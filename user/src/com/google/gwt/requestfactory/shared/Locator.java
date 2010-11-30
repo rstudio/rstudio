@@ -29,7 +29,7 @@ package com.google.gwt.requestfactory.shared;
  * @param <T> the type of domain object the Locator will operate on
  * @param <I> the type of object the Locator expects to use as an id for the
  *          domain object
- * @see LocatorFor
+ * @see ProxyFor#locator()
  */
 public abstract class Locator<T, I> {
   /**

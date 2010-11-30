@@ -17,6 +17,7 @@ package com.google.gwt.requestfactory.server;
 
 import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.Locator;
+import com.google.gwt.requestfactory.shared.ServiceLocator;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -107,6 +108,17 @@ public abstract class ServiceLayer {
    * @return an instance of the requested Locator type
    */
   public abstract <T extends Locator<?, ?>> T createLocator(Class<T> clazz);
+
+  /**
+   * Create an instance of a service object that can be used as the target for
+   * the given method invocation.
+   * 
+   * @param contextMethod a method defined in a RequestContext
+   * @param domainMethod the method that the service object must implement
+   * @return an instance of the requested service object
+   */
+  public abstract Object createServiceInstance(Method contextMethod,
+      Method domainMethod);
 
   /**
    * Return the persistent id for a domain object. May return {@code null} to
@@ -209,6 +221,18 @@ public abstract class ServiceLayer {
       List<Object> domainIds);
 
   /**
+   * Determines if the invocation of a domain method requires a
+   * {@link ServiceLocator} as the 0th parameter when passed into
+   * {@link #invoke(Method, Object...)}.
+   * 
+   * @param contextMethod a method defined in a RequestContext
+   * @param domainMethod a domain method
+   * @return {@code true} if a ServiceLocator is required
+   */
+  public abstract boolean requiresServiceLocator(Method contextMethod,
+      Method domainMethod);
+
+  /**
    * Given a type token previously returned from
    * {@link #resolveTypeToken(Class)}, return the Class literal associated with
    * the token.
@@ -276,6 +300,19 @@ public abstract class ServiceLayer {
    */
   public abstract Method resolveRequestContextMethod(
       String requestContextClass, String methodName);
+
+  /**
+   * Given a RequestContext method declaration, resolve the
+   * {@link ServiceLocator} that should be used when invoking the domain method.
+   * This method will only be called if {@link #requiresServiceLocator(Method)}
+   * returned {@code true} for the associated domain method.
+   * 
+   * @param contextMethod a RequestContext method declaration
+   * @param domainMethod the domain method that will be invoked
+   * @return the type of ServiceLocator to use
+   */
+  public abstract Class<? extends ServiceLocator> resolveServiceLocator(
+      Method contextMethod, Method domainMethod);
 
   /**
    * Return a string used to represent the given type in the wire protocol.

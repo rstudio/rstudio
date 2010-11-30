@@ -19,12 +19,13 @@ import com.google.gwt.requestfactory.server.RequestFactoryInterfaceValidator.Cla
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.InstanceRequest;
 import com.google.gwt.requestfactory.shared.Locator;
-import com.google.gwt.requestfactory.shared.LocatorFor;
 import com.google.gwt.requestfactory.shared.ProxyFor;
+import com.google.gwt.requestfactory.shared.ProxyForName;
 import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.Service;
+import com.google.gwt.requestfactory.shared.ServiceName;
 import com.google.gwt.requestfactory.shared.SimpleRequestFactory;
 import com.google.gwt.requestfactory.shared.ValueProxy;
 import com.google.gwt.requestfactory.shared.impl.FindRequest;
@@ -180,8 +181,7 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
     }
   }
 
-  @ProxyFor(LocatorEntity.class)
-  @LocatorFor(LocatorEntityLocator.class)
+  @ProxyFor(value = LocatorEntity.class, locator = LocatorEntityLocator.class)
   interface LocatorEntityProxy extends EntityProxy {
   }
 
@@ -226,6 +226,13 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
   @Service(Domain.class)
   interface ServiceRequestMissingMethod extends RequestContext {
     Request<Integer> doesNotExist(int a);
+  }
+
+  @ProxyFor(Domain.class)
+  @ProxyForName("Domain")
+  @Service(Domain.class)
+  @ServiceName("Domain")
+  interface TooManyAnnotations extends RequestContext {
   }
 
   static class UnexpectedIdAndVersionDomain {
@@ -347,6 +354,11 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
   public void testTestCodeFactories() {
     v.validateRequestFactory(SimpleRequestFactory.class.getName());
     assertFalse(v.isPoisoned());
+  }
+
+  public void testTooManyAnnotations() {
+    v.validateRequestContext(TooManyAnnotations.class.getName());
+    assertTrue(v.isPoisoned());
   }
 
   public void testUnexpectedIdAndVersion() {

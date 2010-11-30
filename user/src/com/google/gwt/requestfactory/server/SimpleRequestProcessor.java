@@ -27,6 +27,7 @@ import com.google.gwt.autobean.shared.ValueCodex;
 import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.InstanceRequest;
+import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.ServerFailure;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 import com.google.gwt.requestfactory.shared.impl.BaseProxyCategory;
@@ -47,7 +48,6 @@ import com.google.gwt.user.server.Base64Utils;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -346,7 +346,7 @@ public class SimpleRequestProcessor {
    */
   private List<Object> decodeInvocationArguments(RequestState source,
       InvocationMessage invocation, Method contextMethod, Method domainMethod) {
-    boolean isStatic = Modifier.isStatic(domainMethod.getModifiers());
+    boolean isStatic = Request.class.isAssignableFrom(contextMethod.getReturnType());
     int baseLength = contextMethod.getParameterTypes().length;
     int length = baseLength + (isStatic ? 0 : 1);
     int offset = isStatic ? 0 : 1;
@@ -418,9 +418,16 @@ public class SimpleRequestProcessor {
               + invocation.getOperation(), null);
         }
 
-        // Invoke it
+        // Compute the arguments
         List<Object> args = decodeInvocationArguments(state, invocation,
             contextMethod, domainMethod);
+        // Possibly use a ServiceLocator
+        if (service.requiresServiceLocator(contextMethod, domainMethod)) {
+          Object serviceInstance = service.createServiceInstance(contextMethod,
+              domainMethod);
+          args.add(0, serviceInstance);
+        }
+        // Invoke it
         Object returnValue = service.invoke(domainMethod, args.toArray());
 
         // Convert domain object to client object

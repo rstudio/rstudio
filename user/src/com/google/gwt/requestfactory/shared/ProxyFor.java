@@ -21,13 +21,22 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation on EntityProxy classes specifying the domain (server-side) object
- * type.
+ * Annotation on EntityProxy and ValueProxy classes specifying the domain
+ * (server-side) object type.
  * 
  * @see ProxyForName
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface ProxyFor {
+  /**
+   * The domain type that the proxy is mapped to.
+   */
   Class<?> value();
+
+  /**
+   * An optional {@link Locator} that provides instances of the domain objects.
+   */
+  @SuppressWarnings("rawtypes")
+  Class<? extends Locator> locator() default Locator.class;
 }

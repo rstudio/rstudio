@@ -17,6 +17,7 @@ package com.google.gwt.requestfactory.server;
 
 import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.Locator;
+import com.google.gwt.requestfactory.shared.ServiceLocator;
 import com.google.gwt.rpc.server.Pair;
 
 import java.lang.ref.SoftReference;
@@ -42,20 +43,27 @@ class ServiceLayerCache extends ServiceLayerDecorator {
   private static SoftReference<Map<Method, Map<Object, Object>>> methodCache;
 
   private static final Method createLocator;
+  private static final Method createServiceInstance;
   private static final Method getIdType;
   private static final Method getRequestReturnType;
+  private static final Method requiresServiceLocator;
   private static final Method resolveClass;
   private static final Method resolveClientType;
   private static final Method resolveDomainClass;
   private static final Method resolveDomainMethod;
   private static final Method resolveLocator;
   private static final Method resolveRequestContextMethod;
+  private static final Method resolveServiceLocator;
   private static final Method resolveTypeToken;
 
   static {
     createLocator = getMethod("createLocator", Class.class);
+    createServiceInstance = getMethod("createServiceInstance", Method.class,
+        Method.class);
     getIdType = getMethod("getIdType", Class.class);
     getRequestReturnType = getMethod("getRequestReturnType", Method.class);
+    requiresServiceLocator = getMethod("requiresServiceLocator", Method.class,
+        Method.class);
     resolveClass = getMethod("resolveClass", String.class);
     resolveClientType = getMethod("resolveClientType", Class.class,
         Class.class, boolean.class);
@@ -64,6 +72,8 @@ class ServiceLayerCache extends ServiceLayerDecorator {
     resolveLocator = getMethod("resolveLocator", Class.class);
     resolveRequestContextMethod = getMethod("resolveRequestContextMethod",
         String.class, String.class);
+    resolveServiceLocator = getMethod("resolveServiceLocator", Method.class,
+        Method.class);
     resolveTypeToken = getMethod("resolveTypeToken", Class.class);
   }
 
@@ -98,6 +108,12 @@ class ServiceLayerCache extends ServiceLayerDecorator {
   }
 
   @Override
+  public Object createServiceInstance(Method contextMethod, Method domainMethod) {
+    return getOrCache(createServiceInstance, new Pair<Method, Method>(
+        contextMethod, domainMethod), Object.class, contextMethod, domainMethod);
+  }
+
+  @Override
   public Class<?> getIdType(Class<?> domainType) {
     return getOrCache(getIdType, domainType, Class.class, domainType);
   }
@@ -109,18 +125,26 @@ class ServiceLayerCache extends ServiceLayerDecorator {
   }
 
   @Override
+  public boolean requiresServiceLocator(Method contextMethod,
+      Method domainMethod) {
+    return getOrCache(requiresServiceLocator, new Pair<Method, Method>(
+        contextMethod, domainMethod), Boolean.class, contextMethod,
+        domainMethod);
+  }
+
+  @Override
   public Class<? extends BaseProxy> resolveClass(String typeToken) {
     Class<?> found = getOrCache(resolveClass, typeToken, Class.class, typeToken);
     return found.asSubclass(BaseProxy.class);
   }
 
   @Override
-  @SuppressWarnings("unchecked")
   public <T> Class<? extends T> resolveClientType(Class<?> domainClass,
       Class<T> clientType, boolean required) {
-    return getOrCache(resolveClientType, new Pair<Class<?>, Class<?>>(
-        domainClass, clientType), Class.class, domainClass, clientType,
-        required);
+    Class<?> clazz = getOrCache(resolveClientType,
+        new Pair<Class<?>, Class<?>>(domainClass, clientType), Class.class,
+        domainClass, clientType, required);
+    return clazz == null ? null : clazz.asSubclass(clientType);
   }
 
   @Override
@@ -146,6 +170,15 @@ class ServiceLayerCache extends ServiceLayerDecorator {
     return getOrCache(resolveRequestContextMethod, new Pair<String, String>(
         requestContextClass, methodName), Method.class, requestContextClass,
         methodName);
+  }
+
+  @Override
+  public Class<? extends ServiceLocator> resolveServiceLocator(
+      Method contextMethod, Method domainMethod) {
+    Class<?> clazz = getOrCache(resolveServiceLocator,
+        new Pair<Method, Method>(contextMethod, domainMethod), Class.class,
+        contextMethod, domainMethod);
+    return clazz == null ? null : clazz.asSubclass(ServiceLocator.class);
   }
 
   @Override

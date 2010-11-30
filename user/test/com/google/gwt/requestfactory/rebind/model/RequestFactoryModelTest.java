@@ -28,12 +28,14 @@ import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.requestfactory.server.TestContextImpl;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.InstanceRequest;
+import com.google.gwt.requestfactory.shared.Locator;
 import com.google.gwt.requestfactory.shared.ProxyFor;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.Service;
+import com.google.gwt.requestfactory.shared.ServiceLocator;
 import com.google.gwt.requestfactory.shared.ValueProxy;
 
 import junit.framework.TestCase;
@@ -269,8 +271,10 @@ public class RequestFactoryModelTest extends TestCase {
         new EmptyMockJavaResource(Iterable.class),
         new EmptyMockJavaResource(EntityProxy.class),
         new EmptyMockJavaResource(InstanceRequest.class),
+        new EmptyMockJavaResource(Locator.class),
         new EmptyMockJavaResource(RequestFactory.class),
         new EmptyMockJavaResource(Receiver.class),
+        new EmptyMockJavaResource(ServiceLocator.class),
         new EmptyMockJavaResource(ValueProxy.class),
 
         new RealJavaResource(Request.class),

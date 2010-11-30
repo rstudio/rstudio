@@ -28,5 +28,14 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface ProxyForName {
+  /**
+   * The name of the domain type that the proxy is mapped to.
+   */
   String value();
+
+  /**
+   * An optional name of a {@link Locator} that provides instances of the domain
+   * objects.
+   */
+  String locator() default "";
 }

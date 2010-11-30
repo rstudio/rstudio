@@ -17,6 +17,7 @@ package com.google.gwt.requestfactory.server;
 
 import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.Locator;
+import com.google.gwt.requestfactory.shared.ServiceLocator;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -51,6 +52,11 @@ public class ServiceLayerDecorator extends ServiceLayer {
   @Override
   public <T extends Locator<?, ?>> T createLocator(Class<T> clazz) {
     return getNext().createLocator(clazz);
+  }
+
+  @Override
+  public Object createServiceInstance(Method contextMethod, Method domainMethod) {
+    return getNext().createServiceInstance(contextMethod, domainMethod);
   }
 
   @Override
@@ -100,6 +106,12 @@ public class ServiceLayerDecorator extends ServiceLayer {
   }
 
   @Override
+  public boolean requiresServiceLocator(Method contextMethod,
+      Method domainMethod) {
+    return getNext().requiresServiceLocator(contextMethod, domainMethod);
+  }
+
+  @Override
   public Class<? extends BaseProxy> resolveClass(String typeToken) {
     return getNext().resolveClass(typeToken);
   }
@@ -130,6 +142,12 @@ public class ServiceLayerDecorator extends ServiceLayer {
       String methodName) {
     return getNext().resolveRequestContextMethod(requestContextClass,
         methodName);
+  }
+
+  @Override
+  public Class<? extends ServiceLocator> resolveServiceLocator(
+      Method contextMethod, Method domainMethod) {
+    return getNext().resolveServiceLocator(contextMethod, domainMethod);
   }
 
   @Override

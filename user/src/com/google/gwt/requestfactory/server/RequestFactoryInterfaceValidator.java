@@ -31,8 +31,6 @@ import com.google.gwt.dev.util.Name.SourceOrBinaryName;
 import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.InstanceRequest;
-import com.google.gwt.requestfactory.shared.LocatorFor;
-import com.google.gwt.requestfactory.shared.LocatorForName;
 import com.google.gwt.requestfactory.shared.ProxyFor;
 import com.google.gwt.requestfactory.shared.ProxyForName;
 import com.google.gwt.requestfactory.shared.Request;
@@ -44,6 +42,7 @@ import com.google.gwt.requestfactory.shared.ValueProxy;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -142,6 +141,7 @@ public class RequestFactoryInterfaceValidator {
   private class DomainMapper extends EmptyVisitor {
     private final ErrorContext logger;
     private String domainInternalName;
+    private List<Class<? extends Annotation>> found = new ArrayList<Class<? extends Annotation>>();
     private String locatorInternalName;
 
     public DomainMapper(ErrorContext logger) {
@@ -165,64 +165,92 @@ public class RequestFactoryInterfaceValidator {
       }
     }
 
+    /**
+     * This method examines one annotation at a time.
+     */
     @Override
     public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-      final boolean foundLocator = desc.equals(Type.getDescriptor(LocatorFor.class));
-      final boolean foundLocatorName = desc.equals(Type.getDescriptor(LocatorForName.class));
-      boolean foundProxy = desc.equals(Type.getDescriptor(ProxyFor.class));
-      boolean foundProxyName = desc.equals(Type.getDescriptor(ProxyForName.class));
-      boolean foundService = desc.equals(Type.getDescriptor(Service.class));
-      boolean foundServiceName = desc.equals(Type.getDescriptor(ServiceName.class));
+      // Set to true if the annotation should have class literal values
+      boolean expectClasses = false;
+      // Set to true if the annonation has string values
+      boolean expectNames = false;
 
-      if (foundLocator || foundProxy || foundService) {
+      if (desc.equals(Type.getDescriptor(ProxyFor.class))) {
+        expectClasses = true;
+        found.add(ProxyFor.class);
+      } else if (desc.equals(Type.getDescriptor(ProxyForName.class))) {
+        expectNames = true;
+        found.add(ProxyForName.class);
+      } else if (desc.equals(Type.getDescriptor(Service.class))) {
+        expectClasses = true;
+        found.add(Service.class);
+      } else if (desc.equals(Type.getDescriptor(ServiceName.class))) {
+        expectNames = true;
+        found.add(ServiceName.class);
+      }
+
+      if (expectClasses) {
         return new EmptyVisitor() {
           @Override
           public void visit(String name, Object value) {
             if ("value".equals(name)) {
-              String found = ((Type) value).getInternalName();
-              if (foundLocator) {
-                locatorInternalName = found;
-              } else {
-                domainInternalName = found;
-              }
+              domainInternalName = ((Type) value).getInternalName();
+            } else if ("locator".equals(name)) {
+              locatorInternalName = ((Type) value).getInternalName();
             }
           }
         };
       }
 
-      if (foundLocatorName || foundProxyName || foundServiceName) {
+      if (expectNames) {
         return new EmptyVisitor() {
           @Override
           public void visit(String name, Object value) {
-            if ("value".equals(name)) {
-              String sourceName = (String) value;
-
-              /*
-               * The input is a source name, so we need to convert it to an
-               * internal name. We'll do this by substituting dollar signs for
-               * the last slash in the name until there are no more slashes.
-               */
-              StringBuffer desc = new StringBuffer(sourceName.replace('.', '/'));
-              while (!loader.exists(desc.toString() + ".class")) {
-                logger.spam("Did not find " + desc.toString());
-                int idx = desc.lastIndexOf("/");
-                if (idx == -1) {
-                  return;
-                }
-                desc.setCharAt(idx, '$');
-              }
-
-              if (foundLocatorName) {
-                locatorInternalName = desc.toString();
-              } else {
-                domainInternalName = desc.toString();
-              }
-              logger.spam(domainInternalName);
+            String sourceName;
+            if ("value".equals(name) || "locator".equals(name)) {
+              sourceName = (String) value;
+            } else {
+              return;
             }
+
+            /*
+             * The input is a source name, so we need to convert it to an
+             * internal name. We'll do this by substituting dollar signs for the
+             * last slash in the name until there are no more slashes.
+             */
+            StringBuffer desc = new StringBuffer(sourceName.replace('.', '/'));
+            while (!loader.exists(desc.toString() + ".class")) {
+              logger.spam("Did not find " + desc.toString());
+              int idx = desc.lastIndexOf("/");
+              if (idx == -1) {
+                return;
+              }
+              desc.setCharAt(idx, '$');
+            }
+
+            if ("locator".equals(name)) {
+              locatorInternalName = desc.toString();
+            } else {
+              domainInternalName = desc.toString();
+            }
+            logger.spam(domainInternalName);
           }
         };
       }
       return null;
+    }
+
+    @Override
+    public void visitEnd() {
+      // Only allow one annotation
+      if (found.size() > 1) {
+        StringBuilder sb = new StringBuilder();
+        for (Class<?> clazz : found) {
+          sb.append(" @").append(clazz.getSimpleName());
+        }
+        logger.poison("Redundant domain mapping annotations present:%s",
+            sb.toString());
+      }
     }
   }
 
@@ -536,10 +564,10 @@ public class RequestFactoryInterfaceValidator {
    */
   private final Map<Type, Type> clientToDomainType = new HashMap<Type, Type>();
   /**
-   * Maps client types (e.g. FooProxy) to their locator types (e.g. FooLocator).
+   * Maps client types (e.g. FooProxy or FooContext) to their locator types
+   * (e.g. FooLocator or FooServiceLocator).
    */
   private final Map<Type, Type> clientToLocatorMap = new HashMap<Type, Type>();
-
   /**
    * Maps domain types (e.g Foo) to client proxy types (e.g. FooAProxy,
    * FooBProxy).
@@ -731,7 +759,8 @@ public class RequestFactoryInterfaceValidator {
       }
 
       // Check the client method against the domain
-      checkClientMethodInDomain(logger, method, domainServiceType);
+      checkClientMethodInDomain(logger, method, domainServiceType,
+          !clientToLocatorMap.containsKey(requestContextType));
       maybeCheckReferredProxies(logger, method);
     }
 
@@ -887,7 +916,7 @@ public class RequestFactoryInterfaceValidator {
    * to the server's domain type.
    */
   private void checkClientMethodInDomain(ErrorContext logger, RFMethod method,
-      Type domainServiceType) {
+      Type domainServiceType, boolean requireStaticMethodsForRequestType) {
     logger = logger.setMethod(method);
 
     // Create a "translated" method declaration to search for
@@ -905,7 +934,8 @@ public class RequestFactoryInterfaceValidator {
         logger.poison("The method %s is declared to return %s, but the"
             + " service method is static", method.getName(),
             InstanceRequest.class.getCanonicalName());
-      } else if (!isInstance && !found.isDeclaredStatic) {
+      } else if (requireStaticMethodsForRequestType && !isInstance
+          && !found.isDeclaredStatic()) {
         logger.poison("The method %s is declared to return %s, but the"
             + " service method is not static", method.getName(),
             Request.class.getCanonicalName());

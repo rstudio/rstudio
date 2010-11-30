@@ -17,12 +17,19 @@ package com.google.gwt.requestfactory.server;
 
 import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.Locator;
-import com.google.gwt.requestfactory.shared.LocatorFor;
-import com.google.gwt.requestfactory.shared.LocatorForName;
+import com.google.gwt.requestfactory.shared.ProxyFor;
+import com.google.gwt.requestfactory.shared.ProxyForName;
+import com.google.gwt.requestfactory.shared.Request;
+import com.google.gwt.requestfactory.shared.Service;
+import com.google.gwt.requestfactory.shared.ServiceLocator;
+import com.google.gwt.requestfactory.shared.ServiceName;
+
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 /**
- * Adds support to the ServiceLayer chain for using {@link Locator} helper
- * objects.
+ * Adds support to the ServiceLayer chain for using {@link Locator} and
+ * {@link ServiceLocator} helper objects.
  */
 final class LocatorServiceLayer extends ServiceLayerDecorator {
 
@@ -37,17 +44,15 @@ final class LocatorServiceLayer extends ServiceLayerDecorator {
 
   @Override
   public <T extends Locator<?, ?>> T createLocator(Class<T> clazz) {
-    Throwable ex;
-    try {
-      return clazz.newInstance();
-    } catch (InstantiationException e) {
-      ex = e;
-    } catch (IllegalAccessException e) {
-      ex = e;
-    }
-    return this.<T> die(ex,
-        "Could not instantiate Locator %s. It is default-instantiable?",
-        clazz.getCanonicalName());
+    return newInstance(clazz, Locator.class);
+  }
+
+  @Override
+  public Object createServiceInstance(Method contextMethod, Method domainMethod) {
+    Class<? extends ServiceLocator> locatorType = getTop().resolveServiceLocator(
+        contextMethod, domainMethod);
+    ServiceLocator locator = newInstance(locatorType, ServiceLocator.class);
+    return locator.getInstance(domainMethod.getDeclaringClass());
   }
 
   @Override
@@ -79,6 +84,17 @@ final class LocatorServiceLayer extends ServiceLayerDecorator {
     return doLoadDomainObject(clazz, domainId);
   }
 
+  /**
+   * Returns true if the context method returns a {@link Request} and the domain
+   * method is non-static.
+   */
+  @Override
+  public boolean requiresServiceLocator(Method contextMethod,
+      Method domainMethod) {
+    return Request.class.isAssignableFrom(contextMethod.getReturnType())
+        && !Modifier.isStatic(domainMethod.getModifiers());
+  }
+
   @Override
   public Class<? extends Locator<?, ?>> resolveLocator(Class<?> domainType) {
     // Find the matching BaseProxy
@@ -90,24 +106,55 @@ final class LocatorServiceLayer extends ServiceLayerDecorator {
 
     // Check it for annotations
     Class<? extends Locator<?, ?>> locatorType;
-    LocatorFor l = proxyType.getAnnotation(LocatorFor.class);
-    LocatorForName ln = proxyType.getAnnotation(LocatorForName.class);
-    if (l != null) {
-      locatorType = l.value();
-    } else if (ln != null) {
+    ProxyFor l = proxyType.getAnnotation(ProxyFor.class);
+    ProxyForName ln = proxyType.getAnnotation(ProxyForName.class);
+    if (l != null && !Locator.class.equals(l.locator())) {
+      @SuppressWarnings("unchecked")
+      Class<? extends Locator<?, ?>> found = (Class<? extends Locator<?, ?>>) l.locator();
+      locatorType = found;
+    } else if (ln != null && ln.locator().length() > 0) {
       try {
         @SuppressWarnings("unchecked")
         Class<? extends Locator<?, ?>> found = (Class<? extends Locator<?, ?>>) Class.forName(
-            ln.value(), false, domainType.getClassLoader()).asSubclass(
+            ln.locator(), false, domainType.getClassLoader()).asSubclass(
             Locator.class);
         locatorType = found;
       } catch (ClassNotFoundException e) {
-        return die(e,
-            "Could not find the type specified in the @%s annotation %s",
-            LocatorForName.class.getCanonicalName(), ln.value());
+        return die(
+            e,
+            "Could not find the locator type specified in the @%s annotation %s",
+            ProxyForName.class.getCanonicalName(), ln.value());
       }
     } else {
       // No locator annotation
+      locatorType = null;
+    }
+    return locatorType;
+  }
+
+  @Override
+  public Class<? extends ServiceLocator> resolveServiceLocator(
+      Method contextMethod, Method domainMethod) {
+    Class<? extends ServiceLocator> locatorType;
+
+    // Look at the RequestContext
+    Class<?> requestContextClass = contextMethod.getDeclaringClass();
+    Service l = requestContextClass.getAnnotation(Service.class);
+    ServiceName ln = requestContextClass.getAnnotation(ServiceName.class);
+    if (l != null && !ServiceLocator.class.equals(l.locator())) {
+      locatorType = l.locator();
+    } else if (ln != null && ln.locator().length() > 0) {
+      try {
+        locatorType = Class.forName(ln.locator(), false,
+            requestContextClass.getClassLoader()).asSubclass(
+            ServiceLocator.class);
+      } catch (ClassNotFoundException e) {
+        return die(
+            e,
+            "Could not find the locator type specified in the @%s annotation %s",
+            ServiceName.class.getCanonicalName(), ln.value());
+      }
+    } else {
       locatorType = null;
     }
     return locatorType;
@@ -161,5 +208,19 @@ final class LocatorServiceLayer extends ServiceLayerDecorator {
       return null;
     }
     return (Locator<T, I>) getTop().createLocator(locatorType);
+  }
+
+  private <T> T newInstance(Class<T> clazz, Class<? super T> base) {
+    Throwable ex;
+    try {
+      return clazz.newInstance();
+    } catch (InstantiationException e) {
+      ex = e;
+    } catch (IllegalAccessException e) {
+      ex = e;
+    }
+    return this.<T> die(ex,
+        "Could not instantiate %s %s. Is it default-instantiable?",
+        base.getSimpleName(), clazz.getCanonicalName());
   }
 }

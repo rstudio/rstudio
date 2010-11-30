@@ -29,5 +29,16 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Service {
+  /**
+   * The domain type that provides the implementations for the methods defined
+   * in the RequestContext.
+   */
   Class<?> value();
+
+  /**
+   * An optional {@link ServiceLocator} that provides instances of service
+   * objects used when invoking instance methods on the type returned by
+   * {@link #value()}.
+   */
+  Class<? extends ServiceLocator> locator() default ServiceLocator.class;
 }

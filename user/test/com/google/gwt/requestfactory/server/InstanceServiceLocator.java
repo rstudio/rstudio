@@ -13,19 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.requestfactory.shared;
+package com.google.gwt.requestfactory.server;
+
+import com.google.gwt.requestfactory.shared.ServiceLocator;
 
 /**
- * Simple RequesetFactory interface with two domain objects, and our standard
- * UserInformation and Logging services.
+ * Demonstrates instance-based service objects.
  */
-public interface SimpleRequestFactory extends BasicRequestFactory {
-  
-  InstanceServiceRequest instanceServiceRequest();
+public class InstanceServiceLocator implements ServiceLocator {
 
-  SimpleBarRequest simpleBarRequest();
-
-  SimpleFooRequest simpleFooRequest();
-
-  UnicodeTestRequest unicodeTestRequest();
+  public Object getInstance(Class<?> clazz) {
+    assert InstanceService.class.equals(clazz);
+    return clazz.cast(new InstanceServiceImpl(5));
+  }
 }

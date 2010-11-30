@@ -761,6 +761,17 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     });
   }
 
+  public void testInstanceServiceRequest() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    req.instanceServiceRequest().add(5).fire(new Receiver<Integer>() {
+      @Override
+      public void onSuccess(Integer response) {
+        assertEquals(10, (int) response);
+        finishTestAndReset();
+      }
+    });
+  }
+
   /**
    * Make sure our stock RF logging service keeps receiving.
    */
@@ -1157,6 +1168,11 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     });
   }
 
+  /*
+   * TODO: all these tests should check the final values. It will be easy when
+   * we have better persistence than the singleton pattern.
+   */
+
   /**
    * Ensure that a relationship can be set up between two newly-created objects.
    */
@@ -1181,11 +1197,6 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
       }
     });
   }
-
-  /*
-   * TODO: all these tests should check the final values. It will be easy when
-   * we have better persistence than the singleton pattern.
-   */
 
   /*
    * Find Entity2 Create Entity, Persist Entity Relate Entity2 to Entity Persist
@@ -1419,6 +1430,11 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         });
   }
 
+  /*
+   * TODO: all these tests should check the final values. It will be easy when
+   * we have better persistence than the singleton pattern.
+   */
+
   public void testPersistValueList() {
     delayTestFinish(DELAY_TEST_FINISH);
     simpleFooRequest().findSimpleFooById(999L).fire(
@@ -1477,11 +1493,6 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
           }
         });
   }
-
-  /*
-   * TODO: all these tests should check the final values. It will be easy when
-   * we have better persistence than the singleton pattern.
-   */
 
   /*
    * TODO: all these tests should check the final values. It will be easy when
@@ -2071,28 +2082,6 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   /**
-   * We provide a simple UserInformation class to give GAE developers a hand,
-   * and other developers a hint. Make sure RF doesn't break it (it relies on
-   * server side upcasting, and a somewhat sleazey reflective lookup mechanism
-   * in a static method on UserInformation).
-   */
-  public void testUserInfo() {
-    delayTestFinish(DELAY_TEST_FINISH);
-    req.userInformationRequest().getCurrentUserInformation("").fire(
-        new Receiver<UserInformationProxy>() {
-          @Override
-          public void onSuccess(UserInformationProxy response) {
-            response = checkSerialization(response);
-            assertEquals("Dummy Email", response.getEmail());
-            assertEquals("Dummy User", response.getName());
-            assertEquals("", response.getLoginUrl());
-            assertEquals("", response.getLogoutUrl());
-            finishTestAndReset();
-          }
-        });
-  }
-
-  /**
    * Check if a graph of unpersisted objects can be echoed.
    */
   public void testUnpersistedEchoComplexGraph() {
@@ -2228,6 +2217,28 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
                         });
                   }
                 });
+          }
+        });
+  }
+
+  /**
+   * We provide a simple UserInformation class to give GAE developers a hand,
+   * and other developers a hint. Make sure RF doesn't break it (it relies on
+   * server side upcasting, and a somewhat sleazey reflective lookup mechanism
+   * in a static method on UserInformation).
+   */
+  public void testUserInfo() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    req.userInformationRequest().getCurrentUserInformation("").fire(
+        new Receiver<UserInformationProxy>() {
+          @Override
+          public void onSuccess(UserInformationProxy response) {
+            response = checkSerialization(response);
+            assertEquals("Dummy Email", response.getEmail());
+            assertEquals("Dummy User", response.getName());
+            assertEquals("", response.getLoginUrl());
+            assertEquals("", response.getLogoutUrl());
+            finishTestAndReset();
           }
         });
   }
@@ -2373,6 +2384,48 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     checkEqualityAndHashcode(a, b);
   }
 
+  /**
+   * Since a ValueProxy cannot be passed into RequestContext edit, a proxy
+   * returned from a service method should be mutable by default.
+   */
+  public void testValueObjectReturnedFromRequestIsImmutable() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    simpleFooRequest().returnValueProxy().fire(
+        new Receiver<SimpleValueProxy>() {
+          @Override
+          public void onSuccess(SimpleValueProxy a) {
+            a = checkSerialization(a);
+            try {
+              a.setNumber(77);
+              fail();
+            } catch (IllegalStateException expected) {
+            }
+            try {
+              // Ensure Dates comply with ValueProxy mutation behaviors
+              a.getDate().setTime(1);
+              fail();
+            } catch (IllegalStateException expected) {
+            }
+            SimpleFooRequest ctx = simpleFooRequest();
+            final SimpleValueProxy toCheck = ctx.edit(a);
+            toCheck.setNumber(77);
+            toCheck.getDate().setTime(1);
+            ctx.returnValueProxy().fire(new Receiver<SimpleValueProxy>() {
+              @Override
+              public void onSuccess(SimpleValueProxy b) {
+                b = checkSerialization(b);
+                b = simpleFooRequest().edit(b);
+                // Now check that same value is equal across contexts
+                b.setNumber(77);
+                b.setDate(new Date(1));
+                checkEqualityAndHashcode(toCheck, b);
+                finishTestAndReset();
+              }
+            });
+          }
+        });
+  }
+
   public void testValueObjectViolationsOnCreate() {
     delayTestFinish(DELAY_TEST_FINISH);
     SimpleFooRequest req = simpleFooRequest();
@@ -2426,48 +2479,6 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
                 assertEquals(original, v.getOriginalProxy());
                 assertEquals("shouldBeNull", v.getPath());
                 assertNull(v.getProxyId());
-                finishTestAndReset();
-              }
-            });
-          }
-        });
-  }
-
-  /**
-   * Since a ValueProxy cannot be passed into RequestContext edit, a proxy
-   * returned from a service method should be mutable by default.
-   */
-  public void testValueObjectReturnedFromRequestIsImmutable() {
-    delayTestFinish(DELAY_TEST_FINISH);
-    simpleFooRequest().returnValueProxy().fire(
-        new Receiver<SimpleValueProxy>() {
-          @Override
-          public void onSuccess(SimpleValueProxy a) {
-            a = checkSerialization(a);
-            try {
-              a.setNumber(77);
-              fail();
-            } catch (IllegalStateException expected) {
-            }
-            try {
-              // Ensure Dates comply with ValueProxy mutation behaviors
-              a.getDate().setTime(1);
-              fail();
-            } catch (IllegalStateException expected) {
-            }
-            SimpleFooRequest ctx = simpleFooRequest();
-            final SimpleValueProxy toCheck = ctx.edit(a);
-            toCheck.setNumber(77);
-            toCheck.getDate().setTime(1);
-            ctx.returnValueProxy().fire(new Receiver<SimpleValueProxy>() {
-              @Override
-              public void onSuccess(SimpleValueProxy b) {
-                b = checkSerialization(b);
-                b = simpleFooRequest().edit(b);
-                // Now check that same value is equal across contexts
-                b.setNumber(77);
-                b.setDate(new Date(1));
-                checkEqualityAndHashcode(toCheck, b);
                 finishTestAndReset();
               }
             });

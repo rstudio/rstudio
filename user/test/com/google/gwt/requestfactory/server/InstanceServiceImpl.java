@@ -13,19 +13,20 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.requestfactory.shared;
+package com.google.gwt.requestfactory.server;
 
 /**
- * Simple RequesetFactory interface with two domain objects, and our standard
- * UserInformation and Logging services.
+ * A service API that doesn't have static methods and that can't be
+ * default-instantiated.
  */
-public interface SimpleRequestFactory extends BasicRequestFactory {
-  
-  InstanceServiceRequest instanceServiceRequest();
+public class InstanceServiceImpl implements InstanceService {
+  private final int base;
 
-  SimpleBarRequest simpleBarRequest();
+  public InstanceServiceImpl(int base) {
+    this.base = base;
+  }
 
-  SimpleFooRequest simpleFooRequest();
-
-  UnicodeTestRequest unicodeTestRequest();
+  public Integer add(int value) {
+    return base + value;
+  }
 }

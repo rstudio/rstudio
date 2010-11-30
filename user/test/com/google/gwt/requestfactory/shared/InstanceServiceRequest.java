@@ -15,21 +15,13 @@
  */
 package com.google.gwt.requestfactory.shared;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import com.google.gwt.requestfactory.server.InstanceService;
+import com.google.gwt.requestfactory.server.InstanceServiceLocator;
 
 /**
- * Annotation on BaseProxy classes specifying the domain (server-side) object
- * {@link Locator}. Specifying an explicit {@code Locator} removes the
- * requirement to have a {@code findFoo()}, {@code getId()}, and
- * {@code getVersion()} method in the domain object type.
- * 
- * @see LocatorForName
+ * Used to test the ServiceLocator extension hook.
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface LocatorFor {
-  Class<? extends Locator<?, ?>> value();
+@Service(value = InstanceService.class, locator = InstanceServiceLocator.class)
+public interface InstanceServiceRequest extends RequestContext {
+  Request<Integer> add(int value);
 }
