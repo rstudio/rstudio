@@ -156,6 +156,23 @@ public abstract class GWTRunner implements EntryPoint {
   }
 
   /**
+   * Convert unserializable exceptions (usually from dev mode) into generic
+   * serializable ones.
+   */
+  private static void ensureSerializable(ExceptionWrapper wrapper,
+      SerializationStreamWriter writer) {
+    if (wrapper == null) {
+      return;
+    }
+    ensureSerializable(wrapper.causeWrapper, writer);
+    try {
+      writer.writeObject(wrapper.exception);
+    } catch (SerializationException e) {
+      wrapper.exception = new Exception(wrapper.exception.toString());
+    }
+  }
+
+  /**
    * This client's info.
    */
   private ClientInfo clientInfo;
@@ -248,22 +265,10 @@ public abstract class GWTRunner implements EntryPoint {
     if (result != null && failureMessage != null) {
       RuntimeException ex = new RuntimeException(failureMessage);
       result.setException(ex);
-    } else if (!GWT.isProdMode() && result.getException() != null) {
+    } else if (!GWT.isProdMode() && result.exceptionWrapper != null) {
       SerializationStreamFactory fac = (SerializationStreamFactory) junitHost;
       SerializationStreamWriter writer = fac.createStreamWriter();
-      Throwable ex = result.getException();
-      try {
-        writer.writeObject(ex);
-      } catch (SerializationException e) {
-        /*
-         * Probably a dev mode exception that isn't client-side serializable.
-         * Send it as a plain old Exception instead.
-         */
-        StackTraceElement[] st = ex.getStackTrace();
-        ex = new Exception(ex.toString());
-        ex.setStackTrace(st);
-        result.setException(ex);
-      }
+      ensureSerializable(result.exceptionWrapper, writer);
     }
     TestInfo currentTest = getCurrentTest();
     currentResults.put(currentTest, result);

@@ -30,13 +30,13 @@ import java.io.Serializable;
  */
 public class JUnitResult implements Serializable {
 
-  // Computed at the server, via HTTP header.
-  private transient String agent;
-
   /**
    * If non-null, an exception that occurred during the run.
    */
-  private ExceptionWrapper exceptionWrapper;
+  ExceptionWrapper exceptionWrapper;
+
+  // Computed at the server, via HTTP header.
+  private transient String agent;
 
   // Computed at the server, via HTTP header.
   private transient String host;
