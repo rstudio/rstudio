@@ -100,7 +100,9 @@ public class MessageTransportTest extends TestCase {
     MessageTransport messageTransport = new MessageTransport(
         network.getClientSocket().getInputStream(),
         network.getClientSocket().getOutputStream(), requestProcessor,
-        new MessageTransport.TerminationCallback() {
+        new MessageTransport.ErrorCallback() {
+          public void onResponseException(Exception e) {
+          }
           public void onTermination(Exception e) {
           }
         });
@@ -246,7 +248,9 @@ public class MessageTransportTest extends TestCase {
     MessageTransport messageTransport = new MessageTransport(
         network.getClientSocket().getInputStream(),
         network.getClientSocket().getOutputStream(), requestProcessor,
-        new MessageTransport.TerminationCallback() {
+        new MessageTransport.ErrorCallback() {
+          public void onResponseException(Exception e) {
+          }
           public void onTermination(Exception e) {
           }
         });
@@ -340,7 +344,9 @@ public class MessageTransportTest extends TestCase {
     MessageTransport messageTransport = new MessageTransport(
         network.getClientSocket().getInputStream(),
         network.getClientSocket().getOutputStream(), requestProcessor,
-        new MessageTransport.TerminationCallback() {
+        new MessageTransport.ErrorCallback() {
+          public void onResponseException(Exception e) {
+          }
           public void onTermination(Exception e) {
           }
         });
@@ -395,7 +401,9 @@ public class MessageTransportTest extends TestCase {
     MessageTransport messageTransport = new MessageTransport(
         network.getClientSocket().getInputStream(),
         network.getClientSocket().getOutputStream(), requestProcessor,
-        new MessageTransport.TerminationCallback() {
+        new MessageTransport.ErrorCallback() {
+          public void onResponseException(Exception e) {
+          }
           public void onTermination(Exception e) {
           }
         });

@@ -146,7 +146,8 @@ public final class ViewerServiceTreeLogger extends AbstractTreeLogger {
           }
 
           public void onError(Throwable t) {
-            // TODO(rdayal): handle errors?
+            System.err.println("An error occurred while attempting to add a log branch.");
+            t.printStackTrace(System.err);
           }
         });
   }

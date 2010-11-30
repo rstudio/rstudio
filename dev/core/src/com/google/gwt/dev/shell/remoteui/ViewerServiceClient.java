@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.shell.remoteui;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.HelpInfo;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.protobuf.ByteString;
@@ -42,16 +43,8 @@ import java.util.concurrent.Future;
  */
 public class ViewerServiceClient {
 
-  private static final Callback<Response> DUMMY_CALLBACK = new Callback<Response>() {
-    public void onDone(Response result) {
-    }
-
-    public void onError(Throwable t) {
-      // TODO(rdayal): handle errors?
-    }
-  };
-
   private final MessageTransport transport;
+  private final TreeLogger unexpectedErrorLogger;
 
   /**
    * Create a new instance.
@@ -59,8 +52,10 @@ public class ViewerServiceClient {
    * @param processor A MessageProcessor that is used to communicate with the
    *          ViewerService server.
    */
-  public ViewerServiceClient(MessageTransport processor) {
+  public ViewerServiceClient(MessageTransport processor,
+      TreeLogger unexpectedErrorLogger) {
     this.transport = processor;
+    this.unexpectedErrorLogger = unexpectedErrorLogger;
   }
 
   /**
@@ -135,7 +130,15 @@ public class ViewerServiceClient {
     Request requestMessage = buildRequestMessageFromViewerRequest(
         viewerRequestBuilder).build();
 
-    transport.executeRequestAsync(requestMessage, DUMMY_CALLBACK);
+    transport.executeRequestAsync(requestMessage, new Callback<Response>() {
+      public void onDone(Response result) {
+      }
+
+      public void onError(Throwable t) {
+        unexpectedErrorLogger.log(TreeLogger.WARN,
+            "An error occurred while attempting to add a log entry.", t);
+      }
+    });
   }
 
   /**
@@ -326,7 +329,8 @@ public class ViewerServiceClient {
    * 
    * @throws RequestException if the request failed
    */
-  private Response waitForResponse(Future<Response> future) throws RequestException {
+  private Response waitForResponse(Future<Response> future)
+      throws RequestException {
     try {
       return future.get();
     } catch (ExecutionException e) {
@@ -344,7 +348,8 @@ public class ViewerServiceClient {
   /**
    * Waits for response and throws an unchecked exception if the request failed.
    */
-  private Response waitForResponseOrThrowUncheckedException(Future<Response> future) {
+  private Response waitForResponseOrThrowUncheckedException(
+      Future<Response> future) {
     try {
       return waitForResponse(future);
     } catch (RequestException e) {

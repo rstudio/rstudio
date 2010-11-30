@@ -39,7 +39,7 @@ import java.util.Map;
  * development mode server.
  */
 public class RemoteUI extends DevModeUI implements
-    MessageTransport.TerminationCallback {
+    MessageTransport.ErrorCallback {
 
   private final String clientId;
   private final DevModeServiceRequestProcessor devModeRequestProcessor;
@@ -129,15 +129,20 @@ public class RemoteUI extends DevModeUI implements
     // resolved, we send the startup URLs as part of the moduleLoadComplete so
     // they are not displayed before the server is ready to serve the modules at
     // the URLs.
-    viewerServiceClient = new ViewerServiceClient(transport);
+    viewerServiceClient = new ViewerServiceClient(transport, getTopLogger());
     viewerServiceClient.initialize(clientId, cachedStartupUrls);
     viewerServiceClient.checkCapabilities();
   }
 
+  public void onResponseException(Exception e) {
+    getTopLogger().log(TreeLogger.INFO,
+        "An exception occured while attempting to send a response message.", e);   
+  }
+
   public void onTermination(Exception e) {
-    getTopLogger().log(TreeLogger.INFO,
+    getConsoleLogger().log(TreeLogger.INFO,
         "Remote UI connection terminated due to exception: " + e);
-    getTopLogger().log(TreeLogger.INFO,
+    getConsoleLogger().log(TreeLogger.INFO,
         "Shutting down development mode server.");
 
     try {
