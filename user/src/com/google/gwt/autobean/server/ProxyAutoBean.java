@@ -28,9 +28,10 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * An implementation of an AutoBean that uses reflection.
@@ -38,9 +39,60 @@ import java.util.Map;
  * @param <T> the type of interface being wrapped
  */
 class ProxyAutoBean<T> extends AbstractAutoBean<T> {
+  private static class Data {
+    final List<Method> getters = new ArrayList<Method>();
+    final List<String> getterNames = new ArrayList<String>();
+    final List<PropertyType> propertyType = new ArrayList<PropertyType>();
+  }
+
+  private enum PropertyType {
+    VALUE, REFERENCE, COLLECTION, MAP;
+  }
+
+  private static final Map<Class<?>, Data> cache = new WeakHashMap<Class<?>, Data>();
+
+  private static Data calculateData(Class<?> beanType) {
+    Data toReturn;
+    synchronized (cache) {
+      toReturn = cache.get(beanType);
+      if (toReturn == null) {
+        toReturn = new Data();
+        for (Method method : beanType.getMethods()) {
+          if (BeanMethod.GET.matches(method)) {
+            toReturn.getters.add(method);
+
+            String name;
+            PropertyName annotation = method.getAnnotation(PropertyName.class);
+            if (annotation != null) {
+              name = annotation.value();
+            } else {
+              name = method.getName();
+              name = Character.toLowerCase(name.charAt(3))
+                  + (name.length() >= 5 ? name.substring(4) : "");
+            }
+            toReturn.getterNames.add(name);
+
+            Class<?> returnType = method.getReturnType();
+            if (TypeUtils.isValueType(returnType)) {
+              toReturn.propertyType.add(PropertyType.VALUE);
+            } else if (Collection.class.isAssignableFrom(returnType)) {
+              toReturn.propertyType.add(PropertyType.COLLECTION);
+            } else if (Map.class.isAssignableFrom(returnType)) {
+              toReturn.propertyType.add(PropertyType.MAP);
+            } else {
+              toReturn.propertyType.add(PropertyType.REFERENCE);
+            }
+          }
+        }
+        cache.put(beanType, toReturn);
+      }
+    }
+    return toReturn;
+  }
+
   private final Class<T> beanType;
   private final Configuration configuration;
-  private final List<Method> getters;
+  private final Data data;
   private final T shim;
 
   // These constructors mirror the generated constructors.
@@ -50,7 +102,7 @@ class ProxyAutoBean<T> extends AbstractAutoBean<T> {
     super(factory);
     this.beanType = (Class<T>) beanType;
     this.configuration = configuration;
-    this.getters = calculateGetters();
+    this.data = calculateData(beanType);
     this.shim = createShim();
   }
 
@@ -63,7 +115,7 @@ class ProxyAutoBean<T> extends AbstractAutoBean<T> {
     }
     this.beanType = (Class<T>) beanType;
     this.configuration = configuration;
-    this.getters = calculateGetters();
+    this.data = calculateData(beanType);
     this.shim = createShim();
   }
 
@@ -71,7 +123,7 @@ class ProxyAutoBean<T> extends AbstractAutoBean<T> {
     super(toClone, deep);
     this.beanType = toClone.beanType;
     this.configuration = toClone.configuration;
-    this.getters = toClone.getters;
+    this.data = toClone.data;
     this.shim = createShim();
   }
 
@@ -156,16 +208,15 @@ class ProxyAutoBean<T> extends AbstractAutoBean<T> {
   // TODO: Port to model-based when class-based TypeOracle is available.
   @Override
   protected void traverseProperties(AutoBeanVisitor visitor, OneShotContext ctx) {
-    for (final Method getter : getters) {
-      String name;
-      PropertyName annotation = getter.getAnnotation(PropertyName.class);
-      if (annotation != null) {
-        name = annotation.value();
-      } else {
-        name = getter.getName();
-        name = Character.toLowerCase(name.charAt(3))
-            + (name.length() >= 5 ? name.substring(4) : "");
-      }
+    assert data.getters.size() == data.getterNames.size()
+        && data.getters.size() == data.propertyType.size();
+    Iterator<Method> getterIt = data.getters.iterator();
+    Iterator<String> nameIt = data.getterNames.iterator();
+    Iterator<PropertyType> typeIt = data.propertyType.iterator();
+    while (getterIt.hasNext()) {
+      Method getter = getterIt.next();
+      String name = nameIt.next();
+      PropertyType propertyType = typeIt.next();
 
       // Use the shim to handle automatic wrapping
       Object value;
@@ -184,42 +235,51 @@ class ProxyAutoBean<T> extends AbstractAutoBean<T> {
       MethodPropertyContext x = isUsingSimplePeer() ? new BeanPropertyContext(
           this, getter) : new GetterPropertyContext(this, getter);
 
-      if (TypeUtils.isValueType(x.getType())) {
-        if (visitor.visitValueProperty(name, value, x)) {
-        }
-        visitor.endVisitValueProperty(name, value, x);
-      } else if (Collection.class.isAssignableFrom(x.getType())) {
-        // Workaround for generics bug in mac javac 1.6.0_22
-        @SuppressWarnings("rawtypes")
-        AutoBean temp = AutoBeanUtils.getAutoBean((Collection) value);
-        @SuppressWarnings("unchecked")
-        AutoBean<Collection<?>> bean = (AutoBean<Collection<?>>) temp;
-        if (visitor.visitCollectionProperty(name, bean, x)) {
-          if (value != null) {
-            ((ProxyAutoBean<?>) bean).traverse(visitor, ctx);
+      switch (propertyType) {
+        case VALUE: {
+          if (visitor.visitValueProperty(name, value, x)) {
           }
+          visitor.endVisitValueProperty(name, value, x);
+          break;
         }
-        visitor.endVisitCollectionProperty(name, bean, x);
-      } else if (Map.class.isAssignableFrom(x.getType())) {
-        // Workaround for generics bug in mac javac 1.6.0_22
-        @SuppressWarnings("rawtypes")
-        AutoBean temp = AutoBeanUtils.getAutoBean((Map) value);
-        @SuppressWarnings("unchecked")
-        AutoBean<Map<?, ?>> bean = (AutoBean<Map<?, ?>>) temp;
-        if (visitor.visitMapProperty(name, bean, x)) {
-          if (value != null) {
-            ((ProxyAutoBean<?>) bean).traverse(visitor, ctx);
+        case COLLECTION: {
+          // Workaround for generics bug in mac javac 1.6.0_22
+          @SuppressWarnings("rawtypes")
+          AutoBean temp = AutoBeanUtils.getAutoBean((Collection) value);
+          @SuppressWarnings("unchecked")
+          AutoBean<Collection<?>> bean = (AutoBean<Collection<?>>) temp;
+          if (visitor.visitCollectionProperty(name, bean, x)) {
+            if (value != null) {
+              ((ProxyAutoBean<?>) bean).traverse(visitor, ctx);
+            }
           }
+          visitor.endVisitCollectionProperty(name, bean, x);
+          break;
         }
-        visitor.endVisitMapProperty(name, bean, x);
-      } else {
-        ProxyAutoBean<?> bean = (ProxyAutoBean<?>) AutoBeanUtils.getAutoBean(value);
-        if (visitor.visitReferenceProperty(name, bean, x)) {
-          if (value != null) {
-            bean.traverse(visitor, ctx);
+        case MAP: {
+          // Workaround for generics bug in mac javac 1.6.0_22
+          @SuppressWarnings("rawtypes")
+          AutoBean temp = AutoBeanUtils.getAutoBean((Map) value);
+          @SuppressWarnings("unchecked")
+          AutoBean<Map<?, ?>> bean = (AutoBean<Map<?, ?>>) temp;
+          if (visitor.visitMapProperty(name, bean, x)) {
+            if (value != null) {
+              ((ProxyAutoBean<?>) bean).traverse(visitor, ctx);
+            }
           }
+          visitor.endVisitMapProperty(name, bean, x);
+          break;
         }
-        visitor.endVisitReferenceProperty(name, bean, x);
+        case REFERENCE: {
+          ProxyAutoBean<?> bean = (ProxyAutoBean<?>) AutoBeanUtils.getAutoBean(value);
+          if (visitor.visitReferenceProperty(name, bean, x)) {
+            if (value != null) {
+              bean.traverse(visitor, ctx);
+            }
+          }
+          visitor.endVisitReferenceProperty(name, bean, x);
+          break;
+        }
       }
     }
   }
@@ -230,16 +290,6 @@ class ProxyAutoBean<T> extends AbstractAutoBean<T> {
 
   Map<String, Object> getPropertyMap() {
     return values;
-  }
-
-  private List<Method> calculateGetters() {
-    List<Method> toReturn = new ArrayList<Method>();
-    for (Method method : beanType.getMethods()) {
-      if (BeanMethod.GET.matches(method)) {
-        toReturn.add(method);
-      }
-    }
-    return Collections.unmodifiableList(toReturn);
   }
 
   private T createShim() {

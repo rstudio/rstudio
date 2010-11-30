@@ -237,8 +237,7 @@ public class ValueCodex {
   private static <T> Type findType(Class<T> clazz) {
     Type type = typesByClass.get(clazz);
     if (type == null) {
-      // Necessary due to lack of Class.isAssignable() in client-side
-      if (clazz.getEnumConstants() != null) {
+      if (clazz.isEnum()) {
         return Type.ENUM;
       }
     }

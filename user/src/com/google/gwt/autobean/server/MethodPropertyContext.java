@@ -23,6 +23,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * A base type to handle analyzing the return value of a getter method. The
@@ -30,47 +31,61 @@ import java.util.Map;
  */
 abstract class MethodPropertyContext implements CollectionPropertyContext,
     MapPropertyContext {
-  private final Class<?> keyType;
-  private final Class<?> valueType;
-  private final Class<?> elementType;
-  private final Class<?> type;
+  private static class Data {
+    Class<?> keyType;
+    Class<?> valueType;
+    Class<?> elementType;
+    Class<?> type;
+  }
+
+  /**
+   * Save prior instances in order to decrease the amount of data computed.
+   */
+  private static final Map<Method, Data> cache = new WeakHashMap<Method, Data>();
+
+  private final Data data;
 
   public MethodPropertyContext(Method getter) {
-    this.type = getter.getReturnType();
+    synchronized (cache) {
+      Data previous = cache.get(getter);
+      if (previous != null) {
+        this.data = previous;
+        return;
+      }
 
-    // Compute collection element type
-    if (Collection.class.isAssignableFrom(getType())) {
-      elementType = TypeUtils.ensureBaseType(TypeUtils.getSingleParameterization(
-          Collection.class, getter.getGenericReturnType(),
-          getter.getReturnType()));
-      keyType = valueType = null;
-    } else if (Map.class.isAssignableFrom(getType())) {
-      Type[] types = TypeUtils.getParameterization(Map.class,
-          getter.getGenericReturnType());
-      keyType = TypeUtils.ensureBaseType(types[0]);
-      valueType = TypeUtils.ensureBaseType(types[1]);
-      elementType = null;
-    } else {
-      elementType = keyType = valueType = null;
+      this.data = new Data();
+      data.type = getter.getReturnType();
+      // Compute collection element type
+      if (Collection.class.isAssignableFrom(getType())) {
+        data.elementType = TypeUtils.ensureBaseType(TypeUtils.getSingleParameterization(
+            Collection.class, getter.getGenericReturnType(),
+            getter.getReturnType()));
+      } else if (Map.class.isAssignableFrom(getType())) {
+        Type[] types = TypeUtils.getParameterization(Map.class,
+            getter.getGenericReturnType());
+        data.keyType = TypeUtils.ensureBaseType(types[0]);
+        data.valueType = TypeUtils.ensureBaseType(types[1]);
+      }
+      cache.put(getter, data);
     }
   }
 
   public abstract boolean canSet();
 
   public Class<?> getElementType() {
-    return elementType;
+    return data.elementType;
   }
 
   public Class<?> getKeyType() {
-    return keyType;
+    return data.keyType;
   }
 
   public Class<?> getType() {
-    return type;
+    return data.type;
   }
 
   public Class<?> getValueType() {
-    return valueType;
+    return data.valueType;
   }
 
   public abstract void set(Object value);
