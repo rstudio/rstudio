@@ -33,6 +33,7 @@ class ListEditorWrapper<T, E extends Editor<T>> extends AbstractList<T> {
   private final CompositeEditor.EditorChain<T, E> chain;
   private final List<E> editors;
   private final EditorSource<E> editorSource;
+  private final List<T> workingCopy;
 
   public ListEditorWrapper(List<T> backing,
       CompositeEditor.EditorChain<T, E> chain, EditorSource<E> editorSource) {
@@ -40,11 +41,12 @@ class ListEditorWrapper<T, E extends Editor<T>> extends AbstractList<T> {
     this.chain = chain;
     this.editorSource = editorSource;
     editors = new ArrayList<E>(backing.size());
+    workingCopy = new ArrayList<T>(backing);
   }
 
   @Override
   public void add(int index, T element) {
-    backing.add(index, element);
+    workingCopy.add(index, element);
     E subEditor = editorSource.create(index);
     editors.add(index, subEditor);
     for (int i = index + 1, j = editors.size(); i < j; i++) {
@@ -55,13 +57,12 @@ class ListEditorWrapper<T, E extends Editor<T>> extends AbstractList<T> {
 
   @Override
   public T get(int index) {
-    return backing.get(index);
+    return workingCopy.get(index);
   }
 
   @Override
   public T remove(int index) {
-    // Try to mutate the list first, in case it is immutable
-    T toReturn = backing.remove(index);
+    T toReturn = workingCopy.remove(index);
     E subEditor = editors.remove(index);
     editorSource.dispose(subEditor);
     for (int i = index, j = editors.size(); i < j; i++) {
@@ -73,15 +74,14 @@ class ListEditorWrapper<T, E extends Editor<T>> extends AbstractList<T> {
 
   @Override
   public T set(int index, T element) {
-    // Try to mutate the list first, in case it is immutable
-    T toReturn = backing.set(index, element);
+    T toReturn = workingCopy.set(index, element);
     chain.attach(element, editors.get(index));
     return toReturn;
   }
 
   @Override
   public int size() {
-    return backing.size();
+    return workingCopy.size();
   }
 
   /**
@@ -90,9 +90,9 @@ class ListEditorWrapper<T, E extends Editor<T>> extends AbstractList<T> {
    * {@link ListEditor#getList()}
    */
   void attach() {
-    editors.addAll(editorSource.create(backing.size(), 0));
-    for (int i = 0, j = backing.size(); i < j; i++) {
-      chain.attach(backing.get(i), editors.get(i));
+    editors.addAll(editorSource.create(workingCopy.size(), 0));
+    for (int i = 0, j = workingCopy.size(); i < j; i++) {
+      chain.attach(workingCopy.get(i), editors.get(i));
     }
   }
 
@@ -104,14 +104,16 @@ class ListEditorWrapper<T, E extends Editor<T>> extends AbstractList<T> {
   }
 
   void flush() {
-    for (int i = 0, j = backing.size(); i < j; i++) {
+    for (int i = 0, j = workingCopy.size(); i < j; i++) {
       E subEditor = editors.get(i);
       T value = chain.getValue(subEditor);
       // Use of object-identity intentional
-      if (backing.get(i) != value) {
-        backing.set(i, value);
+      if (workingCopy.get(i) != value) {
+        workingCopy.set(i, value);
       }
     }
+    backing.clear();
+    backing.addAll(workingCopy);
   }
 
   /**

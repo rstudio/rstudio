@@ -44,6 +44,9 @@ public class ListEditorWrapperTest extends TestCase {
 
     Object o1 = new Object();
     wrapper.add(o1);
+    assertEquals(0, backing.size());
+    wrapper.flush();
+    assertEquals(1, backing.size());
     assertSame(o1, backing.get(0));
     FakeLeafValueEditor<Object> editor1 = wrapper.getEditors().get(0);
     assertSame(o1, editor1.getValue());
@@ -52,6 +55,9 @@ public class ListEditorWrapperTest extends TestCase {
 
     Object o0 = new Object();
     wrapper.add(0, o0);
+    assertEquals(1, backing.size());
+    wrapper.flush();
+    assertEquals(2, backing.size());
     assertSame(o0, backing.get(0));
     assertSame(o1, backing.get(1));
     FakeLeafValueEditor<Object> editor0 = wrapper.getEditors().get(0);
@@ -112,6 +118,9 @@ public class ListEditorWrapperTest extends TestCase {
     assertSame(o2, e2.getValue());
 
     wrapper.remove(1);
+    assertEquals(Arrays.asList(o0, o1, o2), backing);
+    assertEquals(Arrays.asList(e0, e2), wrapper.getEditors());
+    wrapper.flush();
     assertEquals(Arrays.asList(o0, o2), backing);
     assertEquals(Arrays.asList(e0, e2), wrapper.getEditors());
     assertFalse(chain.isAttached(e1));
@@ -119,6 +128,8 @@ public class ListEditorWrapperTest extends TestCase {
     assertEquals(1, source.getLastKnownPosition(e2));
 
     wrapper.set(1, o1);
+    assertEquals(Arrays.asList(o0, o2), backing);
+    wrapper.flush();
     assertEquals(Arrays.asList(o0, o1), backing);
     // Re-use existing editor
     assertEquals(Arrays.asList(e0, e2), wrapper.getEditors());
