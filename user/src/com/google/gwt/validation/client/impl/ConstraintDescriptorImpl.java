@@ -175,4 +175,12 @@ public class ConstraintDescriptorImpl<T extends Annotation> implements
   public boolean isReportAsSingleViolation() {
     return reportAsSingleViolation;
   }
+
+  /**
+   * For debugging only. Do not rely on the format. It can change at any time.
+   */
+  @Override
+  public String toString() {
+    return annotation + " " + attributes;
+  }
 }

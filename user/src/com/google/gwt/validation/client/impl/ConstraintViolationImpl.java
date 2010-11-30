@@ -162,4 +162,15 @@ public class ConstraintViolationImpl<T> implements ConstraintViolation<T>,
   public Class<T> getRootBeanClass() {
     return rootBeanClass;
   }
+
+  /**
+   * For debugging only. Do not rely on the format. It can change at any time.
+   */
+  @Override
+  public String toString() {
+    return "message= " + message //
+        + ", path= " + propertyPath //
+        + ", invalidValue=" + invalidValue //
+        + " , desc=" + constraintDescriptor;
+  }
 }

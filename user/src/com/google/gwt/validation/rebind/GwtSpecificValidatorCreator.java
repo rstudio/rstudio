@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -24,6 +24,7 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 import com.google.gwt.thirdparty.guava.common.primitives.Primitives;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
@@ -43,7 +44,6 @@ import java.util.Set;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintViolation;
 import javax.validation.Payload;
-import javax.validation.Validator;
 import javax.validation.metadata.ConstraintDescriptor;
 import javax.validation.metadata.PropertyDescriptor;
 
@@ -52,100 +52,74 @@ import javax.validation.metadata.PropertyDescriptor;
  * <p>
  * This class is not thread safe.
  */
-
 public class GwtSpecificValidatorCreator extends AbstractCreator {
 
   /**
-     * Returns the literal value of an object that is suitable for inclusion in
-     * Java Source code.
-     *
-     * <p>
-     * Supports all types that {@link Annotation) value can have.
-     *
-     *
-     * @throws IllegalArgumentException if the type of the object does not have a java literal form.
-     */
-    public static String asLiteral(Object value) throws IllegalArgumentException {
-      Class<?> clazz = value.getClass();
-      JProgram jProgram = new JProgram();
+   * Returns the literal value of an object that is suitable for inclusion in
+   * Java Source code.
+   *
+   * <p>
+   * Supports all types that {@link Annotation) value can have.
+   *
+   *
+   * @throws IllegalArgumentException if the type of the object does not have a java literal form.
+   */
+  public static String asLiteral(Object value) throws IllegalArgumentException {
+    Class<?> clazz = value.getClass();
+    JProgram jProgram = new JProgram();
 
-      if (clazz.isArray()) {
-        StringBuilder sb = new StringBuilder();
-        Object[] array = (Object[]) value;
+    if (clazz.isArray()) {
+      StringBuilder sb = new StringBuilder();
+      Object[] array = (Object[]) value;
 
-        sb.append("new " + clazz.getComponentType().getCanonicalName() + "[] ");
-        sb.append("{");
-        boolean first = true;
-        for (Object object : array) {
-          if (first) {
-            first = false;
-          } else {
-            sb.append(",");
-          }
-          sb.append(asLiteral(object));
+      sb.append("new " + clazz.getComponentType().getCanonicalName() + "[] ");
+      sb.append("{");
+      boolean first = true;
+      for (Object object : array) {
+        if (first) {
+          first = false;
+        } else {
+          sb.append(",");
         }
-        sb.append("}");
-        return sb.toString();
+        sb.append(asLiteral(object));
       }
-
-      if (value instanceof Class) {
-        return ((Class<?>) ((Class<?>) value)).getCanonicalName() + ".class";
-      }
-      if (value instanceof Double) {
-        return jProgram.getLiteralDouble(((Double) value).doubleValue()).toSource();
-      }
-      if (value instanceof Integer) {
-        return jProgram.getLiteralInt(((Integer) value).intValue()).toSource();
-      }
-      if (value instanceof Long) {
-        return jProgram.getLiteralLong(((Long) value).intValue()).toSource();
-      }
-      if (value instanceof String) {
-        return '"' + ((String) value).toString().replace("\"", "\\\"") + '"';
-      }
-    // TODO(nchalko) handle the rest of the literal types
-      throw new IllegalArgumentException(value.getClass()
-          + " is can not be represented as a Java Literal.");
+      sb.append("}");
+      return sb.toString();
     }
-  private BeanHelper beanHelper;
-  private final JClassType beanType;
-  private final TypeOracle oracle;
 
-  private final Validator serverSideValidator;
+    if (value instanceof Class) {
+      return ((Class<?>) ((Class<?>) value)).getCanonicalName() + ".class";
+    }
+    if (value instanceof Double) {
+      return jProgram.getLiteralDouble(((Double) value).doubleValue()).toSource();
+    }
+    if (value instanceof Integer) {
+      return jProgram.getLiteralInt(((Integer) value).intValue()).toSource();
+    }
+    if (value instanceof Long) {
+      return jProgram.getLiteralLong(((Long) value).intValue()).toSource();
+    }
+    if (value instanceof String) {
+      return '"' + ((String) value).toString().replace("\"", "\\\"") + '"';
+    }
+    // TODO(nchalko) handle the rest of the literal types
+    throw new IllegalArgumentException(value.getClass()
+        + " is can not be represented as a Java Literal.");
+  }
+
+  private BeanHelper beanHelper;
+  private Set<BeanHelper> beansToValidate = Sets.newHashSet();
+  private final JClassType beanType;
+
+  private final TypeOracle oracle;
 
   public GwtSpecificValidatorCreator(JClassType validatorType,
       JClassType beanType, BeanHelper beanHelper, TreeLogger logger,
-      GeneratorContext context, Validator serverSideValidator) {
+      GeneratorContext context) {
     super(context, logger, validatorType);
     this.oracle = context.getTypeOracle();
     this.beanType = beanType;
     this.beanHelper = beanHelper;
-    this.serverSideValidator = serverSideValidator;
-  }
-
-  protected <T> T[] asArray(Collection<?> collection, T[] array) {
-    if (collection == null) {
-      return null;
-    }
-    return collection.toArray(array);
-  }
-
-  protected String asGetter(PropertyDescriptor p) {
-    return "get" + capitalizeFirstLetter(p.getPropertyName());
-  }
-
-  protected String capitalizeFirstLetter(String propertyName) {
-    if (propertyName == null) {
-      return null;
-    }
-    if (propertyName.length() == 0) {
-      return "";
-    }
-    String cap = propertyName.substring(0, 1).toUpperCase();
-    if (propertyName.length() > 1) {
-      cap += propertyName.substring(1);
-    }
-    return cap;
   }
 
   @Override
@@ -156,19 +130,6 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     composerFactory.setSuperclass(AbstractGwtSpecificValidator.class.getCanonicalName()
         + "<" + beanType.getQualifiedSourceName() + ">");
     composerFactory.addImplementedInterface(validatorType.getName());
-  }
-
-  protected String constraintDescriptorVar(String name, int count) {
-    String s = name + "_c" + count;
-    return s;
-  }
-
-  protected Class<? extends ConstraintValidator<? extends Annotation, ?>> getValidatorForType(
-      ConstraintDescriptor<? extends Annotation> constraint, Class<?> clazz) {
-    // TODO(nchalko) implement per spec
-    Class<? extends ConstraintValidator<? extends Annotation, ?>> validatorClass = constraint.getConstraintValidatorClasses().get(
-        0);
-    return validatorClass;
   }
 
   @Override
@@ -184,10 +145,82 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     sw.println();
     writeGetDescriptor(sw);
     sw.println();
-    writePropertyValidtors(sw);
+    writePropertyValidators(sw);
+    sw.println();
+    // Write the Validator instance variables last after we have collected the
+    // ones we need in beansToValidate
+    writeValidatorInstances(sw);
   }
 
-  protected void writeConstraintDescriptor(SourceWriter sw,
+  private <T> T[] asArray(Collection<?> collection, T[] array) {
+    if (collection == null) {
+      return null;
+    }
+    return collection.toArray(array);
+  }
+
+  private String asGetter(PropertyDescriptor p) {
+    return "get" + capitalizeFirstLetter(p.getPropertyName());
+  }
+
+  private String capitalizeFirstLetter(String propertyName) {
+    if (propertyName == null) {
+      return null;
+    }
+    if (propertyName.length() == 0) {
+      return "";
+    }
+    String cap = propertyName.substring(0, 1).toUpperCase();
+    if (propertyName.length() > 1) {
+      cap += propertyName.substring(1);
+    }
+    return cap;
+  }
+
+  private String constraintDescriptorVar(String name, int count) {
+    String s = name + "_c" + count;
+    return s;
+  }
+
+  private Class<? extends ConstraintValidator<? extends Annotation, ?>> getValidatorForType(
+      ConstraintDescriptor<? extends Annotation> constraint, Class<?> clazz) {
+    // TODO(nchalko) implement per spec
+    Class<? extends ConstraintValidator<? extends Annotation, ?>> validatorClass = constraint.getConstraintValidatorClasses().get(
+        0);
+    return validatorClass;
+  }
+
+  /**
+   * @param beanHelper2
+   * @param p
+   * @return
+   */
+  private boolean hasGetter(PropertyDescriptor p) {
+    JType[] paramTypes = new JType[]{};
+    try {
+      beanType.getMethod(asGetter(p), paramTypes);
+      return true;
+    } catch (NotFoundException e) {
+      return false;
+    }
+  }
+
+  private String validateMethodName(PropertyDescriptor p) {
+    return "validateProperty_" + p.getPropertyName();
+  }
+
+  private void writeCallValidator(SourceWriter sw, Class<?> type) {
+    if (BeanHelper.isClassConstrained(type)) {
+      BeanHelper helper = createBeanHelper(type);
+      beansToValidate.add(helper);
+      // voilations.addAll(myValidator.validate(context,object,groups));
+      sw.print("violations.addAll(");
+      sw.print(helper.getValidatorInstanceName());
+      sw.println(".validate(context, object, groups));");
+    }
+  }
+
+  private void writeConstraintDescriptor(SourceWriter sw,
       ConstraintDescriptor<? extends Annotation> constraint,
       String constraintDescripotorVar) throws UnableToCompleteException {
     Class<? extends Annotation> annotationType = constraint.getAnnotation().annotationType();
@@ -278,45 +311,6 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     sw.println();
   }
 
-  protected void writeValidateInterfaces(SourceWriter sw, Class<?> clazz) {
-    for (Class<?> type : clazz.getInterfaces()) {
-      if (serverSideValidator.getConstraintsForClass(type).isBeanConstrained()) {
-        // MyInterface_GwtSpecificValidator validator =
-        // GWT.create(MyInterface_GwtSpecificValidator);
-        // TODO (nchalko) validate interface. This Requires the
-        // MyInterface_GwtSpecficValidator
-        // interface to already be generated.
-        sw.print("//TODO(nchalko) GWT.create(");
-        sw.print(type.getCanonicalName());
-        sw.println("_GwtSpecificValidator);");
-
-        // voilations.add(validator.validate(context,this,groups));
-      }
-
-      writeValidateInterfaces(sw, type);
-    }
-  }
-
-/**
- * @param beanHelper2
- * @param p
- * @return
- */
-private boolean hasGetter(PropertyDescriptor p) {
-  JType[] paramTypes = new JType[]{};
-  try {
-    beanType.getMethod(asGetter(p), paramTypes);
-    return true;
-  } catch (NotFoundException e) {
-    return false;
-  }
-
-}
-
-  private String validateMethodName(PropertyDescriptor p) {
-    return "validateProperty_" + p.getPropertyName();
-  }
-
   /**
    * @param sourceWriter
    * @throws UnableToCompleteException
@@ -334,6 +328,9 @@ private boolean hasGetter(PropertyDescriptor p) {
         count++; // index starts at one.
         writeConstraintDescriptor(sw, constraint,
             constraintDescriptorVar(p.getPropertyName(), count));
+      }
+      if (p.isCascaded()) {
+        beansToValidate.add(createBeanHelper(p.getElementClass()));
       }
     }
 
@@ -415,10 +412,7 @@ private boolean hasGetter(PropertyDescriptor p) {
     sw.println("Set<ConstraintViolation<T>> violations = new HashSet<ConstraintViolation<T>>();");
   }
 
-  /**
-   * @param sw
-   */
-  private void writePropertyValidtors(SourceWriter sw) {
+  private void writePropertyValidators(SourceWriter sw) {
     for (PropertyDescriptor p : beanHelper.getBeanDescriptor().getConstrainedProperties()) {
       writeValidatePropertyMethod(sw, p);
       sw.println();
@@ -444,7 +438,6 @@ private boolean hasGetter(PropertyDescriptor p) {
       // /// For each group
 
       // TODO(nchalko) handle the sequence in the AbstractValidator
-      // Let the GwtSpecificValidators only take a single group.
 
       // See JSR 303 section 3.5
       // all reachable fields
@@ -488,25 +481,15 @@ private boolean hasGetter(PropertyDescriptor p) {
 
       // validate all super classes and interfaces
 
-      Class<?> superClass = clazz.getSuperclass();
       writeValidateInterfaces(sw, clazz);
+      Class<?> superClass = clazz.getSuperclass();
       while (superClass != null) {
-        if (serverSideValidator.getConstraintsForClass(superClass).isBeanConstrained()) {
-          // MySuper_GwtSpecificValidator validator =
-          // GWT.create(MySuper_GwtSpecificValidator);
-          sw.print("//  GWT.create(");
-          sw.print(superClass.getCanonicalName());
-          sw.println("_GwtSpecificValidator);");
-        }
+        writeCallValidator(sw, superClass);
         writeValidateInterfaces(sw, superClass);
         superClass = superClass.getSuperclass();
       }
 
       // all reachable and cascadable associations
-
-      // TODO(nchalko) validationg the object graph will require top level
-      // interfaces for the classes
-      // that already generated
 
       beanType.getFields();
     }
@@ -515,6 +498,13 @@ private boolean hasGetter(PropertyDescriptor p) {
 
     sw.outdent();
     sw.println("}");
+  }
+
+  private void writeValidateInterfaces(SourceWriter sw, Class<?> clazz) {
+    for (Class<?> type : clazz.getInterfaces()) {
+      writeCallValidator(sw, type);
+      writeValidateInterfaces(sw, type);
+    }
   }
 
   private void writeValidateProperty(SourceWriter sw) {
@@ -582,6 +572,8 @@ private boolean hasGetter(PropertyDescriptor p) {
     sw.print("violations, ");
     sw.print("object, ");
     sw.print("object.");
+
+    // TODO(nchalko) use the field if the field is what is annotated.
     if (hasGetter(p)) {
       sw.print(asGetter(p) + "()");
     } else {
@@ -608,6 +600,24 @@ private boolean hasGetter(PropertyDescriptor p) {
     sw.println(" value,");
     sw.println("Class<?>... groups) {");
     sw.outdent();
+
+    if (p.isCascaded()) {
+      BeanHelper helper = createBeanHelper(p.getElementClass());
+
+      // if(value != null) {
+      sw.println("if(value != null) {");
+      sw.indent();
+
+      // violations.addAll(myGwtValidator.validate(context, value, groups));
+      sw.print("violations.addAll(");
+      sw.print(helper.getValidatorInstanceName());
+      sw.println(".validate(context, value, groups));");
+
+      // }
+      sw.outdent();
+      sw.println("}");
+    }
+
     int count = 0;
     for (ConstraintDescriptor<?> constraint : p.getConstraintDescriptors()) {
       count++; // index starts at 1
@@ -695,5 +705,13 @@ private boolean hasGetter(PropertyDescriptor p) {
 
     sw.outdent();
     sw.println("}");
+  }
+
+  private void writeValidatorInstances(SourceWriter sw) {
+    sw.println("// The validator instance variables are written last ");
+    sw.println("// after we have identified all the ones we need.");
+    for (BeanHelper helper : beansToValidate) {
+      writeValidatorInstance(sw, helper);
+    }
   }
 }

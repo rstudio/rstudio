@@ -63,7 +63,7 @@ public class ValidatorGenerator extends Generator {
     TreeLogger validatorLogger = logger.branch(TreeLogger.DEBUG,
         "Generating Validator for  '" + validator.getQualifiedSourceName()
             + "'", null);
-    ValidatorCreator creator = new ValidatorCreator(validatorType,
+    AbstractCreator creator = new ValidatorCreator(validatorType,
         gwtValidation,
         validatorLogger,
         context);

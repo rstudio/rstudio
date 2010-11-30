@@ -19,8 +19,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.user.rebind.AbstractSourceCreator;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.validation.client.GwtValidation;
@@ -29,15 +27,11 @@ import com.google.gwt.validation.client.impl.GwtBeanDescriptor;
 import com.google.gwt.validation.client.impl.GwtSpecificValidator;
 import com.google.gwt.validation.client.impl.GwtValidationContext;
 
-import java.io.PrintWriter;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.Validator;
 import javax.validation.metadata.BeanDescriptor;
 
 /**
@@ -45,26 +39,9 @@ import javax.validation.metadata.BeanDescriptor;
  */
 public class ValidatorCreator extends AbstractCreator {
 
-  // stash the map in a ThreadLocal, since each GWT module lives in its own
-  // thread in DevMode
-  private static final ThreadLocal<Map<JClassType, BeanHelper>> threadLocalHelperMap = new ThreadLocal<Map<JClassType, BeanHelper>>() {
-    @Override
-    protected synchronized Map<JClassType, BeanHelper> initialValue() {
-      return new HashMap<JClassType, BeanHelper>();
-    }
-  };
-
-  public static BeanHelper getBeanHelper(JClassType beanType) {
-    return getBeanHelpers().get(beanType);
-  }
-
-  public static Map<JClassType, BeanHelper> getBeanHelpers() {
-    return Collections.unmodifiableMap(threadLocalHelperMap.get());
-  }
-
   private final Map<JClassType, BeanHelper> beansToValidate = new HashMap<JClassType, BeanHelper>();
   private final GwtValidation gwtValidation;
-  private final Validator serverSideValidor = Validation.buildDefaultValidatorFactory().getValidator();
+
 
   public ValidatorCreator(JClassType validatorType, //
       GwtValidation gwtValidation, //
@@ -72,15 +49,11 @@ public class ValidatorCreator extends AbstractCreator {
       GeneratorContext context) {
     super(context, logger, validatorType);
     this.gwtValidation = gwtValidation;
-    TypeOracle oracle = context.getTypeOracle();
 
     for (Class<?> clazz : gwtValidation.value()) {
-      JClassType jClass = oracle.findType(clazz.getCanonicalName());
-      BeanHelper helper = new BeanHelper(jClass,
-          serverSideValidor.getConstraintsForClass(clazz));
-      beansToValidate.put(jClass, helper);
+      BeanHelper helper = createBeanHelper(clazz);
+      beansToValidate.put(helper.getJClass(), helper);
     }
-    threadLocalHelperMap.get().putAll(beansToValidate);
   }
 
   @Override
@@ -164,32 +137,6 @@ public class ValidatorCreator extends AbstractCreator {
         + bean.getTypeCanonicalName() + ".class)) {");
   }
 
-  /**
-   * Write an Empty Interface implementing {@link GwtSpecificValidator} with
-   * Generic parameter of the bean type.
-   * 
-   * @param bean
-   */
-  private void writeInterface(BeanHelper bean) {
-    PrintWriter pw = context.tryCreate(logger, bean.getPackage(),
-        bean.getValidatorName());
-    if (pw != null) {
-      TreeLogger interfaceLogger = AbstractSourceCreator.branch(
-          logger,
-          "Creating the interface for "
-              + bean.getFullyQualifiedValidatorName());
-
-      ClassSourceFileComposerFactory factory = new ClassSourceFileComposerFactory(
-          bean.getPackage(), bean.getValidatorName());
-      factory.addImplementedInterface(GwtSpecificValidator.class.getCanonicalName()
-          + " <" + bean.getTypeCanonicalName() + ">");
-      factory.makeInterface();
-      SourceWriter sw2 = factory.createSourceWriter(context, pw);
-      sw2.commit(interfaceLogger);
-      pw.close();
-    }
-  }
-
   private void writeThrowIllegalArgumnet(SourceWriter sourceWriter,
       String getClassName) {
     // throw new IllegalArgumentException("MyValidator can not validate ",
@@ -213,19 +160,7 @@ public class ValidatorCreator extends AbstractCreator {
 
   private void writeTypeSupport(SourceWriter sw) {
     for (BeanHelper bean : beansToValidate.values()) {
-      writeInterface(bean);
-      // private final MyBeanValidator myBeanValidator =
-      sw.print("private final " + bean.getFullyQualifiedValidatorName() + " ");
-      sw.print(bean.getValidatorInstanceName());
-      sw.println(" = ");
-      sw.indent();
-      sw.indent();
-
-      // GWT.create(MyBeanValidator
-      sw.println("GWT.create(" + bean.getFullyQualifiedValidatorName()
-          + ".class);");
-      sw.outdent();
-      sw.outdent();
+      writeValidatorInstance(sw, bean);
     }
   }
 

@@ -64,6 +64,10 @@ public abstract class AbstractCreator extends AbstractSourceCreator {
 
   protected abstract void compose(ClassSourceFileComposerFactory composerFactory);
 
+  protected BeanHelper createBeanHelper(Class<?> clazz) {
+    return BeanHelper.createBeanHelper(clazz, logger, context);
+  }
+
   protected final String getPackage() {
     JPackage serviceIntfPkg = validatorType.getPackage();
     String packageName = serviceIntfPkg == null ? "" : serviceIntfPkg.getName();
@@ -72,6 +76,22 @@ public abstract class AbstractCreator extends AbstractSourceCreator {
 
   protected abstract void writeClassBody(SourceWriter sourceWriter)
       throws UnableToCompleteException;
+
+  protected void writeValidatorInstance(SourceWriter sw, BeanHelper bean) {
+    BeanHelper.writeInterface(context, logger, bean);
+    // private final MyBeanValidator myBeanValidator =
+    sw.print("private final " + bean.getFullyQualifiedValidatorName() + " ");
+    sw.print(bean.getValidatorInstanceName());
+    sw.println(" = ");
+    sw.indent();
+    sw.indent();
+  
+    // GWT.create(MyBeanValidator
+    sw.println("GWT.create(" + bean.getFullyQualifiedValidatorName()
+        + ".class);");
+    sw.outdent();
+    sw.outdent();
+  }
 
   private String getQualifiedName() {
     String packageName = getPackage();
