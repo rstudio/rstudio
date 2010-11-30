@@ -18,6 +18,7 @@
 <!-- Most new code should inherit this module.                              -->
 <!--                                                                        -->
 <module>
+   <inherits name="com.google.gwt.canvas.Canvas"/>
    <inherits name="com.google.gwt.core.Core"/>
    <inherits name="com.google.gwt.text.Text"/>
    <inherits name="com.google.gwt.event.Event"/>

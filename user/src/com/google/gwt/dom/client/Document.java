@@ -114,6 +114,15 @@ public class Document extends Node {
   }
 
   /**
+   * Creates an &lt;canvas&gt; element.
+   * 
+   * @return the newly created element
+   */
+  public final CanvasElement createCanvasElement() {
+    return (CanvasElement) DOMImpl.impl.createElement(this, CanvasElement.TAG);
+  }
+
+  /**
    * Creates a &lt;caption&gt; element.
    * 
    * @return the newly created element

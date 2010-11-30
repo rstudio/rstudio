@@ -19,6 +19,39 @@ package com.google.gwt.dom.client;
  * Mozilla implementation of StandardBrowser.
  */
 class DOMImplMozilla extends DOMImplStandard {
+  private static boolean isGecko190OrBefore;
+  private static boolean isGecko190OrBeforeDetected;
+
+  /**
+   * Return true if using Gecko 1.9.0 (Firefox 3) or earlier.
+   * 
+   * @return true if using Gecko 1.9.0 (Firefox 3) or earlier.
+   */
+  @SuppressWarnings("unused")
+  static boolean isGecko190OrBefore() {
+    if (!isGecko190OrBeforeDetected) {
+      isGecko190OrBefore = isGecko190OrBeforeImpl();
+      isGecko190OrBeforeDetected = true;
+    }
+    return isGecko190OrBefore;
+  }
+
+  /**
+   * Return true if using Gecko 1.9.0 (Firefox 3) or earlier.
+   * 
+   * @return true if using Gecko 1.9.0 (Firefox 3) or earlier.
+   */
+  private static native boolean isGecko190OrBeforeImpl() /*-{
+    var result = /rv:([0-9]+)\.([0-9]+)\.([0-9]+)?/.exec(navigator.userAgent.toLowerCase());
+    if (result && result.length >= 3) {
+      var version = (parseInt(result[1]) * 1000000) + (parseInt(result[2]) * 1000) + 
+        parseInt(result.length == 4 ? result[3] : 0);
+      if (version <= 1009000) {
+        return true;
+      }
+    }
+    return false;
+  }-*/;
 
   @Override
   public native void buttonClick(ButtonElement button) /*-{
@@ -204,6 +237,11 @@ class DOMImplMozilla extends DOMImplStandard {
     }
   }-*/;
 
+  /**
+   * Return true if using Gecko 1.9 (Firefox 3) or later.
+   * 
+   * @return true if using Gecko 1.9 (Firefox 3) or later
+   */
   private native boolean isGecko19() /*-{
     var result = /rv:([0-9]+)\.([0-9]+)/.exec(navigator.userAgent.toLowerCase());
     if (result && result.length == 3) {
