@@ -108,7 +108,7 @@ public class UnicodeEscapingTest extends GWTTestCase {
   }
 
   /** start of current block being tested. */
-  private int current;
+  protected int current;
 
   @Override
   public String getModuleName() {
@@ -234,7 +234,7 @@ public class UnicodeEscapingTest extends GWTTestCase {
         NON_BMP_TEST_INCREMENT);
   }
 
-  private void clientToServerVerifyRange(final int start, final int end,
+  protected void clientToServerVerifyRange(final int start, final int end,
       final int size, final int step) throws InvalidCharacterException {
     current = start;
     int blockEnd = Math.min(end, current + size);
@@ -274,7 +274,7 @@ public class UnicodeEscapingTest extends GWTTestCase {
         });
   }
 
-  private void serverToClientVerify(final int start, final int end,
+  protected void serverToClientVerify(final int start, final int end,
       final int size, final int step) {
     current = start;
     getService().getStringContainingCharacterRange(start,

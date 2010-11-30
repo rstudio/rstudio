@@ -13,25 +13,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.autobean.shared.impl;
+package com.google.gwt.requestfactory.server;
 
-import com.google.gwt.autobean.server.impl.JsonSplittable;
-import com.google.gwt.autobean.shared.Splittable;
-
-import org.json.JSONObject;
+import com.google.gwt.requestfactory.client.RequestFactoryUnicodeEscapingTest;
+import com.google.gwt.requestfactory.shared.SimpleRequestFactory;
 
 /**
- * This class has a super-source version with a client-only implementation.
+ * A JRE implementation of {@link RequestFactoryUnicodeEscapingTest}.
  */
-public class StringQuoter {
-  /**
-   * Create a quoted JSON string.
-   */
-  public static String quote(String raw) {
-    return JSONObject.quote(raw);
+public class RequestFactoryUnicodeEscapingJreTest extends
+    RequestFactoryUnicodeEscapingTest {
+  @Override
+  public String getModuleName() {
+    return null;
   }
 
-  public static Splittable split(String payload) {
-    return JsonSplittable.create(payload);
+  @Override
+  protected SimpleRequestFactory createFactory() {
+    return RequestFactoryJreTest.createInProcess(SimpleRequestFactory.class);
   }
 }

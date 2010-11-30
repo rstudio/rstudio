@@ -730,6 +730,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * Make sure our stock RF logging service keeps receiving.
    */
   public void testLoggingService() {
+    delayTestFinish(DELAY_TEST_FINISH);
     String logRecordJson = new StringBuilder("{") //
     .append("\"level\": \"ALL\", ") //
     .append("\"loggerName\": \"logger\", ") //
@@ -2041,6 +2042,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * in a static method on UserInformation).
    */
   public void testUserInfo() {
+    delayTestFinish(DELAY_TEST_FINISH);
     req.userInformationRequest().getCurrentUserInformation("").fire(
         new Receiver<UserInformationProxy>() {
           @Override
@@ -2050,6 +2052,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             assertEquals("Dummy User", response.getName());
             assertEquals("", response.getLoginUrl());
             assertEquals("", response.getLogoutUrl());
+            finishTestAndReset();
           }
         });
   }

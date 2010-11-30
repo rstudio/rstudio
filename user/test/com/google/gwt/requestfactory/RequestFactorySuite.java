@@ -20,6 +20,7 @@ import com.google.gwt.requestfactory.client.FindServiceTest;
 import com.google.gwt.requestfactory.client.RequestFactoryExceptionHandlerTest;
 import com.google.gwt.requestfactory.client.RequestFactoryPolymorphicTest;
 import com.google.gwt.requestfactory.client.RequestFactoryTest;
+import com.google.gwt.requestfactory.client.RequestFactoryUnicodeEscapingTest;
 import com.google.gwt.requestfactory.client.ui.EditorTest;
 import com.google.gwt.requestfactory.shared.ComplexKeysTest;
 import com.google.gwt.requestfactory.shared.LocatorTest;
@@ -40,6 +41,7 @@ public class RequestFactorySuite {
     suite.addTestSuite(RequestFactoryTest.class);
     suite.addTestSuite(RequestFactoryExceptionHandlerTest.class);
     suite.addTestSuite(RequestFactoryPolymorphicTest.class);
+    suite.addTestSuite(RequestFactoryUnicodeEscapingTest.class);
     return suite;
   }
 }

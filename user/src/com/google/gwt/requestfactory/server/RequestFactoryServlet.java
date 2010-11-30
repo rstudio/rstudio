@@ -130,7 +130,6 @@ public class RequestFactoryServlet extends HttpServlet {
       if (DUMP_PAYLOAD) {
         System.out.println(">>> " + jsonRequestString);
       }
-      PrintWriter writer = response.getWriter();
 
       try {
         // Check that user is logged in before proceeding
@@ -146,6 +145,8 @@ public class RequestFactoryServlet extends HttpServlet {
           response.setHeader("userId", String.format("%s", userInfo.getId()));
           response.setStatus(HttpServletResponse.SC_OK);
           response.setContentType(RequestFactory.JSON_CONTENT_TYPE_UTF8);
+          // The Writer must be obtained after setting the content type
+          PrintWriter writer = response.getWriter();
           writer.print(payload);
           writer.flush();
         }

@@ -13,25 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.autobean.shared.impl;
+package com.google.gwt.requestfactory.shared;
 
-import com.google.gwt.autobean.server.impl.JsonSplittable;
-import com.google.gwt.autobean.shared.Splittable;
-
-import org.json.JSONObject;
+import com.google.gwt.user.client.rpc.UnicodeEscapingTest;
 
 /**
- * This class has a super-source version with a client-only implementation.
+ * Provides access to the static test methods in {@link UnicodeEscapingTes}.
  */
-public class StringQuoter {
-  /**
-   * Create a quoted JSON string.
-   */
-  public static String quote(String raw) {
-    return JSONObject.quote(raw);
-  }
+@Service(UnicodeEscapingTest.class)
+public interface UnicodeTestRequest extends RequestContext {
+  Request<String> getStringContainingCharacterRange(int start, int end);
 
-  public static Splittable split(String payload) {
-    return JsonSplittable.create(payload);
-  }
+  Request<Void> verifyStringContainingCharacterRange(int start, int end,
+      String str);
 }

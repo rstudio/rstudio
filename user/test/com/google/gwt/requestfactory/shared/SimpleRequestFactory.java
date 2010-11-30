@@ -24,4 +24,6 @@ public interface SimpleRequestFactory extends BasicRequestFactory {
   SimpleBarRequest simpleBarRequest();
 
   SimpleFooRequest simpleFooRequest();
+
+  UnicodeTestRequest unicodeTestRequest();
 }

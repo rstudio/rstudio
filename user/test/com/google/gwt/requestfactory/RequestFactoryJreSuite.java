@@ -21,6 +21,7 @@ import com.google.gwt.requestfactory.server.FindServiceJreTest;
 import com.google.gwt.requestfactory.server.LocatorJreTest;
 import com.google.gwt.requestfactory.server.RequestFactoryInterfaceValidatorTest;
 import com.google.gwt.requestfactory.server.RequestFactoryJreTest;
+import com.google.gwt.requestfactory.server.RequestFactoryUnicodeEscapingJreTest;
 import com.google.gwt.requestfactory.shared.impl.SimpleEntityProxyIdTest;
 
 import junit.framework.Test;
@@ -40,6 +41,7 @@ public class RequestFactoryJreSuite {
     suite.addTestSuite(SimpleEntityProxyIdTest.class);
     suite.addTestSuite(RequestFactoryInterfaceValidatorTest.class);
     suite.addTestSuite(RequestFactoryModelTest.class);
+    suite.addTestSuite(RequestFactoryUnicodeEscapingJreTest.class);
     return suite;
   }
 }
