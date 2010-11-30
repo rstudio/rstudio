@@ -155,7 +155,7 @@ public class TouchHandler implements EventListener {
    */
   public static Touch getTouchFromEvent(TouchEvent e) {
     if (SUPPORTS_TOUCHES) {
-      return e.getTouches().get(0);
+      return e.getOldTouchesUntilMyFriendFredSauerCleansUpTheSample().get(0);
     }
 
     // This is cheating a little bit, but it turns out that the Touch interface

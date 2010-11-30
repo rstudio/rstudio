@@ -30,7 +30,7 @@ public class TouchEvent extends NativeEvent {
     return this.timeStamp;
   }-*/;
 
-  public final native JsArray<Touch> getTouches()/*-{
+  public final native JsArray<Touch> getOldTouchesUntilMyFriendFredSauerCleansUpTheSample()/*-{
     return this.touches;
   }-*/;
 
