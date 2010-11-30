@@ -97,6 +97,8 @@ public interface BaseFooProxy extends EntityProxy {
 
   void setDoubleField(Double d);
 
+  void setEnumField(SimpleEnum value);
+
   void setFloatField(Float f);
 
   void setIntId(Integer intId);

@@ -517,6 +517,41 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     });
   }
 
+  /**
+   * Check default value, a newly-set value, and a null value.
+   */
+  public void testEnumProperty() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    simpleFooRequest().findSimpleFooById(999L).fire(
+        new Receiver<SimpleFooProxy>() {
+          @Override
+          public void onSuccess(SimpleFooProxy response) {
+            assertEquals(SimpleEnum.FOO, response.getEnumField());
+            SimpleFooRequest ctx = simpleFooRequest();
+            response = ctx.edit(response);
+            response.setEnumField(SimpleEnum.BAR);
+            ctx.persistAndReturnSelf().using(response).fire(
+                new Receiver<SimpleFooProxy>() {
+                  @Override
+                  public void onSuccess(SimpleFooProxy response) {
+                    assertEquals(SimpleEnum.BAR, response.getEnumField());
+                    SimpleFooRequest ctx = simpleFooRequest();
+                    response = ctx.edit(response);
+                    response.setEnumField(null);
+                    ctx.persistAndReturnSelf().using(response).fire(
+                        new Receiver<SimpleFooProxy>() {
+                          @Override
+                          public void onSuccess(SimpleFooProxy response) {
+                            assertNull(response.getEnumField());
+                            finishTestAndReset();
+                          }
+                        });
+                  }
+                });
+          }
+        });
+  }
+
   public void testFetchEntity() {
     delayTestFinish(DELAY_TEST_FINISH);
     simpleFooRequest().findSimpleFooById(999L).fire(
