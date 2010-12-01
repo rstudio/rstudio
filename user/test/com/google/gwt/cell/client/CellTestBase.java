@@ -15,6 +15,7 @@
  */
 package com.google.gwt.cell.client;
 
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -41,7 +42,9 @@ public abstract class CellTestBase<T> extends GWTTestCase {
   static class MockCell<T> extends AbstractCell<T> {
 
     private final boolean isSelectable;
+    private Context lastContext;
     private T lastEventValue;
+    private Element lastParentElement;
     private final T updateValue;
 
     public MockCell(boolean isSelectable, T updateValue,
@@ -55,9 +58,18 @@ public abstract class CellTestBase<T> extends GWTTestCase {
       assertEquals(expected, lastEventValue);
     }
 
+    public void assertLastParentElement(Element expected) {
+      assertEquals(expected, lastParentElement);
+    }
+
+    
     @Override
     public boolean dependsOnSelection() {
       return isSelectable;
+    }
+
+    public Context getLastContext() {
+      return lastContext;
     }
 
     @Override
@@ -66,8 +78,10 @@ public abstract class CellTestBase<T> extends GWTTestCase {
     }
 
     @Override
-    public void onBrowserEvent(Element parent, T value, Object key,
+    public void onBrowserEvent(Context context, Element parent, T value,
         NativeEvent event, ValueUpdater<T> valueUpdater) {
+      lastContext = context;
+      lastParentElement = parent;
       lastEventValue = value;
       if (valueUpdater != null) {
         valueUpdater.update(updateValue);
@@ -75,7 +89,8 @@ public abstract class CellTestBase<T> extends GWTTestCase {
     }
 
     @Override
-    public void render(T value, Object key, SafeHtmlBuilder sb) {
+    public void render(Context context, T value, SafeHtmlBuilder sb) {
+      lastContext = context;
       if (value != null) {
         sb.appendEscaped(String.valueOf(value));
       }
@@ -139,7 +154,20 @@ public abstract class CellTestBase<T> extends GWTTestCase {
     Cell<T> cell = createCell();
     T value = createCellValue();
     SafeHtmlBuilder sb = new SafeHtmlBuilder();
-    cell.render(value, null, sb);
+    Context context = new Context(0, 0, null);
+    cell.render(context, value, sb);
+    assertEquals(getExpectedInnerHtml(), sb.toSafeHtml().asString());
+  }
+
+  /**
+   * Test rendering the cell with a negative index is handled.
+   */
+  public void testRenderNegativeIndex() {
+    Cell<T> cell = createCell();
+    T value = createCellValue();
+    SafeHtmlBuilder sb = new SafeHtmlBuilder();
+    Context context = new Context(-1, -1, null);
+    cell.render(context, value, sb);
     assertEquals(getExpectedInnerHtml(), sb.toSafeHtml().asString());
   }
 
@@ -149,7 +177,8 @@ public abstract class CellTestBase<T> extends GWTTestCase {
   public void testRenderNull() {
     Cell<T> cell = createCell();
     SafeHtmlBuilder sb = new SafeHtmlBuilder();
-    cell.render(null, null, sb);
+    Context context = new Context(0, 0, null);
+    cell.render(context, null, sb);
     assertEquals(getExpectedInnerHtmlNull(), sb.toSafeHtml().asString());
   }
 
@@ -225,7 +254,8 @@ public abstract class CellTestBase<T> extends GWTTestCase {
       public void onBrowserEvent(Event event) {
         try {
           DOM.setEventListener(parent, null);
-          createCell().onBrowserEvent(parent, value, DEFAULT_KEY, event,
+          Context context = new Context(0, 0, DEFAULT_KEY);
+          createCell().onBrowserEvent(context, parent, value, event,
               valueUpdater);
           parent.removeFromParent();
         } catch (Exception e) {

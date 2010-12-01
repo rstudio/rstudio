@@ -47,7 +47,7 @@ public class ValuePicker<T> extends Composite
     }
 
     @Override
-    public void render(T value, Object viewData, SafeHtmlBuilder sb) {
+    public void render(Context context, T value, SafeHtmlBuilder sb) {
       sb.appendEscaped(renderer.render(value));
     }
   }

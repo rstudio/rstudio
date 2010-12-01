@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.cell.client;
 
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -26,7 +27,7 @@ import java.util.Set;
 
 /**
  * A default implementation of the {@link Cell} interface.
- *
+ * 
  * <p>
  * <h3>Examples</h3>
  * <dl>
@@ -38,7 +39,7 @@ import java.util.Set;
  * <dd>{@example com.google.gwt.examples.cell.EditableCellExample}</dd>
  * </dl>
  * </p>
- *
+ * 
  * @param <C> the type that this Cell represents
  */
 public abstract class AbstractCell<C> implements Cell<C> {
@@ -51,7 +52,7 @@ public abstract class AbstractCell<C> implements Cell<C> {
   /**
    * Construct a new {@link AbstractCell} with the specified consumed events.
    * The input arguments are passed by copy.
-   *
+   * 
    * @param consumedEvents the events that this cell consumes
    */
   public AbstractCell(String... consumedEvents) {
@@ -67,7 +68,7 @@ public abstract class AbstractCell<C> implements Cell<C> {
 
   /**
    * Construct a new {@link AbstractCell} with the specified consumed events.
-   *
+   * 
    * @param consumedEvents the events that this cell consumes
    */
   public AbstractCell(Set<String> consumedEvents) {
@@ -90,45 +91,45 @@ public abstract class AbstractCell<C> implements Cell<C> {
    * Returns false. Subclasses that support editing should override this method
    * to return the current editing status.
    */
-  public boolean isEditing(Element parent, C value, Object key) {
+  public boolean isEditing(Context context, Element parent, C value) {
     return false;
   }
 
   /**
    * {@inheritDoc}
-   *
+   * 
    * <p>
    * If you override this method to add support for events, remember to pass the
    * event types that the cell expects into the constructor.
    * </p>
    */
-  public void onBrowserEvent(Element parent, C value, Object key,
+  public void onBrowserEvent(Context context, Element parent, C value,
       NativeEvent event, ValueUpdater<C> valueUpdater) {
     String eventType = event.getType();
     // Special case the ENTER key for a unified user experience.
     if ("keydown".equals(eventType) && event.getKeyCode() == KeyCodes.KEY_ENTER) {
-      onEnterKeyDown(parent, value, key, event, valueUpdater);
+      onEnterKeyDown(context, parent, value, event, valueUpdater);
     }
   }
 
-  public abstract void render(C value, Object key, SafeHtmlBuilder sb);
+  public abstract void render(Context context, C value, SafeHtmlBuilder sb);
 
   /**
    * {@inheritDoc}
-   *
+   * 
    * <p>
    * This method is a no-op and returns false. If your cell is editable or can
    * be focused by the user, override this method to reset focus when the
    * containing widget is refreshed.
    * </p>
    */
-  public boolean resetFocus(Element parent, C value, Object key) {
+  public boolean resetFocus(Context context, Element parent, C value) {
     return false;
   }
 
-  public void setValue(Element parent, C value, Object key) {
+  public void setValue(Context context, Element parent, C value) {
     SafeHtmlBuilder sb = new SafeHtmlBuilder();
-    render(value, key, sb);
+    render(context, value, sb);
     parent.setInnerHTML(sb.toSafeHtml().asString());
   }
 
@@ -138,20 +139,20 @@ public abstract class AbstractCell<C> implements Cell<C> {
    * should override this method to provide a consistent user experience. Your
    * widget must consume <code>keydown</code> events for this method to be
    * called.
-   *
+   * 
+   * @param context the {@link Context} of the cell
    * @param parent the parent Element
    * @param value the value associated with the cell
-   * @param key the unique key associated with the row object
    * @param event the native browser event
    * @param valueUpdater a {@link ValueUpdater}, or null if not specified
    */
-  protected void onEnterKeyDown(Element parent, C value, Object key,
+  protected void onEnterKeyDown(Context context, Element parent, C value,
       NativeEvent event, ValueUpdater<C> valueUpdater) {
   }
 
   /**
    * Initialize the cell.
-   *
+   * 
    * @param consumedEvents the events that the cell consumes
    */
   private void init(Set<String> consumedEvents) {

@@ -73,11 +73,11 @@ public abstract class AbstractSafeHtmlCell<C> extends AbstractCell<C> {
   }
 
   @Override
-  public void render(C data, Object key, SafeHtmlBuilder sb) {
+  public void render(Context context, C data, SafeHtmlBuilder sb) {
     if (data == null) {
-      render((SafeHtml) null, key, sb);
+      render(context, (SafeHtml) null, sb);
     } else {
-      render(renderer.render(data), key, sb);
+      render(context, renderer.render(data), sb);
     }
   }
 
@@ -85,9 +85,10 @@ public abstract class AbstractSafeHtmlCell<C> extends AbstractCell<C> {
    * Render the cell contents after they have been converted to {@link SafeHtml}
    * form.
    * 
+   * @param context the original context to render
    * @param data a {@link SafeHtml} string
-   * @param key the unique key associated with the row object
    * @param sb the {@link SafeHtmlBuilder} to be written to
    */
-  protected abstract void render(SafeHtml data, Object key, SafeHtmlBuilder sb);
+  protected abstract void render(Context context, SafeHtml data,
+      SafeHtmlBuilder sb);
 }

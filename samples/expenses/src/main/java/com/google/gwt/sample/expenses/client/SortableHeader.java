@@ -15,6 +15,7 @@
  */
 package com.google.gwt.sample.expenses.client;
 
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.cell.client.ClickableTextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
@@ -89,7 +90,7 @@ public class SortableHeader extends Header<String> {
   }
 
   @Override
-  public void render(SafeHtmlBuilder sb) {
+  public void render(Context context, SafeHtmlBuilder sb) {
     if (sorted) {
       sb.append(template.sorted(IMAGE_WIDTH, reverseSort ? DOWN_ARROW : UP_ARROW, text));
     } else {

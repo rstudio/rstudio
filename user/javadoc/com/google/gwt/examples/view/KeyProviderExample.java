@@ -54,7 +54,7 @@ public class KeyProviderExample implements EntryPoint {
    */
   private static class ContactCell extends AbstractCell<Contact> {
     @Override
-    public void render(Contact value, Object key, SafeHtmlBuilder sb) {
+    public void render(Context context, Contact value, SafeHtmlBuilder sb) {
       if (value != null) {
         sb.appendEscaped(value.name);
       }

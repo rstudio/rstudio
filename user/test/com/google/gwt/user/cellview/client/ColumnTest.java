@@ -19,6 +19,7 @@ import com.google.gwt.cell.client.AbstractEditableCell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.cell.client.ValueUpdater;
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -38,12 +39,12 @@ public class ColumnTest extends GWTTestCase {
       AbstractEditableCell<String, String> {
 
     @Override
-    public boolean isEditing(Element parent, String value, Object key) {
+    public boolean isEditing(Context context, Element parent, String value) {
       return false;
     }
 
     @Override
-    public void render(String value, Object key, SafeHtmlBuilder sb) {
+    public void render(Context context, String value, SafeHtmlBuilder sb) {
       sb.appendEscaped(value);
     }
   }
@@ -101,7 +102,7 @@ public class ColumnTest extends GWTTestCase {
         false, false, false, false);
     final MockEditableCell cell = new MockEditableCell() {
       @Override
-      public void onBrowserEvent(Element parent, String value, Object key,
+      public void onBrowserEvent(Context context, Element parent, String value,
           NativeEvent event, final ValueUpdater<String> valueUpdater) {
         setViewData("test", "newViewData");
         new Timer() {
@@ -126,7 +127,8 @@ public class ColumnTest extends GWTTestCase {
     // Fire the event to the cell.
     delayTestFinish(5000);
     cell.setViewData("test", "oldViewData");
-    column.onBrowserEvent(theElem, 3, "test", theEvent, null);
+    Context context = new Context(3, 0, null);
+    column.onBrowserEvent(context, theElem, "test", theEvent);
   }
 
   public void testGetCell() {
@@ -141,7 +143,7 @@ public class ColumnTest extends GWTTestCase {
         false, false, false, false);
     final MockEditableCell cell = new MockEditableCell() {
       @Override
-      public void onBrowserEvent(Element parent, String value, Object key,
+      public void onBrowserEvent(Context context, Element parent, String value,
           NativeEvent event, ValueUpdater<String> valueUpdater) {
         assertEquals(theElem, parent);
         assertEquals("test", value);
@@ -164,7 +166,8 @@ public class ColumnTest extends GWTTestCase {
     column.setFieldUpdater(fieldUpdater);
 
     cell.setViewData("test", "oldViewData");
-    column.onBrowserEvent(theElem, 3, "test", theEvent, null);
+    Context context = new Context(3, 0, null);
+    column.onBrowserEvent(context, theElem, "test", theEvent);
 
     fieldUpdater.assertUpdateCalled(true);
     fieldUpdater.assertIndex(3);
@@ -178,7 +181,7 @@ public class ColumnTest extends GWTTestCase {
         false, false, false, false);
     final MockEditableCell cell = new MockEditableCell() {
       @Override
-      public void onBrowserEvent(Element parent, String value, Object key,
+      public void onBrowserEvent(Context context, Element parent, String value,
           NativeEvent event, ValueUpdater<String> valueUpdater) {
         assertEquals(theElem, parent);
         assertEquals("test", value);
@@ -191,7 +194,8 @@ public class ColumnTest extends GWTTestCase {
     Column<String, String> column = new IdentityColumn<String>(cell);
 
     cell.setViewData("test", "oldViewData");
-    column.onBrowserEvent(theElem, 3, "test", theEvent, null);
+    Context context = new Context(3, 0, null);
+    column.onBrowserEvent(context, theElem, "test", theEvent);
   }
 
   public void testRender() {
@@ -199,7 +203,8 @@ public class ColumnTest extends GWTTestCase {
     Column<String, String> column = new IdentityColumn<String>(cell);
 
     SafeHtmlBuilder sb = new SafeHtmlBuilder();
-    column.render("test", null, sb);
+    Context context = new Context(0, 0, null);
+    column.render(context, "test", sb);
     assertEquals("test", sb.toSafeHtml().asString());
   }
 }

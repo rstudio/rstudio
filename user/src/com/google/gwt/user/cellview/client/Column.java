@@ -16,6 +16,7 @@
 package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.cell.client.Cell;
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.HasCell;
 import com.google.gwt.cell.client.ValueUpdater;
@@ -23,7 +24,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.HasAlignment;
-import com.google.gwt.view.client.ProvidesKey;
 
 /**
  * A representation of a column in a table. The column may maintain view data
@@ -93,35 +93,32 @@ public abstract class Column<T, C> implements HasCell<T, C>, HasAlignment {
   /**
    * Handle a browser event that took place within the column.
    * 
+   * @param context the cell context
    * @param elem the parent Element
-   * @param index the current row index of the object
    * @param object the base object to be updated
    * @param event the native browser event
-   * @param keyProvider an instance of ProvidesKey<T>, or null if the record
-   *          object should act as its own key.
    */
-  public void onBrowserEvent(Element elem, final int index, final T object,
-      NativeEvent event, ProvidesKey<T> keyProvider) {
-    Object key = getKey(object, keyProvider);
+  public void onBrowserEvent(Context context, Element elem, final T object,
+      NativeEvent event) {
+    final int index = context.getIndex();
     ValueUpdater<C> valueUpdater = (fieldUpdater == null) ? null
         : new ValueUpdater<C>() {
           public void update(C value) {
             fieldUpdater.update(index, object, value);
           }
         };
-    cell.onBrowserEvent(elem, getValue(object), key, event, valueUpdater);
+    cell.onBrowserEvent(context, elem, getValue(object), event, valueUpdater);
   }
 
   /**
    * Render the object into the cell.
    * 
+   * @param context the cell context
    * @param object the object to render
-   * @param keyProvider the {@link ProvidesKey} for the object
    * @param sb the buffer to render into
    */
-  public void render(T object, ProvidesKey<T> keyProvider, SafeHtmlBuilder sb) {
-    Object key = getKey(object, keyProvider);
-    cell.render(getValue(object), key, sb);
+  public void render(Context context, T object, SafeHtmlBuilder sb) {
+    cell.render(context, getValue(object), sb);
   }
 
   /**
@@ -155,17 +152,5 @@ public abstract class Column<T, C> implements HasCell<T, C>, HasAlignment {
    */
   public void setVerticalAlignment(VerticalAlignmentConstant align) {
     this.vAlign = align;
-  }
-
-  /**
-   * Get the view key for the object given the {@link ProvidesKey}. If the
-   * {@link ProvidesKey} is null, the object is used as the key.
-   * 
-   * @param object the row object
-   * @param keyProvider the {@link ProvidesKey}
-   * @return the key for the object
-   */
-  private Object getKey(T object, ProvidesKey<T> keyProvider) {
-    return keyProvider == null ? object : keyProvider.getKey(object);
   }
 }

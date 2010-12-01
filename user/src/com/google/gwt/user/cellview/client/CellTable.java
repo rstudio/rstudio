@@ -16,18 +16,19 @@
 package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.cell.client.Cell;
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableColElement;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.dom.client.TableSectionElement;
-import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.resources.client.ClientBundle;
@@ -292,7 +293,6 @@ public class CellTable<T> extends AbstractHasData<T> {
 
     @Template("<td class=\"{0}\" align=\"{1}\" valign=\"{2}\">{3}</td>")
     SafeHtml tdBothAlign(String classes, String hAlign, String vAlign,
-
         SafeHtml contents);
 
     @Template("<td class=\"{0}\" align=\"{1}\">{2}</td>")
@@ -939,12 +939,14 @@ public class CellTable<T> extends AbstractHasData<T> {
     if (section == thead) {
       Header<?> header = headers.get(col);
       if (header != null && cellConsumesEventType(header.getCell(), eventType)) {
-        header.onBrowserEvent(tableCell, event);
+        Context context = new Context(0, col, header.getKey());
+        header.onBrowserEvent(context, tableCell, event);
       }
     } else if (section == tfoot) {
       Header<?> footer = footers.get(col);
       if (footer != null && cellConsumesEventType(footer.getCell(), eventType)) {
-        footer.onBrowserEvent(tableCell, event);
+        Context context = new Context(0, col, footer.getKey());
+        footer.onBrowserEvent(context, tableCell, event);
       }
     } else if (section == tbody) {
       // Update the hover state.
@@ -964,8 +966,7 @@ public class CellTable<T> extends AbstractHasData<T> {
             style.cellTableHoveredRowCell(), false);
         hoveringRow = null;
       } else if (isClick
-          && ((getPresenter().getKeyboardSelectedRowInView() != row)
-              || (keyboardSelectedColumn != col))) {
+          && ((getPresenter().getKeyboardSelectedRowInView() != row) || (keyboardSelectedColumn != col))) {
         // Move keyboard focus. Since the user clicked, allow focus to go to a
         // non-interactive column.
         boolean isFocusable = CellBasedWidgetImpl.get().isFocusable(target);
@@ -984,14 +985,17 @@ public class CellTable<T> extends AbstractHasData<T> {
       boolean isSelectionHandled = handlesSelection
           || KeyboardSelectionPolicy.BOUND_TO_SELECTION == getKeyboardSelectionPolicy();
       T value = getVisibleItem(row);
+      Context context = new Context(row + getPageStart(), col,
+          getValueKey(value));
       CellPreviewEvent<T> previewEvent = CellPreviewEvent.fire(this, event,
-          this, row, col, value, cellIsEditing, isSelectionHandled);
+          this, context, value, cellIsEditing, isSelectionHandled);
       if (isClick && !cellIsEditing && !isSelectionHandled) {
         doSelection(event, value, row, col);
       }
 
+      // Pass the event to the cell.
       if (!previewEvent.isCanceled()) {
-        fireEventToCell(event, eventType, tableCell, value, row,
+        fireEventToCell(event, eventType, tableCell, value, context,
             columns.get(col));
       }
     }
@@ -1015,7 +1019,6 @@ public class CellTable<T> extends AbstractHasData<T> {
     createHeadersAndFooters();
 
     int keyboardSelectedRow = getKeyboardSelectedRow() + getPageStart();
-    ProvidesKey<T> keyProvider = getKeyProvider();
     String evenRowStyle = style.cellTableEvenRow();
     String oddRowStyle = style.cellTableOddRow();
     String cellStyle = style.cellTableCell();
@@ -1075,7 +1078,8 @@ public class CellTable<T> extends AbstractHasData<T> {
 
         SafeHtmlBuilder cellBuilder = new SafeHtmlBuilder();
         if (value != null) {
-          column.render(value, keyProvider, cellBuilder);
+          Context context = new Context(i, curColumn, getValueKey(value));
+          column.render(context, value, cellBuilder);
         }
 
         // Build the contents.
@@ -1132,7 +1136,7 @@ public class CellTable<T> extends AbstractHasData<T> {
     int row = getKeyboardSelectedRow();
     if (isRowWithinBounds(row) && columns.size() > 0) {
       Column<T, ?> column = columns.get(keyboardSelectedColumn);
-      return resetFocusOnCellImpl(row, column);
+      return resetFocusOnCellImpl(row, keyboardSelectedColumn, column);
     }
     return false;
   }
@@ -1218,7 +1222,8 @@ public class CellTable<T> extends AbstractHasData<T> {
           : style.cellTableFirstColumnHeader());
 
       // Loop through all column headers.
-      for (int curColumn = 1; curColumn < columnCount; curColumn++) {
+      int curColumn;
+      for (curColumn = 1; curColumn < columnCount; curColumn++) {
         Header<?> header = theHeaders.get(curColumn);
 
         if (header != prevHeader) {
@@ -1226,7 +1231,9 @@ public class CellTable<T> extends AbstractHasData<T> {
           SafeHtmlBuilder headerBuilder = new SafeHtmlBuilder();
           if (prevHeader != null) {
             hasHeader = true;
-            prevHeader.render(headerBuilder);
+            Context context = new Context(0, curColumn - prevColspan,
+                prevHeader.getKey());
+            prevHeader.render(context, headerBuilder);
           }
           sb.append(template.th(prevColspan, classesBuilder.toString(),
               headerBuilder.toSafeHtml()));
@@ -1245,7 +1252,9 @@ public class CellTable<T> extends AbstractHasData<T> {
       SafeHtmlBuilder headerBuilder = new SafeHtmlBuilder();
       if (prevHeader != null) {
         hasHeader = true;
-        prevHeader.render(headerBuilder);
+        Context context = new Context(0, curColumn - prevColspan,
+            prevHeader.getKey());
+        prevHeader.render(context, headerBuilder);
       }
 
       // The first and last columns could be the same column.
@@ -1348,17 +1357,15 @@ public class CellTable<T> extends AbstractHasData<T> {
    * Fire an event to the Cell within the specified {@link TableCellElement}.
    */
   private <C> void fireEventToCell(Event event, String eventType,
-      TableCellElement tableCell, T value, int row, Column<T, C> column) {
+      TableCellElement tableCell, T value, Context context,
+      Column<T, C> column) {
     Cell<C> cell = column.getCell();
     if (cellConsumesEventType(cell, eventType)) {
       C cellValue = column.getValue(value);
-      ProvidesKey<T> providesKey = getKeyProvider();
-      Object key = getValueKey(value);
       Element parentElem = getCellParent(tableCell);
-      boolean cellWasEditing = cell.isEditing(parentElem, cellValue, key);
-      column.onBrowserEvent(parentElem, getPageStart() + row, value, event,
-          providesKey);
-      cellIsEditing = cell.isEditing(parentElem, cellValue, key);
+      boolean cellWasEditing = cell.isEditing(context, parentElem, cellValue);
+      column.onBrowserEvent(context, parentElem, value, event);
+      cellIsEditing = cell.isEditing(context, parentElem, cellValue);
       if (cellWasEditing && !cellIsEditing) {
         CellBasedWidgetImpl.get().resetFocus(new Scheduler.ScheduledCommand() {
           public void execute() {
@@ -1438,13 +1445,14 @@ public class CellTable<T> extends AbstractHasData<T> {
     return consumedEvents != null && consumedEvents.size() > 0;
   }
 
-  private <C> boolean resetFocusOnCellImpl(int row, Column<T, C> column) {
+  private <C> boolean resetFocusOnCellImpl(int row, int col, Column<T, C> column) {
     Element parent = getKeyboardSelectedElement();
     T value = getVisibleItem(row);
     Object key = getValueKey(value);
     C cellValue = column.getValue(value);
     Cell<C> cell = column.getCell();
-    return cell.resetFocus(parent, cellValue, key);
+    Context context = new Context(row + getPageStart(), col, key);
+    return cell.resetFocus(context, parent, cellValue);
   }
 
   /**
@@ -1505,4 +1513,3 @@ public class CellTable<T> extends AbstractHasData<T> {
     }
   }
 }
-

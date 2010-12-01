@@ -51,7 +51,7 @@ public class ImageCell extends AbstractCell<String> {
   }
 
   @Override
-  public void render(String value, Object key, SafeHtmlBuilder sb) {
+  public void render(Context context, String value, SafeHtmlBuilder sb) {
     if (value != null) {
       // The template will sanitize the URI.
       sb.append(template.img(value));

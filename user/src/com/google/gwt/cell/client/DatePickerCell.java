@@ -61,6 +61,8 @@ public class DatePickerCell extends AbstractEditableCell<Date, Date> {
   private int offsetY = 10;
   private Object lastKey;
   private Element lastParent;
+  private int lastIndex;
+  private int lastColumn;
   private Date lastValue;
   private PopupPanel panel;
   private final SafeHtmlRenderer<String> renderer;
@@ -131,6 +133,8 @@ public class DatePickerCell extends AbstractEditableCell<Date, Date> {
       public void onClose(CloseEvent<PopupPanel> event) {
         lastKey = null;
         lastValue = null;
+        lastIndex = -1;
+        lastColumn = -1;
         if (lastParent != null && !event.isAutoClosed()) {
           // Refocus on the containing cell after the user selects a value, but
           // not if the popup is auto closed.
@@ -148,12 +152,14 @@ public class DatePickerCell extends AbstractEditableCell<Date, Date> {
         Element cellParent = lastParent;
         Date oldValue = lastValue;
         Object key = lastKey;
+        int index = lastIndex;
+        int column = lastColumn;
         panel.hide();
 
         // Update the cell and value updater.
         Date date = event.getValue();
         setViewData(key, date);
-        setValue(cellParent, oldValue, key);
+        setValue(new Context(index, column, key), cellParent, oldValue);
         if (valueUpdater != null) {
           valueUpdater.update(date);
         }
@@ -162,22 +168,23 @@ public class DatePickerCell extends AbstractEditableCell<Date, Date> {
   }
 
   @Override
-  public boolean isEditing(Element parent, Date value, Object key) {
-    return lastKey != null && lastKey.equals(key);
+  public boolean isEditing(Context context, Element parent, Date value) {
+    return lastKey != null && lastKey.equals(context.getKey());
   }
 
   @Override
-  public void onBrowserEvent(Element parent, Date value, Object key,
+  public void onBrowserEvent(Context context, Element parent, Date value,
       NativeEvent event, ValueUpdater<Date> valueUpdater) {
-    super.onBrowserEvent(parent, value, key, event, valueUpdater);
+    super.onBrowserEvent(context, parent, value, event, valueUpdater);
     if ("click".equals(event.getType())) {
-      onEnterKeyDown(parent, value, key, event, valueUpdater);
+      onEnterKeyDown(context, parent, value, event, valueUpdater);
     }
   }
 
   @Override
-  public void render(Date value, Object key, SafeHtmlBuilder sb) {
+  public void render(Context context, Date value, SafeHtmlBuilder sb) {
     // Get the view data.
+    Object key = context.getKey();
     Date viewData = getViewData(key);
     if (viewData != null && viewData.equals(value)) {
       clearViewData(key);
@@ -196,21 +203,23 @@ public class DatePickerCell extends AbstractEditableCell<Date, Date> {
   }
 
   @Override
-  protected void onEnterKeyDown(final Element parent, Date value, Object key,
+  protected void onEnterKeyDown(Context context, Element parent, Date value,
       NativeEvent event, ValueUpdater<Date> valueUpdater) {
-    this.lastKey = key;
+    this.lastKey = context.getKey();
     this.lastParent = parent;
     this.lastValue = value;
+    this.lastIndex = context.getIndex();
+    this.lastColumn = context.getColumn();
     this.valueUpdater = valueUpdater;
 
-    Date viewData = getViewData(key);
-    Date date = (viewData == null) ? value : viewData;
+    Date viewData = getViewData(lastKey);
+    Date date = (viewData == null) ? lastValue : viewData;
     datePicker.setCurrentMonth(date);
     datePicker.setValue(date);
     panel.setPopupPositionAndShow(new PositionCallback() {
       public void setPosition(int offsetWidth, int offsetHeight) {
-        panel.setPopupPosition(parent.getAbsoluteLeft() + offsetX,
-            parent.getAbsoluteTop() + offsetY);
+        panel.setPopupPosition(lastParent.getAbsoluteLeft() + offsetX,
+            lastParent.getAbsoluteTop() + offsetY);
       }
     });
   }

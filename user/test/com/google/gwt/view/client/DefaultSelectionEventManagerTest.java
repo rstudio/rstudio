@@ -15,6 +15,7 @@
  */
 package com.google.gwt.view.client;
 
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -215,7 +216,7 @@ public class DefaultSelectionEventManagerTest extends GWTTestCase {
     NativeEvent nativeEvent = Document.get().createClickEvent(0, 0, 0, 0, 0,
         false, false, false, false);
     CellPreviewEvent<String> event = new CellPreviewEvent<String>(nativeEvent,
-        display, 1, 0, "test 1", false, false);
+        display, new Context(1, 0, null), "test 1", false, false);
     manager.handleSelectionEvent(event, null, model);
     assertEquals("test 1", model.getSelectedObject());
 
@@ -226,16 +227,16 @@ public class DefaultSelectionEventManagerTest extends GWTTestCase {
     // Ctrl+Select the same value.
     nativeEvent = Document.get().createClickEvent(0, 0, 0, 0, 0, true, false,
         false, true);
-    event = new CellPreviewEvent<String>(nativeEvent, display, 1, 0, "test 1",
-        false, false);
+    event = new CellPreviewEvent<String>(nativeEvent, display, new Context(1,
+        0, null), "test 1", false, false);
     manager.handleSelectionEvent(event, null, model);
     assertNull(model.getSelectedObject());
 
     // Spacebar a different value.
     nativeEvent = Document.get().createKeyUpEvent(false, false, false, false,
         32);
-    event = new CellPreviewEvent<String>(nativeEvent, display, 2, 0, "test 2",
-        false, false);
+    event = new CellPreviewEvent<String>(nativeEvent, display, new Context(2,
+        0, null), "test 2", false, false);
     manager.handleSelectionEvent(event, null, model);
     assertEquals("test 2", model.getSelectedObject());
 
@@ -253,13 +254,13 @@ public class DefaultSelectionEventManagerTest extends GWTTestCase {
     NativeEvent nativeEvent = Document.get().createClickEvent(0, 0, 0, 0, 0,
         false, false, false, false);
     CellPreviewEvent<String> event = new CellPreviewEvent<String>(nativeEvent,
-        display, 1, 0, "test 1", false, false);
+        display, new Context(1, 0, null), "test 1", false, false);
     manager.handleSelectionEvent(event, SelectAction.DESELECT, model);
     assertEquals("test 0", model.getSelectedObject());
 
     // Deselect the same value.
-    event = new CellPreviewEvent<String>(nativeEvent, display, 0, 0, "test 0",
-        false, false);
+    event = new CellPreviewEvent<String>(nativeEvent, display, new Context(0,
+        0, null), "test 0", false, false);
     manager.handleSelectionEvent(event, SelectAction.DESELECT, model);
     assertNull(model.getSelectedObject());
   }
@@ -272,7 +273,7 @@ public class DefaultSelectionEventManagerTest extends GWTTestCase {
     NativeEvent nativeEvent = Document.get().createClickEvent(0, 0, 0, 0, 0,
         false, false, false, false);
     CellPreviewEvent<String> event = new CellPreviewEvent<String>(nativeEvent,
-        display, 3, 0, "test 3", false, false);
+        display, new Context(3, 0, null), "test 3", false, false);
     manager.handleSelectionEvent(event, SelectAction.IGNORE, model);
     assertEquals("test 0", model.getSelectedObject());
   }
@@ -286,13 +287,13 @@ public class DefaultSelectionEventManagerTest extends GWTTestCase {
     NativeEvent nativeEvent = Document.get().createClickEvent(0, 0, 0, 0, 0,
         false, false, false, false);
     CellPreviewEvent<String> event = new CellPreviewEvent<String>(nativeEvent,
-        display, 0, 0, "test 0", false, false);
+        display, new Context(0, 0, null), "test 0", false, false);
     manager.handleSelectionEvent(event, SelectAction.SELECT, model);
     assertEquals("test 0", model.getSelectedObject());
 
     // Select a different value.
-    event = new CellPreviewEvent<String>(nativeEvent, display, 1, 0, "test 1",
-        false, false);
+    event = new CellPreviewEvent<String>(nativeEvent, display, new Context(1,
+        0, null), "test 1", false, false);
     manager.handleSelectionEvent(event, SelectAction.SELECT, model);
     assertEquals("test 1", model.getSelectedObject());
   }
@@ -306,7 +307,7 @@ public class DefaultSelectionEventManagerTest extends GWTTestCase {
     NativeEvent nativeEvent = Document.get().createClickEvent(0, 0, 0, 0, 0,
         false, false, false, false);
     CellPreviewEvent<String> event = new CellPreviewEvent<String>(nativeEvent,
-        display, 1, 0, "test 1", false, false);
+        display, new Context(1, 0, null), "test 1", false, false);
     manager.handleSelectionEvent(event, SelectAction.TOGGLE, model);
     assertEquals("test 1", model.getSelectedObject());
 

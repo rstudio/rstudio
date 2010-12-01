@@ -16,6 +16,7 @@
 package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.cell.client.Cell;
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.AnchorElement;
@@ -63,6 +64,7 @@ import java.util.Set;
  *
  * @param <T> the type that this view contains
  */
+// TODO(jlabanca): Convert this to be the type of the child and create lazily.
 class CellTreeNodeView<T> extends UIObject {
 
   interface Template extends SafeHtmlTemplates {
@@ -138,7 +140,8 @@ class CellTreeNodeView<T> extends UIObject {
         // Render the child nodes.
         ProvidesKey<C> keyProvider = nodeInfo.getProvidesKey();
         TreeViewModel model = nodeView.tree.getTreeViewModel();
-        for (C value : values) {
+        for (int i = start; i < end; i++) {
+          C value = values.get(i - start);
           Object key = keyProvider.getKey(value);
           boolean isOpen = openNodes.contains(key);
 
@@ -171,7 +174,8 @@ class CellTreeNodeView<T> extends UIObject {
           }
           // Render cell contents
           SafeHtmlBuilder cellBuilder = new SafeHtmlBuilder();
-          cell.render(value, key, cellBuilder);
+          Context context = new Context(i, 0, key);
+          cell.render(context, value, cellBuilder);
 
           SafeHtml innerDiv = template.innerDiv(paddingDirection, imageWidth,
               innerClasses.toString(), image, itemValueStyle,
@@ -397,7 +401,6 @@ class CellTreeNodeView<T> extends UIObject {
     }
 
     private final Cell<C> cell;
-
     private final int defaultPageSize;
     private HandlerManager handlerManger = new HandlerManager(this);
     private final NodeInfo<C> nodeInfo;
@@ -999,14 +1002,15 @@ class CellTreeNodeView<T> extends UIObject {
     String eventType = event.getType();
     Element cellParent = getCellParent();
     Object key = getValueKey();
-    boolean cellWasEditing = parentCell.isEditing(cellParent, value, key);
+    Context context = new Context(getIndex(), 0, key);
+    boolean cellWasEditing = parentCell.isEditing(context, cellParent, value);
 
     // Update selection.
     boolean isSelectionHandled = parentCell.handlesSelection()
         || KeyboardSelectionPolicy.BOUND_TO_SELECTION == tree.getKeyboardSelectionPolicy();
     HasData<T> display = (HasData<T>) parentNode.listView;
     CellPreviewEvent<T> previewEvent = CellPreviewEvent.fire(display, event,
-        display, getIndex(), value, cellWasEditing, isSelectionHandled);
+        display, context, value, cellWasEditing, isSelectionHandled);
 
     // Forward the event to the cell.
     if (previewEvent.isCanceled()
@@ -1015,9 +1019,9 @@ class CellTreeNodeView<T> extends UIObject {
     }
     Set<String> consumedEvents = parentCell.getConsumedEvents();
     if (consumedEvents != null && consumedEvents.contains(eventType)) {
-      parentCell.onBrowserEvent(cellParent, value, key, event,
+      parentCell.onBrowserEvent(context, cellParent, value, event,
           parentNodeInfo.getValueUpdater());
-      tree.cellIsEditing = parentCell.isEditing(cellParent, value, key);
+      tree.cellIsEditing = parentCell.isEditing(context, cellParent, value);
       if (cellWasEditing && !tree.cellIsEditing) {
         CellBasedWidgetImpl.get().resetFocus(new Scheduler.ScheduledCommand() {
           public void execute() {
@@ -1198,13 +1202,14 @@ class CellTreeNodeView<T> extends UIObject {
 
   /**
    * Reset focus on this node.
-   *
+   * 
    * @return true of the cell takes focus, false if not
    */
   boolean resetFocusOnCell() {
     if (parentNodeInfo != null) {
+      Context context = new Context(getIndex(), 0, getValueKey());
       Cell<T> cell = parentNodeInfo.getCell();
-      return cell.resetFocus(getCellParent(), value, getValueKey());
+      return cell.resetFocus(context, getCellParent(), value);
     }
     return false;
   }

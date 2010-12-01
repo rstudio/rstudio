@@ -16,6 +16,7 @@
 package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.cell.client.Cell;
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -289,18 +290,19 @@ public class CellList<T> extends AbstractHasData<T> {
 
   /**
    * Fire an event to the cell.
-   *
+   * 
+   * @param context the {@link Context} of the cell
    * @param event the event that was fired
    * @param parent the parent of the cell
    * @param value the value of the cell
    */
-  protected void fireEventToCell(Event event, Element parent, T value) {
+  protected void fireEventToCell(Context context, Event event, Element parent,
+      T value) {
     Set<String> consumedEvents = cell.getConsumedEvents();
     if (consumedEvents != null && consumedEvents.contains(event.getType())) {
-      Object key = getValueKey(value);
-      boolean cellWasEditing = cell.isEditing(parent, value, key);
-      cell.onBrowserEvent(parent, value, key, event, valueUpdater);
-      cellIsEditing = cell.isEditing(parent, value, key);
+      boolean cellWasEditing = cell.isEditing(context, parent, value);
+      cell.onBrowserEvent(context, parent, value, event, valueUpdater);
+      cellIsEditing = cell.isEditing(context, parent, value);
       if (cellWasEditing && !cellIsEditing) {
         CellBasedWidgetImpl.get().resetFocus(new Scheduler.ScheduledCommand() {
           public void execute() {
@@ -393,8 +395,9 @@ public class CellList<T> extends AbstractHasData<T> {
           || KeyboardSelectionPolicy.BOUND_TO_SELECTION == getKeyboardSelectionPolicy();
       Element cellParent = getCellParent(cellTarget);
       T value = getVisibleItem(indexOnPage);
+      Context context = new Context(idx, 0, getValueKey(value));
       CellPreviewEvent<T> previewEvent = CellPreviewEvent.fire(this, event,
-          this, indexOnPage, value, cellIsEditing, isSelectionHandled);
+          this, context, value, cellIsEditing, isSelectionHandled);
       if (isClick && !cellIsEditing && !isSelectionHandled) {
         doSelection(event, value, indexOnPage);
       }
@@ -412,7 +415,7 @@ public class CellList<T> extends AbstractHasData<T> {
 
       // Fire the event to the cell if the list has not been refreshed.
       if (!previewEvent.isCanceled()) {
-        fireEventToCell(event, cellParent, value);
+        fireEventToCell(context, event, cellParent, value);
       }
     }
   }
@@ -448,7 +451,8 @@ public class CellList<T> extends AbstractHasData<T> {
       }
 
       SafeHtmlBuilder cellBuilder = new SafeHtmlBuilder();
-      cell.render(value, getValueKey(value), cellBuilder);
+      Context context = new Context(i, 0, getValueKey(value));
+      cell.render(context, value, cellBuilder);
 
       if (i == keyboardSelectedRow) {
         // This is the focused item.
@@ -477,8 +481,8 @@ public class CellList<T> extends AbstractHasData<T> {
       Element rowElem = getKeyboardSelectedElement();
       Element cellParent = getCellParent(rowElem);
       T value = getVisibleItem(row);
-      Object key = getValueKey(value);
-      return cell.resetFocus(cellParent, value, key);
+      Context context = new Context(row + getPageStart(), 0, getValueKey(value));
+      return cell.resetFocus(context, cellParent, value);
     }
     return false;
   }

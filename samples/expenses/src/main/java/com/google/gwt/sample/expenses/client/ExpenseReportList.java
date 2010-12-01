@@ -163,7 +163,7 @@ public class ExpenseReportList extends Composite implements
     private static final String replaceString = "<span style='color:red;font-weight:bold;'>$1</span>";
 
     @Override
-    public void render(String value, Object viewData, SafeHtmlBuilder sb) {
+    public void render(Context context, String value, SafeHtmlBuilder sb) {
       if (value != null) {
         if (searchRegExp != null) {
           // The search regex has already been html-escaped

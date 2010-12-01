@@ -109,7 +109,7 @@ public class MainMenuTreeViewModel implements TreeViewModel {
    */
   private static class CategoryCell extends AbstractCell<Category> {
     @Override
-    public void render(Category value, Object key, SafeHtmlBuilder sb) {
+    public void render(Context context, Category value, SafeHtmlBuilder sb) {
       if (value != null) {
         sb.appendEscaped(value.getName());
       }
@@ -121,7 +121,8 @@ public class MainMenuTreeViewModel implements TreeViewModel {
    */
   private static class ContentWidgetCell extends AbstractCell<ContentWidget> {
     @Override
-    public void render(ContentWidget value, Object key, SafeHtmlBuilder sb) {
+    public void render(Context context, ContentWidget value,
+        SafeHtmlBuilder sb) {
       if (value != null) {
         sb.appendEscaped(value.getName());
       }

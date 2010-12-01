@@ -15,6 +15,7 @@
  */
 package com.google.gwt.cell.client;
 
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.dom.client.Element;
 
 import java.util.HashMap;
@@ -76,7 +77,7 @@ public abstract class AbstractEditableCell<C, V> extends AbstractCell<C> {
    *
    * @param key the key identifying the row object
    * @return the view data, or null if none has been set
-   * @see #setViewData(Object, Object)V
+   * @see #setViewData(Object, Object)
    */
   public V getViewData(Object key) {
     return (key == null) ? null : viewDataMap.get(key);
@@ -87,14 +88,14 @@ public abstract class AbstractEditableCell<C, V> extends AbstractCell<C> {
    * given element and key. While a cell is editing, widgets containing the cell
    * may choose to pass keystrokes directly to the cell rather than using them
    * for navigation purposes.
-   *
+   * 
+   * @param context the {@link Context} of the cell
    * @param parent the parent Element
    * @param value the value associated with the cell
-   * @param key the unique key associated with the row object
    * @return true if the cell is in edit mode
    */
   @Override
-  public abstract boolean isEditing(Element parent, C value, Object key);
+  public abstract boolean isEditing(Context context, Element parent, C value);
 
   /**
    * Associate view data with the specified key. If the key is null, the view

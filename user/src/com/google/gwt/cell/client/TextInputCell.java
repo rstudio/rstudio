@@ -156,9 +156,9 @@ public class TextInputCell extends
   }
 
   @Override
-  public void onBrowserEvent(Element parent, String value, Object key,
+  public void onBrowserEvent(Context context, Element parent, String value,
       NativeEvent event, ValueUpdater<String> valueUpdater) {
-    super.onBrowserEvent(parent, value, key, event, valueUpdater);
+    super.onBrowserEvent(context, parent, value, event, valueUpdater);
 
     // Ignore events that don't target the input.
     InputElement input = getInputElement(parent);
@@ -168,6 +168,7 @@ public class TextInputCell extends
     }
 
     String eventType = event.getType();
+    Object key = context.getKey();
     if ("change".equals(eventType)) {
       finishEditing(parent, value, key, valueUpdater);
     } else if ("keyup".equals(eventType)) {
@@ -182,8 +183,9 @@ public class TextInputCell extends
   }
 
   @Override
-  public void render(String value, Object key, SafeHtmlBuilder sb) {
+  public void render(Context context, String value, SafeHtmlBuilder sb) {
     // Get the view data.
+    Object key = context.getKey();
     ViewData viewData = getViewData(key);
     if (viewData != null && viewData.getCurrentValue().equals(value)) {
       clearViewData(key);

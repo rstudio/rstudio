@@ -23,6 +23,7 @@ import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.NumberCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.cell.client.ValueUpdater;
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -46,7 +47,6 @@ import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.ui.client.EntityProxyKeyProvider;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates.Template;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -183,15 +183,16 @@ public class ExpenseReportDetails extends Composite implements Activity {
     }
 
     @Override
-    public boolean isEditing(Element parent, String value, Object key) {
-      return super.isEditing(parent, value, key) || denialPopup.isShowing();
+    public boolean isEditing(Context context, Element parent, String value) {
+      return super.isEditing(context, parent, value) || denialPopup.isShowing();
     }
 
     @Override
-    public void onBrowserEvent(Element parent, String value, Object key,
+    public void onBrowserEvent(Context context, Element parent, String value,
         NativeEvent event, ValueUpdater<String> valueUpdater) {
-      super.onBrowserEvent(parent, value, key, event, valueUpdater);
+      super.onBrowserEvent(context, parent, value, event, valueUpdater);
 
+      Object key = context.getKey();
       String type = event.getType();
       ApprovalViewData viewData = getViewData(key);
       if ("change".equals(type)) {
@@ -235,8 +236,9 @@ public class ExpenseReportDetails extends Composite implements Activity {
     }
 
     @Override
-    public void render(String value, Object key, SafeHtmlBuilder sb) {
+    public void render(Context context, String value, SafeHtmlBuilder sb) {
       // Get the view data.
+      Object key = context.getKey();
       ApprovalViewData viewData = getViewData(key);
       if (viewData != null && viewData.getPendingApproval().equals(value)) {
         clearViewData(key);

@@ -15,6 +15,7 @@
  */
 package com.google.gwt.cell.client;
 
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.cell.client.EditTextCell.ViewData;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -35,7 +36,8 @@ public class EditTextCellTest extends EditableCellTestBase<String, ViewData> {
     ViewData viewData = new ViewData("originalValue");
     viewData.setText("newValue");
     cell.setViewData(DEFAULT_KEY, viewData);
-    cell.edit(parent, "originalValue", DEFAULT_KEY);
+    Context context = new Context(0, 0, DEFAULT_KEY);
+    cell.edit(context, parent, "originalValue");
 
     // Verify the input element.
     Element child = parent.getFirstChildElement();
@@ -130,7 +132,8 @@ public class EditTextCellTest extends EditableCellTestBase<String, ViewData> {
     viewData.setEditing(false);
     cell.setViewData(DEFAULT_KEY, viewData);
     SafeHtmlBuilder sb = new SafeHtmlBuilder();
-    cell.render("originalValue", DEFAULT_KEY, sb);
+    Context context = new Context(0, 0, DEFAULT_KEY);
+    cell.render(context, "originalValue", sb);
     assertEquals("newValue", sb.toSafeHtml().asString());
   }
 

@@ -40,7 +40,7 @@ public class ImageResourceCell extends AbstractCell<ImageResource> {
   }
 
   @Override
-  public void render(ImageResource value, Object key, SafeHtmlBuilder sb) {
+  public void render(Context context, ImageResource value, SafeHtmlBuilder sb) {
     if (value != null) {
       SafeHtml html = SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(
           value).getHTML());

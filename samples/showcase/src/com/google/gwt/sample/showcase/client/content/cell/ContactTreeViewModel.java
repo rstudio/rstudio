@@ -69,7 +69,7 @@ public class ContactTreeViewModel implements TreeViewModel {
     }
 
     @Override
-    public void render(Category value, Object key, SafeHtmlBuilder sb) {
+    public void render(Context context, Category value, SafeHtmlBuilder sb) {
       if (value != null) {
         sb.appendHtmlConstant(imageHtml).appendEscaped(" ");
         sb.appendEscaped(value.getDisplayName());
@@ -126,7 +126,7 @@ public class ContactTreeViewModel implements TreeViewModel {
   private static class LetterCountCell extends AbstractCell<LetterCount> {
 
     @Override
-    public void render(LetterCount value, Object key, SafeHtmlBuilder sb) {
+    public void render(Context context, LetterCount value, SafeHtmlBuilder sb) {
       if (value != null) {
         sb.appendEscaped(value.firstLetter + " (" + value.count + ")");
       }
@@ -193,9 +193,9 @@ public class ContactTreeViewModel implements TreeViewModel {
     });
     contactCell = new CompositeCell<ContactInfo>(hasCells) {
       @Override
-      public void render(ContactInfo value, Object key, SafeHtmlBuilder sb) {
+      public void render(Context context, ContactInfo value, SafeHtmlBuilder sb) {
         sb.appendHtmlConstant("<table><tbody><tr>");
-        super.render(value, key, sb);
+        super.render(context, value, sb);
         sb.appendHtmlConstant("</tr></tbody></table>");
       }
 
@@ -206,11 +206,11 @@ public class ContactTreeViewModel implements TreeViewModel {
       }
 
       @Override
-      protected <X> void render(ContactInfo value, Object key,
+      protected <X> void render(Context context, ContactInfo value,
           SafeHtmlBuilder sb, HasCell<ContactInfo, X> hasCell) {
         Cell<X> cell = hasCell.getCell();
         sb.appendHtmlConstant("<td>");
-        cell.render(hasCell.getValue(value), key, sb);
+        cell.render(context, hasCell.getValue(value), sb);
         sb.appendHtmlConstant("</td>");
       }
     };

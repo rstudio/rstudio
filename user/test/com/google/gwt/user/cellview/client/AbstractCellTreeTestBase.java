@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.cellview.client;
 
+import com.google.gwt.user.cellview.client.AbstractHasDataTestBase.IndexCell;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.Scheduler;
@@ -56,8 +57,7 @@ public abstract class AbstractCellTreeTestBase extends GWTTestCase {
     /**
      * The root data provider.
      */
-    private final ListDataProvider<String> rootDataProvider =
-        createDataProvider("");
+    private final ListDataProvider<String> rootDataProvider = createDataProvider("");
 
     public <T> NodeInfo<?> getNodeInfo(T value) {
       if (value == ROOT_VALUE) {
@@ -93,7 +93,7 @@ public abstract class AbstractCellTreeTestBase extends GWTTestCase {
 
     /**
      * Create a data provider that extends the prefix by one letter.
-     *
+     * 
      * @param prefix the prefix string
      * @return a data provider
      */
@@ -163,7 +163,7 @@ public abstract class AbstractCellTreeTestBase extends GWTTestCase {
 
   /**
    * Construct a new {@link AbstractCellTreeTestBase}.
-   *
+   * 
    * @param singlePathOnly true if the tree only supports a single open path
    */
   public AbstractCellTreeTestBase(boolean singlePathOnly) {
@@ -199,14 +199,16 @@ public abstract class AbstractCellTreeTestBase extends GWTTestCase {
   public void testRenderWithKeyProvider() {
     // Create a cell that verifies the render args.
     final List<String> rendered = new ArrayList<String>();
-    final Cell<String> cell = new TextCell() {
+    final IndexCell<String> cell = new IndexCell<String>() {
       @Override
-      public void render(String data, Object key, SafeHtmlBuilder sb) {
-        int call = rendered.size(); 
+      public void render(Context context, String data, SafeHtmlBuilder sb) {
+        super.render(context, data, sb);
+        int call = rendered.size();
         rendered.add(data);
         assertTrue("render() called more than thrice", rendered.size() < 4);
 
         assertEquals(call + "value", data);
+        Object key = context.getKey();
         assertTrue(key instanceof Integer);
         assertEquals(call, key);
       }
@@ -241,11 +243,12 @@ public abstract class AbstractCellTreeTestBase extends GWTTestCase {
       public void execute() {
         assertEquals("Cell#render() should be called exactly thrice", 3,
             rendered.size());
+        cell.assertLastRenderIndex(2);
         finishTest();
       }
     });
   }
-  
+
   /**
    * Test that opening a sibling node works.
    */
@@ -565,7 +568,7 @@ public abstract class AbstractCellTreeTestBase extends GWTTestCase {
 
   /**
    * Create an {@link AbstractCellTree} to test.
-   *
+   * 
    * @param <T> the data type of the root value
    * @param model the {@link TreeViewModel} that backs the tree
    * @param rootValue the root value
@@ -588,7 +591,7 @@ public abstract class AbstractCellTreeTestBase extends GWTTestCase {
 
   /**
    * Test the state of a {@link TreeNode}.
-   *
+   * 
    * @param node the node to test
    * @param parent the expected parent
    * @param index the expected index within the parent

@@ -44,16 +44,16 @@ public class ButtonCell extends AbstractSafeHtmlCell<String> {
   }
 
   @Override
-  public void onBrowserEvent(Element parent, String value, Object key,
+  public void onBrowserEvent(Context context, Element parent, String value,
       NativeEvent event, ValueUpdater<String> valueUpdater) {
-    super.onBrowserEvent(parent, value, key, event, valueUpdater);
+    super.onBrowserEvent(context, parent, value, event, valueUpdater);
     if ("click".equals(event.getType())) {
-      onEnterKeyDown(parent, value, key, event, valueUpdater);
+      onEnterKeyDown(context, parent, value, event, valueUpdater);
     }
   }
 
   @Override
-  public void render(SafeHtml data, Object key, SafeHtmlBuilder sb) {
+  public void render(Context context, SafeHtml data, SafeHtmlBuilder sb) {
     sb.appendHtmlConstant("<button type=\"button\" tabindex=\"-1\">");
     if (data != null) {
       sb.append(data);
@@ -62,7 +62,7 @@ public class ButtonCell extends AbstractSafeHtmlCell<String> {
   }
 
   @Override
-  protected void onEnterKeyDown(Element parent, String value, Object key,
+  protected void onEnterKeyDown(Context context, Element parent, String value,
       NativeEvent event, ValueUpdater<String> valueUpdater) {
     if (valueUpdater != null) {
       valueUpdater.update(value);

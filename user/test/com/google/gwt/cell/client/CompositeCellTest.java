@@ -15,6 +15,7 @@
  */
 package com.google.gwt.cell.client;
 
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -109,7 +110,8 @@ public class CompositeCellTest extends CellTestBase<String> {
     // Add an event listener.
     EventListener listener = new EventListener() {
       public void onBrowserEvent(Event event) {
-        cell.onBrowserEvent(parent, "test", DEFAULT_KEY, event, null);
+        Context context = new Context(3, 4, "key");
+        cell.onBrowserEvent(context, parent, "test", event, null);
       }
     };
     DOM.sinkEvents(parent, Event.ONCLICK);
@@ -120,6 +122,11 @@ public class CompositeCellTest extends CellTestBase<String> {
         false, false, false);
     Element.as(parent.getChild(1)).dispatchEvent(event);
     innerCell.assertLastEventValue("test-1");
+    innerCell.assertLastParentElement(Element.as(parent.getChild(1)));
+    Context innerContext = innerCell.getLastContext();
+    assertEquals("key", innerContext.getKey());
+    assertEquals(3, innerContext.getIndex());
+    assertEquals(4, innerContext.getColumn());
 
     // Remove the element and event listener.
     DOM.setEventListener(parent, null);
@@ -130,7 +137,8 @@ public class CompositeCellTest extends CellTestBase<String> {
     Cell<String> cell = createCell();
     Element parent = Document.get().createDivElement();
     parent.setInnerHTML(getExpectedInnerHtml());
-    cell.setValue(parent, "test", null);
+    Context context = new Context( 0, 0, null);
+    cell.setValue(context, parent, "test");
 
     assertEquals(3, parent.getChildCount());
     assertEquals("test-0", Element.as(parent.getChild(0)).getInnerHTML());

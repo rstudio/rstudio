@@ -15,6 +15,7 @@
  */
 package com.google.gwt.cell.client;
 
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -39,7 +40,8 @@ public abstract class EditableCellTestBase<T, V> extends CellTestBase<T> {
     T value = createCellValue();
     cell.setViewData(DEFAULT_KEY, createCellViewData());
     SafeHtmlBuilder sb = new SafeHtmlBuilder();
-    cell.render(value, DEFAULT_KEY, sb);
+    Context context = new Context(0, 0, DEFAULT_KEY);
+    cell.render(context, value, sb);
     String expectedInnerHtmlViewData = getExpectedInnerHtmlViewData();
     String asString = sb.toSafeHtml().asString();
     assertEquals(expectedInnerHtmlViewData, asString);
@@ -96,7 +98,8 @@ public abstract class EditableCellTestBase<T, V> extends CellTestBase<T> {
       public void onBrowserEvent(Event event) {
         try {
           DOM.setEventListener(parent, null);
-          cell.onBrowserEvent(parent, value, DEFAULT_KEY, event, valueUpdater);
+          Context context = new Context(0, 0, DEFAULT_KEY);
+          cell.onBrowserEvent(context, parent, value, event, valueUpdater);
           parent.removeFromParent();
         } catch (Exception e) {
           // We are in an event loop, so events may not propagate out to JUnit.

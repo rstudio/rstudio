@@ -85,9 +85,9 @@ public class CwCellValidation extends ContentWidget {
     }
 
     @Override
-    public void onBrowserEvent(Element parent, String value, Object key,
+    public void onBrowserEvent(Context context, Element parent, String value,
         NativeEvent event, ValueUpdater<String> valueUpdater) {
-      super.onBrowserEvent(parent, value, key, event, valueUpdater);
+      super.onBrowserEvent(context, parent, value, event, valueUpdater);
 
       // Ignore events that don't target the input.
       Element target = event.getEventTarget().cast();
@@ -95,6 +95,7 @@ public class CwCellValidation extends ContentWidget {
         return;
       }
 
+      Object key = context.getKey();
       ValidationData viewData = getViewData(key);
       String eventType = event.getType();
       if ("change".equals(eventType)) {
@@ -120,8 +121,9 @@ public class CwCellValidation extends ContentWidget {
     }
 
     @Override
-    public void render(String value, Object key, SafeHtmlBuilder sb) {
+    public void render(Context context, String value, SafeHtmlBuilder sb) {
       // Get the view data.
+      Object key = context.getKey();
       ValidationData viewData = getViewData(key);
       if (viewData != null && viewData.getValue().equals(value)) {
         // Clear the view data if the value is the same as the current value.
@@ -148,13 +150,13 @@ public class CwCellValidation extends ContentWidget {
     }
 
     @Override
-    protected void onEnterKeyDown(Element parent, String value, Object key,
+    protected void onEnterKeyDown(Context context, Element parent, String value,
         NativeEvent event, ValueUpdater<String> valueUpdater) {
       Element target = event.getEventTarget().cast();
       if (getInputElement(parent).isOrHasChild(target)) {
-        finishEditing(parent, value, key, valueUpdater);
+        finishEditing(parent, value, context.getKey(), valueUpdater);
       } else {
-        super.onEnterKeyDown(parent, value, key, event, valueUpdater);
+        super.onEnterKeyDown(context, parent, value, event, valueUpdater);
       }
     }
   }

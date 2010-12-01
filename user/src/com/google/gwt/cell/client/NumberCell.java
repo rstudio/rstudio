@@ -84,7 +84,7 @@ public class NumberCell extends AbstractCell<Number> {
   }
 
   @Override
-  public void render(Number value, Object key, SafeHtmlBuilder sb) {
+  public void render(Context context, Number value, SafeHtmlBuilder sb) {
     if (value != null) {
       sb.append(renderer.render(format.format(value)));
     }

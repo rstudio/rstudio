@@ -15,6 +15,7 @@
  */
 package com.google.gwt.cell.client;
 
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
@@ -161,18 +162,19 @@ public class EditTextCell extends
   }
 
   @Override
-  public boolean isEditing(Element element, String value, Object key) {
-    ViewData viewData = getViewData(key);
+  public boolean isEditing(Context context, Element parent, String value) {
+    ViewData viewData = getViewData(context.getKey());
     return viewData == null ? false : viewData.isEditing();
   }
 
   @Override
-  public void onBrowserEvent(Element parent, String value, Object key,
+  public void onBrowserEvent(Context context, Element parent, String value,
       NativeEvent event, ValueUpdater<String> valueUpdater) {
+    Object key = context.getKey();
     ViewData viewData = getViewData(key);
     if (viewData != null && viewData.isEditing()) {
       // Handle the edit event.
-      editEvent(parent, key, viewData, event, valueUpdater);
+      editEvent(context, parent, value, viewData, event, valueUpdater);
     } else {
       String type = event.getType();
       int keyCode = event.getKeyCode();
@@ -186,14 +188,15 @@ public class EditTextCell extends
         } else {
           viewData.setEditing(true);
         }
-        edit(parent, value, key);
+        edit(context, parent, value);
       }
     }
   }
 
   @Override
-  public void render(String value, Object key, SafeHtmlBuilder sb) {
+  public void render(Context context, String value, SafeHtmlBuilder sb) {
     // Get the view data.
+    Object key = context.getKey();
     ViewData viewData = getViewData(key);
     if (viewData != null && !viewData.isEditing() && value != null
         && value.equals(viewData.getText())) {
@@ -218,8 +221,8 @@ public class EditTextCell extends
   }
 
   @Override
-  public boolean resetFocus(Element parent, String value, Object key) {
-    if (isEditing(parent, value, key)) {
+  public boolean resetFocus(Context context, Element parent, String value) {
+    if (isEditing(context, parent, value)) {
       getInputElement(parent).focus();
       return true;
     }
@@ -229,12 +232,12 @@ public class EditTextCell extends
   /**
    * Convert the cell to edit mode.
    *
+   * @param context the {@link Context} of the cell
    * @param parent the parent element
    * @param value the current value
-   * @param key the key of the row object
    */
-  protected void edit(Element parent, String value, Object key) {
-    setValue(parent, value, key);
+  protected void edit(Context context, Element parent, String value) {
+    setValue(context, parent, value);
     InputElement input = getInputElement(parent);
     input.focus();
     input.select();
@@ -242,13 +245,14 @@ public class EditTextCell extends
 
   /**
    * Convert the cell to non-edit mode.
-   *
-   * @param parent the parent element
-   * @param value the current value
+   * 
+   * @param context the context of the cell
+   * @param parent the parent Element
+   * @param value the value associated with the cell
    */
-  private void cancel(Element parent, String value) {
+  private void cancel(Context context, Element parent, String value) {
     clearInput(getInputElement(parent));
-    setValue(parent, value, null);
+    setValue(context, parent, value);
   }
 
   /**
@@ -267,23 +271,24 @@ public class EditTextCell extends
 
   /**
    * Commit the current value.
-   *
-   * @param parent the parent element
+   * 
+   * @param context the context of the cell
+   * @param parent the parent Element
    * @param viewData the {@link ViewData} object
    * @param valueUpdater the {@link ValueUpdater}
    */
-  private void commit(Element parent, ViewData viewData,
+  private void commit(Context context, Element parent, ViewData viewData,
       ValueUpdater<String> valueUpdater) {
     String value = updateViewData(parent, viewData, false);
     clearInput(getInputElement(parent));
-    setValue(parent, value, viewData);
+    setValue(context, parent, viewData.getOriginal());
     if (valueUpdater != null) {
       valueUpdater.update(value);
     }
   }
 
-  private void editEvent(Element parent, Object key, ViewData viewData,
-      NativeEvent event, ValueUpdater<String> valueUpdater) {
+  private void editEvent(Context context, Element parent, String value,
+      ViewData viewData, NativeEvent event, ValueUpdater<String> valueUpdater) {
     String type = event.getType();
     boolean keyUp = "keyup".equals(type);
     boolean keyDown = "keydown".equals(type);
@@ -291,7 +296,7 @@ public class EditTextCell extends
       int keyCode = event.getKeyCode();
       if (keyUp && keyCode == KeyCodes.KEY_ENTER) {
         // Commit the change.
-        commit(parent, viewData, valueUpdater);
+        commit(context, parent, viewData, valueUpdater);
       } else if (keyUp && keyCode == KeyCodes.KEY_ESCAPE) {
         // Cancel edit mode.
         String originalText = viewData.getOriginal();
@@ -299,9 +304,9 @@ public class EditTextCell extends
           viewData.setText(originalText);
           viewData.setEditing(false);
         } else {
-          setViewData(key, null);
+          setViewData(context.getKey(), null);
         }
-        cancel(parent, originalText);
+        cancel(context, parent, value);
       } else {
         // Update the text in the view data on each key.
         updateViewData(parent, viewData, true);
@@ -313,7 +318,7 @@ public class EditTextCell extends
       if (Element.is(eventTarget)) {
         Element target = Element.as(eventTarget);
         if ("input".equals(target.getTagName().toLowerCase())) {
-          commit(parent, viewData, valueUpdater);
+          commit(context, parent, viewData, valueUpdater);
         }
       }
     }

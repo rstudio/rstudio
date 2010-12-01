@@ -17,6 +17,7 @@ package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.cell.client.Cell;
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -300,7 +301,8 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
         }
 
         SafeHtmlBuilder cellBuilder = new SafeHtmlBuilder();
-        cell.render(value, getValueKey(value), cellBuilder);
+        Context context = new Context(i, 0, getValueKey(value));
+        cell.render(context, value, cellBuilder);
 
         // Figure out which image to use.
         SafeHtml image;

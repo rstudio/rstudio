@@ -83,14 +83,14 @@ public class CheckboxCell extends AbstractEditableCell<Boolean, Boolean> {
   }
 
   @Override
-  public boolean isEditing(Element parent, Boolean value, Object key) {
+  public boolean isEditing(Context context, Element parent, Boolean value) {
     // A checkbox is never in "edit mode". There is no intermediate state
     // between checked and unchecked.
     return false;
   }
 
   @Override
-  public void onBrowserEvent(Element parent, Boolean value, Object key,
+  public void onBrowserEvent(Context context, Element parent, Boolean value, 
       NativeEvent event, ValueUpdater<Boolean> valueUpdater) {
     String type = event.getType();
 
@@ -117,9 +117,9 @@ public class CheckboxCell extends AbstractEditableCell<Boolean, Boolean> {
        * do not save the value because we can get into an inconsistent state.
        */
       if (value != isChecked && !dependsOnSelection()) {
-        setViewData(key, isChecked);
+        setViewData(context.getKey(), isChecked);
       } else {
-        clearViewData(key);
+        clearViewData(context.getKey());
       }
 
       if (valueUpdater != null) {
@@ -129,8 +129,9 @@ public class CheckboxCell extends AbstractEditableCell<Boolean, Boolean> {
   }
 
   @Override
-  public void render(Boolean value, Object key, SafeHtmlBuilder sb) {
+  public void render(Context context, Boolean value, SafeHtmlBuilder sb) {
     // Get the view data.
+    Object key = context.getKey();
     Boolean viewData = getViewData(key);
     if (viewData != null && viewData.equals(value)) {
       clearViewData(key);

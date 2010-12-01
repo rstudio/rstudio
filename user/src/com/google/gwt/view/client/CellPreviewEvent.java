@@ -15,6 +15,7 @@
  */
 package com.google.gwt.view.client;
 
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -55,39 +56,17 @@ public class CellPreviewEvent<T> extends GwtEvent<CellPreviewEvent.Handler<T>> {
    * @param source the source of the handlers
    * @param nativeEvent the event to preview
    * @param display the {@link HasData} source of the event
-   * @param index the index of the value where the event occurred
+   * @param context the Cell {@link Context}
    * @param value the value where the event occurred
    * @param isCellEditing indicates whether or not the cell is being edited
    * @param isSelectionHandled indicates whether or not selection is handled
    * @return the {@link CellPreviewEvent} that was fired
    */
   public static <T> CellPreviewEvent<T> fire(HasCellPreviewHandlers<T> source,
-      NativeEvent nativeEvent, HasData<T> display, int index, T value,
+      NativeEvent nativeEvent, HasData<T> display, Context context, T value,
       boolean isCellEditing, boolean isSelectionHandled) {
-    return fire(source, nativeEvent, display, index, 0, value, isCellEditing,
-        isSelectionHandled);
-  }
-
-  /**
-   * Fires a cell preview event on all registered handlers in the handler
-   * manager. If no such handlers exist, this implementation will do nothing.
-   * 
-   * @param <T> the old value type
-   * @param source the source of the handlers
-   * @param nativeEvent the event to preview
-   * @param display the {@link HasData} source of the event
-   * @param index the index of the value where the event occurred
-   * @param column the column index
-   * @param value the value where the event occurred
-   * @param isCellEditing indicates whether or not the cell is being edited
-   * @param isSelectionHandled indicates whether or not selection is handled
-   * @return the {@link CellPreviewEvent} that was fired
-   */
-  public static <T> CellPreviewEvent<T> fire(HasCellPreviewHandlers<T> source,
-      NativeEvent nativeEvent, HasData<T> display, int index, int column,
-      T value, boolean isCellEditing, boolean isSelectionHandled) {
     CellPreviewEvent<T> event = new CellPreviewEvent<T>(nativeEvent, display,
-        index, column, value, isCellEditing, isSelectionHandled);
+        context, value, isCellEditing, isSelectionHandled);
     if (TYPE != null) {
       source.fireEvent(event);
     }
@@ -106,9 +85,8 @@ public class CellPreviewEvent<T> extends GwtEvent<CellPreviewEvent.Handler<T>> {
     return TYPE;
   }
 
-  private final int column;
+  private final Context context;
   private final HasData<T> display;
-  private final int index;
   private boolean isCanceled = false;
   private final boolean isCellEditing;
   private final boolean isSelectionHandled;
@@ -120,18 +98,17 @@ public class CellPreviewEvent<T> extends GwtEvent<CellPreviewEvent.Handler<T>> {
    * 
    * @param nativeEvent the event to preview
    * @param display the {@link HasData} source of the event
-   * @param index the index of the value where the event occurred
+   * @param context the Cell {@link Context}
    * @param value the value where the event occurred
    * @param isCellEditing indicates whether or not the cell is being edited
    * @param isSelectionHandled indicates whether or not selection is handled
    */
   protected CellPreviewEvent(NativeEvent nativeEvent, HasData<T> display,
-      int index, int column, T value, boolean isCellEditing,
+      Context context, T value, boolean isCellEditing,
       boolean isSelectionHandled) {
     this.nativeEvent = nativeEvent;
     this.display = display;
-    this.index = index;
-    this.column = column;
+    this.context = context;
     this.value = value;
     this.isCellEditing = isCellEditing;
     this.isSelectionHandled = isSelectionHandled;
@@ -152,7 +129,16 @@ public class CellPreviewEvent<T> extends GwtEvent<CellPreviewEvent.Handler<T>> {
    * @return the column index, or 0 if there is only one column
    */
   public int getColumn() {
-    return column;
+    return context.getColumn();
+  }
+
+  /**
+   * Get the cell {@link Context}.
+   * 
+   * @return the cell {@link Context}
+   */
+  public Context getContext() {
+    return context;
   }
 
   /**
@@ -166,7 +152,7 @@ public class CellPreviewEvent<T> extends GwtEvent<CellPreviewEvent.Handler<T>> {
    * Get the index of the value where the event occurred.
    */
   public int getIndex() {
-    return index;
+    return context.getIndex();
   }
 
   /**

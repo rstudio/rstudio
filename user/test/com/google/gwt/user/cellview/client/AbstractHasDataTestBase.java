@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,9 +15,16 @@
  */
 package com.google.gwt.user.cellview.client;
 
+import com.google.gwt.cell.client.AbstractCell;
+import com.google.gwt.cell.client.Cell;
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.cell.client.ValueUpdater;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.Range;
@@ -30,13 +37,69 @@ import java.util.List;
  */
 public abstract class AbstractHasDataTestBase extends GWTTestCase {
 
+  /**
+   * A mock cell that tests the index specified in each method.
+   * 
+   * @param <C> the cell type
+   */
+  protected static class IndexCell<C> extends AbstractCell<C> {
+    private int lastBrowserEventIndex = -1;
+    private int lastEditingIndex = -1;
+    private int lastRenderIndex = -1;
+    private int lastResetFocusIndex = -1;
+
+    public IndexCell(String... consumedEvents) {
+      super(consumedEvents);
+    }
+
+    public void assertLastBrowserEventIndex(int expected) {
+      assertEquals(expected, lastBrowserEventIndex);
+    }
+
+    public void assertLastEditingIndex(int expected) {
+      assertEquals(expected, lastEditingIndex);
+    }
+
+    public void assertLastRenderIndex(int expected) {
+      assertEquals(expected, lastRenderIndex);
+    }
+
+    public void assertLastResetFocusIndex(int expected) {
+      assertEquals(expected, lastResetFocusIndex);
+    }
+
+    @Override
+    public boolean isEditing(Context context, Element parent, C value) {
+      this.lastEditingIndex = context.getIndex();
+      return false;
+    }
+
+    @Override
+    public void onBrowserEvent(Context context, Element parent, C value,
+        NativeEvent event, ValueUpdater<C> valueUpdater) {
+      this.lastBrowserEventIndex = context.getIndex();
+    }
+
+    @Override
+    public void render(Context context, C value, SafeHtmlBuilder sb) {
+      this.lastRenderIndex = context.getIndex();
+      sb.appendEscaped("index " + this.lastRenderIndex);
+    }
+
+    @Override
+    public boolean resetFocus(Context context, Element parent, C value) {
+      this.lastResetFocusIndex = context.getIndex();
+      return false;
+    }
+  }
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.user.cellview.CellView";
   }
 
   public void testGetVisibleItem() {
-    AbstractHasData<String> display = createAbstractHasData();
+    AbstractHasData<String> display = createAbstractHasData(new TextCell());
     ListDataProvider<String> provider = new ListDataProvider<String>(
         createData(0, 13));
     provider.addDataDisplay(display);
@@ -65,7 +128,7 @@ public abstract class AbstractHasDataTestBase extends GWTTestCase {
   }
 
   public void testGetVisibleItems() {
-    AbstractHasData<String> display = createAbstractHasData();
+    AbstractHasData<String> display = createAbstractHasData(new TextCell());
     ListDataProvider<String> provider = new ListDataProvider<String>();
     provider.addDataDisplay(display);
     display.setVisibleRange(10, 3);
@@ -82,8 +145,21 @@ public abstract class AbstractHasDataTestBase extends GWTTestCase {
     assertEquals("test 12", items.get(2));
   }
 
+  public void testResetFocus() {
+    IndexCell<String> cell = new IndexCell<String>();
+    AbstractHasData<String> display = createAbstractHasData(cell);
+    display.setRowData(createData(0, 10));
+    display.getPresenter().flush();
+
+    cell.assertLastResetFocusIndex(-1);
+    display.getPresenter().setKeyboardSelectedRow(5, false, false);
+    display.resetFocusOnCell();
+    cell.assertLastResetFocusIndex(5);
+  }
+
   public void testSetRowData() {
-    AbstractHasData<String> display = createAbstractHasData();
+    IndexCell<String> cell = new IndexCell<String>();
+    AbstractHasData<String> display = createAbstractHasData(cell);
 
     // Set exact data.
     List<String> values = createData(0, 62);
@@ -110,6 +186,13 @@ public abstract class AbstractHasDataTestBase extends GWTTestCase {
     assertTrue(display.isRowCountExact());
     assertEquals(values, display.getVisibleItems());
     assertEquals(new Range(0, 62), display.getVisibleRange());
+    display.getPresenter().flush();
+
+    // Render one row and verify the index.
+    display.setRowData(5, createData(100, 1));
+    display.getPresenter().flush();
+    assertEquals("test 100", display.getVisibleItem(5));
+    cell.assertLastRenderIndex(5);
   }
 
   public void testSetTabIndex() {
@@ -123,7 +206,7 @@ public abstract class AbstractHasDataTestBase extends GWTTestCase {
       }
     }
 
-    AbstractHasData<String> display = createAbstractHasData();
+    AbstractHasData<String> display = createAbstractHasData(new TextCell());
     ListDataProvider<String> provider = new ListDataProvider<String>(
         createData(0, 10));
     provider.addDataDisplay(display);
@@ -147,14 +230,16 @@ public abstract class AbstractHasDataTestBase extends GWTTestCase {
 
   /**
    * Create an {@link AbstractHasData} to test.
-   *
+   * 
+   * @param cell the cell to use
    * @return the widget to test
    */
-  protected abstract AbstractHasData<String> createAbstractHasData();
+  protected abstract AbstractHasData<String> createAbstractHasData(
+      Cell<String> cell);
 
   /**
    * Create a list of data for testing.
-   *
+   * 
    * @param start the start index
    * @param length the length
    * @return a list of data

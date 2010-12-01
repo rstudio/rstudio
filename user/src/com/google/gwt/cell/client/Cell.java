@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -23,19 +23,70 @@ import java.util.Set;
 
 /**
  * A light weight representation of a renderable object.
- *
+ * 
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.cell.CellExample}
  * </p>
- *
+ * 
  * @param <C> the type that this Cell represents
  */
 public interface Cell<C> {
 
   /**
+   * Contains information about the context of the Cell.
+   */
+  public static class Context {
+
+    private final int column;
+    private final int index;
+    private final Object key;
+
+    /**
+     * Create a new {@link Context}.
+     * 
+     * @param index the absolute index of the value
+     * @param column the column index of the cell, or 0
+     * @param key the unique key that represents the row value
+     */
+    public Context(int index, int column, Object key) {
+      this.index = index;
+      this.column = column;
+      this.key = key;
+    }
+
+    /**
+     * Get the column index of the cell. If the view only contains a single
+     * column, this method returns 0.
+     * 
+     * @return the column index of the cell
+     */
+    public int getColumn() {
+      return column;
+    }
+
+    /**
+     * Get the absolute index of the value.
+     * 
+     * @return the index
+     */
+    public int getIndex() {
+      return index;
+    }
+
+    /**
+     * Get the key that uniquely identifies the row object.
+     * 
+     * @return the unique key
+     */
+    public Object getKey() {
+      return key;
+    }
+  }
+
+  /**
    * Check if this cell depends on the selection state.
-   *
+   * 
    * @return true if dependent on selection, false if not
    */
   boolean dependsOnSelection();
@@ -43,13 +94,14 @@ public interface Cell<C> {
   /**
    * Get the set of events that this cell consumes. The container that uses this
    * cell should only pass these events to
-   * {@link #onBrowserEvent(Element, Object, Object, NativeEvent, ValueUpdater)}.
-   *
+   * {@link #onBrowserEvent(Context, Element, Object, NativeEvent, ValueUpdater))}
+   * when the event occurs.
+   * 
    * <p>
    * The returned value should not be modified, and may be an unmodifiable set.
    * Changes to the return value may not be reflected in the cell.
    * </p>
-   *
+   * 
    * @return the consumed events, or null if no events are consumed
    */
   Set<String> getConsumedEvents();
@@ -57,7 +109,7 @@ public interface Cell<C> {
   /**
    * Check if this cell handles selection. If the cell handles selection, then
    * its container should not automatically handle selection.
-   *
+   * 
    * @return true if the cell handles selection, false if not
    */
   boolean handlesSelection();
@@ -65,32 +117,32 @@ public interface Cell<C> {
   /**
    * Returns true if the cell is currently editing the data identified by the
    * given element and key. While a cell is editing, widgets containing the cell
-   * may chooses to pass keystrokes directly to the cell rather than using them
+   * may choose to pass keystrokes directly to the cell rather than using them
    * for navigation purposes.
-   *
+   * 
+   * @param context the {@link Context} of the cell
    * @param parent the parent Element
    * @param value the value associated with the cell
-   * @param key the unique key associated with the row object
    * @return true if the cell is in edit mode
    */
-  boolean isEditing(Element parent, C value, Object key);
+  boolean isEditing(Context context, Element parent, C value);
 
   /**
    * Handle a browser event that took place within the cell. The default
    * implementation returns null.
-   *
+   * 
+   * @param context the {@link Context} of the cell
    * @param parent the parent Element
    * @param value the value associated with the cell
-   * @param key the unique key associated with the row object
    * @param event the native browser event
    * @param valueUpdater a {@link ValueUpdater}, or null if not specified
    */
-  void onBrowserEvent(Element parent, C value, Object key, NativeEvent event,
-      ValueUpdater<C> valueUpdater);
+  void onBrowserEvent(Context context, Element parent, C value,
+      NativeEvent event, ValueUpdater<C> valueUpdater);
 
   /**
    * Render a cell as HTML into a {@link SafeHtmlBuilder}, suitable for passing
-   * to {@link Element#setInnerHTML} on a container element.
+   * to {@link Element#setInnerHTML(String)} on a container element.
    * 
    * <p>
    * Note: If your cell contains natively focusable elements, such as buttons or
@@ -98,33 +150,32 @@ public interface Cell<C> {
    * focus away from the containing widget.
    * </p>
    * 
+   * @param context the {@link Context} of the cell
    * @param value the cell value to be rendered
-   * @param key the unique key associated with the row object
    * @param sb the {@link SafeHtmlBuilder} to be written to
    */
-  void render(C value, Object key, SafeHtmlBuilder sb);
+  void render(Context context, C value, SafeHtmlBuilder sb);
 
   /**
    * Reset focus on the Cell. This method is called if the cell has focus when
    * it is refreshed.
-   *
+   * 
+   * @param context the {@link Context} of the cell
    * @param parent the parent Element
    * @param value the value associated with the cell
-   * @param key the unique key associated with the row object
-   *
    * @return true if focus is taken, false if not
    */
-  boolean resetFocus(Element parent, C value, Object key);
+  boolean resetFocus(Context context, Element parent, C value);
 
   /**
    * This method may be used by cell containers to set the value on a single
    * cell directly, rather than using {@link Element#setInnerHTML(String)}. See
-   * {@link AbstractCell#setValue(Element, Object, Object)} for a default
-   * implementation that uses {@link #render(Object, Object, SafeHtmlBuilder)}.
-   *
+   * {@link AbstractCell#setValue(Context)} for a default implementation that
+   * uses {@link #render(Context, SafeHtmlBuilder))}.
+   * 
+   * @param context the {@link Context} of the cell
    * @param parent the parent Element
    * @param value the value associated with the cell
-   * @param key the unique key associated with the row object
    */
-  void setValue(Element parent, C value, Object key);
+  void setValue(Context context, Element parent, C value);
 }

@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -30,13 +30,13 @@ import java.util.Set;
  * <p>
  * A {@link Cell} that is composed of other {@link Cell}s.
  * </p>
- *
+ * 
  * <p>
  * When this cell is rendered, it will render each component {@link Cell} inside
  * a span. If the component {@link Cell} uses block level elements (such as a
  * Div), the component cells will stack vertically.
  * </p>
- *
+ * 
  * @param <C> the type that this Cell represents
  */
 public class CompositeCell<C> extends AbstractCell<C> {
@@ -58,7 +58,7 @@ public class CompositeCell<C> extends AbstractCell<C> {
 
   /**
    * The cells that compose this {@link Cell}.
-   *
+   * 
    * NOTE: Do not add add/insert/remove hasCells methods to the API. This cell
    * assumes that the index of the cellParent corresponds to the index in the
    * hasCells array.
@@ -67,7 +67,7 @@ public class CompositeCell<C> extends AbstractCell<C> {
 
   /**
    * Construct a new {@link CompositeCell}.
-   *
+   * 
    * @param hasCells the cells that makeup the composite
    */
   public CompositeCell(List<HasCell<C, ?>> hasCells) {
@@ -113,7 +113,7 @@ public class CompositeCell<C> extends AbstractCell<C> {
   }
 
   @Override
-  public void onBrowserEvent(Element parent, C value, Object key,
+  public void onBrowserEvent(Context context, Element parent, C value,
       NativeEvent event, ValueUpdater<C> valueUpdater) {
     int index = 0;
     EventTarget eventTarget = event.getEventTarget();
@@ -123,7 +123,7 @@ public class CompositeCell<C> extends AbstractCell<C> {
       Element wrapper = container.getFirstChildElement();
       while (wrapper != null) {
         if (wrapper.isOrHasChild(target)) {
-          onBrowserEventImpl(wrapper, value, key, event, valueUpdater,
+          onBrowserEventImpl(context, wrapper, value, event, valueUpdater,
               hasCells.get(index));
         }
 
@@ -134,19 +134,19 @@ public class CompositeCell<C> extends AbstractCell<C> {
   }
 
   @Override
-  public void render(C value, Object key, SafeHtmlBuilder sb) {
+  public void render(Context context, C value, SafeHtmlBuilder sb) {
     for (HasCell<C, ?> hasCell : hasCells) {
-      render(value, key, sb, hasCell);
+      render(context, value, sb, hasCell);
     }
   }
 
   @Override
-  public boolean resetFocus(Element parent, C value, Object key) {
+  public boolean resetFocus(Context context, Element parent, C value) {
     Element curChild = getContainerElement(parent).getFirstChildElement();
     for (HasCell<C, ?> hasCell : hasCells) {
       // The first child that takes focus wins. Only one child should ever be in
       // edit mode, so this is safe.
-      if (resetFocusImpl(curChild, value, key, hasCell)) {
+      if (resetFocusImpl(context, curChild, value, hasCell)) {
         return true;
       }
       curChild = curChild.getNextSiblingElement();
@@ -155,10 +155,10 @@ public class CompositeCell<C> extends AbstractCell<C> {
   }
 
   @Override
-  public void setValue(Element parent, C object, Object key) {
+  public void setValue(Context context, Element parent, C object) {
     Element curChild = getContainerElement(parent).getFirstChildElement();
     for (HasCell<C, ?> hasCell : hasCells) {
-      setValueImpl(curChild, object, key, hasCell);
+      setValueImpl(context, curChild, object, hasCell);
       curChild = curChild.getNextSiblingElement();
     }
   }
@@ -167,7 +167,7 @@ public class CompositeCell<C> extends AbstractCell<C> {
    * Get the element that acts as the container for all children. If children
    * are added directly to the parent, the parent is the container. If children
    * are added in a table row, the row is the parent.
-   *
+   * 
    * @param parent the parent element of the cell
    * @return the container element
    */
@@ -185,22 +185,22 @@ public class CompositeCell<C> extends AbstractCell<C> {
    * focus away from the containing widget.
    * </p>
    * 
+   * @param context the {@link Context} of the cell
    * @param value the cell value to be rendered
-   * @param key the unique key associated with the row object
    * @param sb the {@link SafeHtmlBuilder} to be written to
    * @param hasCell a {@link HasCell} instance containing the cells to be
    *          rendered within this cell
    */
-  protected <X> void render(C value, Object key, SafeHtmlBuilder sb,
-      HasCell<C, X> hasCell) {
+  protected <X> void render(Context context, C value,
+      SafeHtmlBuilder sb, HasCell<C, X> hasCell) {
     Cell<X> cell = hasCell.getCell();
     sb.appendHtmlConstant("<span>");
-    cell.render(hasCell.getValue(value), key, sb);
+    cell.render(context, hasCell.getValue(value), sb);
     sb.appendHtmlConstant("</span>");
   }
 
-  private <X> void onBrowserEventImpl(Element parent, final C object,
-      Object key, NativeEvent event, final ValueUpdater<C> valueUpdater,
+  private <X> void onBrowserEventImpl(Context context, Element parent,
+      final C object, NativeEvent event, final ValueUpdater<C> valueUpdater,
       final HasCell<C, X> hasCell) {
     ValueUpdater<X> tempUpdater = null;
     final FieldUpdater<C, X> fieldUpdater = hasCell.getFieldUpdater();
@@ -215,18 +215,18 @@ public class CompositeCell<C> extends AbstractCell<C> {
       };
     }
     Cell<X> cell = hasCell.getCell();
-    cell.onBrowserEvent(parent, hasCell.getValue(object), key, event,
+    cell.onBrowserEvent(context, parent, hasCell.getValue(object), event,
         tempUpdater);
   }
 
-  private <X> boolean resetFocusImpl(Element cellParent, C value, Object key,
-      HasCell<C, X> hasCell) {
+  private <X> boolean resetFocusImpl(Context context, Element cellParent,
+      C value, HasCell<C, X> hasCell) {
     X cellValue = hasCell.getValue(value);
-    return hasCell.getCell().resetFocus(cellParent, cellValue, key);
+    return hasCell.getCell().resetFocus(context, cellParent, cellValue);
   }
 
-  private <X> void setValueImpl(Element cellParent, C object, Object key,
+  private <X> void setValueImpl(Context context, Element cellParent, C object,
       HasCell<C, X> hasCell) {
-    hasCell.getCell().setValue(cellParent, hasCell.getValue(object), key);
-  }
+    hasCell.getCell().setValue(context, cellParent, hasCell.getValue(object));
+  }  
 }

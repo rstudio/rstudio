@@ -72,21 +72,21 @@ public class ActionCell<C> extends AbstractCell<C> {
   }
 
   @Override
-  public void onBrowserEvent(Element parent, C value, Object key,
+  public void onBrowserEvent(Context context, Element parent, C value,
       NativeEvent event, ValueUpdater<C> valueUpdater) {
-    super.onBrowserEvent(parent, value, key, event, valueUpdater);
+    super.onBrowserEvent(context, parent, value, event, valueUpdater);
     if ("click".equals(event.getType())) {
-      onEnterKeyDown(parent, value, key, event, valueUpdater);
+      onEnterKeyDown(context, parent, value, event, valueUpdater);
     }
   }
 
   @Override
-  public void render(C value, Object key, SafeHtmlBuilder sb) {
+  public void render(Context context, C value, SafeHtmlBuilder sb) {
     sb.append(html);
   }
 
   @Override
-  protected void onEnterKeyDown(Element parent, C value, Object key,
+  protected void onEnterKeyDown(Context context, Element parent, C value,
       NativeEvent event, ValueUpdater<C> valueUpdater) {
     delegate.execute(value);
   }

@@ -81,7 +81,7 @@ public class MobileExpenseList extends Composite implements MobilePage {
     }
 
     @Override
-    public void render(ExpenseProxy value, Object viewData, SafeHtmlBuilder sb) {
+    public void render(Context context, ExpenseProxy value, SafeHtmlBuilder sb) {
       String approval = value.getApproval();
       SafeHtml approvalIcon;
       if (approvedText.equals(approval)) {

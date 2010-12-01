@@ -64,11 +64,12 @@ public class SelectionCell extends AbstractInputCell<String, String> {
   }
 
   @Override
-  public void onBrowserEvent(Element parent, String value, Object key,
+  public void onBrowserEvent(Context context, Element parent, String value,
       NativeEvent event, ValueUpdater<String> valueUpdater) {
-    super.onBrowserEvent(parent, value, key, event, valueUpdater);
+    super.onBrowserEvent(context, parent, value, event, valueUpdater);
     String type = event.getType();
     if ("change".equals(type)) {
+      Object key = context.getKey();
       SelectElement select = parent.getFirstChild().cast();
       String newValue = options.get(select.getSelectedIndex());
       setViewData(key, newValue);
@@ -80,8 +81,9 @@ public class SelectionCell extends AbstractInputCell<String, String> {
   }
 
   @Override
-  public void render(String value, Object key, SafeHtmlBuilder sb) {
+  public void render(Context context, String value, SafeHtmlBuilder sb) {
     // Get the view data.
+    Object key = context.getKey();
     String viewData = getViewData(key);
     if (viewData != null && viewData.equals(value)) {
       clearViewData(key);

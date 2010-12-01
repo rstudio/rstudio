@@ -15,6 +15,7 @@
  */
 package com.google.gwt.cell.client;
 
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -62,7 +63,8 @@ public class IconCellDecoratorTest extends CellTestBase<String> {
 
     // Render the cell.
     SafeHtmlBuilder sb = new SafeHtmlBuilder();
-    cell.render("helloworld", null, sb);
+    Context context = new Context(0, 0, null);
+    cell.render(context, "helloworld", sb);
 
     // Compare the expected render string.
     String expected = "<div style=\"position:relative;padding-left:64px;\">";
@@ -88,7 +90,8 @@ public class IconCellDecoratorTest extends CellTestBase<String> {
     parent.setInnerHTML(getExpectedInnerHtml());
     assertEquals("helloworld",
         Element.as(parent.getFirstChildElement().getChild(1)).getInnerHTML());
-    cell.setValue(parent, "test", null);
+    Context context = new Context(0, 0, null);
+    cell.setValue(context, parent, "test");
     assertEquals("test",
         Element.as(parent.getFirstChildElement().getChild(1)).getInnerHTML());
   }

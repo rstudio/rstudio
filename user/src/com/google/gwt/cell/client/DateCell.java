@@ -82,7 +82,7 @@ public class DateCell extends AbstractCell<Date> {
   }
 
   @Override
-  public void render(Date value, Object key, SafeHtmlBuilder sb) {
+  public void render(Context context, Date value, SafeHtmlBuilder sb) {
     if (value != null) {
       sb.append(renderer.render(format.format(value)));
     }

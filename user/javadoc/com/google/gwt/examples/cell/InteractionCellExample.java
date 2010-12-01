@@ -78,7 +78,7 @@ public class InteractionCellExample implements EntryPoint {
     }
 
     @Override
-    public void onBrowserEvent(Element parent, Contact value, Object key,
+    public void onBrowserEvent(Context context, Element parent, Contact value,
         NativeEvent event, ValueUpdater<Contact> valueUpdater) {
       // Check that the value is not null.
       if (value == null) {
@@ -86,16 +86,16 @@ public class InteractionCellExample implements EntryPoint {
       }
 
       // Call the super handler, which handlers the enter key.
-      super.onBrowserEvent(parent, value, key, event, valueUpdater);
+      super.onBrowserEvent(context, parent, value, event, valueUpdater);
 
       // On click, perform the same action that we perform on enter.
       if ("click".equals(event.getType())) {
-        this.onEnterKeyDown(parent, value, key, event, valueUpdater);
+        this.onEnterKeyDown(context, parent, value, event, valueUpdater);
       }
     }
 
     @Override
-    public void render(Contact value, Object key, SafeHtmlBuilder sb) {
+    public void render(Context context, Contact value, SafeHtmlBuilder sb) {
       /*
        * Always do a null check on the value. Cell widgets can pass null to
        * cells if the underlying data contains a null, or if the data arrives
@@ -128,8 +128,8 @@ public class InteractionCellExample implements EntryPoint {
      * navigation in the widget.
      */
     @Override
-    protected void onEnterKeyDown(Element parent, Contact value, Object key,
-        NativeEvent event, ValueUpdater<Contact> valueUpdater) {
+    protected void onEnterKeyDown(Context context, Element parent,
+        Contact value, NativeEvent event, ValueUpdater<Contact> valueUpdater) {
       Window.alert("You clicked " + value.name);
     }
   }

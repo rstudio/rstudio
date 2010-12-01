@@ -16,6 +16,7 @@
 package com.google.gwt.cell.client;
 
 import com.google.gwt.cell.client.ActionCell.Delegate;
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -49,7 +50,8 @@ public class ActionCellTest extends CellTestBase<String> {
     Element parent = Document.get().createDivElement();
     NativeEvent event = Document.get().createClickEvent(0, 0, 0, 0, 0, false,
         false, false, false);
-    cell.onBrowserEvent(parent, "test", DEFAULT_KEY, event, null);
+    Context context = new Context(0, 0, DEFAULT_KEY);
+    cell.onBrowserEvent(context, parent, "test", event, null);
     delegate.assertLastObject("test");
   }
 

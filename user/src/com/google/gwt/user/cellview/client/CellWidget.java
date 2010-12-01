@@ -16,6 +16,7 @@
 package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.cell.client.Cell;
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -165,7 +166,7 @@ public class CellWidget<C> extends Widget implements HasKeyProvider<C>,
     // Forward the event to the cell.
     String eventType = event.getType();
     if (cell.getConsumedEvents().contains(eventType)) {
-      cell.onBrowserEvent(getElement(), value, getKey(value), event,
+      cell.onBrowserEvent(createContext(), getElement(), value, event,
           valueUpdater);
     }
   }
@@ -175,7 +176,7 @@ public class CellWidget<C> extends Widget implements HasKeyProvider<C>,
    */
   public void redraw() {
     SafeHtmlBuilder sb = new SafeHtmlBuilder();
-    cell.render(value, getKey(value), sb);
+    cell.render(createContext(), value, sb);
     getElement().setInnerHTML(sb.toSafeHtml().asString());
   }
 
@@ -216,6 +217,13 @@ public class CellWidget<C> extends Widget implements HasKeyProvider<C>,
     if (fireEvents) {
       ValueChangeEvent.fire(this, value);
     }
+  }
+
+  /**
+   * Get the {@link Context} for the cell.
+   */
+  private Context createContext() {
+    return new Context(0, 0, getKey(value));
   }
 
   /**

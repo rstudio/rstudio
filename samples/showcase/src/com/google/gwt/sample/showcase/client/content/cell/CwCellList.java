@@ -90,7 +90,7 @@ public class CwCellList extends ContentWidget {
     }
 
     @Override
-    public void render(ContactInfo value, Object key, SafeHtmlBuilder sb) {
+    public void render(Context context, ContactInfo value, SafeHtmlBuilder sb) {
       // Value can be null, so do a null check..
       if (value == null) {
         return;

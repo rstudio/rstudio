@@ -209,7 +209,7 @@ public class CellBrowserExample2 implements EntryPoint {
         // Create a cell to display a composer.
         Cell<Composer> cell = new AbstractCell<Composer>() {
           @Override
-          public void render(Composer value, Object key, SafeHtmlBuilder sb) {
+          public void render(Context context, Composer value, SafeHtmlBuilder sb) {
             if (value != null) {
               sb.appendEscaped(value.getName());
             }
@@ -225,7 +225,7 @@ public class CellBrowserExample2 implements EntryPoint {
             ((Composer) value).getPlaylists());
         Cell<Playlist> cell = new AbstractCell<Playlist>() {
           @Override
-          public void render(Playlist value, Object key, SafeHtmlBuilder sb) {
+          public void render(Context context, Playlist value, SafeHtmlBuilder sb) {
             if (value != null) {
               sb.appendEscaped(value.getName());
             }

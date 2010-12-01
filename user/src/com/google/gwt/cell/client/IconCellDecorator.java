@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -32,7 +32,7 @@ import java.util.Set;
 
 /**
  * A {@link Cell} decorator that adds an icon to another {@link Cell}.
- *
+ * 
  * @param <C> the type that this Cell represents
  */
 public class IconCellDecorator<C> implements Cell<C> {
@@ -83,7 +83,7 @@ public class IconCellDecorator<C> implements Cell<C> {
   /**
    * Construct a new {@link IconCellDecorator}. The icon and the content will be
    * middle aligned by default.
-   *
+   * 
    * @param icon the icon to use
    * @param cell the cell to decorate
    */
@@ -93,7 +93,7 @@ public class IconCellDecorator<C> implements Cell<C> {
 
   /**
    * Construct a new {@link IconCellDecorator}.
-   *
+   * 
    * @param icon the icon to use
    * @param cell the cell to decorate
    * @param valign the vertical alignment attribute of the contents
@@ -122,35 +122,36 @@ public class IconCellDecorator<C> implements Cell<C> {
     return cell.handlesSelection();
   }
 
-  public boolean isEditing(Element element, C value, Object key) {
-    return cell.isEditing(element, value, key);
+  public boolean isEditing(Context context, Element parent, C value) {
+    return cell.isEditing(context, getCellParent(parent), value);
   }
 
-  public void onBrowserEvent(Element parent, C value, Object key,
+  public void onBrowserEvent(Context context, Element parent, C value,
       NativeEvent event, ValueUpdater<C> valueUpdater) {
-    cell.onBrowserEvent(getCellParent(parent), value, key, event, valueUpdater);
+    cell.onBrowserEvent(context, getCellParent(parent), value, event,
+        valueUpdater);
   }
 
-  public void render(C value, Object key, SafeHtmlBuilder sb) {
+  public void render(Context context, C value, SafeHtmlBuilder sb) {
     SafeHtmlBuilder cellBuilder = new SafeHtmlBuilder();
-    cell.render(value, key, cellBuilder);
+    cell.render(context, value, cellBuilder);
 
     sb.append(template.outerDiv(direction, imageWidth, isIconUsed(value)
         ? getIconHtml(value) : placeHolderHtml, cellBuilder.toSafeHtml()));
   }
 
-  public boolean resetFocus(Element parent, C value, Object key) {
-    return cell.resetFocus(getCellParent(parent), value, key);
+  public boolean resetFocus(Context context, Element parent, C value) {
+    return cell.resetFocus(context, getCellParent(parent), value);
   }
 
-  public void setValue(Element parent, C value, Object key) {
-    cell.setValue(getCellParent(parent), value, key);
+  public void setValue(Context context, Element parent, C value) {
+    cell.setValue(context, getCellParent(parent), value);
   }
 
   /**
    * Get the safe HTML string that represents the icon. Override this method to
    * change the icon based on the value.
-   *
+   * 
    * @param value the value being rendered
    * @return the HTML string that represents the icon
    */
@@ -162,7 +163,7 @@ public class IconCellDecorator<C> implements Cell<C> {
    * Check if the icon should be used for the value. If the icon should not be
    * used, a placeholder of the same size will be used instead. The default
    * implementations returns true.
-   *
+   * 
    * @param value the value being rendered
    * @return true to use the icon, false to use a placeholder
    */
@@ -172,7 +173,7 @@ public class IconCellDecorator<C> implements Cell<C> {
 
   /**
    * Get the HTML representation of an image. Visible for testing.
-   *
+   * 
    * @param res the {@link ImageResource} to render as HTML
    * @param valign the vertical alignment
    * @param isPlaceholder if true, do not include the background image
@@ -203,7 +204,7 @@ public class IconCellDecorator<C> implements Cell<C> {
 
   /**
    * Get the parent element of the decorated cell.
-   *
+   * 
    * @param parent the parent of this cell
    * @return the decorated cell's parent
    */

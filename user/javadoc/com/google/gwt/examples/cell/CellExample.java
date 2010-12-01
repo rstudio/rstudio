@@ -39,7 +39,7 @@ public class CellExample implements EntryPoint {
   private static class ColorCell extends AbstractCell<String> {
 
     @Override
-    public void render(String value, Object key, SafeHtmlBuilder sb) {
+    public void render(Context context, String value, SafeHtmlBuilder sb) {
       /*
        * Always do a null check on the value. Cell widgets can pass null to
        * cells if the underlying data contains a null, or if the data arrives

@@ -76,8 +76,7 @@ public class MobileReportList extends Composite implements MobilePage {
 
     reportList = new CellList<ReportProxy>(new AbstractCell<ReportProxy>() {
       @Override
-      public void render(
-          ReportProxy value, Object viewData, SafeHtmlBuilder sb) {
+      public void render(Context context, ReportProxy value, SafeHtmlBuilder sb) {
         sb.appendHtmlConstant("<div class='item'>");
         sb.appendEscaped(value.getPurpose());
         sb.appendHtmlConstant("</div>");

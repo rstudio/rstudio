@@ -15,8 +15,11 @@
  */
 package com.google.gwt.user.cellview.client;
 
+import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.TableRowElement;
@@ -26,6 +29,7 @@ import com.google.gwt.user.cellview.client.CellTable.Resources;
 import com.google.gwt.user.cellview.client.CellTable.Style;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
+import com.google.gwt.user.client.ui.RootPanel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,7 +68,7 @@ public class CellTableTest extends AbstractHasDataTestBase {
   }
 
   public void testCellAlignment() {
-    CellTable<String> table = createAbstractHasData();
+    CellTable<String> table = createAbstractHasData(new TextCell());
     Column<String, String> column = new Column<String, String>(new TextCell()) {
       @Override
       public String getValue(String object) {
@@ -117,8 +121,25 @@ public class CellTableTest extends AbstractHasDataTestBase {
     assertTrue("bottom".equals(vAlign));
   }
 
+  public void testCellEvent() {
+    IndexCell<String> cell = new IndexCell<String>("click");
+    CellTable<String> table = createAbstractHasData(cell);
+    RootPanel.get().add(table);
+    table.setRowData(createData(0, 10));
+    table.getPresenter().flush();
+
+    // Trigger an event at index 5.
+    NativeEvent event = Document.get().createClickEvent(0, 0, 0, 0, 0, false,
+        false, false, false);
+    table.getRowElement(5).getCells().getItem(0).dispatchEvent(event);
+    cell.assertLastBrowserEventIndex(5);
+    cell.assertLastEditingIndex(5);
+
+    RootPanel.get().remove(table);
+  }
+
   public void testGetRowElement() {
-    CellTable<String> table = createAbstractHasData();
+    CellTable<String> table = createAbstractHasData(new TextCell());
     table.setRowData(0, createData(0, 10));
 
     // Ensure that calling getRowElement() flushes all pending changes.
@@ -238,9 +259,9 @@ public class CellTableTest extends AbstractHasDataTestBase {
   }
 
   @Override
-  protected CellTable<String> createAbstractHasData() {
+  protected CellTable<String> createAbstractHasData(Cell<String> cell) {
     CellTable<String> table = new CellTable<String>();
-    table.addColumn(new Column<String, String>(new TextCell()) {
+    table.addColumn(new Column<String, String>(cell) {
       @Override
       public String getValue(String object) {
         return object;

@@ -55,17 +55,17 @@ public class CellWidgetTest extends GWTTestCase {
     }
 
     @Override
-    public void onBrowserEvent(Element parent, String value, Object key,
+    public void onBrowserEvent(Context context, Element parent, String value,
         NativeEvent event, ValueUpdater<String> valueUpdater) {
       lastEventValue = value;
-      lastEventKey = key;
+      lastEventKey = context.getKey();
       if (valueUpdater != null) {
         valueUpdater.update("newValue");
       }
     }
 
     @Override
-    public void render(String value, Object key, SafeHtmlBuilder sb) {
+    public void render(Context context, String value, SafeHtmlBuilder sb) {
       if (value != null) {
         sb.appendEscaped(value);
       }

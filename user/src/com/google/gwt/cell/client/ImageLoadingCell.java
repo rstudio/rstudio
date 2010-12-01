@@ -179,7 +179,7 @@ public class ImageLoadingCell extends AbstractCell<String> {
   }
 
   @Override
-  public void onBrowserEvent(Element parent, String value, Object key,
+  public void onBrowserEvent(Context context, Element parent, String value,
       NativeEvent event, ValueUpdater<String> valueUpdater) {
     // The loading indicator can fire its own load or error event, so we check
     // that the event actually occurred on the main image.
@@ -201,7 +201,7 @@ public class ImageLoadingCell extends AbstractCell<String> {
   }
 
   @Override
-  public void render(String value, Object key, SafeHtmlBuilder sb) {
+  public void render(Context context, String value, SafeHtmlBuilder sb) {
     // We can't use ViewData because we don't know the caching policy of the
     // browser. The browser may fetch the image every time we render.
     if (value != null) {

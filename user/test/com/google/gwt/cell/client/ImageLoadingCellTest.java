@@ -15,6 +15,7 @@
  */
 package com.google.gwt.cell.client;
 
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.ImageElement;
@@ -30,8 +31,29 @@ public class ImageLoadingCellTest extends CellTestBase<String> {
     Cell<String> cell = createCell();
     String value = createCellValue();
     SafeHtmlBuilder sb = new SafeHtmlBuilder();
-    cell.render(value, null, sb);
+    Context context = new Context(0, 0, null);
+    cell.render(context, value, sb);
 
+    // Render the html.
+    Element elem = Document.get().createDivElement();
+    elem.setInnerHTML(sb.toSafeHtml().asString());
+
+    // Verify the image.
+    assertEquals(2, elem.getChildCount());
+    Element imgWrapper = elem.getChild(1).cast();
+    ImageElement img = imgWrapper.getFirstChildElement().cast();
+    assertEquals("img", img.getTagName().toLowerCase());
+    assertTrue(img.getSrc().toLowerCase().endsWith("test.png"));
+  }
+
+  @Override
+  public void testRenderNegativeIndex() {
+    Cell<String> cell = createCell();
+    String value = createCellValue();
+    SafeHtmlBuilder sb = new SafeHtmlBuilder();
+    Context context = new Context(-1, -1, null);
+    cell.render(context, value, sb);
+ 
     // Render the html.
     Element elem = Document.get().createDivElement();
     elem.setInnerHTML(sb.toSafeHtml().asString());

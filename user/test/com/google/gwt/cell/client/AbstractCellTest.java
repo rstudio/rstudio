@@ -15,6 +15,7 @@
  */
 package com.google.gwt.cell.client;
 
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 
@@ -27,7 +28,8 @@ public class AbstractCellTest extends CellTestBase<String> {
     Cell<String> cell = createCell();
     String value = createCellValue();
     Element parent = Document.get().createDivElement();
-    cell.setValue(parent, value, null);
+    Context context = new Context(0, 0, null);
+    cell.setValue(context, parent, value);
     assertEquals(getExpectedInnerHtml(), parent.getInnerHTML());
   }
 

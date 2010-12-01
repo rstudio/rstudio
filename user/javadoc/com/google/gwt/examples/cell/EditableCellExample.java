@@ -67,7 +67,7 @@ public class EditableCellExample implements EntryPoint {
     }
 
     @Override
-    public void onBrowserEvent(Element parent, Contact value, Object key,
+    public void onBrowserEvent(Context context, Element parent, Contact value,
         NativeEvent event, ValueUpdater<Contact> valueUpdater) {
       // Check that the value is not null.
       if (value == null) {
@@ -75,7 +75,7 @@ public class EditableCellExample implements EntryPoint {
       }
 
       // Call the super handler, which handlers the enter key.
-      super.onBrowserEvent(parent, value, key, event, valueUpdater);
+      super.onBrowserEvent(context, parent, value, event, valueUpdater);
 
       // Handle click events.
       if ("change".equals(event.getType())) {
@@ -85,7 +85,7 @@ public class EditableCellExample implements EntryPoint {
     }
 
     @Override
-    public void render(Contact value, Object key, SafeHtmlBuilder sb) {
+    public void render(Context context, Contact value, SafeHtmlBuilder sb) {
       /*
        * Always do a null check on the value. Cell widgets can pass null to
        * cells if the underlying data contains a null, or if the data arrives
@@ -123,8 +123,8 @@ public class EditableCellExample implements EntryPoint {
      * navigation in the widget. Our cell will toggle the checkbox on Enter.
      */
     @Override
-    protected void onEnterKeyDown(Element parent, Contact value, Object key,
-        NativeEvent event, ValueUpdater<Contact> valueUpdater) {
+    protected void onEnterKeyDown(Context context, Element parent,
+        Contact value, NativeEvent event, ValueUpdater<Contact> valueUpdater) {
       // Toggle the checkbox.
       InputElement input = getInputElement(parent);
       input.setChecked(!input.isChecked());

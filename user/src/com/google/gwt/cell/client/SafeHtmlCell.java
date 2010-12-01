@@ -30,7 +30,7 @@ public class SafeHtmlCell extends AbstractCell<SafeHtml> {
   }
 
   @Override
-  public void render(SafeHtml value, Object key, SafeHtmlBuilder sb) {
+  public void render(Context context, SafeHtml value, SafeHtmlBuilder sb) {
     if (value != null) {
       sb.append(value);
     }
