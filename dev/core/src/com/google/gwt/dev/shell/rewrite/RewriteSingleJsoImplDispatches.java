@@ -222,8 +222,14 @@ public class RewriteSingleJsoImplDispatches extends ClassAdapter {
     List<JClassType> q = new LinkedList<JClassType>();
     JClassType intf = typeOracle.findType(intfName.replace('/', '.').replace(
         '$', '.'));
-    assert intf != null : "Could not find interface " + intfName;
-    q.add(intf);
+    
+    /*
+     * If the interface's compilation unit wasn't retained due to an error, then
+     * it won't be available in the typeOracle for us to rewrite
+     */
+    if (intf != null) {
+      q.add(intf);
+    }
 
     while (!q.isEmpty()) {
       intf = q.remove(0);
