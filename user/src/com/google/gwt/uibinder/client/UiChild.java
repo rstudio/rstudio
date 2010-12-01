@@ -42,14 +42,15 @@ import java.lang.annotation.Target;
  * 
  * &#064;UiChild MyWidget#addCustomChild(Widget w) </code> and
  * 
- *          <pre>
- *          <p:MyWidget>
- *          <p:customchild>
- *          <g:SomeWidget />
- *          </p:customchild>
- *          </p:MyWidget>
- *          </pre> would invoke the <code>addCustomChild</code> function to add
- *          an instance of SomeWidget.
+ * <pre>
+ *   &lt;p:MyWidget>
+ *     &lt;p:customchild>
+ *       &lt;g:SomeWidget />
+ *     &lt;/p:customchild>
+ *   &lt;/p:MyWidget>
+ * </pre> 
+ * would invoke the <code>addCustomChild</code> function to add an instance of
+ * SomeWidget.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
