@@ -135,7 +135,7 @@ public final class CompilingClassLoader extends ClassLoader implements
 
       JsniRef parsed = JsniRef.parse(jsniMemberRef);
       if (parsed == null) {
-        logger.log(TreeLogger.WARN, "Malformed JSNI reference '"
+        logger.log(TreeLogger.ERROR, "Malformed JSNI reference '"
             + jsniMemberRef + "'; expect subsequent failures",
             new NoSuchFieldError(jsniMemberRef));
         return -1;
@@ -155,7 +155,7 @@ public final class CompilingClassLoader extends ClassLoader implements
          * semantics of the hand-written JS.
          */
         if (singleJsoImplTypes.contains(canonicalizeClassName(className))) {
-          logger.log(TreeLogger.WARN,
+          logger.log(TreeLogger.ERROR,
               "Invalid JSNI reference to SingleJsoImpl interface (" + className
                   + "); consider using a trampoline. "
                   + "Expect subsequent failures.", new NoSuchFieldError(
@@ -166,7 +166,7 @@ public final class CompilingClassLoader extends ClassLoader implements
         int memberId = dispClassInfo.getMemberId(memberName);
         if (memberId < 0) {
           if (!className.startsWith("java.")) {
-            logger.log(TreeLogger.WARN, "Member '" + memberName
+            logger.log(TreeLogger.ERROR, "Member '" + memberName
                 + "' in JSNI reference '" + jsniMemberRef
                 + "' could not be found; expect subsequent failures",
                 new NoSuchFieldError(memberName));
@@ -176,7 +176,7 @@ public final class CompilingClassLoader extends ClassLoader implements
         return synthesizeDispId(dispClassInfo.getClassId(), memberId);
       }
 
-      logger.log(TreeLogger.WARN, "Class '" + className
+      logger.log(TreeLogger.ERROR, "Class '" + className
           + "' in JSNI reference '" + jsniMemberRef
           + "' could not be found; expect subsequent failures",
           new ClassNotFoundException(className));

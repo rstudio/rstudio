@@ -270,7 +270,7 @@ public class JsniCheckerTest extends CheckerTestCase {
     code.append("}\n");
 
     // Cannot resolve, missing synthetic enclosing instance.
-    shouldGenerateWarning(code, 7, "Referencing method 'Buggy.Inner.new(Z)': "
+    shouldGenerateError(code, 7, "JSNI Referencing method 'Buggy.Inner.new(Z)': "
         + "unable to resolve method, expect subsequent failures");
 
     code = new StringBuffer();
@@ -505,8 +505,8 @@ public class JsniCheckerTest extends CheckerTestCase {
     code.append("    @Foo::x;\n");
     code.append("  }-*/;\n");
     code.append("}\n");
-    shouldGenerateWarning(code, 3,
-        "Referencing class 'Foo': unable to resolve class, expect subsequent failures");
+    shouldGenerateError(code, 3,
+        "JSNI Referencing class 'Foo': unable to resolve class, expect subsequent failures");
   }
 
   public void testUnresolvedField() {
@@ -516,10 +516,10 @@ public class JsniCheckerTest extends CheckerTestCase {
     code.append("    @Buggy::x;\n");
     code.append("  }-*/;\n");
     code.append("}\n");
-    shouldGenerateWarning(
+    shouldGenerateError(
         code,
         3,
-        "Referencing field 'Buggy.x': unable to resolve field, expect subsequent failures");
+        "JSNI Referencing field 'Buggy.x': unable to resolve field, expect subsequent failures");
   }
 
   public void testUnresolvedMethod() {
@@ -529,10 +529,10 @@ public class JsniCheckerTest extends CheckerTestCase {
     code.append("    @Buggy::x(Ljava/lang/String);\n");
     code.append("  }-*/;\n");
     code.append("}\n");
-    shouldGenerateWarning(
+    shouldGenerateError(
         code,
         3,
-        "Referencing method 'Buggy.x(Ljava/lang/String)': unable to resolve method, expect subsequent failures");
+        "JSNI Referencing method 'Buggy.x(Ljava/lang/String)': unable to resolve method, expect subsequent failures");
   }
 
   public void testUnsafeAnnotation() {

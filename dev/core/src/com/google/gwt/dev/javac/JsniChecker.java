@@ -207,7 +207,7 @@ public class JsniChecker {
       }
       FieldBinding target = getField(clazz, jsniRef);
       if (target == null) {
-        emitWarning("jsni", "Referencing field '" + jsniRef.className() + "."
+        emitError("JSNI Referencing field '" + jsniRef.className() + "."
             + jsniRef.memberName()
             + "': unable to resolve field, expect subsequent failures");
         return;
@@ -231,7 +231,7 @@ public class JsniChecker {
       assert jsniRef.isMethod();
       MethodBinding target = getMethod(clazz, jsniRef);
       if (target == null) {
-        emitWarning("jsni", "Referencing method '" + jsniRef.className() + "."
+        emitError("JSNI Referencing method '" + jsniRef.className() + "."
             + jsniRef.memberSignature()
             + "': unable to resolve method, expect subsequent failures");
         return;
@@ -318,7 +318,7 @@ public class JsniChecker {
           checkFieldRef(clazz, jsniRef);
         }
       } else {
-        emitWarning("jsni", "Referencing class '" + className
+        emitError("JSNI Referencing class '" + className
             + "': unable to resolve class, expect subsequent failures");
       }
     }
