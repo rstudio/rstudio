@@ -19,8 +19,6 @@ package com.google.gwt.dom.client;
  * Mozilla implementation of StandardBrowser.
  */
 class DOMImplMozilla extends DOMImplStandard {
-  private static boolean isGecko190OrBefore;
-  private static boolean isGecko190OrBeforeDetected;
 
   /**
    * Return true if using Gecko 1.9.0 (Firefox 3) or earlier.
@@ -28,20 +26,7 @@ class DOMImplMozilla extends DOMImplStandard {
    * @return true if using Gecko 1.9.0 (Firefox 3) or earlier.
    */
   @SuppressWarnings("unused")
-  static boolean isGecko190OrBefore() {
-    if (!isGecko190OrBeforeDetected) {
-      isGecko190OrBefore = isGecko190OrBeforeImpl();
-      isGecko190OrBeforeDetected = true;
-    }
-    return isGecko190OrBefore;
-  }
-
-  /**
-   * Return true if using Gecko 1.9.0 (Firefox 3) or earlier.
-   * 
-   * @return true if using Gecko 1.9.0 (Firefox 3) or earlier.
-   */
-  private static native boolean isGecko190OrBeforeImpl() /*-{
+  private static native boolean isGecko190OrBefore() /*-{
     var result = /rv:([0-9]+)\.([0-9]+)\.([0-9]+)?/.exec(navigator.userAgent.toLowerCase());
     if (result && result.length >= 3) {
       var version = (parseInt(result[1]) * 1000000) + (parseInt(result[2]) * 1000) + 

@@ -40,7 +40,11 @@ public class Context2dTest extends GWTTestCase {
   protected Canvas canvas2;
 
   native boolean isGecko190OrBefore() /*-{
-    return @com.google.gwt.dom.client.DOMImplMozilla::isGecko190OrBeforeImpl()();
+    return @com.google.gwt.dom.client.DOMImplMozilla::isGecko190OrBefore()();
+  }-*/;
+
+  native boolean isWebkit525OrBefore() /*-{
+    return @com.google.gwt.dom.client.DOMImplSafari::isWebkit525OrBefore()();
   }-*/;
 
   @Override
@@ -69,6 +73,12 @@ public class Context2dTest extends GWTTestCase {
   public void testFillRect() {
     if (!canvas1.isSupported()) {
       return; // disable tests if not supported
+    }
+
+    // Safari 3.0 does not support getImageData(), so the following tests are disabled for
+    // Safari 3.0 and before.
+    if (isWebkit525OrBefore()) {
+      return;
     }
 
     canvas1.setHeight("40px");
@@ -196,6 +206,12 @@ public class Context2dTest extends GWTTestCase {
       return; // disable tests if not supported
     }
 
+    // Safari 3.0 does not support getImageData(), so the following tests are disabled for
+    // Safari 3.0 and before.
+    if (isWebkit525OrBefore()) {
+      return;
+    }
+
     canvas1.setHeight("40px");
     canvas1.setWidth("60px");
     canvas1.setCoordinateSpaceHeight(40);
@@ -239,6 +255,12 @@ public class Context2dTest extends GWTTestCase {
     // Firefox 3.0 does not support createImageData(), so the following tests are disabled
     // for FF 3.0 and before.
     if (isGecko190OrBefore()) {
+      return;
+    }
+
+    // Safari 3.0 does not support getImageData(), so the following tests are disabled for
+    // Safari 3.0 and before.
+    if (isWebkit525OrBefore()) {
       return;
     }
 
@@ -356,6 +378,12 @@ public class Context2dTest extends GWTTestCase {
   public void testPixelManipulation() {
     if (!canvas1.isSupported()) {
       return; // disable tests if not supported
+    }
+
+    // Safari 3.0 does not support getImageData(), so the following tests are disabled for
+    // Safari 3.0 and before.
+    if (isWebkit525OrBefore()) {
+      return;
     }
 
     canvas1.setHeight("40px");

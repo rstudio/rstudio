@@ -34,6 +34,10 @@ public class CanvasTest extends GWTTestCase {
   protected Canvas canvas1;
   protected Canvas canvas2;
 
+  native boolean isWebkit525OrBefore() /*-{
+    return @com.google.gwt.dom.client.DOMImplSafari::isWebkit525OrBefore()();
+  }-*/;
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.canvas.Canvas";
@@ -67,6 +71,12 @@ public class CanvasTest extends GWTTestCase {
   public void testBlankDataUrl() {
     if (!canvas1.isSupported()) {
       return; // disable tests if not supported
+    }
+
+    // Safari 3.0 does not support toDataURL(), so the following tests are disabled for
+    // Safari 3.0 and before.
+    if (isWebkit525OrBefore()) {
+      return;
     }
 
     canvas1.setHeight("0px");
@@ -140,6 +150,12 @@ public class CanvasTest extends GWTTestCase {
   public void testDataUrlWithType() {
     if (!canvas1.isSupported()) {
       return; // disable tests if not supported
+    }
+
+    // Safari 3.0 does not support toDataURL(), so the following tests are disabled for
+    // Safari 3.0 and before.
+    if (isWebkit525OrBefore()) {
+      return;
     }
 
     canvas1.setHeight("10px");

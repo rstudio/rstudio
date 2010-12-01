@@ -22,6 +22,23 @@ import com.google.gwt.core.client.JavaScriptObject;
  */
 class DOMImplSafari extends DOMImplStandard {
 
+  /**
+   * Return true if using Webkit 525.x (Safari 3) or earlier.
+   * 
+   * @return true if using Webkit 525.x (Safari 3) or earlier.
+   */
+  @SuppressWarnings("unused")
+  private static native boolean isWebkit525OrBefore() /*-{
+    var result = /safari\/([\d.]+)/.exec(navigator.userAgent.toLowerCase());
+    if (result) {
+      var version = (parseFloat(result[1]));
+      if (version < 526) {
+        return true;
+      }
+    }
+    return false;
+  }-*/;
+
   private static class ClientRect extends JavaScriptObject {
     
     @SuppressWarnings("unused")
