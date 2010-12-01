@@ -66,7 +66,8 @@ public class MakeTopLevelHtmlForPerm {
    */
   public class DependencyLinkerForLeftoversFragment implements DependencyLinker {
     public String dependencyLinkForClass(String className) {
-      return leftoversStatusFileName() + "#" + filename(className);
+      return leftoversStatusFileName() + "#"
+          + hashedFilenameFragment(className);
     }
   }
 
@@ -77,7 +78,7 @@ public class MakeTopLevelHtmlForPerm {
    */
   public class DependencyLinkerForTotalBreakdown implements DependencyLinker {
     public String dependencyLinkForClass(String className) {
-      return splitStatusFileName() + "#" + filename(className);
+      return splitStatusFileName() + "#" + hashedFilenameFragment(className);
     }
   }
 
@@ -95,27 +96,280 @@ public class MakeTopLevelHtmlForPerm {
   }
 
   /**
-   *  Use this class to intern strings to save space in the generated HTML.  After populating the
-   *  map, call getJs to create a JS array of all possible methods in this report.
+   * Use this class to intern strings to save space in the generated HTML. After
+   * populating the map, call getJs to create a JS array of all possible methods
+   * in this report.
    */
   @SuppressWarnings("serial")
-  private static class HtmlInterner extends LinkedHashMap<String, Integer> {
-    int index = 0;
+  private class HtmlInterner {
+    // Hashes the interned string to the number of times this string is referenced.
+    Map<String, Integer> builder = new HashMap<String, Integer>();
+    // Hashes the interned string to its position in the final array of interned strings.
+    // Populated after the call to {@link #freeze()}
+    Map<String, Integer> frozen = null;
 
-    public String getJs() {
-      StringBuilder builder = new StringBuilder();
-      builder.append("  var internedStrings = [\n");
-      for (String key : keySet()) {
-        builder.append("\"" + key + "\",");
+    /**
+     * Call this method after all calls to {@link #intern(String)} are complete.
+     * This routine then re-orders the interned calls in order of the number of
+     * times each string was referenced by intern() so that lower numbered index
+     * values represent more frequently referenced strings.
+     */
+    public void freeze() {
+      final int maxDigits = 9;
+      assert (frozen == null);
+      assert (builder.size() < Math.pow(10, maxDigits));
+
+      // order the interned values with the most referenced first.
+      String[] temp = new String[builder.size()];
+      int index = 0;
+      for (String key : builder.keySet()) {
+        temp[index++] = key.format("%0" + maxDigits + "d%s", builder.get(key), key);
       }
-      builder.append("];\n");
-      return builder.toString();
+      builder = null;
+      Arrays.sort(temp);
+
+      // strip off the numeric prefix on the key to build the frozen hash table
+      index = 0;
+      frozen = new LinkedHashMap<String, Integer>();
+      for (int i = temp.length - 1; i >= 0; i--) {
+        frozen.put(temp[i].substring(maxDigits), index++);
+      }
     }
 
+    /**
+     * Stores a string for later interning. Keeps track of the number of times a
+     * particular string is interned which will be used by {@link freeze()} to
+     * place the most frequently used strings at the beginning of the
+     * dictionary. After a call to {@link freeze()}, it is no longer valid to
+     * call this method.
+     *
+     * @param key string to be added to the intern dictionary.
+     */
     public void intern(String key) {
-      if (!containsKey(key)) {
-        put(key, index++);
+      if (builder == null) {
+        throw new RuntimeException("freeze() already called.");
       }
+      if (!builder.containsKey(key)) {
+        builder.put(key, 1);
+      } else {
+        int value = builder.get(key) + 1;
+        builder.put(key, value);
+      }
+    }
+
+    /**
+     * Displays a link for a split point that contains this code.
+     */
+    public void printHasCodeInSplitPoint(PrintWriter outFile, String className,
+        int sp) {
+      outFile.print("h(" + frozen.get(getPackageSubstring(className)) + ","
+          + frozen.get(getClassSubstring(className)) + "," + sp + ");");
+    }
+
+    /**
+     * Non specific message that there is code in an initial fragment.
+     */
+    public void printHasInitialFragment(PrintWriter outFile) {
+      outFile.print("f();");
+    }
+
+    /**
+     * Displays a link for code in an initial fragment.
+     */
+    public void printHasInitialFragment(PrintWriter outFile, String className) {
+      String packageName = getPackageSubstring(className);
+      outFile.print("g(" + frozen.get(packageName) + ","
+          + frozen.get(getClassSubstring(className)) + ","
+          + frozen.get(hashedFilenameFragment(packageName)) + ");");
+    }
+
+    public void printSomeCodeLeftover(PrintWriter outFile) {
+      outFile.print("i();");
+    }
+
+    /**
+     * Prints an h3 element with the class name and an anchor.
+     */
+    private void printClassHeader(PrintWriter outFile, String className) {
+      outFile.print("e(" + frozen.get(getPackageSubstring(className)) + ","
+          + frozen.get(getClassSubstring(className)) + ",'"
+          + hashedFilenameFragment(className) + "');");
+    }
+
+    /**
+     * Print out a single class dependency stack in the methodDependencies
+     * report.
+     */
+    private void printDependency(PrintWriter outFile,
+        Map<String, String> dependencies, String method, String depMethod) {
+      String nameArray = "[" + frozen.get(getPackageSubstring(method)) + ","
+          + frozen.get(getClassSubstring(method)) + ","
+          + frozen.get(getMethodSubstring(method)) + "]";
+      outFile.print("b(" + nameArray + ",");
+      outFile.print("[");
+      while (depMethod != null) {
+        String nextDep = dependencies.get(depMethod);
+        // The bottom of the stack frame is not interesting.
+        if (nextDep != null) {
+          String packageString = getPackageSubstring(depMethod);
+          String classString = getClassSubstring(depMethod);
+          String methodString = getMethodSubstring(depMethod);
+          outFile.print("[" + frozen.get(packageString) + ","
+              + frozen.get(classString) + "," + frozen.get(methodString) + "]");
+        }
+        depMethod = nextDep;
+        if (nextDep != null && dependencies.get(nextDep) != null) {
+          outFile.print(",");
+        }
+      }
+      outFile.print("]);");
+    }
+
+    /**
+     * Prints out a class header for the methodDependendies report.
+     */
+    private void printDependencyClassHeader(PrintWriter outFile,
+        String className) {
+      outFile.print("a(" + frozen.get(getPackageSubstring(className)) + ","
+          + frozen.get(getClassSubstring(className)) + ");");
+    }
+
+    /**
+     * Prints a JavaScript snippet that includes the dictionary of interned
+     * strings and methods to use interned strings to create lines in the
+     * report.
+     *
+     * Call this method after invoking {@link #freeze()}.
+     *
+     * @param outFile open file to write the data to.
+     */
+    private void printInternedDataAsJs(PrintWriter outFile) {
+      if (frozen == null) {
+        throw new RuntimeException("freeze() not called.");
+      }
+      outFile.println("  var internedStrings = [");
+      for (String key : frozen.keySet()) {
+        outFile.print("\"" + key + "\",");
+      }
+      outFile.println("];");
+
+
+      // array of split point descriptions
+      outFile.println("  var spl = [");
+      for (int sp = 1; sp <= globalInformation.getNumSplitPoints(); sp++) {
+        outFile.println("        '"
+            + globalInformation.getSplitPointToLocation().get(sp) + "',");
+      }
+      outFile.println("  ];");
+
+      // TODO(zundel): Most of this below is just inserting a fixed string into the code. It would
+      // be easier to read and maintain if we could store the fixed part in a flat file. Use some
+      // kind of HTML template?
+
+      // function to print a class header in the methodDependencies report
+      // see printDependencyClassHeader()
+      outFile.println("  function a(packageRef, classRef) {");
+      outFile.println("    var className = internedStrings[packageRef] + \".\" + "
+          + "internedStrings[classRef];");
+      outFile.println("    document.write(\"<a name='\" + className + \"'>\");");
+      outFile.println("    document.write(\"<h3 class='soyc-class-header'>Class: \" + className + "
+          + "\"</a></h3>\");");
+      outFile.println("  }");
+
+      // function to print a single dependency in the methodDependencies report
+      // see printDependency()
+      outFile.println("  function b(c, deps) {");
+      outFile.println("    document.write(\"<div class='main'>"
+          + "<a class='toggle soyc-call-stack-link' onclick='toggle.call(this)'>\");");
+      outFile.println("    document.write(\"<span class='calledBy'> Call stack: </span>\");");
+      outFile.println("    document.write(internedStrings[c[0]] + \".\" + internedStrings[c[1]] + "
+          + "\"::\" + internedStrings[c[2]] + \"</a>\");");
+      outFile.println("    document.write(\"<ul class='soyc-call-stack-list'>\");");
+      outFile.println("    for (var i = 0; i < deps.length ; i++) {");
+      outFile.println("      var s = deps[i];");
+      outFile.println("      document.write(\"<li>\" + internedStrings[s[0]] + \".\" + "
+          + "internedStrings[s[1]] + \"::\" + internedStrings[s[2]] + \"</li>\");");
+      outFile.println("    }");
+      outFile.println("    document.write(\"</ul></div>\");");
+      outFile.println("  }");
+
+      // leftovers status line
+      outFile.println("  function c(packageRef,classRef,packageHashRef) {");
+      outFile.println("    var packageName = internedStrings[packageRef];");
+      outFile.println("    var className = packageName + \".\" + internedStrings[classRef];");
+      outFile.println("    var d1 = 'methodDependencies-total-' + internedStrings[packageHashRef] "
+          + "+ '-" + getPermutationId() + ".html';");
+      outFile.println("    document.write(\"<ul class='soyc-excl'>\");");
+      outFile.println("    document.write(\"<li><a href='\" + d1 + \"#\" + className + \"'>"
+          + "See why it's live</a></li>\");");
+      outFile.println("    for (var sp = 1; sp <= "
+          + globalInformation.getNumSplitPoints() + "; sp++) {");
+      outFile.println("      var d2 = 'methodDependencies-sp' + sp + '-' + "
+          + "internedStrings[packageHashRef] + '-" + getPermutationId()
+          + ".html';");
+
+      outFile.println("      document.write(\"<li><a href='\" + d2 + \"#\" + className +\"'>"
+          + " See why it's not exclusive to s.p. #\" + sp + \" (\" + spl[sp - 1] + \")"
+          + "</a></li>\");");
+      outFile.println("    }");
+      outFile.println("    document.write(\"</ul>\");");
+      outFile.println("  }");
+
+      // leftovers status package header line
+      outFile.println("  function d(packageRef) {");
+      outFile.println("    document.write(\"<div class='soyc-pkg-break'>Package: \" + "
+          + "internedStrings[packageRef] + \"</div>\");");
+      outFile.println("  }");
+
+      // leftovers status class header line
+      outFile.println("  function e(packageRef,classRef,classHashRef) {");
+      outFile.println("    document.write(\"<a name='\" + classHashRef + \"'></a><h3>\" + "
+          + "internedStrings[packageRef] + \".\" + internedStrings[classRef] + \"</h3>\");");
+      outFile.println("  }");
+
+      // split point has a class with code in the initial fragment - no link
+      outFile.println("  function f() {");
+      outFile.println("    document.write(\"<p>Some code is included in the initial fragment"
+          + "</p>\");");
+      outFile.println("  }");
+
+      // split point has a class with code in the initial fragment
+      outFile.println("  function g(packageRef, classRef, packageHashRef) {");
+      outFile.println("    document.write(\"<p>Some code is included in the initial fragment "
+          + "(<a href='methodDependencies-initial-\" + internedStrings[packageHashRef] + \"-"
+          + getPermutationId()
+          + ".html#\" + internedStrings[packageRef] + \".\" + "
+          + "internedStrings[classRef] + \"'> See why</a>)</p>\");");
+      outFile.println("  }");
+
+      // split point has code from class
+      outFile.println("  function h(packageRef, classRef, sp) {");
+      outFile.println("    document.write(\"<p>Some code downloads with split point \" + sp + "
+          + "\": \" + spl[sp - 1] + \"</p>\");");
+      outFile.println("  }");
+
+      // some code is left over
+      outFile.println("  function i() {");
+      outFile.println("    document.write(\"<p>Some code is left over:</p>\");");
+      outFile.println("  }");
+    }
+
+    /**
+     * Prints links to each split point showing why a leftover fragment isn't
+     * exclusive.
+     */
+    private void printLeftoversStatus(PrintWriter outFile, String packageName,
+        String className) {
+      outFile.println("c(" + frozen.get(packageName) + ","
+          + frozen.get(getClassSubstring(className)) + ","
+          + frozen.get(hashedFilenameFragment(packageName)) + ");");
+    }
+
+    /**
+     * Prints a div containing the package name in a blue block.
+     */
+    private void printPackageHeader(PrintWriter outFile, String packageName) {
+      outFile.print("d(" + frozen.get(packageName) + ");");
     }
   }
 
@@ -280,7 +534,9 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("<div id=\"hd\" class=\"g-section g-tpl-50-50 g-split\">");
     outFile.println("<div class=\"g-unit g-first\">");
     outFile.println("<p>");
-    outFile.println("<a href=\"index.html\" id=\"gwt-logo\" class=\"soyc-ir\"><span>Google Web Toolkit</span></a>");
+    outFile.println("<a href=\"index.html\" id=\"gwt-logo\" class=\"soyc-ir\">");
+    outFile.println("<span>Google Web Toolkit</span>");
+    outFile.println("</a>");
     outFile.println("</p>");
     outFile.println("</div>");
     outFile.println("<div class=\"g-unit\">");
@@ -313,7 +569,7 @@ public class MakeTopLevelHtmlForPerm {
    * Convert a potentially long string into a short file name. The current
    * implementation simply hashes the long name.
    */
-  private static String filename(String longFileName) {
+  private static String hashedFilenameFragment(String longFileName) {
     try {
       return Util.computeStrongName(longFileName.getBytes(Util.DEFAULT_ENCODING));
     } catch (UnsupportedEncodingException e) {
@@ -359,10 +615,11 @@ public class MakeTopLevelHtmlForPerm {
     String popupName = "packageBreakdownPopup";
     String popupTitle = "Package breakdown";
     String popupBody = "The package breakdown blames pieces of JavaScript "
-        + "code on Java packages wherever possible.  Note that this is not possible for all code, so the sizes "
-        + "of the packages here will not normally add up to the full code size.  More specifically, the sum will "
-        + "exclude strings, whitespace, and a few pieces of JavaScript code that are produced during compilation "
-        + "but cannot be attributed to any Java package.";
+        + "code on Java packages wherever possible.  Note that this is not possible for all "
+        + "code, so the sizes of the packages here will not normally add up to the full code "
+        + "size.  More specifically, the sum will exclude strings, whitespace, and a few pieces "
+        + "of JavaScript code that are produced during compilation but cannot be attributed to "
+        + "any Java package.";
 
     outFile.println("<h2>");
     addPopupLink(outFile, popupName, popupTitle, null);
@@ -375,8 +632,8 @@ public class MakeTopLevelHtmlForPerm {
     popupTitle = "Code Type Breakdown";
     popupBody = "The code type breakdown breaks down the JavaScript code according to its "
         + "type or function.  For example, it tells you how much of your code can be attributed to "
-        + "JRE, GWT-RPC, etc.  As above, strings and some other JavaScript snippets are not included "
-        + "in the breakdown.";
+        + "JRE, GWT-RPC, etc.  As above, strings and some other JavaScript snippets are not "
+        + "included in the breakdown.";
     outFile.println("<h2>");
     addPopupLink(outFile, popupName, popupTitle, null);
     outFile.println("</h2>");
@@ -647,16 +904,32 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("<p>These classes have some leftover code, neither initial nor "
         + "exclusive to any split point:</p>");
     String curPackageName = "";
+    HtmlInterner interner = new HtmlInterner();
+
+    for (String className : globalInformation.getClassToPackage().keySet()) {
+      String packageName = globalInformation.getClassToPackage().get(className);
+      interner.intern(packageName);
+      interner.intern(getClassSubstring(className));
+      interner.intern(hashedFilenameFragment(packageName));
+    }
+    interner.freeze();
+
+    outFile.println("<script language=\"javascript\">");
+    interner.printInternedDataAsJs(outFile);
+
     for (String className : globalInformation.getClassToPackage().keySet()) {
       String packageName = globalInformation.getClassToPackage().get(className);
       if (packageName.compareTo("") == 0
           || packageName.compareTo(curPackageName) != 0) {
         curPackageName = packageName;
-        outFile.println("<div class='soyc-pkg-break'>Package: " + packageName + "</div>");
+        interner.printPackageHeader(outFile, packageName);
       }
-      outFile.println("<a name=\"" + filename(className) + "\"></a><h3>" + className + "</h3>");
-      addLefttoversStatus(className, packageName, outFile);
+      interner.printClassHeader(outFile, className);
+      if (globalInformation.dependencies != null) {
+        interner.printLeftoversStatus(outFile, packageName, className);
+      }
     }
+    outFile.println("</script>");
     addStandardHtmlEnding(outFile);
     outFile.close();
   }
@@ -692,13 +965,14 @@ public class MakeTopLevelHtmlForPerm {
    */
   public void makePackageClassesHtmls(SizeBreakdown breakdown,
       DependencyLinker depLinker) throws IOException {
-    PrintWriter outFile = new PrintWriter(
-        getOutFile(classesInPackageFileName(breakdown, getPermutationId())));
+    PrintWriter outFile = new PrintWriter(getOutFile(classesInPackageFileName(
+        breakdown, getPermutationId())));
     addStandardHtmlProlog(outFile, "Classes in  " + breakdown.getDescription(),
         "Classes in " + breakdown.getDescription(),
         headerLineForBreakdown(breakdown));
 
-    String[] packageNames = globalInformation.getPackageToClasses().keySet().toArray(new String[0]);
+    String[] packageNames = globalInformation.getPackageToClasses().keySet().toArray(
+        new String[0]);
     Arrays.sort(packageNames);
     for (String packageName : packageNames) {
       TreeMap<Integer, Set<String>> sortedClasses = new TreeMap<Integer, Set<String>>(
@@ -734,8 +1008,8 @@ public class MakeTopLevelHtmlForPerm {
         outFile.print("<col id=\"soyc-splitpoint-size-col\">");
         outFile.println("</colgroup>");
         outFile.print("<thead>");
-        outFile.print("<a name=\"" + filename(packageName) + "\"></a><th>Package: "
-            + packageName + "</th>");
+        outFile.print("<a name=\"" + hashedFilenameFragment(packageName)
+            + "\"></a><th>Package: " + packageName + "</th>");
         outFile.print("<th>Size <span class=\"soyc-th-units\">(Bytes)</span></th>");
         outFile.print("</thead>");
 
@@ -774,42 +1048,50 @@ public class MakeTopLevelHtmlForPerm {
   public void makeSplitStatusPages() throws IOException {
     PrintWriter outFile = new PrintWriter(getOutFile(splitStatusFileName()));
 
-    addStandardHtmlProlog(outFile, "Split point status", "Split point status", "");
+    addStandardHtmlProlog(outFile, "Split point status", "Split point status",
+        "");
     outFile.println("<div id=\"bd\">");
 
-    String curPackageName = "";
-
+    HtmlInterner interner = new HtmlInterner();
     for (String className : globalInformation.getClassToPackage().keySet()) {
+      String packageName = globalInformation.getClassToPackage().get(className);
+      interner.intern(packageName);
+      interner.intern(getClassSubstring(className));
+      interner.intern(hashedFilenameFragment(packageName));
+    }
+    interner.freeze();
+
+    outFile.println("<script language=\"javascript\">");
+    interner.printInternedDataAsJs(outFile);
+
+    String curPackageName = "";
+    for (String className : globalInformation.getClassToPackage().keySet()) {
+
       String packageName = globalInformation.getClassToPackage().get(className);
       if (packageName.compareTo("") == 0
           || packageName.compareTo(curPackageName) != 0) {
         curPackageName = packageName;
-        outFile.println("<div class='soyc-pkg-break'>Package: " + packageName + "</div>");
+        interner.printPackageHeader(outFile, packageName);
       }
 
-      outFile.println("<a name=\"" + filename(className) + "\"></a><h3>"
-          + className + "</h3>");
+      interner.printClassHeader(outFile, className);
 
       if (globalInformation.getInitialCodeBreakdown().classToSize.containsKey(className)) {
         if (globalInformation.dependencies != null) {
-          outFile.println("<p>Some code is included in the initial fragment (<a href=\""
-              + dependenciesFileName("initial", packageName)
-              + "#"
-              + className
-              + "\">see why</a>)</p>");
+          interner.printHasInitialFragment(outFile, className);
         } else {
-          outFile.println("<p>Some code is included in the initial fragment</p>");
+          interner.printHasInitialFragment(outFile);
         }
       }
       for (int sp : splitPointsWithClass(className)) {
-        outFile.println("<p>Some code downloads with split point " + sp + ": "
-            + globalInformation.getSplitPointToLocation().get(sp) + "</p>");
+        interner.printHasCodeInSplitPoint(outFile, className, sp);
       }
       if (globalInformation.getLeftoversBreakdown().classToSize.containsKey(className)) {
-        outFile.println("<p>Some code is left over:</p>");
-        addLefttoversStatus(className, packageName, outFile);
+        interner.printSomeCodeLeftover(outFile);
+        interner.printLeftoversStatus(outFile, packageName, className);
       }
     }
+    outFile.println("</script>");
 
     addStandardHtmlEnding(outFile);
     outFile.close();
@@ -918,23 +1200,6 @@ public class MakeTopLevelHtmlForPerm {
     outFile.close();
   }
 
-  private void addLefttoversStatus(String className, String packageName, PrintWriter outFile) {
-    outFile.println("<ul class=\"soyc-excl\">");
-    if (globalInformation.dependencies != null) {
-      outFile.println("<li><a href=\""
-          + dependenciesFileName("total", packageName) + "#" + className
-          + "\">See why it's live</a></li>");
-      for (int sp = 1; sp <= globalInformation.getNumSplitPoints(); sp++) {
-        outFile.println("<li><a href=\""
-            + dependenciesFileName("sp" + sp, packageName) + "#" + className
-            + "\">See why it's not exclusive to s.p. #" + sp + " ("
-            + globalInformation.getSplitPointToLocation().get(sp)
-            + ")</a></li>");
-      }
-    }
-    outFile.println("</ul>");
-  }
-
   private void addPopup(PrintWriter outFile, String popupName,
       String popupTitle, String popupBody) {
     outFile.println("<div class=\"soyc-popup\" id=\"" + popupName + "\">");
@@ -960,8 +1225,9 @@ public class MakeTopLevelHtmlForPerm {
    * Returns a file name for the dependencies list.
    */
   private String dependenciesFileName(String depGraphName, String packageName) {
-    return "methodDependencies-" + depGraphName + "-" + filename(packageName)
-        + "-" + getPermutationId() + ".html";
+    return "methodDependencies-" + depGraphName + "-"
+        + hashedFilenameFragment(packageName) + "-" + getPermutationId()
+        + ".html";
   }
 
   /**
@@ -1266,47 +1532,9 @@ public class MakeTopLevelHtmlForPerm {
       Map<String, String> dependencies) throws IOException {
     String curPackageName = "";
 
-    // Separate out the packages to write them into different HTML files.
-    String packageName = "";
-    List<String> classesInPackage = new ArrayList<String>();
-    for (String method : dependencies.keySet()) {
-      // this key set is already in alphabetical order
-      // get the package of this method, i.e., everything up to .[A-Z]
-      packageName = method.replaceAll("\\.\\p{Upper}.*", "");
-
-      if (curPackageName.compareTo("") == 0) {
-        curPackageName = packageName;
-      } else if (curPackageName.compareTo(packageName) != 0) {
-        makeDependenciesInternedHtml(depGraphName, curPackageName,
-            classesInPackage, dependencies);
-        classesInPackage = new ArrayList<String>();
-        curPackageName = packageName;
-      }
-      classesInPackage.add(method);
-    }
-    if (classesInPackage.size() > 0) {
-      makeDependenciesInternedHtml(depGraphName, curPackageName,
-          classesInPackage, dependencies);
-    }
-  }
-
-  /**
-   * Produces an HTML file that displays dependencies.
-   *
-   * @param depGraphName name of dependency graph
-   * @param dependencies map of dependencies
-   * @throws IOException
-   */
-  private void makeDependenciesInternedHtml(String depGraphName,
-      String packageName, List<String> classesInPackage,
-      Map<String, String> dependencies) throws IOException {
-    String depGraphDescription = inferDepGraphDescription(depGraphName);
-    PrintWriter outFile = null;
-    String curClassName = "";
-
     HtmlInterner interner = new HtmlInterner();
 
-    for (String reportMethod : classesInPackage) {
+    for (String reportMethod : dependencies.keySet()) {
       interner.intern(getPackageSubstring(reportMethod));
       interner.intern(getClassSubstring(reportMethod));
       interner.intern(getMethodSubstring(reportMethod));
@@ -1319,6 +1547,53 @@ public class MakeTopLevelHtmlForPerm {
         depMethod = dependencies.get(depMethod);
       }
     }
+    interner.freeze();
+
+    // Write out the interned data values as a script element
+    String jsFileName = "methodDependencies-" + depGraphName + "-"
+        + getPermutationId() + ".js";
+    PrintWriter outFile = new PrintWriter(getOutFile(jsFileName));
+    interner.printInternedDataAsJs(outFile);
+    outFile.close();
+
+    // Separate out the packages to write them into different HTML files.
+    String packageName = "";
+    List<String> classesInPackage = new ArrayList<String>();
+    for (String method : dependencies.keySet()) {
+      // this key set is already in alphabetical order
+      // get the package of this method, i.e., everything up to .[A-Z]
+      packageName = method.replaceAll("\\.\\p{Upper}.*", "");
+
+      if (curPackageName.compareTo("") == 0) {
+        curPackageName = packageName;
+      } else if (curPackageName.compareTo(packageName) != 0) {
+        makeDependenciesInternedHtml(depGraphName, curPackageName,
+            classesInPackage, dependencies, interner, jsFileName);
+        classesInPackage = new ArrayList<String>();
+        curPackageName = packageName;
+      }
+      classesInPackage.add(method);
+    }
+    if (classesInPackage.size() > 0) {
+      makeDependenciesInternedHtml(depGraphName, curPackageName,
+          classesInPackage, dependencies, interner, jsFileName);
+    }
+  }
+
+  /**
+   * Produces an HTML file that displays dependencies.
+   *
+   * @param depGraphName name of dependency graph
+   * @param dependencies map of dependencies
+   * @throws IOException
+   */
+  private void makeDependenciesInternedHtml(String depGraphName,
+      String packageName, List<String> classesInPackage,
+      Map<String, String> dependencies, HtmlInterner interner, String jsFileName)
+      throws IOException {
+    String depGraphDescription = inferDepGraphDescription(depGraphName);
+    PrintWriter outFile = null;
+    String curClassName = "";
 
     String outFileName = dependenciesFileName(depGraphName, packageName);
     outFile = new PrintWriter(getOutFile(outFileName));
@@ -1329,30 +1604,8 @@ public class MakeTopLevelHtmlForPerm {
         "Method Dependencies for " + depGraphDescription, "Showing Package: "
             + packageDescription);
 
-    // Write out the data values in the script
-    outFile.println("<script language=\"javascript\">");
-    outFile.println(interner.getJs());
-    // function to print a class header
-    outFile.println("  function showC(packageRef, classRef) {");
-    outFile.println("    var className = internedStrings[packageRef] + \".\" + internedStrings[classRef];");
-    outFile.println("    document.write(\"<a name='\" + className + \"'>\");");
-    outFile.println("    document.write(\"<h3 class='soyc-class-header'>Class: \" + className + \"</a></h3>\");");
-    outFile.println("  }");
-    // function to print a dependency
-    outFile.println("  function showD(c, deps) {");
-    outFile.println("    document.write(\"<div class='main'><a class='toggle soyc-call-stack-link' "
-        + "onclick='toggle.call(this)'><span class='calledBy'> Call stack: </span>\");");
-    outFile.println("    document.write(internedStrings[c[0]] + \".\" + internedStrings[c[1]] + \"::\" + "
-        + "internedStrings[c[2]] + \"</a>\");");
-    outFile.println("    document.write(\"<ul class='soyc-call-stack-list'>\");");
-    outFile.println("    for (var i = 0; i < deps.length ; i++) {");
-    outFile.println("      var s = deps[i];");
-    outFile.println("      document.write(\"<li>\" + internedStrings[s[0]] + \".\" + internedStrings[s[1]] +"
-        + "\"::\" + internedStrings[s[2]] + \"</li>\");");
-    outFile.println("    }");
-    outFile.println("    document.write(\"</ul></div>\");");
-    outFile.println("  }");
-    outFile.println("</script>");
+    outFile.print("<script src=\"" + jsFileName
+        + "\" language=\"javascript\" ></script>");
 
     // Write out the HTML
     outFile.print("<script>");
@@ -1364,31 +1617,9 @@ public class MakeTopLevelHtmlForPerm {
       String depMethod = dependencies.get(method);
       if (curClassName.compareTo(className) != 0) {
         curClassName = className;
-        outFile.print("showC(" + interner.get(getPackageSubstring(className))
-            + "," + interner.get(getClassSubstring(className)) + ");");
+        interner.printDependencyClassHeader(outFile, className);
       }
-      String nameArray = "[" + interner.get(getPackageSubstring(method)) + ","
-          + interner.get(getClassSubstring(method)) + ","
-          + interner.get(getMethodSubstring(method)) + "]";
-      outFile.print("showD(" + nameArray + ",");
-      outFile.print(" [");
-      while (depMethod != null) {
-        String nextDep = dependencies.get(depMethod);
-          // The bottom of the stack frame is not interesting.
-          if (nextDep != null) {
-          String packageString = getPackageSubstring(depMethod);
-          String classString = getClassSubstring(depMethod);
-          String methodString = getMethodSubstring(depMethod);
-          outFile.print("[" + interner.get(packageString) + ","
-              + interner.get(classString) + "," + interner.get(methodString)
-              + "]");
-        }
-        depMethod = nextDep;
-        if (nextDep != null) {
-          outFile.print(",");
-        }
-      }
-      outFile.print(" ]);");
+      interner.printDependency(outFile, dependencies, method, depMethod);
     }
     outFile.println("</script>");
 
@@ -1444,8 +1675,9 @@ public class MakeTopLevelHtmlForPerm {
       }
       Set<String> packageNames = sortedPackages.get(size);
       for (String packageName : packageNames) {
-        String drillDownFileName = classesInPackageFileName(breakdown, getPermutationId())
-            + "#" + filename(packageName);
+        String drillDownFileName = classesInPackageFileName(breakdown,
+            getPermutationId())
+            + "#" + hashedFilenameFragment(packageName);
         float perc = (size / sumSize) * 100;
         outFile.println("<tr>");
         outFile.println("<td><a href=\"" + drillDownFileName

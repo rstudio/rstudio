@@ -30,7 +30,7 @@ import java.util.TreeSet;
 public class GlobalInformation {
   private static final SizeBreakdown[] EMPTY_SIZE_BREAKDOWN = new SizeBreakdown[0];
   public Map<String, Map<String, String>> dependencies = null;
-  private HashMap<String, String> classToPackage = new HashMap<String, String>();
+  private Map<String, String> classToPackage = new TreeMap<String, String>();
   private HashMap<String, HashSet<String>> classToWhatItDependsOn = new HashMap<String, HashSet<String>>();
   private Map<Integer, SizeBreakdown> exclusiveCodeBreakdowns = new HashMap<Integer, SizeBreakdown>();
   private SizeBreakdown initialCodeBreakdown = new SizeBreakdown(
@@ -76,7 +76,7 @@ public class GlobalInformation {
    * 
    * @return classToPackage
    */
-  public final HashMap<String, String> getClassToPackage() {
+  public final Map<String, String> getClassToPackage() {
     return classToPackage;
   }
 
