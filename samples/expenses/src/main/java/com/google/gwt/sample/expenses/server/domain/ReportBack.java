@@ -17,11 +17,6 @@ package com.google.gwt.sample.expenses.server.domain;
 
 import com.google.appengine.api.datastore.Cursor;
 
-import net.sf.jsr107cache.Cache;
-import net.sf.jsr107cache.CacheException;
-import net.sf.jsr107cache.CacheFactory;
-import net.sf.jsr107cache.CacheManager;
-
 import org.datanucleus.store.appengine.query.JPACursorHelper;
 
 import java.util.Collections;
@@ -29,6 +24,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 
+import javax.cache.Cache;
+import javax.cache.CacheException;
+import javax.cache.CacheFactory;
+import javax.cache.CacheManager;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
