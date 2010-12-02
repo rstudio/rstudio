@@ -17,6 +17,7 @@
 <module>
   <inherits name="com.google.gwt.core.Core" />
 
+  <!-- Legacy property, use 'compiler.stackMode' instead -->
   <!-- If set to true, emulated stack frames will be emitted into the JS -->
   <define-property name="compiler.emulatedStack" values="true,false" />
   <set-property name="compiler.emulatedStack" value="false" />
@@ -29,16 +30,16 @@
   <define-configuration-property name="compiler.emulatedStack.recordFileNames"
     is-multi-valued="false" />
  
-  <replace-with
-    class="com.google.gwt.core.client.impl.StackTraceCreator.CollectorEmulated">
-    <when-type-is class="com.google.gwt.core.client.impl.StackTraceCreator.Collector" />
-    <when-property-is name="compiler.emulatedStack" value="true" />
-  </replace-with>
-  
   <!-- if set to 'strip', stack information can be removed or corrupted -->
   <define-property name="compiler.stackMode" values="strip,native,emulated" />
   <set-property name="compiler.stackMode" value="native" />
   <set-property name="compiler.stackMode" value="emulated" >
     <when-property-is name="compiler.emulatedStack" value="true" />
   </set-property>  
+
+  <replace-with
+    class="com.google.gwt.core.client.impl.StackTraceCreator.CollectorEmulated">
+    <when-type-is class="com.google.gwt.core.client.impl.StackTraceCreator.Collector" />
+    <when-property-is name="compiler.stackMode" value="emulated" />
+  </replace-with>
 </module>

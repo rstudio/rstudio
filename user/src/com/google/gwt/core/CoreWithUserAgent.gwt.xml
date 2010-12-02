@@ -18,23 +18,21 @@
 
   <replace-with class="com.google.gwt.core.client.impl.StackTraceCreator.CollectorChrome">
     <when-type-is class="com.google.gwt.core.client.impl.StackTraceCreator.Collector" />
-    <when-property-is name="compiler.emulatedStack" value="false" />
-    <any>
-      <!-- For now, only Chrome provides Error.stack support, so we hijack the
-           entire WebKit permutation -->
-      <when-property-is name="user.agent" value="safari" />
-    </any>
+    <when-property-is name="compiler.stackMode" value="native" />
+    <!-- For now, only Chrome provides Error.stack support, so we hijack the
+         entire WebKit permutation -->
+    <when-property-is name="user.agent" value="safari" />
   </replace-with>
 
   <replace-with class="com.google.gwt.core.client.impl.StackTraceCreator.CollectorMoz">
     <when-type-is class="com.google.gwt.core.client.impl.StackTraceCreator.Collector" />
-    <when-property-is name="compiler.emulatedStack" value="false" />
+    <when-property-is name="compiler.stackMode" value="native" />
     <when-property-is name="user.agent" value="gecko1_8" />
   </replace-with>
 
   <replace-with class="com.google.gwt.core.client.impl.StackTraceCreator.CollectorOpera">
     <when-type-is class="com.google.gwt.core.client.impl.StackTraceCreator.Collector" />
-    <when-property-is name="compiler.emulatedStack" value="false" />
+    <when-property-is name="compiler.stackMode" value="native" />
     <any>
       <when-property-is name="user.agent" value="opera" />
     </any>
