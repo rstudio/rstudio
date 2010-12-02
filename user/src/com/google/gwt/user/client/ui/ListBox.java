@@ -23,6 +23,13 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.HasChangeHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.i18n.client.HasDirection.Direction;
+import com.google.gwt.i18n.shared.BidiFormatter;
+import com.google.gwt.i18n.shared.DirectionEstimator;
+import com.google.gwt.i18n.shared.HasDirectionEstimator;
+import com.google.gwt.i18n.shared.WordCountDirectionEstimator;
+
+import java.util.ArrayList;
 
 /**
  * A widget that presents a list of choices to the user, either as a list box or
@@ -41,7 +48,14 @@ import com.google.gwt.event.shared.HandlerRegistration;
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.ListBoxExample}
  * </p>
- * 
+ *
+ * <p>
+ * <h3>Built-in Bidi Text Support</h3>
+ * This widget is capable of automatically adjusting its direction according to
+ * its content. This feature is controlled by {@link #setDirectionEstimator},
+ * and is off by default.
+ * </p>
+ *
  * <h3>Use in UiBinder Templates</h3>
  * <p>
  * The items of a ListBox element are laid out in &lt;g:item> elements.
@@ -67,7 +81,10 @@ import com.google.gwt.event.shared.HandlerRegistration;
  */
 @SuppressWarnings("deprecation")
 public class ListBox extends FocusWidget implements SourcesChangeEvents,
-    HasChangeHandlers, HasName {
+    HasChangeHandlers, HasName, HasDirectionEstimator {
+
+  public static final DirectionEstimator DEFAULT_DIRECTION_ESTIMATOR =
+    WordCountDirectionEstimator.get();
 
   private static final int INSERT_AT_END = -1;
 
@@ -93,6 +110,9 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
 
     return listBox;
   }
+
+  private DirectionEstimator estimator;
+  private ArrayList<String> itemTexts = new ArrayList<String>();
 
   /**
    * Creates an empty list box in single selection mode.
@@ -149,6 +169,21 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   }
 
   /**
+   * Adds an item to the list box, specifying its direction. This method has the
+   * same effect as
+   * 
+   * <pre>
+   * addItem(item, dir, item)
+   * </pre>
+   * 
+   * @param item the text of the item to be added
+   * @param dir the item's direction
+   */
+  public void addItem(String item, Direction dir) {
+    insertItem(item, dir, INSERT_AT_END);
+  }
+
+  /**
    * Adds an item to the list box, specifying an initial value for the item.
    * 
    * @param item the text of the item to be added
@@ -160,10 +195,27 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   }
 
   /**
+   * Adds an item to the list box, specifying its direction and an initial value
+   * for the item.
+   * 
+   * @param item the text of the item to be added
+   * @param dir the item's direction
+   * @param value the item's value, to be submitted if it is part of a
+   *          {@link FormPanel}; cannot be <code>null</code>
+   */
+  public void addItem(String item, Direction dir, String value) {
+    insertItem(item, dir, value, INSERT_AT_END);
+  }
+
+  /**
    * Removes all items from the list box.
    */
   public void clear() {
     getSelectElement().clear();
+  }
+
+  public DirectionEstimator getDirectionEstimator() {
+    return estimator;
   }
 
   /**
@@ -184,7 +236,7 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    */
   public String getItemText(int index) {
     checkIndex(index);
-    return getSelectElement().getOptions().getItem(index).getText();
+    return itemTexts.get(index);
   }
 
   public String getName() {
@@ -239,9 +291,28 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   }
 
   /**
+   * Inserts an item into the list box, specifying its direction. Has the same
+   * effect as
+   * 
+   * <pre>
+   * insertItem(item, dir, item, index)
+   * </pre>
+   * 
+   * @param item the text of the item to be inserted
+   * @param dir the item's direction
+   * @param index the index at which to insert it
+   */
+  public void insertItem(String item, Direction dir, int index) {
+    insertItem(item, dir, item, index);
+  }
+
+  /**
    * Inserts an item into the list box, specifying an initial value for the
-   * item. If the index is less than zero, or greater than or equal to the
-   * length of the list, then the item will be appended to the end of the list.
+   * item. Has the same effect as
+   *
+   * <pre>
+   * insertItem(item, null, value, index)
+   * </pre>
    * 
    * @param item the text of the item to be inserted
    * @param value the item's value, to be submitted if it is part of a
@@ -249,12 +320,35 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    * @param index the index at which to insert it
    */
   public void insertItem(String item, String value, int index) {
+    insertItem(item, null, value, index);
+  }
+
+  /**
+   * Inserts an item into the list box, specifying its direction and an initial
+   * value for the item. If the index is less than zero, or greater than or
+   * equal to the length of the list, then the item will be appended to the end
+   * of the list.
+   * 
+   * @param item the text of the item to be inserted
+   * @param dir the item's direction. If {@code null}, the item is displayed in
+   *          the widget's overall direction, or, if a direction estimator has
+   *          been set, in the item's estimated direction.
+   * @param value the item's value, to be submitted if it is part of a
+   *          {@link FormPanel}.
+   * @param index the index at which to insert it
+   */
+  public void insertItem(String item, Direction dir, String value, int index) {
     SelectElement select = getSelectElement();
     OptionElement option = Document.get().createOptionElement();
-    option.setText(item);
+    option.setText(unicodeWrapIfNeeded(item, dir));
     option.setValue(value);
 
-    if ((index == -1) || (index == select.getLength())) {
+    int itemCount = select.getLength();
+    if (index < 0 || index > itemCount) {
+      index = itemCount;
+    }
+    itemTexts.add(index, item);
+    if (index == itemCount) {
       select.add(option, null);
     } else {
       OptionElement before = select.getOptions().getItem(index);
@@ -294,13 +388,31 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
 
   /**
    * Removes the item at the specified index.
-   * 
+   *
    * @param index the index of the item to be removed
    * @throws IndexOutOfBoundsException if the index is out of range
    */
   public void removeItem(int index) {
     checkIndex(index);
     getSelectElement().remove(index);
+    itemTexts.remove(index);
+  }
+
+  /**
+   * {@inheritDoc}
+   * See note at
+   * {@link #setDirectionEstimator(com.google.gwt.i18n.shared.DirectionEstimator)}
+   */
+  public void setDirectionEstimator(boolean enabled) {
+    setDirectionEstimator(enabled ? DEFAULT_DIRECTION_ESTIMATOR : null);
+  }
+
+  /**
+   * {@inheritDoc}
+   * Note: this does not affect the direction of already-existing content.
+   */
+  public void setDirectionEstimator(DirectionEstimator directionEstimator) {
+    estimator = directionEstimator;
   }
 
   /**
@@ -328,11 +440,25 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    * @throws IndexOutOfBoundsException if the index is out of range
    */
   public void setItemText(int index, String text) {
+    setItemText(index, text, null);
+  }
+
+  /**
+   * Sets the text associated with the item at a given index.
+   * 
+   * @param index the index of the item to be set
+   * @param text the item's new text
+   * @param dir the item's direction.
+   * @throws IndexOutOfBoundsException if the index is out of range
+   */
+  public void setItemText(int index, String text, Direction dir) {
     checkIndex(index);
     if (text == null) {
       throw new NullPointerException("Cannot set an option to have null text");
     }
-    getSelectElement().getOptions().getItem(index).setText(text);
+    getSelectElement().getOptions().getItem(index).setText(unicodeWrapIfNeeded(
+        text, dir));
+    itemTexts.set(index, text);
   }
 
   /**
@@ -423,5 +549,14 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
 
   private SelectElement getSelectElement() {
     return getElement().cast();
+  }
+
+  private String unicodeWrapIfNeeded(String text, Direction dir) {
+    if (dir == null && estimator != null) {
+      dir = estimator.estimateDirection(text);
+    }
+    return dir == null ? text :
+        BidiFormatter.getInstanceForCurrentLocale().unicodeWrapWithKnownDir(dir,
+            text, false /* isHtml */, false /* dirReset */);
   }
 }
