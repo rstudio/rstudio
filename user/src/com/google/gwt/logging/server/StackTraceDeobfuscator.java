@@ -17,6 +17,7 @@
 package com.google.gwt.logging.server;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
@@ -33,7 +34,8 @@ import java.util.regex.Pattern;
  * server side code has access to it, and then set the symbolMapsDirectory in
  * this class through the constructor, or the setter method.
  * For example, this variable could be set to "WEB-INF/classes/symbolMaps/"
- * if you copied the symbolMaps directory to there.
+ * if you copied the symbolMaps directory to there or compiled your application
+ * using <code>-extra war/WEB-INF/classes/</code>.
  *
  * TODO(unnurg): Combine this code with similar code in JUnitHostImpl
  */
@@ -46,13 +48,21 @@ public class StackTraceDeobfuscator {
   private static Pattern JsniRefPattern =
     Pattern.compile("@?([^:]+)::([^(]+)(\\((.*)\\))?");
   
-  private String symbolMapsDirectory;
+  private File symbolMapsDirectory;
   
   private Map<String, SymbolMap> symbolMaps =
     new HashMap<String, SymbolMap>();
-  
+
+  /**
+   * Constructor, which takes a <code>symbolMaps</code> directory as its
+   * argument. Symbol maps can be generated using the <code>-extra</code> GWT
+   * compiler argument.
+   *
+   * @param symbolMapsDirectory the <code>symbolMaps</code> directory with, or
+   *          without trailing directory separator character
+   */
   public StackTraceDeobfuscator(String symbolMapsDirectory) {
-    this.symbolMapsDirectory = symbolMapsDirectory;
+    setSymbolMapsDirectory(symbolMapsDirectory);
   }
   
   public LogRecord deobfuscateLogRecord(LogRecord lr, String strongName) {
@@ -95,15 +105,9 @@ public class StackTraceDeobfuscator {
     return ste;
   }
   
-  public void setSymbolMapsDirectory(String dir) {
-    // Switching the directory should clear the symbolMaps variable (which 
-    // is read in lazily), but causing the symbolMaps variable to be re-read
-    // is somewhat expensive, so we only want to do this if the directory is
-    // actually different.
-    if (!dir.equals(symbolMapsDirectory)) {
-      symbolMapsDirectory = dir;
-      symbolMaps = new HashMap<String, SymbolMap>();
-    }
+  public void setSymbolMapsDirectory(String symbolMapsDirectory) {
+    // permutations are unique, no need to clear the symbolMaps hash map
+    this.symbolMapsDirectory = new File(symbolMapsDirectory);
   }
   
   private StackTraceElement[] deobfuscateStackTrace(
@@ -136,9 +140,10 @@ public class StackTraceDeobfuscator {
     }
     toReturn = new SymbolMap();
     String line;
-    String filename = symbolMapsDirectory + strongName + ".symbolMap";
 
     try {
+      String filename = symbolMapsDirectory.getCanonicalPath()
+          + File.separatorChar + strongName + ".symbolMap";
       BufferedReader bin = new BufferedReader(new FileReader(filename));
       try {
         while ((line = bin.readLine()) != null) {
