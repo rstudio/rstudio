@@ -4,7 +4,13 @@
 
   <!-- Variables. -->
   <?define appName = "Google Web Toolkit Developer Plugin for IE" ?>
+  <?if $(var.platform)=x64 ?>
   <?define upgradeCode = "9a5e649a-ec63-4c7d-99bf-75adb345e7e5" ?>
+  <?define win64Flag = "yes" ?>
+  <?else ?>
+  <?define upgradeCode = "8B3F15BC-42FB-4e0e-BAC4-1DE8C4AA10FD" ?>
+  <?define win64Flag = "no" ?>
+  <?endif ?>
   <?define updateRegKey = "SOFTWARE\Google\Update\Clients\{$(var.upgradeCode)}" ?>
   <?define gwtRegKey = "SOFTWARE\Google\Google Web Toolkit\Installer" ?>
 
@@ -13,8 +19,9 @@
     compile to ensure that windows installer completely removes the old
     version and reinstalls the new version without complaining.
   -->
+
   <Product
-    Name='$(var.appName)'
+    Name='$(var.appName) ($(var.platform))'
     Id='*'
     UpgradeCode='$(var.upgradeCode)'
     Language='1033'
@@ -22,88 +29,143 @@
     Version='$(var.version)'
     Manufacturer='Google'>
 
+    <?if $(var.platform)=x64 ?>
     <Package
-      Id='*'
-      Keywords='Installer'
-      Description='$(var.appName) Installer'
-      Manufacturer='Google'
-      InstallPrivileges='limited'
-      InstallerVersion='100'
-      Languages='1033'
-      Compressed='yes'
-      SummaryCodepage='1252' />
-    <Media
-      Id='1'
-      Cabinet='product.cab'
-      EmbedCab='yes' />
+		  Id='*'
+		  Keywords='Installer'
+		  Description='$(var.appName) ($(var.platform))'
+		  Manufacturer='Google'
+		  InstallPrivileges='limited'
+		  InstallerVersion='200'
+		  Languages='1033'
+		  Compressed='yes'
+		  SummaryCodepage='1252'
+		  Platform='x64'
+		/>
+    <?else ?>
+    <Package
+		  Id='*'
+		  Keywords='Installer'
+		  Description='$(var.appName) ($(var.platform))'
+		  Manufacturer='Google'
+		  InstallPrivileges='limited'
+		  InstallerVersion='200'
+		  Languages='1033'
+		  Compressed='yes'
+		  SummaryCodepage='1252'
+		/>
+    <?endif ?>
 
-    <!-- Suppress reboot prompts. -->
+    <Media Id='1' Cabinet='product.cab' EmbedCab='yes' />
+
+    <Icon Id="gwt.ico" SourceFile=".\gwt.ico"/>
+
+	<!-- Properties -->
     <Property Id='REBOOT'>ReallySuppress</Property>
+    <Property Id="ALLUSERS" Secure="yes"></Property>
+    <Property Id="ARPPRODUCTICON" Value="gwt.ico" />
+    <Property Id="ARPCOMMENTS" Value="Google Web Toolkit Developer Plugin for IE ($(var.platform))" />
+    <Property Id="ARPNOMODIFY" Value="1" />
+    <Property Id="ARPNOREPAIR" Value="1" />
+    <Property Id="ARPHELPLINK" Value="http://code.google.com/webtoolkit/" />
+    <Property Id="ARPURLINFOABOUT" Value="http://code.google.com/webtoolkit/" />
 
-    <!-- Install for current user. -->
-    <Property Id="ALLUSERS" Secure="yes" />
-
-    <!-- Remove old version completely when upgrading.  -->
-    <Upgrade
-      Id='$(var.upgradeCode)'>
-      <UpgradeVersion
-        OnlyDetect='no'
-        Property='PREVIOUSFOUND'
-        Minimum='0.0.0.0'
-        IncludeMinimum='yes'
-        RemoveFeatures='all' />
+    <Upgrade Id='$(var.upgradeCode)'>
+		<UpgradeVersion Property='UPGRADING'
+                  OnlyDetect='no'
+                  Minimum='0.0.0.0' IncludeMinimum='yes'
+                  Maximum='$(var.version)' IncludeMaximum='no' />
+		<UpgradeVersion Property='NEWERVERSIONDETECTED'
+                  OnlyDetect='yes'
+                  Minimum='$(var.version)' IncludeMinimum='yes' />
     </Upgrade>
+
     <InstallExecuteSequence>
-      <LaunchConditions
-        After='AppSearch' />
-      <RemoveExistingProducts
-        After='InstallValidate' />
+      <LaunchConditions After='AppSearch' />
+      <RemoveExistingProducts After='InstallValidate' />
+	  <Custom Action="NewerVersionError" After="FindRelatedProducts">NEWERVERSIONDETECTED</Custom>
     </InstallExecuteSequence>
 
+	<UI>
+		<Error Id="4000">A newer version of this product is already installed.</Error>
+	</UI>
+
+	<CustomAction Id="NewerVersionError" Error="4000"/>
+	
     <!-- Define the install directory. -->
-    <Directory
-      Id='TARGETDIR'
-      Name='SourceDir'>
-      <Directory
-        Id='LocalAppDataFolder'
-        Name='AppData'>
-        <Directory
-          Id='GoogleDir'
-          Name='Google'>
-          <Component Id="RemoveGoogleDir" Guid="*" DiskId="1">
+    <?if $(var.platform)=x64 ?>
+    <Directory Id='TARGETDIR'	Name='SourceDir'>
+      <Directory Id='AppDataFolder' Name='AppData'>
+        <Directory Id='GoogleDir' Name='Google'>
+          <Component Id="RemoveGoogleDir" Guid="*" DiskId="1" Win64="$(var.win64Flag)">
             <CreateFolder/>
             <RemoveFolder Id="RemoveGoogleDirFolder" On="uninstall" />
-            <RegistryKey Root="HKCU" Key="$(var.gwtRegKey)" Action="createAndRemoveOnUninstall">
+            <RegistryKey Root="HKMU" Key="$(var.gwtRegKey)" Action="createAndRemoveOnUninstall">
               <RegistryValue Name="RemoveGoogleDirFolder" Value="" Type="string" KeyPath="yes"/>
             </RegistryKey>
           </Component>
-          <Directory
-            Id='GoogleWebToolkitDir'
-            Name='Google Web Toolkit'>
-            <Component Id="RemoveGoogleWebToolkitDir" Guid="*" DiskId="1">
+          <Directory Id='GoogleWebToolkitDir' Name='Google Web Toolkit'>
+            <Component Id="RemoveGoogleWebToolkitDir" Guid="*" DiskId="1" Win64="$(var.win64Flag)">
               <CreateFolder/>
               <RemoveFolder Id="RemoveGoogleWebToolkitDirFolder" On="uninstall" />
-              <RegistryKey Root="HKCU" Key="$(var.gwtRegKey)" Action="createAndRemoveOnUninstall">
+              <RegistryKey Root="HKMU" Key="$(var.gwtRegKey)" Action="createAndRemoveOnUninstall">
                 <RegistryValue Name="RemoveGoogleWebToolkitDirFolder" Value="" Type="string" KeyPath="yes"/>
               </RegistryKey>
             </Component>
-            <Directory
-              Id='DeveloperPluginDir'
-              Name='Developer Plugin'>
-              <Component Id="RemoveDeveloperPluginDir" Guid="*" DiskId="1">
+            <Directory Id='DeveloperPluginDir' Name='Developer Plugin'>
+              <Component Id="RemoveDeveloperPluginDir" Guid="*" DiskId="1" Win64="$(var.win64Flag)">
                 <CreateFolder/>
                 <RemoveFolder Id="RemoveDeveloperPluginDirFolder" On="uninstall" />
-                <RegistryKey Root="HKCU" Key="$(var.gwtRegKey)" Action="createAndRemoveOnUninstall">
+                <RegistryKey Root="HKMU" Key="$(var.gwtRegKey)" Action="createAndRemoveOnUninstall">
                   <RegistryValue Name="RemoveDeveloperPluginDirFolder" Value="" Type="string" KeyPath="yes"/>
                 </RegistryKey>
               </Component>
-              <Directory
-                Id='INSTALLDIR'
-                Name='IE'>
-                <Component Id="RemoveInstallDir" Guid="*" DiskId="1">
+              <Directory Id='INSTALLDIR' Name='IE'>
+                <Component Id="RemoveInstallDir" Guid="*" DiskId="1" Win64="$(var.win64Flag)">
                   <CreateFolder/>
                   <RemoveFolder Id="RemoveInstallerDirFolder" On="uninstall" />
-                  <RegistryKey Root="HKCU" Key="$(var.gwtRegKey)" Action="createAndRemoveOnUninstall">
+                  <RegistryKey Root="HKMU" Key="$(var.gwtRegKey)" Action="createAndRemoveOnUninstall">
+                    <RegistryValue Name="RemoveInstallerDirFolder" Value="" Type="string" KeyPath="yes"/>
+                  </RegistryKey>
+                </Component>
+			  </Directory>
+            </Directory>
+          </Directory>
+        </Directory>
+      </Directory>
+    </Directory>
+    <?else?>
+    <Directory Id='TARGETDIR'	Name='SourceDir'>
+      <Directory Id='AppDataFolder' Name='AppData'>
+        <Directory Id='GoogleDir' Name='Google'>
+          <Component Id="RemoveGoogleDir" Guid="*" DiskId="1" Win64="$(var.win64Flag)">
+            <CreateFolder/>
+            <RemoveFolder Id="RemoveGoogleDirFolder" On="uninstall" />
+            <RegistryKey Root="HKMU" Key="$(var.gwtRegKey)" Action="createAndRemoveOnUninstall">
+              <RegistryValue Name="RemoveGoogleDirFolder" Value="" Type="string" KeyPath="yes"/>
+            </RegistryKey>
+          </Component>
+          <Directory Id='GoogleWebToolkitDir' Name='Google Web Toolkit'>
+            <Component Id="RemoveGoogleWebToolkitDir" Guid="*" DiskId="1" Win64="$(var.win64Flag)">
+              <CreateFolder/>
+              <RemoveFolder Id="RemoveGoogleWebToolkitDirFolder" On="uninstall" />
+              <RegistryKey Root="HKMU" Key="$(var.gwtRegKey)" Action="createAndRemoveOnUninstall">
+                <RegistryValue Name="RemoveGoogleWebToolkitDirFolder" Value="" Type="string" KeyPath="yes"/>
+              </RegistryKey>
+            </Component>
+            <Directory Id='DeveloperPluginDir' Name='Developer Plugin'>
+              <Component Id="RemoveDeveloperPluginDir" Guid="*" DiskId="1" Win64="$(var.win64Flag)">
+                <CreateFolder/>
+                <RemoveFolder Id="RemoveDeveloperPluginDirFolder" On="uninstall" />
+                <RegistryKey Root="HKMU" Key="$(var.gwtRegKey)" Action="createAndRemoveOnUninstall">
+                  <RegistryValue Name="RemoveDeveloperPluginDirFolder" Value="" Type="string" KeyPath="yes"/>
+                </RegistryKey>
+              </Component>
+              <Directory Id='INSTALLDIR' Name='IE'>
+                <Component Id="RemoveInstallDir" Guid="*" DiskId="1" Win64="$(var.win64Flag)">
+                  <CreateFolder/>
+                  <RemoveFolder Id="RemoveInstallerDirFolder" On="uninstall" />
+                  <RegistryKey Root="HKMU" Key="$(var.gwtRegKey)" Action="createAndRemoveOnUninstall">
                     <RegistryValue Name="RemoveInstallerDirFolder" Value="" Type="string" KeyPath="yes"/>
                   </RegistryKey>
                 </Component>
@@ -113,54 +175,34 @@
         </Directory>
       </Directory>
     </Directory>
+    <?endif?>
 
     <!-- Set some registry values. -->
-    <Component
-      Id='registryValues'
-      Directory='INSTALLDIR'
-      Guid='*'>
-      <RegistryKey
-        Root='HKCU'
-        Action='createAndRemoveOnUninstall'
-        Key='$(var.updateRegKey)'>
-        <RegistryValue
-          Name='pv'
-          Value='$(var.version)'
-          Type='string' />
-        <RegistryValue
-          Name='name'
-          Value='$(var.appName)'
-          Type='string' />
-        <RegistryValue
-          Name='lang'
-          Value='en'
-          Type='string' />
+    <Component Id='registryValues' Directory='INSTALLDIR' Guid='*' Win64="$(var.win64Flag)">
+      <RegistryKey Root='HKMU' Action='createAndRemoveOnUninstall' Key='$(var.updateRegKey)'>
+        <RegistryValue Name='pv' Value='$(var.version)' Type='string' />
+        <RegistryValue Name='name' Value='$(var.appName)' Type='string' />
+        <RegistryValue Name='lang' Value='en' Type='string' />
       </RegistryKey>
+	  <!-- requires per machine install (elevated)
+      <RegistryKey Root='HKMU' Action='createAndRemoveOnUninstall' Key='SOFTWARE\Microsoft\Windows\CurrentVersion\explorer\Browser Helper Objects\{1D6156B6-002B-49E7-B5CA-C138FB843B4E}'>
+        <RegistryValue Name='NoExplorer' Value='1' Type='integer' />
+      </RegistryKey>
+	  -->
     </Component>
 
     <!-- Define the features to install. -->
-    <Feature
-      Id='CompleteFeature'
-      Display='expand'
-      Level='1'
-      Absent='disallow'>
+    <Feature Id='CompleteFeature' Display='expand' Level='1' Absent='disallow'>
       <!--
         Loaded from oophm.wxs.xml, which is generated by the build
         script.
-      -->
-      <ComponentRef
-        Id='RemoveGoogleDir' />
-      <ComponentRef
-        Id='RemoveGoogleWebToolkitDir' />
-      <ComponentRef
-        Id='RemoveDeveloperPluginDir' />
-      <ComponentRef
-        Id='RemoveInstallDir' />
-      <ComponentGroupRef
-        Id='oophmDll' />
-      <ComponentRef
-        Id='registryValues' />
+        -->
+      <ComponentRef Id='RemoveGoogleDir' />
+      <ComponentRef Id='RemoveGoogleWebToolkitDir' />
+      <ComponentRef Id='RemoveDeveloperPluginDir' />
+      <ComponentRef Id='RemoveInstallDir' />
+      <ComponentGroupRef Id='oophmDll' />
+      <ComponentRef Id='registryValues' />
     </Feature>
-
   </Product>
 </Wix>

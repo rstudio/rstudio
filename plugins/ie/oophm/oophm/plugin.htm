@@ -1,19 +1,82 @@
-<HTML>
-<HEAD>
-<TITLE>ATL 8.0 test page for object plugin</TITLE>
-</HEAD>
-<BODY>
-
-
-<OBJECT ID="plugin" CLASSID="CLSID:1D6156B6-002B-49E7-B5CA-C138FB843B4E"></OBJECT>
-
-<script>
-var p = document.getElementById("plugin");
-var b = p.connect("this", "sucks");
-var o = p.testObject();
-o.doSomething(42);
-
-
-</script>
-</BODY>
-</HTML>
+<HTML>  
+<HEAD>  
+<TITLE>GWT IE Plugin test page.</TITLE>  
+</HEAD>  
+<BODY>      
+<OBJECT ID="plugin" CLASSID="CLSID:1D6156B6-002B-49E7-B5CA-C138FB843B4E" border="2" width="150" height="150" standby="loading gwt plugin...">
+<div style="color:red; font-family:'Times New Roman'; font-size:20px;">
+<H1>Ooops!!! Failed to load gwt oophm plugin!</H1>
+<a><p>This is was you should have seen...<p>
+<img
+src="data:image/png;base64,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
+AElFTkSuQmCC" /></a>
+</div>
+</OBJECT>
+<script>  
+var plugin = document.getElementById("plugin");  
+var b = plugin.connect("this", "sucks");  
+var obj = plugin.testObject();  
+obj.doSomething(42);      
+</script>  
+</BODY>  
+</HTML> 

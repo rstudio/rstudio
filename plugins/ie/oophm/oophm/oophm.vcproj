@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="oophm"
 	ProjectGUID="{EB69BDFE-9380-4C51-99E8-C3EB25AE36A2}"
 	RootNamespace="oophm"
 	Keyword="AtlProj"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -82,11 +83,13 @@
 				RegisterOutput="true"
 				IgnoreImportLibrary="true"
 				AdditionalDependencies="comsuppw.lib ws2_32.lib"
-				OutputFile="..\..\prebuilt\$(ProjectName).dll"
+				OutputFile="..\..\prebuilt\$(PlatformName)\$(ProjectName).dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile=".\oophm.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -106,9 +109,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -176,11 +176,13 @@
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="true"
 				AdditionalDependencies="comsuppw.lib ws2_32.lib"
-				OutputFile="..\..\prebuilt\$(ProjectName)64.dll"
+				OutputFile="..\..\prebuilt\$(PlatformName)\$(ProjectName).dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile=".\oophm.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -200,9 +202,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -270,13 +269,15 @@
 				RegisterOutput="true"
 				IgnoreImportLibrary="true"
 				AdditionalDependencies="comsuppw.lib ws2_32.lib"
-				OutputFile="..\..\prebuilt\$(ProjectName).dll"
+				OutputFile="..\..\prebuilt\$(PlatformName)\$(ProjectName).dll"
 				LinkIncremental="1"
 				ModuleDefinitionFile=".\oophm.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -296,9 +297,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -347,7 +345,6 @@
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -366,13 +363,15 @@
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="true"
 				AdditionalDependencies="comsuppw.lib ws2_32.lib"
-				OutputFile="..\..\prebuilt\$(ProjectName)64.dll"
+				OutputFile="..\..\prebuilt\$(PlatformName)\$(ProjectName).dll"
 				LinkIncremental="1"
 				ModuleDefinitionFile=".\oophm.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -392,9 +391,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -528,38 +524,6 @@
 			<File
 				RelativePath=".\stdafx.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
-				</FileConfiguration>
 			</File>
 			<Filter
 				Name="common"

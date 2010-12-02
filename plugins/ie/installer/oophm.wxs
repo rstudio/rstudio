@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+	<?if $(var.platform)=x64 ?>
+	<?define win64Flag="yes" ?>
+	<?else ?>
+	<?define win64Flag="no" ?>
+	<?endif ?>
+    <Fragment>
+        <DirectoryRef Id="INSTALLDIR">
+            <Directory Id="dir315E0C50682DFB472927FE1254A22F6A" Name="$(var.platform)" />
+        </DirectoryRef>
+    </Fragment>
+    <Fragment>
+        <ComponentGroup Id="oophmDll">
+            <Component Win64="$(var.win64Flag)" Id="cmpC5076456A3EE2DC3FC2683246BE38AD6" Directory="dir315E0C50682DFB472927FE1254A22F6A" Guid="48789066-DDF6-46C5-BF60-408BC872BF05">
+                <File Id="filEF78EFE99C26E3436EC9C8852A85BE88" KeyPath="yes" Source="$(var.binDir)\oophm.dll">
+                    <TypeLib Id="{9259F105-BE55-4BF6-B7CE-D0AA878C1BA6}" Description="oophm 1.0 Type Library" HelpDirectory="dir315E0C50682DFB472927FE1254A22F6A" Language="0" MajorVersion="1" MinorVersion="0">
+                        <AppId Description="oophm" Id="{F9365E53-5A14-47F3-BF1D-10CAAB815309}">
+                            <Class Id="{1D6156B6-002B-49E7-B5CA-C138FB843B4E}" Context="InprocServer32" Description="plugin Class" ThreadingModel="apartment" Version="1.0" Programmable="yes" Control="yes">
+                                <ProgId Id="oophm.plugin.1" Description="plugin Class">
+                                    <ProgId Id="oophm.plugin" Description="plugin Class" />
+                                </ProgId>
+                            </Class>
+                        </AppId>
+                        <Class Id="{1A2A78F4-B5A4-4208-B520-BDDA0A7EC5CB}" Context="InprocServer32" Description="ExceptionCatcher Class" ThreadingModel="apartment" Programmable="yes">
+                            <ProgId Id="oophm.ExceptionCatcher.1" Description="ExceptionCatcher Class">
+                                <ProgId Id="oophm.ExceptionCatcher" Description="ExceptionCatcher Class" />
+                            </ProgId>
+                        </Class>
+                        <Class Id="{644FD769-8B9D-4AC4-A79E-AAAF5CD751C1}" Context="InprocServer32" Description="JavaObject Class" ThreadingModel="apartment" Programmable="yes">
+                            <ProgId Id="oophm.JavaObject.1" Description="JavaObject Class">
+                                <ProgId Id="oophm.JavaObject" Description="JavaObject Class" />
+                            </ProgId>
+                        </Class>
+                        <Interface Id="{1C3FBB2D-58C2-426C-A461-E6002F9EE294}" Name="IExceptionCatcher" ProxyStubClassId32="{00020424-0000-0000-C000-000000000046}" />
+                        <Interface Id="{58276E45-1F24-4B71-88AC-2A7D0C26CDFF}" Name="IJavaObject" ProxyStubClassId32="{00020424-0000-0000-C000-000000000046}" />
+                        <Interface Id="{73607C2E-369B-4055-8020-D7643A59F521}" Name="Iplugin" ProxyStubClassId32="{00020424-0000-0000-C000-000000000046}" />
+                        <Interface Id="{AB9B16A0-03E9-481E-ADF5-B00B860A8C3A}" Name="IpluginUI" ProxyStubClassId32="{00020424-0000-0000-C000-000000000046}" />
+                    </TypeLib>
+                </File>
+                <RegistryValue Root="HKMU" Key="AppID\oophm.DLL" Name="AppID" Value="{F9365E53-5A14-47F3-BF1D-10CAAB815309}" Type="string" Action="write" />
+                <RegistryValue Root="HKMU" Key="CLSID\{1D6156B6-002B-49E7-B5CA-C138FB843B4E}\MiscStatus\1" Value="131473" Type="string" Action="write" />
+                <RegistryValue Root="HKMU" Key="CLSID\{1D6156B6-002B-49E7-B5CA-C138FB843B4E}\MiscStatus" Value="0" Type="string" Action="write" />
+                <RegistryValue Root="HKMU" Key="CLSID\{1D6156B6-002B-49E7-B5CA-C138FB843B4E}\ToolboxBitmap32" Value="[!filEF78EFE99C26E3436EC9C8852A85BE88], 102" Type="string" Action="write" />
+            </Component>
+        </ComponentGroup>
+    </Fragment>
+    <Fragment>
+        <DirectoryRef Id="dir315E0C50682DFB472927FE1254A22F6A" />
+    </Fragment>
+</Wix>
