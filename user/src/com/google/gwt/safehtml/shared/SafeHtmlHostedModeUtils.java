@@ -54,17 +54,17 @@ public class SafeHtmlHostedModeUtils {
    * For example, this check will pass for the following strings:
    *
    * <pre>{@code
-   *   &lt;foo&gt;blah
-   *   baz&lt;em&gt;foo&lt;/em&gt; &lt;x a="b"&gt;hello
+   *   <foo>blah
+   *   baz<em>foo</em> <x a="b">hello
    * }</pre>
    *
    * <p>
    * The check will fail for the following strings:
    *
    * <pre>{@code
-   *   baz&lt;em&gt;foo&lt;/em&gt; &lt;x
-   *   baz&lt;em&gt;foo&lt;/em&gt; &lt;x a="b
-   *   baz&lt;em&gt;foo&lt;/em&gt; &lt;x a="b"
+   *   baz<em>foo</em> <x
+   *   baz<em>foo</em> <x a="b
+   *   baz<em>foo</em> <x a="b"
    * }</pre>
    *
    * <p>

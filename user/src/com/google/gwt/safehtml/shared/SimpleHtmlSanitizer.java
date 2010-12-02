@@ -27,11 +27,11 @@ import java.util.Set;
  * attribute-free tags:
  *
  * <ul>
- * <li>{@code &lt;b&gt;}, {@code &lt;em&gt;}, {@code &lt;i&gt;}</li>
- * <li>{@code &lt;h1&gt;}, {@code &lt;h2&gt;}, {@code &lt;h3&gt;},
- *     {@code &lt;h4&gt;}, {@code &lt;h5&gt;}, {@code &lt;h6&gt;}</li>
- * <li>{@code &lt;ul&gt;}, {@code &lt;ol&gt;}. {@code &lt;li&gt;}</li>
- * <li>{@code &lt;hr&gt;}</li>
+ * <li>{@code <b>}, {@code <em>}, {@code <i>}</li>
+ * <li>{@code <h1>}, {@code <h2>}, {@code <h3>},
+ *     {@code <h4>}, {@code <h5>}, {@code <h6>}</li>
+ * <li>{@code <ul>}, {@code <ol>}. {@code <li>}</li>
+ * <li>{@code <hr>}</li>
  * </ul>
  *
  * as well as numeric HTML entities and HTML entity references. Any HTML

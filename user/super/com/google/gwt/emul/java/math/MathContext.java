@@ -292,9 +292,9 @@ public final class MathContext implements Serializable {
   /**
    * Returns the string representation for this {@code MathContext} instance.
    * The string has the form {@code
-   * "precision=&lt;precision&gt; roundingMode=&lt;roundingMode&gt;" * } where
-   * {@code &lt;precision&gt;} is an integer describing the number of digits
-   * used for operations and {@code &lt;roundingMode&gt;} is the string
+   * "precision=<precision> roundingMode=<roundingMode>" * } where
+   * {@code <precision>} is an integer describing the number of digits
+   * used for operations and {@code <roundingMode>} is the string
    * representation of the rounding mode.
    * 
    * @return a string representation for this {@code MathContext} instance

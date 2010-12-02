@@ -58,7 +58,7 @@ import java.lang.annotation.Target;
  * <b>Note:</b> The current implementation of the code generator cannot
  * guarantee the {@code SafeHtml} contract for templates with template variables
  * in a CSS or JavaScript context (that is, within a {@code style} attribute or
- * tag; or within {@code &lt;script&gt;} tags or {@code onClick}, {@code
+ * tag; or within {@code <script>} tags or {@code onClick}, {@code
  * onError}, etc. attributes). Developers are advised to avoid such templates,
  * or to review the uses of corresponding template methods very carefully to
  * ensure that values passed into the CSS or JavaScript context cannot result in

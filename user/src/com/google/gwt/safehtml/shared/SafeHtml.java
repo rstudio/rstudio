@@ -45,11 +45,11 @@ import java.io.Serializable;
  * requirement implies that for any value {@code A} of this type, if {@code
  * A.asString()} includes HTML markup, the string must end in an "inner HTML"
  * context and not inside a tag or attribute. For example, a value of {@code
- * &lt;div style="} or {@code &lt;img src="} would not satisfy the SafeHtml contract.
+ * <div style="} or {@code <img src="} would not satisfy the SafeHtml contract.
  * This is because concatenating such strings with a second value that itself
  * does not contain script-executing HTML markup can result in an overall string
- * that does. For example, if {@code javascript:malicious()"&gt;} is appended to
- * {@code &lt;img src="}, the resulting string may result in script execution.
+ * that does. For example, if {@code javascript:malicious()">} is appended to
+ * {@code <img src="}, the resulting string may result in script execution.
  *
  * <p>
  * All implementations must implement equals() and hashCode() to behave

@@ -180,10 +180,10 @@ public final class SafeHtmlBuilder {
    *
    * <li>The value of the argument must end in "inner HTML" context and not
    * contain incomplete HTML tags. I.e., the following is not a correct use of
-   * this method, because the {@code &lt;a&gt;} tag is incomplete:
+   * this method, because the {@code <a>} tag is incomplete:
    *
    * <pre class="code">
-   * {@code shb.appendConstantHtml("&lt;a href='").append(url)}</pre>
+   * {@code shb.appendConstantHtml("<a href='").append(url)}</pre>
    *
    * </ol>
    *
