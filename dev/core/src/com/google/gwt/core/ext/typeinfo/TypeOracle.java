@@ -657,7 +657,7 @@ public class TypeOracle {
   private List<JClassType> classChain(JClassType cls) {
     LinkedList<JClassType> chain = new LinkedList<JClassType>();
     while (cls != null) {
-      chain.push(cls);
+      chain.addFirst(cls);
       cls = cls.getSuperclass();
     }
     return chain;

@@ -396,7 +396,7 @@ public class ProxyCreator {
     String rpcTokenImplementation = "";
     for (JClassType rpcTokenSubtype : rpcTokenSubtypes) {
       if (typesSentFromBrowser.isSerializable(rpcTokenSubtype)) {
-        if (!rpcTokenImplementation.isEmpty()) {
+        if (rpcTokenImplementation.length() > 0) {
           // >1 implematation of RpcToken, bail
           rpcTokenImplementation = "";
           break;
@@ -405,7 +405,7 @@ public class ProxyCreator {
         }
       }
     }
-    if (!rpcTokenImplementation.isEmpty()) {
+    if (rpcTokenImplementation.length() > 0) {
       srcWriter.println("@Override");
       srcWriter.println("protected void checkRpcTokenType(RpcToken token) {");
       srcWriter.indent();
