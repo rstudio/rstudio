@@ -114,7 +114,7 @@ public class Document extends Node {
   }
 
   /**
-   * Creates an &lt;canvas&gt; element.
+   * Creates a &lt;canvas&gt; element.
    * 
    * @return the newly created element
    */

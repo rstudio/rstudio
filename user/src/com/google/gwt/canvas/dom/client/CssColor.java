@@ -25,8 +25,9 @@ package com.google.gwt.canvas.dom.client;
  * </p>
  * 
  * <p>
- * To handle devmode we must wrap JSO strings in an array. Therefore, when in devmode, CssColor is
- * actually an array with one element that is the JSO. In webmode, this is not needed.
+ * To handle dev mode we must wrap JSO strings in an array. Therefore, when in
+ * dev mode, CssColor is actually an array with one element that is the JSO. In
+ * web mode, this is not needed.
  * </p>
  * 
  * @see <a href="http://www.w3.org/TR/CSS1/#color">Cascading Style Sheets, level 1</a>
@@ -36,9 +37,10 @@ public class CssColor extends FillStrokeStyle {
   /**
    * Sets the RGB color value.
    * 
-   * @param r red, int between 0 and 255
-   * @param g green, int between 0 and 255
-   * @param b blue, int between 0 and 255
+   * @param r red, integer between 0 and 255
+   * @param g green, integer between 0 and 255
+   * @param b blue, integer between 0 and 255
+   * @return a {@link CssColor} object
    */
   public static final CssColor make(int r, int g, int b) {
     return make("rgb(" + r + "," + g + "," + b + ")");
@@ -50,10 +52,9 @@ public class CssColor extends FillStrokeStyle {
    * Examples: blue, #ff0000, #f00, rgb(255,0,0)
    * 
    * @param cssColor the CSS color
+   * @return a {@link CssColor} object
    */
   public static final native CssColor make(String cssColor) /*-{
-    // Due to needing to wrap CssColor when in devmode, we check whether the we are in devmode and
-    // wrap the String in an array if necessary.
     return @com.google.gwt.core.client.GWT::isScript()() ? cssColor : [cssColor];
   }-*/;
 
@@ -66,8 +67,6 @@ public class CssColor extends FillStrokeStyle {
    * @return the value of the color, as a String.
    */
   public final native String value() /*-{
-    // Due to needing to wrap CssColor when in devmode, we check whether the we are in devmode and
-    // unwrap the String if necessary.
     return @com.google.gwt.core.client.GWT::isScript()() ? this : this[0];
   }-*/;
 }

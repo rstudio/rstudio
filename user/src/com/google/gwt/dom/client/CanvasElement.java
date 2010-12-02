@@ -32,6 +32,9 @@ import com.google.gwt.canvas.dom.client.Context2d;
 @TagName(CanvasElement.TAG)
 public class CanvasElement extends Element {
 
+  /**
+   * The tag for this element.
+   */
   public static final String TAG = "canvas";
 
   protected CanvasElement() {
@@ -39,7 +42,8 @@ public class CanvasElement extends Element {
 
   /**
    * Gets the rendering context that may be used to draw on this canvas.
-   * 
+   *
+   * @param contextId the context id as a String
    * @return the canvas rendering context
    */
   public final native Context getContext(String contextId) /*-{
@@ -49,7 +53,7 @@ public class CanvasElement extends Element {
   /**
    * Returns a 2D rendering context.
    * 
-   * This is a convenience method, @see {@link #getContext(String)}
+   * This is a convenience method, see {@link #getContext(String)}.
    * 
    * @return a 2D canvas rendering context
    */
@@ -61,6 +65,7 @@ public class CanvasElement extends Element {
    * Gets the height of the canvas.
    * 
    * @return the height, in pixels
+   * @see #setHeight(int)
    */
   public final native int getHeight() /*-{
     return this.height;
@@ -70,6 +75,7 @@ public class CanvasElement extends Element {
    * Gets the width of the canvas.
    * 
    * @return the width, in pixels
+   * @see #setWidth(int)
    */
   public final native int getWidth() /*-{
     return this.width;
@@ -79,6 +85,7 @@ public class CanvasElement extends Element {
    * Sets the height of the canvas.
    * 
    * @param height the height, in pixels
+   * @see #getHeight()
    */
   public final native void setHeight(int height) /*-{
     this.height = height;
@@ -88,6 +95,7 @@ public class CanvasElement extends Element {
    * Sets the width of the canvas.
    * 
    * @param width the width, in pixels
+   * @see #getWidth()
    */
   public final native void setWidth(int width) /*-{
     this.width = width;

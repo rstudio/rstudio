@@ -13,18 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.canvas.dom.client;
 
 /**
- * Rendering Context interface used to draw on a
- * {@link com.google.gwt.dom.client.CanvasElement}.
- * 
- * <p>
- * <span style="color:red">Experimental API: This class is still under rapid
- * development, and is very likely to be deleted. Use it at your own risk.
- * </span>
- * </p>
+ * Classes for HTML Canvas 2D support.
  */
-public interface Context {
-
-}
+@com.google.gwt.util.PreventSpuriousRebuilds
+package com.google.gwt.canvas.client;

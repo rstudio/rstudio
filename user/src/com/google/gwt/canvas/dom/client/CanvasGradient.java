@@ -24,9 +24,10 @@ package com.google.gwt.canvas.dom.client;
  * </span>
  * </p>
  * 
- * This class serves as a reference to a gradient created using {@link Context2d#createPattern}
+ * This class serves as a reference to a gradient created using
+ * {@link Context2d#createPattern}.
  * 
- * @see <a href="http://www.w3.org/TR/2dcontext/#canvasgradient">CanvasGradient</a>
+ * @see <a href="http://www.w3.org/TR/2dcontext/#canvasgradient">HTML Canvas 2D CanvasGradient</a>
  */
 public class CanvasGradient extends FillStrokeStyle {
 

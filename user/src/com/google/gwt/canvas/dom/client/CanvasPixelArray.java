@@ -18,15 +18,17 @@ package com.google.gwt.canvas.dom.client;
 import com.google.gwt.core.client.JavaScriptObject;
 
 /**
- * Array-like object holding the actual image data for an ImageData object. For each pixel, 
+ * Array-like object holding the actual image data for an ImageData object. For each pixel,
  * this object contains a red, green, blue and alpha value between 0 and 255 (in this order).
  * Note that we use ints here to represent the data to avoid complexities stemming from
  * bytes being signed in Java.
- * 
+ *
  * <p>
  * <span style="color:red">Experimental API: This class is still under rapid
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
+ *
+ * @see <a href="http://www.w3.org/TR/2dcontext/#canvaspixelarray">HTML Canvas 2D CanvasPixelArray</a>
  * </p>
  */
 public class CanvasPixelArray extends JavaScriptObject {
@@ -36,6 +38,9 @@ public class CanvasPixelArray extends JavaScriptObject {
 
   /**
    * Returns the data value at index i.
+   *
+   * @param i the data index
+   * @return the data value
    */
   public final native int get(int i) /*-{
     return this[i] || 0;
@@ -43,6 +48,8 @@ public class CanvasPixelArray extends JavaScriptObject {
 
   /**
    * Returns the length of the array.
+   *
+   * @return the array length
    */
   public final native int getLength() /*-{
     return this.length;
@@ -50,10 +57,10 @@ public class CanvasPixelArray extends JavaScriptObject {
 
   /**
    * Sets the data value at position i to the given value.
-   * 
-   * Most browsers will clamp this value to the range 0...255 that is not enforced in this
-   * implementation.
-   * 
+   *
+   * Most browsers will clamp this value to the range 0...255, but that is not
+   * enforced in this implementation.
+   *
    * @param i index to set.
    * @param value value to set (use values from 0 to 255)
    */

@@ -25,8 +25,11 @@ import com.google.gwt.core.client.JavaScriptObject;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
+ *
+ * @see <a href="http://www.w3.org/TR/2dcontext/#imagedata">HTML Canvas 2D ImageData</a>
  */
 public class ImageData extends JavaScriptObject {
+
   /**
    * Number of colors at each location in the array.
    * 
@@ -51,7 +54,9 @@ public class ImageData extends JavaScriptObject {
    * 
    * @param x the x coordinate
    * @param y the y coordinate
-   * @return the alpha value at position (x,y), or 0 if not in the image.
+   * @return the alpha value at position (x,y), or 0 if not in the image
+   * @see #setAlphaAt(int, int, int)
+   * @see #getColorAt(int, int, int)
    */
   public final int getAlphaAt(int x, int y) {
     return getColorAt(x, y, OFFSET_ALPHA);
@@ -62,14 +67,18 @@ public class ImageData extends JavaScriptObject {
    * 
    * @param x the x coordinate
    * @param y the y coordinate
-   * @return the blue value at position (x,y), or 0 if not in the image.
+   * @return the blue value at position (x,y), or 0 if not in the image
+   * @see #setBlueAt(int, int, int)
+   * @see #getColorAt(int, int, int)
    */
   public final int getBlueAt(int x, int y) {
     return getColorAt(x, y, OFFSET_BLUE);
   }
 
   /**
-   * Returns a canvas pixel array of the size width * height * 4.
+   * Returns a canvas pixel array of size width * height * 4.
+   *
+   * @return a {@link CanvasPixelArray} object
    */
   public final native CanvasPixelArray getData() /*-{
     return this.data;
@@ -80,7 +89,9 @@ public class ImageData extends JavaScriptObject {
    * 
    * @param x the x coordinate
    * @param y the y coordinate
-   * @return the green value at position (x,y), or 0 if not in the image.
+   * @return the green value at position (x,y), or 0 if not in the image
+   * @see #setGreenAt(int, int, int)
+   * @see #getColorAt(int, int, int)
    */
   public final int getGreenAt(int x, int y) {
     return getColorAt(x, y, OFFSET_GREEN);
@@ -88,6 +99,8 @@ public class ImageData extends JavaScriptObject {
 
   /**
    * Returns the height of this image data object.
+   *
+   * @return the image height as an int
    */
   public final native int getHeight() /*-{
     return this.height;
@@ -98,7 +111,9 @@ public class ImageData extends JavaScriptObject {
    * 
    * @param x the x coordinate
    * @param y the y coordinate
-   * @return the red value at position (x,y), or 0 if not in the image.
+   * @return the red value at position (x,y), or 0 if not in the image
+   * @see #setRedAt(int, int, int)
+   * @see #getColorAt(int, int, int)
    */
   public final int getRedAt(int x, int y) {
     return getColorAt(x, y, OFFSET_RED);
@@ -106,6 +121,8 @@ public class ImageData extends JavaScriptObject {
 
   /**
    * Returns the width of this image data object.
+   *
+   * @return the image width as an int
    */
   public final native int getWidth() /*-{
     return this.width;
@@ -117,6 +134,8 @@ public class ImageData extends JavaScriptObject {
    * @param alpha the alpha value
    * @param x the x coordinate
    * @param y the y coordinate
+   * @see #getAlphaAt(int, int)
+   * @see #getColorAt(int, int, int)
    */
   public final void setAlphaAt(int alpha, int x, int y) {
     setColorAt(alpha, x, y, OFFSET_ALPHA);
@@ -128,6 +147,8 @@ public class ImageData extends JavaScriptObject {
    * @param blue the blue value
    * @param x the x coordinate
    * @param y the y coordinate
+   * @see #getBlueAt(int, int)
+   * @see #getColorAt(int, int, int)
    */
   public final void setBlueAt(int blue, int x, int y) {
     setColorAt(blue, x, y, OFFSET_BLUE);
@@ -139,6 +160,8 @@ public class ImageData extends JavaScriptObject {
    * @param green the green value
    * @param x the x coordinate
    * @param y the y coordinate
+   * @see #getGreenAt(int, int)
+   * @see #getColorAt(int, int, int)
    */
   public final void setGreenAt(int green, int x, int y) {
     setColorAt(green, x, y, OFFSET_GREEN);
@@ -150,6 +173,8 @@ public class ImageData extends JavaScriptObject {
    * @param red the red value
    * @param x the x coordinate
    * @param y the y coordinate
+   * @see #getRedAt(int, int)
+   * @see #getColorAt(int, int, int)
    */
   public final void setRedAt(int red, int x, int y) {
     setColorAt(red, x, y, OFFSET_RED);
@@ -158,14 +183,15 @@ public class ImageData extends JavaScriptObject {
   /**
    * Returns the color value at position (x,y) with the specified offset.
    * 
-   * Colors are stored in RGBA format, where the offset determines the color (R, G, B, or A.) The
-   * values are stored in row-major order. If the specified location is not in the image, 0 is
-   * returned.
+   * Colors are stored in RGBA format, where the offset determines the color
+   * channel (R, G, B, or A). The values are stored in row-major order. If the
+   * specified location is not in the image, 0 is returned.
    * 
    * @param x the x coordinate
    * @param y the y coordinate
    * @param offset the color offset
-   * @return the color value at position (x,y), or 0 if not in the image.
+   * @return the color value at position (x,y), or 0 if not in the image
+   * @see #setColorAt(int, int, int, int)
    */
   private native int getColorAt(int x, int y, int offset) /*-{
     return this.data[@com.google.gwt.canvas.dom.client.ImageData::NUM_COLORS * 
@@ -175,13 +201,14 @@ public class ImageData extends JavaScriptObject {
   /**
    * Sets the color value at position (x,y) with the specified offset.
    * 
-   * Colors are stored in RGBA format, where the offset determines the color (R, G, B, or A.) The
-   * values are stored in row-major order.
+   * Colors are stored in RGBA format, where the offset determines the color
+   * (R, G, B, or A.) The values are stored in row-major order.
    * 
    * @param color the color (in the range 0...255)
    * @param x the x coordinate
    * @param y the y coordinate
    * @param offset the color offset
+   * @see #getColorAt(int, int, int)
    */
   private native void setColorAt(int color, int x, int y, int offset) /*-{
     this.data[@com.google.gwt.canvas.dom.client.ImageData::NUM_COLORS * 

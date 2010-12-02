@@ -34,6 +34,7 @@ import com.google.gwt.user.client.ui.FocusWidget;
  * This widget may not be supported on all browsers, see {@link IsSupported}
  */
 public class Canvas extends FocusWidget implements IsSupported {
+
   /**
    * Runtime check for whether the canvas element is supported in this browser.
    * See {@link IsSupported}
@@ -63,6 +64,7 @@ public class Canvas extends FocusWidget implements IsSupported {
   /**
    * Gets the rendering context that may be used to draw on this canvas.
    * 
+   * @param contextId the context id as a String
    * @return the canvas rendering context
    */
   public Context getContext(String contextId) {
@@ -72,7 +74,7 @@ public class Canvas extends FocusWidget implements IsSupported {
   /**
    * Returns a 2D rendering context.
    * 
-   * This is a convenience method, @see {@link #getContext(String)}
+   * This is a convenience method, see {@link #getContext(String)}.
    * 
    * @return a 2D canvas rendering context
    */
@@ -84,6 +86,7 @@ public class Canvas extends FocusWidget implements IsSupported {
    * Gets the height of the internal canvas coordinate space.
    * 
    * @return the height, in pixels
+   * @see #setCoordinateSpaceHeight(int)
    */
   public int getCoordinateSpaceHeight() {
     return getCanvasElement().getHeight();
@@ -93,6 +96,7 @@ public class Canvas extends FocusWidget implements IsSupported {
    * Gets the width of the internal canvas coordinate space.
    * 
    * @return the width, in pixels
+   * @see #setCoordinateSpaceWidth(int)
    */
   public int getCoordinateSpaceWidth() {
     return getCanvasElement().getWidth();
@@ -102,6 +106,7 @@ public class Canvas extends FocusWidget implements IsSupported {
    * Sets the height of the internal canvas coordinate space.
    * 
    * @param height the height, in pixels
+   * @see #getCoordinateSpaceHeight()
    */
   public void setCoordinateSpaceHeight(int height) {
     getCanvasElement().setHeight(height);
@@ -111,6 +116,7 @@ public class Canvas extends FocusWidget implements IsSupported {
    * Sets the width of the internal canvas coordinate space.
    * 
    * @param width the width, in pixels
+   * @see #getCoordinateSpaceWidth()
    */
   public void setCoordinateSpaceWidth(int width) {
     getCanvasElement().setWidth(width);
@@ -126,10 +132,12 @@ public class Canvas extends FocusWidget implements IsSupported {
   }
 
   /**
-   * Returns a data URL for the current content of the canvas element, with a specified type.
+   * Returns a data URL for the current content of the canvas element, with a
+   * specified type.
    * 
    * @param type the type of the data url, e.g., image/jpeg or image/png.
-   * @return a data URL for the current content of this element with the specified type.
+   * @return a data URL for the current content of this element with the
+   *         specified type.
    */
   public String toDataUrl(String type) {
     return getCanvasElement().toDataUrl(type);

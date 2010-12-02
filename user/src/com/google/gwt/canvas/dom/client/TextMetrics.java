@@ -25,6 +25,8 @@ import com.google.gwt.core.client.JavaScriptObject;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
+ *
+ * @see <a href="http://www.w3.org/TR/2dcontext/#textmetrics">HTML Canvas 2D TextMetrics</a>
  */
 public class TextMetrics extends JavaScriptObject {
 

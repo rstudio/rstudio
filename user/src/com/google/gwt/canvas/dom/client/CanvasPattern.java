@@ -27,7 +27,7 @@ package com.google.gwt.canvas.dom.client;
  * Note that this class has no methods. It simply serves as a reference to a
  * pattern created using {@link Context2d#createPattern}.
  * 
- * @see <a href="http://www.w3.org/TR/2dcontext/#canvaspattern">CanvasPattern</a>
+ * @see <a href="http://www.w3.org/TR/2dcontext/#canvaspattern">HTML Canvas 2D CanvasPattern</a>
  */
 public class CanvasPattern extends FillStrokeStyle {
 

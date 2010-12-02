@@ -19,8 +19,9 @@ package com.google.gwt.user.client;
 /**
  * Interface for classes that are only supported on a limited set of browsers.
  * 
- * By convention, classes that implement IsSupported will provide a static method
- * <code>boolean isSupported()</code> that checks whether the feature is supported at runtime.
+ * By convention, classes that implement IsSupported will provide a static
+ * method <code>boolean isSupported()</code> that checks whether the feature is
+ * supported at runtime.
  */
 public interface IsSupported {
 
