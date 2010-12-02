@@ -20,9 +20,11 @@ import com.google.gwt.autobean.shared.impl.StringQuoter;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Provides unified encoding and decoding of value objects.
@@ -30,6 +32,11 @@ import java.util.Map;
 public class ValueCodex {
   enum Type {
     BIG_DECIMAL(BigDecimal.class) {
+      @Override
+      public boolean canUpcast(Object value) {
+        return value instanceof BigDecimal;
+      }
+
       @Override
       public BigDecimal decode(Class<?> clazz, String value) {
         return new BigDecimal(value);
@@ -41,6 +48,11 @@ public class ValueCodex {
       }
     },
     BIG_INTEGER(BigInteger.class) {
+      @Override
+      public boolean canUpcast(Object value) {
+        return value instanceof BigInteger;
+      }
+
       @Override
       public BigInteger decode(Class<?> clazz, String value) {
         return new BigInteger(value);
@@ -70,6 +82,11 @@ public class ValueCodex {
       }
     },
     DATE(Date.class) {
+      @Override
+      public boolean canUpcast(Object value) {
+        return value instanceof Date;
+      }
+
       @Override
       public Date decode(Class<?> clazz, String value) {
         return new Date(Long.valueOf(value));
@@ -158,6 +175,15 @@ public class ValueCodex {
       this.defaultValue = defaultValue;
     }
 
+    /**
+     * Determines whether or not the Type can handle the given value via
+     * upcasting semantics.
+     */
+    public boolean canUpcast(Object value) {
+      // Most value types are final, so this method is meaningless
+      return false;
+    }
+
     public abstract Object decode(Class<?> clazz, String value);
 
     public Object getDefaultValue() {
@@ -177,14 +203,18 @@ public class ValueCodex {
     }
   }
 
-  private static Map<Class<?>, Type> typesByClass = new HashMap<Class<?>, Type>();
+  private static final Set<Class<?>> ALL_VALUE_TYPES;
+  private static final Map<Class<?>, Type> TYPES_BY_CLASS;
   static {
+    Map<Class<?>, Type> temp = new HashMap<Class<?>, Type>();
     for (Type t : Type.values()) {
-      typesByClass.put(t.getType(), t);
+      temp.put(t.getType(), t);
       if (t.getPrimitiveType() != null) {
-        typesByClass.put(t.getPrimitiveType(), t);
+        temp.put(t.getPrimitiveType(), t);
       }
     }
+    ALL_VALUE_TYPES = Collections.unmodifiableSet(temp.keySet());
+    TYPES_BY_CLASS = Collections.unmodifiableMap(temp);
   }
 
   /**
@@ -194,7 +224,11 @@ public class ValueCodex {
    * @return {@code true} if the given object type can be decoded
    */
   public static boolean canDecode(Class<?> clazz) {
-    return findType(clazz) != null;
+    if (findType(clazz) != null) {
+      return true;
+    }
+    // Use other platform-specific tests
+    return ValueCodexHelper.canDecode(clazz);
   }
 
   public static <T> T decode(Class<T> clazz, Splittable split) {
@@ -212,12 +246,42 @@ public class ValueCodex {
     return (T) getTypeOrDie(clazz).decode(clazz, string);
   }
 
+  /**
+   * Encode a value object when the wire format type is known. This method
+   * should be preferred over {@link #encode(Object)} when possible.
+   */
+  public static Splittable encode(Class<?> clazz, Object obj) {
+    if (obj == null) {
+      return LazySplittable.NULL;
+    }
+    return new LazySplittable(getTypeOrDie(clazz).toJsonExpression(obj));
+  }
+
   public static Splittable encode(Object obj) {
     if (obj == null) {
       return LazySplittable.NULL;
     }
-    return new LazySplittable(
-        getTypeOrDie(obj.getClass()).toJsonExpression(obj));
+    Type t = findType(obj.getClass());
+    // Try upcasting
+    if (t == null) {
+      for (Type maybe : Type.values()) {
+        if (maybe.canUpcast(obj)) {
+          t = maybe;
+          break;
+        }
+      }
+    }
+    if (t == null) {
+      throw new UnsupportedOperationException(obj.getClass().getName());
+    }
+    return new LazySplittable(t.toJsonExpression(obj));
+  }
+
+  /**
+   * Return all Value types that can be processed by the ValueCodex.
+   */
+  public static Set<Class<?>> getAllValueTypes() {
+    return ALL_VALUE_TYPES;
   }
 
   /**
@@ -235,13 +299,10 @@ public class ValueCodex {
    * May return <code>null</code>.
    */
   private static <T> Type findType(Class<T> clazz) {
-    Type type = typesByClass.get(clazz);
-    if (type == null) {
-      if (clazz.isEnum()) {
-        return Type.ENUM;
-      }
+    if (clazz.isEnum()) {
+      return Type.ENUM;
     }
-    return type;
+    return TYPES_BY_CLASS.get(clazz);
   }
 
   private static <T> Type getTypeOrDie(Class<T> clazz) {

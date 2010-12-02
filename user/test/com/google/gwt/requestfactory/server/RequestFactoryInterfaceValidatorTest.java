@@ -87,6 +87,10 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
     int foo(int a) {
       return 0;
     }
+
+    java.sql.Date getSqlDate() {
+      return null;
+    }
   }
 
   @ProxyFor(Domain.class)
@@ -111,9 +115,15 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
       return 0;
     }
   }
+
   @ProxyFor(DomainWithOverloads.class)
   interface DomainWithOverloadsProxy extends EntityProxy {
     void foo();
+  }
+
+  @ProxyFor(Domain.class)
+  interface DomainWithSqlDateProxy extends EntityProxy {
+    java.sql.Date getSqlDate();
   }
 
   class Foo {
@@ -268,6 +278,14 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
     v.validateRequestContext(RequestContextMissingAnnotation.class.getName());
     assertTrue(v.isPoisoned());
   };
+
+  /**
+   * Test that subclasses of {@code java.util.Date} are not transportable.
+   */
+  public void testDateSubclass() {
+    v.validateEntityProxy(DomainWithSqlDateProxy.class.getName());
+    assertTrue(v.isPoisoned());
+  }
 
   /**
    * Test the {@link FindRequest} context used to implement find().

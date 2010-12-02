@@ -32,11 +32,16 @@ import com.google.gwt.requestfactory.shared.UserInformationProxy;
 import com.google.gwt.requestfactory.shared.Violation;
 import com.google.gwt.requestfactory.shared.impl.SimpleEntityProxyId;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -1801,20 +1806,71 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     });
   }
 
+  public void testPrimitiveListBigDecimalAsParameter() {
+    delayTestFinish(DELAY_TEST_FINISH);
+
+    // Keep these values in sync with SimpleFoo.processBigIntegerList
+    final List<BigDecimal> testList = new ArrayList<BigDecimal>();
+    testList.add(BigDecimal.TEN);
+    testList.add(new BigDecimal("12345.6789") {
+      // This is an anonymous subtype
+    });
+    simpleFooRequest().processBigDecimalList(testList).fire(
+        new Receiver<List<BigDecimal>>() {
+          @Override
+          public void onSuccess(List<BigDecimal> response) {
+            // Check upcasted values only
+            assertEquals(testList, response);
+            finishTestAndReset();
+          }
+        });
+  }
+
+  public void testPrimitiveListBigIntegerAsParameter() {
+    delayTestFinish(DELAY_TEST_FINISH);
+
+    // Keep these values in sync with SimpleFoo.processBigIntegerList
+    final List<BigInteger> testList = new ArrayList<BigInteger>();
+    testList.add(BigInteger.TEN);
+    testList.add(new BigInteger("12345") {
+      // This is an anonymous subtype
+    });
+    simpleFooRequest().processBigIntegerList(testList).fire(
+        new Receiver<List<BigInteger>>() {
+          @Override
+          public void onSuccess(List<BigInteger> response) {
+            // Check upcasted values only
+            assertEquals(testList, response);
+            finishTestAndReset();
+          }
+        });
+  }
+
+  @SuppressWarnings("deprecation")
   public void testPrimitiveListDateAsParameter() {
     delayTestFinish(DELAY_TEST_FINISH);
 
-    @SuppressWarnings("deprecation")
-    final Date date = new Date(90, 0, 1);
-    Request<Date> procReq = simpleFooRequest().processDateList(
-        Arrays.asList(date));
-    procReq.fire(new Receiver<Date>() {
-      @Override
-      public void onSuccess(Date response) {
-        assertEquals(date, response);
-        finishTestAndReset();
-      }
-    });
+    // Keep these values in sync with SimpleFoo.processDateList
+    Date date = new Date(90, 0, 1);
+    java.sql.Date sqlDate = new java.sql.Date(90, 0, 2);
+    Time sqlTime = new Time(1, 2, 3);
+    Timestamp sqlTimestamp = new Timestamp(12345L);
+    final List<Date> testList = Arrays.asList(date, sqlDate, sqlTime,
+        sqlTimestamp);
+    simpleFooRequest().processDateList(testList).fire(
+        new Receiver<List<Date>>() {
+          @Override
+          public void onSuccess(List<Date> response) {
+            // Check upcasted values only
+            assertEquals(testList.size(), response.size());
+            Iterator<Date> expected = testList.iterator();
+            Iterator<Date> actual = response.iterator();
+            while (expected.hasNext()) {
+              assertEquals(expected.next().getTime(), actual.next().getTime());
+            }
+            finishTestAndReset();
+          }
+        });
   }
 
   public void testPrimitiveListEnumAsParameter() {

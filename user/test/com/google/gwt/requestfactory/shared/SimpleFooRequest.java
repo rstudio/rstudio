@@ -15,6 +15,8 @@
  */
 package com.google.gwt.requestfactory.shared;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -61,9 +63,13 @@ public interface SimpleFooRequest extends RequestContext {
 
   InstanceRequest<SimpleFooProxy, SimpleFooProxy> persistCascadingAndReturnSelf();
 
+  Request<List<BigInteger>> processBigIntegerList(List<BigInteger> values);
+
+  Request<List<BigDecimal>> processBigDecimalList(List<BigDecimal> values);
+
   Request<Boolean> processBooleanList(List<Boolean> values);
 
-  Request<Date> processDateList(List<Date> values);
+  Request<List<Date>> processDateList(List<Date> values);
 
   Request<SimpleEnum> processEnumList(List<SimpleEnum> values);
 

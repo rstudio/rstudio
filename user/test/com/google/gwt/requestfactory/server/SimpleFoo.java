@@ -19,11 +19,14 @@ import com.google.gwt.requestfactory.shared.SimpleEnum;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -157,12 +160,72 @@ public class SimpleFoo {
     return foo;
   }
 
+  /**
+   * Check client-side upcasting to BigDecimal and return a list of BigDecimals
+   * that should be upcast.
+   */
+  public static List<BigDecimal> processBigDecimalList(List<BigDecimal> values) {
+    List<BigDecimal> toReturn = new ArrayList<BigDecimal>();
+    toReturn.add(BigDecimal.TEN);
+    toReturn.add(new BigDecimal("12345.6789") {
+      // This is an anonymous subtype
+    });
+    if (!toReturn.equals(values)) {
+      throw new IllegalArgumentException(toReturn + " != " + values);
+    }
+    return toReturn;
+  }
+
+  /**
+   * Check client-side upcasting to BigInteger and return a list of BigIntegers
+   * that should be upcast.
+   */
+  public static List<BigInteger> processBigIntegerList(List<BigInteger> values) {
+    List<BigInteger> toReturn = new ArrayList<BigInteger>();
+    toReturn.add(BigInteger.TEN);
+    toReturn.add(new BigInteger("12345") {
+      // This is an anonymous subtype
+    });
+    if (!toReturn.equals(values)) {
+      throw new IllegalArgumentException(toReturn + " != " + values);
+    }
+    return toReturn;
+  }
+
   public static Boolean processBooleanList(List<Boolean> values) {
     return values.get(0);
   }
 
-  public static Date processDateList(List<Date> values) {
-    return values.get(0);
+  /**
+   * Check client-side upcasting to Date and return a list of Dates that should
+   * be upcast.
+   */
+  @SuppressWarnings("deprecation")
+  public static List<Date> processDateList(List<Date> values) {
+    // Keep these values in sync with SimpleFoo.processDateList
+    Date date = new Date(90, 0, 1);
+    java.sql.Date sqlDate = new java.sql.Date(90, 0, 2);
+    Time sqlTime = new Time(1, 2, 3);
+    Timestamp sqlTimestamp = new Timestamp(12345L);
+    List<Date> toReturn = Arrays.asList(date, sqlDate, sqlTime, sqlTimestamp);
+
+    if (toReturn.size() != values.size()) {
+      throw new IllegalArgumentException("size");
+    }
+
+    Iterator<Date> expected = toReturn.iterator();
+    Iterator<Date> actual = values.iterator();
+    while (expected.hasNext()) {
+      Date expectedDate = expected.next();
+      long expectedTime = expectedDate.getTime();
+      long actualTime = actual.next().getTime();
+      if (expectedTime != actualTime) {
+        throw new IllegalArgumentException(expectedDate.getClass().getName()
+            + " " + expectedTime + " != " + actualTime);
+      }
+    }
+
+    return toReturn;
   }
 
   public static SimpleEnum processEnumList(List<SimpleEnum> values) {
@@ -278,7 +341,7 @@ public class SimpleFoo {
   public static String returnNullString() {
     return null;
   }
-  
+
   public static SimpleFoo returnSimpleFooSubclass() {
     return new SimpleFoo() {
     };

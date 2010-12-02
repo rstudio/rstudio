@@ -15,15 +15,14 @@
  */
 package com.google.gwt.editor.rebind.model;
 
+import com.google.gwt.autobean.shared.ValueCodex;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -32,16 +31,12 @@ import java.util.Set;
  */
 public class ModelUtils {
 
-  @SuppressWarnings("unchecked")
-  static final Set<Class<?>> VALUE_TYPES = Collections.unmodifiableSet(new HashSet<Class<?>>(
-      Arrays.asList(Boolean.class, Character.class, Class.class, Date.class,
-          Enum.class, Number.class, String.class, Void.class)));
-
   static final Set<String> VALUE_TYPE_NAMES;
 
   static {
-    Set<String> names = new HashSet<String>(VALUE_TYPES.size());
-    for (Class<?> clazz : VALUE_TYPES) {
+    Set<Class<?>> valueTypes = ValueCodex.getAllValueTypes();
+    Set<String> names = new HashSet<String>(valueTypes.size());
+    for (Class<?> clazz : valueTypes) {
       names.add(clazz.getName());
     }
     VALUE_TYPE_NAMES = Collections.unmodifiableSet(names);
@@ -110,11 +105,14 @@ public class ModelUtils {
     if (classType == null) {
       return true;
     }
+    if (type.isEnum() != null) {
+      return true;
+    }
 
     for (String valueType : VALUE_TYPE_NAMES) {
       JClassType found = oracle.findType(valueType);
       // null check to accommodate limited mock CompilationStates
-      if (found != null && found.isAssignableFrom(classType)) {
+      if (found != null && found.equals(classType)) {
         return true;
       }
     }

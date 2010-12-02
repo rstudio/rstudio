@@ -434,7 +434,10 @@ public class AbstractRequestContext implements RequestContext,
             if (properties.containsKey(propertyName)) {
               Splittable raw = properties.get(propertyName);
               Object decoded = ValueCodex.decode(ctx.getType(), raw);
-              // Hack for Date, consider generalizing for "custom serializers"
+              /*
+               * Hack for Date subtypes, consider generalizing for
+               * "custom serializers"
+               */
               if (decoded != null && Date.class.equals(ctx.getType())) {
                 decoded = new DatePoser((Date) decoded);
               }

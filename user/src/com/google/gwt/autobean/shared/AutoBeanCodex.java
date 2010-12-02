@@ -295,7 +295,8 @@ public class AutoBeanCodex {
 
       if (ValueCodex.canDecode(ctx.getElementType())) {
         for (Object element : collection) {
-          sb.append(",").append(encodeValue(element).getPayload());
+          sb.append(",").append(
+              encodeValue(ctx.getElementType(), element).getPayload());
         }
       } else {
         boolean isEncoded = Splittable.class.equals(ctx.getElementType());
@@ -330,15 +331,18 @@ public class AutoBeanCodex {
         return false;
       }
 
-      boolean isEncodedKey = Splittable.class.equals(ctx.getKeyType());
-      boolean isEncodedValue = Splittable.class.equals(ctx.getValueType());
-      boolean isValueKey = ValueCodex.canDecode(ctx.getKeyType());
-      boolean isValueValue = ValueCodex.canDecode(ctx.getValueType());
+      Class<?> keyType = ctx.getKeyType();
+      Class<?> valueType = ctx.getValueType();
+      boolean isEncodedKey = Splittable.class.equals(keyType);
+      boolean isEncodedValue = Splittable.class.equals(valueType);
+      boolean isValueKey = ValueCodex.canDecode(keyType);
+      boolean isValueValue = ValueCodex.canDecode(valueType);
 
       if (isValueKey) {
-        writeValueKeyMap(map, isEncodedValue, isValueValue);
+        writeValueKeyMap(map, keyType, valueType, isEncodedValue, isValueValue);
       } else {
-        writeObjectKeyMap(map, isEncodedKey, isEncodedValue, isValueValue);
+        writeObjectKeyMap(map, valueType, isEncodedKey, isEncodedValue,
+            isValueValue);
       }
 
       return false;
@@ -377,7 +381,7 @@ public class AutoBeanCodex {
 
       // Special handling for enums if we have an obfuscation map
       Splittable split;
-      split = encodeValue(value);
+      split = encodeValue(type, value);
       sb.append(",\"").append(propertyName).append("\":").append(
           split.getPayload());
       return false;
@@ -409,12 +413,13 @@ public class AutoBeanCodex {
      * Encodes a value, with special handling for enums to allow the field name
      * to be overridden.
      */
-    private Splittable encodeValue(Object value) {
+    private Splittable encodeValue(Class<?> expectedType, Object value) {
       Splittable split;
       if (value instanceof Enum<?> && enumMap != null) {
-        split = ValueCodex.encode(enumMap.getToken((Enum<?>) value));
+        split = ValueCodex.encode(String.class,
+            enumMap.getToken((Enum<?>) value));
       } else {
-        split = ValueCodex.encode(value);
+        split = ValueCodex.encode(expectedType, value);
       }
       return split;
     }
@@ -429,8 +434,8 @@ public class AutoBeanCodex {
      * encoded as a list of two lists, since it's possible that two distinct
      * objects have the same encoded form.
      */
-    private void writeObjectKeyMap(Map<?, ?> map, boolean isEncodedKey,
-        boolean isEncodedValue, boolean isValueValue) {
+    private void writeObjectKeyMap(Map<?, ?> map, Class<?> valueType,
+        boolean isEncodedKey, boolean isEncodedValue, boolean isValueValue) {
       StringBuilder keys = new StringBuilder();
       StringBuilder values = new StringBuilder();
 
@@ -445,7 +450,8 @@ public class AutoBeanCodex {
           values.append(",").append(
               ((Splittable) entry.getValue()).getPayload());
         } else if (isValueValue) {
-          values.append(",").append(encodeValue(entry.getValue()).getPayload());
+          values.append(",").append(
+              encodeValue(valueType, entry.getValue()).getPayload());
         } else {
           encodeToStringBuilder(values.append(","), entry.getValue());
         }
@@ -462,15 +468,15 @@ public class AutoBeanCodex {
     /**
      * Writes a map JSON literal where the keys are value types.
      */
-    private void writeValueKeyMap(Map<?, ?> map, boolean isEncodedValue,
-        boolean isValueValue) {
+    private void writeValueKeyMap(Map<?, ?> map, Class<?> keyType,
+        Class<?> valueType, boolean isEncodedValue, boolean isValueValue) {
       for (Map.Entry<?, ?> entry : map.entrySet()) {
-        sb.append(",").append(encodeValue(entry.getKey()).getPayload()).append(
+        sb.append(",").append(encodeValue(keyType, entry.getKey()).getPayload()).append(
             ":");
         if (isEncodedValue) {
           sb.append(((Splittable) entry.getValue()).getPayload());
         } else if (isValueValue) {
-          sb.append(encodeValue(entry.getValue()).getPayload());
+          sb.append(encodeValue(valueType, entry.getValue()).getPayload());
         } else {
           encodeToStringBuilder(sb, entry.getValue());
         }

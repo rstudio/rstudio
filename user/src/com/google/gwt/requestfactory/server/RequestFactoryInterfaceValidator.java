@@ -15,6 +15,7 @@
  */
 package com.google.gwt.requestfactory.server;
 
+import com.google.gwt.autobean.shared.ValueCodex;
 import com.google.gwt.dev.asm.AnnotationVisitor;
 import com.google.gwt.dev.asm.ClassReader;
 import com.google.gwt.dev.asm.ClassVisitor;
@@ -44,9 +45,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -517,10 +516,7 @@ public class RequestFactoryInterfaceValidator {
     }
   }
 
-  @SuppressWarnings("unchecked")
-  static final Set<Class<?>> VALUE_TYPES = Collections.unmodifiableSet(new HashSet<Class<?>>(
-      Arrays.asList(Boolean.class, Character.class, Class.class, Date.class,
-          Enum.class, Number.class, String.class, Void.class)));
+  static final Set<Class<?>> VALUE_TYPES = ValueCodex.getAllValueTypes();
 
   public static void main(String[] args) {
     if (args.length == 0) {
@@ -577,6 +573,10 @@ public class RequestFactoryInterfaceValidator {
    * The type {@link EntityProxy}.
    */
   private final Type entityProxyIntf = Type.getType(EntityProxy.class);
+  /**
+   * The type {@link Enum}.
+   */
+  private final Type enumType = Type.getType(Enum.class);
   /**
    * A placeholder type for client types that could not be resolved to a domain
    * type.
@@ -1361,12 +1361,8 @@ public class RequestFactoryInterfaceValidator {
       return true;
     }
     logger = logger.setType(type);
-    List<Type> types = getSupertypes(logger, type);
-    for (Type t : types) {
-      if (valueTypes.contains(t)) {
-        valueTypes.add(type);
-        return true;
-      }
+    if (isAssignable(logger, enumType, type)) {
+      return true;
     }
     return false;
   }
