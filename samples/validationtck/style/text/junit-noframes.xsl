@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0"
+        xmlns:lxslt="http://xml.apache.org/xslt"
+        xmlns:stringutils="xalan://org.apache.tools.ant.util.StringUtils">
+<xsl:output method="text" indent="no" encoding="UTF-8" />
+<xsl:decimal-format decimal-separator="." grouping-separator="," />
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+ -->
+
+<xsl:param name="TITLE">JSR-303 TCK report</xsl:param>
+
+<!--
+
+ Modified from the default spreadshet.
+ Changed so counts are relative to the TOTAL tests in the TCK
+
+-->
+<xsl:template match="testsuites">
+	<xsl:variable name="testCount" select="259"/>
+    <!-- 
+      testCount from
+      jar -xf jsr303-tck-1.0.3.GA-sources.jar 
+      grep -r \@Test org/hibernate/jsr303/tck/tests/ | wc -l
+    -->
+    <xsl:variable name="testExecutedCount" select="sum(testsuite/@tests)"/>
+    <xsl:variable name="errorCount" select="sum(testsuite/@errors)"/>
+    <xsl:variable name="failureCount" select="sum(testsuite/@failures)"/>
+    <xsl:variable name="timeCount" select="sum(testsuite/@time)"/>
+    <xsl:variable name="passedCount" select="($testExecutedCount - $failureCount - $errorCount)"/>
+    <xsl:variable name="successRate" select="($passedCount) div $testCount"/>
+    <xsl:value-of select="$passedCount" /> <xsl:text> Pass </xsl:text>
+    <xsl:value-of select="$failureCount"/> <xsl:text> Fail </xsl:text>
+    <xsl:value-of select="$errorCount" /> <xsl:text> Error from a total of </xsl:text>
+    <xsl:value-of select="$testCount"/> <xsl:text> tests for a success rate of </xsl:text>
+    <xsl:call-template name="display-percent">
+         <xsl:with-param name="value" select="$successRate"/>
+    </xsl:call-template> 
+   <xsl:text>.</xsl:text> 
+</xsl:template>
+
+<xsl:template name="display-percent">
+    <xsl:param name="value"/>
+    <xsl:value-of select="format-number($value,'0.00%')"/>
+</xsl:template>
+
+</xsl:stylesheet>

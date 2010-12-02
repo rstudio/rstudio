@@ -85,6 +85,14 @@
 
 
   <target name="tck"
+      depends="tck.run,tck.report"
+      description="Run all tests for this project.">
+    <fail
+        message="One or more junit tests failed for target: @{test.name} @{test.args}"
+        if="junit.failure" status="2" />
+  </target>
+
+  <target name="tck.run"
       depends="compile, compile.tests"
       description="Run all tests for this project.">
     <!-- Prevent compilation for every target. -->
@@ -120,18 +128,28 @@
       </parallel>
     </limit>
 
-
-    <mkdir dir="${junit.out}/tck-report"/>
-    <junitreport todir="${junit.out}/tck-report">
-      <fileset dir="${junit.out}">
-        <include name="*/reports/TEST-*.xml"/>
-      </fileset>
-      <report format="noframes" todir="${junit.out}/tck-report"/>
-    </junitreport>
-
     <fail
         message="One or more junit tests failed for target: @{test.name} @{test.args}"
         if="junit.failure" status="2" />
+  </target>
+
+  <target name="tck.report">
+    <mkdir dir="${junit.out}/tck-report" />
+    <mkdir dir="${junit.out}/tck-report/text" />
+    <junitreport todir="${junit.out}/tck-report">
+      <fileset dir="${junit.out}">
+        <include name="*/reports/TEST-*.xml" />
+      </fileset>
+      <report format="noframes" todir="${junit.out}/tck-report" styledir="style/html" />
+      <report format="noframes" todir="${junit.out}/tck-report/text" styledir="style/text" />
+    </junitreport>
+
+    <concat taskname="JSR 303 TCK Result">
+      <filelist>
+        <file name="${junit.out}/tck-report/text/junit-noframes.html" />
+      </filelist>
+    </concat>
+
   </target>
 
   <target name="test.dev.htmlunit"
