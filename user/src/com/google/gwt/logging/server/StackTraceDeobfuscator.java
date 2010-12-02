@@ -73,8 +73,22 @@ public class StackTraceDeobfuscator {
       if (parts.length == 5) {
         String[] ref = parse(
             parts[0].substring(0, parts[0].lastIndexOf(')') + 1));
-        return new StackTraceElement(
-            ref[0], ref[1], ste.getFileName(), ste.getLineNumber());
+
+        // parts[3] contains the source file URI or "Unknown"
+        String filename = "Unknown".equals(parts[3]) ? null
+            : parts[3].substring(parts[3].lastIndexOf('/') + 1);
+        
+        int lineNumber = ste.getLineNumber();
+        /*
+         * When lineNumber is zero, either because compiler.stackMode is not
+         * emulated or compiler.emulatedStack.recordLineNumbers is false, use
+         * the method declaration line number from the symbol map.
+         */
+        if (lineNumber == 0) {
+          lineNumber = Integer.parseInt(parts[4]);
+        }
+        
+        return new StackTraceElement(ref[0], ref[1], filename, lineNumber);
       }
     }
     // If anything goes wrong, just return the unobfuscated element
