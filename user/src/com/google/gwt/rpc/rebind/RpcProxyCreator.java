@@ -30,7 +30,6 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.javac.TypeOracleMediator;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.rpc.client.impl.CommandToStringWriter;
 import com.google.gwt.rpc.client.impl.RpcServiceProxy;
@@ -71,7 +70,7 @@ public class RpcProxyCreator extends ProxyCreator {
     if (paramType.isClass() != null) {
       return "GWT.isScript() ? Impl.getNameOf(\"@"
           + paramType.getQualifiedSourceName() + "\") : \""
-          + TypeOracleMediator.computeBinaryClassName(paramType) + "\"";
+          + SerializationUtils.getRpcTypeName(paramType) + "\"";
     } else {
       /*
        * Consider the case of service methods that have interface parameters;
@@ -79,7 +78,7 @@ public class RpcProxyCreator extends ProxyCreator {
        * encode these type names in a way that can always be distinguished from
        * obfuscated type names.
        */
-      return "\" " + TypeOracleMediator.computeBinaryClassName(paramType)
+      return "\" " + SerializationUtils.getRpcTypeName(paramType)
           + "\"";
     }
   }
@@ -292,7 +291,7 @@ public class RpcProxyCreator extends ProxyCreator {
         names = Lists.add(names, serializableFields[i].getName());
       }
 
-      data.setFields(TypeOracleMediator.computeBinaryClassName(type), names);
+      data.setFields(SerializationUtils.getRpcTypeName(type), names);
     }
 
     ctx.commitArtifact(logger, data);

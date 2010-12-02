@@ -44,10 +44,15 @@ public abstract class JType {
   }
 
   /**
-   * TODO(scottb): remove if we can resolve param names differently.
+   * A binary type name as specified by the 
+   * <a href="http://java.sun.com/docs/books/jls/second_edition/html/binaryComp.doc.html">
+   * Java Language Spec, Edition 2</a>.
    */
   public abstract String getQualifiedBinaryName();
 
+  /**
+   * A type name as it would be specified in Java source.
+   */
   public abstract String getQualifiedSourceName();
 
   public abstract String getSimpleSourceName();

@@ -20,9 +20,9 @@ import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
+import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.javac.TypeOracleMediator;
 import com.google.gwt.dev.util.Util;
 
 import java.io.UnsupportedEncodingException;
@@ -68,6 +68,47 @@ public class SerializationUtils {
     TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("junit.framework.AssertionFailedError");
   }
 
+  /**
+   * Returns the binary name of a type. This is the same name that would be
+   * returned by {@link Class#getName()} for this type.
+   * 
+   * @param type TypeOracle type to get the name for
+   * @return binary name for a type
+   */
+  public static String getRpcTypeName(JType type) {
+    JPrimitiveType primitiveType = type.isPrimitive();
+    if (primitiveType != null) {
+      return primitiveType.getJNISignature();
+    }
+  
+    JArrayType arrayType = type.isArray();
+    if (arrayType != null) {
+      JType component = arrayType.getComponentType();
+      if (component.isClassOrInterface() != null) {
+        return "[L" + getRpcTypeName(arrayType.getComponentType())
+            + ";";
+      } else {
+        return "[" + getRpcTypeName(arrayType.getComponentType());
+      }
+    }
+  
+    JParameterizedType parameterizedType = type.isParameterized();
+    if (parameterizedType != null) {
+      return getRpcTypeName(parameterizedType.getBaseType());
+    }
+  
+    JClassType classType = type.isClassOrInterface();
+    assert (classType != null);
+  
+    JClassType enclosingType = classType.getEnclosingType();
+    if (enclosingType != null) {
+      return getRpcTypeName(enclosingType) + "$"
+          + classType.getSimpleSourceName();
+    }
+  
+    return classType.getQualifiedSourceName();
+  }
+  
   /**
    * Returns the set of fields that are serializable for a given class type.
    * This method does not consider any superclass fields.
@@ -218,7 +259,7 @@ public class SerializationUtils {
       return;
     }
 
-    String serializedTypeName = TypeOracleMediator.computeBinaryClassName(type);
+    String serializedTypeName = getRpcTypeName(type);
     crc.update(serializedTypeName.getBytes(Util.DEFAULT_ENCODING));
 
     if (excludeImplementationFromSerializationSignature(type)) {
@@ -240,7 +281,7 @@ public class SerializationUtils {
         assert (field != null);
 
         crc.update(field.getName().getBytes(Util.DEFAULT_ENCODING));
-        crc.update(TypeOracleMediator.computeBinaryClassName(field.getType()).getBytes(
+        crc.update(getRpcTypeName(field.getType()).getBytes(
             Util.DEFAULT_ENCODING));
       }
 
@@ -250,5 +291,4 @@ public class SerializationUtils {
       }
     }
   }
-
 }

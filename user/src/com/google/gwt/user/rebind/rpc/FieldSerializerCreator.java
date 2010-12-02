@@ -29,7 +29,6 @@ import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.JTypeParameter;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.javac.TypeOracleMediator;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
@@ -603,7 +602,7 @@ public class FieldSerializerCreator {
       sourceWriter.println("}");
       sourceWriter.println();
     } else {
-      String jsniTypeRef = TypeOracleMediator.computeBinaryClassName(serializableClass);
+      String jsniTypeRef = SerializationUtils.getRpcTypeName(serializableClass);
       sourceWriter.println("public static native Class<?> concreteType() /*-{");
       sourceWriter.indentln("return @" + jsniTypeRef + "::class;");
       sourceWriter.println("}-*/;");
@@ -681,7 +680,7 @@ public class FieldSerializerCreator {
     sourceWriter.indent();
 
     sourceWriter.print("return instance.@");
-    sourceWriter.print(TypeOracleMediator.computeBinaryClassName(serializableClass));
+    sourceWriter.print(SerializationUtils.getRpcTypeName(serializableClass));
     sourceWriter.print("::");
     sourceWriter.print(fieldName);
     sourceWriter.println(";");
@@ -712,7 +711,7 @@ public class FieldSerializerCreator {
     sourceWriter.indent();
 
     sourceWriter.print("instance.@");
-    sourceWriter.print(TypeOracleMediator.computeBinaryClassName(serializableClass));
+    sourceWriter.print(SerializationUtils.getRpcTypeName(serializableClass));
     sourceWriter.print("::");
     sourceWriter.print(fieldName);
     sourceWriter.println(" = value;");

@@ -36,7 +36,6 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.generator.NameFactory;
-import com.google.gwt.dev.javac.TypeOracleMediator;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
@@ -338,7 +337,7 @@ public class ProxyCreator {
 
     String remoteServiceInterfaceName = elideTypeNames
         ? TypeNameObfuscator.SERVICE_INTERFACE_ID
-        : TypeOracleMediator.computeBinaryClassName(serviceIntf);
+        : SerializationUtils.getRpcTypeName(serviceIntf);
     generateProxyFields(srcWriter, typesSentFromBrowser,
         serializationPolicyStrongName, remoteServiceInterfaceName);
 
@@ -385,7 +384,7 @@ public class ProxyCreator {
     if (typeStrings.containsKey(paramType)) {
       typeName = typeStrings.get(paramType);
     } else {
-      typeName = TypeOracleMediator.computeBinaryClassName(paramType);
+      typeName = SerializationUtils.getRpcTypeName(paramType);
     }
     return typeName == null ? null : ('"' + typeName + '"');
   }
@@ -738,7 +737,7 @@ public class ProxyCreator {
 
       for (int i = 0; i < serializableTypes.length; ++i) {
         JType type = serializableTypes[i];
-        String binaryTypeName = TypeOracleMediator.computeBinaryClassName(type);
+        String binaryTypeName = SerializationUtils.getRpcTypeName(type);
         pw.print(binaryTypeName);
         pw.print(", "
             + Boolean.toString(deserializationSto.isSerializable(type)));

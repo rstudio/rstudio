@@ -91,47 +91,6 @@ public class TypeOracleMediator extends TypeOracleBuilder {
    */
   private static final boolean TRACE_CLASSES = false;
 
-  /**
-   * Returns the binary name of a type. This is the same name that would be
-   * returned by {@link Class#getName()} for this type.
-   * 
-   * @param type TypeOracle type to get the name for
-   * @return binary name for a type
-   */
-  public static String computeBinaryClassName(JType type) {
-    JPrimitiveType primitiveType = type.isPrimitive();
-    if (primitiveType != null) {
-      return primitiveType.getJNISignature();
-    }
-
-    JArrayType arrayType = type.isArray();
-    if (arrayType != null) {
-      JType component = arrayType.getComponentType();
-      if (component.isClassOrInterface() != null) {
-        return "[L" + computeBinaryClassName(arrayType.getComponentType())
-            + ";";
-      } else {
-        return "[" + computeBinaryClassName(arrayType.getComponentType());
-      }
-    }
-
-    JParameterizedType parameterizedType = type.isParameterized();
-    if (parameterizedType != null) {
-      return computeBinaryClassName(parameterizedType.getBaseType());
-    }
-
-    JClassType classType = type.isClassOrInterface();
-    assert (classType != null);
-
-    JClassType enclosingType = classType.getEnclosingType();
-    if (enclosingType != null) {
-      return computeBinaryClassName(enclosingType) + "$"
-          + classType.getSimpleSourceName();
-    }
-
-    return classType.getQualifiedSourceName();
-  }
-
   private static JTypeParameter[] collectTypeParams(String signature) {
     if (signature != null) {
       List<JTypeParameter> params = new ArrayList<JTypeParameter>();
