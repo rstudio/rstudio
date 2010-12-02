@@ -25,7 +25,7 @@ import java.util.logging.Logger;
 public class RemoteLoggingServiceUtil {
 
   /**
-   * Exceptions that occur during remote logging.
+   * Exceptions that may occur during remote logging.
    */
   public static class RemoteLoggingException extends Exception {
     public RemoteLoggingException(String message) {
