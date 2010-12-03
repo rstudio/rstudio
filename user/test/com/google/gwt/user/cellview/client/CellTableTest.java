@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.cellview.client;
 
+import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
@@ -25,6 +26,7 @@ import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.CellTable.Resources;
 import com.google.gwt.user.cellview.client.CellTable.Style;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -38,6 +40,28 @@ import java.util.List;
  * Tests for {@link CellTable}.
  */
 public class CellTableTest extends AbstractHasDataTestBase {
+
+  /**
+   * A concrete column that implements a getter that always returns null.
+   * 
+   * @param <T> the row type
+   * @param <C> the column type
+   */
+  private static class MockColumn<T, C> extends Column<T, C> {
+
+    public MockColumn() {
+      super(new AbstractCell<C>() {
+        @Override
+        public void render(Context context, C value, SafeHtmlBuilder sb) {
+        }
+      });
+    }
+
+    @Override
+    public C getValue(T object) {
+      return null;
+    }
+  }
 
   /**
    * Test that calls to addColumn results in only one redraw.
@@ -138,12 +162,93 @@ public class CellTableTest extends AbstractHasDataTestBase {
     RootPanel.get().remove(table);
   }
 
+  public void testGetColumnOutOfBounds() {
+    CellTable<String> table = new CellTable<String>();
+
+    // Get column when there are no columns.
+    try {
+      table.getColumn(0);
+      fail("Expected IndexOutOfBoundsException");
+    } catch (IndexOutOfBoundsException e) {
+      // Expected.
+    }
+
+    // Add some columns.
+    table.addColumn(new MockColumn<String, String>());
+    table.addColumn(new MockColumn<String, String>());
+
+    // Negative index.
+    try {
+      table.getColumn(-1);
+      fail("Expected IndexOutOfBoundsException");
+    } catch (IndexOutOfBoundsException e) {
+      // Expected.
+    }
+
+    // Index too high.
+    try {
+      table.getColumn(2);
+      fail("Expected IndexOutOfBoundsException");
+    } catch (IndexOutOfBoundsException e) {
+      // Expected.
+    }
+  }
+
   public void testGetRowElement() {
     CellTable<String> table = createAbstractHasData(new TextCell());
     table.setRowData(0, createData(0, 10));
 
     // Ensure that calling getRowElement() flushes all pending changes.
     assertNotNull(table.getRowElement(9));
+  }
+
+  public void testInsertColumn() {
+    CellTable<String> table = new CellTable<String>();
+    assertEquals(0, table.getColumnCount());
+
+    // Insert first column.
+    Column<String, ?> a = new MockColumn<String, String>();
+    table.insertColumn(0, a);
+    assertEquals(1, table.getColumnCount());
+    assertEquals(a, table.getColumn(0));
+
+    // Insert column at beginning.
+    Column<String, ?> b = new MockColumn<String, String>();
+    table.insertColumn(0, b);
+    assertEquals(2, table.getColumnCount());
+    assertEquals(b, table.getColumn(0));
+    assertEquals(a, table.getColumn(1));
+
+    // Insert column at end.
+    Column<String, ?> c = new MockColumn<String, String>();
+    table.insertColumn(2, c);
+    assertEquals(3, table.getColumnCount());
+    assertEquals(b, table.getColumn(0));
+    assertEquals(a, table.getColumn(1));
+    assertEquals(c, table.getColumn(2));
+
+    // Insert column in middle.
+    Column<String, ?> d = new MockColumn<String, String>();
+    table.insertColumn(1, d);
+    assertEquals(4, table.getColumnCount());
+    assertEquals(b, table.getColumn(0));
+    assertEquals(d, table.getColumn(1));
+    assertEquals(a, table.getColumn(2));
+    assertEquals(c, table.getColumn(3));
+
+    // Insert column at invalid index.
+    try {
+      table.insertColumn(-1, d);
+      fail("Expected IndexOutOfBoundsExecltion");
+    } catch (IndexOutOfBoundsException e) {
+      // Expected.
+    }
+    try {
+      table.insertColumn(6, d);
+      fail("Expected IndexOutOfBoundsExecltion");
+    } catch (IndexOutOfBoundsException e) {
+      // Expected.
+    }
   }
 
   /**

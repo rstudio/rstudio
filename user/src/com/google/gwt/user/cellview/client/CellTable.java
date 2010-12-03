@@ -592,42 +592,198 @@ public class CellTable<T> extends AbstractHasData<T> {
   }
 
   /**
-   * Adds a column to the table.
+   * Adds a column to the end of the table.
    * 
    * @param col the column to be added
    */
   public void addColumn(Column<T, ?> col) {
-    addColumn(col, (Header<?>) null, (Header<?>) null);
+    insertColumn(getColumnCount(), col);
   }
 
   /**
-   * Adds a column to the table with an associated header.
+   * Adds a column to the end of the table with an associated header.
    * 
    * @param col the column to be added
    * @param header the associated {@link Header}
    */
   public void addColumn(Column<T, ?> col, Header<?> header) {
-    addColumn(col, header, null);
+    insertColumn(getColumnCount(), col, header);
   }
 
   /**
-   * Adds a column to the table with an associated header and footer.
+   * Adds a column to the end of the table with an associated header and footer.
    * 
    * @param col the column to be added
    * @param header the associated {@link Header}
    * @param footer the associated footer (as a {@link Header} object)
    */
   public void addColumn(Column<T, ?> col, Header<?> header, Header<?> footer) {
-    headers.add(header);
-    footers.add(footer);
-    columns.add(col);
+    insertColumn(getColumnCount(), col, header, footer);
+  }
+
+  /**
+   * Adds a column to the end of the table with an associated String header.
+   * 
+   * @param col the column to be added
+   * @param headerString the associated header text, as a String
+   */
+  public void addColumn(Column<T, ?> col, String headerString) {
+    insertColumn(getColumnCount(), col, headerString);
+  }
+
+  /**
+   * Adds a column to the end of the table with an associated {@link SafeHtml}
+   * header.
+   * 
+   * @param col the column to be added
+   * @param headerHtml the associated header text, as safe HTML
+   */
+  public void addColumn(Column<T, ?> col, SafeHtml headerHtml) {
+    insertColumn(getColumnCount(), col, headerHtml);
+  }
+
+  /**
+   * Adds a column to the end of the table with an associated String header and
+   * footer.
+   * 
+   * @param col the column to be added
+   * @param headerString the associated header text, as a String
+   * @param footerString the associated footer text, as a String
+   */
+  public void addColumn(Column<T, ?> col, String headerString,
+      String footerString) {
+    insertColumn(getColumnCount(), col, headerString, footerString);
+  }
+
+  /**
+   * Adds a column to the end of the table with an associated {@link SafeHtml}
+   * header and footer.
+   * 
+   * @param col the column to be added
+   * @param headerHtml the associated header text, as safe HTML
+   * @param footerHtml the associated footer text, as safe HTML
+   */
+  public void addColumn(Column<T, ?> col, SafeHtml headerHtml,
+      SafeHtml footerHtml) {
+    insertColumn(getColumnCount(), col, headerHtml, footerHtml);
+  }
+
+  /**
+   * Add a style name to the {@link TableColElement} at the specified index,
+   * creating it if necessary.
+   * 
+   * @param index the column index
+   * @param styleName the style name to add
+   */
+  public void addColumnStyleName(int index, String styleName) {
+    ensureTableColElement(index).addClassName(styleName);
+  }
+
+  /**
+   * Return the height of the table body.
+   * 
+   * @return an int representing the body height
+   */
+  public int getBodyHeight() {
+    int height = getClientHeight(tbody);
+    return height;
+  }
+
+  /**
+   * Get the column at the specified index.
+   * 
+   * @param col the index of the column to retrieve
+   * @return the {@link Column} at the index
+   */
+  public Column<T, ?> getColumn(int col) {
+    checkColumnBounds(col);
+    return columns.get(col);
+  }
+
+  /**
+   * Get the number of columns in the table.
+   * 
+   * @return the column count
+   */
+  public int getColumnCount() {
+    return columns.size();
+  }
+
+  /**
+   * Return the height of the table header.
+   * 
+   * @return an int representing the header height
+   */
+  public int getHeaderHeight() {
+    int height = getClientHeight(thead);
+    return height;
+  }
+
+  /**
+   * Get the {@link TableRowElement} for the specified row. If the row element
+   * has not been created, null is returned.
+   * 
+   * @param row the row index
+   * @return the row element, or null if it doesn't exists
+   * @throws IndexOutOfBoundsException if the row index is outside of the
+   *           current page
+   */
+  public TableRowElement getRowElement(int row) {
+    getPresenter().flush();
+    checkRowBounds(row);
+    NodeList<TableRowElement> rows = tbody.getRows();
+    return rows.getLength() > row ? rows.getItem(row) : null;
+  }
+
+  /**
+   * Inserts a column into the table at the specified index.
+   * 
+   * @param beforeIndex the index to insert the column
+   * @param col the column to be added
+   */
+  public void insertColumn(int beforeIndex, Column<T, ?> col) {
+    insertColumn(beforeIndex, col, (Header<?>) null, (Header<?>) null);
+  }
+
+  /**
+   * Inserts a column into the table at the specified index with an associated
+   * header.
+   * 
+   * @param beforeIndex the index to insert the column
+   * @param col the column to be added
+   * @param header the associated {@link Header}
+   */
+  public void insertColumn(int beforeIndex, Column<T, ?> col, Header<?> header) {
+    insertColumn(beforeIndex, col, header, null);
+  }
+
+  /**
+   * Inserts a column into the table at the specified index with an associated
+   * header and footer.
+   * 
+   * @param beforeIndex the index to insert the column
+   * @param col the column to be added
+   * @param header the associated {@link Header}
+   * @param footer the associated footer (as a {@link Header} object)
+   * @throws IndexOutOfBoundsException if the index is out of range
+   */
+  public void insertColumn(int beforeIndex, Column<T, ?> col, Header<?> header,
+      Header<?> footer) {
+    // Allow insert at the end.
+    if (beforeIndex != getColumnCount()) {
+      checkColumnBounds(beforeIndex);
+    }
+
+    headers.add(beforeIndex, header);
+    footers.add(beforeIndex, footer);
+    columns.add(beforeIndex, col);
     boolean wasinteractive = isInteractive;
     updateDependsOnSelection();
 
     // Move the keyboard selected column if the current column is not
     // interactive.
     if (!wasinteractive && isInteractive) {
-      keyboardSelectedColumn = columns.size() - 1;
+      keyboardSelectedColumn = beforeIndex;
     }
 
     // Sink events used by the new column.
@@ -656,96 +812,59 @@ public class CellTable<T> extends AbstractHasData<T> {
   }
 
   /**
-   * Adds a column to the table with an associated String header.
+   * Inserts a column into the table at the specified index with an associated
+   * String header.
    * 
+   * @param beforeIndex the index to insert the column
    * @param col the column to be added
    * @param headerString the associated header text, as a String
    */
-  public void addColumn(Column<T, ?> col, String headerString) {
-    addColumn(col, new TextHeader(headerString), null);
+  public void insertColumn(int beforeIndex, Column<T, ?> col,
+      String headerString) {
+    insertColumn(beforeIndex, col, new TextHeader(headerString), null);
   }
 
   /**
-   * Adds a column to the table with an associated {@link SafeHtml} header.
+   * Inserts a column into the table at the specified index with an associated
+   * {@link SafeHtml} header.
    * 
+   * @param beforeIndex the index to insert the column
    * @param col the column to be added
    * @param headerHtml the associated header text, as safe HTML
    */
-  public void addColumn(Column<T, ?> col, SafeHtml headerHtml) {
-    addColumn(col, new SafeHtmlHeader(headerHtml), null);
+  public void insertColumn(int beforeIndex, Column<T, ?> col,
+      SafeHtml headerHtml) {
+    insertColumn(beforeIndex, col, new SafeHtmlHeader(headerHtml), null);
   }
 
   /**
-   * Adds a column to the table with an associated String header and footer.
+   * Inserts a column into the table at the specified index with an associated
+   * String header and footer.
    * 
+   * @param beforeIndex the index to insert the column
    * @param col the column to be added
    * @param headerString the associated header text, as a String
    * @param footerString the associated footer text, as a String
    */
-  public void addColumn(Column<T, ?> col, String headerString,
-      String footerString) {
-    addColumn(col, new TextHeader(headerString), new TextHeader(footerString));
+  public void insertColumn(int beforeIndex, Column<T, ?> col,
+      String headerString, String footerString) {
+    insertColumn(beforeIndex, col, new TextHeader(headerString),
+        new TextHeader(footerString));
   }
 
   /**
-   * Adds a column to the table with an associated {@link SafeHtml} header and
-   * footer.
+   * Inserts a column into the table at the specified index with an associated
+   * {@link SafeHtml} header and footer.
    * 
+   * @param beforeIndex the index to insert the column
    * @param col the column to be added
    * @param headerHtml the associated header text, as safe HTML
    * @param footerHtml the associated footer text, as safe HTML
    */
-  public void addColumn(Column<T, ?> col, SafeHtml headerHtml,
-      SafeHtml footerHtml) {
-    addColumn(col, new SafeHtmlHeader(headerHtml), new SafeHtmlHeader(
-        footerHtml));
-  }
-
-  /**
-   * Add a style name to the {@link TableColElement} at the specified index,
-   * creating it if necessary.
-   * 
-   * @param index the column index
-   * @param styleName the style name to add
-   */
-  public void addColumnStyleName(int index, String styleName) {
-    ensureTableColElement(index).addClassName(styleName);
-  }
-
-  /**
-   * Return the height of the table body.
-   * 
-   * @return an int representing the body height
-   */
-  public int getBodyHeight() {
-    int height = getClientHeight(tbody);
-    return height;
-  }
-
-  /**
-   * Return the height of the table header.
-   * 
-   * @return an int representing the header height
-   */
-  public int getHeaderHeight() {
-    int height = getClientHeight(thead);
-    return height;
-  }
-
-  /**
-   * Get the {@link TableRowElement} for the specified row. If the row element
-   * has not been created, null is returned.
-   * 
-   * @param row the row index
-   * @return the row element, or null if it doesn't exists
-   * @throws IndexOutOfBoundsException if the row index is outside of the
-   *           current page
-   */
-  public TableRowElement getRowElement(int row) {
-    getPresenter().flush();
-    checkRowBounds(row);
-    NodeList<TableRowElement> rows = tbody.getRows();
-    return rows.getLength() > row ? rows.getItem(row) : null;
+  public void insertColumn(int beforeIndex, Column<T, ?> col,
+      SafeHtml headerHtml, SafeHtml footerHtml) {
+    insertColumn(beforeIndex, col, new SafeHtmlHeader(headerHtml),
+        new SafeHtmlHeader(footerHtml));
   }
 
   /**
@@ -1198,6 +1317,19 @@ public class CellTable<T> extends AbstractHasData<T> {
   }
 
   /**
+   * Check that the specified column is within bounds.
+   * 
+   * @param col the column index
+   * @throws IndexOutOfBoundsException if the column is out of bounds
+   */
+  private void checkColumnBounds(int col) {
+    if (col < 0 || col >= getColumnCount()) {
+      throw new IndexOutOfBoundsException("Column index is out of bounds: "
+          + col);
+    }
+  }
+
+  /**
    * Render the header or footer.
    * 
    * @param isFooter true if this is the footer table, false if the header table
@@ -1357,8 +1489,7 @@ public class CellTable<T> extends AbstractHasData<T> {
    * Fire an event to the Cell within the specified {@link TableCellElement}.
    */
   private <C> void fireEventToCell(Event event, String eventType,
-      TableCellElement tableCell, T value, Context context,
-      Column<T, C> column) {
+      TableCellElement tableCell, T value, Context context, Column<T, C> column) {
     Cell<C> cell = column.getCell();
     if (cellConsumesEventType(cell, eventType)) {
       C cellValue = column.getValue(value);
