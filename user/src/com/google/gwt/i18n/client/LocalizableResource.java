@@ -157,7 +157,7 @@ public interface LocalizableResource extends Localizable {
 
   /**
    * The key used for lookup of translated strings.  If not present, the
-   * key will be generated based on the {@code @GenerateKeysUsing} annotation,
+   * key will be generated based on the {@code @GenerateKeys} annotation,
    * or the unqualified method name if it is not present.
    */
   @Retention(RetentionPolicy.RUNTIME)

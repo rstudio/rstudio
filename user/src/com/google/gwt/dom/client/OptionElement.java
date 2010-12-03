@@ -124,7 +124,7 @@ public class OptionElement extends Element {
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled">W3C HTML Specification</a>
    */
   public final native void setDisabled(boolean disabled) /*-{
-    return this.disabled = disabled;
+    this.disabled = disabled;
   }-*/;
 
   /**
@@ -133,7 +133,7 @@ public class OptionElement extends Element {
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-label-OPTION">W3C HTML Specification</a>
    */
   public final native void setLabel(String label) /*-{
-    return this.label = label;
+    this.label = label;
   }-*/;
 
   /**

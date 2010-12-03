@@ -146,7 +146,7 @@ public class RPCServletUtils {
    *          should be assumed
    * @return the content of an {@link HttpServletRequest} by decoding it using
    *         <code>expectedCharSet</code>, or <code>UTF-8</code> if
-   *         <code>expectedCharSet</code> is <code>null</null>
+   *         <code>expectedCharSet</code> is <code>null</code>
    * @throws IOException if the request's input stream cannot be accessed, read
    *         from or closed
    * @throws ServletException if the request's content type does not

@@ -22,8 +22,7 @@ import com.google.gwt.event.shared.EventHandler;
 /**
  * Abstract class representing touch events.
  *
- * @see http://developer.apple.com/library/safari/documentation/UserExperience/Reference/TouchEventClassReference/TouchEvent/TouchEvent.html
- *
+ * See {@link <a href="http://developer.apple.com/library/safari/documentation/UserExperience/Reference/TouchEventClassReference/TouchEvent/TouchEvent.html">Safari Touch Event Documentation</a>}
  * @param <H> handler type
  */
 public abstract class TouchEvent<H extends EventHandler>

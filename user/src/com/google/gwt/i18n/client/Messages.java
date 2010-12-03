@@ -29,7 +29,7 @@ import java.lang.annotation.Target;
  * extends <code>Messages</code> returns an instance of an automatically
  * generated subclass that is implemented using message templates selected based
  * on locale. Message templates are based on a subset of the format used by <a
- * href="http://java.sun.com/j2se/1.5.0/docs/api/java/text/MessageFormat.html">
+ * href="http://download.oracle.com/javase/1.5.0/docs/api/java/text/MessageFormat.html">
  * <code>MessageFormat</code></a>.  Note in particular that single quotes are
  * used to quote other characters, and should be doubled for a literal single
  * quote.
