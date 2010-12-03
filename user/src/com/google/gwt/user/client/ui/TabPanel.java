@@ -59,17 +59,12 @@ import java.util.Iterator;
  * {@example com.google.gwt.examples.TabPanelExample}
  * </p>
  *
- * @deprecated Use {@link TabLayoutPanel} instead, but understand that it is
- *             not a drop in replacement for this class. It requires standards
- *             mode, and is most easily used under a {@link RootLayoutPanel} (as
- *             opposed to a {@link RootPanel}
- *
  * @see TabLayoutPanel
  */
 
 // Cannot do anything about tab panel implementing TabListener until next
 // release
-@Deprecated
+@SuppressWarnings("deprecation")
 public class TabPanel extends Composite implements TabListener,
     SourcesTabEvents, HasWidgets, HasAnimation, IndexedPanel.ForIsWidget,
     HasBeforeSelectionHandlers<Integer>, HasSelectionHandlers<Integer> {

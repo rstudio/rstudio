@@ -19,12 +19,16 @@ import com.google.gwt.event.shared.GwtEvent.Type;
 
 /**
  * Manager responsible for adding handlers to event sources and firing those
- * handlers on passed in events. Primitive ancestor of {@link EventBus},
- * and used at the core of {com.google.gwt.user.client.ui.Widget}.
- *
- * @deprecated use {@link SimpleEventBus}.
+ * handlers on passed in events. Primitive ancestor of {@link EventBus}, and
+ * used at the core of {com.google.gwt.user.client.ui.Widget}.
+ * <p>
+ * While widget authors should continue to use
+ * {@link com.google.gwt.user.client.ui.Widget#addDomHandler(EventHandler, com.google.gwt.event.dom.client.DomEvent.Type)}
+ * and
+ * {@link com.google.gwt.user.client.ui.Widget#addHandler(EventHandler, Type)},
+ * application developers are strongly discouraged from using a HandlerManager
+ * instance as a global event dispatch mechanism.
  */
-@Deprecated
 public class HandlerManager implements HasHandlers {
 
   private final SimpleEventBus eventBus;
@@ -50,6 +54,7 @@ public class HandlerManager implements HasHandlers {
    * @param source the event source
    * @param fireInReverseOrder true to fire handlers in reverse order
    */
+  @SuppressWarnings("deprecation")
   public HandlerManager(Object source, boolean fireInReverseOrder) {
     eventBus = new SimpleEventBus(fireInReverseOrder);
     this.source = source;
@@ -114,6 +119,7 @@ public class HandlerManager implements HasHandlers {
    * @param type the handler's event type
    * @return the given handler
    */
+  @SuppressWarnings("deprecation")
   public <H extends EventHandler> H getHandler(GwtEvent.Type<H> type, int index) {
     return eventBus.getHandler(type, index);
   }
@@ -124,6 +130,7 @@ public class HandlerManager implements HasHandlers {
    * @param type the event type
    * @return the number of registered handlers
    */
+  @SuppressWarnings("deprecation")
   public int getHandlerCount(Type<?> type) {
     return eventBus.getHandlerCount(type);
   }
@@ -134,6 +141,7 @@ public class HandlerManager implements HasHandlers {
    * @param e the event type
    * @return whether the given event type is handled
    */
+  @SuppressWarnings("deprecation")
   public boolean isEventHandled(Type<?> e) {
     return eventBus.isEventHandled(e);
   }

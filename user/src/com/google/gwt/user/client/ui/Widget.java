@@ -55,7 +55,6 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
    */
   int eventsToSink;
   private boolean attached;
-  @SuppressWarnings("deprecation")
   private HandlerManager handlerManager;
   private Object layoutData;
   private Widget parent;
@@ -74,7 +73,6 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
    * @param handler the handler
    * @return {@link HandlerRegistration} used to remove the handler
    */
-  @SuppressWarnings("deprecation")
   public final <H extends EventHandler> HandlerRegistration addDomHandler(
       final H handler, DomEvent.Type<H> type) {
     assert handler != null : "handler must not be null";
@@ -91,7 +89,6 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
    * @param handler the handler
    * @return {@link HandlerRegistration} used to remove the handler
    */
-  @SuppressWarnings("deprecation")
   public final <H extends EventHandler> HandlerRegistration addHandler(
       final H handler, GwtEvent.Type<H> type) {
     return ensureHandlers().addHandler(type, handler);
@@ -101,7 +98,6 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
     return this;
   }
 
-  @SuppressWarnings("deprecation")
   public void fireEvent(GwtEvent<?> event) {
     if (handlerManager != null) {
       handlerManager.fireEvent(event);
@@ -228,7 +224,6 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
    *
    * @return the {@link HandlerManager} you want to use
    */
-  @SuppressWarnings("deprecation")
   protected com.google.gwt.event.shared.HandlerManager createHandlerManager() {
     return new com.google.gwt.event.shared.HandlerManager(this);
   }
@@ -272,7 +267,6 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
    * @param type the event type
    * @return the number of registered handlers
    */
-  @SuppressWarnings("deprecation")
   protected int getHandlerCount(Type<?> type) {
     return handlerManager == null ? 0 : handlerManager.getHandlerCount(type);
   }
@@ -396,13 +390,11 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
    *
    * @return the handler manager
    * */
-  @SuppressWarnings("deprecation")
   com.google.gwt.event.shared.HandlerManager ensureHandlers() {
     return handlerManager == null ? handlerManager = createHandlerManager()
         : handlerManager;
   }
 
-  @SuppressWarnings("deprecation")
   com.google.gwt.event.shared.HandlerManager getHandlerManager() {
     return handlerManager;
   }
