@@ -1018,7 +1018,10 @@ public final class CompilingClassLoader extends ClassLoader implements
 
     // Get the bytes, compiling if necessary.
     byte[] classBytes = findClassBytes(className);
-  
+    if (classBytes == null) {
+      throw new ClassNotFoundException(className);
+    }
+
     if (HasAnnotation.hasAnnotation(classBytes, GwtScriptOnly.class)) {
       scriptOnlyClasses.add(className);
       maybeInitializeScriptOnlyClassLoader();
@@ -1110,7 +1113,7 @@ public final class CompilingClassLoader extends ClassLoader implements
   }
 
   @SuppressWarnings("deprecation")
-  private byte[] findClassBytes(String className) throws ClassNotFoundException {
+  private byte[] findClassBytes(String className) {
     if (JavaScriptHost.class.getName().equals(className)) {
       // No need to rewrite.
       return javaScriptHostBytes;
@@ -1133,12 +1136,6 @@ public final class CompilingClassLoader extends ClassLoader implements
 
     CompilationUnit unit = (compiledClass == null)
         ? getUnitForClassName(lookupClassName) : compiledClass.getUnit();
-        
-    if (unit != null && unit.isError()) {
-      throw new ClassNotFoundException("Cannot load class " + className
-          + " because it has errors.");
-    }
-    
     if (emmaAvailable) {
       /*
        * build the map for anonymous classes. Do so only if unit has anonymous
@@ -1151,10 +1148,11 @@ public final class CompilingClassLoader extends ClassLoader implements
           && unit.hasAnonymousClasses() && jsniMethods != null
           && jsniMethods.size() > 0 && !unit.createdClassMapping()) {
         if (!unit.constructAnonymousClassMappings(logger)) {
-          throw new ClassNotFoundException(
+          logger.log(TreeLogger.ERROR,
               "Our heuristic for mapping anonymous classes between compilers "
                   + "failed. Unsafe to continue because the wrong jsni code "
                   + "could end up running. className = " + className);
+          return null;
         }
       }
     }
@@ -1200,10 +1198,6 @@ public final class CompilingClassLoader extends ClassLoader implements
         }
       }
       classBytes = newBytes;
-    }
-    
-    if (classBytes == null) {
-      throw new ClassNotFoundException(className);
     }
     return classBytes;
   }
