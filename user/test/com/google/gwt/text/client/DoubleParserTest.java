@@ -30,7 +30,7 @@ public class DoubleParserTest extends GWTTestCase {
   }
   
   public void testOuroborus() throws ParseException {
-    assertEquals("123", DoubleRenderer.instance().render(DoubleParser.instance().parse("123")));
+    assertEquals("123.5", DoubleRenderer.instance().render(DoubleParser.instance().parse("123.5")));
   }
   
   public void testNull() throws ParseException {

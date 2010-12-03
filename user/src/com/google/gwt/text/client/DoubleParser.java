@@ -46,7 +46,7 @@ public class DoubleParser implements Parser<Double> {
     }
 
     try {
-      return Math.rint(NumberFormat.getDecimalFormat().parse(object.toString()));
+      return NumberFormat.getDecimalFormat().parse(object.toString());
     } catch (NumberFormatException e) {
       throw new ParseException(e.getMessage(), 0);
     }
