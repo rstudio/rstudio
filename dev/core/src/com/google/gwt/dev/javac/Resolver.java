@@ -16,15 +16,15 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
-import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.core.ext.typeinfo.JMethod;
-import com.google.gwt.core.ext.typeinfo.JPackage;
-import com.google.gwt.core.ext.typeinfo.JRealClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
-import com.google.gwt.core.ext.typeinfo.JTypeParameter;
-import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.asm.CollectAnnotationData;
+import com.google.gwt.dev.javac.typemodel.JAbstractMethod;
+import com.google.gwt.dev.javac.typemodel.JClassType;
+import com.google.gwt.dev.javac.typemodel.JMethod;
+import com.google.gwt.dev.javac.typemodel.JPackage;
+import com.google.gwt.dev.javac.typemodel.JRealClassType;
+import com.google.gwt.dev.javac.typemodel.JTypeParameter;
+import com.google.gwt.dev.javac.typemodel.TypeOracle;
 
 import java.lang.annotation.Annotation;
 import java.util.List;
@@ -37,7 +37,7 @@ public interface Resolver {
 
   void addImplementedInterface(JRealClassType type, JClassType intf);
 
-  void addThrows(JAbstractMethod method, JType exception);
+  void addThrows(JAbstractMethod method, JClassType exception);
 
   Map<String, JRealClassType> getBinaryMapper();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2010 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,103 +15,55 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
-import com.google.gwt.dev.util.collect.Maps;
-
-import java.lang.annotation.Annotation;
-import java.util.Map;
-
 /**
  * Represents a logical package.
  */
-public class JPackage implements HasAnnotations {
-
-  private final String name;
-
-  private final Annotations annotations = new Annotations();
-
-  private Map<String, JRealClassType> types = Maps.create();
-
-  JPackage(String name) {
-    this.name = name;
-  }
-
-  void addAnnotations(Map<Class<? extends Annotation>, Annotation> annotations) {
-    this.annotations.addAnnotations(annotations);
-  }
-
-  public JClassType findType(String typeName) {
-    String[] parts = typeName.split("\\.");
-    return findType(parts);
-  }
-
-  public JClassType findType(String[] typeName) {
-    return findTypeImpl(typeName, 0);
-  }
-
-  public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-    return annotations.getAnnotation(annotationClass);
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public JClassType getType(String typeName) throws NotFoundException {
-    JClassType result = findType(typeName);
-    if (result == null) {
-      throw new NotFoundException();
-    }
-    return result;
-  }
-
-  public JClassType[] getTypes() {
-    return types.values().toArray(TypeOracle.NO_JCLASSES);
-  }
-
-  public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-    return annotations.isAnnotationPresent(annotationClass);
-  }
-
-  public boolean isDefault() {
-    return "".equals(name);
-  }
-
-  @Override
-  public String toString() {
-    return "package " + name;
-  }
-
-  void addType(JRealClassType type) {
-    types = Maps.put(types, type.getSimpleSourceName(), type);
-  }
-
-  JClassType findTypeImpl(String[] typeName, int index) {
-    JClassType found = types.get(typeName[index]);
-    if (found == null) {
-      return null;
-    } else if (index < typeName.length - 1) {
-      return found.findNestedTypeImpl(typeName, index + 1);
-    } else {
-      return found;
-    }
-  }
+public interface JPackage extends HasAnnotations {
 
   /**
-   * NOTE: This method is for testing purposes only.
+   * Finds a type in this package.
+   * 
+   * @param typeName the name of the type; use the <code>.</code> separator to
+   *          find a nested type
+   * @return the type, or <code>null</code> if the type does not exist in this
+   *         package
    */
-  Annotation[] getAnnotations() {
-    return annotations.getAnnotations();
-  }
+  JClassType findType(String typeName);
 
   /**
-   * NOTE: This method is for testing purposes only.
+   * Finds a type in this package.
+   * 
+   * @param typeName the name of the type; use additional array elements to find
+   *          a nested type
+   * @return the type, or <code>null</code> if the type does not exist in this
+   *         package
+   * @deprecated use {@link #findType(String)}
    */
-  Annotation[] getDeclaredAnnotations() {
-    return annotations.getDeclaredAnnotations();
-  }
+  @Deprecated
+  JClassType findType(String[] typeName);
 
-  void remove(JClassType type) {
-    types = Maps.remove(types, type.getSimpleSourceName());
-    // JDT will occasionally remove non-existent items, such as packages.
-  }
+  /**
+   * Returns the name of the package.
+   */
+  String getName();
+
+  /**
+   * Finds a type in this package.
+   * 
+   * @param typeName the name of the type; use the <code>.</code> separated to
+   *          search for a nested type
+   * @return the type, or <code>null</code> if the type does not exist in this
+   *         package
+   */
+  JClassType getType(String typeName) throws NotFoundException;
+
+  /**
+   * Returns all top-level types in this package.
+   */
+  JClassType[] getTypes();
+
+  /**
+   * Returns <code>true</code> only for the default package.
+   */
+  boolean isDefault();
 }

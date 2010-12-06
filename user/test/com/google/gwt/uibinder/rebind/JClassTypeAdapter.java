@@ -254,12 +254,12 @@ public class JClassTypeAdapter {
 
     // Thrown exceptions
     expect(constructor.getThrows()).andStubAnswer(
-        new IAnswer<JType[]>() {
-          public JType[] answer() throws Throwable {
+        new IAnswer<JClassType[]>() {
+          public JClassType[] answer() throws Throwable {
             Class<?>[] realThrows = realConstructor.getExceptionTypes();
-            JType[] gwtThrows = new JType[realThrows.length];
+            JClassType[] gwtThrows = new JClassType[realThrows.length];
             for (int i = 0; i < realThrows.length; i++) {
-              gwtThrows[i] = adaptType(realThrows[i]);
+              gwtThrows[i] = (JClassType) adaptType(realThrows[i]);
             }
             return gwtThrows;
           }
@@ -304,12 +304,12 @@ public class JClassTypeAdapter {
     });
 
     // Thrown exceptions
-    expect(method.getThrows()).andStubAnswer(new IAnswer<JType[]>() {
-      public JType[] answer() throws Throwable {
+    expect(method.getThrows()).andStubAnswer(new IAnswer<JClassType[]>() {
+      public JClassType[] answer() throws Throwable {
         Class<?>[] realThrows = realMethod.getExceptionTypes();
-        JType[] gwtThrows = new JType[realThrows.length];
+        JClassType[] gwtThrows = new JClassType[realThrows.length];
         for (int i = 0; i < realThrows.length; i++) {
-          gwtThrows[i] = adaptType(realThrows[i]);
+          gwtThrows[i] = (JClassType) adaptType(realThrows[i]);
         }
         return gwtThrows;
       }

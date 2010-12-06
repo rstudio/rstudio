@@ -15,8 +15,8 @@
  */
 package com.google.gwt.dev.javac.asm;
 
-import com.google.gwt.core.ext.typeinfo.test.PrimitiveValuesAnnotation;
-import com.google.gwt.core.ext.typeinfo.test.TestAnnotation;
+import com.google.gwt.dev.javac.typemodel.test.PrimitiveValuesAnnotation;
+import com.google.gwt.dev.javac.typemodel.test.TestAnnotation;
 import com.google.gwt.dev.asm.AnnotationVisitor;
 import com.google.gwt.dev.asm.ClassReader;
 import com.google.gwt.dev.asm.Opcodes;
@@ -183,7 +183,7 @@ public class CollectClassDataTest extends AsmTestCase {
     annotations = field.getAnnotations();
     assertEquals(1, annotations.size());
     AnnotationData annotation = annotations.get(0).getAnnotation();
-    assertEquals("Lcom/google/gwt/core/ext/typeinfo/test/TestAnnotation;",
+    assertEquals("Lcom/google/gwt/dev/javac/typemodel/test/TestAnnotation;",
         annotation.getDesc());
     assertEquals("field", annotation.getValues().get("value"));
     assertEquals(0, cd.getInterfaces().length);
@@ -191,7 +191,7 @@ public class CollectClassDataTest extends AsmTestCase {
     assertEquals(1, annotations.size());
     annotation = annotations.get(0).getAnnotation();
     assertEquals(
-        "Lcom/google/gwt/core/ext/typeinfo/test/PrimitiveValuesAnnotation;",
+        "Lcom/google/gwt/dev/javac/typemodel/test/PrimitiveValuesAnnotation;",
         annotation.getDesc());
     assertEquals(Byte.valueOf((byte) 42), annotation.getValues().get("b"));
     assertEquals(42, annotation.getValues().get("i"));

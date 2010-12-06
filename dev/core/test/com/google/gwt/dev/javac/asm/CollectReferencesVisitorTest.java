@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dev.javac.asm;
 
-import com.google.gwt.core.ext.typeinfo.test.TestAnnotation;
+import com.google.gwt.dev.javac.typemodel.test.TestAnnotation;
 import com.google.gwt.dev.asm.ClassReader;
 import com.google.gwt.dev.util.Name.BinaryName;
 

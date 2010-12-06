@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2010 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,33 +15,15 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
-import java.lang.annotation.Annotation;
-import java.util.Map;
-
 /**
  * An enumeration constant declared in an enumerated type.
  */
-public class JEnumConstant extends JField {
-  private final int ordinal;
-
-  JEnumConstant(JClassType enclosingType, String name,
-      Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
-      int ordinal) {
-    super(enclosingType, name, declaredAnnotations);
-    this.ordinal = ordinal;
-  }
+public interface JEnumConstant extends JField {
 
   /**
    * Returns the ordinal value for this enumeration constant.
    * 
    * @return ordinal value for this enumeration constant
    */
-  public int getOrdinal() {
-    return ordinal;
-  }
-
-  @Override
-  public JEnumConstant isEnumConstant() {
-    return this;
-  }
+  int getOrdinal();
 }
