@@ -18,8 +18,10 @@ package com.google.gwt.logging.server;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.LogRecord;
@@ -30,12 +32,13 @@ import java.util.regex.Pattern;
  * Deobfuscates stack traces on the server side. This class requires that you
  * have turned on emulated stack traces and moved your symbolMap files to a
  * place accessible by your server. More concretely, you must compile with the
- * -extra command line option, copy the symbolMaps directory to somewhere your
- * server side code has access to it, and then set the symbolMapsDirectory in
- * this class through the constructor, or the setter method.
- * For example, this variable could be set to "WEB-INF/classes/symbolMaps/"
- * if you copied the symbolMaps directory to there or compiled your application
- * using <code>-extra war/WEB-INF/classes/</code>.
+ * <code>-extra</code> command line option, copy the <code>symbolMaps</code>
+ * directory to somewhere your server side code has access to it, and then set
+ * the symbolMapsDirectory in this class through the constructor, or the setter
+ * method. For example, this variable could be set to
+ * "WEB-INF/classes/symbolMaps/", if you copied the symbolMaps directory to
+ * there or compiled your application using
+ * <code>-extra war/WEB-INF/classes/</code>.
  *
  * TODO(unnurg): Combine this code with similar code in JUnitHostImpl
  */
@@ -65,6 +68,13 @@ public class StackTraceDeobfuscator {
     setSymbolMapsDirectory(symbolMapsDirectory);
   }
   
+  /**
+   * Best effort resymbolization of a log record's stack trace.
+   * 
+   * @param lr the log record to resymbolize
+   * @param strongName the GWT permutation strong name
+   * @return the best effort resymbolized log record
+   */
   public LogRecord deobfuscateLogRecord(LogRecord lr, String strongName) {
     if (lr.getThrown() != null && strongName != null) {
       lr.setThrown(deobfuscateThrowable(lr.getThrown(), strongName));
@@ -72,6 +82,30 @@ public class StackTraceDeobfuscator {
     return lr;
   }
   
+  /**
+   * Convenience method which resymbolizes an entire stack trace to extent
+   * possible.
+   *
+   * @param st the stack trace to resymbolize
+   * @param strongName the GWT permutation strong name
+   * @return a best effort resymbolized stack trace
+   */
+  public StackTraceElement[] deobfuscateStackTrace(
+      StackTraceElement[] st, String strongName) {
+    StackTraceElement[] newSt = new StackTraceElement[st.length];
+    for (int i = 0; i < st.length; i++) {
+      newSt[i] = resymbolize(st[i], strongName);
+    }
+    return newSt;
+  }
+  
+  /**
+   * Best effort resymbolization of a a single stack trace element.
+   *
+   * @param ste the stack trace element to resymbolize
+   * @param strongName the GWT permutation strong name
+   * @return the best effort resymbolized stack trace element
+   */
   public StackTraceElement resymbolize(StackTraceElement ste,
       String strongName) {
     SymbolMap map = loadSymbolMap(strongName);
@@ -84,6 +118,16 @@ public class StackTraceDeobfuscator {
         String[] ref = parse(
             parts[0].substring(0, parts[0].lastIndexOf(')') + 1));
 
+        String declaringClass;
+        String methodName;
+        if (ref != null) {
+          declaringClass = ref[0];
+          methodName = ref[1];
+        } else {
+          declaringClass = ste.getClassName();
+          methodName = ste.getMethodName();
+        }
+        
         // parts[3] contains the source file URI or "Unknown"
         String filename = "Unknown".equals(parts[3]) ? null
             : parts[3].substring(parts[3].lastIndexOf('/') + 1);
@@ -98,7 +142,8 @@ public class StackTraceDeobfuscator {
           lineNumber = Integer.parseInt(parts[4]);
         }
         
-        return new StackTraceElement(ref[0], ref[1], filename, lineNumber);
+        return new StackTraceElement(
+            declaringClass, methodName, filename, lineNumber);
       }
     }
     // If anything goes wrong, just return the unobfuscated element
@@ -109,14 +154,23 @@ public class StackTraceDeobfuscator {
     // permutations are unique, no need to clear the symbolMaps hash map
     this.symbolMapsDirectory = new File(symbolMapsDirectory);
   }
-  
-  private StackTraceElement[] deobfuscateStackTrace(
-      StackTraceElement[] st, String strongName) {
-    StackTraceElement[] newSt = new StackTraceElement[st.length];
-    for (int i = 0; i < st.length; i++) {
-      newSt[i] = resymbolize(st[i], strongName);
-    }
-    return newSt;
+
+  /**
+   * Retrieves a new {@link InputStream} for the given permutation strong name.
+   * This implementation, which subclasses may override, returns a
+   * {@link InputStream} for the <code>
+   * <i>&lt;permutation-strong-name&gt;</i>.symbolMap</code> file in the
+   * symbolMapsDirectory.
+   *
+   * @param permutationStrongName the GWT permutation strong name
+   * @return a new {@link InputStream}
+   * @throws IOException
+   */
+  protected InputStream getSymbolMapInputStream(String permutationStrongName)
+      throws IOException {
+    String filename = symbolMapsDirectory.getCanonicalPath()
+        + File.separatorChar + permutationStrongName + ".symbolMap";
+    return new FileInputStream(filename);
   }
   
   private Throwable deobfuscateThrowable(Throwable old, String strongName) {
@@ -142,9 +196,8 @@ public class StackTraceDeobfuscator {
     String line;
 
     try {
-      String filename = symbolMapsDirectory.getCanonicalPath()
-          + File.separatorChar + strongName + ".symbolMap";
-      BufferedReader bin = new BufferedReader(new FileReader(filename));
+      BufferedReader bin = new BufferedReader(
+          new InputStreamReader(getSymbolMapInputStream(strongName)));
       try {
         while ((line = bin.readLine()) != null) {
           if (line.charAt(0) == '#') {
@@ -158,13 +211,23 @@ public class StackTraceDeobfuscator {
         bin.close();
       }
     } catch (IOException e) {
-      toReturn = null;
+      //  use empty symbol map to avoid repeated lookups
+      toReturn = new SymbolMap();
     }
 
     symbolMaps.put(strongName, toReturn);
     return toReturn;
   }
-  
+
+  /**
+   * Extracts the declaring class and method name from a JSNI ref, or null if
+   * the information cannot be extracted.
+   *
+   * @see com.google.gwt.dev.util.JsniRef
+   * @param refString symbol map reference string
+   * @return a string array contains the declaring class and method name, or
+   *         null when the regex match fails
+   */
   private String[] parse(String refString) {
     Matcher matcher = JsniRefPattern.matcher(refString);
     if (!matcher.matches()) {
