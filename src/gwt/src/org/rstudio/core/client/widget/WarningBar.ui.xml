@@ -1,0 +1,32 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+
+   <ui:style>
+      .outer {
+         width: 100%;
+         height: 18px;
+         background-color: #ffd;
+         border-bottom: 1px solid #bcc1c5;
+      }
+      .icon {
+         margin-top: 2px;
+         margin-left: 7px;
+      }
+      .label {
+         font-size: 11px;
+         margin-top: 2px;
+         color: #555;
+      }
+   </ui:style>
+
+   <g:FlowPanel>
+   <g:DockLayoutPanel styleName="{style.outer}">
+      <g:west size="26">
+         <g:Image ui:field="icon_" styleName="{style.icon}"/>
+      </g:west>
+      <g:center>
+         <g:Label ui:field="label_" styleName="{style.label}" wordWrap="false"/>
+      </g:center>
+   </g:DockLayoutPanel>
+   </g:FlowPanel>
+</ui:UiBinder>

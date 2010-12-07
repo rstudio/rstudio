@@ -1,0 +1,53 @@
+diff --git a/src/client/src/com/google/gwt/user/client/ui/MenuBar.java b/src/client/src/com/google/gwt/user/client/ui/MenuBar.java
+index 72b373f..961bccb 100644
+--- a/src/client/src/com/google/gwt/user/client/ui/MenuBar.java
++++ b/src/client/src/com/google/gwt/user/client/ui/MenuBar.java
+@@ -676,40 +676,48 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
+    * Select the given MenuItem, which must be a direct child of this MenuBar.
+    * 
+    * @param item the MenuItem to select, or null to clear selection
+    */
+   public void selectItem(MenuItem item) {
+     assert item == null || item.getParentMenu() == this;
+ 
+     if (item == selectedItem) {
+       return;
+     }
+ 
+     if (selectedItem != null) {
+       selectedItem.setSelectionStyle(false);
+       // Set the style of the submenu indicator
+       if (vertical) {
+         Element tr = DOM.getParent(selectedItem.getElement());
+         if (DOM.getChildCount(tr) == 2) {
+           Element td = DOM.getChild(tr, 1);
+           setStyleName(td, "subMenuIcon-selected", false);
+         }
++
++        if (shownChildMenu != null
++            && shownChildMenu == selectedItem.getSubMenu())
++        {
++          shownChildMenu.onHide(false);
++          popup.hide();
++          shownChildMenu = null;
++        }
+       }
+     }
+ 
+     if (item != null) {
+       item.setSelectionStyle(true);
+ 
+       // Set the style of the submenu indicator
+       if (vertical) {
+         Element tr = DOM.getParent(item.getElement());
+         if (DOM.getChildCount(tr) == 2) {
+           Element td = DOM.getChild(tr, 1);
+           setStyleName(td, "subMenuIcon-selected", true);
+         }
+       }
+ 
+       Accessibility.setState(getElement(),
+           Accessibility.STATE_ACTIVEDESCENDANT, DOM.getElementAttribute(
+               item.getElement(), "id"));
+     }
+ 

@@ -1,0 +1,43 @@
+@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+
+.input, .output {
+   resize: none;
+   font-family: fixedWidthFont;
+   font-size: 11px;
+   white-space: pre;
+   width: 400px;
+   height: 200px;
+   overflow: auto;
+   background-color: white;
+   border: 1px solid #888;
+   padding: 4px;
+}
+.output td {
+   padding-right: 16px;
+}
+.inputLabel, .outputLabel {
+   margin-bottom: 3px;
+}
+.outputLabel {
+   margin-top: 12px;
+}
+.header {
+   font-weight: bold;
+}
+.leftPanel {
+   position: relative;
+   top: -5px;
+   margin-right: 10px;
+}
+.list {
+   width: 150px;
+}
+.varname {
+   width: 100%;
+   margin-bottom: 1.5em;
+   border: #cfd2d4 solid 1px;
+   font-size: 12px;
+   font-family: proportionalFont;
+   outline: none;
+}

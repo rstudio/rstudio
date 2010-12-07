@@ -1,0 +1,18 @@
+@external gwt-Label;
+
+@sprite .shelf {
+   gwt-image: 'shelfbg';
+   padding: 0 8px 1px 8px;
+}
+
+.shelf .gwt-Label {
+   font-size: 10px;
+}
+
+.left button {
+   margin-right: 4px;
+}
+
+.right button {
+   margin-left: 4px;
+}

@@ -1,0 +1,58 @@
+#!/bin/bash
+
+#
+# install-boost-linux
+#
+# Copyright (C) 2009-11 by RStudio, Inc.
+#
+# This program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+# install dir 
+INSTALL_DIR=`pwd`
+
+# vars
+BOOST_VERSION_NUMBER=1.44.0
+BOOST_VERSION=boost_1_44_0
+BOOST_TAR=$BOOST_VERSION.tar.bz2
+BOOST_BUILD_DIR=boost-build
+
+# install if we aren't already installed
+if ! test -e /usr/local/include/boost
+then
+
+   # download boost
+   sudo apt-get -y install curl
+   curl -L http://sourceforge.net/projects/boost/files/boost/$BOOST_VERSION_NUMBER/$BOOST_TAR/download?use_mirror=autoselect > $BOOST_TAR
+
+   # remove existing boost installation
+   rm -rf /usr/local/include/boost
+   rm -rf /usr/local/lib/libboost_*
+
+   # untar source (remove existing)
+   rm -rf $BOOST_BUILD_DIR
+   mkdir -p $BOOST_BUILD_DIR
+   cd $BOOST_BUILD_DIR
+   tar --bzip2 -xf ../$BOOST_TAR
+
+   # build and install
+   cd $BOOST_VERSION
+   ./bootstrap.sh  
+   ./bjam variant=release install
+
+   # go back to the original install dir and remove build dir
+   cd $INSTALL_DIR
+   rm -rf $BOOST_TAR
+   rm -rf $BOOST_BUILD_DIR
+
+else
+
+   echo "boost already installed in /usr/local (remove /usr/local/include/boost to force re-install)"
+
+fi
+

@@ -1,0 +1,27 @@
+@external gwt-CheckBox;
+
+.findReplaceBar div, .findReplaceBar td {
+   white-space: nowrap;
+}
+
+.findReplaceBar button {
+   position: relative;
+   top: 1px;
+   margin-right: 3px;
+}
+
+.findReplaceBar .gwt-CheckBox {
+   font-size: 9px;
+   white-space: nowrap;
+   margin-right: 10px;
+}
+
+.closeButton {
+   position: relative;
+   top: 1px;
+   background-color: transparent;
+   border: 0;
+   padding: 0 !important;
+   margin: 0 !important;
+   outline: 0;
+}

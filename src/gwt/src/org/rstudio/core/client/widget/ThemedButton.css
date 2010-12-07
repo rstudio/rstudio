@@ -1,0 +1,125 @@
+@external gwt-Button-DialogAction, gwt-Button-DialogActionLeft,
+          gwt-Button-DefaultDialogAction;
+
+@url BUTTONLEFTFOCUSENABLED buttonLeftFocusEnabled;
+@url BUTTONLEFTFOCUSSELECTED buttonLeftFocusSelected;
+@url BUTTONLEFTFOCUSPRESSED buttonLeftFocusPressed;
+@url BUTTONLEFTENABLED buttonLeftEnabled;
+@url BUTTONLEFTDISABLED buttonLeftDisabled;
+@url BUTTONLEFTSELECTED buttonLeftSelected;
+@url BUTTONLEFTPRESSED buttonLeftPressed;
+@url BUTTONRIGHTFOCUSENABLED buttonRightFocusEnabled;
+@url BUTTONRIGHTFOCUSSELECTED buttonRightFocusSelected;
+@url BUTTONRIGHTFOCUSPRESSED buttonRightFocusPressed;
+@url BUTTONRIGHTENABLED buttonRightEnabled;
+@url BUTTONRIGHTDISABLED buttonRightDisabled;
+@url BUTTONRIGHTSELECTED buttonRightSelected;
+@url BUTTONRIGHTPRESSED buttonRightPressed;
+@url BUTTONTILEFOCUSENABLED buttonTileFocusEnabled;
+@url BUTTONTILEFOCUSSELECTED buttonTileFocusSelected;
+@url BUTTONTILEFOCUSPRESSED buttonTileFocusPressed;
+@url BUTTONTILEENABLED buttonTileEnabled;
+@url BUTTONTILEDISABLED buttonTileDisabled;
+@url BUTTONTILESELECTED buttonTileSelected;
+@url BUTTONTILEPRESSED buttonTilePressed;
+
+.gwt-Button-DialogAction, .themedButton {
+   padding: 0;
+   margin: 0;
+   margin-left: 8px;
+   margin-right: -1px;
+   border: none;
+   background: transparent;
+   outline: none;
+}
+
+.gwt-Button-DialogActionLeft, .left {
+   margin-left: -1px;
+   margin-right: 8px;
+}
+
+.buttonLeft {
+   background: BUTTONLEFTENABLED no-repeat;
+   width: 8px;
+   height: 29px;
+}
+
+.buttonCenter {
+   background: BUTTONTILEENABLED repeat-x;
+   height: 26px;
+   padding-bottom: 3px;
+   min-width: 60px;
+}
+
+.buttonRight {
+   background: BUTTONRIGHTENABLED no-repeat;
+   width: 8px;
+   height: 29px;
+}
+
+.buttonContent {
+   text-align: center;
+}
+
+button.gwt-Button-DefaultDialogAction .buttonLeft {
+   background-image: BUTTONLEFTFOCUSENABLED;
+}
+button.gwt-Button-DefaultDialogAction .buttonCenter {
+   background-image: BUTTONTILEFOCUSENABLED;
+}
+button.gwt-Button-DefaultDialogAction .buttonRight {
+   background-image: BUTTONRIGHTFOCUSENABLED;
+}
+
+button:focus .buttonLeft {
+   background-image: BUTTONLEFTSELECTED;
+}
+button:focus .buttonCenter {
+   background-image: BUTTONTILESELECTED;
+}
+button:focus .buttonRight {
+   background-image: BUTTONRIGHTSELECTED;
+}
+
+button.gwt-Button-DefaultDialogAction:focus .buttonLeft {
+   background-image: BUTTONLEFTFOCUSSELECTED;
+}
+button.gwt-Button-DefaultDialogAction:focus .buttonCenter {
+   background-image: BUTTONTILEFOCUSSELECTED;
+}
+button.gwt-Button-DefaultDialogAction:focus .buttonRight {
+   background-image: BUTTONRIGHTFOCUSSELECTED;
+}
+
+button:active .buttonLeft {
+   background-image: BUTTONLEFTPRESSED;
+}
+button:active .buttonCenter {
+   background-image: BUTTONTILEPRESSED;
+}
+button:active .buttonRight {
+   background-image: BUTTONRIGHTPRESSED;
+}
+
+button.gwt-Button-DefaultDialogAction:active .buttonLeft {
+   background-image: BUTTONLEFTFOCUSPRESSED;
+}
+button.gwt-Button-DefaultDialogAction:active .buttonCenter {
+   background-image: BUTTONTILEFOCUSPRESSED;
+}
+button.gwt-Button-DefaultDialogAction:active .buttonRight {
+   background-image: BUTTONRIGHTFOCUSPRESSED;
+}
+
+button[disabled] .buttonLeft {
+   background-image: BUTTONLEFTDISABLED !important;
+}
+button[disabled] .buttonCenter {
+   background-image: BUTTONTILEDISABLED !important;
+}
+button[disabled] .buttonRight {
+   background-image: BUTTONRIGHTDISABLED !important;
+}
+button[disabled] .buttonContent {
+   color: #AAA;
+}

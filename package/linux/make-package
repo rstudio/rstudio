@@ -1,0 +1,43 @@
+#!/bin/bash
+
+if [ "$1" != "Desktop" ] && [ "$1" != "Server" ]
+then
+   echo "error: must specify Desktop or Server as configuration"
+   exit 1
+fi
+
+if [ "$2" != "DEB" ] && [ "$2" != "RPM" ]
+then
+   echo "error: must specify DEB or RPM as package target"
+   exit 1
+fi
+
+BUILD_DIR=build-$1-$2
+
+if [ "$3" == "clean" ]
+then
+   rm -rf $BUILD_DIR
+fi
+
+if [ "$1" == "Desktop" ]
+then
+  INSTALL_DIR=rstudio
+else
+  INSTALL_DIR=rstudio-server
+fi
+
+mkdir -p $BUILD_DIR
+cd $BUILD_DIR
+rm -f CMakeCache.txt
+rm -rf $BUILD_DIR/_CPack_Packages
+cmake -DRSTUDIO_TARGET=$1 \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DRSTUDIO_PAM_AUTH=1 \
+      -DCMAKE_INSTALL_PREFIX=/usr/bin/$INSTALL_DIR \
+      ../../..
+
+make
+
+cpack -G $2
+
+cd ..

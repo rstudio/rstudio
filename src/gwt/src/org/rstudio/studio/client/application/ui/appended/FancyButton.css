@@ -1,0 +1,31 @@
+button.fancy {
+   padding: 0;
+   border: 0 none;
+   margin: 0 0 0 -3px;
+   outline: none;
+   cursor: pointer;
+   background-color: #f3f3f4;
+}
+button.fancy:focus {
+   outline: none;
+}
+
+@sprite button.fancy .left {
+   gwt-image: 'buttonLeft';
+   width: 11px;
+   height: 38px;
+}
+@sprite button.fancy .inner {
+   gwt-image: 'buttonTile';
+   color: white;
+   font-weight: bold;
+   font-size: 13px;
+   height: 38px;
+   padding: 5px;
+   padding-top: 9px;
+}
+@sprite button.fancy .right {
+   gwt-image: 'buttonRight';
+   width: 11px;
+   height: 38px;
+}

@@ -1,0 +1,124 @@
+/*
+ * SessionSourceDatabase.hpp
+ *
+ * Copyright (C) 2009-11 by RStudio, Inc.
+ *
+ * This program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+#ifndef SESSION_SOURCE_DATABASE_HPP
+#define SESSION_SOURCE_DATABASE_HPP
+
+#include <string>
+#include <vector>
+
+#include <core/FilePath.hpp>
+#include <core/json/Json.hpp>
+
+
+namespace core {
+   class Error;
+   class FilePath;
+}
+ 
+namespace session {
+namespace source_database {
+   
+class SourceDocument
+{
+public:
+   SourceDocument(const std::string& type = std::string());
+   virtual ~SourceDocument() {}
+   // COPYING: via compiler
+
+   // accessors
+   const std::string& id() const { return id_; }
+   const std::string& path() const { return path_; }
+   const std::string& type() const { return type_; }
+   const std::string& contents() const { return contents_; }
+   const std::string& hash() const { return hash_; }
+   bool dirty() const { return dirty_; }
+   double created() const { return created_; }
+   bool sourceOnSave() const { return sourceOnSave_; }
+   const core::json::Object& properties() const { return properties_; }
+   std::string getProperty(const std::string& name);
+
+
+   // set contents from string
+   void setContents(const std::string& contents);
+
+   // set contents from file
+   core::Error setPathAndContents(const std::string& path);
+
+   // set dirty
+   void setDirty(bool dirty)
+   {
+      dirty_ = dirty;
+   }
+
+   // set source on save
+   void setSourceOnSave(bool sourceOnSave)
+   {
+      sourceOnSave_ = sourceOnSave;
+   }
+
+   void checkForExternalEdit(std::time_t* pTime);
+
+   void updateLastKnownWriteTime();
+
+   // applies the values in the given properties object to the document's property
+   // bag. this does NOT replace all of the doc's properties on the server; any
+   // properties that already exist but are not present in the given object are
+   // left unchanged. if an entry in the given object has a null value, that
+   // property should be removed.
+   void editProperties(core::json::Object& properties);
+
+   void setType(const std::string& type)
+   {
+      type_ = type;
+   }
+
+   core::Error readFromJson(core::json::Object* pDocJson);
+   void writeToJson(core::json::Object* pDocJson) const;
+
+private:
+   void editProperty(const core::json::Object::value_type& property);
+
+private:
+   std::string id_;
+   std::string path_;
+   std::string type_;
+   std::string contents_;
+   std::string hash_;
+   std::time_t lastKnownWriteTime_;
+   bool dirty_;
+   double created_;
+   bool sourceOnSave_;
+   core::json::Object properties_;
+};
+
+bool sortByCreated(const SourceDocument& doc1, const SourceDocument& doc2);
+
+
+core::FilePath path();
+core::Error get(const std::string& id, SourceDocument* pDoc);
+core::Error getDurableProperties(const std::string& path,
+                                 core::json::Object* pProperties);
+core::Error list(std::vector<SourceDocument>* pDocs);
+core::Error put(const SourceDocument& doc);
+core::Error remove(const std::string& id);
+core::Error removeAll();
+
+core::Error getSourceDocumentsJson(core::json::Array* pJsonDocs);
+
+core::Error initialize();
+
+} // namespace source_database
+} // namesapce session
+
+#endif // SESSION_SOURCE_DATABASE_HPP

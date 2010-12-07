@@ -1,0 +1,26 @@
+.smallButton {
+   display: block;
+   padding: 0;
+   margin: 0;
+   border: none;
+   background: transparent;
+   outline: none;
+}
+
+@sprite .buttonLeft {
+   gwt-image: 'smallButtonLeft';
+   min-width: value('smallButtonLeft.getWidth', 'px');
+}
+@sprite .buttonCenter {
+   gwt-image: 'smallButtonTile';
+
+}
+@sprite .buttonRight {
+   gwt-image: 'smallButtonRight';
+   min-width: value('smallButtonRight.getWidth', 'px');
+}
+
+.buttonContent {
+   font-size: 9px;
+   white-space: nowrap;
+}

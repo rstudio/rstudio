@@ -1,0 +1,5 @@
+#!/bin/bash
+
+./make-package Desktop $1 $2
+
+

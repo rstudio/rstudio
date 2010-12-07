@@ -1,0 +1,64 @@
+@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+
+@external search;
+
+.progressPanel {
+   background-color: white;
+   border: 1px solid #cfd2d4;
+}
+
+.scrollPanel {
+}
+
+.table td {
+   overflow: hidden;
+   padding: 4px;
+}
+
+.selected {
+   background-color: #ccc;
+}
+*:focus .selected {
+   background-color: rgb(146, 193, 240);
+}
+
+.date {
+   color: #AAA;
+   width: 175px;
+}
+
+.selected .date {
+   color: black;
+}
+
+.googleSpreadsheetSearch .search {
+   margin-right: 0;
+   margin-bottom: 3px;
+   width: 200px;
+}
+
+.overflowWarning {
+   font-size: 10px;
+   margin-top: 3px;
+}
+
+.varNameLabel {
+   display: inline;
+   margin-right: 4px;
+}
+.varName {
+   width: 175px;
+   border: #cfd2d4 solid 1px;
+   font-size: 12px;
+   font-family: proportionalFont;
+   outline: none;
+}
+
+@sprite .spreadsheetIcon {
+   gwt-image: 'spreadsheet'; 
+}
+
+td.iconCell {
+   padding-right: 0;
+}

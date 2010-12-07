@@ -1,0 +1,97 @@
+.gwt-Label-ApplicationHeaderStrong {
+   font-weight: bold;
+}
+
+.gwt-HorizontalSplitPanel-Workbench {
+  
+}
+
+.gwt-HorizontalSplitPanel-Workbench .hsplitter {
+  background: white;
+}
+
+.gwt-DecoratedTabPanel-Workbench {
+   
+}
+
+.gwt-DecoratedTabPanel-Workbench .gwt-TabPanelBottom {
+   padding: 0px;
+}
+
+.rstudio-RCodeEditor-EditDialog {
+   border: 1px solid #BBB;  
+}
+
+
+.rstudio-FolderList {
+   border: 1px solid #BBB;  
+}
+
+.rstudio-NewFileChooser {
+   width: 150px;
+}
+
+.rstudio-FileUploadPanel {
+   width: 250px;
+}
+
+
+
+.selected {
+   background-color: rgb(146, 193, 240);
+}
+
+.edit {
+   background-color: white;
+}
+
+.pending {
+   background-color: silver;
+   text-color: gray;
+}
+
+tr.sectionHead td {
+   text-transform: uppercase;
+   font-weight: bold;
+   background-color: #DDD;
+   color: #666;
+   font-size: 7pt;
+}
+
+.rstudio-WorkspaceObjectTable {
+   outline: none ;
+   border: none ;
+}
+
+.rstudio-ScalarEdit {
+   color: blue;
+}
+
+.rstudio-HelpFrame {
+   outline: none ;
+   border: none ;
+}
+
+.rstudio-HeaderView {
+  
+}
+
+.rstudio-SessionEnded .Caption {
+   font-weight: bold;
+}
+
+.rstudio-Login .NormalCaption {
+   font-weight: bold;
+}
+
+.rstudio-Login .ErrorCaption {
+   color: red;
+}
+
+.rstudio-Login .Form {
+
+}
+
+.rstudio-Login .Form .FieldLabel {
+
+}

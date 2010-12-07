@@ -1,0 +1,100 @@
+/*
+ * PlainTextEditorImplFirefox.java
+ *
+ * Copyright (C) 2009-11 by RStudio, Inc.
+ *
+ * This program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+package org.rstudio.studio.client.workbench.views.console.shell.impl;
+
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Node;
+import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.dom.client.Text;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.ElementEx;
+
+public class PlainTextEditorImplFirefox extends PlainTextEditorImpl
+{
+   /**
+    * @see org.rstudio.studio.client.workbench.views.console.shell.impl.PlainTextEditorImpl#setupTextContainer(Element)
+    */
+   @Override
+   public ElementEx setupTextContainer(Element element)
+   {
+      ElementEx zwspSpan = (ElementEx) DOM.createSpan() ;
+      zwspSpan.setInnerText("\u200B") ;
+      
+      ElementEx textContainer = (ElementEx) DOM.createDiv() ;
+      textContainer.getStyle().setDisplay(Display.INLINE);
+      
+      element.appendChild(zwspSpan) ;
+      element.appendChild(textContainer) ;
+      
+      DOM.setElementPropertyBoolean(textContainer, "contentEditable", true) ;
+
+      textContainer_ = textContainer;
+      return textContainer_;
+   }
+
+   @Override
+   public void poll()
+   {
+      // This doesn't work all that well
+      /*
+      DeferredCommand.addCommand(new Command()
+      {
+         public void execute()
+         {
+            manageZwsp();
+         }
+      });
+      */
+   }
+
+   @SuppressWarnings("unused")
+   private void manageZwsp()
+   {
+      String val = textContainer_.getInnerText();
+      if (val.length() == 0)
+      {
+         textContainer_.appendChild(Document.get().createTextNode("\u200B"));
+      }
+      else if (val.length() > 1 && val.indexOf('\u200B') >= 0)
+      {
+         stripZwsp(textContainer_);
+      }
+   }
+
+   private void stripZwsp(Node node)
+   {
+      if (node.getNodeType() == Node.TEXT_NODE)
+      {
+         while (true)
+         {
+            String text = node.getNodeValue();
+            int index = text.indexOf('\u200B');
+            if (index >= 0)
+               DomUtils.deleteTextData((Text) node, index, 1);
+            else
+               break;
+         }
+      }
+      else if (node.getNodeType() == Node.ELEMENT_NODE)
+      {
+         NodeList<Node> nodes = node.getChildNodes();
+         for (int i = 0; i < nodes.getLength(); i++)
+            stripZwsp(nodes.getItem(i));
+      }
+   }
+
+   private ElementEx textContainer_;
+}

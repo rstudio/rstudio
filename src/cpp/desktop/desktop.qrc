@@ -1,0 +1,14 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>RStudio.ico</file>
+        <file>back.png</file>
+        <file>forward.png</file>
+        <file>print.png</file>
+        <file>reload.png</file>
+        <file>back_mac.png</file>
+        <file>forward_mac.png</file>
+        <file>print_mac.png</file>
+        <file>reload_mac.png</file>
+        <file>resources/logo/rstudio_logo_64.png</file>
+    </qresource>
+</RCC>

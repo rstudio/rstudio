@@ -1,0 +1,41 @@
+#!/bin/sh
+
+# errors shouldn't cause script to exit
+set +e 
+
+# add rserver user account
+sudo useradd -r rstudio-server
+
+# create softlink to admin script in /usr/sbin
+sudo ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/rstudio-server /usr/sbin/rstudio-server
+
+# write installed indicator then cooperatively suspend active sessions 
+# (so they have a chance to get the update)
+sudo mkdir -p /etc/rstudio
+sudo sh -c "echo `date +%s` > /etc/rstudio/installed"
+sudo rstudio-server suspend-all 
+
+# add apparmor profile
+if test -e /etc/apparmor.d/
+then
+   sudo cp ${CMAKE_INSTALL_PREFIX}/extras/apparmor/rstudio-server /etc/apparmor.d/
+   sudo aa-enforce /etc/apparmor.d/rstudio-server
+fi
+
+# add upstart profile or init.d script and start the server
+if test -e /etc/init/
+then
+   sudo cp ${CMAKE_INSTALL_PREFIX}/extras/upstart/rstudio-server.conf /etc/init/
+   sudo initctl reload-configuration
+   sudo initctl stop rstudio-server 2>/dev/null
+   sudo initctl start rstudio-server
+else
+   sudo cp ${CMAKE_INSTALL_PREFIX}/extras/init.d/debian/rstudio-server /etc/init.d/
+   sudo chmod +x /etc/init.d/rstudio-server
+   sudo update-rc.d rstudio-server defaults
+   sudo /etc/init.d/rstudio-server stop  2>/dev/null
+   sudo /etc/init.d/rstudio-server start
+fi
+
+# clear error termination state
+set -e

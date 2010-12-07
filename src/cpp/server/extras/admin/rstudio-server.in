@@ -1,0 +1,87 @@
+#!/bin/sh
+
+daemonCmd() {
+  if test -e /etc/init/rstudio-server.conf
+  then
+     eval "initctl $1 rstudio-server"
+  else
+     eval "/etc/init.d/rstudio-server $1"
+  fi
+  return $?
+}
+
+testConfig() {
+ `${CMAKE_INSTALL_PREFIX}/bin/rserver --test-config` && `${CMAKE_INSTALL_PREFIX}/bin/rsession --test-config`
+}
+
+
+case "$1" in
+    start)
+        testConfig || return $?
+        daemonCmd "start"
+        ;;
+
+    stop)
+        daemonCmd "stop"
+        ;;
+
+    restart)
+        testConfig || return $?
+        daemonCmd "restart"
+        ;;
+
+    test-config)
+        testConfig
+        ;;
+
+    suspend-session)
+        if test -n $2
+        then
+           kill -s USR1 $3 $4 $5 $6 $7 $8 $9 $2
+        else
+           echo "Must specify PID of session to suspend"
+           exit 1
+        fi
+        ;;
+
+    suspend-all)
+        killall -s USR1 $2 $3 $4 $5 $6 $7 $8 $9 rsession
+        ;;
+
+    force-suspend-session)
+        if test -n $2
+        then
+           kill -s USR2 $3 $4 $5 $6 $7 $8 $9 $2
+        else
+           echo "Must specify PID of session to force suspend"
+           exit 1
+        fi
+        ;;
+
+    force-suspend-all)
+        killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rsession
+        ;;
+
+    offline)
+        mkdir -p /etc/rstudio
+        touch /etc/rstudio/offline
+        daemonCmd "restart"
+        ;;
+
+    online)
+        mkdir -p /etc/rstudio
+        rm -f /etc/rstudio/offline
+        daemonCmd "restart"
+        ;;
+
+    active-sessions)
+        ps opid,cputime,args -C "rsession"
+        ;;
+
+    *)
+        echo $"Usage: rstudio-server {start|stop|restart|suspend-session|suspend-all|force-suspend-session|force-suspend-all|offline|online|active-sessions}"
+        exit 2
+esac
+
+
+

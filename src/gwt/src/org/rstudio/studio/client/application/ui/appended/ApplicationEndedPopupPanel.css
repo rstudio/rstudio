@@ -1,0 +1,64 @@
+
+
+.applicationEndedPopupPanel {
+   z-index: 1001;
+}
+
+.mainPanel {
+   width: 530px;
+   height: 350px;
+}
+
+.contentPanel {
+   width: 260px;
+}
+
+.captionLabel {
+   font-size: 1.7em;
+   font-weight: bold;
+   margin-bottom: 15px;
+}
+
+.descriptionLabel {
+   margin-bottom: 30px;
+}
+
+@sprite .NW {
+   gwt-image: 'panelTopLeft';
+   width: 14px;
+   height: 14px;
+}
+@sprite .N {
+   gwt-image: 'panelTop';
+   height: 14px;
+}
+@sprite .NE {
+   gwt-image: 'panelTopRight';
+   width: 14px;
+   height: 14px;
+}
+@sprite .W {
+   gwt-image: 'panelLeft';
+   width: 14px;
+}
+.C {
+   background-color: #f3f3f4;
+}
+@sprite .E {
+   gwt-image: 'panelRight';
+   width: 14px;
+}
+@sprite .SW {
+   gwt-image: 'panelBottomLeft';
+   width: 14px;
+   height: 14px;
+}
+@sprite .S {
+   gwt-image: 'panelBottom';
+   height: 14px;
+}
+@sprite .SE {
+   gwt-image: 'panelBottomRight';
+   width: 14px;
+   height: 14px;
+}

@@ -1,0 +1,56 @@
+
+Component Version Requirements
+=============================================================================
+
+RStudio requires relatively recent versions of a number of components. It is
+therefore likely to only correctly configure and build on more recent Linux
+systems. Specific version requriements for various components include
+
+- R 2.10
+- CMake 2.6
+- Pango 1.20
+- Qt 4.6 (only required for desktop builds)
+
+Linux systems known to conform to all requirements (including Qt version 4.6
+for desktop builds) include:
+
+- Ubuntu 10.04 (or higher)
+- Fedora 13 (or higher) 
+
+Linux systems known to conform to server-only build requirements include:
+
+- Debian 5 (or higher)
+
+
+Desktop vs. Server Builds
+=============================================================================
+
+The dependencies described below are for RStudio desktop and server. If you 
+only want to build the server then Qt is not required. In this case you can
+invoke the install-dependencies scripts with a --server-only flag, e.g.
+
+./install-dependencies-debian --server-only
+
+
+Installing Dependencies
+=============================================================================
+
+1) R installation - building RStudio requires that a version of R be 
+previously installed within a location where the R executable can be run from
+the system shell (e.g. /usr/bin or /usr/local/bin). Building R from source
+and then executing 'make install' will conform to this requirement as will
+installing it using the system standard package management tools (apt-get, 
+yum, etc).
+
+2) Run the install-dependencies script appropritate to your platform's
+package management system (for server-only builds be sure to include the
+--server-only flag as described above)
+
+   ./install-dependencies-debian   OR
+   ./install-dependencies-yum
+
+NOTE: If you are installing on a platform that doesn't support the apt-get
+or yum package managers you should review the scripts above and ensure the
+equivilant dependencies have been satisifed on your system. In order
+to install boost you should use the ./install-boost-linux script which
+is also contained within the dependencies/linux directory.

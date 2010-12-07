@@ -1,0 +1,39 @@
+.warning, .error {
+   
+}
+
+.warningBar {
+   margin-left: 1px;
+   margin-right: 1px;
+}
+
+@sprite .left {
+   gwt-image: 'warningBarLeft';
+}
+
+@sprite .right {
+   gwt-image: 'warningBarRight';
+}
+
+@sprite .center {
+   gwt-image: 'warningBarTile';
+   white-space: nowrap;
+   overflow-x: hidden;
+}
+
+.warningIcon {
+   position: relative;
+   top: 4px;
+   margin-left: 2px;
+   filter: literal("alpha(opacity = 50)") !important;
+   opacity: 0.5; /* non-IE */
+}
+
+.label {
+   position: relative;
+}
+
+.dismiss {
+   cursor: pointer;
+   margin-right: 2px;
+}

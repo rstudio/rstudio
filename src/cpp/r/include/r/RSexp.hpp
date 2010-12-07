@@ -1,0 +1,138 @@
+/*
+ * RSexp.hpp
+ *
+ * Copyright (C) 2009-11 by RStudio, Inc.
+ *
+ * This program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+#ifndef R_R_SEXP_HPP
+#define R_R_SEXP_HPP
+
+#include <string>
+#include <vector>
+#include <deque>
+#include <map>
+
+#include <boost/shared_ptr.hpp>
+#include <boost/any.hpp>
+#include <boost/utility.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+
+#include <core/json/Json.hpp>
+
+#include <r/RInternal.hpp>
+
+namespace core {
+   class Error;
+}
+
+// IMPORTANT NOTE: all code in r::sexp must provide "no jump" guarantee.
+// See comment in RInternal.hpp for more info on this
+
+
+namespace r {
+namespace sexp {
+   
+class Protect;
+   
+// environments and namespaces
+SEXP findNamespace(const std::string& name);
+   
+// variables within an environment
+typedef std::pair<std::string,SEXP> Variable ;
+void listEnvironment(SEXP env, 
+                     bool includeAll,
+                     Protect* pProtect,
+                     std::vector<Variable>* pVariables);
+      
+// object info
+SEXP findVar(const std::string& name,
+             const std::string& ns = std::string()); 
+SEXP findFunction(const std::string& name,
+                  const std::string& ns = std::string());
+std::string typeAsString(SEXP object);
+std::string classOf(SEXP objectSEXP);
+int length(SEXP object);
+   
+SEXP getNames(SEXP sexp);
+core::Error getNames(SEXP sexp, std::vector<std::string>* pNames);  
+ 
+// type checking
+bool isString(SEXP object);
+bool isLanguage(SEXP object);
+bool isMatrix(SEXP object);
+bool isDataFrame(SEXP object);   
+     
+// type coercions
+std::string asString(SEXP object);
+std::string safeAsString(SEXP object, 
+                         const std::string& defValue = std::string());
+int asInteger(SEXP object);
+double asReal(SEXP object);
+bool asLogical(SEXP object);
+
+// extract c++ type from R SEXP
+core::Error extract(SEXP valueSEXP, int* pInt);
+core::Error extract(SEXP valueSEXP, bool* pBool);
+core::Error extract(SEXP valueSEXP, std::vector<int>* pVector);   
+core::Error extract(SEXP valueSEXP, std::string* pString);
+core::Error extract(SEXP valueSEXP, std::vector<std::string>* pVector);
+      
+// create SEXP from c++ type
+SEXP create(const core::json::Value& value, Protect* pProtect);
+SEXP create(const char* value, Protect* pProtect);
+SEXP create(const std::string& value, Protect* pProtect);
+SEXP create(int value, Protect* pProtect);
+SEXP create(double value, Protect* pProtect);
+SEXP create(bool value, Protect* pProtect);
+SEXP create(const std::vector<std::string>& value, Protect* pProtect);
+SEXP create(const std::vector<int>& value, Protect*pProtect);
+SEXP create(const std::vector<double>& value, Protect*pProtect);
+SEXP create(const std::vector<bool>& value, Protect*pProtect);
+SEXP create(const std::vector<boost::posix_time::ptime>& value,
+            Protect* pProtect);
+
+SEXP create(const std::vector<std::pair<std::string,std::string> >& value, 
+            Protect* pProtect);
+SEXP create(const core::json::Array& value, Protect* pProtect);
+SEXP create(const core::json::Object& value, Protect* pProtect);
+
+
+// protect R expressions
+class Protect : boost::noncopyable
+{
+public:
+   Protect()
+   : protectCount_(0)
+   {
+   }
+   
+   explicit Protect(SEXP sexp)
+   : protectCount_(0)
+   {
+      add(sexp);
+   }
+   
+   virtual ~Protect();
+   
+   // COPYING: boost::noncopyable
+   
+   void add(SEXP sexp);
+   void unprotectAll();
+   
+private:
+   int protectCount_ ;
+};
+
+} // namespace sexp
+} // namespace r
+   
+
+#endif // R_R_SEXP_HPP 
+

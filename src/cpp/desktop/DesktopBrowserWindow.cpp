@@ -1,0 +1,76 @@
+/*
+ * DesktopBrowserWindow.cpp
+ *
+ * Copyright (C) 2009-11 by RStudio, Inc.
+ *
+ * This program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+#include "DesktopBrowserWindow.hpp"
+#include <QWebFrame>
+#include "DesktopWebView.hpp"
+
+namespace desktop {
+
+BrowserWindow::BrowserWindow(bool showToolbar, QUrl baseUrl, QWidget* pParent) :
+   QMainWindow(pParent)
+{
+   progress = 0;
+
+   pView_ = new WebView(baseUrl, this);
+   QWebFrame* mainFrame = pView_->page()->mainFrame();
+   connect(mainFrame, SIGNAL(javaScriptWindowObjectCleared()),
+           this, SLOT(onJavaScriptWindowObjectCleared()));
+   connect(pView_, SIGNAL(titleChanged(QString)), SLOT(adjustTitle()));
+   connect(pView_, SIGNAL(loadProgress(int)), SLOT(setProgress(int)));
+   connect(pView_, SIGNAL(loadFinished(bool)), SLOT(finishLoading(bool)));
+   connect(pView_->page(), SIGNAL(printRequested(QWebFrame*)),
+           this, SLOT(printRequested(QWebFrame*)));
+
+   // Kind of a hack to new up a toolbar and not attach it to anything.
+   // Once it is clear what secondary browser windows look like we can
+   // decide whether to keep this.
+   pToolbar_ = showToolbar ? addToolBar(tr("Navigation")) : new QToolBar();
+   pToolbar_->setMovable(false);
+
+   setCentralWidget(pView_);
+   setUnifiedTitleAndToolBarOnMac(true);
+}
+
+void BrowserWindow::printRequested(QWebFrame* frame)
+{
+   QPrintPreviewDialog dialog(window());
+   dialog.setWindowModality(Qt::WindowModal);
+   connect(&dialog, SIGNAL(paintRequested(QPrinter*)),
+           frame, SLOT(print(QPrinter*)));
+   dialog.exec();
+}
+
+void BrowserWindow::adjustTitle()
+{
+   setWindowTitle(pView_->title());
+}
+
+void BrowserWindow::setProgress(int p)
+{
+   progress = p;
+   adjustTitle();
+}
+
+void BrowserWindow::finishLoading(bool)
+{
+   progress = 100;
+   adjustTitle();
+}
+
+QWebView* BrowserWindow::webView()
+{
+   return pView_;
+}
+
+} // namespace desktop

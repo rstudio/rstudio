@@ -1,0 +1,81 @@
+#!/bin/bash
+
+#
+# update-codemirror
+#
+# Copyright (C) 2009-11 by RStudio, Inc.
+#
+# This program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+# install dir
+INSTALL_DIR=`pwd`
+
+# codemirror zip
+if [ "$1" != "" ]
+then
+  CODEMIRROR_ZIP=$1
+else
+  echo "You must specify a codemirror zip archive to install, \"latest\", or \"tip\""
+  exit 1
+fi
+   
+# target directory (codemirror resources)
+RES_DIR=$INSTALL_DIR/../src/org/rstudio/codemirror/client/resources
+
+# extract Closure Compiler jar
+tar xzf compiler-20100330.tar.gz compiler.jar
+
+mkdir tmp
+cd tmp
+
+if [ "$CODEMIRROR_ZIP" == "latest" ]
+then
+	wget --quiet http://codemirror.net/codemirror.zip
+	CODEMIRROR_ZIP=tmp/codemirror.zip
+fi
+
+if [ "$CODEMIRROR_ZIP" != "tip" ]
+then
+	# unzip codemirror archive
+	unzip -q "$INSTALL_DIR/$CODEMIRROR_ZIP"
+	cd `ls -d CodeMirror*`
+	cd js
+else
+	git clone --quiet https://github.com/marijnh/CodeMirror.git
+	cd CodeMirror/js
+fi
+
+# Hack: QtWebKit only responds to mime types
+sed "s/clipboardData.getData.'Text'./(clipboardData.getData('Text') \|\| clipboardData.getData('text\/plain'))/g" editor.js > editor.tmp.js
+mv editor.tmp.js editor.js
+
+# perform compile
+CC_OPTS="--third_party on --compilation_level WHITESPACE_ONLY --warning_level QUIET"
+java -jar "$INSTALL_DIR/compiler.jar" $CC_OPTS \
+                                       --js util.js \
+                                       --js stringstream.js \
+                                       --js select.js \
+                                       --js undo.js \
+                                       --js editor.js \
+                                       --js tokenize.js \
+                                       --js_output_file "$RES_DIR/codemirror_inner.min.js"
+
+java -jar "$INSTALL_DIR/compiler.jar" $CC_OPTS \
+                                       --js codemirror.js \
+                                       --js_output_file "$RES_DIR/codemirror.min.js"
+
+
+# clean up
+cd "$INSTALL_DIR"
+rm -rf tmp
+rm compiler.jar
+
+
+
+

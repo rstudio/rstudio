@@ -1,0 +1,523 @@
+<!--
+
+This file is intended to contain definitions for all commands in RStudio, as
+well as menu structures (for main menu and popup menus).
+
+<menu>
+   Contains <menu>, <cmd>, <separator>
+   @id (required): The method name for this menu on the command bundle interface
+   @vertical: Whether the menu should be vertical. Defaults to true
+   @label: For submenus, indicate the label in the parent menu for this submenu
+
+<cmd> (in menu context)
+   @refid (required): The id of the command that should appear here
+
+<cmd> (in command context)
+   @id (required): The method name for this command on the command bundle iface
+   @label: Will be used for buttonLabel or menuLabel if they are not provided
+   @buttonLabel: Label that should be used on toolbar button face. Use empty
+      string if no label should be used
+   @menuLabel: Label that should be used in a menu.
+   @desc: Extended description (e.g. for tooltip)
+   @shortcut: Not yet implemented
+
+-->
+<commands>
+   <menu id="mainMenu" vertical="false">
+
+      <separator/>
+
+      <menu label="File">
+         <menu label="New">
+            <cmd refid="newSourceDoc"/>
+            <dynamic class="org.rstudio.studio.client.common.filetypes.NewFileMenu"/>
+         </menu>
+         <cmd refid="openSourceDoc"/>
+         <menu label="Open Recent">
+            <cmd refid="mru0"/>
+            <cmd refid="mru1"/>
+            <cmd refid="mru2"/>
+            <cmd refid="mru3"/>
+            <cmd refid="mru4"/>
+            <cmd refid="mru5"/>
+            <cmd refid="mru6"/>
+            <cmd refid="mru7"/>
+            <cmd refid="mru8"/>
+            <cmd refid="mru9"/>
+            <separator/>
+            <cmd refid="clearRecentFiles"/>
+         </menu>
+         <separator/>
+         <cmd refid="saveSourceDoc"/>
+         <cmd refid="saveSourceDocAs"/>
+         <separator/>
+         <cmd refid="printSourceDoc"/>
+         <separator/>
+         <cmd refid="closeSourceDoc"/>
+         <!--<cmd refid="closeAllSourceDocs"/>-->
+         <separator/>
+         <cmd refid="quitSession"/>
+      </menu>
+
+      <separator/>
+      
+      <menu label="Edit">
+         <cmd refid="undoDummy"/>
+         <cmd refid="redoDummy"/>
+         <separator/>
+         <cmd refid="cutDummy"/>
+         <cmd refid="copyDummy"/>
+         <cmd refid="pasteDummy"/>
+         <separator/>
+         <cmd refid="findReplace"/>
+         <separator/>
+         <cmd refid="executeCode"/>
+         <cmd refid="executeAllCode"/>
+         <separator/>
+         <cmd refid="extractFunction"/>
+         <cmd refid="commentUncomment"/>
+         <separator/>
+         <cmd refid="consoleClear"/>
+         <cmd refid="interruptR"/>
+         <separator/>
+         <cmd refid="showOptions"/>
+      </menu>
+
+      <separator/>
+
+      <menu label="View">
+         <cmd refid="switchToTab"/>
+         <separator/>
+         <cmd refid="nextTab"/>
+         <cmd refid="previousTab"/>
+         <cmd refid="firstTab"/>
+         <cmd refid="lastTab"/>
+         <separator/>
+         <cmd refid="activateSource"/>
+         <cmd refid="activateConsole"/>
+         <cmd refid="consoleOnTop"/>
+         <separator/>
+         <cmd refid="activateWorkspace"/>
+         <cmd refid="activateHistory"/>
+         <cmd refid="activateFiles"/>
+         <cmd refid="activatePlots"/>
+         <cmd refid="activatePackages"/>
+         <cmd refid="activateHelp"/>
+      </menu>
+
+      <separator/>
+
+      <menu label="Workspace">
+         <cmd refid="loadWorkspace"/>
+         <cmd refid="loadDefaultWorkspace"/>
+         <separator/>
+         <cmd refid="saveWorkspace"/>
+         <cmd refid="saveDefaultWorkspace"/>
+         <separator/>
+         <!-- 
+         <menu label="Import Dataset">
+            <cmd refid="importDatasetFromFile"/>
+            <cmd refid="importDatasetFromGoogleSpreadsheet"/>
+         </menu>
+         <separator/>
+          -->
+         <cmd refid="clearWorkspace"/>
+      </menu>
+    
+      <separator/>
+
+      <menu label="Plots">
+         <cmd refid="nextPlot"/>
+         <cmd refid="previousPlot"/>
+         <separator/>
+         <cmd refid="zoomPlot"/>
+         <separator/>
+         <cmd refid="exportPlotAsImage"/>
+         <cmd refid="printPlot"/>
+         <separator/>
+         <cmd refid="clearPlots"/>
+      </menu>
+      
+      <separator/>
+
+      <menu label="Help">
+         <cmd refid="helpHome"/>
+         <cmd refid="showAboutDialog"/>
+         <cmd refid="checkForUpdates"/>
+         <separator/>
+         <cmd refid="helpUsingRStudio"/>
+         <cmd refid="helpKeyboardShortcuts"/>
+         <separator/>
+         <cmd refid="supportReportABug"/>
+         <cmd refid="supportSuggestAFeature"/>
+         <cmd refid="supportAskAQuestion"/>
+         <separator/>
+         <cmd refid="rstudioLicense"/>
+         <cmd refid="rstudioAgreement"/>
+         <separator/>
+         <menu label="Diagnostics">
+            <cmd refid="showLogFiles"/>
+            <cmd refid="updateCredentials"/>
+            <cmd refid="showRequestLog"/>
+            <cmd refid="raiseException"/>
+-           <cmd refid="raiseException2"/>
+         </menu>
+      </menu>
+
+      <separator/>
+
+   </menu>
+
+   <shortcuts>
+      <!-- Only alphanumeric values may be used -->
+      <!-- Valid modifiers are Ctrl, Alt, Meta, Shift, and Cmd -->
+      <!-- "Cmd" means Ctrl OR Meta -->
+      <shortcut refid="saveSourceDoc" value="Cmd+S"/>
+      <shortcut refid="openSourceDoc" value="Cmd+O"/>
+      <shortcut refid="newSourceDoc" value="Cmd+Shift+N"/>
+      <shortcut refid="closeSourceDoc" value="Cmd+Shift+L"/>
+      <shortcut refid="executeCode" value="Cmd+Enter"/>
+      <shortcut refid="executeAllCode" value="Cmd+Shift+Enter"/>
+      <shortcut refid="extractFunction" value="Cmd+Alt+F"/>
+      <shortcut refid="commentUncomment" value="Cmd+/"/>
+      <shortcut refid="consoleClear" value="Ctrl+L"/>
+      <shortcut refid="activateSource" value="Ctrl+1"/>
+      <shortcut refid="activateConsole" value="Ctrl+2"/>
+      <shortcut refid="activateWorkspace" value="Ctrl+3"/>
+      <shortcut refid="activateHistory" value="Ctrl+4"/>
+      <shortcut refid="activateFiles" value="Ctrl+5"/>
+      <shortcut refid="activatePlots" value="Ctrl+6"/>
+      <shortcut refid="activatePackages" value="Ctrl+7"/>
+      <shortcut refid="activateHelp" value="Ctrl+8"/>
+      <shortcut refid="switchToTab" value="Cmd+Alt+Down"/>
+      <shortcut refid="previousTab" value="Cmd+Alt+Left"/>
+      <shortcut refid="nextTab" value="Cmd+Alt+Right"/>
+      <shortcut refid="firstTab" value="Cmd+Alt+Shift+Left"/>
+      <shortcut refid="lastTab" value="Cmd+Alt+Shift+Right"/>
+      <shortcut refid="quickOpen" value="Cmd+Alt+O"/>
+      <shortcut refid="previousPlot" value="Cmd+PageUp" />
+      <shortcut refid="nextPlot" value="Cmd+PageDown" />
+      <shortcut refid="showRequestLog" value="Ctrl+`" />
+      <shortcut refid="logFocusedElement" value="Ctrl+Shift+`" />
+   </shortcuts>
+
+   <!--
+   Valid cmd attributes:
+      id           The unique name for this command. There must be a matching
+                   method with this name on the CommandBundle subinterface.
+
+      label        The user-visible name for this command. Will be used on
+                   buttons and menus unless overridden by menuLabel or
+                   buttonLabel.
+
+      menuLabel    The name that will be displayed in the main menu and/or
+                   popup menus.
+
+      buttonLabel  The name that will be displayed on toolbar buttons.
+
+      desc         A short description to be used as a tooltip.
+
+      enabled      [true|false] Whether the command should start out as enabled
+                   or disabled. Defaults to true.
+
+      visible      [true|false] Whether the command should start out as visible
+                   or hidden. Defaults to true.
+   -->
+
+   <cmd id="newSourceDoc"
+        buttonLabel=""
+        menuLabel="R Script"
+        desc="Create a new R script file"/>
+   <cmd id="openSourceDoc"
+        menuLabel="Open File..."
+        buttonLabel=""
+        desc="Open an existing file"/>
+   <cmd id="saveSourceDoc"
+        menuLabel="Save"
+        buttonLabel=""
+        desc="Save current file"/>
+   <cmd id="saveSourceDocAs"
+        menuLabel="Save As..."
+        buttonLabel="Save as"
+        desc="Save current file to a specific path" />
+   <cmd id="closeSourceDoc"
+        menuLabel="Close"/>
+   <cmd id="closeAllSourceDocs"
+        menuLabel="Close All"/>
+   <cmd id="printSourceDoc"
+        menuLabel="Print..."
+        buttonLabel=""
+        desc="Print the current file"/>
+   <cmd id="popoutDoc"
+        desc="Show in new window"/>
+
+   <cmd id="mru0" visible="false"/>
+   <cmd id="mru1" visible="false"/>
+   <cmd id="mru2" visible="false"/>
+   <cmd id="mru3" visible="false"/>
+   <cmd id="mru4" visible="false"/>
+   <cmd id="mru5" visible="false"/>
+   <cmd id="mru6" visible="false"/>
+   <cmd id="mru7" visible="false"/>
+   <cmd id="mru8" visible="false"/>
+   <cmd id="mru9" visible="false"/>
+   <cmd id="clearRecentFiles" menuLabel="Clear List"/>
+
+   <cmd id="activateSource"
+        label="Move Cursor To Source"/>
+   <cmd id="activateConsole"
+        label="Move Cursor To Console"/>
+   <cmd id="activateWorkspace"
+        label="Show Workspace"/>
+   <cmd id="activateData"
+        label="Show Data"/>
+   <cmd id="activateHistory"
+        label="Show History"/>
+   <cmd id="activateFiles"
+        label="Show Files"/>
+   <cmd id="activatePlots"
+        label="Show Plots"/>
+   <cmd id="activatePackages"
+        label="Show Packages"/>
+   <cmd id="activateHelp"
+        label="Show Help"/>
+   <cmd id="switchToTab"
+        label="Switch to Tab..."/>
+   <cmd id="previousTab"
+        label="Previous Tab"/>
+   <cmd id="nextTab"
+        label="Next Tab"/>
+   <cmd id="firstTab"
+        label="First Tab"/>
+   <cmd id="lastTab"
+        label="Last Tab"/>
+
+   <cmd id="findReplace"
+        menuLabel="Find and Replace..."/>
+   <cmd id="executeAllCode"
+        buttonLabel="Run All"
+        menuLabel="Run All"
+        desc="Run the code in the current source tab"/>
+   <cmd id="executeCode"
+        buttonLabel="Run Line(s)"
+        menuLabel="Run Line(s)"
+        desc="Run the current line or selection in the R console"/>
+   <cmd id="extractFunction"
+        menuLabel="Extract Function"
+        desc="Turn the current selection into a function"/>
+   <cmd id="commentUncomment"
+        menuLabel="Comment/Uncomment Lines"
+        desc="Comment or uncomment the current line/selection"/>
+
+   <cmd id="compilePDF"
+        buttonLabel="Compile PDF"
+        menuLabel="Compile PDF"
+        desc="Compile a PDF from the current LaTeX or Sweave document"/>
+        
+   <cmd id="publishPDF"
+        buttonLabel="Publish"
+        menuLabel="Publish PDF..."
+        desc="Publish PDF to Google Docs"/>
+
+   <cmd id="newTextFile"
+        menuLabel="Text File..."/>
+   <cmd id="newRSourceFile"
+        menuLabel="R Source File..."/>
+   <cmd id="newFolder"
+        menuLabel="Folder..."
+        buttonLabel="New Folder"/>
+   <cmd id="uploadFile"
+        menuLabel="Upload Files..."
+        buttonLabel="Upload"
+        desc="Upload files to server"/>
+  <cmd id="copyFile"
+        menuLabel="Copy..."
+        buttonLabel="Copy"
+        desc="Copy selected file or folder"/>
+   <cmd id="moveFiles"
+        menuLabel="Move..."
+        buttonLabel="Move"
+        desc="Move selected files or folders"/>
+  <cmd id="exportFiles"
+        menuLabel="Export..."
+        buttonLabel="Export"
+        desc="Export selected files or folders"/>
+   <cmd id="renameFile"
+        buttonLabel="Rename"
+        desc="Rename selected file or folder"/>
+   <cmd id="deleteFiles"
+        buttonLabel="Delete"/>
+   <cmd id="refreshFiles"
+        menuLabel="Refresh"/>
+   <cmd id="quickOpen"
+        label="Quick Open"/>
+   <cmd id="syncWorkingDir"
+        label="Set as Working Directory"/>
+   <cmd id="showFolder"
+        label="Show Folder in New Window"
+        visible="false"/>
+
+   <cmd id="consoleClear"
+        menuLabel="Clear Console"/>
+   <cmd id="interruptR"
+        menuLabel="Interrupt R"/>
+
+   <cmd id="historySendToSource"
+        label="Insert into Source"
+        desc="Insert the selected command(s) into the current document"/>
+   <cmd id="historySendToConsole"
+        label="Send to Console"
+        desc="Send the selected command(s) to the R console"/>
+   <cmd id="historyDismissResults"
+        label="Done" />
+   <cmd id="historyShowContext"
+        label="Show In Context" />
+   <cmd id="historyDismissContext"
+        label="&#x00AB; Back" />
+
+   <cmd id="nextPlot"
+        buttonLabel=""
+        menuLabel="Next Plot"
+        desc="Next plot"/>
+   <cmd id="previousPlot"
+        buttonLabel=""
+        menuLabel="Previous Plot"
+        desc="Previous plot"/>
+   <cmd id="exportPlotAsImage" 
+        buttonLabel="Export"
+        menuLabel="Export As Image..."
+        desc="Export the current plot as a PNG or JPEG image" />
+   <cmd id="printPlot"
+        buttonLabel = "Print"
+        menuLabel="Print to PDF..."
+        desc="Print current plot to a PDF file"/>
+   <cmd id ="zoomPlot" 
+        menuLabel="Zoom Plot..."
+        buttonLabel="Zoom"
+        desc="View a larger version of the plot in a new window"/>
+   <cmd id="clearPlots"
+        buttonLabel="Clear All"
+        menuLabel="Clear All..."
+        desc="Clear all Plots"/>    
+   <cmd id="refreshPlot"
+        buttonLabel=""
+        menuLabel="Refresh"
+        desc="Refresh current plot"/>     
+        
+   <cmd id="clearWorkspace"
+        menuLabel="Clear All..."
+        buttonLabel="Clear All"/>
+   <cmd id="loadWorkspace"
+        label="Load Workspace..."/>
+   <cmd id="loadDefaultWorkspace"
+        label="Load Default Workspace"/>
+   <cmd id="saveWorkspace"
+        label="Save Workspace..."/>
+   <cmd id="saveDefaultWorkspace"
+        label="Save As Default Workspace..."/>
+   <cmd id="importDatasetFromFile"
+        menuLabel="From Text File..."/>
+   <cmd id="importDatasetFromGoogleSpreadsheet"
+        menuLabel="From Google Spreadsheet..."/>
+   <cmd id="refreshWorkspace"
+        buttonLabel=""
+        menuLabel="Refresh"
+        desc="Refresh Workspace"/>
+
+    
+
+   <cmd id="installPackage"
+        menuLabel="Install Package..."
+        buttonLabel="Install Package"
+        desc="Install an R package" />
+        
+   <cmd id="refreshPackages"
+        menuLabel="Refresh"
+        buttonLabel=""
+        desc="Refresh package listing"/>
+
+   <cmd id="consoleOnTop"
+        menuLabel="Flip Console and Source"/>
+
+   <cmd id="showOptions"
+        menuLabel="Preferences..."/>
+
+   <cmd id="checkForUpdates"
+        menuLabel="Check for Updates"
+        visible="false"/>
+       
+   <cmd id="helpUsingRStudio"
+        menuLabel="Using RStudio"/>
+        
+   <cmd id="helpKeyboardShortcuts"
+        menuLabel="Keyboard Shortcuts" />
+ 
+   <cmd id="helpBack"
+        buttonLabel=""/>
+   <cmd id="helpForward"
+        buttonLabel=""/>
+   <cmd id="helpHome"
+        menuLabel="R Help"
+        buttonLabel=""/>
+   <cmd id="printHelp"
+        buttonLabel=""/>
+   <cmd id="addToHelpFavorites"
+        menuLabel="Add to favorites"/>
+   <cmd id="clearHelpHistory"
+        menuLabel="Clear history"/>
+   <cmd id="helpPopout"
+        buttonLabel=""
+        desc="Show in new window"/>
+   <cmd id="refreshHelp"
+        menuLabel="Refresh"/>
+   <cmd id="raiseException"
+        menuLabel="Raise Exception"/>
+   <cmd id="raiseException2"
+        menuLabel="Raise Exception JS"/>
+   <cmd id="showWarningBar"
+        menuLabel="Show warning bar"/>
+   <cmd id="showRequestLog"
+        menuLabel="Request Log"/>
+   <cmd id="logFocusedElement"
+        menuLabel="Log focused element"/>
+
+   <cmd id="quitSession"
+        menuLabel="Quit R..."/>
+
+   <cmd id="showAboutDialog"
+        menuLabel="About RStudio"
+        visible="false"/>
+   <cmd id="showLogFiles"
+        menuLabel="Show Log Files"
+        visible="false"/>
+   <cmd id="updateCredentials"
+        menuLabel="Update Credentials"/>
+        
+   <cmd id ="supportReportABug" 
+        menuLabel="Report a Bug" />
+             
+   <cmd id="supportSuggestAFeature" 
+        menuLabel="Suggest a Feature" />
+      
+   <cmd id="supportAskAQuestion" 
+        menuLabel="Ask a Question" />
+               
+   <cmd id="rstudioAgreement"
+        menuLabel="RStudio Agreement" />
+        
+    <cmd id="rstudioLicense"
+        menuLabel="RStudio License"
+        visible="false"/>
+
+   <cmd id="undoDummy"
+        label="Undo"/>
+   <cmd id="redoDummy"
+        label="Redo"/>
+   <cmd id="cutDummy"
+        label="Cut"/>
+   <cmd id="copyDummy"
+        label="Copy"/>
+   <cmd id="pasteDummy"
+        label="Paste"/>
+
+</commands>

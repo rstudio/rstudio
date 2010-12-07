@@ -1,0 +1,8 @@
+
+include(BundleUtilities)
+
+set(BUNDLE "${CMAKE_INSTALL_PREFIX}/bin/rdesktop@CMAKE_EXECUTABLE_SUFFIX@")
+set(OTHER_LIBS "")
+set(DIRS "")
+
+fixup_bundle("${BUNDLE}" "${OTHER_LIBS}" "${DIRS}")

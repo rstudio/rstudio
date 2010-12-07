@@ -1,0 +1,25 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             xmlns:f='urn:import:org.rstudio.studio.client.workbench.views.help.search'>
+
+   <ui:with field='res' type='org.rstudio.core.client.theme.res.ThemeResources'/>
+
+   <g:HTMLPanel>
+      <div class="{res.themeStyles.search}">
+         <div class="{res.themeStyles.left}"></div>
+         <div class="{res.themeStyles.center}">
+            <g:Image resource='{res.smallMagGlassIcon}'
+                     styleName='{res.themeStyles.searchMagGlass}' />
+            <div class="{res.themeStyles.searchBoxContainer}">
+               <f:SearchWidget.FocusSuggestBox ui:field='suggestBox_'
+                          styleName='{res.themeStyles.searchBox}'/>
+            </div>
+            <g:Image ui:field='close_'
+                     resource='{res.clearSearch}'
+                     styleName='{res.themeStyles.clearSearch}'/>
+         </div>
+         <div class="{res.themeStyles.right}"></div>
+      </div>
+   </g:HTMLPanel>
+
+</ui:UiBinder>

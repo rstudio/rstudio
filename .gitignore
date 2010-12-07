@@ -1,0 +1,6 @@
+build
+build_*
+build-*
+qtcreator-build
+bin
+.DS_Store

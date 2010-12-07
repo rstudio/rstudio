@@ -1,0 +1,105 @@
+/*
+ * PosixParentProcessMonitor.cpp
+ *
+ * Copyright (C) 2009-11 by RStudio, Inc.
+ *
+ * This program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+#include <core/system/ParentProcessMonitor.hpp>
+
+#include <errno.h>
+#include <unistd.h>
+
+#include <boost/assert.hpp>
+
+#include <core/SafeConvert.hpp>
+#include <core/Log.hpp>
+
+namespace core {
+namespace parent_process_monitor {
+
+namespace {
+
+std::vector<int> s_writeOnExit;
+
+int setFdEnv(std::string name, int val)
+{
+   std::string strVal = boost::lexical_cast<std::string>(val);
+   return ::setenv(name.c_str(), strVal.c_str(), strVal.size());
+}
+
+int getFdEnv(std::string name, int defaultVal)
+{
+   char* result = ::getenv(name.c_str());
+   if (!result)
+      return defaultVal;
+   return core::safe_convert::stringTo(result, defaultVal);
+}
+
+void exitHandler()
+{
+   // Signal normal termination to all child processes
+   // that may be waiting
+   size_t written ;
+   for (size_t i = 0; i < s_writeOnExit.size(); i++)
+   {
+      written = ::write(s_writeOnExit.at(i), "done", 4);
+   }
+}
+
+} // anonymous namespace
+
+Error wrapFork(boost::function<void()> func)
+{
+   int fds[2];
+   int result = ::pipe(fds);
+   if (result != 0)
+      return systemError(errno, ERROR_LOCATION);
+
+   result = setFdEnv("RS_PPM_FD_READ", fds[0]);
+   if (result != 0)
+      return systemError(errno, ERROR_LOCATION);
+   result = setFdEnv("RS_PPM_FD_WRITE", fds[1]);
+   if (result != 0)
+      return systemError(errno, ERROR_LOCATION);
+
+   func();
+
+   ::close(fds[0]);
+
+   ::atexit(exitHandler);
+   s_writeOnExit.push_back(fds[1]);
+
+   return Success();
+}
+
+ParentTermination waitForParentTermination()
+{
+   int fds[2];
+   fds[0] = getFdEnv("RS_PPM_FD_READ", -1);
+   fds[1] = getFdEnv("RS_PPM_FD_WRITE", -1);
+
+   if (fds[0] < 0 || fds[1] < 0)
+      return ParentTerminationNoParent;
+
+   ::close(fds[1]);
+
+   char buf[256];
+   int result = ::read(fds[0], buf, 256);
+
+   if (result == 0)
+      return ParentTerminationAbnormal;
+   else if (result > 0)
+      return ParentTerminationNormal;
+   else
+      return ParentTerminationWaitFailure;
+}
+
+} // namespace parent_process_monitor
+} // namespace core

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DependencyValidationManager">
+    <option name="SKIP_IMPORT_STATEMENTS" value="false" />
+  </component>
+  <component name="FacetAutodetectingManager">
+    <autodetection-disabled>
+      <facet-type id="gwt">
+        <modules>
+          <module name="GWT">
+            <files>
+              <file url="file://$PROJECT_DIR$/src/gwt/bin/com/rstudio/codemirror/CodeMirror.gwt.xml" />
+              <file url="file://$PROJECT_DIR$/src/gwt/bin/com/rstudio/core/Core.gwt.xml" />
+              <file url="file://$PROJECT_DIR$/src/gwt/bin/com/rstudio/studio/PlainTextEditor.gwt.xml" />
+              <file url="file://$PROJECT_DIR$/src/gwt/bin/com/rstudio/studio/RStudio.gwt.xml" />
+              <file url="file://$PROJECT_DIR$/src/gwt/src/com/rstudio/codemirror/CodeMirror.gwt.xml" />
+              <file url="file://$PROJECT_DIR$/src/gwt/src/com/rstudio/core/Core.gwt.xml" />
+              <file url="file://$PROJECT_DIR$/src/gwt/src/com/rstudio/studio/PlainTextEditor.gwt.xml" />
+              <file url="file://$PROJECT_DIR$/src/gwt/src/com/rstudio/studio/RStudio.gwt.xml" />
+            </files>
+          </module>
+        </modules>
+      </facet-type>
+      <facet-type id="web">
+        <modules>
+          <module name="GWT">
+            <files>
+              <file url="file://$PROJECT_DIR$/src/gwt/web/WEB-INF/web.xml" />
+            </files>
+          </module>
+        </modules>
+      </facet-type>
+    </autodetection-disabled>
+  </component>
+  <component name="IdProvider" IDEtalkID="AC9390DF9D3D1C907504F5601CCC6695" />
+  <component name="JavadocGenerationManager">
+    <option name="OUTPUT_DIRECTORY" />
+    <option name="OPTION_SCOPE" value="protected" />
+    <option name="OPTION_HIERARCHY" value="true" />
+    <option name="OPTION_NAVIGATOR" value="true" />
+    <option name="OPTION_INDEX" value="true" />
+    <option name="OPTION_SEPARATE_INDEX" value="true" />
+    <option name="OPTION_DOCUMENT_TAG_USE" value="false" />
+    <option name="OPTION_DOCUMENT_TAG_AUTHOR" value="false" />
+    <option name="OPTION_DOCUMENT_TAG_VERSION" value="false" />
+    <option name="OPTION_DOCUMENT_TAG_DEPRECATED" value="true" />
+    <option name="OPTION_DEPRECATED_LIST" value="true" />
+    <option name="OTHER_OPTIONS" value="" />
+    <option name="HEAP_SIZE" />
+    <option name="LOCALE" />
+    <option name="OPEN_IN_BROWSER" value="true" />
+  </component>
+  <component name="ProjectDetails">
+    <option name="projectName" value="RStudio" />
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_5" assert-keyword="true" jdk-15="true" project-jdk-name="1.6" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/out" />
+  </component>
+</project>
+

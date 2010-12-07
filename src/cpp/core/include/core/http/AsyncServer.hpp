@@ -1,0 +1,349 @@
+/*
+ * AsyncServer.hpp
+ *
+ * Copyright (C) 2009-11 by RStudio, Inc.
+ *
+ * This program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+#ifndef CORE_HTTP_ASYNC_SERVER_HPP
+#define CORE_HTTP_ASYNC_SERVER_HPP
+
+#include <vector>
+
+#include <boost/shared_ptr.hpp>
+#include <boost/function.hpp>
+#include <boost/algorithm/string.hpp>
+
+#include <boost/asio/io_service.hpp>
+#include <boost/asio/placeholders.hpp>
+
+#include <core/BoostThread.hpp>
+#include <core/Error.hpp>
+#include <core/BoostErrors.hpp>
+#include <core/Log.hpp>
+#include <core/system/System.hpp>
+
+#include <core/http/Request.hpp>
+#include <core/http/Response.hpp>
+#include <core/http/AsyncConnectionImpl.hpp>
+#include <core/http/AsyncUriHandler.hpp>
+#include <core/http/Util.hpp>
+#include <core/http/UriHandler.hpp>
+#include <core/http/SocketUtils.hpp>
+#include <core/http/SocketAcceptorService.hpp>
+
+
+namespace core {
+namespace http {
+
+template <typename ProtocolType>
+class AsyncServer : boost::noncopyable
+{
+public:
+   AsyncServer(const std::string& serverName,
+               const std::string& baseUri = std::string())
+      : abortOnResourceError_(false),
+        serverName_(serverName),
+        baseUri_(baseUri)
+   {
+   }
+   
+   virtual ~AsyncServer()
+   {
+   }
+   
+   void setAbortOnResourceError(bool abortOnResourceError)
+   {
+      abortOnResourceError_ = abortOnResourceError;
+   }
+   
+   void addHandler(const std::string& prefix,
+                   const AsyncUriHandlerFunction& handler)
+   {
+      uriHandlers_.add(AsyncUriHandler(baseUri_ + prefix, handler));
+   }
+
+   void addBlockingHandler(const std::string& prefix,
+                           const UriHandlerFunction& handler)
+   {
+      addHandler(prefix,
+                 boost::bind(handleAsyncConnectionSynchronously, handler, _1));
+   }
+
+   void setDefaultHandler(const AsyncUriHandlerFunction& handler)
+   {
+      defaultHandler_ = handler;
+   }
+
+   void setBlockingDefaultHandler(const UriHandlerFunction& handler)
+   {
+      setDefaultHandler(boost::bind(handleAsyncConnectionSynchronously,
+                                    handler,
+                                    _1));
+   }
+
+   
+   Error run(std::size_t threadPoolSize = 1)
+   {
+      try
+      {
+         // get ready for next connection
+         acceptNextConnection();
+         
+         // block all signals for the creation of the thread pool
+         // (prevents signals from occurring on any of the handler threads)
+         core::system::SignalBlocker signalBlocker;
+         Error error = signalBlocker.blockAll();
+         if (error)
+            return error ;
+      
+         // create the threads
+         for (std::size_t i=0; i < threadPoolSize; ++i)
+         {
+            // run the thread
+            boost::shared_ptr<boost::thread> pThread(new boost::thread(
+                              &AsyncServer<ProtocolType>::runServiceThread,
+                              this));
+            
+            // add to list of threads
+            threads_.push_back(pThread);            
+         }
+      }
+      catch(const boost::thread_resource_error& e)
+      {
+         return Error(boost::thread_error::ec_from_exception(e),
+                      ERROR_LOCATION);
+      }
+      
+      return Success();
+   }
+   
+   void stop()
+   {
+      // close acceptor so we free up the main port immediately
+      boost::system::error_code closeEc;
+      acceptorService_.closeAcceptor(closeEc);
+      if (closeEc)
+         LOG_ERROR(Error(closeEc, ERROR_LOCATION));
+      
+      // stop the server 
+      acceptorService_.ioService().stop();
+   }
+   
+   void waitUntilStopped()
+   {
+      // wait until all of the threads in the pool exit
+      for (std::size_t i=0; i < threads_.size(); ++i)
+         threads_[i]->join();
+   }
+   
+   
+private:
+
+   void runServiceThread()
+   {
+      try
+      {
+         boost::system::error_code ec;
+         acceptorService_.ioService().run(ec);
+         if (ec)
+            LOG_ERROR(Error(ec, ERROR_LOCATION));
+      }
+      CATCH_UNEXPECTED_EXCEPTION
+   }
+
+   void acceptNextConnection()
+   {
+      // create a new connection 
+      ptrNextConnection_.reset(new AsyncConnectionImpl<ProtocolType>(
+                                                                 
+         // controlling io_service
+         acceptorService_.ioService(),
+
+         // connection handler
+         boost::bind(&AsyncServer<ProtocolType>::handleConnection,
+                     this, _1, _2),
+
+         // response filter
+         boost::bind(&AsyncServer<ProtocolType>::connectionResponseFilter,
+                     this, _1)
+      ));
+      
+      // wait for next connection
+      acceptorService_.asyncAccept(
+         ptrNextConnection_->socket(), 
+         boost::bind(&AsyncServer<ProtocolType>::handleAccept,
+                     this,
+                     boost::asio::placeholders::error)
+      );
+   }
+   
+   void handleAccept(const boost::system::error_code& ec) 
+   {
+      try
+      {
+         if (!ec) 
+         {
+            // start connection
+            ptrNextConnection_->startReading();
+         }
+         else
+         {
+            // for errors, log and continue (but don't log operation cancelled
+            // since it happens in the ordinary course of shutting down the server)
+            if (ec != boost::asio::error::operation_aborted)
+            {
+               // log the error
+               LOG_ERROR(Error(ec, ERROR_LOCATION)) ;
+               
+               // check for resource exhaustion
+               checkForResourceExhaustion(ec, ERROR_LOCATION);
+            }
+         }
+      }
+      catch(const boost::system::system_error& e)
+      {
+         // always log
+         LOG_ERROR_MESSAGE(std::string("Unexpected exception: ") + e.what());
+         
+         // check for resource exhaustion
+         checkForResourceExhaustion(e.code(), ERROR_LOCATION);
+      }
+      CATCH_UNEXPECTED_EXCEPTION
+
+      // ALWAYS accept next connection
+      try
+      {
+         acceptNextConnection() ;
+      }
+      CATCH_UNEXPECTED_EXCEPTION
+   }
+   
+   void handleConnection(
+         boost::shared_ptr<AsyncConnectionImpl<ProtocolType> > pConnection,
+         http::Request* pRequest)
+   {
+      try
+      {
+         // call filter
+         onRequest(&(pConnection->socket()), pRequest);
+         
+         // convert to cannonical HttpConnection
+         boost::shared_ptr<AsyncConnection> pAsyncConnection =
+             boost::shared_static_cast<AsyncConnection>(pConnection);
+
+         // call the appropriate handler to generate a response
+         std::string uri = pRequest->uri();
+         AsyncUriHandlerFunction handler = uriHandlers_.handlerFor(uri);
+         if (handler)
+         {
+            // call the handler
+            handler(pAsyncConnection) ;
+         }
+         else if (defaultHandler_)
+         {
+            // call the default handler
+            defaultHandler_(pAsyncConnection);
+         }
+         else
+         {
+            // log error
+            LOG_ERROR_MESSAGE("Handler not found for uri: " + pRequest->uri());
+            
+            // return 404 not found
+            pConnection->response().setStatusCode(http::status::NotFound) ;
+         }
+      }
+      catch(const boost::system::system_error& e)
+      {
+         // always log
+         LOG_ERROR_MESSAGE(std::string("Unexpected exception: ") + e.what());
+         
+         // check for resource exhaustion
+         checkForResourceExhaustion(e.code(), ERROR_LOCATION);
+      }
+      CATCH_UNEXPECTED_EXCEPTION
+   }
+
+   void connectionResponseFilter(http::Response* pResponse)
+   {
+      // set server header (evade ref-counting to defend against
+      // non-threadsafe std::string implementations)
+      pResponse->setHeader("Server", std::string(serverName_.c_str()));
+   }
+
+protected: 
+   SocketAcceptorService<ProtocolType>& acceptorService()
+   {
+      return acceptorService_;
+   }
+   
+private:
+
+   virtual void onRequest(typename ProtocolType::socket* pSocket,
+                          http::Request* pRequest)
+   {
+      
+   }
+   
+   void maybeAbortServer(const std::string& message, 
+                         const core::ErrorLocation& location)
+   {
+      if (abortOnResourceError_)
+      {
+         core::log::logErrorMessage("(ABORTING SERVER): " + message, location);
+         ::abort();
+      }
+      else
+      {
+         core::log::logWarningMessage(
+                  "Resource exhaustion error occurred (continuing to run)",
+                  location);
+      }
+   }
+   
+   void checkForResourceExhaustion(const boost::system::error_code& ec,
+                                   const core::ErrorLocation& location)
+   {
+      if ( ec.category() == boost::system::get_system_category() &&
+          (ec.value() == boost::system::errc::too_many_files_open ||
+           ec.value() == boost::system::errc::not_enough_memory) )
+      {
+         // our process has run out of memory or file handles. in this 
+         // case the only way future requests can be serviced is if we 
+         // abort and allow upstart to respawn us
+         maybeAbortServer("Resource exhaustion", location);
+      }
+   }
+
+   static void handleAsyncConnectionSynchronously(
+                        const UriHandlerFunction& uriHandlerFunction,
+                        boost::shared_ptr<AsyncConnection> pConnection)
+   {
+      uriHandlerFunction(pConnection->request(), &(pConnection->response()));
+      pConnection->writeResponse();
+   }
+
+private:
+   bool abortOnResourceError_;
+   std::string serverName_;
+   std::string baseUri_;
+   boost::shared_ptr<AsyncConnectionImpl<ProtocolType> > ptrNextConnection_;
+   AsyncUriHandlers uriHandlers_ ;
+   AsyncUriHandlerFunction defaultHandler_;
+   std::vector<boost::shared_ptr<boost::thread> > threads_;
+   SocketAcceptorService<ProtocolType> acceptorService_;
+};
+
+} // namespace http
+} // namespace core
+
+#endif // CORE_HTTP_ASYNC_SERVER_HPP
+
+

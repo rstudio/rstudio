@@ -1,0 +1,60 @@
+#!/bin/bash
+
+#
+# install-dependencies-java
+#
+# Copyright (C) 2009-11 by RStudio, Inc.
+#
+# This program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+# install dir
+INSTALL_DIR=`pwd`
+
+# determine download command (wget, fallback to curl)
+WGET=`which wget`
+if [ "$WGET" != "" ]
+then
+  DOWNLOAD="wget"
+else
+  DOWNLOAD="curl -L"
+fi
+
+# target directory for gwt
+GWT_DIR=$INSTALL_DIR/../src/gwt
+LIB_DIR=$GWT_DIR/lib
+mkdir -p $LIB_DIR
+
+# guice
+GUICE_ZIP=guice.zip
+$DOWNLOAD https://s3.amazonaws.com/rstudio-buildtools/$GUICE_ZIP > $GUICE_ZIP
+rm -rf $LIB_DIR/guice
+unzip -d $LIB_DIR $GUICE_ZIP
+rm $GUICE_ZIP
+
+# gin
+GIN_ZIP=gin.zip
+$DOWNLOAD https://s3.amazonaws.com/rstudio-buildtools/$GIN_ZIP > $GIN_ZIP
+rm -rf $LIB_DIR/gin
+unzip -d $LIB_DIR $GIN_ZIP
+rm $GIN_ZIP
+
+# gwt sdk
+GWT_SDK=gwt-2.0.4
+GWT_SDK_ZIP=$GWT_SDK.zip
+$DOWNLOAD https://s3.amazonaws.com/rstudio-buildtools/$GWT_SDK_ZIP > $GWT_SDK_ZIP
+rm -rf $GWT_DIR/sdk
+unzip -d $GWT_DIR $GWT_SDK_ZIP
+mv $GWT_DIR/$GWT_SDK $GWT_DIR/sdk
+rm $GWT_SDK_ZIP
+
+# back to install dir
+cd $INSTALL_DIR
+
+
+

@@ -1,0 +1,56 @@
+<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 1.6.4//EN" "http://google-web-toolkit.googlecode.com/svn/tags/1.6.4/distro-source/core/src/gwt-module.dtd">
+<module>
+   <inherits name='com.google.gwt.user.User'/>
+   <inherits name='com.google.gwt.json.JSON' />
+   <inherits name='com.google.gwt.http.HTTP' />
+
+   <generate-with class="org.rstudio.core.rebind.command.CommandBundleGenerator" >
+      <when-type-assignable
+            class="org.rstudio.core.client.command.CommandBundle"/>
+   </generate-with>
+   <generate-with class="org.rstudio.core.rebind.command.CommandBinderGenerator" >
+      <when-type-assignable
+            class="org.rstudio.core.client.command.CommandBinder"/>
+   </generate-with>
+   <generate-with class="org.rstudio.core.rebind.AsyncShimGenerator" >
+      <when-type-assignable
+            class="org.rstudio.core.client.AsyncShim"/>
+   </generate-with>
+   <generate-with class="org.rstudio.core.rebind.JavaScriptPassthroughGenerator" >
+      <when-type-assignable
+            class="org.rstudio.core.client.js.JavaScriptPassthrough"/>
+   </generate-with>
+   <generate-with class="org.rstudio.core.rebind.command.JsObjectInjectorGenerator" >
+      <when-type-assignable
+            class="org.rstudio.core.client.js.JsObjectInjector"/>
+   </generate-with>
+
+   <replace-with class="org.rstudio.core.client.dom.impl.DomUtilsStandardImpl">
+      <when-type-is class="org.rstudio.core.client.dom.impl.DomUtilsImpl" />
+   </replace-with>
+
+   <replace-with class="org.rstudio.core.client.dom.impl.DomUtilsIE8Impl">
+      <when-type-is class="org.rstudio.core.client.dom.impl.DomUtilsImpl" />
+      <any>
+         <when-property-is name="user.agent" value="ie8" />
+      </any>
+   </replace-with>
+
+   <replace-with class="org.rstudio.core.client.BrowseCapIE8">
+      <when-type-is class="org.rstudio.core.client.BrowseCap"/>
+      <when-property-is name="user.agent" value="ie8" />
+   </replace-with>
+   <replace-with class="org.rstudio.core.client.BrowseCapFirefox">
+      <when-type-is class="org.rstudio.core.client.BrowseCap"/>
+      <when-property-is name="user.agent" value="gecko1_8" />
+   </replace-with>
+
+   <replace-with class="org.rstudio.core.client.theme.ThemeFonts.WebThemeFontLoader">
+      <when-type-is class="org.rstudio.core.client.theme.ThemeFonts.ThemeFontLoader"/>
+   </replace-with>
+   <replace-with class="org.rstudio.core.client.theme.ThemeFonts.DesktopThemeFontLoader">
+      <when-type-is class="org.rstudio.core.client.theme.ThemeFonts.ThemeFontLoader"/>
+      <when-property-is name="rstudio.desktop" value="true"/>
+   </replace-with>
+
+</module>

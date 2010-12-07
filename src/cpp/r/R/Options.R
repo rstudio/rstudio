@@ -1,0 +1,49 @@
+#
+# Options.R
+#
+# Copyright (C) 2009-11 by RStudio, Inc.
+#
+# This program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+# custom browseURL implementation
+options(browser = function(url)
+{
+   .C("rs_browseURL", url) ;
+})
+
+# set RStudio as the GUI
+local({
+   platform = .Platform
+   platform$GUI = "RStudio"
+   unlockBinding(".Platform", asNamespace("base"))
+   assign(".Platform", platform, inherits=TRUE)
+   lockBinding(".Platform", asNamespace("base"))
+})
+
+# set default x display (see below for comment on why we need to do this)
+Sys.setenv(DISPLAY = ":0")
+
+# the above two display oriented command affect the behavior of edit.data.frame
+# and edit.matrix as follows: these methods will use .Internal(edit, ...) rather
+# than .Internal(dataentry, ...) if DISPLAY == "" or if the .Platform$GUI is
+# "unknown". since we plan on running on a server without X available we need
+# to manually make sure that the DISPLAY environment variable exists and that
+# the .Platform$GUI is not "unknown"
+
+
+
+
+
+
+
+
+
+
+
+

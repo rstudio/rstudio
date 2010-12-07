@@ -1,0 +1,145 @@
+<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 1.7.0//EN" "http://google-web-toolkit.googlecode.com/svn/tags/1.7.0/distro-source/core/src/gwt-module.dtd">
+<module rename-to='rstudio'>
+
+   <!-- GWT module dependencies                                    -->
+   <inherits name='com.google.gwt.user.User'/>
+   
+   <!-- Gin module dependencies                                    -->
+   <inherits name="com.google.gwt.inject.Inject"/>
+    
+   <!-- Use default GWT style sheet                                -->
+   <!--<inherits name='com.google.gwt.user.theme.standard.Standard'/>-->
+
+   <define-property name="rstudio.desktop" values="true,false"/>
+   <property-provider name="rstudio.desktop"><![CDATA[
+      return window.desktop ? "true" : "false";
+   ]]></property-provider>
+   <set-property name="user.agent" value="safari">
+      <when-property-is name="rstudio.desktop" value="true"/>
+   </set-property>
+
+   <define-property name="rstudio.debug" values="true,false"/>
+   <property-provider name="rstudio.debug"><![CDATA[
+      return /\bdebug=1\b/.test(window.location.search) ? "true" : "false";
+   ]]></property-provider>
+   <!-- For now, always emulate the stack -->
+   <set-property name="rstudio.debug" value="true" />
+
+   <!-- RStudio module dependencies                                -->
+   <inherits name='org.rstudio.core.Core' />
+   <inherits name='org.rstudio.codemirror.CodeMirror' />
+   
+   <!-- Specify the app entry point class.                         -->
+   <entry-point class='org.rstudio.studio.client.RStudio'/>
+
+
+
+
+   <replace-with class="org.rstudio.studio.client.impl.BrowserFenceUnsupported">
+      <when-type-is class="org.rstudio.studio.client.impl.BrowserFence" />
+   </replace-with>
+   
+   <replace-with class="org.rstudio.studio.client.impl.BrowserFenceSupported">
+      <when-type-is class="org.rstudio.studio.client.impl.BrowserFence" />
+      <any>
+         <when-property-is name="user.agent" value="safari" />
+         <when-property-is name="user.agent" value="gecko1_8" />
+         <when-property-is name="user.agent" value="ie8" />
+      </any>
+   </replace-with>
+   
+   <replace-with class="org.rstudio.studio.client.workbench.views.console.shell.impl.PlainTextEditorImplFirefox">
+      <when-type-is class="org.rstudio.studio.client.workbench.views.console.shell.impl.PlainTextEditorImpl" />
+      <any>
+         <when-property-is name="user.agent" value="gecko1_8" />
+      </any>
+   </replace-with>
+   <replace-with class="org.rstudio.studio.client.workbench.views.console.shell.impl.PlainTextEditorImplIE8">
+      <when-type-is class="org.rstudio.studio.client.workbench.views.console.shell.impl.PlainTextEditorImpl" />
+      <any>
+         <when-property-is name="user.agent" value="ie8" />
+      </any>
+   </replace-with>
+
+   <replace-with class="org.rstudio.studio.client.workbench.views.console.shell.editor.impl.TextareaPasteStrategy">
+      <when-type-is class="org.rstudio.studio.client.workbench.views.console.shell.editor.PasteStrategy" />
+   </replace-with>
+   <replace-with class="org.rstudio.studio.client.workbench.views.console.shell.editor.impl.PostProcessPasteStrategy">
+      <when-type-is class="org.rstudio.studio.client.workbench.views.console.shell.editor.PasteStrategy" />
+      <when-property-is name="user.agent" value="gecko1_8"/>
+   </replace-with>
+   <replace-with class="org.rstudio.studio.client.workbench.views.console.shell.editor.impl.InterceptPasteStrategy">
+      <when-type-is class="org.rstudio.studio.client.workbench.views.console.shell.editor.PasteStrategy" />
+      <when-property-is name="user.agent" value="ie8"/>
+   </replace-with>
+
+   <replace-with class="org.rstudio.studio.client.workbench.views.plots.PlotTypeIE8">
+      <when-type-is class="org.rstudio.studio.client.workbench.views.plots.PlotType" />
+      <when-property-is name="user.agent" value="ie8" />
+   </replace-with>
+
+   <replace-with class="org.rstudio.studio.client.common.impl.WebWindowOpener">
+      <when-type-is class="org.rstudio.studio.client.common.WindowOpener" />
+   </replace-with>
+   <replace-with class="org.rstudio.studio.client.common.impl.DesktopWindowOpener">
+      <when-type-is class="org.rstudio.studio.client.common.WindowOpener" />
+      <when-property-is name="rstudio.desktop" value="true"/>
+   </replace-with>
+
+   <replace-with class="org.rstudio.studio.client.common.impl.WebFileDialogs">
+      <when-type-is class="org.rstudio.studio.client.common.FileDialogs" />
+   </replace-with>
+   <replace-with class="org.rstudio.studio.client.common.impl.DesktopFileDialogs">
+      <when-type-is class="org.rstudio.studio.client.common.FileDialogs" />
+      <when-property-is name="rstudio.desktop" value="true"/>
+   </replace-with>
+
+   <replace-with class="org.rstudio.studio.client.application.ui.impl.WebApplicationHeader">
+      <when-type-is class="org.rstudio.studio.client.application.ui.ApplicationHeader" />
+   </replace-with>
+   <replace-with class="org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader">
+      <when-type-is class="org.rstudio.studio.client.application.ui.ApplicationHeader" />
+      <when-property-is name="rstudio.desktop" value="true"/>
+   </replace-with>
+
+   <replace-with class="org.rstudio.studio.client.workbench.views.packages.impl.WebCRANChooser">
+      <when-type-is class="org.rstudio.studio.client.workbench.views.packages.CRANChooser"/>
+   </replace-with>
+   <replace-with class="org.rstudio.studio.client.workbench.views.packages.impl.DesktopCRANChooser">
+      <when-type-is class="org.rstudio.studio.client.workbench.views.packages.CRANChooser"/>
+      <when-property-is name="rstudio.desktop" value="true"/>
+   </replace-with>
+
+   <replace-with class="org.rstudio.studio.client.workbench.views.plots.ui.impl.WebActionsWidget">
+      <when-type-is class="org.rstudio.studio.client.workbench.views.plots.ui.ActionsWidget"/>
+   </replace-with>
+   <replace-with class="org.rstudio.studio.client.workbench.views.plots.ui.impl.DesktopActionsWidget">
+      <when-type-is class="org.rstudio.studio.client.workbench.views.plots.ui.ActionsWidget"/>
+      <when-property-is name="rstudio.desktop" value="true"/>
+   </replace-with>
+
+   <replace-with class="org.rstudio.studio.client.common.dialog.WebDialogBuilderFactory">
+      <when-type-is class="org.rstudio.studio.client.common.dialog.DialogBuilderFactory"/>
+   </replace-with>
+   <replace-with class="org.rstudio.studio.client.common.dialog.DesktopDialogBuilderFactory">
+      <when-type-is class="org.rstudio.studio.client.common.dialog.DialogBuilderFactory"/>
+      <when-property-is name="rstudio.desktop" value="true"/>
+   </replace-with>
+
+   <replace-with class="org.rstudio.studio.client.common.impl.WebTextInput">
+      <when-type-is class="org.rstudio.studio.client.common.TextInput"/>
+   </replace-with>
+   <replace-with class="org.rstudio.studio.client.common.impl.DesktopTextInput">
+      <when-type-is class="org.rstudio.studio.client.common.TextInput"/>
+      <when-property-is name="rstudio.desktop" value="true"/>
+   </replace-with>
+
+
+   <set-property name="compiler.emulatedStack" value="true">
+      <when-property-is name="rstudio.debug" value="true"/>
+   </set-property>
+   <set-configuration-property name="compiler.emulatedStack.recordLineNumbers" value="true"/>
+   <set-configuration-property name="compiler.emulatedStack.recordFileNames" value="true"/>
+   <!--<set-configuration-property name="CssResource.style" value="pretty" />-->
+
+</module>

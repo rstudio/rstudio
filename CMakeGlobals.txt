@@ -1,0 +1,96 @@
+#
+# CMakeGlobals.txt
+#
+# Copyright (C) 2009-11 by RStudio, Inc.
+#
+# This program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+# version info
+set(CPACK_PACKAGE_VERSION_MAJOR "0")
+set(CPACK_PACKAGE_VERSION_MINOR "8")
+set(CPACK_PACKAGE_VERSION_PATCH "0")
+set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+
+# default to debug builds
+if(NOT CMAKE_BUILD_TYPE)
+   set(CMAKE_BUILD_TYPE "Debug")
+endif()
+
+# platform specific default for targets
+if(NOT RSTUDIO_TARGET)
+   if(WIN32)
+      set(RSTUDIO_TARGET "Desktop")
+   else()
+      set(RSTUDIO_TARGET "All")
+   endif()
+endif()
+
+# set desktop and server build flags
+if( ${RSTUDIO_TARGET} STREQUAL "All" OR ${RSTUDIO_TARGET} STREQUAL "Server")
+   set(RSTUDIO_SERVER TRUE)
+endif()
+if( ${RSTUDIO_TARGET} STREQUAL "All" OR ${RSTUDIO_TARGET} STREQUAL "Desktop" )
+   set(RSTUDIO_DESKTOP TRUE)
+endif()
+
+# set session64 if specified
+if (${RSTUDIO_TARGET} STREQUAL "SessionWin64")
+   set(RSTUDIO_SESSION_WIN64 TRUE)
+endif()
+
+# required R version
+set(RSTUDIO_R_MAJOR_VERSION_REQUIRED 2)
+set(RSTUDIO_R_MINOR_VERSION_REQUIRED 10)
+set(RSTUDIO_R_PATCH_VERSION_REQUIRED 0)
+
+# cmake modules (compute path relative to this file)
+get_filename_component(ROOT_SRC_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
+set(CMAKE_MODULE_PATH "${ROOT_SRC_DIR}/cmake/modules/")
+
+# special install directories for apple desktop
+if (APPLE AND RSTUDIO_DESKTOP)
+   set(RSTUDIO_INSTALL_BIN RStudio.app/Contents/MacOS)
+   set(RSTUDIO_INSTALL_SUPPORTING RStudio.app/Contents/Resources)
+else()
+   if (RSTUDIO_SESSION_WIN64)
+     set(RSTUDIO_INSTALL_BIN x64)
+   else()
+     set(RSTUDIO_INSTALL_BIN bin)
+   endif()
+   set(RSTUDIO_INSTALL_SUPPORTING .)
+endif()
+
+# if the install prefix is /usr/local then tweak as appropriate
+if(UNIX)
+   if(${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/local")
+      if(APPLE AND RSTUDIO_DESKTOP)
+         set(CMAKE_INSTALL_PREFIX "/Applications")
+      else()
+         if(RSTUDIO_DESKTOP)
+            set(CMAKE_INSTALL_PREFIX "/usr/local/rstudio")
+         else()
+            set(CMAKE_INSTALL_PREFIX "/usr/local/rstudio-server")
+         endif()
+      endif()
+   endif()
+endif()
+
+# if there isn't an addin path defined and this is a development build
+# (detected by target=all and build-type=debug) then look for an addins
+# environment variable.
+# NOTE: to set environment variables for GUI apps on OSX see:
+#   http://snipurl.com/apple_environment
+#
+if(NOT RSTUDIO_ADDINS_PATH)
+   if(${RSTUDIO_TARGET} STREQUAL "All" AND ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+      set(RSTUDIO_ADDINS_PATH $ENV{RSTUDIO_ADDINS_PATH})
+   endif()
+endif()
+
+

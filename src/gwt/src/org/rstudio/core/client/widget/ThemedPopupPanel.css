@@ -1,0 +1,63 @@
+@external popupTopLeft, popupTopCenter, popupTopRight,
+   popupMiddleLeft, popupMiddleCenter, popupMiddleRight,
+   popupBottomLeft, popupBottomCenter, popupBottomRight,
+   popupContent;
+@external gwt-MenuBarPopup, menuPopupTopLeft, menuPopupTopCenter, menuPopupTopRight,
+   menuPopupMiddleLeft, menuPopupMiddleCenter, menuPopupMiddleRight,
+   menuPopupBottomLeft, menuPopupBottomCenter, menuPopupBottomRight,
+   menuPopupContent;
+@external gwt-SuggestBoxPopup, suggestPopupTopLeft, suggestPopupTopCenter, suggestPopupTopRight,
+   suggestPopupMiddleLeft, suggestPopupMiddleCenter, suggestPopupMiddleRight,
+   suggestPopupBottomLeft, suggestPopupBottomCenter, suggestPopupBottomRight,
+   suggestPopupContent;
+@external gwt-MenuBar-vertical;
+
+.themedPopupPanel {
+   margin: -6px;
+   margin-top: 0px;
+}
+
+@sprite .themedPopupPanel .popupTopLeft, .menuPopupTopLeft, .suggestPopupTopLeft {
+   gwt-image: 'popupTopLeft';
+   width: 7px;
+   height: 7px;
+}
+@sprite .themedPopupPanel .popupTopCenter, .menuPopupTopCenter, .suggestPopupTopCenter {
+   gwt-image: 'popupTopCenter';
+   height: 7px;
+}
+@sprite .themedPopupPanel .popupTopRight, .menuPopupTopRight, .suggestPopupTopRight {
+   gwt-image: 'popupTopRight';
+   width: 10px;
+   height: 7px;
+}
+@sprite .themedPopupPanel .popupMiddleLeft, .menuPopupMiddleLeft, .suggestPopupMiddleLeft {
+   gwt-image: 'popupMiddleLeft';
+   width: 7px;
+}
+.themedPopupPanel .popupMiddleCenter, .menuPopupMiddleCenter, .suggestPopupMiddleCenter {
+   background-color: white;
+}
+@sprite .themedPopupPanel .popupMiddleRight, .menuPopupMiddleRight, .suggestPopupMiddleRight {
+   gwt-image: 'popupMiddleRight';
+   width: 10px;
+}
+@sprite .themedPopupPanel .popupBottomLeft, .menuPopupBottomLeft, .suggestPopupBottomLeft {
+   gwt-image: 'popupBottomLeft';
+   width: 7px;
+   height: 10px;
+}
+@sprite .themedPopupPanel .popupBottomCenter, .menuPopupBottomCenter, .suggestPopupBottomCenter {
+   gwt-image: 'popupBottomCenter';
+   height: 10px;
+}
+@sprite .themedPopupPanel .popupBottomRight, .menuPopupBottomRight, .suggestPopupBottomRight {
+   gwt-image: 'popupBottomRight';
+   width: 10px;
+   height: 10px;
+}
+
+.gwt-MenuBarPopup {
+   margin: -5px;
+   margin-top: 0;
+}

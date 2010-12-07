@@ -1,0 +1,99 @@
+/*
+ * ImageFrame.java
+ *
+ * Copyright (C) 2009-11 by RStudio, Inc.
+ *
+ * This program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+package org.rstudio.core.client.widget;
+
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.DeferredCommand;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.Frame;
+
+public class ImageFrame extends Frame
+{
+   public ImageFrame()
+   {
+      setUrl("javascript:false");
+   }
+
+   @Override
+   protected void onLoad()
+   {
+      super.onLoad();
+      new Timer() {
+         @Override
+         public void run()
+         {
+            setupContent(getElement());
+            replaceLocation(getElement(), url_);
+         }
+      }.schedule(100);
+   }
+
+   public void setMarginWidth(int width)
+   {
+      DOM.setElementAttribute(getElement(), 
+                              "marginwidth", 
+                              Integer.toString(width));
+   }
+   
+   public void setMarginHeight(int height)
+   {
+      DOM.setElementAttribute(getElement(), 
+                              "marginheight", 
+                              Integer.toString(height));
+   }
+   
+   public void setImageUrl(String url)
+   {
+      url_ = url;
+      if (isAttached())
+         replaceLocation(getElement(), url);
+   }
+
+   private native final boolean replaceLocation(Element el, String url) /*-{
+      if (!el.contentWindow.document)
+         return false;
+      var img = el.contentWindow.document.getElementById('img');
+      if (!img)
+         return false;
+      if (url && url != 'javascript:false') {
+         img.style.display = 'inline';
+         img.src = url;
+      }
+      else {
+         img.style.display = 'none';
+      }
+      return true;
+   }-*/;
+
+   private native final void setupContent(Element el) /*-{
+      var doc = el.contentWindow.document;
+
+      // setupContent can get called multiple times, as progress causes the
+      // widget to be loaded/unloaded. This condition checks if we're already
+      // set up.
+      if (doc.getElementById('img'))
+         return;
+
+      doc.open();
+      doc.write(
+         '<html><head></head>' +
+         '<body style="margin: 0; padding: 0; overflow: hidden; border: none">' +
+         '<img id="img" width="100%" height="100%" style="display: none" src="javascript:false">' +
+         '</body></html>');
+      doc.close();
+   }-*/;
+
+   private String url_ = "javascript:false";
+}

@@ -1,0 +1,56 @@
+/*
+ * DesktopAboutDialog.cpp
+ *
+ * Copyright (C) 2009-11 by RStudio, Inc.
+ *
+ * This program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+#include "DesktopAboutDialog.hpp"
+#include "ui_DesktopAboutDialog.h"
+
+#include <core/FilePath.hpp>
+#include <core/FileSerializer.hpp>
+#include <core/system/System.hpp>
+
+#include "DesktopOptions.hpp"
+#include "config.h"
+
+using namespace core;
+
+AboutDialog::AboutDialog(QWidget *parent) :
+      QDialog(parent, Qt::Dialog),
+      ui(new Ui::AboutDialog())
+{
+   ui->setupUi(this);
+   ui->lblIcon->setPixmap(QPixmap(":/icons/resources/logo/rstudio_logo_64.png"));
+   ui->lblVersion->setText("Version " RSTUDIO_VERSION);
+
+   setWindowModality(Qt::ApplicationModal);
+
+   // read notice file
+   FilePath supportingFilePath = desktop::options().supportingFilePath();
+   FilePath noticePath = supportingFilePath.complete("NOTICE");
+   std::string notice;
+   Error error = readStringFromFile(noticePath, &notice);
+   if (!error)
+   {
+      ui->textBrowser->setFontFamily(desktop::options().fixedWidthFont());
+#ifdef Q_WS_MACX
+      ui->textBrowser->setFontPointSize(11);
+#else
+      ui->textBrowser->setFontPointSize(9);
+#endif
+      ui->textBrowser->setText(QString::fromStdString(notice));
+   }
+}
+
+AboutDialog::~AboutDialog()
+{
+   delete ui;
+}

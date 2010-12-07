@@ -1,0 +1,48 @@
+@url SLIDELABELBOTTOM slideLabelBottom;
+@url SLIDELABELBOTTOMLEFT slideLabelBottomLeft;
+@url SLIDELABELBOTTOMRIGHT slideLabelBottomRight;
+@url SLIDELABELFILL slideLabelFill;
+@url SLIDELABELLEFT slideLabelLeft;
+@url SLIDELABELRIGHT slideLabelRight;
+
+
+.curtain {
+   overflow-y: hidden;
+   height: 0;
+   position: relative;
+   z-index: 1000;
+}
+.content {
+   max-width: 500px;
+}
+.progress {
+   margin-right: 8px;
+}
+.border {
+}
+
+.W {
+   background: SLIDELABELLEFT repeat-y top right;
+   width: 18px;
+}
+.C {
+   background: SLIDELABELFILL repeat;
+}
+.E {
+   background: SLIDELABELRIGHT repeat-y top left;
+   width: 18px;
+}
+.SW {
+   background: SLIDELABELBOTTOMLEFT no-repeat top right;
+   width: 18px;
+   height: 18px;
+}
+.S {
+   background: SLIDELABELBOTTOM repeat-x top center;
+   height: 18px;
+}
+.SE {
+   background: SLIDELABELBOTTOMRIGHT no-repeat top left;
+   width: 18px;
+   height: 18px;
+}

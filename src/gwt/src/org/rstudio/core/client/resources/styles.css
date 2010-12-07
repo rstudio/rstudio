@@ -1,0 +1,103 @@
+.DEBUG {
+   border: 1px solid red;
+   background-color: lime;
+}
+
+.rstudio-Toolbar {
+   height: 23px;
+   width: 100%;
+   background-color: #F2F3F4;
+   border-top: 1px solid #FFF;
+   border-bottom: 1px solid #BBC1C5;
+}
+
+.rstudio-SecondaryToolbar {
+   height: 23px;
+}
+
+.rstudio-SecondaryToolbar .rstudio-StrongLabel {
+   font-weight: bold;
+}
+
+
+.gwt-Button-Toolbar {
+   height: 19px;
+   background-color: transparent;
+   margin: 1px;
+   padding: 0;
+   border: none;
+}
+
+.gwt-Button-Toolbar:active {
+  border: 1px inset #ccc;
+}
+
+.gwt-Button-Toolbar:hover {
+   margin: 0;
+   border-width: 1px;
+   border-style: solid;
+   border-color: #ccc #999 #999 #aaa;
+}
+
+.gwt-Button-Toolbar[disabled] {
+  cursor: default;
+  color: #888;
+}
+
+.gwt-Button-Toolbar[disabled]:hover {
+  border: 1px outset #ccc;
+}
+
+.gwt-DecoratedPopupPanel-Toolbar .popupMiddleCenter {
+  background: white;
+}
+
+.gwt-DialogBox-ModalDialog .Caption {
+  font-weight: bold;
+} 
+
+.rstudio-DialogBoxProgressPanel {
+  height: 25px;
+}
+
+.rstudio-DialogBoxProgressPanel .gwt-Label-ProgressText {
+  color: grey;
+  padding-left: 4px;
+}
+
+.rstudio-DialogBoxVerticalInputLabel {
+  margin-bottom: 2px;
+}
+
+.rstudio-ModalDialogButtonSpacer {
+  width: 5px;
+}
+
+
+.rstudio-HyperlinkLabel {
+   color: #0000AA;
+}
+
+.rstudio-HyperlinkLabel-Link {
+   cursor: pointer;
+   cursor: hand;
+   text-decoration: underline;
+}
+
+
+.rstudio-StatusIndicator {
+   
+}
+
+.rstudio-StatusIndicator .Message {
+   font-weight: bold;
+   padding: 3px 3px 3px 3px;
+}
+
+.rstudio-StatusIndicator .Message-Info {
+   background-color: #FFEC8B;
+}
+
+.rstudio-StatusIndicator .Message-Error {
+   background-color: #FF6347;
+}

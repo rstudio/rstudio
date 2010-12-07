@@ -1,0 +1,22 @@
+.description {
+   position: relative;
+   top: -1px;
+   margin-right: 6px;
+}
+
+.statusBar {
+   font-size: 10px;
+   background-color: #F3F3F3;
+   border-top: 1px solid #CCC;
+   padding: 3px 0 0 6px; 
+}
+
+.statusBarDisplayed {
+   display: inline;
+}
+
+.statusBarOmitted {
+   display: inline;
+   color: #777;
+   margin-left: 4px;
+}

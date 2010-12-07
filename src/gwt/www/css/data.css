@@ -1,0 +1,45 @@
+/*
+ * data.css
+ *
+ * Copyright (C) 2009-11 by RStudio, Inc.
+ *
+ * This program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+
+body {
+  margin: 0;
+  padding: 0;
+}
+table {
+  border-collapse: collapse;
+  margin: 0;
+  border: none;
+}
+th, td {
+  font-size: 11px;
+  border: 1px solid #DDD;
+  padding: 3px 12px 3px 6px;
+  white-space: pre;
+}
+th {
+  text-align: left;
+}
+td {
+  font-family: Consolas, Lucida Console, Monaco, monospace;
+}
+thead th, .rn, #origin {
+  font-family: Segoe UI, Lucida Grande, Verdana, Helvetica;
+  background-color: #F0F0F0;
+  font-weight: bold;
+  color: #555;
+}
+.rn, #origin {
+  text-align: right;
+  border-left: none;
+}

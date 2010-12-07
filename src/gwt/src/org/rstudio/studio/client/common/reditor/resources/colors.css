@@ -1,0 +1,70 @@
+.editbox {
+  margin: .4em;
+  padding: 0;
+  font-size: 12px;
+  color: black;
+}
+
+.editbox p {
+  margin: 0;
+}
+
+
+/* Latex */
+span.latex-text {
+}
+
+span.latex-command {
+  color: #000084;
+}
+
+span.latex-comment {
+  color: green;
+}
+
+span.latex-inline-math {
+  color: #882288;
+}
+
+span.latex-braces {
+  color: #346CB7;
+}
+
+
+/* R */
+
+.bracket {
+   color: brown;
+}
+
+.str,
+.str-start-single,
+.str-start-double,
+.str-end-single,
+.str-end-double {
+   color: #555;
+}
+
+.comment {
+   color: green;
+   font-style: italic;
+}
+
+.number {
+   color: navy;
+}
+
+.reserved {
+   color: navy;
+}
+
+.identifier {
+}
+
+.operator {
+   color: red;
+}
+
+.highlight {
+   color: #99f;
+}

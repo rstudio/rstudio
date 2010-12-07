@@ -1,0 +1,121 @@
+
+Install Required Applications
+=============================================================================
+
+Building RStudio requires installations of a number of applications 
+(including R). These applications include:
+
+R:         http://www.r-project.org/ 
+CMake:     http://www.cmake.org/ (choose "Add to system path" during install)
+QtForWin:  http://qt.nokia.com/downloads/sdk-windows-cpp
+Java:      http://www.oracle.com/technetwork/java/javase/downloads
+Ant:       http://code.google.com/p/winant
+NSIS:      http://nsis.sourceforge.net
+
+
+Update System Path
+=============================================================================
+
+Building RStudio requires that the CMake, Qt, and MingGW executables be 
+accessible via the system path (note that CMake should already be accessible
+via the CMake installer if the "Add to system path" option was chosen during
+installation). For Qt and MinGW you should ensure that the following 
+additional directories are available on the path:
+
+C:\Qt\<QtVersion>\qt\bin
+C:\Qt\<QtVersion>\mingw\bin
+
+
+Extract Boost
+=============================================================================
+
+A set of pre-built boost binaries for Win32 and Win64 are available for
+download at: 
+
+https://s3.amazonaws.com/rstudio-buildtools/boost-1.44-win.zip
+
+You should download and extract this archive into the dependencies/windows
+directory. After extraction you should ensure that the resulting directory
+structure is:
+
+dependencies
+  windows
+    boost-win
+      boost32
+      boost64
+
+
+Extract MinGW w64
+=============================================================================
+
+For 32-bit builds RStudio uses the MinGW 32-bit compiler bundled with Qt for
+Windows. For 64-bit builds RStudio uses MinGW-w64. A pre-built version of 
+MinGW-w64 that is hosted on & targets 64-bit windows is available for 
+download at:
+
+https://s3.amazonaws.com/rstudio-buildtools/mingw64-2010-10-03.zip
+
+You should download and extract this archive into the dependencies/windows
+directory. After extraction the directory structure should be:
+
+dependencies
+  windows
+    mingw64
+
+
+NOTE: How to upgrade boost-win.zip
+=============================================================================
+
+boost-win.zip is a prepackaged set of boost 1.44 windows headers and
+binaries (32 and 64 bit) built for MinGW 4.4. To upgrade to either a new
+boost or MinGW version you should download the appropriate boost windows
+source archive as well as the pre-built bjam for windows then follow the 
+instructions below for 32/64 bit
+
+Win32
+---------
+
+(ensure 32 bit mingw is in the path)
+
+bjam --prefix=C:\boost32 toolset=gcc address-model=32 ^ 
+ variant=debug,release link=static threading=multi ^ 
+ install
+
+Win64
+--------- 
+
+(ensure 64 bit mingw is in the path) 
+
+bjam --prefix=C:\boost64 toolset=gcc address-model=64 ^
+ variant=debug,release link=static threading=multi ^
+ define=BOOST_USE_WINDOWS_H ^
+ install
+
+Note the additional define of BOOST_USE_WINDOWS_H required for the 64 bit build 
+
+After this you can create a new boost-win.zip archive using the contents
+of the C:\boost32 and C:\boost64 directories.
+
+
+NOTE: Getting boost to work with mingw w64
+=============================================================================
+
+See the following article for general approach/guidelines:
+
+http://sourceforge.net/apps/trac/mingw-w64/wiki/Building%20Boost
+
+Note that in order to build rstudio with boost under win64 we had to make
+the following additional accomodations:
+
+1) define BOOST_USE_WINDOWS_H to eliminate errors compiling boost::thread
+   (see thread: http://lists.boost.org/boost-users/2010/02/55945.php)
+
+2) #undef BOOST_USE_WINDOWS_H prior to including <boost/interprocess/*>
+within BoostErrors.hpp
+
+3) add a dummy definitions for boost::thread::tss_cleanup_implemented
+   (see ticket: https://svn.boost.org/trac/boost/ticket/4258)
+
+
+
+

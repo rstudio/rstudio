@@ -1,0 +1,857 @@
+@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+
+@external cueText;
+@external search;
+@external highlight, disabled;
+@external gwt-Button, gwt-Button-DialogAction, gwt-Button-DefaultDialogAction;
+@external gwt-CheckBox;
+@external gwt-DialogBox, gwt-DialogBox-ModalDialog;
+@external gwt-PopupPanelGlass;
+@external gwt-Label;
+@external gwt-MenuItem, gwt-MenuItem-selected, subMenuIcon, subMenuIcon-selected;
+@external gwt-MenuItemSeparator, menuSeparatorInner;
+@external gwt-MenuBar, gwt-MenuBar-vertical;
+@external gwt-SplitLayoutPanel-HDragger, gwt-SplitLayoutPanel-VDragger;
+@external gwt-SuggestBoxPopup, item-selected;
+@external gwt-TabLayoutPanelTab, gwt-TabLayoutPanelTab-selected;
+@external gwt-TabLayoutPanelTabs;
+
+@external windowframe, windowframe-maximized, windowframe-exclusive;
+
+@external dialogTopLeft, dialogTopLeftInner,
+      dialogTopCenter, dialogTopCenterInner,
+      dialogTopRight, dialogTopRightInner,
+      dialogMiddleLeft, dialogMiddleCenter,
+      dialogMiddleCenterInner, dialogMiddleRight, dialogBottomLeft,
+      dialogBottomCenter, dialogBottomRight;    
+
+@external Caption;
+
+@external rCodeEditor-EditDialog;
+
+@external avoid-move-cursor;
+
+@url DIALOGTOPLEFT dialogTopLeft;
+@url DIALOGTOP dialogTop;
+@url DIALOGTOPRIGHT dialogTopRight;
+@url DIALOGLEFT dialogLeft;
+@url DIALOGRIGHT dialogRight;
+@url DIALOGBOTTOMLEFT dialogBottomLeft;
+@url DIALOGBOTTOM dialogBottom;
+@url DIALOGBOTTOMRIGHT dialogBottomRight;
+@url PODTOPLEFT podTopLeft;
+@url PODTOP podTop;
+@url PODTOPRIGHT podTopRight;
+@url PODLEFT podLeft;
+@url PODRIGHT podRight;
+@url PODBOTTOMLEFT podBottomLeft;
+@url PODBOTTOM podBottom;
+@url PODBOTTOMRIGHT podBottomRight;
+@url HORIZONTALHANDLE horizontalHandle;
+@url VERTICALHANDLE verticalHandle;
+@url BACKGROUNDGRADIENT backgroundGradient;
+@url MAXIMIZE maximize;
+@url MAXIMIZESELECTED maximizeSelected;
+@url RESTORE restore;
+@url RESTORESELECTED restoreSelected;
+@url MINIMIZE minimize;
+@url MINIMIZESELECTED minimizeSelected;
+@url PODMINIMIZEDLEFT podMinimizedLeft;
+@url PODMINIMIZEDRIGHT podMinimizedRight;
+@url PODMINIMIZEDTILE podMinimizedTile;
+
+@url TABBACKGROUND tabBackground;
+
+@url TOOLBARBACKGROUND toolbarBackground;
+@url TOOLBARBACKGROUND2 toolbarBackground2;
+
+@url MULTIPODACTIVETABLEFT multiPodActiveTabLeft;
+@url MULTIPODACTIVETABRIGHT multiPodActiveTabRight;
+@url MULTIPODACTIVETABTILE multiPodActiveTabTile;
+@url MULTIPODTABLEFT multiPodTabLeft;
+@url MULTIPODTABRIGHT multiPodTabRight;
+@url MULTIPODTOP multiPodTop;
+@url MULTIPODTOPFADE multiPodTopFade;
+
+@url SEARCHFIELDLEFT searchFieldLeft;
+@url SEARCHFIELDTILE searchFieldTile;
+@url SEARCHFIELDRIGHT searchFieldRight;
+
+@url WORKSPACESECTIONHEADERTILE workspaceSectionHeaderTile;
+
+
+body {
+   background: BACKGROUNDGRADIENT repeat-x top #e1e2e5;
+}
+
+body {
+   font-family: proportionalFont;
+   font-size: 12px;
+}
+
+input[type=text] {
+   font-family: proportionalFont;
+}
+
+iframe {
+   border: none;
+}
+
+button {
+   cursor: pointer;
+}
+
+textarea {
+   outline: none;
+}
+
+pre {
+  font-family: fixedWidthFont;
+  font-size: 12px;
+}
+
+.gwt-MenuBar {
+   cursor: default;
+}
+
+.gwt-MenuBar>table {
+   border-spacing: 0;
+}
+.gwt-MenuBar-vertical {
+   cursor: default;
+}
+
+.gwt-MenuBar .subMenuIcon {
+   width: 7px;
+}
+
+.gwt-MenuItem {
+   padding: 4px;
+}
+.gwt-MenuItem.disabled {
+   color: #888;
+   background-image: none;
+}
+
+.gwt-MenuItemSeparator .menuSeparatorInner{
+   border-top: #BABABA 1px solid;
+   margin-top: 1px;
+   margin-bottom: 2px;
+}
+
+.highlight {
+   color: #900 !important;
+}
+
+@if rstudio.desktop false {
+.gwt-PopupPanelGlass {
+   background-color: black;
+   filter: literal("alpha(opacity = 15)") !important;
+   opacity: 0.15; /* non-IE */
+   z-index: 1000;
+}
+}
+
+@if rstudio.desktop true {
+@sprite .gwt-PopupPanelGlass {
+   gwt-image: 'clear';
+}
+}
+
+
+.cueText {
+   color: #CCC;
+}
+
+
+/** Dialogs **/
+
+.gwt-DialogBox-ModalDialog {
+   z-index: 1001;
+}
+
+.gwt-SuggestBoxPopup {
+   z-index: 1002;	
+}
+
+.gwt-DialogBox .dialogTopLeft {
+   background: DIALOGTOPLEFT no-repeat;
+}
+.gwt-DialogBox .dialogTopLeft, .gwt-DialogBox .dialogTopLeftInner {
+   width: 32px;
+   height: 32px;
+}
+.gwt-DialogBox .dialogTopCenter {
+   background: DIALOGTOP repeat-x;
+   height: 32px;
+}
+.gwt-DialogBox .dialogTopCenterInner .Caption {
+   font-weight: normal;
+   font-size: 11px;
+   cursor: default;
+   padding-top: 7px;
+   margin-top: 1px;
+   margin-left: -2px;
+}
+.gwt-DialogBox .dialogTopRight {
+   background: DIALOGTOPRIGHT no-repeat;
+}
+.gwt-DialogBox .dialogTopRight, .gwt-DialogBox .dialogTopRightInner {
+   width: 32px;
+   height: 32px;
+}
+.gwt-DialogBox .dialogMiddleLeft {
+   background: DIALOGLEFT repeat-y;
+   width: 32px;
+}
+.gwt-DialogBox .dialogMiddleCenter {
+   background: #F3F4F4;
+}
+.gwt-DialogBox .dialogMiddleCenterInner {
+   margin: 12px -1px -8px -1px;
+   position: relative;
+   z-index: 100;
+}
+
+.dialogBottomPanel {
+   margin-top: 8px;
+}
+
+.gwt-DialogBox .dialogMiddleRight {
+   background: DIALOGRIGHT repeat-y;
+   width: 32px;
+}
+.gwt-DialogBox .dialogBottomLeft {
+   background: DIALOGBOTTOMLEFT no-repeat;
+   width: 32px;
+   height: 32px;
+}
+.gwt-DialogBox .dialogBottomCenter {
+   background: DIALOGBOTTOM repeat-x;
+}
+.gwt-DialogBox .dialogBottomRight {
+   background: DIALOGBOTTOMRIGHT no-repeat;
+   width: 32px;
+   height: 32px;
+}
+
+.header {
+   height: 28px;
+   padding: 0 0 4px 32px;
+   font-size: 11px;
+}
+.header * {
+   white-space: nowrap;
+}
+
+.mainMenu {
+   font-size: 11px;
+   font-weight: bold;
+   color: #494949;
+}
+
+.mainMenu .gwt-MenuItem {
+   padding: 5px 12px 5px 12px;
+   height: 15px;
+   text-shadow: 0px 1px 0px #FFFFFF;
+}
+.mainMenu .gwt-MenuItem-selected {
+   text-shadow: none;
+}
+.mainMenu .gwt-MenuItem-selected span {
+   color: white !important;
+   opacity: 1.0;
+}
+.mainMenuArrow {
+   position: relative;
+   top: -1px;
+}
+
+.gwt-MenuItem-selected, .subMenuIcon-selected, .gwt-SuggestBoxPopup .item-selected {
+   background-color: #D6E9F8;
+}
+.mainMenu .gwt-MenuItem-selected, .mainMenu .subMenuIcon-selected {
+   background-color: #79B7F1;
+   color: white;
+   height: 3px;
+}
+@sprite .mainMenu .gwt-MenuItemSeparator {
+   gwt-image: 'menuBevel';
+   border: none;
+   padding: 0;
+   width: 2px;
+   overflow: hidden;
+   display: block;
+}
+.mainMenu .gwt-MenuItemSeparator .menuSeparatorInner {
+   border: 0;
+   margin: 0;
+}
+
+.windowframe .maximize {
+   background-image: MAXIMIZE;
+   z-index: 50;
+   cursor: pointer;
+}
+.windowframe-maximized .maximize,
+.windowframe-exclusive .maximize {
+   background-image: RESTORE;
+   z-index: 50;
+}
+.windowframe .minimize {
+   background-image: MINIMIZE;
+   z-index: 50;
+   cursor: pointer;
+}
+.windowframe .maximize:hover {
+   background-image: MAXIMIZESELECTED;
+}
+.windowframe-maximized .maximize:hover,
+.windowframe-exclusive .maximize:hover {
+   background-image: RESTORESELECTED;
+}
+.windowframe .minimize:hover {
+   background-image: MINIMIZESELECTED;
+}
+
+.windowframe-exclusive .minimize {
+   display: none;
+}
+
+.C  { background-color: white; }
+.N  { background-image: PODTOP; }
+.NE { background-image: PODTOPRIGHT; }
+.E  { background-image: PODRIGHT; }
+.SE { background-image: PODBOTTOMRIGHT; }
+.S  { background-image: PODBOTTOM; }
+.SW { background-image: PODBOTTOMLEFT; }
+.W  { background-image: PODLEFT; }
+.NW { background-image: PODTOPLEFT; }
+
+
+.minimizedWindow .left {
+   width: 8px;
+   background-image: PODMINIMIZEDLEFT;
+}
+.minimizedWindow div {
+   height: 30px;
+}
+.minimizedWindow .right {
+   width: 8px;
+   background-image: PODMINIMIZEDRIGHT;
+}
+.minimizedWindow .minimize {
+   width: 14px;
+   height: 14px;
+   background: RESTORE center no-repeat;
+   margin: 4px 4px 0 0;
+   cursor: pointer;
+}
+.minimizedWindow .maximize {
+   width: 14px;
+   height: 14px;
+   background: MAXIMIZE center no-repeat;
+   margin: 4px 3px 0 0;
+   cursor: pointer;
+}
+.minimizedWindow .maximize:hover {
+   background-image: MAXIMIZESELECTED;
+}
+.minimizedWindow .minimize:hover {
+   background-image: RESTORESELECTED;
+}
+.minimizedWindow .center {
+   background-image: PODMINIMIZEDTILE;
+   padding-top: 3px;
+   padding-bottom: 5px;
+}
+.minimizedWindow .title {
+   margin-left: -4px;
+}
+.minimizedWindow {
+   margin-left: -1px;
+   margin-right: -1px;
+}
+
+
+
+.gwt-SplitLayoutPanel-HDragger, .gwt-SplitLayoutPanel-VDragger {
+   background-color: transparent !important;
+   border: 0px;
+   cursor: move;
+}
+body.avoid-move-cursor .gwt-SplitLayoutPanel-HDragger,
+body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
+   cursor: pointer;
+}
+.gwt-SplitLayoutPanel-HDragger {
+   background: VERTICALHANDLE no-repeat center;
+}
+.gwt-SplitLayoutPanel-VDragger {
+   background: HORIZONTALHANDLE no-repeat center;
+}
+
+.primaryWindowFrameHeader {
+   padding: 4px 0 0 12px;
+   margin-right: 10px;
+}
+.title, .subtitle {
+   display: inline;
+   color: black;
+   font-size: 11px;
+   font-weight: bold;
+   text-shadow: white 0px 1px 0px;
+   cursor: default;
+}
+.subtitle {
+   color: #999;
+   margin-left: 6px;
+}
+
+.gwt-TabLayoutPanelTab {
+   float: left;
+}
+
+/** Document tabs **/
+/*
+@def TABSTRIPHEIGHT 24px;
+@def TABHEIGHT 18px;
+
+.docTabPanel .gwt-TabLayoutPanelTabs {
+   background-image: TABBACKGROUND;
+   height: 100%;
+   padding-left: 6px;
+   font-size: 11px;
+}
+
+.docTabPanel .gwt-TabLayoutPanelTab {
+   cursor: default;
+   margin-right: 2px;
+}
+.docTabPanel .gwt-TabLayoutPanelTab-selected {
+}
+*/
+.docTabPanel .closeTabButton {
+   margin-top: 4px;
+   margin-left: 3px;
+}
+.closeTabButton {
+   filter: literal("alpha(opacity = 40)") !important;
+   opacity: 0.4;
+}
+
+.docTabPanel .closeTabButton:hover {
+   filter: literal("alpha(opacity = 100)") !important;
+   opacity: 1.0;
+}
+.tabLayout {
+}
+.docTabPanel.moduleTabPanel .gwt-TabLayoutPanelTab .gwt-Label {
+   font-weight: normal;
+   padding-top: 0;
+}
+.docTabIcon {
+   margin-top: 2px;
+   margin-right: 3px;
+}
+
+.docMenuScroll {
+   overflow-y: scroll !important;
+   overflow-x: hidden;
+   margin: -4px;
+   padding-right: 15px;
+}
+
+/*
+.docTabPanel .tabLayout {
+   height: TABSTRIPHEIGHT;
+}
+@sprite .docTabPanel .tabLayoutLeft {
+   gwt-image: 'docTabLeft';
+}
+@sprite .docTabPanel .gwt-TabLayoutPanelTab-selected .tabLayoutLeft {
+   gwt-image: 'activeDocTabLeft';
+}
+
+@sprite .docTabPanel .tabLayoutCenter {
+   gwt-image: 'docTabTile';
+   padding-right: 2px;
+   padding-left: 6px;
+   vertical-align:middle;
+}
+@sprite .docTabPanel .gwt-TabLayoutPanelTab-selected .tabLayoutCenter {
+   gwt-image: 'activeDocTabTile';
+}
+
+@sprite .docTabPanel .tabLayoutRight {
+   gwt-image: 'docTabRight';
+}
+@sprite .docTabPanel .gwt-TabLayoutPanelTab-selected .tabLayoutRight {
+   gwt-image: 'activeDocTabRight';
+}
+*/
+.dirtyTab {
+   color: #a00;
+}
+
+.dirtyTabIndicator {
+   display: none;
+}
+.dirtyTab .dirtyTabIndicator {
+   display: inline;
+}
+
+/** Module tabs **/
+.gwt-TabLayoutPanelTab {
+   cursor: default;
+}
+
+.moduleTabPanel .gwt-TabLayoutPanelTabs {
+   font-size: 11px;
+   height: 24px;
+   background: MULTIPODTOP top repeat-x;
+   background-color: white;
+   cursor: default;
+}
+.moduleTabPanel .gwt-TabLayoutPanelTab {
+   font-size: 11px;
+}
+.moduleTabPanel.minimized .gwt-TabLayoutPanelTab {
+   margin-top: -1px;
+}
+
+.moduleTabPanel .gwt-TabLayoutPanelTab .tabLayoutLeft {
+   width: 3px;
+   height: 23px;
+   background: MULTIPODTABLEFT right top no-repeat;
+}
+.moduleTabPanel .gwt-TabLayoutPanelTab .tabLayoutCenter {
+   height: 23px;
+   padding-left: 6px;
+   padding-right: 6px;
+}
+.moduleTabPanel .gwt-TabLayoutPanelTab .tabLayoutRight {
+   width: 3px;
+   height: 23px;
+   background: MULTIPODTABRIGHT left top no-repeat;
+}
+.moduleTabPanel .gwt-TabLayoutPanelTab .gwt-Label {
+   font-weight: bold;
+   padding-top: 4px;
+}
+.moduleTabPanel .gwt-TabLayoutPanelTab-selected .tabLayoutLeft {
+   height: 24px;
+   width: 6px;
+   background: MULTIPODACTIVETABLEFT right top no-repeat;
+}
+.moduleTabPanel .gwt-TabLayoutPanelTab-selected .tabLayoutCenter {
+   height: 24px;
+   background: MULTIPODACTIVETABTILE top repeat-x;
+   padding-left: 3px;
+   padding-right: 3px;
+}
+.moduleTabPanel .gwt-TabLayoutPanelTab-selected .tabLayoutRight {
+   height: 24px;
+   width: 6px;
+   background: MULTIPODACTIVETABRIGHT left top no-repeat;
+}
+.moduleTabPanel .toolbar {
+   background-image: TOOLBARBACKGROUND2;
+}
+.multiPodUtilityArea {
+   background: MULTIPODTOPFADE left top repeat-y;
+}
+.firstTabSelected {
+}
+
+/** Toolbar **/
+
+.toolbar .gwt-CheckBox {
+   position: relative;
+   top: 1px;
+   margin: 0 9px 0 0;
+   padding: 0;
+}
+
+.toolbar {
+   font-size: 11px;
+   width: 100%;
+   height: 23px;
+   background: TOOLBARBACKGROUND repeat-x top;
+   padding: 0 0 0 6px;
+}
+
+.toolbar * {
+   margin-top: 0px;
+}
+
+.toolbar input[type=checkbox] {
+   margin: 0 3px 0 0;
+   max-height: 14px;
+}
+
+.toolbarButton {
+   border: none;
+   background-color: transparent;
+   margin: 0 8px 0 0;
+   padding: 0;
+   vertical-align: top;
+   height: 21px;
+   overflow: hidden;
+   cursor: pointer;
+}
+.toolbarButton.noLabel {
+   margin-right: 4px;
+}
+@if user.agent safari gecko1_8 {
+   .toolbarButtonPushed {
+      position: relative;
+      top: 1px;
+   }
+}
+.toolbarButtonPushed {
+}
+.toolbarButton[disabled] {
+   /* joecheng: This renders poorly in ie8 */
+   /*filter: literal("alpha(opacity = 50)") !important;*/
+   opacity: 0.5;
+   color: #333;
+   cursor: default;
+}
+
+.toolbarButton[disabled]:active {
+   top: 0px;
+}
+.toolbarSeparator {
+   margin-right: 5px;
+}
+.secondaryToolbar {
+   background: TABBACKGROUND bottom repeat-x;
+   height: TABSTRIPHEIGHT;
+}
+.toolbarButtonRightImage {
+   display: none;
+}
+.toolbarButtonMenu .toolbarButtonRightImage {
+   display: inline;
+   margin: 4px 0 0 2px;
+}
+.toolbarButtonLeftImage {
+   margin-top: 2px;
+}
+.toolbarButtonLabel {
+   margin: 4px 0 0 2px;
+   font-family: proportionalFont;
+   font-size: 11px !important;
+   white-space: nowrap;
+}
+
+.miniToolbar {
+   margin-top: 4px;
+}
+.miniToolbar img {
+   margin-right: 6px;
+}
+
+
+/** Help Search box **/
+.search {
+   position: relative;
+   top: -1px;
+   margin-right: 8px;
+   width: 140px;
+   height: 18px;
+}
+.search .left {
+   position: absolute;
+   top: 0;
+   left: 0;
+   width: 6px;
+   height: 18px;
+   background: SEARCHFIELDLEFT top no-repeat;
+}
+.search .center {
+   position: absolute;
+   top: 0;
+   bottom: 0;
+   left: 6px;
+   right: 6px;
+   background: SEARCHFIELDTILE top repeat-x;
+}
+.search .right {
+   position: absolute;
+   top: 0;
+   right: 0;
+   width: 6px;
+   height: 18px;
+   background: SEARCHFIELDRIGHT top no-repeat;
+}
+.searchMagGlass {
+   position: absolute;
+   top: 3px;
+   left: 0;
+   width: 14px;
+   height: 13px;
+}
+.clearSearch {
+   position: absolute;
+   top: 4px;
+   right: 0;
+   width: 11px;
+   height: 11px;
+}
+.searchBoxContainer {
+   position: absolute;
+   top: 0;
+   bottom: 1px;
+   left: 18px;
+   right: 18px;
+}
+.searchBoxContainer2 {
+   position: absolute;
+   top: 0;
+   bottom: 1px;
+   left: 0;
+   right: 2px;
+}
+.searchBox {
+   width: 100%;
+   height: 100%;
+   border: 0;
+   margin: 0;
+   outline: none;
+   font-size: 10px;
+   background-color: transparent;
+}
+
+/** Workbench **/
+
+.dialogMessage {
+   padding-left: 8px;
+   padding-top: 12px;
+   width: 300px;
+   padding-bottom: 12px;
+}
+
+.sessionAbendMessage {
+   padding-left: 8px;
+   width: 300px;
+}
+
+.applicationHeaderStrong {
+   font-weight: bold;
+}
+
+.linkDownArrow {
+   cursor: pointer;
+}
+
+
+/** Help Search box **/
+.workspace {
+   border-collapse: collapse;
+}
+.workspace td {
+   font-family: fixedWidthFont;
+   border: 1px solid #eeeff2;
+}
+
+.workspace tr.workspaceDataRow {
+   cursor: pointer;
+}
+
+@sprite .workspace tr.workspaceDataFrameRow td+td {
+   gwt-image: 'zoomDataset';
+   background-position: right center; 
+}
+
+.workspaceSectionHead {
+   font-size: 11px;
+   height: 18px;
+   background: WORKSPACESECTIONHEADERTILE top repeat-x;
+}
+.workspaceSectionHead td {
+   font-family: proportionalFont;
+   font-weight: bold;
+}
+.scalarEdit {
+	cursor: text;
+}
+.editing {
+   background-color: white;
+}
+.editPending {
+   color: gray;
+}
+
+.odd {
+   background-color: #f2f2f2;
+}
+
+.rCodeEditor-EditDialog {
+   border: 1px solid #BBB;  
+   background-color: white;
+}
+
+.showFile {
+  font-size: 12px;
+  padding-left: 5px; 
+  border: 1px solid #BBB; 
+  background-color: white;
+}
+
+.showFileFixed {
+  font-size: 12px;
+  padding-left: 5px;
+  border: 1px solid #BBB;  
+  background-color: white;
+}
+
+.fileUploadPanel {
+  width: 350px;
+}
+
+.fileUploadPanel .fileUploadField {
+  margin-left: 7px;
+  margin-top: 10px;
+  margin-bottom: 8px;
+}
+
+.fileUploadPanel .fileUploadTipLabel {
+   border: 1px solid #BBB; 
+   padding: 5px;
+   font-size: 11px;
+}
+
+.fileList {
+   font-size: 12px;
+}
+
+.fileList input[type=checkbox] {
+   margin-top: 0;
+   margin-bottom: 0;
+}
+
+.fileList .parentDirIcon {
+   cursor: pointer;
+}
+
+.locatorPanel {
+   border: none;
+   padding: 0;
+   margin: 0;
+}
+
+.locatorPanel:hover {
+   cursor: crosshair;
+}
+
+.tabOverflowPopup .gwt-MenuBar>table {
+   width: 100%;
+}
+.tabOverflowPopup .search {
+   margin: 2px 0 2px 0;
+   min-width: 130px;
+   width: 100%;
+}

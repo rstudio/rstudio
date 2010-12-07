@@ -1,0 +1,137 @@
+
+Installing RStudio from Source
+=============================================================================
+
+This document describes how to build and install RStudio from the source
+distribution. Note that precompiled binaries are also available for Windows,
+OSX, as well as recent versions of various Linux distributions.
+
+1) Installing Dependencies
+----------------------------------------------------------------------------
+
+Building RStudio requires a number of dependencies (including R itself).
+There are platform-specific instructions for satsifying these dependencies
+within the the following directories
+
+   dependencies
+      linux
+      osx
+      windows
+
+Please see the README file contained within the root of each platform's
+directory for specific instructions.
+
+ 
+2) Configuring the Build Environment
+----------------------------------------------------------------------------
+
+a) From the root of the RStudio tree create a build directory and then
+   change to it:
+
+   mkdir build
+   cd build
+
+
+b) Configure the build using cmake as appopriate, e.g.
+
+   cmake -DRSTUDIO_TARGET=Desktop \
+         -DCMAKE_BUILD_TYPE=Release \
+         ..
+   
+   Variables that control configuration include:
+
+   RSTUDIO_TARGET        Desktop or Server
+
+   CMAKE_BUILD_TYPE      Debug, Release, RelMinSize, or RelWithDebInfo
+
+   CMAKE_INSTALL_PREFIX  Defaults:
+                           Linux (Desktop):     /usr/local/rstudio 
+                           Linux (Server):      /usr/local/rstudio-server
+                           OSX:                 /Applications/RStudio
+                           Windows:             C:\Program Files\RStudio
+           
+             
+c) There are a couple of additional considerations on Windows. First,
+   RStudio Server is not supported on Windows so the configuration 
+   always defaults to Desktop. Second, you need to add an extra -G 
+   paramater to specify MinGW as the build toolchain, for example:
+
+   cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release ..
+    
+
+3) Building and Installing
+----------------------------------------------------------------------------
+
+a) Acquire administrative rights (if necessary). If you have configured
+   RStudio to be installed in a protected directory (the default on all
+   platforms) then you need to run the build/install command as an
+   administrator (e.g. "su -", "sudo sh", or running a console as an
+   Administrator on Windows)
+
+
+b) Change to the build directory where you configured RStudio
+
+
+c) Run the "make install" command:
+
+   Linux & OSX:  sudo make install        OR
+   Windows:      mingw32-make install 
+
+Note that if you wish to also build and install 64-bit support on Windows
+then you'll need to also perform a separate 64-bit configuration/build. An 
+example of what is required to do this can be found in the package/win32
+directory.
+
+
+4) RStudio Server Extras
+----------------------------------------------------------------------------
+
+If you have installed RStudio Server from source there are a number of 
+optional (but recommended) steps you can take to complete your installation.
+Note that these steps are taken automatically by the DEB and RPM pre-built
+binary distributions of RStudio Server.
+
+a) Create an rstudio-server system user account (RStudio will automatically
+   run under this account if it is present). You can do this with:
+
+   sudo useradd -r rstudio-server
+
+b) Register RStudio as a daemon using an init.d or upstart script 
+   appropriate for your system. The rstudio-server/extras directory contains
+   the following scripts:
+
+   extras
+      /init.d
+         /debian
+            rstudio-server
+         /redhat
+            rstudio-server
+      /upstart
+         rstudio-server.conf
+
+c) Create a soft link in /usr/sbin to the server administrative script
+  
+   sudo ln -f -s /usr/local/rstudio-server/bin/rstudio-server /usr/sbin/rstudio-server
+
+   Assuming you have previously installed an init.d or upstart script (as
+   described above) then you should now be able start the server with the
+   following command:
+   
+   sudo rstudio-server start
+  
+   Additional commands include stop, restart, offline, online, and others
+
+d) If your system supports AppArmor you may wish to add an AppArmor profile
+   for RStudio Server. You can find one at:
+
+   extras
+      /apparmor
+         rstudio-server
+
+
+
+
+
+
+
+

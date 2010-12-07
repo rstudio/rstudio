@@ -1,0 +1,5 @@
+<module rename-to="rstudio">
+   <inherits name="org.rstudio.studio.RStudioDraft" />
+   <set-property name="user.agent" value="safari" />
+   <set-property name="rstudio.desktop" value="true" />
+</module>

@@ -1,0 +1,73 @@
+/*
+ * DesktopWebPage.cpp
+ *
+ * Copyright (C) 2009-11 by RStudio, Inc.
+ *
+ * This program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+#include "DesktopWebPage.hpp"
+#include <QWidget>
+#include <QtDebug>
+#include "DesktopNetworkAccessManager.hpp"
+
+extern QString sharedSecret;
+
+namespace desktop {
+
+WebPage::WebPage(QUrl baseUrl, QWidget *parent) :
+      QWebPage(parent),
+      baseUrl_(baseUrl),
+      navigated_(false)
+{
+   //settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
+   setNetworkAccessManager(new NetworkAccessManager(sharedSecret, parent));
+}
+
+void WebPage::javaScriptConsoleMessage(const QString& message, int /*lineNumber*/, const QString& /*sourceID*/)
+{
+   qDebug() << message;
+}
+
+QString WebPage::userAgentForUrl(const QUrl &url) const
+{
+   return this->QWebPage::userAgentForUrl(url);
+}
+
+bool WebPage::acceptNavigationRequest(QWebFrame*,
+                                       const QNetworkRequest& request,
+                                       NavigationType navType)
+{
+   QUrl url = request.url();
+   if (url.scheme() != "http"
+       && url.scheme() != "https"
+       && url.scheme() != "mailto")
+   {
+      return false;
+   }
+
+   if (baseUrl_.isEmpty() ||
+       (url.scheme() == baseUrl_.scheme()
+        && url.host() == baseUrl_.host()
+        && url.port() == baseUrl_.port()))
+   {
+      navigated_ = true;
+      return true;
+   }
+   else
+   {
+      QDesktopServices::openUrl(url);
+
+      if (!navigated_)
+         this->view()->window()->deleteLater();
+
+      return false;
+   }
+}
+
+}

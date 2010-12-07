@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+#
+# build.xml
+#
+# Copyright (C) 2009-11 by RStudio, Inc.
+#
+# This program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+-->
+
+<project name="client" default="build" basedir=".">
+	
+  <!-- Configure path to GWT SDK -->
+  <property name="gwt.sdk" value="sdk"/>
+
+  <property name="gwt.extra.args" value=""/>
+  <property name="gwt.main.module" value="org.rstudio.studio.RStudio"/>
+  
+  <path id="project.class.path">
+    <pathelement location="bin"/>
+    <pathelement location="${gwt.sdk}/gwt-user.jar"/>
+    <fileset dir="${gwt.sdk}" includes="gwt-dev*.jar"/>
+    <pathelement location="${gwt.sdk}/gwt-soyc-vis.jar"/>
+    <!-- Add any additional non-server libs (such as JUnit) -->
+  	 <pathelement location="lib/gin/gin.jar"/>
+  	 <pathelement location="lib/guice/guice-2.0.jar"/>
+  	 <pathelement location="lib/guice/aopalliance.jar"/>
+  </path>
+  
+  <target name="javac" description="Compile java source">
+    <mkdir dir="bin"/>
+    <javac srcdir="src" includes="**" encoding="utf-8"
+        destdir="bin"
+        source="1.5" target="1.5" nowarn="true" deprecation="true"
+        debug="true" debuglevel="lines,vars,source"
+        includeantruntime="false">
+      <classpath refid="project.class.path"/>
+    </javac>
+    <copy todir="bin">
+      <fileset dir="src" excludes="**/*.java"/>
+    </copy>
+  </target>
+
+  <target name="gwtc" depends="javac" description="GWT compile to JavaScript">
+    <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler">
+      <classpath>
+        <pathelement location="src"/>
+        <path refid="project.class.path"/>
+      </classpath>
+      <!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
+      <jvmarg value="-Xmx512M"/>
+      <arg value="-war"/>
+      <arg value="www"/>
+      <arg value="-localWorkers"/>
+      <arg value="2"/>
+      <arg value="-XdisableClassMetadata"/>
+      <arg value="-XdisableCastChecking"/>
+      <arg line="-gen gen"/>
+      <!--<arg line="-style PRETTY"/>-->
+      <arg line="-extra extras"/>
+      <arg line="${gwt.extra.args}"/>
+      <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
+      <arg value="${gwt.main.module}"/>
+    </java>
+  </target>
+
+  <target name="soyc" description="Generate and show SOYC report">
+    <antcall target="gwtc">
+      <param name="gwt.main.module" value="org.rstudio.studio.RStudioDraft"/>
+      <param name="gwt.extra.args" value="${gwt.extra.args} -compileReport"/>
+    </antcall>
+    <exec executable="open" os="Mac OS X">
+      <arg file="extras/rstudio/soycReport/compile-report/index.html"/>
+    </exec>
+  </target>
+
+   <target name="draft" description="Compile using GWT's draft mode">
+     <echo message="Draft means gwtc will build for Safari, Firefox 3+, and IE8 only, with -draftCompile."/>
+     <antcall target="gwtc">
+       <param name="gwt.extra.args" value="${gwt.extra.args} -draftCompile"/>
+       <param name="gwt.main.module" value="org.rstudio.studio.RStudioDraft"/>
+     </antcall>
+   </target>
+
+   <target name="desktop" description="Compile only desktop permutation">
+     <antcall target="gwtc">
+       <param name="gwt.main.module" value="org.rstudio.studio.RStudioDesktop"/>
+     </antcall>
+   </target>
+
+  <target name="devmode" depends="javac" description="Run development mode">
+    <java failonerror="true" fork="true" classname="com.google.gwt.dev.DevMode">
+      <classpath>
+        <pathelement location="src"/>
+        <path refid="project.class.path"/>
+      </classpath>
+      <jvmarg value="-Xmx512M"/>
+      <arg value="-war"/>
+      <arg value="www"/>
+      <arg value="-noserver"/>
+      <arg value="-startupUrl"/>
+      <arg value="http://localhost:8787"/>
+      <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
+      <arg value="org.rstudio.studio.RStudioDraft"/>
+    </java>
+  </target>
+
+  <target name="hosted" depends="devmode"/>
+
+  <target name="build" depends="gwtc" description="Build this project" />
+
+  <target name="clean" description="Cleans this project">
+    <delete dir="bin" failonerror="false" />
+    <delete dir="www/rstudio" failonerror="false" />
+    <delete dir="gen" failonerror="false" />
+    <delete dir="extras" failonerror="false" />
+   </target>
+
+</project>

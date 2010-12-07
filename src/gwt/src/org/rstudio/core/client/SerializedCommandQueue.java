@@ -1,0 +1,93 @@
+/*
+ * SerializedCommandQueue.java
+ *
+ * Copyright (C) 2009-11 by RStudio, Inc.
+ *
+ * This program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+package org.rstudio.core.client;
+
+import com.google.gwt.user.client.Command;
+
+import java.util.ArrayList;
+
+public class SerializedCommandQueue
+{
+   public SerializedCommandQueue(boolean log)
+   {
+      log_ = log;
+   }
+
+   public SerializedCommandQueue()
+   {
+      this(false);
+   }
+
+   public void addCommand(SerializedCommand command)
+   {
+      if (command != null)
+         commands_.add(command);
+      log("addCommand");
+      run();
+   }
+
+   public void addPriorityCommand(SerializedCommand command)
+   {
+      if (command != null)
+         commands_.add(0, command);
+      log("addPriorityCommand");
+      run();
+   }
+
+   private void run()
+   {
+      if (running_)
+      {
+         log("already running");
+         return;
+      }
+      running_ = true;
+
+      executeNextCommand();
+   }
+
+   private void executeNextCommand()
+   {
+      log("executeNextCommand");
+
+      if (commands_.size() == 0)
+      {
+         log("done");
+         running_ = false;
+         return;
+      }
+
+      SerializedCommand head = commands_.remove(0);
+      head.onExecute(new Command()
+      {
+         public void execute()
+         {
+            log("continuation");
+            executeNextCommand();
+         }
+      });
+   }
+
+   private void log(String label)
+   {
+      if (log_)
+      {
+         Debug.log(hashCode() + " " + label + " size=" + commands_.size());
+      }
+   }
+
+   private boolean running_ = false;
+   private ArrayList<SerializedCommand> commands_
+         = new ArrayList<SerializedCommand>();
+   private final boolean log_;
+}

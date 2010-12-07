@@ -1,0 +1,117 @@
+@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+
+@external popupContent;
+
+.console {
+   font-family: fixedWidthFont;
+   font-size: 12px ;
+   padding-left: 6px;
+   padding-bottom: 4px;
+   line-height: 16px;
+   border: none;
+   outline: none;
+   word-wrap: break-word;
+   white-space: pre-wrap;
+   cursor: text;
+}
+.console td {
+   font-family: fixedWidthFont;
+   font-size: 12px ;
+}
+
+.output {
+   outline: none;
+   border: none;
+   white-space: pre-wrap;
+   margin: 0;
+}
+.output .command, .input {
+   color: blue;
+}
+
+.error {}
+
+.input, .input span, .input div {
+   border: none;
+   outline: none;
+}
+.input {
+   padding-bottom: 12px;
+}
+
+.console .prompt {
+   color: navy;
+   white-space: pre;
+}
+
+.completionPopup {
+   padding: 0;
+   margin-left: -8px !important;
+   margin-top: 4px !important;
+   z-index: 1002;
+}
+.completionPopup .popupContent {
+   margin: -4px;
+}
+
+.completionGrid {
+   cursor: default;
+   padding: 0;
+}
+
+.completionGrid td {
+   font-family: fixedWidthFont;
+   font-size: 12px;
+   padding-left: 3px;
+   padding-right: 3px;
+   margin: 0;
+   white-space: nowrap;
+   text-overflow: ellipsis;
+}
+
+.completionGrid td span.packageName {
+   color: #999;
+}
+
+.selected {
+   background-color: rgb(146, 193, 240);
+}
+
+.functionInfo, .paramInfoName {
+   background-color: #fff;
+   padding: 2px 2px 2px 3px;
+
+}
+
+.paramInfoName {
+   font-weight: bold;
+}
+
+.functionInfoSignature {
+   font-family: fixedWidthFont;
+   font-size: 12px;
+}
+
+.functionInfoSignature,
+.paramInfoDesc {
+   padding-left: 2em;
+   text-indent: -2em;
+   padding-bottom: 3px;
+}
+
+.functionInfoSummary {
+   color: black;
+}
+
+.functionInfoSummary>a {
+   text-decoration: none;
+   color: black;
+}
+
+.promptFullHelp {
+   height: 16px;
+   background: #f0f0f4;
+   font-size: 9px;
+   padding: 3px;
+}

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Exec=${CMAKE_INSTALL_PREFIX}/${RSTUDIO_INSTALL_BIN}/rdesktop %F
+Icon=rstudio_logo_32.png
+Type=Application
+Terminal=false
+Name=RStudio
+Categories=Development
+
+

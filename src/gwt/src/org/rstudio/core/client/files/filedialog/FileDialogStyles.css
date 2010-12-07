@@ -1,0 +1,133 @@
+@external gwt-CheckBox-FilesSelectAll;
+@external gwt-DialogBox;
+@external gwt-MenuItem-selected;
+@external breadcrumb, breadcrumb-filepane;
+
+@url DIRSEPARATOR dirseparator;
+@url HOME home;
+
+.contents, .filename {
+   background-color: white;
+   border: #cfd2d4 solid 1px;
+}
+
+.filenamePanel {
+   width: 498px;
+}
+
+.filenameLabel {
+   margin-right: 3px;
+}
+
+.filename {
+   background-color: white;
+   width: 100%;
+   outline: none;
+   height: 22px;
+   font-size: 12px;
+}
+
+.contents {
+   font-size: 12px;
+   width: 500px;
+   height: 300px;
+}
+
+.contents td {
+   cursor: default;
+   white-space: nowrap;
+   overflow-x: hidden;
+}
+
+.columnIcon {
+   width: 20px;
+}
+
+.columnName {
+}
+
+.columnSize {
+   width: 80px;
+   color: #606060;
+   text-align: right;
+   padding-right: 16px;
+}
+
+.columnDate {
+   width: 160px;
+   color: #606060;
+}
+
+.contents tr.gwt-MenuItem-selected .columnSize,
+.contents tr.gwt-MenuItem-selected .columnDate {
+   color: white;
+}
+
+.gwt-CheckBox-FilesSelectAll {
+   margin-left: 2px;
+}
+
+.gwt-DialogBox .breadcrumbFrame {
+   width: 500px;
+   margin-top: 6px;
+   border: #cfd2d4 solid 1px;
+   border-bottom: none;
+}
+
+.breadcrumbFrame {
+   height: 20px;
+}
+
+.breadcrumb {
+   position: relative;
+   white-space: nowrap;
+   overflow: hidden;
+   background-color: #eeeff1;
+   font-size: 11px;
+}
+.breadcrumb, .breadcrumb table, .breadcrumb td {
+   height: 20px;
+}
+.breadcrumb-filepane {
+   background-color: transparent;
+   border: none;
+}
+.breadcrumb-filepane, .breadcrumb-filepane table, .breadcrumb-filepane td {
+   height: 20px;
+}
+.breadcrumb table.path a {
+   float: left;
+   text-decoration: none;
+   color: #0945bf;
+   margin: 0;
+   padding: 3px 6px 0 11px;
+   height: 18px;
+   background: DIRSEPARATOR center left no-repeat;
+}
+
+.breadcrumb table.path a.home {
+   background: none;
+   padding-left: 28px;
+   background: HOME 0 1px no-repeat;
+}
+
+.breadcrumb table.path a.last {
+   padding-right: 8px;
+}
+
+.breadcrumb .fade {
+   position: absolute;
+   left: 0;
+   top: 0;
+   width: 25px;
+   height: 24px;
+}
+
+.goUp {
+   cursor: pointer;
+   margin: 0 3px 0 12px;
+}
+
+.browse {
+   cursor: pointer;
+}

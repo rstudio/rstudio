@@ -1,0 +1,5 @@
+#!/bin/bash
+
+./make-package Server $1 $2
+
+

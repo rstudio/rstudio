@@ -1,0 +1,18 @@
+.panel {
+   width: 100%;
+   padding: 0 7px 0 7px;
+   margin-top: 10px;
+   overflow: visible;
+}
+
+@sprite .left {
+   gwt-image: 'headerPanelLeft';
+}
+
+@sprite .center {
+   gwt-image: 'headerPanelTile';
+}
+
+@sprite .right {
+   gwt-image: 'headerPanelRight';
+}

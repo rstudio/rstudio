@@ -1,0 +1,25 @@
+
+Install Required Applications
+=============================================================================
+
+Building RStudio requires installations of a number of applications 
+(including R). These applications include:
+
+- R:         http://www.r-project.org/
+- XCode:     http://developer.apple.com/technologies/xcode.html
+- QtForMac:  http://qt.nokia.com/downloads/sdk-mac-os-cpp
+- CMake:     http://www.cmake.org/
+
+
+Satisfy Additional Dependencies
+=============================================================================
+
+Additional dependencies (principally boost) can be satisfied by running the
+following script:
+
+./install-dependencies-osx
+
+Note that this script includes download, extraction, and compilation of
+boost so can take some time (30-60 minutes) to complete.
+
+

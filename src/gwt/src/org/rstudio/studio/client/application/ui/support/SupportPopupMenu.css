@@ -1,0 +1,9 @@
+
+.supportPopupMenu {
+   margin-top: 3px !important;
+   font-size: 11px;
+   width: 145px;
+   /* note: we don't size to content because safari was not properly
+      responding to showRelativeTo unless the width was set in CSS
+      (the offset width passed to the PositionCallback was very large */
+}

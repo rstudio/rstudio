@@ -1,0 +1,21 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+
+   <ui:with field='res' type='org.rstudio.core.client.theme.res.ThemeResources'/>
+
+   <g:HTMLPanel>
+      <div ui:field='searchDiv_'
+           class="{res.themeStyles.search}"
+           style="margin-right: 3px">
+         <div class="{res.themeStyles.left}"></div>
+         <div class="{res.themeStyles.center}">
+            <div class="{res.themeStyles.searchBoxContainer2}">
+               <g:TextBox ui:field='textBox_'
+                          styleName='{res.themeStyles.searchBox}'/>
+            </div>
+         </div>
+         <div class="{res.themeStyles.right}"></div>
+      </div>
+   </g:HTMLPanel>
+
+</ui:UiBinder>

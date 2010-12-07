@@ -1,0 +1,25 @@
+#!/bin/bash
+
+if [ "$1" == "clean" ]
+then
+   rm -rf build
+fi
+
+mkdir -p build
+cd build
+rm -f CMakeCache.txt
+rm -rf build/_CPack_Packages
+
+export CMAKE_OSX_ARCHITECTURES="i386;x86_64"
+export CMAKE_OSX_SYSROOT="/Developer/SDKs/MacOSX10.5.sdk"
+export CMAKE_OSX_DEPLOYMENT_TARGET="10.5"
+
+cmake -DRSTUDIO_TARGET=Desktop \
+      -DCMAKE_BUILD_TYPE=Release \
+      ../../..
+
+make
+
+cpack -G DragNDrop
+
+cd ..

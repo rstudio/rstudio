@@ -1,0 +1,82 @@
+@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+
+.selected {
+   background-color: #ccc;
+}
+*:focus .selected, .inboundFocus .selected, .fakeFocus .selected {
+   background-color: rgb(146, 193, 240)
+}
+@if user.agent ie8 {
+   .selected {
+      background-color: rgb(146, 193, 240)
+   }
+}
+
+.historyTable:focus {
+   outline: none;
+}
+
+.loadMore {
+   display: block;
+   text-decoration: none;
+   text-align: center;
+   font-weight: bold;
+   padding: 2px 0 2px 0;
+}
+
+.historyTable {
+   font-family: fixedWidthFont;
+   font-size: 12px;
+   overflow-x: hidden;
+   table-layout: fixed;
+}
+
+.historyTable td:first-child div {
+   width: 100%;
+   padding-left: 3px;
+   padding-right: 3px;
+   text-overflow: ellipsis;
+   overflow-x: hidden;
+}
+
+.historyTable .selected td:first-child div {
+   width: auto;
+   overflow-x: visible;
+   margin-left: 28px;
+   text-indent: -28px;
+}
+
+.command {
+   width: 20%;
+   overflow-x: hidden;
+   white-space: nowrap;
+}
+
+.selected .command {
+   white-space: normal;
+}
+
+.timestamp {
+   color: #999;
+   font-family: proportionalFont;
+   font-size: 10px;
+}
+td.timestamp {
+   padding-right: 3px;
+}
+tr.timestamp td {
+   padding-top: 6px;
+}
+.selected td.timestamp {
+   color: black;
+}
+
+@sprite div.disclosure {
+   gwt-image: 'searchResultsContextButton2';
+   cursor: pointer;
+   margin-top: 1px;
+}
+@sprite .selected div.disclosure {
+   gwt-image: 'searchResultsContextButton';
+}

@@ -1,0 +1,77 @@
+/*
+ * RConsoleHistory.hpp
+ *
+ * Copyright (C) 2009-11 by RStudio, Inc.
+ *
+ * This program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+#ifndef R_SESSION_CONSOLE_HISTORY_HPP
+#define R_SESSION_CONSOLE_HISTORY_HPP
+
+#include <string>
+
+#include <boost/utility.hpp>
+#include <boost/circular_buffer.hpp>
+#include <boost/signal.hpp>
+
+#include <core/json/Json.hpp>
+
+namespace core {
+   class Error ;
+   class FilePath;
+}
+
+namespace r {
+namespace session {
+
+// singleton
+class ConsoleHistory ;
+ConsoleHistory& consoleHistory();
+   
+class ConsoleHistory : boost::noncopyable
+{
+public:
+   typedef boost::circular_buffer<std::string>::value_type value_type;
+   typedef boost::circular_buffer<std::string>::const_iterator const_iterator;
+   typedef boost::signal<void (const std::string&)> AddSignal;
+
+private:
+   ConsoleHistory();
+   friend ConsoleHistory& consoleHistory();
+   // COPYING: boost::noncopyable
+      
+public:   
+   void setCapacity(int capacity);
+   
+   void add(const std::string& command);
+   
+   const_iterator begin() const { return historyBuffer_.begin(); }
+   const_iterator end() const { return historyBuffer_.end(); }
+   
+   void asJson(core::json::Array* pHistoryArray) const;
+   
+   core::Error loadFromFile(const core::FilePath& filePath, bool verifyFile);
+   core::Error saveToFile(const core::FilePath& filePath) const;
+   
+   boost::signals::connection connectOnAdd(
+                                 const AddSignal::slot_function_type& slot)
+   {
+      return onAdd_.connect(slot);
+   }
+   
+private:   
+   boost::circular_buffer<std::string> historyBuffer_ ;
+   AddSignal onAdd_; 
+};
+   
+} // namespace session
+} // namespace r
+
+#endif // R_SESSION_CONSOLE_HISTORY_HPP 
+

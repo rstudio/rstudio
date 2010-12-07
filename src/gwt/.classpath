@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
+	<classpathentry kind="con" path="com.google.gwt.eclipse.core.GWT_CONTAINER"/>
+	<classpathentry kind="lib" path="lib/guice/guice-2.0.jar" sourcepath="lib/guice/guice-2.0-src.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/client/lib/guice/guice-2.0-javadoc.zip!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="lib/guice/aopalliance.jar"/>
+	<classpathentry kind="lib" path="lib/gin/gin.jar" sourcepath="lib/gin/gin-src.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/client/lib/gin/gin-javadoc.zip!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

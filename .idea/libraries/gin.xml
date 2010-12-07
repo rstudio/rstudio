@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="gin">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/src/gwt/lib/gin/gin.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/src/gwt/lib/gin/gin-javadoc.zip!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/src/gwt/lib/gin/gin-src.jar!/" />
+    </SOURCES>
+  </library>
+</component>

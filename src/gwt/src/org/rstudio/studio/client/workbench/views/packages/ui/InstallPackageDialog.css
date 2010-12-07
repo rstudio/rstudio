@@ -1,0 +1,13 @@
+
+.mainWidget {
+   width: 360px;
+   height: 110px;
+}
+
+.repositoryListBox {
+   width: 125px;
+}
+
+.repositoryURLTextBox {
+   width: 250px;
+}

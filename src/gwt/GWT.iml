@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="gwt" name="GWT">
+      <configuration>
+        <setting name="compilerMaxHeapSize" value="128" />
+        <setting name="gwtScriptOutputStyle" value="PRETTY" />
+        <setting name="gwtSdkUrl" value="file://$MODULE_DIR$/sdk" />
+        <packaging>
+          <module name="org.rstudio.codemirror.CodeMirror" path="/com.rstudio.codemirror.CodeMirror" />
+          <module name="org.rstudio.core.Core" path="/com.rstudio.core.Core" />
+          <module name="org.rstudio.studio.PlainTextEditor" path="/com.rstudio.studio.PlainTextEditor" />
+          <module name="org.rstudio.studio.RStudio" path="/rstudio" />
+          <module name="org.rstudio.studio.RStudioDesktop" path="/rstudio" />
+          <module name="org.rstudio.studio.RStudioDraft" path="/rstudio" />
+        </packaging>
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager" inherit-compiler-output="false">
+    <output url="file://$MODULE_DIR$/bin" />
+    <output-test url="file://$MODULE_DIR$/bin.test" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/.settings" />
+      <excludeFolder url="file://$MODULE_DIR$/www" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/gwt/gwt-incubator-july-14-2009.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="gin" level="project" />
+    <orderEntry type="library" name="guice" level="project" />
+    <orderEntry type="library" name="gwt-user" level="project" />
+    <orderEntry type="library" name="gwt-dev" level="project" />
+  </component>
+</module>
+

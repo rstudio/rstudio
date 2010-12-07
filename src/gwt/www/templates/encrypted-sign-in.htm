@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+
+<!--
+#
+# encrypted-sign-in.htm
+#
+# Copyright (C) 2009-11 by RStudio, Inc.
+#
+# This program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+-->
+
+<html>
+
+<head>
+<meta http-equiv="X-UA-Compatible" content="chrome=1">
+<title>RStudio Sign In</title>
+<link rel="shortcut icon" href="images/favicon.ico" />
+
+<script language='javascript'>
+function verifyMe()
+{
+   if(document.getElementById('username').value=='')
+   {
+      alert('You must enter a username');
+      document.getElementById('username').focus();
+      return false;
+   }
+   if(document.getElementById('password').value=='')
+   {
+      alert('You must enter a password');
+      document.getElementById('password').focus();
+      return false;
+   }
+   return true;
+}
+</script>
+
+<link rel="stylesheet" href="rstudio.css" type="text/css"/>
+
+<style type="text/css">
+
+body, td {
+   font-size: 12px;
+}
+
+#caption {
+  text-align: center;
+  font-size: 14px;
+  margin-right: 0;
+  width: 100%;
+}
+
+input[type=text], input[type=password] {
+  width: 262px;
+  border: 1px solid #aaa;
+  font-size: 14px;
+  padding: 3px;
+  -moz-border-radius: 4px;
+  -webkit-border-radius: 4px;
+  outline: none;
+}
+
+#buttonpanel {
+  text-align: center;
+  margin-top: 12px;
+}
+#errorpanel {
+  text-align: center;
+  padding: 0 25% 0 25%;
+  color: red;
+  display: #errorDisplay#;
+  font-weight: bold;
+}
+button.fancy {
+  padding: 0;
+  border: 0 none;
+  margin: 0;
+  outline: none;
+  cursor: pointer;
+  background-color: white;
+}
+button.fancy .left {
+  width: 11px;
+  height: 35px;
+  background: url(images/buttonLeft.png) center right no-repeat;
+}
+button.fancy .inner {
+  color: white;
+  font-weight: bold;
+  font-size: 13px;
+  background: url(images/buttonTile.png) center repeat-x;
+  height: 35px;
+  padding: 5px;
+  padding-top: 1px;
+}
+button.fancy .right {
+  width: 11px;
+  height: 35px;
+  background: url(images/buttonRight.png) center left no-repeat;
+}
+</style>
+
+<script type="text/javascript" src="js/encrypt.min.js"></script>
+<script type="text/javascript">
+function prepare() {
+   if (!verifyMe())
+      return false;
+   try {
+      var payload = document.getElementById('username').value + "\n" +
+                    document.getElementById('password').value;
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", "#'publicKeyUrl#", true);
+      xhr.onreadystatechange = function() {
+         try {
+            if (xhr.readyState == 4) {
+               if (xhr.status != 200) {
+                  var errorMessage;
+                  if (xhr.status == 0)
+                     errorMessage = "Error: Could not reach server--check your internet connection";
+                  else
+                     errorMessage = "Error: " + xhr.statusText;
+                     
+                  var errorDiv = document.getElementById('errorpanel');
+                  errorDiv.innerHTML = '';
+                  var errorp = document.createElement('p');
+                  errorDiv.appendChild(errorp);
+                  if (typeof(errorp.innerText) == 'undefined')
+                     errorp.textContent = errorMessage;
+                  else
+                     errorp.innerText = errorMessage;
+                  errorDiv.style.display = 'block';
+               }
+               else {
+                  var response = xhr.responseText;
+                  var chunks = response.split(':', 2);
+                  var exp = chunks[0];
+                  var mod = chunks[1];
+                  var encrypted = encrypt(payload, exp, mod);
+                  document.getElementById('persist').value = document.getElementById('staySignedIn').checked ? "1" : "0";
+                  document.getElementById('package').value = encrypted;
+                  document.getElementById('clientPath').value = window.location.pathname;
+                  document.realform.submit();
+               }
+            }
+         } catch (exception) {
+            alert("Error: " + exception);
+         }
+      };
+      xhr.send(null);
+   } catch (exception) {
+      alert("Error: " + exception);
+   }
+}
+function submitRealForm() {
+   if (prepare())
+      document.realform.submit();
+}
+</script>
+
+</head>
+
+<h3 id="banner"><img src="images/rstudio.png" width="73" height="17" title="RStudio"/></h3>
+
+<div id="errorpanel">
+<p>Error: #errorMessage#</p>
+</div>
+
+<form action="javascript:void" method="POST" onsubmit="submitRealForm();return false">
+<table id="border" align="center">
+  <tr>
+    <td>
+      <h2 id="caption">Sign in to RStudio</h2>
+      <p>
+         <label for="username">Username:</label><br />
+         <input type='text' 
+                name='username' 
+                value='' 
+                id='username' 
+                size='45'/><br />
+      </p>
+      <p>
+         <label for="password">Password:</label><br />
+         <input type='password' 
+                name='password' 
+                value='' 
+                id='password' 
+                size='45'/><br />
+      </p>
+      <p>
+         <input type="checkbox" name="staySignedIn" id="staySignedIn"/>
+         <label for="staySignedIn">Stay signed in</label>
+      </p>
+      <div id="buttonpanel"><button class="fancy" type="submit"><table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="left"></td>
+          <td class="inner" valign="middle">Sign In</td>
+          <td class="right"></td>
+        </tr>
+      </table></button></div>
+    </td>
+  </tr>
+</table>
+</form>
+
+<form action="#action#" name="realform" method="POST">
+   <input type="hidden" name="persist" id="persist" value=""/>
+   <input type="hidden" name="appUri" value="#appUri#"/>
+   <input type="hidden" name="clientPath" id="clientPath" value=""/>
+   <input id="package" type="hidden" name="v" value=""/>
+</form>
+
+<script type="text/javascript">
+document.getElementById('username').focus();
+</script>
+</body>
+</html>

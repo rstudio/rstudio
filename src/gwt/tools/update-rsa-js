@@ -1,0 +1,38 @@
+#!/bin/bash
+
+#
+# update-rsa-js
+#
+# Copyright (C) 2009-11 by RStudio, Inc.
+#
+# This program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+# install dir
+INSTALL_DIR=`pwd`
+
+echo "// Downloaded from http://www-cs-students.stanford.edu/~tjw/ at `date`" > rsa.js
+echo "// ==== File: jsbn.js" >> rsa.js
+wget --quiet -O - http://www-cs-students.stanford.edu/~tjw/jsbn/jsbn.js >> rsa.js
+echo "// ==== File: prng4.js" >> rsa.js
+wget --quiet -O - http://www-cs-students.stanford.edu/~tjw/jsbn/prng4.js >> rsa.js
+echo "// ==== File: rng.js" >> rsa.js
+wget --quiet -O - http://www-cs-students.stanford.edu/~tjw/jsbn/rng.js >> rsa.js
+echo "// ==== File: rsa.js" >> rsa.js
+wget --quiet -O - http://www-cs-students.stanford.edu/~tjw/jsbn/rsa.js >> rsa.js
+echo "// ==== File: base64.js" >> rsa.js
+wget --quiet -O - http://www-cs-students.stanford.edu/~tjw/jsbn/base64.js >> rsa.js
+
+# extract Closure Compiler jar
+tar xzf compiler-20100330.tar.gz compiler.jar
+
+CC_OPTS="--compilation_level ADVANCED_OPTIMIZATIONS"
+java -jar "$INSTALL_DIR/compiler.jar" $CC_OPTS --js rsa.js --js encrypt-bootstrap.js --js_output_file "$INSTALL_DIR/../www/js/encrypt.min.js"
+
+rm compiler.jar
+
