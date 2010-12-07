@@ -16,14 +16,16 @@
 # install dir
 INSTALL_DIR=`pwd`
 
-# determine download command (wget, fallback to curl)
-WGET=`which wget`
-if [ "$WGET" != "" ]
-then
-  DOWNLOAD="wget"
-else
-  DOWNLOAD="curl -L"
-fi
+download()
+{
+  WGET=`which wget`
+  if [ "$WGET" != "" ]
+  then
+    wget https://s3.amazonaws.com/rstudio-buildtools/$1 -O $1
+  else
+    curl -L https://s3.amazonaws.com/rstudio-buildtools/$1 > $1
+  fi
+}
 
 # target directory for gwt
 GWT_DIR=$INSTALL_DIR/../src/gwt
@@ -32,14 +34,14 @@ mkdir -p $LIB_DIR
 
 # guice
 GUICE_ZIP=guice.zip
-$DOWNLOAD https://s3.amazonaws.com/rstudio-buildtools/$GUICE_ZIP > $GUICE_ZIP
+download $GUICE_ZIP
 rm -rf $LIB_DIR/guice
 unzip -d $LIB_DIR $GUICE_ZIP
 rm $GUICE_ZIP
 
 # gin
 GIN_ZIP=gin.zip
-$DOWNLOAD https://s3.amazonaws.com/rstudio-buildtools/$GIN_ZIP > $GIN_ZIP
+download $GIN_ZIP
 rm -rf $LIB_DIR/gin
 unzip -d $LIB_DIR $GIN_ZIP
 rm $GIN_ZIP
@@ -47,7 +49,7 @@ rm $GIN_ZIP
 # gwt sdk
 GWT_SDK=gwt-2.0.4
 GWT_SDK_ZIP=$GWT_SDK.zip
-$DOWNLOAD https://s3.amazonaws.com/rstudio-buildtools/$GWT_SDK_ZIP > $GWT_SDK_ZIP
+download $GWT_SDK_ZIP
 rm -rf $GWT_DIR/sdk
 unzip -d $GWT_DIR $GWT_SDK_ZIP
 mv $GWT_DIR/$GWT_SDK $GWT_DIR/sdk
