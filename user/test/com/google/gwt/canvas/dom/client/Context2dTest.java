@@ -70,6 +70,30 @@ public class Context2dTest extends GWTTestCase {
     RootPanel.get().remove(canvas2);
   }
 
+  public void testArc() {
+    if (!canvas1.isSupported()) {
+      return; // disable tests if not supported
+    }
+
+    canvas1.setHeight("40px");
+    canvas1.setWidth("60px");
+    canvas1.setCoordinateSpaceHeight(80);
+    canvas1.setCoordinateSpaceWidth(120);
+
+    // get a 2d context
+    Context2d context = canvas1.getContext2d();
+
+    // make sure there are no issues drawing an arc
+    try {
+      context.beginPath();
+      context.arc(50, 50, 40, 0, Math.PI);
+      context.closePath();
+      context.stroke();
+    } catch (Exception e) {
+      fail("Should not throw an exception drawing an arc: " + e.getMessage());
+    }
+  }
+
   public void testFillRect() {
     if (!canvas1.isSupported()) {
       return; // disable tests if not supported
@@ -95,10 +119,10 @@ public class Context2dTest extends GWTTestCase {
 
     // draw green rectangle filling 1st half of canvas
     context.setFillStyle(CssColor.make("#00fF00"));
-    context.fillRect(0f, 0f, 60f, 80f);
+    context.fillRect(0, 0, 60, 80);
     // draw red rectangle filling 2nd half of canvas
     context.setFillStyle("#fF0000");
-    context.fillRect(60f, 0f, 60f, 80f);
+    context.fillRect(60, 0, 60, 80);
 
     // test that the first pixel is green and the last pixel is red
     ImageData imageData = context.getImageData(0, 0, 120, 80);
@@ -114,7 +138,7 @@ public class Context2dTest extends GWTTestCase {
     
     // draw a blue square in the top left
     context.setFillStyle("#0000fF");
-    context.fillRect(0f, 0f, 20f, 20f);
+    context.fillRect(0, 0, 20, 20);
     imageData = context.getImageData(0, 0, 20, 20);
     pixelArray = imageData.getData();
     
@@ -184,8 +208,8 @@ public class Context2dTest extends GWTTestCase {
     }
 
     Context2d context = canvas1.getContext2d();
-    context.setGlobalAlpha(0.5f);
-    assertEquals(0.5f, context.getGlobalAlpha());
+    context.setGlobalAlpha(0.5);
+    assertEquals(0.5, context.getGlobalAlpha());
   }
 
   // This test currently fails on IE9 and is disabled.
@@ -229,7 +253,7 @@ public class Context2dTest extends GWTTestCase {
     context.setFillStyle(linearGradient);
     context.fillRect(0, 0, 60, 40);
     
-    // test that the first pixel is ff0000, the last is 00ffff, and the middle is something else
+    // test that the first pixel is ff0000, the last is 000fff, and the middle is something else
     // isn't exact due to rounding, give 5px approx wiggle-room
     int approx = 5;
     ImageData imageData = context.getImageData(0, 0, 60, 40);
@@ -303,11 +327,11 @@ public class Context2dTest extends GWTTestCase {
     try {
       clampArraySet.set(2, -2);
       clampArraySet.set(3, 270);
-      context.putImageData(clampPixels, 4f, 4f);
+      context.putImageData(clampPixels, 4, 4);
     } catch (Exception e) {
       fail("Should not throw exception when setting values outside the range of 0...255");
     }
-    clampPixels = context.getImageData(4f, 4f, 3f, 3f);
+    clampPixels = context.getImageData(4, 4, 3, 3);
     CanvasPixelArray clampArrayGet = clampPixels.getData();
     
     // test that edge cases don't blow up: fall off the CanvasPixelArray end
@@ -329,13 +353,13 @@ public class Context2dTest extends GWTTestCase {
 
     Context2d context = canvas1.getContext2d();
     context.beginPath();
-    context.moveTo(10f, 10f);
-    context.lineTo(20f, 20f);
-    context.lineTo(20f, 10f);
+    context.moveTo(10, 10);
+    context.lineTo(20, 20);
+    context.lineTo(20, 10);
     context.closePath();
     
-    assertTrue("Point should be in path", context.isPointInPath(18f, 12f));
-    assertFalse("Point should not be in path", context.isPointInPath(1f, 1f));
+    assertTrue("Point should be in path", context.isPointInPath(18, 12));
+    assertFalse("Point should not be in path", context.isPointInPath(1, 1));
   }
 
   public void testLines() {
@@ -352,17 +376,17 @@ public class Context2dTest extends GWTTestCase {
     context.setFillStyle("#ff00ff");
     context.setLineCap(LineCap.BUTT);
     context.setLineJoin(LineJoin.BEVEL);
-    context.setLineWidth(2f);
+    context.setLineWidth(2);
 
     context.beginPath();
-    context.moveTo(10f, 10f);
-    context.lineTo(20f, 20f);
-    context.lineTo(20f, 10f);
+    context.moveTo(10, 10);
+    context.lineTo(20, 20);
+    context.lineTo(20, 10);
     context.closePath();
 
     assertEquals(LineCap.BUTT.getValue(), context.getLineCap());
     assertEquals(LineJoin.BEVEL.getValue(), context.getLineJoin());
-    assertEquals(2f, context.getLineWidth());
+    assertEquals(2.0, context.getLineWidth());
   }
 
   public void testMiter() {
@@ -371,8 +395,8 @@ public class Context2dTest extends GWTTestCase {
     }
 
     Context2d context = canvas1.getContext2d();
-    context.setMiterLimit(3f);
-    assertEquals(3f, context.getMiterLimit());
+    context.setMiterLimit(3);
+    assertEquals(3.0, context.getMiterLimit());
   }
 
   public void testPixelManipulation() {
@@ -423,15 +447,15 @@ public class Context2dTest extends GWTTestCase {
     canvas1.setCoordinateSpaceWidth(60);
 
     Context2d context = canvas1.getContext2d();
-    context.setShadowBlur(3f);
+    context.setShadowBlur(3);
     context.setShadowColor("#ff00ff");
-    context.setShadowOffsetX(3f);
-    context.setShadowOffsetY(4f);
+    context.setShadowOffsetX(3);
+    context.setShadowOffsetY(4);
     context.lineTo(60, 40);
-    assertEquals(3f, context.getShadowBlur());
+    assertEquals(3.0, context.getShadowBlur());
     assertEquals("#ff00ff", context.getShadowColor().toLowerCase());
-    assertEquals(3f, context.getShadowOffsetX());
-    assertEquals(4f, context.getShadowOffsetY());
+    assertEquals(3.0, context.getShadowOffsetX());
+    assertEquals(4.0, context.getShadowOffsetY());
   }
 
   public void testStrokeStyle() {
@@ -452,7 +476,7 @@ public class Context2dTest extends GWTTestCase {
 
     // test that a gradient can be set and is correct
     CanvasGradient gradient = context1.createLinearGradient(0, 0, 10, 20);
-    gradient.addColorStop(0.5f, "#ff00ff");
+    gradient.addColorStop(0.5, "#ff000f");
     context1.setStrokeStyle(gradient);
     FillStrokeStyle strokeStyleGrad = context1.getStrokeStyle();
     assertFalse("strokeStyleGrad is a gradient", strokeStyleGrad.getType() == FillStrokeStyle.TYPE_CSSCOLOR);

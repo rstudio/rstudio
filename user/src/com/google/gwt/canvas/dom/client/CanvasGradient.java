@@ -40,7 +40,7 @@ public class CanvasGradient extends FillStrokeStyle {
    * @param offset value between 0 and 1 for where the color stop is located.
    * @param color color at the stop.
    */
-  public final native void addColorStop(float offset, String color) /*-{
+  public final native void addColorStop(double offset, String color) /*-{
     this.addColorStop(offset, color);
   }-*/;
 }

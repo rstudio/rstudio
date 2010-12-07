@@ -38,7 +38,7 @@ public class TextMetrics extends JavaScriptObject {
    * 
    * @return the width of the text
    */
-  public final native float getWidth() /*-{
+  public final native double getWidth() /*-{
     return this.width;
   }-*/;
 }

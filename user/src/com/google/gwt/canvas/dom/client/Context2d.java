@@ -235,9 +235,11 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param endAngle the end angle, measured in radians clockwise from the
    *          positive x-axis
    */
-  public final native void arc(float x, float y, float radius, float startAngle,
-      float endAngle) /*-{
-    this.arc(x, y, radius, startAngle, endAngle);
+  public final native void arc(double x, double y, double radius, double startAngle,
+      double endAngle) /*-{
+    // We must explicitly use false for the anticlockwise parameter because firefox has a bug where 
+    // the last parameter is not actually optional.
+    this.arc(x, y, radius, startAngle, endAngle, false);
   }-*/;
 
   /**
@@ -258,7 +260,7 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param anticlockwise if {@code true}, the arc is drawn in an anticlockwise
    *       direction
    */
-  public final native void arc(float x, float y, float radius, float startAngle, float endAngle,
+  public final native void arc(double x, double y, double radius, double startAngle, double endAngle,
       boolean anticlockwise) /*-{
     this.arc(x, y, radius, startAngle, endAngle, anticlockwise);
   }-*/;
@@ -273,7 +275,7 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param y2 the y coordinate of the ending point of the arc
    * @param radius the radius of a circle containing the arc
    */
-  public final native void arcTo(float x1, float y1, float x2, float y2, float radius) /*-{
+  public final native void arcTo(double x1, double y1, double x2, double y2, double radius) /*-{
     this.arcTo(x1, y1, x2, y2, radius);
   }-*/;
 
@@ -295,8 +297,8 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param x the x coordinate of the end point
    * @param y the y coordinate of the end point
    */
-  public final native void bezierCurveTo(float cp1x, float cp1y,
-      float cp2x, float cp2y, float x, float y) /*-{
+  public final native void bezierCurveTo(double cp1x, double cp1y,
+      double cp2x, double cp2y, double x, double y) /*-{
     this.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y);
   }-*/;
 
@@ -308,7 +310,7 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param w the width of the rectangle
    * @param h the height of the rectangle
    */
-  public final native void clearRect(float x, float y, float w, float h) /*-{
+  public final native void clearRect(double x, double y, double w, double h) /*-{
     this.clearRect(x, y, w, h);
   }-*/;
 
@@ -356,8 +358,8 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param y1 the y coordinate of the ending point of the gradient
    * @return a {@link CanvasGradient} object
    */
-  public final native CanvasGradient createLinearGradient(float x0, float y0, float x1,
-      float y1) /*-{
+  public final native CanvasGradient createLinearGradient(double x0, double y0, double x1,
+      double y1) /*-{
     return this.createLinearGradient(x0, y0, x1, y1);
   }-*/;
 
@@ -416,8 +418,8 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param r1 the radius of the end circle of the gradient
    * @return a {@link CanvasGradient} object
    */
-  public final native CanvasGradient createRadialGradient(float x0, float y0, float r0, float x1,
-      float y1, float r1) /*-{
+  public final native CanvasGradient createRadialGradient(double x0, double y0, double r0, double x1,
+      double y1, double r1) /*-{
     return this.createRadialGradient(x0, y0, r0, x1, y1, r1);
   }-*/;
 
@@ -428,7 +430,7 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param dx the x coordinate of the upper-left corner of the destination rectangle
    * @param dy the y coordinate of the upper-left corner of the destination rectangle
    */
-  public final native void drawImage(CanvasElement image, float dx, float dy) /*-{
+  public final native void drawImage(CanvasElement image, double dx, double dy) /*-{
     this.drawImage(image, dx, dy);
   }-*/;
 
@@ -441,8 +443,8 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param dw the width of the destination rectangle
    * @param dh the height of the destination rectangle
    */
-  public final native void drawImage(CanvasElement image, float dx, float dy, float dw,
-      float dh) /*-{
+  public final native void drawImage(CanvasElement image, double dx, double dy, double dw,
+      double dh) /*-{
     this.drawImage(image, dx, dy, dw, dh);
   }-*/;
 
@@ -459,8 +461,8 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param dw the width of the destination rectangle
    * @param dh the height of the destination rectangle
    */
-  public final native void drawImage(CanvasElement image, float sx, float sy, float sw, float sh,
-      float dx, float dy, float dw, float dh) /*-{
+  public final native void drawImage(CanvasElement image, double sx, double sy, double sw, double sh,
+      double dx, double dy, double dw, double dh) /*-{
     this.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
   }-*/;
 
@@ -471,7 +473,7 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param dx the x coordinate of the upper-left corner of the destination rectangle
    * @param dy the y coordinate of the upper-left corner of the destination rectangle
    */
-  public final native void drawImage(ImageElement image, float dx, float dy) /*-{
+  public final native void drawImage(ImageElement image, double dx, double dy) /*-{
     this.drawImage(image, dx, dy);
   }-*/;
 
@@ -484,8 +486,8 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param dw the width of the destination rectangle
    * @param dh the height of the destination rectangle
    */
-  public final native void drawImage(ImageElement image, float dx, float dy, float dw,
-      float dh) /*-{
+  public final native void drawImage(ImageElement image, double dx, double dy, double dw,
+      double dh) /*-{
     this.drawImage(image, dx, dy, dw, dh);
   }-*/;
 
@@ -502,8 +504,8 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param dw the width of the destination rectangle
    * @param dh the height of the destination rectangle
    */
-  public final native void drawImage(ImageElement image, float sx, float sy, float sw, float sh,
-      float dx, float dy, float dw, float dh) /*-{
+  public final native void drawImage(ImageElement image, double sx, double sy, double sw, double sh,
+      double dx, double dy, double dw, double dh) /*-{
     this.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
   }-*/;
 
@@ -522,7 +524,7 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param w the width of the rectangle
    * @param h the height of the rectangle
    */
-  public final native void fillRect(float x, float y, float w, float h) /*-{
+  public final native void fillRect(double x, double y, double w, double h) /*-{
     this.fillRect(x, y, w, h);
   }-*/;
 
@@ -533,7 +535,7 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param x the x coordinate of the text position
    * @param y the y coordinate of the text position
    */
-  public final native void fillText(String text, float x, float y) /*-{
+  public final native void fillText(String text, double x, double y) /*-{
     // FF3.0 does not implement this method.
     if (this.fillText) {
       this.fillText(text, x, y);
@@ -548,7 +550,7 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param y the y coordinate of the text position
    * @param maxWidth the maximum width for the text
    */
-  public final native void fillText(String text, float x, float y, float maxWidth) /*-{
+  public final native void fillText(String text, double x, double y, double maxWidth) /*-{
     this.fillText(text, x, y, maxWidth);
   }-*/;
 
@@ -591,10 +593,10 @@ public class Context2d extends JavaScriptObject implements Context {
   /**
    * Gets the global alpha value.
    *
-   * @return the global alpha value as a float
-   * @see #setGlobalAlpha(float)
+   * @return the global alpha value as a double
+   * @see #setGlobalAlpha(double)
    */
-  public final native float getGlobalAlpha() /*-{
+  public final native double getGlobalAlpha() /*-{
     return this.globalAlpha;
   }-*/;
 
@@ -619,7 +621,7 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param sh the height of the desired area
    * @return an {@link ImageData} object containing screen pixel data
    */
-  public final native ImageData getImageData(float sx, float sy, float sw, float sh) /*-{
+  public final native ImageData getImageData(double sx, double sy, double sw, double sh) /*-{
     return this.getImageData(sx, sy, sw, sh);
   }-*/;
 
@@ -648,30 +650,30 @@ public class Context2d extends JavaScriptObject implements Context {
   /**
    * Gets the current line-width.
    *
-   * @return the line width as a float
-   * @see #setLineWidth(float)
+   * @return the line width as a double
+   * @see #setLineWidth(double)
    */
-  public final native float getLineWidth() /*-{
+  public final native double getLineWidth() /*-{
     return this.lineWidth;
   }-*/;
 
   /**
    * Gets the current miter-limit.
    *
-   * @return the miter limit as a float
-   * @see #setMiterLimit(float)
+   * @return the miter limit as a double
+   * @see #setMiterLimit(double)
    */
-  public final native float getMiterLimit() /*-{
+  public final native double getMiterLimit() /*-{
     return this.miterLimit;
   }-*/;
 
   /**
    * Gets the current shadow-blur.
    *
-   * @return the shadow blur amount as a float
-   * @see #setShadowBlur(float)
+   * @return the shadow blur amount as a double
+   * @see #setShadowBlur(double)
    */
-  public final native float getShadowBlur() /*-{
+  public final native double getShadowBlur() /*-{
     return this.shadowBlur;
   }-*/;
 
@@ -688,22 +690,22 @@ public class Context2d extends JavaScriptObject implements Context {
   /**
    * Gets the current x-shadow-offset.
    *
-   * @return the shadow x offset as a float
-   * @see #setShadowOffsetX(float)
+   * @return the shadow x offset as a double
+   * @see #setShadowOffsetX(double)
    * @see #getShadowOffsetY()
    */
-  public final native float getShadowOffsetX() /*-{
+  public final native double getShadowOffsetX() /*-{
     return this.shadowOffsetX;
   }-*/;
 
   /**
    * Gets the current y-shadow-offset.
    *
-   * @return the shadow y offset as a float
-   * @see #setShadowOffsetY(float)
+   * @return the shadow y offset as a double
+   * @see #setShadowOffsetY(double)
    * @see #getShadowOffsetX()
    */
-  public final native float getShadowOffsetY() /*-{
+  public final native double getShadowOffsetY() /*-{
     return this.shadowOffsetY;
   }-*/;
 
@@ -753,7 +755,7 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param y the y coordinate of the point to test.
    * @return {@code true} if the given point is in the current path.
    */
-  public final native boolean isPointInPath(float x, float y) /*-{
+  public final native boolean isPointInPath(double x, double y) /*-{
     return this.isPointInPath(x, y);
   }-*/;
 
@@ -764,7 +766,7 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param x the x coordinate of the line endpoint
    * @param y the y coordinate of the line endpoint
    */
-  public final native void lineTo(float x, float y) /*-{
+  public final native void lineTo(double x, double y) /*-{
     this.lineTo(x, y);
   }-*/;
 
@@ -785,7 +787,7 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param x the x coordinate of the new position
    * @param y the y coordinate of the new position
    */
-  public final native void moveTo(float x, float y) /*-{
+  public final native void moveTo(double x, double y) /*-{
     this.moveTo(x, y);
   }-*/;
 
@@ -796,7 +798,7 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param x the x coordinate of the upper-left corner at which to draw
    * @param y the y coordinate of the upper-left corner at which to draw
    */
-  public final native void putImageData(ImageData imagedata, float x, float y) /*-{
+  public final native void putImageData(ImageData imagedata, double x, double y) /*-{
     return this.putImageData(imagedata, x, y);
   }-*/;
 
@@ -809,7 +811,7 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param x the x coordinate of the end point
    * @param y the y coordinate of the end point
    */
-  public final native void quadraticCurveTo(float cpx, float cpy, float x, float y) /*-{
+  public final native void quadraticCurveTo(double cpx, double cpy, double x, double y) /*-{
     this.quadraticCurveTo(cpx, cpy, x, y);
   }-*/;
 
@@ -821,7 +823,7 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param w the width of the rectangle
    * @param h the height of the rectangle
    */
-  public final native void rect(float x, float y, float w, float h) /*-{
+  public final native void rect(double x, double y, double w, double h) /*-{
     this.rect(x, y, w, h);
   }-*/;
 
@@ -837,7 +839,7 @@ public class Context2d extends JavaScriptObject implements Context {
    *
    * @param angle the clockwise rotation angle, in radians
    */
-  public final native void rotate(float angle) /*-{
+  public final native void rotate(double angle) /*-{
     this.rotate(angle);
   }-*/;
 
@@ -854,7 +856,7 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param x the scale factor along the x-axis
    * @param y the scale factor along the y-axis
    */
-  public final native void scale(float x, float y) /*-{
+  public final native void scale(double x, double y) /*-{
     this.scale(x, y);
   }-*/;
 
@@ -897,10 +899,10 @@ public class Context2d extends JavaScriptObject implements Context {
   /**
    * Sets the global alpha value.
    *
-   * @param alpha the global alpha value as a float
+   * @param alpha the global alpha value as a double
    * @see #getGlobalAlpha()
    */
-  public final native void setGlobalAlpha(float alpha) /*-{
+  public final native void setGlobalAlpha(double alpha) /*-{
     this.globalAlpha = alpha;
   }-*/;
 
@@ -967,31 +969,31 @@ public class Context2d extends JavaScriptObject implements Context {
   /**
    * Sets the line-width.
    *
-   * @param lineWidth the line width as a float
+   * @param lineWidth the line width as a double
    * @see #getMiterLimit()
    * @see #getLineWidth()
    */
-  public final native void setLineWidth(float lineWidth) /*-{
+  public final native void setLineWidth(double lineWidth) /*-{
     this.lineWidth = lineWidth;
   }-*/;
 
   /**
    * Sets the miter-limit.
    *
-   * @param miterLimit the miter limit as a float
+   * @param miterLimit the miter limit as a double
    * @see #getMiterLimit()
    */
-  public final native void setMiterLimit(float miterLimit) /*-{
+  public final native void setMiterLimit(double miterLimit) /*-{
     this.miterLimit = miterLimit;
   }-*/;
 
   /**
    * Sets the shadow-blur.
    *
-   * @param shadowBlur the amount of blur as a float
+   * @param shadowBlur the amount of blur as a double
    * @see #getShadowBlur()
    */
-  public final native void setShadowBlur(float shadowBlur) /*-{
+  public final native void setShadowBlur(double shadowBlur) /*-{
     this.shadowBlur = shadowBlur;
   }-*/;
 
@@ -1012,7 +1014,7 @@ public class Context2d extends JavaScriptObject implements Context {
    * @see #getShadowOffsetX()
    * @see #getShadowOffsetY()
    */
-  public final native void setShadowOffsetX(float shadowOffsetX) /*-{
+  public final native void setShadowOffsetX(double shadowOffsetX) /*-{
     this.shadowOffsetX = shadowOffsetX;
   }-*/;
 
@@ -1023,7 +1025,7 @@ public class Context2d extends JavaScriptObject implements Context {
    * @see #getShadowOffsetX()
    * @see #getShadowOffsetY()
    */
-  public final native void setShadowOffsetY(float shadowOffsetY) /*-{
+  public final native void setShadowOffsetY(double shadowOffsetY) /*-{
     this.shadowOffsetY = shadowOffsetY;
   }-*/;
 
@@ -1102,8 +1104,8 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param dx the x translation value
    * @param dy the y translation value
    */
-  public final native void setTransform(float m11, float m12, float m21,
-      float m22, float dx, float dy) /*-{
+  public final native void setTransform(double m11, double m12, double m21,
+      double m22, double dx, double dy) /*-{
     this.setTransform(m11, m12, m21, m22, dx, dy);
   }-*/;
 
@@ -1122,7 +1124,7 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param w the width of the rectangle
    * @param h the height of the rectangle
    */
-  public final native void strokeRect(float x, float y, float w, float h) /*-{
+  public final native void strokeRect(double x, double y, double w, double h) /*-{
     this.strokeRect(x, y, w, h);
   }-*/;
 
@@ -1133,7 +1135,7 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param x the x coordinate of the text position
    * @param y the y coordinate of the text position
    */
-  public final native void strokeText(String text, float x, float y) /*-{
+  public final native void strokeText(String text, double x, double y) /*-{
     this.strokeText(text, x, y);
   }-*/;
 
@@ -1146,7 +1148,7 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param y the y coordinate of the text position
    * @param maxWidth the maximum width for the text
    */
-  public final native void strokeText(String text, float x, float y, float maxWidth) /*-{
+  public final native void strokeText(String text, double x, double y, double maxWidth) /*-{
     this.strokeText(text, x, y, maxWidth);
   }-*/;
 
@@ -1160,8 +1162,8 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param dx the x translation value
    * @param dy the y translation value
    */
-  public final native void transform(float m11, float m12, float m21, float m22, float dx,
-      float dy) /*-{
+  public final native void transform(double m11, double m12, double m21, double m22, double dx,
+      double dy) /*-{
     this.transform(m11, m12, m21, m22, dx, dy);
   }-*/;
 
@@ -1171,7 +1173,7 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param x the amount of translation along the x-axis
    * @param y the amount of translation along the y-axis
    */
-  public final native void translate(float x, float y) /*-{
+  public final native void translate(double x, double y) /*-{
     this.translate(x, y);
   }-*/;
 
