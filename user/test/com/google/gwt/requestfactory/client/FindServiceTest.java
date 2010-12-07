@@ -23,6 +23,7 @@ import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.SimpleBarProxy;
 import com.google.gwt.requestfactory.shared.SimpleBarRequest;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
+import com.google.gwt.requestfactory.shared.SimpleFooRequest;
 import com.google.gwt.requestfactory.shared.SimpleRequestFactory;
 
 /**
@@ -131,6 +132,37 @@ public class FindServiceTest extends RequestFactoryTestBase {
               @Override
               public void onSuccess(SimpleBarProxy returnedProxy) {
                 assertEquals(stableId, returnedProxy.stableId());
+                finishTestAndReset();
+              }
+            });
+          }
+        });
+  }
+
+  public void testFetchsAfterCreateDontUpdate() {
+    final int[] count = {0};
+    final HandlerRegistration registration = EntityProxyChange.registerForProxyType(
+        req.getEventBus(), SimpleFooProxy.class,
+        new EntityProxyChange.Handler<SimpleFooProxy>() {
+          public void onProxyChange(EntityProxyChange<SimpleFooProxy> event) {
+            count[0]++;
+          }
+        });
+    delayTestFinish(TEST_DELAY);
+    SimpleFooRequest context = req.simpleFooRequest();
+    SimpleFooProxy proxy = context.create(SimpleFooProxy.class);
+    context.persistAndReturnSelf().using(proxy).fire(
+        new Receiver<SimpleFooProxy>() {
+          @Override
+          public void onSuccess(SimpleFooProxy response) {
+            // Persist and Update events
+            assertEquals(2, count[0]);
+            req.find(response.stableId()).fire(new Receiver<SimpleFooProxy>() {
+              @Override
+              public void onSuccess(SimpleFooProxy response) {
+                // No new events
+                assertEquals(2, count[0]);
+                registration.removeHandler();
                 finishTestAndReset();
               }
             });

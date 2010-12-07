@@ -114,7 +114,7 @@ public class AbstractRequestContext implements RequestContext,
   }
 
   private static final String PARENT_OBJECT = "parentObject";
-
+  private final Set<SimpleProxyId<?>> createdIds = new HashSet<SimpleProxyId<?>>();
   private final List<AbstractRequest<?>> invocations = new ArrayList<AbstractRequest<?>>();
   private boolean locked;
   private final AbstractRequestFactory requestFactory;
@@ -148,8 +148,9 @@ public class AbstractRequestContext implements RequestContext,
   public <T extends BaseProxy> T create(Class<T> clazz) {
     checkLocked();
 
-    AutoBean<T> created = requestFactory.createProxy(clazz,
-        requestFactory.allocateId(clazz));
+    SimpleProxyId<T> id = requestFactory.allocateId(clazz);
+    createdIds.add(id);
+    AutoBean<T> created = requestFactory.createProxy(clazz, id);
     return takeOwnership(created);
   }
 
@@ -791,7 +792,8 @@ public class AbstractRequestContext implements RequestContext,
       SimpleProxyId<?> id = getId(op);
       if (id.isEphemeral()) {
         processReturnOperation(id, op);
-      } else if (id.wasEphemeral()) {
+      } else if (id.wasEphemeral() && createdIds.contains(id)) {
+        // Only send a PERSIST if this RequestContext created the id.
         processReturnOperation(id, op, WriteOperation.PERSIST,
             WriteOperation.UPDATE);
       } else {
