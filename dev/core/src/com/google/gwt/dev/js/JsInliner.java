@@ -611,35 +611,10 @@ public class JsInliner {
     private boolean maintainsOrder = true;
     private final List<JsName> toEvaluate;
     private final List<JsName> unevaluated;
-    private final Set<JsName> paramsOrLocals = new HashSet<JsName>();
 
-    public EvaluationOrderVisitor(List<JsName> toEvaluate, JsFunction callee) {
+    public EvaluationOrderVisitor(List<JsName> toEvaluate) {
       this.toEvaluate = toEvaluate;
       this.unevaluated = new ArrayList<JsName>(toEvaluate);
-      // collect params and locals from callee function
-      new JsVisitor() {
-        @Override
-        public void endVisit(JsParameter x, JsContext<JsParameter> ctx) {
-          paramsOrLocals.add(x.getName());
-        }
-
-        @Override
-        public boolean visit(JsVar x, JsContext<JsVar> ctx) {
-          // record this before visiting initializer
-          paramsOrLocals.add(x.getName());
-          return true;
-        }
-      }.accept(callee);
-    }
-
-    /**
-     * Referencing an array breaks order if there are unevaluated arguments.
-     */
-    @Override
-    public void endVisit(JsArrayAccess x, JsContext<JsExpression> ctx) {
-      if (unevaluated.size() > 0) {
-        maintainsOrder = false;
-      }
     }
 
     @Override
@@ -694,7 +669,12 @@ public class JsInliner {
      */
     @Override
     public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
-      if (unevaluated.size() > 0) {
+      /*
+       * The check for isExecuteOnce() is potentially incorrect here, however
+       * the original Java semantics of the clinit would have made the code
+       * incorrect anyway.
+       */
+      if ((isExecuteOnce(x) == null) && unevaluated.size() > 0) {
         maintainsOrder = false;
       }
     }
@@ -730,35 +710,11 @@ public class JsInliner {
       return maintainsOrder && unevaluated.size() == 0;
     }
 
-    /**
-     * Check to see if the evaluation of this JsName will break program order assumptions given
-     * the parameters left to be substituted.
-     *
-     * The cases are as follows:
-     * 1) JsName is a function parameter name which has side effects or is affected by side effects
-     * (hereafter called 'volatile'), so it will be in 'toEvaluate'
-     * 2) JsName is a function parameter which is not volatile (not in toEvaluate)
-     * 3) JsName is a reference to a global variable
-     * 4) JsName is a reference to a local variable
-     *
-     * A reference to a global while there are still parameters left to evaluate / substitute
-     * implies an order volation.
-     *
-     * A reference to a volatile parameter is ok if it if is the next parameter in sequence to
-     * be evaluated (beginning of unevaluated list). Else, it is either being evaluated out of
-     * order with respect to other parameters, or it is being evaluated more than once.
-     */
     private void checkName(JsName name) {
       if (!toEvaluate.contains(name)) {
-        // if the name is a non-local/non-parameter (e.g. global) and there are params left to eval
-        if (!paramsOrLocals.contains(name) && unevaluated.size() > 0) {
-          maintainsOrder = false;
-        }
-        // else this may be a local, or all volatile params have already been evaluated, so it's ok.
         return;
       }
 
-      // either this param is being evaled twice, or out of order
       if (unevaluated.size() == 0 || !unevaluated.remove(0).equals(name)) {
         maintainsOrder = false;
       }
@@ -1989,7 +1945,7 @@ public class JsInliner {
        * order.
        */
       EvaluationOrderVisitor orderVisitor = new EvaluationOrderVisitor(
-          requiredOrder, callee);
+          requiredOrder);
       orderVisitor.accept(toInline);
       if (!orderVisitor.maintainsOrder()) {
         return false;
