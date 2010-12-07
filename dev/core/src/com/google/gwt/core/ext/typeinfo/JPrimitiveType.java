@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,31 +31,46 @@ import java.util.Map;
 /**
  * Represents a primitive type in a declaration.
  */
-public enum JPrimitiveType implements JType {
-  BOOLEAN("boolean", "Boolean", DESC_BOOLEAN, "false"), //
-  BYTE("byte", "Byte", DESC_BYTE, "0"), //
-  CHAR("char", "Character", DESC_CHAR, "0"), //
-  DOUBLE("double", "Double", DESC_DOUBLE, "0d"), //
-  FLOAT("float", "Float", DESC_FLOAT, "0f"), //
-  INT("int", "Integer", DESC_INT, "0"), //
-  LONG("long", "Long", DESC_LONG, "0L"), //
-  SHORT("short", "Short", DESC_SHORT, "0"), //
-  VOID("void", "Void", DESC_VOID, "null");
+public class JPrimitiveType extends JType {
+  public static final JPrimitiveType BOOLEAN = create("boolean", "Boolean",
+      DESC_BOOLEAN, "false");
+  public static final JPrimitiveType BYTE = create("byte", "Byte", DESC_BYTE,
+      "0");
+  public static final JPrimitiveType CHAR = create("char", "Character",
+      DESC_CHAR, "0");
+  public static final JPrimitiveType DOUBLE = create("double", "Double",
+      DESC_DOUBLE, "0d");
+  public static final JPrimitiveType FLOAT = create("float", "Float",
+      DESC_FLOAT, "0f");
+  public static final JPrimitiveType INT = create("int", "Integer", DESC_INT,
+      "0");
+  public static final JPrimitiveType LONG = create("long", "Long", DESC_LONG,
+      "0L");
+  public static final JPrimitiveType SHORT = create("short", "Short",
+      DESC_SHORT, "0");
+  public static final JPrimitiveType VOID = create("void", "Void", DESC_VOID,
+      "null");
 
-  /**
-   * Lazy-initialized map of Java identifier name to enum values.
-   */
-  private static class NameMap {
-    static final Map<String, JPrimitiveType> map = new HashMap<String, JPrimitiveType>();
-    static {
-      for (JPrimitiveType type : JPrimitiveType.values()) {
-        map.put(type.getSimpleSourceName(), type);
-      }
-    }
+  private static Map<String, JPrimitiveType> map;
+
+  public static JPrimitiveType valueOf(String typeName) {
+    return getMap().get(typeName);
   }
 
-  public static JPrimitiveType parse(String name) {
-    return NameMap.map.get(name);
+  private static JPrimitiveType create(String name, String boxedName, char jni,
+      String defaultValue) {
+    JPrimitiveType type = new JPrimitiveType(name, boxedName,
+        String.valueOf(jni), defaultValue);
+    Object existing = getMap().put(name, type);
+    assert (existing == null);
+    return type;
+  }
+
+  private static Map<String, JPrimitiveType> getMap() {
+    if (map == null) {
+      map = new HashMap<String, JPrimitiveType>();
+    }
+    return map;
   }
 
   private final String boxedName;
@@ -66,30 +81,25 @@ public enum JPrimitiveType implements JType {
 
   private final String name;
 
-  private JPrimitiveType(String name, String boxedName, char jni,
+  private JPrimitiveType(String name, String boxedName, String jni,
       String defaultValue) {
     this.name = name;
     this.boxedName = boxedName;
-    this.jni = String.valueOf(jni);
+    this.jni = jni;
     this.defaultValue = defaultValue;
   }
 
+  @Override
   public JType getErasedType() {
     return this;
   }
 
+  @Override
   public String getJNISignature() {
     return jni;
   }
 
-  public JType getLeafType() {
-    return this;
-  }
-
-  public String getParameterizedQualifiedSourceName() {
-    return name;
-  }
-
+  @Override
   public String getQualifiedBinaryName() {
     return name;
   }
@@ -98,10 +108,12 @@ public enum JPrimitiveType implements JType {
     return "java.lang." + boxedName;
   }
 
+  @Override
   public String getQualifiedSourceName() {
     return name;
   }
 
+  @Override
   public String getSimpleSourceName() {
     return name;
   }
@@ -110,50 +122,52 @@ public enum JPrimitiveType implements JType {
     return defaultValue;
   }
 
-  public JAnnotationType isAnnotation() {
-    return null;
-  }
-
+  @Override
   public JArrayType isArray() {
+    // intentional null
     return null;
   }
 
+  @Override
   public JClassType isClass() {
+    // intentional null
     return null;
   }
 
-  public JClassType isClassOrInterface() {
-    return null;
-  }
-
+  @Override
   public JEnumType isEnum() {
     return null;
   }
 
+  @Override
   public JGenericType isGenericType() {
     return null;
   }
 
+  @Override
   public JClassType isInterface() {
+    // intentional null
     return null;
   }
 
+  @Override
   public JParameterizedType isParameterized() {
+    // intentional null
     return null;
   }
 
+  @Override
   public JPrimitiveType isPrimitive() {
     return this;
   }
 
+  @Override
   public JRawType isRawType() {
+    // intentional null
     return null;
   }
 
-  public JTypeParameter isTypeParameter() {
-    return null;
-  }
-
+  @Override
   public JWildcardType isWildcard() {
     return null;
   }
@@ -161,5 +175,10 @@ public enum JPrimitiveType implements JType {
   @Override
   public String toString() {
     return name;
+  }
+
+  @Override
+  JPrimitiveType getSubstitutedType(JParameterizedType parameterizedType) {
+    return this;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,15 +15,42 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Type representing a Java enumerated type.
  */
-public interface JEnumType extends JRealClassType {
+public class JEnumType extends JRealClassType {
+  private JEnumConstant[] lazyEnumConstants;
+
+  JEnumType(TypeOracle oracle, JPackage declaringPackage,
+      String enclosingTypeName, String name) {
+    super(oracle, declaringPackage, enclosingTypeName, name, false);
+  }
+
   /**
    * Returns the enumeration constants declared by this enumeration.
    * 
    * @return enumeration constants declared by this enumeration
    */
+  public JEnumConstant[] getEnumConstants() {
+    if (lazyEnumConstants == null) {
+      List<JEnumConstant> enumConstants = new ArrayList<JEnumConstant>();
+      for (JField field : getFields()) {
+        if (field.isEnumConstant() != null) {
+          enumConstants.add(field.isEnumConstant());
+        }
+      }
 
-  JEnumConstant[] getEnumConstants();
+      lazyEnumConstants = enumConstants.toArray(new JEnumConstant[enumConstants.size()]);
+    }
+
+    return lazyEnumConstants;
+  }
+
+  @Override
+  public JEnumType isEnum() {
+    return this;
+  }
 }

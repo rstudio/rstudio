@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2006 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,61 +16,112 @@
 package com.google.gwt.core.ext.typeinfo;
 
 /**
- * Super interface for types.
+ * Abstract superclass for types.
  */
-public interface JType {
+public abstract class JType {
 
-  JType getErasedType();
+  JType() {
+  }
 
-  String getJNISignature();
+  /**
+   * All types use identity for comparison.
+   */
+  @Override
+  public final boolean equals(Object obj) {
+    return super.equals(obj);
+  }
 
-  JType getLeafType();
+  public abstract JType getErasedType();
 
-  String getParameterizedQualifiedSourceName();
+  public abstract String getJNISignature();
+
+  public JType getLeafType() {
+    return this;
+  }
+
+  public String getParameterizedQualifiedSourceName() {
+    return getQualifiedSourceName();
+  }
 
   /**
    * A binary type name as specified by the 
    * <a href="http://java.sun.com/docs/books/jls/second_edition/html/binaryComp.doc.html">
    * Java Language Spec, Edition 2</a>.
    */
-  String getQualifiedBinaryName();
+  public abstract String getQualifiedBinaryName();
 
   /**
    * A type name as it would be specified in Java source.
    */
-  String getQualifiedSourceName();
+  public abstract String getQualifiedSourceName();
 
-  String getSimpleSourceName();
+  public abstract String getSimpleSourceName();
+
+  /**
+   * All types use identity for comparison.
+   */
+  @Override
+  public final int hashCode() {
+    return super.hashCode();
+  }
 
   /**
    * Returns this instance if it is a annotation or <code>null</code> if it is
    * not.
+   * 
+   * @return this instance if it is a annotation or <code>null</code> if it is
+   *         not
    */
-  JAnnotationType isAnnotation();
+  public JAnnotationType isAnnotation() {
+    return null;
+  }
 
-  JArrayType isArray();
+  public abstract JArrayType isArray();
 
-  JClassType isClass();
+  public abstract JClassType isClass();
 
-  JClassType isClassOrInterface();
+  public JClassType isClassOrInterface() {
+    JClassType type = isClass();
+    if (type != null) {
+      return type;
+    }
+    return isInterface();
+  }
 
   /**
    * Returns this instance if it is an enumeration or <code>null</code> if it is
    * not.
+   * 
+   * @return this instance if it is an enumeration or <code>null</code> if it is
+   *         not
    */
-  JEnumType isEnum();
+  public abstract JEnumType isEnum();
 
-  JGenericType isGenericType();
+  // TODO: Rename this to isGeneric
+  public abstract JGenericType isGenericType();
 
-  JClassType isInterface();
+  public abstract JClassType isInterface();
 
-  JParameterizedType isParameterized();
+  public abstract JParameterizedType isParameterized();
 
-  JPrimitiveType isPrimitive();
+  public abstract JPrimitiveType isPrimitive();
 
-  JRawType isRawType();
+  // TODO: Rename this to isRaw
+  public abstract JRawType isRawType();
 
-  JTypeParameter isTypeParameter();
+  public JTypeParameter isTypeParameter() {
+    return null;
+  }
 
-  JWildcardType isWildcard();
+  public abstract JWildcardType isWildcard();
+
+  /**
+   * Returns either the substitution of this type based on the parameterized
+   * type or this instance.
+   * 
+   * @param parameterizedType
+   * @return either the substitution of this type based on the parameterized
+   *         type or this instance
+   */
+  abstract JType getSubstitutedType(JParameterizedType parameterizedType);
 }

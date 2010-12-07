@@ -330,10 +330,9 @@ public class TypeConstrainer {
     JModTypeVisitor replacer = new JModTypeVisitor() {
       @Override
       public void endVisit(JWildcardType wildcardType) {
-        // TODO: fix this to not assume the typemodel types.
-        com.google.gwt.dev.javac.typemodel.JTypeParameter newParam = new com.google.gwt.dev.javac.typemodel.JTypeParameter(
-            "TP$" + freshTypeVariableCounter++, -1);
-        newParam.setBounds(new com.google.gwt.dev.javac.typemodel.JClassType[]{(com.google.gwt.dev.javac.typemodel.JClassType) typeOracle.getJavaLangObject()});
+        JTypeParameter newParam = new JTypeParameter("TP$"
+            + freshTypeVariableCounter++, -1);
+        newParam.setBounds(makeArray(typeOracle.getJavaLangObject()));
         constraints.put(newParam, wildcardType.getUpperBound());
         replacement = newParam;
       }

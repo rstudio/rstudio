@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dev.javac.asm;
 
-import com.google.gwt.dev.javac.typemodel.JTypeParameter;
+import com.google.gwt.core.ext.typeinfo.JTypeParameter;
 
 import java.util.List;
 

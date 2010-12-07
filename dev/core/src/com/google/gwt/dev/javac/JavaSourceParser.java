@@ -15,10 +15,10 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
+import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JType;
-import com.google.gwt.dev.javac.typemodel.JAbstractMethod;
-import com.google.gwt.dev.javac.typemodel.JClassType;
-import com.google.gwt.dev.javac.typemodel.JParameter;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.Name.BinaryName;

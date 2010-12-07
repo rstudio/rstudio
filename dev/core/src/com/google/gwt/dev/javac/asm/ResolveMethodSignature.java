@@ -16,15 +16,15 @@
 package com.google.gwt.dev.javac.asm;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
+import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.ext.typeinfo.JTypeParameter;
 import com.google.gwt.dev.asm.Type;
 import com.google.gwt.dev.asm.signature.SignatureVisitor;
 import com.google.gwt.dev.javac.MethodArgNamesLookup;
 import com.google.gwt.dev.javac.Resolver;
 import com.google.gwt.dev.javac.TypeParameterLookup;
-import com.google.gwt.dev.javac.typemodel.JAbstractMethod;
-import com.google.gwt.dev.javac.typemodel.JClassType;
-import com.google.gwt.dev.javac.typemodel.JTypeParameter;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -44,7 +44,7 @@ public class ResolveMethodSignature extends EmptySignatureVisitor {
   private final Type[] argTypes;
   private ArrayList<JType[]> bounds = null;
   private JTypeParameter currentParam = null;
-  private final List<JClassType[]> exceptions = new ArrayList<JClassType[]>();
+  private final List<JType[]> exceptions = new ArrayList<JType[]>();
   private final boolean hasReturnType;
   private final TreeLogger logger;
   private final JAbstractMethod method;
@@ -136,7 +136,7 @@ public class ResolveMethodSignature extends EmptySignatureVisitor {
     }
 
     // Handle thrown exceptions
-    for (JClassType[] exc : exceptions) {
+    for (JType[] exc : exceptions) {
       if (exc[0] == null) {
         failed = true;
         continue;
@@ -162,7 +162,7 @@ public class ResolveMethodSignature extends EmptySignatureVisitor {
 
   @Override
   public SignatureVisitor visitExceptionType() {
-    JClassType[] exc = new JClassType[1];
+    JType[] exc = new JType[1];
     exceptions.add(exc);
     return new ResolveTypeSignature(resolver, resolver.getBinaryMapper(),
         logger, exc, typeParamLookup, null);

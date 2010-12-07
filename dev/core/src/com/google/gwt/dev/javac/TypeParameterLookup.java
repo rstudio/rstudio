@@ -15,9 +15,9 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.gwt.dev.javac.typemodel.JClassType;
-import com.google.gwt.dev.javac.typemodel.JGenericType;
-import com.google.gwt.dev.javac.typemodel.JTypeParameter;
+import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.JGenericType;
+import com.google.gwt.core.ext.typeinfo.JTypeParameter;
 import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.collect.Maps;
 

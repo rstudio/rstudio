@@ -16,8 +16,22 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
+import com.google.gwt.core.ext.typeinfo.JArrayType;
+import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.JField;
+import com.google.gwt.core.ext.typeinfo.JGenericType;
+import com.google.gwt.core.ext.typeinfo.JMethod;
+import com.google.gwt.core.ext.typeinfo.JPackage;
+import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
+import com.google.gwt.core.ext.typeinfo.JRawType;
+import com.google.gwt.core.ext.typeinfo.JRealClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.ext.typeinfo.JTypeParameter;
+import com.google.gwt.core.ext.typeinfo.JWildcardType;
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.core.ext.typeinfo.TypeOracleBuilder;
 import com.google.gwt.dev.asm.ClassReader;
 import com.google.gwt.dev.asm.ClassVisitor;
 import com.google.gwt.dev.asm.Opcodes;
@@ -34,20 +48,6 @@ import com.google.gwt.dev.javac.asm.ResolveMethodSignature;
 import com.google.gwt.dev.javac.asm.ResolveTypeSignature;
 import com.google.gwt.dev.javac.asm.CollectAnnotationData.AnnotationData;
 import com.google.gwt.dev.javac.asm.CollectClassData.AnnotationEnum;
-import com.google.gwt.dev.javac.typemodel.JAbstractMethod;
-import com.google.gwt.dev.javac.typemodel.JArrayType;
-import com.google.gwt.dev.javac.typemodel.JClassType;
-import com.google.gwt.dev.javac.typemodel.JField;
-import com.google.gwt.dev.javac.typemodel.JGenericType;
-import com.google.gwt.dev.javac.typemodel.JMethod;
-import com.google.gwt.dev.javac.typemodel.JPackage;
-import com.google.gwt.dev.javac.typemodel.JParameterizedType;
-import com.google.gwt.dev.javac.typemodel.JRawType;
-import com.google.gwt.dev.javac.typemodel.JRealClassType;
-import com.google.gwt.dev.javac.typemodel.JTypeParameter;
-import com.google.gwt.dev.javac.typemodel.JWildcardType;
-import com.google.gwt.dev.javac.typemodel.TypeOracle;
-import com.google.gwt.dev.javac.typemodel.TypeOracleBuilder;
 import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
@@ -170,7 +170,7 @@ public class TypeOracleMediator extends TypeOracleBuilder {
    */
   private static JType possiblySubstituteRawType(JType type) {
     if (type != null) {
-      JGenericType genericType = (JGenericType) type.isGenericType();
+      JGenericType genericType = type.isGenericType();
       if (genericType != null) {
         type = genericType.getRawType();
       }
@@ -205,7 +205,7 @@ public class TypeOracleMediator extends TypeOracleBuilder {
         TypeOracleMediator.this.addImplementedInterface(type, intf);
       }
 
-      public void addThrows(JAbstractMethod method, JClassType exception) {
+      public void addThrows(JAbstractMethod method, JType exception) {
         TypeOracleMediator.this.addThrows(method, exception);
       }
 
@@ -1052,7 +1052,7 @@ public class TypeOracleMediator extends TypeOracleBuilder {
         if (exc == null) {
           return false;
         }
-        addThrows(method, (JClassType) exc);
+        addThrows(method, exc);
       }
     }
     return true;

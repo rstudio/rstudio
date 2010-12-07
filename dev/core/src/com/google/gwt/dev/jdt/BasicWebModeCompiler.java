@@ -69,7 +69,7 @@ public class BasicWebModeCompiler extends AbstractCompiler {
       ICompilationUnit... additionalUnits) throws UnableToCompleteException {
 
     TypeOracle oracle = compilationState.getTypeOracle();
-    Set<? extends JClassType> intfTypes = oracle.getSingleJsoImplInterfaces();
+    Set<JClassType> intfTypes = oracle.getSingleJsoImplInterfaces();
     Map<String, CompiledClass> classMapBySource = compilationState.getClassFileMapBySource();
 
     /*

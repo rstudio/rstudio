@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,10 +15,41 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+import java.util.Arrays;
+
 /**
  * Type representing an annotation type.
  */
-public interface JAnnotationType extends JRealClassType {
-  JAnnotationMethod getMethod(String name, JType[] paramTypes)
-      throws NotFoundException;
+public class JAnnotationType extends JRealClassType {
+
+  JAnnotationType(TypeOracle oracle, JPackage declaringPackage,
+      String enclosingTypeName, String name) {
+    super(oracle, declaringPackage, enclosingTypeName, name, true);
+  }
+
+  @Override
+  public JAnnotationMethod getMethod(String name, JType[] paramTypes)
+      throws NotFoundException {
+    return (JAnnotationMethod) super.getMethod(name, paramTypes);
+  }
+
+  @Override
+  public JAnnotationMethod[] getMethods() {
+    JMethod[] methodArray = super.getMethods();
+    return Arrays.asList(methodArray).toArray(
+        new JAnnotationMethod[methodArray.length]);
+  }
+
+  @Override
+  public JAnnotationMethod[] getOverridableMethods() {
+    JMethod[] methodArray = super.getOverridableMethods();
+    return Arrays.asList(methodArray).toArray(
+        new JAnnotationMethod[methodArray.length]);
+  }
+
+  @Override
+  public JAnnotationType isAnnotation() {
+    return this;
+  }
+
 }

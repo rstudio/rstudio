@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,16 +15,353 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+import com.google.gwt.dev.util.collect.HashSet;
+
 import java.lang.annotation.Annotation;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * Type used to represent any non-primitive type.
  */
 @SuppressWarnings("deprecation")
-public interface JClassType extends JType, HasAnnotations, HasMetaData {
+public abstract class JClassType extends JType implements HasAnnotations,
+    HasMetaData {
 
-  JParameterizedType asParameterizationOf(JGenericType type);
+  /**
+   * Returns all of the superclasses and superinterfaces for a given type
+   * including the type itself. The returned set maintains an internal
+   * breadth-first ordering of the type, followed by its interfaces (and their
+   * super-interfaces), then the supertype and its interfaces, and so on.
+   */
+  protected static Set<JClassType> getFlattenedSuperTypeHierarchy(
+      JClassType type) {
+    Set<JClassType> flattened = type.flattenedSupertypes;
+    if (flattened == null) {
+      flattened = new LinkedHashSet<JClassType>();
+      getFlattenedSuperTypeHierarchyRecursive(type, flattened);
+      // flattened.size() > 1 for all types other than Object
+      type.flattenedSupertypes = Collections.unmodifiableSet(flattened);
+    }
+    return flattened;
+  }
+
+  /**
+   * Returns <code>true</code> if the rhs array type can be assigned to the lhs
+   * array type.
+   */
+  private static boolean areArraysAssignable(JArrayType lhsType,
+      JArrayType rhsType) {
+    // areClassTypesAssignable should prevent us from getting here if the types
+    // are referentially equal.
+    assert (lhsType != rhsType);
+
+    JType lhsComponentType = lhsType.getComponentType();
+    JType rhsComponentType = rhsType.getComponentType();
+
+    if (lhsComponentType.isPrimitive() != null
+        || rhsComponentType.isPrimitive() != null) {
+      /*
+       * Arrays are referentially stable so there will only be one int[] no
+       * matter how many times it is referenced in the code. So, if either
+       * component type is a primitive then we know that we are not assignable.
+       */
+      return false;
+    }
+
+    assert (lhsComponentType instanceof JClassType);
+    assert (rhsComponentType instanceof JClassType);
+
+    JClassType thisComponentClass = (JClassType) lhsComponentType;
+    JClassType subtypeComponentClass = (JClassType) rhsComponentType;
+
+    return areClassTypesAssignable(thisComponentClass, subtypeComponentClass);
+  }
+
+  /**
+   * Returns <code>true</code> if the rhsType can be assigned to the lhsType.
+   */
+  private static boolean areClassTypesAssignable(JClassType lhsType,
+      JClassType rhsType) {
+    // The supertypes of rhs will include rhs.
+    Set<JClassType> rhsSupertypes = getFlattenedSuperTypeHierarchy(rhsType);
+    for (JClassType rhsSupertype : rhsSupertypes) {
+      if (areClassTypesAssignableNoSupers(lhsType, rhsSupertype)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Returns <code>true</code> if the lhs and rhs are assignable without
+   * consideration of the supertypes of the rhs.
+   * 
+   * @param lhsType
+   * @param rhsType
+   * @return true if rhsType can be assigned to lhsType
+   */
+  private static boolean areClassTypesAssignableNoSupers(JClassType lhsType,
+      JClassType rhsType) {
+    if (lhsType == rhsType) {
+      // Done, these are the same types.
+      return true;
+    }
+
+    if (lhsType == lhsType.getOracle().getJavaLangObject()) {
+      // Done, any type can be assigned to object.
+      return true;
+    }
+
+    /*
+     * Get the generic base type, if there is one, for the lhs type and convert
+     * it to a raw type if it is generic.
+     */
+    if (lhsType.isGenericType() != null) {
+      lhsType = lhsType.isGenericType().getRawType();
+    }
+
+    if (rhsType.isGenericType() != null) {
+      // Treat the generic rhs type as a raw type.
+      rhsType = rhsType.isGenericType().getRawType();
+    }
+
+    // Check for JTypeParameters.
+    JTypeParameter lhsTypeParam = lhsType.isTypeParameter();
+    JTypeParameter rhsTypeParam = rhsType.isTypeParameter();
+    if (lhsTypeParam != null) {
+      JClassType[] lhsTypeBounds = lhsTypeParam.getBounds();
+      for (JClassType lhsTypeBound : lhsTypeBounds) {
+        if (!areClassTypesAssignable(lhsTypeBound, rhsType)) {
+          // Done, the rhsType was not assignable to one of the bounds.
+          return false;
+        }
+      }
+
+      // Done, the rhsType was assignable to all of the bounds.
+      return true;
+    } else if (rhsTypeParam != null) {
+      JClassType[] possibleSubtypeBounds = rhsTypeParam.getBounds();
+      for (JClassType possibleSubtypeBound : possibleSubtypeBounds) {
+        if (areClassTypesAssignable(lhsType, possibleSubtypeBound)) {
+          // Done, at least one bound is assignable to this type.
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    /*
+     * Check for JWildcards. We have not examined this part in great detail
+     * since there should not be top level wildcard types.
+     */
+    JWildcardType lhsWildcard = lhsType.isWildcard();
+    JWildcardType rhsWildcard = rhsType.isWildcard();
+    if (lhsWildcard != null && rhsWildcard != null) {
+      // Both types are wildcards.
+      return areWildcardsAssignable(lhsWildcard, rhsWildcard);
+    } else if (lhsWildcard != null) {
+      // The lhs type is a wildcard but the rhs is not.
+      // ? extends T, U OR ? super T, U
+      JClassType[] lowerBounds = lhsWildcard.getLowerBounds();
+      if (lowerBounds.length > 0) {
+        // ? super T will reach object no matter what the rhs type is
+        return true;
+      } else {
+        return areClassTypesAssignable(lhsWildcard.getFirstBound(), rhsType);
+      }
+    }
+
+    // Check for JArrayTypes.
+    JArrayType lhsArray = lhsType.isArray();
+    JArrayType rhsArray = rhsType.isArray();
+    if (lhsArray != null) {
+      if (rhsArray == null) {
+        return false;
+      } else {
+        return areArraysAssignable(lhsArray, rhsArray);
+      }
+    } else if (rhsArray != null) {
+      // Safe although perhaps not necessary
+      return false;
+    }
+
+    // Check for JParameterizedTypes and JRawTypes.
+    JMaybeParameterizedType lhsMaybeParameterized = lhsType.isMaybeParameterizedType();
+    JMaybeParameterizedType rhsMaybeParameterized = rhsType.isMaybeParameterizedType();
+    if (lhsMaybeParameterized != null && rhsMaybeParameterized != null) {
+      if (lhsMaybeParameterized.getBaseType() == rhsMaybeParameterized.getBaseType()) {
+        if (lhsMaybeParameterized.isRawType() != null
+            || rhsMaybeParameterized.isRawType() != null) {
+          /*
+           * Any raw type can be assigned to or from any parameterization of its
+           * generic type.
+           */
+          return true;
+        }
+
+        assert (lhsMaybeParameterized.isRawType() == null && rhsMaybeParameterized.isRawType() == null);
+        JParameterizedType lhsParameterized = lhsMaybeParameterized.isParameterized();
+        JParameterizedType rhsParameterized = rhsMaybeParameterized.isParameterized();
+        assert (lhsParameterized != null && rhsParameterized != null);
+
+        return areTypeArgumentsAssignable(lhsParameterized, rhsParameterized);
+      }
+    }
+
+    // Default to not being assignable.
+    return false;
+  }
+
+  /**
+   * Returns <code>true</code> if the type arguments of the rhs parameterized
+   * type are assignable to the type arguments of the lhs parameterized type.
+   */
+  private static boolean areTypeArgumentsAssignable(JParameterizedType lhsType,
+      JParameterizedType rhsType) {
+    // areClassTypesAssignable should prevent us from getting here if the types
+    // are referentially equal.
+    assert (lhsType != rhsType);
+    assert (lhsType.getBaseType() == rhsType.getBaseType());
+
+    JClassType[] lhsTypeArgs = lhsType.getTypeArgs();
+    JClassType[] rhsTypeArgs = rhsType.getTypeArgs();
+    JGenericType lhsBaseType = lhsType.getBaseType();
+
+    // Compare at least as many formal type parameters as are declared on the
+    // generic base type. gwt.typeArgs could cause more types to be included.
+
+    JTypeParameter[] lhsTypeParams = lhsBaseType.getTypeParameters();
+    for (int i = 0; i < lhsTypeParams.length; ++i) {
+      if (!doesTypeArgumentContain(lhsTypeArgs[i], rhsTypeArgs[i])) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Returns <code>true</code> if the rhsWildcard can be assigned to the
+   * lhsWildcard. This method does not consider supertypes of either lhs or rhs.
+   */
+  private static boolean areWildcardsAssignable(JWildcardType lhsWildcard,
+      JWildcardType rhsWildcard) {
+    // areClassTypesAssignable should prevent us from getting here if the types
+    // are referentially equal.
+    assert (lhsWildcard != rhsWildcard);
+    assert (lhsWildcard != null && rhsWildcard != null);
+
+    if (lhsWildcard.getLowerBounds().length > 0
+        && rhsWildcard.getLowerBounds().length > 0) {
+      // lhsType: ? super T, rhsType ? super U
+      return areClassTypesAssignable(rhsWildcard.getFirstBound(),
+          lhsWildcard.getFirstBound());
+    } else if (lhsWildcard.getUpperBounds().length > 0
+        && lhsWildcard.getLowerBounds().length == 0
+        && rhsWildcard.getUpperBounds().length > 0
+        && rhsWildcard.getLowerBounds().length == 0) {
+      // lhsType: ? extends T, rhsType: ? extends U
+      return areClassTypesAssignable(lhsWildcard.getFirstBound(),
+          rhsWildcard.getFirstBound());
+    }
+
+    return false;
+  }
+
+  /**
+   * A restricted version of areClassTypesAssignable that is used for comparing
+   * the type arguments of parameterized types, where the lhsTypeArg is the
+   * container.
+   */
+  private static boolean doesTypeArgumentContain(JClassType lhsTypeArg,
+      JClassType rhsTypeArg) {
+    if (lhsTypeArg == rhsTypeArg) {
+      return true;
+    }
+
+    // Check for wildcard types
+    JWildcardType lhsWildcard = lhsTypeArg.isWildcard();
+    JWildcardType rhsWildcard = rhsTypeArg.isWildcard();
+
+    if (lhsWildcard != null) {
+      if (rhsWildcard != null) {
+        return areWildcardsAssignable(lhsWildcard, rhsWildcard);
+      } else {
+        // LHS is a wildcard but the RHS is not.
+        if (lhsWildcard.getLowerBounds().length > 0) {
+          return areClassTypesAssignable(rhsTypeArg,
+              lhsWildcard.getFirstBound());
+        } else {
+          return areClassTypesAssignable(lhsWildcard.getFirstBound(),
+              rhsTypeArg);
+        }
+      }
+    }
+
+    /*
+     * At this point the arguments are not the same and they are not wildcards
+     * so, they cannot be assignable, Eh.
+     */
+    return false;
+  }
+
+  private static void getFlattenedSuperTypeHierarchyRecursive(JClassType type,
+      Set<JClassType> typesSeen) {
+    if (typesSeen.contains(type)) {
+      return;
+    }
+    typesSeen.add(type);
+
+    // Check the interfaces
+    JClassType[] intfs = type.getImplementedInterfaces();
+    for (JClassType intf : intfs) {
+      typesSeen.addAll(getFlattenedSuperTypeHierarchy(intf));
+    }
+
+    // Superclass
+    JClassType superclass = type.getSuperclass();
+    if (superclass != null) {
+      typesSeen.addAll(getFlattenedSuperTypeHierarchy(superclass));
+    }
+  }
+
+  /**
+   * Cached set of supertypes for this type (including itself). If null, the set
+   * has not been calculated yet.
+   */
+  private Set<JClassType> flattenedSupertypes;
+
+  /**
+   * True if this type may be enhanced with server-only fields. This property is
+   * 'sticky' and may be set but not unset, since we need to generate the
+   * relevant RPC code for handling the server fields if there is any chance the
+   * class will be enhanced.
+   */
+  private boolean isEnhanced = false;
+
+  public JParameterizedType asParameterizationOf(JGenericType type) {
+    Set<JClassType> supertypes = getFlattenedSuperTypeHierarchy(this);
+    for (JClassType supertype : supertypes) {
+      JParameterizedType isParameterized = supertype.isParameterized();
+      if (isParameterized != null && isParameterized.getBaseType() == type) {
+        return isParameterized;
+      }
+
+      JRawType isRaw = supertype.isRawType();
+      if (isRaw != null && isRaw.getBaseType() == type) {
+        return isRaw.asParameterizedByWildcards();
+      }
+    }
+
+    return null;
+  }
 
   /**
    * Find an annotation on a type or on one of its superclasses or
@@ -44,27 +381,71 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
    * @return the desired annotation or <code>null</code> if the annotation is
    *         not present in the type's type hierarchy
    */
-  <T extends Annotation> T findAnnotationInTypeHierarchy(Class<T> annotationType);
+  public <T extends Annotation> T findAnnotationInTypeHierarchy(
+      Class<T> annotationType) {
 
-  JConstructor findConstructor(JType[] paramTypes);
+    // Remember what we've seen to avoid loops
+    Set<JClassType> seen = new HashSet<JClassType>();
 
-  JField findField(String name);
+    // Work queue
+    List<JClassType> searchTypes = new LinkedList<JClassType>();
+    searchTypes.add(this);
 
-  JMethod findMethod(String name, JType[] paramTypes);
+    T toReturn = null;
 
-  JClassType findNestedType(String typeName);
+    while (!searchTypes.isEmpty()) {
+      JClassType current = searchTypes.remove(0);
 
-  JConstructor getConstructor(JType[] paramTypes) throws NotFoundException;
+      if (!seen.add(current)) {
+        continue;
+      }
 
-  JConstructor[] getConstructors();
+      toReturn = current.getAnnotation(annotationType);
+      if (toReturn != null) {
+        /*
+         * First one wins. It might be desirable at some point to have a
+         * variation that can return more than one instance of the annotation if
+         * it is present on multiple supertypes.
+         */
+        break;
+      }
 
-  JClassType getEnclosingType();
+      if (current.getSuperclass() != null) {
+        // Add the superclass at the front of the list
+        searchTypes.add(0, current.getSuperclass());
+      }
 
-  JClassType getErasedType();
+      // Superinterfaces
+      Collections.addAll(searchTypes, current.getImplementedInterfaces());
+    }
 
-  JField getField(String name);
+    return toReturn;
+  }
 
-  JField[] getFields();
+  public abstract JConstructor findConstructor(JType[] paramTypes);
+
+  public abstract JField findField(String name);
+
+  public abstract JMethod findMethod(String name, JType[] paramTypes);
+
+  public abstract JClassType findNestedType(String typeName);
+
+  public abstract <T extends Annotation> T getAnnotation(
+      Class<T> annotationClass);
+
+  public abstract JConstructor getConstructor(JType[] paramTypes)
+      throws NotFoundException;
+
+  public abstract JConstructor[] getConstructors();
+
+  public abstract JClassType getEnclosingType();
+
+  @Override
+  public abstract JClassType getErasedType();
+
+  public abstract JField getField(String name);
+
+  public abstract JField[] getFields();
 
   /**
    * Returns all of the superclasses and superinterfaces for a given type
@@ -72,9 +453,12 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
    * breadth-first ordering of the type, followed by its interfaces (and their
    * super-interfaces), then the supertype and its interfaces, and so on.
    */
-  Set<? extends JClassType> getFlattenedSupertypeHierarchy();
+  public Set<JClassType> getFlattenedSupertypeHierarchy() {
+    // Retuns an immutable set
+    return getFlattenedSuperTypeHierarchy(this);
+  }
 
-  JClassType[] getImplementedInterfaces();
+  public abstract JClassType[] getImplementedInterfaces();
 
   /**
    * Iterates over the most-derived declaration of each unique inheritable
@@ -89,25 +473,37 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
    * @return an array of {@link JMethod} objects representing inheritable
    *         methods
    */
-  JMethod[] getInheritableMethods();
+  public abstract JMethod[] getInheritableMethods();
 
-  JMethod getMethod(String name, JType[] paramTypes) throws NotFoundException;
+  @Deprecated
+  public final String[][] getMetaData(String tagName) {
+    return TypeOracle.NO_STRING_ARR_ARR;
+  }
+
+  @Deprecated
+  public final String[] getMetaDataTags() {
+    return TypeOracle.NO_STRINGS;
+  }
+
+  public abstract JMethod getMethod(String name, JType[] paramTypes)
+      throws NotFoundException;
 
   /*
    * Returns the declared methods of this class (not any superclasses or
    * superinterfaces).
    */
-  JMethod[] getMethods();
+  public abstract JMethod[] getMethods();
 
-  String getName();
+  public abstract String getName();
 
-  JClassType getNestedType(String typeName) throws NotFoundException;
+  public abstract JClassType getNestedType(String typeName)
+      throws NotFoundException;
 
-  JClassType[] getNestedTypes();
+  public abstract JClassType[] getNestedTypes();
 
-  TypeOracle getOracle();
+  public abstract TypeOracle getOracle();
 
-  JMethod[] getOverloads(String name);
+  public abstract JMethod[] getOverloads(String name);
 
   /**
    * Iterates over the most-derived declaration of each unique overridable
@@ -126,15 +522,18 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
    * @return an array of {@link JMethod} objects representing overridable
    *         methods
    */
-  JMethod[] getOverridableMethods();
+  public abstract JMethod[] getOverridableMethods();
 
-  JPackage getPackage();
+  public abstract JPackage getPackage();
 
-  JClassType[] getSubtypes();
+  public abstract JClassType[] getSubtypes();
 
-  JClassType getSuperclass();
+  public abstract JClassType getSuperclass();
 
-  boolean isAbstract();
+  public abstract boolean isAbstract();
+
+  public abstract boolean isAnnotationPresent(
+      Class<? extends Annotation> annotationClass);
 
   /**
    * Returns <code>true</code> if this {@link JClassType} is assignable from the
@@ -147,7 +546,13 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
    * @throws NullPointerException if <code>possibleSubtype</code> is
    *           <code>null</code>
    */
-  boolean isAssignableFrom(JClassType possibleSubtype);
+  public boolean isAssignableFrom(JClassType possibleSubtype) {
+    if (possibleSubtype == null) {
+      throw new NullPointerException("possibleSubtype");
+    }
+
+    return areClassTypesAssignable(this, possibleSubtype);
+  }
 
   /**
    * Returns <code>true</code> if this {@link JClassType} is assignable to the
@@ -160,7 +565,13 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
    * @throws NullPointerException if <code>possibleSupertype</code> is
    *           <code>null</code>
    */
-  boolean isAssignableTo(JClassType possibleSupertype);
+  public boolean isAssignableTo(JClassType possibleSupertype) {
+    if (possibleSupertype == null) {
+      throw new NullPointerException("possibleSupertype");
+    }
+
+    return areClassTypesAssignable(possibleSupertype, this);
+  }
 
   /**
    * Determines if the class can be constructed using a simple <code>new</code>
@@ -174,7 +585,7 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
    * @return <code>true</code> if the type is default instantiable, or
    *         <code>false</code> otherwise
    */
-  boolean isDefaultInstantiable();
+  public abstract boolean isDefaultInstantiable();
 
   /**
    * Returns true if the type may be enhanced on the server to contain extra
@@ -182,15 +593,25 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
    * 
    * @return <code>true</code> if the type might be enhanced on the server
    */
-  boolean isEnhanced();
+  public final boolean isEnhanced() {
+    return isEnhanced;
+  }
 
-  boolean isFinal();
+  public abstract boolean isFinal();
+
+  @Override
+  public abstract JGenericType isGenericType();
+
+  @Override
+  public abstract JClassType isInterface();
 
   /**
    * @deprecated local types are not modeled
    */
   @Deprecated
-  boolean isLocalType();
+  public final boolean isLocalType() {
+    return false;
+  }
 
   /**
    * Tests if this type is contained within another type.
@@ -198,15 +619,15 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
    * @return true if this type has an enclosing type, false if this type is a
    *         top-level type
    */
-  boolean isMemberType();
+  public abstract boolean isMemberType();
 
-  boolean isPrivate();
+  public abstract boolean isPrivate();
 
-  boolean isProtected();
+  public abstract boolean isProtected();
 
-  boolean isPublic();
+  public abstract boolean isPublic();
 
-  boolean isStatic();
+  public abstract boolean isStatic();
 
   /**
    * Indicates that the type may be enhanced on the server to contain extra
@@ -214,5 +635,81 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
    * 
    * TODO(rice): find a better way to do this.
    */
-  void setEnhanced();
+  public void setEnhanced() {
+    this.isEnhanced = true;
+  }
+
+  @Override
+  public String toString() {
+    return this.getQualifiedSourceName();
+  }
+
+  protected abstract void acceptSubtype(JClassType me);
+
+  protected abstract void getInheritableMethodsOnSuperclassesAndThisClass(
+      Map<String, JMethod> methodsBySignature);
+
+  /**
+   * Gets the methods declared in interfaces that this type extends. If this
+   * type is a class, its own methods are not added. If this type is an
+   * interface, its own methods are added. Used internally by
+   * {@link #getOverridableMethods()}.
+   * 
+   * @param methodsBySignature
+   */
+  protected abstract void getInheritableMethodsOnSuperinterfacesAndMaybeThisInterface(
+      Map<String, JMethod> methodsBySignature);
+
+  protected abstract int getModifierBits();
+
+  protected JMaybeParameterizedType isMaybeParameterizedType() {
+    return null;
+  }
+
+  /**
+   * Tells this type's superclasses and superinterfaces about it.
+   */
+  protected abstract void notifySuperTypesOf(JClassType me);
+
+  protected abstract void removeSubtype(JClassType me);
+
+  abstract void addConstructor(JConstructor ctor);
+
+  abstract void addField(JField field);
+
+  abstract void addImplementedInterface(JClassType intf);
+
+  abstract void addMethod(JMethod method);
+
+  abstract void addModifierBits(int bits);
+
+  abstract void addNestedType(JClassType type);
+
+  abstract JClassType findNestedTypeImpl(String[] typeName, int index);
+
+  /**
+   * Returns all of the annotations declared or inherited by this instance.
+   * 
+   * NOTE: This method is for testing purposes only.
+   */
+  abstract Annotation[] getAnnotations();
+
+  /**
+   * Returns all of the annotations declared on this instance.
+   * 
+   * NOTE: This method is for testing purposes only.
+   */
+  abstract Annotation[] getDeclaredAnnotations();
+
+  @Override
+  abstract JClassType getSubstitutedType(JParameterizedType parameterizedType);
+
+  abstract void notifySuperTypes();
+
+  /**
+   * Removes references to this instance from all of its super types.
+   */
+  abstract void removeFromSupertypes();
+
+  abstract void setSuperclass(JClassType type);
 }
