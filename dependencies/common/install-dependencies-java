@@ -18,12 +18,12 @@ INSTALL_DIR=`pwd`
 
 download()
 {
-  WGET=`which wget`
-  if [ "$WGET" != "" ]
+  CURL=`which curl`
+  if [ "$CURL" != "" ]
   then
-    wget https://s3.amazonaws.com/rstudio-buildtools/$1 -O $1
-  else
     curl -L https://s3.amazonaws.com/rstudio-buildtools/$1 > $1
+  else
+    wget https://s3.amazonaws.com/rstudio-buildtools/$1 -O $1
   fi
 }
 
