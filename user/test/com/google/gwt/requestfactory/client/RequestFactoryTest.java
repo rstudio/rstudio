@@ -1069,6 +1069,27 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     });
   }
 
+  /**
+   * Test that the server code will not allow a persisted entity to be returned
+   * if it has a null version property.
+   */
+  public void testPersistedEntityWithNullVersion() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    simpleFooRequest().getSimpleFooWithNullVersion().fire(
+        new Receiver<SimpleFooProxy>() {
+
+          @Override
+          public void onFailure(ServerFailure error) {
+            finishTestAndReset();
+          }
+
+          @Override
+          public void onSuccess(SimpleFooProxy response) {
+            fail();
+          }
+        });
+  }
+
   public void testPersistExistingEntityExistingRelation() {
     delayTestFinish(DELAY_TEST_FINISH);
 

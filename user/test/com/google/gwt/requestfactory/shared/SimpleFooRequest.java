@@ -49,6 +49,8 @@ public interface SimpleFooRequest extends RequestContext {
 
   Request<Set<Integer>> getNumberSet();
 
+  Request<SimpleFooProxy> getSimpleFooWithNullVersion();
+  
   Request<SimpleFooProxy> getSimpleFooWithSubPropertyCollection();
 
   Request<SimpleFooProxy> getTripletReference();

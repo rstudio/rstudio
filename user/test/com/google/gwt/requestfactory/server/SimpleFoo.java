@@ -124,6 +124,16 @@ public class SimpleFoo {
     return list;
   }
 
+  /**
+   * This tests that the server detects and disallows the use of persisted
+   * objects with a null version property.
+   */
+  public static SimpleFoo getSimpleFooWithNullVersion() {
+    SimpleFoo foo = new SimpleFoo();
+    foo.setVersion(null);
+    return foo;
+  }
+
   public static SimpleFoo getSimpleFooWithSubPropertyCollection() {
     SimpleFoo foo = new SimpleFoo();
     SimpleFoo subFoo = new SimpleFoo();

@@ -67,8 +67,8 @@ public class ComplexKeysTest extends GWTTestCase {
       return key;
     }
 
-    public Void getVersion() {
-      return null;
+    public Integer getVersion() {
+      return 0;
     }
   }
 
@@ -101,8 +101,8 @@ public class ComplexKeysTest extends GWTTestCase {
       return key;
     }
 
-    public Void getVersion() {
-      return null;
+    public Integer getVersion() {
+      return 0;
     }
   }
 
@@ -129,8 +129,8 @@ public class ComplexKeysTest extends GWTTestCase {
       return key;
     }
 
-    public Void getVersion() {
-      return null;
+    public Integer getVersion() {
+      return 0;
     }
   }
 

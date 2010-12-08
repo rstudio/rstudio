@@ -82,7 +82,7 @@ public abstract class AbstractRequestFactory extends IdFactory implements
       protected RequestData makeRequestData() {
         return new RequestData(
             "com.google.gwt.requestfactory.shared.impl.FindRequest::find",
-            new Object[] {proxyId}, propertyRefs, proxyId.getProxyClass(), null);
+            new Object[]{proxyId}, propertyRefs, proxyId.getProxyClass(), null);
       }
     };
   }
@@ -142,6 +142,8 @@ public abstract class AbstractRequestFactory extends IdFactory implements
    */
   protected boolean hasVersionChanged(SimpleProxyId<?> id,
       String observedVersion) {
+    assert id != null : "id";
+    assert observedVersion != null : "observedVersion";
     String key = getHistoryToken(id);
     String existingVersion = version.get(key);
     // Return true if we haven't seen this before or the versions differ
