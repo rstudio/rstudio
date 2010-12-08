@@ -59,7 +59,7 @@ then
             macosx-version=10.5 macosx-version-min=10.5 \
             install
    else
-       ./bjam variant=release install
+     ./bjam variant=release install
    fi
 
    # go back to the original install dir and remove build dir
