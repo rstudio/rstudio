@@ -14,9 +14,9 @@
 #
 
 # java
-cd ..
+cd ../common
 ./install-dependencies-java
-cd osx
+cd ../osx
 
 # boost
 sudo ./install-boost-osx

@@ -37,9 +37,9 @@ sudo yum install -y ant
 sudo ./install-boost-linux
 
 # java
-cd ..
+cd ../common
 ./install-dependencies-java
-cd linux
+cd ../linux
 
 # desktop dependencies (qt)
 if [ "$1" != "--server-only" ]

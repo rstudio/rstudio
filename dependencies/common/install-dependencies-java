@@ -28,7 +28,7 @@ download()
 }
 
 # target directory for gwt
-GWT_DIR=$INSTALL_DIR/../src/gwt
+GWT_DIR=$INSTALL_DIR/../../src/gwt
 
 # lib dir
 LIB_DIR=$GWT_DIR/lib
