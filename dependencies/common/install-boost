@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# install-boost-linux
+# install-boost
 #
 # Copyright (C) 2009-11 by RStudio, Inc.
 #
@@ -16,6 +16,9 @@
 # install dir 
 INSTALL_DIR=`pwd`
 
+# determine platform
+PLATFORM=`uname`
+
 # vars
 BOOST_VERSION_NUMBER=1.44.0
 BOOST_VERSION=boost_1_44_0
@@ -25,11 +28,15 @@ BOOST_BUILD_DIR=boost-build
 # install if we aren't already installed
 if ! test -e /usr/local/include/boost
 then
-
    # download boost
-   sudo apt-get -y install curl
-   curl -L http://sourceforge.net/projects/boost/files/boost/$BOOST_VERSION_NUMBER/$BOOST_TAR/download?use_mirror=autoselect > $BOOST_TAR
-
+   BOOST_URL=http://sourceforge.net/projects/boost/files/boost/$BOOST_VERSION_NUMBER/$BOOST_TAR/download?use_mirror=autoselect
+   if [ "$PLATFORM" == "Darwin" ]
+   then
+      curl -L $BOOST_URL > $BOOST_TAR
+   else
+      wget $BOOST_URL -O $BOOST_TAR
+   fi
+   
    # remove existing boost installation
    rm -rf /usr/local/include/boost
    rm -rf /usr/local/lib/libboost_*
@@ -40,10 +47,20 @@ then
    cd $BOOST_BUILD_DIR
    tar --bzip2 -xf ../$BOOST_TAR
 
-   # build and install
+   # bootstrap boost
    cd $BOOST_VERSION
    ./bootstrap.sh  
-   ./bjam variant=release install
+   
+   # special variation of build for osx (multi-arch, tied to 10.5)
+   if [ "$PLATFORM" == "Darwin" ]
+   then
+     ./bjam variant=release threading=multi link=static \
+            architecture=x86 address-model=32_64 \
+            macosx-version=10.5 macosx-version-min=10.5 \
+            install
+   else
+       ./bjam variant=release install
+   fi
 
    # go back to the original install dir and remove build dir
    cd $INSTALL_DIR
@@ -56,3 +73,5 @@ else
 
 fi
 
+# back to install dir
+cd $INSTALL_DIR

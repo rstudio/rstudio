@@ -33,12 +33,9 @@ sudo yum install -y pango-devel
 sudo yum install -y java-1.6.0-openjdk 
 sudo yum install -y ant
 
-# boost
-sudo ./install-boost-linux
-
-# java
+# common
 cd ../common
-./install-dependencies-java
+./install-dependencies-common
 cd ../linux
 
 # desktop dependencies (qt)

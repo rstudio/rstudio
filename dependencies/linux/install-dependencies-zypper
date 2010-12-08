@@ -33,12 +33,9 @@ sudo zypper --non-interactive in pango-devel
 sudo zypper --non-interactive in java-1_6_0-openjdk
 sudo zypper --non-interactive in ant
 
-# boost
-sudo ./install-boost-linux
-
-# java
+# common
 cd ../common
-./install-dependencies-java
+./install-dependencies-common
 cd ../linux
 
 # desktop dependencies (qt)

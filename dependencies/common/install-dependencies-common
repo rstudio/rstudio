@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# install-dependencies-ports
+# install-common
 #
 # Copyright (C) 2009-11 by RStudio, Inc.
 #
@@ -13,10 +13,8 @@
 #
 #
 
-# java
-cd ../common
-./install-dependencies-common
-cd ../osx
+# java dependencies
+./install-dependencies-java
 
-# enable PAM
-sudo cp /etc/pam.d/ftpd /etc/pam.d/rstudio
+# boost
+sudo ./install-boost

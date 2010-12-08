@@ -31,12 +31,9 @@ sudo apt-get -y install libpango1.0-dev
 sudo apt-get -y install openjdk-6-jdk 
 sudo apt-get -y install ant
 
-# boost
-sudo ./install-boost-linux
-
-# java
+# common
 cd ../common
-./install-dependencies-java
+./install-dependencies-common
 cd ../linux
 
 # desktop dependencies (qt)
