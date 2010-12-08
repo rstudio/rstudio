@@ -14,7 +14,7 @@
 #ifndef CORE_HTTP_TCP_IP_ASYNC_CLIENT_SSL_HPP
 #define CORE_HTTP_TCP_IP_ASYNC_CLIENT_SSL_HPP
 
-#ifdef WIN32
+#ifdef _WIN32
 #error TcpIpAsyncClientSsl is not supported on Windows
 #endif
 
