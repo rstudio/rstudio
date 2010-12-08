@@ -277,11 +277,12 @@ public abstract class ModalDialogBase extends DialogBox
           && !originallyActiveElement_.getTagName().equalsIgnoreCase("body"))
       {
          Document doc = originallyActiveElement_.getOwnerDocument();
-         if (doc != null && doc.isOrHasChild(originallyActiveElement_))
+         if (doc != null)
          {
             originallyActiveElement_.focus();
          }
       }
+      originallyActiveElement_ = null;
    }
    
    protected SimplePanel getContainerPanel()
