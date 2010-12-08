@@ -116,18 +116,25 @@ if(WIN32)
    configure_file (${CMAKE_CURRENT_SOURCE_DIR}/rdesktop.rc.in
                    ${CMAKE_CURRENT_BINARY_DIR}/rdesktop.rc)
 
+   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/RStudio.ico
+                   ${CMAKE_CURRENT_BINARY_DIR}/RStudio.ico COPYONLY)
+
+   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/rdesktop.exe.manifest
+                   ${CMAKE_CURRENT_BINARY_DIR}/rdesktop.exe.manifest COPYONLY)
+
    if(MINGW)
       set(LINK_FLAGS -Wl,-subsystem,windows -lversion)
       add_custom_command(
          OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/res.o"
          COMMAND windres.exe
-            -I "${CMAKE_CURRENT_SOURCE_DIR}"
-            -i "\"${CMAKE_CURRENT_BINARY_DIR}/rdesktop.rc\""
+            -I "."
+            -i "rdesktop.rc"
             -o "${CMAKE_CURRENT_BINARY_DIR}/res.o"
             -Ocoff
          DEPENDS
             "${CMAKE_CURRENT_BINARY_DIR}/rdesktop.rc"
-            "${CMAKE_CURRENT_SOURCE_DIR}/rdesktop.exe.manifest")
+            "${CMAKE_CURRENT_SOURCE_DIR}/rdesktop.exe.manifest"
+            "${CMAKE_CURRENT_SOURCE_DIR}/RStudio.ico")
       set(DESKTOP_SOURCE_FILES
          ${DESKTOP_SOURCE_FILES}
          "${CMAKE_CURRENT_BINARY_DIR}/res.o")
