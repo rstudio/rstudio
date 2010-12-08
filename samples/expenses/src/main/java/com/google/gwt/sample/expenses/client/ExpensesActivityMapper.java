@@ -38,12 +38,12 @@ public class ExpensesActivityMapper implements ActivityMapper {
   public Activity getActivity(Place place) {
     if (place instanceof ReportListPlace) {
       expenseList.updateForPlace((ReportListPlace) place);
-      return expenseList;
+      return expenseList.asActivity();
     }
 
     if (place instanceof ReportPlace) {
       expenseDetails.updateForPlace((ReportPlace) place);
-      return expenseDetails;
+      return expenseDetails.asActivity();
     }
 
     return null;

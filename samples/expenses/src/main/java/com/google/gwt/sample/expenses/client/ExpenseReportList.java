@@ -16,6 +16,8 @@
 package com.google.gwt.sample.expenses.client;
 
 import com.google.gwt.activity.shared.Activity;
+import com.google.gwt.activity.shared.IsActivity;
+import com.google.gwt.activity.shared.SimpleActivity;
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.DateCell;
@@ -76,7 +78,7 @@ import java.util.Set;
  * The list of expense reports on the right side of the app.
  */
 public class ExpenseReportList extends Composite implements
-    EntityProxyChange.Handler<ReportProxy>, Activity {
+    EntityProxyChange.Handler<ReportProxy>, IsActivity {
 
   interface Binder extends UiBinder<Widget, ExpenseReportList> {
   }
@@ -176,6 +178,23 @@ public class ExpenseReportList extends Composite implements
       }
     }
   }
+
+  private final Activity activityAspect = new SimpleActivity() {
+    @Override
+    public void onCancel() {
+      ExpenseReportList.this.onCancel();
+    }
+
+    @Override
+    public void onStop() {
+      ExpenseReportList.this.onStop();
+    }
+
+    @Override
+    public void start(AcceptsOneWidget panel, EventBus eventBus) {
+      ExpenseReportList.this.start(panel, eventBus);
+    }
+  };
 
   private static final ProvidesKey<ReportProxy> keyProvider = new EntityProxyKeyProvider<ReportProxy>();
 
@@ -337,12 +356,8 @@ public class ExpenseReportList extends Composite implements
     });
   }
 
-  public String mayStop() {
-    return null;
-  }
-
-  public void onCancel() {
-    onStop();
+  public Activity asActivity() {
+    return activityAspect;
   }
 
   public void onProxyChange(EntityProxyChange<ReportProxy> event) {
@@ -359,22 +374,8 @@ public class ExpenseReportList extends Composite implements
     }
   }
 
-  public void onStop() {
-    running = false;
-    refreshTimer.cancel();
-  }
-
   public void setListener(Listener listener) {
     this.listener = listener;
-  }
-
-  public void start(AcceptsOneWidget panel, EventBus eventBus) {
-    running = true;
-    doUpdateForPlace();
-
-    EntityProxyChange.registerForProxyType(eventBus, ReportProxy.class, this);
-    requestReports(false);
-    panel.setWidget(this);
   }
 
   /**
@@ -396,6 +397,24 @@ public class ExpenseReportList extends Composite implements
     p.setDisplay(table);
     p.setRangeLimited(true);
     return p;
+  }
+
+  void onCancel() {
+    onStop();
+  }
+
+  void onStop() {
+    running = false;
+    refreshTimer.cancel();
+  }
+
+  void start(AcceptsOneWidget panel, EventBus eventBus) {
+    running = true;
+    doUpdateForPlace();
+
+    EntityProxyChange.registerForProxyType(eventBus, ReportProxy.class, this);
+    requestReports(false);
+    panel.setWidget(this);
   }
 
   /**
