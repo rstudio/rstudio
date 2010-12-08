@@ -67,7 +67,7 @@ public class IconCellDecoratorTest extends CellTestBase<String> {
     cell.render(context, "helloworld", sb);
 
     // Compare the expected render string.
-    String expected = "<div style=\"position:relative;padding-left:64px;\">";
+    String expected = "<div style=\"position:relative;padding-left:64px;zoom:1;\">";
     expected += cell.getImageHtml(images.prettyPiccy(),
         HasVerticalAlignment.ALIGN_MIDDLE, true).asString();
     expected += "<div>helloworld</div>";
@@ -123,7 +123,7 @@ public class IconCellDecoratorTest extends CellTestBase<String> {
   @Override
   protected String getExpectedInnerHtml() {
     IconCellDecorator<String> cell = createCell();
-    String html = "<div style=\"position:relative;padding-left:64px;\">";
+    String html = "<div style=\"position:relative;padding-left:64px;zoom:1;\">";
     html += cell.getIconHtml("helloworld").asString();
     html += "<div>helloworld</div>";
     html += "</div>";
@@ -133,7 +133,7 @@ public class IconCellDecoratorTest extends CellTestBase<String> {
   @Override
   protected String getExpectedInnerHtmlNull() {
     IconCellDecorator<String> cell = createCell();
-    String html = "<div style=\"position:relative;padding-left:64px;\">";
+    String html = "<div style=\"position:relative;padding-left:64px;zoom:1;\">";
     html += cell.getIconHtml("helloworld").asString();
     html += "<div></div>";
     html += "</div>";

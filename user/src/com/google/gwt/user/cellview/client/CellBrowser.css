@@ -27,10 +27,12 @@
 
 .cellBrowserEvenItem {
   padding: 8px;
+  zoom: 1;
 }
 
 .cellBrowserOddItem {
   padding: 8px;
+  zoom: 1;
 }
 
 .cellBrowserKeyboardSelectedItem {

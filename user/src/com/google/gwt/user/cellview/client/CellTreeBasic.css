@@ -27,6 +27,7 @@
   padding-bottom: 4px;
   cursor: hand;
   cursor: pointer;
+  zoom: 1;
 }
 
 .cellTreeItemImage {
@@ -34,7 +35,7 @@
 }
 
 .cellTreeItemImageValue {
-  
+  zoom: 1;
 }
 
 .cellTreeItemValue {

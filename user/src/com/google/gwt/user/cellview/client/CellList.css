@@ -19,10 +19,12 @@
 
 .cellListEvenItem {
   cursor: pointer;
+  zoom: 1;
 }
 
 .cellListOddItem {
   cursor: pointer;
+  zoom: 1;
 }
 
 .cellListKeyboardSelectedItem {

@@ -443,11 +443,6 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
         + "width:{2}px;height:{3}px;\">{4}</div>")
     SafeHtml imageWrapper(String classes, String direction, int width,
         int height, SafeHtml image);
-
-    @Template("<div class=\"{0}\" style=\"position:absolute;{1}:-{2}px;"
-        + "width:{2}px;height:{3}px;\">{4}</div>")
-    SafeHtml imageWrapperIE6(String classes, String direction, int width,
-        int height, SafeHtml image);
   }
 
   /**
@@ -461,30 +456,6 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
         int height, SafeHtml image) {
       return template.imageWrapper(classes, direction, width, height, image);
     }
-  }
-
-  /**
-   * Implementation of {@link CellTable} used by IE6.
-   */
-  @SuppressWarnings("unused")
-  private static class ImplIE6 extends Impl {
-    @Override
-    public SafeHtml imageWrapper(String classes, String direction, int width,
-        int height, SafeHtml image) {
-      /*
-       * In IE6, left/right positions are relative to the inside of the padding
-       * instead of the outside of the padding. The bug does not happen on IE7,
-       * which maps to the IE6 user agent, so we need a runtime check for IE6.
-       */
-      if (isIe6()) {
-        return template.imageWrapperIE6(classes, direction, width, height, image);
-      }
-      return super.imageWrapper(classes, direction, width, height, image);
-    }
-
-    private native boolean isIe6() /*-{
-      return @com.google.gwt.dom.client.DOMImplIE6::isIE6()();
-    }-*/;
   }
 
   /**

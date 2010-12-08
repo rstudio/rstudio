@@ -38,7 +38,7 @@ import java.util.Set;
 public class IconCellDecorator<C> implements Cell<C> {
 
   interface Template extends SafeHtmlTemplates {
-    @Template("<div style=\"position:relative;padding-{0}:{1}px;\">{2}<div>{3}</div></div>")
+    @Template("<div style=\"position:relative;padding-{0}:{1}px;zoom:1;\">{2}<div>{3}</div></div>")
     SafeHtml outerDiv(String direction, int width, SafeHtml icon,
         SafeHtml cellContents);
 
