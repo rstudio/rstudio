@@ -158,7 +158,7 @@ public class Application implements ApplicationEventHandlers,
    @Handler
    public void onHelpUsingRStudio()
    {
-      openRStudioLink("using_rstudio");
+      globalDisplay_.openRStudioLink("help");
    }
    
    @Handler
@@ -170,6 +170,12 @@ public class Application implements ApplicationEventHandlers,
    private void showAgreement()
    {
       globalDisplay_.openWindow(server_.getApplicationURL("agreement"));
+   }
+   
+   @Handler
+   public void onRstudioSupport()
+   {
+      globalDisplay_.openRStudioLink("support");
    }
    
    @Handler
@@ -199,24 +205,6 @@ public class Application implements ApplicationEventHandlers,
    public final native void onRaiseException2() /*-{
       $wnd.welfkjweg();
    }-*/;
-
-   @Handler
-   public void onSupportReportABug()
-   {
-      openRStudioLink("report_a_bug");
-   }
-   
-   @Handler
-   public void onSupportSuggestAFeature()
-   {
-      openRStudioLink("suggest_a_feature");
-   }
-   
-   @Handler
-   public void onSupportAskAQuestion()
-   {
-      openRStudioLink("ask_a_question");
-   }
    
    @Handler
    public void onQuitSession()
@@ -486,19 +474,6 @@ public class Application implements ApplicationEventHandlers,
    private void openApplicationURL(String relativeURL)
    {
       String url = GWT.getHostPageBaseURL() + relativeURL;
-      globalDisplay_.openWindow(url);
-   }
-   
-   private void openRStudioLink(String linkName)
-   {
-      // build url
-      final SessionInfo sessionInfo = session_.getSessionInfo();
-      String url = "http://www.rstudio.org/links/" ;
-      url += URL.encodeComponent(linkName) ;
-      url += "?version=" + URL.encodeComponent(sessionInfo.getRstudioVersion(), true);
-      url += "&mode=" + URL.encodeComponent(sessionInfo.getMode(), true);
-      
-      // open window
       globalDisplay_.openWindow(url);
    }
    

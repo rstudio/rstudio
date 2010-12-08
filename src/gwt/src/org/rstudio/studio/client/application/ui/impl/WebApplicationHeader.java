@@ -252,40 +252,29 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
       Widget helpLink = createCommandLink("Help", new ClickHandler() {
          public void onClick(ClickEvent event)
          {
-            String url = GWT.getHostPageBaseURL() + "docs/using_rstudio.htm";
-            globalDisplay_.openWindow(url);
+            globalDisplay_.openRStudioLink("help");
          }
       });
       headerBarCommandsPanel_.add(helpLink);
       headerBarCommandsPanel_.add(createCommandSeparator());
       
-      // support menu
-      final Image supportDownArrow = new Image(
-                                     ThemeResources.INSTANCE.linkDownArrow());
-      ClickHandler supportClickHandler = new ClickHandler() {
+      // support link
+      Widget supportLink = createCommandLink("Support", new ClickHandler() {
          public void onClick(ClickEvent event)
          {
-            SupportPopupMenu menu = new SupportPopupMenu(globalDisplay_);
-            menu.showRelativeTo(supportDownArrow);
-         }   
-      };
-           
-      Widget supportLink = createCommandLink("Support", supportClickHandler);
+            globalDisplay_.openRStudioLink("support");
+         }
+      });
       headerBarCommandsPanel_.add(supportLink);
-      headerBarCommandsPanel_.add(new HTML("&nbsp;"));
-      supportDownArrow.addClickHandler(supportClickHandler);
-      supportDownArrow.setStylePrimaryName(
-      ThemeResources.INSTANCE.themeStyles().linkDownArrow());
-      headerBarCommandsPanel_.add(supportDownArrow);
-      
-      // add signout link 
+      headerBarCommandsPanel_.add(createCommandSeparator());
+       
+      // signout link 
       Widget signoutLink = createCommandLink("Sign Out", new ClickHandler() {
          public void onClick(ClickEvent event)
          {
             eventBus_.fireEvent(new LogoutRequestedEvent());
          }
       });
-      headerBarCommandsPanel_.add(createCommandSeparator());
       headerBarCommandsPanel_.add(signoutLink);
    }
 

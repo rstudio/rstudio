@@ -148,9 +148,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="helpUsingRStudio"/>
          <cmd refid="helpKeyboardShortcuts"/>
          <separator/>
-         <cmd refid="supportReportABug"/>
-         <cmd refid="supportSuggestAFeature"/>
-         <cmd refid="supportAskAQuestion"/>
+         <cmd refid="rstudioSupport"/>
          <separator/>
          <cmd refid="rstudioLicense"/>
          <cmd refid="rstudioAgreement"/>
@@ -492,15 +490,9 @@ well as menu structures (for main menu and popup menus).
         visible="false"/>
    <cmd id="updateCredentials"
         menuLabel="Update Credentials"/>
-        
-   <cmd id ="supportReportABug" 
-        menuLabel="Report a Bug" />
-             
-   <cmd id="supportSuggestAFeature" 
-        menuLabel="Suggest a Feature" />
-      
-   <cmd id="supportAskAQuestion" 
-        menuLabel="Ask a Question" />
+               
+   <cmd id="rstudioSupport"
+        menuLabel="RStudio Support" />            
                
    <cmd id="rstudioAgreement"
         menuLabel="RStudio Agreement" />

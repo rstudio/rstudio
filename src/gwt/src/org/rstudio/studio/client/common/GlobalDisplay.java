@@ -93,6 +93,8 @@ public abstract class GlobalDisplay extends MessageDisplay
                                    boolean focus);
 
    public abstract void openEmailComposeWindow(String to, String subject);
+   
+   public abstract void openRStudioLink(String linkName);
 
    /**
     * Shows a non-modal progress message. Execute the returned command

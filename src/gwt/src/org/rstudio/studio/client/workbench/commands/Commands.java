@@ -127,9 +127,7 @@ public abstract class Commands extends CommandBundle
    public abstract AppCommand quitSession();
    public abstract AppCommand updateCredentials();
    public abstract AppCommand showLogFiles();
-   public abstract AppCommand supportReportABug();
-   public abstract AppCommand supportSuggestAFeature();
-   public abstract AppCommand supportAskAQuestion();
+   public abstract AppCommand rstudioSupport();
    public abstract AppCommand rstudioAgreement();
    public abstract AppCommand rstudioLicense();
 

@@ -28,6 +28,7 @@ import org.rstudio.core.client.widget.DialogBuilder;
 import org.rstudio.studio.client.common.dialog.DialogBuilderFactory;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 public class DefaultGlobalDisplay extends GlobalDisplay
 {
@@ -240,6 +241,20 @@ public class DefaultGlobalDisplay extends GlobalDisplay
       url += "&to=" + URL.encodeComponent(to, true);
       if (subject != null)
          url += "&subject=" + URL.encodeComponent(subject, true);
+      
+      // open window
+      openWindow(url);
+   }
+   
+   @Override
+   public void openRStudioLink(String linkName)
+   {
+      // build url
+      final SessionInfo sessionInfo = session_.getSessionInfo();
+      String url = "http://www.rstudio.org/links/" ;
+      url += URL.encodeComponent(linkName) ;
+      url += "?version=" + URL.encodeComponent(sessionInfo.getRstudioVersion(), true);
+      url += "&mode=" + URL.encodeComponent(sessionInfo.getMode(), true);
       
       // open window
       openWindow(url);
