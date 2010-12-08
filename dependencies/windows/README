@@ -26,7 +26,31 @@ C:\Qt\<QtVersion>\qt\bin
 C:\Qt\<QtVersion>\mingw\bin
 
 
-Extract Boost
+Install Java Libraries
+=============================================================================
+
+JAR files for GWT, Guice, and GIN need to be installed in the src/gwt
+directory prior to building. You can download these dependencies at:
+
+https://s3.amazonaws.com/rstudio-buildtools/gin.zip
+https://s3.amazonaws.com/rstudio-buildtools/guice.zip
+https://s3.amazonaws.com/rstudio-buildtools/gwt-2.0.4.zip
+
+Unzip these archives into the src/gwt directory. After extraction you should
+ensure that the resulting directory structure is:
+
+src
+  gwt
+    lib
+      gin
+      guice
+    sdk
+
+Note that the gwt-2.0.4 directory should be renamed to "sdk" and placed
+in the root of the src/gwt directory.
+
+
+Install Boost
 =============================================================================
 
 A set of pre-built boost binaries for Win32 and Win64 are available for
@@ -45,7 +69,7 @@ dependencies
       boost64
 
 
-Extract MinGW w64
+Install MinGW w64
 =============================================================================
 
 For 32-bit builds RStudio uses the MinGW 32-bit compiler bundled with Qt for
