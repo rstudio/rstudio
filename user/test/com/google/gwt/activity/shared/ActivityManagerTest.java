@@ -81,7 +81,7 @@ public class ActivityManagerTest extends TestCase {
       return null;
     }
   }
-  private static class SyncActivity extends Activity {
+  private static class SyncActivity implements Activity {
     boolean canceled = false;
     boolean stopped = false;
     AcceptsOneWidget display;

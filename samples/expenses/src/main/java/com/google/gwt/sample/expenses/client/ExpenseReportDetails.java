@@ -16,8 +16,6 @@
 package com.google.gwt.sample.expenses.client;
 
 import com.google.gwt.activity.shared.Activity;
-import com.google.gwt.activity.shared.IsActivity;
-import com.google.gwt.activity.shared.SimpleActivity;
 import com.google.gwt.cell.client.AbstractInputCell;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.DateCell;
@@ -25,6 +23,7 @@ import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.NumberCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.cell.client.ValueUpdater;
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -48,7 +47,6 @@ import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.ui.client.EntityProxyKeyProvider;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates.Template;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -91,11 +89,11 @@ import java.util.Map;
  * Details about the current expense report on the right side of the app,
  * including the list of expenses.
  */
-public class ExpenseReportDetails extends Composite implements IsActivity {
+public class ExpenseReportDetails extends Composite implements Activity {
 
   interface Binder extends UiBinder<Widget, ExpenseReportDetails> {
   }
-  
+
   /**
    * Fetches an employee and a report in parallel. A fine example of the kind of
    * thing that will no longer be necessary when RequestFactory provides server
@@ -129,7 +127,7 @@ public class ExpenseReportDetails extends Composite implements IsActivity {
       });
     }
   }
-  
+
   /**
    * The resources applied to the table.
    */
@@ -325,13 +323,6 @@ public class ExpenseReportDetails extends Composite implements IsActivity {
     }
   }
 
-  private final Activity activityAspect = new SimpleActivity() {
-    @Override
-    public void start(AcceptsOneWidget panel, EventBus eventBus) {
-      ExpenseReportDetails.this.start(panel, eventBus);
-    }
-  };
-
   private static Template template;
 
   /**
@@ -478,10 +469,6 @@ public class ExpenseReportDetails extends Composite implements IsActivity {
     });
   }
 
-  public Activity asActivity() {
-    return activityAspect;
-  }
-
   public ReportListPlace getReportListPlace() {
     ReportListPlace listPlace = place.getListPlace();
     return listPlace == null ? ReportListPlace.ALL : listPlace;
@@ -489,6 +476,13 @@ public class ExpenseReportDetails extends Composite implements IsActivity {
 
   public Anchor getReportsLink() {
     return reportsLink;
+  }
+
+  public String mayStop() {
+    return null;
+  }
+
+  public void onCancel() {
   }
 
   public void onExpenseRecordChanged(EntityProxyChange<ExpenseProxy> event) {
@@ -537,17 +531,10 @@ public class ExpenseReportDetails extends Composite implements IsActivity {
     }
   }
 
-  /**
-   * In this application, called by {@link ExpensesActivityMapper} each time a
-   * ReportListPlace is posted. In a more typical set up, this would be a
-   * constructor argument to a one shot activity, perhaps managing a shared
-   * widget view instance.
-   */
-  public void updateForPlace(final ReportPlace place) {
-    this.place = place;
+  public void onStop() {
   }
 
-  void start(AcceptsOneWidget panel, EventBus eventBus) {
+  public void start(AcceptsOneWidget panel, EventBus eventBus) {
     final ReportListPlace listPlace = place.getListPlace();
 
     if (listPlace.getEmployeeId() == null) {
@@ -585,6 +572,16 @@ public class ExpenseReportDetails extends Composite implements IsActivity {
         });
 
     panel.setWidget(this);
+  }
+
+  /**
+   * In this application, called by {@link ExpensesActivityMapper} each time a
+   * ReportListPlace is posted. In a more typical set up, this would be a
+   * constructor argument to a one shot activity, perhaps managing a shared
+   * widget view instance.
+   */
+  public void updateForPlace(final ReportPlace place) {
+    this.place = place;
   }
 
   /**

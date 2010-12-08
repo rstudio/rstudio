@@ -54,7 +54,7 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
     }
   }
 
-  private static final Activity NULL_ACTIVITY = new SimpleActivity() {
+  private static final Activity NULL_ACTIVITY = new AbstractActivity() {
     public void start(AcceptsOneWidget panel, EventBus eventBus) {
     }
   };
