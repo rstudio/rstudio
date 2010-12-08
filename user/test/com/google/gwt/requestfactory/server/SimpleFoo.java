@@ -447,9 +447,11 @@ public class SimpleFoo {
 
   public void deleteBar() {
     if (barField != null) {
+      isChanged = true;
       barField.delete();
     }
     barField = null;
+    persist();
   }
 
   public SimpleBar getBarField() {

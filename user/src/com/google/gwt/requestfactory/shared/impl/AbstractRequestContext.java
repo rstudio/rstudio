@@ -114,7 +114,10 @@ public class AbstractRequestContext implements RequestContext,
   }
 
   private static final String PARENT_OBJECT = "parentObject";
-  private final Set<SimpleProxyId<?>> createdIds = new HashSet<SimpleProxyId<?>>();
+  private static final WriteOperation[] PERSIST_AND_UPDATE = {
+      WriteOperation.PERSIST, WriteOperation.UPDATE};
+  private static final WriteOperation[] DELETE_ONLY = {WriteOperation.DELETE};
+  private static final WriteOperation[] UPDATE_ONLY = {WriteOperation.UPDATE};
   private final List<AbstractRequest<?>> invocations = new ArrayList<AbstractRequest<?>>();
   private boolean locked;
   private final AbstractRequestFactory requestFactory;
@@ -149,7 +152,6 @@ public class AbstractRequestContext implements RequestContext,
     checkLocked();
 
     SimpleProxyId<T> id = requestFactory.allocateId(clazz);
-    createdIds.add(id);
     AutoBean<T> created = requestFactory.createProxy(clazz, id);
     return takeOwnership(created);
   }
@@ -612,7 +614,8 @@ public class AbstractRequestContext implements RequestContext,
         if (response.getGeneralFailure() != null) {
           ServerFailureMessage failure = response.getGeneralFailure();
           ServerFailure fail = new ServerFailure(failure.getMessage(),
-              failure.getExceptionType(), failure.getStackTrace(), failure.isFatal());
+              failure.getExceptionType(), failure.getStackTrace(),
+              failure.isFatal());
 
           fail(receiver, fail);
           return;
@@ -649,7 +652,8 @@ public class AbstractRequestContext implements RequestContext,
                 response.getInvocationResults().get(i)).as();
             invocations.get(i).onFail(
                 new ServerFailure(failure.getMessage(),
-                    failure.getExceptionType(), failure.getStackTrace(), failure.isFatal()));
+                    failure.getExceptionType(), failure.getStackTrace(),
+                    failure.isFatal()));
           }
         }
 
@@ -777,24 +781,36 @@ public class AbstractRequestContext implements RequestContext,
    * Process an array of OperationMessages.
    */
   private void processReturnOperations(ResponseMessage response) {
-    List<OperationMessage> records = response.getOperations();
+    List<OperationMessage> ops = response.getOperations();
 
     // If there are no observable effects, this will be null
-    if (records == null) {
+    if (ops == null) {
       return;
     }
 
-    for (OperationMessage op : records) {
+    for (OperationMessage op : ops) {
       SimpleProxyId<?> id = getId(op);
-      if (id.isEphemeral()) {
-        processReturnOperation(id, op);
-      } else if (id.wasEphemeral() && createdIds.contains(id)) {
-        // Only send a PERSIST if this RequestContext created the id.
-        processReturnOperation(id, op, WriteOperation.PERSIST,
-            WriteOperation.UPDATE);
-      } else {
-        processReturnOperation(id, op, WriteOperation.UPDATE);
+      WriteOperation[] toPropagate = null;
+
+      // May be null if the server is returning an unpersisted object
+      WriteOperation effect = op.getOperation();
+      if (effect != null) {
+        switch (effect) {
+          case DELETE:
+            toPropagate = DELETE_ONLY;
+            break;
+          case PERSIST:
+            toPropagate = PERSIST_AND_UPDATE;
+            break;
+          case UPDATE:
+            toPropagate = UPDATE_ONLY;
+            break;
+          default:
+            // Should never reach here
+            throw new RuntimeException(effect.toString());
+        }
       }
+      processReturnOperation(id, op, toPropagate);
     }
   }
 

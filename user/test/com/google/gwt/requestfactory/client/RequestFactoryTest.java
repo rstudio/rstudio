@@ -197,69 +197,6 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     }
   }
 
-  /**
-   * Test that removing a parent entity and implicitly removing the child sends
-   * an event to the client that the child was removed.
-   * 
-   * TODO(rjrjr): Should cascading deletes be detected?
-   */
-  public void disableTestMethodWithSideEffectDeleteChild() {
-    delayTestFinish(DELAY_TEST_FINISH);
-
-    // Persist bar.
-    SimpleBarRequest context = req.simpleBarRequest();
-    final SimpleBarProxy bar = context.create(SimpleBarProxy.class);
-    context.persistAndReturnSelf().using(bar).fire(
-        new Receiver<SimpleBarProxy>() {
-          @Override
-          public void onSuccess(SimpleBarProxy persistentBar) {
-            persistentBar = checkSerialization(persistentBar);
-            // Persist foo with bar as a child.
-            SimpleFooRequest context = req.simpleFooRequest();
-            SimpleFooProxy foo = context.create(SimpleFooProxy.class);
-            final Request<SimpleFooProxy> persistRequest = context.persistAndReturnSelf().using(
-                foo);
-            foo = context.edit(foo);
-            foo.setUserName("John");
-            foo.setBarField(bar);
-            persistRequest.fire(new Receiver<SimpleFooProxy>() {
-              @Override
-              public void onSuccess(SimpleFooProxy persistentFoo) {
-                persistentFoo = checkSerialization(persistentFoo);
-                // Handle changes to SimpleFooProxy.
-                final SimpleFooEventHandler<SimpleFooProxy> fooHandler = new SimpleFooEventHandler<SimpleFooProxy>();
-                EntityProxyChange.registerForProxyType(req.getEventBus(),
-                    SimpleFooProxy.class, fooHandler);
-
-                // Handle changes to SimpleBarProxy.
-                final SimpleFooEventHandler<SimpleBarProxy> barHandler = new SimpleFooEventHandler<SimpleBarProxy>();
-                EntityProxyChange.registerForProxyType(req.getEventBus(),
-                    SimpleBarProxy.class, barHandler);
-
-                // Delete bar.
-                SimpleFooRequest context = req.simpleFooRequest();
-                final Request<Void> deleteRequest = context.deleteBar().using(
-                    persistentFoo);
-                SimpleFooProxy editable = context.edit(persistentFoo);
-                editable.setBarField(bar);
-                deleteRequest.fire(new Receiver<Void>() {
-                  @Override
-                  public void onSuccess(Void response) {
-                    assertEquals(1, fooHandler.updateEventCount); // set bar to
-                    // null
-                    assertEquals(1, fooHandler.totalEventCount);
-
-                    assertEquals(1, barHandler.deleteEventCount); // deleted bar
-                    assertEquals(1, barHandler.totalEventCount);
-                    finishTestAndReset();
-                  }
-                });
-              }
-            });
-          }
-        });
-  }
-
   @Override
   public String getModuleName() {
     return "com.google.gwt.requestfactory.RequestFactorySuite";
@@ -810,6 +747,68 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     });
   }
 
+  /**
+   * Test that removing a parent entity and implicitly removing the child sends
+   * an event to the client that the child was removed.
+   */
+  public void testMethodWithSideEffectDeleteChild() {
+    delayTestFinish(DELAY_TEST_FINISH);
+
+    // Handle changes to SimpleFooProxy.
+    final SimpleFooEventHandler<SimpleFooProxy> fooHandler = new SimpleFooEventHandler<SimpleFooProxy>();
+    EntityProxyChange.registerForProxyType(req.getEventBus(),
+        SimpleFooProxy.class, fooHandler);
+
+    // Handle changes to SimpleBarProxy.
+    final SimpleFooEventHandler<SimpleBarProxy> barHandler = new SimpleFooEventHandler<SimpleBarProxy>();
+    EntityProxyChange.registerForProxyType(req.getEventBus(),
+        SimpleBarProxy.class, barHandler);
+
+    // Persist bar.
+    SimpleBarRequest context = req.simpleBarRequest();
+    final SimpleBarProxy bar = context.create(SimpleBarProxy.class);
+    context.persistAndReturnSelf().using(bar).fire(
+        new Receiver<SimpleBarProxy>() {
+          @Override
+          public void onSuccess(SimpleBarProxy persistentBar) {
+            persistentBar = checkSerialization(persistentBar);
+            // Persist foo with bar as a child.
+            SimpleFooRequest context = req.simpleFooRequest();
+            SimpleFooProxy foo = context.create(SimpleFooProxy.class);
+            final Request<SimpleFooProxy> persistRequest = context.persistAndReturnSelf().using(
+                foo).with("barField");
+            foo = context.edit(foo);
+            foo.setUserName("John");
+            foo.setBarField(bar);
+            persistRequest.fire(new Receiver<SimpleFooProxy>() {
+              @Override
+              public void onSuccess(SimpleFooProxy persistentFoo) {
+                persistentFoo = checkSerialization(persistentFoo);
+
+                // Delete bar.
+                SimpleFooRequest context = req.simpleFooRequest();
+                final Request<Void> deleteRequest = context.deleteBar().using(
+                    persistentFoo);
+                deleteRequest.fire(new Receiver<Void>() {
+                  @Override
+                  public void onSuccess(Void response) {
+                    assertEquals(1, fooHandler.persistEventCount);
+                    assertEquals(2, fooHandler.updateEventCount);
+                    assertEquals(3, fooHandler.totalEventCount);
+
+                    assertEquals(1, barHandler.persistEventCount);
+                    assertEquals(1, barHandler.updateEventCount);
+                    assertEquals(1, barHandler.deleteEventCount);
+                    assertEquals(3, barHandler.totalEventCount);
+                    finishTestAndReset();
+                  }
+                });
+              }
+            });
+          }
+        });
+  }
+
   /*
    * tests that (a) any method can have a side effect that is handled correctly.
    * (b) instance methods are handled correctly and (c) a request cannot be
@@ -1008,7 +1007,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    */
   public void testNullValueInIntegerListRequest() {
     delayTestFinish(DELAY_TEST_FINISH);
-    List<Integer> list = Arrays.asList(new Integer[] {1, 2, null});
+    List<Integer> list = Arrays.asList(new Integer[]{1, 2, null});
     final Request<Void> fooReq = req.simpleFooRequest().receiveNullValueInIntegerList(
         list);
     fooReq.fire(new Receiver<Void>() {
@@ -1024,7 +1023,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    */
   public void testNullValueInStringListRequest() {
     delayTestFinish(DELAY_TEST_FINISH);
-    List<String> list = Arrays.asList(new String[] {"nonnull", "null", null});
+    List<String> list = Arrays.asList(new String[]{"nonnull", "null", null});
     final Request<Void> fooReq = req.simpleFooRequest().receiveNullValueInStringList(
         list);
     fooReq.fire(new Receiver<Void>() {
@@ -1801,21 +1800,6 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     });
   }
 
-  public void testPrimitiveListBooleanAsParameter() {
-    delayTestFinish(DELAY_TEST_FINISH);
-
-    Request<Boolean> procReq = simpleFooRequest().processBooleanList(
-        Arrays.asList(true, false));
-
-    procReq.fire(new Receiver<Boolean>() {
-      @Override
-      public void onSuccess(Boolean response) {
-        assertEquals(true, (boolean) response);
-        finishTestAndReset();
-      }
-    });
-  }
-
   public void testPrimitiveListBigDecimalAsParameter() {
     delayTestFinish(DELAY_TEST_FINISH);
 
@@ -1854,6 +1838,21 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             finishTestAndReset();
           }
         });
+  }
+
+  public void testPrimitiveListBooleanAsParameter() {
+    delayTestFinish(DELAY_TEST_FINISH);
+
+    Request<Boolean> procReq = simpleFooRequest().processBooleanList(
+        Arrays.asList(true, false));
+
+    procReq.fire(new Receiver<Boolean>() {
+      @Override
+      public void onSuccess(Boolean response) {
+        assertEquals(true, (boolean) response);
+        finishTestAndReset();
+      }
+    });
   }
 
   @SuppressWarnings("deprecation")
