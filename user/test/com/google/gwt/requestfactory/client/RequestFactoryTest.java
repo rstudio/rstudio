@@ -28,7 +28,6 @@ import com.google.gwt.requestfactory.shared.SimpleEnum;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
 import com.google.gwt.requestfactory.shared.SimpleFooRequest;
 import com.google.gwt.requestfactory.shared.SimpleValueProxy;
-import com.google.gwt.requestfactory.shared.UserInformationProxy;
 import com.google.gwt.requestfactory.shared.Violation;
 import com.google.gwt.requestfactory.shared.impl.SimpleEntityProxyId;
 
@@ -770,6 +769,17 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   public void testInstanceServiceRequest() {
     delayTestFinish(DELAY_TEST_FINISH);
     req.instanceServiceRequest().add(5).fire(new Receiver<Integer>() {
+      @Override
+      public void onSuccess(Integer response) {
+        assertEquals(10, (int) response);
+        finishTestAndReset();
+      }
+    });
+  }
+
+  public void testInstanceServiceRequestByName() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    req.instanceServiceRequestByName().add(5).fire(new Receiver<Integer>() {
       @Override
       public void onSuccess(Integer response) {
         assertEquals(10, (int) response);
@@ -2276,28 +2286,6 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
                         });
                   }
                 });
-          }
-        });
-  }
-
-  /**
-   * We provide a simple UserInformation class to give GAE developers a hand,
-   * and other developers a hint. Make sure RF doesn't break it (it relies on
-   * server side upcasting, and a somewhat sleazey reflective lookup mechanism
-   * in a static method on UserInformation).
-   */
-  public void testUserInfo() {
-    delayTestFinish(DELAY_TEST_FINISH);
-    req.userInformationRequest().getCurrentUserInformation("").fire(
-        new Receiver<UserInformationProxy>() {
-          @Override
-          public void onSuccess(UserInformationProxy response) {
-            response = checkSerialization(response);
-            assertEquals("Dummy Email", response.getEmail());
-            assertEquals("Dummy User", response.getName());
-            assertEquals("", response.getLoginUrl());
-            assertEquals("", response.getLogoutUrl());
-            finishTestAndReset();
           }
         });
   }

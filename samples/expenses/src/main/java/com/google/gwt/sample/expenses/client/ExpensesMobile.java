@@ -20,21 +20,25 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.RequestEvent;
-import com.google.gwt.requestfactory.shared.UserInformationProxy;
-import com.google.gwt.requestfactory.ui.client.AuthenticationFailureHandler;
-import com.google.gwt.requestfactory.ui.client.LoginWidget;
 import com.google.gwt.sample.expenses.shared.EmployeeProxy;
 import com.google.gwt.sample.expenses.shared.ExpensesRequestFactory;
+import com.google.gwt.sample.gaerequest.client.GaeAuthRequestTransport;
+import com.google.gwt.sample.gaerequest.client.LoginWidget;
+import com.google.gwt.sample.gaerequest.client.ReloadOnAuthenticationFailure;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * Entry point for the mobile version of the Expenses app.
+ * <p>
+ * TODO Should be using ExpenseFactory
  */
 public class ExpensesMobile implements EntryPoint {
+  private static final Logger log = Logger.getLogger(ExpensesMobile.class.getName());
 
   /**
    * The url parameter that specifies the employee id.
@@ -77,8 +81,7 @@ public class ExpensesMobile implements EntryPoint {
   public void onModuleLoad() {
     GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
       public void onUncaughtException(Throwable e) {
-        Window.alert("Error: " + e.getMessage());
-        // placeController.goTo(Place.NOWHERE);
+        log.log(Level.SEVERE, e.getMessage(), e);
       }
     });
 
@@ -96,29 +99,18 @@ public class ExpensesMobile implements EntryPoint {
 
     final EventBus eventBus = new SimpleEventBus();
     final ExpensesRequestFactory requestFactory = GWT.create(ExpensesRequestFactory.class);
-    requestFactory.initialize(eventBus);
+    requestFactory.initialize(eventBus, new GaeAuthRequestTransport(eventBus));
 
     requestFactory.employeeRequest().findEmployee(employeeId).fire(
         new Receiver<EmployeeProxy>() {
           @Override
           public void onSuccess(EmployeeProxy employee) {
             final ExpensesMobileShell shell = new ExpensesMobileShell(eventBus,
-                requestFactory, employee);
+                requestFactory, employee, new LoginWidget(requestFactory));
             RootPanel.get().add(shell);
 
             // Check for Authentication failures or mismatches
-            RequestEvent.register(eventBus, new AuthenticationFailureHandler());
-
-            // Add a login widget to the page
-            final LoginWidget login = shell.getLoginWidget();
-            Receiver<UserInformationProxy> receiver = new Receiver<UserInformationProxy>() {
-              @Override
-              public void onSuccess(UserInformationProxy userInformationRecord) {
-                login.setUserInformation(userInformationRecord);
-              }
-            };
-            requestFactory.userInformationRequest().getCurrentUserInformation(
-                Location.getHref()).fire(receiver);
+            new ReloadOnAuthenticationFailure().register(eventBus);
           }
         });
   }

@@ -32,6 +32,7 @@ import com.google.gwt.requestfactory.shared.impl.FindRequest;
 
 import junit.framework.TestCase;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Level;
@@ -195,6 +196,14 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
   interface LocatorEntityProxy extends EntityProxy {
   }
 
+  @ProxyForName(value = "com.google.gwt.requestfactory.server.RequestFactoryInterfaceValidatorTest.LocatorEntity", locator = "badLocator")
+  interface LocatorEntityProxyWithBadLocator extends EntityProxy {
+  }
+
+  @ProxyForName(value = "badDomainType", locator = "com.google.gwt.requestfactory.server.RequestFactoryInterfaceValidatorTest.LocatorEntityProxyWithBadServiceName")
+  interface LocatorEntityProxyWithBadServiceName extends EntityProxy {
+  }
+
   @ProxyFor(value = Value.class)
   interface MyValueProxy extends ValueProxy {
   }
@@ -262,9 +271,43 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
   static class Value {
   }
 
-  RequestFactoryInterfaceValidator v;
+  static class VisibleErrorContext extends
+      RequestFactoryInterfaceValidator.ErrorContext {
+    final List<String> logs;
+
+    public VisibleErrorContext(Logger logger) {
+      super(logger);
+      logs = new ArrayList<String>();
+    }
+
+    public VisibleErrorContext(VisibleErrorContext that) {
+      super(that);
+      this.logs = that.logs;
+    }
+
+    @Override
+    public void poison(String msg, Object... args) {
+      logs.add(String.format(msg, args));
+      super.poison(msg, args);
+    }
+
+    @Override
+    public void poison(String msg, Throwable t) {
+      logs.add(msg);
+      super.poison(msg, t);
+    }
+
+    @Override
+    protected VisibleErrorContext fork() {
+      return new VisibleErrorContext(this);
+    }
+  }
+
+  RequestFactoryInterfaceValidator v;;
 
   private static final boolean DUMP_PAYLOAD = Boolean.getBoolean("gwt.rpc.dumpPayload");;
+
+  private VisibleErrorContext errors;
 
   /**
    * Ensure that calling {@link RequestFactoryInterfaceValidator#antidote()}
@@ -277,7 +320,19 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
     assertFalse(v.isPoisoned());
     v.validateRequestContext(RequestContextMissingAnnotation.class.getName());
     assertTrue(v.isPoisoned());
-  };
+  }
+
+  public void testBadLocatorName() {
+    v.validateEntityProxy(LocatorEntityProxyWithBadLocator.class.getName());
+    assertTrue(v.isPoisoned());
+    assertTrue(errors.logs.contains("Cannot find locator named badLocator"));
+  }
+
+  public void testBadServiceName() {
+    v.validateEntityProxy(LocatorEntityProxyWithBadServiceName.class.getName());
+    assertTrue(v.isPoisoned());
+    assertTrue(errors.logs.contains("Cannot find domain type named badDomainType"));
+  }
 
   /**
    * Test that subclasses of {@code java.util.Date} are not transportable.
@@ -393,7 +448,8 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
   protected void setUp() throws Exception {
     Logger logger = Logger.getLogger("");
     logger.setLevel(DUMP_PAYLOAD ? Level.ALL : Level.OFF);
-    v = new RequestFactoryInterfaceValidator(logger, new ClassLoaderLoader(
+    errors = new VisibleErrorContext(logger);
+    v = new RequestFactoryInterfaceValidator(errors, new ClassLoaderLoader(
         Thread.currentThread().getContextClassLoader()));
   }
 }

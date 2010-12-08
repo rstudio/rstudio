@@ -166,9 +166,15 @@ public class MobileReportEntry extends Composite implements MobilePage {
 
   @SuppressWarnings("deprecation")
   private void showCreationDate(Date d) {
-    // TODO(jgw): Use non-deprecated date methods for this.
-    dateYear.setSelectedIndex(d.getYear() - 100);
-    dateMonth.setSelectedIndex(d.getMonth());
-    dateDay.setSelectedIndex(d.getDate() - 1);
+    if (d != null) {
+      // TODO(jgw): Use non-deprecated date methods for this.
+      dateYear.setSelectedIndex(d.getYear() - 100);
+      dateMonth.setSelectedIndex(d.getMonth());
+      dateDay.setSelectedIndex(d.getDate() - 1);
+    } else {
+      dateYear.setSelectedIndex(0);
+      dateMonth.setSelectedIndex(0);
+      dateDay.setSelectedIndex(0);
+    }
   }
 }

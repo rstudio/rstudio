@@ -20,8 +20,5 @@ package com.google.gwt.requestfactory.shared;
  * RequestFactory interfaces works correctly.
  */
 public interface BasicRequestFactory extends RequestFactory {
-
   LoggingRequest loggingRequest();
-
-  UserInformationRequest userInformationRequest();
 }

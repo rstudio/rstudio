@@ -32,6 +32,8 @@ import com.google.gwt.sample.expenses.client.place.ExpensesPlaceHistoryMapper;
 import com.google.gwt.sample.expenses.client.place.ReportListPlace;
 import com.google.gwt.sample.expenses.client.place.ReportPlace;
 import com.google.gwt.sample.expenses.shared.ExpensesRequestFactory;
+import com.google.gwt.sample.gaerequest.client.GaeAuthRequestTransport;
+import com.google.gwt.sample.gaerequest.client.LoginWidget;
 
 /**
  * In charge of instantiation.
@@ -41,6 +43,7 @@ import com.google.gwt.sample.expenses.shared.ExpensesRequestFactory;
 public class ExpensesFactory {
 
   private final EventBus eventBus = new SimpleEventBus();
+  private final GaeAuthRequestTransport requestTransport = new GaeAuthRequestTransport(eventBus);
   private final ExpensesRequestFactory requestFactory = GWT.create(ExpensesRequestFactory.class);
   private final ExpensesPlaceHistoryMapper historyMapper = GWT.create(ExpensesPlaceHistoryMapper.class);
   private final PlaceHistoryHandler placeHistoryHandler;
@@ -49,21 +52,23 @@ public class ExpensesFactory {
   private final ExpenseReportList expenseList = new ExpenseReportList(requestFactory);
   private final ExpenseReportDetails expenseDetails = new ExpenseReportDetails(
       requestFactory);
+  private final LoginWidget loginWidget = new LoginWidget(requestFactory);
+  
   private final ActivityMapper activityMapper = new ExpensesActivityMapper(
       expenseDetails, expenseList);
   private final ActivityManager activityManager = new ActivityManager(
       activityMapper, eventBus);
 
   public ExpensesFactory() {
-    requestFactory.initialize(eventBus);
+    requestFactory.initialize(eventBus, requestTransport);
     historyMapper.setFactory(this);
     placeHistoryHandler = new PlaceHistoryHandler(historyMapper);
   }
 
   public ExpensesApp getExpensesApp() {
     return new ExpensesApp(activityManager, eventBus, placeController,
-        placeHistoryHandler, requestFactory, new ExpensesShell(expenseTree,
-            expenseList, expenseDetails));
+        placeHistoryHandler, new ExpensesShell(expenseTree,
+            expenseList, expenseDetails, loginWidget));
   }
 
   /**

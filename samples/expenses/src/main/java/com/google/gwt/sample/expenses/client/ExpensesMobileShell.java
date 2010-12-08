@@ -19,11 +19,11 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.requestfactory.ui.client.LoginWidget;
 import com.google.gwt.sample.expenses.shared.EmployeeProxy;
 import com.google.gwt.sample.expenses.shared.ExpenseProxy;
 import com.google.gwt.sample.expenses.shared.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.shared.ReportProxy;
+import com.google.gwt.sample.gaerequest.client.LoginWidget;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -39,13 +39,19 @@ import java.util.ArrayList;
  */
 public class ExpensesMobileShell extends Composite {
 
-  interface ShellUiBinder extends UiBinder<Widget, ExpensesMobileShell> { }
+  interface ShellUiBinder extends UiBinder<Widget, ExpensesMobileShell> {
+  }
+
   private static ShellUiBinder BINDER = GWT.create(ShellUiBinder.class);
 
-  @UiField SimplePanel container;
-  @UiField HTML backButton, addButton, refreshButton, customButton;
-  @UiField LoginWidget loginWidget;
-  @UiField Element titleSpan;
+  @UiField
+  SimplePanel container;
+  @UiField
+  HTML backButton, addButton, refreshButton, customButton;
+  @UiField(provided = true)
+  final LoginWidget loginWidget;
+  @UiField
+  Element titleSpan;
 
   private MobileReportList reportList;
   private MobileExpenseList expenseList;
@@ -59,10 +65,12 @@ public class ExpensesMobileShell extends Composite {
   private ArrayList<MobilePage> pages = new ArrayList<MobilePage>();
 
   public ExpensesMobileShell(EventBus eventBus,
-      ExpensesRequestFactory requestFactory, EmployeeProxy employee) {
+      ExpensesRequestFactory requestFactory, EmployeeProxy employee,
+      LoginWidget loginWidget) {
     this.eventBus = eventBus;
     this.requestFactory = requestFactory;
     this.employee = employee;
+    this.loginWidget = loginWidget;
 
     initWidget(BINDER.createAndBindUi(this));
     showReportList();
@@ -74,7 +82,7 @@ public class ExpensesMobileShell extends Composite {
   public LoginWidget getLoginWidget() {
     return loginWidget;
   }
-  
+
   @UiHandler("addButton")
   void onAdd(@SuppressWarnings("unused") ClickEvent evt) {
     topPage().onAdd();

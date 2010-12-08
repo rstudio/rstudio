@@ -29,24 +29,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * Handles GWT RequestFactory JSON requests. Does user authentication on every
- * request, returning SC_UNAUTHORIZED if authentication fails, as well as a
- * header named "login" which contains the URL the user should be sent in to
- * login. Note that the servlet expects a "pageurl" header in the request,
- * indicating the page to redirect to after authentication. If authentication
- * succeeds, a header named "userId" is returned, which will be unique to the
- * user (so the app can react if the signed in user has changed).
- * 
- * Configured via servlet init params.
- * <p>
- * e.g. - in order to use GAE authentication:
- * 
- * <pre>  &lt;init-param>
-    &lt;param-name>userInfoClass&lt;/param-name>
-    &lt;param-value>com.google.gwt.sample.expenses.server.domain.GaeUserInformation&lt;/param-value>
-  &lt;/init-param>
-
- * </pre>
+ * Handles GWT RequestFactory JSON requests. 
  */
 @SuppressWarnings("serial")
 public class RequestFactoryServlet extends HttpServlet {
@@ -132,24 +115,16 @@ public class RequestFactoryServlet extends HttpServlet {
       }
 
       try {
-        // Check that user is logged in before proceeding
-        UserInformation userInfo = UserInformation.getCurrentUserInformation(request.getHeader("pageurl"));
-        if (!userInfo.isUserLoggedIn()) {
-          response.setHeader("login", userInfo.getLoginUrl());
-          response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-        } else {
-          String payload = processor.process(jsonRequestString);
-          if (DUMP_PAYLOAD) {
-            System.out.println("<<< " + payload);
-          }
-          response.setHeader("userId", String.format("%s", userInfo.getId()));
-          response.setStatus(HttpServletResponse.SC_OK);
-          response.setContentType(RequestFactory.JSON_CONTENT_TYPE_UTF8);
-          // The Writer must be obtained after setting the content type
-          PrintWriter writer = response.getWriter();
-          writer.print(payload);
-          writer.flush();
+        String payload = processor.process(jsonRequestString);
+        if (DUMP_PAYLOAD) {
+          System.out.println("<<< " + payload);
         }
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.setContentType(RequestFactory.JSON_CONTENT_TYPE_UTF8);
+        // The Writer must be obtained after setting the content type
+        PrintWriter writer = response.getWriter();
+        writer.print(payload);
+        writer.flush();
       } catch (RuntimeException e) {
         response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         log.log(Level.SEVERE, "Unexpected error", e);
@@ -161,15 +136,6 @@ public class RequestFactoryServlet extends HttpServlet {
   }
 
   private void ensureConfig() {
-    // Instantiate a class for authentication, using either the default
-    // UserInfo class, or a subclass if the web.xml specifies one. This allows
-    // clients to use a Google App Engine based authentication class without
-    // adding GAE dependencies to GWT.
-    String userInfoClass = getServletConfig().getInitParameter("userInfoClass");
-    if (userInfoClass != null) {
-      UserInformation.setUserInformationImplClass(userInfoClass);
-    }
-
     String symbolMapsDirectory = getServletConfig().getInitParameter(
         "symbolMapsDirectory");
     if (symbolMapsDirectory != null) {

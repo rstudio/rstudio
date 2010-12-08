@@ -240,6 +240,7 @@ public class SimpleRequestProcessor {
     msg.setExceptionType(failure.getExceptionType());
     msg.setMessage(failure.getMessage());
     msg.setStackTrace(failure.getStackTraceString());
+    msg.setFatal(failure.isFatal());
     return bean;
   }
 
@@ -345,7 +346,7 @@ public class SimpleRequestProcessor {
    * is not static, the instance object will be in the 0th position.
    */
   private List<Object> decodeInvocationArguments(RequestState source,
-      InvocationMessage invocation, Method contextMethod, Method domainMethod) {
+      InvocationMessage invocation, Method contextMethod) {
     boolean isStatic = Request.class.isAssignableFrom(contextMethod.getReturnType());
     int baseLength = contextMethod.getParameterTypes().length;
     int length = baseLength + (isStatic ? 0 : 1);
@@ -374,7 +375,8 @@ public class SimpleRequestProcessor {
   private List<Object> decodeInvocationArguments(RequestState source,
       List<Splittable> parameters, Class<?>[] contextArgs, Type[] genericArgs) {
     if (parameters == null) {
-      return Collections.emptyList();
+      // Can't return Collections.emptyList() because this must be mutable
+      return new ArrayList<Object>();
     }
 
     assert parameters.size() == contextArgs.length;
@@ -420,7 +422,7 @@ public class SimpleRequestProcessor {
 
         // Compute the arguments
         List<Object> args = decodeInvocationArguments(state, invocation,
-            contextMethod, domainMethod);
+            contextMethod);
         // Possibly use a ServiceLocator
         if (service.requiresServiceLocator(contextMethod, domainMethod)) {
           Object serviceInstance = service.createServiceInstance(contextMethod,

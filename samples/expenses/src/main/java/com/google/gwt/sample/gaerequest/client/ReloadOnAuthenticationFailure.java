@@ -13,19 +13,24 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.requestfactory.client.impl;
+
+package com.google.gwt.sample.gaerequest.client;
 
 import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.requestfactory.client.DefaultRequestTransport;
-import com.google.gwt.requestfactory.shared.impl.AbstractRequestFactory;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Window.Location;
 
 /**
- * A RequestFactory that uses a {@link DefaultRequestTransport} by default.
+ * A minimal auth failure handler which takes the user a login page.
  */
-public abstract class AbstractClientRequestFactory extends
-    AbstractRequestFactory {
-  @Override
-  public void initialize(EventBus eventBus) {
-    initialize(eventBus, new DefaultRequestTransport());
+public class ReloadOnAuthenticationFailure implements
+    GaeAuthenticationFailureEvent.Handler {
+  
+  public HandlerRegistration register(EventBus eventBus) {
+    return GaeAuthenticationFailureEvent.register(eventBus, this);
+  }
+  
+  public void onAuthFailure(GaeAuthenticationFailureEvent requestEvent) {
+    Location.replace(requestEvent.getLoginUrl());
   }
 }

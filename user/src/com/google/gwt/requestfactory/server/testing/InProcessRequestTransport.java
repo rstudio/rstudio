@@ -17,6 +17,7 @@ package com.google.gwt.requestfactory.server.testing;
 
 import com.google.gwt.requestfactory.server.SimpleRequestProcessor;
 import com.google.gwt.requestfactory.shared.RequestTransport;
+import com.google.gwt.requestfactory.shared.ServerFailure;
 
 /**
  * A RequesTransports that calls a {@link SimpleRequestProcessor}. This test can
@@ -57,7 +58,7 @@ public class InProcessRequestTransport implements RequestTransport {
       receiver.onTransportSuccess(result);
     } catch (RuntimeException e) {
       e.printStackTrace();
-      receiver.onTransportFailure(e.getMessage());
+      receiver.onTransportFailure(new ServerFailure(e.getMessage()));
     }
   }
 }

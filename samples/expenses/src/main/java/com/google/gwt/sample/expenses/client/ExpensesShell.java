@@ -16,7 +16,7 @@
 package com.google.gwt.sample.expenses.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.requestfactory.ui.client.LoginWidget;
+import com.google.gwt.sample.gaerequest.client.LoginWidget;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
@@ -35,21 +35,25 @@ public class ExpensesShell extends Composite {
 
   @UiField(provided = true)
   final ExpenseReportList expenseList;
-  
+
   @UiField(provided = true)
   final ExpenseReportDetails expenseDetails;
 
   @UiField(provided = true)
   final ExpenseTree expenseTree;
-  
+
+  @UiField(provided = true)
+  final LoginWidget loginWidget;
+
   @UiField SlidingPanel slidingPanel;
-  @UiField LoginWidget loginWidget;
   @UiField DockLayoutPanel dockLayout;
 
-  public ExpensesShell(ExpenseTree expenseTree, ExpenseReportList expenseList, ExpenseReportDetails expenseDetails) {
+  public ExpensesShell(ExpenseTree expenseTree, ExpenseReportList expenseList,
+      ExpenseReportDetails expenseDetails, LoginWidget loginWidget) {
     this.expenseTree = expenseTree;
     this.expenseList = expenseList;
     this.expenseDetails = expenseDetails;
+    this.loginWidget = loginWidget;
     initWidget(uiBinder.createAndBindUi(this));
   }
 
@@ -68,7 +72,7 @@ public class ExpensesShell extends Composite {
   public LoginWidget getLoginWidget() {
     return loginWidget;
   }
-  
+
   public HasOneWidget getPanel() {
     return slidingPanel;
   }

@@ -17,36 +17,49 @@ package com.google.gwt.requestfactory.shared;
 
 /**
  * Describes a request failure on the server.
+ * <p>
+ * This error reporting mechanism is adequate at best. When RequestFactory is
+ * extended to handle polymorphic types, this class will likely be replaced with
+ * something more expressive.
  */
 public class ServerFailure {
   private final String message;
   private final String stackTraceString;
   private final String exceptionType;
+  private final boolean fatal;
 
   /**
-   * Constructs a ServerFailure with a null message.
+   * Constructs a ServerFailure with null properties.
    */
   public ServerFailure() {
-    this(null, null, null);
+    this(null);
+  }
+
+  /**
+   * Constructs a fatal ServerFailure with null type and null stack trace.
+   */
+  public ServerFailure(String message) {
+    this(message, null, null, true);
   }
 
   /**
    * Constructs a ServerFailure object.
-   *
+   * 
    * @param message a String containing the failure message
    * @param exceptionType a String containing the exception type
    * @param stackTraceString a String containing the stack trace
    */
   public ServerFailure(String message, String exceptionType,
-      String stackTraceString) {
+      String stackTraceString, boolean fatal) {
     this.message = message;
     this.exceptionType = exceptionType;
     this.stackTraceString = stackTraceString;
+    this.fatal = fatal;
   }
 
   /**
-   * Returns the exception type.
-   *
+   * Return the exception type.
+   * 
    * @return the exception type as a String
    */
   public String getExceptionType() {
@@ -54,8 +67,8 @@ public class ServerFailure {
   }
 
   /**
-   * Returns the failure message.
-   *
+   * Return the failure message.
+   * 
    * @return the message as a String
    */
   public String getMessage() {
@@ -63,11 +76,21 @@ public class ServerFailure {
   }
 
   /**
-   * Returns the failure stack trace.
-   *
+   * Return the failure stack trace.
+   * 
    * @return the stack trace as a String
    */
   public String getStackTraceString() {
     return stackTraceString;
+  }
+
+  /**
+   * Return true if this is a fatal error. The default implementation of
+   * {@link Receiver#onFailure} throws a runtime exception for fatal failures.
+   * 
+   * @return whether this is a fatal failure
+   */
+  public boolean isFatal() {
+    return fatal;
   }
 }

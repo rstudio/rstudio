@@ -24,6 +24,7 @@ public interface ServerFailureMessage {
   String EXCEPTION_TYPE = "X";
   String MESSAGE = "M";
   String STACK_TRACE = "S";
+  String FATAL = "F";
 
   @PropertyName(EXCEPTION_TYPE)
   String getExceptionType();
@@ -33,13 +34,19 @@ public interface ServerFailureMessage {
 
   @PropertyName(STACK_TRACE)
   String getStackTrace();
+  
+  @PropertyName(FATAL)
+  boolean isFatal();
 
   @PropertyName(EXCEPTION_TYPE)
   void setExceptionType(String exceptionType);
 
+  @PropertyName(FATAL)
+  void setFatal(boolean significant);
+
   @PropertyName(MESSAGE)
   void setMessage(String message);
-
+  
   @PropertyName(STACK_TRACE)
   void setStackTrace(String stackTrace);
 }

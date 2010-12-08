@@ -2,14 +2,16 @@
   xmlns:g='urn:import:com.google.gwt.user.client.ui'>
   <ui:style>
     .link {
-       cursor: pointer;
+       /* make it look like text */
+       color: inherit;
+       text-decoration: inherit;
      }
   </ui:style>
   
   <g:HTMLPanel>
     <div>
       <span ui:field="name">Not logged in</span> |
-      <g:InlineLabel ui:field="logoutLink" addStyleNames="{style.link}">Sign out</g:InlineLabel>
+      <g:Anchor ui:field="logoutLink" addStyleNames="{style.link}">Sign out</g:Anchor>
     </div>
   </g:HTMLPanel>
 </ui:UiBinder>

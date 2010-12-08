@@ -602,16 +602,8 @@ public class AbstractRequestContext implements RequestContext,
 
     String payload = makePayload();
     requestFactory.getRequestTransport().send(payload, new TransportReceiver() {
-      public void onTransportFailure(String message) {
-        ServerFailure failure = new ServerFailure(message, null, null);
-        reuse();
-        for (AbstractRequest<?> request : new ArrayList<AbstractRequest<?>>(
-            invocations)) {
-          request.onFail(failure);
-        }
-        if (receiver != null) {
-          receiver.onFailure(failure);
-        }
+      public void onTransportFailure(ServerFailure failure) {
+        fail(receiver, failure);
       }
 
       public void onTransportSuccess(String payload) {
@@ -620,16 +612,9 @@ public class AbstractRequestContext implements RequestContext,
         if (response.getGeneralFailure() != null) {
           ServerFailureMessage failure = response.getGeneralFailure();
           ServerFailure fail = new ServerFailure(failure.getMessage(),
-              failure.getExceptionType(), failure.getStackTrace());
+              failure.getExceptionType(), failure.getStackTrace(), failure.isFatal());
 
-          reuse();
-          for (AbstractRequest<?> invocation : new ArrayList<AbstractRequest<?>>(
-              invocations)) {
-            invocation.onFail(fail);
-          }
-          if (receiver != null) {
-            receiver.onFailure(fail);
-          }
+          fail(receiver, fail);
           return;
         }
 
@@ -664,7 +649,7 @@ public class AbstractRequestContext implements RequestContext,
                 response.getInvocationResults().get(i)).as();
             invocations.get(i).onFail(
                 new ServerFailure(failure.getMessage(),
-                    failure.getExceptionType(), failure.getStackTrace()));
+                    failure.getExceptionType(), failure.getStackTrace(), failure.isFatal()));
           }
         }
 
@@ -675,6 +660,17 @@ public class AbstractRequestContext implements RequestContext,
         editedProxies.clear();
         invocations.clear();
         returnedProxies.clear();
+      }
+
+      private void fail(Receiver<Void> receiver, ServerFailure failure) {
+        reuse();
+        for (AbstractRequest<?> request : new ArrayList<AbstractRequest<?>>(
+            invocations)) {
+          request.onFail(failure);
+        }
+        if (receiver != null) {
+          receiver.onFailure(failure);
+        }
       }
     });
   }

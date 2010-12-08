@@ -127,6 +127,102 @@ public class RequestFactoryInterfaceValidator {
   }
 
   /**
+   * Improves error messages by providing context for the user.
+   * <p>
+   * Visible for testing.
+   */
+  static class ErrorContext {
+    private final Logger logger;
+    private final ErrorContext parent;
+    private Type currentType;
+    private Method currentMethod;
+    private RequestFactoryInterfaceValidator validator;
+
+    public ErrorContext(Logger logger) {
+      this.logger = logger;
+      this.parent = null;
+    }
+
+    protected ErrorContext(ErrorContext parent) {
+      this.logger = parent.logger;
+      this.parent = parent;
+      this.validator = parent.validator;
+    }
+    
+    public void poison(String msg, Object... args) {
+      poison();
+      logger.logp(Level.SEVERE, currentType(), currentMethod(),
+          String.format(msg, args));
+      validator.poisoned = true;
+    }
+
+    public void poison(String msg, Throwable t) {
+      poison();
+      logger.logp(Level.SEVERE, currentType(), currentMethod(), msg, t);
+      validator.poisoned = true;
+    }
+
+    public ErrorContext setMethod(Method method) {
+      ErrorContext toReturn = fork();
+      toReturn.currentMethod = method;
+      return toReturn;
+    }
+
+    public ErrorContext setType(Type type) {
+      ErrorContext toReturn = fork();
+      toReturn.currentType = type;
+      return toReturn;
+    }
+    
+    public void spam(String msg, Object... args) {
+      logger.logp(Level.FINEST, currentType(), currentMethod(),
+          String.format(msg, args));
+    }
+
+    protected ErrorContext fork() {
+      return new ErrorContext(this);
+    }
+
+    void setValidator(RequestFactoryInterfaceValidator validator) {
+      assert this.validator == null : "Cannot set validator twice";
+      this.validator = validator;
+    }
+
+    private String currentMethod() {
+      if (currentMethod != null) {
+        return print(currentMethod);
+      }
+      if (parent != null) {
+        return parent.currentMethod();
+      }
+      return null;
+    }
+
+    private String currentType() {
+      if (currentType != null) {
+        return print(currentType);
+      }
+      if (parent != null) {
+        return parent.currentType();
+      }
+      return null;
+    }
+
+    /**
+     * Populate {@link RequestFactoryInterfaceValidator#badTypes} with the
+     * current context.
+     */
+    private void poison() {
+      if (currentType != null) {
+        validator.badTypes.add(currentType.getClassName());
+      }
+      if (parent != null) {
+        parent.poison();
+      }
+    }
+  }
+
+  /**
    * Used internally as a placeholder for types that cannot be mapped to a
    * domain object.
    */
@@ -206,12 +302,14 @@ public class RequestFactoryInterfaceValidator {
           @Override
           public void visit(String name, Object value) {
             String sourceName;
-            if ("value".equals(name) || "locator".equals(name)) {
+            boolean locatorRequired = "locator".equals(name);
+            boolean valueRequired = "value".equals(name);
+            if (valueRequired || locatorRequired) {
               sourceName = (String) value;
             } else {
               return;
             }
-
+            
             /*
              * The input is a source name, so we need to convert it to an
              * internal name. We'll do this by substituting dollar signs for the
@@ -222,17 +320,25 @@ public class RequestFactoryInterfaceValidator {
               logger.spam("Did not find " + desc.toString());
               int idx = desc.lastIndexOf("/");
               if (idx == -1) {
+                if (locatorRequired) {
+                  logger.poison("Cannot find locator named %s", value);
+                } else if (valueRequired) {
+                  logger.poison("Cannot find domain type named %s", value);
+                }
                 return;
               }
               desc.setCharAt(idx, '$');
             }
 
-            if ("locator".equals(name)) {
+            if (locatorRequired) {
               locatorInternalName = desc.toString();
-            } else {
+              logger.spam(locatorInternalName);
+            } else if (valueRequired) {
               domainInternalName = desc.toString();
+              logger.spam(domainInternalName);
+            } else {
+              throw new RuntimeException("Should not reach here");
             }
-            logger.spam(domainInternalName);
           }
         };
       }
@@ -249,89 +355,6 @@ public class RequestFactoryInterfaceValidator {
         }
         logger.poison("Redundant domain mapping annotations present:%s",
             sb.toString());
-      }
-    }
-  }
-
-  /**
-   * Improves error messages by providing context for the user.
-   */
-  private class ErrorContext {
-    private final Logger logger;
-    private final ErrorContext parent;
-    private Type currentType;
-    private Method currentMethod;
-
-    public ErrorContext(Logger logger) {
-      this.logger = logger;
-      this.parent = null;
-    }
-
-    private ErrorContext(ErrorContext parent) {
-      this.logger = parent.logger;
-      this.parent = parent;
-    }
-
-    public void poison(String msg, Object... args) {
-      poison();
-      logger.logp(Level.SEVERE, currentType(), currentMethod(),
-          String.format(msg, args));
-      poisoned = true;
-    }
-
-    public void poison(String msg, Throwable t) {
-      poison();
-      logger.logp(Level.SEVERE, currentType(), currentMethod(), msg, t);
-      poisoned = true;
-    }
-
-    public ErrorContext setMethod(Method method) {
-      ErrorContext toReturn = new ErrorContext(this);
-      toReturn.currentMethod = method;
-      return toReturn;
-    }
-
-    public ErrorContext setType(Type type) {
-      ErrorContext toReturn = new ErrorContext(this);
-      toReturn.currentType = type;
-      return toReturn;
-    }
-
-    public void spam(String msg, Object... args) {
-      logger.logp(Level.FINEST, currentType(), currentMethod(),
-          String.format(msg, args));
-    }
-
-    private String currentMethod() {
-      if (currentMethod != null) {
-        return print(currentMethod);
-      }
-      if (parent != null) {
-        return parent.currentMethod();
-      }
-      return null;
-    }
-
-    private String currentType() {
-      if (currentType != null) {
-        return print(currentType);
-      }
-      if (parent != null) {
-        return parent.currentType();
-      }
-      return null;
-    }
-
-    /**
-     * Populate {@link RequestFactoryInterfaceValidator#badTypes} with the
-     * current context.
-     */
-    private void poison() {
-      if (currentType != null) {
-        badTypes.add(currentType.getClassName());
-      }
-      if (parent != null) {
-        parent.poison();
       }
     }
   }
@@ -623,18 +646,31 @@ public class RequestFactoryInterfaceValidator {
    * Contains vaue types (e.g. Integer).
    */
   private final Set<Type> valueTypes = new HashSet<Type>();
-
+  
   /**
    * Maps a domain object to the type returned from its getId method.
    */
   private final Map<Type, Type> unresolvedKeyTypes = new HashMap<Type, Type>();
 
-  public RequestFactoryInterfaceValidator(Logger logger, Loader loader) {
-    this.parentLogger = new ErrorContext(logger);
-    this.loader = loader;
+  {
     for (Class<?> clazz : VALUE_TYPES) {
       valueTypes.add(Type.getType(clazz));
     }
+  }
+  
+  public RequestFactoryInterfaceValidator(Logger logger, Loader loader) {
+    this.parentLogger = new ErrorContext(logger);
+    parentLogger.setValidator(this);
+    this.loader = loader;
+  }
+  
+  /**
+   * Visible for testing.
+   */
+  RequestFactoryInterfaceValidator(ErrorContext errorContext, Loader loader) {
+    this.parentLogger = errorContext;
+    this.loader = loader;
+    errorContext.setValidator(this);
   }
 
   /**
@@ -1332,7 +1368,8 @@ public class RequestFactoryInterfaceValidator {
     return true;
   }
 
-  private boolean isCollectionType(ErrorContext logger, Type type) {
+  private boolean isCollectionType(@SuppressWarnings("unused") ErrorContext logger, Type type) {
+    // keeping the logger arg just for internal consistency for our small minds
     return "java/util/List".equals(type.getInternalName())
         || "java/util/Set".equals(type.getInternalName());
   }

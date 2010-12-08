@@ -18,24 +18,28 @@ package com.google.gwt.requestfactory.shared;
 import java.util.Set;
 
 /**
- * Implemented by objects that display values.
+ * Callback object for {@link Request#fire(Receiver)} and
+ * {@link RequestContext#fire(Receiver)}.
  * 
  * @param <V> value type
  */
 public abstract class Receiver<V> {
   /**
-   * Receives general failure notifications. The default implementation throws a
-   * RuntimeException with the provided error message.
+   * Receives general failure notifications. The default implementation looks at
+   * {@link ServerFailure#isFatal()}, and throws a runtime exception with the
+   * failure object's error message if it is true.
    * 
    * @param error a {@link ServerFailure} instance
    */
   public void onFailure(ServerFailure error) {
-    throw new RuntimeException(error.getMessage());
+    if (error.isFatal()) {
+      throw new RuntimeException(error.getMessage());
+    }
   }
 
   /**
    * Called when a Request has been successfully executed on the server.
-   *
+   * 
    * @param response a response of type V
    */
   public abstract void onSuccess(V response);
@@ -44,14 +48,13 @@ public abstract class Receiver<V> {
    * Called if an object sent to the server could not be validated. The default
    * implementation calls {@link #onFailure(ServerFailure)} if <code>errors
    * </code> is not empty.
-   *
+   * 
    * @param errors a Set of {@link Violation} instances
    */
   public void onViolation(Set<Violation> errors) {
     if (!errors.isEmpty()) {
       onFailure(new ServerFailure(
-          "The call failed on the server due to a ConstraintViolation",
-          "", ""));
+          "The call failed on the server due to a ConstraintViolation"));
     }
   }
 }

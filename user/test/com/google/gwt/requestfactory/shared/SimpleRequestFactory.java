@@ -23,6 +23,8 @@ public interface SimpleRequestFactory extends BasicRequestFactory {
   
   InstanceServiceRequest instanceServiceRequest();
 
+  InstanceServiceRequestByName instanceServiceRequestByName();
+
   SimpleBarRequest simpleBarRequest();
 
   SimpleFooRequest simpleFooRequest();

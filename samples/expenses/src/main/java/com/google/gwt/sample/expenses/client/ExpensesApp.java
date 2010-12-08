@@ -23,17 +23,11 @@ import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.place.shared.PlaceController;
 import com.google.gwt.place.shared.PlaceHistoryHandler;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
-import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.RequestEvent;
-import com.google.gwt.requestfactory.shared.UserInformationProxy;
-import com.google.gwt.requestfactory.ui.client.AuthenticationFailureHandler;
-import com.google.gwt.requestfactory.ui.client.LoginWidget;
 import com.google.gwt.sample.expenses.client.place.ReportListPlace;
 import com.google.gwt.sample.expenses.client.place.ReportPlace;
 import com.google.gwt.sample.expenses.shared.EmployeeProxy;
-import com.google.gwt.sample.expenses.shared.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.shared.ReportProxy;
-import com.google.gwt.user.client.Window.Location;
+import com.google.gwt.sample.gaerequest.client.ReloadOnAuthenticationFailure;
 import com.google.gwt.user.client.ui.HasWidgets;
 
 import java.util.logging.Level;
@@ -55,7 +49,6 @@ public class ExpensesApp {
   private final EventBus eventBus;
   private final PlaceController placeController;
   private final PlaceHistoryHandler placeHistoryHandler;
-  private final ExpensesRequestFactory requestFactory;
   private final ExpensesShell shell;
 
   private EntityProxyId<EmployeeProxy> lastEmployee;
@@ -63,12 +56,11 @@ public class ExpensesApp {
 
   public ExpensesApp(ActivityManager activityManager, EventBus eventBus,
       PlaceController placeController, PlaceHistoryHandler placeHistoryHandler,
-      ExpensesRequestFactory requestFactory, ExpensesShell shell) {
+      ExpensesShell shell) {
     this.activityManager = activityManager;
     this.eventBus = eventBus;
     this.placeController = placeController;
     this.placeHistoryHandler = placeHistoryHandler;
-    this.requestFactory = requestFactory;
     this.shell = shell;
   }
 
@@ -94,18 +86,7 @@ public class ExpensesApp {
     });
 
     // Check for Authentication failures or mismatches
-    RequestEvent.register(eventBus, new AuthenticationFailureHandler());
-
-    // Kick off the login widget
-    final LoginWidget login = shell.getLoginWidget();
-    Receiver<UserInformationProxy> receiver = new Receiver<UserInformationProxy>() {
-      @Override
-      public void onSuccess(UserInformationProxy userInformationRecord) {
-        login.setUserInformation(userInformationRecord);
-      }
-    };
-    requestFactory.userInformationRequest().getCurrentUserInformation(
-        Location.getHref()).fire(receiver);
+    new ReloadOnAuthenticationFailure().register(eventBus);
 
     // Listen for requests from ExpenseTree.
     expenseTree.setListener(new ExpenseTree.Listener() {

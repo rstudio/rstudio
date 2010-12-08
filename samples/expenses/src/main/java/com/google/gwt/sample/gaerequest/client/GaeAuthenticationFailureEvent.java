@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.requestfactory.shared;
+package com.google.gwt.sample.gaerequest.client;
 
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.EventHandler;
@@ -22,50 +22,41 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.http.client.Response;
 
 /**
- * An event posted whenever an RPC request is sent or its response is received.
+ * An event posted when an authentication failure is detected.
  */
-public class RequestEvent extends GwtEvent<RequestEvent.Handler> {
+public class GaeAuthenticationFailureEvent extends GwtEvent<GaeAuthenticationFailureEvent.Handler> {
   
   /**
    * Implemented by handlers of this type of event.
    */
   public interface Handler extends EventHandler {
     /**
-     * Called when a {@link RequestEvent} is fired.
+     * Called when a {@link GaeAuthenticationFailureEvent} is fired.
      *
-     * @param requestEvent a {@link RequestEvent} instance
+     * @param requestEvent a {@link GaeAuthenticationFailureEvent} instance
      */
-    void onRequestEvent(RequestEvent requestEvent);
-  }
-
-  /**
-   * The request state.
-   */
-  public enum State {
-    SENT, RECEIVED
+    void onAuthFailure(GaeAuthenticationFailureEvent requestEvent);
   }
 
   private static final Type<Handler> TYPE = new Type<Handler>();
 
   /**
-   * Register a {@link RequestEvent.Handler} on an {@link EventBus}.
+   * Register a {@link GaeAuthenticationFailureEvent.Handler} on an {@link EventBus}.
    *
    * @param eventBus the {@link EventBus}
-   * @param handler a {@link RequestEvent.Handler}
+   * @param handler a {@link GaeAuthenticationFailureEvent.Handler}
    * @return a {@link HandlerRegistration} instance
    */
   public static HandlerRegistration register(EventBus eventBus,
-      RequestEvent.Handler handler) {
+      GaeAuthenticationFailureEvent.Handler handler) {
     return eventBus.addHandler(TYPE, handler);
   }
-
-  private final State state;
 
   /**
    * Will only be non-null if this is an event of type {@link State#RECEIVED},
    * and the RPC was successful.
    */
-  private final Response response;
+  private final String loginUrl;
 
   /**
    * Constructs a new @{link RequestEvent}.
@@ -73,9 +64,8 @@ public class RequestEvent extends GwtEvent<RequestEvent.Handler> {
    * @param state a {@link State} instance
    * @param response a {@link Response} instance
    */
-  public RequestEvent(State state, Response response) {
-    this.state = state;
-    this.response = response;
+  public GaeAuthenticationFailureEvent(String loginUrl) {
+    this.loginUrl = loginUrl;
   }
 
   @Override
@@ -84,25 +74,16 @@ public class RequestEvent extends GwtEvent<RequestEvent.Handler> {
   }
 
   /**
-   * Returns the {@link Response} associated with this event.
-   *
+   * Returns the URL the user can visit to reauthenticate.
+   * 
    * @return a {@link Response} instance
    */
-  public Response getResponse() {
-    return response;
-  }
-
-  /**
-   * Returns the {@link State} associated with this event.
-   *
-   * @return a {@link State} instance
-   */
-  public State getState() {
-    return state;
+  public String getLoginUrl() {
+    return loginUrl;
   }
 
   @Override
   protected void dispatch(Handler handler) {
-    handler.onRequestEvent(this);
+    handler.onAuthFailure(this);
   }
 }

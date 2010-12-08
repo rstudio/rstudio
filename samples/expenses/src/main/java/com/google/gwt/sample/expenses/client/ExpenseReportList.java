@@ -347,7 +347,7 @@ public class ExpenseReportList extends Composite implements
 
   public void onProxyChange(EntityProxyChange<ReportProxy> event) {
     EntityProxyId<ReportProxy> changedId = event.getProxyId();
-    List<ReportProxy> records = table.getDisplayedItems();
+    List<ReportProxy> records = table.getVisibleItems();
     int i = 0;
     for (ReportProxy record : records) {
       if (record != null && changedId.equals(record.stableId())) {

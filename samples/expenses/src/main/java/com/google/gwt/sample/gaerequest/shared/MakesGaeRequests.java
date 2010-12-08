@@ -13,21 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.requestfactory.server;
-
-import com.google.gwt.requestfactory.shared.ServerFailure;
+package com.google.gwt.sample.gaerequest.shared;
 
 /**
- * A RequestFactoryServlet that forwards all exception information.
+ * Implemented by {@link com.google.gwt.requestfactory.shared.RequestFactory}s
+ * that vend AppEngine requests.
  */
-public class RequestFactoryExceptionHandlerServlet
-    extends RequestFactoryServlet {
-  public RequestFactoryExceptionHandlerServlet() {
-    super(new ExceptionHandler() {
-      public ServerFailure createServerFailure(Throwable throwable) {
-        return new ServerFailure(throwable.getMessage(),
-            throwable.getClass().getName(), "my stack trace", true);
-      }
-    });
-  }
+public interface MakesGaeRequests {
+
+  /**
+   * Return a request selector.
+   */
+  GaeUserServiceRequest userServiceRequest();
 }

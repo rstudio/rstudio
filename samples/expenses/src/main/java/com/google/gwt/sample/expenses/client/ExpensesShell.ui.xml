@@ -4,7 +4,9 @@
   xmlns:g='urn:import:com.google.gwt.user.client.ui'
   xmlns:m='urn:import:com.google.gwt.mobile.client'
   xmlns:r='urn:import:com.google.gwt.requestfactory.ui.client'
-  xmlns:e='urn:import:com.google.gwt.sample.expenses.client'>
+  xmlns:e='urn:import:com.google.gwt.sample.expenses.client'
+  xmlns:a='urn:import:com.google.gwt.sample.gaerequest.client'>
+
 
   <ui:with field='styles' type='com.google.gwt.sample.expenses.client.style.Styles' />
 
@@ -44,7 +46,7 @@
   <g:DockLayoutPanel unit='PX'>
     <g:north size='96'>
       <g:HTMLPanel styleName='{style.title}'>
-        <r:LoginWidget styleName='{style.login}' ui:field="loginWidget"/>
+        <a:LoginWidget styleName='{style.login}' ui:field="loginWidget"/>
         <table height='100%' cellpadding='8' cellspacing='0'>
           <tr>
             <td>

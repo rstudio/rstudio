@@ -89,7 +89,7 @@ public class RequestFactoryUnicodeEscapingTest extends RequestFactoryTestBase {
             verifyStringContainingCharacterRange(current,
                 Math.min(end, current + size), response);
           } catch (InvalidCharacterException e) {
-            fails.add(new ServerFailure(e.getMessage(), null, null));
+            fails.add(new ServerFailure(e.getMessage()));
           }
           nextBatch();
         }
