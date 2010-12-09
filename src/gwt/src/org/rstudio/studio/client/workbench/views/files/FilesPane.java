@@ -23,6 +23,7 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -40,12 +41,14 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    @Inject
    public FilesPane(GlobalDisplay globalDisplay,
                     Commands commands,
-                    FileDialogs fileDialogs)
+                    FileDialogs fileDialogs,
+                    FileTypeRegistry fileTypeRegistry)
    {
       super("Files");
       globalDisplay_ = globalDisplay ;
       commands_ = commands;
       fileDialogs_ = fileDialogs;
+      fileTypeRegistry_ = fileTypeRegistry;
       ensureWidget();
    }
    
@@ -182,7 +185,7 @@ public class FilesPane extends WorkbenchPane implements Files.Display
       filePathToolbar_ = new FilePathToolbar(new DisplayObserverProxy());
 
       // create file list and file progress
-      fileList_ = new FileList(new DisplayObserverProxy());
+      fileList_ = new FileList(new DisplayObserverProxy(), fileTypeRegistry_);
 
       DockLayoutPanel dockPanel = new DockLayoutPanel(Unit.PX);
       dockPanel.addNorth(filePathToolbar_, filePathToolbar_.getHeight());
@@ -216,4 +219,5 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    private final FileDialogs fileDialogs_;
    private Files.Display.Observer observer_;
 
+   private final FileTypeRegistry fileTypeRegistry_;
 }

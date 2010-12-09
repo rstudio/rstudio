@@ -82,7 +82,7 @@ public class FileTypeRegistry
       register("*.nw", SWEAVE, icons.iconText());
       register("*.tex", TEX, icons.iconTex());
       register("*.latex", TEX, icons.iconTex());
-      register("*.rd", TEX, icons.iconTex());
+      register("*.rd", RD, icons.iconTex());
       register("*.rdata", RDATA, icons.iconRdata());
       defaultType_ = BROWSER;
 

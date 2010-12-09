@@ -159,7 +159,8 @@ public class FileSystemItem extends JavaScriptObject
    {
       return isDirectory() && PUBLIC.equals(homeRelativePath());
    }
-   
+
+   // RStudio-specific code should use FileTypeRegistry.getIconForFile() instead
    public final ImageResource getIcon()
    {
       if (isDirectory())
@@ -169,7 +170,7 @@ public class FileSystemItem extends JavaScriptObject
          else
             return RES.iconFolder();
       }
-      
+
       Match m = EXT_PATTERN.match(getName(), 0);
       if (m == null)
          return RES.iconText();
@@ -189,22 +190,6 @@ public class FileSystemItem extends JavaScriptObject
                lowerExt.equals(".png"))
       {
          return RES.iconPng();
-      }
-      else if (lowerExt.equals(".rdata"))
-      {
-         return RES.iconRdata();
-      }
-      else if (lowerExt.equals(".r"))
-      {
-         return RES.iconRdoc();
-      }
-      else if (lowerExt.equals(".rhistory"))
-      {
-         return RES.iconRhistory();
-      }
-      else if (lowerExt.equals(".rprofile"))
-      {
-         return RES.iconRprofile();
       }
       else
       {

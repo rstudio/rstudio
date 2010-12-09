@@ -17,6 +17,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.HTMLTable.CellFormatter;
 import com.google.gwt.user.client.ui.HTMLTable.ColumnFormatter;
@@ -28,6 +29,7 @@ import org.rstudio.core.client.files.filedialog.FileDialogStyles;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.views.files.Files;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 
@@ -38,9 +40,11 @@ import java.util.ArrayList;
 
 public class FileList extends Composite
 {
-   public FileList(Files.Display.Observer observer)
+   public FileList(Files.Display.Observer observer,
+                   FileTypeRegistry fileTypeRegistry)
    {   
       observer_ = observer;
+      fileTypeRegistry_ = fileTypeRegistry;
       scrollPanel_ = new ScrollPanel();
       initWidget(scrollPanel_);
       setStylePrimaryName(ThemeStyles.INSTANCE.fileList());
@@ -288,7 +292,10 @@ public class FileList extends Composite
    
    private Image iconForFile(FileSystemItem file)
    {
-      return new Image(file.getIcon());
+      ImageResource img = fileTypeRegistry_.getIconForFile(file);
+      if (img == null)
+         img = file.getIcon(); 
+      return new Image(img);
    }
    
    private void setAllSelections(boolean checked)
@@ -318,4 +325,5 @@ public class FileList extends Composite
    private static final int COL_SIZE = 3;
    private static final int COL_TIMESTAMP = 4;
    private final FileDialogStyles styles_ = FileDialogResources.INSTANCE.styles();
+   private FileTypeRegistry fileTypeRegistry_;
 }
