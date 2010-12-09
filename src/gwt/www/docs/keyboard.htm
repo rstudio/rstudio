@@ -11,6 +11,12 @@
 #banner {
   margin-bottom: 0px;
 }
+.shortcuts th {
+  text-align: left;
+}
+.shortcuts, .shortcuts td {
+  font-size: 10pt;
+}
 </style>
 
 </head>
@@ -23,56 +29,246 @@
 
 <h2>Keyboard Shortcuts</h2>
 
-<h4>Console</h4>
-Ctrl+1 - put the cursor in the console<br/>
-Ctrl+L - clear console<br/>
-Ctrl+A - move cursor to beginning of line<br/>
-Ctrl+E - move cursor to end of line<br/>
-Up/Down - navigate command history<br/>
-Ctrl+Up - popup command history (filtered by command text already entered)<br/>
-Esc - interrupt currently executing command<br/>
-<h4>Source</h4>
-Ctrl+2 - put the cursor in the Source document<br/>
-Ctrl+Shift+N - start new document (except on Chrome for Windows)<br/>
-Ctrl+O - open document<br/>
-Ctrl+S - save active document<br/>
-Ctrl+Shift+L - close active document<br/>
-Ctrl+Enter (or Ctrl+Alt+L) - run current line/selection<br/>
-Ctrl+Shift+Enter - Run current document<br/>
-Ctrl+Option+Down - switch to tab<br/>
-Ctrl+Option+Right - next tab<br/>
-Ctrl+Option+Left - previous tab<br/>
-Ctrl+Shift+Option+Left - first tab<br/>
-Ctrl+Shift+Option+Right - last tab<br/>
-<h4>Editing (Console &amp; Source)</h4>
-Ctrl+Z - undo<br/>
-Ctrl+Shift+Z - redo<br/>
-Ctrl+X - cut<br/>
-Ctrl+C - copy<br/>
-Ctrl+V - paste<br/>
-Ctrl+U - yank line up to cursor<br/>
-Ctrl+K - yank line after cursor<br/>
-Ctrl+Y - insert currently yanked text<br/>
-<h4>Completions (Console &amp; Source)</h4>
-Tab or Ctrl+Space - attempt completion<br/>
-Up/Down - navigate candidates<br/>
-Enter, Tab, Right - accept selected candidate<br/>
-F1 - show help for selected candidate<br/>
-Esc - dismiss completion popup<br/>
-<h4>Views</h4>
-Ctrl+1 - move cursor to source<br/>
-Ctrl+2 - move cursor to console<br/>
-Ctrl+3 - show workspace<br/>
-Ctrl+4 - show data<br/>
-Ctrl+5 - show history<br/>
-Ctrl+6 - show files<br/>
-Ctrl+7 - show plots<br/>
-Ctrl+8 - show packages<br/>
-Ctrl+9 - show help<br/>
-<h4>Plots</h4>
-Ctrl+PgDn - next plot<br/>
-Ctrl+PgUp - previous plot<br/>
-
+<!-- Automatically generated from keyboard_shortcuts.haml; do not edit by hand -->
+<table class='shortcuts'>
+  <tr><td colspan="3"><h3>Console</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
+  <tr>
+    <td>Put the cursor in the console</td>
+    <td>Ctrl+1</td>
+    <td>Ctrl+1</td>
+  </tr>
+  <tr>
+    <td>Clear console</td>
+    <td>Ctrl+L</td>
+    <td>Command+L</td>
+  </tr>
+  <tr>
+    <td>Move cursor to beginning of line</td>
+    <td>Ctrl+A</td>
+    <td>Command+A</td>
+  </tr>
+  <tr>
+    <td>Move cursor to end of line</td>
+    <td>Ctrl+E</td>
+    <td>Command+E</td>
+  </tr>
+  <tr>
+    <td>Navigate command history</td>
+    <td>Up/Down</td>
+    <td>Up/Down</td>
+  </tr>
+  <tr>
+    <td>Popup command history</td>
+    <td>Ctrl+Up</td>
+    <td>Command+Up</td>
+  </tr>
+  <tr>
+    <td>Interrupt currently executing command</td>
+    <td>Esc</td>
+    <td>Esc</td>
+  </tr>
+  <tr><td><br/></td></tr>
+  <tr><td colspan="3"><h3>Source</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
+  <tr>
+    <td>Put the cursor in the Source document</td>
+    <td>Ctrl+2</td>
+    <td>Ctrl+2</td>
+  </tr>
+  <tr>
+    <td>New document (except on Chrome/Windows)</td>
+    <td>Ctrl+Shift+N</td>
+    <td>Command+Shift+N</td>
+  </tr>
+  <tr>
+    <td>Open document</td>
+    <td>Ctrl+O</td>
+    <td>Command+O</td>
+  </tr>
+  <tr>
+    <td>Save active document</td>
+    <td>Ctrl+S</td>
+    <td>Command+S</td>
+  </tr>
+  <tr>
+    <td>Close active document</td>
+    <td>Ctrl+Shift+L</td>
+    <td>Command+Shift+L</td>
+  </tr>
+  <tr>
+    <td>Run current line/selection</td>
+    <td>Ctrl+Enter</td>
+    <td>Command+Enter</td>
+  </tr>
+  <tr>
+    <td>Run current document</td>
+    <td>Ctrl+Shift+Enter</td>
+    <td>Command+Shift+Enter</td>
+  </tr>
+  <tr>
+    <td>Switch to tab</td>
+    <td>Ctrl+Alt+Down</td>
+    <td>Command+Option+Down</td>
+  </tr>
+  <tr>
+    <td>Previous tab</td>
+    <td>Ctrl+Alt+Left</td>
+    <td>Command+Option+Left</td>
+  </tr>
+  <tr>
+    <td>Next tab</td>
+    <td>Ctrl+Alt+Right</td>
+    <td>Command+Option+Right</td>
+  </tr>
+  <tr>
+    <td>First tab</td>
+    <td>Ctrl+Shift+Alt+Left</td>
+    <td>Command+Shift+Option+Left</td>
+  </tr>
+  <tr>
+    <td>Last tab</td>
+    <td>Ctrl+Shift+Alt+Right</td>
+    <td>Command+Shift+Option+Right</td>
+  </tr>
+  <tr>
+    <td>Extract function from selection</td>
+    <td>Ctrl+Alt+F</td>
+    <td>Command+Option+F</td>
+  </tr>
+  <tr>
+    <td>Comment/uncomment current line/selection</td>
+    <td>Ctrl+/</td>
+    <td>Command+/</td>
+  </tr>
+  <tr><td><br/></td></tr>
+  <tr><td colspan="3"><h3>Editing (Console and Source)</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
+  <tr>
+    <td>Undo</td>
+    <td>Ctrl+Z</td>
+    <td>Command+Z</td>
+  </tr>
+  <tr>
+    <td>Redo</td>
+    <td>Ctrl+Shift+Z</td>
+    <td>Command+Shift+Z</td>
+  </tr>
+  <tr>
+    <td>Cut</td>
+    <td>Ctrl+X</td>
+    <td>Command+X</td>
+  </tr>
+  <tr>
+    <td>Copy</td>
+    <td>Ctrl+C</td>
+    <td>Command+C</td>
+  </tr>
+  <tr>
+    <td>Paste</td>
+    <td>Ctrl+V</td>
+    <td>Command+V</td>
+  </tr>
+  <tr>
+    <td>Yank line up to cursor</td>
+    <td>Ctrl+U</td>
+    <td>Command+U</td>
+  </tr>
+  <tr>
+    <td>Yank line after cursor</td>
+    <td>Ctrl+K</td>
+    <td>Command+K</td>
+  </tr>
+  <tr>
+    <td>Insert currently yanked text</td>
+    <td>Ctrl+Y</td>
+    <td>Command+Y</td>
+  </tr>
+  <tr><td><br/></td></tr>
+  <tr><td colspan="3"><h3>Completions (Console and Source)</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
+  <tr>
+    <td>Attempt completion</td>
+    <td>Tab or Ctrl+Space</td>
+    <td>Tab or Command+Space</td>
+  </tr>
+  <tr>
+    <td>Navigate candidates</td>
+    <td>Up/Down</td>
+    <td>Up/Down</td>
+  </tr>
+  <tr>
+    <td>Accept selected candidate</td>
+    <td>Enter, Tab, or Right</td>
+    <td>Enter, Tab, or Right</td>
+  </tr>
+  <tr>
+    <td>Show help for selected candidate</td>
+    <td>F1</td>
+    <td>F1</td>
+  </tr>
+  <tr>
+    <td>Dismiss completion popup</td>
+    <td>Esc</td>
+    <td>Esc</td>
+  </tr>
+  <tr><td><br/></td></tr>
+  <tr><td colspan="3"><h3>Views</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
+  <tr>
+    <td>Move cursor to source</td>
+    <td>Ctrl+1</td>
+    <td>Ctrl+1</td>
+  </tr>
+  <tr>
+    <td>Move cursor to console</td>
+    <td>Ctrl+2</td>
+    <td>Ctrl+2</td>
+  </tr>
+  <tr>
+    <td>Show workspace</td>
+    <td>Ctrl+3</td>
+    <td>Ctrl+3</td>
+  </tr>
+  <tr>
+    <td>Show data</td>
+    <td>Ctrl+4</td>
+    <td>Ctrl+4</td>
+  </tr>
+  <tr>
+    <td>Show history</td>
+    <td>Ctrl+5</td>
+    <td>Ctrl+5</td>
+  </tr>
+  <tr>
+    <td>Show files</td>
+    <td>Ctrl+6</td>
+    <td>Ctrl+6</td>
+  </tr>
+  <tr>
+    <td>Show plots</td>
+    <td>Ctrl+7</td>
+    <td>Ctrl+7</td>
+  </tr>
+  <tr>
+    <td>Show packages</td>
+    <td>Ctrl+8</td>
+    <td>Ctrl+8</td>
+  </tr>
+  <tr>
+    <td>Show help</td>
+    <td>Ctrl+9</td>
+    <td>Ctrl+9</td>
+  </tr>
+  <tr><td><br/></td></tr>
+  <tr><td colspan="3"><h3>Plots</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
+  <tr>
+    <td>Previous plot</td>
+    <td>Ctrl+PageUp</td>
+    <td>Command+PageUp</td>
+  </tr>
+  <tr>
+    <td>Next plot</td>
+    <td>Ctrl+PageDown</td>
+    <td>Command+PageDown</td>
+  </tr>
+  <tr><td><br/></td></tr>
+</table>
 </div>
    
 </body>

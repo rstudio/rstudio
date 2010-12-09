@@ -49,7 +49,7 @@ public class ExportDialog extends ModalDialogBase
             closeDialog();
          }
       });
-      addOkButton(closeButton); 
+      addCancelButton(closeButton); 
    }
    
    @Override
@@ -100,7 +100,9 @@ public class ExportDialog extends ModalDialogBase
       });
       updateButton.getElement().getStyle().setMarginTop(5, Unit.PX);
       imageSizePanel.add(new HTML("&nbsp;"));
-      imageSizePanel.add(updateButton);  
+      imageSizePanel.add(updateButton);
+
+      setDefaultOverrideButton(updateButton);
       
       optionsPanel_.add(imageSizePanel);
      
@@ -142,6 +144,7 @@ public class ExportDialog extends ModalDialogBase
    {
       super.onDialogShown();
       updatePreview(false);
+      widthTextBox_.setFocus(true);
    }
    
   
