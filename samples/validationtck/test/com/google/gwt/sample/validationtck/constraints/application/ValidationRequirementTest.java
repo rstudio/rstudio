@@ -26,6 +26,13 @@ public class ValidationRequirementTest extends GWTTestCase {
   org.hibernate.jsr303.tck.tests.constraints.application.ValidationRequirementTest delegate =
       new org.hibernate.jsr303.tck.tests.constraints.application.ValidationRequirementTest();
 
+  /**
+   * This test is disabled in the TCK.
+   */
+  public void disabledTestIgnoreStaticFieldsAndProperties() {
+    delegate.testIgnoreStaticFieldsAndProperties();
+  }
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.sample.validationtck.constraints.application.TckTest";
@@ -45,10 +52,6 @@ public class ValidationRequirementTest extends GWTTestCase {
 
   public void testFieldAndPropertyVisibilityIsNotConstrained() {
     delegate.testFieldAndPropertyVisibilityIsNotConstrained();
-  }
-
-  public void testIgnoreStaticFieldsAndProperties() {
-    delegate.testIgnoreStaticFieldsAndProperties();
   }
 
   public void testPropertyAccess() {

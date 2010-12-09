@@ -27,7 +27,6 @@ public class Author {
   @NotEmpty(message = "lastname must not be null")
   private String lastName;
 
-  @Size(max = 30)
   private String company;
 
   public String getFirstName() {
@@ -42,6 +41,9 @@ public class Author {
     return lastName;
   }
 
+  // TODO(nchalko) move constraint to the field once the JNSI wrappers are
+  // working.
+  @Size(max = 30)
   public String getCompany() {
     return company;
   }

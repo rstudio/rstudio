@@ -86,7 +86,7 @@ public abstract class AbstractCreator extends AbstractSourceCreator {
     sw.indent();
     sw.indent();
   
-    // GWT.create(MyBeanValidator
+    // GWT.create(MyBeanValidator.class);
     sw.println("GWT.create(" + bean.getFullyQualifiedValidatorName()
         + ".class);");
     sw.outdent();

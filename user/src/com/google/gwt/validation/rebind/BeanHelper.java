@@ -55,7 +55,7 @@ final class BeanHelper {
         clazz.getCanonicalName());
     BeanHelper helper = getBeanHelper(beanType);
     if (helper == null) {
-      helper = new BeanHelper(beanType,
+      helper = new BeanHelper(beanType, clazz,
           serverSideValidor.getConstraintsForClass(clazz));
       addBeanHelper(helper);
       writeInterface(context, logger, helper);
@@ -106,10 +106,14 @@ final class BeanHelper {
 
   private final JClassType jClass;
 
-  private BeanHelper(JClassType jClass, BeanDescriptor beanDescriptor) {
+  private Class<?> clazz;
+
+  private BeanHelper(JClassType jClass, Class<?> clazz,
+      BeanDescriptor beanDescriptor) {
     super();
     this.beanDescriptor = beanDescriptor;
     this.jClass = jClass;
+    this.clazz = clazz;
   }
 
   public BeanDescriptor getBeanDescriptor() {
@@ -119,8 +123,8 @@ final class BeanHelper {
   /*
    * The server side validator needs an actual class.
    */
-  public Class<?> getClazz() throws ClassNotFoundException {
-    return Class.forName(jClass.getQualifiedSourceName());
+  public Class<?> getClazz() {
+    return clazz;
   }
 
   public String getDescriptorName() {

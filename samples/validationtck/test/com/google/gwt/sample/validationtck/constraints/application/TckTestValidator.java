@@ -21,6 +21,7 @@ import com.google.gwt.validation.client.GwtValidation;
 
 import org.hibernate.jsr303.tck.tests.constraints.application.Building;
 import org.hibernate.jsr303.tck.tests.constraints.application.SuperWoman;
+import org.hibernate.jsr303.tck.tests.constraints.application.Visibility;
 import org.hibernate.jsr303.tck.tests.constraints.application.Woman;
 
 import javax.validation.Validator;
@@ -34,7 +35,7 @@ public final class TckTestValidator extends AbstractValidator {
    * Marker Interface for {@link GWT#create(Class)}.
    */
   @GwtValidation(value = {
-      Building.class, SuperWoman.class, Woman.class})
+      Building.class, SuperWoman.class, Visibility.class, Woman.class})
   public static interface GwtValidator extends Validator {
   }
 
