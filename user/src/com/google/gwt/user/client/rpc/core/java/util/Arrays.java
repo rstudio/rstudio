@@ -60,16 +60,12 @@ public final class Arrays {
       Object[] array;
       if (GWT.isScript()) {
         // Violator pattern.
-        array = getArray0(instance);
+        array = ArraysViolator.getArray0(instance);
       } else {
         // Clone the underlying array.
         array = instance.toArray();
       }
       streamWriter.writeObject(array);
     }
-
-    private static native Object[] getArray0(List<?> instance) /*-{
-      return instance.@java.util.Arrays$ArrayList::array;
-    }-*/;
   }
 }

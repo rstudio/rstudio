@@ -61,6 +61,9 @@ public class JavaDispatchImpl implements JavaDispatch {
    * @return the field
    */
   public Field getField(int dispId) {
+    if (dispId < 0) {
+      throw new RuntimeException("Field does not exist.");
+    }
     Member member = getMember(dispId);
 
     if (member instanceof SyntheticClassMember) {
@@ -82,6 +85,10 @@ public class JavaDispatchImpl implements JavaDispatch {
    * @throws IllegalArgumentException
    */
   public Object getFieldValue(int dispId) {
+    if (dispId < 0) {
+      throw new RuntimeException("Field does not exist.");
+    }
+    
     Member member = getMember(dispId);
 
     if (member instanceof SyntheticClassMember) {
@@ -103,6 +110,10 @@ public class JavaDispatchImpl implements JavaDispatch {
    * @return the method
    */
   public MethodAdaptor getMethod(int dispId) {
+    if (dispId < 0) {
+      throw new RuntimeException("Method does not exist.");
+    }
+    
     Member m = getMember(dispId);
     if (m instanceof Method) {
       return new MethodAdaptor((Method) m);

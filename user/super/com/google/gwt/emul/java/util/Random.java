@@ -34,14 +34,14 @@
  */
 package java.util;
 
-import java.io.Serializable;
-
 /**
  * This class provides methods that generates pseudo-random numbers of different
  * types, such as {@code int}, {@code long}, {@code double}, and {@code float}.
  * It follows the algorithms specified in the JRE javadoc.
+ * 
+ * This emulated version of Random is not serializable.
  */
-public class Random implements Serializable {
+public class Random {
 
   private static final double multiplierHi = 0x5de;
   private static final double multiplierLo = 0xece66d;
@@ -90,29 +90,21 @@ public class Random implements Serializable {
 
   /**
    * The boolean value indicating if the second Gaussian number is available.
-   * 
-   * @serial
    */
   private boolean haveNextNextGaussian = false;
 
   /**
    * The second Gaussian generated number.
-   * 
-   * @serial
    */
   private double nextNextGaussian;
   
   /**
    * The high 24 bits of the 48=bit seed value.
-   * 
-   * @serial It is associated with the internal state of this generator.
    */
   private double seedhi;
 
   /**
    * The low 24 bits of the 48=bit seed value.
-   * 
-   * @serial It is associated with the internal state of this generator.
    */
   private double seedlo;
   

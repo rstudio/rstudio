@@ -136,12 +136,6 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
     assertEquals(expected.values().toArray(), actual.values().toArray());
   }
 
-  // Use JSNI to call a special method on our implementation of TreeMap.
-  @SuppressWarnings("unchecked") // raw Map
-  private static native void callAssertCorrectness(Map map) /*-{
-    map.@java.util.TreeMap::assertCorrectness()();
-  }-*/;
-
   /**
    * Create the expected return of toString for a Map containing only the passed
    * key and value.
@@ -1868,7 +1862,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
   protected void verifyMap() {
     if (GWT.isScript()) {
       // Verify red-black correctness in our implementation
-      callAssertCorrectness(map);
+      TreeMapViolator.callAssertCorrectness(map);
     }
     super.verifyMap();
   }

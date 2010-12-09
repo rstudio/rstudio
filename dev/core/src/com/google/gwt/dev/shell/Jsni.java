@@ -106,13 +106,18 @@ public class Jsni {
 
         Member member;
         if (dispId < 0) {
-          // We've already emitted a warning from getDispId; just fake the jsni
           member = null;
         } else {
           member = dispatchInfo.getClassInfoByDispId(dispId).getMember(dispId);
         }
+        
+        if (member == null) {
+          throw new HostedModeException(
+              "JSNI rewriter found reference to non-existent field in a field reference or java method tear-off: "
+                  + ident + " at " + x.getSourceInfo());
+        }
 
-        if (member == null || member instanceof Field
+        if (member instanceof Field
             || member instanceof SyntheticClassMember) {
           if (q != null) {
             accept(q);
@@ -176,18 +181,21 @@ public class Jsni {
             member = dispatchInfo.getClassInfoByDispId(dispId).getMember(dispId);
           }
 
+          if (member == null) {
+            throw new HostedModeException(
+                "JSNI rewriter found reference to non-existent field in a method invocation: "
+                    + ref.getIdent() + " at " + ref.getSourceInfo());
+          }
+          
           /*
            * Make sure the ident is a reference to a method or constructor and
            * not a reference to a field whose contents (e.g. a Function) we
            * intend to immediately invoke.
            * 
            * p.C::method()(); versus p.C::field();
-           * 
-           * Also, if the reference was to a non-existent field, we'll go ahead
-           * and rewrite the call site as though -1 is a valid dispid.
+           *
            */
-          if (member == null || member instanceof Method
-              || member instanceof Constructor<?>) {
+          if (member instanceof Method || member instanceof Constructor<?>) {
 
             // Use a clone instead of modifying the original JSNI
             // __gwt_makeJavaInvoke(paramCount)(obj, dispId, args)

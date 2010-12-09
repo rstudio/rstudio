@@ -786,29 +786,25 @@ public class BigIntegerConstructorsTest extends EmulTestBase {
       // JRE implementation doesn't have the method tested here
       return;
     }
-    BigInteger val = fromDouble(1.0);
+    BigInteger val = BigIntegerViolator.fromDouble(1.0);
     assertEquals("1", val.toString());
-    val = fromDouble(100.0);
+    val = BigIntegerViolator.fromDouble(100.0);
     assertEquals("100", val.toString());
-    val = fromDouble(2147483647.0);
+    val = BigIntegerViolator.fromDouble(2147483647.0);
     assertEquals("2147483647", val.toString());
-    val = fromDouble(-2147483647.0);
+    val = BigIntegerViolator.fromDouble(-2147483647.0);
     assertEquals("-2147483647", val.toString());
-    val = fromDouble(2147483648.0);
+    val = BigIntegerViolator.fromDouble(2147483648.0);
     assertEquals("2147483648", val.toString());
-    val = fromDouble(-2147483648.0);
+    val = BigIntegerViolator.fromDouble(-2147483648.0);
     assertEquals("-2147483648", val.toString());
-    val = fromDouble(4294967295.0);
+    val = BigIntegerViolator.fromDouble(4294967295.0);
     assertEquals("4294967295", val.toString());
-    val = fromDouble(-4294967295.0);
+    val = BigIntegerViolator.fromDouble(-4294967295.0);
     assertEquals("-4294967295", val.toString());
-    val = fromDouble(4294967296.0);
+    val = BigIntegerViolator.fromDouble(4294967296.0);
     assertEquals("4294967296", val.toString());
-    val = fromDouble(-4294967296.0);
+    val = BigIntegerViolator.fromDouble(-4294967296.0);
     assertEquals("-4294967296", val.toString());
   }
-
-  private native BigInteger fromDouble(double v) /*-{
-    return @java.math.BigInteger::valueOf(D)(v);
-  }-*/;
 }
