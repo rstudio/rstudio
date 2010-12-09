@@ -1,15 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE web-app
-    PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
-    "http://java.sun.com/dtd/web-app_2_3.dtd">
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee 
+              http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+         version="2.5"
+         xmlns="http://java.sun.com/xml/ns/javaee">
 
-<web-app>
   <security-constraint>
     <display-name>
       Redirect to the login page if needed before showing
       any html pages
     </display-name>
     <web-resource-collection>
+      <web-resource-name>Login required</web-resource-name>
       <url-pattern>*.html</url-pattern>
     </web-resource-collection>
     <auth-constraint>
@@ -34,12 +36,12 @@
   </servlet-mapping>
 
   <filter>
-    <filter-name>GaeAuthFilter</filter-name>
-    <filter-class>com.google.gwt.sample.gaerequest.server.GaeAuthFilter</filter-class>
     <description>
       This filter demonstrates making GAE authentication
       services visible to a RequestFactory client.
     </description>
+    <filter-name>GaeAuthFilter</filter-name>
+    <filter-class>com.google.gwt.sample.gaerequest.server.GaeAuthFilter</filter-class>
   </filter>
   <filter-mapping>
     <filter-name>GaeAuthFilter</filter-name>
@@ -54,11 +56,11 @@
    -->
 
   <servlet>
-    <servlet-name>dataGeneration</servlet-name>
-    <servlet-class>com.google.gwt.sample.expenses.server.DataGenerationServiceImpl</servlet-class>
     <description>
       GWT RPC service used by LoadExpensesDB.html
     </description>
+    <servlet-name>dataGeneration</servlet-name>
+    <servlet-class>com.google.gwt.sample.expenses.server.DataGenerationServiceImpl</servlet-class>
   </servlet>
   <servlet-mapping>
     <servlet-name>dataGeneration</servlet-name>
