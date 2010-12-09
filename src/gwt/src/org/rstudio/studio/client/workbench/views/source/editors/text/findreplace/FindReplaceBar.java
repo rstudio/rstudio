@@ -72,7 +72,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
                event.preventDefault();
                event.stopPropagation();
                btnFindNext_.click();
-               focusFindField();
+               focusFindField(false);
             }
          }
       });
@@ -168,10 +168,12 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       return 23;
    }
 
-   public void focusFindField()
+   public void focusFindField(boolean selectAll)
    {
       WindowEx.get().focus();
       txtFind_.focus();
+      if (selectAll)
+         txtFind_.selectAll();
    }
 
    public static void ensureStylesInjected()

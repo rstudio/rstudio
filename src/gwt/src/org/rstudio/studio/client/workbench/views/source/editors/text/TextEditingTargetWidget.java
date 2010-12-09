@@ -160,7 +160,7 @@ public class TextEditingTargetWidget extends ResizeComposite implements Display
 
          findReplaceButton_.setLeftImage(FindReplaceBar.getFindLatchedIcon());
       }
-      findReplaceBar_.focusFindField();
+      findReplaceBar_.focusFindField(true);
    }
 
    private void hideFindReplace()

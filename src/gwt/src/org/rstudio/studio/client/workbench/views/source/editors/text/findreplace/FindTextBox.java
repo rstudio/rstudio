@@ -80,6 +80,11 @@ public class FindTextBox extends Composite implements HasValue<String>
       searchDiv_.getStyle().setWidth(pixels, Unit.PX);
    }
 
+   public void selectAll()
+   {
+      textBox_.selectAll();
+   }
+
    @UiField(provided=true)
    TextBox textBox_;
    @UiField
