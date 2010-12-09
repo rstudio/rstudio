@@ -42,7 +42,7 @@ public class ImageCellTest extends CellTestBase<String> {
 
   @Override
   protected String getExpectedInnerHtml() {
-    return "<img src=\"test.png\"></img>";
+    return "<img src=\"test.png\"/>";
   }
 
   @Override

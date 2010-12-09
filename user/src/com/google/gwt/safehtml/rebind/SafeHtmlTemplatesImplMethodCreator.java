@@ -27,17 +27,12 @@ import com.google.gwt.safehtml.rebind.ParsedHtmlTemplate.HtmlContext;
 import com.google.gwt.safehtml.rebind.ParsedHtmlTemplate.LiteralChunk;
 import com.google.gwt.safehtml.rebind.ParsedHtmlTemplate.ParameterChunk;
 import com.google.gwt.safehtml.rebind.ParsedHtmlTemplate.TemplateChunk;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.safehtml.shared.OnlyToBeUsedInGeneratedCodeStringBlessedAsSafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
 import com.google.gwt.user.rebind.AbstractMethodCreator;
-
-import java.io.StringReader;
-import java.util.Arrays;
-import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * Method body code generator for implementations of
@@ -71,31 +66,6 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
    */
   private static final String URI_UTILS_FQCN = UriUtils.class.getName();
 
-  /**
-   * The set of the names of the HTML attributes whose values are interpreted
-   * as URIs.
-   *
-   * <p>See <a href="http://www.w3.org/TR/html4/index/attributes.html">Index
-   * of Attributes</a> for reference.
-   */
-  private static final Set<String> URI_VALUED_ATTRIBUTES;
-
-  static {
-    URI_VALUED_ATTRIBUTES = new TreeSet<String>();
-    URI_VALUED_ATTRIBUTES.addAll(Arrays.asList(
-          "action",
-          "archive",
-          "background",
-          "cite",
-          "classid",
-          "codebase",
-          "data",
-          "dynsrc",
-          "href",
-          "longdesc",
-          "src",
-          "usemap"));
-  }
 
   public SafeHtmlTemplatesImplMethodCreator(
       AbstractGeneratorClassCreator classCreator) {
@@ -162,9 +132,6 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
       HtmlContext htmlContext, String formalParameterName,
       JType parameterType) {
 
-    // TODO(xtof): check attr name against a set of attributes we know we can
-    //     handle (i.e., excluding things like onFoo, style, etc).
-
     /*
      * Build up the expression from the "inside out", i.e. start with the formal
      * parameter, convert to string if necessary, then wrap in validators if
@@ -178,10 +145,7 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
       expression = "String.valueOf(" + expression + ")";
     }
 
-    boolean isParameterAtStartOfUriAttribute =
-        htmlContext.getType() == HtmlContext.Type.ATTRIBUTE_START
-            && URI_VALUED_ATTRIBUTES.contains(htmlContext.getAttribute());
-    if (isParameterAtStartOfUriAttribute) {
+    if ((htmlContext.getType() == HtmlContext.Type.URL_START)) {
       expression = URI_UTILS_FQCN + ".sanitizeUri(" + expression + ")";
     }
 
@@ -197,7 +161,7 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
    * Generates code that renders the provided HTML template into an instance
    * of the {@link SafeHtml} type.
    *
-   * <p>The template is parsed as a (X)HTML template (see
+   * <p>The template is parsed as a HTML template (see
    * {@link HtmlTemplateParser}).  From the template's parsed form, code is
    * generated that, when executed, will emit an instantiation of the template.
    * The generated code appropriately escapes and/or sanitizes template
@@ -221,7 +185,7 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
     indent();
 
     HtmlTemplateParser parser = new HtmlTemplateParser(logger);
-    parser.parseXHtml(new StringReader(template));
+    parser.parseTemplate(template);
 
     for (TemplateChunk chunk : parser.getParsedTemplate().getChunks()) {
       if (chunk.getKind() == TemplateChunk.Kind.LITERAL) {
@@ -253,32 +217,55 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
   /**
    * Emits an expression corresponding to a template parameter.
    *
-   * <p>The expression emitted applies appropriate escaping/sanitization to the
+   * <p>
+   * The expression emitted applies appropriate escaping/sanitization to the
    * parameter's value, depending on the parameter's HTML context, and the Java
    * type of the corresponding template method parameter.
    *
    * @param logger the logger to log failures to
    * @param htmlContext the HTML context in which the corresponding template
-   *        variable occurs in
+   *          variable occurs in
    * @param formalParameterName the name of the template method's formal
-   *        parameter corresponding to the expression being emitted
+   *          parameter corresponding to the expression being emitted
    * @param parameterType the Java type of the corresponding template method's
-   *        parameter
+   *          parameter
    */
   private void emitParameterExpression(TreeLogger logger,
       HtmlContext htmlContext, String formalParameterName,
       JType parameterType) {
     print(".append(");
-    if (htmlContext.getType() == HtmlContext.Type.TEXT) {
-      emitTextContextParameterExpression(formalParameterName, parameterType);
-    } else if (htmlContext.getType() == HtmlContext.Type.ATTRIBUTE
-        || htmlContext.getType() == HtmlContext.Type.ATTRIBUTE_START) {
-      emitAttributeContextParameterExpression(logger, htmlContext,
-          formalParameterName, parameterType);
-    } else {
-      throw new IllegalStateException(
-          "unknown HTML context for formal template parameter "
-              + formalParameterName + ": " + htmlContext);
+    switch (htmlContext.getType()) {
+      case CSS:
+        // TODO(xtof): Improve support for CSS.
+        // The stream parser does not parse CSS; we could however improve
+        // safety via sub-formats that specify the in-css context.
+        logger.log(TreeLogger.WARN, "Template with variable in CSS context: "
+            + "The template code generator cannot guarantee HTML-safety of "
+            + "the template -- please inspect manually");
+        emitTextContextParameterExpression(formalParameterName, parameterType);
+        break;
+      case TEXT:
+        emitTextContextParameterExpression(formalParameterName, parameterType);
+        break;
+
+      case CSS_ATTRIBUTE:
+        // TODO(xtof): Improve support for CSS.
+        logger.log(TreeLogger.WARN, "Template with variable in CSS context: "
+            + "The template code generator cannot guarantee HTML-safety of "
+            + "the template -- please inspect manually");
+        emitAttributeContextParameterExpression(logger, htmlContext,
+            formalParameterName, parameterType);
+        break;
+      case URL_START:
+      case ATTRIBUTE_VALUE:
+        emitAttributeContextParameterExpression(logger, htmlContext,
+            formalParameterName, parameterType);
+        break;
+
+      default:
+          throw new IllegalStateException(
+              "unknown HTML context for formal template parameter "
+                  + formalParameterName + ": " + htmlContext);
     }
     println(")");
   }

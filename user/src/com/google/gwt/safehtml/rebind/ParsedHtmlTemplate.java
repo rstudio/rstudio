@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -22,7 +22,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * A representation of a parsed (X)HTML template.
+ * A representation of a parsed HTML template.
  *
  * <p>A parsed template is represented as a sequence of template chunks.
  *
@@ -44,25 +44,27 @@ final class ParsedHtmlTemplate {
     /**
      * The possible types of HTML context.
      */
-    // TODO(xtof): Possibly add support for other contexts, such as style.
     static enum Type {
-      /**
-       * The undefined HTML context. Contexts of this type are meant to be used
-       * in cases where a parser is used that is not HTML context-aware.
-       */
-      UNDEFINED,
       /**
        * Regular inner text HTML context.
        */
       TEXT,
       /**
-       * HTML attribute context.
+       * Value of a HTML attribute.
        */
-      ATTRIBUTE,
+      ATTRIBUTE_VALUE,
       /**
-       * At the very start of an attribute.
+       * At the very start of a URL-valued attribute.
        */
-      ATTRIBUTE_START,
+      URL_START,
+      /**
+       * CSS (style) context.
+       */
+      CSS,
+      /**
+       * CSS (style) attribute context.
+       */
+      CSS_ATTRIBUTE
     }
 
     private final Type type;
@@ -88,9 +90,6 @@ final class ParsedHtmlTemplate {
      *        applicable; null otherwise
      */
     public HtmlContext(Type type, String tag, String attribute) {
-      Preconditions.checkArgument((type != Type.UNDEFINED)
-          || ((tag == null) && (attribute == null)),
-          "tag and attribute must be null for context \"UNDEFINED\"");
       Preconditions.checkArgument((type != Type.TEXT)
           || ((tag == null) && (attribute == null)),
           "tag and attribute must be null for context \"TEXT\"");
@@ -210,7 +209,7 @@ final class ParsedHtmlTemplate {
 
   /**
    * Represents a parsed chunk of a template.
-   * 
+   *
    * <p>There are two kinds of chunks: Those representing literal strings and
    * those representing template parameters.
    */
@@ -242,7 +241,7 @@ final class ParsedHtmlTemplate {
 
   /**
    * Adds a literal string to the template.
-   * 
+   *
    * If the currently last chunk of the parsed template is a literal chunk, the
    * provided string literal will be appended to that chunk. I.e., consecutive
    * literal chunks are automatically coalesced.
@@ -260,7 +259,7 @@ final class ParsedHtmlTemplate {
 
   /**
    * Adds a parameter chunk to the template.
-   * 
+   *
    * @param chunk the chunk to be added
    */
   public void addParameter(ParameterChunk chunk) {
@@ -269,7 +268,7 @@ final class ParsedHtmlTemplate {
 
   /**
    * Returns the chunks of this parsed template.
-   * 
+   *
    * <p>The returned list is unmodifiable.
    */
   public List<TemplateChunk> getChunks() {

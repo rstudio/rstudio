@@ -20,219 +20,90 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.Preconditions;
 import com.google.gwt.safehtml.rebind.ParsedHtmlTemplate.HtmlContext;
 import com.google.gwt.safehtml.rebind.ParsedHtmlTemplate.ParameterChunk;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.thirdparty.streamhtmlparser.HtmlParser;
+import com.google.gwt.thirdparty.streamhtmlparser.HtmlParserFactory;
+import com.google.gwt.thirdparty.streamhtmlparser.ParseException;
 
-import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXNotSupportedException;
-import org.xml.sax.SAXParseException;
-import org.xml.sax.XMLReader;
-import org.xml.sax.helpers.DefaultHandler;
-import org.xml.sax.helpers.XMLReaderFactory;
-
-import java.io.IOException;
-import java.io.Reader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * A HTML context-aware parser for a simple HTML template language.
  *
- * <p>This parser parses templates consisting of well-formed XML or XHTML
- * markup, with template parameters of the form {@code "{n}"}. For example, a
- * template might look like,
+ * <p>
+ * This parser parses templates consisting of HTML markup, with template
+ * variables of the form {@code "{n}"}. For example, a template might look like,
+ *
  * <pre>  {@code
- *   <span class="{0}"><a href="{1}/{2}">{3}</a></span>
+ *   <span style="{0}"><a href="{1}/{2}">{3}</a></span>
  * }</pre>
  *
- * <p>The parser produces a parsed form of the template (returned as a
- * {@link ParsedHtmlTemplate}) consisting of a sequence of chunks
- * corresponding to the literal strings and parameters of the template.  The
- * parser is HTML context aware and tags each parameter with its parameter index
- * as well as a {@link HtmlContext} that corresponds to the HTML context in
- * which the parameter occurs in the template.
+ * <p>
+ * The parser is lenient, and will accept HTML that is not well-formed; the
+ * accepted set of HTML is similar to what is typically accepted by browsers.
+ * However, the following constraints on the HTML template are enforced:
  *
- * <p>The following contexts are recognized and instantiated:
+ * <ol>
+ * <li>Template variables may not appear in a JavaScript context (inside a
+ * {@code <script>} tag, or in an {@code onClick} etc handler).</li>
+ * <li>Template variables may not appear inside HTML comments.</li>
+ * <li>If a template variable appears inside the value of an attribute, the
+ * value must be enclosed in quotes.</li>
+ * <li>Template variables may not appear in the context of an attribute name,
+ * nor elsewhere inside a tag except within a quoted attribute value.
+ * </li>
+ * <li>The template must end in "inner HTML" context, and not inside a tag or
+ * attribute.</li>
+ * </ol>
+ *
+ * <p>
+ * The parser produces a parsed form of the template (returned as a
+ * {@link ParsedHtmlTemplate}) consisting of a sequence of chunks corresponding
+ * to the literal strings and parameters of the template. The parser is HTML
+ * context aware and tags each parameter with its parameter index as well as a
+ * {@link HtmlContext} that corresponds to the HTML context in which the
+ * parameter occurs in the template.
+ *
+ * <p>
+ * The following contexts are recognized and instantiated:
  * <dl>
- *   <dt>{@link HtmlContext.Type#TEXT}
- *   <dd>This context corresponds to basic inner text. In the above example,
- *       parameter #3 would be tagged with this context.
- *   <dt>{@link HtmlContext.Type#ATTRIBUTE_START}
- *   <dd>This context corresponds to a parameter that appears at the very start
- *       of a HTML attribute's value; in the above example this applies to
- *       parameters #0 and #1.
- *   <dt>{@link HtmlContext.Type#ATTRIBUTE}
- *   <dd>This context corresponds to a parameter that appears within an
- *       attribute in a position other than at the start of the attribute's
- *       value. In the above example, this applies to parameter #2.
+ * <dt>{@link HtmlContext.Type#TEXT}
+ * <dd>This context corresponds to basic inner text. In the above example,
+ * parameter #3 would be tagged with this context.
+ * <dt>{@link HtmlContext.Type#URL_START}
+ * <dd>This context corresponds to a parameter that appears at the very start of
+ * a URL-valued HTML attribute's value; in the above example this applies to
+ * parameter #1.
+ * <dt>{@link HtmlContext.Type#CSS_ATTRIBUTE}
+ * <dd>This context corresponds to a parameter that appears in the context of a
+ * {@code style} attribute; in the above example this applies to
+ * parameter #0.
+ * <dt>{@link HtmlContext.Type#ATTRIBUTE_VALUE}
+ * <dd>This context corresponds to a parameter that appears within an attribute
+ * and is not in one of the more specific in-attribute contexts above. In
+ * the example, this applies to parameter #2.
+ * <dt>{@link HtmlContext.Type#CSS}
+ * <dd>This context corresponds to a parameter that appears within a
+ * {@code <style>} tag.
  * </dl>
  *
- * <p>For both attribute contexts, the {@code tag} and {@code attribute}
- * properties of the context are set to the name of the enclosing tag and
- * attribute, respectively.
+ * <p>
+ * For attribute contexts, the {@code tag} and {@code attribute} properties
+ * of the context are set to the name of the enclosing tag and attribute,
+ * respectively.
  *
- * <p>Tag and attribute names are converted to lower-case in {@link HtmlContext}
- * properties and literal string chunks of the parsed form.
+ * <p>
+ * The implementation is subject to the following limitation:
  *
- * <p>The implementation is subject to the following limitations:
- * <ul>
- *   <li>The input template must be well-formed XML/XHTML. If it is not,
- *       an {@link UnableToCompleteException} is thrown and details regarding
- *       the source of the parse failure are logged to this parser's logger.
- *   <li>Template parameters can only appear within inner text and within
- *       attributes. In particular, parameters cannot appear within a HTML
- *       tag or attribute name; for example, the following is not a valid
- *       template:
- *       <pre>  {@code
- *         <span><{0} class="xyz" {1}="..."/></span>
- *       }</pre>
- *   <li>The output markup will contain separate closing tags for tags without
- *       content. I.e., an input template
- *       <pre>  {@code
- *         <img src="..."/>
- *       }</pre>
- *       will result in the corresponding output
- *       <pre>  {@code
- *         <img src="..."></img>
- *       }</pre>
- *   <li>There is no escaping mechanism for the parameter syntax, i.e. it is
- *       impossible to write a template that results in a literal output chunk
- *       containing a substring of the form "{@code {0}}".
- * </ul>
+ * <p>
+ * There is no escaping mechanism for the parameter syntax, i.e. it is
+ * impossible to write a template that results in a literal output chunk
+ * containing a substring of the form "{@code {0}}".
+ *
+ * <p>
+ * This class is not thread safe.
  */
 final class HtmlTemplateParser {
-
-  /**
-   * A SAX parser event handler for parsing HTML templates.
-   */
-  private class HtmlTemplateHandler extends DefaultHandler {
-
-    /*
-     * Overrides for relevant SAX event handler methods.
-     */
-
-    @Override
-    public void characters(char[] ch, int start, int length) {
-      parseTemplateString(
-          new HtmlContext(HtmlContext.Type.TEXT),
-          SafeHtmlUtils.htmlEscape(new String(ch, start, length)));
-    }
-
-    @Override
-    public void endElement(String uri, String localName, String name) {
-      Preconditions.checkArgument(uri.equals(""),
-          "Namespace uri unexpectedly non-empty: %s", uri);
-      appendLiteral("</" + name.toLowerCase() + ">");
-    }
-
-    @Override
-    public void endPrefixMapping(String prefix) throws SAXException {
-      throw unsupportedError("Prefix Mapping");
-    }
-
-    @Override
-    public void error(SAXParseException e) {
-      getLogger().log(TreeLogger.ERROR, "Parser error: " + e);
-    }
-
-    @Override
-    public void fatalError(SAXParseException e) throws SAXException {
-      getLogger().log(TreeLogger.ERROR, "Parser fatal error: " + e);
-      throw e;
-    }
-
-    /*
-     * Throw errors on various irrelevant SAX events that we don't want to
-     * handle, and which should not occur in templates.
-     *
-     * It may be reasonable to just silently ignore these events, but failing
-     * explicitly seems more helpful to developers.
-     */
-
-    @Override
-    public void notationDecl(String name, String publicId, String systemId)
-        throws SAXException {
-      throw unsupportedError("Notation Declaration");
-    }
-
-    @Override
-    public void processingInstruction(String target, String data)
-        throws SAXException {
-      throw unsupportedError("Processing Instruction");
-    }
-
-    @Override
-    public InputSource resolveEntity(String publicId, String systemId)
-        throws SAXException {
-      throw unsupportedError("External Entity");
-    }
-
-    @Override
-    public void skippedEntity(String name) throws SAXException {
-      throw unsupportedError("Skipped Entity");
-    }
-
-    @Override
-    public void startElement(String uri, String localName, String name,
-        Attributes attributes) {
-      Preconditions.checkArgument(uri.equals(""),
-          "Namespace uri unexpectedly non-empty: %s", uri);
-
-      name = name.toLowerCase();
-      appendLiteral("<" + name);
-      if (attributes != null) {
-        int len = attributes.getLength();
-        for (int i = 0; i < len; i++) {
-          String attribute = attributes.getQName(i).toLowerCase();
-          appendLiteral(" " + attribute + "=\"");
-          parseTemplateString(
-              new HtmlContext(HtmlContext.Type.ATTRIBUTE, name, attribute),
-              new HtmlContext(HtmlContext.Type.ATTRIBUTE_START,
-                  name, attribute),
-                  SafeHtmlUtils.htmlEscape(attributes.getValue(i)));
-          appendLiteral("\"");
-        }
-      }
-      appendLiteral(">");
-    }
-
-    /*
-     * Error handlers.
-     */
-
-    @Override
-    public void startPrefixMapping(String prefix, String uri)
-        throws SAXException {
-      throw unsupportedError("Prefix Mapping");
-    }
-
-    @Override
-    public void unparsedEntityDecl(String name, String publicId,
-        String systemId, String notationName) throws SAXException {
-      throw unsupportedError("Unparsed Entity Declaration");
-    }
-
-    @Override
-    public void warning(SAXParseException e) {
-      getLogger().log(TreeLogger.WARN, "Parser warning: " + e);
-    }
-
-    /**
-     * Returns exception for unsupported event in SafeHtmlTemplates.
-     *
-     * <p>
-     * Returns an exception indicating that the event in question is not
-     * supported in SafeHtmlTemplates.
-     *
-     * @param what unsupported SAX event that should not occur in templates
-     * @return exception stating that the event is not allowed
-     */
-    private SAXNotSupportedException unsupportedError(String what) {
-      return new SAXNotSupportedException(
-          "Not allowed in SafeHtmlTemplates: " + what);
-    }
-  }
 
   /**
    * Pattern to find template parameters references.
@@ -244,6 +115,21 @@ final class HtmlTemplateParser {
 
   private final ParsedHtmlTemplate parsedTemplate;
 
+  private final HtmlParser streamHtmlParser;
+
+  /**
+   * The template string being parsed.
+   */
+  private String template;
+
+  /**
+   * The index in the template up to which the template has been parsed.
+   *
+   * <p>
+   * Used for error reporting.
+   */
+  private int parsePosition;
+
   /**
    * Creates a {@link HtmlTemplateParser}.
    *
@@ -252,13 +138,7 @@ final class HtmlTemplateParser {
   public HtmlTemplateParser(TreeLogger logger) {
     this.logger = logger;
     this.parsedTemplate = new ParsedHtmlTemplate();
-  }
-
-  /**
-   * Returns this parser's logger.
-   */
-  public TreeLogger getLogger() {
-    return logger;
+    this.streamHtmlParser = HtmlParserFactory.createParser();
   }
 
   /**
@@ -269,134 +149,152 @@ final class HtmlTemplateParser {
   }
 
   /**
-   * Parses a XML/XHTML document.
-   *
-   * @param input a {@link Reader} from which the document to be parsed will be
-   *        read.
-   * @throws UnableToCompleteException if the template cannot be parsed. Details
-   *         on the source of the failure will have been logged to this parser's
-   *         logger.
-   */
-  public void parseXHtml(Reader input) throws UnableToCompleteException {
-    HtmlTemplateHandler saxEventHandler = new HtmlTemplateHandler();
-    XMLReader xmlParser;
-    try {
-      xmlParser = XMLReaderFactory.createXMLReader();
-    } catch (SAXException e) {
-      logger.log(TreeLogger.ERROR, "Couldn't instantiate XML parser", e);
-      throw new UnableToCompleteException();
-    }
-
-    xmlParser.setContentHandler(saxEventHandler);
-    xmlParser.setDTDHandler(saxEventHandler);
-    xmlParser.setEntityResolver(saxEventHandler);
-    xmlParser.setErrorHandler(saxEventHandler);
-
-    try {
-      xmlParser.parse(new InputSource(input));
-    } catch (IOException e) {
-      logger.log(TreeLogger.ERROR, "Error during template parsing:", e);
-      throw new UnableToCompleteException();
-    } catch (SAXParseException e) {
-      String logMessage = "Parse Error during template parsing, at line "
-          + e.getLineNumber() + ", column " + e.getColumnNumber();
-      // Attempt to extract (some) of the input to provide a more useful
-      // error message.
-      try {
-        input.reset();
-        char[] buf = new char[200];
-        int len = input.read(buf);
-        if (len > 0) {
-          logMessage += " of input " + new String(buf, 0, len);
-        }
-      } catch (IOException e1) {
-        // We tried, but resetting/reading from the input stream failed. Sorry.
-        logMessage += " <failed to read input snippet>";
-      }
-      logger.log(TreeLogger.ERROR, logMessage + ": " + e);
-      throw new UnableToCompleteException();
-    } catch (SAXException e) {
-      logger.log(TreeLogger.ERROR, "Error during template parsing:", e);
-      throw new UnableToCompleteException();
-    }
-  }
-
-  /**
    * Parses a {@link String} that may contain template parameters of the form
    * {@code {n}} into corresponding literal and parameter
    * {@link ParsedHtmlTemplate.TemplateChunk}s.
    *
-   * <p>Parameters will be tagged with the {@link HtmlContext} provided.
-   *
-   * <p>If {@code contextAtStart} is not {@code null} and the parsed template
-   * starts with a parameter (i.e., is of the form {@code "{n}..."}), this first
-   * parameter will be tagged with that context; any other parameters will
-   * be tagged with context {@code context}.
-   *
-   * @param context the context with which to tag parameters occurring in the
-   *        template
-   * @param contextAtStart if not {@code null}, the context with which to tag a
-   *        parameter that occurs at the very beginning of the template
    * @param template the template {@link String} to parse
+   * @throws UnableToCompleteException if an unrecoverable parse error occurs
    */
   // @VisibleForTesting
-  void parseTemplateString(HtmlContext context,
-      HtmlContext contextAtStart, String template) {
+  void parseTemplate(String template) throws UnableToCompleteException {
+    this.template = template;
+    this.parsePosition = 0;
     Matcher match = TEMPLATE_PARAM_PATTERN.matcher(template);
 
-    boolean firstMatch = true;
-    int endOfLastMatch = 0;
+    int endOfPreviousMatch = 0;
     while (match.find()) {
-      if (match.start() > endOfLastMatch) {
+      if (match.start() > endOfPreviousMatch) {
         // There is a non-empty string between the previous match and this
         // match; add this as a literal chunk to the parsed representation.
-        appendLiteral(template.substring(endOfLastMatch, match.start()));
+        parseAndAppendTemplateSegment(
+            template.substring(endOfPreviousMatch, match.start()));
+        parsePosition = match.start();
       }
 
       int paramIndex = Integer.parseInt(match.group(1));
-      if (firstMatch && (match.start() == 0) && (contextAtStart != null)) {
-        parsedTemplate.addParameter(new ParameterChunk(contextAtStart,
-            paramIndex));
-      } else {
-        parsedTemplate.addParameter(new ParameterChunk(context, paramIndex));
-      }
+      parsePosition = match.end();
+      parsedTemplate.addParameter(
+          new ParameterChunk(getHtmlContextFromParseState(), paramIndex));
 
-      firstMatch = false;
-      endOfLastMatch = match.end();
+      endOfPreviousMatch = match.end();
     }
 
     // Add a literal chunk for the substring after the last match, if any.
-    if (endOfLastMatch < template.length()) {
-      parsedTemplate.addLiteral(template.substring(endOfLastMatch));
+    if (endOfPreviousMatch < template.length()) {
+      parseAndAppendTemplateSegment(template.substring(endOfPreviousMatch));
+    }
+
+    if (!streamHtmlParser.getState().equals(HtmlParser.STATE_TEXT)) {
+      logger.log(TreeLogger.ERROR,
+          "Template does not end in inner-HTML context: " + template);
+      throw new UnableToCompleteException();
     }
   }
 
   /**
-   * Parses a {@link String} that may contain template parameters of the form
-   * {@code {n}} into corresponding literal and parameter
-   * {@link ParsedHtmlTemplate.TemplateChunk}s.
+   * Determines the {@link HtmlContext} in the parser's current state.
    *
-   * <p>Parameters will be tagged with the {@link HtmlContext} provided.
+   * <p>
+   * This method translates from the stream HTML parser's internal state
+   * representation to our HTML context representation, and is intended to be
+   * invoked at the point where a template variable is encountered.
    *
-   * @param context the context with which to tag parameters occurring in the
-   *        template
-   * @param template the template to parse
+   * <p>
+   * This method checks for certain illegal/unsupported template constructs,
+   * such as template variables that occur in an un-quoted attribute (see this
+   * class' class documentation for details).
+   *
+   * @throws UnableToCompleteException if an illegal/unuspported template
+   *           construct is encountered
    */
-  // @VisibleForTesting
-  void parseTemplateString(HtmlContext context, String template) {
-    parseTemplateString(context, null, template);
+  private HtmlContext getHtmlContextFromParseState()
+      throws UnableToCompleteException {
+
+    if (streamHtmlParser.getState().equals(HtmlParser.STATE_ERROR)) {
+      logger.log(TreeLogger.ERROR,
+          "Parsing template resulted in parse error: "
+              + getTemplateParsedSoFar());
+      throw new UnableToCompleteException();
+    }
+
+    if (streamHtmlParser.inJavascript()) {
+      logger.log(TreeLogger.ERROR,
+          "Template variables in javascript context are not supported: "
+              + getTemplateParsedSoFar());
+      throw new UnableToCompleteException();
+    }
+    if (streamHtmlParser.getState().equals(HtmlParser.STATE_COMMENT)) {
+      logger.log(TreeLogger.ERROR,
+          "Template variables inside HTML comments are not supported: "
+              + getTemplateParsedSoFar());
+      throw new UnableToCompleteException();
+    } else if (streamHtmlParser.getState().equals(HtmlParser.STATE_TEXT)
+        && !streamHtmlParser.inCss()) {
+      return new HtmlContext(HtmlContext.Type.TEXT);
+    } else if (streamHtmlParser.getState().equals(HtmlParser.STATE_VALUE)) {
+      final String tag = streamHtmlParser.getTag();
+      final String attribute = streamHtmlParser.getAttribute();
+      Preconditions.checkState(!tag.equals(""),
+          "streamHtmlParser.getTag() should not be empty  while in "
+              + "attribute value context; at %s", getTemplateParsedSoFar());
+      Preconditions.checkState(!attribute.equals(""),
+          "streamHtmlParser.getAttribute() should not be empty while in "
+              + "attribute value context; at %s", getTemplateParsedSoFar());
+      if (!streamHtmlParser.isAttributeQuoted()) {
+        logger.log(TreeLogger.ERROR,
+            "Template variable in unquoted attribute value: "
+                + getTemplateParsedSoFar());
+        throw new UnableToCompleteException();
+      }
+      if (streamHtmlParser.isUrlStart()) {
+        return new HtmlContext(HtmlContext.Type.URL_START, tag, attribute);
+      } else if (streamHtmlParser.inCss()) {
+        return new HtmlContext(HtmlContext.Type.CSS_ATTRIBUTE, tag, attribute);
+      } else {
+        return new HtmlContext(
+            HtmlContext.Type.ATTRIBUTE_VALUE, tag, attribute);
+      }
+    } else if (streamHtmlParser.inCss()) {
+      return new HtmlContext(HtmlContext.Type.CSS);
+    } else if (streamHtmlParser.getState().equals(HtmlParser.STATE_TAG)
+        || streamHtmlParser.inAttribute()) {
+      logger.log(TreeLogger.ERROR,
+          "Template variables in tags or in attribute names are not supported: "
+              + getTemplateParsedSoFar());
+      throw new UnableToCompleteException();
+    }
+
+    logger.log(TreeLogger.ERROR,
+        "unhandeled/illegal parse state" + streamHtmlParser.getState());
+    throw new UnableToCompleteException();
   }
 
   /**
-   * Appends a literal string to the parsed template representation.
-   *
-   * <p>The {@code literal} will be appended without processing; any XML/XHTML
-   * markup as well as template parameters occurring in the {@code literal} will
-   * not be parsed.
-   *
-   * @param literal the string to append
+   * Returns the prefix of the template string that has been parsed so far.
    */
-  private void appendLiteral(String literal) {
-    parsedTemplate.addLiteral(literal);
+  private String getTemplateParsedSoFar() {
+    return template.substring(0, parsePosition);
+  }
+
+  /**
+   * Feeds a literal string to the stream parser and appends it to the parsed
+   * template representation.
+   *
+   * @param segment the template segment to parse and append to the parsed
+   *          template representation
+   * @throws UnableToCompleteException if an unrecoverable parse error occurs
+   */
+  private void parseAndAppendTemplateSegment(String segment)
+      throws UnableToCompleteException {
+    try {
+      streamHtmlParser.parse(segment);
+    } catch (ParseException cause) {
+      logger.log(TreeLogger.ERROR,
+          "Parse exception when parsing segment '" + segment + "' of template '"
+              + template + "'", cause);
+      throw new UnableToCompleteException();
+    }
+    parsedTemplate.addLiteral(segment);
   }
 }

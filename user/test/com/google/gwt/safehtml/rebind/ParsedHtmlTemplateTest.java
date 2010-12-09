@@ -120,7 +120,7 @@ public final class ParsedHtmlTemplateTest extends TestCase {
     parsed.addLiteral("<a");
     parsed.addLiteral(" href=\"");
     parsed.addParameter(new ParameterChunk(new HtmlContext(
-        HtmlContext.Type.ATTRIBUTE_START, "a", "href"), 1));
+        HtmlContext.Type.URL_START, "a", "href"), 1));
 
     List<TemplateChunk> chunks = parsed.getChunks();
     assertEquals(3, chunks.size());
@@ -145,15 +145,15 @@ public final class ParsedHtmlTemplateTest extends TestCase {
     paramChunk = (ParameterChunk) it.next();
     assertEquals(TemplateChunk.Kind.PARAMETER, paramChunk.getKind());
     assertEquals(
-        HtmlContext.Type.ATTRIBUTE_START, paramChunk.getContext().getType());
+        HtmlContext.Type.URL_START, paramChunk.getContext().getType());
     assertEquals("a", paramChunk.getContext().getTag());
     assertEquals("href", paramChunk.getContext().getAttribute());
     assertEquals(1, paramChunk.getParameterIndex());
-    assertEquals("P((ATTRIBUTE_START,a,href),1)", paramChunk.toString());
+    assertEquals("P((URL_START,a,href),1)", paramChunk.toString());
 
     assertEquals(
         "[P((TEXT,null,null),0), L(<a href=\"), "
-            + "P((ATTRIBUTE_START,a,href),1)]",
+            + "P((URL_START,a,href),1)]",
         parsed.toString());
   }
 }

@@ -99,11 +99,11 @@ public class SafeHtmlTemplatesTest extends GWTTestCase {
   
   public void testTemplateWithTwoPartUriAttribute() {
     Assert.assertEquals(
-        "<span><img src=\"" + GOOD_URL_ESCAPED + "/x&amp;y\"></img></span>",
+        "<span><img src=\"" + GOOD_URL_ESCAPED + "/x&amp;y\"/></span>",
         templates.templateWithTwoPartUriAttribute(
             GOOD_URL, "x&y").asString());
     Assert.assertEquals(
-        "<span><img src=\"#/x&amp;y\"></img></span>",
+        "<span><img src=\"#/x&amp;y\"/></span>",
         templates.templateWithTwoPartUriAttribute(
             BAD_URL, "x&y").asString());
   }
