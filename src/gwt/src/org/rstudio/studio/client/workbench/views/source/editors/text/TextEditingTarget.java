@@ -673,15 +673,24 @@ public class TextEditingTarget implements EditingTarget
          activeEl.blur();
       docDisplay_.focus();
 
+      boolean focusConsole = false;
       String code = docDisplay_.getSelection();
       if (code == null || code.length() == 0)
       {
          code = docDisplay_.getCurrentLine();
          docDisplay_.moveSelectionToNextLine();
       }
+      else
+      {
+         focusConsole = true;
+      }
 
       if (code != null && code.trim().length() > 0)
+      {
          events_.fireEvent(new SendToConsoleEvent(code, true));
+         if (focusConsole)
+            commands_.activateConsole().execute();
+      }
    }
 
    @Handler
