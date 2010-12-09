@@ -170,7 +170,7 @@ if (NOT RSTUDIO_SESSION_WIN64)
            
    # 64 bit binaries
    if(WIN32)
-      if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}\\x64")
+      if(EXISTS ${CMAKE_CURRENT_BINARY_DIR}/x64)
          install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/x64
                  USE_SOURCE_PERMISSIONS
                  DESTINATION  ${RSTUDIO_INSTALL_BIN})
