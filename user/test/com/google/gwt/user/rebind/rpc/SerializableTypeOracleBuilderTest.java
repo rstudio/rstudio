@@ -2348,20 +2348,26 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       resources.add(new StaticJavaResource("B", code));
     }
 
+    {
+      StringBuilder code = new StringBuilder();
+      code.append("import java.io.Serializable;\n");
+      code.append("public class C<U extends B> {\n");
+      code.append("}\n");
+      resources.add(new StaticJavaResource("C", code));
+    }
+
     TreeLogger logger = createLogger();
     TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JGenericType a = to.getType("A").isGenericType();
     JRawType rawA = a.getRawType();
     JClassType b = to.getType("B");
-
-    JTypeParameter syntheticTypeParam = new JTypeParameter("U", 0);
-    // Force the type parameter to have a declaring class
-    new JGenericType(to, a.getPackage(), null, "C", false, new JTypeParameter[] {syntheticTypeParam});
-    syntheticTypeParam.setBounds(makeArray(b));
+    JGenericType c = to.getType("C").isGenericType();
+    
+    JTypeParameter typeParam = c.getTypeParameters()[0];
 
     JParameterizedType parameterizedType = to.getParameterizedType(a,
-        new JClassType[] {syntheticTypeParam});
+        new JClassType[] {typeParam});
     SerializableTypeOracleBuilder sob = createSerializableTypeOracleBuilder(
         logger, to);
     sob.addRootType(logger, parameterizedType);

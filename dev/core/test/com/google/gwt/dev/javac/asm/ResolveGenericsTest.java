@@ -16,15 +16,7 @@
 package com.google.gwt.dev.javac.asm;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
-import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.core.ext.typeinfo.JGenericType;
-import com.google.gwt.core.ext.typeinfo.JMethod;
-import com.google.gwt.core.ext.typeinfo.JPackage;
-import com.google.gwt.core.ext.typeinfo.JRealClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
-import com.google.gwt.core.ext.typeinfo.JTypeParameter;
-import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.Type;
 import com.google.gwt.dev.asm.signature.SignatureReader;
@@ -34,6 +26,14 @@ import com.google.gwt.dev.javac.TypeOracleMediator;
 import com.google.gwt.dev.javac.TypeOracleTestingUtils;
 import com.google.gwt.dev.javac.TypeParameterLookup;
 import com.google.gwt.dev.javac.asm.CollectClassData.ClassType;
+import com.google.gwt.dev.javac.typemodel.JAbstractMethod;
+import com.google.gwt.dev.javac.typemodel.JClassType;
+import com.google.gwt.dev.javac.typemodel.JGenericType;
+import com.google.gwt.dev.javac.typemodel.JMethod;
+import com.google.gwt.dev.javac.typemodel.JPackage;
+import com.google.gwt.dev.javac.typemodel.JRealClassType;
+import com.google.gwt.dev.javac.typemodel.JTypeParameter;
+import com.google.gwt.dev.javac.typemodel.TypeOracle;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -83,7 +83,7 @@ public class ResolveGenericsTest extends AsmTestCase {
       delegate.addImplementedInterface(type, intf);
     }
 
-    public void addThrows(JAbstractMethod method, JType exception) {
+    public void addThrows(JAbstractMethod method, JClassType exception) {
       delegate.addThrows(method, exception);
     }
 

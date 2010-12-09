@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2010 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,26 +15,10 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
-import java.lang.annotation.Annotation;
-import java.util.Map;
-
 /**
  * Method declared on an annotation type.
  */
-public class JAnnotationMethod extends JMethod {
-  /**
-   * Default value for this annotation element. <code>null</code> is not a valid
-   * default value for an annotation element.
-   */
-  private final Object defaultValue;
-
-  JAnnotationMethod(JClassType enclosingType, String name,
-      Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
-      JTypeParameter[] jtypeParameters, Object defaultValue) {
-    super(enclosingType, name, declaredAnnotations, jtypeParameters);
-    this.defaultValue = defaultValue;
-  }
-
+public interface JAnnotationMethod extends JMethod {
   /**
    * Returns the default value for this annotation method or <code>null</code>
    * if there is not one.
@@ -42,12 +26,5 @@ public class JAnnotationMethod extends JMethod {
    * @return default value for this annotation method or <code>null</code> if
    *         there is not one
    */
-  public Object getDefaultValue() {
-    return defaultValue;
-  }
-
-  @Override
-  public JAnnotationMethod isAnnotationMethod() {
-    return this;
-  }
+  Object getDefaultValue();
 }

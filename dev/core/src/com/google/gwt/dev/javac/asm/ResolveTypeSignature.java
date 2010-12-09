@@ -16,19 +16,19 @@
 package com.google.gwt.dev.javac.asm;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.core.ext.typeinfo.JGenericType;
-import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
-import com.google.gwt.core.ext.typeinfo.JRealClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
-import com.google.gwt.core.ext.typeinfo.JTypeParameter;
-import com.google.gwt.core.ext.typeinfo.JWildcardType;
 import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.dev.asm.signature.SignatureVisitor;
 import com.google.gwt.dev.javac.Resolver;
 import com.google.gwt.dev.javac.TypeParameterLookup;
+import com.google.gwt.dev.javac.typemodel.JClassType;
+import com.google.gwt.dev.javac.typemodel.JGenericType;
+import com.google.gwt.dev.javac.typemodel.JParameterizedType;
+import com.google.gwt.dev.javac.typemodel.JRealClassType;
+import com.google.gwt.dev.javac.typemodel.JTypeParameter;
+import com.google.gwt.dev.javac.typemodel.JWildcardType;
 import com.google.gwt.dev.util.Name;
 
 import java.util.ArrayList;
@@ -242,7 +242,7 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
 
   private JType resolveGeneric(JType type, JClassType outer,
       JClassType[] typeArgs) {
-    JGenericType genericType = type.isGenericType();
+    JGenericType genericType = (JGenericType) type.isGenericType();
     if (genericType != null) {
       int actual = typeArgs.length;
       JTypeParameter[] typeParams = genericType.getTypeParameters();
@@ -322,7 +322,7 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
   }
 
   private void resolveGenerics() {
-    JGenericType genericType = returnTypeRef[0].isGenericType();
+    JGenericType genericType = (JGenericType) returnTypeRef[0].isGenericType();
     if (genericType != null) {
       int actual = args.size();
       JClassType[] typeArgs = new JClassType[actual];
