@@ -148,7 +148,7 @@ public abstract class ModalDialogBase extends DialogBox
    {
       okButton_ = okButton;
       okButton_.addStyleDependentName("DialogAction");
-      okButton_.setDefault(true);
+      okButton_.setDefault(defaultOverrideButton_ == null);
       addButton(okButton_);
    }
    
@@ -156,7 +156,22 @@ public abstract class ModalDialogBase extends DialogBox
    {
       okButton_.setText(caption);
    }
-   
+
+   protected void setDefaultOverrideButton(ThemedButton button)
+   {
+      if (button != defaultOverrideButton_)
+      {
+         if (defaultOverrideButton_ != null)
+            defaultOverrideButton_.setDefault(false);
+
+         defaultOverrideButton_ = button;
+         if (okButton_ != null)
+            okButton_.setDefault(defaultOverrideButton_ == null);
+
+         if (defaultOverrideButton_ != null)
+            defaultOverrideButton_.setDefault(true);
+      }
+   }
    
    protected void addCancelButton()
    {
@@ -313,12 +328,15 @@ public abstract class ModalDialogBase extends DialogBox
          switch (nativeEvent.getKeyCode())
          {
             case KeyCodes.KEY_ENTER:
-               if ((okButton_ != null) && okButton_.isEnabled())
+               ThemedButton defaultButton = defaultOverrideButton_ == null
+                                            ? okButton_
+                                            : defaultOverrideButton_;
+               if ((defaultButton != null) && defaultButton.isEnabled())
                {
                   nativeEvent.preventDefault();
                   nativeEvent.stopPropagation();
                   event.cancel();
-                  okButton_.click();
+                  defaultButton.click();
                }
                break;
             case KeyCodes.KEY_ESCAPE:
@@ -361,6 +379,7 @@ public abstract class ModalDialogBase extends DialogBox
    private HorizontalPanel leftButtonPanel_;
    private ThemedButton okButton_;
    private ThemedButton cancelButton_;
+   private ThemedButton defaultOverrideButton_;
    private ArrayList<ThemedButton> allButtons_ = new ArrayList<ThemedButton>();
    private Widget mainWidget_ ;
    private com.google.gwt.dom.client.Element originallyActiveElement_;
