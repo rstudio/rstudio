@@ -89,18 +89,24 @@ public class TextEditingTargetWidget extends ResizeComposite implements Display
                         hideFindReplace();
                   }
                });
+         findReplaceButton_.setTitle("Find/Replace");
       }
       return findReplaceButton_;
    }
 
    private Widget createCodeTransformMenuButton()
    {
-      ImageResource icon = ThemeResources.INSTANCE.codeTransform();
+      if (codeTransform_ == null)
+      {
+         ImageResource icon = ThemeResources.INSTANCE.codeTransform();
 
-      ToolbarPopupMenu menu = new ToolbarPopupMenu();
-      menu.addItem(commands_.extractFunction().createMenuItem(false));
-      menu.addItem(commands_.commentUncomment().createMenuItem(false));
-      return codeTransform_ = new ToolbarButton("", icon, menu);
+         ToolbarPopupMenu menu = new ToolbarPopupMenu();
+         menu.addItem(commands_.extractFunction().createMenuItem(false));
+         menu.addItem(commands_.commentUncomment().createMenuItem(false));
+         codeTransform_ = new ToolbarButton("", icon, menu);
+         codeTransform_.setTitle("Code Tools");
+      }
+      return codeTransform_;
    }
 
    public void adaptToFileType(TextFileType fileType)
