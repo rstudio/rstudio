@@ -187,6 +187,9 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
   public abstract HandlerRegistration subscribe();
 
   protected String appendPath(String path) {
+    if (path.length() == 0) {
+      return this.path;
+    }
     return appendPath(this.path, path);
   }
 

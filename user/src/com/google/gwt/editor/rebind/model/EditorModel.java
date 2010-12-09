@@ -455,6 +455,9 @@ public class EditorModel {
 
     JClassType lookingAt = proxyType;
     part : for (int i = 0, j = parts.length; i < j; i++) {
+      if (parts[i].length() == 0) {
+        continue;
+      }
       String getterName = camelCase("get", parts[i]);
 
       for (JClassType search : lookingAt.getFlattenedSupertypeHierarchy()) {
@@ -494,7 +497,7 @@ public class EditorModel {
     }
 
     int idx = interstitialGetters.lastIndexOf(".");
-    builder.beanOwnerExpression(idx == 0 ? "" : interstitialGetters.substring(
+    builder.beanOwnerExpression(idx <= 0 ? "" : interstitialGetters.substring(
         0, idx));
     if (parts.length > 1) {
       // Strip after last && since null is a valid value
@@ -502,8 +505,13 @@ public class EditorModel {
           interstitialGuard.length());
       builder.beanOwnerGuard(interstitialGuard.substring(8));
     }
-    builder.getterName(interstitialGetters.substring(idx + 1,
-        interstitialGetters.length() - 2));
+    if (interstitialGetters.length() > 0) {
+      builder.getterExpression("."
+          + interstitialGetters.substring(idx + 1,
+              interstitialGetters.length() - 2) + "()");
+    } else {
+      builder.getterExpression("");
+    }
     builder.setterName(setterName);
   }
 

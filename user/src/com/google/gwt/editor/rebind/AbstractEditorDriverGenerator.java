@@ -174,9 +174,9 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
               delegateFields.get(d));
         } else if (d.isLeafValueEditor()) {
           // if (can().access().without().npe()) { editor.subEditor.setValue() }
-          sw.println("if (%4$s) editor.%1$s.setValue(getObject()%2$s.%3$s());",
+          sw.println("if (%4$s) editor.%1$s.setValue(getObject()%2$s%3$s);",
               d.getSimpleExpression(), d.getBeanOwnerExpression(),
-              d.getGetterName(), d.getBeanOwnerGuard("getObject()"));
+              d.getGetterExpression(), d.getBeanOwnerGuard("getObject()"));
           // simpleEditor.put("some.path", editor.simpleEditor());
           sw.println("simpleEditors.put(\"%s\", editor.%s);",
               d.getDeclaredPath(), d.getSimpleExpression());
@@ -259,8 +259,8 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
           // if (can().access().without().npe()) {
           sw.println("if (%s) {", d.getBeanOwnerGuard("getObject()"));
           // subDelegate.refresh(getObject().getFoo().getBar());
-          sw.indentln("%s.refresh(getObject()%s.%s());", delegateFields.get(d),
-              d.getBeanOwnerExpression(), d.getGetterName());
+          sw.indentln("%s.refresh(getObject()%s%s);", delegateFields.get(d),
+              d.getBeanOwnerExpression(), d.getGetterExpression());
           // } else { subDelegate.refresh(null); }
           sw.println("} else { %s.refresh(null); }", delegateFields.get(d));
           sw.outdent();
@@ -270,9 +270,9 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
           sw.println("if (editor.%s != null) {", d.getSimpleExpression());
           sw.indent();
           // if (can().access().without().npe()) { editor.subEditor.setValue() }
-          sw.println("if (%4$s) editor.%1$s.setValue(getObject()%2$s.%3$s());",
+          sw.println("if (%4$s) editor.%1$s.setValue(getObject()%2$s%3$s);",
               d.getSimpleExpression(), d.getBeanOwnerExpression(),
-              d.getGetterName(), d.getBeanOwnerGuard("getObject()"));
+              d.getGetterExpression(), d.getBeanOwnerGuard("getObject()"));
           // else { editor.subEditor.setValue(null); }
           sw.println("else { editor.%s.setValue(null); }",
               d.getSimpleExpression());

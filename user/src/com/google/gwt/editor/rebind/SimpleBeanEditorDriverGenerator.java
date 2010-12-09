@@ -55,9 +55,9 @@ public class SimpleBeanEditorDriverGenerator extends
       Map<EditorData, String> delegateFields) {
     // fooDelegate.initialize(appendPath("foo"), getObject().getFoo(),
     // editor.fooEditor);
-    sw.println("%s.initialize(appendPath(\"%s\"), getObject()%s.%s(),"
+    sw.println("%s.initialize(appendPath(\"%s\"), getObject()%s%s,"
         + " editor.%s, delegateMap);", delegateFields.get(d),
-        d.getPropertyName(), d.getBeanOwnerExpression(), d.getGetterName(),
+        d.getPropertyName(), d.getBeanOwnerExpression(), d.getGetterExpression(),
         d.getSimpleExpression());
   }
 }

@@ -93,6 +93,22 @@ public class SimpleBeanEditorTest extends GWTTestCase {
       SimpleBeanEditorDriver<Person, PersonEditorWithAddressEditorView> {
   }
 
+  /**
+   * A test for assigning the object associated with an editor to an immediate
+   * child editors.
+   */
+  class PersonEditorWithAliasedSubEditors implements Editor<Person> {
+    @Path("")
+    PersonEditor e1 = new PersonEditor();
+
+    @Path("")
+    PersonEditor e2 = new PersonEditor();
+  }
+
+  interface PersonEditorWithAliasedSubEditorsDriver extends
+      SimpleBeanEditorDriver<Person, PersonEditorWithAliasedSubEditors> {
+  }
+
   class PersonEditorWithCoAddressEditorView implements Editor<Person> {
     AddressCoEditorView addressEditor = new AddressCoEditorView();
     SimpleEditor<String> name = SimpleEditor.of(UNINITIALIZED);
@@ -263,6 +279,29 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     assertEquals("Wootville", person.address.city);
     assertEquals("12345", person.address.street);
     assertEquals("David", person.manager.name);
+  }
+
+  public void testAliasedEditors() {
+    PersonEditorWithAliasedSubEditors editor = new PersonEditorWithAliasedSubEditors();
+    PersonEditorWithAliasedSubEditorsDriver driver = GWT.create(PersonEditorWithAliasedSubEditorsDriver.class);
+    driver.initialize(editor);
+    driver.edit(person);
+
+    assertEquals("Alice", editor.e1.name.getValue());
+    assertEquals("Alice", editor.e2.name.getValue());
+
+    /*
+     * Expecting that aliased editors will be editing disjoint sets of
+     * properties, but we want to at least have a predictable behavior if two
+     * editors are assigned to the same property.
+     */
+    editor.e1.name.setValue("Should not see this");
+    driver.flush();
+    assertEquals("Alice", person.getName());
+
+    editor.e2.name.setValue("Should see this");
+    driver.flush();
+    assertEquals("Should see this", person.getName());
   }
 
   /**

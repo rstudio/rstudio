@@ -102,8 +102,8 @@ class EditorAccess {
   }
 
   /**
-   * Returns <code> true if the editor accessed by this EditorAccess
-   * implements the IsEditor interface.
+   * Returns {@code true} if the editor accessed by this EditorAccess implements
+   * the IsEditor interface.
    */
   public boolean isEditor() {
     return isEditor;

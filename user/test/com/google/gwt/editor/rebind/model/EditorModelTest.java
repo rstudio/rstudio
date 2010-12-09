@@ -198,12 +198,12 @@ public class EditorModelTest extends TestCase {
     assertFalse(fields[0].isDeclaredPathNested());
     assertEquals("", fields[0].getBeanOwnerExpression());
     assertEquals("true", fields[0].getBeanOwnerGuard("object"));
-    assertEquals("getName", fields[0].getGetterName());
+    assertEquals(".getName()", fields[0].getGetterExpression());
     assertEquals("address.street", fields[1].getPath());
     assertEquals(".getAddress()", fields[1].getBeanOwnerExpression());
     assertEquals("object.getAddress() != null",
         fields[1].getBeanOwnerGuard("object"));
-    assertEquals("getStreet", fields[1].getGetterName());
+    assertEquals(".getStreet()", fields[1].getGetterExpression());
     assertEquals("setStreet", fields[1].getSetterName());
     assertEquals("street", fields[1].getPropertyName());
     assertTrue(fields[1].isDeclaredPathNested());
@@ -404,6 +404,16 @@ public class EditorModelTest extends TestCase {
     testLogger.assertCorrectLogEntries();
   }
 
+  /**
+   * Verify that {@code @Path("")} is valid.
+   */
+  public void testZeroLengthPath() throws UnableToCompleteException {
+    EditorModel m = new EditorModel(logger,
+        types.findType("t.PersonEditorWithAliasedSubEditorsDriver"), rfedType);
+    EditorData[] fields = m.getEditorData();
+    assertEquals(6, fields.length);
+  }
+
   private void checkPersonName(EditorData editorField) {
     assertNotNull(editorField);
     assertEquals(types.findType(SimpleEditor.class.getName()),
@@ -411,7 +421,7 @@ public class EditorModelTest extends TestCase {
     assertTrue(editorField.isLeafValueEditor());
     assertFalse(editorField.isDelegateRequired());
     assertFalse(editorField.isValueAwareEditor());
-    assertEquals("getName", editorField.getGetterName());
+    assertEquals(".getName()", editorField.getGetterExpression());
     assertEquals("setName", editorField.getSetterName());
   }
 
@@ -425,7 +435,7 @@ public class EditorModelTest extends TestCase {
     assertTrue(editorField.isLeafValueEditor());
     assertFalse(editorField.isDelegateRequired());
     assertFalse(editorField.isValueAwareEditor());
-    assertEquals("getReadonly", editorField.getGetterName());
+    assertEquals(".getReadonly()", editorField.getGetterExpression());
     assertNull(editorField.getSetterName());
   }
 
@@ -614,6 +624,31 @@ public class EditorModelTest extends TestCase {
         code.append("}");
         return code;
       }
+    }, new MockJavaResource("t.PersonEditorWithAliasedSubEditors") {
+      @Override
+      protected CharSequence getContent() {
+        StringBuilder code = new StringBuilder();
+        code.append("package t;\n");
+        code.append("import " + Editor.class.getName() + ";\n");
+        code.append("import " + SimpleEditor.class.getName() + ";\n");
+        code.append("class PersonEditorWithAliasedSubEditors implements Editor<PersonProxy> {\n");
+        code.append("@Path(\"\") PersonEditor e1;\n");
+        code.append("@Path(\"\") PersonEditor e2;\n");
+        code.append("}");
+        return code;
+      }
+    }, new MockJavaResource("t.PersonEditorWithAliasedSubEditorsDriver") {
+      @Override
+      protected CharSequence getContent() {
+        StringBuilder code = new StringBuilder();
+        code.append("package t;\n");
+        code.append("import " + RequestFactoryEditorDriver.class.getName()
+            + ";\n");
+        code.append("interface PersonEditorWithAliasedSubEditorsDriver extends"
+            + " RequestFactoryEditorDriver<PersonProxy, t.PersonEditorWithAliasedSubEditors> {\n");
+        code.append("}");
+        return code;
+      }
     }, new MockJavaResource("t.PersonEditorUsingMethods") {
       @Override
       protected CharSequence getContent() {
@@ -774,7 +809,7 @@ public class EditorModelTest extends TestCase {
     }};
 
     Set<Resource> toReturn = new HashSet<Resource>(Arrays.asList(javaFiles));
-    toReturn.addAll(Arrays.asList(new Resource[] {
+    toReturn.addAll(Arrays.asList(new Resource[]{
         new RealJavaResource(CompositeEditor.class),
         new RealJavaResource(Editor.class),
         new RealJavaResource(EditorError.class),

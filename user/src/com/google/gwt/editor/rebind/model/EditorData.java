@@ -85,8 +85,7 @@ public class EditorData {
       }
       try {
         data.editorExpression = (parent == null ? ""
-            : (parent.getExpression() + "."))
-            + access.getExpresson();
+            : (parent.getExpression() + ".")) + access.getExpresson();
         data.path = (parent == null ? "" : (parent.getPath() + "."))
             + access.getPath();
 
@@ -103,8 +102,8 @@ public class EditorData {
       }
     }
 
-    public Builder getterName(String value) {
-      data.getterName = value;
+    public Builder getterExpression(String value) {
+      data.getterExpression = value;
       return this;
     }
 
@@ -131,7 +130,7 @@ public class EditorData {
   private JClassType editedType;
   private JClassType editorType;
   private String editorExpression;
-  private String getterName;
+  private String getterExpression;
   private boolean isLeaf;
   private boolean isCompositeEditor;
   private boolean isDelegateRequired;
@@ -179,8 +178,12 @@ public class EditorData {
     return editorExpression;
   }
 
-  public String getGetterName() {
-    return getterName;
+  /**
+   * Returns an expression, relative to an instance of the parent object being
+   * edited, to retrieve the value to pass into the editor.
+   */
+  public String getGetterExpression() {
+    return getterExpression;
   }
 
   /**
