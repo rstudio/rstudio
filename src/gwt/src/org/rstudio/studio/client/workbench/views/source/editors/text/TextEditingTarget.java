@@ -646,9 +646,12 @@ public class TextEditingTarget implements EditingTarget
       docDisplay_.fitSelectionToLines(true);
       String selection = docDisplay_.getSelection();
 
-      Match match = Pattern.create("^\\s*#").match(selection, 0);
-      boolean isComment = match != null && match.getIndex() == 0;
-      if (isComment)
+      // If any line's first non-whitespace character is not #, then the whole
+      // selection should be commented. Exception: If the whole selection is
+      // whitespace, then we comment out the whitespace.
+      Match match = Pattern.create("^\\s*[^#\\s]").match(selection, 0);
+      boolean uncomment = match == null && selection.trim().length() != 0;
+      if (uncomment)
          selection = selection.replaceAll("((^|\\n)\\s*)# ?", "$1");
       else
       {
