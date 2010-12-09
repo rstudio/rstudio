@@ -7,12 +7,12 @@
 	<version>0.1.0.BUILD-SNAPSHOT</version>
 	<name>expenses</name>
 	<properties>
-                <gwt.version>2.1.0</gwt.version>
+                <gwt.version>2.1.1-rc1</gwt.version>
 		<roo.version>1.1.0.RELEASE</roo.version>
 		<spring.version>3.0.3.RELEASE</spring.version>
 		<slf4j.version>1.6.1</slf4j.version>
-	<gae.version>1.3.7</gae.version>
-    <gae-test.version>1.3.7</gae-test.version>
+	<gae.version>1.4.0</gae.version>
+    <gae-test.version>1.4.0</gae-test.version>
     <gae.home>${user.home}/.m2/repository/com/google/appengine/appengine-java-sdk/${gae.version}/appengine-java-sdk-${gae.version}</gae.home>
     <datanucleus.version>1.1.5</datanucleus.version>
     </properties>
@@ -47,11 +47,6 @@
     <pluginRepository>
             <id>DataNucleus_2</id>
             <url>http://www.datanucleus.org/downloads/maven2/</url>
-        </pluginRepository>
-    <pluginRepository>
-            <id>gwt-plugin-repo</id>
-            <url>http://google-web-toolkit.googlecode.com/svn/2.1.0.M3/gwt/maven</url>
-            <name>Google Web Toolkit Plugin Repository</name>
         </pluginRepository>
     </pluginRepositories>
 	<dependencies>
@@ -142,7 +137,7 @@
 	<dependency>
             <groupId>com.google.appengine.orm</groupId>
             <artifactId>datanucleus-appengine</artifactId>
-            <version>1.0.7</version>
+            <version>1.0.8</version>
         </dependency>
         <!-- must be in main dependencies as well as plugin dependencies below -->
         <dependency>
@@ -545,7 +540,7 @@
 		<plugin>
                 <groupId>net.kindleit</groupId>
                 <artifactId>maven-gae-plugin</artifactId>
-                <version>0.7.2</version>
+                <version>0.7.3</version>
                 <configuration>
 						<unpackVersion>${gae.version}</unpackVersion>
 					</configuration>
@@ -613,25 +608,45 @@
                     </dependency>
                 </dependencies>
             </plugin>
-        <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>gwt-maven-plugin</artifactId>
-                <version>1.3.2.google</version>
-                <configuration>
-				<logLevel>INFO</logLevel>
-				<style>PRETTY</style>
-                <gwtVersion>${gwt.version}</gwtVersion>
-				<runTarget>/Expenses.html</runTarget>
-                <hostedWebapp>${project.build.directory}/${project.build.finalName}</hostedWebapp>
-				<modules>
-					<module>${project.groupId}.Expenses</module>
-                    <module>${project.groupId}.ExpensesMobile</module>
-			<module>${project.groupId}.LoadExpensesDB</module>
-				</modules>
-                <server>com.google.appengine.tools.development.gwt.AppEngineLauncher</server>
-                <extraJvmArgs>-javaagent:${gae.home}/lib/agent/appengine-agent.jar -Xmx1024m</extraJvmArgs>
-                <copyWebapp>true</copyWebapp>
-			</configuration>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>gwt-maven-plugin</artifactId>
+        <version>2.1.0-1</version>
+        <dependencies>
+          <dependency>
+            <groupId>com.google.gwt</groupId>
+            <artifactId>gwt-user</artifactId>
+            <version>${gwt.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>com.google.gwt</groupId>
+            <artifactId>gwt-user</artifactId>
+            <version>${gwt.version}</version>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <logLevel>INFO</logLevel>
+          <style>PRETTY</style>
+          <runTarget>/Expenses.html</runTarget>
+          <modules>
+            <module>${project.groupId}.Expenses</module>
+            <module>${project.groupId}.ExpensesMobile</module>
+            <module>${project.groupId}.LoadExpensesDB</module>
+          </modules>          <server>com.google.appengine.tools.development.gwt.AppEngineLauncher</server>
+          <!--
+          comment as it failed when running the application
+          <extraJvmArgs>-javaagent:${gae.home}/appengine-java-sdk-${gae.version}/lib/agent/appengine-agent.jar -Xmx1024m
+</extraJvmArgs>
+          -->
+
+          <appEngineVersion>${gae.version}</appEngineVersion>
+          <copyWebapp>true</copyWebapp>
+          <runClasspathExcludes>
+            <runClasspathExclude>asm-3.3.jar</runClasspathExclude>
+          </runClasspathExcludes>
+
+        </configuration>
+
                 <executions>
                     <execution>
                         <id>gwtcompile</id>
