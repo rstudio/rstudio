@@ -15,6 +15,7 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.ui.MenuItem;
+import org.rstudio.core.client.command.AppMenuItem;
 import org.rstudio.core.client.command.BaseMenuBar;
 
 public class ToolbarPopupMenu extends ThemedPopupPanel
@@ -37,6 +38,8 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    public void addItem(MenuItem menuItem)
    {
       Command command = menuItem.getCommand();
+      if (command == null && menuItem instanceof AppMenuItem)
+         command = ((AppMenuItem)menuItem).getCommand(true);
       if (command != null)
          menuItem.setCommand(new ToolbarPopupMenuCommand(command));
       menuBar_.addItem(menuItem);

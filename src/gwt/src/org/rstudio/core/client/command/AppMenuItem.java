@@ -27,7 +27,12 @@ public class AppMenuItem extends MenuItem
    @Override
    public Command getCommand()
    {
-      return cmd_.isEnabled() ? super.getCommand() : null;
+      return getCommand(false);
+   }
+
+   public Command getCommand(boolean evenIfDisabled)
+   {
+      return evenIfDisabled || cmd_.isEnabled() ? super.getCommand() : null;
    }
 
    public void onShow()
