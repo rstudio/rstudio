@@ -27,6 +27,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.view.client.ListDataProvider;
+import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.TreeViewModel;
 
@@ -49,6 +50,8 @@ public abstract class AbstractCellTreeTestBase extends GWTTestCase {
    */
   protected class MockTreeViewModel implements TreeViewModel {
 
+    private static final int MAX_DEPTH = 4;
+
     /**
      * The cell used to render all nodes in the tree.
      */
@@ -59,16 +62,30 @@ public abstract class AbstractCellTreeTestBase extends GWTTestCase {
      */
     private final ListDataProvider<String> rootDataProvider = createDataProvider("");
 
+    /**
+     * The selection models at each level of the tree.
+     */
+    private final List<MultiSelectionModel<String>> selectionModels = new ArrayList<MultiSelectionModel<String>>();
+
+    public MockTreeViewModel() {
+      for (int i = 0; i < MAX_DEPTH; i++) {
+        selectionModels.add(new MultiSelectionModel<String>());
+      }
+    }
+
     public <T> NodeInfo<?> getNodeInfo(T value) {
       if (value == ROOT_VALUE) {
-        return new DefaultNodeInfo<String>(rootDataProvider, cell);
+        return new DefaultNodeInfo<String>(rootDataProvider, cell,
+            selectionModels.get(0), null);
       } else if (value instanceof String) {
         String prefix = (String) value;
-        if (prefix.length() > 3) {
-          throw new IllegalStateException(
-              "Prefix should never exceed four characters.");
+        int depth = prefix.length();
+        if (depth >= MAX_DEPTH) {
+          throw new IllegalStateException("Prefix should never exceed "
+              + MAX_DEPTH + " characters.");
         }
-        return new DefaultNodeInfo<String>(createDataProvider(prefix), cell);
+        return new DefaultNodeInfo<String>(createDataProvider(prefix), cell,
+            selectionModels.get(depth), null);
       }
       throw new IllegalArgumentException("Unrecognized value type");
     }
@@ -77,18 +94,28 @@ public abstract class AbstractCellTreeTestBase extends GWTTestCase {
       if (value == ROOT_VALUE) {
         return false;
       } else if (value instanceof String) {
-        String s = (String) value;
-        if (s.length() > 4) {
+        int depth = ((String) value).length();
+        if (depth > MAX_DEPTH) {
           throw new IllegalStateException(
               "value should never exceed five characters.");
         }
-        return ((String) value).length() == 4;
+        return depth == MAX_DEPTH;
       }
       throw new IllegalArgumentException("Unrecognized value type");
     }
 
     public ListDataProvider<String> getRootDataProvider() {
       return rootDataProvider;
+    }
+
+    /**
+     * Get the {@link MultiSelectionModel} for the nodes at the specified depth.
+     * 
+     * @param depth the depth of the node
+     * @return the {@link MultiSelectionModel} at that depth
+     */
+    public MultiSelectionModel<String> getSelectionModel(int depth) {
+      return selectionModels.get(depth);
     }
 
     /**

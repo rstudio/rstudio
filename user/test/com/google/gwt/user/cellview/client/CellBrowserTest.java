@@ -118,6 +118,37 @@ public class CellBrowserTest extends AbstractCellTreeTestBase {
     assertTrue(browser.treeNodes.get(0).isFocusedOpen());
   }
 
+  /**
+   * Test that even when keyboard selection is bound to the selection model, we
+   * do not automatically select items in child lists until the child list is
+   * actually touched.
+   */
+  public void testSetKeyboardSelectionPolicyBound() {
+    CellBrowser browser = (CellBrowser) tree;
+
+    // Bind keyboard selection to the selection model.
+    browser.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.BOUND_TO_SELECTION);
+    assertEquals(KeyboardSelectionPolicy.BOUND_TO_SELECTION,
+        browser.getKeyboardSelectionPolicy());
+
+    // Select an item at depth 0. Nothing should be selected at depth 1.
+    BrowserCellList<?> list0 = browser.treeNodes.get(0).getDisplay();
+    list0.getPresenter().setKeyboardSelectedRow(1, false, false);
+    list0.getPresenter().flush();
+    browser.treeNodes.get(1).getDisplay().getPresenter().flush();
+    assertEquals(1, model.getSelectionModel(0).getSelectedSet().size());
+    assertEquals(0, model.getSelectionModel(1).getSelectedSet().size());
+
+    // Select an item at depth 1. Nothing should be selected at depth 2.
+    BrowserCellList<?> list1 = browser.treeNodes.get(1).getDisplay();
+    list1.getPresenter().setKeyboardSelectedRow(2, false, false);
+    list1.getPresenter().flush();
+    browser.treeNodes.get(2).getDisplay().getPresenter().flush();
+    assertEquals(1, model.getSelectionModel(0).getSelectedSet().size());
+    assertEquals(1, model.getSelectionModel(1).getSelectedSet().size());
+    assertEquals(0, model.getSelectionModel(2).getSelectedSet().size());
+  }
+
   public void testSetKeyboardSelectionPolicyDisabled() {
     CellBrowser browser = (CellBrowser) tree;
 

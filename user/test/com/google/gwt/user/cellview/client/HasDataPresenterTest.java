@@ -31,6 +31,7 @@ import com.google.gwt.view.client.MockHasData;
 import com.google.gwt.view.client.MockHasData.MockRangeChangeHandler;
 import com.google.gwt.view.client.MockHasData.MockRowCountChangeHandler;
 import com.google.gwt.view.client.MockSelectionModel;
+import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.RangeChangeEvent;
 import com.google.gwt.view.client.SelectionChangeEvent;
@@ -45,6 +46,49 @@ import java.util.TreeSet;
  * Tests for {@link HasDataPresenter}.
  */
 public class HasDataPresenterTest extends GWTTestCase {
+
+  /**
+   * A mock {@link SelectionChangeEvent.Handler} used for testing.
+   */
+  private static class MockSelectionChangeHandler implements
+      SelectionChangeEvent.Handler {
+
+    private boolean eventFired;
+
+    /**
+     * Assert that a {@link SelectionChangeEvent} was fired and clear the
+     * boolean.
+     * 
+     * @param expected the expected value
+     */
+    public void assertEventFired(boolean expected) {
+      assertEquals(expected, eventFired);
+      eventFired = false;
+    }
+
+    public void onSelectionChange(SelectionChangeEvent event) {
+      assertFalse(eventFired);
+      eventFired = true;
+    }
+  }
+
+  /**
+   * A mock {@link SelectionModel} used for testing without used any GWT client
+   * code.
+   * 
+   * @param <T> the selection type
+   */
+  private class MockSingleSelectionModel<T> extends SingleSelectionModel<T> {
+
+    public MockSingleSelectionModel(ProvidesKey<T> keyProvider) {
+      super(keyProvider);
+    }
+
+    @Override
+    public void fireSelectionChangeEvent() {
+      super.fireSelectionChangeEvent();
+    }
+  }
 
   /**
    * A mock view used for testing.
@@ -794,6 +838,16 @@ public class HasDataPresenterTest extends GWTTestCase {
     presenter.flush();
     assertEquals(0, model.getSelectedSet().size());
 
+    // Clear the data and push new data. This should not select an item because
+    // there has not been any user interaction.
+    presenter.setRowCount(0, true);
+    presenter.flush();
+    presenter.setRowCount(100, false);
+    presenter.flush();
+    populatePresenter(presenter);
+    presenter.flush();
+    assertEquals(0, model.getSelectedSet().size());
+
     // Select an element.
     presenter.setKeyboardSelectedRow(5, false, false);
     presenter.flush();
@@ -809,13 +863,70 @@ public class HasDataPresenterTest extends GWTTestCase {
     // Select an element on another page.
     presenter.setKeyboardSelectedRow(11, false, false);
     presenter.flush();
-    // Nothing is selected yet because we don't have data.
-    assertEquals(0, model.getSelectedSet().size());
+    // The previous value is still selected because we don't have new data.
+    assertEquals(1, model.getSelectedSet().size());
+    assertTrue(model.isSelected("test 9"));
     populatePresenter(presenter);
     presenter.flush();
     // Once data is pushed, the selection model should be populated.
     assertEquals(1, model.getSelectedSet().size());
     assertTrue(model.isSelected("test 10"));
+  }
+
+  /**
+   * Test that we only get one selection event when keyboard selection changes.
+   */
+  public void testSetKeyboardSelectedRowFiresOneSelectionEvent() {
+    HasData<String> listView = new MockHasData<String>();
+    MockView<String> view = new MockView<String>();
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
+        view, 10, null);
+    presenter.setVisibleRange(new Range(0, 10));
+    populatePresenter(presenter);
+    presenter.flush();
+
+    // Bind keyboard selection to the selection model.
+    presenter.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.BOUND_TO_SELECTION);
+    presenter.setKeyboardPagingPolicy(KeyboardPagingPolicy.CHANGE_PAGE);
+
+    // Add a selection model.
+    MockSingleSelectionModel<String> model = new MockSingleSelectionModel<String>(
+        null);
+    presenter.setSelectionModel(model);
+    presenter.flush();
+    assertNull(model.getSelectedObject());
+
+    // Add an selection event handler.
+    MockSelectionChangeHandler handler = new MockSelectionChangeHandler();
+    model.addSelectionChangeHandler(handler);
+
+    // Select an element.
+    presenter.setKeyboardSelectedRow(5, false, false);
+    presenter.flush();
+    model.fireSelectionChangeEvent();
+    handler.assertEventFired(true);
+    assertEquals("test 5", model.getSelectedObject());
+
+    // Select another element.
+    presenter.setKeyboardSelectedRow(9, false, false);
+    presenter.flush();
+    model.fireSelectionChangeEvent();
+    handler.assertEventFired(true);
+    assertEquals("test 9", model.getSelectedObject());
+
+    // Select an element on another page.
+    presenter.setKeyboardSelectedRow(11, false, false);
+    presenter.flush();
+    model.fireSelectionChangeEvent();
+    // The previous value is still selected because we don't have new data.
+    handler.assertEventFired(false);
+    assertEquals("test 9", model.getSelectedObject());
+    populatePresenter(presenter);
+    presenter.flush();
+    model.fireSelectionChangeEvent();
+    // Once data is pushed, the selection model should be populated.
+    assertEquals("test 10", model.getSelectedObject());
+    handler.assertEventFired(true);
   }
 
   public void testSetKeyboardSelectedRowChangePage() {

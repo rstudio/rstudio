@@ -181,6 +181,8 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     boolean rowCountIsExact = false;
     final List<T> rowData = new ArrayList<T>();
     final Set<Integer> selectedRows = new HashSet<Integer>();
+    T selectedValue = null;
+    boolean viewTouched;
 
     public DefaultState(int pageSize) {
       this.pageSize = pageSize;
@@ -218,6 +220,10 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
       return Collections.unmodifiableList(rowData);
     }
 
+    public T getSelectedValue() {
+      return selectedValue;
+    }
+
     public boolean isRowCountExact() {
       return rowCountIsExact;
     }
@@ -232,6 +238,10 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
      */
     public boolean isRowSelected(int index) {
       return selectedRows.contains(index);
+    }
+
+    public boolean isViewTouched() {
+      return viewTouched;
     }
   }
 
@@ -271,6 +281,8 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
       this.pageStart = state.getPageStart();
       this.rowCount = state.getRowCount();
       this.rowCountIsExact = state.isRowCountExact();
+      this.selectedValue = state.getSelectedValue();
+      this.viewTouched = state.isViewTouched();
 
       // Copy the row data.
       int rowDataSize = state.getRowDataSize();
@@ -343,6 +355,11 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     List<T> getRowDataValues();
 
     /**
+     * Get the value that is selected in the {@link SelectionModel}.
+     */
+    T getSelectedValue();
+
+    /**
      * Get a boolean indicating whether the row count is exact or an estimate.
      */
     boolean isRowCountExact();
@@ -354,6 +371,13 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
      * @return true if selected, false if not
      */
     boolean isRowSelected(int index);
+
+    /**
+     * Check if the user interacted with the view at some point. Selection is
+     * not bound to the keyboard selected row until the view is touched. Once
+     * touched, selection is bound from then on.
+     */
+    boolean isViewTouched();
   }
 
   /**
@@ -728,9 +752,12 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
       return;
     }
 
+    // The user touched the view.
+    ensurePendingState().viewTouched = true;
+
     /*
      * Early exit if the keyboard selected row has not changed and the keyboard
-     * selected value is already set. 
+     * selected value is already set.
      */
     if (!forceUpdate && getKeyboardSelectedRow() == index
         && getKeyboardSelectedRowValue() != null) {
@@ -1162,24 +1189,38 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
 
     /*
      * Update the SelectionModel based on the keyboard selected value. This must
-     * happen before we read the selection state.
+     * happen before we read the selection state. We only bind to selection
+     * after the user has interacted with the widget at least once. This
+     * prevents values from being selected by default.
      */
     if (KeyboardSelectionPolicy.BOUND_TO_SELECTION == keyboardSelectionPolicy
-        && selectionModel != null) {
-      T oldValue = oldState.getRowDataSize() > 0
-          ? oldState.getRowDataValue(oldState.getKeyboardSelectedRow()) : null;
+        && selectionModel != null && pending.viewTouched) {
+      T oldValue = oldState.getSelectedValue();
       Object oldKey = getRowValueKey(oldValue);
       T newValue = rowDataCount > 0
           ? pending.getRowDataValue(pending.getKeyboardSelectedRow()) : null;
       Object newKey = getRowValueKey(newValue);
-      if ((oldKey == null) ? newKey != null : !oldKey.equals(newKey)) {
+      /*
+       * Do not deselect the old value unless we have a new value to select, or
+       * we will have a null selection event while we wait for asynchronous data
+       * to load.
+       */
+      if (newKey != null && !newKey.equals(oldKey)) {
+        // Check both values for selection before setting selection, or the
+        // selection model may resolve state early.
+        boolean oldValueWasSelected = (oldValue == null) ? false
+            : selectionModel.isSelected(oldValue);
+        boolean newValueWasSelected = (newValue == null) ? false
+            : selectionModel.isSelected(newValue);
+
         // Deselect the old value.
-        if (oldValue != null && selectionModel.isSelected(oldValue)) {
+        if (oldValueWasSelected) {
           selectionModel.setSelected(oldValue, false);
         }
 
         // Select the new value.
-        if (newValue != null && !selectionModel.isSelected(newValue)) {
+        pending.selectedValue = newValue;
+        if (newValue != null && !newValueWasSelected) {
           selectionModel.setSelected(newValue, true);
         }
       }
