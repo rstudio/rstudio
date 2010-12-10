@@ -724,6 +724,24 @@ public class BigDecimalConstructorsTest extends EmulTestBase {
   }
 
   /**
+   * Test that constructing BigDecimals from zeros works properly.
+   */
+  public void testConstrZero() {
+    BigDecimal bd = new BigDecimal("0");
+    assertEquals(0, bd.intValueExact());
+    assertEquals(1, bd.precision());
+    assertEquals(0, bd.scale());
+    bd = new BigDecimal("0.0");
+    assertEquals(0, bd.intValueExact());
+    assertEquals(1, bd.precision());
+    assertEquals(1, bd.scale());
+    bd = new BigDecimal("0.00");
+    assertEquals(0, bd.intValueExact());
+    assertEquals(1, bd.precision());
+    assertEquals(2, bd.scale());
+  }
+
+  /**
    * check ONE.
    */
   public void testFieldONE() {

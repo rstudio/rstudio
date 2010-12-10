@@ -309,6 +309,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal>,
   private static int bitLength(double value) {
     // if |value| is less than 2^47, use log
     if (value > -POW47 && value < POW47) {
+      if (value == 0.0) {
+        // special-case zero, otherwise we get -INFINITY below
+        return 0;
+      }
       boolean negative = (value < 0.0);
       if (negative) {
         value = -value;
