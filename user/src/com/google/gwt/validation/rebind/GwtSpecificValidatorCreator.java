@@ -16,6 +16,7 @@
 package com.google.gwt.validation.rebind;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.UnsafeNativeLong;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -168,6 +169,14 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     // Write the Validator instance variables after we have collected the
     // ones we need in beansToValidate
     writeValidatorInstances(sw);
+  }
+
+  protected void writeUnsafeNativeLongIfNeeded(SourceWriter sw, JType jType) {
+    if (JPrimitiveType.LONG.equals(jType)) {
+      // @com.google.gwt.core.client.UnsafeNativeLong
+      sw.print("@");
+      sw.println(UnsafeNativeLong.class.getCanonicalName());
+    }
   }
 
   private <T> T[] asArray(Collection<?> collection, T[] array) {
@@ -378,10 +387,6 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     sw.println();
   }
 
-  /**
-   * @param sourceWriter
-   * @throws UnableToCompleteException
-   */
   private void writeFields(SourceWriter sw) throws UnableToCompleteException {
     // MyBeanDescriptor beanDescriptor = GWT.create(MyBeanDescriptor);
     sw.println(GwtBeanDescriptor.class.getCanonicalName());
@@ -413,27 +418,28 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
   }
 
   private void writeFieldWrapperMethod(SourceWriter sw, JField field) {
-    // private fieldType _fieldName(Bean object) {
-    sw.print("private ");
+    writeUnsafeNativeLongIfNeeded(sw, field.getType());
+
+    // private native fieldType _fieldName(Bean object) /*-{
+    sw.print("private native ");
+
     sw.print(field.getType().getQualifiedSourceName());
     sw.print(" ");
     sw.print(toWrapperName(field));
     sw.print("(");
     sw.print(beanType.getName());
-    sw.println(" object) {");
+    sw.println(" object) /*-{");
     sw.indent();
 
-    // TOOD (nchalko) javascript magic to get private vars
-    JPrimitiveType primitive = field.getType().isPrimitive();
-    if (primitive != null) {
-      sw.println("return 0;");
-    } else {
-      sw.println("return null;");
-    }
+    // return object.@com.examples.Bean::myMethod();
+    sw.print("return object.@");
+    sw.print(field.getEnclosingType().getQualifiedSourceName());
+    sw.print("::" + field.getName());
+    sw.println(";");
 
-    // }
+    // }-*/;
     sw.outdent();
-    sw.println("}");
+    sw.println("}-*/;");
   }
 
   private void writeGetDescriptor(SourceWriter sw) {
@@ -450,32 +456,27 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     sw.println("}");
   }
 
-  /**
-   * @param sw
-   * @param method
-   */
   private void writeGetterWrapperMethod(SourceWriter sw, JMethod method) {
-    // private fieldType _getter(Bean object) {
-    sw.print("private ");
+    writeUnsafeNativeLongIfNeeded(sw, method.getReturnType());
+
+    // private native fieldType _getter(Bean object) /*={
+    sw.print("private native ");
     sw.print(method.getReturnType().getQualifiedSourceName());
     sw.print(" ");
     sw.print(toWrapperName(method));
     sw.print("(");
     sw.print(beanType.getName());
-    sw.println(" object) {");
+    sw.println(" object) /*-{");
     sw.indent();
 
-    // TOOD (nchalko) javascript magic to call private methods
-    JPrimitiveType primitive = method.getReturnType().isPrimitive();
-    if (primitive != null) {
-      sw.println("return 0;");
-    } else {
-      sw.println("return null;");
-    }
+    // return object.@com.examples.Bean::myMethod()();
+    sw.print("return object.");
+    sw.print(method.getJsniSignature());
+    sw.println("();");
 
-    // }
+    // }-*/;
     sw.outdent();
-    sw.println("}");
+    sw.println("}-*/;");
   }
 
   private void writeNewAnnotation(SourceWriter sw,
@@ -659,7 +660,6 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
   private void writeValidateGetterCall(SourceWriter sw, PropertyDescriptor p,
       boolean useValue) {
     // validateProperty_get<<field>>(context, violations,
-
     sw.print(validateMethodGetterName(p));
     sw.print("(context, ");
     sw.print("violations, ");
@@ -965,10 +965,12 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     sw.println("// Write the  wrappers after we know which are needed");
     for (JField field : fieldsToWrap) {
       writeFieldWrapperMethod(sw, field);
+      sw.println();
     }
 
     for (JMethod method : gettersToWrap) {
       writeGetterWrapperMethod(sw, method);
+      sw.println();
     }
   }
 }

@@ -35,7 +35,6 @@ public class Person implements IsSerializable {
   @Size(min = 4)
   private String name;
 
-  @Max(999999999)
   private long ssn;
 
   public Address getAddress() {
@@ -44,10 +43,6 @@ public class Person implements IsSerializable {
 
   public String getName() {
     return name;
-  }
-
-  public long getSsn() {
-    return ssn;
   }
 
   public void setAddress(Address address) {
@@ -60,5 +55,10 @@ public class Person implements IsSerializable {
 
   public void setSsn(long ssn) {
     this.ssn = ssn;
+  }
+
+  @Max(999999999)
+  protected long getSsn() {
+    return ssn;
   }
 }

@@ -27,7 +27,6 @@ import javax.validation.groups.Default;
  * the {@link GwtValidation} annotation can be validated.
  */
 @GwtValidation(value = Person.class,
- groups = {
-    Default.class, ClientGroup.class})
+     groups = {Default.class, ClientGroup.class})
 public interface SampleValidator extends Validator {
 }

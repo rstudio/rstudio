@@ -30,11 +30,11 @@
 
 -->
 <xsl:template match="testsuites">
-	<xsl:variable name="testCount" select="259"/>
+	<xsl:variable name="testCount" select="258"/>
     <!-- 
       testCount from
       jar -xf jsr303-tck-1.0.3.GA-sources.jar 
-      grep -r \@Test org/hibernate/jsr303/tck/tests/ | wc -l
+      grep -r \@Test org/hibernate/jsr303/tck/tests/| grep -v "enabled = false"  | wc -l
     -->
     <xsl:variable name="testExecutedCount" select="sum(testsuite/@tests)"/>
     <xsl:variable name="errorCount" select="sum(testsuite/@errors)"/>
@@ -42,14 +42,14 @@
     <xsl:variable name="timeCount" select="sum(testsuite/@time)"/>
     <xsl:variable name="passedCount" select="($testExecutedCount - $failureCount - $errorCount)"/>
     <xsl:variable name="successRate" select="($passedCount) div $testCount"/>
-    <xsl:value-of select="$passedCount" /> <xsl:text> Pass </xsl:text>
-    <xsl:value-of select="$failureCount"/> <xsl:text> Fail </xsl:text>
-    <xsl:value-of select="$errorCount" /> <xsl:text> Error from a total of </xsl:text>
-    <xsl:value-of select="$testCount"/> <xsl:text> tests for a success rate of </xsl:text>
+    <xsl:value-of select="$passedCount" /> <xsl:text> of </xsl:text>
+    <xsl:value-of select="$testCount"/> <xsl:text> (</xsl:text>
     <xsl:call-template name="display-percent">
          <xsl:with-param name="value" select="$successRate"/>
     </xsl:call-template> 
-   <xsl:text>.</xsl:text> 
+    <xsl:text>) Pass with </xsl:text>
+    <xsl:value-of select="$failureCount"/> <xsl:text> Failures and </xsl:text>
+    <xsl:value-of select="$errorCount" /> <xsl:text> Errors.</xsl:text>
 </xsl:template>
 
 <xsl:template name="display-percent">
