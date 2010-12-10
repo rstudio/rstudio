@@ -282,7 +282,7 @@ public class CellTable<T> extends AbstractHasData<T> {
     @Template("<div style=\"outline:none;\" tabindex=\"{0}\" accessKey=\"{1}\">{2}</div>")
     SafeHtml divFocusableWithKey(int tabIndex, char accessKey, SafeHtml contents);
 
-    @Template("<div class=\"{0}\"/>")
+    @Template("<div class=\"{0}\"></div>")
     SafeHtml loading(String loading);
 
     @Template("<table><tbody>{0}</tbody></table>")
