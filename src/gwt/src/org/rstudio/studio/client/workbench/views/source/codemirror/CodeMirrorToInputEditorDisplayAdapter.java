@@ -199,20 +199,7 @@ public class CodeMirrorToInputEditorDisplayAdapter
 
    public boolean hasSelection()
    {
-      // NOTE: this smells fishy, must be a better way
-      CursorPosition startPos = editor_.cursorPosition(true);
-      CursorPosition endPos = editor_.cursorPosition(false);
-
-      return valuesEqual(startPos.getLine(), endPos.getLine());
-   }
-
-   private boolean valuesEqual(Object a, Object b)
-   {
-      if (a == null && b == null)
-         return true;
-      if (a == null)
-         return false;
-      return a.equals(b);
+      return true;
    }
 
    public boolean isSelectionCollapsed()
