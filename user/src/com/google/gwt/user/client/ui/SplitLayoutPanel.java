@@ -23,6 +23,7 @@ import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Window;
 
 /**
  * A panel that adds user-positioned splitters between each of its child
@@ -109,9 +110,14 @@ public class SplitLayoutPanel extends DockLayoutPanel {
         case Event.ONMOUSEDOWN:
           mouseDown = true;
 
-          // Resize glassElem to take up the entire scrollable window area
-          int height = RootLayoutPanel.get().getElement().getScrollHeight() - 1;
-          int width = RootLayoutPanel.get().getElement().getScrollWidth() - 1;
+          /*
+           * Resize glassElem to take up the entire scrollable window area,
+           * which is the greater of the scroll size and the client size.
+           */
+          int width = Math.max(Window.getClientWidth(),
+              Document.get().getScrollWidth());
+          int height = Math.max(Window.getClientHeight(),
+              Document.get().getScrollHeight());
           glassElem.getStyle().setHeight(height, Unit.PX);
           glassElem.getStyle().setWidth(width, Unit.PX);
           Document.get().getBody().appendChild(glassElem);
