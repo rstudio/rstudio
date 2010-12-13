@@ -67,8 +67,15 @@ void set(const RClientMetrics& metrics)
       // which diverges from the actual client size will break locator
       // so we need to set the size small enough that there is no way 
       // it can reasonably be used for locator
-      int width = std::max(metrics.graphicsWidth, 150);
-      int height = std::max(metrics.graphicsHeight, 150);
+      int width = std::max(metrics.graphicsWidth, 100);
+      int height = std::max(metrics.graphicsHeight, 100);
+
+      // enforce a maximum graphics size so we don't create a device
+      // that is so large that it exhausts available memory
+      width = std::min(width, 10000);
+      height = std::min(height, 10000);
+
+      // set device size
       graphics::device::setSize(width, height);
    }
 }
