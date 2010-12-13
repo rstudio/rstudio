@@ -491,7 +491,7 @@ void handleHttpdRequest(const std::string& location,
    // was url encoding dashes in e.g. help for memory-limits)
    std::string path = http::util::urlDecode(uri);
 
-   if (path == "/library/R.css")
+   if (path == "/library/R.css" || path == "/doc/html/R.css")
    {
       core::FilePath cssFile = options().rHelpCssFilePath();
       if (cssFile.exists())
