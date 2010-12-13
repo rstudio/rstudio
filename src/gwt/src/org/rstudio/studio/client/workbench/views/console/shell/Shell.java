@@ -390,24 +390,28 @@ public class Shell implements ConsoleInputHandler,
                   && modifiers == KeyboardShortcut.NONE)
          {
             InputEditorUtil.moveSelectionToLineStart(input_);
+            event.preventDefault();
          }
          else if (BrowseCap.INSTANCE.emulatedHomeAndEnd()
                   && keyCode == KeyCodes.KEY_HOME
                   && modifiers == KeyboardShortcut.SHIFT)
          {
             InputEditorUtil.extendSelectionToLineStart(input_);
+            event.preventDefault();
          }
          else if (BrowseCap.INSTANCE.emulatedHomeAndEnd()
                   && keyCode == KeyCodes.KEY_END
                   && modifiers == KeyboardShortcut.NONE)
          {
             InputEditorUtil.moveSelectionToLineEnd(input_);
+            event.preventDefault();
          }
          else if (BrowseCap.INSTANCE.emulatedHomeAndEnd()
                   && keyCode == KeyCodes.KEY_END
                   && modifiers == KeyboardShortcut.SHIFT)
          {
             InputEditorUtil.extendSelectionToLineEnd(input_);
+            event.preventDefault();
          }
          else if (!event.isAltKeyDown()
                && !event.isShiftKeyDown() 
@@ -431,14 +435,6 @@ public class Shell implements ConsoleInputHandler,
             case 'Y':
                event.preventDefault();
                InputEditorUtil.pasteYanked(input_);
-               break;
-            case 'A':
-               event.preventDefault();
-               InputEditorUtil.moveSelectionToLineStart(input_);
-               break;
-            case 'E':
-               event.preventDefault();
-               InputEditorUtil.moveSelectionToLineEnd(input_);
                break;
             }
          }
