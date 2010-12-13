@@ -44,7 +44,6 @@ public class TextEditingTargetWidget extends ResizeComposite implements Display
       commands_ = commands;
       editor_ = editor;
       sourceOnSave_ = new CheckBox("Source on Save");
-      sourceOnSave_.getElement().getStyle().setMarginLeft(-6, Unit.PX);
       panel_ = new PanelWithToolbar(createToolbar(),
                                     editor.toWidget());
       adaptToFileType(fileType);
