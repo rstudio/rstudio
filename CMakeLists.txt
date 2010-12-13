@@ -24,7 +24,20 @@ endif()
 
 # install root docs
 if (NOT RSTUDIO_SESSION_WIN64)
-   install(FILES COPYING NOTICE
+   # dynamically configure SOURCE with the git revision hash
+   INSTALL(CODE "
+      exec_program(git ARGS rev-parse HEAD
+                   OUTPUT_VARIABLE RSTUDIO_GIT_REVISION_HASH)
+      configure_file (${CMAKE_CURRENT_SOURCE_DIR}/SOURCE.in
+                      ${CMAKE_CURRENT_BINARY_DIR}/SOURCE)
+    ")
+
+   # install root docs
+   install(FILES README
+                 INSTALL
+                 COPYING
+                 NOTICE
+                 ${CMAKE_CURRENT_BINARY_DIR}/SOURCE
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING})
 endif()
 

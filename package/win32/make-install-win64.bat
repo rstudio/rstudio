@@ -12,7 +12,7 @@ mkdir %WIN64_BUILD_PATH%
 cd %WIN64_BUILD_PATH%
 del CMakeCache.txt
 cmake -G"MinGW Makefiles" ^
-      -DCMAKE_INSTALL_PREFIX=%INSTALL_PATH% ^
+      -DCMAKE_INSTALL_PREFIX:String=%INSTALL_PATH% ^
       -DRSTUDIO_TARGET=SessionWin64 ^
       -DCMAKE_BUILD_TYPE=Release ^
       ..\..\..

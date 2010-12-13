@@ -17,6 +17,8 @@
 #include <core/Error.hpp>
 #include <core/Thread.hpp>
 
+#include <core/http/Request.hpp>
+
 #include "SessionHttpLog.hpp"
 
 using namespace core ;
@@ -87,6 +89,21 @@ boost::shared_ptr<HttpConnection> HttpConnectionQueue::dequeConnection(
       return dequeConnection();
    else
       return boost::shared_ptr<HttpConnection>();
+}
+
+std::string HttpConnectionQueue::peekNextConnectionUri()
+{
+   LOCK_MUTEX(*pMutex_)
+   {
+      if (!queue_.empty())
+         return queue_.front()->request().uri();
+      else
+         return std::string();
+   }
+   END_LOCK_MUTEX
+
+   // keep compiler happy
+   return std::string();
 }
 
 bool HttpConnectionQueue::waitForConnection(
