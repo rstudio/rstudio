@@ -403,10 +403,15 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
    }
 }
 
+bool isMethod(const std::string& uri, const std::string& method)
+{
+   return boost::algorithm::ends_with(uri, method);
+}
+
 bool isMethod(boost::shared_ptr<HttpConnection> ptrConnection,
               const std::string& method)
 {
-   return boost::algorithm::ends_with(ptrConnection->request().uri(), method);
+   return isMethod(ptrConnection->request().uri(), method);
 }
 
 bool isJsonRpcRequest(boost::shared_ptr<HttpConnection> ptrConnection)
@@ -533,6 +538,20 @@ void handlePendingConnections()
    // (otherwise we'll handle them directly in waitForMethod)
    if (s_rProcessingInput)
    {
+      // check the uri of the next connection
+      std::string nextConnectionUri =
+       httpConnectionListener().mainConnectionQueue().peekNextConnectionUri();
+
+      // if the uri is empty or if it one of our special waitForMethod calls
+      // then bails so that the waitForMethod logic can handle it
+      if (nextConnectionUri.empty() ||
+          isMethod(nextConnectionUri, kLocatorCompleted) ||
+          isMethod(nextConnectionUri, kEditCompleted) ||
+          isMethod(nextConnectionUri, kChooseFileCompleted))
+      {
+         return;
+      }
+
       // attempt to deque a connection and handle it. for now we just handle
       // a single connection at a time (we'll be called back again if processing
       // continues)

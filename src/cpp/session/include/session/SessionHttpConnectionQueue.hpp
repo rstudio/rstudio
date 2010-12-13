@@ -46,6 +46,8 @@ public:
    boost::shared_ptr<HttpConnection> dequeConnection(
                const boost::posix_time::time_duration& waitDuration);
 
+   std::string peekNextConnectionUri();
+
 private:
    boost::shared_ptr<HttpConnection> doDequeConnection();
    bool waitForConnection(const boost::posix_time::time_duration& waitDuration);
