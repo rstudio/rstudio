@@ -254,7 +254,15 @@ public class Files
    @Handler
    void onCopyFile()
    {
-      pFilesCopy_.get().execute(view_.getSelectedFiles(), currentPath_);   
+      // copy selected files then clear the selection
+      pFilesCopy_.get().execute(view_.getSelectedFiles(),
+                                currentPath_,
+                                new Command() {
+                                    @Override
+                                    public void execute()
+                                    {
+                                       view_.selectNone();
+                                    }});
    }
    
    

@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.files;
 
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -33,7 +34,8 @@ public class FilesCopy
    }
     
    public void execute(ArrayList<FileSystemItem> files, 
-                       FileSystemItem targetDirectory)
+                       FileSystemItem targetDirectory,
+                       Command completedCommand)
    {
       // copy list so we don't modify passed list
       ArrayList<FileSystemItem> filesQueue = new ArrayList<FileSystemItem>(
@@ -41,15 +43,21 @@ public class FilesCopy
       
       // begin copy sequence (this method keeps calling itself until
       // the queue of files is empty)
-      copyNextFile(filesQueue, targetDirectory);
+      copyNextFile(filesQueue, targetDirectory, completedCommand);
    }
    
    private void copyNextFile(final ArrayList<FileSystemItem> filesQueue, 
-                             final FileSystemItem targetDirectory)
+                             final FileSystemItem targetDirectory,
+                             final Command completedCommand)
    {
       // terminate if there are no files left
       if (filesQueue.size() == 0)
+      {
+         if (completedCommand != null)
+            completedCommand.execute();
+
          return;
+      }
       
       // remove the first file from the list
       final FileSystemItem sourceFile = filesQueue.remove(0);
@@ -86,7 +94,9 @@ public class FilesCopy
                                  protected void onSuccess()
                                  {
                                     // copy the next file in the queue
-                                    copyNextFile(filesQueue, targetDirectory);
+                                    copyNextFile(filesQueue,
+                                                 targetDirectory,
+                                                 completedCommand);
                                  }
             });      
          }                                
