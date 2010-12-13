@@ -9,14 +9,14 @@
         <modules>
           <module name="GWT">
             <files>
-              <file url="file://$PROJECT_DIR$/src/gwt/bin/com/rstudio/codemirror/CodeMirror.gwt.xml" />
-              <file url="file://$PROJECT_DIR$/src/gwt/bin/com/rstudio/core/Core.gwt.xml" />
-              <file url="file://$PROJECT_DIR$/src/gwt/bin/com/rstudio/studio/PlainTextEditor.gwt.xml" />
-              <file url="file://$PROJECT_DIR$/src/gwt/bin/com/rstudio/studio/RStudio.gwt.xml" />
-              <file url="file://$PROJECT_DIR$/src/gwt/src/com/rstudio/codemirror/CodeMirror.gwt.xml" />
-              <file url="file://$PROJECT_DIR$/src/gwt/src/com/rstudio/core/Core.gwt.xml" />
-              <file url="file://$PROJECT_DIR$/src/gwt/src/com/rstudio/studio/PlainTextEditor.gwt.xml" />
-              <file url="file://$PROJECT_DIR$/src/gwt/src/com/rstudio/studio/RStudio.gwt.xml" />
+              <file url="file://$PROJECT_DIR$/bin/com/rstudio/codemirror/CodeMirror.gwt.xml" />
+              <file url="file://$PROJECT_DIR$/bin/com/rstudio/core/Core.gwt.xml" />
+              <file url="file://$PROJECT_DIR$/bin/com/rstudio/studio/PlainTextEditor.gwt.xml" />
+              <file url="file://$PROJECT_DIR$/bin/com/rstudio/studio/RStudio.gwt.xml" />
+              <file url="file://$PROJECT_DIR$/src/com/rstudio/codemirror/CodeMirror.gwt.xml" />
+              <file url="file://$PROJECT_DIR$/src/com/rstudio/core/Core.gwt.xml" />
+              <file url="file://$PROJECT_DIR$/src/com/rstudio/studio/PlainTextEditor.gwt.xml" />
+              <file url="file://$PROJECT_DIR$/src/com/rstudio/studio/RStudio.gwt.xml" />
             </files>
           </module>
         </modules>
@@ -25,7 +25,7 @@
         <modules>
           <module name="GWT">
             <files>
-              <file url="file://$PROJECT_DIR$/src/gwt/web/WEB-INF/web.xml" />
+              <file url="file://$PROJECT_DIR$/web/WEB-INF/web.xml" />
             </files>
           </module>
         </modules>
