@@ -59,6 +59,11 @@ public class DateTimeFormatInfoImpl_pt extends DateTimeFormatInfoImpl {
   }
 
   @Override
+  public int firstDayOfTheWeek() {
+    return 0;
+  }
+
+  @Override
   public String formatMinuteSecond() {
     return "mm'min'ss's'";
   }

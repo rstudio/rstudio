@@ -36,6 +36,11 @@ public class DateTimeFormatInfoImpl_pt_PT extends DateTimeFormatInfoImpl_pt {
   }
 
   @Override
+  public int firstDayOfTheWeek() {
+    return 1;
+  }
+
+  @Override
   public String formatHour12Minute() {
     return "h:mm";
   }
