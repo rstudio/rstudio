@@ -181,6 +181,10 @@ public class CellWidgetTest extends GWTTestCase {
     assertEquals("test0", cw.getElement().getInnerText());
     handler.assertOnValueChangeNotCalled();
 
+    // Set value to the existing value, shouldn't fire events.
+    cw.setValue("test0", true);
+    handler.assertOnValueChangeNotCalled();
+
     // Set value and fire events.
     cw.setValue("test1", true);
     assertEquals("test1", cw.getValue());

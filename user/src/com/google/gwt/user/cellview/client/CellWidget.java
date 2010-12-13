@@ -183,7 +183,8 @@ public class CellWidget<C> extends Widget implements HasKeyProvider<C>,
   /**
    * {@inheritDoc}
    * <p>
-   * This method will redraw the widget using the new value.
+   * This method will redraw the widget if the new value does not equal the
+   * existing value.
    * </p>
    */
   public void setValue(C value) {
@@ -193,7 +194,8 @@ public class CellWidget<C> extends Widget implements HasKeyProvider<C>,
   /**
    * {@inheritDoc}
    * <p>
-   * This method will redraw the widget using the new value.
+   * This method will redraw the widget if the new value does not equal the
+   * existing value.
    * </p>
    */
   public void setValue(C value, boolean fireEvents) {
@@ -204,18 +206,23 @@ public class CellWidget<C> extends Widget implements HasKeyProvider<C>,
    * Sets this object's value and optionally redraw the widget. Fires
    * {@link com.google.gwt.event.logical.shared.ValueChangeEvent} when
    * fireEvents is true and the new value does not equal the existing value.
+   * Redraws the widget when redraw is true and the new value does not equal the
+   * existing value.
    * 
    * @param value the object's new value
    * @param fireEvents fire events if true and value is new
-   * @param redraw true to redraw the widget, false not to
+   * @param redraw redraw the widget if true and value is new
    */
   public void setValue(C value, boolean fireEvents, boolean redraw) {
-    this.value = value;
-    if (redraw) {
-      redraw();
-    }
-    if (fireEvents) {
-      ValueChangeEvent.fire(this, value);
+    C oldValue = getValue();
+    if (value != oldValue && (oldValue == null || !oldValue.equals(value))) {
+      this.value = value;
+      if (redraw) {
+        redraw();
+      }
+      if (fireEvents) {
+        ValueChangeEvent.fire(this, value);
+      }
     }
   }
 
