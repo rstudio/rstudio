@@ -12,7 +12,7 @@ cd ..
 REM perform 64-bit build and install it into the 32-bit tree
 REM (but only do this if we are on win64)
 if "%1" == "clean" rmdir /s /q build64
-IF DEFINED PROGRAMW6432 call make-install-win64.bat %CD%\build\src\cpp\session
+IF DEFINED PROGRAMW6432 call make-install-win64.bat "%CD%\build\src\cpp\session"
 
 REM create packages
 cd build
