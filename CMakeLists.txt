@@ -33,7 +33,9 @@ if (NOT RSTUDIO_SESSION_WIN64)
     ")
 
    # install root docs
-   install(FILES COPYING
+   install(FILES README
+                 INSTALL
+                 COPYING
                  NOTICE
                  ${CMAKE_CURRENT_BINARY_DIR}/SOURCE
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING})

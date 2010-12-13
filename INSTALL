@@ -3,8 +3,9 @@ Installing RStudio from Source
 =============================================================================
 
 This document describes how to build and install RStudio from the source
-distribution. Note that precompiled binaries are also available for Windows,
-OSX, as well as recent versions of various Linux distributions.
+distribution. Information on obtaining the RStudio source code can be found
+in the file SOURCE. Note that precompiled binaries are also available for
+Windows, OSX, as well as recent versions of various Linux distributions.
 
 1) Installing Dependencies
 ----------------------------------------------------------------------------

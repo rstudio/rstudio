@@ -1,0 +1,15 @@
+RStudio is an Integrated Development Environment for the R programming
+language (http://www.r-project.org).
+
+RStudio is licensed to you under the AGPLv3, the terms of which are
+included in the file COPYING.
+
+Additional information about the RStudio project can be found at 
+http://www.rstudio.org.
+
+Please see also the following files:
+
+COPYING - RStudio license (AGPLv3)
+NOTICE  - Additional open source software included with RStudio
+SOURCE  - How to obtain the source code for RStudio
+INSTALL - How to build and install RStudio from source
