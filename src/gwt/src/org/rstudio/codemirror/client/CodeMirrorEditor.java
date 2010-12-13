@@ -13,6 +13,7 @@
 package org.rstudio.codemirror.client;
 
 import com.google.gwt.dom.client.*;
+import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -46,6 +47,7 @@ public abstract class CodeMirrorEditor extends Composite
       // create parent element for code mirror
       codeMirrorPanel_ = new SimplePanel();
       initWidget(codeMirrorPanel_);
+      getElement().getStyle().setPosition(Position.RELATIVE);
    }
 
    public CodeMirror getRawEditor()
