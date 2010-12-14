@@ -168,11 +168,13 @@ if (NOT RSTUDIO_SESSION_WIN64)
    install(FILES ${R_MODULE_SRC_FILES}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/modules)
            
-   # 64 bit binaries
+   # install 64 bit binaries if we are on win64
    if(WIN32)
-      install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x64"
-              USE_SOURCE_PERMISSIONS
-              DESTINATION  ${RSTUDIO_INSTALL_BIN})
+      if(NOT ("$ENV{PROGRAMW6432}" STREQUAL ""))
+         install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x64"
+                 USE_SOURCE_PERMISSIONS
+                 DESTINATION  ${RSTUDIO_INSTALL_BIN})
+      endif()
    endif()
 endif()
 

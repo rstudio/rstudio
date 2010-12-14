@@ -55,6 +55,7 @@ FilePath requestedFile(const std::string& wwwLocalPath,
                                   &realRequestedPath);
    if (error)
    {
+      error.addProperty("requested-path", relativePath);
       LOG_ERROR(error);
       return FilePath();
    }
