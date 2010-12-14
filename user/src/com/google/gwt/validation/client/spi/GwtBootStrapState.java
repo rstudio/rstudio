@@ -13,10 +13,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package javax.validation;
+package com.google.gwt.validation.client.spi;
+
+import com.google.gwt.core.client.GWT;
+
+import javax.validation.ValidationProviderResolver;
+import javax.validation.spi.BootstrapState;
 
 /**
- * Pass through to GWT version {@link com.google.gwt.validation.client.Validation}.
+ * GWT {@link BootstrapState}.
  */
-public class Validation  extends com.google.gwt.validation.client.Validation {
+public class GwtBootStrapState implements BootstrapState {
+
+  public ValidationProviderResolver getDefaultValidationProviderResolver() {
+    return GWT.create(ValidationProviderResolver.class);
+  }
+
+  public ValidationProviderResolver getValidationProviderResolver() {
+    return null;
+  }
 }

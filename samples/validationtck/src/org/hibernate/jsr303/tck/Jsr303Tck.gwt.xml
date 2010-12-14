@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-This is a HACK, is not a complete Validation TCK solution.
-It is only enough to run the tests in the GWT Validation TCK.
+<!-- 
+This is a HACK, is not a complete Validation TCK solution. 
+It is only enough to run the tests in the GWT Validation TCK. 
 -->
 <module>
   <inherits name='com.google.gwt.validation.Validation' />
@@ -11,13 +11,11 @@ It is only enough to run the tests in the GWT Validation TCK.
   <source path="">
     <exclude name="super/" />
     <!-- things not used in any current test -->
-    <exclude name="common/" />
     <exclude name="tests/bootstrap/" />
     <exclude name="tests/constraints/builtinconstraints/" />
     <exclude name="tests/messageinterpolation/" />
     <exclude name="tests/xmlconfiguration/" />
-    <exclude name="tests/validation/UnknownProviderBootstrapTest.java"/>
-    <exclude name="tests/validation/ValidationTest.java"/>
+    <exclude name="tests/validation/UnknownProviderBootstrapTest.java" />
     <exclude name="util/StandaloneContainersImpl.java" />
   </source>
   <super-source path="super" />

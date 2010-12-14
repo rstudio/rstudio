@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.0.1//EN" "http://google-web-toolkit.googlecode.com/svn/tags/2.0.1/distro-source/core/src/gwt-module.dtd">
+<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.0.1//EN"
+  "http://google-web-toolkit.googlecode.com/svn/tags/2.0.1/distro-source/core/src/gwt-module.dtd">
 <!--
   Copyright 2010 Google Inc.
 
@@ -20,6 +21,37 @@
   <inherits name="com.google.gwt.regexp.RegExp" />
   <inherits name="javax.validation.Validation" />
   <source path="client" />
+  <super-source path="super" />
+
+  <replace-with
+    class="com.google.gwt.validation.client.GwtConstraintValidatorFactory">
+    <when-type-is class="javax.validation.ConstraintValidatorFactory" />
+  </replace-with>
+  <replace-with
+    class="com.google.gwt.validation.client.GwtMessageInterpolator">
+    <when-type-is class="javax.validation.MessageInterpolator" />
+  </replace-with>
+  <replace-with
+    class="com.google.gwt.validation.client.GwtTraversableResolver">
+    <when-type-is class="javax.validation.TraversableResolver" />
+  </replace-with>
+  <replace-with
+    class="com.google.gwt.validation.client.spi.GwtValidationProvider">
+    <when-type-is class="javax.validation.spi.ValidationProvider" />
+  </replace-with>
+  <replace-with
+    class="com.google.gwt.validation.client.GwtValidationProviderResolver">
+    <when-type-is class="javax.validation.ValidationProviderResolver" />
+  </replace-with>
+  <replace-with class="com.google.gwt.validation.client.GwtValidatorContext">
+    <when-type-is class="javax.validation.ValidatorContext" />
+  </replace-with>
+  <replace-with class="com.google.gwt.validation.client.GwtValidatorFactory">
+    <when-type-is class="javax.validation.ValidatorFactory" />
+  </replace-with>
+  <replace-with class="com.google.gwt.validation.client.Validation">
+    <when-type-is class="javax.validation.Validation" />
+  </replace-with>
 
   <!-- Generators -->
   <generate-with class="com.google.gwt.validation.rebind.ValidatorGenerator">

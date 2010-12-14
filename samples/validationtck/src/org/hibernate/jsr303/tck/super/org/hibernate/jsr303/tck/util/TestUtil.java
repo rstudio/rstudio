@@ -19,7 +19,6 @@ package org.hibernate.jsr303.tck.util;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
-
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
@@ -36,6 +35,8 @@ import javax.validation.MessageInterpolator;
 import javax.validation.Path;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
+import javax.validation.Validation;
+import javax.validation.bootstrap.ProviderSpecificBootstrap;
 import javax.validation.metadata.ConstraintDescriptor;
 import javax.validation.metadata.ElementDescriptor;
 import javax.validation.metadata.PropertyDescriptor;
@@ -45,7 +46,6 @@ import javax.validation.spi.ValidationProvider;
  * Modified by Google.
  * <ul>
  * <li>Use RegExp instead of Pattern</li>
- *  <li>Hard code the validator</li>
  * </ul>
  * @author Hardy Ferentschik
  */
@@ -59,8 +59,7 @@ public final class TestUtil {
   }
 
   public static Validator getValidatorUnderTest() {
-    // return getValidatorFactoryUnderTest().getValidator();
-    return GWT.create(Validator.class);
+    return getValidatorFactoryUnderTest().getValidator();
   }
 
   public static ValidationProvider<?> getValidationProviderUnderTest() {
@@ -80,9 +79,9 @@ public final class TestUtil {
       instantiateValidationProviderUnderTest();
     }
 
-    // ProviderSpecificBootstrap<?> bootstrap =
-    // Validation.byProvider(validationProviderUnderTest.getClass());
-    return null; // bootstrap.configure();
+    ProviderSpecificBootstrap<?> bootstrap =
+    Validation.byProvider(validationProviderUnderTest.getClass());
+    return bootstrap.configure();
   }
 
   public static MessageInterpolator getDefaultMessageInterpolator() {
@@ -243,7 +242,7 @@ public final class TestUtil {
   }
 
   private static <U extends ValidationProvider<?>> void instantiateValidationProviderUnderTest() {
-
+      validationProviderUnderTest = GWT.create(ValidationProvider.class);
   }
 
   public static class PathImpl implements Path {

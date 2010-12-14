@@ -13,10 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package javax.validation;
+package com.google.gwt.validation.client;
+
+import javax.validation.MessageInterpolator;
 
 /**
- * Pass through to GWT version {@link com.google.gwt.validation.client.Validation}.
+ * Base GWT {@link MessageInterpolator}.
  */
-public class Validation  extends com.google.gwt.validation.client.Validation {
+public abstract class BaseMessageInterpolator implements MessageInterpolator {
+
+  public final String interpolate(String messageTemplate, Context context) {
+    // TODO(nchalko) implement.
+    return null;
+  }
 }

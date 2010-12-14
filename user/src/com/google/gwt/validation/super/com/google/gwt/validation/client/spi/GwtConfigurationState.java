@@ -13,10 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package javax.validation;
+package com.google.gwt.validation.client.spi;
+
+import java.util.Set;
 
 /**
- * Pass through to GWT version {@link com.google.gwt.validation.client.Validation}.
+ * Only the GWT incompatible parts.
  */
-public class Validation  extends com.google.gwt.validation.client.Validation {
+public class GwtConfigurationState extends BaseConfigurationState {
+
+  public Set<String> getMappingStreams() {
+    throw new UnsupportedOperationException(
+        "GWT Validation does not support getMappingStreams");
+  }
+
 }

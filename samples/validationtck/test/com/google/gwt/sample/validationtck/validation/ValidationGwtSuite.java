@@ -29,6 +29,7 @@ public class ValidationGwtSuite {
     suite.addTestSuite(PropertyPathTest.class);
     suite.addTestSuite(ValidatePropertyTest.class);
     suite.addTestSuite(ValidateValueTest.class);
+    suite.addTestSuite(ValidationTest.class);
     return suite;
   }
 }

@@ -15,18 +15,31 @@
  */
 package com.google.gwt.sample.validation.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.sample.validation.shared.ClientGroup;
 import com.google.gwt.sample.validation.shared.Person;
+import com.google.gwt.validation.client.AbstractValidator;
 import com.google.gwt.validation.client.GwtValidation;
 
 import javax.validation.Validator;
 import javax.validation.groups.Default;
 
 /**
- * Validator marker for the Valiation Sample project. Only the classes listed in
- * the {@link GwtValidation} annotation can be validated.
+ * {@link Validator} implementation that uses
+ * {@link com.google.gwt.validation.client.GwtValidation GwtValidation}.
  */
-@GwtValidation(value = Person.class,
-     groups = {Default.class, ClientGroup.class})
-public interface SampleValidator extends Validator {
+public class SampleValidator extends AbstractValidator {
+
+  /**
+   * Validator marker for the Validation Sample project. Only the classes listed
+   * in the {@link GwtValidation} annotation can be validated.
+   */
+  @GwtValidation(value = Person.class,
+      groups = {Default.class, ClientGroup.class})
+  public interface GwtValidator extends Validator {
+  }
+
+  public SampleValidator() {
+    super((Validator) GWT.create(SampleValidator.GwtValidator.class));
+  }
 }

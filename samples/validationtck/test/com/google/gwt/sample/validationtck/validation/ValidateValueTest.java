@@ -22,8 +22,8 @@ package com.google.gwt.sample.validationtck.validation;
  */
 public class ValidateValueTest extends AbstractValidationTest {
 
-  private final org.hibernate.jsr303.tck.tests.validation.ValidateValueTest delegate =
-    new org.hibernate.jsr303.tck.tests.validation.ValidateValueTest();
+  private final org.hibernate.jsr303.tck.tests.validation.ValidateValueTest delegate = 
+      new org.hibernate.jsr303.tck.tests.validation.ValidateValueTest();
 
   public void testExistingPropertyWoConstraintsNorCascaded() {
     delegate.testExistingPropertyWoConstraintsNorCascaded();

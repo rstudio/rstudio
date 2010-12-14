@@ -13,10 +13,24 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package javax.validation;
+package com.google.gwt.validation.client;
+
+import com.google.gwt.validation.client.spi.GwtValidationProvider;
+
+import javax.validation.spi.BootstrapState;
 
 /**
- * Pass through to GWT version {@link com.google.gwt.validation.client.Validation}.
+ * Extends {@link BaseGwtConfiguration} with just the parts that are not GWT
+ * compatible.
  */
-public class Validation  extends com.google.gwt.validation.client.Validation {
+public class GwtConfiguration extends BaseGwtConfiguration {
+
+  public GwtConfiguration(GwtValidationProvider gwtValidationProvider,
+      BootstrapState state) {
+    super(gwtValidationProvider, state);
+  }
+
+  public BaseGwtConfiguration addMapping(String stream) {
+    throw new UnsupportedOperationException("GWT does not support InputStreams");
+  }
 }

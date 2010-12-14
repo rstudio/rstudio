@@ -13,10 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package javax.validation;
+package com.google.gwt.validation.client;
+
+import java.util.Locale;
 
 /**
- * Pass through to GWT version {@link com.google.gwt.validation.client.Validation}.
+ * Simple GWT {@link javax.validation.MessageInterpolator}.
  */
-public class Validation  extends com.google.gwt.validation.client.Validation {
+public class GwtMessageInterpolator extends BaseMessageInterpolator {
+  // This class only has the parts the need to overridden for GWT
+
+  public String interpolate(String messageTemplate, Context context,
+      Locale locale) {
+    return messageTemplate;
+  }
 }

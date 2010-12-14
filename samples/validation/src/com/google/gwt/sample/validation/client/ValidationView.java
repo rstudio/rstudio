@@ -39,6 +39,7 @@ import java.util.Set;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
+import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.groups.Default;
 
@@ -127,7 +128,7 @@ public class ValidationView extends Composite {
     errorLabel.setText("");
     person.setName(nameField.getText());
 
-    Validator validator = GWT.create(SampleValidator.class);
+    Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
     Set<ConstraintViolation<Person>> violations = validator.validate(person,
         Default.class, ClientGroup.class);
     if (!violations.isEmpty()) {

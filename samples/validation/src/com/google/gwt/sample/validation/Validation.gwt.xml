@@ -13,14 +13,19 @@
 <!-- limitations under the License.                                         -->
 
 <module rename-to='validation'>
-  <inherits name='com.google.gwt.rpc.RPC'/>
-  <inherits name='com.google.gwt.user.User'/>
-  <inherits name='com.google.gwt.user.theme.standard.Standard'/>
-  <inherits name='org.hibernate.validator.HibernateValidator'/>
+  <inherits name='com.google.gwt.rpc.RPC' />
+  <inherits name='com.google.gwt.user.User' />
+  <inherits name='com.google.gwt.user.theme.standard.Standard' />
+  <inherits name='org.hibernate.validator.HibernateValidator' />
 
-  <entry-point class='com.google.gwt.sample.validation.client.Validation'/>
+  <entry-point class='com.google.gwt.sample.validation.client.Validation' />
 
-  <source path='client'/>
-  <source path='shared'/>
+  <source path='client' />
+  <source path='shared' />
   <super-source path="super" />
+
+  <replace-with
+    class="com.google.gwt.sample.validation.client.SampleValidator">
+    <when-type-is class="javax.validation.Validator" />
+  </replace-with>
 </module>
