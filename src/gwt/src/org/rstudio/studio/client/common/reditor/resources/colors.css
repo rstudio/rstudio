@@ -5,6 +5,10 @@
   color: black;
 }
 
+.editbox {
+  font-family: "Droid Sans Mono", "DejaVu Sans Mono", Monaco, Consolas, "Lucida Console", monospace;
+}
+
 .editbox p {
   margin: 0;
 }

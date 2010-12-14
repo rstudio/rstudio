@@ -131,6 +131,7 @@ public class Application implements ApplicationEventHandlers,
 
          public void onError(ServerError error)
          {
+            Debug.logError(error);
             dismissLoadingProgress.execute();
 
             globalDisplay_.showErrorMessage("RStudio Initialization Error",
