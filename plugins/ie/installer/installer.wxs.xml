@@ -8,7 +8,7 @@
   <?define upgradeCode = "9a5e649a-ec63-4c7d-99bf-75adb345e7e5" ?>
   <?define win64Flag = "yes" ?>
   <?else ?>
-  <?define upgradeCode = "8B3F15BC-42FB-4e0e-BAC4-1DE8C4AA10FD" ?>
+  <?define upgradeCode = "53DAE7D2-8C28-440F-920B-B2D665CE73B2" ?>
   <?define win64Flag = "no" ?>
   <?endif ?>
   <?define updateRegKey = "SOFTWARE\Google\Update\Clients\{$(var.upgradeCode)}" ?>

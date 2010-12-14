@@ -12,7 +12,7 @@
     </Fragment>
     <Fragment>
         <ComponentGroup Id="oophmDll">
-            <Component Win64="$(var.win64Flag)" Id="cmpC5076456A3EE2DC3FC2683246BE38AD6" Directory="dir315E0C50682DFB472927FE1254A22F6A" Guid="48789066-DDF6-46C5-BF60-408BC872BF05">
+            <Component Win64="$(var.win64Flag)" Id="cmpC5076456A3EE2DC3FC2683246BE38AD6" Directory="dir315E0C50682DFB472927FE1254A22F6A" Guid="76483594-CBB8-438C-B777-5ABF473A90F0">
                 <File Id="filEF78EFE99C26E3436EC9C8852A85BE88" KeyPath="yes" Source="$(var.binDir)\oophm.dll">
                     <TypeLib Id="{9259F105-BE55-4BF6-B7CE-D0AA878C1BA6}" Description="oophm 1.0 Type Library" HelpDirectory="dir315E0C50682DFB472927FE1254A22F6A" Language="0" MajorVersion="1" MinorVersion="0">
                         <AppId Description="oophm" Id="{F9365E53-5A14-47F3-BF1D-10CAAB815309}">
