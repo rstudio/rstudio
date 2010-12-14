@@ -46,7 +46,7 @@ public class DateTimeFormatInfoImpl_pt extends DateTimeFormatInfoImpl {
   public String[] erasFull() {
     return new String[] {
         "Antes de Cristo",
-        "Ano do Senhor"
+        "Depois de Cristo"
     };
   }
 
