@@ -41,7 +41,8 @@ Cookie::Cookie(const Request& request,
       // is not something we're likely to want, we warn--if this
       // is actually the desired behavior then use an explicit path
       // value.
-      LOG_WARNING_MESSAGE("Implicit path used with non-root URL");
+      LOG_WARNING_MESSAGE("Implicit path used with non-root URL (" +
+                          request.uri() + ")");
    }
 }
    
