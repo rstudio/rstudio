@@ -688,7 +688,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
   private List<JClassType> classChain(JClassType cls) {
     LinkedList<JClassType> chain = new LinkedList<JClassType>();
     while (cls != null) {
-      chain.push(cls);
+      chain.addFirst(cls);
       cls = cls.getSuperclass();
     }
     return chain;
