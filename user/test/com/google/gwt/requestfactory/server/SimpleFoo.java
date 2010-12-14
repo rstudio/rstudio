@@ -783,7 +783,7 @@ public class SimpleFoo {
     this.simpleValueField = simpleValueField.get(0);
   }
 
-  public void setUnpersisted(Boolean unpersisted) {
+  public void setUnpersisted(boolean unpersisted) {
     this.unpersisted = unpersisted;
   }
 

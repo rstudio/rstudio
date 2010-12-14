@@ -148,7 +148,7 @@ public class RequestFactoryInterfaceValidator {
       this.parent = parent;
       this.validator = parent.validator;
     }
-    
+
     public void poison(String msg, Object... args) {
       poison();
       logger.logp(Level.SEVERE, currentType(), currentMethod(),
@@ -173,7 +173,7 @@ public class RequestFactoryInterfaceValidator {
       toReturn.currentType = type;
       return toReturn;
     }
-    
+
     public void spam(String msg, Object... args) {
       logger.logp(Level.FINEST, currentType(), currentMethod(),
           String.format(msg, args));
@@ -309,7 +309,7 @@ public class RequestFactoryInterfaceValidator {
             } else {
               return;
             }
-            
+
             /*
              * The input is a source name, so we need to convert it to an
              * internal name. We'll do this by substituting dollar signs for the
@@ -555,6 +555,18 @@ public class RequestFactoryInterfaceValidator {
     System.exit(validator.isPoisoned() ? 1 : 0);
   }
 
+  static String messageCouldNotFindMethod(Type domainType,
+      List<? extends Method> methods) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(String.format(
+        "Could not find matching method in %s.\nPossible matches:\n",
+        print(domainType)));
+    for (Method domainMethod : methods) {
+      sb.append("  ").append(print(domainMethod)).append("\n");
+    }
+    return sb.toString();
+  }
+
   private static String print(Method method) {
     StringBuilder sb = new StringBuilder();
     sb.append(print(method.getReturnType())).append(" ").append(
@@ -632,6 +644,7 @@ public class RequestFactoryInterfaceValidator {
    * A map of a type to all types that it could be assigned to.
    */
   private final Map<Type, List<Type>> supertypes = new HashMap<Type, List<Type>>();
+
   /**
    * The type {@link ValueProxy}.
    */
@@ -646,7 +659,7 @@ public class RequestFactoryInterfaceValidator {
    * Contains vaue types (e.g. Integer).
    */
   private final Set<Type> valueTypes = new HashSet<Type>();
-  
+
   /**
    * Maps a domain object to the type returned from its getId method.
    */
@@ -657,13 +670,13 @@ public class RequestFactoryInterfaceValidator {
       valueTypes.add(Type.getType(clazz));
     }
   }
-  
+
   public RequestFactoryInterfaceValidator(Logger logger, Loader loader) {
     this.parentLogger = new ErrorContext(logger);
     parentLogger.setValidator(this);
     this.loader = loader;
   }
-  
+
   /**
    * Visible for testing.
    */
@@ -790,7 +803,8 @@ public class RequestFactoryInterfaceValidator {
 
     for (RFMethod method : getMethodsInHierarchy(logger, requestContextType)) {
       // Ignore methods in RequestContext itself
-      if (findCompatibleMethod(logger, requestContextIntf, method, false, true) != null) {
+      if (findCompatibleMethod(logger, requestContextIntf, method, false, true,
+          true) != null) {
         continue;
       }
 
@@ -961,7 +975,8 @@ public class RequestFactoryInterfaceValidator {
     Method searchFor = createDomainMethod(logger, new Method(method.getName(),
         returnType, method.getArgumentTypes()));
 
-    RFMethod found = findCompatibleMethod(logger, domainServiceType, searchFor);
+    RFMethod found = findCompatibleServiceMethod(logger, domainServiceType,
+        searchFor);
 
     if (found != null) {
       boolean isInstance = isAssignable(logger, instanceRequestIntf,
@@ -1048,7 +1063,7 @@ public class RequestFactoryInterfaceValidator {
       Method clientPropertyMethod, Type domainType) {
     logger = logger.setMethod(clientPropertyMethod);
 
-    findCompatibleMethod(logger, domainType,
+    findCompatiblePropertyMethod(logger, domainType,
         createDomainMethod(logger, clientPropertyMethod));
   }
 
@@ -1108,20 +1123,14 @@ public class RequestFactoryInterfaceValidator {
    * hierarchy that is assignment-compatible with the given Method.
    */
   private RFMethod findCompatibleMethod(final ErrorContext logger,
-      Type domainType, Method searchFor) {
-    return findCompatibleMethod(logger, domainType, searchFor, true, false);
-  }
-
-  /**
-   * Finds a compatible method declaration in <code>domainType</code>'s
-   * hierarchy that is assignment-compatible with the given Method.
-   */
-  private RFMethod findCompatibleMethod(final ErrorContext logger,
       Type domainType, Method searchFor, boolean mustFind,
-      boolean allowOverloads) {
+      boolean allowOverloads, boolean boxReturnTypes) {
     String methodName = searchFor.getName();
     Type[] clientArgs = searchFor.getArgumentTypes();
     Type clientReturnType = searchFor.getReturnType();
+    if (boxReturnTypes) {
+      clientReturnType = maybeBoxType(clientReturnType);
+    }
     // Pull all methods out of the domain type
     Map<String, List<RFMethod>> domainLookup = new LinkedHashMap<String, List<RFMethod>>();
     for (RFMethod method : getMethodsInHierarchy(logger, domainType)) {
@@ -1155,12 +1164,16 @@ public class RequestFactoryInterfaceValidator {
 
     // Check each overloaded name
     for (RFMethod domainMethod : methods) {
-      // Box any primitive types to simplify compotibility check
       Type[] domainArgs = domainMethod.getArgumentTypes();
-      for (int i = 0, j = domainArgs.length; i < j; i++) {
-        domainArgs[i] = maybeBoxType(domainArgs[i]);
+      Type domainReturnType = domainMethod.getReturnType();
+      if (boxReturnTypes) {
+        /*
+         * When looking for the implementation of a Request<Integer>, we want to
+         * match either int or Integer, so we'll box the domain method's return
+         * type.
+         */
+        domainReturnType = maybeBoxType(domainReturnType);
       }
-      Type domainReturnType = maybeBoxType(domainMethod.getReturnType());
 
       /*
        * Make sure the client args can be passed into the domain args and the
@@ -1175,16 +1188,29 @@ public class RequestFactoryInterfaceValidator {
       }
     }
     if (mustFind) {
-      StringBuilder sb = new StringBuilder();
-      sb.append(String.format(
-          "Could not find matching method in %s:\nPossible matches:\n",
-          print(domainType)));
-      for (RFMethod domainMethod : methods) {
-        sb.append("  ").append(print(domainMethod)).append("\n");
-      }
-      logger.poison(sb.toString());
+      logger.poison(messageCouldNotFindMethod(domainType, methods));
     }
     return null;
+  }
+
+  /**
+   * Finds a compatible method declaration in <code>domainType</code>'s
+   * hierarchy that is assignment-compatible with the given Method.
+   */
+  private RFMethod findCompatiblePropertyMethod(final ErrorContext logger,
+      Type domainType, Method searchFor) {
+    return findCompatibleMethod(logger, domainType, searchFor, true, false,
+        false);
+  }
+
+  /**
+   * Finds a compatible method declaration in <code>domainType</code>'s
+   * hierarchy that is assignment-compatible with the given Method.
+   */
+  private RFMethod findCompatibleServiceMethod(final ErrorContext logger,
+      Type domainType, Method searchFor) {
+    return findCompatibleMethod(logger, domainType, searchFor, true, false,
+        true);
   }
 
   /**
@@ -1341,14 +1367,6 @@ public class RequestFactoryInterfaceValidator {
       return true;
     }
 
-    // Box primitive types to make this simple
-    if (possibleSupertype.getSort() != Type.OBJECT) {
-      possibleSupertype = getBoxedType(possibleSupertype);
-    }
-    if (possibleSubtype.getSort() != Type.OBJECT) {
-      possibleSubtype = getBoxedType(possibleSubtype);
-    }
-
     // Supertype calculation is cached
     List<Type> allSupertypes = getSupertypes(logger, possibleSubtype);
     return allSupertypes.contains(possibleSupertype);
@@ -1368,7 +1386,8 @@ public class RequestFactoryInterfaceValidator {
     return true;
   }
 
-  private boolean isCollectionType(@SuppressWarnings("unused") ErrorContext logger, Type type) {
+  private boolean isCollectionType(
+      @SuppressWarnings("unused") ErrorContext logger, Type type) {
     // keeping the logger arg just for internal consistency for our small minds
     return "java/util/List".equals(type.getInternalName())
         || "java/util/Set".equals(type.getInternalName());

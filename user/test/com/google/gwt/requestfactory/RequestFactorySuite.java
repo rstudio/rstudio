@@ -22,6 +22,7 @@ import com.google.gwt.requestfactory.client.RequestFactoryPolymorphicTest;
 import com.google.gwt.requestfactory.client.RequestFactoryTest;
 import com.google.gwt.requestfactory.client.RequestFactoryUnicodeEscapingTest;
 import com.google.gwt.requestfactory.client.ui.EditorTest;
+import com.google.gwt.requestfactory.shared.BoxesAndPrimitivesTest;
 import com.google.gwt.requestfactory.shared.ComplexKeysTest;
 import com.google.gwt.requestfactory.shared.LocatorTest;
 
@@ -34,6 +35,7 @@ public class RequestFactorySuite {
   public static Test suite() {
     GWTTestSuite suite = new GWTTestSuite(
         "Test suite for requestfactory gwt code.");
+    suite.addTestSuite(BoxesAndPrimitivesTest.class);
     suite.addTestSuite(ComplexKeysTest.class);
     suite.addTestSuite(EditorTest.class);
     suite.addTestSuite(FindServiceTest.class);

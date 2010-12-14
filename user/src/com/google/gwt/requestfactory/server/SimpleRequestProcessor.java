@@ -186,7 +186,7 @@ public class SimpleRequestProcessor {
     processOperationMessages(state, message);
     List<Object> decoded = decodeInvocationArguments(state,
         message.getInvocations().get(0).getParameters(),
-        new Class<?>[]{proxyType}, new Type[]{domainClass});
+        new Class<?>[] {proxyType}, new Type[] {domainClass});
 
     @SuppressWarnings("unchecked")
     List<T> toReturn = (List<T>) decoded;
@@ -234,7 +234,8 @@ public class SimpleRequestProcessor {
 
   private AutoBean<ServerFailureMessage> createFailureMessage(
       ReportableException e) {
-    ServerFailure failure = exceptionHandler.createServerFailure(e.getCause());
+    ServerFailure failure = exceptionHandler.createServerFailure(e.getCause() == null
+        ? e : e.getCause());
     AutoBean<ServerFailureMessage> bean = FACTORY.failure();
     ServerFailureMessage msg = bean.as();
     msg.setExceptionType(failure.getExceptionType());

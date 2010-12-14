@@ -75,7 +75,7 @@ public interface BaseFooProxy extends EntityProxy {
 
   List<SimpleValueProxy> getSimpleValues();
 
-  Boolean getUnpersisted();
+  boolean getUnpersisted();
 
   String getUserName();
 
@@ -127,7 +127,7 @@ public interface BaseFooProxy extends EntityProxy {
 
   void setSimpleValues(List<SimpleValueProxy> value);
 
-  void setUnpersisted(Boolean unpersisted);
+  void setUnpersisted(boolean unpersisted);
 
   void setUserName(String userName);
 }
