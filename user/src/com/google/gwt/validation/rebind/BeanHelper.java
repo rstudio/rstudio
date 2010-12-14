@@ -153,7 +153,7 @@ final class BeanHelper {
   }
 
   public String getValidatorName() {
-    return makeJavaSafe(jClass.getName() + "Validator");
+    return makeJavaSafe("_" + jClass.getName() + "Validator");
   }
 
   @Override

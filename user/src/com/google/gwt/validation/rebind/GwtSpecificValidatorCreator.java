@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.UnsafeNativeLong;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
@@ -37,19 +38,23 @@ import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.validation.client.impl.AbstractGwtSpecificValidator;
 import com.google.gwt.validation.client.impl.ConstraintDescriptorImpl;
 import com.google.gwt.validation.client.impl.GwtBeanDescriptor;
+import com.google.gwt.validation.client.impl.GwtBeanDescriptorImpl;
 import com.google.gwt.validation.client.impl.GwtValidationContext;
+import com.google.gwt.validation.client.impl.PropertyDescriptorImpl;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintViolation;
 import javax.validation.Payload;
+import javax.validation.metadata.BeanDescriptor;
 import javax.validation.metadata.ConstraintDescriptor;
 import javax.validation.metadata.PropertyDescriptor;
 
@@ -228,11 +233,16 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     return annotation;
   }
 
-  private Class<? extends ConstraintValidator<? extends Annotation, ?>> getValidatorForType(
-      ConstraintDescriptor<? extends Annotation> constraint, Class<?> clazz) {
+  private <T extends Annotation> Class<? extends ConstraintValidator<T, ?>> getValidatorForType(
+      ConstraintDescriptor<T> constraint, Class<?> clazz) {
     // TODO(nchalko) implement per spec
-    Class<? extends ConstraintValidator<? extends Annotation, ?>> validatorClass =
-        constraint.getConstraintValidatorClasses().get(0);
+
+    List<Class<? extends ConstraintValidator<T, ?>>> constraintValidatorClasses
+        = constraint.getConstraintValidatorClasses();
+    if (constraintValidatorClasses.isEmpty()) {
+      return null;
+    }
+    Class<? extends ConstraintValidator<T, ?>> validatorClass = constraintValidatorClasses.get(0);
     return validatorClass;
   }
 
@@ -254,6 +264,12 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     } catch (NotFoundException e) {
       return false;
     }
+  }
+
+  private boolean isIterable(Class<?> elementClass) {
+    // TODO(nchalko) handle iterables everywhere this is called.
+    return elementClass.isArray()
+        || Iterable.class.isAssignableFrom(elementClass);
   }
 
   private boolean isPropertyConstrained(BeanHelper helper, PropertyDescriptor p) {
@@ -290,6 +306,42 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
 
   private String validateMethodGetterName(PropertyDescriptor p) {
     return "validateProperty_get" + p.getPropertyName();
+  }
+
+  private void writeBeanDescriptor(SourceWriter sw) {
+    BeanDescriptor beanDescriptor = beanHelper.getBeanDescriptor();
+
+    // GwtBeanDescriptor <MyBean> beanDescriptor =
+    sw.print(GwtBeanDescriptor.class.getCanonicalName());
+    sw.print("<" + beanHelper.getTypeCanonicalName() + ">");
+    sw.println(" beanDescriptor = ");
+    sw.indent();
+    sw.indent();
+
+    // GwtBeanDescriptorImpl.builder(Order.class)
+    sw.print(GwtBeanDescriptorImpl.class.getCanonicalName());
+    sw.println(".builder(" + beanHelper.getTypeCanonicalName() + ".class)");
+    sw.indent();
+    sw.indent();
+
+    // .setConstrained(true)
+    sw.println(".setConstrained(" + beanDescriptor.isBeanConstrained() + ")");
+
+    // .put("myProperty", myProperty_pd)
+    for (PropertyDescriptor p : beanDescriptor.getConstrainedProperties()) {
+      sw.print(".put(\"");
+      sw.print(p.getPropertyName());
+      sw.print("\", ");
+      sw.print(p.getPropertyName());
+      sw.println("_pd)");
+    }
+
+    // .build();
+    sw.println(".build();");
+    sw.outdent();
+    sw.outdent();
+    sw.outdent();
+    sw.outdent();
   }
 
   private void writeConstraintDescriptor(SourceWriter sw,
@@ -388,32 +440,34 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
   }
 
   private void writeFields(SourceWriter sw) throws UnableToCompleteException {
-    // MyBeanDescriptor beanDescriptor = GWT.create(MyBeanDescriptor);
-    sw.println(GwtBeanDescriptor.class.getCanonicalName());
-    // TODO(nchalko) implement BeanDescriptor Generator
-    sw.println(" beanDescriptor = null; //TODO(nchalko) GWT.create");
 
     // Create a variable for each constraint of each property
     for (PropertyDescriptor p :
          beanHelper.getBeanDescriptor().getConstrainedProperties()) {
       int count = 0;
       for (ConstraintDescriptor<?> constraint : p.getConstraintDescriptors()) {
-        count++; // index starts at one.
         writeConstraintDescriptor(sw, constraint,
             constraintDescriptorVar(p.getPropertyName(), count));
+        count++; // index starts at zero.
       }
-      if (p.isCascaded()) {
+      writePropertyDescriptor(sw, p);
+      if (p.isCascaded() && !isIterable(p.getElementClass())) {
         beansToValidate.add(createBeanHelper(p.getElementClass()));
       }
     }
+
+    // Now write the BeanDescriptor after we already have the PropertyDescriptor
+    writeBeanDescriptor(sw);
+    sw.println();
 
     // Create a variable for each constraint of this class.
     int count = 0;
     for (ConstraintDescriptor<?> constraint :
         beanHelper.getBeanDescriptor().getConstraintDescriptors()) {
-      count++; // index starts at one.
+
       writeConstraintDescriptor(sw, constraint,
           constraintDescriptorVar("this", count));
+      count++; // index starts at zero.
     }
   }
 
@@ -540,6 +594,48 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     sw.outdent();
   }
 
+  /**
+   * @param sw
+   * @param p
+   */
+  private void writePropertyDescriptor(SourceWriter sw, PropertyDescriptor p) {
+    // PropertyDescriptor myProperty_pd =
+    sw.print(PropertyDescriptor.class.getCanonicalName());
+    sw.print(" ");
+    sw.print(p.getPropertyName());
+    sw.println("_pd =");
+    sw.indent();
+    sw.indent();
+
+    // new PropertyDescriptorImpl(
+    sw.println("new " + PropertyDescriptorImpl.class.getCanonicalName() + "(");
+    sw.indent();
+    sw.indent();
+
+    // "myProperty",
+    sw.println("\"" + p.getPropertyName() + "\",");
+
+    // MyType.class,
+    sw.println(p.getElementClass().getCanonicalName() + ".class,");
+
+    // isCascaded,
+    sw.print(Boolean.toString(p.isCascaded()));
+
+    // myProperty_c0,
+    // myProperty_c1 );
+    int size = p.getConstraintDescriptors().size();
+    for (int i = 0; i < size; i++) {
+      sw.println(","); // Print the , for the previous line
+      sw.print(constraintDescriptorVar(p.getPropertyName(), i));
+    }
+    sw.println(");");
+
+    sw.outdent();
+    sw.outdent();
+    sw.outdent();
+    sw.outdent();
+  }
+
   private void writePropertyValidators(SourceWriter sw) {
     for (PropertyDescriptor p :
         beanHelper.getBeanDescriptor().getConstrainedProperties()) {
@@ -591,9 +687,10 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
       int count = 0;
       Class<?> clazz = beanHelper.getClazz();
       for (ConstraintDescriptor<?> constraint : beanHelper.getBeanDescriptor().findConstraints().getConstraintDescriptors()) {
-        count++; // index starts at 1
+
         Class<? extends ConstraintValidator<? extends Annotation, ?>> validatorClass = getValidatorForType(
             constraint, clazz);
+        if (validatorClass != null) {
         // TODO(nchalko) handle constraint.isReportAsSingleViolation() and
         // hasComposingConstraints
 
@@ -607,6 +704,12 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
                           // safe
         sw.print(constraintDescriptorVar("this", count));
         sw.println(", groups);");
+        } else {
+          // TODO(nchalko) What does the spec say to do here.
+          logger.log(Type.WARN, "No ConstraintValidator of " + constraint
+              + " for type " + clazz);
+        }
+        count++; // index starts at 0
       }
 
       // validate all super classes and interfaces
@@ -783,6 +886,8 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
 
   private void writeValidatePropertyMethod(SourceWriter sw,
       PropertyDescriptor p, boolean useField) {
+    Class<?> elementClass = p.getElementClass();
+
     // private final <T> void validateProperty_{get}<p>(
     sw.print("private final <T> void ");
     if (useField) {
@@ -798,14 +903,15 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     sw.println("GwtValidationContext<T> context,");
     sw.println("Set<ConstraintViolation<T>> violations,");
     sw.println(beanHelper.getTypeCanonicalName() + " object,");
-    sw.print(p.getElementClass().getCanonicalName());
+    sw.print(elementClass.getCanonicalName());
     sw.println(" value,");
     sw.println("Class<?>... groups) {");
     sw.outdent();
 
     // TODO(nchalko) move this out of here to the Validate method
-    if (p.isCascaded()) {
-      BeanHelper helper = createBeanHelper(p.getElementClass());
+    if (p.isCascaded() && !isIterable(elementClass)) {
+
+      BeanHelper helper = createBeanHelper(elementClass);
 
       // if(value != null) {
       sw.println("if(value != null) {");
@@ -823,27 +929,33 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
 
     int count = 0;
     for (ConstraintDescriptor<?> constraint : p.getConstraintDescriptors()) {
-      count++; // index starts at 1
-
       Annotation annotation = getAnnotation(p, useField, constraint);
       if (annotation != null) {
         // TODO(nchalko) check for annotation equality
 
         Class<? extends ConstraintValidator<? extends Annotation, ?>> validatorClass = getValidatorForType(
-            constraint, p.getElementClass());
-        // TODO(nchalko) handle constraint.isReportAsSingleViolation() and
-        // hasComposingConstraints
+            constraint, elementClass);
+        if (validatorClass == null) {
+          // TODO(nchalko) What does the spec say to do here.
+          logger.log(Type.WARN, "No ConstraintValidator of " + constraint
+              + " for " + p.getPropertyName() + " of type " + elementClass);
 
-        // validate(context, violations, object, value, new MyValidator(),
-        // constraintDescriptor, groups);
-        sw.print("validate(context, violations, object, value, ");
-        sw.print("new ");
-        sw.print(validatorClass.getCanonicalName());
-        sw.print("(), "); // new one each time because validators are not thread
-                          // safe
-        sw.print(constraintDescriptorVar(p.getPropertyName(), count));
-        sw.println(", groups);");
+        } else {
+          // TODO(nchalko) handle constraint.isReportAsSingleViolation() and
+          // hasComposingConstraints
+
+          // validate(context, violations, object, value, new MyValidator(),
+          // constraintDescriptor, groups);
+          sw.print("validate(context, violations, object, value, ");
+          sw.print("new "); // new one each time because validators are not
+                            // thread safe
+          sw.print(validatorClass.getCanonicalName());
+          sw.print("(), ");
+          sw.print(constraintDescriptorVar(p.getPropertyName(), count));
+          sw.println(", groups);");
+        }
       }
+      count++; // index starts at zero
     }
     sw.outdent();
     sw.println("}");
@@ -915,7 +1027,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
 
   private void writeValidatorCall(SourceWriter sw, Class<?> type, Stage stage,
       PropertyDescriptor p) {
-    if (BeanHelper.isClassConstrained(type)) {
+    if (BeanHelper.isClassConstrained(type) && !isIterable(type)) {
       BeanHelper helper = createBeanHelper(type);
       beansToValidate.add(helper);
       switch (stage) {

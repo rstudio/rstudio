@@ -58,7 +58,7 @@ public class ValidatorCreator extends AbstractCreator {
 
   @Override
   protected void compose(ClassSourceFileComposerFactory composerFactory) {
-   addImports(composerFactory, 
+   addImports(composerFactory,
        GWT.class,
        GwtBeanDescriptor.class,
        GwtSpecificValidator.class,
@@ -124,12 +124,38 @@ public class ValidatorCreator extends AbstractCreator {
     sw.println(");");
   }
 
-  private void writeGetConstraintsForClass(SourceWriter sourceWriter) {
-    sourceWriter.println("public BeanDescriptor getConstraintsForClass(Class<?> clazz) {");
-    sourceWriter.indent();
-    sourceWriter.println("return null;");
-    sourceWriter.outdent();
-    sourceWriter.println("}");
+  private void writeGetConstraintsForClass(SourceWriter sw) {
+    // public BeanDescriptor getConstraintsForClass(Class<?> clazz {
+    sw.println("public BeanDescriptor getConstraintsForClass(Class<?> clazz) {");
+    sw.indent();
+
+    // checkNotNull(clazz, "clazz");
+    sw.println("checkNotNull(clazz, \"clazz\");");
+
+    for (BeanHelper bean : beansToValidate.values()) {
+      writeGetConstraintsForClass(sw, bean);
+    }
+
+    writeThrowIllegalArgumnet(sw, "clazz.getName()");
+
+    // }
+    sw.outdent();
+    sw.println("}");
+  }
+
+  private void writeGetConstraintsForClass(SourceWriter sw,
+      BeanHelper bean) {
+    // if (clazz.eqals(MyBean.class)) {
+    sw.println("if (clazz.equals(" + bean.getTypeCanonicalName() + ".class)) {");
+    sw.indent();
+
+    // return myBeanValidator.getConstraints();
+    sw.print("return ");
+    sw.print(bean.getValidatorInstanceName() + ".getConstraints();");
+
+    // }
+    sw.outdent();
+    sw.println("}");
   }
 
   private void writeIfEqualsBeanType(SourceWriter sourceWriter, BeanHelper bean) {

@@ -30,19 +30,54 @@ import javax.validation.metadata.PropertyDescriptor;
  *
  * @param <T> the bean Type
  */
-public abstract class AbstractBeanDescriptor<T> implements GwtBeanDescriptor<T> {
-
-  private final Class<T> clazz;
-
-  private final Set<ConstraintDescriptor<?>> constraints = new HashSet<ConstraintDescriptor<?>>();
-  private final Map<String, PropertyDescriptor> descriptor = new HashMap<String, PropertyDescriptor>();
+public final class GwtBeanDescriptorImpl<T> implements GwtBeanDescriptor<T> {
 
   /**
-   * @param clazz
+   * Builder for {@link GwtBeanDescriptors}.
+   * 
+   * @param <T> the bean Type
    */
-  public AbstractBeanDescriptor(Class<T> clazz) {
+  public static final class Builder<T> {
+
+    private final Class<T> clazz;
+    private final Map<String, PropertyDescriptor> descriptorMap = new HashMap<String, PropertyDescriptor>();
+    private boolean isConstrained;
+
+    private Builder(Class<T> clazz) {
+      this.clazz = clazz;
+    }
+
+    public GwtBeanDescriptorImpl<T> build() {
+      return new GwtBeanDescriptorImpl<T>(clazz, isConstrained, descriptorMap);
+    }
+
+    public Builder<T> put(String key, PropertyDescriptor value) {
+      descriptorMap.put(key, value);
+      return this;
+    }
+
+    public Builder<T> setConstrained(boolean isConstrained) {
+      this.isConstrained = isConstrained;
+      return this;
+    }
+  }
+
+  public static <T> Builder<T> builder(Class<T> clazz) {
+    return new Builder<T>(clazz);
+  }
+
+  private final Class<T> clazz;
+  private final Set<ConstraintDescriptor<?>> constraints = new HashSet<ConstraintDescriptor<?>>();
+
+  private final Map<String, PropertyDescriptor> descriptorMap = new HashMap<String, PropertyDescriptor>();
+  private final boolean isBeanConstrained;
+
+  private GwtBeanDescriptorImpl(Class<T> clazz, boolean isConstrained,
+      Map<String, PropertyDescriptor> descriptorMap) {
     super();
     this.clazz = clazz;
+    this.isBeanConstrained = isConstrained;
+    this.descriptorMap.putAll(descriptorMap);
   }
 
   public ConstraintFinder findConstraints() {
@@ -51,7 +86,7 @@ public abstract class AbstractBeanDescriptor<T> implements GwtBeanDescriptor<T> 
   }
 
   public Set<PropertyDescriptor> getConstrainedProperties() {
-    return new HashSet<PropertyDescriptor>(descriptor.values());
+    return new HashSet<PropertyDescriptor>(descriptorMap.values());
   }
 
   public Set<ConstraintDescriptor<?>> getConstraintDescriptors() {
@@ -60,7 +95,7 @@ public abstract class AbstractBeanDescriptor<T> implements GwtBeanDescriptor<T> 
   }
 
   public PropertyDescriptor getConstraintsForProperty(String propertyName) {
-    return descriptor.get(propertyName);
+    return descriptorMap.get(propertyName);
   }
 
   public Class<?> getElementClass() {
@@ -72,14 +107,14 @@ public abstract class AbstractBeanDescriptor<T> implements GwtBeanDescriptor<T> 
   }
 
   public boolean isBeanConstrained() {
-    return true;
+    return isBeanConstrained;
   }
 
   protected void setDescriptorMap(Map<String, PropertyDescriptor> map) {
-    descriptor.clear();
-    descriptor.putAll(map);
+    descriptorMap.clear();
+    descriptorMap.putAll(map);
     constraints.clear();
-    for (PropertyDescriptor p : descriptor.values()) {
+    for (PropertyDescriptor p : descriptorMap.values()) {
       if (p.hasConstraints()) {
         constraints.addAll(p.getConstraintDescriptors());
       }
