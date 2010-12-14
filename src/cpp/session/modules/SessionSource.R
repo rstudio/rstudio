@@ -105,6 +105,11 @@
 .rs.addJsonRpcHandler("detect_free_vars", function(code)
 {
    globals <- new.env(parent=emptyenv())
+
+   # Ignore predefined symbols like T and F
+   assign('T', T, envir=globals)
+   assign('F', T, envir=globals)
+
    w <- codetools:::makeCodeWalker(assigned=globals,
                                    assignedGlobals=globals,
                                    call=.rs.detectFreeVars_Call,
