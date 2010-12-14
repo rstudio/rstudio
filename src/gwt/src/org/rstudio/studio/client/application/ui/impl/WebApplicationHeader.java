@@ -81,6 +81,9 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
       headerBarPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
       headerBarPanel.setWidth("100%");
 
+      if (BrowseCap.INSTANCE.suppressBrowserForwardBack())
+         suppressBrowserForwardBack();
+
       // main menu
       advertiseEditingShortcuts(globalDisplay, commands);
       WebMenuCallback menuCallback = new WebMenuCallback();
@@ -145,6 +148,20 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
       // initialize widget
       initWidget(outerPanel);
    }
+
+   private native final void suppressBrowserForwardBack() /*-{
+      var outerWindow = $wnd.parent;
+      if (outerWindow.addEventListener) {
+         var handler = function(evt) {
+            if ((evt.keyCode == 37 || evt.keyCode == 39) && (evt.metaKey && !evt.ctrlKey && !evt.shiftKey && !evt.altKey)) {
+               evt.preventDefault();
+               evt.stopPropagation();
+            }
+         };
+         outerWindow.addEventListener('keydown', handler, false);
+         $wnd.addEventListener('keydown', handler, false);
+      }
+   }-*/;
 
    private void advertiseEditingShortcuts(final GlobalDisplay display,
                                           final Commands commands)

@@ -413,29 +413,46 @@ public class Shell implements ConsoleInputHandler,
             InputEditorUtil.extendSelectionToLineEnd(input_);
             event.preventDefault();
          }
-         else if (!event.isAltKeyDown()
-               && !event.isShiftKeyDown() 
-               && !event.isMetaKeyDown()
-               && event.isControlKeyDown())
+         else
          {
-            switch (keyCode)
+            int mod = KeyboardShortcut.getModifierValue(event.getNativeEvent());
+            if (mod == KeyboardShortcut.CTRL)
             {
-            case 'L':
-               Shell.this.onConsoleClear() ;
-               event.preventDefault() ;
-               break;
-            case 'U':
-               event.preventDefault() ;
-               InputEditorUtil.yankBeforeCursor(input_, true);
-               break;
-            case 'K':
-               event.preventDefault();
-               InputEditorUtil.yankAfterCursor(input_, true);
-               break;
-            case 'Y':
-               event.preventDefault();
-               InputEditorUtil.pasteYanked(input_);
-               break;
+               switch (keyCode)
+               {
+                  case 'L':
+                     Shell.this.onConsoleClear() ;
+                     event.preventDefault() ;
+                     break;
+                  case 'U':
+                     event.preventDefault() ;
+                     InputEditorUtil.yankBeforeCursor(input_, true);
+                     break;
+                  case 'K':
+                     event.preventDefault();
+                     InputEditorUtil.yankAfterCursor(input_, true);
+                     break;
+                  case 'Y':
+                     event.preventDefault();
+                     InputEditorUtil.pasteYanked(input_);
+                     break;
+               }
+            }
+            else if (mod == KeyboardShortcut.META)
+            {
+               switch (keyCode)
+               {
+                  case KeyCodes.KEY_LEFT:
+                     event.preventDefault();
+                     event.stopPropagation();
+                     InputEditorUtil.moveSelectionToLineStart(input_);
+                     break;
+                  case KeyCodes.KEY_RIGHT:
+                     event.preventDefault();
+                     event.stopPropagation();
+                     InputEditorUtil.moveSelectionToLineEnd(input_);
+                     break;
+               }
             }
          }
       }

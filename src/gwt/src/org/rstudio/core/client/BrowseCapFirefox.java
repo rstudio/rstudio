@@ -25,4 +25,10 @@ public class BrowseCapFirefox extends BrowseCap
    {
       return true;
    }
+
+   @Override
+   public boolean suppressBrowserForwardBack()
+   {
+      return true;
+   }
 }

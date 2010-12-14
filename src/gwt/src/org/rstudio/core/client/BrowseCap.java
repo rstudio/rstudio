@@ -33,6 +33,11 @@ public class BrowseCap
       return false;
    }
 
+   public boolean suppressBrowserForwardBack()
+   {
+      return false;
+   }
+
    public static boolean hasMetaKey()
    {
       return OPERATING_SYSTEM.equals("macintosh");
