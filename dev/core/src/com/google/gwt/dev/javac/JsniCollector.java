@@ -15,10 +15,12 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.core.client.GwtScriptOnly;
 import com.google.gwt.core.ext.TreeLogger.HelpInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.dev.jjs.ast.JAnnotation;
 import com.google.gwt.dev.js.JsParser;
 import com.google.gwt.dev.js.JsParserException;
 import com.google.gwt.dev.js.JsParserException.SourceDetail;
@@ -30,12 +32,15 @@ import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
 import com.google.gwt.dev.util.collect.IdentityMaps;
 
+import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
+import org.eclipse.jdt.internal.compiler.ast.Annotation;
 import org.eclipse.jdt.internal.compiler.ast.Argument;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
+import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.problem.ProblemSeverities;
 import org.eclipse.jdt.internal.compiler.util.Util;
 
@@ -66,15 +71,22 @@ public class JsniCollector {
   private static final class JsniMethodImpl extends JsniMethod {
     private final JsFunction func;
     private final String name;
+    private boolean isScriptOnly;
 
-    public JsniMethodImpl(String name, JsFunction func) {
+    public JsniMethodImpl(String name, JsFunction func, boolean isScriptOnly) {
       this.name = name;
       this.func = func;
+      this.isScriptOnly = isScriptOnly;
     }
 
     @Override
     public JsFunction function() {
       return func;
+    }
+
+    @Override
+    public boolean isScriptOnly() {
+      return isScriptOnly;
     }
 
     @Override
@@ -114,6 +126,20 @@ public class JsniCollector {
   }
 
   private static class Visitor extends MethodVisitor {
+    private static boolean isScriptOnly(AbstractMethodDeclaration method) {
+      if (method.annotations == null) {
+        return false;
+      }
+      for (Annotation a : method.annotations) {
+        JAnnotation annotation;
+        ReferenceBinding binding = (ReferenceBinding) a.resolvedType;
+        String name = CharOperation.toString(binding.compoundName);
+        if (name.equals(GwtScriptOnly.class.getName())) {
+          return true;
+        }
+      }
+      return false;
+    }
 
     private final Map<AbstractMethodDeclaration, JsniMethod> jsniMethods;
     private final JsProgram jsProgram;
@@ -140,7 +166,7 @@ public class JsniCollector {
       if (jsFunction != null) {
         String jsniSignature = getJsniSignature(enclosingType, method);
         jsniMethods.put(method, new JsniMethodImpl(jsniSignature,
-            jsFunction));
+            jsFunction, isScriptOnly(method)));
       }
     }
   }

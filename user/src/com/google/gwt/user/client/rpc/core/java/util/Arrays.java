@@ -32,8 +32,8 @@ public final class Arrays {
    */
   public static final class ArrayList_CustomFieldSerializer {
 
-    public static Class<?> concreteType() {
-      return java.util.Arrays.asList().getClass();
+    public static String concreteType() {
+      return java.util.Arrays.asList().getClass().getName();
     }
 
     /*

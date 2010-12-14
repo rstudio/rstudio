@@ -112,8 +112,6 @@ public class FieldSerializerCreator {
 
     writeFieldAccessors();
 
-    writeConcreteTypeMethod();
-
     writeDeserializeMethod();
 
     maybeWriteInstatiateMethod();
@@ -576,37 +574,6 @@ public class FieldSerializerCreator {
           typeOracle, superClass);
       sourceWriter.print(superFieldSerializer);
       sourceWriter.println(".serialize(streamWriter, instance);");
-    }
-  }
-
-  /**
-   * Writes the concreteType method, for loading a Java Class -> TypeHandler
-   * map.
-   * 
-   * <pre>
-   * public static Class&lt;?&gt; concreteType() {
-   *   return com.google.gwt.sample.client.Student.class;
-   * }
-   * </pre>
-   */
-  private void writeConcreteTypeMethod() {
-    if (customFieldSerializer != null
-        && CustomFieldSerializerValidator.getConcreteTypeMethod(customFieldSerializer) != null) {
-      return;
-    }
-
-    if (classIsAccessible()) {
-      sourceWriter.println("public static Class<?> concreteType() {");
-      sourceWriter.indentln("return "
-          + serializableClass.getQualifiedSourceName() + ".class;");
-      sourceWriter.println("}");
-      sourceWriter.println();
-    } else {
-      String jsniTypeRef = SerializationUtils.getRpcTypeName(serializableClass);
-      sourceWriter.println("public static native Class<?> concreteType() /*-{");
-      sourceWriter.indentln("return @" + jsniTypeRef + "::class;");
-      sourceWriter.println("}-*/;");
-      sourceWriter.println();
     }
   }
 

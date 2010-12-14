@@ -33,8 +33,8 @@ public final class Collections {
    */
   public static final class EmptyList_CustomFieldSerializer {
 
-    public static Class<?> concreteType() {
-      return java.util.Collections.emptyList().getClass();
+    public static String concreteType() {
+      return java.util.Collections.emptyList().getClass().getName();
     }
 
     @SuppressWarnings({"unused", "unchecked"})
@@ -61,8 +61,8 @@ public final class Collections {
    */
   public static final class EmptyMap_CustomFieldSerializer {
 
-    public static Class<?> concreteType() {
-      return java.util.Collections.emptyMap().getClass();
+    public static String concreteType() {
+      return java.util.Collections.emptyMap().getClass().getName();
     }
 
     @SuppressWarnings({"unused", "unchecked"})
@@ -89,8 +89,8 @@ public final class Collections {
    */
   public static final class EmptySet_CustomFieldSerializer {
 
-    public static Class<?> concreteType() {
-      return java.util.Collections.emptySet().getClass();
+    public static String concreteType() {
+      return java.util.Collections.emptySet().getClass().getName();
     }
 
     @SuppressWarnings({"unused", "unchecked"})
@@ -117,8 +117,8 @@ public final class Collections {
    */
   public static final class SingletonList_CustomFieldSerializer {
 
-    public static Class<?> concreteType() {
-      return java.util.Collections.singletonList(null).getClass();
+    public static String concreteType() {
+      return java.util.Collections.singletonList(null).getClass().getName();
     }
 
     @SuppressWarnings({"unused", "unchecked"})

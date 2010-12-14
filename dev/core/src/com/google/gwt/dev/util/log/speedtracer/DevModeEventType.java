@@ -30,6 +30,7 @@ public enum DevModeEventType implements EventType {
   JAVA_TO_JS_CALL("Java to JS call", "LightSkyBlue"), //
   JETTY_STARTUP("Jetty startup", "Orchid"), //
   JS_TO_JAVA_CALL("JS to Java call", "Orange"), //
+  LOAD_JSNI("Parse and Load JSNI", "LightCoral"), //
   MODULE_INIT("Module init", "Khaki"), //
   MODULE_SPACE_CLASS_LOAD("ModuleSpace class load", "MintCream"), //
   MODULE_SPACE_HOST_CREATE("ModuleSpaceHost create", "Peachpuff"), //

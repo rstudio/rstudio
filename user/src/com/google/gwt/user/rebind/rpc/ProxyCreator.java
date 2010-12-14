@@ -37,6 +37,9 @@ import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.generator.NameFactory;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
@@ -280,6 +283,8 @@ public class ProxyCreator {
         propertyOracle);
 
     // Determine the set of serializable types
+    Event event = SpeedTracerLogger.start(CompilerEventType.GENERATOR_RPC_STOB);
+    
     SerializableTypeOracleBuilder typesSentFromBrowserBuilder = new SerializableTypeOracleBuilder(
         logger, propertyOracle, typeOracle);
     typesSentFromBrowserBuilder.setTypeFilter(blacklistTypeFilter);
@@ -328,7 +333,8 @@ public class ProxyCreator {
       writer.close();
       rpcLog = stringWriter.toString();
     }
-
+    event.end();
+    
     generateTypeHandlers(logger, context, typesSentFromBrowser,
         typesSentToBrowser);
 
@@ -687,11 +693,13 @@ public class ProxyCreator {
       GeneratorContext context, SerializableTypeOracle typesSentFromBrowser,
       SerializableTypeOracle typesSentToBrowser)
       throws UnableToCompleteException {
+    Event event = SpeedTracerLogger.start(CompilerEventType.GENERATOR_RPC_TYPE_SERIALIZER);
     TypeSerializerCreator tsc = new TypeSerializerCreator(logger,
         typesSentFromBrowser, typesSentToBrowser, context,
         SerializationUtils.getTypeSerializerQualifiedName(serviceIntf),
         SerializationUtils.getTypeSerializerSimpleName(serviceIntf));
     tsc.realize(logger);
+    event.end();
 
     typeStrings = new HashMap<JType, String>(tsc.getTypeStrings());
     typeStrings.put(serviceIntf, TypeNameObfuscator.SERVICE_INTERFACE_ID);

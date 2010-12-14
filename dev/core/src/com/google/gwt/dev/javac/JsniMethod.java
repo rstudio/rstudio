@@ -29,6 +29,12 @@ public abstract class JsniMethod {
   public abstract JsFunction function();
 
   /**
+   * Returns true if this JSNI function should only be used from script.
+   * See {@link com.google.gwt.core.client.GwtScriptOnly GwtScriptOnly}.
+   */
+  public abstract boolean isScriptOnly();
+  
+  /**
    * Starting line number of the method.
    */
   public abstract int line();
@@ -49,7 +55,7 @@ public abstract class JsniMethod {
   public abstract String[] paramNames();
 
   /**
-   * Gets the JsProgram in which {@link #function(TreeLogger)} is located.
+   * Gets the JsProgram in which this method is located.
    */
   public abstract JsProgram program();
 }

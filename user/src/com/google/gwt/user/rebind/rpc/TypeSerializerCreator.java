@@ -17,6 +17,7 @@
 package com.google.gwt.user.rebind.rpc;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.GwtScriptOnly;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.ConfigurationProperty;
@@ -28,6 +29,9 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 import com.google.gwt.user.client.rpc.impl.SerializerBase;
@@ -205,6 +209,7 @@ public class TypeSerializerCreator {
    */
   private void createFieldSerializer(TreeLogger logger, GeneratorContext ctx,
       JType type) {
+    Event event = SpeedTracerLogger.start(CompilerEventType.GENERATOR_RPC_FIELD_SERIALIZER);
     assert (type != null);
     assert (serializationOracle.isSerializable(type) || deserializationOracle.isSerializable(type));
 
@@ -228,6 +233,7 @@ public class TypeSerializerCreator {
         serializationOracle, deserializationOracle, (JClassType) type,
         customFieldSerializer);
     creator.realize(logger, ctx);
+    event.end();
   }
 
   /*
@@ -276,6 +282,7 @@ public class TypeSerializerCreator {
     composerFactory.addImport(TypeHandler.class.getName());
     composerFactory.addImport(HashMap.class.getName());
     composerFactory.addImport(Map.class.getName());
+    composerFactory.addImport(GwtScriptOnly.class.getName());
 
     composerFactory.setSuperclass(SerializerBase.class.getName());
     return composerFactory.createSourceWriter(ctx, printWriter);
@@ -317,15 +324,15 @@ public class TypeSerializerCreator {
   }
 
   /**
-   * Writes a method to produce a map of type string -> {@link TypeHandler}
-   * for Java.
+   * Writes a method to produce a map of type string -> class name of 
+   * {@link TypeHandler} for Java.
    * 
    * <pre>
-   * private static Map&lt;String, TypeHandler&gt; loadMethodsJava() {
-   *   Map&lt;String, TypeHandler&gt; result = new HashMap&lt;String, TypeHandler&gt;();
+   * private static Map&lt;String, String&gt; loadMethodsJava() {
+   *   Map&lt;String, String&gt; result = new HashMap&lt;String, String&gt;();
    *   result.put(
    *       &quot;java.lang.String/2004016611&quot;,
-   *       new com.google.gwt.user.client.rpc.core.java.lang.String_FieldSerializer.Handler());
+   *       &quot;com.google.gwt.user.client.rpc.core.java.lang.String_FieldSerializer&quot;
    *   ...
    *   return result;
    * }
@@ -333,9 +340,9 @@ public class TypeSerializerCreator {
    */
   private void writeLoadMethodsJava() {
     srcWriter.println("@SuppressWarnings(\"deprecation\")");
-    srcWriter.println("private static Map<String, TypeHandler> loadMethodsJava() {");
+    srcWriter.println("private static Map<String, String> loadMethodsJava() {");
     srcWriter.indent();
-    srcWriter.println("Map<String, TypeHandler> result = new HashMap<String, TypeHandler>();");
+    srcWriter.println("Map<String, String> result = new HashMap<String, String>();");
 
     List<JType> filteredTypes = new ArrayList<JType>();
     JType[] types = getSerializableTypes();
@@ -352,9 +359,9 @@ public class TypeSerializerCreator {
       String typeString = typeStrings.get(type);
       assert typeString != null : "Missing type signature for "
           + type.getQualifiedSourceName();
-      srcWriter.println("result.put(\"" + typeString + "\", new "
+      srcWriter.println("result.put(\"" + typeString + "\", \""
           + SerializationUtils.getStandardSerializerName((JClassType) type)
-          + "());");
+          + "\");");
     }
 
     srcWriter.println("return result;");
@@ -381,6 +388,7 @@ public class TypeSerializerCreator {
    */
   private void writeLoadMethodsNative() {
     srcWriter.println("@SuppressWarnings(\"deprecation\")");
+    srcWriter.println("@GwtScriptOnly");
     srcWriter.println("private static native MethodMap loadMethodsNative() /*-{");
     srcWriter.indent();
     srcWriter.println("var result = {};");
@@ -433,11 +441,11 @@ public class TypeSerializerCreator {
   }
 
   /**
-   * Writes a method to produce a map of class to type string for Java.
+   * Writes a method to produce a map of class name to type string for Java.
    * 
    * <pre>
-   * private static Map&lt;Class&lt;?&gt;, String&gt; loadSignaturesJava() {
-   *   Map&lt;Class&lt;?&gt;, String&gt; result = new HashMap&lt;Class&lt;?&gt;, String&gt;();
+   * private static Map&lt;String&lt;?&gt;, String&gt; loadSignaturesJava() {
+   *   Map&lt;String&lt;?&gt;, String&gt; result = new HashMap&lt;String&lt;?&gt;, String&gt;();
    *   result.put(
    *       com.google.gwt.user.client.rpc.core.java.lang.String_FieldSerializer.concreteType(),
    *       &quot;java.lang.String/2004016611&quot;);
@@ -448,9 +456,9 @@ public class TypeSerializerCreator {
    */
   private void writeLoadSignaturesJava() {
     srcWriter.println("@SuppressWarnings(\"deprecation\")");
-    srcWriter.println("private static Map<Class<?>, String> loadSignaturesJava() {");
+    srcWriter.println("private static Map<String, String> loadSignaturesJava() {");
     srcWriter.indent();
-    srcWriter.println("Map<Class<?>, String> result = new HashMap<Class<?>, String>();");
+    srcWriter.println("Map<String, String> result = new HashMap<String, String>();");
 
     for (JType type : getSerializableTypes()) {
       String typeString = typeStrings.get(type);
@@ -466,16 +474,8 @@ public class TypeSerializerCreator {
       if (customSerializer != null
           && CustomFieldSerializerValidator.getConcreteTypeMethod(customSerializer) != null) {
         typeRef = customSerializer.getQualifiedSourceName() + ".concreteType()";
-      } else if (type instanceof JClassType) {
-        typeRef = SerializationUtils.getStandardSerializerName((JClassType) type)
-            + ".concreteType()";
       } else {
-        typeRef = type.getLeafType().getQualifiedSourceName();
-        while (type.isArray() != null) {
-          typeRef += "[]";
-          type = type.isArray().getComponentType();
-        }
-        typeRef += ".class";
+        typeRef = '"' + SerializationUtils.getRpcTypeName(type) + '"';
       }
 
       srcWriter.println("result.put(" + typeRef + ", \"" + typeString + "\");");
@@ -501,6 +501,7 @@ public class TypeSerializerCreator {
    */
   private void writeLoadSignaturesNative() {
     srcWriter.println("@SuppressWarnings(\"deprecation\")");
+    srcWriter.println("@GwtScriptOnly");  
     srcWriter.println("private static native JsArrayString loadSignaturesNative() /*-{");
     srcWriter.indent();
     srcWriter.println("var result = [];");
@@ -550,16 +551,16 @@ public class TypeSerializerCreator {
    * Writes the class's static fields.
    * 
    * <pre>
-   * private static final Map&lt;String, TypeHandler&gt; methodMapJava;
+   * private static final Map&lt;String, String&gt; methodMapJava;
    * private static final MethodMap methodMapNative;
-   * private static final Map&lt;Class&lt;?&gt;, String&gt; signatureMapJava;
+   * private static final Map&lt;String&lt;?&gt;, String&gt; signatureMapJava;
    * private static final JsArrayString signatureMapNative;
    * </pre>
    */
   private void writeStaticFields() {
-    srcWriter.println("private static final Map<String, TypeHandler> methodMapJava;");
+    srcWriter.println("private static final Map<String, String> methodMapJava;");
     srcWriter.println("private static final MethodMap methodMapNative;");
-    srcWriter.println("private static final Map<Class<?>, String> signatureMapJava;");
+    srcWriter.println("private static final Map<String, String> signatureMapJava;");
     srcWriter.println("private static final JsArrayString signatureMapNative;");
     srcWriter.println();
   }

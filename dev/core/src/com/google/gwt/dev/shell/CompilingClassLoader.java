@@ -42,6 +42,9 @@ import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.Name.SourceOrBinaryName;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.util.tools.Utility;
 
 import org.apache.commons.collections.map.AbstractReferenceMap;
@@ -1247,7 +1250,14 @@ public final class CompilingClassLoader extends ClassLoader implements
     if (unit == null || unit.getJsniMethods() == null) {
       return;
     }
-    shellJavaScriptHost.createNativeMethods(logger, unit.getJsniMethods(), this);
+    Event event = SpeedTracerLogger.start(DevModeEventType.LOAD_JSNI, "unit",
+        unit.getTypeName());
+    try {
+      shellJavaScriptHost.createNativeMethods(logger, unit.getJsniMethods(),
+          this);
+    } finally {
+      event.end();
+    }
   }
 
   private void maybeInitializeScriptOnlyClassLoader() {

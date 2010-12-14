@@ -27,7 +27,15 @@ public enum CompilerEventType implements EventType {
   COMPILE_PERMUTATIONS("CompilePermutations", "BurlyWood"), //
   JJS_COMPILE_PERMUTATION("JjsCompilePermutation", "Moccasin"), //
   DRAFT_OPTIMIZE("DraftOptimizer", "Blue"), //
-  GENERATOR("Generator", "Red"), //
+  GENERATOR_CLIENT_BUNDLE("Generator ClientBundle", "#CCCC33"), //
+  GENERATOR_I18N("Generator I18N", "#FF00CC"), //
+  GENERATOR_RPC("Generator RPC", "#3300CC"), //
+  GENERATOR_RPC_STOB("Generator RPC STOB", "#3300CC"), //
+  GENERATOR_RPC_TYPE_SERIALIZER("Generator RPC Type Serializer", "#3300CC"), //
+  GENERATOR_RPC_FIELD_SERIALIZER("Generator RPC Field Serializer", "#3300CC"), //
+  GENERATOR_UIBINDER("Generator UiBinder", "#FFFF00"), //
+  GENERATOR_GIN("Generator GIN", "#009900"), //
+  GENERATOR_OTHER("Generator (Other)", "Red"), //
   JDT_COMPILER("JdtCompiler1", "#6c6"), //
   JDT_COMPILER2("JdtCompiler2", "#0c0"), //
   JDT_COMPILER3("JdtCompiler3", "#494"), //

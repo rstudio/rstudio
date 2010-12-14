@@ -23,6 +23,7 @@ import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -64,17 +65,20 @@ public abstract class SerializerBase implements Serializer {
     }-*/;
   }
 
-  private final Map<String, TypeHandler> methodMapJava;
-
+  private final Map<String, TypeHandler> handlerCache;
+  
+  private final Map<String, String> methodMapJava;
+  
   private final MethodMap methodMapNative;
 
-  private final Map<Class<?>, String> signatureMapJava;
+  private final Map<String, String> signatureMapJava;
 
   private final JsArrayString signatureMapNative;
 
-  public SerializerBase(Map<String, TypeHandler> methodMapJava,
-      MethodMap methodMapNative, Map<Class<?>, String> signatureMapJava,
+  public SerializerBase(Map<String, String> methodMapJava,
+      MethodMap methodMapNative, Map<String, String> signatureMapJava,
       JsArrayString signatureMapNative) {
+    this.handlerCache = new HashMap<String, TypeHandler>();
     this.methodMapJava = methodMapJava;
     this.methodMapNative = methodMapNative;
     this.signatureMapJava = signatureMapJava;
@@ -97,7 +101,7 @@ public abstract class SerializerBase implements Serializer {
     if (GWT.isScript()) {
       return signatureMapNative.get(clazz.hashCode());
     } else {
-      return signatureMapJava.get(clazz);
+      return signatureMapJava.get(clazz.getName());
     }
   }
 
@@ -139,13 +143,26 @@ public abstract class SerializerBase implements Serializer {
 
   private TypeHandler getTypeHandler(String typeSignature)
       throws SerializationException {
-    TypeHandler typeHandler = methodMapJava.get(typeSignature);
-    if (typeHandler == null) {
-      /*
-       * Probably trying to serialize a type that isn't supposed to be
-       * serializable.
-       */
+    String typeHandlerClass = methodMapJava.get(typeSignature);
+
+    if (typeHandlerClass == null) {
+     /*
+      * Probably trying to serialize a type that isn't supposed to be
+      * serializable.
+      */
       throw new SerializationException(typeSignature);
+    }
+
+    TypeHandler typeHandler = handlerCache.get(typeHandlerClass);
+    
+    if (typeHandler == null) {
+      try {
+        Class<?> klass = ReflectionHelper.loadClass(typeHandlerClass);
+        typeHandler = (TypeHandler) ReflectionHelper.newInstance(klass);
+        handlerCache.put(typeHandlerClass, typeHandler);
+      } catch (Exception e) {
+        throw new SerializationException(e);
+      }
     }
     return typeHandler;
   }

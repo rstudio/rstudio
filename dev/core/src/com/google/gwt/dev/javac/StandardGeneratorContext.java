@@ -226,6 +226,33 @@ public class StandardGeneratorContext implements GeneratorContext {
 
   private static DiskCache diskCache = new DiskCache();
 
+  private static final Map<String,CompilerEventType> eventsByGeneratorType = new HashMap<String,CompilerEventType>();
+  static {
+    eventsByGeneratorType.put(
+        "com.google.gwt.resources.rebind.context.InlineClientBundleGenerator",
+        CompilerEventType.GENERATOR_CLIENT_BUNDLE);
+    eventsByGeneratorType.put("com.google.gwt.i18n.rebind.LocalizableGenerator",
+        CompilerEventType.GENERATOR_I18N);
+    eventsByGeneratorType.put("com.google.gwt.i18n.rebind.LocaleInfoGenerator",
+        CompilerEventType.GENERATOR_I18N);
+    eventsByGeneratorType.put(
+        "com.google.gwt.i18n.rebind.CurrencyListGenerator",
+        CompilerEventType.GENERATOR_I18N);
+    eventsByGeneratorType.put(
+        "com.google.gwt.i18n.rebind.CustomDateTimeFormatGenerator",
+        CompilerEventType.GENERATOR_I18N);
+    eventsByGeneratorType.put(
+        "com.google.gwt.user.rebind.rpc.ServiceInterfaceProxyGenerator",
+        CompilerEventType.GENERATOR_RPC);
+    eventsByGeneratorType.put("com.google.gwt.rpc.rebind.RpcServiceGenerator",
+        CompilerEventType.GENERATOR_RPC); // deRPC
+    eventsByGeneratorType.put(
+        "com.google.gwt.uibinder.rebind.UiBinderGenerator",
+        CompilerEventType.GENERATOR_UIBINDER);
+    eventsByGeneratorType.put("com.google.gwt.inject.rebind.GinjectorGenerator",
+        CompilerEventType.GENERATOR_GIN);
+  }
+
   private final ArtifactSet allGeneratedArtifacts;
 
   private final Set<GeneratedUnit> committedGeneratedCups = new HashSet<GeneratedUnit>();
@@ -421,8 +448,16 @@ public class StandardGeneratorContext implements GeneratorContext {
     setCurrentGenerator(generatorClass);
 
     long before = System.currentTimeMillis();
-    Event generatorEvent = SpeedTracerLogger.start(CompilerEventType.GENERATOR, "class",
-        generator.getClass().getName(), "type", typeName);
+    String generatorClassName = generator.getClass().getName();
+    CompilerEventType type = eventsByGeneratorType.get(generatorClassName);
+    
+    if (type == null) {
+      type = CompilerEventType.GENERATOR_OTHER;
+    }
+
+    Event generatorEvent = SpeedTracerLogger.start(type, "class",
+        generatorClassName, "type", typeName);
+    
     try {
       String className = generator.generate(logger, this, typeName);
       long after = System.currentTimeMillis();

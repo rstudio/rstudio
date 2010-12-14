@@ -46,6 +46,9 @@ public class ModuleSpaceOOPHM extends ModuleSpace {
     }
     StringBuilder jsni = new StringBuilder();
     for (JsniMethod jsniMethod : jsniMethods) {
+      if (jsniMethod.isScriptOnly()) {
+        continue;
+      }
       String body = Jsni.getJavaScriptForHostedMode(logger, dispatchIdOracle,
           jsniMethod);
       if (body == null) {

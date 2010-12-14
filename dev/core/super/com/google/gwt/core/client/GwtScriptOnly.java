@@ -29,8 +29,13 @@ import java.lang.annotation.Target;
  * to provide web-mode implementations of (binary-only) types that the developer
  * wishes to use in hosted mode. This can be used, for instance, to provide a
  * reference implementation to develop unit tests.
+ * <p>
+ * This annotation may also be applied to jsni methods to prevent them from
+ * being parsed and loaded for devmode. This is done under certain 
+ * circumstances as an optimization to avoid loading very large jsni methods
+ * which are only executed in webmode.   
  */
 @Documented
-@Target(ElementType.TYPE)
+@Target({ElementType.TYPE, ElementType.METHOD})
 public @interface GwtScriptOnly {
 }
