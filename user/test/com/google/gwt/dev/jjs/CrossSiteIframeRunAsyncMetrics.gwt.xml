@@ -13,7 +13,9 @@
 <!-- limitations under the License.                                         -->
 
 <module>
-  <inherits name="com.google.gwt.dev.jjs.RunAsyncMetricsIntegrationTest" />
+  <!-- We cannot inherit the RunAsyncMetricsIntegrationTest module because
+       it adds a script tag and the xsiframe linker does not support them -->
+  <inherits name="com.google.gwt.dev.jjs.CompilerSuite"/>
   <add-linker name="xsiframe" />
 
   <public path="public" />

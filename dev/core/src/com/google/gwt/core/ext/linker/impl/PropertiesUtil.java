@@ -18,12 +18,37 @@ package com.google.gwt.core.ext.linker.impl;
 
 import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.SelectionProperty;
+
+import java.util.Map.Entry;
 
 /**
  * A utility class to fill in the properties javascript in linker templates.
  */
 public class PropertiesUtil {
+  public static String addKnownPropertiesJs(TreeLogger logger,
+      CompilationResult result) {
+    StringBuffer propertiesJs = new StringBuffer();
+    
+    // Multiple values for a property can result in one permutation. For
+    // example, this permutation may be valid for safari and chrome.  However,
+    // we need to pick one, since the computePropValue() needs to return a
+    // single value.  It actually doesn't matter which one we pick. The fact
+    // that safari and chrome compiled into one permutation indicates that
+    // for this module, the behavior is the same.  Therefore, we just pick
+    // the first one.
+    for (Entry<SelectionProperty, String> entry :
+         result.getPropertyMap().first().entrySet()) {
+      propertiesJs.append("properties['");
+      propertiesJs.append(entry.getKey().getName());
+      propertiesJs.append("'] = '");
+      propertiesJs.append(entry.getValue());
+      propertiesJs.append("';");
+    }
+    return propertiesJs.toString();
+  }
+  
   public static StringBuffer addPropertiesJs(StringBuffer selectionScript,
       TreeLogger logger, LinkerContext context) {
     int startPos;
@@ -38,7 +63,7 @@ public class PropertiesUtil {
       }
     }
     return selectionScript;
-  }
+  } 
   
   private static String generatePropertyProvider(SelectionProperty prop) {
     StringBuffer toReturn = new StringBuffer();

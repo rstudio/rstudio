@@ -20,12 +20,15 @@ import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
+import com.google.gwt.core.ext.linker.ScriptReference;
 import com.google.gwt.core.ext.linker.Shardable;
 import com.google.gwt.core.ext.linker.impl.PropertiesMappingArtifact;
+import com.google.gwt.core.ext.linker.impl.PropertiesUtil;
 import com.google.gwt.core.ext.linker.impl.ResourceInjectionUtil;
 import com.google.gwt.core.ext.linker.impl.SelectionScriptLinker;
 import com.google.gwt.dev.About;
@@ -54,8 +57,8 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
   
   @Override
   protected String fillSelectionScriptTemplate(StringBuffer ss,
-      TreeLogger logger, LinkerContext context, ArtifactSet artifacts) throws
-      UnableToCompleteException {
+      TreeLogger logger, LinkerContext context, ArtifactSet artifacts,
+      CompilationResult result) throws UnableToCompleteException {
     
     // Must do installScript before installLocation and waitForBodyLoaded
     includeJs(ss, logger, getJsInstallScript(context), "__INSTALL_SCRIPT__");
@@ -69,9 +72,20 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     includeJs(ss, logger, getJsComputeScriptBase(context), "__COMPUTE_SCRIPT_BASE__");
     includeJs(ss, logger, getJsLoadExternalStylesheets(context), "__LOAD_STYLESHEETS__");
     
+    // This Linker does not support <script> tags in the gwt.xml
+    if (!artifacts.find(ScriptReference.class).isEmpty()) {
+      logger.log(TreeLogger.ERROR, "The " + getDescription() + 
+          " linker does not support <script> tags in the gwt.xml files");
+      throw new UnableToCompleteException();
+    }
+    
     ss = ResourceInjectionUtil.injectStylesheets(ss, artifacts);
     ss = permutationsUtil.addPermutationsJs(ss, logger, context);
-
+    
+    if (result != null) {
+      replaceAll(ss, "__KNOWN_PROPERTIES__",
+          PropertiesUtil.addKnownPropertiesJs(logger, result));
+    }
     replaceAll(ss, "__MODULE_FUNC__", context.getModuleFunctionName());
     replaceAll(ss, "__MODULE_NAME__", context.getModuleName());
     replaceAll(ss, "__HOSTED_FILENAME__", getHostedFilename());
@@ -200,10 +214,19 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
 
   @Override
   protected void maybeAddHostedModeFile(TreeLogger logger, 
-      LinkerContext context, ArtifactSet artifacts)
+      LinkerContext context, ArtifactSet artifacts, CompilationResult result)
       throws UnableToCompleteException {
     String filename = getHostedFilename();
     if ("".equals(filename)) {
+      return;
+    }
+    
+    // when we're including bootstrap in the primary fragment, we should be
+    // generating devmode files for each permutation. Otherwise, we generate it
+    // only in the final link stage.
+    boolean isSinglePermutation = (result != null);
+    if (isSinglePermutation != 
+      shouldIncludeBootstrapInPrimaryFragment(context)) {
       return;
     }
     
@@ -211,11 +234,16 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     StringBuffer buffer = readFileToStringBuffer(
         "com/google/gwt/core/ext/linker/impl/" + filename, logger); 
 
+    String outputFilename = filename;
+    if (result != null) {
+      outputFilename = result.getStrongName() + "." + outputFilename;
+    }
+
     String script = generatePrimaryFragmentString(
-        logger, context, "", buffer.toString(), 1, artifacts);
+        logger, context, result, buffer.toString(), 1, artifacts);
     
     EmittedArtifact devArtifact = 
-      emitString(logger, script, filename, lastModified);
+      emitString(logger, script, outputFilename, lastModified);
     artifacts.add(devArtifact);
   }
 
@@ -264,11 +292,12 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
   
   @Override
   protected String wrapPrimaryFragment(TreeLogger logger,
-      LinkerContext context, String script, ArtifactSet artifacts) {
+      LinkerContext context, String script, ArtifactSet artifacts,
+      CompilationResult result) {
     StringBuffer out = new StringBuffer();
     if (shouldIncludeBootstrapInPrimaryFragment(context)) {
       try {
-        out.append(generateSelectionScript(logger, context, artifacts));
+        out.append(generateSelectionScript(logger, context, artifacts, result));
       } catch (UnableToCompleteException e) {
         logger.log(TreeLogger.ERROR, "Problem setting up selection script", e);
         e.printStackTrace();

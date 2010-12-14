@@ -89,8 +89,6 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     }
   }
 
-  private String selectionScriptText = null;
-
   /**
    * This method is left in place for existing subclasses of
    * SelectionScriptLinker that have not been upgraded for the sharding API.
@@ -116,6 +114,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
        */
       for (CompilationResult compilation : toReturn.find(CompilationResult.class)) {
         toReturn.addAll(doEmitCompilation(logger, context, compilation, artifacts));
+        maybeAddHostedModeFile(logger, context, toReturn, compilation);
       }
       return toReturn;
     } else {
@@ -126,7 +125,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
         toReturn.add(art);
       }
       maybeOutputPropertyMap(logger, context, toReturn);
-      maybeAddHostedModeFile(logger, context, toReturn);
+      maybeAddHostedModeFile(logger, context, toReturn, null);
       return toReturn;
     }
   }
@@ -156,7 +155,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     }
 
     toReturn.addAll(emitSelectionInformation(result.getStrongName(), result));
-
+ 
     return toReturn;
   }
 
@@ -185,7 +184,8 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
    * have been scanned using {@link #setupPermutationsMap(ArtifactSet)}.
    */
   protected String fillSelectionScriptTemplate(StringBuffer selectionScript,
-      TreeLogger logger, LinkerContext context, ArtifactSet artifacts) throws
+      TreeLogger logger, LinkerContext context, ArtifactSet artifacts,
+      CompilationResult result) throws
       UnableToCompleteException {
     String computeScriptBase;
     String processMetas;
@@ -231,30 +231,35 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
       ArtifactSet artifacts) throws UnableToCompleteException {
     TextOutput to = new DefaultTextOutput(context.isOutputCompact());
     to.print(generatePrimaryFragmentString(
-        logger, context, result.getStrongName(), js[0], js.length, artifacts));
+        logger, context, result, js[0], js.length, artifacts));
     return Util.getBytes(to.toString());
   }
   
   protected String generatePrimaryFragmentString(TreeLogger logger,
-      LinkerContext context, String strongName, String js, int length,
+      LinkerContext context, CompilationResult result, String js, int length,
       ArtifactSet artifacts) 
   throws UnableToCompleteException {
     StringBuffer b = new StringBuffer();
+    String strongName = result == null ? "" : result.getStrongName();
     b.append(getModulePrefix(logger, context, strongName, length));
     b.append(js);
     b.append(getModuleSuffix(logger, context));
-    return wrapPrimaryFragment(logger, context, b.toString(), artifacts);
+    return wrapPrimaryFragment(logger, context, b.toString(), artifacts, result);
   }
   
   protected String generateSelectionScript(TreeLogger logger,
       LinkerContext context, ArtifactSet artifacts) throws UnableToCompleteException {
-    if (selectionScriptText != null) {
-      return selectionScriptText;
-    }
+    return generateSelectionScript(logger, context, artifacts, null);
+  }
+  
+  protected String generateSelectionScript(TreeLogger logger,
+        LinkerContext context, ArtifactSet artifacts, CompilationResult result)
+        throws UnableToCompleteException {
+    String selectionScriptText;
     StringBuffer buffer = readFileToStringBuffer(
         getSelectionScriptTemplate(logger,context), logger);
     selectionScriptText = fillSelectionScriptTemplate(
-        buffer, logger, context, artifacts);
+        buffer, logger, context, artifacts, result);
     selectionScriptText =
       context.optimizeJavaScript(logger, selectionScriptText);
     return selectionScriptText;
@@ -300,10 +305,10 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
    * Add the hosted file to the artifact set.
    */
   protected void maybeAddHostedModeFile(TreeLogger logger, 
-      LinkerContext context, ArtifactSet artifacts)
+      LinkerContext context, ArtifactSet artifacts, CompilationResult result)
       throws UnableToCompleteException {
     String hostedFilename = getHostedFilename();
-    if ("".equals(hostedFilename)) {
+    if ("".equals(hostedFilename) || result != null) {
       return;
     }
     try {
@@ -359,7 +364,8 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   }
 
   protected String wrapPrimaryFragment(TreeLogger logger,
-      LinkerContext context, String script, ArtifactSet artifacts) {
+      LinkerContext context, String script, ArtifactSet artifacts,
+      CompilationResult result) {
     return script;
   }
 
