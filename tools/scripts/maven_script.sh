@@ -14,16 +14,15 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-
 # This script should be run from the trunk dir.
-ant clean dist-dev
+echo Did you remember to run ant clean dist-dev
 
 MAVEN_REPO=~/.m2/repository
 
 for i in dev user servlet
 do
-   mvn install:install-file -DgroupId=com.google.gwt -DartifactId=gwt-${i} -Dversion=2.1.1-rc1 -Dpackaging=jar -Dfile=build/lib/gwt-${i}.jar -DgeneratePom=true
+   mvn install:install-file -DgroupId=com.google.gwt -DartifactId=gwt-${i} -Dversion=2.1.1 -Dpackaging=jar -Dfile=build/lib/gwt-${i}.jar -DgeneratePom=true
 done 
 touch /tmp/empty-fake-soyc-vis.jar
-mvn install:install-file -DgroupId=com.google.gwt -DartifactId=gwt-soyc-vis -Dversion=2.1.1-rc1 -Dpackaging=jar -DgeneratePom=true -Dfile=/tmp/empty-fake-soyc-vis.jar
+mvn install:install-file -DgroupId=com.google.gwt -DartifactId=gwt-soyc-vis -Dversion=2.1.1 -Dpackaging=jar -DgeneratePom=true -Dfile=/tmp/empty-fake-soyc-vis.jar
 echo "installed the gwt libs in the maven repo"

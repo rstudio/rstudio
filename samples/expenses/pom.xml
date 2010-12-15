@@ -7,7 +7,7 @@
 	<version>0.1.0.BUILD-SNAPSHOT</version>
 	<name>expenses</name>
 	<properties>
-                <gwt.version>2.1.1-rc1</gwt.version>
+    <gwt.version>2.1.1</gwt.version>
 		<roo.version>1.1.0.RELEASE</roo.version>
 		<spring.version>3.0.3.RELEASE</spring.version>
 		<slf4j.version>1.6.1</slf4j.version>
@@ -620,7 +620,7 @@
           </dependency>
           <dependency>
             <groupId>com.google.gwt</groupId>
-            <artifactId>gwt-user</artifactId>
+            <artifactId>gwt-dev</artifactId>
             <version>${gwt.version}</version>
           </dependency>
         </dependencies>
