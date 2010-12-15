@@ -726,10 +726,11 @@ void setAttachmentResponse(const http::Request& request,
    {
       // Can't set full no-cache headers because this breaks downloads in IE
       pResponse->setHeader("Expires", "Fri, 01 Jan 1990 00:00:00 GMT");
+      pResponse->setHeader("Cache-Control", "private");
    }
    pResponse->setHeader("Content-Disposition",
                         "attachment; filename=" + 
-                        http::util::urlEncode(filename, true));
+                        http::util::urlEncode(filename, false));
    pResponse->setBody(attachmentPath);
 }
    
