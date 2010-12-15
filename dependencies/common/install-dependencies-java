@@ -42,7 +42,7 @@ if [ "$GUICE_ZIP" != "$INSTALLED_VERSION" ]
 then
    download $GUICE_ZIP
    rm -rf $LIB_DIR/guice
-   unzip -d $LIB_DIR $GUICE_ZIP
+   unzip -qd $LIB_DIR $GUICE_ZIP
    echo "$GUICE_ZIP" > $INSTALLED_VERSION_FILE
    rm $GUICE_ZIP
 else
@@ -57,7 +57,7 @@ if [ "$GIN_ZIP" != "$INSTALLED_VERSION" ]
 then
    download $GIN_ZIP
    rm -rf $LIB_DIR/gin
-   unzip -d $LIB_DIR $GIN_ZIP
+   unzip -qd $LIB_DIR $GIN_ZIP
    echo "$GIN_ZIP" > $INSTALLED_VERSION_FILE
    rm $GIN_ZIP
 else
@@ -73,7 +73,7 @@ if [ "$GWT_SDK_ZIP" != "$INSTALLED_VERSION" ]
 then
    download $GWT_SDK_ZIP
    rm -rf $GWT_DIR/sdk
-   unzip -d $GWT_DIR $GWT_SDK_ZIP
+   unzip -qd $GWT_DIR $GWT_SDK_ZIP
    mv $GWT_DIR/$GWT_SDK $GWT_DIR/sdk
    echo "$GWT_SDK_ZIP" > $INSTALLED_VERSION_FILE
    rm $GWT_SDK_ZIP
@@ -83,6 +83,3 @@ fi
 
 # back to install dir
 cd $INSTALL_DIR
-
-
-
