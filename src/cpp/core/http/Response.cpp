@@ -91,11 +91,12 @@ void Response::setPrivateCacheForeverHeaders()
    setCacheForeverHeaders(false);
 }
 
+// WARNING: This appears to break IE8 if Content-Disposition: attachment
 void Response::setNoCacheHeaders()
 {
    setHeader("Expires", "Fri, 01 Jan 1990 00:00:00 GMT");
    setHeader("Pragma", "no-cache");
-   setHeader("Cache-Control", 
+   setHeader("Cache-Control",
              "no-cache, no-store, max-age=0, must-revalidate");
 }
 

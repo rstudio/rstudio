@@ -713,12 +713,21 @@ void handleFileUploadRequest(const http::Request& request,
    json::setJsonRpcResult(uploadJson, pResponse);   
 }
    
-void setUncacheableAttachmentResponse(const std::string& filename,
-                                      const FilePath& attachmentPath,
-                                      http::Response* pResponse)
+void setAttachmentResponse(const http::Request& request,
+                           const std::string& filename,
+                           const FilePath& attachmentPath,
+                           http::Response* pResponse)
 {
-   pResponse->setNoCacheHeaders();
-   pResponse->setHeader("Content-Disposition", 
+   if (request.headerValue("User-Agent").find("MSIE") == std::string::npos)
+   {
+      pResponse->setNoCacheHeaders();
+   }
+   else
+   {
+      // Can't set full no-cache headers because this breaks downloads in IE
+      pResponse->setHeader("Expires", "Fri, 01 Jan 1990 00:00:00 GMT");
+   }
+   pResponse->setHeader("Content-Disposition",
                         "attachment; filename=" + 
                         http::util::urlEncode(filename, true));
    pResponse->setBody(attachmentPath);
@@ -786,7 +795,7 @@ void handleMultipleFileExportRequest(const http::Request& request,
    }
    
    // return attachment
-   setUncacheableAttachmentResponse(name, tempZipFilePath, pResponse);
+   setAttachmentResponse(request, name, tempZipFilePath, pResponse);
 }
    
 void handleFileExportRequest(const http::Request& request, 
@@ -800,7 +809,7 @@ void handleFileExportRequest(const http::Request& request,
       FilePath filePath = module_context::resolveAliasedPath(file);
       if (!filePath.exists())
       {
-         pResponse->setError(http::status::BadRequest, "file doesn't exist");
+         pResponse->setError(http::status::NotFound, "file doesn't exist");
          return;
       }
       
@@ -813,7 +822,7 @@ void handleFileExportRequest(const http::Request& request,
       }
       
       // download as attachment
-      setUncacheableAttachmentResponse(name, filePath, pResponse);
+      setAttachmentResponse(request, name, filePath, pResponse);
    }
    else
    {
