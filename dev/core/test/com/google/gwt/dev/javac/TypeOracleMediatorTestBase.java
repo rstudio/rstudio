@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -49,27 +49,7 @@ import java.util.Set;
 /**
  * Test TypeOracleMediator.
  */
-public class TypeOracleMediatorTest extends TestCase {
-
-  private abstract class MutableJavaResource extends MockJavaResource {
-    private String extraSource = "";
-
-    public MutableJavaResource(String qualifiedTypeName) {
-      super(qualifiedTypeName);
-    }
-
-    @Override
-    protected CharSequence getContent() {
-      return getSource() + extraSource;
-    }
-
-    public abstract String getSource();
-
-    public void touch() {
-      super.touch();
-      extraSource += '\n';
-    }
-  }
+public abstract class TypeOracleMediatorTestBase extends TestCase {
 
   private abstract class CheckedJavaResource extends MutableJavaResource {
     public CheckedJavaResource(String packageName, String shortMainTypeName,
@@ -82,6 +62,27 @@ public class TypeOracleMediatorTest extends TestCase {
     }
 
     public abstract void check(JClassType type) throws NotFoundException;
+  }
+
+  private abstract class MutableJavaResource extends MockJavaResource {
+    private String extraSource = "";
+
+    public MutableJavaResource(String qualifiedTypeName) {
+      super(qualifiedTypeName);
+    }
+
+    public abstract String getSource();
+
+    @Override
+    public void touch() {
+      super.touch();
+      extraSource += '\n';
+    }
+
+    @Override
+    protected CharSequence getContent() {
+      return getSource() + extraSource;
+    }
   }
 
   private static void assertIsAssignable(JClassType from, JClassType to) {
@@ -365,6 +366,7 @@ public class TypeOracleMediatorTest extends TestCase {
   protected CheckedJavaResource CU_ExtendsGenericOuterInner = new CheckedJavaResource(
       "test", "ExtendsOuter", "ExtendsOuter.ExtendsInner") {
 
+    @Override
     public void check(JClassType type) {
       final String name = type.getSimpleSourceName();
       if ("ExtendsOuter".equals(name)) {
@@ -392,6 +394,7 @@ public class TypeOracleMediatorTest extends TestCase {
           inner.getQualifiedSourceName());
     }
 
+    @Override
     public String getSource() {
       StringBuffer sb = new StringBuffer();
       sb.append("package test;\n");
@@ -555,6 +558,7 @@ public class TypeOracleMediatorTest extends TestCase {
   protected CheckedJavaResource CU_GenericOuterInner = new CheckedJavaResource(
       "test", "Outer", "Outer.Inner") {
 
+    @Override
     public void check(JClassType type) {
       final String name = type.getSimpleSourceName();
       if ("GenericOuter".equals(name)) {
@@ -580,6 +584,7 @@ public class TypeOracleMediatorTest extends TestCase {
       assertEquals("test.Outer.Inner", inner.getQualifiedSourceName());
     }
 
+    @Override
     public String getSource() {
       StringBuffer sb = new StringBuffer();
       sb.append("package test;\n");
@@ -995,9 +1000,9 @@ public class TypeOracleMediatorTest extends TestCase {
     }
   };
 
-  private TypeOracle typeOracle;
+  protected final Set<Resource> resources = new HashSet<Resource>();
 
-  private final Set<Resource> resources = new HashSet<Resource>();
+  protected TypeOracle typeOracle;
 
   public void checkTypes(JClassType[] types) throws NotFoundException {
     for (JClassType type : types) {
@@ -1055,7 +1060,7 @@ public class TypeOracleMediatorTest extends TestCase {
     resources.add(CU_Object);
     resources.add(CU_Assignable);
     resources.add(CU_OuterInner);
-    compileAndRefresh();
+    buildTypeOracle();
     JClassType[] allTypes = typeOracle.getTypes();
     assertEquals(7, allTypes.length);
 
@@ -1091,57 +1096,21 @@ public class TypeOracleMediatorTest extends TestCase {
   public void testAssimilation() throws TypeOracleException {
     resources.add(CU_Object);
     resources.add(CU_BeforeAssimilate);
-    compileAndRefresh();
+    buildTypeOracle();
     assertEquals(2, typeOracle.getTypes().length);
 
     // Build onto an existing type oracle.
     resources.add(CU_AfterAssimilate);
-    compileAndRefresh();
+    buildTypeOracle();
     assertEquals(3, typeOracle.getTypes().length);
   }
 
   public void testBindToTypeScope() throws TypeOracleException {
     resources.add(CU_Object);
     resources.add(CU_BindToTypeScope);
-    compileAndRefresh();
+    buildTypeOracle();
     JClassType[] types = typeOracle.getTypes();
     assertEquals(4, types.length);
-  }
-
-  public void testConstructors() throws TypeOracleException {
-    resources.add(CU_Object);
-    compileAndRefresh();
-    JClassType[] types = typeOracle.getTypes();
-    assertEquals(1, types.length);
-    JClassType objectType = types[0];
-    assertEquals("Object", objectType.getSimpleSourceName());
-    JConstructor[] ctors = objectType.getConstructors();
-    assertEquals(1, ctors.length);
-    JConstructor defaultCtor = ctors[0];
-    assertEquals("Object", defaultCtor.getName());
-    assertEquals(0, defaultCtor.getParameters().length);
-  }
-
-  public void testConstrainedList() throws TypeOracleException {
-    resources.add(CU_Object);
-    resources.add(CU_Throwable);
-    resources.add(CU_ConstrainedList);
-
-    compileAndRefresh();
-
-    JClassType type = typeOracle.getType("test.ConstrainedList");
-    JClassType throwable = typeOracle.getType("java.lang.Throwable");
-
-    assertNull(type.isParameterized());
-    JGenericType genericType = type.isGenericType();
-    assertNotNull(genericType);
-    JTypeParameter[] typeParams = genericType.getTypeParameters();
-    assertEquals(1, typeParams.length);
-    assertEquals(throwable, typeParams[0].getBaseType());
-    assertEquals(type, typeParams[0].getDeclaringClass());
-    JClassType[] bounds = typeParams[0].getBounds();
-    assertEquals(1, bounds.length);
-    assertEquals(throwable, bounds[0]);
   }
 
   public void testConstrainedField() throws TypeOracleException {
@@ -1150,7 +1119,7 @@ public class TypeOracleMediatorTest extends TestCase {
     resources.add(CU_ConstrainedList);
     resources.add(CU_ConstrainedListAsField);
 
-    compileAndRefresh();
+    buildTypeOracle();
 
     // Get the types produced by the TypeOracle
     JClassType type = typeOracle.getType("test.ConstrainedListAsField");
@@ -1173,10 +1142,46 @@ public class TypeOracleMediatorTest extends TestCase {
     assertEquals("Throwable", upperBound.getSimpleSourceName());
   }
 
+  public void testConstrainedList() throws TypeOracleException {
+    resources.add(CU_Object);
+    resources.add(CU_Throwable);
+    resources.add(CU_ConstrainedList);
+
+    buildTypeOracle();
+
+    JClassType type = typeOracle.getType("test.ConstrainedList");
+    JClassType throwable = typeOracle.getType("java.lang.Throwable");
+
+    assertNull(type.isParameterized());
+    JGenericType genericType = type.isGenericType();
+    assertNotNull(genericType);
+    JTypeParameter[] typeParams = genericType.getTypeParameters();
+    assertEquals(1, typeParams.length);
+    assertEquals(throwable, typeParams[0].getBaseType());
+    assertEquals(type, typeParams[0].getDeclaringClass());
+    JClassType[] bounds = typeParams[0].getBounds();
+    assertEquals(1, bounds.length);
+    assertEquals(throwable, bounds[0]);
+  }
+
+  public void testConstructors() throws TypeOracleException {
+    resources.add(CU_Object);
+    buildTypeOracle();
+    JClassType[] types = typeOracle.getTypes();
+    assertEquals(1, types.length);
+    JClassType objectType = types[0];
+    assertEquals("Object", objectType.getSimpleSourceName());
+    JConstructor[] ctors = objectType.getConstructors();
+    assertEquals(1, ctors.length);
+    JConstructor defaultCtor = ctors[0];
+    assertEquals("Object", defaultCtor.getName());
+    assertEquals(0, defaultCtor.getParameters().length);
+  }
+
   public void testDefaultClass() throws TypeOracleException {
     resources.add(CU_Object);
     resources.add(CU_DefaultClass);
-    compileAndRefresh();
+    buildTypeOracle();
     JClassType[] types = typeOracle.getTypes();
     assertEquals(2, types.length);
   }
@@ -1187,7 +1192,7 @@ public class TypeOracleMediatorTest extends TestCase {
     resources.add(CU_GenericOuterInner);
     resources.add(CU_ExtendsGenericOuterInner);
 
-    compileAndRefresh();
+    buildTypeOracle();
 
     // Get the types produced by the TypeOracle
     JClassType outer = typeOracle.getType("test.Outer");
@@ -1227,7 +1232,7 @@ public class TypeOracleMediatorTest extends TestCase {
     resources.add(CU_List);
     resources.add(CU_ListAsField);
 
-    compileAndRefresh();
+    buildTypeOracle();
 
     // Get the types produced by the TypeOracle
     JClassType listAsField = typeOracle.getType("test.refresh.ListAsField");
@@ -1247,7 +1252,7 @@ public class TypeOracleMediatorTest extends TestCase {
   public void testFieldsAndTypes() throws TypeOracleException {
     resources.add(CU_Object);
     resources.add(CU_FieldsAndTypes);
-    compileAndRefresh();
+    buildTypeOracle();
     JClassType[] types = typeOracle.getTypes();
     assertEquals(3, types.length);
   }
@@ -1256,7 +1261,7 @@ public class TypeOracleMediatorTest extends TestCase {
   public void testLocal() throws TypeOracleException {
     resources.add(CU_Object);
     resources.add(CU_LocalClass);
-    compileAndRefresh();
+    buildTypeOracle();
     JClassType[] types = typeOracle.getTypes();
     assertEquals(2, types.length);
   }
@@ -1264,7 +1269,7 @@ public class TypeOracleMediatorTest extends TestCase {
   public void testLocalWithSynthetic() throws TypeOracleException {
     resources.add(CU_Object);
     resources.add(CU_LocalClass2);
-    compileAndRefresh();
+    buildTypeOracle();
     JClassType[] types = typeOracle.getTypes();
     assertEquals(2, types.length);
   }
@@ -1273,7 +1278,7 @@ public class TypeOracleMediatorTest extends TestCase {
     resources.add(CU_Object);
     resources.add(CU_Throwable);
     resources.add(CU_MethodsAndParams);
-    compileAndRefresh();
+    buildTypeOracle();
     JClassType[] types = typeOracle.getTypes();
     assertEquals(3, types.length);
   }
@@ -1281,7 +1286,7 @@ public class TypeOracleMediatorTest extends TestCase {
   public void testOuterInner() throws TypeOracleException {
     resources.add(CU_Object);
     resources.add(CU_OuterInner);
-    compileAndRefresh();
+    buildTypeOracle();
     JClassType[] types = typeOracle.getTypes();
     assertEquals(3, types.length);
     JClassType outer = null;
@@ -1311,14 +1316,14 @@ public class TypeOracleMediatorTest extends TestCase {
     resources.add(CU_DeclaresInnerGenericType);
     resources.add(CU_Object);
 
-    compileAndRefresh();
+    buildTypeOracle();
     assertNull(typeOracle.findType("test.parameterizedtype.build.dependencies.Class2"));
   }
 
   /**
    * Test that modifying a type will cause any types that depend on it to be
    * rebuilt by the TypeOracleBuilder during a refresh.
-   * 
+   *
    * @throws UnableToCompleteException
    * @throws NotFoundException
    * @throws IOException
@@ -1329,7 +1334,7 @@ public class TypeOracleMediatorTest extends TestCase {
     resources.add(CU_GenericList);
     resources.add(CU_ReferencesGenericListConstant);
 
-    compileAndRefresh();
+    buildTypeOracle();
 
     // Get the types produced by the TypeOracle
     JClassType extendsGenericListType = typeOracle.getType("test.refresh.ExtendsGenericList");
@@ -1341,7 +1346,7 @@ public class TypeOracleMediatorTest extends TestCase {
      * anything that depends on GenericList to be rebuilt by the type oracle.
      */
     CU_GenericList.touch();
-    compileAndRefresh();
+    buildTypeOracle();
 
     assertNotSame(genericListType.getQualifiedSourceName() + "; ",
         typeOracle.getType("test.refresh.GenericList"), genericListType);
@@ -1366,7 +1371,7 @@ public class TypeOracleMediatorTest extends TestCase {
    * old units which did not have errors. This ensures that the correct units
    * are pruned from the type oracle in the case where we encounter units with
    * errors.
-   * 
+   *
    * @throws UnableToCompleteException
    * @throws IOException
    */
@@ -1410,7 +1415,7 @@ public class TypeOracleMediatorTest extends TestCase {
     };
     resources.add(unitThatWillGoBad);
 
-    compileAndRefresh();
+    buildTypeOracle();
 
     assertNotNull(typeOracle.findType("test.refresh.with.errors.UnmodifiedClass"));
     assertNotNull(typeOracle.findType("test.refresh.with.errors.GoodClass"));
@@ -1437,7 +1442,7 @@ public class TypeOracleMediatorTest extends TestCase {
     // Now this cup should cause errors.
     unitThatWillGoBad.touch();
 
-    compileAndRefresh();
+    buildTypeOracle();
 
     assertNotNull(typeOracle.findType("test.refresh.with.errors.UnmodifiedClass"));
     assertNotNull(typeOracle.findType("test.refresh.with.errors.AnotherGoodClass"));
@@ -1449,7 +1454,7 @@ public class TypeOracleMediatorTest extends TestCase {
   public void testSyntaxErrors() throws TypeOracleException {
     resources.add(CU_Object);
     resources.add(CU_HasSyntaxErrors);
-    compileAndRefresh();
+    buildTypeOracle();
     JClassType[] types = typeOracle.getTypes();
     // Only java.lang.Object should remain.
     //
@@ -1461,7 +1466,7 @@ public class TypeOracleMediatorTest extends TestCase {
     resources.add(CU_Object);
     resources.add(CU_NestedGenericInterfaces);
     resources.add(CU_UnnestedImplementations);
-    compileAndRefresh();
+    buildTypeOracle();
     JClassType[] types = typeOracle.getTypes();
     assertEquals(6, types.length);
     JClassType type = typeOracle.findType("test.Implementations.InnerImpl");
@@ -1479,7 +1484,7 @@ public class TypeOracleMediatorTest extends TestCase {
     resources.add(CU_Object);
     resources.add(CU_HasUnresolvedSymbols);
     resources.add(CU_RefsInfectedCompilationUnit);
-    compileAndRefresh();
+    buildTypeOracle();
     JClassType[] types = typeOracle.getTypes();
     // Only java.lang.Object should remain.
     //
@@ -1487,9 +1492,25 @@ public class TypeOracleMediatorTest extends TestCase {
     assertEquals("java.lang.Object", types[0].getQualifiedSourceName());
   }
 
+  protected abstract void buildTypeOracle() throws TypeOracleException;
+
+  /**
+   * Tweak this if you want to see the log output.
+   */
+  protected TreeLogger createTreeLogger() {
+    boolean reallyLog = false;
+    if (reallyLog) {
+      AbstractTreeLogger logger = new PrintWriterTreeLogger();
+      logger.setMaxDetail(TreeLogger.ALL);
+      return logger;
+    } else {
+      return TreeLogger.NULL;
+    }
+  }
+
   /**
    * Creates a {@link Resource} and adds it the set of resources.
-   * 
+   *
    * @throws UnableToCompleteException
    */
   private void addResource(String qualifiedTypeName, CharSequence source) {
@@ -1501,26 +1522,6 @@ public class TypeOracleMediatorTest extends TestCase {
     CheckedJavaResource cup = publicTypeNameToTestCupMap.get(qName);
     if (cup != null) {
       cup.check(classInfo);
-    }
-  }
-
-  private void compileAndRefresh() throws TypeOracleException {
-    typeOracle = TypeOracleTestingUtils.buildTypeOracle(createTreeLogger(),
-        resources);
-    checkTypes(typeOracle.getTypes());
-  }
-
-  /**
-   * Tweak this if you want to see the log output.
-   */
-  private TreeLogger createTreeLogger() {
-    boolean reallyLog = false;
-    if (reallyLog) {
-      AbstractTreeLogger logger = new PrintWriterTreeLogger();
-      logger.setMaxDetail(TreeLogger.ALL);
-      return logger;
-    } else {
-      return TreeLogger.NULL;
     }
   }
 

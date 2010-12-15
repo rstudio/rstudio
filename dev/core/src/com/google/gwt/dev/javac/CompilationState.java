@@ -74,7 +74,7 @@ public class CompilationState {
   /**
    * Controls our type oracle.
    */
-  private final TypeOracleMediator mediator = new TypeOracleMediator();
+  private final TypeOracleMediatorFromSource mediator = new TypeOracleMediatorFromSource();
 
   CompilationState(TreeLogger logger, Collection<CompilationUnit> units,
       CompileMoreLater compileMoreLater) {

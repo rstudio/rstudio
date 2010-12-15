@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -63,6 +63,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -74,15 +75,90 @@ import java.util.Set;
 public class TypeOracleMediator extends TypeOracleBuilder {
 
   /**
+   * A container to hold all the information we need to add one type to the
+   * TypeOracle.
+   */
+  public static class TypeData {
+
+    /**
+     * Bytecode from compiled Java source.
+     */
+    private final byte[] byteCode;
+
+    /**
+     * See {@link Type#getInternalName()}.
+     */
+    private final String internalName;
+
+    /**
+     * A timestamp as returned from {@link System#currentTimeMillis()}
+     *
+     * TODO(zundel): currently unused, add to JType later.
+     */
+    private final long lastModifiedTime;
+
+    /**
+     * Package name.
+     */
+    private final String packageName;
+
+    /**
+     * URL to fetch the source file from a class loader. If a method arg name is
+     * requested, we may need to go back to this file and compile it.
+     *
+     * TODO(zundel): currently unused, add to JRealClassType later.
+     */
+    private final String sourceFileResourceName;
+
+    /**
+     * See {@link JType#getQualifiedSourceName()}.
+     */
+    private final String sourceName;
+
+    protected TypeData(String packageName, String sourceName,
+        String internalName, String sourceFileResourceName, byte[] classBytes,
+        long lastModifiedTime) {
+      this.packageName = packageName;
+      this.sourceName = sourceName;
+      this.internalName = internalName;
+      this.sourceFileResourceName = sourceFileResourceName;
+      this.byteCode = classBytes;
+      this.lastModifiedTime = lastModifiedTime;
+    }
+  }
+
+  /**
+   * This context keeps common data so we don't have to pass it around between
+   * methods for one pass of
+   * {@link TypeOracleMediator#addNewTypes(TreeLogger, Collection, MethodArgNamesLookup)}
+   * .
+   */
+  private static class TypeOracleBuildContext {
+    private final MethodArgNamesLookup allMethodArgs;
+
+    // map of internal names to class visitors.
+    private final Map<String, CollectClassData> classMap = new HashMap<String, CollectClassData>();
+    // map of JRealType instances to lookup class visitors.
+    private final HashMap<JRealClassType, CollectClassData> classMapType = new HashMap<JRealClassType, CollectClassData>();
+
+    private TypeOracleBuildContext(MethodArgNamesLookup allMethodArgs) {
+      this.allMethodArgs = allMethodArgs;
+    }
+  }
+
+  /**
    * Pairs of bits to convert from ASM Opcodes.* to Shared.* bitfields.
    */
   private static final int[] ASM_TO_SHARED_MODIFIERS = new int[]{
-      Opcodes.ACC_PUBLIC, Shared.MOD_PUBLIC, Opcodes.ACC_PRIVATE,
-      Shared.MOD_PRIVATE, Opcodes.ACC_PROTECTED, Shared.MOD_PROTECTED,
-      Opcodes.ACC_STATIC, Shared.MOD_STATIC, Opcodes.ACC_FINAL,
-      Shared.MOD_FINAL, Opcodes.ACC_ABSTRACT, Shared.MOD_ABSTRACT,
-      Opcodes.ACC_VOLATILE, Shared.MOD_VOLATILE, Opcodes.ACC_TRANSIENT,
-      Shared.MOD_TRANSIENT,};
+      Opcodes.ACC_PUBLIC, Shared.MOD_PUBLIC, //
+      Opcodes.ACC_PRIVATE, Shared.MOD_PRIVATE, //
+      Opcodes.ACC_PROTECTED, Shared.MOD_PROTECTED, //
+      Opcodes.ACC_STATIC, Shared.MOD_STATIC, //
+      Opcodes.ACC_FINAL, Shared.MOD_FINAL, //
+      Opcodes.ACC_ABSTRACT, Shared.MOD_ABSTRACT, //
+      Opcodes.ACC_VOLATILE, Shared.MOD_VOLATILE, //
+      Opcodes.ACC_TRANSIENT, Shared.MOD_TRANSIENT, //
+  };
 
   private static final JTypeParameter[] NO_TYPE_PARAMETERS = new JTypeParameter[0];
 
@@ -146,9 +222,9 @@ public class TypeOracleMediator extends TypeOracleBuilder {
 
   /**
    * Returns true if this class is a non-static class inside a generic class.
-   * 
+   *
    * TODO(jat): do we need to consider the entire hierarchy?
-   * 
+   *
    * @param classData
    * @param enclosingClassData
    * @return true if this class is a non-static class inside a generic class
@@ -164,7 +240,7 @@ public class TypeOracleMediator extends TypeOracleBuilder {
 
   /**
    * Substitute the raw type if the supplied type is generic.
-   * 
+   *
    * @param type
    * @return original type or its raw type if it is generic
    */
@@ -178,19 +254,12 @@ public class TypeOracleMediator extends TypeOracleBuilder {
     return type;
   }
 
+  // transient since it is not retained across calls to {@link #addNewTypes()}
+  // TODO(zundel): This doesn't need to be an instance variable.  Refactor to pass as method argument.
+  protected transient TypeOracleBuildContext context = null;
+
   // map of internal names to classes
   final Map<String, JRealClassType> binaryMapper = new HashMap<String, JRealClassType>();
-
-  // map of fully qualified method names to their argument names
-  // transient since it is not retained across calls to addNewUnits
-  private transient MethodArgNamesLookup allMethodArgs;
-
-  // map of internal names to class visitors
-  // transient since it is not retained across calls to addNewUnits
-  private transient Map<String, CollectClassData> classMap;
-
-  // transient since it is not retained across calls to addNewUnits
-  private transient HashMap<JRealClassType, CollectClassData> classMapType;
 
   private final Set<JRealClassType> resolved = new HashSet<JRealClassType>();
 
@@ -269,26 +338,38 @@ public class TypeOracleMediator extends TypeOracleBuilder {
 
   /**
    * Adds new units to an existing TypeOracle.
-   * 
+   *
    * @param logger logger to use
-   * @param units collection of compilation units to process
+   * @param typeDataList collection of data need to build types
    */
-  public void addNewUnits(TreeLogger logger, Collection<CompilationUnit> units) {
+  public void addNewTypes(TreeLogger logger, Collection<TypeData> typeDataList) {
+    addNewTypes(logger, typeDataList, new MethodArgNamesLookup());
+  }
+
+  /**
+   * Adds new units to an existing TypeOracle.
+   *
+   * @param logger logger to use
+   * @param typeDataList collection of data need to build types
+   * @param argsLookup Allows the caller to pass the method argument names which
+   *          are not normally available in bytecode.
+   */
+  public void addNewTypes(TreeLogger logger, Collection<TypeData> typeDataList,
+      MethodArgNamesLookup argsLookup) {
     Event typeOracleMediatorEvent = SpeedTracerLogger.start(CompilerEventType.TYPE_ORACLE_MEDIATOR);
 
     // First collect all class data.
     Event visitClassFileEvent = SpeedTracerLogger.start(
         CompilerEventType.TYPE_ORACLE_MEDIATOR, "phase", "Visit Class Files");
-    classMap = new HashMap<String, CollectClassData>();
-    for (CompilationUnit unit : units) {
-      Collection<CompiledClass> compiledClasses = unit.getCompiledClasses();
-      for (CompiledClass compiledClass : compiledClasses) {
-        CollectClassData cv = processClass(compiledClass);
-        // skip any classes that can't be referenced by name outside of
-        // their local scope, such as anonymous classes and method-local classes
-        if (!cv.hasNoExternalName()) {
-          classMap.put(compiledClass.getInternalName(), cv);
-        }
+    assert (context == null);
+    context = new TypeOracleBuildContext(argsLookup);
+
+    for (TypeData typeData : typeDataList) {
+      CollectClassData cv = processClass(typeData);
+      // skip any classes that can't be referenced by name outside of
+      // their local scope, such as anonymous classes and method-local classes
+      if (!cv.hasNoExternalName()) {
+        context.classMap.put(typeData.internalName, cv);
       }
     }
     visitClassFileEvent.end();
@@ -296,24 +377,17 @@ public class TypeOracleMediator extends TypeOracleBuilder {
     Event identityEvent = SpeedTracerLogger.start(
         CompilerEventType.TYPE_ORACLE_MEDIATOR, "phase", "Establish Identity");
     // Perform a shallow pass to establish identity for new and old types.
-    classMapType = new HashMap<JRealClassType, CollectClassData>();
-    allMethodArgs = new MethodArgNamesLookup();
-    Set<JRealClassType> unresolvedTypes = new HashSet<JRealClassType>();
-    for (CompilationUnit unit : units) {
-      Collection<CompiledClass> compiledClasses = unit.getCompiledClasses();
-      for (CompiledClass compiledClass : compiledClasses) {
-        String internalName = compiledClass.getInternalName();
-        CollectClassData cv = classMap.get(internalName);
-        if (cv == null) {
-          // ignore classes that were skipped earlier
-          continue;
-        }
-        JRealClassType type = createType(compiledClass, unresolvedTypes);
-        if (type != null) {
-          allMethodArgs.mergeFrom(unit.getMethodArgs());
-          binaryMapper.put(internalName, type);
-          classMapType.put(type, cv);
-        }
+    Set<JRealClassType> unresolvedTypes = new LinkedHashSet<JRealClassType>();
+    for (TypeData typeData : typeDataList) {
+      CollectClassData cv = context.classMap.get(typeData.internalName);
+      if (cv == null) {
+        // ignore classes that were skipped earlier
+        continue;
+      }
+      JRealClassType type = createType(typeData, unresolvedTypes);
+      if (type != null) {
+        binaryMapper.put(typeData.internalName, type);
+        context.classMapType.put(type, cv);
       }
     }
     identityEvent.end();
@@ -341,7 +415,7 @@ public class TypeOracleMediator extends TypeOracleBuilder {
       branch = logger.branch(TreeLogger.SPAM, "Resolving "
           + type.getQualifiedSourceName());
       if (!resolveClass(branch, type)) {
-        // already logged why it failed
+        // already logged why it failed.
         // TODO: should we do anything else here?
       }
     }
@@ -353,9 +427,7 @@ public class TypeOracleMediator extends TypeOracleBuilder {
     finishEvent.end();
 
     // no longer needed
-    allMethodArgs = null;
-    classMap = null;
-    classMapType = null;
+    context = null;
     typeOracleMediatorEvent.end();
   }
 
@@ -404,16 +476,16 @@ public class TypeOracleMediator extends TypeOracleBuilder {
     return AnnotationProxyFactory.create(annotationClass, values);
   }
 
-  private JRealClassType createType(CompiledClass compiledClass,
-      CollectClassData classData, CollectClassData enclosingClassData) {
-    int access = classData.getAccess();
-    String qname = compiledClass.getSourceName();
-    String className = Shared.getShortName(qname);
+  private JRealClassType createType(TypeData typeData,
+      CollectClassData collectClassData, CollectClassData enclosingClassData) {
+    int access = collectClassData.getAccess();
+    String qualifiedSourceName = typeData.sourceName;
+    String className = Shared.getShortName(qualifiedSourceName);
     JRealClassType resultType = null;
-    String jpkgName = compiledClass.getPackageName();
+    String jpkgName = typeData.packageName;
     JPackage pkg = typeOracle.getOrCreatePackage(jpkgName);
     boolean isIntf = (access & Opcodes.ACC_INTERFACE) != 0;
-    assert !classData.hasNoExternalName();
+    assert !collectClassData.hasNoExternalName();
     String enclosingTypeName = null;
     if (enclosingClassData != null) {
       enclosingTypeName = InternalName.toSourceName(InternalName.getClassName(enclosingClassData.getName()));
@@ -423,9 +495,9 @@ public class TypeOracleMediator extends TypeOracleBuilder {
     } else if ((access & Opcodes.ACC_ENUM) != 0) {
       resultType = newEnumType(pkg, enclosingTypeName, className);
     } else {
-      JTypeParameter[] typeParams = getTypeParametersForClass(classData);
+      JTypeParameter[] typeParams = getTypeParametersForClass(collectClassData);
       if ((typeParams != null && typeParams.length > 0)
-          || nonStaticInsideGeneric(classData, enclosingClassData)) {
+          || nonStaticInsideGeneric(collectClassData, enclosingClassData)) {
         resultType = new JGenericType(typeOracle, pkg, enclosingTypeName,
             className, isIntf, typeParams);
       } else {
@@ -433,15 +505,6 @@ public class TypeOracleMediator extends TypeOracleBuilder {
       }
     }
 
-    /*
-     * Declare type parameters for all methods; we must do this during the first
-     * pass.
-     */
-    // if (typeDecl.methods != null) {
-    // for (AbstractMethodDeclaration method : typeDecl.methods) {
-    // declareTypeParameters(method.typeParameters());
-    // }
-    // }
     /*
      * Add modifiers since these are needed for
      * TypeOracle.getParameterizedType's error checking code.
@@ -455,19 +518,19 @@ public class TypeOracleMediator extends TypeOracleBuilder {
     return resultType;
   }
 
-  private JRealClassType createType(CompiledClass compiledClass,
+  private JRealClassType createType(TypeData typeData,
       Set<JRealClassType> unresolvedTypes) {
-    CollectClassData classData = classMap.get(compiledClass.getInternalName());
-    String outerClassName = classData.getOuterClass();
+    CollectClassData collectClassData = context.classMap.get(typeData.internalName);
+    String outerClassName = collectClassData.getOuterClass();
     CollectClassData enclosingClassData = null;
     if (outerClassName != null) {
-      enclosingClassData = classMap.get(outerClassName);
+      enclosingClassData = context.classMap.get(outerClassName);
       if (enclosingClassData == null) {
         // if our enclosing class was skipped, skip this one too
         return null;
       }
     }
-    JRealClassType realClassType = createType(compiledClass, classData,
+    JRealClassType realClassType = createType(typeData, collectClassData,
         enclosingClassData);
     unresolvedTypes.add(realClassType);
     return realClassType;
@@ -521,7 +584,7 @@ public class TypeOracleMediator extends TypeOracleBuilder {
 
   /**
    * Map a bitset onto a different bitset.
-   * 
+   *
    * @param mapping int array containing a sequence of from/to pairs, each from
    *          entry should have exactly one bit set
    * @param input bitset to map
@@ -542,9 +605,8 @@ public class TypeOracleMediator extends TypeOracleBuilder {
    * data structures. This is used to make the initial shallow identity pass for
    * creating JRealClassType/JGenericType objects.
    */
-  private CollectClassData processClass(CompiledClass compiledClass) {
-    byte[] classBytes = compiledClass.getBytes();
-    ClassReader reader = new ClassReader(classBytes);
+  private CollectClassData processClass(TypeData typeData) {
+    ClassReader reader = new ClassReader(typeData.byteCode);
     CollectClassData mcv = new CollectClassData();
     ClassVisitor cv = mcv;
     if (TRACE_CLASSES) {
@@ -707,7 +769,7 @@ public class TypeOracleMediator extends TypeOracleBuilder {
     TypeParameterLookup typeParamLookup = new TypeParameterLookup();
     typeParamLookup.pushEnclosingScopes(type);
 
-    CollectClassData classData = classMapType.get(type);
+    CollectClassData classData = context.classMapType.get(type);
     assert classData != null;
     int access = classData.getAccess();
 
@@ -838,7 +900,7 @@ public class TypeOracleMediator extends TypeOracleBuilder {
       return true;
     }
     // Find our enclosing class and set it
-    CollectClassData classData = classMapType.get(type);
+    CollectClassData classData = context.classMapType.get(type);
     assert classData != null;
     String outerClass = classData.getOuterClass();
     JRealClassType enclosingType = null;
@@ -892,10 +954,6 @@ public class TypeOracleMediator extends TypeOracleBuilder {
       reader.acceptType(new ResolveTypeSignature(resolver, binaryMapper,
           logger, fieldTypeRef, typeParamLookup, null));
       fieldType = fieldTypeRef[0];
-      // TraceSignatureVisitor trace = new TraceSignatureVisitor(
-      // methodData.getAccess());
-      // reader.acceptType(trace);
-      // System.err.println("Field " + name + ": " + trace.getDeclaration());
 
     } else {
       fieldType = resolveType(Type.getType(field.getDesc()));
@@ -967,7 +1025,7 @@ public class TypeOracleMediator extends TypeOracleBuilder {
       ResolveMethodSignature methodResolver = new ResolveMethodSignature(
           resolver, logger, method, typeParamLookup, hasReturnType, methodData,
           methodData.getArgTypes(), methodData.getArgNames(),
-          methodData.hasActualArgNames(), allMethodArgs);
+          methodData.hasActualArgNames(), context.allMethodArgs);
       // TraceSignatureVisitor trace = new TraceSignatureVisitor(
       // methodData.getAccess());
       // reader.accept(trace);
@@ -1022,7 +1080,7 @@ public class TypeOracleMediator extends TypeOracleBuilder {
     boolean argNamesAreReal = methodData.hasActualArgNames();
     String[] argNames = methodData.getArgNames();
     if (!argNamesAreReal) {
-      String[] lookupNames = allMethodArgs.lookup(method, methodData);
+      String[] lookupNames = context.allMethodArgs.lookup(method, methodData);
       if (lookupNames != null) {
         argNames = lookupNames;
         argNamesAreReal = true;

@@ -26,7 +26,7 @@ import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompilationUnitBuilder;
 import com.google.gwt.dev.javac.CompilationUnitInvalidator;
 import com.google.gwt.dev.javac.JdtCompiler;
-import com.google.gwt.dev.javac.TypeOracleMediator;
+import com.google.gwt.dev.javac.TypeOracleMediatorFromSource;
 import com.google.gwt.dev.resource.Resource;
 
 import java.util.ArrayList;
@@ -202,7 +202,7 @@ public final class ApiContainer {
       throw new UnableToCompleteException();
     }
 
-    TypeOracleMediator mediator = new TypeOracleMediator();
+    TypeOracleMediatorFromSource mediator = new TypeOracleMediatorFromSource();
     mediator.addNewUnits(logger, units);
     logger.log(TreeLogger.INFO, "API " + name
         + ", Finished with building typeOracle, added " + units.size()
