@@ -12,8 +12,10 @@
  */
 package org.rstudio.studio.client.common.reditor;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Node;
+import com.google.gwt.dom.client.StyleElement;
 import com.google.gwt.event.dom.client.KeyCodeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
@@ -33,6 +35,8 @@ import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
 import org.rstudio.core.client.events.NativeKeyPressEvent;
 import org.rstudio.core.client.events.NativeKeyPressHandler;
+import org.rstudio.core.client.theme.ThemeFonts;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.reditor.model.REditorServerOperations;
 import org.rstudio.studio.client.common.reditor.resources.REditorResources;
@@ -170,6 +174,16 @@ public class REditor extends CodeMirrorEditor
    protected void onEditorLoaded()
    {
       super.onEditorLoaded() ;
+
+      if (Desktop.isDesktop())
+      {
+         Document editorDoc = codeMirror_.getWin().getDocument();
+         StyleElement styleEl = editorDoc.createStyleElement();
+         styleEl.setInnerText(".editbox {" +
+                              "font-family: " + ThemeFonts.getFixedWidthFont() +
+                              " !important}");
+         editorDoc.getElementsByTagName("head").getItem(0).appendChild(styleEl);
+      }
 
       inputEditorDisplay_ = new CodeMirrorToInputEditorDisplayAdapter(this);
       updateCompletionManager();

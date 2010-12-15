@@ -135,9 +135,7 @@
    </replace-with>
 
 
-   <set-property name="compiler.emulatedStack" value="true">
-      <when-property-is name="rstudio.debug" value="true"/>
-   </set-property>
+   <set-property name="compiler.emulatedStack" value="${GWT_EMULATED_STACK}"/>
    <set-configuration-property name="compiler.emulatedStack.recordLineNumbers" value="true"/>
    <set-configuration-property name="compiler.emulatedStack.recordFileNames" value="true"/>
    <!--<set-configuration-property name="CssResource.style" value="pretty" />-->

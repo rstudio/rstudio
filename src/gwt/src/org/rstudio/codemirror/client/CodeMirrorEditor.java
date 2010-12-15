@@ -36,6 +36,7 @@ import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.theme.ThemeFonts;
+import org.rstudio.studio.client.application.Desktop;
 
 import java.util.ArrayList;
 
@@ -289,13 +290,6 @@ public abstract class CodeMirrorEditor extends Composite
    protected void onEditorLoaded()
    {
       editorLoaded_ = true ;
-
-      Document editorDoc = codeMirror_.getWin().getDocument();
-      StyleElement styleEl = editorDoc.createStyleElement();
-      styleEl.setInnerText(".editbox {" +
-                           "font-family: " + ThemeFonts.getFixedWidthFont() +
-                           "}");
-      editorDoc.getElementsByTagName("head").getItem(0).appendChild(styleEl);
 
       codeMirror_.setKeyDownHandler(new CodeMirrorKeyHandler()
       {
