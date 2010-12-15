@@ -15,6 +15,7 @@ package org.rstudio.core.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.user.client.ui.AttachDetachException;
 import org.rstudio.studio.client.server.ServerError;
 
 public class Debug
@@ -81,4 +82,23 @@ public class Debug
    {
       Debug.log(new JSONObject(object).toString());
    }
+
+   public static void logAttachDetachException(AttachDetachException ade)
+   {
+      if (ade == null)
+         return;
+
+      for (Throwable t : ade.getCauses())
+      {
+         if (t instanceof AttachDetachException)
+            logAttachDetachException((AttachDetachException) t);
+         else
+         {
+            Debug.devlog(t.toString());
+            for (StackTraceElement ste : t.getStackTrace())
+               Debug.devlog(ste.toString());
+         }
+      }
+   }
+
 }
