@@ -81,6 +81,9 @@ if(UNIX)
    endif()
 endif()
 
+# make sure the CMAKE_INSTALL_PREFIX uses a cmake style path
+file(TO_CMAKE_PATH "${CMAKE_INSTALL_PREFIX}" CMAKE_INSTALL_PREFIX)
+
 # if there isn't an addin path defined and this is a development build
 # (detected by target=all and build-type=debug) then look for an addins
 # environment variable.
