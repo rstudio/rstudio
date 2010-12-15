@@ -33,7 +33,11 @@ public class InterceptPasteStrategy implements PasteStrategy
    }
 
    private native void hookPaste(Element el) /*-{
-      el.onpaste = this.@org.rstudio.studio.client.workbench.views.console.shell.editor.impl.TextareaPasteStrategy::onPaste(Lcom/google/gwt/dom/client/NativeEvent;);
+      var thiz = this;
+      el.onpaste = function (e) {
+         e = e || $wnd.event;
+         thiz.@org.rstudio.studio.client.workbench.views.console.shell.editor.impl.InterceptPasteStrategy::onPaste(Lcom/google/gwt/dom/client/NativeEvent;)(e);
+      };
    }-*/;
 
    @SuppressWarnings("unused")
