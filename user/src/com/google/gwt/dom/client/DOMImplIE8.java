@@ -17,6 +17,41 @@ package com.google.gwt.dom.client;
 
 class DOMImplIE8 extends DOMImplTrident {
 
+  private static boolean isIE8;
+  private static boolean isIE8Detected;
+
+  /**
+   * Check if the browser is IE8 or IE9.
+   * 
+   * @return <code>true</code> if the browser is IE8, <code>false</code> if IE9
+   *         or any other browser
+   */
+  static boolean isIE8() {
+    if (!isIE8Detected) {
+      isIE8 = isIE8Impl();
+      isIE8Detected = true;
+    }
+    return isIE8;
+  }
+
+  // Stolen and modified from UserAgent.gwt.xml.
+  private static native boolean isIE8Impl() /*-{
+    var ua = navigator.userAgent.toLowerCase();
+    if (ua.indexOf("msie") != -1 && $doc.documentMode == 8) {
+      return true;
+    }
+    return false;
+  }-*/;
+
+  @Override
+  public void cssSetOpacity(Style style, double value) {
+    if (isIE8()) {
+      cssSetOpacityImpl(style, value);
+    } else {
+      super.cssSetOpacity(style, value);
+    }
+  }
+
   @Override
   public int getAbsoluteLeft(Element elem) {
     Document doc = elem.getOwnerDocument();
@@ -46,4 +81,8 @@ class DOMImplIE8 extends DOMImplTrident {
     }
     super.setScrollLeft(elem, left);
   }
+
+  private native void cssSetOpacityImpl(Style style, double value) /*-{
+    style.filter = 'alpha(opacity=' + (value * 100) + ')';
+  }-*/;
 }
