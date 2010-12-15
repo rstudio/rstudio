@@ -179,7 +179,7 @@ public class ResolveGenericsTest extends AsmTestCase {
 
   public ResolveGenericsTest() {
     mediator = TypeOracleTestingUtils.buildStandardMediatorWith(failTreeLogger);
-    resolver = new MockResolver(mediator.getResolver());
+    resolver = new MockResolver(mediator.getMockResolver());
     oracle = mediator.getTypeOracle();
     createUnresolvedClass(String.class, null);
     testHandler = createUnresolvedClass(TestHandler.class, null);
