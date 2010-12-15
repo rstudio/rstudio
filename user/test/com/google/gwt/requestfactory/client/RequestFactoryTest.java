@@ -27,6 +27,7 @@ import com.google.gwt.requestfactory.shared.SimpleBarRequest;
 import com.google.gwt.requestfactory.shared.SimpleEnum;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
 import com.google.gwt.requestfactory.shared.SimpleFooRequest;
+import com.google.gwt.requestfactory.shared.SimpleValueContext;
 import com.google.gwt.requestfactory.shared.SimpleValueProxy;
 import com.google.gwt.requestfactory.shared.Violation;
 import com.google.gwt.requestfactory.shared.impl.SimpleEntityProxyId;
@@ -2308,6 +2309,20 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
                 });
           }
         });
+  }
+
+  public void testValueMethodInvocation() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    SimpleValueContext ctx = req.simpleValueContext();
+    SimpleValueProxy p = ctx.create(SimpleValueProxy.class);
+    p.setString("Hello World!");
+    ctx.getString().using(p).fire(new Receiver<String>() {
+      @Override
+      public void onSuccess(String response) {
+        assertEquals("Hello World!", response);
+        finishTestAndReset();
+      }
+    });
   }
 
   public void testValueObjectCreateSetRetrieveUpdate() {

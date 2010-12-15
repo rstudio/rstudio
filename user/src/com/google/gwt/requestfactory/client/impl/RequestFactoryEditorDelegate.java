@@ -20,6 +20,7 @@ import com.google.gwt.editor.client.impl.AbstractEditorDelegate;
 import com.google.gwt.editor.client.impl.DelegateMap;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyChange;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
@@ -117,9 +118,9 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
       // Read-only mode
       return object;
     }
-    if (object instanceof EntityProxy) {
+    if (object instanceof BaseProxy) {
       @SuppressWarnings("unchecked")
-      T toReturn = (T) request.edit((EntityProxy) object);
+      T toReturn = (T) request.edit((BaseProxy) object);
       return toReturn;
     }
     return object;

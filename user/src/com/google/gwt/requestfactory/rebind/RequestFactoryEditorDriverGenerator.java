@@ -25,7 +25,7 @@ import com.google.gwt.editor.rebind.model.EditorModel;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.client.impl.AbstractRequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.client.impl.RequestFactoryEditorDelegate;
-import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.util.List;
@@ -37,13 +37,13 @@ import java.util.Map;
 public class RequestFactoryEditorDriverGenerator extends
     AbstractEditorDriverGenerator {
 
-  private JClassType entityProxyType;
+  private JClassType baseProxyType;
 
   @Override
   public String generate(TreeLogger logger, GeneratorContext context,
       String typeName) throws UnableToCompleteException {
-    entityProxyType = context.getTypeOracle().findType(
-        EntityProxy.class.getCanonicalName());
+    baseProxyType = context.getTypeOracle().findType(
+        BaseProxy.class.getCanonicalName());
     return super.generate(logger, context, typeName);
   }
 
@@ -65,7 +65,7 @@ public class RequestFactoryEditorDriverGenerator extends
   @Override
   protected String mutableObjectExpression(EditorData data,
       String sourceObjectExpression) {
-    if (entityProxyType.isAssignableFrom(data.getPropertyOwnerType())) {
+    if (baseProxyType.isAssignableFrom(data.getPropertyOwnerType())) {
       return String.format("((%s) request.edit((%s)))",
           data.getPropertyOwnerType().getQualifiedSourceName(),
           sourceObjectExpression);

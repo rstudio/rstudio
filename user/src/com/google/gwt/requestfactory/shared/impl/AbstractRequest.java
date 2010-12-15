@@ -16,7 +16,7 @@
 package com.google.gwt.requestfactory.shared.impl;
 
 import com.google.gwt.autobean.shared.Splittable;
-import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.InstanceRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.Request;
@@ -36,7 +36,7 @@ import java.util.Set;
  * @param <T> return type
  */
 public abstract class AbstractRequest<T> implements Request<T>,
-    InstanceRequest<EntityProxy, T> {
+    InstanceRequest<BaseProxy, T> {
 
   /**
    * Used by generated subtypes.
@@ -82,7 +82,7 @@ public abstract class AbstractRequest<T> implements Request<T>,
    * This method comes from the {@link InstanceRequest} interface. Instance
    * methods place the instance in the first parameter slot.
    */
-  public Request<T> using(EntityProxy instanceObject) {
+  public Request<T> using(BaseProxy instanceObject) {
     getRequestData().getParameters()[0] = instanceObject;
     /*
      * Instance methods enqueue themselves when their using() method is called.

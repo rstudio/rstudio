@@ -15,21 +15,12 @@
  */
 package com.google.gwt.requestfactory.shared;
 
+import com.google.gwt.requestfactory.server.SimpleValue;
+
 /**
- * Simple RequesetFactory interface with two domain objects, and our standard
- * UserInformation and Logging services.
+ * Tests instance method invocations on value objects.
  */
-public interface SimpleRequestFactory extends BasicRequestFactory {
-
-  InstanceServiceRequest instanceServiceRequest();
-
-  InstanceServiceRequestByName instanceServiceRequestByName();
-
-  SimpleBarRequest simpleBarRequest();
-
-  SimpleFooRequest simpleFooRequest();
-
-  SimpleValueContext simpleValueContext();
-
-  UnicodeTestRequest unicodeTestRequest();
+@Service(SimpleValue.class)
+public interface SimpleValueContext extends RequestContext {
+  InstanceRequest<SimpleValueProxy, String> getString();
 }

@@ -738,10 +738,10 @@ public class RequestFactoryInterfaceValidator {
    *          EntityProxy or ValueProxy subtype
    */
   public void validateProxy(String binaryName) {
-    if (fastFail(binaryName)) {
-      return;
-    }
-
+    /*
+     * Don't call fastFail() here or the proxy may not be validated, since
+     * validateXProxy delegates to validateProxy() which would re-check.
+     */
     Type proxyType = Type.getObjectType(BinaryName.toInternalName(binaryName));
     if (isAssignable(parentLogger, entityProxyIntf, proxyType)) {
       validateEntityProxy(binaryName);

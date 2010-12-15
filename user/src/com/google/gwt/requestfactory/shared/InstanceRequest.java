@@ -20,15 +20,15 @@ package com.google.gwt.requestfactory.shared;
  * &mdash; rather it vends one. There is no way to get an instance method's
  * {@link Request#fire} without assigning an instance by calling {@link #using}.
  * 
- * @param <P> the instance type of EntityProxy
+ * @param <P> the instance type of BaseProxy
  * @param <T> the type eventually returned by the method invocation
  */
-public interface InstanceRequest<P extends EntityProxy, T> {
+public interface InstanceRequest<P extends BaseProxy, T> {
 
   /**
    * Provide the instance on which the request will be invoked.
-   *
-   * @param instanceObject an {@link EntityProxy} instance of type P
+   * 
+   * @param instanceObject an {@link BaseProxy} instance of type P
    * @return an instance of {@link Request}&lt;T&gt;
    */
   Request<T> using(P instanceObject);
