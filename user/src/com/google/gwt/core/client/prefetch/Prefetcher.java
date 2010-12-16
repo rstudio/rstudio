@@ -35,7 +35,7 @@ public class Prefetcher {
       return;
     }
 
-    // No range checking in web mode means we needn't precompute the size.
+    // No range checking in Production Mode means we needn't precompute the size
     int[] runAsyncSplitPoints = new int[0];
     int i = 0;
     for (PrefetchableResource resource : resources) {

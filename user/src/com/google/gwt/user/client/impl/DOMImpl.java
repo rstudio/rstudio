@@ -33,9 +33,10 @@ public abstract class DOMImpl {
    */
   protected static boolean isMyListener(Object object) {
     /*
-     * The first test ensures the Object belongs to this module in web mode by
-     * ensuring this is not a JavaScriptObject. In web mode, foreign Java
-     * objects appear to be JavaScriptObject. See Cast.isJavaScriptObject().
+     * The first test ensures the Object belongs to this module in Production
+     * Mode by ensuring this is not a JavaScriptObject. In Production Mode,
+     * foreign Java objects appear to be JavaScriptObject. See
+     * Cast.isJavaScriptObject().
      * 
      * The second test then checks the exact type.
      * 

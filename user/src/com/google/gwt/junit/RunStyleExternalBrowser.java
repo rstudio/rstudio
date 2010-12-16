@@ -22,8 +22,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Runs in web mode via browsers managed as an external process. This feature is
- * experimental and is not officially supported.
+ * Runs in Production Mode via browsers managed as an external process. This
+ * feature is experimental and is not officially supported.
  */
 class RunStyleExternalBrowser extends RunStyle {
 

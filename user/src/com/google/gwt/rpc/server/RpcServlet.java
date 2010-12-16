@@ -108,7 +108,7 @@ public class RpcServlet extends AbstractRemoteServiceServlet {
 
       if ("HostedMode".equals(permutationStrongName)) {
         if (!allowHostedModeConnections()) {
-          throw new SecurityException("Blocked hosted mode request");
+          throw new SecurityException("Blocked Development Mode request");
         }
         toReturn = new HostedModeClientOracle();
       } else {
@@ -236,17 +236,18 @@ public class RpcServlet extends AbstractRemoteServiceServlet {
   }
 
   /**
-   * Indicates whether or not an RPC request from a hosted mode client should be
-   * serviced. Requests from hosted mode clients will expose unobfuscated
-   * identifiers in the payload. It is intended that developers override this
-   * method to restrict access based on installation-specific logic (such as a
-   * range of IP addresses, checking for certain cookies, etc.)
+   * Indicates whether or not an RPC request from a Development Mode client
+   * should be serviced. Requests from Development Mode clients will expose
+   * unobfuscated identifiers in the payload. It is intended that developers
+   * override this method to restrict access based on installation-specific
+   * logic (such as a range of IP addresses, checking for certain cookies, etc.)
    * <p>
    * The default implementation allows hosted-mode connections from the local
    * host, loopback addresses (127.*), site local (RFC 1918), link local
    * (169.254/16) addresses, and their IPv6 equivalents.
-   * 
-   * @return <code>true</code> if a hosted mode connection should be allowed
+   *
+   * @return <code>true</code> if a Development Mode connection should be
+   *         allowed
    * @see #getThreadLocalRequest()
    * @see InetAddress
    */

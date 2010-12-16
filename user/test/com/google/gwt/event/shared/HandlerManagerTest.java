@@ -206,7 +206,7 @@ public class HandlerManagerTest extends HandlerTestBase {
       return;
     }
 
-    // Web mode, no asserts, so remove will quietly succeed.
+    // Production Mode, no asserts, so remove will quietly succeed.
     manager.fireEvent(new MouseDownEvent() {
     });
     assertFired(one);

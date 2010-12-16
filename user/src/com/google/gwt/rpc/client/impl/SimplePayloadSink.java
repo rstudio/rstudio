@@ -192,10 +192,11 @@ public class SimplePayloadSink extends CommandSink {
     @Override
     public boolean visit(SetCommand x, Context ctx) {
       /*
-       * In hosted-mode, the field's declaring class is written to the stream to
-       * handle field shadowing. In web mode, this isn't necessary because all
-       * field names are allocated in the same "object" scope.
-       * 
+       * In Development Mode, the field's declaring class is written to the
+       * stream to handle field shadowing. In Production Mode, this isn't
+       * necessary because all field names are allocated in the same "object"
+       * scope.
+       *
        * DeclaringClassName~FieldName~...value...
        */
       if (!GWT.isScript()) {

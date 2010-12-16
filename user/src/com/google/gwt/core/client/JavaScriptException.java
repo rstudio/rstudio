@@ -127,12 +127,12 @@ public final class JavaScriptException extends RuntimeException {
   public JavaScriptException(Object e) {
     this.e = e;
     /*
-     * In hosted mode, JavaScriptExceptions are created exactly when the native
-     * method returns and their stack traces are fixed-up by the hosted-mode
-     * plumbing.
-     * 
-     * In web mode, we'll attempt to infer the stack trace from the thrown
-     * object, although this is not possible in all browsers.
+     * In Development Mode, JavaScriptExceptions are created exactly when the
+     * native method returns and their stack traces are fixed-up by the
+     * hosted-mode plumbing.
+     *
+     * In Production Mode, we'll attempt to infer the stack trace from the
+     * thrown object, although this is not possible in all browsers.
      */
     if (GWT.isScript()) {
       StackTraceCreator.createStackTrace(this);

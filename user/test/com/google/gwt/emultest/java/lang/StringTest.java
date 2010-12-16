@@ -156,17 +156,17 @@ public class StringTest extends GWTTestCase {
     assertEquals("bcd", str);
     try {
       new String(bytes, 1, 6);
-      assertTrue("Should have thrown IOOB in devmode", GWT.isScript());
+      assertTrue("Should have thrown IOOB in Development Mode", GWT.isScript());
     } catch (IndexOutOfBoundsException expected) {
     }
     try {
       new String(bytes, -1, 2);
-      assertTrue("Should have thrown IOOB in devmode", GWT.isScript());
+      assertTrue("Should have thrown IOOB in Development Mode", GWT.isScript());
     } catch (IndexOutOfBoundsException expected) {
     }
     try {
       new String(bytes, 6, 2);
-      assertTrue("Should have thrown IOOB in devmode", GWT.isScript());
+      assertTrue("Should have thrown IOOB in Development Mode", GWT.isScript());
     } catch (IndexOutOfBoundsException expected) {
     }
   }
@@ -181,17 +181,17 @@ public class StringTest extends GWTTestCase {
     assertEquals("ßçÐ", str);
     try {
       new String(bytes, 1, 6, "ISO-8859-1");
-      assertTrue("Should have thrown IOOB in devmode", GWT.isScript());
+      assertTrue("Should have thrown IOOB in Development Mode", GWT.isScript());
     } catch (IndexOutOfBoundsException expected) {
     }
     try {
       new String(bytes, -1, 2, "ISO-8859-1");
-      assertTrue("Should have thrown IOOB in devmode", GWT.isScript());
+      assertTrue("Should have thrown IOOB in Development Mode", GWT.isScript());
     } catch (IndexOutOfBoundsException expected) {
     }
     try {
       new String(bytes, 6, 2, "ISO-8859-1");
-      assertTrue("Should have thrown IOOB in devmode", GWT.isScript());
+      assertTrue("Should have thrown IOOB in Development Mode", GWT.isScript());
     } catch (IndexOutOfBoundsException expected) {
     }
   }
@@ -207,17 +207,17 @@ public class StringTest extends GWTTestCase {
     assertEquals("ßçÐ", str);
     try {
       new String(bytes, 2, 12, "UTF-8");
-      assertTrue("Should have thrown IOOB in devmode", GWT.isScript());
+      assertTrue("Should have thrown IOOB in Development Mode", GWT.isScript());
     } catch (IndexOutOfBoundsException expected) {
     }
     try {
       new String(bytes, -1, 2, "UTF-8");
-      assertTrue("Should have thrown IOOB in devmode", GWT.isScript());
+      assertTrue("Should have thrown IOOB in Development Mode", GWT.isScript());
     } catch (IndexOutOfBoundsException expected) {
     }
     try {
       new String(bytes, 12, 2, "UTF-8");
-      assertTrue("Should have thrown IOOB in devmode", GWT.isScript());
+      assertTrue("Should have thrown IOOB in Development Mode", GWT.isScript());
     } catch (IndexOutOfBoundsException expected) {
     }
   }
@@ -368,7 +368,7 @@ public class StringTest extends GWTTestCase {
 
       /*
        * Verify that the resulting hash code is numeric, since this is not
-       * enforced in web mode.
+       * enforced in Production Mode.
        */
       String str = Integer.toString(expectedHash);
       for (int j = 0; j < str.length(); ++j) {

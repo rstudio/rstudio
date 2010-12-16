@@ -168,7 +168,7 @@ function fireOnModuleLoadStart(className) {
 
 
 /******************************************************************************
- * Helper functions for the DevMode startup code. Listed alphabetically
+ * Helper functions for the Development Mode startup code. Listed alphabetically
  *****************************************************************************/
 function disconnectPlugin() {
   try {
@@ -306,7 +306,7 @@ function pluginConnectionError(codeServer) {
   if ($errFn) {
     $errFn($moduleName);
   } else {
-    alert("Plugin failed to connect to hosted mode server at " + codeServer);
+    alert("Plugin failed to connect to Development Mode server at " + codeServer);
     loadIframe("http://code.google.com/p/google-web-toolkit/wiki/TroubleshootingOOPHM");
   }
 }
@@ -342,7 +342,7 @@ function tryConnectingToPlugin(sessionId, url) {
 
 
 /******************************************************************************
- * DevMode startup code
+ * Development Mode startup code
  *****************************************************************************/
 function gwtOnLoad(errFn, moduleName, moduleBase, softPermutationId, computePropValue) {
   $errFn = errFn;

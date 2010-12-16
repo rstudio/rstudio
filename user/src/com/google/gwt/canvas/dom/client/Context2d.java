@@ -1193,7 +1193,7 @@ public class Context2d extends JavaScriptObject implements Context {
   }-*/;
 
   /**
-   * Returns the fill style when in web mode.
+   * Returns the fill style when in Production Mode.
    *
    * @return the fill style
    */
@@ -1217,7 +1217,7 @@ public class Context2d extends JavaScriptObject implements Context {
   }-*/;
 
   /**
-   * Returns the stroke style when in web mode.
+   * Returns the stroke style when in Production Mode.
    *
    * @return the stroke style
    */
@@ -1240,7 +1240,7 @@ public class Context2d extends JavaScriptObject implements Context {
   }-*/;
 
   /**
-   * Sets the fill style when in web mode.
+   * Sets the fill style when in Production Mode.
    *
    * @param fillStyle the fill style to set
    */
@@ -1263,7 +1263,7 @@ public class Context2d extends JavaScriptObject implements Context {
   }-*/;
 
   /**
-   * Sets the stroke style when in web mode.
+   * Sets the stroke style when in Production Mode.
    *
    * @param strokeStyle the strokeStyle to set
    */

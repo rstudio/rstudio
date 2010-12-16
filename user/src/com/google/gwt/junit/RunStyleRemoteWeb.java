@@ -31,8 +31,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Runs in web mode via browsers managed over RMI. This feature is experimental
- * and is not officially supported.
+ * Runs in Production Mode via browsers managed over RMI. This feature is
+ * experimental and is not officially supported.
  */
 class RunStyleRemoteWeb extends RunStyle {
 

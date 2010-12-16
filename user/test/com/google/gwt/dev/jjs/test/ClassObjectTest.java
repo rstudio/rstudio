@@ -18,7 +18,7 @@ package com.google.gwt.dev.jjs.test;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * Tests the web mode implementation of class literals.
+ * Tests the Production Mode implementation of class literals.
  */
 public class ClassObjectTest extends GWTTestCase {
 

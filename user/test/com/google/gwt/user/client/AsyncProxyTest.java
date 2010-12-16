@@ -135,7 +135,7 @@ public class AsyncProxyTest extends GWTTestCase {
   }
 
   public void testProxy() {
-    // Disable in web mode for now
+    // Disable in Production Mode for now
     // TODO Make sure runAsync and JUnit play nicely together
     if (GWT.isScript()) {
       return;

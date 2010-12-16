@@ -140,7 +140,7 @@ public class RegExpTest extends GWTTestCase {
   
   public void testExec_controlCharacterValid() {
     regExp = RegExp.compile("\\cM");
-    // DISCREPANCY: does not work on hosted mode
+    // DISCREPANCY: does not work on Development Mode
     // checkExec("\r", 0, "\r");
     checkExecNoMatch(allAsciiCharsBut("\r", 255));
   }

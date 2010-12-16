@@ -27,7 +27,7 @@ package com.google.gwt.canvas.dom.client;
  * <p>
  * To handle dev mode we must wrap JSO strings in an array. Therefore, when in
  * dev mode, CssColor is actually an array with one element that is the JSO. In
- * web mode, this is not needed.
+ * Production Mode, this is not needed.
  * </p>
  * 
  * @see <a href="http://www.w3.org/TR/CSS1/#color">Cascading Style Sheets, level 1</a>

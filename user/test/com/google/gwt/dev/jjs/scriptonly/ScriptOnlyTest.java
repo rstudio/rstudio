@@ -21,7 +21,8 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 /**
- * Tests various aspects of using user-defined bridge classes in hosted mode.
+ * Tests various aspects of using user-defined bridge classes in Development
+ * Mode.
  */
 public class ScriptOnlyTest extends GWTTestCase {
 
@@ -45,7 +46,7 @@ public class ScriptOnlyTest extends GWTTestCase {
   public void testUserBridgeClass() {
     final ScriptOnlyClass b = new ScriptOnlyClass();
     if (GWT.isScript()) {
-      // Just make sure the super-source version is used in web mode
+      // Just make sure the super-source version is used in Production Mode
       assertFalse(b.isHostedMode());
       return;
     }
@@ -56,10 +57,10 @@ public class ScriptOnlyTest extends GWTTestCase {
     // Is the sub-loader delegating to our CCL?
     assertSame(Window.class, b.getWindowClass());
 
-    // Try something you can't do in web-mode (JRE code)
+    // Try something you can't do in Production Mode (JRE code)
     assertNotNull(b.getClassLoaderName());
 
-    // Try something you can't do in web-mode ("server" code)
+    // Try something you can't do in Prodiction Mode ("server" code)
     assertTrue(b.callCodeNotInSourcePath());
 
     b.callCallback(new AsyncCallback<ScriptOnlyClass>() {

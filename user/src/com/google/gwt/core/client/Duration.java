@@ -23,7 +23,7 @@ public class Duration {
   /**
    * Returns the same result as {@link System#currentTimeMillis()}, but as a
    * double. Because emulated long math is significantly slower than doubles in
-   * web mode, this method is to be preferred.
+   * Production Mode, this method is to be preferred.
    */
   public static native double currentTimeMillis() /*-{
     return (new Date()).getTime();

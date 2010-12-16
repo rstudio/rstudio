@@ -38,11 +38,11 @@ public class BenchmarkResults extends JUnitResult {
   /**
    * The URL of the document on the browser (document.location). This is used to
    * locate the *cache.html document containing the generated JavaScript for the
-   * test. In the case of hosted mode, this points (uselessly) to the nocache
-   * file, because there is no generated JavaScript.
-   * 
-   * Apparently, we can't get this value on the server-side because of the goofy
-   * way HTTP_REFERER is set by different browser implementations of
+   * test. In the case of Development Mode, this points (uselessly) to the
+   * nocache file, because there is no generated JavaScript.
+   *
+   * Apparently, we can't get this value on the server-side because of the
+   * goofy way HTTP_REFERER is set by different browser implementations of
    * XMLHttpRequest.
    */
   private String sourceRef;

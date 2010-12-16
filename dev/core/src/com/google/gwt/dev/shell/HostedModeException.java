@@ -16,8 +16,8 @@
 package com.google.gwt.dev.shell;
 
 /**
- * An exception that can only occur in hosted mode, but may indicate potential
- * problems in web mode.
+ * An exception that can only occur in Development Mode, but may indicate
+ * potential problems in Production Mode.
  */
 public class HostedModeException extends RuntimeException {
 

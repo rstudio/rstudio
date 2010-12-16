@@ -35,8 +35,8 @@ public final class Impl {
    * and there is no GWT code in the same module on the call stack. Examples
    * include event handlers, exported methods, and module initialization.
    * <p>
-   * The GWT compiler and hosted mode will provide a module-scoped variable,
-   * <code>$entry</code>, which is an alias for this method.
+   * The GWT compiler and Development Mode will provide a module-scoped
+   * variable, <code>$entry</code>, which is an alias for this method.
    * <p>
    * This method can be called reentrantly, which will simply delegate to the
    * function.
@@ -111,7 +111,7 @@ public final class Impl {
   /**
    * Returns the obfuscated name of members in the compiled output. This is a
    * thin wrapper around JNameOf AST nodes and is therefore meaningless to
-   * implement in hosted mode.
+   * implement in Development Mode.
    * 
    * @param jsniIdent a string literal specifying a type, field, or method. Raw
    *          type names may also be used to obtain the name of the type's seed
@@ -123,12 +123,12 @@ public final class Impl {
    */
   public static String getNameOf(String jsniIdent) {
     /*
-     * In web mode, the compiler directly replaces calls to this method with a
-     * string literal expression.
+     * In Production Mode, the compiler directly replaces calls to this method
+     * with a string literal expression.
      */
     assert !GWT.isScript() : "ReplaceRebinds failed to replace this method";
     throw new UnsupportedOperationException(
-        "Impl.getNameOf() is unimplemented in hosted mode");
+        "Impl.getNameOf() is unimplemented in Development Mode");
   }
 
   public static native String getPermutationStrongName() /*-{
@@ -157,7 +157,7 @@ public final class Impl {
       // Assignment to $entry is done by the compiler
       return @com.google.gwt.core.client.impl.Impl::entry(Lcom/google/gwt/core/client/JavaScriptObject;);
     } else {
-      // But we have to do in in hosted mode
+      // But we have to do in in Development Mode
       return $entry = @com.google.gwt.core.client.impl.Impl::entry(Lcom/google/gwt/core/client/JavaScriptObject;);
     }
   }-*/;
@@ -169,7 +169,7 @@ public final class Impl {
     } else {
       _ = jsFunction.apply(thisObj, arguments);
       if (_ != null) {
-        // Wrap for hosted mode
+        // Wrap for Development Mode
         _ = Object(_);
       }
       return _;
@@ -177,7 +177,7 @@ public final class Impl {
   }-*/;
 
   /**
-   * Called by ModuleSpace in hosted mode when running onModuleLoads.
+   * Called by ModuleSpace in Development Mode when running onModuleLoads.
    */
   private static boolean enter() {
     assert entryDepth >= 0 : "Negative entryDepth value at entry " + entryDepth;
@@ -231,7 +231,7 @@ public final class Impl {
   }
 
   /**
-   * Called by ModuleSpace in hosted mode when running onModuleLoads.
+   * Called by ModuleSpace in Development Mode when running onModuleLoads.
    */
   private static void exit(boolean initialEntry) {
     if (initialEntry) {

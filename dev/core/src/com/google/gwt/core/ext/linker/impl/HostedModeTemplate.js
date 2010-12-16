@@ -46,8 +46,8 @@ function __MODULE_FUNC__() {
 
   ; // end of global vars
 
-  // Only fire the event if really hosted mode; in web mode the compiled
-  // selection script will fire its own startup event.
+  // Only fire the event if really Development Mode; in Production Mode the
+  // compiled selection script will fire its own startup event.
   if (isHostedMode()) {
     $stats && $stats({
       moduleName: '__MODULE_NAME__',
@@ -92,7 +92,7 @@ function __MODULE_FUNC__() {
     if (scriptsDone && loadDone) {
       var iframe = $doc.getElementById('__MODULE_NAME__');
       var frameWnd = iframe.contentWindow;
-      // inject hosted mode property evaluation function
+      // inject Development Mode property evaluation function
       if (isHostedMode()) {
         frameWnd.__gwt_getProperty = function(name) {
           return computePropValue(name);
@@ -353,7 +353,7 @@ function __MODULE_FUNC__() {
   computeScriptBase();
 
 // __SHELL_SERVLET_ONLY_BEGIN__
-  // Force shell servlet to serve compiled output for web mode
+  // Force shell servlet to serve compiled output for Production Mode
   if (!isHostedMode()) {
     $doc.write('<script src="' + base + '__MODULE_NAME__.nocache.js?compiled"></script>');
     return;

@@ -29,7 +29,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Tests several tricky aspects of hosted mode.
+ * Tests several tricky aspects of Development Mode.
  */
 public class HostedTest extends GWTTestCase {
 
@@ -213,8 +213,8 @@ public class HostedTest extends GWTTestCase {
 
   /*
    * Test that returning JavaScript boxed primitives works as expected. Note
-   * that Boolean and Number cannot be supported properly in web mode, so we do
-   * not support it in hosted mode and therefore do not test it here.
+   * that Boolean and Number cannot be supported properly in Production Mode, so
+   * we do not support it in Development Mode and therefore do not test it here.
    */
   public void testAutoBoxing() {
     JavaScriptObject bvo = getBoxedBooleanAsObject(true);
@@ -601,8 +601,8 @@ public class HostedTest extends GWTTestCase {
     assertEquals(str, "test");
     try {
       getIntAsObject();
-      // should have thrown an exception in hosted mode,
-      // so fail unless we are in web mode
+      // should have thrown an exception in Development Mode,
+      // so fail unless we are in Production Mode
       assertTrue(GWT.isScript());
     } catch (IllegalArgumentException e) {
       // expected exception

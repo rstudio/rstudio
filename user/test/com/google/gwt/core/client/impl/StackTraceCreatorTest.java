@@ -23,8 +23,8 @@ import com.google.gwt.core.client.impl.StackTraceCreator.CollectorChrome;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * Tests StackTraceCreator in web mode. The methods in this test class are
- * static so that their names can be reliably determined in web mode.
+ * Tests StackTraceCreator in Production Mode. The methods in this test class
+ * are static so that their names can be reliably determined in Production Mode.
  */
 public class StackTraceCreatorTest extends GWTTestCase {
   
@@ -41,7 +41,7 @@ public class StackTraceCreatorTest extends GWTTestCase {
        */
       assertNotNull(e.getStackTrace());
       if (e.getStackTrace().length == 0) {
-        assertTrue("hosted mode", GWT.isScript());
+        assertTrue("Development Mode", GWT.isScript());
         return;
       } else {
         t = e;
@@ -66,7 +66,7 @@ public class StackTraceCreatorTest extends GWTTestCase {
    */  
   public static void testReentrantCalls() {
     if (!GWT.isScript()) {
-      // sample is useless in hosted mode
+      // sample is useless in Development Mode
       return;
     }
 

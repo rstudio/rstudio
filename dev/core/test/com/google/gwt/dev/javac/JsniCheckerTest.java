@@ -299,8 +299,8 @@ public class JsniCheckerTest extends CheckerTestCase {
   }
 
   /**
-   * The proper behavior here is a close call. In hosted mode, Java arrays are
-   * completely unusable in JavaScript, so the current reasoning is to allow
+   * The proper behavior here is a close call. In Development Mode, Java arrays
+   * are completely unusable in JavaScript, so the current reasoning is to allow
    * them.
    */
   public void testLongArray() {

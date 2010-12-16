@@ -83,8 +83,8 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
     Property prop = getProperty(propertyName);
 
     // Check if this property has already been queried for; if so, return
-    // the same answer. This is necessary to match web mode behavior since
-    // property providers are only called once. We cache even values that
+    // the same answer. This is necessary to match Production Mode behavior
+    // since property providers are only called once. We cache even values that
     // cause exceptions to be thrown to make sure we are consistent even
     // in throwing exceptions for the same property.
     if (prevAnswers.containsKey(propertyName)) {

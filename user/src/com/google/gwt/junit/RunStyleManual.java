@@ -19,7 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 
 /**
- * Runs in web mode waiting for the user to contact the server with their own
+ * Runs in Production Mode waiting for the user to contact the server with their own
  * browser.
  */
 class RunStyleManual extends RunStyle {

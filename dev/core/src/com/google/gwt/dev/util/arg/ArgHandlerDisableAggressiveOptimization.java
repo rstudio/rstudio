@@ -31,8 +31,8 @@ public final class ArgHandlerDisableAggressiveOptimization extends
 
   @Override
   public String getPurpose() {
-    return "Troubleshooting: Prevent the web mode compiler from performing "
-        + "aggressive optimizations.";
+    return "Troubleshooting: Prevent the Production Mode compiler from "
+        + "performing aggressive optimizations.";
   }
 
   @Override

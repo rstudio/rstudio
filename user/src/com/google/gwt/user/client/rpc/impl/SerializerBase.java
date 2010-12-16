@@ -28,8 +28,8 @@ import java.util.Map;
 
 /**
  * Maps class literals to type signatures and type signatures to serialization
- * methods. Relies on monotonic behavior of hashcodes in web mode defined in
- * {@link com.google.gwt.core.client.impl.Impl#getHashCode(Object)} In hosted
+ * methods. Relies on monotonic behavior of hashcodes in Production Mode defined
+ * in {@link com.google.gwt.core.client.impl.Impl#getHashCode(Object)} In hosted
  * mode, we map the underlying signature JsArray onto a proper IdentityHashMap.
  */
 public abstract class SerializerBase implements Serializer {

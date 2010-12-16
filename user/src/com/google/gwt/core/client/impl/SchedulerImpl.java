@@ -243,7 +243,7 @@ public class SchedulerImpl extends Scheduler {
       // $entry takes care of uncaught exception handling
       var ret = $entry(@com.google.gwt.core.client.impl.SchedulerImpl::execute(Lcom/google/gwt/core/client/Scheduler$RepeatingCommand;))(cmd);
       if (!@com.google.gwt.core.client.GWT::isScript()()) {
-        // Unwrap from hosted mode
+        // Unwrap from Development Mode
         ret = ret == true;
       }
       if (ret) {
@@ -258,7 +258,7 @@ public class SchedulerImpl extends Scheduler {
       // $entry takes care of uncaught exception handling
       var ret = $entry(@com.google.gwt.core.client.impl.SchedulerImpl::execute(Lcom/google/gwt/core/client/Scheduler$RepeatingCommand;))(cmd);
       if (!@com.google.gwt.core.client.GWT::isScript()()) {
-        // Unwrap from hosted mode
+        // Unwrap from Development Mode
         ret = ret == true;
       }
       if (!ret) {

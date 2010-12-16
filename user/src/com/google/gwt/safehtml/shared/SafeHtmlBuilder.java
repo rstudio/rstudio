@@ -194,9 +194,10 @@ public final class SafeHtmlBuilder {
    * values.
    *
    * <p>
-   * When executing client-side in hosted mode, or server side with assertions
-   * enabled, the argument is HTML-parsed and validated to satisfy the second
-   * constraint (the server-side check can also be enabled programmatically, see
+   * When executing client-side in Development Mode, or server side with
+   * assertions enabled, the argument is HTML-parsed and validated to satisfy
+   * the second constraint (the server-side check can also be enabled
+   * programmatically, see
    * {@link SafeHtmlHostedModeUtils#maybeCheckCompleteHtml(String)} for
    * details). For performance reasons, this check is not performed in prod mode
    * on the client, and with assertions disabled on the server.

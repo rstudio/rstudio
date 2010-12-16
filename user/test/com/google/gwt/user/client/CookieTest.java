@@ -63,7 +63,7 @@ public class CookieTest extends GWTTestCase {
   public void testExpires() {
     // Generate a random ID for the cookies. Since cookies are shared across
     // browser instances, its possible for multiple instances of this test to
-    // run concurrently (eg. hosted and web mode tests).  If that happens,
+    // run concurrently (eg. hosted and Production Mode tests). If that happens,
     // the cookies will be cleared while we wait for the timer to fire.
     int uniqueId = Random.nextInt(9000000) + 1000000;
     final String earlyCookie = "shouldExpireEarly" + uniqueId;

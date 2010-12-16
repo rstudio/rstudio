@@ -200,11 +200,11 @@ public class SelectionScriptLinkerUnitTest extends TestCase {
   }
 
   /**
-   * Test timestamps on the selection script. For hosted mode, it should match
-   * the module's timestamp. For dev mode, it should be current.
+   * Test timestamps on the selection script. For Development Mode, it should match
+   * the module's timestamp. For Production Mode, it should be current.
    */
   public void testTimestampOnSelectionScript() throws UnableToCompleteException {
-    // hosted
+    // Development Mode
     {
       ArtifactSet artifacts = new ArtifactSet();
       ArtifactSet updated = new ShardableSelectionScriptLinker().link(
@@ -213,7 +213,7 @@ public class SelectionScriptLinkerUnitTest extends TestCase {
       assertEquals(MOCK_MODULE_LAST_MODIFIED, selectionScript.getLastModified());
     }
 
-    // compiled
+    // Production Mode
     {
       ArtifactSet artifacts = new ArtifactSet();
       artifacts.add(createCompilationResult());

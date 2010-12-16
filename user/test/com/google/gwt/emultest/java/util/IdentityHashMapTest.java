@@ -505,8 +505,8 @@ public class IdentityHashMapTest extends TestMap {
     hashMap1.put(new Foo(), VALUE_1);
     hashMap2.put(new Foo(), VALUE_1);
     if (GWT.isScript()) {
-      // Only reliable in web mode since hosted mode can have identity hash
-      // collisions.
+      // Only reliable in Production Mode since Development Mode can have
+      // identity hash collisions.
       assertFalse(hashMap1.hashCode() == hashMap2.hashCode());
     }
   }

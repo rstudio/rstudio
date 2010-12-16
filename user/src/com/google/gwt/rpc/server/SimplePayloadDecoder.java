@@ -308,7 +308,7 @@ public class SimplePayloadDecoder {
   private Class<?> findClass(String token) throws ClassNotFoundException {
     /*
      * NB: This is the only method in SimplePayloadDecoder which would require
-     * any real adaptation to be made to run in web mode.
+     * any real adaptation to be made to run in Production Mode.
      */
 
     Class<?> clazz = classCache.get(token);
@@ -465,7 +465,7 @@ public class SimplePayloadDecoder {
    */
   private void readSetter(Class<?> clazz, HasSetters x)
       throws ClassNotFoundException {
-    // Only used by hosted mode to handle shadowing
+    // Only used by Development Mode to handle shadowing
     if (!clientOracle.isScript()) {
       String fieldDeclClassName = readCommand(StringValueCommand.class).getValue();
       if (fieldDeclClassName != null) {

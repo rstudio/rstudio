@@ -121,7 +121,7 @@ public class RunAsyncMetricsIntegrationTest extends GWTTestCase {
 
   public void testMetricsSignalled() {
     if (!GWT.isScript()) {
-      // There are no runAsync lightweight metrics in hosted mode
+      // There are no runAsync lightweight metrics in Development Mode
       return;
     }
     delayTestFinish(TIMEOUT);

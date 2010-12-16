@@ -619,17 +619,17 @@ public class CompilerTest extends GWTTestCase {
   /**
    * Make sure that the compiler does not crash itself on user code that divides
    * by zero. The actual behavior varies by the numeric type and whether it is
-   * hosted mode or web mode, but the important thing is that the compiler does
-   * not crash.
+   * Development Mode or Production Mode, but the important thing is that the
+   * compiler does not crash.
    */
   public void testDivByZero() {
     assertTrue(Double.isNaN(0.0 / 0.0));
 
     try {
-      // 0 / 0 is currently 0 in web mode.
+      // 0 / 0 is currently 0 in Production Mode.
       assertEquals(0, 0 / 0);
     } catch (ArithmeticException expected) {
-      // expected in hosted mode
+      // expected in Development Mode
     }
 
     try {
@@ -642,10 +642,10 @@ public class CompilerTest extends GWTTestCase {
     assertTrue(Double.isNaN(0.0 % 0.0));
 
     try {
-      // 0 % 0 is currently NaN in web mode.
+      // 0 % 0 is currently NaN in Production Mode.
       assertTrue(Double.isNaN(0 % 0));
     } catch (ArithmeticException expected) {
-      // expected in hosted mode
+      // expected in Development Mode
     }
 
     try {
@@ -986,9 +986,9 @@ public class CompilerTest extends GWTTestCase {
       f.returnNull().toString();
       fail();
     } catch (NullPointerException e) {
-      // hosted mode
+      // Development Mode
     } catch (JavaScriptException e) {
-      // web mode
+      // Production Mode
     }
 
     try {
@@ -996,9 +996,9 @@ public class CompilerTest extends GWTTestCase {
       fa[4] = null;
       fail();
     } catch (NullPointerException e) {
-      // hosted mode
+      // Development Mode
     } catch (JavaScriptException e) {
-      // web mode
+      // Production Mode
     }
   }
 

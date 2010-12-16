@@ -203,13 +203,13 @@ public abstract class GWTTestCase extends TestCase {
 
   /**
    * Determines whether or not exceptions will be caught by the test fixture.
-   * Override this method and return <code>false</code> to let exceptions
-   * escape to the browser. This will break the normal JUnit reporting
-   * functionality, but can be useful in web mode with a JavaScript debugger to
-   * pin down where exceptions are originating.
+   * Override this method and return <code>false</code> to let exceptions escape
+   * to the browser. This will break the normal JUnit reporting functionality,
+   * but can be useful in Production Mode with a JavaScript debugger to pin down
+   * where exceptions are originating.
    *
-   * @return <code>true</code> for normal JUnit behavior, or
-   *         <code>false</code> to disable normal JUnit getException reporting
+   * @return <code>true</code> for normal JUnit behavior, or <code>false</code>
+   *         to disable normal JUnit getException reporting
    */
   public boolean catchExceptions() {
     return true;

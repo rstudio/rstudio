@@ -44,9 +44,9 @@ class LongLibBase {
    * zeroed.
    *
    * Note that this class must be careful using type "long". Being the
-   * implementation of the long type for web mode, any place it uses a long is
-   * not usable in web mode. There is currently one such method: {@link
-   * LongLib#getAsIntArray}.
+   * implementation of the long type for Production Mode, any place it uses a
+   * long is not usable in Production Mode. There is currently one such method:
+   * {@link LongLib#getAsIntArray}.
    */
 
   // Note that the {@link LonghLib#mul} method implicitly depends on the
@@ -79,7 +79,7 @@ class LongLibBase {
       * TWO_PWR_31_DBL;
 
   /**
-   * Web mode implementation; the int array is already the right object.
+   * Production Mode implementation; the int array is already the right object.
    */
   @UnsafeNativeLong
   protected static native long asLong(LongEmul value) /*-{

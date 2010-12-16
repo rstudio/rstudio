@@ -28,10 +28,11 @@ public final class GWT {
    * This interface is used to catch exceptions at the "top level" just before
    * they escape to the browser. This is used in places where the browser calls
    * into user code such as event callbacks, timers, and RPC.
-   * 
-   * In hosted mode, the default handler prints a stack trace to the log window.
-   * In web mode, the default handler is null and thus exceptions are allowed to
-   * escape, which provides an opportunity to use a JavaScript debugger.
+   *
+   * In Development Mode, the default handler prints a stack trace to the log
+   * window. In Production Mode, the default handler is null and thus exceptions
+   * are allowed to escape, which provides an opportunity to use a JavaScript
+   * debugger.
    */
   public interface UncaughtExceptionHandler {
     void onUncaughtException(Throwable e);
@@ -40,7 +41,7 @@ public final class GWT {
   /**
    * An {@link UncaughtExceptionHandler} that logs errors to
    * {@link GWT#log(String, Throwable)}. This is the default exception handler
-   * in hosted mode. In web mode, the default exception handler is
+   * in Development Mode. In Production Mode, the default exception handler is
    * <code>null</code>.
    */
   private static final class DefaultUncaughtExceptionHandler implements
@@ -52,19 +53,19 @@ public final class GWT {
 
   /**
    * This constant is used by {@link #getPermutationStrongName} when running in
-   * hosted mode.
+   * Development Mode.
    */
   public static final String HOSTED_MODE_PERMUTATION_STRONG_NAME = "HostedMode";
 
   /**
-   * Always <code>null</code> in web mode; in hosted mode provides the
-   * implementation for certain methods.
+   * Always <code>null</code> in Production Mode; in Development Mode provides
+   * the implementation for certain methods.
    */
   private static GWTBridge sGWTBridge = null;
 
   /**
-   * Defaults to <code>null</code> in web mode and an instance of
-   * {@link DefaultUncaughtExceptionHandler} in hosted mode.
+   * Defaults to <code>null</code> in Production Mode and an instance of
+   * {@link DefaultUncaughtExceptionHandler} in Development Mode.
    */
   private static UncaughtExceptionHandler sUncaughtExceptionHandler = null;
 
@@ -72,10 +73,10 @@ public final class GWT {
    * Instantiates a class via deferred binding.
    * 
    * <p>
-   * The argument to {@link #create(Class)}&#160;<i>must</i> be a class
-   * literal because the web mode compiler must be able to statically determine
+   * The argument to {@link #create(Class)}&#160;<i>must</i> be a class literal
+   * because the Production Mode compiler must be able to statically determine
    * the requested type at compile-time. This can be tricky because using a
-   * {@link Class} variable may appear to work correctly in hosted mode.
+   * {@link Class} variable may appear to work correctly in Development Mode.
    * </p>
    * 
    * @param classLiteral a class literal specifying the base class to be
@@ -85,8 +86,8 @@ public final class GWT {
   public static <T> T create(Class<?> classLiteral) {
     if (sGWTBridge == null) {
       /*
-       * In web mode, the compiler directly replaces calls to this method with a
-       * new Object() type expression of the correct rebound type.
+       * In Production Mode, the compiler directly replaces calls to this method
+       * with a new Object() type expression of the correct rebound type.
        */
       throw new UnsupportedOperationException(
           "ERROR: GWT.create() is only usable in client code!  It cannot be called, "
@@ -130,8 +131,8 @@ public final class GWT {
 
   /**
    * Returns the permutation's strong name. This can be used to distinguish
-   * between different permutations of the same module. In hosted mode, this
-   * method will return {@value #HOSTED_MODE_PERMUTATION_STRONG_NAME}.
+   * between different permutations of the same module. In Development Mode,
+   * this method will return {@value #HOSTED_MODE_PERMUTATION_STRONG_NAME}.
    */
   public static String getPermutationStrongName() {
     if (GWT.isScript()) {
@@ -165,14 +166,14 @@ public final class GWT {
   }
 
   /**
-   * Returns the empty string when running in web mode, but returns a unique
-   * string for each thread in hosted mode (for example, different windows
-   * accessing the dev mode server will each have a unique id, and hitting
-   * refresh without restarting dev mode will result in a new unique id for
-   * a particular window.
-   * 
-   * TODO(unnurg): Remove this function once Dev Mode rewriting classes are
-   * in gwt-dev.
+   * Returns the empty string when running in Production Mode, but returns a
+   * unique string for each thread in Development Mode (for example, different
+   * windows accessing the dev mode server will each have a unique id, and
+   * hitting refresh without restarting dev mode will result in a new unique id
+   * for a particular window.
+   *
+   * TODO(unnurg): Remove this function once Dev Mode rewriting classes are in
+   * gwt-dev.
    */
   public static String getUniqueThreadId() {
     if (sGWTBridge != null) {
@@ -191,9 +192,10 @@ public final class GWT {
 
   /**
    * Returns <code>true</code> when running inside the normal GWT environment,
-   * either in hosted mode or web mode. Returns <code>false</code> if this
-   * code is running in a plain JVM. This might happen when running shared code
-   * on the server, or during the bootstrap sequence of a GWTTestCase test.
+   * either in Development Mode or Production Mode. Returns <code>false</code>
+   * if this code is running in a plain JVM. This might happen when running
+   * shared code on the server, or during the bootstrap sequence of a
+   * GWTTestCase test.
    */
   public static boolean isClient() {
     // Replaced with "true" by GWT compiler.
@@ -219,16 +221,16 @@ public final class GWT {
   }
 
   /**
-   * Logs a message to the development shell logger in hosted mode. Calls are
-   * optimized out in web mode.
+   * Logs a message to the development shell logger in Development Mode. Calls
+   * are optimized out in Production Mode.
    */
   public static void log(String message) {
     log(message, null);
   }
 
   /**
-   * Logs a message to the development shell logger in hosted mode. Calls are
-   * optimized out in web mode.
+   * Logs a message to the development shell logger in Development Mode. Calls
+   * are optimized out in Production Mode.
    */
   public static void log(String message, Throwable e) {
     if (sGWTBridge != null) {
@@ -268,8 +270,8 @@ public final class GWT {
   }
 
   /**
-   * Called via reflection in hosted mode; do not ever call this method in web
-   * mode.
+   * Called via reflection in Development Mode; do not ever call this method in
+   * Production Mode.
    */
   static void setBridge(GWTBridge bridge) {
     sGWTBridge = bridge;

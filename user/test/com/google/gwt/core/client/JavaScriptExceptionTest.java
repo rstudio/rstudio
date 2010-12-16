@@ -54,9 +54,9 @@ public class JavaScriptExceptionTest extends GWTTestCase {
   }-*/;
 
   /**
-   * This test doesn't work in hosted mode yet; we'd need a way to throw true
-   * native objects as exceptions. Windows/IE is the deal killer right now on
-   * really making this work since there's no way to raise an exception of a
+   * This test doesn't work in Development Mode yet; we'd need a way to throw
+   * true native objects as exceptions. Windows/IE is the deal killer right now
+   * on really making this work since there's no way to raise an exception of a
    * true JS value. We could use JS lambdas around Java calls to get around this
    * restriction.
    */

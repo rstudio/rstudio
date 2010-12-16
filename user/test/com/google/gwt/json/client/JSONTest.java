@@ -184,7 +184,7 @@ public class JSONTest extends GWTTestCase {
     assertEquals(new JSONString("foo"), new JSONString("foo"));
   }
 
-  // Null characters do not work in hosted mode
+  // Null characters do not work in Development Mode
   public void testEscaping() {
     JSONObject o = new JSONObject();
     char[] charsToEscape = new char[42];

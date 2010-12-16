@@ -400,9 +400,9 @@ public class Event extends NativeEvent {
 
   /**
    * Value returned by accessors when the actual integer value is undefined. In
-   * hosted mode, most accessors assert that the requested attribute is reliable
-   * across all supported browsers.
-   * 
+   * Development Mode, most accessors assert that the requested attribute is
+   * reliable across all supported browsers.
+   *
    * @see Event
    */
   @Deprecated

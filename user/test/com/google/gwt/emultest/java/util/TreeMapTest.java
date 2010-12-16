@@ -310,7 +310,8 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
     } catch (NullPointerException e) {
       // expected outcome
     } catch (JavaScriptException e) {
-      // in web mode we don't actually do null checks, so we get a JS exception
+      // in Production Mode we don't actually do null checks, so we get a JS
+      // exception
     }
   }
 
@@ -344,7 +345,8 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
     } catch (NullPointerException e) {
       // expected outcome
     } catch (JavaScriptException e) {
-      // in web mode we don't actually do null checks, so we get a JS exception
+      // in Production Mode we don't actually do null checks, so we get a JS
+      // exception
     }
   }
 
@@ -372,7 +374,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
     map.put(getKeys()[0], getValues()[0]);
     try {
       map.containsKey(getConflictingKey());
-      assertTrue("CCE expected in hosted mode", GWT.isScript());
+      assertTrue("CCE expected in Development Mode", GWT.isScript());
     } catch (ClassCastException e) {
       // expected outcome
     }
@@ -392,7 +394,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
       } catch (NullPointerException e) {
         // expected outcome
       } catch (JavaScriptException e) {
-        // in web mode we don't actually do null checks, so we get a JS
+        // in Production Mode we don't actually do null checks, so we get a JS
         // exception
       }
     }
@@ -683,7 +685,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
     map.put(getKeys()[0], getValues()[0]);
     try {
       map.get(getConflictingKey());
-      assertTrue("CCE expected in hosted mode", GWT.isScript());
+      assertTrue("CCE expected in Development Mode", GWT.isScript());
     } catch (ClassCastException e) {
       // expected outcome
     }
@@ -805,7 +807,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
     } else {
       try {
         sortedMap.headMap(getConflictingKey());
-        assertTrue("CCE expected in hosted mode", GWT.isScript());
+        assertTrue("CCE expected in Development Mode", GWT.isScript());
       } catch (ClassCastException e) {
         // expected outcome
       }
@@ -1137,7 +1139,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
       try {
         Map untypedMap = map;
         untypedMap.put(getConflictingKey(), getValues()[1]);
-        assertTrue("CCE expected in hosted mode", GWT.isScript());
+        assertTrue("CCE expected in Development Mode", GWT.isScript());
       } catch (ClassCastException e) {
         // expected outcome
       }
@@ -1352,7 +1354,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
       destMap.put(getKeys()[0], getValues()[0]);
       try {
         destMap.putAll(sourceMap);
-        assertTrue("CCE expected in hosted mode", GWT.isScript());
+        assertTrue("CCE expected in Development Mode", GWT.isScript());
       } catch (ClassCastException e) {
         // expected outcome
       }
@@ -1388,7 +1390,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
       } catch (NullPointerException e) {
         // expected outcome
       } catch (JavaScriptException e) {
-        // in web mode we don't actually do null checks, so we get a JS
+        // in Production Mode we don't actually do null checks, so we get a JS
         // exception
       }
     }
@@ -1447,7 +1449,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
       map.put(getKeys()[0], getValues()[0]);
       try {
         map.remove(getConflictingKey());
-        assertTrue("CCE expected in hosted mode", GWT.isScript());
+        assertTrue("CCE expected in Development Mode", GWT.isScript());
       } catch (ClassCastException e) {
         // expected outcome
       }
@@ -1579,19 +1581,19 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
     sortedMap.put(getKeys()[0], getValues()[0]);
     try {
       sortedMap.subMap(getConflictingKey(), getKeys()[0]);
-      assertTrue("CCE expected in hosted mode", GWT.isScript());
+      assertTrue("CCE expected in Development Mode", GWT.isScript());
     } catch (IllegalArgumentException e) {
-      // since we can't ensure CCEs in web mode, we may get IAE
-      assertTrue("IllegalArgumentException in hosted mode", GWT.isScript());
+      // since we can't ensure CCEs in Production Mode, we may get IAE
+      assertTrue("IllegalArgumentException in Development Mode", GWT.isScript());
     } catch (ClassCastException e) {
       // expected outcome
     }
     try {
       sortedMap.subMap(getKeys()[0], getConflictingKey());
-      assertTrue("CCE expected in hosted mode", GWT.isScript());
+      assertTrue("CCE expected in Development Mode", GWT.isScript());
     } catch (IllegalArgumentException e) {
-      // since we can't ensure CCEs in web mode, we may get IAE
-      assertTrue("IllegalArgumentException in hosted mode", GWT.isScript());
+      // since we can't ensure CCEs in Production Mode, we may get IAE
+      assertTrue("IllegalArgumentException in Development Mode", GWT.isScript());
     } catch (ClassCastException e) {
       // expected outcome
     }
@@ -1710,7 +1712,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
     } else {
       try {
         sortedMap.tailMap(getConflictingKey());
-        assertTrue("CCE expected in hosted mode", GWT.isScript());
+        assertTrue("CCE expected in Development Mode", GWT.isScript());
       } catch (ClassCastException e) {
         // expected outcome
       }

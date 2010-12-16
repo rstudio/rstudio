@@ -747,10 +747,10 @@ public class LinkedHashMapTest extends TestMap {
 
   /**
    * This method exists because java 1.5 no longer has
-   * LinkedHashMap(LinkedHashMap), replacing it with LinkedHashMap(Map<?
-   * extends K, ? extends V> m). Nevertheless, we want to use it in web mode to
-   * test that web mode function.
-   * 
+   * LinkedHashMap(LinkedHashMap), replacing it with LinkedHashMap(Map<? extends
+   * K, ? extends V> m). Nevertheless, we want to use it in Production Mode to
+   * test that Production Mode function.
+   *
    * @param hashMap the LinkedHashMap to be copied
    * @return the copy
    */

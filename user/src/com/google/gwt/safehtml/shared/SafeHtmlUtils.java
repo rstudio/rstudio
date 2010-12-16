@@ -37,8 +37,8 @@ public final class SafeHtmlUtils {
   private static final RegExp QUOT_RE = RegExp.compile("\"", "g");
 
   /**
-   * Returns a SafeHtml constructed from a safe string, i.e., without
-   * escaping the string.
+   * Returns a SafeHtml constructed from a safe string, i.e., without escaping
+   * the string.
    *
    * <p>
    * <b>Important</b>: For this method to be able to honor the {@link SafeHtml}
@@ -63,17 +63,18 @@ public final class SafeHtmlUtils {
    * second constraint ensures the composability of {@link SafeHtml} values.
    *
    * <p>
-   * When executing client-side in hosted mode, or server side with assertions
-   * enabled, the argument is HTML-parsed and validated to satisfy the second
-   * constraint (the server-side check can also be enabled programmatically, see
+   * When executing client-side in Development Mode, or server side with
+   * assertions enabled, the argument is HTML-parsed and validated to satisfy
+   * the second constraint (the server-side check can also be enabled
+   * programmatically, see
    * {@link SafeHtmlHostedModeUtils#maybeCheckCompleteHtml(String)} for
-   * details). For performance reasons, this check is not performed in prod mode
-   * on the client, and with assertions disabled on the server.
+   * details). For performance reasons, this check is not performed in
+   * Production Mode on the client, and with assertions disabled on the server.
    *
    * @param s the string to be wrapped as a {@link SafeHtml}
    * @return {@code s}, wrapped as a {@link SafeHtml}
-   * @throws IllegalArgumentException if not running in prod mode and {@code
-   *           html} violates the second constraint
+   * @throws IllegalArgumentException if not running in Production Mode and
+   *           {@code html} violates the second constraint
    */
   public static SafeHtml fromSafeConstant(String s) {
     SafeHtmlHostedModeUtils.maybeCheckCompleteHtml(s);

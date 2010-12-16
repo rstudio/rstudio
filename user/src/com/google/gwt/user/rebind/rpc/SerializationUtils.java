@@ -185,7 +185,7 @@ public class SerializationUtils {
       String serializerName = name[0] + "." + name[1];
       if (SerializableTypeOracleBuilder.isInStandardJavaPackage(classType.getQualifiedSourceName())) {
         /*
-         * Don't generate code into java packages. If you do hosted mode
+         * Don't generate code into java packages. If you do Development Mode
          * CompilingClassLoader will fail to resolve references to the generated
          * code.
          */

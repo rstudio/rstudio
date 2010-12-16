@@ -374,7 +374,7 @@ public class BigDecimalCompareTest extends EmulTestBase {
    */
   public void testNegateMathContextNegative() {
     if (!GWT.isScript()) {
-      // OpenJDK fails this test, so for now we only run it in web mode
+      // OpenJDK fails this test, so for now we only run it in Production Mode
       return;
     }
     String a = "-92948782094488478231212478987482988429808779810457634781384756794987";
@@ -395,7 +395,7 @@ public class BigDecimalCompareTest extends EmulTestBase {
    */
   public void testNegateMathContextPositive() {
     if (!GWT.isScript()) {
-      // OpenJDK fails this test, so for now we only run it in web mode
+      // OpenJDK fails this test, so for now we only run it in Production Mode
       return;
     }
     String a = "92948782094488478231212478987482988429808779810457634781384756794987";

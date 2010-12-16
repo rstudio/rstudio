@@ -23,7 +23,7 @@ import com.google.gwt.core.client.JsArrayString;
 
 /**
  * Encapsulates logic to create a stack trace. This class should only be used in
- * web mode.
+ * Production Mode.
  */
 public class StackTraceCreator {
   /**
@@ -363,12 +363,12 @@ public class StackTraceCreator {
   
   /**
    * Create a stack trace based on a JavaScriptException. This method should
-   * only be called in web mode.
+   * only be called in Production Mode.
    */
   public static void createStackTrace(JavaScriptException e) {
     if (!GWT.isScript()) {
       throw new RuntimeException(
-          "StackTraceCreator should only be called in web mode");
+          "StackTraceCreator should only be called in Production Mode");
     }
 
     GWT.<Collector> create(Collector.class).createStackTrace(e);
@@ -376,12 +376,12 @@ public class StackTraceCreator {
 
   /**
    * Fill in a stack trace based on the current execution stack. This method
-   * should only be called in web mode.
+   * should only be called in Production Mode.
    */
   public static void fillInStackTrace(Throwable t) {
     if (!GWT.isScript()) {
       throw new RuntimeException(
-          "StackTraceCreator should only be called in web mode");
+          "StackTraceCreator should only be called in Production Mode");
     }
 
     GWT.<Collector> create(Collector.class).fillInStackTrace(t);
@@ -389,12 +389,12 @@ public class StackTraceCreator {
 
   /**
    * Create a stack trace based on the current execution stack. This method
-   * should only be called in web mode.
+   * should only be called in Production Mode.
    */
   static JsArrayString createStackTrace() {
     if (!GWT.isScript()) {
       throw new RuntimeException(
-          "StackTraceCreator should only be called in web mode");
+          "StackTraceCreator should only be called in Production Mode");
     }
 
     return GWT.<Collector> create(Collector.class).collect();

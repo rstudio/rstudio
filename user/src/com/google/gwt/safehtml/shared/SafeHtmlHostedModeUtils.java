@@ -22,10 +22,12 @@ import com.google.gwt.thirdparty.streamhtmlparser.HtmlParserFactory;
 import com.google.gwt.thirdparty.streamhtmlparser.ParseException;
 
 /**
- * SafeHtml utilities whose implementation differs between hosted and web mode.
+ * SafeHtml utilities whose implementation differs between Development and
+ * Production Mode.
  *
  * <p>
- * This class has a super-source peer that provides the web-mode implementation.
+ * This class has a super-source peer that provides the Production Mode
+ * implementation.
  */
 public class SafeHtmlHostedModeUtils {
 
@@ -81,7 +83,7 @@ public class SafeHtmlHostedModeUtils {
    * conditions, and will be short-circuited otherwise:
    *
    * <ul>
-   * <li>In client-side code in hosted mode,</li>
+   * <li>In client-side code in Development Mode,</li>
    * <li>In server-side code if assertions are enabled,</li>
    * <li>In server-side code if the property {@code
    * com.google.gwt.safehtml.ForceCheckCompleteHtml} is set.</li>

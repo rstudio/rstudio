@@ -27,13 +27,13 @@ import java.lang.annotation.Target;
  * <p>
  * This annotation is typically combined with the <code>super-source</code> tag
  * to provide web-mode implementations of (binary-only) types that the developer
- * wishes to use in hosted mode. This can be used, for instance, to provide a
- * reference implementation to develop unit tests.
+ * wishes to use in Development Mode. This can be used, for instance, to provide
+ * a reference implementation to develop unit tests.
  * <p>
  * This annotation may also be applied to jsni methods to prevent them from
- * being parsed and loaded for devmode. This is done under certain 
+ * being parsed and loaded for Development Mode. This is done under certain
  * circumstances as an optimization to avoid loading very large jsni methods
- * which are only executed in webmode.   
+ * which are only executed in Production Mode.
  */
 @Documented
 @Target({ElementType.TYPE, ElementType.METHOD})

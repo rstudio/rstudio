@@ -183,7 +183,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
       try {
         Set untypedSet = set;
         untypedSet.add(getConflictingKey());
-        assertTrue("CCE expected in hosted mode", GWT.isScript());
+        assertTrue("CCE expected in Development Mode", GWT.isScript());
       } catch (ClassCastException e) {
         // expected outcome
       }
@@ -346,7 +346,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
       destSet.add(getKeys()[0]);
       try {
         destSet.addAll(sourceSet);
-        assertTrue("CCE expected in hosted mode", GWT.isScript());
+        assertTrue("CCE expected in Development Mode", GWT.isScript());
       } catch (ClassCastException e) {
         // expected outcome
       }
@@ -369,7 +369,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
       } catch (NullPointerException e) {
         // expected outcome
       } catch (JavaScriptException e) {
-        // in web mode we don't actually do null checks, so we get a JS
+        // in Production Mode we don't actually do null checks, so we get a JS
         // exception
       }
     }
@@ -517,7 +517,8 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
     } catch (NullPointerException e) {
       // expected outcome
     } catch (JavaScriptException e) {
-      // in web mode we don't actually do null checks, so we get a JS exception
+      // in Production Mode we don't actually do null checks, so we get a JS
+      // exception
     }
   }
 
@@ -533,7 +534,8 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
     } catch (NullPointerException e) {
       // expected outcome
     } catch (JavaScriptException e) {
-      // in web mode we don't actually do null checks, so we get a JS exception
+      // in Production Mode we don't actually do null checks, so we get a JS
+      // exception
     }
   }
 
@@ -579,7 +581,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
     set.add(getKeys()[0]);
     try {
       set.contains(getConflictingKey());
-      assertTrue("CCE expected in hosted mode", GWT.isScript());
+      assertTrue("CCE expected in Development Mode", GWT.isScript());
     } catch (ClassCastException e) {
       // expected outcome
     }
@@ -599,7 +601,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
       } catch (NullPointerException e) {
         // expected outcome
       } catch (JavaScriptException e) {
-        // in web mode we don't actually do null checks, so we get a JS
+        // in Production Mode we don't actually do null checks, so we get a JS
         // exception
       }
     }
@@ -705,7 +707,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
     } else {
       try {
         SortedSet.headSet(getConflictingKey());
-        assertTrue("CCE expected in hosted mode", GWT.isScript());
+        assertTrue("CCE expected in Development Mode", GWT.isScript());
       } catch (ClassCastException e) {
         // expected outcome
       }
@@ -853,7 +855,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
       set.add(getKeys()[0]);
       try {
         set.remove(getConflictingKey());
-        assertTrue("CCE expected in hosted mode", GWT.isScript());
+        assertTrue("CCE expected in Development Mode", GWT.isScript());
       } catch (ClassCastException e) {
         // expected outcome
       }
@@ -923,19 +925,19 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
     SortedSet.add(getKeys()[0]);
     try {
       SortedSet.subSet(getConflictingKey(), getKeys()[0]);
-      assertTrue("CCE expected in hosted mode", GWT.isScript());
+      assertTrue("CCE expected in Development Mode", GWT.isScript());
     } catch (IllegalArgumentException e) {
-      // since we can't ensure CCEs in web mode, we may get IAE
-      assertTrue("IllegalArgumentException in hosted mode", GWT.isScript());
+      // since we can't ensure CCEs in Production Mode, we may get IAE
+      assertTrue("IllegalArgumentException in Development Mode", GWT.isScript());
     } catch (ClassCastException e) {
       // expected outcome
     }
     try {
       SortedSet.subSet(getKeys()[0], getConflictingKey());
-      assertTrue("CCE expected in hosted mode", GWT.isScript());
+      assertTrue("CCE expected in Development Mode", GWT.isScript());
     } catch (IllegalArgumentException e) {
-      // since we can't ensure CCEs in web mode, we may get IAE
-      assertTrue("IllegalArgumentException in hosted mode", GWT.isScript());
+      // since we can't ensure CCEs in Production Mode, we may get IAE
+      assertTrue("IllegalArgumentException in Development Mode", GWT.isScript());
     } catch (ClassCastException e) {
       // expected outcome
     }
@@ -1057,7 +1059,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
     } else {
       try {
         SortedSet.tailSet(getConflictingKey());
-        assertTrue("CCE expected in hosted mode", GWT.isScript());
+        assertTrue("CCE expected in Development Mode", GWT.isScript());
       } catch (ClassCastException e) {
         // expected outcome
       }

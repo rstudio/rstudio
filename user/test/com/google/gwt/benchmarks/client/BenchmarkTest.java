@@ -168,7 +168,8 @@ public class BenchmarkTest extends Benchmark {
   }
 
   /**
-   * Do something that is relatively expensive both in hosted mode and web mode.
+   * Do something that is relatively expensive both in Development Mode and
+   * Production Mode.
    */
   private native void somethingExpensive() /*-{
     var deadField = 0;

@@ -23,12 +23,12 @@ import java.util.Map;
 
 /**
  * A class associating a (String, Object) map with arbitrary source objects
- * (except for Strings). This implementation is used in hosted mode.
+ * (except for Strings). This implementation is used in Development Mode.
  */
 public class WeakMapping {
 
   /*
-   * This implementation is used in hosted mode only. It uses a HashMap to
+   * This implementation is used in Development Mode only. It uses a HashMap to
    * associate the (key, value) maps with source object instances. The object
    * instances are wrapped in IdentityWeakReference objects in order to both
    * allow the underlying objects to be garbage-collected and to apply
@@ -126,9 +126,9 @@ public class WeakMapping {
    * some care should be taken to choose sufficiently unique identifiers.
    * 
    * <p>
-   * Due to restrictions of the web mode implementation, the instance argument
-   * must not be a String.
-   * 
+   * Due to restrictions of the Production Mode implementation, the instance
+   * argument must not be a String.
+   *
    * @param instance the source Object, which must not be a String.
    * @param key a String key.
    * @param value the Object to associate with the key on the given source

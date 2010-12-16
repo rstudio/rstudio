@@ -29,7 +29,8 @@ import java.util.Collections;
 
 /**
  * Isolates client code from swapping out the command factory in hosted versus
- * web mode. This type has a super-source peer which is used in web mode.
+ * Production Mode. This type has a super-source peer which is used in
+ * Production Mode.
  */
 public class ClientWriterFactory {
 

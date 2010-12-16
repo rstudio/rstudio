@@ -49,7 +49,7 @@ public class TextResourceTest extends GWTTestCase {
 
   /**
    * Test fix for problem where large text files caused out of memory errors
-   * when run in hosted mode.
+   * when run in Development Mode.
    */
   public void testBigTextResource() {
     final Resources r = GWT.create(Resources.class);

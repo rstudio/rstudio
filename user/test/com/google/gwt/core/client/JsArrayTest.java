@@ -71,12 +71,12 @@ public class JsArrayTest extends GWTTestCase {
     assertEquals(4, jsArray.length());
 
     // Stick a non-JSO value in the '4' slot. Getting it should cause a type
-    // error in hosted mode.
+    // error in Development Mode.
     if (!GWT.isScript()) {
       try {
         jsArray.<JsArrayString> cast().set(4, "bubba");
         jsArray.get(4);
-        fail("Expected an exception getting an invalid value in hosted mode");
+        fail("Expected an exception getting an invalid value in Development Mode");
       } catch (Throwable e) {
       }
     }
@@ -98,12 +98,12 @@ public class JsArrayTest extends GWTTestCase {
     assertEquals("true,false,true", jsArray.join());
     assertEquals("true:false:true", jsArray.join(":"));
 
-    // Make sure getting the '3' element throws an exception in hosted mode
-    // (this won't happen in web mode).
+    // Make sure getting the '3' element throws an exception in Development Mode
+    // (this won't happen in Production Mode).
     if (!GWT.isScript()) {
       try {
         jsArray.get(3);
-        fail("Expected an exception getting an invalid value in hosted mode");
+        fail("Expected an exception getting an invalid value in Development Mode");
       } catch (Throwable e) {
       }
     }
@@ -115,12 +115,12 @@ public class JsArrayTest extends GWTTestCase {
     assertEquals(4, jsArray.length());
 
     // Stick a non-boolean value in the '4' slot. Getting it should cause a type
-    // error in hosted mode.
+    // error in Development Mode.
     if (!GWT.isScript()) {
       try {
         jsArray.<JsArrayString> cast().set(4, "bubba");
         jsArray.get(4);
-        fail("Expected an exception getting an invalid value in hosted mode");
+        fail("Expected an exception getting an invalid value in Development Mode");
       } catch (Throwable e) {
       }
     } else {
@@ -152,12 +152,12 @@ public class JsArrayTest extends GWTTestCase {
     assertEquals("0,1,2", jsArray.join());
     assertEquals("0:1:2", jsArray.join(":"));
 
-    // Make sure getting the '3' element throws an exception in hosted mode
-    // (this won't happen in web mode).
+    // Make sure getting the '3' element throws an exception in Development Mode
+    // (this won't happen in Production Mode).
     if (!GWT.isScript()) {
       try {
         jsArray.get(3);
-        fail("Expected an exception getting an invalid value in hosted mode");
+        fail("Expected an exception getting an invalid value in Development Mode");
       } catch (Throwable e) {
       }
     }
@@ -169,12 +169,12 @@ public class JsArrayTest extends GWTTestCase {
     assertEquals(4, jsArray.length());
 
     // Stick a non-numeric value in the '4' slot. Getting it should cause a type
-    // error in hosted mode.
+    // error in Development Mode.
     if (!GWT.isScript()) {
       try {
         jsArray.<JsArrayString> cast().set(4, "bubba");
         jsArray.get(4);
-        fail("Expected an exception getting an invalid value in hosted mode");
+        fail("Expected an exception getting an invalid value in Development Mode");
       } catch (Throwable e) {
       }
     } else {
@@ -206,12 +206,12 @@ public class JsArrayTest extends GWTTestCase {
     assertEquals("0,1.1,2.2", jsArray.join());
     assertEquals("0:1.1:2.2", jsArray.join(":"));
 
-    // Make sure getting the '3' element throws an exception in hosted mode
-    // (this won't happen in web mode).
+    // Make sure getting the '3' element throws an exception in Development Mode
+    // (this won't happen in Production Mode).
     if (!GWT.isScript()) {
       try {
         jsArray.get(3);
-        fail("Expected an exception getting an invalid value in hosted mode");
+        fail("Expected an exception getting an invalid value in Development Mode");
       } catch (Throwable e) {
       }
     }
@@ -223,12 +223,12 @@ public class JsArrayTest extends GWTTestCase {
     assertEquals(4, jsArray.length());
 
     // Stick a non-numeric value in the '4' slot. Getting it should cause a type
-    // error in hosted mode.
+    // error in Development Mode.
     if (!GWT.isScript()) {
       try {
         jsArray.<JsArrayString> cast().set(4, "bubba");
         jsArray.get(4);
-        fail("Expected an exception getting an invalid value in hosted mode");
+        fail("Expected an exception getting an invalid value in Development Mode");
       } catch (Throwable e) {
       }
     } else {
@@ -274,12 +274,12 @@ public class JsArrayTest extends GWTTestCase {
     assertEquals(4, jsArray.length());
 
     // Stick a non-String value in the '4' slot. Getting it should cause a type
-    // error in hosted mode.
+    // error in Development Mode.
     if (!GWT.isScript()) {
       try {
         jsArray.<JsArrayBoolean> cast().set(4, true);
         jsArray.get(4);
-        fail("Expected an exception getting an invalid value in hosted mode");
+        fail("Expected an exception getting an invalid value in Development Mode");
       } catch (Throwable e) {
       }
     } else {

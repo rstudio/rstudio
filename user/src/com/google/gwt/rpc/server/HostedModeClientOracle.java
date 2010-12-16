@@ -161,6 +161,6 @@ public final class HostedModeClientOracle extends ClientOracle {
   }
 
   private <T> T unimplemented() {
-    throw new RuntimeException("Not supported in hosted mode");
+    throw new RuntimeException("Not supported in Development Mode");
   }
 }

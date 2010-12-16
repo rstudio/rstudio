@@ -28,7 +28,7 @@ import com.google.gwt.junit.client.GWTTestCase;
  * assert should become trivial things like <code>assertEquals("", 5, 5)</code>.
  * 
  * To verify the test itself, which includes a lot of random constants, run in
- * hosted mode.
+ * Development Mode.
  */
 public class JStaticEvalTest extends GWTTestCase {
   private static void assertEquals(double expected, double actual) {

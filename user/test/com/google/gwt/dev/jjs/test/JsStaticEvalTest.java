@@ -21,8 +21,8 @@ import com.google.gwt.junit.client.GWTTestCase;
 /**
  * Most of these tests (the "do" ones guarded by isScript tests) verify that
  * declarations in pruned code still happen. Those tests do not run reliably in
- * hosted mode due to browser inconsistencies; however it should run in web mode
- * due to our normalizations.
+ * Development Mode due to browser inconsistencies; however it should run in
+ * Production Mode due to our normalizations.
  */
 public class JsStaticEvalTest extends GWTTestCase {
   @SuppressWarnings("unused")

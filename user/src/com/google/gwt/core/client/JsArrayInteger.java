@@ -36,10 +36,11 @@ public class JsArrayInteger extends JavaScriptObject {
    * Gets the value at a given index.
    * 
    * If no value exists at the given index, a type-conversion error will occur
-   * in hosted mode and unpredictable behavior may occur in web mode. If the
-   * numeric value returned is non-integral, it will cause a warning in hosted
-   * mode, and may affect the results of mathematical expressions.
-   * 
+   * in Development Mode and unpredictable behavior may occur in Production
+   * Mode. If the numeric value returned is non-integral, it will cause a
+   * warning in Development Mode, and may affect the results of mathematical
+   * expressions.
+   *
    * @param index the index to be retrieved
    * @return the value at the given index
    */

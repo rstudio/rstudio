@@ -561,7 +561,7 @@ public abstract class AbstractCompiler {
      * This is useful as an optimization, but more importantly, it is useful to
      * compile against bytecode that was pre-compiled to which we don't have the
      * source. This ability is crucial bridging the gap between user-level and
-     * "dev" code in hosted mode for classes such as JavaScriptHost and
+     * "dev" code in Development Mode for classes such as JavaScriptHost and
      * ShellJavaScriptHost.
      */
     private void rememberPackage(String packageName) {
@@ -603,7 +603,7 @@ public abstract class AbstractCompiler {
   public static CompilerOptions getCompilerOptions() {
     CompilerOptions options = JdtCompiler.getCompilerOptions();
 
-    // Turn off all debugging for web mode.
+    // Turn off all debugging for Production Mode.
     options.produceDebugAttributes = 0;
     options.preserveAllLocalVariables = false;
     return options;

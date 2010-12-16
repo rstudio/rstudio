@@ -251,10 +251,10 @@ public class SerializabilityUtil {
     assert (instanceType != null);
     String qualifiedTypeName = instanceType.getName();
     /*
-     * This class is called from client code running in hosted mode as well as
-     * server code running in the servlet container.  In hosted mode, we want to
-     * load classes through the CompilingClassLoader$MultiParentClassLoader, not
-     * the system classloader.
+     * This class is called from client code running in Development Mode as well
+     * as server code running in the servlet container. In Development Mode, we
+     * want to load classes through the
+     * CompilingClassLoader$MultiParentClassLoader, not the system classloader.
      */
     ClassLoader classLoader = GWT.isClient()
         ? SerializabilityUtil.class.getClassLoader()

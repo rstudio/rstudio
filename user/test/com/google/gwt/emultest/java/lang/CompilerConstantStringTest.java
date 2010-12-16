@@ -128,7 +128,7 @@ public class CompilerConstantStringTest extends GWTTestCase {
 
       /*
        * Verify that the resulting hash code is numeric, since this is not
-       * enforced in web mode.
+       * enforced in Production Mode.
        */
       String str = Integer.toString(savedHash[i]);
       for (int j = 0; j < str.length(); ++j) {

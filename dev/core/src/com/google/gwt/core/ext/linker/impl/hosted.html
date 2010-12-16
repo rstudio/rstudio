@@ -290,7 +290,7 @@ gwtOnLoad = function(errFn, modName, modBase){
       if (errFn) {
         errFn(modName);
       } else {
-        alert("Plugin failed to connect to hosted mode server at " + $hosted);
+        alert("Plugin failed to connect to Development Mode server at " + $hosted);
         loadIframe("http://code.google.com/p/google-web-toolkit/wiki/TroubleshootingOOPHM");
       }
     }
@@ -308,7 +308,7 @@ window.fireOnModuleLoadStart = function(className) {
 window.__gwt_module_id = 0;
 </script></head>
 <body>
-<font face='arial' size='-1'>This html file is for hosted mode support.</font>
+<font face='arial' size='-1'>This html file is for Development Mode support.</font>
 <script><!--
 // Lightweight metrics
 $stats && $stats({moduleName:$moduleName, sessionId:$sessionId, subSystem:'startup', evtGroup:'moduleStartup', millis:(new Date()).getTime(), type:'moduleEvalEnd'});

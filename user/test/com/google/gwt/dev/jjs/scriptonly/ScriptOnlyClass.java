@@ -51,7 +51,7 @@ public class ScriptOnlyClass extends BaseClass {
   }
 
   /**
-   * Can only do this in hosted mode.
+   * Can only do this in Development Mode.
    */
   public String getClassLoaderName() {
     return getClass().getClassLoader().getClass().getName();

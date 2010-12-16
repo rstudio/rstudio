@@ -68,7 +68,7 @@ public class TypeSerializerCreator {
    * property value.
    * 
    * Note that the inliner will likely reassemble the shards if it is used in
-   * web mode, but it isn't needed there anyway.
+   * Production Mode, but it isn't needed there anyway.
    * 
    * TODO: remove this (and related code) when it is no longer needed.
    */

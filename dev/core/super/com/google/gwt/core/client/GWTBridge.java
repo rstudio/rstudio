@@ -16,8 +16,8 @@
 package com.google.gwt.core.client;
 
 /**
- * When running in hosted mode, acts as a bridge from {@link GWT} into the
- * hosted mode environment.
+ * When running in Development Mode, acts as a bridge from {@link GWT} into the
+ * Development Mode environment.
  */
 public abstract class GWTBridge {
 

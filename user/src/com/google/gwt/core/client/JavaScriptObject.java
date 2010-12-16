@@ -57,7 +57,7 @@ public class JavaScriptObject {
   }-*/;
 
   /**
-   * Helper for {@link #toString()}, when hosted mode or assertions are on.
+   * Helper for {@link #toString()}, when Development Mode or assertions are on.
    */
   private static native String toStringVerbose(JavaScriptObject obj) /*-{
     var defined = function(m) { return typeof m != 'undefined'; };
@@ -148,12 +148,12 @@ public class JavaScriptObject {
   }-*/;
 
   /**
-   * Makes a best-effort attempt to get a useful debugging string describing
-   * the given JavaScriptObject.  In web mode with assertions disabled, this
+   * Makes a best-effort attempt to get a useful debugging string describing the
+   * given JavaScriptObject. In Production Mode with assertions disabled, this
    * will either call and return the JSO's toString() if one exists, or just
-   * return "[JavaScriptObject]".  In hosted mode, or with assertions enabled,
-   * some stronger effort is made to represent other types of JSOs, including
-   * inspecting for document nodes' outerHTML and innerHTML, etc.
+   * return "[JavaScriptObject]". In Development Mode, or with assertions
+   * enabled, some stronger effort is made to represent other types of JSOs,
+   * including inspecting for document nodes' outerHTML and innerHTML, etc.
    */
   @Override
   public final String toString() {

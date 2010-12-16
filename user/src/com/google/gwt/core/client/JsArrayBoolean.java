@@ -36,9 +36,9 @@ public class JsArrayBoolean extends JavaScriptObject {
    * Gets the value at a given index.
    * 
    * If an undefined or non-boolean value exists at the given index, a
-   * type-conversion error will occur in hosted mode and unpredictable behavior
-   * may occur in web mode.
-   * 
+   * type-conversion error will occur in Development Mode and unpredictable
+   * behavior may occur in Production Mode.
+   *
    * @param index the index to be retrieved
    * @return the value at the given index
    */
