@@ -36,14 +36,6 @@ public class DateTimeFormatInfoImpl_pt_PT extends DateTimeFormatInfoImpl_pt {
   }
 
   @Override
-  public String[] erasFull() {
-    return new String[] {
-        "Antes de Cristo",
-        "Ano do Senhor"
-    };
-  }
-
-  @Override
   public int firstDayOfTheWeek() {
     return 1;
   }
