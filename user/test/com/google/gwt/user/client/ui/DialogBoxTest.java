@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,14 +15,14 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.DeferredCommand;
 
 /**
  * Unit test for {@link DialogBox}.
@@ -42,7 +42,7 @@ public class DialogBoxTest extends PopupTest {
   @Override
   public void testAccessors() {
     super.testAccessors();
-    
+
     // Set the widget
     DialogBox box1 = new DialogBox();
     assertNull(box1.getWidget());
@@ -104,9 +104,9 @@ public class DialogBoxTest extends PopupTest {
     UIObjectTest.assertDebugId("myDialogBox-content",
         DOM.getParent(content.getElement()));
 
-    delayTestFinish(250);
+    delayTestFinish(5000);
     // Check the header IDs
-    DeferredCommand.addCommand(new Command() {
+    Scheduler.get().scheduleDeferred(new ScheduledCommand() {
       public void execute() {
         UIObjectTest.assertDebugIdContents("myDialogBox-caption",
             "test caption");

@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -36,7 +36,7 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Listener for use with key[down up press].
    */
-  private class KeyCodeEventListener extends BubbleAssertingEventListener {
+  private static class KeyCodeEventListener extends BubbleAssertingEventListener {
 
     public KeyCodeEventListener(String eventType) {
       super(eventType, true);
@@ -44,6 +44,9 @@ public class CreateEventTest extends GWTTestCase {
 
     @Override
     public void onBrowserEvent(Event event) {
+      if (cancelled) {
+        return;
+      }
       super.onBrowserEvent(event);
       assertEquals(KEY_CODE, event.getKeyCode());
       // shouldn't throw:
@@ -54,14 +57,18 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Listener for use with key[down up press].
    */
-  private class KeyPressEventListener extends BubbleAssertingEventListener {
+  private static class KeyPressEventListener extends BubbleAssertingEventListener {
     public KeyPressEventListener() {
       super("keypress", true);
     }
 
     @Override
     public void onBrowserEvent(Event event) {
+      if (cancelled) {
+        return;
+      }
       super.onBrowserEvent(event);
+
       assertEquals(KEY_CODE, event.getCharCode());
       // shouldn't throw:
       event.getKeyCode();
@@ -71,13 +78,16 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Listener for use with mouse[down up move over out].
    */
-  private class MouseEventListener extends BubbleAssertingEventListener {
+  private static class MouseEventListener extends BubbleAssertingEventListener {
     public MouseEventListener(String eventType) {
       super(eventType, true);
     }
 
     @Override
     public void onBrowserEvent(Event event) {
+      if (cancelled) {
+        return;
+      }
       super.onBrowserEvent(event);
       assertMouseCoordinates(event);
       assertEquals(Event.BUTTON_LEFT, event.getButton());
@@ -88,28 +98,42 @@ public class CreateEventTest extends GWTTestCase {
    * An event listener that asserts that the event is passed to child, then
    * parent.
    */
-  private class BubbleAssertingEventListener implements EventListener {
-    private boolean parentReceived, childReceived;
+  private static class BubbleAssertingEventListener implements EventListener {
+    protected boolean cancelled = false;
     private final String eventType;
-    private boolean supportsShiftKeys;
-    private boolean expectedCtrl = true;
     private boolean expectedAlt = true;
-    private boolean expectedShift = true;
+    private boolean expectedCtrl = true;
     private boolean expectedMeta = true;
+    private boolean expectedShift = true;
+    private boolean parentReceived, childReceived;
+    private boolean supportsShiftKeys;
 
-    public BubbleAssertingEventListener(String eventType, boolean supportsShiftKeys) {
+    public BubbleAssertingEventListener(String eventType,
+        boolean supportsShiftKeys) {
       this.eventType = eventType;
       this.supportsShiftKeys = supportsShiftKeys;
     }
 
     public void assertReceived() {
+      if (cancelled) {
+        return;
+      }
+
       assertTrue("Expected child to receive event", childReceived);
       assertTrue("Expected parent to receive event", parentReceived);
       childReceived = false;
       parentReceived = false;
     }
 
+    public void cancel() {
+      cancelled = true;
+    }
+
     public void onBrowserEvent(Event event) {
+      if (cancelled) {
+        return;
+      }
+
       assertEquals(eventType, event.getType());
       if (supportsShiftKeys) {
         assertAllShiftKeys(event, expectedCtrl, expectedAlt, expectedShift,
@@ -172,7 +196,8 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * An event listener that asserts that the event is passed only to child.
    */
-  private class NonBubbleAssertingEventListener implements EventListener {
+  private static class NonBubbleAssertingEventListener implements EventListener {
+    protected boolean cancelled = false;
     private boolean childReceived;
     private String eventType;
 
@@ -180,45 +205,23 @@ public class CreateEventTest extends GWTTestCase {
       this.eventType = eventType;
     }
 
+    public void cancel() {
+      cancelled = true;
+    }
+
     public void onBrowserEvent(Event event) {
+      if (cancelled) {
+        return;
+      }
+
       assertEquals(eventType, event.getType());
 
-      if (event.getTarget() == child) {
+      if (event.getEventTarget().equals(child)) {
         assertFalse("Expecting child to receive the event only once",
             childReceived);
         childReceived = true;
-      } else if (event.getTarget() == parent) {
+      } else if (event.getEventTarget().equals(parent)) {
         fail("Not expecting parent to receive the event");
-      }
-    }
-
-    protected String getEventType() {
-      return eventType;
-    }
-  }
-
-  /**
-   * An event listener that asserts that events are received properly for the
-   * img element.
-   */
-  private static class ImgEventListener implements EventListener {
-    private boolean imgReceived;
-    private final String eventType;
-
-    public ImgEventListener(String eventType) {
-      this.eventType = eventType;
-    }
-
-    public void onBrowserEvent(Event event) {
-      if (event.getType().equals(eventType)) {
-        if (event.getTarget() == img) {
-          assertFalse("Expecting img to receive the event only once",
-              imgReceived);
-
-          imgReceived = true;
-        } else if (event.getTarget() == parent) {
-          fail("Not expecting parent to receive the event");
-        }
       }
     }
   }
@@ -231,19 +234,70 @@ public class CreateEventTest extends GWTTestCase {
         boolean metaKey);
   }
 
-  private static final int MOUSE_DETAIL = 1;
-  private static final int CLIENT_X = 2;
-  private static final int CLIENT_Y = 3;
-  private static final int SCREEN_X = 4;
-  private static final int SCREEN_Y = 5;
-  private static final int KEY_CODE = 'A';
+  /**
+   * An event listener that asserts that events are received properly for the
+   * img element.
+   */
+  private static class ImgEventListener implements EventListener {
+    private final String eventType;
+    private boolean imgReceived;
+
+    public ImgEventListener(String eventType) {
+      this.eventType = eventType;
+    }
+
+    public void onBrowserEvent(Event event) {
+      if (event.getType().equals(eventType)) {
+        if (event.getEventTarget().equals(img)) {
+          assertFalse("Expecting img to receive the event only once",
+              imgReceived);
+
+          imgReceived = true;
+        } else if (event.getEventTarget().equals(parent)) {
+          fail("Not expecting parent to receive the event");
+        }
+      }
+    }
+  }
 
   private static final int ALL_EVENTS = Event.MOUSEEVENTS | Event.KEYEVENTS
       | Event.FOCUSEVENTS | Event.ONCHANGE | Event.ONCLICK | Event.ONDBLCLICK
       | Event.ONCONTEXTMENU | Event.ONLOAD | Event.ONERROR | Event.ONSCROLL;
-  private static DivElement parent;
+
   private static InputElement child;
+
+  private static final int CLIENT_X = 2;
+  private static final int CLIENT_Y = 3;
   private static ImageElement img;
+  private static final int KEY_CODE = 'A';
+  private static final int MOUSE_DETAIL = 1;
+  private static DivElement parent;
+
+  private static final int SCREEN_X = 4;
+  private static final int SCREEN_Y = 5;
+
+  /**
+   * Assert that all shift keys are in the expected state.
+   *
+   * @param event the event that was triggered
+   */
+  private static void assertAllShiftKeys(Event event, boolean expectedCtrl,
+      boolean expectedAlt, boolean expectedShift, boolean expectedMeta) {
+    assertEquals("Expecting ctrl = " + expectedCtrl, expectedCtrl,
+        event.getCtrlKey());
+    assertEquals("Expecting alt = " + expectedAlt, expectedAlt,
+        event.getAltKey());
+    assertEquals("Expecting shift = " + expectedShift, expectedShift,
+        event.getShiftKey());
+    assertEquals("Expecting meta = " + expectedMeta, expectedMeta,
+        event.getMetaKey());
+  }
+  private static void assertMouseCoordinates(Event event) {
+    assertEquals("clientX", CLIENT_X, event.getClientX());
+    assertEquals("clientY", CLIENT_Y, event.getClientY());
+    assertEquals("screenX", SCREEN_X, event.getScreenX());
+    assertEquals("screenY", SCREEN_Y, event.getScreenY());
+  }
 
   @Override
   public String getModuleName() {
@@ -262,7 +316,7 @@ public class CreateEventTest extends GWTTestCase {
     child.dispatchEvent(Document.get().createClickEvent(0, 0, 0, 0, 0, false,
         false, false, false));
     child.dispatchEvent(Document.get().createKeyPressEvent(false, false, false,
-        false, 65, 65));
+        false, 65));
     child.dispatchEvent(Document.get().createFocusEvent());
 
     assertTrue("Expecting click as current event", listener.gotClick);
@@ -279,7 +333,7 @@ public class CreateEventTest extends GWTTestCase {
       @Override
       public void onBrowserEvent(Event event) {
         super.onBrowserEvent(event);
-        if (event.getCurrentTarget() == child) {
+        if (event.getCurrentEventTarget().equals(child)) {
           event.stopPropagation();
         }
       }
@@ -289,6 +343,7 @@ public class CreateEventTest extends GWTTestCase {
 
     child.dispatchEvent(Document.get().createClickEvent(MOUSE_DETAIL, SCREEN_X,
         SCREEN_Y, CLIENT_X, CLIENT_Y, true, true, true, true));
+    listener.cancel();
 
     assertTrue("Expected child to receive event", listener.childReceived);
   }
@@ -301,6 +356,9 @@ public class CreateEventTest extends GWTTestCase {
         "blur") {
       @Override
       public void onBrowserEvent(Event event) {
+        if (cancelled) {
+          return;
+        }
         super.onBrowserEvent(event);
         assertEquals("blur", event.getType());
       }
@@ -309,6 +367,7 @@ public class CreateEventTest extends GWTTestCase {
     Event.setEventListener(child, listener);
 
     child.dispatchEvent(Document.get().createBlurEvent());
+    listener.cancel();
 
     assertTrue("Expected child to receive event", listener.childReceived);
   }
@@ -323,6 +382,7 @@ public class CreateEventTest extends GWTTestCase {
     Event.setEventListener(child, listener);
 
     child.dispatchEvent(Document.get().createChangeEvent());
+    listener.cancel();
 
     assertTrue("Expected child to receive event", listener.childReceived);
   }
@@ -335,6 +395,9 @@ public class CreateEventTest extends GWTTestCase {
         "click", true) {
       @Override
       public void onBrowserEvent(Event event) {
+        if (cancelled) {
+          return;
+        }
         super.onBrowserEvent(event);
         assertMouseCoordinates(event);
       }
@@ -344,6 +407,7 @@ public class CreateEventTest extends GWTTestCase {
 
     child.dispatchEvent(Document.get().createClickEvent(MOUSE_DETAIL, SCREEN_X,
         SCREEN_Y, CLIENT_X, CLIENT_Y, true, true, true, true));
+    listener.cancel();
 
     assertTrue("Expected child to receive event", listener.childReceived);
     assertTrue("Expected parent to receive event", listener.parentReceived);
@@ -359,6 +423,7 @@ public class CreateEventTest extends GWTTestCase {
     Event.setEventListener(child, listener);
 
     child.dispatchEvent(Document.get().createContextMenuEvent());
+    listener.cancel();
 
     assertTrue("Expected child to receive event", listener.childReceived);
     assertTrue("Expected parent to receive event", listener.parentReceived);
@@ -372,6 +437,9 @@ public class CreateEventTest extends GWTTestCase {
         "dblclick", true) {
       @Override
       public void onBrowserEvent(Event event) {
+        if (cancelled) {
+          return;
+        }
         if (event.getTypeInt() == Event.ONCLICK) {
           // Some browsers (IE, I'm looking at you) synthesize an extra click
           // event when a double-click is triggered. This synthesized click
@@ -389,6 +457,7 @@ public class CreateEventTest extends GWTTestCase {
 
     child.dispatchEvent(Document.get().createDblClickEvent(MOUSE_DETAIL,
         SCREEN_X, SCREEN_Y, CLIENT_X, CLIENT_Y, true, true, true, true));
+    listener.cancel();
 
     assertTrue("Expected child to receive event", listener.childReceived);
     assertTrue("Expected parent to receive event", listener.parentReceived);
@@ -396,9 +465,10 @@ public class CreateEventTest extends GWTTestCase {
 
   /**
    * Tests createErrorEvent().
-   * 
+   *
    * Failed in all modes due to HtmlUnit bug:
-   * https://sourceforge.net/tracker/?func=detail&aid=2888342&group_id=47038&atid=448266
+   * https://sourceforge.net/tracker/?func
+   * =detail&aid=2888342&group_id=47038&atid=448266
    */
   @DoNotRunWith({Platform.HtmlUnitBug})
   public void testTriggerErrorEvent() {
@@ -419,6 +489,9 @@ public class CreateEventTest extends GWTTestCase {
         "focus") {
       @Override
       public void onBrowserEvent(Event event) {
+        if (cancelled) {
+          return;
+        }
         super.onBrowserEvent(event);
         assertEquals("focus", event.getType());
       }
@@ -427,6 +500,7 @@ public class CreateEventTest extends GWTTestCase {
     Event.setEventListener(child, listener);
 
     child.dispatchEvent(Document.get().createFocusEvent());
+    listener.cancel();
 
     assertTrue("Expected child to receive event", listener.childReceived);
   }
@@ -444,11 +518,12 @@ public class CreateEventTest extends GWTTestCase {
       }
     };
     testTriggerEventWithShiftKeys(listener, creator);
+    listener.cancel();
   }
 
   /**
    * Tests createKeyPressEvent().
-   * 
+   *
    * Failed in all modes due to HtmlUnit bug:
    */
   @DoNotRunWith({Platform.HtmlUnitBug})
@@ -462,6 +537,7 @@ public class CreateEventTest extends GWTTestCase {
       }
     };
     testTriggerEventWithShiftKeys(listener, creator);
+    listener.cancel();
   }
 
   /**
@@ -477,6 +553,7 @@ public class CreateEventTest extends GWTTestCase {
       }
     };
     testTriggerEventWithShiftKeys(listener, creator);
+    listener.cancel();
   }
 
   /**
@@ -506,6 +583,7 @@ public class CreateEventTest extends GWTTestCase {
       }
     };
     testTriggerEventWithShiftKeys(listener, creator);
+    listener.cancel();
   }
 
   /**
@@ -522,11 +600,12 @@ public class CreateEventTest extends GWTTestCase {
       }
     };
     testTriggerEventWithShiftKeys(listener, creator);
+    listener.cancel();
   }
 
   /**
    * Tests createMouseOutEvent().
-   * 
+   *
    * Failed in all modes due to HtmlUnit bug:
    */
   @DoNotRunWith({Platform.HtmlUnitBug})
@@ -548,11 +627,12 @@ public class CreateEventTest extends GWTTestCase {
       }
     };
     testTriggerEventWithShiftKeys(listener, creator);
+    listener.cancel();
   }
 
   /**
    * Tests createMouseOverEvent().
-   * 
+   *
    * Failed in all modes due to HtmlUnit bug:
    */
   @DoNotRunWith({Platform.HtmlUnitBug})
@@ -574,6 +654,7 @@ public class CreateEventTest extends GWTTestCase {
       }
     };
     testTriggerEventWithShiftKeys(listener, creator);
+    listener.cancel();
   }
 
   /**
@@ -590,11 +671,12 @@ public class CreateEventTest extends GWTTestCase {
       }
     };
     testTriggerEventWithShiftKeys(listener, creator);
+    listener.cancel();
   }
 
   /**
    * Tests createKeyPressEvent().
-   * 
+   *
    * Failed in all modes due to HtmlUnit bug:
    */
   @DoNotRunWith({Platform.HtmlUnitBug})
@@ -603,6 +685,9 @@ public class CreateEventTest extends GWTTestCase {
         "scroll") {
       @Override
       public void onBrowserEvent(Event event) {
+        if (cancelled) {
+          return;
+        }
         super.onBrowserEvent(event);
         assertEquals("scroll", event.getType());
       }
@@ -611,6 +696,7 @@ public class CreateEventTest extends GWTTestCase {
     Event.setEventListener(child, listener);
 
     child.dispatchEvent(Document.get().createScrollEvent());
+    listener.cancel();
 
     assertTrue("Expected child to receive event", listener.childReceived);
   }
@@ -628,30 +714,6 @@ public class CreateEventTest extends GWTTestCase {
     Event.sinkEvents(parent, ALL_EVENTS);
     Event.sinkEvents(child, ALL_EVENTS);
     Event.sinkEvents(img, ALL_EVENTS);
-  }
-
-  /**
-   * Assert that all shift keys are in the expected state.
-   * 
-   * @param event the event that was triggered
-   */
-  private void assertAllShiftKeys(Event event, boolean expectedCtrl,
-      boolean expectedAlt, boolean expectedShift, boolean expectedMeta) {
-    assertEquals("Expecting ctrl = " + expectedCtrl, expectedCtrl,
-        event.getCtrlKey());
-    assertEquals("Expecting alt = " + expectedAlt, expectedAlt,
-        event.getAltKey());
-    assertEquals("Expecting shift = " + expectedShift, expectedShift,
-        event.getShiftKey());
-    assertEquals("Expecting meta = " + expectedMeta, expectedMeta,
-        event.getMetaKey());
-  }
-
-  private void assertMouseCoordinates(Event event) {
-    assertEquals("clientX", CLIENT_X, event.getClientX());
-    assertEquals("clientY", CLIENT_Y, event.getClientY());
-    assertEquals("screenX", SCREEN_X, event.getScreenX());
-    assertEquals("screenY", SCREEN_Y, event.getScreenY());
   }
 
   /**

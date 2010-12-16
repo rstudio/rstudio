@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -22,7 +24,6 @@ import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 
 import java.util.List;
 
@@ -188,8 +189,8 @@ public class MenuBarTest extends WidgetTestBase {
     bar.ensureDebugId("myMenu");
     UIObjectTest.assertDebugId("myMenu", bar.getElement());
 
-    delayTestFinish(250);
-    DeferredCommand.addCommand(new Command() {
+    delayTestFinish(5000);
+    Scheduler.get().scheduleDeferred(new ScheduledCommand() {
       public void execute() {
         UIObjectTest.assertDebugIdContents("myMenu-item0", "top0");
         UIObjectTest.assertDebugIdContents("myMenu-item1", "top1");
@@ -247,7 +248,7 @@ public class MenuBarTest extends WidgetTestBase {
 
     // Escape from the menu.
     NativeEvent event = Document.get().createKeyDownEvent(
-        false, false, false, false, KeyCodes.KEY_ESCAPE, KeyCodes.KEY_ESCAPE);
+        false, false, false, false, KeyCodes.KEY_ESCAPE);
     l1.getElement().dispatchEvent(event);
     assertNull(l0.getPopup());
     assertNull(l0.getSelectedItem());
@@ -334,14 +335,14 @@ public class MenuBarTest extends WidgetTestBase {
 
   public void testSafeHtml() {
     MenuBar bar = new MenuBar(true);
-    
+
     // ensure safehtml passes through when a command is set.
-    MenuItem item1 = 
+    MenuItem item1 =
       bar.addItem(SafeHtmlUtils.fromSafeConstant(html), BLANK_COMMAND);
     assertEquals(html, item1.getHTML().toLowerCase());
     assertEquals(BLANK_COMMAND, item1.getCommand());
     assertEquals(bar, item1.getParentMenu());
-    
+
     // ensure safehtml passes through when a submenu/popup is set.
     MenuBar foo = new MenuBar(true);
     MenuItem item2 = foo.addItem(SafeHtmlUtils.fromSafeConstant(html), bar);
@@ -424,7 +425,7 @@ public class MenuBarTest extends WidgetTestBase {
 
     // Tab away from the menu.
     NativeEvent event = Document.get().createKeyDownEvent(
-        false, false, false, false, KeyCodes.KEY_TAB, KeyCodes.KEY_TAB);
+        false, false, false, false, KeyCodes.KEY_TAB);
     l1.getElement().dispatchEvent(event);
     assertNull(l0.getPopup());
     assertNull(l0.getSelectedItem());
