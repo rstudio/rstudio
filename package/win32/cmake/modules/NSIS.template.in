@@ -937,7 +937,7 @@ Function .onInit
   ;
 
   ; Detect whether the application is running
-  FindWindow $R0 "" "@CPACK_PACKAGE_NAME@"
+  FindWindow $R0 "QWidget" "@CPACK_PACKAGE_NAME@"
   StrCmp $R0 0 not_running
     MessageBox MB_OK|MB_ICONEXCLAMATION "@CPACK_PACKAGE_NAME@ is currently running. Please close it before installing a new version." /SD IDOK
     Abort
