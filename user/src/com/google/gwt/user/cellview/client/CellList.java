@@ -340,7 +340,7 @@ public class CellList<T> extends AbstractHasData<T> {
   protected Element getKeyboardSelectedElement() {
     // Do not use getRowElement() because that will flush the presenter.
     int rowIndex = getKeyboardSelectedRow();
-    if (childContainer.getChildCount() > rowIndex) {
+    if (rowIndex >= 0 && childContainer.getChildCount() > rowIndex) {
       return childContainer.getChild(rowIndex).cast();
     }
     return null;

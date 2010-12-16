@@ -988,7 +988,7 @@ public class CellTable<T> extends AbstractHasData<T> {
     // Do not use getRowElement() because that will flush the presenter.
     int rowIndex = getKeyboardSelectedRow();
     NodeList<TableRowElement> rows = tbody.getRows();
-    if (rowIndex < rows.getLength() && columns.size() > 0) {
+    if (rowIndex >= 0 && rowIndex < rows.getLength() && columns.size() > 0) {
       TableRowElement tr = rows.getItem(rowIndex);
       TableCellElement td = tr.getCells().getItem(keyboardSelectedColumn);
       return getCellParent(td);

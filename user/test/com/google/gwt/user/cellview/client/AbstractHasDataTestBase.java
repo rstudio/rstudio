@@ -25,6 +25,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.Range;
@@ -143,6 +144,21 @@ public abstract class AbstractHasDataTestBase extends GWTTestCase {
     assertEquals("test 10", items.get(0));
     assertEquals("test 11", items.get(1));
     assertEquals("test 12", items.get(2));
+  }
+
+  /**
+   * Test that we don't get any errors when keyboard selection is disabled.
+   */
+  public void testKeyboardSelectionPolicyDisabled() {
+    AbstractHasData<String> display = createAbstractHasData(new TextCell());
+    display.setRowData(createData(0, 10));
+    display.getPresenter().flush();
+    display.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
+
+    assertNull(display.getKeyboardSelectedElement());
+    display.resetFocusOnCell();
+    display.setAccessKey('a');
+    display.setTabIndex(1);
   }
 
   public void testResetFocus() {
