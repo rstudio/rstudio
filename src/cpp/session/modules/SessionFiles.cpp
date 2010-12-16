@@ -122,15 +122,34 @@ const char * const kMonitoredPath = "files.monitored-path";
 
 void onSuspend(Settings* pSettings)
 {
-   pSettings->set(kMonitoredPath, s_directoryMonitor.path());
+   // get monitored path and alias it
+   std::string monitoredPath = s_directoryMonitor.path();
+   if (!monitoredPath.empty())
+   {
+      monitoredPath = FilePath::createAliasedPath(
+                                            FilePath(monitoredPath),
+                                            module_context::userHomePath());
+   }
+
+   // set it
+   pSettings->set(kMonitoredPath, monitoredPath);
 }
 
 void onResume(const Settings& settings)
 {
+   // get the monitored path
    std::string monitoredPath = settings.get(kMonitoredPath);
    if (!monitoredPath.empty())
-      startMonitoring(monitoredPath);
-   
+   {
+      // resolve aliases
+      FilePath resolvedPath = FilePath::resolveAliasedPath(
+                                            monitoredPath,
+                                            module_context::userHomePath());
+
+      // start monitoriing
+      startMonitoring(resolvedPath.absolutePath());
+   }
+
    quotas::checkQuotaStatus();
 }
    
