@@ -102,6 +102,16 @@ public class HTMLPanel extends ComplexPanel {
   }
   
   /**
+   * Adds a child widget to the panel.
+   * 
+   * @param widget the widget to be added
+   */
+  @Override
+  public void add(Widget widget) {
+    add(widget, getElement());
+  }
+
+  /**
    * Adds a child widget to the panel, contained within the HTML element
    * specified by a given id.
    * 

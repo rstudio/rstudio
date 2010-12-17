@@ -45,6 +45,23 @@ public class HTMLPanelTest extends GWTTestCase {
   }
 
   /**
+   * Tests {@link HTMLPanel#add(Widget)}.
+   */
+  public void testAdd() {
+    Label labelA = new Label("A");
+    Label labelB = new Label("B");
+    HTMLPanel p = new HTMLPanel("<div></div>");
+    p.add(labelA);
+    p.add(labelB);
+
+    // Ensure that both Labels have the correct parent.
+    Element first = p.getElement().getFirstChildElement();
+    assertSame(labelA.getElement(), first.getNextSiblingElement());
+    assertSame(labelB.getElement(), labelA.getElement().getNextSiblingElement());
+    assertNull(labelB.getElement().getNextSiblingElement());
+  }
+
+  /**
    * Tests {@link HTMLPanel#add(Widget, String)}.
    */
   public void testAddToElementWithId() {
