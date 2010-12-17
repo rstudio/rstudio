@@ -124,7 +124,7 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
             
             // only show the user identity if we are in server mode
            if (sessionInfo.getMode().equals(SessionInfo.SERVER_MODE))
-               initCommandsPanel(sessionInfo.getUserIdentity());
+               initCommandsPanel(sessionInfo);
 
             if (!sessionInfo.isGoogleDocsIntegrationEnabled())
             {
@@ -255,11 +255,11 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
       });
    }
 
-   private void initCommandsPanel(String username)
+   private void initCommandsPanel(final SessionInfo sessionInfo)
    {  
       // add username 
       Label usernameLabel = new Label();
-      usernameLabel.setText(username);
+      usernameLabel.setText(sessionInfo.getUserIdentity());
       usernameLabel.setStylePrimaryName(
             ThemeResources.INSTANCE.themeStyles().applicationHeaderStrong());
       headerBarCommandsPanel_.add(usernameLabel);
@@ -269,7 +269,11 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
       Widget helpLink = createCommandLink("Help", new ClickHandler() {
          public void onClick(ClickEvent event)
          {
-            globalDisplay_.openRStudioLink("help");
+            String customHelpURL = sessionInfo.helpURL();
+            if (customHelpURL.length() > 0)
+               globalDisplay_.openWindow(customHelpURL);
+            else
+               globalDisplay_.openRStudioLink("help");
          }
       });
       headerBarCommandsPanel_.add(helpLink);

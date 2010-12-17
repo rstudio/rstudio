@@ -71,11 +71,17 @@ public:
       else
          return core::FilePath();
    }
+
+   // help
+   std::string helpURL() const
+   {
+      return std::string(helpURL_.c_str());
+   }
    
    // www
    std::string wwwLocalPath() const
    {
-      return wwwLocalPath_;
+      return std::string(wwwLocalPath_.c_str());
    }
 
    std::string wwwPort() const
@@ -181,6 +187,9 @@ private:
 
    // agreement
    std::string agreementFilePath_;
+
+   // help
+   std::string helpURL_;
    
    // www
    std::string wwwLocalPath_;
