@@ -19,15 +19,6 @@ if (NOT RSTUDIO_SERVER)
    set(ANT_ARGS "desktop")
 endif()
 
-if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-   set(GWT_EMULATED_STACK "true")
-else()
-   set(GWT_EMULATED_STACK "false")
-endif()
-
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/org/rstudio/studio/RStudio.gwt.xml.in
-               ${CMAKE_CURRENT_SOURCE_DIR}/src/org/rstudio/studio/RStudio.gwt.xml)
-
 # invoke ant to build
 add_custom_target(gwt_build ALL)
 add_custom_command(
