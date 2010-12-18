@@ -13,22 +13,20 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.validation.shared;
+package com.google.gwt.sample.validationtck.constraints.constraintcomposition;
 
-import com.google.gwt.user.client.rpc.IsSerializable;
+import com.google.gwt.junit.tools.GWTTestSuite;
 
-import javax.validation.constraints.NotNull;
+import junit.framework.Test;
 
 /**
- * Sample address for validation
+ * Tck Tests for the {@code constraints composition} package.
  */
-public class Address implements IsSerializable {
-
-  @NotNull
-  public String street;
-
-  @Zip
-  public String zip;
-
-
+public class ConstraintCompositionGwtSuite {
+  public static Test suite() {
+    GWTTestSuite suite = new GWTTestSuite(
+        "TCK for GWT Validation, constraints composition package");
+    suite.addTestSuite(ConstraintCompositionTest.class);
+    return suite;
+  }
 }

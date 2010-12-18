@@ -17,6 +17,7 @@ package com.google.gwt.validation.rebind;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.UnsafeNativeLong;
+import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
@@ -117,7 +118,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
       return jProgram.getLiteralLong(((Long) value).intValue()).toSource();
     }
     if (value instanceof String) {
-      return '"' + ((String) value).toString().replace("\"", "\\\"") + '"';
+      return '"' + Generator.escape((String) value) + '"';
     }
     // TODO(nchalko) handle the rest of the literal types
     throw new IllegalArgumentException(value.getClass()
@@ -726,6 +727,37 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     sw.println("}");
   }
 
+  private void writeValidateConstraint(SourceWriter sw, PropertyDescriptor p,
+      Class<?> elementClass, ConstraintDescriptor<?> constraint,
+      String constraintDescriptorVar) {
+    Class<? extends ConstraintValidator<? extends Annotation, ?>> validatorClass = 
+        getValidatorForType(constraint, elementClass);
+    if (validatorClass == null) {
+      // TODO(nchalko) What does the spec say to do here.
+      logger.log(Type.WARN, "No ConstraintValidator of " + constraint + " for "
+          + p.getPropertyName() + " of type " + elementClass);
+
+    } else {
+      // TODO(nchalko) handle constraint.isReportAsSingleViolation()
+      // validate(context, violations, object, value, new MyValidator(),
+      // constraintDescriptor, groups);
+      sw.print("validate(context, violations, object, value, ");
+      sw.print("new "); // new one each time because validators are not
+                        // thread safe
+                        // TODO(nchalko) use ConstraintValidatorFactory
+      sw.print(validatorClass.getCanonicalName());
+      sw.print("(), ");
+      sw.print(constraintDescriptorVar);
+      sw.println(", groups);");
+    }
+    int count = 0;
+    for (ConstraintDescriptor<?> compositeConstraint : constraint.getComposingConstraints()) {
+      String compositeVar = constraintDescriptorVar + "_" + count++;
+      writeValidateConstraint(sw, p, elementClass, compositeConstraint,
+          compositeVar);
+    }
+  }
+
   private void writeValidateFieldCall(SourceWriter sw, PropertyDescriptor p,
       boolean useValue) {
     String propertyName = p.getPropertyName();
@@ -933,27 +965,11 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
       if (annotation != null) {
         // TODO(nchalko) check for annotation equality
 
-        Class<? extends ConstraintValidator<? extends Annotation, ?>> validatorClass = getValidatorForType(
-            constraint, elementClass);
-        if (validatorClass == null) {
-          // TODO(nchalko) What does the spec say to do here.
-          logger.log(Type.WARN, "No ConstraintValidator of " + constraint
-              + " for " + p.getPropertyName() + " of type " + elementClass);
+        String constraintDescriptorVar = constraintDescriptorVar(
+            p.getPropertyName(), count);
 
-        } else {
-          // TODO(nchalko) handle constraint.isReportAsSingleViolation() and
-          // hasComposingConstraints
-
-          // validate(context, violations, object, value, new MyValidator(),
-          // constraintDescriptor, groups);
-          sw.print("validate(context, violations, object, value, ");
-          sw.print("new "); // new one each time because validators are not
-                            // thread safe
-          sw.print(validatorClass.getCanonicalName());
-          sw.print("(), ");
-          sw.print(constraintDescriptorVar(p.getPropertyName(), count));
-          sw.println(", groups);");
-        }
+        writeValidateConstraint(sw, p, elementClass, constraint,
+            constraintDescriptorVar);
       }
       count++; // index starts at zero
     }
