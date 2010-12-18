@@ -59,15 +59,10 @@ const char * const kWorkingDirectory = "working_directory";
 Error restoreWorkingDirectory(const FilePath& userHomePath, 
                               const std::string& workingDirectory)
 {
-   // temporarily fixup relative paths to absolute 
-   FilePath workingDirPath ;
-   if (workingDirectory.empty())
-      workingDirPath = userHomePath;
-   else if (workingDirectory[0] != '/')
-      workingDirPath = userHomePath.complete(workingDirectory);
-   else
-      workingDirPath = FilePath(workingDirectory);
-   
+   // resolve working dir
+   FilePath workingDirPath = FilePath::resolveAliasedPath(workingDirectory,
+                                                          userHomePath);
+
    // restore working path if it exists (else revert to home)
    if (workingDirPath.exists())
       return workingDirPath.makeCurrentPath() ;
@@ -173,8 +168,11 @@ bool save(const FilePath& statePath)
    // save client metrics
    client_metrics::save(&settings);
    
-   // save full path to current working directory
-   settings.set(kWorkingDirectory, utils::safeCurrentPath().absolutePath());
+   // save aliased path to current working directory
+   std::string workingDirectory = FilePath::createAliasedPath(
+                                       utils::safeCurrentPath(),
+                                       r::session::utils::userHomePath());
+   settings.set(kWorkingDirectory, workingDirectory);
    
    // save console actions
    FilePath consoleActionsPath = statePath.complete(kConsoleActionsFile);

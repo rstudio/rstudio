@@ -160,7 +160,11 @@ public class Application implements ApplicationEventHandlers,
    @Handler
    public void onHelpUsingRStudio()
    {
-      globalDisplay_.openRStudioLink("help");
+      String customHelpURL = session_.getSessionInfo().helpURL();
+      if (customHelpURL.length() > 0)
+         globalDisplay_.openWindow(customHelpURL);
+      else
+         globalDisplay_.openRStudioLink("help");
    }
    
    @Handler
