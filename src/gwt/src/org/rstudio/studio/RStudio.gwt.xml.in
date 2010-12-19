@@ -18,12 +18,12 @@
       <when-property-is name="rstudio.desktop" value="true"/>
    </set-property>
 
+   <!--
    <define-property name="rstudio.debug" values="true,false"/>
    <property-provider name="rstudio.debug"><![CDATA[
       return /\bdebug=1\b/.test(window.location.search) ? "true" : "false";
    ]]></property-provider>
-   <!-- For now, always emulate the stack -->
-   <set-property name="rstudio.debug" value="true" />
+   -->
 
    <!-- RStudio module dependencies                                -->
    <inherits name='org.rstudio.core.Core' />
