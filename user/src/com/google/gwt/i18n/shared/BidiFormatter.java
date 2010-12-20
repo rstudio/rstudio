@@ -18,7 +18,6 @@ package com.google.gwt.i18n.shared;
 
 import com.google.gwt.i18n.client.HasDirection.Direction;
 import com.google.gwt.i18n.client.LocaleInfo;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 /**
  * Utility class for formatting text for display in a potentially
@@ -61,62 +60,17 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
  * to the caller to insert the return value in the output.
  *
  */
-public class BidiFormatter {
+public class BidiFormatter extends BidiFormatterBase {
 
-  /**
-   * A container class for direction-related string constants, e.g. Unicode
-   * formatting characters.
-   */
-  static final class Format {
-    /**
-     * "left" string constant.
-     */
-    public static final String LEFT = "left";
-
-    /**
-     * Unicode "Left-To-Right Embedding" (LRE) character.
-     */
-    public static final char LRE = '\u202A';
-
-    /**
-     * Unicode "Left-To-Right Mark" (LRM) character.
-     */
-    public static final char LRM = '\u200E';
-
-    /**
-     * String representation of LRM.
-     */
-    public static final String LRM_STRING = Character.toString(LRM);
-
-    /**
-     * Unicode "Pop Directional Formatting" (PDF) character.
-     */
-    public static final char PDF = '\u202C';
-
-    /**
-     * "right" string constant.
-     */
-    public static final String RIGHT = "right";
-
-    /**
-     * Unicode "Right-To-Left Embedding" (RLE) character.
-     */
-    public static final char RLE = '\u202B';
-
-    /**
-     * Unicode "Right-To-Left Mark" (RLM) character.
-     */
-    public static final char RLM = '\u200F';
-
-    /**
-     * String representation of RLM.
-     */
-    public static final String RLM_STRING = Character.toString(RLM);
-
-    // Not instantiable.
-    private Format() {
+  static class Factory extends BidiFormatterBase.Factory<BidiFormatter> {
+    @Override
+    public BidiFormatter createInstance(Direction contextDir,
+        boolean alwaysSpan) {
+      return new BidiFormatter(contextDir, alwaysSpan);
     }
   }
+
+  private static Factory factory = new Factory();
 
   /**
    * Factory for creating an instance of BidiFormatter given the context
@@ -182,7 +136,7 @@ public class BidiFormatter {
    */
   public static BidiFormatter getInstance(Direction contextDir,
       boolean alwaysSpan) {
-    return new BidiFormatter(contextDir, alwaysSpan);
+    return factory.getInstance(contextDir, alwaysSpan);
   }
 
   /**
@@ -209,9 +163,6 @@ public class BidiFormatter {
     return getInstance(LocaleInfo.getCurrentLocale().isRTL(), alwaysSpan);
   }
 
-  private boolean alwaysSpan;
-  private Direction contextDir;
-
   /**
    * @param contextDir The context direction
    * @param alwaysSpan Whether {@link #spanWrap} (and its variations) should
@@ -220,8 +171,7 @@ public class BidiFormatter {
    *          does not depend on the combination of directions
    */
   private BidiFormatter(Direction contextDir, boolean alwaysSpan) {
-    this.contextDir = contextDir;
-    this.alwaysSpan = alwaysSpan;
+    super(contextDir, alwaysSpan);
   }
 
   /**
@@ -247,7 +197,7 @@ public class BidiFormatter {
    *         in non-LTR context; else, the empty string.
    */
   public String dirAttr(String str, boolean isHtml) {
-    return knownDirAttr(BidiUtils.get().estimateDirection(str, isHtml));
+    return dirAttrBase(str, isHtml);
   }
 
   /**
@@ -255,53 +205,7 @@ public class BidiFormatter {
    * unknown context direction) returns "right".
    */
   public String endEdge() {
-    return contextDir == Direction.RTL ? Format.LEFT : Format.RIGHT;
-  }
-
-  /**
-   * Like {@link #estimateDirection(String, boolean)}, but assumes {@code
-   * isHtml} is false.
-   *
-   * @param str String whose direction is to be estimated
-   * @return {@code str}'s estimated overall direction
-   */
-  public Direction estimateDirection(String str) {
-    return BidiUtils.get().estimateDirection(str);
-  }
-
-  /**
-   * Estimates the direction of a string using the best known general-purpose
-   * method, i.e. using relative word counts. Direction.DEFAULT return value
-   * indicates completely neutral input.
-   *
-   * @param str String whose direction is to be estimated
-   * @param isHtml Whether {@code str} is HTML / HTML-escaped
-   * @return {@code str}'s estimated overall direction
-   */
-  public Direction estimateDirection(String str, boolean isHtml) {
-    return BidiUtils.get().estimateDirection(str, isHtml);
-  }
-
-  /**
-   * Returns whether the span structure added by the formatter should be stable,
-   * i.e., spans added even when the direction does not need to be declared.
-   */
-  public boolean getAlwaysSpan() {
-    return alwaysSpan;
-  }
-
-  /**
-   * Returns the context direction.
-   */
-  public Direction getContextDir() {
-    return contextDir;
-  }
-
-  /**
-   * Returns whether the context direction is RTL.
-   */
-  public boolean isRtlContext() {
-    return contextDir == Direction.RTL;
+    return endEdgeBase();
   }
 
   /**
@@ -313,11 +217,7 @@ public class BidiFormatter {
    *         in non-LTR context; else, the empty string.
    */
   public String knownDirAttr(Direction dir) {
-    if (dir != contextDir) {
-      return dir == Direction.LTR ? "dir=ltr" : dir == Direction.RTL
-          ? "dir=rtl" : "";
-    }
-    return "";
+    return knownDirAttrBase(dir);
   }
 
   /**
@@ -326,8 +226,7 @@ public class BidiFormatter {
    * default / unknown context direction.
    */
   public String mark() {
-    return contextDir == Direction.LTR ? Format.LRM_STRING
-        : contextDir == Direction.RTL ? Format.RLM_STRING : "";
+    return markBase();
   }
 
   /**
@@ -353,9 +252,7 @@ public class BidiFormatter {
    *         else, the empty string.
    */
   public String markAfter(String str, boolean isHtml) {
-    str = BidiUtils.get().stripHtmlIfNeeded(str, isHtml);
-    return dirResetIfNeeded(str, BidiUtils.get().estimateDirection(str), false,
-        true);
+    return markAfterBase(str, isHtml);
   }
 
   /**
@@ -407,8 +304,7 @@ public class BidiFormatter {
    * @return Input string after applying the above processing.
    */
   public String spanWrap(String str, boolean isHtml, boolean dirReset) {
-    Direction dir = BidiUtils.get().estimateDirection(str, isHtml);
-    return spanWrapWithKnownDir(dir, str, isHtml, dirReset);
+    return spanWrapBase(str, isHtml, dirReset);
   }
 
   /**
@@ -466,26 +362,7 @@ public class BidiFormatter {
    */
   public String spanWrapWithKnownDir(Direction dir, String str, boolean isHtml,
       boolean dirReset) {
-    boolean dirCondition = dir != Direction.DEFAULT && dir != contextDir;
-    String origStr = str;
-    if (!isHtml) {
-      str = SafeHtmlUtils.htmlEscape(str);
-    }
-
-    StringBuilder result = new StringBuilder();
-    if (alwaysSpan || dirCondition) {
-      result.append("<span");
-      if (dirCondition) {
-        result.append(" ");
-        result.append(dir == Direction.RTL ? "dir=rtl" : "dir=ltr");
-      }
-      result.append(">" + str + "</span>");
-    } else {
-      result.append(str);
-    }
-    // origStr is passed (more efficient when isHtml is false).
-    result.append(dirResetIfNeeded(origStr, dir, isHtml, dirReset));
-    return result.toString();
+    return spanWrapWithKnownDirBase(dir, str, isHtml, dirReset);
   }
 
   /**
@@ -493,7 +370,7 @@ public class BidiFormatter {
    * unknown context direction) returns "left".
    */
   public String startEdge() {
-    return contextDir == Direction.RTL ? Format.RIGHT : Format.LEFT;
+    return startEdgeBase();
   }
 
   /**
@@ -545,8 +422,7 @@ public class BidiFormatter {
    * @return Input string after applying the above processing.
    */
   public String unicodeWrap(String str, boolean isHtml, boolean dirReset) {
-    Direction dir = BidiUtils.get().estimateDirection(str, isHtml);
-    return unicodeWrapWithKnownDir(dir, str, isHtml, dirReset);
+    return unicodeWrapBase(str, isHtml, dirReset);
   }
 
   /**
@@ -605,45 +481,6 @@ public class BidiFormatter {
    */
   public String unicodeWrapWithKnownDir(Direction dir, String str,
       boolean isHtml, boolean dirReset) {
-    StringBuilder result = new StringBuilder();
-    if (dir != Direction.DEFAULT && dir != contextDir) {
-      result.append(dir == Direction.RTL ? Format.RLE : Format.LRE);
-      result.append(str);
-      result.append(Format.PDF);
-    } else {
-      result.append(str);
-    }
-
-    result.append(dirResetIfNeeded(str, dir, isHtml, dirReset));
-    return result.toString();
-  }
-
-  /**
-   * Returns a unicode BiDi mark matching the context direction (LRM or RLM) if
-   * {@code dirReset}, and if the overall direction or the exit direction of
-   * {@code str} are opposite to the context direction. Otherwise returns the
-   * empty string.
-   *
-   * @param str The input string
-   * @param dir {@code str}'s overall direction
-   * @param isHtml Whether {@code str} is HTML / HTML-escaped
-   * @param dirReset Whether to perform the reset
-   * @return A unicode BiDi mark or the empty string.
-   */
-  private String dirResetIfNeeded(String str, Direction dir, boolean isHtml,
-      boolean dirReset) {
-    // endsWithRtl and endsWithLtr are called only if needed (short-circuit).
-    if (dirReset
-        && ((contextDir == Direction.LTR &&
-            (dir == Direction.RTL ||
-             BidiUtils.get().endsWithRtl(str, isHtml))) ||
-            (contextDir == Direction.RTL &&
-            (dir == Direction.LTR ||
-             BidiUtils.get().endsWithLtr(str, isHtml))))) {
-      return contextDir == Direction.LTR ? Format.LRM_STRING
-          : Format.RLM_STRING;
-    } else {
-      return "";
-    }
+    return unicodeWrapWithKnownDirBase(dir, str, isHtml, dirReset);
   }
 }
