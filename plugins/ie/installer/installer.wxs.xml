@@ -4,15 +4,17 @@
 
   <!-- Variables. -->
   <?define appName = "Google Web Toolkit Developer Plugin for IE" ?>
+  <?define gwtRegKey = "SOFTWARE\Google\Google Web Toolkit\Installer" ?>
   <?if $(var.platform)=x64 ?>
-  <?define upgradeCode = "9a5e649a-ec63-4c7d-99bf-75adb345e7e5" ?>
-  <?define win64Flag = "yes" ?>
+      <?define upgradeCode = "53dae7d2-8c28-440f-920b-b2d665ce73b2" ?>
+      <?define win64Flag = "yes" ?>
+      <?define platformFriendlyName="x64" ?>
   <?else ?>
-  <?define upgradeCode = "53DAE7D2-8C28-440F-920B-B2D665CE73B2" ?>
-  <?define win64Flag = "no" ?>
+      <?define upgradeCode = "9a5e649a-ec63-4c7d-99bf-75adb345e7e5" ?>
+      <?define win64Flag = "no" ?>
+      <?define platformFriendlyName="x86" ?>
   <?endif ?>
   <?define updateRegKey = "SOFTWARE\Google\Update\Clients\{$(var.upgradeCode)}" ?>
-  <?define gwtRegKey = "SOFTWARE\Google\Google Web Toolkit\Installer" ?>
 
   <!--
     The main product to install. We generate a new GUID (*) on each
@@ -21,7 +23,7 @@
   -->
 
   <Product
-    Name='$(var.appName) ($(var.platform))'
+    Name='$(var.appName) ($(var.platformFriendlyName))'
     Id='*'
     UpgradeCode='$(var.upgradeCode)'
     Language='1033'
@@ -31,51 +33,51 @@
 
     <?if $(var.platform)=x64 ?>
     <Package
-		  Id='*'
-		  Keywords='Installer'
-		  Description='$(var.appName) ($(var.platform))'
-		  Manufacturer='Google'
-		  InstallPrivileges='limited'
-		  InstallerVersion='200'
-		  Languages='1033'
-		  Compressed='yes'
-		  SummaryCodepage='1252'
-		  Platform='x64'
-		/>
+          Id='*'
+          Keywords='Installer'
+          Description='$(var.appName) ($(var.platformFriendlyName))'
+          Manufacturer='Google'
+          InstallPrivileges='limited'
+          InstallerVersion='200'
+          Languages='1033'
+          Compressed='yes'
+          SummaryCodepage='1252'
+          Platform='x64'
+        />
     <?else ?>
     <Package
-		  Id='*'
-		  Keywords='Installer'
-		  Description='$(var.appName) ($(var.platform))'
-		  Manufacturer='Google'
-		  InstallPrivileges='limited'
-		  InstallerVersion='200'
-		  Languages='1033'
-		  Compressed='yes'
-		  SummaryCodepage='1252'
-		/>
+          Id='*'
+          Keywords='Installer'
+          Description='$(var.appName) ($(var.platformFriendlyName))'
+          Manufacturer='Google'
+          InstallPrivileges='limited'
+          InstallerVersion='200'
+          Languages='1033'
+          Compressed='yes'
+          SummaryCodepage='1252'
+        />
     <?endif ?>
 
     <Media Id='1' Cabinet='product.cab' EmbedCab='yes' />
 
     <Icon Id="gwt.ico" SourceFile=".\gwt.ico"/>
 
-	<!-- Properties -->
+    <!-- Properties -->
     <Property Id='REBOOT'>ReallySuppress</Property>
     <Property Id="ALLUSERS" Secure="yes"></Property>
     <Property Id="ARPPRODUCTICON" Value="gwt.ico" />
-    <Property Id="ARPCOMMENTS" Value="Google Web Toolkit Developer Plugin for IE ($(var.platform))" />
+    <Property Id="ARPCOMMENTS" Value="Google Web Toolkit Developer Plugin for IE ($(var.platformFriendlyName))" />
     <Property Id="ARPNOMODIFY" Value="1" />
     <Property Id="ARPNOREPAIR" Value="1" />
     <Property Id="ARPHELPLINK" Value="http://code.google.com/webtoolkit/" />
     <Property Id="ARPURLINFOABOUT" Value="http://code.google.com/webtoolkit/" />
 
     <Upgrade Id='$(var.upgradeCode)'>
-		<UpgradeVersion Property='UPGRADING'
+        <UpgradeVersion Property='UPGRADING'
                   OnlyDetect='no'
                   Minimum='0.0.0.0' IncludeMinimum='yes'
                   Maximum='$(var.version)' IncludeMaximum='no' />
-		<UpgradeVersion Property='NEWERVERSIONDETECTED'
+        <UpgradeVersion Property='NEWERVERSIONDETECTED'
                   OnlyDetect='yes'
                   Minimum='$(var.version)' IncludeMinimum='yes' />
     </Upgrade>
@@ -83,18 +85,18 @@
     <InstallExecuteSequence>
       <LaunchConditions After='AppSearch' />
       <RemoveExistingProducts After='InstallValidate' />
-	  <Custom Action="NewerVersionError" After="FindRelatedProducts">NEWERVERSIONDETECTED</Custom>
+      <Custom Action="NewerVersionError" After="FindRelatedProducts">NEWERVERSIONDETECTED</Custom>
     </InstallExecuteSequence>
 
-	<UI>
-		<Error Id="4000">A newer version of this product is already installed.</Error>
-	</UI>
+    <UI>
+        <Error Id="4000">A newer version of this product is already installed.</Error>
+    </UI>
 
-	<CustomAction Id="NewerVersionError" Error="4000"/>
-	
+    <CustomAction Id="NewerVersionError" Error="4000"/>
+    
     <!-- Define the install directory. -->
     <?if $(var.platform)=x64 ?>
-    <Directory Id='TARGETDIR'	Name='SourceDir'>
+    <Directory Id='TARGETDIR'    Name='SourceDir'>
       <Directory Id='AppDataFolder' Name='AppData'>
         <Directory Id='GoogleDir' Name='Google'>
           <Component Id="RemoveGoogleDir" Guid="*" DiskId="1" Win64="$(var.win64Flag)">
@@ -128,14 +130,14 @@
                     <RegistryValue Name="RemoveInstallerDirFolder" Value="" Type="string" KeyPath="yes"/>
                   </RegistryKey>
                 </Component>
-			  </Directory>
+              </Directory>
             </Directory>
           </Directory>
         </Directory>
       </Directory>
     </Directory>
     <?else?>
-    <Directory Id='TARGETDIR'	Name='SourceDir'>
+    <Directory Id='TARGETDIR'    Name='SourceDir'>
       <Directory Id='AppDataFolder' Name='AppData'>
         <Directory Id='GoogleDir' Name='Google'>
           <Component Id="RemoveGoogleDir" Guid="*" DiskId="1" Win64="$(var.win64Flag)">
@@ -177,18 +179,12 @@
     </Directory>
     <?endif?>
 
-    <!-- Set some registry values. -->
-    <Component Id='registryValues' Directory='INSTALLDIR' Guid='*' Win64="$(var.win64Flag)">
-      <RegistryKey Root='HKMU' Action='createAndRemoveOnUninstall' Key='$(var.updateRegKey)'>
+    <Component Id='registryValues' Directory='INSTALLDIR' Guid='*' >
+      <RegistryKey Root='HKCU' Action='createAndRemoveOnUninstall' Key='$(var.updateRegKey)'>
         <RegistryValue Name='pv' Value='$(var.version)' Type='string' />
-        <RegistryValue Name='name' Value='$(var.appName)' Type='string' />
+        <RegistryValue Name='name' Value='$(var.appName) ($(var.platformFriendlyName))' Type='string' />
         <RegistryValue Name='lang' Value='en' Type='string' />
       </RegistryKey>
-	  <!-- requires per machine install (elevated)
-      <RegistryKey Root='HKMU' Action='createAndRemoveOnUninstall' Key='SOFTWARE\Microsoft\Windows\CurrentVersion\explorer\Browser Helper Objects\{1D6156B6-002B-49E7-B5CA-C138FB843B4E}'>
-        <RegistryValue Name='NoExplorer' Value='1' Type='integer' />
-      </RegistryKey>
-	  -->
     </Component>
 
     <!-- Define the features to install. -->
