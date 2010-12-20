@@ -730,7 +730,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
   private void writeValidateConstraint(SourceWriter sw, PropertyDescriptor p,
       Class<?> elementClass, ConstraintDescriptor<?> constraint,
       String constraintDescriptorVar) {
-    Class<? extends ConstraintValidator<? extends Annotation, ?>> validatorClass = 
+    Class<? extends ConstraintValidator<? extends Annotation, ?>> validatorClass =
         getValidatorForType(constraint, elementClass);
     if (validatorClass == null) {
       // TODO(nchalko) What does the spec say to do here.
@@ -939,6 +939,12 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     sw.println(" value,");
     sw.println("Class<?>... groups) {");
     sw.outdent();
+
+    // TODO(nchalko) handle the other path types.
+    // context = context.append("myProperty");
+    sw.print("context = context.append(\"");
+    sw.print(p.getPropertyName());
+    sw.println("\");");
 
     // TODO(nchalko) move this out of here to the Validate method
     if (p.isCascaded() && !isIterable(elementClass)) {
