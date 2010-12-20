@@ -278,7 +278,7 @@ public class ValidatorCreator extends AbstractCreator {
   }
 
   private void writeValidateValue(SourceWriter sw, BeanHelper bean) {
-    sw.println("if (beanType.getClass().equals(" + bean.getTypeCanonicalName()
+    sw.println("if (beanType.equals(" + bean.getTypeCanonicalName()
         + ".class)) {");
     sw.indent();
     writeContext(sw, bean, "null");
