@@ -19,9 +19,12 @@ package com.google.gwt.core.ext.linker.impl;
 import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.linker.CompilationResult;
+import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.ConfigurationProperty;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 
 import java.util.Map.Entry;
+import java.util.SortedSet;
 
 /**
  * A utility class to fill in the properties javascript in linker templates.
@@ -30,7 +33,7 @@ public class PropertiesUtil {
   public static String addKnownPropertiesJs(TreeLogger logger,
       CompilationResult result) {
     StringBuffer propertiesJs = new StringBuffer();
-    
+
     // Multiple values for a property can result in one permutation. For
     // example, this permutation may be valid for safari and chrome.  However,
     // we need to pick one, since the computePropValue() needs to return a
@@ -48,29 +51,33 @@ public class PropertiesUtil {
     }
     return propertiesJs.toString();
   }
-  
+
   public static StringBuffer addPropertiesJs(StringBuffer selectionScript,
-      TreeLogger logger, LinkerContext context) {
+      TreeLogger logger, LinkerContext context)
+      throws UnableToCompleteException {
     int startPos;
 
     // Add property providers
     startPos = selectionScript.indexOf("// __PROPERTIES_END__");
     if (startPos != -1) {
       for (SelectionProperty p : context.getProperties()) {
-        String text = generatePropertyProvider(p);
+        String text = generatePropertyProvider(logger, p,
+            context.getConfigurationProperties());
         selectionScript.insert(startPos, text);
         startPos += text.length();
       }
     }
     return selectionScript;
-  } 
-  
-  private static String generatePropertyProvider(SelectionProperty prop) {
+  }
+
+  private static String generatePropertyProvider(TreeLogger logger,
+      SelectionProperty prop, SortedSet<ConfigurationProperty> configProps)
+      throws UnableToCompleteException {
     StringBuffer toReturn = new StringBuffer();
 
     if (prop.tryGetValue() == null && !prop.isDerived()) {
       toReturn.append("providers['" + prop.getName() + "'] = function()");
-      toReturn.append(prop.getPropertyProvider());
+      toReturn.append(prop.getPropertyProvider(logger, configProps));
       toReturn.append(";");
 
       toReturn.append("values['" + prop.getName() + "'] = {");

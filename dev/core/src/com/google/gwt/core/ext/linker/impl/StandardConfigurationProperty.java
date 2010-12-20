@@ -48,8 +48,7 @@ public class StandardConfigurationProperty implements ConfigurationProperty {
 
   @Deprecated
   public String getValue() {
-    // values should always have at least one entry
-    return values.get(0);
+    return values.isEmpty() ? null : values.get(0);
   }
 
   public List<String> getValues() {
