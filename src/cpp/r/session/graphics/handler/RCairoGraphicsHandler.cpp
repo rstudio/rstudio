@@ -17,7 +17,11 @@
 // them as Rboolean enumerated values)
 #include <pango/pango.h>
 #include <pango/pangocairo.h>
+
+#ifdef CAIRO_HAS_SVG_SURFACE
 #include <cairo-svg.h>
+#endif
+
 #undef TRUE
 #undef FALSE
 
@@ -261,7 +265,11 @@ bool initializePNG(const FilePath& filePath,
 
 bool supportsSVG()
 {
+#ifdef CAIRO_HAS_SVG_SURFACE
    return true;
+#else
+   return false;
+#endif
 }
 
 bool initializeSVG(const FilePath& filePath,
@@ -270,6 +278,7 @@ bool initializeSVG(const FilePath& filePath,
                    bool displayListOn,
                    DeviceContext* pDC)
 {
+#ifdef CAIRO_HAS_SVG_SURFACE
    // initialize file info
    pDC->fileType = "svg";
    pDC->targetPath = filePath;
@@ -289,6 +298,9 @@ bool initializeSVG(const FilePath& filePath,
 
    // complete initialization
    return completeInitialization(pCDD);
+#else
+   return false;
+#endif
 }
 
 DeviceContext* allocate(pDevDesc dev)

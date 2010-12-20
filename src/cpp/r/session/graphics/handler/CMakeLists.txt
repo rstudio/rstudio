@@ -22,7 +22,7 @@ if(APPLE)
    set(R_GRAPHICS_HANDLER_SOURCE_FILES RShadowPngGraphicsHandler.cpp)
 elseif(UNIX)
    # detect pangocairo
-   pkg_check_modules(PANGO_CAIRO pangocairo>=1.20)
+   pkg_check_modules(PANGO_CAIRO pangocairo>=1.14)
    if(PANGO_CAIRO_FOUND)
       set(R_GRAPHICS_HANDLER_SYSTEM_INCLUDE_DIRS ${PANGO_CAIRO_INCLUDE_DIRS})
       set(R_GRAPHICS_HANDLER_SYSTEM_LIBRARIES ${PANGO_CAIRO_LIBRARIES})
