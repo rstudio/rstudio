@@ -21,7 +21,10 @@
     <include name="*.java" />
     <exclude name="super" />
   </source>
-  <replace-with class="com.google.gwt.sample.validationtck.constraints.inheritance.TckTestValidatorFactory">
+  <replace-with class="com.google.gwt.sample.validationtck.messageinterpolation.TckUserValidationMessageProvider">
+    <when-type-is class="com.google.gwt.validation.client.UserValidationMessagesResolver" />
+  </replace-with>
+  <replace-with class="com.google.gwt.sample.validationtck.messageinterpolation.TckTestValidatorFactory">
     <when-type-is class="javax.validation.ValidatorFactory"/>
   </replace-with>
 </module>

@@ -24,8 +24,18 @@
   <source path='shared' />
   <super-source path="super" />
 
+  <!-- Specify the Validator for the Validation bootstrap to use. -->
   <replace-with
-    class="com.google.gwt.sample.validation.client.SampleValidator">
-    <when-type-is class="javax.validation.Validator" />
+    class="com.google.gwt.sample.validation.client.SampleValidatorFactory">
+    <when-type-is class="javax.validation.ValidatorFactory" />
+  </replace-with>
+  
+  <!-- TODO(nchalko) figure out how to make this a attribute of the GwtValidation
+       annotation -->
+  <!--  specify the ValidationMessageResolver to use for your custom validation messages -->
+  <replace-with
+    class="com.google.gwt.sample.validation.client.CustomValidationMessagesResolver">
+    <when-type-is
+      class="com.google.gwt.validation.client.UserValidationMessagesResolver" />
   </replace-with>
 </module>

@@ -15,10 +15,9 @@
  */
 package com.google.gwt.validation.example.client;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.validation.example.client.ExampleGwtValidator.ClientGroup;
-import com.google.gwt.validation.example.client.ExampleGwtValidator.ServerGroup;
+import com.google.gwt.validation.example.client.ExampleValidatorFactory.ClientGroup;
+import com.google.gwt.validation.example.client.ExampleValidatorFactory.ServerGroup;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.groups.Default;
 
@@ -43,22 +43,10 @@ public class AuthorTest extends GWTTestCase {
     return "com.google.gwt.validation.example.ValidationExample";
   }
 
-  // TODO(nchalko) handle more than one validator
-
-  // @GwtValidation(value = Author.class, groups =
-  // {ExampleGwtValidator.ClientGroup.class})
-  // public interface NotDefaultValidator extends Validator {
-  // }
-
-  // public void testNotDefaultValidtor_EmptyNotDefualt() throws Exception {
-  // NotDefaultValidator other = GWT.create(NotDefaultValidator.class);
-  // Set<ConstraintViolation<Author>> violations = other.validate(author);
-  // assertContentsAnyOrder("valid author", violations);
-  // }
-
-  public void testGroup_empty() throws Exception {
+  public void testGroup_clientGroup() throws Exception {
     initValidAuthor();
-    Set<ConstraintViolation<Author>> violations = validator.validate(author);
+    Set<ConstraintViolation<Author>> violations = validator.validate(author,
+        ClientGroup.class);
     assertContentsAnyOrder("valid author", violations);
   }
 
@@ -69,10 +57,9 @@ public class AuthorTest extends GWTTestCase {
     assertContentsAnyOrder("valid author", violations);
   }
 
-  public void testGroup_clientGroup() throws Exception {
+  public void testGroup_empty() throws Exception {
     initValidAuthor();
-    Set<ConstraintViolation<Author>> violations = validator.validate(author,
-        ClientGroup.class);
+    Set<ConstraintViolation<Author>> violations = validator.validate(author);
     assertContentsAnyOrder("valid author", violations);
   }
 
@@ -84,6 +71,15 @@ public class AuthorTest extends GWTTestCase {
     } catch (IllegalArgumentException e) {
       // expected
     }
+  }
+
+  public void testValidate_companySize31() {
+    initValidAuthor();
+    author.setCompany("1234567890123456789012345678901");
+    Set<ConstraintViolation<Author>> violations = validator.validate(author);
+    assertContentsAnyOrder("company size 31", toMessage(violations),
+        "size must be between 0 and 30"
+        );
   }
 
   public void testValidate_string() {
@@ -98,21 +94,6 @@ public class AuthorTest extends GWTTestCase {
     initValidAuthor();
     Set<ConstraintViolation<Author>> violations = validator.validate(author);
     assertContentsAnyOrder("valid author", violations);
-  }
-
-  public void testValidate_companySize31() {
-    initValidAuthor();
-    author.setCompany("1234567890123456789012345678901");
-    Set<ConstraintViolation<Author>> violations = validator.validate(author);
-    assertContentsAnyOrder("company size 31", toMessage(violations),
-        "{javax.validation.constraints.Size.message}"
-        );
-  }
-
-  protected void initValidAuthor() {
-    author.setFirstName("John");
-    author.setLastName("Smith");
-    author.setCompany("Google");
   }
 
   public void testValidateProperty_object() {
@@ -131,23 +112,17 @@ public class AuthorTest extends GWTTestCase {
     }
   }
 
-  protected Validator createValidator() {
-    return GWT.create(ExampleGwtValidator.class);
-  }
-
   @Override
   protected final void gwtSetUp() throws Exception {
     super.gwtSetUp();
     author = new Author();
-    validator = createValidator();
+    validator = Validation.buildDefaultValidatorFactory().getValidator();
   }
-  
-  private <T> List<String> toMessage(Set<ConstraintViolation<T>> violations) {
-    List<String> messages = new ArrayList<String>();
-    for (ConstraintViolation<T> violation : violations) {
-      messages.add(violation.getMessage());
-    }
-    return messages;
+
+  protected void initValidAuthor() {
+    author.setFirstName("John");
+    author.setLastName("Smith");
+    author.setCompany("Google");
   }
 
   private <T> void assertContentsAnyOrder(String message,
@@ -165,5 +140,13 @@ public class AuthorTest extends GWTTestCase {
     if (!expectedList.isEmpty()) {
       fail(message);
     }
+  }
+
+  private <T> List<String> toMessage(Set<ConstraintViolation<T>> violations) {
+    List<String> messages = new ArrayList<String>();
+    for (ConstraintViolation<T> violation : violations) {
+      messages.add(violation.getMessage());
+    }
+    return messages;
   }
 }

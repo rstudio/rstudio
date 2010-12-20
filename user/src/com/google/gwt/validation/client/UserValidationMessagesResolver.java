@@ -13,21 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.example.client;
-
-import com.google.gwt.junit.tools.GWTTestSuite;
-
-import junit.framework.Test;
+package com.google.gwt.validation.client;
 
 /**
- * All Constraints tests that GWTTestCase.
+ * Validation Providers implement this to resolve Validation Messages. including
+ * overriding the default {@link ProviderValidationMessageResolver}.
  */
-public class ExampleValidationClientGwtSuite {
-  public static Test suite() {
-    GWTTestSuite suite = new GWTTestSuite(
-        "Validation Example tests that require GWT");
-    suite.addTestSuite(AuthorTest.class);
-    return suite;
-  }
-
+public interface UserValidationMessagesResolver extends ValidationMessageResolver {
 }

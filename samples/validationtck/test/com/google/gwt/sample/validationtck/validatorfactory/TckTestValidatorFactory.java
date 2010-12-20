@@ -13,34 +13,32 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.validationtck.validation;
+package com.google.gwt.sample.validationtck.validatorfactory;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.validation.client.AbstractValidator;
+import com.google.gwt.validation.client.AbstractGwtValidatorFactory;
 import com.google.gwt.validation.client.GwtValidation;
+import com.google.gwt.validation.client.impl.AbstractGwtValidator;
 
-import org.hibernate.jsr303.tck.tests.validation.Actor;
-import org.hibernate.jsr303.tck.tests.validation.BadlyBehavedEntity;
-import org.hibernate.jsr303.tck.tests.validation.Customer;
-import org.hibernate.jsr303.tck.tests.validation.Engine;
+import org.hibernate.jsr303.tck.tests.validatorfactory.CustomConstraintValidatorTest.Dummy;
+import org.hibernate.jsr303.tck.tests.validatorfactory.CustomConstraintValidatorTest.SecondDummy;
 
 import javax.validation.Validator;
 
 /**
- * {@link Validator} implementation that uses
+ * {@link AbstractGwtValidatorFactory} implementation that uses
  * {@link com.google.gwt.validation.client.GwtValidation GwtValidation}.
  */
-public final class TckTestValidator extends AbstractValidator {
+public final class TckTestValidatorFactory extends AbstractGwtValidatorFactory {
   /**
    * Marker Interface for {@link GWT#create(Class)}.
    */
-  @GwtValidation(value = {
-      Actor.class, BadlyBehavedEntity.class, Engine.class,
-      Customer.class})
+  @GwtValidation(value = {Dummy.class, SecondDummy.class})
   public static interface GwtValidator extends Validator {
   }
 
-  public TckTestValidator() {
-    super((Validator) GWT.create(GwtValidator.class));
+  @Override
+  public AbstractGwtValidator createValidator() {
+    return GWT.create(GwtValidator.class);
   }
 }

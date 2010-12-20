@@ -17,12 +17,13 @@ package com.google.gwt.validation.client.impl;
 
 import java.lang.annotation.Annotation;
 
+import javax.validation.MessageInterpolator;
 import javax.validation.metadata.BeanDescriptor;
 import javax.validation.metadata.ConstraintDescriptor;
 
 /**
  * Context for a {@link com.google.gwt.validation.client.GwtValidation}.
- * 
+ *
  * @param <T> the type of the root bean.
  */
 public class GwtValidationContext<T> {
@@ -30,13 +31,16 @@ public class GwtValidationContext<T> {
   private final BeanDescriptor beanDescriptor;
   private PathImpl path = new PathImpl();
   private final T rootBean;
+  private final MessageInterpolator messageInterpolator;
 
   /**
    *
    */
-  public GwtValidationContext(T rootBean, BeanDescriptor beanDescriptor) {
+  public GwtValidationContext(T rootBean, BeanDescriptor beanDescriptor,
+      MessageInterpolator messageInterpolator) {
     this.rootBean = rootBean;
     this.beanDescriptor = beanDescriptor;
+    this.messageInterpolator = messageInterpolator;
   }
 
   /**
@@ -47,7 +51,7 @@ public class GwtValidationContext<T> {
    */
   public GwtValidationContext<T> append(String name) {
     GwtValidationContext<T> temp = new GwtValidationContext<T>(rootBean,
-        beanDescriptor);
+        beanDescriptor, messageInterpolator);
     temp.path = temp.path.append(name);
     return temp;
   }
@@ -55,6 +59,10 @@ public class GwtValidationContext<T> {
   public <A extends Annotation, V> ConstraintValidatorContextImpl<A, V> createConstraintValidatorContext(
       ConstraintDescriptor<A> descriptor) {
     return new ConstraintValidatorContextImpl<A, V>(path, descriptor);
+  }
+
+  public MessageInterpolator getMessageInterpolator() {
+    return messageInterpolator;
   }
 
   public T getRootBean() {

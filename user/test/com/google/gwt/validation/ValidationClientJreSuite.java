@@ -13,20 +13,24 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client;
+package com.google.gwt.validation;
 
-import com.google.gwt.i18n.shared.GwtLocale;
+import com.google.gwt.validation.client.impl.NodeImplTest;
+import com.google.gwt.validation.client.impl.PathImplTest;
 
-import javax.validation.MessageInterpolator.Context;
+import junit.framework.Test;
+import junit.framework.TestSuite;
 
 /**
- * Simple GWT {@link javax.validation.MessageInterpolator}.
+ * All validation client non GWT tests.
  */
-public class GwtMessageInterpolator extends BaseMessageInterpolator {
-  // This class only has the parts the need to overridden for GWT
+public class ValidationClientJreSuite {
 
-  public String interpolate(String messageTemplate, Context context,
-      GwtLocale locale) {
-    return gwtInterpolate(messageTemplate,context,locale);
+  public static Test suite() {
+    TestSuite suite = new TestSuite(
+        "Test suite for validation client code that does not require GWT.");
+    suite.addTestSuite(PathImplTest.class);
+    suite.addTestSuite(NodeImplTest.class);
+    return suite;
   }
 }

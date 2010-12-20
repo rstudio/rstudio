@@ -13,33 +13,37 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.validationtck.constraints.application;
+package com.google.gwt.sample.validationtck.validation;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.validation.client.AbstractValidator;
+import com.google.gwt.validation.client.AbstractGwtValidatorFactory;
 import com.google.gwt.validation.client.GwtValidation;
+import com.google.gwt.validation.client.impl.AbstractGwtValidator;
 
-import org.hibernate.jsr303.tck.tests.constraints.application.Building;
-import org.hibernate.jsr303.tck.tests.constraints.application.SuperWoman;
-import org.hibernate.jsr303.tck.tests.constraints.application.Visibility;
-import org.hibernate.jsr303.tck.tests.constraints.application.Woman;
+import org.hibernate.jsr303.tck.tests.validation.Actor;
+import org.hibernate.jsr303.tck.tests.validation.Address;
+import org.hibernate.jsr303.tck.tests.validation.BadlyBehavedEntity;
+import org.hibernate.jsr303.tck.tests.validation.Customer;
+import org.hibernate.jsr303.tck.tests.validation.Engine;
 
 import javax.validation.Validator;
 
 /**
- * {@link Validator} implementation that uses
+ * {@link AbstractGwtValidatorFactory} implementation that uses
  * {@link com.google.gwt.validation.client.GwtValidation GwtValidation}.
  */
-public final class TckTestValidator extends AbstractValidator {
+public final class TckTestValidatorFactory extends AbstractGwtValidatorFactory {
   /**
    * Marker Interface for {@link GWT#create(Class)}.
    */
   @GwtValidation(value = {
-      Building.class, SuperWoman.class, Visibility.class, Woman.class})
+      Address.class, Actor.class, BadlyBehavedEntity.class, Engine.class,
+      Customer.class})
   public static interface GwtValidator extends Validator {
   }
 
-  public TckTestValidator() {
-    super((Validator) GWT.create(GwtValidator.class));
+  @Override
+  public AbstractGwtValidator createValidator() {
+    return GWT.create(GwtValidator.class);
   }
 }

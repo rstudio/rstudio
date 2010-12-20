@@ -13,9 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client.constraints;
+package com.google.gwt.validation;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
+import com.google.gwt.validation.client.constraints.GwtCompileTest;
 
 import junit.framework.Test;
 

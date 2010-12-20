@@ -32,7 +32,7 @@ public class Person implements IsSerializable {
   private Address address;
 
   @NotNull
-  @Size(min = 4)
+  @Size(min = 4, message = "{custom.name.size.message}")
   private String name;
 
   private long ssn;

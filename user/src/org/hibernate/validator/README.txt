@@ -6,7 +6,7 @@ The Hibernate Validator module is used to:
 
 
 Maintenance Notes.
-Test using samples/validation.
+Test using samples/validation and samples/validationtck
 
 
 NOTE

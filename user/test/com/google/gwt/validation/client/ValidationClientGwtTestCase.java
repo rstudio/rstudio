@@ -15,18 +15,15 @@
  */
 package com.google.gwt.validation.client;
 
-import com.google.gwt.i18n.shared.GwtLocale;
-
-import javax.validation.MessageInterpolator.Context;
+import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * Simple GWT {@link javax.validation.MessageInterpolator}.
+ * Base {@link GWTTestCase} for Validation Client tests.
  */
-public class GwtMessageInterpolator extends BaseMessageInterpolator {
-  // This class only has the parts the need to overridden for GWT
+public abstract class ValidationClientGwtTestCase extends GWTTestCase {
 
-  public String interpolate(String messageTemplate, Context context,
-      GwtLocale locale) {
-    return gwtInterpolate(messageTemplate,context,locale);
+  @Override
+  public final String getModuleName() {
+    return "com.google.gwt.validation.ValidationTest";
   }
 }

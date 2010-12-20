@@ -15,18 +15,16 @@
  */
 package com.google.gwt.validation.client;
 
-import com.google.gwt.i18n.shared.GwtLocale;
-
-import javax.validation.MessageInterpolator.Context;
-
 /**
- * Simple GWT {@link javax.validation.MessageInterpolator}.
+ * Users and Validation providers implement this to resolve ValidationMessages
  */
-public class GwtMessageInterpolator extends BaseMessageInterpolator {
-  // This class only has the parts the need to overridden for GWT
+public interface ValidationMessageResolver {
 
-  public String interpolate(String messageTemplate, Context context,
-      GwtLocale locale) {
-    return gwtInterpolate(messageTemplate,context,locale);
-  }
+  /**
+   * Lookup the value of the given key.
+   *
+   * @param key the key to find
+   * @return the value of the key or {@code null} if not found.
+   */
+  String get(String key);
 }

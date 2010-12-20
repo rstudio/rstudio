@@ -157,6 +157,7 @@
     <gwt.checkstyle outputdirectory="${sample.build}">
       <fileset dir="src" >
         <exclude name="org/**/super/org/**/*.java"/>
+        <exclude name="com/google/gwt/sample/validation*/**/ValidationMessages.java" />
       </fileset>
     </gwt.checkstyle>
   </target>

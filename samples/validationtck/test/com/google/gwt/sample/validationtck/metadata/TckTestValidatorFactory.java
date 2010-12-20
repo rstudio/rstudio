@@ -16,8 +16,9 @@
 package com.google.gwt.sample.validationtck.metadata;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.validation.client.AbstractValidator;
 import com.google.gwt.validation.client.GwtValidation;
+import com.google.gwt.validation.client.AbstractGwtValidatorFactory;
+import com.google.gwt.validation.client.impl.AbstractGwtValidator;
 
 import org.hibernate.jsr303.tck.tests.metadata.Account;
 import org.hibernate.jsr303.tck.tests.metadata.Customer;
@@ -28,9 +29,9 @@ import org.hibernate.jsr303.tck.tests.metadata.UnconstraintEntity;
 import javax.validation.Validator;
 
 /**
- * Test Validator for {@link MetadataGwtSuite}.
+ * Test {@link AbstractGwtValidatorFactory} for {@link MetadataGwtSuite}.
  */
-public final class TckTestValidator extends AbstractValidator {
+public final class TckTestValidatorFactory extends AbstractGwtValidatorFactory {
   /**
    * Marker Interface to {@link GWT#create(Class)}.
    */
@@ -40,7 +41,8 @@ public final class TckTestValidator extends AbstractValidator {
   public static interface GwtValidator extends Validator {
   }
 
-  public TckTestValidator() {
-    super((Validator) GWT.create(GwtValidator.class));
+  @Override
+  public AbstractGwtValidator createValidator() {
+    return GWT.create(GwtValidator.class);
   }
 }

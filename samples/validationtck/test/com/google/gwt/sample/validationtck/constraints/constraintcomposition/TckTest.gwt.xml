@@ -21,7 +21,7 @@
     <include name="*.java" />
     <exclude name="super" />
   </source>
-  <replace-with class="com.google.gwt.sample.validationtck.constraints.constraintcomposition.TckTestValidator">
-    <when-type-is class="javax.validation.Validator"/>
+  <replace-with class="com.google.gwt.sample.validationtck.constraints.constraintcomposition.TckTestValidatorFactory">
+    <when-type-is class="javax.validation.ValidatorFactory"/>
   </replace-with>
 </module>

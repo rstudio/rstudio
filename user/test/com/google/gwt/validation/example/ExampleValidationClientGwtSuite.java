@@ -13,20 +13,22 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client;
+package com.google.gwt.validation.example;
 
-import com.google.gwt.i18n.shared.GwtLocale;
+import com.google.gwt.junit.tools.GWTTestSuite;
+import com.google.gwt.validation.example.client.AuthorTest;
 
-import javax.validation.MessageInterpolator.Context;
+import junit.framework.Test;
 
 /**
- * Simple GWT {@link javax.validation.MessageInterpolator}.
+ * All Constraints tests that GWTTestCase.
  */
-public class GwtMessageInterpolator extends BaseMessageInterpolator {
-  // This class only has the parts the need to overridden for GWT
-
-  public String interpolate(String messageTemplate, Context context,
-      GwtLocale locale) {
-    return gwtInterpolate(messageTemplate,context,locale);
+public class ExampleValidationClientGwtSuite {
+  public static Test suite() {
+    GWTTestSuite suite = new GWTTestSuite(
+        "Validation Example tests that require GWT");
+    suite.addTestSuite(AuthorTest.class);
+    return suite;
   }
+
 }

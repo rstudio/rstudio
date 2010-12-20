@@ -15,6 +15,8 @@
  */
 package com.google.gwt.validation.client.impl;
 
+import com.google.gwt.validation.client.BaseMessageInterpolator.ContextImpl;
+
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,6 +27,7 @@ import java.util.Set;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintViolation;
+import javax.validation.MessageInterpolator;
 import javax.validation.groups.Default;
 
 /**
@@ -125,12 +128,15 @@ public abstract class AbstractGwtSpecificValidator<G> implements
       GwtValidationContext<T> context, G object, V value,
       ConstraintDescriptorImpl<A> constraintDescriptor,
       MessageAndPath messageAndPath) {
-    // TODO(nchalko) interpolate
+    MessageInterpolator messageInterpolator = context.getMessageInterpolator();
+    ContextImpl messageContext = new ContextImpl(constraintDescriptor, value);
+    String message = messageInterpolator.interpolate(
+        messageAndPath.getMessage(), messageContext);
     ConstraintViolation<T> violation = ConstraintViolationImpl.<T> builder() //
         .setConstraintDescriptor(constraintDescriptor) //
         .setInvalidValue(value) //
         .setLeafBean(object) //
-        .setMessage(messageAndPath.getMessage()) //
+        .setMessage(message) //
         .setMessageTemplate(messageAndPath.getMessage()) //
         .setPropertyPath(messageAndPath.getPath()) //
         .setRootBean(context.getRootBean()) //

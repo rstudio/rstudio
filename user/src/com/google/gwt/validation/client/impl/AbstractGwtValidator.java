@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -19,6 +19,9 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.validation.ConstraintValidatorFactory;
+import javax.validation.MessageInterpolator;
+import javax.validation.TraversableResolver;
 import javax.validation.ValidationException;
 import javax.validation.Validator;
 
@@ -30,14 +33,25 @@ import javax.validation.Validator;
 public abstract class AbstractGwtValidator implements Validator {
 
   private final Set<Class<?>> validGroups;
+  private ConstraintValidatorFactory factory;
+  private MessageInterpolator messageInterpolator;
+  private TraversableResolver traversableResolver;
 
   /**
-   * 
+   *
    * @param groups list of valid groups. An empty list defaults to just the
    *          {@link javax.validation.groups.Default} group.
    */
   public AbstractGwtValidator(Class<?>... groups) {
     validGroups = new HashSet<Class<?>>(Arrays.asList(groups));
+  }
+
+  public void init(ConstraintValidatorFactory factory,
+      MessageInterpolator messageInterpolator,
+      TraversableResolver traversableResolver) {
+    this.factory = factory;
+    this.messageInterpolator = messageInterpolator;
+    this.traversableResolver = traversableResolver;
   }
 
   public <T> T unwrap(Class<T> type) {
@@ -58,5 +72,17 @@ public abstract class AbstractGwtValidator implements Validator {
     if (object == null) {
       throw new IllegalArgumentException(name + " can not be null.");
     }
+  }
+
+  protected ConstraintValidatorFactory getFactory() {
+    return factory;
+  }
+
+  protected MessageInterpolator getMessageInterpolator() {
+    return messageInterpolator;
+  }
+
+  protected TraversableResolver getTraversableResolver() {
+    return traversableResolver;
   }
 }

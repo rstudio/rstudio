@@ -14,5 +14,13 @@ gwt clients.
     <include name="NodeImpl.java"/>
     <include name="PathImpl.java"/>
   </source>
+  <source path="">
+    <include name="ValidationMessages.java"/>
+    <include name="HibernateValidationMessageResolver.java"/>
+  </source>
   <super-source path="super" />
+  <replace-with
+    class="org.hibernate.validator.HibernateValidationMessageResolver">
+    <when-type-is class="com.google.gwt.validation.client.ProviderValidationMessageResolver" />
+  </replace-with>
 </module>

@@ -15,7 +15,6 @@
  */
 package com.google.gwt.validation.client;
 
-import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.validation.client.impl.ConstraintViolationImpl;
 
 import javax.validation.ConstraintViolation;
@@ -24,13 +23,8 @@ import javax.validation.constraints.NotNull;
 /**
  * Tests for {@link SimpleSample}.
  */
-public class SimpleSampleTest extends GWTTestCase {
+public class SimpleSampleTest extends ValidationClientGwtTestCase {
   SimpleSample sample;
-
-  @Override
-  protected void gwtSetUp() {
-    sample = new SimpleSample();
-  }
 
   public void testAnnotatedClassCompiles() throws Exception {
     // Only tests that validation annotated class compile
@@ -47,7 +41,7 @@ public class SimpleSampleTest extends GWTTestCase {
   }
 
   @Override
-  public String getModuleName() {
-    return "com.google.gwt.validation.Validation";
+  protected void gwtSetUp() {
+    sample = new SimpleSample();
   }
 }

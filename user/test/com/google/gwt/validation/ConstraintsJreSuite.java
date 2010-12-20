@@ -13,7 +13,37 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client.constraints;
+package com.google.gwt.validation;
+
+import com.google.gwt.validation.client.constraints.AssertFalseValidatorTest;
+import com.google.gwt.validation.client.constraints.AssertTrueValidatorTest;
+import com.google.gwt.validation.client.constraints.DecimalMaxValidatorForNumberTest;
+import com.google.gwt.validation.client.constraints.DecimalMaxValidatorForStringTest;
+import com.google.gwt.validation.client.constraints.DecimalMinValidatorForNumberTest;
+import com.google.gwt.validation.client.constraints.DecimalMinValidatorForStringTest;
+import com.google.gwt.validation.client.constraints.DigitsValidatorForNumberTest;
+import com.google.gwt.validation.client.constraints.DigitsValidatorForStringTest;
+import com.google.gwt.validation.client.constraints.FutureValidatorForDateTest;
+import com.google.gwt.validation.client.constraints.MaxValidatorForNumberTest;
+import com.google.gwt.validation.client.constraints.MaxValidatorForStringTest;
+import com.google.gwt.validation.client.constraints.MinValidatorForNumberTest;
+import com.google.gwt.validation.client.constraints.MinValidatorForStringTest;
+import com.google.gwt.validation.client.constraints.NotNullValidatorTest;
+import com.google.gwt.validation.client.constraints.NullValidatorTest;
+import com.google.gwt.validation.client.constraints.PastValidatorForDateTest;
+import com.google.gwt.validation.client.constraints.PatternValidatorTest;
+import com.google.gwt.validation.client.constraints.SizeValidatorForArrayOfBooleanTest;
+import com.google.gwt.validation.client.constraints.SizeValidatorForArrayOfByteTest;
+import com.google.gwt.validation.client.constraints.SizeValidatorForArrayOfCharTest;
+import com.google.gwt.validation.client.constraints.SizeValidatorForArrayOfDoubleTest;
+import com.google.gwt.validation.client.constraints.SizeValidatorForArrayOfFloatTest;
+import com.google.gwt.validation.client.constraints.SizeValidatorForArrayOfIntTest;
+import com.google.gwt.validation.client.constraints.SizeValidatorForArrayOfLongTest;
+import com.google.gwt.validation.client.constraints.SizeValidatorForArrayOfObjectTest;
+import com.google.gwt.validation.client.constraints.SizeValidatorForArrayOfShortTest;
+import com.google.gwt.validation.client.constraints.SizeValidatorForCollectionTest;
+import com.google.gwt.validation.client.constraints.SizeValidatorForMapTest;
+import com.google.gwt.validation.client.constraints.SizeValidatorForStringTest;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;

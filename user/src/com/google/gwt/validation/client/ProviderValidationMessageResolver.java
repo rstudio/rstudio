@@ -15,22 +15,8 @@
  */
 package com.google.gwt.validation.client;
 
-import com.google.gwt.validation.client.impl.NodeImplTest;
-import com.google.gwt.validation.client.impl.PathImplTest;
-
-import junit.framework.Test;
-import junit.framework.TestSuite;
-
 /**
- * All validation client non GWT tests.
+ * Validation Providers implement this to resolve Validation Messages.
  */
-public class ValidationClientJreSuite {
-
-  public static Test suite() {
-    TestSuite suite = new TestSuite(
-        "Test suite for validation client code that does not require GWT.");
-    suite.addTestSuite(PathImplTest.class);
-    suite.addTestSuite(NodeImplTest.class);
-    return suite;
-  }
+public interface ProviderValidationMessageResolver extends ValidationMessageResolver {
 }

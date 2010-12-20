@@ -35,10 +35,7 @@
     class="com.google.gwt.validation.client.GwtTraversableResolver">
     <when-type-is class="javax.validation.TraversableResolver" />
   </replace-with>
-  <replace-with
-    class="com.google.gwt.validation.client.spi.GwtValidationProvider">
-    <when-type-is class="javax.validation.spi.ValidationProvider" />
-  </replace-with>
+
   <replace-with
     class="com.google.gwt.validation.client.GwtValidationProviderResolver">
     <when-type-is class="javax.validation.ValidationProviderResolver" />
@@ -46,11 +43,13 @@
   <replace-with class="com.google.gwt.validation.client.GwtValidatorContext">
     <when-type-is class="javax.validation.ValidatorContext" />
   </replace-with>
-  <replace-with class="com.google.gwt.validation.client.GwtValidatorFactory">
-    <when-type-is class="javax.validation.ValidatorFactory" />
+  <replace-with class="com.google.gwt.validation.client.NullUserValidationMessageResolver">
+    <!-- User can override this to have Custom messages -->
+    <when-type-is class="com.google.gwt.validation.client.UserValidationMessagesResolver" />
   </replace-with>
-  <replace-with class="com.google.gwt.validation.client.Validation">
-    <when-type-is class="javax.validation.Validation" />
+  <replace-with
+    class="com.google.gwt.validation.client.spi.GwtValidationProvider">
+    <when-type-is class="javax.validation.spi.ValidationProvider" />
   </replace-with>
 
   <!-- Generators -->

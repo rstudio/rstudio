@@ -15,19 +15,13 @@
  */
 package com.google.gwt.validation.client;
 
-import com.google.gwt.junit.tools.GWTTestSuite;
-
-import junit.framework.Test;
-
 /**
- * All validation client GWT tests.
+ * Always resolves message keys to null.
  */
-public class ValidationClientGwtSuite {
+public class NullUserValidationMessageResolver implements
+    UserValidationMessagesResolver {
 
-  public static Test suite() {
-    GWTTestSuite suite = new GWTTestSuite(
-        "Test suite for all validation code.");
-    suite.addTestSuite(SimpleSampleTest.class);
-    return suite;
+  public String get(String key) {
+    return null;
   }
 }

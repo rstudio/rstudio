@@ -13,20 +13,20 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client;
+package com.google.gwt.sample.validationtck.messageinterpolation;
 
-import com.google.gwt.i18n.shared.GwtLocale;
+import com.google.gwt.junit.tools.GWTTestSuite;
 
-import javax.validation.MessageInterpolator.Context;
+import junit.framework.Test;
 
 /**
- * Simple GWT {@link javax.validation.MessageInterpolator}.
+ * Tck Tests for the {@code messageinterpolation} package.
  */
-public class GwtMessageInterpolator extends BaseMessageInterpolator {
-  // This class only has the parts the need to overridden for GWT
-
-  public String interpolate(String messageTemplate, Context context,
-      GwtLocale locale) {
-    return gwtInterpolate(messageTemplate,context,locale);
+public class MessageInterpolationGwtSuite {
+  public static Test suite() {
+    GWTTestSuite suite = new GWTTestSuite(
+        "TCK for GWT Validation, messageinterpolation package");
+    suite.addTestSuite(MessageInterpolationTest.class);
+    return suite;
   }
 }

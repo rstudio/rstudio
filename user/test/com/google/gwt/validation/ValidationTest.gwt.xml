@@ -16,12 +16,8 @@
   the License.
 -->
 <module>
-  <inherits name="com.google.gwt.sample.validationtck.ValidationTck" />
-  <source path="">
-    <include name="*.java" />
-    <exclude name="super" />
+  <inherits name="com.google.gwt.user.User" />
+  <inherits name="org.hibernate.validator.HibernateValidator" />
+  <source path="client">
   </source>
-  <replace-with class="com.google.gwt.sample.validationtck.constraints.inheritance.TckTestValidatorFactory">
-    <when-type-is class="javax.validation.ValidatorFactory"/>
-  </replace-with>
 </module>

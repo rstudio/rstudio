@@ -13,33 +13,47 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.validation.client;
+package com.google.gwt.validation.example.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.sample.validation.shared.ClientGroup;
-import com.google.gwt.sample.validation.shared.Person;
-import com.google.gwt.validation.client.AbstractValidator;
 import com.google.gwt.validation.client.GwtValidation;
+import com.google.gwt.validation.client.AbstractGwtValidatorFactory;
+import com.google.gwt.validation.client.impl.AbstractGwtValidator;
 
 import javax.validation.Validator;
 import javax.validation.groups.Default;
 
 /**
- * {@link Validator} implementation that uses
- * {@link com.google.gwt.validation.client.GwtValidation GwtValidation}.
+ * Factory to create the Validator specified by {@link GwtValidator}.
+ *
+ * GWT.create instances of this class
  */
-public class SampleValidator extends AbstractValidator {
+public class ExampleValidatorFactory extends AbstractGwtValidatorFactory {
 
   /**
-   * Validator marker for the Validation Sample project. Only the classes listed
-   * in the {@link GwtValidation} annotation can be validated.
+   * Marks constraints that should run on the client.
    */
-  @GwtValidation(value = Person.class,
+  public interface ClientGroup {
+  }
+
+  /**
+   * Validator Interface annotated with the list of classes to validate on the
+   * client.
+   */
+  @GwtValidation(
+      value = {Author.class},
       groups = {Default.class, ClientGroup.class})
   public interface GwtValidator extends Validator {
   }
 
-  public SampleValidator() {
-    super((Validator) GWT.create(SampleValidator.GwtValidator.class));
+  /**
+   * Marks constraints that should run on the server.
+   */
+  public interface ServerGroup {
+  }
+
+  @Override
+  public AbstractGwtValidator createValidator() {
+    return GWT.create(GwtValidator.class);
   }
 }
