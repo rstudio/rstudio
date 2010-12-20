@@ -264,6 +264,17 @@ public class ModuleDef {
     return null;
   }
 
+  /**
+   * Returns the Resource for a source file if it is found; <code>null</code>
+   * otherwise.
+   *
+   * @param partialPath the partial path of the source file
+   * @return the resource for the requested source file
+   */
+  public synchronized Resource findSourceFile(String partialPath) {
+    return lazySourceOracle.getResourceMap().get(partialPath);
+  }
+
   public Set<String> getActiveLinkerNames() {
     return new LinkedHashSet<String>(activeLinkers);
   }
@@ -432,19 +443,6 @@ public class ModuleDef {
    */
   public synchronized void setNameOverride(String nameOverride) {
     this.nameOverride = nameOverride;
-  }
-
-  /**
-   * Returns the URL for a source file if it is found; <code>false</code>
-   * otherwise.
-   *
-   * NOTE: this method is for testing only.
-   *
-   * @param partialPath the partial path of the source file
-   * @return the resource for the requested source file
-   */
-  synchronized Resource findSourceFile(String partialPath) {
-    return lazySourceOracle.getResourceMap().get(partialPath);
   }
 
   /**

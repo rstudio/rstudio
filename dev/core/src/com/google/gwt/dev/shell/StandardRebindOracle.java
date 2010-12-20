@@ -22,6 +22,10 @@ import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.dev.cfg.Rule;
 import com.google.gwt.dev.cfg.Rules;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
+import com.google.gwt.dev.javac.rebind.CachedRebindResult;
+import com.google.gwt.dev.javac.rebind.RebindCache;
+import com.google.gwt.dev.javac.rebind.RebindResult;
+import com.google.gwt.dev.javac.rebind.RebindStatus;
 import com.google.gwt.dev.jdt.RebindOracle;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
@@ -55,7 +59,27 @@ public class StandardRebindOracle implements RebindOracle {
       Event rebindEvent = SpeedTracerLogger.start(DevModeEventType.REBIND, "Type Name", typeName);
       try {
         genCtx.setPropertyOracle(propOracle);
-        String result = tryRebind(logger, typeName);
+        Rule rule = getRebindRule(logger, typeName);
+
+        if (rule == null) {
+          return typeName;
+        }
+        
+        CachedRebindResult cachedResult = rebindCacheGet(rule, typeName);
+        if (cachedResult != null) {
+          genCtx.setCachedRebindResult(cachedResult);
+        }
+        
+        // realize the rule (call a generator, or do type replacement, etc.)
+        RebindResult result = rule.realize(logger, genCtx, typeName);
+        
+        // handle rebind result caching (if enabled)
+        String resultTypeName = processCacheableResult(logger, rule, typeName, 
+            cachedResult, result);
+        
+        /*
+         * Finalize new artifacts from the generator context
+         */
         if (artifactAcceptor != null) {
           // Go ahead and call finish() to accept new artifacts.
           ArtifactSet newlyGeneratedArtifacts = genCtx.finish(logger);
@@ -63,16 +87,15 @@ public class StandardRebindOracle implements RebindOracle {
             artifactAcceptor.accept(logger, newlyGeneratedArtifacts);
           }
         }
-        if (result == null) {
-          result = typeName;
-        }
-        return result;
+
+        assert (resultTypeName != null);
+        return resultTypeName;
       } finally {
         rebindEvent.end();
       }
     }
 
-    private String tryRebind(TreeLogger logger, String typeName)
+    private Rule getRebindRule(TreeLogger logger, String typeName)
         throws UnableToCompleteException {
       if (usedTypeNames.contains(typeName)) {
         // Found a cycle.
@@ -110,10 +133,7 @@ public class StandardRebindOracle implements RebindOracle {
             usedRules.add(rule);
             Messages.TRACE_RULE_MATCHED.log(logger, null);
 
-            // Invoke the rule.
-            //
-            return rule.realize(logger, genCtx, typeName);
-
+            return rule;
           } else {
             // We are skipping this rule because it has already been used
             // in a previous iteration.
@@ -128,13 +148,83 @@ public class StandardRebindOracle implements RebindOracle {
       //
       return null;
     }
+
+    /*
+     * Decide how to handle integrating a previously cached result, and whether
+     * to cache the new result for the future.
+     */
+    private String processCacheableResult(TreeLogger logger, Rule rule, 
+        String typeName, CachedRebindResult cachedResult, RebindResult newResult) {
+      
+      String resultTypeName = newResult.getReturnedTypeName();
+      
+      if (!genCtx.isGeneratorResultCachingEnabled()) {
+        return resultTypeName;
+      }
+      
+      RebindStatus status = newResult.getResultStatus();
+      switch (status) {
+        
+        case USE_EXISTING:
+          // in this case, no newly generated or cached types are needed
+          break; 
+          
+        case USE_ALL_NEW_WITH_NO_CACHING:
+          /*
+           * in this case, new artifacts have been generated, but no need to
+           * cache results (as the generator is probably not able to take
+           * advantage of caching).
+           */
+          break;
+          
+        case USE_ALL_NEW:
+          // use all new results, add a new cache entry
+          cachedResult = new CachedRebindResult(newResult.getReturnedTypeName(),
+              genCtx.getArtifacts(), genCtx.getGeneratedUnitMap(), 
+              System.currentTimeMillis(), newResult.getClientData());
+          rebindCachePut(rule, typeName, cachedResult);
+          break;
+          
+        case USE_ALL_CACHED:
+          // use all cached results
+          assert (cachedResult != null);
+          
+          genCtx.commitArtifactsFromCachedRebindResult(logger);
+          genCtx.addGeneratedUnitsFromCachedRebindResult();
+          
+          // use cached type name
+          resultTypeName = cachedResult.getReturnedTypeName();
+          break;
+          
+        case USE_PARTIAL_CACHED:
+          /*
+           * Add cached generated units marked for reuse to the context.  
+           * TODO(jbrosenberg): add support for reusing artifacts as well
+           * as GeneratedUnits.
+           */
+          genCtx.addGeneratedUnitsMarkedForReuseFromCache();
+          
+          /*
+           * Create a new cache entry using the composite set of new and 
+           * reused cached results currently in genCtx.
+           */
+          cachedResult = new CachedRebindResult(newResult.getReturnedTypeName(),
+              genCtx.getArtifacts(), genCtx.getGeneratedUnitMap(), 
+              System.currentTimeMillis(), newResult.getClientData());
+          rebindCachePut(rule, typeName, cachedResult);
+          break;
+      }
+      return resultTypeName;
+    }
   }
 
-  private final Map<String, String> cache = new HashMap<String, String>();
+  private final Map<String, String> typeNameBindingMap = new HashMap<String, String>();
 
   private final StandardGeneratorContext genCtx;
 
   private final PropertyOracle propOracle;
+
+  private RebindCache rebindCache = null;
 
   private final Rules rules;
 
@@ -153,16 +243,33 @@ public class StandardRebindOracle implements RebindOracle {
   public String rebind(TreeLogger logger, String typeName,
       ArtifactAcceptor artifactAcceptor) throws UnableToCompleteException {
 
-    String result = cache.get(typeName);
-    if (result == null) {
+    String resultTypeName = typeNameBindingMap.get(typeName);
+    if (resultTypeName == null) {
       logger = Messages.TRACE_TOPLEVEL_REBIND.branch(logger, typeName, null);
 
       Rebinder rebinder = new Rebinder();
-      result = rebinder.rebind(logger, typeName, artifactAcceptor);
-      cache.put(typeName, result);
+      resultTypeName = rebinder.rebind(logger, typeName, artifactAcceptor);
+      typeNameBindingMap.put(typeName, resultTypeName);
 
-      Messages.TRACE_TOPLEVEL_REBIND_RESULT.log(logger, result, null);
+      Messages.TRACE_TOPLEVEL_REBIND_RESULT.log(logger, resultTypeName, null);
     }
-    return result;
+    return resultTypeName;
+  }
+
+  public void setRebindCache(RebindCache cache) {
+    this.rebindCache = cache;
+  }
+  
+  private CachedRebindResult rebindCacheGet(Rule rule, String typeName) {
+    if (rebindCache != null) {
+      return rebindCache.get(rule, typeName);
+    }
+    return null;
+  }
+  
+  private void rebindCachePut(Rule rule, String typeName, CachedRebindResult result) {
+    if (rebindCache != null) {
+      rebindCache.put(rule, typeName, result);
+    }
   }
 }

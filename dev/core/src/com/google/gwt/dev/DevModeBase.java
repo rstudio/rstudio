@@ -23,6 +23,7 @@ import com.google.gwt.dev.Precompile.PrecompileOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.javac.CompilationState;
+import com.google.gwt.dev.javac.rebind.RebindCache;
 import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.shell.ArtifactAcceptor;
 import com.google.gwt.dev.shell.BrowserChannelServer;
@@ -38,6 +39,7 @@ import com.google.gwt.dev.ui.DevModeUI;
 import com.google.gwt.dev.ui.DoneCallback;
 import com.google.gwt.dev.ui.DoneEvent;
 import com.google.gwt.dev.util.BrowserInfo;
+import com.google.gwt.dev.util.arg.ArgHandlerEnableGeneratorResultCaching;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.OptionGenDir;
@@ -662,6 +664,7 @@ public abstract class DevModeBase implements DoneCallback {
       registerHandler(new ArgHandlerPort(options));
       registerHandler(new ArgHandlerWhitelist());
       registerHandler(new ArgHandlerBlacklist());
+      registerHandler(new ArgHandlerEnableGeneratorResultCaching(options));
       registerHandler(new ArgHandlerLogDir(options));
       registerHandler(new ArgHandlerLogLevel(options));
       registerHandler(new ArgHandlerGenDir(options));
@@ -736,6 +739,8 @@ public abstract class DevModeBase implements DoneCallback {
   private BrowserWidgetHost browserHost = new UiBrowserWidgetHostImpl();
 
   private boolean headlessMode = false;
+
+  private Map<String, RebindCache> rebindCaches = null;
 
   private boolean started;
 
@@ -838,7 +843,8 @@ public abstract class DevModeBase implements DoneCallback {
     ArtifactAcceptor artifactAcceptor = createArtifactAcceptor(logger,
         moduleDef);
     return new ShellModuleSpaceHost(logger, compilationState, moduleDef,
-        options.getGenDir(), artifactAcceptor);
+        options.getGenDir(), artifactAcceptor, 
+        getRebindCache(moduleDef.getName()));
   }
 
   protected abstract void doShutDownServer();
@@ -1034,7 +1040,6 @@ public abstract class DevModeBase implements DoneCallback {
 
     Event startupEvent = SpeedTracerLogger.start(DevModeEventType.STARTUP);
     try {
-      boolean result = false;
       // See if there was a UI specified by command-line args
       ui = createUI();
   
@@ -1145,6 +1150,24 @@ public abstract class DevModeBase implements DoneCallback {
 
     createUIEvent.end();
     return newUI;
+  }
+
+  private RebindCache getRebindCache(String moduleName) {
+    
+    if (!options.isGeneratorResultCachingEnabled()) {
+      return null;
+    }
+    
+    if (rebindCaches == null) {
+      rebindCaches = new HashMap<String, RebindCache>();
+    }
+    
+    RebindCache cache = rebindCaches.get(moduleName);
+    if (cache == null) {
+      cache = new RebindCache();
+      rebindCaches.put(moduleName, cache);
+    }
+    return cache;
   }
 
   /**

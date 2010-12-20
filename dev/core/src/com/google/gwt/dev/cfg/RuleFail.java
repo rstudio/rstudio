@@ -18,14 +18,15 @@ package com.google.gwt.dev.cfg;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
+import com.google.gwt.dev.javac.rebind.RebindResult;
 
 /**
- * A rule to explicitly fail during a deferred binding requrest.
+ * A rule to explicitly fail during a deferred binding request.
  */
 public class RuleFail extends Rule {
 
   @Override
-  public String realize(TreeLogger logger, StandardGeneratorContext context,
+  public RebindResult realize(TreeLogger logger, StandardGeneratorContext context,
       String typeName) throws UnableToCompleteException {
     logger.log(TreeLogger.ERROR, "Deferred binding request failed for type '"
         + typeName + "'", null);

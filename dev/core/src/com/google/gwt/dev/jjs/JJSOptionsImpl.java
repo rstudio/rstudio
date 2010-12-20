@@ -28,6 +28,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private boolean disableCastChecking = false;
   private boolean disableClassMetadata = false;
   private boolean enableAssertions;
+  private boolean enableGeneratorResultCaching = false;
   private boolean optimizePrecompile = false;
   private JsOutputOption output = JsOutputOption.OBFUSCATED;
   private boolean runAsyncEnabled = true;
@@ -45,11 +46,12 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   }
 
   public void copyFrom(JJSOptions other) {
+    setAggressivelyOptimize(other.isAggressivelyOptimize());
     setCastCheckingDisabled(other.isCastCheckingDisabled());
     setClassMetadataDisabled(other.isClassMetadataDisabled());
     setCompilerMetricsEnabled(other.isCompilerMetricsEnabled());
     setEnableAssertions(other.isEnableAssertions());
-    setAggressivelyOptimize(other.isAggressivelyOptimize());
+    setGeneratorResultCachingEnabled(other.isGeneratorResultCachingEnabled());
     setOptimizationLevel(other.getOptimizationLevel());
     setOutput(other.getOutput());
     setRunAsyncEnabled(other.isRunAsyncEnabled());
@@ -88,6 +90,10 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   public boolean isEnableAssertions() {
     return enableAssertions;
+  }
+  
+  public boolean isGeneratorResultCachingEnabled() {
+    return enableGeneratorResultCaching;
   }
 
   public boolean isOptimizePrecompile() {
@@ -128,6 +134,10 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   public void setEnableAssertions(boolean enableAssertions) {
     this.enableAssertions = enableAssertions;
+  }
+  
+  public void setGeneratorResultCachingEnabled(boolean enabled) {
+    this.enableGeneratorResultCaching = enabled;
   }
 
   public void setOptimizationLevel(int level) {

@@ -18,6 +18,7 @@ package com.google.gwt.dev.cfg;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
+import com.google.gwt.dev.javac.rebind.RebindResult;
 
 /**
  * Abstract base class for various kinds of deferred binding rules.
@@ -38,7 +39,7 @@ public abstract class Rule {
         context.getTypeOracle(), typeName));
   }
 
-  public abstract String realize(TreeLogger logger,
+  public abstract RebindResult realize(TreeLogger logger,
       StandardGeneratorContext context, String typeName)
       throws UnableToCompleteException;
 

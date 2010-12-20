@@ -22,6 +22,7 @@ import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.Rules;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
+import com.google.gwt.dev.javac.rebind.RebindCache;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -53,18 +54,20 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
 
   private ModuleSpace space;
 
+  private RebindCache rebindCache;
+
   /**
    * @param module the module associated with the hosted module space
-   * @param saveJsni
    */
   public ShellModuleSpaceHost(TreeLogger logger,
       CompilationState compilationState, ModuleDef module, File genDir,
-      ArtifactAcceptor artifactAcceptor) {
+      ArtifactAcceptor artifactAcceptor, RebindCache rebindCache) {
     this.logger = logger;
     this.compilationState = compilationState;
     this.module = module;
     this.genDir = genDir;
     this.artifactAcceptor = artifactAcceptor;
+    this.rebindCache = rebindCache;
   }
 
   public CompilingClassLoader getClassLoader() {
@@ -98,7 +101,12 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
       Rules rules = module.getRules();
       StandardGeneratorContext genCtx = new StandardGeneratorContext(
           compilationState, module, genDir, new ArtifactSet());
+      
+      // Only enable generator result caching if we have a valid rebindCache
+      genCtx.setGeneratorResultCachingEnabled((rebindCache != null));
+      
       rebindOracle = new StandardRebindOracle(propOracle, rules, genCtx);
+      rebindOracle.setRebindCache(rebindCache);
 
       // Create a completely isolated class loader which owns all classes
       // associated with a particular module. This effectively builds a

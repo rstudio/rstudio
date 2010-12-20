@@ -18,6 +18,8 @@ package com.google.gwt.dev.cfg;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
+import com.google.gwt.dev.javac.rebind.RebindResult;
+import com.google.gwt.dev.javac.rebind.RebindStatus;
 
 /**
  * A rule to replace the type being rebound with an explicitly named class.
@@ -35,9 +37,11 @@ public class RuleReplaceWith extends Rule {
   }
 
   @Override
-  public String realize(TreeLogger logger, StandardGeneratorContext context,
-      String typeName) throws UnableToCompleteException {
-    return replacementTypeName;
+  public RebindResult realize(TreeLogger logger,
+      StandardGeneratorContext context, String typeName)
+      throws UnableToCompleteException {
+    return new RebindResult(
+        RebindStatus.USE_EXISTING, replacementTypeName);
   }
 
   @Override

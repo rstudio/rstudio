@@ -202,6 +202,10 @@ public class Precompile {
       return enableGeneratingOnShards;
     }
 
+    public boolean isGeneratorResultCachingEnabled() {
+      return jjsOptions.isGeneratorResultCachingEnabled();
+    }
+
     public boolean isOptimizePrecompile() {
       return jjsOptions.isOptimizePrecompile();
     }
@@ -260,6 +264,10 @@ public class Precompile {
 
     public void setGenDir(File genDir) {
       this.genDir = genDir;
+    }
+    
+    public void setGeneratorResultCachingEnabled(boolean enabled) {
+      jjsOptions.setGeneratorResultCachingEnabled(enabled);
     }
 
     public void setMaxPermsPerPrecompile(int maxPermsPerPrecompile) {
