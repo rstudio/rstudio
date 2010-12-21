@@ -460,9 +460,6 @@ bool parseAndValidateJsonRpcConnection(
 
 void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection)
 {
-   // ensure session is initialized
-   ensureSessionInitialized();
-
    // check for a uri handler registered by a module
    const http::Request& request = ptrConnection->request();
    std::string uri = request.uri();
@@ -470,6 +467,9 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection)
 
    if (uriHandler) // uri handler
    {
+      // r code may execute - ensure session is initialized
+      ensureSessionInitialized();
+
       http::Response response;
       uriHandler(request, &response);
       ptrConnection->sendResponse(response);
@@ -479,6 +479,9 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection)
    }
    else if (isJsonRpcRequest(ptrConnection)) // check for json-rpc
    {
+      // r code may execute - ensure session is initialized
+      ensureSessionInitialized();
+
       // attempt to parse & validate
       json::JsonRpcRequest jsonRpcRequest;
       if (parseAndValidateJsonRpcConnection(ptrConnection, &jsonRpcRequest))
