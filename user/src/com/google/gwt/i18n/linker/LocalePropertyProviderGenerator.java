@@ -192,7 +192,7 @@ public class LocalePropertyProviderGenerator implements PropertyProviderGenerato
     body.println("var end = cookies.indexOf(';', idx);");
     body.println("if (end < 0) {");
     body.indent();
-    body.println("end = cookies.length();");
+    body.println("end = cookies.length;");
     body.outdent();
     body.println("}");
     body.println("locale = cookies.substring(idx + " + (cookieName.length() + 1)
@@ -257,7 +257,7 @@ public class LocalePropertyProviderGenerator implements PropertyProviderGenerato
     body.println("var end = queryParam.indexOf(\"&\", qpStart);");
     body.println("if (end < 0) {");
     body.indent();
-    body.println("end = queryParam.length();");
+    body.println("end = queryParam.length;");
     body.outdent();
     body.println("}");
     body.println("locale = queryParam.substring(qpStart + "
