@@ -13,21 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.validationtck.validation;
+package org.hibernate.jsr303.tck.tests.constraints.validatorresolution;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.validation.client.AbstractGwtValidatorFactory;
 import com.google.gwt.validation.client.GwtValidation;
 import com.google.gwt.validation.client.impl.AbstractGwtValidator;
 
-import org.hibernate.jsr303.tck.tests.validation.Actor;
-import org.hibernate.jsr303.tck.tests.validation.ActorArrayBased;
-import org.hibernate.jsr303.tck.tests.validation.ActorListBased;
-import org.hibernate.jsr303.tck.tests.validation.Address;
-import org.hibernate.jsr303.tck.tests.validation.BadlyBehavedEntity;
-import org.hibernate.jsr303.tck.tests.validation.Customer;
-import org.hibernate.jsr303.tck.tests.validation.Engine;
-import org.hibernate.jsr303.tck.tests.validation.Order;
+import org.hibernate.jsr303.tck.tests.constraints.validatorresolution.ValidatorResolutionTest.CustomClass;
+import org.hibernate.jsr303.tck.tests.constraints.validatorresolution.ValidatorResolutionTest.CustomInterfaceImpl;
+import org.hibernate.jsr303.tck.tests.constraints.validatorresolution.ValidatorResolutionTest.SubClassAHolder;
+import org.hibernate.jsr303.tck.tests.constraints.validatorresolution.ValidatorResolutionTest.SubClassBHolder;
 
 import javax.validation.Validator;
 
@@ -40,8 +36,8 @@ public final class TckTestValidatorFactory extends AbstractGwtValidatorFactory {
    * Marker Interface for {@link GWT#create(Class)}.
    */
   @GwtValidation(value = {
-      Actor.class, ActorArrayBased.class, ActorListBased.class, Address.class,
-      BadlyBehavedEntity.class, Customer.class, Engine.class, Order.class})
+      Bar.class, CustomInterfaceImpl.class, CustomClass.class, Foo.class,
+      MinMax.class, SubClassAHolder.class, SubClassBHolder.class, Suburb.class})
   public static interface GwtValidator extends Validator {
   }
 

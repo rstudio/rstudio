@@ -32,6 +32,7 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 import com.google.gwt.thirdparty.guava.common.primitives.Primitives;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
@@ -125,12 +126,67 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
         + " is can not be represented as a Java Literal.");
   }
 
+  static <T extends Annotation> Class<?> getTypeOfConstraintValidator(
+      Class<? extends ConstraintValidator<T, ?>> constraintClass) {
+
+    for (Method method :  constraintClass.getMethods()) {
+      if (method.getName().equals("isValid")
+          && method.getParameterTypes().length == 2
+          && method.getReturnType().isAssignableFrom(Boolean.TYPE)) {
+        return method.getParameterTypes()[0];
+      }
+    }
+    throw new IllegalStateException(
+        "ConstraintValidators must have a isValid method");
+  }
+
+  // Visible for testing
+  static <A extends Annotation> Class<? extends ConstraintValidator<A, ?>> getValidatorForType(
+      Class<?> type,
+      List<Class<? extends ConstraintValidator<A, ?>>> constraintValidatorClasses) {
+    Map<Class<?>, Class<? extends ConstraintValidator<A, ?>>> map = Maps.newHashMap();
+    for (Class<? extends ConstraintValidator<A, ?>> constraintClass : constraintValidatorClasses) {
+      Class<?> aType = getTypeOfConstraintValidator(constraintClass);
+      if (aType.isAssignableFrom(type)) {
+        map.put(aType, constraintClass);
+      }
+    }
+    Class<?> best = null;
+    for (Class<?> c : map.keySet()) {
+      if (best == null) {
+        best = c;
+      } else {
+        if (c.equals(type)) {
+          best = c;
+          break; // Exact match we can stop
+        }
+        // TODO(nchalko) implement per spec
+        // is the new one better than the last.
+      }
+    }
+    return map.get(best);
+  }
+
+  private static <A extends Annotation> Class<? extends ConstraintValidator<A, ?>> getValidatorForType(
+      ConstraintDescriptor<A> constraint, Class<?> clazz) {
+    List<Class<? extends ConstraintValidator<A, ?>>> constraintValidatorClasses
+        = constraint.getConstraintValidatorClasses();
+    if (constraintValidatorClasses.isEmpty()) {
+      return null;
+    }
+    return getValidatorForType(clazz, constraintValidatorClasses);
+  }
+
   private BeanHelper beanHelper;
   private Set<BeanHelper> beansToValidate = Sets.newHashSet();
   private final JClassType beanType;
 
   private final Set<JField> fieldsToWrap = Sets.newHashSet();
+
   private Set<JMethod> gettersToWrap = Sets.newHashSet();
+
+
+
   private final TypeOracle oracle;
 
   public GwtSpecificValidatorCreator(JClassType validatorType,
@@ -217,7 +273,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
 
   private Annotation getAnnotation(PropertyDescriptor p, boolean useField,
       ConstraintDescriptor<?> constraint) {
-    Class<? extends Annotation> expectedAnnotaionClass =
+    Class<? extends Annotation> expectedAnnotaionClass = 
         ((Annotation) constraint.getAnnotation()).annotationType();
     Annotation annotation = null;
     if (useField) {
@@ -232,19 +288,6 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
       }
     }
     return annotation;
-  }
-
-  private <T extends Annotation> Class<? extends ConstraintValidator<T, ?>> getValidatorForType(
-      ConstraintDescriptor<T> constraint, Class<?> clazz) {
-    // TODO(nchalko) implement per spec
-
-    List<Class<? extends ConstraintValidator<T, ?>>> constraintValidatorClasses
-        = constraint.getConstraintValidatorClasses();
-    if (constraintValidatorClasses.isEmpty()) {
-      return null;
-    }
-    Class<? extends ConstraintValidator<T, ?>> validatorClass = constraintValidatorClasses.get(0);
-    return validatorClass;
   }
 
   private boolean hasField(PropertyDescriptor p) {

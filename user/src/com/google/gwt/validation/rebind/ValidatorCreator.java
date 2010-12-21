@@ -180,7 +180,7 @@ public class ValidatorCreator extends AbstractCreator {
 
     // + "Valid values are {Foo.clas, Bar.class}
     sourceWriter.print("+ \"Valid types are ");
-    sourceWriter.print(beansToValidate.entrySet().toString());
+    sourceWriter.print(beansToValidate.values().toString());
     sourceWriter.println("\");");
     sourceWriter.outdent();
     sourceWriter.outdent();

@@ -13,21 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.validationtck.validation;
+package com.google.gwt.sample.validationtck.constraints.customconstraint;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.validation.client.AbstractGwtValidatorFactory;
 import com.google.gwt.validation.client.GwtValidation;
 import com.google.gwt.validation.client.impl.AbstractGwtValidator;
 
-import org.hibernate.jsr303.tck.tests.validation.Actor;
-import org.hibernate.jsr303.tck.tests.validation.ActorArrayBased;
-import org.hibernate.jsr303.tck.tests.validation.ActorListBased;
-import org.hibernate.jsr303.tck.tests.validation.Address;
-import org.hibernate.jsr303.tck.tests.validation.BadlyBehavedEntity;
-import org.hibernate.jsr303.tck.tests.validation.Customer;
-import org.hibernate.jsr303.tck.tests.validation.Engine;
-import org.hibernate.jsr303.tck.tests.validation.Order;
+import org.hibernate.jsr303.tck.tests.constraints.customconstraint.Author;
+import org.hibernate.jsr303.tck.tests.constraints.customconstraint.CustomConstraintValidatorTest.Freezer;
+import org.hibernate.jsr303.tck.tests.constraints.customconstraint.CustomConstraintValidatorTest.OddShoe;
+import org.hibernate.jsr303.tck.tests.constraints.customconstraint.CustomConstraintValidatorTest.Shoe;
 
 import javax.validation.Validator;
 
@@ -37,11 +33,10 @@ import javax.validation.Validator;
  */
 public final class TckTestValidatorFactory extends AbstractGwtValidatorFactory {
   /**
-   * Marker Interface for {@link GWT#create(Class)}.
+   * Marker Interface to {@link GWT#create(Class)}.
    */
   @GwtValidation(value = {
-      Actor.class, ActorArrayBased.class, ActorListBased.class, Address.class,
-      BadlyBehavedEntity.class, Customer.class, Engine.class, Order.class})
+      Author.class, Freezer.class, OddShoe.class, Shoe.class})
   public static interface GwtValidator extends Validator {
   }
 
