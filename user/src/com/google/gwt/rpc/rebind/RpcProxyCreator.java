@@ -19,7 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.impl.ArtificialRescue;
 import com.google.gwt.core.client.impl.Impl;
 import com.google.gwt.core.client.impl.ArtificialRescue.Rescue;
-import com.google.gwt.core.ext.GeneratorContext;
+import com.google.gwt.core.ext.GeneratorContextExt;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
@@ -118,7 +118,7 @@ public class RpcProxyCreator extends ProxyCreator {
   }
 
   @Override
-  protected void generateTypeHandlers(TreeLogger logger, GeneratorContext ctx,
+  protected void generateTypeHandlers(TreeLogger logger, GeneratorContextExt ctx,
       SerializableTypeOracle serializationSto,
       SerializableTypeOracle deserializationSto)
       throws UnableToCompleteException {
@@ -271,7 +271,7 @@ public class RpcProxyCreator extends ProxyCreator {
 
   @Override
   protected String writeSerializationPolicyFile(TreeLogger logger,
-      GeneratorContext ctx, SerializableTypeOracle serializationSto,
+      GeneratorContextExt ctx, SerializableTypeOracle serializationSto,
       SerializableTypeOracle deserializationSto)
       throws UnableToCompleteException {
 
