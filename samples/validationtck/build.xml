@@ -71,7 +71,7 @@
         depends="compile.emma.if.enabled"
         unless="compile.tests.complete">
     <mkdir dir="${javac.junit.out}" />
-    <gwt.javac srcdir="test" excludes="com/google/gwt/langtest/**"
+    <gwt.javac srcdir="test" excludes="**/super/**"
           destdir="${javac.junit.out}">
       <classpath>
         <pathelement location="${javac.out}" />
