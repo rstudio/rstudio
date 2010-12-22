@@ -28,7 +28,7 @@ namespace parent_process_monitor {
 
 Error wrapFork(boost::function<void()> func)
 {
-   static bool s_initialized = true;
+   static bool s_initialized = false;
 
    if (!s_initialized)
    {
