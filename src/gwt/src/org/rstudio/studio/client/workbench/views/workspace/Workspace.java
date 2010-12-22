@@ -113,6 +113,13 @@ public class Workspace
       eventBus_.addHandler(WorkspaceObjectRemovedEvent.TYPE, this);
       eventBus_.addHandler(OpenDataFileEvent.TYPE, this);
    }
+   
+   @Override
+   public void onBeforeSelected()
+   {
+      super.onBeforeSelected();
+      synchronizeView();
+   }
 
    public void onWorkspaceRefresh(WorkspaceRefreshEvent event)
    {
