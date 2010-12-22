@@ -19,7 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.impl.Impl;
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.ConfigurationProperty;
-import com.google.gwt.core.ext.GeneratorContextExt;
+import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -248,7 +248,7 @@ public class ProxyCreator {
    *
    * @throws UnableToCompleteException
    */
-  public String create(TreeLogger logger, GeneratorContextExt context)
+  public String create(TreeLogger logger, GeneratorContext context)
       throws UnableToCompleteException {
     TypeOracle typeOracle = context.getTypeOracle();
 
@@ -690,7 +690,7 @@ public class ProxyCreator {
   }
 
   protected void generateTypeHandlers(TreeLogger logger,
-      GeneratorContextExt context, SerializableTypeOracle typesSentFromBrowser,
+      GeneratorContext context, SerializableTypeOracle typesSentFromBrowser,
       SerializableTypeOracle typesSentToBrowser)
       throws UnableToCompleteException {
     Event event = SpeedTracerLogger.start(CompilerEventType.GENERATOR_RPC_TYPE_SERIALIZER);
@@ -729,7 +729,7 @@ public class ProxyCreator {
   }
 
   protected String writeSerializationPolicyFile(TreeLogger logger,
-      GeneratorContextExt ctx, SerializableTypeOracle serializationSto,
+      GeneratorContext ctx, SerializableTypeOracle serializationSto,
       SerializableTypeOracle deserializationSto)
       throws UnableToCompleteException {
     try {
@@ -830,7 +830,7 @@ public class ProxyCreator {
   }
 
   private void emitPolicyFileArtifact(TreeLogger logger,
-      GeneratorContextExt context, String partialPath)
+      GeneratorContext context, String partialPath)
       throws UnableToCompleteException {
     try {
       String qualifiedSourceName = serviceIntf.getQualifiedSourceName();
@@ -881,7 +881,7 @@ public class ProxyCreator {
     return ResponseReader.OBJECT;
   }
 
-  private SourceWriter getSourceWriter(TreeLogger logger, GeneratorContextExt ctx,
+  private SourceWriter getSourceWriter(TreeLogger logger, GeneratorContext ctx,
       JClassType serviceAsync) {
     JPackage serviceIntfPkg = serviceAsync.getPackage();
     String packageName = serviceIntfPkg == null ? "" : serviceIntfPkg.getName();
