@@ -96,6 +96,8 @@ public:
 
    int timeoutMinutes() const { return timeoutMinutes_; }
 
+   bool createPublicFolder() const { return createPublicFolder_; }
+
    unsigned int minimumUserId() const { return 100; }
    
    core::FilePath coreRSourcePath() const 
@@ -198,6 +200,7 @@ private:
    // session
    std::string secret_;
    int timeoutMinutes_;
+   bool createPublicFolder_;
 
    // r
    std::string coreRSourcePath_;

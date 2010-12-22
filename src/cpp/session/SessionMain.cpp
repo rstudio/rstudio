@@ -1351,7 +1351,11 @@ void ensureRProfile()
       
 void ensurePublicFolder()
 {
+   // check if we need to create the public folder (bail if we don't)
    Options& options = session::options();
+   if (!options.createPublicFolder())
+      return;
+
    FilePath publicPath = options.userHomePath().complete("Public");
    if (!publicPath.exists())
    {

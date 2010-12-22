@@ -107,7 +107,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    session.add_options()
       ("session-timeout-minutes",
          value<int>(&timeoutMinutes_)->default_value(120),
-         "session timeout (minutes)" );
+         "session timeout (minutes)" )
+      ("session-create-public-folder",
+         value<bool>(&createPublicFolder_)->default_value(false),
+         "automatically create public folder");
 
    // r options
    options_description r("r") ;
