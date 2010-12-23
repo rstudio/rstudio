@@ -88,8 +88,16 @@
           "ie" :
           {
             "caption" : "Download the GWT Developer Plugin<br>For Internet Explorer",
-            "url" : "https://dl-ssl.google.com/tag/s/appguid%3D%7B9a5e649a-ec63-4c7d-99bf-75adb345e7e5%7D%26lang%3Den%26appname%3DGWT%2520Developer%2520Plugin%2520for%2520IE%26needsadmin%3Dfalse/gwt/plugins/ie/GwtDevPluginSetup.exe",
+            "url" : "https://dl-ssl.google.com/tag/s/appguid%3D%7B9a5e649a-ec63-4c7d-99bf-75adb345e7e5%7D%26lang%3Den%26appname%3DGWT%2520Developer%2520Plugin%2520for%2520IE%2520%2528x86%2529%26needsadmin%3Dfalse/gwt/plugins/ie/GwtDevPluginSetup.exe",
             "platforms" : "Win x86",
+            "supported" : true
+          },
+
+          "ie-x64" :
+          {
+            "caption" : "Download the GWT Developer Plugin<br>For Internet Explorer (64-bit)",
+            "url" : "https://dl-ssl.google.com/tag/s/appguid%3D%7B53dae7d2-8c28-440f-920b-b2d665ce73b2%7D%26lang%3Den%26appname%3DGWT%2520Developer%2520Plugin%2520for%2520IE%2520%2528x64%2529%26needsadmin%3Dfalse/gwt/plugins/ie/GwtDevPluginSetup.exe",
+            "platforms" : "Win x64",
             "supported" : true
           },
 
@@ -104,7 +112,6 @@
       };
 
       var ua = navigator.userAgent.toLowerCase();
-
       var id = 'unknown';
       if (ua.indexOf("webkit") != -1) {
         if ( (ua.indexOf("iphone") != -1) || (ua.indexOf("ipod") != -1) ) {
@@ -119,7 +126,7 @@
           id = 'safari-win';
         }
       } else if (ua.indexOf("msie") != -1) {
-        id = 'ie';
+        id = (ua.indexOf("win64") == -1) ? 'ie' : 'ie-x64';
       } else if (ua.indexOf("opera") != -1) {
         id = 'opera';
       } else if (ua.indexOf("gecko") != -1) {

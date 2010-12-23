@@ -23,8 +23,6 @@
     <pathelement location="war/WEB-INF/classes"/>
     <pathelement location="${gwt.user.jar}" />
     <pathelement location="${gwt.dev.jar}" />
-    <!-- Add any additional non-server libs (such as JUnit) -->
-    <fileset dir="war/WEB-INF/lib" includes="**/*.jar"/>
   </path>
 
   <target name="javac" description="Compile java source">
