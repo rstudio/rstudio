@@ -16,49 +16,25 @@
 package com.google.gwt.core.ext;
 
 import com.google.gwt.dev.javac.rebind.RebindResult;
-import com.google.gwt.dev.javac.rebind.RebindStatus;
 
 /**
  * EXPERIMENTAL and subject to change. Do not use this in production code.
  * <p>
- * Adds a new {@link #generateIfNecessary} method.
+ * Adds a new {@link #generateIncrementally} method.
  * <p> 
  * TODO(jbrosenberg): Merge this into {@link Generator} directly, once the api
  * has stabilized and we can remove the "experimental" moniker.
  */
 public abstract class GeneratorExt extends Generator {
-  
+ 
   /**
-   * A wrapper class for using old style {@link Generator} implementations where
-   * a GeneratorExt instance is needed.
-   */
-  private static class BaseGeneratorWrapper extends GeneratorExt {
-    final Generator baseGenerator;
-    
-    public BaseGeneratorWrapper(Generator baseGenerator) {
-      this.baseGenerator = baseGenerator;
-    }
-    
-    @Override
-    public String generate(TreeLogger logger, GeneratorContext context,
-        String typeName) throws UnableToCompleteException {
-      return this.baseGenerator.generate(logger, context, typeName);
-    }
-  }
-  
-  /**
-   * Get a new instance wrapped from an old style {@link Generator} 
-   * implementation.
-   */
-  public static GeneratorExt getWrappedInstance(Generator baseGenerator) {
-    return new BaseGeneratorWrapper(baseGenerator);
-  }
-  
-  /**
-   * A default implementation of the abstract method defined in the old style
-   * {@link Generator}.
+   * A default implementation of the abstract method defined in the base
+   * {@link Generator} class.  This will wrap a call to
+   * {@link #generateIncrementally}, and attempt no caching.  This supports
+   * backwards compatibility for applications or other generators which call 
+   * this generator directly, as outside of the normal internal rebind process.
    * <p>
-   * Note, it is recommended that {@link #generateIncrementally} be used instead.
+   * It is recommended that {@link #generateIncrementally} be used instead.
    * 
    * @return the name of a subclass to substitute for the requested class, or
    *         return <code>null</code> to cause the requested type itself to be
@@ -67,8 +43,13 @@ public abstract class GeneratorExt extends Generator {
   @Override
   public String generate(TreeLogger logger, GeneratorContext context,
       String typeName) throws UnableToCompleteException {
-    // to override (implementing generateIncrementally instead is recommended)
-    return null;
+    
+    // wrap the passed in context
+    GeneratorContextExt contextExt = 
+      GeneratorContextExtWrapper.newInstance(context);
+    
+    RebindResult result = generateIncrementally(logger, contextExt, typeName);
+    return result.getReturnedTypeName();
   }
   
   /**
@@ -76,37 +57,21 @@ public abstract class GeneratorExt extends Generator {
    * type.  The generator can use information from the context to determine
    * whether it needs to regenerate everything, or whether it can selectively
    * regenerate a subset of its output, or whether it can return quickly to
-   * allow use of all previously cached objects.  It will return a 
-   * {@link RebindResult}, which contains a {@link RebindStatus} field 
-   * indicating whether to use previously cached artifacts, newly generated 
-   * ones, or a partial mixture of both cached and newly generated objects.  
+   * allow reuse of all previously cached objects.  It will return a 
+   * {@link RebindResult}, which contains a
+   * {@link com.google.gwt.dev.javac.rebind.RebindStatus} field indicating
+   * whether to use previously cached artifacts, newly generated ones, or a
+   * partial mixture of both cached and newly generated objects.
    * <p>
    * The result also includes a field for the name of the subclass to 
    * substitute for the requested class.
    * <p>
-   * For backwards compatibility, the default implementation calls the old-style
-   * generate() method, and doesn't attempt any generator result caching.
-   * <p>
    * The generator throws an <code>UnableToCompleteException</code> if for 
    * any reason it cannot complete successfully.
    * 
-   * @return a GeneratorResult
+   * @return a RebindResult
    */
-  public RebindResult generateIncrementally(TreeLogger logger, 
+  public abstract RebindResult generateIncrementally(TreeLogger logger, 
       GeneratorContextExt context, String typeName) 
-      throws UnableToCompleteException {
-    
-    // to override (default implementation calls unconditional generate() method)
-    
-    RebindStatus status;
-    String resultTypeName = generate(logger, context, typeName);
-    if (resultTypeName == null) {
-      status = RebindStatus.USE_EXISTING;
-      resultTypeName = typeName;
-    } else {
-      status = RebindStatus.USE_ALL_NEW_WITH_NO_CACHING;
-    }
-    
-    return new RebindResult(status, resultTypeName);
-  }
+      throws UnableToCompleteException;
 }

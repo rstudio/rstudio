@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.GeneratorContextExt;
 import com.google.gwt.core.ext.GeneratorExt;
+import com.google.gwt.core.ext.GeneratorExtWrapper;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -332,7 +333,7 @@ public class StandardGeneratorContext implements GeneratorContextExt {
    * Adds all available cached generated units to the context.  Existing units
    * for a given type will not be overwritten.
    */
-  public void addGeneratedUnitsFromCachedRebindResult() {
+  public void addGeneratedUnitsFromCache() {
     if (cachedRebindResult != null 
         && cachedRebindResult.getGeneratedUnits() != null) {
       addGeneratedUnits(cachedRebindResult.getGeneratedUnits());
@@ -392,7 +393,7 @@ public class StandardGeneratorContext implements GeneratorContextExt {
   /**
    * Commits all available cached Artifacts to the context.
    */
-  public void commitArtifactsFromCachedRebindResult(TreeLogger logger) {
+  public void commitArtifactsFromCache(TreeLogger logger) {
     if (cachedRebindResult != null 
         && cachedRebindResult.getArtifacts() != null) {
       for (Artifact<?> art : cachedRebindResult.getArtifacts()) {
@@ -654,7 +655,7 @@ public class StandardGeneratorContext implements GeneratorContextExt {
       if (generator instanceof GeneratorExt) {
         generatorExt = (GeneratorExt) generator;
       } else {
-        generatorExt = GeneratorExt.getWrappedInstance(generator);
+        generatorExt = GeneratorExtWrapper.newInstance(generator);
       }
       
       RebindResult result;
@@ -686,7 +687,7 @@ public class StandardGeneratorContext implements GeneratorContextExt {
   /**
    * Set previously cached rebind result for currently active generator.
    */
-  public void setCachedRebindResult(CachedRebindResult cachedRebindResult) {
+  public void setCachedGeneratorResult(CachedRebindResult cachedRebindResult) {
     this.cachedRebindResult = cachedRebindResult;
   }
   

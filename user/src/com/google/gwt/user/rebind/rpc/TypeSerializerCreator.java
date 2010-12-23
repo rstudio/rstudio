@@ -21,7 +21,7 @@ import com.google.gwt.core.client.GwtScriptOnly;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.ConfigurationProperty;
-import com.google.gwt.core.ext.GeneratorContext;
+import com.google.gwt.core.ext.GeneratorContextExt;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
@@ -29,6 +29,7 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.javac.rebind.CachedRebindResult;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -99,7 +100,7 @@ public class TypeSerializerCreator {
     }
   }
 
-  private final GeneratorContext context;
+  private final GeneratorContextExt context;
 
   private final SerializableTypeOracle deserializationOracle;
 
@@ -121,7 +122,7 @@ public class TypeSerializerCreator {
 
   public TypeSerializerCreator(TreeLogger logger,
       SerializableTypeOracle serializationOracle,
-      SerializableTypeOracle deserializationOracle, GeneratorContext context,
+      SerializableTypeOracle deserializationOracle, GeneratorContextExt context,
       String typeSerializerClassName, String typeSerializerSimpleName)
       throws UnableToCompleteException {
     this.context = context;
@@ -202,44 +203,52 @@ public class TypeSerializerCreator {
 
     return typeSerializerClassName;
   }
-
+ 
   /*
    * Create a field serializer for a type if it does not have a custom
    * serializer.
    */
-  private void createFieldSerializer(TreeLogger logger, GeneratorContext ctx,
+  private void createFieldSerializer(TreeLogger logger, GeneratorContextExt ctx,
       JType type) {
     Event event = SpeedTracerLogger.start(CompilerEventType.GENERATOR_RPC_FIELD_SERIALIZER);
-    assert (type != null);
-    assert (serializationOracle.isSerializable(type) || deserializationOracle.isSerializable(type));
-
-    JParameterizedType parameterizedType = type.isParameterized();
-    if (parameterizedType != null) {
-      createFieldSerializer(logger, ctx, parameterizedType.getRawType());
-      return;
+    try {
+      assert (type != null);
+      assert (serializationOracle.isSerializable(type) || deserializationOracle.isSerializable(type));
+  
+      JParameterizedType parameterizedType = type.isParameterized();
+      if (parameterizedType != null) {
+        createFieldSerializer(logger, ctx, parameterizedType.getRawType());
+        return;
+      }
+  
+      /*
+       * Only a JClassType can reach this point in the code. JPrimitives have been
+       * removed because their serialization is built in, interfaces have been
+       * removed because they are not an instantiable type and parameterized types
+       * have been broken down into their raw types.
+       */
+      assert (type.isClass() != null || type.isArray() != null);
+      
+      if (findCacheableFieldSerializerAndMarkForReuseIfAvailable(ctx, type)) {
+        // skip generation of field serializer
+        return;
+      }
+  
+      JClassType customFieldSerializer = SerializableTypeOracleBuilder.findCustomFieldSerializer(
+          typeOracle, type);
+      FieldSerializerCreator creator = new FieldSerializerCreator(typeOracle,
+          serializationOracle, deserializationOracle, (JClassType) type,
+          customFieldSerializer);
+      creator.realize(logger, ctx);
+    } finally {
+      event.end();
     }
-
-    /*
-     * Only a JClassType can reach this point in the code. JPrimitives have been
-     * removed because their serialization is built in, interfaces have been
-     * removed because they are not an instantiable type and parameterized types
-     * have been broken down into their raw types.
-     */
-    assert (type.isClass() != null || type.isArray() != null);
-
-    JClassType customFieldSerializer = SerializableTypeOracleBuilder.findCustomFieldSerializer(
-        typeOracle, type);
-    FieldSerializerCreator creator = new FieldSerializerCreator(typeOracle,
-        serializationOracle, deserializationOracle, (JClassType) type,
-        customFieldSerializer);
-    creator.realize(logger, ctx);
-    event.end();
   }
 
   /*
    * Create all of the necessary field serializers.
    */
-  private void createFieldSerializers(TreeLogger logger, GeneratorContext ctx) {
+  private void createFieldSerializers(TreeLogger logger, GeneratorContextExt ctx) {
     JType[] types = getSerializableTypes();
     int typeCount = types.length;
     for (int typeIndex = 0; typeIndex < typeCount; ++typeIndex) {
@@ -249,7 +258,51 @@ public class TypeSerializerCreator {
       createFieldSerializer(logger, ctx, type);
     }
   }
-
+  
+  /*
+   * check whether we can use a previously generated version of a 
+   * FieldSerializer.  If so, mark it for reuse, and return true.
+   * Otherwise return false.
+   */
+  private boolean findCacheableFieldSerializerAndMarkForReuseIfAvailable(
+      GeneratorContextExt ctx, JType type) {
+    
+    CachedRebindResult lastResult = ctx.getCachedGeneratorResult();
+    if (lastResult == null || !ctx.isGeneratorResultCachingEnabled()) {
+      return false;
+    }
+    
+    String fieldSerializerName = 
+      SerializationUtils.getStandardSerializerName((JClassType) type);
+    
+    if (type instanceof JClassType) {
+      // check that it is available for reuse
+      if (!lastResult.isTypeCached(fieldSerializerName)) {
+        return false;
+      }
+    } else {
+      return false;
+    }
+          
+    try {
+      /*
+       * TODO(jbrosenberg): Change this check to use getVersion() from 
+       * TypeOracle, once that is available.
+       */
+      long lastModified = ctx.getSourceLastModifiedTime((JClassType) type);
+      
+      if (lastModified != 0L &&
+          lastModified < lastResult.getTimeGenerated()) {
+        
+        // use cached version  
+        return ctx.reuseTypeFromCacheIfAvailable(fieldSerializerName);
+      }
+    } catch (RuntimeException ex) {
+      // could get an exception checking modified time
+    }
+      
+    return false;
+  }
   private String[] getPackageAndClassName(String fullClassName) {
     String className = fullClassName;
     String packageName = "";
@@ -265,7 +318,7 @@ public class TypeSerializerCreator {
     return serializableTypes;
   }
 
-  private SourceWriter getSourceWriter(TreeLogger logger, GeneratorContext ctx) {
+  private SourceWriter getSourceWriter(TreeLogger logger, GeneratorContextExt ctx) {
     String name[] = getPackageAndClassName(typeSerializerClassName);
     String packageName = name[0];
     String className = name[1];

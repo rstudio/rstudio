@@ -67,7 +67,7 @@ public class StandardRebindOracle implements RebindOracle {
         
         CachedRebindResult cachedResult = rebindCacheGet(rule, typeName);
         if (cachedResult != null) {
-          genCtx.setCachedRebindResult(cachedResult);
+          genCtx.setCachedGeneratorResult(cachedResult);
         }
         
         // realize the rule (call a generator, or do type replacement, etc.)
@@ -189,8 +189,8 @@ public class StandardRebindOracle implements RebindOracle {
           // use all cached results
           assert (cachedResult != null);
           
-          genCtx.commitArtifactsFromCachedRebindResult(logger);
-          genCtx.addGeneratedUnitsFromCachedRebindResult();
+          genCtx.commitArtifactsFromCache(logger);
+          genCtx.addGeneratedUnitsFromCache();
           
           // use cached type name
           resultTypeName = cachedResult.getReturnedTypeName();
