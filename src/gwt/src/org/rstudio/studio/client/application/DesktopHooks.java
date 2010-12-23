@@ -116,7 +116,6 @@ public class DesktopHooks
                      {
                         progress.dismiss();
                         super.onResponseReceived(response);
-                        new ProgressDelayer("Saving R Workspace...");
                      }
 
                      @Override
