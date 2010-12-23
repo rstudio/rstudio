@@ -214,8 +214,7 @@ public class SimpleRequestProcessor {
     // Invoke methods
     List<Splittable> invocationResults = new ArrayList<Splittable>();
     List<Boolean> invocationSuccess = new ArrayList<Boolean>();
-    List<InvocationMessage> invlist = req.getInvocations();
-    processInvocationMessages(source, invlist, invocationResults,
+    processInvocationMessages(source, req, invocationResults,
         invocationSuccess, returnState);
 
     // Store return objects
@@ -225,8 +224,11 @@ public class SimpleRequestProcessor {
     toProcess.putAll(returnState.beans);
     createReturnOperations(operations, returnState, toProcess);
 
-    resp.setInvocationResults(invocationResults);
-    resp.setStatusCodes(invocationSuccess);
+    assert invocationResults.size() == invocationSuccess.size();
+    if (!invocationResults.isEmpty()) {
+      resp.setInvocationResults(invocationResults);
+      resp.setStatusCodes(invocationSuccess);
+    }
     if (!operations.isEmpty()) {
       resp.setOperations(operations);
     }
@@ -409,9 +411,14 @@ public class SimpleRequestProcessor {
   }
 
   private void processInvocationMessages(RequestState state,
-      List<InvocationMessage> invlist, List<Splittable> results,
-      List<Boolean> success, RequestState returnState) {
-    for (InvocationMessage invocation : invlist) {
+      RequestMessage req, List<Splittable> results, List<Boolean> success,
+      RequestState returnState) {
+    List<InvocationMessage> invocations = req.getInvocations();
+    if (invocations == null) {
+      // No method invocations which can happen via RequestContext.fire()
+      return;
+    }
+    for (InvocationMessage invocation : invocations) {
       try {
         // Find the Method
         String[] operation = invocation.getOperation().split("::");

@@ -886,6 +886,19 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   /**
+   * Tests a no-op request.
+   */
+  public void testNoOpRequest() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    simpleFooRequest().fire(new Receiver<Void>() {
+      @Override
+      public void onSuccess(Void response) {
+        finishTestAndReset();
+      }
+    });
+  }
+
+  /**
    * Ensures that a service method can respond with a null value.
    */
   public void testNullEntityProxyResult() {
@@ -1008,7 +1021,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    */
   public void testNullValueInIntegerListRequest() {
     delayTestFinish(DELAY_TEST_FINISH);
-    List<Integer> list = Arrays.asList(new Integer[]{1, 2, null});
+    List<Integer> list = Arrays.asList(new Integer[] {1, 2, null});
     final Request<Void> fooReq = req.simpleFooRequest().receiveNullValueInIntegerList(
         list);
     fooReq.fire(new Receiver<Void>() {
@@ -1024,12 +1037,28 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    */
   public void testNullValueInStringListRequest() {
     delayTestFinish(DELAY_TEST_FINISH);
-    List<String> list = Arrays.asList(new String[]{"nonnull", "null", null});
+    List<String> list = Arrays.asList(new String[] {"nonnull", "null", null});
     final Request<Void> fooReq = req.simpleFooRequest().receiveNullValueInStringList(
         list);
     fooReq.fire(new Receiver<Void>() {
       @Override
       public void onSuccess(Void v) {
+        finishTestAndReset();
+      }
+    });
+  }
+
+  /**
+   * Tests a message consisting only of operations, with no invocations.
+   */
+  public void testOperationOnlyMessage() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    RequestContext ctx = simpleFooRequest();
+    SimpleFooProxy proxy = ctx.create(SimpleFooProxy.class);
+    proxy.setUserName("GWT");
+    ctx.fire(new Receiver<Void>() {
+      @Override
+      public void onSuccess(Void response) {
         finishTestAndReset();
       }
     });
