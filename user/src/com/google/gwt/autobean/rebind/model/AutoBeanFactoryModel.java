@@ -249,7 +249,7 @@ public class AutoBeanFactoryModel {
       AutoBeanMethod toAdd = builder.build();
 
       // Collect referenced enums
-      if (toAdd.isEnum()) {
+      if (toAdd.hasEnumMap()) {
         allEnumConstants.putAll(toAdd.getEnumMap());
       }
 

@@ -49,6 +49,22 @@ public class AutoBeanCodexTest extends GWTTestCase {
     AutoBean<Simple> simple();
   }
 
+  /*
+   * These enums are used to verify that a List<Enum> or Map<Enum, Enum> pulls
+   * in the necessary metadata.
+   */
+  enum EnumReachableThroughList {
+    FOO_LIST
+  }
+
+  enum EnumReachableThroughMapKey {
+    FOO_KEY
+  }
+
+  enum EnumReachableThroughMapValue {
+    FOO_VALUE
+  }
+
   interface HasAutoBean {
     Splittable getSimple();
 
@@ -78,6 +94,10 @@ public class AutoBeanCodexTest extends GWTTestCase {
     List<MyEnum> getEnums();
 
     Map<MyEnum, Integer> getMap();
+
+    List<EnumReachableThroughList> getParameterizedList();
+
+    Map<EnumReachableThroughMapKey, EnumReachableThroughMapValue> getParameterizedMap();
 
     void setEnum(MyEnum value);
 
@@ -157,13 +177,6 @@ public class AutoBeanCodexTest extends GWTTestCase {
     assertTrue(decodedBean.as().getList().isEmpty());
   }
 
-  private <T> AutoBean<T> checkEncode(AutoBean<T> bean) {
-    Splittable split = AutoBeanCodex.encode(bean);
-    AutoBean<T> decoded = AutoBeanCodex.decode(f, bean.getType(), split);
-    assertTrue(AutoBeanUtils.deepEquals(bean, decoded));
-    return decoded;
-  }
-
   public void testEnum() {
     EnumMap map = (EnumMap) f;
     assertEquals("BAR", map.getToken(MyEnum.BAR));
@@ -190,6 +203,24 @@ public class AutoBeanCodexTest extends GWTTestCase {
     assertEquals(MyEnum.BAZ, decoded.as().getEnum());
     assertEquals(arrayValue, decoded.as().getEnums());
     assertEquals(mapValue, decoded.as().getMap());
+  }
+
+  /**
+   * Ensures that enum types that are reachable only through a method
+   * parameterization are included in the enum map.
+   */
+  public void testEnumReachableOnlyThroughParameterization() {
+    EnumMap map = (EnumMap) f;
+    assertEquals("FOO_LIST", map.getToken(EnumReachableThroughList.FOO_LIST));
+    assertEquals("FOO_KEY", map.getToken(EnumReachableThroughMapKey.FOO_KEY));
+    assertEquals("FOO_VALUE",
+        map.getToken(EnumReachableThroughMapValue.FOO_VALUE));
+    assertEquals(EnumReachableThroughList.FOO_LIST,
+        map.getEnum(EnumReachableThroughList.class, "FOO_LIST"));
+    assertEquals(EnumReachableThroughMapKey.FOO_KEY,
+        map.getEnum(EnumReachableThroughMapKey.class, "FOO_KEY"));
+    assertEquals(EnumReachableThroughMapValue.FOO_VALUE,
+        map.getEnum(EnumReachableThroughMapValue.class, "FOO_VALUE"));
   }
 
   public void testMap() {
@@ -290,5 +321,12 @@ public class AutoBeanCodexTest extends GWTTestCase {
   @Override
   protected void gwtSetUp() throws Exception {
     f = GWT.create(Factory.class);
+  }
+
+  private <T> AutoBean<T> checkEncode(AutoBean<T> bean) {
+    Splittable split = AutoBeanCodex.encode(bean);
+    AutoBean<T> decoded = AutoBeanCodex.decode(f, bean.getType(), split);
+    assertTrue(AutoBeanUtils.deepEquals(bean, decoded));
+    return decoded;
   }
 }

@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.typeinfo.JEnumConstant;
 import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
+import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.editor.rebind.model.ModelUtils;
 
@@ -158,40 +159,29 @@ public class AutoBeanMethod {
       toReturn.method = method;
       TypeOracle oracle = method.getEnclosingType().getOracle();
 
-      toReturn.isValueType = ModelUtils.isValueType(oracle,
-          method.getReturnType());
+      JType returnType = method.getReturnType();
+      toReturn.isValueType = ModelUtils.isValueType(oracle, returnType);
 
       if (!toReturn.isValueType) {
         // See if it's a collection or a map
-        JClassType returnClass = method.getReturnType().isClassOrInterface();
+        JClassType returnClass = returnType.isClassOrInterface();
         JClassType collectionInterface = oracle.findType(Collection.class.getCanonicalName());
         JClassType mapInterface = oracle.findType(Map.class.getCanonicalName());
         if (collectionInterface.isAssignableFrom(returnClass)) {
           JClassType[] parameterizations = ModelUtils.findParameterizationOf(
               collectionInterface, returnClass);
           toReturn.elementType = parameterizations[0];
+          maybeProcessEnumType(toReturn.elementType);
         } else if (mapInterface.isAssignableFrom(returnClass)) {
           JClassType[] parameterizations = ModelUtils.findParameterizationOf(
               mapInterface, returnClass);
           toReturn.keyType = parameterizations[0];
           toReturn.valueType = parameterizations[1];
+          maybeProcessEnumType(toReturn.keyType);
+          maybeProcessEnumType(toReturn.valueType);
         }
-      }
-
-      JEnumType enumType = method.getReturnType().isEnum();
-      if (enumType != null) {
-        Map<JEnumConstant, String> map = new LinkedHashMap<JEnumConstant, String>();
-        for (JEnumConstant e : enumType.getEnumConstants()) {
-          String name;
-          PropertyName annotation = e.getAnnotation(PropertyName.class);
-          if (annotation == null) {
-            name = e.getName();
-          } else {
-            name = annotation.value();
-          }
-          map.put(e, name);
-        }
-        toReturn.enumMap = map;
+      } else {
+        maybeProcessEnumType(returnType);
       }
     }
 
@@ -201,6 +191,39 @@ public class AutoBeanMethod {
 
     public void setStaticImp(JMethod staticImpl) {
       toReturn.staticImpl = staticImpl;
+    }
+
+    /**
+     * Call {@link #processEnumType(JEnumType)} if {@code type} is a
+     * {@link JEnumType}.
+     */
+    private void maybeProcessEnumType(JType type) {
+      assert type != null : "type == null";
+      JEnumType enumType = type.isEnum();
+      if (enumType != null) {
+        processEnumType(enumType);
+      }
+    }
+
+    /**
+     * Adds a JEnumType to the AutoBeanMethod's enumMap so that the
+     * AutoBeanFactoryGenerator can embed extra metadata about the enum values.
+     */
+    private void processEnumType(JEnumType enumType) {
+      Map<JEnumConstant, String> map = toReturn.enumMap;
+      if (map == null) {
+        map = toReturn.enumMap = new LinkedHashMap<JEnumConstant, String>();
+      }
+      for (JEnumConstant e : enumType.getEnumConstants()) {
+        String name;
+        PropertyName annotation = e.getAnnotation(PropertyName.class);
+        if (annotation == null) {
+          name = e.getName();
+        } else {
+          name = annotation.value();
+        }
+        map.put(e, name);
+      }
     }
   }
 
@@ -255,12 +278,12 @@ public class AutoBeanMethod {
     return valueType;
   }
 
-  public boolean isCollection() {
-    return elementType != null;
+  public boolean hasEnumMap() {
+    return enumMap != null;
   }
 
-  public boolean isEnum() {
-    return enumMap != null;
+  public boolean isCollection() {
+    return elementType != null;
   }
 
   public boolean isMap() {
