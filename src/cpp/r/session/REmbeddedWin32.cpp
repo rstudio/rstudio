@@ -40,6 +40,9 @@
 // from Defn.h
 extern "C" void R_ProcessEvents(void);
 
+// from Startup.h
+extern "C" void R_CleanUp(SA_TYPE, int, int);
+
 // for do_edit fork
 extern "C" FILE *R_fopen(const char *filename, const char *mode);
 extern "C" void R_ResetConsole(void);

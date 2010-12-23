@@ -303,7 +303,9 @@ const int kSerializationActionResumeSession = 4;
 const int kSerializationActionCompleted = 5;
 
 // forward declare win32QuitHook so we can register it
+#ifdef _WIN32
 SEXP win32QuitHook(SEXP call, SEXP op, SEXP args, SEXP rho);
+#endif
 
 // one-time per session initialization
 Error initialize()
@@ -980,6 +982,8 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
 // to do_quit in main.c save for calling our RCleanUp function rather
 // than R's R_CleanUp function (which will ultimatley be called by our
 // function after it does it's work)
+#ifdef _WIN32
+extern "C" Rboolean R_Interactive;/* TRUE during interactive use*/
 #define CTXT_BROWSER 16 // from Defn.h
 #define _(String) String
 SEXP win32QuitHook(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -1027,6 +1031,7 @@ SEXP win32QuitHook(SEXP call, SEXP op, SEXP args, SEXP rho)
    exit(0);
    /*NOTREACHED*/
 }
+#endif
 
    
 Error run(const ROptions& options, const RCallbacks& callbacks) 
