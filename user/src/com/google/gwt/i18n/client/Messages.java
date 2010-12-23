@@ -173,6 +173,84 @@ import java.lang.annotation.Target;
 public interface Messages extends LocalizableResource {
 
   /**
+   * Provides alternate forms of a message, such as are needed when plural
+   * forms are used or a placeholder has known gender. The selection of which
+   * form to use is based on the value of the arguments marked
+   * PluralCount and/or Select.
+   * 
+   * <p>Example:
+   * <code><pre>
+   *   &#64;DefaultMessage("You have {0} widgets.")
+   *   &#64;AlternateMessage({"one", "You have one widget.")
+   *   String example(&#64;PluralCount int count);
+   * </pre></code>
+   * </p>
+   * 
+   * <p>If multiple {@link PluralCount} or {@link Select} parameters are
+   * supplied, the forms for each, in the order they appear in the parameter
+   * list, are supplied separated by a vertical bar ("|").  Example:
+   * <code><pre>
+   *   &#64;DefaultMessage("You have {0} messages and {1} notifications.")
+   *   &#64;AlternateMessage({
+   *       "=0|=0", "You have no messages or notifications."
+   *       "=0|one", "You have a notification."
+   *       "one|=0", "You have a message."
+   *       "one|one", "You have one message and one notification."
+   *       "other|one", "You have {0} messages and one notification."
+   *       "one|other", "You have one message and {1} notifications."
+   *   })
+   *   String messages(&#64;PluralCount int msgCount,
+   *       &#64;PluralCount int notifyCount);
+   * </pre></code>
+   * 
+   * Note that the number of permutations can grow quickly, and that the default
+   * message is used when every {@link PluralCount} or {@link Select} would use
+   * the "other" value.
+   * </p>
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.METHOD)
+  @Documented
+  public @interface AlternateMessage {
+
+    /**
+     * An array of pairs of strings containing the strings for different forms.
+     * 
+     * Each pair is the name of a form followed by the string in the source
+     * locale for that form.  Each form name is the name of a plural form if
+     * {@link PluralCount} is used, or the matching value if {@link Select} is
+     * used.  An example for a locale that has "none", "one", and "other" plural
+     * forms:
+     * 
+     * <code><pre>
+     * &#64;DefaultMessage("{0} widgets")
+     * &#64;AlternateMessage({"none", "No widgets", "one", "One widget"})
+     * </pre>
+     * 
+     * Note that the plural form "other" gets the translation specified in
+     * {@code &#64;DefaultMessage}, as does any {@code &#64;Select} value not
+     * listed. 
+     * 
+     * If more than one way of selecting a translation exists, they will be
+     * combined, separated with {@code |}, in the order they are supplied as
+     * arguments in the method.  For example:
+     * <code><pre>
+     *   &#64;DefaultMessage("{0} gave away their {2} widgets")
+     *   &#64;AlternateMesssage({
+     *     "MALE|other", "{0} gave away his {2} widgets",
+     *     "FEMALE|other", "{0} gave away her {2} widgets",
+     *     "MALE|one", "{0} gave away his widget",
+     *     "FEMALE|one", "{0} gave away her widget",
+     *     "other|one", "{0} gave away their widget",
+     *   })
+     *   String giveAway(String name, &#64;Select Gender gender,
+     *       &#64;PluralCount int count);
+     * </pre></code>
+     */
+    String[] value();
+  }
+
+  /**
    * Default text to be used if no translation is found (and also used as the
    * source for translation). Format should be that expected by
    * {@link java.text.MessageFormat}.
@@ -265,7 +343,7 @@ public interface Messages extends LocalizableResource {
    * <p>Example:
    * <code><pre>
    *   &#64;DefaultMessage("You have {0} widgets.")
-   *   &#64;PluralText({"one", "You have one widget.")
+   *   &#64;AlternateMessage({"one", "You have one widget."})
    *   String example(&#64;PluralCount int count)
    * </pre></code>
    * </p>
@@ -297,10 +375,13 @@ public interface Messages extends LocalizableResource {
    *   String example(&#64;PluralCount int count)
    * </pre></code>
    * </p>
+   * 
+   * @deprecated use {@link AlternateMessage} instead
    */
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.METHOD)
   @Documented
+  @Deprecated
   public @interface PluralText {
 
     /**
@@ -320,5 +401,31 @@ public interface Messages extends LocalizableResource {
      * DefaultMessage value.
      */
     String[] value();
+  }
+
+  /**
+   * Provides multiple forms based on a dynamic parameter.
+   * 
+   * This annotation is applied to a single parameter of a Messages subinterface
+   * and indicates that parameter is to be used to choose the proper form of the
+   * message. The parameter chosen must be of type Enum, String, or a primitive
+   * numeric type.  This is frequently used to get proper gender for
+   * translations to languages where surrounding words depend on the gender of
+   * a person or noun.  This also marks the parameter as {@link Optional}.
+   * 
+   * <p>Example:
+   * <code><pre>
+   *   &#64;DefaultMessage("{0} likes their widgets.")
+   *   &#64;AlternateMessage({
+   *       "FEMALE", "{0} likes her widgets.",
+   *       "MALE", "{0} likes his widgets.",
+   *   })
+   *   String example(String name, &#64;Select Gender gender)
+   * </pre></code>
+   * </p>
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.PARAMETER)
+  public @interface Select {
   }
 }

@@ -31,7 +31,17 @@ import java.util.List;
 @GenerateKeys("com.google.gwt.i18n.rebind.keygen.MethodNameKeyGenerator")
 // default
 @Generate(format = "com.google.gwt.i18n.rebind.format.PropertiesFormat")
+@SuppressWarnings("deprecation")
 public interface TestAnnotatedMessages extends Messages {
+
+  /**
+   * Represents the gender of a person in a message.
+   */
+  public enum Gender {
+    MALE,
+    FEMALE,
+    UNKNOWN
+  }
 
   /**
    * Test of property file lookup on nested classes.
@@ -155,12 +165,91 @@ public interface TestAnnotatedMessages extends Messages {
   @Key("defaultNumberFormat")
   SafeHtml defaultNumberFormatAsSafeHtml(double value);
 
+  @DefaultMessage("{1} wants to sell their car")
+  @AlternateMessage({
+    "FEMALE", "{1} wants to sell her car",
+    "MALE", "{1} wants to sell his car"
+  })
+  String gender(@Select Gender gender, String name);
+
   @DefaultMessage("It is {0,time,short} on {0,date,full}")
   String getTimeDate(Date value);
 
   @DefaultMessage("It is {0,time,short} on {0,date,full}")
   @Key("getTimeDate")
   SafeHtml getTimeDateAsSafeHtml(Date value);
+
+  @DefaultMessage("{1}, {2}, and {0} others liked their {3} messages")
+  @AlternateMessage({
+    "=0|other|other", "Nobody liked their {3} messages",
+    "=0|other|FEMALE", "Nobody liked her {3} messages",
+    "=0|other|MALE", "Nobody liked his {3} messages",
+    "=0|one|other", "Nobody liked their message",
+    "=0|one|FEMALE", "Nobody liked her message",
+    "=0|one|MALE", "Nobody liked his message",
+    "=1|other|other", "{1} liked their {3} messages",
+    "=1|other|FEMALE", "{1} liked her {3} messages",
+    "=1|other|MALE", "{1} liked his {3} messages",
+    "=1|one|other", "{1} liked their message",
+    "=1|one|FEMALE", "{1} liked her message",
+    "=1|one|MALE", "{1} liked his message",
+    "=2|other|other", "{1} and {2} liked their {3} messages",
+    "=2|other|FEMALE", "{1} and {2} liked her {3} messages",
+    "=2|other|MALE", "{1} and {2} liked his {3} messages",
+    "=2|one|other", "{1} and {2} liked their message",
+    "=2|one|FEMALE", "{1} and {2} liked her message",
+    "=2|one|MALE", "{1} and {2} liked his message",
+    "one|other|other", "{1}, {2}, and one other liked their {3} messages",
+    "one|other|FEMALE", "{1}, {2}, and one other liked her {3} messages",
+    "one|other|MALE", "{1}, {2}, and one other liked his {3} messages",
+    "one|one|other", "{1}, {2}, and one other liked their message",
+    "one|one|FEMALE", "{1}, {2}, and one other liked her message",
+    "one|one|MALE", "{1}, {2}, and one other liked his message",
+    "other|one|other", "{1}, {2}, and {0} others liked their message",
+    "other|one|MALE", "{1}, {2}, and {0} others liked his message",
+    "other|one|FEMALE", "{1}, {2}, and {0} others liked her message",
+    "other|other|MALE", "{1}, {2}, and {0} others liked his {3} messages",
+    "other|other|FEMALE", "{1}, {2}, and {0} others liked her {3} messages"
+  })
+  String multiSelectString(@PluralCount @Offset(2) List<String> names,
+      String name1, String name2, @PluralCount int msgCount,
+      @Select String gender);
+
+  @DefaultMessage("{1}, {2}, and {0} others liked their {3} messages")
+  @AlternateMessage({
+    "=0|other|other", "Nobody liked their {3} messages",
+    "=0|other|FEMALE", "Nobody liked her {3} messages",
+    "=0|other|MALE", "Nobody liked his {3} messages",
+    "=0|one|other", "Nobody liked their message",
+    "=0|one|FEMALE", "Nobody liked her message",
+    "=0|one|MALE", "Nobody liked his message",
+    "=1|other|other", "{1} liked their {3} messages",
+    "=1|other|FEMALE", "{1} liked her {3} messages",
+    "=1|other|MALE", "{1} liked his {3} messages",
+    "=1|one|other", "{1} liked their message",
+    "=1|one|FEMALE", "{1} liked her message",
+    "=1|one|MALE", "{1} liked his message",
+    "=2|other|other", "{1} and {2} liked their {3} messages",
+    "=2|other|FEMALE", "{1} and {2} liked her {3} messages",
+    "=2|other|MALE", "{1} and {2} liked his {3} messages",
+    "=2|one|other", "{1} and {2} liked their message",
+    "=2|one|FEMALE", "{1} and {2} liked her message",
+    "=2|one|MALE", "{1} and {2} liked his message",
+    "one|other|other", "{1}, {2}, and one other liked their {3} messages",
+    "one|other|FEMALE", "{1}, {2}, and one other liked her {3} messages",
+    "one|other|MALE", "{1}, {2}, and one other liked his {3} messages",
+    "one|one|other", "{1}, {2}, and one other liked their message",
+    "one|one|FEMALE", "{1}, {2}, and one other liked her message",
+    "one|one|MALE", "{1}, {2}, and one other liked his message",
+    "other|one|other", "{1}, {2}, and {0} others liked their message",
+    "other|one|MALE", "{1}, {2}, and {0} others liked his message",
+    "other|one|FEMALE", "{1}, {2}, and {0} others liked her message",
+    "other|other|MALE", "{1}, {2}, and {0} others liked his {3} messages",
+    "other|other|FEMALE", "{1}, {2}, and {0} others liked her {3} messages"
+  })
+  SafeHtml multiSelectEnum(@PluralCount @Offset(2) List<String> names,
+      String name1, String name2, @PluralCount int msgCount,
+      @Select Gender gender);
 
   @DefaultMessage("{0} widgets")
   @PluralText({"one", "A widget"})
@@ -213,7 +302,7 @@ public interface TestAnnotatedMessages extends Messages {
   @DefaultMessage("Distance is {0,number,##0.0##E0}")
   String withNumberExponent(Number value);
 
-  @DefaultMessage("{1}, {2} and {0,number} others have reviewed this movie")
+  @DefaultMessage("{1}, {2}, and {0,number} others have reviewed this movie")
   @PluralText({
     "=0", "No one has reviewed this movie",
     "=1", "{1} has reviewed this movie",
@@ -222,7 +311,7 @@ public interface TestAnnotatedMessages extends Messages {
   String reviewers(@PluralCount @Offset(2) int size,
        String name1, String name2);
 
-  @DefaultMessage("{1}, {2} and {0,number} others have reviewed this movie")
+  @DefaultMessage("{1}, {2}, and {0,number} others have reviewed this movie")
   @PluralText({
     "=0", "No one has reviewed this movie",
     "=1", "{1} has reviewed this movie",

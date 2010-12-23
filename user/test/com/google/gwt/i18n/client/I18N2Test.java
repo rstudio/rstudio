@@ -16,6 +16,7 @@
 package com.google.gwt.i18n.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.i18n.client.TestAnnotatedMessages.Gender;
 import com.google.gwt.i18n.client.TestAnnotatedMessages.Nested;
 import com.google.gwt.i18n.client.constants.TimeZoneConstants;
 import com.google.gwt.i18n.client.gen.Colors;
@@ -24,8 +25,10 @@ import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Test the same things as I18NTest but with a different module which
@@ -214,6 +217,232 @@ public class I18N2Test extends GWTTestCase {
   }
 
   /**
+   * Verifies correct output for multiple, nested selectors, using an enum
+   * for gender selection (and SafeHtml output).
+   */
+  public void testMultiSelectEnum() {
+    TestAnnotatedMessages m = GWT.create(TestAnnotatedMessages.class);
+    List<String> names = new ArrayList<String>();
+    
+    // empty list of names
+    assertEquals("Nobody liked his message",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, Gender.MALE).asString());
+    assertEquals("Nobody liked his 2 messages",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 2, Gender.MALE).asString());
+    assertEquals("Nobody liked her message",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, Gender.FEMALE).asString());
+    assertEquals("Nobody liked her 3 messages",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 3, Gender.FEMALE).asString());
+    assertEquals("Nobody liked their message",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, null).asString());
+    assertEquals("Nobody liked their 4 messages",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 4, Gender.UNKNOWN).asString());
+
+    // one name
+    names.add("John");
+    assertEquals("John liked his message",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, Gender.MALE).asString());
+    assertEquals("John liked his 2 messages",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 2, Gender.MALE).asString());
+    assertEquals("John liked her message",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, Gender.FEMALE).asString());
+    assertEquals("John liked her 3 messages",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 3, Gender.FEMALE).asString());
+    assertEquals("John liked their message",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, Gender.UNKNOWN).asString());
+    assertEquals("John liked their 4 messages",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 4, null).asString());
+
+    // two names
+    names.add("Bob");
+    assertEquals("John and Bob liked his message",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, Gender.MALE).asString());
+    assertEquals("John and Bob liked his 2 messages",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 2, Gender.MALE).asString());
+    assertEquals("John and Bob liked her message",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, Gender.FEMALE).asString());
+    assertEquals("John and Bob liked her 3 messages",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 3, Gender.FEMALE).asString());
+    assertEquals("John and Bob liked their message",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, null).asString());
+    assertEquals("John and Bob liked their 4 messages",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 4, Gender.UNKNOWN).asString());
+
+    // three names
+    names.add("Alice");
+    assertEquals("John, Bob, and one other liked his message",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, Gender.MALE).asString());
+    assertEquals("John, Bob, and one other liked his 2 messages",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 2, Gender.MALE).asString());
+    assertEquals("John, Bob, and one other liked her message",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, Gender.FEMALE).asString());
+    assertEquals("John, Bob, and one other liked her 3 messages",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 3, Gender.FEMALE).asString());
+    assertEquals("John, Bob, and one other liked their message",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, Gender.UNKNOWN).asString());
+    assertEquals("John, Bob, and one other liked their 4 messages",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 4, null).asString());
+
+    // four names
+    names.add("Carol");
+    assertEquals("John, Bob, and 2 others liked his message",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, Gender.MALE).asString());
+    assertEquals("John, Bob, and 2 others liked his 2 messages",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 2, Gender.MALE).asString());
+    assertEquals("John, Bob, and 2 others liked her message",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, Gender.FEMALE).asString());
+    assertEquals("John, Bob, and 2 others liked her 3 messages",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 3, Gender.FEMALE).asString());
+    assertEquals("John, Bob, and 2 others liked their message",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, Gender.UNKNOWN).asString());
+    assertEquals("John, Bob, and 2 others liked their 4 messages",
+        m.multiSelectEnum(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 4, null).asString());
+  }
+
+  /**
+   * Verifies correct output for multiple, nested selectors, using a string
+   * for gender selection.
+   */
+  public void testMultiSelectString() {
+    TestAnnotatedMessages m = GWT.create(TestAnnotatedMessages.class);
+    List<String> names = new ArrayList<String>();
+    
+    // empty list of names
+    assertEquals("Nobody liked his message",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, "MALE"));
+    assertEquals("Nobody liked his 2 messages",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 2, "MALE"));
+    assertEquals("Nobody liked her message",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, "FEMALE"));
+    assertEquals("Nobody liked her 3 messages",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 3, "FEMALE"));
+    assertEquals("Nobody liked their message",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, "unknown"));
+    assertEquals("Nobody liked their 4 messages",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 4, "unknown"));
+
+    // one name
+    names.add("John");
+    assertEquals("John liked his message",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, "MALE"));
+    assertEquals("John liked his 2 messages",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 2, "MALE"));
+    assertEquals("John liked her message",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, "FEMALE"));
+    assertEquals("John liked her 3 messages",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 3, "FEMALE"));
+    assertEquals("John liked their message",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, "unknown"));
+    assertEquals("John liked their 4 messages",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 4, "unknown"));
+
+    // two names
+    names.add("Bob");
+    assertEquals("John and Bob liked his message",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, "MALE"));
+    assertEquals("John and Bob liked his 2 messages",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 2, "MALE"));
+    assertEquals("John and Bob liked her message",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, "FEMALE"));
+    assertEquals("John and Bob liked her 3 messages",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 3, "FEMALE"));
+    assertEquals("John and Bob liked their message",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, "unknown"));
+    assertEquals("John and Bob liked their 4 messages",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 4, "unknown"));
+
+    // three names
+    names.add("Alice");
+    assertEquals("John, Bob, and one other liked his message",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, "MALE"));
+    assertEquals("John, Bob, and one other liked his 2 messages",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 2, "MALE"));
+    assertEquals("John, Bob, and one other liked her message",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, "FEMALE"));
+    assertEquals("John, Bob, and one other liked her 3 messages",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 3, "FEMALE"));
+    assertEquals("John, Bob, and one other liked their message",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, "unknown"));
+    assertEquals("John, Bob, and one other liked their 4 messages",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 4, "unknown"));
+
+    // four names
+    names.add("Carol");
+    assertEquals("John, Bob, and 2 others liked his message",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, "MALE"));
+    assertEquals("John, Bob, and 2 others liked his 2 messages",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 2, "MALE"));
+    assertEquals("John, Bob, and 2 others liked her message",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, "FEMALE"));
+    assertEquals("John, Bob, and 2 others liked her 3 messages",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 3, "FEMALE"));
+    assertEquals("John, Bob, and 2 others liked their message",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 1, "unknown"));
+    assertEquals("John, Bob, and 2 others liked their 4 messages",
+        m.multiSelectString(names, names.size() > 0 ? names.get(0) : null,
+        names.size() > 1 ? names.get(1) : null, 4, "unknown"));
+  }
+
+  /**
    * Verify that nested annotations are looked up with both A$B names
    * and A_B names.  Note that $ takes precedence and only one file for a
    * given level in the inheritance tree will be used, so A$B_locale will
@@ -238,6 +467,9 @@ public class I18N2Test extends GWTTestCase {
     assertEquals(
         "John Doe, Betty Smith, and one other have reviewed this movie",
         m.reviewers(3, "John Doe", "Betty Smith"));
+    assertEquals(
+        "John Doe, Betty Smith, and 3 others have reviewed this movie",
+        m.reviewers(5, "John Doe", "Betty Smith"));
 
     assertEquals("No widgets", m.specialPluralsAsSafeHtml(0).asString());
     assertEquals("A widget", m.specialPluralsAsSafeHtml(1).asString());
@@ -251,6 +483,9 @@ public class I18N2Test extends GWTTestCase {
     assertEquals(
         "John Doe, Betty Smith, and one other have reviewed this movie",
         m.reviewersAsSafeHtml(3, "John Doe", sh("Betty Smith")).asString());
+    assertEquals(
+        "John Doe, Betty Smith, and 3 others have reviewed this movie",
+        m.reviewersAsSafeHtml(5, "John Doe", sh("Betty Smith")).asString());
 }
 
   public void testStaticArg() {

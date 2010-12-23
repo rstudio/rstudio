@@ -188,6 +188,15 @@ public class PropertiesFormat implements MessageCatalogFormat {
           buf.append(" (Optional");
           inParen = true;
         }
+        if (argInfo.isSelect) {
+          if (inParen) {
+            buf.append("; ");
+          } else {
+            buf.append(" (");
+            inParen = true;
+          }
+          buf.append("Selector");
+        }
         if (argInfo.isPluralCount) {
           if (inParen) {
             buf.append("; ");

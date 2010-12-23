@@ -470,7 +470,7 @@ public class MessageFormatParser {
 
   /**
    * Parse any arguments appended to a format. The syntax is:
-   * format[:tag[=value][,tag[=value]]... for example: "date:tz=EST,showoffset"
+   * format[:tag[=value][:tag[=value]]... for example: "date:tz=EST:showoffset"
    *
    * @param format format value to parse
    * @param formatArgs map to add tag/value pairs to

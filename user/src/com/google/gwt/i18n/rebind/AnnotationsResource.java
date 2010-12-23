@@ -26,6 +26,8 @@ import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JRawType;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.i18n.client.Messages.AlternateMessage;
+import com.google.gwt.i18n.client.Messages.Select;
 import com.google.gwt.i18n.client.PluralRule;
 import com.google.gwt.i18n.client.Constants.DefaultBooleanValue;
 import com.google.gwt.i18n.client.Constants.DefaultDoubleValue;
@@ -82,6 +84,7 @@ public class AnnotationsResource extends AbstractResource {
     public String name;
     public boolean optional;
     public Class<? extends PluralRule> pluralRuleClass;
+    public boolean isSelect;
 
     public ArgumentInfo(String name) {
       this.name = name;
@@ -99,11 +102,11 @@ public class AnnotationsResource extends AbstractResource {
     }
 
     public String getForm(String form) {
-      return form == null ? entry.text : entry.pluralText.get(form);
+      return form == null ? entry.text : entry.altText.get(form);
     }
 
     public Collection<String> getForms() {
-      return entry.pluralText.keySet();
+      return entry.altText.keySet();
     }
 
     public String getKey() {
@@ -123,24 +126,24 @@ public class AnnotationsResource extends AbstractResource {
     public ArrayList<ArgumentInfo> arguments;
     public String description;
     public String meaning;
-    public Map<String, String> pluralText;
+    public Map<String, String> altText;
     public String text;
 
     public MethodEntry(String text, String meaning) {
       this.text = text;
       this.meaning = meaning;
-      pluralText = new HashMap<String, String>();
+      altText = new HashMap<String, String>();
       arguments = new ArrayList<ArgumentInfo>();
+    }
+
+    public void addAlternateText(String altForm, String altMessage) {
+      altText.put(altForm, altMessage);
     }
 
     public ArgumentInfo addArgument(String argName) {
       ArgumentInfo argInfo = new ArgumentInfo(argName);
       arguments.add(argInfo);
       return argInfo;
-    }
-
-    public void addPluralText(String form, String pluralFormText) {
-      pluralText.put(form, pluralFormText);
     }
 
     @Override
@@ -497,10 +500,26 @@ public class AnnotationsResource extends AbstractResource {
         if ((pluralForms.length & 1) != 0) {
           throw new AnnotationsError(
               "Odd number of strings supplied to @PluralText: must be"
-              + " pairs of form names and strings");
+              + " pairs of form names and messages");
         }
         for (int i = 0; i + 1 < pluralForms.length; i += 2) {
-          entry.addPluralText(pluralForms[i], pluralForms[i + 1]);
+          entry.addAlternateText(pluralForms[i], pluralForms[i + 1]);
+        }
+      }
+      AlternateMessage altMsg = method.getAnnotation(AlternateMessage.class);
+      if (altMsg != null) {
+        if (pluralText != null) {
+          throw new AnnotationsError("May not have both @AlternateMessage"
+              + " and @PluralText");
+        }
+        String[] altForms = altMsg.value();
+        if ((altForms.length & 1) != 0) {
+          throw new AnnotationsError(
+              "Odd number of strings supplied to @AlternateMessage: must be"
+              + " pairs of values and messages");
+        }
+        for (int i = 0; i + 1 < altForms.length; i += 2) {
+          entry.addAlternateText(altForms[i], altForms[i + 1]);
         }
       }
       for (JParameter param : method.getParameters()) {
@@ -516,6 +535,10 @@ public class AnnotationsResource extends AbstractResource {
         Example example = param.getAnnotation(Example.class);
         if (example != null) {
           argInfo.example = example.value();
+        }
+        Select select = param.getAnnotation(Select.class);
+        if (select != null) {
+          argInfo.isSelect = true;
         }
       }
     }
@@ -545,7 +568,7 @@ public class AnnotationsResource extends AbstractResource {
   @Override
   public Collection<String> getExtensions(String key) {
     MethodEntry entry = map.get(key);
-    return entry == null ? new ArrayList<String>() : entry.pluralText.keySet();
+    return entry == null ? new ArrayList<String>() : entry.altText.keySet();
   }
 
   public String getMeaning(String key) {
@@ -560,7 +583,7 @@ public class AnnotationsResource extends AbstractResource {
       return null;
     }
     if (extension != null) {
-      return entry.pluralText.get(extension);
+      return entry.altText.get(extension);
     } else {
       return entry.text;
     }

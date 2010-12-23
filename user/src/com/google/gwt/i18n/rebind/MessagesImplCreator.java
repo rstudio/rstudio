@@ -47,7 +47,7 @@ class MessagesImplCreator extends AbstractLocalizableImplCreator {
       throws UnableToCompleteException {
     super(logger, writer, localizableClass, resourceList, false);
     try {
-      MessagesMethodCreator creator = new MessagesMethodCreator(this);
+      MessagesMethodCreator creator = new MessagesMethodCreator(this, writer);
       JClassType stringClass = oracle.getType(String.class.getName());
       register(stringClass, creator);
       JClassType safeHtmlClass = oracle.getType(SafeHtml.class.getName());

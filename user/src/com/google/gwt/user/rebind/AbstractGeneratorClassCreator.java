@@ -116,6 +116,7 @@ public abstract class AbstractGeneratorClassCreator extends
     classPrologue();
     emitMethods(logger, targetClass, locale);
     classEpilog();
+    getWriter().outdent();
     getWriter().println("}");
   }
 
@@ -231,8 +232,8 @@ public abstract class AbstractGeneratorClassCreator extends
       throws UnableToCompleteException {
     JMethod[] x = getAllInterfaceMethods(cur);
     for (int i = 0; i < x.length; i++) {
-      genMethod(logger, x[i], locale);
       getWriter().println();
+      genMethod(logger, x[i], locale);
     }
   }
 
