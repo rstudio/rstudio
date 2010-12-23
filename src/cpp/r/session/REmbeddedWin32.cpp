@@ -280,7 +280,7 @@ void runEmbeddedR(const core::FilePath& rHome,
                   bool newSession,
                   SA_TYPE defaultSaveAction,
                   const Callbacks& callbacks,
-                  InternalCallbacks* /*pInternal*/)
+                  InternalCallbacks* pInternal)
 {
    // save callbacks for delegation
    s_callbacks = callbacks;
@@ -319,6 +319,10 @@ void runEmbeddedR(const core::FilePath& rHome,
    pRP->ShowMessage = showMessage;
    pRP->YesNoCancel = askYesNoCancel;
    pRP->Busy = callbacks.busy;
+
+   // set internal callbacks
+   pInternal->cleanUp = R_CleanUp;
+   pInternal->suicide = R_Suicide;
 
    // set command line
    const char *args[]= {"RStudio", "--interactive"};

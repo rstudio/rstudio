@@ -337,7 +337,11 @@ public class Application implements ApplicationEventHandlers,
    public void onQuit(QuitEvent event)
    {
       cleanupWorkbench();  
-      view_.showApplicationQuit(event.getWorkspaceSaved());
+      
+      // only show the quit state in server mode (in desktop mode the
+      // window will close)
+      if (!Desktop.isDesktop())
+         view_.showApplicationQuit(event.getWorkspaceSaved());
    }
    
    public void onSuicide(SuicideEvent event)

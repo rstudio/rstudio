@@ -1268,8 +1268,6 @@ void rResumed()
    module_context::onResumed(persistentState().settings());
 }
       
-// NOTE: this event is never received in desktop mode (because
-// we can't override R_CleanUp on Windows)
 void rQuit(bool workspaceSaved)
 {   
    // enque a quit event
@@ -1277,8 +1275,8 @@ void rQuit(bool workspaceSaved)
    session::clientEventQueue().add(quitEvent);
 }
    
-// NOTE: this event is never received in desktop mode (because
-// we can't override R_Suicide on Windows)
+// NOTE: this event is never received on windows (because we can't
+// override suicide on windows)
 void rSuicide(const std::string& message)
 {
    // log the error
@@ -1289,8 +1287,6 @@ void rSuicide(const std::string& message)
    session::clientEventQueue().add(suicideEvent);
 }
 
-// NOTE: this event is never received in desktop mode (because
-// we can't override R_CleanUp on Windows)
 void rCleanup(bool terminatedNormally)
 {
    try
