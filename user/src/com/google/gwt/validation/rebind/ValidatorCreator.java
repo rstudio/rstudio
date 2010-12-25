@@ -160,9 +160,11 @@ public class ValidatorCreator extends AbstractCreator {
     sw.println("}");
   }
 
-  private void writeIfEqualsBeanType(SourceWriter sourceWriter, BeanHelper bean) {
-    sourceWriter.println("if (object.getClass().equals("
-        + bean.getTypeCanonicalName() + ".class)) {");
+  private void writeIfInstanceofBeanType(SourceWriter sourceWriter, BeanHelper bean) {
+    // if (object instanceof MyBean) {
+    sourceWriter.print("if (object instanceof ");
+    sourceWriter.print(bean.getTypeCanonicalName());
+    sourceWriter.println(") {");
   }
 
   private void writeThrowIllegalArgumnet(SourceWriter sourceWriter,
@@ -213,7 +215,7 @@ public class ValidatorCreator extends AbstractCreator {
   }
 
   private void writeValidate(SourceWriter sw, BeanHelper bean) {
-    writeIfEqualsBeanType(sw, bean);
+    writeIfInstanceofBeanType(sw, bean);
     sw.indent();
 
     writeContext(sw, bean, "object");
@@ -249,7 +251,7 @@ public class ValidatorCreator extends AbstractCreator {
   }
 
   private void writeValidateProperty(SourceWriter sw, BeanHelper bean) {
-    writeIfEqualsBeanType(sw, bean);
+    writeIfInstanceofBeanType(sw, bean);
     sw.indent();
     writeContext(sw, bean, "object");
     sw.print("return " + bean.getValidatorInstanceName()

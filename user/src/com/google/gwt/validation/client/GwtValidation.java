@@ -26,23 +26,58 @@ import java.lang.annotation.Target;
  * Annotates a {@code javax.validation.Validator} explicitly listing the classes
  * that can be validated in GWT.
  * <p>
- * Define the Validator you want explicitly listing the class you want to
+ * Define the Validator you want, explicitly listing the class you want to
  * validate.
- *
+ * 
  * <pre>
  * &#064;GwtValidation(MyBean.class, MyOther.class)
  * public interface MyValidator extends javax.validation.Validator {
  * }
  * </pre>
  * Create and use the validator.
- *
+ * 
  * <pre>
  * MyValidator validator = GWT.create(MyValidator.class);
  * MyBean bean = new MyBean();
  * ...
  * Set&lt;ConstraintViolation&lt;MyBean>> violations = validator.validate(bean);
  * </pre>
+ * 
+ * <p>
+ * NOTE: Validation is done using only the Constraints found on the Classes
+ * listed in the annotation. If you have
+ * 
+ * <pre>
+ * class MyBean {
+ *  &#064;Null
+ *  String getName(){return name;}
+ * }
+ * class MySubBean extends MyBean {
+ *   &#064;Size(min = 5)
+ *   String getName(){return super.getName();}
+ * }
+ * </pre>
+ * 
+ * And then create your {@link javax.validation.ValidatorFactory
+ * ValidatorFactory} using
+ * 
+ * <pre>
+ * @GwtValidation(MyBean.class, MyOther.class)}
+ * </pre>
+ * 
+ * but call validator with the subclass like
+ * 
+ * <pre>
+ * MySubBean bean = new MySubBean();
+ * Set&lt;ConstraintViolation&lt;MyBean>> violations = validator.validate(bean);
+ * </pre>
  *
+ * The {@code Size} constraint will not be validated.
+ *
+ * Instead make sure you list the all BeanTypes that will be directly validated
+ * in the {@link GwtValidation} annotation.
+ *
+ * 
  */
 @Documented
 @Target(TYPE)
@@ -50,14 +85,14 @@ import java.lang.annotation.Target;
 public @interface GwtValidation {
 
   /**
-   * The list of Classes which can be validated by the annotated
-   * {@code Validator}.
-   */
-  Class<?>[] value();
-
-  /**
    * The list of Groups which can be processed by the annotated
    * {@code Validator}, empty means all groups.
    */
   Class<?>[] groups() default {};
+
+  /**
+   * The list of Classes which can be validated by the annotated
+   * {@code Validator}.
+   */
+  Class<?>[] value();
 }
