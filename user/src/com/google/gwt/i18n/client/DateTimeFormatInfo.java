@@ -112,7 +112,7 @@ public interface DateTimeFormatInfo {
 
   /**
    * Returns the day which generally comes first in a weekly calendar view, as
-   *     an index into the return value of {@link #weekdaysFull()}.
+   * an index into the return value of {@link #weekdaysFull()}.
    */
   int firstDayOfTheWeek();
 
@@ -238,14 +238,14 @@ public interface DateTimeFormatInfo {
 
   /**
    * Returns an array of the shortest abbreviations for months, typically a
-   *     single character and not guaranteed to be unique.
+   * single character and not guaranteed to be unique.
    */
   String[] monthsNarrow();
 
   /**
    * Returns an array of the shortest abbreviations for months suitable for use
-   *     in a stand-alone context, typically a single character and not
-   *     guaranteed to be unique.
+   * in a stand-alone context, typically a single character and not guaranteed
+   * to be unique.
    */
   String[] monthsNarrowStandalone();
 
@@ -256,7 +256,7 @@ public interface DateTimeFormatInfo {
 
   /**
    * Returns an array of month abbreviations, suitable for use in a stand-alone
-   *     context.
+   * context.
    */
   String[] monthsShortStandalone();
 
@@ -302,20 +302,20 @@ public interface DateTimeFormatInfo {
 
   /**
    * Returns an array of the full names of weekdays, suitable for use in a
-   *     stand-alone context.
+   * stand-alone context.
    */
   String[] weekdaysFullStandalone();
 
   /**
    * Returns an array of the shortest abbreviations for weekdays, typically a
-   *     single character and not guaranteed to be unique.
+   * single character and not guaranteed to be unique.
    */
   String[] weekdaysNarrow();
 
   /**
    * Returns an array of the shortest abbreviations for weekdays suitable for
-   *     use in a stand-alone context, typically a single character and not
-   *     guaranteed to be unique.
+   * use in a stand-alone context, typically a single character and not
+   * guaranteed to be unique.
    */
   String[] weekdaysNarrowStandalone();
 
@@ -326,22 +326,23 @@ public interface DateTimeFormatInfo {
 
   /**
    * Returns an array of abbreviations for weekdays, suitable for use in a
-   *     stand-alone context.
+   * stand-alone context.
    */
   String[] weekdaysShortStandalone();
 
   /**
-   * Returns the day which starts the weekend, as an index into the return value
-   *     of {@link #weekdaysFull()}.
+   * Returns the day which ends the weekend, as an index into the return value
+   * of {@link #weekdaysFull()}.
+   *
+   * <p>Note that this value may be numerically less than
+   * {@link #weekendStart()} - for example, {@link #weekendStart()} of 6 and
+   * {@link #weekendEnd()} of 0 means Saturday and Sunday are the weekend.
    */
   int weekendEnd();
 
   /**
-   * Returns the day which ends the weekend, as an index into the return value
-   *     of {@link #weekdaysFull()}.  Note that this value may be numerically less
-   *     than {@link #weekendEnd()} - for example, {@link #weekendEnd()} of 6
-   *     and {@link #weekendStart()} of 0 means Saturday and Sunday are the
-   *     weekend.
+   * Returns the day which starts the weekend, as an index into the return value
+   * of {@link #weekdaysFull()}.
    */
   int weekendStart();
 }
