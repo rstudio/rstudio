@@ -27,7 +27,7 @@ public class WebMenuCallback implements MenuCallback
 
    public void beginMenu(String label)
    {
-      label = label.replaceAll("&(?!&)", "");
+      label = label.replaceAll("_(?!_)", "");
 
       if (menuStack_.size() == 1)
          label = label + " ${dropdown}";
