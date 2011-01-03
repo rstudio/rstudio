@@ -27,7 +27,7 @@ well as menu structures (for main menu and popup menus).
 
       <separator/>
 
-      <menu label="File">
+      <menu label="&amp;File">
          <menu label="New">
             <cmd refid="newSourceDoc"/>
             <dynamic class="org.rstudio.studio.client.common.filetypes.NewFileMenu"/>
@@ -61,7 +61,7 @@ well as menu structures (for main menu and popup menus).
 
       <separator/>
       
-      <menu label="Edit">
+      <menu label="&amp;Edit">
          <cmd refid="undoDummy"/>
          <cmd refid="redoDummy"/>
          <separator/>
@@ -85,7 +85,7 @@ well as menu structures (for main menu and popup menus).
 
       <separator/>
 
-      <menu label="View">
+      <menu label="&amp;View">
          <cmd refid="switchToTab"/>
          <separator/>
          <cmd refid="nextTab"/>
@@ -107,7 +107,7 @@ well as menu structures (for main menu and popup menus).
 
       <separator/>
 
-      <menu label="Workspace">
+      <menu label="&amp;Workspace">
          <cmd refid="loadWorkspace"/>
          <cmd refid="loadDefaultWorkspace"/>
          <separator/>
@@ -126,7 +126,7 @@ well as menu structures (for main menu and popup menus).
     
       <separator/>
 
-      <menu label="Plots">
+      <menu label="&amp;Plots">
          <cmd refid="nextPlot"/>
          <cmd refid="previousPlot"/>
          <separator/>
@@ -140,7 +140,7 @@ well as menu structures (for main menu and popup menus).
       
       <separator/>
 
-      <menu label="Help">
+      <menu label="&amp;Help">
          <cmd refid="helpHome"/>
          <cmd refid="showAboutDialog"/>
          <cmd refid="checkForUpdates"/>
