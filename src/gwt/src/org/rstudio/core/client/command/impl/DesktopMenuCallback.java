@@ -25,28 +25,14 @@ public class DesktopMenuCallback implements MenuCallback
    }-*/;
 
    public native final void beginMenu(String label) /*-{
-      label = @org.rstudio.core.client.command.impl.DesktopMenuCallback::translateAccelerators(Ljava/lang/String;)(label);
+      label = @org.rstudio.core.client.command.AppMenuItem::replaceMnemonics(Ljava/lang/String;Ljava/lang/String;)(label, "&");
       $wnd.desktopMenuCallback.beginMenu(label);
    }-*/;
-
-   private static String translateAccelerators(String label)
-   {
-      return Pattern.create("_(_?)").replaceAll(label, new ReplaceOperation()
-      {
-         public String replace(Match m)
-         {
-            if (m.getGroup(1).length() > 0)
-               return "_";
-            else
-               return "&";
-         }
-      });
-   }
 
    public void addCommand(String commandId, AppCommand command)
    {
       addCommand(commandId,
-                 command.getMenuLabel(),
+                 command.getMenuLabel(true),
                  command.getTooltip(),
                  command.getShortcutRaw());
    }

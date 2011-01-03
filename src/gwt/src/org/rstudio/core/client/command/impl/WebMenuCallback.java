@@ -14,6 +14,7 @@ package org.rstudio.core.client.command.impl;
 
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.AppMenuBar;
+import org.rstudio.core.client.command.AppMenuItem;
 import org.rstudio.core.client.command.MenuCallback;
 
 import java.util.Stack;
@@ -27,7 +28,7 @@ public class WebMenuCallback implements MenuCallback
 
    public void beginMenu(String label)
    {
-      label = label.replaceAll("_(?!_)", "");
+      label = AppMenuItem.replaceMnemonics(label, "");
 
       if (menuStack_.size() == 1)
          label = label + " ${dropdown}";

@@ -229,23 +229,23 @@ well as menu structures (for main menu and popup menus).
         menuLabel="R Script"
         desc="Create a new R script file"/>
    <cmd id="openSourceDoc"
-        menuLabel="Open File..."
+        menuLabel="_Open File..."
         buttonLabel=""
         desc="Open an existing file"/>
    <cmd id="saveSourceDoc"
-        menuLabel="Save"
+        menuLabel="_Save"
         buttonLabel=""
         desc="Save current file"/>
    <cmd id="saveSourceDocAs"
-        menuLabel="Save As..."
+        menuLabel="Save _As..."
         buttonLabel="Save as"
         desc="Save current file to a specific path" />
    <cmd id="closeSourceDoc"
-        menuLabel="Close"/>
+        menuLabel="_Close"/>
    <cmd id="closeAllSourceDocs"
         menuLabel="Close All"/>
    <cmd id="printSourceDoc"
-        menuLabel="Print..."
+        menuLabel="_Print..."
         buttonLabel=""
         desc="Print the current file"/>
    <cmd id="popoutDoc"
@@ -264,49 +264,49 @@ well as menu structures (for main menu and popup menus).
    <cmd id="clearRecentFiles" menuLabel="Clear List"/>
 
    <cmd id="activateSource"
-        label="Move Cursor To Source"/>
+        menuLabel="Move Cursor To _Source"/>
    <cmd id="activateConsole"
-        label="Move Cursor To Console"/>
+        menuLabel="Move Cursor To _Console"/>
    <cmd id="activateWorkspace"
-        label="Show Workspace"/>
+        menuLabel="Show _Workspace"/>
    <cmd id="activateData"
-        label="Show Data"/>
+        menuLabel="Show _Data"/>
    <cmd id="activateHistory"
-        label="Show History"/>
+        menuLabel="Show _History"/>
    <cmd id="activateFiles"
-        label="Show Files"/>
+        menuLabel="Show F_iles"/>
    <cmd id="activatePlots"
-        label="Show Plots"/>
+        menuLabel="Show Pl_ots"/>
    <cmd id="activatePackages"
-        label="Show Packages"/>
+        menuLabel="Show P_ackages"/>
    <cmd id="activateHelp"
-        label="Show Help"/>
+        menuLabel="Show _Help"/>
    <cmd id="switchToTab"
-        label="Switch to Tab..."/>
+        menuLabel="Switch to _Tab..."/>
    <cmd id="previousTab"
-        label="Previous Tab"/>
+        menuLabel="_Previous Tab"/>
    <cmd id="nextTab"
-        label="Next Tab"/>
+        menuLabel="_Next Tab"/>
    <cmd id="firstTab"
-        label="First Tab"/>
+        menuLabel="_First Tab"/>
    <cmd id="lastTab"
-        label="Last Tab"/>
+        menuLabel="_Last Tab"/>
 
    <cmd id="findReplace"
-        menuLabel="Find and Replace..."/>
+        menuLabel="_Find and Replace..."/>
    <cmd id="executeAllCode"
         buttonLabel="Run All"
-        menuLabel="Run All"
+        menuLabel="Run _All"
         desc="Run the code in the current source tab"/>
    <cmd id="executeCode"
         buttonLabel="Run Line(s)"
-        menuLabel="Run Line(s)"
+        menuLabel="_Run Line(s)"
         desc="Run the current line or selection in the R console"/>
    <cmd id="extractFunction"
-        menuLabel="Extract Function"
+        menuLabel="E_xtract Function"
         desc="Turn the current selection into a function"/>
    <cmd id="commentUncomment"
-        menuLabel="Comment/Uncomment Lines"
+        menuLabel="C_omment/Uncomment Lines"
         desc="Comment or uncomment the current line/selection"/>
 
    <cmd id="compilePDF"
@@ -358,9 +358,9 @@ well as menu structures (for main menu and popup menus).
         visible="false"/>
 
    <cmd id="consoleClear"
-        menuLabel="Clear Console"/>
+        menuLabel="C_lear Console"/>
    <cmd id="interruptR"
-        menuLabel="Interrupt R"/>
+        menuLabel="_Interrupt R"/>
 
    <cmd id="historySendToSource"
         label="Insert into Source"
@@ -377,44 +377,44 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="nextPlot"
         buttonLabel=""
-        menuLabel="Next Plot"
+        menuLabel="_Next Plot"
         desc="Next plot"/>
    <cmd id="previousPlot"
         buttonLabel=""
-        menuLabel="Previous Plot"
+        menuLabel="_Previous Plot"
         desc="Previous plot"/>
    <cmd id="exportPlotAsImage" 
         buttonLabel="Export"
-        menuLabel="Export As Image..."
+        menuLabel="_Export As Image..."
         desc="Export the current plot as a PNG or JPEG image" />
    <cmd id="printPlot"
         buttonLabel = "Print"
-        menuLabel="Print to PDF..."
+        menuLabel="_Print to PDF..."
         desc="Print current plot to a PDF file"/>
    <cmd id ="zoomPlot" 
-        menuLabel="Zoom Plot..."
+        menuLabel="_Zoom Plot..."
         buttonLabel="Zoom"
         desc="View a larger version of the plot in a new window"/>
    <cmd id="clearPlots"
         buttonLabel="Clear All"
-        menuLabel="Clear All..."
+        menuLabel="_Clear All..."
         desc="Clear all Plots"/>    
    <cmd id="refreshPlot"
         buttonLabel=""
-        menuLabel="Refresh"
+        menuLabel="_Refresh"
         desc="Refresh current plot"/>     
         
    <cmd id="clearWorkspace"
-        menuLabel="Clear All..."
+        menuLabel="_Clear All..."
         buttonLabel="Clear All"/>
    <cmd id="loadWorkspace"
-        label="Load Workspace..."/>
+        menuLabel="_Load Workspace..."/>
    <cmd id="loadDefaultWorkspace"
-        label="Load Default Workspace"/>
+        menuLabel="Load _Default Workspace"/>
    <cmd id="saveWorkspace"
-        label="Save Workspace..."/>
+        menuLabel="_Save Workspace..."/>
    <cmd id="saveDefaultWorkspace"
-        label="Save As Default Workspace..."/>
+        menuLabel="Save _as Default Workspace..."/>
    <cmd id="importDatasetFromFile"
         menuLabel="From Text File..."/>
    <cmd id="importDatasetFromGoogleSpreadsheet"
@@ -440,7 +440,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Flip Console and Source"/>
 
    <cmd id="showOptions"
-        menuLabel="Preferences..."/>
+        menuLabel="Pr_eferences..."/>
 
    <cmd id="checkForUpdates"
         menuLabel="Check for Updates"
@@ -482,7 +482,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Log focused element"/>
 
    <cmd id="quitSession"
-        menuLabel="Quit R..."/>
+        menuLabel="_Quit R..."/>
 
    <cmd id="showAboutDialog"
         menuLabel="About RStudio"
@@ -504,14 +504,14 @@ well as menu structures (for main menu and popup menus).
         visible="false"/>
 
    <cmd id="undoDummy"
-        label="Undo"/>
+        menuLabel="_Undo"/>
    <cmd id="redoDummy"
-        label="Redo"/>
+        menuLabel="Re_do"/>
    <cmd id="cutDummy"
-        label="Cut"/>
+        menuLabel="Cu_t"/>
    <cmd id="copyDummy"
-        label="Copy"/>
+        menuLabel="_Copy"/>
    <cmd id="pasteDummy"
-        label="Paste"/>
+        menuLabel="_Paste"/>
 
 </commands>

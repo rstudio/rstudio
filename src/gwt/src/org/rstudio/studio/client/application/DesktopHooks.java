@@ -162,7 +162,7 @@ public class DesktopHooks
    String getCommandLabel(String commandId)
    {
       AppCommand command = commands_.getCommandById(commandId);
-      return command != null ? command.getMenuLabel() : "";
+      return command != null ? command.getMenuLabel(true) : "";
    }
 
    void openFile(String filePath)

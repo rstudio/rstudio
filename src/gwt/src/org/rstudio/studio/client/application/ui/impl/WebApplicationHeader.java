@@ -202,7 +202,7 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
             String textAlign = BrowseCap.hasMetaKey()
                                ? "text-align: right"
                                : "";
-            return "<tr><td>" + cmd.getMenuLabel() + "</td>" +
+            return "<tr><td>" + cmd.getMenuLabel(true) + "</td>" +
                    "<td style='padding-left: 12px; " + textAlign + "'>"
                    + cmd.getShortcutPrettyHtml() + "</td></tr>";
          }

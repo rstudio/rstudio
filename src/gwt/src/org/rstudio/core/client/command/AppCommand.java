@@ -180,10 +180,12 @@ public class AppCommand implements Command, ClickHandler
       buttonLabel_ = buttonLabel;
    }
 
-   public String getMenuLabel()
+   public String getMenuLabel(boolean useMnemonics)
    {
       if (menuLabel_ != null)
-         return menuLabel_;
+      {
+         return AppMenuItem.replaceMnemonics(menuLabel_, useMnemonics ? "&" : "");
+      }
       return getLabel();
    }
 
@@ -236,13 +238,13 @@ public class AppCommand implements Command, ClickHandler
 
    public MenuItem createMenuItem(boolean mainMenu)
    {
-      return new AppMenuItem(this);
+      return new AppMenuItem(this, mainMenu);
    }
 
-   public String getMenuHTML()
+   public String getMenuHTML(boolean mainMenu)
    {
       ImageResource icon = imageResource_;
-      String label = getMenuLabel();
+      String label = getMenuLabel(false);
       String shortcut = shortcut_ != null ? shortcut_.toString(true) : "";
 
       return formatMenuLabel(icon, label, shortcut);
