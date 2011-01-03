@@ -124,11 +124,8 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
    ptr_R_Suicide = callbacks.suicide;
 
    // hook clean up, but save reference to internal clean up so can forward
-   if (callbacks.cleanUp != NULL)
-   {
-      pInternal->cleanUp = ptr_R_CleanUp;
-      ptr_R_CleanUp = callbacks.cleanUp ;
-   }
+   pInternal->cleanUp = ptr_R_CleanUp;
+   ptr_R_CleanUp = callbacks.cleanUp ;
 
    // NOTE: we do not hook the following callbacks because they are targeted
    // at clients that have a stdio-based console

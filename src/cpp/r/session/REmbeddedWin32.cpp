@@ -40,6 +40,9 @@
 // from Defn.h
 extern "C" void R_ProcessEvents(void);
 
+// from Startup.h
+extern "C" void R_CleanUp(SA_TYPE, int, int);
+
 // for do_edit fork
 extern "C" FILE *R_fopen(const char *filename, const char *mode);
 extern "C" void R_ResetConsole(void);
@@ -280,7 +283,7 @@ void runEmbeddedR(const core::FilePath& rHome,
                   bool newSession,
                   SA_TYPE defaultSaveAction,
                   const Callbacks& callbacks,
-                  InternalCallbacks* /*pInternal*/)
+                  InternalCallbacks* pInternal)
 {
    // save callbacks for delegation
    s_callbacks = callbacks;
@@ -319,6 +322,10 @@ void runEmbeddedR(const core::FilePath& rHome,
    pRP->ShowMessage = showMessage;
    pRP->YesNoCancel = askYesNoCancel;
    pRP->Busy = callbacks.busy;
+
+   // set internal callbacks
+   pInternal->cleanUp = R_CleanUp;
+   pInternal->suicide = R_Suicide;
 
    // set command line
    const char *args[]= {"RStudio", "--interactive"};

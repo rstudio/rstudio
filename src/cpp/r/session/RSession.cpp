@@ -61,7 +61,6 @@ using namespace core ;
 namespace r {
 namespace session {
 
-
 namespace {
    
 // options
@@ -214,12 +213,6 @@ void saveHistoryAndClientState()
                                     s_clientStatePath);
 }
 
-CCODE s_originalQuitFunction = NULL;
-SEXP quitHook(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-   saveHistoryAndClientState();
-   return s_originalQuitFunction(call, op, args, rho);
-}
 
 // automatically create R_LIBS_USER if it doesen't already exist
 // and there is nowhere else writeable that we can install packages
@@ -308,7 +301,12 @@ const int kSerializationActionLoadDefaultWorkspace = 2;
 const int kSerializationActionSuspendSession = 3;
 const int kSerializationActionResumeSession = 4;
 const int kSerializationActionCompleted = 5;
-   
+
+// forward declare win32QuitHook so we can register it
+#ifdef _WIN32
+SEXP win32QuitHook(SEXP call, SEXP op, SEXP args, SEXP rho);
+#endif
+
 // one-time per session initialization
 Error initialize()
 {
@@ -410,17 +408,15 @@ Error initialize()
          return error;
    }
 
-   // hook the quit function if we are in desktop mode (used to
-   // eagerly save session state which persists along with the
-   // quiting of a session
-   if (!s_options.serverMode)
-   {
-      error = r::function_hook::registerReplaceHook("quit",
-                                                    quitHook,
-                                                    &s_originalQuitFunction);
-      if (error)
-         return error;
-   }
+   // hook the quit function if we are on win32 (used so we can
+   // call our RCleanUp function which otherwise couldn't be called on
+   // Windows where no cleanup hook is supported)
+#ifdef _WIN32
+   error = r::function_hook::registerReplaceHook("quit", win32QuitHook, NULL);
+   if (error)
+      return error;
+#endif
+
 
    // complete embedded r initialization
    error = r::session::completeEmbeddedRInitialization();
@@ -831,8 +827,7 @@ r::session::InternalCallbacks s_internalCallbacks;
 void RSuicide(const char* s)
 {
    s_callbacks.suicide(s);
-   if (s_internalCallbacks.suicide)
-      s_internalCallbacks.suicide(s);
+   s_internalCallbacks.suicide(s);
 }
   
 
@@ -976,11 +971,68 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
       // NOTE: may want to replace RCleanUp entirely so that the client
       // can see any errors which occur during cleanup in the console
       // (they aren't seen now because the handling of quit obstructs them)
-      if (s_internalCallbacks.cleanUp)
-         s_internalCallbacks.cleanUp(saveact, status, FALSE);
+      s_internalCallbacks.cleanUp(saveact, status, FALSE);
    }
    CATCH_UNEXPECTED_EXCEPTION 
 }
+
+// NOTE: on Win32 we fully replace the quit function so that
+// we can call our R_CleanUp hook (Windows R doesn't allow hooking
+// of the cleanup function). The implementation below is identical
+// to do_quit in main.c save for calling our RCleanUp function rather
+// than R's R_CleanUp function (which will ultimatley be called by our
+// function after it does it's work)
+#ifdef _WIN32
+extern "C" Rboolean R_Interactive;/* TRUE during interactive use*/
+#define CTXT_BROWSER 16 // from Defn.h
+#define _(String) String
+SEXP win32QuitHook(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+   const char *tmp;
+   SA_TYPE ask=SA_DEFAULT;
+   int status, runLast;
+
+   /* if there are any browser contexts active don't quit */
+   if(Rf_countContexts(CTXT_BROWSER, 1)) {
+   Rf_warning(_("cannot quit from browser"));
+   return R_NilValue;
+   }
+   if( !Rf_isString(CAR(args)) )
+   Rf_errorcall(call, _("one of \"yes\", \"no\", \"ask\" or \"default\" expected."));
+   tmp = CHAR(STRING_ELT(CAR(args), 0)); /* ASCII */
+   if( !strcmp(tmp, "ask") ) {
+   ask = SA_SAVEASK;
+   if(!R_Interactive)
+     Rf_warning(_("save=\"ask\" in non-interactive use: command-line default will be used"));
+   } else if( !strcmp(tmp, "no") )
+   ask = SA_NOSAVE;
+   else if( !strcmp(tmp, "yes") )
+   ask = SA_SAVE;
+   else if( !strcmp(tmp, "default") )
+   ask = SA_DEFAULT;
+   else
+   Rf_errorcall(call, _("unrecognized value of 'save'"));
+   status = Rf_asInteger(CADR(args));
+   if (status == NA_INTEGER) {
+   Rf_warning(_("invalid 'status', 0 assumed"));
+   runLast = 0;
+   }
+   runLast = Rf_asLogical(CADDR(args));
+   if (runLast == NA_LOGICAL) {
+   Rf_warning(_("invalid 'runLast', FALSE assumed"));
+   runLast = 0;
+   }
+   /* run the .Last function. If it gives an error, will drop back to main
+     loop. */
+
+   // run our cleanup function rather than R's
+   RCleanUp(ask, status, runLast);
+
+   exit(0);
+   /*NOTREACHED*/
+}
+#endif
+
    
 Error run(const ROptions& options, const RCallbacks& callbacks) 
 {   
@@ -1048,7 +1100,7 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    cb.savehistory = Rsavehistory;
    cb.addhistory = Raddhistory;
    cb.suicide = RSuicide;
-   cb.cleanUp = s_options.serverMode ? RCleanUp : NULL;
+   cb.cleanUp = RCleanUp;
    r::session::runEmbeddedR(FilePath(rLocations.homePath),
                             options.userHomePath,
                             newSession,

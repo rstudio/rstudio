@@ -42,57 +42,69 @@
 
 .rs.addFunction("valueAsString", function(val)
 {
-   is.scalar <- function (x) {
-      if (length(x) == 1 && is.null(attributes(x)))
-      {
-         !is.na(c(NULL=TRUE, 
-                  logical=TRUE, 
-                  double=TRUE, 
-                  integer=TRUE, 
-                  complex=TRUE, 
-                  character=TRUE)[typeof(x)])
-      }
-      else
-      {
-         FALSE
-      }
-   }
-   
-   if (is.scalar(val))
+   tryCatch(
    {
-      if (nchar(val) < 100)
-         deparse(val)
+      is.scalar <- function (x) {
+         if (length(x) == 1 && is.null(attributes(x)))
+         {
+            !is.na(c(NULL=TRUE,
+                     logical=TRUE,
+                     double=TRUE,
+                     integer=TRUE,
+                     complex=TRUE,
+                     character=TRUE)[typeof(x)])
+         }
+         else
+         {
+            FALSE
+         }
+      }
+
+      if (is.scalar(val))
+      {
+         if (nchar(val) < 100)
+            return (deparse(val))
+         else
+            return ("NO_VALUE")
+      }
+      else if (is.function(val))
+         return (.rs.getSignature(val))
       else
-         "NO_VALUE"
-   }
-   else if (is.function(val))
-      .rs.getSignature(val)
-   else
-      "NO_VALUE"
+         return ("NO_VALUE")
+   },
+   error = function(e) print(e))
+
+   return ("NO_VALUE")
 })
 
 .rs.addFunction("valueDescription", function(obj)
 {
-   if (is.data.frame(obj))
+   tryCatch(
    {
-      return(paste(dim(obj)[1],
-                   "obs. of",
-                   dim(obj)[2],
-                   "variables",
-                   sep=" "))
-   }
-   else if (is.matrix(obj))
-   {
-      return(paste(ncol(obj),
-                   "x",
-                   nrow(obj),
-                   " ",
-                   typeof(obj),
-                   " matrix",
-                   sep=""))
-   }
-   else
-      return("")
+      if (is.data.frame(obj))
+      {
+         return(paste(dim(obj)[1],
+                      "obs. of",
+                      dim(obj)[2],
+                      "variables",
+                      sep=" "))
+      }
+      else if (is.matrix(obj))
+      {
+         return(paste(ncol(obj),
+                      "x",
+                      nrow(obj),
+                      " ",
+                      typeof(obj),
+                      " matrix",
+                      sep=""))
+      }
+      else
+         return("")
+   },
+   error = function(e) print(e))
+
+   return ("")
 })
 
 .rs.addJsonRpcHandler("remove_all_objects", function()
@@ -103,7 +115,10 @@
 
 .rs.addFunction("getSingleClass", function(obj)
 {
-   class(obj)[1]
+   className <- "(unknown)"
+   tryCatch(className <- class(obj)[1],
+            error = function(e) print(e))
+   return (className)
 })
 
 .rs.addJsonRpcHandler("list_objects", function()
