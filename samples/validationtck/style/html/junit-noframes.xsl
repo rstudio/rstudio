@@ -26,10 +26,15 @@
 
 <!--
 
- Modified from the default spreadshet.
+ Modified from the default stylesheet.
  Changed so counts are relative to the TOTAL tests in the TCK
 
 -->
+
+<xsl:param name="markedFailing" />
+<xsl:param name="markedNonTckTest" />
+<xsl:param name="markedNotSupported" />
+
 <xsl:template match="testsuites">
     <html>
         <head>
@@ -248,12 +253,13 @@
 
     <xsl:template name="summary">
         <h2>Summary</h2>
-        <xsl:variable name="testCount" select="258"/>
-        <!-- 
-          testCount from
-          jar -xf jsr303-tck-1.0.3.GA-sources.jar 
-          grep -r \@Test org/hibernate/jsr303/tck/tests/ | grep -v "enabled = false" | wc -l
+        <xsl:variable name="rawTestCount" select="258"/>
+        <!--
+          rawTestCount from
+          jar -xf jsr303-tck-1.0.3.GA-sources.jar
+          grep -r \@Test org/hibernate/jsr303/tck/tests/| grep -v "enabled = false"  | wc -l
         -->
+        <xsl:variable name="testCount" select="($rawTestCount - $markedNotSupported)"/>
         <xsl:variable name="testExecutedCount" select="sum(testsuite/@tests)"/>
         <xsl:variable name="errorCount" select="sum(testsuite/@errors)"/>
         <xsl:variable name="failureCount" select="sum(testsuite/@failures)"/>
@@ -265,11 +271,17 @@
           <xsl:value-of select="$testCount"/> <xsl:text> (</xsl:text>
           <xsl:call-template name="display-percent">
             <xsl:with-param name="value" select="$successRate"/>
-          </xsl:call-template> 
+          </xsl:call-template>
          <xsl:text>) Pass with </xsl:text>
          <xsl:value-of select="$failureCount"/> <xsl:text> Failures and </xsl:text>
          <xsl:value-of select="$errorCount" /> <xsl:text> Errors.</xsl:text>
     </h3>
+
+    <xsl:if test="($failureCount + $errorCount) != ($markedFailing)">
+      <p style="color:red"><strong>WARINING</strong> expected Failures + Errors to match the
+      <xsl:value-of select="$markedFailing" />
+      test marked @Failing</p>
+    </xsl:if>
         <table class="details" border="0" cellpadding="5" cellspacing="2" width="95%">
         <tr valign="top">
             <th>Tests</th>

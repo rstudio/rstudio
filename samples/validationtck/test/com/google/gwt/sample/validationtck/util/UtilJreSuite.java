@@ -13,20 +13,20 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.validationtck.constraints.constraintcomposition;
-
-import com.google.gwt.sample.validationtck.util.TckTestSuiteWrapper;
+package com.google.gwt.sample.validationtck.util;
 
 import junit.framework.Test;
+import junit.framework.TestSuite;
 
 /**
- * Tck Tests for the {@code constraints composition} package.
+ * Test Suite for non GWT tests.
  */
-public class ConstraintCompositionGwtSuite {
+public class UtilJreSuite {
+
   public static Test suite() {
-    TckTestSuiteWrapper suite = new TckTestSuiteWrapper(
-        "TCK for GWT Validation, constraints composition package");
-    suite.addTestSuite(ConstraintCompositionTest.class);
+    TestSuite suite = new TestSuite("Test suite for tck utility classes");
+    suite.addTestSuite(TckTestSuiteWrapperTest.class);
     return suite;
   }
+
 }

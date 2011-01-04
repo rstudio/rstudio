@@ -15,6 +15,8 @@
  */
 package com.google.gwt.sample.validationtck.validation;
 
+import com.google.gwt.sample.validationtck.util.Failing;
+
 import javax.validation.ValidationException;
 
 /**
@@ -34,6 +36,7 @@ public class ValidatePropertyTest extends AbstractValidationTest {
     delegate.testPassingNullAsGroup();
   }
 
+  @Failing(issue = 5804)
   public void testUnexpectedExceptionsInValidatePropertyGetWrappedInValidationExceptions() {
     // Wrap the test to catch the @Test expected exception.
     try {
@@ -43,6 +46,7 @@ public class ValidatePropertyTest extends AbstractValidationTest {
     }
   }
 
+  @Failing(issue = 5804)
   public void testValidateProperty() {
     delegate.testValidateProperty();
   }

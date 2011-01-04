@@ -16,6 +16,7 @@
 package com.google.gwt.sample.validationtck.validatorfactory;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.sample.validationtck.util.Failing;
 
 /**
  * Wraps
@@ -30,6 +31,7 @@ public class CustomConstraintValidatorTest extends GWTTestCase {
     return "com.google.gwt.sample.validationtck.validatorfactory.TckTest";
   }
 
+  @Failing(issue = 5805)
   public void testDefaultConstructorInValidatorCalled() {
     delegate.testDefaultConstructorInValidatorCalled();
   }

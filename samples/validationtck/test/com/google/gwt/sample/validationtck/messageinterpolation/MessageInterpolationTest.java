@@ -16,6 +16,7 @@
 package com.google.gwt.sample.validationtck.messageinterpolation;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.sample.validationtck.util.Failing;
 
 /**
  * Wraps
@@ -47,6 +48,7 @@ public class MessageInterpolationTest extends GWTTestCase {
     delegate.testLiteralCurlyBraces();
   }
 
+  @Failing(issue = 5763)
   public void testMessageInterpolationWithLocale() {
     delegate.testMessageInterpolationWithLocale();
   }

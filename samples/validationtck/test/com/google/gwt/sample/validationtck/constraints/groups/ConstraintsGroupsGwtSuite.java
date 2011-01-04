@@ -15,7 +15,7 @@
  */
 package com.google.gwt.sample.validationtck.constraints.groups;
 
-import com.google.gwt.junit.tools.GWTTestSuite;
+import com.google.gwt.sample.validationtck.util.TckTestSuiteWrapper;
 
 import junit.framework.Test;
 
@@ -24,7 +24,7 @@ import junit.framework.Test;
  */
 public class ConstraintsGroupsGwtSuite {
   public static Test suite() {
-    GWTTestSuite suite = new GWTTestSuite(
+    TckTestSuiteWrapper suite = new TckTestSuiteWrapper(
         "TCK for GWT Validation, constraints groups package");
     suite.addTestSuite(GroupTest.class);
     return suite;

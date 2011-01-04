@@ -16,6 +16,7 @@
 package com.google.gwt.sample.validationtck.constraints.application;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.sample.validationtck.util.Failing;
 
 /**
  * Wraps
@@ -38,10 +39,12 @@ public class ValidationRequirementTest extends GWTTestCase {
     return "com.google.gwt.sample.validationtck.constraints.application.TckTest";
   }
 
+  @Failing(issue = 5798)
   public void testClassLevelConstraints() {
     delegate.testClassLevelConstraints();
   }
 
+  @Failing(issue = 5798)
   public void testConstraintAppliedOnFieldAndProperty() {
     delegate.testConstraintAppliedOnFieldAndProperty();
   }
@@ -50,6 +53,7 @@ public class ValidationRequirementTest extends GWTTestCase {
     delegate.testFieldAccess();
   }
 
+  @Failing(issue = 5798)
   public void testFieldAndPropertyVisibilityIsNotConstrained() {
     delegate.testFieldAndPropertyVisibilityIsNotConstrained();
   }

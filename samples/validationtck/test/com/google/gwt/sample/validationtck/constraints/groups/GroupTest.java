@@ -16,13 +16,14 @@
 package com.google.gwt.sample.validationtck.constraints.groups;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.sample.validationtck.util.Failing;
 
 /**
  * Test wrapper for
  * {@link org.hibernate.jsr303.tck.tests.constraints.groups.GroupTest}.
  */
 public class GroupTest extends GWTTestCase {
-  private final org.hibernate.jsr303.tck.tests.constraints.groups.GroupTest delegate = 
+  private final org.hibernate.jsr303.tck.tests.constraints.groups.GroupTest delegate =
       new org.hibernate.jsr303.tck.tests.constraints.groups.GroupTest();
 
   @Override
@@ -42,22 +43,27 @@ public class GroupTest extends GWTTestCase {
     delegate.testCyclicGroupSequence();
   }
 
+  @Failing(issue = 5801)
   public void testGroups() {
     delegate.testGroups();
   }
 
+  @Failing(issue = 5801)
   public void testGroupSequence() {
     delegate.testGroupSequence();
   }
 
+  @Failing(issue = 5801)
   public void testGroupSequenceFollowedByGroup() {
     delegate.testGroupSequenceFollowedByGroup();
   }
 
+  @Failing(issue = 5801)
   public void testImplicitGrouping() {
     delegate.testImplicitGrouping();
   }
 
+  @Failing(issue = 5801)
   public void testValidateAgainstDifferentGroups() {
     delegate.testValidateAgainstDifferentGroups();
   }

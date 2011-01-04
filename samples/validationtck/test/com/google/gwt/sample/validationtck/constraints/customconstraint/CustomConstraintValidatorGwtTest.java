@@ -16,6 +16,7 @@
 package com.google.gwt.sample.validationtck.constraints.customconstraint;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.sample.validationtck.util.Failing;
 
 import org.hibernate.jsr303.tck.tests.constraints.customconstraint.CustomConstraintValidatorTest;
 
@@ -30,10 +31,12 @@ public class CustomConstraintValidatorGwtTest extends GWTTestCase {
     return "com.google.gwt.sample.validationtck.constraints.customconstraint.TckTest";
   }
 
+  @Failing(issue = 5800)
   public void testDefaultPropertyPath() {
     delegate.testDefaultPropertyPath();
   }
 
+  @Failing(issue = 5800)
   public void testIsValidIsCalledForEachValidation() {
     delegate.testIsValidIsCalledForEachValidation();
   }
@@ -46,6 +49,7 @@ public class CustomConstraintValidatorGwtTest extends GWTTestCase {
     delegate.testOneConstraintViolationPerFailingConstraint();
   }
 
+  @Failing(issue = 5800)
   public void testRightValidatorIsSelectedAndInitializedCalled() {
     delegate.testRightValidatorIsSelectedAndInitializedCalled();
   }

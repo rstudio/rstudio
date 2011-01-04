@@ -16,13 +16,14 @@
 package com.google.gwt.sample.validationtck.metadata;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.sample.validationtck.util.Failing;
 
 /**
  * Test wrapper for
  * {@link org.hibernate.jsr303.tck.tests.constraints.groups.GroupTest}.
  */
 public class BeanDescriptorTest extends GWTTestCase {
-  private final org.hibernate.jsr303.tck.tests.metadata.BeanDescriptorTest delegate = 
+  private final org.hibernate.jsr303.tck.tests.metadata.BeanDescriptorTest delegate =
       new org.hibernate.jsr303.tck.tests.metadata.BeanDescriptorTest();
 
   @Override
@@ -54,6 +55,7 @@ public class BeanDescriptorTest extends GWTTestCase {
     delegate.testGetConstraintsForNullProperty();
   }
 
+  @Failing(issue = 5802)
   public void testIsBeanConstrainedDueToConstraintOnEntity() {
     delegate.testIsBeanConstrainedDueToConstraintOnEntity();
   }

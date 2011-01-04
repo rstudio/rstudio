@@ -25,28 +25,40 @@
 
 <!--
 
- Modified from the default spreadshet.
+ Modified from the default stylesheet.
  Changed so counts are relative to the TOTAL tests in the TCK
 
 -->
+
+<xsl:param name="markedFailing" />
+<xsl:param name="markedNonTckTest" />
+<xsl:param name="markedNotSupported" />
 <xsl:template match="testsuites">
-	<xsl:variable name="testCount" select="258"/>
-    <!-- 
-      testCount from
-      jar -xf jsr303-tck-1.0.3.GA-sources.jar 
+
+	<xsl:variable name="rawTestCount" select="258"/>
+    <!--
+      rawTestCount from
+      jar -xf jsr303-tck-1.0.3.GA-sources.jar
       grep -r \@Test org/hibernate/jsr303/tck/tests/| grep -v "enabled = false"  | wc -l
     -->
+    <xsl:variable name="testCount" select="($rawTestCount - $markedNotSupported)"/>
     <xsl:variable name="testExecutedCount" select="sum(testsuite/@tests)"/>
     <xsl:variable name="errorCount" select="sum(testsuite/@errors)"/>
     <xsl:variable name="failureCount" select="sum(testsuite/@failures)"/>
     <xsl:variable name="timeCount" select="sum(testsuite/@time)"/>
     <xsl:variable name="passedCount" select="($testExecutedCount - $failureCount - $errorCount)"/>
     <xsl:variable name="successRate" select="($passedCount) div $testCount"/>
+    <xsl:if test="($failureCount + $errorCount) != ($markedFailing)">
+      <xsl:text>WARINING expected Failures + Errors to match the </xsl:text>
+      <xsl:value-of select="$markedFailing" />
+      <xsl:text> test marked @Failing
+</xsl:text>
+    </xsl:if>
     <xsl:value-of select="$passedCount" /> <xsl:text> of </xsl:text>
     <xsl:value-of select="$testCount"/> <xsl:text> (</xsl:text>
     <xsl:call-template name="display-percent">
          <xsl:with-param name="value" select="$successRate"/>
-    </xsl:call-template> 
+    </xsl:call-template>
     <xsl:text>) Pass with </xsl:text>
     <xsl:value-of select="$failureCount"/> <xsl:text> Failures and </xsl:text>
     <xsl:value-of select="$errorCount" /> <xsl:text> Errors.</xsl:text>

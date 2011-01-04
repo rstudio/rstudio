@@ -3,7 +3,7 @@
   <property name="sample.module" value="ValidationTck" />
   <property name="sample.path" value="src" />
   <property name="test.args" value="-ea" />
-  <property name="test.jvmargs" value="-ea" />
+  <property name="test.jvmargs" value="-ea -Dcom.google.gwt.sample.validationtck.util.Failing.include=true  -Dcom.google.gwt.sample.validationtck.util.NonTckTest.exclude=true" />
   <import file="../common.ant.xml" />
 
   <!-- these are after the common.ant.xml so they have gwt.tools etc. -->
@@ -60,9 +60,8 @@
   <property name="emma.merged.out" value="${junit.out}/emma-coverage" />
   <property name="gwt.junit.testcase.web.includes" value="${gwt.junit.testcase.includes}" />
   <property name="gwt.junit.testcase.web.excludes" value="" />
-
   <property name="gwt.junit.testcase.dev.includes" value="${gwt.junit.testcase.includes}" />
-  <property name="gwt.junit.testcase.dev.excludes" value="" />
+  <property name="gwt.junit.testcase.dev.excludes" value="com/google/gwt/sample/validationtck/util/*.class" />
 
   <!--
         Compiles the test code for this project
@@ -133,15 +132,49 @@
         if="junit.failure" status="2" />
   </target>
 
+  <macrodef name="countMarkedTests">
+    <attribute name="annotation" default="NOT SET" />
+    <attribute name="outputproperty" default="jsr303.marked.@{annotation}" />
+    <sequential>
+      <!--TODO(nchalko) find a way to count annotations in windows -->
+      <exec dir="${basedir}"
+          executable="${basedir}/countMarkedTests.sh"
+          outputproperty="@{outputproperty}"
+          os="Mac OS X,Linux"
+          >
+        <arg line="@{annotation}" />
+      </exec>
+    </sequential>
+  </macrodef>
+
   <target name="tck.report">
     <mkdir dir="${junit.out}/tck-report" />
     <mkdir dir="${junit.out}/tck-report/text" />
+    
+    <!-- Greping for annotation currently only works on OS X and Linux -->
+    <!-- The reports will still run but the total count will not be reduced -->
+    <countMarkedTests annotation="Failing" />
+    <countMarkedTests annotation="NonTckTest" />
+    <countMarkedTests annotation="NotSupported" />
+    
+    <echo message="Marked Failing = ${jsr303.marked.Failing}" />
+    <echo message="Marked NonTckTest = ${jsr303.marked.NonTckTest}" />
+    <echo message="Marked NotSupported = ${jsr303.marked.NotSupported}" />
+    
     <junitreport todir="${junit.out}/tck-report">
       <fileset dir="${junit.out}">
         <include name="*/reports/TEST-*.xml" />
       </fileset>
-      <report format="noframes" todir="${junit.out}/tck-report" styledir="style/html" />
-      <report format="noframes" todir="${junit.out}/tck-report/text" styledir="style/text" />
+      <report format="noframes" todir="${junit.out}/tck-report" styledir="style/html">
+        <param name="markedFailing" expression="${jsr303.marked.Failing}" />
+        <param name="markedNonTckTest" expression="${jsr303.marked.NonTckTest}" />
+        <param name="markedNotSupported" expression="${jsr303.marked.NotSupported}" />
+      </report>
+      <report format="noframes" todir="${junit.out}/tck-report/text" styledir="style/text">
+        <param name="markedFailing" expression="${jsr303.marked.Failing}" />
+        <param name="markedNonTckTest" expression="${jsr303.marked.NonTckTest}" />
+        <param name="markedNotSupported" expression="${jsr303.marked.NotSupported}" />
+      </report>
     </junitreport>
 
     <concat taskname="JSR 303 TCK Result">

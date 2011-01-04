@@ -16,6 +16,7 @@
 package org.hibernate.jsr303.tck.tests.constraints.validatorresolution;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.sample.validationtck.util.Failing;
 
 /**
  * Wraps {@link ValidatorResolutionTest} .
@@ -27,22 +28,27 @@ public class ValidatorResolutionGwtTest extends GWTTestCase {
     return "org.hibernate.jsr303.tck.tests.constraints.validatorresolution.TckTest";
   }
 
+  @Failing(issue = 5806)
   public void testAmbiguousValidatorResolution() {
     delegate.testAmbiguousValidatorResolution();
   }
 
+  @Failing(issue = 5806)
   public void testResolutionOfMinMaxForDifferentTypes() {
     delegate.testResolutionOfMinMaxForDifferentTypes();
   }
 
+  @Failing(issue = 5806)
   public void testResolutionOfMultipleSizeValidators() {
     delegate.testResolutionOfMultipleSizeValidators();
   }
 
+  @Failing(issue = 5806)
   public void testTargetedTypeIsField() {
     delegate.testTargetedTypeIsField();
   }
 
+  @Failing(issue = 5806)
   public void testTargetedTypeIsGetter() {
     delegate.testTargetedTypeIsGetter();
   }
@@ -51,13 +57,13 @@ public class ValidatorResolutionGwtTest extends GWTTestCase {
     delegate.testTargetTypeIsClass();
   }
 
+  @Failing(issue = 5806)
   public void testTargetTypeIsInterface() {
     delegate.testTargetTypeIsInterface();
   }
 
+  @Failing(issue = 5806)
   public void testUnexpectedTypeInValidatorResolution() {
     delegate.testUnexpectedTypeInValidatorResolution();
   }
-
-
 }

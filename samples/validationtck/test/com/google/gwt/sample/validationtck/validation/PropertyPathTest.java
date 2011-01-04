@@ -15,6 +15,9 @@
  */
 package com.google.gwt.sample.validationtck.validation;
 
+import com.google.gwt.sample.validationtck.util.Failing;
+import com.google.gwt.sample.validationtck.util.NonTckTest;
+
 /**
  * Test wrapper for
  * {@link org.hibernate.jsr303.tck.tests.validation.PropertyPathTest}.
@@ -24,26 +27,36 @@ public class PropertyPathTest extends AbstractValidationTest {
   org.hibernate.jsr303.tck.tests.validation.PropertyPathTest delegate =
     new org.hibernate.jsr303.tck.tests.validation.PropertyPathTest();
 
+  @NonTckTest
+  public void testPlaceHolder() {
+  }
+
+  @Failing(issue = 5803)
   public void testPropertyPathSet() {
     delegate.testPropertyPathSet();
   }
 
+  @Failing(issue = 5803)
   public void testPropertyPathTraversedObject() {
     delegate.testPropertyPathTraversedObject();
   }
 
+  @Failing(issue = 5803)
   public void testPropertyPathWithArray() {
     delegate.testPropertyPathWithArray();
   }
 
+  @Failing(issue = 5803)
   public void testPropertyPathWithConstraintViolationForRootObject() {
     delegate.testPropertyPathWithConstraintViolationForRootObject();
   }
 
+  @Failing(issue = 5803)
   public void testPropertyPathWithList() {
     delegate.testPropertyPathWithList();
   }
 
+  @Failing(issue = 5803)
   public void testPropertyPathWithMap() {
     delegate.testPropertyPathWithMap();
   }

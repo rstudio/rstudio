@@ -15,7 +15,7 @@
  */
 package com.google.gwt.sample.validationtck.validation;
 
-import com.google.gwt.junit.tools.GWTTestSuite;
+import com.google.gwt.sample.validationtck.util.TckTestSuiteWrapper;
 
 import junit.framework.Test;
 
@@ -24,7 +24,7 @@ import junit.framework.Test;
  */
 public class ValidationGwtSuite {
   public static Test suite() {
-    GWTTestSuite suite = new GWTTestSuite(
+    TckTestSuiteWrapper suite = new TckTestSuiteWrapper(
         "TCK for GWT Validation, validation package");
     suite.addTestSuite(PropertyPathTest.class);
     suite.addTestSuite(ValidatePropertyTest.class);

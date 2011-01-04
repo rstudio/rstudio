@@ -15,6 +15,8 @@
  */
 package com.google.gwt.sample.validationtck.validation;
 
+import com.google.gwt.sample.validationtck.util.Failing;
+
 
 /**
  * Test wrapper for
@@ -22,17 +24,20 @@ package com.google.gwt.sample.validationtck.validation;
  */
 public class ValidateValueTest extends AbstractValidationTest {
 
-  private final org.hibernate.jsr303.tck.tests.validation.ValidateValueTest delegate = 
+  private final org.hibernate.jsr303.tck.tests.validation.ValidateValueTest delegate =
       new org.hibernate.jsr303.tck.tests.validation.ValidateValueTest();
 
+  @Failing(issue = 5804)
   public void testExistingPropertyWoConstraintsNorCascaded() {
     delegate.testExistingPropertyWoConstraintsNorCascaded();
   }
 
+  @Failing(issue = 5804)
   public void testValidateValue() {
     delegate.testValidateValue();
   }
 
+  @Failing(issue = 5804)
   public void testValidateValueFailure() {
     delegate.testValidateValueFailure();
   }
@@ -61,6 +66,7 @@ public class ValidateValueTest extends AbstractValidationTest {
     delegate.testValidateValueWithNullPropertyName();
   }
 
+  @Failing(issue = 5804)
   public void testValidIsNotHonoredValidateValue() {
     delegate.testValidIsNotHonoredValidateValue();
   }

@@ -15,7 +15,7 @@
  */
 package com.google.gwt.sample.validationtck.validatorfactory;
 
-import com.google.gwt.junit.tools.GWTTestSuite;
+import com.google.gwt.sample.validationtck.util.TckTestSuiteWrapper;
 
 import junit.framework.Test;
 
@@ -24,7 +24,7 @@ import junit.framework.Test;
  */
 public class ValidatorFactoryGwtSuite {
   public static Test suite() {
-    GWTTestSuite suite = new GWTTestSuite(
+    TckTestSuiteWrapper suite = new TckTestSuiteWrapper(
         "TCK for GWT Validation, validatorfactory package");
     suite.addTestSuite(CustomConstraintValidatorTest.class);
     return suite;

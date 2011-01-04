@@ -16,6 +16,7 @@
 package com.google.gwt.sample.validationtck.constraints.constraintcomposition;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.sample.validationtck.util.Failing;
 
 /**
  * Wraps
@@ -31,22 +32,27 @@ public class ConstraintCompositionTest extends GWTTestCase {
     return "com.google.gwt.sample.validationtck.constraints.constraintcomposition.TckTest";
   }
 
+  @Failing(issue = 5799)
   public void testAllComposingConstraintsMustBeApplicableToAnnotatedType() {
     delegate.testAllComposingConstraintsMustBeApplicableToAnnotatedType();
   }
 
+  @Failing(issue = 5799)
   public void testAttributesDefinedOnComposingConstraints() {
     delegate.testAttributesDefinedOnComposingConstraints();
   }
 
+  @Failing(issue = 5799)
   public void testComposedConstraints() {
     delegate.testComposedConstraints();
   }
 
+  @Failing(issue = 5799)
   public void testComposedConstraintsAreRecursive() {
     delegate.testComposedConstraintsAreRecursive();
   }
 
+  @Failing(issue = 5799)
   public void testEachFailingConstraintCreatesConstraintViolation() {
     delegate.testEachFailingConstraintCreatesConstraintViolation();
   }
@@ -55,10 +61,12 @@ public class ConstraintCompositionTest extends GWTTestCase {
     delegate.testGroupsDefinedOnMainAnnotationAreInherited();
   }
 
+  @Failing(issue = 5799)
   public void testOnlySingleConstraintViolation() {
     delegate.testOnlySingleConstraintViolation();
   }
 
+  @Failing(issue = 5799)
   public void testOverriddenAttributesMustMatchInType() {
     delegate.testOverriddenAttributesMustMatchInType();
   }
@@ -67,6 +75,7 @@ public class ConstraintCompositionTest extends GWTTestCase {
     delegate.testPayloadPropagationInComposedConstraints();
   }
 
+  @Failing(issue = 5799)
   public void testValidationOfMainAnnotationIsAlsoApplied() {
     delegate.testValidationOfMainAnnotationIsAlsoApplied();
   }
