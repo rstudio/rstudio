@@ -269,7 +269,7 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
       Widget docsLink = createCommandLink("Docs", new ClickHandler() {
          public void onClick(ClickEvent event)
          {
-            String customDocsURL = sessionInfo.docsURL();
+            String customDocsURL = sessionInfo.absoluteDocsURL();
             if (customDocsURL.length() > 0)
                globalDisplay_.openWindow(customDocsURL);
             else
