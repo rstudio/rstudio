@@ -51,6 +51,8 @@
    width: 20%;
    overflow-x: hidden;
    white-space: nowrap;
+   padding-top: 1px;
+   padding-bottom: 1px;
 }
 
 .selected .command {

@@ -14,13 +14,17 @@ package org.rstudio.core.client.command;
 
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.MenuItem;
+import org.rstudio.core.client.regex.Match;
+import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.regex.Pattern.ReplaceOperation;
 
 public class AppMenuItem extends MenuItem
 {
-   public AppMenuItem(AppCommand cmd)
+   public AppMenuItem(AppCommand cmd, boolean mainMenu)
    {
-      super(cmd.getMenuHTML(), true, cmd);
+      super(cmd.getMenuHTML(mainMenu), true, cmd);
       cmd_ = cmd;
+      mainMenu_ = mainMenu;
       setTitle(cmd_.getDesc());
    }
 
@@ -44,9 +48,24 @@ public class AppMenuItem extends MenuItem
 
       setVisible(cmd_.isVisible());
 
-      setHTML(cmd_.getMenuHTML());
+      setHTML(cmd_.getMenuHTML(mainMenu_));
       setTitle(cmd_.getDesc());
    }
 
+   public static String replaceMnemonics(String label, final String replacement)
+   {
+      return Pattern.create("_(_?)").replaceAll(label, new ReplaceOperation()
+      {
+         public String replace(Match m)
+         {
+            if (m.getGroup(1).length() > 0)
+               return "_";
+            else
+               return replacement;
+         }
+      });
+   }
+
    private final AppCommand cmd_;
+   private final boolean mainMenu_;
 }

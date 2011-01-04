@@ -114,11 +114,16 @@ QString Options::proportionalFont() const
 
 QString Options::fixedWidthFont() const
 {
+   // NB: Windows has "Lucida Console" and "Consolas" reversed vs.
+   // the list in WebThemeFontLoader (in the GWT codebase). This is
+   // because Consolas is more attractive but has a spacing issue
+   // in Win/Desktop mode (U+200B shows up as a space, and we use it
+   // in the History pane).
    QStringList fontList;
    fontList <<
            "Droid Sans Mono" << "DejaVu Sans Mono" << // Linux
            "Monaco" <<                      // Mac
-           "Consolas" << "Lucida Console"   // Windows;
+           "Lucida Console" << "Consolas"   // Windows;
            ;
    return "\"" + findFirstMatchingFont(fontList, "monospace") + "\"";
 }

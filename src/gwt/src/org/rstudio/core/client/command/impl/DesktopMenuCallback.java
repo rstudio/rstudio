@@ -14,6 +14,9 @@ package org.rstudio.core.client.command.impl;
 
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.MenuCallback;
+import org.rstudio.core.client.regex.Match;
+import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.regex.Pattern.ReplaceOperation;
 
 public class DesktopMenuCallback implements MenuCallback
 {
@@ -22,21 +25,22 @@ public class DesktopMenuCallback implements MenuCallback
    }-*/;
 
    public native final void beginMenu(String label) /*-{
+      label = @org.rstudio.core.client.command.AppMenuItem::replaceMnemonics(Ljava/lang/String;Ljava/lang/String;)(label, "&");
       $wnd.desktopMenuCallback.beginMenu(label);
    }-*/;
 
    public void addCommand(String commandId, AppCommand command)
    {
       addCommand(commandId,
-                 command.getMenuLabel(),
+                 command.getMenuLabel(true),
                  command.getTooltip(),
                  command.getShortcutRaw());
    }
 
-   private native final void addCommand(String cmdId,
-                                        String label,
-                                        String tooltip,
-                                        String shortcut) /*-{
+   private native void addCommand(String cmdId,
+                                  String label,
+                                  String tooltip,
+                                  String shortcut) /*-{
       $wnd.desktopMenuCallback.addCommand(cmdId, label, tooltip, shortcut);
    }-*/;
 

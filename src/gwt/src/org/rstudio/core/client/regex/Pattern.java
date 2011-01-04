@@ -16,6 +16,11 @@ import com.google.gwt.core.client.JavaScriptObject;
 
 public class Pattern extends JavaScriptObject
 {
+   public interface ReplaceOperation
+   {
+      String replace(Match m);
+   }
+
    protected Pattern() {}
    
    public static native Pattern create(String pattern) /*-{
@@ -61,4 +66,27 @@ public class Pattern extends JavaScriptObject
    public native final String replaceAll(String str, String substr) /*-{
       return str.replace(this, substr);
    }-*/;
+
+   public final String replaceAll(String str, ReplaceOperation op)
+   {
+      StringBuilder result = new StringBuilder();
+      int tail = 0; // Index of last character copied/replaced from source str
+      Match match = match(str, 0);
+      while (match != null)
+      {
+         if (tail < match.getIndex())
+            result.append(str, tail, match.getIndex());
+
+         result.append(op.replace(match));
+
+         tail = match.getIndex() + match.getValue().length();
+
+         match = match.nextMatch();
+      }
+
+      if (tail < str.length())
+         result.append(str, tail, str.length());
+
+      return result.toString();
+   }
 }
