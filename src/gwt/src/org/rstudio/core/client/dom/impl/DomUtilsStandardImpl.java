@@ -36,8 +36,7 @@ public class DomUtilsStandardImpl implements DomUtilsImpl
          Range range = Range.create(doc) ;
          range.selectNodeContents(el) ;
          Selection sel = Selection.get(NativeWindow.get(doc)) ;
-         sel.removeAllRanges() ;
-         sel.addRange(range) ;
+         sel.setRange(range);
       }
 
       NativeWindow.get().focus();

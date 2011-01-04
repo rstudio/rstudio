@@ -24,7 +24,6 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Rectangle;
-import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.ElementEx;
 import org.rstudio.core.client.dom.NativeWindow;
@@ -43,6 +42,8 @@ import org.rstudio.studio.client.workbench.views.console.shell.BraceHighlighter;
 import org.rstudio.studio.client.workbench.views.console.shell.BraceHighlighter.BraceHighlighterDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.RTokenizerBraceMatcher;
 import org.rstudio.studio.client.workbench.views.console.shell.impl.PlainTextEditorImpl;
+
+import java.util.*;
 
 public class PlainTextEditor
       extends FocusWidget
@@ -168,7 +169,6 @@ public class PlainTextEditor
    public void setText(String text)
    {
       boolean focused = DomUtils.hasFocus(textContainer_);
-      normalize() ;
 
       DomUtils.setInnerText(textContainer_, text);
 
@@ -237,13 +237,39 @@ public class PlainTextEditor
     * Insert a span around the specified range. If the range spans
     * more than one text node, you'll probably get an exception or something.
     */
-   public Object attachStyle(RToken token, String style)
+   public Object attachStyle(RToken[] tokens, String style)
+   {
+      // It's important to highlight in reverse order, otherwise it's quite easy
+      // for the highlight spans to get nested. For example, "plot()" and then
+      // arrow the cursor past the opening parenthesis. The nesting causes the
+      // desired highlighting to not occur, as the wrong text node is split.
+      List<RToken> tokenList = Arrays.asList(tokens);
+      Collections.sort(tokenList, Collections.reverseOrder(new Comparator<RToken>()
+      {
+         public int compare(RToken a, RToken b)
+         {
+            if (a == null ^ b == null)
+               return a == null ? -1 : 1;
+            else if (a == null)
+               return 0;
+            return a.getOffset() - b.getOffset();
+         }
+      }));
+
+      ArrayList<Command> cookies = new ArrayList<Command>();
+      for (RToken token : tokenList)
+      {
+         if (token != null)
+            cookies.add(attachStyle(token, style));
+      }
+      return cookies;
+   }
+
+   private Command attachStyle(RToken token, String style)
    {
       // Splitting text can cause the selection to move to the wrong
       // place, so save it now and we'll restore it at the end.
       InputEditorSelection origSelection = getSelection() ;
-
-      normalize() ;
 
       Text newText = DomUtils.splitTextNodeAt(textContainer_, token.getOffset());
       DomUtils.splitTextNodeAt(textContainer_,
@@ -270,7 +296,11 @@ public class PlainTextEditor
 
    public void unattachStyle(Object cookie)
    {
-      ((Command)cookie).execute();
+      if (cookie == null)
+         return;
+      for (Command c : (ArrayList<Command>)cookie)
+         if (c != null)
+            c.execute();
    }
 
    private void stripElement(Element el)
@@ -307,8 +337,6 @@ public class PlainTextEditor
    
    public InputEditorSelection getSelection()
    {
-      normalize() ;
-
       int[] offsets = DomUtils.getSelectionOffsets(textContainer_);
       if (offsets == null)
          return null;
@@ -336,7 +364,6 @@ public class PlainTextEditor
 
    public String replaceSelection(String text, final boolean collapseSelection)
    {
-      normalize() ;
       if (!hasSelection())
          throw new IllegalStateException("Selection not active") ;
 

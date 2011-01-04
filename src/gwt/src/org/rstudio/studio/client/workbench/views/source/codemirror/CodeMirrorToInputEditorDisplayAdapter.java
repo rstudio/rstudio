@@ -35,6 +35,8 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 
+import java.util.ArrayList;
+
 public class CodeMirrorToInputEditorDisplayAdapter 
       implements InputEditorDisplay,
                  BraceHighlighter.BraceHighlighterDisplay<Node>
@@ -177,7 +179,16 @@ public class CodeMirrorToInputEditorDisplayAdapter
       return new Node[] {span, match};
    }
 
-   public Object attachStyle(Node token, final String style)
+   public Object attachStyle(Node[] tokens, final String style)
+   {
+      ArrayList<Command> cookies = new ArrayList<Command>();
+      for (Node n : tokens)
+         if (n != null)
+            cookies.add(attachStyleInternal(n, style));
+      return cookies;
+   }
+
+   public Command attachStyleInternal(Node token, final String style)
    {
       final SpanElement span = (SpanElement) token;
       span.setClassName(span.getClassName() + " " + style);
@@ -194,7 +205,9 @@ public class CodeMirrorToInputEditorDisplayAdapter
 
    public void unattachStyle(Object cookie)
    {
-      ((Command)cookie).execute();
+      for (Command c : (ArrayList<Command>)cookie)
+         if (c != null)
+            c.execute();
    }
 
    public boolean hasSelection()

@@ -38,7 +38,7 @@ public class BraceHighlighter<T>
       public T[] getTokensToHighlight(InputEditorSelection selection,
                                       boolean forward);
       
-      public Object attachStyle(T token, String style);
+      public Object attachStyle(T[] tokens, String style);
       public void unattachStyle(Object cookie);
    }
 
@@ -144,21 +144,14 @@ public class BraceHighlighter<T>
       if (ranges.length == 0)
          return ;
       
-      final ArrayList<Object> cookies = new ArrayList<Object>();
-      
-      for (T range : ranges)
-      {
-         assert range != null : "Highlight range was null";
-         cookies.add(editor_.attachStyle(range, "highlight"));
-      }
+      final Object cookie = editor_.attachStyle(ranges, "highlight");
 
       pendingUnhighlight_ = new Timer() {
          @Override
          public void run()
          {
             pendingUnhighlight_ = null ;
-            for (Object cookie : cookies)
-               editor_.unattachStyle(cookie); ;
+            editor_.unattachStyle(cookie);
          }
       } ;
       pendingUnhighlight_.schedule(HIGHLIGHT_MILLIS) ;
