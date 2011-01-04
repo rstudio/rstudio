@@ -85,12 +85,12 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       value<std::string>(&agreementFilePath_)->default_value(""),
       "agreement file");
 
-   // help url
-   options_description help("help");
-   help.add_options()
-      ("help-url",
-       value<std::string>(&helpURL_)->default_value(""),
-       "custom help url");
+   // docs url
+   options_description docs("docs");
+   docs.add_options()
+      ("docs-url",
+       value<std::string>(&docsURL_)->default_value(""),
+       "custom docs url");
 
    // www options
    options_description www("www") ;
@@ -180,7 +180,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 
    optionsDesc.commandLine.add(program);
    optionsDesc.commandLine.add(agreement);
-   optionsDesc.commandLine.add(help);
+   optionsDesc.commandLine.add(docs);
    optionsDesc.commandLine.add(www);
    optionsDesc.commandLine.add(session);
    optionsDesc.commandLine.add(r);
@@ -191,7 +191,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    // define groups included in config-file processing
    optionsDesc.configFile.add(program);
    optionsDesc.configFile.add(agreement);
-   optionsDesc.configFile.add(help);
+   optionsDesc.configFile.add(docs);
    optionsDesc.configFile.add(www);
    optionsDesc.configFile.add(session);
    optionsDesc.configFile.add(r);

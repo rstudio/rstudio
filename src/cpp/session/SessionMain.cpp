@@ -306,8 +306,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["hasAgreement"] = modules::agreement::hasAgreement();
    sessionInfo["pendingAgreement"] = modules::agreement::pendingAgreement();
 
-   // help url
-   sessionInfo["helpURL"] = session::options().helpURL();
+   // docs url
+   sessionInfo["docsURL"] = session::options().docsURL();
 
    // get alias to console_actions and get limit
    r::session::ConsoleActions& consoleActions = r::session::consoleActions();

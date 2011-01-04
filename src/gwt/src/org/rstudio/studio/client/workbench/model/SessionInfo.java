@@ -91,8 +91,8 @@ public class SessionInfo extends JavaScriptObject
       return this.pendingAgreement;
    }-*/;
    
-   public final native String helpURL() /*-{
-      return this.helpURL;
+   public final native String docsURL() /*-{
+      return this.docsURL;
    }-*/;
 
    public final native boolean isGoogleDocsIntegrationEnabled() /*-{

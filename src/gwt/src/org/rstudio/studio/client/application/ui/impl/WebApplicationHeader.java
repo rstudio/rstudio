@@ -266,17 +266,17 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
       headerBarCommandsPanel_.add(createCommandSeparator());
       
       // help link
-      Widget helpLink = createCommandLink("Help", new ClickHandler() {
+      Widget docsLink = createCommandLink("Docs", new ClickHandler() {
          public void onClick(ClickEvent event)
          {
-            String customHelpURL = sessionInfo.helpURL();
-            if (customHelpURL.length() > 0)
-               globalDisplay_.openWindow(customHelpURL);
+            String customDocsURL = sessionInfo.docsURL();
+            if (customDocsURL.length() > 0)
+               globalDisplay_.openWindow(customDocsURL);
             else
-               globalDisplay_.openRStudioLink("help");
+               globalDisplay_.openRStudioLink("docs");
          }
       });
-      headerBarCommandsPanel_.add(helpLink);
+      headerBarCommandsPanel_.add(docsLink);
       headerBarCommandsPanel_.add(createCommandSeparator());
       
       // support link

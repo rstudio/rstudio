@@ -72,10 +72,10 @@ public:
          return core::FilePath();
    }
 
-   // help
-   std::string helpURL() const
+   // docs
+   std::string docsURL() const
    {
-      return std::string(helpURL_.c_str());
+      return std::string(docsURL_.c_str());
    }
    
    // www
@@ -190,8 +190,8 @@ private:
    // agreement
    std::string agreementFilePath_;
 
-   // help
-   std::string helpURL_;
+   // docs
+   std::string docsURL_;
    
    // www
    std::string wwwLocalPath_;
