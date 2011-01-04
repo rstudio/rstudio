@@ -13,11 +13,14 @@
 package org.rstudio.studio.client.workbench.views.source;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -719,7 +722,15 @@ public class Source implements InsertSourceHandler,
          activeEditor_ = editors_.get(event.getSelectedItem());
          activeEditor_.onActivate();
          if (initialized_)
-            activeEditor_.focus();
+         {
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               public void execute()
+               {
+                  activeEditor_.focus();
+               }
+            });
+         }
       }
 
       if (initialized_)
