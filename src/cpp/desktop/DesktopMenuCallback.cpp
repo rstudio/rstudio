@@ -35,7 +35,7 @@ void MenuCallback::beginMainMenu()
 void MenuCallback::beginMenu(QString label)
 {
 #ifdef Q_OS_MAC
-   if (label == "Help")
+   if (label == "&Help")
    {
       pMainMenu_->addMenu(new WindowMenu(pMainMenu_));
    }
