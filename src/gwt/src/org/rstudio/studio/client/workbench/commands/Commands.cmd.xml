@@ -157,8 +157,10 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="showLogFiles"/>
             <cmd refid="updateCredentials"/>
             <cmd refid="showRequestLog"/>
+            <!--
             <cmd refid="raiseException"/>
 -           <cmd refid="raiseException2"/>
+            -->
          </menu>
       </menu>
 
