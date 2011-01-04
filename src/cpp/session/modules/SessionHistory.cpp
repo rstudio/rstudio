@@ -88,6 +88,10 @@ public:
    ReadCollectionAction operator()(const std::string& line, 
                                    HistoryEntry* pEntry)
    {
+      // if the line doesn't have a ':' then ignore it
+      if (line.find(':') == std::string::npos)
+         return ReadCollectionIgnoreLine;
+
       pEntry->index = nextIndex_++; 
       std::istringstream istr(line);
       istr >> pEntry->timestamp ;
