@@ -294,6 +294,7 @@ public class PlainTextEditor
       };
    }
 
+   @SuppressWarnings("unchecked")
    public void unattachStyle(Object cookie)
    {
       if (cookie == null)

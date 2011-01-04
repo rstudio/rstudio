@@ -203,6 +203,7 @@ public class CodeMirrorToInputEditorDisplayAdapter
       };
    }
 
+   @SuppressWarnings("unchecked")
    public void unattachStyle(Object cookie)
    {
       for (Command c : (ArrayList<Command>)cookie)
