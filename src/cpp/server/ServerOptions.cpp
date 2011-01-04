@@ -86,7 +86,7 @@ ProgramStatus Options::read(int argc, char * const argv[])
          value<std::string>(&wwwLocalPath_)->default_value("www"),
          "www files path")
       ("www-thread-pool-size",
-         value<int>(&wwwThreadPoolSize_)->default_value(1),
+         value<int>(&wwwThreadPoolSize_)->default_value(2),
          "thread pool size");
 
    // rsession
