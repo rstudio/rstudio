@@ -296,7 +296,7 @@ public class DateTest extends GWTTestCase {
     // /////////////////////////////
     Date accum2 = create(FUTURE);
     long a2 = accum2.getTime();
-    assertEquals(1293678245000L, a2);
+    assertEquals(1924830245000L, a2);
   }
 
   /** Testing for public int java.util.Date.getTimezoneOffset(). */
@@ -336,7 +336,7 @@ public class DateTest extends GWTTestCase {
     // /////////////////////////////
     Date accum2 = create(FUTURE);
     int a2 = accum2.getYear();
-    assertEquals(110, a2);
+    assertEquals(130, a2);
   }
 
   /**
@@ -390,7 +390,7 @@ public class DateTest extends GWTTestCase {
     Date accum2 = create(FUTURE);
     String arg30 = createString(FUTURE);
     long a2 = Date.parse(arg30);
-    assertEquals(1293678245000L, a2);
+    assertEquals(1924830245000L, a2);
   }
 
   /** Testing for public void java.util.Date.setDate(int). */
@@ -513,7 +513,7 @@ public class DateTest extends GWTTestCase {
 
   /** Testing for public void java.util.Date.setYear(int). */
   public void testSetYear() {
-    for (int i = 1880; i < 2050; i++) {
+    for (int i = 1880; i < 2030; i++) {
       // We want to use a fixed date here. If we use the current date, the
       // assertion may fail
       // when the date is February 29th, and we set the year to a non-leap year
@@ -540,7 +540,7 @@ public class DateTest extends GWTTestCase {
       // /////////////////////////////
       Date accum2 = create(FUTURE);
       String a2 = accum2.toGMTString();
-      assertEquals("30 Dec 2010 03:04:05 GMT", a2);
+      assertEquals("30 Dec 2030 03:04:05 GMT", a2);
     }
   }
 
@@ -560,7 +560,7 @@ public class DateTest extends GWTTestCase {
       // /////////////////////////////
       Date accum2 = create(FUTURE);
       String a2 = accum2.toLocaleString();
-      assertTrue(a2.indexOf("2010") != -1);
+      assertTrue(a2.indexOf("2030") != -1);
     }
   }
 
@@ -864,7 +864,7 @@ public class DateTest extends GWTTestCase {
 
   Date create(String s) {
     if (s.equals(FUTURE)) {
-      return new Date("12/30/2010 3:4:5 GMT");
+      return new Date("12/30/2030 3:4:5 GMT");
     } else if (s.equals(PAST)) {
       return new Date("1/5/1880 GMT");
     } else {
@@ -874,7 +874,7 @@ public class DateTest extends GWTTestCase {
 
   private String createString(String s) {
     if (s.equals(FUTURE)) {
-      return "12/30/2010 3:4:5 GMT";
+      return "12/30/2030 3:4:5 GMT";
     } else if (s.equals(PAST)) {
       return "1/1/1880 GMT";
     } else {
