@@ -12,6 +12,8 @@
  */
 package org.rstudio.codemirror.client;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.*;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -334,6 +336,14 @@ public abstract class CodeMirrorEditor extends Composite
       for (Command c : deferredCommands_)
          c.execute();
       deferredCommands_.clear();
+
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         public void execute()
+         {
+            updateBodyMinHeight();
+         }
+      });
    }
 
    public HandlerRegistration addEditorFocusedHandler(EditorFocusedHandler h)
