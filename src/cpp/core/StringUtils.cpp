@@ -17,9 +17,36 @@
 
 #include <algorithm>
 #include <boost/algorithm/string/replace.hpp>
+#include <boost/regex.hpp>
 
 namespace core {
 namespace string_utils {   
+
+void convertLineEndings(std::string* pStr, LineEnding type)
+{
+   std::string replacement;
+   switch (type)
+   {
+   case LineEndingWindows:
+      replacement = "\r\n";
+      break;
+   case LineEndingPosix:
+      replacement = "\n";
+      break;
+   case LineEndingNative:
+#if _WIN32
+      replacement = "\r\n";
+#else
+      replacement = "\n";
+#endif
+      break;
+   case LineEndingPassthrough:
+   default:
+      return;
+   }
+
+   *pStr = boost::regex_replace(*pStr, boost::regex("\\r?\\n"), replacement);
+}
 
 std::string toLower(const std::string& str)
 {

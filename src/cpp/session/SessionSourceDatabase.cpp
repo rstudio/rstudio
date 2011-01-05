@@ -133,7 +133,8 @@ Error getProperties(const std::string& path, json::Object* pProperties)
    // read the properties file
    std::string contents ;
    FilePath propertiesFilePath = propertiesDB.path.complete(propertiesFile);
-   error = readStringFromFile(propertiesFilePath, &contents);
+   error = readStringFromFile(propertiesFilePath, &contents,
+                              options().sourceLineEnding());
    if (error)
       return error;
 
@@ -192,7 +193,8 @@ Error SourceDocument::setPathAndContents(const std::string& path)
 
    // read contents
    std::string contents;
-   Error error = readStringFromFile(docPath, &contents);
+   Error error = readStringFromFile(docPath, &contents,
+                                    options().sourceLineEnding());
    if (error)
       return error ;
 
@@ -324,7 +326,8 @@ Error get(const std::string& id, SourceDocument* pDoc)
    {
       // read the contents of the file
       std::string contents ;
-      Error error = readStringFromFile(filePath, &contents);
+      Error error = readStringFromFile(filePath, &contents,
+                                       options().sourceLineEnding());
       if (error)
          return error;
    

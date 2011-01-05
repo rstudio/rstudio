@@ -21,6 +21,7 @@
 #include <core/SafeConvert.hpp>
 #include <core/FilePath.hpp>
 #include <core/system/System.hpp>
+#include <core/StringUtils.hpp>
 
 #include <R_ext/RStartup.h>
 
@@ -180,6 +181,21 @@ public:
    core::FilePath userLogPath() const
    {
       return userScratchPath().childPath("log");
+   }
+
+   // The line ending we use when working with source documents
+   // in memory. This doesn't really make sense for the user to
+   // change.
+   core::string_utils::LineEnding sourceLineEnding() const
+   {
+      return core::string_utils::LineEndingPosix;
+   }
+
+   // The line ending we persist to disk with. This could potentially
+   // be a per-user or even per-file option.
+   core::string_utils::LineEnding sourcePersistLineEnding() const
+   {
+      return core::string_utils::LineEndingNative;
    }
 
 private:

@@ -107,8 +107,9 @@ Error readStringVectorFromFile(const core::FilePath& filePath,
    
 }
    
-
-Error writeStringToFile(const FilePath& filePath, const std::string& str)
+Error writeStringToFile(const FilePath& filePath,
+                        const std::string& str,
+                        string_utils::LineEnding lineEnding)
 {
    using namespace boost::system::errc ;
    
@@ -128,7 +129,9 @@ Error writeStringToFile(const FilePath& filePath, const std::string& str)
       ofs.exceptions(std::istream::failbit | std::istream::badbit);
       
       // copy string to file
-      std::istringstream istr(str);
+      std::string normalized = str;
+      string_utils::convertLineEndings(&normalized, lineEnding);
+      std::istringstream istr(normalized);
       boost::iostreams::copy(istr, ofs);
       
       // return success
@@ -143,8 +146,10 @@ Error writeStringToFile(const FilePath& filePath, const std::string& str)
       return error;
    }
 }
-   
-Error readStringFromFile(const FilePath& filePath, std::string* pStr)
+
+Error readStringFromFile(const FilePath& filePath,
+                         std::string* pStr,
+                         string_utils::LineEnding lineEnding)
 {
    using namespace boost::system::errc ;
    
@@ -168,7 +173,8 @@ Error readStringFromFile(const FilePath& filePath, std::string* pStr)
       std::ostringstream ostr;
       boost::iostreams::copy(ifs, ostr);
       *pStr = ostr.str();
-      
+      string_utils::convertLineEndings(pStr, lineEnding);
+
       // return success
       return Success();
    }

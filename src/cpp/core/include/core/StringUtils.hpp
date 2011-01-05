@@ -19,12 +19,21 @@
 
 namespace core {
 namespace string_utils {
-   
+
+enum LineEnding {
+   LineEndingWindows,
+   LineEndingPosix,
+   LineEndingNative,
+   LineEndingPassthrough
+};
+
 std::string toLower(const std::string& str);
 std::string textToHtml(const std::string& str);
 
 std::string htmlEscape(const std::string& str, bool isAttributeValue);
 std::string jsLiteralEscape(const std::string& str);
+
+void convertLineEndings(std::string* str, LineEnding type);
 
 template<typename T>
 T hashStable(const std::string& str)

@@ -164,7 +164,8 @@ Error saveDocumentCore(const std::string& contents,
    if (hasPath)
    {
       // write the contents to the file
-      error = writeStringToFile(fullDocPath, contents);
+      error = writeStringToFile(fullDocPath, contents,
+                                options().sourcePersistLineEnding());
       if (error)
          return error ;
 
@@ -459,7 +460,8 @@ void enqueFileEditEvent(const std::string& file)
    // if it doesn't exist then create it
    if (!filePath.exists())
    {
-      Error error = core::writeStringToFile(filePath, "");
+      Error error = core::writeStringToFile(filePath, "",
+                                            options().sourcePersistLineEnding());
       if (error)
       {
          LOG_ERROR(error);
