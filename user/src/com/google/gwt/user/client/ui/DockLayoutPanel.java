@@ -124,6 +124,7 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
   private Widget center;
   private final Layout layout;
   private final LayoutCommand layoutCmd;
+  private double filledWidth, filledHeight;
 
   /**
    * Creates an empty dock panel.
@@ -380,6 +381,16 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
     return center;
   }
 
+  protected double getCenterHeight() {
+    return getElement().getClientHeight() / layout.getUnitSize(unit, true) -
+              filledHeight;
+  }
+
+  protected double getCenterWidth() {
+    return getElement().getClientWidth() / layout.getUnitSize(unit, false) -
+              filledWidth;
+  }
+
   /**
    * Resolve the specified direction based on the current locale. If the
    * direction is {@link Direction#LINE_START} or {@link Direction#LINE_END},
@@ -510,5 +521,8 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
           break;
       }
     }
+
+    filledWidth = left + right;
+    filledHeight = top + bottom;
   }
 }

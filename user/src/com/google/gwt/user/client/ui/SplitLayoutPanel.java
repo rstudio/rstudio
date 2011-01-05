@@ -70,6 +70,11 @@ public class SplitLayoutPanel extends DockLayoutPanel {
     }
 
     @Override
+    protected double getCenterSize() {
+      return getCenterWidth();
+    }
+
+    @Override
     protected int getEventPosition(Event event) {
       return event.getClientX();
     }
@@ -163,13 +168,15 @@ public class SplitLayoutPanel extends DockLayoutPanel {
 
     protected abstract int getAbsolutePosition();
 
+    protected abstract double getCenterSize();
+
     protected abstract int getEventPosition(Event event);
 
     protected abstract int getTargetPosition();
 
     protected abstract int getTargetSize();
 
-    private void setAssociatedWidgetSize(int size) {
+    private void setAssociatedWidgetSize(double size) {
       if (size < minSize) {
         size = minSize;
       }
@@ -177,6 +184,12 @@ public class SplitLayoutPanel extends DockLayoutPanel {
       LayoutData layout = (LayoutData) target.getLayoutData();
       if (size == layout.size) {
         return;
+      }
+
+      // Don't grow beyond remaining space
+      double centerSize = getCenterSize();
+      if (size - layout.size > centerSize) {
+        size = layout.size + centerSize;
       }
 
       layout.size = size;
@@ -205,6 +218,11 @@ public class SplitLayoutPanel extends DockLayoutPanel {
     @Override
     protected int getAbsolutePosition() {
       return getAbsoluteTop();
+    }
+
+    @Override
+    protected double getCenterSize() {
+      return getCenterHeight();
     }
 
     @Override
