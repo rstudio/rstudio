@@ -87,10 +87,13 @@ void UpdateChecker::manifestDownloadComplete(const QByteArray& data)
    // get the list of ignored updates
    QStringList ignoredVersions = options().ignoredUpdateVersions();
 
+   URLDownloader* pURLDownloader = qobject_cast<URLDownloader*>(sender());
+
    // is there an update which we haven't already chosen to ignore?
    std::string stdUpdateVersion = http::util::fieldValue(fields, "update-version");
    QString updateVersion = QString::fromStdString(stdUpdateVersion);
-   if ( (updateVersion.size() > 0) && !ignoredVersions.contains(updateVersion))
+   if ( (updateVersion.size() > 0) &&
+        (!ignoredVersions.contains(updateVersion) || pURLDownloader->manuallyInvoked()) )
    {
       // get update info
       std::string updateURL = http::util::fieldValue(fields, "update-url");
@@ -123,7 +126,6 @@ void UpdateChecker::manifestDownloadComplete(const QByteArray& data)
    }
    else
    {
-      URLDownloader* pURLDownloader = qobject_cast<URLDownloader*>(sender());
       if (pURLDownloader && pURLDownloader->manuallyInvoked())
       {
          // WA_DeleteOnClose
