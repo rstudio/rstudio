@@ -39,5 +39,9 @@
     class='com.google.gwt.user.server.rpc.AnnotatedRpcTokenTestServiceImpl' />
   <servlet path='/unicodeEscape'
     class='com.google.gwt.user.server.rpc.UnicodeEscapingServiceImpl' />
+  <servlet path='/recursiveclass'
+    class='com.google.gwt.user.server.rpc.RecursiveClassTestServiceImpl' />
+  <servlet path='/finalfields'
+    class='com.google.gwt.user.server.rpc.FinalFieldsTestServiceImpl' />
 
 </module>

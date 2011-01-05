@@ -38,6 +38,7 @@ import com.google.gwt.user.client.rpc.InheritanceTest;
 import com.google.gwt.user.client.rpc.InheritanceTestWithTypeObfuscation;
 import com.google.gwt.user.client.rpc.ObjectGraphTest;
 import com.google.gwt.user.client.rpc.ObjectGraphTestWithTypeObfuscation;
+import com.google.gwt.user.client.rpc.RecursiveClassTest;
 import com.google.gwt.user.client.rpc.RpcTokenTest;
 import com.google.gwt.user.client.rpc.RunTimeSerializationErrorsTest;
 import com.google.gwt.user.client.rpc.UnicodeEscapingTest;
@@ -101,6 +102,7 @@ public class RPCSuite {
     suite.addTestSuite(RpcTokenTest.class);
     suite.addTestSuite(UnicodeEscapingTest.class);
     suite.addTestSuite(RunTimeSerializationErrorsTest.class);
+    suite.addTestSuite(RecursiveClassTest.class);
 
     // This test turns on the type-elision feature of RPC
     suite.addTestSuite(ValueTypesTestWithTypeObfuscation.class);

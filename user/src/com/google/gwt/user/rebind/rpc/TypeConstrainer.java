@@ -355,9 +355,10 @@ public class TypeConstrainer {
       public void endVisit(JTypeParameter param) {
         JClassType constr = constraints.get(param);
         if (constr != null) {
-          replacement = constr;
+          // further transform the substituted type recursively 
+          replacement = transform(constr);
         }
-      }
+      } 
     };
     return substituter.transform(type);
   }

@@ -23,6 +23,7 @@ import com.google.gwt.user.client.rpc.TestSetFactory.SerializableDoublyLinkedNod
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableGraphWithCFS;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializablePrivateNoArg;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableWithTwoArrays;
+import com.google.gwt.user.client.rpc.RecursiveClassTestService.ResultNode;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
@@ -559,6 +560,10 @@ public class TestSetValidator {
     assertFalse(result == child);
     assertSame(result, child.getParent());
     return true;
+  }
+  
+  public static boolean isValidRecurisveClassObject(ResultNode<? extends ResultNode<?>> result) {
+    return (result != null);
   }
 
   public static boolean isValidSingletonList(List<MarkerTypeSingleton> list) {
