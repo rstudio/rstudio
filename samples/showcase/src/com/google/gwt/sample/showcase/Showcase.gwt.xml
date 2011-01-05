@@ -4,7 +4,6 @@
   <inherits name='com.google.gwt.user.User'/>
   <inherits name="com.google.gwt.i18n.I18N"/>
   <inherits name="com.google.gwt.i18n.CldrLocales"/>
-  <inherits name="com.google.gwt.i18n.LocaleConfigLinker"/>
   <inherits name="com.google.gwt.user.theme.standard.StandardResources"/>
 
   <!-- Enable debug ID. -->
