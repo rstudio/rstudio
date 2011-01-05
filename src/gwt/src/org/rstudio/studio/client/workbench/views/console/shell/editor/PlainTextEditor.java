@@ -105,12 +105,9 @@ public class PlainTextEditor
 
       // BraceHighlighter causes browser crashes in IE8 in hosted mode.
       // Update 5/3/2010: Also screws up cursor movement in IE8 script mode.
-      if (//GWT.isScript() ||
-          !BrowseCap.INSTANCE.suppressConsoleBraceHighlightingInHostedMode())
-      {
+      if (!BrowseCap.INSTANCE.suppressBraceHighlighting())
          new BraceHighlighter<RToken>(this, 20) ;
-      }
-      
+
       events.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
          public void onSessionInit(SessionInitEvent sie)
          {

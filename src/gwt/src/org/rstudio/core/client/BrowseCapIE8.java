@@ -15,7 +15,7 @@ package org.rstudio.core.client;
 public class BrowseCapIE8 extends BrowseCap
 {
    @Override
-   public boolean suppressConsoleBraceHighlightingInHostedMode()
+   public boolean suppressBraceHighlighting()
    {
       return true;
    }
