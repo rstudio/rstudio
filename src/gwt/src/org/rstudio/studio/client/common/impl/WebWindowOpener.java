@@ -12,8 +12,10 @@
  */
 package org.rstudio.studio.client.common.impl;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Window;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -67,8 +69,15 @@ public class WebWindowOpener implements WindowOpener
          name += "_" + clientId;
       }
 
+      // Need to make the URL absolute because IE resolves relative URLs
+      // against the JavaScript file location, not the window.location like
+      // the other browsers do
+      final String absUrl = Pattern.create("^/|([a-zA-Z]+:)").match(url, 0) == null
+                            ? GWT.getHostPageBaseURL() + url
+                            : url;
+
       final String finalName = name;
-      WindowEx window = doOpenWindow(url, finalName, features, focus);
+      WindowEx window = doOpenWindow(absUrl, finalName, features, focus);
       if (window == null)
       {
          globalDisplay.showYesNoMessage(
@@ -86,7 +95,7 @@ public class WebWindowOpener implements WindowOpener
                {
                   public void execute()
                   {
-                     WindowEx window = doOpenWindow(url,
+                     WindowEx window = doOpenWindow(absUrl,
                                                     finalName,
                                                     features,
                                                     focus);
@@ -124,7 +133,6 @@ public class WebWindowOpener implements WindowOpener
                                               String name,
                                               String features,
                                               boolean focus)/*-{
-
       var window = $wnd.open(url, name, features);
       if (!window)
       {

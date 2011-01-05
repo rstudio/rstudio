@@ -160,7 +160,7 @@ public class Application implements ApplicationEventHandlers,
    @Handler
    public void onHelpUsingRStudio()
    {
-      String customDocsURL = session_.getSessionInfo().absoluteDocsURL();
+      String customDocsURL = session_.getSessionInfo().docsURL();
       if (customDocsURL.length() > 0)
          globalDisplay_.openWindow(customDocsURL);
       else

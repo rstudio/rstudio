@@ -12,11 +12,9 @@
  */
 package org.rstudio.studio.client.workbench.model;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
-
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
@@ -93,17 +91,6 @@ public class SessionInfo extends JavaScriptObject
       return this.pendingAgreement;
    }-*/;
    
-   public final String absoluteDocsURL()
-   {
-      String docsURL = docsURL();
-      if (docsURL.length() == 0)
-         return "";
-      else if (docsURL.startsWith("http"))
-         return docsURL;
-      else
-         return GWT.getHostPageBaseURL() + docsURL;
-   }
-
    public final native String docsURL() /*-{
       return this.docsURL;
    }-*/;
