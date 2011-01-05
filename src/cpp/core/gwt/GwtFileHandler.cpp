@@ -55,8 +55,12 @@ FilePath requestedFile(const std::string& wwwLocalPath,
                                   &realRequestedPath);
    if (error)
    {
-      error.addProperty("requested-path", relativePath);
-      LOG_ERROR(error);
+      // log if this isn't file not found
+      if (error.code() != boost::system::errc::no_such_file_or_directory)
+      {
+         error.addProperty("requested-path", relativePath);
+         LOG_ERROR(error);
+      }
       return FilePath();
    }
 
