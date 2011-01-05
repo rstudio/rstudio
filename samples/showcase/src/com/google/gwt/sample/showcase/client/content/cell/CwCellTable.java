@@ -34,6 +34,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.ColumnSortEvent.ListHandler;
 import com.google.gwt.user.cellview.client.SimplePager;
 import com.google.gwt.user.cellview.client.SimplePager.TextLocation;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -43,6 +44,7 @@ import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.SelectionModel;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -121,6 +123,11 @@ public class CwCellTable extends ContentWidget {
     cellTable = new CellTable<ContactInfo>(
         ContactDatabase.ContactInfo.KEY_PROVIDER);
 
+    // Attach a column sort handler to the ListDataProvider to sort the list.
+    ListHandler<ContactInfo> sortHandler = new ListHandler<ContactInfo>(
+        ContactDatabase.get().getDataProvider().getList());
+    cellTable.addColumnSortHandler(sortHandler);
+
     // Create a Pager to control the table.
     SimplePager.Resources pagerResources = GWT.create(SimplePager.Resources.class);
     pager = new SimplePager(TextLocation.CENTER, pagerResources, false, 0, true);
@@ -130,10 +137,10 @@ public class CwCellTable extends ContentWidget {
     final SelectionModel<ContactInfo> selectionModel = new MultiSelectionModel<ContactInfo>(
         ContactDatabase.ContactInfo.KEY_PROVIDER);
     cellTable.setSelectionModel(selectionModel,
-        DefaultSelectionEventManager.<ContactInfo>createCheckboxManager());
+        DefaultSelectionEventManager.<ContactInfo> createCheckboxManager());
 
     // Initialize the columns.
-    initTableColumns(selectionModel);
+    initTableColumns(selectionModel, sortHandler);
 
     // Add the CellList to the adapter in the database.
     ContactDatabase.get().addDataDisplay(cellTable);
@@ -163,7 +170,9 @@ public class CwCellTable extends ContentWidget {
    * Add the columns to the table.
    */
   @ShowcaseSource
-  private void initTableColumns(final SelectionModel<ContactInfo> selectionModel) {
+  private void initTableColumns(
+      final SelectionModel<ContactInfo> selectionModel,
+      ListHandler<ContactInfo> sortHandler) {
     // Checkbox column. This table will uses a checkbox column for selection.
     // Alternatively, you can call cellTable.setSelectionEnabled(true) to enable
     // mouse selection.
@@ -185,6 +194,12 @@ public class CwCellTable extends ContentWidget {
         return object.getFirstName();
       }
     };
+    firstNameColumn.setSortable(true);
+    sortHandler.setComparator(firstNameColumn, new Comparator<ContactInfo>() {
+      public int compare(ContactInfo o1, ContactInfo o2) {
+        return o1.getFirstName().compareTo(o2.getFirstName());
+      }
+    });
     cellTable.addColumn(firstNameColumn, constants.cwCellTableColumnFirstName());
     firstNameColumn.setFieldUpdater(new FieldUpdater<ContactInfo, String>() {
       public void update(int index, ContactInfo object, String value) {
@@ -202,6 +217,12 @@ public class CwCellTable extends ContentWidget {
         return object.getLastName();
       }
     };
+    lastNameColumn.setSortable(true);
+    sortHandler.setComparator(lastNameColumn, new Comparator<ContactInfo>() {
+      public int compare(ContactInfo o1, ContactInfo o2) {
+        return o1.getLastName().compareTo(o2.getLastName());
+      }
+    });
     cellTable.addColumn(lastNameColumn, constants.cwCellTableColumnLastName());
     lastNameColumn.setFieldUpdater(new FieldUpdater<ContactInfo, String>() {
       public void update(int index, ContactInfo object, String value) {
@@ -238,11 +259,19 @@ public class CwCellTable extends ContentWidget {
     });
 
     // Address.
-    cellTable.addColumn(new Column<ContactInfo, String>(new TextCell()) {
+    Column<ContactInfo, String> addressColumn = new Column<ContactInfo, String>(
+        new TextCell()) {
       @Override
       public String getValue(ContactInfo object) {
         return object.getAddress();
       }
-    }, constants.cwCellTableColumnAddress());
+    };
+    addressColumn.setSortable(true);
+    sortHandler.setComparator(addressColumn, new Comparator<ContactInfo>() {
+      public int compare(ContactInfo o1, ContactInfo o2) {
+        return o1.getAddress().compareTo(o2.getAddress());
+      }
+    });
+    cellTable.addColumn(addressColumn, constants.cwCellTableColumnAddress());
   }
 }

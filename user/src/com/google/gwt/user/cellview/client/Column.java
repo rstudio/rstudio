@@ -46,6 +46,7 @@ public abstract class Column<T, C> implements HasCell<T, C>, HasAlignment {
    */
   private FieldUpdater<T, C> fieldUpdater;
 
+  private boolean isSortable = false;
   private HorizontalAlignmentConstant hAlign = null;
   private VerticalAlignmentConstant vAlign = null;
 
@@ -88,6 +89,15 @@ public abstract class Column<T, C> implements HasCell<T, C>, HasAlignment {
 
   public VerticalAlignmentConstant getVerticalAlignment() {
     return vAlign;
+  }
+
+  /**
+   * Check if the column is sortable.
+   * 
+   * @return true if sortable, false if not
+   */
+  public boolean isSortable() {
+    return isSortable;
   }
 
   /**
@@ -141,6 +151,16 @@ public abstract class Column<T, C> implements HasCell<T, C>, HasAlignment {
    */
   public void setHorizontalAlignment(HorizontalAlignmentConstant align) {
     this.hAlign = align;
+  }
+
+  /**
+   * Set whether or not the column can be sorted. The change will take effect
+   * the next time the table is redrawn.
+   * 
+   * @param sortable true to make sortable, false to make unsortable
+   */
+  public void setSortable(boolean sortable) {
+    this.isSortable = sortable;
   }
 
   /**

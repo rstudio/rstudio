@@ -162,6 +162,26 @@ public class CellTableTest extends AbstractHasDataTestBase {
     RootPanel.get().remove(table);
   }
 
+  public void testGetColumnIndex() {
+    CellTable<String> table = new CellTable<String>();
+    Column<String, String> col0 = new IdentityColumn<String>(new TextCell());
+    table.addColumn(col0);
+    Column<String, String> col1 = new IdentityColumn<String>(new TextCell());
+    table.addColumn(col1);
+    Column<String, String> col2 = new IdentityColumn<String>(new TextCell());
+    table.addColumn(col2);
+    assertEquals(0, table.getColumnIndex(col0));
+    assertEquals(1, table.getColumnIndex(col1));
+    assertEquals(2, table.getColumnIndex(col2));
+
+    // Test a column that is not in the table.
+    Column<String, String> other = new IdentityColumn<String>(new TextCell());
+    assertEquals(-1, table.getColumnIndex(other));
+
+    // Test null.
+    assertEquals(-1, table.getColumnIndex(null));
+  }
+
   public void testGetColumnOutOfBounds() {
     CellTable<String> table = new CellTable<String>();
 
@@ -363,6 +383,54 @@ public class CellTableTest extends AbstractHasDataTestBase {
         styleLastColumn));
   }
 
+  public void testSortableColumn() {
+    CellTable<String> table = createAbstractHasData(new TextCell());
+    table.getColumn(0).setSortable(true);
+    table.getPresenter().flush();
+    RootPanel.get().add(table);
+
+    // Add a column sort handler.
+    final List<Column<?, ?>> lastSorted = new ArrayList<Column<?, ?>>();
+    table.addColumnSortHandler(new ColumnSortEvent.Handler() {
+      public void onColumnSort(ColumnSortEvent event) {
+        lastSorted.clear();
+        lastSorted.add(event.getColumn());
+      }
+    });
+
+    // Default sort order is empty.
+    ColumnSortList sortList = table.getColumnSortList();
+    assertEquals(0, sortList.size());
+
+    // Sort a column that is sortable.
+    NativeEvent click = Document.get().createClickEvent(0, 0, 0, 0, 0, false,
+        false, false, false);
+    getHeaderElement(table, 0).dispatchEvent(click);
+    assertEquals(1, sortList.size());
+    assertEquals(table.getColumn(0), sortList.get(0).getColumn());
+    assertTrue(sortList.get(0).isAscending());
+    assertEquals(1, lastSorted.size());
+    lastSorted.clear();
+
+    // Sort the same column again.
+    getHeaderElement(table, 0).dispatchEvent(click);
+    assertEquals(1, sortList.size());
+    assertEquals(table.getColumn(0), sortList.get(0).getColumn());
+    assertFalse(sortList.get(0).isAscending());
+    assertEquals(1, lastSorted.size());
+    lastSorted.clear();
+
+    // Sort a column that is not sortable.
+    getHeaderElement(table, 1).dispatchEvent(click);
+    assertEquals(1, sortList.size());
+    assertEquals(table.getColumn(0), sortList.get(0).getColumn());
+    assertFalse(sortList.get(0).isAscending());
+    assertEquals(0, lastSorted.size());
+
+    // Cleanup.
+    RootPanel.get().remove(table);
+  }
+
   @Override
   protected CellTable<String> createAbstractHasData(Cell<String> cell) {
     CellTable<String> table = new CellTable<String>();
@@ -371,13 +439,13 @@ public class CellTableTest extends AbstractHasDataTestBase {
       public String getValue(String object) {
         return object;
       }
-    });
+    }, "Column 0");
     table.addColumn(new Column<String, String>(new TextCell()) {
       @Override
       public String getValue(String object) {
         return object + "-2";
       }
-    });
+    }, "Column 1");
     return table;
   }
 

@@ -45,20 +45,20 @@ public class IconCellDecorator<C> implements Cell<C> {
     /**
      * The wrapper around the image vertically aligned to the bottom.
      */
-    @Template("<div style=\"position:absolute;{0}:0px;bottom:0px;\">{1}</div>")
+    @Template("<div style=\"position:absolute;{0}:0px;bottom:0px;line-height:0px;\">{1}</div>")
     SafeHtml imageWrapperBottom(String direction, SafeHtml image);
 
     /**
      * The wrapper around the image vertically aligned to the middle.
      */
-    @Template("<div style=\"position:absolute;{0}:0px;top:50%;"
+    @Template("<div style=\"position:absolute;{0}:0px;top:50%;line-height:0px;"
         + "margin-top:-{1}px;\">{2}</div>")
     SafeHtml imageWrapperMiddle(String direction, int halfHeight, SafeHtml image);
 
     /**
      * The wrapper around the image vertically aligned to the top.
      */
-    @Template("<div style=\"position:absolute;{0}:0px;top:0px;\">{1}</div>")
+    @Template("<div style=\"position:absolute;{0}:0px;top:0px;line-height:0px;\">{1}</div>")
     SafeHtml imageWrapperTop(String direction, SafeHtml image);
   }
 
@@ -196,8 +196,7 @@ public class IconCellDecorator<C> implements Cell<C> {
     } else if (HasVerticalAlignment.ALIGN_BOTTOM == valign) {
       return template.imageWrapperBottom(direction, image);
     } else {
-      // Add one to the margin-top because it looks better in all browsers.
-      int halfHeight = 1 + (int) Math.round(res.getHeight() / 2.0);
+      int halfHeight = (int) Math.round(res.getHeight() / 2.0);
       return template.imageWrapperMiddle(direction, halfHeight, image);
     }
   }

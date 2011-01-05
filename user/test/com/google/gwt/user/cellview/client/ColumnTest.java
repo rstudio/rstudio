@@ -207,4 +207,16 @@ public class ColumnTest extends GWTTestCase {
     column.render(context, "test", sb);
     assertEquals("test", sb.toSafeHtml().asString());
   }
+
+  public void testSetSortable() {
+    TextCell cell = new TextCell();
+    Column<String, String> column = new IdentityColumn<String>(cell);
+    assertFalse(column.isSortable());
+
+    column.setSortable(true);
+    assertTrue(column.isSortable());
+
+    column.setSortable(false);
+    assertFalse(column.isSortable());
+  }
 }

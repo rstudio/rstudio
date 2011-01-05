@@ -55,8 +55,7 @@ public class ContactDatabase {
     /**
      * The key provider that provides the unique ID of a contact.
      */
-    public static final ProvidesKey<ContactInfo> KEY_PROVIDER = new ProvidesKey<
-        ContactInfo>() {
+    public static final ProvidesKey<ContactInfo> KEY_PROVIDER = new ProvidesKey<ContactInfo>() {
       public Object getKey(ContactInfo item) {
         return item == null ? null : item.getId();
       }
@@ -78,8 +77,8 @@ public class ContactDatabase {
     }
 
     public int compareTo(ContactInfo o) {
-      return (o == null || o.firstName == null) ? -1 : -o.firstName.compareTo(
-          firstName);
+      return (o == null || o.firstName == null) ? -1
+          : -o.firstName.compareTo(firstName);
     }
 
     @Override
@@ -315,8 +314,7 @@ public class ContactDatabase {
   /**
    * The provider that holds the list of contacts in the database.
    */
-  private ListDataProvider<ContactInfo> dataProvider = new ListDataProvider<
-      ContactInfo>();
+  private ListDataProvider<ContactInfo> dataProvider = new ListDataProvider<ContactInfo>();
 
   private final Category[] categories;
 
@@ -369,6 +367,10 @@ public class ContactDatabase {
     for (int i = 0; i < count; i++) {
       contacts.add(createContactInfo());
     }
+  }
+
+  public ListDataProvider<ContactInfo> getDataProvider() {
+    return dataProvider;
   }
 
   /**
@@ -442,8 +444,8 @@ public class ContactDatabase {
 
     // Create a birthday between 20-80 years ago.
     int year = (new Date()).getYear() - 21 - Random.nextInt(61);
-    contact.setBirthday(
-        new Date(year, Random.nextInt(12), 1 + Random.nextInt(31)));
+    contact.setBirthday(new Date(year, Random.nextInt(12),
+        1 + Random.nextInt(31)));
 
     // Create an address.
     int addrNum = 1 + Random.nextInt(999);

@@ -17,6 +17,8 @@ package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.Cell.Context;
+import com.google.gwt.cell.client.IconCellDecorator;
+import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
@@ -30,6 +32,7 @@ import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
@@ -41,6 +44,7 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
 import com.google.gwt.user.cellview.client.HasDataPresenter.LoadingState;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
@@ -59,21 +63,19 @@ import java.util.Set;
  * A tabular view that supports paging and columns.
  * 
  * <p>
- * <h3>Columns</h3>
- * The {@link Column} class defines the {@link Cell} used to render a column.
- * Implement {@link Column#getValue(Object)} to retrieve the field value from
- * the row object that will be rendered in the {@link Cell}.
+ * <h3>Columns</h3> The {@link Column} class defines the {@link Cell} used to
+ * render a column. Implement {@link Column#getValue(Object)} to retrieve the
+ * field value from the row object that will be rendered in the {@link Cell}.
  * </p>
  * 
  * <p>
- * <h3>Headers and Footers</h3>
- * A {@link Header} can be placed at the top (header) or bottom (footer) of the
- * {@link CellTable}. You can specify a header as text using
- * {@link #addColumn(Column, String)}, or you can create a custom {@link Header}
- * that can change with the value of the cells, such as a column total. The
- * {@link Header} will be rendered every time the row data changes or the table
- * is redrawn. If you pass the same header instance (==) into adjacent columns,
- * the header will span the columns.
+ * <h3>Headers and Footers</h3> A {@link Header} can be placed at the top
+ * (header) or bottom (footer) of the {@link CellTable}. You can specify a
+ * header as text using {@link #addColumn(Column, String)}, or you can create a
+ * custom {@link Header} that can change with the value of the cells, such as a
+ * column total. The {@link Header} will be rendered every time the row data
+ * changes or the table is redrawn. If you pass the same header instance (==)
+ * into adjacent columns, the header will span the columns.
  * </p>
  * 
  * <p>
@@ -132,6 +134,20 @@ public class CellTable<T> extends AbstractHasData<T> {
     @Source("cellListSelectedBackground.png")
     @ImageOptions(repeatStyle = RepeatStyle.Horizontal, flipRtl = true)
     ImageResource cellTableSelectedBackground();
+
+    /**
+     * Icon used when a column is sorted in ascending order.
+     */
+    @Source("sortAscending.png")
+    @ImageOptions(flipRtl = true)
+    ImageResource cellTableSortAscending();
+
+    /**
+     * Icon used when a column is sorted in descending order.
+     */
+    @Source("sortDescending.png")
+    @ImageOptions(flipRtl = true)
+    ImageResource cellTableSortDescending();
 
     /**
      * The styles used in this widget.
@@ -254,6 +270,21 @@ public class CellTable<T> extends AbstractHasData<T> {
      * Applied to cells in selected rows.
      */
     String cellTableSelectedRowCell();
+
+    /**
+     * Applied to header cells that are sortable.
+     */
+    String cellTableSortableHeader();
+
+    /**
+     * Applied to header cells that are sorted in ascending order.
+     */
+    String cellTableSortedHeaderAscending();
+
+    /**
+     * Applied to header cells that are sorted in descending order.
+     */
+    String cellTableSortedHeaderDescending();
 
     /**
      * Applied to the table.
@@ -476,15 +507,18 @@ public class CellTable<T> extends AbstractHasData<T> {
 
   private int keyboardSelectedColumn = 0;
 
+  private final Resources resources;
   private RowStyles<T> rowStyles;
+  private IconCellDecorator<SafeHtml> sortAscDecorator;
+  private IconCellDecorator<SafeHtml> sortDescDecorator;
+  private final ColumnSortList sortList;
   private final Style style;
   private final TableElement table;
   private final TableSectionElement tbody;
   private final TableSectionElement tbodyLoading;
-
   private final TableSectionElement tfoot;
-
   private final TableSectionElement thead;
+  private boolean updatingSortList;
 
   /**
    * Constructs a table with a default page size of 15.
@@ -554,8 +588,18 @@ public class CellTable<T> extends AbstractHasData<T> {
     if (template == null) {
       template = GWT.create(Template.class);
     }
+    this.resources = resources;
     this.style = resources.cellTableStyle();
     this.style.ensureInjected();
+
+    // Create the ColumnSortList and delegate.
+    sortList = new ColumnSortList(new ColumnSortList.Delegate() {
+      public void onModification() {
+        if (!updatingSortList) {
+          createHeaders(false);
+        }
+      }
+    });
 
     table = getElement().cast();
     table.setCellSpacing(0);
@@ -669,6 +713,17 @@ public class CellTable<T> extends AbstractHasData<T> {
   }
 
   /**
+   * Add a handler to handle {@link ColumnSortEvent}s.
+   * 
+   * @param handler the {@link ColumnSortEvent.Handler} to add
+   * @return a {@link HandlerRegistration} to remove the handler
+   */
+  public HandlerRegistration addColumnSortHandler(
+      ColumnSortEvent.Handler handler) {
+    return addHandler(handler, ColumnSortEvent.getType());
+  }
+
+  /**
    * Add a style name to the {@link TableColElement} at the specified index,
    * creating it if necessary.
    * 
@@ -707,6 +762,27 @@ public class CellTable<T> extends AbstractHasData<T> {
    */
   public int getColumnCount() {
     return columns.size();
+  }
+
+  /**
+   * Get the index of the specified column.
+   * 
+   * @param column the column to search for
+   * @return the index of the column, or -1 if not found
+   */
+  public int getColumnIndex(Column<T,?> column) {
+    return columns.indexOf(column);
+  }
+
+  /**
+   * Get the {@link ColumnSortList} that specifies which columns are sorted.
+   * Modifications to the {@link ColumnSortList} will be reflected in the table
+   * header.
+   * 
+   * @return the {@link ColumnSortList}
+   */
+  public ColumnSortList getColumnSortList() {
+    return sortList;
   }
 
   /**
@@ -1054,12 +1130,25 @@ public class CellTable<T> extends AbstractHasData<T> {
     TableSectionElement section = TableSectionElement.as(sectionElem);
 
     // Forward the event to the associated header, footer, or column.
+    boolean isClick = "click".equals(eventType);
     int col = tableCell.getCellIndex();
     if (section == thead) {
       Header<?> header = headers.get(col);
-      if (header != null && cellConsumesEventType(header.getCell(), eventType)) {
-        Context context = new Context(0, col, header.getKey());
-        header.onBrowserEvent(context, tableCell, event);
+      if (header != null) {
+        // Fire the event to the header.
+        if (cellConsumesEventType(header.getCell(), eventType)) {
+          Context context = new Context(0, col, header.getKey());
+          header.onBrowserEvent(context, tableCell, event);
+        }
+
+        // Sort the header.
+        Column<T, ?> column = columns.get(col);
+        if (isClick && column.isSortable()) {
+          updatingSortList = true;
+          sortList.push(column);
+          updatingSortList = false;
+          ColumnSortEvent.fire(this, sortList);
+        }
       }
     } else if (section == tfoot) {
       Header<?> footer = footers.get(col);
@@ -1069,7 +1158,6 @@ public class CellTable<T> extends AbstractHasData<T> {
       }
     } else if (section == tbody) {
       // Update the hover state.
-      boolean isClick = "click".equals(eventType);
       int row = tr.getSectionRowIndex();
       if ("mouseover".equals(eventType)) {
         // Unstyle the old row if it is still part of the table.
@@ -1339,19 +1427,41 @@ public class CellTable<T> extends AbstractHasData<T> {
     TableSectionElement section = isFooter ? tfoot : thead;
     String className = isFooter ? style.cellTableFooter()
         : style.cellTableHeader();
+    String firstColumnStyle = " "
+        + (isFooter ? style.cellTableFirstColumnFooter()
+            : style.cellTableFirstColumnHeader());
+    String lastColumnStyle = " "
+        + (isFooter ? style.cellTableLastColumnFooter()
+            : style.cellTableLastColumnHeader());
+    String sortableStyle = " " + style.cellTableSortableHeader();
+    String sortedAscStyle = " " + style.cellTableSortedHeaderAscending();
+    String sortedDescStyle = " " + style.cellTableSortedHeaderDescending();
 
     boolean hasHeader = false;
     SafeHtmlBuilder sb = new SafeHtmlBuilder();
     sb.appendHtmlConstant("<tr>");
     int columnCount = columns.size();
     if (columnCount > 0) {
+      // Get information about the sorted column.
+      ColumnSortInfo sortedInfo = (sortList.size() == 0) ? null
+          : sortList.get(0);
+      Column<?, ?> sortedColumn = (sortedInfo == null) ? null
+          : sortedInfo.getColumn();
+      boolean isSortAscending = (sortedInfo == null) ? false
+          : sortedInfo.isAscending();
+
       // Setup the first column.
       Header<?> prevHeader = theHeaders.get(0);
+      Column<T, ?> column = columns.get(0);
       int prevColspan = 1;
+      boolean isSortable = false;
+      boolean isSorted = false;
       StringBuilder classesBuilder = new StringBuilder(className);
-      classesBuilder.append(" ");
-      classesBuilder.append(isFooter ? style.cellTableFirstColumnFooter()
-          : style.cellTableFirstColumnHeader());
+      classesBuilder.append(firstColumnStyle);
+      if (!isFooter && column.isSortable()) {
+        isSortable = true;
+        isSorted = (column == sortedColumn);
+      }
 
       // Loop through all column headers.
       int curColumn;
@@ -1360,41 +1470,86 @@ public class CellTable<T> extends AbstractHasData<T> {
 
         if (header != prevHeader) {
           // The header has changed, so append the previous one.
-          SafeHtmlBuilder headerBuilder = new SafeHtmlBuilder();
+          SafeHtml headerHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
           if (prevHeader != null) {
             hasHeader = true;
+
+            // Build the header.
+            SafeHtmlBuilder headerBuilder = new SafeHtmlBuilder();
             Context context = new Context(0, curColumn - prevColspan,
                 prevHeader.getKey());
             prevHeader.render(context, headerBuilder);
+
+            // Wrap the header with a sort icon.
+            if (isSorted) {
+              SafeHtml unwrappedHeader = headerBuilder.toSafeHtml();
+              headerBuilder = new SafeHtmlBuilder();
+              getSortDecorator(isSortAscending).render(null, unwrappedHeader,
+                  headerBuilder);
+            }
+            headerHtml = headerBuilder.toSafeHtml();
+          }
+          if (isSortable) {
+            classesBuilder.append(sortableStyle);
+          }
+          if (isSorted) {
+            classesBuilder.append(isSortAscending ? sortedAscStyle
+                : sortedDescStyle);
           }
           sb.append(template.th(prevColspan, classesBuilder.toString(),
-              headerBuilder.toSafeHtml()));
+              headerHtml));
 
           // Reset the previous header.
           prevHeader = header;
           prevColspan = 1;
           classesBuilder = new StringBuilder(className);
+          isSortable = false;
+          isSorted = false;
         } else {
           // Increment the colspan if the headers == each other.
           prevColspan++;
         }
+
+        // Update the sorted state.
+        column = columns.get(curColumn);
+        if (!isFooter && column.isSortable()) {
+          isSortable = true;
+          isSorted = (column == sortedColumn);
+        }
       }
 
       // Append the last header.
-      SafeHtmlBuilder headerBuilder = new SafeHtmlBuilder();
+      SafeHtml headerHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
       if (prevHeader != null) {
         hasHeader = true;
+
+        // Build the header.
+        SafeHtmlBuilder headerBuilder = new SafeHtmlBuilder();
         Context context = new Context(0, curColumn - prevColspan,
             prevHeader.getKey());
         prevHeader.render(context, headerBuilder);
+
+        // Wrap the header with a sort icon.
+        if (isSorted) {
+          SafeHtml unwrappedHeader = headerBuilder.toSafeHtml();
+          headerBuilder = new SafeHtmlBuilder();
+          getSortDecorator(isSortAscending).render(null, unwrappedHeader,
+              headerBuilder);
+        }
+        headerHtml = headerBuilder.toSafeHtml();
+      }
+      if (isSortable) {
+        classesBuilder.append(sortableStyle);
+      }
+      if (isSorted) {
+        classesBuilder.append(isSortAscending ? sortedAscStyle
+            : sortedDescStyle);
       }
 
       // The first and last columns could be the same column.
       classesBuilder.append(" ");
-      classesBuilder.append(isFooter ? style.cellTableLastColumnFooter()
-          : style.cellTableLastColumnHeader());
-      sb.append(template.th(prevColspan, classesBuilder.toString(),
-          headerBuilder.toSafeHtml()));
+      classesBuilder.append(lastColumnStyle);
+      sb.append(template.th(prevColspan, classesBuilder.toString(), headerHtml));
     }
     sb.appendHtmlConstant("</tr>");
 
@@ -1521,6 +1676,28 @@ public class CellTable<T> extends AbstractHasData<T> {
   private native int getClientHeight(Element element) /*-{
     return element.clientHeight;
   }-*/;
+
+  /**
+   * Get the {@link IconCellDecorator} used to decorate sorted column headers.
+   * 
+   * @param ascending true if ascending, false if descending
+   * @return the {@link IconCellDecorator}
+   */
+  private IconCellDecorator<SafeHtml> getSortDecorator(boolean ascending) {
+    if (ascending) {
+      if (sortAscDecorator == null) {
+        sortAscDecorator = new IconCellDecorator<SafeHtml>(
+            resources.cellTableSortAscending(), new SafeHtmlCell());
+      }
+      return sortAscDecorator;
+    } else {
+      if (sortDescDecorator == null) {
+        sortDescDecorator = new IconCellDecorator<SafeHtml>(
+            resources.cellTableSortDescending(), new SafeHtmlCell());
+      }
+      return sortDescDecorator;
+    }
+  }
 
   private boolean handleKey(Event event) {
     HasDataPresenter<T> presenter = getPresenter();
