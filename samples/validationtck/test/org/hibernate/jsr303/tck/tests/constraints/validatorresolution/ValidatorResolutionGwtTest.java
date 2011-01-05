@@ -16,7 +16,8 @@
 package org.hibernate.jsr303.tck.tests.constraints.validatorresolution;
 
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.sample.validationtck.util.Failing;
+
+import org.hibernate.jsr303.tck.util.Failing;
 
 /**
  * Wraps {@link ValidatorResolutionTest} .

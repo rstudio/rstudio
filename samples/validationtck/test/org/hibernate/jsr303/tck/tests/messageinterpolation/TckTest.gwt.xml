@@ -21,7 +21,10 @@
     <include name="*.java" />
     <exclude name="super" />
   </source>
-  <replace-with class="org.hibernate.jsr303.tck.tests.constraints.validatorresolution.TckTestValidatorFactory">
+  <replace-with class="org.hibernate.jsr303.tck.tests.messageinterpolation.TckUserValidationMessageProvider">
+    <when-type-is class="com.google.gwt.validation.client.UserValidationMessagesResolver" />
+  </replace-with>
+  <replace-with class="org.hibernate.jsr303.tck.tests.messageinterpolation.TckTestValidatorFactory">
     <when-type-is class="javax.validation.ValidatorFactory"/>
   </replace-with>
 </module>

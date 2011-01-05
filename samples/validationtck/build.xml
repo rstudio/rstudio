@@ -60,8 +60,8 @@
   <property name="emma.merged.out" value="${junit.out}/emma-coverage" />
   <property name="gwt.junit.testcase.web.includes" value="${gwt.junit.testcase.includes}" />
   <property name="gwt.junit.testcase.web.excludes" value="" />
-  <property name="gwt.junit.testcase.dev.includes" value="${gwt.junit.testcase.includes}" />
-  <property name="gwt.junit.testcase.dev.excludes" value="com/google/gwt/sample/validationtck/util/*.class" />
+  <property name="gwt.junit.testcase.dev.includes" value="org/hibernate/jsr303/tck/tests/**/*GwtSuite.class" />
+  <property name="gwt.junit.testcase.dev.excludes" value="org/hibernate/jsr303/tck/util/*.class" />
 
   <!--
         Compiles the test code for this project

@@ -15,13 +15,11 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<module>
-  <inherits name="org.hibernate.jsr303.tck.tests.ValidationTck" />
+<module rename-to="validationtck">
+  <inherits name="com.google.gwt.user.User" />
+  <inherits name="org.hibernate.validator.HibernateValidator" />
   <source path="">
-    <include name="*.java" />
     <exclude name="super" />
   </source>
-  <replace-with class="org.hibernate.jsr303.tck.tests.constraints.validatorresolution.TckTestValidatorFactory">
-    <when-type-is class="javax.validation.ValidatorFactory"/>
-  </replace-with>
+  <entry-point class="com.google.gwt.sample.validationtck.Tck" />
 </module>

@@ -9,14 +9,11 @@ It is only enough to run the tests in the GWT Validation TCK.
   <inherits name='org.jboss.testharness.JbossTestHarness' />
   <inherits name='org.testng.TestNg' />
   <source path="">
-    <exclude name="super/" />
-    <!-- things not used in any current test -->
-    <exclude name="tests/bootstrap/" />
-    <exclude name="tests/constraints/builtinconstraints/" />
-    <exclude name="tests/messageinterpolation/" />
-    <exclude name="tests/xmlconfiguration/" />
-    <exclude name="tests/validation/UnknownProviderBootstrapTest.java" />
+    <include name="common/*.java" />
+    <include name="util/*.java" />
     <exclude name="util/StandaloneContainersImpl.java" />
+    <exclude name="util/TckTestSuite*.java" />
+    <exclude name="util/UtilJreSuite.java" />
   </source>
   <super-source path="super" />
 </module>

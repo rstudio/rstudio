@@ -21,7 +21,7 @@
     <include name="*.java" />
     <exclude name="super" />
   </source>
-  <replace-with class="org.hibernate.jsr303.tck.tests.constraints.validatorresolution.TckTestValidatorFactory">
+  <replace-with class="org.hibernate.jsr303.tck.tests.constraints.customconstraint.TckTestValidatorFactory">
     <when-type-is class="javax.validation.ValidatorFactory"/>
   </replace-with>
 </module>
