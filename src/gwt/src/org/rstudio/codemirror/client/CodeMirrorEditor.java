@@ -32,6 +32,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.IFrameElementEx;
+import org.rstudio.core.client.dom.NativeWindow;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.*;
 
@@ -586,13 +587,22 @@ public abstract class CodeMirrorEditor extends Composite
 
       final int TOTAL_MARGIN = 10;
 
-      if (codeMirror_ != null
-          && codeMirror_.getWin() != null)
+      if (codeMirror_ != null)
       {
-         int minHeight = Math.max(0, getOffsetHeight() - TOTAL_MARGIN);
-
-         codeMirror_.getWin().getDocument().getBody().getStyle().setProperty(
-               "minHeight", minHeight + "px");
+         NativeWindow win = codeMirror_.getWin();
+         if (win != null)
+         {
+            Document doc = win.getDocument();
+            if (doc != null)
+            {
+               BodyElement body = doc.getBody();
+               if (body != null)
+               {
+                  int minHeight = Math.max(0, getOffsetHeight() - TOTAL_MARGIN);
+                  body.getStyle().setProperty("minHeight", minHeight + "px");
+               }
+            }
+         }
       }
    }
 
