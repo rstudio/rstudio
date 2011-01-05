@@ -33,6 +33,11 @@ public class LocaleInfoTest extends GWTTestCase {
         "default", "piglatin", "piglatin_UK", "piglatin_UK_WINDOWS"}, locales);
   }
 
+  public void testCookieName() {
+    String cookieName = LocaleInfo.getCurrentLocale().getLocaleCookieName();
+    assertNull(cookieName);
+  }
+
   public void testCurrentLocale() {
     String locale = LocaleInfo.getCurrentLocale().getLocaleName();
     assertEquals("piglatin_UK_WINDOWS", locale);
@@ -46,6 +51,11 @@ public class LocaleInfoTest extends GWTTestCase {
     // verify piglatin is known
     displayName = LocaleInfo.getLocaleNativeDisplayName("piglatin");
     assertEquals("Igpay Atinlay", displayName);
+  }
+
+  public void testQueryParam() {
+    String queryParam = LocaleInfo.getCurrentLocale().getLocaleQueryParam();
+    assertEquals("locale", queryParam);
   }
   
   public void testRTL() {

@@ -44,6 +44,18 @@ public class LocaleUtils {
   private static final String PROP_LOCALE = "locale";
 
   /**
+   * The config property identifying the URL query paramter name to possibly get
+   * the value of the locale property.
+   */
+  private static final String PROP_LOCALE_QUERY_PARAM = "locale.queryparam";
+
+  /**
+   * The config property identifying the cookie name to possibly get the value
+   * of the locale property.
+   */
+  private static final String PROP_LOCALE_COOKIE = "locale.cookie";
+
+  /**
    * The token representing the runtime.locales configuration property.
    */
   private static final String PROP_RUNTIME_LOCALES = "runtime.locales";
@@ -70,11 +82,18 @@ public class LocaleUtils {
           = propertyOracle.getSelectionProperty(logger, PROP_LOCALE);
       ConfigurationProperty runtimeLocaleProp
           = propertyOracle.getConfigurationProperty(PROP_RUNTIME_LOCALES);
+      ConfigurationProperty queryParamProp
+          = propertyOracle.getConfigurationProperty(PROP_LOCALE_QUERY_PARAM);
+      ConfigurationProperty cookieProp
+          = propertyOracle.getConfigurationProperty(PROP_LOCALE_COOKIE);
       LocaleInfoContext localeInfoCtx = getLocaleInfoCtx(context);
-      LocaleUtils localeUtils = localeInfoCtx.getLocaleUtils(localeProp, runtimeLocaleProp);
+      LocaleUtils localeUtils = localeInfoCtx.getLocaleUtils(localeProp,
+          runtimeLocaleProp, queryParamProp, cookieProp);
       if (localeUtils == null) {
-        localeUtils = createInstance(localeProp, runtimeLocaleProp);
-        localeInfoCtx.putLocaleUtils(localeProp, runtimeLocaleProp, localeUtils);
+        localeUtils = createInstance(localeProp, runtimeLocaleProp,
+            queryParamProp, cookieProp);
+        localeInfoCtx.putLocaleUtils(localeProp, runtimeLocaleProp,
+            queryParamProp, cookieProp, localeUtils);
       }
       return localeUtils;
     } catch (BadPropertyValueException e) {
@@ -85,7 +104,7 @@ public class LocaleUtils {
       Set<GwtLocale> allLocales = new HashSet<GwtLocale>();
       allLocales.add(defaultLocale);
       return new LocaleUtils(defaultLocale, allLocales, allLocales,
-          Collections.<GwtLocale>emptySet());
+          Collections.<GwtLocale>emptySet(), null, null);
     }
   }
 
@@ -99,12 +118,21 @@ public class LocaleUtils {
   }
 
   private static LocaleUtils createInstance(SelectionProperty localeProp,
-      ConfigurationProperty prop) {
+      ConfigurationProperty prop, ConfigurationProperty queryParamProp,
+      ConfigurationProperty cookieProp) {
     GwtLocale compileLocale = null;
     Set<GwtLocale> allLocales = new HashSet<GwtLocale>();
     Set<GwtLocale> allCompileLocales = new HashSet<GwtLocale>();
     Set<GwtLocale> runtimeLocales = new HashSet<GwtLocale>();
     String localeName = localeProp.getCurrentValue();
+    String queryParam = queryParamProp.getValues().get(0);
+    if (queryParam.length() == 0) {
+      queryParam = null;
+    }
+    String cookie = cookieProp.getValues().get(0);
+    if (cookie.length() == 0) {
+      cookie = null;
+    }
     SortedSet<String> localeValues = localeProp.getPossibleValues();
 
     GwtLocaleFactory factoryInstance = getLocaleFactory();
@@ -140,7 +168,7 @@ public class LocaleUtils {
       }
     }
     return new LocaleUtils(compileLocale, allLocales, allCompileLocales,
-        runtimeLocales);
+        runtimeLocales, queryParam, cookie);
   }
 
   private static synchronized LocaleInfoContext getLocaleInfoCtx(
@@ -164,12 +192,19 @@ public class LocaleUtils {
 
   private final Set<GwtLocale> runtimeLocales;
 
+  private final String queryParam;
+
+  private final String cookie;
+
   private LocaleUtils(GwtLocale compileLocale, Set<GwtLocale> allLocales,
-      Set<GwtLocale> allCompileLocales, Set<GwtLocale> runtimeLocales) {
+      Set<GwtLocale> allCompileLocales, Set<GwtLocale> runtimeLocales,
+      String queryParam, String cookie) {
     this.compileLocale = compileLocale;
     this.allLocales = Collections.unmodifiableSet(allLocales);
     this.allCompileLocales = Collections.unmodifiableSet(allCompileLocales);
     this.runtimeLocales = Collections.unmodifiableSet(runtimeLocales);
+    this.queryParam = queryParam;
+    this.cookie = cookie;
   }
 
   /**
@@ -196,6 +231,25 @@ public class LocaleUtils {
    */
   public GwtLocale getCompileLocale() {
     return compileLocale;
+  }
+
+  /**
+   * Return the name of the cookie to potentially get the locale value from.
+   *
+   * @return the cookie name or null if none
+   */
+  public String getCookie() {
+    return cookie;
+  }
+
+  /**
+   * Return the name of the URL query param to potentially get the locale value
+   * from.
+   *
+   * @return the URL query param or null if none
+   */
+  public String getQueryParam() {
+    return queryParam;
   }
 
   /**

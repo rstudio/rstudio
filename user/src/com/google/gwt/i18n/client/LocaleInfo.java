@@ -69,6 +69,16 @@ public class LocaleInfo {
   }
 
   /**
+   * Returns the name of the name of the cookie holding the locale to use,
+   * which is defined in the config property {@code locale.cookie}.
+   * 
+   * @return locale cookie name, or null if none
+   */
+  public static final String getLocaleCookieName() {
+    return instance.infoImpl.getLocaleCookieName();
+  }
+
+  /**
    * Returns the display name of the requested locale in its native locale, if
    * possible. If no native localization is available, the English name will
    * be returned, or as a last resort just the locale name will be returned.  If
@@ -85,6 +95,16 @@ public class LocaleInfo {
      * See the comment from getAvailableLocaleNames() above.
      */
     return instance.infoImpl.getLocaleNativeDisplayName(localeName);
+  }
+
+  /**
+   * Returns the name of the query parameter holding the locale to use, which is
+   * defined in the config property {@code locale.queryparam}.
+   * 
+   * @return locale URL query parameter name, or null if none
+   */
+  public static String getLocaleQueryParam() {
+    return instance.infoImpl.getLocaleQueryParam();
   }
 
   /**
@@ -150,7 +170,7 @@ public class LocaleInfo {
   /**
    * @return an implementation of {@link LocalizedNames} for this locale.
    */
-  public LocalizedNames getLocalizedNames() {
+  public final LocalizedNames getLocalizedNames() {
     return infoImpl.getLocalizedNames();
   }
 

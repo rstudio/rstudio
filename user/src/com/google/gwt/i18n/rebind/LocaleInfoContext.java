@@ -25,23 +25,32 @@ import java.util.Map;
  * A LocaleUtils specific context for caching.
  */
 public class LocaleInfoContext {
+
   /**
    * A key for lookup of computed values in a cache.
    */
   private static class CacheKey {
     private final SelectionProperty localeProperty;
     private final ConfigurationProperty runtimeLocaleProperty;
+    private ConfigurationProperty queryParamProperty;
+    private ConfigurationProperty cookieProperty;
 
     /**
      * Create a key for cache lookup.
      * 
      * @param localeProperty "locale" property, must not be null
      * @param runtimeLocaleProperty "runtime.locales" property, must not be null
+     * @param cookieProperty "locale.queryparam" property, must not be null
+     * @param queryParamProperty "locale.cookie" property, must not be null
      */
     public CacheKey(SelectionProperty localeProperty,
-        ConfigurationProperty runtimeLocaleProperty) {
+        ConfigurationProperty runtimeLocaleProperty,
+        ConfigurationProperty queryParamProperty,
+        ConfigurationProperty cookieProperty) {
       this.localeProperty = localeProperty;
       this.runtimeLocaleProperty = runtimeLocaleProperty;
+      this.queryParamProperty = queryParamProperty;
+      this.cookieProperty = cookieProperty;
     }
 
     @Override
@@ -57,7 +66,9 @@ public class LocaleInfoContext {
       }
       CacheKey other = (CacheKey) obj;
       return localeProperty.equals(other.localeProperty)
-          && runtimeLocaleProperty.equals(other.runtimeLocaleProperty);
+          && runtimeLocaleProperty.equals(other.runtimeLocaleProperty)
+          && queryParamProperty.equals(other.queryParamProperty)
+          && cookieProperty.equals(other.cookieProperty);
     }
 
     @Override
@@ -66,6 +77,8 @@ public class LocaleInfoContext {
       int result = 1;
       result = prime * result + localeProperty.hashCode();
       result = prime * result + runtimeLocaleProperty.hashCode();
+      result = prime * result + queryParamProperty.hashCode();
+      result = prime * result + cookieProperty.hashCode();
       return result;
     }
   }
@@ -74,15 +87,18 @@ public class LocaleInfoContext {
       CacheKey, LocaleUtils>();
 
   public LocaleUtils getLocaleUtils(SelectionProperty localeProperty,
-      ConfigurationProperty runtimeLocaleProperty) {
-    CacheKey key = new CacheKey(localeProperty, runtimeLocaleProperty);
+      ConfigurationProperty runtimeLocaleProperty,
+      ConfigurationProperty queryParamProp, ConfigurationProperty cookieProp) {
+    CacheKey key = new CacheKey(localeProperty, runtimeLocaleProperty,
+        queryParamProp, cookieProp);
     return localeUtilsCache.get(key);
   }
-  
+
   public void putLocaleUtils(SelectionProperty localeProperty,
-      ConfigurationProperty runtimeLocaleProperty, LocaleUtils localeUtils) {
-    CacheKey key = new CacheKey(localeProperty, runtimeLocaleProperty);
+      ConfigurationProperty runtimeLocaleProperty, ConfigurationProperty queryParamProp,
+      ConfigurationProperty cookieProp, LocaleUtils localeUtils) {
+    CacheKey key = new CacheKey(localeProperty, runtimeLocaleProperty,
+        queryParamProp, cookieProp);
     localeUtilsCache.put(key, localeUtils);
   }
-
 }

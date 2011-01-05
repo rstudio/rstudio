@@ -276,6 +276,22 @@ public class LocaleInfoGenerator extends Generator {
       }
       writer.println("}");
       writer.println();
+      String queryParam = localeUtils.getQueryParam();
+      if (queryParam != null) {
+        writer.println("@Override");
+        writer.println("public String getLocaleQueryParam() {");
+        writer.println("  return \"" + quoteQuotes(queryParam) + "\";");
+        writer.println("}");
+        writer.println();
+      }
+      String cookie = localeUtils.getCookie();
+      if (cookie != null) {
+        writer.println("@Override");
+        writer.println("public String getLocaleCookieName() {");
+        writer.println("  return \"" + quoteQuotes(cookie) + "\";");
+        writer.println("}");
+        writer.println();
+      }
       writer.println("@Override");
       writer.println("public DateTimeFormatInfo getDateTimeFormatInfo() {");
       LocalizableGenerator localizableGenerator = new LocalizableGenerator();

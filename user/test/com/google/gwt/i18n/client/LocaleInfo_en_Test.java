@@ -27,7 +27,8 @@ public class LocaleInfo_en_Test extends GWTTestCase {
 
   @Override
   public String getModuleName() {
-    // This module is built in the en locale, but includes ar.
+    // This module is built in the en locale, but includes ar.  It also has
+    // custom settings for the locale query parameter and cookie name.
     return "com.google.gwt.i18n.I18NTest_en";
   }
 
@@ -38,6 +39,16 @@ public class LocaleInfo_en_Test extends GWTTestCase {
     assertTrue(localeList.contains("ar"));
     assertTrue(localeList.contains("default"));
     assertTrue(localeList.contains("en_US"));
+  }
+
+  public void testCookieName() {
+    String cookieName = LocaleInfo.getCurrentLocale().getLocaleCookieName();
+    assertEquals("LOCALE", cookieName);
+  }
+
+  public void testQueryParam() {
+    String queryParam = LocaleInfo.getCurrentLocale().getLocaleQueryParam();
+    assertNull(queryParam);
   }
 
   public void testRTL() {

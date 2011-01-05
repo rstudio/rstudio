@@ -62,6 +62,16 @@ public class LocaleInfoImpl {
   }
 
   /**
+   * Returns the name of the name of the cookie holding the locale to use,
+   * which is defined in the config property {@code locale.cookie}.
+   * 
+   * @return locale cookie name, or null if none
+   */
+  public String getLocaleCookieName() {
+    return null;
+  }
+
+  /**
    * Returns the current locale name, such as "default, "en_US", etc.
    */
   public String getLocaleName() {
@@ -78,6 +88,16 @@ public class LocaleInfoImpl {
    * @return the name of the locale in its native locale
    */
   public String getLocaleNativeDisplayName(String localeName) {
+    return null;
+  }
+
+  /**
+   * Returns the name of the query parameter holding the locale to use, which is
+   * defined in the config property {@code locale.queryparam}.
+   * 
+   * @return locale URL query parameter name, or null if none
+   */
+  public String getLocaleQueryParam() {
     return null;
   }
 

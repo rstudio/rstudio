@@ -18,6 +18,7 @@ package com.google.gwt.sample.showcase.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableElement;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -26,12 +27,13 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.http.client.UrlBuilder;
-import com.google.gwt.i18n.client.HasDirection.Direction;
 import com.google.gwt.i18n.client.LocaleInfo;
+import com.google.gwt.i18n.client.HasDirection.Direction;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.CellTree;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
+import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
@@ -43,6 +45,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.TreeViewModel;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -305,6 +308,13 @@ public class ShowcaseShell extends Composite {
    * Initialize the {@link ListBox} used for locale selection.
    */
   private void initializeLocaleBox() {
+    final String cookieName = LocaleInfo.getLocaleCookieName();
+    final String queryParam = LocaleInfo.getLocaleQueryParam();
+    if (cookieName == null && queryParam == null) {
+      // if there is no way for us to affect the locale, don't show the selector
+      localeSelectionCell.getStyle().setDisplay(Display.NONE);
+      return;
+    }
     String currentLocale = LocaleInfo.getCurrentLocale().getLocaleName();
     if (currentLocale.equals("default")) {
       currentLocale = "en";
@@ -320,11 +330,23 @@ public class ShowcaseShell extends Composite {
       }
     }
     localeBox.addChangeHandler(new ChangeHandler() {
+      @SuppressWarnings("deprecation")
       public void onChange(ChangeEvent event) {
         String localeName = localeBox.getValue(localeBox.getSelectedIndex());
-        UrlBuilder builder = Location.createUrlBuilder().setParameter(
-            "locale", localeName);
-        Window.Location.replace(builder.buildString());
+        if (cookieName != null) {
+          // expire in one year
+          Date expires = new Date();
+          expires.setYear(expires.getYear() + 1);
+          Cookies.setCookie(cookieName, localeName, expires);
+        }
+        if (queryParam != null) {
+          UrlBuilder builder = Location.createUrlBuilder().setParameter(
+              queryParam, localeName);
+          Window.Location.replace(builder.buildString());
+        } else {
+          // If we are using only cookies, just reload
+          Window.Location.reload();
+        }
       }
     });
   }
