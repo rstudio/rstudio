@@ -91,6 +91,7 @@ public class TextEditingTarget implements EditingTarget
       void showWarningBar(String warning);
       void hideWarningBar();
       void showFindReplace();
+      void onActivate();
    }
 
    public interface DocDisplay extends HasValueChangeHandlers<Void>,
@@ -124,6 +125,9 @@ public class TextEditingTarget implements EditingTarget
       void fitSelectionToLines(boolean expand);
       Object getSelectionLine(boolean start);
       int getSelectionOffset(boolean start);
+
+      // Fix bug 964
+      void updateBodyMinHeight();
    }
    private class ExplicitSaveProgressIndicator implements ProgressIndicator
    {
@@ -358,6 +362,8 @@ public class TextEditingTarget implements EditingTarget
          commandHandlerReg_ = null;
       }
       commandHandlerReg_ = commandBinder.bind(commands_, this);
+
+      view_.onActivate();
    }
 
    public void onDeactivate()

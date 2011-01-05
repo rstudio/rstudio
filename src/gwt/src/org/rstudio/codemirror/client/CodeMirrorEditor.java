@@ -21,9 +21,8 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.LayoutPanel;
+import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.codemirror.client.CodeMirror.CursorPosition;
 import org.rstudio.codemirror.client.CodeMirror.LineHandle;
 import org.rstudio.codemirror.client.events.EditorFocusedEvent;
@@ -35,13 +34,12 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.*;
-import org.rstudio.core.client.theme.ThemeFonts;
-import org.rstudio.studio.client.application.Desktop;
 
 import java.util.ArrayList;
 
 public abstract class CodeMirrorEditor extends Composite
-                                       implements HasNativeKeyHandlers
+                                       implements HasNativeKeyHandlers,
+                                                  RequiresResize
 {
    public CodeMirrorEditor()
    {
@@ -573,6 +571,28 @@ public abstract class CodeMirrorEditor extends Composite
          WindowEx win = getWindow();
          if (win != null)
             win.setScrollPosition(markedScrollPos_);
+      }
+   }
+
+   public void onResize()
+   {
+      updateBodyMinHeight();
+   }
+
+   public void updateBodyMinHeight()
+   {
+      // Fixes bug 964, wherein clicking empty areas of a source document don't
+      // put the cursor on the last line
+
+      final int TOTAL_MARGIN = 10;
+
+      if (codeMirror_ != null
+          && codeMirror_.getWin() != null)
+      {
+         int minHeight = Math.max(0, getOffsetHeight() - TOTAL_MARGIN);
+
+         codeMirror_.getWin().getDocument().getBody().getStyle().setProperty(
+               "minHeight", minHeight + "px");
       }
    }
 

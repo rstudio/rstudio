@@ -179,6 +179,11 @@ public class TextEditingTargetWidget extends ResizeComposite implements Display
       editor_.focus();
    }
 
+   public void onActivate()
+   {
+      editor_.updateBodyMinHeight();
+   }
+
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
    {
       return addHandler(handler, EnsureVisibleEvent.TYPE);
