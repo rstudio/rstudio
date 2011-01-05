@@ -3,7 +3,7 @@ RStudio is an integrated development environment (IDE) for R.
 RStudio is licensed to you under the AGPLv3, the terms of which are
 included in the file COPYING.
 
-For documentation on RStudio please see: [[http://www.rstudio.org/docs|http://www.rstudio.org/docs]]
+For documentation on RStudio please see [[http://www.rstudio.org/docs]]
 
 See also the following files included with this distribution:
 
