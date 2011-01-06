@@ -34,7 +34,6 @@ import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
-import com.google.gwt.thirdparty.guava.common.primitives.Primitives;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.validation.client.impl.AbstractGwtSpecificValidator;
@@ -56,6 +55,7 @@ import java.util.Set;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintViolation;
 import javax.validation.Payload;
+import javax.validation.ValidationException;
 import javax.validation.metadata.BeanDescriptor;
 import javax.validation.metadata.ConstraintDescriptor;
 import javax.validation.metadata.PropertyDescriptor;
@@ -198,6 +198,14 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     this.beanHelper = beanHelper;
   }
 
+  public JType getElementType(PropertyDescriptor p, boolean useField) {
+    if (useField) {
+      return beanType.findField(p.getPropertyName()).getType();
+    } else {
+      return beanType.findMethod(this.asGetter(p), NO_ARGS).getReturnType();
+    }
+  }
+
   @Override
   protected void compose(ClassSourceFileComposerFactory composerFactory) {
     addImports(composerFactory, GWT.class, GwtBeanDescriptor.class,
@@ -273,7 +281,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
 
   private Annotation getAnnotation(PropertyDescriptor p, boolean useField,
       ConstraintDescriptor<?> constraint) {
-    Class<? extends Annotation> expectedAnnotaionClass = 
+    Class<? extends Annotation> expectedAnnotaionClass =
         ((Annotation) constraint.getAnnotation()).annotationType();
     Annotation annotation = null;
     if (useField) {
@@ -288,6 +296,16 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
       }
     }
     return annotation;
+  }
+
+  /**
+   * @param elementType
+   * @return
+   */
+  private String getQualifiedSourceNonPrimitiveType(JType elementType) {
+    JPrimitiveType primitive = elementType.isPrimitive();
+    return primitive == null ? elementType.getQualifiedSourceName()
+        : primitive.getQualifiedBoxedSourceName();
   }
 
   private boolean hasField(PropertyDescriptor p) {
@@ -310,10 +328,11 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     }
   }
 
-  private boolean isIterable(Class<?> elementClass) {
+  private boolean isIterableOrMap(Class<?> elementClass) {
     // TODO(nchalko) handle iterables everywhere this is called.
     return elementClass.isArray()
-        || Iterable.class.isAssignableFrom(elementClass);
+        || Iterable.class.isAssignableFrom(elementClass)
+        || Map.class.isAssignableFrom(elementClass);
   }
 
   private boolean isPropertyConstrained(BeanHelper helper, PropertyDescriptor p) {
@@ -495,7 +514,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
         count++; // index starts at zero.
       }
       writePropertyDescriptor(sw, p);
-      if (p.isCascaded() && !isIterable(p.getElementClass())) {
+      if (p.isCascaded() && !isIterableOrMap(p.getElementClass())) {
         beansToValidate.add(createBeanHelper(p.getElementClass()));
       }
     }
@@ -816,7 +835,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     if (useValue) {
       sw.print("null, ");
       sw.print("(");
-      sw.print(Primitives.wrap(p.getElementClass()).getCanonicalName());
+      sw.print(getQualifiedSourceNonPrimitiveType(getElementType(p, true)));
       sw.print(") value");
     } else {
       sw.print("object, ");
@@ -848,7 +867,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     if (useValue) {
       sw.print("null, ");
       sw.print("(");
-      sw.print(Primitives.wrap(p.getElementClass()).getCanonicalName());
+      sw.print(getQualifiedSourceNonPrimitiveType(getElementType(p, false)));
       sw.print(") value");
     } else {
       sw.print("object, ");
@@ -950,18 +969,63 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
   private void writeValidatePropertyCall(SourceWriter sw,
       PropertyDescriptor property, boolean useValue) {
     if (hasGetter(property)) {
+      if (useValue) {
+        // if ( value == null || value instanceof propertyType) {
+        sw.print("if ( value == null || value instanceof ");
+        sw.print(getQualifiedSourceNonPrimitiveType(getElementType(property,
+            false)));
+        sw.println(") {");
+        sw.indent();
+      }
       // validate_getMyProperty
       writeValidateGetterCall(sw, property, useValue);
+      if (useValue) {
+        // } else
+        sw.outdent();
+        sw.print("} else ");
+      }
     }
+
+
     if (hasField(property)) {
+      if (useValue) {
+        // if ( value == null || value instanceof propertyType) {
+        sw.print("if ( value == null || value instanceof ");
+        sw.print(getQualifiedSourceNonPrimitiveType(getElementType(property,
+            true)));
+        sw.println(") {");
+        sw.indent();
+      }
       // validate_myProperty
       writeValidateFieldCall(sw, property, useValue);
+      if (useValue) {
+        // } else
+        sw.outdent();
+        sw.print("}  else ");
+      }
+    }
+
+    if (useValue & (hasGetter(property) || hasField(property))) {
+      // {
+      sw.println(" {");
+      sw.indent();
+
+      // throw new ValidationException(value.getClass +
+      // " is not a valid type for " + propertyName);
+      sw.print("throw new ");
+      sw.print(ValidationException.class.getCanonicalName());
+      sw.println("(value.getClass() +\" is not a valid type for \"+ propertyName);");
+
+      // }
+      sw.outdent();
+      sw.println("}");
     }
   }
 
   private void writeValidatePropertyMethod(SourceWriter sw,
       PropertyDescriptor p, boolean useField) {
     Class<?> elementClass = p.getElementClass();
+    JType elementType = getElementType(p, useField);
 
     // private final <T> void validateProperty_{get}<p>(
     sw.print("private final <T> void ");
@@ -978,7 +1042,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     sw.println("GwtValidationContext<T> context,");
     sw.println("Set<ConstraintViolation<T>> violations,");
     sw.println(beanHelper.getTypeCanonicalName() + " object,");
-    sw.print(elementClass.getCanonicalName());
+    sw.print(elementType.getQualifiedSourceName());
     sw.println(" value,");
     sw.println("Class<?>... groups) {");
     sw.outdent();
@@ -990,7 +1054,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     sw.println("\");");
 
     // TODO(nchalko) move this out of here to the Validate method
-    if (p.isCascaded() && !isIterable(elementClass)) {
+    if (p.isCascaded() && !isIterableOrMap(elementClass)) {
 
       BeanHelper helper = createBeanHelper(elementClass);
 
@@ -1053,7 +1117,9 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
       sw.println("\")) {");
       sw.indent();
 
-      writeValidatePropertyCall(sw, property, true);
+      if (!isIterableOrMap(property.getElementClass())) {
+        writeValidatePropertyCall(sw, property, true);
+      }
 
       // validate all super classes and interfaces
       writeValidateInheritance(sw, beanHelper.getClazz(),
@@ -1092,7 +1158,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
 
   private void writeValidatorCall(SourceWriter sw, Class<?> type, Stage stage,
       PropertyDescriptor p) {
-    if (BeanHelper.isClassConstrained(type) && !isIterable(type)) {
+    if (BeanHelper.isClassConstrained(type) && !isIterableOrMap(type)) {
       BeanHelper helper = createBeanHelper(type);
       beansToValidate.add(helper);
       switch (stage) {

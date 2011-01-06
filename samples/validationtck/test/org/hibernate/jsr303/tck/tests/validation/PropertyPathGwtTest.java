@@ -16,7 +16,6 @@
 package org.hibernate.jsr303.tck.tests.validation;
 
 import org.hibernate.jsr303.tck.util.Failing;
-import org.hibernate.jsr303.tck.util.NonTckTest;
 
 /**
  * Test wrapper for {@link PropertyPathTest}.
@@ -24,10 +23,6 @@ import org.hibernate.jsr303.tck.util.NonTckTest;
 public class PropertyPathGwtTest extends AbstractValidationTest {
 
   private final PropertyPathTest delegate = new PropertyPathTest();
-
-  @NonTckTest
-  public void testPlaceHolder() {
-  }
 
   @Failing(issue = 5803)
   public void testPropertyPathSet() {
@@ -44,7 +39,6 @@ public class PropertyPathGwtTest extends AbstractValidationTest {
     delegate.testPropertyPathWithArray();
   }
 
-  @Failing(issue = 5803)
   public void testPropertyPathWithConstraintViolationForRootObject() {
     delegate.testPropertyPathWithConstraintViolationForRootObject();
   }
@@ -58,5 +52,4 @@ public class PropertyPathGwtTest extends AbstractValidationTest {
   public void testPropertyPathWithMap() {
     delegate.testPropertyPathWithMap();
   }
-
 }

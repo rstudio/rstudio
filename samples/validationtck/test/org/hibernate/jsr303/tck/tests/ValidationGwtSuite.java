@@ -15,8 +15,6 @@
  */
 package org.hibernate.jsr303.tck.tests;
 
-
-
 import junit.framework.Test;
 
 import org.hibernate.jsr303.tck.tests.validation.PropertyPathGwtTest;

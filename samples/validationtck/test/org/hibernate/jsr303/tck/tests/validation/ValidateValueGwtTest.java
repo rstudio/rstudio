@@ -63,7 +63,7 @@ public class ValidateValueGwtTest extends AbstractValidationTest {
     delegate.testValidateValueWithNullPropertyName();
   }
 
-  @Failing(issue = 5804)
+  // This passes but the desired behavior is still not working
   public void testValidIsNotHonoredValidateValue() {
     delegate.testValidIsNotHonoredValidateValue();
   }

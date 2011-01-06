@@ -44,12 +44,10 @@ public class ValidatorResolutionGwtTest extends GWTTestCase {
     delegate.testResolutionOfMultipleSizeValidators();
   }
 
-  @Failing(issue = 5806)
   public void testTargetedTypeIsField() {
     delegate.testTargetedTypeIsField();
   }
 
-  @Failing(issue = 5806)
   public void testTargetedTypeIsGetter() {
     delegate.testTargetedTypeIsGetter();
   }
