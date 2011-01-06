@@ -311,7 +311,7 @@ public List collectMissingTypes(List missingTypes) {
       missingTypes = variable.superclass().collectMissingTypes(missingTypes);
       ReferenceBinding[] interfaces = variable.superInterfaces();
       for (int j = 0, length = interfaces.length; j < length; j++) {
-        missingTypes = interfaces[i].collectMissingTypes(missingTypes);
+        missingTypes = interfaces[j].collectMissingTypes(missingTypes);
       }
     }
   }
