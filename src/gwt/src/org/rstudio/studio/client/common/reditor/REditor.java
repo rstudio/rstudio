@@ -28,6 +28,7 @@ import org.rstudio.codemirror.client.CodeMirror.CursorPosition;
 import org.rstudio.codemirror.client.CodeMirror.LineHandle;
 import org.rstudio.codemirror.client.CodeMirrorConfig;
 import org.rstudio.codemirror.client.CodeMirrorEditor;
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.DomMetrics;
@@ -37,7 +38,6 @@ import org.rstudio.core.client.events.NativeKeyPressEvent;
 import org.rstudio.core.client.events.NativeKeyPressHandler;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.reditor.model.REditorServerOperations;
 import org.rstudio.studio.client.common.reditor.resources.REditorResources;
 import org.rstudio.studio.client.server.Void;
@@ -187,7 +187,8 @@ public class REditor extends CodeMirrorEditor
 
       inputEditorDisplay_ = new CodeMirrorToInputEditorDisplayAdapter(this);
       updateCompletionManager();
-      braceHighlighter_ = new BraceHighlighter<Node>(inputEditorDisplay_, 300);
+      if (!BrowseCap.INSTANCE.suppressBraceHighlighting())
+         new BraceHighlighter<Node>(inputEditorDisplay_, 300);
 
       addNativeKeyDownHandler(new NativeKeyDownHandler()
       {
@@ -386,8 +387,6 @@ public class REditor extends CodeMirrorEditor
    private int version_ = (int) Math.random();
    private final REditorServerOperations server_ ;
    private CodeMirrorToInputEditorDisplayAdapter inputEditorDisplay_;
-   @SuppressWarnings("unused")
-   private BraceHighlighter<Node> braceHighlighter_;
    private boolean lineNumbers_;
    private EditorLanguage language_ = EditorLanguage.LANG_PLAIN;
    private CompletionManager completionManager_;

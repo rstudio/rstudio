@@ -39,6 +39,14 @@ body, td {
   margin-right: -18px;
 }
 
+#iewarn {
+  color: #aaa;
+  width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
 #caption {
   text-align: left;
   border-bottom: 4px solid #e0e2e5;

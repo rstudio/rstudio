@@ -18,7 +18,7 @@ public class BrowseCap
 {
    public static final BrowseCap INSTANCE = GWT.create(BrowseCap.class);
 
-   public boolean suppressConsoleBraceHighlightingInHostedMode()
+   public boolean suppressBraceHighlighting()
    {
       return false;
    }
