@@ -100,6 +100,8 @@ public class SplitLayoutPanel extends DockLayoutPanel {
     private final boolean reverse;
     private int minSize;
 
+    private double centerSize, syncedCenterSize;
+
     public Splitter(Widget target, boolean reverse) {
       this.target = target;
       this.reverse = reverse;
@@ -176,9 +178,27 @@ public class SplitLayoutPanel extends DockLayoutPanel {
 
     protected abstract int getTargetSize();
 
+    private double getMaxSize() {
+      // To avoid seeing stale center size values due to deferred layout
+      // updates, maintain our own copy up to date and resync when the
+      // DockLayoutPanel value changes.
+      double newCenterSize = getCenterSize();
+      if (syncedCenterSize != newCenterSize) {
+        syncedCenterSize = newCenterSize;
+        centerSize = newCenterSize;
+      }
+
+      return ((LayoutData) target.getLayoutData()).size + centerSize;
+    }
+
     private void setAssociatedWidgetSize(double size) {
       if (size < minSize) {
         size = minSize;
+      }
+
+      double maxSize = getMaxSize();
+      if (size > maxSize) {
+        size = maxSize;
       }
 
       LayoutData layout = (LayoutData) target.getLayoutData();
@@ -186,12 +206,8 @@ public class SplitLayoutPanel extends DockLayoutPanel {
         return;
       }
 
-      // Don't grow beyond remaining space
-      double centerSize = getCenterSize();
-      if (size - layout.size > centerSize) {
-        size = layout.size + centerSize;
-      }
-
+      // Adjust our view until the deferred layout gets scheduled.
+      centerSize += layout.size - size;
       layout.size = size;
 
       // Defer actually updating the layout, so that if we receive many
