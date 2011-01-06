@@ -15,6 +15,10 @@
 
 #include <algorithm>
 
+#if _WIN32
+#include <shlobj.h>
+#endif
+
 #include <QtGui/QFileDialog>
 
 #include <core/FilePath.hpp>
@@ -99,11 +103,33 @@ QString GwtCallback::getSaveFileName(const QString& caption,
    return createAliasedPath(result);
 }
 
-QString GwtCallback::getExistingDirectory(const QString &caption,
-                                         const QString &dir)
+QString GwtCallback::getExistingDirectory(const QString& caption,
+                                         const QString& dir)
 {
    QString resolvedDir = resolveAliasedPath(dir);
-   QString result = QFileDialog::getExistingDirectory(pOwnerWindow_, caption, resolvedDir);
+
+   QString result;
+#ifdef _WIN32
+   // Bug
+   char szDir[MAX_PATH];
+   BROWSEINFO bi;
+   bi.hwndOwner = pOwnerWindow_->winId();
+   bi.pidlRoot = NULL;
+   bi.pszDisplayName = szDir;
+   bi.lpszTitle = "Select a folder:";
+   bi.ulFlags = BIF_RETURNONLYFSDIRS;
+   bi.lpfn = NULL;
+   bi.lpfn = 0;
+   bi.iImage = -1;
+   LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
+   if (!pidl || !SHGetPathFromIDList(pidl, szDir))
+      result = QString("");
+   else
+      result = QString::fromLocal8Bit(szDir);
+#else
+   result = QFileDialog::getExistingDirectory(pOwnerWindow_, caption, resolvedDir);
+#endif
+
    webView()->page()->mainFrame()->setFocus();
    return createAliasedPath(result);
 }
