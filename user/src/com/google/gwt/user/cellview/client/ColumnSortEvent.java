@@ -18,6 +18,7 @@ package com.google.gwt.user.cellview.client;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.view.client.HasData;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -41,6 +42,25 @@ public class ColumnSortEvent extends GwtEvent<ColumnSortEvent.Handler> {
      * @param event the {@link ColumnSortEvent} that was fired
      */
     void onColumnSort(ColumnSortEvent event);
+  }
+
+  /**
+   * A default handler used with views attached to asynchronous data providers
+   * such as {@link AsyncDataProvider}. This handler calls
+   * {@link HasData#setVisibleRangeAndClearData(com.google.gwt.view.client.Range, boolean)},
+   * which clears the current data and triggers the data provider's range change
+   * handler.
+   */
+  public static class AsyncHandler implements Handler {
+    private final HasData<?> hasData;
+
+    public AsyncHandler(HasData<?> hasData) {
+      this.hasData = hasData;
+    }
+
+    public void onColumnSort(ColumnSortEvent event) {
+      hasData.setVisibleRangeAndClearData(hasData.getVisibleRange(), true);
+    }
   }
 
   /**
