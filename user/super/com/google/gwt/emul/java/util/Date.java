@@ -125,15 +125,7 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
   }
 
   public int compareTo(Date other) {
-    long thisTime = getTime();
-    long otherTime = other.getTime();
-    if (thisTime < otherTime) {
-      return -1;
-    } else if (thisTime > otherTime) {
-      return 1;
-    } else {
-      return 0;
-    }
+    return Long.signum(getTime() - other.getTime());
   }
 
   @Override

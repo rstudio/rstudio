@@ -36,6 +36,14 @@ public class SqlTimestampTest extends GWTTestCase {
     return "com.google.gwt.emultest.EmulSuite";
   }
 
+  public void testCompareTo() {
+    Timestamp now = Timestamp.valueOf("2011-01-05 12:45:18.000000000");
+    // add 1.5 << 31 so coercing the ms difference to int results in a
+    // sign change
+    Timestamp later = new Timestamp(now.getTime() + (3L << 30));
+    assertTrue("later <= now", later.compareTo(now) > 0);
+  }
+
   /**
    * Timestamps have some non-obvious comparison semantics when compared to
    * dates.

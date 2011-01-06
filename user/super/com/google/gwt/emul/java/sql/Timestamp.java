@@ -116,8 +116,8 @@ public class Timestamp extends java.util.Date {
   }
 
   public int compareTo(Timestamp o) {
-    int delta = (int) (getTime() - o.getTime());
-    return delta == 0 ? getNanos() - o.getNanos() : delta;
+    int sign = Long.signum(getTime() - o.getTime());
+    return sign == 0 ? getNanos() - o.getNanos() : sign;
   }
 
   @Override
