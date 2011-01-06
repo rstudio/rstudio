@@ -321,12 +321,11 @@ public class XMLTest extends GWTTestCase {
   }
 
   /**
-   * This test is failing on one Safari configuration in web mode in the 1.5
-   * release branch, but it passes in all other configurations and in the trunk.
-   * The files in the xml package are identical between the trunk and the 1.5
-   * branch.
+   * At one point, this test was failing on one Safari configuration in
+   * Production Mode in the 1.5 release branch.
    */
-  public void disabledTestParse() {
+  @DoNotRunWith({Platform.HtmlUnitUnknown})
+  public void testParse() {
     Document docA = XMLParser.parse("<!--hello-->   <a spam=\"ham\">\n  <?pi hello ?>dfgdfg  <b/>\t</a>");
 
     Document docB = XMLParser.createDocument();
