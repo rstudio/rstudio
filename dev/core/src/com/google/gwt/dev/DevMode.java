@@ -402,7 +402,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
     // Background scan the classpath to warm the cache.
     Thread scanThread = new Thread(new Runnable() {
       public void run() {
-        ResourceOracleImpl.preload(getTopLogger());
+        ResourceOracleImpl.preload(TreeLogger.NULL);
       }
     });
     scanThread.setDaemon(true);

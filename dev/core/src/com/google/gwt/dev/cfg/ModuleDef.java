@@ -243,7 +243,7 @@ public class ModuleDef {
   }
 
   public synchronized Resource findPublicFile(String partialPath) {
-    doRefresh(TreeLogger.NULL);
+    doRefresh();
     return lazyPublicOracle.getResourceMap().get(partialPath);
   }
 
@@ -275,7 +275,7 @@ public class ModuleDef {
    * @return the resource for the requested source file
    */
   public synchronized Resource findSourceFile(String partialPath) {
-    doRefresh(TreeLogger.NULL);
+    doRefresh();
     return lazySourceOracle.getResourceMap().get(partialPath);
   }
 
@@ -298,7 +298,7 @@ public class ModuleDef {
   }
 
   public String[] getAllPublicFiles() {
-    doRefresh(TreeLogger.NULL);
+    doRefresh();
     return lazyPublicOracle.getPathNames().toArray(Empty.STRINGS);
   }
 
@@ -307,7 +307,7 @@ public class ModuleDef {
    * oracle has been initialized.
    */
   public String[] getAllSourceFiles() {
-    doRefresh(TreeLogger.NULL);
+    doRefresh();
     return lazySourceOracle.getPathNames().toArray(Empty.STRINGS);
   }
 
@@ -321,7 +321,7 @@ public class ModuleDef {
 
   public synchronized CompilationState getCompilationState(TreeLogger logger)
       throws UnableToCompleteException {
-    doRefresh(TreeLogger.NULL);
+    doRefresh();
     CompilationState compilationState = CompilationStateBuilder.buildFrom(
         logger, lazySourceOracle.getResources());
     checkForSeedTypes(logger, compilationState);
@@ -368,7 +368,7 @@ public class ModuleDef {
       lazyResourcesOracle.setPathPrefixes(newPathPrefixes);
       ResourceOracleImpl.refresh(TreeLogger.NULL, lazyResourcesOracle);
     } else {
-      doRefresh(TreeLogger.NULL);
+      doRefresh();
     }
     return lazyResourcesOracle;
   }
@@ -424,7 +424,7 @@ public class ModuleDef {
     servletClassNamesByPath.put(path, servletClassName);
   }
 
-  public synchronized void refresh(TreeLogger logger) {
+  public synchronized void refresh() {
     needsRefresh = true;
   }
 
@@ -519,21 +519,19 @@ public class ModuleDef {
     }
   }
 
-  private synchronized void doRefresh(TreeLogger logger) {
+  private synchronized void doRefresh() {
     if (!needsRefresh) {
       return;
     }
     Event moduleDefEvent = SpeedTracerLogger.start(
         CompilerEventType.MODULE_DEF, "phase", "refresh", "module", getName());
-    logger = logger.branch(TreeLogger.DEBUG, "Refreshing module '" + getName()
-        + "'");
-
     // Refresh resource oracles.
     if (lazyResourcesOracle == null) {
-      ResourceOracleImpl.refresh(logger, lazyPublicOracle, lazySourceOracle);
+      ResourceOracleImpl.refresh(TreeLogger.NULL, lazyPublicOracle,
+          lazySourceOracle);
     } else {
-      ResourceOracleImpl.refresh(logger, lazyPublicOracle, lazySourceOracle,
-          lazyResourcesOracle);
+      ResourceOracleImpl.refresh(TreeLogger.NULL, lazyPublicOracle,
+          lazySourceOracle, lazyResourcesOracle);
     }
     moduleDefEvent.end();
     needsRefresh = false;

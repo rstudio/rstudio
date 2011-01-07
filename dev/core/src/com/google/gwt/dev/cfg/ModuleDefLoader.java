@@ -90,7 +90,7 @@ public final class ModuleDefLoader {
   public static ModuleDef createSyntheticModule(TreeLogger logger,
       String moduleName, String[] inherits, boolean refresh)
       throws UnableToCompleteException {
-    ModuleDef moduleDef = tryGetLoadedModule(logger, moduleName, refresh);
+    ModuleDef moduleDef = tryGetLoadedModule(moduleName, refresh);
     if (moduleDef != null) {
       return moduleDef;
     }
@@ -139,7 +139,7 @@ public final class ModuleDefLoader {
       if (physicalName != null) {
         moduleName = physicalName;
       }
-      ModuleDef moduleDef = tryGetLoadedModule(logger, moduleName, refresh);
+      ModuleDef moduleDef = tryGetLoadedModule(moduleName, refresh);
       if (moduleDef != null) {
         return moduleDef;
       }
@@ -150,13 +150,12 @@ public final class ModuleDefLoader {
     }
   }
 
-  private static ModuleDef tryGetLoadedModule(TreeLogger logger,
-      String moduleName, boolean refresh) {
+  private static ModuleDef tryGetLoadedModule(String moduleName, boolean refresh) {
     ModuleDef moduleDef = loadedModules.get(moduleName);
     if (moduleDef == null || moduleDef.isGwtXmlFileStale()) {
       return null;
     } else if (refresh) {
-      moduleDef.refresh(logger);
+      moduleDef.refresh();
     }
     return moduleDef;
   }
