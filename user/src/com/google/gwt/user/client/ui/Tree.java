@@ -89,10 +89,16 @@ import java.util.Map;
  * </p>
  */
 @SuppressWarnings("deprecation")
-public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
-    HasFocus, HasAnimation, HasAllKeyHandlers, HasAllFocusHandlers,
-    HasSelectionHandlers<TreeItem>, HasOpenHandlers<TreeItem>,
-    HasCloseHandlers<TreeItem>, SourcesMouseEvents, HasAllMouseHandlers {
+public class Tree extends Widget implements HasTreeItems, HasWidgets, 
+    SourcesTreeEvents, HasFocus, HasAnimation, HasAllKeyHandlers,
+    HasAllFocusHandlers, HasSelectionHandlers<TreeItem>,
+    HasOpenHandlers<TreeItem>, HasCloseHandlers<TreeItem>, SourcesMouseEvents,
+    HasAllMouseHandlers {
+  /*
+   * For compatibility with UiBinder interface HasTreeItems should be declared
+   * before HasWidgets, so that corresponding parser will run first and add
+   * TreeItem children as items, not as widgets.
+   */
 
   /**
    * A ClientBundle that provides images for this widget.
@@ -317,18 +323,15 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   public void addFocusListener(FocusListener listener) {
     ListenerWrapper.WrappedFocusListener.add(this, listener);
   }
-
+  
   /**
-   * Adds a simple tree item containing the specified text.
+   * Adds a simple tree item containing the specified html.
    * 
-   * @param itemText the text of the item to be added
+   * @param itemHtml the text of the item to be added
    * @return the item that was added
    */
-  public TreeItem addItem(String itemText) {
-    TreeItem ret = new TreeItem(itemText);
-    addItem(ret);
-
-    return ret;
+  public TreeItem addItem(String itemHtml) {
+    return root.addItem(itemHtml);
   }
 
   /**
@@ -348,6 +351,15 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
    */
   public void addItem(TreeItem item) {
     root.addItem(item);
+  }
+  
+  /**
+   * Adds an item to the root level of this tree.
+   * 
+   * @param isItem the wrapper of item to be added
+   */
+  public void addItem(IsTreeItem isItem) {
+    root.addItem(isItem);
   }
 
   /**
@@ -422,6 +434,16 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   public HandlerRegistration addSelectionHandler(
       SelectionHandler<TreeItem> handler) {
     return addHandler(handler, SelectionEvent.getType());
+  }
+  
+  /**
+   * Adds a simple tree item containing the specified text.
+   * 
+   * @param itemText the text of the item to be added
+   * @return the item that was added
+   */
+  public TreeItem addTextItem(String itemText) {
+    return root.addTextItem(itemText);
   }
 
   /**
@@ -674,6 +696,18 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
    */
   public void removeItem(TreeItem item) {
     root.removeItem(item);
+  }
+  
+  /**
+   * Removes an item from the root level of this tree.
+   * 
+   * @param isItem the wrapper of item to be removed
+   */
+  public void removeItem(IsTreeItem isItem) {
+    if (isItem != null) { 
+      TreeItem item = isItem.asTreeItem();
+      removeItem(item);
+    }
   }
 
   /**

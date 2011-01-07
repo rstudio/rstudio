@@ -39,11 +39,33 @@ public class TreeTest extends GWTTestCase {
   public String getModuleName() {
     return "com.google.gwt.user.DebugTest";
   }
+  
+  /**
+   * Test for {@link Tree#addItem(IsTreeItem)}.
+   */
+  public void testAddItemIsTreeItem() {
+    Tree t = new Tree();
+    TreeItem item = new TreeItem("hello");
+    t.addItem((IsTreeItem) item);
+    assertEquals(1, t.getItemCount());
+    assertSame(item, t.getItem(0));
+  }
 
   public void testAddItemSafeHtml() {
     Tree t = new Tree();
     TreeItem item = t.addItem(SafeHtmlUtils.fromSafeConstant(html));
     assertEquals(html, item.getHTML().toLowerCase());
+  }
+  
+  /**
+   * Test for {@link Tree#addTextItem(String)}.
+   */
+  public void testAddTextItem() {
+    Tree t = new Tree();
+    String text = "Some<br>text";
+    TreeItem item = t.addTextItem(text);
+    assertEquals(text, item.getText());
+    assertEquals("Some&lt;br&gt;text", item.getHTML());
   }
 
   public void testAttachDetachOrder() {
@@ -183,6 +205,41 @@ public class TreeTest extends GWTTestCase {
     assertNull(t.getSelectedItem());
     Iterator<TreeItem> iter2 = t.treeItemIterator();
     assertFalse(iter2.hasNext());
+  }
+  
+  /**
+   * Test for {@link Tree#removeItem(IsTreeItem)}.
+   */
+  public void testRemoveIsTreeItem() {
+    Tree t = new Tree();
+    TreeItem itemA = t.addItem("a");
+    TreeItem itemB = t.addItem("b");
+    // initial state
+    assertEquals(2, t.getItemCount());
+    assertSame(itemA, t.getItem(0));
+    assertSame(itemB, t.getItem(1));
+    // remove "itemA" as wrapper
+    t.removeItem((IsTreeItem) itemA);
+    assertEquals(1, t.getItemCount());
+    assertSame(itemB, t.getItem(0));
+    // ignore null
+    t.removeItem((IsTreeItem) null);
+  }
+  
+  /**
+   * Test for {@link Tree#removeItems()}.
+   */
+  public void testRemoveItems() {
+    Tree t = new Tree();
+    TreeItem itemA = t.addItem("a");
+    TreeItem itemB = t.addItem("b");
+    // initial state
+    assertEquals(2, t.getItemCount());
+    assertSame(itemA, t.getItem(0));
+    assertSame(itemB, t.getItem(1));
+    // do remove
+    t.removeItems();
+    assertEquals(0, t.getItemCount());
   }
 
   public void testRootAdd() {

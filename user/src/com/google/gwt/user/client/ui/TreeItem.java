@@ -39,7 +39,13 @@ import java.util.List;
  * {@example com.google.gwt.examples.TreeExample}
  * </p>
  */
-public class TreeItem extends UIObject implements HasHTML, HasSafeHtml {
+public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
+    HasHTML, HasSafeHtml {
+  /*
+   * For compatibility with UiBinder interface HasTreeItems should be declared
+   * before HasHTML, so that children items and widgets are processed before
+   * interpreting HTML. 
+   */
 
   /**
    * The margin applied to child items.
@@ -326,13 +332,13 @@ public class TreeItem extends UIObject implements HasHTML, HasSafeHtml {
   }
 
   /**
-   * Adds a child tree item containing the specified text.
+   * Adds a child tree item containing the specified html.
    * 
-   * @param itemText the text to be added
+   * @param itemHtml the text to be added
    * @return the item that was added
    */
-  public TreeItem addItem(String itemText) {
-    TreeItem ret = new TreeItem(itemText);
+  public TreeItem addItem(String itemHtml) {
+    TreeItem ret = new TreeItem(itemHtml);
     addItem(ret);
     return ret;
   }
@@ -360,6 +366,16 @@ public class TreeItem extends UIObject implements HasHTML, HasSafeHtml {
     maybeRemoveItemFromParent(item);
     insertItem(getChildCount(), item);
   }
+  
+  /**
+   * Adds another item as a child to this one.
+   * 
+   * @param isItem the wrapper of item to be added
+   */
+  public void addItem(IsTreeItem isItem) {
+    TreeItem item = isItem.asTreeItem();
+    addItem(item);
+  }
 
   /**
    * Adds a child tree item containing the specified widget.
@@ -371,6 +387,23 @@ public class TreeItem extends UIObject implements HasHTML, HasSafeHtml {
     TreeItem ret = new TreeItem(widget);
     addItem(ret);
     return ret;
+  }
+  
+  /**
+   * Adds a child tree item containing the specified text.
+   * 
+   * @param itemText the text of the item to be added
+   * @return the item that was added
+   */
+  public TreeItem addTextItem(String itemText) {
+    TreeItem ret = new TreeItem();
+    ret.setText(itemText);
+    addItem(ret);
+    return ret;
+  }
+  
+  public TreeItem asTreeItem() {
+    return this;
   }
 
   /**
@@ -597,7 +630,6 @@ public class TreeItem extends UIObject implements HasHTML, HasSafeHtml {
    * 
    * @param item the item to be removed
    */
-
   public void removeItem(TreeItem item) {
     // Validate.
     if (children == null || !children.contains(item)) {
@@ -621,6 +653,18 @@ public class TreeItem extends UIObject implements HasHTML, HasSafeHtml {
 
     if (!isRoot && children.size() == 0) {
       updateState(false, false);
+    }
+  }
+  
+  /**
+   * Removes one of this item's children.
+   * 
+   * @param isItem the wrapper of item to be removed
+   */
+  public void removeItem(IsTreeItem isItem) {
+    if (isItem != null) { 
+      TreeItem item = isItem.asTreeItem();
+      removeItem(item);
     }
   }
 

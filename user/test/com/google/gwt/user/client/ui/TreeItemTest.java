@@ -46,11 +46,38 @@ public class TreeItemTest extends GWTTestCase {
     assertEquals(b, item.getChild(0));
     assertEquals(a, item.getChild(1));
   }
+  
+  /**
+   * Test for {@link TreeItem#addItem(IsTreeItem)}.
+   */
+  public void testAddItemIsTreeItem() {
+    TreeItem root = new TreeItem("foo");
+    TreeItem item = new TreeItem("hello");
+    root.addItem((IsTreeItem) item);
+    assertEquals(1, root.getChildCount());
+    assertSame(item, root.getChild(0));
+  }
 
   public void testAddItemSafeHtml() {
     TreeItem item = new TreeItem("foo");
     TreeItem child = item.addItem(SafeHtmlUtils.fromSafeConstant(html));
     assertEquals(html, child.getHTML().toLowerCase());
+  }
+  
+  /**
+   * Test for {@link Tree#addTextItem(String)}.
+   */
+  public void testAddTextItem() {
+    TreeItem root = new TreeItem("foo");
+    String text = "Some<br>text";
+    TreeItem item = root.addTextItem(text);
+    assertEquals(text, item.getText());
+    assertEquals("Some&lt;br&gt;text", item.getHTML());
+  }
+  
+  public void testAsTreeItem() {
+    TreeItem item = new TreeItem("foo");
+    assertSame(item, item.asTreeItem());
   }
 
   public void testInsert() {
@@ -134,6 +161,41 @@ public class TreeItemTest extends GWTTestCase {
     TreeItem item = new TreeItem("foo");
     TreeItem child = item.insertItem(0, SafeHtmlUtils.fromSafeConstant(html));
     assertEquals(html, child.getHTML().toLowerCase());
+  }
+  
+  /**
+   * Test for {@link TreeItem#removeItem(IsTreeItem)}.
+   */
+  public void testRemoveIsTreeItem() {
+    TreeItem root = new TreeItem("root");
+    TreeItem itemA = root.addItem("a");
+    TreeItem itemB = root.addItem("b");
+    // initial state
+    assertEquals(2, root.getChildCount());
+    assertSame(itemA, root.getChild(0));
+    assertSame(itemB, root.getChild(1));
+    // remove "itemA" as wrapper
+    root.removeItem((IsTreeItem) itemA);
+    assertEquals(1, root.getChildCount());
+    assertSame(itemB, root.getChild(0));
+    // ignore null
+    root.removeItem((IsTreeItem) null);
+  }
+  
+  /**
+   * Test for {@link TreeItem#removeItems()}.
+   */
+  public void testRemoveItems() {
+    TreeItem root = new TreeItem("root");
+    TreeItem itemA = root.addItem("a");
+    TreeItem itemB = root.addItem("b");
+    // initial state
+    assertEquals(2, root.getChildCount());
+    assertSame(itemA, root.getChild(0));
+    assertSame(itemB, root.getChild(1));
+    // do remove
+    root.removeItems();
+    assertEquals(0, root.getChildCount());
   }
 
   public void testSafeHtmlConstructor() {

@@ -516,6 +516,28 @@ public class UiJavaResources {
       return code;
     }
   };
+  public static final MockJavaResource TREE = new MockJavaResource(
+      "com.google.gwt.user.client.ui.Tree") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("public class Tree extends Widget {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource TREE_ITEM = new MockJavaResource(
+      "com.google.gwt.user.client.ui.TreeItem") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("public class TreeItem extends UIObject {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource TIME_ZONE = new MockJavaResource(
       "com.google.gwt.i18n.client.TimeZone") {
     @Override
@@ -634,6 +656,8 @@ public class UiJavaResources {
     rtn.add(TAB_PANEL);
     rtn.add(TEXT_BOX_BASE);
     rtn.add(TIME_ZONE);
+    rtn.add(TREE);
+    rtn.add(TREE_ITEM);
     rtn.add(UI_OBJECT);
     rtn.add(UI_BINDER);
     rtn.add(UI_FACTORY);

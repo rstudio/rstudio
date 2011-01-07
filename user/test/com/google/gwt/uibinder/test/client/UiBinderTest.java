@@ -38,6 +38,8 @@ import com.google.gwt.user.client.ui.NamedFrame;
 import com.google.gwt.user.client.ui.NumberLabel;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.StackPanel;
+import com.google.gwt.user.client.ui.Tree;
+import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.ValueLabel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -470,6 +472,20 @@ public class UiBinderTest extends GWTTestCase {
   public void testNamedFrame() {
     NamedFrame p = widgetUi.myNamedFrame;
     assertNotNull("NamedFrame exists", p);
+  }
+  
+  public void testTree() {
+    Tree tree = widgetUi.myTree;
+    TreeItem complexItem = widgetUi.myTreeItemC;
+    // top level items
+    assertEquals(3, tree.getItemCount());
+    assertSame(widgetUi.myTreeItemA, tree.getItem(0));
+    assertSame(widgetUi.myTreeWidgetB, tree.getItem(1).getWidget());
+    assertSame(complexItem, tree.getItem(2));
+    // complex item
+    assertSame(2, complexItem.getChildCount());
+    assertSame(widgetUi.myTreeItemCA, complexItem.getChild(0));
+    assertSame(widgetUi.myTreeWidgetCB, complexItem.getChild(1).getWidget());
   }
 
   public void testDateLabel() {

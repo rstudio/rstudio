@@ -42,6 +42,7 @@ import com.google.gwt.uibinder.elementparsers.StackLayoutPanelParserTest;
 import com.google.gwt.uibinder.elementparsers.StackPanelParserTest;
 import com.google.gwt.uibinder.elementparsers.TabLayoutPanelParserTest;
 import com.google.gwt.uibinder.elementparsers.TabPanelParserTest;
+import com.google.gwt.uibinder.elementparsers.HasTreeItemsParserTest;
 import com.google.gwt.uibinder.elementparsers.UIObjectParserTest;
 import com.google.gwt.uibinder.rebind.DesignTimeUtilsTest;
 import com.google.gwt.uibinder.rebind.FieldWriterOfGeneratedCssResourceTest;
@@ -106,6 +107,7 @@ public class UiBinderJreSuite {
     suite.addTestSuite(StackPanelParserTest.class);
     suite.addTestSuite(TabLayoutPanelParserTest.class);
     suite.addTestSuite(TabPanelParserTest.class);
+    suite.addTestSuite(HasTreeItemsParserTest.class);
     suite.addTestSuite(UIObjectParserTest.class);
 
     return suite;

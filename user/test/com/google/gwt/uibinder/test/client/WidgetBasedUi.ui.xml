@@ -290,7 +290,14 @@
           </gwt:MenuItem>
         </gwt:MenuBar>
         </div>
-        <gwt:Tree ui:field='myTree' width="100px" />
+        <gwt:Tree ui:field="myTree" width="100px">
+          <gwt:TreeItem ui:field="myTreeItemA"/>
+          <gwt:Button ui:field="myTreeWidgetB"/>
+          <gwt:TreeItem ui:field="myTreeItemC">
+            <gwt:TreeItem ui:field="myTreeItemCA"/>
+            <gwt:Button ui:field="myTreeWidgetCB"/>
+          </gwt:TreeItem>
+        </gwt:Tree>
 
       <p>...TextBoxes...</p>
 

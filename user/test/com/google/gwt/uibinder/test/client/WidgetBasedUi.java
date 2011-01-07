@@ -54,6 +54,7 @@ import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.StackPanel;
 import com.google.gwt.user.client.ui.ToggleButton;
 import com.google.gwt.user.client.ui.Tree;
+import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.ValueLabel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -108,6 +109,11 @@ public class WidgetBasedUi extends Composite {
   @UiField DisclosurePanel myDisclosurePanel;
   @UiField Widget myDisclosurePanelItem;
   @UiField Tree myTree;
+  @UiField TreeItem myTreeItemA;
+  @UiField Widget myTreeWidgetB;
+  @UiField TreeItem myTreeItemC;
+  @UiField TreeItem myTreeItemCA;
+  @UiField Widget myTreeWidgetCB;
   @UiField Element nonStandardElement;
   @SuppressWarnings("deprecation")
   @UiField com.google.gwt.user.client.ui.DockPanel root;
