@@ -133,10 +133,21 @@ public class FileList extends Composite
       case FileChange.ADD:
          if (file.getParentPath().equalTo(containingPath_))
          {
-            if (rowForFile(file) == -1)
+            int row = rowForFile(file);
+            if (row == -1)
             {
                addFile(file);
                scrollToBottom();
+            }
+            else
+            {
+               // since we eagerly perform renames at the client UI
+               // layer then sometimes an "added" file is really just
+               // a rename. in this case the file already exists due
+               // to the eager rename in the client but still needs its
+               // metadata updated
+               files_.set(row, file);
+               setFileWidgets(row, file);
             }
          }
          break;
