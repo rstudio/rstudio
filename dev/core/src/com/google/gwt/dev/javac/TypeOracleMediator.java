@@ -787,6 +787,15 @@ public class TypeOracleMediator extends TypeOracleBuilder {
     addAnnotations(type, declaredAnnotations);
 
     String signature = classData.getSignature();
+
+    /*
+     * Note: Byte code from the OpenJDK compiler doesn't contain a type signature for non-static
+     * inner classes of parameterized types that do not contain new parameters (but JDT compiled
+     * byte code does). That can cause some differences in the way generic types are represented
+     * in the type oracle.
+     *
+     * These differences also show up when using java.lang.reflect to look at types.
+     */
     if (signature != null) {
       // If we have a signature, use it for superclass and interfaces
       SignatureReader reader = new SignatureReader(signature);
