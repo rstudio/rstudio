@@ -172,6 +172,30 @@ public class ResourceOracleImpl implements ResourceOracle {
   }
 
   /**
+   * Preinitializes the classpath from the thread default {@link ClassLoader}.
+   */
+  public static void preload(TreeLogger logger) {
+    preload(logger, Thread.currentThread().getContextClassLoader());
+  }
+
+  /**
+   * Preinitializes the classpath for a given {@link ClassLoader}.
+   */
+  public static void preload(TreeLogger logger, ClassLoader classLoader) {
+    Event resourceOracle = SpeedTracerLogger.start(
+        CompilerEventType.RESOURCE_ORACLE, "phase", "preload");
+    List<ClassPathEntry> entries = getAllClassPathEntries(logger, classLoader);
+    for (ClassPathEntry entry : entries) {
+      // We only handle pre-indexing jars, the file system could change.
+      if (entry instanceof ZipFileClassPathEntry) {
+        ZipFileClassPathEntry zpe = (ZipFileClassPathEntry) entry;
+        zpe.index(logger);
+      }
+    }
+    resourceOracle.end();
+  }
+
+  /**
    * Rescans the associated paths to recompute the available resources.
    * 
    * TODO(conroy,scottb): This synchronization could be improved upon to allow

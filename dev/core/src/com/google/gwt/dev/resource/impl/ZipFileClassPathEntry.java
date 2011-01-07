@@ -90,11 +90,7 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
   @Override
   public Map<AbstractResource, PathPrefix> findApplicableResources(
       TreeLogger logger, PathPrefixSet pathPrefixSet) {
-    // Never re-index.
-    if (allZipFileResources == null) {
-      allZipFileResources = buildIndex(logger);
-    }
-
+    index(logger);
     ZipFileSnapshot snapshot = cachedSnapshots.get(pathPrefixSet);
     if (snapshot == null || snapshot.prefixSetSize != pathPrefixSet.getSize()) {
       snapshot = new ZipFileSnapshot(pathPrefixSet.getSize(),
@@ -111,6 +107,13 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
 
   public ZipFile getZipFile() {
     return zipFile;
+  }
+
+  synchronized void index(TreeLogger logger) {
+    // Never re-index.
+    if (allZipFileResources == null) {
+      allZipFileResources = buildIndex(logger);
+    }
   }
 
   private Set<ZipFileResource> buildIndex(TreeLogger logger) {

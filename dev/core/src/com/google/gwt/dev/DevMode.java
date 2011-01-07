@@ -23,6 +23,7 @@ import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.cfg.ModuleDef;
+import com.google.gwt.dev.resource.impl.ResourceOracleImpl;
 import com.google.gwt.dev.shell.jetty.JettyLauncher;
 import com.google.gwt.dev.ui.RestartServerCallback;
 import com.google.gwt.dev.ui.RestartServerEvent;
@@ -410,6 +411,21 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
     return true;
   }
 
+  @Override
+  protected boolean doStartup() {
+    // Background scan the classpath to warm the cache.
+    Thread scanThread = new Thread(new Runnable() {
+      public void run() {
+        ResourceOracleImpl.preload(getTopLogger());
+      }
+    });
+    scanThread.setDaemon(true);
+    scanThread.setPriority((Thread.MIN_PRIORITY + Thread.NORM_PRIORITY) / 2);
+    scanThread.start();
+
+    return super.doStartup();
+  }
+  
   @Override
   protected int doStartUpServer() {
     // Create the war directory if it doesn't exist
