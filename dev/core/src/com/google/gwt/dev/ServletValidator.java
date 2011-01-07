@@ -221,7 +221,7 @@ class ServletValidator {
         + "' with a mapping to '"
         + servletPath
         + "', but the web.xml has no corresponding mapping; please add the following lines to your web.xml:\n"
-        + ServletValidator.generateServletMappingTag(servletName, servletPath);
+        + ServletWriter.generateServletMappingTag(servletName, servletPath);
   }
 
   static String generateMissingServletMessage(String servletClass,
@@ -230,8 +230,8 @@ class ServletValidator {
     return "Module declares a servlet class '"
         + servletClass
         + "', but the web.xml has no corresponding declaration; please add the following lines to your web.xml:\n"
-        + ServletValidator.generateServletTag(servletName, servletClass) + "\n"
-        + ServletValidator.generateServletMappingTag(servletName, servletPath);
+        + ServletWriter.generateServletTag(servletName, servletClass) + "\n"
+        + ServletWriter.generateServletMappingTag(servletName, servletPath);
   }
 
   static String suggestServletName(String servletClass) {
@@ -240,26 +240,6 @@ class ServletValidator {
     String firstChar = suggest.substring(0, 1).toLowerCase(Locale.ENGLISH);
     suggest = firstChar + suggest.substring(1);
     return suggest;
-  }
-
-  private static String generateServletMappingTag(String servletName,
-      String servletPath) {
-    StringBuilder sb = new StringBuilder();
-    sb.append("<servlet-mapping>\n");
-    sb.append("  <servlet-name>" + servletName + "</servlet-name>\n");
-    sb.append("  <url-pattern>" + servletPath + "</url-pattern>\n");
-    sb.append("</servlet-mapping>");
-    return sb.toString();
-  }
-
-  private static String generateServletTag(String servletName,
-      String servletClass) {
-    StringBuilder sb = new StringBuilder();
-    sb.append("<servlet>\n");
-    sb.append("  <servlet-name>" + servletName + "</servlet-name>\n");
-    sb.append("  <servlet-class>" + servletClass + "</servlet-class>\n");
-    sb.append("</servlet>");
-    return sb.toString();
   }
 
   private final Map<String, Set<String>> classNameToPaths;

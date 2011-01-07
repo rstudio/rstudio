@@ -47,7 +47,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.BindException;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -321,7 +321,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
    */
   private ServletContainer server;
 
-  private final Map<String, ModuleDef> startupModules = new HashMap<String, ModuleDef>();
+  private final Map<String, ModuleDef> startupModules = new LinkedHashMap<String, ModuleDef>();
 
   /**
    * Tracks whether we created a temp workdir that we need to destroy.
@@ -379,28 +379,14 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       }
     }
 
-    ServletValidator servletValidator = null;
-    File webXml = new File(options.getWarDir(), "WEB-INF/web.xml");
-    if (!options.isNoServer() && webXml.exists()) {
-      servletValidator = ServletValidator.create(getTopLogger(), webXml);
-    }
-
     TreeLogger branch = getTopLogger().branch(TreeLogger.TRACE,
-        "Loading modules");
+        "Linking modules");
     Event slowStartupEvent = SpeedTracerLogger.start(DevModeEventType.SLOW_STARTUP);
     try {
-      for (String moduleName : options.getModuleNames()) {
-        TreeLogger moduleBranch = branch.branch(TreeLogger.TRACE, moduleName);
-          ModuleDef module = loadModule(moduleBranch, moduleName, false);
-          // Create a hard reference to the module to avoid gc-ing it until we
-          // actually load the module from the browser.
-          startupModules.put(module.getName(), module);
-          if (!options.isNoServer()) {
-            validateServletTags(moduleBranch, servletValidator, module, webXml);
-          }
-          TreeLogger loadLogger = moduleBranch.branch(TreeLogger.DEBUG,
-              "Bootstrap link for command-line module '" + moduleName + "'");
-          link(loadLogger, module);
+      for (ModuleDef module : startupModules.values()) {
+        TreeLogger loadLogger = branch.branch(TreeLogger.DEBUG,
+            "Bootstrap link for command-line module '" + module.getCanonicalName() + "'");
+        link(loadLogger, module);
       }
     } catch (UnableToCompleteException e) {
       // Already logged.
@@ -423,7 +409,47 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
     scanThread.setPriority((Thread.MIN_PRIORITY + Thread.NORM_PRIORITY) / 2);
     scanThread.start();
 
-    return super.doStartup();
+    if (!super.doStartup()) {
+      return false;
+    }
+
+    ServletValidator servletValidator = null;
+    ServletWriter servletWriter = null;
+    File webXml = new File(options.getWarDir(), "WEB-INF/web.xml");
+    if (!options.isNoServer()) {
+      if (webXml.exists()) {
+        servletValidator = ServletValidator.create(getTopLogger(), webXml);
+      } else {
+        servletWriter = new ServletWriter();
+      }
+    }
+
+    TreeLogger branch = getTopLogger().branch(TreeLogger.TRACE,
+        "Loading modules");
+    try {
+      for (String moduleName : options.getModuleNames()) {
+        TreeLogger moduleBranch = branch.branch(TreeLogger.TRACE, moduleName);
+        ModuleDef module = loadModule(moduleBranch, moduleName, false);
+        // Create a hard reference to the module to avoid gc-ing it until we
+        // actually load the module from the browser.
+        startupModules.put(module.getName(), module);
+
+        if (!options.isNoServer()) {
+          validateServletTags(moduleBranch, servletValidator, servletWriter,
+              module);
+        }
+      }
+      if (servletWriter != null) {
+        servletWriter.realize(webXml);
+      }
+    } catch (IOException e) {
+      getTopLogger().log(TreeLogger.WARN,
+          "Unable to generate '" + webXml.getAbsolutePath() + "'");
+    } catch (UnableToCompleteException e) {
+      // Already logged.
+      return false;
+    }
+    return true;
   }
   
   @Override
@@ -562,24 +588,24 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
   }
 
   private void validateServletTags(TreeLogger logger,
-      ServletValidator servletValidator, ModuleDef module, File webXml) {
+      ServletValidator servletValidator, ServletWriter servletWriter,
+      ModuleDef module) {
+    String[] servletPaths = module.getServletPaths();
+    if (servletPaths.length == 0) {
+      return;
+    }
+
     TreeLogger servletLogger = logger.branch(TreeLogger.DEBUG,
         "Validating <servlet> tags for module '" + module.getName() + "'",
         null, new InstalledHelpInfo("servletMappings.html"));
-    String[] servletPaths = module.getServletPaths();
-    if (servletValidator == null && servletPaths.length > 0) {
-      servletLogger.log(
-          TreeLogger.WARN,
-          "Module declares "
-              + servletPaths.length
-              + " <servlet> declaration(s), but a valid 'web.xml' was not found at '"
-              + webXml.getAbsolutePath() + "'");
-    } else {
-      for (String servletPath : servletPaths) {
-        String servletClass = module.findServletForPath(servletPath);
-        assert (servletClass != null);
-        // Prefix module name to convert module mapping to global mapping.
-        servletPath = "/" + module.getName() + servletPath;
+    for (String servletPath : servletPaths) {
+      String servletClass = module.findServletForPath(servletPath);
+      assert (servletClass != null);
+      // Prefix module name to convert module mapping to global mapping.
+      servletPath = "/" + module.getName() + servletPath;
+      if (servletValidator == null) {
+        servletWriter.addMapping(servletClass, servletPath);
+      } else {
         servletValidator.validate(servletLogger, servletClass, servletPath);
       }
     }
