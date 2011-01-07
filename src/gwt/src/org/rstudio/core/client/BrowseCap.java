@@ -18,6 +18,11 @@ public class BrowseCap
 {
    public static final BrowseCap INSTANCE = GWT.create(BrowseCap.class);
 
+   public boolean suppressCodeMirrorCompletion()
+   {
+      return false;
+   }
+
    public boolean suppressBraceHighlighting()
    {
       return false;

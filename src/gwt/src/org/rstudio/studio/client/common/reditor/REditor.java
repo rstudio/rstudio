@@ -314,7 +314,8 @@ public class REditor extends CodeMirrorEditor
 
    private void updateCompletionManager()
    {
-      if (language_.useRCompletion())
+      if (language_.useRCompletion()
+          && !BrowseCap.INSTANCE.suppressCodeMirrorCompletion())
       {
          completionManager_ = new RCompletionManager(
                inputEditorDisplay_,
