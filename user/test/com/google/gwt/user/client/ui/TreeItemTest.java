@@ -23,7 +23,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
  */
 public class TreeItemTest extends GWTTestCase {
 
-  private static final String html = "<b>hello</b><i>world</i>";
+  private static final String HTML = "<b>hello</b><i>world</i>";
 
   @Override
   public String getModuleName() {
@@ -60,8 +60,8 @@ public class TreeItemTest extends GWTTestCase {
 
   public void testAddItemSafeHtml() {
     TreeItem item = new TreeItem("foo");
-    TreeItem child = item.addItem(SafeHtmlUtils.fromSafeConstant(html));
-    assertEquals(html, child.getHTML().toLowerCase());
+    TreeItem child = item.addItem(SafeHtmlUtils.fromSafeConstant(HTML));
+    assertEquals(HTML, child.getHTML().toLowerCase());
   }
   
   /**
@@ -72,7 +72,9 @@ public class TreeItemTest extends GWTTestCase {
     String text = "Some<br>text";
     TreeItem item = root.addTextItem(text);
     assertEquals(text, item.getText());
-    assertEquals("Some&lt;br&gt;text", item.getHTML());
+    // Normalize the html for ancient safari 3
+    String html = item.getHTML().replace(">", "&gt;");
+    assertEquals("Some&lt;br&gt;text", html);
   }
   
   public void testAsTreeItem() {
@@ -159,8 +161,8 @@ public class TreeItemTest extends GWTTestCase {
 
   public void testInsertItemSafeHtml() {
     TreeItem item = new TreeItem("foo");
-    TreeItem child = item.insertItem(0, SafeHtmlUtils.fromSafeConstant(html));
-    assertEquals(html, child.getHTML().toLowerCase());
+    TreeItem child = item.insertItem(0, SafeHtmlUtils.fromSafeConstant(HTML));
+    assertEquals(HTML, child.getHTML().toLowerCase());
   }
   
   /**
@@ -199,15 +201,15 @@ public class TreeItemTest extends GWTTestCase {
   }
 
   public void testSafeHtmlConstructor() {
-    TreeItem item = new TreeItem(SafeHtmlUtils.fromSafeConstant(html));
+    TreeItem item = new TreeItem(SafeHtmlUtils.fromSafeConstant(HTML));
     
-    assertEquals(html, item.getHTML().toLowerCase());
+    assertEquals(HTML, item.getHTML().toLowerCase());
   }
 
   public void testSetSafeHtml() {
     TreeItem item = new TreeItem("foo");
-    item.setHTML(SafeHtmlUtils.fromSafeConstant(html));
-    assertEquals(html, item.getHTML().toLowerCase());
+    item.setHTML(SafeHtmlUtils.fromSafeConstant(HTML));
+    assertEquals(HTML, item.getHTML().toLowerCase());
   }
 
   /**
