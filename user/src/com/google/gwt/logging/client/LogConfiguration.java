@@ -18,6 +18,7 @@ package com.google.gwt.logging.client;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.ui.HasWidgets;
 
@@ -146,5 +147,16 @@ public class LogConfiguration implements EntryPoint {
 
   public void onModuleLoad() {
     impl.configureClientSideLogging();
+    
+    if (impl.loggingIsEnabled()) {
+      if (GWT.getUncaughtExceptionHandler() == null) {
+        final Logger log = Logger.getLogger(LogConfiguration.class.getName());
+        GWT.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+          public void onUncaughtException(Throwable e) {
+            log.log(Level.SEVERE, e.getMessage(), e);
+          }
+        });
+      }
+    }
   }
 }
