@@ -26,6 +26,8 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.dom.client.Style.TableLayout;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableColElement;
 import com.google.gwt.dom.client.TableElement;
@@ -55,8 +57,10 @@ import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.SelectionModel;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -478,11 +482,11 @@ public class CellTable<T> extends AbstractHasData<T> {
     return DEFAULT_RESOURCES;
   }
 
+  final TableColElement colgroup;
   private boolean cellIsEditing;
 
-  private final TableColElement colgroup;
-
   private final List<Column<T, ?>> columns = new ArrayList<Column<T, ?>>();
+  private final Map<Column<T, ?>, String> columnWidths = new HashMap<Column<T, ?>, String>();
 
   /**
    * Indicates that at least one column depends on selection.
@@ -735,6 +739,16 @@ public class CellTable<T> extends AbstractHasData<T> {
   }
 
   /**
+   * Clear the width of the specified {@link Column}.
+   * 
+   * @param column the column
+   */
+  public void clearColumnWidth(Column<T, ?> column) {
+    columnWidths.remove(column);
+    refreshColumnWidths();
+  }
+
+  /**
    * Return the height of the table body.
    * 
    * @return an int representing the body height
@@ -770,7 +784,7 @@ public class CellTable<T> extends AbstractHasData<T> {
    * @param column the column to search for
    * @return the index of the column, or -1 if not found
    */
-  public int getColumnIndex(Column<T,?> column) {
+  public int getColumnIndex(Column<T, ?> column) {
     return columns.indexOf(column);
   }
 
@@ -943,6 +957,12 @@ public class CellTable<T> extends AbstractHasData<T> {
         new SafeHtmlHeader(footerHtml));
   }
 
+  @Override
+  public void redraw() {
+    refreshColumnWidths();
+    super.redraw();
+  }
+
   /**
    * Redraw the table's footers.
    */
@@ -1020,6 +1040,32 @@ public class CellTable<T> extends AbstractHasData<T> {
   }
 
   /**
+   * Set the width of a {@link Column}. The layout behavior depends on whether
+   * or not the table is using fixed layout.
+   * 
+   * @param column the column
+   * @param width the width of the column
+   * @see #setTableLayoutFixed(boolean)
+   */
+  public void setColumnWidth(Column<T, ?> column, String width) {
+    columnWidths.put(column, width);
+    refreshColumnWidths();
+  }
+
+  /**
+   * Set the width of a {@link Column}. The layout behavior depends on whether
+   * or not the table is using fixed layout.
+   * 
+   * @param column the column
+   * @param width the width of the column
+   * @param unit the {@link Unit} of measurement
+   * @see #setTableLayoutFixed(boolean)
+   */
+  public void setColumnWidth(Column<T, ?> column, double width, Unit unit) {
+    setColumnWidth(column, width + unit.getType());
+  }
+
+  /**
    * Sets the object used to determine how a row is styled; the change will take
    * effect the next time that the table is rendered.
    * 
@@ -1027,6 +1073,62 @@ public class CellTable<T> extends AbstractHasData<T> {
    */
   public void setRowStyles(RowStyles<T> rowStyles) {
     this.rowStyles = rowStyles;
+  }
+
+  /**
+   * <p>
+   * Enable or disable fixed table layout.
+   * </p>
+   * 
+   * <p>
+   * <h1>Fixed Table Layout</h1>
+   * When using the fixed table layout, cell contents are truncated as needed,
+   * which allows you to set the exact width of columns and the table. The
+   * default column width is 0 (invisible). In order to see all columns, you
+   * must set the width of the table (recommended 100%), or set the width of
+   * every column in the table. The following conditions are true for fixed
+   * layout tables:
+   * <ul>
+   * <li>
+   * If the widths of <b>all</b> columns are set, the width becomes a weight and
+   * the columns are resized proportionally.</li>
+   * <li>If the widths of <b>some</b> columns are set using absolute values
+   * (PX), those columns are fixed and the remaining width is divided evenly
+   * over the other columns. If there is no remaining width, the other columns
+   * will not be visible.</li>
+   * <li>If the width of some columns are set in absolute values (PX) and others
+   * are set in relative values (PCT), the absolute columns will be fixed and
+   * the remaining width is divided proportionally over the PCT columns. This
+   * allows users to define how the remaining width is allocated.</li>
+   * </ul>
+   * </p>
+   * 
+   * @param isFixed true to use fixed table layout, false not to
+   * @see <a href="http://www.w3.org/TR/CSS2/tables.html#width-layout">W3C HTML
+   *      Specification</a>
+   */
+  public void setTableLayoutFixed(boolean isFixed) {
+    if (isFixed) {
+      table.getStyle().setTableLayout(TableLayout.FIXED);
+    } else {
+      table.getStyle().clearTableLayout();
+    }
+  }
+
+  /**
+   * Set the width of the width and specify whether or not it should use fixed
+   * table layout. See {@link #setTableLayoutFixed(boolean)} for more
+   * information about fixed layout tables.
+   * 
+   * @param width the width of the table
+   * @param isFixedLayout true to use fixed width layout, false not to
+   * @see #setTableLayoutFixed(boolean)
+   * @see <a href="http://www.w3.org/TR/CSS2/tables.html#width-layout">W3C HTML
+   *      Specification</a>
+   */
+  public final void setWidth(String width, boolean isFixedLayout) {
+    super.setWidth(width);
+    setTableLayoutFixed(isFixedLayout);
   }
 
   @Override
@@ -1751,6 +1853,29 @@ public class CellTable<T> extends AbstractHasData<T> {
   private boolean isColumnInteractive(Column<T, ?> column) {
     Set<String> consumedEvents = column.getCell().getConsumedEvents();
     return consumedEvents != null && consumedEvents.size() > 0;
+  }
+
+  private void refreshColumnWidths() {
+    int columnCount = getColumnCount();
+    for (int i = 0; i < columnCount; i++) {
+      Column<T, ?> column = columns.get(i);
+      String width = columnWidths.get(column);
+      if (width == null) {
+        ensureTableColElement(i).getStyle().clearWidth();
+      } else {
+        ensureTableColElement(i).getStyle().setProperty("width", width);
+      }
+    }
+
+    /*
+     * Set the width to zero for all col elements that appear after the last
+     * column. Clearing the width would cause it to take up the remaining width
+     * in a fixed layout table.
+     */
+    int colCount = colgroup.getChildCount();
+    for (int i = columnCount; i < colCount; i++) {
+      ensureTableColElement(i).getStyle().setWidth(0.0, Unit.PX);
+    }
   }
 
   private <C> boolean resetFocusOnCellImpl(int row, int col, Column<T, C> column) {

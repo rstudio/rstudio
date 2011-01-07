@@ -17,6 +17,7 @@ package com.google.gwt.sample.showcase.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
@@ -44,8 +45,12 @@ public class ContentWidgetView extends Composite {
   @UiField
   Element nameElem;
 
-  public ContentWidgetView() {
+  public ContentWidgetView(boolean hasMargins) {
     initWidget(uiBinder.createAndBindUi(this));
+    if (hasMargins) {
+      examplePanel.getElement().getStyle().setMarginLeft(10.0, Unit.PX);
+      examplePanel.getElement().getStyle().setMarginRight(10.0, Unit.PX);
+    }
   }
 
   public void setDescription(String html) {

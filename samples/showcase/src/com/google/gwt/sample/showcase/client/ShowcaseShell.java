@@ -16,6 +16,7 @@
 package com.google.gwt.sample.showcase.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.Style.Display;
@@ -186,6 +187,8 @@ public class ShowcaseShell extends Composite {
     initWidget(uiBinder.createAndBindUi(this));
     initializeLocaleBox();
     contentSource.getElement().getStyle().setBackgroundColor("#eee");
+    contentSource.getElement().getStyle().setMarginLeft(10.0, Unit.PX);
+    contentSource.getElement().getStyle().setMarginRight(10.0, Unit.PX);
     contentSource.getElement().getStyle().setProperty(
         "border", "1px solid #c3c3c3");
     contentSource.getElement().getStyle().setProperty("padding", "10px 2px");

@@ -22,6 +22,7 @@ import com.google.gwt.cell.client.SelectionCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.sample.showcase.client.ContentWidget;
@@ -109,6 +110,11 @@ public class CwCellTable extends ContentWidget {
     this.constants = constants;
   }
 
+  @Override
+  public boolean hasMargins() {
+    return false;
+  }
+
   /**
    * Initialize this example.
    */
@@ -122,6 +128,7 @@ public class CwCellTable extends ContentWidget {
     // change.
     cellTable = new CellTable<ContactInfo>(
         ContactDatabase.ContactInfo.KEY_PROVIDER);
+    cellTable.setWidth("100%", true);
 
     // Attach a column sort handler to the ListDataProvider to sort the list.
     ListHandler<ContactInfo> sortHandler = new ListHandler<ContactInfo>(
@@ -185,6 +192,7 @@ public class CwCellTable extends ContentWidget {
       }
     };
     cellTable.addColumn(checkColumn, SafeHtmlUtils.fromSafeConstant("<br/>"));
+    cellTable.setColumnWidth(checkColumn, 40, Unit.PX);
 
     // First name.
     Column<ContactInfo, String> firstNameColumn = new Column<ContactInfo, String>(
@@ -208,6 +216,7 @@ public class CwCellTable extends ContentWidget {
         ContactDatabase.get().refreshDisplays();
       }
     });
+    cellTable.setColumnWidth(firstNameColumn, 20, Unit.PCT);
 
     // Last name.
     Column<ContactInfo, String> lastNameColumn = new Column<ContactInfo, String>(
@@ -231,6 +240,7 @@ public class CwCellTable extends ContentWidget {
         ContactDatabase.get().refreshDisplays();
       }
     });
+    cellTable.setColumnWidth(lastNameColumn, 20, Unit.PCT);
 
     // Category.
     final Category[] categories = ContactDatabase.get().queryCategories();
@@ -257,6 +267,7 @@ public class CwCellTable extends ContentWidget {
         ContactDatabase.get().refreshDisplays();
       }
     });
+    cellTable.setColumnWidth(categoryColumn, 130, Unit.PX);
 
     // Address.
     Column<ContactInfo, String> addressColumn = new Column<ContactInfo, String>(
@@ -273,5 +284,6 @@ public class CwCellTable extends ContentWidget {
       }
     });
     cellTable.addColumn(addressColumn, constants.cwCellTableColumnAddress());
+    cellTable.setColumnWidth(addressColumn, 60, Unit.PCT);
   }
 }

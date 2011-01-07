@@ -8,13 +8,14 @@
       color: #4B4A4A;
       font-size: 17pt;
       font-weight: bold;
+      margin: 0px 10px;
     }
     
     .description {
       color: #4B4A4A;
       padding: 10px 0px;
       border-bottom: 1px solid #6F7277;
-      margin-bottom: 12px;
+      margin: 0px 10px 12px 10px;
     }
   </ui:style>
 

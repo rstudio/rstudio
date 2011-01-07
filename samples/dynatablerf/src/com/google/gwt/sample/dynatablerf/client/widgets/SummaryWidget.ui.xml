@@ -6,12 +6,9 @@
       	display: inline;
       }
       
-      .thirty {
-      	width: 30%
-      }
-      
       .table {
       	width: 100%;
+      	table-layout: fixed;
       }
     </ui:style>
   <g:DockLayoutPanel ui:field="dock" unit="EX">

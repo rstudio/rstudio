@@ -20,11 +20,13 @@ import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.dom.client.TableSectionElement;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.CellTable.Resources;
@@ -381,6 +383,59 @@ public class CellTableTest extends AbstractHasDataTestBase {
     assertTrue(getHeaderElement(table, 2).getClassName().contains(styleHeader));
     assertTrue(getHeaderElement(table, 2).getClassName().contains(
         styleLastColumn));
+  }
+
+  /**
+   * Test that removing a column sets its width to zero.
+   */
+  public void testRemoveColumnWithWidth() {
+    CellTable<String> table = createAbstractHasData(new TextCell());
+    Column<String, ?> column1 = table.getColumn(1);
+    table.setColumnWidth(column1, "100px");
+    Element col0 = table.colgroup.getFirstChildElement();
+    Element col1 = col0.getNextSiblingElement();
+    assertEquals("100px", col1.getStyle().getWidth().toLowerCase());
+
+    // Remove column 1.
+    table.removeColumn(column1);
+    assertEquals("0px", col1.getStyle().getWidth());
+  }
+
+  public void testSetColumnWidth() {
+    CellTable<String> table = createAbstractHasData(new TextCell());
+    Column<String, ?> column0 = table.getColumn(0);
+    Column<String, ?> column1 = table.getColumn(1);
+
+    // Set the width.
+    table.setColumnWidth(column1, "100px");
+    Element col0 = table.colgroup.getFirstChildElement();
+    Element col1 = col0.getNextSiblingElement();
+    assertEquals("", col0.getStyle().getWidth());
+    assertEquals("100px", col1.getStyle().getWidth().toLowerCase());
+
+    // Clear the width.
+    table.clearColumnWidth(column1);
+    assertEquals("", col0.getStyle().getWidth());
+    assertEquals("", col1.getStyle().getWidth());
+
+    // Set the width again.
+    table.setColumnWidth(column0, 30.1, Unit.PCT);
+    assertEquals("30.1%", col0.getStyle().getWidth().toLowerCase());
+    assertEquals("", col1.getStyle().getWidth());
+  }
+
+  public void testSetTableLayoutFixed() {
+    CellTable<String> table = createAbstractHasData(new TextCell());
+    assertNotSame("fixed",
+        table.getElement().getStyle().getTableLayout());
+
+    table.setTableLayoutFixed(true);
+    assertEquals("fixed",
+        table.getElement().getStyle().getTableLayout());
+
+    table.setTableLayoutFixed(false);
+    assertNotSame("fixed",
+        table.getElement().getStyle().getTableLayout());
   }
 
   public void testSortableColumn() {

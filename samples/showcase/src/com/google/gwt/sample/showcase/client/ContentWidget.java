@@ -269,6 +269,15 @@ public abstract class ContentWidget extends LazyPanel
   }
 
   /**
+   * Check if the widget should have margins.
+   * 
+   * @return true to use margins, false to flush against edges
+   */
+  public boolean hasMargins() {
+    return true;
+  }
+
+  /**
    * Returns true if this widget has a style section.
    *
    * @return true if style tab available
@@ -302,7 +311,7 @@ public abstract class ContentWidget extends LazyPanel
    */
   @Override
   protected final Widget createWidget() {
-    view = new ContentWidgetView();
+    view = new ContentWidgetView(hasMargins());
     view.setName(getName());
     view.setDescription(getDescription());
     return view;

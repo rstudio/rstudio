@@ -62,7 +62,6 @@ public class SummaryWidget extends Composite {
   }
 
   interface Style extends CssResource {
-    String thirty();
   }
 
   interface TableResources extends CellTable.Resources {
@@ -106,9 +105,6 @@ public class SummaryWidget extends Composite {
   @UiField
   DockLayoutPanel dock;
 
-  @UiField
-  Style style;
-
   @UiField(provided = true)
   SimplePager pager = new SimplePager();
 
@@ -135,11 +131,13 @@ public class SummaryWidget extends Composite {
     dock.getWidgetContainerElement(table).getStyle().setProperty("overflowY",
         "visible");
 
-    table.addColumn(new NameColumn(), "Name");
-    table.addColumn(new DescriptionColumn(), "Description");
+    Column<PersonProxy, String> nameColumn = new NameColumn();
+    table.addColumn(nameColumn, "Name");
+    table.setColumnWidth(nameColumn, "25ex");
+    Column<PersonProxy, String> descriptionColumn = new DescriptionColumn();
+    table.addColumn(descriptionColumn, "Description");
+    table.setColumnWidth(descriptionColumn, "40ex");
     table.addColumn(new ScheduleColumn(), "Schedule");
-    table.addColumnStyleName(0, style.thirty());
-    table.addColumnStyleName(1, style.thirty());
     table.setRowCount(numRows, false);
     table.setSelectionModel(selectionModel);
     table.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);

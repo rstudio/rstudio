@@ -483,6 +483,25 @@ public class Style extends JavaScriptObject {
   }
 
   /**
+   * Enum for the table-layout property.
+   */
+  public enum TableLayout implements HasCssName {
+    AUTO {
+      @Override
+      public String getCssName() {
+        return TABLE_LAYOUT_AUTO;
+      }
+    },
+    FIXED {
+      @Override
+      public String getCssName() {
+        return TABLE_LAYOUT_FIXED;
+      }
+    };
+    public abstract String getCssName();
+  }
+
+  /**
    * Enum for the text-decoration property.
    */
   public enum TextDecoration implements HasCssName {
@@ -687,6 +706,10 @@ public class Style extends JavaScriptObject {
   private static final String STYLE_BACKGROUND_IMAGE = "backgroundImage";
   private static final String STYLE_BACKGROUND_COLOR = "backgroundColor";
   private static final String STYLE_VERTICAL_ALIGN = "verticalAlign";
+  private static final String STYLE_TABLE_LAYOUT = "tableLayout";
+
+  private static final String TABLE_LAYOUT_AUTO = "auto";
+  private static final String TABLE_LAYOUT_FIXED = "fixed";
 
   private static final String TEXT_DECORATION_LINE_THROUGH = "line-through";
   private static final String TEXT_DECORATION_OVERLINE = "overline";
@@ -950,6 +973,13 @@ public class Style extends JavaScriptObject {
    }
 
   /**
+   * Clear the table-layout css property.
+   */
+  public final void clearTableLayout() {
+    clearProperty(STYLE_TABLE_LAYOUT);
+  }
+
+  /**
    * Clears the text-decoration CSS property.
    */
   public final void clearTextDecoration() {
@@ -1207,6 +1237,13 @@ public class Style extends JavaScriptObject {
    */
   public final String getRight() {
     return getProperty(STYLE_RIGHT);
+  }
+
+  /**
+   * Gets the table-layout property.
+   */
+  public final String getTableLayout() {
+    return getProperty(STYLE_TABLE_LAYOUT);
   }
 
   /**
@@ -1498,6 +1535,13 @@ public class Style extends JavaScriptObject {
    */
   public final void setRight(double value, Unit unit) {
     setProperty(STYLE_RIGHT, value, unit);
+  }
+
+  /**
+   * Set the table-layout CSS property.
+   */
+  public final void setTableLayout(TableLayout value) {
+    setProperty(STYLE_TABLE_LAYOUT, value.getCssName());
   }
 
   /**

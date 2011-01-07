@@ -33,6 +33,7 @@ import com.google.gwt.dom.client.Style.HasCssName;
 import com.google.gwt.dom.client.Style.ListStyleType;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
+import com.google.gwt.dom.client.Style.TableLayout;
 import com.google.gwt.dom.client.Style.TextDecoration;
 import com.google.gwt.dom.client.Style.VerticalAlign;
 import com.google.gwt.dom.client.Style.Visibility;
@@ -197,6 +198,16 @@ public class StyleTest extends GWTTestCase {
     assertEquals(Position.ABSOLUTE, style.getPosition());
     style.setPosition(Position.FIXED);
     assertEquals(Position.FIXED, style.getPosition());
+  }
+
+  public void testTableLayout() {
+    TableElement table = Document.get().createTableElement();
+    Style style = table.getStyle();
+
+    style.setTableLayout(TableLayout.AUTO);
+    assertEquals(TableLayout.AUTO, style.getTableLayout());
+    style.setTableLayout(TableLayout.FIXED);
+    assertEquals(TableLayout.FIXED, style.getTableLayout());
   }
 
   public void testTextDecoration() {

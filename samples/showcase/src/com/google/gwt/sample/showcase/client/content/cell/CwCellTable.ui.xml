@@ -6,14 +6,14 @@
 
   <ui:style>
     .cellTable {
-      width: 600px;
-      border: 1px solid #ccc;
+      border-bottom: 1px solid #ccc;
       text-align: left;
+      margin-bottom: 4px;
     }
   </ui:style>
 
   <g:HTMLPanel>
-    <table>
+    <table cellspacing='0' cellpadding='0' style='width:100%;'>
       <tr>
         <td
           valign='top'>

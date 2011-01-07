@@ -34,7 +34,8 @@
   padding: 0px 10px;
   text-align: left;
   color: #4b4a4a;
-  text-shadow: #ddf 1px 1px 0
+  text-shadow: #ddf 1px 1px 0;
+  overflow: hidden;
 }
 
 @sprite .cellTableHeader {
@@ -47,10 +48,12 @@
   text-align: left;
   color: #4b4a4a;
   text-shadow: #ddf 1px 1px 0;
+  overflow: hidden;
 }
 
 .cellTableCell {
   padding: 4px 10px;
+  overflow: hidden;
 }
 
 .cellTableFirstColumnFooter {
