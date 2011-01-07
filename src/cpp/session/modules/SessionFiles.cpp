@@ -463,13 +463,17 @@ core::Error renameFile(const core::json::JsonRpcRequest& request,
    Error error = json::readParams(request.params, &path, &targetPath);
    if (error)
       return error ;
+
+   // if the destination already exists then send back file exists
+    FilePath destPath = module_context::resolveAliasedPath(targetPath) ;
+    if (destPath.exists())
+       return systemError(boost::system::errc::file_exists, ERROR_LOCATION);
   
    // create file info now before we remove
    FilePath sourcePath = module_context::resolveAliasedPath(path);
    FileInfo sourceFileInfo(sourcePath);
       
    // move the file
-   FilePath destPath = module_context::resolveAliasedPath(targetPath) ;
    Error renameError = sourcePath.move(destPath);
    if (renameError)
       return renameError ;
