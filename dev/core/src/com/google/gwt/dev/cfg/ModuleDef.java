@@ -111,6 +111,8 @@ public class ModuleDef {
    */
   private String nameOverride;
 
+  private boolean needsRefresh;
+
   private final Properties properties = new Properties();
 
   private PathPrefixSet publicPrefixSet = new PathPrefixSet();
@@ -196,7 +198,7 @@ public class ModuleDef {
    * method, the ResourceOraclewill be empty and unusable. Calling
    * {@link #refresh(TreeLogger)} will restore them.
    */
-  public void clear() {
+  public synchronized void clear() {
     if (lazySourceOracle != null) {
       lazySourceOracle.clear();
     }
@@ -241,6 +243,7 @@ public class ModuleDef {
   }
 
   public synchronized Resource findPublicFile(String partialPath) {
+    doRefresh(TreeLogger.NULL);
     return lazyPublicOracle.getResourceMap().get(partialPath);
   }
 
@@ -272,6 +275,7 @@ public class ModuleDef {
    * @return the resource for the requested source file
    */
   public synchronized Resource findSourceFile(String partialPath) {
+    doRefresh(TreeLogger.NULL);
     return lazySourceOracle.getResourceMap().get(partialPath);
   }
 
@@ -294,6 +298,7 @@ public class ModuleDef {
   }
 
   public String[] getAllPublicFiles() {
+    doRefresh(TreeLogger.NULL);
     return lazyPublicOracle.getPathNames().toArray(Empty.STRINGS);
   }
 
@@ -302,6 +307,7 @@ public class ModuleDef {
    * oracle has been initialized.
    */
   public String[] getAllSourceFiles() {
+    doRefresh(TreeLogger.NULL);
     return lazySourceOracle.getPathNames().toArray(Empty.STRINGS);
   }
 
@@ -315,6 +321,7 @@ public class ModuleDef {
 
   public synchronized CompilationState getCompilationState(TreeLogger logger)
       throws UnableToCompleteException {
+    doRefresh(TreeLogger.NULL);
     CompilationState compilationState = CompilationStateBuilder.buildFrom(
         logger, lazySourceOracle.getResources());
     checkForSeedTypes(logger, compilationState);
@@ -360,6 +367,8 @@ public class ModuleDef {
       }
       lazyResourcesOracle.setPathPrefixes(newPathPrefixes);
       ResourceOracleImpl.refresh(TreeLogger.NULL, lazyResourcesOracle);
+    } else {
+      doRefresh(TreeLogger.NULL);
     }
     return lazyResourcesOracle;
   }
@@ -416,18 +425,7 @@ public class ModuleDef {
   }
 
   public synchronized void refresh(TreeLogger logger) {
-    Event moduleDefEvent = SpeedTracerLogger.start(CompilerEventType.MODULE_DEF, "phase", "refresh", "module", getName());
-    logger = logger.branch(TreeLogger.DEBUG, "Refreshing module '" + getName()
-        + "'");
-
-    // Refresh resource oracles.
-    if (lazyResourcesOracle == null) {
-      ResourceOracleImpl.refresh(logger, lazyPublicOracle, lazySourceOracle);
-    } else {
-      ResourceOracleImpl.refresh(
-          logger, lazyPublicOracle, lazySourceOracle, lazyResourcesOracle);
-    }
-    moduleDefEvent.end();
+    needsRefresh = true;
   }
 
   /**
@@ -483,23 +481,15 @@ public class ModuleDef {
 
     // Create the public path.
     TreeLogger branch = Messages.PUBLIC_PATH_LOCATIONS.branch(logger, null);
-    // lazyPublicOracle = publicPathEntries.create(branch);
-    if (lazyPublicOracle == null) {
-      lazyPublicOracle = new ResourceOracleImpl(branch);
-      lazyPublicOracle.setPathPrefixes(publicPrefixSet);
-    }
+    lazyPublicOracle = new ResourceOracleImpl(branch);
+    lazyPublicOracle.setPathPrefixes(publicPrefixSet);
 
     // Create the source path.
     branch = Messages.SOURCE_PATH_LOCATIONS.branch(logger, null);
     lazySourceOracle = new ResourceOracleImpl(branch);
     lazySourceOracle.setPathPrefixes(sourcePrefixSet);
 
-    ResourceOracleImpl.refresh(logger, lazyPublicOracle, lazySourceOracle);
-    if (lazySourceOracle.getResources().isEmpty()) {
-      branch.log(TreeLogger.WARN,
-          "No source path entries; expect subsequent failures", null);
-    }
-
+    needsRefresh = true;
     moduleDefNormalize.end();
   }
 
@@ -527,5 +517,25 @@ public class ModuleDef {
     if (seedTypesMissing) {
       throw new UnableToCompleteException();
     }
+  }
+
+  private synchronized void doRefresh(TreeLogger logger) {
+    if (!needsRefresh) {
+      return;
+    }
+    Event moduleDefEvent = SpeedTracerLogger.start(
+        CompilerEventType.MODULE_DEF, "phase", "refresh", "module", getName());
+    logger = logger.branch(TreeLogger.DEBUG, "Refreshing module '" + getName()
+        + "'");
+
+    // Refresh resource oracles.
+    if (lazyResourcesOracle == null) {
+      ResourceOracleImpl.refresh(logger, lazyPublicOracle, lazySourceOracle);
+    } else {
+      ResourceOracleImpl.refresh(logger, lazyPublicOracle, lazySourceOracle,
+          lazyResourcesOracle);
+    }
+    moduleDefEvent.end();
+    needsRefresh = false;
   }
 }
