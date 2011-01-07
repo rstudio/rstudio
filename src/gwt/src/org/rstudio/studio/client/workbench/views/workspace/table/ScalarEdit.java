@@ -104,7 +104,8 @@ public class ScalarEdit<TValue> extends HTML implements InlineEditor.Display<TVa
          try
          {
              newValue = convert_.convertToValue(getText()) ;
-             if (!commitEvenIfNoChange && value_.equals(newValue))
+             if (newValue == null ||
+                 (!commitEvenIfNoChange && value_.equals(newValue)))
              {
                 endEdit(false, false, forceBlur) ;
                 return ;
