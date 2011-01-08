@@ -65,7 +65,9 @@ public class TreeTest extends GWTTestCase {
     String text = "Some<br>text";
     TreeItem item = t.addTextItem(text);
     assertEquals(text, item.getText());
-    assertEquals("Some&lt;br&gt;text", item.getHTML());
+    // Normalize the html for ancient safari 3
+    String html = item.getHTML().replace(">", "&gt;");
+    assertEquals("Some&lt;br&gt;text", html);
   }
 
   public void testAttachDetachOrder() {
