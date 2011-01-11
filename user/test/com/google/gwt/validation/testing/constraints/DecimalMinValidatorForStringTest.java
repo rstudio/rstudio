@@ -13,29 +13,31 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client.constraints;
+package com.google.gwt.validation.testing.constraints;
 
-import javax.validation.constraints.DecimalMax;
+import com.google.gwt.validation.client.constraints.DecimalMinValidatorForString;
+
+import javax.validation.constraints.DecimalMin;
 
 /**
- * Tests for {@link DecimalMaxValidatorForString}.
+ * Tests for {@link DecimalMinValidatorForString}.
  */
-public class DecimalMaxValidatorForStringTest extends
-    ConstraintValidatorTestCase<DecimalMax, String> {
+public class DecimalMinValidatorForStringTest extends
+    ConstraintValidatorTestCase<DecimalMin, String> {
   private static String BELOW = "922392239223.08";
   private static String SAME = "922392239223.09";
   private static String ABOVE = "922392239223.10";
 
   @SuppressWarnings("unused")
-  @DecimalMax("922392239223.09")
-  private String defaultField;
+  @DecimalMin("922392239223.09")
+  private double defaultField;
 
-  protected DecimalMaxValidatorForString createValidator() {
-    return new DecimalMaxValidatorForString();
+  protected DecimalMinValidatorForString createValidator() {
+    return new DecimalMinValidatorForString();
   }
 
   public void testIsValid_below() {
-    assertConstraintValidator(BELOW, true);
+    assertConstraintValidator(BELOW, false);
   }
 
   public void testIsValid_same() {
@@ -43,7 +45,7 @@ public class DecimalMaxValidatorForStringTest extends
   }
 
   public void testIsValid_above() {
-    assertConstraintValidator(ABOVE, false);
+    assertConstraintValidator(ABOVE, true);
   }
 
   public void testIsValid_invalid() {
@@ -51,8 +53,8 @@ public class DecimalMaxValidatorForStringTest extends
   }
 
   @Override
-  protected Class<DecimalMax> getAnnotationClass() {
-    return DecimalMax.class;
+  protected Class<DecimalMin> getAnnotationClass() {
+    return DecimalMin.class;
   }
 
 }

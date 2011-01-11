@@ -13,28 +13,32 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client.constraints;
+package com.google.gwt.validation.testing.constraints;
+
+import com.google.gwt.validation.client.constraints.DigitsValidatorForNumber;
+
+import java.math.BigDecimal;
 
 import javax.validation.constraints.Digits;
 
 /**
- * Tests for {@link DigitsValidatorForString}.
+ * Tests for {@link DigitsValidatorForNumber}.
  */
-public class DigitsValidatorForStringTest extends
-    ConstraintValidatorTestCase<Digits, String> {
+public class DigitsValidatorForNumberTest extends
+    ConstraintValidatorTestCase<Digits, Number> {
 
-  private static String GOOD = "1234.12";
-  private static String INT_TO_BIG = "12345.12";
-  private static String INT_SMALL = "123.12";
-  private static String DECIMAL_TO_BIG = "1234.123";
-  private static String DECIMAL_SMALL = "1234.1";
+  private static BigDecimal GOOD = new BigDecimal("1234.12");
+  private static BigDecimal INT_TO_BIG = new BigDecimal("12345.12");
+  private static BigDecimal INT_SMALL = new BigDecimal("123.12");
+  private static BigDecimal DECIMAL_TO_BIG = new BigDecimal("1234.123");
+  private static BigDecimal DECIMAL_SMALL = new BigDecimal("1234.1");
 
   @SuppressWarnings("unused")
   @Digits(integer = 4, fraction = 2)
   private double defaultField;
 
-  protected DigitsValidatorForString createValidator() {
-    return new DigitsValidatorForString();
+  protected DigitsValidatorForNumber createValidator() {
+    return new DigitsValidatorForNumber();
   }
 
   public void testIsValid_decimalToBig() {
@@ -55,10 +59,6 @@ public class DigitsValidatorForStringTest extends
 
   public void testIsValid_intToSmall() {
     assertConstraintValidator(INT_SMALL, true);
-  }
-
-  public void testIsValid_invalid() {
-    assertConstraintValidator("invalid", false);
   }
 
   @Override

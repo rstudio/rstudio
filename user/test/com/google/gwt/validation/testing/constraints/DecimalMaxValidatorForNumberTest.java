@@ -13,7 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client.constraints;
+package com.google.gwt.validation.testing.constraints;
+
+import com.google.gwt.validation.client.constraints.DecimalMaxValidatorForNumber;
 
 import javax.validation.constraints.DecimalMax;
 

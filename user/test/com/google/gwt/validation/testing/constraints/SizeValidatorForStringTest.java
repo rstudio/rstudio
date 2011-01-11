@@ -13,52 +13,42 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client.constraints;
+package com.google.gwt.validation.testing.constraints;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import com.google.gwt.validation.client.constraints.SizeValidatorForString;
+
 import java.util.Date;
-import java.util.List;
 
 import javax.validation.constraints.Size;
 
 /**
- * Tests for {@link SizeValidatorForCollection}.
+ * Tests for {@link SizeValidatorForString}.
  */
-public class SizeValidatorForCollectionTest extends
-    ConstraintValidatorTestCase<Size, Collection<?>> {
+public class SizeValidatorForStringTest extends
+    ConstraintValidatorTestCase<Size, String> {
 
   @SuppressWarnings("unused")
   @Size(min = 2, max = 5)
   private Date defaultField;
 
-  protected SizeValidatorForCollection createValidator() {
-    return new SizeValidatorForCollection();
+  protected SizeValidatorForString createValidator() {
+    return new SizeValidatorForString();
   }
 
   public void testAssertIsValid_short() {
-    assertConstraintValidator(createList(1), false);
+    assertConstraintValidator("1", false);
   }
 
   public void testAssertIsValid_min() {
-    assertConstraintValidator(createList(2), true);
+    assertConstraintValidator("12", true);
   }
 
   public void testAssertIsValid_max() {
-    assertConstraintValidator(createList(5), true);
+    assertConstraintValidator("12345", true);
   }
 
   public void testAssertIsValid_long() {
-    assertConstraintValidator(createList(6), false);
-  }
-
-  private Collection<Integer> createList(int size) {
-    List<Integer> list = new ArrayList<Integer>(size);
-    for (int i = 1; i <= size; i++) {
-      Integer key = Integer.valueOf(i);
-      list.add(key);
-    }
-    return list;
+    assertConstraintValidator("123456", false);
   }
 
   @Override

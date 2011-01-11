@@ -13,14 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client.constraints;
+package com.google.gwt.validation.testing.constraints;
+
+import com.google.gwt.validation.client.constraints.PatternValidator;
 
 import java.util.Date;
 
 import javax.validation.constraints.Pattern;
 
 /**
- * Tests for {@link PastValidatorForDate}.
+ * Tests for {@link PatternValidator}.
  */
 public class PatternValidatorTest extends
     ConstraintValidatorTestCase<Pattern, String> {

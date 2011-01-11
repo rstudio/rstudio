@@ -13,24 +13,26 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client.constraints;
+package com.google.gwt.validation.testing.constraints;
+
+import com.google.gwt.validation.client.constraints.SizeValidatorForArrayOfChar;
 
 import java.util.Date;
 
 import javax.validation.constraints.Size;
 
 /**
- * Tests for {@link SizeValidatorForArrayOfFloat}.
+ * Tests for {@link SizeValidatorForArrayOfChar}.
  */
-public class SizeValidatorForArrayOfFloatTest extends
-    ConstraintValidatorTestCase<Size, float[]> {
+public class SizeValidatorForArrayOfCharTest extends
+    ConstraintValidatorTestCase<Size, char[]> {
 
   @SuppressWarnings("unused")
   @Size(min = 2, max = 5)
   private Date defaultField;
 
-  protected SizeValidatorForArrayOfFloat createValidator() {
-    return new SizeValidatorForArrayOfFloat();
+  protected SizeValidatorForArrayOfChar createValidator() {
+    return new SizeValidatorForArrayOfChar();
   }
 
   public void testAssertIsValid_short() {
@@ -49,10 +51,10 @@ public class SizeValidatorForArrayOfFloatTest extends
     assertConstraintValidator(createArray(6), false);
   }
 
-  private float[] createArray(int size) {
-    float[] array = new float[size];
+  private char[] createArray(int size) {
+    char[] array = new char[size];
     for (int i = 0; i < size; i++) {
-      array[i] = i;
+      array[i] = (char) i;
     }
     return array;
   }

@@ -13,20 +13,22 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client.constraints;
+package com.google.gwt.validation.testing.constraints;
 
-import javax.validation.constraints.Max;
+import com.google.gwt.validation.client.constraints.MinValidatorForString;
+
+import javax.validation.constraints.Min;
 
 /**
  * Tests for {@link MinValidatorForString}.
  */
 public class MinValidatorForStringTest extends
-    ConstraintValidatorTestCase<Max, String> {
+    ConstraintValidatorTestCase<Min, String> {
   private static String SAME = "123456789";
   private static String SMALLER = "123456788";
   private static String BIGGER = "123456790";
 
-  @Max(123456789)
+  @Min(123456789)
   public String defaultField;
 
   public void testIsValid_same() {
@@ -34,19 +36,19 @@ public class MinValidatorForStringTest extends
   }
 
   public void testIsValid_smaller() {
-    assertConstraintValidator(SMALLER, true);
+    assertConstraintValidator(SMALLER, false);
   }
 
   public void testIsValid_bigger() {
-    assertConstraintValidator(BIGGER, false);
+    assertConstraintValidator(BIGGER, true);
   }
 
   public void testIsValid_minValue() {
-    assertConstraintValidator(Long.valueOf(Long.MIN_VALUE).toString(), true);
+    assertConstraintValidator(Long.valueOf(Long.MIN_VALUE).toString(), false);
   }
 
   public void testIsValid_maxValue() {
-    assertConstraintValidator(Long.valueOf(Long.MAX_VALUE).toString(), false);
+    assertConstraintValidator(Long.valueOf(Long.MAX_VALUE).toString(), true);
   }
 
   public void testIsValid_invalid() {
@@ -54,12 +56,12 @@ public class MinValidatorForStringTest extends
   }
 
   @Override
-  protected MaxValidatorForString createValidator() {
-    return new MaxValidatorForString();
+  protected MinValidatorForString createValidator() {
+    return new MinValidatorForString();
   }
 
   @Override
-  protected Class<Max> getAnnotationClass() {
-    return Max.class;
+  protected Class<Min> getAnnotationClass() {
+    return Min.class;
   }
 }

@@ -13,49 +13,47 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client.constraints;
+package com.google.gwt.validation.testing.constraints;
+
+import com.google.gwt.validation.client.constraints.MaxValidatorForNumber;
 
 import javax.validation.constraints.Max;
 
 /**
- * Tests for {@link MinValidatorForString}.
+ * Tests for {@link MaxValidatorForNumber}.
  */
-public class MaxValidatorForStringTest extends
-    ConstraintValidatorTestCase<Max, String> {
-  private static String SAME = "123456789";
-  private static String SMALLER = "123456788";
-  private static String BIGGER = "123456790";
+public class MaxValidatorForNumberTest extends
+    ConstraintValidatorTestCase<Max, Number> {
+  private static long SAME = 123456789L;
+  private static long SMALLER = SAME - 1L;
+  private static long BIGGER = SAME + 1L;
 
-  @Max(123456789)
-  public String defaultField;
+  @Max(123456789L)
+  public long defaultField;
 
   public void testIsValid_same() {
-    assertConstraintValidator(SAME, true);
+    assertConstraintValidator(Long.valueOf(SAME), true);
   }
 
   public void testIsValid_smaller() {
-    assertConstraintValidator(SMALLER, true);
+    assertConstraintValidator(Long.valueOf(SMALLER), true);
   }
 
   public void testIsValid_bigger() {
-    assertConstraintValidator(BIGGER, false);
+    assertConstraintValidator(Long.valueOf(BIGGER), false);
   }
 
   public void testIsValid_minValue() {
-    assertConstraintValidator(Long.valueOf(Long.MIN_VALUE).toString(), true);
+    assertConstraintValidator(Long.valueOf(Long.MIN_VALUE), true);
   }
 
   public void testIsValid_maxValue() {
-    assertConstraintValidator(Long.valueOf(Long.MAX_VALUE).toString(), false);
-  }
-
-  public void testIsValid_invalid() {
-    assertConstraintValidator("invalid", false);
+    assertConstraintValidator(Long.valueOf(Long.MAX_VALUE), false);
   }
 
   @Override
-  protected MaxValidatorForString createValidator() {
-    return new MaxValidatorForString();
+  protected MaxValidatorForNumber createValidator() {
+    return new MaxValidatorForNumber();
   }
 
   @Override

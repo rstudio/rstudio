@@ -13,36 +13,38 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client.constraints;
+package com.google.gwt.validation.testing.constraints;
+
+import com.google.gwt.validation.client.constraints.PastValidatorForDate;
 
 import java.util.Date;
 
-import javax.validation.constraints.Future;
+import javax.validation.constraints.Past;
 
 /**
- * Tests for {@link FutureValidatorForDate}.
+ * Tests for {@link PastValidatorForDate}.
  */
-public class FutureValidatorForDateTest extends
-    ConstraintValidatorTestCase<Future, Date> {
+public class PastValidatorForDateTest extends
+    ConstraintValidatorTestCase<Past, Date> {
 
   @SuppressWarnings("unused")
-  @Future
+  @Past
   private Date defaultField;
 
-  protected FutureValidatorForDate createValidator() {
-    return new FutureValidatorForDate();
+  protected PastValidatorForDate createValidator() {
+    return new PastValidatorForDate();
   }
 
   public void testAssertIsValid_nowMinus1000() {
-    assertConstraintValidator(new Date(new Date().getTime() - 1000), false);
+    assertConstraintValidator(new Date(new Date().getTime() - 1000), true);
   }
 
   public void testAssertIsValid_nowPlus1000() {
-    assertConstraintValidator(new Date(new Date().getTime() + 1000), true);
+    assertConstraintValidator(new Date(new Date().getTime() + 1000), false);
   }
 
   @Override
-  protected Class<Future> getAnnotationClass() {
-    return Future.class;
+  protected Class<Past> getAnnotationClass() {
+    return Past.class;
   }
 }

@@ -13,40 +13,50 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client.constraints;
+package com.google.gwt.validation.testing.constraints;
+
+import com.google.gwt.validation.client.constraints.SizeValidatorForArrayOfLong;
 
 import java.util.Date;
 
 import javax.validation.constraints.Size;
 
 /**
- * Tests for {@link SizeValidatorForString}.
+ * Tests for {@link SizeValidatorForArrayOfLong}.
  */
-public class SizeValidatorForStringTest extends
-    ConstraintValidatorTestCase<Size, String> {
+public class SizeValidatorForArrayOfLongTest extends
+    ConstraintValidatorTestCase<Size, long[]> {
 
   @SuppressWarnings("unused")
   @Size(min = 2, max = 5)
   private Date defaultField;
 
-  protected SizeValidatorForString createValidator() {
-    return new SizeValidatorForString();
+  protected SizeValidatorForArrayOfLong createValidator() {
+    return new SizeValidatorForArrayOfLong();
   }
 
   public void testAssertIsValid_short() {
-    assertConstraintValidator("1", false);
+    assertConstraintValidator(createArray(1), false);
   }
 
   public void testAssertIsValid_min() {
-    assertConstraintValidator("12", true);
+    assertConstraintValidator(createArray(2), true);
   }
 
   public void testAssertIsValid_max() {
-    assertConstraintValidator("12345", true);
+    assertConstraintValidator(createArray(5), true);
   }
 
   public void testAssertIsValid_long() {
-    assertConstraintValidator("123456", false);
+    assertConstraintValidator(createArray(6), false);
+  }
+
+  private long[] createArray(int size) {
+    long[] array = new long[size];
+    for (int i = 0; i < size; i++) {
+      array[i] = i;
+    }
+    return array;
   }
 
   @Override

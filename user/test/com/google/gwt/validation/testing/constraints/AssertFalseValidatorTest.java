@@ -13,35 +13,38 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client.constraints;
+package com.google.gwt.validation.testing.constraints;
 
-import javax.validation.constraints.AssertTrue;
+import com.google.gwt.validation.client.constraints.AssertFalseValidator;
+
+import javax.validation.constraints.AssertFalse;
 
 /**
  * Tests for {@link AssertFalseValidator}.
  */
-public class AssertTrueValidatorTest extends
-    ConstraintValidatorTestCase<AssertTrue, Boolean> {
+public class AssertFalseValidatorTest extends
+    ConstraintValidatorTestCase<AssertFalse, Boolean> {
 
   @SuppressWarnings("unused")
-  @AssertTrue
+  @AssertFalse
   private Boolean defaultField;
 
-  @Override
-  protected AssertTrueValidator createValidator() {
-    return new AssertTrueValidator();
+  protected AssertFalseValidator createValidator() {
+    return new AssertFalseValidator();
   }
 
   public void testIsValid_false() {
-    assertConstraintValidator(Boolean.FALSE, false);
+    Boolean value = Boolean.FALSE;
+    boolean expected = true;
+    assertConstraintValidator(value, expected);
   }
 
   public void testIsValid_true() {
-    assertConstraintValidator(Boolean.TRUE, true);
+    assertConstraintValidator(Boolean.TRUE, false);
   }
 
   @Override
-  protected Class<AssertTrue> getAnnotationClass() {
-    return AssertTrue.class;
+  protected Class<AssertFalse> getAnnotationClass() {
+    return AssertFalse.class;
   }
 }

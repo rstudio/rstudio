@@ -13,48 +13,54 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client.constraints;
+package com.google.gwt.validation.testing.constraints;
 
+import com.google.gwt.validation.client.constraints.SizeValidatorForCollection;
+
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 import javax.validation.constraints.Size;
 
 /**
- * Tests for {@link SizeValidatorForArrayOfBoolean}.
+ * Tests for {@link SizeValidatorForCollection}.
  */
-public class SizeValidatorForArrayOfBooleanTest extends
-    ConstraintValidatorTestCase<Size, boolean[]> {
+public class SizeValidatorForCollectionTest extends
+    ConstraintValidatorTestCase<Size, Collection<?>> {
 
   @SuppressWarnings("unused")
   @Size(min = 2, max = 5)
   private Date defaultField;
 
-  protected SizeValidatorForArrayOfBoolean createValidator() {
-    return new SizeValidatorForArrayOfBoolean();
+  protected SizeValidatorForCollection createValidator() {
+    return new SizeValidatorForCollection();
   }
 
   public void testAssertIsValid_short() {
-    assertConstraintValidator(createArray(1), false);
+    assertConstraintValidator(createList(1), false);
   }
 
   public void testAssertIsValid_min() {
-    assertConstraintValidator(createArray(2), true);
+    assertConstraintValidator(createList(2), true);
   }
 
   public void testAssertIsValid_max() {
-    assertConstraintValidator(createArray(5), true);
+    assertConstraintValidator(createList(5), true);
   }
 
   public void testAssertIsValid_long() {
-    assertConstraintValidator(createArray(6), false);
+    assertConstraintValidator(createList(6), false);
   }
 
-  private boolean[] createArray(int size) {
-    boolean[] array = new boolean[size];
-    for (int i = 0; i < size; i++) {
-      array[i] = (i % 2 == 0);
+  private Collection<Integer> createList(int size) {
+    List<Integer> list = new ArrayList<Integer>(size);
+    for (int i = 1; i <= size; i++) {
+      Integer key = Integer.valueOf(i);
+      list.add(key);
     }
-    return array;
+    return list;
   }
 
   @Override

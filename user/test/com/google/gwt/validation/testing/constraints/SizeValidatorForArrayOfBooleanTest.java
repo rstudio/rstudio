@@ -13,24 +13,26 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client.constraints;
+package com.google.gwt.validation.testing.constraints;
+
+import com.google.gwt.validation.client.constraints.SizeValidatorForArrayOfBoolean;
 
 import java.util.Date;
 
 import javax.validation.constraints.Size;
 
 /**
- * Tests for {@link SizeValidatorForArrayOfObject}.
+ * Tests for {@link SizeValidatorForArrayOfBoolean}.
  */
-public class SizeValidatorForArrayOfObjectTest extends
-    ConstraintValidatorTestCase<Size, Object[]> {
+public class SizeValidatorForArrayOfBooleanTest extends
+    ConstraintValidatorTestCase<Size, boolean[]> {
 
   @SuppressWarnings("unused")
   @Size(min = 2, max = 5)
   private Date defaultField;
 
-  protected SizeValidatorForArrayOfObject createValidator() {
-    return new SizeValidatorForArrayOfObject();
+  protected SizeValidatorForArrayOfBoolean createValidator() {
+    return new SizeValidatorForArrayOfBoolean();
   }
 
   public void testAssertIsValid_short() {
@@ -49,10 +51,10 @@ public class SizeValidatorForArrayOfObjectTest extends
     assertConstraintValidator(createArray(6), false);
   }
 
-  private Object[] createArray(int size) {
-    Object[] array = new Object[size];
+  private boolean[] createArray(int size) {
+    boolean[] array = new boolean[size];
     for (int i = 0; i < size; i++) {
-      array[i] = Integer.valueOf(i);
+      array[i] = (i % 2 == 0);
     }
     return array;
   }
