@@ -68,6 +68,17 @@
     <pathelement location="${gwt.tools.lib}/slf4j/slf4j-api/slf4j-api-1.6.1.jar" />
     <pathelement location="${gwt.tools.lib}/slf4j/slf4j-log4j12/slf4j-log4j12-1.6.1.jar" />
     <pathelement location="${gwt.tools}/redist/json/r2_20080312/json-1.5.jar" />
+    <!-- TCK jars -->
+    <pathelement location="${gwt.tools.lib}/hibernate/validator/tck/jsr303-tck-1.0.3.GA-sources.jar" />
+    <pathelement location="${gwt.tools.lib}/hibernate/validator/tck/jsr303-tck-1.0.3.GA.jar" />
+    <pathelement location="${gwt.tools.lib}/jboss/test-audit/jboss-test-audit-api-1.0.0-sources.jar" />
+    <pathelement location="${gwt.tools.lib}/jboss/test-audit/jboss-test-audit-api-1.0.0.jar" />
+    <pathelement location="${gwt.tools.lib}/jboss/test-harness/jboss-test-harness-1.0.0-sources.jar" />
+    <pathelement location="${gwt.tools.lib}/jboss/test-harness/jboss-test-harness-1.0.0.jar" />
+    <pathelement location="${gwt.tools.lib}/jboss/test-harness/jboss-test-harness-api-1.0.0-sources.jar" />
+    <pathelement location="${gwt.tools.lib}/jboss/test-harness/jboss-test-harness-api-1.0.0.jar" />
+    <pathelement location="${gwt.tools.lib}/testng/testng-5.14.1-sources.jar" />
+    <pathelement location="${gwt.tools.lib}/testng/testng-5.14.1.jar" />
     <pathelement location="${gwt.dev.jar}" />
   </path>
 
@@ -114,8 +125,7 @@
       depends="compile.dev.tests, compile.emma.if.enabled"
       unless="compile.tests.complete">
     <mkdir dir="${javac.junit.out}" />
-    <gwt.javac srcdir="test" excludes="com/google/gwt/langtest/**"
-        destdir="${javac.junit.out}">
+    <gwt.javac srcdir="test" excludes="com/google/gwt/langtest/**" destdir="${javac.junit.out}">
       <classpath>
         <pathelement location="${javac.out}" />
         <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />

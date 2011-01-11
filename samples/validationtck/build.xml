@@ -83,6 +83,8 @@
   </target>
 
 
+  <!-- TODO(nchalko) move the tck target to user/build.xml and then delete
+       all of samples/validaitontck -->
   <target name="tck"
       depends="tck.run,tck.report"
       description="Run all tests for this project.">

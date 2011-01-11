@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+This is a HACK, is not a complete Validation TCK solution. 
+It is only enough to run the tests in the GWT Validation TCK. 
+-->
+<module>
+  <inherits name='com.google.gwt.validation.Validation' />
+  <inherits name='org.jboss.test.audit.JbossTestAudit' />
+  <inherits name='org.jboss.testharness.JbossTestHarness' />
+  <inherits name='org.testng.TestNg' />
+  <source path="">
+    <include name="common/*.java" />
+    <include name="util/client/*.java" />
+  </source>
+  <super-source path="super" />
+</module>

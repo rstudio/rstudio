@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+This is a HACK, is not a general solution for using JBoss Test Harness.
+It is only enough to run the tests in the GWT Validation TCK.
+-->
+<module>
+  <inherits name="org.testng.TestNg" />
+  <source path="api">
+    <include name="DeploymentException.java"/>
+  </source>
+  <super-source path="super" />
+</module>
