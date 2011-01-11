@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.CompilationResult;
+import com.google.gwt.core.ext.linker.ConfigurationProperty;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.linker.LinkerOrder;
@@ -38,6 +39,7 @@ import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.IOException;
+import java.util.SortedSet;
 
 
 /**
@@ -49,6 +51,12 @@ import java.io.IOException;
 @LinkerOrder(Order.PRIMARY)
 @Shardable
 public class CrossSiteIframeLinker extends SelectionScriptLinker {
+  /**
+   * A configuration property that can be used to have the linker ignore the
+   * script tags in gwt.xml rather than fail to compile if they are present
+   */
+  private static final String FAIL_IF_SCRIPT_TAG_PROPERTY =
+    "xsiframe.failIfScriptTag";
   
   @Override
   public String getDescription() {
@@ -73,10 +81,37 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     includeJs(ss, logger, getJsLoadExternalStylesheets(context), "__LOAD_STYLESHEETS__");
     
     // This Linker does not support <script> tags in the gwt.xml
-    if (!artifacts.find(ScriptReference.class).isEmpty()) {
-      logger.log(TreeLogger.ERROR, "The " + getDescription() + 
-          " linker does not support <script> tags in the gwt.xml files");
-      throw new UnableToCompleteException();
+    SortedSet<ScriptReference> scripts = artifacts.find(ScriptReference.class);
+    if (!scripts.isEmpty()) {
+      String list = "";
+      for (ScriptReference script : scripts) {
+        list += (script.getSrc() + "\n");
+      }
+      boolean failIfScriptTags = true;
+      for (ConfigurationProperty prop : context.getConfigurationProperties()) {
+        if (prop.getName().equalsIgnoreCase(FAIL_IF_SCRIPT_TAG_PROPERTY)) {
+          if (prop.getValues().get(0).equalsIgnoreCase("false")) {
+            failIfScriptTags = false;
+          }
+        }
+      }
+      if (failIfScriptTags) {
+        String msg = "The " + getDescription() + 
+        " linker does not support <script> tags in the gwt.xml files, but the" +
+        " gwt.xml file (or the gwt.xml files which it includes) contains the" +
+        " following script tags: \n" + list +
+        "In order for your application to run correctly, you will need to" +
+        " include these tags in your host page directly. In order to avoid" +
+        " this error, you will need to remove the script tags from the" +
+        " gwt.xml file, or add this property to the gwt.xml file:" +
+        " <set-configuration-property name='xsiframe.failIfScriptTag' value='FALSE'/>";
+        logger.log(TreeLogger.ERROR, msg);
+        throw new UnableToCompleteException();
+      } else {
+        String msg = "Ignoring the following script tags in the gwt.xml " +
+        "file\n" + list;
+        logger.log(TreeLogger.INFO, msg);
+      }
     }
     
     ss = ResourceInjectionUtil.injectStylesheets(ss, artifacts);

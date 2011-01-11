@@ -15,7 +15,9 @@
 <!-- Defines the cross-site iframe linker   -->
 <module>
   <define-linker name="xsiframe" class="com.google.gwt.core.linker.CrossSiteIframeLinker" />
-  
+  <define-configuration-property name="xsiframe.failIfScriptTag" is_multi_valued="FALSE"/>
+  <set-configuration-property name="xsiframe.failIfScriptTag" value="TRUE"/> 
+
   <replace-with class="com.google.gwt.core.client.impl.CrossSiteIframeLoadingStrategy">
     <when-type-is
       class="com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadingStrategy" />
