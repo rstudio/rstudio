@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -46,15 +46,14 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Provides type-related information about a set of source files, including doc
- * comment metadata.
+ * Provides type-related information about a set of types.
  * <p>
  * All type objects exposed, such as
  * {@link com.google.gwt.core.ext.typeinfo.JClassType} and others, have a stable
  * identity relative to this type oracle instance. Consequently, you can
  * reliably compare object identity of any objects this type oracle produces.
  * For example, the following code relies on this stable identity guarantee:
- * 
+ *
  * <pre>
  * JClassType o = typeOracle.getJavaLangObject();
  * JClassType s1 = typeOracle.getType(&quot;java.lang.String&quot;);
@@ -64,8 +63,9 @@ import java.util.Set;
  * JParameterizedType ls = typeOracle.parse(&quot;java.util.List&lt;java.lang.String&gt;&quot;);
  * assert (ls.getTypeArgs()[0] == s1);
  * </pre>
- * 
+ *
  * </p>
+ *
  */
 public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
 
@@ -207,13 +207,6 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
     });
   }
 
-  static JClassType[] cast(
-      com.google.gwt.core.ext.typeinfo.JClassType[] extTypeArgs) {
-    JClassType[] result = new JClassType[extTypeArgs.length];
-    System.arraycopy(extTypeArgs, 0, result, 0, extTypeArgs.length);
-    return result;
-  }
-
   static String[] modifierBitsToNames(int bits) {
     List<String> strings = new ArrayList<String>();
 
@@ -258,16 +251,29 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
     return strings.toArray(NO_STRINGS);
   }
 
+  private static JClassType[] cast(
+      com.google.gwt.core.ext.typeinfo.JClassType[] extTypeArgs) {
+    JClassType[] result = new JClassType[extTypeArgs.length];
+    System.arraycopy(extTypeArgs, 0, result, 0, extTypeArgs.length);
+    return result;
+  }
+
   /**
    * A map of fully-qualify source names (ie, use "." rather than "$" for nested
    * classes) to JRealClassTypes.
    */
   private final Map<String, JRealClassType> allTypes = new HashMap<String, JRealClassType>();
 
+  /**
+   * Cached types that represent Arrays of other types.  These types are created as needed.
+   */
   @SuppressWarnings("unchecked")
   private final Map<JType, JArrayType> arrayTypes = new ReferenceIdentityMap(
       AbstractReferenceMap.WEAK, AbstractReferenceMap.WEAK, true);
 
+  /**
+   * Cached singleton type representing <code>java.lang.Object</code>.
+   */
   private JClassType javaLangObject;
 
   private final JavaSourceParser javaSourceParser = new JavaSourceParser();
@@ -277,8 +283,15 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
    */
   private final Map<JClassType, JClassType> jsoSingleImpls = new IdentityHashMap<JClassType, JClassType>();
 
+  /**
+   * Cached map of all packages thus far encountered.
+   */
   private final Map<String, JPackage> packages = new HashMap<String, JPackage>();
 
+  /**
+   * Subclasses of generic types that have type parameters filled in.  These types are created
+   * as needed.
+   */
   @SuppressWarnings("unchecked")
   private final Map<ParameterizedTypeKey, JParameterizedType> parameterizedTypes = new ReferenceMap(
       AbstractReferenceMap.HARD, AbstractReferenceMap.WEAK, true);
@@ -304,7 +317,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
   /**
    * Attempts to find a package by name. All requests for the same package
    * return the same package object.
-   * 
+   *
    * @return <code>null</code> if the package could not be found
    */
   @Override
@@ -314,11 +327,11 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
 
   /**
    * Finds a class or interface given its fully-qualified name.
-   * 
+   *
    * @param name fully-qualified class/interface name - for nested classes, use
    *          its source name rather than its binary name (that is, use a "."
    *          rather than a "$")
-   * 
+   *
    * @return <code>null</code> if the type is not found
    */
   @Override
@@ -331,7 +344,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
    * Finds a type given its package-relative name. For nested classes, use its
    * source name rather than its binary name (that is, use a "." rather than a
    * "$").
-   * 
+   *
    * @return <code>null</code> if the type is not found
    */
   @Override
@@ -351,7 +364,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
    * Gets the type object that represents an array of the specified type. The
    * returned type always has a stable identity so as to guarantee that all
    * calls to this method with the same argument return the same object.
-   * 
+   *
    * @param componentType the component type of the array, which can itself be
    *          an array type
    * @return a type object representing an array of the component type
@@ -403,7 +416,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
   /**
    * Gets a package by name. All requests for the same package return the same
    * package object.
-   * 
+   *
    * @return the package object associated with the specified name
    */
   @Override
@@ -417,7 +430,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
 
   /**
    * Gets an array of all packages known to this type oracle.
-   * 
+   *
    * @return an array of packages, possibly of zero-length
    */
   @Override
@@ -430,7 +443,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
    * specified raw type and a set of type arguments. The returned type always
    * has a stable identity so as to guarantee that all calls to this method with
    * the same arguments return the same object.
-   * 
+   *
    * @param genericType a generic base class
    * @param enclosingType
    * @param typeArgs the type arguments bound to the specified generic type
@@ -498,7 +511,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
    * specified raw type and a set of type arguments. The returned type always
    * has a stable identity so as to guarantee that all calls to this method with
    * the same arguments return the same object.
-   * 
+   *
    * @param genericType a generic base class
    * @param typeArgs the type arguments bound to the specified generic type
    * @return a type object representing this particular binding of type
@@ -551,7 +564,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
    * Finds a type given its fully qualified name. For nested classes, use its
    * source name rather than its binary name (that is, use a "." rather than a
    * "$").
-   * 
+   *
    * @return the specified type
    */
   @Override
@@ -568,7 +581,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
    * Finds a type given its package-relative name. For nested classes, use its
    * source name rather than its binary name (that is, use a "." rather than a
    * "$").
-   * 
+   *
    * @return the specified type
    */
   @Override
@@ -584,7 +597,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
 
   /**
    * Gets all types, both top-level and nested.
-   * 
+   *
    * @return an array of types, possibly of zero length
    */
   @Override
@@ -643,7 +656,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
    * <li><code>List&lt;List&lt;Shape&gt;&gt;</code></li>
    * </ul>
    * </p>
-   * 
+   *
    * @param type a type signature to be parsed
    * @return the type object corresponding to the parse type
    */
