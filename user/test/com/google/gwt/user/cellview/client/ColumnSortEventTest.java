@@ -44,7 +44,7 @@ public class ColumnSortEventTest extends TestCase {
     ColumnSortEvent event = new ColumnSortEvent(sortList);
     assertEquals(sortList, event.getColumnSortList());
     assertEquals(col1, event.getColumn());
-    assertFalse(event.isSortAcsending());
+    assertFalse(event.isSortAscending());
   }
 
   public void testAsyncHandler() {

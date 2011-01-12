@@ -103,7 +103,7 @@ public class ColumnSortEvent extends GwtEvent<ColumnSortEvent.Handler> {
       }
 
       // Sort using the comparator.
-      if (event.isSortAcsending()) {
+      if (event.isSortAscending()) {
         Collections.sort(list, comparator);
       } else {
         Collections.sort(list, new Comparator<T>() {
@@ -199,7 +199,7 @@ public class ColumnSortEvent extends GwtEvent<ColumnSortEvent.Handler> {
    * 
    * @return true if ascending, false if descending or not sorted
    */
-  public boolean isSortAcsending() {
+  public boolean isSortAscending() {
     return (sortList == null || sortList.size() == 0) ? false
         : sortList.get(0).isAscending();
   }
