@@ -53,10 +53,18 @@ std::string dumpJsVal(JSContext* ctx, jsval v) {
   } else if (JSVAL_IS_INT(v)) {
     snprintf(buf, sizeof(buf), "int(%d)", JSVAL_TO_INT(v));
   } else if (JSVAL_IS_DOUBLE(v)) {
-    snprintf(buf, sizeof(buf), "double(%lf)", *JSVAL_TO_DOUBLE(v));
+    double d;
+#if GECKO_VERSION < 2000
+    d= *JSVAL_TO_DOUBLE(v);
+#else
+    d = JSVAL_TO_DOUBLE(v);
+#endif //GECKO_VERSION
+    snprintf(buf, sizeof(buf), "double(%lf)", d);
   } else if (JSVAL_IS_STRING(v)) {
     JSString* str = JSVAL_TO_STRING(v);
-    size_t len = JS_GetStringLength(str);
+
+    size_t len = JS_GetStringEncodingLength(ctx, str);
+
     const char* continued = "";
     if (len > 20) {
       len = 20;
@@ -64,12 +72,12 @@ std::string dumpJsVal(JSContext* ctx, jsval v) {
     }
     // TODO: trashes Unicode
     snprintf(buf, sizeof(buf), "string(%.*s%s)", static_cast<int>(len),
-        JS_GetStringBytes(str), continued);
+        JS_EncodeString(ctx, str), continued);
   } else if (JSVAL_IS_BOOLEAN(v)) {
     snprintf(buf, sizeof(buf), "bool(%s)", JSVAL_TO_BOOLEAN(v) ? "true"
         : " false");
   } else {
-    snprintf(buf, sizeof(buf), "unknown(%08x)", v);
+    snprintf(buf, sizeof(buf), "unknown(%08x)", (unsigned) v);
   }
   buf[sizeof(buf) - 1] = 0;
   return std::string(buf);

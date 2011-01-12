@@ -32,15 +32,18 @@
 #include "nsIScriptContext.h"
 #include "nsIScriptGlobalObject.h"
 #include "nsPIDOMWindow.h"
-
-#ifndef NS_IMPL_ISUPPORTS2_CI
-#include "nsIClassInfoImpl.h" // 1.9 only
-#endif
-
 #include "LoadModuleMessage.h"
 #include "ServerMethods.h"
 #include "BrowserChannel.h"
 #include "AllowedConnections.h"
+
+#if GECKO_VERSION >= 1900
+#include "nsIClassInfoImpl.h"
+#endif //GECKO_VERSION
+
+#if GECKO_VERSION >= 2000
+NS_IMPL_CLASSINFO(ExternalWrapper, NULL, 0, OOPHM_CID)
+#endif //GECKO_VERSION
 
 NS_IMPL_ISUPPORTS2_CI(ExternalWrapper, IOOPHM, nsISecurityCheckedComponent)
 

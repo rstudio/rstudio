@@ -7,10 +7,10 @@
     <em:name>Google Web Toolkit Developer Plugin for Firefox</em:name>
     <em:version>GWT_DEV_PLUGIN_VERSION</em:version>
     <em:type>2</em:type>
+    <em:unpack>true</em:unpack>
     <em:targetApplication>
       <Description>
         <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
-        <!-- TODO: can we add 1.5-2.0 back?  Do we care? -->
         <em:minVersion>3.0</em:minVersion>
         <em:maxVersion>4.0.*</em:maxVersion>
       </Description>

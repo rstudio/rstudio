@@ -41,7 +41,11 @@ static JSClass JavaObjectClass = {
 
   NULL, /* object hooks */
   NULL, /* check access */
+#if GECKO_VERSION < 2000
   JavaObject::call, /* call */ //TODO
+#else
+  JavaObject::call20, /* call: compatability wrapper for 2.0+ */
+#endif //GECKO_VERSION
   NULL, /* construct */
   NULL, /* object serialization */
   NULL, /* has instance */
@@ -52,7 +56,6 @@ static JSClass JavaObjectClass = {
 int JavaObject::getObjectId(JSContext* ctx, JSObject* obj) {
   jsval val;
   JSClass* jsClass = JS_GET_CLASS(ctx, obj);
-#if 1
   if (jsClass != &JavaObjectClass) {
     Debug::log(Debug::Error)
         << "JavaObject::getObjectId called on non-JavaObject: " << jsClass->name
@@ -66,7 +69,6 @@ int JavaObject::getObjectId(JSContext* ctx, JSObject* obj) {
         << " reserved slots, no objectId present" << Debug::flush;
     return -1;
   }
-#endif
   if (!JS_GetReservedSlot(ctx, obj, 0, &val)) {
     Debug::log(Debug::Error) << "Error getting reserved slot" << Debug::flush;
     return -1;
@@ -104,16 +106,21 @@ JSObject* JavaObject::construct(JSContext* ctx, SessionData* data, int objectRef
     return NULL;
   }
   // define toString (TODO: some way to avoid doing this each time)
-#if 1
+#if GECKO_VERSION < 2000
   if (!JS_DefineFunction(ctx, obj, "toString", JavaObject::toString, 0, 0)) {
     Debug::log(Debug::Error) << "Could not define toString method on object"
         << Debug::flush;
   }
-#endif
+#else
+  if (!JS_DefineFunction(ctx, obj, "toString", JavaObject::toString20, 0, 0)) {
+    Debug::log(Debug::Error) << "Could not define toString method on object"
+        << Debug::flush;
+  }
+#endif //GECKO_VERSION
   return obj;
 }
 
-JSBool JavaObject::getProperty(JSContext* ctx, JSObject* obj, jsval id,
+JSBool JavaObject::getProperty(JSContext* ctx, JSObject* obj, jsid id,
     jsval* rval) {
   Debug::log(Debug::Spam) << "JavaObject::getProperty obj=" << obj << Debug::flush;
   SessionData* data = JavaObject::getSessionData(ctx, obj);
@@ -123,20 +130,20 @@ JSBool JavaObject::getProperty(JSContext* ctx, JSObject* obj, jsval id,
     return JS_TRUE;
   }
   int objectRef = JavaObject::getObjectId(ctx, obj);
-  if (JSVAL_IS_STRING(id)) {
-    JSString* str = JSVAL_TO_STRING(id);
-    if ((JS_GetStringLength(str) == 8) && !strncmp("toString",
-          JS_GetStringBytes(str), 8)) {
+  if (JSID_IS_STRING(id)) {
+    JSString* str = JSID_TO_STRING(id);
+    if ((JS_GetStringEncodingLength(ctx, str) == 8) && !strncmp("toString",
+          JS_EncodeString(ctx, str), 8)) {
       *rval = data->getToStringTearOff();
       return JS_TRUE;
     }
-    if ((JS_GetStringLength(str) == 2) && !strncmp("id",
-          JS_GetStringBytes(str), 2)) {
+    if ((JS_GetStringEncodingLength(ctx, str) == 2) && !strncmp("id",
+          JS_EncodeString(ctx, str), 2)) {
       *rval = INT_TO_JSVAL(objectRef);
       return JS_TRUE;
     }
-    if ((JS_GetStringLength(str) == 16) && !strncmp("__noSuchMethod__",
-          JS_GetStringBytes(str), 16)) {
+    if ((JS_GetStringEncodingLength(ctx, str) == 16) && !strncmp("__noSuchMethod__",
+          JS_EncodeString(ctx, str), 16)) {
       // Avoid error spew if we are disconnected
       *rval = JSVAL_VOID;
       return JS_TRUE;
@@ -146,13 +153,13 @@ JSBool JavaObject::getProperty(JSContext* ctx, JSObject* obj, jsval id,
     // TODO: throw a better exception here
     return JS_FALSE;
   }
-  if (!JSVAL_IS_INT(id)) {
+  if (!JSID_IS_INT(id)) {
     Debug::log(Debug::Error) << "Getting non-int/non-string property "
           << dumpJsVal(ctx, id) << Debug::flush;
     // TODO: throw a better exception here
     return JS_FALSE;
   }
-  int dispId = JSVAL_TO_INT(id);
+  int dispId = JSID_TO_INT(id);
 
   HostChannel* channel = data->getHostChannel();
   SessionHandler* handler = data->getSessionHandler();
@@ -162,10 +169,10 @@ JSBool JavaObject::getProperty(JSContext* ctx, JSObject* obj, jsval id,
   return JS_TRUE;
 }
 
-JSBool JavaObject::setProperty(JSContext* ctx, JSObject* obj, jsval id,
+JSBool JavaObject::setProperty(JSContext* ctx, JSObject* obj, jsid id,
     jsval* vp) {
   Debug::log(Debug::Spam) << "JavaObject::setProperty obj=" << obj << Debug::flush;
-  if (!JSVAL_IS_INT(id)) {
+  if (!JSID_IS_INT(id)) {
     Debug::log(Debug::Error) << "  Error: setting string property id" << Debug::flush;
     // TODO: throw a better exception here
     return JS_FALSE;
@@ -177,7 +184,7 @@ JSBool JavaObject::setProperty(JSContext* ctx, JSObject* obj, jsval id,
   }
 
   int objectRef = JavaObject::getObjectId(ctx, obj);
-  int dispId = JSVAL_TO_INT(id);
+  int dispId = JSID_TO_INT(id);
 
   Value value;
   data->makeValueFromJsval(value, ctx, *vp);
@@ -232,7 +239,7 @@ JSBool JavaObject::enumerate(JSContext* ctx, JSObject* obj, JSIterateOp op,
           << ", INIT)" << Debug::flush;
       *statep = JSVAL_ZERO;
       if (idp) {
-        *idp = INT_TO_JSVAL(NUM_PROPERTY_NAMES);
+        *idp = INT_TO_JSID(NUM_PROPERTY_NAMES);
       }
       break;
     case JSENUMERATE_NEXT:
@@ -243,7 +250,10 @@ JSBool JavaObject::enumerate(JSContext* ctx, JSObject* obj, JSIterateOp op,
       *statep = INT_TO_JSVAL(idNum + 1);
       if (idNum >= NUM_PROPERTY_NAMES) {
         *statep = JSVAL_NULL;
+#if GECKO_VERSION < 2000
+	//TODO(jat): do we need to do this?
         *idp = JSVAL_NULL;
+#endif //GECKO_VERSION
       } else {
         const char* propName = propertyNames[idNum];
         JSString* str = JS_NewStringCopyZ(ctx, propName);
@@ -344,6 +354,31 @@ JSBool JavaObject::call(JSContext* ctx, JSObject*, uintN argc, jsval* argv,
   }
   return invokeJava(ctx, data, javaThis, dispId, argc - 2, &argv[2], rval);
 }
+
+#if GECKO_VERSION >= 2000
+/**
+ * Compatability wrapper for Gecko 2.0+
+ */
+JSBool JavaObject::toString20(JSContext* ctx, uintN argc, jsval* vp) {
+  jsval rval = JSVAL_VOID;
+  JSBool success;
+  success = toString(ctx, JS_THIS_OBJECT(ctx, vp), argc, JS_ARGV(ctx, vp),
+                       &rval);
+  JS_SET_RVAL(cx, vp, rval);
+  return success;
+}
+
+/**
+ * Compatability wrapper method for Gecko 2.0+
+ */
+JSBool JavaObject::call20(JSContext* ctx, uintN argc, jsval* vp) {
+  jsval rval = JSVAL_VOID;
+  JSBool success;
+  success = call(ctx, NULL, argc, JS_ARGV(ctx, vp), &rval);
+  JS_SET_RVAL(ctx, vp, rval);
+  return success;
+}
+#endif //GECKO_VERSION
 
 /**
  * Calls a method on a Java object and returns a two-element JS array, with

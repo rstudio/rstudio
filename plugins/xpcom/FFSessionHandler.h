@@ -68,13 +68,4 @@ private:
   std::map<void*, int> jsIdsByObject;
 };
 
-inline Debug::DebugStream& operator<<(Debug::DebugStream& dbg, JSString* str) {
-  if (str == NULL) {
-    dbg << "null";
-  } else {
-    dbg << std::string(JS_GetStringBytes(str), JS_GetStringLength(str));
-  }
-  return dbg;
-}
-
 #endif

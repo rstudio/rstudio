@@ -20,10 +20,17 @@
 
 #include "jsapi.h"
 
+#if GECKO_VERSION < 2000
+#define JS_AddNamedObjectRoot JS_AddNamedRoot
+#define JS_AddNamedValueRoot JS_AddNamedRoot
+#define JS_RemoveObjectRoot JS_RemoveRoot
+#define JS_RemoveValueRoot JS_RemoveRoot
+#endif
+
 class RootedObject {
 public:
   RootedObject(JSContext* ctx, const char* name = 0) : ctx(ctx), obj(0) {
-    if (!JS_AddNamedRoot(ctx, &obj, name)) {
+    if (!JS_AddNamedObjectRoot(ctx, &obj, name)) {
       Debug::log(Debug::Error) << "RootedObject(" << (name ? name : "")
           << "): JS_AddNamedRoot failed" << Debug::flush;
     }
@@ -31,7 +38,7 @@ public:
   
   ~RootedObject() {
     // Always returns success, so no need to check.
-    JS_RemoveRoot(ctx, &obj);
+    JS_RemoveObjectRoot(ctx, &obj);
   }
   
   JSObject& operator*() const {

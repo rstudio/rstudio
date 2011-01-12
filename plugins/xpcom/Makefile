@@ -49,7 +49,7 @@ endif
 export FLAG32BIT
 
 ifeq ($(BROWSER),)
-$(warning Defaulting to FF3 build [set with BROWSER=ff2, ff3, ff3+, ff35, or ff36])
+$(warning Defaulting to FF3 build [set with BROWSER=ff3, ff3+, ff35, ff36, or ff40])
 BROWSER=ff3
 endif
 
@@ -67,35 +67,36 @@ endif
 
 CFLAGS += -DBROWSER=$(BROWSER)
 GECKO_MINOR_VERSION=
-ifeq ($(BROWSER),ff2)
-GECKO_VERSION   = 1.8
-else
+GECKO_DLLFLAGS = -lxpcomglue_s -lxpcom
+NSPR_DLLFLAGS = -lnspr4
+MOZJS_DLLFLAGS = -lmozjs
+MOZALLOC_DLLFLAGS =
+
 ifeq ($(BROWSER),ff3)
 GECKO_VERSION   = 1.9.0
-CFLAGS += -DGECKO_19
+CFLAGS += -DGECKO_VERSION=1900
 else
 ifeq ($(BROWSER),ff3+)
 GECKO_VERSION   = 1.9.0
-CFLAGS += -DGECKO_19
+CFLAGS += -DGECKO_VERSION=1901
 GECKO_MINOR_VERSION=.10
 else
 ifeq ($(BROWSER),ff35)
 GECKO_VERSION   = 1.9.1
-CFLAGS += -DGECKO_19
+CFLAGS += -DGECKO_VERSION=1910
 else
 ifeq ($(BROWSER),ff36)
 GECKO_VERSION   = 1.9.2
-CFLAGS += -DGECKO_19
+CFLAGS += -DGECKO_VERSION=1920
 else
 ifeq ($(BROWSER),ff40)
-GECKO_VERSION   = 1.9.3
-CFLAGS += -DGECKO_19
-ifeq ($(OS),mac)
-DLLFLAGS += -lmozalloc
-endif
+GECKO_VERSION   = 2.0.0
+CFLAGS += -DGECKO_VERSION=2000
+MOZALLOC_DLLFLAGS = -lmozalloc
+#MOZJS is statically linked in FF4
+MOZJS_DLLFLAGS =
 else
-$(error Unrecognized BROWSER of $(BROWSER) - options are ff2, ff3, ff3+, ff35, ff36, ff40)
-endif
+$(error Unrecognized BROWSER of $(BROWSER) - options are ff3, ff3+, ff35, ff36, ff40)
 endif
 endif
 endif
@@ -131,18 +132,12 @@ GECKO_LIBS        = $(GECKO_SDK)/$(GECKO_PLATFORM)/lib$(GECKO_MINOR_VERSION)
 XPIDL             = $(GECKO_SDK)/$(GECKO_PLATFORM)/bin/xpidl
 XPIDL_FLAGS       = -I$(GECKO_SDK)/idl
 
-#DLLFLAGS += \
-#		-L$(GECKO_LIBS) \
-#		-L$(FIREFOX_LIBS) \
-#		-Wl,$(RUN_PATH_FLAG),$(FIREFOX_LIBS) \
-#		-Wl,$(RUN_PATH_FLAG),$(GECKO_LIBS) \
-#		-Wl,$(RUN_PATH_FLAG),$(DEFAULT_FIREFOX_LIBS) \
-#		-lxpcomglue_s -lxpcom -lnspr4 -lmozjs
 DLLFLAGS += \
 		-L$(DEFAULT_FIREFOX_LIBS) \
 		-L$(GECKO_LIBS) \
 		-Wl,$(RUN_PATH_FLAG),$(GECKO_LIBS) \
-		-lxpcomglue_s -lxpcom -lnspr4 -lmozjs
+		$(GECKO_DLLFLAGS) $(NSPR_DLLFLAGS) \
+		$(MOZALLOC_DLLFLAGS) $(MOZJS_DLLFLAGS)
 
 INC += -I$(GECKO_PLAT_INC) -I$(GECKO_SDK)/include -I$(dir $(FF_HEADER))
 
@@ -239,7 +234,6 @@ ifeq ($(OS),mac)
 	-cp $(FF_DLL) $(subst $(EXTENSION_OUTDIR),prebuilt/extension-$(BROWSER),$(subst x86,ppc,$(FF_PLATFORM_DIR)))/components
 endif
 else
-	@$(MAKE) $@ BROWSER=ff2
 	@$(MAKE) $@ BROWSER=ff3
 	@$(MAKE) $@ BROWSER=ff3+
 	@$(MAKE) $@ BROWSER=ff35

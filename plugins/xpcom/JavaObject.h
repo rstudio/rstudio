@@ -22,19 +22,36 @@
 class SessionData;
 class Value;
 
+#if GECKO_VERSION < 2000
+#define jsid jsval
+#define JSID_IS_STRING JSVAL_IS_STRING
+#define JSID_TO_STRING JSVAL_TO_STRING
+#define JSID_IS_INT JSVAL_IS_INT
+#define JSID_TO_INT JSVAL_TO_INT
+#define INT_TO_JSID INT_TO_JSVAL
+#define JS_GetStringEncodingLength(ctx, str) JS_GetStringLength(str)
+#define JS_EncodeString(ctx, str) JS_GetStringBytes(str)
+#endif
+
 class JavaObject {
 public:
   static bool isJavaObject(JSContext* ctx, JSObject* obj);
   static JSObject* construct(JSContext* ctx, SessionData* data, int objectRef);
   static int getObjectId(JSContext* ctx, JSObject* obj);
-  static JSBool getProperty(JSContext* ctx, JSObject* obj, jsval id, jsval* vp);
-  static JSBool setProperty(JSContext* ctx, JSObject* obj, jsval id, jsval* vp);
+  static JSBool getProperty(JSContext* ctx, JSObject* obj, jsid id, jsval* vp);
+  static JSBool setProperty(JSContext* ctx, JSObject* obj, jsid id, jsval* vp);
   static JSBool resolve(JSContext* ctx, JSObject* obj, jsval id);
   static JSBool convert(JSContext* cx, JSObject* obj, JSType type, jsval* vp);
   static JSBool enumerate(JSContext* ctx, JSObject* obj, JSIterateOp op, jsval* statep, jsid* idp);
   static void finalize(JSContext* ctx, JSObject* obj);
   static JSBool toString(JSContext* ctx, JSObject* obj, uintN argc, jsval* argv, jsval* rval);
   static JSBool call(JSContext* ctx, JSObject* obj, uintN argc, jsval* argv, jsval* rval);
+
+#if GECKO_VERSION >= 2000
+  static JSBool toString20(JSContext* ctx, uintN argc, jsval* vp);
+  static JSBool call20(JSContext* ctx, uintN argc, jsval* vp);
+#endif //GECKO_VERSION
+
 private:
   static SessionData* getSessionData(JSContext* ctx, JSObject* obj);
   static JSBool invokeJava(JSContext* ctx, SessionData* data,

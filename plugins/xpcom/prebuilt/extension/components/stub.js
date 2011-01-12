@@ -33,6 +33,10 @@
 // components are located, depending on what version of Firefox we detect we are
 // running in.
 
+// NOTE: This file is only used pre Gecko 2.0 (FF4). The registration mechanism
+// in Gecko 2.0 allows the chrome.manifest to indicate the appropriate binary
+// component for each ABI.
+
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 

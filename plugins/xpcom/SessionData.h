@@ -22,13 +22,17 @@
 
 #include "jsapi.h"
 
+#if GECKO_VERSION >= 2000
+#include "jsobj.h"
+#endif
+
 class HostChannel;
 
 class SessionData {
 public:
   SessionData(HostChannel* channel, SessionHandler* sessionHandler,
       JSContext* ctx) : channel(channel), sessionHandler(sessionHandler),
-      global(JS_GetGlobalObject(ctx)), runtime(JS_GetRuntime(ctx)),
+      global(SessionData::getJSGlobalObject(ctx)), runtime(JS_GetRuntime(ctx)),
       toStringTearOff(JSVAL_VOID)
   {
   }
@@ -65,6 +69,17 @@ public:
   * Removes the JavaObject wrapper with the given id and notifies the host.
   */
   virtual void freeJavaObject(int objectId)=0;
+
+private:
+  static JSObject* getJSGlobalObject(JSContext* ctx) {
+    JSObject* global = JS_GetGlobalObject(ctx);
+#if GECKO_VERSION >= 2000
+    // Innerize the global object from the WindowProxy object to its inner
+    // Window delegate since the proxy can't be used for evaluating scripts.
+    OBJ_TO_INNER_OBJECT(ctx, global);
+#endif //GECKO_VERSION
+    return global;
+  }
 
 protected:
   /*

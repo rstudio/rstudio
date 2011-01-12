@@ -18,17 +18,23 @@
 #include "ExternalWrapper.h"
 
 #include "nsCOMPtr.h"
-#include "nsIGenericFactory.h"
-#include "nsICategoryManager.h"
 #include "nsISupports.h"
 #include "nsIXULAppInfo.h"
 #include "nsIXULRuntime.h"
 #include "nsServiceManagerUtils.h"
 #include "nsXPCOMCID.h"
 
-#ifdef GECKO_19
-#include "nsIClassInfoImpl.h" // 1.9 only
+#if GECKO_VERSION >= 1900
+#include "nsIClassInfoImpl.h"
 #endif
+
+#if GECKO_VERSION >= 2000
+#include "mozilla/ModuleUtils.h"
+#else
+#include "nsIGenericFactory.h"
+#include "nsICategoryManager.h"
+#endif
+
 
 // Allow a macro to be treated as a C string, ie -Dfoo=bar; QUOTE(foo) = "bar"
 #define QUOTE_HELPER(x) #x
@@ -49,9 +55,95 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ulReasonForCall, LPVOID lpReserved)
 }
 #endif
 
-NS_GENERIC_FACTORY_CONSTRUCTOR(ExternalWrapper)
-NS_DECL_CLASSINFO(ExternalWrapper)
+// This defines ExternalWrapperConstructor, which in turn instantiates via
+// ExternalWrapper::ExternalWrapper()
+NS_GENERIC_FACTORY_CONSTRUCTOR(ExternalWrapper);
 
+static nsresult Load() {
+  nsresult nr;
+  nsCOMPtr<nsIXULAppInfo> app_info
+      = do_GetService("@mozilla.org/xre/app-info;1", &nr);
+  if (NS_FAILED(nr) || !app_info) {
+    return NS_ERROR_FAILURE;
+  }
+  nsCString gecko_version;
+  app_info->GetPlatformVersion(gecko_version);
+  nsCString browser_version;
+  app_info->GetVersion(browser_version);
+  nsCOMPtr<nsIXULRuntime> xulRuntime
+      = do_GetService("@mozilla.org/xre/app-info;1", &nr);
+  if (NS_FAILED(nr) || !app_info) {
+    return NS_ERROR_FAILURE;
+  }
+  nsCString os;
+  xulRuntime->GetOS(os);
+  nsCString abi;
+  xulRuntime->GetXPCOMABI(abi);
+  Debug::log(Debug::Info) << "Initializing GWT Developer Plugin"
+      << Debug::flush;
+  Debug::log(Debug::Info) << "  gecko=" << gecko_version.BeginReading()
+      << ", firefox=" << browser_version.BeginReading() << ", abi="
+      << os.BeginReading() << "_" << abi.BeginReading() << ", built for "
+      QUOTE(BROWSER) << Debug::flush;
+  return NS_OK;
+}
+
+static void Unload() {
+  Debug::log(Debug::Debugging) << "ModuleOOPHM Unload()"
+      << Debug::flush;
+}
+
+#if GECKO_VERSION >= 2000
+/**
+ * Gecko 2.0 has a completely different initialization mechanism
+ */
+
+// This defines kOOPHM_CID variable that refers to the OOPHM_CID
+NS_DEFINE_NAMED_CID(OOPHM_CID);
+
+// Build a table of ClassIDs (CIDs) which are implemented by this module. CIDs
+// should be completely unique UUIDs.
+// each entry has the form { CID, service, factoryproc, constructorproc }
+// where factoryproc is usually NULL.
+static const mozilla::Module::CIDEntry kOOPHMCIDs[] = {
+  {&kOOPHM_CID, false, NULL, ExternalWrapperConstructor},
+  {NULL }
+};
+
+// Build a table which maps contract IDs to CIDs.
+// A contract is a string which identifies a particular set of functionality. In some
+// cases an extension component may override the contract ID of a builtin gecko component
+// to modify or extend functionality.
+static const mozilla::Module::ContractIDEntry kOOPHMContracts[] = {
+  {OOPHM_CONTRACTID, &kOOPHM_CID},
+  {NULL}
+};
+
+// Category entries are category/key/value triples which can be used
+// to register contract ID as content handlers or to observe certain
+// notifications.
+static const mozilla::Module::CategoryEntry kOOPHMCategories[] = {
+  {"JavaScript-global-property", "__gwt_HostedModePlugin", OOPHM_CONTRACTID},
+  {NULL}
+};
+
+static const mozilla::Module kModuleOOPHM = {
+  mozilla::Module::kVersion,
+  kOOPHMCIDs,
+  kOOPHMContracts,
+  kOOPHMCategories,
+  NULL, /* Use the default factory */
+  Load,
+  Unload
+};
+
+NSMODULE_DEFN(ModuleOOPHM) = &kModuleOOPHM;
+
+#else
+/**
+ * pre-Gecko2.0 initialization
+ */
+NS_DECL_CLASSINFO(ExternalWrapper);
 static NS_IMETHODIMP registerSelf(nsIComponentManager *aCompMgr, nsIFile *aPath,
     const char *aLoaderStr, const char *aType,
     const nsModuleComponentInfo *aInfo) {
@@ -76,8 +168,7 @@ static NS_IMETHODIMP registerSelf(nsIComponentManager *aCompMgr, nsIFile *aPath,
 }
 
 static NS_IMETHODIMP factoryDestructor(void) {
-  Debug::log(Debug::Debugging) << "ModuleOOPHM factoryDestructor()"
-      << Debug::flush;
+  Unload();
   return NS_OK;
 }
 
@@ -117,30 +208,7 @@ static nsModuleInfo const kModuleInfo = {
 
 NSGETMODULE_ENTRY_POINT(ExternalWrapperModule) (nsIComponentManager *servMgr,
     nsIFile* location, nsIModule** result) {
-  nsresult nr;
-  nsCOMPtr<nsIXULAppInfo> app_info
-      = do_GetService("@mozilla.org/xre/app-info;1", &nr);
-  if (NS_FAILED(nr) || !app_info) {
-    return NS_ERROR_FAILURE;
-  }
-  nsCString gecko_version;
-  app_info->GetPlatformVersion(gecko_version);
-  nsCString browser_version;
-  app_info->GetVersion(browser_version);
-  nsCOMPtr<nsIXULRuntime> xulRuntime
-      = do_GetService("@mozilla.org/xre/app-info;1", &nr);
-  if (NS_FAILED(nr) || !app_info) {
-    return NS_ERROR_FAILURE;
-  }
-  nsCString os;
-  xulRuntime->GetOS(os);
-  nsCString abi;
-  xulRuntime->GetXPCOMABI(abi);
-  Debug::log(Debug::Info) << "Initializing GWT Developer Plugin"
-      << Debug::flush;
-  Debug::log(Debug::Info) << "  gecko=" << gecko_version.BeginReading()
-      << ", firefox=" << browser_version.BeginReading() << ", abi="
-      << os.BeginReading() << "_" << abi.BeginReading() << ", built for "
-      QUOTE(BROWSER) << Debug::flush;
+  Load();
   return NS_NewGenericModule2(&kModuleInfo, result);
 }
+#endif //GECKO_VERSION

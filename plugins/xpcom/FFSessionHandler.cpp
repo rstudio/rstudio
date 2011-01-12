@@ -33,6 +33,13 @@
 #include "nsIPrincipal.h"
 #include "nsServiceManagerUtils.h"
 
+#if GECKO_VERSION >= 2000
+#define JS_RemoveRootRT js_RemoveRoot
+static inline bool INT_FITS_IN_JSVAL(int i) {
+  return (i >= JSVAL_INT_MIN) && (i <= JSVAL_INT_MAX);
+}
+#endif //GECKO_VERSION
+
 static JSContext* getJSContext() {
   // Get JSContext from stack.
   nsCOMPtr<nsIJSContextStack> stack =
@@ -62,14 +69,14 @@ FFSessionHandler::FFSessionHandler(HostChannel* channel)
   // TODO(jat): is there a way to avoid calling this twice, without keeping
   // JSContext in an instance field?
   JSContext* ctx = getJSContext();
-  if (!JS_AddNamedRoot(ctx, &jsObjectsById, "jsObjectsById")) {
+  if (!JS_AddNamedObjectRoot(ctx, &jsObjectsById, "jsObjectsById")) {
     Debug::log(Debug::Error) << "Error rooting jsObjectsById" << Debug::flush;
   }
   jsObjectsById = JS_NewArrayObject(ctx, 0, NULL);
   if (!jsObjectsById) {
     Debug::log(Debug::Error) << "Error rooting jsObjectsById" << Debug::flush;
   }
-  if (!JS_AddNamedRoot(ctx, &toStringTearOff, "toStringTearOff")) {
+  if (!JS_AddNamedValueRoot(ctx, &toStringTearOff, "toStringTearOff")) {
     Debug::log(Debug::Error) << "Error rooting toStringTearOff" << Debug::flush;
   }
   getStringObjectClass(ctx);
@@ -439,10 +446,15 @@ void FFSessionHandler::makeValueFromJsval(Value& retVal, JSContext* ctx,
     retVal.setBoolean(JSVAL_TO_BOOLEAN(value));
   } else if (JSVAL_IS_STRING(value)) {
     JSString* str = JSVAL_TO_STRING(value);
+#if GECKO_VERSION < 2000
     retVal.setString(utf8String(JS_GetStringChars(str),
         JS_GetStringLength(str)));
+#else
+    retVal.setString(utf8String(JS_GetStringCharsZ(ctx, str),
+        JS_GetStringLength(str)));
+#endif //GECKO_VERSION
   } else if (JSVAL_IS_DOUBLE(value)) {
-    retVal.setDouble(*JSVAL_TO_DOUBLE(value));
+    retVal.setDouble(JSVAL_TO_DOUBLE(value));
   } else if (JSVAL_IS_OBJECT(value)) {
     JSObject* obj = JSVAL_TO_OBJECT(value);
     if (JavaObject::isJavaObject(ctx, obj)) {
@@ -450,8 +462,13 @@ void FFSessionHandler::makeValueFromJsval(Value& retVal, JSContext* ctx,
     } else if (JS_GET_CLASS(ctx, obj) == stringObjectClass) {
       // JS String wrapper object, treat as a string primitive
       JSString* str = JS_ValueToString(ctx, value);
-      retVal.setString(utf8String(JS_GetStringChars(str),
-          JS_GetStringLength(str)));
+#if GECKO_VERSION < 2000
+    retVal.setString(utf8String(JS_GetStringChars(str),
+        JS_GetStringLength(str)));
+#else
+    retVal.setString(utf8String(JS_GetStringCharsZ(ctx, str),
+        JS_GetStringLength(str)));
+#endif //GECKO_VERSION
       // str will be garbage-collected, does not need to be freed
     } else {
       // It's a plain-old JavaScript Object
