@@ -52,7 +52,7 @@ double millisecondsSinceEpoch(std::time_t time)
    return std::difftime(time, 0) * 1000;
 }
    
-boost::posix_time::ptime timeFromMillisecondsSinceEpoch(double ms)
+boost::posix_time::ptime timeFromMillisecondsSinceEpoch(int64_t ms)
 {
    using namespace boost::gregorian;
    using namespace boost::posix_time;
