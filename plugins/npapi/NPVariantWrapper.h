@@ -81,8 +81,20 @@ public:
     return isInt(variant);
   }
   
+  // Return true if the variant is holding a regular integer or an integral double.
   static int isInt(const NPVariant& variant) {
-    return NPVARIANT_IS_INT32(variant);
+    if (NPVARIANT_IS_INT32(variant)) {
+      return 1;
+    } else if (NPVARIANT_IS_DOUBLE(variant)) {
+      // As of http://trac.webkit.org/changeset/72974 we get doubles for all
+      // numerical variants out of V8.
+      double d = NPVARIANT_TO_DOUBLE(variant);
+      int i = static_cast<int>(d);
+      // Verify that d is an integral value in range.
+      return (d == static_cast<double>(i));
+    } else {
+      return 0;
+    }
   }
 
   int getAsInt() const {
@@ -90,10 +102,16 @@ public:
   }
 
   static int getAsInt(const NPVariant& variant) {
-    if (NPVARIANT_IS_INT32(variant)) {
-      return NPVARIANT_TO_INT32(variant);
+    if (isInt(variant)) {
+      if (NPVARIANT_IS_INT32(variant)) {
+        return NPVARIANT_TO_INT32(variant);
+      } else if (NPVARIANT_IS_DOUBLE(variant)) {
+        return static_cast<int>(NPVARIANT_TO_DOUBLE(variant));
+      }
     }
-    Debug::log(Debug::Error) << "getAsInt: variant not int" << Debug::flush;
+
+    Debug::log(Debug::Error) << "getAsInt: variant " <<
+      NPVariantProxy::toString(variant) << "not int" << Debug::flush;
     return 0;
   }
 

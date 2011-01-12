@@ -238,7 +238,7 @@ extern "C" {
   }
 
   int16 NPP_HandleEvent(NPP instance, void* event) {
-    Debug::log(Debug::Spam) << "NPP_HandleEvent(instance=" << instance << ")" << Debug::flush;
+    //Debug::log(Debug::Spam) << "NPP_HandleEvent(instance=" << instance << ")" << Debug::flush;
     return 0 ;
   }
 
