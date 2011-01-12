@@ -67,6 +67,10 @@ public:
    {
    }
 
+   virtual ~AsyncClient()
+   {
+   }
+
    // populate the request before calling execute
    http::Request& request() { return request_; }
 
