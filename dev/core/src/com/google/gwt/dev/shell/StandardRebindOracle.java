@@ -235,6 +235,14 @@ public class StandardRebindOracle implements RebindOracle {
     this.genCtx = genCtx;
   }
 
+  /**
+   * Invalidates the given source type name, so the next rebind request will
+   * generate type again.
+   */
+  public void invalidateRebind(String sourceTypeName) {
+    typeNameBindingMap.remove(sourceTypeName);
+  }
+
   public String rebind(TreeLogger logger, String typeName)
       throws UnableToCompleteException {
     return rebind(logger, typeName, null);

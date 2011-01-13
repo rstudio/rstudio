@@ -84,6 +84,15 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
     return logger;
   }
 
+  /**
+   * Invalidates the given source type name, so the next rebind request will
+   * generate a type again.
+   */
+  public void invalidateRebind(String sourceTypeName) {
+    checkForModuleSpace();
+    rebindOracle.invalidateRebind(sourceTypeName);
+  }
+
   public void onModuleReady(ModuleSpace readySpace)
       throws UnableToCompleteException {
     this.space = readySpace;
