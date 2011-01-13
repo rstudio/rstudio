@@ -1,5 +1,7 @@
 #!/bin/bash
 
+PACKAGE_DIR=`pwd`
+
 if [ "$1" != "Desktop" ] && [ "$1" != "Server" ]
 then
    echo "error: must specify Desktop or Server as configuration"
@@ -16,7 +18,13 @@ BUILD_DIR=build-$1-$2
 
 if [ "$3" == "clean" ]
 then
+   # remove existing build dir
    rm -rf $BUILD_DIR
+   
+   # clean out ant build
+   cd ../../src/gwt
+   ant clean
+   cd $PACKAGE_DIR
 fi
 
 if [ "$1" == "Desktop" ]

@@ -1,8 +1,16 @@
 #!/bin/bash
 
+PACKAGE_DIR=`pwd`
+
 if [ "$1" == "clean" ]
 then
+   # remove existing build dir
    rm -rf build
+   
+   # clean out ant build
+   cd ../../src/gwt
+   ant clean
+   cd $PACKAGE_DIR
 fi
 
 mkdir -p build
