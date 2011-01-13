@@ -62,6 +62,7 @@ public class ValidatePropertyGwtTest extends AbstractValidationTest {
     delegate.testValidatePropertyWithNullProperty();
   }
 
+  @Failing(issue = 5804)
   public void testValidIsNotHonoredValidateProperty() {
     delegate.testValidIsNotHonoredValidateProperty();
   }

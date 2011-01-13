@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JPackage;
+import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.user.rebind.AbstractSourceCreator;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
@@ -68,6 +69,11 @@ public abstract class AbstractCreator extends AbstractSourceCreator {
     return BeanHelper.createBeanHelper(clazz, logger, context);
   }
 
+  protected BeanHelper createBeanHelper(JType jType)
+      throws UnableToCompleteException {
+    return BeanHelper.createBeanHelper(jType, logger, context);
+  }
+
   protected final String getPackage() {
     JPackage serviceIntfPkg = validatorType.getPackage();
     String packageName = serviceIntfPkg == null ? "" : serviceIntfPkg.getName();
@@ -85,7 +91,7 @@ public abstract class AbstractCreator extends AbstractSourceCreator {
     sw.println(" = ");
     sw.indent();
     sw.indent();
-  
+
     // GWT.create(MyBeanValidator.class);
     sw.println("GWT.create(" + bean.getFullyQualifiedValidatorName()
         + ".class);");

@@ -52,7 +52,33 @@ public class GwtValidationContext<T> {
   public GwtValidationContext<T> append(String name) {
     GwtValidationContext<T> temp = new GwtValidationContext<T>(rootBean,
         beanDescriptor, messageInterpolator);
-    temp.path = temp.path.append(name);
+    temp.path = path.append(name);
+    return temp;
+  }
+
+  /**
+   * Append a indexed node to the path.
+   *
+   * @param name
+   * @return the new GwtValidationContext.
+   */
+  public GwtValidationContext<T> appendIndex(String name, int index) {
+    GwtValidationContext<T> temp = new GwtValidationContext<T>(rootBean,
+        beanDescriptor, messageInterpolator);
+    temp.path = path.appendIndex(name, index);
+    return temp;
+  }
+
+  /**
+   * Append a keyed node to the path.
+   *
+   * @param name
+   * @return the new GwtValidationContext.
+   */
+  public GwtValidationContext<T> appendKey(String name, String key) {
+    GwtValidationContext<T> temp = new GwtValidationContext<T>(rootBean,
+        beanDescriptor, messageInterpolator);
+    temp.path = path.appendKey(name, key);
     return temp;
   }
 

@@ -17,6 +17,8 @@ package com.google.gwt.sample.validation.shared;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 
+import java.util.Map;
+
 import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.NotNull;
@@ -30,6 +32,9 @@ public class Person implements IsSerializable {
 
   @Valid
   private Address address;
+
+  @Valid
+  private Map<String, Address> otherAddresses;
 
   @NotNull
   @Size(min = 4, message = "{custom.name.size.message}")

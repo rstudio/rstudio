@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,7 +17,9 @@ package com.google.gwt.validation.rebind;
 
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.validation.client.impl.GwtSpecificValidator;
@@ -41,7 +43,7 @@ final class BeanHelper {
 
   // stash the map in a ThreadLocal, since each GWT module lives in its own
   // thread in DevMode
-  private static final ThreadLocal<Map<JClassType, BeanHelper>> threadLocalHelperMap = 
+  private static final ThreadLocal<Map<JClassType, BeanHelper>> threadLocalHelperMap =
       new ThreadLocal<Map<JClassType, BeanHelper>>() {
     @Override
     protected synchronized Map<JClassType, BeanHelper> initialValue() {
@@ -61,6 +63,18 @@ final class BeanHelper {
       writeInterface(context, logger, helper);
     }
     return helper;
+  }
+
+  protected static BeanHelper createBeanHelper(JType jType, TreeLogger logger,
+      GeneratorContext context) throws UnableToCompleteException {
+    try {
+      Class<?> clazz = Class.forName(jType.getQualifiedSourceName());
+      return createBeanHelper(clazz, logger, context);
+    } catch (ClassNotFoundException e) {
+      logger.log(TreeLogger.ERROR, "Unable to create BeanHelper for " + jType,
+          e);
+      throw new UnableToCompleteException();
+    }
   }
 
   protected static boolean isClassConstrained(Class<?> clazz) {

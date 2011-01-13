@@ -40,7 +40,9 @@ public class PathImpl implements Path, Serializable {
   }
 
   private PathImpl(PathImpl originalPath, Node node) {
-    nodes.addAll(originalPath.nodes);
+    if (!originalPath.isRoot()) {
+      nodes.addAll(originalPath.nodes);
+    }
     nodes.add(node);
   }
 
@@ -110,5 +112,9 @@ public class PathImpl implements Path, Serializable {
       sb.append(n);
     }
     return sb.toString();
+  }
+
+  private boolean isRoot() {
+    return nodes.size() == 1 && nodes.get(0) == NodeImpl.ROOT_NODE;
   }
 }
