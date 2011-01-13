@@ -89,11 +89,6 @@ public:
    {
       return std::string(authRequiredUserGroup_.c_str());
    }
-
-   std::string authPamchkPath()
-   {
-      return std::string(authPamchkPath_.c_str());
-   }
    
    // rsession
    std::string rsessionPath() const
@@ -131,7 +126,6 @@ private:
    std::string wwwLocalPath_ ;
    int wwwThreadPoolSize_;
    bool authValidateUsers_;
-   std::string authPamchkPath_;
    std::string authRequiredUserGroup_;
    std::string oauthConsumerKey_;
    std::string oauthConsumerSecret_;
