@@ -40,6 +40,9 @@ import java.util.Set;
  * The top-level API for loading module XML.
  */
 public final class ModuleDefLoader {
+  /*
+   * TODO(scottb,tobyr,zundel): synchronization????
+   */
 
   /**
    * Interface to provide a load strategy to the load process.
@@ -64,11 +67,12 @@ public final class ModuleDefLoader {
 
   /**
    * Keep soft references to loaded modules so the VM can gc them when memory is
-   * tight.  The module's physical name is used as a key.
+   * tight. The current context class loader used as a key for modules cache.
+   * The module's physical name is used as a key inside the cache.
    */
   @SuppressWarnings("unchecked")
-  private static final Map<String, ModuleDef> loadedModules = new ReferenceMap(
-      AbstractReferenceMap.HARD, AbstractReferenceMap.SOFT);
+  private static final Map<ClassLoader, Map<String, ModuleDef>> loadedModulesCaches = new ReferenceMap(
+      AbstractReferenceMap.WEAK, AbstractReferenceMap.HARD);
 
   /**
    * A mapping from effective to physical module names.
@@ -150,8 +154,19 @@ public final class ModuleDefLoader {
     }
   }
 
+  @SuppressWarnings("unchecked")
+  private static Map<String, ModuleDef> getModulesCache() {
+    ClassLoader keyClassLoader = Thread.currentThread().getContextClassLoader();
+    Map<String, ModuleDef> cache = loadedModulesCaches.get(keyClassLoader);
+    if (cache == null) {
+      cache = new ReferenceMap(AbstractReferenceMap.HARD, AbstractReferenceMap.SOFT);
+      loadedModulesCaches.put(keyClassLoader, cache);
+    }
+    return cache;
+  }
+  
   private static ModuleDef tryGetLoadedModule(String moduleName, boolean refresh) {
-    ModuleDef moduleDef = loadedModules.get(moduleName);
+    ModuleDef moduleDef = getModulesCache().get(moduleName);
     if (moduleDef == null || moduleDef.isGwtXmlFileStale()) {
       return null;
     } else if (refresh) {
@@ -301,7 +316,7 @@ public final class ModuleDefLoader {
     moduleNormalizeEvent.end();
 
     // Add the "physical" module name: com.google.Module
-    loadedModules.put(moduleName, moduleDef);
+    getModulesCache().put(moduleName, moduleDef);
 
     // Add a mapping from the module's effective name to its physical name
     moduleEffectiveNameToPhysicalName.put(moduleDef.getName(), moduleName);
