@@ -29,7 +29,7 @@ import com.google.gwt.uibinder.rebind.JClassTypeAdapter;
 import com.google.gwt.uibinder.rebind.MortalLogger;
 import com.google.gwt.uibinder.rebind.UiBinderContext;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.HTML;
 
 import junit.framework.TestCase;
 
@@ -51,23 +51,35 @@ public class OwnerFieldClassTest extends TestCase {
   }
 
   public void testOwnerFieldClass() throws Exception {
-    // Get the JType for a Label
-    JClassType labelType = gwtTypeAdapter.adaptJavaClass(Label.class);
+    // Get the JType for an HTML
+    JClassType htmlType = gwtTypeAdapter.adaptJavaClass(HTML.class);
 
     // Now get its field class model
-    OwnerFieldClass fieldClass = OwnerFieldClass.getFieldClass(labelType,
+    OwnerFieldClass fieldClass = OwnerFieldClass.getFieldClass(htmlType,
         MortalLogger.NULL, uiBinderCtx);
 
     // Check the class model properties
-    assertEquals(labelType, fieldClass.getRawType());
+    assertEquals(htmlType, fieldClass.getRawType());
     assertNull(fieldClass.getUiConstructor());
 
-    JMethod setter = fieldClass.getSetter("visible");
-    assertMethod(setter, "setVisible", JPrimitiveType.BOOLEAN);
+    // simple property: visible="" maps to setVisible
+    JMethod visibleSetter = fieldClass.getSetter("visible");
+    assertMethod(visibleSetter, "setVisible", JPrimitiveType.BOOLEAN);
+
+    // all-upper-case property, Java Bean naming (all-upper-cased)
+    JMethod htmlSetter = fieldClass.getSetter("HTML");
+    assertMethod(htmlSetter, "setHTML",
+        gwtTypeAdapter.adaptJavaClass(String.class));
+
+    // all-upper-case property, GWT-legacy naming with the first char
+    // lower-cased
+    htmlSetter = fieldClass.getSetter("hTML");
+    assertMethod(htmlSetter, "setHTML",
+        gwtTypeAdapter.adaptJavaClass(String.class));
 
     // Check that the same instance of the model is returned if asked again
-    assertSame(fieldClass, OwnerFieldClass.getFieldClass(labelType,
-        MortalLogger.NULL, uiBinderCtx));
+    assertSame(fieldClass,
+        OwnerFieldClass.getFieldClass(htmlType, MortalLogger.NULL, uiBinderCtx));
 
     gwtTypeAdapter.verifyAll();
   }
@@ -153,47 +165,47 @@ public class OwnerFieldClassTest extends TestCase {
     }
     
     // setvalue1 is not ambiguous
-    public void setValue1(boolean b) {
+    public void setValue1(@SuppressWarnings("unused") boolean b) {
     }
 
-    public void setValue1(Boolean b) {
+    public void setValue1(@SuppressWarnings("unused") Boolean b) {
     }
 
     // derived wins
-    public void setValue2(Integer b) {
+    public void setValue2(@SuppressWarnings("unused") Integer b) {
     }
 
     // this overload wins
-    public void setValue3(int b) {
+    public void setValue3(@SuppressWarnings("unused") int b) {
     }
     
     // this is not ambiguous since derived
     // has the exact same signature
-    public void setValue4(int b) {
+    public void setValue4(@SuppressWarnings("unused") int b) {
     }
     
     // setvalue5 is ambiguous
-    public void setValue5(float f) {
+    public void setValue5(@SuppressWarnings("unused") float f) {
     }
     
-    public void setValue5(double d) {
+    public void setValue5(@SuppressWarnings("unused") double d) {
     }
     
     // string always wins
-    public void setValue6(String s) {
+    public void setValue6(@SuppressWarnings("unused") String s) {
     }
 
-    public void setValue6(char s) {
+    public void setValue6(@SuppressWarnings("unused") char s) {
     }
     
-    public void setValue6(Object s) {
+    public void setValue6(@SuppressWarnings("unused") Object s) {
     }
     
     // primitive wins
-    public void setValue7(int s) {
+    public void setValue7(@SuppressWarnings("unused") int s) {
     }
     
-    public void setValue7(StringBuffer s) {
+    public void setValue7(@SuppressWarnings("unused") StringBuffer s) {
     }
   }
 
@@ -207,10 +219,10 @@ public class OwnerFieldClassTest extends TestCase {
       super();
     }
     
-    public void setValue2(int b) {
+    public void setValue2(@SuppressWarnings("unused") int b) {
     }
     
-    public void setValue3(Integer b) {
+    public void setValue3(@SuppressWarnings("unused") Integer b) {
     }
     
     public void setValue4(int b) {
@@ -498,8 +510,7 @@ public class OwnerFieldClassTest extends TestCase {
   public void testOwnerFieldClass_withBadlyNamedMethod() {
     JClassType parentType = gwtTypeAdapter.adaptJavaClass(UiChildWithPoorMethodNames.class);
     try {
-      OwnerFieldClass parentClass = OwnerFieldClass.getFieldClass(parentType,
-          MortalLogger.NULL, uiBinderCtx);
+      OwnerFieldClass.getFieldClass(parentType, MortalLogger.NULL, uiBinderCtx);
       fail("Class should error because @UiChild method has invalid name (and no tag specified).");
     } catch (UnableToCompleteException expected) {
       gwtTypeAdapter.verifyAll();
@@ -553,7 +564,7 @@ public class OwnerFieldClassTest extends TestCase {
     }
   }
 
-  public void testOwnerFieldClass_withMultipleUiConstructors() throws Exception {
+  public void testOwnerFieldClass_withMultipleUiConstructors() {
     JClassType constructorsType = gwtTypeAdapter.adaptJavaClass(MultiUiConstructorsClass.class);
 
     try {

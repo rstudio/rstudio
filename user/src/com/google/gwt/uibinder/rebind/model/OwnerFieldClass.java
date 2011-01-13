@@ -28,6 +28,7 @@ import com.google.gwt.uibinder.client.UiConstructor;
 import com.google.gwt.uibinder.rebind.MortalLogger;
 import com.google.gwt.uibinder.rebind.UiBinderContext;
 
+import java.beans.Introspector;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -44,8 +45,8 @@ import java.util.Set;
  */
 public class OwnerFieldClass {
   
-  private static final int defaultCost = 4;
-  private static final Map<String, Integer> typeRank;
+  private static final int DEFAULT_COST = 4;
+  private static final Map<String, Integer> TYPE_RANK;
   static {
     HashMap<String, Integer> tmpTypeRank = new HashMap<String, Integer>();
     tmpTypeRank.put("java.lang.String", 1);
@@ -65,7 +66,7 @@ public class OwnerFieldClass {
     tmpTypeRank.put("java.lang.Integer", 3);
     tmpTypeRank.put("java.lang.Long", 3);
     tmpTypeRank.put("java.lang.Short", 3);
-    typeRank = Collections.unmodifiableMap(tmpTypeRank);
+    TYPE_RANK = Collections.unmodifiableMap(tmpTypeRank);
   }
   
   /**
@@ -158,6 +159,24 @@ public class OwnerFieldClass {
   }
 
   /**
+   * Adds a setter for a given property to the given map of setters.
+   *
+   * @param allSetters the map of setters (keyed by property name)
+   * @param propertyName the property name to use
+   * @param method the setter to use
+   */
+  private void addSetter(Map<String, Collection<JMethod>> allSetters,
+      String propertyName, JMethod method) {
+    Collection<JMethod> propertyMethods = allSetters.get(propertyName);
+    if (propertyMethods == null) {
+      propertyMethods = new ArrayList<JMethod>();
+      allSetters.put(propertyName, propertyMethods);
+    }
+
+    propertyMethods.add(method);
+  }
+
+  /**
    * Given a collection of setters for the same property, picks which one to
    * use. Not having a proper setter is not an error unless of course the user
    * tries to use it.
@@ -230,16 +249,15 @@ public class OwnerFieldClass {
       String propertyName = method.getName().substring(3);
 
       // turn "PropertyName" into "propertyName"
-      propertyName = propertyName.substring(0, 1).toLowerCase()
+      String beanPropertyName = Introspector.decapitalize(propertyName);
+      addSetter(allSetters, beanPropertyName, method);
+
+      // keep backwards compatibility (i.e. hTML instead of HTML for setHTML)
+      String legacyPropertyName = propertyName.substring(0, 1).toLowerCase()
           + propertyName.substring(1);
-
-      Collection<JMethod> propertyMethods = allSetters.get(propertyName);
-      if (propertyMethods == null) {
-        propertyMethods = new ArrayList<JMethod>();
-        allSetters.put(propertyName, propertyMethods);
+      if (!legacyPropertyName.equals(beanPropertyName)) {
+        addSetter(allSetters, legacyPropertyName, method);
       }
-
-      propertyMethods.add(method);
     }
 
     return allSetters;
@@ -349,7 +367,7 @@ public class OwnerFieldClass {
    * types, it will not be considered ambiguous. 
    *  
    * The cost mapping is defined in 
-   * {@link #typeRank typeRank }
+   * {@link #TYPE_RANK typeRank }
    * @param method.
    * @return the rank of the method.
    */
@@ -358,9 +376,9 @@ public class OwnerFieldClass {
     int rank = 0;
     for (int i = 0; i < Math.min(params.length, 10); i++) {
       JType paramType = params[i].getType();
-      int cost = defaultCost;
-      if (typeRank.containsKey(paramType.getQualifiedSourceName())) {
-        cost = typeRank.get(paramType.getQualifiedSourceName());
+      int cost = DEFAULT_COST;
+      if (TYPE_RANK.containsKey(paramType.getQualifiedSourceName())) {
+        cost = TYPE_RANK.get(paramType.getQualifiedSourceName());
       }
       assert (cost >= 0 && cost <= 0x07);
       rank = rank | (cost << (3 * i));
