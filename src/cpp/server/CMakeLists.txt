@@ -13,6 +13,9 @@
 
 project (SERVER)
 
+# add pamchk sub-executable
+add_subdirectory(pamchk)
+
 # include files
 file(GLOB_RECURSE SERVER_HEADER_FILES "*.h*")
 
@@ -144,6 +147,12 @@ if (UNIX AND NOT APPLE)
                   ${CMAKE_CURRENT_BINARY_DIR}/${RSERVER_INITD_REDHAT_SCRIPT})
    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${RSERVER_INITD_REDHAT_SCRIPT}
            DESTINATION ${RSERVER_INITD_REDHAT_DIR})
+
+   # install redhat pam profile
+   set(RSERVER_PAM_REDHAT_DIR "extras/pam/redhat")
+   set(RSERVER_PAM_REDHAT_PROFILE "${RSERVER_PAM_REDHAT_DIR}/rstudio")
+   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${RSERVER_PAM_REDHAT_PROFILE}
+           DESTINATION ${RSERVER_PAM_REDHAT_DIR})
 
    # install configured apparmor profile
    set(RSERVER_APPARMOR_DIR "extras/apparmor")

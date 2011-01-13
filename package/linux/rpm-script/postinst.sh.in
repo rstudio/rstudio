@@ -22,5 +22,11 @@ sudo chkconfig --add rstudio-server
 sudo service rstudio-server stop 2>/dev/null
 sudo service rstudio-server start
 
+# add pam profile
+if [ ! -e /etc/pam.d/rstudio ]
+then
+   sudo cp /usr/bin/rstudio-server/extras/pam/redhat/rstudio /etc/pam.d/
+fi
+
 # clear error termination state
 set -e

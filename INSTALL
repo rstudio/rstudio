@@ -122,7 +122,14 @@ c) Create a soft link in /usr/sbin to the server administrative script
   
    Additional commands include stop, restart, offline, online, and others
 
-d) If your system supports AppArmor you may wish to add an AppArmor profile
+d) RStudio Server uses PAM to authenticate users. Some Unix systems (such as Ubuntu) use default PAM settings for applications which aren't explicitly registered with PAM. If your system requires explicit registration (default or other profile set to pam_deny) then you need to add an /etc/pam.d/rstudio file to your configuration. You can find a default version of this file for Red Hat server systems at:
+
+   extras
+      /pam
+         /redhat
+            rstudio
+
+e) If your system supports AppArmor you may wish to add an AppArmor profile
    for RStudio Server. You can find one at:
 
    extras

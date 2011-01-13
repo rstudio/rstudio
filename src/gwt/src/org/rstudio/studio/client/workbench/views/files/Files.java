@@ -258,7 +258,6 @@ public class Files
       pFilesCopy_.get().execute(view_.getSelectedFiles(),
                                 currentPath_,
                                 new Command() {
-                                    @Override
                                     public void execute()
                                     {
                                        view_.selectNone();

@@ -11,7 +11,7 @@ cd ..
 
 REM perform 64-bit build and install it into the 32-bit tree
 REM (but only do this if we are on win64)
-IF DEFINED PROGRAMW6432 call make-install-win64.bat "%CD%\build\src\cpp\session" %1
+IF "%PROCESSOR_ARCHITECTURE%" == "AMD64" call make-install-win64.bat "%CD%\build\src\cpp\session" %1
 
 REM create packages
 cd build

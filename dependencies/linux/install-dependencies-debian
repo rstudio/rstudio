@@ -31,6 +31,9 @@ sudo apt-get -y install libpango1.0-dev
 sudo apt-get -y install openjdk-6-jdk 
 sudo apt-get -y install ant
 
+# common prereqs
+sudo apt-get -y install unzip
+
 # common
 cd ../common
 ./install-dependencies-common

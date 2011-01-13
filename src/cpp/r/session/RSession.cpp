@@ -1162,7 +1162,7 @@ void setClientMetrics(const RClientMetrics& metrics)
       
       // restore previous values (but don't fire plotsChanged b/c
       // the reset doesn't result in a change in graphics state)
-      client_metrics::set(previousMetrics);
+      r::exec::executeSafely(boost::bind(doSetClientMetrics, previousMetrics));
    }
 }
 

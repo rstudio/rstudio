@@ -116,7 +116,11 @@ ProgramStatus Options::read(int argc, char * const argv[])
         "validate that authenticated users exist on the target system")
       ("auth-required-user-group",
         value<std::string>(&authRequiredUserGroup_)->default_value(""),
-        "limit to users belonging to the specified group");
+        "limit to users belonging to the specified group")
+      ("auth-pamchk-path",
+          value<std::string>(&authPamchkPath_)->default_value("bin/rserver_pamchk"),
+          "Path to rserver_pamchk helper executable");
+
 
    // define program options
    FilePath defaultConfigPath("/etc/rstudio/rserver.conf");
@@ -164,6 +168,7 @@ ProgramStatus Options::read(int argc, char * const argv[])
    resolvePath(installPath, &wwwLocalPath_);
    resolvePath(installPath, &rsessionPath_);
    resolvePath(installPath, &rsessionConfigFile_);
+   resolvePath(installPath, &authPamchkPath_);
 
    // return status
    return status;

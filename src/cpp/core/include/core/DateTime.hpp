@@ -29,7 +29,7 @@ double millisecondsSinceEpoch();
 double millisecondsSinceEpoch(const boost::posix_time::ptime& time);
 double millisecondsSinceEpoch(std::time_t time);   
    
-boost::posix_time::ptime timeFromMillisecondsSinceEpoch(double ms);
+boost::posix_time::ptime timeFromMillisecondsSinceEpoch(int64_t ms);
 
 std::string format(const boost::posix_time::ptime& datetime,
                    const std::string& format);
