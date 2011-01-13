@@ -68,7 +68,8 @@ Error httpServerAddHandlers()
    // use default gwt handling for image urls (required to render 
    // embedded images in offline page)
    uri_handlers::addBlocking("/images",
-                             gwt::fileHandlerFunction(options.wwwLocalPath()));
+                             gwt::fileHandlerFunction(options.wwwLocalPath(),
+                                                      "/"));
    
    // default handler sends back offline page or json error as appropriate
    uri_handlers::setBlockingDefault(handleOfflineRequest);
