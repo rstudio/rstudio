@@ -325,7 +325,8 @@ well as menu structures (for main menu and popup menus).
         menuLabel="R Source File..."/>
    <cmd id="newFolder"
         menuLabel="Folder..."
-        buttonLabel="New Folder"/>
+        buttonLabel="New Folder"
+        desc="Create a new folder"/>
    <cmd id="uploadFile"
         menuLabel="Upload Files..."
         buttonLabel="Upload"
@@ -346,9 +347,11 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="Rename"
         desc="Rename selected file or folder"/>
    <cmd id="deleteFiles"
-        buttonLabel="Delete"/>
+        buttonLabel="Delete"
+        desc="Delete selected files or folders"/>
    <cmd id="refreshFiles"
-        menuLabel="Refresh"/>
+        menuLabel="Refresh"
+        desc="Refresh file listing"/>
    <cmd id="quickOpen"
         label="Quick Open"/>
    <cmd id="syncWorkingDir"
