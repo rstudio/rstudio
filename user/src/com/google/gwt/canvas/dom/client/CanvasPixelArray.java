@@ -24,10 +24,12 @@ import com.google.gwt.core.client.JavaScriptObject;
  * bytes being signed in Java.
  *
  * <p>
- * <span style="color:red">Experimental API: This class is still under rapid
- * development, and is very likely to be deleted. Use it at your own risk.
+ * <span style="color:red">Experimental API: This API is still under development 
+ * and is subject to change.
  * </span>
+ * </p>
  *
+ * <p>
  * @see <a href="http://www.w3.org/TR/2dcontext/#canvaspixelarray">HTML Canvas 2D CanvasPixelArray</a>
  * </p>
  */
