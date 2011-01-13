@@ -19,7 +19,12 @@
 #include <vector>
 
 #include <boost/shared_ptr.hpp>
+
 #include <boost/system/error_code.hpp>
+#ifdef _WIN32
+   #include <boost/system/windows_error.hpp>
+#endif
+
 #include <boost/current_function.hpp>
 
 namespace core {
@@ -119,6 +124,8 @@ Error systemError(int value, const ErrorLocation& location) ;
 Error systemError(int value,
                   const std::string& description,
                   const ErrorLocation& location) ;
+
+Error fileExistsError(const ErrorLocation& location);
 
 class ErrorLocation
 {
