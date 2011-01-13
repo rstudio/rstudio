@@ -231,7 +231,7 @@ int main(int argc, char * const argv[])
       }
 
       // automatically reap children
-      Error error = core::system::ignoreChildExits();
+      Error error = core::system::reapChildren();
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 

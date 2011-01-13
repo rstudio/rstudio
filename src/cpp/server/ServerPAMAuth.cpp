@@ -13,6 +13,7 @@
 #include "ServerPAMAuth.hpp"
 
 #include <security/pam_appl.h>
+#include <sys/wait.h>
 
 #include <boost/regex.hpp>
 
@@ -24,6 +25,7 @@
 #include <core/text/TemplateFilter.hpp>
 
 #include <server/util/system/Crypto.hpp>
+#include <server/util/system/System.hpp>
 
 #include <server/auth/ServerValidateUser.hpp>
 #include <server/auth/ServerSecureUriHandler.hpp>
@@ -176,42 +178,61 @@ public:
              std::string(::pam_strerror(pamh_, status_)));
     }
 
-    static void initialize()
-    {
-#ifdef __APPLE__
-       // jcheng 11/19/2010: For some unknown reason, PAM on Mac
-       // segfaults unless pam_start is called early in the process.
-       struct pam_conv myConv;
-       myConv.conv = conv;
-       myConv.appdata_ptr = NULL;
-       pam_handle_t* h;
-       if (PAM_SUCCESS == ::pam_start("rstudio", NULL, &myConv, &h))
-         ::pam_end(h, 0);
-#endif
-    }
-
     int login(const std::string& username,
               const std::string& password)
     {
-       struct pam_conv myConv;
-       myConv.conv = conv;
-       myConv.appdata_ptr = const_cast<void*>(static_cast<const void*>(password.c_str()));
-       status_ = ::pam_start("rstudio",
-                             username.c_str(),
-                             &myConv,
-                             &pamh_);
-       if (status_ != PAM_SUCCESS)
-          return status_;
+       // RedHat 5 returns PAM_SYSTEM_ERR from pam_authenticate if we're
+       // running with geteuid != getuid, as is the case when we temporarily
+       // drop privileges. Restoring privileges fixes the problem but we
+       // don't want to do that in the (multithreaded) server process. Fork
+       // a child instead.
 
-       status_ = ::pam_authenticate(pamh_, defaultFlags_);
-       if (status_ != PAM_SUCCESS)
-          return status_;
+       pid_t pid = fork();
+       if (pid == 0)
+       {
+          // This is the child process
 
-       status_ = ::pam_acct_mgmt(pamh_, defaultFlags_);
-       if (status_ != PAM_SUCCESS)
-          return status_;
+          util::system::restorePriv();
 
-       return PAM_SUCCESS;
+          struct pam_conv myConv;
+          myConv.conv = conv;
+          myConv.appdata_ptr = const_cast<void*>(static_cast<const void*>(password.c_str()));
+          status_ = ::pam_start("rstudio",
+                                username.c_str(),
+                                &myConv,
+                                &pamh_);
+          if (status_ != PAM_SUCCESS)
+          {
+             LOG_ERROR_MESSAGE("pam_start failed: " + lastError().second);
+             exit(EXIT_FAILURE);
+          }
+
+          status_ = ::pam_authenticate(pamh_, defaultFlags_);
+          if (status_ != PAM_SUCCESS)
+          {
+             if (status_ != PAM_AUTH_ERR)
+                LOG_ERROR_MESSAGE("pam_authenticate failed: " + lastError().second);
+             exit(EXIT_FAILURE);
+          }
+
+          status_ = ::pam_acct_mgmt(pamh_, defaultFlags_);
+          if (status_ != PAM_SUCCESS)
+          {
+             LOG_ERROR_MESSAGE("pam_acct_mgmt failed: " + lastError().second);
+             exit(EXIT_FAILURE);
+          }
+
+          exit(EXIT_SUCCESS);
+       }
+       else
+       {
+          int stat;
+          int waitres = ::waitpid(pid, &stat, 0);
+          if (waitres == pid)
+             return stat == EXIT_SUCCESS;
+          else
+             return false;
+       }
     }
 
 private:
@@ -445,8 +466,7 @@ Error initialize()
    uri_handlers::addBlocking(kDoSignIn, doSignIn);
    uri_handlers::addBlocking(kPublicKey, publicKey);
 
-   // initialize pam and crypto
-   PAMAuth::initialize();
+   // initialize crypto
    return util::system::crypto::rsaInit();
 }
 
