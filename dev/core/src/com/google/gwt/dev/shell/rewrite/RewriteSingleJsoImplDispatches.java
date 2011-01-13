@@ -34,8 +34,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * Effects the renaming of {@code @SingleJsoImpl} methods from their original
@@ -181,9 +181,9 @@ public class RewriteSingleJsoImplDispatches extends ClassAdapter {
      * may be referenced via a more specific interface.
      */
     if (inSingleJsoImplInterfaceType) {
-      for (Map.Entry<String, List<Method>> entry : toImplement(currentTypeName).entrySet()) {
-        for (Method method : entry.getValue()) {
-          writeEmptyMethod(entry.getKey(), method);
+      for (String mangledName : toImplement(currentTypeName)) {
+        for (Method method : jsoData.getDeclarations(mangledName)) {
+          writeEmptyMethod(mangledName, method);
         }
       }
     }
@@ -265,29 +265,23 @@ public class RewriteSingleJsoImplDispatches extends ClassAdapter {
    * Given a resource name of a class, find all mangled method names that must
    * be implemented.
    */
-  private SortedMap<String, List<Method>> toImplement(String typeName) {
+  private SortedSet<String> toImplement(String typeName) {
     String name = typeName.replace('/', '_');
     String prefix = name + "_";
     String suffix = name + "`";
-    SortedMap<String, List<Method>> toReturn = new TreeMap<String, List<Method>>();
-
+    SortedSet<String> toReturn = new TreeSet<String>();
     for (String mangledName : jsoData.getMangledNames().subSet(prefix, suffix)) {
-      toReturn.put(mangledName, jsoData.getImplementations(mangledName));
+      if (!implementedMethods.contains(mangledName)) {
+        toReturn.add(mangledName);
+      }
     }
-    toReturn.keySet().removeAll(implementedMethods);
     return toReturn;
   }
-
-  private void writeEmptyMethod(String mangledMethodName, Method method) {
-    assert method.getArgumentTypes().length > 0;
-    // Remove the first argument, which would be the implementing JSO type
-    String descriptor = "("
-        + method.getDescriptor().substring(
-            1 + method.getArgumentTypes()[0].getDescriptor().length());
-
-    // Create the stub method entry in the interface
+  
+  private void writeEmptyMethod(String mangledMethodName, Method declMethod) {
     MethodVisitor mv = super.visitMethod(Opcodes.ACC_PUBLIC
-        | Opcodes.ACC_ABSTRACT, mangledMethodName, descriptor, null, null);
+        | Opcodes.ACC_ABSTRACT, mangledMethodName, declMethod.getDescriptor(),
+        null, null);
     mv.visitEnd();
   }
 
@@ -303,20 +297,14 @@ public class RewriteSingleJsoImplDispatches extends ClassAdapter {
      * semantics of the dispatches that would make a common implementation far
      * more awkward than the duplication of code.
      */
-    for (Map.Entry<String, List<Method>> entry : toImplement(stubIntr).entrySet()) {
-      for (Method method : entry.getValue()) {
-        String mangledName = entry.getKey();
+    for (String mangledName : toImplement(stubIntr)) {
+      for (Method method : jsoData.getDeclarations(mangledName)) {
 
-        String descriptor = "("
-            + method.getDescriptor().substring(
-                1 + method.getArgumentTypes()[0].getDescriptor().length());
-        String localName = method.getName().substring(0,
-            method.getName().length() - 1);
-        Method toCall = new Method(localName, descriptor);
+        Method toCall = new Method(method.getName(), method.getDescriptor());
 
         // Must not be final
         MethodVisitor mv = super.visitMethod(Opcodes.ACC_PUBLIC
-            | Opcodes.ACC_SYNTHETIC, mangledName, descriptor, null, null);
+            | Opcodes.ACC_SYNTHETIC, mangledName, method.getDescriptor(), null, null);
         if (mv != null) {
           mv.visitCode();
 

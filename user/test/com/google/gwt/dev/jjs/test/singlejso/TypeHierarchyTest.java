@@ -123,6 +123,45 @@ public class TypeHierarchyTest extends GWTTestCase {
   static class Wide {
   }
 
+  private interface Element extends Node {
+  }
+
+  private static class JvmNode implements Node {
+    @Override
+    public JvmNode appendChild(Node node) {
+      return (JvmNode)node;
+    }
+  }
+  
+  private final static class JvmElement extends JvmNode implements Element {
+    static Element create() {
+      return new JvmElement();
+    }
+  }
+  
+  private final static class JsElement extends JsNode implements Element {
+    static Element create() {
+      return (Element) JavaScriptObject.createObject();
+    }
+
+    protected JsElement() {
+    }
+  }
+
+  private static class JsNode extends JavaScriptObject implements Node {
+    @Override
+    public final native JsNode appendChild(Node node) /*-{
+      return node;
+    }-*/;
+
+    protected JsNode() {
+    }
+  }
+
+  private interface Node {
+    Node appendChild(Node node);
+  }
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
@@ -149,7 +188,7 @@ public class TypeHierarchyTest extends GWTTestCase {
     IA b2 = new B2();
     assertEquals("B2", b2.whoAmI());
   }
-
+  
   public void testCase3() {
     IA a = A.create();
     assertEquals("A", a.whoAmI());
@@ -170,6 +209,17 @@ public class TypeHierarchyTest extends GWTTestCase {
 
     IDiamond2B d2b = DiamondImpl.create();
     assertEquals(42, d2b.size());
+  }
+  
+  /**
+   * Tests that dispatches through a hierarchy of interfaces works properly.
+   */
+  public void testInterfaceHierarchyDispatch() {
+    Element jsElement = JsElement.create();
+    assertEquals(jsElement, jsElement.appendChild(jsElement));
+    
+    Element jvmElement = JvmElement.create();
+    assertEquals(jvmElement, jvmElement.appendChild(jvmElement));
   }
 
   public void testVirtualOverrides() {
