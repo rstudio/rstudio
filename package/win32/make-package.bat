@@ -1,6 +1,11 @@
 
+set PACKAGE_DIR="%CD%"
+
+REM clean if requested
+if "%1" == "clean" call clean-build.bat
+
 REM perform 32-bit build 
-if "%1" == "clean" rmdir /s /q build
+cd "%PACKAGE_DIR%"
 mkdir build
 cd build
 del CMakeCache.txt
@@ -11,7 +16,7 @@ cd ..
 
 REM perform 64-bit build and install it into the 32-bit tree
 REM (but only do this if we are on win64)
-IF "%PROCESSOR_ARCHITECTURE%" == "AMD64" call make-install-win64.bat "%CD%\build\src\cpp\session" %1
+IF "%PROCESSOR_ARCHITECTURE%" == "AMD64" call make-install-win64.bat "%PACKAGE_DIR%\build\src\cpp\session" %1
 
 REM create packages
 cd build
