@@ -46,5 +46,17 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/guava/guava-r06/guava-r06-rebased.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-1.5-rebased.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/icu4j/4.4.2/icu4j.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/javax/activation/activation-1.1.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/javax/xml/bind/jaxb-api-2.1.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/hibernate/validator/tck/jsr303-tck-1.0.3.GA-sources.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/hibernate/validator/tck/jsr303-tck-1.0.3.GA.jar" sourcepath="/GWT_TOOLS/lib/hibernate/validator/tck/jsr303-tck-1.0.3.GA-sources.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/jboss/test-audit/jboss-test-audit-api-1.0.0-sources.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/jboss/test-audit/jboss-test-audit-api-1.0.0.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/jboss/test-harness/jboss-test-harness-1.0.0-sources.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/jboss/test-harness/jboss-test-harness-1.0.0.jar" sourcepath="/GWT_TOOLS/lib/jboss/test-harness/jboss-test-harness-1.0.0-sources.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/jboss/test-harness/jboss-test-harness-api-1.0.0-sources.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/jboss/test-harness/jboss-test-harness-api-1.0.0.jar" sourcepath="/GWT_TOOLS/lib/jboss/test-harness/jboss-test-harness-api-1.0.0-sources.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/testng/testng-5.14.1-sources.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/testng/testng-5.14.1.jar" sourcepath="/GWT_TOOLS/lib/testng/testng-5.14.1-sources.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
