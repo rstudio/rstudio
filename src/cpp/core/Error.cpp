@@ -155,6 +155,15 @@ Error systemError(int value,
    error.addProperty("description", description);
    return error;
 }
+
+Error fileExistsError(const ErrorLocation& location)
+{
+#ifdef _WIN32
+   return systemError(boost::system::windows_error::file_exists, location);
+#else
+   return systemError(boost::system::errc::file_exists, location);
+#endif
+}
    
 struct ErrorLocation::Impl 
 {
