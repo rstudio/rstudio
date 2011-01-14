@@ -428,6 +428,7 @@ void publicKey(const http::Request&,
 {
    std::string exp, mod;
    util::system::crypto::rsaPublicKey(&exp, &mod);
+   pResponse->setNoCacheHeaders();
    pResponse->setBody(exp + ":" + mod);
    pResponse->setContentType("text/plain");
 }
@@ -459,6 +460,7 @@ void doSignIn(const http::Request& request,
    size_t splitAt = plainText.find('\n');
    if (splitAt < 0)
    {
+      LOG_ERROR_MESSAGE("Didn't find newline in plaintext");
       pResponse->setMovedTemporarily(
             request,
             applicationSignInURL(request,
