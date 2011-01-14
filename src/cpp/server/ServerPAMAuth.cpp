@@ -271,7 +271,9 @@ bool pam_login(const std::string& username, const std::string& password)
    else
    {
       char buf;
-      if (0 >= ::read(pfd[0], &buf, 1))
+      size_t bytesRead = ::read(pfd[0], &buf, 1);
+      ::close(pfd[0]);
+      if (0 >= bytesRead)
          return false;
       return buf;
    }
