@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -36,7 +36,7 @@ import com.google.gwt.requestfactory.shared.impl.SimpleProxyId;
  * A base class for anything that makes use of the SimpleRequestFactory.
  * Subclasses must always use {@link #finishTestAndReset()} in order to allow
  * calls to the reset methods to complete before the next test starts.
- * 
+ *
  */
 public abstract class RequestFactoryTestBase extends GWTTestCase {
 
@@ -102,7 +102,7 @@ public abstract class RequestFactoryTestBase extends GWTTestCase {
     store = new DefaultProxyStore(store.encode());
     s = req.getSerializer(store);
     T restored = s.deserialize(id.getProxyClass(), key);
-    AutoBean<BaseProxy> restoredBean = AutoBeanUtils.getAutoBean(restored);
+    AutoBean<? extends BaseProxy> restoredBean = AutoBeanUtils.getAutoBean(restored);
     assertNotSame(proxy, restored);
     /*
      * Performing a regular assertEquals() or even an AutoBeanUtils.diff() here
