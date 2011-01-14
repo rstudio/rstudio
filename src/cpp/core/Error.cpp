@@ -20,6 +20,10 @@
 
 #include <boost/lexical_cast.hpp>
 
+#ifdef _WIN32
+#include <boost/system/windows_error.hpp>
+#endif
+
 namespace core {
 
 struct Error::Impl

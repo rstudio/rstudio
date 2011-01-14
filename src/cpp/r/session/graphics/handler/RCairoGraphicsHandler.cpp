@@ -148,7 +148,7 @@ PangoFontDescription *PG_getFont(const pGEcontext gc, double fs)
       if(face == 3 || face == 4)
          pango_font_description_set_style(fontdesc, PANGO_STYLE_OBLIQUE);
    }
-   gint scaledSize = PANGO_SCALE * size;
+   gint scaledSize = PANGO_SCALE * (gint)size;
    pango_font_description_set_size(fontdesc, scaledSize);
    
    return fontdesc;

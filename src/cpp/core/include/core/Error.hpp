@@ -21,9 +21,6 @@
 #include <boost/shared_ptr.hpp>
 
 #include <boost/system/error_code.hpp>
-#ifdef _WIN32
-   #include <boost/system/windows_error.hpp>
-#endif
 
 #include <boost/current_function.hpp>
 
