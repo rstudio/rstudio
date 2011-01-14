@@ -20,6 +20,10 @@
 
 #include <boost/lexical_cast.hpp>
 
+#ifdef _WIN32
+#include <boost/system/windows_error.hpp>
+#endif
+
 namespace core {
 
 struct Error::Impl
@@ -154,6 +158,15 @@ Error systemError(int value,
    Error error = systemError(value, location);
    error.addProperty("description", description);
    return error;
+}
+
+Error fileExistsError(const ErrorLocation& location)
+{
+#ifdef _WIN32
+   return systemError(boost::system::windows_error::file_exists, location);
+#else
+   return systemError(boost::system::errc::file_exists, location);
+#endif
 }
    
 struct ErrorLocation::Impl 

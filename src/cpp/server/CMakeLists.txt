@@ -13,9 +13,6 @@
 
 project (SERVER)
 
-# add pamchk sub-executable
-add_subdirectory(pamchk)
-
 # include files
 file(GLOB_RECURSE SERVER_HEADER_FILES "*.h*")
 

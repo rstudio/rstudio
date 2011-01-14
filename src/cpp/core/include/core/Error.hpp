@@ -19,7 +19,9 @@
 #include <vector>
 
 #include <boost/shared_ptr.hpp>
+
 #include <boost/system/error_code.hpp>
+
 #include <boost/current_function.hpp>
 
 namespace core {
@@ -119,6 +121,8 @@ Error systemError(int value, const ErrorLocation& location) ;
 Error systemError(int value,
                   const std::string& description,
                   const ErrorLocation& location) ;
+
+Error fileExistsError(const ErrorLocation& location);
 
 class ErrorLocation
 {

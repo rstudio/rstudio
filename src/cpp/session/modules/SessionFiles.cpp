@@ -96,7 +96,7 @@ bool isVisible(const FilePath& file)
    {
       return !file.isHidden();
    }
-}  
+}
 
 // directory monitor instance. the DirectoryMonitor is started when a 
 // call to list_files includes monitor=true or when a session which was
@@ -258,7 +258,7 @@ core::Error createFile(const core::json::JsonRpcRequest& request,
    FilePath filePath = module_context::resolveAliasedPath(path) ;
    if (filePath.exists())
    {
-      return systemError(boost::system::errc::file_exists, ERROR_LOCATION);
+      return fileExistsError(ERROR_LOCATION);
    }
    else
    {
@@ -287,7 +287,7 @@ core::Error createFolder(const core::json::JsonRpcRequest& request,
    FilePath folderPath = module_context::resolveAliasedPath(path) ;
    if (folderPath.exists())
    {
-      return systemError(boost::system::errc::file_exists, ERROR_LOCATION);
+      return fileExistsError(ERROR_LOCATION);
    }
    else
    {
@@ -376,10 +376,7 @@ Error copyFile(const core::json::JsonRpcRequest& request,
    // make sure the target path doesn't exist
    FilePath targetFilePath = module_context::resolveAliasedPath(targetPath);
    if (targetFilePath.exists())
-   {
-      return systemError(boost::system::errc::file_exists, 
-                         ERROR_LOCATION);
-   }
+      return fileExistsError(ERROR_LOCATION);
 
    // compute the source file path
    FilePath sourceFilePath = module_context::resolveAliasedPath(sourcePath);
@@ -467,7 +464,7 @@ core::Error renameFile(const core::json::JsonRpcRequest& request,
    // if the destination already exists then send back file exists
     FilePath destPath = module_context::resolveAliasedPath(targetPath) ;
     if (destPath.exists())
-       return systemError(boost::system::errc::file_exists, ERROR_LOCATION);
+       return fileExistsError(ERROR_LOCATION);
   
    // create file info now before we remove
    FilePath sourcePath = module_context::resolveAliasedPath(path);

@@ -16,8 +16,7 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
   /usr/local/lib/lib*so* mr,
 
   ${CMAKE_INSTALL_PREFIX}/bin/*.so mr,
-  ${CMAKE_INSTALL_PREFIX}/bin/rsession Ux,
-  ${CMAKE_INSTALL_PREFIX}/bin/rserver_pamchk ix,
+  ${CMAKE_INSTALL_PREFIX}/bin/rsession Ux ,
 
   ${CMAKE_INSTALL_PREFIX}/www/** r,
 
