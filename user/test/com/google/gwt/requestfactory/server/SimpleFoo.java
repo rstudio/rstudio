@@ -170,6 +170,16 @@ public class SimpleFoo {
     return foo;
   }
 
+  public static void pleaseCrash(Integer crashIf42or43) throws Exception {
+    if (crashIf42or43 == 42) {
+      throw new UnsupportedOperationException(
+          "THIS EXCEPTION IS EXPECTED BY A TEST");
+    }
+    if (crashIf42or43 == 43) {
+      throw new Exception("THIS EXCEPTION IS EXPECTED BY A TEST");
+    }
+  }
+
   /**
    * Check client-side upcasting to BigDecimal and return a list of BigDecimals
    * that should be upcast.
@@ -754,13 +764,7 @@ public class SimpleFoo {
   }
 
   public void setPleaseCrash(Integer crashIf42or43) throws Exception {
-    if (crashIf42or43 == 42) {
-      throw new UnsupportedOperationException(
-          "THIS EXCEPTION IS EXPECTED BY A TEST");
-    }
-    if (crashIf42or43 == 43) {
-      throw new Exception("THIS EXCEPTION IS EXPECTED BY A TEST");
-    }
+    pleaseCrash(crashIf42or43);
     pleaseCrash = crashIf42or43;
   }
 

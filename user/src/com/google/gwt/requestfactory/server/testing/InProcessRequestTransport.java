@@ -47,18 +47,20 @@ public class InProcessRequestTransport implements RequestTransport {
   }
 
   public void send(String payload, TransportReceiver receiver) {
+    String result;
     try {
       if (DUMP_PAYLOAD) {
         System.out.println(">>> " + payload);
       }
-      String result = processor.process(payload);
+      result = processor.process(payload);
       if (DUMP_PAYLOAD) {
         System.out.println("<<< " + result);
       }
-      receiver.onTransportSuccess(result);
     } catch (RuntimeException e) {
       e.printStackTrace();
       receiver.onTransportFailure(new ServerFailure(e.getMessage()));
+      return;
     }
+    receiver.onTransportSuccess(result);
   }
 }

@@ -50,7 +50,7 @@ public interface SimpleFooRequest extends RequestContext {
   Request<Set<Integer>> getNumberSet();
 
   Request<SimpleFooProxy> getSimpleFooWithNullVersion();
-  
+
   Request<SimpleFooProxy> getSimpleFooWithSubPropertyCollection();
 
   Request<SimpleFooProxy> getTripletReference();
@@ -65,9 +65,11 @@ public interface SimpleFooRequest extends RequestContext {
 
   InstanceRequest<SimpleFooProxy, SimpleFooProxy> persistCascadingAndReturnSelf();
 
-  Request<List<BigInteger>> processBigIntegerList(List<BigInteger> values);
+  Request<Void> pleaseCrash(Integer crashIf42or43);
 
   Request<List<BigDecimal>> processBigDecimalList(List<BigDecimal> values);
+
+  Request<List<BigInteger>> processBigIntegerList(List<BigInteger> values);
 
   Request<Boolean> processBooleanList(List<Boolean> values);
 

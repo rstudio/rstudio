@@ -20,6 +20,7 @@ import com.google.gwt.requestfactory.server.BoxesAndPrimitivesJreTest;
 import com.google.gwt.requestfactory.server.ComplexKeysJreTest;
 import com.google.gwt.requestfactory.server.FindServiceJreTest;
 import com.google.gwt.requestfactory.server.LocatorJreTest;
+import com.google.gwt.requestfactory.server.RequestFactoryExceptionPropagationJreTest;
 import com.google.gwt.requestfactory.server.RequestFactoryInterfaceValidatorTest;
 import com.google.gwt.requestfactory.server.RequestFactoryJreTest;
 import com.google.gwt.requestfactory.server.RequestFactoryUnicodeEscapingJreTest;
@@ -39,11 +40,12 @@ public class RequestFactoryJreSuite {
     suite.addTestSuite(ComplexKeysJreTest.class);
     suite.addTestSuite(FindServiceJreTest.class);
     suite.addTestSuite(LocatorJreTest.class);
-    suite.addTestSuite(RequestFactoryJreTest.class);
-    suite.addTestSuite(SimpleEntityProxyIdTest.class);
+    suite.addTestSuite(RequestFactoryExceptionPropagationJreTest.class);
     suite.addTestSuite(RequestFactoryInterfaceValidatorTest.class);
+    suite.addTestSuite(RequestFactoryJreTest.class);
     suite.addTestSuite(RequestFactoryModelTest.class);
     suite.addTestSuite(RequestFactoryUnicodeEscapingJreTest.class);
+    suite.addTestSuite(SimpleEntityProxyIdTest.class);
     return suite;
   }
 }

@@ -24,6 +24,7 @@ import com.google.gwt.autobean.shared.AutoBeanUtils;
 import com.google.gwt.autobean.shared.AutoBeanVisitor;
 import com.google.gwt.autobean.shared.Splittable;
 import com.google.gwt.autobean.shared.ValueCodex;
+import com.google.gwt.event.shared.UmbrellaException;
 import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyChange;
@@ -628,14 +629,7 @@ public class AbstractRequestContext implements RequestContext,
             errors.add(new MyViolation(message));
           }
 
-          reuse();
-          for (AbstractRequest<?> request : new ArrayList<AbstractRequest<?>>(
-              invocations)) {
-            request.onViolation(errors);
-          }
-          if (receiver != null) {
-            receiver.onViolation(errors);
-          }
+          violation(receiver, errors);
           return;
         }
 
@@ -643,37 +637,115 @@ public class AbstractRequestContext implements RequestContext,
         processReturnOperations(response);
 
         // Send return values
+        Set<Throwable> causes = null;
         for (int i = 0, j = invocations.size(); i < j; i++) {
-          if (response.getStatusCodes().get(i)) {
-            invocations.get(i).onSuccess(response.getInvocationResults().get(i));
-          } else {
-            ServerFailureMessage failure = AutoBeanCodex.decode(
-                MessageFactoryHolder.FACTORY, ServerFailureMessage.class,
-                response.getInvocationResults().get(i)).as();
-            invocations.get(i).onFail(
-                new ServerFailure(failure.getMessage(),
-                    failure.getExceptionType(), failure.getStackTrace(),
-                    failure.isFatal()));
+          try {
+            if (response.getStatusCodes().get(i)) {
+              invocations.get(i).onSuccess(
+                  response.getInvocationResults().get(i));
+            } else {
+              ServerFailureMessage failure = AutoBeanCodex.decode(
+                  MessageFactoryHolder.FACTORY, ServerFailureMessage.class,
+                  response.getInvocationResults().get(i)).as();
+              invocations.get(i).onFail(
+                  new ServerFailure(failure.getMessage(),
+                      failure.getExceptionType(), failure.getStackTrace(),
+                      failure.isFatal()));
+            }
+          } catch (Throwable t) {
+            if (causes == null) {
+              causes = new HashSet<Throwable>();
+            }
+            causes.add(t);
           }
         }
 
         if (receiver != null) {
-          receiver.onSuccess(null);
+          try {
+            receiver.onSuccess(null);
+          } catch (Throwable t) {
+            if (causes == null) {
+              causes = new HashSet<Throwable>();
+            }
+            causes.add(t);
+          }
         }
         // After success, shut down the context
         editedProxies.clear();
         invocations.clear();
         returnedProxies.clear();
+
+        if (causes != null) {
+          throw new UmbrellaException(causes);
+        }
       }
 
+      /**
+       * Invoke the appropriate {@code onFailure} callbacks, possibly throwing
+       * an {@link UmbrellaException} if one or more callbacks fails.
+       */
       private void fail(Receiver<Void> receiver, ServerFailure failure) {
         reuse();
+        Set<Throwable> causes = null;
         for (AbstractRequest<?> request : new ArrayList<AbstractRequest<?>>(
             invocations)) {
-          request.onFail(failure);
+          try {
+            request.onFail(failure);
+          } catch (Throwable t) {
+            if (causes == null) {
+              causes = new HashSet<Throwable>();
+            }
+            causes.add(t);
+          }
         }
         if (receiver != null) {
-          receiver.onFailure(failure);
+          try {
+            receiver.onFailure(failure);
+          } catch (Throwable t) {
+            if (causes == null) {
+              causes = new HashSet<Throwable>();
+            }
+            causes.add(t);
+          }
+        }
+
+        if (causes != null) {
+          throw new UmbrellaException(causes);
+        }
+      }
+
+      /**
+       * Invoke the appropriate {@code onViolation} callbacks, possibly throwing
+       * an {@link UmbrellaException} if one or more callbacks fails.
+       */
+      private void violation(final Receiver<Void> receiver,
+          Set<Violation> errors) {
+        reuse();
+        Set<Throwable> causes = null;
+        for (AbstractRequest<?> request : new ArrayList<AbstractRequest<?>>(
+            invocations)) {
+          try {
+            request.onViolation(errors);
+          } catch (Throwable t) {
+            if (causes == null) {
+              causes = new HashSet<Throwable>();
+            }
+            causes.add(t);
+          }
+        }
+        if (receiver != null) {
+          try {
+            receiver.onViolation(errors);
+          } catch (Throwable t) {
+            if (causes == null) {
+              causes = new HashSet<Throwable>();
+            }
+            causes.add(t);
+          }
+        }
+
+        if (causes != null) {
+          throw new UmbrellaException(causes);
         }
       }
     });

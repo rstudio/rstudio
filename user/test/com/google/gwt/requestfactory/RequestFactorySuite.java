@@ -18,6 +18,7 @@ package com.google.gwt.requestfactory;
 import com.google.gwt.junit.tools.GWTTestSuite;
 import com.google.gwt.requestfactory.client.FindServiceTest;
 import com.google.gwt.requestfactory.client.RequestFactoryExceptionHandlerTest;
+import com.google.gwt.requestfactory.client.RequestFactoryExceptionPropagationTest;
 import com.google.gwt.requestfactory.client.RequestFactoryPolymorphicTest;
 import com.google.gwt.requestfactory.client.RequestFactoryTest;
 import com.google.gwt.requestfactory.client.RequestFactoryUnicodeEscapingTest;
@@ -42,6 +43,7 @@ public class RequestFactorySuite {
     suite.addTestSuite(LocatorTest.class);
     suite.addTestSuite(RequestFactoryTest.class);
     suite.addTestSuite(RequestFactoryExceptionHandlerTest.class);
+    suite.addTestSuite(RequestFactoryExceptionPropagationTest.class);
     suite.addTestSuite(RequestFactoryPolymorphicTest.class);
     suite.addTestSuite(RequestFactoryUnicodeEscapingTest.class);
     return suite;
