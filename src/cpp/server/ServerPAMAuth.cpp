@@ -181,8 +181,6 @@ public:
     int login(const std::string& username,
               const std::string& password)
     {
-       util::system::restorePriv();
-
        struct pam_conv myConv;
        myConv.conv = conv;
        myConv.appdata_ptr = const_cast<void*>(static_cast<const void*>(password.c_str()));
@@ -220,12 +218,30 @@ private:
     int status_;
 };
 
-bool do_pam_login(const std::string& username, const std::string& password)
+bool doPamLogin(const std::string& username, const std::string& password)
 {
    return PAM_SUCCESS == PAMAuth(false).login(username, password);
 }
 
-bool pam_login(const std::string& username, const std::string& password)
+// Handles error logging and EINTR retrying. Only for use with
+// functions that return -1 on error and set errno.
+int posixcall(boost::function<ssize_t()> func)
+{
+   while (true)
+   {
+      int result;
+      if ((result = func()) == -1)
+      {
+         if (errno == EINTR)
+            continue;
+         LOG_ERROR(systemError(errno, ERROR_LOCATION));
+         return result;
+      }
+      return result;
+   }
+}
+
+bool pamLogin(const std::string& username, const std::string& password)
 {
    // RedHat 5 returns PAM_SYSTEM_ERR from pam_authenticate if we're
    // running with geteuid != getuid, as is the case when we temporarily
@@ -237,45 +253,55 @@ bool pam_login(const std::string& username, const std::string& password)
    // doesn't go well with our child process cleanup strategy and signal
    // blocking of the background threads.
 
-   int pfd[2];
-   if (::pipe(pfd) == -1)
-   {
-      LOG_ERROR_MESSAGE("Pipe failed");
-      return false;
-   }
+   // On successful login, one byte is written to the pipe--otherwise,
+   // the pipe is closed without writing.
 
-   pid_t pid = fork();
+   int pfd[2];
+   if (posixcall(boost::bind(::pipe, pfd)) == -1)
+      return false;
+
+   pid_t pid = posixcall(::fork);
+
    if (pid == -1)
    {
-      LOG_ERROR_MESSAGE("Fork failed");
       return false;
    }
-
-
-   if (pid == 0)
+   else if (pid == 0)
    {
-      ::close(pfd[0]); // close unused read end
+      // Forked child process
 
-      util::system::restorePriv();
-      if (do_pam_login(username, password))
-         ::write(pfd[1], "1", 1);
-      else
-         ::write(pfd[1], "0", 1);
+      // Close the unused reading end
+      posixcall(boost::bind(::close, pfd[0]));
 
-      ::close(pfd[1]);
+      if (util::system::realUserIsRoot())
+      {
+         Error error = util::system::restorePriv();
+         if (error)
+            LOG_ERROR(error);
+         // intentionally failing forward
+      }
+
+      if (doPamLogin(username, password))
+         posixcall(boost::bind(::write, pfd[1], "1", 1));
+      posixcall(boost::bind(::close, pfd[1]));
+
       _exit(0);
 
-      // should never get here
+      // should never get here, but need return stmt to satisfy compiler
       return false;
    }
    else
    {
+      // Parent process
+
+      // Close the unused writing end, very important--otherwise the ::read
+      // call to come will block forever!
+      posixcall(boost::bind(::close, pfd[1]));
+
       char buf;
-      size_t bytesRead = ::read(pfd[0], &buf, 1);
-      ::close(pfd[0]);
-      if (0 >= bytesRead)
-         return false;
-      return buf;
+      size_t bytesRead = posixcall(boost::bind(::read, pfd[0], &buf, 1));
+      posixcall(boost::bind(::close, pfd[0]));
+      return bytesRead > 0;
    }
 }
 
@@ -420,6 +446,7 @@ void doSignIn(const http::Request& request,
                                                          &plainText);
    if (error)
    {
+      LOG_ERROR(error);
       pResponse->setMovedTemporarily(
             request,
             applicationSignInURL(request,
@@ -444,7 +471,7 @@ void doSignIn(const http::Request& request,
    std::string username = plainText.substr(0, splitAt);
    std::string password = plainText.substr(splitAt + 1, plainText.size());
 
-   if ( pam_login(username, password) &&
+   if ( pamLogin(username, password) &&
         server::auth::validateUser(username))
    {
       if (appUri.size() > 0 && appUri[0] != '/')
