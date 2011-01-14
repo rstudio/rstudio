@@ -26,7 +26,7 @@ import java.util.NoSuchElementException;
  */
 public class SimplePanel extends Panel implements HasOneWidget {
 
-  private Widget widget;
+  Widget widget;
 
   /**
    * Creates an empty panel that uses a DIV for its contents.
