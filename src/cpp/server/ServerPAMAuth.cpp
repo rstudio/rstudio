@@ -428,6 +428,7 @@ void publicKey(const http::Request&,
 {
    std::string exp, mod;
    util::system::crypto::rsaPublicKey(&exp, &mod);
+   pResponse->setNoCacheHeaders();
    pResponse->setBody(exp + ":" + mod);
    pResponse->setContentType("text/plain");
 }
