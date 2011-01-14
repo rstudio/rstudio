@@ -53,12 +53,12 @@ public class EditorTest extends RequestFactoryTestBase {
     protected final SimpleEditor<String> userName = SimpleEditor.of();
   }
 
-  interface SimpleFooDriver extends
-      RequestFactoryEditorDriver<SimpleFooProxy, SimpleFooEditor> {
-  }
-
   static class SimpleFooBarOnlyEditor implements Editor<SimpleFooProxy> {
     SimpleBarEditor barField = new SimpleBarEditor();
+  }
+
+  interface SimpleFooDriver extends
+      RequestFactoryEditorDriver<SimpleFooProxy, SimpleFooEditor> {
   }
 
   static class SimpleFooEditor implements HasEditorErrors<SimpleFooProxy> {
@@ -163,6 +163,45 @@ public class EditorTest extends RequestFactoryTestBase {
     assertNull(editor.delegate.subscribe());
   }
 
+  /**
+   * Tests the editor can be re-used while the initial context is locked and
+   * therefore its attached proxies are frozen..
+   * 
+   * @see http://code.google.com/p/google-web-toolkit/issues/detail?id=5752
+   */
+  public void testReuse() {
+    delayTestFinish(TEST_TIMEOUT);
+    final SimpleFooEditor editor = new SimpleFooEditor();
+
+    final SimpleFooDriver driver = GWT.create(SimpleFooDriver.class);
+    driver.initialize(req, editor);
+
+    req.simpleFooRequest().findSimpleFooById(1L).with(driver.getPaths()).fire(
+        new Receiver<SimpleFooProxy>() {
+          @Override
+          public void onSuccess(SimpleFooProxy response) {
+
+            SimpleFooRequest context = req.simpleFooRequest();
+            driver.edit(response, context);
+            editor.userName.setValue("One");
+            context.persistAndReturnSelf().using(response).with(
+                driver.getPaths()).to(new Receiver<SimpleFooProxy>() {
+              @Override
+              public void onSuccess(SimpleFooProxy response) {
+                assertEquals("One", response.getUserName());
+                // just testing that it doesn't throw (see issue 5752)
+                driver.edit(response, req.simpleFooRequest());
+                editor.userName.setValue("Two");
+                driver.flush();
+                finishTestAndReset();
+              }
+            });
+            // The fire() will freeze the proxies and lock the context
+            driver.flush().fire();
+          }
+        });
+  }
+
   public void testSubscription() {
     delayTestFinish(TEST_TIMEOUT);
     final SimpleFooEditorWithDelegate editor = new SimpleFooEditorWithDelegate();
@@ -171,7 +210,7 @@ public class EditorTest extends RequestFactoryTestBase {
     driver.initialize(req, editor);
 
     String[] paths = driver.getPaths();
-    assertEquals(Arrays.asList("barField.userName", "selfOneToManyField", 
+    assertEquals(Arrays.asList("barField.userName", "selfOneToManyField",
         "selfOneToManyField.barField", "barField"), Arrays.asList(paths));
 
     req.simpleFooRequest().findSimpleFooById(1L).with(paths).fire(

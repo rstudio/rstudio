@@ -28,6 +28,7 @@ import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.WriteOperation;
+import com.google.gwt.requestfactory.shared.impl.AbstractRequestContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -93,7 +94,7 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
        */
       return null;
     }
-    
+
     if (!(getObject() instanceof EntityProxy)) {
       /*
        * This is kind of weird. The user is asking for notifications on a
@@ -136,6 +137,12 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
 
   @Override
   protected boolean shouldFlush() {
-    return request != null;
+    if (request == null) {
+      return false;
+    }
+    if (request instanceof AbstractRequestContext) {
+      return !((AbstractRequestContext) request).isLocked();
+    }
+    return true;
   }
 }
