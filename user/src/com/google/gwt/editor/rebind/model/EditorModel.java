@@ -28,6 +28,7 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.editor.client.CompositeEditor;
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.IsEditor;
+import com.google.gwt.editor.client.LeafValueEditor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -60,7 +61,7 @@ public class EditorModel {
         if (compositeEditorIntf.equals(parameterized.getBaseType())) {
           JClassType[] typeArgs = parameterized.getTypeArgs();
           assert typeArgs.length == 3;
-          return new JClassType[]{typeArgs[1], typeArgs[2]};
+          return new JClassType[] {typeArgs[1], typeArgs[2]};
         }
       }
     }
@@ -175,6 +176,8 @@ public class EditorModel {
    */
   private final JGenericType isEditorIntf;
 
+  private final JGenericType leafValueEditorIntf;
+
   private final TreeLogger logger;
 
   private final EditorModel parentModel;
@@ -216,6 +219,8 @@ public class EditorModel {
     assert isEditorIntf != null : "No IsEditor type";
     compositeEditorIntf = oracle.findType(CompositeEditor.class.getName()).isGenericType();
     assert compositeEditorIntf != null : "No CompositeEditor type";
+    leafValueEditorIntf = oracle.findType(LeafValueEditor.class.getName()).isGenericType();
+    assert leafValueEditorIntf != null;
 
     JClassType[] interfaces = intf.getImplementedInterfaces();
     if (interfaces.length != 1) {
@@ -244,6 +249,7 @@ public class EditorModel {
     this.editorType = editorType;
     this.editorSoFar = subEditor;
     this.isEditorIntf = parent.isEditorIntf;
+    this.leafValueEditorIntf = parent.leafValueEditorIntf;
     this.parentModel = parent;
     this.proxyType = proxyType;
     this.typeData = parent.typeData;
@@ -301,41 +307,44 @@ public class EditorModel {
     List<EditorData> flatData = new ArrayList<EditorData>();
     List<EditorData> toReturn = new ArrayList<EditorData>();
 
-    for (JClassType type : editorType.getFlattenedSupertypeHierarchy()) {
-      for (JField field : type.getFields()) {
-        if (field.isPrivate() || field.isStatic()
-            || field.getAnnotation(Editor.Ignore.class) != null) {
-          continue;
-        }
-        JType fieldClassType = field.getType();
-        if (shouldExamine(fieldClassType)) {
-          List<EditorData> data = createEditorData(EditorAccess.via(field));
-          accumulateEditorData(data, flatData, toReturn);
-        }
-      }
-      for (JMethod method : type.getMethods()) {
-        if (method.isPrivate() || method.isStatic()
-            || method.getAnnotation(Editor.Ignore.class) != null) {
-          continue;
-        }
-        JType methodReturnType = method.getReturnType();
-        if (shouldExamine(methodReturnType)
-            && method.getParameters().length == 0) {
-          EditorAccess access = EditorAccess.via(method);
-          if (access.getPath().equals("as")
-              && isEditorIntf.isAssignableFrom(editorType)) {
-            // Ignore IsEditor.asEditor()
-            continue;
-          } else if (access.getPath().equals("createEditorForTraversal")
-              && compositeEditorIntf.isAssignableFrom(editorType)) {
-            // Ignore CompositeEditor.createEditorForTraversal();
+    // Only look for sub-editor accessors if the editor isn't a leaf
+    if (!leafValueEditorIntf.isAssignableFrom(editorType)) {
+      for (JClassType type : editorType.getFlattenedSupertypeHierarchy()) {
+        for (JField field : type.getFields()) {
+          if (field.isPrivate() || field.isStatic()
+              || field.getAnnotation(Editor.Ignore.class) != null) {
             continue;
           }
-          List<EditorData> data = createEditorData(access);
-          accumulateEditorData(data, flatData, toReturn);
+          JType fieldClassType = field.getType();
+          if (shouldExamine(fieldClassType)) {
+            List<EditorData> data = createEditorData(EditorAccess.via(field));
+            accumulateEditorData(data, flatData, toReturn);
+          }
         }
+        for (JMethod method : type.getMethods()) {
+          if (method.isPrivate() || method.isStatic()
+              || method.getAnnotation(Editor.Ignore.class) != null) {
+            continue;
+          }
+          JType methodReturnType = method.getReturnType();
+          if (shouldExamine(methodReturnType)
+              && method.getParameters().length == 0) {
+            EditorAccess access = EditorAccess.via(method);
+            if (access.getPath().equals("as")
+                && isEditorIntf.isAssignableFrom(editorType)) {
+              // Ignore IsEditor.asEditor()
+              continue;
+            } else if (access.getPath().equals("createEditorForTraversal")
+                && compositeEditorIntf.isAssignableFrom(editorType)) {
+              // Ignore CompositeEditor.createEditorForTraversal();
+              continue;
+            }
+            List<EditorData> data = createEditorData(access);
+            accumulateEditorData(data, flatData, toReturn);
+          }
+        }
+        type = type.getSuperclass();
       }
-      type = type.getSuperclass();
     }
 
     if (compositeEditorIntf.isAssignableFrom(editorType)) {
@@ -423,7 +432,7 @@ public class EditorModel {
       superModel = superModel.parentModel;
     }
 
-    if (!data.isLeafValueEditor()) {
+    if (data.isDelegateRequired()) {
       EditorModel subModel = new EditorModel(this, data.getEditorType(), data,
           calculateEditedType(logger, data.getEditorType()));
       accumulator.addAll(accumulator.indexOf(data) + 1,
