@@ -220,6 +220,11 @@ private:
     int status_;
 };
 
+bool do_pam_login(const std::string& username, const std::string& password)
+{
+   return PAM_SUCCESS == PAMAuth(false).login(username, password);
+}
+
 bool pam_login(const std::string& username, const std::string& password)
 {
    // RedHat 5 returns PAM_SYSTEM_ERR from pam_authenticate if we're
@@ -228,6 +233,17 @@ bool pam_login(const std::string& username, const std::string& password)
    // don't want to do that in the (multithreaded) server process. Fork
    // a child instead.
 
+   // We use an anonymous pipe to communicate the results because waitpid
+   // doesn't go well with our child process cleanup strategy and signal
+   // blocking of the background threads.
+
+   int pfd[2];
+   if (::pipe(pfd) == -1)
+   {
+      LOG_ERROR_MESSAGE("Pipe failed");
+      return false;
+   }
+
    pid_t pid = fork();
    if (pid == -1)
    {
@@ -235,26 +251,29 @@ bool pam_login(const std::string& username, const std::string& password)
       return false;
    }
 
+
    if (pid == 0)
    {
+      ::close(pfd[0]); // close unused read end
+
       util::system::restorePriv();
-      PAMAuth auth(false);
-      if (PAM_SUCCESS != auth.login(username, password))
-         _exit(EXIT_FAILURE);
+      if (do_pam_login(username, password))
+         ::write(pfd[1], "1", 1);
       else
-         _exit(EXIT_SUCCESS);
+         ::write(pfd[1], "0", 1);
+
+      ::close(pfd[1]);
+      _exit(0);
 
       // should never get here
       return false;
    }
    else
    {
-      int stat;
-      int waitres = ::waitpid(pid, &stat, 0);
-      if (waitres == pid)
-         return stat == EXIT_SUCCESS;
-      else
+      char buf;
+      if (0 >= ::read(pfd[0], &buf, 1))
          return false;
+      return buf;
    }
 }
 
