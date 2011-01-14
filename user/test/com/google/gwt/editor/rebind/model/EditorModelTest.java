@@ -144,40 +144,6 @@ public class EditorModelTest extends TestCase {
     assertEquals(types.findType("t.PersonProxy"), m.getProxyType());
   }
 
-  /**
-   * Verify that we correctly descend into a subeditor of a CompositeEditor that
-   * also is a LeafValueEditor (as is the case of OptionalFieldEditor).
-   */
-  public void testCompositeAndLeafValueEditor()
-      throws UnableToCompleteException {
-    EditorModel m = new EditorModel(logger,
-        types.findType("t.CompositeAndLeafEditorDriver"), rfedType);
-
-    assertEquals(types.findType("t.CompositeAndLeafEditorDriver.AProxy"),
-        m.getProxyType());
-    assertEquals(types.findType("t.CompositeAndLeafEditorDriver.AEditor"),
-        m.getEditorType());
-
-    EditorData[] data = m.getEditorData();
-    assertEquals(1, data.length);
-
-    assertTrue(data[0].isCompositeEditor());
-
-    EditorData composed = data[0].getComposedData();
-    assertEquals(types.findType("t.CompositeAndLeafEditorDriver.BProxy"),
-        composed.getEditedType());
-    assertEquals(types.findType("t.CompositeAndLeafEditorDriver.BEditor"),
-        composed.getEditorType());
-
-    // Nonsensical for the optional editor to have any data
-    EditorData[] optionalEditorData = m.getEditorData(data[0].getEditorType());
-    assertEquals(0, optionalEditorData.length);
-
-    // Make sure we have EditorData for the sub-editor
-    EditorData[] subEditorData = m.getEditorData(composed.getEditorType());
-    assertEquals(1, subEditorData.length);
-  }
-
   public void testCompositeDriver() throws UnableToCompleteException {
     EditorModel m = new EditorModel(logger,
         types.findType("t.CompositeEditorDriver"), rfedType);
@@ -830,39 +796,6 @@ public class EditorModelTest extends TestCase {
         code.append("}");
         return code;
       }
-    }, new MockJavaResource("t.CompositeAndLeafEditorDriver") {
-        // Tests that we descend into sub-editor of a CompositeEditor that also
-        // is
-        // a LeafValueEditor (this is the case for the
-        // c.g.g.editor.client.adapters.OptionalFieldEditor)
-      @Override
-      protected CharSequence getContent() {
-        StringBuilder code = new StringBuilder();
-        code.append("package t;\n");
-        code.append("import " + Editor.class.getName() + ";\n");
-        code.append("import " + IsEditor.class.getName() + ";\n");
-        code.append("import " + EntityProxy.class.getName() + ";\n");
-        code.append("import " + RequestFactoryEditorDriver.class.getName()
-            + ";\n");
-        code.append("import " + SimpleEditor.class.getName() + ";\n");
-        code.append("import " + CompositeEditor.class.getName() + ";\n");
-        code.append("import " + LeafValueEditor.class.getName() + ";\n");
-        code.append("interface CompositeAndLeafEditorDriver extends"
-            + " RequestFactoryEditorDriver<CompositeAndLeafEditorDriver.AProxy,"
-            + " CompositeAndLeafEditorDriver.AEditor> {\n");
-        code.append("  interface AProxy extends EntityProxy { BProxy getB();}");
-        code.append("  interface BProxy extends EntityProxy { String getString();}");
-        code.append("  interface AEditor extends Editor<AProxy> {");
-        code.append("    OptionalBEditor bEditor();");
-        code.append("  }");
-        code.append("  interface OptionalBEditor extends CompositeEditor<BProxy, BProxy, BEditor>, LeafValueEditor<BProxy> {");
-        code.append("  }");
-        code.append("  interface BEditor extends Editor<BProxy> {");
-        code.append("    @Editor.Path(\"string\") SimpleEditor<String> coEditor();");
-        code.append("  }");
-        code.append("}");
-        return code;
-      }
     }, new MockJavaResource("java.util.List") {
         // Tests a Driver interface that extends more than RFED
       @Override
@@ -876,7 +809,7 @@ public class EditorModelTest extends TestCase {
     }};
 
     Set<Resource> toReturn = new HashSet<Resource>(Arrays.asList(javaFiles));
-    toReturn.addAll(Arrays.asList(new Resource[] {
+    toReturn.addAll(Arrays.asList(new Resource[]{
         new RealJavaResource(CompositeEditor.class),
         new RealJavaResource(Editor.class),
         new RealJavaResource(EditorError.class),

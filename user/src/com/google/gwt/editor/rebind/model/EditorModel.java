@@ -423,7 +423,7 @@ public class EditorModel {
       superModel = superModel.parentModel;
     }
 
-    if (data.isDelegateRequired()) {
+    if (!data.isLeafValueEditor()) {
       EditorModel subModel = new EditorModel(this, data.getEditorType(), data,
           calculateEditedType(logger, data.getEditorType()));
       accumulator.addAll(accumulator.indexOf(data) + 1,
