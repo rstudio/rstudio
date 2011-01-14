@@ -96,7 +96,7 @@
 # we can assume it's a free variable.
 .rs.addFunction("detectFreeVars_Leaf", function(e, w)
 {
-   if (typeof(e) == 'symbol' && nchar(e) > 0 && !exists(as.character(e), envir=w$assigned))
+   if (typeof(e) == 'symbol' && nchar(as.character(e)) > 0 && !exists(as.character(e), envir=w$assigned))
       return(as.character(e))
    else
       return(character(0))
