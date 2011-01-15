@@ -146,6 +146,7 @@ public class DefaultGlobalDisplay extends GlobalDisplay
 
          public void onError(String message)
          {
+            dismissProgress();
             showMessage(GlobalDisplay.MSG_ERROR, errorCaption, message);
          }
 
