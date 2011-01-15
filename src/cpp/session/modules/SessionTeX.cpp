@@ -45,8 +45,15 @@ void callSweave(const std::string& file)
 
    // build args
    core::system::Options args;
+
+#ifdef _WIN32
+   std::string sweaveCmd = "\"Sweave('" + file + "')\"";
+   args.push_back(std::make_pair("-e", sweaveCmd));
+   args.push_back(std::make_pair("--silent", ""));
+#else
    args.push_back(std::make_pair("CMD", "Sweave"));
    args.push_back(std::make_pair(file, ""));
+#endif
 
    // call sweave
    Error error = module_context::executeInterruptableChild(path, args);
