@@ -692,17 +692,19 @@
           <countfilter match="@Failing"  property="jsr303.marked.Failing" init="0"/>
           <countfilter match="@NonTckTest"  property="jsr303.marked.NonTckTest" init="0"/>
           <countfilter match="@NotSupported"  property="jsr303.marked.NotSupported" init="0"/>
+          <countfilter match="@TestNotCompatible"  property="jsr303.marked.NotSupported" init="0"/>
         </filterchain>
       </scan>
       
       <!-- force to zero if not set above -->
       <property name="jsr303.marked.Failing" value="0"/>
       <property name="jsr303.marked.NonTckTest" value="0"/>
-      <property name="jsr303.marked.NotSupported" value="0"/>
+      <property name="jsr303.marked.TestNotCompatible" value="0"/>
       
       <echo message="Marked Failing = ${jsr303.marked.Failing}" />
       <echo message="Marked NonTckTest = ${jsr303.marked.NonTckTest}" />
       <echo message="Marked NotSupported = ${jsr303.marked.NotSupported}" />
+      <echo message="Marked TestNotCompatible = ${jsr303.marked.TestNotCompatible}" />
       
       <junitreport todir="${junit.out}/tck-report">
         <fileset dir="${junit.out}/tck-dev-htmlunit">
@@ -712,11 +714,13 @@
           <param name="markedFailing" expression="${jsr303.marked.Failing}" />
           <param name="markedNonTckTest" expression="${jsr303.marked.NonTckTest}" />
           <param name="markedNotSupported" expression="${jsr303.marked.NotSupported}" />
+          <param name="markedTestNotCompatible" expression="${jsr303.marked.TestNotCompatible}" />
         </report>
         <report format="noframes" todir="${junit.out}/tck-report/text" styledir="style/text">
           <param name="markedFailing" expression="${jsr303.marked.Failing}" />
           <param name="markedNonTckTest" expression="${jsr303.marked.NonTckTest}" />
           <param name="markedNotSupported" expression="${jsr303.marked.NotSupported}" />
+          <param name="markedTestNotCompatible" expression="${jsr303.marked.TestNotCompatible}" />
         </report>
       </junitreport>
 

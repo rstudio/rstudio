@@ -33,6 +33,8 @@
 <xsl:param name="markedFailing" />
 <xsl:param name="markedNonTckTest" />
 <xsl:param name="markedNotSupported" />
+<xsl:param name="markedTestNotCompatible" />
+
 <xsl:template match="testsuites">
 
 	<xsl:variable name="rawTestCount" select="258"/>
@@ -41,7 +43,7 @@
       jar -xf jsr303-tck-1.0.3.GA-sources.jar
       grep -r \@Test org/hibernate/jsr303/tck/tests/| grep -v "enabled = false"  | wc -l
     -->
-    <xsl:variable name="testCount" select="($rawTestCount - $markedNotSupported)"/>
+    <xsl:variable name="testCount" select="($rawTestCount - $markedNotSupported -$markedTestNotCompatible)"/>
     <xsl:variable name="testExecutedCount" select="sum(testsuite/@tests)"/>
     <xsl:variable name="errorCount" select="sum(testsuite/@errors)"/>
     <xsl:variable name="failureCount" select="sum(testsuite/@failures)"/>

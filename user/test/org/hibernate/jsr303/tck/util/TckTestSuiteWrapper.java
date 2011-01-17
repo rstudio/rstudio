@@ -30,6 +30,7 @@ import junit.framework.TestCase;
 import org.hibernate.jsr303.tck.util.client.Failing;
 import org.hibernate.jsr303.tck.util.client.NonTckTest;
 import org.hibernate.jsr303.tck.util.client.NotSupported;
+import org.hibernate.jsr303.tck.util.client.TestNotCompatible;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -47,14 +48,17 @@ public class TckTestSuiteWrapper extends GWTTestSuite {
   private static final Predicate<Method> HAS_FAILING = createHasAnnotationPredicate(Failing.class);
   private static final Predicate<Method> HAS_NON_TCK_TEST = createHasAnnotationPredicate(NonTckTest.class);
   private static final Predicate<Method> HAS_NOT_SUPPORTED = createHasAnnotationPredicate(NotSupported.class);
+  private static final Predicate<Method> HAS_TEST_NOT_COMPATIBLE = createHasAnnotationPredicate(TestNotCompatible.class);
 
   private static final Predicate<Method> INCLUDE_FAILING = createHasProperty(Failing.INCLUDE);
   private static final Predicate<Method> INCLUDE_NOT_SUPPORTED = createHasProperty(NotSupported.INCLUDE);
+  private static final Predicate<Method> INCLUDE_TEST_NOT_COMPATIBLE = createHasProperty(TestNotCompatible.INCLUDE);
   private static final Predicate<Method> EXCLUDE_NON_TCK_TEST = createHasProperty(NonTckTest.EXCLUDE);
 
   @SuppressWarnings("unchecked")
   private static final Predicate<Method> METHOD_FILTER = and(
       or(INCLUDE_NOT_SUPPORTED, not(HAS_NOT_SUPPORTED)),
+      or(INCLUDE_TEST_NOT_COMPATIBLE, not(HAS_TEST_NOT_COMPATIBLE)),
       not(and(EXCLUDE_NON_TCK_TEST, HAS_NON_TCK_TEST)),
       or(INCLUDE_FAILING, not(HAS_FAILING))
       );
