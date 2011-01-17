@@ -40,12 +40,10 @@ public class ConstraintCompositionGwtTest extends GWTTestCase {
     delegate.testAttributesDefinedOnComposingConstraints();
   }
 
-  @Failing(issue = 5799)
   public void testComposedConstraints() {
     delegate.testComposedConstraints();
   }
 
-  @Failing(issue = 5799)
   public void testComposedConstraintsAreRecursive() {
     delegate.testComposedConstraintsAreRecursive();
   }
@@ -55,7 +53,6 @@ public class ConstraintCompositionGwtTest extends GWTTestCase {
     delegate.testEachFailingConstraintCreatesConstraintViolation();
   }
 
-  @Failing(issue = 5799)
   public void testGroupsDefinedOnMainAnnotationAreInherited() {
     delegate.testGroupsDefinedOnMainAnnotationAreInherited();
   }

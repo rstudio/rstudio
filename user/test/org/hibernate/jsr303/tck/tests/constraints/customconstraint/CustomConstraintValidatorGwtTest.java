@@ -30,7 +30,6 @@ public class CustomConstraintValidatorGwtTest extends GWTTestCase {
     return "org.hibernate.jsr303.tck.tests.constraints.customconstraint.TckTest";
   }
 
-  @Failing(issue = 5800)
   public void testDefaultPropertyPath() {
     delegate.testDefaultPropertyPath();
   }

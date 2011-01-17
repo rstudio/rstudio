@@ -24,7 +24,6 @@ public class PropertyPathGwtTest extends AbstractValidationTest {
 
   private final PropertyPathTest delegate = new PropertyPathTest();
 
-  @Failing(issue = 5803)
   public void testPropertyPathSet() {
     delegate.testPropertyPathSet();
   }

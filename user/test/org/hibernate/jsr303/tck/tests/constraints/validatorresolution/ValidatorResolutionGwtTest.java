@@ -34,7 +34,6 @@ public class ValidatorResolutionGwtTest extends GWTTestCase {
     delegate.testAmbiguousValidatorResolution();
   }
 
-  @Failing(issue = 5806)
   public void testResolutionOfMinMaxForDifferentTypes() {
     delegate.testResolutionOfMinMaxForDifferentTypes();
   }

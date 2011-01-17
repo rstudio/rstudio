@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.validation.client.GwtValidation;
@@ -27,8 +28,7 @@ import com.google.gwt.validation.client.impl.GwtBeanDescriptor;
 import com.google.gwt.validation.client.impl.GwtSpecificValidator;
 import com.google.gwt.validation.client.impl.GwtValidationContext;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 
 import javax.validation.ConstraintViolation;
@@ -39,7 +39,10 @@ import javax.validation.metadata.BeanDescriptor;
  */
 public class ValidatorCreator extends AbstractCreator {
 
-  private final Map<JClassType, BeanHelper> beansToValidate = new HashMap<JClassType, BeanHelper>();
+  /**
+   * The beans to validate in source declaratoin order.
+   */
+  private final List<BeanHelper> beansToValidate = Lists.newArrayList();
   private final GwtValidation gwtValidation;
 
 
@@ -50,9 +53,10 @@ public class ValidatorCreator extends AbstractCreator {
     super(context, logger, validatorType);
     this.gwtValidation = gwtValidation;
 
+
     for (Class<?> clazz : gwtValidation.value()) {
       BeanHelper helper = createBeanHelper(clazz);
-      beansToValidate.put(helper.getJClass(), helper);
+      beansToValidate.add(helper);
     }
   }
 
@@ -134,7 +138,7 @@ public class ValidatorCreator extends AbstractCreator {
     // checkNotNull(clazz, "clazz");
     sw.println("checkNotNull(clazz, \"clazz\");");
 
-    for (BeanHelper bean : beansToValidate.values()) {
+    for (BeanHelper bean : beansToValidate) {
       writeGetConstraintsForClass(sw, bean);
     }
 
@@ -182,14 +186,14 @@ public class ValidatorCreator extends AbstractCreator {
 
     // + "Valid values are {Foo.clas, Bar.class}
     sourceWriter.print("+ \"Valid types are ");
-    sourceWriter.print(beansToValidate.values().toString());
+    sourceWriter.print(beansToValidate.toString());
     sourceWriter.println("\");");
     sourceWriter.outdent();
     sourceWriter.outdent();
   }
 
   private void writeTypeSupport(SourceWriter sw) {
-    for (BeanHelper bean : beansToValidate.values()) {
+    for (BeanHelper bean : beansToValidate) {
       writeValidatorInstance(sw, bean);
     }
   }
@@ -204,7 +208,7 @@ public class ValidatorCreator extends AbstractCreator {
     sw.println("checkNotNull(groups, \"groups\");");
     sw.println("checkGroups(groups);");
 
-    for (BeanHelper bean : beansToValidate.values()) {
+    for (BeanHelper bean : beansToValidate) {
       writeValidate(sw, bean);
     }
 
@@ -240,7 +244,7 @@ public class ValidatorCreator extends AbstractCreator {
     sw.println("checkNotNull(groups, \"groups\");");
     sw.println("checkGroups(groups);");
 
-    for (BeanHelper bean : beansToValidate.values()) {
+    for (BeanHelper bean : beansToValidate) {
       writeValidateProperty(sw, bean);
     }
 
@@ -271,7 +275,7 @@ public class ValidatorCreator extends AbstractCreator {
     sw.println("checkNotNull(groups, \"groups\");");
     sw.println("checkGroups(groups);");
 
-    for (BeanHelper bean : beansToValidate.values()) {
+    for (BeanHelper bean : beansToValidate) {
       writeValidateValue(sw, bean);
     }
 
