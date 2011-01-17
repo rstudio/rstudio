@@ -27,8 +27,10 @@ import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
 import org.rstudio.codemirror.client.CodeMirror.CursorPosition;
 import org.rstudio.codemirror.client.CodeMirror.LineHandle;
-import org.rstudio.codemirror.client.events.EditorFocusedEvent;
-import org.rstudio.codemirror.client.events.EditorFocusedHandler;
+import org.rstudio.codemirror.client.events.EditorBlurEvent;
+import org.rstudio.codemirror.client.events.EditorBlurHandler;
+import org.rstudio.codemirror.client.events.EditorFocusEvent;
+import org.rstudio.codemirror.client.events.EditorFocusHandler;
 import org.rstudio.codemirror.client.resources.CodeMirrorResources;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Point;
@@ -329,7 +331,15 @@ public abstract class CodeMirrorEditor extends Composite
       {
          public void execute(NativeEvent event)
          {
-            fireEvent(new EditorFocusedEvent());
+            fireEvent(new EditorFocusEvent());
+         }
+      });
+
+      addBlurCallback(codeMirror_, new CommandWithNativeEvent()
+      {
+         public void execute(NativeEvent event)
+         {
+            fireEvent(new EditorBlurEvent());
          }
       });
 
@@ -346,11 +356,16 @@ public abstract class CodeMirrorEditor extends Composite
       });
    }
 
-   public HandlerRegistration addEditorFocusedHandler(EditorFocusedHandler h)
+   public HandlerRegistration addEditorFocusHandler(EditorFocusHandler h)
    {
-      return addHandler(h, EditorFocusedEvent.TYPE);
+      return addHandler(h, EditorFocusEvent.TYPE);
    }
    
+   public HandlerRegistration addEditorBlurHandler(EditorBlurHandler h)
+   {
+      return addHandler(h, EditorBlurEvent.TYPE);
+   }
+
    protected void onCursorActivity()
    {
    }
@@ -435,6 +450,22 @@ public abstract class CodeMirrorEditor extends Composite
       else
       {
          editor.win.attachEvent("focus", function(evt) {
+            command.@org.rstudio.codemirror.client.CommandWithNativeEvent::execute(Lcom/google/gwt/dom/client/NativeEvent;)(evt);
+         }, false);
+      }
+   }-*/;
+
+   private static final native void addBlurCallback(CodeMirror editor,
+                                                    CommandWithNativeEvent command) /*-{
+      if (editor.win.addEventListener)
+      {
+         editor.win.addEventListener("blur", function(evt) {
+            command.@org.rstudio.codemirror.client.CommandWithNativeEvent::execute(Lcom/google/gwt/dom/client/NativeEvent;)(evt);
+         }, false);
+      }
+      else
+      {
+         editor.win.attachEvent("blur", function(evt) {
             command.@org.rstudio.codemirror.client.CommandWithNativeEvent::execute(Lcom/google/gwt/dom/client/NativeEvent;)(evt);
          }, false);
       }

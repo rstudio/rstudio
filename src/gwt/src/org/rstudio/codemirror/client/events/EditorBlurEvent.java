@@ -1,5 +1,5 @@
 /*
- * EditorFocusedEvent.java
+ * EditorFocusEvent.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -14,24 +14,24 @@ package org.rstudio.codemirror.client.events;
 
 import com.google.gwt.event.shared.GwtEvent;
 
-public class EditorFocusedEvent extends GwtEvent<EditorFocusedHandler>
+public class EditorBlurEvent extends GwtEvent<EditorBlurHandler>
 {
-   public static Type<EditorFocusedHandler> TYPE =
-         new Type<EditorFocusedHandler>();
+   public static Type<EditorBlurHandler> TYPE =
+         new Type<EditorBlurHandler>();
 
-   public EditorFocusedEvent()
+   public EditorBlurEvent()
    {
    }
 
    @Override
-   public Type<EditorFocusedHandler> getAssociatedType()
+   public Type<EditorBlurHandler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(EditorFocusedHandler handler)
+   protected void dispatch(EditorBlurHandler handler)
    {
-      handler.onEditorFocused(this);
+      handler.onEditorBlur(this);
    }
 }

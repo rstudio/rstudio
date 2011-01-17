@@ -161,7 +161,8 @@ public class SlideLabel extends Widget
       {
          public void execute()
          {
-            new Animation() {
+            stopCurrentAnimation();
+            currentAnimation_ = new Animation() {
                @Override
                protected void onStart()
                {
@@ -180,20 +181,24 @@ public class SlideLabel extends Widget
                @Override
                protected void onComplete()
                {
+                  currentAnimation_ = null;
                   if (autoHideMillis >= 0)
                   {
-                     new Timer() {
+                     currentAutoHideTimer_ = new Timer() {
                         @Override
                         public void run()
                         {
+                           currentAutoHideTimer_ = null;
                            hide(executeOnComplete);
                         }
-                     }.schedule(autoHideMillis);
+                     };
+                     currentAutoHideTimer_.schedule(autoHideMillis);
                   }
                }
 
                private int height;
-            }.run(ANIM_MILLIS);
+            };
+            currentAnimation_.run(ANIM_MILLIS);
          }
       });
    }
@@ -205,8 +210,9 @@ public class SlideLabel extends Widget
 
    public void hide(final Command executeOnComplete)
    {
+      stopCurrentAnimation();
       final int height = curtain_.getOffsetHeight();
-      new Animation() {
+      currentAnimation_ = new Animation() {
          @Override
          protected void onUpdate(double progress)
          {
@@ -216,17 +222,34 @@ public class SlideLabel extends Widget
          @Override
          protected void onComplete()
          {
+            currentAnimation_ = null;
             super.onComplete();
             setVisible(false);
             if (executeOnComplete != null)
                executeOnComplete.execute();
          }
-      }.run(ANIM_MILLIS);
+      };
+      currentAnimation_.run(ANIM_MILLIS);
    }
 
    private void setHeight(double height)
    {
       curtain_.getStyle().setHeight((int)height, Style.Unit.PX);
+   }
+
+   private void stopCurrentAnimation()
+   {
+      if (currentAnimation_ != null)
+      {
+         currentAnimation_.cancel();
+         currentAnimation_ = null;
+      }
+
+      if (currentAutoHideTimer_ != null)
+      {
+         currentAutoHideTimer_.cancel();
+         currentAutoHideTimer_ = null;
+      }
    }
 
    @UiField
@@ -237,6 +260,9 @@ public class SlideLabel extends Widget
    TableElement border_;
    @UiField
    ImageElement progress_;
+
+   private Animation currentAnimation_;
+   private Timer currentAutoHideTimer_;
 
    private static final int ANIM_MILLIS = 250;
 }

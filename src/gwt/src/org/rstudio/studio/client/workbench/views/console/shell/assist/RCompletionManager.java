@@ -18,6 +18,9 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
@@ -55,7 +58,15 @@ public class RCompletionManager implements CompletionManager
             ignoreNextInputBlur_ = false ;
          }
       }) ;
-      
+
+      input_.addClickHandler(new ClickHandler()
+      {
+         public void onClick(ClickEvent event)
+         {
+            invalidatePendingRequests();
+         }
+      });
+
       popup_.addSelectionCommitHandler(new SelectionCommitHandler<QualifiedName>() {
          public void onSelectionCommit(SelectionCommitEvent<QualifiedName> event)
          {
@@ -79,6 +90,17 @@ public class RCompletionManager implements CompletionManager
             ignoreNextInputBlur_ = true ;
          }
       }) ;
+
+      Event.addNativePreviewHandler(new NativePreviewHandler()
+      {
+         public void onPreviewNativeEvent(NativePreviewEvent event)
+         {
+            if (event.getTypeInt() == Event.ONFOCUS)
+            {
+               
+            }
+         }
+      });
    }
 
    public void close()

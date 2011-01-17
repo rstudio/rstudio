@@ -1,5 +1,5 @@
 /*
- * EditorFocusedHandler.java
+ * EditorFocusHandler.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -14,7 +14,7 @@ package org.rstudio.codemirror.client.events;
 
 import com.google.gwt.event.shared.EventHandler;
 
-public interface EditorFocusedHandler extends EventHandler
+public interface EditorFocusHandler extends EventHandler
 {
-   void onEditorFocused(EditorFocusedEvent e);
+   void onEditorFocus(EditorFocusEvent e);
 }
