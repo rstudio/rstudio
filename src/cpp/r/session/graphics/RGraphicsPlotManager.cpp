@@ -25,7 +25,7 @@
 #include <core/FileSerializer.hpp>
 
 #include <r/RExec.hpp>
-
+#include <r/RErrorCategory.hpp>
 #include <r/session/RSessionUtils.hpp>
 
 #include "RGraphicsUtils.hpp"
@@ -108,8 +108,8 @@ int PlotManager::activePlotIndex() const
        
 // NOTE: returns an error if the plot index is invalid. Otherwise will always
 // successfully update the active plot state. If any file or rendering errors
-// occur while setting the active plot they will be reported and logged
-// but will not cause the method to return an error.
+// occur while setting the active plot they will be reported but will not
+// cause the method to return an error.
 Error PlotManager::setActivePlot(int index)
 {
    if (!isValidPlotIndex(index))
@@ -121,10 +121,8 @@ Error PlotManager::setActivePlot(int index)
       activePlot_ = index;
       
       // render it
-      Error error = renderActivePlotToDisplay();
-      if (error)
-         logAndReportError(error, ERROR_LOCATION);
-      
+      renderActivePlotToDisplay();
+
       // trip changes flag 
       displayHasChanges_ = true; 
    }
@@ -300,7 +298,16 @@ void PlotManager::render(boost::function<void(DisplayState)> outputFunction)
       Error error = activePlot().renderFromDisplay();
       if (error)
       {
-         logAndReportError(error, ERROR_LOCATION);
+         // no such file error expected in the case of an invalid graphics
+         // context (because generation of the PNG would have failed)
+         bool pngNotFound =
+          error.cause() &&
+          (error.cause().code() == boost::system::errc::no_such_file_or_directory);
+
+         // only log if this wasn't png not found
+         if (!pngNotFound)
+            logAndReportError(error, ERROR_LOCATION);
+
          return;
       }
    }
@@ -441,15 +448,8 @@ Error PlotManager::restorePlotsState(const FilePath& plotsStateFile)
    
    // restore snapshot for the active plot
    if (hasPlot())
-   {
-      Error error = renderActivePlotToDisplay();
-      if (error)
-      {
-         reportError(error);
-         return error;
-      }
-   }
-   
+      renderActivePlotToDisplay();
+
    return Success();
 }
    
@@ -544,15 +544,17 @@ void PlotManager::invalidateActivePlot()
 }
    
 // render active plot to display (used in setActivePlot and onSessionResume)
-Error PlotManager::renderActivePlotToDisplay()
+void PlotManager::renderActivePlotToDisplay()
 {   
    suppressDeviceEvents_ = true;
    
+   // attempt to render the active plot -- notify end user if there is an error
    Error error = activePlot().renderToDisplay();
+   if (error)
+      reportError(error);
    
    suppressDeviceEvents_ = false;
    
-   return error;
 }
    
       
@@ -576,7 +578,8 @@ void PlotManager::logAndReportError(const Error& error,
    
 void PlotManager::reportError(const core::Error& error) const
 {
-   std::string errmsg = ("Graphics error: " + error.code().message() + "\n");
+   std::string endUserMessage = r::endUserErrorMessage(error);
+   std::string errmsg = ("Graphics error: " + endUserMessage + "\n");
    REprintf(errmsg.c_str());
 }
    
