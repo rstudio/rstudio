@@ -59,10 +59,14 @@ public class FileSystemItem extends JavaScriptObject
    public final native String getPath() /*-{
       return this.path;
    }-*/;
-   
+
+   private final native String getRawPath() /*-{
+      return this.raw_path || this.path;
+   }-*/;
+
    public final String getName()
    {
-      return getNameFromPath(getPath());
+      return getNameFromPath(getRawPath());
    }
    
    public final String getExtension()

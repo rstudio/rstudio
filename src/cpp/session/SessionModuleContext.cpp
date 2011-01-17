@@ -326,7 +326,13 @@ json::Object createFileSystemItem(const FileInfo& fileInfo)
 {
    json::Object entry ;
 
-   entry["path"] = module_context::createAliasedPath(fileInfo);
+   std::string aliasedPath = module_context::createAliasedPath(fileInfo);
+   std::string rawPath =
+         module_context::resolveAliasedPath(aliasedPath).absolutePath();
+
+   entry["path"] = aliasedPath;
+   if (aliasedPath != rawPath)
+      entry["raw_path"] = rawPath;
    entry["dir"] = fileInfo.isDirectory();
 
    // length requires cast
