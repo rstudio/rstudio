@@ -31,6 +31,9 @@
   <property name="benchmark.timeout" value="30" />
   <property name="gwt.benchmark.testcase.web.includes" value="${gwt.benchmark.testcase.includes}" />
   <property name="gwt.benchmark.testcase.web.excludes" value="${gwt.benchmark.testcase.excludes}" />
+  
+  <property name="gwt.tck.testcase.dev.includes" value="com/google/gwt/validation/tck/**/*GwtSuite.class" />
+  <property name="gwt.tct.testcase.dev.excludes" value="" />
 
   <!--
     Test args can be specified per test target type.
@@ -638,7 +641,113 @@
     </parallel>
     </limit>
   </target>
+  
+  
+  <!-- Validation TCK test and reports -->
+  
+  <!-- TODO(nchalko) move the tck target to user/build.xml and then delete
+         all of samples/validaitontck -->
+    <target name="tck"
+        depends="tck.run,tck.report"
+        description="Run all tests for this project.">
+      <fail
+          message="One or more junit tests failed for target: @{test.name} @{test.args}"
+          if="junit.failure" status="2" />
+    </target>
 
+    <target name="tck.run"
+        depends="compile, compile.tests"
+        description="Run all tests for this project.">
+      <!-- Prevent compilation for every target. -->
+      <property name="compile.complete" value="true"/>
+      <property name="compile.tests.complete" value="true"/>
+
+      <property.ensure name="distro.built" location="${gwt.dev.staging.jar}"
+          message="GWT must be built before performing any tests.  This can be fixed by running ant in the ${gwt.root} directory." />
+      <limit failonerror="true" hours="${test.timeout}">
+
+          <antcall target="tck.dev.htmlunit"/>
+      </limit>
+
+      <fail
+          message="One or more tck tests failed for target: @{test.name} @{test.args}"
+          if="junit.failure" status="2" />
+    </target>
+
+    <macrodef name="countMarkedTests">
+      <attribute name="annotation" default="NOT SET" />
+      <attribute name="outputproperty" default="jsr303.marked.@{annotation}" />
+      <sequential>
+   
+      </sequential>
+    </macrodef>
+
+    <target name="tck.report">
+      <mkdir dir="${junit.out}/tck-report" />
+      <mkdir dir="${junit.out}/tck-report/text" />
+      
+      <scan> 
+        <fileset dir="test/org/hibernate/jsr303/tck/tests" id="id"/>
+        <filterchain>
+          <countfilter match="@Failing"  property="jsr303.marked.Failing" init="0"/>
+          <countfilter match="@NonTckTest"  property="jsr303.marked.NonTckTest" init="0"/>
+          <countfilter match="@NotSupported"  property="jsr303.marked.NotSupported" init="0"/>
+        </filterchain>
+      </scan>
+      
+      <!-- force to zero if not set above -->
+      <property name="jsr303.marked.Failing" value="0"/>
+      <property name="jsr303.marked.NonTckTest" value="0"/>
+      <property name="jsr303.marked.NotSupported" value="0"/>
+      
+      <echo message="Marked Failing = ${jsr303.marked.Failing}" />
+      <echo message="Marked NonTckTest = ${jsr303.marked.NonTckTest}" />
+      <echo message="Marked NotSupported = ${jsr303.marked.NotSupported}" />
+      
+      <junitreport todir="${junit.out}/tck-report">
+        <fileset dir="${junit.out}/tck-dev-htmlunit">
+          <include name="reports/TEST-*.xml" />
+        </fileset>
+        <report format="noframes" todir="${junit.out}/tck-report" styledir="style/html">
+          <param name="markedFailing" expression="${jsr303.marked.Failing}" />
+          <param name="markedNonTckTest" expression="${jsr303.marked.NonTckTest}" />
+          <param name="markedNotSupported" expression="${jsr303.marked.NotSupported}" />
+        </report>
+        <report format="noframes" todir="${junit.out}/tck-report/text" styledir="style/text">
+          <param name="markedFailing" expression="${jsr303.marked.Failing}" />
+          <param name="markedNonTckTest" expression="${jsr303.marked.NonTckTest}" />
+          <param name="markedNotSupported" expression="${jsr303.marked.NotSupported}" />
+        </report>
+      </junitreport>
+
+      <concat taskname="JSR 303 TCK Result">
+        <filelist>
+          <file name="${junit.out}/tck-report/text/junit-noframes.html" />
+        </filelist>
+      </concat>
+
+    </target>
+
+    <target name="tck.dev.htmlunit"
+        depends="compile, compile.tests"
+        description="Run dev-mode tests with HtmlUnit."
+        unless="test.dev.htmlunit.disable">
+      <fileset id="tck.dev.htmlunit.tests" dir="${javac.junit.out}"
+          includes="${gwt.tck.testcase.dev.includes}"
+          excludes="${gwt.tck.testcase.dev.excludes}" />
+      <gwt.junit test.name="test.dev.htmlunit"
+          test.args="${test.args} -standardsMode "
+          test.jvmargs="-ea -Dcom.google.gwt.sample.validationtck.util.Failing.include=true  -Dcom.google.gwt.sample.validationtck.util.NonTckTest.exclude=true"
+          test.out="${junit.out}/tck-dev-htmlunit"
+          test.cases="tck.dev.htmlunit.tests"
+          haltonfailure="false"
+         >
+        <extraclasspaths>
+          <path refid="test.extraclasspath" />
+        </extraclasspaths>
+      </gwt.junit>
+    </target>
+  
   <target name="benchmark"
       description="Run all benchmarks for this project.">
 
