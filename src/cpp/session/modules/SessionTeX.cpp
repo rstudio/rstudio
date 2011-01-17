@@ -38,19 +38,19 @@ FilePath pdfPathForTexPath(const FilePath& texPath)
    return texPath.parent().complete(texPath.stem() + ".pdf");
 }
 
-void callSweave(const std::string& file)
+void callSweave(const std::string& rBinDir,
+                const std::string& file)
 {
-   // calculate path to R binary
-   std::string path = r::exec::rBinaryPath().absolutePath();
-
-   // build args
-   core::system::Options args;
-
+   // build R exe path and args
 #ifdef _WIN32
+   std::string path = FilePath(rBinDir).complete("Rterm.exe").absolutePath();
+   core::system::Options args;
    std::string sweaveCmd = "\"Sweave('" + file + "')\"";
    args.push_back(std::make_pair("-e", sweaveCmd));
    args.push_back(std::make_pair("--silent", ""));
 #else
+   std::string path = FilePath(rBinDir).complete("R").absolutePath();
+   core::system::Options args;
    args.push_back(std::make_pair("CMD", "Sweave"));
    args.push_back(std::make_pair(file, ""));
 #endif
@@ -61,10 +61,11 @@ void callSweave(const std::string& file)
       LOG_ERROR(error);
 }
 
-SEXP rs_callSweave(SEXP fileSEXP)
+SEXP rs_callSweave(SEXP rBinDirSEXP, SEXP fileSEXP)
 {
    // call sweave
-   callSweave(r::sexp::asString(fileSEXP));
+   callSweave(r::sexp::asString(rBinDirSEXP),
+              r::sexp::asString(fileSEXP));
 
    // check for interrupts (likely since sweave can be long running)
    r::exec::checkUserInterrupt();
@@ -111,7 +112,7 @@ Error initialize()
    R_CallMethodDef callSweaveMethodDef;
    callSweaveMethodDef.name = "rs_callSweave" ;
    callSweaveMethodDef.fun = (DL_FUNC) rs_callSweave ;
-   callSweaveMethodDef.numArgs = 1;
+   callSweaveMethodDef.numArgs = 2;
    r::routines::addCallMethod(callSweaveMethodDef);
 
    R_CallMethodDef validateTexFileMethodDef;
