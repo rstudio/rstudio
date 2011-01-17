@@ -74,7 +74,10 @@ var LatexParser = Editor.Parser = (function() {
       next: function() {
         var tok = source.next();
         if (tok.type == "whitespace") {
-          if (tok.value == "\n") tok.indentation = indentTo(space);
+          if (tok.value == "\n") {
+             tok.indentation = indentTo(space);
+             space = 0;
+          }
           else space = tok.value.length;
         }
         return tok;
