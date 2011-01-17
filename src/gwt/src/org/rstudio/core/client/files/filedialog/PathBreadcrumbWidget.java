@@ -176,6 +176,7 @@ public class PathBreadcrumbWidget
       RStudioGinjector.INSTANCE.getFileDialogs().chooseFolder(
             "Go To Folder",
             tempContext,
+            false,
             new ProgressOperationWithInput<FileSystemItem>()
             {
                public void execute(FileSystemItem input,

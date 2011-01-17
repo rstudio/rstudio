@@ -127,7 +127,7 @@ public class FilesPane extends WorkbenchPane implements Files.Display
                      RemoteFileSystemContext fileSystemContext,
                      ProgressOperationWithInput<FileSystemItem> operation)
    {
-      fileDialogs_.chooseFolder(caption, fileSystemContext, operation);
+      fileDialogs_.chooseFolder(caption, fileSystemContext, true, operation);
    }
    
    public void showFileUpload(

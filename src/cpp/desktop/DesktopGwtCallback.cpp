@@ -110,22 +110,29 @@ QString GwtCallback::getExistingDirectory(const QString& caption,
 
    QString result;
 #ifdef _WIN32
-   // Bug
-   char szDir[MAX_PATH];
-   BROWSEINFO bi;
-   bi.hwndOwner = pOwnerWindow_->winId();
-   bi.pidlRoot = NULL;
-   bi.pszDisplayName = szDir;
-   bi.lpszTitle = "Select a folder:";
-   bi.ulFlags = BIF_RETURNONLYFSDIRS;
-   bi.lpfn = NULL;
-   bi.lpfn = 0;
-   bi.iImage = -1;
-   LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
-   if (!pidl || !SHGetPathFromIDList(pidl, szDir))
-      result = QString("");
+   if (!dir.isNull())
+   {
+      // Bug
+      char szDir[MAX_PATH];
+      BROWSEINFO bi;
+      bi.hwndOwner = pOwnerWindow_->winId();
+      bi.pidlRoot = NULL;
+      bi.pszDisplayName = szDir;
+      bi.lpszTitle = "Select a folder:";
+      bi.ulFlags = BIF_RETURNONLYFSDIRS;
+      bi.lpfn = NULL;
+      bi.lpfn = 0;
+      bi.iImage = -1;
+      LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
+      if (!pidl || !SHGetPathFromIDList(pidl, szDir))
+         result = QString("");
+      else
+         result = QString::fromLocal8Bit(szDir);
+   }
    else
-      result = QString::fromLocal8Bit(szDir);
+   {
+      result = QFileDialog::getExistingDirectory(pOwnerWindow_, caption);
+   }
 #else
    result = QFileDialog::getExistingDirectory(pOwnerWindow_, caption, resolvedDir);
 #endif

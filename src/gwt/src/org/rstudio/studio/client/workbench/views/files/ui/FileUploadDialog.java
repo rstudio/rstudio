@@ -178,6 +178,7 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
          fileDialogs_.chooseFolder(
              "Choose Target Directory",
              fileSystemContext_,
+             true,
              new ProgressOperationWithInput<FileSystemItem>() {
 
                public void execute(FileSystemItem input,

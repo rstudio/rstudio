@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.common.impl;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.files.FilenameTransform;
@@ -51,8 +52,13 @@ public class WebFileDialogs implements FileDialogs
 
    public void chooseFolder(String caption,
                             FileSystemContext fsContext,
+                            boolean browseFromCurrentDir,
                             ProgressOperationWithInput<FileSystemItem> operation)
    {
+      if (!browseFromCurrentDir)
+         Debug.log("WARNING: browseFromCurrentDir is false, but WebFileDialogs " +
+                   "always browses from the current dir");
+
       ChooseFolderDialog2 dialog = new ChooseFolderDialog2(caption,
                                                            fsContext,
                                                            operation);

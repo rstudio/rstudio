@@ -32,5 +32,6 @@ public interface FileDialogs
 
    void chooseFolder(String caption,
                      FileSystemContext fsContext,
+                     boolean browseFromCurrentDir,
                      ProgressOperationWithInput<FileSystemItem> operation);
 }
