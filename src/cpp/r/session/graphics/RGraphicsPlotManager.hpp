@@ -120,7 +120,7 @@ private:
    void invalidateActivePlot();
 
    // render active plot to display (used in setActivePlot and onSessionResume)
-   core::Error renderActivePlotToDisplay();
+   void renderActivePlotToDisplay();
    
    // render active plot file file
    core::Error savePlotAsFile(const boost::function<core::Error()>&

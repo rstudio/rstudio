@@ -149,13 +149,6 @@ Error Plot::renderToDisplay()
    if (error)
    {
       Error graphicsError(errc::PlotRenderingError, error, ERROR_LOCATION);
-      
-      // NOTE: occationally we have seen a plot rendering error at 
-      // restore time which has an "invalid graphics state" message.
-      // we believe this may be caused by the margin check in GNewPlot
-      // failing and thereby not setting the dd->valid flag to true.
-      // to test this theory we add the current size of the graphics 
-      // device as error properties
       DisplaySize deviceSize = graphicsDevice_.displaySize();
       graphicsError.addProperty("device-width", deviceSize.width);
       graphicsError.addProperty("device-height", deviceSize.height);

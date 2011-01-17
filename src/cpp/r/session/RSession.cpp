@@ -1154,12 +1154,10 @@ void setClientMetrics(const RClientMetrics& metrics)
    
    if (error)
    {
-      // log error
-      error.addProperty("console-width", metrics.consoleWidth);
-      error.addProperty("graphics-width", metrics.graphicsWidth);
-      error.addProperty("graphics-height", metrics.graphicsHeight);
-      LOG_ERROR(error);
-      
+      // report to user
+      std::string errMsg = r::endUserErrorMessage(error);
+      REprintf((errMsg + "\n").c_str());
+
       // restore previous values (but don't fire plotsChanged b/c
       // the reset doesn't result in a change in graphics state)
       r::exec::executeSafely(boost::bind(doSetClientMetrics, previousMetrics));
