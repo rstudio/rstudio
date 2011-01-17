@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.codemirror;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.event.dom.client.*;
@@ -24,6 +25,10 @@ import org.rstudio.codemirror.client.CodeMirror;
 import org.rstudio.codemirror.client.CodeMirror.CursorPosition;
 import org.rstudio.codemirror.client.CodeMirror.LineHandle;
 import org.rstudio.codemirror.client.CodeMirrorEditor;
+import org.rstudio.codemirror.client.events.EditorBlurEvent;
+import org.rstudio.codemirror.client.events.EditorBlurHandler;
+import org.rstudio.codemirror.client.events.EditorFocusHandler;
+import org.rstudio.codemirror.client.events.EditorFocusEvent;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.dom.DomUtils;
@@ -91,6 +96,39 @@ public class CodeMirrorToInputEditorDisplayAdapter
       editor_ = editor.getRawEditor() ;
       wrapper_ = editor ;
       handlerManager_ = new HandlerManager(this) ;
+
+      wrapper_.addEditorFocusHandler(new EditorFocusHandler()
+      {
+         public void onEditorFocus(EditorFocusEvent e)
+         {
+            DomEvent.fireNativeEvent(
+                  Document.get().createFocusEvent(),
+                  CodeMirrorToInputEditorDisplayAdapter.this,
+                  editor_.getFrame());
+         }
+      });
+
+      wrapper_.addEditorBlurHandler(new EditorBlurHandler()
+      {
+         public void onEditorBlur(EditorBlurEvent e)
+         {
+            DomEvent.fireNativeEvent(
+                  Document.get().createBlurEvent(),
+                  CodeMirrorToInputEditorDisplayAdapter.this,
+                  editor_.getFrame());
+         }
+      });
+
+      wrapper_.addEditorClickHandler(new ClickHandler()
+      {
+         public void onClick(ClickEvent event)
+         {
+            DomEvent.fireNativeEvent(
+                  event.getNativeEvent(),
+                  CodeMirrorToInputEditorDisplayAdapter.this,
+                  editor_.getFrame());
+         }
+      });
    }
 
    public Rectangle getCursorBounds()
@@ -313,18 +351,21 @@ public class CodeMirrorToInputEditorDisplayAdapter
       editor_.setCode(string);
    }
 
-   // Yeah, this doesn't actually work.
    public HandlerRegistration addFocusHandler(FocusHandler handler)
    {
       return handlerManager_.addHandler(FocusEvent.getType(), handler) ;
    }
 
-   // Yeah, this doesn't actually work.
    public HandlerRegistration addBlurHandler(BlurHandler handler)
    {
       return handlerManager_.addHandler(BlurEvent.getType(), handler) ;
    }
    
+   public HandlerRegistration addMouseDownHandler(MouseDownHandler handler)
+   {
+      return handlerManager_.addHandler(MouseDownEvent.getType(), handler);
+   }
+
    public void fireEvent(GwtEvent<?> event)
    {
       handlerManager_.fireEvent(event) ;

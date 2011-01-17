@@ -39,7 +39,7 @@
    ext <- tolower(pathInfo$extension)
    if (ext == ".rnw" || ext == ".snw" || ext == ".nw")
    {
-     .Call("rs_callSweave", fileName)
+     .Call("rs_callSweave", R.home("bin"), fileName)
      fileName = paste(pathInfo$stem, ".tex", sep="")
 
      # validate the TeX file before proceeding (will be invalid if

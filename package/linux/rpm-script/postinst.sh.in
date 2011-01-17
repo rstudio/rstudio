@@ -4,28 +4,28 @@
 set +e 
 
 # add rserver user account
-sudo useradd -r rstudio-server
+useradd -r rstudio-server
 
 # create softlink to admin script in /usr/sbin
-sudo ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/rstudio-server /usr/sbin/rstudio-server
+ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/rstudio-server /usr/sbin/rstudio-server
 
 # write installed indicator then cooperatively suspend active sessions 
 # (so they have a chance to get the update)
-sudo mkdir -p /etc/rstudio
-sudo sh -c "echo `date +%s` > /etc/rstudio/installed"
-sudo rstudio-server suspend-all 
+mkdir -p /etc/rstudio
+sh -c "echo `date +%s` > /etc/rstudio/installed"
+rstudio-server suspend-all
 
 # add and register init.d script and (re) start the server
-sudo cp ${CMAKE_INSTALL_PREFIX}/extras/init.d/redhat/rstudio-server /etc/init.d/
-sudo chmod +x /etc/init.d/rstudio-server
-sudo chkconfig --add rstudio-server
-sudo service rstudio-server stop 2>/dev/null
-sudo service rstudio-server start
+cp ${CMAKE_INSTALL_PREFIX}/extras/init.d/redhat/rstudio-server /etc/init.d/
+chmod +x /etc/init.d/rstudio-server
+chkconfig --add rstudio-server
+service rstudio-server stop
+service rstudio-server start
 
 # add pam profile
 if [ ! -e /etc/pam.d/rstudio ]
 then
-   sudo cp /usr/bin/rstudio-server/extras/pam/redhat/rstudio /etc/pam.d/
+   cp /usr/bin/rstudio-server/extras/pam/redhat/rstudio /etc/pam.d/
 fi
 
 # clear error termination state

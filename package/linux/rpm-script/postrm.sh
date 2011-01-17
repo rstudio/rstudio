@@ -4,7 +4,7 @@
 set +e 
 
 # remove softlink to admin script 
-sudo rm -f /usr/sbin/rstudio-server
+rm -f /usr/sbin/rstudio-server
 
 # clear error termination state
 set -e

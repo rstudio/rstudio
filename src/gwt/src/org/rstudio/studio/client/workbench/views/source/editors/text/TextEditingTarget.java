@@ -27,8 +27,9 @@ import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import org.rstudio.codemirror.client.events.EditorFocusedEvent;
-import org.rstudio.codemirror.client.events.EditorFocusedHandler;
+import org.rstudio.codemirror.client.events.EditorBlurHandler;
+import org.rstudio.codemirror.client.events.EditorFocusEvent;
+import org.rstudio.codemirror.client.events.EditorFocusHandler;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
@@ -114,7 +115,8 @@ public class TextEditingTarget implements EditingTarget
       ChangeTracker getChangeTracker();
       void setTextWrapping(boolean wrap);
       void setLineNumbers(boolean on);
-      HandlerRegistration addEditorFocusedHandler(EditorFocusedHandler handler);
+      HandlerRegistration addEditorFocusHandler(EditorFocusHandler handler);
+      HandlerRegistration addEditorBlurHandler(EditorBlurHandler handler);
       HandlerRegistration addNativeKeyDownHandler(NativeKeyDownHandler handler);
 
       void fireValueChanged();
@@ -258,9 +260,9 @@ public class TextEditingTarget implements EditingTarget
          }
       });
 
-      docDisplay_.addEditorFocusedHandler(new EditorFocusedHandler()
+      docDisplay_.addEditorFocusHandler(new EditorFocusHandler()
       {
-         public void onEditorFocused(EditorFocusedEvent e)
+         public void onEditorFocus(EditorFocusEvent e)
          {
             checkForExternalEdit();
          }
