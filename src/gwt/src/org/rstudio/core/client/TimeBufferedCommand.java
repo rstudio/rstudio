@@ -62,7 +62,7 @@ public abstract class TimeBufferedCommand
       this.activeIntervalMillis_ = activeIntervalMillis;
 
       if (initialIntervalMillis_ >= 0 && passiveIntervalMillis_ > 0)
-         scheduleExecution(true, initialIntervalMillis_);
+         scheduleExecution(true, Math.max(1, initialIntervalMillis_));
    }
 
    /**
