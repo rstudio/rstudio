@@ -127,7 +127,6 @@ public class TypeHierarchyTest extends GWTTestCase {
   }
 
   private static class JvmNode implements Node {
-    @Override
     public JvmNode appendChild(Node node) {
       return (JvmNode)node;
     }
@@ -149,7 +148,6 @@ public class TypeHierarchyTest extends GWTTestCase {
   }
 
   private static class JsNode extends JavaScriptObject implements Node {
-    @Override
     public final native JsNode appendChild(Node node) /*-{
       return node;
     }-*/;
