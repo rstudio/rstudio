@@ -34,8 +34,18 @@ public class ImageFrame extends Frame
          @Override
          public void run()
          {
-            setupContent(getElement());
-            replaceLocation(getElement(), url_);
+            // No way to tell when iframe is actually ready to be
+            // manipulated (sometimes contentWindow is null). Need
+            // to probe and retry.
+            if (!isReadyForContent(getElement()))
+            {
+               this.schedule(200);
+            }
+            else
+            {
+               setupContent(getElement());
+               replaceLocation(getElement(), url_);
+            }
          }
       }.schedule(100);
    }
@@ -77,7 +87,13 @@ public class ImageFrame extends Frame
       return true;
    }-*/;
 
-   private native final void setupContent(Element el) /*-{
+   private native boolean isReadyForContent(Element el) /*-{
+      return el != null
+            && el.contentWindow != null
+            && el.contentWindow.document != null; 
+   }-*/;
+
+   private native void setupContent(Element el) /*-{
       var doc = el.contentWindow.document;
 
       // setupContent can get called multiple times, as progress causes the
