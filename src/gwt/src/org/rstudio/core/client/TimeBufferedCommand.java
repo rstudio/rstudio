@@ -125,9 +125,9 @@ public abstract class TimeBufferedCommand
             // if we're in the passive chain of execution, then reschedule.
             if (passive)
             {
-               long gap = passiveIntervalMillis_ - millisSinceLast;
+               int gap = passiveIntervalMillis_ - (int)millisSinceLast;
                gap = Math.max(1, gap); // a non-positive value will cause error
-               scheduleExecution(true, (int) gap);
+               scheduleExecution(true, gap);
             }
             return;
          }
