@@ -249,8 +249,6 @@ public class Files
 
    void onUploadFile()
    {
-      if (currentPath_ != null)
-         fileSystemContext_.cd(currentPath_.getPath());
       pFilesUpload_.get().execute(currentPath_, fileSystemContext_);
    }
    
