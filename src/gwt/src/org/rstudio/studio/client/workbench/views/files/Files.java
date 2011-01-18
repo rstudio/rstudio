@@ -87,9 +87,10 @@ public class Files
       ArrayList<FileSystemItem> getSelectedFiles();
        
       void showFolderPicker(
-                        String title, 
-                        RemoteFileSystemContext context,
-                        ProgressOperationWithInput<FileSystemItem> operation);
+            String title,
+            RemoteFileSystemContext context,
+            FileSystemItem initialDir,
+            ProgressOperationWithInput<FileSystemItem> operation);
       
       void showFileUpload(
                      String targetURL,
@@ -248,6 +249,8 @@ public class Files
 
    void onUploadFile()
    {
+      if (currentPath_ != null)
+         fileSystemContext_.cd(currentPath_.getPath());
       pFilesUpload_.get().execute(currentPath_, fileSystemContext_);
    }
    
@@ -274,10 +277,11 @@ public class Files
       // validation: some selection exists
       if  (selectedFiles.size() == 0)
          return ;
-      
+
       view_.showFolderPicker(
                         "Choose Folder", 
                         fileSystemContext_,
+                        currentPath_,
                         new ProgressOperationWithInput<FileSystemItem>() {
 
          public void execute(final FileSystemItem targetDir,

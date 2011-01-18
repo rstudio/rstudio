@@ -123,11 +123,15 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    }
     
    public void showFolderPicker(
-                     String caption, 
-                     RemoteFileSystemContext fileSystemContext,
-                     ProgressOperationWithInput<FileSystemItem> operation)
+         String caption,
+         RemoteFileSystemContext fileSystemContext,
+         FileSystemItem initialDir,
+         ProgressOperationWithInput<FileSystemItem> operation)
    {
-      fileDialogs_.chooseFolder(caption, fileSystemContext, true, operation);
+      fileDialogs_.chooseFolder(caption,
+                                fileSystemContext,
+                                initialDir,
+                                operation);
    }
    
    public void showFileUpload(

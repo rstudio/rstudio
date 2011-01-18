@@ -172,11 +172,10 @@ public class PathBreadcrumbWidget
    {
       FileSystemContext tempContext =
             RStudioGinjector.INSTANCE.getRemoteFileSystemContext();
-      tempContext.cd(context_.pwd());
       RStudioGinjector.INSTANCE.getFileDialogs().chooseFolder(
             "Go To Folder",
             tempContext,
-            false,
+            null,
             new ProgressOperationWithInput<FileSystemItem>()
             {
                public void execute(FileSystemItem input,

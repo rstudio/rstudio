@@ -114,7 +114,7 @@ public class DesktopFileDialogs implements FileDialogs
 
    public void chooseFolder(String caption,
                             FileSystemContext fsContext,
-                            final boolean browseFromCurrentDir,
+                            final FileSystemItem initialDir,
                             ProgressOperationWithInput<FileSystemItem> operation)
    {
       new FileDialogOperation()
@@ -124,7 +124,7 @@ public class DesktopFileDialogs implements FileDialogs
          {
             return Desktop.getFrame().getExistingDirectory(
                   caption,
-                  browseFromCurrentDir ? dir : null);
+                  initialDir != null ? initialDir.getPath() : null);
          }
       }.execute(caption, fsContext, null, null, operation);
    }

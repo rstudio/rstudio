@@ -52,17 +52,16 @@ public class WebFileDialogs implements FileDialogs
 
    public void chooseFolder(String caption,
                             FileSystemContext fsContext,
-                            boolean browseFromCurrentDir,
+                            FileSystemItem initialDir,
                             ProgressOperationWithInput<FileSystemItem> operation)
    {
-      if (!browseFromCurrentDir)
-         Debug.log("WARNING: browseFromCurrentDir is false, but WebFileDialogs " +
-                   "always browses from the current dir");
-
       ChooseFolderDialog2 dialog = new ChooseFolderDialog2(caption,
                                                            fsContext,
                                                            operation);
-      fsContext.refresh();
+      if (initialDir != null)
+         fsContext.cd(initialDir.getPath());
+      else
+         fsContext.refresh();
       dialog.showModal();
    }
 
