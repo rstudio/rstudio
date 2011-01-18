@@ -74,4 +74,17 @@ public final class JsIf extends JsStatement {
     }
     v.endVisit(this, ctx);
   }
+
+  @Override
+  public boolean unconditionalControlBreak() {
+    boolean thenBreaks = thenStmt != null
+      && thenStmt.unconditionalControlBreak();
+    boolean elseBreaks = elseStmt != null
+      && elseStmt.unconditionalControlBreak();
+    if (thenBreaks && elseBreaks) {
+      // both branches have an unconditional break
+      return true;
+    }
+    return false;
+  }
 }
