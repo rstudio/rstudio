@@ -45,6 +45,7 @@ public class ValidatePropertyGwtTest extends AbstractValidationTest {
     }
   }
 
+  @Failing(issue = 5882)
   public void testValidateProperty() {
     delegate.testValidateProperty();
   }

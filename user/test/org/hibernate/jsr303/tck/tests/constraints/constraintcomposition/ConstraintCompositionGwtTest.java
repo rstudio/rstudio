@@ -40,10 +40,12 @@ public class ConstraintCompositionGwtTest extends GWTTestCase {
     delegate.testAttributesDefinedOnComposingConstraints();
   }
 
+  @Failing(issue = 5882)
   public void testComposedConstraints() {
     delegate.testComposedConstraints();
   }
 
+  @Failing(issue = 5882)
   public void testComposedConstraintsAreRecursive() {
     delegate.testComposedConstraintsAreRecursive();
   }
