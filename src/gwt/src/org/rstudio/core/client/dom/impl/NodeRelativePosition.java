@@ -120,9 +120,9 @@ public class NodeRelativePosition
             String tagName = el.getTagName().toLowerCase();
             if (tagName.equals("br"))
             {
-               counter[0] -= 1;
                if (counter[0] <= 0)
                   return new NodeRelativePosition(here, 0);
+               counter[0] -= 1;
                return null;
             }
             else if (tagName.equals("script") || tagName.equals("style"))
