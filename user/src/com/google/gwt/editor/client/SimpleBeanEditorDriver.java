@@ -17,6 +17,8 @@ package com.google.gwt.editor.client;
 
 import java.util.List;
 
+import javax.validation.ConstraintViolation;
+
 /**
  * Automates editing of simple bean-like objects. The {@link EditorDelegate}
  * provided from this driver has a no-op implementation of
@@ -34,6 +36,9 @@ import java.util.List;
  * instance.flush();
  * }
  * </pre>
+ * <p>
+ * Note that this interface is intended to be implemented by generated code and
+ * is subject to API expansion in the future.
  * 
  * @param <T> the type being edited
  * @param <E> the Editor for the type
@@ -77,4 +82,17 @@ public interface SimpleBeanEditorDriver<T, E extends Editor<? super T>> {
    * @param editor the Editor to populate
    */
   void initialize(E editor);
+
+  /**
+   * Show {@link ConstraintViolation ConstraintViolations} generated through a
+   * {@link javax.validation.Validator Validator}. The violations will be
+   * converted into {@link EditorError} objects whose
+   * {@link EditorError#getUserData() getUserData()} method can be used to
+   * access the original ConstraintViolation object.
+   * 
+   * @param violations an Iterable over {@link ConstraintViolation} instances
+   * @return <code>true</code> if there were any unconsumed EditorErrors which
+   *         can be retrieved from {@link #getErrors()}
+   */
+  boolean setConstraintViolations(Iterable<ConstraintViolation<?>> violations);
 }

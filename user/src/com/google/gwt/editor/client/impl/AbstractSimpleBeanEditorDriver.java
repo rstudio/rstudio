@@ -22,6 +22,8 @@ import com.google.gwt.editor.client.SimpleBeanEditorDriver;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.validation.ConstraintViolation;
+
 /**
  * A base implementation class for generated SimpleBeanEditorDriver
  * implementations.
@@ -63,6 +65,19 @@ public abstract class AbstractSimpleBeanEditorDriver<T, E extends Editor<T>>
 
   public void initialize(E editor) {
     this.editor = editor;
+  }
+
+  public boolean setConstraintViolations(
+      final Iterable<ConstraintViolation<?>> violations) {
+    checkDelegate();
+    SimpleViolation.pushViolations(
+        SimpleViolation.iterableFromConstrantViolations(violations),
+        delegateMap);
+
+    // Flush the errors, which will take care of co-editor chains.
+    errors = new ArrayList<EditorError>();
+    delegate.flushErrors(errors);
+    return hasErrors();
   }
 
   protected abstract SimpleBeanEditorDelegate<T, E> createDelegate();

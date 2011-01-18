@@ -54,6 +54,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.validation.ConstraintViolation;
+
 /**
  * Test case for {@link EditorModel} that uses mock CompilationStates.
  */
@@ -881,8 +883,10 @@ public class EditorModelTest extends TestCase {
     Set<Resource> toReturn = new HashSet<Resource>(Arrays.asList(javaFiles));
     toReturn.addAll(Arrays.asList(new Resource[] {
         new RealJavaResource(CompositeEditor.class),
+        new EmptyMockJavaResource(ConstraintViolation.class),
         new RealJavaResource(Editor.class),
         new RealJavaResource(EditorError.class),
+        new EmptyMockJavaResource(EntityProxy.class),
         new EmptyMockJavaResource(EventBus.class),
         new EmptyMockJavaResource(HasEditorDelegate.class),
         new EmptyMockJavaResource(HasEditorErrors.class),
@@ -890,7 +894,6 @@ public class EditorModelTest extends TestCase {
         new RealJavaResource(IsEditor.class),
         new EmptyMockJavaResource(Iterable.class),
         new RealJavaResource(LeafValueEditor.class),
-        new EmptyMockJavaResource(EntityProxy.class),
         new EmptyMockJavaResource(RequestFactory.class),
         new RealJavaResource(RequestFactoryEditorDriver.class),
         new EmptyMockJavaResource(Request.class),

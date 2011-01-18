@@ -26,6 +26,8 @@ import com.google.gwt.requestfactory.shared.Violation;
 import java.util.Collections;
 import java.util.List;
 
+import javax.validation.ConstraintViolation;
+
 /**
  * A no-op implementation of {@link RequestFactoryEditorDriver} that records its
  * inputs.
@@ -137,6 +139,14 @@ public class MockRequestFactoryEditorDriver<P, E extends Editor<P>> implements
 
   public void initialize(RequestFactory requestFactory, E editor) {
     this.initialize(requestFactory.getEventBus(), requestFactory, editor);
+  }
+
+  /**
+   * A no-op method that always returns false.
+   */
+  public boolean setConstraintViolations(
+      Iterable<ConstraintViolation<?>> violations) {
+    return false;
   }
 
   /**

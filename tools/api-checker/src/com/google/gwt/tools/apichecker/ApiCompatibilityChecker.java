@@ -67,19 +67,19 @@ import java.util.jar.JarFile;
  * <p>
  * An {@code ApiContainer} object is a list of {@link ApiPackage} objects.
  * {@code ApiPackage} objects themselves are list of {@link ApiClass} objects.
- * {@code ApiClass} objects contain list of {@code ApiConstructor}, {@code
- * ApiMethod}, and {@code JField} objects.
+ * {@code ApiClass} objects contain list of {@code ApiConstructor},
+ * {@code ApiMethod}, and {@code JField} objects.
  * </p>
  * 
  * <p>
  * Each {@code ApiDiffGenerator} object computes the list of intersecting and
- * missing {@link ApiPackageDiffGenerator} objects. Each {@code
- * ApiPackageDiffGenerator} object in turn computes the list of intersecting and
- * missing {@link ApiClassDiffGenerator} objects. Each {@code
- * ApiClassDiffGenerator} object in turn computes the list of intersecting and
- * missing API members. The members are represented by {@link ApiConstructor}
- * for constructors, {@link ApiMethod} for methods, and {@link ApiField} for
- * fields.
+ * missing {@link ApiPackageDiffGenerator} objects. Each
+ * {@code ApiPackageDiffGenerator} object in turn computes the list of
+ * intersecting and missing {@link ApiClassDiffGenerator} objects. Each
+ * {@code ApiClassDiffGenerator} object in turn computes the list of
+ * intersecting and missing API members. The members are represented by
+ * {@link ApiConstructor} for constructors, {@link ApiMethod} for methods, and
+ * {@link ApiField} for fields.
  * </p>
  * 
  * <p>
@@ -172,65 +172,6 @@ public class ApiCompatibilityChecker extends ToolBase {
     @Override
     public boolean wasRerooted() {
       return false;
-    }
-  }
-
-  /**
-   * Abstract internal class that specifies a set of {@link CompilationUnit}.
-   */
-  private abstract static class Resources {
-    protected final TreeLogger logger;
-
-    Resources(TreeLogger logger) {
-      this.logger = logger;
-    }
-
-    public abstract Set<Resource> getResources() throws NotFoundException,
-        IOException, UnableToCompleteException;
-
-    // TODO (amitmanjhi): remove this code. use TypeOracle functionality
-    // instead.
-    protected String extractPackageName(Reader reader) throws IOException {
-      BufferedReader br = new BufferedReader(reader);
-      String str = null;
-      while ((str = br.readLine()) != null) {
-        if (str.indexOf("package") != 0) {
-          continue;
-        }
-        String parts[] = str.split("[\b\t\n\r ]+");
-        if ((parts.length == 2) && parts[0].equals("package")) {
-          return parts[1].substring(0, parts[1].length() - 1); // the ; char
-        }
-      }
-      return null;
-    }
-
-    protected File getFileFromName(String tag, String pathName)
-        throws FileNotFoundException {
-      File file = new File(pathName);
-      if (!file.exists()) {
-        throw new FileNotFoundException(tag + "file " + pathName + " not found");
-      }
-      return file;
-    }
-
-    // TODO (amitmanjhi): remove this code. use TypeOracle functionality
-    // instead.
-    protected boolean isValidPackage(String packageName, String filePath) {
-      logger.log(TreeLogger.SPAM, "packageName = " + packageName
-          + ", filePath = " + filePath, null);
-      if (packageName == null) {
-        return false;
-      }
-      int lastSlashPosition = filePath.lastIndexOf("/");
-      if (lastSlashPosition == -1) {
-        return false;
-      }
-      String dirPath = filePath.substring(0, lastSlashPosition);
-      String packageNameAsPath = packageName.replace('.', '/');
-      logger.log(TreeLogger.SPAM, "packageNameAsPath " + packageNameAsPath
-          + ", dirPath = " + dirPath, null);
-      return dirPath.endsWith(packageNameAsPath);
     }
   }
 
@@ -349,6 +290,65 @@ public class ApiCompatibilityChecker extends ToolBase {
   }
 
   /**
+   * Abstract internal class that specifies a set of {@link CompilationUnit}.
+   */
+  private abstract static class Resources {
+    protected final TreeLogger logger;
+
+    Resources(TreeLogger logger) {
+      this.logger = logger;
+    }
+
+    public abstract Set<Resource> getResources() throws NotFoundException,
+        IOException, UnableToCompleteException;
+
+    // TODO (amitmanjhi): remove this code. use TypeOracle functionality
+    // instead.
+    protected String extractPackageName(Reader reader) throws IOException {
+      BufferedReader br = new BufferedReader(reader);
+      String str = null;
+      while ((str = br.readLine()) != null) {
+        if (str.indexOf("package") != 0) {
+          continue;
+        }
+        String parts[] = str.split("[\b\t\n\r ]+");
+        if ((parts.length == 2) && parts[0].equals("package")) {
+          return parts[1].substring(0, parts[1].length() - 1); // the ; char
+        }
+      }
+      return null;
+    }
+
+    protected File getFileFromName(String tag, String pathName)
+        throws FileNotFoundException {
+      File file = new File(pathName);
+      if (!file.exists()) {
+        throw new FileNotFoundException(tag + "file " + pathName + " not found");
+      }
+      return file;
+    }
+
+    // TODO (amitmanjhi): remove this code. use TypeOracle functionality
+    // instead.
+    protected boolean isValidPackage(String packageName, String filePath) {
+      logger.log(TreeLogger.SPAM, "packageName = " + packageName
+          + ", filePath = " + filePath, null);
+      if (packageName == null) {
+        return false;
+      }
+      int lastSlashPosition = filePath.lastIndexOf("/");
+      if (lastSlashPosition == -1) {
+        return false;
+      }
+      String dirPath = filePath.substring(0, lastSlashPosition);
+      String packageNameAsPath = packageName.replace('.', '/');
+      logger.log(TreeLogger.SPAM, "packageNameAsPath " + packageNameAsPath
+          + ", dirPath = " + dirPath, null);
+      return dirPath.endsWith(packageNameAsPath);
+    }
+  }
+
+  /**
    * Class that specifies a set of {@link CompilationUnit} read from the
    * file-system.
    */
@@ -438,8 +438,9 @@ public class ApiCompatibilityChecker extends ToolBase {
                 fileName.length() - 5);
             String pkgName = extractPackageName(new FileReader(file));
             if (pkgName == null) {
-              logger.log(TreeLogger.WARN, "Not adding file = "
-                  + file.toString() + ", because packageName = null", null);
+              logger.log(TreeLogger.WARN,
+                  "Not adding file = " + file.toString()
+                      + ", because packageName = null", null);
             } else {
               if (isValidPackage(pkgName,
                   sourcePathEntry.toURI().toURL().toString())) {
@@ -520,10 +521,12 @@ public class ApiCompatibilityChecker extends ToolBase {
 
       AbstractTreeLogger logger = new PrintWriterTreeLogger();
       logger.setMaxDetail(checker.type);
-      logger.log(TreeLogger.INFO, "gwtDevJar = " + checker.gwtDevJar
-          + ", userJar = " + checker.gwtUserJar + ", refjars = "
-          + Arrays.toString(checker.refJars) + ", logLevel = " + checker.type
-          + ", printAllApi = " + checker.printAllApi, null);
+      logger.log(
+          TreeLogger.INFO,
+          "gwtDevJar = " + checker.gwtDevJar + ", userJar = "
+              + checker.gwtUserJar + ", refjars = "
+              + Arrays.toString(checker.refJars) + ", logLevel = "
+              + checker.type + ", printAllApi = " + checker.printAllApi, null);
 
       Set<String> excludedPackages = checker.getSetOfExcludedPackages(checker.configProperties);
       if (PROCESS_NEW_API) {
@@ -532,6 +535,7 @@ public class ApiCompatibilityChecker extends ToolBase {
             checker.configProperties.getProperty("dirRoot_new"),
             checker.getConfigPropertyAsSet("sourceFiles_new"),
             checker.getConfigPropertyAsSet("excludedFiles_new"), logger).getResources());
+        resources.addAll(checker.getJavaxValidationCompilationUnits(logger));
         resources.addAll(checker.getGwtCompilationUnits(logger));
         newApi = new ApiContainer(
             checker.configProperties.getProperty("name_new"), resources,
@@ -552,6 +556,7 @@ public class ApiCompatibilityChecker extends ToolBase {
               checker.getConfigPropertyAsSet("sourceFiles_old"),
               checker.getConfigPropertyAsSet("excludedFiles_old"), logger).getResources());
         }
+        resources.addAll(checker.getJavaxValidationCompilationUnits(logger));
         resources.addAll(checker.getGwtCompilationUnits(logger));
         existingApi = new ApiContainer(
             checker.configProperties.getProperty("name_old"), resources,
@@ -631,7 +636,7 @@ public class ApiCompatibilityChecker extends ToolBase {
   }
 
   private Properties configProperties;
-
+  private JarFile[] extraSourceJars;
   private JarFile gwtDevJar;
   private JarFile gwtUserJar;
 
@@ -817,6 +822,35 @@ public class ApiCompatibilityChecker extends ToolBase {
         return configProperties != null && whiteList != null;
       }
     });
+
+    registerHandler(new ArgHandlerString() {
+
+      @Override
+      public String getPurpose() {
+        return "The location of the javax.validation sources";
+      }
+
+      @Override
+      public String getTag() {
+        return "-validationSourceJars";
+      }
+
+      @Override
+      public String[] getTagArgs() {
+        return new String[] {"jar1.jar:jar2.jar"};
+      }
+
+      @Override
+      public boolean setString(String str) {
+        boolean success = true;
+        String[] parts = str.split(System.getProperty("path.separator"));
+        extraSourceJars = new JarFile[parts.length];
+        for (int i = 0, j = parts.length; i < j; i++) {
+          extraSourceJars[i] = getJarFromString(parts[i]);
+        }
+        return success;
+      }
+    });
   }
 
   @Override
@@ -938,6 +972,25 @@ public class ApiCompatibilityChecker extends ToolBase {
     cu = new JarFileResources(new JarFile[] {gwtDevJar}, gwtIncludedPaths,
         new HashSet<String>(), logger);
     resources.addAll(cu.getResources());
+    return resources;
+  }
+
+  /**
+   * This is a hack to make the ApiChecker able to find the javax.validation
+   * sources, which we include through an external jar file.
+   */
+  private Set<Resource> getJavaxValidationCompilationUnits(TreeLogger logger)
+      throws UnableToCompleteException, NotFoundException, IOException {
+    Set<Resource> resources = new HashSet<Resource>();
+    if (extraSourceJars != null) {
+      Resources extra = new JarFileResources(extraSourceJars,
+          Collections.singleton(""), new HashSet<String>(Arrays.asList(
+              "javax/validation/Validation.java",
+              "javax/validation/constraints/Pattern.java")), logger);
+      Set<Resource> loaded = extra.getResources();
+      System.out.println("Found " + loaded.size() + " new resources");
+      resources.addAll(loaded);
+    }
     return resources;
   }
 

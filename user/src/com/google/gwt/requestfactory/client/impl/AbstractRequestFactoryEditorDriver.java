@@ -17,8 +17,8 @@ package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.EditorError;
-import com.google.gwt.editor.client.impl.AbstractEditorDelegate;
 import com.google.gwt.editor.client.impl.DelegateMap;
+import com.google.gwt.editor.client.impl.SimpleViolation;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.shared.EntityProxy;
@@ -28,7 +28,10 @@ import com.google.gwt.requestfactory.shared.ValueProxy;
 import com.google.gwt.requestfactory.shared.Violation;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+
+import javax.validation.ConstraintViolation;
 
 /**
  * Contains utility methods for top-level driver implementations.
@@ -38,6 +41,66 @@ import java.util.List;
  */
 public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
     implements RequestFactoryEditorDriver<R, E> {
+
+  /**
+   * Adapts a RequestFactory Violation object to the SimpleViolation interface.
+   */
+  static class SimpleViolationAdapter extends SimpleViolation {
+    private final Violation v;
+
+    /**
+     * @param source
+     */
+    private SimpleViolationAdapter(Violation v) {
+      this.v = v;
+    }
+
+    public Object getKey() {
+      return v.getOriginalProxy();
+    }
+
+    public String getMessage() {
+      return v.getMessage();
+    }
+
+    public String getPath() {
+      return v.getPath();
+    }
+
+    public Object getUserDataObject() {
+      return v;
+    }
+  }
+
+  /**
+   * Provides a source of SimpleViolation objects based on RequestFactory's
+   * simplified Violation interface.
+   */
+  static class ViolationIterable implements Iterable<SimpleViolation> {
+
+    private final Iterable<Violation> violations;
+
+    public ViolationIterable(Iterable<Violation> violations) {
+      this.violations = violations;
+    }
+
+    public Iterator<SimpleViolation> iterator() {
+      final Iterator<Violation> source = violations.iterator();
+      return new Iterator<SimpleViolation>() {
+        public boolean hasNext() {
+          return source.hasNext();
+        }
+
+        public SimpleViolation next() {
+          return new SimpleViolationAdapter(source.next());
+        }
+
+        public void remove() {
+          source.remove();
+        }
+      };
+    }
+  }
 
   /**
    * Since the ValueProxy is being mutated in-place, we need a way to stabilize
@@ -130,51 +193,13 @@ public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
     initialize(requestFactory.getEventBus(), requestFactory, editor);
   }
 
+  public boolean setConstraintViolations(
+      Iterable<ConstraintViolation<?>> violations) {
+    return doSetViolations(SimpleViolation.iterableFromConstrantViolations(violations));
+  }
+
   public boolean setViolations(Iterable<Violation> violations) {
-    checkDelegate();
-
-    // For each violation
-    for (Violation error : violations) {
-
-      /*
-       * Find the delegates that are attached to the object. Use getRaw() here
-       * since the violation doesn't include an EntityProxy reference
-       */
-      Object key = error.getInvalidProxy();
-      // Object key = error.getOriginalProxy();
-      // if (key == null) {
-      // }
-      List<AbstractEditorDelegate<?, ?>> delegateList = delegateMap.get(key);
-      if (delegateList != null) {
-
-        // For each delegate editing some record...
-        for (AbstractEditorDelegate<?, ?> baseDelegate : delegateList) {
-
-          // compute its base path in the hierarchy...
-          String basePath = baseDelegate.getPath();
-
-          // and the absolute path of the leaf editor receiving the error.
-          String absolutePath = (basePath.length() > 0 ? basePath + "." : "")
-              + error.getPath();
-
-          // Find the leaf editor's delegate.
-          List<AbstractEditorDelegate<?, ?>> leafDelegates = delegateMap.getPath(absolutePath);
-          if (leafDelegates != null) {
-            // Only attach the error to the first delegate in a co-editor chain.
-            leafDelegates.get(0).recordError(error.getMessage(), null, error);
-          } else {
-            // No EditorDelegate to attach it to, stick it on the base.
-            baseDelegate.recordError(error.getMessage(), null, error,
-                error.getPath());
-          }
-        }
-      }
-    }
-
-    // Flush the errors, which will take care of co-editor chains.
-    errors = new ArrayList<EditorError>();
-    delegate.flushErrors(errors);
-    return !errors.isEmpty();
+    return doSetViolations(new ViolationIterable(violations));
   }
 
   protected abstract RequestFactoryEditorDelegate<R, E> createDelegate();
@@ -210,5 +235,15 @@ public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
     this.editor = editor;
 
     traverseEditors(paths);
+  }
+
+  private boolean doSetViolations(Iterable<SimpleViolation> violations) {
+    checkDelegate();
+    SimpleViolation.pushViolations(violations, delegateMap);
+
+    // Flush the errors, which will take care of co-editor chains.
+    errors = new ArrayList<EditorError>();
+    delegate.flushErrors(errors);
+    return hasErrors();
   }
 }

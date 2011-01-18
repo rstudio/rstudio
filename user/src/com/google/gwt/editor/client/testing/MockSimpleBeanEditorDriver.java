@@ -22,6 +22,8 @@ import com.google.gwt.editor.client.SimpleBeanEditorDriver;
 import java.util.Collections;
 import java.util.List;
 
+import javax.validation.ConstraintViolation;
+
 /**
  * A no-op implementation of {@link SimpleBeanEditorDriver} that records its
  * inputs.
@@ -83,5 +85,13 @@ public class MockSimpleBeanEditorDriver<T, E extends Editor<T>> implements
    */
   public void initialize(E editor) {
     this.editor = editor;
+  }
+
+  /**
+   * A no-op method that always returns false.
+   */
+  public boolean setConstraintViolations(
+      Iterable<ConstraintViolation<?>> violations) {
+    return false;
   }
 }

@@ -184,6 +184,9 @@
       <arg file="${gwt.apicheck.config}"/>
       <arg value="-logLevel"/>
       <arg value="ERROR"/>
+      <!-- Needed for checking types that include validation APIs -->
+      <arg value="-validationSourceJars" />
+      <arg path="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA-sources.jar" />
     </java>
   </target>
 
