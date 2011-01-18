@@ -110,7 +110,7 @@ QString GwtCallback::getExistingDirectory(const QString& caption,
 
    QString result;
 #ifdef _WIN32
-   if (!dir.isNull())
+   if (dir.isNull())
    {
       // Bug
       char szDir[MAX_PATH];
@@ -131,7 +131,7 @@ QString GwtCallback::getExistingDirectory(const QString& caption,
    }
    else
    {
-      result = QFileDialog::getExistingDirectory(pOwnerWindow_, caption);
+      result = QFileDialog::getExistingDirectory(pOwnerWindow_, caption, resolvedDir);
    }
 #else
    result = QFileDialog::getExistingDirectory(pOwnerWindow_, caption, resolvedDir);
