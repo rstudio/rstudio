@@ -294,7 +294,15 @@ public abstract class ModalDialogBase extends DialogBox
          Document doc = originallyActiveElement_.getOwnerDocument();
          if (doc != null)
          {
-            originallyActiveElement_.focus();
+            try
+            {
+               originallyActiveElement_.focus();
+            }
+            catch (Exception e)
+            {
+               // focus() fail if the element is no longer visible. It's
+               // easier to just catch this than try to detect it.
+            }
          }
       }
       originallyActiveElement_ = null;
