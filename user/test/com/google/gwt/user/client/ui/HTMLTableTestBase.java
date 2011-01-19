@@ -33,8 +33,10 @@ import java.util.List;
  */
 public abstract class HTMLTableTestBase extends GWTTestCase {
   static class Adder implements HasWidgetsTester.WidgetAdder {
+    private int row = -1;
+
     public void addChild(HasWidgets container, Widget child) {
-      ((HTMLTable) container).setWidget(0, 0, child);
+      ((HTMLTable) container).setWidget(++row, 0, child);
     }
   }
 
@@ -67,7 +69,7 @@ public abstract class HTMLTableTestBase extends GWTTestCase {
   public abstract HTMLTable getTable(int row, int column);
 
   public void testAttachDetachOrder() {
-    HasWidgetsTester.testAll(getTable(1, 1), new Adder(), true);
+    HasWidgetsTester.testAll(getTable(25, 1), new Adder(), true);
   }
 
   public void testBoundsOnEmptyTable() {

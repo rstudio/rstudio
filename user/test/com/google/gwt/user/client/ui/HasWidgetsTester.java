@@ -112,7 +112,7 @@ public abstract class HasWidgetsTester {
     testAttachDetachOrder(container, adder);
     testRemovalOfNonExistantChild(container);
     testDoAttachChildrenWithError(container, adder, supportsMultipleWidgets);
-    testDoAttachChildrenWithError(container, adder, supportsMultipleWidgets);
+    testDoDetachChildrenWithError(container, adder, supportsMultipleWidgets);
   }
 
   /**
