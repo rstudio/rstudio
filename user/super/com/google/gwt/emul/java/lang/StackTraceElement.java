@@ -60,7 +60,8 @@ public final class StackTraceElement implements Serializable {
   }
 
   public String toString() {
-    return className + "." + methodName + "(" + fileName + ":" + lineNumber
-        + ")";
+    return className + "." + methodName + "("
+        + (fileName != null ? fileName : "Unknown Source")
+        + (lineNumber >= 0 ? ":" + lineNumber : "") + ")";
   }
 }

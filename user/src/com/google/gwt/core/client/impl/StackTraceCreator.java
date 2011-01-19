@@ -67,8 +67,8 @@ public class StackTraceCreator {
 
       StackTraceElement[] stackTrace = new StackTraceElement[stack.length()];
       for (int i = 0, j = stackTrace.length; i < j; i++) {
-        stackTrace[i] = new StackTraceElement("Unknown", stack.get(i),
-            "Unknown source", 0);
+        stackTrace[i] = new StackTraceElement("Unknown", stack.get(i), null,
+            LINE_NUMBER_UNKNOWN);
       }
       e.setStackTrace(stackTrace);
     }
@@ -77,8 +77,8 @@ public class StackTraceCreator {
       JsArrayString stack = StackTraceCreator.createStackTrace();
       StackTraceElement[] stackTrace = new StackTraceElement[stack.length()];
       for (int i = 0, j = stackTrace.length; i < j; i++) {
-        stackTrace[i] = new StackTraceElement("Unknown", stack.get(i),
-            "Unknown source", 0);
+        stackTrace[i] = new StackTraceElement("Unknown", stack.get(i), null,
+            LINE_NUMBER_UNKNOWN);
       }
       t.setStackTrace(stackTrace);
     }
@@ -145,8 +145,8 @@ public class StackTraceCreator {
       for (int i = 0, j = stackTrace.length; i < j; i++) {
         // Locations is also backwards
         String location = locations.get(j - i - 1);
-        String fileName = "Unknown source";
-        int lineNumber = 0;
+        String fileName = null;
+        int lineNumber = LINE_NUMBER_UNKNOWN;
         if (location != null) {
           int idx = location.indexOf(':');
           if (idx != -1) {
@@ -361,6 +361,8 @@ public class StackTraceCreator {
     }
   }
   
+  private static final int LINE_NUMBER_UNKNOWN = -1;
+
   /**
    * Create a stack trace based on a JavaScriptException. This method should
    * only be called in Production Mode.
