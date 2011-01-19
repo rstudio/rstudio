@@ -17,6 +17,7 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QListWidgetItem>
+#include <QDesktopServices>
 
 #include <core/system/System.hpp>
 
@@ -196,18 +197,36 @@ void ChooseRHome::done(int r)
          Architecture arch = preferR64() ? ArchX64 : ArchX86;
          if (desktop::autoDetect(arch).isEmpty())
          {
-            QString name = preferR64() ? "R64" : "R";
+            if (desktop::allRVersions().length() > 0)
+            {
+               QString name = preferR64() ? "R64" : "R";
 
-            QMessageBox::warning(
-                  this,
-                  QString("No %1 Installation Detected").arg(name),
-                  QString("No compatible %1 version was found. If you "
-                          "have a compatible version of %1 installed, "
-                          "please choose it manually."
-                          ).arg(name)
-                  );
-            ui->radioCustom->setChecked(true);
-            return;
+               QMessageBox::warning(
+                     this,
+                     QString("No %1 Installation Detected").arg(name),
+                     QString("No compatible %1 version was found. If you "
+                             "have a compatible version of %1 installed, "
+                             "please choose it manually."
+                             ).arg(name)
+                     );
+               ui->radioCustom->setChecked(true);
+               return;
+            }
+            else
+            {
+               if (QMessageBox::warning(
+                     this,
+                     QString("R Not Installed"),
+                     QString("R does not appear to be installed. Please "
+                             "install R before using RStudio.\n\n"
+                             "You can download R from the official R Project "
+                             "website. Would you like to go there now?"),
+                     QMessageBox::Yes | QMessageBox::No,
+                     QMessageBox::Yes) == QMessageBox::Yes)
+               {
+                  QDesktopServices::openUrl(QUrl("http://www.r-project.org/"));
+               }
+            }
          }
       }
    }
