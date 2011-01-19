@@ -195,6 +195,14 @@ public class Source implements InsertSourceHandler,
          }
       });
 
+      events.addHandler(SourceFileSavedEvent.TYPE, new SourceFileSavedHandler()
+      {
+         public void onSourceFileSaved(SourceFileSavedEvent event)
+         {
+            mruList_.add(event.getPath());
+         }
+      });
+
       restoreDocuments(session);
 
       initialized_ = true;

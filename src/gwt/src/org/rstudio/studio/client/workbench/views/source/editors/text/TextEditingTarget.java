@@ -67,6 +67,7 @@ import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEve
 import org.rstudio.studio.client.workbench.views.source.codemirror.REditorWithId;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.PublishPdfDialog;
+import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -474,6 +475,9 @@ public class TextEditingTarget implements EditingTarget
                            new ExplicitSaveProgressIndicator(saveItem,
                                                              fileType,
                                                              executeOnSuccess));
+
+                     events_.fireEvent(
+                           new SourceFileSavedEvent(saveItem.getPath()));
                   }
                   catch (Exception e)
                   {
