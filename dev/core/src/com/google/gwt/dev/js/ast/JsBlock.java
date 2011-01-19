@@ -45,14 +45,4 @@ public class JsBlock extends JsStatement {
     }
     v.endVisit(this, ctx);
   }
-
-  @Override
-  public boolean unconditionalControlBreak() {
-    for (JsStatement stmt : stmts) {
-      if (stmt.unconditionalControlBreak()) {
-        return true;
-      }
-    }
-    return false;
-  }
 }

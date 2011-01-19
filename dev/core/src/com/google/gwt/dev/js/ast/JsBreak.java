@@ -48,6 +48,6 @@ public final class JsBreak extends JsStatement {
 
   @Override
   public boolean unconditionalControlBreak() {
-    return label == null;
+    return true;
   }
 }
