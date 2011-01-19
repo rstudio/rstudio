@@ -16,14 +16,12 @@
 package com.google.gwt.dom.client;
 
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.Frame;
-import com.google.gwt.user.client.ui.RootPanel;
 
 /**
  * Tests for the FrameElement and IFrameElement classes.
  */
 public class FrameTests extends GWTTestCase {
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.dom.DOMTest";
@@ -35,24 +33,5 @@ public class FrameTests extends GWTTestCase {
     iframe.setSrc("about:blank");
     doc.getBody().appendChild(iframe);
     assertNotNull(iframe.getContentDocument());
-  }
-
-  public void testOnloadEventFires() {
-    int delayMillis = 3000;
-    delayTestFinish(delayMillis);
-
-    Frame frame = new Frame() {
-      @Override
-      public void onBrowserEvent(Event event) {
-        if (event.getTypeInt() == Event.ONLOAD) {
-          super.onBrowserEvent(event);
-          finishTest();
-        }
-      }
-    };
-
-    frame.sinkEvents(Event.ONLOAD);
-    frame.setUrl("iframetest.html");
-    RootPanel.get().add(frame);
   }
 }
