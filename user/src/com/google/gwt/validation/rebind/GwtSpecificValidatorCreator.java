@@ -46,6 +46,7 @@ import com.google.gwt.validation.client.impl.GwtValidationContext;
 import com.google.gwt.validation.client.impl.PropertyDescriptorImpl;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
@@ -55,6 +56,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.validation.Constraint;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintViolation;
 import javax.validation.Payload;
@@ -74,6 +76,8 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
   private static enum Stage {
     OBJECT, PROPERTY, VALUE
   }
+
+  private static final Annotation[] NO_ANNOTATIONS = new Annotation[]{};
 
   private static final JType[] NO_ARGS = new JType[]{};
 
@@ -292,13 +296,26 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     return annotation;
   }
 
-  private Annotation getAnnotation(PropertyDescriptor p, boolean useField,
-      ConstraintDescriptor<?> constraint) {
-    Class<? extends Annotation> expectedAnnotationClass =
-        ((Annotation) constraint.getAnnotation()).annotationType();
-    return getAnnotation(p, useField, expectedAnnotationClass);
+  private Annotation[] getAnnotations(PropertyDescriptor p,
+      boolean useField) {
+    Class<?> clazz = beanHelper.getClazz();
+    if (useField) {
+      try {
+        Field field = clazz.getDeclaredField(p.getPropertyName());
+        return field.getAnnotations();
+      } catch (NoSuchFieldException ignore) {
+        // Expected Case
+      }
+    } else {
+      try {
+        Method method = clazz.getMethod(asGetter(p));
+        return method.getAnnotations();
+      } catch (NoSuchMethodException ignore) {
+        // Expected Case
+      }
+    }
+    return NO_ANNOTATIONS;
   }
-
 
   private JType getAssociationType(PropertyDescriptor p, boolean useField) {
     JType type = getElementType(p, useField);
@@ -312,6 +329,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     // it is either a Iterable or a Map use the last type arg.
     return typeArgs[typeArgs.length - 1];
   }
+
 
   private JType getElementType(PropertyDescriptor p, boolean useField) {
     if (useField) {
@@ -349,6 +367,63 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     } catch (NotFoundException e) {
       return false;
     }
+  }
+
+  private boolean hasMatchingAnnotation(Annotation expectedAnnotation,
+      Annotation[] annotations) throws UnableToCompleteException {
+    // See spec section 2.2. Applying multiple constraints of the same type
+    for (Annotation annotation : annotations) {
+      // annotations not annotated by @Constraint
+      if (annotation.annotationType().getAnnotation(Constraint.class) == null) {
+        try {
+          // value element has a return type of an array of constraint
+          // annotations
+          Method valueMethod = annotation.annotationType().getMethod("value");
+          Class<?> valueType = valueMethod.getReturnType();
+          if (valueType.isArray()
+              && Annotation.class.isAssignableFrom(valueType.getComponentType())) {
+            Annotation[] valueAnnotions = (Annotation[]) valueMethod.invoke(annotation);
+            for (Annotation annotation2 : valueAnnotions) {
+              if (expectedAnnotation.equals(annotation2)) {
+                return true;
+              }
+            }
+          }
+        } catch (NoSuchMethodException ignore) {
+          // Expected Case.
+        } catch (Exception e) {
+          throw error(logger, e);
+        }
+      }
+    }
+    return false;
+  }
+
+  private boolean hasMatchingAnnotation(ConstraintDescriptor<?> constraint)
+      throws UnableToCompleteException {
+    Annotation expectedAnnotation = constraint.getAnnotation();
+    Class<? extends Annotation> expectedAnnotationClass = expectedAnnotation.annotationType();
+    if (expectedAnnotation.equals(beanHelper.getClazz().getAnnotation(
+        expectedAnnotationClass))) {
+      return true;
+    }
+
+    // See spec section 2.2. Applying multiple constraints of the same type
+    Annotation[] annotations = beanHelper.getClazz().getAnnotations();
+    return hasMatchingAnnotation(expectedAnnotation, annotations);
+  }
+
+  private boolean hasMatchingAnnotation(PropertyDescriptor p, boolean useField,
+      ConstraintDescriptor<?> constraint) throws UnableToCompleteException {
+    Annotation expectedAnnotation = constraint.getAnnotation();
+    Class<? extends Annotation> expectedAnnotationClass =
+        expectedAnnotation.annotationType();
+    if (expectedAnnotation.equals(getAnnotation(p, useField,
+        expectedAnnotationClass))) {
+      return true;
+    }
+    return hasMatchingAnnotation(expectedAnnotation,
+        getAnnotations(p, useField));
   }
 
   private boolean hasValid(PropertyDescriptor p, boolean useField) {
@@ -743,7 +818,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     }
   }
 
-  private void writeValidate(SourceWriter sw) {
+  private void writeValidate(SourceWriter sw) throws UnableToCompleteException {
     // public <T> Set<ConstraintViolation<T>> validate(
     sw.println("public <T> Set<ConstraintViolation<T>> validate(");
 
@@ -780,27 +855,32 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
       int count = 0;
       Class<?> clazz = beanHelper.getClazz();
       for (ConstraintDescriptor<?> constraint : beanHelper.getBeanDescriptor().findConstraints().getConstraintDescriptors()) {
+        Annotation annotation = constraint.getAnnotation();
+        if (hasMatchingAnnotation(constraint)) {
+          Class<? extends ConstraintValidator<? extends Annotation, ?>> validatorClass = getValidatorForType(
+              constraint, clazz);
+          if (validatorClass != null) {
+            // TODO(nchalko) handle constraint.isReportAsSingleViolation() and
+            // hasComposingConstraints
 
-        Class<? extends ConstraintValidator<? extends Annotation, ?>> validatorClass = getValidatorForType(
-            constraint, clazz);
-        if (validatorClass != null) {
-        // TODO(nchalko) handle constraint.isReportAsSingleViolation() and
-        // hasComposingConstraints
+            // validate(context, violations, null, object,
+            sw.print("validate(context, violations, null, object, ");
 
-        // validate(context, violations, object, value, validator,
-        // constraintDescriptor, groups);
-        sw.print("validate(context, violations, null, object, ");
-        // new MyValidtor();
-        sw.print("new ");
-        sw.print(validatorClass.getCanonicalName());
-        sw.print("(), "); // new one each time because validators are not thread
-                          // safe
-        sw.print(constraintDescriptorVar("this", count));
-        sw.println(", groups);");
-        } else {
-          // TODO(nchalko) What does the spec say to do here.
-          logger.log(Type.WARN, "No ConstraintValidator of " + constraint
-              + " for type " + clazz);
+            // new MyValidtor();
+            sw.print("new ");
+            sw.print(validatorClass.getCanonicalName());
+            sw.print("(), "); // new one each time because validators are not
+                              // thread
+                              // safe
+
+            // this.aConstraintDescriptor, groups);;
+            sw.print(constraintDescriptorVar("this", count));
+            sw.println(", groups);");
+          } else {
+            // TODO(nchalko) What does the spec say to do here.
+            logger.log(Type.WARN, "No ConstraintValidator of " + constraint
+                + " for type " + clazz);
+          }
         }
         count++; // index starts at 0
       }
@@ -1213,10 +1293,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
 
     int count = 0;
     for (ConstraintDescriptor<?> constraint : p.getConstraintDescriptors()) {
-      Annotation annotation = getAnnotation(p, useField, constraint);
-      if (annotation != null) {
-        // TODO(nchalko) check for annotation equality
-
+      if (hasMatchingAnnotation(p, useField, constraint)) {
         String constraintDescriptorVar = constraintDescriptorVar(
             p.getPropertyName(), count);
 
