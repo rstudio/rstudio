@@ -224,7 +224,7 @@ void ChooseRHome::done(int r)
                      QMessageBox::Yes | QMessageBox::No,
                      QMessageBox::Yes) == QMessageBox::Yes)
                {
-                  QDesktopServices::openUrl(QUrl("http://www.r-project.org/"));
+                  QDesktopServices::openUrl(QUrl("http://www.rstudio.org/links/r-project"));
                }
             }
          }
