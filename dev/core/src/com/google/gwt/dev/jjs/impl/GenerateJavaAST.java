@@ -2051,10 +2051,11 @@ public class GenerateJavaAST {
       }
     }
 
-    private void addCallArgs(Expression[] args, JMethodCall call,
+    private void addCallArgs(Expression[] jdtArgs, JMethodCall call,
         MethodBinding binding) {
-      if (args == null) {
-        args = new Expression[0];
+      JExpression[] args = new JExpression[jdtArgs == null ? 0 : jdtArgs.length];
+      for (int i = 0; i < args.length; ++i) {
+        args[i] = dispProcessExpression(jdtArgs[i]);
       }
 
       TypeBinding[] params = binding.parameters;
@@ -2072,32 +2073,29 @@ public class GenerateJavaAST {
       }
 
       for (int i = 0; i < n; ++i) {
-        call.addArg(dispProcessExpression(args[i]));
+        call.addArg(args[i]);
       }
 
       if (binding.isVarargs()) {
         // Handle the last arg.
-        JArrayType type = (JArrayType) typeMap.get(params[n]);
+        JArrayType lastParamType = (JArrayType) typeMap.get(params[n]);
 
         // See if there is only one arg and it's an array of the correct dims.
         if (args.length == n + 1) {
-          JType lastArgType = (JType) typeMap.get(args[n].resolvedType);
-          if (lastArgType instanceof JArrayType) {
-            JArrayType lastArgArrayType = (JArrayType) lastArgType;
-            if (lastArgArrayType.getDims() == type.getDims()) {
-              // Looks like it's already an array.
-              call.addArg(dispProcessExpression(args[n]));
-              return;
-            }
+          if (program.typeOracle.canTriviallyCast(args[n].getType(),
+              lastParamType)) {
+            // Looks like it's already an array.
+            call.addArg(args[n]);
+            return;
           }
         }
 
         List<JExpression> initializers = new ArrayList<JExpression>();
         for (int i = n; i < args.length; ++i) {
-          initializers.add(dispProcessExpression(args[i]));
+          initializers.add(args[i]);
         }
         JNewArray newArray = JNewArray.createInitializers(program,
-            call.getSourceInfo(), type, initializers);
+            call.getSourceInfo(), lastParamType, initializers);
         call.addArg(newArray);
       }
     }

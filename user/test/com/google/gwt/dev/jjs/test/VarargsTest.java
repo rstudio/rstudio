@@ -28,6 +28,13 @@ public class VarargsTest extends GWTTestCase {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }
 
+  public void testNullEmpty() {
+    assertNotNull(vararg());
+    assertNull(vararg(null));
+    assertNotNull(vararg((String) null));
+    assertNull(vararg((String[]) null));
+  }
+
   public void testVararg() {
     String[] expected = new String[] {"1", "2", "3"};
     String[] actual = vararg("1", "2", "3");
