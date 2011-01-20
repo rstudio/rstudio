@@ -20,6 +20,7 @@ import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.HasAnnotations;
 import com.google.gwt.dev.jjs.ast.HasEnclosingType;
@@ -2057,47 +2058,40 @@ public class GenerateJavaAST {
       for (int i = 0; i < args.length; ++i) {
         args[i] = dispProcessExpression(jdtArgs[i]);
       }
-
-      TypeBinding[] params = binding.parameters;
-      int n = params.length;
-
-      if (binding.isVarargs()) {
-        // Do everything but the last arg.
-        --n;
-      }
-
-      if (args.length < n) {
-        // Hackish, the super call to Enum() won't have enough parameters.
-        assert (call.getTarget().getName().equals("Enum"));
+      if (!binding.isVarargs()) {
+        call.addArgs(args);
         return;
       }
 
-      for (int i = 0; i < n; ++i) {
+      // Handle the odd var-arg case.
+      TypeBinding[] params = binding.parameters;
+      int varArg = params.length - 1;
+
+      // Everything but the last arg.
+      for (int i = 0; i < varArg; ++i) {
         call.addArg(args[i]);
       }
 
-      if (binding.isVarargs()) {
-        // Handle the last arg.
-        JArrayType lastParamType = (JArrayType) typeMap.get(params[n]);
+      // Handle the last arg.
 
-        // See if there is only one arg and it's an array of the correct dims.
-        if (args.length == n + 1) {
-          if (program.typeOracle.canTriviallyCast(args[n].getType(),
-              lastParamType)) {
-            // Looks like it's already an array.
-            call.addArg(args[n]);
-            return;
-          }
+      // See if there's a single varArg which is already an array.
+      if (args.length == params.length) {
+        if (jdtArgs[varArg].resolvedType.isCompatibleWith(params[varArg])) {
+          // Already the correct array type.
+          call.addArg(args[varArg]);
+          return;
         }
-
-        List<JExpression> initializers = new ArrayList<JExpression>();
-        for (int i = n; i < args.length; ++i) {
-          initializers.add(args[i]);
-        }
-        JNewArray newArray = JNewArray.createInitializers(program,
-            call.getSourceInfo(), lastParamType, initializers);
-        call.addArg(newArray);
       }
+
+      // Need to synthesize an appropriately-typed array.
+      List<JExpression> initializers = new ArrayList<JExpression>();
+      for (int i = varArg; i < args.length; ++i) {
+        initializers.add(args[i]);
+      }
+      JArrayType lastParamType = (JArrayType) typeMap.get(params[varArg]);
+      JNewArray newArray = JNewArray.createInitializers(program,
+          SourceOrigin.UNKNOWN, lastParamType, initializers);
+      call.addArg(newArray);
     }
 
     private void addThrownExceptions(MethodBinding methodBinding, JMethod method) {
