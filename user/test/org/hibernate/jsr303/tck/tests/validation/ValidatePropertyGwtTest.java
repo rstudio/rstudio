@@ -30,7 +30,6 @@ public class ValidatePropertyGwtTest extends AbstractValidationTest {
     delegate.testIllegalArgumentExceptionIsThrownForNullValue();
   }
 
-  @Failing(issue = 5804)
   public void testPassingNullAsGroup() {
     delegate.testPassingNullAsGroup();
   }

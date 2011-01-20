@@ -39,7 +39,6 @@ public class ValidateValueGwtTest extends AbstractValidationTest {
     delegate.testValidateValueFailure();
   }
 
-  @Failing(issue = 5804)
   public void testValidateValuePassingNullAsGroup() {
     delegate.testValidateValuePassingNullAsGroup();
   }
