@@ -117,6 +117,17 @@ Error realPath(const std::string& path, FilePath* pRealPath)
    return Success();
 }
 
+void addToSystemPath(const FilePath& path, bool prepend)
+{
+   std::string systemPath = system::getenv("PATH");
+   if (prepend)
+      systemPath = path.absolutePath() + ":" + systemPath;
+   else
+      systemPath = systemPath + ":" + path.absolutePath();
+   system::setenv("PATH", systemPath);
+}
+
+
 namespace {
 LogWriter* s_pLogWriter = NULL;
 } // anonymous namespace

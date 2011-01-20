@@ -108,6 +108,20 @@ SEXP rs_viewPdf(SEXP texPathSEXP)
       
 Error initialize()
 {
+   // On Mac OS make sure the path is updated to find MacTeX or
+   // MacPorts texlive
+#ifdef __APPLE__
+   if (session::options().programMode() == kSessionProgramModeDesktop)
+   {
+      FilePath macportsTex("/opt/local/bin/tex");
+      if (macportsTex.exists())
+         core::system::addToSystemPath(macportsTex, true); // prepend
+      FilePath mactexTex("/usr/texbin");
+      if (mactexTex.exists())
+         core::system::addToSystemPath(mactexTex);
+   }
+#endif
+
    // install core Sweave/TeX routines
    R_CallMethodDef callSweaveMethodDef;
    callSweaveMethodDef.name = "rs_callSweave" ;
