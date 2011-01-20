@@ -15,6 +15,8 @@
 
 #include <string>
 
+#include <boost/regex.hpp>
+
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -113,12 +115,26 @@ Error initialize()
 #ifdef __APPLE__
    if (session::options().programMode() == kSessionProgramModeDesktop)
    {
-      FilePath macportsTex("/opt/local/bin/tex");
-      if (macportsTex.exists())
-         core::system::addToSystemPath(macportsTex, true); // prepend
-      FilePath mactexTex("/usr/texbin");
-      if (mactexTex.exists())
-         core::system::addToSystemPath(mactexTex);
+      // get path
+      std::string path = core::system::getenv("PATH");
+
+      // do we need to add /opt/local/bin?
+      FilePath optLocalBinPath("/opt/local/bin");
+      if (!regex_search(path, boost::regex("(^|:)/opt/local/bin/?($|:)"))
+          && optLocalBinPath.exists())
+      {
+         // add opt/local/bin to path (prepend so we find macports texi2dvi
+         // first if it is installed there)
+         core::system::addToSystemPath(optLocalBinPath, true);
+      }
+
+      // do we need to add /usr/texbin?
+      FilePath texbinPath("/usr/texbin");
+      if (!regex_match(path, boost::regex("(^|:)/usr/texbin/?($|:)"))
+          && texbinPath.exists())
+      {
+         core::system::addToSystemPath(texbinPath);
+      }
    }
 #endif
 
