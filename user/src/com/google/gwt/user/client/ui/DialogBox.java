@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -34,11 +34,12 @@ import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.client.HasSafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Window;
 
 /**
  * A form of popup that has a caption area at the top and can be dragged by the
@@ -84,14 +85,17 @@ import com.google.gwt.user.client.Event.NativePreviewEvent;
  * 
  * <h3>Use in UiBinder Templates</h3>
  * <p>
- * DialogBox elements in  
- * {@link com.google.gwt.uibinder.client.UiBinder UiBinder} templates can 
- * have one widget child and one &lt;g:caption> child. (Note the lower case
- * "c", meant to signal that the caption is not a runtime object, and so cannot
- * have a <code>ui:field</code> attribute.) The body of the
- * caption can be html.
+ * DialogBox elements in {@link com.google.gwt.uibinder.client.UiBinder
+ * UiBinder} templates can have one widget child and one &lt;g:caption> child.
+ * (Note the lower case "c", meant to signal that the caption is not a runtime
+ * object, and so cannot have a <code>ui:field</code> attribute.) The body of
+ * the caption can be html.
+ * 
  * <p>
- * For example: <pre>
+ * 
+ * For example:
+ * 
+ * <pre>
  * &lt;g:DialogBox autoHide="true" modal="true">
  *   &lt;g:caption>&lt;b>Caption text&lt;/b>&lt;/g:caption>
  *   &lt;g:HTMLPanel>
@@ -101,20 +105,51 @@ import com.google.gwt.user.client.Event.NativePreviewEvent;
  *   &lt;/g:HTMLPanel>
  * &lt;/g:DialogBox>
  * </pre>
+ * 
+ * You may also create your own header caption. The caption must implement
+ * {@link Caption}.
+ *
+ * <p>
+ *
+ * For example:
+ * 
+ * <p>
+ * 
+ * <pre>
+ * &lt;g:DialogBox autoHide="true" modal="true">
+ *   &lt;-- foo is your prefix and Bar is a class that implements {@link Caption}-->
+ *   &lt;g:customCaption>&lt;foo:Bar/>&lt;/g:customCaption>
+ *   &lt;g:HTMLPanel>
+ *     Body text
+ *     &lt;g:Button ui:field='cancelButton'>Cancel&lt;/g:Button>
+ *     &lt;g:Button ui:field='okButton'>Okay&lt;/g:Button>
+ *   &lt;/g:HTMLPanel>
+ * &lt;/g:DialogBox>
+ * </pre>
+ * 
  */
 @SuppressWarnings("deprecation")
 public class DialogBox extends DecoratedPopupPanel implements HasHTML,
     HasSafeHtml, MouseListener {
   /**
-   * Set of characteristic interfaces supported by the {@link DialogBox} caption
-   * 
-   * Note that this set might expand over time, so implement this interface at
-   * your own risk.
+   * Set of characteristic interfaces supported by the {@link DialogBox}
+   * caption.
+   *
    */
-  public interface Caption extends HasAllMouseHandlers {
+  public interface Caption extends HasAllMouseHandlers, HasHTML, HasSafeHtml,
+      IsWidget {
   }
 
-  private static class CaptionImpl extends HTML implements Caption {
+  /**
+   * Default implementation of Caption. This will be created as the header if
+   * there isn't a header specified.
+   */
+  public static class CaptionImpl extends HTML implements Caption {
+
+    public CaptionImpl() {
+      super();
+      setStyleName("Caption");
+    }
   }
 
   private class MouseHandler implements MouseDownHandler, MouseUpHandler,
@@ -129,11 +164,11 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML,
     }
 
     public void onMouseOut(MouseOutEvent event) {
-      DialogBox.this.onMouseLeave(caption);
+      DialogBox.this.onMouseLeave(caption.asWidget());
     }
 
     public void onMouseOver(MouseOverEvent event) {
-      DialogBox.this.onMouseEnter(caption);
+      DialogBox.this.onMouseEnter(caption.asWidget());
     }
 
     public void onMouseUp(MouseUpEvent event) {
@@ -146,7 +181,7 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML,
    */
   private static final String DEFAULT_STYLENAME = "gwt-DialogBox";
 
-  private CaptionImpl caption = new CaptionImpl();
+  private Caption caption;
   private boolean dragging;
   private int dragStartX, dragStartY;
   private int windowWidth;
@@ -167,7 +202,7 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML,
    * Creates an empty dialog box specifying its "auto-hide" property. It should
    * not be shown until its child widget has been added using
    * {@link #add(Widget)}.
-   * 
+   *
    * @param autoHide <code>true</code> if the dialog should be automatically
    *          hidden when the user clicks outside of it
    */
@@ -176,24 +211,53 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML,
   }
 
   /**
-   * Creates an empty dialog box specifying its "auto-hide" property. It should
-   * not be shown until its child widget has been added using
-   * {@link #add(Widget)}.
-   * 
+   * Creates an empty dialog box specifying its {@link Caption}. It should not
+   * be shown until its child widget has been added using {@link #add(Widget)}.
+   *
+   * @param captionWidget the widget that is the DialogBox's header.
+   */
+  public DialogBox(Caption captionWidget) {
+    this(false, true, captionWidget);
+  }
+
+  /**
+   * Creates an empty dialog box specifying its "auto-hide" and "modal"
+   * properties. It should not be shown until its child widget has been added
+   * using {@link #add(Widget)}.
+   *
    * @param autoHide <code>true</code> if the dialog should be automatically
    *          hidden when the user clicks outside of it
    * @param modal <code>true</code> if keyboard and mouse events for widgets not
    *          contained by the dialog should be ignored
    */
   public DialogBox(boolean autoHide, boolean modal) {
+    this(autoHide, modal, new CaptionImpl());
+  }
+
+  /**
+   *
+   * Creates an empty dialog box specifying its "auto-hide", "modal" properties
+   * and an implementation a custom {@link Caption}. It should not be shown
+   * until its child widget has been added using {@link #add(Widget)}.
+   *
+   * @param autoHide <code>true</code> if the dialog should be automatically
+   *          hidden when the user clicks outside of it
+   * @param modal <code>true</code> if keyboard and mouse events for widgets not
+   *          contained by the dialog should be ignored
+   * @param captionWidget the widget that is the DialogBox's header.
+   */
+  public DialogBox(boolean autoHide, boolean modal, Caption captionWidget) {
     super(autoHide, modal, "dialog");
+
+    assert captionWidget != null : "The caption must not be null";
+    captionWidget.asWidget().removeFromParent();
+    caption = captionWidget;
 
     // Add the caption to the top row of the decorator panel. We need to
     // logically adopt the caption so we can catch mouse events.
     Element td = getCellElement(0, 1);
-    DOM.appendChild(td, caption.getElement());
-    adopt(caption);
-    caption.setStyleName("Caption");
+    DOM.appendChild(td, caption.asWidget().getElement());
+    adopt(caption.asWidget());
 
     // Set the style name
     setStyleName(DEFAULT_STYLENAME);
@@ -212,14 +276,10 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML,
 
   /**
    * Provides access to the dialog's caption.
-   * 
-   * This method is final because the Caption interface will expand. Therefore
-   * it is highly likely that subclasses which implemented this method would end
-   * up breaking.
-   * 
+   *
    * @return the logical caption for this dialog box
    */
-  public final Caption getCaption() {
+  public Caption getCaption() {
     return caption;
   }
 
@@ -259,15 +319,22 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML,
   }
 
   /**
-   * @deprecated Use {@link #beginDragging} and {@link #getCaption}
-   *             instead
+   * @deprecated Use {@link #beginDragging} and {@link #getCaption} instead
    */
   @Deprecated
   public void onMouseDown(Widget sender, int x, int y) {
-    dragging = true;
-    DOM.setCapture(getElement());
-    dragStartX = x;
-    dragStartY = y;
+    if (DOM.getCaptureElement() == null) {
+      /*
+       * Need to check to make sure that we aren't already capturing an element
+       * otherwise events will not fire as expected. If this check isn't here,
+       * any class which extends custom button will not fire its click event for
+       * example.
+       */
+      dragging = true;
+      DOM.setCapture(getElement());
+      dragStartX = x;
+      dragStartY = y;
+    }
   }
 
   /**
@@ -314,19 +381,8 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML,
   }
 
   /**
-   * Sets the html string inside the caption.
-   * 
-   * Use {@link #setWidget(Widget)} to set the contents inside the
-   * {@link DialogBox}.
-   * 
-   * @param html the object's new HTML
-   */
-  public void setHTML(String html) {
-    caption.setHTML(html);
-  }
-
-  /**
-   * Sets the html string inside the caption.
+   * Sets the html string inside the caption by calling its
+   * {@link #setHTML(SafeHTML)} method.
    *
    * Use {@link #setWidget(Widget)} to set the contents inside the
    * {@link DialogBox}.
@@ -334,11 +390,26 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML,
    * @param html the object's new HTML
    */
   public void setHTML(SafeHtml html) {
-    setHTML(html.asString());
+    caption.setHTML(html);
   }
 
   /**
-   * Sets the text inside the caption.
+   * Sets the html string inside the caption by calling its
+   * {@link #setHTML(SafeHtml)} method. Only known safe HTML should be inserted
+   * in here.
+   *
+   * Use {@link #setWidget(Widget)} to set the contents inside the
+   * {@link DialogBox}.
+   *
+   * @param html the object's new HTML
+   */
+  public void setHTML(String html) {
+    caption.setHTML(SafeHtmlUtils.fromTrustedString(html));
+  }
+
+  /**
+   * Sets the text inside the caption by calling its {@link #setText(String)}
+   * method.
    *
    * Use {@link #setWidget(Widget)} to set the contents inside the
    * {@link DialogBox}.
@@ -364,25 +435,25 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML,
   /**
    * Called on mouse down in the caption area, begins the dragging loop by
    * turning on event capture.
-   * 
+   *
    * @see DOM#setCapture
    * @see #continueDragging
    * @param event the mouse down event that triggered dragging
    */
   protected void beginDragging(MouseDownEvent event) {
-    onMouseDown(caption, event.getX(), event.getY());
+    onMouseDown(caption.asWidget(), event.getX(), event.getY());
   }
 
   /**
    * Called on mouse move in the caption area, continues dragging if it was
    * started by {@link #beginDragging}.
-   * 
+   *
    * @see #beginDragging
    * @see #endDragging
    * @param event the mouse move event that continues dragging
    */
   protected void continueDragging(MouseMoveEvent event) {
-    onMouseMove(caption, event.getX(), event.getY());
+    onMouseMove(caption.asWidget(), event.getX(), event.getY());
   }
 
   @Override
@@ -391,7 +462,7 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML,
       super.doAttachChildren();
     } finally {
       // See comment in doDetachChildren for an explanation of this call
-      caption.onAttach();
+      caption.asWidget().onAttach();
     }
   }
 
@@ -400,26 +471,28 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML,
     try {
       super.doDetachChildren();
     } finally {
-      // We need to detach the caption specifically because it is not part of the
-      // iterator of Widgets that the {@link SimplePanel} super class returns.
-      // This is similar to a {@link ComplexPanel}, but we do not want to expose
-      // the caption widget, as its just an internal implementation.
-      caption.onDetach();
+      /*
+       * We need to detach the caption specifically because it is not part of
+       * the iterator of Widgets that the {@link SimplePanel} super class
+       * returns. This is similar to a {@link ComplexPanel}, but we do not want
+       * to expose the caption widget, as its just an internal implementation.
+       */
+      caption.asWidget().onDetach();
     }
   }
 
   /**
    * Called on mouse up in the caption area, ends dragging by ending event
    * capture.
-   * 
+   *
    * @param event the mouse up event that ended dragging
-   * 
+   *
    * @see DOM#releaseCapture
    * @see #beginDragging
    * @see #endDragging
    */
   protected void endDragging(MouseUpEvent event) {
-    onMouseUp(caption, event.getX(), event.getY());
+    onMouseUp(caption.asWidget(), event.getX(), event.getY());
   }
 
   /**
@@ -428,13 +501,13 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML,
    * <li>-caption = text at the top of the {@link DialogBox}.</li>
    * <li>-content = the container around the content.</li>
    * </ul>
-   * 
+   *
    * @see UIObject#onEnsureDebugId(String)
    */
   @Override
   protected void onEnsureDebugId(String baseID) {
     super.onEnsureDebugId(baseID);
-    caption.ensureDebugId(baseID + "-caption");
+    caption.asWidget().ensureDebugId(baseID + "-caption");
     ensureDebugId(getCellElement(1, 1), baseID, "content");
   }
 
@@ -445,8 +518,7 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML,
     // is dragged.
     NativeEvent nativeEvent = event.getNativeEvent();
 
-    if (!event.isCanceled()
-        && (event.getTypeInt() == Event.ONMOUSEDOWN)
+    if (!event.isCanceled() && (event.getTypeInt() == Event.ONMOUSEDOWN)
         && isCaptionEvent(nativeEvent)) {
       nativeEvent.preventDefault();
     }

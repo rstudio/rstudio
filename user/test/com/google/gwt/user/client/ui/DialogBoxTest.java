@@ -19,15 +19,83 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.dom.client.MouseMoveHandler;
+import com.google.gwt.event.dom.client.MouseOutHandler;
+import com.google.gwt.event.dom.client.MouseOverHandler;
+import com.google.gwt.event.dom.client.MouseUpHandler;
+import com.google.gwt.event.dom.client.MouseWheelHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
 
 /**
  * Unit test for {@link DialogBox}.
  */
 public class DialogBoxTest extends PopupTest {
+
+  /**
+   * An implementation of Caption which is used for testing.
+   */
+  private static class CaptionForTesting extends Composite implements
+      DialogBox.Caption, HasHTML {
+
+    private FocusPanel panel = new FocusPanel();
+    private HTML htmlWidget = new HTML();
+
+    public CaptionForTesting() {
+      panel.add(htmlWidget);
+      initWidget(panel);
+    }
+
+    public HandlerRegistration addMouseDownHandler(MouseDownHandler handler) {
+      return panel.addMouseDownHandler(handler);
+    }
+
+    public HandlerRegistration addMouseMoveHandler(MouseMoveHandler handler) {
+      return panel.addMouseMoveHandler(handler);
+    }
+
+    public HandlerRegistration addMouseOutHandler(MouseOutHandler handler) {
+      return panel.addMouseOutHandler(handler);
+    }
+
+    public HandlerRegistration addMouseOverHandler(MouseOverHandler handler) {
+      return panel.addMouseOverHandler(handler);
+    }
+
+    public HandlerRegistration addMouseUpHandler(MouseUpHandler handler) {
+      return panel.addMouseUpHandler(handler);
+    }
+
+    public HandlerRegistration addMouseWheelHandler(MouseWheelHandler handler) {
+      return panel.addMouseWheelHandler(handler);
+    }
+
+    public String getHTML() {
+      return htmlWidget.getHTML();
+    }
+
+    public String getText() {
+      return htmlWidget.getText();
+    }
+
+    public void setHTML(SafeHtml html) {
+      htmlWidget.setHTML(html);
+    }
+
+    public void setHTML(String html) {
+      this.htmlWidget.setHTML(html);
+    }
+
+    public void setText(String text) {
+      htmlWidget.setText(text);
+    }
+  }
 
   private static final String html = "<b>hello</b><i>world</i>";
 
@@ -76,20 +144,6 @@ public class DialogBoxTest extends PopupTest {
     assertTrue(dialogBox.getHTML().equalsIgnoreCase("<b>text</b>"));
   }
 
-  public void testSimpleCloseButtonOnModalDialog() {
-    final DialogBox dialogBox = new DialogBox(false, true);
-    Button button = new Button();
-    button.addClickHandler(new ClickHandler() {
-      public void onClick(ClickEvent event) {
-        dialogBox.hide();
-      }
-    });
-    dialogBox.add(button);
-    dialogBox.show();
-    button.click();
-    assertFalse(dialogBox.isShowing());
-  }
-
   public void testDebugId() {
     DialogBox dBox = new DialogBox();
     dBox.setAnimationEnabled(false);
@@ -109,7 +163,7 @@ public class DialogBoxTest extends PopupTest {
     Scheduler.get().scheduleDeferred(new ScheduledCommand() {
       public void execute() {
         UIObjectTest.assertDebugIdContents("myDialogBox-caption",
-            "test caption");
+        "test caption");
         finishTest();
       }
     });
@@ -149,6 +203,37 @@ public class DialogBoxTest extends PopupTest {
     box.setHTML(SafeHtmlUtils.fromSafeConstant(html));
 
     assertEquals(html, box.getHTML().toLowerCase());
+  }
+
+  /**
+   * Test setting the caption.
+   */
+  public void testSetCaption() {
+    CaptionForTesting caption = new CaptionForTesting();
+    DialogBox dialogBox = new DialogBox(caption);
+    caption.setText("text");
+    Element td = dialogBox.getCellElement(0, 1);
+    assertEquals(dialogBox.getText(), "text");
+    caption.setHTML("<b>text</b>");
+    assertEquals("<b>text</b>", dialogBox.getHTML().toLowerCase());
+    dialogBox.show();
+    assertTrue(dialogBox.getCaption() == caption);
+    assertTrue(caption.asWidget().getElement() == DOM.getChild(td, 0));
+    dialogBox.hide();
+  }
+
+  public void testSimpleCloseButtonOnModalDialog() {
+    final DialogBox dialogBox = new DialogBox(false, true);
+    Button button = new Button();
+    button.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
+        dialogBox.hide();
+      }
+    });
+    dialogBox.add(button);
+    dialogBox.show();
+    button.click();
+    assertFalse(dialogBox.isShowing());
   }
 
   @Override
