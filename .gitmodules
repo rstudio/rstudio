@@ -1,0 +1,3 @@
+[submodule "src/gwt/tools/ace"]
+	path = src/gwt/tools/ace
+	url = https://github.com/ajaxorg/ace.git

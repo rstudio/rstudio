@@ -41,6 +41,7 @@
         debug="true" debuglevel="lines,vars,source"
         includeantruntime="false">
       <classpath refid="project.class.path"/>
+      <compilerarg value="-Xlint"/>
     </javac>
     <copy todir="bin">
       <fileset dir="src" excludes="**/*.java"/>
@@ -106,6 +107,7 @@
       <arg value="-noserver"/>
       <arg value="-startupUrl"/>
       <arg value="http://localhost:8787"/>
+      <arg line="-bindAddress 0.0.0.0"/>
       <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
       <arg value="org.rstudio.studio.RStudioDraft"/>
     </java>

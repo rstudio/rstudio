@@ -100,9 +100,6 @@ public class TextEditingTarget implements EditingTarget
                                        Widgetable
    {
 
-      String getId();
-      void setId(String id);
-      TextFileType getFileType();
       void setFileType(TextFileType fileType);
       String getCode();
       void setCode(String code);
@@ -115,18 +112,13 @@ public class TextEditingTarget implements EditingTarget
       boolean moveSelectionToNextLine();
       ChangeTracker getChangeTracker();
       void setTextWrapping(boolean wrap);
-      void setLineNumbers(boolean on);
       HandlerRegistration addEditorFocusHandler(EditorFocusHandler handler);
-      HandlerRegistration addEditorBlurHandler(EditorBlurHandler handler);
       HandlerRegistration addNativeKeyDownHandler(NativeKeyDownHandler handler);
-
-      void fireValueChanged();
 
       void markScrollPosition();
       void restoreScrollPosition();
 
       void fitSelectionToLines(boolean expand);
-      Object getSelectionLine(boolean start);
       int getSelectionOffset(boolean start);
 
       // Fix bug 964
@@ -182,7 +174,7 @@ public class TextEditingTarget implements EditingTarget
    }
    @Inject
    public TextEditingTarget(Commands commands,
-                            Provider<REditorWithId> pEditor,
+                            Provider<AceEditor> pEditor, // Provider<REditorWithId> pEditor,
                             SourceServerOperations server,
                             EventBus events,
                             GlobalDisplay globalDisplay,
