@@ -42,7 +42,8 @@ Plot::Plot(const GraphicsDeviceFunctions& graphicsDevice,
    // NOTE: it may be easier to create the environment for the
    // maniplator on the fly verses attemptimg to persist it
    // (could simply persist everything as text using json or
-   // boost::property_tree)
+   // boost::property_tree). could also just use native R object
+   // serialization
 
 
    // TODO: save manipulator. we are having trouble "protecting" it
