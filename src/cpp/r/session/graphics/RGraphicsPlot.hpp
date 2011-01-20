@@ -20,6 +20,8 @@
 
 #include <core/FilePath.hpp>
 
+#include <r/RSexp.hpp>
+
 #include "RGraphicsTypes.hpp"
 
 namespace core {
@@ -36,7 +38,8 @@ class Plot : boost::noncopyable
 {
 public:
    Plot(const GraphicsDeviceFunctions& graphicsDevice,
-        const core::FilePath& baseDirPath);
+        const core::FilePath& baseDirPath,
+        SEXP manipulatorSEXP);
    
    Plot(const GraphicsDeviceFunctions& graphicsDevice,
         const core::FilePath& baseDirPath, 
@@ -67,6 +70,10 @@ private:
    std::string storageUuid_ ;
    DisplaySize renderedSize_ ;
    bool needsUpdate_;
+
+   // manipulator and protection scope for it
+   r::sexp::Protect rProtect_;
+   SEXP manipulatorSEXP_;
 };
 
 } // namespace graphics

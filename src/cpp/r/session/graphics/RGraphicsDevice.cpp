@@ -24,6 +24,7 @@
 #include <r/RExec.hpp>
 #include <r/RFunctionHook.hpp>
 #include <r/RRoutines.hpp>
+#include <r/RErrorCategory.hpp>
 
 #include "RGraphicsUtils.hpp"
 #include "RGraphicsPlotManager.hpp"
@@ -393,6 +394,12 @@ std::string imageFileExtension()
    return "png";
 }
 
+SEXP rs_executeManipulator(SEXP manipulatorSEXP)
+{
+   plotManager().executeManipulator(manipulatorSEXP);
+   return R_NilValue;
+}
+
 
 } // anonymous namespace
     
@@ -442,6 +449,12 @@ Error initialize(
       activateGDMethodDef.numArgs = 0;
       r::routines::addCallMethod(activateGDMethodDef);
 
+      // regsiter execute manipulator routine
+      R_CallMethodDef execManipulatorMethodDef ;
+      execManipulatorMethodDef.name = "rs_executeManipulator" ;
+      execManipulatorMethodDef.fun = (DL_FUNC) rs_executeManipulator ;
+      execManipulatorMethodDef.numArgs = 1;
+      r::routines::addCallMethod(execManipulatorMethodDef);
 
       // register interactive() hook to work around dev.interactive device
       // bootstrapping bug

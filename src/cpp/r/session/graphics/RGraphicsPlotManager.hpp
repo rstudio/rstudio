@@ -96,6 +96,9 @@ public:
    
    virtual void clear();
    
+   // execute a manipulator
+   void executeManipulator(SEXP manipulatorSEXP);
+
    // manipulate persistent state
    core::Error savePlotsState(const core::FilePath& plotsStateFile);
    core::Error restorePlotsState(const core::FilePath& plotsStateFile);
@@ -161,6 +164,9 @@ private:
    std::vector<PtrPlot> plots_ ;
    
    boost::regex plotInfoRegex_;
+
+   // pending manipulator
+   SEXP pendingManipulatorSEXP_;
 };
    
 } // namespace graphics

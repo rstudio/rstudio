@@ -316,6 +316,12 @@ Error initialize()
    if (error)
       return error ;
 
+   // source manipulator functions
+   FilePath manipFilePath = s_options.rSourcePath.complete("Manipulate.R");
+   error = r::sourceManager().sourceLocal(manipFilePath);
+   if (error)
+      return error ;
+
    // create R_LIBS_USER if there is nowhere else defined to install packages
    initRLibsUser();
 

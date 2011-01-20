@@ -32,11 +32,20 @@ namespace session {
 namespace graphics {
       
 Plot::Plot(const GraphicsDeviceFunctions& graphicsDevice,
-           const FilePath& baseDirPath)
+           const FilePath& baseDirPath,
+           SEXP manipulatorSEXP)
    : graphicsDevice_(graphicsDevice), 
      baseDirPath_(baseDirPath),
-     needsUpdate_(false)
+     needsUpdate_(false),
+     manipulatorSEXP_(manipulatorSEXP)
 {
+   // TODO: save manipulator. we are having trouble "protecting" it
+   // so it may be wisest to simply save it out to a file straight away
+   if (manipulatorSEXP_ != R_NilValue)
+   {
+
+
+   }
 }
 
 Plot::Plot(const GraphicsDeviceFunctions& graphicsDevice,
@@ -47,8 +56,12 @@ Plot::Plot(const GraphicsDeviceFunctions& graphicsDevice,
      baseDirPath_(baseDirPath), 
      storageUuid_(storageUuid),
      renderedSize_(renderedSize),
-     needsUpdate_(false)
+     needsUpdate_(false),
+     manipulatorSEXP_(R_NilValue)
 {
+   // TOOD: read in the manipulator from disk if we have one
+
+
    // invalidate if the image file doesn't exist (allows the server
    // to migrate between different image backends e.g. png, jpeg, svg)
    if (!imageFilePath(storageUuid_).exists())

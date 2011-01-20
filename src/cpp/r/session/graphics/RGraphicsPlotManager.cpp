@@ -19,6 +19,7 @@
 #include <boost/function.hpp>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/scope_exit.hpp>
 
 #include <core/Log.hpp>
 #include <core/Error.hpp>
@@ -54,7 +55,8 @@ PlotManager::PlotManager()
    :  displayHasChanges_(false), 
       suppressDeviceEvents_(false),
       activePlot_(-1),
-      plotInfoRegex_("([A-Za-z0-9\\-]+):([0-9]+),([0-9]+)")
+      plotInfoRegex_("([A-Za-z0-9\\-]+):([0-9]+),([0-9]+)"),
+      pendingManipulatorSEXP_(R_NilValue)
 {
 }
       
@@ -358,7 +360,32 @@ FilePath PlotManager::imagePath(const std::string& imageFilename) const
 void PlotManager::clear()
 {
    graphicsDevice_.close();
-}   
+}
+
+
+
+// execute a manipulator
+void PlotManager::executeManipulator(SEXP manipulatorSEXP)
+{
+   // keep the pending manipulator set for the duration of this call.
+   // this allows the plot manager to "collect" it on a new plot
+   // but to ignore and let it die if the manipulator code block
+   // doesn't create a plot
+   pendingManipulatorSEXP_ = manipulatorSEXP;
+   BOOST_SCOPE_EXIT( (&pendingManipulatorSEXP_) ) {
+      pendingManipulatorSEXP_ = R_NilValue;
+   } BOOST_SCOPE_EXIT_END
+
+   // execute the code within the manipulator.
+   Error error = r::exec::RFunction(".rs.manipulator.execute",
+                                    pendingManipulatorSEXP_).call();
+
+   // r code execution errors are expected (e.g. for invalid manipulate
+   // code or incorrectly specified controls). if we get something that
+   // isn't an r code execution error then log it
+   if (!r::isCodeExecutionError(error))
+      LOG_ERROR(error);
+}
    
 Error PlotManager::savePlotsState(const FilePath& plotsStateFile)
 {
@@ -477,7 +504,9 @@ void PlotManager::onDeviceNewPage(SEXP previousPageSnapshot)
    }
    
    // create a new plot and make it active
-   PtrPlot ptrPlot(new Plot(graphicsDevice_, graphicsPath_));
+   PtrPlot ptrPlot(new Plot(graphicsDevice_,
+                            graphicsPath_,
+                            pendingManipulatorSEXP_));
    plots_.push_back(ptrPlot);
    activePlot_ = plots_.size() - 1  ;
    
