@@ -17,18 +17,60 @@ package com.google.gwt.editor.client.impl;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Allows fast traversal of an Editor hierarchy.
  */
-public class DelegateMap {
+public class DelegateMap implements Iterable<AbstractEditorDelegate<?, ?>> {
   /**
    * 
    */
   public interface KeyMethod {
     Object key(Object object);
+  }
+
+  private static class MapIterator implements
+      Iterator<AbstractEditorDelegate<?, ?>> {
+    private AbstractEditorDelegate<?, ?> next;
+    private Iterator<AbstractEditorDelegate<?, ?>> list;
+    private Iterator<List<AbstractEditorDelegate<?, ?>>> values;
+
+    public MapIterator(DelegateMap map) {
+      values = map.map.values().iterator();
+      next();
+    }
+
+    public boolean hasNext() {
+      return next != null;
+    }
+
+    public AbstractEditorDelegate<?, ?> next() {
+      AbstractEditorDelegate<?, ?> toReturn = next;
+
+      if (list != null && list.hasNext()) {
+        // Simple case, just advance the pointer
+        next = list.next();
+      } else {
+        // Uninitialized, or current list exhausted
+        next = null;
+        while (values.hasNext()) {
+          // Find the next non-empty iterator
+          list = values.next().iterator();
+          if (list.hasNext()) {
+            next = list.next();
+            break;
+          }
+        }
+      }
+      return toReturn;
+    }
+
+    public void remove() {
+      throw new UnsupportedOperationException();
+    }
   }
 
   public static final KeyMethod IDENTITY = new KeyMethod() {
@@ -62,6 +104,10 @@ public class DelegateMap {
    */
   public List<AbstractEditorDelegate<?, ?>> getRaw(Object key) {
     return map.get(key);
+  }
+
+  public Iterator<AbstractEditorDelegate<?, ?>> iterator() {
+    return new MapIterator(this);
   }
 
   public <T> void put(T object, AbstractEditorDelegate<T, ?> delegate) {

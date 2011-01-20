@@ -29,7 +29,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 public interface EditorDelegate<T> {
   /**
    * Returns the Editor's path, relative to the root object.
-   *
+   * 
    * @return the path as a String
    */
   String getPath();
@@ -48,6 +48,22 @@ public interface EditorDelegate<T> {
    *          be retrieved with {@link EditorError#getUserData()}
    */
   void recordError(String message, Object value, Object userData);
+
+  /**
+   * Toggle the dirty-state flag for the Editor.
+   * <p>
+   * The dirty state of an Editor will be automatically cleared any time the
+   * Driver's {@code edit()} or {@code flush()} methods are called.
+   * <p>
+   * The dirty state will be automatically calculated for
+   * {@link LeafValueEditor} instances based on an {@link Object#equals(Object)}
+   * comparison of {@link LeafValueEditor#getValue()} and the value last passed
+   * to {@link LeafValueEditor#setValue(Object)}, however a clean state can be
+   * overridden by calling {@code setDirty(true)}.
+   * 
+   * @param dirty the dirty state of the Editor
+   */
+  void setDirty(boolean dirty);
 
   /**
    * Register for notifications if object being edited is updated. Not all

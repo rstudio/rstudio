@@ -139,6 +139,14 @@ public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>> {
   void initialize(E editor);
 
   /**
+   * Returns {@code true} if any of the Editors in the hierarchy have been
+   * modified relative to the last value passed into {@link #edit(Object)}.
+   * 
+   * @see com.google.gwt.editor.client.EditorDelegate#setDirty(boolean)
+   */
+  boolean isDirty();
+
+  /**
    * Show {@link ConstraintViolation ConstraintViolations} generated through a
    * JSR 303 Validator. The violations will be converted into
    * {@link EditorError} objects whose {@link EditorError#getUserData()

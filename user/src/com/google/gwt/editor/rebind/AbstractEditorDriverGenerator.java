@@ -173,13 +173,22 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
           sw.println("delegateMap.put(%1$s.getObject(), %1$s);",
               delegateFields.get(d));
         } else if (d.isLeafValueEditor()) {
-          // if (can().access().without().npe()) { editor.subEditor.setValue() }
-          sw.println("if (%4$s) editor.%1$s.setValue(getObject()%2$s%3$s);",
-              d.getSimpleExpression(), d.getBeanOwnerExpression(),
-              d.getGetterExpression(), d.getBeanOwnerGuard("getObject()"));
-          // simpleEditor.put("some.path", editor.simpleEditor());
+          // if (can().access().without().npe()) {
+          sw.println("if (%s) {", d.getBeanOwnerGuard("getObject()"));
+          sw.indent();
+          // Bar value = getObject()....;
+          sw.println("%s value = getObject()%s%s;",
+              d.getEditedType().getQualifiedSourceName(),
+              d.getBeanOwnerExpression(), d.getGetterExpression());
+          // editor.subEditor.setValue(value);
+          sw.println("editor.%s.setValue(value);", d.getSimpleExpression());
+          // simpleEditors.put("foo.bar", editor.subEditor);
           sw.println("simpleEditors.put(\"%s\", editor.%s);",
               d.getDeclaredPath(), d.getSimpleExpression());
+          // lastLeafValues.put("foo.bar", value);
+          sw.println("lastLeafValues.put(\"%s\", value);", d.getDeclaredPath());
+          sw.outdent();
+          sw.println("}");
         }
         sw.outdent();
         sw.println("}");
@@ -247,6 +256,39 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
       sw.outdent();
       sw.println("}");
 
+      sw.println("protected boolean hasSubEditorsWithoutDelegates() {");
+      boolean hasSubEditorsWithoutDelegates = false;
+      for (EditorData d : data) {
+        if (!d.isDelegateRequired()) {
+          hasSubEditorsWithoutDelegates = true;
+          break;
+        }
+      }
+      sw.indentln("return %s;", hasSubEditorsWithoutDelegates ? "true"
+          : "false");
+      sw.println("}");
+
+      // isDirty() traversal method for sub-editors without delegates
+      sw.println("protected boolean isDirtyCheckLeaves() {");
+      sw.indent();
+      if (hasSubEditorsWithoutDelegates) {
+        for (EditorData d : data) {
+          if (!d.isDelegateRequired()) {
+            // if (editor.subEditor != null &&
+            sw.println("if (editor.%s != null &&", d.getSimpleExpression());
+            // !equals(editor.sub.getValue(), lastLeafValues.get("foo.bar"))) {
+            sw.indentln(
+                "!equals(editor.%s.getValue(), lastLeafValues.get(\"%s\"))) {",
+                d.getSimpleExpression(), d.getDeclaredPath());
+            sw.indentln("return true;");
+            sw.println("}");
+          }
+        }
+      }
+      sw.println("return false;");
+      sw.outdent();
+      sw.println("}");
+
       // Reset the data being displayed
       sw.println("protected void refreshEditors() {",
           DelegateMap.class.getCanonicalName());
@@ -269,13 +311,24 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
           // if (editor.subEditor != null) {
           sw.println("if (editor.%s != null) {", d.getSimpleExpression());
           sw.indent();
-          // if (can().access().without().npe()) { editor.subEditor.setValue() }
-          sw.println("if (%4$s) editor.%1$s.setValue(getObject()%2$s%3$s);",
-              d.getSimpleExpression(), d.getBeanOwnerExpression(),
-              d.getGetterExpression(), d.getBeanOwnerGuard("getObject()"));
-          // else { editor.subEditor.setValue(null); }
-          sw.println("else { editor.%s.setValue(null); }",
-              d.getSimpleExpression());
+          // if (can().access().without().npe()) {
+          sw.println("if (%s) {", d.getBeanOwnerGuard("getObject()"));
+          sw.indent();
+          // Bar value = getObject()....;
+          sw.println("%s value = getObject()%s%s;",
+              d.getEditedType().getQualifiedSourceName(),
+              d.getBeanOwnerExpression(), d.getGetterExpression());
+          // editor.subEditor.setValue(value);
+          sw.println("editor.%s.setValue(value);", d.getSimpleExpression());
+          // lastLeafValues.put("foo.bar", value);
+          sw.println("lastLeafValues.put(\"%s\", value);", d.getDeclaredPath());
+          sw.outdent();
+          sw.println("} else {");
+          sw.indent();
+          sw.println("editor.%s.setValue(null);", d.getSimpleExpression());
+          sw.println("lastLeafValues.put(\"%s\", null);", d.getDeclaredPath());
+          sw.outdent();
+          sw.println("}");
           sw.outdent();
           sw.println("}");
         }

@@ -67,6 +67,15 @@ public abstract class AbstractSimpleBeanEditorDriver<T, E extends Editor<T>>
     this.editor = editor;
   }
 
+  public boolean isDirty() {
+    for (AbstractEditorDelegate<?, ?> d : delegateMap) {
+      if (d.isDirty()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public boolean setConstraintViolations(
       final Iterable<ConstraintViolation<?>> violations) {
     checkDelegate();

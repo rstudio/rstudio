@@ -142,6 +142,13 @@ public class MockRequestFactoryEditorDriver<P, E extends Editor<P>> implements
   }
 
   /**
+   * Returns {@code false}.
+   */
+  public boolean isDirty() {
+    return false;
+  }
+
+  /**
    * A no-op method that always returns false.
    */
   public boolean setConstraintViolations(

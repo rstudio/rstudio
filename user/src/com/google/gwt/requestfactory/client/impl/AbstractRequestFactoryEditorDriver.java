@@ -17,6 +17,7 @@ package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.EditorError;
+import com.google.gwt.editor.client.impl.AbstractEditorDelegate;
 import com.google.gwt.editor.client.impl.DelegateMap;
 import com.google.gwt.editor.client.impl.SimpleViolation;
 import com.google.gwt.event.shared.EventBus;
@@ -191,6 +192,15 @@ public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
 
   public void initialize(RequestFactory requestFactory, E editor) {
     initialize(requestFactory.getEventBus(), requestFactory, editor);
+  }
+
+  public boolean isDirty() {
+    for (AbstractEditorDelegate<?, ?> d : delegateMap) {
+      if (d.isDirty()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public boolean setConstraintViolations(

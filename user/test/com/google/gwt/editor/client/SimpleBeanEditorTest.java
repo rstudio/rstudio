@@ -118,6 +118,19 @@ public class SimpleBeanEditorTest extends GWTTestCase {
       SimpleBeanEditorDriver<Person, PersonEditorWithCoAddressEditorView> {
   }
 
+  class PersonEditorWithDelegate extends PersonEditor implements
+      HasEditorDelegate<Person> {
+    EditorDelegate<Person> delegate;
+
+    public void setDelegate(EditorDelegate<Person> delegate) {
+      this.delegate = delegate;
+    }
+  }
+
+  interface PersonEditorWithDelegateDriver extends
+      SimpleBeanEditorDriver<Person, PersonEditorWithDelegate> {
+  }
+
   class PersonEditorWithLeafAddressEditor implements Editor<Person> {
     LeafAddressEditor addressEditor = new LeafAddressEditor();
     SimpleEditor<String> name = SimpleEditor.of(UNINITIALIZED);
@@ -304,6 +317,76 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     assertEquals("Should see this", person.getName());
   }
 
+  public void testDirty() {
+    PersonEditor editor = new PersonEditor();
+    PersonEditorDriver driver = GWT.create(PersonEditorDriver.class);
+    driver.initialize(editor);
+    driver.edit(person);
+
+    // Freshly-initialized should not be dirty
+    assertFalse(driver.isDirty());
+
+    // Changing the Person object should not affect the dirty status
+    person.setName("blah");
+    assertFalse(driver.isDirty());
+
+    editor.addressEditor.city.setValue("Foo");
+    assertTrue(driver.isDirty());
+
+    // Reset to original value
+    editor.addressEditor.city.setValue("City");
+    assertFalse(driver.isDirty());
+
+    // Try a null value
+    editor.managerName.setValue(null);
+    assertTrue(driver.isDirty());
+  }
+
+  public void testDirtyWithDelegate() {
+    PersonEditorWithDelegate editor = new PersonEditorWithDelegate();
+    PersonEditorWithDelegateDriver driver = GWT.create(PersonEditorWithDelegateDriver.class);
+    driver.initialize(editor);
+    driver.edit(person);
+
+    // Freshly-initialized should not be dirty
+    assertFalse(driver.isDirty());
+
+    // Use the delegate to toggle the state
+    editor.delegate.setDirty(true);
+    assertTrue(driver.isDirty());
+    
+    // Use the delegate to clear the state
+    editor.delegate.setDirty(false);
+    assertFalse(driver.isDirty());
+
+    // Check that the delegate has no influence over values
+    editor.addressEditor.city.setValue("edited");
+    assertTrue(driver.isDirty());
+    editor.delegate.setDirty(false);
+    assertTrue(driver.isDirty());
+    editor.delegate.setDirty(true);
+    assertTrue(driver.isDirty());
+  }
+
+  public void testDirtyWithOptionalEditor() {
+    AddressEditor addressEditor = new AddressEditor();
+    PersonEditorWithOptionalAddressEditor editor = new PersonEditorWithOptionalAddressEditor(addressEditor);
+    PersonEditorWithOptionalAddressDriver driver = GWT.create(PersonEditorWithOptionalAddressDriver.class);
+    driver.initialize(editor);
+    driver.edit(person);
+    
+    // Freshly-initialized should not be dirty
+    assertFalse(driver.isDirty());
+    
+    // Change the instance being edited
+    Address a = new Address();
+    editor.address.setValue(a);
+    assertTrue(driver.isDirty());
+    
+    // Check restoration works
+    editor.address.setValue(personAddress);
+    assertFalse(driver.isDirty());
+  }
   /**
    * Test the use of the IsEditor interface that allows a view object to
    * encapsulate its Editor.

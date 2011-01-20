@@ -104,9 +104,15 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
   }
 
   protected CompositeEditor<T, Object, Editor<Object>> composedEditor;
+  protected boolean dirty;
   protected Chain<Object, Editor<Object>> editorChain;
   protected List<EditorError> errors;
   protected HasEditorErrors<T> hasEditorErrors;
+  protected T lastLeafValue;
+  /**
+   * Records values last set into any sub-editors that are leaves.
+   */
+  protected Map<String, Object> lastLeafValues;
   protected LeafValueEditor<T> leafValueEditor;
   protected String path;
   /**
@@ -118,10 +124,6 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
    * This field avoids needing to repeatedly cast {@link #editor}.
    */
   protected ValueAwareEditor<T> valueAwareEditor;
-
-  public AbstractEditorDelegate() {
-    super();
-  }
 
   /**
    * Flushes both data and errors.
@@ -162,6 +164,18 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
     return path;
   }
 
+  public boolean isDirty() {
+    if (dirty) {
+      return true;
+    }
+    if (leafValueEditor != null) {
+      if (!equals(lastLeafValue, leafValueEditor.getValue())) {
+        return true;
+      }
+    }
+    return isDirtyCheckLeaves();
+  }
+
   public void recordError(String message, Object value, Object userData) {
     EditorError error = new SimpleError(this, message, value, userData);
     errors.add(error);
@@ -175,13 +189,19 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
   }
 
   public void refresh(T object) {
+    dirty = false;
     setObject(ensureMutable(object));
     if (leafValueEditor != null) {
+      lastLeafValue = object;
       leafValueEditor.setValue(object);
     } else if (valueAwareEditor != null) {
       valueAwareEditor.setValue(object);
     }
     refreshEditors();
+  }
+
+  public void setDirty(boolean dirty) {
+    this.dirty = dirty;
   }
 
   public abstract HandlerRegistration subscribe();
@@ -206,6 +226,20 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
     return object;
   }
 
+  /**
+   * Utility method used by generated subtypes that handles null vs. non-null
+   * comparisons.
+   */
+  protected boolean equals(Object a, Object b) {
+    if (a == b) {
+      return true;
+    }
+    if (a != null && a.equals(b)) {
+      return true;
+    }
+    return false;
+  }
+
   protected abstract void flushSubEditorErrors(
       List<EditorError> errorAccumulator);
 
@@ -217,6 +251,11 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
     return simpleEditors.get(declaredPath);
   }
 
+  /**
+   * Returns {@code true} if the editor contains leaf editors without delegates.
+   */
+  protected abstract boolean hasSubEditorsWithoutDelegates();
+
   protected void initialize(String pathSoFar, T object, E editor,
       DelegateMap map) {
     this.path = pathSoFar;
@@ -224,6 +263,9 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
     setObject(ensureMutable(object));
     errors = new ArrayList<EditorError>();
     simpleEditors = new HashMap<String, Editor<?>>();
+    if (hasSubEditorsWithoutDelegates()) {
+      lastLeafValues = new HashMap<String, Object>();
+    }
 
     // Set up pre-casted fields to access the editor
     if (editor instanceof HasEditorErrors<?>) {
@@ -252,6 +294,7 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
      * happened, only set the value and don't descend into any sub-Editors.
      */
     if (leafValueEditor != null) {
+      lastLeafValue = object;
       leafValueEditor.setValue(object);
       return;
     }
@@ -271,6 +314,13 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
   protected abstract <R, S extends Editor<R>> void initializeSubDelegate(
       AbstractEditorDelegate<R, S> subDelegate, String path, R object,
       S subEditor, DelegateMap map);
+
+  /**
+   * Returns {@code true} if any leaf sub-editors are dirty.
+   * 
+   * @see #lastLeafValues
+   */
+  protected abstract boolean isDirtyCheckLeaves();
 
   /**
    * Refresh all of the sub-editors.

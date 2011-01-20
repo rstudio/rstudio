@@ -29,6 +29,7 @@ public class MockEditorDelegate<T> implements EditorDelegate<T> {
     }
   };
 
+  private boolean dirty;
   private String path = "";
 
   /**
@@ -39,9 +40,25 @@ public class MockEditorDelegate<T> implements EditorDelegate<T> {
   }
 
   /**
+   * Returns {@code false} or the last value passed to
+   * {@link #setDirty(boolean)}.
+   */
+  public boolean isDirty() {
+    return dirty;
+  }
+
+  /**
    * No-op.
    */
   public void recordError(String message, Object value, Object userData) {
+  }
+
+  /**
+   * Records the value of {@code dirty} which can be retrieved from
+   * {@link #isDirty()}.
+   */
+  public void setDirty(boolean dirty) {
+    this.dirty = dirty;
   }
 
   /**

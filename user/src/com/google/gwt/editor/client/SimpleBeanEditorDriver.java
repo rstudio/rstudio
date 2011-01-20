@@ -84,6 +84,14 @@ public interface SimpleBeanEditorDriver<T, E extends Editor<? super T>> {
   void initialize(E editor);
 
   /**
+   * Returns {@code true} if any of the Editors in the hierarchy have been
+   * modified relative to the last value passed into {@link #edit(Object)}.
+   * 
+   * @see EditorDelegate#setDirty(boolean)
+   */
+  boolean isDirty();
+
+  /**
    * Show {@link ConstraintViolation ConstraintViolations} generated through a
    * {@link javax.validation.Validator Validator}. The violations will be
    * converted into {@link EditorError} objects whose
