@@ -39,6 +39,12 @@ Plot::Plot(const GraphicsDeviceFunctions& graphicsDevice,
      needsUpdate_(false),
      manipulatorSEXP_(manipulatorSEXP)
 {
+   // NOTE: it may be easier to create the environment for the
+   // maniplator on the fly verses attemptimg to persist it
+   // (could simply persist everything as text using json or
+   // boost::property_tree)
+
+
    // TODO: save manipulator. we are having trouble "protecting" it
    // so it may be wisest to simply save it out to a file straight away
    if (manipulatorSEXP_ != R_NilValue)
