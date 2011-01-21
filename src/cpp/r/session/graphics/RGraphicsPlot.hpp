@@ -23,6 +23,7 @@
 #include <r/RSexp.hpp>
 
 #include "RGraphicsTypes.hpp"
+#include "RGraphicsPlotManipulator.hpp"
 
 namespace core {
    class Error;
@@ -63,7 +64,11 @@ private:
    core::FilePath snapshotFilePath() const ;
    core::FilePath snapshotFilePath(const std::string& storageUuid) const;
    core::FilePath imageFilePath(const std::string& storageUuid) const;
-   
+
+   core::FilePath manipulatorFilePath(const std::string& storageUuid) const;
+   void loadManipulator();
+   void saveManipulator(const std::string& storageUuid);
+
 private:
    GraphicsDeviceFunctions graphicsDevice_;
    core::FilePath baseDirPath_;
@@ -72,8 +77,7 @@ private:
    bool needsUpdate_;
 
    // manipulator and protection scope for it
-   r::sexp::Protect rProtect_;
-   SEXP manipulatorSEXP_;
+   PlotManipulator manipulator_;
 };
 
 } // namespace graphics

@@ -156,6 +156,7 @@ public:
                         
    core::Error call(SEXP evalNS = R_GlobalEnv);
 
+   core::Error call(SEXP* pResultSEXP);
    core::Error call(SEXP* pResultSEXP, sexp::Protect* pProtect);
    core::Error call(SEXP evalNS, SEXP* pResultSEXP, sexp::Protect* pProtect);
  
@@ -164,7 +165,7 @@ public:
    {
       return call(R_GlobalEnv, pValue);
    }
-   
+
    template <typename T>
    core::Error call(SEXP evalNS, T* pValue)
    {

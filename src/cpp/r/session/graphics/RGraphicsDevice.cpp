@@ -394,9 +394,9 @@ std::string imageFileExtension()
    return "png";
 }
 
-SEXP rs_executeManipulator(SEXP manipulatorSEXP)
+SEXP rs_executeAndAttachManipulator(SEXP manipulatorSEXP)
 {
-   plotManager().executeManipulator(manipulatorSEXP);
+   plotManager().executeAndAttachManipulator(manipulatorSEXP);
    return R_NilValue;
 }
 
@@ -451,8 +451,8 @@ Error initialize(
 
       // regsiter execute manipulator routine
       R_CallMethodDef execManipulatorMethodDef ;
-      execManipulatorMethodDef.name = "rs_executeManipulator" ;
-      execManipulatorMethodDef.fun = (DL_FUNC) rs_executeManipulator ;
+      execManipulatorMethodDef.name = "rs_executeAndAttachManipulator" ;
+      execManipulatorMethodDef.fun = (DL_FUNC) rs_executeAndAttachManipulator;
       execManipulatorMethodDef.numArgs = 1;
       r::routines::addCallMethod(execManipulatorMethodDef);
 

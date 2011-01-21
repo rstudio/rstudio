@@ -13,6 +13,7 @@
 
 #define R_INTERNAL_FUNCTIONS
 #include <r/RSexp.hpp>
+#include <r/RInternal.hpp>
 
 #include <algorithm>
 
@@ -510,6 +511,47 @@ void Protect::unprotectAll()
       UNPROTECT(protectCount_);
    protectCount_ = 0;
 }
+
+
+PreservedSEXP::PreservedSEXP()
+   : sexp_(R_NilValue)
+{
+}
+
+PreservedSEXP::PreservedSEXP(SEXP sexp)
+   : sexp_(R_NilValue)
+{
+   set(sexp);
+}
+
+void PreservedSEXP::set(SEXP sexp)
+{
+   releaseNow();
+   sexp_ = sexp ;
+   if (sexp_ != R_NilValue)
+      ::R_PreserveObject(sexp_);
+}
+
+PreservedSEXP::~PreservedSEXP()
+{
+   try
+   {
+      releaseNow();
+   }
+   catch(...)
+   {
+   }
+}
+
+void PreservedSEXP::releaseNow()
+{
+   if (sexp_ != R_NilValue)
+   {
+      ::R_ReleaseObject(sexp_);
+      sexp_ = R_NilValue;
+   }
+}
+
 
 } // namespace sexp   
 } // namespace r

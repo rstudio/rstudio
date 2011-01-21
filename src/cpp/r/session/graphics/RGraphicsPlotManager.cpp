@@ -365,7 +365,7 @@ void PlotManager::clear()
 
 
 // execute a manipulator
-void PlotManager::executeManipulator(SEXP manipulatorSEXP)
+void PlotManager::executeAndAttachManipulator(SEXP manipulatorSEXP)
 {
    // keep the pending manipulator set for the duration of this call.
    // this allows the plot manager to "collect" it on a new plot

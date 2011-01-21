@@ -130,6 +130,34 @@ private:
    int protectCount_ ;
 };
 
+class PreservedSEXP : boost::noncopyable
+{
+public:
+   PreservedSEXP();
+   explicit PreservedSEXP(SEXP sexp);
+   virtual ~PreservedSEXP();
+
+   void set(SEXP sexp);
+   SEXP get() const { return sexp_; }
+   bool isNil() const { return sexp_ == R_NilValue; }
+
+   typedef void (*unspecified_bool_type)();
+   static void unspecified_bool_true() {}
+   operator unspecified_bool_type() const
+   {
+      return isNil() ? 0 : unspecified_bool_true;
+   }
+   bool operator!() const
+   {
+      return isNil();
+   }
+
+   void releaseNow();
+
+private:
+   SEXP sexp_;
+};
+
 } // namespace sexp
 } // namespace r
    

@@ -37,22 +37,8 @@ Plot::Plot(const GraphicsDeviceFunctions& graphicsDevice,
    : graphicsDevice_(graphicsDevice), 
      baseDirPath_(baseDirPath),
      needsUpdate_(false),
-     manipulatorSEXP_(manipulatorSEXP)
+     manipulator_(manipulatorSEXP)
 {
-   // NOTE: it may be easier to create the environment for the
-   // maniplator on the fly verses attemptimg to persist it
-   // (could simply persist everything as text using json or
-   // boost::property_tree). could also just use native R object
-   // serialization
-
-
-   // TODO: save manipulator. we are having trouble "protecting" it
-   // so it may be wisest to simply save it out to a file straight away
-   if (manipulatorSEXP_ != R_NilValue)
-   {
-
-
-   }
 }
 
 Plot::Plot(const GraphicsDeviceFunctions& graphicsDevice,
@@ -64,10 +50,10 @@ Plot::Plot(const GraphicsDeviceFunctions& graphicsDevice,
      storageUuid_(storageUuid),
      renderedSize_(renderedSize),
      needsUpdate_(false),
-     manipulatorSEXP_(R_NilValue)
+     manipulator_()
 {
-   // TOOD: read in the manipulator from disk if we have one
-
+   // read the manipulator from disk if we have one
+   loadManipulator();
 
    // invalidate if the image file doesn't exist (allows the server
    // to migrate between different image backends e.g. png, jpeg, svg)
@@ -112,6 +98,9 @@ Error Plot::renderFromDisplay()
    // save rendered size
    renderedSize_ = graphicsDevice_.displaySize();
    
+   // save manipulator (if any)
+   saveManipulator(storageUuid);
+
    // delete existing files (if any)
    Error removeError = removeFiles();
         
@@ -145,7 +134,10 @@ Error Plot::renderFromDisplaySnapshot(SEXP snapshot)
    
    // save rendered size
    renderedSize_ = graphicsDevice_.displaySize();
-   
+
+   // save manipulator (if any)
+   saveManipulator(storageUuid);
+
    // delete existing files (if any)
    Error removeError = removeFiles();
    
@@ -186,11 +178,14 @@ Error Plot::removeFiles()
    
    Error snapshotError = snapshotFilePath(storageUuid_).removeIfExists();
    Error imageError = imageFilePath(storageUuid_).removeIfExists();
+   Error manipulatorError = manipulatorFilePath(storageUuid_).removeIfExists();
    
    if (snapshotError)
       return Error(errc::PlotFileError, snapshotError, ERROR_LOCATION);
    else if (imageError)
       return Error(errc::PlotFileError, imageError, ERROR_LOCATION);
+   else if (manipulatorError)
+      return Error(errc::PlotFileError, manipulatorError, ERROR_LOCATION);
    else
       return Success();
 }
@@ -207,9 +202,35 @@ FilePath Plot::snapshotFilePath(const std::string& storageUuid) const
 }
    
 FilePath Plot::imageFilePath(const std::string& storageUuid) const
-   {
+{
    std::string extension = graphicsDevice_.imageFileExtension();
    return baseDirPath_.complete(storageUuid + "." + extension);
+}
+
+FilePath Plot::manipulatorFilePath(const std::string& storageUuid) const
+{
+   return baseDirPath_.complete(storageUuid + ".manipulator");
+}
+
+void Plot::loadManipulator()
+{
+   FilePath manipPath = manipulatorFilePath(storageUuid());
+   if (manipPath.exists())
+   {
+      Error error = manipulator_.load(manipPath);
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
+void Plot::saveManipulator(const std::string& storageUuid)
+{
+   if (!manipulator_.empty())
+   {
+      Error error = manipulator_.save(manipulatorFilePath(storageUuid));
+      if (error)
+         LOG_ERROR(error);
+   }
 }
 
 

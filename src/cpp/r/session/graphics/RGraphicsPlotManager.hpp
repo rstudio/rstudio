@@ -96,8 +96,8 @@ public:
    
    virtual void clear();
    
-   // execute a manipulator
-   void executeManipulator(SEXP manipulatorSEXP);
+   // execute and attach manipulator
+   void executeAndAttachManipulator(SEXP manipulatorSEXP);
 
    // manipulate persistent state
    core::Error savePlotsState(const core::FilePath& plotsStateFile);
