@@ -117,6 +117,7 @@ public class ResizeLayoutPanel extends SimplePanel implements ProvidesResize,
     private Element expandableInner;
     private int lastOffsetHeight = -1;
     private int lastOffsetWidth = -1;
+    private boolean resettingScrollables;
 
     @Override
     public void init(Element elem, Delegate delegate) {
@@ -189,7 +190,7 @@ public class ResizeLayoutPanel extends SimplePanel implements ProvidesResize,
     }
 
     public void onBrowserEvent(Event event) {
-      if (Event.ONSCROLL == event.getTypeInt()) {
+      if (!resettingScrollables && Event.ONSCROLL == event.getTypeInt()) {
         EventTarget eventTarget = event.getEventTarget();
         if (!Element.is(eventTarget)) {
           return;
@@ -224,6 +225,15 @@ public class ResizeLayoutPanel extends SimplePanel implements ProvidesResize,
      */
     private boolean resetScrollables() {
       /*
+       * Older versions of safari trigger a synchronous scroll event when we
+       * update scrollTop/scrollLeft, so we set a boolean to ignore that event.
+       */
+      if (resettingScrollables) {
+        return false;
+      }
+      resettingScrollables = true;
+
+      /*
        * Reset expandable element. Scrollbars are not rendered if the div is too
        * small, so we need to set the dimensions of the inner div to a value
        * greater than the offsetWidth/Height.
@@ -244,8 +254,10 @@ public class ResizeLayoutPanel extends SimplePanel implements ProvidesResize,
       if (lastOffsetHeight != offsetHeight || lastOffsetWidth != offsetWidth) {
         lastOffsetHeight = offsetHeight;
         lastOffsetWidth = offsetWidth;
+        resettingScrollables = false;
         return true;
       }
+      resettingScrollables = false;
       return false;
     }
   }
