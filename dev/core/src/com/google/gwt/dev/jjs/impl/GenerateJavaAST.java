@@ -534,9 +534,11 @@ public class GenerateJavaAST {
             if (isScript(program) && currentClass == program.getIndexedType("Array")) {
               // Special implementation: return this.arrayClass
               SourceInfo info = method.getSourceInfo();
-              implementMethod(method, new JFieldRef(info, new JThisRef(info,
-                  program.getNonNullType(currentClass)),
-                  program.getIndexedField("Array.arrayClass"), currentClass));
+              implementMethod(
+                  method,
+                  new JFieldRef(info, new JThisRef(info,
+                      (JClassType) currentClass),
+                      program.getIndexedField("Array.arrayClass"), currentClass));
             } else {
               implementMethod(method, program.getLiteralClass(currentClass));
             }
@@ -1300,7 +1302,7 @@ public class GenerateJavaAST {
        * because the explicit qualifier takes precedence.
        */
       if (!currentMethod.isStatic()) {
-        JExpression implicitOuter = program.getExprThisRef(info,
+        JExpression implicitOuter = new JThisRef(info,
             (JClassType) currentClass);
         qualList.add(implicitOuter);
       }
@@ -2132,8 +2134,8 @@ public class GenerateJavaAST {
       bridgeMethod.freezeParamTypes();
 
       // create a call
-      JMethodCall call = new JMethodCall(info, program.getExprThisRef(info,
-          clazz), implmeth);
+      JMethodCall call = new JMethodCall(info, new JThisRef(info, clazz),
+          implmeth);
 
       for (int i = 0; i < bridgeMethod.getParams().size(); i++) {
         JParameter param = bridgeMethod.getParams().get(i);
@@ -2183,7 +2185,7 @@ public class GenerateJavaAST {
     private JExpression createQualifiedThisRef(SourceInfo info,
         JClassType targetType) {
       assert (currentClass instanceof JClassType);
-      JExpression expr = program.getExprThisRef(info, (JClassType) currentClass);
+      JExpression expr = new JThisRef(info, ((JClassType) currentClass));
       List<JExpression> list = new ArrayList<JExpression>();
       addAllOuterThisRefsPlusSuperChain(list, expr, (JClassType) currentClass);
       return createThisRef(targetType, list);
@@ -2250,8 +2252,8 @@ public class GenerateJavaAST {
      */
     private JExpression createThisRef(SourceInfo info, JReferenceType targetType) {
       assert (currentClass instanceof JClassType);
-      return createThisRef(targetType, program.getExprThisRef(info,
-          (JClassType) currentClass));
+      return createThisRef(targetType, new JThisRef(info,
+          ((JClassType) currentClass)));
     }
 
     /**

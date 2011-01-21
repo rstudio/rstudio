@@ -22,20 +22,19 @@ import com.google.gwt.dev.jjs.SourceInfo;
  */
 public class JThisRef extends JExpression {
 
-  private final JNonNullType type;
+  private final JClassType type;
 
-  public JThisRef(SourceInfo info, JNonNullType type) {
+  public JThisRef(SourceInfo info, JClassType type) {
     super(info);
-    assert type.getUnderlyingType() instanceof JClassType;
     this.type = type;
   }
 
   public JClassType getClassType() {
-    return (JClassType) type.getUnderlyingType();
+    return type;
   }
 
   public JNonNullType getType() {
-    return type;
+    return type.getNonNull();
   }
 
   @Override

@@ -45,7 +45,7 @@ public class JNewArray extends JExpression {
       classLiterals.add(classLit);
       cur = ((JArrayType) cur).getElementType();
     }
-    return new JNewArray(info, program.getNonNullType(arrayType), dims, null,
+    return new JNewArray(info, arrayType.getNonNull(), dims, null,
         classLiterals);
   }
 
@@ -53,8 +53,8 @@ public class JNewArray extends JExpression {
       JArrayType arrayType, List<JExpression> initializers) {
     List<JClassLiteral> classLiterals = new ArrayList<JClassLiteral>();
     classLiterals.add(program.getLiteralClass(arrayType));
-    return new JNewArray(info, program.getNonNullType(arrayType), null,
-        initializers, classLiterals);
+    return new JNewArray(info, arrayType.getNonNull(), null, initializers,
+        classLiterals);
   }
 
   public final List<JExpression> dims;

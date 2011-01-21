@@ -267,7 +267,7 @@ public class JavaScriptObjectNormalizer {
           refType = program.getTypeArray(replacement, arrayType.getDims());
         }
       }
-      return canBeNull ? refType : program.getNonNullType(refType);
+      return canBeNull ? refType : refType.getNonNull();
     }
   }
 

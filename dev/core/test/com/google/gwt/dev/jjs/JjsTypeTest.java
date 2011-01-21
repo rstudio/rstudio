@@ -268,8 +268,8 @@ public class JjsTypeTest extends TestCase {
     // Save off some miscellaneous types to test against
     typeNull = program.getTypeNull();
 
-    classBnn = program.getNonNullType(classB);
-    classBaseNn = program.getNonNullType(classBase);
+    classBnn = classB.getNonNull();
+    classBaseNn = classBase.getNonNull();
 
     arrayOfA = program.getTypeArray(classA, 1);
     arrayOfB = program.getTypeArray(classB, 1);

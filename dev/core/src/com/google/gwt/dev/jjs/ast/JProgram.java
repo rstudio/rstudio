@@ -321,8 +321,6 @@ public class JProgram extends JNode {
 
   private IdentityHashMap<JReferenceType, JsonObject> castableTypeMaps;
 
-  private Map<JReferenceType, JNonNullType> nonNullTypes = new IdentityHashMap<JReferenceType, JNonNullType>();
-
   private JField nullField;
 
   private JMethod nullMethod;
@@ -430,7 +428,7 @@ public class JProgram extends JNode {
         typeJavaLangObject = x;
       } else if (name.equals("java.lang.String")) {
         typeString = x;
-        typeNonNullString = getNonNullType(x);
+        typeNonNullString = x.getNonNull();
       } else if (name.equals("java.lang.Enum")) {
         typeJavaLangEnum = x;
       } else if (name.equals("java.lang.Class")) {
@@ -448,7 +446,7 @@ public class JProgram extends JNode {
   public JConstructor createConstructor(SourceInfo info,
       JClassType enclosingType) {
     JConstructor x = new JConstructor(info, enclosingType,
-        getNonNullType(enclosingType));
+        enclosingType.getNonNull());
     x.setBody(new JMethodBody(info));
     if (indexedTypes.containsValue(enclosingType)) {
       indexedMethods.put(enclosingType.getShortName() + '.'
@@ -596,7 +594,7 @@ public class JProgram extends JNode {
       // Neither can be null.
       type1 = type1.getUnderlyingType();
       type2 = type2.getUnderlyingType();
-      return getNonNullType(generalizeTypes(type1, type2));
+      return generalizeTypes(type1, type2).getNonNull();
     } else if (type1 instanceof JNonNullType) {
       // type2 can be null, so the result can be null
       type1 = type1.getUnderlyingType();
@@ -797,10 +795,6 @@ public class JProgram extends JNode {
     return entryMethods.get(fragment).size();
   }
 
-  public JThisRef getExprThisRef(SourceInfo info, JClassType enclosingType) {
-    return new JThisRef(info, getNonNullType(enclosingType));
-  }
-
   public int getFragmentCount() {
     return entryMethods.size();
   }
@@ -947,18 +941,6 @@ public class JProgram extends JNode {
     }
     toReturn.getSourceInfo().merge(sourceInfo);
     return toReturn;
-  }
-
-  public JNonNullType getNonNullType(JReferenceType type) {
-    if (type instanceof JNonNullType) {
-      return (JNonNullType) type;
-    }
-    JNonNullType nonNullType = nonNullTypes.get(type);
-    if (nonNullType == null) {
-      nonNullType = new JNonNullType(type);
-      nonNullTypes.put(type, nonNullType);
-    }
-    return nonNullType;
   }
 
   public JField getNullField() {
@@ -1247,7 +1229,7 @@ public class JProgram extends JNode {
 
     if (type1 instanceof JNonNullType != type2 instanceof JNonNullType) {
       // If either is non-nullable, the result should be non-nullable.
-      return strongerType(getNonNullType(type1), getNonNullType(type2));
+      return strongerType(type1.getNonNull(), type2.getNonNull());
     }
 
     if (typeOracle.canTriviallyCast(type1, type2)) {

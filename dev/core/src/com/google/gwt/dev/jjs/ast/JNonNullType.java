@@ -40,6 +40,11 @@ public class JNonNullType extends JReferenceType {
   }
 
   @Override
+  public JNonNullType getNonNull() {
+    return this;
+  }
+
+  @Override
   public JClassType getSuperClass() {
     return ref.getSuperClass();
   }
@@ -59,5 +64,9 @@ public class JNonNullType extends JReferenceType {
 
   public void traverse(JVisitor visitor, Context ctx) {
     visitor.accept(ref);
+  }
+
+  private Object readResolve() {
+    return ref.getNonNull();
   }
 }

@@ -299,7 +299,7 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JThisRef x, Context ctx) {
-    expression = new JThisRef(x.getSourceInfo(), x.getType());
+    expression = new JThisRef(x.getSourceInfo(), x.getClassType());
     return false;
   }
 }

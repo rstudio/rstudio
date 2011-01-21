@@ -166,7 +166,7 @@ public class MakeCallsStatic {
       // Setup parameters; map from the old params to the new params
       JParameter thisParam = JParameter.create(sourceInfo.makeChild(
           CreateStaticImplsVisitor.class, "Instance parameter"), "this$static",
-          program.getNonNullType(enclosingType), true, true, newMethod);
+          enclosingType.getNonNull(), true, true, newMethod);
       Map<JParameter, JParameter> varMap = new IdentityHashMap<JParameter, JParameter>();
       for (int i = 0; i < x.getParams().size(); ++i) {
         JParameter oldVar = x.getParams().get(i);
@@ -178,7 +178,7 @@ public class MakeCallsStatic {
 
       // Set the new original param types based on the old original param types
       List<JType> originalParamTypes = new ArrayList<JType>();
-      originalParamTypes.add(program.getNonNullType(enclosingType));
+      originalParamTypes.add(enclosingType.getNonNull());
       originalParamTypes.addAll(x.getOriginalParamTypes());
       newMethod.setOriginalTypes(x.getOriginalReturnType(), originalParamTypes);
 
@@ -193,8 +193,7 @@ public class MakeCallsStatic {
       x.setBody(newBody);
       JMethodCall newCall = new JMethodCall(delegateCallSourceInfo, null, 
           newMethod);
-      newCall.addArg(new JThisRef(delegateCallSourceInfo, 
-          program.getNonNullType(enclosingType)));
+      newCall.addArg(new JThisRef(delegateCallSourceInfo, enclosingType));
       for (int i = 0; i < x.getParams().size(); ++i) {
         JParameter param = x.getParams().get(i);
         newCall.addArg(new JParameterRef(delegateCallSourceInfo, param));

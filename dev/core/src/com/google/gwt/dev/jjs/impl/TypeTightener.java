@@ -681,7 +681,7 @@ public class TypeTightener {
             return null;
           }
           return refType.canBeNull() ? singleConcrete
-              : program.getNonNullType(singleConcrete);
+              : singleConcrete.getNonNull();
         }
       }
       return null;

@@ -651,7 +651,7 @@ public class EnumOrdinalizer {
         if (canBeOrdinal(leafType)) {
           JArrayType newAType = program.getTypeArray(
                     JPrimitiveType.INT, aType.getDims());
-          return program.getNonNullType(newAType);
+          return newAType.getNonNull();
         }
       }
       

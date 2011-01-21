@@ -22,6 +22,8 @@ import com.google.gwt.dev.jjs.SourceInfo;
  */
 public abstract class JReferenceType extends JType implements CanBeAbstract {
 
+  private transient JNonNullType nonNullType;
+
   public JReferenceType(SourceInfo info, String name) {
     super(info, name, JNullLiteral.INSTANCE);
   }
@@ -44,6 +46,13 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
   @Override
   public String getJsniSignatureName() {
     return "L" + name.replace('.', '/') + ';';
+  }
+
+  public JNonNullType getNonNull() {
+    if (nonNullType == null) {
+      nonNullType = new JNonNullType(this);
+    }
+    return nonNullType;
   }
 
   public String getShortName() {

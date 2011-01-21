@@ -22,7 +22,6 @@ import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
-import com.google.gwt.dev.jjs.ast.JNonNullType;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
@@ -135,12 +134,12 @@ public class EnumNameObfuscator {
     private final TreeLogger logger;
     private final JProgram jprogram;
     private final JMethod enumObfuscatedName;
-    private final JNonNullType enumType;
+    private final JClassType enumType;
 
     public EnumNameReplacer(JProgram jprogram, TreeLogger logger) {
       this.logger = logger;
       this.jprogram = jprogram;
-      this.enumType = jprogram.getNonNullType(jprogram.getIndexedType("Enum"));
+      this.enumType = (JClassType) jprogram.getIndexedType("Enum");
       this.enumObfuscatedName = jprogram.getIndexedMethod("Enum.obfuscatedName");
     }
 
