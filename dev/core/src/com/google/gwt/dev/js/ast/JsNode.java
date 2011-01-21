@@ -42,10 +42,23 @@ public abstract class JsNode<T extends JsVisitable<T>> implements
     return sourceInfo;
   }
 
+  /**
+   * Returns a source code representation of the node using short identifiers.
+   */
   // Causes source generation to delegate to the one visitor
   public final String toSource() {
+    return toSource(false);
+  }
+  
+  /**
+   * Returns a source code representation of the node using short or long
+   * identifiers.
+   * 
+   * @param useLongIdents if true, emit all identifiers in long form
+   */
+  public final String toSource(boolean useLongIdents) {
     DefaultTextOutput out = new DefaultTextOutput(false);
-    JsSourceGenerationVisitor v = new JsSourceGenerationVisitor(out);
+    JsSourceGenerationVisitor v = new JsSourceGenerationVisitor(out, useLongIdents);
     v.accept(this);
     return out.toString();
   }

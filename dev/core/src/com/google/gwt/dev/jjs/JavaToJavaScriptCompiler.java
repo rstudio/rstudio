@@ -107,6 +107,7 @@ import com.google.gwt.dev.jjs.impl.gflow.DataflowOptimizer;
 import com.google.gwt.dev.js.EvalFunctionsAtTopScope;
 import com.google.gwt.dev.js.JsBreakUpLargeVarStatements;
 import com.google.gwt.dev.js.JsCoerceIntShift;
+import com.google.gwt.dev.js.JsDuplicateCaseFolder;
 import com.google.gwt.dev.js.JsDuplicateFunctionRemover;
 import com.google.gwt.dev.js.JsIEBlockSizeVisitor;
 import com.google.gwt.dev.js.JsInliner;
@@ -322,6 +323,11 @@ public class JavaToJavaScriptCompiler {
       // (9) Optimize the JS AST.
       if (optimizationLevel > OptionOptimize.OPTIMIZE_LEVEL_DRAFT) {
         optimizeJs(options, jsProgram);
+
+        /*
+         * Coalesce redundant labels in switch statements.
+         */
+        JsDuplicateCaseFolder.exec(jsProgram);
       }
 
       /*
@@ -572,7 +578,7 @@ public class JavaToJavaScriptCompiler {
 
       Memory.maybeDumpMemory("AstOnly");
       AstDumper.maybeDumpAST(jprogram);
-      
+
       // See if we should run the EnumNameObfuscator
       if (module != null) {
         ConfigurationProperty enumNameObfuscationProp = (ConfigurationProperty) module.getProperties().find(
@@ -822,12 +828,12 @@ public class JavaToJavaScriptCompiler {
       // remove same parameters value
       stats.add(SameParameterValueOptimizer.exec(jprogram).recordVisits(
           numNodes));
-    
+
       /*
        * enum ordinalization
        * TODO(jbrosenberg): graduate this out of the 'isAggressivelyOptimize'
        * block, over time.
-       */ 
+       */
       stats.add(EnumOrdinalizer.exec(jprogram).recordVisits(numNodes));
     }
 

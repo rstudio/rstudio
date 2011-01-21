@@ -27,8 +27,20 @@ import com.google.gwt.dev.util.TextOutput;
  */
 public class JsSourceGenerationVisitor extends JsToStringGenerationVisitor {
 
+  /**
+   * Generate the output source code using short identifiers.
+   */
   public JsSourceGenerationVisitor(TextOutput out) {
     super(out);
+  }
+  
+  /**
+   * Generate the output source code using short or long identifiers.
+   *
+   * @param useLongIdents if true, emit all identifiers in long form
+   */
+  public JsSourceGenerationVisitor(TextOutput out, boolean useLongIdents) {
+    super(out, useLongIdents);
   }
 
   @Override

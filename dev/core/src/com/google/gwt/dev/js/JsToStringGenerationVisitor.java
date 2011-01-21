@@ -263,13 +263,27 @@ public class JsToStringGenerationVisitor extends JsVisitor {
    */
   private Set<JsBlock> globalBlocks = new HashSet<JsBlock>();
   private final TextOutput p;
+  private final boolean useLongIdents;
 
   private ArrayList<Integer> statementEnds = new ArrayList<Integer>();
 
   private ArrayList<Integer> statementStarts = new ArrayList<Integer>();
 
+  /**
+   * Generate the output string using short identifiers.
+   */
   public JsToStringGenerationVisitor(TextOutput out) {
+    this(out, false);
+  }
+  
+  /**
+   * Generate the output string using short or long identifiers.
+   *
+   * @param useLongIdents if true, emit all identifiers in long form
+   */
+  JsToStringGenerationVisitor(TextOutput out, boolean useLongIdents) {
     this.p = out;
+    this.useLongIdents = useLongIdents;
   }
 
   public StatementRanges getStatementRanges() {
@@ -682,7 +696,12 @@ public class JsToStringGenerationVisitor extends JsVisitor {
 
   @Override
   public boolean visit(JsNameOf x, JsContext<JsExpression> ctx) {
-    printStringLiteral(x.getName().getShortIdent());
+    if (useLongIdents) {
+      printStringLiteral(x.getName().getIdent());
+    } else {
+      printStringLiteral(x.getName().getShortIdent());
+    }
+    
     return false;
   }
 
@@ -1142,7 +1161,11 @@ public class JsToStringGenerationVisitor extends JsVisitor {
   }
 
   private void _nameDef(JsName name) {
-    p.print(name.getShortIdent());
+    if (useLongIdents) {
+      p.print(name.getIdent());
+    } else {
+      p.print(name.getShortIdent());
+    }
   }
 
   private void _nameOf(HasName hasName) {
@@ -1150,7 +1173,11 @@ public class JsToStringGenerationVisitor extends JsVisitor {
   }
 
   private void _nameRef(JsNameRef nameRef) {
-    p.print(nameRef.getShortIdent());
+    if (useLongIdents) {
+      p.print(nameRef.getIdent());
+    } else {
+      p.print(nameRef.getShortIdent());
+    }
   }
 
   private boolean _nestedPop(JsStatement statement) {
