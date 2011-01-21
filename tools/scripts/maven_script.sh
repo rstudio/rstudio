@@ -14,15 +14,17 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-# This script should be run from the trunk dir.
-echo Did you remember to run ant clean dist-dev
+MAVEN_REPO=${MAVEN_REPO:-"~/.m2/repository"}
+GWT_VERSION=${GWT_VERSION:-"2.2-M1"}
+GWT_DIR=${GWT_DIR:-"build/lib"}
 
-MAVEN_REPO=~/.m2/repository
+echo "Pushing GWT jars from ${GWT_DIR} into local maven repo with version ${GWT_VERSION}."
+echo "Customize by setting GWT_DIR and GWT_VERSION."
 
 for i in dev user servlet
 do
-   mvn install:install-file -DgroupId=com.google.gwt -DartifactId=gwt-${i} -Dversion=2.1.1 -Dpackaging=jar -Dfile=build/lib/gwt-${i}.jar -DgeneratePom=true
+   mvn install:install-file -DgroupId=com.google.gwt -DartifactId=gwt-${i} -Dversion=${GWT_VERSION} -Dpackaging=jar -Dfile=${GWT_DIR}/gwt-${i}.jar -DgeneratePom=true
 done 
 touch /tmp/empty-fake-soyc-vis.jar
-mvn install:install-file -DgroupId=com.google.gwt -DartifactId=gwt-soyc-vis -Dversion=2.1.1 -Dpackaging=jar -DgeneratePom=true -Dfile=/tmp/empty-fake-soyc-vis.jar
+mvn install:install-file -DgroupId=com.google.gwt -DartifactId=gwt-soyc-vis -Dversion=${GWT_VERSION} -Dpackaging=jar -DgeneratePom=true -Dfile=/tmp/empty-fake-soyc-vis.jar
 echo "installed the gwt libs in the maven repo"
