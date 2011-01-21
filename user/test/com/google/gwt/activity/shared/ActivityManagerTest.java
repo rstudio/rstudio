@@ -41,6 +41,7 @@ public class ActivityManagerTest extends TestCase {
     @Override
     public void start(AcceptsOneWidget display, EventBus eventBus) {
       this.display = display;
+      this.bus = eventBus;
     }
 
     void finish() {
@@ -454,5 +455,52 @@ public class ActivityManagerTest extends TestCase {
     assertEquals(activity2.view, realDisplay.widget);
     assertTrue(activity1.stopped);
     assertFalse(activity1.canceled);
+  }
+  
+  /**
+   * Non-regression test: make sure an activity can call {@link AcceptsOneWidget#setWidget(IsWidget)} several times to switch views.
+   */
+  public void testSetWidgetSeveralTimesPerActivity() {
+    class TwoViewActivity extends SyncActivity {
+      MyView view2;
+      
+      public TwoViewActivity(MyView view1, MyView view2) {
+        super(view1);
+        this.view2 = view2;
+      }
+      
+      void secondView() {
+        display.setWidget(view2);
+      }
+      
+      void firstView() {
+        display.setWidget(view);
+      }
+    }
+    final TwoViewActivity activity = new TwoViewActivity(new MyView(), new MyView());
+    
+    ActivityMapper map = new ActivityMapper() {
+      public Activity getActivity(Place place) {
+        return activity;
+      }
+    };
+
+    manager = new ActivityManager(map, eventBus);
+    manager.setDisplay(realDisplay);
+    
+    // Start an activity
+    manager.onPlaceChange(new PlaceChangeEvent(place1));
+
+    assertEquals(activity.view, realDisplay.widget);
+    
+    // Call setWidget on the display several times, just to make sure it's possible
+    activity.secondView();
+    assertEquals(activity.view2, realDisplay.widget);
+
+    activity.firstView();
+    assertEquals(activity.view, realDisplay.widget);
+
+    activity.secondView();
+    assertEquals(activity.view2, realDisplay.widget);
   }
 }
