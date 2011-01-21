@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.rpc.core.java.util;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.rpc.CustomFieldSerializer;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
@@ -28,9 +29,10 @@ import java.util.List;
 public final class Arrays {
 
   /**
-   * Custom field serializer for {@link java.util.Arrays$ArrayList}.
+   * Custom field serializer for {@link java.util.Arrays.ArrayList}.
    */
-  public static final class ArrayList_CustomFieldSerializer {
+  public static final class ArrayList_CustomFieldSerializer extends
+      CustomFieldSerializer<List> {
 
     public static String concreteType() {
       return java.util.Arrays.asList().getClass().getName();
@@ -66,6 +68,27 @@ public final class Arrays {
         array = instance.toArray();
       }
       streamWriter.writeObject(array);
+    }
+
+    public void deserializeInstance(SerializationStreamReader streamReader,
+        List instance) throws SerializationException {
+      deserialize(streamReader, instance);
+    }
+
+    @Override
+    public boolean hasCustomInstantiateInstance() {
+      return true;
+    }
+
+    @Override
+    public List instantiateInstance(SerializationStreamReader streamReader)
+        throws SerializationException {
+      return instantiate(streamReader);
+    }
+
+    public void serializeInstance(SerializationStreamWriter streamWriter,
+        List instance) throws SerializationException {
+      serialize(streamWriter, instance);
     }
   }
 }

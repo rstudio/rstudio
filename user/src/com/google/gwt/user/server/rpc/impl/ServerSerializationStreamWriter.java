@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.server.rpc.impl;
 
+import com.google.gwt.user.client.rpc.CustomFieldSerializer;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.impl.AbstractSerializationStreamWriter;
 import com.google.gwt.user.server.Base64Utils;
@@ -724,7 +725,16 @@ public final class ServerSerializationStreamWriter extends
     Class<?> customSerializer = SerializabilityUtil.hasCustomFieldSerializer(instanceClass);
     if (customSerializer != null) {
       // Use custom field serializer
-      serializeWithCustomSerializer(customSerializer, instance, instanceClass);
+      @SuppressWarnings("unchecked")
+      CustomFieldSerializer<Object> customFieldSerializer =
+          (CustomFieldSerializer<Object>)
+              SerializabilityUtil.loadCustomFieldSerializer(customSerializer);
+      if (customFieldSerializer == null) {
+        serializeWithCustomSerializer(customSerializer, instance,
+            instanceClass);
+      } else {
+        customFieldSerializer.serializeInstance(this, instance);
+      }
     } else if (instanceClass.isArray()) {
       serializeArray(instanceClass, instance);
     } else if (instanceClass.isEnum()) {

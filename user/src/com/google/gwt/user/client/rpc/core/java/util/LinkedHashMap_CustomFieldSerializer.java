@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.rpc.core.java.util;
 
+import com.google.gwt.user.client.rpc.CustomFieldSerializer;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
@@ -29,7 +30,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * (uses reflection).
  */
 @SuppressWarnings("unchecked")
-public final class LinkedHashMap_CustomFieldSerializer {
+public final class LinkedHashMap_CustomFieldSerializer extends
+    CustomFieldSerializer<LinkedHashMap> {
 
   /**
    * We use an atomic reference to avoid having to synchronize. This is safe
@@ -125,5 +127,26 @@ public final class LinkedHashMap_CustomFieldSerializer {
 
     // Use a (possibly slower) technique that does not require reflection.
     return getAccessOrderNoReflection(instance);
+  }
+
+  public void deserializeInstance(SerializationStreamReader streamReader,
+      LinkedHashMap instance) throws SerializationException {
+    deserialize(streamReader, instance);
+  }
+
+  @Override
+  public boolean hasCustomInstantiateInstance() {
+    return true;
+  }
+
+  @Override
+  public LinkedHashMap instantiateInstance(SerializationStreamReader streamReader)
+      throws SerializationException {
+    return instantiate(streamReader);
+  }
+
+  public void serializeInstance(SerializationStreamWriter streamWriter,
+      LinkedHashMap instance) throws SerializationException {
+    serialize(streamWriter, instance);
   }
 }

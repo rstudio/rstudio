@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.rpc.core.java.util;
 
+import com.google.gwt.user.client.rpc.CustomFieldSerializer;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
@@ -25,7 +26,8 @@ import java.util.LinkedHashMap;
  * Custom field serializer for {@link java.util.LinkedHashMap}, which uses
  * JSNI.
  */
-public final class LinkedHashMap_CustomFieldSerializer {
+public final class LinkedHashMap_CustomFieldSerializer extends
+    CustomFieldSerializer<LinkedHashMap> {
 
   public static void deserialize(SerializationStreamReader streamReader,
       LinkedHashMap instance) throws SerializationException {
@@ -54,4 +56,25 @@ public final class LinkedHashMap_CustomFieldSerializer {
   private static native boolean getAccessOrder(LinkedHashMap instance) /*-{
     return instance.@java.util.LinkedHashMap::accessOrder;
   }-*/;
+
+  public void deserializeInstance(SerializationStreamReader streamReader,
+      LinkedHashMap instance) throws SerializationException {
+    deserialize(streamReader, instance);
+  }
+
+  @Override
+  public boolean hasCustomInstantiateInstance() {
+    return true;
+  }
+
+  @Override
+  public LinkedHashMap instantiateInstance(
+      SerializationStreamReader streamReader) throws SerializationException {
+    return instantiate(streamReader);
+  }
+
+  public void serializeInstance(SerializationStreamWriter streamWriter,
+      LinkedHashMap instance) throws SerializationException {
+    serialize(streamWriter, instance);
+  }
 }

@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.rpc.core.java.sql;
 
+import com.google.gwt.user.client.rpc.CustomFieldSerializer;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
@@ -24,7 +25,8 @@ import java.sql.Timestamp;
 /**
  * Custom field serializer for {@link java.sql.Timestamp}.
  */
-public final class Timestamp_CustomFieldSerializer {
+public final class Timestamp_CustomFieldSerializer extends
+    CustomFieldSerializer<Timestamp> {
 
   public static void deserialize(SerializationStreamReader streamReader,
       Timestamp instance) throws SerializationException {
@@ -40,5 +42,26 @@ public final class Timestamp_CustomFieldSerializer {
       Timestamp instance) throws SerializationException {
     streamWriter.writeLong(instance.getTime());
     streamWriter.writeInt(instance.getNanos());
+  }
+
+  public void deserializeInstance(SerializationStreamReader streamReader,
+      Timestamp instance) throws SerializationException {
+    deserialize(streamReader, instance);
+  }
+
+  @Override
+  public boolean hasCustomInstantiateInstance() {
+    return true;
+  }
+
+  @Override
+  public Timestamp instantiateInstance(SerializationStreamReader streamReader)
+      throws SerializationException {
+    return instantiate(streamReader);
+  }
+
+  public void serializeInstance(SerializationStreamWriter streamWriter,
+      Timestamp instance) throws SerializationException {
+    serialize(streamWriter, instance);
   }
 }

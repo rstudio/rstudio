@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.rpc.core.java.util;
 
+import com.google.gwt.user.client.rpc.CustomFieldSerializer;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
@@ -24,7 +25,8 @@ import java.util.HashMap;
 /**
  * Custom field serializer for {@link java.util.HashMap}.
  */
-public final class HashMap_CustomFieldSerializer {
+public final class HashMap_CustomFieldSerializer extends
+    CustomFieldSerializer<HashMap> {
 
   @SuppressWarnings("unchecked")
   public static void deserialize(SerializationStreamReader streamReader,
@@ -38,4 +40,13 @@ public final class HashMap_CustomFieldSerializer {
     Map_CustomFieldSerializerBase.serialize(streamWriter, instance);
   }
 
+  public void deserializeInstance(SerializationStreamReader streamReader,
+      HashMap instance) throws SerializationException {
+    deserialize(streamReader, instance);
+  }
+
+  public void serializeInstance(SerializationStreamWriter streamWriter,
+      HashMap instance) throws SerializationException {
+    serialize(streamWriter, instance);
+  }
 }

@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.rpc.core.java.sql;
 
+import com.google.gwt.user.client.rpc.CustomFieldSerializer;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
@@ -26,7 +27,8 @@ import java.sql.Time;
  * constructor due to differences in implementations when using the single-arg
  * constructor (is the day Jan 1 1970, what are the millis).
  */
-public final class Time_CustomFieldSerializer {
+public final class Time_CustomFieldSerializer extends
+    CustomFieldSerializer<Time> {
 
   @SuppressWarnings("unused")
   public static void deserialize(SerializationStreamReader streamReader,
@@ -42,5 +44,26 @@ public final class Time_CustomFieldSerializer {
   public static void serialize(SerializationStreamWriter streamWriter,
       Time instance) throws SerializationException {
     streamWriter.writeLong(instance.getTime());
+  }
+
+  public void deserializeInstance(SerializationStreamReader streamReader,
+      Time instance) throws SerializationException {
+    deserialize(streamReader, instance);
+  }
+
+  @Override
+  public boolean hasCustomInstantiateInstance() {
+    return true;
+  }
+
+  @Override
+  public Time instantiateInstance(SerializationStreamReader streamReader)
+      throws SerializationException {
+    return instantiate(streamReader);
+  }
+
+  public void serializeInstance(SerializationStreamWriter streamWriter,
+      Time instance) throws SerializationException {
+    serialize(streamWriter, instance);
   }
 }

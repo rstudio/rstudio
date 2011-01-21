@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.rpc.core.java.util;
 
+import com.google.gwt.user.client.rpc.CustomFieldSerializer;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
@@ -24,7 +25,8 @@ import java.util.Date;
 /**
  * Custom field serializer for {@link java.util.Date}.
  */
-public final class Date_CustomFieldSerializer {
+public final class Date_CustomFieldSerializer extends
+    CustomFieldSerializer<Date> {
 
   /**
    * @param streamReader a SerializationStreamReader instance
@@ -43,5 +45,26 @@ public final class Date_CustomFieldSerializer {
   public static void serialize(SerializationStreamWriter streamWriter,
       Date instance) throws SerializationException {
     streamWriter.writeLong(instance.getTime());
+  }
+
+  public void deserializeInstance(SerializationStreamReader streamReader,
+      Date instance) throws SerializationException {
+    deserialize(streamReader, instance);
+  }
+
+  @Override
+  public boolean hasCustomInstantiateInstance() {
+    return true;
+  }
+
+  @Override
+  public Date instantiateInstance(SerializationStreamReader streamReader)
+      throws SerializationException {
+    return instantiate(streamReader);
+  }
+
+  public void serializeInstance(SerializationStreamWriter streamWriter,
+      Date instance) throws SerializationException {
+    serialize(streamWriter, instance);
   }
 }

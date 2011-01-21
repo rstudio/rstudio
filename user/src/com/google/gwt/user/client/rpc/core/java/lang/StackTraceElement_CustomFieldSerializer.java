@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.rpc.core.java.lang;
 
+import com.google.gwt.user.client.rpc.CustomFieldSerializer;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
@@ -22,7 +23,8 @@ import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 /**
  * Custom field serializer for {@link java.lang.StackTraceElement}.
  */
-public final class StackTraceElement_CustomFieldSerializer {
+public final class StackTraceElement_CustomFieldSerializer extends
+    CustomFieldSerializer<StackTraceElement> {
 
   @SuppressWarnings("unused")
   public static void deserialize(SerializationStreamReader streamReader,
@@ -30,8 +32,8 @@ public final class StackTraceElement_CustomFieldSerializer {
     // No fields
   }
 
-  public static StackTraceElement instantiate(SerializationStreamReader streamReader)
-      throws SerializationException {
+  public static StackTraceElement instantiate(
+      SerializationStreamReader streamReader) throws SerializationException {
     return new StackTraceElement(streamReader.readString(),
         streamReader.readString(),
         streamReader.readString(),
@@ -44,5 +46,26 @@ public final class StackTraceElement_CustomFieldSerializer {
     streamWriter.writeString(instance.getMethodName());
     streamWriter.writeString(instance.getFileName());
     streamWriter.writeInt(instance.getLineNumber());
+  }
+
+  public void deserializeInstance(SerializationStreamReader streamReader,
+      StackTraceElement instance) throws SerializationException {
+    deserialize(streamReader, instance);
+  }
+
+  @Override
+  public boolean hasCustomInstantiateInstance() {
+    return true;
+  }
+
+  @Override
+  public StackTraceElement instantiateInstance(SerializationStreamReader
+      streamReader) throws SerializationException {
+    return instantiate(streamReader);
+  }
+
+  public void serializeInstance(SerializationStreamWriter streamWriter,
+      StackTraceElement instance) throws SerializationException {
+    serialize(streamWriter, instance);
   }
 }

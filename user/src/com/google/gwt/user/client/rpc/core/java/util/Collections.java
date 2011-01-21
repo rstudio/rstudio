@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.rpc.core.java.util;
 
+import com.google.gwt.user.client.rpc.CustomFieldSerializer;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
@@ -29,9 +30,10 @@ import java.util.Set;
 public final class Collections {
 
   /**
-   * Custom field serializer for {@link java.util.Collections$EmptyList}.
+   * Custom field serializer for {@link java.util.Collections.EmptyList}.
    */
-  public static final class EmptyList_CustomFieldSerializer {
+  public static final class EmptyList_CustomFieldSerializer extends
+      CustomFieldSerializer<List> {
 
     public static String concreteType() {
       return java.util.Collections.emptyList().getClass().getName();
@@ -54,12 +56,34 @@ public final class Collections {
         List instance) throws SerializationException {
       // Nothing to serialize -- instantiate always returns the same thing
     }
+
+    public void deserializeInstance(SerializationStreamReader streamReader,
+        List instance) throws SerializationException {
+      deserialize(streamReader, instance);
+    }
+
+    @Override
+    public boolean hasCustomInstantiateInstance() {
+      return true;
+    }
+
+    @Override
+    public List instantiateInstance(SerializationStreamReader streamReader)
+        throws SerializationException {
+      return instantiate(streamReader);
+    }
+
+    public void serializeInstance(SerializationStreamWriter streamWriter,
+        List instance) throws SerializationException {
+      serialize(streamWriter, instance);
+    }
   }
 
   /**
-   * Custom field serializer for {@link java.util.Collections$EmptyMap}.
+   * Custom field serializer for {@link java.util.Collections.EmptyMap}.
    */
-  public static final class EmptyMap_CustomFieldSerializer {
+  public static final class EmptyMap_CustomFieldSerializer extends
+      CustomFieldSerializer<Map> {
 
     public static String concreteType() {
       return java.util.Collections.emptyMap().getClass().getName();
@@ -82,12 +106,34 @@ public final class Collections {
         Map instance) throws SerializationException {
       // Nothing to serialize -- instantiate always returns the same thing
     }
+
+    public void deserializeInstance(SerializationStreamReader streamReader,
+        Map instance) throws SerializationException {
+      deserialize(streamReader, instance);
+    }
+
+    @Override
+    public boolean hasCustomInstantiateInstance() {
+      return true;
+    }
+
+    @Override
+    public Map instantiateInstance(SerializationStreamReader streamReader)
+        throws SerializationException {
+      return instantiate(streamReader);
+    }
+
+    public void serializeInstance(SerializationStreamWriter streamWriter,
+        Map instance) throws SerializationException {
+      serialize(streamWriter, instance);
+    }
   }
 
   /**
-   * Custom field serializer for {@link java.util.Collections$EmptySet}.
+   * Custom field serializer for {@link java.util.Collections.EmptySet}.
    */
-  public static final class EmptySet_CustomFieldSerializer {
+  public static final class EmptySet_CustomFieldSerializer extends
+      CustomFieldSerializer<Set> {
 
     public static String concreteType() {
       return java.util.Collections.emptySet().getClass().getName();
@@ -110,12 +156,34 @@ public final class Collections {
         Set instance) throws SerializationException {
       // Nothing to serialize -- instantiate always returns the same thing
     }
+
+    public void deserializeInstance(SerializationStreamReader streamReader,
+        Set instance) throws SerializationException {
+      deserialize(streamReader, instance);
+    }
+
+    @Override
+    public boolean hasCustomInstantiateInstance() {
+      return true;
+    }
+
+    @Override
+    public Set instantiateInstance(SerializationStreamReader streamReader)
+        throws SerializationException {
+      return instantiate(streamReader);
+    }
+
+    public void serializeInstance(SerializationStreamWriter streamWriter,
+        Set instance) throws SerializationException {
+      serialize(streamWriter, instance);
+    }
   }
 
   /**
-   * Custom field serializer for {@link java.util.Collections$SingletonList}.
+   * Custom field serializer for {@link java.util.Collections.SingletonList}.
    */
-  public static final class SingletonList_CustomFieldSerializer {
+  public static final class SingletonList_CustomFieldSerializer extends
+      CustomFieldSerializer<List> {
 
     public static String concreteType() {
       return java.util.Collections.singletonList(null).getClass().getName();
@@ -136,6 +204,27 @@ public final class Collections {
     public static void serialize(SerializationStreamWriter streamWriter,
         List instance) throws SerializationException {
       streamWriter.writeObject(instance.get(0));
+    }
+
+    public void deserializeInstance(SerializationStreamReader streamReader,
+        List instance) throws SerializationException {
+      deserialize(streamReader, instance);
+    }
+
+    @Override
+    public boolean hasCustomInstantiateInstance() {
+      return true;
+    }
+
+    @Override
+    public List instantiateInstance(SerializationStreamReader streamReader)
+        throws SerializationException {
+      return instantiate(streamReader);
+    }
+
+    public void serializeInstance(SerializationStreamWriter streamWriter,
+        List instance) throws SerializationException {
+      serialize(streamWriter, instance);
     }
   }
 }

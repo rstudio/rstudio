@@ -16,6 +16,10 @@
 package com.google.gwt.user.server.rpc.impl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.rpc.CustomFieldSerializer;
+import com.google.gwt.user.client.rpc.SerializationException;
+import com.google.gwt.user.client.rpc.SerializationStreamReader;
+import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 import com.google.gwt.user.client.rpc.GwtTransient;
 import com.google.gwt.user.server.rpc.SerializationPolicy;
 
@@ -81,7 +85,35 @@ public class SerializabilityUtil {
    */
   private static final Map<Class<?>, Class<?>> classCustomSerializerCache = new IdentityHashMap<Class<?>, Class<?>>();
 
+  /**
+   * Map of {@link Class} objects to singleton instances of that
+   * {@link CustomFieldSerializer}.
+   */
+  private static final Map<Class<?>, CustomFieldSerializer<?>>
+      CLASS_TO_SERIALIZER_INSTANCE =
+      new IdentityHashMap<Class<?>, CustomFieldSerializer<?>>();
+
   private static final String JRE_SERIALIZER_PACKAGE = "com.google.gwt.user.client.rpc.core";
+
+  /**
+   * A re-usable, non-functional {@link CustomFieldSerializer} for when the
+   * Custom Field Serializer does not implement the
+   * {@link CustomFieldSerializer} interface.
+   */
+  private static final CustomFieldSerializer NO_SUCH_SERIALIZER =
+      new CustomFieldSerializer<Object>() {
+        @Override
+        public void deserializeInstance(SerializationStreamReader
+            streamReader, Object instance) {
+          throw new AssertionError("This should never be called.");
+        }
+
+        @Override
+        public void serializeInstance(SerializationStreamWriter streamWriter,
+            Object instance) {
+          throw new AssertionError("This should never be called.");
+        }
+      };
 
   private static final Map<String, String> SERIALIZED_PRIMITIVE_TYPE_NAMES = new HashMap<String, String>();
 
@@ -242,6 +274,53 @@ public class SerializabilityUtil {
         && !Modifier.isTransient(fieldModifiers)
         && !field.isAnnotationPresent(GwtTransient.class)
         && !Modifier.isFinal(fieldModifiers);
+  }
+
+  /**
+   * Loads a {@link CustomFieldSerializer} from a class that may implement that
+   * interface.
+   *
+   * @param customSerializerClass the Custom Field Serializer class
+   *
+   * @return an instance the class provided if it implements
+   *         {@link CustomFieldSerializer} or {@code null} if it does not
+   *
+   * @throws SerializationException if the load process encounters an
+   *         unexpected problem
+   */
+  static CustomFieldSerializer<?> loadCustomFieldSerializer(
+      final Class<?> customSerializerClass) throws SerializationException {
+    /**
+     * Note that neither reading or writing to the CLASS_TO_SERIALIZER_INSTANCE
+     * is synchronized for performance reasons.  This could cause get misses,
+     * put misses and the same CustomFieldSerializer to be instantiated more
+     * than once, but none of these are critical operations as
+     * CLASS_TO_SERIALIZER_INSTANCE is only a performance improving cache.
+     */
+    CustomFieldSerializer<?> customFieldSerializer =
+        CLASS_TO_SERIALIZER_INSTANCE.get(customSerializerClass);
+    if (customFieldSerializer == null) {
+      if (CustomFieldSerializer.class.isAssignableFrom(customSerializerClass)) {
+        try {
+          customFieldSerializer =
+              (CustomFieldSerializer) customSerializerClass.newInstance();
+        } catch (InstantiationException e) {
+          throw new SerializationException(e);
+
+        } catch (IllegalAccessException e) {
+          throw new SerializationException(e);
+        }
+      } else {
+        customFieldSerializer = NO_SUCH_SERIALIZER;
+      }
+      CLASS_TO_SERIALIZER_INSTANCE.put(customSerializerClass,
+          customFieldSerializer);
+    }
+    if (customFieldSerializer == NO_SUCH_SERIALIZER) {
+      return null;
+    } else {
+      return customFieldSerializer;
+    }
   }
 
   /**

@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.rpc.core.java.util;
 
+import com.google.gwt.user.client.rpc.CustomFieldSerializer;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
@@ -26,7 +27,8 @@ import java.util.TreeMap;
  * Custom field serializer for {@link java.util.TreeMap}.
  */
 @SuppressWarnings("unchecked")
-public class TreeMap_CustomFieldSerializer {
+public class TreeMap_CustomFieldSerializer extends
+    CustomFieldSerializer<TreeMap> {
 
   /* for now, build it entry by entry. Can optimize later via bulk loading */
   public static void deserialize(SerializationStreamReader streamReader,
@@ -43,5 +45,26 @@ public class TreeMap_CustomFieldSerializer {
       TreeMap instance) throws SerializationException {
     streamWriter.writeObject(instance.comparator());
     Map_CustomFieldSerializerBase.serialize(streamWriter, instance);
+  }
+
+  public void deserializeInstance(SerializationStreamReader streamReader,
+      TreeMap instance) throws SerializationException {
+    deserialize(streamReader, instance);
+  }
+
+  @Override
+  public boolean hasCustomInstantiateInstance() {
+    return true;
+  }
+
+  @Override
+  public TreeMap instantiateInstance(SerializationStreamReader streamReader)
+      throws SerializationException {
+    return instantiate(streamReader);
+  }
+
+  public void serializeInstance(SerializationStreamWriter streamWriter,
+      TreeMap instance) throws SerializationException {
+    serialize(streamWriter, instance);
   }
 }

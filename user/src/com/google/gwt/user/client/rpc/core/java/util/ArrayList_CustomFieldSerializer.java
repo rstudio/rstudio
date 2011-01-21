@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.rpc.core.java.util;
 
+import com.google.gwt.user.client.rpc.CustomFieldSerializer;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
@@ -24,7 +25,8 @@ import java.util.ArrayList;
 /**
  * Custom field serializer for {@link java.util.ArrayList}.
  */
-public final class ArrayList_CustomFieldSerializer {
+public final class ArrayList_CustomFieldSerializer extends
+    CustomFieldSerializer<ArrayList> {
 
   @SuppressWarnings("unchecked")
   public static void deserialize(SerializationStreamReader streamReader,
@@ -36,5 +38,15 @@ public final class ArrayList_CustomFieldSerializer {
   public static void serialize(SerializationStreamWriter streamWriter,
       ArrayList instance) throws SerializationException {
     Collection_CustomFieldSerializerBase.serialize(streamWriter, instance);
+  }
+
+  public void deserializeInstance(SerializationStreamReader streamReader,
+      ArrayList instance) throws SerializationException {
+    deserialize(streamReader, instance);
+  }
+
+  public void serializeInstance(SerializationStreamWriter streamWriter,
+      ArrayList instance) throws SerializationException {
+    serialize(streamWriter, instance);
   }
 }

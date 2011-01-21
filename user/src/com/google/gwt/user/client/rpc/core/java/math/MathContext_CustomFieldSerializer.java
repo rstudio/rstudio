@@ -18,6 +18,7 @@
  */
 package com.google.gwt.user.client.rpc.core.java.math;
 
+import com.google.gwt.user.client.rpc.CustomFieldSerializer;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
@@ -28,7 +29,8 @@ import java.math.RoundingMode;
 /**
  * Custom field serializer for MathContext.
  */
-public class MathContext_CustomFieldSerializer {
+public class MathContext_CustomFieldSerializer extends
+    CustomFieldSerializer<MathContext> {
 
   /**
    * @param streamReader a SerializationStreamReader instance
@@ -48,5 +50,26 @@ public class MathContext_CustomFieldSerializer {
       MathContext instance) throws SerializationException {
     streamWriter.writeInt(instance.getPrecision());
     streamWriter.writeInt(instance.getRoundingMode().ordinal());
+  }
+
+  public void deserializeInstance(SerializationStreamReader streamReader,
+      MathContext instance) throws SerializationException {
+    deserialize(streamReader, instance);
+  }
+
+  @Override
+  public boolean hasCustomInstantiateInstance() {
+    return true;
+  }
+
+  @Override
+  public MathContext instantiateInstance(SerializationStreamReader streamReader)
+      throws SerializationException {
+    return instantiate(streamReader);
+  }
+
+  public void serializeInstance(SerializationStreamWriter streamWriter,
+      MathContext instance) throws SerializationException {
+    serialize(streamWriter, instance);
   }
 }

@@ -18,6 +18,7 @@
  */
 package com.google.gwt.user.client.rpc.core.java.math;
 
+import com.google.gwt.user.client.rpc.CustomFieldSerializer;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
@@ -27,7 +28,8 @@ import java.math.BigDecimal;
 /**
  * Custom field serializer for BigDecimal.
  */
-public class BigDecimal_CustomFieldSerializer {
+public class BigDecimal_CustomFieldSerializer extends
+    CustomFieldSerializer<BigDecimal> {
 
   /**
    * @param streamReader a SerializationStreamReader instance
@@ -45,5 +47,26 @@ public class BigDecimal_CustomFieldSerializer {
   public static void serialize(SerializationStreamWriter streamWriter,
       BigDecimal instance) throws SerializationException {
     streamWriter.writeString(instance.toString());
+  }
+
+  public void deserializeInstance(SerializationStreamReader streamReader,
+      BigDecimal instance) throws SerializationException {
+    deserialize(streamReader, instance);
+  }
+
+  @Override
+  public boolean hasCustomInstantiateInstance() {
+    return true;
+  }
+
+  @Override
+  public BigDecimal instantiateInstance(SerializationStreamReader streamReader)
+      throws SerializationException {
+    return instantiate(streamReader);
+  }
+
+  public void serializeInstance(SerializationStreamWriter streamWriter,
+      BigDecimal instance) throws SerializationException {
+    serialize(streamWriter, instance);
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.rpc.core.java.lang;
 
+import com.google.gwt.user.client.rpc.CustomFieldSerializer;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
@@ -22,7 +23,8 @@ import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 /**
  * Custom field serializer for {@link java.lang.Void}.
  */
-public final class Void_CustomFieldSerializer {
+public final class Void_CustomFieldSerializer extends
+    CustomFieldSerializer<Void> {
 
   @SuppressWarnings("unused")
   public static void deserialize(SerializationStreamReader streamReader,
@@ -38,5 +40,26 @@ public final class Void_CustomFieldSerializer {
   @SuppressWarnings("unused")
   public static void serialize(SerializationStreamWriter streamWriter,
       Void instance) throws SerializationException {
+  }
+
+  public void deserializeInstance(SerializationStreamReader streamReader,
+      Void instance) throws SerializationException {
+    deserialize(streamReader, instance);
+  }
+
+  @Override
+  public boolean hasCustomInstantiateInstance() {
+    return true;
+  }
+
+  @Override
+  public Void instantiateInstance(SerializationStreamReader streamReader)
+      throws SerializationException {
+    return instantiate(streamReader);
+  }
+
+  public void serializeInstance(SerializationStreamWriter streamWriter,
+      Void instance) throws SerializationException {
+    serialize(streamWriter, instance);
   }
 }
