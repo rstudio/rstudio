@@ -682,8 +682,8 @@ public class Style extends JavaScriptObject {
   private static final String STYLE_PADDING_BOTTOM = "paddingBottom";
   private static final String STYLE_PADDING = "padding";
   private static final String STYLE_OVERFLOW = "overflow";
-  private static final String STYLE_OVERFLOW_X = "overflow-x";
-  private static final String STYLE_OVERFLOW_Y = "overflow-y";
+  private static final String STYLE_OVERFLOW_X = "overflowX";
+  private static final String STYLE_OVERFLOW_Y = "overflowY";
   private static final String STYLE_OPACITY = "opacity";
   private static final String STYLE_MARGIN_TOP = "marginTop";
   private static final String STYLE_MARGIN_RIGHT = "marginRight";

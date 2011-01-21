@@ -186,6 +186,34 @@ public class StyleTest extends GWTTestCase {
     assertEquals(Overflow.AUTO, style.getOverflow());
   }
 
+  public void testOverflowX() {
+    DivElement div = Document.get().createDivElement();
+    Style style = div.getStyle();
+
+    style.setOverflowX(Overflow.VISIBLE);
+    assertEquals(Overflow.VISIBLE, style.getOverflowX());
+    style.setOverflowX(Overflow.HIDDEN);
+    assertEquals(Overflow.HIDDEN, style.getOverflowX());
+    style.setOverflowX(Overflow.SCROLL);
+    assertEquals(Overflow.SCROLL, style.getOverflowX());
+    style.setOverflowX(Overflow.AUTO);
+    assertEquals(Overflow.AUTO, style.getOverflowX());
+  }
+
+  public void testOverflowY() {
+    DivElement div = Document.get().createDivElement();
+    Style style = div.getStyle();
+
+    style.setOverflowY(Overflow.VISIBLE);
+    assertEquals(Overflow.VISIBLE, style.getOverflowY());
+    style.setOverflowY(Overflow.HIDDEN);
+    assertEquals(Overflow.HIDDEN, style.getOverflowY());
+    style.setOverflowY(Overflow.SCROLL);
+    assertEquals(Overflow.SCROLL, style.getOverflowY());
+    style.setOverflowY(Overflow.AUTO);
+    assertEquals(Overflow.AUTO, style.getOverflowY());
+  }
+
   public void testPosition() {
     DivElement div = Document.get().createDivElement();
     Style style = div.getStyle();
