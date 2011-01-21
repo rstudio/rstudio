@@ -294,6 +294,9 @@ void PlotManager::render(boost::function<void(DisplayState)> outputFunction)
    // clear changes flag
    displayHasChanges_ = false;
    
+   // optional manipulator structure
+   json::Value plotManipulatorJson;
+
    if (hasPlot()) // write image for active plot
    {
       // copy current contents of the display to the active plot files
@@ -312,6 +315,9 @@ void PlotManager::render(boost::function<void(DisplayState)> outputFunction)
 
          return;
       }
+
+      // get manipulator
+      activePlot().manipulatorAsJson(&plotManipulatorJson);
    }
    else  // write "empty" image 
    {
@@ -328,6 +334,7 @@ void PlotManager::render(boost::function<void(DisplayState)> outputFunction)
    
    // call output function
    DisplayState currentState(imageFilename(),
+                             plotManipulatorJson,
                              r::session::graphics::device::getWidth(),
                              r::session::graphics::device::getHeight(),
                              activePlotIndex(), 
@@ -382,9 +389,12 @@ void PlotManager::executeAndAttachManipulator(SEXP manipulatorSEXP)
 
    // r code execution errors are expected (e.g. for invalid manipulate
    // code or incorrectly specified controls). if we get something that
-   // isn't an r code execution error then log it
-   if (!r::isCodeExecutionError(error))
-      LOG_ERROR(error);
+   // isn't an r code execution error then report and log it
+   if (error)
+   {
+      if (!r::isCodeExecutionError(error))
+         logAndReportError(error, ERROR_LOCATION);
+   }
 }
    
 Error PlotManager::savePlotsState(const FilePath& plotsStateFile)

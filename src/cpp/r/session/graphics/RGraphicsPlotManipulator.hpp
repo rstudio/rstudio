@@ -16,6 +16,8 @@
 
 #include <boost/utility.hpp>
 
+#include <core/json/Json.hpp>
+
 #include <r/RSexp.hpp>
 
 namespace core {
@@ -38,6 +40,8 @@ public:
 
    core::Error save(const core::FilePath& filePath);
    core::Error load(const core::FilePath& filePath);
+
+   void asJson(core::json::Value* pValue) const;
 
 private:
    r::sexp::PreservedSEXP sexp_;

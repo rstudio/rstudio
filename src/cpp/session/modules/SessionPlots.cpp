@@ -382,6 +382,7 @@ void enquePlotsChanged(const r::session::graphics::DisplayState& displayState,
    // build graphics output event
    json::Object jsonPlotsState;
    jsonPlotsState["filename"] = displayState.imageFilename;
+   jsonPlotsState["manipulator"] = displayState.manipulatorJson;
    jsonPlotsState["width"] = displayState.width;
    jsonPlotsState["height"] = displayState.height;
    jsonPlotsState["plotIndex"] = displayState.activePlotIndex;

@@ -17,6 +17,7 @@
 #include <core/FilePath.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RJson.hpp>
 
 using namespace core;
 
@@ -67,6 +68,13 @@ Error PlotManipulator::load(const FilePath& filePath)
    // set it
    sexp_.set(manipSEXP);
    return Success();
+}
+
+void PlotManipulator::asJson(core::json::Value* pValue) const
+{
+   Error error = r::json::jsonValueFromObject(sexp_.get(), pValue);
+   if (error)
+      LOG_ERROR(error);
 }
 
 

@@ -71,6 +71,13 @@ void Plot::invalidate()
    needsUpdate_ = true;
 }
    
+void Plot::manipulatorAsJson(json::Value* pValue) const
+{
+   if (!manipulator_.empty())
+      manipulator_.asJson(pValue);
+   else
+      *pValue = json::Value();
+}
    
 Error Plot::renderFromDisplay()
 {

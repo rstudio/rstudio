@@ -13,6 +13,8 @@
 
 .rs.addFunction( "manipulator.createControl", function(type, value, min, max)
 {
+  # TODO: validate data types of value, min, and max
+
    # validate inputs
   if ( ! (type %in% c("slider")) )
     stop(paste("invalid control type:", type))
@@ -55,6 +57,11 @@
 
 .rs.addGlobalFunction( "manipulate", function(code, ...)
 {
+  # TODO: validate that all controls have variables in the expression
+
+  # TODO: use special naming scheme to eliminate chance of internal vars
+  # (e.g. "code") conflicting with user variables
+
   # create new list container for the manipulator
   manipulator <- list()
   class(manipulator) <- "manipulator"
@@ -62,6 +69,10 @@
   # save the unevaluated expression as the code
   manipulator$code <- substitute(code) 
   
+  # save a human readable version of the code (specify control = NULL
+  # to make the display as close to the original text as possible)
+  manipulator$codeAsText <- deparse(substitute(code), control = NULL)
+
   # get the controls and their names, then save them into the env
   controls <- list(...)
   controlNames <- names(controls)

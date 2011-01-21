@@ -20,6 +20,8 @@
 
 #include <core/FilePath.hpp>
 
+#include <core/json/Json.hpp>
+
 #include <r/RSexp.hpp>
 
 #include "RGraphicsTypes.hpp"
@@ -49,6 +51,8 @@ public:
    
    std::string storageUuid() const;  
    const DisplaySize& renderedSize() const { return renderedSize_; }
+
+   void manipulatorAsJson(core::json::Value* pValue) const;
    
    void invalidate();
    

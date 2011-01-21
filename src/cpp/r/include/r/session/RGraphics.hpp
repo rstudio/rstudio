@@ -20,6 +20,7 @@
 #include <boost/function.hpp>
 
 #include <core/Error.hpp>
+#include <core/json/Json.hpp>
 
 namespace core {
    class FilePath;
@@ -32,11 +33,13 @@ namespace graphics {
 struct DisplayState
 {
    DisplayState(const std::string& imageFilename, 
+                const core::json::Value& manipulatorJson,
                 int width,
                 int height,
                 int activePlotIndex,
                 int plotCount)
       : imageFilename(imageFilename), 
+        manipulatorJson(manipulatorJson),
         width(width),
         height(height),
         activePlotIndex(activePlotIndex),
@@ -45,6 +48,7 @@ struct DisplayState
    }
    
    std::string imageFilename;
+   core::json::Value manipulatorJson;
    int width;
    int height;
    int activePlotIndex;
