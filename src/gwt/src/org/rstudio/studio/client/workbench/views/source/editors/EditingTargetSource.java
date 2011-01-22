@@ -14,20 +14,24 @@ package org.rstudio.studio.client.workbench.views.source.editors;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.common.filetypes.*;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlContentEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 public interface EditingTargetSource
 {
-   EditingTarget getEditingTarget(FileType fileType);
-   EditingTarget getEditingTarget(SourceDocument document,
-                                  RemoteFileSystemContext fileContext,
-                                  Provider<String> defaultNameProvider);
+   void getEditingTarget(FileType fileType,
+                         CommandWithArg<EditingTarget> callback);
+   void getEditingTarget(SourceDocument document,
+                         RemoteFileSystemContext fileContext,
+                         Provider<String> defaultNameProvider,
+                         CommandWithArg<EditingTarget> callback);
 
    public static class Impl implements EditingTargetSource
    {
@@ -43,20 +47,31 @@ public interface EditingTargetSource
          pUrlContentEditingTarget_ = pUrlContentEditingTarget;
       }
 
-      public EditingTarget getEditingTarget(FileType type)
+      public void getEditingTarget(FileType type,
+                                   final CommandWithArg<EditingTarget> callback)
       {
          if (type instanceof TextFileType)
-            return pTextEditingTarget_.get();
+         {
+            AceEditor.create(new CommandWithArg<AceEditor>()
+            {
+               public void execute(AceEditor arg)
+               {
+                  TextEditingTarget tet = pTextEditingTarget_.get();
+                  tet.setEditor(arg);
+                  callback.execute(tet);
+               }
+            });
+         }
          else if (type instanceof DataFrameType)
-            return pDataEditingTarget_.get();
+            callback.execute(pDataEditingTarget_.get());
          else if (type instanceof UrlContentType)
-            return pUrlContentEditingTarget_.get();
-         return null;
+            callback.execute(pUrlContentEditingTarget_.get());
       }
 
-      public EditingTarget getEditingTarget(SourceDocument document,
-                                            RemoteFileSystemContext fileContext,
-                                            Provider<String> defaultNameProvider)
+      public void getEditingTarget(final SourceDocument document,
+                                   final RemoteFileSystemContext fileContext,
+                                   final Provider<String> defaultNameProvider,
+                                   final CommandWithArg<EditingTarget> callback)
       {
          FileType type = registry_.getTypeByTypeName(document.getType());
          if (type == null)
@@ -64,9 +79,18 @@ public interface EditingTargetSource
             Debug.log("Unknown document type: " + document.getType());
             type = FileTypeRegistry.TEXT;
          }
-         EditingTarget target = getEditingTarget(type);
-         target.initialize(document, fileContext, type, defaultNameProvider);
-         return target;
+         final FileType finalType = type;
+         getEditingTarget(type, new CommandWithArg<EditingTarget>()
+         {
+            public void execute(EditingTarget target)
+            {
+               target.initialize(document,
+                                 fileContext,
+                                 finalType,
+                                 defaultNameProvider);
+               callback.execute(target);
+            }
+         });
       }
 
       private final FileTypeRegistry registry_;

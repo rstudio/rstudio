@@ -81,6 +81,7 @@ public class TextEditingTarget implements EditingTarget
          extends CommandBinder<Commands, TextEditingTarget>
    {
    }
+
    private static final MyCommandBinder commandBinder =
          GWT.create(MyCommandBinder.class);
 
@@ -174,7 +175,6 @@ public class TextEditingTarget implements EditingTarget
    }
    @Inject
    public TextEditingTarget(Commands commands,
-                            Provider<AceEditor> pEditor, // Provider<REditorWithId> pEditor,
                             SourceServerOperations server,
                             EventBus events,
                             GlobalDisplay globalDisplay,
@@ -190,9 +190,12 @@ public class TextEditingTarget implements EditingTarget
       fileDialogs_ = fileDialogs;
       fileTypeRegistry_ = fileTypeRegistry;
       session_ = session;
-      docDisplay_ = pEditor.get();
       pPublishPdf_ = pPublishPdf;
+   }
 
+   public void setEditor(AceEditor editor)
+   {
+      docDisplay_ = editor;
       docDisplay_.addNativeKeyDownHandler(new NativeKeyDownHandler()
       {
          public void onKeyDown(NativeKeyDownEvent event)
@@ -946,7 +949,7 @@ public class TextEditingTarget implements EditingTarget
             });
    }
 
-   private final DocDisplay docDisplay_;
+   private DocDisplay docDisplay_;
    private Display view_;
    private final Commands commands_;
    private SourceServerOperations server_;
