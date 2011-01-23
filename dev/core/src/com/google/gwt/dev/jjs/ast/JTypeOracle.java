@@ -614,17 +614,21 @@ public class JTypeOracle implements Serializable {
     if (type.isExternal() || !type.hasClinit() || computed.contains(type)) {
       return;
     }
-    if (type.getSuperClass() != null) {
+    JClassType superClass = null;
+    if (type instanceof JClassType) {
+      superClass = ((JClassType) type).getSuperClass();
+    }
+    if (superClass != null) {
       /*
        * Compute super first so that it's already been tightened to the tightest
        * possible target; this ensures if we're tightened as well it's to the
        * transitively tightest target.
        */
-      computeClinitTarget(type.getSuperClass(), computed);
+      computeClinitTarget(superClass, computed);
     }
     if (type.getClinitTarget() != type) {
       // I already have a trivial clinit, just follow my super chain.
-      type.setClinitTarget(type.getSuperClass().getClinitTarget());
+      type.setClinitTarget(superClass.getClinitTarget());
     } else {
       // I still have a real clinit, actually compute.
       JDeclaredType target = computeClinitTargetRecursive(type, computed,

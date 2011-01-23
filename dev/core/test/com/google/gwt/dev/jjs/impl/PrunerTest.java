@@ -134,7 +134,6 @@ public class PrunerTest extends OptimizerTestBase {
     assertEquals(
         "interface EntryPoint$UsedInterface {\n" +
         "  private static final void $clinit(){\n" +
-        "    Object.$clinit();\n" +
         "  }\n" +
         "\n" +
         "}", 

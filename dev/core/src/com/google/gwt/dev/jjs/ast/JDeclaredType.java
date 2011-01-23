@@ -75,11 +75,6 @@ public abstract class JDeclaredType extends JReferenceType implements
   private boolean isExternal;
 
   /**
-   * This type's super class.
-   */
-  private JClassType superClass;
-
-  /**
    * This type's implemented interfaces.
    */
   private List<JInterfaceType> superInterfaces = Lists.create();
@@ -218,10 +213,11 @@ public abstract class JDeclaredType extends JReferenceType implements
     return name.substring(dotpos + 1);
   }
 
-  @Override
-  public final JClassType getSuperClass() {
-    return superClass;
-  }
+  /**
+   * Returns this type's super class, or <code>null</code> if this type is
+   * {@link Object} or an interface.
+   */
+  public abstract JClassType getSuperClass();
 
   /**
    * Returns <code>true</code> when this class's clinit must be run dynamically.
@@ -262,17 +258,6 @@ public abstract class JDeclaredType extends JReferenceType implements
 
   public void setExternal(boolean isExternal) {
     this.isExternal = isExternal;
-  }
-
-  /**
-   * Sets this type's super class.
-   * 
-   * TODO: to replace this setter with a final field, we'd have to refactor
-   * {@link com.google.gwt.dev.jjs.impl.BuildTypeMap} to use the builder pattern
-   * and resolve super types first.
-   */
-  public final void setSuperClass(JClassType superClass) {
-    this.superClass = superClass;
   }
 
   /**
@@ -334,7 +319,7 @@ public abstract class JDeclaredType extends JReferenceType implements
     }
     if (newClinitTarget != null && getClass().desiredAssertionStatus()) {
       // Make sure this is a pure upgrade to a superclass or null.
-      for (JDeclaredType current = clinitTarget; current != newClinitTarget; current = current.getSuperClass()) {
+      for (JClassType current = (JClassType) clinitTarget; current != newClinitTarget; current = current.getSuperClass()) {
         Preconditions.checkNotNull(
             current.getSuperClass(),
             "Null super class for: %s (currentTarget: %s; newTarget: %s) in %s",

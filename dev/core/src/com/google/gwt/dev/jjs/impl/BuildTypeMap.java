@@ -868,12 +868,12 @@ public class BuildTypeMap {
       }
 
       ReferenceBinding superClassBinding = binding.superclass();
-      if (superClassBinding != null) {
+      if (type instanceof JClassType && superClassBinding != null) {
         // TODO: handle separately?
         assert (binding.superclass().isClass()
             || binding.superclass().isEnum());
         JClassType superClass = (JClassType) getType(superClassBinding);
-        type.setSuperClass(superClass);
+        ((JClassType) type).setSuperClass(superClass);
       }
 
       ReferenceBinding[] superInterfaces = binding.superInterfaces();

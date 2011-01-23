@@ -31,6 +31,11 @@ public class JInterfaceType extends JDeclaredType {
     return "Class.createForInterface";
   }
 
+  @Override
+  public JClassType getSuperClass() {
+    return null;
+  }
+
   public boolean isAbstract() {
     return true;
   }

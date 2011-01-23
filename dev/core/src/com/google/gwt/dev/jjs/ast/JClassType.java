@@ -24,6 +24,7 @@ public class JClassType extends JDeclaredType implements CanBeSetFinal {
 
   private final boolean isAbstract;
   private boolean isFinal;
+  private JClassType superClass;
 
   public JClassType(SourceInfo info, String name, boolean isAbstract,
       boolean isFinal) {
@@ -35,6 +36,11 @@ public class JClassType extends JDeclaredType implements CanBeSetFinal {
   @Override
   public String getClassLiteralFactoryMethod() {
     return "Class.createForClass";
+  }
+
+  @Override
+  public final JClassType getSuperClass() {
+    return superClass;
   }
 
   public boolean isAbstract() {
@@ -54,6 +60,17 @@ public class JClassType extends JDeclaredType implements CanBeSetFinal {
 
   public void setFinal() {
     isFinal = true;
+  }
+
+  /**
+   * Sets this type's super class.
+   * 
+   * TODO: to replace this setter with a final field, we'd have to refactor
+   * {@link com.google.gwt.dev.jjs.impl.BuildTypeMap} to use the builder pattern
+   * and resolve super types first.
+   */
+  public final void setSuperClass(JClassType superClass) {
+    this.superClass = superClass;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

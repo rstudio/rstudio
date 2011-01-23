@@ -204,7 +204,9 @@ public class CastNormalizer {
       alreadyRan.add(type);
 
       // Visit super type.
-      computeSourceType(type.getSuperClass());
+      if (type instanceof JClassType) {
+        computeSourceType(((JClassType) type).getSuperClass());
+      }
 
       if (!program.typeOracle.isInstantiatedType(type)
           || program.isJavaScriptObject(type)) {

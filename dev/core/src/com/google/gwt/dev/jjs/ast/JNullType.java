@@ -46,11 +46,6 @@ public class JNullType extends JReferenceType {
     return "N";
   }
 
-  @Override
-  public JClassType getSuperClass() {
-    return null;
-  }
-
   public boolean isAbstract() {
     return false;
   }

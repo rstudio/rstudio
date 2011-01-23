@@ -100,15 +100,28 @@ public class ControlFlowAnalyzer {
       int dims = type.getDims();
 
       // Rescue my super array type
-      if (leafType instanceof JReferenceType) {
-        JReferenceType rLeafType = (JReferenceType) leafType;
-        if (rLeafType.getSuperClass() != null) {
-          JArrayType superArray = program.getTypeArray(
-              rLeafType.getSuperClass(), dims);
-          rescue(superArray, true, isInstantiated);
+      boolean didSuperType = false;
+      if (leafType instanceof JClassType) {
+        JClassType superClass = ((JClassType) leafType).getSuperClass();
+        if (superClass != null) {
+          // FooSub[] -> Foo[]
+          rescue(program.getTypeArray(superClass, dims), true, isInstantiated);
+          didSuperType = true;
+        }
+      }
+      if (!didSuperType) {
+        if (dims > 1) {
+          // anything[][] -> Object[]
+          rescue(
+              program.getTypeArray(program.getTypeJavaLangObject(), dims - 1),
+              true, isInstantiated);
+        } else {
+          // anything[] -> Object
+          rescue(program.getTypeJavaLangObject(), true, isInstantiated);
         }
       }
 
+      // Rescue super interface array types.
       if (leafType instanceof JDeclaredType) {
         JDeclaredType dLeafType = (JDeclaredType) leafType;
         for (JInterfaceType intfType : dLeafType.getImplements()) {

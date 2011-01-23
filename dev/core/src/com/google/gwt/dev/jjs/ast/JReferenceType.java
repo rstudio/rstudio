@@ -61,12 +61,6 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
   }
 
   /**
-   * Returns this type's super class, or <code>null</code> if this type is
-   * {@link Object} or the {@link JNullType}.
-   */
-  public abstract JClassType getSuperClass();
-
-  /**
    * If this type is a non-null type, returns the underlying (original) type.
    */
   public JReferenceType getUnderlyingType() {

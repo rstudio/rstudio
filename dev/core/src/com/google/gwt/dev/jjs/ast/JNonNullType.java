@@ -45,11 +45,6 @@ public class JNonNullType extends JReferenceType {
   }
 
   @Override
-  public JClassType getSuperClass() {
-    return ref.getSuperClass();
-  }
-
-  @Override
   public JReferenceType getUnderlyingType() {
     return ref;
   }

@@ -693,28 +693,30 @@ public class JProgram extends JNode {
       } else {
 
         assert (classify1 == IS_CLASS);
+        JClassType class1 = (JClassType) type1;
+        JClassType class2 = (JClassType) type2;
 
         /*
          * see how far each type is from object; walk the one who's farther up
          * until they're even; then walk them up together until they meet (worst
          * case at Object)
          */
-        int distance1 = countSuperTypes(type1);
-        int distance2 = countSuperTypes(type2);
+        int distance1 = countSuperTypes(class1);
+        int distance2 = countSuperTypes(class2);
         for (; distance1 > distance2; --distance1) {
-          type1 = type1.getSuperClass();
+          class1 = class1.getSuperClass();
         }
 
         for (; distance1 < distance2; --distance2) {
-          type2 = type2.getSuperClass();
+          class2 = class2.getSuperClass();
         }
 
-        while (type1 != type2) {
-          type1 = type1.getSuperClass();
-          type2 = type2.getSuperClass();
+        while (class1 != class2) {
+          class1 = class1.getSuperClass();
+          class2 = class2.getSuperClass();
         }
 
-        return type1;
+        return class1;
       }
     } else {
 
@@ -1027,8 +1029,7 @@ public class JProgram extends JNode {
       } else {
         elementType = getTypeArray(leafType, dimensions - 1);
       }
-      arrayType = new JArrayType(elementType, leafType, dimensions,
-          typeJavaLangObject);
+      arrayType = new JArrayType(elementType, leafType, dimensions);
       allArrayTypes.add(arrayType);
 
       /*
@@ -1266,17 +1267,7 @@ public class JProgram extends JNode {
     throw new InternalCompilerException("Unknown reference type");
   }
 
-  private int countSuperTypes(JReferenceType type) {
-    if (type instanceof JArrayType) {
-      JType leafType = ((JArrayType) type).getLeafType();
-      if (leafType instanceof JReferenceType) {
-        // however many steps from Foo[] -> Object[] + 1 for Object[]->Object
-        return countSuperTypes((JReferenceType) leafType) + 1;
-      } else {
-        // primitive array types can only cast up to object
-        return 1;
-      }
-    }
+  private int countSuperTypes(JClassType type) {
     int count = 0;
     while ((type = type.getSuperClass()) != null) {
       ++count;
