@@ -48,6 +48,19 @@ public class PlaceHistoryMapperGeneratorTest extends GWTTestCase {
       PlaceHistoryMapperWithFactory<TokenizerFactory> {
   };
 
+  /**
+   * The goal is only to test that the generator doesn't fail (but doesn't
+   * generate anything either).
+   */
+  static class LocalConcreteClass implements LocalNoFactory {
+    public Place getPlace(String token) {
+      return null;
+    }
+    public String getToken(Place place) {
+      return null;
+    }
+  }
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.place.PlaceSuite";
@@ -85,6 +98,18 @@ public class PlaceHistoryMapperGeneratorTest extends GWTTestCase {
     subject.setFactory(factory);
 
     doTest(subject, factory);
+  }
+
+  /**
+   * When asked to GWT.create a concrete implementation of PlaceHistoryMapper,
+   * the generator politely instantiates it. This is to make life easier
+   * for GIN users. See 
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=5563
+   */
+  public void testNotAnInterface() {
+    PlaceHistoryMapper subject = GWT.create(LocalConcreteClass.class);
+    assertNull(subject.getToken(null));
+    assertNull(subject.getPlace(null));
   }
 
   // CHECKSTYLE_OFF

@@ -38,6 +38,17 @@ import java.util.Set;
 import java.util.TreeMap;
 
 class PlaceHistoryGeneratorContext {
+  /**
+   * Creates a {@link PlaceHistoryGeneratorContext} for the given
+   * {@link PlaceHistoryMapper} sub-interface.
+   * 
+   * @return a {@link PlaceHistoryGeneratorContext}, or <code>null</code> if the
+   *         generator should not run (i.e. <code>interfaceName</code> is not an
+   *         interface)
+   * @throws UnableToCompleteException if the type denoted by
+   *           <code>interfaceName</code> cannot be found in
+   *           <code>typeOracle</code>
+   */
   static PlaceHistoryGeneratorContext create(TreeLogger logger,
       TypeOracle typeOracle, String interfaceName)
       throws UnableToCompleteException {
@@ -57,9 +68,7 @@ class PlaceHistoryGeneratorContext {
     }
 
     if (interfaceType.isInterface() == null) {
-      logger.log(TreeLogger.ERROR, interfaceType.getQualifiedSourceName()
-          + " is not an interface.", null);
-      throw new UnableToCompleteException();
+      return null;
     }
 
     factoryType = findFactoryType(placeHistoryMapperWithFactoryType,

@@ -90,6 +90,31 @@ public class PlaceHistoryGeneratorContextTest extends TestCase {
     return CompilationStateBuilder.buildFrom(createCompileLogger(), rtn).getTypeOracle();
   }
 
+  public void testCreateNotAnInterface() throws UnableToCompleteException {
+    MockJavaResource intf = new MockJavaResource("my.MyPlaceHistoryMapper") {
+
+      @Override
+      protected CharSequence getContent() {
+        StringBuilder code = new StringBuilder();
+        code.append("package my;\n");
+        code.append("import com.google.gwt.place.shared.PlaceHistoryMapper;\n");
+
+        code.append("public abstract class MyPlaceHistoryMapper implements PlaceHistoryMapper {\n");
+        code.append("}\n");
+        return code;
+      }
+    };
+
+    TypeOracle typeOracle = createTypeOracle(intf);
+
+    UnitTestTreeLogger logger = new UnitTestTreeLogger.Builder().createLogger();
+
+    PlaceHistoryGeneratorContext context = PlaceHistoryGeneratorContext.create(
+        logger, typeOracle, intf.getTypeName());
+
+    assertNull(context);
+  }
+
   public void testCreateNoFactory() throws UnableToCompleteException,
       NotFoundException {
     doTestCreate(NoFactory.class, null);

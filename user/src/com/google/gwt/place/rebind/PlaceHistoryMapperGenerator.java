@@ -32,11 +32,6 @@ import com.google.gwt.user.rebind.SourceWriter;
 import java.io.PrintWriter;
 
 /**
- * <p>
- * <span style="color:red">Experimental API: This class is still under rapid
- * development, and is very likely to be deleted. Use it at your own risk.
- * </span>
- * </p>
  * Generates implementations of
  * {@link com.google.gwt.place.shared.PlaceHistoryMapper PlaceHistoryMapper}.
  */
@@ -49,6 +44,10 @@ public class PlaceHistoryMapperGenerator extends Generator {
 
     context = PlaceHistoryGeneratorContext.create(logger,
         generatorContext.getTypeOracle(), interfaceName);
+
+    if (context == null) {
+      return null;
+    }
 
     PrintWriter out = generatorContext.tryCreate(logger, context.packageName,
         context.implName);
