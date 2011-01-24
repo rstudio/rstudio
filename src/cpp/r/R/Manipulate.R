@@ -16,7 +16,7 @@
   # TODO: validate data types of value, min, and max
 
    # validate inputs
-  if ( ! (type %in% c("slider")) )
+  if ( ! (type %in% c(0)) )
     stop(paste("invalid control type:", type))
   else if (value < min)
     stop(paste(type, "value", value, "is less than the specified minimum"))
@@ -36,7 +36,7 @@
 
 .rs.addGlobalFunction( "slider", function(value, min, max)
 {
-   .rs.manipulator.createControl("slider", value, min, max)
+   .rs.manipulator.createControl(0, value, min, max)
 })
 
 .rs.addFunction( "manipulator.execute", function(manipulator)
