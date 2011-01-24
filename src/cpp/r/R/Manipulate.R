@@ -11,37 +11,9 @@
 #
 #
 
-.rs.addFunction( "manipulator.createControl", function(type, value, min, max)
-{
-  # TODO: validate data types of value, min, and max
-
-   # validate inputs
-  if ( ! (type %in% c(0)) )
-    stop(paste("invalid control type:", type))
-  else if (value < min)
-    stop(paste(type, "value", value, "is less than the specified minimum"))
-  else if (value > max)
-    stop(paste(type, "value", value, "is greater than the specified maximum"))
-  else if (min > max)
-    stop(paste(type, "maximum is greater than minimum"))
-  
-  # create control and return it
-  control <- list(type = type,
-                  value = value,
-                  min = min,
-                  max = max)
-  class(control) <- "manipulator.control"
-  return (control)
-})
-
-.rs.addGlobalFunction( "slider", function(value, min, max)
-{
-   .rs.manipulator.createControl(0, value, min, max)
-})
-
 .rs.addFunction( "manipulator.execute", function(manipulator)
 {
-  eval(manipulator$code, envir=manipulator, enclos=globalenv())
+  eval(manipulator$manip_code, envir=manipulator, enclos=globalenv())
 })
 
 .rs.addFunction( "manipulator.save", function(manipulator, filename)
@@ -55,28 +27,65 @@
    return (manipulator)
 })
 
+.rs.addGlobalFunction( "slider", function(value, min, max)
+{
+  # validate inputs
+  if (!is.numeric(value) || !is.numeric(min) || !is.numeric(max))
+    stop("value, min, and max must all be numeric values")
+  else if (value < min)
+    stop(paste(type, "value", value, "is less than the specified minimum"))
+  else if (value > max)
+    stop(paste(type, "value", value, "is greater than the specified maximum"))
+  else if (min > max)
+    stop(paste(type, "maximum is greater than minimum"))
+  
+  # create slider and return it
+  slider <- list(type = 0,
+                 initialValue = value,
+                 min = min,
+                 max = max)
+  class(slider) <- "manipulator.slider"
+  return (slider)
+})
+
+.rs.addGlobalFunction( "picker", function(choices)
+{
+  # TODO: validate that this isn't an empty array
+  
+  # validate inputs
+  if ( !is.character(choices) )
+    stop("choices is not a character vector")
+    
+  picker <- list(type = 1,
+                 initialValue = choices[1],
+                 choices = choices)
+  class(picker) <- "manipulator.picker"
+  return (picker) 
+})
+
+
 .rs.addGlobalFunction( "manipulate", function(code, ...)
 {
   # TODO: validate that all controls have variables in the expression
-
-  # TODO: use special naming scheme to eliminate chance of internal vars
-  # (e.g. "code") conflicting with user variables
 
   # create new list container for the manipulator
   manipulator <- list()
   class(manipulator) <- "manipulator"
   
   # save the unevaluated expression as the code
-  manipulator$code <- substitute(code) 
+  manipulator$manip_code <- substitute(code) 
   
   # save a human readable version of the code (specify control = NULL
   # to make the display as close to the original text as possible)
-  manipulator$codeAsText <- deparse(substitute(code), control = NULL)
+  manipulator$manip_codeAsText <- deparse(substitute(code), control = NULL)
 
-  # get the controls and their names, then save them into the env
+  # get the controls and their names
   controls <- list(...)
   controlNames <- names(controls)
-  manipulator$controls <- controls 
+ 
+  # save the controls and their names into the manipulator
+  manipulator$manip_controls <- controls
+  manipulator$manip_variables <- controlNames
  
   # iterate over the names and controls, adding the default values to the env
   c = 1 
@@ -89,11 +98,14 @@
     c = c + 1  
     
     # confirm that this is in fact a control
-    if (class(control) != "manipulator.control")
+    if ( ! (class(control) %in% c("manipulator.slider",
+                                  "manipulator.picker")) )
+    {
       stop(paste("argument", name, "is not a control"))
-    
-    # assign the value
-    manipulator[name] = control$value
+    }
+      
+    # assign the control's initial value into the list
+    manipulator[name] <- control$initialValue
   }
 
   # execute the manipulator -- will execute the code and attach it
