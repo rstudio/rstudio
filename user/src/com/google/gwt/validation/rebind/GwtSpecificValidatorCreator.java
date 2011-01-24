@@ -492,6 +492,12 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     // .setConstrained(true)
     sw.println(".setConstrained(" + beanDescriptor.isBeanConstrained() + ")");
 
+    int count = 0;
+    for (ConstraintDescriptor<? extends Annotation>constraint : beanDescriptor.getConstraintDescriptors()) {
+      // .add(c0)
+      sw.println(".add(" + constraintDescriptorVar("this", count++) + ")");
+    }
+
     // .put("myProperty", myProperty_pd)
     for (PropertyDescriptor p : beanDescriptor.getConstrainedProperties()) {
       sw.print(".put(\"");
@@ -612,8 +618,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
       int count = 0;
       for (ConstraintDescriptor<?> constraint : p.getConstraintDescriptors()) {
         writeConstraintDescriptor(sw, constraint,
-            constraintDescriptorVar(p.getPropertyName(), count));
-        count++; // index starts at zero.
+            constraintDescriptorVar(p.getPropertyName(), count++));
       }
       writePropertyDescriptor(sw, p);
       if (p.isCascaded()) {
@@ -623,19 +628,18 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
       }
     }
 
-    // Now write the BeanDescriptor after we already have the PropertyDescriptor
-    writeBeanDescriptor(sw);
-    sw.println();
-
     // Create a variable for each constraint of this class.
     int count = 0;
     for (ConstraintDescriptor<?> constraint :
         beanHelper.getBeanDescriptor().getConstraintDescriptors()) {
-
       writeConstraintDescriptor(sw, constraint,
-          constraintDescriptorVar("this", count));
-      count++; // index starts at zero.
+          constraintDescriptorVar("this", count++));
     }
+
+    // Now write the BeanDescriptor after we already have the
+    // PropertyDescriptors and class constraints
+    writeBeanDescriptor(sw);
+    sw.println();
   }
 
   private void writeFieldWrapperMethod(SourceWriter sw, JField field) {
@@ -882,7 +886,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
                 + " for type " + clazz);
           }
         }
-        count++; // index starts at 0
+        count++;
       }
 
       // validate all super classes and interfaces
@@ -1300,7 +1304,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
         writeValidateConstraint(sw, p, elementClass, constraint,
             constraintDescriptorVar);
       }
-      count++; // index starts at zero
+      count++;
     }
     sw.outdent();
     sw.println("}");

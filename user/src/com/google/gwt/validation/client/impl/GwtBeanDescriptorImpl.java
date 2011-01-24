@@ -15,6 +15,7 @@
  */
 package com.google.gwt.validation.client.impl;
 
+import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -34,21 +35,31 @@ public final class GwtBeanDescriptorImpl<T> implements GwtBeanDescriptor<T> {
 
   /**
    * Builder for {@link GwtBeanDescriptors}.
-   * 
+   *
    * @param <T> the bean Type
    */
   public static final class Builder<T> {
 
     private final Class<T> clazz;
-    private final Map<String, PropertyDescriptor> descriptorMap = new HashMap<String, PropertyDescriptor>();
+    private final Map<String, PropertyDescriptor> descriptorMap =
+        new HashMap<String, PropertyDescriptor>();
+    private final Set<ConstraintDescriptor<? extends Annotation>> constraints =
+        new HashSet<ConstraintDescriptor<? extends Annotation>>();
     private boolean isConstrained;
 
     private Builder(Class<T> clazz) {
       this.clazz = clazz;
     }
 
+    public Builder<T> add(
+        ConstraintDescriptor<? extends Annotation> constraintDescriptor) {
+      constraints.add(constraintDescriptor);
+      return this;
+    }
+
     public GwtBeanDescriptorImpl<T> build() {
-      return new GwtBeanDescriptorImpl<T>(clazz, isConstrained, descriptorMap);
+      return new GwtBeanDescriptorImpl<T>(clazz, isConstrained, descriptorMap,
+          constraints);
     }
 
     public Builder<T> put(String key, PropertyDescriptor value) {
@@ -73,11 +84,13 @@ public final class GwtBeanDescriptorImpl<T> implements GwtBeanDescriptor<T> {
   private final boolean isBeanConstrained;
 
   private GwtBeanDescriptorImpl(Class<T> clazz, boolean isConstrained,
-      Map<String, PropertyDescriptor> descriptorMap) {
+      Map<String, PropertyDescriptor> descriptorMap,
+      Set<ConstraintDescriptor<?>> constraints) {
     super();
     this.clazz = clazz;
     this.isBeanConstrained = isConstrained;
     this.descriptorMap.putAll(descriptorMap);
+    this.constraints.addAll(constraints);
   }
 
   public ConstraintFinder findConstraints() {
@@ -108,16 +121,5 @@ public final class GwtBeanDescriptorImpl<T> implements GwtBeanDescriptor<T> {
 
   public boolean isBeanConstrained() {
     return isBeanConstrained;
-  }
-
-  protected void setDescriptorMap(Map<String, PropertyDescriptor> map) {
-    descriptorMap.clear();
-    descriptorMap.putAll(map);
-    constraints.clear();
-    for (PropertyDescriptor p : descriptorMap.values()) {
-      if (p.hasConstraints()) {
-        constraints.addAll(p.getConstraintDescriptors());
-      }
-    }
   }
 }

@@ -17,8 +17,6 @@ package org.hibernate.jsr303.tck.tests.metadata;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-import org.hibernate.jsr303.tck.util.client.Failing;
-
 /**
  * Test wrapper for {@link BeanDescriptorTest}.
  */
@@ -54,7 +52,6 @@ public class BeanDescriptorGwtTest extends GWTTestCase {
     delegate.testGetConstraintsForNullProperty();
   }
 
-  @Failing(issue = 5802)
   public void testIsBeanConstrainedDueToConstraintOnEntity() {
     delegate.testIsBeanConstrainedDueToConstraintOnEntity();
   }
