@@ -54,10 +54,11 @@ public class Context2dTest extends GWTTestCase {
 
   @Override
   protected void gwtSetUp() throws Exception {
-    canvas1 = new Canvas();
-    canvas2 = new Canvas();
-    if (!canvas1.isSupported()) {
-      return; // disable tests if not supported
+    canvas1 = Canvas.createIfSupported();
+    canvas2 = Canvas.createIfSupported();
+
+    if (canvas1 == null) {
+      return; // don't continue if not supported
     }
 
     RootPanel.get().add(canvas1);
@@ -71,8 +72,8 @@ public class Context2dTest extends GWTTestCase {
   }
 
   public void testArc() {
-    if (!canvas1.isSupported()) {
-      return; // disable tests if not supported
+    if (canvas1 == null) {
+      return; // don't continue if not supported
     }
 
     canvas1.setHeight("40px");
@@ -95,8 +96,8 @@ public class Context2dTest extends GWTTestCase {
   }
 
   public void testFillRect() {
-    if (!canvas1.isSupported()) {
-      return; // disable tests if not supported
+    if (canvas1 == null) {
+      return; // don't continue if not supported
     }
 
     // Safari 3.0 does not support getImageData(), so the following tests are disabled for
@@ -150,8 +151,8 @@ public class Context2dTest extends GWTTestCase {
   }
 
   public void testFillStyle() {
-    if (!canvas1.isSupported()) {
-      return; // disable tests if not supported
+    if (canvas1 == null) {
+      return; // don't continue if not supported
     }
 
     // get the 2d contexts
@@ -193,8 +194,8 @@ public class Context2dTest extends GWTTestCase {
   }
 
   public void testFont() {
-    if (!canvas1.isSupported()) {
-      return; // disable tests if not supported
+    if (canvas1 == null) {
+      return; // don't continue if not supported
     }
 
     Context2d context = canvas1.getContext2d();
@@ -203,8 +204,8 @@ public class Context2dTest extends GWTTestCase {
   }
 
   public void testGlobalAlpha() {
-    if (!canvas1.isSupported()) {
-      return; // disable tests if not supported
+    if (canvas1 == null) {
+      return; // don't continue if not supported
     }
 
     Context2d context = canvas1.getContext2d();
@@ -214,8 +215,8 @@ public class Context2dTest extends GWTTestCase {
 
   // This test currently fails on IE9 and is disabled.
   public void disabled_testGlobalComposite() {
-    if (!canvas1.isSupported()) {
-      return; // disable tests if not supported
+    if (canvas1 == null) {
+      return; // don't continue if not supported
     }
 
     Context2d context = canvas1.getContext2d();
@@ -226,8 +227,8 @@ public class Context2dTest extends GWTTestCase {
   }
 
   public void testGradient() {
-    if (!canvas1.isSupported()) {
-      return; // disable tests if not supported
+    if (canvas1 == null) {
+      return; // don't continue if not supported
     }
 
     // Safari 3.0 does not support getImageData(), so the following tests are disabled for
@@ -272,8 +273,8 @@ public class Context2dTest extends GWTTestCase {
   }
 
   public void testImageData() {
-    if (!canvas1.isSupported()) {
-      return; // disable tests if not supported
+    if (canvas1 == null) {
+      return; // don't continue if not supported
     }
     
     // Firefox 3.0 does not support createImageData(), so the following tests are disabled
@@ -342,8 +343,8 @@ public class Context2dTest extends GWTTestCase {
   }
 
   public void testIsPointInPath() {
-    if (!canvas1.isSupported()) {
-      return; // disable tests if not supported
+    if (canvas1 == null) {
+      return; // don't continue if not supported
     }
 
     canvas1.setHeight("40px");
@@ -363,8 +364,8 @@ public class Context2dTest extends GWTTestCase {
   }
 
   public void testLines() {
-    if (!canvas1.isSupported()) {
-      return; // disable tests if not supported
+    if (canvas1 == null) {
+      return; // don't continue if not supported
     }
 
     canvas1.setHeight("40px");
@@ -390,8 +391,8 @@ public class Context2dTest extends GWTTestCase {
   }
 
   public void testMiter() {
-    if (!canvas1.isSupported()) {
-      return; // disable tests if not supported
+    if (canvas1 == null) {
+      return; // don't continue if not supported
     }
 
     Context2d context = canvas1.getContext2d();
@@ -400,8 +401,8 @@ public class Context2dTest extends GWTTestCase {
   }
 
   public void testPixelManipulation() {
-    if (!canvas1.isSupported()) {
-      return; // disable tests if not supported
+    if (canvas1 == null) {
+      return; // don't continue if not supported
     }
 
     // Safari 3.0 does not support getImageData(), so the following tests are disabled for
@@ -431,8 +432,8 @@ public class Context2dTest extends GWTTestCase {
   }
 
   public void testShadows() {
-    if (!canvas1.isSupported()) {
-      return; // disable tests if not supported
+    if (canvas1 == null) {
+      return; // don't continue if not supported
     }
     
     // Firefox 3.0 returns the incorrect shadowBlur value so the following tests are disabled
@@ -459,8 +460,8 @@ public class Context2dTest extends GWTTestCase {
   }
 
   public void testStrokeStyle() {
-    if (!canvas1.isSupported()) {
-      return; // disable tests if not supported
+    if (canvas1 == null) {
+      return; // don't continue if not supported
     }
 
     // get the 2d contexts
@@ -502,8 +503,8 @@ public class Context2dTest extends GWTTestCase {
   }
 
   public void testText() {
-    if (!canvas1.isSupported()) {
-      return; // disable tests if not supported
+    if (canvas1 == null) {
+      return; // don't continue if not supported
     }
     
     canvas1.setHeight("40px");

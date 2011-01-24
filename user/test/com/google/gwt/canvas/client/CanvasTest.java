@@ -45,10 +45,11 @@ public class CanvasTest extends GWTTestCase {
 
   @Override
   protected void gwtSetUp() throws Exception {
-    canvas1 = new Canvas();
-    canvas2 = new Canvas();
-    if (!canvas1.isSupported()) {
-      return; // disable tests if not supported
+    canvas1 = Canvas.createIfSupported();
+    canvas2 = Canvas.createIfSupported();
+    
+    if (canvas1 == null) {
+      return; // don't continue if not supported
     }
 
     RootPanel.get().add(canvas1);
@@ -57,24 +58,29 @@ public class CanvasTest extends GWTTestCase {
 
   @Override
   protected void gwtTearDown() throws Exception {
+    if (canvas1 == null) {
+      return; // don't continue if not supported
+    }
+    
     RootPanel.get().remove(canvas1);
     RootPanel.get().remove(canvas2);
   }
 
   /*
-   * If the canvas has no pixels (i.e. either its horizontal dimension or its vertical dimension 
-   * is zero) then the method must return the string "data:,". (This is the shortest data: URL; 
-   * it represents the empty string in a text/plain resource.)
-   * 
+   * If the canvas has no pixels (i.e. either its horizontal dimension or its
+   * vertical dimension is zero) then the method must return the string
+   * "data:,". (This is the shortest data: URL; it represents the empty string
+   * in a text/plain resource.)
+   *
    * Due to browser inconsistencies, we just check for data:something.
    */
   public void testBlankDataUrl() {
-    if (!canvas1.isSupported()) {
-      return; // disable tests if not supported
+    if (canvas1 == null) {
+      return; // don't continue if not supported
     }
 
-    // Safari 3.0 does not support toDataURL(), so the following tests are disabled for
-    // Safari 3.0 and before.
+    // Safari 3.0 does not support toDataURL(), so the following tests are
+    // disabled for Safari 3.0 and before.
     if (isWebkit525OrBefore()) {
       return;
     }
@@ -87,12 +93,34 @@ public class CanvasTest extends GWTTestCase {
     canvas1.setCoordinateSpaceWidth(0);
     
     String dataUrl = canvas1.toDataUrl();
-    assertTrue("toDataURL() should return data:something", dataUrl.startsWith("data:"));
+    assertTrue("toDataURL() should return data:something",
+        dataUrl.startsWith("data:"));
+  }
+
+  public void testDataUrlWithType() {
+    if (canvas1 == null) {
+      return; // don't continue if not supported
+    }
+
+    // Safari 3.0 does not support toDataURL(), so the following tests are
+    // disabled for Safari 3.0 and before.
+    if (isWebkit525OrBefore()) {
+      return;
+    }
+
+    canvas1.setHeight("10px");
+    canvas1.setWidth("10px");
+    canvas1.setCoordinateSpaceHeight(10);
+    canvas1.setCoordinateSpaceWidth(10);
+    
+    String dataUrl = canvas1.toDataUrl("image/png");
+    assertTrue("toDataURL(image/png) should return data:image/png[data]", 
+        dataUrl.startsWith("data:image/png"));
   }
 
   public void testHeightAndWidth() {
-    if (!canvas1.isSupported()) {
-      return; // disable tests if not supported
+    if (canvas1 == null) {
+      return; // don't continue if not supported
     }
 
     canvas1.setHeight("40px");
@@ -117,8 +145,8 @@ public class CanvasTest extends GWTTestCase {
   }
 
   public void testInternalHeightAndWidth() {
-    if (!canvas1.isSupported()) {
-      return; // disable tests if not supported
+    if (canvas1 == null) {
+      return; // don't continue if not supported
     }
 
     canvas1.setHeight("40px");
@@ -147,24 +175,14 @@ public class CanvasTest extends GWTTestCase {
     assertEquals(161, canvas1.getCoordinateSpaceWidth());
   }
 
-  public void testDataUrlWithType() {
-    if (!canvas1.isSupported()) {
-      return; // disable tests if not supported
+  public void testIsSupported() {
+    if (canvas1 == null) {
+      assertFalse(
+          "isSupported() should be false when createIfSupported() returns null",
+          Canvas.isSupported());
+    } else {
+      assertTrue(
+          "isSupported() should be true when createIfSupported() returns non-null", Canvas.isSupported());
     }
-
-    // Safari 3.0 does not support toDataURL(), so the following tests are disabled for
-    // Safari 3.0 and before.
-    if (isWebkit525OrBefore()) {
-      return;
-    }
-
-    canvas1.setHeight("10px");
-    canvas1.setWidth("10px");
-    canvas1.setCoordinateSpaceHeight(10);
-    canvas1.setCoordinateSpaceWidth(10);
-    
-    String dataUrl = canvas1.toDataUrl("image/png");
-    assertTrue("toDataURL(image/png) should return data:image/png[data]", 
-        dataUrl.startsWith("data:image/png"));
   }
 }

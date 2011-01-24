@@ -16,5 +16,30 @@
 <module>
   <inherits name="com.google.gwt.user.User"/>
   <inherits name="com.google.gwt.canvas.dom.DOM"/>
+
+  <!-- Define the support property -->
+  <define-property name="canvasElementSupport" values="maybe,no" />
+
+  <!-- Give default support value of no -->
+  <set-property name="canvasElementSupport" value="no" />
+
+  <set-property name="canvasElementSupport" value="maybe">
+    <any>
+      <when-property-is name="user.agent" value="safari" />
+      <when-property-is name="user.agent" value="gecko1_8" />
+      <when-property-is name="user.agent" value="opera" />
+    </any>
+  </set-property>
+
+  <replace-with class="com.google.gwt.canvas.client.Canvas.CanvasElementSupportDetectedMaybe">
+    <when-type-is class="com.google.gwt.canvas.client.Canvas.CanvasElementSupportDetector" />
+    <when-property-is name="canvasElementSupport" value="maybe" />
+  </replace-with>
+
+  <replace-with class="com.google.gwt.canvas.client.Canvas.CanvasElementSupportDetectedNo">
+    <when-type-is class="com.google.gwt.canvas.client.Canvas.CanvasElementSupportDetector" />
+    <when-property-is name="canvasElementSupport" value="no" />
+  </replace-with>
+
   <source path="client"/>
 </module>
