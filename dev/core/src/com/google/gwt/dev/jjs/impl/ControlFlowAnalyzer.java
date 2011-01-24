@@ -117,7 +117,8 @@ public class ControlFlowAnalyzer {
               true, isInstantiated);
         } else {
           // anything[] -> Object
-          rescue(program.getTypeJavaLangObject(), true, isInstantiated);
+          // But instead of Object, rescue the base Array implementation type.
+          rescue(baseArrayType, true, isInstantiated);
         }
       }
 
@@ -130,8 +131,6 @@ public class ControlFlowAnalyzer {
         }
       }
 
-      // Rescue the base Array type
-      rescue(program.getIndexedType("Array"), true, isInstantiated);
       return false;
     }
 
@@ -710,6 +709,7 @@ public class ControlFlowAnalyzer {
     }
   }
 
+  private JDeclaredType baseArrayType;
   private DependencyRecorder dependencyRecorder;
 
   private Set<JField> fieldsWritten = new HashSet<JField>();
@@ -739,6 +739,7 @@ public class ControlFlowAnalyzer {
 
   public ControlFlowAnalyzer(ControlFlowAnalyzer cfa) {
     program = cfa.program;
+    baseArrayType = cfa.baseArrayType;
     fieldsWritten = new HashSet<JField>(cfa.fieldsWritten);
     instantiatedTypes = new HashSet<JReferenceType>(cfa.instantiatedTypes);
     liveFieldsAndMethods = new HashSet<JNode>(cfa.liveFieldsAndMethods);
@@ -752,6 +753,7 @@ public class ControlFlowAnalyzer {
 
   public ControlFlowAnalyzer(JProgram program) {
     this.program = program;
+    baseArrayType = program.getIndexedType("Array");
     buildMethodsOverriding();
   }
 
