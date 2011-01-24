@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -80,10 +80,12 @@ bool Socket::connect(const char* host, int port) {
   if (::connect(fd, (struct sockaddr*) &sockAddr, sizeof(sockAddr)) < 0) {
 #ifdef _WINDOWS
     char buf[256];
-    strerror_s(buf, sizeof(buf), errno);
-    Debug::log(Debug::Error) << "Can't connect to " << host << ":" << port << " -- "
-        << buf << Debug::flush;
+    DWORD dwLastError = ::GetLastError();
+    strerror_s(buf, sizeof(buf), dwLastError);
+    Debug::log(Debug::Error) << "Failed to connect to " << host << ":" << port << " -- error code "
+        << dwLastError << Debug::flush;
     closesocket(fd);
+    ::SetLastError(dwLastError);
 #else
     Debug::log(Debug::Error) << "Can't connect to " << host << ":" << port << " -- "
         << strerror(errno) << Debug::flush;
@@ -119,7 +121,7 @@ bool Socket::disconnect(bool doFlush) {
   }
   return true;
 }
-  
+
 bool Socket::emptyWriteBuf() {
   size_t len = writeBufPtr - writeBuf;
   Debug::log(Debug::Spam) << "Socket::emptyWriteBuf: len=" << len << Debug::flush;
@@ -146,7 +148,7 @@ bool Socket::emptyWriteBuf() {
   writeBufPtr = writeBuf;
   return true;
 }
-  
+
 bool Socket::fillReadBuf() {
   readBufPtr = readBuf;
   errno = 0;

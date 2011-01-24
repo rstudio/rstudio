@@ -12,7 +12,7 @@
     </Fragment>
     <Fragment>
         <ComponentGroup Id="oophmDll">
-            <Component Win64="$(var.win64Flag)" Id="cmpC5076456A3EE2DC3FC2683246BE38AD6" Directory="dir315E0C50682DFB472927FE1254A22F6A" Guid="76483594-CBB8-438C-B777-5ABF473A90F0">
+            <Component Win64="$(var.win64Flag)" Id="cmpC5076456A3EE2DC3FC2683246BE38AD6" Directory="dir315E0C50682DFB472927FE1254A22F6A" Guid="FA1A9445-6468-4AF2-9132-8089DBE4AA91">
                 <File Id="filEF78EFE99C26E3436EC9C8852A85BE88" KeyPath="yes" Source="$(var.binDir)\oophm.dll">
                     <TypeLib Id="{9259F105-BE55-4BF6-B7CE-D0AA878C1BA6}" Description="oophm 1.0 Type Library" HelpDirectory="dir315E0C50682DFB472927FE1254A22F6A" Language="0" MajorVersion="1" MinorVersion="0">
                         <AppId Description="oophm" Id="{F9365E53-5A14-47F3-BF1D-10CAAB815309}">
@@ -41,7 +41,7 @@
                 <RegistryValue Root="HKMU" Key="AppID\oophm.DLL" Name="AppID" Value="{F9365E53-5A14-47F3-BF1D-10CAAB815309}" Type="string" Action="write" />
                 <RegistryValue Root="HKMU" Key="CLSID\{1D6156B6-002B-49E7-B5CA-C138FB843B4E}\MiscStatus\1" Value="131473" Type="string" Action="write" />
                 <RegistryValue Root="HKMU" Key="CLSID\{1D6156B6-002B-49E7-B5CA-C138FB843B4E}\MiscStatus" Value="0" Type="string" Action="write" />
-                <RegistryValue Root="HKMU" Key="CLSID\{1D6156B6-002B-49E7-B5CA-C138FB843B4E}\ToolboxBitmap32" Value="[!filEF78EFE99C26E3436EC9C8852A85BE88], 102" Type="string" Action="write" />
+                <RegistryValue Root="HKMU" Key="CLSID\{1D6156B6-002B-49E7-B5CA-C138FB843B4E}\ToolboxBitmap32" Value="[#filEF78EFE99C26E3436EC9C8852A85BE88], 102" Type="string" Action="write" />
             </Component>
         </ComponentGroup>
     </Fragment>

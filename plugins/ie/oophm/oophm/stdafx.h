@@ -40,3 +40,7 @@
 #include "initguid.h"
 
 using namespace ATL;
+
+#include <windows.h>
+#include <stdio.h>
+#include <winevt.h>

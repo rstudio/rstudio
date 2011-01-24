@@ -245,6 +245,9 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;../../../platform/Win;../../../common"
 				PreprocessorDefinitions="_WINDOWS;GWT_DEBUGDISABLE"
 				RuntimeLibrary="0"
@@ -339,6 +342,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;../../../platform/Win;../../../common"
 				PreprocessorDefinitions="_WINDOWS;GWT_DEBUGDISABLE"
@@ -604,6 +609,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Constants.h"
+				>
+			</File>
+			<File
 				RelativePath=".\dlldatax.h"
 				>
 			</File>
@@ -621,6 +630,10 @@
 			</File>
 			<File
 				RelativePath=".\IESessionHandler.h"
+				>
+			</File>
+			<File
+				RelativePath=".\IEUtils.h"
 				>
 			</File>
 			<File

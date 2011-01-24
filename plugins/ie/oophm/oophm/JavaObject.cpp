@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -22,6 +22,8 @@
 #include "ReturnMessage.h"
 #include "ServerMethods.h"
 #include "scoped_ptr/scoped_ptr.h"
+#include "IEUtils.h"
+#include "Constants.h"
 //#include "activscp.h"
 
 static const DISPID DISPID_TOSTRING = 1;
@@ -179,9 +181,9 @@ STDMETHODIMP CJavaObject::InvokeEx(DISPID dispidMember, LCID lcid, WORD wFlags,
     }
 
     DISPID dispId;
-    LPOLESTR makeResultName = L"__gwt_makeResult";
-    if (!SUCCEEDED(sessionData->getWindow()->GetIDsOfNames(IID_NULL, &makeResultName, 1,
-      LOCALE_SYSTEM_DEFAULT, &dispId))) {
+
+    HRESULT hr = IEUtils::resolveName(sessionData->getWindow(), Constants::__gwt_makeResult, &dispId);
+    if (FAILED(hr)) {
         Debug::log(Debug::Error) << "Unable to get dispId for __gwt_makeResult" << Debug::flush;
         return E_FAIL;
     }
@@ -207,14 +209,11 @@ STDMETHODIMP CJavaObject::InvokeEx(DISPID dispidMember, LCID lcid, WORD wFlags,
     } else if (dispidMember == DISPID_TOSTRING) {
       // Asking for a tear-off of the .toString function
       Debug::log(Debug::Spam) << "Making .toString tearoff" << Debug::flush;
-      HRESULT res;
 
       // Get a reference to __gwt_makeTearOff
       DISPID tearOffDispid;
-      LPOLESTR tearOffName = L"__gwt_makeTearOff";
-      res = sessionData->getWindow()->GetIDsOfNames(IID_NULL,
-        &tearOffName, 1, LOCALE_SYSTEM_DEFAULT, &tearOffDispid);
-      if (FAILED(res)) {
+      HRESULT hr = IEUtils::resolveName(sessionData->getWindow(), Constants::__gwt_makeTearOff, &tearOffDispid);
+      if (FAILED(hr)) {
         Debug::log(Debug::Error) << "Unable to find __gwt_makeTearOff" << Debug::flush;
         return E_FAIL;
       }
@@ -228,9 +227,9 @@ STDMETHODIMP CJavaObject::InvokeEx(DISPID dispidMember, LCID lcid, WORD wFlags,
       DISPPARAMS tearOffParams = {tearOffArgs.get(), NULL, 3, 0};
 
       // Invoke __gwt_makeTearOff
-      res = sessionData->getWindow()->Invoke(tearOffDispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
-        DISPATCH_METHOD, &tearOffParams, pvarResult, NULL, 0);
-      if (FAILED(res)) {
+      hr = IEUtils::Invoke(sessionData->getWindow(), tearOffDispid,DISPATCH_METHOD,
+          &tearOffParams, pvarResult, NULL, 0);
+      if (FAILED(hr)) {
         Debug::log(Debug::Error) << "Unable to invoke __gwt_makeTearOff" << Debug::flush;
         return E_FAIL;
       }

@@ -27,6 +27,7 @@
 #include "AllowedConnections.h"
 #include "Preferences.h"
 #include "AllowDialog.h"
+#include "IEUtils.h"
 
 // Cplugin
 
@@ -75,10 +76,16 @@ STDMETHODIMP Cplugin::connect(BSTR burl, BSTR bsessionKey, BSTR bhostedServer,
   HostChannel* channel = new HostChannel();
 
   if (!channel->connectToHost(
-      hostPart.c_str(),
-      atoi(portPart.c_str()))) {
-    *ret = false;
-    return S_OK;
+    hostPart.c_str(),
+    atoi(portPart.c_str()))) {
+      *ret = false;
+      DWORD  errCode = ::GetLastError();
+      PWCHAR errMsg = IEUtils::GetSysErrorMessage(errCode);
+      SYSLOGERROR(L"GWT Developer Mode plugin failed to connect to code server.",
+          L"URL: %S\nERRORMESSAGE: %sERRORCODE: %d (0x%08X)",
+          url.c_str(), errMsg, errCode, errCode);
+      ::LocalFree(errMsg);
+      return S_OK;
   }
 
   sessionHandler.reset(new IESessionHandler(channel, window));

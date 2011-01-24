@@ -21,49 +21,54 @@
 #include "IESessionHandler.h"
 #include "ServerMethods.h"
 #include "scoped_ptr/scoped_ptr.h"
+#include "IEUtils.h"
+#include "Constants.h"
+
 
 IESessionHandler::IESessionHandler(HostChannel* channel,
                                    IHTMLWindow2* window) : SessionData(channel, window, this), jsObjectId(1)
 {
   // window->put_defaultStatus(L"GWT Developer Plugin active");
+  IEUtils::resetResolver();
 }
 
 IESessionHandler::~IESessionHandler(void) {
   Debug::log(Debug::Debugging) << "Destroying session handler" << Debug::flush;
-
   Debug::log(Debug::Spam) << jsObjectsById.size() << " active JS object referances" << Debug::flush;
-
   // Put any remaining JavaObject references into zombie-mode in case
   // of lingering references
-  Debug::log(Debug::Spam) << javaObjectsById.size() << " active Java object referances" << Debug::flush;
+  Debug::log(Debug::Spam) << javaObjectsById.size() << " active Java object references" << Debug::flush;
+
+  IEUtils::resetResolver();
   std::map<int, IUnknown*>::iterator it = javaObjectsById.begin();
   while (it != javaObjectsById.end()) {
     ((CJavaObject*)it->second)->shutdown();
     it++;
   }
-
   channel->disconnectFromHost();
 }
 
 void IESessionHandler::disconnectDetectedImpl() {
   DISPID dispId;
-  LPOLESTR gwtDisconnectedName = L"__gwt_disconnected";
-  if (!SUCCEEDED(getWindow()->GetIDsOfNames(IID_NULL, &gwtDisconnectedName, 1,
-    LOCALE_SYSTEM_DEFAULT, &dispId))) {
-      Debug::log(Debug::Error) << "Unable to get dispId for __gwt_disconnected" << Debug::flush;
-      return;
+
+  HRESULT hr = IEUtils::resolveName(window, Constants::__gwt_disconnected, &dispId);
+  if(FAILED(hr)) {
+    Debug::log(Debug::Error) << "Unable to get dispId for __gwt_disconnected" << Debug::flush;
+    return;
   }
 
   DISPPARAMS dispParams = {NULL, NULL, 0, 0};
   CComPtr<IDispatchEx> dispEx;
-  getWindow()->QueryInterface(&dispEx);
-  dispEx->InvokeEx(dispId, LOCALE_SYSTEM_DEFAULT, DISPATCH_METHOD,
-    &dispParams, NULL, NULL, NULL);
+  hr = IEUtils::Invoke(getWindow(), dispId, DISPATCH_METHOD, &dispParams, NULL, NULL, NULL);
+  if (FAILED(hr)) {
+    Debug::log(Debug::Error) << "Unable to invoke __gwt_disconnected" << Debug::flush;
+    SYSLOGERROR(L"failed to invoke __gwt_disconnected", L"hr=0x%08x", hr);
+  }
 }
 
 void IESessionHandler::fatalError(HostChannel& channel,
     const std::string& message) {
-  // TODO: better way of reporting error?
+  SYSLOGERROR(L"IESessionHandler::fatalError()", L"%S", message.c_str());
   Debug::log(Debug::Error) << "Fatal error: " << message << Debug::flush;
 }
 
@@ -92,6 +97,7 @@ void IESessionHandler::sendFreeValues(HostChannel& channel) {
   if (!ServerMethods::freeJava(channel, this, idCount, ids.get())) {
     Debug::log(Debug::Error) << "Unable to free Java ids on server" << Debug::flush;
   }
+
   javaObjectsToFree.clear();
 }
 
@@ -113,17 +119,17 @@ bool IESessionHandler::invoke(HostChannel& channel, const Value& thisObj,
                                const std::string& methodName, int numArgs,
                                const Value* const args, Value* returnValue)
 {
-  Debug::log(Debug::Debugging) << "Executing method " << methodName << " on object " << thisObj.toString() << Debug::flush;
+  Debug::log(Debug::Debugging) << "Executing method " << methodName <<
+      " on object " << thisObj.toString() << Debug::flush;
 
-  HRESULT res;
-
-  // Get the function off of the window
   DISPID methodDispId;
-  _bstr_t methodNameBstr = UTF8ToBSTR(methodName.length(), methodName.c_str());
-  res = window->GetIDsOfNames(IID_NULL, &methodNameBstr.GetBSTR(), 1,
-    LOCALE_SYSTEM_DEFAULT, &methodDispId);
-  if (res) {
-    Debug::log(Debug::Error) << "Unable to find method " << methodName << " on the window object" <<Debug::flush;
+  HRESULT hr = IEUtils::resolveName(window, methodName, &methodDispId);
+  if (FAILED(hr)) {
+    SYSLOGERROR(L"Failed to resolve name to DISPID",
+        L"IESessionHandler::invoke(thisObj=%S, methodName=%S)",
+        thisObj.toString().c_str(), methodName.c_str());
+    Debug::log(Debug::Error) << "Unable to find method " << methodName
+        << " on the window object" <<Debug::flush;
     makeExceptionValue(*returnValue, "Unable to find named method on window");
     return true;
   }
@@ -132,14 +138,16 @@ bool IESessionHandler::invoke(HostChannel& channel, const Value& thisObj,
   // TODO try PROPERTYGET|EXECUTE instead?
   _variant_t functionObject;
   DISPPARAMS disparamsNoArgs = {NULL, NULL, 0, 0};
-  res = window->Invoke(methodDispId, IID_NULL, LOCALE_SYSTEM_DEFAULT,
-    DISPATCH_PROPERTYGET, &disparamsNoArgs, functionObject.GetAddress(), NULL, NULL);
-  if (res) {
-    Debug::log(Debug::Error) << "Unable to get method " << methodName << Debug::flush;
+  hr = IEUtils::Invoke(window, methodDispId, DISPATCH_PROPERTYGET, &disparamsNoArgs,
+      functionObject.GetAddress(), NULL, NULL);
+  if (FAILED(hr)) {
+    Debug::log(Debug::Error) << "Unable to get method " << methodName
+        << Debug::flush;
     makeExceptionValue(*returnValue, "Unable to get method from window");
     return true;
   } else if (functionObject.vt != VT_DISPATCH) {
-    Debug::log(Debug::Error) << "Did not get a VT_DISPATCH, got " << functionObject.vt << Debug::flush;
+    Debug::log(Debug::Error) << "Did not get a VT_DISPATCH, got " <<
+        functionObject.vt << Debug::flush;
     makeExceptionValue(*returnValue, "Did not get a VT_DISPATCH");
     return true;
   }
@@ -148,7 +156,8 @@ bool IESessionHandler::invoke(HostChannel& channel, const Value& thisObj,
   CComPtr<IDispatchEx> ex;
   if (functionObject.pdispVal->QueryInterface(&ex)) {
     // Probably not a function
-    Debug::log(Debug::Error) << "Failed to invoke " << methodName << " which is not an IDispatchEx" << Debug::flush;
+    Debug::log(Debug::Error) << "Failed to invoke " << methodName <<
+        " which is not an IDispatchEx" << Debug::flush;
     makeExceptionValue(*returnValue, "Unable to invoke method");
     return true;
   }
@@ -171,7 +180,7 @@ bool IESessionHandler::invoke(HostChannel& channel, const Value& thisObj,
 
   CComPtr<IServiceProvider> serviceProvider;
   catcher->QueryInterface(&serviceProvider);
-  res = ex->InvokeEx(DISPID_VALUE, LOCALE_SYSTEM_DEFAULT, DISPATCH_METHOD,
+  hr = ex->InvokeEx(DISPID_VALUE, LOCALE_SYSTEM_DEFAULT, DISPATCH_METHOD,
     &callDispParams, retVal.GetAddress(), &excepInfo, serviceProvider);
 
   // There are cases where an exception was thrown and we've caught it, but
@@ -187,7 +196,7 @@ bool IESessionHandler::invoke(HostChannel& channel, const Value& thisObj,
     makeValue(*returnValue, exception);
     exceptionFlag = true;
 
-  } else if (!SUCCEEDED(res)) {
+  } else if (!SUCCEEDED(hr)) {
     makeExceptionValue(*returnValue, "Unknown failure");
     exceptionFlag = true;
 
@@ -206,39 +215,42 @@ bool IESessionHandler::invokeSpecial(HostChannel& channel, SpecialMethodId metho
   return true;
 }
 
+
 void IESessionHandler::loadJsni(HostChannel& channel, const std::string& js) {
-  Debug::log(Debug::Spam) << "loadJsni " << js << Debug::flush;
+    Debug::log(Debug::Spam) << ">>> loadJsni\n" << js << "\n<<< loadJsni" << Debug::flush;
 
-  _bstr_t code = UTF8ToBSTR(js.length(), js.c_str());
-  _bstr_t language = UTF8ToBSTR(10, "JavaScript");
-  _variant_t retVal;
-  Value toReturn;
-
-  HRESULT res = window->execScript(code, language, retVal.GetAddress());
-  if (!SUCCEEDED(res)) {
-    Debug::log(Debug::Error) << "Unable to evaluate JSNI code" << Debug::flush;
-  }
+    _variant_t retVal;
+    HRESULT hr = window->execScript(UTF8ToBSTR(js.length(), js.c_str()),
+        Constants::JavaScript, retVal.GetAddress());
+    if (FAILED(hr)) {
+        Debug::log(Debug::Error) << "Unable to evaluate JSNI code" << Debug::flush;
+    }
 }
 
 void IESessionHandler::makeException(_variant_t& in, const char* message) {
-  Debug::log(Debug::Debugging) << "Creating exception variant " << std::string(message) << Debug::flush;
-  HRESULT res;
+  Debug::log(Debug::Debugging) << "Creating exception variant " <<
+      std::string(message) << Debug::flush;
+
+  SYSLOGERROR(L"IESessionHandler::makeException()", L"exception: %S", message);
   DISPID dispId;
-  LPOLESTR error = L"Error";
-  res = window->GetIDsOfNames(IID_NULL, &error, 1, LOCALE_SYSTEM_DEFAULT, &dispId);
+  HRESULT hr = IEUtils::resolveName(window, Constants::Error, &dispId);
+  if (FAILED(hr)) {
+      SYSLOGERROR(L"failed to resolve Error object", L"hr=0x%08x", hr);
+      return;
+  }
 
   DISPPARAMS emptyParams = {NULL, NULL, 0, 0};
   _variant_t errorConstructor;
-  res = window->Invoke(dispId, IID_NULL, LOCALE_SYSTEM_DEFAULT, DISPATCH_PROPERTYGET,
-    &emptyParams, errorConstructor.GetAddress(), NULL, NULL);
-  if (res) {
+  hr = IEUtils::Invoke(window, dispId, DISPATCH_PROPERTYGET, &emptyParams,
+      errorConstructor.GetAddress(), NULL, NULL);
+  if (FAILED(hr)) {
     Debug::log(Debug::Error) << "Unable to get Error constructor" << Debug::flush;
     in.SetString("Unable to get Error constructor");
   }
 
   CComPtr<IDispatchEx> ex;
-  res = errorConstructor.pdispVal->QueryInterface(&ex);
-  if (res) {
+  hr = errorConstructor.pdispVal->QueryInterface(&ex);
+  if (FAILED(hr)) {
     Debug::log(Debug::Error) << "Error constructor not IDispatchEx" << Debug::flush;
     in.SetString("Error constructor not IDispatchEx");
   }
@@ -246,10 +258,10 @@ void IESessionHandler::makeException(_variant_t& in, const char* message) {
   _variant_t param = _variant_t(message);
   DISPPARAMS dispParams = {&param, NULL, 1, 0};
 
-  res = ex->InvokeEx(DISPID_VALUE, LOCALE_SYSTEM_DEFAULT, DISPATCH_CONSTRUCT,
+  hr = ex->InvokeEx(DISPID_VALUE, LOCALE_SYSTEM_DEFAULT, DISPATCH_CONSTRUCT,
     &dispParams, in.GetAddress(), NULL, NULL);
 
-  if (res) {
+  if (FAILED(hr)) {
     Debug::log(Debug::Error) << "Unable to invoke Error constructor" << Debug::flush;
     in.SetString("Unable to invoke Error constructor");
   }
@@ -315,10 +327,9 @@ void IESessionHandler::makeValue(Value& retVal, const _variant_t& value) {
         _variant_t stringValue;
         DISPPARAMS emptyParams = {NULL, NULL, 0, 0};
         DISPID valueOfDispId = -1;
-        LPOLESTR valueOfString = L"valueOf";
-
-        dispObj->GetIDsOfNames(IID_NULL, &valueOfString, 1, LOCALE_SYSTEM_DEFAULT, &valueOfDispId);
         // See if it's a wrapped String object by invoking valueOf()
+        HRESULT hr = dispObj->GetIDsOfNames(IID_NULL, (LPOLESTR*)&Constants::valueOf, 1,
+            LOCALE_SYSTEM_DEFAULT, &valueOfDispId);
         if ((valueOfDispId != -1) &&
             SUCCEEDED(dispObj->Invoke(valueOfDispId, IID_NULL, LOCALE_SYSTEM_DEFAULT,
               DISPATCH_METHOD, &emptyParams, stringValue.GetAddress(),

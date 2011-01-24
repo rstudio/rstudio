@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -77,7 +77,7 @@ typedef SessionData* SessionDataRef;
 
 // TODO move these to a utility header
 
-static std::string BSTRToUTF8(BSTR bstr) {
+__inline static std::string BSTRToUTF8(BSTR bstr) {
   // Need an explict length due to the possibility of embedded nulls
   int length = SysStringLen(bstr);
   int numChars = WideCharToMultiByte(CP_UTF8, 0, bstr, length, NULL, 0, NULL, NULL);
@@ -93,7 +93,7 @@ static std::string BSTRToUTF8(BSTR bstr) {
  * Convert a utf8-encoded string into a BSTR.  The length is explicitly
  * specified because the incoming string may have embedded null charachers.
  */
-static _bstr_t UTF8ToBSTR(int length, const char* utf8) {
+__inline static _bstr_t UTF8ToBSTR(int length, const char* utf8) {
   // We explicitly use MultiByteToWideChar to handle embedded nulls
   int numChars = MultiByteToWideChar(CP_UTF8, 0, utf8, length, NULL, 0);
   OLECHAR* buffer = new OLECHAR[numChars];
