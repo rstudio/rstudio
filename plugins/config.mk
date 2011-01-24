@@ -69,10 +69,6 @@ endif
 MARCH=$(ARCH)
 ifeq ($(ARCH),x86)
 MARCH=i386
-OMARCH=ppc
-endif
-ifeq ($(ARCH),ppc)
-OMARCH=i386
 endif
 
 # Set OS as well as CFLAGS, CXX, and other common make variables
@@ -80,13 +76,13 @@ ifeq ($(shell uname),Linux)
 OS=linux
 BASECFLAGS= -g -O2 -fPIC $(INC) -rdynamic
 ARCHCFLAGS=-m$(FLAG32BIT)
-ALLARCHCFLAGS=$(ARCHCFLAGS)
+ALLARCHCFLAGS=
 endif
 ifeq ($(shell uname),Darwin)
 OS=mac
 BASECFLAGS= -g -O2 -fPIC $(INC) -D__mac
 ARCHCFLAGS=-arch $(MARCH)
-ALLARCHCFLAGS=-arch i386 -arch ppc
+ALLARCHCFLAGS=-arch i386 -arch ppc -arch x86_64
 AR=libtool
 ARFLAGS=-static -o
 endif

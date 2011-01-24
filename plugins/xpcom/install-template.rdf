@@ -26,6 +26,7 @@
     <em:targetPlatform>Linux_x86_64-gcc3</em:targetPlatform>
     <em:targetPlatform>WINNT_x86-msvc</em:targetPlatform>
     <em:targetPlatform>Darwin_x86-gcc3</em:targetPlatform>
+    <em:targetPlatform>Darwin_x86_64-gcc3</em:targetPlatform>
     <em:targetPlatform>Darwin_ppc-gcc3</em:targetPlatform>
 
     <em:optionsURL>chrome://gwt-dev-plugin/content/options.xul</em:optionsURL>

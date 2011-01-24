@@ -72,6 +72,9 @@ NSPR_DLLFLAGS = -lnspr4
 MOZJS_DLLFLAGS = -lmozjs
 MOZALLOC_DLLFLAGS =
 
+#default ALLARCHFLAGS for pre-FF4
+ALLARCHCFLAGS=-arch i386 -arch ppc
+
 ifeq ($(BROWSER),ff3)
 GECKO_VERSION   = 1.9.0
 CFLAGS += -DGECKO_VERSION=1900
@@ -93,8 +96,13 @@ ifeq ($(BROWSER),ff40)
 GECKO_VERSION   = 2.0.0
 CFLAGS += -DGECKO_VERSION=2000
 MOZALLOC_DLLFLAGS = -lmozalloc
-#MOZJS is statically linked in FF4
-MOZJS_DLLFLAGS =
+MOZJS_DLLFLAGS = -lxul
+
+#FF4 drops PPC, adds x86_64. Use FLAG32BIT as a switch in the unified headers.
+ifeq ($(OS),mac)
+ALLARCHCFLAGS = -arch i386 -arch x86_64 -Xarch_i386 -DFLAG32BIT=32 -Xarch_x86_64 -DFLAG32BIT=64
+endif
+
 else
 $(error Unrecognized BROWSER of $(BROWSER) - options are ff3, ff3+, ff35, ff36, ff40)
 endif
@@ -133,7 +141,6 @@ XPIDL             = $(GECKO_SDK)/$(GECKO_PLATFORM)/bin/xpidl
 XPIDL_FLAGS       = -I$(GECKO_SDK)/idl
 
 DLLFLAGS += \
-		-L$(DEFAULT_FIREFOX_LIBS) \
 		-L$(GECKO_LIBS) \
 		-Wl,$(RUN_PATH_FLAG),$(GECKO_LIBS) \
 		$(GECKO_DLLFLAGS) $(NSPR_DLLFLAGS) \
@@ -212,7 +219,7 @@ $(FF_HEADER): IOOPHM.idl $(OBJ_OUTDIR)
 	[ ! -x $(XPIDL) -o \( -e $(FF_HEADER) -a ! -w $(FF_HEADER) \) ] || $(XPIDL) $(XPIDL_FLAGS) -m header -e $@ $<
 
 $(FF_DLL): $(FF_OBJS) $(COMMON)
-	$(CXX) -m$(FLAG32BIT) -o $@ $(FF_OBJS) $(COMMON) $(DLLFLAGS) 
+	$(CXX) -o $@ $(FF_OBJS) $(COMMON) $(DLLFLAGS)
 	@mkdir -p $(FF_PLATFORM_DIR)
 	cp $(FF_DLL) $(FF_PLATFORM_DIR)/
 

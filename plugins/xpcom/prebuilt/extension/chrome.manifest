@@ -3,8 +3,10 @@ skin gwt-dev-plugin classic/1.0 skin/
 
 binary-component lib/Linux_x86_64-gcc3/ff40/libgwt_dev_ff40.so ABI=Linux_x86_64-gcc3
 binary-component lib/Linux_x86-gcc3/ff40/libgwt_dev_ff40.so ABI=Linux_x86-gcc3
-# Windows and Mac are not yet supported
-# binary-component lib/Darwin-gcc3/ff40/libgwt_dev_ff40.dylib ABI=Darwin_x86-gcc3
+binary-component lib/Darwin-gcc3/ff40/libgwt_dev_ff40.dylib ABI=Darwin_x86_64-gcc3
+binary-component lib/Darwin-gcc3/ff40/libgwt_dev_ff40.dylib ABI=Darwin_x86-gcc3
+
+# Windows is not yet supported
 # binary-component lib/WINNT_x86-msvc/ff40/xpGwtDevPlugin.dll ABI=WINNT_x86-msvc
 
 interfaces components/IOOPHM.xpt
