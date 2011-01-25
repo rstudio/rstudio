@@ -108,6 +108,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("session-timeout-minutes",
          value<int>(&timeoutMinutes_)->default_value(120),
          "session timeout (minutes)" )
+      ("session-preflight-script",
+         value<std::string>(&preflightScript_)->default_value(""),
+         "session preflight script")
       ("session-create-public-folder",
          value<bool>(&createPublicFolder_)->default_value(false),
          "automatically create public folder");

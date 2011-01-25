@@ -121,12 +121,14 @@ bool currentUserIsPrivilleged(unsigned int minimumUserId);
    
 typedef std::pair<std::string,std::string> Option;
 typedef std::vector<Option> Options;
-   
+
 Error executeInterruptableChildProcess(
            std::string path,
            Options args,
            int checkContinueIntervalMs,
            const boost::function<bool()>& checkContinueFunction);
+
+Error runCommand(const std::string& command);
 
 Error captureCommand(const std::string& command, std::string* pOutput);
 

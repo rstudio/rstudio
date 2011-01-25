@@ -595,6 +595,14 @@ Error executeInterruptableChildProcess(
 }   
 
 
+Error runCommand(const std::string& command)
+{
+   int rc = ::system(command.c_str());
+   if (rc == -1 && errno != ECHILD)
+      return systemError(errno, ERROR_LOCATION);
+   else
+      return Success();
+}
 
 Error captureCommand(const std::string& command, std::string* pOutput)
 {
