@@ -48,7 +48,11 @@ public class TimeSlot implements Comparable<TimeSlot> {
         return -1;
       } else if (startMinutes > o.startMinutes) {
         return 1;
-      }
+      } else if (endMinutes < o.endMinutes) {
+        return -1;
+      } else if (endMinutes > o.endMinutes) {
+        return 1;
+      } 
     }
 
     return 0;

@@ -28,7 +28,10 @@ import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.Violation;
 import com.google.gwt.sample.dynatablerf.client.events.EditPersonEvent;
+import com.google.gwt.sample.dynatablerf.client.widgets.MentorSelector;
 import com.google.gwt.sample.dynatablerf.client.widgets.PersonEditor;
+import com.google.gwt.sample.dynatablerf.client.widgets.ScheduleEditor;
+import com.google.gwt.sample.dynatablerf.client.widgets.TimeSlotListWidget;
 import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory;
 import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory.PersonRequest;
 import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
@@ -88,7 +91,10 @@ public class PersonEditorWorkflow {
     this.requestFactory = requestFactory;
     this.manager = manager;
     this.person = person;
-    personEditor = new PersonEditor(requestFactory);
+    TimeSlotListWidget timeSlotEditor = new TimeSlotListWidget(requestFactory);
+    ScheduleEditor scheduleEditor = new ScheduleEditor(timeSlotEditor);
+    MentorSelector mentorEditor = new MentorSelector(requestFactory);
+    personEditor = new PersonEditor(mentorEditor, scheduleEditor);
     Binder.BINDER.createAndBindUi(this);
     contents.addDomHandler(new KeyUpHandler() {
       public void onKeyUp(KeyUpEvent event) {

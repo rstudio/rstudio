@@ -17,10 +17,8 @@ package com.google.gwt.sample.dynatablerf.server;
 
 import com.google.gwt.sample.dynatablerf.domain.Person;
 import com.google.gwt.sample.dynatablerf.domain.Schedule;
-import com.google.gwt.sample.dynatablerf.domain.TimeSlot;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -28,6 +26,8 @@ import java.util.Random;
  * Utility class for creating random people.
  */
 class PersonFuzzer {
+
+  public static final int MAX_PEOPLE = 100;
 
   private static final String[] FIRST_NAMES = new String[] {
       "Inman", "Sally", "Omar", "Teddy", "Jimmy", "Cathy", "Barney", "Fred",
@@ -42,15 +42,15 @@ class PersonFuzzer {
       "Basketball", "Computer Science", "Statistics", "Materials Engineering",
       "English Literature", "Geology"};
 
-  private static final int CLASS_LENGTH_MINS = 50;
-
-  private static final int MAX_PEOPLE = 100;
-
-  private static final int MAX_SCHED_ENTRIES = 5;
-
-  private static final int MIN_SCHED_ENTRIES = 1;
-
   private static final int STUDENTS_PER_PROF = 5;
+
+  public static List<Schedule> collectSchedules(List<Person> randomPeople) {
+    List<Schedule> toReturn = new ArrayList<Schedule>();
+    for (Person person : randomPeople) {
+      toReturn.add(person.getClassSchedule());
+    }
+    return toReturn;
+  }
 
   public static Person generatePerson() {
     Random rnd = new Random();
@@ -71,9 +71,7 @@ class PersonFuzzer {
   }
 
   private static Person generateRandomPerson(Random rnd) {
-    // 1 out of every so many people is a prof.
-    //
-    if (rnd.nextInt(STUDENTS_PER_PROF) == 1) {
+    if (isChosenAsProfessor(rnd)) {
       return generateRandomProfessor(rnd);
     } else {
       return generateRandomStudent(rnd);
@@ -90,33 +88,9 @@ class PersonFuzzer {
     String subject = pickRandomString(rnd, SUBJECTS);
     prof.setDescription("Professor of " + subject);
 
-    generateRandomSchedule(rnd, prof.getClassSchedule());
+    prof.setClassSchedule(ScheduleFuzzer.generateRandomSchedule(rnd));
 
     return prof;
-  }
-
-  private static void generateRandomSchedule(Random rnd, Schedule sched) {
-    int range = MAX_SCHED_ENTRIES - MIN_SCHED_ENTRIES + 1;
-    int howMany = MIN_SCHED_ENTRIES + rnd.nextInt(range);
-
-    TimeSlot[] timeSlots = new TimeSlot[howMany];
-
-    for (int i = 0; i < howMany; ++i) {
-      int startHrs = 8 + rnd.nextInt(9); // 8 am - 5 pm
-      int startMins = 15 * rnd.nextInt(4); // on the hour or some quarter
-      int dayOfWeek = 1 + rnd.nextInt(5); // Mon - Fri
-
-      int absStartMins = 60 * startHrs + startMins; // convert to minutes
-      int absStopMins = absStartMins + CLASS_LENGTH_MINS;
-
-      timeSlots[i] = new TimeSlot(dayOfWeek, absStartMins, absStopMins);
-    }
-
-    Arrays.sort(timeSlots);
-
-    for (int i = 0; i < howMany; ++i) {
-      sched.addTimeSlot(timeSlots[i]);
-    }
   }
 
   private static Person generateRandomStudent(Random rnd) {
@@ -129,13 +103,18 @@ class PersonFuzzer {
     String subject = pickRandomString(rnd, SUBJECTS);
     student.setDescription("Majoring in " + subject);
 
-    generateRandomSchedule(rnd, student.getClassSchedule());
+    student.setClassSchedule(ScheduleFuzzer.generateRandomSchedule(rnd));
 
     return student;
+  }
+
+  private static boolean isChosenAsProfessor(Random rnd) {
+    return rnd.nextInt(STUDENTS_PER_PROF + 1) == 0;
   }
 
   private static String pickRandomString(Random rnd, String[] a) {
     int i = rnd.nextInt(a.length);
     return a[i];
   }
+
 }

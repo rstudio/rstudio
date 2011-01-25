@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2011 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,41 +16,17 @@
 package com.google.gwt.sample.dynatablerf.shared;
 
 import com.google.gwt.requestfactory.shared.EntityProxy;
-import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.ProxyFor;
-import com.google.gwt.sample.dynatablerf.domain.Person;
+import com.google.gwt.sample.dynatablerf.domain.Schedule;
+import com.google.gwt.sample.dynatablerf.server.ScheduleLocator;
+
+import java.util.List;
 
 /**
- * Person DTO.
+ * Schedule DTO.
  */
-@ProxyFor(Person.class)
-public interface PersonProxy extends EntityProxy {
-
-  AddressProxy getAddress();
-
-  ScheduleProxy getClassSchedule();
-  
-  String getDescription();
-
-  PersonProxy getMentor();
-
-  String getName();
-
-  String getNote();
-
-  String getScheduleDescription();
-  
-  void setAddress(AddressProxy address);
-
-  void setClassSchedule(ScheduleProxy schedule);
-
-  void setDescription(String description);
-
-  void setMentor(PersonProxy mentor);
-
-  void setName(String name);
-
-  void setNote(String note);
-  
-  EntityProxyId<PersonProxy> stableId();
+@ProxyFor(value = Schedule.class, locator = ScheduleLocator.class)
+public interface ScheduleProxy extends EntityProxy {
+  List<TimeSlotProxy> getTimeSlots();
+  void setTimeSlots(List<TimeSlotProxy> slots);
 }

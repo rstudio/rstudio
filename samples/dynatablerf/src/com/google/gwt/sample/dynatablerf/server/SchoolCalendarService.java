@@ -36,6 +36,7 @@ import javax.servlet.ServletResponse;
 public class SchoolCalendarService implements Filter {
 
   private static final ThreadLocal<PersonSource> PERSON_SOURCE = new ThreadLocal<PersonSource>();
+  static final ThreadLocal<ScheduleSource> SCHEDULE_SOURCE = new ThreadLocal<ScheduleSource>();
 
   public static Person createPerson() {
     checkPersonSource();
@@ -74,6 +75,7 @@ public class SchoolCalendarService implements Filter {
   }
 
   private PersonSource backingStore;
+  private ScheduleSource scheduleStore;
 
   public void destroy() {
   }
@@ -81,10 +83,13 @@ public class SchoolCalendarService implements Filter {
   public void doFilter(ServletRequest req, ServletResponse resp,
       FilterChain chain) throws IOException, ServletException {
     try {
-      PERSON_SOURCE.set(PersonSource.of(backingStore));
+      ScheduleSource scheduleBacking = ScheduleSource.of(scheduleStore);
+      SCHEDULE_SOURCE.set(scheduleBacking);
+      PERSON_SOURCE.set(PersonSource.of(backingStore, scheduleBacking));
       chain.doFilter(req, resp);
     } finally {
       PERSON_SOURCE.set(null);
+      SCHEDULE_SOURCE.set(null);
     }
   }
 
@@ -92,7 +97,9 @@ public class SchoolCalendarService implements Filter {
     backingStore = (PersonSource) config.getServletContext().getAttribute(
         SchoolCalendarService.class.getName());
     if (backingStore == null) {
-      backingStore = PersonSource.of(PersonFuzzer.generateRandomPeople());
+      List<Person> randomPeople = PersonFuzzer.generateRandomPeople();
+      scheduleStore = ScheduleSource.of(PersonFuzzer.collectSchedules(randomPeople));
+      backingStore = PersonSource.of(randomPeople, scheduleStore);
       config.getServletContext().setAttribute(
           SchoolCalendarService.class.getName(), backingStore);
     }

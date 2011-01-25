@@ -22,6 +22,8 @@ import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.sample.dynatablerf.domain.Person;
+import com.google.gwt.sample.dynatablerf.server.ScheduleService;
+import com.google.gwt.sample.dynatablerf.server.ScheduleServiceLocator;
 import com.google.gwt.sample.dynatablerf.server.SchoolCalendarService;
 
 import java.util.Arrays;
@@ -57,9 +59,20 @@ public interface DynaTableRequestFactory extends RequestFactory {
     Request<PersonProxy> getRandomPerson();
   }
 
+  /**
+   * Source of request objects for Schedule entities.
+   */
+  @Service(value = ScheduleService.class, locator = ScheduleServiceLocator.class)
+  interface ScheduleRequest extends RequestContext {
+    Request<TimeSlotProxy> createTimeSlot(int zeroBasedDayOfWeek, int startMinutes,
+        int endMinutes);
+  }
+
   LoggingRequest loggingRequest();
 
   PersonRequest personRequest();
+  
+  ScheduleRequest scheduleRequest();
 
   SchoolCalendarRequest schoolCalendarRequest();
 }

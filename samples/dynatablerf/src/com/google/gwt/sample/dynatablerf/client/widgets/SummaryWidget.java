@@ -34,6 +34,8 @@ import com.google.gwt.sample.dynatablerf.shared.AddressProxy;
 import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory;
 import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory.PersonRequest;
 import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
+import com.google.gwt.sample.dynatablerf.shared.ScheduleProxy;
+import com.google.gwt.sample.dynatablerf.shared.TimeSlotProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -98,7 +100,7 @@ public class SummaryWidget extends Composite {
 
     @Override
     public String getValue(PersonProxy object) {
-      return object.getSchedule();
+      return object.getScheduleDescription();
     }
   }
 
@@ -177,8 +179,11 @@ public class SummaryWidget extends Composite {
   void onCreate(ClickEvent event) {
     PersonRequest context = requestFactory.personRequest();
     AddressProxy address = context.create(AddressProxy.class);
+    ScheduleProxy schedule = context.create(ScheduleProxy.class);
+    schedule.setTimeSlots(new ArrayList<TimeSlotProxy>());
     PersonProxy person = context.edit(context.create(PersonProxy.class));
     person.setAddress(address);
+    person.setClassSchedule(schedule);
     context.persist().using(person);
     eventBus.fireEvent(new EditPersonEvent(person, context));
   }

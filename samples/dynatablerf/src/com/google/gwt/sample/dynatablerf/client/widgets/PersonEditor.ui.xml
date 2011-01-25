@@ -35,5 +35,8 @@
     <dt:AddressEditor ui:field="address" stylePrimaryName="{style.editField}" />
     Mentor:
     <dt:MentorSelector ui:field="mentor" stylePrimaryName="{style.editField}" />
+    <br />
+    Schedule:
+    <dt:ScheduleEditor ui:field="classSchedule" stylePrimaryName="{style.editField}" />
   </g:HTMLPanel>
 </ui:UiBinder>

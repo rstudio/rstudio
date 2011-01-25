@@ -19,6 +19,7 @@ import static com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory.S
 import static com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory.SchoolCalendarRequest.NO_DAYS;
 
 import com.google.gwt.sample.dynatablerf.domain.Person;
+import com.google.gwt.sample.dynatablerf.domain.Schedule;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,6 +37,11 @@ import java.util.Map;
 public abstract class PersonSource {
   static class Backing extends PersonSource {
     private Long serial = 0L;
+    private final ScheduleSource scheduleStore;
+    
+    public Backing(ScheduleSource scheduleStore) {
+      this.scheduleStore = scheduleStore;
+    }
 
     @Override
     public int countPeople() {
@@ -94,6 +100,9 @@ public abstract class PersonSource {
         person.setId(Long.toString(++serial));
       }
       person.setVersion(person.getVersion() + 1);
+      if (person.getClassSchedule() != null) {
+        scheduleStore.persist(person.getClassSchedule());
+      }
       Person existing = people.get(person.getId());
       if (existing != null) {
         existing.copyFrom(person);
@@ -105,9 +114,11 @@ public abstract class PersonSource {
 
   static class CopyOnRead extends PersonSource {
     private final PersonSource backingStore;
+    private final ScheduleSource scheduleStore;
 
-    public CopyOnRead(PersonSource backingStore) {
+    public CopyOnRead(PersonSource backingStore, ScheduleSource scheduleStore) {
       this.backingStore = backingStore;
+      this.scheduleStore = scheduleStore;
     }
 
     @Override
@@ -122,6 +133,10 @@ public abstract class PersonSource {
         toReturn = backingStore.findPerson(id);
         if (toReturn != null) {
           toReturn = toReturn.makeCopy();
+          
+          Integer scheduleKey = toReturn.getClassSchedule().getKey();
+          Schedule scheduleCopy = scheduleStore.find(scheduleKey);
+          toReturn.setClassSchedule(scheduleCopy);
         }
         people.put(id, toReturn);
       }
@@ -150,8 +165,8 @@ public abstract class PersonSource {
   /**
    * Create a PersonSource that will act directly on the given list.
    */
-  public static PersonSource of(List<Person> people) {
-    PersonSource backing = new Backing();
+  public static PersonSource of(List<Person> people, ScheduleSource schedules) {
+    PersonSource backing = new Backing(schedules);
     for (Person person : people) {
       backing.persist(person);
     }
@@ -162,8 +177,8 @@ public abstract class PersonSource {
    * Create a PersonSource that will read through to the given source and make
    * copies of any objects that are requested.
    */
-  public static PersonSource of(PersonSource backing) {
-    return new CopyOnRead(backing);
+  public static PersonSource of(PersonSource backing, ScheduleSource scheduleBacking) {
+    return new CopyOnRead(backing, scheduleBacking);
   }
 
   final Map<String, Person> people = new LinkedHashMap<String, Person>();

@@ -16,14 +16,23 @@
 package com.google.gwt.sample.dynatablerf.domain;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
- * Hold the relevant data for a Schedule.
+ * Holds the relevant data for a Schedule entity.
+ * This entity does not follow the usual pattern of providing getId(), getVersion()
+ * and findSchedule() methods for RequestFactory's use. 
+ * {@link com.google.gwt.sample.dynatablerf.server.ScheduleLocator} handles
+ * those responsibilities instead.
  */
 public class Schedule {
 
   private List<TimeSlot> timeSlots = new ArrayList<TimeSlot>();
+  
+  private Integer key;
+  
+  private Integer revision;
 
   public Schedule() {
   }
@@ -34,7 +43,9 @@ public class Schedule {
 
   public String getDescription(List<Boolean> daysFilter) {
     String s = null;
-    for (TimeSlot timeSlot : timeSlots) {
+    ArrayList<TimeSlot> sortedSlots = new ArrayList<TimeSlot>(timeSlots);
+    Collections.sort(sortedSlots);
+    for (TimeSlot timeSlot : sortedSlots) {
       if (daysFilter.get(timeSlot.getDayOfWeek())) {
         if (s == null) {
           s = timeSlot.getDescription();
@@ -49,6 +60,30 @@ public class Schedule {
     } else {
       return "";
     }
+  }
+
+  public Integer getKey() {
+    return key;
+  }
+
+  public Integer getRevision() {
+    return revision;
+  }
+
+  public List<TimeSlot> getTimeSlots() {
+    return timeSlots;
+  }
+
+  public void setKey(Integer key) {
+    this.key = key;
+  }
+
+  public void setRevision(Integer revision) {
+    this.revision = revision;
+  }
+
+  public void setTimeSlots(List<TimeSlot> timeSlots) {
+    this.timeSlots = new ArrayList<TimeSlot>(timeSlots);
   }
 
   @Override

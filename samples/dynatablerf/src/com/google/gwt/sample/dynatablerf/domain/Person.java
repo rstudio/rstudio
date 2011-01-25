@@ -127,8 +127,8 @@ public class Person {
   public String getNote() {
     return note;
   }
-
-  public String getSchedule() {
+  
+  public String getScheduleDescription() {
     return getScheduleWithFilter(daysFilters);
   }
 
@@ -148,17 +148,16 @@ public class Person {
     return new Person(this);
   }
 
-  /**
-   * When this was written the RequestFactory required a persist method per
-   * type. That requirement should be relaxed very soon (and may well have been
-   * already if we forget to update this comment).
-   */
   public void persist() {
     SchoolCalendarService.persist(this);
   }
 
   public void setAddress(Address address) {
     this.address = address;
+  }
+  
+  public void setClassSchedule(Schedule schedule) {
+    this.classSchedule = schedule;
   }
 
   public void setDaysFilter(List<Boolean> daysFilter) {
