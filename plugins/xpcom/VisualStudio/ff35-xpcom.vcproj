@@ -1,11 +1,12 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="ff35-xpcom"
-	ProjectGUID="{6BF0C2CE-CB0C-421B-A67C-1E448371D24D}"
+	ProjectGUID="{59A0C5AD-DE66-4C6D-9164-86F31308E719}"
 	RootNamespace="ff35-xpcom"
 	Keyword="Win32Proj"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -40,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\common&quot;;..\prebuilt\ff35\include;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\WINNT_x86-msvc\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\caps&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\dom&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\js&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\necko&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\string&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\widget&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\xpcom&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\xpconnect&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\common&quot;;..\prebuilt\ff35\include;&quot;..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\WINNT_x86-msvc\include&quot;;&quot;..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;FIREFOXPLUGIN_EXPORTS;GWT_DEBUGLEVEL=Debugging;XPCOM_GLUE;XPCOM_GLUE_USE_NSPR;MOZILLA_STRICT_API;BROWSER_FF3"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -67,11 +68,13 @@
 				ShowProgress="2"
 				OutputFile="$(ProjectDir)\..\prebuilt\extension\lib\WINNT_x86-msvc\ff35\xpGwtDevPlugin.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\WINNT_x86-msvc\lib"
+				AdditionalLibraryDirectories="&quot;..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\WINNT_x86-msvc\lib&quot;"
 				ModuleDefinitionFile="$(ProjectDir)\..\xpGwtDevPlugin.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(IntDir)\$(TargetName).pdb"
 				SubSystem="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary="$(IntDir)\$(TargetName).lib"
 				TargetMachine="1"
 			/>
@@ -92,9 +95,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -125,8 +125,8 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\common&quot;;..\prebuilt\ff35\include;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\WINNT_x86-msvc\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\caps&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\dom&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\js&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\necko&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\string&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\widget&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\xpcom&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\xpconnect&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;FIREFOXPLUGIN_EXPORTS;GWT_DEBUGLEVEL=Warning;XPCOM_GLUE;XPCOM_GLUE_USE_NSPR;MOZILLA_STRICT_API;BROWSER_FF3;BROWSER=ff35"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\common&quot;;..\prebuilt\ff35\include;&quot;..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\WINNT_x86-msvc\include&quot;;&quot;..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include&quot;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;FIREFOXPLUGIN_EXPORTS;GWT_DEBUGLEVEL=Warning;XPCOM_GLUE;XPCOM_GLUE_USE_NSPR;MOZILLA_STRICT_API;BROWSER_FF3;BROWSER=ff35;GECKO_VERSION=1901"
 				ExceptionHandling="1"
 				RuntimeLibrary="0"
 				TreatWChar_tAsBuiltInType="false"
@@ -151,13 +151,15 @@
 				ShowProgress="2"
 				OutputFile="$(ProjectDir)\..\prebuilt\extension\lib\WINNT_x86-msvc\ff35\xpGwtDevPlugin.dll"
 				LinkIncremental="0"
-				AdditionalLibraryDirectories="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\WINNT_x86-msvc\lib"
+				AdditionalLibraryDirectories="&quot;..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\WINNT_x86-msvc\lib&quot;"
 				ModuleDefinitionFile="$(ProjectDir)\..\xpGwtDevPlugin.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(IntDir)\$(TargetName).pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary="$(IntDir)\$(TargetName).lib"
 				TargetMachine="1"
 			/>
@@ -178,9 +180,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
