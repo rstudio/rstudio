@@ -761,6 +761,10 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    cursor: pointer;
 }
 
+.workspace tr.workspaceDataRow td {
+   line-height: 16px;   
+}
+
 @sprite .workspace tr.workspaceDataFrameRow td+td {
    gwt-image: 'zoomDataset';
    background-position: right center; 
