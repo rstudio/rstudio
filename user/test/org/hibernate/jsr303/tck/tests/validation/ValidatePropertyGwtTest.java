@@ -34,7 +34,6 @@ public class ValidatePropertyGwtTest extends AbstractValidationTest {
     delegate.testPassingNullAsGroup();
   }
 
-  @Failing(issue = 5804)
   public void testUnexpectedExceptionsInValidatePropertyGetWrappedInValidationExceptions() {
     // Wrap the test to catch the @Test expected exception.
     try {

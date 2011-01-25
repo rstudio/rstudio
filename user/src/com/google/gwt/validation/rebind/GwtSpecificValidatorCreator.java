@@ -230,9 +230,10 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
 
   @Override
   protected void compose(ClassSourceFileComposerFactory composerFactory) {
-    addImports(composerFactory, GWT.class, GwtBeanDescriptor.class,
-        GwtValidationContext.class, Set.class, HashSet.class,
-        ConstraintViolation.class, Annotation.class);
+    addImports(composerFactory, Annotation.class, ConstraintViolation.class,
+        GWT.class, GwtBeanDescriptor.class, GwtValidationContext.class,
+        HashSet.class, IllegalArgumentException.class, Set.class,
+        ValidationException.class);
     composerFactory.setSuperclass(AbstractGwtSpecificValidator.class.getCanonicalName()
         + "<" + beanType.getQualifiedSourceName() + ">");
     composerFactory.addImplementedInterface(validatorType.getName());
@@ -535,6 +536,36 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     sw.outdent();
     sw.outdent();
     sw.outdent();
+  }
+
+  private void writeCatchUnexpectedException(SourceWriter sw, String message) {
+    // } catch (IllegalArgumentException e) {
+    sw.outdent();
+    sw.println("} catch (IllegalArgumentException e) {");
+    sw.indent();
+
+    // throw e;
+    sw.println("throw e;");
+
+    // } catch (ValidationException e) {
+    sw.outdent();
+    sw.println("} catch (ValidationException e) {");
+    sw.indent();
+
+    // throw e;
+    sw.println("throw e;");
+
+    // } catch (Exception e) {
+    sw.outdent();
+    sw.println("} catch (Exception e) {");
+    sw.indent();
+
+    // throw new ValidationException("my message", e);
+    sw.println("throw new ValidationException(" + message + ", e);");
+
+    // }
+    sw.outdent();
+    sw.println("}");
   }
 
   private void writeConstraintDescriptor(SourceWriter sw,
@@ -893,6 +924,10 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     sw.println("Class<?>... groups) {");
     sw.outdent();
 
+    // try {
+    sw.println("try {");
+    sw.indent();
+
     writeNewViolations(sw);
 
     if (beanHelper.getBeanDescriptor().isBeanConstrained()) {
@@ -955,6 +990,10 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     }
     // return violations;
     sw.println("return violations;");
+
+    writeCatchUnexpectedException(
+        sw,
+        "\"Error validating " + beanHelper.getTypeCanonicalName() + "\"");
 
     sw.outdent();
     sw.println("}");
@@ -1173,14 +1212,18 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     sw.println("public <T> Set<ConstraintViolation<T>> validateProperty(");
 
     // GwtValidationContext<T> context, BeanType object, String propertyName,
-    // Class<?>... groups) {
+    // Class<?>... groups) throws ValidationException {
     sw.indent();
     sw.indent();
     sw.println("GwtValidationContext<T> context,");
     sw.println(beanHelper.getTypeCanonicalName() + " object,");
     sw.println("String propertyName,");
-    sw.println("Class<?>... groups) {");
+    sw.println("Class<?>... groups) throws ValidationException {");
     sw.outdent();
+
+    // try {
+    sw.println("try {");
+    sw.indent();
 
     writeNewViolations(sw);
 
@@ -1207,6 +1250,12 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     // return violations;
     sw.println("return violations;");
 
+    writeCatchUnexpectedException(
+        sw,
+        "\"Error validating \" + propertyName + \" of "
+        + beanHelper.getTypeCanonicalName() + "\"");
+
+    // }
     sw.outdent();
     sw.println("}");
   }
@@ -1257,8 +1306,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
 
       // throw new ValidationException(value.getClass +
       // " is not a valid type for " + propertyName);
-      sw.print("throw new ");
-      sw.print(ValidationException.class.getCanonicalName());
+      sw.print("throw new ValidationException");
       sw.println("(value.getClass() +\" is not a valid type for \"+ propertyName);");
 
       // }
@@ -1365,6 +1413,10 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     sw.println("Class<?>... groups) {");
     sw.outdent();
 
+    // try {
+    sw.println("try {");
+    sw.indent();
+
     writeNewViolations(sw);
 
     for (PropertyDescriptor property :
@@ -1392,6 +1444,11 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
 
     // return violations;
     sw.println("return violations;");
+
+    writeCatchUnexpectedException(
+        sw,
+        "\"Error validating \" + propertyName + \" of "
+            + beanHelper.getTypeCanonicalName() + "\"");
 
     sw.outdent();
     sw.println("}");
