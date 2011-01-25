@@ -30,16 +30,18 @@ import java.util.regex.Pattern;
 
 /**
  * Deobfuscates stack traces on the server side. This class requires that you
- * have turned on emulated stack traces and moved your symbolMap files to a
- * place accessible by your server. More concretely, you must compile with the
- * <code>-extra</code> command line option, copy the <code>symbolMaps</code>
- * directory to somewhere your server side code has access to it, and then set
- * the symbolMapsDirectory in this class through the constructor, or the setter
- * method. For example, this variable could be set to
- * "WEB-INF/classes/symbolMaps/", if you copied the symbolMaps directory to
- * there or compiled your application using
- * <code>-extra war/WEB-INF/classes/</code>.
- *
+ * have turned on emulated stack traces, via
+ * <code>&lt;set-property name="compiler.emulatedStack" value="true" /&gt;</code>
+ * in your <code>.gwt.xml</code> module file, and moved your symbol map files to
+ * a location accessible by your server sever side code. You can use the GWT
+ * compiler <code>-deploy</code> command line argument to specify the location
+ * of the folder into which the generated <code>symbolMaps</code> directory is
+ * written. By default, the final <code>symbolMaps</code> directory is
+ * <code>war/WEB-INF/deploy/<i>yourmodulename</i>/symbolMaps/</code>. Pass the
+ * resulting directory location into this class'
+ * {@link StackTraceDeobfuscator#symbolMapsDirectory} constructor or
+ * {@link #setSymbolMapsDirectory(String)} setter method.
+ * 
  * TODO(unnurg): Combine this code with similar code in JUnitHostImpl
  */
 public class StackTraceDeobfuscator {
@@ -58,9 +60,9 @@ public class StackTraceDeobfuscator {
 
   /**
    * Constructor, which takes a <code>symbolMaps</code> directory as its
-   * argument. Symbol maps can be generated using the <code>-extra</code> GWT
-   * compiler argument.
-   *
+   * argument. Symbol maps are generated into the location specified by the
+   * GWT compiler <code>-deploy</code> command line argument.
+   * 
    * @param symbolMapsDirectory the <code>symbolMaps</code> directory with, or
    *          without trailing directory separator character
    */
@@ -159,8 +161,8 @@ public class StackTraceDeobfuscator {
    * Retrieves a new {@link InputStream} for the given permutation strong name.
    * This implementation, which subclasses may override, returns a
    * {@link InputStream} for the <code>
-   * <i>&lt;permutation-strong-name&gt;</i>.symbolMap</code> file in the
-   * symbolMapsDirectory.
+   * <i>permutation-strong-name</i>.symbolMap</code> file in the
+   * <code>symbolMaps</code> directory.
    *
    * @param permutationStrongName the GWT permutation strong name
    * @return a new {@link InputStream}
