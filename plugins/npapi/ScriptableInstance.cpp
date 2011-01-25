@@ -352,8 +352,15 @@ void ScriptableInstance::connect(const NPVariant* args, unsigned argCount, NPVar
     result->type = NPVariantType_Void;
     return;
   }
-  //ignore args[0]. Get the URL from window.location.href instead.
+
+  // application provided URL string used for user facing things like the
+  // devmode tab title
+  const NPString appUrl = args[0].value.stringValue;
+  const string appUrlStr = convertToString(appUrl);
+
+  // window.location.href provided URL. (used for security)
   const string urlStr = getLocationHref();
+
   const NPString sessionKey = args[1].value.stringValue;
   const NPString hostAddr = args[2].value.stringValue;
   const NPString moduleName = args[3].value.stringValue;
@@ -405,7 +412,7 @@ void ScriptableInstance::connect(const NPVariant* args, unsigned argCount, NPVar
   string tabKeyStr = computeTabIdentity();
   string sessionKeyStr = convertToString(sessionKey);
   Debug::log(Debug::Debugging) << "  connected, sending loadModule" << Debug::flush;
-  connected = LoadModuleMessage::send(*_channel, urlStr, tabKeyStr, sessionKeyStr,
+  connected = LoadModuleMessage::send(*_channel, appUrlStr, tabKeyStr, sessionKeyStr,
       moduleNameStr, userAgent, this);
   BOOLEAN_TO_NPVARIANT(connected, *result);
   result->type = NPVariantType_Bool;
