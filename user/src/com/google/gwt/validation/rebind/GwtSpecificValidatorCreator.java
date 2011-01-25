@@ -32,7 +32,11 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.thirdparty.guava.common.base.Function;
+import com.google.gwt.thirdparty.guava.common.base.Functions;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
@@ -45,6 +49,9 @@ import com.google.gwt.validation.client.impl.GwtBeanDescriptorImpl;
 import com.google.gwt.validation.client.impl.GwtValidationContext;
 import com.google.gwt.validation.client.impl.PropertyDescriptorImpl;
 
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -81,58 +88,73 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
 
   private static final JType[] NO_ARGS = new JType[]{};
 
+  private static Function<java.beans.PropertyDescriptor, String> 
+      PROPERTY_DESCRIPTOR_TO_NAME = 
+          new Function<java.beans.PropertyDescriptor, String>() {
+    public String apply(java.beans.PropertyDescriptor pd) {
+      return pd.getName();
+    }
+  };
+
+  private static Function<Object, String> TO_LITERAL = new Function<Object, String>() {
+
+    public String apply(Object input) {
+      return asLiteral(input);
+    }
+  };
+
   /**
-   * Returns the literal value of an object that is suitable for inclusion in
-   * Java Source code.
-   *
-   * <p>
-   * Supports all types that {@link Annotation) value can have.
-   *
-   *
-   * @throws IllegalArgumentException if the type of the object does not have a java literal form.
-   */
-  public static String asLiteral(Object value) throws IllegalArgumentException {
-    Class<?> clazz = value.getClass();
-    JProgram jProgram = new JProgram();
+     * Returns the literal value of an object that is suitable for inclusion in
+     * Java Source code.
+     *
+     * <p>
+     * Supports all types that {@link Annotation) value can have.
+     *
+     *
+     * @throws IllegalArgumentException if the type of the object does not have a java literal form.
+     */
+    public static String asLiteral(Object value) throws IllegalArgumentException {
+      Class<?> clazz = value.getClass();
+      JProgram jProgram = new JProgram();
 
-    if (clazz.isArray()) {
-      StringBuilder sb = new StringBuilder();
-      Object[] array = (Object[]) value;
+      if (clazz.isArray()) {
+        StringBuilder sb = new StringBuilder();
+        Object[] array = (Object[]) value;
 
-      sb.append("new " + clazz.getComponentType().getCanonicalName() + "[] ");
-      sb.append("{");
-      boolean first = true;
-      for (Object object : array) {
-        if (first) {
-          first = false;
-        } else {
-          sb.append(",");
+        sb.append("new " + clazz.getComponentType().getCanonicalName() + "[] ");
+        sb.append("{");
+        boolean first = true;
+        for (Object object : array) {
+          if (first) {
+            first = false;
+          } else {
+            sb.append(",");
+          }
+          sb.append(asLiteral(object));
         }
-        sb.append(asLiteral(object));
+        sb.append("}");
+        return sb.toString();
       }
-      sb.append("}");
-      return sb.toString();
-    }
 
-    if (value instanceof Class) {
-      return ((Class<?>) ((Class<?>) value)).getCanonicalName() + ".class";
+      if (value instanceof Class) {
+        return ((Class<?>) ((Class<?>) value)).getCanonicalName() + ".class";
+      }
+      if (value instanceof Double) {
+        return jProgram.getLiteralDouble(((Double) value).doubleValue()).toSource();
+      }
+      if (value instanceof Integer) {
+        return jProgram.getLiteralInt(((Integer) value).intValue()).toSource();
+      }
+      if (value instanceof Long) {
+        return jProgram.getLiteralLong(((Long) value).intValue()).toSource();
+      }
+      if (value instanceof String) {
+        return '"' + Generator.escape((String) value) + '"';
+      }
+      // TODO(nchalko) handle the rest of the literal types
+      throw new IllegalArgumentException(value.getClass()
+          + " is can not be represented as a Java Literal.");
     }
-    if (value instanceof Double) {
-      return jProgram.getLiteralDouble(((Double) value).doubleValue()).toSource();
-    }
-    if (value instanceof Integer) {
-      return jProgram.getLiteralInt(((Integer) value).intValue()).toSource();
-    }
-    if (value instanceof Long) {
-      return jProgram.getLiteralLong(((Long) value).intValue()).toSource();
-    }
-    if (value instanceof String) {
-      return '"' + Generator.escape((String) value) + '"';
-    }
-    // TODO(nchalko) handle the rest of the literal types
-    throw new IllegalArgumentException(value.getClass()
-        + " is can not be represented as a Java Literal.");
-  }
 
   static <T extends Annotation> Class<?> getTypeOfConstraintValidator(
       Class<? extends ConstraintValidator<T, ?>> constraintClass) {
@@ -232,7 +254,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     writePropertyValidators(sw);
     sw.println();
 
-    // Write these after we know what is needed
+    // Write the wrappers after we know which are needed
     writeWrappers(sw);
     sw.println();
 
@@ -612,6 +634,25 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
 
   private void writeFields(SourceWriter sw) throws UnableToCompleteException {
 
+    // Create a static array of all valid property names.
+
+    BeanInfo beanInfo;
+    try {
+      beanInfo = Introspector.getBeanInfo(beanHelper.getClazz());
+    } catch (IntrospectionException e) {
+      throw error(logger, e);
+    }
+
+    // java.util.List<String> allPropertyNames = java.util.Arrays.asList(
+    sw.print("java.util.List<String> allPropertyNames = java.util.Arrays.asList(");
+
+    // "foo","bar" );
+    sw.print(Joiner.on(",").join(
+        Iterables.transform(
+            ImmutableList.copyOf(beanInfo.getPropertyDescriptors()),
+            Functions.compose(TO_LITERAL, PROPERTY_DESCRIPTOR_TO_NAME))));
+    sw.println(");");
+
     // Create a variable for each constraint of each property
     for (PropertyDescriptor p :
          beanHelper.getBeanDescriptor().getConstrainedProperties()) {
@@ -702,6 +743,24 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     // }-*/;
     sw.outdent();
     sw.println("}-*/;");
+  }
+
+  private void writeIfPropertyNameNotFound(SourceWriter sw) {
+    // if (!allPropertyNames.contains(propertyName)) {
+    sw.println(" if (!allPropertyNames.contains(propertyName)) {");
+    sw.indent();
+
+    // throw new IllegalArgumentException(propertyName
+    // +"is not a valid property of myClass");
+    sw.print("throw new ");
+    sw.print(IllegalArgumentException.class.getCanonicalName());
+    sw.print("( propertyName +\" is not a valid property of ");
+    sw.print(beanType.getQualifiedSourceName());
+    sw.println("\");");
+
+    // }
+    sw.outdent();
+    sw.println("}");
   }
 
   private void writeNewAnnotation(SourceWriter sw,
@@ -1125,8 +1184,6 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
 
     writeNewViolations(sw);
 
-    // TODO(nchalko) check if it is a valid propertyName
-
     for (PropertyDescriptor property : beanHelper.getBeanDescriptor().getConstrainedProperties()) {
       // if (propertyName.equals(myPropety)) {
       sw.print("if (propertyName.equals(\"");
@@ -1145,27 +1202,10 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
       sw.print("} else ");
     }
 
-    // {
-    sw.println("{");
-    sw.indent();
+    writeIfPropertyNameNotFound(sw);
 
-    // throw new IllegalArgumentException(propertyName
-    // +"is not a valid property of myClass");
-    sw.print("throw new ");
-    sw.print(IllegalArgumentException.class.getCanonicalName());
-    sw.print("( propertyName +\" is not a valid property of ");
-    sw.print(beanType.getQualifiedSourceName());
-    sw.println("\");");
-
-    // }
-    sw.outdent();
-    sw.println("}");
-
-    if (!beanHelper.getBeanDescriptor().getConstrainedProperties().isEmpty()) {
-
-      // return violations;
-      sw.println("return violations;");
-    }
+    // return violations;
+    sw.println("return violations;");
 
     sw.outdent();
     sw.println("}");
@@ -1327,8 +1367,6 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
 
     writeNewViolations(sw);
 
-    // TODO(nchalko) check if it is a valid propertyName
-
     for (PropertyDescriptor property :
         beanHelper.getBeanDescriptor().getConstrainedProperties()) {
       // if (propertyName.equals(myPropety)) {
@@ -1350,27 +1388,10 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
       sw.print("} else ");
     }
 
-    // {
-    sw.println("{");
-    sw.indent();
+    writeIfPropertyNameNotFound(sw);
 
-    // throw new IllegalArgumentException(propertyName
-    // +"is not a valid property of myClass");
-    sw.print("throw new ");
-    sw.print(IllegalArgumentException.class.getCanonicalName());
-    sw.print("( propertyName +\" is not a valid property of ");
-    sw.print(beanType.getQualifiedSourceName());
-    sw.println("\");");
-
-    // }
-    sw.outdent();
-    sw.println("}");
-
-    if (!beanHelper.getBeanDescriptor()
-        .getConstrainedProperties().isEmpty()) {
-      // return violations;
-      sw.println("return violations;");
-    }
+    // return violations;
+    sw.println("return violations;");
 
     sw.outdent();
     sw.println("}");
@@ -1425,7 +1446,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
   }
 
   private void writeWrappers(SourceWriter sw) {
-    sw.println("// Write the  wrappers after we know which are needed");
+    sw.println("// Write the wrappers after we know which are needed");
     for (JField field : fieldsToWrap) {
       writeFieldWrapperMethod(sw, field);
       sw.println();

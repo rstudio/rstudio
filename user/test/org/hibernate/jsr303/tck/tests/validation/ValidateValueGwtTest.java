@@ -24,7 +24,6 @@ public class ValidateValueGwtTest extends AbstractValidationTest {
 
   private final ValidateValueTest delegate = new ValidateValueTest();
 
-  @Failing(issue = 5804)
   public void testExistingPropertyWoConstraintsNorCascaded() {
     delegate.testExistingPropertyWoConstraintsNorCascaded();
   }
