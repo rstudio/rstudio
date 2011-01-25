@@ -38,10 +38,12 @@ public:
 
    bool empty() const { return !sexp_; }
 
-   core::Error save(const core::FilePath& filePath);
+   core::Error save(const core::FilePath& filePath) const;
    core::Error load(const core::FilePath& filePath);
 
    void asJson(core::json::Value* pValue) const;
+
+   SEXP sexp() const;
 
 private:
    r::sexp::PreservedSEXP sexp_;

@@ -70,6 +70,16 @@ void Plot::invalidate()
 {
    needsUpdate_ = true;
 }
+
+bool Plot::hasManipulator() const
+{
+   return !manipulator_.empty();
+}
+
+SEXP Plot::manipulatorSEXP() const
+{
+   return manipulator_.sexp();
+}
    
 void Plot::manipulatorAsJson(json::Value* pValue) const
 {
@@ -77,6 +87,12 @@ void Plot::manipulatorAsJson(json::Value* pValue) const
       manipulator_.asJson(pValue);
    else
       *pValue = json::Value();
+}
+
+void Plot::saveManipulator() const
+{
+   if (hasManipulator() && !storageUuid_.empty())
+      saveManipulator(storageUuid_);
 }
    
 Error Plot::renderFromDisplay()
@@ -230,7 +246,7 @@ void Plot::loadManipulator()
    }
 }
 
-void Plot::saveManipulator(const std::string& storageUuid)
+void Plot::saveManipulator(const std::string& storageUuid) const
 {
    if (!manipulator_.empty())
    {

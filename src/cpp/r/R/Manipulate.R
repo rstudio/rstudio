@@ -63,8 +63,32 @@
   return (picker) 
 })
 
+.rs.addGlobalFunction( "manipulator.attribs", function()
+{
+  if ( .Call("rs_hasActiveManipulator") )
+  {
+    .Call("rs_activeManipulator")$manip_attribs
+  }
+  else
+  {
+    stop("no plot manipulator currently active")
+  }
+})
 
-.rs.addGlobalFunction( "manipulate", function(code, ...)
+.rs.addGlobalFunction( "manipulator.setAttribs", function(attribs)
+{
+  if ( .Call("rs_hasActiveManipulator") )
+  {
+     .Call("rs_setManipulatorAttribs", attribs)
+     invisible(NULL)
+  }
+  else
+  {
+    stop("no plot manipulator currently active")
+  }
+})
+
+.rs.addGlobalFunction( "manipulate", function(code, attribs = list(), ...)
 {
   # TODO: validate that all controls have variables in the expression
 
@@ -86,7 +110,10 @@
   # save the controls and their names into the manipulator
   manipulator$manip_controls <- controls
   manipulator$manip_variables <- controlNames
- 
+  
+  # set attributes
+  manipulator$manip_attribs <- attribs
+  
   # iterate over the names and controls, adding the default values to the env
   c = 1 
   for (control in controls)

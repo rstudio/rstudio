@@ -46,7 +46,7 @@ PlotManipulator::~PlotManipulator()
    }
 }
 
-Error PlotManipulator::save(const FilePath& filePath)
+Error PlotManipulator::save(const FilePath& filePath) const
 {
    // call manipulator save
    r::exec::RFunction manipSave(".rs.manipulator.save");
@@ -75,6 +75,11 @@ void PlotManipulator::asJson(core::json::Value* pValue) const
    Error error = r::json::jsonValueFromObject(sexp_.get(), pValue);
    if (error)
       LOG_ERROR(error);
+}
+
+SEXP PlotManipulator::sexp() const
+{
+   return sexp_.get();
 }
 
 

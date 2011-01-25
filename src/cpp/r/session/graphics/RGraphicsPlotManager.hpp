@@ -98,6 +98,9 @@ public:
    
    // execute and attach manipulator
    void executeAndAttachManipulator(SEXP manipulatorSEXP);
+   bool hasActiveManipulator() const;
+   SEXP activeManipulator() const;
+   void setActiveManipulatorAttribs(SEXP attribsSEXP);
 
    // manipulate persistent state
    core::Error savePlotsState(const core::FilePath& plotsStateFile);

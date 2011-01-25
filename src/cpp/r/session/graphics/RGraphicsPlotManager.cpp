@@ -396,6 +396,68 @@ void PlotManager::executeAndAttachManipulator(SEXP manipulatorSEXP)
          logAndReportError(error, ERROR_LOCATION);
    }
 }
+
+bool PlotManager::hasActiveManipulator() const
+{
+   return activeManipulator() != R_NilValue;
+}
+
+// the "active" manipultor is either the currently pending manipulator
+// or if there is none pending then the the one associated with the
+// currently active plot
+SEXP PlotManager::activeManipulator() const
+{
+   if (pendingManipulatorSEXP_ != R_NilValue)
+   {
+      return pendingManipulatorSEXP_;
+   }
+   else if (hasPlot())
+   {
+      return activePlot().manipulatorSEXP();
+   }
+   else
+   {
+      return R_NilValue;
+   }
+}
+
+void PlotManager::setActiveManipulatorAttribs(SEXP attribsSEXP)
+{
+   SEXP manipulatorSEXP = plotManager().activeManipulator();
+   if (manipulatorSEXP != R_NilValue)
+   {
+      // get the names so we can determine which slot the attribs are in
+      std::vector<std::string> names;
+      Error error = r::sexp::getNames(manipulatorSEXP, &names);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+
+      // find the index
+      int attribsIndex = -1;
+      for (int i = 0; i<(int)names.size(); i++)
+      {
+         if (names[i] == "manip_attribs")
+         {
+            attribsIndex = i;
+            break;
+         }
+      }
+
+      // set the vector element
+      if (attribsIndex != -1)
+         SET_VECTOR_ELT(manipulatorSEXP, attribsIndex, attribsSEXP);
+
+      // if the active plot has a manipulator then ensure it is
+      // saved. note that if the set was applied to a pending
+      // manipulator then this save is technically unnecessary but we
+      // do it unconditionally anyway to ensure we always save
+      if (hasPlot() && activePlot().hasManipulator())
+         activePlot().saveManipulator();
+   }
+}
    
 Error PlotManager::savePlotsState(const FilePath& plotsStateFile)
 {

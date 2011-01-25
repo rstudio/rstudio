@@ -400,6 +400,23 @@ SEXP rs_executeAndAttachManipulator(SEXP manipulatorSEXP)
    return R_NilValue;
 }
 
+SEXP rs_hasActiveManipulator()
+{
+   r::sexp::Protect rProtect;
+   return r::sexp::create(plotManager().hasActiveManipulator(), &rProtect);
+}
+
+SEXP rs_activeManipulator()
+{
+   return plotManager().activeManipulator();
+}
+
+SEXP rs_setManipulatorAttribs(SEXP attribsSEXP)
+{
+   plotManager().setActiveManipulatorAttribs(attribsSEXP);
+   return R_NilValue;
+}
+
 
 } // anonymous namespace
     
@@ -449,12 +466,34 @@ Error initialize(
       activateGDMethodDef.numArgs = 0;
       r::routines::addCallMethod(activateGDMethodDef);
 
-      // regsiter execute manipulator routine
+      // register execute and attach manipulator routine
       R_CallMethodDef execManipulatorMethodDef ;
       execManipulatorMethodDef.name = "rs_executeAndAttachManipulator" ;
       execManipulatorMethodDef.fun = (DL_FUNC) rs_executeAndAttachManipulator;
       execManipulatorMethodDef.numArgs = 1;
       r::routines::addCallMethod(execManipulatorMethodDef);
+
+      // register has active manipulator routine
+      R_CallMethodDef hasActiveManipulatorMethodDef ;
+      hasActiveManipulatorMethodDef.name = "rs_hasActiveManipulator" ;
+      hasActiveManipulatorMethodDef.fun = (DL_FUNC) rs_hasActiveManipulator;
+      hasActiveManipulatorMethodDef.numArgs = 0;
+      r::routines::addCallMethod(hasActiveManipulatorMethodDef);
+
+      // register active manipulator routine
+      R_CallMethodDef activeManipulatorMethodDef ;
+      activeManipulatorMethodDef.name = "rs_activeManipulator" ;
+      activeManipulatorMethodDef.fun = (DL_FUNC) rs_activeManipulator;
+      activeManipulatorMethodDef.numArgs = 0;
+      r::routines::addCallMethod(activeManipulatorMethodDef);
+
+      // register set manipulator attribs routine
+      R_CallMethodDef setManipulatorAttribsMethodDef ;
+      setManipulatorAttribsMethodDef.name = "rs_setManipulatorAttribs" ;
+      setManipulatorAttribsMethodDef.fun = (DL_FUNC) rs_setManipulatorAttribs;
+      setManipulatorAttribsMethodDef.numArgs = 1;
+      r::routines::addCallMethod(setManipulatorAttribsMethodDef);
+
 
       // register interactive() hook to work around dev.interactive device
       // bootstrapping bug

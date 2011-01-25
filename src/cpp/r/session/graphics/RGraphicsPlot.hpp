@@ -52,7 +52,10 @@ public:
    std::string storageUuid() const;  
    const DisplaySize& renderedSize() const { return renderedSize_; }
 
+   bool hasManipulator() const;
+   SEXP manipulatorSEXP() const;
    void manipulatorAsJson(core::json::Value* pValue) const;
+   void saveManipulator() const;
    
    void invalidate();
    
@@ -71,7 +74,7 @@ private:
 
    core::FilePath manipulatorFilePath(const std::string& storageUuid) const;
    void loadManipulator();
-   void saveManipulator(const std::string& storageUuid);
+   void saveManipulator(const std::string& storageUuid) const;
 
 private:
    GraphicsDeviceFunctions graphicsDevice_;
