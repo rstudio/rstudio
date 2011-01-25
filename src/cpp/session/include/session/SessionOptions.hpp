@@ -95,6 +95,11 @@ public:
       return std::string(secret_.c_str());
    }
 
+   core::FilePath preflightScriptPath() const
+   {
+      return core::FilePath(preflightScript_.c_str());
+   }
+
    int timeoutMinutes() const { return timeoutMinutes_; }
 
    bool createPublicFolder() const { return createPublicFolder_; }
@@ -215,6 +220,7 @@ private:
 
    // session
    std::string secret_;
+   std::string preflightScript_;
    int timeoutMinutes_;
    bool createPublicFolder_;
 
