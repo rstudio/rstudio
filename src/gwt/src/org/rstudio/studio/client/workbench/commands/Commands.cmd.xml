@@ -95,7 +95,6 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="activateSource"/>
          <cmd refid="activateConsole"/>
-         <cmd refid="consoleOnTop"/>
          <separator/>
          <cmd refid="activateWorkspace"/>
          <cmd refid="activateHistory"/>
@@ -103,6 +102,11 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="activatePlots"/>
          <cmd refid="activatePackages"/>
          <cmd refid="activateHelp"/>
+         <separator/>
+         <menu label="Customize">
+            <cmd refid="consoleOnTop"/>
+            <cmd refid="plotsOnTop"/>
+         </menu>
       </menu>
 
       <separator/>
@@ -439,8 +443,13 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         desc="Refresh package listing"/>
 
+   <!-- consoleOnTop has a dynamic menuLabel -->
    <cmd id="consoleOnTop"
-        menuLabel="Flip Console and Source"/>
+        menuLabel=""/>
+
+   <!-- plotsOnTop has a dynamic menuLabel -->
+   <cmd id="plotsOnTop"
+        menuLabel=""/>
 
    <cmd id="showOptions"
         menuLabel="Pr_eferences..."/>

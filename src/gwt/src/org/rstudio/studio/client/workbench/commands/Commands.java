@@ -61,6 +61,7 @@ public abstract class Commands extends CommandBundle
 
    // View
    public abstract AppCommand consoleOnTop();
+   public abstract AppCommand plotsOnTop();
    public abstract AppCommand switchToTab();
    public abstract AppCommand previousTab();
    public abstract AppCommand nextTab();

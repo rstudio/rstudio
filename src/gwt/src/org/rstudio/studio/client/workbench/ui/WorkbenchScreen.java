@@ -46,6 +46,7 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.workbench.MRUList;
 import org.rstudio.studio.client.workbench.WorkbenchMainView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -141,14 +142,26 @@ public class WorkbenchScreen extends Composite
             browseTabs_.selectTab(tab);
          }
       });
+
+      LogicalWindow workspaceLogicalWindow = new LogicalWindow(
+            rightTopFrame,
+            minimizedTopModuleTabs);
+      LogicalWindow plotsLogicalWindow = new LogicalWindow(
+            rightBottomFrame,
+            minimizedBottomModuleTabs);
+
+      initBoolPref("plotsOnTop", plotsOnTop_, commands.plotsOnTop(), session, globalDisplay);
+      commands.plotsOnTop().setMenuLabel("Plots on " + (plotsOnTop_.getValue() ? "Bottom" : "Top"));
+
+      LogicalWindow rightTopWindow = plotsOnTop_.getValue() ? plotsLogicalWindow
+                                                            : workspaceLogicalWindow;
+      LogicalWindow rightBottomWindow = plotsOnTop_.getValue() ? workspaceLogicalWindow
+                                                               : plotsLogicalWindow;
+
       final DualWindowLayoutPanel rightTabs = new DualWindowLayoutPanel(
             eventBus,
-            new LogicalWindow(
-                  rightTopFrame,
-                  minimizedTopModuleTabs),
-            new LogicalWindow(
-                  rightBottomFrame,
-                  minimizedBottomModuleTabs),
+            rightTopWindow,
+            rightBottomWindow,
             session,
             "right",
             WindowState.NORMAL,
@@ -158,8 +171,8 @@ public class WorkbenchScreen extends Composite
       consolePane_ = consolePane;
       consoleFrame_ = new PrimaryWindowFrame("Console", consolePane_);
       consoleFrame_.setContextButton(consoleInterrupt,
-                                    consoleInterrupt.getWidth(),
-                                    consoleInterrupt.getHeight());
+                                     consoleInterrupt.getWidth(),
+                                     consoleInterrupt.getHeight());
       consoleLogicalWindow_ = new LogicalWindow(
             consoleFrame_,
             new MinimizedWindowFrame("Console"));
@@ -170,42 +183,13 @@ public class WorkbenchScreen extends Composite
             sourceFrame,
             new MinimizedWindowFrame("Source"));
 
-      new BoolStateValue("moduleprefs", "consoleOnTop", true,
-                         session_.getSessionInfo().getClientState())
-      {
-         @Override
-         protected void onInit(Boolean value)
-         {
-            consoleOnTop_ = value == null ? false : value;
-         }
+      initBoolPref("consoleOnTop", consoleOnTop_, commands.consoleOnTop(), session, globalDisplay);
+      commands.consoleOnTop().setMenuLabel("Console on " + (plotsOnTop_.getValue() ? "Bottom" : "Top"));
 
-         @Override
-         protected Boolean getValue()
-         {
-            return consoleOnTop_;
-         }
-      };
-      commands.consoleOnTop().addHandler(new CommandHandler()
-      {
-         public void onCommand(AppCommand command)
-         {
-            consoleOnTop_ = !consoleOnTop_;
-            session_.persistClientState();
-            globalDisplay.showProgress("Saving preferences...");
-            new Timer() {
-               @Override
-               public void run()
-               {
-                  Window.Location.reload();
-               }
-            }.schedule(1500);
-         }
-      });
-
-      LogicalWindow leftTopWindow = consoleOnTop_ ? consoleLogicalWindow_
-                                                  : sourceLogicalWindow_;
-      LogicalWindow leftBottomWindow = consoleOnTop_ ? sourceLogicalWindow_
-                                                     : consoleLogicalWindow_;
+      LogicalWindow leftTopWindow = consoleOnTop_.getValue() ? consoleLogicalWindow_
+                                                             : sourceLogicalWindow_;
+      LogicalWindow leftBottomWindow = consoleOnTop_.getValue() ? sourceLogicalWindow_
+                                                                : consoleLogicalWindow_;
 
       DualWindowLayoutPanel leftTabs = new DualWindowLayoutPanel(
             eventBus,
@@ -374,6 +358,46 @@ public class WorkbenchScreen extends Composite
       commandBinder.bind(commands, this);
    }
 
+   private static void initBoolPref(String key,
+                                    final Value<Boolean> val,
+                                    AppCommand command,
+                                    final Session session,
+                                    final GlobalDisplay globalDisplay)
+   {
+      new BoolStateValue("moduleprefs", key, true,
+                         session.getSessionInfo().getClientState())
+      {
+         @Override
+         protected void onInit(Boolean value)
+         {
+            val.setValue(value == null ? false : value);
+         }
+
+         @Override
+         protected Boolean getValue()
+         {
+            return val.getValue();
+         }
+      };
+      command.addHandler(new CommandHandler()
+      {
+         public void onCommand(AppCommand command)
+         {
+            val.setValue(val.getValue() == null
+                         || !val.getValue());
+            session.persistClientState();
+            globalDisplay.showProgress("Saving preferences...");
+            new Timer() {
+               @Override
+               public void run()
+               {
+                  Window.Location.reload();
+               }
+            }.schedule(1500);
+         }
+      });
+   }
+
    private void updateWorkingDirectory(String path)
    {
       if (!path.endsWith("/"))
@@ -467,7 +491,8 @@ public class WorkbenchScreen extends Composite
    
    private final WorkbenchTabPanel rightTopTabs_;
    private final WorkbenchTabPanel browseTabs_;
-   private boolean consoleOnTop_;
+   private Value<Boolean> consoleOnTop_ = new Value<Boolean>(false);
+   private Value<Boolean> plotsOnTop_ = new Value<Boolean>(false);
    private LogicalWindow consoleLogicalWindow_;
    private LogicalWindow sourceLogicalWindow_;
    private PrimaryWindowFrame consoleFrame_;
