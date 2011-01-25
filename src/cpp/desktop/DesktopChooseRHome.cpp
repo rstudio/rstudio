@@ -118,7 +118,6 @@ void ChooseRHome::chooseOther()
    else if (versions.size() > 1)
    {
       QStringList items;
-      items.reserve(versions.size());
       for (int i = 0; i < versions.size(); i++)
          items << versions.at(i).description();
 
