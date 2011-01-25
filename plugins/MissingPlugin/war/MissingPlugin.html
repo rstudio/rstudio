@@ -35,7 +35,7 @@
 
           "firefox-old" :
           {
-            "caption" : "Sorry, the GWT Developer Plugin only supports Firefox 3.0 and 3.5 at present",
+            "caption" : "Sorry, the GWT Developer Plugin only supports Firefox 3.0 - 4.0 at present",
             "url" : "http://www.getfirefox.com",
             "supported" : false
           },
@@ -81,7 +81,7 @@
           {
             "caption" : "Download the GWT Developer Plugin<br>For Firefox",
             "url" : "https://dl-ssl.google.com/gwt/plugins/firefox/gwt-dev-plugin.xpi",
-            "platforms" : "Win x86, Linux x86/x86_64, Mac x86/PPC",
+            "platforms" : "Win x86, Linux x86/x86_64, Mac x86/PPC(3.x only)/x86_64 (4.x) only",
             "supported" : true
           },
 
@@ -130,7 +130,8 @@
       } else if (ua.indexOf("opera") != -1) {
         id = 'opera';
       } else if (ua.indexOf("gecko") != -1) {
-        if (ua.indexOf("rv:1.9") != -1) {
+      if (ua.indexOf("rv:1.9") != -1 ||
+          ua.indexOf("rv:2.0") != -1) {
           id = 'firefox';
         } else {
           id = 'firefox-old';
