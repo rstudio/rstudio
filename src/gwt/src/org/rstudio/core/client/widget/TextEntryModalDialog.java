@@ -83,9 +83,11 @@ public class TextEntryModalDialog extends ModalDialog<String>
    {
       if (input.length() == 0)
       {
-         new MessageDialog(MessageDialog.ERROR, 
-                           "Error", 
-                           "You must enter a value.").showModal();
+         MessageDialog dialog = new MessageDialog(MessageDialog.ERROR,
+                                                  "Error",
+                                                  "You must enter a value.");
+         dialog.addButton("OK", (Operation)null, true, true);
+         dialog.showModal();
          textBox_.setFocus(true);
          return false;
       }
