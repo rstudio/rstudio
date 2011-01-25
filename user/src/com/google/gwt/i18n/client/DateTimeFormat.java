@@ -752,6 +752,7 @@ public class DateTimeFormat {
    * pattern for this format is predefined for each locale.
    * 
    * @return A DateTimeFormat object
+   * @deprecated use {@link #getFormat(PredefinedFormat)} with
    *     {@link PredefinedFormat#DATE_TIME_MEDIUM} instead
    */
   @Deprecated
