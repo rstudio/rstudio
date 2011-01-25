@@ -18,6 +18,7 @@ package com.google.gwt.editor.rebind.model;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
@@ -185,7 +186,7 @@ public class EditorModelTest extends TestCase {
         types.findType("t.CompositeEditorDriver"), rfedType);
 
     EditorData[] data = m.getEditorData();
-    assertEquals(6, data.length);
+    assertEquals(7, data.length);
 
     String[] paths = new String[data.length];
     String[] expressions = new String[data.length];
@@ -194,17 +195,19 @@ public class EditorModelTest extends TestCase {
       expressions[i] = data[i].getExpression();
     }
     assertEquals(Arrays.asList("address", "address.city", "address.street",
-        "person", "person.name", "person.readonly"), Arrays.asList(paths));
+        "person", "person.lastModified", "person.name", "person.readonly"),
+        Arrays.asList(paths));
     // address is a property, person is a method in CompositeEditor
     assertEquals(Arrays.asList("address", "address.city", "address.street",
-        "person()", "person().name", "person().readonly"),
-        Arrays.asList(expressions));
+        "person()", "person().lastModified", "person().name",
+        "person().readonly"), Arrays.asList(expressions));
     assertTrue(data[0].isDelegateRequired());
     assertFalse(data[0].isLeafValueEditor() || data[0].isValueAwareEditor());
     assertTrue(data[3].isDelegateRequired());
     assertFalse(data[3].isLeafValueEditor() || data[3].isValueAwareEditor());
-    checkPersonName(data[4]);
-    checkPersonReadonly(data[5]);
+    checkPersonLastModified(data[4]);
+    checkPersonName(data[5]);
+    checkPersonReadonly(data[6]);
   }
 
   public void testCyclicDriver() {
@@ -254,12 +257,14 @@ public class EditorModelTest extends TestCase {
     EditorModel m = new EditorModel(logger,
         types.findType("t.PersonEditorDriver"), rfedType);
     EditorData[] fields = m.getEditorData();
-    assertEquals(2, fields.length);
+    assertEquals(3, fields.length);
 
+    // lastModified
+    checkPersonLastModified(fields[0]);
     // name
-    checkPersonName(fields[0]);
+    checkPersonName(fields[1]);
     // readonly
-    checkPersonReadonly(fields[1]);
+    checkPersonReadonly(fields[2]);
   }
 
   public void testFlatData() throws UnableToCompleteException {
@@ -275,9 +280,10 @@ public class EditorModelTest extends TestCase {
     assertEquals("person", composite[1].getPropertyName());
 
     EditorData[] person = m.getEditorData(types.findType("t.PersonEditor"));
-    assertEquals(2, person.length);
-    assertEquals("name", person[0].getPropertyName());
-    assertEquals("readonly", person[1].getPropertyName());
+    assertEquals(3, person.length);
+    assertEquals("lastModified", person[0].getPropertyName());
+    assertEquals("name", person[1].getPropertyName());
+    assertEquals("readonly", person[2].getPropertyName());
 
     EditorData[] address = m.getEditorData(types.findType("t.AddressEditor"));
     assertEquals("city", address[0].getPropertyName());
@@ -401,6 +407,9 @@ public class EditorModelTest extends TestCase {
     builder.expectError(
         EditorModel.tooManyInterfacesMessage(types.findType("t.TooManyInterfacesEditorDriver")),
         null);
+    builder.expectError(EditorModel.foundPrimitiveMessage(JPrimitiveType.LONG,
+        "", "lastModified.foo"), null);
+    builder.expectError(EditorModel.poisonedMessage(), null);
     UnitTestTreeLogger testLogger = builder.createLogger();
 
     try {
@@ -416,6 +425,13 @@ public class EditorModelTest extends TestCase {
     try {
       new EditorModel(testLogger,
           types.findType("t.TooManyInterfacesEditorDriver"), rfedType);
+      fail("Should have thrown exception");
+    } catch (UnableToCompleteException expected) {
+    }
+    try {
+      new EditorModel(testLogger,
+          types.findType("t.PersonEditorWithBadPrimitiveAccessDriver"),
+          rfedType);
       fail("Should have thrown exception");
     } catch (UnableToCompleteException expected) {
     }
@@ -447,7 +463,18 @@ public class EditorModelTest extends TestCase {
     EditorModel m = new EditorModel(logger,
         types.findType("t.PersonEditorWithAliasedSubEditorsDriver"), rfedType);
     EditorData[] fields = m.getEditorData();
-    assertEquals(6, fields.length);
+    assertEquals(8, fields.length);
+  }
+
+  private void checkPersonLastModified(EditorData editorField) {
+    assertNotNull(editorField);
+    assertEquals(types.findType(SimpleEditor.class.getName()),
+        editorField.getEditorType().isParameterized().getBaseType());
+    assertTrue(editorField.isLeafValueEditor());
+    assertFalse(editorField.isDelegateRequired());
+    assertFalse(editorField.isValueAwareEditor());
+    assertEquals(".getLastModified()", editorField.getGetterExpression());
+    assertEquals("setLastModified", editorField.getSetterName());
   }
 
   private void checkPersonName(EditorData editorField) {
@@ -639,8 +666,10 @@ public class EditorModelTest extends TestCase {
         code.append("interface PersonProxy extends EntityProxy {\n");
         code.append("AddressProxy getAddress();\n");
         code.append("String getName();\n");
-        code.append("void setName(String name);\n");
+        code.append("long getLastModified();\n");
         code.append("String getReadonly();\n");
+        code.append("void setName(String name);\n");
+        code.append("void setLastModified(long value);\n");
         code.append("}");
         return code;
       }
@@ -652,6 +681,7 @@ public class EditorModelTest extends TestCase {
         code.append("import " + Editor.class.getName() + ";\n");
         code.append("import " + SimpleEditor.class.getName() + ";\n");
         code.append("class PersonEditor implements Editor<PersonProxy> {\n");
+        code.append("SimpleEditor<Long> lastModified;\n");
         code.append("public SimpleEditor<String> name;\n");
         code.append("SimpleEditor<String> readonly;\n");
         code.append("public static SimpleEditor ignoredStatic;\n");
@@ -682,6 +712,30 @@ public class EditorModelTest extends TestCase {
             + ";\n");
         code.append("interface PersonEditorWithAliasedSubEditorsDriver extends"
             + " RequestFactoryEditorDriver<PersonProxy, t.PersonEditorWithAliasedSubEditors> {\n");
+        code.append("}");
+        return code;
+      }
+    }, new MockJavaResource("t.PersonEditorWithBadPrimitiveAccess") {
+      @Override
+      protected CharSequence getContent() {
+        StringBuilder code = new StringBuilder();
+        code.append("package t;\n");
+        code.append("import " + Editor.class.getName() + ";\n");
+        code.append("import " + SimpleEditor.class.getName() + ";\n");
+        code.append("class PersonEditorWithBadPrimitiveAccess implements Editor<PersonProxy> {\n");
+        code.append("@Path(\"lastModified.foo\") SimpleEditor<String> bad;\n");
+        code.append("}");
+        return code;
+      }
+    }, new MockJavaResource("t.PersonEditorWithBadPrimitiveAccessDriver") {
+      @Override
+      protected CharSequence getContent() {
+        StringBuilder code = new StringBuilder();
+        code.append("package t;\n");
+        code.append("import " + RequestFactoryEditorDriver.class.getName()
+            + ";\n");
+        code.append("interface PersonEditorWithBadPrimitiveAccessDriver extends"
+            + " RequestFactoryEditorDriver<PersonProxy, t.PersonEditorWithBadPrimitiveAccess> {\n");
         code.append("}");
         return code;
       }

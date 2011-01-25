@@ -180,6 +180,8 @@ public class EditorModel {
 
   private final TreeLogger logger;
 
+  private final TypeOracle oracle;
+
   private final EditorModel parentModel;
 
   private boolean poisoned;
@@ -212,7 +214,7 @@ public class EditorModel {
       die(mustExtendMessage(driverType));
     }
 
-    TypeOracle oracle = intf.getOracle();
+    oracle = intf.getOracle();
     editorIntf = oracle.findType(Editor.class.getName()).isGenericType();
     assert editorIntf != null : "No Editor type";
     isEditorIntf = oracle.findType(IsEditor.class.getName()).isGenericType();
@@ -250,6 +252,7 @@ public class EditorModel {
     this.editorSoFar = subEditor;
     this.isEditorIntf = parent.isEditorIntf;
     this.leafValueEditorIntf = parent.leafValueEditorIntf;
+    this.oracle = parent.oracle;
     this.parentModel = parent;
     this.proxyType = proxyType;
     this.typeData = parent.typeData;
@@ -467,6 +470,7 @@ public class EditorModel {
       if (parts[i].length() == 0) {
         continue;
       }
+      boolean lastPart = i == j - 1;
       String getterName = camelCase("get", parts[i]);
 
       for (JClassType search : lookingAt.getFlattenedSupertypeHierarchy()) {
@@ -475,12 +479,19 @@ public class EditorModel {
           for (JMethod maybeSetter : search.getOverloads(camelCase("set",
               parts[i]))) {
             if (maybeSetter.getReturnType().equals(JPrimitiveType.VOID)
-                && maybeSetter.getParameters().length == 1
-                && maybeSetter.getParameters()[0].getType().isClassOrInterface() != null
-                && maybeSetter.getParameters()[0].getType().isClassOrInterface().isAssignableFrom(
-                    propertyType)) {
-              setterName = maybeSetter.getName();
-              break;
+                && maybeSetter.getParameters().length == 1) {
+              JType setterParamType = maybeSetter.getParameters()[0].getType();
+              // Handle the case of setFoo(int) vs. Editor<Integer>
+              if (setterParamType.isPrimitive() != null) {
+                // Replace the int with Integer
+                setterParamType = oracle.findType(setterParamType.isPrimitive().getQualifiedBoxedSourceName());
+              }
+              boolean matches = setterParamType.isClassOrInterface().isAssignableFrom(
+                  propertyType);
+              if (matches) {
+                setterName = maybeSetter.getName();
+                break;
+              }
             }
           }
         }
@@ -489,7 +500,7 @@ public class EditorModel {
         if (getter != null) {
           JType returnType = getter.getReturnType();
           lookingAt = returnType.isClassOrInterface();
-          if (lookingAt == null) {
+          if (!lastPart && lookingAt == null) {
             poison(foundPrimitiveMessage(returnType,
                 interstitialGetters.toString(), path));
             return;

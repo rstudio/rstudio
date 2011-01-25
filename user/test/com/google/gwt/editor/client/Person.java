@@ -19,12 +19,17 @@ package com.google.gwt.editor.client;
  * Simple data object used by multiple tests.
  */
 public class Person {
-  String name;
   Address address;
   Person manager;
+  String name;
+  long localTime;
 
   public Address getAddress() {
     return address;
+  }
+
+  public long getLocalTime() {
+    return localTime;
   }
 
   public Person getManager() {
@@ -37,6 +42,10 @@ public class Person {
 
   public void setAddress(Address address) {
     this.address = address;
+  }
+
+  public void setLocalTime(long localTime) {
+    this.localTime = localTime;
   }
 
   public void setManager(Person manager) {

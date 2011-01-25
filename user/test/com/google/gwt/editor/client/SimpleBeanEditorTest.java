@@ -267,6 +267,8 @@ public class SimpleBeanEditorTest extends GWTTestCase {
 
   static final String UNINITIALIZED = "uninitialized";
 
+  long now;
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.editor.Editor";
@@ -277,17 +279,20 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     PersonEditor editor = new PersonEditor();
     driver.initialize(editor);
     driver.edit(person);
+    assertEquals(now, editor.localTime.getValue().longValue());
     assertEquals("Alice", editor.name.getValue());
     assertEquals("City", editor.addressEditor.city.getValue());
     assertEquals("Street", editor.addressEditor.street.getValue());
     assertEquals("Bill", editor.managerName.getValue());
 
+    editor.localTime.setValue(now + 1);
     editor.name.setValue("Charles");
     editor.addressEditor.city.setValue("Wootville");
     editor.addressEditor.street.setValue("12345");
     editor.managerName.setValue("David");
 
     driver.flush();
+    assertEquals(now + 1, person.localTime);
     assertEquals("Charles", person.name);
     assertEquals("Wootville", person.address.city);
     assertEquals("12345", person.address.street);
@@ -354,7 +359,7 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     // Use the delegate to toggle the state
     editor.delegate.setDirty(true);
     assertTrue(driver.isDirty());
-    
+
     // Use the delegate to clear the state
     editor.delegate.setDirty(false);
     assertFalse(driver.isDirty());
@@ -370,23 +375,25 @@ public class SimpleBeanEditorTest extends GWTTestCase {
 
   public void testDirtyWithOptionalEditor() {
     AddressEditor addressEditor = new AddressEditor();
-    PersonEditorWithOptionalAddressEditor editor = new PersonEditorWithOptionalAddressEditor(addressEditor);
+    PersonEditorWithOptionalAddressEditor editor = new PersonEditorWithOptionalAddressEditor(
+        addressEditor);
     PersonEditorWithOptionalAddressDriver driver = GWT.create(PersonEditorWithOptionalAddressDriver.class);
     driver.initialize(editor);
     driver.edit(person);
-    
+
     // Freshly-initialized should not be dirty
     assertFalse(driver.isDirty());
-    
+
     // Change the instance being edited
     Address a = new Address();
     editor.address.setValue(a);
     assertTrue(driver.isDirty());
-    
+
     // Check restoration works
     editor.address.setValue(personAddress);
     assertFalse(driver.isDirty());
   }
+
   /**
    * Test the use of the IsEditor interface that allows a view object to
    * encapsulate its Editor.
@@ -677,6 +684,7 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     person.address = personAddress;
     person.name = "Alice";
     person.manager = manager;
+    person.localTime = now = System.currentTimeMillis();
   }
 
   private <T extends Editor<Person>> void testLeafAddressEditor(
