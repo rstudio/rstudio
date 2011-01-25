@@ -18,15 +18,10 @@ package com.google.gwt.canvas.dom.client;
 import com.google.gwt.core.client.JavaScriptObject;
 
 /**
- * Object that holds image data and a size. 
- * 
- * <p>
- * <span style="color:red">Experimental API: This API is still under development 
- * and is subject to change.
- * </span>
- * </p>
+ * Object that holds image data and a size.
  *
- * @see <a href="http://www.w3.org/TR/2dcontext/#imagedata">HTML Canvas 2D ImageData</a>
+ * @see <a href="http://www.w3.org/TR/2dcontext/#imagedata">HTML Canvas 2D
+ *      ImageData</a>
  */
 public class ImageData extends JavaScriptObject {
 

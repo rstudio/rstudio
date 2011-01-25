@@ -17,17 +17,12 @@ package com.google.gwt.canvas.dom.client;
 
 /**
  * Gradient object used with {@link Context2d}.
- * 
- * <p>
- * <span style="color:red">Experimental API: This API is still under development 
- * and is subject to change.
- * </span>
- * </p>
- * 
+ *
  * This class serves as a reference to a gradient created using
  * {@link Context2d#createPattern}.
- * 
- * @see <a href="http://www.w3.org/TR/2dcontext/#canvasgradient">HTML Canvas 2D CanvasGradient</a>
+ *
+ * @see <a href="http://www.w3.org/TR/2dcontext/#canvasgradient">HTML Canvas 2D
+ *      CanvasGradient</a>
  */
 public class CanvasGradient extends FillStrokeStyle {
 

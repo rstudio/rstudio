@@ -21,12 +21,6 @@ import com.google.gwt.core.client.JavaScriptObject;
 /**
  * Represents a {@link CssColor}, {@link CanvasGradient}, or
  * {@link CanvasPattern} that is used for stroke and fill.
- *
- * <p>
- * <span style="color:red">Experimental API: This API is still under development 
- * and is subject to change.
- * </span>
- * </p>
  */
 public class FillStrokeStyle extends JavaScriptObject {
 

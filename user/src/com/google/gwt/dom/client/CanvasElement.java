@@ -21,12 +21,6 @@ import com.google.gwt.canvas.dom.client.Context2d;
 /**
  * Canvas element.
  * 
- * <p>
- * <span style="color:red">Experimental API: This API is still under development 
- * and is subject to change.
- * </span>
- * </p>
- * 
  * @see <a href="http://www.w3.org/TR/html5/#canvas">W3C HTML 5 Specification</a>
  */
 @TagName(CanvasElement.TAG)

@@ -17,17 +17,12 @@ package com.google.gwt.canvas.dom.client;
 
 /**
  * Pattern object used with {@link Context2d}.
- * 
- * <p>
- * <span style="color:red">Experimental API: This API is still under development 
- * and is subject to change.
- * </span>
- * </p>
- * 
+ *
  * Note that this class has no methods. It simply serves as a reference to a
  * pattern created using {@link Context2d#createPattern}.
- * 
- * @see <a href="http://www.w3.org/TR/2dcontext/#canvaspattern">HTML Canvas 2D CanvasPattern</a>
+ *
+ * @see <a href="http://www.w3.org/TR/2dcontext/#canvaspattern">HTML Canvas 2D
+ *      CanvasPattern</a>
  */
 public class CanvasPattern extends FillStrokeStyle {
 

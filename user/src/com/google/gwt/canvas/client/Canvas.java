@@ -26,12 +26,6 @@ import com.google.gwt.user.client.ui.FocusWidget;
 /**
  * A widget representing a &lt;canvas&gt; element.
  * 
- * <p>
- * <span style="color:red">Experimental API: This API is still under development 
- * and is subject to change.
- * </span>
- * </p>
- * 
  * This widget may not be supported on all browsers.
  */
 @PartialSupport

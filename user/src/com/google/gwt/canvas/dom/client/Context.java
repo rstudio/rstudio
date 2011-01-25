@@ -18,12 +18,6 @@ package com.google.gwt.canvas.dom.client;
 /**
  * Rendering Context interface used to draw on a
  * {@link com.google.gwt.dom.client.CanvasElement}.
- * 
- * <p>
- * <span style="color:red">Experimental API: This API is still under development 
- * and is subject to change.
- * </span>
- * </p>
  */
 public interface Context {
 

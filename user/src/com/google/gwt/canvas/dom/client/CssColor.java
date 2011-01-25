@@ -17,20 +17,15 @@ package com.google.gwt.canvas.dom.client;
 
 /**
  * CSS Color object.
- * 
- * <p>
- * <span style="color:red">Experimental API: This API is still under development 
- * and is subject to change.
- * </span>
- * </p>
- * 
+ *
  * <p>
  * To handle dev mode we must wrap JSO strings in an array. Therefore, when in
  * dev mode, CssColor is actually an array with one element that is the JSO. In
  * Production Mode, this is not needed.
  * </p>
- * 
- * @see <a href="http://www.w3.org/TR/CSS1/#color">Cascading Style Sheets, level 1</a>
+ *
+ * @see <a href="http://www.w3.org/TR/CSS1/#color">Cascading Style Sheets, level
+ *      1</a>
  */
 public class CssColor extends FillStrokeStyle {
 
