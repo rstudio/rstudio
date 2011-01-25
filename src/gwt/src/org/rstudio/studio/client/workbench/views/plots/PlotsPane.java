@@ -27,6 +27,9 @@ import org.rstudio.core.client.widget.ImageFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.plots.Plots.ManipulatorChangedHandler;
+import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
+import org.rstudio.studio.client.workbench.views.plots.ui.ManipulatorPopupPanel;
 import org.rstudio.studio.client.workbench.views.plots.ui.PlotsToolbar;
 
 import java.util.Iterator;
@@ -100,6 +103,15 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
       // use frame.contentWindow.location.replace to avoid having the plot
       // enter the browser's history
       frame_.setImageUrl(plotUrl);
+   }
+   
+   public void showManipulator(
+                  Manipulator manipulator,
+                  ManipulatorChangedHandler changedHandler)
+   {
+      ManipulatorPopupPanel panel = new ManipulatorPopupPanel(manipulator,
+                                                              changedHandler);
+      panel.showRelativeTo(this);
    }
 
    public String getPlotUrl()

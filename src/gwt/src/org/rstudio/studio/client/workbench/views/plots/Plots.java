@@ -13,15 +13,13 @@
 package org.rstudio.studio.client.workbench.views.plots;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.logical.shared.HasResizeHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.inject.Inject;
-
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.js.JsObject;
@@ -62,10 +60,18 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    {
    }
    
+   public interface ManipulatorChangedHandler
+   {
+      void onManipulatorChanged(JSONObject values);
+   }
+   
    public interface Display extends WorkbenchView, HasResizeHandlers
    {
       void showEmptyPlot();
       void showPlot(String plotUrl);
+      void showManipulator(
+            Manipulator manipulator,
+            ManipulatorChangedHandler changedHandler);
       String getPlotUrl();
 
       void refresh();
@@ -73,6 +79,8 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       Parent getPlotsParent();
       Size getPlotFrameSize();
    }
+   
+  
 
    @Inject
    public Plots(final Display view,
@@ -133,59 +141,26 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       };
    }
    
-   /*
-   private void debugPrintManipulator(Manipulator manipulator)
+   private void showManipulator(Manipulator manipulator)
    {
-     Debug.log(manipulator.getCode());
-     
-     JsArrayString vars = manipulator.getVariables();
-     for (int i=0; i<vars.length(); i++)
-     {
-        String var = vars.get(i);
-        Debug.log("VAR: " + var);
-        
-        
-        
-        Manipulator.Control control = manipulator.getControl(var);
-        switch(control.getType())
-        {
-        case Manipulator.Control.SLIDER:
-           Manipulator.Slider slider = control.cast();
-           Debug.log("SLIDER");
-           Debug.log("MIN: " + slider.getMin());
-           Debug.log("MAX: " + slider.getMax());
-           try
-           {
-              double value = manipulator.getDoubleValue(var);
-              Debug.log("VALUE: " + value);
-           }
-           catch(Throwable e)
-           {
-              Debug.log(e.toString());
-           }
-           break;
-           
-        case Manipulator.Control.PICKER:
-           Manipulator.Picker picker = control.cast();
-           Debug.log("PICKER");
-           Debug.log("CHOICES: ");
-           for (int j=0; j<picker.getChoices().length(); j++)
-              Debug.log("   " + picker.getChoices().get(j));
-           String value = manipulator.getStringValue(var);
-           Debug.log("VALUE: " + value);
-           break;
-        }
-        
-     }
-      
+      view_.showManipulator(
+         manipulator,
+         new ManipulatorChangedHandler() {
+            public void onManipulatorChanged(JSONObject values)
+            {
+               if (!Desktop.isDesktop())
+                  view_.setProgress(true);
+               
+               server_.setManipulatorValues(values, new PlotRequestCallback());
+            }
+         });   
    }
-   */
 
    public void onPlotsChanged(PlotsChangedEvent event)
    {
       // get the event
       PlotsState plotsState = event.getPlotsState();
-      
+        
       // clear progress 
       view_.setProgress(false);
       
@@ -202,6 +177,11 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       {
          String url = server_.getGraphicsUrl(plotsState.getFilename());
          view_.showPlot(url);
+         
+         /*
+         if (plotsState.getManipulator() != null)
+            showManipulator(plotsState.getManipulator());
+         */
       }
 
       // activate plots tab if requested

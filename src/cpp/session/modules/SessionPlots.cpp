@@ -375,6 +375,7 @@ void handleGraphicsRequest(const http::Request& request,
       }
    }
 }
+
    
 void enquePlotsChanged(const r::session::graphics::DisplayState& displayState,
                        bool activatePlots)
@@ -422,6 +423,17 @@ void onDetectChanges(module_context::ChangeSource source)
    }
 }
 
+Error setManipulatorValues(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+
+   using namespace r::session;
+   if (graphics::display().hasOutput())
+      graphics::display().render(boost::bind(enquePlotsChanged, _1, true));
+
+   return Success();
+}
+
 } // anonymous namespace  
    
 Error initialize()
@@ -442,6 +454,7 @@ Error initialize()
       (bind(registerRpcMethod, "load_plot", loadPlot))
       (bind(registerRpcMethod, "refresh_plot", refreshPlot))
       (bind(registerRpcMethod, "export_plot", exportPlot))
+      (bind(registerRpcMethod, "set_manipulator_values", setManipulatorValues))
       (bind(registerUriHandler, kGraphics "/plot_zoom", handleZoomRequest))
       (bind(registerUriHandler, kGraphics "/plot.pdf", handlePrintRequest))
       (bind(registerUriHandler, kGraphics "/plot.png", handlePngRequest))

@@ -27,7 +27,7 @@
    return (manipulator)
 })
 
-.rs.addGlobalFunction( "slider", function(value, min, max)
+.rs.addGlobalFunction( "slider", function(value, min, max, label = NULL)
 {
   # validate inputs
   if (!is.numeric(value) || !is.numeric(min) || !is.numeric(max))
@@ -38,27 +38,37 @@
     stop(paste(type, "value", value, "is greater than the specified maximum"))
   else if (min > max)
     stop(paste(type, "maximum is greater than minimum"))
+  else if ( !is.null(label) && !is.character(label) )
+    stop("label is not a character value")
   
   # create slider and return it
   slider <- list(type = 0,
                  initialValue = value,
                  min = min,
-                 max = max)
+                 max = max,
+                 label = label)
   class(slider) <- "manipulator.slider"
   return (slider)
 })
 
-.rs.addGlobalFunction( "picker", function(choices)
+.rs.addGlobalFunction( "picker", function(value, choices, label = NULL)
 {
-  # TODO: validate that this isn't an empty array
-  
   # validate inputs
-  if ( !is.character(choices) )
+  if ( !is.character(value) )
+    stop("value is not a character value")
+  else if ( !is.character(choices) )
     stop("choices is not a character vector")
-    
+  else if ( length(choices) < 1 )
+    stop("choices must contain at least one value")
+  else if ( !(value %in% choices) )
+    stop("value doesn't match one of the supplied choices") 
+  else if ( !is.null(label) && !is.character(label) )
+    stop("label is not a character value")
+   
   picker <- list(type = 1,
                  initialValue = choices[1],
-                 choices = choices)
+                 choices = choices,
+                 label = label)
   class(picker) <- "manipulator.picker"
   return (picker) 
 })

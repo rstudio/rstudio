@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.views.plots.model;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import com.google.gwt.json.client.JSONObject;
 
 
 public interface PlotsServerOperations
@@ -27,6 +28,9 @@ public interface PlotsServerOperations
    void clearPlots(ServerRequestCallback<Void> requestCallback);
       
    void refreshPlot(ServerRequestCallback<Void> requestCallback);
+   
+   void setManipulatorValues(JSONObject values,
+                             ServerRequestCallback<Void> requestCallback);
    
    void locatorCompleted(Point point, 
                         ServerRequestCallback<Void> requestCallback);

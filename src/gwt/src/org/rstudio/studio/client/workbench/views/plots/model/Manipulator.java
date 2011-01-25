@@ -21,6 +21,13 @@ public class Manipulator extends JavaScriptObject
       public final native int getType() /*-{
          return this.type[0];
       }-*/;
+      
+      public final native String getLabel() /*-{
+         if (this.label)
+            return this.label[0];
+         else
+            return null;
+      }-*/;
    }
    
    public static class Slider extends Control
