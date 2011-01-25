@@ -411,9 +411,9 @@ SEXP rs_activeManipulator()
    return plotManager().activeManipulator();
 }
 
-SEXP rs_setManipulatorAttribs(SEXP attribsSEXP)
+SEXP rs_setManipulatorState(SEXP stateSEXP)
 {
-   plotManager().setActiveManipulatorAttribs(attribsSEXP);
+   plotManager().setActiveManipulatorState(stateSEXP);
    return R_NilValue;
 }
 
@@ -487,12 +487,12 @@ Error initialize(
       activeManipulatorMethodDef.numArgs = 0;
       r::routines::addCallMethod(activeManipulatorMethodDef);
 
-      // register set manipulator attribs routine
-      R_CallMethodDef setManipulatorAttribsMethodDef ;
-      setManipulatorAttribsMethodDef.name = "rs_setManipulatorAttribs" ;
-      setManipulatorAttribsMethodDef.fun = (DL_FUNC) rs_setManipulatorAttribs;
-      setManipulatorAttribsMethodDef.numArgs = 1;
-      r::routines::addCallMethod(setManipulatorAttribsMethodDef);
+      // register set manipulator state routine
+      R_CallMethodDef setManipulatorStateMethodDef ;
+      setManipulatorStateMethodDef.name = "rs_setManipulatorState" ;
+      setManipulatorStateMethodDef.fun = (DL_FUNC) rs_setManipulatorState;
+      setManipulatorStateMethodDef.numArgs = 1;
+      r::routines::addCallMethod(setManipulatorStateMethodDef);
 
 
       // register interactive() hook to work around dev.interactive device

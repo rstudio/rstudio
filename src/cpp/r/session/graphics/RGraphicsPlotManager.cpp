@@ -421,7 +421,7 @@ SEXP PlotManager::activeManipulator() const
    }
 }
 
-void PlotManager::setActiveManipulatorAttribs(SEXP attribsSEXP)
+void PlotManager::setActiveManipulatorState(SEXP stateSEXP)
 {
    SEXP manipulatorSEXP = plotManager().activeManipulator();
    if (manipulatorSEXP != R_NilValue)
@@ -436,19 +436,19 @@ void PlotManager::setActiveManipulatorAttribs(SEXP attribsSEXP)
       }
 
       // find the index
-      int attribsIndex = -1;
+      int stateIndex = -1;
       for (int i = 0; i<(int)names.size(); i++)
       {
-         if (names[i] == "manip_attribs")
+         if (names[i] == "manip_state")
          {
-            attribsIndex = i;
+            stateIndex = i;
             break;
          }
       }
 
       // set the vector element
-      if (attribsIndex != -1)
-         SET_VECTOR_ELT(manipulatorSEXP, attribsIndex, attribsSEXP);
+      if (stateIndex != -1)
+         SET_VECTOR_ELT(manipulatorSEXP, stateIndex, stateSEXP);
 
       // if the active plot has a manipulator then ensure it is
       // saved. note that if the set was applied to a pending

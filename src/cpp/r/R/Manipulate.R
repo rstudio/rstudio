@@ -63,11 +63,11 @@
   return (picker) 
 })
 
-.rs.addGlobalFunction( "manipulator.attribs", function()
+.rs.addGlobalFunction( "manipulator.state", function()
 {
   if ( .Call("rs_hasActiveManipulator") )
   {
-    .Call("rs_activeManipulator")$manip_attribs
+    .Call("rs_activeManipulator")$manip_state
   }
   else
   {
@@ -75,11 +75,14 @@
   }
 })
 
-.rs.addGlobalFunction( "manipulator.setAttribs", function(attribs)
+.rs.addGlobalFunction( "manipulator.setState", function(state)
 {
+  if ( !is.list(state) )
+    stop("manipulator state must be a list")
+  
   if ( .Call("rs_hasActiveManipulator") )
   {
-     .Call("rs_setManipulatorAttribs", attribs)
+     .Call("rs_setManipulatorState", state)
      invisible(NULL)
   }
   else
@@ -88,7 +91,7 @@
   }
 })
 
-.rs.addGlobalFunction( "manipulate", function(code, attribs = list(), ...)
+.rs.addGlobalFunction( "manipulate", function(code, ...)
 {
   # TODO: validate that all controls have variables in the expression
 
@@ -111,8 +114,8 @@
   manipulator$manip_controls <- controls
   manipulator$manip_variables <- controlNames
   
-  # set attributes
-  manipulator$manip_attribs <- attribs
+  # set custom state
+  manipulator$manip_state <- list()
   
   # iterate over the names and controls, adding the default values to the env
   c = 1 
