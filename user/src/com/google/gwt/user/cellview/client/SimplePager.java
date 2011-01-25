@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -24,6 +24,7 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.uibinder.client.UiConstructor;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -34,7 +35,7 @@ import com.google.gwt.view.client.Range;
 /**
  * A pager for controlling a {@link HasRows} that only supports simple page
  * navigation.
- *
+ * 
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.cellview.SimplePagerExample}
@@ -142,6 +143,53 @@ public class SimplePager extends AbstractPager {
     CENTER, LEFT, RIGHT;
   }
 
+  /**
+   * An {@link Image} that acts as a button.
+   */
+  private static class ImageButton extends Image {
+    private boolean disabled;
+    private final ImageResource resDisabled;
+    private final ImageResource resEnabled;
+    private final String styleDisabled;
+
+    public ImageButton(ImageResource resEnabled, ImageResource resDiabled,
+        String disabledStyle) {
+      super(resEnabled);
+      this.resEnabled = resEnabled;
+      this.resDisabled = resDiabled;
+      this.styleDisabled = disabledStyle;
+    }
+
+    public boolean isDisabled() {
+      return disabled;
+    }
+
+    @Override
+    public void onBrowserEvent(Event event) {
+      // Ignore events if disabled.
+      if (disabled) {
+        return;
+      }
+
+      super.onBrowserEvent(event);
+    }
+
+    public void setDisabled(boolean isDisabled) {
+      if (this.disabled == isDisabled) {
+        return;
+      }
+
+      this.disabled = isDisabled;
+      if (disabled) {
+        setResource(resDisabled);
+        getElement().getParentElement().addClassName(styleDisabled);
+      } else {
+        setResource(resEnabled);
+        getElement().getParentElement().removeClassName(styleDisabled);
+      }
+    }
+  }
+
   private static int DEFAULT_FAST_FORWARD_ROWS = 1000;
   private static Resources DEFAULT_RESOURCES;
 
@@ -152,32 +200,20 @@ public class SimplePager extends AbstractPager {
     return DEFAULT_RESOURCES;
   }
 
-  private final Image fastForward;
+  private final ImageButton fastForward;
 
   private final int fastForwardRows;
 
-  private final Image firstPage;
+  private final ImageButton firstPage;
 
   /**
    * We use an {@link HTML} so we can embed the loading image.
    */
   private final HTML label = new HTML();
 
-  private final Image lastPage;
-
-  /**
-   * Set to true when the next and last buttons are disabled.
-   */
-  private boolean nextDisabled;
-
-  private final Image nextPage;
-
-  /**
-   * Set to true when the prev and first buttons are disabled.
-   */
-  private boolean prevDisabled;
-
-  private final Image prevPage;
+  private final ImageButton lastPage;
+  private final ImageButton nextPage;
+  private final ImageButton prevPage;
 
   /**
    * The {@link Resources} used by this widget.
@@ -198,7 +234,7 @@ public class SimplePager extends AbstractPager {
 
   /**
    * Construct a {@link SimplePager} with the specified text location.
-   *
+   * 
    * @param location the location of the text relative to the buttons
    */
   @UiConstructor
@@ -210,7 +246,7 @@ public class SimplePager extends AbstractPager {
 
   /**
    * Construct a {@link SimplePager} with the specified resources.
-   *
+   * 
    * @param location the location of the text relative to the buttons
    * @param resources the {@link Resources} to use
    * @param showFastForwardButton if true, show a fast-forward button that
@@ -227,26 +263,31 @@ public class SimplePager extends AbstractPager {
     this.style.ensureInjected();
 
     // Create the buttons.
-    firstPage = new Image(resources.simplePagerFirstPage());
+    String disabledStyle = style.disabledButton();
+    firstPage = new ImageButton(resources.simplePagerFirstPage(),
+        resources.simplePagerFirstPageDisabled(), disabledStyle);
     firstPage.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
         firstPage();
       }
     });
-    nextPage = new Image(resources.simplePagerNextPage());
+    nextPage = new ImageButton(resources.simplePagerNextPage(),
+        resources.simplePagerNextPageDisabled(), disabledStyle);
     nextPage.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
         nextPage();
       }
     });
-    prevPage = new Image(resources.simplePagerPreviousPage());
+    prevPage = new ImageButton(resources.simplePagerPreviousPage(),
+        resources.simplePagerPreviousPageDisabled(), disabledStyle);
     prevPage.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
         previousPage();
       }
     });
     if (showLastPageButton) {
-      lastPage = new Image(resources.simplePagerLastPage());
+      lastPage = new ImageButton(resources.simplePagerLastPage(),
+          resources.simplePagerLastPageDisabled(), disabledStyle);
       lastPage.addClickHandler(new ClickHandler() {
         public void onClick(ClickEvent event) {
           lastPage();
@@ -256,7 +297,8 @@ public class SimplePager extends AbstractPager {
       lastPage = null;
     }
     if (showFastForwardButton) {
-      fastForward = new Image(resources.simplePagerFastForward());
+      fastForward = new ImageButton(resources.simplePagerFastForward(),
+          resources.simplePagerFastForwardDisabled(), disabledStyle);
       fastForward.addClickHandler(new ClickHandler() {
         public void onClick(ClickEvent event) {
           setPage(getPage() + getFastForwardPages());
@@ -402,7 +444,7 @@ public class SimplePager extends AbstractPager {
 
   /**
    * Get the text to display in the pager that reflects the state of the pager.
-   *
+   * 
    * @return the text
    */
   protected String createText() {
@@ -439,19 +481,19 @@ public class SimplePager extends AbstractPager {
    * Check if the next button is disabled. Visible for testing.
    */
   boolean isNextButtonDisabled() {
-    return nextDisabled;
+    return nextPage.isDisabled();
   }
 
   /**
    * Check if the previous button is disabled. Visible for testing.
    */
   boolean isPreviousButtonDisabled() {
-    return prevDisabled;
+    return prevPage.isDisabled();
   }
 
   /**
    * Get the number of pages to fast forward based on the current page size.
-   *
+   * 
    * @return the number of pages to fast forward
    */
   private int getFastForwardPages() {
@@ -461,7 +503,7 @@ public class SimplePager extends AbstractPager {
 
   /**
    * Enable or disable the fast forward button.
-   *
+   * 
    * @param disabled true to disable, false to enable
    */
   private void setFastForwardDisabled(boolean disabled) {
@@ -481,61 +523,23 @@ public class SimplePager extends AbstractPager {
 
   /**
    * Enable or disable the next page buttons.
-   *
+   * 
    * @param disabled true to disable, false to enable
    */
   private void setNextPageButtonsDisabled(boolean disabled) {
-    if (disabled == nextDisabled) {
-      return;
-    }
-
-    nextDisabled = disabled;
-    if (disabled) {
-      nextPage.setResource(resources.simplePagerNextPageDisabled());
-      nextPage.getElement().getParentElement().addClassName(
-          style.disabledButton());
-      if (lastPage != null) {
-        lastPage.setResource(resources.simplePagerLastPageDisabled());
-        lastPage.getElement().getParentElement().addClassName(
-            style.disabledButton());
-      }
-    } else {
-      nextPage.setResource(resources.simplePagerNextPage());
-      nextPage.getElement().getParentElement().removeClassName(
-          style.disabledButton());
-      if (lastPage != null) {
-        lastPage.setResource(resources.simplePagerLastPage());
-        lastPage.getElement().getParentElement().removeClassName(
-            style.disabledButton());
-      }
+    nextPage.setDisabled(disabled);
+    if (lastPage != null) {
+      lastPage.setDisabled(disabled);
     }
   }
 
   /**
    * Enable or disable the previous page buttons.
-   *
+   * 
    * @param disabled true to disable, false to enable
    */
   private void setPrevPageButtonsDisabled(boolean disabled) {
-    if (disabled == prevDisabled) {
-      return;
-    }
-
-    prevDisabled = disabled;
-    if (disabled) {
-      firstPage.setResource(resources.simplePagerFirstPageDisabled());
-      firstPage.getElement().getParentElement().addClassName(
-          style.disabledButton());
-      prevPage.setResource(resources.simplePagerPreviousPageDisabled());
-      prevPage.getElement().getParentElement().addClassName(
-          style.disabledButton());
-    } else {
-      firstPage.setResource(resources.simplePagerFirstPage());
-      firstPage.getElement().getParentElement().removeClassName(
-          style.disabledButton());
-      prevPage.setResource(resources.simplePagerPreviousPage());
-      prevPage.getElement().getParentElement().removeClassName(
-          style.disabledButton());
-    }
+    firstPage.setDisabled(disabled);
+    prevPage.setDisabled(disabled);
   }
 }

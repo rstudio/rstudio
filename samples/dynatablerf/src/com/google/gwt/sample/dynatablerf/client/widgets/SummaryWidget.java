@@ -240,6 +240,10 @@ public class SummaryWidget extends Composite {
         new Receiver<List<PersonProxy>>() {
           @Override
           public void onSuccess(List<PersonProxy> response) {
+            if (lastFetch != start) {
+              return;
+            }
+
             int responses = response.size();
             table.setRowData(start, response);
             pager.setPageStart(start);
