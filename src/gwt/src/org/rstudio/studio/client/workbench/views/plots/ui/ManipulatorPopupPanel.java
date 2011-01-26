@@ -2,8 +2,8 @@ package org.rstudio.studio.client.workbench.views.plots.ui;
 
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
-import org.rstudio.studio.client.workbench.views.plots.Plots.ManipulatorChangedHandler;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
+import org.rstudio.studio.client.workbench.views.plots.ui.ManipulatorUIManager.ManipulatorChangedHandler;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -16,42 +16,50 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 public class ManipulatorPopupPanel extends ThemedPopupPanel 
                              
 {
-
-   public ManipulatorPopupPanel(Manipulator manipulator,
-                                final ManipulatorChangedHandler changedHandler)
+   public ManipulatorPopupPanel(final ManipulatorChangedHandler changedHandler)
    {
       super(true, false);
       
-      manipulator_ = manipulator;
       changedHandler_ = changedHandler;
       
-      VerticalPanel mainPanel = new VerticalPanel();
       
-      final TextBox inputBox = new TextBox();
-      mainPanel.add(inputBox);
+      mainPanel_ = new VerticalPanel();
+      mainPanel_.setHeight("200px;");
+      setWidget(mainPanel_);
       
-      mainPanel.add(new ThemedButton("Change", new ClickHandler() {
-
-      
-         public void onClick(ClickEvent event)
-         {
-            int value = Integer.parseInt(inputBox.getText());
-           
-            JSONObject jsObject = new JSONObject();
-            jsObject.put("x", new JSONNumber(value));
- 
-            changedHandler_.onManipulatorChanged(jsObject);       
-         }
-         
-      }));
+     
       
       
-      setWidget(mainPanel);
+      setWidget(mainPanel_);
    }
    
+   public void update(Manipulator manipulator)
+   {
+      mainPanel_.clear();
+      
+      if (manipulator != null)
+      {
+         final TextBox inputBox = new TextBox();
+         mainPanel_.add(inputBox);
+         
+         mainPanel_.add(new ThemedButton("Change", new ClickHandler() {
    
-   @SuppressWarnings("unused")
-   private final Manipulator manipulator_;
+            public void onClick(ClickEvent event)
+            {
+               int value = Integer.parseInt(inputBox.getText());
+              
+               JSONObject jsObject = new JSONObject();
+               jsObject.put("x", new JSONNumber(value));
+    
+               changedHandler_.onManipulatorChanged(jsObject);       
+            }
+            
+         }));
+      }
+   }
+   
+  
+   private final VerticalPanel mainPanel_;
    private final ManipulatorChangedHandler changedHandler_;
 
 }

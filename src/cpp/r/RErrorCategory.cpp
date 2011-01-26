@@ -57,6 +57,10 @@ std::string RErrorCategory::message( int ev ) const
       case errc::SymbolNotFoundError:
          message = "R symbol not found";
          break;
+
+      case errc::ListElementNotFoundError:
+         message = "List element not found";
+         break;
          
       case errc::UnexpectedDataTypeError:
          message = "Unexpected data type";

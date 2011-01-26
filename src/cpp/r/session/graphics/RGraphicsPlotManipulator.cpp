@@ -11,14 +11,13 @@
  *
  */
 
-// TODO: generalize setting list element by name
-// TODO: ShowManipulator event on calling
-// TODO: manipulator.changed function
-// TODO: checkbox, picker no def value and ...
+
 // TODO: closure for manipulate substitute expression
-// TODO: button controls?
+// TODO: button controls? danny's trigger concept
+// TODO: ability to get imputed code (substitute w/ list as env)
 
 // TODO: mechanism for rebuilding the plot
+// TODO: set manip_changed on change
 
 #include "RGraphicsPlotManipulator.hpp"
 

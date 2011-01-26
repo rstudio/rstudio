@@ -47,4 +47,8 @@ public class PlotsState extends JavaScriptObject
    public final native boolean getActivatePlots() /*-{
       return this.activatePlots;
    }-*/;
+   
+   public final native boolean getShowManipulator() /*-{
+      return this.showManipulator;
+   }-*/;
 }

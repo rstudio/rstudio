@@ -95,6 +95,8 @@ public:
    virtual core::FilePath imagePath(const std::string& imageFilename) const;
    
    virtual void clear();
+
+   virtual boost::signal<void ()>& onShowManipulator() ;
    
    // execute and attach manipulator
    void executeAndAttachManipulator(SEXP manipulatorSEXP);
@@ -170,6 +172,9 @@ private:
 
    // pending manipulator
    SEXP pendingManipulatorSEXP_;
+
+   // manipulator event hook
+   boost::signal<void ()> onShowManipulator_;
 };
    
 } // namespace graphics

@@ -13,6 +13,7 @@ public class Manipulator extends JavaScriptObject
    {
       public final static int SLIDER = 0;
       public final static int PICKER = 1;
+      public final static int CHECKBOX = 2;
       
       protected Control()
       {
@@ -54,6 +55,13 @@ public class Manipulator extends JavaScriptObject
       public final native JsArrayString getChoices() /*-{
          return this.choices;
       }-*/;
+   }
+   
+   public static class Checkbox extends Control
+   {
+      protected Checkbox()
+      {
+      }
    }
    
    

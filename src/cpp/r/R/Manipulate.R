@@ -27,11 +27,12 @@
    return (manipulator)
 })
 
+
 .rs.addGlobalFunction( "slider", function(value, min, max, label = NULL)
 {
   # validate inputs
   if (!is.numeric(value) || !is.numeric(min) || !is.numeric(max))
-    stop("value, min, and max must all be numeric values")
+    stop("min, max, amd value must all be numeric values")
   else if (value < min)
     stop(paste(type, "value", value, "is less than the specified minimum"))
   else if (value > max)
@@ -43,9 +44,9 @@
   
   # create slider and return it
   slider <- list(type = 0,
-                 initialValue = value,
                  min = min,
                  max = max,
+                 initialValue = value,
                  label = label)
   class(slider) <- "manipulator.slider"
   return (slider)
@@ -54,8 +55,8 @@
 .rs.addGlobalFunction( "picker", function(value, choices, label = NULL)
 {
   # validate inputs
-  if ( !is.character(value) )
-    stop("value is not a character value")
+  if ( !is.character(value) || (length(value) != 1) )
+    stop("value must be a character object")
   else if ( !is.character(choices) )
     stop("choices is not a character vector")
   else if ( length(choices) < 1 )
@@ -66,11 +67,40 @@
     stop("label is not a character value")
    
   picker <- list(type = 1,
-                 initialValue = choices[1],
                  choices = choices,
+                 initialValue = value,
                  label = label)
   class(picker) <- "manipulator.picker"
   return (picker) 
+})
+
+.rs.addGlobalFunction( "checkbox", function(value, label)
+{
+  # validate inputs
+  if ( !is.null(label) && !is.character(label) )
+     stop("label is not a character value")  
+  else if ( !is.logical(value) )
+    stop("value must be a logical")
+    
+  # create checkbox and return it
+  checkbox <- list(type = 2,
+                   initialValue = value,
+                   label = label)
+  class(checkbox) <- "manipulator.checkbox"
+  return (checkbox)
+})
+
+
+.rs.addGlobalFunction( "manipulator.changed", function()
+{
+  if ( .Call("rs_hasActiveManipulator") )
+  {
+    .Call("rs_activeManipulator")$manip_changed
+  }
+  else
+  {
+    stop("no plot manipulator currently active")
+  }
 })
 
 .rs.addGlobalFunction( "manipulator.state", function()
@@ -124,7 +154,8 @@
   manipulator$manip_controls <- controls
   manipulator$manip_variables <- controlNames
   
-  # set custom state
+  # establish changed and state list elements
+  manipulator$manip_changed <- character()
   manipulator$manip_state <- list()
   
   # iterate over the names and controls, adding the default values to the env
@@ -139,12 +170,13 @@
     
     # confirm that this is in fact a control
     if ( ! (class(control) %in% c("manipulator.slider",
-                                  "manipulator.picker")) )
+                                  "manipulator.picker",
+                                  "manipulator.checkbox")) )
     {
       stop(paste("argument", name, "is not a control"))
     }
       
-    # assign the control's initial value into the list
+    # assign the control's default into the list
     manipulator[name] <- control$initialValue
   }
 

@@ -18,6 +18,7 @@
 #include <vector>
 
 #include <boost/function.hpp>
+#include <boost/signal.hpp>
 
 #include <core/Error.hpp>
 #include <core/json/Json.hpp>
@@ -96,6 +97,9 @@ public:
    
    // clear the display (closes the device)
    virtual void clear() = 0;
+
+   // subscribe to showManipulator event
+   virtual boost::signal<void ()>& onShowManipulator() = 0;
 };
    
 // singleton

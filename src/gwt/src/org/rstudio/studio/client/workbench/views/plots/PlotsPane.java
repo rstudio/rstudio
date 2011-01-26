@@ -18,7 +18,9 @@ import com.google.gwt.event.logical.shared.HasResizeHandlers;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.LayoutPanel;
+import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -27,9 +29,6 @@ import org.rstudio.core.client.widget.ImageFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
-import org.rstudio.studio.client.workbench.views.plots.Plots.ManipulatorChangedHandler;
-import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
-import org.rstudio.studio.client.workbench.views.plots.ui.ManipulatorPopupPanel;
 import org.rstudio.studio.client.workbench.views.plots.ui.PlotsToolbar;
 
 import java.util.Iterator;
@@ -70,13 +69,16 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
       panel_.setWidgetLeftRight(frame_, 0, Unit.PX, 0, Unit.PX);
 
       // Stops mouse events from being routed to the iframe, which would
-      // interfere with dragging the workbench pane sizer.
-      SimplePanel shield = new SimplePanel();
-      shield.setSize("100%", "100%");
-      panel_.add(shield);
-      panel_.setWidgetTopBottom(shield, 0, Unit.PX, 0, Unit.PX);
-      panel_.setWidgetLeftRight(shield, 0, Unit.PX, 0, Unit.PX);
-
+      // interfere with dragging the workbench pane sizer. also provide
+      // a widget container where adornments can be added on top fo the
+      // plots panel (e.g. manipulator button)
+      plotsSurface_ = new SimplePanel();
+      plotsSurface_.setSize("100%", "100%");
+      panel_.add(plotsSurface_);
+      panel_.setWidgetTopBottom(plotsSurface_, 0, Unit.PX, 0, Unit.PX);
+      panel_.setWidgetLeftRight(plotsSurface_, 0, Unit.PX, 0, Unit.PX);
+      
+      // return the panel
       return panel_;
    }
 
@@ -104,20 +106,12 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
       // enter the browser's history
       frame_.setImageUrl(plotUrl);
    }
-   
-   public void showManipulator(
-                  Manipulator manipulator,
-                  ManipulatorChangedHandler changedHandler)
-   {
-      ManipulatorPopupPanel panel = new ManipulatorPopupPanel(manipulator,
-                                                              changedHandler);
-      panel.showRelativeTo(this);
-   }
-
+       
    public String getPlotUrl()
    {
       return plotUrl_;
    }
+   
 
    public void refresh()
    {
@@ -125,6 +119,11 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
          frame_.setImageUrl(plotUrl_);
    }
 
+   public Panel getPlotsSurface()
+   {
+      return plotsSurface_;
+   }
+   
    public Plots.Parent getPlotsParent()
    {
       return plotsParent_;    
@@ -152,7 +151,7 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
    private String plotUrl_;
    private final Commands commands_;
    private PlotsToolbar plotsToolbar_ = null;
-   
+   private SimplePanel plotsSurface_ = null;
    private Plots.Parent plotsParent_ = new Plots.Parent() { 
       public void add(Widget w)
       {

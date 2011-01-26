@@ -378,7 +378,7 @@ void handleGraphicsRequest(const http::Request& request,
 
    
 void enquePlotsChanged(const r::session::graphics::DisplayState& displayState,
-                       bool activatePlots)
+                       bool activatePlots, bool showManipulator)
 {
    // build graphics output event
    json::Object jsonPlotsState;
@@ -389,6 +389,7 @@ void enquePlotsChanged(const r::session::graphics::DisplayState& displayState,
    jsonPlotsState["plotIndex"] = displayState.activePlotIndex;
    jsonPlotsState["plotCount"] = displayState.plotCount;
    jsonPlotsState["activatePlots"] = activatePlots;
+   jsonPlotsState["showManipulator"] = showManipulator;
    ClientEvent plotsStateChangedEvent(client_events::kPlotsStateChanged, 
                                       jsonPlotsState);
       
@@ -403,7 +404,7 @@ void onClientInit()
    using namespace r::session;
    if (graphics::display().hasOutput())
    {
-      graphics::display().render(boost::bind(enquePlotsChanged, _1, false));
+      graphics::display().render(boost::bind(enquePlotsChanged, _1, false, false));
    }
    
 }
@@ -419,17 +420,29 @@ void onDetectChanges(module_context::ChangeSource source)
    {
       graphics::display().render(boost::bind(enquePlotsChanged,
                                              _1,
-                                             activatePlots));
+                                             activatePlots,
+                                             false));
    }
+}
+
+
+void onShowManipulator()
+{
+   // render changes and show manipulator
+   using namespace r::session;
+   if (graphics::display().hasOutput())
+      graphics::display().render(boost::bind(enquePlotsChanged, _1, true, true));
 }
 
 Error setManipulatorValues(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
 
+
+
    using namespace r::session;
    if (graphics::display().hasOutput())
-      graphics::display().render(boost::bind(enquePlotsChanged, _1, true));
+      graphics::display().render(boost::bind(enquePlotsChanged, _1, true, true));
 
    return Success();
 }
@@ -442,6 +455,9 @@ Error initialize()
    using boost::bind;
    module_context::events().onClientInit.connect(bind(onClientInit));
    module_context::events().onDetectChanges.connect(bind(onDetectChanges, _1));
+
+   using namespace r::session;
+   graphics::display().onShowManipulator().connect(bind(onShowManipulator));
    
    using namespace module_context;
    ExecBlock initBlock ;
