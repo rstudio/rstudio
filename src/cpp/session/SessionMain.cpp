@@ -1568,6 +1568,18 @@ int main (int argc, char * const argv[])
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
 
+      // run the preflight script (if specified)
+      if (serverMode)
+      {
+         FilePath preflightScriptPath = options.preflightScriptPath();
+         if (preflightScriptPath.exists())
+         {
+            error = core::system::runCommand(preflightScriptPath.absolutePath());
+            if (error)
+               LOG_ERROR(error);
+         }
+      }
+
       // initialize client event queue
       session::initializeClientEventQueue();
 
