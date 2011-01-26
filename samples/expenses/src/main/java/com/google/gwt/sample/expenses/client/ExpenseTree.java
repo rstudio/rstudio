@@ -287,6 +287,7 @@ public class ExpenseTree extends Composite {
           lastDepartment = "";
         } else if (selected instanceof EmployeeProxy) {
           lastEmployee = (EmployeeProxy) selected;
+          lastDepartment = lastEmployee.getDepartment();
         } else if (selected instanceof String) {
           lastEmployee = null;
           if (model.isAllDepartment(selected)) {
