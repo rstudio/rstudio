@@ -11,6 +11,15 @@
  *
  */
 
+// TODO: generalize setting list element by name
+// TODO: ShowManipulator event on calling
+// TODO: manipulator.changed function
+// TODO: checkbox, picker no def value and ...
+// TODO: closure for manipulate substitute expression
+// TODO: button controls?
+
+// TODO: mechanism for rebuilding the plot
+
 #include "RGraphicsPlotManipulator.hpp"
 
 #include <core/Error.hpp>
