@@ -15,7 +15,6 @@
  */
 package com.google.gwt.autobean.rebind.model;
 
-import com.google.gwt.autobean.rebind.model.AutoBeanMethod.Action;
 import com.google.gwt.autobean.shared.AutoBean;
 import com.google.gwt.autobean.shared.AutoBeanFactory;
 import com.google.gwt.autobean.shared.AutoBeanFactory.Category;
@@ -152,7 +151,7 @@ public class AutoBeanFactoryModel {
               + " methods did not have static implementations:",
               beanType.getQualifiedSourceName());
           for (AutoBeanMethod missing : autoBeanType.getMethods()) {
-            if (missing.getAction().equals(Action.CALL)
+            if (missing.getAction().equals(JBeanMethod.CALL)
                 && missing.getStaticImpl() == null) {
               poison(missing.getMethod().getReadableDeclaration());
             }
@@ -235,9 +234,9 @@ public class AutoBeanFactoryModel {
       }
 
       // GET, SET, or CALL
-      Action action = Action.which(method);
+      JBeanMethod action = JBeanMethod.which(method);
       builder.setAction(action);
-      if (Action.CALL.equals(action)) {
+      if (JBeanMethod.CALL.equals(action)) {
         JMethod staticImpl = findStaticImpl(beanType, method);
         if (staticImpl == null && objectMethods.contains(method)) {
           // Don't complain about lack of implementation for Object methods

@@ -147,7 +147,15 @@ public class AutoBeanCodexTest extends GWTTestCase {
 
     String getString();
 
+    Boolean hasOtherBoolean();
+
+    boolean isBoolean();
+
+    void setBoolean(boolean b);
+
     void setInt(int i);
+
+    void setOtherBoolean(Boolean b);
 
     void setString(String s);
   }
@@ -265,11 +273,15 @@ public class AutoBeanCodexTest extends GWTTestCase {
   public void testSimple() {
     AutoBean<Simple> bean = f.simple();
     Simple simple = bean.as();
+    simple.setBoolean(true);
     simple.setInt(42);
+    simple.setOtherBoolean(true);
     simple.setString("Hello World!");
 
     AutoBean<Simple> decodedBean = checkEncode(bean);
     assertTrue(AutoBeanUtils.diff(bean, decodedBean).isEmpty());
+    assertTrue(decodedBean.as().isBoolean());
+    assertTrue(decodedBean.as().hasOtherBoolean());
 
     AutoBean<HasSimple> bean2 = f.hasSimple();
     bean2.as().setSimple(simple);

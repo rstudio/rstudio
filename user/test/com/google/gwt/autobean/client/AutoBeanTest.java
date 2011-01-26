@@ -104,9 +104,13 @@ public class AutoBeanTest extends GWTTestCase {
   interface OtherIntf {
     Intf getIntf();
 
+    HasBoolean getHasBoolean();
+
     UnreferencedInFactory getUnreferenced();
 
     void setIntf(Intf intf);
+
+    void setHasBoolean(HasBoolean value);
   }
 
   static class RealIntf implements Intf {
@@ -362,17 +366,26 @@ public class AutoBeanTest extends GWTTestCase {
   public void testTraversal() {
     final AutoBean<OtherIntf> other = factory.otherIntf();
     final AutoBean<Intf> intf = factory.intf();
+    final AutoBean<HasBoolean> hasBoolean = factory.hasBoolean();
     other.as().setIntf(intf.as());
+    other.as().setHasBoolean(hasBoolean.as());
     intf.as().setInt(42);
+    hasBoolean.as().setGet(true);
+    hasBoolean.as().setHas(true);
+    hasBoolean.as().setIs(true);
 
     class Checker extends AutoBeanVisitor {
-      boolean seenOther;
+      boolean seenHasBoolean;
       boolean seenIntf;
+      boolean seenOther;
 
       @Override
       public void endVisitReferenceProperty(String propertyName,
           AutoBean<?> value, PropertyContext ctx) {
-        if ("intf".equals(propertyName)) {
+        if ("hasBoolean".equals(propertyName)) {
+          assertSame(hasBoolean, value);
+          assertEquals(HasBoolean.class, ctx.getType());
+        } else if ("intf".equals(propertyName)) {
           assertSame(intf, value);
           assertEquals(Intf.class, ctx.getType());
         } else if ("unreferenced".equals(propertyName)) {
@@ -392,6 +405,10 @@ public class AutoBeanTest extends GWTTestCase {
         } else if ("string".equals(propertyName)) {
           assertNull(value);
           assertEquals(String.class, ctx.getType());
+        } else if ("get".equals(propertyName) || "has".equals(propertyName)
+            || "is".equals(propertyName)) {
+          assertEquals(boolean.class, ctx.getType());
+          assertTrue((Boolean) value);
         } else {
           fail("Unknown value property " + propertyName);
         }
@@ -399,10 +416,12 @@ public class AutoBeanTest extends GWTTestCase {
 
       @Override
       public boolean visit(AutoBean<?> bean, Context ctx) {
-        if (bean == other) {
-          seenOther = true;
+        if (bean == hasBoolean) {
+          seenHasBoolean = true;
         } else if (bean == intf) {
           seenIntf = true;
+        } else if (bean == other) {
+          seenOther = true;
         } else {
           fail("Unknown AutoBean");
         }
@@ -410,8 +429,9 @@ public class AutoBeanTest extends GWTTestCase {
       }
 
       void check() {
-        assertTrue(seenOther);
+        assertTrue(seenHasBoolean);
         assertTrue(seenIntf);
+        assertTrue(seenOther);
       }
     }
     Checker c = new Checker();

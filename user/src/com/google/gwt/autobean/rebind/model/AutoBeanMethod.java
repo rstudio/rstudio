@@ -20,7 +20,6 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JEnumConstant;
 import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
-import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.editor.rebind.model.ModelUtils;
@@ -34,108 +33,14 @@ import java.util.Map;
  */
 public class AutoBeanMethod {
   /**
-   * Describes the type of method that was invoked.
-   */
-  public enum Action {
-    GET {
-      @Override
-      String inferName(JMethod method) {
-        if (JPrimitiveType.BOOLEAN.equals(method.getReturnType())) {
-          String name = method.getName();
-          if (name.startsWith("is") && name.length() > 2) {
-            name = Character.toLowerCase(name.charAt(2))
-                + (name.length() >= 4 ? name.substring(3) : "");
-            return name;
-          }
-        }
-        return super.inferName(method);
-      }
-
-      @Override
-      boolean matches(JMethod method) {
-        if (method.getParameters().length > 0) {
-          return false;
-        }
-        String name = method.getName();
-
-        // Allow boolean isFoo() or boolean hasFoo();
-        if (JPrimitiveType.BOOLEAN.equals(method.getReturnType())) {
-          if (name.startsWith("is") && name.length() > 2) {
-            return true;
-          }
-          if (name.startsWith("has") && name.length() > 3) {
-            return true;
-          }
-        }
-        if (name.startsWith("get") && name.length() > 3) {
-          return true;
-        }
-        return false;
-      }
-    },
-    SET {
-      @Override
-      boolean matches(JMethod method) {
-        if (!JPrimitiveType.VOID.equals(method.getReturnType())) {
-          return false;
-        }
-        if (method.getParameters().length != 1) {
-          return false;
-        }
-        String name = method.getName();
-        if (name.startsWith("set") && name.length() > 3) {
-          return true;
-        }
-        return false;
-      }
-    },
-    CALL {
-      /**
-       * Matches all leftover methods.
-       */
-      @Override
-      boolean matches(JMethod method) {
-        return true;
-      }
-    };
-
-    /**
-     * Determine which Action a method maps to.
-     */
-    public static Action which(JMethod method) {
-      for (Action action : Action.values()) {
-        if (action.matches(method)) {
-          return action;
-        }
-      }
-      throw new RuntimeException("CALL should have matched");
-    }
-
-    /**
-     * Infer the name of a property from the method.
-     */
-    String inferName(JMethod method) {
-      String name = method.getName();
-      name = Character.toLowerCase(name.charAt(3))
-          + (name.length() >= 5 ? name.substring(4) : "");
-      return name;
-    }
-
-    /**
-     * Returns {@code true} if the Action matches the method.
-     */
-    abstract boolean matches(JMethod method);
-  }
-
-  /**
    * Creates AutoBeanMethods.
    */
   public static class Builder {
     private AutoBeanMethod toReturn = new AutoBeanMethod();
 
     public AutoBeanMethod build() {
-      if (toReturn.action.equals(Action.GET)
-          || toReturn.action.equals(Action.SET)) {
+      if (toReturn.action.equals(JBeanMethod.GET)
+          || toReturn.action.equals(JBeanMethod.SET)) {
         PropertyName annotation = toReturn.method.getAnnotation(PropertyName.class);
         if (annotation != null) {
           toReturn.propertyName = annotation.value();
@@ -151,7 +56,7 @@ public class AutoBeanMethod {
       }
     }
 
-    public void setAction(Action action) {
+    public void setAction(JBeanMethod action) {
       toReturn.action = action;
     }
 
@@ -227,7 +132,7 @@ public class AutoBeanMethod {
     }
   }
 
-  private Action action;
+  private JBeanMethod action;
   private JClassType elementType;
   private Map<JEnumConstant, String> enumMap;
   private JClassType keyType;
@@ -241,7 +146,7 @@ public class AutoBeanMethod {
   private AutoBeanMethod() {
   }
 
-  public Action getAction() {
+  public JBeanMethod getAction() {
     return action;
   }
 

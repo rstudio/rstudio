@@ -13,7 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.autobean.server;
+package com.google.gwt.autobean.server.impl;
+
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -30,12 +31,16 @@ class GetterPropertyContext extends MethodPropertyContext {
     this.shim = bean.as();
 
     // Look for the setter method.
-    Method found;
-    try {
-      found = bean.getBeanType().getMethod(
-          "set" + getter.getName().substring(3), getter.getReturnType());
-    } catch (NoSuchMethodException expected) {
-      found = null;
+    Method found = null;
+    String name = BeanMethod.GET.inferName(getter);
+    for (Method m : getter.getDeclaringClass().getMethods()) {
+      if (BeanMethod.SET.matches(m)) {
+        if (BeanMethod.SET.inferName(m).equals(name)
+            && getter.getReturnType().isAssignableFrom(m.getParameterTypes()[0])) {
+          found = m;
+          break;
+        }
+      }
     }
     setter = found;
   }

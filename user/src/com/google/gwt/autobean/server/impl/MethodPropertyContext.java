@@ -13,9 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.autobean.server;
+package com.google.gwt.autobean.server.impl;
 
-import com.google.gwt.autobean.server.impl.TypeUtils;
 import com.google.gwt.autobean.shared.AutoBeanVisitor.CollectionPropertyContext;
 import com.google.gwt.autobean.shared.AutoBeanVisitor.MapPropertyContext;
 

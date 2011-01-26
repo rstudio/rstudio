@@ -16,10 +16,10 @@
 package com.google.gwt.autobean.rebind;
 
 import com.google.gwt.autobean.client.impl.AbstractAutoBeanFactory;
+import com.google.gwt.autobean.rebind.model.JBeanMethod;
 import com.google.gwt.autobean.rebind.model.AutoBeanFactoryMethod;
 import com.google.gwt.autobean.rebind.model.AutoBeanFactoryModel;
 import com.google.gwt.autobean.rebind.model.AutoBeanMethod;
-import com.google.gwt.autobean.rebind.model.AutoBeanMethod.Action;
 import com.google.gwt.autobean.rebind.model.AutoBeanType;
 import com.google.gwt.autobean.shared.AutoBean;
 import com.google.gwt.autobean.shared.AutoBeanFactory;
@@ -559,7 +559,7 @@ public class AutoBeanFactoryGenerator extends Generator {
     sw.indent();
 
     for (AutoBeanMethod method : type.getMethods()) {
-      if (!method.getAction().equals(Action.GET)) {
+      if (!method.getAction().equals(JBeanMethod.GET)) {
         continue;
       }
 
@@ -567,7 +567,7 @@ public class AutoBeanFactoryGenerator extends Generator {
       // If it's not a simple bean type, try to find a real setter method
       if (!type.isSimpleBean()) {
         for (AutoBeanMethod maybeSetter : type.getMethods()) {
-          if (maybeSetter.getAction().equals(Action.SET)
+          if (maybeSetter.getAction().equals(JBeanMethod.SET)
               && maybeSetter.getPropertyName().equals(method.getPropertyName())) {
             setter = maybeSetter;
             break;

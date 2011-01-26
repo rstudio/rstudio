@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.autobean.server;
+package com.google.gwt.autobean.server.impl;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;

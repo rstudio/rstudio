@@ -129,6 +129,8 @@ public class SimpleFoo {
    * objects with a null version property.
    */
   public static SimpleFoo getSimpleFooWithNullVersion() {
+    System.err.println("The following exception about an entity with a null"
+        + " version is expected");
     SimpleFoo foo = new SimpleFoo();
     foo.setVersion(null);
     return foo;

@@ -15,6 +15,7 @@
  */
 package com.google.gwt.requestfactory.rebind.model;
 
+import com.google.gwt.autobean.rebind.model.JBeanMethod;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
@@ -236,6 +237,7 @@ public class RequestFactoryModel {
 
       // Look at the methods declared on the EntityProxy
       List<RequestMethod> requestMethods = new ArrayList<RequestMethod>();
+      Map<String, JMethod> duplicatePropertyGetters = new HashMap<String, JMethod>();
       for (JMethod method : entityProxyType.getInheritableMethods()) {
         if (method.getEnclosingType().equals(entityProxyInterface)) {
           // Ignore methods on EntityProxy
@@ -246,11 +248,18 @@ public class RequestFactoryModel {
 
         JType transportedType;
         String name = method.getName();
-        if (name.startsWith("get") && method.getParameters().length == 0) {
-          // Getter
+        if (JBeanMethod.GET.matches(method)) {
           transportedType = method.getReturnType();
+          String propertyName = JBeanMethod.GET.inferName(method);
+          JMethod previouslySeen = duplicatePropertyGetters.get(propertyName);
+          if (previouslySeen == null) {
+            duplicatePropertyGetters.put(propertyName, method);
+          } else {
+            poison("Duplicate accessors for property %s: %s() and %s()",
+                propertyName, previouslySeen.getName(), method.getName());
+          }
 
-        } else if (name.startsWith("set") && method.getParameters().length == 1) {
+        } else if (JBeanMethod.SET.matches(method)) {
           transportedType = method.getParameters()[0].getType();
 
         } else if (name.equals("stableId")

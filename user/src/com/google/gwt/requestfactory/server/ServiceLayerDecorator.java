@@ -60,6 +60,11 @@ public class ServiceLayerDecorator extends ServiceLayer {
   }
 
   @Override
+  public Method getGetter(Class<?> domainType, String property) {
+    return getNext().getGetter(domainType, property);
+  }
+
+  @Override
   public Object getId(Object domainObject) {
     return getNext().getId(domainObject);
   }
@@ -77,6 +82,11 @@ public class ServiceLayerDecorator extends ServiceLayer {
   @Override
   public Type getRequestReturnType(Method contextMethod) {
     return getNext().getRequestReturnType(contextMethod);
+  }
+
+  @Override
+  public Method getSetter(Class<?> domainType, String property) {
+    return getNext().getSetter(domainType, property);
   }
 
   @Override

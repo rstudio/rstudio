@@ -51,6 +51,22 @@ public class BoxesAndPrimitivesTest extends GWTTestCase {
       return 0;
     }
 
+    public boolean hasHas() {
+      return EXPECTED_BOOL;
+    }
+
+    public Boolean hasHasBoxed() {
+      return EXPECTED_BOOL_BOXED;
+    }
+
+    public boolean isIs() {
+      return EXPECTED_BOOL;
+    }
+
+    public Boolean isIsBoxed() {
+      return EXPECTED_BOOL_BOXED;
+    }
+
     public void setBoxed(Integer value) {
       assertEquals(EXPECTED_BOXED, value);
     }
@@ -111,6 +127,14 @@ public class BoxesAndPrimitivesTest extends GWTTestCase {
 
     int getPrimitive();
 
+    boolean hasHas();
+
+    Boolean hasHasBoxed();
+
+    boolean isIs();
+
+    Boolean isIsBoxed();
+
     void setBoxed(Integer value);
 
     void setPrimitive(int value);
@@ -125,6 +149,8 @@ public class BoxesAndPrimitivesTest extends GWTTestCase {
 
   private static final int EXPECTED = 42;
   private static final Integer EXPECTED_BOXED = Integer.valueOf(EXPECTED);
+  private static final boolean EXPECTED_BOOL = true;
+  private static final Boolean EXPECTED_BOOL_BOXED = Boolean.TRUE;
   private static final int TEST_DELAY = 5000;
 
   private Factory factory;
@@ -163,6 +189,10 @@ public class BoxesAndPrimitivesTest extends GWTTestCase {
       public void onSuccess(Proxy response) {
         assertEquals(EXPECTED_BOXED, response.getBoxed());
         assertEquals(EXPECTED, response.getPrimitive());
+        assertEquals(EXPECTED_BOOL, response.isIs());
+        assertEquals(EXPECTED_BOOL_BOXED, response.isIsBoxed());
+        assertEquals(EXPECTED_BOOL, response.hasHas());
+        assertEquals(EXPECTED_BOOL_BOXED, response.hasHasBoxed());
       }
     });
     // Boxed service argument

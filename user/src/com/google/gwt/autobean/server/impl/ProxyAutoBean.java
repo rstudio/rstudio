@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.autobean.server;
+package com.google.gwt.autobean.server.impl;
 
-import com.google.gwt.autobean.server.impl.TypeUtils;
+import com.google.gwt.autobean.server.Configuration;
 import com.google.gwt.autobean.shared.AutoBean;
 import com.google.gwt.autobean.shared.AutoBeanFactory;
 import com.google.gwt.autobean.shared.AutoBeanUtils;
@@ -23,6 +23,7 @@ import com.google.gwt.autobean.shared.AutoBeanVisitor;
 import com.google.gwt.autobean.shared.impl.AbstractAutoBean;
 import com.google.gwt.core.client.impl.WeakMapping;
 
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -38,7 +39,7 @@ import java.util.WeakHashMap;
  * 
  * @param <T> the type of interface being wrapped
  */
-class ProxyAutoBean<T> extends AbstractAutoBean<T> {
+public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
   private static class Data {
     final List<Method> getters = new ArrayList<Method>();
     final List<String> getterNames = new ArrayList<String>();
@@ -50,6 +51,31 @@ class ProxyAutoBean<T> extends AbstractAutoBean<T> {
   }
 
   private static final Map<Class<?>, Data> cache = new WeakHashMap<Class<?>, Data>();
+
+  /**
+   * Utility method to crete a new {@link Proxy} instance.
+   * 
+   * @param <T> the interface type to be implemented by the Proxy
+   * @param intf the Class representing the interface type
+   * @param handler the implementation of the interface
+   * @param extraInterfaces additional interface types the Proxy should
+   *          implement
+   * @return a Proxy instance
+   */
+  public static <T> T makeProxy(Class<T> intf, InvocationHandler handler,
+      Class<?>... extraInterfaces) {
+    Class<?>[] intfs;
+    if (extraInterfaces == null) {
+      intfs = new Class<?>[] {intf};
+    } else {
+      intfs = new Class<?>[extraInterfaces.length + 1];
+      intfs[0] = intf;
+      System.arraycopy(extraInterfaces, 0, intfs, 1, extraInterfaces.length);
+    }
+
+    return intf.cast(Proxy.newProxyInstance(intf.getClassLoader(), intfs,
+        handler));
+  }
 
   private static Data calculateData(Class<?> beanType) {
     Data toReturn;
@@ -66,9 +92,7 @@ class ProxyAutoBean<T> extends AbstractAutoBean<T> {
             if (annotation != null) {
               name = annotation.value();
             } else {
-              name = method.getName();
-              name = Character.toLowerCase(name.charAt(3))
-                  + (name.length() >= 5 ? name.substring(4) : "");
+              name = BeanMethod.GET.inferName(method);
             }
             toReturn.getterNames.add(name);
 
@@ -93,6 +117,7 @@ class ProxyAutoBean<T> extends AbstractAutoBean<T> {
   private final Class<T> beanType;
   private final Configuration configuration;
   private final Data data;
+
   private final T shim;
 
   // These constructors mirror the generated constructors.
@@ -171,8 +196,7 @@ class ProxyAutoBean<T> extends AbstractAutoBean<T> {
 
   @Override
   protected T createSimplePeer() {
-    return AutoBeanFactoryMagic.makeProxy(beanType, new SimpleBeanHandler<T>(
-        this));
+    return ProxyAutoBean.makeProxy(beanType, new SimpleBeanHandler<T>(this));
   }
 
   /**
@@ -293,8 +317,8 @@ class ProxyAutoBean<T> extends AbstractAutoBean<T> {
   }
 
   private T createShim() {
-    T toReturn = AutoBeanFactoryMagic.makeProxy(beanType, new ShimHandler<T>(
-        this, getWrapped()));
+    T toReturn = ProxyAutoBean.makeProxy(beanType, new ShimHandler<T>(this,
+        getWrapped()));
     WeakMapping.set(toReturn, AutoBean.class.getName(), this);
     return toReturn;
   }

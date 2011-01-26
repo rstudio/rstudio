@@ -140,6 +140,11 @@ public class RequestFactoryModelTest extends TestCase {
         "Invalid Request parameterization java.lang.Iterable");
   }
 
+  public void testDuplicateBooleanGetters() {
+    testModelWithMethodDecl("Request<t.ProxyWithRepeatedGetters> method();",
+        "Duplicate accessors for property foo: getFoo() and isFoo()");
+  }
+
   public void testMissingProxyFor() {
     testModelWithMethodDeclArgs("Request<TestProxy> okMethodProxy();",
         TestContextImpl.class.getName(), null,
@@ -230,6 +235,22 @@ public class RequestFactoryModelTest extends TestCase {
           code.append("@ProxyFor(" + proxyClass + ".class)");
         }
         code.append("interface TestProxy extends EntityProxy {\n");
+        code.append("}");
+        return code;
+      }
+    }, new MockJavaResource("t.ProxyWithRepeatedGetters") {
+      @Override
+      protected CharSequence getContent() {
+        StringBuilder code = new StringBuilder();
+        code.append("package t;\n");
+        code.append("import " + ProxyFor.class.getName() + ";\n");
+        code.append("import " + EntityProxy.class.getName() + ";\n");
+        if (proxyClass != null) {
+          code.append("@ProxyFor(" + proxyClass + ".class)");
+        }
+        code.append("interface ProxyWithRepeatedGetters extends EntityProxy {\n");
+        code.append("  boolean getFoo();");
+        code.append("  boolean isFoo();");
         code.append("}");
         return code;
       }

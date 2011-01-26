@@ -15,6 +15,7 @@
  */
 package com.google.gwt.requestfactory.server;
 
+import com.google.gwt.autobean.server.impl.BeanMethod;
 import com.google.gwt.autobean.server.impl.TypeUtils;
 import com.google.gwt.autobean.shared.ValueCodex;
 import com.google.gwt.requestfactory.shared.BaseProxy;
@@ -65,9 +66,19 @@ final class ReflectiveServiceLayer extends ServiceLayerDecorator {
     jsr303Validator = found;
   }
 
-  private static String capitalize(String name) {
-    return Character.toUpperCase(name.charAt(0))
-        + (name.length() >= 1 ? name.substring(1) : "");
+  /**
+   * Linear search, but we want to handle getFoo, isFoo, and hasFoo. The result
+   * of this method will be cached by the ServiceLayerCache.
+   */
+  private static Method getBeanMethod(BeanMethod methodType,
+      Class<?> domainType, String property) {
+    for (Method m : domainType.getMethods()) {
+      if (methodType.matches(m) && property.equals(methodType.inferName(m))) {
+        m.setAccessible(true);
+        return m;
+      }
+    }
+    return null;
   }
 
   @Override
@@ -96,6 +107,11 @@ final class ReflectiveServiceLayer extends ServiceLayerDecorator {
   }
 
   @Override
+  public Method getGetter(Class<?> domainType, String property) {
+    return getBeanMethod(BeanMethod.GET, domainType, property);
+  }
+
+  @Override
   public Object getId(Object domainObject) {
     return getTop().getProperty(domainObject, "id");
   }
@@ -107,25 +123,19 @@ final class ReflectiveServiceLayer extends ServiceLayerDecorator {
 
   @Override
   public Object getProperty(Object domainObject, String property) {
-    Throwable toReport;
     try {
-      Method method = domainObject.getClass().getMethod(
-          "get" + capitalize(property));
-      method.setAccessible(true);
-      Object value = method.invoke(domainObject);
+      Method getter = getTop().getGetter(domainObject.getClass(), property);
+      if (getter == null) {
+        die(null, "Could not determine getter for property %s on type %s",
+            property, domainObject.getClass().getCanonicalName());
+      }
+      Object value = getter.invoke(domainObject);
       return value;
-    } catch (SecurityException e) {
-      toReport = e;
-    } catch (NoSuchMethodException e) {
-      toReport = e;
-    } catch (IllegalArgumentException e) {
-      toReport = e;
     } catch (IllegalAccessException e) {
-      toReport = e;
+      return die(e, "Could not retrieve property %s", property);
     } catch (InvocationTargetException e) {
       return report(e);
     }
-    return die(toReport, "Could not retrieve property %s", property);
   }
 
   @Override
@@ -144,6 +154,11 @@ final class ReflectiveServiceLayer extends ServiceLayerDecorator {
       return die(null, "Unknown RequestContext return type %s",
           returnClass.getCanonicalName());
     }
+  }
+
+  @Override
+  public Method getSetter(Class<?> domainType, String property) {
+    return getBeanMethod(BeanMethod.SET, domainType, property);
   }
 
   @Override
@@ -210,28 +225,19 @@ final class ReflectiveServiceLayer extends ServiceLayerDecorator {
   @Override
   public void setProperty(Object domainObject, String property,
       Class<?> expectedType, Object value) {
-    Method setter;
-    Throwable ex;
     try {
-      setter = domainObject.getClass().getMethod("set" + capitalize(property),
-          expectedType);
-      setter.setAccessible(true);
+      Method setter = getTop().getSetter(domainObject.getClass(), property);
+      if (setter == null) {
+        die(null, "Could not locate setter for property %s in type %s",
+            property, domainObject.getClass().getCanonicalName());
+      }
       setter.invoke(domainObject, value);
       return;
-    } catch (SecurityException e) {
-      ex = e;
-    } catch (NoSuchMethodException e) {
-      ex = e;
-    } catch (IllegalArgumentException e) {
-      ex = e;
     } catch (IllegalAccessException e) {
-      ex = e;
+      die(e, "Could not set property %s", property);
     } catch (InvocationTargetException e) {
       report(e);
-      return;
     }
-    die(ex, "Could not locate setter for property %s in type %s", property,
-        domainObject.getClass().getCanonicalName());
   }
 
   @Override

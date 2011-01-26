@@ -44,6 +44,12 @@ public abstract class ServiceLayer {
    */
 
   /**
+   * Provides a flag to disable the ServiceLayerCache for debugging purposes.
+   */
+  private static final boolean ENABLE_CACHE = Boolean.valueOf(System.getProperty(
+      "gwt.rf.ServiceLayerCache", "true"));
+
+  /**
    * Create a RequestFactory ServiceLayer that is optionally modified by the
    * given decorators.
    * 
@@ -54,7 +60,8 @@ public abstract class ServiceLayer {
   public static ServiceLayer create(ServiceLayerDecorator... decorators) {
     List<ServiceLayerDecorator> list = new ArrayList<ServiceLayerDecorator>();
     // Always hit the cache first
-    ServiceLayerCache cache = new ServiceLayerCache();
+    ServiceLayerDecorator cache = ENABLE_CACHE ? new ServiceLayerCache()
+        : new ServiceLayerDecorator();
     list.add(cache);
     // The the user-provided decorators
     if (decorators != null) {
@@ -121,6 +128,16 @@ public abstract class ServiceLayer {
       Method domainMethod);
 
   /**
+   * Determine the method to invoke when retrieving the given property.
+   * 
+   * @param domainType a domain entity type
+   * @param property the name of the property to be retrieved
+   * @return the Method that should be invoked to retrieve the property or
+   *         {@code null} if the method could not be located
+   */
+  public abstract Method getGetter(Class<?> domainType, String property);
+
+  /**
    * Return the persistent id for a domain object. May return {@code null} to
    * indicate that the domain object has not been persisted. The value returned
    * from this method must be a simple type (e.g. Integer, String) or a domain
@@ -160,6 +177,16 @@ public abstract class ServiceLayer {
    * analyzing the generic method declaration.
    */
   public abstract Type getRequestReturnType(Method contextMethod);
+
+  /**
+   * Determine the method to invoke when setting the given property.
+   * 
+   * @param domainType a domain entity type
+   * @param property the name of the property to be set
+   * @return the Method that should be invoked to set the property or
+   *         {@code null} if the method could not be located
+   */
+  public abstract Method getSetter(Class<?> domainType, String property);
 
   /**
    * May return {@code null} to indicate that the domain object has not been

@@ -13,8 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.autobean.server;
+package com.google.gwt.autobean.server.impl;
 
+import com.google.gwt.autobean.server.Configuration;
 import com.google.gwt.autobean.shared.AutoBean.PropertyName;
 import com.google.gwt.autobean.shared.AutoBeanFactory;
 import com.google.gwt.autobean.shared.AutoBeanUtils;
@@ -27,7 +28,7 @@ import java.lang.reflect.ParameterizedType;
 /**
  * Handles dispatches on AutoBeanFactory interfaces.
  */
-class FactoryHandler implements InvocationHandler {
+public class FactoryHandler implements InvocationHandler {
   private final Configuration configuration;
 
   /**

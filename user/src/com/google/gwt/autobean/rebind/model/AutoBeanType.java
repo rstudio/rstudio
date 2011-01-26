@@ -15,7 +15,6 @@
  */
 package com.google.gwt.autobean.rebind.model;
 
-import com.google.gwt.autobean.rebind.model.AutoBeanMethod.Action;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 
@@ -71,7 +70,7 @@ public class AutoBeanType {
 
       toReturn.simpleBean = true;
       for (AutoBeanMethod method : methods) {
-        if (method.getAction().equals(Action.CALL)) {
+        if (method.getAction().equals(JBeanMethod.CALL)) {
           if (method.getStaticImpl() == null) {
             toReturn.simpleBean = false;
           } else {

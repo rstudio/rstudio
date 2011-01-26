@@ -13,9 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.autobean.server;
+package com.google.gwt.autobean.server.impl;
 
-import com.google.gwt.autobean.server.impl.TypeUtils;
 
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -30,7 +29,7 @@ class BeanPropertyContext extends MethodPropertyContext {
 
   public BeanPropertyContext(ProxyAutoBean<?> bean, Method getter) {
     super(getter);
-    propertyName = getter.getName().substring(3);
+    propertyName = BeanMethod.GET.inferName(getter);
     map = bean.getPropertyMap();
   }
 
@@ -41,6 +40,9 @@ class BeanPropertyContext extends MethodPropertyContext {
 
   @Override
   public void set(Object value) {
-    map.put(propertyName, TypeUtils.maybeAutobox(getType()).cast(value));
+    Class<?> maybeAutobox = TypeUtils.maybeAutobox(getType());
+    assert value == null || maybeAutobox.isInstance(value) : value.getClass().getCanonicalName()
+        + " is not assignable to " + maybeAutobox.getCanonicalName();
+    map.put(propertyName, maybeAutobox.cast(value));
   }
 }

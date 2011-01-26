@@ -13,23 +13,31 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.autobean.server;
+package com.google.gwt.autobean.server.impl;
 
-import com.google.gwt.autobean.server.impl.TypeUtils;
 import com.google.gwt.autobean.shared.AutoBean;
 
+import java.beans.Introspector;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 /**
  * Breakout of method types that an AutoBean shim interface can implement. The
  * order of the values of the enum is important.
+ * 
+ * @see com.google.gwt.autobean.rebind.model.JBeanMethod
  */
-enum BeanMethod {
+public enum BeanMethod {
   /**
    * Methods defined in Object.
    */
   OBJECT {
+
+    @Override
+    public String inferName(Method method) {
+      throw new UnsupportedOperationException();
+    }
+
     @Override
     Object invoke(SimpleBeanHandler<?> handler, Method method, Object[] args)
         throws Throwable {
@@ -49,15 +57,20 @@ enum BeanMethod {
    */
   GET {
     @Override
-    Object invoke(SimpleBeanHandler<?> handler, Method method, Object[] args) {
-      String propertyName;
+    public String inferName(Method method) {
       String name = method.getName();
-      if (Boolean.TYPE.equals(method.getReturnType()) && name.startsWith("is")) {
-        propertyName = name.substring(2);
-      } else {
-        // A regular getter or a boolean hasFoo()
-        propertyName = name.substring(3);
+      if (name.startsWith(IS_PREFIX)) {
+        Class<?> returnType = method.getReturnType();
+        if (Boolean.TYPE.equals(returnType) || Boolean.class.equals(returnType)) {
+          return Introspector.decapitalize(name.substring(2));
+        }
       }
+      return super.inferName(method);
+    }
+
+    @Override
+    Object invoke(SimpleBeanHandler<?> handler, Method method, Object[] args) {
+      String propertyName = inferName(method);
       Object toReturn = handler.getBean().getValues().get(propertyName);
       if (toReturn == null && method.getReturnType().isPrimitive()) {
         toReturn = TypeUtils.getDefaultPrimitiveValue(method.getReturnType());
@@ -74,13 +87,13 @@ enum BeanMethod {
       }
 
       String name = method.getName();
-      if (Boolean.TYPE.equals(returnType)) {
-        if (name.startsWith("is") && name.length() > 2
-            || name.startsWith("has") && name.length() > 3) {
+      if (Boolean.TYPE.equals(returnType) || Boolean.class.equals(returnType)) {
+        if (name.startsWith(IS_PREFIX) && name.length() > 2
+            || name.startsWith(HAS_PREFIX) && name.length() > 3) {
           return true;
         }
       }
-      return name.startsWith("get") && name.length() > 3;
+      return name.startsWith(GET_PREFIX) && name.length() > 3;
     }
   },
   /**
@@ -89,14 +102,14 @@ enum BeanMethod {
   SET {
     @Override
     Object invoke(SimpleBeanHandler<?> handler, Method method, Object[] args) {
-      handler.getBean().getValues().put(method.getName().substring(3), args[0]);
+      handler.getBean().getValues().put(inferName(method), args[0]);
       return null;
     }
 
     @Override
     boolean matches(SimpleBeanHandler<?> handler, Method method) {
       String name = method.getName();
-      return name.startsWith("set") && name.length() > 3
+      return name.startsWith(SET_PREFIX) && name.length() > 3
           && method.getParameterTypes().length == 1
           && method.getReturnType().equals(Void.TYPE);
     }
@@ -105,6 +118,11 @@ enum BeanMethod {
    * Domain methods.
    */
   CALL {
+    @Override
+    public String inferName(Method method) {
+      throw new UnsupportedOperationException();
+    }
+
     @Override
     Object invoke(SimpleBeanHandler<?> handler, Method method, Object[] args)
         throws Throwable {
@@ -130,6 +148,11 @@ enum BeanMethod {
           && findMethod(handler, method) != null;
     }
   };
+
+  public static final String GET_PREFIX = "get";
+  public static final String HAS_PREFIX = "has";
+  public static final String IS_PREFIX = "is";
+  public static final String SET_PREFIX = "set";
 
   private static final Object[] EMPTY_OBJECT = new Object[0];
 
@@ -161,18 +184,22 @@ enum BeanMethod {
     return null;
   }
 
+  public String inferName(Method method) {
+    return Introspector.decapitalize(method.getName().substring(3));
+  }
+
+  /**
+   * Convenience method, not valid for {@link BeanMethod#CALL}.
+   */
+  public boolean matches(Method method) {
+    return matches(null, method);
+  }
+
   /**
    * Invoke the method.
    */
   abstract Object invoke(SimpleBeanHandler<?> handler, Method method,
       Object[] args) throws Throwable;
-
-  /**
-   * Convenience method, not valid for {@link BeanMethod#CALL}.
-   */
-  boolean matches(Method method) {
-    return matches(null, method);
-  }
 
   /**
    * Determine if the method maches the given type.

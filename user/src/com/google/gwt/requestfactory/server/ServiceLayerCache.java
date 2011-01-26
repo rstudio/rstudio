@@ -44,8 +44,10 @@ class ServiceLayerCache extends ServiceLayerDecorator {
 
   private static final Method createLocator;
   private static final Method createServiceInstance;
+  private static final Method getGetter;
   private static final Method getIdType;
   private static final Method getRequestReturnType;
+  private static final Method getSetter;
   private static final Method requiresServiceLocator;
   private static final Method resolveClass;
   private static final Method resolveClientType;
@@ -60,8 +62,10 @@ class ServiceLayerCache extends ServiceLayerDecorator {
     createLocator = getMethod("createLocator", Class.class);
     createServiceInstance = getMethod("createServiceInstance", Method.class,
         Method.class);
+    getGetter = getMethod("getGetter", Class.class, String.class);
     getIdType = getMethod("getIdType", Class.class);
     getRequestReturnType = getMethod("getRequestReturnType", Method.class);
+    getSetter = getMethod("getSetter", Class.class, String.class);
     requiresServiceLocator = getMethod("requiresServiceLocator", Method.class,
         Method.class);
     resolveClass = getMethod("resolveClass", String.class);
@@ -114,6 +118,12 @@ class ServiceLayerCache extends ServiceLayerDecorator {
   }
 
   @Override
+  public Method getGetter(Class<?> domainType, String property) {
+    return getOrCache(getGetter, new Pair<Class<?>, String>(domainType,
+        property), Method.class, domainType, property);
+  }
+
+  @Override
   public Class<?> getIdType(Class<?> domainType) {
     return getOrCache(getIdType, domainType, Class.class, domainType);
   }
@@ -122,6 +132,12 @@ class ServiceLayerCache extends ServiceLayerDecorator {
   public Type getRequestReturnType(Method contextMethod) {
     return getOrCache(getRequestReturnType, contextMethod, Type.class,
         contextMethod);
+  }
+
+  @Override
+  public Method getSetter(Class<?> domainType, String property) {
+    return getOrCache(getSetter, new Pair<Class<?>, String>(domainType,
+        property), Method.class, domainType, property);
   }
 
   @Override
