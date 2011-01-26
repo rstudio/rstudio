@@ -623,7 +623,12 @@
             <artifactId>gwt-dev</artifactId>
             <version>${gwt.version}</version>
           </dependency>
-        </dependencies>
+          <dependency>
+            <groupId>com.google.gwt</groupId>
+            <artifactId>gwt-servlet</artifactId>
+            <version>${gwt.version}</version>
+          </dependency>
+       </dependencies>
         <configuration>
           <logLevel>INFO</logLevel>
           <style>PRETTY</style>
