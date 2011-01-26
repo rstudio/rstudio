@@ -38,15 +38,17 @@ public class FontSizeManager
          @Override
          protected void onInit(String value)
          {
+            final Size DEFAULT_SIZE = Size.Pt12;
             try
             {
-               size_ = FontSizer.Size.valueOf(value);
+               if (value != null)
+                  size_ = FontSizer.Size.valueOf(value);
+               else
+                  size_ = DEFAULT_SIZE;
             }
             catch (Exception e)
             {
-               Debug.log("Unexpected value for font size: " + value);
-               Debug.log(e.toString());
-               size_ = FontSizer.Size.Pt12;
+               size_ = DEFAULT_SIZE;
             }
          }
 
