@@ -7,14 +7,14 @@ import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Panel;
 
-public class ManipulatorUIManager
+public class ManipulatorManager
 {
    public interface ManipulatorChangedHandler
    {
       void onManipulatorChanged(JSONObject values);
    }
    
-   public ManipulatorUIManager(Panel plotsSurface,
+   public ManipulatorManager(Panel plotsSurface,
                                ManipulatorChangedHandler changedHandler)
    {
       // references
@@ -42,7 +42,7 @@ public class ManipulatorUIManager
    }
    
    
-   public void setActiveManipulator(Manipulator manipulator, boolean show)
+   public void setManipulator(Manipulator manipulator, boolean show)
    {
       // set active manipulator
       manipulator_ = manipulator;

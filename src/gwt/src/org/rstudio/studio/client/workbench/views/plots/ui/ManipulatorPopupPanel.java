@@ -3,7 +3,7 @@ package org.rstudio.studio.client.workbench.views.plots.ui;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
-import org.rstudio.studio.client.workbench.views.plots.ui.ManipulatorUIManager.ManipulatorChangedHandler;
+import org.rstudio.studio.client.workbench.views.plots.ui.ManipulatorManager.ManipulatorChangedHandler;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;

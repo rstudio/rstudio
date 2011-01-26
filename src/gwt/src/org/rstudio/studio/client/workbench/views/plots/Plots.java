@@ -50,7 +50,7 @@ import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperatio
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
 import org.rstudio.studio.client.workbench.views.plots.model.PrintOptions;
 import org.rstudio.studio.client.workbench.views.plots.ui.ExportDialog;
-import org.rstudio.studio.client.workbench.views.plots.ui.ManipulatorUIManager;
+import org.rstudio.studio.client.workbench.views.plots.ui.ManipulatorManager;
 import org.rstudio.studio.client.workbench.views.plots.ui.PrintDialog;
 
 public class Plots extends BasePresenter implements PlotsChangedHandler,
@@ -104,9 +104,9 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
          }
       });
 
-      manipulatorUIManager_ = new ManipulatorUIManager(
+      manipulatorManager_ = new ManipulatorManager(
          view_.getPlotsSurface(),
-         new ManipulatorUIManager.ManipulatorChangedHandler()
+         new ManipulatorManager.ManipulatorChangedHandler()
          { 
             @Override
             public void onManipulatorChanged(JSONObject values)
@@ -181,9 +181,8 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       plotSize_ = new Size(plotsState.getWidth(), plotsState.getHeight());
 
       // manipulator
-      manipulatorUIManager_.setActiveManipulator(
-                                             plotsState.getManipulator(),
-                                             plotsState.getShowManipulator());
+      manipulatorManager_.setManipulator(plotsState.getManipulator(),
+                                         plotsState.getShowManipulator());
       
       // locator
       if (locator_.isActive())
@@ -396,7 +395,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    private final PlotsServerOperations server_;
    private final Session session_;
    private final Locator locator_;
-   private final ManipulatorUIManager manipulatorUIManager_;
+   private final ManipulatorManager manipulatorManager_;
    
    // default export options
    private ExportOptions exportOptions_ = ExportOptions.create(
