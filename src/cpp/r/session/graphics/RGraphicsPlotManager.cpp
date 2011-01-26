@@ -581,6 +581,9 @@ void PlotManager::onDeviceNewPage(SEXP previousPageSnapshot)
                             pendingManipulatorSEXP_));
    plots_.push_back(ptrPlot);
    activePlot_ = plots_.size() - 1  ;
+
+   // that plot took the pending manipluator (if any) so we set it to nil
+   pendingManipulatorSEXP_ = R_NilValue;
    
    // ensure updates
    invalidateActivePlot();
