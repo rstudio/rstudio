@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.logical.shared.*;
@@ -131,6 +132,8 @@ public class TextEditingTarget implements EditingTarget
 
       // Fix bug 964
       void updateBodyMinHeight();
+
+      Document getDocument();
    }
    private class ExplicitSaveProgressIndicator implements ProgressIndicator
    {
@@ -228,7 +231,8 @@ public class TextEditingTarget implements EditingTarget
       fileType_ = (TextFileType) type;
       view_ = new TextEditingTargetWidget(commands_,
                                           docDisplay_,
-                                          fileType_);
+                                          fileType_,
+                                          events_);
       docUpdateSentinel_ = new DocUpdateSentinel(
             server_,
             docDisplay_,

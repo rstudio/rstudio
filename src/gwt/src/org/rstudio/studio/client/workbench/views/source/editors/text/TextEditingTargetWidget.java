@@ -12,21 +12,23 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HasValue;
+import com.google.gwt.user.client.ui.ResizeComposite;
+import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.codemirror.client.CodeMirrorEditor;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.theme.res.ThemeResources;
-import org.rstudio.core.client.widget.Toolbar;
-import org.rstudio.core.client.widget.ToolbarButton;
-import org.rstudio.core.client.widget.ToolbarPopupMenu;
-import org.rstudio.core.client.widget.WarningBar;
+import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
+import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbar;
@@ -39,7 +41,8 @@ public class TextEditingTargetWidget extends ResizeComposite implements Display
 {
    public TextEditingTargetWidget(Commands commands,
                                   DocDisplay editor,
-                                  TextFileType fileType)
+                                  TextFileType fileType,
+                                  EventBus events)
    {
       commands_ = commands;
       editor_ = editor;
@@ -49,6 +52,14 @@ public class TextEditingTargetWidget extends ResizeComposite implements Display
       adaptToFileType(fileType);
 
       initWidget(panel_);
+
+      events.addHandler(ChangeFontSizeEvent.TYPE, new ChangeFontSizeHandler()
+      {
+         public void onChangeFontSize(ChangeFontSizeEvent event)
+         {
+            FontSizer.setNormalFontSize(editor_.getDocument(), event.getFontSize());
+         }
+      });
    }
 
    private Toolbar createToolbar()

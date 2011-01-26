@@ -616,6 +616,11 @@ public abstract class CodeMirrorEditor extends Composite
       }
    }
 
+   public Document getDocument()
+   {
+      return codeMirror_.getWin().getDocument();
+   }
+
    public void onResize()
    {
       updateBodyMinHeight();

@@ -22,6 +22,7 @@ import org.rstudio.studio.client.application.ui.impl.WebApplicationHeader;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.NewFileMenu;
+import org.rstudio.studio.client.workbench.FontSizeMenu;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.source.DocsMenu;
@@ -31,6 +32,7 @@ public interface RStudioGinjector extends Ginjector
 {
    void injectMembers(NewFileMenu newFileMenu);
    void injectMembers(DocsMenu docsMenu);
+   void injectMembers(FontSizeMenu fontSizeMenu);
 
    void injectMembers(DesktopApplicationHeader desktopApplicationHeader);
    void injectMembers(WebApplicationHeader webApplicationHeader);
