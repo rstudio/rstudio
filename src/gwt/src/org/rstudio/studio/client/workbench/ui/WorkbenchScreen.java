@@ -14,6 +14,9 @@
 package org.rstudio.studio.client.workbench.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
@@ -42,7 +45,10 @@ import org.rstudio.core.client.theme.MinimizedModuleTabLayoutPanel;
 import org.rstudio.core.client.theme.MinimizedWindowFrame;
 import org.rstudio.core.client.theme.PrimaryWindowFrame;
 import org.rstudio.core.client.theme.WindowFrame;
+import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
+import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -93,12 +99,29 @@ public class WorkbenchScreen extends Composite
                           final Edit.Shim edit,
                           Commands commands,
                           final GlobalDisplay globalDisplay,
-                          final Provider<MRUList> mruList)
+                          final Provider<MRUList> mruList,
+                          FontSizeManager fontSizeManager)
    {
       eventBus_ = eventBus;
       session_ = session;
 
       eventBus_.addHandler(ShowEditorEvent.TYPE, edit);
+      eventBus_.addHandler(ChangeFontSizeEvent.TYPE, new ChangeFontSizeHandler()
+      {
+         public void onChangeFontSize(ChangeFontSizeEvent event)
+         {
+            FontSizer.setNormalFontSize(Document.get(), event.getFontSize());
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               public void execute()
+               {
+                  // Causes the console width to be remeasured
+                  doOnPaneSizesChanged();
+               }
+            });
+         }
+      });
+      FontSizer.setNormalFontSize(Document.get(), fontSizeManager.getSize());
 
       // create tabsets
       tabsPanel_ = pSplitPanel.get();

@@ -1,0 +1,26 @@
+@external pt10, pt12, pt14, pt16, pt18;
+
+body.pt10 .normalSize, body.pt10 .normalSize td, body.pt10 .normalSize pre {
+   font-size: 10px;
+   line-height: 14px;
+}
+
+body.pt12 .normalSize, body.pt12 .normalSize td, body.pt12 .normalSize pre {
+   font-size: 12px;
+   line-height: 16px;
+}
+
+body.pt14 .normalSize, body.pt14 .normalSize td, body.pt14 .normalSize pre {
+   font-size: 14px;
+   line-height: 18px;
+}
+
+body.pt16 .normalSize, body.pt16 .normalSize td, body.pt16 .normalSize pre {
+   font-size: 16px;
+   line-height: 20px;
+}
+
+body.pt18 .normalSize, body.pt18 .normalSize td, body.pt18 .normalSize pre {
+   font-size: 18px;
+   line-height: 24px;
+}

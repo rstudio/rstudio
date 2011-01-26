@@ -14,6 +14,31 @@
   margin: 0;
 }
 
+body.pt10.editbox {
+   font-size: 10px;
+   line-height: 14px;
+}
+
+body.pt12.editbox {
+   font-size: 12px;
+   line-height: 16px;
+}
+
+body.pt14.editbox {
+   font-size: 14px;
+   line-height: 18px;
+}
+
+body.pt16.editbox {
+   font-size: 16px;
+   line-height: 20px;
+}
+
+body.pt18.editbox {
+   font-size: 18px;
+   line-height: 24px;
+}
+
 
 /* Latex */
 span.latex-text {

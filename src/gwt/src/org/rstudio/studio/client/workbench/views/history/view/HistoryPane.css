@@ -62,13 +62,13 @@
 .timestamp {
    color: #999;
    font-family: proportionalFont;
-   font-size: 10px;
 }
 td.timestamp {
    padding-right: 3px;
 }
 tr.timestamp td {
    padding-top: 6px;
+   font-size: 0.8em !important;
 }
 .selected td.timestamp {
    color: black;

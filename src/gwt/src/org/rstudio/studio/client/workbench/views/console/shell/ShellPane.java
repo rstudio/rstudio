@@ -27,6 +27,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.widget.BottomScrollPanel;
+import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
@@ -64,6 +65,7 @@ public class ShellPane extends Composite implements Shell.Display,
 
       verticalPanel_ = new VerticalPanel() ;
       verticalPanel_.setStylePrimaryName(styles_.console());
+      FontSizer.applyNormalFontSize(verticalPanel_);
       verticalPanel_.add(output_) ;
       verticalPanel_.add(inputLine_) ;
       verticalPanel_.setWidth("100%") ;
@@ -381,6 +383,7 @@ public class ShellPane extends Composite implements Shell.Display,
       // create width checker label and add it to the root panel
       Label widthChecker = new Label();
       widthChecker.setStylePrimaryName(styles_.console());
+      FontSizer.applyNormalFontSize(widthChecker);
       RootPanel.get().add(widthChecker, -1000, -1000);
       
       // put the text into the label, measure it, and remove it
