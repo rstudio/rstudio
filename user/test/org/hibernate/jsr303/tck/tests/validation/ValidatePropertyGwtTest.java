@@ -26,15 +26,18 @@ public class ValidatePropertyGwtTest extends AbstractValidationTest {
 
   private final ValidatePropertyTest delegate = new ValidatePropertyTest();
 
-  public void testIllegalArgumentExceptionIsThrownForNullValue() {
+  // Add Property Prefix so test name is unique in the suite.
+  public void testPropertyIllegalArgumentExceptionIsThrownForNullValue() {
     delegate.testIllegalArgumentExceptionIsThrownForNullValue();
   }
 
-  public void testPassingNullAsGroup() {
+  // Add Property Prefix so test name is unique in the suite.
+  public void testPropertyPassingNullAsGroup() {
     delegate.testPassingNullAsGroup();
   }
 
-  public void testUnexpectedExceptionsInValidatePropertyGetWrappedInValidationExceptions() {
+  // Add Property Prefix so test name is unique in the suite.
+  public void testPropertyUnexpectedExceptionsInValidatePropertyGetWrappedInValidationExceptions() {
     // Wrap the test to catch the @Test expected exception.
     try {
     delegate.testUnexpectedExceptionsInValidatePropertyGetWrappedInValidationExceptions();

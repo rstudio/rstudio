@@ -20,6 +20,9 @@ package com.google.gwt.validation.tck;
 import junit.framework.Test;
 
 import org.hibernate.jsr303.tck.tests.metadata.BeanDescriptorGwtTest;
+import org.hibernate.jsr303.tck.tests.metadata.ConstraintDescriptorGwtTest;
+import org.hibernate.jsr303.tck.tests.metadata.ElementDescriptorGwtTest;
+import org.hibernate.jsr303.tck.tests.metadata.PropertyDescriptorGwtTest;
 import org.hibernate.jsr303.tck.util.TckTestSuiteWrapper;
 
 /**
@@ -30,6 +33,9 @@ public class MetadataGwtSuite {
     TckTestSuiteWrapper suite = new TckTestSuiteWrapper(
         "TCK for GWT Validation, metadata package");
     suite.addTestSuite(BeanDescriptorGwtTest.class);
+    suite.addTestSuite(ConstraintDescriptorGwtTest.class);
+    suite.addTestSuite(ElementDescriptorGwtTest.class);
+    suite.addTestSuite(PropertyDescriptorGwtTest.class);
     return suite;
   }
 }

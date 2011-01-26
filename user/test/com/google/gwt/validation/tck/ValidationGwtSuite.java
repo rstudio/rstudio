@@ -18,6 +18,7 @@ package com.google.gwt.validation.tck;
 import junit.framework.Test;
 
 import org.hibernate.jsr303.tck.tests.validation.PropertyPathGwtTest;
+import org.hibernate.jsr303.tck.tests.validation.ValidateGwtTest;
 import org.hibernate.jsr303.tck.tests.validation.ValidatePropertyGwtTest;
 import org.hibernate.jsr303.tck.tests.validation.ValidateValueGwtTest;
 import org.hibernate.jsr303.tck.tests.validation.ValidationGwtTest;
@@ -31,6 +32,7 @@ public class ValidationGwtSuite {
     TckTestSuiteWrapper suite = new TckTestSuiteWrapper(
         "TCK for GWT Validation, validation package");
     suite.addTestSuite(PropertyPathGwtTest.class);
+    suite.addTestSuite(ValidateGwtTest.class);
     suite.addTestSuite(ValidatePropertyGwtTest.class);
     suite.addTestSuite(ValidateValueGwtTest.class);
     suite.addTestSuite(ValidationGwtTest.class);

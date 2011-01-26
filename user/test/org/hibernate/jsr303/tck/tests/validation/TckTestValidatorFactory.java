@@ -22,6 +22,7 @@ import com.google.gwt.validation.client.impl.AbstractGwtValidator;
 
 import org.hibernate.jsr303.tck.tests.validation.PropertyPathTest.ActorDB;
 import org.hibernate.jsr303.tck.tests.validation.PropertyPathTest.VerySpecialClass;
+import org.hibernate.jsr303.tck.tests.validation.ValidateTest.Car;
 
 import javax.validation.Validator;
 
@@ -36,8 +37,8 @@ public final class TckTestValidatorFactory extends AbstractGwtValidatorFactory {
   @GwtValidation(value = {
       // Actor must be after its subclasses
       ActorDB.class, ActorArrayBased.class, ActorListBased.class, Actor.class,
-      Address.class, BadlyBehavedEntity.class, Customer.class, Engine.class,
-      Order.class, VerySpecialClass.class})
+      Address.class, BadlyBehavedEntity.class, Car.class,
+      Customer.class, Engine.class, Order.class, VerySpecialClass.class})
   public static interface GwtValidator extends Validator {
   }
 

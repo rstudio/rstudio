@@ -31,8 +31,8 @@ public final class TckTestValidatorFactory extends AbstractGwtValidatorFactory {
    * Marker Interface to {@link GWT#create(Class)}.
    */
   @GwtValidation(value = {
-      Account.class, Customer.class, Man.class, Order.class,
-      UnconstraintEntity.class})
+      Account.class, Customer.class, Man.class, Order.class, Person.class,
+      SubClass.class, SuperClass.class, UnconstraintEntity.class})
   public static interface GwtValidator extends Validator {
   }
 
