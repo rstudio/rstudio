@@ -54,6 +54,11 @@ public class FontSizer
       element.addClassName(styles.normalSize());
    }
 
+   public static String getNormalFontSizeClass()
+   {
+      return styles.normalSize();
+   }
+
    public static void setNormalFontSize(Document document, Size size)
    {
       ArrayList<String> stylesToRemove = new ArrayList<String>();

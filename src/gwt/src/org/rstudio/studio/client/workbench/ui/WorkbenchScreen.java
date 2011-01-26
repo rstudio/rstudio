@@ -14,6 +14,8 @@
 package org.rstudio.studio.client.workbench.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
@@ -97,7 +99,8 @@ public class WorkbenchScreen extends Composite
                           final Edit.Shim edit,
                           Commands commands,
                           final GlobalDisplay globalDisplay,
-                          final Provider<MRUList> mruList)
+                          final Provider<MRUList> mruList,
+                          FontSizeManager fontSizeManager)
    {
       eventBus_ = eventBus;
       session_ = session;
@@ -108,8 +111,17 @@ public class WorkbenchScreen extends Composite
          public void onChangeFontSize(ChangeFontSizeEvent event)
          {
             FontSizer.setNormalFontSize(Document.get(), event.getFontSize());
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               public void execute()
+               {
+                  // Causes the console width to be remeasured
+                  doOnPaneSizesChanged();
+               }
+            });
          }
       });
+      FontSizer.setNormalFontSize(Document.get(), fontSizeManager.getSize());
 
       // create tabsets
       tabsPanel_ = pSplitPanel.get();

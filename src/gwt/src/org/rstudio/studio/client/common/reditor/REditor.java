@@ -23,6 +23,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import org.rstudio.codemirror.client.CodeMirror.CursorPosition;
 import org.rstudio.codemirror.client.CodeMirror.LineHandle;
@@ -37,6 +38,7 @@ import org.rstudio.core.client.events.NativeKeyDownHandler;
 import org.rstudio.core.client.events.NativeKeyPressEvent;
 import org.rstudio.core.client.events.NativeKeyPressHandler;
 import org.rstudio.core.client.theme.ThemeFonts;
+import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.reditor.model.REditorServerOperations;
 import org.rstudio.studio.client.common.reditor.resources.REditorResources;
@@ -133,6 +135,18 @@ public class REditor extends CodeMirrorEditor
    public ChangeTracker getChangeTracker()
    {
       return new REditorChangeTracker();
+   }
+
+   public void setFontSize(final FontSizer.Size size)
+   {
+      executeOrDefer(new Command()
+      {
+         public void execute()
+         {
+            FontSizer.setNormalFontSize(codeMirror_.getWin().getDocument(),
+                                        size);
+         }
+      });
    }
    
    @Override

@@ -27,6 +27,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.views.workspace.model.WorkspaceObjectInfo;
 
@@ -103,6 +104,9 @@ public class WorkspaceObjectTable
          table_.getRowFormatter().setStylePrimaryName(
                tableIndex,
                ThemeResources.INSTANCE.themeStyles().workspaceDataRow());
+         table_.getRowFormatter().addStyleName(
+               tableIndex,
+               FontSizer.getNormalFontSizeClass());
          manageHeadingVisibility(sectionId);
          return tableIndex ;
       }
