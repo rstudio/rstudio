@@ -15,6 +15,8 @@
  */
 package com.google.gwt.resources.rg;
 
+import com.google.gwt.core.ext.BadPropertyValueException;
+import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -42,6 +44,15 @@ import java.util.Map;
  */
 public final class ExternalTextResourceGenerator extends
     AbstractResourceGenerator {
+  /**
+   * The name of a deferred binding property that determines whether or not this
+   * generator will use JSONP to fetch the files.
+   */
+  static final String USE_JSONP = "ExternalTextResource.useJsonp";
+  
+  // This string must stay in sync with the values in JsonpRequest.java
+  static final String JSONP_CALLBACK_PREFIX = "__gwt_jsonp__.P";
+
   private StringBuffer data;
   private boolean first;
   private String urlExpression;
@@ -65,6 +76,9 @@ public final class ExternalTextResourceGenerator extends
     // These are field names
     sw.println(externalTextUrlIdent + ", " + externalTextCacheIdent + ", ");
     sw.println(offsets.get(method.getName()).toString());
+    if (shouldUseJsonp(context, logger)) {
+      sw.println(", \"" + getMd5HashOfData() + "\"");
+    }
     sw.outdent();
     sw.print(")");
 
@@ -75,10 +89,20 @@ public final class ExternalTextResourceGenerator extends
   public void createFields(TreeLogger logger, ResourceContext context,
       ClientBundleFields fields) throws UnableToCompleteException {
     data.append(']');
+    StringBuffer wrappedData = new StringBuffer();
+    if (shouldUseJsonp(context, logger)) {
+      wrappedData.append(JSONP_CALLBACK_PREFIX);
+      wrappedData.append(getMd5HashOfData());
+      wrappedData.append(".onSuccess(\n");
+      wrappedData.append(data.toString());
+      wrappedData.append(")");
+    } else {
+      wrappedData = data;
+    }
 
     urlExpression = context.deploy(
         context.getClientBundleType().getQualifiedSourceName().replace('.', '_')
-            + "_jsonbundle.txt", "text/plain", data.toString().getBytes(), true);
+            + "_jsonbundle.txt", "text/plain", wrappedData.toString().getBytes(), true);
 
     TypeOracle typeOracle = context.getGeneratorContext().getTypeOracle();
     JClassType stringType = typeOracle.findType(String.class.getName());
@@ -142,4 +166,22 @@ public final class ExternalTextResourceGenerator extends
     // Store the (possibly n:1) mapping of resource function to bundle index.
     offsets.put(method.getName(), hashes.get(toWrite));
   }
+
+  private String getMd5HashOfData() {
+    return Util.computeStrongName(data.toString().getBytes());
+  }
+
+  private boolean shouldUseJsonp(ResourceContext context, TreeLogger logger) {
+    String useJsonpProp = null;
+    try {
+      ConfigurationProperty prop = context.getGeneratorContext()
+        .getPropertyOracle().getConfigurationProperty(USE_JSONP);
+      useJsonpProp = prop.getValues().get(0);
+    } catch (BadPropertyValueException e) {
+      logger.log(TreeLogger.ERROR, "Bad value for " + USE_JSONP, e);
+      return false;
+    }
+    return Boolean.parseBoolean(useJsonpProp);
+  }
+
 }

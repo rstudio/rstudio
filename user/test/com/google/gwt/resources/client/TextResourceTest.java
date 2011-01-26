@@ -58,28 +58,6 @@ public class TextResourceTest extends GWTTestCase {
     assertEquals(length, 12737792);
   }
 
-  public void testExternal() throws ResourceException {
-    final Resources r = GWT.create(Resources.class);
-
-    delayTestFinish(2000);
-
-    ResourceCallback<TextResource> c = new ResourceCallback<TextResource>() {
-
-      public void onError(ResourceException e) {
-        e.printStackTrace();
-        fail("Unable to fetch " + e.getResource().getName());
-      }
-
-      public void onSuccess(TextResource resource) {
-        assertEquals(r.helloWorldExternal().getName(), resource.getName());
-        assertEquals(HELLO, resource.getText());
-        finishTest();
-      }
-    };
-
-    r.helloWorldExternal().getText(c);
-  }
-
   public void testInline() {
     Resources r = GWT.create(Resources.class);
     assertEquals(HELLO, r.helloWorldRelative().getText());

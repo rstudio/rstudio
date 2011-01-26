@@ -20,6 +20,7 @@
   <inherits name="com.google.gwt.dom.DOM" />
   <!-- Used by ExternalTextResource -->
   <inherits name="com.google.gwt.http.HTTP" />
+  <inherits name="com.google.gwt.jsonp.Jsonp" />
 
   <!--  This acts as a switch to disable the use of data: URLs -->
   <define-property name="ClientBundle.enableInlining" values="true,false" />
@@ -78,4 +79,9 @@
   <!-- This can be used to make CssResource produce human-readable CSS -->
   <define-configuration-property name="CssResource.style" is-multi-valued="false" />
   <set-configuration-property name="CssResource.style" value="obf" />
+
+  <!-- This can be used to make ExternalTextResource use JSONP rather than XHR -->
+  <!-- by setting the value to true. -->
+  <define-configuration-property name="ExternalTextResource.useJsonp" is-multi-valued="false" />
+  <set-configuration-property name="ExternalTextResource.useJsonp" value="false" />
 </module>

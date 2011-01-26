@@ -283,6 +283,17 @@ public class JsonpRequestTest extends GWTTestCase {
         new AssertSuccessCallback<String>("C", counter));
   }
 
+  public void testPredeterminedIds() {
+    delayTestFinish(RESPONSE_DELAY);
+    String PREDETERMINED = "pred";
+    jsonp.setPredeterminedId(PREDETERMINED);
+    JsonpRequest<String> reqA = jsonp.requestString(echo("'A'"),
+        new AssertSuccessCallback<String>("A"));
+    String idA = reqA.getCallbackId().substring(1);
+    assertEquals("Unexpected ID sequence", PREDETERMINED, idA);
+    jsonp.setPredeterminedId(null);
+  }
+
   public void testString() {
     delayTestFinish(RESPONSE_DELAY);
     jsonp.requestString(echo("'Hello'"), new AssertSuccessCallback<String>(

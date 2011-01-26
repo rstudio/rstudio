@@ -104,6 +104,7 @@ public class JsonpRequestBuilder {
   private int timeout = 10000;
   private String callbackParam = "callback";
   private String failureCallbackParam = null;
+  private String predeterminedId = null;
 
   /**
    * Returns the name of the callback url parameter to send to the server. The
@@ -184,6 +185,10 @@ public class JsonpRequestBuilder {
     this.failureCallbackParam = failureCallbackParam;
   }
 
+  public void setPredeterminedId(String id) {
+    this.predeterminedId = id;
+  }
+  
   /**
    * @param timeout The expected timeout (ms) for this request. The default is 10s.
    */
@@ -192,8 +197,14 @@ public class JsonpRequestBuilder {
   }
 
   private <T> JsonpRequest<T> send(String url, AsyncCallback<T> callback, boolean expectInteger) {
-    JsonpRequest<T> request = new JsonpRequest<T>(callback, timeout, expectInteger, callbackParam,
-        failureCallbackParam);
+    JsonpRequest<T> request;
+    if (predeterminedId != null) {
+      request = new JsonpRequest<T>(callback, timeout, expectInteger, callbackParam,
+          failureCallbackParam, predeterminedId);
+    } else {
+      request = new JsonpRequest<T>(callback, timeout, expectInteger, callbackParam,
+          failureCallbackParam);
+    }
     request.send(url);
     return request;
   }

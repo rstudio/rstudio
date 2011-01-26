@@ -21,10 +21,12 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
+import com.google.gwt.jsonp.client.JsonpRequestBuilder;
 import com.google.gwt.resources.client.ExternalTextResource;
 import com.google.gwt.resources.client.ResourceCallback;
 import com.google.gwt.resources.client.ResourceException;
 import com.google.gwt.resources.client.TextResource;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 
 /**
  * Implements external resource fetching of TextResources.
@@ -34,25 +36,35 @@ public class ExternalTextResourcePrototype implements ExternalTextResource {
   /**
    * Maps the HTTP callback onto the ResourceCallback.
    */
-  private class ETRCallback implements RequestCallback {
+  private class ETRCallback implements RequestCallback, AsyncCallback<JavaScriptObject> {
     final ResourceCallback<TextResource> callback;
 
     public ETRCallback(ResourceCallback<TextResource> callback) {
       this.callback = callback;
     }
 
+    // For RequestCallback
     public void onError(Request request, Throwable exception) {
+      onFailure(exception);
+    }
+
+    // For AsyncCallback
+    public void onFailure(Throwable exception) {
       callback.onError(new ResourceException(
           ExternalTextResourcePrototype.this,
           "Unable to retrieve external resource", exception));
     }
 
+    // For RequestCallback
     public void onResponseReceived(Request request, final Response response) {
-      // Get the contents of the JSON bundle
       String responseText = response.getText();
-
       // Call eval() on the object.
       JavaScriptObject jso = evalObject(responseText);
+      onSuccess(jso);
+     }
+
+    // For AsyncCallback
+    public void onSuccess(JavaScriptObject jso) {
       if (jso == null) {
         callback.onError(new ResourceException(
             ExternalTextResourcePrototype.this, "eval() returned null"));
@@ -60,20 +72,18 @@ public class ExternalTextResourcePrototype implements ExternalTextResource {
       }
 
       // Populate the TextResponse cache array
-      for (int i = 0; i < cache.length; i++) {
-        final String resourceText = extractString(jso, i);
-        cache[i] = new TextResource() {
+      final String resourceText = extractString(jso, index);
+      cache[index] = new TextResource() {
 
-          public String getName() {
-            return name;
-          }
+        public String getName() {
+          return name;
+        }
 
-          public String getText() {
-            return resourceText;
-          }
+        public String getText() {
+          return resourceText;
+        }
 
-        };
-      }
+      };
 
       // Finish by invoking the callback
       callback.onSuccess(cache[index]);
@@ -117,6 +127,7 @@ public class ExternalTextResourcePrototype implements ExternalTextResource {
    */
   private final TextResource[] cache;
   private final int index;
+  private final String md5Hash;
   private final String name;
   private final String url;
 
@@ -126,6 +137,16 @@ public class ExternalTextResourcePrototype implements ExternalTextResource {
     this.url = url;
     this.cache = cache;
     this.index = index;
+    this.md5Hash = null;
+  }
+
+  public ExternalTextResourcePrototype(String name, String url,
+      TextResource[] cache, int index, String md5Hash) {
+    this.name = name;
+    this.url = url;
+    this.cache = cache;
+    this.index = index;
+    this.md5Hash = md5Hash;
   }
 
   public String getName() {
@@ -144,13 +165,19 @@ public class ExternalTextResourcePrototype implements ExternalTextResource {
       return;
     }
 
-    // Otherwise, fire an HTTP request.
-    RequestBuilder rb = new RequestBuilder(RequestBuilder.GET, url);
-    try {
-      rb.sendRequest("", new ETRCallback(callback));
-    } catch (RequestException e) {
-      throw new ResourceException(this,
-          "Unable to initiate request for external resource", e);
+    if (md5Hash != null) {
+      // If we have an md5Hash, we should be using JSONP
+      JsonpRequestBuilder rb = new JsonpRequestBuilder();
+      rb.setPredeterminedId(md5Hash);
+      rb.requestObject(url, new ETRCallback(callback));
+    } else {
+      RequestBuilder rb = new RequestBuilder(RequestBuilder.GET, url);
+      try {
+        rb.sendRequest("", new ETRCallback(callback));
+      } catch (RequestException e) {
+        throw new ResourceException(this,
+            "Unable to initiate request for external resource", e);
+      }
     }
   }
 }

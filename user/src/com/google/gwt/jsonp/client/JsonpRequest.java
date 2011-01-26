@@ -44,6 +44,17 @@ public class JsonpRequest<T> {
   private static final JavaScriptObject CALLBACKS = getOrCreateCallbacksObject();
 
   /**
+   * Prefix appended to all id's that are determined by the callbacks counter
+   */
+  private static final String INCREMENTAL_ID_PREFIX = "P";
+
+  /**
+   * Prefix appended to all id's that are passed in by the user. The "P" 
+   * suffix must stay in sync with ExternalTextResourceGenerator.java
+   */
+  private static final String PREDETERMINED_ID_PREFIX = "P";
+
+  /**
    * Returns the next ID to use, incrementing the global counter.
    */
   private static native int getAndIncrementCallbackCounter() /*-{
@@ -71,8 +82,12 @@ public class JsonpRequest<T> {
     return $wnd[name];
   }-*/;
 
+  private static String getPredeterminedId(String suffix) {
+    return PREDETERMINED_ID_PREFIX + suffix;
+  }
+
   private static String nextCallbackId() {
-    return "I" + getAndIncrementCallbackCounter();
+    return INCREMENTAL_ID_PREFIX + getAndIncrementCallbackCounter();
   }
 
   private final String callbackId;
@@ -90,6 +105,8 @@ public class JsonpRequest<T> {
   private final String callbackParam;
 
   private final String failureCallbackParam;
+
+  private final boolean canHaveMultipleRequestsForSameId;
 
   /**
    * Timer which keeps track of timeouts.
@@ -117,10 +134,41 @@ public class JsonpRequest<T> {
     this.expectInteger = expectInteger;
     this.callbackParam = callbackParam;
     this.failureCallbackParam = failureCallbackParam;
+    this.canHaveMultipleRequestsForSameId = false;
   }
 
   /**
-   * Cancels a pending request.
+   * Create a new JSONP request with a hardcoded id. This could be used to
+   * manually control which resources are considered duplicates (by giving them
+   * identical ids). Could also be used if the callback name needs to be
+   * completely user controlled (since the id is part of the callback name).
+   *
+   * @param callback The callback instance to notify when the response comes
+   *          back
+   * @param timeout Time in ms after which a {@link TimeoutException} will be
+   *          thrown
+   * @param expectInteger Should be true if T is {@link Integer}, false
+   *          otherwise
+   * @param callbackParam Name of the url param of the callback function name
+   * @param failureCallbackParam Name of the url param containing the the
+   *          failure callback function name, or null for no failure callback
+   * @param id unique id for the resource that is being fetched
+   */
+  JsonpRequest(AsyncCallback<T> callback, int timeout, boolean expectInteger,
+      String callbackParam, String failureCallbackParam, String id) {
+    callbackId = getPredeterminedId(id);
+    this.callback = callback;
+    this.timeout = timeout;
+    this.expectInteger = expectInteger;
+    this.callbackParam = callbackParam;
+    this.failureCallbackParam = failureCallbackParam;
+    this.canHaveMultipleRequestsForSameId = true;
+  }
+
+  /**
+   * Cancels a pending request.  Note that if you are using preset ID's, this
+   * will not work, since there is no way of knowing if there are other
+   * requests pending (or have already returned) for the same data.
    */
   public void cancel() {
     timer.cancel();
@@ -151,7 +199,7 @@ public class JsonpRequest<T> {
    * @param baseUri To be sent to the server.
    */
   void send(final String baseUri) {
-    registerCallbacks(CALLBACKS);
+    registerCallbacks(CALLBACKS, canHaveMultipleRequestsForSameId);
     StringBuffer uri = new StringBuffer(baseUri);
     uri.append(baseUri.contains("?") ? "&" : "?");
     String prefix = CALLBACKS_NAME + "." + callbackId;
@@ -176,7 +224,7 @@ public class JsonpRequest<T> {
     timer.schedule(timeout);
     getHeadElement().appendChild(script);
   }
-
+  
   @SuppressWarnings("unused") // used by JSNI
   private void onFailure(String message) {
     onFailure(new Exception(message));
@@ -212,10 +260,9 @@ public class JsonpRequest<T> {
    *
    * @param callbacks the global JS object which stores callbacks
    */
-  private native void registerCallbacks(JavaScriptObject callbacks) /*-{
+  private native void registerCallbacks(JavaScriptObject callbacks, boolean canHaveMultipleRequestsForId) /*-{
     var self = this;
     var callback = new Object();
-    callbacks[this.@com.google.gwt.jsonp.client.JsonpRequest::callbackId] = callback;
     callback.onSuccess = $entry(function(data) {
       // Box primitive types
       if (typeof data == 'boolean') {
@@ -234,6 +281,36 @@ public class JsonpRequest<T> {
         self.@com.google.gwt.jsonp.client.JsonpRequest::onFailure(Ljava/lang/String;)(message);
       });
     }
+    
+    if (canHaveMultipleRequestsForId) {
+      // In this case, we keep a wrapper, with a list of callbacks.  Since the
+      // response for the request is the same each time, we call all of the
+      // callbacks as soon as any response comes back.
+      var callbackWrapper =
+        callbacks[this.@com.google.gwt.jsonp.client.JsonpRequest::callbackId];
+      if (!callbackWrapper) {
+        callbackWrapper = new Object();
+        callbackWrapper.callbackList = new Array();
+
+        callbackWrapper.onSuccess = function(data) {
+          while (callbackWrapper.callbackList.length > 0) {
+            callbackWrapper.callbackList.shift().onSuccess(data);
+          }
+        } 
+        callbackWrapper.onFailure = function(data) {
+          while (callbackWrapper.callbackList.length > 0) {
+            callbackWrapper.callbackList.shift().onFailure(data);
+          }
+        } 
+        callbacks[this.@com.google.gwt.jsonp.client.JsonpRequest::callbackId] =
+          callbackWrapper;
+      }
+      callbackWrapper.callbackList.push(callback);
+    } else {
+      // In this simple case, just associate the callback directly with the
+      // particular id in the callbacks object
+      callbacks[this.@com.google.gwt.jsonp.client.JsonpRequest::callbackId] = callback;
+    }
   }-*/;
 
   /**
@@ -248,7 +325,13 @@ public class JsonpRequest<T> {
      */
     DeferredCommand.addCommand(new Command() {
       public void execute() {
-        unregisterCallbacks(CALLBACKS);
+        if (!canHaveMultipleRequestsForSameId) {
+          // If there can me multiple requests for a particular ID, then we
+          // don't want to unregister the callback since there may be pending
+          // requests that have not yet come back and we don't want them to
+          // have an undefined callback function.
+          unregisterCallbacks(CALLBACKS);
+        }
         Node script = Document.get().getElementById(callbackId);
         if (script != null) {
           // The script may have already been deleted
