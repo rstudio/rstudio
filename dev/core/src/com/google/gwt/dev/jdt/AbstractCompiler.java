@@ -22,7 +22,6 @@ import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.GWTProblem;
 import com.google.gwt.dev.javac.JdtCompiler;
 import com.google.gwt.dev.javac.Shared;
-import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.util.CharArrayComparator;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.Util;
@@ -52,19 +51,14 @@ import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblemFactory;
 import org.eclipse.jdt.internal.compiler.util.Messages;
 
-import java.io.IOException;
-import java.net.JarURLConnection;
 import java.net.URL;
 import java.util.Comparator;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
 /**
  * A facade around the JDT compiler to manage on-demand compilation, caching
@@ -338,47 +332,6 @@ public abstract class AbstractCompiler {
       }
     }
 
-    static class JreIndex {
-      private static Set<String> packages = readPackages();
-
-      private static void addPackageRecursively(Set<String> packages, String pkg) {
-        if (!packages.add(pkg)) {
-          return;
-        }
-
-        int i = pkg.lastIndexOf('.');
-        if (i != -1) {
-          addPackageRecursively(packages, pkg.substring(0, i));
-        }
-      }
-
-      public static boolean contains(String name) {
-        return packages.contains(name);
-      }
-
-      private static Set<String> readPackages() {
-        HashSet<String> pkgs = new HashSet<String>();
-        String klass = "java/lang/Object.class";
-        URL url = ClassLoader.getSystemClassLoader().getResource(klass);
-        try {
-          JarURLConnection connection = (JarURLConnection) url.openConnection();
-          JarFile f = connection.getJarFile();
-          Enumeration<JarEntry> entries = f.entries();
-          while (entries.hasMoreElements()) {
-            JarEntry e = entries.nextElement();
-            String name = e.getName();
-            if (name.endsWith(".class")) {
-              String pkg = Shared.getPackageNameFromBinary(name);
-              addPackageRecursively(pkgs, pkg);
-            }
-          }
-          return pkgs;
-        } catch (IOException e) {
-          throw new InternalCompilerException("Unable to find JRE", e);
-        }
-      }
-    }
-
     private class INameEnvironmentImpl implements INameEnvironment {
 
       public INameEnvironmentImpl() {
@@ -483,9 +436,8 @@ public abstract class AbstractCompiler {
       private boolean isPackage(ClassLoader classLoader, String packageName) {
         String packageAsPath = packageName.replace('.', '/');
 
-        // Test the JRE explicitly first, because the following method does
-        // not work for JRE classes.
-        if (JreIndex.contains(packageName)) {
+        // Test the JRE explicitly, because the classloader trick doesn't work.
+        if (JdtCompiler.JreIndex.contains(packageAsPath)) {
           return true;
         }
 
