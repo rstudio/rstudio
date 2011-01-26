@@ -30,6 +30,7 @@ public class ValidateGwtTest extends AbstractValidationTest {
     delegate.testConstraintDescriptorWithoutExplicitGroup();
   }
 
+  @Failing(issue = 5882)
   public void testConstraintViolation() {
     delegate.testConstraintViolation();
   }
