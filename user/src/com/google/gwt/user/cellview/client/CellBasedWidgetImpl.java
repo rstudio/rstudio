@@ -50,7 +50,7 @@ abstract class CellBasedWidgetImpl {
   /**
    * The set of natively focusable elements.
    */
-  private final Set<String> focusableTypes;
+  final Set<String> focusableTypes;
 
   CellBasedWidgetImpl() {
     focusableTypes = new HashSet<String>();

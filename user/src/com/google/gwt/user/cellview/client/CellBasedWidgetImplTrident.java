@@ -247,6 +247,12 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
   }
 
   @Override
+  public boolean isFocusable(Element elem) {
+    return focusableTypes.contains(elem.getTagName().toLowerCase())
+        || getTabIndexIfSpecified(elem) >= 0;
+  }
+
+  @Override
   public void onBrowserEvent(final Widget widget, Event event) {
     // We need to remove the event listener from the cell now that the event
     // has fired.
@@ -340,6 +346,16 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
       return super.sinkEvent(widget, typeName);
     }
   }
+
+  /**
+   * Get the tab index of an element if the tab index is specified.
+   * 
+   * @param elem the Element
+   * @return the tab index, or -1 if not specified
+   */
+  private native int getTabIndexIfSpecified(Element elem) /*-{
+    return elem.getAttributeNode('tabIndex').specified ? elem.tabIndex : -1;
+  }-*/;
 
   /**
    * Initialize the focus event listener.
