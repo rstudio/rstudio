@@ -5,5 +5,10 @@
   <import file="../common.ant.xml" />
   <!-- these are after the common.ant.xml so they have gwt.tools... -->
   <path id="sample.extraclasspath">
+    <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA.jar" />
+    <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA-sources.jar" />
   </path>
+  <fileset id="sample.server.libs" dir="${gwt.tools.lib}">
+    <include name="javax/validation/validation-api-1.0.0.GA-sources.jar" />
+  </fileset>
 </project>
