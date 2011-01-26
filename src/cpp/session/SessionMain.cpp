@@ -1574,7 +1574,7 @@ int main (int argc, char * const argv[])
          FilePath preflightScriptPath = options.preflightScriptPath();
          if (preflightScriptPath.exists())
          {
-            error = system::runCommand(preflightScriptPath.absolutePath());
+            error = core::system::runCommand(preflightScriptPath.absolutePath());
             if (error)
                LOG_ERROR(error);
          }
