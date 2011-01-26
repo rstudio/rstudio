@@ -44,6 +44,7 @@ const char * const kCaption = "caption";
 const char * const kCommand = "command";
 const char * const kTarget = "target";
 const char * const kDiffView = "/diff/view";
+const char * const kDiffViewRel = "diff/view";
 
 bool getDiffViewParams(const http::Request& request,
                        http::Response* pResponse,
@@ -129,7 +130,7 @@ void handleDiffViewRequest(const http::Request& request, http::Response* pRespon
       "<html>\n"
       "  <head>\n"
       "     <title>RStudio: %1%</title>\n"
-      "     <script type='text/javascript' src='../js/diff.js'</script>\n"
+      "     <script type='text/javascript' src='../js/diff.js'></script>\n"
       "     <style type='text/css'>\n"
       "     .proportional { font-family: Segoe UI, Lucida Grande, Verdana, Helvetica; }\n"
       "     body      { font-size: 12px; }\n"
@@ -164,7 +165,7 @@ SEXP rs_diff(SEXP captionSEXP, SEXP commandSEXP, SEXP targetSEXP)
    queryParams.push_back(std::make_pair(kTarget, r::sexp::asString(targetSEXP)));
    std::string queryString;
    http::util::buildQueryString(queryParams, &queryString);
-   std::string url = std::string(kDiffView) + "?" + queryString;
+   std::string url = std::string(kDiffViewRel) + "?" + queryString;
 
    // fire browse url event
    ClientEvent event = browseUrlEvent(url, "_rstudio_diff_view");
