@@ -140,7 +140,8 @@ public class RunWebApp {
       options.addStartupURL("/");
     }
     for (String startupUrl : options.getStartupURLs()) {
-      startupUrl = DevModeBase.normalizeURL(startupUrl, port, "localhost");
+      startupUrl = DevModeBase.normalizeURL(startupUrl, false, port,
+          "localhost");
       try {
         BrowserLauncher.browse(startupUrl);
       } catch (IOException e) {

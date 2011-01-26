@@ -58,6 +58,18 @@ public abstract class ServletContainerLauncher {
   public String getName() {
     return "Web Server";
   }
+  /**
+   * Return true if this servlet container launcher is configured for secure
+   * operation (ie, HTTPS).  This value is only queried after arguments, if any,
+   * have been processed.
+   * 
+   * The default implementation just returns false.
+   * 
+   * @return true if HTTPS is in use
+   */
+  public boolean isSecure() {
+    return false;
+  }
 
   /**
    * Process any supplied arguments.

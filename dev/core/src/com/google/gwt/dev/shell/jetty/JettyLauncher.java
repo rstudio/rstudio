@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.util.InstalledHelpInfo;
+import com.google.gwt.dev.util.Util;
 
 import org.mortbay.component.AbstractLifeCycle;
 import org.mortbay.jetty.AbstractConnector;
@@ -31,6 +32,7 @@ import org.mortbay.jetty.Server;
 import org.mortbay.jetty.HttpFields.Field;
 import org.mortbay.jetty.handler.RequestLogHandler;
 import org.mortbay.jetty.nio.SelectChannelConnector;
+import org.mortbay.jetty.security.SslSocketConnector;
 import org.mortbay.jetty.webapp.WebAppClassLoader;
 import org.mortbay.jetty.webapp.WebAppContext;
 import org.mortbay.log.Log;
@@ -475,6 +477,15 @@ public class JettyLauncher extends ServletContainerLauncher {
   }
 
   /**
+   * Represents the type of SSL client certificate authentication desired.
+   */
+  private enum ClientAuth {
+    NONE,
+    WANT,
+    REQUIRE,
+  }
+
+  /**
    * System property to suppress warnings about loading web app classes from the
    * system classpath.
    */
@@ -495,16 +506,116 @@ public class JettyLauncher extends ServletContainerLauncher {
     System.setProperty("build.compiler", antJavaC);
   }
 
+  /**
+   * Setup a connector for the bind address/port.
+   * 
+   * @param connector
+   * @param bindAddress 
+   * @param port
+   */
+  private static void setupConnector(AbstractConnector connector,
+      String bindAddress, int port) {
+    if (bindAddress != null) {
+      connector.setHost(bindAddress.toString());
+    }
+    connector.setPort(port);
+
+    // Don't share ports with an existing process.
+    connector.setReuseAddress(false);
+
+    // Linux keeps the port blocked after shutdown if we don't disable this.
+    connector.setSoLingerTime(0);
+  }
+
   // default value used if setBaseLogLevel isn't called
   private TreeLogger.Type baseLogLevel = TreeLogger.INFO;
 
   private String bindAddress = null;
 
+  private ClientAuth clientAuth;
+
+  private String keyStore;
+
+  private String keyStorePassword;
+
   private final Object privateInstanceLock = new Object();
+
+  private boolean useSsl;
 
   @Override
   public String getName() {
     return "Jetty";
+  }
+
+  @Override
+  public boolean isSecure() {
+    return useSsl;
+  }
+
+  @Override
+  public boolean processArguments(TreeLogger logger, String arguments) {
+    if (arguments != null && arguments.length() > 0) {
+      // TODO(jat): better parsing of the args
+      for (String arg : arguments.split(",")) {
+        int equals = arg.indexOf('=');
+        String tag;
+        String value = null;
+        if (equals < 0) {
+          tag = arg;
+        } else {
+          tag = arg.substring(0, equals);
+          value = arg.substring(equals + 1);
+        }
+        if ("ssl".equals(tag)) {
+          useSsl = true;
+          URL keyStoreUrl = getClass().getResource("localhost.keystore");
+          if (keyStoreUrl == null) {
+            logger.log(TreeLogger.ERROR, "Default GWT keystore not found");
+            return false;
+          }
+          keyStore = keyStoreUrl.toExternalForm();
+          keyStorePassword = "localhost";
+        } else if ("keystore".equals(tag)) {
+          useSsl = true;
+          keyStore = value;
+        } else if ("password".equals(tag)) {
+          useSsl = true;
+          keyStorePassword = value;
+        } else if ("pwfile".equals(tag)) {
+          useSsl = true;
+          keyStorePassword = Util.readFileAsString(new File(value)).trim();
+          if (keyStorePassword == null) {
+            logger.log(TreeLogger.ERROR,
+                "Unable to read keystore password from '" + value + "'");
+            return false;
+          }
+        } else if ("clientAuth".equals(tag)) {
+          useSsl = true;
+          try {
+            clientAuth = ClientAuth.valueOf(value);
+          } catch (IllegalArgumentException e) {
+            logger.log(TreeLogger.WARN, "Ignoring invalid clientAuth of '"
+                + value + "'");
+          }
+        } else {
+          logger.log(TreeLogger.ERROR, "Unexpected argument to "
+              + JettyLauncher.class.getSimpleName() + ": " + arg);
+          return false;
+        }
+      }
+      if (useSsl) {
+        if (keyStore == null) {
+          logger.log(TreeLogger.ERROR, "A keystore is required to use SSL");
+          return false;
+        }
+        if (keyStorePassword == null) {
+          logger.log(TreeLogger.ERROR,
+              "A keystore password is required to use SSL");
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   /*
@@ -540,19 +651,10 @@ public class JettyLauncher extends ServletContainerLauncher {
     // Turn off XML validation.
     System.setProperty("org.mortbay.xml.XmlParser.Validating", "false");
 
-    AbstractConnector connector = getConnector();
-    if (bindAddress != null) {
-      connector.setHost(bindAddress.toString());
-    }
-    connector.setPort(port);
-
-    // Don't share ports with an existing process.
-    connector.setReuseAddress(false);
-
-    // Linux keeps the port blocked after shutdown if we don't disable this.
-    connector.setSoLingerTime(0);
-
     Server server = new Server();
+
+    AbstractConnector connector = getConnector(logger);
+    setupConnector(connector, bindAddress, port);
     server.addConnector(connector);
 
     // Create a new web app in the war directory.
@@ -582,7 +684,36 @@ public class JettyLauncher extends ServletContainerLauncher {
         "/");
   }
 
-  protected AbstractConnector getConnector() {
+  protected AbstractConnector getConnector(TreeLogger logger) {
+    if (useSsl) {
+      TreeLogger sslLogger = logger.branch(TreeLogger.INFO,
+          "Listening for SSL connections");
+      sslLogger.log(TreeLogger.TRACE, "Using keystore " + keyStore);
+      SslSocketConnector conn = new SslSocketConnector();
+      if (clientAuth != null) {
+        switch (clientAuth) {
+          case NONE:
+            conn.setWantClientAuth(false);
+            conn.setNeedClientAuth(false);
+            break;
+          case WANT:
+            sslLogger.log(TreeLogger.TRACE, "Requesting client certificates");
+            conn.setWantClientAuth(true);
+            conn.setNeedClientAuth(false);
+            break;
+          case REQUIRE:
+            sslLogger.log(TreeLogger.TRACE, "Requiring client certificates");
+            conn.setWantClientAuth(true);
+            conn.setNeedClientAuth(true);
+            break;
+        }
+      }
+      conn.setKeystore(keyStore);
+      conn.setTruststore(keyStore);
+      conn.setKeyPassword(keyStorePassword);
+      conn.setTrustPassword(keyStorePassword);
+      return conn;
+    }
     return new SelectChannelConnector();
   }
 

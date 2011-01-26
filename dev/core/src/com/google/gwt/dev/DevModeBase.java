@@ -676,8 +676,9 @@ public abstract class DevModeBase implements DoneCallback {
 
   private static final Random RNG = new Random();
 
-  public static String normalizeURL(String unknownUrlText, int port, String host) {
-    if (unknownUrlText.indexOf(":") != -1) {
+  public static String normalizeURL(String unknownUrlText, boolean isHttps,
+      int port, String host) {
+    if (unknownUrlText.contains("://")) {
       // Assume it's a full url.
       return unknownUrlText;
     }
@@ -687,14 +688,18 @@ public abstract class DevModeBase implements DoneCallback {
       unknownUrlText = unknownUrlText.substring(1);
     }
 
-    if (port != 80) {
-      // CHECKSTYLE_OFF: Not really an assembled error message, so no space
-      // after ':'.
-      return "http://" + host + ":" + port + "/" + unknownUrlText;
-      // CHECKSTYLE_ON
-    } else {
-      return "http://" + host + "/" + unknownUrlText;
+    String protocol = "http";
+    String portString = ":" + port;
+    if (isHttps) {
+      protocol += "s";
+      if (port == 443) {
+        portString = "";
+      }
+    } else if (port == 80) {
+      portString = "";
     }
+
+    return protocol + "://" + host + portString + "/" + unknownUrlText;
   }
 
   /**
@@ -727,6 +732,8 @@ public abstract class DevModeBase implements DoneCallback {
   protected int codeServerPort;
 
   protected String connectAddress;
+
+  protected boolean isHttps;
 
   protected BrowserListener listener;
 
@@ -1203,7 +1210,8 @@ public abstract class DevModeBase implements DoneCallback {
     ensureCodeServerListener();
     Map<String, URL> startupUrls = new HashMap<String, URL>();
     for (String prenormalized : options.getStartupURLs()) {
-      String startupURL = normalizeURL(prenormalized, getPort(), getHost());
+      String startupURL = normalizeURL(prenormalized, isHttps, getPort(),
+          getHost());
       logger.log(TreeLogger.DEBUG, "URL " + prenormalized + " normalized as "
           + startupURL, null);
       try {

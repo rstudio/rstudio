@@ -157,6 +157,17 @@ public abstract class DevModeUI {
   }
 
   /**
+   * Show in the UI that the web server, identified by the logger returned from
+   * {@link #getWebServerLogger(String, byte[])}, is operating in a secure
+   * fashion.
+   * 
+   * @param serverLogger
+   */
+  public void setWebServerSecure(TreeLogger serverLogger) {
+    // do nothing by default
+  }
+
+  /**
    * Call callback for a given event.
    * 
    * @param eventType type of event

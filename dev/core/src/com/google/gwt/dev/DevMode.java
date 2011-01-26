@@ -62,6 +62,9 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
    * Handles the -server command line flag.
    */
   protected static class ArgHandlerServer extends ArgHandlerString {
+
+    private static final String DEFAULT_SCL = JettyLauncher.class.getName();
+
     private HostedModeOptions options;
 
     public ArgHandlerServer(HostedModeOptions options) {
@@ -73,7 +76,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       if (options.isNoServer()) {
         return null;
       } else {
-        return new String[]{getTag(), JettyLauncher.class.getName()};
+        return new String[]{getTag(), DEFAULT_SCL};
       }
     }
 
@@ -105,6 +108,9 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       } else {
         sclArgs = null;
         sclClassName = arg;
+      }
+      if (sclClassName.length() == 0) {
+        sclClassName = DEFAULT_SCL;
       }
       Throwable t;
       try {
@@ -477,6 +483,13 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
         if (!scl.processArguments(serverLogger, sclArgs)) {
           return -1;
         }
+      }
+
+      isHttps = scl.isSecure();
+
+      // Tell the UI if the web server is secure
+      if (isHttps) {
+        ui.setWebServerSecure(serverLogger);
       }
 
       /*

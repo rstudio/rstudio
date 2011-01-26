@@ -290,6 +290,20 @@ public class SwingUI extends DevModeUI {
       }
     });
   }
+
+  @Override
+  public void setWebServerSecure(TreeLogger serverLogger) {
+    if (webServerLog != null && serverLogger == webServerLog.getLogger()) {
+      EventQueue.invokeLater(new Runnable() {
+        public void run() {
+          // TODO(jat): if the web server has an icon, should combine with the
+          // secure icon or perhaps switch to a different one.
+          ImageIcon secureIcon = loadImageIcon("secure24.png");
+          tabs.setIconAt(1, secureIcon);
+        }
+      });
+    }
+  }
   
   protected int getNextSessionCounter(File logdir) {
     synchronized (sessionCounterLock) {
