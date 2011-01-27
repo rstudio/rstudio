@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -219,14 +219,14 @@ public class GenerateJavaAST {
    * JProgram. By the end of this pass, the produced AST should contain every
    * piece of information we'll ever need about the code. The JDT nodes should
    * never again be referenced after this.
-   *
+   * 
    * This is implemented as a reflective visitor for JDT's AST. The advantage of
    * doing it reflectively is that if we run into any JDT nodes we can't handle,
    * we'll automatically throw an exception. If we had subclassed
    * {@link org.eclipse.jdt.internal.compiler.ast.ASTNode} we'd have to override
    * every single method and explicitly throw an exception to get the same
    * behavior.
-   *
+   * 
    * NOTE ON JDT FORCED OPTIMIZATIONS - If JDT statically determines that a
    * section of code in unreachable, it won't fully resolve that section of
    * code. This invalid-state code causes us major problems. As a result, we
@@ -244,7 +244,7 @@ public class GenerateJavaAST {
       private Class<? extends Object> childClass;
       private String name;
 
-      public MethodKey(String name, Class<? extends Object>childClass) {
+      public MethodKey(String name, Class<? extends Object> childClass) {
         this.name = name;
         this.childClass = childClass;
       }
@@ -253,9 +253,10 @@ public class GenerateJavaAST {
       public boolean equals(Object obj) {
         if (obj instanceof MethodKey) {
           MethodKey otherKey = (MethodKey) obj;
-          return name.equals(otherKey.name) && childClass.equals(otherKey.childClass);
+          return name.equals(otherKey.name)
+              && childClass.equals(otherKey.childClass);
         }
-       return super.equals(obj);
+        return super.equals(obj);
       }
 
       @Override
@@ -270,6 +271,7 @@ public class GenerateJavaAST {
     private static class MethodValue {
       private final NoSuchMethodException ex;
       private final Method method;
+
       public MethodValue(Method method) {
         this.method = method;
         this.ex = null;
@@ -289,8 +291,8 @@ public class GenerateJavaAST {
     }
 
     /**
-     * The literal for the JLS identifier that represents the length
-     * field on an array.
+     * The literal for the JLS identifier that represents the length field on an
+     * array.
      */
     private static final String ARRAY_LENGTH_FIELD = "length";
 
@@ -363,7 +365,7 @@ public class GenerateJavaAST {
      * inherits that implements an interface method but that has a different
      * erased signature from the interface method.
      * </p>
-     *
+     * 
      * <p>
      * The need for these bridges was pointed out in issue 3064. The goal is
      * that virtual method calls through an interface type are translated to
@@ -378,7 +380,7 @@ public class GenerateJavaAST {
      * case, a bridge method should be added that overrides the interface method
      * and then calls the implementation method.
      * </p>
-     *
+     * 
      * <p>
      * This method should only be called once all regular, non-bridge methods
      * have been installed on the GWT types.
@@ -531,7 +533,8 @@ public class GenerateJavaAST {
             currentClass.getMethods().remove(2);
           } else {
             tryFindUpRefs(method);
-            if (isScript(program) && currentClass == program.getIndexedType("Array")) {
+            if (isScript(program)
+                && currentClass == program.getIndexedType("Array")) {
               // Special implementation: return this.arrayClass
               SourceInfo info = method.getSourceInfo();
               implementMethod(
@@ -701,8 +704,8 @@ public class GenerateJavaAST {
       // May be processing an annotation
       SourceInfo info = currentMethod == null ? currentClass.getSourceInfo()
           : currentMethod.getSourceInfo();
-      return program.getLiteralString(info.makeChild(
-          JavaASTGenerationVisitor.class, "String literal"),
+      return program.getLiteralString(
+          info.makeChild(JavaASTGenerationVisitor.class, "String literal"),
           x.stringValue().toCharArray());
     }
 
@@ -715,7 +718,7 @@ public class GenerateJavaAST {
      * Java that glue code is a semantic error, because a this/super call must
      * be the first statement of your constructor. On the upside, optimizations
      * work the same on our synthetic fields as with any user fields.
-     *
+     * 
      * The order of emulation is: - assign all synthetic fields from synthetic
      * args - call our super constructor emulation method - call our instance
      * initializer emulation method - run user code
@@ -760,8 +763,8 @@ public class GenerateJavaAST {
                 if (arg.matchingField != null) {
                   JField field = (JField) typeMap.get(arg);
                   block.addStmt(JProgram.createAssignmentStmt(info,
-                      createVariableRef(info, field), createVariableRef(info,
-                          param)));
+                      createVariableRef(info, field),
+                      createVariableRef(info, param)));
                   currentOuterThisRefParams = Maps.put(
                       currentOuterThisRefParams, field, param);
                 }
@@ -774,8 +777,8 @@ public class GenerateJavaAST {
                 JParameter param = paramIt.next();
                 JField field = (JField) typeMap.get(arg);
                 block.addStmt(JProgram.createAssignmentStmt(info,
-                    createVariableRef(info, field), createVariableRef(info,
-                        param)));
+                    createVariableRef(info, field),
+                    createVariableRef(info, param)));
               }
             }
           }
@@ -1718,9 +1721,11 @@ public class GenerateJavaAST {
 
         List<JStatement> initializers = new ArrayList<JStatement>(1);
         // Iterator<T> i$iterator = collection.iterator()
-        initializers.add(createDeclaration(info, iteratorVar, new JMethodCall(
-            info, dispProcessExpression(x.collection),
-            program.getIndexedMethod("Iterable.iterator"))));
+        initializers.add(createDeclaration(
+            info,
+            iteratorVar,
+            new JMethodCall(info, dispProcessExpression(x.collection),
+                program.getIndexedMethod("Iterable.iterator"))));
 
         // i$iterator.hasNext()
         JExpression condition = new JMethodCall(info, createVariableRef(info,
@@ -1941,7 +1946,7 @@ public class GenerateJavaAST {
                * Got to be one of my params; it would be illegal to use a this
                * ref at this moment-- we would most likely be passing in a
                * supertype field that HASN'T BEEN INITIALIZED YET.
-               *
+               * 
                * Unfortunately, my params might not work as-is, so we have to
                * check each one to see if any will make a suitable this ref.
                */
@@ -2105,7 +2110,7 @@ public class GenerateJavaAST {
     /**
      * Create a bridge method. It calls a same-named method with the same
      * arguments, but with a different type signature.
-     *
+     * 
      * @param clazz The class to put the bridge method in
      * @param jdtBridgeMethod The corresponding bridge method added in the JDT
      * @param implmeth The implementation method to bridge to
@@ -2215,13 +2220,13 @@ public class GenerateJavaAST {
      * refs up an arbitrarily big tree of enclosing classes and
      * supertypes-with-enclosing-classes until we find something that's the
      * right type.
-     *
+     * 
      * We have this implemented as a Breadth-First Search to minimize the number
      * of derefs required, and this seems to be correct. Note that we explicitly
      * prefer the current expression as one of its supertypes over a synthetic
      * this ref rooted off the current expression that happens to be the correct
      * type. We have observed this to be consistent with how Java handles it.
-     *
+     * 
      * TODO(scottb): could we get this info directly from JDT?
      */
     private JExpression createThisRef(JReferenceType qualType,
@@ -2321,7 +2326,8 @@ public class GenerateJavaAST {
       return typeBinding;
     }
 
-    private Method getCachedMethod(String name, Class<? extends Object> childClass) throws NoSuchMethodException {
+    private Method getCachedMethod(String name,
+        Class<? extends Object> childClass) throws NoSuchMethodException {
       MethodKey key = new MethodKey(name, childClass);
       MethodValue value = methodCache.get(key);
       if (value == null) {
@@ -2459,7 +2465,7 @@ public class GenerateJavaAST {
 
     /**
      * Check whether the specified type is definitely for an enum class.
-     *
+     * 
      * @param type The type being tested
      * @return whether it is certainly an enum
      */
@@ -2506,7 +2512,7 @@ public class GenerateJavaAST {
      * obvious way to tell, but the clue we can get from JDT is that the local's
      * containing method won't be the same as the method we're currently
      * processing.
-     *
+     * 
      * Once we have this clue, we can use getEmulationPath to compute the
      * current class's binding for that field.
      */
@@ -2581,8 +2587,8 @@ public class GenerateJavaAST {
         Object[] array = (Object[]) value;
         List<JAnnotationArgument> toReturn = Lists.create();
         for (int i = 0, j = array.length; i < j; i++) {
-          toReturn = Lists.add(toReturn, processAnnotationPropertyValue(info,
-              array[i]).get(0));
+          toReturn = Lists.add(toReturn,
+              processAnnotationPropertyValue(info, array[i]).get(0));
         }
         return toReturn;
 
@@ -2678,7 +2684,7 @@ public class GenerateJavaAST {
        * innermost type (in other words, a needless qualifier), it must refer to
        * that innermost type, because a class can never be nested inside of
        * itself. In this case, we must treat it as if it were not qualified.
-       *
+       * 
        * In all other cases, the qualified thisref or superref cannot possibly
        * refer to the innermost type (even if the innermost type could be cast
        * to a compatible type), so we must create a reference to some outer
@@ -2850,7 +2856,7 @@ public class GenerateJavaAST {
         /*
          * Make an inner class to hold a lazy-init name-value map. We use a
          * class to take advantage of its clinit.
-         *
+         * 
          * class Map { $MAP = Enum.createValueOfMap($VALUES); }
          */
         SourceInfo sourceInfo = type.getSourceInfo().makeChild(
@@ -2997,7 +3003,9 @@ public class GenerateJavaAST {
          */
         if (field.isCompileTimeConstant()) {
           if (ctx.isLvalue()) {
-            JsniCollector.reportJsniError(info, methodDecl,
+            JsniCollector.reportJsniError(
+                info,
+                methodDecl,
                 "Cannot change the value of compile-time constant "
                     + field.getName());
           }

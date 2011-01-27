@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -168,8 +168,6 @@ import javax.xml.parsers.ParserConfigurationException;
  */
 public class JavaToJavaScriptCompiler {
 
-  private static final String ENUM_NAME_OBFUSCATION_PROPERTY = "compiler.enum.obfuscate.names";
-
   private static class PermutationResultImpl implements PermutationResult {
     private final ArtifactSet artifacts = new ArtifactSet();
     private final byte[][] js;
@@ -235,14 +233,14 @@ public class JavaToJavaScriptCompiler {
     }
   }
 
+  private static final String ENUM_NAME_OBFUSCATION_PROPERTY = "compiler.enum.obfuscate.names";
+
   /**
    * Compiles a particular permutation, based on a precompiled unified AST.
-   *
+   * 
    * @param logger the logger to use
    * @param unifiedAst the result of a
-   *          {@link #precompile(TreeLogger, ModuleDef, RebindPermutationOracle,
-   *                             String[], String[], JJSOptions, boolean,
-   *                             PrecompilationMetricsArtifact)}
+   *          {@link #precompile(TreeLogger, ModuleDef, RebindPermutationOracle, String[], String[], JJSOptions, boolean, PrecompilationMetricsArtifact)}
    * @param permutation the permutation to compile
    * @return the output JavaScript
    * @throws UnableToCompleteException if an error other than
@@ -309,8 +307,8 @@ public class JavaToJavaScriptCompiler {
 
       // (7) Generate a JavaScript code DOM from the Java type declarations
       jprogram.typeOracle.recomputeAfterOptimizations();
-      JavaToJavaScriptMap jjsmap = GenerateJavaScriptAST.exec(jprogram, jsProgram,
-          options.getOutput(), symbolTable, propertyOracles);
+      JavaToJavaScriptMap jjsmap = GenerateJavaScriptAST.exec(jprogram,
+          jsProgram, options.getOutput(), symbolTable, propertyOracles);
 
       // (8) Normalize the JS AST.
       // Fix invalid constructs created during JS AST gen.
@@ -337,7 +335,7 @@ public class JavaToJavaScriptCompiler {
 
       /*
        * Work around Safari 5 bug by rewriting a >> b as ~~a >> b.
-       *
+       * 
        * No shifts may be generated after this point.
        */
       JsCoerceIntShift.exec(jsProgram, logger, propertyOracles);
@@ -424,11 +422,11 @@ public class JavaToJavaScriptCompiler {
       // (12) Generate the final output text.
       String[] js = new String[jsProgram.getFragmentCount()];
       StatementRanges[] ranges = new StatementRanges[js.length];
-      SizeBreakdown[] sizeBreakdowns =
-        options.isSoycEnabled() || options.isCompilerMetricsEnabled() ?
-          new SizeBreakdown[js.length] : null;
-      List<Map<Range, SourceInfo>> sourceInfoMaps = options.isSoycExtra() ?
-          new ArrayList<Map<Range, SourceInfo>>() : null;
+      SizeBreakdown[] sizeBreakdowns = options.isSoycEnabled()
+          || options.isCompilerMetricsEnabled() ? new SizeBreakdown[js.length]
+          : null;
+      List<Map<Range, SourceInfo>> sourceInfoMaps = options.isSoycExtra()
+          ? new ArrayList<Map<Range, SourceInfo>>() : null;
       generateJavaScriptCode(options, jsProgram, jjsmap, js, ranges,
           sizeBreakdowns, sourceInfoMaps, splitBlocks);
 
@@ -447,12 +445,13 @@ public class JavaToJavaScriptCompiler {
             unifiedAst.getPrecompilationMetrics(), compilationMetrics));
       }
       toReturn.addArtifacts(makeSoycArtifacts(logger, permutationId, jprogram,
-          js, sizeBreakdowns, sourceInfoMaps, dependencies, jjsmap, obfuscateMap,
-          unifiedAst.getModuleMetrics(), unifiedAst.getPrecompilationMetrics(),
-          compilationMetrics));
+          js, sizeBreakdowns, sourceInfoMaps, dependencies, jjsmap,
+          obfuscateMap, unifiedAst.getModuleMetrics(),
+          unifiedAst.getPrecompilationMetrics(), compilationMetrics));
 
-      logger.log(TreeLogger.TRACE, "Permutation took "
-          + (System.currentTimeMillis() - permStart) + " ms");
+      logger.log(TreeLogger.TRACE,
+          "Permutation took " + (System.currentTimeMillis() - permStart)
+              + " ms");
       return toReturn;
     } catch (Throwable e) {
       throw logAndTranslateException(logger, e);
@@ -471,7 +470,7 @@ public class JavaToJavaScriptCompiler {
 
   /**
    * Performs a precompilation, returning a unified AST.
-   *
+   * 
    * @param logger the logger to use
    * @param module the module to compile
    * @param rpo the RebindPermutationOracle
@@ -493,7 +492,7 @@ public class JavaToJavaScriptCompiler {
       String[] additionalRootTypes, JJSOptions options,
       boolean singlePermutation,
       PrecompilationMetricsArtifact precompilationMetrics)
-  throws UnableToCompleteException {
+      throws UnableToCompleteException {
 
     InternalCompilerException.preload();
 
@@ -623,9 +622,9 @@ public class JavaToJavaScriptCompiler {
 
       /*
        * 4) Possibly optimize some.
-       *
-       * Don't optimize early if this is a draft compile, or if there's only
-       * one permutation.
+       * 
+       * Don't optimize early if this is a draft compile, or if there's only one
+       * permutation.
        */
       if (options.getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT
           && !singlePermutation) {
@@ -830,7 +829,8 @@ public class JavaToJavaScriptCompiler {
           numNodes));
 
       /*
-       * enum ordinalization
+       * Enum ordinalization.
+       * 
        * TODO(jbrosenberg): graduate this out of the 'isAggressivelyOptimize'
        * block, over time.
        */
@@ -1048,7 +1048,7 @@ public class JavaToJavaScriptCompiler {
   /**
    * Generate JavaScript code from the given JavaScript ASTs. Also produces
    * information about that transformation.
-   *
+   * 
    * @param options The options this compiler instance is running with
    * @param jsProgram The AST to convert to source code
    * @param jjsMap A map between the JavaScript AST and the Java AST it came
@@ -1104,6 +1104,27 @@ public class JavaToJavaScriptCompiler {
       }
       ranges[i] = ieXformer.getStatementRanges();
     }
+  }
+
+  /**
+   * This method can be used to fetch the list of referenced classs.
+   * 
+   * This method is intended to support compiler metrics in the precompile
+   * phase.
+   */
+  private static String[] getReferencedJavaClasses(JProgram jprogram) {
+    class ClassNameVisitor extends JVisitor {
+      List<String> classNames = new ArrayList<String>();
+
+      @Override
+      public boolean visit(JClassType x, Context ctx) {
+        classNames.add(x.getName());
+        return true;
+      }
+    }
+    ClassNameVisitor v = new ClassNameVisitor();
+    v.accept(jprogram);
+    return v.classNames.toArray(new String[v.classNames.size()]);
   }
 
   private static UnableToCompleteException logAndTranslateException(
@@ -1233,10 +1254,12 @@ public class JavaToJavaScriptCompiler {
             e);
       }
       dashboard.generateForOnePermutation();
-      if (moduleMetricsArtifact != null && precompilationMetricsArtifact != null
+      if (moduleMetricsArtifact != null
+          && precompilationMetricsArtifact != null
           && compilationMetrics != null) {
-        dashboard.generateCompilerMetricsForOnePermuation(moduleMetricsArtifact,
-            precompilationMetricsArtifact, compilationMetrics);
+        dashboard.generateCompilerMetricsForOnePermuation(
+            moduleMetricsArtifact, precompilationMetricsArtifact,
+            compilationMetrics);
       }
       soycArtifacts.addAll(outDir.getArtifacts());
       generateCompileReport.end();
@@ -1249,7 +1272,7 @@ public class JavaToJavaScriptCompiler {
 
   /**
    * Create a variable assignment to invoke a call to the statistics collector.
-   *
+   * 
    * <pre>
    * Stats.isStatsAvailable() &&
    *   Stats.onModuleStart("mainClassName");
@@ -1318,26 +1341,5 @@ public class JavaToJavaScriptCompiler {
 
     deps.endDependencyGraph();
     deps.close();
-  }
-
-  /**
-   * This method can be used to fetch the list of referenced classs.
-   *
-   * This method is intended to support compiler metrics in the precompile
-   * phase.
-   */
-  private static String[] getReferencedJavaClasses(JProgram jprogram) {
-    class ClassNameVisitor extends JVisitor {
-      List<String> classNames = new ArrayList<String>();
-
-      @Override
-      public boolean visit(JClassType x, Context ctx) {
-        classNames.add(x.getName());
-        return true;
-      }
-    }
-    ClassNameVisitor v = new ClassNameVisitor();
-    v.accept(jprogram);
-    return v.classNames.toArray(new String[v.classNames.size()]);
   }
 }

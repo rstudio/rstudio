@@ -213,8 +213,9 @@ public class JsniChecker {
         return;
       }
       if (target.isDeprecated()) {
-        emitWarning("deprecation", "Referencing deprecated field '"
-            + jsniRef.className() + "." + jsniRef.memberName() + "'");
+        emitWarning("deprecation",
+            "Referencing deprecated field '" + jsniRef.className() + "."
+                + jsniRef.memberName() + "'");
       }
 
       if (hasUnsafeLongsAnnotation) {
@@ -237,8 +238,9 @@ public class JsniChecker {
         return;
       }
       if (target.isDeprecated()) {
-        emitWarning("deprecation", "Referencing deprecated method '"
-            + jsniRef.className() + "." + jsniRef.memberName() + "'");
+        emitWarning("deprecation",
+            "Referencing deprecated method '" + jsniRef.className() + "."
+                + jsniRef.memberName() + "'");
       }
 
       if (hasUnsafeLongsAnnotation) {

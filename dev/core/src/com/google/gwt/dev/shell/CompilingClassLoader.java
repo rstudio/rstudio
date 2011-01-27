@@ -390,9 +390,10 @@ public final class CompilingClassLoader extends ClassLoader implements
         JClassType intf = typeOracle.findType(Name.InternalName.toSourceName(intfName));
         JClassType jso = typeOracle.getSingleJsoImpl(intf);
         for (JMethod method : intf.getMethods()) {
-          JClassType implementingJso = findImplementingTypeForMethod(jso, method);
-          assert implementingJso != null
-            : "Jso should contain method: " + method.getJsniSignature();
+          JClassType implementingJso = findImplementingTypeForMethod(jso,
+              method);
+          assert implementingJso != null : "Jso should contain method: "
+              + method.getJsniSignature();
           add(implementingJso, method);
         }
       }
@@ -482,8 +483,8 @@ public final class CompilingClassLoader extends ClassLoader implements
     private final SortedSet<String> mangledNames = new TreeSet<String>();
     private final Map<String, List<com.google.gwt.dev.asm.commons.Method>> mangledNamesToDeclarations = new HashMap<String, List<com.google.gwt.dev.asm.commons.Method>>();
     private final Map<String, List<com.google.gwt.dev.asm.commons.Method>> mangledNamesToImplementations = new HashMap<String, List<com.google.gwt.dev.asm.commons.Method>>();
-    private final SortedSet<String> unmodifiableNames = Collections.unmodifiableSortedSet(mangledNames);
     private final Set<String> unmodifiableIntfNames = Collections.unmodifiableSet(singleJsoImplTypes);
+    private final SortedSet<String> unmodifiableNames = Collections.unmodifiableSortedSet(mangledNames);
 
     public MySingleJsoImplData() {
       // Loop over all interfaces with JSO implementations
@@ -688,7 +689,7 @@ public final class CompilingClassLoader extends ClassLoader implements
    * The set of classes exposed into user space that actually live in hosted
    * space (thus, they bridge across the spaces).
    */
-  private static final Class<?>[] BRIDGE_CLASSES = new Class<?>[] {
+  private static final Class<?>[] BRIDGE_CLASSES = new Class<?>[]{
       ShellJavaScriptHost.class, GWTBridge.class};
 
   private static final boolean CLASS_DUMP = Boolean.getBoolean("gwt.dev.classDump");
@@ -795,8 +796,9 @@ public final class CompilingClassLoader extends ClassLoader implements
       throw new UnableToCompleteException();
     }
   }
-  
-  private static JClassType findImplementingTypeForMethod(JClassType type, JMethod method) {
+
+  private static JClassType findImplementingTypeForMethod(JClassType type,
+      JMethod method) {
     JType[] methodParamTypes = method.getErasedParameterTypes();
     while (type != null) {
       for (JMethod candidate : type.getMethods()) {
@@ -823,24 +825,25 @@ public final class CompilingClassLoader extends ClassLoader implements
     }
   }
 
-  private static boolean hasMatchingErasedSignature(JMethod a, JType[] aParamTypes, JMethod b) {
+  private static boolean hasMatchingErasedSignature(JMethod a,
+      JType[] aParamTypes, JMethod b) {
     if (!a.getName().equals(b.getName())) {
       return false;
     }
-    
+
     JType[] bParamTypes = b.getErasedParameterTypes();
     if (aParamTypes.length != bParamTypes.length) {
       return false;
     }
-    
+
     for (int i = 0; i < aParamTypes.length; ++i) {
       if (aParamTypes[i] != bParamTypes[i]) {
         return false;
       }
     }
-    
+
     return true;
-  }  
+  }
 
   /**
    * The set of units whose JSNI has already been injected.
@@ -1289,11 +1292,11 @@ public final class CompilingClassLoader extends ClassLoader implements
       } else {
         bridge = new GWTBridgeImpl(shellJavaScriptHost);
       }
-      final Class<?>[] paramTypes = new Class[] {GWTBridge.class};
+      final Class<?>[] paramTypes = new Class[]{GWTBridge.class};
       Method setBridgeMethod = gwtClass.getDeclaredMethod("setBridge",
           paramTypes);
       setBridgeMethod.setAccessible(true);
-      setBridgeMethod.invoke(gwtClass, new Object[] {bridge});
+      setBridgeMethod.invoke(gwtClass, new Object[]{bridge});
       return;
     } catch (SecurityException e) {
       caught = e;
@@ -1321,11 +1324,11 @@ public final class CompilingClassLoader extends ClassLoader implements
     }
     Throwable caught;
     try {
-      final Class<?>[] paramTypes = new Class[] {ShellJavaScriptHost.class};
+      final Class<?>[] paramTypes = new Class[]{ShellJavaScriptHost.class};
       Method setHostMethod = javaScriptHostClass.getMethod("setHost",
           paramTypes);
       setHostMethod.invoke(javaScriptHostClass,
-          new Object[] {shellJavaScriptHost});
+          new Object[]{shellJavaScriptHost});
       return;
     } catch (SecurityException e) {
       caught = e;

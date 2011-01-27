@@ -83,17 +83,14 @@ public class CompilationStateBuilder {
         MethodArgNamesLookup methodArgs = MethodParamCollector.collect(cud);
 
         StringInterner interner = StringInterner.get();
-        String packageName = interner.intern(
-            Shared.getPackageName(builder.getTypeName()));
+        String packageName = interner.intern(Shared.getPackageName(builder.getTypeName()));
         List<String> unresolvedQualified = new ArrayList<String>();
         List<String> unresolvedSimple = new ArrayList<String>();
         for (char[] simpleRef : cud.compilationResult().simpleNameReferences) {
           unresolvedSimple.add(interner.intern(String.valueOf(simpleRef)));
         }
-        for (char[][] qualifiedRef :
-            cud.compilationResult().qualifiedReferences) {
-          unresolvedQualified.add(
-              interner.intern(CharOperation.toString(qualifiedRef)));
+        for (char[][] qualifiedRef : cud.compilationResult().qualifiedReferences) {
+          unresolvedQualified.add(interner.intern(CharOperation.toString(qualifiedRef)));
         }
         for (String jsniDep : jsniDeps) {
           unresolvedQualified.add(interner.intern(jsniDep));
@@ -148,11 +145,10 @@ public class CompilationStateBuilder {
     public CompileMoreLater(AdditionalTypeProviderDelegate delegate) {
       compiler.setAdditionalTypeProviderDelegate(delegate);
     }
-    
+
     public Collection<CompilationUnit> addGeneratedTypes(TreeLogger logger,
         Collection<GeneratedUnit> generatedUnits) {
-      Event compilationStateBuilderProcess =
-          SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
+      Event compilationStateBuilderProcess = SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
       try {
         return doBuildGeneratedTypes(logger, generatedUnits, this);
       } finally {
@@ -269,19 +265,17 @@ public class CompilationStateBuilder {
 
   public static CompilationState buildFrom(TreeLogger logger,
       Set<Resource> resources) {
-    Event compilationStateBuilderProcessEvent =
-        SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
-     try {
-       return instance.doBuildFrom(logger, resources, null);
-     } finally {
-       compilationStateBuilderProcessEvent.end();
-     }
+    Event compilationStateBuilderProcessEvent = SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
+    try {
+      return instance.doBuildFrom(logger, resources, null);
+    } finally {
+      compilationStateBuilderProcessEvent.end();
+    }
   }
 
   public static CompilationState buildFrom(TreeLogger logger,
       Set<Resource> resources, AdditionalTypeProviderDelegate delegate) {
-    Event compilationStateBuilderProcessEvent =
-        SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
+    Event compilationStateBuilderProcessEvent = SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
     try {
       return instance.doBuildFrom(logger, resources, delegate);
     } finally {
@@ -342,22 +336,20 @@ public class CompilationStateBuilder {
   /**
    * Build a new compilation state from a source oracle.
    */
-  public CompilationState doBuildFrom(TreeLogger logger,
-      Set<Resource> resources) {
+  public CompilationState doBuildFrom(TreeLogger logger, Set<Resource> resources) {
     return doBuildFrom(logger, resources, null);
   }
 
   /**
-   * Build a new compilation state from a source oracle.  Allow the caller to specify 
-   * a compiler delegate that will handle undefined names. 
+   * Build a new compilation state from a source oracle. Allow the caller to
+   * specify a compiler delegate that will handle undefined names.
    * 
    * TODO: maybe use a finer brush than to synchronize the whole thing.
    */
   public synchronized CompilationState doBuildFrom(TreeLogger logger,
       Set<Resource> resources, AdditionalTypeProviderDelegate compilerDelegate) {
-    Event compilationStateBuilderProcess =
-        SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
-    
+    Event compilationStateBuilderProcess = SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
+
     try {
       // Units we definitely want to build.
       List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
