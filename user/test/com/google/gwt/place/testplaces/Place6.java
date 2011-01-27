@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2011 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,18 +13,33 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.place.testplacemappers;
+package com.google.gwt.place.testplaces;
 
-import com.google.gwt.place.shared.PlaceHistoryMapperWithFactory;
-import com.google.gwt.place.shared.WithTokenizers;
-import com.google.gwt.place.testplaces.Place6;
-import com.google.gwt.place.testplaces.Tokenizer4;
-import com.google.gwt.place.testplaces.TokenizerFactory;
+import com.google.gwt.place.shared.Place;
+import com.google.gwt.place.shared.PlaceTokenizer;
+import com.google.gwt.place.shared.Prefix;
 
 /**
  * Used by tests of {@link com.google.gwt.place.rebind.PlaceHistoryMapperGenerator}.
  */
-@WithTokenizers({Tokenizer4.class, Place6.Tokenizer.class})
-public interface WithFactory extends
-  PlaceHistoryMapperWithFactory<TokenizerFactory> {
+public class Place6 extends Place {
+  public final String content;
+
+  public Place6(String token) {
+    this.content = token;
+  }
+  
+  /**
+   * Tokenizer.
+   */
+  @Prefix("")
+  public static class Tokenizer implements PlaceTokenizer<Place6> {
+    public Place6 getPlace(String token) {
+      return new Place6(token);
+    }
+
+    public String getToken(Place6 place) {
+      return place.content;
+    }
+  }
 }

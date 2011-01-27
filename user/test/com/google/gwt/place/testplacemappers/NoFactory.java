@@ -18,6 +18,7 @@ package com.google.gwt.place.testplacemappers;
 import com.google.gwt.place.shared.PlaceHistoryMapper;
 import com.google.gwt.place.shared.WithTokenizers;
 import com.google.gwt.place.testplaces.Place1;
+import com.google.gwt.place.testplaces.Place6;
 import com.google.gwt.place.testplaces.Tokenizer2;
 import com.google.gwt.place.testplaces.Tokenizer3;
 import com.google.gwt.place.testplaces.Tokenizer4;
@@ -27,6 +28,6 @@ import com.google.gwt.place.testplaces.Tokenizer4;
  */
 @WithTokenizers({
   Place1.Tokenizer.class, Tokenizer2.class, Tokenizer3.class,
-  Tokenizer4.class})
+  Tokenizer4.class, Place6.Tokenizer.class})
 public interface NoFactory extends PlaceHistoryMapper {
 }

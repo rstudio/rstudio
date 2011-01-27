@@ -28,6 +28,7 @@ import com.google.gwt.place.testplaces.Place2;
 import com.google.gwt.place.testplaces.Place3;
 import com.google.gwt.place.testplaces.Place4;
 import com.google.gwt.place.testplaces.Place5;
+import com.google.gwt.place.testplaces.Place6;
 import com.google.gwt.place.testplaces.Tokenizer2;
 import com.google.gwt.place.testplaces.Tokenizer3;
 import com.google.gwt.place.testplaces.Tokenizer4;
@@ -39,11 +40,11 @@ import com.google.gwt.place.testplaces.TokenizerFactory;
 public class PlaceHistoryMapperGeneratorTest extends GWTTestCase {
   @WithTokenizers({
       Place1.Tokenizer.class, Tokenizer2.class, Tokenizer3.class,
-      Tokenizer4.class})
+      Tokenizer4.class, Place6.Tokenizer.class})
   interface LocalNoFactory extends PlaceHistoryMapper {
   };
 
-  @WithTokenizers(Tokenizer4.class)
+  @WithTokenizers({Tokenizer4.class, Place6.Tokenizer.class})
   interface LocalWithFactory extends
       PlaceHistoryMapperWithFactory<TokenizerFactory> {
   };
@@ -71,6 +72,7 @@ public class PlaceHistoryMapperGeneratorTest extends GWTTestCase {
   Place3 place3 = new Place3("charlie");
   Place4 place4 = new Place4("delta");
   Place5 place5 = new Place5("echo");
+  Place6 place6 = new Place6("foxtrot");
 
   public void testTopLevelWithoutFactory() {
     AbstractPlaceHistoryMapper<?> subject = GWT.create(NoFactory.class);
@@ -148,6 +150,12 @@ public class PlaceHistoryMapperGeneratorTest extends GWTTestCase {
       assertTrue(subject.getTokenizer("Place3") instanceof Tokenizer3);
     }
     assertTrue(subject.getTokenizer("Place4") instanceof Tokenizer4);
+    
+    // Empty prefix
+    String history6 = subject.getPrefixAndToken(place6).toString();
+    assertEquals(place6.content, history6);
+    assertTrue(subject.getTokenizer("") instanceof Place6.Tokenizer);
+    assertTrue(subject.getPlace("noPrefix") instanceof Place6);
 
     Place place = new Place() {
     };

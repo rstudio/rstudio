@@ -39,6 +39,7 @@ import com.google.gwt.place.testplaces.Place1;
 import com.google.gwt.place.testplaces.Place2;
 import com.google.gwt.place.testplaces.Place3;
 import com.google.gwt.place.testplaces.Place4;
+import com.google.gwt.place.testplaces.Place6;
 import com.google.gwt.place.testplaces.Tokenizer2;
 import com.google.gwt.place.testplaces.Tokenizer3;
 import com.google.gwt.place.testplaces.Tokenizer4;
@@ -83,6 +84,7 @@ public class PlaceHistoryGeneratorContextTest extends TestCase {
     rtn.add(new RealJavaResource(Place2.class));
     rtn.add(new RealJavaResource(Place3.class));
     rtn.add(new RealJavaResource(Place4.class));
+    rtn.add(new RealJavaResource(Place6.class));
     rtn.add(new RealJavaResource(Tokenizer2.class));
     rtn.add(new RealJavaResource(Tokenizer3.class));
     rtn.add(new RealJavaResource(Tokenizer4.class));
@@ -133,16 +135,17 @@ public class PlaceHistoryGeneratorContextTest extends TestCase {
     JClassType place2 = typeOracle.getType(Place2.class.getName());
     JClassType place3 = typeOracle.getType(Place3.class.getName());
     JClassType place4 = typeOracle.getType(Place4.class.getName());
+    JClassType place6 = typeOracle.getType(Place6.class.getName());
 
     PlaceHistoryGeneratorContext context = createContext(TreeLogger.NULL,
         typeOracle, NoFactory.class.getName(), null);
 
     // Found all place prefixes?
-    assertEquals(new HashSet<String>(Arrays.asList(Place1.Tokenizer.PREFIX,
+    assertEquals(new HashSet<String>(Arrays.asList("", Place1.Tokenizer.PREFIX,
         "Place2", "Place3", "Place4")), context.getPrefixes());
 
     // Found all place types and correctly sorted them?
-    assertEquals(Arrays.asList(place3, place4, place1, place2),
+    assertEquals(Arrays.asList(place3, place4, place1, place2, place6),
         new ArrayList<JClassType>(context.getPlaceTypes()));
 
     // correctly maps place types to their prefixes?
@@ -150,12 +153,14 @@ public class PlaceHistoryGeneratorContextTest extends TestCase {
     assertEquals("Place2", context.getPrefix(place2));
     assertEquals("Place3", context.getPrefix(place3));
     assertEquals("Place4", context.getPrefix(place4));
+    assertEquals("", context.getPrefix(place6));
 
     // there obviously shouldn't be factory methods
     assertNull(context.getTokenizerGetter(Place1.Tokenizer.PREFIX));
     assertNull(context.getTokenizerGetter("Place2"));
     assertNull(context.getTokenizerGetter("Place3"));
     assertNull(context.getTokenizerGetter("Place4"));
+    assertNull(context.getTokenizerGetter(""));
 
     // correctly maps prefixes to their tokenizer type?
     assertEquals(typeOracle.getType(Place1.Tokenizer.class.getCanonicalName()),
@@ -166,6 +171,8 @@ public class PlaceHistoryGeneratorContextTest extends TestCase {
         context.getTokenizerType("Place3"));
     assertEquals(typeOracle.getType(Tokenizer4.class.getName()),
         context.getTokenizerType("Place4"));
+    assertEquals(typeOracle.getType(Place6.Tokenizer.class.getCanonicalName()),
+        context.getTokenizerType(""));
   }
 
   public void testWithFactory() throws UnableToCompleteException,
@@ -177,6 +184,7 @@ public class PlaceHistoryGeneratorContextTest extends TestCase {
     JClassType place2 = typeOracle.getType(Place2.class.getName());
     JClassType place3 = typeOracle.getType(Place3.class.getName());
     JClassType place4 = typeOracle.getType(Place4.class.getName());
+    JClassType place6 = typeOracle.getType(Place6.class.getName());
     JClassType factory = typeOracle.getType(TokenizerFactory.class.getName());
 
     PlaceHistoryGeneratorContext context = createContext(TreeLogger.NULL,
@@ -184,12 +192,12 @@ public class PlaceHistoryGeneratorContextTest extends TestCase {
         TokenizerFactory.class.getName());
 
     // Found all place prefixes?
-    assertEquals(new HashSet<String>(Arrays.asList(Place1.Tokenizer.PREFIX,
+    assertEquals(new HashSet<String>(Arrays.asList("", Place1.Tokenizer.PREFIX,
         TokenizerFactory.PLACE2_PREFIX, "Place3", "Place4")),
         context.getPrefixes());
 
     // Found all place types and correctly sorted them?
-    assertEquals(Arrays.asList(place3, place4, place1, place2),
+    assertEquals(Arrays.asList(place3, place4, place1, place2, place6),
         new ArrayList<JClassType>(context.getPlaceTypes()));
 
     // correctly maps place types to their prefixes?
@@ -197,6 +205,7 @@ public class PlaceHistoryGeneratorContextTest extends TestCase {
     assertEquals(TokenizerFactory.PLACE2_PREFIX, context.getPrefix(place2));
     assertEquals("Place3", context.getPrefix(place3));
     assertEquals("Place4", context.getPrefix(place4));
+    assertEquals("", context.getPrefix(place6));
 
     // correctly map prefixes to their factory method (or null)?
     assertEquals(factory.getMethod("getTokenizer1", EMPTY_JTYPE_ARRAY),
@@ -206,6 +215,7 @@ public class PlaceHistoryGeneratorContextTest extends TestCase {
     assertEquals(factory.getMethod("getTokenizer3", EMPTY_JTYPE_ARRAY),
         context.getTokenizerGetter("Place3"));
     assertNull(context.getTokenizerGetter("Place4"));
+    assertNull(context.getTokenizerGetter(""));
 
     // correctly maps prefixes to their tokenizer type (or null)?
     assertNull(context.getTokenizerType(Place1.Tokenizer.PREFIX));
@@ -213,6 +223,8 @@ public class PlaceHistoryGeneratorContextTest extends TestCase {
     assertNull(context.getTokenizerType("Place3"));
     assertEquals(typeOracle.getType(Tokenizer4.class.getName()),
         context.getTokenizerType("Place4"));
+    assertEquals(typeOracle.getType(Place6.Tokenizer.class.getCanonicalName()),
+        context.getTokenizerType(""));
   }
 
   public void testDuplicatePrefix() {

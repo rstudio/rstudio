@@ -51,13 +51,18 @@ public abstract class AbstractPlaceHistoryMapper<F> implements
   
   public Place getPlace(String token) {
     int colonAt = token.indexOf(':');
-    if (colonAt > 0) {
-      String initial = token.substring(0, colonAt);
-      String rest = token.substring(colonAt + 1);
-      PlaceTokenizer<?> tokenizer = getTokenizer(initial);
-      if (tokenizer != null) {
-        return tokenizer.getPlace(rest);
-      }
+    String initial;
+    String rest;
+    if (colonAt >= 0) {
+      initial = token.substring(0, colonAt);
+      rest = token.substring(colonAt + 1);
+    } else {
+      initial = "";
+      rest = token;
+    }
+    PlaceTokenizer<?> tokenizer = getTokenizer(initial);
+    if (tokenizer != null) {
+      return tokenizer.getPlace(rest);
     }
     return null;
   }
