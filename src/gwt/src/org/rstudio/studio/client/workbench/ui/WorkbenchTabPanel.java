@@ -37,7 +37,6 @@ class WorkbenchTabPanel
 {
    public WorkbenchTabPanel(WindowFrame owner)
    {
-      barHeight_ = ModuleTabLayoutPanel.BAR_HEIGHT;
       tabPanel_ = new ModuleTabLayoutPanel(owner);
       tabPanel_.setSize("100%", "100%");
       tabPanel_.addStyleDependentName("Workbench");
@@ -124,15 +123,6 @@ class WorkbenchTabPanel
       return tabPanel_.getSelectedIndex();
    }
    
-   // internal method for getting access to the deck panel
-   Size getDeckPanelSize()
-   {
-      int width = tabPanel_.getOffsetWidth();
-      int height = tabPanel_.getOffsetHeight();
-      height -= barHeight_;
-      return new Size(width, height);
-   }
-
    public HandlerRegistration addSelectionHandler(
          SelectionHandler<Integer> integerSelectionHandler)
    {
@@ -153,6 +143,5 @@ class WorkbenchTabPanel
    }
 
    private ModuleTabLayoutPanel tabPanel_;
-   private final int barHeight_;
    private ArrayList<WorkbenchTab> tabs_ = new ArrayList<WorkbenchTab>();
 }
