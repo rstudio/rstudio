@@ -207,7 +207,7 @@ public class WorkbenchScreen extends Composite
             new MinimizedWindowFrame("Source"));
 
       initBoolPref("consoleOnTop", consoleOnTop_, commands.consoleOnTop(), session, globalDisplay);
-      commands.consoleOnTop().setMenuLabel("Console on " + (plotsOnTop_.getValue() ? "Bottom" : "Top"));
+      commands.consoleOnTop().setMenuLabel("Console on " + (consoleOnTop_.getValue() ? "Bottom" : "Top"));
 
       LogicalWindow leftTopWindow = consoleOnTop_.getValue() ? consoleLogicalWindow_
                                                              : sourceLogicalWindow_;

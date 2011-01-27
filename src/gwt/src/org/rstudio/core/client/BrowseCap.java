@@ -13,6 +13,7 @@
 package org.rstudio.core.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
 
 public class BrowseCap
 {
@@ -59,4 +60,8 @@ public class BrowseCap
    }-*/;
    private static final String OPERATING_SYSTEM = getOperatingSystem();
 
+   static
+   {
+      Document.get().getBody().addClassName(OPERATING_SYSTEM);
+   }
 }
