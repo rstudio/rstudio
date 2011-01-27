@@ -60,8 +60,7 @@ public abstract class HtmlFormModalDialog<T> extends ModalDialogBase
                            StringUtil.notNull(e.getDescription()).trim()))
                      {
                         progressIndicator.onError(
-                              "For security reasons, you must click the " +
-                              "Browse button and choose your file.");
+                              "Please use a complete file path.");
                      }
                      else
                      {
