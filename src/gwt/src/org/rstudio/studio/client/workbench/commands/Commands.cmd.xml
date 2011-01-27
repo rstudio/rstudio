@@ -103,7 +103,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="activatePackages"/>
          <cmd refid="activateHelp"/>
          <separator/>
-         <menu label="Customize">
+         <menu label="Pane Layout">
             <cmd refid="consoleOnTop"/>
             <cmd refid="plotsOnTop"/>
          </menu>
