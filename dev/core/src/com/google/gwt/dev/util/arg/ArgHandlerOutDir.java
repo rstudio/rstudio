@@ -22,7 +22,7 @@ import java.io.File;
 /**
  * Argument handler for processing the output directory flag.
  */
-public final class ArgHandlerOutDir extends ArgHandlerDir {
+public class ArgHandlerOutDir extends ArgHandlerDir {
 
   private final OptionOutDir option;
 

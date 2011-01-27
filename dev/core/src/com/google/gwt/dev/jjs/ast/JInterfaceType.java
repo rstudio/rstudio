@@ -22,7 +22,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
  */
 public class JInterfaceType extends JDeclaredType {
 
-  JInterfaceType(SourceInfo info, String name) {
+  public JInterfaceType(SourceInfo info, String name) {
     super(info, name);
   }
 

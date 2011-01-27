@@ -169,10 +169,7 @@ public class JClassLiteral extends JLiteral implements JAnnotationArgument {
   private final JField field;
   private final JType refType;
 
-  /**
-   * This constructor is only used by {@link JProgram}.
-   */
-  JClassLiteral(SourceInfo sourceInfo, JType type, JField field) {
+  public JClassLiteral(SourceInfo sourceInfo, JType type, JField field) {
     super(sourceInfo);
     refType = type;
     this.field = field;

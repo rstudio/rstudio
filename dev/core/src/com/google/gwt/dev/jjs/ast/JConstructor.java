@@ -30,15 +30,9 @@ public class JConstructor extends JMethod {
    */
   private boolean isEmpty = false;
 
-  private JNonNullType newType;
-
-  /**
-   * These are only supposed to be constructed by JProgram.
-   */
-  JConstructor(SourceInfo info, JClassType enclosingType, JNonNullType newType) {
+  public JConstructor(SourceInfo info, JClassType enclosingType) {
     super(info, enclosingType.getShortName(), enclosingType,
         JPrimitiveType.VOID, false, false, true, false);
-    this.newType = newType;
   }
 
   @Override
@@ -57,7 +51,7 @@ public class JConstructor extends JMethod {
   }
 
   public JNonNullType getNewType() {
-    return newType;
+    return getEnclosingType().getNonNull();
   }
 
   /**

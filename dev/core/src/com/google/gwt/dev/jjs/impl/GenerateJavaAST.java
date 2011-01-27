@@ -1654,7 +1654,7 @@ public class GenerateJavaAST {
       assert (elementDecl.initializer == null);
 
       JForStatement result;
-      if (x.collection.resolvedType.isArrayType()) {
+      if (x.collectionVariable != null) {
         /**
          * <pre>
          * for (final T[] i$array = collection,

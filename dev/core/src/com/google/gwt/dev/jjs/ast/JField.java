@@ -50,7 +50,7 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
   private boolean isThisRef;
   private boolean isVolatile;
 
-  JField(SourceInfo info, String name, JDeclaredType enclosingType, JType type,
+  public JField(SourceInfo info, String name, JDeclaredType enclosingType, JType type,
       boolean isStatic, Disposition disposition) {
     super(info, name, type, disposition.isFinal());
     this.enclosingType = enclosingType;

@@ -357,8 +357,6 @@ public class JProgram extends JNode {
 
   private final Map<String, JDeclaredType> typeNameMap = new HashMap<String, JDeclaredType>();
 
-  private JNonNullType typeNonNullString;
-
   private JClassType typeSpecialClassLiteralHolder;
 
   private JClassType typeSpecialJavaScriptObject;
@@ -428,7 +426,6 @@ public class JProgram extends JNode {
         typeJavaLangObject = x;
       } else if (name.equals("java.lang.String")) {
         typeString = x;
-        typeNonNullString = x.getNonNull();
       } else if (name.equals("java.lang.Enum")) {
         typeJavaLangEnum = x;
       } else if (name.equals("java.lang.Class")) {
@@ -445,8 +442,7 @@ public class JProgram extends JNode {
 
   public JConstructor createConstructor(SourceInfo info,
       JClassType enclosingType) {
-    JConstructor x = new JConstructor(info, enclosingType,
-        enclosingType.getNonNull());
+    JConstructor x = new JConstructor(info, enclosingType);
     x.setBody(new JMethodBody(info));
     if (indexedTypes.containsValue(enclosingType)) {
       indexedMethods.put(enclosingType.getShortName() + '.'
@@ -938,7 +934,7 @@ public class JProgram extends JNode {
     JStringLiteral toReturn = stringLiteralMap.get(s);
     if (toReturn == null) {
       toReturn = new JStringLiteral(stringPoolSourceInfo.makeChild(
-          JProgram.class, "String literal: " + s), s, typeNonNullString);
+          JProgram.class, "String literal: " + s), s, typeString);
       stringLiteralMap.put(s, toReturn);
     }
     toReturn.getSourceInfo().merge(sourceInfo);
@@ -1153,7 +1149,7 @@ public class JProgram extends JNode {
   }
 
   public boolean isJavaLangString(JType type) {
-    return type == typeString || type == typeNonNullString;
+    return type == typeString || type == typeString.getNonNull();
   }
 
   public boolean isJavaScriptObject(JType type) {
