@@ -179,9 +179,14 @@ class HistoryImplIE6 extends HistoryImpl {
 
   private native void injectGlobalHandler() /*-{
     var historyImplRef = this;
+    var oldOnLoad = $wnd.__gwt_onHistoryLoad;
 
     $wnd.__gwt_onHistoryLoad = $entry(function(token) {
       historyImplRef.@com.google.gwt.user.client.impl.HistoryImpl::newItemOnEvent(Ljava/lang/String;)(token);
+
+      if (oldOnLoad) {
+        oldOnLoad(token);
+      }
     });
   }-*/;
 

@@ -35,9 +35,11 @@ import com.google.gwt.event.shared.HasHandlers;
  */
 public class HistoryImpl implements HasValueChangeHandlers<String>, HasHandlers {
 
-  public static native String getToken() /*-{
-    return $wnd.__gwt_historyToken || "";
-  }-*/;
+  private static String token = "";
+
+  public static String getToken() {
+    return (token == null) ? "" : token;
+  }
 
   /**
    * Sets whether the IE6 history implementation will update the URL hash when
@@ -53,9 +55,9 @@ public class HistoryImpl implements HasValueChangeHandlers<String>, HasHandlers 
   public static void setUpdateHashOnIE6(boolean updateHash) {
   }
 
-  protected static native void setToken(String token) /*-{
-    $wnd.__gwt_historyToken = token;
-  }-*/;
+  protected static void setToken(String token) {
+    HistoryImpl.token = token;
+  }
 
   private HandlerManager handlers = new HandlerManager(null);
 
@@ -97,6 +99,9 @@ public class HistoryImpl implements HasValueChangeHandlers<String>, HasHandlers 
     @com.google.gwt.user.client.impl.HistoryImpl::setToken(Ljava/lang/String;)(token);
 
     var historyImpl = this;
+
+    var oldHandler = $wnd.onhashchange;
+
     $wnd.onhashchange = $entry(function() {
       var token = '', hash = $wnd.location.hash;
       if (hash.length > 0) {
@@ -104,6 +109,10 @@ public class HistoryImpl implements HasValueChangeHandlers<String>, HasHandlers 
       }
 
       historyImpl.@com.google.gwt.user.client.impl.HistoryImpl::newItemOnEvent(Ljava/lang/String;)(token);
+
+      if (oldHandler) {
+        oldHandler();
+      }
     });
 
     return true;
