@@ -13,11 +13,17 @@
 
 
 // TODO: closure for manipulate substitute expression
-// TODO: button controls? danny's trigger concept
-// TODO: ability to get imputed code (substitute w/ list as env)
 
-// TODO: mechanism for rebuilding the plot
-// TODO: set manip_changed on change
+// TODO: if manipulator popup values and controls match exactly then
+// do nothing....this will take care of the flashing problem
+
+// TODO: validate that all controls have variables in the expression
+
+// TODO: consider whether we can factor manipulator stuff out of
+//       RGraphicsPlotManager (may not be possible)
+
+// TODO: codemirror needs to fire event notifying it got focus so
+//       that the popup can dismiss
 
 #include "RGraphicsPlotManipulator.hpp"
 

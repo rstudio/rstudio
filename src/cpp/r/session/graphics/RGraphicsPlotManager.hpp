@@ -97,12 +97,14 @@ public:
    virtual void clear();
 
    virtual boost::signal<void ()>& onShowManipulator() ;
+   virtual void setPlotManipulatorValues(const core::json::Object& values);
    
    // execute and attach manipulator
    void executeAndAttachManipulator(SEXP manipulatorSEXP);
    bool hasActiveManipulator() const;
    SEXP activeManipulator() const;
    void setActiveManipulatorState(SEXP stateSEXP);
+
 
    // manipulate persistent state
    core::Error savePlotsState(const core::FilePath& plotsStateFile);
@@ -142,10 +144,7 @@ private:
    // error helpers
    core::Error plotIndexError(int index, const core::ErrorLocation& location)
                                                                          const;
-   void logAndReportError(const core::Error& error,
-                          const core::ErrorLocation& location) const;
-   void reportError(const core::Error& error) const;
-   
+
    std::string emptyImageFilename() const ;
 
    bool hasStorageUuid(const PtrPlot& ptrPlot,
@@ -153,6 +152,8 @@ private:
    void removeIfGarbage(const core::FilePath& imageFilePath) const;
    void collectPlotFileGarbage() const;
    void truncatePlotList();
+
+   void ensurePlotManipulatorSaved();
 
 private:   
    // storage path
@@ -173,8 +174,12 @@ private:
    // pending manipulator
    SEXP pendingManipulatorSEXP_;
 
+   // are we currently replaying a manipulator call?
+   bool replayingManipulator_;
+
    // manipulator event hook
    boost::signal<void ()> onShowManipulator_;
+
 };
    
 } // namespace graphics

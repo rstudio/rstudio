@@ -38,7 +38,28 @@ using namespace core;
 namespace r {
 namespace session {  
 namespace graphics {
-      
+
+namespace {
+
+void reportError(const core::Error& error)
+{
+   std::string endUserMessage = r::endUserErrorMessage(error);
+   std::string errmsg = ("Graphics error: " + endUserMessage + "\n");
+   REprintf(errmsg.c_str());
+}
+
+void logAndReportError(const Error& error, const ErrorLocation& location)
+{
+   // log
+   core::log::logError(error, location);
+
+   // report to user
+   reportError(error);
+}
+
+}
+
+
 // satisfy r::session::graphics::Display singleton
 Display& display()
 {
@@ -56,7 +77,8 @@ PlotManager::PlotManager()
       suppressDeviceEvents_(false),
       activePlot_(-1),
       plotInfoRegex_("([A-Za-z0-9\\-]+):([0-9]+),([0-9]+)"),
-      pendingManipulatorSEXP_(R_NilValue)
+      pendingManipulatorSEXP_(R_NilValue),
+      replayingManipulator_(false)
 {
 }
       
@@ -376,6 +398,41 @@ boost::signal<void ()>& PlotManager::onShowManipulator()
    return onShowManipulator_;
 }
 
+namespace {
+
+void setManipulatorValue(SEXP manipulatorSEXP,
+                         const std::pair<std::string,json::Value>& object)
+{
+   Error error = r::sexp::setNamedListElement(manipulatorSEXP,
+                                              object.first,
+                                              object.second);
+
+   if (error)
+      LOG_ERROR(error);
+}
+
+void safeExecuteManipulator(SEXP manipulatorSEXP)
+{
+   try
+   {
+      // execute the code within the manipulator.
+      Error error = r::exec::RFunction(".rs.manipulator.execute",
+                                       manipulatorSEXP).call();
+
+      // r code execution errors are expected (e.g. for invalid manipulate
+      // code or incorrectly specified controls). if we get something that
+      // isn't an r code execution error then report and log it
+      if (error)
+      {
+         if (!r::isCodeExecutionError(error))
+            logAndReportError(error, ERROR_LOCATION);
+      }
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+}
+
+}
+
 // execute a manipulator
 void PlotManager::executeAndAttachManipulator(SEXP manipulatorSEXP)
 {
@@ -385,18 +442,8 @@ void PlotManager::executeAndAttachManipulator(SEXP manipulatorSEXP)
    // doesn't create a plot
    pendingManipulatorSEXP_ = manipulatorSEXP;
 
-   // execute the code within the manipulator.
-   Error error = r::exec::RFunction(".rs.manipulator.execute",
-                                    pendingManipulatorSEXP_).call();
-
-   // r code execution errors are expected (e.g. for invalid manipulate
-   // code or incorrectly specified controls). if we get something that
-   // isn't an r code execution error then report and log it
-   if (error)
-   {
-      if (!r::isCodeExecutionError(error))
-         logAndReportError(error, ERROR_LOCATION);
-   }
+   // execute it
+   safeExecuteManipulator(pendingManipulatorSEXP_);
 
    // did the code create a new manipulator that is still active?
    bool showNewManipulator = (pendingManipulatorSEXP_ == R_NilValue) &&
@@ -447,13 +494,39 @@ void PlotManager::setActiveManipulatorState(SEXP stateSEXP)
       if (error)
          LOG_ERROR(error);
 
-      // if the active plot has a manipulator then ensure it is
-      // saved. note that if the set was applied to a pending
-      // manipulator then this save is technically unnecessary but we
-      // do it unconditionally anyway to ensure we always save
-      if (hasPlot() && activePlot().hasManipulator())
-         activePlot().saveManipulator();
+      // if the active plot has a manipulator then ensure it is saved.
+      ensurePlotManipulatorSaved();
    }
+}
+
+void PlotManager::setPlotManipulatorValues(const json::Object& values)
+{
+   if (hasPlot() && activePlot().hasManipulator())
+   {
+      // get the manipulator
+      SEXP manipulatorSEXP = activePlot().manipulatorSEXP();
+
+      // set the underlying values
+      std::for_each(values.begin(),
+                    values.end(),
+                    boost::bind(setManipulatorValue, manipulatorSEXP, _1));
+
+      // replay the manipulator
+      replayingManipulator_ = true;
+      safeExecuteManipulator(manipulatorSEXP);
+      replayingManipulator_ = false;
+   }
+   else
+   {
+      LOG_WARNING_MESSAGE("called setPlotManipulatorValues but active plot "
+                          "has no manipulator");
+   }
+}
+
+void PlotManager::ensurePlotManipulatorSaved()
+{
+   if (hasPlot() && activePlot().hasManipulator())
+      activePlot().saveManipulator();
 }
    
 Error PlotManager::savePlotsState(const FilePath& plotsStateFile)
@@ -571,15 +644,35 @@ void PlotManager::onDeviceNewPage(SEXP previousPageSnapshot)
                      "onDeviceNewPage was not passed a previousPageSnapshot");
       }
    }
-   
-   // create a new plot and make it active
-   PtrPlot ptrPlot(new Plot(graphicsDevice_,
-                            graphicsPath_,
-                            pendingManipulatorSEXP_));
-   plots_.push_back(ptrPlot);
-   activePlot_ = plots_.size() - 1  ;
 
-   // that plot took the pending manipluator (if any) so we set it to nil
+   // if we are replaying a manipulator then this plot replaces the
+   // existing plot
+   if (hasPlot() && replayingManipulator_)
+   {
+      // create plot using the active plot's manipulator
+      PtrPlot ptrPlot(new Plot(graphicsDevice_,
+                               graphicsPath_,
+                               activePlot().manipulatorSEXP()));
+
+      // replace active plot
+      plots_[activePlotIndex()] = ptrPlot;
+
+      // unset replaying bit
+      replayingManipulator_ = false;
+   }
+   else
+   {
+      // create plot using pending manipulator (if any)
+      PtrPlot ptrPlot(new Plot(graphicsDevice_,
+                               graphicsPath_,
+                               pendingManipulatorSEXP_));
+
+      // add the plot
+      plots_.push_back(ptrPlot);
+      activePlot_ = plots_.size() - 1  ;
+   }
+
+   // always reset pending manipulator
    pendingManipulatorSEXP_ = R_NilValue;
    
    // ensure updates
@@ -666,23 +759,7 @@ Error PlotManager::plotIndexError(int index, const ErrorLocation& location)
    error.addProperty("index", index);
    return error;
 }
-   
-void PlotManager::logAndReportError(const Error& error,
-                                    const ErrorLocation& location) const
-{
-   // log
-   core::log::logError(error, location);
-   
-   // report to user
-   reportError(error);
-}
-   
-void PlotManager::reportError(const core::Error& error) const
-{
-   std::string endUserMessage = r::endUserErrorMessage(error);
-   std::string errmsg = ("Graphics error: " + endUserMessage + "\n");
-   REprintf(errmsg.c_str());
-}
+
    
 std::string PlotManager::emptyImageFilename() const
 {

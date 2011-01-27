@@ -27,7 +27,6 @@
    return (manipulator)
 })
 
-
 .rs.addGlobalFunction( "slider", function(value, min, max, label = NULL)
 {
   # validate inputs
@@ -77,7 +76,7 @@
 .rs.addGlobalFunction( "checkbox", function(value, label)
 {
   # validate inputs
-  if ( !is.null(label) && !is.character(label) )
+  if ( !is.character(label) )
      stop("label is not a character value")  
   else if ( !is.logical(value) )
     stop("value must be a logical")
@@ -88,19 +87,6 @@
                    label = label)
   class(checkbox) <- "manipulator.checkbox"
   return (checkbox)
-})
-
-
-.rs.addGlobalFunction( "manipulator.changed", function()
-{
-  if ( .Call("rs_hasActiveManipulator") )
-  {
-    .Call("rs_activeManipulator")$manip_changed
-  }
-  else
-  {
-    stop("no plot manipulator currently active")
-  }
 })
 
 .rs.addGlobalFunction( "manipulator.state", function()
@@ -133,8 +119,6 @@
 
 .rs.addGlobalFunction( "manipulate", function(code, ...)
 {
-  # TODO: validate that all controls have variables in the expression
-
   # create new list container for the manipulator
   manipulator <- list()
   class(manipulator) <- "manipulator"
@@ -154,8 +138,7 @@
   manipulator$manip_controls <- controls
   manipulator$manip_variables <- controlNames
   
-  # establish changed and state list elements
-  manipulator$manip_changed <- character()
+  # establish state
   manipulator$manip_state <- list()
   
   # iterate over the names and controls, adding the default values to the env

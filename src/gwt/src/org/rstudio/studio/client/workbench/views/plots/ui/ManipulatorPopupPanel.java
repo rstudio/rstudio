@@ -8,6 +8,7 @@ import org.rstudio.studio.client.workbench.views.plots.ui.ManipulatorManager.Man
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 
+import com.google.gwt.json.client.JSONBoolean;
 import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.client.ui.TextBox;
@@ -34,22 +35,27 @@ public class ManipulatorPopupPanel extends ThemedPopupPanel
    }
    
    public void update(Manipulator manipulator)
-   {
+   {  
       mainPanel_.clear();
       
       if (manipulator != null)
       {
-         final TextBox inputBox = new TextBox();
-         mainPanel_.add(inputBox);
+         final TextBox varInputBox = new TextBox();
+         varInputBox.setText(manipulator.getVariables().toString());
+         mainPanel_.add(varInputBox);
+         
+         final TextBox valueInputBox = new TextBox();
+         mainPanel_.add(valueInputBox);
          
          mainPanel_.add(new ThemedButton("Change", new ClickHandler() {
    
             public void onClick(ClickEvent event)
             {
-               int value = Integer.parseInt(inputBox.getText());
+               String var = varInputBox.getText().trim();
+               int value = Integer.parseInt(valueInputBox.getText().trim());
               
                JSONObject jsObject = new JSONObject();
-               jsObject.put("x", new JSONNumber(value));
+               jsObject.put(var, new JSONNumber(value));
     
                changedHandler_.onManipulatorChanged(jsObject);       
             }

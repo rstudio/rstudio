@@ -15,7 +15,7 @@ public class ManipulatorManager
    }
    
    public ManipulatorManager(Panel plotsSurface,
-                               ManipulatorChangedHandler changedHandler)
+                             ManipulatorChangedHandler changedHandler)
    {
       // references
       plotsSurface_ = plotsSurface;

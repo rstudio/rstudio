@@ -103,22 +103,13 @@ SEXP create(const core::json::Array& value, Protect* pProtect);
 SEXP create(const core::json::Object& value, Protect* pProtect);
 
 
-// set list element by name. note that the specified element MUST already
-// exist before the call
-template <typename T>
-core::Error setNamedListElement(SEXP listSEXP,
-                                const std::string& name,
-                                const T& value)
+inline int indexOfElementNamed(SEXP listSEXP, const std::string& name)
 {
-   // convert to SEXP
-   r::sexp::Protect rProtect;
-   SEXP valueSEXP = create(value, &rProtect);
-
    // get the names so we can determine which slot the element is in are in
    std::vector<std::string> names;
    core::Error error = r::sexp::getNames(listSEXP, &names);
    if (error)
-      return error;
+      return -1;
 
    // find the index
    int valueIndex = -1;
@@ -130,6 +121,48 @@ core::Error setNamedListElement(SEXP listSEXP,
          break;
       }
    }
+
+   // return
+   return valueIndex;
+
+}
+
+template <typename T>
+core::Error getNamedListElement(SEXP listSEXP,
+                                const std::string& name,
+                                T* pValue)
+{
+   // find the element
+   int valueIndex = indexOfElementNamed(listSEXP, name);
+
+   if (valueIndex != -1)
+   {
+      // get the appropriate value
+      SEXP valueSEXP = VECTOR_ELT(listSEXP, valueIndex);
+      return sexp::extract(valueSEXP, pValue);
+   }
+   else
+   {
+      // otherwise an error
+      core::Error error(r::errc::ListElementNotFoundError, ERROR_LOCATION);
+      error.addProperty("element", name);
+      return error;
+   }
+}
+
+// set list element by name. note that the specified element MUST already
+// exist before the call
+template <typename T>
+core::Error setNamedListElement(SEXP listSEXP,
+                                const std::string& name,
+                                const T& value)
+{
+   // convert to SEXP
+   r::sexp::Protect rProtect;
+   SEXP valueSEXP = create(value, &rProtect);
+
+   // find the element
+   int valueIndex = indexOfElementNamed(listSEXP, name);
 
    if (valueIndex != -1)
    {

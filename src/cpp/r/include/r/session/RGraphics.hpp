@@ -100,6 +100,9 @@ public:
 
    // subscribe to showManipulator event
    virtual boost::signal<void ()>& onShowManipulator() = 0;
+
+   // set manipulator values
+   virtual void setPlotManipulatorValues(const core::json::Object& values) = 0;
 };
    
 // singleton

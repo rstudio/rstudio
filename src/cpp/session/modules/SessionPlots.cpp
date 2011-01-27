@@ -437,10 +437,17 @@ void onShowManipulator()
 Error setManipulatorValues(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
+   // read the params
+   json::Object jsObject;
+   Error error = json::readParam(request.params, 0, &jsObject);
+   if (error)
+      return error;
 
-
-
+   // set them
    using namespace r::session;
+   graphics::display().setPlotManipulatorValues(jsObject);
+
+   // render
    if (graphics::display().hasOutput())
       graphics::display().render(boost::bind(enquePlotsChanged, _1, true, true));
 
