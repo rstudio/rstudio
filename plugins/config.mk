@@ -80,7 +80,7 @@ ALLARCHCFLAGS=
 endif
 ifeq ($(shell uname),Darwin)
 OS=mac
-BASECFLAGS= -g -O2 -fPIC $(INC) -D__mac
+BASECFLAGS= -g -O2 -fPIC $(INC) -D__mac -mmacosx-version-min=10.5
 ARCHCFLAGS=-arch $(MARCH)
 ALLARCHCFLAGS=-arch i386 -arch ppc -arch x86_64
 AR=libtool

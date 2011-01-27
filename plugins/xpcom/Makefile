@@ -24,7 +24,7 @@ ifeq ($(OS),mac)
 DEFAULT_FIREFOX_LIBS ?= /Applications/Firefox.app/Contents/MacOS
 RUN_PATH_FLAG = -executable_path
 DLL_SUFFIX = .dylib
-DLLFLAGS += -bundle $(ALLARCHCFLAGS)
+DLLFLAGS += -bundle $(ALLARCHCFLAGS) -mmacosx-version-min=10.5
 CFLAGS += $(ALLARCHCFLAGS)
 CXXFLAGS += $(ALLARCHCFLAGS)
 TARGET_PLATFORM = Darwin-gcc3

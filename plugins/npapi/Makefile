@@ -17,7 +17,7 @@ include ../config.mk
 ifeq ($(OS),mac)
 RUN_PATH_FLAG = -executable_path
 DLL_SUFFIX = .dylib
-DLLFLAGS = -bundle $(ARCHCFLAGS)
+DLLFLAGS = -bundle $(ARCHCFLAGS) -mmacosx-version-min=10.5
 CFLAGS += -DXP_MACOSX $(ARCHCFLAGS)
 CXXFLAGS += -DXP_MACOSX $(ARCHCFLAGS)
 # Mac puts multiple architectures into the same files

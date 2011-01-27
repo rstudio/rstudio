@@ -1,6 +1,6 @@
 {
   "name": "GWT Developer Plugin",
-  "version": "1.0.9636",
+  "version": "1.0.9639",
   "description": "A plugin to enable debugging with GWT's Development Mode",
   "update_url": "https://dl-ssl.google.com/gwt/plugins/chrome/updates.xml",
   "icons": {
