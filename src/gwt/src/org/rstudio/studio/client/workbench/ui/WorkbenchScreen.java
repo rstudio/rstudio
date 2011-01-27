@@ -41,10 +41,7 @@ import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.layout.DualWindowLayoutPanel;
 import org.rstudio.core.client.layout.LogicalWindow;
 import org.rstudio.core.client.layout.WindowState;
-import org.rstudio.core.client.theme.MinimizedModuleTabLayoutPanel;
-import org.rstudio.core.client.theme.MinimizedWindowFrame;
-import org.rstudio.core.client.theme.PrimaryWindowFrame;
-import org.rstudio.core.client.theme.WindowFrame;
+import org.rstudio.core.client.theme.*;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
@@ -128,18 +125,26 @@ public class WorkbenchScreen extends Composite
       tabsPanel_.setSize("100%", "100%");
       tabsPanel_.addStyleDependentName("Workbench");
 
+      initBoolPref("plotsOnTop", plotsOnTop_, commands.plotsOnTop(), session, globalDisplay);
+      commands.plotsOnTop().setMenuLabel("Plots on " + (plotsOnTop_.getValue() ? "Bottom" : "Top"));
+
+      plotsTab_ = plotsTab;
+
       final WindowFrame rightTopFrame = new WindowFrame();
       rightTopTabs_ = new WorkbenchTabPanel(rightTopFrame);
       rightTopTabs_.add(workspaceTab);
       //rightTopTabs_.add(dataTab);
       rightTopTabs_.add(historyTab);
+      if (plotsOnTop_.getValue())
+         rightTopTabs_.add(plotsTab_);
       rightTopFrame.setFillWidget(rightTopTabs_);
 
       // initialize right tabs
       final WindowFrame rightBottomFrame = new WindowFrame();
       browseTabs_ = new WorkbenchTabPanel(rightBottomFrame);
       browseTabs_.add(filesTab);
-      browseTabs_.add(plotsTab_ = plotsTab);
+      if (!plotsOnTop_.getValue())
+         browseTabs_.add(plotsTab_);
       browseTabs_.add(packagesTab);
       browseTabs_.add(helpTab) ;
       browseTabs_.addSelectionHandler(this);
@@ -173,13 +178,8 @@ public class WorkbenchScreen extends Composite
             rightBottomFrame,
             minimizedBottomModuleTabs);
 
-      initBoolPref("plotsOnTop", plotsOnTop_, commands.plotsOnTop(), session, globalDisplay);
-      commands.plotsOnTop().setMenuLabel("Plots on " + (plotsOnTop_.getValue() ? "Bottom" : "Top"));
-
-      LogicalWindow rightTopWindow = plotsOnTop_.getValue() ? plotsLogicalWindow
-                                                            : workspaceLogicalWindow;
-      LogicalWindow rightBottomWindow = plotsOnTop_.getValue() ? workspaceLogicalWindow
-                                                               : plotsLogicalWindow;
+      LogicalWindow rightTopWindow = workspaceLogicalWindow;
+      LogicalWindow rightBottomWindow = plotsLogicalWindow;
 
       final DualWindowLayoutPanel rightTabs = new DualWindowLayoutPanel(
             eventBus,
@@ -452,7 +452,12 @@ public class WorkbenchScreen extends Composite
       int consoleWidth = ((ConsolePane) consolePane_).getCharacterWidth();
 
       // plots size (don't allow negative metrics)
-      Size deckPanelSize = browseTabs_.getDeckPanelSize();
+      WorkbenchTabPanel plotPanel = plotsOnTop_.getValue() ? rightTopTabs_
+                                                           : browseTabs_;
+      Size deckPanelSize = new Size(
+            plotPanel.getOffsetWidth(),
+            plotPanel.getOffsetHeight() - ModuleTabLayoutPanel.BAR_HEIGHT);
+
       Size plotsSize = new Size(
                Math.max(deckPanelSize.width, 0),
                Math.max(deckPanelSize.height - Toolbar.DEFAULT_HEIGHT, 0));

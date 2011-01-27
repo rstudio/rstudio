@@ -1,6 +1,5 @@
 #%PAM-1.0
-auth	include		system-auth
-account	include		system-auth
-password	include	system-auth
-session	include		system-auth
+auth      requisite      pam_succeed_if.so uid >= 500 quiet
+auth      required       pam_unix.so nodelay
 
+account   required       pam_unix.so
