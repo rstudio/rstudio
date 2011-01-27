@@ -276,36 +276,6 @@ class DOMImplSafari extends DOMImplStandard {
     return false;
   }-*/;
 
-  /*
-   * The 'options' array cannot be used due to a bug in the version of WebKit
-   * that ships with GWT (http://bugs.webkit.org/show_bug.cgi?id=10472). The
-   * 'children' array, which is common for all DOM elements in Safari, does not
-   * suffer from the same problem. Ideally, the 'children' array should be used
-   * in all of the traversal methods in the DOM classes. Unfortunately, due to a
-   * bug in Safari 2 (http://bugs.webkit.org/show_bug.cgi?id=3330), this will
-   * not work. However, this bug does not cause problems in the case of <SELECT>
-   * elements, because their descendent elements are only one level deep.
-   */
-  @Override
-  public void selectClear(SelectElement select) {
-    select.setInnerText("");
-  }
-
-  @Override
-  public native int selectGetLength(SelectElement select) /*-{
-    return select.children.length;
-  }-*/;
-
-  @Override
-  public native NodeList<OptionElement> selectGetOptions(SelectElement select) /*-{
-    return select.children;
-  }-*/;
-
-  @Override
-  public native void selectRemoveOption(SelectElement select, int index) /*-{
-    select.removeChild(select.children[index]);
-  }-*/;
-
   @Override
   public void setScrollLeft(Document doc, int left) {
     // Safari always applies document scrolling to the body element, even in

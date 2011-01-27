@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dom.client;
 
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -127,4 +129,45 @@ public class SelectTests extends GWTTestCase {
     assertTrue(opt1.isSelected());
     assertTrue(opt2.isSelected());
   }
+  
+  /**
+   * optgroups
+   * 
+   * @see <a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=4916">Issue 4916</a>
+   */
+  @DoNotRunWith(Platform.HtmlUnitBug)
+  public void testOptGroups() {
+    Document doc = Document.get();
+    SelectElement select = doc.createSelectElement();
+    doc.getBody().appendChild(select);
+
+    OptionElement opt0 = doc.createOptionElement();
+    OptionElement opt1 = doc.createOptionElement();
+    OptionElement opt2 = doc.createOptionElement();
+    OptGroupElement group1 = doc.createOptGroupElement();
+    opt0.setText("foo");
+    opt1.setText("bar");
+    opt2.setText("baz");
+    opt0.setValue("0");
+    opt1.setValue("1");
+    opt2.setValue("2");
+    group1.setLabel("group1");
+
+    select.appendChild(opt0);
+    select.appendChild(group1);
+    group1.appendChild(opt1);
+    select.appendChild(opt2);
+
+    assertEquals("3 options expected", 3, select.getOptions().getLength());
+    assertEquals("[0] == opt0", opt0, select.getOptions().getItem(0));
+    assertEquals("[1] == opt1", opt1, select.getOptions().getItem(1));
+    assertEquals("[2] == opt2", opt2, select.getOptions().getItem(2));
+
+    select.remove(1);
+    assertNull("null parent expected when removed", opt1.getParentElement());
+
+    select.add(opt1, opt0);
+    assertEquals("[0] == opt1", opt1, select.getOptions().getItem(0));
+    assertEquals("[1] == opt0", opt0, select.getOptions().getItem(1));
+    }
 }
