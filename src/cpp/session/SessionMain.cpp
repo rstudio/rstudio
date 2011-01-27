@@ -879,6 +879,40 @@ Error registerSignalHandlers()
       return Success();
    }
 }
+
+
+Error preflight()
+{
+   // alias options
+   Options& options = session::options();
+
+   // run the preflight script (if specified)
+   if (session::options().programMode() == kSessionProgramModeServer)
+   {
+      FilePath preflightScriptPath = options.preflightScriptPath();
+      if (preflightScriptPath.exists())
+      {
+         // run the script (ignore errors and continue no matter what
+         // the outcome of the script is)
+         Error error = core::system::runCommand(preflightScriptPath.absolutePath());
+         if (error)
+            LOG_ERROR(error);
+
+         // re-read our settings and persistent state to pickup
+         // any changes from a suspended session on another box
+         error = session::userSettings().initialize();
+         if (error)
+            LOG_ERROR(error);
+         error = persistentState().initialize();
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
+
+   // always return success
+   return Success();
+}
+
       
 Error rInit(const r::session::RInitInfo& rInitInfo) 
 {
@@ -895,6 +929,10 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       // http listners
       (startHttpConnectionListener)
       (startClientEventService)
+
+      // optional preflight script -- needs to be after the http listeners
+      // so the proxy server sees that we have startup up
+      (preflight)
 
       // json-rpc listeners
       (bind(registerRpcMethod, kConsoleInput, bufferConsoleInput))
@@ -1567,18 +1605,6 @@ int main (int argc, char * const argv[])
       Error error = core::system::reapChildren();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
-
-      // run the preflight script (if specified)
-      if (serverMode)
-      {
-         FilePath preflightScriptPath = options.preflightScriptPath();
-         if (preflightScriptPath.exists())
-         {
-            error = core::system::runCommand(preflightScriptPath.absolutePath());
-            if (error)
-               LOG_ERROR(error);
-         }
-      }
 
       // initialize client event queue
       session::initializeClientEventQueue();
