@@ -51,9 +51,10 @@ public class DataResourceDoNotEmbedTest extends GWTTestCase {
    * com/google/gwt/resources/Resources.gwt.xml
    */
   private static native boolean isPreIe8() /*-{
+    // Stolen from UserAgentPropertyGenerator
     var ua = navigator.userAgent.toLowerCase();
     return ua.indexOf("msie") != -1
-        && !(document.documentMode >= 8);
+        && !($doc.documentMode >= 8);
   }-*/;
 
   @Override

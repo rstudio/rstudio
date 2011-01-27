@@ -612,11 +612,11 @@ public class ElementTest extends GWTTestCase {
     return {};
   }-*/;
 
-  // Stolen from UserAgent.gwt.xml.
+  // Stolen from UserAgentPropertyGenerator
   private native boolean isIE6or7() /*-{
     var ua = navigator.userAgent.toLowerCase();
     if (ua.indexOf("msie") != -1) {
-      if (document.documentMode >= 8) {
+      if ($doc.documentMode >= 8) {
         return false;
       }
       return true;

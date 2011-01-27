@@ -21,33 +21,14 @@
   <!-- Browser-sensitive code should use the 'user.agent' property -->
   <define-property name="user.agent" values="ie6,ie8,gecko1_8,safari,opera"/>
 
-  <property-provider name="user.agent"><![CDATA[
-      var ua = navigator.userAgent.toLowerCase();
-      var makeVersion = function(result) {
-        return (parseInt(result[1]) * 1000) + parseInt(result[2]);
-      };
+  <property-provider name="user.agent" generator="com.google.gwt.user.rebind.UserAgentPropertyGenerator"/>
 
-      if (ua.indexOf("opera") != -1) {
-        return "opera";
-      } else if (ua.indexOf("webkit") != -1) {
-        return "safari";
-      } else if (ua.indexOf("msie") != -1) {
-        if (document.documentMode >= 8) {
-          return "ie8";
-        } else {
-          var result = /msie ([0-9]+)\.([0-9]+)/.exec(ua);
-          if (result && result.length == 3) {
-            var v = makeVersion(result);
-            if (v >= 6000) {
-              return "ie6";
-            }
-          }
-        }
-      } else if (ua.indexOf("gecko") != -1) {
-        return "gecko1_8";
-      }
-      return "unknown";
-  ]]></property-provider>
+  <!-- Asserts the the compile time value matches the runtime user.agent value -->
+  <entry-point class="com.google.gwt.user.client.UserAgentAsserter" />
+
+  <generate-with class="com.google.gwt.user.rebind.UserAgentGenerator">
+    <when-type-assignable class="com.google.gwt.user.client.UserAgentAsserter.UserAgentProperty" />
+  </generate-with>
 
   <!-- Deferred binding to optimize JRE classes based on user agent. -->
   <inherits name="com.google.gwt.emul.EmulationWithUserAgent"/>

@@ -59,7 +59,7 @@ public class PopupImplMozilla extends PopupImpl {
 
     var ua = navigator.userAgent;
     if (ua.indexOf("Macintosh") != -1) {
-      // Version logic taken from UserAgent.gwt.xml.
+      // Version logic taken from UserAgentPropertyGenerator
       var result = /rv:([0-9]+)\.([0-9]+)/.exec(ua);
       if (result && result.length == 3) {
         // Gecko 1.8 and earlier had the scrollbar bug on OS X.

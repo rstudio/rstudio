@@ -47,12 +47,12 @@ public class HistoryTest extends GWTTestCase {
   }-*/;
 
   /*
-   * Copied from UserAgent.gwt.xml and HistoryImplSafari.
+   * Copied from UserAgentPropertyGenerator and HistoryImplSafari.
    */
   private static native boolean isSafari2() /*-{
     var ua = navigator.userAgent;
     
-    // copied from UserAgent.gwt.xml
+    // copied from UserAgentPropertyGenerator
     if (ua.indexOf("webkit") == -1) {
       return false;
     }
