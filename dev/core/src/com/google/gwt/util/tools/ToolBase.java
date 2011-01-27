@@ -63,6 +63,17 @@ public abstract class ToolBase {
    */
   private final Map<String, ArgHandler> argHandlers = new LinkedHashMap<String, ArgHandler>();
 
+  /**
+   * Log deprecation warning on old JREs.
+   */
+  protected void checkJdkVersion() {
+    // JDK 1.6 is 50
+    double classVersion = Double.valueOf(System.getProperty("java.class.version","0.0"));
+    if (classVersion < 50) {
+      System.err.println("WARNING: Use on a JRE prior to version 1.6 is deprecated");
+    }
+  }
+
   protected String getDescription() {
     return null;
   }
@@ -180,6 +191,8 @@ public abstract class ToolBase {
   }
 
   protected boolean processArgs(String... args) {
+    checkJdkVersion();
+
     if (args.length > 0) {
       boolean help = false;
       if ("-help".equalsIgnoreCase(args[0])) {
