@@ -78,7 +78,7 @@ public class DesktopFileDialogs implements FileDialogs
    }
 
    public void openFile(final String caption,
-                        FileSystemContext fsContext,
+                        final FileSystemContext fsContext,
                         final FileSystemItem initialFilePath,
                         final ProgressOperationWithInput<FileSystemItem> operation)
    {
@@ -87,13 +87,18 @@ public class DesktopFileDialogs implements FileDialogs
          @Override
          String operation(String caption, String dir)
          {
-            return Desktop.getFrame().getOpenFileName(caption, dir);
+            String fileName = Desktop.getFrame().getOpenFileName(caption, dir);
+            if (fileName != null)
+            {
+               updateWorkingDirectory(fileName, fsContext);
+            }
+            return fileName;
          }
       }.execute(caption, fsContext, initialFilePath, null, operation);
    }
 
    public void saveFile(final String caption,
-                        FileSystemContext fsContext,
+                        final FileSystemContext fsContext,
                         final FileSystemItem initialFilePath,
                         FilenameTransform filenameTransform,
                         final ProgressOperationWithInput<FileSystemItem> operation)
@@ -103,7 +108,12 @@ public class DesktopFileDialogs implements FileDialogs
          @Override
          String operation(String caption, String dir)
          {
-            return Desktop.getFrame().getSaveFileName(caption, dir);
+            String fileName = Desktop.getFrame().getSaveFileName(caption, dir);
+            if (fileName != null)
+            {
+               updateWorkingDirectory(fileName, fsContext);
+            }
+            return fileName;
          }
       }.execute(caption,
                 fsContext,
@@ -127,5 +137,17 @@ public class DesktopFileDialogs implements FileDialogs
                   initialDir != null ? initialDir.getPath() : null);
          }
       }.execute(caption, fsContext, null, null, operation);
+   }
+
+   private void updateWorkingDirectory(String fileName,
+                                       FileSystemContext fsContext)
+   {
+      if (fileName != null)
+      {
+         String parentPath =
+               FileSystemItem.createFile(fileName).getParentPathString();
+         if (!StringUtil.isNullOrEmpty(parentPath))
+            fsContext.cd(parentPath);
+      }
    }
 }
