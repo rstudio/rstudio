@@ -894,7 +894,9 @@ Error preflight()
       {
          // run the script (ignore errors and continue no matter what
          // the outcome of the script is)
-         Error error = core::system::runCommand(preflightScriptPath.absolutePath());
+         std::string script = preflightScriptPath.absolutePath();
+         std::string output;
+         Error error = core::system::captureCommand(script, &output);
          if (error)
             LOG_ERROR(error);
 
