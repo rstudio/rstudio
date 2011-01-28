@@ -7,6 +7,7 @@ import org.rstudio.studio.client.workbench.views.plots.ui.ManipulatorManager.Man
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.gen2.picker.client.SliderBar;
 
 import com.google.gwt.json.client.JSONBoolean;
 import com.google.gwt.json.client.JSONNumber;
@@ -40,6 +41,15 @@ public class ManipulatorPopupPanel extends ThemedPopupPanel
       
       if (manipulator != null)
       {
+         
+         SliderBar slider = new SliderBar(0.0, 100.0);
+         slider.setStepSize(5.0);
+         slider.setCurrentValue(50.0);
+         slider.setNumTicks(10);
+         slider.setNumLabels(5);
+         
+         mainPanel_.add(slider);
+         
          final TextBox varInputBox = new TextBox();
          varInputBox.setText(manipulator.getVariables().toString());
          mainPanel_.add(varInputBox);
