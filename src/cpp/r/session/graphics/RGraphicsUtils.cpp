@@ -15,12 +15,15 @@
 
 #include <boost/format.hpp>
 
+#include <core/Log.hpp>
 #include <core/Error.hpp>
 
 #include <Rinternals.h>
 #define R_USE_PROTOTYPES 1
 #include <R_ext/GraphicsEngine.h>
 #include <R_ext/GraphicsDevice.h>
+
+#include <r/RErrorCategory.hpp>
 
 using namespace core;
 
@@ -104,6 +107,22 @@ RestorePreviousGraphicsDeviceScope::~RestorePreviousGraphicsDeviceScope()
    catch(...)
    {
    }
+}
+
+void reportError(const core::Error& error)
+{
+   std::string endUserMessage = r::endUserErrorMessage(error);
+   std::string errmsg = ("Graphics error: " + endUserMessage + "\n");
+   REprintf(errmsg.c_str());
+}
+
+void logAndReportError(const Error& error, const ErrorLocation& location)
+{
+   // log
+   core::log::logError(error, location);
+
+   // report to user
+   reportError(error);
 }
         
 
