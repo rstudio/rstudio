@@ -333,7 +333,13 @@ void PlotManager::render(boost::function<void(DisplayState)> outputFunction)
 
          // only log if this wasn't png not found
          if (!pngNotFound)
-            logAndReportError(error, ERROR_LOCATION);
+         {
+            // for r code execution errors we just report them
+            if (r::isCodeExecutionError(error))
+               reportError(error);
+            else
+               logAndReportError(error, ERROR_LOCATION);
+         }
 
          return;
       }
