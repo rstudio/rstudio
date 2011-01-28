@@ -302,6 +302,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     topPanel = new JPanel(new BorderLayout());
     JPanel logButtons = new JPanel(new WrapLayout());
     JButton expandButton = new JButton("Expand All");
+    expandButton.setMnemonic(KeyEvent.VK_E);
     expandButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         expandAll();
@@ -309,6 +310,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     });
     logButtons.add(expandButton);
     JButton collapseButton = new JButton("Collapse All");
+    collapseButton.setMnemonic(KeyEvent.VK_O);
     collapseButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         collapseAll();

@@ -22,6 +22,7 @@ import com.google.gwt.dev.shell.log.SwingLoggerPanel;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.io.File;
 
 import javax.swing.JButton;
@@ -55,6 +56,7 @@ public class WebServerPanel extends JPanel {
     if (restartServerAction != null) {
       JPanel panel = new JPanel(new WrapLayout());
       JButton restartButton = new JButton("Restart Server");
+      restartButton.setMnemonic(KeyEvent.VK_R);
       restartButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           restartServerAction.restartServer(getLogger());

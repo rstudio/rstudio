@@ -26,6 +26,7 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -187,6 +188,7 @@ public class ShellMainWindow extends JPanel {
     loadingMessage = new JLabel("Loading...");
     launchPanel.add(loadingMessage);
     defaultBrowserButton = new JButton("Launch Default Browser");
+    defaultBrowserButton.setMnemonic(KeyEvent.VK_L);
     defaultBrowserButton.setEnabled(false);
     defaultBrowserButton.setVisible(false);
     defaultBrowserButton.addActionListener(new ActionListener() {
@@ -196,6 +198,7 @@ public class ShellMainWindow extends JPanel {
     });
     launchPanel.add(defaultBrowserButton);
     copyToClipboardButton = new JButton("Copy to Clipboard");
+    copyToClipboardButton.setMnemonic(KeyEvent.VK_C);
     copyToClipboardButton.setEnabled(false);
     copyToClipboardButton.setVisible(false);
     copyToClipboardButton.addActionListener(new ActionListener() {
