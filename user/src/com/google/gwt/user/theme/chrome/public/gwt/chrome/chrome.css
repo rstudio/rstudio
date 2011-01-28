@@ -230,6 +230,7 @@ a, a:visited, a:hover {
   cursor: move;
   border: 0px; 
   background: #91c0ef url(images/vborder.png) repeat-y;
+  line-height: 0px;
 }
 .gwt-VerticalSplitPanel {
 }
@@ -237,6 +238,7 @@ a, a:visited, a:hover {
   cursor: move;
   border: 0px; 
   background: #91c0ef url(images/hborder.png) repeat-x;
+  line-height: 0px;
 }
 
 .gwt-HTML {

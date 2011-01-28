@@ -213,6 +213,7 @@ a, a:visited, a:hover {
   cursor: move;
   border: 0px; 
   background: #00CCFF;
+  line-height: 0px;
 }
 .gwt-VerticalSplitPanel {
 }
@@ -220,6 +221,7 @@ a, a:visited, a:hover {
   cursor: move;
   border: 0px; 
   background: #00CCFF;
+  line-height: 0px;
 }
 
 .gwt-HTML {
