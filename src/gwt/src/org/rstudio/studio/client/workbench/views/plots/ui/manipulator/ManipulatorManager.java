@@ -1,6 +1,7 @@
-package org.rstudio.studio.client.workbench.views.plots.ui;
+package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
+
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.json.client.JSONObject;

@@ -1,15 +1,13 @@
-package org.rstudio.studio.client.workbench.views.plots.ui;
+package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
-import org.rstudio.studio.client.workbench.views.plots.ui.ManipulatorManager.ManipulatorChangedHandler;
+import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorManager.ManipulatorChangedHandler;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.gen2.picker.client.SliderBar;
 
-import com.google.gwt.json.client.JSONBoolean;
 import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.client.ui.TextBox;
@@ -27,10 +25,8 @@ public class ManipulatorPopupPanel extends ThemedPopupPanel
       
       mainPanel_ = new VerticalPanel();
       mainPanel_.setHeight("200px;");
-      setWidget(mainPanel_);
-      
-     
-      
+   
+        
       
       setWidget(mainPanel_);
    }
@@ -40,13 +36,10 @@ public class ManipulatorPopupPanel extends ThemedPopupPanel
       mainPanel_.clear();
       
       if (manipulator != null)
-      {
-         
-         SliderBar slider = new SliderBar(0.0, 100.0);
-         slider.setStepSize(5.0);
-         slider.setCurrentValue(50.0);
-         slider.setNumTicks(10);
-         slider.setNumLabels(5);
+      {         
+         ManipulatorControlSlider slider = new ManipulatorControlSlider();
+         slider.setLabel("SliderMe");
+         slider.setValueText("67");
          
          mainPanel_.add(slider);
          

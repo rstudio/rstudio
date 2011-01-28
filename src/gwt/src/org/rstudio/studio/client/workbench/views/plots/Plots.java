@@ -50,8 +50,8 @@ import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperatio
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
 import org.rstudio.studio.client.workbench.views.plots.model.PrintOptions;
 import org.rstudio.studio.client.workbench.views.plots.ui.ExportDialog;
-import org.rstudio.studio.client.workbench.views.plots.ui.ManipulatorManager;
 import org.rstudio.studio.client.workbench.views.plots.ui.PrintDialog;
+import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorManager;
 
 public class Plots extends BasePresenter implements PlotsChangedHandler,
                                                     LocatorHandler,

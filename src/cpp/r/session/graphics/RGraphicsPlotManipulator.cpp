@@ -11,6 +11,8 @@
  *
  */
 
+// TODO: resize of plot creates brand new plot
+
 #include "RGraphicsPlotManipulator.hpp"
 
 #include <core/Error.hpp>
