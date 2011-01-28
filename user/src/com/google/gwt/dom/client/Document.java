@@ -54,6 +54,15 @@ public class Document extends Node {
   }
 
   /**
+   * Creates an &lt;audio&gt; element.
+   * 
+   * @return the newly created element
+   */
+  public final AudioElement createAudioElement() {
+    return (AudioElement) DOMImpl.impl.createElement(this, AudioElement.TAG);
+  }
+
+  /**
    * Creates a &lt;base&gt; element.
    * 
    * @return the newly created element
@@ -1188,6 +1197,15 @@ public class Document extends Node {
 
     return "gwt-uid-" + this.gwt_uid++;
   }-*/;
+
+  /**
+   * Creates a &lt;video&gt; element.
+   * 
+   * @return the newly created element
+   */
+  public final VideoElement createVideoElement() {
+    return (VideoElement) DOMImpl.impl.createElement(this, VideoElement.TAG);
+  }
 
   /**
    * Enables or disables scrolling of the document.

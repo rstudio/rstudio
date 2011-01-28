@@ -26,6 +26,7 @@
    <inherits name="com.google.gwt.editor.Editor" />
    <inherits name="com.google.gwt.resources.Resources"/>
    <inherits name="com.google.gwt.layout.Layout"/>
+   <inherits name="com.google.gwt.media.Media"/>
    <inherits name="com.google.gwt.uibinder.UiBinder"/>
    <inherits name="com.google.gwt.user.AsyncProxy"/>
    <inherits name="com.google.gwt.user.RemoteService"/>

@@ -19,24 +19,49 @@ package com.google.gwt.dom.client;
  * Mozilla implementation of StandardBrowser.
  */
 class DOMImplMozilla extends DOMImplStandard {
-
-  /**
-   * Return true if using Gecko 1.9.0 (Firefox 3) or earlier.
-   * 
-   * @return true if using Gecko 1.9.0 (Firefox 3) or earlier.
-   */
-  @SuppressWarnings("unused")
-  private static native boolean isGecko190OrBefore() /*-{
+  
+  private static native int getGeckoVersion() /*-{
     var result = /rv:([0-9]+)\.([0-9]+)\.([0-9]+)?/.exec(navigator.userAgent.toLowerCase());
     if (result && result.length >= 3) {
       var version = (parseInt(result[1]) * 1000000) + (parseInt(result[2]) * 1000) + 
         parseInt(result.length == 4 ? result[3] : 0);
-      if (version <= 1009000) {
-        return true;
-      }
+      return version;
     }
-    return false;
+    return -1; // not gecko
   }-*/;
+
+  /**
+   * Return true if using Gecko 1.9.0 (Firefox 3) or earlier.
+   * 
+   * @return true if using Gecko 1.9.0 (Firefox 3) or earlier
+   */
+  @SuppressWarnings("unused")
+  private static boolean isGecko190OrBefore() {
+    int geckoVersion = getGeckoVersion();
+    return (geckoVersion != -1) && (geckoVersion <= 1009000);
+  }
+  
+  /**
+   * Return true if using Gecko 1.9.1 (Firefox 3.5) or earlier.
+   * 
+   * @return true if using Gecko 1.9.1 (Firefox 3.5) or earlier
+   */
+  @SuppressWarnings("unused")
+  private static boolean isGecko191OrBefore() {
+    int geckoVersion = getGeckoVersion();
+    return (geckoVersion != -1) && (geckoVersion <= 1009001);
+  }
+
+  /**
+   * Return true if using Gecko 2.0.0 (Firefox 4.0) or earlier.
+   * 
+   * @return true if using Gecko 2.0.0 (Firefox 4.0) or earlier
+   */
+  @SuppressWarnings("unused")
+  private static boolean isGecko2OrBefore() {
+    int geckoVersion = getGeckoVersion();
+    return (geckoVersion != -1) && (geckoVersion < 2000000);
+  }
 
   @Override
   public native void buttonClick(ButtonElement button) /*-{
