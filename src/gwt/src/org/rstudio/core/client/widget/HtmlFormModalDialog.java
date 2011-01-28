@@ -12,6 +12,9 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.core.client.JavaScriptException;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.FormPanel;
@@ -19,6 +22,8 @@ import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent;
 import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteHandler;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
 import com.google.gwt.user.client.ui.FormPanel.SubmitHandler;
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 
 
 public abstract class HtmlFormModalDialog<T> extends ModalDialogBase
@@ -41,7 +46,41 @@ public abstract class HtmlFormModalDialog<T> extends ModalDialogBase
       
       ThemedButton okButton = new ThemedButton("OK", new ClickHandler() {
          public void onClick(ClickEvent event) {
-            formPanel.submit();
+            try
+            {
+               formPanel.submit();
+            }
+            catch (final JavaScriptException e)
+            {
+               Scheduler.get().scheduleDeferred(new ScheduledCommand()
+               {
+                  public void execute()
+                  {
+                     if ("Access is denied.".equals(
+                           StringUtil.notNull(e.getDescription()).trim()))
+                     {
+                        progressIndicator.onError(
+                              "Please use a complete file path.");
+                     }
+                     else
+                     {
+                        Debug.log(e.toString());
+                        progressIndicator.onError(e.getDescription());
+                     }
+                  }
+               });
+            }
+            catch (final Exception e)
+            {
+               Scheduler.get().scheduleDeferred(new ScheduledCommand()
+               {
+                  public void execute()
+                  {
+                     Debug.log(e.toString());
+                     progressIndicator.onError(e.getMessage());
+                  }
+               });
+            }
          }    
       });
       addOkButton(okButton);
