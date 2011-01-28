@@ -11,16 +11,6 @@
  *
  */
 
-
-// TODO: closure for manipulate substitute expression
-
-// TODO: validate that all controls have variables in the expression
-
-// TODO: if manipulator popup values and controls match exactly then
-// do nothing....this will take care of the flashing problem
-
-
-
 #include "RGraphicsPlotManipulator.hpp"
 
 #include <core/Error.hpp>
