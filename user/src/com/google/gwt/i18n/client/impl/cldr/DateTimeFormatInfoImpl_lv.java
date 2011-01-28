@@ -118,7 +118,7 @@ public class DateTimeFormatInfoImpl_lv extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthWeekdayDay() {
-    return "EEE, y. 'gada' d. MMM";
+    return "EEE, yyyy. 'g'. dd. MMM";
   }
 
   @Override

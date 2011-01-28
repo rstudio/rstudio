@@ -123,7 +123,7 @@ public class DateTimeFormatInfoImpl_hu extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthWeekdayDay() {
-    return "y. MMM d., EEE";
+    return "y. MMM d., E";
   }
 
   @Override

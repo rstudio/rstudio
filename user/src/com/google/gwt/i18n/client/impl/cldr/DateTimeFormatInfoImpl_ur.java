@@ -88,7 +88,7 @@ public class DateTimeFormatInfoImpl_ur extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthWeekdayDay() {
-    return "EEE, d, MMM y";
+    return "EEE, y MMM d";
   }
 
   @Override

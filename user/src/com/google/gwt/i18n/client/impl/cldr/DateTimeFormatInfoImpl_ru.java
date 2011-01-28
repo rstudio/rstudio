@@ -120,7 +120,7 @@ public class DateTimeFormatInfoImpl_ru extends DateTimeFormatInfoImpl {
 
   @Override
   public String formatYearMonthWeekdayDay() {
-    return "EEE, d MMM y 'г'.";
+    return "E, d MMM y";
   }
 
   @Override
