@@ -833,6 +833,7 @@ Error bufferConsoleInput(const core::json::JsonRpcRequest& request,
 
 Error startHttpConnectionListener()
 {
+   initializeHttpConnectionListener();
    return httpConnectionListener().start();
 }
 
@@ -881,7 +882,7 @@ Error registerSignalHandlers()
 }
 
 
-Error preflight()
+Error runPreflightScript()
 {
    // alias options
    Options& options = session::options();
@@ -897,15 +898,6 @@ Error preflight()
          std::string script = preflightScriptPath.absolutePath();
          std::string output;
          Error error = core::system::captureCommand(script, &output);
-         if (error)
-            LOG_ERROR(error);
-
-         // re-read our settings and persistent state to pickup
-         // any changes from a suspended session on another box
-         error = session::userSettings().initialize();
-         if (error)
-            LOG_ERROR(error);
-         error = persistentState().initialize();
          if (error)
             LOG_ERROR(error);
       }
@@ -928,13 +920,8 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
    ExecBlock initialize ;
    initialize.addFunctions()
    
-      // http listners
-      (startHttpConnectionListener)
+      // client event service
       (startClientEventService)
-
-      // optional preflight script -- needs to be after the http listeners
-      // so the proxy server sees that we have startup up
-      (preflight)
 
       // json-rpc listeners
       (bind(registerRpcMethod, kConsoleInput, bufferConsoleInput))
@@ -1627,11 +1614,27 @@ int main (int argc, char * const argv[])
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
       
+      // start http connection listener
+      error = startHttpConnectionListener();
+      if (error)
+         return sessionExitFailure(error, ERROR_LOCATION);
+
+      // run optional preflight script -- needs to be after the http listeners
+      // so the proxy server sees that we have startup up
+      error = runPreflightScript();
+      if (error)
+         return sessionExitFailure(error, ERROR_LOCATION);
+
       // initialize user settings
       error = userSettings().initialize();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION) ;
-      
+
+      // initialize persistent state
+      error = session::persistentState().initialize();
+      if (error)
+         return sessionExitFailure(error, ERROR_LOCATION) ;
+
       // server-only user file/directory initialization
       if (serverMode)
       {
@@ -1645,14 +1648,6 @@ int main (int argc, char * const argv[])
          if (!options.rLibsUser().empty())
             ensureRLibsUser(userHomePath, options.rLibsUser());
       }
-
-      // initialize persistent state
-      error = session::persistentState().initialize();
-      if (error)
-         return sessionExitFailure(error, ERROR_LOCATION) ;
-
-      // initialize connection listener
-      initializeHttpConnectionListener();
 
       // r options
       r::session::ROptions rOptions ;
