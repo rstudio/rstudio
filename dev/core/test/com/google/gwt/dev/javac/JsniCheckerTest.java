@@ -466,23 +466,34 @@ public class JsniCheckerTest extends CheckerTestCase {
     StringBuffer code = new StringBuffer();
     code.append("class Buggy {\n");
     code.append("  native void jsniMethod() /*-{\n");
-    code.append("    @Z::blah;\n");
+    code.append("    @boolean::blah;\n");
     code.append("  }-*/;\n");
     code.append("}\n");
     shouldGenerateError(
         code,
         3,
-        "Referencing member 'Z.blah': 'class' is the only legal reference for primitive types");
+        "Referencing member 'boolean.blah': 'class' is the only legal reference for primitive types");
   }
 
   public void testPrimitiveClass() {
     StringBuffer code = new StringBuffer();
     code.append("class Buggy {\n");
     code.append("  native void jsniMethod() /*-{\n");
-    code.append("    @Z::class;\n");
+    code.append("    @boolean::class;\n");
     code.append("  }-*/;\n");
     code.append("}\n");
     shouldGenerateNoWarning(code);
+  }
+
+  public void testPrimitiveClassDeprecated() {
+    StringBuffer code = new StringBuffer();
+    code.append("class Buggy {\n");
+    code.append("  native void jsniMethod() /*-{\n");
+    code.append("    @Z::class;\n");
+    code.append("  }-*/;\n");
+    code.append("}\n");
+    shouldGenerateWarning(code, 3,
+        "Referencing primitive type 'Z': this is deprecated, use 'boolean' instead");
   }
 
   public void testRefInString() {

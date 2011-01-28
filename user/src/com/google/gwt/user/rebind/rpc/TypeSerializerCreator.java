@@ -574,20 +574,13 @@ public class TypeSerializerCreator {
         continue;
       }
 
-      String jsniTypeRef;
-      jsniTypeRef = SerializationUtils.getRpcTypeName(type.getLeafType());
-      while (type.isArray() != null) {
-        jsniTypeRef += "[]";
-        type = type.isArray().getComponentType();
-      }
-
       if (shard && ++shardCount % shardSize == 0) {
         srcWriter.println("})();");
         srcWriter.println("(function() {");
       }
 
       srcWriter.println("result[@com.google.gwt.core.client.impl.Impl::getHashCode(Ljava/lang/Object;)(@"
-          + jsniTypeRef + "::class)] = \"" + typeString + "\";");
+          + type.getQualifiedSourceName() + "::class)] = \"" + typeString + "\";");
     }
 
     if (shard) {

@@ -106,6 +106,11 @@ public class JProgram extends JNode {
 
   private static final int IS_NULL = 0;
 
+  private static final Map<String, JPrimitiveType> primitiveTypes = new HashMap<String, JPrimitiveType>();
+  
+  @Deprecated
+  private static final Map<String, JPrimitiveType> primitiveTypesDeprecated = new HashMap<String, JPrimitiveType>();
+
   static {
     INDEX_TYPES_SET.addAll(CODEGEN_TYPES_SET);
 
@@ -133,6 +138,35 @@ public class JProgram extends JNode {
         }
       }
     }
+
+    primitiveTypes.put(JPrimitiveType.BOOLEAN.getName(), JPrimitiveType.BOOLEAN);
+    primitiveTypes.put(JPrimitiveType.BYTE.getName(), JPrimitiveType.BYTE);
+    primitiveTypes.put(JPrimitiveType.CHAR.getName(), JPrimitiveType.CHAR);
+    primitiveTypes.put(JPrimitiveType.DOUBLE.getName(), JPrimitiveType.DOUBLE);
+    primitiveTypes.put(JPrimitiveType.FLOAT.getName(), JPrimitiveType.FLOAT);
+    primitiveTypes.put(JPrimitiveType.INT.getName(), JPrimitiveType.INT);
+    primitiveTypes.put(JPrimitiveType.LONG.getName(), JPrimitiveType.LONG);
+    primitiveTypes.put(JPrimitiveType.SHORT.getName(), JPrimitiveType.SHORT);
+    primitiveTypes.put(JPrimitiveType.VOID.getName(), JPrimitiveType.VOID);
+
+    primitiveTypesDeprecated.put(JPrimitiveType.BOOLEAN.getJsniSignatureName(),
+        JPrimitiveType.BOOLEAN);
+    primitiveTypesDeprecated.put(JPrimitiveType.BYTE.getJsniSignatureName(),
+        JPrimitiveType.BYTE);
+    primitiveTypesDeprecated.put(JPrimitiveType.CHAR.getJsniSignatureName(),
+        JPrimitiveType.CHAR);
+    primitiveTypesDeprecated.put(JPrimitiveType.DOUBLE.getJsniSignatureName(),
+        JPrimitiveType.DOUBLE);
+    primitiveTypesDeprecated.put(JPrimitiveType.FLOAT.getJsniSignatureName(),
+        JPrimitiveType.FLOAT);
+    primitiveTypesDeprecated.put(JPrimitiveType.INT.getJsniSignatureName(),
+        JPrimitiveType.INT);
+    primitiveTypesDeprecated.put(JPrimitiveType.LONG.getJsniSignatureName(),
+        JPrimitiveType.LONG);
+    primitiveTypesDeprecated.put(JPrimitiveType.SHORT.getJsniSignatureName(),
+        JPrimitiveType.SHORT);
+    primitiveTypesDeprecated.put(JPrimitiveType.VOID.getJsniSignatureName(),
+        JPrimitiveType.VOID);
   }
 
   /**
@@ -1054,29 +1088,14 @@ public class JProgram extends JNode {
       className = className.substring(0, className.length() - 2);
     }
 
-    JType type;
-    if ("Z".equals(className)) {
-      type = getTypePrimitiveBoolean();
-    } else if ("B".equals(className)) {
-      type = getTypePrimitiveByte();
-    } else if ("C".equals(className)) {
-      type = getTypePrimitiveChar();
-    } else if ("D".equals(className)) {
-      type = getTypePrimitiveDouble();
-    } else if ("F".equals(className)) {
-      type = getTypePrimitiveFloat();
-    } else if ("I".equals(className)) {
-      type = getTypePrimitiveInt();
-    } else if ("J".equals(className)) {
-      type = getTypePrimitiveLong();
-    } else if ("S".equals(className)) {
-      type = getTypePrimitiveShort();
-    } else if ("V".equals(className)) {
-      type = getTypeVoid();
-    } else {
+    JType type = primitiveTypes.get(className);
+    if (type == null) {
       type = getFromTypeMap(className);
     }
-
+    // TODO(deprecation): remove support for this.
+    if (type == null) {
+      type = primitiveTypesDeprecated.get(className);
+    }
     if (type == null || dim == 0) {
       return type;
     } else {

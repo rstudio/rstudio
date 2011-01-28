@@ -280,13 +280,27 @@ public class JsniChecker {
         className = className.substring(0, className.length() - 2);
       }
 
-      /*
-       * TODO(bobv): OMG WTF LOL. Okay, but seriously, the LHS of a JSNI ref for
-       * a primitive type should be the keyword, e.g. "int.class".
-       */
-      ReferenceBinding clazz = findClass(className);
-      boolean isPrimitive = (clazz == null) && className.length() == 1
-          && "ZBCDFIJSV".indexOf(className.charAt(0)) >= 0;
+      boolean isPrimitive = false;
+      TypeBinding binding = method.scope.getBaseType(className.toCharArray());
+      if (binding != null) {
+        isPrimitive = true;
+      } else {
+        binding = findClass(className);
+      }
+
+      // TODO(deprecation): remove this support eventually.
+      if (binding == null && className.length() == 1
+          && "ZBCDFIJSV".indexOf(className.charAt(0)) >= 0) {
+        isPrimitive = true;
+        binding = getTypeBinding(className.charAt(0));
+        assert binding != null;
+        JsniCollector.reportJsniWarning(
+            errorInfo,
+            method,
+            "Referencing primitive type '" + className
+                + "': this is deprecated, use '"
+                + String.valueOf(binding.sourceName()) + "' instead");
+      }
 
       if (isArray || isPrimitive) {
         if (!jsniRef.isField() || !jsniRef.memberName().equals("class")) {
@@ -302,26 +316,26 @@ public class JsniChecker {
         return;
       }
 
-      // TODO(bobv): uncomment this.
-      // ReferenceBinding clazz = findClass(className);
       if (looksLikeAnonymousClass(jsniRef)
-          || (clazz != null && clazz.isAnonymousType())) {
+          || (binding != null && binding.isAnonymousType())) {
         emitError("Referencing class '" + className
             + ": JSNI references to anonymous classes are illegal");
-      } else if (clazz != null) {
-        if (clazz.isDeprecated()) {
-          emitWarning("deprecation", "Referencing deprecated class '"
-              + className + "'");
-        }
-
-        if (jsniRef.isMethod()) {
-          checkMethodRef(clazz, jsniRef);
-        } else {
-          checkFieldRef(clazz, jsniRef);
-        }
-      } else {
+        return;
+      } else if (binding == null) {
         emitError("JSNI Referencing class '" + className
             + "': unable to resolve class, expect subsequent failures");
+        return;
+      }
+      ReferenceBinding clazz = (ReferenceBinding) binding;
+      if (clazz.isDeprecated()) {
+        emitWarning("deprecation", "Referencing deprecated class '" + className
+            + "'");
+      }
+
+      if (jsniRef.isMethod()) {
+        checkMethodRef(clazz, jsniRef);
+      } else {
+        checkFieldRef(clazz, jsniRef);
       }
     }
 
@@ -404,6 +418,32 @@ public class JsniChecker {
         }
       }
       return null;
+    }
+
+    @Deprecated
+    private TypeBinding getTypeBinding(char c) {
+      switch (c) {
+        case 'I':
+          return TypeBinding.INT;
+        case 'Z':
+          return TypeBinding.BOOLEAN;
+        case 'V':
+          return TypeBinding.VOID;
+        case 'C':
+          return TypeBinding.CHAR;
+        case 'D':
+          return TypeBinding.DOUBLE;
+        case 'B':
+          return TypeBinding.BYTE;
+        case 'F':
+          return TypeBinding.FLOAT;
+        case 'J':
+          return TypeBinding.LONG;
+        case 'S':
+          return TypeBinding.SHORT;
+        default:
+          return null;
+      }
     }
 
     private boolean looksLikeAnonymousClass(JsniRef jsniRef) {

@@ -208,45 +208,31 @@ public final class CompilingClassLoader extends ClassLoader implements
      *         class name could not be found
      */
     private Class<?> getClassFromBinaryName(String binaryClassName) {
-      try {
-        int dims = 0;
-        while (binaryClassName.endsWith("[]")) {
-          dims++;
-          binaryClassName = binaryClassName.substring(0,
-              binaryClassName.length() - 2);
-        }
+      int dims = 0;
+      while (binaryClassName.endsWith("[]")) {
+        dims++;
+        binaryClassName = binaryClassName.substring(0,
+            binaryClassName.length() - 2);
+      }
 
-        Class<?> clazz;
-        if ("Z".equals(binaryClassName)) {
-          clazz = boolean.class;
-        } else if ("B".equals(binaryClassName)) {
-          clazz = byte.class;
-        } else if ("C".equals(binaryClassName)) {
-          clazz = char.class;
-        } else if ("D".equals(binaryClassName)) {
-          clazz = double.class;
-        } else if ("F".equals(binaryClassName)) {
-          clazz = float.class;
-        } else if ("I".equals(binaryClassName)) {
-          clazz = int.class;
-        } else if ("J".equals(binaryClassName)) {
-          clazz = long.class;
-        } else if ("S".equals(binaryClassName)) {
-          clazz = short.class;
-        } else if ("V".equals(binaryClassName)) {
-          clazz = void.class;
-        } else {
+      Class<?> clazz = primitiveTypes.get(binaryClassName);
+      if (clazz == null) {
+        try {
           clazz = Class.forName(binaryClassName, false,
               CompilingClassLoader.this);
+        } catch (ClassNotFoundException e) {
         }
-
-        if (dims > 0) {
-          return Array.newInstance(clazz, new int[dims]).getClass();
-        } else {
-          return clazz;
-        }
-      } catch (ClassNotFoundException e) {
-        return null;
+      }
+      // TODO(deprecation): remove this support eventually.
+      if (clazz == null && binaryClassName.length() == 1
+          && "ZBCDFIJSV".indexOf(binaryClassName.charAt(0)) >= 0) {
+        clazz = getDeprecatedPrimitiveType(binaryClassName.charAt(0));
+        assert clazz != null;
+      }
+      if (dims > 0) {
+        return Array.newInstance(clazz, new int[dims]).getClass();
+      } else {
+        return clazz;
       }
     }
 
@@ -318,6 +304,32 @@ public final class CompilingClassLoader extends ClassLoader implements
       classNameToClassInfo.put(className, dispClassInfo);
 
       return dispClassInfo;
+    }
+
+    @Deprecated
+    private Class<?> getDeprecatedPrimitiveType(char c) {
+      switch (c) {
+        case 'Z':
+          return boolean.class;
+        case 'B':
+          return byte.class;
+        case 'C':
+          return char.class;
+        case 'D':
+          return double.class;
+        case 'F':
+          return float.class;
+        case 'I':
+          return int.class;
+        case 'J':
+          return long.class;
+        case 'S':
+          return short.class;
+        case 'V':
+          return void.class;
+        default:
+          return null;
+      }
     }
 
     /**
@@ -705,6 +717,20 @@ public final class CompilingClassLoader extends ClassLoader implements
    * Caches the byte code for {@link JavaScriptHost}.
    */
   private static byte[] javaScriptHostBytes;
+
+  private static final Map<String, Class<?>> primitiveTypes = new HashMap<String, Class<?>>();
+
+  static {
+    primitiveTypes.put(boolean.class.getSimpleName(), boolean.class);
+    primitiveTypes.put(byte.class.getSimpleName(), boolean.class);
+    primitiveTypes.put(char.class.getSimpleName(), boolean.class);
+    primitiveTypes.put(double.class.getSimpleName(), boolean.class);
+    primitiveTypes.put(float.class.getSimpleName(), boolean.class);
+    primitiveTypes.put(int.class.getSimpleName(), boolean.class);
+    primitiveTypes.put(long.class.getSimpleName(), boolean.class);
+    primitiveTypes.put(short.class.getSimpleName(), boolean.class);
+    primitiveTypes.put(void.class.getSimpleName(), boolean.class);
+  }
 
   static {
     for (Class<?> c : BRIDGE_CLASSES) {

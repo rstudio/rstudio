@@ -323,19 +323,10 @@ public class RpcProxyCreator extends ProxyCreator {
       JPrimitiveType serializablePrimitive = serializableType.isPrimitive();
       if (serializableArray != null) {
         sb.append("\n@Rescue(className = \"");
-        if (serializableArray.getLeafType() instanceof JPrimitiveType) {
-          sb.append(serializableArray.getLeafType().getJNISignature());
-          for (int i = 0, j = serializableArray.getRank(); i < j; i++) {
-            sb.append("[]");
-          }
-        } else {
-          sb.append(serializableArray.getQualifiedSourceName());
-        }
+        sb.append(serializableArray.getQualifiedSourceName());
         sb.append("\",\n instantiable = true),");
-
       } else if (serializableClass != null) {
         writeSingleRescue(typeOracle, deserializationSto, sb, serializableClass);
-
       } else if (serializablePrimitive != null) {
         JClassType boxedClass = typeOracle.findType(serializablePrimitive.getQualifiedBoxedSourceName());
         assert boxedClass != null : "No boxed version of "
