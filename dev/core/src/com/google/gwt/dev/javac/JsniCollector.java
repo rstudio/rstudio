@@ -20,7 +20,6 @@ import com.google.gwt.core.ext.TreeLogger.HelpInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
-import com.google.gwt.dev.jjs.ast.JAnnotation;
 import com.google.gwt.dev.js.JsParser;
 import com.google.gwt.dev.js.JsParserException;
 import com.google.gwt.dev.js.JsParserException.SourceDetail;
@@ -131,7 +130,6 @@ public class JsniCollector {
         return false;
       }
       for (Annotation a : method.annotations) {
-        JAnnotation annotation;
         ReferenceBinding binding = (ReferenceBinding) a.resolvedType;
         String name = CharOperation.toString(binding.compoundName);
         if (name.equals(GwtScriptOnly.class.getName())) {
@@ -141,12 +139,12 @@ public class JsniCollector {
       return false;
     }
 
-    private final Map<AbstractMethodDeclaration, JsniMethod> jsniMethods;
+    private final Map<MethodDeclaration, JsniMethod> jsniMethods;
     private final JsProgram jsProgram;
     private final String source;
 
     public Visitor(String source, JsProgram program,
-        Map<AbstractMethodDeclaration, JsniMethod> jsniMethods) {
+        Map<MethodDeclaration, JsniMethod> jsniMethods) {
       this.jsProgram = program;
       this.jsniMethods = jsniMethods;
       this.source = source;
@@ -159,14 +157,13 @@ public class JsniCollector {
 
     @Override
     protected void processMethod(TypeDeclaration typeDecl,
-        AbstractMethodDeclaration method, String enclosingType,
-        String loc) {
+        AbstractMethodDeclaration method, String enclosingType, String loc) {
       JsFunction jsFunction = parseJsniFunction(method, source, enclosingType,
           loc, jsProgram);
       if (jsFunction != null) {
         String jsniSignature = getJsniSignature(enclosingType, method);
-        jsniMethods.put(method, new JsniMethodImpl(jsniSignature,
-            jsFunction, isScriptOnly(method)));
+        jsniMethods.put((MethodDeclaration) method, new JsniMethodImpl(
+            jsniSignature, jsFunction, isScriptOnly(method)));
       }
     }
   }
@@ -175,10 +172,10 @@ public class JsniCollector {
 
   public static final String JSNI_BLOCK_START = "/*-{";
 
-  public static Map<AbstractMethodDeclaration, JsniMethod> collectJsniMethods(
+  public static Map<MethodDeclaration, JsniMethod> collectJsniMethods(
       final CompilationUnitDeclaration cud, final String source,
       final JsProgram program) {
-    Map<AbstractMethodDeclaration, JsniMethod> jsniMethods = new IdentityHashMap<AbstractMethodDeclaration, JsniMethod>();
+    Map<MethodDeclaration, JsniMethod> jsniMethods = new IdentityHashMap<MethodDeclaration, JsniMethod>();
     new Visitor(source, program, jsniMethods).collect(cud);
     return IdentityMaps.normalizeUnmodifiable(jsniMethods);
   }

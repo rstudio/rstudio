@@ -32,6 +32,7 @@ import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
 import org.eclipse.jdt.internal.compiler.lookup.MethodScope;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
+import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 
 import java.util.HashMap;
@@ -65,16 +66,26 @@ public class JSORestrictionsChecker {
     private final Map<String, String> interfacesToJsoImpls = new HashMap<String, String>();
 
     public void addJsoInterface(TypeDeclaration jsoType,
-        CompilationUnitDeclaration cud, String interfaceName) {
-      String alreadyImplementor = interfacesToJsoImpls.get(interfaceName);
+        CompilationUnitDeclaration cud, ReferenceBinding interf) {
+      String intfName = CharOperation.toString(interf.compoundName);
+      String alreadyImplementor = interfacesToJsoImpls.get(intfName);
       String myName = CharOperation.toString(jsoType.binding.compoundName);
       if (alreadyImplementor == null) {
-        interfacesToJsoImpls.put(interfaceName, myName);
+        interfacesToJsoImpls.put(intfName, myName);
       } else {
-        String msg = errAlreadyImplemented(interfaceName, alreadyImplementor,
-            myName);
+        String msg = errAlreadyImplemented(intfName, alreadyImplementor, myName);
         errorOn(jsoType, cud, msg);
       }
+    }
+
+    public String getJsoImplementor(ReferenceBinding binding) {
+      String name = CharOperation.toString(binding.compoundName);
+      return interfacesToJsoImpls.get(name);
+    }
+
+    public boolean isJsoInterface(ReferenceBinding binding) {
+      String name = CharOperation.toString(binding.compoundName);
+      return interfacesToJsoImpls.containsKey(name);
     }
   }
 
@@ -183,15 +194,16 @@ public class JSORestrictionsChecker {
     }
 
     private boolean checkType(TypeDeclaration type) {
-      if (!isJsoSubclass(type.binding)) {
+      SourceTypeBinding binding = type.binding;
+      if (!isJsoSubclass(binding)) {
         return false;
       }
 
-      if (type.enclosingType != null && !type.binding.isStatic()) {
+      if (type.enclosingType != null && !binding.isStatic()) {
         errorOn(type, ERR_IS_NONSTATIC_NESTED);
       }
 
-      ReferenceBinding[] interfaces = type.binding.superInterfaces();
+      ReferenceBinding[] interfaces = binding.superInterfaces();
       if (interfaces != null) {
         for (ReferenceBinding interf : interfaces) {
           if (interf.methods() == null) {
@@ -200,11 +212,10 @@ public class JSORestrictionsChecker {
 
           if (interf.methods().length > 0) {
             // See if any of my superTypes implement it.
-            ReferenceBinding superclass = type.binding.superclass();
+            ReferenceBinding superclass = binding.superclass();
             if (superclass == null
                 || !superclass.implementsInterface(interf, true)) {
-              String intfName = CharOperation.toString(interf.compoundName);
-              state.addJsoInterface(type, cud, intfName);
+              state.addJsoInterface(type, cud, interf);
             }
           }
         }
@@ -253,6 +264,36 @@ public class JSORestrictionsChecker {
         + ") is implemented by both (" + impl1 + ") and (" + impl2 + ")";
   }
 
+  /**
+   * Returns {@code true} if {@code typeBinding} is {@code JavaScriptObject} or
+   * any subtype.
+   */
+  static boolean isJso(TypeBinding typeBinding) {
+    if (!(typeBinding instanceof ReferenceBinding)) {
+      return false;
+    }
+    ReferenceBinding binding = (ReferenceBinding) typeBinding;
+    while (binding != null) {
+      if (JSO_CLASS.equals(String.valueOf(binding.constantPoolName()))) {
+        return true;
+      }
+      binding = binding.superclass();
+    }
+    return false;
+  }
+
+  /**
+   * Returns {@code true} if {@code typeBinding} is a subtype of
+   * {@code JavaScriptObject}, but not {@code JavaScriptObject} itself.
+   */
+  static boolean isJsoSubclass(TypeBinding typeBinding) {
+    if (!(typeBinding instanceof ReferenceBinding)) {
+      return false;
+    }
+    ReferenceBinding binding = (ReferenceBinding) typeBinding;
+    return isJso(binding.superclass());
+  }
+
   private static void errorOn(ASTNode node, CompilationUnitDeclaration cud,
       String error) {
     GWTProblem.recordError(node, cud, error, new InstalledHelpInfo(
@@ -275,19 +316,5 @@ public class JSORestrictionsChecker {
 
   private void errorOn(ASTNode node, String error) {
     errorOn(node, cud, error);
-  }
-
-  private boolean isJsoSubclass(TypeBinding typeBinding) {
-    if (!(typeBinding instanceof ReferenceBinding)) {
-      return false;
-    }
-    ReferenceBinding binding = (ReferenceBinding) typeBinding;
-    while (binding.superclass() != null) {
-      if (JSO_CLASS.equals(String.valueOf(binding.superclass().constantPoolName()))) {
-        return true;
-      }
-      binding = binding.superclass();
-    }
-    return false;
   }
 }

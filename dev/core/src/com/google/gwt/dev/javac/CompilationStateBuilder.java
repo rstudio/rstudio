@@ -31,8 +31,9 @@ import org.apache.commons.collections.map.AbstractReferenceMap;
 import org.apache.commons.collections.map.ReferenceIdentityMap;
 import org.apache.commons.collections.map.ReferenceMap;
 import org.eclipse.jdt.core.compiler.CharOperation;
-import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
+import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
+import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 
 import java.util.ArrayList;
@@ -44,8 +45,8 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Manages a centralized cache for compiled units.
@@ -61,22 +62,25 @@ public class CompilationStateBuilder {
 
       public void process(CompilationUnitBuilder builder,
           CompilationUnitDeclaration cud, List<CompiledClass> compiledClasses) {
-        Map<AbstractMethodDeclaration, JsniMethod> jsniMethods = JsniCollector.collectJsniMethods(
+        Map<MethodDeclaration, JsniMethod> jsniMethods = JsniCollector.collectJsniMethods(
             cud, builder.getSource(), jsProgram);
+
+        JSORestrictionsChecker.check(jsoState, cud);
 
         // JSNI check + collect dependencies.
         final Set<String> jsniDeps = new HashSet<String>();
-        JsniChecker.check(cud, jsniMethods, new JsniChecker.TypeResolver() {
-          public ReferenceBinding resolveType(String typeName) {
-            ReferenceBinding resolveType = compiler.resolveType(typeName);
-            if (resolveType != null) {
-              jsniDeps.add(String.valueOf(resolveType.qualifiedSourceName()));
-            }
-            return resolveType;
-          }
-        });
+        Map<String, Binding> jsniRefs = new HashMap<String, Binding>();
+        JsniChecker.check(cud, jsoState, jsniMethods, jsniRefs,
+            new JsniChecker.TypeResolver() {
+              public ReferenceBinding resolveType(String typeName) {
+                ReferenceBinding resolveType = compiler.resolveType(typeName);
+                if (resolveType != null) {
+                  jsniDeps.add(String.valueOf(resolveType.qualifiedSourceName()));
+                }
+                return resolveType;
+              }
+            });
 
-        JSORestrictionsChecker.check(jsoState, cud);
         ArtificialRescueChecker.check(cud, builder.isGenerated());
         BinaryTypeReferenceRestrictionsChecker.check(cud);
 

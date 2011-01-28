@@ -56,7 +56,7 @@ public class JsniCollectorTest extends CompilationStateTestBase {
     assertEquals(3, problem.getSourceLineNumber());
     assertTrue(problem.isError());
     assertEquals(
-        "JSNI Referencing method 'Foo.m(Ljava/lang/String)': unable to resolve method, expect subsequent failures",
+        "Referencing method 'Foo.m(Ljava/lang/String)': unable to resolve method",
         problem.getMessage());
   }
 

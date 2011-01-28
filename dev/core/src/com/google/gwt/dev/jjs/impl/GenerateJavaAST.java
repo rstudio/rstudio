@@ -2985,31 +2985,12 @@ public class GenerateJavaAST {
 
       private void processField(JsNameRef nameRef, SourceInfo info,
           JField field, JsContext<JsExpression> ctx) {
-        if (field.getEnclosingType() != null) {
-          if (field.isStatic() && nameRef.getQualifier() != null) {
-            JsniCollector.reportJsniError(info, methodDecl,
-                "Cannot make a qualified reference to the static field "
-                    + field.getName());
-          } else if (!field.isStatic() && nameRef.getQualifier() == null) {
-            JsniCollector.reportJsniError(info, methodDecl,
-                "Cannot make an unqualified reference to the instance field "
-                    + field.getName());
-          }
-        }
-
         /*
          * We must replace any compile-time constants with the constant value of
          * the field.
          */
         if (field.isCompileTimeConstant()) {
-          if (ctx.isLvalue()) {
-            JsniCollector.reportJsniError(
-                info,
-                methodDecl,
-                "Cannot change the value of compile-time constant "
-                    + field.getName());
-          }
-
+          assert !ctx.isLvalue();
           JLiteral initializer = field.getConstInitializer();
           JType type = initializer.getType();
           if (type instanceof JPrimitiveType || program.isJavaLangString(type)) {
@@ -3031,43 +3012,7 @@ public class GenerateJavaAST {
 
       private void processMethod(JsNameRef nameRef, SourceInfo info,
           JMethod method, JsContext<JsExpression> ctx) {
-        JDeclaredType enclosingType = method.getEnclosingType();
-        if (enclosingType != null) {
-          JClassType jsoImplType = program.typeOracle.getSingleJsoImpl(enclosingType);
-          if (jsoImplType != null) {
-            JsniCollector.reportJsniError(info, methodDecl,
-                "Illegal reference to method '" + method.getName()
-                    + "' in type '" + enclosingType.getName()
-                    + "', which is implemented by an overlay type '"
-                    + jsoImplType.getName()
-                    + "'. Use a stronger type in the JSNI "
-                    + "identifier or a Java trampoline method.");
-          } else if (!method.needsVtable() && nameRef.getQualifier() != null) {
-            JsniCollector.reportJsniError(info, methodDecl,
-                "Cannot make a qualified reference to the static method "
-                    + method.getName());
-          } else if (method.needsVtable() && nameRef.getQualifier() == null
-              && !(method instanceof JConstructor)) {
-            JsniCollector.reportJsniError(info, methodDecl,
-                "Cannot make an unqualified reference to the instance method "
-                    + method.getName());
-          } else if (!method.isStatic()
-              && program.isJavaScriptObject(enclosingType)) {
-            JsniCollector.reportJsniError(
-                info,
-                methodDecl,
-                "Illegal reference to instance method '"
-                    + method.getName()
-                    + "' in type '"
-                    + enclosingType.getName()
-                    + "', which is an overlay type; only static references to overlay types are allowed from JSNI");
-          }
-        }
-        if (ctx.isLvalue()) {
-          JsniCollector.reportJsniError(info, methodDecl,
-              "Cannot reassign the Java method " + method.getName());
-        }
-
+        assert !ctx.isLvalue();
         JsniMethodRef methodRef = new JsniMethodRef(info, nameRef.getIdent(),
             method, program.getJavaScriptObject());
         nativeMethodBody.addJsniRef(methodRef);

@@ -16,6 +16,7 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.client.UnsafeNativeLong;
+import com.google.gwt.dev.javac.JSORestrictionsChecker.CheckerState;
 import com.google.gwt.dev.jdt.SafeASTVisitor;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
@@ -30,7 +31,6 @@ import com.google.gwt.dev.util.collect.Sets;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.ASTNode;
-import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Annotation;
 import org.eclipse.jdt.internal.compiler.ast.Argument;
 import org.eclipse.jdt.internal.compiler.ast.ArrayInitializer;
@@ -42,7 +42,9 @@ import org.eclipse.jdt.internal.compiler.ast.StringLiteral;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeReference;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
+import org.eclipse.jdt.internal.compiler.impl.Constant;
 import org.eclipse.jdt.internal.compiler.lookup.BaseTypeBinding;
+import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
@@ -194,57 +196,94 @@ public class JsniChecker {
         if (jsniRef == null) {
           emitError("Malformed JSNI identifier '" + ident + "'");
         } else {
-          checkRef(jsniRef);
+          Binding binding = checkRef(jsniRef, x.getQualifier() != null,
+              ctx.isLvalue());
+          if (binding != null) {
+            jsniRefs.put(ident, binding);
+          }
         }
       }
       this.errorInfo = null;
     }
 
-    private void checkFieldRef(ReferenceBinding clazz, JsniRef jsniRef) {
+    private FieldBinding checkFieldRef(ReferenceBinding clazz, JsniRef jsniRef,
+        boolean hasQualifier, boolean isLvalue) {
       assert jsniRef.isField();
-      if ("class".equals(jsniRef.memberName())) {
-        return;
-      }
       FieldBinding target = getField(clazz, jsniRef);
       if (target == null) {
-        emitError("JSNI Referencing field '" + jsniRef.className() + "."
-            + jsniRef.memberName()
-            + "': unable to resolve field, expect subsequent failures");
-        return;
+        emitError("Referencing field '" + jsniRef.className() + "."
+            + jsniRef.memberName() + "': unable to resolve field");
+        return null;
       }
       if (target.isDeprecated()) {
         emitWarning("deprecation",
             "Referencing deprecated field '" + jsniRef.className() + "."
                 + jsniRef.memberName() + "'");
       }
+      if (isLvalue && target.constant() != Constant.NotAConstant) {
+        emitError("Illegal assignment to compile-time constant '"
+            + jsniRef.className() + "." + jsniRef.memberName() + "'");
+      }
+      if (target.isStatic() && hasQualifier) {
+        emitError("Unnecessary qualifier on static field '"
+            + jsniRef.className() + "." + jsniRef.memberName() + "'");
+      } else if (!target.isStatic() && !hasQualifier) {
+        emitError("Missing qualifier on instance field '" + jsniRef.className()
+            + "." + jsniRef.memberName() + "'");
+      }
 
       if (hasUnsafeLongsAnnotation) {
-        return;
+        return target;
       }
       if (containsLong(target.type)) {
         emitError("Referencing field '" + jsniRef.className() + "."
             + jsniRef.memberName() + "': type '" + typeString(target.type)
             + "' is not safe to access in JSNI code");
       }
+      return target;
     }
 
-    private void checkMethodRef(ReferenceBinding clazz, JsniRef jsniRef) {
+    private MethodBinding checkMethodRef(ReferenceBinding clazz,
+        JsniRef jsniRef, boolean hasQualifier, boolean isLvalue) {
       assert jsniRef.isMethod();
       MethodBinding target = getMethod(clazz, jsniRef);
       if (target == null) {
-        emitError("JSNI Referencing method '" + jsniRef.className() + "."
-            + jsniRef.memberSignature()
-            + "': unable to resolve method, expect subsequent failures");
-        return;
+        emitError("Referencing method '" + jsniRef.className() + "."
+            + jsniRef.memberSignature() + "': unable to resolve method");
+        return null;
       }
       if (target.isDeprecated()) {
         emitWarning("deprecation",
             "Referencing deprecated method '" + jsniRef.className() + "."
                 + jsniRef.memberName() + "'");
       }
+      if (isLvalue) {
+        emitError("Illegal assignment to method '" + jsniRef.className() + "."
+            + jsniRef.memberName() + "'");
+      }
+      boolean needsQualifer = !target.isStatic() && !target.isConstructor();
+      if (!needsQualifer && hasQualifier) {
+        emitError("Unnecessary qualifier on static method '"
+            + jsniRef.className() + "." + jsniRef.memberName() + "'");
+      } else if (needsQualifer && !hasQualifier) {
+        emitError("Missing qualifier on instance method '"
+            + jsniRef.className() + "." + jsniRef.memberName() + "'");
+      }
+      if (!target.isStatic() && JSORestrictionsChecker.isJso(clazz)) {
+        emitError("Referencing method '" + jsniRef.className() + "."
+            + jsniRef.memberSignature()
+            + "': references to instance methods in overlay types are illegal");
+      }
+      if (checkerState.isJsoInterface(clazz)) {
+        String implementor = checkerState.getJsoImplementor(clazz);
+        emitError("Referencing interface method '" + jsniRef.className() + "."
+            + jsniRef.memberSignature() + "': implemented by '" + implementor
+            + "'; references to instance methods in overlay types are illegal"
+            + "; use a stronger type or a Java trampoline method");
+      }
 
       if (hasUnsafeLongsAnnotation) {
-        return;
+        return target;
       }
       if (containsLong(target.returnType)) {
         emitError("Referencing method '" + jsniRef.className() + "."
@@ -266,26 +305,47 @@ public class JsniChecker {
           }
         }
       }
+      return target;
     }
 
-    private void checkRef(JsniRef jsniRef) {
+    private Binding checkRef(JsniRef jsniRef, boolean hasQualifier,
+        boolean isLvalue) {
       String className = jsniRef.className();
       if ("null".equals(className)) {
-        return;
+        if (jsniRef.isField()) {
+          if (!"nullField".equals(jsniRef.memberName())) {
+            emitError("Referencing field '" + jsniRef.className() + "."
+                + jsniRef.memberName()
+                + "': 'nullField' is the only legal field reference for 'null'");
+          }
+        } else {
+          if (!"nullMethod()".equals(jsniRef.memberSignature())) {
+            emitError("Referencing method '" + jsniRef.className() + "."
+                + jsniRef.memberSignature()
+                + "': 'nullMethod()' is the only legal method for 'null'");
+          }
+          return null;
+        }
+        return null;
       }
 
       boolean isArray = false;
+      int dims = 0;
       while (className.endsWith("[]")) {
+        ++dims;
         isArray = true;
         className = className.substring(0, className.length() - 2);
       }
 
-      boolean isPrimitive = false;
+      boolean isPrimitive;
+      ReferenceBinding clazz;
       TypeBinding binding = method.scope.getBaseType(className.toCharArray());
       if (binding != null) {
         isPrimitive = true;
+        clazz = null;
       } else {
-        binding = findClass(className);
+        isPrimitive = false;
+        binding = clazz = findClass(className);
       }
 
       // TODO(deprecation): remove this support eventually.
@@ -302,40 +362,49 @@ public class JsniChecker {
                 + String.valueOf(binding.sourceName()) + "' instead");
       }
 
-      if (isArray || isPrimitive) {
-        if (!jsniRef.isField() || !jsniRef.memberName().equals("class")) {
-          emitError("Referencing member '" + jsniRef.className() + "."
-              + jsniRef.memberName()
-              + "': 'class' is the only legal reference for "
-              + (isArray ? "array" : "primitive") + " types");
-          return;
-        }
-      }
-
-      if (isPrimitive) {
-        return;
-      }
-
-      if (looksLikeAnonymousClass(jsniRef)
+      if ((binding == null && looksLikeAnonymousClass(jsniRef))
           || (binding != null && binding.isAnonymousType())) {
         emitError("Referencing class '" + className
-            + ": JSNI references to anonymous classes are illegal");
-        return;
+            + "': JSNI references to anonymous classes are illegal");
+        return null;
       } else if (binding == null) {
-        emitError("JSNI Referencing class '" + className
-            + "': unable to resolve class, expect subsequent failures");
-        return;
+        emitError("Referencing class '" + className
+            + "': unable to resolve class");
+        return null;
       }
-      ReferenceBinding clazz = (ReferenceBinding) binding;
-      if (clazz.isDeprecated()) {
+
+      if (clazz != null && clazz.isDeprecated()) {
         emitWarning("deprecation", "Referencing deprecated class '" + className
             + "'");
       }
 
+      if (jsniRef.isField() && "class".equals(jsniRef.memberName())) {
+        if (isLvalue) {
+          emitError("Illegal assignment to class literal '"
+              + jsniRef.className() + ".class'");
+          return null;
+        }
+        // Reference to the class itself.
+        if (isArray) {
+          return method.scope.createArrayType(binding, dims);
+        } else {
+          return binding;
+        }
+      }
+
+      if (isArray || isPrimitive) {
+        emitError("Referencing member '" + jsniRef.className() + "."
+            + jsniRef.memberName()
+            + "': 'class' is the only legal reference for "
+            + (isArray ? "array" : "primitive") + " types");
+        return null;
+      }
+
+      assert clazz != null;
       if (jsniRef.isMethod()) {
-        checkMethodRef(clazz, jsniRef);
+        return checkMethodRef(clazz, jsniRef, hasQualifier, isLvalue);
       } else {
-        checkFieldRef(clazz, jsniRef);
+        return checkFieldRef(clazz, jsniRef, hasQualifier, isLvalue);
       }
     }
 
@@ -485,9 +554,10 @@ public class JsniChecker {
    * 
    */
   public static void check(CompilationUnitDeclaration cud,
-      Map<AbstractMethodDeclaration, JsniMethod> jsniMethods,
-      TypeResolver typeResolver) {
-    new JsniChecker(cud, typeResolver, jsniMethods).check();
+      CheckerState checkerState,
+      Map<MethodDeclaration, JsniMethod> jsniMethods,
+      Map<String, Binding> jsniRefs, TypeResolver typeResolver) {
+    new JsniChecker(cud, checkerState, typeResolver, jsniMethods, jsniRefs).check();
   }
 
   static Set<String> getSuppressedWarnings(Annotation[] annotations) {
@@ -523,17 +593,22 @@ public class JsniChecker {
     return Sets.create();
   }
 
+  private final CheckerState checkerState;
   private final CompilationUnitDeclaration cud;
-  private final Map<AbstractMethodDeclaration, JsniMethod> jsniMethods;
+  private final Map<MethodDeclaration, JsniMethod> jsniMethods;
+  private final Map<String, Binding> jsniRefs;
   private final Stack<Set<String>> suppressWarningsStack = new Stack<Set<String>>();
   private final TypeResolver typeResolver;
 
   private JsniChecker(CompilationUnitDeclaration cud,
-      TypeResolver typeResolver,
-      Map<AbstractMethodDeclaration, JsniMethod> jsniMethods) {
+      CheckerState checkerState, TypeResolver typeResolver,
+      Map<MethodDeclaration, JsniMethod> jsniMethods,
+      Map<String, Binding> jsniRefs) {
+    this.checkerState = checkerState;
     this.cud = cud;
     this.typeResolver = typeResolver;
     this.jsniMethods = jsniMethods;
+    this.jsniRefs = jsniRefs;
   }
 
   private void check() {

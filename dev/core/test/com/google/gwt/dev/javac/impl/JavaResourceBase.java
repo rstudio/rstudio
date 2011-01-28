@@ -232,7 +232,9 @@ public class JavaResourceBase {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.core.client;\n");
       code.append("public class JavaScriptObject {\n");
+      code.append("  public static native JavaScriptObject createObject() /*-{ return {}; }-*/;\n");
       code.append("  protected JavaScriptObject() { }\n");
+      code.append("  public final String toString() { return \"JavaScriptObject\"; }\n");
       code.append("}\n");
       return code;
     }
@@ -396,7 +398,7 @@ public class JavaResourceBase {
   };
 
   public static MockJavaResource[] getStandardResources() {
-    return new MockJavaResource[] {
+    return new MockJavaResource[]{
         ANNOTATION, BYTE, CHARACTER, CLASS, CLASS_NOT_FOUND_EXCEPTION,
         COLLECTION, DOUBLE, ENUM, EXCEPTION, ERROR, FLOAT, INTEGER,
         IS_SERIALIZABLE, JAVASCRIPTOBJECT, LONG, MAP, NO_CLASS_DEF_FOUND_ERROR,
