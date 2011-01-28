@@ -92,7 +92,6 @@ public class UserAgentPropertyGenerator implements PropertyProviderGenerator {
     body.println("return 'unknown';");
   }
 
-  @Override
   public String generate(TreeLogger logger, SortedSet<String> possibleValues,
       String fallback, SortedSet<ConfigurationProperty> configProperties) {
     for (String value : possibleValues) {

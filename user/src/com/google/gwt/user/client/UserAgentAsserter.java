@@ -34,11 +34,10 @@ public class UserAgentAsserter implements EntryPoint {
    */
   interface UserAgentProperty {
     String getCompileTimeValue();
-    
+
     String getRuntimeValue();
   }
-  
-  @Override
+
   public void onModuleLoad() {
     UserAgentProperty impl = GWT.create(UserAgentProperty.class);
     String compileTimeValue = impl.getCompileTimeValue();
