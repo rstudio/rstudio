@@ -192,7 +192,10 @@ void resizeGraphicsDevice()
    handler::setSize(pDev);
 
    // replay the display list onto the resized surface
-   GEplayDisplayList(s_pGEDevDesc);
+   {
+      SuppressDeviceEventsScope scope(plotManager());
+      GEplayDisplayList(s_pGEDevDesc);
+   }
 
    // notify listeners of resize
    s_graphicsDeviceEvents.onResized();

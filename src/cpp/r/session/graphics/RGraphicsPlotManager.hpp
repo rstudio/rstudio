@@ -147,6 +147,8 @@ private:
    void truncatePlotList();
 
 private:   
+   friend class SuppressDeviceEventsScope;
+
    // storage path
    core::FilePath graphicsPath_;
   
@@ -162,7 +164,25 @@ private:
    
    boost::regex plotInfoRegex_;
 };
-   
+
+class SuppressDeviceEventsScope
+{
+public:
+   SuppressDeviceEventsScope(PlotManager& plotManager)
+      : plotManager_(plotManager)
+   {
+      plotManager_.suppressDeviceEvents_ = true;
+   }
+
+   virtual ~SuppressDeviceEventsScope()
+   {
+      plotManager_.suppressDeviceEvents_ = false;
+   }
+private:
+   PlotManager& plotManager_;
+};
+
+
 } // namespace graphics
 } // namespace session
 } // namespace r
