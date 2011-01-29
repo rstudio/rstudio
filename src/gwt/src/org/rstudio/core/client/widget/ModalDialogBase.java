@@ -288,22 +288,26 @@ public abstract class ModalDialogBase extends DialogBox
       hide();
       removeFromParent();
 
-      if (originallyActiveElement_ != null
-          && !originallyActiveElement_.getTagName().equalsIgnoreCase("body"))
+      try
       {
-         Document doc = originallyActiveElement_.getOwnerDocument();
-         if (doc != null)
+         if (originallyActiveElement_ != null
+             && !originallyActiveElement_.getTagName().equalsIgnoreCase("body"))
          {
-            try
+            Document doc = originallyActiveElement_.getOwnerDocument();
+            if (doc != null)
             {
                originallyActiveElement_.focus();
             }
-            catch (Exception e)
-            {
-               // focus() fail if the element is no longer visible. It's
-               // easier to just catch this than try to detect it.
-            }
          }
+      }
+      catch (Exception e)
+      {
+         // focus() fail if the element is no longer visible. It's
+         // easier to just catch this than try to detect it.
+
+         // Also originallyActiveElement_.getTagName() can fail with:
+         // "Permission denied to access property 'tagName' from a non-chrome context"
+         // possibly due to Firefox "anonymous div" issue.
       }
       originallyActiveElement_ = null;
    }

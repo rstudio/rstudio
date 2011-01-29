@@ -40,6 +40,10 @@ BrowserWindow::BrowserWindow(bool showToolbar, QUrl baseUrl, QWidget* pParent) :
 
    setCentralWidget(pView_);
    setUnifiedTitleAndToolBarOnMac(true);
+
+   QShortcut* copyShortcut = new QShortcut(QKeySequence::Copy, this);
+   connect(copyShortcut, SIGNAL(activated()),
+           pView_->pageAction(QWebPage::Copy), SLOT(trigger()));
 }
 
 void BrowserWindow::printRequested(QWebFrame* frame)
