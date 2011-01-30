@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,7 +21,6 @@ import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.util.FileBackedObject;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.util.tools.Utility;
 
 import java.io.BufferedReader;
 import java.io.EOFException;
@@ -250,7 +249,7 @@ public class ExternalPermutationWorkerFactory extends PermutationWorkerFactory {
 
     byte[] cookieBytes = new byte[16];
     random.nextBytes(cookieBytes);
-    String cookie = Utility.toHexString(cookieBytes);
+    String cookie = Util.toHexString(cookieBytes);
 
     // Cook up the classpath, main class, and extra args
     args.addAll(Arrays.asList("-classpath",

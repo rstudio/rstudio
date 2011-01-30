@@ -37,10 +37,6 @@
     class='com.google.gwt.user.server.rpc.RpcTokenServiceImpl' />
   <servlet path='/rpctokentest-annotation'
     class='com.google.gwt.user.server.rpc.AnnotatedRpcTokenTestServiceImpl' />
-  <servlet path='/xsrftestservice'
-    class='com.google.gwt.user.server.rpc.XsrfTestServiceImpl' />
-  <servlet path='/xsrfmock'
-    class='com.google.gwt.user.server.rpc.MockXsrfTokenServiceImpl' /> 
   <servlet path='/unicodeEscape'
     class='com.google.gwt.user.server.rpc.UnicodeEscapingServiceImpl' />
   <servlet path='/recursiveclass'

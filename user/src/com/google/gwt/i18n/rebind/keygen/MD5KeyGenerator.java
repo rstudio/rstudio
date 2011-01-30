@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,7 +15,7 @@
  */
 package com.google.gwt.i18n.rebind.keygen;
 
-import com.google.gwt.util.tools.Utility;
+import com.google.gwt.dev.util.Util;
 
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
@@ -29,9 +29,9 @@ public class MD5KeyGenerator implements KeyGenerator {
   public String generateKey(String className, String methodName, String text, String meaning) {
     /*
      * This does not use Util.computeStrongName because we would have
-     * to concatenate the text and meaning into a temporary buffer.
+     * to concatenate the text and meaning into a temporary buffer. 
      */
-
+    
     if (text == null) {
       // Cannot compute a key if no default text is supplied.
       return null;
@@ -51,6 +51,6 @@ public class MD5KeyGenerator implements KeyGenerator {
     } catch (UnsupportedEncodingException e) {
       throw new RuntimeException("UTF-8 unsupported", e);
     }
-    return Utility.toHexString(md5.digest());
+    return Util.toHexString(md5.digest());
   }
 }

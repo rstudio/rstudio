@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -45,13 +45,10 @@ import com.google.gwt.user.client.rpc.UnicodeEscapingTest;
 import com.google.gwt.user.client.rpc.UnicodeEscapingTestWithTypeObfuscation;
 import com.google.gwt.user.client.rpc.ValueTypesTest;
 import com.google.gwt.user.client.rpc.ValueTypesTestWithTypeObfuscation;
-import com.google.gwt.user.client.rpc.XsrfProtectionTest;
 import com.google.gwt.user.rebind.rpc.BlacklistTypeFilterTest;
 import com.google.gwt.user.rebind.rpc.SerializableTypeOracleBuilderTest;
 import com.google.gwt.user.rebind.rpc.TypeHierarchyUtilsTest;
 import com.google.gwt.user.server.Base64Test;
-import com.google.gwt.user.server.UtilTest;
-import com.google.gwt.user.server.rpc.AbstractXsrfProtectedServiceServletTest;
 import com.google.gwt.user.server.rpc.RPCRequestTest;
 import com.google.gwt.user.server.rpc.RPCServletUtilsTest;
 import com.google.gwt.user.server.rpc.RPCTest;
@@ -93,8 +90,6 @@ public class RPCSuite {
     suite.addTestSuite(FailedRequestTest.class);
     suite.addTestSuite(FailingRequestBuilderTest.class);
     suite.addTestSuite(Base64Test.class);
-    suite.addTestSuite(UtilTest.class);
-    suite.addTestSuite(AbstractXsrfProtectedServiceServletTest.class);
 
     // GWTTestCases
     suite.addTestSuite(ValueTypesTest.class);
@@ -108,7 +103,6 @@ public class RPCSuite {
     suite.addTestSuite(UnicodeEscapingTest.class);
     suite.addTestSuite(RunTimeSerializationErrorsTest.class);
     suite.addTestSuite(RecursiveClassTest.class);
-    suite.addTestSuite(XsrfProtectionTest.class);
 
     // This test turns on the type-elision feature of RPC
     suite.addTestSuite(ValueTypesTestWithTypeObfuscation.class);
