@@ -1,12 +1,12 @@
 /*
  * Copyright 2006 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -31,15 +31,36 @@ import java.io.Writer;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
 /**
- * A smattering of useful file functions.
+ * A smattering of useful functions.
  */
 public final class Utility {
+
+  /**
+   * Per thread MD5 instance.
+   */
+  private static final ThreadLocal<MessageDigest> perThreadMd5  =
+    new ThreadLocal<MessageDigest>() {
+      @Override
+      protected MessageDigest initialValue() {
+        try {
+          return MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+          return null;
+        }
+      };
+  };
+
+  public static char[] HEX_CHARS = new char[] {
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
+    'E', 'F'};
 
   private static String sInstallPath = null;
 
@@ -203,7 +224,7 @@ public final class Utility {
    * Gets the contents of a file from the class path as a String. Note: this
    * method is only guaranteed to work for resources in the same class loader
    * that contains this {@link Utility} class.
-   * 
+   *
    * @param partialPath the partial path to the resource on the class path
    * @return the contents of the file
    * @throws IOException if the file could not be found or an error occurred
@@ -233,8 +254,31 @@ public final class Utility {
   }
 
   /**
+   * Generate MD5 digest.
+   *
+   * @param input input data to be hashed.
+   * @return MD5 digest.
+   */
+  public static byte[] getMd5Digest(byte[] input) {
+    MessageDigest md5 = perThreadMd5.get();
+    md5.reset();
+    md5.update(input);
+    return md5.digest();
+  }
+
+  /**
+   * A 4-digit hex result.
+   */
+  public static void hex4(char c, StringBuffer sb) {
+    sb.append(HEX_CHARS[(c & 0xF000) >> 12]);
+    sb.append(HEX_CHARS[(c & 0x0F00) >> 8]);
+    sb.append(HEX_CHARS[(c & 0x00F0) >> 4]);
+    sb.append(HEX_CHARS[c & 0x000F]);
+  }
+
+  /**
    * Creates a randomly-named temporary directory.
-   * 
+   *
    * @param baseDir base directory to contain the new directory. May be
    *          {@code null}, in which case the directory given by the
    *          {@code java.io.tmpdir} system property will be used.
@@ -295,6 +339,25 @@ public final class Utility {
         return;
       }
     }
+  }
+
+  /**
+   * Returns a string representation of the byte array as a series of
+   * hexadecimal characters.
+   *
+   * @param bytes byte array to convert
+   * @return a string representation of the byte array as a series of
+   *         hexadecimal characters
+   */
+  public static String toHexString(byte[] bytes) {
+    char[] hexString = new char[2 * bytes.length];
+    int j = 0;
+    for (int i = 0; i < bytes.length; i++) {
+      hexString[j++] = HEX_CHARS[(bytes[i] & 0xF0) >> 4];
+      hexString[j++] = HEX_CHARS[bytes[i] & 0x0F];
+    }
+
+    return new String(hexString);
   }
 
   public static void writeTemplateFile(File file, String contents,
