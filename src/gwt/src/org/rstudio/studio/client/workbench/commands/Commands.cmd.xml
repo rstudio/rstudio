@@ -406,9 +406,9 @@ well as menu structures (for main menu and popup menus).
    <cmd id="exportPlotAsImage" 
         buttonLabel="Export"
         menuLabel="_Export As Image..."
-        desc="Export the current plot as a PNG or JPEG image" />
+        desc="Export the current plot as a PNG image" />
    <cmd id="printPlot"
-        buttonLabel = "Print"
+        buttonLabel = "PDF"
         menuLabel="_Print to PDF..."
         desc="Print current plot to a PDF file"/>
    <cmd id ="zoomPlot" 
