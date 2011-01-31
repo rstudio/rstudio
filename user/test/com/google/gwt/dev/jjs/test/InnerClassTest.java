@@ -25,6 +25,12 @@ import java.util.List;
  */
 public class InnerClassTest extends GWTTestCase {
 
+  static class OuterRefFromSuperCtorBase {
+    OuterRefFromSuperCtorBase(Object o) {
+      o.toString();
+    }
+  }
+
   class InnerClass {
     {
       callInner();
@@ -45,18 +51,28 @@ public class InnerClassTest extends GWTTestCase {
     }
   }
 
-  class OuterRefFromSuperCtorBase {
-    OuterRefFromSuperCtorBase(Object o) {
-      o.toString();
-    }
-  }
-
   class OuterRefFromSuperCtorCall extends OuterRefFromSuperCtorBase {
     OuterRefFromSuperCtorCall() {
       super(new Object() {
         @Override
         public String toString() {
           testAppend.append("OuterRefFromSuperCtorCall");
+          return "";
+        }
+      });
+    }
+  }
+
+  class OuterRefFromThisCtorCall extends OuterRefFromSuperCtorBase {
+    public OuterRefFromThisCtorCall(Object object) {
+      super(object);
+    }
+
+    public OuterRefFromThisCtorCall() {
+      this(new Object() {
+        @Override
+        public String toString() {
+          testAppend.append("OuterRefFromThisCtorCall");
           return "";
         }
       });
@@ -150,4 +166,8 @@ public class InnerClassTest extends GWTTestCase {
     assertEquals("OuterRefFromSuperCtorCall", testAppend.toString());
   }
 
+  public void testOuterThisFromThisCall() {
+    new OuterRefFromThisCtorCall();
+    assertEquals("OuterRefFromThisCtorCall", testAppend.toString());
+  }
 }

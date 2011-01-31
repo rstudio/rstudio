@@ -752,25 +752,25 @@ public class GenerateJavaAST {
          * this constructor call, in which case the callee will assign them for
          * us.
          */
-        if (!hasExplicitThis) {
-          ReferenceBinding declaringClass = x.binding.declaringClass;
-          if (declaringClass instanceof NestedTypeBinding) {
-            Iterator<JParameter> paramIt = currentMethod.getParams().iterator();
-            NestedTypeBinding nestedBinding = (NestedTypeBinding) declaringClass;
-            if (nestedBinding.enclosingInstances != null) {
-              for (SyntheticArgumentBinding arg : nestedBinding.enclosingInstances) {
-                JParameter param = paramIt.next();
-                if (arg.matchingField != null) {
-                  JField field = (JField) typeMap.get(arg);
-                  block.addStmt(JProgram.createAssignmentStmt(info,
-                      createVariableRef(info, field),
-                      createVariableRef(info, param)));
-                  currentOuterThisRefParams = Maps.put(
-                      currentOuterThisRefParams, field, param);
-                }
+        ReferenceBinding declaringClass = x.binding.declaringClass;
+        if (declaringClass instanceof NestedTypeBinding) {
+          Iterator<JParameter> paramIt = currentMethod.getParams().iterator();
+          NestedTypeBinding nestedBinding = (NestedTypeBinding) declaringClass;
+          if (nestedBinding.enclosingInstances != null) {
+            for (SyntheticArgumentBinding arg : nestedBinding.enclosingInstances) {
+              JParameter param = paramIt.next();
+              JField field = (JField) typeMap.get(arg);
+              if (!hasExplicitThis) {
+                block.addStmt(JProgram.createAssignmentStmt(info,
+                    createVariableRef(info, field),
+                    createVariableRef(info, param)));
               }
+              currentOuterThisRefParams = Maps.put(currentOuterThisRefParams,
+                  field, param);
             }
+          }
 
+          if (!hasExplicitThis) {
             paramIt = getSyntheticLocalsIterator();
             if (nestedBinding.outerLocalVariables != null) {
               for (SyntheticArgumentBinding arg : nestedBinding.outerLocalVariables) {
@@ -2549,6 +2549,15 @@ public class GenerateJavaAST {
           }
 
           // now we have an updated variable that we can create our ref from
+        }
+      } else {
+        assert variable instanceof JField;
+        // In a constructor, prefer the ctor arg rather than the field.
+        if (currentOuterThisRefParams != null) {
+          JParameter ctorArg = currentOuterThisRefParams.get(variable);
+          if (ctorArg != null) {
+            variable = ctorArg;
+          }
         }
       }
       return variable;

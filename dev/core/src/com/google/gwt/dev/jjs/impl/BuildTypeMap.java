@@ -841,9 +841,7 @@ public class BuildTypeMap {
         if (nestedBinding.enclosingInstances != null) {
           for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
             SyntheticArgumentBinding arg = nestedBinding.enclosingInstances[i];
-            if (arg.matchingField != null) {
-              createField(arg, type, Disposition.THIS_REF);
-            }
+            createField(arg, type, Disposition.THIS_REF);
           }
         }
 
