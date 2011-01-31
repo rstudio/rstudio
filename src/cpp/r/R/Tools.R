@@ -224,57 +224,11 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
 
 .rs.addFunction( "setCRANRepos", function(reposUrl)
 {
-	local({
-    	r <- getOption("repos");
-    	r["CRAN"] <- reposUrl;
-    	options(repos=r)
+  local({
+      r <- getOption("repos");
+      r["CRAN"] <- reposUrl;
+      options(repos=r)
     })
-})
-
-.rs.addFunction( "path.info", function(file)
-{
-  # TODO: make this work for windows paths
-  
-   # check for nothing passed
-   if (length(file) != 1)
-     stop("must pass a single file to get path info for")
-     
-   # convert to character and verify it has chars
-   filePath <- as.character(file)
-   if (nchar(filePath) == 0)
-     stop("must pass a non empty character vector")
-
-   # if the file doesn't start with / or ~ then resolve to current wd
-   firstChar <- substr(filePath, 1, 1)
-   if (firstChar != "/" && firstChar != "~")
-     filePath <- paste(getwd(), "/", filePath, sep="")
-    
-   # expand aliases
-   filePath = path.expand(filePath)
-
-   # get the directory of the file
-   fileDirectory = dirname(filePath)
-
-   # get the basename of the file and default stem and extension
-   fileName <- basename(file)
-   fileStem <- fileName
-   fileExtension <- ""
-   
-   # parse the filename for stem and extension
-   fileComponents <- unlist(strsplit(fileName, ".", fixed = TRUE))
-   components <- length(fileComponents)
-   if (components > 1)
-   {
-     fileStem <- paste(fileComponents[1:components-1], collapse=".")
-     fileExtension <- paste(".", fileComponents[components], sep="")
-   }
-
-   # return the path info
-   list(path = filePath, 
-        directory = fileDirectory,
-        name = fileName,
-        stem = fileStem,
-        extension = fileExtension)
 })
 
 

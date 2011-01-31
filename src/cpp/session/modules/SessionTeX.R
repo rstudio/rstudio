@@ -14,7 +14,7 @@
 .rs.addFunction("compilePdf", function(file, completedAction = "")
 {
    # get the path info
-   pathInfo = .rs.path.info(file)
+   pathInfo = .Call("rs_pathInfo", file)
    
    # check for spaces in path (sweave chokes on these)
    if ( length(grep(" ", pathInfo$name)) > 0 )

@@ -851,6 +851,53 @@ void handleFileExportRequest(const http::Request& request,
    }
 }
 
+SEXP rs_pathInfo(SEXP pathSEXP)
+{
+   try
+   {
+      // validate
+      if (r::sexp::length(pathSEXP) != 1)
+      {
+         throw r::exec::RErrorException(
+                        "must pass a single file to get path info for");
+      }
+
+      std::string path;
+      Error error = r::sexp::extract(pathSEXP, &path);
+      if (error)
+         throw r::exec::RErrorException(r::endUserErrorMessage(error));
+
+      // resolve aliased path
+      FilePath filePath = module_context::resolveAliasedPath(path);
+      if (filePath.empty())
+         throw r::exec::RErrorException("invalid path: " + path);
+
+      // create path info vector (use json repsesentation to force convertion
+      // to VECSXP rather than STRSXP)
+      json::Object pathInfo;
+      pathInfo["path"] = filePath.absolutePath();
+      std::string parent = filePath.absolutePath();
+      FilePath parentPath = filePath.parent();
+      if (!parentPath.empty())
+         parent = parentPath.absolutePath();
+      pathInfo["directory"] = parent;
+      pathInfo["name"] = filePath.filename();
+      pathInfo["stem"] = filePath.stem();
+      pathInfo["extension"] = filePath.extension();
+
+      // return it
+      r::sexp::Protect rProtect;
+      return r::sexp::create(pathInfo, &rProtect);
+   }
+   catch(r::exec::RErrorException e)
+   {
+      r::exec::error(e.message());
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
+   return R_NilValue;
+}
+
 } // anonymous namespace
 
 Error initialize()
@@ -864,6 +911,13 @@ Error initialize()
    events().onClientInit.connect(bind(onClientInit));
    events().onDetectChanges.connect(bind(onDetectChanges, _1));
    events().onShutdown.connect(bind(onShutdown, _1));
+
+   // register path info function
+   R_CallMethodDef pathInfoMethodDef ;
+   pathInfoMethodDef.name = "rs_pathInfo" ;
+   pathInfoMethodDef.fun = (DL_FUNC) rs_pathInfo ;
+   pathInfoMethodDef.numArgs = 1;
+   r::routines::addCallMethod(pathInfoMethodDef);
 
    // install handlers
    using boost::bind;
