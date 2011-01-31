@@ -891,15 +891,26 @@ Error runPreflightScript()
    if (session::options().programMode() == kSessionProgramModeServer)
    {
       FilePath preflightScriptPath = options.preflightScriptPath();
-      if (preflightScriptPath.exists())
+      if (!preflightScriptPath.empty())
       {
-         // run the script (ignore errors and continue no matter what
-         // the outcome of the script is)
-         std::string script = preflightScriptPath.absolutePath();
-         std::string output;
-         Error error = core::system::captureCommand(script, &output);
-         if (error)
-            LOG_ERROR(error);
+         if (preflightScriptPath.exists())
+         {
+            // run the script (ignore errors and continue no matter what
+            // the outcome of the script is)
+            std::string script = preflightScriptPath.absolutePath();
+            std::string output;
+            Error error = core::system::captureCommand(script, &output);
+            if (error)
+            {
+               error.addProperty("preflight-script", script);
+               LOG_ERROR(error);
+            }
+         }
+         else
+         {
+            LOG_WARNING_MESSAGE("preflight script does not exist: " +
+                                preflightScriptPath.absolutePath());
+         }
       }
    }
 
