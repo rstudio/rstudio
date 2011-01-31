@@ -187,8 +187,9 @@ public class Workspace
       refreshView();
    }
 
-   public void onClearWorkspace()
+   void onClearWorkspace()
    {
+      view_.bringToFront();
       globalDisplay_.showYesNoMessage(
          GlobalDisplay.MSG_QUESTION,
          "Confirm Clear Workspace",
@@ -207,9 +208,9 @@ public class Workspace
       );
    }
 
-   public void onSaveWorkspace()
+   void onSaveWorkspace()
    {
-
+      view_.bringToFront();
       fileDialogs_.saveFile(
             "Save Workspace",
             fsContext_,
@@ -254,9 +255,10 @@ public class Workspace
    }
 
 
-   public void onSaveDefaultWorkspace()
+   void onSaveDefaultWorkspace()
    {
-      globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_WARNING, 
+      view_.bringToFront();
+      globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_WARNING,
             
             "Confirm Overwrite",
             
@@ -278,8 +280,9 @@ public class Workspace
    }
 
 
-   public void onLoadWorkspace()
+   void onLoadWorkspace()
    {
+      view_.bringToFront();
       fileDialogs_.openFile(
             "Load Workspace",
             fsContext_,
@@ -300,8 +303,9 @@ public class Workspace
    }
 
 
-   public void onLoadDefaultWorkspace()
+   void onLoadDefaultWorkspace()
    {
+      view_.bringToFront();
       // set progress and create command to dismiss it
       view_.setProgress(true);
       Command dismissProgress = new Command() {
@@ -340,8 +344,9 @@ public class Workspace
    }
    
    
-   public void onImportDatasetFromFile()
+   void onImportDatasetFromFile()
    {
+      view_.bringToFront();
       fileDialogs_.openFile(
             "Select File to Import",
             fsContext_,
@@ -428,8 +433,9 @@ public class Workspace
       return code.toString();
    }
    
-   public void onImportDatasetFromURL()
+   void onImportDatasetFromURL()
    {
+      view_.bringToFront();
       globalDisplay_.promptForText(
          "Import from Web URL" ,
          "Please enter the URL to import data from:", 
@@ -465,8 +471,9 @@ public class Workspace
       
    }
 
-   public void onImportDatasetFromGoogleSpreadsheet()
+   void onImportDatasetFromGoogleSpreadsheet()
    {
+      view_.bringToFront();
       new ImportGoogleSpreadsheetDialog(
          server_,
          globalDisplay_,

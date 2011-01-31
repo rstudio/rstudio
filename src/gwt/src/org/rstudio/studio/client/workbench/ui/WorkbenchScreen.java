@@ -68,7 +68,7 @@ import org.rstudio.studio.client.workbench.views.plots.PlotsTab;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedHandler;
-import org.rstudio.studio.client.workbench.views.workspace.table.WorkspaceTab;
+import org.rstudio.studio.client.workbench.views.workspace.WorkspaceTab;
 
 public class WorkbenchScreen extends Composite 
                              implements WorkbenchMainView,
@@ -84,9 +84,8 @@ public class WorkbenchScreen extends Composite
                           Provider<MainSplitPanel> pSplitPanel,
                           @Named("Console") final Widget consolePane,
                           ConsoleInterruptButton consoleInterrupt,
-                          //@Named("Source") final Widget sourcePane,
                           SourceShim source,
-                          final WorkspaceTab workspaceTab,
+                          @Named("Workspace") final WorkbenchTab workspaceTab,
                           @Named("History") final WorkbenchTab historyTab,
                           @Named("Data") final WorkbenchTab dataTab,
                           @Named("Files") final WorkbenchTab filesTab,

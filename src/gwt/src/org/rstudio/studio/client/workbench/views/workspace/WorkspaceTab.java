@@ -10,7 +10,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.workspace.table;
+package org.rstudio.studio.client.workbench.views.workspace;
 
 import com.google.inject.Inject;
 
@@ -19,7 +19,6 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
-import org.rstudio.studio.client.workbench.views.workspace.Workspace;
 
 public class WorkspaceTab extends DelayLoadWorkbenchTab<Workspace>
 {

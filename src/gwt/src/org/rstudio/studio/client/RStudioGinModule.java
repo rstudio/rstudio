@@ -75,6 +75,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSou
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.workspace.Workspace;
 import org.rstudio.studio.client.workbench.views.workspace.WorkspacePane;
+import org.rstudio.studio.client.workbench.views.workspace.WorkspaceTab;
 import org.rstudio.studio.client.workbench.views.workspace.model.WorkspaceServerOperations;
 
 public class RStudioGinModule extends AbstractGinModule
@@ -108,7 +109,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(Packages.Display.class).to(PackagesPane.class);
       bind(Help.Display.class).to(HelpPane.class);
       bind(Edit.Display.class).to(EditView.class);
-      bindPane("Workspace", WorkspacePane.class);
+      bindTab("Workspace", WorkspaceTab.class);
       bindTab("History", HistoryTab.class);
       bindTab("Data", DataTab.class);
       bindTab("Files", FilesTab.class);
