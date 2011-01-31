@@ -21,10 +21,10 @@ public class DownloadInfo extends JavaScriptObject
    }
    
    public final native String getPath() /*-{
-      return this.path;
+      return this.path[0];
    }-*/;
 
    public final native String getVarname() /*-{
-      return this.varname;
+      return this.varname[0];
    }-*/;
 }
