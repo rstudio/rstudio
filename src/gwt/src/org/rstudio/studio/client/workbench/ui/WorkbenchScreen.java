@@ -150,7 +150,9 @@ public class WorkbenchScreen extends Composite
       rightBottomFrame.setFillWidget(browseTabs_);
 
       MinimizedModuleTabLayoutPanel minimizedTopModuleTabs = new MinimizedModuleTabLayoutPanel(
-            new String[] {"Workspace", /*"Data",*/ "History"});
+            new String[] {"Workspace",
+                          "History",
+                          plotsOnTop_.getValue() ? "Plots" : null});
       minimizedTopModuleTabs.addSelectionHandler(new SelectionHandler<Integer>()
       {
          public void onSelection(SelectionEvent<Integer> integerSelectionEvent)
@@ -160,7 +162,10 @@ public class WorkbenchScreen extends Composite
          }
       });
       MinimizedModuleTabLayoutPanel minimizedBottomModuleTabs = new MinimizedModuleTabLayoutPanel(
-            new String[] {"Files", "Plots", "Packages", "Help"});
+            new String[] {"Files",
+                          plotsOnTop_.getValue() ? null : "Plots",
+                          "Packages",
+                          "Help"});
       minimizedBottomModuleTabs.addSelectionHandler(new SelectionHandler<Integer>()
       {
          public void onSelection(SelectionEvent<Integer> integerSelectionEvent)
