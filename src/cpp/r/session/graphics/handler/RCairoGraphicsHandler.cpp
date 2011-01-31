@@ -266,11 +266,16 @@ bool initializePNG(const FilePath& filePath,
 
 bool supportsSVG()
 {
+   // disable svg for all platforms now (b/c couldn't figure out
+   // how to accurately detect working svg implementation on redhat
+   return false;
+/*
 #ifdef CAIRO_HAS_SVG_SURFACE
    return true;
 #else
    return false;
 #endif
+*/
 }
 
 bool initializeSVG(const FilePath& filePath,
