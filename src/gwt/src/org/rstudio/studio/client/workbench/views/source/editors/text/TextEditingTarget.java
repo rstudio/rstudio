@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.logical.shared.*;
@@ -48,7 +49,10 @@ import org.rstudio.core.client.files.FilenameTransform;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.*;
+import org.rstudio.core.client.widget.FontSizer.Size;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
+import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -63,6 +67,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.codemirror.REditorWithId;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
@@ -95,6 +100,7 @@ public class TextEditingTarget implements EditingTarget
       void hideWarningBar();
       void showFindReplace();
       void onActivate();
+      void setFontSize(FontSizer.Size size);
    }
 
    public interface DocDisplay extends HasValueChangeHandlers<Void>,
@@ -124,6 +130,8 @@ public class TextEditingTarget implements EditingTarget
 
       // Fix bug 964
       void updateBodyMinHeight();
+
+      void setFontSize(Size size);
    }
    private class ExplicitSaveProgressIndicator implements ProgressIndicator
    {
@@ -181,7 +189,8 @@ public class TextEditingTarget implements EditingTarget
                             FileDialogs fileDialogs,
                             FileTypeRegistry fileTypeRegistry,
                             Provider<PublishPdf> pPublishPdf,
-                            Session session)
+                            Session session,
+                            FontSizeManager fontSizeManager)
    {
       commands_ = commands;
       server_ = server;
@@ -190,6 +199,7 @@ public class TextEditingTarget implements EditingTarget
       fileDialogs_ = fileDialogs;
       fileTypeRegistry_ = fileTypeRegistry;
       session_ = session;
+      fontSizeManager_ = fontSizeManager;
       pPublishPdf_ = pPublishPdf;
    }
 
@@ -223,7 +233,8 @@ public class TextEditingTarget implements EditingTarget
       fileType_ = (TextFileType) type;
       view_ = new TextEditingTargetWidget(commands_,
                                           docDisplay_,
-                                          fileType_);
+                                          fileType_,
+                                          events_);
       docUpdateSentinel_ = new DocUpdateSentinel(
             server_,
             docDisplay_,
@@ -292,6 +303,18 @@ public class TextEditingTarget implements EditingTarget
             }
          });
       }
+
+      changeFontSizeRegistration_ = events_.addHandler(
+            ChangeFontSizeEvent.TYPE,
+            new ChangeFontSizeHandler()
+            {
+               public void onChangeFontSize(ChangeFontSizeEvent event)
+               {
+                  view_.setFontSize(event.getFontSize());
+               }
+            });
+      view_.setFontSize(fontSizeManager_.getSize());
+
    }
 
    private String getNameFromDocument(SourceDocument document,
@@ -491,6 +514,11 @@ public class TextEditingTarget implements EditingTarget
       docUpdateSentinel_.stop();
       
       removePublishPdfHandler();
+      if (changeFontSizeRegistration_ != null)
+      {
+         changeFontSizeRegistration_.removeHandler();
+         changeFontSizeRegistration_ = null;
+      }
    }
 
    public HasValue<Boolean> dirtyState()
@@ -958,12 +986,14 @@ public class TextEditingTarget implements EditingTarget
    private final FileDialogs fileDialogs_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final Session session_;
+   private final FontSizeManager fontSizeManager_;
    private DocUpdateSentinel docUpdateSentinel_;
    private Value<String> name_ = new Value<String>(null);
    private TextFileType fileType_;
    private String id_;
    private HandlerRegistration commandHandlerReg_;
    private HandlerRegistration publishPdfReg_;
+   private HandlerRegistration changeFontSizeRegistration_;
    private final Value<Boolean> dirtyState_ = new Value<Boolean>(false);
    private HandlerManager handlers_ = new HandlerManager(this);
    private FileSystemContext fileContext_;

@@ -272,6 +272,7 @@ Error executeInterruptableChildProcess(
    return error;
 }
 
+
 Error captureCommand(const std::string& command, std::string* pOutput)
 {
    // WIN32 popen docs:

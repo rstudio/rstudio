@@ -383,7 +383,7 @@ public abstract class CodeMirrorEditor extends Composite
       return new $wnd.CodeMirror(element, config);
    }-*/;
    
-   private void executeOrDefer(Command command)
+   protected void executeOrDefer(Command command)
    {
       if (editorLoaded_)
          command.execute();

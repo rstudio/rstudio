@@ -46,6 +46,7 @@ import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEd
 import org.rstudio.studio.client.workbench.views.source.model.PublishPdfResult;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.workspace.model.DataPreviewResult;
+import org.rstudio.studio.client.workbench.views.workspace.model.DownloadInfo;
 import org.rstudio.studio.client.workbench.views.workspace.model.GoogleSpreadsheetImportSpec;
 import org.rstudio.studio.client.workbench.views.workspace.model.GoogleSpreadsheetInfo;
 import org.rstudio.studio.client.workbench.views.workspace.model.WorkspaceObjectInfo;
@@ -323,6 +324,16 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, 
                   IMPORT_GOOGLE_SPREADSHEET, 
                   importSpec, 
+                  requestCallback);
+   }
+   
+   public void downloadDataFile(
+                  String dataFileUrl,
+                  ServerRequestCallback<DownloadInfo> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+                  DOWNLOAD_DATA_FILE,
+                  dataFileUrl,
                   requestCallback);
    }
 
@@ -1301,6 +1312,7 @@ public class RemoteServer implements Server
    private static final String LOAD_WORKSPACE = "load_workspace";
    private static final String LIST_GOOGLE_SPREADSHEETS = "list_google_spreadsheets";
    private static final String IMPORT_GOOGLE_SPREADSHEET = "import_google_spreadsheet";
+   private static final String DOWNLOAD_DATA_FILE = "download_data_file";
    private static final String GET_DATA_PREVIEW = "get_data_preview";
    private static final String GET_OUTPUT_PREVIEW = "get_output_preview";
 

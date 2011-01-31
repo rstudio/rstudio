@@ -95,7 +95,6 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="activateSource"/>
          <cmd refid="activateConsole"/>
-         <cmd refid="consoleOnTop"/>
          <separator/>
          <cmd refid="activateWorkspace"/>
          <cmd refid="activateHistory"/>
@@ -103,6 +102,18 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="activatePlots"/>
          <cmd refid="activatePackages"/>
          <cmd refid="activateHelp"/>
+         <separator/>
+         <menu label="Pane Layout">
+            <cmd refid="consoleOnTop"/>
+            <cmd refid="plotsOnTop"/>
+         </menu>
+         <menu label="Font Size">
+            <cmd refid="fontSize10"/>
+            <cmd refid="fontSize12"/>
+            <cmd refid="fontSize14"/>
+            <cmd refid="fontSize16"/>
+            <cmd refid="fontSize18"/>
+         </menu>
       </menu>
 
       <separator/>
@@ -114,13 +125,12 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="saveWorkspace"/>
          <cmd refid="saveDefaultWorkspace"/>
          <separator/>
-         <!-- 
          <menu label="Import Dataset">
             <cmd refid="importDatasetFromFile"/>
+            <cmd refid="importDatasetFromURL"/>
             <cmd refid="importDatasetFromGoogleSpreadsheet"/>
          </menu>
          <separator/>
-          -->
          <cmd refid="clearWorkspace"/>
       </menu>
     
@@ -292,6 +302,12 @@ well as menu structures (for main menu and popup menus).
    <cmd id="lastTab"
         menuLabel="_Last Tab"/>
 
+   <cmd id="fontSize10" menuLabel="10pt"/>
+   <cmd id="fontSize12" menuLabel="12pt"/>
+   <cmd id="fontSize14" menuLabel="14pt"/>
+   <cmd id="fontSize16" menuLabel="16pt"/>
+   <cmd id="fontSize18" menuLabel="18pt"/>
+
    <cmd id="findReplace"
         menuLabel="_Find and Replace..."/>
    <cmd id="executeAllCode"
@@ -389,9 +405,9 @@ well as menu structures (for main menu and popup menus).
    <cmd id="exportPlotAsImage" 
         buttonLabel="Export"
         menuLabel="_Export As Image..."
-        desc="Export the current plot as a PNG or JPEG image" />
+        desc="Export the current plot as a PNG image" />
    <cmd id="printPlot"
-        buttonLabel = "Print"
+        buttonLabel = "PDF"
         menuLabel="_Print to PDF..."
         desc="Print current plot to a PDF file"/>
    <cmd id ="zoomPlot" 
@@ -420,6 +436,8 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Save _as Default Workspace..."/>
    <cmd id="importDatasetFromFile"
         menuLabel="From Text File..."/>
+   <cmd id="importDatasetFromURL"
+        menuLabel="From Web URL..."/>
    <cmd id="importDatasetFromGoogleSpreadsheet"
         menuLabel="From Google Spreadsheet..."/>
    <cmd id="refreshWorkspace"
@@ -439,8 +457,13 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         desc="Refresh package listing"/>
 
+   <!-- consoleOnTop has a dynamic menuLabel -->
    <cmd id="consoleOnTop"
-        menuLabel="Flip Console and Source"/>
+        menuLabel=""/>
+
+   <!-- plotsOnTop has a dynamic menuLabel -->
+   <cmd id="plotsOnTop"
+        menuLabel=""/>
 
    <cmd id="showOptions"
         menuLabel="Pr_eferences..."/>

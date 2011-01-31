@@ -121,7 +121,7 @@ bool currentUserIsPrivilleged(unsigned int minimumUserId);
    
 typedef std::pair<std::string,std::string> Option;
 typedef std::vector<Option> Options;
-   
+
 Error executeInterruptableChildProcess(
            std::string path,
            Options args,

@@ -19,6 +19,8 @@
 
 @external windowframe, windowframe-maximized, windowframe-exclusive;
 
+@external windows, macintosh, linux;
+
 @external dialogTopLeft, dialogTopLeftInner,
       dialogTopCenter, dialogTopCenterInner,
       dialogTopRight, dialogTopRightInner,
@@ -80,6 +82,7 @@
 
 @url WORKSPACESECTIONHEADERTILE workspaceSectionHeaderTile;
 
+body.windows, body.macintosh, body.linux {}
 
 body {
    background: BACKGROUNDGRADIENT repeat-x top #e1e2e5;
@@ -724,6 +727,9 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    font-size: 10px;
    background-color: transparent;
 }
+body.windows .searchBox {
+   font-size: 11px;
+}
 
 /** Workbench **/
 
@@ -759,6 +765,10 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 
 .workspace tr.workspaceDataRow {
    cursor: pointer;
+}
+
+.workspace tr.workspaceDataRow td {
+   line-height: 16px;   
 }
 
 @sprite .workspace tr.workspaceDataFrameRow td+td {

@@ -46,6 +46,8 @@ public class MinimizedModuleTabLayoutPanel
       for (int i = 0; i < tabNames.length; i++)
       {
          String tabName = tabNames[i];
+         if (tabName == null)
+            continue;
          ModuleTabLayoutPanel.ModuleTab tab
                = new ModuleTabLayoutPanel.ModuleTab(tabName, styles);
          tab.addStyleName("gwt-TabLayoutPanelTab");

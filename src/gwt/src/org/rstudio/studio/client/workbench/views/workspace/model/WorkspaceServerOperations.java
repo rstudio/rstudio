@@ -48,6 +48,9 @@ public interface WorkspaceServerOperations
    void importGoogleSpreadsheet(GoogleSpreadsheetImportSpec importSpec,
                                 ServerRequestCallback<Void> requestCallback);
 
+   void downloadDataFile(String dataFileURL,
+                         ServerRequestCallback<DownloadInfo> requestCallback);
+   
    void getDataPreview(
          String dataFilePath,
          ServerRequestCallback<DataPreviewResult> requestCallback);

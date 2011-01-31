@@ -434,11 +434,11 @@ void showFile(const FilePath& filePath, const std::string& window)
       if (isVisibleUserFile(filePath))
       {
          std::string relPath = filePath.relativePath(module_context::userHomePath());
-         url = "/files/" + relPath;
+         url = "files/" + relPath;
       }
       else
       {
-         url = "/file_show?path=" + http::util::urlEncode(filePath.absolutePath(), true);
+         url = "file_show?path=" + http::util::urlEncode(filePath.absolutePath(), true);
       }
 
       // fire event

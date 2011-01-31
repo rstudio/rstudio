@@ -14,6 +14,9 @@
 package org.rstudio.studio.client.workbench.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
@@ -38,14 +41,15 @@ import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.layout.DualWindowLayoutPanel;
 import org.rstudio.core.client.layout.LogicalWindow;
 import org.rstudio.core.client.layout.WindowState;
-import org.rstudio.core.client.theme.MinimizedModuleTabLayoutPanel;
-import org.rstudio.core.client.theme.MinimizedWindowFrame;
-import org.rstudio.core.client.theme.PrimaryWindowFrame;
-import org.rstudio.core.client.theme.WindowFrame;
+import org.rstudio.core.client.theme.*;
+import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
+import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.workbench.MRUList;
 import org.rstudio.studio.client.workbench.WorkbenchMainView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -64,7 +68,7 @@ import org.rstudio.studio.client.workbench.views.plots.PlotsTab;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedHandler;
-import org.rstudio.studio.client.workbench.views.workspace.table.WorkspaceTab;
+import org.rstudio.studio.client.workbench.views.workspace.WorkspaceTab;
 
 public class WorkbenchScreen extends Composite 
                              implements WorkbenchMainView,
@@ -80,9 +84,8 @@ public class WorkbenchScreen extends Composite
                           Provider<MainSplitPanel> pSplitPanel,
                           @Named("Console") final Widget consolePane,
                           ConsoleInterruptButton consoleInterrupt,
-                          //@Named("Source") final Widget sourcePane,
                           SourceShim source,
-                          final WorkspaceTab workspaceTab,
+                          @Named("Workspace") final WorkbenchTab workspaceTab,
                           @Named("History") final WorkbenchTab historyTab,
                           @Named("Data") final WorkbenchTab dataTab,
                           @Named("Files") final WorkbenchTab filesTab,
@@ -92,37 +95,64 @@ public class WorkbenchScreen extends Composite
                           final Edit.Shim edit,
                           Commands commands,
                           final GlobalDisplay globalDisplay,
-                          final Provider<MRUList> mruList)
+                          final Provider<MRUList> mruList,
+                          FontSizeManager fontSizeManager)
    {
       eventBus_ = eventBus;
       session_ = session;
 
       eventBus_.addHandler(ShowEditorEvent.TYPE, edit);
+      eventBus_.addHandler(ChangeFontSizeEvent.TYPE, new ChangeFontSizeHandler()
+      {
+         public void onChangeFontSize(ChangeFontSizeEvent event)
+         {
+            FontSizer.setNormalFontSize(Document.get(), event.getFontSize());
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               public void execute()
+               {
+                  // Causes the console width to be remeasured
+                  doOnPaneSizesChanged();
+               }
+            });
+         }
+      });
+      FontSizer.setNormalFontSize(Document.get(), fontSizeManager.getSize());
 
       // create tabsets
       tabsPanel_ = pSplitPanel.get();
       tabsPanel_.setSize("100%", "100%");
       tabsPanel_.addStyleDependentName("Workbench");
 
+      initBoolPref("plotsOnTop", plotsOnTop_, commands.plotsOnTop(), session, globalDisplay);
+      commands.plotsOnTop().setMenuLabel("Plots on " + (plotsOnTop_.getValue() ? "Bottom" : "Top"));
+
+      plotsTab_ = plotsTab;
+
       final WindowFrame rightTopFrame = new WindowFrame();
       rightTopTabs_ = new WorkbenchTabPanel(rightTopFrame);
       rightTopTabs_.add(workspaceTab);
       //rightTopTabs_.add(dataTab);
       rightTopTabs_.add(historyTab);
+      if (plotsOnTop_.getValue())
+         rightTopTabs_.add(plotsTab_);
       rightTopFrame.setFillWidget(rightTopTabs_);
 
       // initialize right tabs
       final WindowFrame rightBottomFrame = new WindowFrame();
       browseTabs_ = new WorkbenchTabPanel(rightBottomFrame);
       browseTabs_.add(filesTab);
-      browseTabs_.add(plotsTab_ = plotsTab);
+      if (!plotsOnTop_.getValue())
+         browseTabs_.add(plotsTab_);
       browseTabs_.add(packagesTab);
       browseTabs_.add(helpTab) ;
       browseTabs_.addSelectionHandler(this);
       rightBottomFrame.setFillWidget(browseTabs_);
 
       MinimizedModuleTabLayoutPanel minimizedTopModuleTabs = new MinimizedModuleTabLayoutPanel(
-            new String[] {"Workspace", /*"Data",*/ "History"});
+            new String[] {"Workspace",
+                          "History",
+                          plotsOnTop_.getValue() ? "Plots" : null});
       minimizedTopModuleTabs.addSelectionHandler(new SelectionHandler<Integer>()
       {
          public void onSelection(SelectionEvent<Integer> integerSelectionEvent)
@@ -132,7 +162,10 @@ public class WorkbenchScreen extends Composite
          }
       });
       MinimizedModuleTabLayoutPanel minimizedBottomModuleTabs = new MinimizedModuleTabLayoutPanel(
-            new String[] {"Files", "Plots", "Packages", "Help"});
+            new String[] {"Files",
+                          plotsOnTop_.getValue() ? null : "Plots",
+                          "Packages",
+                          "Help"});
       minimizedBottomModuleTabs.addSelectionHandler(new SelectionHandler<Integer>()
       {
          public void onSelection(SelectionEvent<Integer> integerSelectionEvent)
@@ -141,14 +174,21 @@ public class WorkbenchScreen extends Composite
             browseTabs_.selectTab(tab);
          }
       });
+
+      LogicalWindow workspaceLogicalWindow = new LogicalWindow(
+            rightTopFrame,
+            minimizedTopModuleTabs);
+      LogicalWindow plotsLogicalWindow = new LogicalWindow(
+            rightBottomFrame,
+            minimizedBottomModuleTabs);
+
+      LogicalWindow rightTopWindow = workspaceLogicalWindow;
+      LogicalWindow rightBottomWindow = plotsLogicalWindow;
+
       final DualWindowLayoutPanel rightTabs = new DualWindowLayoutPanel(
             eventBus,
-            new LogicalWindow(
-                  rightTopFrame,
-                  minimizedTopModuleTabs),
-            new LogicalWindow(
-                  rightBottomFrame,
-                  minimizedBottomModuleTabs),
+            rightTopWindow,
+            rightBottomWindow,
             session,
             "right",
             WindowState.NORMAL,
@@ -158,8 +198,8 @@ public class WorkbenchScreen extends Composite
       consolePane_ = consolePane;
       consoleFrame_ = new PrimaryWindowFrame("Console", consolePane_);
       consoleFrame_.setContextButton(consoleInterrupt,
-                                    consoleInterrupt.getWidth(),
-                                    consoleInterrupt.getHeight());
+                                     consoleInterrupt.getWidth(),
+                                     consoleInterrupt.getHeight());
       consoleLogicalWindow_ = new LogicalWindow(
             consoleFrame_,
             new MinimizedWindowFrame("Console"));
@@ -170,42 +210,13 @@ public class WorkbenchScreen extends Composite
             sourceFrame,
             new MinimizedWindowFrame("Source"));
 
-      new BoolStateValue("moduleprefs", "consoleOnTop", true,
-                         session_.getSessionInfo().getClientState())
-      {
-         @Override
-         protected void onInit(Boolean value)
-         {
-            consoleOnTop_ = value == null ? false : value;
-         }
+      initBoolPref("consoleOnTop", consoleOnTop_, commands.consoleOnTop(), session, globalDisplay);
+      commands.consoleOnTop().setMenuLabel("Console on " + (consoleOnTop_.getValue() ? "Bottom" : "Top"));
 
-         @Override
-         protected Boolean getValue()
-         {
-            return consoleOnTop_;
-         }
-      };
-      commands.consoleOnTop().addHandler(new CommandHandler()
-      {
-         public void onCommand(AppCommand command)
-         {
-            consoleOnTop_ = !consoleOnTop_;
-            session_.persistClientState();
-            globalDisplay.showProgress("Saving preferences...");
-            new Timer() {
-               @Override
-               public void run()
-               {
-                  Window.Location.reload();
-               }
-            }.schedule(1500);
-         }
-      });
-
-      LogicalWindow leftTopWindow = consoleOnTop_ ? consoleLogicalWindow_
-                                                  : sourceLogicalWindow_;
-      LogicalWindow leftBottomWindow = consoleOnTop_ ? sourceLogicalWindow_
-                                                     : consoleLogicalWindow_;
+      LogicalWindow leftTopWindow = consoleOnTop_.getValue() ? consoleLogicalWindow_
+                                                             : sourceLogicalWindow_;
+      LogicalWindow leftBottomWindow = consoleOnTop_.getValue() ? sourceLogicalWindow_
+                                                                : consoleLogicalWindow_;
 
       DualWindowLayoutPanel leftTabs = new DualWindowLayoutPanel(
             eventBus,
@@ -374,6 +385,46 @@ public class WorkbenchScreen extends Composite
       commandBinder.bind(commands, this);
    }
 
+   private static void initBoolPref(String key,
+                                    final Value<Boolean> val,
+                                    AppCommand command,
+                                    final Session session,
+                                    final GlobalDisplay globalDisplay)
+   {
+      new BoolStateValue("moduleprefs", key, true,
+                         session.getSessionInfo().getClientState())
+      {
+         @Override
+         protected void onInit(Boolean value)
+         {
+            val.setValue(value == null ? false : value);
+         }
+
+         @Override
+         protected Boolean getValue()
+         {
+            return val.getValue();
+         }
+      };
+      command.addHandler(new CommandHandler()
+      {
+         public void onCommand(AppCommand command)
+         {
+            val.setValue(val.getValue() == null
+                         || !val.getValue());
+            session.persistClientState();
+            globalDisplay.showProgress("Saving preferences...");
+            new Timer() {
+               @Override
+               public void run()
+               {
+                  Window.Location.reload();
+               }
+            }.schedule(1500);
+         }
+      });
+   }
+
    private void updateWorkingDirectory(String path)
    {
       if (!path.endsWith("/"))
@@ -405,7 +456,12 @@ public class WorkbenchScreen extends Composite
       int consoleWidth = ((ConsolePane) consolePane_).getCharacterWidth();
 
       // plots size (don't allow negative metrics)
-      Size deckPanelSize = browseTabs_.getDeckPanelSize();
+      WorkbenchTabPanel plotPanel = plotsOnTop_.getValue() ? rightTopTabs_
+                                                           : browseTabs_;
+      Size deckPanelSize = new Size(
+            plotPanel.getOffsetWidth(),
+            plotPanel.getOffsetHeight() - ModuleTabLayoutPanel.BAR_HEIGHT);
+
       Size plotsSize = new Size(
                Math.max(deckPanelSize.width, 0),
                Math.max(deckPanelSize.height - Toolbar.DEFAULT_HEIGHT, 0));
@@ -467,7 +523,8 @@ public class WorkbenchScreen extends Composite
    
    private final WorkbenchTabPanel rightTopTabs_;
    private final WorkbenchTabPanel browseTabs_;
-   private boolean consoleOnTop_;
+   private Value<Boolean> consoleOnTop_ = new Value<Boolean>(false);
+   private Value<Boolean> plotsOnTop_ = new Value<Boolean>(false);
    private LogicalWindow consoleLogicalWindow_;
    private LogicalWindow sourceLogicalWindow_;
    private PrimaryWindowFrame consoleFrame_;

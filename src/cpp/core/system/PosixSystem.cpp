@@ -594,8 +594,6 @@ Error executeInterruptableChildProcess(
    return Success() ;
 }   
 
-
-
 Error captureCommand(const std::string& command, std::string* pOutput)
 {
    // start process

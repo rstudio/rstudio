@@ -23,6 +23,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import org.rstudio.core.client.widget.FastSelectTable;
+import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.history.HasHistory;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
@@ -53,6 +54,7 @@ public class HistoryTable extends FastSelectTable<HistoryEntry, String, Long>
 
       final Resources res = GWT.create(Resources.class);
       setStyleName(res.styles().historyTable());
+      FontSizer.applyNormalFontSize(this);
 
       if (searchResult_)
       {
