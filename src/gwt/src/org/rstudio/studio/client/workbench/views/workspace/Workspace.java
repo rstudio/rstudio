@@ -184,8 +184,7 @@ public class Workspace
       refreshView();
    }
 
-   @Handler
-   void onClearWorkspace()
+   public void onClearWorkspace()
    {
       globalDisplay_.showYesNoMessage(
          GlobalDisplay.MSG_QUESTION,
@@ -205,8 +204,7 @@ public class Workspace
       );
    }
 
-   @Handler
-   void onSaveWorkspace()
+   public void onSaveWorkspace()
    {
 
       fileDialogs_.saveFile(
@@ -252,8 +250,8 @@ public class Workspace
                            : null;
    }
 
-   @Handler
-   void onSaveDefaultWorkspace()
+
+   public void onSaveDefaultWorkspace()
    {
       globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_WARNING, 
             
@@ -276,8 +274,8 @@ public class Workspace
             true);
    }
 
-   @Handler
-   void onLoadWorkspace()
+
+   public void onLoadWorkspace()
    {
       fileDialogs_.openFile(
             "Load Workspace",
@@ -298,8 +296,8 @@ public class Workspace
             });
    }
 
-   @Handler
-   void onLoadDefaultWorkspace()
+
+   public void onLoadDefaultWorkspace()
    {
       // set progress and create command to dismiss it
       view_.setProgress(true);
@@ -338,8 +336,7 @@ public class Workspace
            true);   
    }
    
-   @Handler
-   void onImportDatasetFromFile()
+   public void onImportDatasetFromFile()
    {
       fileDialogs_.openFile(
             "Select File to Import",
