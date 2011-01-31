@@ -125,13 +125,11 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="saveWorkspace"/>
          <cmd refid="saveDefaultWorkspace"/>
          <separator/>
-         <!-- 
          <menu label="Import Dataset">
             <cmd refid="importDatasetFromFile"/>
             <cmd refid="importDatasetFromGoogleSpreadsheet"/>
          </menu>
          <separator/>
-          -->
          <cmd refid="clearWorkspace"/>
       </menu>
     
