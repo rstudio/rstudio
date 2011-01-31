@@ -91,6 +91,7 @@ public abstract class Commands extends CommandBundle
    public abstract AppCommand saveDefaultWorkspace();
    public abstract AppCommand loadDefaultWorkspace();
    public abstract AppCommand importDatasetFromFile();
+   public abstract AppCommand importDatasetFromURL();
    public abstract AppCommand importDatasetFromGoogleSpreadsheet();
    public abstract AppCommand activateWorkspace();
   

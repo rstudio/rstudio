@@ -63,6 +63,7 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettings>
    public ImportFileSettingsDialog(
          WorkspaceServerOperations server,
          FileSystemItem dataFile,
+         String varname,
          String caption,
          OperationWithInput<ImportFileSettings> operation,
          GlobalDisplay globalDisplay)
@@ -78,7 +79,10 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettings>
       MyBinder binder = GWT.create(MyBinder.class);
       widget_ = binder.createAndBindUi(this);
 
-      varname_.setText(dataFile.getStem().replace(" ", "."));
+      if (varname != null)
+         varname_.setText(varname);
+      else
+         varname_.setText(dataFile.getStem().replace(" ", "."));
 
       separator_.addItem("Whitespace", "");
       separator_.addItem("Comma", ",");

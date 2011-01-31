@@ -41,6 +41,10 @@ public class WorkspaceTab extends DelayLoadWorkbenchTab<Workspace>
       @Handler
       public abstract void onImportDatasetFromFile();
       @Handler
+      public abstract void onImportDatasetFromURL();
+      @Handler
+      public abstract void onImportDatasetFromGoogleSpreadsheet();
+      @Handler
       public abstract void onClearWorkspace();
    }
 
