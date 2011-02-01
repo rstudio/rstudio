@@ -175,11 +175,7 @@ public final class Dictionary {
   }
 
   void resourceError(String key) {
-    Collection<String> s = this.keySet();
     String error = "Cannot find '" + key + "' in " + this;
-    if (s.size() < MAX_KEYS_TO_SHOW) {
-      error += "\n keys found: " + s;
-    }
     throw new MissingResourceException(error, this.toString(), key);
   }
 
