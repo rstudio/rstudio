@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.resource.impl;
 
+import com.google.gwt.dev.resource.impl.DefaultFilters.FilterFileType;
+
 import junit.framework.TestCase;
 
 import org.apache.tools.ant.types.ZipScanner;
@@ -51,29 +53,39 @@ public class DefaultFiltersTest extends TestCase {
     String baseExcluded[] = mergeArrays(baseExcludedTesting, baseExcludedExact,
         baseExcludedDoubleStar);
 
-    void testAdvancedJavaPath(ResourceFilterString expected,
-        ResourceFilterString actual) {
+    void testAdvancedPath(ResourceFilterString expected,
+        ResourceFilterString actual, String suffix) {
       for (String path : mergeArrays(baseIncluded, baseExcluded, getMiscPaths(
           "testing", false).toArray(EMPTY_ARRAY),
           getMiscPaths("a/bc/de", false).toArray(EMPTY_ARRAY))) {
-        assertEquals(path + ".java", expected, actual);
+        assertEquals(path + suffix, expected, actual);
+      }      
+    }
+
+    void testAdvancedPathAnt(ResourceFilterString expected,
+        ResourceFilterString actual, String suffix) {
+      for (String path : mergeArrays(baseIncluded, baseExcluded, getMiscPaths(
+          "testing", true).toArray(EMPTY_ARRAY),
+          getMiscPaths("a/bc/de", true).toArray(EMPTY_ARRAY))) {
+        assertEquals(EXCLUDED_CHARS + path + EXCLUDED_CHARS + suffix,
+            expected, actual);
+        assertEquals(path + EXCLUDED_CHARS + suffix, expected, actual);
+        assertEquals(path + suffix, expected, actual);
       }
+      testAdvancedPath(expected, actual, suffix);
+      new BasicPaths().testBasicPath(expected, actual, suffix);
+    }
+    
+    void testAdvancedClassFilesPathAnt(ResourceFilterString expected,
+        ResourceFilterString actual) {
+      testAdvancedPathAnt(expected, actual, CLASS_FILE_SUFFIX);
     }
 
     void testAdvancedJavaPathAnt(ResourceFilterString expected,
         ResourceFilterString actual) {
-      for (String path : mergeArrays(baseIncluded, baseExcluded, getMiscPaths(
-          "testing", true).toArray(EMPTY_ARRAY),
-          getMiscPaths("a/bc/de", true).toArray(EMPTY_ARRAY))) {
-        assertEquals(excludedChars + path + excludedChars + javaSuffix,
-            expected, actual);
-        assertEquals(path + excludedChars + javaSuffix, expected, actual);
-        assertEquals(path + javaSuffix, expected, actual);
-      }
-      testAdvancedJavaPath(expected, actual);
-      new BasicPaths().testBasicJavaPath(expected, actual);
+      testAdvancedPathAnt(expected, actual, JAVA_FILE_SUFFIX);      
     }
-
+    
     void testAdvancedPath(ResourceFilterString expected,
         ResourceFilterString actual) {
       for (String path : mergeArrays(baseIncluded, baseExcluded, getMiscPaths(
@@ -89,8 +101,8 @@ public class DefaultFiltersTest extends TestCase {
           "testing", true).toArray(EMPTY_ARRAY),
           getMiscPaths("a/bc/de", true).toArray(EMPTY_ARRAY))) {
         assertEquals(path, expected, actual);
-        assertEquals(path + excludedChars, expected, actual);
-        assertEquals(excludedChars + path + excludedChars, expected, actual);
+        assertEquals(path + EXCLUDED_CHARS, expected, actual);
+        assertEquals(EXCLUDED_CHARS + path + EXCLUDED_CHARS, expected, actual);
       }
       testAdvancedPath(expected, actual);
       new BasicPaths().testBasicPath(expected, actual);
@@ -106,20 +118,20 @@ public class DefaultFiltersTest extends TestCase {
         "foo/.cvsignore", "foo/CVS", "foo/.svn", "foo/SCCS",
         "foo/bar/vssver.scc", "/foo/bar/.DS_Store"};
 
-    void testBasicJavaPath(ResourceFilterString expected,
-        ResourceFilterString actual) {
+    void testBasicPath(ResourceFilterString expected,
+        ResourceFilterString actual, String suffix) {
       for (String str : mergeArrays(baseIncluded, baseExcluded,
           baseSuffixExcluded,
           getMiscPaths("testing", true).toArray(EMPTY_ARRAY), getMiscPaths(
               "a/bc/de", true).toArray(EMPTY_ARRAY))) {
         assertEquals(str, expected, actual);
-        assertEquals(str + javaSuffix, expected, actual);
-        assertEquals(excludedChars + str, expected, actual);
-        assertEquals(excludedChars + str + excludedChars, expected, actual);
-        assertEquals(excludedChars + str + javaSuffix, expected, actual);
-        assertEquals(excludedChars + str + excludedChars + javaSuffix,
+        assertEquals(str + suffix, expected, actual);
+        assertEquals(EXCLUDED_CHARS + str, expected, actual);
+        assertEquals(EXCLUDED_CHARS + str + EXCLUDED_CHARS, expected, actual);
+        assertEquals(EXCLUDED_CHARS + str + suffix, expected, actual);
+        assertEquals(EXCLUDED_CHARS + str + EXCLUDED_CHARS + suffix,
             expected, actual);
-      }
+      }      
     }
 
     void testBasicPath(ResourceFilterString expected,
@@ -129,8 +141,8 @@ public class DefaultFiltersTest extends TestCase {
           getMiscPaths("testing", true).toArray(EMPTY_ARRAY), getMiscPaths(
               "a/bc/de", true).toArray(EMPTY_ARRAY))) {
         assertEquals(str, expected, actual);
-        assertEquals(excludedChars + str, expected, actual);
-        assertEquals(excludedChars + str + excludedChars, expected, actual);
+        assertEquals(EXCLUDED_CHARS + str, expected, actual);
+        assertEquals(EXCLUDED_CHARS + str + EXCLUDED_CHARS, expected, actual);
       }
     }
   }
@@ -146,28 +158,25 @@ public class DefaultFiltersTest extends TestCase {
       this.filter = filter;
       this.stringRepresentation = stringRepresentation;
     }
-
   }
 
   private static final String EMPTY_ARRAY[] = new String[0];
   private static final boolean DEFAULT_EXCLUDES = true;
   private static final boolean DEFAULT_INCLUDES = false;
-  private static final boolean NOT_JAVA = false;
-  private static final boolean YES_JAVA = true;
-
-  private static final String mergedPatterns[] = {
+  private static final String JAVA_FILE_SUFFIX = ".java";
+  private static final String CLASS_FILE_SUFFIX = ".class";
+  
+  private static final String MERGED_PATTERNS[] = {
       "**/testing/**", "Foo", "Bar", "fooz/**", "barz/hello/**"};
 
   // careful that the pattern is still permitted by ant.
-  private static final String excludedChars = "#~%*";
-
-  private static final String javaSuffix = ".java";
+  private static final String EXCLUDED_CHARS = "#~%*";
 
   private static void assertEquals(String path, ResourceFilterString expected,
       ResourceFilterString actual) {
     boolean scanResult = expected.filter.allows(path);
     assertEquals("String to be matched = " + path + ", actual filter = "
-        + actual.stringRepresentation + " should yied " + scanResult
+        + actual.stringRepresentation + " should yield " + scanResult
         + ", expected Filter = " + expected.stringRepresentation, scanResult,
         actual.filter.allows(path));
   }
@@ -215,26 +224,38 @@ public class DefaultFiltersTest extends TestCase {
 
   public void testEmptyFilters() {
     BasicPaths basicPaths = new BasicPaths();
-    DefaultFilters defaultFilters = new DefaultFilters();
-
+    FilterFileType fileType;
+    
     // first arg: ant filter, second arg: our custom filter
+    fileType= FilterFileType.RESOURCE_FILES;
     basicPaths.testBasicPath(getAntFilter(EMPTY_ARRAY, EMPTY_ARRAY,
-        EMPTY_ARRAY, DEFAULT_EXCLUDES, NOT_JAVA, "antDefaultFilter"),
-        new ResourceFilterString(defaultFilters.defaultResourceFilter,
+        EMPTY_ARRAY, DEFAULT_EXCLUDES, fileType, "antDefaultFilter"),
+        new ResourceFilterString(fileType.getDefaultFilter(),
             "defaultFilter"));
     basicPaths.testBasicPath(getAntFilter(EMPTY_ARRAY, EMPTY_ARRAY,
-        EMPTY_ARRAY, DEFAULT_INCLUDES, NOT_JAVA, "antDefaultIncludesFilter"),
-        new ResourceFilterString(defaultFilters.justResourceFilter,
+        EMPTY_ARRAY, DEFAULT_INCLUDES, fileType, "antDefaultIncludesFilter"),
+        new ResourceFilterString(fileType.getFileTypeFilter(),
             "defaultIncludesFilter"));
 
-    basicPaths.testBasicJavaPath(getAntFilter(EMPTY_ARRAY, EMPTY_ARRAY,
-        EMPTY_ARRAY, DEFAULT_EXCLUDES, YES_JAVA, "antDefaultJavaFilter"),
-        new ResourceFilterString(defaultFilters.defaultJavaFilter,
-            "defaultJavaFilter"));
-    basicPaths.testBasicJavaPath(getAntFilter(EMPTY_ARRAY, EMPTY_ARRAY,
-        EMPTY_ARRAY, DEFAULT_INCLUDES, YES_JAVA, "antJustJavaFilter"),
-        new ResourceFilterString(defaultFilters.justJavaFilter,
-            "justJavaFilter"));
+    fileType = FilterFileType.JAVA_FILES;
+    basicPaths.testBasicPath(getAntFilter(EMPTY_ARRAY, EMPTY_ARRAY,
+        EMPTY_ARRAY, DEFAULT_EXCLUDES, fileType, "antDefaultJavaFilter"),
+        new ResourceFilterString(fileType.getDefaultFilter(),
+            "defaultJavaFilter"), fileType.getSuffix());
+    basicPaths.testBasicPath(getAntFilter(EMPTY_ARRAY, EMPTY_ARRAY,
+        EMPTY_ARRAY, DEFAULT_INCLUDES, fileType, "antJustJavaFilter"),
+        new ResourceFilterString(fileType.getFileTypeFilter(),
+            "justJavaFilter"), fileType.getSuffix());
+    
+    fileType = FilterFileType.CLASS_FILES;
+    basicPaths.testBasicPath(getAntFilter(EMPTY_ARRAY, EMPTY_ARRAY,
+        EMPTY_ARRAY, DEFAULT_EXCLUDES, FilterFileType.CLASS_FILES, "antDefaultClassFilesFilter"),
+        new ResourceFilterString(fileType.getDefaultFilter(),
+            "defaultClassFilesFilter"), fileType.getSuffix());
+    basicPaths.testBasicPath(getAntFilter(EMPTY_ARRAY, EMPTY_ARRAY,
+        EMPTY_ARRAY, DEFAULT_INCLUDES, FilterFileType.CLASS_FILES, "antJustClassFilesFilter"),
+        new ResourceFilterString(fileType.getFileTypeFilter(),
+            "justClassFilesFilter"), fileType.getSuffix());    
   }
 
   /**
@@ -271,10 +292,10 @@ public class DefaultFiltersTest extends TestCase {
 
       ResourceFilterString antFilterString = getAntFilter(
           new String[] {filter}, EMPTY_ARRAY, EMPTY_ARRAY, DEFAULT_EXCLUDES,
-          NOT_JAVA, "ant_" + filter);
+          FilterFileType.RESOURCE_FILES, "ant_" + filter);
       ResourceFilterString customFilterString = new ResourceFilterString(
           filters.customFilterWithCatchAll(new String[] {filter}, EMPTY_ARRAY,
-              EMPTY_ARRAY, true, null, NOT_JAVA), "custom_" + pattern);
+              EMPTY_ARRAY, true, null, FilterFileType.RESOURCE_FILES), "custom_" + pattern);
       for (String path : testPaths) {
         assertEquals(path, antFilterString, customFilterString);
       }
@@ -286,20 +307,20 @@ public class DefaultFiltersTest extends TestCase {
     ResourceFilter filter = null;
 
     // everything except those starting with '/' should be included
-    filter = new DefaultFilters().getFilterPart(EMPTY_ARRAY, true);
+    filter = new DefaultFilters().getIncludesFilterPart(EMPTY_ARRAY);
     advancedPaths.testAdvancedPath(getAntFilter(EMPTY_ARRAY, EMPTY_ARRAY,
-        EMPTY_ARRAY, DEFAULT_INCLUDES, NOT_JAVA, "antDefaultFilter"),
+        EMPTY_ARRAY, DEFAULT_INCLUDES, FilterFileType.RESOURCE_FILES, "antDefaultFilter"),
         new ResourceFilterString(filter, "defaultFilter"));
 
     // everything should be excluded
-    filter = new DefaultFilters().getFilterPart(EMPTY_ARRAY, false);
+    filter = new DefaultFilters().getExcludesFilterPart(EMPTY_ARRAY);
     advancedPaths.testAdvancedPath(getAntFilter(new String[] {"a/1/2/3"},
-        new String[] {"**", "/**"}, EMPTY_ARRAY, DEFAULT_INCLUDES, NOT_JAVA,
+        new String[] {"**", "/**"}, EMPTY_ARRAY, DEFAULT_INCLUDES, FilterFileType.RESOURCE_FILES,
         "antDefaultFilter"), new ResourceFilterString(filter, "defaultFilter"));
 
-    filter = new DefaultFilters().getFilterPart(mergedPatterns, true);
-    advancedPaths.testAdvancedPath(getAntFilter(mergedPatterns, EMPTY_ARRAY,
-        EMPTY_ARRAY, DEFAULT_INCLUDES, NOT_JAVA, "antMergedPatterns"),
+    filter = new DefaultFilters().getIncludesFilterPart(MERGED_PATTERNS);
+    advancedPaths.testAdvancedPath(getAntFilter(MERGED_PATTERNS, EMPTY_ARRAY,
+        EMPTY_ARRAY, DEFAULT_INCLUDES, FilterFileType.RESOURCE_FILES, "antMergedPatterns"),
         new ResourceFilterString(filter, "customMergedPatterns"));
   }
 
@@ -309,25 +330,25 @@ public class DefaultFiltersTest extends TestCase {
 
     ResourceFilter filter = null;
     // pass empty includeArray. Matches everything that is not excluded.
-    filter = getFilterWithoutCatchAll(EMPTY_ARRAY, mergedPatterns, EMPTY_ARRAY,
-        NOT_JAVA);
-    advancedPaths.testAdvancedPath(getAntFilter(EMPTY_ARRAY, mergedPatterns,
-        EMPTY_ARRAY, DEFAULT_EXCLUDES, NOT_JAVA, "ant_emptyArray_mergedPatterns"),
+    filter = getFilterWithoutCatchAll(EMPTY_ARRAY, MERGED_PATTERNS, EMPTY_ARRAY,
+        FilterFileType.RESOURCE_FILES);
+    advancedPaths.testAdvancedPath(getAntFilter(EMPTY_ARRAY, MERGED_PATTERNS,
+        EMPTY_ARRAY, DEFAULT_EXCLUDES, FilterFileType.RESOURCE_FILES, "ant_emptyArray_mergedPatterns"),
         new ResourceFilterString(filter, "custom_emptyArray_mergedPatterns"));
 
     // pass empty excludeArray. Matches everything that is included.
-    filter = getFilterWithoutCatchAll(mergedPatterns, EMPTY_ARRAY, EMPTY_ARRAY,
-        NOT_JAVA);
-    advancedPaths.testAdvancedPath(getAntFilter(mergedPatterns, EMPTY_ARRAY,
-        EMPTY_ARRAY, DEFAULT_EXCLUDES, NOT_JAVA, "ant_mergedPatterns_emptyArray"),
+    filter = getFilterWithoutCatchAll(MERGED_PATTERNS, EMPTY_ARRAY, EMPTY_ARRAY,
+        FilterFileType.RESOURCE_FILES);
+    advancedPaths.testAdvancedPath(getAntFilter(MERGED_PATTERNS, EMPTY_ARRAY,
+        EMPTY_ARRAY, DEFAULT_EXCLUDES, FilterFileType.RESOURCE_FILES, "ant_mergedPatterns_emptyArray"),
         new ResourceFilterString(filter, "custom_mergedPatterns_emptyArray"));
 
     // pass non-empty include and exclude array. Matches nothing
-    filter = getFilterWithoutCatchAll(mergedPatterns, mergedPatterns,
-        EMPTY_ARRAY, NOT_JAVA);
+    filter = getFilterWithoutCatchAll(MERGED_PATTERNS, MERGED_PATTERNS,
+        EMPTY_ARRAY, FilterFileType.RESOURCE_FILES);
     advancedPaths.testAdvancedPath(
-        getAntFilter(mergedPatterns, mergedPatterns, EMPTY_ARRAY,
-            DEFAULT_EXCLUDES, NOT_JAVA, "ant_mergedPatterns_mergedPatterns"),
+        getAntFilter(MERGED_PATTERNS, MERGED_PATTERNS, EMPTY_ARRAY,
+            DEFAULT_EXCLUDES, FilterFileType.RESOURCE_FILES, "ant_mergedPatterns_mergedPatterns"),
         new ResourceFilterString(filter, "custom_mergedPatterns_mergedPatterns"));
   }
 
@@ -337,26 +358,26 @@ public class DefaultFiltersTest extends TestCase {
 
     ResourceFilter filter = null;
     // pass empty includeArray. Matches everything that is not excluded.
-    filter = getFilterWithCatchAll(EMPTY_ARRAY, mergedPatterns, EMPTY_ARRAY,
-        NOT_JAVA);
-    advancedPaths.testAdvancedPathAnt(getAntFilter(EMPTY_ARRAY, mergedPatterns,
-        EMPTY_ARRAY, DEFAULT_EXCLUDES, NOT_JAVA,
-        "ant_emptyArray_mergedPatterns"),
+    filter = getFilterWithCatchAll(EMPTY_ARRAY, MERGED_PATTERNS, EMPTY_ARRAY,
+        FilterFileType.RESOURCE_FILES);
+    advancedPaths.testAdvancedPathAnt(getAntFilter(EMPTY_ARRAY, MERGED_PATTERNS,
+        EMPTY_ARRAY, DEFAULT_EXCLUDES, FilterFileType.RESOURCE_FILES,
+        "ant_emptyIncludeArray_mergedPatterns"),
         new ResourceFilterString(filter, "custom_emptyArray_mergedPatterns"));
 
     // pass empty excludeArray. Matches everything that is included.
-    filter = getFilterWithCatchAll(mergedPatterns, EMPTY_ARRAY, EMPTY_ARRAY,
-        NOT_JAVA);
-    advancedPaths.testAdvancedPathAnt(getAntFilter(mergedPatterns, EMPTY_ARRAY,
-        EMPTY_ARRAY, DEFAULT_EXCLUDES, NOT_JAVA,
-        "ant_emptyArray_mergedPatterns"),
+    filter = getFilterWithCatchAll(MERGED_PATTERNS, EMPTY_ARRAY, EMPTY_ARRAY,
+        FilterFileType.RESOURCE_FILES);
+    advancedPaths.testAdvancedPathAnt(getAntFilter(MERGED_PATTERNS, EMPTY_ARRAY,
+        EMPTY_ARRAY, DEFAULT_EXCLUDES, FilterFileType.RESOURCE_FILES,
+        "ant_emptyExcludeArray_mergedPatterns"),
         new ResourceFilterString(filter, "custom_emptyArray_mergedPatterns"));
 
     // pass non-empty include and exclude array. Matches nothing
-    filter = getFilterWithCatchAll(mergedPatterns, mergedPatterns, EMPTY_ARRAY,
-        NOT_JAVA);
-    advancedPaths.testAdvancedPathAnt(getAntFilter(mergedPatterns,
-        mergedPatterns, EMPTY_ARRAY, DEFAULT_EXCLUDES, NOT_JAVA,
+    filter = getFilterWithCatchAll(MERGED_PATTERNS, MERGED_PATTERNS, EMPTY_ARRAY,
+        FilterFileType.RESOURCE_FILES);
+    advancedPaths.testAdvancedPathAnt(getAntFilter(MERGED_PATTERNS,
+        MERGED_PATTERNS, EMPTY_ARRAY, DEFAULT_EXCLUDES, FilterFileType.RESOURCE_FILES,
         "ant_mergedPatterns_mergedPatterns"), new ResourceFilterString(filter,
         "custom_mergedPatterns_mergedPatterns"));
   }
@@ -364,146 +385,240 @@ public class DefaultFiltersTest extends TestCase {
   // no ant, catchAll filter is null
   public void testNonEmptyJavaFilters() {
     AdvancedPaths advancedPaths = new AdvancedPaths();
-
-    String newMergedPatterns[] = new String[mergedPatterns.length];
-    for (int i = 0; i < mergedPatterns.length; i++) {
-      if (mergedPatterns[i].endsWith("*")) {
-        newMergedPatterns[i] = mergedPatterns[i];
-      } else {
-        newMergedPatterns[i] = mergedPatterns[i] + ".java";
-      }
-    }
+    String newMergedPatterns[] = getMergedPatterns(JAVA_FILE_SUFFIX);
     ResourceFilter filter = null;
+    
     // pass empty includeArray. Means catch all
     filter = getFilterWithoutCatchAll(EMPTY_ARRAY, newMergedPatterns,
-        EMPTY_ARRAY, YES_JAVA);
-    advancedPaths.testAdvancedJavaPath(getAntFilter(EMPTY_ARRAY,
-        newMergedPatterns, EMPTY_ARRAY, DEFAULT_EXCLUDES, YES_JAVA,
+        EMPTY_ARRAY, FilterFileType.JAVA_FILES);
+    advancedPaths.testAdvancedPath(getAntFilter(EMPTY_ARRAY,
+        newMergedPatterns, EMPTY_ARRAY, DEFAULT_EXCLUDES, FilterFileType.JAVA_FILES,
         "ant_emptyArray_newMergedPatterns"), new ResourceFilterString(filter,
-        "custom_emptyArray_newMergedPatterns"));
+        "custom_emptyArray_newMergedPatterns"), JAVA_FILE_SUFFIX);
 
     // pass empty excludeArray. Means catch only the pattern
     filter = getFilterWithoutCatchAll(newMergedPatterns, EMPTY_ARRAY,
-        EMPTY_ARRAY, YES_JAVA);
-    advancedPaths.testAdvancedJavaPath(getAntFilter(newMergedPatterns,
-        EMPTY_ARRAY, EMPTY_ARRAY, DEFAULT_EXCLUDES, YES_JAVA,
+        EMPTY_ARRAY, FilterFileType.JAVA_FILES);
+    advancedPaths.testAdvancedPath(getAntFilter(newMergedPatterns,
+        EMPTY_ARRAY, EMPTY_ARRAY, DEFAULT_EXCLUDES, FilterFileType.JAVA_FILES,
         "ant_newMergedPatterns_emptyArray"), new ResourceFilterString(filter,
-        "custom_newMergedPatterns_emptyArray"));
+        "custom_newMergedPatterns_emptyArray"), JAVA_FILE_SUFFIX);
 
     // pass non-empty include and exclude array.
     filter = getFilterWithoutCatchAll(newMergedPatterns, newMergedPatterns,
-        EMPTY_ARRAY, YES_JAVA);
-    advancedPaths.testAdvancedJavaPath(getAntFilter(newMergedPatterns,
-        newMergedPatterns, EMPTY_ARRAY, DEFAULT_EXCLUDES, YES_JAVA,
+        EMPTY_ARRAY, FilterFileType.JAVA_FILES);
+    advancedPaths.testAdvancedPath(getAntFilter(newMergedPatterns,
+        newMergedPatterns, EMPTY_ARRAY, DEFAULT_EXCLUDES, FilterFileType.JAVA_FILES,
         "ant_newMergedPatterns_newMergedPatterns"), new ResourceFilterString(
-        filter, "custom_newMergedPatterns_newMergedPatterns"));
+        filter, "custom_newMergedPatterns_newMergedPatterns"), JAVA_FILE_SUFFIX);
   }
 
   public void testNonEmptyJavaFiltersAnt() {
     AdvancedPaths advancedPaths = new AdvancedPaths();
-
-    String newMergedPatterns[] = new String[mergedPatterns.length];
-    for (int i = 0; i < mergedPatterns.length; i++) {
-      if (mergedPatterns[i].endsWith("*")) {
-        newMergedPatterns[i] = mergedPatterns[i];
-      } else {
-        newMergedPatterns[i] = mergedPatterns[i] + ".java";
-      }
-    }
+    String newMergedPatterns[] = getMergedPatterns(JAVA_FILE_SUFFIX);
     ResourceFilter filter = null;
+    
     // pass empty includeArray. Means catch all
     filter = getFilterWithCatchAll(EMPTY_ARRAY, newMergedPatterns, EMPTY_ARRAY,
-        YES_JAVA);
-    advancedPaths.testAdvancedJavaPathAnt(getAntFilter(EMPTY_ARRAY,
-        newMergedPatterns, EMPTY_ARRAY, DEFAULT_EXCLUDES, YES_JAVA,
+        FilterFileType.JAVA_FILES);
+    advancedPaths.testAdvancedPathAnt(getAntFilter(EMPTY_ARRAY,
+        newMergedPatterns, EMPTY_ARRAY, DEFAULT_EXCLUDES, FilterFileType.JAVA_FILES,
         "ant_emptyArray_newMergedPatterns"), new ResourceFilterString(filter,
-        "custom_emptyArray_newMergedPatterns"));
+        "custom_emptyArray_newMergedPatterns"), JAVA_FILE_SUFFIX);
 
     // pass empty excludeArray. Means catch only the pattern
     filter = getFilterWithCatchAll(newMergedPatterns, EMPTY_ARRAY, EMPTY_ARRAY,
-        YES_JAVA);
-    advancedPaths.testAdvancedJavaPathAnt(getAntFilter(newMergedPatterns,
-        EMPTY_ARRAY, EMPTY_ARRAY, DEFAULT_EXCLUDES, YES_JAVA,
+        FilterFileType.JAVA_FILES);
+    advancedPaths.testAdvancedPathAnt(getAntFilter(newMergedPatterns,
+        EMPTY_ARRAY, EMPTY_ARRAY, DEFAULT_EXCLUDES, FilterFileType.JAVA_FILES,
         "ant_newMergedPatterns_emptyArray"), new ResourceFilterString(filter,
-        "custom_newMergedPatterns_emptyArray"));
+        "custom_newMergedPatterns_emptyArray"), JAVA_FILE_SUFFIX);
 
     // pass non-empty include and exclude array.
     filter = getFilterWithCatchAll(newMergedPatterns, newMergedPatterns,
-        EMPTY_ARRAY, YES_JAVA);
-    advancedPaths.testAdvancedJavaPathAnt(getAntFilter(newMergedPatterns,
-        newMergedPatterns, EMPTY_ARRAY, DEFAULT_EXCLUDES, YES_JAVA,
+        EMPTY_ARRAY, FilterFileType.JAVA_FILES);
+    advancedPaths.testAdvancedPathAnt(getAntFilter(newMergedPatterns,
+        newMergedPatterns, EMPTY_ARRAY, DEFAULT_EXCLUDES, FilterFileType.JAVA_FILES,
         "ant_newMergedPatterns_newMergedPatterns"), new ResourceFilterString(
-        filter, "custom_newMergedPatterns_newMergedPatterns"));
+        filter, "custom_newMergedPatterns_newMergedPatterns"), JAVA_FILE_SUFFIX);
   }
   
   public void testNonEmptyJavaSkipFiltersAnt() {
     AdvancedPaths advancedPaths = new AdvancedPaths();
-
-    String newMergedPatterns[] = new String[mergedPatterns.length];
-    for (int i = 0; i < mergedPatterns.length; i++) {
-      if (mergedPatterns[i].endsWith("*")) {
-        newMergedPatterns[i] = mergedPatterns[i];
-      } else {
-        newMergedPatterns[i] = mergedPatterns[i] + ".java";
-      }
-    }
+    String newMergedPatterns[] = getMergedPatterns(JAVA_FILE_SUFFIX);
     ResourceFilter filter = null;
 
     // pass empty includeArray. Means catch all, skipping newMergedPatterns
     filter = getFilterWithCatchAll(EMPTY_ARRAY, EMPTY_ARRAY, newMergedPatterns,
-        YES_JAVA);
+        FilterFileType.JAVA_FILES);
     advancedPaths.testAdvancedJavaPathAnt(getAntFilter(EMPTY_ARRAY,
-        EMPTY_ARRAY, newMergedPatterns, DEFAULT_EXCLUDES, YES_JAVA,
+        EMPTY_ARRAY, newMergedPatterns, DEFAULT_EXCLUDES, FilterFileType.JAVA_FILES,
         "ant_emptyArray_newMergedPatterns"), new ResourceFilterString(filter,
         "custom_emptyArray_newMergedPatterns"));
 
     // pass non-empty include and skip array.
     filter = getFilterWithCatchAll(newMergedPatterns, EMPTY_ARRAY,
-        newMergedPatterns, YES_JAVA);
+        newMergedPatterns, FilterFileType.JAVA_FILES);
     advancedPaths.testAdvancedJavaPathAnt(getAntFilter(newMergedPatterns,
-        EMPTY_ARRAY, newMergedPatterns, DEFAULT_EXCLUDES, YES_JAVA,
+        EMPTY_ARRAY, newMergedPatterns, DEFAULT_EXCLUDES, FilterFileType.JAVA_FILES,
         "ant_newMergedPatterns_newMergedPatterns"), new ResourceFilterString(
         filter, "custom_newMergedPatterns_newMergedPatterns"));
 
     // in a single filter, skip and exclude are equivalent
     filter = getFilterWithCatchAll(newMergedPatterns, newMergedPatterns,
-        EMPTY_ARRAY, YES_JAVA);
+        EMPTY_ARRAY, FilterFileType.JAVA_FILES);
     advancedPaths.testAdvancedJavaPathAnt(getAntFilter(newMergedPatterns,
-        EMPTY_ARRAY, newMergedPatterns, DEFAULT_EXCLUDES, YES_JAVA,
+        EMPTY_ARRAY, newMergedPatterns, DEFAULT_EXCLUDES, FilterFileType.JAVA_FILES,
         "ant_newMergedPatterns_newMergedPatterns"), new ResourceFilterString(
         filter, "custom_newMergedPatterns_newMergedPatterns"));
   }
+  
+  // no ant, catchAll filter is null
+  public void testNonEmptyClassFileFilters() {
+    AdvancedPaths advancedPaths = new AdvancedPaths();
 
+    String newMergedPatterns[] = getMergedPatterns(CLASS_FILE_SUFFIX);
+    ResourceFilter filter = null;
+    // pass empty includeArray. Means catch all
+    filter = getFilterWithoutCatchAll(EMPTY_ARRAY, newMergedPatterns,
+        EMPTY_ARRAY, FilterFileType.CLASS_FILES);
+    advancedPaths.testAdvancedPath(getAntFilter(EMPTY_ARRAY,
+        newMergedPatterns, EMPTY_ARRAY, DEFAULT_EXCLUDES, FilterFileType.CLASS_FILES,
+        "ant_emptyArray_newMergedPatterns"), new ResourceFilterString(filter,
+        "custom_emptyArray_newMergedPatterns"), CLASS_FILE_SUFFIX);
+
+    // pass empty excludeArray. Means catch only the pattern
+    filter = getFilterWithoutCatchAll(newMergedPatterns, EMPTY_ARRAY,
+        EMPTY_ARRAY, FilterFileType.CLASS_FILES);
+    advancedPaths.testAdvancedPath(getAntFilter(newMergedPatterns,
+        EMPTY_ARRAY, EMPTY_ARRAY, DEFAULT_EXCLUDES, FilterFileType.CLASS_FILES,
+        "ant_newMergedPatterns_emptyArray"), new ResourceFilterString(filter,
+        "custom_newMergedPatterns_emptyArray"), CLASS_FILE_SUFFIX);
+
+    // pass non-empty include and exclude array.
+    filter = getFilterWithoutCatchAll(newMergedPatterns, newMergedPatterns,
+        EMPTY_ARRAY, FilterFileType.CLASS_FILES);
+    advancedPaths.testAdvancedPath(getAntFilter(newMergedPatterns,
+        newMergedPatterns, EMPTY_ARRAY, DEFAULT_EXCLUDES, FilterFileType.CLASS_FILES,
+        "ant_newMergedPatterns_newMergedPatterns"), new ResourceFilterString(
+        filter, "custom_newMergedPatterns_newMergedPatterns"), CLASS_FILE_SUFFIX);
+  }
+
+  public void testNonEmptyClassFileFiltersAnt() {
+    AdvancedPaths advancedPaths = new AdvancedPaths();
+    String newMergedPatterns[] = getMergedPatterns(CLASS_FILE_SUFFIX);
+    ResourceFilter filter = null;
+    
+    // pass empty includeArray. Means catch all
+    filter = getFilterWithCatchAll(EMPTY_ARRAY, newMergedPatterns, EMPTY_ARRAY,
+        FilterFileType.CLASS_FILES);
+    advancedPaths.testAdvancedPathAnt(getAntFilter(EMPTY_ARRAY,
+        newMergedPatterns, EMPTY_ARRAY, DEFAULT_EXCLUDES, FilterFileType.CLASS_FILES,
+        "ant_emptyArray_newMergedPatterns"), new ResourceFilterString(filter,
+        "custom_emptyArray_newMergedPatterns"), CLASS_FILE_SUFFIX);
+
+    // pass empty excludeArray. Means catch only the pattern
+    filter = getFilterWithCatchAll(newMergedPatterns, EMPTY_ARRAY, EMPTY_ARRAY,
+        FilterFileType.CLASS_FILES);
+    advancedPaths.testAdvancedPathAnt(getAntFilter(newMergedPatterns,
+        EMPTY_ARRAY, EMPTY_ARRAY, DEFAULT_EXCLUDES, FilterFileType.CLASS_FILES,
+        "ant_newMergedPatterns_emptyArray"), new ResourceFilterString(filter,
+        "custom_newMergedPatterns_emptyArray"), CLASS_FILE_SUFFIX);
+
+    // pass non-empty include and exclude array.
+    filter = getFilterWithCatchAll(newMergedPatterns, newMergedPatterns,
+        EMPTY_ARRAY, FilterFileType.CLASS_FILES);
+    advancedPaths.testAdvancedPathAnt(getAntFilter(newMergedPatterns,
+        newMergedPatterns, EMPTY_ARRAY, DEFAULT_EXCLUDES, FilterFileType.CLASS_FILES,
+        "ant_newMergedPatterns_newMergedPatterns"), new ResourceFilterString(
+        filter, "custom_newMergedPatterns_newMergedPatterns"), CLASS_FILE_SUFFIX);
+  }
+  
+  private String[] getMergedPatterns(String suffix) {
+    String newMergedPatterns[] = new String[MERGED_PATTERNS.length];
+    for (int i = 0; i < MERGED_PATTERNS.length; i++) {
+      if (MERGED_PATTERNS[i].endsWith("*")) {
+        newMergedPatterns[i] = MERGED_PATTERNS[i];
+      } else {
+        newMergedPatterns[i] = MERGED_PATTERNS[i] + suffix;
+      }
+    }
+    return newMergedPatterns;
+  }
+  
+  public void testNonEmptyClassFileSkipFiltersAnt() {
+    AdvancedPaths advancedPaths = new AdvancedPaths();
+    String newMergedPatterns[] = getMergedPatterns(CLASS_FILE_SUFFIX);
+    ResourceFilter filter = null;
+
+    // pass empty includeArray. Means catch all, skipping newMergedPatterns
+    filter = getFilterWithCatchAll(EMPTY_ARRAY, EMPTY_ARRAY, newMergedPatterns,
+        FilterFileType.CLASS_FILES);
+    advancedPaths.testAdvancedPathAnt(getAntFilter(EMPTY_ARRAY,
+        EMPTY_ARRAY, newMergedPatterns, DEFAULT_EXCLUDES, FilterFileType.CLASS_FILES,
+        "ant_emptyArray_newMergedPatterns"), new ResourceFilterString(filter,
+        "custom_emptyArray_newMergedPatterns"), CLASS_FILE_SUFFIX);
+
+    // pass non-empty include and skip array.
+    filter = getFilterWithCatchAll(newMergedPatterns, EMPTY_ARRAY,
+        newMergedPatterns, FilterFileType.CLASS_FILES);
+    advancedPaths.testAdvancedPathAnt(getAntFilter(newMergedPatterns,
+        EMPTY_ARRAY, newMergedPatterns, DEFAULT_EXCLUDES, FilterFileType.CLASS_FILES,
+        "ant_newMergedPatterns_newMergedPatterns"), new ResourceFilterString(
+        filter, "custom_newMergedPatterns_newMergedPatterns"), CLASS_FILE_SUFFIX);
+
+    // in a single filter, skip and exclude are equivalent
+    filter = getFilterWithCatchAll(newMergedPatterns, newMergedPatterns,
+        EMPTY_ARRAY, FilterFileType.CLASS_FILES);
+    advancedPaths.testAdvancedPathAnt(getAntFilter(newMergedPatterns,
+        EMPTY_ARRAY, newMergedPatterns, DEFAULT_EXCLUDES, FilterFileType.CLASS_FILES,
+        "ant_newMergedPatterns_newMergedPatterns"), new ResourceFilterString(
+        filter, "custom_newMergedPatterns_newMergedPatterns"), CLASS_FILE_SUFFIX);
+  }
+  
   private ResourceFilterString getAntFilter(String includes[],
       String excludes[], String skips[], boolean defaultExcludes,
-      final boolean isJava, String tag) {
+      final FilterFileType filterFileType, String tag) {
     final ZipScanner scanner = DefaultFilters.getScanner(includes, excludes,
         skips, defaultExcludes, true);
     return new ResourceFilterString(new ResourceFilter() {
       public boolean allows(String path) {
-        if (isJava && !path.endsWith(".java")) {
-          return false;
-        }
-        return scanner.match(path);
+        return fileTypeMatches(filterFileType, path) && scanner.match(path);
       }
     }, tag != null ? tag : "includes: " + Arrays.toString(includes)
         + ", excludes: " + Arrays.toString(excludes));
   }
 
   private ResourceFilter getFilterWithCatchAll(String includesList[],
-      String excludesList[], String skipList[], boolean isJava) {
-    if (isJava) {
-      return new DefaultFilters().customJavaFilter(includesList, excludesList,
-          skipList, true, true);
+      String excludesList[], String skipList[], FilterFileType filterFileType) {
+    switch (filterFileType) {
+      case JAVA_FILES:
+        return new DefaultFilters().customJavaFilter(includesList, excludesList,
+            skipList, true, true);
+      case CLASS_FILES:
+        return new DefaultFilters().customClassFilesFilter(includesList, excludesList,
+            skipList, true, true);
+      case RESOURCE_FILES:
+      default:
+        return new DefaultFilters().customResourceFilter(includesList,
+            excludesList, skipList, true, true);
     }
-    return new DefaultFilters().customResourceFilter(includesList,
-        excludesList, skipList, true, true);
   }
 
   // caseSensitive and excludeDefaults are set
   private ResourceFilter getFilterWithoutCatchAll(String includesList[],
-      String excludesList[], String skipList[], boolean isJava) {
+      String excludesList[], String skipList[],  FilterFileType filterFileType) {
     return new DefaultFilters().customFilterWithCatchAll(includesList,
-        excludesList, skipList, true, null, isJava);
+        excludesList, skipList, true, null, filterFileType);
+  }
+  
+  private boolean fileTypeMatches(FilterFileType filterFileType, String path) {
+    switch (filterFileType) {
+      case JAVA_FILES:
+        return path.endsWith(".java");
+      case CLASS_FILES:
+        return path.endsWith(".class");
+    }
+    return true;
   }
 }

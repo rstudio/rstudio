@@ -38,253 +38,91 @@ import java.util.regex.Pattern;
  */
 public class DefaultFilters {
 
-  private static final boolean IS_EXCLUDES = false;
-  private static final boolean IS_INCLUDES = true;
-  private static final boolean NOT_JAVA = false;
-  private static final boolean YES_JAVA = true;
+  /**
+   * Constants to represent the type of files that will be filtered.
+   */
+  public static enum FilterFileType {
+    RESOURCE_FILES(null), //
+    JAVA_FILES(".java"), //
+    CLASS_FILES(".class");
 
-  static ZipScanner getScanner(String[] includeList, String[] excludeList,
-      String[] skipList, boolean defaultExcludes, boolean caseSensitive) {
-    /*
-     * Hijack Ant's ZipScanner to handle inclusions/exclusions exactly as Ant
-     * does. We're only using its pattern-matching capabilities; the code path
-     * I'm using never tries to hit the filesystem in Ant 1.6.5.
-     */
-    ZipScanner scanner = new ZipScanner();
-    if (includeList.length > 0) {
-      scanner.setIncludes(includeList);
-    }
-    if (excludeList.length > 0 || skipList.length > 0) {
-      String[] excludeOrSkip = concatenate(excludeList, skipList);
-      scanner.setExcludes(excludeOrSkip);
-    }
-    if (defaultExcludes) {
-      scanner.addDefaultExcludes();
-    }
-    scanner.setCaseSensitive(caseSensitive);
-    scanner.init();
+    private final String suffix;
 
-    return scanner;
-  }
+    /* used when defaultExcludes is false */
+    private final ResourceFilter justThisFileTypeFilter = new ResourceFilter() {
+      public boolean allows(String path) {
+        return defaultAntIncludes.allows(path) && matches(path);
+      }
+    };    
+    
+    private final ResourceFilter defaultFilter = new ResourceFilter() {
 
-  private static String[] concatenate(String[] array1, String[] array2) {
-    String[] answer = new String[array1.length + array2.length];
-    int i = 0;
-    for (String entry : array1) {
-      answer[i++] = entry;
+      public boolean allows(String path) {
+        return getFileTypeFilter().allows(path)
+        && !defaultExcludesPattern.matcher(path).matches();
+      }
+    };
+    
+    private FilterFileType(String suffix) {
+      this.suffix = suffix;
     }
-    for (String entry : array2) {
-      answer[i++] = entry;
+    
+    public ResourceFilter getDefaultFilter() {
+      return defaultFilter;
     }
-    return answer;
+    
+    /* used when defaultExcludes is false */
+    public ResourceFilter getFileTypeFilter() {
+      return justThisFileTypeFilter;
+    }
+    
+    public String getSuffix() {
+      return suffix;
+    }
+
+    public boolean matches(String path) {
+      if (suffix == null) {
+        return true;
+      }
+      return path.endsWith(suffix);
+    }
   }
   
-  /* used when defaultExcludes is true */
-  final ResourceFilter defaultResourceFilter = new ResourceFilter() {
+  /*
+   * list copied from {@link org.apache.tools.ant.DirectoryScanner}
+   */
+  private static final String DEFAULT_EXCLUDES[] = new String[]{
+  // Miscellaneous typical temporary files
+      "**/*~", "**/#*#", "**/.#*", "**/%*%", "**/._*",
 
-    public boolean allows(String path) {
-      return defaultAntIncludes.allows(path)
-          && !defaultExcludesPattern.matcher(path).matches();
-    }
-  };
+      // CVS
+      "**/CVS", "**/CVS/**",
+      // to not hit the weird formatting error.
+      "**/.cvsignore",
 
-  /* used when defaultExcludes is true */
-  final ResourceFilter defaultJavaFilter = new ResourceFilter() {
+      // SCCS
+      "**/SCCS", "**/SCCS/**",
 
-    public boolean allows(String path) {
-      return justJavaFilter.allows(path)
-          && !defaultJavaExcludesPattern.matcher(path).matches();
-    }
+      // Visual SourceSafe
+      "**/vssver.scc",
 
-  };
-  /* used when defaultExcludes is false */
-  final ResourceFilter justResourceFilter = new ResourceFilter() {
+      // Subversion
+      "**/.svn", "**/.svn/**",
 
-    public boolean allows(String path) {
-      return defaultAntIncludes.allows(path);
-    }
-  };
+      // Mac
+      "**/.DS_Store",};
 
-  /* used when defaultExcludes is false */
-  final ResourceFilter justJavaFilter = new ResourceFilter() {
-
-    public boolean allows(String path) {
-      return defaultAntIncludes.allows(path) && isJavaFile(path);
-    }
-  };
-
-  private final Pattern defaultExcludesPattern;
-  private final Pattern defaultJavaExcludesPattern;
   // \w (word character), ., $, /, -, *, ~, #, %
-  private final Pattern antPattern = Pattern.compile("^[\\w\\.\\$/\\-\\*~#%]*$");
+  private static final Pattern antPattern = Pattern.compile("^[\\w\\.\\$/\\-\\*~#%]*$");
+
+  private static final Pattern defaultExcludesPattern = getPatternFromAntStrings(DEFAULT_EXCLUDES);
 
   // accepts all but paths starting with '/'. Default include list is '**'
-  private final ResourceFilter defaultAntIncludes = new ResourceFilter() {
+  private static final ResourceFilter defaultAntIncludes = new ResourceFilter() {
     public boolean allows(String path) {
       return path.charAt(0) != '/';
     }
   };
-
-  private final ResourceFilter rejectAll = new ResourceFilter() {
-    public boolean allows(String path) {
-      return false;
-    }
-  };
-
-  public DefaultFilters() {
-
-    /*
-     * list copied from {@link org.apache.tools.ant.DirectoryScanner}
-     */
-    String defaultExcludes[] = new String[] {
-    // Miscellaneous typical temporary files
-        "**/*~", "**/#*#", "**/.#*", "**/%*%", "**/._*",
-
-        // CVS
-        "**/CVS", "**/CVS/**",
-        // to not hit the weird formatting error.
-        "**/.cvsignore",
-
-        // SCCS
-        "**/SCCS", "**/SCCS/**",
-
-        // Visual SourceSafe
-        "**/vssver.scc",
-
-        // Subversion
-        "**/.svn", "**/.svn/**",
-
-        // Mac
-        "**/.DS_Store",};
-
-    defaultExcludesPattern = getPatternFromAntStrings(defaultExcludes);
-
-    String defaultExcludesJava[] = new String[] {
-    // Miscellaneous typical temporary files
-        "**/.#*", "**/._*",
-
-        // CVS
-        "**/CVS/**",
-
-        // SCCS
-        "**/SCCS/**",
-
-        // Subversion
-        "**/.svn/**",};
-    defaultJavaExcludesPattern = getPatternFromAntStrings(defaultExcludesJava);
-  }
-
-  public ResourceFilter customJavaFilter(String includeList[],
-      String excludeList[], String skipList[], boolean defaultExcludes,
-      boolean caseSensitive) {
-    return getCustomFilter(includeList, excludeList, skipList, defaultExcludes,
-        caseSensitive, YES_JAVA);
-  }
-
-  public ResourceFilter customResourceFilter(String includeList[],
-      String excludeList[], String[] skipList, boolean defaultExcludes,
-      boolean caseSensitive) {
-
-    return getCustomFilter(includeList, excludeList, skipList, defaultExcludes,
-        caseSensitive, NOT_JAVA);
-  }
-
-  /**
-   * return a customResourceFiter that handles all the argument. If unable to
-   * create a customResourceFilter that handles the arguments, catchAll is used
-   * as the final ResourceFilter.
-   */
-  ResourceFilter customFilterWithCatchAll(final String includeList[],
-      final String excludeList[], final String skipList[],
-      final boolean defaultExcludes, final ResourceFilter catchAll,
-      final boolean isJava) {
-
-    assert includeList.length > 0 || excludeList.length > 0 || skipList.length > 0;
-
-    final ResourceFilter includeFilter = getFilterPart(includeList, IS_INCLUDES);
-    final ResourceFilter excludeFilter = getFilterPart(concatenate(excludeList, skipList),
-        IS_EXCLUDES);
-
-    if (includeFilter == null || excludeFilter == null) {
-      return catchAll;
-    }
-    // another common-case
-    ResourceFilter filter = new ResourceFilter() {
-      public boolean allows(String path) {
-        // do not handle the case when pattern ends in '/'
-        if (path.endsWith("/")) {
-          return catchAll.allows(path);
-        }
-        return isPathAllowedByDefaults(path, defaultExcludes, isJava)
-            && includeFilter.allows(path) && !excludeFilter.allows(path);
-      }
-
-      private boolean isPathAllowedByDefaults(String path,
-          boolean defaultExcludes, boolean isJava) {
-        if (defaultExcludes) {
-          return isJava ? !defaultJavaExcludesPattern.matcher(path).matches()
-              && isJavaFile(path)
-              : !defaultExcludesPattern.matcher(path).matches();
-        }
-        return isJava ? isJavaFile(path) : true;
-      }
-    };
-    return filter;
-  }
-
-  ResourceFilter getCustomFilter(final String includeList[],
-      final String excludeList[], final String skipList[],
-      final boolean defaultExcludes, final boolean caseSensitive,
-      final boolean isJava) {
-    if (includeList.length == 0 && excludeList.length == 0 &&
-        skipList.length == 0 && caseSensitive) {
-      // optimize for the common case.
-      return getMatchingDefaultFilter(defaultExcludes, isJava);
-    }
-
-    // don't create a catchAll in default cases
-    ResourceFilter catchAll = new ResourceFilter() {
-      ZipScanner scanner = getScanner(includeList, excludeList,
-          skipList, defaultExcludes, caseSensitive);
-
-      public boolean allows(String path) {
-        if (isJava) {
-          return isJavaFile(path) && scanner.match(path);
-        }
-        return scanner.match(path);
-      }
-    };
-
-    // for now, don't handle case sensitivity
-    if (!caseSensitive) {
-      return catchAll;
-    }
-    return customFilterWithCatchAll(includeList, excludeList, skipList, defaultExcludes,
-        catchAll, isJava);
-  }
-
-  ResourceFilter getFilterPart(final String list[], final boolean defaultValue) {
-    if (list.length == 0) {
-      return defaultValue ? defaultAntIncludes : rejectAll;
-    }
-
-    String patternStrings[] = new String[list.length];
-    int count = 0;
-    for (String antPatternString : list) {
-      String patternString = getPatternFromAntPattern(antPatternString);
-      if (patternString == null) {
-        return null;
-      }
-      patternStrings[count++] = patternString;
-    }
-
-    final Pattern pattern = getPatternFromStrings(patternStrings);
-    return new ResourceFilter() {
-      public boolean allows(String path) {
-        return pattern.matcher(path).matches();
-      }
-    };
-  }
 
   /**
    * Returns a pattern string that can be passed in Java Pattern.compile(..).
@@ -305,7 +143,7 @@ public class DefaultFilters {
    * @return a pattern string that can be passed in Java's Pattern.compile(..),
    *         null if cannot process the pattern.
    */
-  String getPatternFromAntPattern(String antPatternString) {
+  static String getPatternFromAntPattern(String antPatternString) {
     if (!antPattern.matcher(antPatternString).matches()) {
       return null;
     }
@@ -381,20 +219,43 @@ public class DefaultFilters {
     return sb.toString();
   }
 
-  /**
-   * Obtain the appropriate resourceFilter based on defaultExcludes and isJava
-   * values. Assumptions: caseSensitive = true,and the includesList and
-   * excludesList are empty
-   */
-  private ResourceFilter getMatchingDefaultFilter(boolean defaultExcludes,
-      boolean isJava) {
-    if (defaultExcludes) {
-      return isJava ? defaultJavaFilter : defaultResourceFilter;
+  static ZipScanner getScanner(String[] includeList, String[] excludeList,
+      String[] skipList, boolean defaultExcludes, boolean caseSensitive) {
+    /*
+     * Hijack Ant's ZipScanner to handle inclusions/exclusions exactly as Ant
+     * does. We're only using its pattern-matching capabilities; the code path
+     * I'm using never tries to hit the filesystem in Ant 1.6.5.
+     */
+    ZipScanner scanner = new ZipScanner();
+    if (includeList.length > 0) {
+      scanner.setIncludes(includeList);
     }
-    return isJava ? justJavaFilter : justResourceFilter;
+    if (excludeList.length > 0 || skipList.length > 0) {
+      String[] excludeOrSkip = concatenate(excludeList, skipList);
+      scanner.setExcludes(excludeOrSkip);
+    }
+    if (defaultExcludes) {
+      scanner.addDefaultExcludes();
+    }
+    scanner.setCaseSensitive(caseSensitive);
+    scanner.init();
+
+    return scanner;
   }
 
-  private Pattern getPatternFromAntStrings(String... antPatterns) {
+  private static String[] concatenate(String[] array1, String[] array2) {
+    String[] answer = new String[array1.length + array2.length];
+    int i = 0;
+    for (String entry : array1) {
+      answer[i++] = entry;
+    }
+    for (String entry : array2) {
+      answer[i++] = entry;
+    }
+    return answer;
+  }
+  
+  private static Pattern getPatternFromAntStrings(String... antPatterns) {
     String patternStrings[] = new String[antPatterns.length];
     int count = 0;
     for (String antPatternString : antPatterns) {
@@ -408,7 +269,7 @@ public class DefaultFilters {
     return getPatternFromStrings(patternStrings);
   }
 
-  private Pattern getPatternFromStrings(String... patterns) {
+  private static Pattern getPatternFromStrings(String... patterns) {
     StringBuffer entirePattern = new StringBuffer("^");
     int length = patterns.length;
     int count = 0;
@@ -423,7 +284,156 @@ public class DefaultFilters {
     return Pattern.compile(entirePattern.toString());
   }
 
-  private boolean isJavaFile(String path) {
-    return path.endsWith(".java");
+  private final ResourceFilter rejectAll = new ResourceFilter() {
+    public boolean allows(String path) {
+      return false;
+    }
+  };
+
+  public ResourceFilter customClassFilesFilter(String includeList[],
+      String excludeList[], String skipList[], boolean defaultExcludes,
+      boolean caseSensitive) {
+    return getCustomFilter(includeList, excludeList, skipList, defaultExcludes,
+        caseSensitive, FilterFileType.CLASS_FILES);
+  }
+
+  public ResourceFilter customJavaFilter(String includeList[],
+      String excludeList[], String skipList[], boolean defaultExcludes,
+      boolean caseSensitive) {
+    return getCustomFilter(includeList, excludeList, skipList, defaultExcludes,
+        caseSensitive, FilterFileType.JAVA_FILES);
+  }
+
+  public ResourceFilter customResourceFilter(String includeList[],
+      String excludeList[], String[] skipList, boolean defaultExcludes,
+      boolean caseSensitive) {
+    return getCustomFilter(includeList, excludeList, skipList, defaultExcludes,
+        caseSensitive, FilterFileType.RESOURCE_FILES);
+  }
+  
+  /**
+   * Return a customResourceFiter that handles all the argument. If unable to
+   * create a customResourceFilter that handles the arguments, catchAll is used
+   * as the final ResourceFilter.
+   */
+  ResourceFilter customFilterWithCatchAll(final String includeList[],
+      final String excludeList[], final String skipList[],
+      final boolean defaultExcludes, final ResourceFilter catchAll,
+      final FilterFileType filterFileType) {
+
+    assert includeList.length > 0 || excludeList.length > 0
+        || skipList.length > 0;
+
+    final ResourceFilter includeFilter = getIncludesFilterPart(includeList);
+    final ResourceFilter excludeFilter = getExcludesFilterPart(concatenate(
+        excludeList, skipList));
+
+    if (includeFilter == null || excludeFilter == null) {
+      return catchAll;
+    }
+    // another common-case
+    ResourceFilter filter = new ResourceFilter() {
+      public boolean allows(String path) {
+        // do not handle the case when pattern ends in '/'
+        if (path.endsWith("/")) {
+          return catchAll.allows(path);
+        }
+        return isPathAllowedByDefaults(path, defaultExcludes, filterFileType)
+            && includeFilter.allows(path) && !excludeFilter.allows(path);
+      }
+
+      private boolean isPathAllowedByDefaults(String path,
+          boolean defaultExcludes, FilterFileType filterFileType) {
+        boolean fileTypeMatch = filterFileType.matches(path);
+        if (!fileTypeMatch) {
+          return false;
+        }
+        if (defaultExcludes) {
+          return !defaultExcludesPattern.matcher(path).matches();
+        }
+        return true;
+      }
+    };
+    return filter;
+  }
+
+  ResourceFilter getCustomFilter(final String includeList[],
+      final String excludeList[], final String skipList[],
+      final boolean defaultExcludes, final boolean caseSensitive,
+      final FilterFileType filterFileType) {
+    if (includeList.length == 0 && excludeList.length == 0
+        && skipList.length == 0 && caseSensitive) {
+      // optimize for the common case.
+      return getMatchingDefaultFilter(defaultExcludes, filterFileType);
+    }
+
+    // don't create a catchAll in default cases
+    ResourceFilter catchAll = new ResourceFilter() {
+      ZipScanner scanner = getScanner(includeList, excludeList, skipList,
+          defaultExcludes, caseSensitive);
+
+      public boolean allows(String path) {
+        return filterFileType.matches(path) && scanner.match(path);
+      }
+    };
+
+    // for now, don't handle case sensitivity
+    if (!caseSensitive) {
+      return catchAll;
+    }
+    return customFilterWithCatchAll(includeList, excludeList, skipList,
+        defaultExcludes, catchAll, filterFileType);
+  }
+
+  ResourceFilter getExcludesFilterPart(final String list[]) {
+    return getFilterPart(list, false);
+  }
+
+  ResourceFilter getIncludesFilterPart(final String list[]) {
+    return getFilterPart(list, true);
+  }
+
+  /**
+   * @param list patterns to add to the filter.
+   * @param isInclude Only used if the the array is empty. If <code>true</code>
+   *          treat this as an include. Otherwise, assume this is an excludes
+   *          filter and exclude all files.
+   * @return
+   */
+  private ResourceFilter getFilterPart(final String list[],
+      final boolean isInclude) {
+    if (list.length == 0) {
+      return isInclude ? defaultAntIncludes : rejectAll;
+    }
+
+    String patternStrings[] = new String[list.length];
+    int count = 0;
+    for (String antPatternString : list) {
+      String patternString = getPatternFromAntPattern(antPatternString);
+      if (patternString == null) {
+        return null;
+      }
+      patternStrings[count++] = patternString;
+    }
+
+    final Pattern pattern = getPatternFromStrings(patternStrings);
+    return new ResourceFilter() {
+      public boolean allows(String path) {
+        return pattern.matcher(path).matches();
+      }
+    };
+  }
+
+  /**
+   * Obtain the appropriate resourceFilter based on defaultExcludes and isJava
+   * values. Assumptions: caseSensitive = true,and the includesList and
+   * excludesList are empty
+   */
+  private ResourceFilter getMatchingDefaultFilter(boolean defaultExcludes,
+      FilterFileType filterFileType) {
+    if (defaultExcludes) {
+      return filterFileType.getDefaultFilter();
+    }
+    return filterFileType.getFileTypeFilter();
   }
 }
