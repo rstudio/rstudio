@@ -13,11 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package com.google.gwt.i18n.client.impl.plurals;
 
 /**
- * Plural forms for Welsh are 1, 2, 8/11, and n.
+ * Plural forms for Welsh.
+ * 
+ * See http://www.saltcymru.org/wordpress/?p=99&lang=en
  */
 public class DefaultRule_cy extends DefaultRule {
 
@@ -25,14 +26,17 @@ public class DefaultRule_cy extends DefaultRule {
   public PluralForm[] pluralForms() {
     return new PluralForm[] {
         new PluralForm("other", "Default plural form"),
+        new PluralForm("none", "Count is 0"),
         new PluralForm("one", "Count is 1"),
         new PluralForm("two", "Count is 2"),
-        new PluralForm("eighteleven", "Count is either 8 or 11"),
+        new PluralForm("three", "Count is 3"),
+        new PluralForm("six", "Count is 6"),
     };
   }
 
   @Override
   public int select(int n) {
-    return n == 1 ? 1 : n == 2 ? 2 : n == 8 || n == 11 ? 3 : 0;
+    return n == 0 ? 1 : n == 1 ? 2 : n == 2 ? 3 : n == 3 ? 4
+        : n == 6 ? 5 : 0;
   }
 }

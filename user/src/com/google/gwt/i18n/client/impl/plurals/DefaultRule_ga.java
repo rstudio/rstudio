@@ -13,21 +13,28 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package com.google.gwt.i18n.client.impl.plurals;
 
 /**
- * Plural forms for Irish are 1, 2, and n.
+ * Plural forms for Celtic (Scottish Gaelic).
+ * 
+ * See https://developer.mozilla.org/en/Localization_and_Plurals#Plural_rule_.234_%284_forms%29
  */
 public class DefaultRule_ga extends DefaultRule {
 
   @Override
   public PluralForm[] pluralForms() {
-    return DefaultRule_1_2_n.pluralForms();
+    return new PluralForm[] {
+        new PluralForm("other", "Default plural form"),
+        new PluralForm("one", "Count is 1 or 11"),
+        new PluralForm("two", "Count is 2 or 12"),
+        new PluralForm("few", "Count is 3-10 or 13-19"),
+    };
   }
 
   @Override
   public int select(int n) {
-    return DefaultRule_1_2_n.select(n);
+    return (n == 1 || n == 11) ? 1 : (n == 2 || n == 12) ? 2
+        : (n >= 3 && n <= 19) ? 3 : 0;
   }
 }
