@@ -9,7 +9,7 @@
             <table>
                <tr>
                   <td colspan="2">
-                     <g:Label text="Variable Name" />
+                     <g:Label text="Name" />
                      <g:TextBox ui:field="varname_" styleName="{res.styles.varname}" />
                   </td>
                </tr>

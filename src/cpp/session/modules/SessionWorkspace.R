@@ -173,6 +173,31 @@
    return(output)
 })
 
+.rs.addJsonRpcHandler("download_data_file", function(url)
+{
+   # download the file
+   downloadPath <- tempfile("data")
+   download.file(url, downloadPath)
+
+   # return the path
+   downloadInfo <- list()
+   downloadInfo$path = downloadPath
+
+   # also return a suggested variable name
+   downloadInfo$varname <- "dataset"
+   urlBasename <- basename(url)
+   if (length(urlBasename) > 0)
+   {
+      fileComponents <- unlist(strsplit(urlBasename, ".", fixed = TRUE))
+      components <- length(fileComponents)
+      if (components >= 1)
+         downloadInfo$varname <- paste(fileComponents[1:components-1],
+                                       collapse=".")
+   }
+
+   return (downloadInfo)
+})
+
 .rs.addJsonRpcHandler("get_data_preview", function(path)
 {
    nrows <- 20

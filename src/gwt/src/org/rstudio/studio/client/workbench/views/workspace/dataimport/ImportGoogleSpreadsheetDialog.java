@@ -200,7 +200,7 @@ public class ImportGoogleSpreadsheetDialog extends ModalDialog<GoogleSpreadsheet
       vpanel.add(overflow_);
 
       FlowPanel varNamePanel = new FlowPanel();
-      Label varNameLabel = new Label("Variable Name:");
+      Label varNameLabel = new Label("Name:");
       varNameLabel.setStyleName(styles.varNameLabel());
       varNamePanel.add(varNameLabel);
       varname_ = new TextBox();

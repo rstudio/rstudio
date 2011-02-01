@@ -13,6 +13,8 @@
 package org.rstudio.studio.client.workbench.views.workspace;
 
 
+import com.gargoylesoftware.htmlunit.util.StringUtils;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
@@ -40,6 +42,7 @@ import org.rstudio.studio.client.workbench.views.workspace.dataimport.ImportFile
 import org.rstudio.studio.client.workbench.views.workspace.dataimport.ImportFileSettingsDialog;
 import org.rstudio.studio.client.workbench.views.workspace.dataimport.ImportGoogleSpreadsheetDialog;
 import org.rstudio.studio.client.workbench.views.workspace.events.*;
+import org.rstudio.studio.client.workbench.views.workspace.model.DownloadInfo;
 import org.rstudio.studio.client.workbench.views.workspace.model.GoogleSpreadsheetImportSpec;
 import org.rstudio.studio.client.workbench.views.workspace.model.WorkspaceObjectInfo;
 import org.rstudio.studio.client.workbench.views.workspace.model.WorkspaceServerOperations;
@@ -184,9 +187,9 @@ public class Workspace
       refreshView();
    }
 
-   @Handler
    void onClearWorkspace()
    {
+      view_.bringToFront();
       globalDisplay_.showYesNoMessage(
          GlobalDisplay.MSG_QUESTION,
          "Confirm Clear Workspace",
@@ -205,10 +208,9 @@ public class Workspace
       );
    }
 
-   @Handler
    void onSaveWorkspace()
    {
-
+      view_.bringToFront();
       fileDialogs_.saveFile(
             "Save Workspace",
             fsContext_,
@@ -252,10 +254,11 @@ public class Workspace
                            : null;
    }
 
-   @Handler
+
    void onSaveDefaultWorkspace()
    {
-      globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_WARNING, 
+      view_.bringToFront();
+      globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_WARNING,
             
             "Confirm Overwrite",
             
@@ -276,9 +279,10 @@ public class Workspace
             true);
    }
 
-   @Handler
+
    void onLoadWorkspace()
    {
+      view_.bringToFront();
       fileDialogs_.openFile(
             "Load Workspace",
             fsContext_,
@@ -298,9 +302,10 @@ public class Workspace
             });
    }
 
-   @Handler
+
    void onLoadDefaultWorkspace()
    {
+      view_.bringToFront();
       // set progress and create command to dismiss it
       view_.setProgress(true);
       Command dismissProgress = new Command() {
@@ -338,9 +343,10 @@ public class Workspace
            true);   
    }
    
-   @Handler
+   
    void onImportDatasetFromFile()
    {
+      view_.bringToFront();
       fileDialogs_.openFile(
             "Select File to Import",
             fsContext_,
@@ -356,28 +362,34 @@ public class Workspace
 
                   indicator.onCompleted();
 
-                  ImportFileSettingsDialog dialog = new ImportFileSettingsDialog(
-                        server_,
-                        input,
-                        "Import Dataset",
-                        new OperationWithInput<ImportFileSettings>()
-                        {
-                           public void execute(
-                                 ImportFileSettings input)
-                           {
-                              String var = StringUtil.toRSymbolName(input.getVarname());
-                              String code =
-                                    var +
-                                    " <- " +
-                                    makeCommand(input) +
-                                    "\n  View(" + var + ")";
-                              eventBus_.fireEvent(new SendToConsoleEvent(code, true));
-                           }
-                        },
-                        globalDisplay_);
-                  dialog.showModal();
+                  showImportFileDialog(input, null);
                }
             });
+   }
+   
+   private void showImportFileDialog(FileSystemItem input, String varname)
+   {
+      ImportFileSettingsDialog dialog = new ImportFileSettingsDialog(
+            server_,
+            input,
+            varname,
+            "Import Dataset",
+            new OperationWithInput<ImportFileSettings>()
+            {
+               public void execute(
+                     ImportFileSettings input)
+               {
+                  String var = StringUtil.toRSymbolName(input.getVarname());
+                  String code =
+                        var +
+                        " <- " +
+                        makeCommand(input) +
+                        "\n  View(" + var + ")";
+                  eventBus_.fireEvent(new SendToConsoleEvent(code, true));
+               }
+            },
+            globalDisplay_);
+      dialog.showModal();
    }
 
    private String makeCommand(ImportFileSettings input)
@@ -420,10 +432,48 @@ public class Workspace
 
       return code.toString();
    }
+   
+   void onImportDatasetFromURL()
+   {
+      view_.bringToFront();
+      globalDisplay_.promptForText(
+         "Import from Web URL" ,
+         "Please enter the URL to import data from:", 
+                                   "", 
+         new ProgressOperationWithInput<String>(){
+            public void execute(String input, final ProgressIndicator indicator)
+            {
+            
+               
+               indicator.onProgress("Downloading data...");
+               server_.downloadDataFile(input.trim(), 
+                                        new ServerRequestCallback<DownloadInfo>(){
 
-   @Handler
+                  @Override
+                  public void onResponseReceived(DownloadInfo downloadInfo)
+                  {
+                     indicator.onCompleted();
+                     showImportFileDialog(
+                           FileSystemItem.createFile(downloadInfo.getPath()),
+                           StringUtil.toRSymbolName(downloadInfo.getVarname()));
+                  }
+                  
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     indicator.onError(error.getUserMessage());
+                  }
+                  
+               });
+                                       
+            }
+      });
+      
+   }
+
    void onImportDatasetFromGoogleSpreadsheet()
    {
+      view_.bringToFront();
       new ImportGoogleSpreadsheetDialog(
          server_,
          globalDisplay_,

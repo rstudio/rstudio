@@ -68,7 +68,7 @@ import org.rstudio.studio.client.workbench.views.plots.PlotsTab;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedHandler;
-import org.rstudio.studio.client.workbench.views.workspace.table.WorkspaceTab;
+import org.rstudio.studio.client.workbench.views.workspace.WorkspaceTab;
 
 public class WorkbenchScreen extends Composite 
                              implements WorkbenchMainView,
@@ -84,9 +84,8 @@ public class WorkbenchScreen extends Composite
                           Provider<MainSplitPanel> pSplitPanel,
                           @Named("Console") final Widget consolePane,
                           ConsoleInterruptButton consoleInterrupt,
-                          //@Named("Source") final Widget sourcePane,
                           SourceShim source,
-                          final WorkspaceTab workspaceTab,
+                          @Named("Workspace") final WorkbenchTab workspaceTab,
                           @Named("History") final WorkbenchTab historyTab,
                           @Named("Data") final WorkbenchTab dataTab,
                           @Named("Files") final WorkbenchTab filesTab,
@@ -151,7 +150,9 @@ public class WorkbenchScreen extends Composite
       rightBottomFrame.setFillWidget(browseTabs_);
 
       MinimizedModuleTabLayoutPanel minimizedTopModuleTabs = new MinimizedModuleTabLayoutPanel(
-            new String[] {"Workspace", /*"Data",*/ "History"});
+            new String[] {"Workspace",
+                          "History",
+                          plotsOnTop_.getValue() ? "Plots" : null});
       minimizedTopModuleTabs.addSelectionHandler(new SelectionHandler<Integer>()
       {
          public void onSelection(SelectionEvent<Integer> integerSelectionEvent)
@@ -161,7 +162,10 @@ public class WorkbenchScreen extends Composite
          }
       });
       MinimizedModuleTabLayoutPanel minimizedBottomModuleTabs = new MinimizedModuleTabLayoutPanel(
-            new String[] {"Files", "Plots", "Packages", "Help"});
+            new String[] {"Files",
+                          plotsOnTop_.getValue() ? null : "Plots",
+                          "Packages",
+                          "Help"});
       minimizedBottomModuleTabs.addSelectionHandler(new SelectionHandler<Integer>()
       {
          public void onSelection(SelectionEvent<Integer> integerSelectionEvent)
