@@ -1193,37 +1193,43 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
      * after the user has interacted with the widget at least once. This
      * prevents values from being selected by default.
      */
-    if (KeyboardSelectionPolicy.BOUND_TO_SELECTION == keyboardSelectionPolicy
-        && selectionModel != null && pending.viewTouched) {
-      T oldValue = oldState.getSelectedValue();
-      Object oldKey = getRowValueKey(oldValue);
-      T newValue = rowDataCount > 0
-          ? pending.getRowDataValue(pending.getKeyboardSelectedRow()) : null;
-      Object newKey = getRowValueKey(newValue);
-      /*
-       * Do not deselect the old value unless we have a new value to select, or
-       * we will have a null selection event while we wait for asynchronous data
-       * to load.
-       */
-      if (newKey != null && !newKey.equals(oldKey)) {
-        // Check both values for selection before setting selection, or the
-        // selection model may resolve state early.
-        boolean oldValueWasSelected = (oldValue == null) ? false
-            : selectionModel.isSelected(oldValue);
-        boolean newValueWasSelected = (newValue == null) ? false
-            : selectionModel.isSelected(newValue);
+    try {
+      if (KeyboardSelectionPolicy.BOUND_TO_SELECTION == keyboardSelectionPolicy
+          && selectionModel != null && pending.viewTouched) {
+        T oldValue = oldState.getSelectedValue();
+        Object oldKey = getRowValueKey(oldValue);
+        T newValue = rowDataCount > 0
+            ? pending.getRowDataValue(pending.getKeyboardSelectedRow()) : null;
+        Object newKey = getRowValueKey(newValue);
+        /*
+         * Do not deselect the old value unless we have a new value to select,
+         * or we will have a null selection event while we wait for asynchronous
+         * data to load.
+         */
+        if (newKey != null && !newKey.equals(oldKey)) {
+          // Check both values for selection before setting selection, or the
+          // selection model may resolve state early.
+          boolean oldValueWasSelected = (oldValue == null) ? false
+              : selectionModel.isSelected(oldValue);
+          boolean newValueWasSelected = (newValue == null) ? false
+              : selectionModel.isSelected(newValue);
 
-        // Deselect the old value.
-        if (oldValueWasSelected) {
-          selectionModel.setSelected(oldValue, false);
-        }
+          // Deselect the old value.
+          if (oldValueWasSelected) {
+            selectionModel.setSelected(oldValue, false);
+          }
 
-        // Select the new value.
-        pending.selectedValue = newValue;
-        if (newValue != null && !newValueWasSelected) {
-          selectionModel.setSelected(newValue, true);
+          // Select the new value.
+          pending.selectedValue = newValue;
+          if (newValue != null && !newValueWasSelected) {
+            selectionModel.setSelected(newValue, true);
+          }
         }
       }
+    } catch (RuntimeException e) {
+      // Unlock the rendering loop if the user SelectionModel throw an error.
+      isResolvingState = false;
+      throw e;
     }
 
     // If the keyboard row changes, add it to the modified set.
@@ -1338,64 +1344,70 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     /*
      * Push changes to the view.
      */
-    if (redrawRequired) {
-      // Redraw the entire content.
-      SafeHtmlBuilder sb = new SafeHtmlBuilder();
-      view.render(sb, pending.rowData, pending.pageStart, selectionModel);
-      SafeHtml newContents = sb.toSafeHtml();
-      if (!newContents.equals(lastContents)) {
-        lastContents = newContents;
-        view.replaceAllChildren(pending.rowData, newContents,
-            pending.keyboardStealFocus);
-      }
-      view.resetFocus();
-    } else if (range0 != null) {
-      // Replace specific rows.
-      lastContents = null;
-
-      // Replace range0.
-      {
-        int absStart = range0.getStart();
-        int relStart = absStart - pageStart;
+    try {
+      if (redrawRequired) {
+        // Redraw the entire content.
         SafeHtmlBuilder sb = new SafeHtmlBuilder();
-        List<T> replaceValues = pending.rowData.subList(relStart, relStart
-            + range0.getLength());
-        view.render(sb, replaceValues, absStart, selectionModel);
-        view.replaceChildren(replaceValues, relStart, sb.toSafeHtml(),
-            pending.keyboardStealFocus);
-      }
+        view.render(sb, pending.rowData, pending.pageStart, selectionModel);
+        SafeHtml newContents = sb.toSafeHtml();
+        if (!newContents.equals(lastContents)) {
+          lastContents = newContents;
+          view.replaceAllChildren(pending.rowData, newContents,
+              pending.keyboardStealFocus);
+        }
+        view.resetFocus();
+      } else if (range0 != null) {
+        // Replace specific rows.
+        lastContents = null;
 
-      // Replace range1 if it exists.
-      if (range1 != null) {
-        int absStart = range1.getStart();
-        int relStart = absStart - pageStart;
-        SafeHtmlBuilder sb = new SafeHtmlBuilder();
-        List<T> replaceValues = pending.rowData.subList(relStart, relStart
-            + range1.getLength());
-        view.render(sb, replaceValues, absStart, selectionModel);
-        view.replaceChildren(replaceValues, relStart, sb.toSafeHtml(),
-            pending.keyboardStealFocus);
-      }
+        // Replace range0.
+        {
+          int absStart = range0.getStart();
+          int relStart = absStart - pageStart;
+          SafeHtmlBuilder sb = new SafeHtmlBuilder();
+          List<T> replaceValues = pending.rowData.subList(relStart, relStart
+              + range0.getLength());
+          view.render(sb, replaceValues, absStart, selectionModel);
+          view.replaceChildren(replaceValues, relStart, sb.toSafeHtml(),
+              pending.keyboardStealFocus);
+        }
 
-      view.resetFocus();
-    } else if (keyboardRowChanged) {
-      // Update the keyboard selected rows without redrawing.
-      // Deselect the old keyboard row.
-      int oldSelectedRow = oldState.getKeyboardSelectedRow();
-      if (oldSelectedRow >= 0 && oldSelectedRow < rowDataCount) {
-        view.setKeyboardSelected(oldSelectedRow, false, false);
-      }
+        // Replace range1 if it exists.
+        if (range1 != null) {
+          int absStart = range1.getStart();
+          int relStart = absStart - pageStart;
+          SafeHtmlBuilder sb = new SafeHtmlBuilder();
+          List<T> replaceValues = pending.rowData.subList(relStart, relStart
+              + range1.getLength());
+          view.render(sb, replaceValues, absStart, selectionModel);
+          view.replaceChildren(replaceValues, relStart, sb.toSafeHtml(),
+              pending.keyboardStealFocus);
+        }
 
-      // Select the new keyboard row.
-      int newSelectedRow = pending.getKeyboardSelectedRow();
-      if (newSelectedRow >= 0 && newSelectedRow < rowDataCount) {
-        view.setKeyboardSelected(newSelectedRow, true,
-            pending.keyboardStealFocus);
+        view.resetFocus();
+      } else if (keyboardRowChanged) {
+        // Update the keyboard selected rows without redrawing.
+        // Deselect the old keyboard row.
+        int oldSelectedRow = oldState.getKeyboardSelectedRow();
+        if (oldSelectedRow >= 0 && oldSelectedRow < rowDataCount) {
+          view.setKeyboardSelected(oldSelectedRow, false, false);
+        }
+
+        // Select the new keyboard row.
+        int newSelectedRow = pending.getKeyboardSelectedRow();
+        if (newSelectedRow >= 0 && newSelectedRow < rowDataCount) {
+          view.setKeyboardSelected(newSelectedRow, true,
+              pending.keyboardStealFocus);
+        }
       }
+    } finally {
+      /*
+       * We are done resolving state, so unlock the rendering loop. We unlock
+       * the loop even if user rendering code throws an error to avoid throwing
+       * an additional, misleading IllegalStateException.
+       */
+      isResolvingState = false;
     }
-
-    // We are done resolving state.
-    isResolvingState = false;
   }
 
   /**

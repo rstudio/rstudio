@@ -17,6 +17,7 @@ package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -35,6 +36,7 @@ import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.RangeChangeEvent;
 import com.google.gwt.view.client.SelectionChangeEvent;
+import com.google.gwt.view.client.SelectionChangeEvent.Handler;
 import com.google.gwt.view.client.SelectionModel;
 import com.google.gwt.view.client.SingleSelectionModel;
 
@@ -270,6 +272,88 @@ public class HasDataPresenterTest extends GWTTestCase {
     presenter.setVisibleRange(new Range(20, 100));
     assertNull(handler.getLastRange());
     handler.reset();
+  }
+
+  /**
+   * Test that the presenter can gracefully handle a view that throws exceptions
+   * when rendering the content.
+   */
+  public void testBadViewSelectionModel() {
+    SelectionModel<String> badModel = new SelectionModel<String>() {
+      public void fireEvent(GwtEvent<?> event) {
+      }
+
+      public Object getKey(String item) {
+        return null;
+      }
+
+      public HandlerRegistration addSelectionChangeHandler(Handler handler) {
+        return null;
+      }
+
+      public boolean isSelected(String object) {
+        throw new NullPointerException();
+      }
+
+      public void setSelected(String object, boolean selected) {
+        throw new NullPointerException();
+      }
+    };
+
+    // Use the bad view in a presenter.
+    MockView<String> view = new MockView<String>();
+    HasData<String> listView = new MockHasData<String>();
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
+        view, 10, null);
+    presenter.setSelectionModel(badModel);
+    presenter.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.BOUND_TO_SELECTION);
+    testPresenterWithBadUserCode(presenter);
+  }
+
+  /**
+   * Test that the presenter can gracefully handle a view that throws exceptions
+   * when rendering the content.
+   */
+  public void testBadViewRender() {
+    MockView<String> badView = new MockView<String>() {
+      @Override
+      public void render(SafeHtmlBuilder sb, List<String> values, int start,
+          SelectionModel<? super String> selectionModel) {
+        throw new NullPointerException();
+      }
+    };
+
+    // Use the bad view in a presenter.
+    HasData<String> listView = new MockHasData<String>();
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
+        badView, 10, null);
+    testPresenterWithBadUserCode(presenter);
+  }
+
+  /**
+   * Test that the presenter can gracefully handle a view that throws exceptions
+   * when rendering the children.
+   */
+  public void testBadViewReplaceChildren() {
+    MockView<String> badView = new MockView<String>() {
+      @Override
+      public void replaceAllChildren(List<String> values, SafeHtml html,
+          boolean stealFocus) {
+        throw new NullPointerException();
+      }
+
+      @Override
+      public void replaceChildren(List<String> values, int start,
+          SafeHtml html, boolean stealFocus) {
+        throw new NullPointerException();
+      }
+    };
+
+    // Use the bad view in a presenter.
+    HasData<String> listView = new MockHasData<String>();
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
+        badView, 10, null);
+    testPresenterWithBadUserCode(presenter);
   }
 
   public void testCalculateModifiedRanges() {
@@ -1880,5 +1964,38 @@ public class HasDataPresenterTest extends GWTTestCase {
     int start = range.getStart();
     int length = range.getLength();
     presenter.setRowData(start, createData(start, length));
+  }
+
+  /**
+   * Test that the presenter can gracefully handle a view or
+   * {@link SelectionModel} that throws an exception.
+   * 
+   * @param presenter the presenter to test
+   */
+  private void testPresenterWithBadUserCode(HasDataPresenter<String> presenter) {
+    // Render some data with an exception.
+    try {
+      populatePresenter(presenter);
+      presenter.setKeyboardSelectedRow(0, false, false);
+      presenter.flush();
+      fail("Expected NullPointerException");
+    } catch (NullPointerException e) {
+      // Expected.
+    }
+
+    // Render additional data with an exception.
+    try {
+      presenter.setVisibleRange(new Range(10, 10));
+      populatePresenter(presenter);
+      presenter.setKeyboardSelectedRow(1, false, false);
+      presenter.flush();
+      fail("Expected NullPointerException");
+    } catch (NullPointerException e) {
+      /*
+       * Expected. If we do not get a NullPointerException, then we are stuck in
+       * the rendering loop. We should not get an IllegalStateException from the
+       * rendering loop if the presenter fails gracefully.
+       */
+    }
   }
 }
