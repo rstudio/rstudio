@@ -221,11 +221,15 @@ public class Source implements InsertSourceHandler,
     */
    private void ensureVisible(boolean isNewTabPending)
    {
-      newTabPending_ = isNewTabPending;
-
-      view_.ensureVisible();
-
-      newTabPending_ = false;
+      newTabPending_++;
+      try
+      {
+         view_.ensureVisible();
+      }
+      finally
+      {
+         newTabPending_--;
+      }
    }
 
    public Widget toWidget()
@@ -579,8 +583,7 @@ public class Source implements InsertSourceHandler,
    private void addTab(SourceDocument doc,
                        final CommandWithArg<EditingTarget> callback)
    {
-      Debug.printStackTrace("addTab");
-
+      newTabPending_++;
       editingTargetSource_.getEditingTarget(
             doc, fileContext_, new Provider<String>()
             {
@@ -593,6 +596,8 @@ public class Source implements InsertSourceHandler,
             {
                public void execute(final EditingTarget target)
                {
+                  newTabPending_--;
+
                   final Widget widget = target.toWidget();
 
                   editors_.add(target);
@@ -823,7 +828,7 @@ public class Source implements InsertSourceHandler,
 
    public void onBeforeShow(BeforeShowEvent event)
    {
-      if (view_.getTabCount() == 0 && !newTabPending_)
+      if (view_.getTabCount() == 0 && newTabPending_ == 0)
       {
          // Avoid scenarios where the Source tab comes up but no tabs are
          // in it. (But also avoid creating an extra source tab when there
@@ -851,6 +856,6 @@ public class Source implements InsertSourceHandler,
    private static final String KEY_ACTIVETAB = "activeTab";
    private boolean initialized_;
 
-   // If true, a new tab is about to be created
-   private boolean newTabPending_;
+   // If positive, a new tab is about to be created
+   private int newTabPending_;
 }

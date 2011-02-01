@@ -22,12 +22,26 @@ public class EditSession extends JavaScriptObject
       return this.getSelection();
    }-*/;
 
-   public native final void replace(Range range, String text) /*-{
-      this.replace(range, text);
+   public native final Position replace(Range range, String text) /*-{
+      return this.replace(range, text);
    }-*/;
 
    public native final String getTextRange(Range range) /*-{
       return this.getTextRange(range);
    }-*/;
 
+   public native final String getLine(int row) /*-{
+      return this.getLine(row);
+   }-*/;
+
+   public native final void setUseWrapMode(boolean useWrapMode) /*-{
+      return this.setUseWrapMode(useWrapMode);
+   }-*/;
+
+   /**
+    * Number of rows
+    */
+   public native final int getLength() /*-{
+      return this.getLength();
+   }-*/;
 }

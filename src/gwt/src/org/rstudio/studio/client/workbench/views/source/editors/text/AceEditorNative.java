@@ -1,6 +1,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.user.client.Command;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.EditSession;
 
 public class AceEditorNative extends JavaScriptObject {
@@ -29,5 +30,12 @@ public class AceEditorNative extends JavaScriptObject {
 
    public native final void focus() /*-{
       this.focus();
+   }-*/;
+
+   public native final void onChange(Command command) /*-{
+      this.getSession().on("change",
+              $entry(function () {
+                 command.@com.google.gwt.user.client.Command::execute()();
+              }));
    }-*/;
 }

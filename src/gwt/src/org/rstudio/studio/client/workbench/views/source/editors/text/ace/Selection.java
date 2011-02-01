@@ -9,4 +9,19 @@ public class Selection extends JavaScriptObject
    public native final Range getRange() /*-{
       return this.getRange();
    }-*/;
+
+   public native final void setSelectionRange(Range range) /*-{
+      this.setSelectionRange(range);
+   }-*/;
+
+   public native final Position getCursor() /*-{
+      return this.getCursor();
+   }-*/;
+
+   public native final void moveCursorTo(int row,
+                                         int column,
+                                         boolean preventUpdateDesiredColumn) /*-{
+      this.moveCursorTo(row, column, preventUpdateDesiredColumn);
+   }-*/;
+
 }
