@@ -159,4 +159,6 @@ public interface ThemeResources extends ClientBundle
    ImageResource warning();
 
    ImageResource codeTransform();
+
+   ImageResource closeChevron();
 }

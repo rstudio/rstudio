@@ -128,4 +128,9 @@ public interface ThemeStyles extends CssResource
    String multiPodUtilityArea();
 
    String tabOverflowPopup();   
+   
+   String miniDialogPopupPanel();
+   String miniDialogContainer();
+   String miniDialogCaption();
+   String miniDialogTools();
 }

@@ -9,6 +9,9 @@ public interface ManipulatorStyles extends CssResource
 
    
    String control();
+
+   String captionLabel();
+   String valueLabel();
 }
 
 

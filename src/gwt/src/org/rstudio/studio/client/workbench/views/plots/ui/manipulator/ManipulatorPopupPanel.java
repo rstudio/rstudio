@@ -1,7 +1,7 @@
 package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 
+import org.rstudio.core.client.widget.MiniDialogPopupPanel;
 import org.rstudio.core.client.widget.ThemedButton;
-import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorManager.ManipulatorChangedHandler;
 
@@ -12,8 +12,9 @@ import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 
-public class ManipulatorPopupPanel extends ThemedPopupPanel 
+public class ManipulatorPopupPanel extends MiniDialogPopupPanel 
                              
 {
    public ManipulatorPopupPanel(final ManipulatorChangedHandler changedHandler)
@@ -23,12 +24,19 @@ public class ManipulatorPopupPanel extends ThemedPopupPanel
       changedHandler_ = changedHandler;
       
       
-      mainPanel_ = new VerticalPanel();
-      mainPanel_.setHeight("200px;");
+      setCaption("Manipulate");
    
         
       
-      setWidget(mainPanel_);
+      
+   }
+   
+   @Override
+   protected Widget createMainWidget()
+   {
+      mainPanel_ = new VerticalPanel();
+      mainPanel_.setHeight("200px;");
+      return mainPanel_;
    }
    
    public void update(Manipulator manipulator)
@@ -38,7 +46,7 @@ public class ManipulatorPopupPanel extends ThemedPopupPanel
       if (manipulator != null)
       {         
          ManipulatorControlSlider slider = new ManipulatorControlSlider();
-         slider.setLabel("SliderMe");
+         slider.setCaption("SliderMe");
          slider.setValueText("67");
          
          mainPanel_.add(slider);
@@ -68,7 +76,7 @@ public class ManipulatorPopupPanel extends ThemedPopupPanel
    }
    
   
-   private final VerticalPanel mainPanel_;
+   private VerticalPanel mainPanel_;
    private final ManipulatorChangedHandler changedHandler_;
 
 }

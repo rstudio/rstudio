@@ -10,7 +10,8 @@ public class ManipulatorControl extends Composite
 {
    public ManipulatorControl()
    {
-    
+      // get manipulator styles
+      ManipulatorStyles styles = ManipulatorResources.INSTANCE.manipulatorStyles();
       
       panel_ = new VerticalPanel();
       
@@ -18,20 +19,22 @@ public class ManipulatorControl extends Composite
       // setup caption panel and add it
       HorizontalPanel captionPanel = new HorizontalPanel();
   
-      label_ = new Label();
-      captionPanel.add(label_);
+      captionLabel_ = new Label();
+      captionLabel_.setStyleName(styles.captionLabel());
+      captionPanel.add(captionLabel_);
       valueLabel_ = new Label();
+      valueLabel_.setStyleName(styles.valueLabel());
       captionPanel.add(valueLabel_);
       panel_.add(captionPanel);
       
       initWidget(panel_);
-      setStyleName(ManipulatorResources.INSTANCE.manipulatorStyles().control());
+      setStyleName(styles.control());
    }
    
    
-   public void setLabel(String label)
+   public void setCaption(String captionText)
    {
-      label_.setText(label);
+      captionLabel_.setText(captionText + ":");
    }
    
    public void setValueText(String valueText)
@@ -44,7 +47,7 @@ public class ManipulatorControl extends Composite
       panel_.add(w);
    }
    
-   private Label label_;
+   private Label captionLabel_;
    private Label valueLabel_;
    
    private VerticalPanel panel_;
