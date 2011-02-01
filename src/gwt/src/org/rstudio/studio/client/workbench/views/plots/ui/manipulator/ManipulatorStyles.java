@@ -12,6 +12,8 @@ public interface ManipulatorStyles extends CssResource
 
    String captionLabel();
    String valueLabel();
+   
+   String manipulateButton();
 }
 
 

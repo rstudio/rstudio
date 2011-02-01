@@ -69,3 +69,8 @@
   background-color: #DDDDDD;
   cursor: pointer;
 }
+
+.manipulateButton {
+   margin-left: 4px;
+   margin-top: 3px;
+}

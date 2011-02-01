@@ -35,7 +35,7 @@ public class ManipulatorPopupPanel extends MiniDialogPopupPanel
    protected Widget createMainWidget()
    {
       mainPanel_ = new VerticalPanel();
-      mainPanel_.setHeight("200px;");
+      mainPanel_.setWidth("250px");
       return mainPanel_;
    }
    

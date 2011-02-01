@@ -1,12 +1,13 @@
 package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Panel;
+import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 
 public class ManipulatorManager
 {
@@ -26,15 +27,16 @@ public class ManipulatorManager
       manipulatorPopup_ = null;
       
       // create manipulator button
-      manipulatorButton_ = new Button("M");
-      manipulatorButton_.setHeight("25px;");
-      manipulatorButton_.addClickHandler(new ClickHandler() {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            showManipulatorPopup();
-         }
-      });
+      manipulatorButton_ = new ToolbarButton(
+            ManipulatorResources.INSTANCE.manipulateButton(),
+            new ClickHandler() { 
+               public void onClick(ClickEvent event)
+               {
+                  showManipulatorPopup();
+               }
+            });
+      manipulatorButton_.addStyleName(ManipulatorStyles.INSTANCE.manipulateButton());
+      manipulatorButton_.setTitle("Show plot manipulator");
       plotsSurface_.add(manipulatorButton_);
       manipulatorButton_.setVisible(false);
       
@@ -71,13 +73,26 @@ public class ManipulatorManager
    {
       // show it if necessary
       if (!manipulatorPopup_.isShowing())
-         manipulatorPopup_.showRelativeTo(plotsSurface_);   
+      {
+         manipulatorPopup_.setPopupPositionAndShow(new PositionCallback(){
+            @Override
+            public void setPosition(int offsetWidth, int offsetHeight)
+            {
+               manipulatorPopup_.setPopupPosition(
+                     plotsSurface_.getAbsoluteLeft() - offsetWidth + 22,
+                     plotsSurface_.getAbsoluteTop() - 6);
+            }
+            
+         }) ;
+         
+         
+      }
    }
    
    
    private final Panel plotsSurface_;
    private Manipulator manipulator_;
-   private Button manipulatorButton_;
+   private ToolbarButton manipulatorButton_;
    private ManipulatorPopupPanel manipulatorPopup_;
   
 }
