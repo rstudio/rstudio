@@ -13,7 +13,12 @@
 
 .rs.addFunction( "manipulator.execute", function(manipulator)
 {
-  eval(manipulator$manip_code, envir=manipulator, enclos=globalenv())
+  eval(manipulator$manip_code,
+       envir  = manipulator,
+       enclos = if (is.null(manipulator$manip_envir))
+                 globalenv()
+               else
+                 manipulator$manip_envir)
 })
 
 .rs.addFunction( "manipulator.save", function(manipulator, filename)
@@ -138,6 +143,12 @@
   manipulator$manip_controls <- controls
   manipulator$manip_variables <- controlNames
   
+  # if the parent frame isn't the global environment then save it as well
+  if (sys.nframe() > 1)
+    manipulator$manip_envir <- parent.frame()
+ else
+    manipulator$manip_envir <- NULL
+
   # establish state
   manipulator$manip_state <- list()
   
