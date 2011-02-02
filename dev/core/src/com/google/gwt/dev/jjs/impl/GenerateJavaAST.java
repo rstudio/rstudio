@@ -451,14 +451,6 @@ public class GenerateJavaAST {
      * output JavaScript.
      */
     public void processType(TypeDeclaration x) {
-      if (x.binding.isAnnotationType()) {
-        // Do not process completely. Use tryGet for binary-only annotations
-        currentClass = (JDeclaredType) typeMap.tryGet(x.binding);
-        if (currentClass != null) {
-          processHasAnnotations(currentClass, x.annotations);
-        }
-        return;
-      }
       currentClass = (JDeclaredType) typeMap.get(x.binding);
       processHasAnnotations(currentClass, x.annotations);
       try {
