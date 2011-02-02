@@ -17,6 +17,7 @@ package com.google.gwt.editor.client.testing;
 
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.EditorError;
+import com.google.gwt.editor.client.EditorVisitor;
 import com.google.gwt.editor.client.SimpleBeanEditorDriver;
 
 import java.util.Collections;
@@ -36,6 +37,12 @@ public class MockSimpleBeanEditorDriver<T, E extends Editor<T>> implements
 
   private E editor;
   private T object;
+
+  /**
+   * A no-op method.
+   */
+  public void accept(EditorVisitor visitor) {
+  }
 
   /**
    * Records <code>object</code>.

@@ -30,7 +30,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 
+ * Tests for DelegateMap.
  */
 public class DelegateMapTest extends GWTTestCase {
   class AddressCoEditorView extends AddressEditor implements
@@ -82,27 +82,26 @@ public class DelegateMapTest extends GWTTestCase {
     driver.initialize(editor);
     driver.edit(person);
 
-    map = driver.getDelegateMap();
+    map = DelegateMap.of(driver, DelegateMap.IDENTITY);
   }
 
   public void test() {
     // Test by-object
     assertEquals(Arrays.asList(editor), editors(map, person));
-    assertEquals(Arrays.asList(editor.addressEditor.addressEditor,
-        editor.addressEditor), editors(map, person.getAddress()));
+    assertEquals(
+        Arrays.asList(editor.addressEditor.addressEditor, editor.addressEditor),
+        editors(map, person.getAddress()));
 
     // Test by-path
     assertEquals(Arrays.asList(editor), editors(map, ""));
-    assertEquals(Arrays.asList(editor.addressEditor.addressEditor,
-        editor.addressEditor), editors(map, "address"));
+    assertEquals(
+        Arrays.asList(editor.addressEditor.addressEditor, editor.addressEditor),
+        editors(map, "address"));
   }
 
   public void testSimplePath() {
-    assertSame(editor.name, map.get(person).get(0).getSimpleEditor("name"));
-    assertSame(editor.managerName, map.get(person).get(0).getSimpleEditor(
-        "manager.name"));
-    // Only simple editors
-    assertNull(map.get(person).get(0).getSimpleEditor("address"));
+    assertSame(editor.name, map.getEditorByPath("name").get(0));
+    assertSame(editor.managerName, map.getEditorByPath("manager.name").get(0));
   }
 
   private List<Editor<?>> editors(DelegateMap map, Object o) {
@@ -115,7 +114,7 @@ public class DelegateMapTest extends GWTTestCase {
 
   private List<Editor<?>> editors(DelegateMap map, String path) {
     List<Editor<?>> toReturn = new ArrayList<Editor<?>>();
-    for (AbstractEditorDelegate<?, ?> delegate : map.getPath(path)) {
+    for (AbstractEditorDelegate<?, ?> delegate : map.getDelegatesByPath(path)) {
       toReturn.add(delegate.getEditor());
     }
     return toReturn;

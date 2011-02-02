@@ -25,7 +25,10 @@ import com.google.gwt.dev.generator.NameFactory;
 import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.editor.client.Editor;
-import com.google.gwt.editor.client.impl.DelegateMap;
+import com.google.gwt.editor.client.EditorVisitor;
+import com.google.gwt.editor.client.impl.AbstractEditorContext;
+import com.google.gwt.editor.client.impl.AbstractEditorDelegate;
+import com.google.gwt.editor.client.impl.RootEditorContext;
 import com.google.gwt.editor.rebind.model.EditorData;
 import com.google.gwt.editor.rebind.model.EditorModel;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
@@ -33,7 +36,6 @@ import com.google.gwt.user.rebind.SourceWriter;
 
 import java.io.PrintWriter;
 import java.util.IdentityHashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -128,20 +130,20 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
        * supertype.
        */
       sw.println("private %s editor;", editor.getQualifiedSourceName());
-      sw.println("protected %s getEditor() {return editor;}",
+      sw.println("@Override protected %s getEditor() {return editor;}",
           editor.getQualifiedSourceName());
       sw.println(
           "protected void setEditor(%s editor) {this.editor=(%s)editor;}",
           Editor.class.getCanonicalName(), editor.getQualifiedSourceName());
       sw.println("private %s object;", edited.getQualifiedSourceName());
-      sw.println("public %s getObject() {return object;}",
+      sw.println("@Override public %s getObject() {return object;}",
           edited.getQualifiedSourceName());
       sw.println(
-          "protected void setObject(Object object) {this.object=(%s)object;}",
+          "@Override protected void setObject(Object object) {this.object=(%s)object;}",
           edited.getQualifiedSourceName());
 
       if (delegateData.isCompositeEditor()) {
-        sw.println("protected %s createComposedDelegate() {",
+        sw.println("@Override protected %s createComposedDelegate() {",
             Name.getSourceNameForClass(this.getEditorDelegateType()));
         sw.indentln("return new %s();",
             getEditorDelegate(delegateData.getComposedData()));
@@ -160,224 +162,55 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
       }
 
       // For each entity property, create a sub-delegate and initialize
-      sw.println("protected void attachSubEditors(%s delegateMap) {",
-          DelegateMap.class.getCanonicalName());
+      sw.println("@Override protected void initializeSubDelegates() {");
       sw.indent();
+      if (delegateData.isCompositeEditor()) {
+        sw.println(
+            "createChain(%s.class);",
+            delegateData.getComposedData().getEditedType().getQualifiedSourceName());
+      }
       for (EditorData d : data) {
         String subDelegateType = getEditorDelegate(d);
-        sw.println("if (editor.%s != null) {", d.getSimpleExpression());
-        sw.indent();
         if (d.isDelegateRequired()) {
-          sw.println("%s = new %s();", delegateFields.get(d), subDelegateType);
-          writeDelegateInitialization(sw, d, delegateFields);
-          sw.println("delegateMap.put(%1$s.getObject(), %1$s);",
-              delegateFields.get(d));
-        } else if (d.isLeafValueEditor()) {
-          // if (can().access().without().npe()) {
-          sw.println("if (%s) {", d.getBeanOwnerGuard("getObject()"));
+          sw.println("if (editor.%s != null) {", d.getSimpleExpression());
           sw.indent();
-          // Bar value = getObject()....;
-          sw.println("%s value = getObject()%s%s;",
-              d.getEditedType().getQualifiedSourceName(),
-              d.getBeanOwnerExpression(), d.getGetterExpression());
-          // editor.subEditor.setValue(value);
-          sw.println("editor.%s.setValue(value);", d.getSimpleExpression());
-          // simpleEditors.put("foo.bar", editor.subEditor);
-          sw.println("simpleEditors.put(\"%s\", editor.%s);",
-              d.getDeclaredPath(), d.getSimpleExpression());
-          // lastLeafValues.put("foo.bar", value);
-          sw.println("lastLeafValues.put(\"%s\", value);", d.getDeclaredPath());
+          sw.println("%s = new %s();", delegateFields.get(d), subDelegateType);
+          sw.println("addSubDelegate(%s, appendPath(\"%s\"), editor.%s);",
+              delegateFields.get(d), d.getPropertyName(),
+              d.getSimpleExpression());
           sw.outdent();
           sw.println("}");
         }
+      }
+      sw.outdent();
+      sw.println("}");
+
+      sw.println("@Override public void accept(%s visitor) {",
+          EditorVisitor.class.getCanonicalName());
+      sw.indent();
+      if (delegateData.isCompositeEditor()) {
+        sw.println("getEditorChain().accept(visitor);");
+      }
+      for (EditorData d : data) {
+        sw.println("{");
+        sw.indent();
+        String editorContextName = getEditorContext(delegateData, d);
+        if (d.isDelegateRequired()) {
+          sw.println("%s ctx = new %s(getObject(), %s);", editorContextName,
+              editorContextName, delegateFields.get(d));
+        } else {
+          sw.println(
+              "%s ctx = new %s(getObject(), editor.%s, appendPath(\"%s\"));",
+              editorContextName, editorContextName, d.getSimpleExpression(),
+              d.getDeclaredPath());
+        }
+        sw.println("ctx.traverse(visitor, %s);", d.isDelegateRequired()
+            ? delegateFields.get(d) : "null");
         sw.outdent();
         sw.println("}");
       }
       sw.outdent();
       sw.println("}");
-
-      // Flush each sub-delegate
-      sw.println("protected void flushSubEditors(%s errorAccumulator) {",
-          List.class.getCanonicalName());
-      sw.indent();
-      for (EditorData d : data) {
-        String mutableObjectExpression;
-        if (d.getBeanOwnerExpression().length() > 0) {
-          mutableObjectExpression = mutableObjectExpression(d,
-              String.format("(getObject()%s)", d.getBeanOwnerExpression()));
-        } else {
-          mutableObjectExpression = "getObject()";
-        }
-
-        if (d.getSetterName() != null && d.isLeafValueEditor()) {
-          // if (editor.subEditor != null && can().access()) {
-          sw.println("if (editor.%s != null && %s) {", d.getSimpleExpression(),
-              d.getBeanOwnerGuard("getObject()"));
-          sw.indent();
-          if (d.isDelegateRequired()) {
-            sw.println("%s.flush(errorAccumulator);", delegateFields.get(d));
-            // mutableObject.setFoo((cast)fooDelegate.getValue());
-            sw.println("%s.%s((%s)%s.getObject());", mutableObjectExpression,
-                d.getSetterName(), d.getEditedType().getQualifiedSourceName(),
-                delegateFields.get(d));
-          } else {
-            // mutableObject.setFoo(editor.subEditor.getValue());
-            sw.println("%s.%s(editor.%s.getValue());", mutableObjectExpression,
-                d.getSetterName(), d.getSimpleExpression());
-          }
-          sw.outdent();
-          sw.println("}");
-        } else if (d.isDelegateRequired()) {
-          // if (fooDelegate != null && can().reach().without().npe()) {
-          sw.println("if (%s != null && %s) {", delegateFields.get(d),
-              d.getBeanOwnerGuard("getObject()"));
-          sw.indent();
-          // fooDelegate.flush(errorAccumulator);
-          sw.println("%s.flush(errorAccumulator);", delegateFields.get(d));
-
-          sw.outdent();
-          sw.println("}");
-        }
-      }
-      sw.outdent();
-      sw.println("}");
-
-      // Flush each sub-delegate
-      sw.println("protected void flushSubEditorErrors(%s errorAccumulator) {",
-          List.class.getCanonicalName());
-      sw.indent();
-      for (EditorData d : data) {
-        if (d.isDelegateRequired()) {
-          // if (fooDelegate != null) fooDelegate.flushErrors(accumulator);
-          sw.println("if (%1$s != null) %1$s.flushErrors(errorAccumulator);",
-              delegateFields.get(d));
-        }
-      }
-      sw.outdent();
-      sw.println("}");
-
-      sw.println("protected boolean hasSubEditorsWithoutDelegates() {");
-      boolean hasSubEditorsWithoutDelegates = false;
-      for (EditorData d : data) {
-        if (!d.isDelegateRequired()) {
-          hasSubEditorsWithoutDelegates = true;
-          break;
-        }
-      }
-      sw.indentln("return %s;", hasSubEditorsWithoutDelegates ? "true"
-          : "false");
-      sw.println("}");
-
-      // isDirty() traversal method for sub-editors without delegates
-      sw.println("protected boolean isDirtyCheckLeaves() {");
-      sw.indent();
-      if (hasSubEditorsWithoutDelegates) {
-        for (EditorData d : data) {
-          if (!d.isDelegateRequired()) {
-            // if (editor.subEditor != null &&
-            sw.println("if (editor.%s != null &&", d.getSimpleExpression());
-            // !equals(editor.sub.getValue(), lastLeafValues.get("foo.bar"))) {
-            sw.indentln(
-                "!equals(editor.%s.getValue(), lastLeafValues.get(\"%s\"))) {",
-                d.getSimpleExpression(), d.getDeclaredPath());
-            sw.indentln("return true;");
-            sw.println("}");
-          }
-        }
-      }
-      sw.println("return false;");
-      sw.outdent();
-      sw.println("}");
-
-      // Reset the data being displayed
-      sw.println("protected void refreshEditors() {",
-          DelegateMap.class.getCanonicalName());
-      sw.indent();
-      for (EditorData d : data) {
-        if (d.isDelegateRequired()) {
-          // if (subEditorDelegate != null) {
-          sw.println("if (%s != null) {", delegateFields.get(d));
-          sw.indent();
-          // if (can().access().without().npe()) {
-          sw.println("if (%s) {", d.getBeanOwnerGuard("getObject()"));
-          // subDelegate.refresh(getObject().getFoo().getBar());
-          sw.indentln("%s.refresh(getObject()%s%s);", delegateFields.get(d),
-              d.getBeanOwnerExpression(), d.getGetterExpression());
-          // } else { subDelegate.refresh(null); }
-          sw.println("} else { %s.refresh(null); }", delegateFields.get(d));
-          sw.outdent();
-          sw.println("}");
-        } else if (d.isLeafValueEditor()) {
-          // if (editor.subEditor != null) {
-          sw.println("if (editor.%s != null) {", d.getSimpleExpression());
-          sw.indent();
-          // if (can().access().without().npe()) {
-          sw.println("if (%s) {", d.getBeanOwnerGuard("getObject()"));
-          sw.indent();
-          // Bar value = getObject()....;
-          sw.println("%s value = getObject()%s%s;",
-              d.getEditedType().getQualifiedSourceName(),
-              d.getBeanOwnerExpression(), d.getGetterExpression());
-          // editor.subEditor.setValue(value);
-          sw.println("editor.%s.setValue(value);", d.getSimpleExpression());
-          // lastLeafValues.put("foo.bar", value);
-          sw.println("lastLeafValues.put(\"%s\", value);", d.getDeclaredPath());
-          sw.outdent();
-          sw.println("} else {");
-          sw.indent();
-          sw.println("editor.%s.setValue(null);", d.getSimpleExpression());
-          sw.println("lastLeafValues.put(\"%s\", null);", d.getDeclaredPath());
-          sw.outdent();
-          sw.println("}");
-          sw.outdent();
-          sw.println("}");
-        }
-      }
-      sw.outdent();
-      sw.println("}");
-
-      // Write instance delegate to static implementation
-      sw.println("protected void traverse(%s paths) {",
-          List.class.getCanonicalName());
-      sw.indentln("traverseEditor(getEditor(), \"\", paths);");
-      sw.println("}");
-
-      sw.println("public static void traverseEditor(%s editor,"
-          + " String prefix, %s<String> paths) {",
-          editor.getQualifiedSourceName(), List.class.getName());
-      sw.indent();
-      for (EditorData d : data) {
-        if (d.isDelegateRequired() || d.isDeclaredPathNested()
-            || d.isCompositeEditor()) {
-          // if (editor.subEditor != null) {
-          sw.println("if (editor.%s != null) {", d.getSimpleExpression());
-          sw.indent();
-          // String localPath = appendPath(prefix, "somePath");
-          sw.println("String localPath = appendPath(prefix, \"%s\");",
-              d.getDeclaredPath());
-          sw.println("paths.add(localPath);");
-
-          if (d.isDelegateRequired()) {
-            // fooDelegate.traverseEditor(editor.subEditor, localPath, paths);
-            sw.println("%s.traverseEditor(editor.%s, localPath, paths);",
-                getEditorDelegate(d), d.getSimpleExpression());
-          }
-          if (d.isCompositeEditor()) {
-            /*
-             * composedDelegate.traverseEditor(editor.subEditor.
-             * createEditorForTraversal(), localPath, paths);
-             */
-            sw.println(
-                "%s.traverseEditor(editor.%s.createEditorForTraversal(), localPath, paths);",
-                getEditorDelegate(d.getComposedData()), d.getSimpleExpression());
-          }
-          sw.outdent();
-          sw.println("}");
-        }
-      }
-      sw.outdent();
-      sw.println("}");
-
       sw.commit(logger);
     }
     return packageName + "." + delegateSimpleName;
@@ -388,31 +221,107 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
   protected abstract String mutableObjectExpression(EditorData data,
       String sourceObjectExpression);
 
-  /**
-   * @param logger
-   * @param context
-   * @param model
-   * @param sw
-   * 
-   * @throws UnableToCompleteException
-   */
   protected void writeAdditionalContent(TreeLogger logger,
       GeneratorContext context, EditorModel model, SourceWriter sw)
       throws UnableToCompleteException {
   }
 
-  protected abstract void writeDelegateInitialization(SourceWriter sw,
-      EditorData d, Map<EditorData, String> delegateFields);
-
   private String escapedBinaryName(String binaryName) {
     return binaryName.replace("_", "_1").replace('$', '_').replace('.', '_');
+  }
+
+  /**
+   * Create an EditorContext implementation that will provide acess to
+   * {@link data} owned by {@link parent}. In other words, given the EditorData
+   * for a {@code PersonEditor} and the EditorData for a {@code AddressEditor}
+   * nested in the {@code PersonEditor}, create an EditorContext that will
+   * describe the relationship.
+   * 
+   * @return the qualified name of the EditorContext implementation
+   */
+  private String getEditorContext(EditorData parent, EditorData data) {
+    String pkg = parent.getEditorType().getPackage().getName();
+    // PersonEditor_manager_name_Context
+    String simpleName = escapedBinaryName(parent.getEditorType().getName())
+        + "_" + data.getDeclaredPath().replace("_", "_1").replace(".", "_")
+        + "_Context";
+
+    PrintWriter pw = context.tryCreate(logger, pkg, simpleName);
+    if (pw != null) {
+      ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
+          pkg, simpleName);
+      String editedSourceName = data.getEditedType().getQualifiedSourceName();
+      f.setSuperclass(AbstractEditorContext.class.getCanonicalName() + "<"
+          + editedSourceName + ">");
+      SourceWriter sw = f.createSourceWriter(context, pw);
+
+      String parentSourceName = parent.getEditedType().getQualifiedSourceName();
+      sw.println("private final %s parent;", parentSourceName);
+      sw.println("public %s(%s parent, %s<%s, ?> delegate) {", simpleName,
+          parentSourceName, AbstractEditorDelegate.class.getCanonicalName(),
+          editedSourceName);
+      sw.indentln("super(delegate);");
+      sw.indentln("this.parent = parent;");
+      sw.println("}");
+
+      sw.println("public %s(%s parent, %s<%s> editor, String path) {",
+          simpleName, parentSourceName, Editor.class.getCanonicalName(),
+          editedSourceName);
+      sw.indentln("super(editor,path);");
+      sw.indentln("this.parent = parent;");
+      sw.println("}");
+
+      sw.println("@Override public boolean canSetInModel() {");
+      sw.indentln("return parent != null && %s && %s;",
+          data.getSetterName() == null ? "false" : "true",
+          data.getBeanOwnerGuard("parent"));
+      sw.println("}");
+
+      sw.println("@Override public %s checkAssignment(Object value) {",
+          editedSourceName);
+      sw.indentln("return (%s) value;", editedSourceName);
+      sw.println("}");
+
+      sw.println(
+          "@Override public Class<%1$s> getEditedType() { return %1$s.class; }",
+          editedSourceName);
+
+      sw.println("@Override public %s getFromModel() {", editedSourceName);
+      sw.indentln("return (parent != null && %s) ? parent%s%s : null;",
+          data.getBeanOwnerGuard("parent"), data.getBeanOwnerExpression(),
+          data.getGetterExpression());
+      sw.println("}");
+
+      sw.println("@Override public void setInModel(%s data) {",
+          editedSourceName);
+      if (data.getSetterName() == null) {
+        sw.indentln("throw new UnsupportedOperationException();");
+      } else {
+        sw.indentln("parent%s.%s(data);", data.getBeanOwnerExpression(),
+            data.getSetterName());
+      }
+      sw.println("}");
+
+      sw.commit(logger);
+    }
+    return pkg + "." + simpleName;
   }
 
   private void writeCreateDelegate(SourceWriter sw)
       throws UnableToCompleteException {
     String editorDelegateName = getEditorDelegate(model.getRootData());
 
-    sw.println("protected %s createDelegate() {",
+    sw.println("@Override public void accept(%s visitor) {",
+        EditorVisitor.class.getCanonicalName());
+    sw.indent();
+    sw.println("%1$s ctx = new %1$s(getDelegate(), %2$s.class, getObject());",
+        RootEditorContext.class.getCanonicalName(),
+        model.getProxyType().getQualifiedSourceName());
+    sw.println("ctx.traverse(visitor, getDelegate());");
+    sw.outdent();
+    sw.println("}");
+
+    sw.println("@Override protected %s createDelegate() {",
         Name.getSourceNameForClass(getEditorDelegateType()),
         model.getProxyType().getQualifiedSourceName(),
         model.getEditorType().getQualifiedSourceName());

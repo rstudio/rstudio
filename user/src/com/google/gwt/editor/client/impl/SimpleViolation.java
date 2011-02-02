@@ -15,6 +15,10 @@
  */
 package com.google.gwt.editor.client.impl;
 
+import com.google.gwt.editor.client.Editor;
+import com.google.gwt.editor.client.EditorDriver;
+import com.google.gwt.editor.client.impl.DelegateMap.KeyMethod;
+
 import java.util.Iterator;
 import java.util.List;
 
@@ -100,7 +104,9 @@ public abstract class SimpleViolation {
    * EditorDelegate.
    */
   public static void pushViolations(Iterable<SimpleViolation> violations,
-      DelegateMap delegateMap) {
+      EditorDriver<?> driver, KeyMethod keyMethod) {
+    DelegateMap delegateMap = DelegateMap.of(driver, keyMethod);
+
     // For each violation
     for (SimpleViolation error : violations) {
       Object key = error.getKey();
@@ -118,15 +124,19 @@ public abstract class SimpleViolation {
               + error.getPath();
 
           // Find the leaf editor's delegate.
-          List<AbstractEditorDelegate<?, ?>> leafDelegates = delegateMap.getPath(absolutePath);
+          List<AbstractEditorDelegate<?, ?>> leafDelegates = delegateMap.getDelegatesByPath(absolutePath);
+          List<Editor<?>> editors = delegateMap.getEditorByPath(absolutePath);
           if (leafDelegates != null) {
-            // Only attach the error to the first delegate in a co-editor chain.
-            leafDelegates.get(0).recordError(error.getMessage(), null,
-                error.getUserDataObject());
-          } else {
-            // No EditorDelegate to attach it to, stick it on the base.
-            baseDelegate.recordError(error.getMessage(), null,
-                error.getUserDataObject(), error.getPath());
+            for (AbstractEditorDelegate<?, ?> delegate : leafDelegates) {
+              delegate.recordError(error.getMessage(), null,
+                  error.getUserDataObject());
+            }
+          } else if (editors != null) {
+            // No EditorDelegate to attach it to, so fake the source
+            for (Editor<?> editor : editors) {
+              baseDelegate.recordError(error.getMessage(), null,
+                  error.getUserDataObject(), error.getPath(), editor);
+            }
           }
         }
       }

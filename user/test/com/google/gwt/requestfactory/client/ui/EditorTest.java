@@ -26,10 +26,12 @@ import com.google.gwt.editor.client.HasEditorErrors;
 import com.google.gwt.editor.client.adapters.EditorSource;
 import com.google.gwt.editor.client.adapters.ListEditor;
 import com.google.gwt.editor.client.adapters.SimpleEditor;
+import com.google.gwt.requestfactory.client.HasRequestContext;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.client.RequestFactoryTestBase;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.Request;
+import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.SimpleBarProxy;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
 import com.google.gwt.requestfactory.shared.SimpleFooRequest;
@@ -49,8 +51,15 @@ public class EditorTest extends RequestFactoryTestBase {
    * DO NOT USE finishTest(). Instead, call finishTestAndReset();
    */
 
-  static class SimpleBarEditor implements Editor<SimpleBarProxy> {
+  static class SimpleBarEditor implements Editor<SimpleBarProxy>,
+      HasRequestContext<SimpleBarProxy> {
     protected final SimpleEditor<String> userName = SimpleEditor.of();
+    RequestContext ctx;
+
+    @Override
+    public void setRequestContext(RequestContext ctx) {
+      this.ctx = ctx;
+    }
   }
 
   static class SimpleFooBarOnlyEditor implements Editor<SimpleFooProxy> {
@@ -119,24 +128,28 @@ public class EditorTest extends RequestFactoryTestBase {
 
     final SimpleFooDriver driver = GWT.create(SimpleFooDriver.class);
     driver.initialize(req, editor);
+    final String[] paths = driver.getPaths();
+    assertEquals(Arrays.asList("selfOneToManyField",
+        "selfOneToManyField.barField", "barField"), Arrays.asList(paths));
 
-    req.simpleFooRequest().findSimpleFooById(1L).with(driver.getPaths()).fire(
+    req.simpleFooRequest().findSimpleFooById(1L).with(paths).fire(
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy response) {
 
             SimpleFooRequest context = req.simpleFooRequest();
             driver.edit(response, context);
-            context.persistAndReturnSelf().using(response).with(
-                driver.getPaths()).to(new Receiver<SimpleFooProxy>() {
-              @Override
-              public void onSuccess(SimpleFooProxy response) {
-                assertEquals("EditorFooTest", response.getUserName());
-                assertEquals("EditorBarTest",
-                    response.getBarField().getUserName());
-                finishTestAndReset();
-              }
-            });
+            assertSame(context, editor.barEditor().ctx);
+            context.persistAndReturnSelf().using(response).with(paths).to(
+                new Receiver<SimpleFooProxy>() {
+                  @Override
+                  public void onSuccess(SimpleFooProxy response) {
+                    assertEquals("EditorFooTest", response.getUserName());
+                    assertEquals("EditorBarTest",
+                        response.getBarField().getUserName());
+                    finishTestAndReset();
+                  }
+                });
             assertEquals("GWT", editor.userName.getValue());
             assertEquals("FOO", editor.barEditor().userName.getValue());
             assertEquals("FOO", editor.barName.getValue());
@@ -210,7 +223,7 @@ public class EditorTest extends RequestFactoryTestBase {
     driver.initialize(req, editor);
 
     String[] paths = driver.getPaths();
-    assertEquals(Arrays.asList("barField.userName", "selfOneToManyField",
+    assertEquals(Arrays.asList("selfOneToManyField",
         "selfOneToManyField.barField", "barField"), Arrays.asList(paths));
 
     req.simpleFooRequest().findSimpleFooById(1L).with(paths).fire(
@@ -235,11 +248,9 @@ public class EditorTest extends RequestFactoryTestBase {
             request.fire(new Receiver<SimpleFooProxy>() {
               @Override
               public void onSuccess(SimpleFooProxy response) {
-                System.out.println("B");
                 // EventBus notifications occur after the onSuccess()
                 Scheduler.get().scheduleFixedDelay(new RepeatingCommand() {
                   public boolean execute() {
-                    System.out.println("fo");
                     if ("updated".equals(editor.userName.getValue())) {
                       assertEquals("updated", editor.userName.getValue());
                       assertEquals("newBar",

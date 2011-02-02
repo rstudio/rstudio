@@ -128,7 +128,11 @@ public class ListEditor<T, E extends Editor<T>> implements
       // Having entire value reset, so dump the wrapper gracefully
       list.detach();
     }
-    list = new ListEditorWrapper<T, E>(value, chain, editorSource);
-    list.attach();
+    if (value == null) {
+      list = null;
+    } else {
+      list = new ListEditorWrapper<T, E>(value, chain, editorSource);
+      list.attach();
+    }
   }
 }

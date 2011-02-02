@@ -15,10 +15,6 @@
  */
 package com.google.gwt.editor.client;
 
-import java.util.List;
-
-import javax.validation.ConstraintViolation;
-
 /**
  * Automates editing of simple bean-like objects. The {@link EditorDelegate}
  * provided from this driver has a no-op implementation of
@@ -44,7 +40,8 @@ import javax.validation.ConstraintViolation;
  * @param <E> the Editor for the type
  * @see com.google.gwt.editor.client.testing.MockSimpleBeanEditorDriver
  */
-public interface SimpleBeanEditorDriver<T, E extends Editor<? super T>> {
+public interface SimpleBeanEditorDriver<T, E extends Editor<? super T>> extends
+    EditorDriver<T> {
   /**
    * Push the data in an object graph into the Editor given to
    * {@link #initialize}.
@@ -57,24 +54,10 @@ public interface SimpleBeanEditorDriver<T, E extends Editor<? super T>> {
   /**
    * Update the object being edited with the current state of the Editor.
    * 
-   * @return the object passed into {@link #edit}
-   * @throws IllegalStateException if {@link #edit} has not been called
+   * @return the object passed into {@link #edit(Object)}
+   * @throws IllegalStateException if {@link #edit(Object)} has not been called
    */
   T flush();
-
-  /**
-   * Returns any unconsumed EditorErrors from the last call to {@link #flush()}.
-   * 
-   * @return a List of {@link EditorError} instances
-   */
-  List<EditorError> getErrors();
-
-  /**
-   * Indicates if the last call to {@link #flush()} resulted in any errors.
-   * 
-   * @return {@code true} if errors are present
-   */
-  boolean hasErrors();
 
   /**
    * Initialize the editor driver.
@@ -82,25 +65,4 @@ public interface SimpleBeanEditorDriver<T, E extends Editor<? super T>> {
    * @param editor the Editor to populate
    */
   void initialize(E editor);
-
-  /**
-   * Returns {@code true} if any of the Editors in the hierarchy have been
-   * modified relative to the last value passed into {@link #edit(Object)}.
-   * 
-   * @see EditorDelegate#setDirty(boolean)
-   */
-  boolean isDirty();
-
-  /**
-   * Show {@link ConstraintViolation ConstraintViolations} generated through a
-   * {@link javax.validation.Validator Validator}. The violations will be
-   * converted into {@link EditorError} objects whose
-   * {@link EditorError#getUserData() getUserData()} method can be used to
-   * access the original ConstraintViolation object.
-   * 
-   * @param violations an Iterable over {@link ConstraintViolation} instances
-   * @return <code>true</code> if there were any unconsumed EditorErrors which
-   *         can be retrieved from {@link #getErrors()}
-   */
-  boolean setConstraintViolations(Iterable<ConstraintViolation<?>> violations);
 }

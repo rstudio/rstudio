@@ -15,33 +15,37 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
+import com.google.gwt.autobean.shared.AutoBean;
+import com.google.gwt.autobean.shared.AutoBeanUtils;
 import com.google.gwt.editor.client.Editor;
-import com.google.gwt.editor.client.EditorError;
+import com.google.gwt.editor.client.EditorContext;
+import com.google.gwt.editor.client.EditorVisitor;
 import com.google.gwt.editor.client.impl.AbstractEditorDelegate;
+import com.google.gwt.editor.client.impl.BaseEditorDriver;
 import com.google.gwt.editor.client.impl.DelegateMap;
+import com.google.gwt.editor.client.impl.DelegateMap.KeyMethod;
 import com.google.gwt.editor.client.impl.SimpleViolation;
 import com.google.gwt.event.shared.EventBus;
+import com.google.gwt.requestfactory.client.HasRequestContext;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.ValueProxy;
 import com.google.gwt.requestfactory.shared.Violation;
+import com.google.gwt.requestfactory.shared.impl.Constants;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
-import javax.validation.ConstraintViolation;
 
 /**
  * Contains utility methods for top-level driver implementations.
  * 
- * @param <R> the type of Record
+ * @param <R> the type being edited
  * @param <E> the type of Editor
  */
 public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
-    implements RequestFactoryEditorDriver<R, E> {
+    extends BaseEditorDriver<R, E> implements RequestFactoryEditorDriver<R, E> {
 
   /**
    * Adapts a RequestFactory Violation object to the SimpleViolation interface.
@@ -72,7 +76,6 @@ public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
       return v;
     }
   }
-
   /**
    * Provides a source of SimpleViolation objects based on RequestFactory's
    * simplified Violation interface.
@@ -126,57 +129,58 @@ public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
   }
 
   private static final DelegateMap.KeyMethod PROXY_ID_KEY = new DelegateMap.KeyMethod() {
-    public Object key(final Object object) {
+    public Object key(Object object) {
       if (object instanceof EntityProxy) {
         return ((EntityProxy) object).stableId();
       } else if (object instanceof ValueProxy) {
+        AutoBean<?> bean = AutoBeanUtils.getAutoBean(object);
+        // Possibly replace an editable ValueProxy with its immutable base
+        AutoBean<?> parent = bean.getTag(Constants.PARENT_OBJECT);
+        if (parent != null) {
+          object = parent.as();
+        }
         return new ValueProxyHolder((ValueProxy) object);
       }
       return null;
     }
   };
 
-  private RequestFactoryEditorDelegate<R, E> delegate;
-  private DelegateMap delegateMap = new DelegateMap(PROXY_ID_KEY);
-  private E editor;
   private EventBus eventBus;
-  private List<EditorError> errors;
-  private List<String> paths = new ArrayList<String>();
-  private RequestFactory requestFactory;
+  private List<String> paths;
+  private RequestFactory factory;
   private RequestContext saveRequest;
 
   public void display(R object) {
     edit(object, null);
   }
 
-  public void edit(R object, RequestContext saveRequest) {
-    checkEditor();
+  public void edit(R object, final RequestContext saveRequest) {
     this.saveRequest = saveRequest;
-    delegate = createDelegate();
-    delegate.initialize(eventBus, requestFactory, "", object, editor,
-        delegateMap, saveRequest);
-    delegateMap.put(object, delegate);
+    // Provide the delegate and maybe the editor with the RequestContext
+    accept(new EditorVisitor() {
+      @Override
+      public <T> void endVisit(EditorContext<T> ctx) {
+        RequestFactoryEditorDelegate<?, ?> delegate = (RequestFactoryEditorDelegate<?, ?>) ctx.getEditorDelegate();
+        if (delegate != null) {
+          delegate.setRequestContext(saveRequest);
+        }
+        Editor<T> editor = ctx.getEditor();
+        if (editor instanceof HasRequestContext) {
+          ((HasRequestContext<T>) editor).setRequestContext(saveRequest);
+        }
+      }
+    });
+    doEdit(object);
   }
 
   public RequestContext flush() {
-    checkDelegate();
     checkSaveRequest();
-    errors = new ArrayList<EditorError>();
-    delegate.flush(errors);
-
+    doFlush();
     return saveRequest;
-  }
-
-  public List<EditorError> getErrors() {
-    return errors;
   }
 
   public String[] getPaths() {
     return paths.toArray(new String[paths.size()]);
-  }
-
-  public boolean hasErrors() {
-    return !errors.isEmpty();
   }
 
   public void initialize(E editor) {
@@ -194,66 +198,34 @@ public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
     initialize(requestFactory.getEventBus(), requestFactory, editor);
   }
 
-  public boolean isDirty() {
-    for (AbstractEditorDelegate<?, ?> d : delegateMap) {
-      if (d.isDirty()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public boolean setConstraintViolations(
-      Iterable<ConstraintViolation<?>> violations) {
-    return doSetViolations(SimpleViolation.iterableFromConstrantViolations(violations));
-  }
-
   public boolean setViolations(Iterable<Violation> violations) {
     return doSetViolations(new ViolationIterable(violations));
   }
 
-  protected abstract RequestFactoryEditorDelegate<R, E> createDelegate();
-
-  protected E getEditor() {
-    return editor;
-  }
-
-  protected abstract void traverseEditors(List<String> paths);
-
-  private void checkDelegate() {
-    if (delegate == null) {
-      throw new IllegalStateException("Must call edit() first");
-    }
-  }
-
-  private void checkEditor() {
-    if (editor == null) {
-      throw new IllegalStateException("Must call initialize() first");
-    }
-  }
-
-  private void checkSaveRequest() {
+  protected void checkSaveRequest() {
     if (saveRequest == null) {
       throw new IllegalStateException("edit() was called with a null Request");
     }
   }
 
-  private void doInitialize(EventBus eventBus, RequestFactory requestFactory,
-      E editor) {
-    this.eventBus = eventBus;
-    this.requestFactory = requestFactory;
-    this.editor = editor;
-
-    traverseEditors(paths);
+  @Override
+  protected void configureDelegate(AbstractEditorDelegate<R, E> rootDelegate) {
+    ((RequestFactoryEditorDelegate<R, E>) rootDelegate).initialize(eventBus,
+        factory, "", getEditor());
   }
 
-  private boolean doSetViolations(Iterable<SimpleViolation> violations) {
-    checkDelegate();
-    SimpleViolation.pushViolations(violations, delegateMap);
+  protected void doInitialize(EventBus eventBus, RequestFactory requestFactory,
+      E editor) {
+    this.eventBus = eventBus;
+    this.factory = requestFactory;
+    super.doInitialize(editor);
+    PathCollector c = new PathCollector();
+    accept(c);
+    this.paths = c.getPaths();
+  }
 
-    // Flush the errors, which will take care of co-editor chains.
-    errors = new ArrayList<EditorError>();
-    delegate.flushErrors(errors);
-    return hasErrors();
+  @Override
+  protected KeyMethod getViolationKeyMethod() {
+    return PROXY_ID_KEY;
   }
 }

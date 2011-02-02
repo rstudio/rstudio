@@ -134,7 +134,7 @@ public class EditorErrorTest extends GWTTestCase {
 
     List<EditorError> errors = editor.errors;
     assertNotNull(errors);
-    assertEquals(2, errors.size());
+    assertEquals("Wrong number of EditorErrors", 2, errors.size());
     assertEquals(Arrays.asList("people[0].address", "people[1].address"),
         Arrays.asList(errors.get(0).getPath(), errors.get(1).getPath()));
   }

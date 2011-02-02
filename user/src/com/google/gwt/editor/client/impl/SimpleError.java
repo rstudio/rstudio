@@ -43,10 +43,10 @@ class SimpleError implements EditorError {
    * Used to construct an error for an Editor that does not have a delegate.
    */
   SimpleError(AbstractEditorDelegate<?, ?> delegate, String message,
-      Object value, Object userData, String extraPath) {
+      Object value, Object userData, String extraPath, Editor<?> leafEditor) {
     assert extraPath != null && extraPath.length() > 0;
     this.absolutePath = delegate.getPath() + extraPath;
-    this.editor = delegate.getSimpleEditor(extraPath);
+    this.editor = leafEditor;
     this.message = message;
     this.value = value;
     this.userData = userData;

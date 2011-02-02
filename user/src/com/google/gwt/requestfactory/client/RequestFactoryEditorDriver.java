@@ -16,20 +16,16 @@
 package com.google.gwt.requestfactory.client;
 
 import com.google.gwt.editor.client.Editor;
-import com.google.gwt.editor.client.EditorError;
+import com.google.gwt.editor.client.EditorDriver;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.Violation;
 
-import java.util.List;
-
-import javax.validation.ConstraintViolation;
-
 /**
  * The interface that links RequestFactory and the Editor framework together.
- * Used for configuration and lifecycle control. Expected that this will be
- * created with
+ * <p>
+ * Instances of this interface are created with
  * 
  * <pre>
  * interface MyRFED extends RequestFactoryEditorDriver&lt;MyObjectProxy, MyObjectEditor> {}
@@ -45,13 +41,14 @@ import javax.validation.ConstraintViolation;
  * }
  * </pre>
  * 
- * <p>
- * 
  * @param <P> the type of Proxy being edited
  * @param <E> the type of Editor that will edit the Record
- * @see {@link com.google.gwt.requestfactory.client.testing.MockRequestFactoryEditorDriver}
+ * @see HasRequestContext
+ * @see {@link com.google.gwt.requestfactory.client.testing.MockRequestFactoryEditorDriver
+ *      MockRequestFactoryEditorDriver}
  */
-public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>> {
+public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>>
+    extends EditorDriver<RequestContext> {
   /**
    * Start driving the Editor and its sub-editors with data for display-only
    * mode.
@@ -73,23 +70,14 @@ public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>> {
   void edit(P proxy, RequestContext request);
 
   /**
-   * Ensures that the Editor passed into {@link #initialize} and its
-   * sub-editors, if any, have synced their UI state by invoking flushing them
-   * in a depth-first manner.
+   * Update the object being edited with the current state of the Editor.
    * 
-   * @return the RequestContext passed into {@link #edit}
+   * @return the RequestContext passed into
+   *         {@link #edit(Object, RequestContext)}
    * @throws IllegalStateException if {@link #edit(Object, RequestContext)} has
-   *           not been called with a non-null {@link RequestContext}
+   *           not been called
    */
   RequestContext flush();
-
-  /**
-   * Returns any unconsumed {@link EditorError EditorErrors} from the last call
-   * to {@link #flush()}.
-   * 
-   * @return a List of {@link EditorError} instances
-   */
-  List<EditorError> getErrors();
 
   /**
    * Returns a new array containing the request paths.
@@ -97,13 +85,6 @@ public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>> {
    * @return an array of Strings
    */
   String[] getPaths();
-
-  /**
-   * Indicates if the last call to {@link #flush()} resulted in any errors.
-   * 
-   * @return {@code} true if errors are present
-   */
-  boolean hasErrors();
 
   /**
    * Overload of {@link #initialize(RequestFactory, Editor)} to allow a modified
@@ -139,31 +120,11 @@ public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>> {
   void initialize(E editor);
 
   /**
-   * Returns {@code true} if any of the Editors in the hierarchy have been
-   * modified relative to the last value passed into {@link #edit(Object)}.
-   * 
-   * @see com.google.gwt.editor.client.EditorDelegate#setDirty(boolean)
-   */
-  boolean isDirty();
-
-  /**
-   * Show {@link ConstraintViolation ConstraintViolations} generated through a
-   * JSR 303 Validator. The violations will be converted into
-   * {@link EditorError} objects whose {@link EditorError#getUserData()
-   * getUserData()} method can be used to access the original
-   * ConstraintViolation object.
-   * 
-   * @param violations an Iterable over {@link ConstraintViolation} instances
-   * @return <code>true</code> if there were any unconsumed EditorErrors which
-   *         can be retrieved from {@link #getErrors()}
-   */
-  boolean setConstraintViolations(Iterable<ConstraintViolation<?>> violations);
-
-  /**
    * Show Violations returned from an attempt to submit a request. The
-   * violations will be converted into {@link EditorError} objects whose
-   * {@link EditorError#getUserData() getUserData()} method can be used to
-   * access the original Violation object.
+   * violations will be converted into
+   * {@link com.google.gwt.editor.client.EditorError EditorError} objects whose
+   * {@link com.google.gwt.editor.client.EditorError#getUserData()
+   * getUserData()} method can be used to access the original Violation object.
    * 
    * @param violations an Iterable over {@link Violation} instances
    * @return <code>true</code> if there were any unconsumed EditorErrors which

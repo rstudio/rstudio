@@ -20,8 +20,9 @@ package com.google.gwt.requestfactory.shared.impl;
  */
 public interface Constants {
   String DOMAIN_OBJECT = "domainObject";
-  String VERSION_PROPERTY_B64 = "version";
   String IN_RESPONSE = "inResponse";
+  String PARENT_OBJECT = "parentObject";
   String REQUEST_CONTEXT = "requestContext";
   String STABLE_ID = "stableId";
+  String VERSION_PROPERTY_B64 = "version";
 }

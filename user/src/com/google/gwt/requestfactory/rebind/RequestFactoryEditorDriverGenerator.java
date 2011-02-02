@@ -21,15 +21,10 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.editor.rebind.AbstractEditorDriverGenerator;
 import com.google.gwt.editor.rebind.model.EditorData;
-import com.google.gwt.editor.rebind.model.EditorModel;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.client.impl.AbstractRequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.client.impl.RequestFactoryEditorDelegate;
 import com.google.gwt.requestfactory.shared.BaseProxy;
-import com.google.gwt.user.rebind.SourceWriter;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * Generates implementations of RFEDs.
@@ -72,26 +67,5 @@ public class RequestFactoryEditorDriverGenerator extends
     } else {
       return sourceObjectExpression;
     }
-  }
-
-  @Override
-  protected void writeAdditionalContent(TreeLogger logger,
-      GeneratorContext context, EditorModel model, SourceWriter sw)
-      throws UnableToCompleteException {
-    sw.println("protected void traverseEditors(%s<String> paths) {",
-        List.class.getName());
-    sw.indentln("%s.traverseEditor(getEditor(), \"\", paths);",
-        getEditorDelegate(model.getRootData()));
-    sw.println("}");
-  }
-
-  @Override
-  protected void writeDelegateInitialization(SourceWriter sw, EditorData d,
-      Map<EditorData, String> delegateFields) {
-    sw.println("%s.initialize(eventBus, factory, "
-        + "appendPath(\"%s\"), getObject()%s%s," + " editor.%s,"
-        + " delegateMap, request);", delegateFields.get(d),
-        d.getPropertyName(), d.getBeanOwnerExpression(),
-        d.getGetterExpression(), d.getSimpleExpression());
   }
 }

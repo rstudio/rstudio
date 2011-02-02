@@ -17,6 +17,7 @@ package com.google.gwt.requestfactory.client.testing;
 
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.EditorError;
+import com.google.gwt.editor.client.EditorVisitor;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.shared.RequestContext;
@@ -44,6 +45,12 @@ public class MockRequestFactoryEditorDriver<P, E extends Editor<P>> implements
   private P proxy;
   private RequestContext saveRequest;
   private RequestFactory requestFactory;
+
+  /**
+   * A no-op method.
+   */
+  public void accept(EditorVisitor visitor) {
+  }
 
   /**
    * Records its arguments.

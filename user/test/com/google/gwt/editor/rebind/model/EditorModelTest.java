@@ -30,6 +30,7 @@ import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.editor.client.CompositeEditor;
 import com.google.gwt.editor.client.Editor;
+import com.google.gwt.editor.client.EditorDriver;
 import com.google.gwt.editor.client.EditorError;
 import com.google.gwt.editor.client.HasEditorDelegate;
 import com.google.gwt.editor.client.HasEditorErrors;
@@ -939,6 +940,7 @@ public class EditorModelTest extends TestCase {
         new RealJavaResource(CompositeEditor.class),
         new EmptyMockJavaResource(ConstraintViolation.class),
         new RealJavaResource(Editor.class),
+        new EmptyMockJavaResource(EditorDriver.class),
         new RealJavaResource(EditorError.class),
         new EmptyMockJavaResource(EntityProxy.class),
         new EmptyMockJavaResource(EventBus.class),

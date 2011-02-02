@@ -118,7 +118,7 @@ public class SimpleBeanEditorTest extends GWTTestCase {
       SimpleBeanEditorDriver<Person, PersonEditorWithCoAddressEditorView> {
   }
 
-  class PersonEditorWithDelegate extends PersonEditor implements
+  static class PersonEditorWithDelegate extends PersonEditor implements
       HasEditorDelegate<Person> {
     EditorDelegate<Person> delegate;
 
@@ -158,7 +158,7 @@ public class SimpleBeanEditorTest extends GWTTestCase {
       SimpleBeanEditorDriver<Person, PersonEditorWithOptionalAddressEditor> {
   }
 
-  class PersonEditorWithOptionalAddressEditor implements Editor<Person> {
+  static class PersonEditorWithOptionalAddressEditor implements Editor<Person> {
     OptionalFieldEditor<Address, AddressEditor> address;
     SimpleEditor<String> name = SimpleEditor.of(UNINITIALIZED);
 
@@ -264,10 +264,9 @@ public class SimpleBeanEditorTest extends GWTTestCase {
   Person person;
   Address personAddress;
   Person manager;
+  long now;
 
   static final String UNINITIALIZED = "uninitialized";
-
-  long now;
 
   @Override
   public String getModuleName() {
@@ -320,78 +319,6 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     editor.e2.name.setValue("Should see this");
     driver.flush();
     assertEquals("Should see this", person.getName());
-  }
-
-  public void testDirty() {
-    PersonEditor editor = new PersonEditor();
-    PersonEditorDriver driver = GWT.create(PersonEditorDriver.class);
-    driver.initialize(editor);
-    driver.edit(person);
-
-    // Freshly-initialized should not be dirty
-    assertFalse(driver.isDirty());
-
-    // Changing the Person object should not affect the dirty status
-    person.setName("blah");
-    assertFalse(driver.isDirty());
-
-    editor.addressEditor.city.setValue("Foo");
-    assertTrue(driver.isDirty());
-
-    // Reset to original value
-    editor.addressEditor.city.setValue("City");
-    assertFalse(driver.isDirty());
-
-    // Try a null value
-    editor.managerName.setValue(null);
-    assertTrue(driver.isDirty());
-  }
-
-  public void testDirtyWithDelegate() {
-    PersonEditorWithDelegate editor = new PersonEditorWithDelegate();
-    PersonEditorWithDelegateDriver driver = GWT.create(PersonEditorWithDelegateDriver.class);
-    driver.initialize(editor);
-    driver.edit(person);
-
-    // Freshly-initialized should not be dirty
-    assertFalse(driver.isDirty());
-
-    // Use the delegate to toggle the state
-    editor.delegate.setDirty(true);
-    assertTrue(driver.isDirty());
-
-    // Use the delegate to clear the state
-    editor.delegate.setDirty(false);
-    assertFalse(driver.isDirty());
-
-    // Check that the delegate has no influence over values
-    editor.addressEditor.city.setValue("edited");
-    assertTrue(driver.isDirty());
-    editor.delegate.setDirty(false);
-    assertTrue(driver.isDirty());
-    editor.delegate.setDirty(true);
-    assertTrue(driver.isDirty());
-  }
-
-  public void testDirtyWithOptionalEditor() {
-    AddressEditor addressEditor = new AddressEditor();
-    PersonEditorWithOptionalAddressEditor editor = new PersonEditorWithOptionalAddressEditor(
-        addressEditor);
-    PersonEditorWithOptionalAddressDriver driver = GWT.create(PersonEditorWithOptionalAddressDriver.class);
-    driver.initialize(editor);
-    driver.edit(person);
-
-    // Freshly-initialized should not be dirty
-    assertFalse(driver.isDirty());
-
-    // Change the instance being edited
-    Address a = new Address();
-    editor.address.setValue(a);
-    assertTrue(driver.isDirty());
-
-    // Check restoration works
-    editor.address.setValue(personAddress);
-    assertFalse(driver.isDirty());
   }
 
   /**
@@ -454,7 +381,7 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     // Runtime assignment of unexpected LeafValueEditor
     personEditor.addressEditor = addressEditor;
 
-    testLeafAddressEditor(driver, personEditor, addressEditor, false);
+    testLeafAddressEditor(driver, personEditor, addressEditor, true);
   }
 
   public void testLifecycle() {
@@ -666,7 +593,7 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     // Runtime assignment of unexpected LeafValueEditor
     personEditor.addressEditor = addressEditor;
 
-    testLeafAddressEditor(driver, personEditor, addressEditor, false);
+    testLeafAddressEditor(driver, personEditor, addressEditor, true);
     assertEquals(1, addressEditor.flushCalled);
     assertEquals(1, addressEditor.setDelegateCalled);
   }
@@ -699,20 +626,15 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     // Edit
     driver.edit(person);
     assertEquals(1, addressEditor.setValueCalled);
-    assertEquals(0, addressEditor.getValueCalled);
-    assertEquals(UNINITIALIZED, addressEditor.city.getValue());
+    // The DirtCollector will interrogate the leaf editors
+    assertEquals(1, addressEditor.getValueCalled);
 
     // Flush
     driver.flush();
     assertEquals(1, addressEditor.setValueCalled);
-    assertEquals(1, addressEditor.getValueCalled);
-    if (declaredAsLeaf) {
-      assertNotSame(oldAddress, person.address);
-      assertSame(person.address, addressEditor.value);
-    } else {
-      assertSame(oldAddress, person.address);
-      assertNotSame(person.address, addressEditor.value);
-    }
+    assertEquals(2, addressEditor.getValueCalled);
+    assertNotSame(oldAddress, person.address);
+    assertSame(person.address, addressEditor.value);
   }
 
   private <T extends Editor<Person>> void testValueAwareAddressEditor(

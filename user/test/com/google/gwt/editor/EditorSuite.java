@@ -15,6 +15,7 @@
  */
 package com.google.gwt.editor;
 
+import com.google.gwt.editor.client.DirtyEditorTest;
 import com.google.gwt.editor.client.EditorErrorTest;
 import com.google.gwt.editor.client.SimpleBeanEditorTest;
 import com.google.gwt.editor.client.adapters.ListEditorWrapperTest;
@@ -33,6 +34,7 @@ public class EditorSuite {
     GWTTestSuite suite = new GWTTestSuite(
         "Test suite for core Editor functions");
     suite.addTestSuite(DelegateMapTest.class);
+    suite.addTestSuite(DirtyEditorTest.class);
     suite.addTestSuite(EditorModelTest.class);
     suite.addTestSuite(EditorErrorTest.class);
     suite.addTestSuite(ListEditorWrapperTest.class);

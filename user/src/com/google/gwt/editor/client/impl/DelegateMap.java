@@ -15,6 +15,11 @@
  */
 package com.google.gwt.editor.client.impl;
 
+import com.google.gwt.editor.client.Editor;
+import com.google.gwt.editor.client.EditorContext;
+import com.google.gwt.editor.client.EditorDriver;
+import com.google.gwt.editor.client.EditorVisitor;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -26,7 +31,8 @@ import java.util.Map;
  */
 public class DelegateMap implements Iterable<AbstractEditorDelegate<?, ?>> {
   /**
-   * 
+   * Defines an equivalence relationship to allow objects with non-identity
+   * equality to be used as data keys.
    */
   public interface KeyMethod {
     Object key(Object object);
@@ -79,11 +85,29 @@ public class DelegateMap implements Iterable<AbstractEditorDelegate<?, ?>> {
     }
   };
 
+  public static DelegateMap of(EditorDriver<?> driver, KeyMethod key) {
+    final DelegateMap toReturn = new DelegateMap(key);
+    driver.accept(new EditorVisitor() {
+      @Override
+      public <T> void endVisit(EditorContext<T> ctx) {
+        toReturn.put(ctx.getAbsolutePath(), ctx.getEditor());
+        @SuppressWarnings("unchecked")
+        AbstractEditorDelegate<T, ?> delegate = (AbstractEditorDelegate<T, ?>) ctx.getEditorDelegate();
+        if (delegate != null) {
+          toReturn.put(delegate.getObject(), delegate);
+        }
+      }
+    });
+    return toReturn;
+  }
+
   private final Map<Object, List<AbstractEditorDelegate<?, ?>>> map = new HashMap<Object, List<AbstractEditorDelegate<?, ?>>>();
-  private final Map<String, List<AbstractEditorDelegate<?, ?>>> paths = new HashMap<String, List<AbstractEditorDelegate<?, ?>>>();
+  private final Map<String, List<AbstractEditorDelegate<?, ?>>> delegatesByPath = new HashMap<String, List<AbstractEditorDelegate<?, ?>>>();
+  private final Map<String, List<Editor<?>>> editorsByPath = new HashMap<String, List<Editor<?>>>();
+
   private final KeyMethod keyMethod;
 
-  public DelegateMap(KeyMethod key) {
+  DelegateMap(KeyMethod key) {
     this.keyMethod = key;
   }
 
@@ -93,10 +117,17 @@ public class DelegateMap implements Iterable<AbstractEditorDelegate<?, ?>> {
   }
 
   /**
+   * Returns a list of EditorDelegates available at a particular absolute path.
+   */
+  public List<AbstractEditorDelegate<?, ?>> getDelegatesByPath(String path) {
+    return delegatesByPath.get(path);
+  }
+
+  /**
    * Returns a list of Editors available at a particular absolute path.
    */
-  public List<AbstractEditorDelegate<?, ?>> getPath(String path) {
-    return paths.get(path);
+  public List<Editor<?>> getEditorByPath(String path) {
+    return editorsByPath.get(path);
   }
 
   /**
@@ -110,26 +141,27 @@ public class DelegateMap implements Iterable<AbstractEditorDelegate<?, ?>> {
     return new MapIterator(this);
   }
 
-  public <T> void put(T object, AbstractEditorDelegate<T, ?> delegate) {
-    {
-      List<AbstractEditorDelegate<?, ?>> list = paths.get(delegate.getPath());
-      if (list == null) {
-        list = new ArrayList<AbstractEditorDelegate<?, ?>>();
-        paths.put(delegate.getPath(), list);
-      }
-      list.add(delegate);
+  <K, V> void add(Map<K, List<V>> map, K key, V value) {
+    List<V> list = map.get(key);
+    if (list == null) {
+      list = new ArrayList<V>();
+      map.put(key, list);
     }
+    list.add(value);
+  }
+
+  <T> void put(String path, Editor<T> editor) {
+    add(editorsByPath, path, editor);
+  }
+
+  <T> void put(T object, AbstractEditorDelegate<T, ?> delegate) {
+    add(delegatesByPath, delegate.getPath(), delegate);
+
     Object key = keyMethod.key(object);
     if (key == null) {
       return;
     }
-    {
-      List<AbstractEditorDelegate<?, ?>> list = map.get(key);
-      if (list == null) {
-        list = new ArrayList<AbstractEditorDelegate<?, ?>>();
-        map.put(key, list);
-      }
-      list.add(delegate);
-    }
+
+    add(map, key, delegate);
   }
 }

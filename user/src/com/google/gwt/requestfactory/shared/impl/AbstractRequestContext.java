@@ -87,7 +87,7 @@ public class AbstractRequestContext implements RequestContext,
       currentProxy = (BaseProxy) edited.as();
 
       // Try to find the original, immutable version.
-      AutoBean<BaseProxy> parentBean = edited.getTag(PARENT_OBJECT);
+      AutoBean<BaseProxy> parentBean = edited.getTag(Constants.PARENT_OBJECT);
       parentProxy = parentBean == null ? null : parentBean.as();
       path = message.getPath();
       this.message = message.getMessage();
@@ -114,11 +114,11 @@ public class AbstractRequestContext implements RequestContext,
     }
   }
 
-  private static final String PARENT_OBJECT = "parentObject";
-  private static final WriteOperation[] PERSIST_AND_UPDATE = {
-      WriteOperation.PERSIST, WriteOperation.UPDATE};
   private static final WriteOperation[] DELETE_ONLY = {WriteOperation.DELETE};
+  private static final WriteOperation[] PERSIST_AND_UPDATE = {
+    WriteOperation.PERSIST, WriteOperation.UPDATE};
   private static final WriteOperation[] UPDATE_ONLY = {WriteOperation.UPDATE};
+
   private final List<AbstractRequest<?>> invocations = new ArrayList<AbstractRequest<?>>();
   private boolean locked;
   private final AbstractRequestFactory requestFactory;
@@ -182,7 +182,7 @@ public class AbstractRequestContext implements RequestContext,
     // Create editable copies
     AutoBean<T> parent = bean;
     bean = cloneBeanAndCollections(bean);
-    bean.setTag(PARENT_OBJECT, parent);
+    bean.setTag(Constants.PARENT_OBJECT, parent);
     return bean.as();
   }
 
@@ -262,7 +262,7 @@ public class AbstractRequestContext implements RequestContext,
      * the JavaDoc.
      */
     for (AutoBean<?> bean : editedProxies.values()) {
-      AutoBean<?> previous = bean.getTag(PARENT_OBJECT);
+      AutoBean<?> previous = bean.getTag(Constants.PARENT_OBJECT);
       if (previous == null) {
         // Compare to empty object
         Class<?> proxyClass = ((EntityProxy) bean.as()).stableId().getProxyClass();
@@ -364,7 +364,7 @@ public class AbstractRequestContext implements RequestContext,
       operation.setSyntheticId(stableId.getSyntheticId());
       operation.setStrength(Strength.SYNTHETIC);
     } else {
-      parent = proxyBean.getTag(PARENT_OBJECT);
+      parent = proxyBean.getTag(Constants.PARENT_OBJECT);
       // Requests involving existing objects use the persisted id
       operation.setServerId(stableId.getServerId());
       operation.setOperation(WriteOperation.UPDATE);
@@ -765,7 +765,7 @@ public class AbstractRequestContext implements RequestContext,
    */
   private void makeImmutable(final AutoBean<? extends BaseProxy> toMutate) {
     // Always diff'ed against itself, producing a no-op
-    toMutate.setTag(PARENT_OBJECT, toMutate);
+    toMutate.setTag(Constants.PARENT_OBJECT, toMutate);
     // Act with entity-identity semantics
     toMutate.setTag(REQUEST_CONTEXT, null);
     toMutate.setFrozen(true);

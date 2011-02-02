@@ -17,7 +17,7 @@ package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.impl.AbstractEditorDelegate;
-import com.google.gwt.editor.client.impl.DelegateMap;
+import com.google.gwt.editor.client.impl.Refresher;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.requestfactory.shared.BaseProxy;
@@ -30,7 +30,6 @@ import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 import com.google.gwt.requestfactory.shared.impl.AbstractRequestContext;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -42,17 +41,16 @@ import java.util.List;
  */
 public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
     extends AbstractEditorDelegate<P, E> {
-
   private class SubscriptionHandler implements
       EntityProxyChange.Handler<EntityProxy> {
 
     public void onProxyChange(EntityProxyChange<EntityProxy> event) {
       if (event.getWriteOperation().equals(WriteOperation.UPDATE)
           && event.getProxyId().equals(((EntityProxy) getObject()).stableId())) {
-        List<String> paths = new ArrayList<String>();
-        traverse(paths);
+        PathCollector collector = new PathCollector();
+        accept(collector);
         EntityProxyId<?> id = event.getProxyId();
-        doFind(paths, id);
+        doFind(collector.getPaths(), id);
       }
     }
 
@@ -68,7 +66,8 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
     public void onSuccess(EntityProxy response) {
       @SuppressWarnings("unchecked")
       P cast = (P) response;
-      refresh(cast);
+      setObject(cast);
+      accept(new Refresher());
     }
   }
 
@@ -76,13 +75,8 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
   protected RequestFactory factory;
   protected RequestContext request;
 
-  public void initialize(EventBus eventBus, RequestFactory factory,
-      String pathSoFar, P object, E editor, DelegateMap delegateMap,
-      RequestContext editRequest) {
-    this.eventBus = eventBus;
-    this.factory = factory;
-    this.request = editRequest;
-    super.initialize(pathSoFar, object, editor, delegateMap);
+  public void setRequestContext(RequestContext request) {
+    this.request = request;
   }
 
   @Override
@@ -114,6 +108,13 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
   }
 
   @Override
+  protected <R, S extends Editor<R>> void addSubDelegate(
+      AbstractEditorDelegate<R, S> subDelegate, String path, S subEditor) {
+    RequestFactoryEditorDelegate<R, S> d = (RequestFactoryEditorDelegate<R, S>) subDelegate;
+    d.initialize(eventBus, factory, path, subEditor);
+  }
+
+  @Override
   protected <T> T ensureMutable(T object) {
     if (request == null) {
       // Read-only mode
@@ -127,12 +128,19 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
     return object;
   }
 
+  protected void initialize(EventBus eventBus, RequestFactory factory,
+      String pathSoFar, E editor) {
+    this.eventBus = eventBus;
+    this.factory = factory;
+    super.initialize(pathSoFar, editor);
+  }
+
+  /**
+   * Must call four-arg version instead.
+   */
   @Override
-  protected <R, S extends Editor<R>> void initializeSubDelegate(
-      AbstractEditorDelegate<R, S> subDelegate, String path, R object,
-      S subEditor, DelegateMap delegateMap) {
-    ((RequestFactoryEditorDelegate<R, S>) subDelegate).initialize(eventBus,
-        factory, path, object, subEditor, delegateMap, request);
+  protected void initialize(String pathSoFar, E editor) {
+    throw new UnsupportedOperationException();
   }
 
   @Override
