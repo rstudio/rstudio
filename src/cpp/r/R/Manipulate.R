@@ -27,7 +27,12 @@
    return (manipulator)
 })
 
-.rs.addGlobalFunction( "slider", function(value, min, max, label = NULL)
+.rs.addGlobalFunction( "slider", function(value, 
+                                          min, 
+                                          max,
+                                          step = 1,
+                                          ticks = FALSE,
+                                          label = NULL)
 {
   # validate inputs
   if (!is.numeric(value) || !is.numeric(min) || !is.numeric(max))
@@ -38,14 +43,20 @@
     stop(paste(type, "value", value, "is greater than the specified maximum"))
   else if (min > max)
     stop(paste(type, "maximum is greater than minimum"))
+  else if ( !is.numeric(step) )
+    stop("step is not a numeric value")
+  else if ( !is.logical(ticks) )
+    stop("ticks is not a logical value")
   else if ( !is.null(label) && !is.character(label) )
     stop("label is not a character value")
   
   # create slider and return it
   slider <- list(type = 0,
+                 initialValue = value,
                  min = min,
                  max = max,
-                 initialValue = value,
+                 step = step,
+                 ticks = ticks,
                  label = label)
   class(slider) <- "manipulator.slider"
   return (slider)

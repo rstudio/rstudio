@@ -1,5 +1,6 @@
 package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
 
 import com.google.gwt.json.client.JSONNumber;
@@ -12,6 +13,7 @@ import com.google.gwt.widgetideas.client.SliderBar;
 
 @SuppressWarnings("deprecation")
 public class ManipulatorControlSlider extends ManipulatorControl
+                                      implements SliderBar.LabelFormatter
 {
    public ManipulatorControlSlider(String variable, 
                                    double value,
@@ -38,20 +40,50 @@ public class ManipulatorControlSlider extends ManipulatorControl
       captionPanel.add(valueLabel);
       panel.add(captionPanel);
      
+      // create with range and custom formatter
       final SliderBar sliderBar = new SliderBar(slider.getMin(), 
-                                                slider.getMax());
+                                                slider.getMax(),
+                                                this);
+      
+      // show labels only at the beginning and end
       sliderBar.setNumLabels(1);
-      sliderBar.setNumTicks(1);
-      sliderBar.setStepSize((slider.getMax() - slider.getMin()) / 250);
+      
+      // compute step size (default to 1, but if the range is less than 2
+      // then is probably should be a continuous decimal treatment)
+      boolean overrodeDefaultStep = false;
+      double range = slider.getMax() - slider.getMin();
+      double step = slider.getStep();
+      if (step == 1 && range < 2)
+      {
+         step = range / 250; // ~ one step per pixel
+         overrodeDefaultStep = true;
+      }
+      sliderBar.setStepSize(step);
+      
+      // optional tick marks
+      if (slider.getTicks() && !overrodeDefaultStep)
+      {
+         double numTicks = range / step;
+         sliderBar.setNumTicks(new Double(numTicks).intValue());
+      }
+      else 
+      {
+         // always at beginning and end
+         sliderBar.setNumTicks(1); 
+      }
+      
+      // update label on change
       sliderBar.addChangeListener(new ChangeListener() {
          @Override
          public void onChange(Widget sender)
          {
-            String label = Double.toString(sliderBar.getCurrentValue());
-            valueLabel.setText(label);
+            valueLabel.setText(formatLabel(sliderBar, 
+                                           sliderBar.getCurrentValue()));
          } 
       });
       sliderBar.setCurrentValue(value);
+      
+      // fire changed even on slide completed
       sliderBar.addSlideCompletedListener(new ChangeListener() {
          @Override
          public void onChange(Widget sender)
@@ -61,10 +93,16 @@ public class ManipulatorControlSlider extends ManipulatorControl
          }
          
       });
+      
+      // add slider bar and fully initialize widget
       panel.add(sliderBar);
-      
-      
       initWidget(panel);
       setStyleName(styles.slider());
+   }
+   
+   @Override
+   public String formatLabel(SliderBar slider, double value)
+   {
+     return StringUtil.prettyFormatNumber(value);
    }
 }

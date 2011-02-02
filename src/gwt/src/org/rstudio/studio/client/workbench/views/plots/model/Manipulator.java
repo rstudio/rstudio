@@ -44,6 +44,15 @@ public class Manipulator extends JavaScriptObject
       public final native double getMax() /*-{
          return this.max[0];
       }-*/;
+      
+      public final native double getStep() /*-{
+         return this.step[0];
+      }-*/;
+      
+      public final native boolean getTicks() /*-{
+         return this.ticks[0];
+      }-*/;
+      
    }
    
    public static class Picker extends Control

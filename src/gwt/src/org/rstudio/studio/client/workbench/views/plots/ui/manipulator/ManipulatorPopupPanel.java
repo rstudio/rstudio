@@ -2,16 +2,10 @@ package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.MiniDialogPopupPanel;
-import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
 
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 
-import com.google.gwt.json.client.JSONNumber;
-import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 

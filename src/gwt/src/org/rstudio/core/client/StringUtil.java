@@ -58,6 +58,11 @@ public class StringUtil
 
       return FORMAT.format((double)size / divisor) + " " + label;
    }
+   
+   public static String prettyFormatNumber(double number)
+   {
+      return PRETTY_NUMBER_FORMAT.format(number);
+   }
 
    public static String formatGeneralNumber(long number)
    {
@@ -193,6 +198,7 @@ public class StringUtil
          "TB"
    };
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
+   private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");
    private static final DateTimeFormat DATE_FORMAT
                           = DateTimeFormat.getFormat("MMM d, yyyy, h:mm a");
 
