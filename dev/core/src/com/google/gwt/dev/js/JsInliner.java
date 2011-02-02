@@ -1618,7 +1618,8 @@ public class JsInliner {
    * the generated output. Increasing this number will allow larger sections of
    * code to be inlined, but at a cost of larger JS output.
    */
-  private static final int MAX_COMPLEXITY_INCREASE = 5;
+  private static final double MAX_COMPLEXITY_INCREASE = 
+      Double.parseDouble(System.getProperty("gwt.jsinlinerRatio", "5.0"));
 
   /**
    * Static entry point used by JavaToJavaScriptCompiler.
