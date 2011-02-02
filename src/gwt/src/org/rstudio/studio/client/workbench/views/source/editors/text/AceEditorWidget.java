@@ -13,10 +13,13 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.events.*;
 import org.rstudio.studio.client.server.Void;
 
 public class AceEditorWidget extends Composite
-      implements RequiresResize, HasValueChangeHandlers<Void>
+      implements RequiresResize,
+                 HasValueChangeHandlers<Void>,
+                 HasNativeKeyHandlers
 {
    public static void create(final CommandWithArg<AceEditorWidget> callback)
    {
@@ -62,6 +65,7 @@ public class AceEditorWidget extends Composite
                   ValueChangeEvent.fire(AceEditorWidget.this, null);
                }
             });
+            editor_.onKeyDown(AceEditorWidget.this);
             if (initialCode_ != null)
             {
                editor_.getSession().setValue(initialCode_);
@@ -205,6 +209,16 @@ public class AceEditorWidget extends Composite
    public HandlerRegistration addValueChangeHandler(ValueChangeHandler<Void> handler)
    {
       return addHandler(handler, ValueChangeEvent.getType());
+   }
+
+   public HandlerRegistration addNativeKeyDownHandler(NativeKeyDownHandler handler)
+   {
+      return addHandler(handler, NativeKeyDownEvent.TYPE);
+   }
+
+   public HandlerRegistration addNativeKeyPressHandler(NativeKeyPressHandler handler)
+   {
+      return addHandler(handler, NativeKeyPressEvent.TYPE);
    }
 
    private AceEditorNative editor_;

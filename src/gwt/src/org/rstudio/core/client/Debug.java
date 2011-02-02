@@ -22,9 +22,9 @@ public class Debug
 {
    public static native void injectDebug() /*-{
       $Debug = {
-         log: function(message) {
+         log: $entry(function(message) {
             @org.rstudio.core.client.Debug::log(Ljava/lang/String;)(message);
-         }
+         })
       };
    }-*/;
 

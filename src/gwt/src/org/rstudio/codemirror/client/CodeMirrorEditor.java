@@ -198,7 +198,7 @@ public abstract class CodeMirrorEditor extends Composite
       codeMirror_.print();
    }
    
-   public String getSelection()
+   public String getSelectionValue()
    {
       return codeMirror_.selection();
    }

@@ -113,7 +113,7 @@ public class TextEditingTarget implements EditingTarget
       void insertCode(String code, boolean blockMode);
       void focus();
       void print();
-      String getSelection();
+      String getSelectionValue();
       String getCurrentLine();
       void replaceSelection(String code);
       boolean moveSelectionToNextLine();
@@ -594,7 +594,7 @@ public class TextEditingTarget implements EditingTarget
          activeEl.blur();
       docDisplay_.focus();
 
-      String initialSelection = docDisplay_.getSelection();
+      String initialSelection = docDisplay_.getSelectionValue();
       if (initialSelection == null || initialSelection.trim().length() == 0)
       {
          globalDisplay_.showErrorMessage("Extract Function",
@@ -605,7 +605,7 @@ public class TextEditingTarget implements EditingTarget
 
       docDisplay_.fitSelectionToLines(false);
 
-      final String code = docDisplay_.getSelection();
+      final String code = docDisplay_.getSelectionValue();
       if (code == null || code.trim().length() == 0)
       {
          globalDisplay_.showErrorMessage("Extract Function",
@@ -679,7 +679,7 @@ public class TextEditingTarget implements EditingTarget
    void onCommentUncomment()
    {
       docDisplay_.fitSelectionToLines(true);
-      String selection = docDisplay_.getSelection();
+      String selection = docDisplay_.getSelectionValue();
 
       // If any line's first non-whitespace character is not #, then the whole
       // selection should be commented. Exception: If the whole selection is
@@ -712,7 +712,7 @@ public class TextEditingTarget implements EditingTarget
       docDisplay_.focus();
 
       boolean focusConsole = false;
-      String code = docDisplay_.getSelection();
+      String code = docDisplay_.getSelectionValue();
       if (code == null || code.length() == 0)
       {
          code = docDisplay_.getCurrentLine();

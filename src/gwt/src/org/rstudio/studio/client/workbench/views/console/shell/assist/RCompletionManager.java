@@ -90,17 +90,6 @@ public class RCompletionManager implements CompletionManager
             ignoreNextInputBlur_ = true ;
          }
       }) ;
-
-      Event.addNativePreviewHandler(new NativePreviewHandler()
-      {
-         public void onPreviewNativeEvent(NativePreviewEvent event)
-         {
-            if (event.getTypeInt() == Event.ONFOCUS)
-            {
-               
-            }
-         }
-      });
    }
 
    public void close()

@@ -4,15 +4,20 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.IFrameElement;
 import com.google.gwt.dom.client.PreElement;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.codemirror.client.events.EditorFocusHandler;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
 import org.rstudio.core.client.regex.Match;
@@ -22,12 +27,14 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.EventBasedChangeTracker;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.EditSession;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
-public class AceEditor implements DocDisplay
+public class AceEditor implements DocDisplay, InputEditorDisplay
 {
    private AceEditor(AceEditorWidget widget)
    {
@@ -95,10 +102,84 @@ public class AceEditor implements DocDisplay
       iframe.removeFromParent();
    }
 
-   public String getSelection()
+   public String getText()
+   {
+      return null;  //To change body of implemented methods use File | Settings | File Templates.
+   }
+
+   public void setText(String string)
+   {
+      //To change body of implemented methods use File | Settings | File Templates.
+   }
+
+   public boolean hasSelection()
+   {
+      return false;  //To change body of implemented methods use File | Settings | File Templates.
+   }
+
+   public InputEditorSelection getSelection()
+   {
+      return null;  //To change body of implemented methods use File | Settings | File Templates.
+   }
+
+   public String getSelectionValue()
    {
       return getSession().getTextRange(
             getSession().getSelection().getRange());
+   }
+
+   public void beginSetSelection(InputEditorSelection selection,
+                                 Command callback)
+   {
+      //To change body of implemented methods use File | Settings | File Templates.
+   }
+
+   public Rectangle getCursorBounds()
+   {
+      return null;  //To change body of implemented methods use File | Settings | File Templates.
+   }
+
+   public Rectangle getBounds()
+   {
+      return null;  //To change body of implemented methods use File | Settings | File Templates.
+   }
+
+   public void setFocus(boolean focused)
+   {
+      if (focused)
+         widget_.getEditor().focus();
+      else
+         widget_.getEditor().blur();
+   }
+
+   public String replaceSelection(String value, boolean collapseSelection)
+   {
+      return null;  //To change body of implemented methods use File | Settings | File Templates.
+   }
+
+   public boolean isSelectionCollapsed()
+   {
+      return false;  //To change body of implemented methods use File | Settings | File Templates.
+   }
+
+   public void clear()
+   {
+      //To change body of implemented methods use File | Settings | File Templates.
+   }
+
+   public void collapseSelection(boolean collapseToStart)
+   {
+      //To change body of implemented methods use File | Settings | File Templates.
+   }
+
+   public InputEditorSelection getStart()
+   {
+      return null;  //To change body of implemented methods use File | Settings | File Templates.
+   }
+
+   public InputEditorSelection getEnd()
+   {
+      return null;  //To change body of implemented methods use File | Settings | File Templates.
    }
 
    public String getCurrentLine()
@@ -152,7 +233,7 @@ public class AceEditor implements DocDisplay
 
    public HandlerRegistration addNativeKeyDownHandler(NativeKeyDownHandler handler)
    {
-      return null;  //To change body of implemented methods use File | Settings | File Templates.
+      return widget_.addNativeKeyDownHandler(handler);
    }
 
    public void markScrollPosition()
@@ -255,6 +336,21 @@ public class AceEditor implements DocDisplay
    private EditSession getSession()
    {
       return widget_.getEditor().getSession();
+   }
+
+   public HandlerRegistration addBlurHandler(BlurHandler handler)
+   {
+      return null;  //To change body of implemented methods use File | Settings | File Templates.
+   }
+
+   public HandlerRegistration addClickHandler(ClickHandler handler)
+   {
+      return null;  //To change body of implemented methods use File | Settings | File Templates.
+   }
+
+   public HandlerRegistration addFocusHandler(FocusHandler handler)
+   {
+      return null;  //To change body of implemented methods use File | Settings | File Templates.
    }
 
    private final HandlerManager handlers_ = new HandlerManager(this);

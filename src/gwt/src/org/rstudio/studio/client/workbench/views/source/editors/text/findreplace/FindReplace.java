@@ -157,7 +157,7 @@ public class FindReplace
       boolean ignoreCase = !display_.getCaseSensitive().getValue();
       String searchString = display_.getFindValue().getValue();
       String replacement = display_.getReplaceValue().getValue();
-      String selected = editor_.getSelection();
+      String selected = editor_.getSelectionValue();
       if (ignoreCase ? searchString.equalsIgnoreCase(selected)
                      : searchString.equals(selected))
       {
