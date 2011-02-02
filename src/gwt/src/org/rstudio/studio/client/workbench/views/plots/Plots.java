@@ -51,6 +51,7 @@ import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
 import org.rstudio.studio.client.workbench.views.plots.model.PrintOptions;
 import org.rstudio.studio.client.workbench.views.plots.ui.ExportDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.PrintDialog;
+import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorChangedHandler;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorManager;
 
 public class Plots extends BasePresenter implements PlotsChangedHandler,
@@ -106,7 +107,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
 
       manipulatorManager_ = new ManipulatorManager(
          view_.getPlotsSurface(),
-         new ManipulatorManager.ManipulatorChangedHandler()
+         new ManipulatorChangedHandler()
          { 
             @Override
             public void onManipulatorChanged(JSONObject values)

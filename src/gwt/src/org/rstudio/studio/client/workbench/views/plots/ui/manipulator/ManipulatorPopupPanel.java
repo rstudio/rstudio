@@ -1,10 +1,11 @@
 package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.MiniDialogPopupPanel;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
-import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorManager.ManipulatorChangedHandler;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 
@@ -45,36 +46,61 @@ public class ManipulatorPopupPanel extends MiniDialogPopupPanel
       
       if (manipulator != null)
       {         
-         ManipulatorControlSlider slider = new ManipulatorControlSlider();
-         slider.setCaption("SliderMe");
-         slider.setValueText("67");
-         
-         mainPanel_.add(slider);
-         
-         final TextBox varInputBox = new TextBox();
-         varInputBox.setText(manipulator.getVariables().toString());
-         mainPanel_.add(varInputBox);
-         
-         final TextBox valueInputBox = new TextBox();
-         mainPanel_.add(valueInputBox);
-         
-         mainPanel_.add(new ThemedButton("Change", new ClickHandler() {
-   
-            public void onClick(ClickEvent event)
+         // iterate over the variables
+         JsArrayString variables = manipulator.getVariables();
+         for (int i=0; i<variables.length(); i++)
+         {
+            String variable = variables.get(i);
+            try
             {
-               String var = varInputBox.getText().trim();
-               int value = Integer.parseInt(valueInputBox.getText().trim());
-              
-               JSONObject jsObject = new JSONObject();
-               jsObject.put(var, new JSONNumber(value));
-    
-               changedHandler_.onManipulatorChanged(jsObject);       
+               Manipulator.Control control = manipulator.getControl(variable);
+               switch(control.getType())
+               {
+               case Manipulator.Control.SLIDER:
+                  Manipulator.Slider slider = control.cast();
+                  addSliderControl(variable, 
+                                   manipulator.getDoubleValue(variable), 
+                                   slider);
+                  break;
+               case Manipulator.Control.PICKER:
+                  Manipulator.Picker picker = control.cast();
+                  addPickerControl(variable, picker);
+                  break;
+               case Manipulator.Control.CHECKBOX:
+                  Manipulator.Checkbox checkbox = control.cast();
+                  addCheckboxControl(variable, checkbox);
+                  break;
+               }
+            }
+            catch(Throwable e)
+            {
+               Debug.log("WARNING: exception occurred during addition of " +
+                         "variable " + variable + ", " + e.getMessage());
             }
             
-         }));
+         }
       }
    }
    
+   private void addSliderControl(String variable, 
+                                 double value, 
+                                 Manipulator.Slider slider)
+   {
+      ManipulatorControlSlider sliderControl = 
+         new ManipulatorControlSlider(variable, value, slider, changedHandler_);
+      mainPanel_.add(sliderControl);
+   }
+   
+   private void addPickerControl(String variable, Manipulator.Picker picker)
+   {
+      
+   }
+   
+   private void addCheckboxControl(String variable, 
+                                   Manipulator.Checkbox checkbox)
+   {
+      
+   }
   
    private VerticalPanel mainPanel_;
    private final ManipulatorChangedHandler changedHandler_;

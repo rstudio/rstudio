@@ -5,17 +5,11 @@ import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 
 public class ManipulatorManager
 {
-   public interface ManipulatorChangedHandler
-   {
-      void onManipulatorChanged(JSONObject values);
-   }
-   
    public ManipulatorManager(Panel plotsSurface,
                              ManipulatorChangedHandler changedHandler)
    {

@@ -8,21 +8,21 @@
 @external .gwt-SliderBar-tick;
 @external .gwt-SliderBar-knob;
 
-.control {
+.slider {
   width: 100%;
 	
 }
 
-.control .captionLabel {
+.slider .sliderCaptionLabel {
    font-weight: bold;
    margin-right: 8px;
 }
 
-.control .valueLabel {
+.slider .sliderValueLabel {
 
 }
 
-.control .gwt-SliderBar-shell {
+.slider .gwt-SliderBar-shell {
   border: 2px solid #faf9f7;
   border-right: 2px solid #848280;
   border-bottom: 2px solid #848280;
@@ -31,7 +31,7 @@
   width: 100%;
 }
 
-.control .gwt-SliderBar-shell .gwt-SliderBar-line {
+.slider .gwt-SliderBar-shell .gwt-SliderBar-line {
   border: 1px solid black;
   background-color: white;
   height: 4px;
@@ -40,7 +40,7 @@
   overflow: hidden;
 }
 
-.control .gwt-SliderBar-shell .gwt-SliderBar-knob {
+.slider .gwt-SliderBar-shell .gwt-SliderBar-knob {
   top: 14pt;
   width: 11px;
   height: 21px;
@@ -48,7 +48,7 @@
   cursor: pointer;
 }
 
-.control .gwt-SliderBar-shell .gwt-SliderBar-tick {
+.slider .gwt-SliderBar-shell .gwt-SliderBar-tick {
   top: 12pt;
   width: 1px;
   height: 8pt;
@@ -56,16 +56,16 @@
   overflow: hidden;
 }
 
-.control .gwt-SliderBar-shell .gwt-SliderBar-label {
+.slider .gwt-SliderBar-shell .gwt-SliderBar-label {
   top: 2pt;
   font-size: 8pt;
   cursor: default;
 }
 
-.control .gwt-SliderBar-shell-focused {
+.slider .gwt-SliderBar-shell-focused {
 }
 
-.control .gwt-SliderBar-shell .gwt-SliderBar-line-sliding {
+.slider .gwt-SliderBar-shell .gwt-SliderBar-line-sliding {
   background-color: #DDDDDD;
   cursor: pointer;
 }

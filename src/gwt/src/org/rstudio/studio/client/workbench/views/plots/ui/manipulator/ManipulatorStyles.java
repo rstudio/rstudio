@@ -8,10 +8,9 @@ public interface ManipulatorStyles extends CssResource
    public static ManipulatorStyles INSTANCE = ManipulatorResources.INSTANCE.manipulatorStyles();
 
    
-   String control();
-
-   String captionLabel();
-   String valueLabel();
+   String slider();
+   String sliderCaptionLabel();
+   String sliderValueLabel();
    
    String manipulateButton();
 }
