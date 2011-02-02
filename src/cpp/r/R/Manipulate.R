@@ -127,6 +127,7 @@
   # create new list container for the manipulator
   manipulator <- list()
   class(manipulator) <- "manipulator"
+  manipulator$manip_id <- .rs.createUUID()
   
   # save the unevaluated expression as the code
   manipulator$manip_code <- substitute(code) 

@@ -47,26 +47,41 @@ public class ManipulatorManager
    
    public void setManipulator(Manipulator manipulator, boolean show)
    {
-      // set active manipulator
-      manipulator_ = manipulator;
-          
-      // set visibility of manipulator button
-      manipulatorButton_.setVisible(manipulator_ != null);
-      
-      // update manipulator popup panel
-      manipulatorPopup_.update(manipulator_); 
-      
-      // if we have a manipulator then show if requested, otherwise hide
-      if (manipulator_ != null)
+      if (isNewManipulatorState(manipulator))
       {
-         // show if requested
-         if (show)
-            showManipulatorPopup();  
+         // set active manipulator
+         manipulator_ = manipulator;
+             
+         // set visibility of manipulator button
+         manipulatorButton_.setVisible(manipulator_ != null);
+         
+         // update UI
+         manipulatorPopup_.update(manipulator_); 
+         
+         // if we have a manipulator then show if requested, otherwise hide
+         if (manipulator_ != null)
+         {
+            // show if requested
+            if (show)
+               showManipulatorPopup();  
+         }
+         else
+         {
+            manipulatorPopup_.hide();
+         }
       }
+   }
+   
+   private boolean isNewManipulatorState(Manipulator manipulator)
+   {
+      if (manipulator_ == null && manipulator != null)
+         return true;
+      if (manipulator == null && manipulator_ != null)
+         return true;
+      if (!manipulator_.getID().equals(manipulator.getID()))
+         return true;
       else
-      {
-         manipulatorPopup_.hide();
-      }
+         return false;
    }
    
    private void showManipulatorPopup()

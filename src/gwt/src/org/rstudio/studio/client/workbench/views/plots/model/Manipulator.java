@@ -64,7 +64,10 @@ public class Manipulator extends JavaScriptObject
       }
    }
    
-   
+   public final native String getID() /*-{
+      return this.manip_id[0];
+   }-*/;
+
    public final native String getCode() /*-{
       return this.manip_codeAsText[0];
    }-*/;
