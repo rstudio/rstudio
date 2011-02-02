@@ -112,7 +112,11 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
             @Override
             public void onManipulatorChanged(JSONObject values)
             {
-               setChangePlotProgress();
+               // always set progress because this will run R code
+               // to regenerate the plot
+               view_.setProgress(true);
+               
+               // set values
                server_.setManipulatorValues(values, new PlotRequestCallback());
             }
          });
