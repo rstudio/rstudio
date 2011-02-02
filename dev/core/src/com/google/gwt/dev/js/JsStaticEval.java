@@ -76,12 +76,12 @@ public class JsStaticEval {
     private boolean hasBreakContinueStatements = false;
 
     @Override
-    public void endVisit(JsBreak x, JsContext<JsStatement> ctx) {
+    public void endVisit(JsBreak x, JsContext ctx) {
       hasBreakContinueStatements = true;
     }
 
     @Override
-    public void endVisit(JsContinue x, JsContext<JsStatement> ctx) {
+    public void endVisit(JsContinue x, JsContext ctx) {
       hasBreakContinueStatements = true;
     }
 
@@ -109,7 +109,7 @@ public class JsStaticEval {
     }
 
     @Override
-    public void endVisit(JsExprStmt x, JsContext<JsStatement> ctx) {
+    public void endVisit(JsExprStmt x, JsContext ctx) {
       JsFunction func = isFunctionDecl(x);
       if (func != null) {
         mustExec.add(x);
@@ -117,7 +117,7 @@ public class JsStaticEval {
     }
 
     @Override
-    public void endVisit(JsVars x, JsContext<JsStatement> ctx) {
+    public void endVisit(JsVars x, JsContext ctx) {
       JsVars strippedVars = new JsVars(x.getSourceInfo().makeChild(
           MustExecVisitor.class, "Simplified execution"));
       boolean mustReplace = false;
@@ -141,7 +141,7 @@ public class JsStaticEval {
     }
 
     @Override
-    public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
+    public boolean visit(JsFunction x, JsContext ctx) {
       // Don't dive into nested functions.
       return false;
     }
@@ -164,7 +164,7 @@ public class JsStaticEval {
     private Map<JsExpression, Boolean> coercesToStringMap = new IdentityHashMap<JsExpression, Boolean>();
 
     @Override
-    public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsBinaryOperation x, JsContext ctx) {
       JsBinaryOperator op = x.getOperator();
       JsExpression arg1 = x.getArg1();
       JsExpression arg2 = x.getArg2();
@@ -191,7 +191,7 @@ public class JsStaticEval {
      * Prune dead statements and empty blocks.
      */
     @Override
-    public void endVisit(JsBlock x, JsContext<JsStatement> ctx) {
+    public void endVisit(JsBlock x, JsContext ctx) {
       /*
        * Remove any dead statements after an abrupt change in code flow and
        * promote safe statements within nested blocks to this block.
@@ -235,7 +235,7 @@ public class JsStaticEval {
     }
 
     @Override
-    public void endVisit(JsConditional x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsConditional x, JsContext ctx) {
       evalBooleanContext.remove(x.getTestExpression());
 
       JsExpression condExpr = x.getTestExpression();
@@ -262,7 +262,7 @@ public class JsStaticEval {
      * Convert do { } while (false); into a block.
      */
     @Override
-    public void endVisit(JsDoWhile x, JsContext<JsStatement> ctx) {
+    public void endVisit(JsDoWhile x, JsContext ctx) {
       evalBooleanContext.remove(x.getCondition());
 
       JsExpression expr = x.getCondition();
@@ -286,7 +286,7 @@ public class JsStaticEval {
     }
 
     @Override
-    public void endVisit(JsExprStmt x, JsContext<JsStatement> ctx) {
+    public void endVisit(JsExprStmt x, JsContext ctx) {
       if (!x.getExpression().hasSideEffects()) {
         if (ctx.canRemove()) {
           ctx.removeMe();
@@ -300,7 +300,7 @@ public class JsStaticEval {
      * Prune for (X; false(); Y) statements, make sure X and false() are run.
      */
     @Override
-    public void endVisit(JsFor x, JsContext<JsStatement> ctx) {
+    public void endVisit(JsFor x, JsContext ctx) {
       evalBooleanContext.remove(x.getCondition());
 
       JsExpression expr = x.getCondition();
@@ -331,7 +331,7 @@ public class JsStaticEval {
      * Simplify if statements.
      */
     @Override
-    public void endVisit(JsIf x, JsContext<JsStatement> ctx) {
+    public void endVisit(JsIf x, JsContext ctx) {
       evalBooleanContext.remove(x.getIfExpr());
 
       JsExpression condExpr = x.getIfExpr();
@@ -390,7 +390,7 @@ public class JsStaticEval {
      * Change !!x to x in a boolean context.
      */
     @Override
-    public void endVisit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsPrefixOperation x, JsContext ctx) {
       if (x.getOperator() == JsUnaryOperator.NOT) {
         evalBooleanContext.remove(x.getArg());
       }
@@ -411,7 +411,7 @@ public class JsStaticEval {
      * Prune while (false) statements.
      */
     @Override
-    public void endVisit(JsWhile x, JsContext<JsStatement> ctx) {
+    public void endVisit(JsWhile x, JsContext ctx) {
       evalBooleanContext.remove(x.getCondition());
 
       JsExpression expr = x.getCondition();
@@ -433,31 +433,31 @@ public class JsStaticEval {
     }
 
     @Override
-    public boolean visit(JsConditional x, JsContext<JsExpression> ctx) {
+    public boolean visit(JsConditional x, JsContext ctx) {
       evalBooleanContext.add(x.getTestExpression());
       return true;
     }
 
     @Override
-    public boolean visit(JsDoWhile x, JsContext<JsStatement> ctx) {
+    public boolean visit(JsDoWhile x, JsContext ctx) {
       evalBooleanContext.add(x.getCondition());
       return true;
     }
 
     @Override
-    public boolean visit(JsFor x, JsContext<JsStatement> ctx) {
+    public boolean visit(JsFor x, JsContext ctx) {
       evalBooleanContext.add(x.getCondition());
       return true;
     }
 
     @Override
-    public boolean visit(JsIf x, JsContext<JsStatement> ctx) {
+    public boolean visit(JsIf x, JsContext ctx) {
       evalBooleanContext.add(x.getIfExpr());
       return true;
     }
 
     @Override
-    public boolean visit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
+    public boolean visit(JsPrefixOperation x, JsContext ctx) {
       if (x.getOperator() == JsUnaryOperator.NOT) {
         evalBooleanContext.add(x.getArg());
       }
@@ -465,7 +465,7 @@ public class JsStaticEval {
     }
 
     @Override
-    public boolean visit(JsWhile x, JsContext<JsStatement> ctx) {
+    public boolean visit(JsWhile x, JsContext ctx) {
       evalBooleanContext.add(x.getCondition());
       return true;
     }
@@ -651,7 +651,7 @@ public class JsStaticEval {
      * Simplify a + b.
      */
     private void trySimplifyAdd(JsExpression original, JsExpression arg1,
-        JsExpression arg2, JsContext<JsExpression> ctx) {
+        JsExpression arg2, JsContext ctx) {
       if (arg1 instanceof JsValueLiteral && arg2 instanceof JsValueLiteral) {
         // case: number + number
         if (arg1 instanceof JsNumberLiteral && arg2 instanceof JsNumberLiteral) {
@@ -676,7 +676,7 @@ public class JsStaticEval {
      * expressions as left-normal as possible.
      */
     private boolean trySimplifyAssociativeExpression(JsBinaryOperation x,
-        JsContext<JsExpression> ctx) {
+        JsContext ctx) {
       boolean toReturn = false;
       JsBinaryOperator op = x.getOperator();
       JsExpression arg1 = x.getArg1();
@@ -770,7 +770,7 @@ public class JsStaticEval {
     }
 
     private void trySimplifyEq(JsExpression original, JsExpression arg1,
-        JsExpression arg2, JsContext<JsExpression> ctx) {
+        JsExpression arg2, JsContext ctx) {
       JsExpression updated = simplifyEq(original, arg1, arg2);
       if (updated != original) {
         ctx.replaceMe(updated);
@@ -778,15 +778,14 @@ public class JsStaticEval {
     }
 
     private void trySimplifyNe(JsExpression original, JsExpression arg1,
-        JsExpression arg2, JsContext<JsExpression> ctx) {
+        JsExpression arg2, JsContext ctx) {
       JsExpression updated = simplifyNe(original, arg1, arg2);
       if (updated != original) {
         ctx.replaceMe(updated);
       }
     }
 
-    private boolean tryStaticEvalIf(JsIf x, CanBooleanEval cond,
-        JsContext<JsStatement> ctx) {
+    private boolean tryStaticEvalIf(JsIf x, CanBooleanEval cond, JsContext ctx) {
       JsStatement thenStmt = x.getThenStmt();
       JsStatement elseStmt = x.getElseStmt();
       if (cond.isBooleanTrue()) {
@@ -831,18 +830,17 @@ public class JsStaticEval {
       JsBinaryOperator.BIT_OR, JsBinaryOperator.BIT_XOR,
       JsBinaryOperator.COMMA, JsBinaryOperator.MUL, JsBinaryOperator.OR);
 
-  @SuppressWarnings("unchecked")
   public static <T extends JsVisitable> T exec(JsProgram program, T node) {
-    Event optimizeJsEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE_JS, 
-        "optimizer", NAME);
+    Event optimizeJsEvent = SpeedTracerLogger.start(
+        CompilerEventType.OPTIMIZE_JS, "optimizer", NAME);
     T result = new JsStaticEval(program).execImpl(node);
     optimizeJsEvent.end();
     return result;
   }
 
   public static OptimizerStats exec(JsProgram program) {
-    Event optimizeJsEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE_JS, 
-        "optimizer", NAME);
+    Event optimizeJsEvent = SpeedTracerLogger.start(
+        CompilerEventType.OPTIMIZE_JS, "optimizer", NAME);
     OptimizerStats stats = new JsStaticEval(program).execImpl();
     optimizeJsEvent.end("didChange", "" + stats.didChange());
     return stats;
@@ -902,7 +900,7 @@ public class JsStaticEval {
    * </pre>
    */
   protected static void shortCircuitAnd(JsExpression arg1, JsExpression arg2,
-      JsContext<JsExpression> ctx) {
+      JsContext ctx) {
     if (arg1 instanceof CanBooleanEval) {
       CanBooleanEval eval1 = (CanBooleanEval) arg1;
       if (eval1.isBooleanTrue() && !arg1.hasSideEffects()) {
@@ -922,7 +920,7 @@ public class JsStaticEval {
    * </pre>
    */
   protected static void shortCircuitOr(JsExpression arg1, JsExpression arg2,
-      JsContext<JsExpression> ctx) {
+      JsContext ctx) {
     if (arg1 instanceof CanBooleanEval) {
       CanBooleanEval eval1 = (CanBooleanEval) arg1;
       if (eval1.isBooleanTrue()) {
@@ -934,7 +932,7 @@ public class JsStaticEval {
   }
 
   protected static void trySimplifyComma(JsExpression arg1, JsExpression arg2,
-      JsContext<JsExpression> ctx) {
+      JsContext ctx) {
     if (!arg1.hasSideEffects()) {
       ctx.replaceMe(arg2);
     }
@@ -946,7 +944,6 @@ public class JsStaticEval {
     this.program = program;
   }
 
-  @SuppressWarnings("unchecked")
   public <T extends JsVisitable> T execImpl(T node) {
     return new StaticEvalVisitor().accept(node);
   }

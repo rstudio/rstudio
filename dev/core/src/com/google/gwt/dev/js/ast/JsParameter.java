@@ -20,7 +20,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
 /**
  * A JavaScript parameter.
  */
-public final class JsParameter extends JsNode<JsParameter> implements HasName {
+public final class JsParameter extends JsNode implements HasName {
 
   private final JsName name;
 
@@ -34,7 +34,7 @@ public final class JsParameter extends JsNode<JsParameter> implements HasName {
     return name;
   }
 
-  public void traverse(JsVisitor v, JsContext<JsParameter> ctx) {
+  public void traverse(JsVisitor v, JsContext ctx) {
     v.visit(this, ctx);
     v.endVisit(this, ctx);
   }

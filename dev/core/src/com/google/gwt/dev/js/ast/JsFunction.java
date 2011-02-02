@@ -165,7 +165,7 @@ public final class JsFunction extends JsLiteral implements HasName {
     this.trace = true;
   }
 
-  public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
+  public void traverse(JsVisitor v, JsContext ctx) {
     String before = null;
     if (trace && v instanceof JsModVisitor) {
       before = this.toSource();

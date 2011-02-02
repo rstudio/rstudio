@@ -89,7 +89,7 @@ public class JsStackEmulator {
     }
 
     @Override
-    public void endVisit(JsExprStmt x, JsContext<JsStatement> ctx) {
+    public void endVisit(JsExprStmt x, JsContext ctx) {
       // Looking for e = caught(e);
       JsExpression expr = x.getExpression();
 
@@ -246,7 +246,7 @@ public class JsStackEmulator {
      * local variables and the final stack-pop instructions.
      */
     @Override
-    public void endVisit(JsBlock x, JsContext<JsStatement> ctx) {
+    public void endVisit(JsBlock x, JsContext ctx) {
       if (x == currentFunction.getBody()) {
 
         // Add the entry code
@@ -273,7 +273,7 @@ public class JsStackEmulator {
     }
 
     @Override
-    public void endVisit(JsReturn x, JsContext<JsStatement> ctx) {
+    public void endVisit(JsReturn x, JsContext ctx) {
       if (outerFinallyBlock != null) {
         // There is a finally block, so we need to set the early-exit flag
         JsBinaryOperation asg = new JsBinaryOperation(x.getSourceInfo(),
@@ -317,20 +317,20 @@ public class JsStackEmulator {
      * <code>visit<code> and not a <code>endVisit</code>.
      */
     @Override
-    public boolean visit(JsCatch x, JsContext<JsCatch> ctx) {
+    public boolean visit(JsCatch x, JsContext ctx) {
       // Reset the stack depth to the local index
       new CatchStackReset(this).accept(x);
       return true;
     }
 
     @Override
-    public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
+    public boolean visit(JsFunction x, JsContext ctx) {
       // Will be taken care of by the Bootstrap visitor
       return false;
     }
 
     @Override
-    public boolean visit(JsTry x, JsContext<JsStatement> ctx) {
+    public boolean visit(JsTry x, JsContext ctx) {
 
       /*
        * Only the outermost finally block needs special treatment; try/finally
@@ -479,8 +479,7 @@ public class JsStackEmulator {
      * @param x the statement that will cause the pop
      * @param ctx the visitor context
      */
-    private void pop(JsStatement x, JsExpression expr,
-        JsContext<JsStatement> ctx) {
+    private void pop(JsStatement x, JsExpression expr, JsContext ctx) {
       // $stackDepth = stackIndex - 1
       SourceInfo info = x.getSourceInfo().makeChild(JsStackEmulator.class,
           "Stack exit");
@@ -566,7 +565,7 @@ public class JsStackEmulator {
    */
   private class InstrumentAllFunctions extends JsVisitor {
     @Override
-    public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsFunction x, JsContext ctx) {
       if (!x.getBody().getStatements().isEmpty()) {
         if (recordLineNumbers) {
           (new LocationVisitor(x)).accept(x.getBody());
@@ -602,7 +601,7 @@ public class JsStackEmulator {
      * reference. These are tracked because it wouldn't be safe to rewrite
      * <code>delete foo.bar</code> to <code>delete (line='123',foo).bar</code>.
      */
-    private final Set<JsNode<?>> nodesInRefContext = new HashSet<JsNode<?>>();
+    private final Set<JsNode> nodesInRefContext = new HashSet<JsNode>();
 
     public LocationVisitor(JsFunction function) {
       super(function);
@@ -610,40 +609,40 @@ public class JsStackEmulator {
     }
 
     @Override
-    public void endVisit(JsArrayAccess x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsArrayAccess x, JsContext ctx) {
       record(x, ctx);
     }
 
     @Override
-    public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsBinaryOperation x, JsContext ctx) {
       if (x.getOperator().isAssignment()) {
         record(x, ctx);
       }
     }
 
     @Override
-    public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsInvocation x, JsContext ctx) {
       nodesInRefContext.remove(x.getQualifier());
       record(x, ctx);
     }
 
     @Override
-    public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNameRef x, JsContext ctx) {
       record(x, ctx);
     }
 
     @Override
-    public void endVisit(JsNew x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNew x, JsContext ctx) {
       record(x, ctx);
     }
 
     @Override
-    public void endVisit(JsPostfixOperation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsPostfixOperation x, JsContext ctx) {
       record(x, ctx);
     }
 
     @Override
-    public void endVisit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsPrefixOperation x, JsContext ctx) {
       record(x, ctx);
       nodesInRefContext.remove(x.getArg());
     }
@@ -655,7 +654,7 @@ public class JsStackEmulator {
      * so that location data will be recorded correctly.
      */
     @Override
-    public boolean visit(JsFor x, JsContext<JsStatement> ctx) {
+    public boolean visit(JsFor x, JsContext ctx) {
       if (x.getInitExpr() != null) {
         x.setInitExpr(accept(x.getInitExpr()));
       } else if (x.getInitVars() != null) {
@@ -677,13 +676,13 @@ public class JsStackEmulator {
     }
 
     @Override
-    public boolean visit(JsInvocation x, JsContext<JsExpression> ctx) {
+    public boolean visit(JsInvocation x, JsContext ctx) {
       nodesInRefContext.add(x.getQualifier());
       return true;
     }
 
     @Override
-    public boolean visit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
+    public boolean visit(JsPrefixOperation x, JsContext ctx) {
       if (x.getOperator() == JsUnaryOperator.DELETE
           || x.getOperator() == JsUnaryOperator.TYPEOF) {
         nodesInRefContext.add(x.getArg());
@@ -696,7 +695,7 @@ public class JsStackEmulator {
      * evaluating the condition.
      */
     @Override
-    public boolean visit(JsWhile x, JsContext<JsStatement> ctx) {
+    public boolean visit(JsWhile x, JsContext ctx) {
       resetPosition();
       x.setCondition(accept(x.getCondition()));
       accept(x.getBody());
@@ -720,7 +719,7 @@ public class JsStackEmulator {
       }
     }
 
-    private void record(JsExpression x, JsContext<JsExpression> ctx) {
+    private void record(JsExpression x, JsContext ctx) {
       if (ctx.isLvalue()) {
         // Assignments to comma expressions aren't legal
         return;
@@ -780,7 +779,7 @@ public class JsStackEmulator {
         "$stackDepth");
 
     @Override
-    public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNameRef x, JsContext ctx) {
       JsName name = x.getName();
       JsNameRef newRef = null;
 
@@ -808,7 +807,7 @@ public class JsStackEmulator {
   public enum StackMode {
     STRIP, NATIVE, EMULATED;
   }
-  
+
   public static void exec(JsProgram program, PropertyOracle[] propertyOracles) {
     if (getStackMode(propertyOracles) == StackMode.EMULATED) {
       (new JsStackEmulator(program, propertyOracles)).execImpl();
@@ -836,10 +835,9 @@ public class JsStackEmulator {
           property = propertyOracles[i].getSelectionProperty(TreeLogger.NULL,
               PROPERTY_NAME);
         } catch (BadPropertyValueException e) {
-          // OK! 
+          // OK!
         }
-        assert value.equals(property.getCurrentValue()) : 
-            "compiler.stackMode property has multiple values.";
+        assert value.equals(property.getCurrentValue()) : "compiler.stackMode property has multiple values.";
       }
     }
     return stackMode;

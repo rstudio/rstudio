@@ -23,5 +23,5 @@ import java.util.List;
 public interface HasArguments {
 
   List<JsExpression> getArguments();
-  
+
 }

@@ -55,7 +55,7 @@ public class JsTry extends JsStatement {
     tryBlock = block;
   }
 
-  public void traverse(JsVisitor v, JsContext<JsStatement> ctx) {
+  public void traverse(JsVisitor v, JsContext ctx) {
     if (v.visit(this, ctx)) {
       tryBlock = v.accept(tryBlock);
       v.acceptWithInsertRemove(catches);

@@ -42,13 +42,12 @@ public class JsPrettyNamer {
   private Set<String> childIdents = null;
 
   private final JsProgram program;
-  
+
   /**
-   * A map containing the next integer to try as an identifier suffix for
-   * a given JsScope.
+   * A map containing the next integer to try as an identifier suffix for a
+   * given JsScope.
    */
-  private IdentityHashMap<JsScope,HashMap<String,Integer>> startIdentForScope =
-    new IdentityHashMap<JsScope, HashMap<String,Integer>>();
+  private IdentityHashMap<JsScope, HashMap<String, Integer>> startIdentForScope = new IdentityHashMap<JsScope, HashMap<String, Integer>>();
 
   public JsPrettyNamer(JsProgram program) {
     this.program = program;
@@ -58,7 +57,8 @@ public class JsPrettyNamer {
     visit(program.getRootScope());
   }
 
-  private boolean isLegal(JsScope scope, Set<String> childIdents, String newIdent) {
+  private boolean isLegal(JsScope scope, Set<String> childIdents,
+      String newIdent) {
     if (JsKeywords.isKeyword(newIdent)) {
       return false;
     }
@@ -75,12 +75,12 @@ public class JsPrettyNamer {
   }
 
   private void visit(JsScope scope) {
-    HashMap<String,Integer> startIdent = startIdentForScope.get(scope);
+    HashMap<String, Integer> startIdent = startIdentForScope.get(scope);
     if (startIdent == null) {
-      startIdent = new HashMap<String,Integer>();
+      startIdent = new HashMap<String, Integer>();
       startIdentForScope.put(scope, startIdent);
     }
-    
+
     // Save off the childIdents which is currently being computed for my parent.
     Set<String> myChildIdents = childIdents;
 
@@ -111,7 +111,7 @@ public class JsPrettyNamer {
       String newIdent = name.getShortIdent();
       if (!isLegal(scope, childIdents, newIdent)) {
         String checkIdent;
-        
+
         // Start searching using a suffix hint stored in the scope.
         // We still do a search in case there is a collision with
         // a user-provided identifier

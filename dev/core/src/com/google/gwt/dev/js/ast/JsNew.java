@@ -59,7 +59,7 @@ public final class JsNew extends JsExpression implements HasArguments {
     return false;
   }
 
-  public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
+  public void traverse(JsVisitor v, JsContext ctx) {
     if (v.visit(this, ctx)) {
       ctorExpr = v.accept(ctorExpr);
       v.acceptList(args);

@@ -2958,7 +2958,7 @@ public class GenerateJavaAST {
       }
 
       @Override
-      public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+      public void endVisit(JsNameRef x, JsContext ctx) {
         String ident = x.getIdent();
         if (ident.charAt(0) == '@') {
           processNameRef(x, ctx);
@@ -2985,7 +2985,7 @@ public class GenerateJavaAST {
       }
 
       private void processField(JsNameRef nameRef, SourceInfo info,
-          JField field, JsContext<JsExpression> ctx) {
+          JField field, JsContext ctx) {
         /*
          * We must replace any compile-time constants with the constant value of
          * the field.
@@ -3012,14 +3012,14 @@ public class GenerateJavaAST {
       }
 
       private void processMethod(JsNameRef nameRef, SourceInfo info,
-          JMethod method, JsContext<JsExpression> ctx) {
+          JMethod method, JsContext ctx) {
         assert !ctx.isLvalue();
         JsniMethodRef methodRef = new JsniMethodRef(info, nameRef.getIdent(),
             method, program.getJavaScriptObject());
         nativeMethodBody.addJsniRef(methodRef);
       }
 
-      private void processNameRef(JsNameRef nameRef, JsContext<JsExpression> ctx) {
+      private void processNameRef(JsNameRef nameRef, JsContext ctx) {
         SourceInfo info = nativeMethodBody.getSourceInfo();
         // TODO: make this tighter when we have real source info
         // JSourceInfo info = translateInfo(nameRef.getInfo());

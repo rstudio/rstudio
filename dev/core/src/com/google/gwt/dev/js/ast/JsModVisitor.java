@@ -24,7 +24,8 @@ import java.util.List;
  */
 public class JsModVisitor extends JsVisitor {
 
-  private class ListContext<T extends JsVisitable<T>> implements JsContext<T> {
+  @SuppressWarnings("unchecked")
+  private class ListContext<T extends JsVisitable> implements JsContext {
     private List<T> collection;
     private int index;
     private boolean removed;
@@ -38,15 +39,15 @@ public class JsModVisitor extends JsVisitor {
       return true;
     }
 
-    public void insertAfter(T node) {
+    public void insertAfter(JsVisitable node) {
       checkRemoved();
-      collection.add(index + 1, node);
+      collection.add(index + 1, (T) node);
       didChange = true;
     }
 
-    public void insertBefore(T node) {
+    public void insertBefore(JsVisitable node) {
       checkRemoved();
-      collection.add(index++, node);
+      collection.add(index++, (T) node);
       didChange = true;
     }
 
@@ -60,10 +61,10 @@ public class JsModVisitor extends JsVisitor {
       didChange = removed = true;
     }
 
-    public void replaceMe(T node) {
+    public void replaceMe(JsVisitable node) {
       checkState();
       checkReplacement(collection.get(index), node);
-      collection.set(index, node);
+      collection.set(index, (T) node);
       didChange = replaced = true;
     }
 
@@ -96,7 +97,8 @@ public class JsModVisitor extends JsVisitor {
     }
   }
 
-  private class NodeContext<T extends JsVisitable<T>> implements JsContext<T> {
+  @SuppressWarnings("unchecked")
+  private class NodeContext<T extends JsVisitable> implements JsContext {
     private T node;
     private boolean replaced;
 
@@ -108,11 +110,11 @@ public class JsModVisitor extends JsVisitor {
       return false;
     }
 
-    public void insertAfter(T node) {
+    public void insertAfter(JsVisitable node) {
       throw new UnsupportedOperationException();
     }
 
-    public void insertBefore(T node) {
+    public void insertBefore(JsVisitable node) {
       throw new UnsupportedOperationException();
     }
 
@@ -124,12 +126,12 @@ public class JsModVisitor extends JsVisitor {
       throw new UnsupportedOperationException();
     }
 
-    public void replaceMe(T node) {
+    public void replaceMe(JsVisitable node) {
       if (replaced) {
         throw new InternalCompilerException("Node was already replaced");
       }
       checkReplacement(this.node, node);
-      this.node = node;
+      this.node = (T) node;
       didChange = replaced = true;
     }
 
@@ -141,8 +143,8 @@ public class JsModVisitor extends JsVisitor {
     }
   }
 
-  protected static <T extends JsVisitable<T>> void checkReplacement(T origNode,
-      T newNode) {
+  protected static void checkReplacement(JsVisitable origNode,
+      JsVisitable newNode) {
     if (newNode == null) {
       throw new InternalCompilerException("Cannot replace with null");
     }
@@ -160,12 +162,12 @@ public class JsModVisitor extends JsVisitor {
   }
 
   @Override
-  protected <T extends JsVisitable<T>> T doAccept(T node) {
+  protected <T extends JsVisitable> T doAccept(T node) {
     return new NodeContext<T>().traverse(node);
   }
 
   @Override
-  protected <T extends JsVisitable<T>> void doAcceptList(List<T> collection) {
+  protected <T extends JsVisitable> void doAcceptList(List<T> collection) {
     NodeContext<T> ctx = new NodeContext<T>();
     for (int i = 0, c = collection.size(); i < c; ++i) {
       ctx.traverse(collection.get(i));
@@ -181,7 +183,7 @@ public class JsModVisitor extends JsVisitor {
   }
 
   @Override
-  protected <T extends JsVisitable<T>> void doAcceptWithInsertRemove(
+  protected <T extends JsVisitable> void doAcceptWithInsertRemove(
       List<T> collection) {
     new ListContext<T>().traverse(collection);
   }

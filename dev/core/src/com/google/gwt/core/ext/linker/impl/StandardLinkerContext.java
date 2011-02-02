@@ -24,9 +24,9 @@ import com.google.gwt.core.ext.linker.ConfigurationProperty;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.linker.LinkerOrder;
+import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.linker.PublicResource;
 import com.google.gwt.core.ext.linker.SelectionProperty;
-import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.Property;
@@ -44,7 +44,6 @@ import com.google.gwt.dev.js.JsSymbolResolver;
 import com.google.gwt.dev.js.JsUnusedFunctionRemover;
 import com.google.gwt.dev.js.JsVerboseNamer;
 import com.google.gwt.dev.js.ast.JsContext;
-import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsName;
@@ -92,7 +91,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     }
 
     @Override
-    public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
+    public boolean visit(JsFunction x, JsContext ctx) {
       didChange |= JsStringInterner.exec(program, x.getBody(), x.getScope());
       return false;
     }
@@ -472,7 +471,8 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
    * @param out where to emit the artifact contents
    */
   public void produceOutput(TreeLogger logger, ArtifactSet artifacts,
-      Visibility visibility, OutputFileSet out) throws UnableToCompleteException {
+      Visibility visibility, OutputFileSet out)
+      throws UnableToCompleteException {
     logger = logger.branch(TreeLogger.TRACE, "Linking " + visibility
         + " artifacts into " + out.getPathDescription(), null);
 

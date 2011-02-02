@@ -17,7 +17,6 @@ package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsContext;
-import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsInvocation;
 import com.google.gwt.dev.js.ast.JsModVisitor;
@@ -57,19 +56,19 @@ public class JsDuplicateFunctionRemover {
     }
 
     @Override
-    public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsInvocation x, JsContext ctx) {
       if (x.getQualifier() instanceof JsNameRef) {
         invocationQualifiers.pop();
       }
     }
 
     @Override
-    public void endVisit(JsNameOf x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNameOf x, JsContext ctx) {
       dontReplace.add(x.getName());
     }
 
     @Override
-    public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNameRef x, JsContext ctx) {
       if (x != invocationQualifiers.peek()) {
         if (x.getName() != null) {
           dontReplace.add(x.getName());
@@ -86,7 +85,7 @@ public class JsDuplicateFunctionRemover {
     }
 
     @Override
-    public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
+    public boolean visit(JsFunction x, JsContext ctx) {
       /*
        * Don't process anonymous functions.
        */
@@ -104,7 +103,7 @@ public class JsDuplicateFunctionRemover {
     }
 
     @Override
-    public boolean visit(JsInvocation x, JsContext<JsExpression> ctx) {
+    public boolean visit(JsInvocation x, JsContext ctx) {
       if (x.getQualifier() instanceof JsNameRef) {
         invocationQualifiers.push((JsNameRef) x.getQualifier());
       }
@@ -125,7 +124,7 @@ public class JsDuplicateFunctionRemover {
     }
 
     @Override
-    public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNameRef x, JsContext ctx) {
       JsName orig = duplicateMap.get(x.getName());
       if (orig != null && x.getName() != null
           && x.getName().getEnclosing() == program.getScope()

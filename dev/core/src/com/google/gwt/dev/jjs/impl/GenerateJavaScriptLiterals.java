@@ -45,7 +45,7 @@ import java.util.Stack;
 public class GenerateJavaScriptLiterals extends JVisitor {
 
   private final JsProgram program;
-  private final Stack<JsVisitable<?>> nodeStack = new Stack<JsVisitable<?>>();
+  private final Stack<JsVisitable> nodeStack = new Stack<JsVisitable>();
 
   public GenerateJavaScriptLiterals(JsProgram program) {
     this.program = program;
@@ -114,7 +114,6 @@ public class GenerateJavaScriptLiterals extends JVisitor {
     return (T) nodeStack.pop();
   }
 
-  @SuppressWarnings("unchecked")
   protected final <T extends JsVisitable> List<T> popList(int count) {
     List<T> list = new ArrayList<T>();
     while (count > 0) {
@@ -128,7 +127,6 @@ public class GenerateJavaScriptLiterals extends JVisitor {
     return list;
   }
 
-  @SuppressWarnings("unchecked")
   protected final <T extends JsVisitable> void popList(List<T> collection,
       int count) {
     List<T> list = new ArrayList<T>();
@@ -143,7 +141,6 @@ public class GenerateJavaScriptLiterals extends JVisitor {
     collection.addAll(list);
   }
 
-  @SuppressWarnings("unchecked")
   protected final <T extends JsVisitable> void push(T node) {
     nodeStack.push(node);
   }

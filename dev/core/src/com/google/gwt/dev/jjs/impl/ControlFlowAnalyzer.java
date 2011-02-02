@@ -51,7 +51,6 @@ import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.js.ast.JsContext;
-import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
@@ -320,7 +319,7 @@ public class ControlFlowAnalyzer {
 
         new JsVisitor() {
           @Override
-          public void endVisit(JsNameRef nameRef, JsContext<JsExpression> ctx) {
+          public void endVisit(JsNameRef nameRef, JsContext ctx) {
             JsName ident = nameRef.getName();
 
             if (ident != null) {
@@ -529,8 +528,8 @@ public class ControlFlowAnalyzer {
            * time, this would happen naturally since the instance method
            * delegates to the static. However, in cases where the static has
            * been inlined into the instance method, future optimization could
-           * tighten an instance call into a static call, reaching code that
-           * was pruned.
+           * tighten an instance call into a static call, reaching code that was
+           * pruned.
            */
           JMethod staticImpl = program.getStaticImpl(method);
           if (staticImpl != null) {

@@ -20,7 +20,6 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsContext;
-import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
@@ -38,11 +37,11 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.Map.Entry;
 
 /**
  * Interns all String literals in a JsProgram. Each unique String will be
@@ -106,7 +105,7 @@ public class JsStringInterner {
     }
 
     @Override
-    public void endVisit(JsProgramFragment x, JsContext<JsProgramFragment> ctx) {
+    public void endVisit(JsProgramFragment x, JsContext ctx) {
       currentFragment++;
     }
 
@@ -114,7 +113,7 @@ public class JsStringInterner {
      * Prevents 'fixing' an otherwise illegal operation.
      */
     @Override
-    public boolean visit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
+    public boolean visit(JsBinaryOperation x, JsContext ctx) {
       return !x.getOperator().isAssignment()
           || !(x.getArg1() instanceof JsStringLiteral);
     }
@@ -123,7 +122,7 @@ public class JsStringInterner {
      * Prevents 'fixing' an otherwise illegal operation.
      */
     @Override
-    public boolean visit(JsPostfixOperation x, JsContext<JsExpression> ctx) {
+    public boolean visit(JsPostfixOperation x, JsContext ctx) {
       return !(x.getArg() instanceof JsStringLiteral);
     }
 
@@ -131,7 +130,7 @@ public class JsStringInterner {
      * Prevents 'fixing' an otherwise illegal operation.
      */
     @Override
-    public boolean visit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
+    public boolean visit(JsPrefixOperation x, JsContext ctx) {
       return !(x.getArg() instanceof JsStringLiteral);
     }
 
@@ -141,8 +140,7 @@ public class JsStringInterner {
      * and never evaluated as an expression.
      */
     @Override
-    public boolean visit(JsPropertyInitializer x,
-        JsContext<JsPropertyInitializer> ctx) {
+    public boolean visit(JsPropertyInitializer x, JsContext ctx) {
       x.setValueExpr(accept(x.getValueExpr()));
       return false;
     }
@@ -151,7 +149,7 @@ public class JsStringInterner {
      * Replace JsStringLiteral instances with JsNameRefs.
      */
     @Override
-    public boolean visit(JsStringLiteral x, JsContext<JsExpression> ctx) {
+    public boolean visit(JsStringLiteral x, JsContext ctx) {
       JsName name = toCreate.get(x);
       if (name == null) {
         String ident = PREFIX + lastId++;
@@ -188,7 +186,7 @@ public class JsStringInterner {
      * declarations that look like they were created by the interner.
      */
     @Override
-    public boolean visit(JsVar x, JsContext<JsVar> ctx) {
+    public boolean visit(JsVar x, JsContext ctx) {
       return !(x.getName().getIdent().startsWith(PREFIX));
     }
   }

@@ -42,7 +42,7 @@ public final class JsPostfixOperation extends JsUnaryOperation {
   }
 
   @Override
-  public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
+  public void traverse(JsVisitor v, JsContext ctx) {
     if (v.visit(this, ctx)) {
       super.traverse(v, ctx);
     }

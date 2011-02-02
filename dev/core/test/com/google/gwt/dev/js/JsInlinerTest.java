@@ -16,7 +16,6 @@
 package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.js.ast.JsContext;
-import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsName;
@@ -29,14 +28,18 @@ public class JsInlinerTest extends OptimizerTestBase {
 
   private static class FixStaticRefsVisitor extends JsModVisitor {
 
+    /**
+     * Called reflectively.
+     */
+    @SuppressWarnings("unused")
     public static void exec(JsProgram program) {
       (new FixStaticRefsVisitor()).accept(program);
     }
 
     @Override
-    public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsFunction x, JsContext ctx) {
       JsName name = x.getName();
-      if (name != null) { 
+      if (name != null) {
         name.setStaticRef(x);
       }
     }
@@ -56,15 +59,16 @@ public class JsInlinerTest extends OptimizerTestBase {
         + "function b1() { var x=a1(function blah(){}, 10); } b1();";
     compare(input2, input2);
   }
-  
+
   public void testInlineObjectLiterals() throws Exception {
     String input = "function a1(arg, x) { arg.x = x; return arg; }"
         + "function b1() { var x=a1({}, 10); } b1();";
     compare(input, input);
   }
+
   /**
    * A test for mutually-recursive functions. Setup:
-   *
+   * 
    * <pre>
    * a -> b, c
    * b -> a, c

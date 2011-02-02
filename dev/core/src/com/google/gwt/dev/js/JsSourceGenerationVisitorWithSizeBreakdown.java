@@ -57,25 +57,25 @@ public class JsSourceGenerationVisitorWithSizeBreakdown extends
   }
 
   @Override
-  public boolean visit(JsBlock x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsBlock x, JsContext ctx) {
     printJsBlock(x, false, true);
     return false;
   }
 
   @Override
-  public boolean visit(JsProgram x, JsContext<JsProgram> ctx) {
+  public boolean visit(JsProgram x, JsContext ctx) {
     // Descend naturally.
     return true;
   }
 
   @Override
-  public boolean visit(JsProgramFragment x, JsContext<JsProgramFragment> ctx) {
+  public boolean visit(JsProgramFragment x, JsContext ctx) {
     // Descend naturally.
     return true;
   }
 
   @Override
-  protected <T extends JsVisitable<T>> T doAccept(T node) {
+  protected <T extends JsVisitable> T doAccept(T node) {
     JsName newName = nameToBillTo(node);
     if (newName == null) {
       return super.doAccept(node);
@@ -91,14 +91,14 @@ public class JsSourceGenerationVisitorWithSizeBreakdown extends
   }
 
   @Override
-  protected <T extends JsVisitable<T>> void doAcceptList(List<T> collection) {
+  protected <T extends JsVisitable> void doAcceptList(List<T> collection) {
     for (T t : collection) {
       doAccept(t);
     }
   }
 
   @Override
-  protected <T extends JsVisitable<T>> void doAcceptWithInsertRemove(
+  protected <T extends JsVisitable> void doAcceptWithInsertRemove(
       List<T> collection) {
     for (T t : collection) {
       doAccept(t);
@@ -114,10 +114,9 @@ public class JsSourceGenerationVisitorWithSizeBreakdown extends
   }
 
   /**
-   * If parameter is JsVisitable<?>, javac version sun jdk1.6.0 complains about
+   * If parameter is JsVisitable, javac version sun jdk1.6.0 complains about
    * incompatible types.
    */
-  @SuppressWarnings("unchecked")
   private JsName nameToBillTo(JsVisitable node) {
     if (node instanceof JsStatement) {
       JsStatement stat = (JsStatement) node;

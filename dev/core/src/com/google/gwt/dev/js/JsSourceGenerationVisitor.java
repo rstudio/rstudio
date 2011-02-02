@@ -19,7 +19,6 @@ import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsProgramFragment;
-import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.util.TextOutput;
 
 /**
@@ -33,10 +32,10 @@ public class JsSourceGenerationVisitor extends JsToStringGenerationVisitor {
   public JsSourceGenerationVisitor(TextOutput out) {
     super(out);
   }
-  
+
   /**
    * Generate the output source code using short or long identifiers.
-   *
+   * 
    * @param useLongIdents if true, emit all identifiers in long form
    */
   public JsSourceGenerationVisitor(TextOutput out, boolean useLongIdents) {
@@ -44,19 +43,19 @@ public class JsSourceGenerationVisitor extends JsToStringGenerationVisitor {
   }
 
   @Override
-  public boolean visit(JsProgram x, JsContext<JsProgram> ctx) {
+  public boolean visit(JsProgram x, JsContext ctx) {
     // Descend naturally.
     return true;
   }
 
   @Override
-  public boolean visit(JsProgramFragment x, JsContext<JsProgramFragment> ctx) {
+  public boolean visit(JsProgramFragment x, JsContext ctx) {
     // Descend naturally.
     return true;
   }
 
   @Override
-  public boolean visit(JsBlock x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsBlock x, JsContext ctx) {
     printJsBlock(x, false, true);
     return false;
   }

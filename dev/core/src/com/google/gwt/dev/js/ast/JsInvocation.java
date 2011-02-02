@@ -60,7 +60,7 @@ public final class JsInvocation extends JsExpression implements HasArguments {
     this.qualifier = qualifier;
   }
 
-  public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
+  public void traverse(JsVisitor v, JsContext ctx) {
     if (v.visit(this, ctx)) {
       qualifier = v.accept(qualifier);
       v.acceptList(args);

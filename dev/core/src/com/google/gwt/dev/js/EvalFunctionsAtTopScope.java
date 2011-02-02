@@ -18,13 +18,12 @@ package com.google.gwt.dev.js;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsContext;
-import com.google.gwt.dev.js.ast.JsExpression;
+import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsProgramFragment;
 import com.google.gwt.dev.js.ast.JsStatement;
-import com.google.gwt.dev.js.ast.JsExprStmt;
 
 import java.util.HashSet;
 import java.util.ListIterator;
@@ -46,41 +45,41 @@ public class EvalFunctionsAtTopScope extends JsModVisitor {
   }
 
   private JsStatement currentStatement;
-  
+
   private final Set<JsFunction> dontMove = new HashSet<JsFunction>();
 
   private final Stack<ListIterator<JsStatement>> itrStack = new Stack<ListIterator<JsStatement>>();
 
   private JavaToJavaScriptMap java2jsMap;
-  
+
   private final Stack<JsBlock> scopeStack = new Stack<JsBlock>();
-  
+
   public EvalFunctionsAtTopScope(JavaToJavaScriptMap java2jsMap) {
     this.java2jsMap = java2jsMap;
   }
-  
+
   @Override
-  public void endVisit(JsExprStmt x, JsContext<JsStatement> ctx) {
-    currentStatement = null;     
+  public void endVisit(JsExprStmt x, JsContext ctx) {
+    currentStatement = null;
   }
-  
+
   @Override
-  public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
+  public void endVisit(JsFunction x, JsContext ctx) {
     scopeStack.pop();
   }
 
   @Override
-  public void endVisit(JsProgram x, JsContext<JsProgram> ctx) {
+  public void endVisit(JsProgram x, JsContext ctx) {
     scopeStack.pop();
   }
 
   @Override
-  public void endVisit(JsProgramFragment x, JsContext<JsProgramFragment> ctx) {
+  public void endVisit(JsProgramFragment x, JsContext ctx) {
     scopeStack.pop();
   }
 
   @Override
-  public boolean visit(JsBlock x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsBlock x, JsContext ctx) {
     if (x == scopeStack.peek()) {
       ListIterator<JsStatement> itr = x.getStatements().listIterator();
       itrStack.push(itr);
@@ -106,22 +105,22 @@ public class EvalFunctionsAtTopScope extends JsModVisitor {
   }
 
   @Override
-  public boolean visit(JsExprStmt x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsExprStmt x, JsContext ctx) {
     currentStatement = x;
     return true;
   }
 
   @Override
-  public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsFunction x, JsContext ctx) {
     JsStaticEval.isFunctionDecl(currentStatement);
-    
+
     /*
-     * We do this during visit() to preserve first-to-last evaluation order.
-     * We check if this function is a vtable declaration and don't 
-     * move functions used in other expressions or are in vtable assignments.
+     * We do this during visit() to preserve first-to-last evaluation order. We
+     * check if this function is a vtable declaration and don't move functions
+     * used in other expressions or are in vtable assignments.
      */
-    if (x.getName() != null && !dontMove.contains(x) && 
-        !isVtableDeclaration(currentStatement)) {
+    if (x.getName() != null && !dontMove.contains(x)
+        && !isVtableDeclaration(currentStatement)) {
       /*
        * Reinsert this function into the statement immediately before the
        * current statement. The current statement will have already been
@@ -143,17 +142,17 @@ public class EvalFunctionsAtTopScope extends JsModVisitor {
   }
 
   @Override
-  public boolean visit(JsProgram x, JsContext<JsProgram> ctx) {
+  public boolean visit(JsProgram x, JsContext ctx) {
     scopeStack.push(x.getGlobalBlock());
     return true;
   }
 
   @Override
-  public boolean visit(JsProgramFragment x, JsContext<JsProgramFragment> ctx) {
+  public boolean visit(JsProgramFragment x, JsContext ctx) {
     scopeStack.push(x.getGlobalBlock());
     return true;
   }
-  
+
   private boolean isVtableDeclaration(JsStatement currentStatement) {
     return java2jsMap.vtableInitToMethod(currentStatement) != null;
   }

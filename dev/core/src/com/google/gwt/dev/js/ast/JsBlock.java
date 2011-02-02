@@ -39,7 +39,7 @@ public class JsBlock extends JsStatement {
     return false;
   }
 
-  public void traverse(JsVisitor v, JsContext<JsStatement> ctx) {
+  public void traverse(JsVisitor v, JsContext ctx) {
     if (v.visit(this, ctx)) {
       v.acceptWithInsertRemove(stmts);
     }

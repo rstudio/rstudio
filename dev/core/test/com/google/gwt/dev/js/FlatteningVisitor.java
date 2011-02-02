@@ -32,10 +32,10 @@ class FlatteningVisitor extends JsVisitor {
   }
 
   public static class TreeNode {
-    public final JsVisitable<?> node;
+    public final JsVisitable node;
     public final List<TreeNode> children = new ArrayList<TreeNode>();
 
-    public TreeNode(JsVisitable<?> node) {
+    public TreeNode(JsVisitable node) {
       this.node = node;
     }
   }
@@ -46,7 +46,7 @@ class FlatteningVisitor extends JsVisitor {
     root = new TreeNode(null);
   }
 
-  protected <T extends JsVisitable<T>> T doAccept(T node) {
+  protected <T extends JsVisitable> T doAccept(T node) {
     TreeNode oldRoot = root;
     root = new TreeNode(node);
     oldRoot.children.add(root);
@@ -55,7 +55,7 @@ class FlatteningVisitor extends JsVisitor {
     return node;
   }
 
-  protected <T extends JsVisitable<T>> void doAcceptList(List<T> collection) {
+  protected <T extends JsVisitable> void doAcceptList(List<T> collection) {
     for (Iterator<T> it = collection.iterator(); it.hasNext();) {
       doAccept(it.next());
     }

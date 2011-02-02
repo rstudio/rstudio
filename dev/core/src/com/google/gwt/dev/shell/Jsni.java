@@ -43,7 +43,8 @@ public class Jsni {
   /**
    * Generate source code, fixing up any JSNI references for hosted mode.
    * 
-   * <p/><table>
+   * <p/>
+   * <table>
    * <tr>
    * <td>Original</td>
    * <td>Becomes</td>
@@ -98,7 +99,7 @@ public class Jsni {
      * This will handle references to fields or tear-offs of Java methods.
      */
     @Override
-    public boolean visit(JsNameRef x, JsContext<JsExpression> ctx) {
+    public boolean visit(JsNameRef x, JsContext ctx) {
       String ident = x.getIdent();
       JsExpression q = x.getQualifier();
       if (ident.startsWith("@")) {
@@ -110,15 +111,14 @@ public class Jsni {
         } else {
           member = dispatchInfo.getClassInfoByDispId(dispId).getMember(dispId);
         }
-        
+
         if (member == null) {
           throw new HostedModeException(
               "JSNI rewriter found reference to non-existent field in a field reference or java method tear-off: "
                   + ident + " at " + x.getSourceInfo());
         }
 
-        if (member instanceof Field
-            || member instanceof SyntheticClassMember) {
+        if (member instanceof Field || member instanceof SyntheticClassMember) {
           if (q != null) {
             accept(q);
             out.print("[");
@@ -167,7 +167,7 @@ public class Jsni {
      * correctly on some browsers.
      */
     @Override
-    public boolean visit(JsInvocation x, JsContext<JsExpression> ctx) {
+    public boolean visit(JsInvocation x, JsContext ctx) {
       if (x.getQualifier() instanceof JsNameRef) {
         JsNameRef ref = (JsNameRef) x.getQualifier();
         String ident = ref.getIdent();
@@ -186,14 +186,13 @@ public class Jsni {
                 "JSNI rewriter found reference to non-existent field in a method invocation: "
                     + ref.getIdent() + " at " + ref.getSourceInfo());
           }
-          
+
           /*
            * Make sure the ident is a reference to a method or constructor and
            * not a reference to a field whose contents (e.g. a Function) we
            * intend to immediately invoke.
            * 
            * p.C::method()(); versus p.C::field();
-           *
            */
           if (member instanceof Method || member instanceof Constructor<?>) {
 
@@ -256,7 +255,7 @@ public class Jsni {
    * JSNI idents have been replaced with legal JavaScript for hosted mode.
    */
   private static String generateJavaScriptForHostedMode(
-      DispatchIdOracle dispatchInfo, JsProgram program, JsNode<?> node) {
+      DispatchIdOracle dispatchInfo, JsProgram program, JsNode node) {
     DefaultTextOutput out = new DefaultTextOutput(false);
     JsSourceGenWithJsniIdentFixup vi = new JsSourceGenWithJsniIdentFixup(out,
         dispatchInfo, program);

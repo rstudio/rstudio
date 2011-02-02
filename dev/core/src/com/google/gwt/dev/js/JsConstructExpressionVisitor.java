@@ -51,7 +51,7 @@ public class JsConstructExpressionVisitor extends JsVisitor {
    * We only look at the array expression since the index has its own scope.
    */
   @Override
-  public boolean visit(JsArrayAccess x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsArrayAccess x, JsContext ctx) {
     accept(x.getArrayExpr());
     return false;
   }
@@ -60,7 +60,7 @@ public class JsConstructExpressionVisitor extends JsVisitor {
    * Array literals have their own scoping.
    */
   @Override
-  public boolean visit(JsArrayLiteral x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsArrayLiteral x, JsContext ctx) {
     return false;
   }
 
@@ -68,18 +68,18 @@ public class JsConstructExpressionVisitor extends JsVisitor {
    * Functions have their own scoping.
    */
   @Override
-  public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsFunction x, JsContext ctx) {
     return false;
   }
 
   @Override
-  public boolean visit(JsInvocation x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsInvocation x, JsContext ctx) {
     containsInvocation = true;
     return false;
   }
 
   @Override
-  public boolean visit(JsNameRef x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsNameRef x, JsContext ctx) {
     if (!x.isLeaf()) {
       accept(x.getQualifier());
     }
@@ -90,7 +90,7 @@ public class JsConstructExpressionVisitor extends JsVisitor {
    * New constructs bind to the nearest set of parentheses.
    */
   @Override
-  public boolean visit(JsNew x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsNew x, JsContext ctx) {
     return false;
   }
 
@@ -98,7 +98,7 @@ public class JsConstructExpressionVisitor extends JsVisitor {
    * Object literals have their own scope.
    */
   @Override
-  public boolean visit(JsObjectLiteral x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsObjectLiteral x, JsContext ctx) {
     return false;
   }
 
@@ -106,8 +106,8 @@ public class JsConstructExpressionVisitor extends JsVisitor {
    * We only look at nodes that would not normally be surrounded by parentheses.
    */
   @SuppressWarnings("cast")
-    @Override
-  protected <T extends JsVisitable<T>> T doAccept(T node) {
+  @Override
+  protected <T extends JsVisitable> T doAccept(T node) {
     /*
      * Extra casts to Object to prevent 'inconvertible types' compile errors due
      * to http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6548436

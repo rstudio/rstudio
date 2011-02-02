@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -37,7 +37,6 @@ import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.js.ast.JsContext;
-import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsName;
@@ -89,13 +88,13 @@ public class MakeCallsStatic {
       }
 
       @Override
-      public void endVisit(JsThisRef x, JsContext<JsExpression> ctx) {
+      public void endVisit(JsThisRef x, JsContext ctx) {
         ctx.replaceMe(thisParam.makeRef(x.getSourceInfo().makeChild(
             RewriteJsniMethodBody.class, "Devirtualized instance")));
       }
 
       @Override
-      public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
+      public boolean visit(JsFunction x, JsContext ctx) {
         // Don't recurse into nested functions!
         return false;
       }
@@ -111,7 +110,7 @@ public class MakeCallsStatic {
       private final JParameter thisParam;
       private final Map<JParameter, JParameter> varMap;
 
-      public RewriteMethodBody(JParameter thisParam, 
+      public RewriteMethodBody(JParameter thisParam,
           Map<JParameter, JParameter> varMap) {
         this.thisParam = thisParam;
         this.varMap = varMap;
@@ -191,7 +190,7 @@ public class MakeCallsStatic {
           CreateStaticImplsVisitor.class, "Degelgating to devirtualized method");
       JMethodBody newBody = new JMethodBody(delegateCallSourceInfo);
       x.setBody(newBody);
-      JMethodCall newCall = new JMethodCall(delegateCallSourceInfo, null, 
+      JMethodCall newCall = new JMethodCall(delegateCallSourceInfo, null,
           newMethod);
       newCall.addArg(new JThisRef(delegateCallSourceInfo, enclosingType));
       for (int i = 0; i < x.getParams().size(); ++i) {
@@ -216,8 +215,10 @@ public class MakeCallsStatic {
         // TODO: Do we really need to do that in BuildTypeMap?
         JsFunction jsFunc = ((JsniMethodBody) movedBody).getFunc();
         JsName paramName = jsFunc.getScope().declareName("this$static");
-        jsFunc.getParameters().add(0, new JsParameter(sourceInfo.makeChild(
-            CreateStaticImplsVisitor.class, "Static accessor"), paramName));
+        jsFunc.getParameters().add(
+            0,
+            new JsParameter(sourceInfo.makeChild(
+                CreateStaticImplsVisitor.class, "Static accessor"), paramName));
         RewriteJsniMethodBody rewriter = new RewriteJsniMethodBody(paramName);
         // Accept the body to avoid the recursion blocker.
         rewriter.accept(jsFunc.getBody());
@@ -324,7 +325,7 @@ public class MakeCallsStatic {
       if (isRunCallbacksMethod(x.getTarget())) {
         /*
          * Don't devirtualize these calls created by FragmentLoaderCreator,
-         * because it spoils code splitting. 
+         * because it spoils code splitting.
          * 
          * TODO(spoon) remove this once FragmentLoaderCreator is gone
          */
@@ -336,7 +337,8 @@ public class MakeCallsStatic {
 
     @Override
     public boolean visit(JMethod x, Context ctx) {
-      currentMethodIsInitiallyLive = initiallyLive.getLiveFieldsAndMethods().contains(x);
+      currentMethodIsInitiallyLive = initiallyLive.getLiveFieldsAndMethods().contains(
+          x);
       return true;
     }
 
@@ -348,8 +350,8 @@ public class MakeCallsStatic {
   }
 
   public static OptimizerStats exec(JProgram program) {
-    Event optimizeEvent = SpeedTracerLogger.start(
-        CompilerEventType.OPTIMIZE, "optimizer", NAME);
+    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE,
+        "optimizer", NAME);
     OptimizerStats stats = new MakeCallsStatic(program).execImpl();
     optimizeEvent.end("didChange", "" + stats.didChange());
     return stats;

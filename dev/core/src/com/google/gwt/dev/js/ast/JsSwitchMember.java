@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * A member/case in a JavaScript switch object.
  */
-public abstract class JsSwitchMember extends JsNode<JsSwitchMember> {
+public abstract class JsSwitchMember extends JsNode {
 
   protected final List<JsStatement> stmts = new ArrayList<JsStatement>();
 

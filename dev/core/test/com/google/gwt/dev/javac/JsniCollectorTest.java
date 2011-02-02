@@ -18,7 +18,6 @@ package com.google.gwt.dev.javac;
 import com.google.gwt.dev.javac.impl.StaticJavaResource;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.js.ast.JsContext;
-import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsVisitor;
 
@@ -125,7 +124,7 @@ public class JsniCollectorTest extends CompilationStateTestBase {
     final List<JsNameRef> foundRefs = new ArrayList<JsNameRef>();
     new JsVisitor() {
       @Override
-      public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+      public void endVisit(JsNameRef x, JsContext ctx) {
         if (x.getIdent().startsWith("@")) {
           foundRefs.add(x);
         }

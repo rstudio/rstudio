@@ -30,9 +30,8 @@ import com.google.gwt.dev.js.ast.JsUnaryOperator;
  * Fixes any semantic errors introduced by JS AST gen.
  * 
  * <ul>
- * <li> Creating clinit calls can put comma expressions as lvalues; the
- * modifying operation must be moved inside the comma expression to the last
- * argument. </li>
+ * <li>Creating clinit calls can put comma expressions as lvalues; the modifying
+ * operation must be moved inside the comma expression to the last argument.</li>
  * </ul>
  */
 public class JsNormalizer {
@@ -43,17 +42,17 @@ public class JsNormalizer {
   private static class JsNormalizing extends JsModVisitor {
 
     @Override
-    public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsBinaryOperation x, JsContext ctx) {
       maybeShuffleModifyingBinary(x, ctx);
     }
 
     @Override
-    public void endVisit(JsPostfixOperation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsPostfixOperation x, JsContext ctx) {
       maybeShuffleModifyingUnary(x, ctx);
     }
 
     @Override
-    public void endVisit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsPrefixOperation x, JsContext ctx) {
       maybeShuffleModifyingUnary(x, ctx);
     }
 
@@ -62,8 +61,7 @@ public class JsNormalizer {
      * operation as the argument to a modifying operation, which is illegal.
      * Juggle things to put the operator inside of the comma expression.
      */
-    private void maybeShuffleModifyingBinary(JsBinaryOperation x,
-        JsContext<JsExpression> ctx) {
+    private void maybeShuffleModifyingBinary(JsBinaryOperation x, JsContext ctx) {
       JsBinaryOperator myOp = x.getOperator();
       JsExpression lhs = x.getArg1();
 
@@ -88,8 +86,7 @@ public class JsNormalizer {
      * operation as the argument to a modifying operation, which is illegal.
      * Juggle things to put the operator inside of the comma expression.
      */
-    private void maybeShuffleModifyingUnary(JsUnaryOperation x,
-        JsContext<JsExpression> ctx) {
+    private void maybeShuffleModifyingUnary(JsUnaryOperation x, JsContext ctx) {
       JsUnaryOperator myOp = x.getOperator();
       JsExpression arg = x.getArg();
       if (myOp.isModifying() && (arg instanceof JsBinaryOperation)) {

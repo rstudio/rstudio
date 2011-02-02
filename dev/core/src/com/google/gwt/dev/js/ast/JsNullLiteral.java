@@ -45,7 +45,7 @@ public final class JsNullLiteral extends JsValueLiteral {
     return true;
   }
 
-  public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
+  public void traverse(JsVisitor v, JsContext ctx) {
     v.visit(this, ctx);
     v.endVisit(this, ctx);
   }

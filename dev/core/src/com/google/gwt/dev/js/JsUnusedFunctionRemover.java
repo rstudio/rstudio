@@ -19,13 +19,11 @@ import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.impl.OptimizerStats;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsExprStmt;
-import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
-import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -46,7 +44,7 @@ public class JsUnusedFunctionRemover {
   private class JsFunctionVisitor extends JsVisitor {
 
     @Override
-    public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsFunction x, JsContext ctx) {
       // Anonymous function, ignore it
       if (x.getName() != null && !x.isArtificiallyRescued()) {
         toRemove.put(x.getName(), x);
@@ -60,7 +58,7 @@ public class JsUnusedFunctionRemover {
   private class JsNameRefVisitor extends JsVisitor {
 
     @Override
-    public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNameRef x, JsContext ctx) {
       toRemove.remove(x.getName());
     }
   }
@@ -68,7 +66,7 @@ public class JsUnusedFunctionRemover {
   private class RemovalVisitor extends JsModVisitor {
 
     @Override
-    public void endVisit(JsExprStmt x, JsContext<JsStatement> ctx) {
+    public void endVisit(JsExprStmt x, JsContext ctx) {
       if (!(x.getExpression() instanceof JsFunction)) {
         return;
       }
@@ -96,8 +94,8 @@ public class JsUnusedFunctionRemover {
   }
 
   public static OptimizerStats exec(JsProgram program) {
-    Event optimizeJsEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE_JS,
-        "optimizer", NAME);
+    Event optimizeJsEvent = SpeedTracerLogger.start(
+        CompilerEventType.OPTIMIZE_JS, "optimizer", NAME);
     OptimizerStats stats = new JsUnusedFunctionRemover(program).execImpl();
     optimizeJsEvent.end("didChange", "" + stats.didChange());
     return stats;

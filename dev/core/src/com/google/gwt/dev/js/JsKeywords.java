@@ -34,7 +34,7 @@ public class JsKeywords {
   }
 
   private static synchronized void initJavaScriptKeywords() {
-    String[] keywords = new String[] {
+    String[] keywords = new String[]{
         // These are current keywords
         //
         "break", "delete", "function", "return", "typeof", "case", "do", "if",

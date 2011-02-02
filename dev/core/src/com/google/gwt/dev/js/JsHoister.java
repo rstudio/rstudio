@@ -61,7 +61,7 @@ public final class JsHoister {
     private boolean successful = true;
 
     @Override
-    public void endVisit(JsArrayAccess x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsArrayAccess x, JsContext ctx) {
       JsArrayAccess newExpression = new JsArrayAccess(x.getSourceInfo());
       newExpression.setIndexExpr(stack.pop());
       newExpression.setArrayExpr(stack.pop());
@@ -69,7 +69,7 @@ public final class JsHoister {
     }
 
     @Override
-    public void endVisit(JsArrayLiteral x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsArrayLiteral x, JsContext ctx) {
       JsArrayLiteral toReturn = new JsArrayLiteral(x.getSourceInfo());
       List<JsExpression> expressions = toReturn.getExpressions();
       int size = x.getExpressions().size();
@@ -80,7 +80,7 @@ public final class JsHoister {
     }
 
     @Override
-    public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsBinaryOperation x, JsContext ctx) {
       JsBinaryOperation toReturn = new JsBinaryOperation(x.getSourceInfo(),
           x.getOperator());
       toReturn.setArg2(stack.pop());
@@ -89,12 +89,12 @@ public final class JsHoister {
     }
 
     @Override
-    public void endVisit(JsBooleanLiteral x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsBooleanLiteral x, JsContext ctx) {
       stack.push(x);
     }
 
     @Override
-    public void endVisit(JsConditional x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsConditional x, JsContext ctx) {
       JsConditional toReturn = new JsConditional(x.getSourceInfo());
       toReturn.setElseExpression(stack.pop());
       toReturn.setThenExpression(stack.pop());
@@ -107,7 +107,7 @@ public final class JsHoister {
      * first-class objects.
      */
     @Override
-    public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsFunction x, JsContext ctx) {
       // Set a flag to indicate that we cannot continue, and push a null so
       // we don't run out of elements on the stack.
       successful = false;
@@ -119,7 +119,7 @@ public final class JsHoister {
      * sites.
      */
     @Override
-    public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsInvocation x, JsContext ctx) {
       JsInvocation toReturn = new JsInvocation(x.getSourceInfo());
       List<JsExpression> params = toReturn.getArguments();
       int size = x.getArguments().size();
@@ -131,7 +131,7 @@ public final class JsHoister {
     }
 
     @Override
-    public void endVisit(JsNameOf x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNameOf x, JsContext ctx) {
       JsNameOf toReturn = new JsNameOf(x.getSourceInfo(), x.getName());
       stack.push(toReturn);
     }
@@ -142,7 +142,7 @@ public final class JsHoister {
      * re-writing an invocation.
      */
     @Override
-    public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNameRef x, JsContext ctx) {
       JsNameRef toReturn = new JsNameRef(x.getSourceInfo(), x.getName());
 
       if (x.getQualifier() != null) {
@@ -152,7 +152,7 @@ public final class JsHoister {
     }
 
     @Override
-    public void endVisit(JsNew x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNew x, JsContext ctx) {
       int size = x.getArguments().size();
       List<JsExpression> arguments = new ArrayList<JsExpression>(size);
       while (size-- > 0) {
@@ -164,17 +164,17 @@ public final class JsHoister {
     }
 
     @Override
-    public void endVisit(JsNullLiteral x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNullLiteral x, JsContext ctx) {
       stack.push(x);
     }
 
     @Override
-    public void endVisit(JsNumberLiteral x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNumberLiteral x, JsContext ctx) {
       stack.push(x);
     }
 
     @Override
-    public void endVisit(JsObjectLiteral x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsObjectLiteral x, JsContext ctx) {
       JsObjectLiteral toReturn = new JsObjectLiteral(x.getSourceInfo());
       List<JsPropertyInitializer> inits = toReturn.getPropertyInitializers();
 
@@ -197,7 +197,7 @@ public final class JsHoister {
     }
 
     @Override
-    public void endVisit(JsPostfixOperation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsPostfixOperation x, JsContext ctx) {
       JsPostfixOperation toReturn = new JsPostfixOperation(x.getSourceInfo(),
           x.getOperator());
       toReturn.setArg(stack.pop());
@@ -205,7 +205,7 @@ public final class JsHoister {
     }
 
     @Override
-    public void endVisit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsPrefixOperation x, JsContext ctx) {
       JsPrefixOperation toReturn = new JsPrefixOperation(x.getSourceInfo(),
           x.getOperator());
       toReturn.setArg(stack.pop());
@@ -213,17 +213,17 @@ public final class JsHoister {
     }
 
     @Override
-    public void endVisit(JsRegExp x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsRegExp x, JsContext ctx) {
       stack.push(x);
     }
 
     @Override
-    public void endVisit(JsStringLiteral x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsStringLiteral x, JsContext ctx) {
       stack.push(x);
     }
 
     @Override
-    public void endVisit(JsThisRef x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsThisRef x, JsContext ctx) {
       stack.push(new JsThisRef(x.getSourceInfo()));
     }
 

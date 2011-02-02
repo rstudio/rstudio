@@ -68,7 +68,7 @@ public final class JsArrayAccess extends JsExpression {
     this.indexExpr = indexExpr;
   }
 
-  public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
+  public void traverse(JsVisitor v, JsContext ctx) {
     if (v.visit(this, ctx)) {
       arrayExpr = v.accept(arrayExpr);
       indexExpr = v.accept(indexExpr);

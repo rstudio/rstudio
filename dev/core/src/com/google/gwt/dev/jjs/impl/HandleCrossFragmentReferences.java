@@ -22,25 +22,23 @@ import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBinaryOperator;
 import com.google.gwt.dev.js.ast.JsContext;
-import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsProgram;
-import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVars;
-import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
+import com.google.gwt.dev.js.ast.JsVisitor;
 
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Rewrite JavaScript to better handle references from one code fragment to
@@ -50,9 +48,9 @@ import java.util.Map.Entry;
  */
 public class HandleCrossFragmentReferences {
   /**
-   * Find out which islands define and use each named function or variable.
-   * This visitor is not smart about which definitions and uses matter.  It
-   * blindly records all of them.
+   * Find out which islands define and use each named function or variable. This
+   * visitor is not smart about which definitions and uses matter. It blindly
+   * records all of them.
    */
   private class FindNameReferences extends JsVisitor {
     Map<JsName, Set<Integer>> islandsDefining = new LinkedHashMap<JsName, Set<Integer>>();
@@ -60,7 +58,7 @@ public class HandleCrossFragmentReferences {
     private int currentIsland;
 
     @Override
-    public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsFunction x, JsContext ctx) {
       JsName name = x.getName();
       if (name != null) {
         definitionSeen(name);
@@ -68,7 +66,7 @@ public class HandleCrossFragmentReferences {
     }
 
     @Override
-    public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNameRef x, JsContext ctx) {
       if (x.getQualifier() == null) {
         JsName name = x.getName();
         if (name != null) {
@@ -78,7 +76,7 @@ public class HandleCrossFragmentReferences {
     }
 
     @Override
-    public void endVisit(JsVars x, JsContext<JsStatement> ctx) {
+    public void endVisit(JsVars x, JsContext ctx) {
       for (JsVar var : x) {
         JsName name = var.getName();
         if (name != null) {
@@ -88,7 +86,7 @@ public class HandleCrossFragmentReferences {
     }
 
     @Override
-    public boolean visit(JsProgram x, JsContext<JsProgram> ctx) {
+    public boolean visit(JsProgram x, JsContext ctx) {
       for (int i = 0; i < x.getFragmentCount(); i++) {
         currentIsland = i;
         accept(x.getFragmentBlock(i));
@@ -126,7 +124,7 @@ public class HandleCrossFragmentReferences {
    */
   private class RewriteDeclsAndRefs extends JsModVisitor {
     @Override
-    public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsFunction x, JsContext ctx) {
       if (namesToPredefine.contains(x.getName())) {
         JsBinaryOperation asg = new JsBinaryOperation(x.getSourceInfo(),
             JsBinaryOperator.ASG, makeRefViaJslink(x.getName(),
@@ -137,14 +135,14 @@ public class HandleCrossFragmentReferences {
     }
 
     @Override
-    public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNameRef x, JsContext ctx) {
       if (namesToPredefine.contains(x.getName())) {
         ctx.replaceMe(makeRefViaJslink(x.getName(), x.getSourceInfo()));
       }
     }
 
     @Override
-    public void endVisit(JsVars x, JsContext<JsStatement> ctx) {
+    public void endVisit(JsVars x, JsContext ctx) {
       if (!ctx.canInsert()) {
         return;
       }

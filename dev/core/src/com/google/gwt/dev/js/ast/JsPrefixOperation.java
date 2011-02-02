@@ -70,7 +70,7 @@ public final class JsPrefixOperation extends JsUnaryOperation implements
   }
 
   @Override
-  public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
+  public void traverse(JsVisitor v, JsContext ctx) {
     if (v.visit(this, ctx)) {
       super.traverse(v, ctx);
     }

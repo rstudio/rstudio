@@ -26,7 +26,7 @@ public final class JsDefault extends JsSwitchMember {
     super(sourceInfo);
   }
 
-  public void traverse(JsVisitor v, JsContext<JsSwitchMember> ctx) {
+  public void traverse(JsVisitor v, JsContext ctx) {
     if (v.visit(this, ctx)) {
       v.acceptWithInsertRemove(stmts);
     }

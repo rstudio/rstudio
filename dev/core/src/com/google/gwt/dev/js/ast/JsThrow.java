@@ -41,7 +41,7 @@ public class JsThrow extends JsStatement {
     this.expr = expr;
   }
 
-  public void traverse(JsVisitor v, JsContext<JsStatement> ctx) {
+  public void traverse(JsVisitor v, JsContext ctx) {
     if (v.visit(this, ctx)) {
       expr = v.accept(expr);
     }

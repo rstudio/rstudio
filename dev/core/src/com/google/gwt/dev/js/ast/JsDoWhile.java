@@ -53,7 +53,7 @@ public class JsDoWhile extends JsStatement {
     this.condition = condition;
   }
 
-  public void traverse(JsVisitor v, JsContext<JsStatement> ctx) {
+  public void traverse(JsVisitor v, JsContext ctx) {
     if (v.visit(this, ctx)) {
       body = v.accept(body);
       condition = v.accept(condition);

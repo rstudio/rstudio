@@ -449,8 +449,9 @@ public class GenerateJavaScriptAST {
     private void recordSymbol(JReferenceType x, JsName jsName) {
       int queryId = program.getQueryId(x);
       JsonObject castableTypeMapObj = program.getCastableTypeMap(x);
-      CastableTypeMap castableTypeMap = new StandardCastableTypeMap(castableTypeMapObj.toString());
-      
+      CastableTypeMap castableTypeMap = new StandardCastableTypeMap(
+          castableTypeMapObj.toString());
+
       StandardSymbolData symbolData = StandardSymbolData.forClass(x.getName(),
           x.getSourceInfo().getFileName(), x.getSourceInfo().getStartLine(),
           queryId, castableTypeMap);
@@ -520,7 +521,7 @@ public class GenerateJavaScriptAST {
     private Map<JMethod, Integer> entryMethodToIndex;
 
     private final JsName arrayLength = objectScope.declareName("length");
-    
+
     private final JsName globalTemp = topScope.declareName("_");
 
     private final JsName prototype = objectScope.declareName("prototype");
@@ -632,7 +633,6 @@ public class GenerateJavaScriptAST {
       push(classLit.makeRef(x.getSourceInfo()));
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void endVisit(JClassType x, Context ctx) {
       if (alreadyRan.contains(x)) {
@@ -1146,8 +1146,9 @@ public class GenerateJavaScriptAST {
       List<JsStatement> globalStmts = jsProgram.getGlobalBlock().getStatements();
 
       // Generate entry methods
-      generateGwtOnLoad(Arrays.asList(entryFunctions).subList(0,
-          x.getEntryCount(0)), globalStmts);
+      generateGwtOnLoad(
+          Arrays.asList(entryFunctions).subList(0, x.getEntryCount(0)),
+          globalStmts);
       generateNullFunc(globalStmts);
 
       // Add a few things onto the beginning.
@@ -1348,7 +1349,7 @@ public class GenerateJavaScriptAST {
         private JsNameRef dontReplaceCtor;
 
         @Override
-        public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
+        public void endVisit(JsInvocation x, JsContext ctx) {
           // Replace invocation to ctor with a new op.
           if (x.getQualifier() instanceof JsNameRef) {
             JsNameRef ref = (JsNameRef) x.getQualifier();
@@ -1368,7 +1369,7 @@ public class GenerateJavaScriptAST {
         }
 
         @Override
-        public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+        public void endVisit(JsNameRef x, JsContext ctx) {
           String ident = x.getIdent();
           if (isJsniIdent(ident)) {
             HasEnclosingType node = program.jsniMap.get(ident);
@@ -1430,7 +1431,7 @@ public class GenerateJavaScriptAST {
         }
 
         @Override
-        public boolean visit(JsInvocation x, JsContext<JsExpression> ctx) {
+        public boolean visit(JsInvocation x, JsContext ctx) {
           if (x.getQualifier() instanceof JsNameRef) {
             dontReplaceCtor = (JsNameRef) x.getQualifier();
           }
@@ -1500,8 +1501,9 @@ public class GenerateJavaScriptAST {
       return new JsBinaryOperation(lhs.getSourceInfo(), JsBinaryOperator.COMMA,
           lhs, rhs);
     }
-    
-    private void generateCastableTypeMap(JClassType x, List<JsStatement> globalStmts) {
+
+    private void generateCastableTypeMap(JClassType x,
+        List<JsStatement> globalStmts) {
       JsonObject castableTypeMap = program.getCastableTypeMap(x);
       if (castableTypeMap != null) {
         JField castableTypeMapField = program.getIndexedField("Object.castableTypeMap");
@@ -1510,25 +1512,25 @@ public class GenerateJavaScriptAST {
           // Was pruned; this compilation must have no dynamic casts.
           return;
         }
-        
+
         SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic(
-              GenerateJavaScriptAST.class, "Castable type map");
-        
+            GenerateJavaScriptAST.class, "Castable type map");
+
         accept(castableTypeMap);
         JsExpression objExpr = pop();
-        
+
         // Generate castableTypeMap for each type prototype
         // _.castableTypeMap$ = {2:1, 4:1, 12:1};
         JsNameRef fieldRef = castableTypeMapName.makeRef(sourceInfo);
         fieldRef.setQualifier(globalTemp.makeRef(sourceInfo));
         JsExpression asg = createAssignment(fieldRef, objExpr);
-        
+
         JsExprStmt asgStmt = asg.makeStmt();
         globalStmts.add(asgStmt);
         typeForStatMap.put(asgStmt, x);
-      }   
+      }
     }
-    
+
     private void generateClassLiteral(JDeclarationStatement decl, JsVars vars) {
       JField field = (JField) decl.getVariableRef().getTarget();
       JsName jsName = names.get(field);
@@ -1624,8 +1626,9 @@ public class GenerateJavaScriptAST {
           topScope.findExistingUnobfuscatableName("$moduleName").makeRef(
               sourceInfo), modName.makeRef(sourceInfo));
       body.getStatements().add(asg.makeStmt());
-      asg = createAssignment(topScope.findExistingUnobfuscatableName(
-          "$moduleBase").makeRef(sourceInfo), modBase.makeRef(sourceInfo));
+      asg = createAssignment(
+          topScope.findExistingUnobfuscatableName("$moduleBase").makeRef(
+              sourceInfo), modBase.makeRef(sourceInfo));
       body.getStatements().add(asg.makeStmt());
 
       // Assignment to CollapsedPropertyHolder.permutationId only if it's used
@@ -1804,7 +1807,7 @@ public class GenerateJavaScriptAST {
       globalStmts.add(stmt);
       typeForStatMap.put(stmt, program.getTypeJavaLangObject());
     }
-    
+
     private void generateVTables(JClassType x, List<JsStatement> globalStmts) {
       for (JMethod method : x.getMethods()) {
         SourceInfo sourceInfo = method.getSourceInfo().makeChild(
@@ -1832,8 +1835,9 @@ public class GenerateJavaScriptAST {
       SourceInfo sourceInfo = clinitFunc.getSourceInfo().makeChild(
           GenerateJavaScriptVisitor.class, "clinit reassignment");
       // self-assign to the null method immediately (to prevent reentrancy)
-      JsExpression asg = createAssignment(clinitFunc.getName().makeRef(
-          sourceInfo), nullMethodName.makeRef(sourceInfo));
+      JsExpression asg = createAssignment(
+          clinitFunc.getName().makeRef(sourceInfo),
+          nullMethodName.makeRef(sourceInfo));
       statements.add(0, asg.makeStmt());
     }
 

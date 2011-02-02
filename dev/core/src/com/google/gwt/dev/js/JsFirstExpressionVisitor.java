@@ -74,42 +74,42 @@ public class JsFirstExpressionVisitor extends JsVisitor {
   }
 
   @Override
-  public boolean visit(JsArrayAccess x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsArrayAccess x, JsContext ctx) {
     accept(x.getArrayExpr());
     return false;
   }
 
   @Override
-  public boolean visit(JsArrayLiteral x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsArrayLiteral x, JsContext ctx) {
     return false;
   }
 
   @Override
-  public boolean visit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsBinaryOperation x, JsContext ctx) {
     accept(x.getArg1());
     return false;
   }
 
   @Override
-  public boolean visit(JsConditional x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsConditional x, JsContext ctx) {
     accept(x.getTestExpression());
     return false;
   }
 
   @Override
-  public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsFunction x, JsContext ctx) {
     needsParentheses = true;
     return false;
   }
 
   @Override
-  public boolean visit(JsInvocation x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsInvocation x, JsContext ctx) {
     accept(x.getQualifier());
     return false;
   }
 
   @Override
-  public boolean visit(JsNameRef x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsNameRef x, JsContext ctx) {
     if (!x.isLeaf()) {
       accept(x.getQualifier());
     }
@@ -117,29 +117,29 @@ public class JsFirstExpressionVisitor extends JsVisitor {
   }
 
   @Override
-  public boolean visit(JsNew x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsNew x, JsContext ctx) {
     return false;
   }
 
   @Override
-  public boolean visit(JsObjectLiteral x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsObjectLiteral x, JsContext ctx) {
     needsParentheses = true;
     return false;
   }
 
   @Override
-  public boolean visit(JsPostfixOperation x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsPostfixOperation x, JsContext ctx) {
     accept(x.getArg());
     return false;
   }
 
   @Override
-  public boolean visit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsPrefixOperation x, JsContext ctx) {
     return false;
   }
 
   @Override
-  public boolean visit(JsRegExp x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsRegExp x, JsContext ctx) {
     return false;
   }
 }

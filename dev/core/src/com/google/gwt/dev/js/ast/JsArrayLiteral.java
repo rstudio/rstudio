@@ -63,7 +63,7 @@ public final class JsArrayLiteral extends JsLiteral {
     return false;
   }
 
-  public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
+  public void traverse(JsVisitor v, JsContext ctx) {
     if (v.visit(this, ctx)) {
       v.acceptWithInsertRemove(exprs);
     }

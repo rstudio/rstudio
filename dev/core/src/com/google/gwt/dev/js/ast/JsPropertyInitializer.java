@@ -20,7 +20,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
 /**
  * Used in object literals to specify property values by name.
  */
-public class JsPropertyInitializer extends JsNode<JsPropertyInitializer> {
+public class JsPropertyInitializer extends JsNode {
 
   private JsExpression labelExpr;
 
@@ -30,7 +30,8 @@ public class JsPropertyInitializer extends JsNode<JsPropertyInitializer> {
     super(sourceInfo);
   }
 
-  public JsPropertyInitializer(SourceInfo sourceInfo, JsExpression labelExpr, JsExpression valueExpr) {
+  public JsPropertyInitializer(SourceInfo sourceInfo, JsExpression labelExpr,
+      JsExpression valueExpr) {
     super(sourceInfo);
     this.labelExpr = labelExpr;
     this.valueExpr = valueExpr;
@@ -56,7 +57,7 @@ public class JsPropertyInitializer extends JsNode<JsPropertyInitializer> {
     this.valueExpr = valueExpr;
   }
 
-  public void traverse(JsVisitor v, JsContext<JsPropertyInitializer> ctx) {
+  public void traverse(JsVisitor v, JsContext ctx) {
     if (v.visit(this, ctx)) {
       labelExpr = v.accept(labelExpr);
       valueExpr = v.accept(valueExpr);

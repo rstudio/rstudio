@@ -104,7 +104,7 @@ public final class JsBinaryOperation extends JsExpression {
     this.arg2 = arg2;
   }
 
-  public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
+  public void traverse(JsVisitor v, JsContext ctx) {
     if (v.visit(this, ctx)) {
       if (op.isAssignment()) {
         arg1 = v.acceptLvalue(arg1);

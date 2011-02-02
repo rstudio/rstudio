@@ -20,7 +20,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
 /**
  * Abstract base class for JavaScript statement objects.
  */
-public abstract class JsStatement extends JsNode<JsStatement> {
+public abstract class JsStatement extends JsNode {
 
   protected JsStatement(SourceInfo sourceInfo) {
     super(sourceInfo);

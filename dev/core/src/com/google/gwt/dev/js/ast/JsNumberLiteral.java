@@ -52,7 +52,7 @@ public final class JsNumberLiteral extends JsValueLiteral {
     return false;
   }
 
-  public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
+  public void traverse(JsVisitor v, JsContext ctx) {
     v.visit(this, ctx);
     v.endVisit(this, ctx);
   }

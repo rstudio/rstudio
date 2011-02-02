@@ -385,7 +385,7 @@ public class FragmentExtractor {
     final boolean[] anyLiveCode = new boolean[1];
     Cloner c = new Cloner() {
       @Override
-      public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
+      public void endVisit(JsBinaryOperation x, JsContext ctx) {
         JsExpression rhs = stack.pop();
         JsNameRef lhs = (JsNameRef) stack.pop();
         if (rhs instanceof JsNew || rhs instanceof JsObjectLiteral) {

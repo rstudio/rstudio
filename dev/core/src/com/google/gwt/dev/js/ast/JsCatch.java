@@ -20,7 +20,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
 /**
  * Represents a JavaScript catch clause.
  */
-public class JsCatch extends JsNode<JsCatch> implements HasCondition {
+public class JsCatch extends JsNode implements HasCondition {
 
   protected final JsCatchScope scope;
 
@@ -61,7 +61,7 @@ public class JsCatch extends JsNode<JsCatch> implements HasCondition {
     this.condition = condition;
   }
 
-  public void traverse(JsVisitor v, JsContext<JsCatch> ctx) {
+  public void traverse(JsVisitor v, JsContext ctx) {
     if (v.visit(this, ctx)) {
       param = v.accept(param);
       if (condition != null) {

@@ -20,5 +20,6 @@ package com.google.gwt.dev.js.ast;
  */
 public interface HasCondition {
   JsExpression getCondition();
+
   void setCondition(JsExpression condition);
 }

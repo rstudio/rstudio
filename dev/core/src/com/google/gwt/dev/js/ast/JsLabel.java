@@ -42,7 +42,8 @@ public class JsLabel extends JsStatement implements HasName {
   public void setStmt(JsStatement stmt) {
     this.stmt = stmt;
   }
-  public void traverse(JsVisitor v, JsContext<JsStatement> ctx) {
+
+  public void traverse(JsVisitor v, JsContext ctx) {
     if (v.visit(this, ctx)) {
       stmt = v.accept(stmt);
     }

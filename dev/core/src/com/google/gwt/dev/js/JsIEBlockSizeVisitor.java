@@ -22,7 +22,6 @@ import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsDefault;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
-import com.google.gwt.dev.js.ast.JsSwitchMember;
 import com.google.gwt.dev.js.ast.JsVisitor;
 
 import java.util.List;
@@ -33,7 +32,7 @@ import java.util.ListIterator;
  * within a JsBlock. This visitor will restructure blocks and other block-like
  * structures with too many statements in order to reduce the total number of
  * statements that appear within any given block to fewer than
- * {@value #MAX_BLOCK_SIZE} statements by creating nested blocks:  
+ * {@value #MAX_BLOCK_SIZE} statements by creating nested blocks:
  * 
  * <pre>
  * {
@@ -59,7 +58,7 @@ public class JsIEBlockSizeVisitor {
     }
 
     @Override
-    public void endVisit(JsBlock x, JsContext<JsStatement> ctx) {
+    public void endVisit(JsBlock x, JsContext ctx) {
       // JsFunctionClusterer handles restructuring top-level statement blocks
       if (!x.isGlobalBlock()) {
         restructure(x.getStatements());
@@ -67,12 +66,12 @@ public class JsIEBlockSizeVisitor {
     }
 
     @Override
-    public void endVisit(JsCase x, JsContext<JsSwitchMember> ctx) {
+    public void endVisit(JsCase x, JsContext ctx) {
       restructure(x.getStmts());
     }
 
     @Override
-    public void endVisit(JsDefault x, JsContext<JsSwitchMember> ctx) {
+    public void endVisit(JsDefault x, JsContext ctx) {
       restructure(x.getStmts());
     }
 

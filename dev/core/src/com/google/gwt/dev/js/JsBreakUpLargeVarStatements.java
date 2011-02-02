@@ -22,7 +22,6 @@ import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsProgram;
-import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 
@@ -31,7 +30,7 @@ import java.util.List;
 
 /**
  * Divides large var statements into smaller ones. Very long var statements have
- * trouble on some browsers, including the initial Safari 4 beta.  See Issue
+ * trouble on some browsers, including the initial Safari 4 beta. See Issue
  * 3455.
  */
 public class JsBreakUpLargeVarStatements extends JsModVisitor {
@@ -52,7 +51,7 @@ public class JsBreakUpLargeVarStatements extends JsModVisitor {
   }
 
   @Override
-  public void endVisit(JsVars x, JsContext<JsStatement> context) {
+  public void endVisit(JsVars x, JsContext context) {
     if (maxVarsPerStatement < 0) {
       return;
     }

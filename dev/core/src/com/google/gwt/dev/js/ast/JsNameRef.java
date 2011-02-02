@@ -117,7 +117,7 @@ public final class JsNameRef extends JsExpression implements CanBooleanEval,
     this.qualifier = qualifier;
   }
 
-  public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
+  public void traverse(JsVisitor v, JsContext ctx) {
     if (v.visit(this, ctx)) {
       if (qualifier != null) {
         qualifier = v.accept(qualifier);
@@ -135,7 +135,7 @@ public final class JsNameRef extends JsExpression implements CanBooleanEval,
   private SourceInfo maybeUpdateSourceInfo() {
     SourceInfo toReturn = super.getSourceInfo();
     if (!hasStaticRef && name != null) {
-      JsNode<?> staticRef = name.getStaticRef();
+      JsNode staticRef = name.getStaticRef();
       if (staticRef != null) {
         toReturn.copyMissingCorrelationsFrom(name.getStaticRef().getSourceInfo());
         hasStaticRef = true;

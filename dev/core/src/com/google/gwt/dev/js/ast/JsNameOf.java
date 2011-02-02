@@ -52,7 +52,7 @@ public class JsNameOf extends JsExpression {
     return false;
   }
 
-  public void traverse(JsVisitor visitor, JsContext<JsExpression> ctx) {
+  public void traverse(JsVisitor visitor, JsContext ctx) {
     if (visitor.visit(this, ctx)) {
     }
     visitor.endVisit(this, ctx);

@@ -20,7 +20,6 @@ import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JAbstractMethodBody;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.js.ast.JsContext;
-import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsVisitor;
@@ -95,7 +94,7 @@ public class JsniMethodBody extends JAbstractMethodBody {
     final Set<String> result = new HashSet<String>();
     class RecordStrings extends JsVisitor {
       @Override
-      public void endVisit(JsStringLiteral lit, JsContext<JsExpression> ctx) {
+      public void endVisit(JsStringLiteral lit, JsContext ctx) {
         result.add(lit.getValue());
       }
     }

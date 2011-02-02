@@ -26,7 +26,7 @@ public class JsDebugger extends JsStatement {
     super(sourceInfo);
   }
 
-  public void traverse(JsVisitor v, JsContext<JsStatement> ctx) {
+  public void traverse(JsVisitor v, JsContext ctx) {
     v.visit(this, ctx);
     v.endVisit(this, ctx);
   }

@@ -17,7 +17,6 @@ package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.js.ast.JsCatch;
 import com.google.gwt.dev.js.ast.JsContext;
-import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
@@ -34,17 +33,17 @@ public abstract class JsAbstractSymbolResolver extends JsVisitor {
   private final Stack<JsScope> scopeStack = new Stack<JsScope>();
 
   @Override
-  public void endVisit(JsCatch x, JsContext<JsCatch> ctx) {
+  public void endVisit(JsCatch x, JsContext ctx) {
     popScope();
   }
 
   @Override
-  public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
+  public void endVisit(JsFunction x, JsContext ctx) {
     popScope();
   }
 
   @Override
-  public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+  public void endVisit(JsNameRef x, JsContext ctx) {
     if (x.isResolved()) {
       return;
     }
@@ -53,24 +52,24 @@ public abstract class JsAbstractSymbolResolver extends JsVisitor {
   }
 
   @Override
-  public void endVisit(JsProgram x, JsContext<JsProgram> ctx) {
+  public void endVisit(JsProgram x, JsContext ctx) {
     popScope();
   }
 
   @Override
-  public boolean visit(JsCatch x, JsContext<JsCatch> ctx) {
+  public boolean visit(JsCatch x, JsContext ctx) {
     pushScope(x.getScope());
     return true;
   }
 
   @Override
-  public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsFunction x, JsContext ctx) {
     pushScope(x.getScope());
     return true;
   }
 
   @Override
-  public boolean visit(JsProgram x, JsContext<JsProgram> ctx) {
+  public boolean visit(JsProgram x, JsContext ctx) {
     pushScope(x.getScope());
     return true;
   }
@@ -80,7 +79,7 @@ public abstract class JsAbstractSymbolResolver extends JsVisitor {
   }
 
   protected abstract void resolve(JsNameRef x);
-  
+
   private void popScope() {
     scopeStack.pop();
   }

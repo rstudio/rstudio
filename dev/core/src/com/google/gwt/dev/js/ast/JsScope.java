@@ -28,17 +28,17 @@ import java.util.Map;
 
 /**
  * A scope is a factory for creating and allocating
- * {@link com.google.gwt.dev.js.ast.JsName}s. A JavaScript AST is built in
- * terms of abstract name objects without worrying about obfuscation,
+ * {@link com.google.gwt.dev.js.ast.JsName}s. A JavaScript AST is built in terms
+ * of abstract name objects without worrying about obfuscation,
  * keyword/identifier blacklisting, and so on.
  * 
  * <p>
  * 
- * Scopes are associated with {@link com.google.gwt.dev.js.ast.JsFunction}s,
- * but the two are not equivalent. Functions <i>have</i> scopes, but a scope
- * does not necessarily have an associated Function. Examples of this include
- * the {@link com.google.gwt.dev.js.ast.JsRootScope} and synthetic scopes that
- * might be created by a client.
+ * Scopes are associated with {@link com.google.gwt.dev.js.ast.JsFunction}s, but
+ * the two are not equivalent. Functions <i>have</i> scopes, but a scope does
+ * not necessarily have an associated Function. Examples of this include the
+ * {@link com.google.gwt.dev.js.ast.JsRootScope} and synthetic scopes that might
+ * be created by a client.
  * 
  * <p>
  * 
@@ -46,9 +46,9 @@ import java.util.Map;
  * identifiers for names. Specifically, names in child scopes are chosen such
  * that they do not conflict with names in their parent scopes. The ultimate
  * parent is usually the global scope (see
- * {@link com.google.gwt.dev.js.ast.JsProgram#getGlobalScope()}), but
- * parentless scopes are useful for managing names that are always accessed with
- * a qualifier and could therefore never be confused with the global scope
+ * {@link com.google.gwt.dev.js.ast.JsProgram#getGlobalScope()}), but parentless
+ * scopes are useful for managing names that are always accessed with a
+ * qualifier and could therefore never be confused with the global scope
  * hierarchy.
  */
 public class JsScope implements Serializable {
@@ -162,7 +162,7 @@ public class JsScope implements Serializable {
    * Returns an iterator for all the names defined by this scope.
    */
   public Iterator<JsName> getAllNames() {
-      return names.values().iterator();
+    return names.values().iterator();
   }
 
   /**
@@ -173,8 +173,8 @@ public class JsScope implements Serializable {
   }
 
   /**
-   * Returns the parent scope of this scope, or <code>null</code> if this is
-   * the root scope.
+   * Returns the parent scope of this scope, or <code>null</code> if this is the
+   * root scope.
    */
   public final JsScope getParent() {
     return parent;

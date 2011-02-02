@@ -28,12 +28,10 @@ import com.google.gwt.dev.js.ast.JsConditional;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsContinue;
 import com.google.gwt.dev.js.ast.JsDebugger;
-import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsDefault;
 import com.google.gwt.dev.js.ast.JsDoWhile;
 import com.google.gwt.dev.js.ast.JsEmpty;
 import com.google.gwt.dev.js.ast.JsExprStmt;
-import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFor;
 import com.google.gwt.dev.js.ast.JsForIn;
 import com.google.gwt.dev.js.ast.JsFunction;
@@ -44,6 +42,7 @@ import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsNullLiteral;
+import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
@@ -55,15 +54,14 @@ import com.google.gwt.dev.js.ast.JsReturn;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsSwitch;
-import com.google.gwt.dev.js.ast.JsSwitchMember;
 import com.google.gwt.dev.js.ast.JsThisRef;
 import com.google.gwt.dev.js.ast.JsThrow;
 import com.google.gwt.dev.js.ast.JsTry;
 import com.google.gwt.dev.js.ast.JsVars;
+import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.js.ast.JsWhile;
-import com.google.gwt.dev.js.ast.JsVars.JsVar;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -78,7 +76,7 @@ public class ComparingVisitor extends JsVisitor {
     compare(expectedTree, actualTree);
   }
 
-  private static void compare(JsVisitable<?> expected, JsVisitable<?> actual) {
+  private static void compare(JsVisitable expected, JsVisitable actual) {
     if (expected == actual) {
       return;
     }
@@ -104,24 +102,24 @@ public class ComparingVisitor extends JsVisitor {
    */
   private final JsVisitable other;
 
-  private ComparingVisitor(JsVisitable<?> other) {
+  private ComparingVisitor(JsVisitable other) {
     this.other = other;
   }
 
   @Override
-  public boolean visit(JsArrayAccess x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsArrayAccess x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsArrayAccess);
     return false;
   }
 
   @Override
-  public boolean visit(JsArrayLiteral x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsArrayLiteral x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsArrayLiteral);
     return false;
   }
 
   @Override
-  public boolean visit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsBinaryOperation x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsBinaryOperation);
     Assert.assertEquals(((JsBinaryOperation) other).getOperator().getSymbol(),
         x.getOperator().getSymbol());
@@ -129,21 +127,21 @@ public class ComparingVisitor extends JsVisitor {
   }
 
   @Override
-  public boolean visit(JsBlock x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsBlock x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsBlock);
     Assert.assertEquals(((JsBlock) other).isGlobalBlock(), x.isGlobalBlock());
     return false;
   }
 
   @Override
-  public boolean visit(JsBooleanLiteral x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsBooleanLiteral x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsBooleanLiteral);
     Assert.assertEquals(((JsBooleanLiteral) other).getValue(), x.getValue());
     return false;
   }
 
   @Override
-  public boolean visit(JsBreak x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsBreak x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsBreak);
     Assert.assertEquals(((JsBreak) other).getLabel().getIdent(),
         x.getLabel().getIdent());
@@ -151,13 +149,13 @@ public class ComparingVisitor extends JsVisitor {
   }
 
   @Override
-  public boolean visit(JsCase x, JsContext<JsSwitchMember> ctx) {
+  public boolean visit(JsCase x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsCase);
     return false;
   }
 
   @Override
-  public boolean visit(JsCatch x, JsContext<JsCatch> ctx) {
+  public boolean visit(JsCatch x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsCatch);
     Assert.assertEquals(((JsCatch) other).getParameter().getName().getIdent(),
         x.getParameter().getName().getIdent());
@@ -165,13 +163,13 @@ public class ComparingVisitor extends JsVisitor {
   }
 
   @Override
-  public boolean visit(JsConditional x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsConditional x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsConditional);
     return false;
   }
 
   @Override
-  public boolean visit(JsContinue x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsContinue x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsContinue);
     Assert.assertEquals(((JsContinue) other).getLabel().getIdent(),
         x.getLabel().getIdent());
@@ -179,49 +177,49 @@ public class ComparingVisitor extends JsVisitor {
   }
 
   @Override
-  public boolean visit(JsDebugger x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsDebugger x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsDebugger);
     return false;
   }
 
   @Override
-  public boolean visit(JsDefault x, JsContext<JsSwitchMember> ctx) {
+  public boolean visit(JsDefault x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsDefault);
     return false;
   }
 
   @Override
-  public boolean visit(JsDoWhile x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsDoWhile x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsDoWhile);
     return false;
   }
 
   @Override
-  public boolean visit(JsEmpty x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsEmpty x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsEmpty);
     return false;
   }
 
   @Override
-  public boolean visit(JsExprStmt x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsExprStmt x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsExprStmt);
     return false;
   }
 
   @Override
-  public boolean visit(JsFor x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsFor x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsFor);
     return false;
   }
 
   @Override
-  public boolean visit(JsForIn x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsForIn x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsForIn);
     return false;
   }
 
   @Override
-  public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsFunction x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsFunction);
     JsFunction otherFunc = (JsFunction) other;
     JsName otherName = otherFunc.getName();
@@ -233,19 +231,19 @@ public class ComparingVisitor extends JsVisitor {
   }
 
   @Override
-  public boolean visit(JsIf x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsIf x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsIf);
     return false;
   }
 
   @Override
-  public boolean visit(JsInvocation x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsInvocation x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsInvocation);
     return false;
   }
 
   @Override
-  public boolean visit(JsLabel x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsLabel x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsLabel);
     Assert.assertEquals(((JsLabel) other).getName().getIdent(),
         x.getName().getIdent());
@@ -253,39 +251,39 @@ public class ComparingVisitor extends JsVisitor {
   }
 
   @Override
-  public boolean visit(JsNameRef x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsNameRef x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsNameRef);
     Assert.assertEquals(((JsNameRef) other).getIdent(), x.getIdent());
     return false;
   }
 
   @Override
-  public boolean visit(JsNew x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsNew x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsNew);
     return false;
   }
 
   @Override
-  public boolean visit(JsNullLiteral x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsNullLiteral x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsNullLiteral);
     return false;
   }
 
   @Override
-  public boolean visit(JsNumberLiteral x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsNumberLiteral x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsNumberLiteral);
     Assert.assertEquals(((JsNumberLiteral) other).getValue(), x.getValue());
     return false;
   }
 
   @Override
-  public boolean visit(JsObjectLiteral x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsObjectLiteral x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsObjectLiteral);
     return false;
   }
 
   @Override
-  public boolean visit(JsParameter x, JsContext<JsParameter> ctx) {
+  public boolean visit(JsParameter x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsParameter);
     Assert.assertEquals(((JsParameter) other).getName().getIdent(),
         x.getName().getIdent());
@@ -293,7 +291,7 @@ public class ComparingVisitor extends JsVisitor {
   }
 
   @Override
-  public boolean visit(JsPostfixOperation x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsPostfixOperation x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsPostfixOperation);
     Assert.assertEquals(((JsPostfixOperation) other).getOperator().getSymbol(),
         x.getOperator().getSymbol());
@@ -301,7 +299,7 @@ public class ComparingVisitor extends JsVisitor {
   }
 
   @Override
-  public boolean visit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsPrefixOperation x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsPrefixOperation);
     Assert.assertEquals(((JsPrefixOperation) other).getOperator().getSymbol(),
         x.getOperator().getSymbol());
@@ -309,20 +307,19 @@ public class ComparingVisitor extends JsVisitor {
   }
 
   @Override
-  public boolean visit(JsProgram x, JsContext<JsProgram> ctx) {
+  public boolean visit(JsProgram x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsProgram);
     return false;
   }
 
   @Override
-  public boolean visit(JsPropertyInitializer x,
-      JsContext<JsPropertyInitializer> ctx) {
+  public boolean visit(JsPropertyInitializer x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsPropertyInitializer);
     return false;
   }
 
   @Override
-  public boolean visit(JsRegExp x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsRegExp x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsRegExp);
     Assert.assertEquals(((JsRegExp) other).getFlags(), x.getFlags());
     Assert.assertEquals(((JsRegExp) other).getPattern(), x.getPattern());
@@ -330,56 +327,56 @@ public class ComparingVisitor extends JsVisitor {
   }
 
   @Override
-  public boolean visit(JsReturn x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsReturn x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsReturn);
     return false;
   }
 
   @Override
-  public boolean visit(JsStringLiteral x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsStringLiteral x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsStringLiteral);
     Assert.assertEquals(((JsStringLiteral) other).getValue(), x.getValue());
     return false;
   }
 
   @Override
-  public boolean visit(JsSwitch x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsSwitch x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsSwitch);
     return false;
   }
 
   @Override
-  public boolean visit(JsThisRef x, JsContext<JsExpression> ctx) {
+  public boolean visit(JsThisRef x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsThisRef);
     return false;
   }
 
   @Override
-  public boolean visit(JsThrow x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsThrow x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsThrow);
     return false;
   }
 
   @Override
-  public boolean visit(JsTry x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsTry x, JsContext ctx) {
     Assert.assertTrue(other instanceof JsTry);
     return false;
   }
 
   @Override
-  public boolean visit(JsVar x, JsContext<JsVar> ctx) {
+  public boolean visit(JsVar x, JsContext ctx) {
     TestCase.assertTrue(other instanceof JsVar);
     TestCase.assertEquals(((JsVar) other).getName().getIdent(),
         x.getName().getIdent());
     return false;
   }
 
-  public boolean visit(JsVars x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsVars x, JsContext ctx) {
     TestCase.assertTrue(other instanceof JsVars);
     return false;
   }
 
-  public boolean visit(JsWhile x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsWhile x, JsContext ctx) {
     TestCase.assertTrue(other instanceof JsWhile);
     return false;
   }

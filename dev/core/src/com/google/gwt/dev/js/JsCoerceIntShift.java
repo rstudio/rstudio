@@ -30,10 +30,10 @@ import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsUnaryOperator;
 
 /**
- * Coerces lhs of right shift operations to int.  Necessary for Safari 5 bug
+ * Coerces lhs of right shift operations to int. Necessary for Safari 5 bug
  * https://bugs.webkit.org/show_bug.cgi?id=40367 fixed in
  * http://trac.webkit.org/changeset/60990 -- this should be removed once that
- * fix has been pushed. 
+ * fix has been pushed.
  */
 public class JsCoerceIntShift {
   // TODO(jat): remove this once Safari 5 has the update
@@ -44,18 +44,18 @@ public class JsCoerceIntShift {
   private static class MyVisitor extends JsModVisitor {
 
     @Override
-    public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsBinaryOperation x, JsContext ctx) {
       JsBinaryOperator op = x.getOperator();
       if (op != JsBinaryOperator.SHR && op != JsBinaryOperator.SHRU) {
         return;
       }
-      
+
       SourceInfo sourceInfo = x.getSourceInfo();
       JsExpression lhs = x.getArg1();
       JsExpression rhs = x.getArg2();
       JsExpression newNode = new JsBinaryOperation(sourceInfo, op,
           new JsPrefixOperation(sourceInfo, JsUnaryOperator.BIT_NOT,
-          new JsPrefixOperation(sourceInfo, JsUnaryOperator.BIT_NOT, lhs)),
+              new JsPrefixOperation(sourceInfo, JsUnaryOperator.BIT_NOT, lhs)),
           rhs);
       ctx.replaceMe(newNode);
     }

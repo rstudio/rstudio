@@ -20,8 +20,8 @@ import com.google.gwt.dev.jjs.SourceInfo;
 /**
  * An abstract base class for all JavaScript expressions.
  */
-public abstract class JsExpression extends JsNode<JsExpression> {
-  
+public abstract class JsExpression extends JsNode {
+
   protected JsExpression(SourceInfo sourceInfo) {
     super(sourceInfo);
   }

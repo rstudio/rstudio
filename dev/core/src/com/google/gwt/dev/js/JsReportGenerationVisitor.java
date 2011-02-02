@@ -31,7 +31,8 @@ import java.util.Map;
  * A variation on the standard source generation visitor that records the
  * locations of SourceInfo objects in the output.
  */
-public class JsReportGenerationVisitor extends JsSourceGenerationVisitorWithSizeBreakdown {
+public class JsReportGenerationVisitor extends
+    JsSourceGenerationVisitorWithSizeBreakdown {
   private final Map<Range, SourceInfo> sourceInfoMap = new HashMap<Range, SourceInfo>();
   private final TextOutput out;
 
@@ -45,7 +46,7 @@ public class JsReportGenerationVisitor extends JsSourceGenerationVisitorWithSize
   }
 
   @Override
-  protected <T extends JsVisitable<T>> T doAccept(T node) {
+  protected <T extends JsVisitable> T doAccept(T node) {
     boolean addEntry = node instanceof HasSourceInfo;
     int start = addEntry ? out.getPosition() : 0;
     T toReturn = super.doAccept(node);
@@ -57,14 +58,14 @@ public class JsReportGenerationVisitor extends JsSourceGenerationVisitorWithSize
   }
 
   @Override
-  protected <T extends JsVisitable<T>> void doAcceptList(List<T> collection) {
+  protected <T extends JsVisitable> void doAcceptList(List<T> collection) {
     for (T t : collection) {
       doAccept(t);
     }
   }
 
   @Override
-  protected <T extends JsVisitable<T>> void doAcceptWithInsertRemove(
+  protected <T extends JsVisitable> void doAcceptWithInsertRemove(
       List<T> collection) {
     for (T t : collection) {
       doAccept(t);

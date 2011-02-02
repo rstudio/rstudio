@@ -21,7 +21,6 @@ import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.js.JsParser;
 import com.google.gwt.dev.js.JsParserException;
 import com.google.gwt.dev.js.ast.JsContext;
-import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
@@ -96,7 +95,7 @@ public class FindJsniRefVisitor extends SafeASTVisitor {
           jsProgram.getScope(), sr);
       new JsVisitor() {
         @Override
-        public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+        public void endVisit(JsNameRef x, JsContext ctx) {
           String ident = x.getIdent();
           if (ident.charAt(0) == '@') {
             jsniRefs.add(ident.substring(1));
@@ -120,8 +119,10 @@ public class FindJsniRefVisitor extends SafeASTVisitor {
       return null; // ignore the error
     }
 
-    startPos += JsniCollector.JSNI_BLOCK_START.length() - 1; // move up to open brace
-    endPos += 1; // move past close brace
+    // move up to open brace
+    startPos += JsniCollector.JSNI_BLOCK_START.length() - 1;
+    // move past close brace
+    endPos += 1;
 
     jsniCode = jsniCode.substring(startPos, endPos);
     return jsniCode;

@@ -29,7 +29,7 @@ public class JsVars extends JsStatement implements Iterable<JsVars.JsVar> {
   /**
    * A var declared using the JavaScript <code>var</code> statement.
    */
-  public static class JsVar extends JsNode<JsVar> implements HasName {
+  public static class JsVar extends JsNode implements HasName {
 
     private JsExpression initExpr;
 
@@ -52,7 +52,7 @@ public class JsVars extends JsStatement implements Iterable<JsVars.JsVar> {
       this.initExpr = initExpr;
     }
 
-    public void traverse(JsVisitor v, JsContext<JsVar> ctx) {
+    public void traverse(JsVisitor v, JsContext ctx) {
       if (v.visit(this, ctx)) {
         if (initExpr != null) {
           initExpr = v.accept(initExpr);
@@ -85,7 +85,7 @@ public class JsVars extends JsStatement implements Iterable<JsVars.JsVar> {
     return vars.iterator();
   }
 
-  public void traverse(JsVisitor v, JsContext<JsStatement> ctx) {
+  public void traverse(JsVisitor v, JsContext ctx) {
     if (v.visit(this, ctx)) {
       v.acceptWithInsertRemove(vars);
     }

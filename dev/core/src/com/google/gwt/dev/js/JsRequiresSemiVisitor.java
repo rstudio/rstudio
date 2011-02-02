@@ -64,37 +64,37 @@ public class JsRequiresSemiVisitor extends JsVisitor {
   }
 
   @Override
-  public boolean visit(JsBlock x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsBlock x, JsContext ctx) {
     return false;
   }
 
   @Override
-  public boolean visit(JsBreak x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsBreak x, JsContext ctx) {
     return false;
   }
 
   @Override
-  public boolean visit(JsDebugger x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsDebugger x, JsContext ctx) {
     return false;
   }
 
   @Override
-  public boolean visit(JsDoWhile x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsDoWhile x, JsContext ctx) {
     return false;
   }
 
   @Override
-  public boolean visit(JsEmpty x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsEmpty x, JsContext ctx) {
     return false;
   }
 
   @Override
-  public boolean visit(JsExprStmt x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsExprStmt x, JsContext ctx) {
     return false;
   }
 
   @Override
-  public boolean visit(JsFor x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsFor x, JsContext ctx) {
     if (x.getBody() instanceof JsEmpty) {
       needsSemicolon = true;
     }
@@ -102,7 +102,7 @@ public class JsRequiresSemiVisitor extends JsVisitor {
   }
 
   @Override
-  public boolean visit(JsForIn x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsForIn x, JsContext ctx) {
     if (x.getBody() instanceof JsEmpty) {
       needsSemicolon = true;
     }
@@ -110,7 +110,7 @@ public class JsRequiresSemiVisitor extends JsVisitor {
   }
 
   @Override
-  public boolean visit(JsIf x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsIf x, JsContext ctx) {
     JsStatement thenStmt = x.getThenStmt();
     JsStatement elseStmt = x.getElseStmt();
     JsStatement toCheck = thenStmt;
@@ -127,7 +127,7 @@ public class JsRequiresSemiVisitor extends JsVisitor {
   }
 
   @Override
-  public boolean visit(JsLabel x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsLabel x, JsContext ctx) {
     if (x.getStmt() instanceof JsEmpty) {
       needsSemicolon = true;
     }
@@ -135,32 +135,32 @@ public class JsRequiresSemiVisitor extends JsVisitor {
   }
 
   @Override
-  public boolean visit(JsReturn x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsReturn x, JsContext ctx) {
     return false;
   }
 
   @Override
-  public boolean visit(JsSwitch x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsSwitch x, JsContext ctx) {
     return false;
   }
 
   @Override
-  public boolean visit(JsThrow x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsThrow x, JsContext ctx) {
     return false;
   }
 
   @Override
-  public boolean visit(JsTry x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsTry x, JsContext ctx) {
     return false;
   }
 
   @Override
-  public boolean visit(JsVars x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsVars x, JsContext ctx) {
     return false;
   }
 
   @Override
-  public boolean visit(JsWhile x, JsContext<JsStatement> ctx) {
+  public boolean visit(JsWhile x, JsContext ctx) {
     if (x.getBody() instanceof JsEmpty) {
       needsSemicolon = true;
     }

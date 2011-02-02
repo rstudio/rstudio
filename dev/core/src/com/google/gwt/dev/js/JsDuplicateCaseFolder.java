@@ -32,9 +32,9 @@ import java.util.Map;
  * Combine case labels with identical bodies. Case bodies that may fall through
  * to the following case label and case bodies following a possible fallthrough
  * are left undisturbed.
- *
+ * 
  * For example, consider the following input:
- *
+ * 
  * <pre>
  * switch (x) {
  *   case 0: y = 17; break;
@@ -46,9 +46,9 @@ import java.util.Map;
  *   case 6: return 22;
  * }
  * </pre>
- *
+ * 
  * This will be transformed into:
- *
+ * 
  * <pre>
  * switch (x) {
  *   case 0: y = 17; break;
@@ -57,7 +57,7 @@ import java.util.Map;
  *   case 3: if (z == 0) { y = 18; break; } else { y = 19 }
  *   case 5: case 4: y = 17; break;
  * }
- *
+ * 
  * <pre>
  *
  * Cases (2, 6) and (4, 5) have been coalesced.  Note that case 0 has not been
@@ -76,7 +76,7 @@ public class JsDuplicateCaseFolder {
     }
 
     @Override
-    public boolean visit(JsSwitch x, JsContext<JsStatement> ctx) {
+    public boolean visit(JsSwitch x, JsContext ctx) {
       boolean modified = false;
 
       // A map from case body source code to the original case label

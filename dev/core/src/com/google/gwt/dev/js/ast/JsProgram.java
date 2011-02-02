@@ -27,7 +27,7 @@ import java.util.Map;
 /**
  * A JavaScript program.
  */
-public final class JsProgram extends JsNode<JsProgram> {
+public final class JsProgram extends JsNode {
 
   private final CorrelationFactory correlator;
 
@@ -252,7 +252,7 @@ public final class JsProgram extends JsNode<JsProgram> {
     this.indexedFunctions.putAll(indexedFunctions);
   }
 
-  public void traverse(JsVisitor v, JsContext<JsProgram> ctx) {
+  public void traverse(JsVisitor v, JsContext ctx) {
     if (v.visit(this, ctx)) {
       for (JsProgramFragment fragment : fragments) {
         v.accept(fragment);

@@ -36,7 +36,7 @@ public final class JsCase extends JsSwitchMember {
     this.caseExpr = caseExpr;
   }
 
-  public void traverse(JsVisitor v, JsContext<JsSwitchMember> ctx) {
+  public void traverse(JsVisitor v, JsContext ctx) {
     if (v.visit(this, ctx)) {
       caseExpr = v.accept(caseExpr);
       v.acceptWithInsertRemove(stmts);

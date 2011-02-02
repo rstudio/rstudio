@@ -20,7 +20,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
 /**
  * One independently loadable fragment of a {@link JsProgram}.
  */
-public class JsProgramFragment extends JsNode<JsProgramFragment> {
+public class JsProgramFragment extends JsNode {
   private final JsGlobalBlock globalBlock;
 
   public JsProgramFragment(SourceInfo sourceInfo) {
@@ -33,7 +33,7 @@ public class JsProgramFragment extends JsNode<JsProgramFragment> {
     return globalBlock;
   }
 
-  public void traverse(JsVisitor v, JsContext<JsProgramFragment> ctx) {
+  public void traverse(JsVisitor v, JsContext ctx) {
     if (v.visit(this, ctx)) {
       v.accept(globalBlock);
     }

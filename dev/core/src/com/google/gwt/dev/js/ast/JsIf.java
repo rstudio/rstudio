@@ -64,7 +64,7 @@ public final class JsIf extends JsStatement {
     this.thenStmt = thenStmt;
   }
 
-  public void traverse(JsVisitor v, JsContext<JsStatement> ctx) {
+  public void traverse(JsVisitor v, JsContext ctx) {
     if (v.visit(this, ctx)) {
       ifExpr = v.accept(ifExpr);
       thenStmt = v.accept(thenStmt);
@@ -78,9 +78,9 @@ public final class JsIf extends JsStatement {
   @Override
   public boolean unconditionalControlBreak() {
     boolean thenBreaks = thenStmt != null
-      && thenStmt.unconditionalControlBreak();
+        && thenStmt.unconditionalControlBreak();
     boolean elseBreaks = elseStmt != null
-      && elseStmt.unconditionalControlBreak();
+        && elseStmt.unconditionalControlBreak();
     if (thenBreaks && elseBreaks) {
       // both branches have an unconditional break
       return true;

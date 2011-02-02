@@ -54,7 +54,7 @@ public abstract class JsUnaryOperation extends JsExpression {
     this.arg = arg;
   }
 
-  public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
+  public void traverse(JsVisitor v, JsContext ctx) {
     if (op.isModifying()) {
       /*
        * The delete operator is practically like an assignment of undefined, so

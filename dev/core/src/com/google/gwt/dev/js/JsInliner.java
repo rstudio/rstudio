@@ -54,7 +54,6 @@ import com.google.gwt.dev.js.ast.JsReturn;
 import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
-import com.google.gwt.dev.js.ast.JsSwitchMember;
 import com.google.gwt.dev.js.ast.JsThisRef;
 import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
@@ -103,17 +102,17 @@ public class JsInliner {
     }
 
     @Override
-    public void endVisit(JsArrayLiteral x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsArrayLiteral x, JsContext ctx) {
       affectedBySideEffects = true;
     }
 
     @Override
-    public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsFunction x, JsContext ctx) {
       affectedBySideEffects = true;
     }
 
     @Override
-    public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsInvocation x, JsContext ctx) {
       /*
        * We could make this more accurate by analyzing the function that's being
        * executed, but we'll bank on subsequent passes inlining simple function
@@ -123,7 +122,7 @@ public class JsInliner {
     }
 
     @Override
-    public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNameRef x, JsContext ctx) {
       if (x.getQualifier() == null && x.getName() != null) {
         // Special case the undefined literal.
         if (x.getName() == program.getUndefinedLiteral().getName()) {
@@ -143,7 +142,7 @@ public class JsInliner {
     }
 
     @Override
-    public void endVisit(JsObjectLiteral x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsObjectLiteral x, JsContext ctx) {
       affectedBySideEffects = true;
     }
   }
@@ -183,7 +182,7 @@ public class JsInliner {
     }
 
     @Override
-    public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsBinaryOperation x, JsContext ctx) {
       if (isComma(x) == null) {
         return;
       }
@@ -280,87 +279,87 @@ public class JsInliner {
     private int complexity = 0;
 
     @Override
-    public void endVisit(JsArrayAccess x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsArrayAccess x, JsContext ctx) {
       complexity++;
     }
 
     @Override
-    public void endVisit(JsArrayLiteral x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsArrayLiteral x, JsContext ctx) {
       complexity++;
     }
 
     @Override
-    public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsBinaryOperation x, JsContext ctx) {
       complexity++;
     }
 
     @Override
-    public void endVisit(JsBooleanLiteral x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsBooleanLiteral x, JsContext ctx) {
       complexity++;
     }
 
     @Override
-    public void endVisit(JsConditional x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsConditional x, JsContext ctx) {
       complexity++;
     }
 
     @Override
-    public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsFunction x, JsContext ctx) {
       complexity++;
     }
 
     @Override
-    public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsInvocation x, JsContext ctx) {
       complexity++;
     }
 
     @Override
-    public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNameRef x, JsContext ctx) {
       complexity++;
     }
 
     @Override
-    public void endVisit(JsNew x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNew x, JsContext ctx) {
       complexity++;
     }
 
     @Override
-    public void endVisit(JsNullLiteral x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNullLiteral x, JsContext ctx) {
       complexity++;
     }
 
     @Override
-    public void endVisit(JsNumberLiteral x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNumberLiteral x, JsContext ctx) {
       complexity++;
     }
 
     @Override
-    public void endVisit(JsObjectLiteral x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsObjectLiteral x, JsContext ctx) {
       complexity++;
     }
 
     @Override
-    public void endVisit(JsPostfixOperation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsPostfixOperation x, JsContext ctx) {
       complexity++;
     }
 
     @Override
-    public void endVisit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsPrefixOperation x, JsContext ctx) {
       complexity++;
     }
 
     @Override
-    public void endVisit(JsRegExp x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsRegExp x, JsContext ctx) {
       complexity++;
     }
 
     @Override
-    public void endVisit(JsStringLiteral x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsStringLiteral x, JsContext ctx) {
       complexity++;
     }
 
     @Override
-    public void endVisit(JsThisRef x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsThisRef x, JsContext ctx) {
       complexity++;
     }
 
@@ -406,7 +405,7 @@ public class JsInliner {
      * conditional-evaluation case of logical and/or operations.
      */
     @Override
-    public boolean visit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
+    public boolean visit(JsBinaryOperation x, JsContext ctx) {
       if (x.getOperator() == JsBinaryOperator.COMMA) {
 
         boolean left = isDuplicateCall(x.getArg1());
@@ -458,20 +457,20 @@ public class JsInliner {
      * subtypes.
      */
     @Override
-    public boolean visit(JsBlock x, JsContext<JsStatement> ctx) {
+    public boolean visit(JsBlock x, JsContext ctx) {
       branch(x.getStatements());
       return false;
     }
 
     @Override
-    public boolean visit(JsCase x, JsContext<JsSwitchMember> ctx) {
+    public boolean visit(JsCase x, JsContext ctx) {
       x.setCaseExpr(accept(x.getCaseExpr()));
       branch(x.getStmts());
       return false;
     }
 
     @Override
-    public boolean visit(JsConditional x, JsContext<JsExpression> ctx) {
+    public boolean visit(JsConditional x, JsContext ctx) {
       x.setTestExpression(accept(x.getTestExpression()));
       x.setThenExpression(branch(x.getThenExpression()));
       x.setElseExpression(branch(x.getElseExpression()));
@@ -479,13 +478,13 @@ public class JsInliner {
     }
 
     @Override
-    public boolean visit(JsDefault x, JsContext<JsSwitchMember> ctx) {
+    public boolean visit(JsDefault x, JsContext ctx) {
       branch(x.getStmts());
       return false;
     }
 
     @Override
-    public boolean visit(JsExprStmt x, JsContext<JsStatement> ctx) {
+    public boolean visit(JsExprStmt x, JsContext ctx) {
       if (isDuplicateCall(x.getExpression())) {
         if (ctx.canRemove()) {
           ctx.removeMe();
@@ -500,7 +499,7 @@ public class JsInliner {
     }
 
     @Override
-    public boolean visit(JsFor x, JsContext<JsStatement> ctx) {
+    public boolean visit(JsFor x, JsContext ctx) {
       // The JsFor may have an expression xor a variable declaration.
       if (x.getInitExpr() != null) {
         x.setInitExpr(accept(x.getInitExpr()));
@@ -524,7 +523,7 @@ public class JsInliner {
     }
 
     @Override
-    public boolean visit(JsForIn x, JsContext<JsStatement> ctx) {
+    public boolean visit(JsForIn x, JsContext ctx) {
       if (x.getIterExpr() != null) {
         x.setIterExpr(accept(x.getIterExpr()));
       }
@@ -537,7 +536,7 @@ public class JsInliner {
     }
 
     @Override
-    public boolean visit(JsIf x, JsContext<JsStatement> ctx) {
+    public boolean visit(JsIf x, JsContext ctx) {
       x.setIfExpr(accept(x.getIfExpr()));
 
       x.setThenStmt(branch(x.getThenStmt()));
@@ -552,7 +551,7 @@ public class JsInliner {
      * Possibly record that we've seen a call in the current context.
      */
     @Override
-    public boolean visit(JsInvocation x, JsContext<JsExpression> ctx) {
+    public boolean visit(JsInvocation x, JsContext ctx) {
       JsFunction func = isExecuteOnce(x);
       while (func != null) {
         called.add(func);
@@ -562,7 +561,7 @@ public class JsInliner {
     }
 
     @Override
-    public boolean visit(JsWhile x, JsContext<JsStatement> ctx) {
+    public boolean visit(JsWhile x, JsContext ctx) {
       x.setCondition(accept(x.getCondition()));
 
       // The body is not guaranteed to be a JsBlock
@@ -570,13 +569,13 @@ public class JsInliner {
       return false;
     }
 
-    private <T extends JsNode<T>> void branch(List<T> x) {
+    private <T extends JsNode> void branch(List<T> x) {
       DuplicateXORemover dup = new DuplicateXORemover(program, called);
       dup.acceptWithInsertRemove(x);
       didChange |= dup.didChange();
     }
 
-    private <T extends JsNode<T>> T branch(T x) {
+    private <T extends JsNode> T branch(T x) {
       DuplicateXORemover dup = new DuplicateXORemover(program, called);
       T toReturn = dup.accept(x);
 
@@ -618,7 +617,7 @@ public class JsInliner {
     }
 
     @Override
-    public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsBinaryOperation x, JsContext ctx) {
       JsBinaryOperator op = x.getOperator();
 
       /*
@@ -639,7 +638,7 @@ public class JsInliner {
      * don't allow inlining.
      */
     @Override
-    public void endVisit(JsConditional x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsConditional x, JsContext ctx) {
       boolean thenStrict = refersToRequiredName(x.getThenExpression());
       boolean elseStrict = refersToRequiredName(x.getElseExpression());
 
@@ -654,7 +653,7 @@ public class JsInliner {
      * just ignore them.
      */
     @Override
-    public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsFunction x, JsContext ctx) {
       maintainsOrder = false;
     }
 
@@ -668,7 +667,7 @@ public class JsInliner {
      * nested invocation.
      */
     @Override
-    public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsInvocation x, JsContext ctx) {
       /*
        * The check for isExecuteOnce() is potentially incorrect here, however
        * the original Java semantics of the clinit would have made the code
@@ -678,23 +677,21 @@ public class JsInliner {
         maintainsOrder = false;
       }
     }
-    
+
     @Override
-    public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNameRef x, JsContext ctx) {
       checkName(x.getName());
     }
 
     @Override
-    public void endVisit(JsNew x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNew x, JsContext ctx) {
       /*
-       * Unless all arguments have already been evaluated, assume
-       * that invoking the new expression might interfere with
-       * the evaluation of the argument.
-       *
-       * It would be possible to allow this if the invoked function
-       * either does nothing or does nothing that affects the 
-       * remaining arguments.  However, currently there is no
-       * analysis of the invoked function.
+       * Unless all arguments have already been evaluated, assume that invoking
+       * the new expression might interfere with the evaluation of the argument.
+       * 
+       * It would be possible to allow this if the invoked function either does
+       * nothing or does nothing that affects the remaining arguments. However,
+       * currently there is no analysis of the invoked function.
        */
       if (unevaluated.size() > 0) {
         maintainsOrder = false;
@@ -702,7 +699,7 @@ public class JsInliner {
     }
 
     @Override
-    public void endVisit(JsThisRef x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsThisRef x, JsContext ctx) {
       checkName(THIS_NAME);
     }
 
@@ -743,7 +740,7 @@ public class JsInliner {
     }
 
     @Override
-    public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNameRef x, JsContext ctx) {
       boolean hasQualifier = x.getQualifier() != null;
 
       if ((collectQualified && !hasQualifier)
@@ -811,7 +808,7 @@ public class JsInliner {
      * removes statements with no side-effects.
      */
     @Override
-    public void endVisit(JsExprStmt x, JsContext<JsStatement> ctx) {
+    public void endVisit(JsExprStmt x, JsContext ctx) {
       JsExpression e = x.getExpression();
 
       // We will occasionally create JsExprStmts that have no side-effects.
@@ -889,7 +886,7 @@ public class JsInliner {
     }
 
     @Override
-    public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsFunction x, JsContext ctx) {
       if (!functionStack.pop().equals(x)) {
         throw new InternalCompilerException("Unexpected function popped");
       }
@@ -901,7 +898,7 @@ public class JsInliner {
     }
 
     @Override
-    public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsInvocation x, JsContext ctx) {
       if (functionStack.isEmpty()) {
         return;
       }
@@ -972,7 +969,7 @@ public class JsInliner {
     }
 
     @Override
-    public void endVisit(JsProgramFragment x, JsContext<JsProgramFragment> ctx) {
+    public void endVisit(JsProgramFragment x, JsContext ctx) {
       if (!functionStack.pop().equals(programFunction)) {
         throw new InternalCompilerException("Unexpected function popped");
       }
@@ -984,7 +981,7 @@ public class JsInliner {
     }
 
     @Override
-    public boolean visit(JsExprStmt x, JsContext<JsStatement> ctx) {
+    public boolean visit(JsExprStmt x, JsContext ctx) {
       if (functionStack.peek() == programFunction) {
         /* Don't inline top-level invocations. */
         if (x.getExpression() instanceof JsInvocation) {
@@ -995,7 +992,7 @@ public class JsInliner {
     }
 
     @Override
-    public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
+    public boolean visit(JsFunction x, JsContext ctx) {
       functionStack.push(x);
       newLocalVariableStack.push(new ArrayList<JsName>());
       return true;
@@ -1006,7 +1003,7 @@ public class JsInliner {
      * top-level of the program.
      */
     @Override
-    public boolean visit(JsProgramFragment x, JsContext<JsProgramFragment> ctx) {
+    public boolean visit(JsProgramFragment x, JsContext ctx) {
       programFunction = new JsFunction(program.getSourceInfo(),
           program.getScope());
       programFunction.setBody(new JsBlock(x.getSourceInfo()));
@@ -1222,12 +1219,12 @@ public class JsInliner {
     private final Map<JsFunction, Integer> invocationCount = new IdentityHashMap<JsFunction, Integer>();
 
     @Override
-    public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsInvocation x, JsContext ctx) {
       checkFunctionCall(x.getQualifier());
     }
 
     @Override
-    public void endVisit(JsNew x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNew x, JsContext ctx) {
       checkFunctionCall(x.getConstructorExpression());
     }
 
@@ -1306,7 +1303,7 @@ public class JsInliner {
      * into the function invocation.
      */
     @Override
-    public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNameRef x, JsContext ctx) {
       if (x.getQualifier() != null) {
         return;
       }
@@ -1321,7 +1318,7 @@ public class JsInliner {
     }
 
     @Override
-    public void endVisit(JsThisRef x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsThisRef x, JsContext ctx) {
       assert thisExpr != null;
       ctx.replaceMe(thisExpr);
     }
@@ -1374,7 +1371,7 @@ public class JsInliner {
     }
 
     @Override
-    public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsFunction x, JsContext ctx) {
       containsNestedFunctions = true;
     }
   }
@@ -1396,14 +1393,14 @@ public class JsInliner {
     }
 
     @Override
-    public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNameRef x, JsContext ctx) {
       if (ctx.isLvalue() && isParameter(x)) {
         violation = true;
       }
     }
 
     @Override
-    public void endVisit(JsThisRef x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsThisRef x, JsContext ctx) {
       if (!hasThisExpr) {
         violation = true;
       }
@@ -1437,14 +1434,14 @@ public class JsInliner {
     private final Set<JsFunction> recursive = new HashSet<JsFunction>();
 
     @Override
-    public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsFunction x, JsContext ctx) {
       if (!functionStack.pop().equals(x)) {
         throw new InternalCompilerException("Unexpected function popped");
       }
     }
 
     @Override
-    public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsInvocation x, JsContext ctx) {
       /*
        * Because functions can encapsulate other functions, we look at the
        * entire stack and not just the top element. This would prevent inlining
@@ -1464,7 +1461,7 @@ public class JsInliner {
     }
 
     @Override
-    public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
+    public boolean visit(JsFunction x, JsContext ctx) {
       functionStack.push(x);
       return true;
     }
@@ -1484,7 +1481,7 @@ public class JsInliner {
      * Look for assignments to JsNames whose static references are JsFunctions.
      */
     @Override
-    public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsBinaryOperation x, JsContext ctx) {
 
       if (!x.getOperator().equals(JsBinaryOperator.ASG)) {
         return;
@@ -1501,7 +1498,7 @@ public class JsInliner {
      * existing function.
      */
     @Override
-    public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsFunction x, JsContext ctx) {
       JsName name = x.getName();
 
       if (name == null) {
@@ -1539,7 +1536,7 @@ public class JsInliner {
     }
 
     @Override
-    public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNameRef x, JsContext ctx) {
       JsName name = x.getName();
 
       if (name == null) {
@@ -1577,7 +1574,7 @@ public class JsInliner {
     }
 
     @Override
-    public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+    public void endVisit(JsNameRef x, JsContext ctx) {
       /*
        * We can ignore qualified reference, since their scope is always that of
        * the qualifier.
@@ -1627,8 +1624,8 @@ public class JsInliner {
    * Static entry point used by JavaToJavaScriptCompiler.
    */
   public static OptimizerStats exec(JsProgram program) {
-    Event optimizeJsEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE_JS, 
-        "optimizer", NAME);
+    Event optimizeJsEvent = SpeedTracerLogger.start(
+        CompilerEventType.OPTIMIZE_JS, "optimizer", NAME);
     OptimizerStats stats = execImpl(program);
     optimizeJsEvent.end("didChange", "" + stats.didChange());
     return stats;
@@ -1658,7 +1655,7 @@ public class JsInliner {
   /**
    * Generate an estimated measure of the syntactic complexity of a JsNode.
    */
-  private static int complexity(JsNode<?> toEstimate) {
+  private static int complexity(JsNode toEstimate) {
     ComplexityEstimator e = new ComplexityEstimator();
     e.accept(toEstimate);
     return e.getComplexity();
@@ -1708,7 +1705,7 @@ public class JsInliner {
    * that refer to function parameters.
    */
   private static boolean hasCommonIdents(List<JsExpression> arguments,
-      JsNode<?> toInline, Collection<String> parameterIdents) {
+      JsNode toInline, Collection<String> parameterIdents) {
 
     // This is a fire-twice loop
     boolean checkQualified = false;
@@ -1833,8 +1830,6 @@ public class JsInliner {
    * Given an expression, determine if it it is a JsNameRef that refers to a
    * statically-defined JsFunction.
    */
-  // Javac 1.6.0_01 barfs if staticRef is a JsNode<?>
-  @SuppressWarnings("unchecked")
   private static JsFunction isFunction(JsExpression e) {
     if (e instanceof JsNameRef) {
       JsNameRef ref = (JsNameRef) e;
@@ -1860,7 +1855,7 @@ public class JsInliner {
    */
   private static boolean isInlinable(JsProgram program, JsFunction caller,
       JsFunction callee, JsExpression thisExpr, List<JsExpression> arguments,
-      JsNode<?> toInline) {
+      JsNode toInline) {
 
     /*
      * This will happen with varargs-style JavaScript functions that rely on the
