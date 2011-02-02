@@ -65,29 +65,25 @@ public class Manipulator extends JavaScriptObject
    }
    
    public final native String getID() /*-{
-      return this.manip_id[0];
+      return this.id[0];
    }-*/;
 
-   public final native String getCode() /*-{
-      return this.manip_codeAsText[0];
-   }-*/;
-   
    public final native JsArrayString getVariables() /*-{
-      return this.manip_variables;
+      return this.variables;
    }-*/;
    
    public final native double getDoubleValue(String name) /*-{
-      var valueArray = this[name];
+      var valueArray = this.values[name];
       return valueArray[0];
    }-*/;
    
    public final native String getStringValue(String name) /*-{
-      var valueArray = this[name];
+      var valueArray = this.values[name];
       return valueArray[0];
    }-*/;
    
    public final native Control getControl(String name) /*-{
-      var control = this.manip_controls[name];
+      var control = this.controls[name];
       return control;
    }-*/;
 }

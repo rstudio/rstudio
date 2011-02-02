@@ -11,22 +11,17 @@
 #
 #
 
-.rs.addFunction( "manipulator.execute", function(manipulator)
+.rs.addFunction( "manipulatorExecute", function(manipulator)
 {
-  eval(manipulator$manip_code,
-       envir  = manipulator,
-       enclos = if (is.null(manipulator$manip_envir))
-                 globalenv()
-               else
-                 manipulator$manip_envir)
+  eval(get(".code", envir = manipulator), envir = manipulator)
 })
 
-.rs.addFunction( "manipulator.save", function(manipulator, filename)
+.rs.addFunction( "manipulatorSave", function(manipulator, filename)
 {
-   save(manipulator, file=filename)
+   suppressWarnings(save(manipulator, file=filename))
 })
 
-.rs.addFunction( "manipulator.load", function(filename)
+.rs.addFunction( "manipulatorLoad", function(filename)
 {
    load(filename)
    return (manipulator)
@@ -94,11 +89,16 @@
   return (checkbox)
 })
 
-.rs.addGlobalFunction( "manipulator.state", function()
+.rs.addGlobalFunction( "manipulatorGetState", function(name)
 {
   if ( .Call("rs_hasActiveManipulator") )
   {
-    .Call("rs_activeManipulator")$manip_state
+    value <- NULL
+    try(silent = TRUE,
+        value <- get(name, 
+                     envir = get(".state", envir = .Call("rs_activeManipulator")))
+    )
+    return (value)
   }
   else
   {
@@ -106,14 +106,12 @@
   }
 })
 
-.rs.addGlobalFunction( "manipulator.setState", function(state)
+.rs.addGlobalFunction( "manipulatorSetState", function(name, value)
 {
-  if ( !is.list(state) )
-    stop("manipulator state must be a list")
-  
   if ( .Call("rs_hasActiveManipulator") )
   {
-     .Call("rs_setManipulatorState", state)
+     assign(name, value, envir = get(".state", envir = .Call("rs_activeManipulator")))
+     .Call("rs_ensureManipulatorSaved")
      invisible(NULL)
   }
   else
@@ -125,33 +123,26 @@
 .rs.addGlobalFunction( "manipulate", function(code, ...)
 {
   # create new list container for the manipulator
-  manipulator <- list()
-  class(manipulator) <- "manipulator"
-  manipulator$manip_id <- .rs.createUUID()
+  manipulator <- new.env(parent = parent.frame())
+  assign(".id", .rs.createUUID(), envir = manipulator)
   
   # save the unevaluated expression as the code
-  manipulator$manip_code <- substitute(code) 
+  assign(".code", substitute(code), envir = manipulator) 
   
   # save a human readable version of the code (specify control = NULL
   # to make the display as close to the original text as possible)
-  manipulator$manip_codeAsText <- deparse(substitute(code), control = NULL)
-
+  assign(".codeAsText", deparse(substitute(code), control = NULL), envir = manipulator)
+  
   # get the controls and their names
   controls <- list(...)
   controlNames <- names(controls)
  
   # save the controls and their names into the manipulator
-  manipulator$manip_controls <- controls
-  manipulator$manip_variables <- controlNames
+  assign(".controls", controls, envir = manipulator)
+  assign(".variables", controlNames, envir = manipulator)
   
-  # if the parent frame isn't the global environment then save it as well
-  if (sys.nframe() > 1)
-    manipulator$manip_envir <- parent.frame()
- else
-    manipulator$manip_envir <- NULL
-
   # establish state
-  manipulator$manip_state <- list()
+  assign(".state", new.env(parent = globalenv()), envir = manipulator)
   
   # iterate over the names and controls, adding the default values to the env
   c = 1 
@@ -172,7 +163,7 @@
     }
       
     # assign the control's default into the list
-    manipulator[name] <- control$initialValue
+    assign(name, control$initialValue, envir = manipulator)
   }
 
   # execute the manipulator -- will execute the code and attach it

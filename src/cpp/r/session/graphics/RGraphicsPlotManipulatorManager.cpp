@@ -37,15 +37,24 @@ namespace graphics {
 
 namespace {
 
+template <typename T>
 void setManipulatorValue(SEXP manipulatorSEXP,
-                         const std::pair<std::string,json::Value>& object)
+                         const std::string& name,
+                         const T& value)
 {
-   Error error = r::sexp::setNamedListElement(manipulatorSEXP,
-                                              object.first,
-                                              object.second);
-
+   r::exec::RFunction assignFunction("assign");
+   assignFunction.addParam(name);
+   assignFunction.addParam(value);
+   assignFunction.addParam("envir", manipulatorSEXP);
+   Error error = assignFunction.call();
    if (error)
       LOG_ERROR(error);
+}
+
+void setManipulatorJsonValue(SEXP manipulatorSEXP,
+                             const std::pair<std::string,json::Value>& object)
+{
+   setManipulatorValue(manipulatorSEXP, object.first, object.second);
 }
 
 void safeExecuteManipulator(SEXP manipulatorSEXP)
@@ -53,7 +62,7 @@ void safeExecuteManipulator(SEXP manipulatorSEXP)
    try
    {
       // execute the code within the manipulator.
-      Error error = r::exec::RFunction(".rs.manipulator.execute",
+      Error error = r::exec::RFunction(".rs.manipulatorExecute",
                                        manipulatorSEXP).call();
 
       // r code execution errors are expected (e.g. for invalid manipulate
@@ -86,9 +95,14 @@ SEXP rs_activeManipulator()
    return plotManipulatorManager().activeManipulator();
 }
 
-SEXP rs_setManipulatorState(SEXP stateSEXP)
+SEXP rs_ensureManipulatorSaved()
 {
-   plotManipulatorManager().setActiveManipulatorState(stateSEXP);
+   try
+   {
+      plotManipulatorManager().ensureManipulatorSaved();
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
    return R_NilValue;
 }
 
@@ -132,12 +146,12 @@ Error PlotManipulatorManager::initialize()
    activeManipulatorMethodDef.numArgs = 0;
    r::routines::addCallMethod(activeManipulatorMethodDef);
 
-   // register set manipulator state routine
-   R_CallMethodDef setManipulatorStateMethodDef ;
-   setManipulatorStateMethodDef.name = "rs_setManipulatorState" ;
-   setManipulatorStateMethodDef.fun = (DL_FUNC) rs_setManipulatorState;
-   setManipulatorStateMethodDef.numArgs = 1;
-   r::routines::addCallMethod(setManipulatorStateMethodDef);
+   // register ensure manipulator saved routine
+   R_CallMethodDef ensureManipulatorSavedMethodDef ;
+   ensureManipulatorSavedMethodDef.name = "rs_ensureManipulatorSaved" ;
+   ensureManipulatorSavedMethodDef.fun = (DL_FUNC) rs_ensureManipulatorSaved;
+   ensureManipulatorSavedMethodDef.numArgs = 0;
+   r::routines::addCallMethod(ensureManipulatorSavedMethodDef);
 
    return Success();
 }
@@ -199,22 +213,6 @@ SEXP PlotManipulatorManager::activeManipulator() const
    }
 }
 
-void PlotManipulatorManager::setActiveManipulatorState(SEXP stateSEXP)
-{
-   SEXP manipulatorSEXP = activeManipulator();
-   if (manipulatorSEXP != R_NilValue)
-   {
-      Error error = r::sexp::setNamedListElement(manipulatorSEXP,
-                                                 "manip_state",
-                                                 stateSEXP);
-      if (error)
-         LOG_ERROR(error);
-
-      // if the active plot has a manipulator then ensure it is saved.
-      ensurePlotManipulatorSaved();
-   }
-}
-
 void PlotManipulatorManager::setPlotManipulatorValues(const json::Object& values)
 {
    if (plotManager().hasPlot() &&
@@ -226,7 +224,7 @@ void PlotManipulatorManager::setPlotManipulatorValues(const json::Object& values
       // set the underlying values
       std::for_each(values.begin(),
                     values.end(),
-                    boost::bind(setManipulatorValue, manipulatorSEXP, _1));
+                    boost::bind(setManipulatorJsonValue, manipulatorSEXP, _1));
 
       // replay the manipulator
       replayingManipulator_ = true;
@@ -240,7 +238,7 @@ void PlotManipulatorManager::setPlotManipulatorValues(const json::Object& values
    }
 }
 
-void PlotManipulatorManager::ensurePlotManipulatorSaved()
+void PlotManipulatorManager::ensureManipulatorSaved()
 {
    if (plotManager().hasPlot() && plotManager().activePlot().hasManipulator())
       plotManager().activePlot().saveManipulator();
@@ -249,6 +247,3 @@ void PlotManipulatorManager::ensurePlotManipulatorSaved()
 } // namespace graphics
 } // namespace session
 } // namespace r
-
-
-

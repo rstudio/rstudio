@@ -51,7 +51,7 @@ PlotManipulator::~PlotManipulator()
 Error PlotManipulator::save(const FilePath& filePath) const
 {
    // call manipulator save
-   r::exec::RFunction manipSave(".rs.manipulator.save");
+   r::exec::RFunction manipSave(".rs.manipulatorSave");
    manipSave.addParam(sexp_.get());
    manipSave.addParam(filePath.absolutePath());
    return manipSave.call();
@@ -60,7 +60,7 @@ Error PlotManipulator::save(const FilePath& filePath) const
 Error PlotManipulator::load(const FilePath& filePath)
 {
    // call manipulator load
-   r::exec::RFunction manipLoad(".rs.manipulator.load");
+   r::exec::RFunction manipLoad(".rs.manipulatorLoad");
    manipLoad.addParam(filePath.absolutePath());
    SEXP manipSEXP;
    Error error = manipLoad.call(&manipSEXP);
@@ -74,9 +74,24 @@ Error PlotManipulator::load(const FilePath& filePath)
 
 void PlotManipulator::asJson(core::json::Value* pValue) const
 {
-   Error error = r::json::jsonValueFromObject(sexp_.get(), pValue);
+   // build manipulator json
+   core::json::Object manipulator;
+
+   // meta-info
+   manipulator["id"] = getAsJson(".id");
+   manipulator["controls"] = getAsJson(".controls");
+   manipulator["variables"] = getAsJson(".variables");
+
+   // variable values
+   core::json::Value valuesJson;
+   SEXP valuesSEXP = getValuesList();
+   Error error = r::json::jsonValueFromObject(valuesSEXP, &valuesJson);
    if (error)
       LOG_ERROR(error);
+   manipulator["values"] = valuesJson;
+
+   // return manipualtor
+   *pValue = manipulator;
 }
 
 SEXP PlotManipulator::sexp() const
@@ -84,7 +99,65 @@ SEXP PlotManipulator::sexp() const
    return sexp_.get();
 }
 
+SEXP PlotManipulator::get(const std::string& name) const
+{
+   if (!empty())
+   {
+      r::exec::RFunction getFunction("get");
+      getFunction.addParam(name);
+      getFunction.addParam("envir", sexp());
+      SEXP valueSEXP;
+      Error error = getFunction.call(&valueSEXP);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return R_NilValue;
+      }
+      else
+      {
+         return valueSEXP;
+      }
+   }
+   else
+   {
+      return R_NilValue;
+   }
+}
 
+core::json::Value PlotManipulator::getAsJson(const std::string& name) const
+{
+   core::json::Value value;
+   Error error = r::json::jsonValueFromObject(get(name), &value);
+   if (error)
+      LOG_ERROR(error);
+   return value;
+}
+
+SEXP PlotManipulator::getValuesList() const
+{
+   SEXP variablesSEXP = get(".variables");
+   if (variablesSEXP != R_NilValue)
+   {
+      r::exec::RFunction mgetFunction("mget");
+      mgetFunction.addParam(variablesSEXP);
+      mgetFunction.addParam("envir", sexp());
+      SEXP valuesSEXP;
+      Error error = mgetFunction.call(&valuesSEXP);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return R_NilValue;
+      }
+      else
+      {
+         return valuesSEXP;
+      }
+   }
+   else
+   {
+      return R_NilValue;
+   }
+}
 
 
 } // namespace graphics

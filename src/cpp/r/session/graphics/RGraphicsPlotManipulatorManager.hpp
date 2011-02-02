@@ -52,7 +52,6 @@ public:
    void executeAndAttachManipulator(SEXP manipulatorSEXP);
    bool hasActiveManipulator() const;
    SEXP activeManipulator() const;
-   void setActiveManipulatorState(SEXP stateSEXP);
 
    bool replayingManipulator() const { return replayingManipulator_; }
    SEXP pendingManipulatorSEXP() const { return pendingManipulatorSEXP_; }
@@ -62,9 +61,8 @@ public:
       pendingManipulatorSEXP_ = R_NilValue;
       replayingManipulator_ = false;
    }
-      
-private:  
-   void ensurePlotManipulatorSaved();
+
+   void ensureManipulatorSaved();
 
 private:   
    // pending manipulator

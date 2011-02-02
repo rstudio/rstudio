@@ -46,6 +46,11 @@ public:
    SEXP sexp() const;
 
 private:
+   SEXP get(const std::string& name) const;
+   core::json::Value getAsJson(const std::string& name) const;
+   SEXP getValuesList() const;
+
+private:
    r::sexp::PreservedSEXP sexp_;
 };
 
