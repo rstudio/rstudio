@@ -140,7 +140,7 @@
   }
 })
 
-.rs.addGlobalFunction( "manipulate", function(code, ..., c = NULL)
+.rs.addGlobalFunction( "manipulate", function(code, controls = list(), ..., c = NULL)
 {
   # create new list container for the manipulator
   manipulator <- new.env(parent = parent.frame())
@@ -154,7 +154,7 @@
   assign(".codeAsText", deparse(substitute(code), control = NULL), envir = manipulator)
   
   # get the controls 
-  controls <- list(...)
+  controls <- append(controls, list(...))
   
   # special handling for arguments named 'c' -- they seem to show up
   # as NULL when doing list(...) to get the arguments
