@@ -140,7 +140,7 @@
   }
 })
 
-.rs.addGlobalFunction( "manipulate", function(code, ...)
+.rs.addGlobalFunction( "manipulate", function(code, ..., c = NA)
 {
   # create new list container for the manipulator
   manipulator <- new.env(parent = parent.frame())
@@ -153,8 +153,15 @@
   # to make the display as close to the original text as possible)
   assign(".codeAsText", deparse(substitute(code), control = NULL), envir = manipulator)
   
-  # get the controls and their names
+  # get the controls 
   controls <- list(...)
+  
+  # special handling for arguments named 'c' -- they seem to show up
+  # as NULL when doing list(...) to get the arguments
+  if (!is.na(c))
+    controls$c <- c
+    
+  # get the control names
   controlNames <- names(controls)
  
   # save the controls and their names into the manipulator
@@ -165,16 +172,14 @@
   assign(".state", new.env(parent = globalenv()), envir = manipulator)
   
   # iterate over the names and controls, adding the default values to the env
-  c = 1 
-  for (control in controls)
+  for (name in names(controls))
   {
-    # get the name and bump the control index
-    name <- controlNames[c]
+    # check the name
     if (name == "")
       stop("all controls passed to manipulate must be named")
-    c = c + 1  
     
     # confirm that this is in fact a control
+    control <- controls[[name]]
     if ( ! (class(control) %in% c("manipulator.slider",
                                   "manipulator.picker",
                                   "manipulator.checkbox")) )
