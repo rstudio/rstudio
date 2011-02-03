@@ -7,10 +7,12 @@ public interface ManipulatorStyles extends CssResource
 {
    public static ManipulatorStyles INSTANCE = ManipulatorResources.INSTANCE.manipulatorStyles();
 
+   String captionLabel();
    
    String slider();
-   String sliderCaptionLabel();
    String sliderValueLabel();
+
+   String picker();
    
    String manipulateButton();
 }

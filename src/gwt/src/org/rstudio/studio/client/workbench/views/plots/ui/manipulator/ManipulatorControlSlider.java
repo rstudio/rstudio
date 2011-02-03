@@ -32,7 +32,7 @@ public class ManipulatorControlSlider extends ManipulatorControl
       HorizontalPanel captionPanel = new HorizontalPanel();
   
       Label captionLabel = new Label();
-      captionLabel.setStyleName(styles.sliderCaptionLabel());
+      captionLabel.setStyleName(styles.captionLabel());
       captionLabel.setText(getLabel() + ":");
       captionPanel.add(captionLabel);
       final Label valueLabel = new Label();

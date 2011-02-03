@@ -64,7 +64,10 @@ public class ManipulatorPopupPanel extends MiniDialogPopupPanel
                   break;
                case Manipulator.Control.PICKER:
                   Manipulator.Picker picker = control.cast();
-                  addedControl = addPickerControl(variable, picker);
+                  addedControl = addPickerControl(
+                                          variable, 
+                                          manipulator.getStringValue(variable), 
+                                          picker);
                   break;
                case Manipulator.Control.CHECKBOX:
                   Manipulator.Checkbox checkbox = control.cast();
@@ -104,10 +107,14 @@ public class ManipulatorPopupPanel extends MiniDialogPopupPanel
       return sliderControl;
    }
    
-   private ManipulatorControl addPickerControl(String variable, 
+   private ManipulatorControl addPickerControl(String variable,
+                                               String value,
                                                Manipulator.Picker picker)
    {
-      return null;
+      ManipulatorControlPicker pickerControl =
+         new ManipulatorControlPicker(variable, value, picker, changedHandler_);
+      mainPanel_.add(pickerControl);
+      return pickerControl;
    }
    
    private ManipulatorControl addCheckboxControl(String variable, 
