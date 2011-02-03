@@ -76,11 +76,13 @@ public class ManipulatorManager
    
    private boolean isNewManipulatorState(Manipulator manipulator)
    {
+      if (manipulator_ == null && manipulator == null)
+         return false;
       if (manipulator_ == null && manipulator != null)
          return true;
-      if (manipulator == null && manipulator_ != null)
+      else if (manipulator == null && manipulator_ != null)
          return true;
-      if (!manipulator_.getID().equals(manipulator.getID()))
+      else if (!manipulator_.getID().equals(manipulator.getID()))
          return true;
       else
          return false;
