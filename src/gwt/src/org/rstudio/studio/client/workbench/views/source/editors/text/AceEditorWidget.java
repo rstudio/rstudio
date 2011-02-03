@@ -17,6 +17,7 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.events.*;
+import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.server.Void;
 
 public class AceEditorWidget extends Composite
@@ -41,6 +42,7 @@ public class AceEditorWidget extends Composite
       env_ = environment;
 
       initWidget(new HTML());
+      FontSizer.applyNormalFontSize(this);
       setSize("100%", "100%");
    }
 

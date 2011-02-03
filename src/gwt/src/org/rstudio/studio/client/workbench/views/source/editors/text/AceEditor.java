@@ -439,12 +439,12 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
 
    public void updateBodyMinHeight()
    {
-      //To change body of implemented methods use File | Settings | File Templates.
+      widget_.onResize();
    }
 
    public void setFontSize(Size size)
    {
-      //To change body of implemented methods use File | Settings | File Templates.
+      // No change needed--the AceEditorWidget uses the "normalSize" style 
    }
 
    public HandlerRegistration addValueChangeHandler(
