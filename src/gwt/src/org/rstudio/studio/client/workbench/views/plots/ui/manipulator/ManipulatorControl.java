@@ -1,12 +1,13 @@
 package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 
+import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
 
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.ui.Composite;
 
-public class ManipulatorControl extends Composite
+public abstract class ManipulatorControl extends Composite implements CanFocus
 {
    public ManipulatorControl(String variable, 
                              Manipulator.Control control,

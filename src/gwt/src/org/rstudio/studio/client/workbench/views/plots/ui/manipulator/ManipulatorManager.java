@@ -90,6 +90,8 @@ public class ManipulatorManager
                manipulatorPopup_.setPopupPosition(
                      plotsSurface_.getAbsoluteLeft() - offsetWidth + 22,
                      plotsSurface_.getAbsoluteTop() - 6);
+               
+               manipulatorPopup_.focusFirstControl();
             }
             
          }) ;

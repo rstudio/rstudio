@@ -44,10 +44,10 @@ public class ManipulatorControlSlider extends ManipulatorControl
       final double min = slider.getMin();
       final double max = slider.getMax();
       final double range = max - min;
-      final SliderBar sliderBar = new SliderBar(min, max, this);
+      sliderBar_ = new SliderBar(min, max, this);
       
       // show labels only at the beginning and end
-      sliderBar.setNumLabels(1);
+      sliderBar_.setNumLabels(1);
       
       // set step size (default to 1 or continuous decimal as appropriate)
       double step = slider.getStep();
@@ -59,48 +59,53 @@ public class ManipulatorControlSlider extends ManipulatorControl
          else
             step = 1;
       }
-      sliderBar.setStepSize(step);
+      sliderBar_.setStepSize(step);
       
       // optional tick marks 
       if (slider.getTicks())
       {
          double numTicks = range / step;
-         sliderBar.setNumTicks(new Double(numTicks).intValue());
+         sliderBar_.setNumTicks(new Double(numTicks).intValue());
       }
       else 
       {
          // always at beginning and end
-         sliderBar.setNumTicks(1); 
+         sliderBar_.setNumTicks(1); 
       }
       
       // update label on change
-      sliderBar.addChangeListener(new ChangeListener() {
+      sliderBar_.addChangeListener(new ChangeListener() {
          @Override
          public void onChange(Widget sender)
          {
-            valueLabel.setText(formatLabel(sliderBar, 
-                                           sliderBar.getCurrentValue()));
+            valueLabel.setText(formatLabel(sliderBar_, 
+                                           sliderBar_.getCurrentValue()));
          } 
       });
-      sliderBar.setCurrentValue(value);
+      sliderBar_.setCurrentValue(value);
       
       // fire changed even on slide completed
-      sliderBar.addSlideCompletedListener(new ChangeListener() {
+      sliderBar_.addSlideCompletedListener(new ChangeListener() {
          @Override
          public void onChange(Widget sender)
          {
             ManipulatorControlSlider.this.onValueChanged(
-                        new JSONNumber(sliderBar.getCurrentValue()));
+                        new JSONNumber(sliderBar_.getCurrentValue()));
          }
          
       });
       
       // add slider bar and fully initialize widget
-      panel.add(sliderBar);
+      panel.add(sliderBar_);
       initWidget(panel);
       setStyleName(styles.slider());
    }
    
+   @Override
+   public void focus()
+   {
+      sliderBar_.setFocus(true);
+   }
    
    
    @Override
@@ -114,4 +119,6 @@ public class ManipulatorControlSlider extends ManipulatorControl
       double truncatedValue = (double)(Math.round(value));
       return value != truncatedValue;       
    }
+   
+   private SliderBar sliderBar_ ;
 }

@@ -1,6 +1,7 @@
 package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.MiniDialogPopupPanel;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
 
@@ -24,7 +25,7 @@ public class ManipulatorPopupPanel extends MiniDialogPopupPanel
       
       setCaption("Manipulate");
    
-        
+       
       
       
    }
@@ -50,24 +51,30 @@ public class ManipulatorPopupPanel extends MiniDialogPopupPanel
             String variable = variables.get(i);
             try
             {
+               ManipulatorControl addedControl = null;
                Manipulator.Control control = manipulator.getControl(variable);
                switch(control.getType())
                {
                case Manipulator.Control.SLIDER:
                   Manipulator.Slider slider = control.cast();
-                  addSliderControl(variable, 
-                                   manipulator.getDoubleValue(variable), 
-                                   slider);
+                  addedControl = addSliderControl(
+                                          variable, 
+                                          manipulator.getDoubleValue(variable), 
+                                          slider);
                   break;
                case Manipulator.Control.PICKER:
                   Manipulator.Picker picker = control.cast();
-                  addPickerControl(variable, picker);
+                  addedControl = addPickerControl(variable, picker);
                   break;
                case Manipulator.Control.CHECKBOX:
                   Manipulator.Checkbox checkbox = control.cast();
-                  addCheckboxControl(variable, checkbox);
+                  addedControl = addCheckboxControl(variable, checkbox);
                   break;
                }
+               
+               // save reference to first control (for setting focus)
+               if (i == 0)
+                  firstControl_ = addedControl;
             }
             catch(Throwable e)
             {
@@ -79,24 +86,34 @@ public class ManipulatorPopupPanel extends MiniDialogPopupPanel
       }
    }
    
-   private void addSliderControl(String variable, 
-                                 double value, 
-                                 Manipulator.Slider slider)
+   public void focusFirstControl()
+   {
+      if (firstControl_ != null) // defensive
+      {
+         FocusHelper.setFocusDeferred(firstControl_);
+      }
+   }
+   
+   private ManipulatorControl addSliderControl(String variable, 
+                                               double value, 
+                                               Manipulator.Slider slider)
    {
       ManipulatorControlSlider sliderControl = 
          new ManipulatorControlSlider(variable, value, slider, changedHandler_);
       mainPanel_.add(sliderControl);
+      return sliderControl;
    }
    
-   private void addPickerControl(String variable, Manipulator.Picker picker)
+   private ManipulatorControl addPickerControl(String variable, 
+                                               Manipulator.Picker picker)
    {
-      
+      return null;
    }
    
-   private void addCheckboxControl(String variable, 
-                                   Manipulator.Checkbox checkbox)
+   private ManipulatorControl addCheckboxControl(String variable, 
+                                                 Manipulator.Checkbox checkbox)
    {
-      
+      return null;
    }
    
    @Override
@@ -119,6 +136,7 @@ public class ManipulatorPopupPanel extends MiniDialogPopupPanel
    }
   
    private VerticalPanel mainPanel_;
+   private ManipulatorControl firstControl_;
    private final ManipulatorChangedHandler changedHandler_;
 
 }
