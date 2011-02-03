@@ -9,6 +9,7 @@ import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
 import org.rstudio.core.client.events.NativeKeyPressEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.EditSession;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer;
 
 public class AceEditorNative extends JavaScriptObject {
 
@@ -16,6 +17,10 @@ public class AceEditorNative extends JavaScriptObject {
 
    public native final EditSession getSession() /*-{
       return this.getSession();
+   }-*/;
+
+   public native final Renderer getRenderer() /*-{
+      return this.renderer;
    }-*/;
 
    public native final void resize() /*-{
@@ -54,6 +59,10 @@ public class AceEditorNative extends JavaScriptObject {
       event.addListener(this.textInput.getElement(), "keydown", $entry(function(e) {
          return @org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorNative::fireKeyDown(Lcom/google/gwt/dom/client/NativeEvent;Lcom/google/gwt/event/shared/HasHandlers;)(e, handlers);
       }));
+   }-*/;
+
+   public native final void onKeyPress(HasHandlers handlers) /*-{
+      var event = $wnd.require("pilot/event");
       event.addListener(this.textInput.getElement(), "keypress", $entry(function(e) {
          return @org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorNative::fireKeyPress(Lcom/google/gwt/dom/client/NativeEvent;Lcom/google/gwt/event/shared/HasHandlers;)(e, handlers);
       }));

@@ -1,6 +1,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 
 public class Selection extends JavaScriptObject
 {
@@ -24,4 +25,7 @@ public class Selection extends JavaScriptObject
       this.moveCursorTo(row, column, preventUpdateDesiredColumn);
    }-*/;
 
+   public native final boolean isEmpty() /*-{
+      return this.isEmpty();
+   }-*/;
 }

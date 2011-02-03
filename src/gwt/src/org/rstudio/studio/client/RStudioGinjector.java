@@ -25,6 +25,7 @@ import org.rstudio.studio.client.common.filetypes.NewFileMenu;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.source.DocsMenu;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 
 @GinModules(RStudioGinModule.class)
 public interface RStudioGinjector extends Ginjector
@@ -34,6 +35,8 @@ public interface RStudioGinjector extends Ginjector
 
    void injectMembers(DesktopApplicationHeader desktopApplicationHeader);
    void injectMembers(WebApplicationHeader webApplicationHeader);
+
+   void injectMembers(AceEditor aceEditor);
 
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

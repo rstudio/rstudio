@@ -23,6 +23,7 @@ import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.ui.ApplicationWindow;
 import org.rstudio.studio.client.common.DefaultGlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.reditor.model.REditorServerOperations;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.remote.RemoteServer;
@@ -129,6 +130,7 @@ public class RStudioGinModule extends AbstractGinModule
 
       bind(ApplicationServerOperations.class).to(RemoteServer.class) ;
       bind(ChooseFileServerOperations.class).to(RemoteServer.class) ;
+      bind(CodeToolsServerOperations.class).to(RemoteServer.class) ;
       bind(ConsoleServerOperations.class).to(RemoteServer.class) ;
       bind(SourceServerOperations.class).to(RemoteServer.class) ;
       bind(DataServerOperations.class).to(RemoteServer.class);
