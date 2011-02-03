@@ -23,10 +23,6 @@
 }
 
 .slider .gwt-SliderBar-shell {
-  border: 2px solid #faf9f7;
-  border-right: 2px solid #848280;
-  border-bottom: 2px solid #848280;
-  background-color: #efebe7;
   height: 34pt;
   width: 100%;
 }
