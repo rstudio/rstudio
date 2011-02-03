@@ -30,9 +30,9 @@
 .rs.addGlobalFunction( "slider", function(min,
                                           max,
                                           value = min,
-                                          label = NA,
-                                          step = NA,
-                                          ticks = if (is.na(step)) FALSE else TRUE)
+                                          label = NULL,
+                                          step = NULL,
+                                          ticks = if (is.null(step)) FALSE else TRUE)
 {
   # validate inputs
   if (!is.numeric(value) || !is.numeric(min) || !is.numeric(max))
@@ -43,7 +43,7 @@
     stop(paste(type, "value", value, "is greater than the specified maximum"))
   else if (min > max)
     stop(paste(type, "maximum is greater than minimum"))
-  else if ( !is.na(step) )
+  else if ( !is.null(step) )
   {
     if ( !is.numeric(step) )
       stop("step is not a numeric value")
@@ -52,11 +52,11 @@
   }
   else if ( !is.logical(ticks) )
     stop("ticks is not a logical value")
-  else if ( !is.na(label) && !is.character(label) )
+  else if ( !is.null(label) && !is.character(label) )
     stop("label is not a character value")
   
   # serialize "default" step as -1
-  if ( is.na(step) )
+  if ( is.null(step) )
     step <- -1
   
   # create slider and return it
@@ -71,7 +71,7 @@
   return (slider)
 })
 
-.rs.addGlobalFunction( "picker", function(choices, value = choices[1], label = NA)
+.rs.addGlobalFunction( "picker", function(choices, value = choices[1], label = NULL)
 {
   # validate inputs
   if ( !is.character(value) || (length(value) != 1) )
@@ -82,7 +82,7 @@
     stop("choices must contain at least one value")
   else if ( !(value %in% choices) )
     stop("value doesn't match one of the supplied choices") 
-  else if ( !is.na(label) && !is.character(label) )
+  else if ( !is.null(label) && !is.character(label) )
     stop("label is not a character value")
    
   picker <- list(type = 1,
