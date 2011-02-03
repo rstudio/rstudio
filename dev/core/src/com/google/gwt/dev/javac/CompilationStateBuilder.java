@@ -62,67 +62,72 @@ public class CompilationStateBuilder {
 
       public void process(CompilationUnitBuilder builder,
           CompilationUnitDeclaration cud, List<CompiledClass> compiledClasses) {
-        Map<MethodDeclaration, JsniMethod> jsniMethods = JsniCollector.collectJsniMethods(
-            cud, builder.getSource(), jsProgram);
+        Event compilationStateBuilderProcess = SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
+        try {
+          Map<MethodDeclaration, JsniMethod> jsniMethods = JsniCollector.collectJsniMethods(
+              cud, builder.getSource(), jsProgram);
 
-        JSORestrictionsChecker.check(jsoState, cud);
+          JSORestrictionsChecker.check(jsoState, cud);
 
-        // JSNI check + collect dependencies.
-        final Set<String> jsniDeps = new HashSet<String>();
-        Map<String, Binding> jsniRefs = new HashMap<String, Binding>();
-        JsniChecker.check(cud, jsoState, jsniMethods, jsniRefs,
-            new JsniChecker.TypeResolver() {
-              public ReferenceBinding resolveType(String typeName) {
-                ReferenceBinding resolveType = compiler.resolveType(typeName);
-                if (resolveType != null) {
-                  jsniDeps.add(String.valueOf(resolveType.qualifiedSourceName()));
+          // JSNI check + collect dependencies.
+          final Set<String> jsniDeps = new HashSet<String>();
+          Map<String, Binding> jsniRefs = new HashMap<String, Binding>();
+          JsniChecker.check(cud, jsoState, jsniMethods, jsniRefs,
+              new JsniChecker.TypeResolver() {
+                public ReferenceBinding resolveType(String typeName) {
+                  ReferenceBinding resolveType = compiler.resolveType(typeName);
+                  if (resolveType != null) {
+                    jsniDeps.add(String.valueOf(resolveType.qualifiedSourceName()));
+                  }
+                  return resolveType;
                 }
-                return resolveType;
-              }
-            });
+              });
 
-        ArtificialRescueChecker.check(cud, builder.isGenerated());
-        BinaryTypeReferenceRestrictionsChecker.check(cud);
+          ArtificialRescueChecker.check(cud, builder.isGenerated());
+          BinaryTypeReferenceRestrictionsChecker.check(cud);
 
-        MethodArgNamesLookup methodArgs = MethodParamCollector.collect(cud);
+          MethodArgNamesLookup methodArgs = MethodParamCollector.collect(cud);
 
-        StringInterner interner = StringInterner.get();
-        String packageName = interner.intern(Shared.getPackageName(builder.getTypeName()));
-        List<String> unresolvedQualified = new ArrayList<String>();
-        List<String> unresolvedSimple = new ArrayList<String>();
-        for (char[] simpleRef : cud.compilationResult().simpleNameReferences) {
-          unresolvedSimple.add(interner.intern(String.valueOf(simpleRef)));
-        }
-        for (char[][] qualifiedRef : cud.compilationResult().qualifiedReferences) {
-          unresolvedQualified.add(interner.intern(CharOperation.toString(qualifiedRef)));
-        }
-        for (String jsniDep : jsniDeps) {
-          unresolvedQualified.add(interner.intern(jsniDep));
-        }
-        ArrayList<String> apiRefs = compiler.collectApiRefs(cud);
-        for (int i = 0; i < apiRefs.size(); ++i) {
-          apiRefs.set(i, interner.intern(apiRefs.get(i)));
-        }
-        Dependencies dependencies = new Dependencies(packageName,
-            unresolvedQualified, unresolvedSimple, apiRefs);
+          StringInterner interner = StringInterner.get();
+          String packageName = interner.intern(Shared.getPackageName(builder.getTypeName()));
+          List<String> unresolvedQualified = new ArrayList<String>();
+          List<String> unresolvedSimple = new ArrayList<String>();
+          for (char[] simpleRef : cud.compilationResult().simpleNameReferences) {
+            unresolvedSimple.add(interner.intern(String.valueOf(simpleRef)));
+          }
+          for (char[][] qualifiedRef : cud.compilationResult().qualifiedReferences) {
+            unresolvedQualified.add(interner.intern(CharOperation.toString(qualifiedRef)));
+          }
+          for (String jsniDep : jsniDeps) {
+            unresolvedQualified.add(interner.intern(jsniDep));
+          }
+          ArrayList<String> apiRefs = compiler.collectApiRefs(cud);
+          for (int i = 0; i < apiRefs.size(); ++i) {
+            apiRefs.set(i, interner.intern(apiRefs.get(i)));
+          }
+          Dependencies dependencies = new Dependencies(packageName,
+              unresolvedQualified, unresolvedSimple, apiRefs);
 
-        CompilationUnit unit = builder.build(compiledClasses, dependencies,
-            jsniMethods.values(), methodArgs,
-            cud.compilationResult().getProblems());
-        addValidUnit(unit);
-        // Cache the valid unit for future compiles.
-        ContentId contentId = builder.getContentId();
-        unitCache.put(contentId, unit);
-        if (builder instanceof ResourceCompilationUnitBuilder) {
-          ResourceCompilationUnitBuilder rcub = (ResourceCompilationUnitBuilder) builder;
-          ResourceTag resourceTag = new ResourceTag(rcub.getLastModifed(),
-              contentId);
-          resourceContentCache.put(builder.getLocation(), resourceTag);
-          keepAliveLatestVersion.put(resourceTag, unit);
-        } else if (builder instanceof GeneratedCompilationUnitBuilder) {
-          keepAliveRecentlyGenerated.put(unit.getTypeName(), unit);
+          CompilationUnit unit = builder.build(compiledClasses, dependencies,
+              jsniMethods.values(), methodArgs,
+              cud.compilationResult().getProblems());
+          addValidUnit(unit);
+          // Cache the valid unit for future compiles.
+          ContentId contentId = builder.getContentId();
+          unitCache.put(contentId, unit);
+          if (builder instanceof ResourceCompilationUnitBuilder) {
+            ResourceCompilationUnitBuilder rcub = (ResourceCompilationUnitBuilder) builder;
+            ResourceTag resourceTag = new ResourceTag(rcub.getLastModifed(),
+                contentId);
+            resourceContentCache.put(builder.getLocation(), resourceTag);
+            keepAliveLatestVersion.put(resourceTag, unit);
+          } else if (builder instanceof GeneratedCompilationUnitBuilder) {
+            keepAliveRecentlyGenerated.put(unit.getTypeName(), unit);
+          }
+          newlyBuiltUnits.add(unit);
+        } finally {
+          compilationStateBuilderProcess.end();
         }
-        newlyBuiltUnits.add(unit);
       }
     }
 
@@ -352,43 +357,37 @@ public class CompilationStateBuilder {
    */
   public synchronized CompilationState doBuildFrom(TreeLogger logger,
       Set<Resource> resources, AdditionalTypeProviderDelegate compilerDelegate) {
-    Event compilationStateBuilderProcess = SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
+    // Units we definitely want to build.
+    List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
 
-    try {
-      // Units we definitely want to build.
-      List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
+    // Units we don't want to rebuild unless we have to.
+    Map<CompilationUnitBuilder, CompilationUnit> cachedUnits = new IdentityHashMap<CompilationUnitBuilder, CompilationUnit>();
 
-      // Units we don't want to rebuild unless we have to.
-      Map<CompilationUnitBuilder, CompilationUnit> cachedUnits = new IdentityHashMap<CompilationUnitBuilder, CompilationUnit>();
+    CompileMoreLater compileMoreLater = new CompileMoreLater(compilerDelegate);
 
-      CompileMoreLater compileMoreLater = new CompileMoreLater(compilerDelegate);
-
-      // For each incoming Java source file...
-      for (Resource resource : resources) {
-        String typeName = Shared.toTypeName(resource.getPath());
-        // Create a builder for all incoming units.
-        ResourceCompilationUnitBuilder builder = new ResourceCompilationUnitBuilder(
-            typeName, resource);
-        // Try to get an existing unit from the cache.
-        String location = resource.getLocation();
-        ResourceTag tag = resourceContentCache.get(location);
-        if (tag != null && tag.getLastModified() == resource.getLastModified()) {
-          ContentId contentId = tag.getContentId();
-          CompilationUnit existingUnit = unitCache.get(contentId);
-          if (existingUnit != null) {
-            cachedUnits.put(builder, existingUnit);
-            compileMoreLater.addValidUnit(existingUnit);
-            continue;
-          }
+    // For each incoming Java source file...
+    for (Resource resource : resources) {
+      String typeName = Shared.toTypeName(resource.getPath());
+      // Create a builder for all incoming units.
+      ResourceCompilationUnitBuilder builder = new ResourceCompilationUnitBuilder(
+          typeName, resource);
+      // Try to get an existing unit from the cache.
+      String location = resource.getLocation();
+      ResourceTag tag = resourceContentCache.get(location);
+      if (tag != null && tag.getLastModified() == resource.getLastModified()) {
+        ContentId contentId = tag.getContentId();
+        CompilationUnit existingUnit = unitCache.get(contentId);
+        if (existingUnit != null) {
+          cachedUnits.put(builder, existingUnit);
+          compileMoreLater.addValidUnit(existingUnit);
+          continue;
         }
-        builders.add(builder);
       }
-      Collection<CompilationUnit> resultUnits = compileMoreLater.compile(
-          logger, builders, cachedUnits);
-      return new CompilationState(logger, resultUnits, compileMoreLater);
-    } finally {
-      compilationStateBuilderProcess.end();
+      builders.add(builder);
     }
+    Collection<CompilationUnit> resultUnits = compileMoreLater.compile(logger,
+        builders, cachedUnits);
+    return new CompilationState(logger, resultUnits, compileMoreLater);
   }
 
   /**
