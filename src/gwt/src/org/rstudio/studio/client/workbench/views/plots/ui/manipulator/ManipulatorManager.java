@@ -1,6 +1,7 @@
 package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -11,6 +12,7 @@ import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 public class ManipulatorManager
 {
    public ManipulatorManager(Panel plotsSurface,
+                             Commands commands,
                              ManipulatorChangedHandler changedHandler)
    {
       // references
@@ -30,7 +32,7 @@ public class ManipulatorManager
                }
             });
       manipulatorButton_.addStyleName(ManipulatorStyles.INSTANCE.manipulateButton());
-      manipulatorButton_.setTitle("Show plot manipulator");
+      manipulatorButton_.setTitle(commands.showManipulator().getTooltip());
       plotsSurface_.add(manipulatorButton_);
       manipulatorButton_.setVisible(false);
       
@@ -64,6 +66,12 @@ public class ManipulatorManager
             manipulatorPopup_.hide();
          }
       }
+   }
+   
+   public void showManipulator()
+   {
+      if (manipulator_ != null)
+         showManipulatorPopup();
    }
    
    private boolean isNewManipulatorState(Manipulator manipulator)

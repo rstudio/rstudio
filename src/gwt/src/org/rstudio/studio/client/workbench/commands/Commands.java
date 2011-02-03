@@ -104,6 +104,7 @@ public abstract class Commands extends CommandBundle
    public abstract AppCommand clearPlots();
    public abstract AppCommand refreshPlot();
    public abstract AppCommand activatePlots();
+   public abstract AppCommand showManipulator();
 
    // Packages
    public abstract AppCommand installPackage();

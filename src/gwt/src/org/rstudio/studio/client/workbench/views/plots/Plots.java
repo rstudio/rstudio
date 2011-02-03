@@ -36,6 +36,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
@@ -82,6 +83,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    @Inject
    public Plots(final Display view,
                 GlobalDisplay globalDisplay,
+                Commands commands,
                 final PlotsServerOperations server,
                 Session session)
    {
@@ -107,6 +109,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
 
       manipulatorManager_ = new ManipulatorManager(
          view_.getPlotsSurface(),
+         commands,
          new ManipulatorChangedHandler()
          { 
             @Override
@@ -313,6 +316,11 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       view_.bringToFront();
       view_.setProgress(true);
       server_.refreshPlot(new PlotRequestCallback());
+   }
+   
+   void onShowManipulator()
+   {
+      manipulatorManager_.showManipulator();
    }
 
    public Display getView()
