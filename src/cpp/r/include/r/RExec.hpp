@@ -156,7 +156,6 @@ public:
                         
    core::Error call(SEXP evalNS = R_GlobalEnv);
 
-   core::Error call(SEXP* pResultSEXP);
    core::Error call(SEXP* pResultSEXP, sexp::Protect* pProtect);
    core::Error call(SEXP evalNS, SEXP* pResultSEXP, sexp::Protect* pProtect);
  

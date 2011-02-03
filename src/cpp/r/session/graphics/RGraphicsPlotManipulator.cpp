@@ -62,8 +62,9 @@ Error PlotManipulator::load(const FilePath& filePath)
    // call manipulator load
    r::exec::RFunction manipLoad(".rs.manipulatorLoad");
    manipLoad.addParam(filePath.absolutePath());
+   r::sexp::Protect rProtect;
    SEXP manipSEXP;
-   Error error = manipLoad.call(&manipSEXP);
+   Error error = manipLoad.call(&manipSEXP, &rProtect);
    if (error)
       return error;
 
@@ -106,8 +107,9 @@ SEXP PlotManipulator::get(const std::string& name) const
       r::exec::RFunction getFunction("get");
       getFunction.addParam(name);
       getFunction.addParam("envir", sexp());
+      r::sexp::Protect rProtect;
       SEXP valueSEXP;
-      Error error = getFunction.call(&valueSEXP);
+      Error error = getFunction.call(&valueSEXP, &rProtect);
       if (error)
       {
          LOG_ERROR(error);
@@ -141,8 +143,9 @@ SEXP PlotManipulator::getValuesList() const
       r::exec::RFunction mgetFunction("mget");
       mgetFunction.addParam(variablesSEXP);
       mgetFunction.addParam("envir", sexp());
+      r::sexp::Protect rProtect;
       SEXP valuesSEXP;
-      Error error = mgetFunction.call(&valuesSEXP);
+      Error error = mgetFunction.call(&valuesSEXP, &rProtect);
       if (error)
       {
          LOG_ERROR(error);

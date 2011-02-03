@@ -261,12 +261,6 @@ Error RFunction::call(SEXP evalNS)
    return call(evalNS, &ignoredResultSEXP, &rProtect);  
 }
 
-Error RFunction::call(SEXP* pResultSEXP)
-{
-   sexp::Protect rProtect;
-   return call(R_GlobalEnv, pResultSEXP, &rProtect);
-}
-
 Error RFunction::call(SEXP* pResultSEXP, sexp::Protect* pProtect)
 {
    return call(R_GlobalEnv, pResultSEXP, pProtect);
