@@ -70,8 +70,11 @@ public class ManipulatorPopupPanel extends MiniDialogPopupPanel
                                           picker);
                   break;
                case Manipulator.Control.CHECKBOX:
-                  Manipulator.Checkbox checkbox = control.cast();
-                  addedControl = addCheckboxControl(variable, checkbox);
+                  Manipulator.CheckBox checkBox = control.cast();
+                  addedControl = addCheckBoxControl(
+                                          variable, 
+                                          manipulator.getBooleanValue(variable),
+                                          checkBox);
                   break;
                }
                
@@ -117,10 +120,14 @@ public class ManipulatorPopupPanel extends MiniDialogPopupPanel
       return pickerControl;
    }
    
-   private ManipulatorControl addCheckboxControl(String variable, 
-                                                 Manipulator.Checkbox checkbox)
+   private ManipulatorControl addCheckBoxControl(String variable, 
+                                                 boolean value,
+                                                 Manipulator.CheckBox checkBox)
    {
-      return null;
+      ManipulatorControlCheckBox checkBoxControl =
+         new ManipulatorControlCheckBox(variable, value, checkBox, changedHandler_);
+      mainPanel_.add(checkBoxControl);
+      return checkBoxControl;
    }
    
    @Override

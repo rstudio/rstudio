@@ -14,6 +14,8 @@ public interface ManipulatorStyles extends CssResource
 
    String picker();
    
+   String checkBox();
+   
    String manipulateButton();
 }
 

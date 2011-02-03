@@ -66,9 +66,9 @@ public class Manipulator extends JavaScriptObject
       }-*/;
    }
    
-   public static class Checkbox extends Control
+   public static class CheckBox extends Control
    {
-      protected Checkbox()
+      protected CheckBox()
       {
       }
    }
@@ -80,13 +80,18 @@ public class Manipulator extends JavaScriptObject
    public final native JsArrayString getVariables() /*-{
       return this.variables;
    }-*/;
-   
+      
    public final native double getDoubleValue(String name) /*-{
       var valueArray = this.values[name];
       return valueArray[0];
    }-*/;
    
    public final native String getStringValue(String name) /*-{
+      var valueArray = this.values[name];
+      return valueArray[0];
+   }-*/;
+   
+   public final native boolean getBooleanValue(String name) /*-{
       var valueArray = this.values[name];
       return valueArray[0];
    }-*/;
