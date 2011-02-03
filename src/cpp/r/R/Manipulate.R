@@ -27,12 +27,12 @@
    return (manipulator)
 })
 
-.rs.addGlobalFunction( "slider", function(value, 
-                                          min, 
+.rs.addGlobalFunction( "slider", function(min,
                                           max,
-                                          step = 1,
-                                          ticks = FALSE,
-                                          label = NULL)
+                                          value = min,
+                                          label = NA,
+                                          step = NA,
+                                          ticks = if (is.na(step)) FALSE else TRUE)
 {
   # validate inputs
   if (!is.numeric(value) || !is.numeric(min) || !is.numeric(max))
@@ -43,26 +43,35 @@
     stop(paste(type, "value", value, "is greater than the specified maximum"))
   else if (min > max)
     stop(paste(type, "maximum is greater than minimum"))
-  else if ( !is.numeric(step) )
-    stop("step is not a numeric value")
+  else if ( !is.na(step) )
+  {
+    if ( !is.numeric(step) )
+      stop("step is not a numeric value")
+    if ( step > (max - min) )
+      stop("step is greater than range")
+  }
   else if ( !is.logical(ticks) )
     stop("ticks is not a logical value")
-  else if ( !is.null(label) && !is.character(label) )
+  else if ( !is.na(label) && !is.character(label) )
     stop("label is not a character value")
+  
+  # serialize "default" step as -1
+  if ( is.na(step) )
+    step <- -1
   
   # create slider and return it
   slider <- list(type = 0,
-                 initialValue = value,
                  min = min,
                  max = max,
+                 initialValue = value,
+                 label = label,
                  step = step,
-                 ticks = ticks,
-                 label = label)
+                 ticks = ticks)
   class(slider) <- "manipulator.slider"
   return (slider)
 })
 
-.rs.addGlobalFunction( "picker", function(value, choices, label = NULL)
+.rs.addGlobalFunction( "picker", function(choices, value = choices[1], label = NA)
 {
   # validate inputs
   if ( !is.character(value) || (length(value) != 1) )
@@ -73,7 +82,7 @@
     stop("choices must contain at least one value")
   else if ( !(value %in% choices) )
     stop("value doesn't match one of the supplied choices") 
-  else if ( !is.null(label) && !is.character(label) )
+  else if ( !is.na(label) && !is.character(label) )
     stop("label is not a character value")
    
   picker <- list(type = 1,
@@ -84,7 +93,7 @@
   return (picker) 
 })
 
-.rs.addGlobalFunction( "checkbox", function(value, label)
+.rs.addGlobalFunction( "checkbox", function(label, value = FALSE)
 {
   # validate inputs
   if ( !is.character(label) )

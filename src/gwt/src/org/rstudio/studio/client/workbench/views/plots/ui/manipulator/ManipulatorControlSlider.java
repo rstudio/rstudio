@@ -41,27 +41,28 @@ public class ManipulatorControlSlider extends ManipulatorControl
       panel.add(captionPanel);
      
       // create with range and custom formatter
-      final SliderBar sliderBar = new SliderBar(slider.getMin(), 
-                                                slider.getMax(),
-                                                this);
+      final double min = slider.getMin();
+      final double max = slider.getMax();
+      final double range = max - min;
+      final SliderBar sliderBar = new SliderBar(min, max, this);
       
       // show labels only at the beginning and end
       sliderBar.setNumLabels(1);
       
-      // compute step size (default to 1, but if the range is less than 2
-      // then is probably should be a continuous decimal treatment)
-      boolean overrodeDefaultStep = false;
-      double range = slider.getMax() - slider.getMin();
+      // set step size (default to 1 or continuous decimal as appropriate)
       double step = slider.getStep();
-      if (step == 1 && range < 2)
-      {
-         step = range / 250; // ~ one step per pixel
-         overrodeDefaultStep = true;
+      if (step == -1)
+      {        
+         // short range or decimals means continous decimal
+         if (range < 2 || hasDecimals(max) || hasDecimals(min) )
+            step = range / 250; // ~ one step per pixel
+         else
+            step = 1;
       }
       sliderBar.setStepSize(step);
       
-      // optional tick marks
-      if (slider.getTicks() && !overrodeDefaultStep)
+      // optional tick marks 
+      if (slider.getTicks())
       {
          double numTicks = range / step;
          sliderBar.setNumTicks(new Double(numTicks).intValue());
@@ -100,9 +101,17 @@ public class ManipulatorControlSlider extends ManipulatorControl
       setStyleName(styles.slider());
    }
    
+   
+   
    @Override
    public String formatLabel(SliderBar slider, double value)
    {
      return StringUtil.prettyFormatNumber(value);
+   }
+   
+   private static boolean hasDecimals(double value)
+   {
+      double truncatedValue = (double)(Math.round(value));
+      return value != truncatedValue;       
    }
 }

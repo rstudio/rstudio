@@ -5,7 +5,10 @@ import org.rstudio.core.client.widget.MiniDialogPopupPanel;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
 
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
 
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -94,6 +97,25 @@ public class ManipulatorPopupPanel extends MiniDialogPopupPanel
                                    Manipulator.Checkbox checkbox)
    {
       
+   }
+   
+   @Override
+   public void onPreviewNativeEvent(Event.NativePreviewEvent event)
+   {
+ 
+      if (event.getTypeInt() == Event.ONKEYDOWN)
+      {
+         NativeEvent nativeEvent = event.getNativeEvent();
+         switch (nativeEvent.getKeyCode())
+         {
+            case KeyCodes.KEY_ESCAPE:
+               nativeEvent.preventDefault();
+               nativeEvent.stopPropagation();
+               event.cancel();
+               hideMiniDialog();
+               break;
+         } 
+      }
    }
   
    private VerticalPanel mainPanel_;

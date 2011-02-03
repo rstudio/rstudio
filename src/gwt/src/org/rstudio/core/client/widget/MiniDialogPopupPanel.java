@@ -55,7 +55,7 @@ public abstract class MiniDialogPopupPanel extends DecoratedPopupPanel
             new ClickHandler() { 
                public void onClick(ClickEvent event)
                {
-                  MiniDialogPopupPanel.this.hide();
+                  MiniDialogPopupPanel.this.hideMiniDialog();
                }
             });
       hideButton.setTitle("Close");
@@ -79,7 +79,10 @@ public abstract class MiniDialogPopupPanel extends DecoratedPopupPanel
    
    protected abstract Widget createMainWidget();
    
-   
+   protected void hideMiniDialog()
+   {
+      hide();
+   }
    
    private VerticalPanel verticalPanel_;
    private Label captionLabel_ ;
