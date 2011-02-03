@@ -140,7 +140,7 @@
   }
 })
 
-.rs.addGlobalFunction( "manipulate", function(code, ..., c = NA)
+.rs.addGlobalFunction( "manipulate", function(code, ..., c = NULL)
 {
   # create new list container for the manipulator
   manipulator <- new.env(parent = parent.frame())
@@ -158,9 +158,9 @@
   
   # special handling for arguments named 'c' -- they seem to show up
   # as NULL when doing list(...) to get the arguments
-  if (!is.na(c))
+  if (!is.null(c))
     controls$c <- c
-    
+  
   # get the control names
   controlNames <- names(controls)
  
