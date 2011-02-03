@@ -449,7 +449,7 @@ Error setManipulatorValues(const json::JsonRpcRequest& request,
 
    // render
    if (graphics::display().hasOutput())
-      graphics::display().render(boost::bind(enquePlotsChanged, _1, true, true));
+      graphics::display().render(boost::bind(enquePlotsChanged, _1, true, false));
 
    return Success();
 }
