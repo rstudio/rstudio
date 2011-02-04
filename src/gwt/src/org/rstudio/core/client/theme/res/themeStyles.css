@@ -1,6 +1,7 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
+@external ace_text-layer;
 @external cueText;
 @external search;
 @external highlight, disabled;
@@ -112,6 +113,10 @@ textarea {
 pre {
   font-family: fixedWidthFont;
   font-size: 12px;
+}
+
+.ace_text-layer {
+  font-family: fixedWidthFont !important;
 }
 
 .gwt-MenuBar {
