@@ -73,24 +73,31 @@ Error PlotManipulator::load(const FilePath& filePath)
 
 void PlotManipulator::asJson(core::json::Value* pValue) const
 {
-   // build manipulator json
-   core::json::Object manipulator;
+   if (!empty())
+   {
+      // build manipulator json
+      core::json::Object manipulator;
 
-   // meta-info
-   manipulator["id"] = getAsJson(".id");
-   manipulator["controls"] = getAsJson(".controls");
-   manipulator["variables"] = getAsJson(".variables");
+      // meta-info
+      manipulator["id"] = getAsJson(".id");
+      manipulator["controls"] = getAsJson(".controls");
+      manipulator["variables"] = getAsJson(".variables");
 
-   // variable values
-   core::json::Value valuesJson;
-   SEXP valuesSEXP = getValuesList();
-   Error error = r::json::jsonValueFromObject(valuesSEXP, &valuesJson);
-   if (error)
-      LOG_ERROR(error);
-   manipulator["values"] = valuesJson;
+      // variable values
+      core::json::Value valuesJson;
+      SEXP valuesSEXP = getValuesList();
+      Error error = r::json::jsonValueFromObject(valuesSEXP, &valuesJson);
+      if (error)
+         LOG_ERROR(error);
+      manipulator["values"] = valuesJson;
 
-   // return manipualtor
-   *pValue = manipulator;
+      // return manipualtor
+      *pValue = manipulator;
+   }
+   else
+   {
+      *pValue = core::json::Value();
+   }
 }
 
 SEXP PlotManipulator::sexp() const

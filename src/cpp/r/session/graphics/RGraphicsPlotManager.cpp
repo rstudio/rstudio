@@ -525,7 +525,7 @@ void PlotManager::onDeviceNewPage(SEXP previousPageSnapshot)
    }
    else
    {
-      // create plot using pending manipulator (if any)
+      // create new plot (use pending manipulator, if any)
       PtrPlot ptrPlot(new Plot(graphicsDevice_,
                                graphicsPath_,
                                plotManipulatorManager().pendingManipulatorSEXP()));
