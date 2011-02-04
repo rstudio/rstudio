@@ -16,11 +16,5 @@
   <!-- Inherit the JUnit support -->
   <inherits name='com.google.gwt.junit.JUnit'/>
 
-  <!-- Make media files available on the server by abusing the 'script' tag -->
   <source path="client"/>
-  <script src="jabberwocky.ogg"></script>
-  <script src="jabberwocky.mp3"></script>
-  <script src="testogg.ogv"></script>
-  <script src="testh264.mp4"></script>
-  <script src="poster.jpg"></script>
 </module>
