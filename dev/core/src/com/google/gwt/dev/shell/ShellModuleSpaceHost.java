@@ -109,7 +109,7 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
       //
       Rules rules = module.getRules();
       StandardGeneratorContext genCtx = new StandardGeneratorContext(
-          compilationState, module, genDir, new ArtifactSet());
+          compilationState, module, genDir, new ArtifactSet(), false);
       
       // Only enable generator result caching if we have a valid rebindCache
       genCtx.setGeneratorResultCachingEnabled((rebindCache != null));

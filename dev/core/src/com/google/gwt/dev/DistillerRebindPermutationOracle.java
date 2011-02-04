@@ -57,7 +57,7 @@ class DistillerRebindPermutationOracle implements RebindPermutationOracle {
     propertyOracles = new StaticPropertyOracle[perms.size()];
     rebindOracles = new RebindOracle[perms.size()];
     generatorContext = new StandardGeneratorContext(compilationState, module,
-        genDir, generatorArtifacts);
+        genDir, generatorArtifacts, true);
     BindingProperty[] orderedProps = perms.getOrderedProperties();
     SortedSet<ConfigurationProperty> configPropSet = module.getProperties().getConfigurationProperties();
     ConfigurationProperty[] configProps = configPropSet.toArray(new ConfigurationProperty[configPropSet.size()]);

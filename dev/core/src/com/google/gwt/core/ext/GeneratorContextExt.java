@@ -51,6 +51,13 @@ public interface GeneratorContextExt extends GeneratorContext {
    * Check whether generator result caching is currently enabled.
    */
   boolean isGeneratorResultCachingEnabled();
+
+  /**
+   * Returns true if generators are being run to produce code for a
+   * production compile. Returns false for dev mode. Generators can use this
+   * information to produce code optimized for the target. 
+   */
+  boolean isProdMode();
   
   /**
    * Mark a type to be reused from the generator result cache.  Calling this

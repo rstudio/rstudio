@@ -297,16 +297,20 @@ public class StandardGeneratorContext implements GeneratorContextExt {
   
   private List<String> cachedTypeNamesToReuse = null;
 
+  private boolean isProdMode;
+  
   /**
    * Normally, the compiler host would be aware of the same types that are
    * available in the supplied type oracle although it isn't strictly required.
    */
   public StandardGeneratorContext(CompilationState compilationState,
-      ModuleDef module, File genDir, ArtifactSet allGeneratedArtifacts) {
+      ModuleDef module, File genDir, ArtifactSet allGeneratedArtifacts, boolean
+      isProdMode) {
     this.compilationState = compilationState;
     this.module = module;
     this.genDir = genDir;
     this.allGeneratedArtifacts = allGeneratedArtifacts;
+    this.isProdMode = isProdMode;
   }
   
   /**
@@ -561,6 +565,11 @@ public class StandardGeneratorContext implements GeneratorContextExt {
   
   public boolean isGeneratorResultCachingEnabled() {
     return generatorResultCachingEnabled;
+  }
+
+  @Override
+  public boolean isProdMode() {
+    return isProdMode;
   }
   
   /**

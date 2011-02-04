@@ -45,8 +45,9 @@ public abstract class GeneratorExt extends Generator {
       String typeName) throws UnableToCompleteException {
     
     // wrap the passed in context
-    GeneratorContextExt contextExt = 
-      GeneratorContextExtWrapper.newInstance(context);
+    GeneratorContextExt contextExt = context instanceof GeneratorContextExt
+        ? (GeneratorContextExt) context
+        : GeneratorContextExtWrapper.newInstance(context);
     
     RebindResult result = generateIncrementally(logger, contextExt, typeName);
     return result.getReturnedTypeName();

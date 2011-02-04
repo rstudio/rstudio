@@ -93,7 +93,7 @@ public class StandardGeneratorContextTest extends TestCase {
 
   public StandardGeneratorContextTest() {
     genCtx = new StandardGeneratorContext(mockCompilationState,
-        new MockModuleDef(), null, artifactSet);
+        new MockModuleDef(), null, artifactSet, false);
     genCtx.setPropertyOracle(mockPropOracle);
     genCtx.setCurrentGenerator(Generator.class);
   }

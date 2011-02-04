@@ -46,7 +46,7 @@ public class GeneratorContextExtWrapper implements GeneratorContextExt {
   
   private final GeneratorContext baseContext;
   
-  public GeneratorContextExtWrapper(GeneratorContext baseContext) {
+  private GeneratorContextExtWrapper(GeneratorContext baseContext) {
     this.baseContext = baseContext;
   }
 
@@ -86,6 +86,12 @@ public class GeneratorContextExtWrapper implements GeneratorContextExt {
 
   public boolean isGeneratorResultCachingEnabled() {
     return false;
+  }
+
+  @Override
+  public boolean isProdMode() {
+    throw new UnsupportedOperationException(
+        "isProdMode is only available from GeneratorContextExt.");
   }
 
   public boolean reuseTypeFromCacheIfAvailable(String typeName) {
