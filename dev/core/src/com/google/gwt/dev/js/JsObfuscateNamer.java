@@ -17,17 +17,15 @@ package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
-import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.js.ast.JsScope;
 
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * A namer that uses short, unrecognizable idents to minimize generated code
  * size.
  */
-public class JsObfuscateNamer {
+public class JsObfuscateNamer extends JsNamer {
 
   /**
    * A lookup table of base-64 chars we use to encode idents.
@@ -48,19 +46,62 @@ public class JsObfuscateNamer {
    */
   private int maxChildId = 0;
 
-  private final JsProgram program;
-
   /**
    * A temp buffer big enough to hold at least 32 bits worth of base-64 chars.
    */
   private final char[] sIdentBuf = new char[6];
 
   public JsObfuscateNamer(JsProgram program) {
-    this.program = program;
+    super(program);
   }
 
-  private void execImpl() {
-    visit(program.getRootScope());
+  @Override
+  protected void reset() {
+    maxChildId = 0;
+  }
+
+  @Override
+  protected void visit(JsScope scope) {
+    // Save off the maxChildId which is currently being computed for my parent.
+    int mySiblingsMaxId = maxChildId;
+
+    /*
+     * Visit my children first. Reset maxChildId so that my children will get a
+     * clean slate: I do not communicate to my children.
+     */
+    maxChildId = 0;
+    for (JsScope child : scope.getChildren()) {
+      visit(child);
+    }
+    // maxChildId is now the max of all of my children's ids
+
+    // Visit my idents.
+    int curId = maxChildId;
+    for (Iterator<JsName> it = scope.getAllNames(); it.hasNext();) {
+      JsName name = it.next();
+      if (!referenced.contains(name)) {
+        // Don't allocate idents for non-referenced names.
+        continue;
+      }
+
+      if (!name.isObfuscatable()) {
+        // Unobfuscatable names become themselves.
+        name.setShortIdent(name.getIdent());
+        continue;
+      }
+
+      String newIdent;
+      while (true) {
+        // Get the next possible obfuscated name
+        newIdent = makeObfuscatedIdent(curId++);
+        if (isLegal(scope, newIdent)) {
+          break;
+        }
+      }
+      name.setShortIdent(newIdent);
+    }
+
+    maxChildId = Math.max(mySiblingsMaxId, curId);
   }
 
   private boolean isLegal(JsScope scope, String newIdent) {
@@ -93,49 +134,5 @@ public class JsObfuscateNamer {
     }
 
     return new String(sIdentBuf, 0, i);
-  }
-
-  private void visit(JsScope scope) {
-    // Save off the maxChildId which is currently being computed for my parent.
-    int mySiblingsMaxId = maxChildId;
-
-    /*
-     * Visit my children first. Reset maxChildId so that my children will get a
-     * clean slate: I do not communicate to my children.
-     */
-    maxChildId = 0;
-    List<JsScope> children = scope.getChildren();
-    for (Iterator<JsScope> it = children.iterator(); it.hasNext();) {
-      visit(it.next());
-    }
-    // maxChildId is now the max of all of my children's ids
-
-    JsRootScope rootScope = program.getRootScope();
-    if (scope == rootScope) {
-      return;
-    }
-
-    // Visit my idents.
-    int curId = maxChildId;
-    for (Iterator<JsName> it = scope.getAllNames(); it.hasNext();) {
-      JsName name = it.next();
-      if (!name.isObfuscatable()) {
-        // Unobfuscatable names become themselves.
-        name.setShortIdent(name.getIdent());
-        continue;
-      }
-
-      String newIdent;
-      while (true) {
-        // Get the next possible obfuscated name
-        newIdent = makeObfuscatedIdent(curId++);
-        if (isLegal(scope, newIdent)) {
-          break;
-        }
-      }
-      name.setShortIdent(newIdent);
-    }
-
-    maxChildId = Math.max(mySiblingsMaxId, curId);
   }
 }

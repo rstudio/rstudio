@@ -17,52 +17,44 @@ package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
-import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.js.ast.JsScope;
 
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * A namer that uses long, fully qualified names for maximum unambiguous
  * debuggability.
  */
-public class JsVerboseNamer {
+public class JsVerboseNamer extends JsNamer {
 
   public static void exec(JsProgram program) {
     new JsVerboseNamer(program).execImpl();
   }
 
-  private final JsProgram program;
-
   public JsVerboseNamer(JsProgram program) {
-    this.program = program;
+    super(program);
   }
 
-  private void execImpl() {
-    visit(program.getRootScope());
+  @Override
+  protected void reset() {
+    // Nothing to do.
   }
 
-  private boolean isLegal(String newIdent) {
-    // only keywords are forbidden
-    return !JsKeywords.isKeyword(newIdent);
-  }
-
-  private void visit(JsScope scope) {
+  @Override
+  protected void visit(JsScope scope) {
     // Visit children.
-    List<JsScope> children = scope.getChildren();
-    for (Iterator<JsScope> it = children.iterator(); it.hasNext();) {
-      visit(it.next());
-    }
-
-    JsRootScope rootScope = program.getRootScope();
-    if (scope == rootScope) {
-      return;
+    for (JsScope child : scope.getChildren()) {
+      visit(child);
     }
 
     // Visit all my idents.
     for (Iterator<JsName> it = scope.getAllNames(); it.hasNext();) {
       JsName name = it.next();
+      if (!referenced.contains(name)) {
+        // Don't allocate idents for non-referenced names.
+        continue;
+      }
+
       if (!name.isObfuscatable()) {
         // Unobfuscatable names become themselves.
         name.setShortIdent(name.getIdent());
@@ -84,5 +76,10 @@ public class JsVerboseNamer {
         name.setShortIdent(fullIdent);
       }
     }
+  }
+
+  private boolean isLegal(String newIdent) {
+    // only keywords are forbidden
+    return !JsKeywords.isKeyword(newIdent);
   }
 }

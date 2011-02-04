@@ -17,20 +17,17 @@ package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
-import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.js.ast.JsScope;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
 /**
  * A namer that uses short, readable idents to maximize reability.
  */
-public class JsPrettyNamer {
+public class JsPrettyNamer extends JsNamer {
 
   public static void exec(JsProgram program) {
     new JsPrettyNamer(program).execImpl();
@@ -41,46 +38,17 @@ public class JsPrettyNamer {
    */
   private Set<String> childIdents = null;
 
-  private final JsProgram program;
-
-  /**
-   * A map containing the next integer to try as an identifier suffix for a
-   * given JsScope.
-   */
-  private IdentityHashMap<JsScope, HashMap<String, Integer>> startIdentForScope = new IdentityHashMap<JsScope, HashMap<String, Integer>>();
-
   public JsPrettyNamer(JsProgram program) {
-    this.program = program;
+    super(program);
   }
 
-  private void execImpl() {
-    visit(program.getRootScope());
+  @Override
+  protected void reset() {
+    childIdents = new HashSet<String>();
   }
 
-  private boolean isLegal(JsScope scope, Set<String> childIdents,
-      String newIdent) {
-    if (JsKeywords.isKeyword(newIdent)) {
-      return false;
-    }
-    if (childIdents.contains(newIdent)) {
-      // one of my children already claimed this ident
-      return false;
-    }
-    /*
-     * Never obfuscate a name into an identifier that conflicts with an existing
-     * unobfuscatable name! It's okay if it conflicts with an existing
-     * obfuscatable name; that name will get obfuscated out of the way.
-     */
-    return (scope.findExistingUnobfuscatableName(newIdent) == null);
-  }
-
-  private void visit(JsScope scope) {
-    HashMap<String, Integer> startIdent = startIdentForScope.get(scope);
-    if (startIdent == null) {
-      startIdent = new HashMap<String, Integer>();
-      startIdentForScope.put(scope, startIdent);
-    }
-
+  @Override
+  protected void visit(JsScope scope) {
     // Save off the childIdents which is currently being computed for my parent.
     Set<String> myChildIdents = childIdents;
 
@@ -89,19 +57,22 @@ public class JsPrettyNamer {
      * clean slate: I do not communicate to my children.
      */
     childIdents = new HashSet<String>();
-    List<JsScope> children = scope.getChildren();
-    for (Iterator<JsScope> it = children.iterator(); it.hasNext();) {
-      visit(it.next());
+    for (JsScope child : scope.getChildren()) {
+      visit(child);
     }
+    // Child idents now contains all idents my children are using.
 
-    JsRootScope rootScope = program.getRootScope();
-    if (scope == rootScope) {
-      return;
-    }
+    // The next integer to try as an identifier suffix.
+    HashMap<String, Integer> startIdent = new HashMap<String, Integer>();
 
     // Visit all my idents.
     for (Iterator<JsName> it = scope.getAllNames(); it.hasNext();) {
       JsName name = it.next();
+      if (!referenced.contains(name)) {
+        // Don't allocate idents for non-referenced names.
+        continue;
+      }
+
       if (!name.isObfuscatable()) {
         // Unobfuscatable names become themselves.
         name.setShortIdent(name.getIdent());
@@ -129,5 +100,22 @@ public class JsPrettyNamer {
     }
     myChildIdents.addAll(childIdents);
     childIdents = myChildIdents;
+  }
+
+  private boolean isLegal(JsScope scope, Set<String> childIdents,
+      String newIdent) {
+    if (JsKeywords.isKeyword(newIdent)) {
+      return false;
+    }
+    if (childIdents.contains(newIdent)) {
+      // one of my children already claimed this ident
+      return false;
+    }
+    /*
+     * Never obfuscate a name into an identifier that conflicts with an existing
+     * unobfuscatable name! It's okay if it conflicts with an existing
+     * obfuscatable name; that name will get obfuscated out of the way.
+     */
+    return (scope.findExistingUnobfuscatableName(newIdent) == null);
   }
 }
