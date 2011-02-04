@@ -65,13 +65,6 @@ public class AceEditorWidget extends Composite
             editor_.setShowPrintMargin(false);
             editor_.setPrintMarginColumn(0);
             editor_.setHighlightActiveLine(false);
-            editor_.onChange(new Command()
-            {
-               public void execute()
-               {
-                  ValueChangeEvent.fire(AceEditorWidget.this, null);
-               }
-            });
             editor_.onKeyDown(AceEditorWidget.this);
             editor_.onKeyPress(AceEditorWidget.this);
             if (initialCode_ != null)
@@ -79,6 +72,14 @@ public class AceEditorWidget extends Composite
                editor_.getSession().setValue(initialCode_);
                initialCode_ = null;
             }
+
+            editor_.onChange(new Command()
+            {
+               public void execute()
+               {
+                  ValueChangeEvent.fire(AceEditorWidget.this, null);
+               }
+            });
 
             fireEvent(new EditorLoadedEvent());
 
