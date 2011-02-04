@@ -83,6 +83,9 @@ core::Error setOption(const std::string& name, const T& value)
    return optionsFunction.call();
 }
 
+SEXP setOption(SEXP tag, SEXP value);
+
+
 } // namespace options   
 } // namespace r
 

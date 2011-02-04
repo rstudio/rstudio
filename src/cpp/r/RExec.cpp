@@ -20,6 +20,7 @@
 #include <r/RErrorCategory.hpp>
 #include <r/RSourceManager.hpp>
 #include <r/RInterface.hpp>
+#include <r/ROptions.hpp>
 
 #include <R_ext/Parse.h>
 
@@ -41,6 +42,45 @@ namespace r {
 namespace exec {
    
 namespace {
+
+// create a scope for disabling any installed error handlers (e.g. recover)
+// we need to do this so that recover isn't invoked while we are running
+// R code within an r::exec scope -- when the user presses 0 to exit
+// from recover and jump_to_top it gets eaten by the R_ToplevelExecute
+// context so the console becomes unresponsive
+class DisableErrorHandlerScope : boost::noncopyable
+{
+public:
+   DisableErrorHandlerScope()
+      : didDisable_(false),
+        previousErrorHandlerSEXP_(r::options::getOption("error"))
+   {
+      if (previousErrorHandlerSEXP_)
+      {
+         r::options::setOption(Rf_install("error"), R_NilValue);
+         didDisable_ = true;
+      }
+   }
+   virtual ~DisableErrorHandlerScope()
+   {
+      try
+      {
+         if (didDisable_)
+         {
+            r::options::setOption(Rf_install("error"),
+                                  previousErrorHandlerSEXP_.get());
+         }
+      }
+      catch(...)
+      {
+      }
+   }
+
+private:
+   bool didDisable_;
+   r::sexp::PreservedSEXP previousErrorHandlerSEXP_;
+};
+
 
 Error parseString(const std::string& str, SEXP* pSEXP, sexp::Protect* pProtect)
 {
@@ -70,6 +110,9 @@ Error evaluateExpressions(SEXP expr,
                           SEXP* pSEXP,
                           sexp::Protect* pProtect)   
 {
+   // disable custom error handlers while we execute code
+   DisableErrorHandlerScope disableErrorHandler;
+
    int er=0;
    int i=0,l;
    
@@ -137,6 +180,9 @@ void SEXPTopLevelExec(void *data)
    
 Error executeSafely(boost::function<void()> function)
 {
+   // disable custom error handlers while we execute code
+   DisableErrorHandlerScope disableErrorHandler;
+
    Rboolean success = R_ToplevelExec(topLevelExec, (void*)&function);
    if (!success)
    {
@@ -150,6 +196,9 @@ Error executeSafely(boost::function<void()> function)
    
 core::Error executeSafely(boost::function<SEXP()> function, SEXP* pSEXP)
 {
+   // disable custom error handlers while we execute code
+   DisableErrorHandlerScope disableErrorHandler;
+
    SEXPTopLevelExecContext context ;
    context.function = function ;
    context.pReturnSEXP = pSEXP ;
