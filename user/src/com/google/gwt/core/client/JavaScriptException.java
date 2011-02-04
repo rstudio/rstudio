@@ -74,30 +74,9 @@ public final class JavaScriptException extends RuntimeException {
   }-*/;
 
   private static String getProperties(Object e) {
-    return (e instanceof JavaScriptObject)
-        ? getProperties0((JavaScriptObject) e) : "";
+    return (GWT.isScript() && e instanceof JavaScriptObject)
+        ? StackTraceCreator.getProperties((JavaScriptObject) e) : "";
   }
-
-  /**
-   * Returns the list of properties of an unexpected JavaScript exception.
-   */
-  private static native String getProperties0(JavaScriptObject e) /*-{
-    var result = "";
-    try {
-      for (var prop in e) {
-        if (prop != "name" && prop != "message" && prop != "toString") {
-          try {
-            result += "\n " + prop + ": " + e[prop];
-          } catch (ignored) {
-            // Skip the property if it threw an exception.
-          }
-        }
-      }
-    } catch (ignored) {
-      // If we can't do "in" on the exception, just return what we have.
-    }
-    return result;
-  }-*/;
 
   /**
    * The original description of the JavaScript exception this class wraps,

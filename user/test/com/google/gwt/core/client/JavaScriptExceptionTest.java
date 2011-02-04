@@ -16,6 +16,8 @@
 package com.google.gwt.core.client;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.junit.client.WithProperties;
+import com.google.gwt.junit.client.WithProperties.Property;
 
 /**
  * Any JavaScript exceptions occurring within JSNI methods are wrapped as this
@@ -53,6 +55,35 @@ public class JavaScriptExceptionTest extends GWTTestCase {
     @com.google.gwt.core.client.JavaScriptExceptionTest::throwJava(Ljava/lang/Throwable;)(t);
   }-*/;
 
+  public void assertJsoProperties(boolean extraPropertiesShouldBePresent) {
+    JavaScriptObject jso = makeJSO();
+    try {
+      throwNative(jso);
+      fail();
+    } catch (JavaScriptException e) {
+      assertEquals("myName", e.getName());
+      assertEquals("myDescription", e.getDescription());
+      assertSame(jso, e.getException());
+      assertTrue(e.getMessage().contains("myName"));
+      assertTrue(e.getMessage().contains("myDescription"));
+      if (extraPropertiesShouldBePresent) {
+        assertTrue(
+            "message does not contain 'extraField', but should: "
+                + e.getMessage(), e.getMessage().contains("extraField"));
+        assertTrue(
+            "message does not contain 'extraData', but should:"
+                + e.getMessage(), e.getMessage().contains("extraData"));
+      } else {
+        assertFalse(
+            "message contains 'extraField', but shouldn't: " + e.getMessage(),
+            e.getMessage().contains("extraField"));
+        assertFalse(
+            "message contains 'extraData', but shouldn't:" + e.getMessage(),
+            e.getMessage().contains("extraData"));
+      }
+    }
+  }
+
   /**
    * This test doesn't work in Development Mode yet; we'd need a way to throw
    * true native objects as exceptions. Windows/IE is the deal killer right now
@@ -82,21 +113,46 @@ public class JavaScriptExceptionTest extends GWTTestCase {
       assertSame(e, t);
     }
   }
+  
+  @WithProperties({
+    @Property(name = "compiler.stackMode", value = "emulated")
+  })
+  public void testJsoStackModeEmulated() {
+    /**
+     * Whether we're in Development Mode, or in Production Mode with
+     * compiler.stackMode = emulated, extra properties should not be present.
+     * 
+     * @see StackTraceCreator#getProperties(JavaScriptObject)
+     */
+    assertJsoProperties(false);
+  }
+  
+  @WithProperties({
+    @Property(name = "compiler.stackMode", value = "native")
+  })
+  public void testJsoStackModeNative() {
+    /**
+     * In Production Mode with compiler.stackMode = native, extra properties
+     * should be present. In Development Mode, extra properties should not be
+     * present.
+     * 
+     * @see StackTraceCreator#getProperties(JavaScriptObject)
+     */
+    assertJsoProperties(GWT.isScript());
+  }
 
-  public void testJso() {
-    JavaScriptObject jso = makeJSO();
-    try {
-      throwNative(jso);
-      fail();
-    } catch (JavaScriptException e) {
-      assertEquals("myName", e.getName());
-      assertEquals("myDescription", e.getDescription());
-      assertSame(jso, e.getException());
-      assertTrue(e.getMessage().contains("myName"));
-      assertTrue(e.getMessage().contains("myDescription"));
-      assertTrue(e.getMessage().contains("extraField"));
-      assertTrue(e.getMessage().contains("extraData"));
-    }
+  @WithProperties({
+    @Property(name = "compiler.stackMode", value = "strip")
+  })
+  public void testJsoStackModeStrip() {
+    /**
+     * In Production Mode with compiler.stackMode = strip, extra properties
+     * should be present. In Development Mode, extra properties should not be
+     * present.
+     * 
+     * @see StackTraceCreator#getProperties(JavaScriptObject)
+     */
+    assertJsoProperties(GWT.isScript());
   }
 
   public void testNull() {

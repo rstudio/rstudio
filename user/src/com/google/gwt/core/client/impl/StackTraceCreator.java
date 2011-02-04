@@ -84,6 +84,27 @@ public class StackTraceCreator {
     }
 
     /**
+     * Returns the list of properties of an unexpected JavaScript exception.
+     */
+    public native String getProperties(JavaScriptObject e) /*-{
+      var result = "";
+      try {
+        for (var prop in e) {
+          if (prop != "name" && prop != "message" && prop != "toString") {
+            try {
+              result += "\n " + prop + ": " + e[prop];
+            } catch (ignored) {
+              // Skip the property if it threw an exception.
+            }
+          }
+        }
+      } catch (ignored) {
+        // If we can't do "in" on the exception, just return what we have.
+      }
+      return result;
+    }-*/;
+
+    /**
      * Attempt to infer the stack from an unknown JavaScriptObject that had been
      * thrown. The default implementation just returns an empty array.
      * 
@@ -160,6 +181,17 @@ public class StackTraceCreator {
             fileName, lineNumber);
       }
       t.setStackTrace(stackTrace);
+    }
+
+    /**
+     * When compiler.stackMode = emulated, return an empty string, rather than a
+     * list of properties, since the additional information regarding the origin
+     * of the JavaScriptException, relative to compiled JavaScript source code,
+     * adds no real value, since we have fully emulated stack traces.
+     */
+    @Override
+    public String getProperties(JavaScriptObject e) {
+      return "";
     }
 
     @Override
@@ -387,6 +419,20 @@ public class StackTraceCreator {
     }
 
     GWT.<Collector> create(Collector.class).fillInStackTrace(t);
+  }
+
+  /**
+   * Returns the list of properties of an unexpected JavaScript exception,
+   * unless compiler.stackMode = emulated, in which case the empty string is
+   * returned. This method should only be called in Production Mode.
+   */
+  public static String getProperties(JavaScriptObject e) {
+    if (!GWT.isScript()) {
+      throw new RuntimeException(
+          "StackTraceCreator should only be called in Production Mode");
+    }
+
+    return GWT.<Collector> create(Collector.class).getProperties(e);
   }
 
   /**
