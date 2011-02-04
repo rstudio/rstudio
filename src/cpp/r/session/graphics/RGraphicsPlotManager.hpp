@@ -46,6 +46,8 @@ struct GraphicsDeviceEvents
    boost::signal<void ()> onResized;
    boost::signal<void ()> onClosed;
 };
+
+class PlotManipulatorManager;
  
 class PlotManager : boost::noncopyable, public r::session::graphics::Display
 {   
@@ -95,13 +97,19 @@ public:
    virtual core::FilePath imagePath(const std::string& imageFilename) const;
    
    virtual void clear();
-   
+
+   virtual boost::signal<void ()>& onShowManipulator() ;
+   virtual void setPlotManipulatorValues(const core::json::Object& values);
+
    // manipulate persistent state
    core::Error savePlotsState(const core::FilePath& plotsStateFile);
    core::Error restorePlotsState(const core::FilePath& plotsStateFile);
       
 private:
    
+   // make plot manipulator manager a friend
+   friend class PlotManipulatorManager;
+
    // typedefs
    typedef boost::shared_ptr<Plot> PtrPlot ;
 
@@ -134,10 +142,7 @@ private:
    // error helpers
    core::Error plotIndexError(int index, const core::ErrorLocation& location)
                                                                          const;
-   void logAndReportError(const core::Error& error,
-                          const core::ErrorLocation& location) const;
-   void reportError(const core::Error& error) const;
-   
+
    std::string emptyImageFilename() const ;
 
    bool hasStorageUuid(const PtrPlot& ptrPlot,

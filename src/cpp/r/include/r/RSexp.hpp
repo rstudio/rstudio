@@ -24,13 +24,12 @@
 #include <boost/utility.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include <core/Error.hpp>
 #include <core/json/Json.hpp>
 
+#include <r/RErrorCategory.hpp>
 #include <r/RInternal.hpp>
 
-namespace core {
-   class Error;
-}
 
 // IMPORTANT NOTE: all code in r::sexp must provide "no jump" guarantee.
 // See comment in RInternal.hpp for more info on this
@@ -104,6 +103,83 @@ SEXP create(const core::json::Array& value, Protect* pProtect);
 SEXP create(const core::json::Object& value, Protect* pProtect);
 
 
+inline int indexOfElementNamed(SEXP listSEXP, const std::string& name)
+{
+   // get the names so we can determine which slot the element is in are in
+   std::vector<std::string> names;
+   core::Error error = r::sexp::getNames(listSEXP, &names);
+   if (error)
+      return -1;
+
+   // find the index
+   int valueIndex = -1;
+   for (int i = 0; i<(int)names.size(); i++)
+   {
+      if (names[i] == name)
+      {
+         valueIndex = i;
+         break;
+      }
+   }
+
+   // return
+   return valueIndex;
+
+}
+
+template <typename T>
+core::Error getNamedListElement(SEXP listSEXP,
+                                const std::string& name,
+                                T* pValue)
+{
+   // find the element
+   int valueIndex = indexOfElementNamed(listSEXP, name);
+
+   if (valueIndex != -1)
+   {
+      // get the appropriate value
+      SEXP valueSEXP = VECTOR_ELT(listSEXP, valueIndex);
+      return sexp::extract(valueSEXP, pValue);
+   }
+   else
+   {
+      // otherwise an error
+      core::Error error(r::errc::ListElementNotFoundError, ERROR_LOCATION);
+      error.addProperty("element", name);
+      return error;
+   }
+}
+
+// set list element by name. note that the specified element MUST already
+// exist before the call
+template <typename T>
+core::Error setNamedListElement(SEXP listSEXP,
+                                const std::string& name,
+                                const T& value)
+{
+   // convert to SEXP
+   r::sexp::Protect rProtect;
+   SEXP valueSEXP = create(value, &rProtect);
+
+   // find the element
+   int valueIndex = indexOfElementNamed(listSEXP, name);
+
+   if (valueIndex != -1)
+   {
+      // set the appropriate value and return success
+      SET_VECTOR_ELT(listSEXP, valueIndex, valueSEXP);
+      return core::Success();
+   }
+   else
+   {
+      // otherwise an error
+      core::Error error(r::errc::ListElementNotFoundError, ERROR_LOCATION);
+      error.addProperty("element", name);
+      return error;
+   }
+}
+
+
 // protect R expressions
 class Protect : boost::noncopyable
 {
@@ -128,6 +204,34 @@ public:
    
 private:
    int protectCount_ ;
+};
+
+class PreservedSEXP : boost::noncopyable
+{
+public:
+   PreservedSEXP();
+   explicit PreservedSEXP(SEXP sexp);
+   virtual ~PreservedSEXP();
+
+   void set(SEXP sexp);
+   SEXP get() const { return sexp_; }
+   bool isNil() const { return sexp_ == R_NilValue; }
+
+   typedef void (*unspecified_bool_type)();
+   static void unspecified_bool_true() {}
+   operator unspecified_bool_type() const
+   {
+      return isNil() ? 0 : unspecified_bool_true;
+   }
+   bool operator!() const
+   {
+      return isNil();
+   }
+
+   void releaseNow();
+
+private:
+   SEXP sexp_;
 };
 
 } // namespace sexp

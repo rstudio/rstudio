@@ -4,6 +4,9 @@
    <!-- GWT module dependencies                                    -->
    <inherits name='com.google.gwt.user.User'/>
    
+   <!-- GWT incubator dependencies                                 -->
+   <inherits name='com.google.gwt.gen2.picker.Picker' />
+   
    <!-- Gin module dependencies                                    -->
    <inherits name="com.google.gwt.inject.Inject"/>
     

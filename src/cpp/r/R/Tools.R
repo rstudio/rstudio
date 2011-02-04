@@ -131,6 +131,12 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
    suppressWarnings(grDevices::replayPlot(plot))
 })
 
+# generate a uuid
+.rs.addFunction( "createUUID", function()
+{
+  .Call("rs_createUUID")
+})
+
 # view a pdf (based on implementation in RShowDoc and print.vignette)
 .rs.addFunction( "shellViewPdf", function(path)
 {

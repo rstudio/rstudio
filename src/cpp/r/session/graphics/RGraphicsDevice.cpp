@@ -24,6 +24,7 @@
 #include <r/RExec.hpp>
 #include <r/RFunctionHook.hpp>
 #include <r/RRoutines.hpp>
+#include <r/RErrorCategory.hpp>
 
 #include "RGraphicsUtils.hpp"
 #include "RGraphicsPlotManager.hpp"
@@ -396,7 +397,6 @@ std::string imageFileExtension()
    return "png";
 }
 
-
 } // anonymous namespace
     
 const int kDefaultWidth = 500;   
@@ -444,7 +444,6 @@ Error initialize(
       activateGDMethodDef.fun = (DL_FUNC) rs_activateGD ;
       activateGDMethodDef.numArgs = 0;
       r::routines::addCallMethod(activateGDMethodDef);
-
 
       // register interactive() hook to work around dev.interactive device
       // bootstrapping bug

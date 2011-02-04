@@ -702,6 +702,14 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, LOCATOR_COMPLETED, point, requestCallback);
    }
+   
+   public void setManipulatorValues(JSONObject values,
+                                    ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, values);
+      sendRequest(RPC_SCOPE, SET_MANIPULATOR_VALUES, params, requestCallback);
+   }
 
    public void newDocument(String filetype,
                            JsObject properties,
@@ -1348,6 +1356,7 @@ public class RemoteServer implements Server
    private static final String REFRESH_PLOT = "refresh_plot";
    private static final String EXPORT_PLOT = "export_plot";
    private static final String LOCATOR_COMPLETED = "locator_completed";
+   private static final String SET_MANIPULATOR_VALUES = "set_manipulator_values";
 
    private static final String NEW_DOCUMENT = "new_document";
    private static final String OPEN_DOCUMENT = "open_document";

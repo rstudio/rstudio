@@ -316,6 +316,12 @@ Error initialize()
    if (error)
       return error ;
 
+   // source manipulator functions
+   FilePath manipFilePath = s_options.rSourcePath.complete("Manipulate.R");
+   error = r::sourceManager().sourceLocal(manipFilePath);
+   if (error)
+      return error ;
+
    // create R_LIBS_USER if there is nowhere else defined to install packages
    initRLibsUser();
 
@@ -741,6 +747,12 @@ extern "C" void RBrowseURL(char ** url)
    }
    CATCH_UNEXPECTED_EXCEPTION
 }
+
+SEXP rs_createUUID()
+{
+   r::sexp::Protect rProtect;
+   return r::sexp::create(core::system::generateUuid(false), &rProtect);
+}
    
 
 void doHistoryFileOperation(SEXP args, 
@@ -1085,6 +1097,13 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    browseURLMethod.types = types;
    browseURLMethod.styles = NULL;
    r::routines::addCMethod(browseURLMethod);
+
+   // register createUUID method
+   R_CallMethodDef createUUIDMethodDef ;
+   createUUIDMethodDef.name = "rs_createUUID" ;
+   createUUIDMethodDef.fun = (DL_FUNC) rs_createUUID ;
+   createUUIDMethodDef.numArgs = 0;
+   r::routines::addCallMethod(createUUIDMethodDef);
 
    // run R
    bool newSession = !s_suspendedSessionPath.exists();

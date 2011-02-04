@@ -29,6 +29,7 @@ enum errc_t {
    ExpressionParsingError,
    CodeExecutionError,
    SymbolNotFoundError,
+   ListElementNotFoundError,
    UnexpectedDataTypeError,
    NoDataAvailableError
 };

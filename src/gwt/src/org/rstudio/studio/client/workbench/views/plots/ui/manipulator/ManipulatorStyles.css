@@ -1,0 +1,83 @@
+
+@external .gwt-SliderBar-shell;
+@external .gwt-SliderBar-line;
+@external .gwt-SliderBar-knob;
+@external .gwt-SliderBar-label;
+@external .gwt-SliderBar-line-sliding;
+@external .gwt-SliderBar-shell-focused;
+@external .gwt-SliderBar-tick;
+@external .gwt-SliderBar-knob;
+@external .gwt-ListBox;
+
+.captionLabel {
+   font-weight: bold;
+   margin-right: 8px;
+}
+
+.slider {
+  width: 100%;	
+}
+
+
+.slider .sliderValueLabel {
+
+}
+
+.slider .gwt-SliderBar-shell {
+  height: 34pt;
+  width: 100%;
+}
+
+.slider .gwt-SliderBar-shell .gwt-SliderBar-line {
+  border: 1px solid black;
+  background-color: white;
+  height: 4px;
+  width: 95%;
+  top: 22pt;
+  overflow: hidden;
+}
+
+.slider .gwt-SliderBar-shell .gwt-SliderBar-knob {
+  top: 14pt;
+  width: 11px;
+  height: 21px;
+  z-index: 1;
+  cursor: pointer;
+}
+
+.slider .gwt-SliderBar-shell .gwt-SliderBar-tick {
+  top: 12pt;
+  width: 1px;
+  height: 8pt;
+  background: black;
+  overflow: hidden;
+}
+
+.slider .gwt-SliderBar-shell .gwt-SliderBar-label {
+  top: 2pt;
+  font-size: 8pt;
+  cursor: default;
+}
+
+.slider .gwt-SliderBar-shell-focused {
+}
+
+.slider .gwt-SliderBar-shell .gwt-SliderBar-line-sliding {
+  background-color: #DDDDDD;
+  cursor: pointer;
+}
+
+.picker {
+}
+
+.picker .gwt-ListBox {
+   min-width: 100px;	
+}
+
+.checkBox {	
+}
+
+.manipulateButton {
+   margin-left: 4px;
+   margin-top: 3px;
+}

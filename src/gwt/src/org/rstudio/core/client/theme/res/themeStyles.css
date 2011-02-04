@@ -27,7 +27,14 @@
       dialogTopRight, dialogTopRightInner,
       dialogMiddleLeft, dialogMiddleCenter,
       dialogMiddleCenterInner, dialogMiddleRight, dialogBottomLeft,
-      dialogBottomCenter, dialogBottomRight;    
+      dialogBottomCenter, dialogBottomRight;
+
+@external popupTopLeft, popupTopLeftInner,
+      popupTopCenter, popupTopCenterInner,
+      popupTopRight, popupTopRightInner,
+      popupMiddleLeft, popupMiddleCenter,
+      popupMiddleCenterInner, popupMiddleRight, popupBottomLeft,
+      popupBottomCenter, popupBottomRight;
 
 @external Caption;
 
@@ -175,6 +182,30 @@ pre {
 
 /** Dialogs **/
 
+.miniDialogPopupPanel {
+}
+
+.miniDialogPopupPanel .miniDialogContainer {
+   position: relative;
+   top: -32px;
+   margin-bottom: -32px;
+}
+
+.miniDialogPopupPanel .miniDialogCaption {
+	font-weight: normal;
+   font-size: 11px;
+   cursor: default;
+   margin-bottom: 10px;
+   margin-left: -2px;
+   padding-top: 1px;
+}
+
+.miniDialogPopupPanel .miniDialogTools {
+	position: relative;
+	top: -2px;
+	right: -12px;
+}
+
 .gwt-DialogBox-ModalDialog {
    z-index: 1001;
 }
@@ -183,14 +214,14 @@ pre {
    z-index: 1002;	
 }
 
-.gwt-DialogBox .dialogTopLeft {
+.gwt-DialogBox .dialogTopLeft, .miniDialogPopupPanel .popupTopLeft {
    background: DIALOGTOPLEFT no-repeat;
 }
-.gwt-DialogBox .dialogTopLeft, .gwt-DialogBox .dialogTopLeftInner {
+.gwt-DialogBox .dialogTopLeft, .gwt-DialogBox .dialogTopLeftInner, .miniDialogPopupPanel .popupTopLeft, .miniDialogPopupPanel .popupTopLeftInner {
    width: 32px;
    height: 32px;
 }
-.gwt-DialogBox .dialogTopCenter {
+.gwt-DialogBox .dialogTopCenter, .miniDialogPopupPanel .popupTopCenter {
    background: DIALOGTOP repeat-x;
    height: 32px;
 }
@@ -202,21 +233,21 @@ pre {
    margin-top: 1px;
    margin-left: -2px;
 }
-.gwt-DialogBox .dialogTopRight {
+.gwt-DialogBox .dialogTopRight, .miniDialogPopupPanel .popupTopRight {
    background: DIALOGTOPRIGHT no-repeat;
 }
-.gwt-DialogBox .dialogTopRight, .gwt-DialogBox .dialogTopRightInner {
+.gwt-DialogBox .dialogTopRight, .gwt-DialogBox .dialogTopRightInner, .miniDialogPopupPanel .popupTopRight, .miniDialogPopupPanel .popupTopRightInner {
    width: 32px;
    height: 32px;
 }
-.gwt-DialogBox .dialogMiddleLeft {
+.gwt-DialogBox .dialogMiddleLeft, .miniDialogPopupPanel .popupMiddleLeft {
    background: DIALOGLEFT repeat-y;
    width: 32px;
 }
-.gwt-DialogBox .dialogMiddleCenter {
+.gwt-DialogBox .dialogMiddleCenter, .miniDialogPopupPanel .popupMiddleCenter {
    background: #F3F4F4;
 }
-.gwt-DialogBox .dialogMiddleCenterInner {
+.gwt-DialogBox .dialogMiddleCenterInner, .miniDialogPopupPanel .popupMiddleCenterInner {
    margin: 12px -1px -8px -1px;
    position: relative;
    z-index: 100;
@@ -226,19 +257,19 @@ pre {
    margin-top: 8px;
 }
 
-.gwt-DialogBox .dialogMiddleRight {
+.gwt-DialogBox .dialogMiddleRight, .miniDialogPopupPanel .popupMiddleRight {
    background: DIALOGRIGHT repeat-y;
    width: 32px;
 }
-.gwt-DialogBox .dialogBottomLeft {
+.gwt-DialogBox .dialogBottomLeft, .miniDialogPopupPanel .popupBottomLeft {
    background: DIALOGBOTTOMLEFT no-repeat;
    width: 32px;
    height: 32px;
 }
-.gwt-DialogBox .dialogBottomCenter {
+.gwt-DialogBox .dialogBottomCenter, .miniDialogPopupPanel .popupBottomCenter {
    background: DIALOGBOTTOM repeat-x;
 }
-.gwt-DialogBox .dialogBottomRight {
+.gwt-DialogBox .dialogBottomRight, .miniDialogPopupPanel .popupBottomRight {
    background: DIALOGBOTTOMRIGHT no-repeat;
    width: 32px;
    height: 32px;

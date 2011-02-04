@@ -45,6 +45,7 @@ import org.rstudio.studio.client.workbench.views.history.view.Shelf;
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.ExportDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.PrintDialog;
+import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorResources;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.PublishPdfDialog;
 import org.rstudio.studio.client.workbench.views.workspace.dataimport.ImportFileSettingsDialog;
@@ -115,6 +116,7 @@ public class RStudio implements EntryPoint
       REditorResources.INSTANCE.styles().ensureInjected(); 
       FileDialogResources.INSTANCE.styles().ensureInjected();
       CodeMirrorResources.INSTANCE.linenumbers().ensureInjected();
+      ManipulatorResources.INSTANCE.manipulatorStyles().ensureInjected();
       
       SupportPopupMenu.ensureStylesInjected();
       SlideLabel.ensureStylesInjected();

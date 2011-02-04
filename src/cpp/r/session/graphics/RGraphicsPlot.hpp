@@ -20,7 +20,12 @@
 
 #include <core/FilePath.hpp>
 
+#include <core/json/Json.hpp>
+
+#include <r/RSexp.hpp>
+
 #include "RGraphicsTypes.hpp"
+#include "RGraphicsPlotManipulator.hpp"
 
 namespace core {
    class Error;
@@ -36,7 +41,8 @@ class Plot : boost::noncopyable
 {
 public:
    Plot(const GraphicsDeviceFunctions& graphicsDevice,
-        const core::FilePath& baseDirPath);
+        const core::FilePath& baseDirPath,
+        SEXP manipulatorSEXP);
    
    Plot(const GraphicsDeviceFunctions& graphicsDevice,
         const core::FilePath& baseDirPath, 
@@ -45,6 +51,11 @@ public:
    
    std::string storageUuid() const;  
    const DisplaySize& renderedSize() const { return renderedSize_; }
+
+   bool hasManipulator() const;
+   SEXP manipulatorSEXP() const;
+   void manipulatorAsJson(core::json::Value* pValue) const;
+   void saveManipulator() const;
    
    void invalidate();
    
@@ -60,13 +71,20 @@ private:
    core::FilePath snapshotFilePath() const ;
    core::FilePath snapshotFilePath(const std::string& storageUuid) const;
    core::FilePath imageFilePath(const std::string& storageUuid) const;
-   
+
+   core::FilePath manipulatorFilePath(const std::string& storageUuid) const;
+   void loadManipulator();
+   void saveManipulator(const std::string& storageUuid) const;
+
 private:
    GraphicsDeviceFunctions graphicsDevice_;
    core::FilePath baseDirPath_;
    std::string storageUuid_ ;
    DisplaySize renderedSize_ ;
    bool needsUpdate_;
+
+   // manipulator and protection scope for it
+   PlotManipulator manipulator_;
 };
 
 } // namespace graphics

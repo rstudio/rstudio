@@ -17,7 +17,6 @@
 
 #include <boost/function.hpp>
 #include <boost/format.hpp>
-#include <boost/scope_exit.hpp>
 
 #include <core/Error.hpp>
 #include <core/Exec.hpp>

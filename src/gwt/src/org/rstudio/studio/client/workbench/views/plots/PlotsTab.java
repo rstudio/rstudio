@@ -60,6 +60,8 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
       public abstract void onExportPlotAsImage();
       @Handler
       public abstract void onRefreshPlot();
+      @Handler
+      public abstract void onShowManipulator();
 
       @Override
       protected void onDelayLoadSuccess(Plots plots)
@@ -109,6 +111,7 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
       commands_.zoomPlot().setEnabled(false);
       commands_.clearPlots().setEnabled(false);
       commands_.refreshPlot().setEnabled(false);
+      commands_.showManipulator().setEnabled(false);
    }
 
    public HandlerRegistration addResizeHandler(ResizeHandler handler)
@@ -161,6 +164,7 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
       commands_.zoomPlot().setEnabled(hasPlots);
       commands_.clearPlots().setEnabled(hasPlots);
       commands_.refreshPlot().setEnabled(hasPlots);
+      commands_.showManipulator().setEnabled(hasPlots);
 
       if (plotsState.getActivatePlots() || shim_.loaded)
       {

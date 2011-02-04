@@ -27,6 +27,7 @@
 
 #include <r/RSexp.hpp> 
 
+
 namespace core {
    class FilePath;
 }
@@ -164,7 +165,7 @@ public:
    {
       return call(R_GlobalEnv, pValue);
    }
-   
+
    template <typename T>
    core::Error call(SEXP evalNS, T* pValue)
    {
@@ -253,6 +254,15 @@ public:
 private:
    bool previousInterruptsSuspended_ ;
    boost::scoped_ptr<core::system::SignalBlocker> pSignalBlocker_;
+};
+
+class NonInteractiveScope : boost::noncopyable
+{
+public:
+   NonInteractiveScope();
+   virtual ~NonInteractiveScope();
+private:
+   Rboolean previousValue_;
 };
 
 class InterruptException {};

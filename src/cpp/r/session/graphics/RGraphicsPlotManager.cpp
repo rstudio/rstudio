@@ -31,13 +31,15 @@
 #include "RGraphicsUtils.hpp"
 #include "RGraphicsDevice.hpp"
 #include "RGraphicsFileDevice.hpp"
+#include "RGraphicsPlotManipulatorManager.hpp"
 
 using namespace core;
 
 namespace r {
 namespace session {  
 namespace graphics {
-      
+
+
 // satisfy r::session::graphics::Display singleton
 Display& display()
 {
@@ -62,9 +64,14 @@ Error PlotManager::initialize(const FilePath& graphicsPath,
                               const GraphicsDeviceFunctions& graphicsDevice,
                               GraphicsDeviceEvents* pEvents)
 {
+   // initialize plot manipulator manager
+   Error error = plotManipulatorManager().initialize();
+   if (error)
+      return error;
+
    // save reference to graphics path and make sure it exists
    graphicsPath_ = graphicsPath ;
-   Error error = graphicsPath_.ensureDirectory();
+   error = graphicsPath_.ensureDirectory();
    if (error)
       return error;
    
@@ -292,6 +299,9 @@ void PlotManager::render(boost::function<void(DisplayState)> outputFunction)
    // clear changes flag
    displayHasChanges_ = false;
    
+   // optional manipulator structure
+   json::Value plotManipulatorJson;
+
    if (hasPlot()) // write image for active plot
    {
       // copy current contents of the display to the active plot files
@@ -316,6 +326,9 @@ void PlotManager::render(boost::function<void(DisplayState)> outputFunction)
 
          return;
       }
+
+      // get manipulator
+      activePlot().manipulatorAsJson(&plotManipulatorJson);
    }
    else  // write "empty" image 
    {
@@ -332,6 +345,7 @@ void PlotManager::render(boost::function<void(DisplayState)> outputFunction)
    
    // call output function
    DisplayState currentState(imageFilename(),
+                             plotManipulatorJson,
                              r::session::graphics::device::getWidth(),
                              r::session::graphics::device::getHeight(),
                              activePlotIndex(), 
@@ -364,8 +378,22 @@ FilePath PlotManager::imagePath(const std::string& imageFilename) const
 void PlotManager::clear()
 {
    graphicsDevice_.close();
-}   
-   
+}
+
+
+
+boost::signal<void ()>& PlotManager::onShowManipulator()
+{
+   return plotManipulatorManager().onShowManipulator();
+}
+
+
+
+void PlotManager::setPlotManipulatorValues(const json::Object& values)
+{
+   return plotManipulatorManager().setPlotManipulatorValues(values);
+}
+
 Error PlotManager::savePlotsState(const FilePath& plotsStateFile)
 {
    // truncate the plot list based on defined maximum # of saved plots
@@ -481,11 +509,34 @@ void PlotManager::onDeviceNewPage(SEXP previousPageSnapshot)
                      "onDeviceNewPage was not passed a previousPageSnapshot");
       }
    }
-   
-   // create a new plot and make it active
-   PtrPlot ptrPlot(new Plot(graphicsDevice_, graphicsPath_));
-   plots_.push_back(ptrPlot);
-   activePlot_ = plots_.size() - 1  ;
+
+   // if we are replaying a manipulator then this plot replaces the
+   // existing plot
+   if (hasPlot() &&
+       plotManipulatorManager().replayingManipulator())
+   {
+      // create plot using the active plot's manipulator
+      PtrPlot ptrPlot(new Plot(graphicsDevice_,
+                               graphicsPath_,
+                               activePlot().manipulatorSEXP()));
+
+      // replace active plot
+      plots_[activePlotIndex()] = ptrPlot;
+   }
+   else
+   {
+      // create new plot (use pending manipulator, if any)
+      PtrPlot ptrPlot(new Plot(graphicsDevice_,
+                               graphicsPath_,
+                               plotManipulatorManager().pendingManipulatorSEXP()));
+
+      // add the plot
+      plots_.push_back(ptrPlot);
+      activePlot_ = plots_.size() - 1  ;
+   }
+
+   // once we render the new plot we always reset pending manipulator state
+   plotManipulatorManager().clearPendingManipulatorState();
    
    // ensure updates
    invalidateActivePlot();
@@ -571,23 +622,7 @@ Error PlotManager::plotIndexError(int index, const ErrorLocation& location)
    error.addProperty("index", index);
    return error;
 }
-   
-void PlotManager::logAndReportError(const Error& error,
-                                    const ErrorLocation& location) const
-{
-   // log
-   core::log::logError(error, location);
-   
-   // report to user
-   reportError(error);
-}
-   
-void PlotManager::reportError(const core::Error& error) const
-{
-   std::string endUserMessage = r::endUserErrorMessage(error);
-   std::string errmsg = ("Graphics error: " + endUserMessage + "\n");
-   REprintf(errmsg.c_str());
-}
+
    
 std::string PlotManager::emptyImageFilename() const
 {

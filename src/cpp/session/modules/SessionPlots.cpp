@@ -375,18 +375,21 @@ void handleGraphicsRequest(const http::Request& request,
       }
    }
 }
+
    
 void enquePlotsChanged(const r::session::graphics::DisplayState& displayState,
-                       bool activatePlots)
+                       bool activatePlots, bool showManipulator)
 {
    // build graphics output event
    json::Object jsonPlotsState;
    jsonPlotsState["filename"] = displayState.imageFilename;
+   jsonPlotsState["manipulator"] = displayState.manipulatorJson;
    jsonPlotsState["width"] = displayState.width;
    jsonPlotsState["height"] = displayState.height;
    jsonPlotsState["plotIndex"] = displayState.activePlotIndex;
    jsonPlotsState["plotCount"] = displayState.plotCount;
    jsonPlotsState["activatePlots"] = activatePlots;
+   jsonPlotsState["showManipulator"] = showManipulator;
    ClientEvent plotsStateChangedEvent(client_events::kPlotsStateChanged, 
                                       jsonPlotsState);
       
@@ -401,7 +404,7 @@ void onClientInit()
    using namespace r::session;
    if (graphics::display().hasOutput())
    {
-      graphics::display().render(boost::bind(enquePlotsChanged, _1, false));
+      graphics::display().render(boost::bind(enquePlotsChanged, _1, false, false));
    }
    
 }
@@ -417,8 +420,38 @@ void onDetectChanges(module_context::ChangeSource source)
    {
       graphics::display().render(boost::bind(enquePlotsChanged,
                                              _1,
-                                             activatePlots));
+                                             activatePlots,
+                                             false));
    }
+}
+
+
+void onShowManipulator()
+{
+   // render changes and show manipulator
+   using namespace r::session;
+   if (graphics::display().hasOutput())
+      graphics::display().render(boost::bind(enquePlotsChanged, _1, true, true));
+}
+
+Error setManipulatorValues(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   // read the params
+   json::Object jsObject;
+   Error error = json::readParam(request.params, 0, &jsObject);
+   if (error)
+      return error;
+
+   // set them
+   using namespace r::session;
+   graphics::display().setPlotManipulatorValues(jsObject);
+
+   // render
+   if (graphics::display().hasOutput())
+      graphics::display().render(boost::bind(enquePlotsChanged, _1, true, false));
+
+   return Success();
 }
 
 } // anonymous namespace  
@@ -429,6 +462,9 @@ Error initialize()
    using boost::bind;
    module_context::events().onClientInit.connect(bind(onClientInit));
    module_context::events().onDetectChanges.connect(bind(onDetectChanges, _1));
+
+   using namespace r::session;
+   graphics::display().onShowManipulator().connect(bind(onShowManipulator));
    
    using namespace module_context;
    ExecBlock initBlock ;
@@ -441,6 +477,7 @@ Error initialize()
       (bind(registerRpcMethod, "load_plot", loadPlot))
       (bind(registerRpcMethod, "refresh_plot", refreshPlot))
       (bind(registerRpcMethod, "export_plot", exportPlot))
+      (bind(registerRpcMethod, "set_manipulator_values", setManipulatorValues))
       (bind(registerUriHandler, kGraphics "/plot_zoom", handleZoomRequest))
       (bind(registerUriHandler, kGraphics "/plot.pdf", handlePrintRequest))
       (bind(registerUriHandler, kGraphics "/plot.png", handlePngRequest))

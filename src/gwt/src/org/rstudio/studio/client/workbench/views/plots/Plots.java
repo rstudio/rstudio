@@ -16,8 +16,10 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.HasResizeHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HasWidgets;
+import com.google.gwt.user.client.ui.Panel;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Size;
@@ -34,6 +36,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
@@ -49,6 +52,8 @@ import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
 import org.rstudio.studio.client.workbench.views.plots.model.PrintOptions;
 import org.rstudio.studio.client.workbench.views.plots.ui.ExportDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.PrintDialog;
+import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorChangedHandler;
+import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorManager;
 
 public class Plots extends BasePresenter implements PlotsChangedHandler,
                                                     LocatorHandler,
@@ -58,21 +63,27 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    {
    }
    
+  
    public interface Display extends WorkbenchView, HasResizeHandlers
    {
       void showEmptyPlot();
       void showPlot(String plotUrl);
       String getPlotUrl();
-
+      
       void refresh();
+   
+      Panel getPlotsSurface();
       
       Parent getPlotsParent();
       Size getPlotFrameSize();
    }
+   
+  
 
    @Inject
    public Plots(final Display view,
                 GlobalDisplay globalDisplay,
+                Commands commands,
                 final PlotsServerOperations server,
                 Session session)
    {
@@ -96,6 +107,24 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
          }
       });
 
+      manipulatorManager_ = new ManipulatorManager(
+         view_.getPlotsSurface(),
+         commands,
+         new ManipulatorChangedHandler()
+         { 
+            @Override
+            public void onManipulatorChanged(JSONObject values)
+            {
+               // always set progress because this will run R code
+               // to regenerate the plot
+               view_.setProgress(true);
+               
+               // set values
+               server_.setManipulatorValues(values, new PlotRequestCallback());
+            }
+         });
+      
+      
       new JSObjectStateValue("plots", "exportOptions", false,
                              session.getSessionInfo().getClientState(), false)
       {
@@ -128,12 +157,12 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
          private ExportOptions lastKnownState_;
       };
    }
-
+   
    public void onPlotsChanged(PlotsChangedEvent event)
    {
       // get the event
       PlotsState plotsState = event.getPlotsState();
-
+        
       // clear progress 
       view_.setProgress(false);
       
@@ -159,6 +188,11 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       // update plot size
       plotSize_ = new Size(plotsState.getWidth(), plotsState.getHeight());
 
+      // manipulator
+      manipulatorManager_.setManipulator(plotsState.getManipulator(),
+                                         plotsState.getShowManipulator());
+      
+      // locator
       if (locator_.isActive())
          locate();
    }
@@ -166,16 +200,14 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    void onNextPlot()
    {
       view_.bringToFront();
-      if (!Desktop.isDesktop())
-         view_.setProgress(true);
+      setChangePlotProgress();
       server_.nextPlot(new PlotRequestCallback());
    }
 
    void onPreviousPlot()
    {
       view_.bringToFront();
-      if (!Desktop.isDesktop())
-         view_.setProgress(true);
+      setChangePlotProgress();
       server_.previousPlot(new PlotRequestCallback());
    }
 
@@ -285,6 +317,11 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       view_.setProgress(true);
       server_.refreshPlot(new PlotRequestCallback());
    }
+   
+   void onShowManipulator()
+   {
+      manipulatorManager_.showManipulator();
+   }
 
    public Display getView()
    {
@@ -309,6 +346,12 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
             }
          });
       }
+   }
+   
+   private void setChangePlotProgress()
+   {
+      if (!Desktop.isDesktop())
+         view_.setProgress(true);
    }
    
    private class PlotRequestCallback extends ServerRequestCallback<Void>
@@ -365,6 +408,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    private final PlotsServerOperations server_;
    private final Session session_;
    private final Locator locator_;
+   private final ManipulatorManager manipulatorManager_;
    
    // default export options
    private ExportOptions exportOptions_ = ExportOptions.create(

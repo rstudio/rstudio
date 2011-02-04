@@ -18,6 +18,7 @@
 
 namespace core {
    class Error;
+   class ErrorLocation;
    class FilePath;
 }
 
@@ -38,6 +39,11 @@ private:
    struct Impl;
    boost::shared_ptr<Impl> pImpl_;
 };
+
+void reportError(const core::Error& error);
+
+void logAndReportError(const core::Error& error,
+                       const core::ErrorLocation& location);
 
 } // namespace graphics
 } // namespace session

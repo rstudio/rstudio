@@ -15,5 +15,6 @@
 			<attribute name="javadoc_location" value="jar:platform:/resource/client/lib/gin/gin-javadoc.zip!/"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="lib/gwt-incubator/gwt-incubator-20100204-r1747.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

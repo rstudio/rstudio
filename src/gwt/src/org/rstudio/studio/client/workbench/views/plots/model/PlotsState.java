@@ -24,6 +24,10 @@ public class PlotsState extends JavaScriptObject
       return this.filename;
    }-*/;
    
+   public final native Manipulator getManipulator() /*-{
+      return this.manipulator;
+   }-*/;
+   
    public final native int getWidth() /*-{
       return this.width;
    }-*/;
@@ -42,5 +46,9 @@ public class PlotsState extends JavaScriptObject
    
    public final native boolean getActivatePlots() /*-{
       return this.activatePlots;
+   }-*/;
+   
+   public final native boolean getShowManipulator() /*-{
+      return this.showManipulator;
    }-*/;
 }

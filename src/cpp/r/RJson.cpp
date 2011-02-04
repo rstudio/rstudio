@@ -136,6 +136,11 @@ Error jsonValueFromVectorElement(SEXP vectorSEXP,
          }
          break;
       }
+      case ENVSXP:
+      {
+         *pValue = std::string("<environment>");
+         break;
+      }
       default:
       {
          return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
