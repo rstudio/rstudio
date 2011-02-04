@@ -29,7 +29,7 @@ function __MODULE_FUNC__() {
       // the body element exists.
       return (typeof $doc.body != "undefined" && $doc.body != null);
     }
-    return (/loaded|interactive|complete/.test($doc.readyState));
+    return (/loaded|complete/.test($doc.readyState));
   }
 
   function isHostedMode() {
