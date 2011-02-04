@@ -256,15 +256,6 @@ private:
    boost::scoped_ptr<core::system::SignalBlocker> pSignalBlocker_;
 };
 
-class NonInteractiveScope : boost::noncopyable
-{
-public:
-   NonInteractiveScope();
-   virtual ~NonInteractiveScope();
-private:
-   Rboolean previousValue_;
-};
-
 class InterruptException {};
    
 } // namespace exec   

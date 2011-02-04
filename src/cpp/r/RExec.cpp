@@ -29,7 +29,6 @@ LibExtern Rboolean R_interrupts_suspended;
 LibExtern int R_interrupts_pending;
 #ifdef _WIN32
 LibExtern int UserBreak;
-extern "C" Rboolean R_Interactive;
 #endif
 
 // R-INTERNAL-IMPORT: from Defn.h
@@ -71,12 +70,6 @@ Error evaluateExpressions(SEXP expr,
                           SEXP* pSEXP,
                           sexp::Protect* pProtect)   
 {
-   // execute this in a non-interactive scope so that errors which
-   // dump the user into the debugger don't cause us to become
-   // unresponsive (b/c we miss the jump_to_top that occurs when
-   // the user hits 0 to exit recover mode)
-   r::exec::NonInteractiveScope nonInteractiveScope;
-
    int er=0;
    int i=0,l;
    
@@ -144,12 +137,6 @@ void SEXPTopLevelExec(void *data)
    
 Error executeSafely(boost::function<void()> function)
 {
-   // execute this in a non-interactive scope so that errors which
-   // dump the user into the debugger don't cause us to become
-   // unresponsive (b/c we miss the jump_to_top that occurs when
-   // the user hits 0 to exit recover mode)
-   r::exec::NonInteractiveScope nonInteractiveScope;
-
    Rboolean success = R_ToplevelExec(topLevelExec, (void*)&function);
    if (!success)
    {
@@ -163,12 +150,6 @@ Error executeSafely(boost::function<void()> function)
    
 core::Error executeSafely(boost::function<SEXP()> function, SEXP* pSEXP)
 {
-   // execute this in a non-interactive scope so that errors which
-   // dump the user into the debugger don't cause us to become
-   // unresponsive (b/c we miss the jump_to_top that occurs when
-   // the user hits 0 to exit recover mode)
-   r::exec::NonInteractiveScope nonInteractiveScope;
-
    SEXPTopLevelExecContext context ;
    context.function = function ;
    context.pReturnSEXP = pSEXP ;
@@ -460,18 +441,6 @@ IgnoreInterruptsScope::~IgnoreInterruptsScope()
    {
    }
 }
-
-NonInteractiveScope::NonInteractiveScope()
-{
-   previousValue_ = R_Interactive;
-   R_Interactive = FALSE;
-}
-
-NonInteractiveScope::~NonInteractiveScope()
-{
-   R_Interactive = previousValue_;
-}
-
 
 } // namespace exec   
 } // namespace r
