@@ -16,12 +16,13 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.user.client.ui.HasValue;
-import org.rstudio.codemirror.client.CodeMirror;
-import org.rstudio.codemirror.client.CodeMirror.CursorPosition;
-import org.rstudio.codemirror.client.CodeMirrorEditor;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Search;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
 
 public class FindReplace
 {
@@ -38,23 +39,13 @@ public class FindReplace
       HasClickHandlers getReplaceAll();
    }
 
-   public FindReplace(CodeMirrorEditor editor,
+   public FindReplace(AceEditor editor,
                       Display display,
                       GlobalDisplay globalDisplay)
    {
       editor_ = editor;
       display_ = display;
       globalDisplay_ = globalDisplay;
-
-      /*
-      display.getFindValue().addValueChangeHandler(new ValueChangeHandler<String>()
-      {
-         public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent)
-         {
-            find(FindType.Incremental);
-         }
-      });
-      */
 
       addClickHandler(display.getFindButton(), new ClickHandler()
       {
@@ -105,57 +96,46 @@ public class FindReplace
          hasClickHandlers.addClickHandler(clickHandler);
    }
 
-   private enum FindType { Forward, Reverse, Incremental
-   }
+   private enum FindType { Forward, Reverse }
 
    private boolean find(FindType findType)
    {
-      boolean reverse = findType == FindType.Reverse;
-
       String searchString = display_.getFindValue().getValue();
+      if (searchString.length() == 0)
+         return false;
+      
       boolean ignoreCase = !display_.getCaseSensitive().getValue();
 
-      CodeMirror codeMirror = editor_.getRawEditor();
-      boolean success = editor_.find(
-            codeMirror.cursorPosition(findType != FindType.Forward),
-            searchString,
-            ignoreCase,
-            reverse);
+      Search search = Search.create(searchString,
+                                    findType != FindType.Forward,
+                                    true,
+                                    !ignoreCase,
+                                    false,
+                                    false,
+                                    false);
 
-      if (!success)
+      Range range = search.find(editor_.getSession());
+
+      if (range == null)
       {
-         CursorPosition pos;
-         if (reverse)
-         {
-            pos = CursorPosition.create(
-                  codeMirror.lastLine(),
-                  codeMirror.lineContent(codeMirror.lastLine()).length());
-         }
-         else
-         {
-            pos = CursorPosition.create(codeMirror.firstLine(), 0);
-         }
-
-         success = editor_.find(pos,
-                                searchString,
-                                ignoreCase,
-                                reverse);
-
-         if (!success && findType != FindType.Incremental)
-         {
-            globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
-                                       "Find/Replace",
-                                       "No more occurrences.");
-         }
+         globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
+                                    "Find/Replace",
+                                    "No more occurrences.");
+         return false;
       }
-
-      return success;
+      else
+      {
+         editor_.getSession().getSelection().setSelectionRange(range);
+         return true;
+      }
    }
 
    private void replace()
    {
-      boolean ignoreCase = !display_.getCaseSensitive().getValue();
       String searchString = display_.getFindValue().getValue();
+      if (searchString.length() == 0)
+         return;
+      boolean ignoreCase = !display_.getCaseSensitive().getValue();
       String replacement = display_.getReplaceValue().getValue();
       String selected = editor_.getSelectionValue();
       if (ignoreCase ? searchString.equalsIgnoreCase(selected)
@@ -200,12 +180,12 @@ public class FindReplace
          }
          result.append(code, pos, code.length());
 
-         CodeMirror codeMirror = editor_.getRawEditor();
-         int line = codeMirror.lineNumber(codeMirror.cursorPosition(true).getLine());
+         Selection selection = editor_.getSession().getSelection();
+         int row = selection.getRange().getStart().getRow();
          editor_.markScrollPosition();
-         editor_.selectAll();
+         selection.selectAll();
          editor_.replaceSelection(result.toString());
-         codeMirror.selectLine(codeMirror.nthLine(line), 0);
+         selection.moveCursorTo(row, 0, false);
          editor_.restoreScrollPosition();
       }
       globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
@@ -213,7 +193,7 @@ public class FindReplace
                                  occurrences + " occurrences replaced.");
    }
 
-   private final CodeMirrorEditor editor_;
+   private final AceEditor editor_;
    private final Display display_;
    private final GlobalDisplay globalDisplay_;
 }

@@ -28,4 +28,8 @@ public class Selection extends JavaScriptObject
    public native final boolean isEmpty() /*-{
       return this.isEmpty();
    }-*/;
+
+   public native final void selectAll() /*-{
+      this.selectAll();
+   }-*/;
 }

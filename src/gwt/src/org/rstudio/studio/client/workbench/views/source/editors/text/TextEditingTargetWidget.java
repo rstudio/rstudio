@@ -20,7 +20,6 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.codemirror.client.CodeMirrorEditor;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -154,7 +153,7 @@ public class TextEditingTargetWidget extends ResizeComposite implements Display
       if (findReplaceBar_ == null)
       {
          findReplaceBar_ = new FindReplaceBar();
-         new FindReplace((CodeMirrorEditor)editor_,
+         new FindReplace((AceEditor)editor_,
                          findReplaceBar_,
                          RStudioGinjector.INSTANCE.getGlobalDisplay());
          panel_.insertNorth(findReplaceBar_,

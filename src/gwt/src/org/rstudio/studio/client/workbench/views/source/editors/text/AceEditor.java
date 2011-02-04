@@ -491,7 +491,7 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       return widget_.getEditor() != null;
    }
    
-   private EditSession getSession()
+   public EditSession getSession()
    {
       return widget_.getEditor().getSession();
    }
