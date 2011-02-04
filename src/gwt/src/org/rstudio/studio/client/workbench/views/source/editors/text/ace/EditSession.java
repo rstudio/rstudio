@@ -44,4 +44,9 @@ public class EditSession extends JavaScriptObject
    public native final int getLength() /*-{
       return this.getLength();
    }-*/;
+
+   public native final void setEditorMode(String parserName) /*-{
+      var Mode = $wnd.require(parserName).Mode;
+      this.setMode(new Mode());
+   }-*/;
 }

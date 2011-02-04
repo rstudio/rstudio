@@ -45,13 +45,13 @@ public class EditorLanguage
    };
 
    public static final EditorLanguage LANG_R = new EditorLanguage(
-         0, "RParser", true);
+         0, "mode/r", true);
    public static final EditorLanguage LANG_TEX = new EditorLanguage(
-         1, "LatexParser", false);
+         1, "mode/tex", false);
    public static final EditorLanguage LANG_SWEAVE = new EditorLanguage(
-         2, "SweaveParser", true);
+         2, "mode/sweave", true);
    public static final EditorLanguage LANG_PLAIN = new EditorLanguage(
-         3, "DummyParser", false);
+         3, "ace/mode/text", false);
 
    /**
     *

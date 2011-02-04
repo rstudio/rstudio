@@ -19,6 +19,8 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedHandler;
 
 public class AceEditorWidget extends Composite
       implements RequiresResize,
@@ -77,6 +79,9 @@ public class AceEditorWidget extends Composite
                editor_.getSession().setValue(initialCode_);
                initialCode_ = null;
             }
+
+            fireEvent(new EditorLoadedEvent());
+
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
                public void execute()
@@ -102,12 +107,19 @@ public class AceEditorWidget extends Composite
           paths: {
               demo: "../demo",
               ace: "../lib/ace",
-              pilot: "../support/pilot/lib/pilot"
+              pilot: "../support/pilot/lib/pilot",
+              mode: "../../js/acemode"
           }
       };
 
-      var deps = [ "pilot/fixoldbrowsers", "pilot/plugin_manager", "pilot/settings",
-                   "pilot/environment", "demo/demo" ];
+      var deps = [ "pilot/fixoldbrowsers",
+                   "pilot/plugin_manager",
+                   "pilot/settings",
+                   "pilot/environment",
+                   "demo/demo",
+                   "mode/r",
+                   "mode/tex",
+                   "mode/sweave" ];
 
       require(config);
       require(deps, function() {
@@ -123,83 +135,26 @@ public class AceEditorWidget extends Composite
 
    private static native AceEditorNative createEditor(
          JavaScriptObject env,
-         Element el) /*-{
+         Element container) /*-{
       var require = $wnd.require;
       var event = require("pilot/event");
       var Editor = require("ace/editor").Editor;
       var Renderer = require("ace/virtual_renderer").VirtualRenderer;
       var theme = require("ace/theme/textmate");
       var EditSession = require("ace/edit_session").EditSession;
-      var JavaScriptMode = require("ace/mode/javascript").Mode;
-      var CssMode = require("ace/mode/css").Mode;
-      var HtmlMode = require("ace/mode/html").Mode;
-      var XmlMode = require("ace/mode/xml").Mode;
-      var PythonMode = require("ace/mode/python").Mode;
-      var PhpMode = require("ace/mode/php").Mode;
-      var TextMode = require("ace/mode/text").Mode;
       var UndoManager = require("ace/undomanager").UndoManager;
 
+      var TextMode = require("ace/mode/text").Mode;
+      var RMode = require("mode/r").Mode;
+      var TexMode = require("mode/tex").Mode;
+      var SweaveMode = require("mode/sweave").Mode;
+   
       var vim = require("ace/keyboard/keybinding/vim").Vim;
       var emacs = require("ace/keyboard/keybinding/emacs").Emacs;
       var HashHandler = require("ace/keyboard/hash_handler").HashHandler;
 
-      var docs = {};
-
-      var document = $wnd.document;
-
-      docs.js = new EditSession('');
-      docs.js.setMode(new JavaScriptMode());
-      docs.js.setUndoManager(new UndoManager());
-
-      docs.css = new EditSession('');
-      docs.css.setMode(new CssMode());
-      docs.css.setUndoManager(new UndoManager());
-
-      docs.html = new EditSession('');
-      docs.html.setMode(new HtmlMode());
-      docs.html.setUndoManager(new UndoManager());
-
-      docs.python = new EditSession('');
-      docs.python.setMode(new PythonMode());
-      docs.python.setUndoManager(new UndoManager());
-
-      docs.php = new EditSession('');
-      docs.php.setMode(new PhpMode());
-      docs.php.setUndoManager(new UndoManager());
-
-
-      var container = el;
       env.editor = new Editor(new Renderer(container, theme));
-
-      var modes = {
-          text: new TextMode(),
-          xml: new XmlMode(),
-          html: new HtmlMode(),
-          css: new CssMode(),
-          javascript: new JavaScriptMode(),
-          python: new PythonMode(),
-          php: new PhpMode()
-      };
-
-      function getMode() {
-          return modes[modeEl.value];
-      }
-
-      // for debugging
-      window.jump = function() {
-          var jump = document.getElementById("jump");
-          var cursor = env.editor.getCursorPosition();
-          var pos = env.editor.renderer.textToScreenCoordinates(cursor.row, cursor.column);
-          jump.style.left = pos.pageX + "px";
-          jump.style.top = pos.pageY + "px";
-          jump.style.display = "block";
-      };
-
-      function onResize() {
-          env.editor.resize();
-      };
-
-      window.onresize = onResize;
+      env.editor.getSession().setMode(new RMode());
 
       return env.editor;
    }-*/;
@@ -240,6 +195,11 @@ public class AceEditorWidget extends Composite
    public HandlerRegistration addClickHandler(ClickHandler handler)
    {
       return null;  //To change body of created methods use File | Settings | File Templates.
+   }
+
+   public HandlerRegistration addEditorLoadedHandler(EditorLoadedHandler handler)
+   {
+      return addHandler(handler, EditorLoadedEvent.TYPE);
    }
 
    private AceEditorNative editor_;

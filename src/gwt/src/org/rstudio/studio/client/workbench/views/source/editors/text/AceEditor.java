@@ -1,11 +1,13 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.IFrameElement;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.PreElement;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.KeyCodeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.EventHandler;
@@ -17,7 +19,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.codemirror.client.events.EditorFocusHandler;
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
@@ -38,11 +39,12 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.assist.NullCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
-import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedHandler;
 
 public class AceEditor implements DocDisplay, InputEditorDisplay
 {
@@ -85,6 +87,14 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
          public void onValueChange(ValueChangeEvent<Void> evt)
          {
             ValueChangeEvent.fire(AceEditor.this, null);
+         }
+      });
+
+      widget_.addEditorLoadedHandler(new EditorLoadedHandler()
+      {
+         public void onEditorLoaded(EditorLoadedEvent event)
+         {
+            updateLanguage();
          }
       });
 
@@ -135,7 +145,17 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
 
    public void setFileType(TextFileType fileType)
    {
-      if (fileType.canExecuteCode())
+      fileType_ = fileType;
+      if (isEditorLoaded())
+         updateLanguage();
+   }
+
+   private void updateLanguage()
+   {
+      if (fileType_ == null)
+         return;
+      
+      if (fileType_.canExecuteCode())
       {
          completionManager_ = new RCompletionManager(this,
                                                      new CompletionPopupPanel(),
@@ -144,6 +164,9 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       }
       else
          completionManager_ = new NullCompletionManager();
+
+      getSession().setEditorMode(fileType_.getEditorLanguage().getParserName());
+      getSession().setUseWrapMode(fileType_.getWordWrap());
    }
 
    public String getCode()
@@ -463,6 +486,11 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       return widget_;
    }
 
+   private boolean isEditorLoaded()
+   {
+      return widget_.getEditor() != null;
+   }
+   
    private EditSession getSession()
    {
       return widget_.getEditor().getSession();
@@ -487,4 +515,5 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
    private final AceEditorWidget widget_;
    private CompletionManager completionManager_;
    private CodeToolsServerOperations server_;
+   private TextFileType fileType_;
 }
