@@ -140,6 +140,7 @@ public class AceEditorNative extends JavaScriptObject {
 
       env.editor = new Editor(new Renderer(container, theme));
       env.editor.getSession().setMode(new RMode());
+      env.editor.getSession().setUndoManager(new UndoManager());
 
       return env.editor;
    }-*/;
