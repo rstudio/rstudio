@@ -20,6 +20,7 @@
 #include <r/RErrorCategory.hpp>
 #include <r/RSourceManager.hpp>
 #include <r/RInterface.hpp>
+#include <r/ROptions.hpp>
 
 #include <R_ext/Parse.h>
 
@@ -29,7 +30,6 @@ LibExtern Rboolean R_interrupts_suspended;
 LibExtern int R_interrupts_pending;
 #ifdef _WIN32
 LibExtern int UserBreak;
-extern "C" Rboolean R_Interactive;
 #endif
 
 // R-INTERNAL-IMPORT: from Defn.h
@@ -42,6 +42,45 @@ namespace r {
 namespace exec {
    
 namespace {
+
+// create a scope for disabling any installed error handlers (e.g. recover)
+// we need to do this so that recover isn't invoked while we are running
+// R code within an r::exec scope -- when the user presses 0 to exit
+// from recover and jump_to_top it gets eaten by the R_ToplevelExecute
+// context so the console becomes unresponsive
+class DisableErrorHandlerScope : boost::noncopyable
+{
+public:
+   DisableErrorHandlerScope()
+      : didDisable_(false),
+        previousErrorHandlerSEXP_(r::options::getOption("error"))
+   {
+      if (previousErrorHandlerSEXP_)
+      {
+         r::options::setOption(Rf_install("error"), R_NilValue);
+         didDisable_ = true;
+      }
+   }
+   virtual ~DisableErrorHandlerScope()
+   {
+      try
+      {
+         if (didDisable_)
+         {
+            r::options::setOption(Rf_install("error"),
+                                  previousErrorHandlerSEXP_.get());
+         }
+      }
+      catch(...)
+      {
+      }
+   }
+
+private:
+   bool didDisable_;
+   r::sexp::PreservedSEXP previousErrorHandlerSEXP_;
+};
+
 
 Error parseString(const std::string& str, SEXP* pSEXP, sexp::Protect* pProtect)
 {
@@ -71,11 +110,8 @@ Error evaluateExpressions(SEXP expr,
                           SEXP* pSEXP,
                           sexp::Protect* pProtect)   
 {
-   // execute this in a non-interactive scope so that errors which
-   // dump the user into the debugger don't cause us to become
-   // unresponsive (b/c we miss the jump_to_top that occurs when
-   // the user hits 0 to exit recover mode)
-   r::exec::NonInteractiveScope nonInteractiveScope;
+   // disable custom error handlers while we execute code
+   DisableErrorHandlerScope disableErrorHandler;
 
    int er=0;
    int i=0,l;
@@ -144,11 +180,8 @@ void SEXPTopLevelExec(void *data)
    
 Error executeSafely(boost::function<void()> function)
 {
-   // execute this in a non-interactive scope so that errors which
-   // dump the user into the debugger don't cause us to become
-   // unresponsive (b/c we miss the jump_to_top that occurs when
-   // the user hits 0 to exit recover mode)
-   r::exec::NonInteractiveScope nonInteractiveScope;
+   // disable custom error handlers while we execute code
+   DisableErrorHandlerScope disableErrorHandler;
 
    Rboolean success = R_ToplevelExec(topLevelExec, (void*)&function);
    if (!success)
@@ -163,11 +196,8 @@ Error executeSafely(boost::function<void()> function)
    
 core::Error executeSafely(boost::function<SEXP()> function, SEXP* pSEXP)
 {
-   // execute this in a non-interactive scope so that errors which
-   // dump the user into the debugger don't cause us to become
-   // unresponsive (b/c we miss the jump_to_top that occurs when
-   // the user hits 0 to exit recover mode)
-   r::exec::NonInteractiveScope nonInteractiveScope;
+   // disable custom error handlers while we execute code
+   DisableErrorHandlerScope disableErrorHandler;
 
    SEXPTopLevelExecContext context ;
    context.function = function ;
@@ -460,18 +490,6 @@ IgnoreInterruptsScope::~IgnoreInterruptsScope()
    {
    }
 }
-
-NonInteractiveScope::NonInteractiveScope()
-{
-   previousValue_ = R_Interactive;
-   R_Interactive = FALSE;
-}
-
-NonInteractiveScope::~NonInteractiveScope()
-{
-   R_Interactive = previousValue_;
-}
-
 
 } // namespace exec   
 } // namespace r

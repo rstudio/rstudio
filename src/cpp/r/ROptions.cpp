@@ -55,6 +55,61 @@ SEXP getOption(const std::string& name)
 {
    return Rf_GetOption(Rf_install(name.c_str()), R_BaseEnv);
 }
+
+
+namespace {
+
+static SEXP FindTaggedItem(SEXP lst, SEXP tag)
+{
+    for ( ; lst!=R_NilValue ; lst=CDR(lst)) {
+   if (TAG(lst) == tag)
+       return lst;
+    }
+    return R_NilValue;
+}
+
+}
+
+// copy of static SetOption method from options.c. we need the
+// lower level version of this so we can set an option without
+// invoking r::exec (which explicilty sets the error option to
+// prevent error handlers from running)
+/* Change the value of an option or add a new option or, */
+/* if called with value R_NilValue, remove that option. */
+
+SEXP setOption(SEXP tag, SEXP value)
+{
+    SEXP opt, old, t;
+    t = opt = SYMVALUE(Rf_install(".Options"));
+    if (!Rf_isList(opt))
+      Rf_error("corrupted options list");
+    opt = FindTaggedItem(opt, tag);
+
+    /* The option is being removed. */
+    if (value == R_NilValue) {
+   for ( ; t != R_NilValue ; t = CDR(t))
+       if (TAG(CDR(t)) == tag) {
+      old = CAR(t);
+      SETCDR(t, CDDR(t));
+      return old;
+       }
+   return R_NilValue;
+    }
+    /* If the option is new, a new slot */
+    /* is added to the end of .Options */
+    if (opt == R_NilValue) {
+   while (CDR(t) != R_NilValue)
+       t = CDR(t);
+   PROTECT(value);
+   SETCDR(t, Rf_allocList(1));
+   UNPROTECT(1);
+   opt = CDR(t);
+   SET_TAG(opt, tag);
+    }
+    old = CAR(opt);
+    SETCAR(opt, value);
+    return old;
+}
     
 } // namespace options   
 } // namespace r
