@@ -53,10 +53,12 @@ class DisableErrorHandlerScope : boost::noncopyable
 public:
    DisableErrorHandlerScope()
       : didDisable_(false),
-        previousErrorHandlerSEXP_(r::options::getOption("error"))
+        previousErrorHandlerSEXP_(R_NilValue)
    {
-      if (previousErrorHandlerSEXP_)
+      previousErrorHandlerSEXP_ = r::options::getOption("error");
+      if (previousErrorHandlerSEXP_ != R_NilValue)
       {
+         rProtect_.add(previousErrorHandlerSEXP_);
          r::options::setOption(Rf_install("error"), R_NilValue);
          didDisable_ = true;
       }
@@ -66,10 +68,7 @@ public:
       try
       {
          if (didDisable_)
-         {
-            r::options::setOption(Rf_install("error"),
-                                  previousErrorHandlerSEXP_.get());
-         }
+            r::options::setOption(Rf_install("error"), previousErrorHandlerSEXP_);
       }
       catch(...)
       {
@@ -78,7 +77,8 @@ public:
 
 private:
    bool didDisable_;
-   r::sexp::PreservedSEXP previousErrorHandlerSEXP_;
+   r::sexp::Protect rProtect_;
+   SEXP previousErrorHandlerSEXP_;
 };
 
 
