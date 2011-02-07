@@ -361,9 +361,12 @@ public class Pruner {
         JMethod method = type.getMethods().get(i);
         if (!methodIsReferenced(method)
             || pruneViaNoninstantiability(isInstantiated, method)) {
-          type.removeMethod(i);
-          madeChanges();
-          --i;
+          // Never prune clinit directly out of the class.
+          if (i > 0) {
+            type.removeMethod(i);
+            madeChanges();
+            --i;
+          }
         } else {
           accept(method);
         }

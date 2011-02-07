@@ -205,7 +205,9 @@ public class ControlFlowAnalyzer {
       rescue(type.getSuperClass(), true, isInstantiated);
 
       // Rescue my clinit (it won't ever be explicitly referenced)
-      rescue(type.getMethods().get(0));
+      if (type.hasClinit()) {
+        rescue(type.getMethods().get(0));
+      }
 
       // JLS 12.4.1: don't rescue my super interfaces just because I'm rescued.
       // However, if I'm instantiated, let's mark them as instantiated.
@@ -273,7 +275,9 @@ public class ControlFlowAnalyzer {
       assert (isReferenced || isInstantiated);
 
       // Rescue my clinit (it won't ever be explicitly referenced
-      rescue(type.getMethods().get(0));
+      if (type.hasClinit()) {
+        rescue(type.getMethods().get(0));
+      }
 
       // JLS 12.4.1: don't rescue my super interfaces just because I'm rescued.
       // However, if I'm instantiated, let's mark them as instantiated.

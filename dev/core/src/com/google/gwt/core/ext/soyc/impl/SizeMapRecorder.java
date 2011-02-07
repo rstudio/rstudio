@@ -29,8 +29,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -38,6 +40,16 @@ import java.util.zip.GZIPOutputStream;
  * then read to produce a Story of Your Compile.
  */
 public class SizeMapRecorder {
+
+  /**
+   * Sorts by JsName.getIdent().
+   */
+  private static final Comparator<JsName> JSNAME_SORT = new Comparator<JsName>() {
+    public int compare(JsName o1, JsName o2) {
+      return o1.getIdent().compareTo(o2.getIdent());
+    }
+  };
+
   /**
    * A human-accessible type and description of a program reference. These are
    * produced by
@@ -72,7 +84,7 @@ public class SizeMapRecorder {
     return toReturn;
   }
 
-  /**
+/**
    * Escapes '&', '<', '>', '"', and '\'' to their XML entity equivalents.
    */
   public static String escapeXml(String unescaped) {
@@ -81,7 +93,7 @@ public class SizeMapRecorder {
     return builder.toString();
   }
 
-  /**
+/**
    * Escapes '&', '<', '>', '"', and optionally ''' to their XML entity
    * equivalents. The portion of the input string between start (inclusive) and
    * end (exclusive) is scanned.  The output is appended to the given
@@ -95,7 +107,7 @@ public class SizeMapRecorder {
    * @param builder a StringBuilder to be appended with the output.
    */
   public static void escapeXml(String code, int start, int end,
-    boolean quoteApostrophe, StringBuilder builder) {
+      boolean quoteApostrophe, StringBuilder builder) {
     // See http://www.w3.org/TR/2006/REC-xml11-20060816/#charsets.
     int lastIndex = 0;
     int len = end - start;
@@ -156,7 +168,7 @@ public class SizeMapRecorder {
     }
     builder.append(c, lastIndex, len - lastIndex);
   }
-  
+
   /**
    * @param logger a TreeLogger
    */
@@ -172,7 +184,9 @@ public class SizeMapRecorder {
     for (int i = 0; i < sizeBreakdowns.length; i++) {
       writer.append("<sizemap fragment=\"" + i + "\" " + "size=\""
           + sizeBreakdowns[i].getSize() + "\">\n");
-      for (Entry<JsName, Integer> sizeMapEntry : sizeBreakdowns[i].getSizeMap().entrySet()) {
+      Map<JsName, Integer> sizeMap = new TreeMap<JsName, Integer>(JSNAME_SORT);
+      sizeMap.putAll(sizeBreakdowns[i].getSizeMap());
+      for (Entry<JsName, Integer> sizeMapEntry : sizeMap.entrySet()) {
         JsName name = sizeMapEntry.getKey();
         int size = sizeMapEntry.getValue();
         TypedProgramReference typedRef = typedProgramReference(name, jjsmap,

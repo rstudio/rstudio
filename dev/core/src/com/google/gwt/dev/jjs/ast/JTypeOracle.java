@@ -16,9 +16,11 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
+import com.google.gwt.dev.jjs.impl.HasNameSort;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.collect.IdentitySets;
+import com.google.gwt.dev.util.collect.Lists;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -462,10 +464,11 @@ public class JTypeOracle implements Serializable {
      * building the full maps.
      */
     JClassType jsoType = program.getJavaScriptObject();
-    Set<JClassType> jsoSubTypes = Collections.emptySet();
+    List<JClassType> jsoSubTypes = Lists.create();
     if (jsoType != null) {
       assert jsoType.getImplements().size() == 0;
-      jsoSubTypes = get(subClassMap, jsoType);
+      jsoSubTypes = new ArrayList<JClassType>(get(subClassMap, jsoType));
+      Collections.sort(jsoSubTypes, new HasNameSort());
       for (JClassType jsoSubType : jsoSubTypes) {
         for (JInterfaceType intf : jsoSubType.getImplements()) {
           jsoType.addImplements(intf);
