@@ -61,7 +61,7 @@ public class ManipulatorControlPicker extends ManipulatorControl
       panel.add(listBox_);
       
       initWidget(panel);
-      setStyleName(styles.picker());
+      addControlStyle(styles.picker());
    }
 
    @Override

@@ -9,6 +9,8 @@ public interface ManipulatorStyles extends CssResource
 
    String captionLabel();
    
+   String control();
+   
    String slider();
    String sliderValueLabel();
 

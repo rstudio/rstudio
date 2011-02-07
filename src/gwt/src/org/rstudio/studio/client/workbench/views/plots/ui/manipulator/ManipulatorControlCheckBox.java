@@ -50,7 +50,7 @@ public class ManipulatorControlCheckBox extends ManipulatorControl
     
       
       initWidget(panel);
-      setStyleName(styles.checkBox());
+      addControlStyle(styles.checkBox());
    }
 
    @Override

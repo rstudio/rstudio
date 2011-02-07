@@ -14,13 +14,17 @@
    margin-right: 8px;
 }
 
+.control {
+	padding-bottom: 15px;
+}
+
 .slider {
   width: 100%;	
 }
 
 
 .slider .sliderValueLabel {
-
+   margin-bottom: 10px;
 }
 
 .slider .gwt-SliderBar-shell {
@@ -75,6 +79,7 @@
 }
 
 .checkBox {	
+	margin-left: -5px;	
 }
 
 .manipulateButton {
