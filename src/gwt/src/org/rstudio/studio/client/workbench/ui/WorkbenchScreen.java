@@ -132,7 +132,6 @@ public class WorkbenchScreen extends Composite
       final WindowFrame rightTopFrame = new WindowFrame();
       rightTopTabs_ = new WorkbenchTabPanel(rightTopFrame);
       rightTopTabs_.add(workspaceTab);
-      //rightTopTabs_.add(dataTab);
       rightTopTabs_.add(historyTab);
       if (plotsOnTop_.getValue())
          rightTopTabs_.add(plotsTab_);
@@ -489,20 +488,28 @@ public class WorkbenchScreen extends Composite
 
    @Handler
    void onActivateWorkspace() { rightTopTabs_.selectTab(0); }
-   /*
    @Handler
-   void onActivateData() { rightTopTabs_.selectTab(1); }
-   */
-   @Handler
-   void onActivateHistory() { rightTopTabs_.selectTab(2); }
+   void onActivateHistory() { rightTopTabs_.selectTab(1); }
    @Handler
    void onActivateFiles() { browseTabs_.selectTab(0); }
    @Handler
-   void onActivatePlots() { browseTabs_.selectTab(1); }
+   void onActivatePlots()
+   {
+      if (plotsOnTop_.getValue())
+         rightTopTabs_.selectTab(2);
+      else
+         browseTabs_.selectTab(1);
+   }
    @Handler
-   void onActivatePackages() { browseTabs_.selectTab(2); }
+   void onActivatePackages()
+   {
+      browseTabs_.selectTab(plotsOnTop_.getValue() ? 1 : 2);
+   }
    @Handler
-   void onActivateHelp() { browseTabs_.selectTab(3); }
+   void onActivateHelp()
+   {
+      browseTabs_.selectTab(plotsOnTop_.getValue() ? 2 : 3); 
+   }
 
    public Widget toWidget()
    {
