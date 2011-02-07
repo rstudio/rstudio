@@ -415,9 +415,11 @@ pre {
    border: 0px;
    cursor: move;
 }
-body.avoid-move-cursor .gwt-SplitLayoutPanel-HDragger,
+body.avoid-move-cursor .gwt-SplitLayoutPanel-HDragger {
+	cursor: e-resize;
+}
 body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
-   cursor: pointer;
+   cursor: n-resize;
 }
 .gwt-SplitLayoutPanel-HDragger {
    background: VERTICALHANDLE no-repeat center;
