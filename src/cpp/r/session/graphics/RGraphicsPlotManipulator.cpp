@@ -46,6 +46,11 @@ PlotManipulator::~PlotManipulator()
    }
 }
 
+void PlotManipulator::clear()
+{
+   sexp_.releaseNow();
+}
+
 Error PlotManipulator::save(const FilePath& filePath) const
 {
    // call manipulator save

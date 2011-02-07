@@ -38,6 +38,8 @@ public:
 
    bool empty() const { return !sexp_; }
 
+   void clear();
+
    core::Error save(const core::FilePath& filePath) const;
    core::Error load(const core::FilePath& filePath);
 

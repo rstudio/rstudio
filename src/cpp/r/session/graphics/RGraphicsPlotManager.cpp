@@ -124,6 +124,11 @@ Error PlotManager::setActivePlot(int index)
    
    if (activePlot_ != index)
    {
+      // if there is already a plot active then release its
+      // in-memory resources
+      if (hasPlot())
+         activePlot().purgeInMemoryResources();
+
       // set index
       activePlot_ = index;
       
@@ -525,6 +530,11 @@ void PlotManager::onDeviceNewPage(SEXP previousPageSnapshot)
    }
    else
    {
+      // if there is already a plot active then release its
+      // in-memory resources
+      if (hasPlot())
+         activePlot().purgeInMemoryResources();
+
       // create new plot (use pending manipulator, if any)
       PtrPlot ptrPlot(new Plot(graphicsDevice_,
                                graphicsPath_,
@@ -670,7 +680,7 @@ void PlotManager::collectPlotFileGarbage() const
 
 void PlotManager::truncatePlotList()
 {
-   // truncate the plot list to a reasonable maximum (50)
+   // truncate the plot list to a reasonable maximum (20)
    // only truncate if the active plot is the last one, otherwise we could
    // have bugs related to removing plots that are active or getting the wrong
    // plots state because the previous plot was removed

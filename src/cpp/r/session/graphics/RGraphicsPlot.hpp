@@ -66,14 +66,19 @@ public:
    core::Error renderToDisplay();
    
    core::Error removeFiles();
+
+   void purgeInMemoryResources();
    
 private:
+   bool hasStorage() const;
+
    core::FilePath snapshotFilePath() const ;
    core::FilePath snapshotFilePath(const std::string& storageUuid) const;
    core::FilePath imageFilePath(const std::string& storageUuid) const;
 
+   bool hasManipulatorFile() const;
    core::FilePath manipulatorFilePath(const std::string& storageUuid) const;
-   void loadManipulator();
+   void loadManipulatorIfNecessary() const;
    void saveManipulator(const std::string& storageUuid) const;
 
 private:
@@ -84,7 +89,7 @@ private:
    bool needsUpdate_;
 
    // manipulator and protection scope for it
-   PlotManipulator manipulator_;
+   mutable PlotManipulator manipulator_;
 };
 
 } // namespace graphics
