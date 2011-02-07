@@ -32,7 +32,7 @@
                                           value = min,
                                           label = NULL,
                                           step = NULL,
-                                          ticks = if (is.null(step)) FALSE else TRUE)
+                                          ticks = if (is.null(step)) F else T)
 {
   # validate inputs
   if (!is.numeric(value) || !is.numeric(min) || !is.numeric(max))
@@ -155,18 +155,18 @@
   }
 })
 
-.rs.addGlobalFunction( "manipulate", function(code, controls = list(), ..., c = NULL)
+.rs.addGlobalFunction( "manipulate", function(expr, controls = list(), ..., c = NULL)
 {
   # create new list container for the manipulator
   manipulator <- new.env(parent = parent.frame())
   assign(".id", .rs.createUUID(), envir = manipulator)
   
   # save the unevaluated expression as the code
-  assign(".code", substitute(code), envir = manipulator) 
+  assign(".code", substitute(expr), envir = manipulator) 
   
   # save a human readable version of the code (specify control = NULL
   # to make the display as close to the original text as possible)
-  assign(".codeAsText", deparse(substitute(code), control = NULL), envir = manipulator)
+  assign(".codeAsText", deparse(substitute(expr), control = NULL), envir = manipulator)
   
   # get the controls 
   controls <- append(controls, list(...))
