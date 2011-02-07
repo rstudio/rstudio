@@ -110,6 +110,11 @@
   color: rgb(104, 104, 91);
 }
 
+.ace-tm .ace_line .ace_paren {
+  color: brown;
+}
+
+
 .ace-tm .ace_marker-layer .ace_selection {
   background: rgb(181, 213, 255);
 }

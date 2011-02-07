@@ -66,10 +66,10 @@ TexHighlightRules = function() {
 	            regex : "`",
 	            next : "qstring"
 	        }, {
-	            token : "lparen",
+	            token : "paren",
 	            regex : "[[({]"
 	        }, {
-	            token : "rparen",
+	            token : "paren",
 	            regex : "[\\])}]"
 	        }, {
 	            token : "text",
@@ -91,10 +91,10 @@ TexHighlightRules = function() {
 	            token : "keyword", // command
 	            regex : "\\\\(?:[a-zA-z0-9]+|[^a-zA-z0-9])"
 	        }, {
-	            token : "lparen",
+	            token : "paren",
 	            regex : "[[({]"
 	        }, {
-	            token : "rparen",
+	            token : "paren",
 	            regex : "[\\])}]"
 	        }, {
 	            token : "string",
@@ -119,10 +119,10 @@ TexHighlightRules = function() {
 	            token : "keyword", // command
 	            regex : "\\\\(?:[a-zA-z0-9]+|[^a-zA-z0-9])"
 	        }, {
-	            token : "lparen",
+	            token : "paren",
 	            regex : "[[({]"
 	        }, {
-	            token : "rparen",
+	            token : "paren",
 	            regex : "[\\])}]"
 	        }, {
 	            token : "string",

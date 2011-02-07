@@ -114,10 +114,10 @@ RHighlightRules = function() {
 	            token : "keyword.operator", // infix operators
 	            regex : "%.*%"
 	        }, {
-	            token : "lparen",
+	            token : "paren",
 	            regex : "[[({]"
 	        }, {
-	            token : "rparen",
+	            token : "paren",
 	            regex : "[\\])}]"
 	        }, {
 	            token : "text",
