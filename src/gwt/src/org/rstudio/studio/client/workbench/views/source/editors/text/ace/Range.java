@@ -18,4 +18,8 @@ public class Range extends JavaScriptObject
    public final native Position getEnd() /*-{
       return this.end;
    }-*/;
+
+   public final native boolean isEmpty() /*-{
+      return this.isEmpty();
+   }-*/;
 }

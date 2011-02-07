@@ -35,6 +35,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.EventBasedChangeTracker;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager.InitCompletionFilter;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupPanel;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.NullCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
@@ -73,6 +74,24 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       protected void dispatch(EventHandler handler)
       {
          assert false;
+      }
+   }
+
+   private class Filter implements InitCompletionFilter
+   {
+      public boolean shouldComplete(KeyCodeEvent<?> event)
+      {
+         Range range = getSession().getSelection().getRange();
+         if (!range.isEmpty())
+            return false;
+
+         int col = range.getStart().getColumn();
+         if (col == 0)
+            return false;
+
+         String row = getSession().getLine(range.getStart().getRow());
+
+         return row.substring(0, col).trim().length() != 0;
       }
    }
 
@@ -160,7 +179,7 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
          completionManager_ = new RCompletionManager(this,
                                                      new CompletionPopupPanel(),
                                                      server_,
-                                                     null);
+                                                     new Filter());
       }
       else
          completionManager_ = new NullCompletionManager();
