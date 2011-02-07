@@ -19,57 +19,51 @@ import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.StringInterner;
 
-import org.eclipse.jdt.core.compiler.CharOperation;
-import org.eclipse.jdt.internal.compiler.ClassFile;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
-import org.eclipse.jdt.internal.compiler.lookup.LocalTypeBinding;
-import org.eclipse.jdt.internal.compiler.lookup.NestedTypeBinding;
-import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
 /**
  * Encapsulates the state of a single compiled class file.
  */
-public final class CompiledClass {
+public final class CompiledClass implements Serializable {
 
   private static final DiskCache diskCache = new DiskCache();
 
+  private final CompiledClass enclosingClass;
+  private final String internalName;
+  private final boolean isLocal;
+  private CompilationUnit unit;
+  
   /**
-   * Returns <code>true</code> if this is a local type, or if this type is
-   * nested inside of any local type.
+   * A token to retrieve this object's bytes from the disk cache. byte code is
+   * placed in the cache when the object is deserialized.
    */
-  private static boolean isLocalType(SourceTypeBinding binding) {
-    SourceTypeBinding b = binding;
-    while (!b.isStatic()) {
-      if (b instanceof LocalTypeBinding) {
-        return true;
-      }
-      b = ((NestedTypeBinding) b).enclosingType;
-    }
-    return false;
-  }
-
-  protected final CompiledClass enclosingClass;
-  protected final String internalName;
-  protected final boolean isLocal;
-  protected CompilationUnit unit;
-
-  /**
-   * A token to retrieve this object's bytes from the disk cache.
-   */
-  private final long cacheToken;
-
+  private transient long cacheToken;
   private transient NameEnvironmentAnswer nameEnvironmentAnswer;
 
-  CompiledClass(ClassFile classFile, CompiledClass enclosingClass) {
+  /**
+   * Create a compiled class from raw class bytes.
+   * 
+   * @param classBytes - byte code for this class
+   * @param enclosingClass - outer class
+   * @param isLocal Is this class a local class? (See the JLS rev 2 section
+   *          14.3)
+   * @param internalName the internal binary name for this class. e.g. {@code
+   *          java/util/Map$Entry}. See
+   *          {@link "http://java.sun.com/docs/books/jvms/second_edition/html/ClassFile.doc.html#14757"}
+   */
+  CompiledClass(byte[] classBytes, CompiledClass enclosingClass,
+      boolean isLocal, String internalName) {
     this.enclosingClass = enclosingClass;
-    SourceTypeBinding binding = classFile.referenceBinding;
-    this.internalName = StringInterner.get().intern(
-        CharOperation.charToString(binding.constantPoolName()));
-    byte[] bytes = classFile.getBytes();
-    this.cacheToken = diskCache.writeByteArray(bytes);
-    this.isLocal = isLocalType(binding);
+    this.internalName = StringInterner.get().intern(internalName);
+    this.cacheToken = diskCache.writeByteArray(classBytes);
+    this.isLocal = isLocal;
   }
 
   /**
@@ -84,7 +78,8 @@ public final class CompiledClass {
   }
 
   /**
-   * Returns the binary class name, e.g. {@code java/util/Map$Entry}.
+   * Returns the class internal binary name for this type, e.g. {@code
+   * java/util/Map$Entry}.
    */
   public String getInternalName() {
     return internalName;
@@ -137,5 +132,17 @@ public final class CompiledClass {
   void initUnit(CompilationUnit unit) {
     assert this.unit == null;
     this.unit = unit;
+  }
+
+  private void readObject(ObjectInputStream inputStream)
+      throws ClassNotFoundException, IOException {
+    inputStream.defaultReadObject();
+    this.cacheToken = diskCache.transferFromStream(inputStream);
+  }
+
+  private void writeObject(ObjectOutputStream outputStream) throws IOException {
+    outputStream.defaultWriteObject();
+    byte[] byteCode = diskCache.readByteArray(cacheToken);
+    diskCache.transferToStream(cacheToken, outputStream);
   }
 }

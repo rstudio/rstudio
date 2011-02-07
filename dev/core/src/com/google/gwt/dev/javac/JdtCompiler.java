@@ -52,8 +52,10 @@ import org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
+import org.eclipse.jdt.internal.compiler.lookup.LocalTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment;
 import org.eclipse.jdt.internal.compiler.lookup.MethodScope;
+import org.eclipse.jdt.internal.compiler.lookup.NestedTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.UnresolvedReferenceBinding;
@@ -129,14 +131,6 @@ public class JdtCompiler {
     }
   }
   /**
-   * Interface for processing units on the fly during compilation.
-   */
-  public interface UnitProcessor {
-    void process(CompilationUnitBuilder builder,
-        CompilationUnitDeclaration cud, List<CompiledClass> compiledClasses);
-  }
-
-  /**
    * Static cache of all the JRE package names.
    */
   public static class JreIndex {
@@ -178,6 +172,14 @@ public class JdtCompiler {
         throw new InternalCompilerException("Unable to find JRE", e);
       }
     }
+  }
+
+  /**
+   * Interface for processing units on the fly during compilation.
+   */
+  public interface UnitProcessor {
+    void process(CompilationUnitBuilder builder,
+        CompilationUnitDeclaration cud, List<CompiledClass> compiledClasses);
   }
 
   /**
@@ -261,7 +263,9 @@ public class JdtCompiler {
         enclosingClass = results.get(enclosingClassFile);
         assert enclosingClass != null;
       }
-      CompiledClass result = new CompiledClass(classFile, enclosingClass);
+      String internalName = CharOperation.charToString(classFile.fileName());
+      CompiledClass result = new CompiledClass(classFile.getBytes(), 
+          enclosingClass, isLocalType(classFile), internalName);
       results.put(classFile, result);
     }
   }
@@ -357,7 +361,7 @@ public class JdtCompiler {
       }
     }
   }
-
+  
   /**
    * Compiles the given set of units. The units will be internally modified to
    * reflect the results of compilation.
@@ -437,6 +441,21 @@ public class JdtCompiler {
     }
 
     return null;
+  }
+
+  /**
+   * Returns <code>true</code> if this is a local type, or if this type is
+   * nested inside of any local type.
+   */
+  private static boolean isLocalType(ClassFile classFile) {
+    SourceTypeBinding b = classFile.referenceBinding;
+    while (!b.isStatic()) {
+      if (b instanceof LocalTypeBinding) {
+        return true;
+      }
+      b = ((NestedTypeBinding) b).enclosingType;
+    }
+    return false;
   }
 
   private AdditionalTypeProviderDelegate additionalTypeProviderDelegate;
