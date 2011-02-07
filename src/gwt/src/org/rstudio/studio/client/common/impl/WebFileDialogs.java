@@ -34,6 +34,8 @@ public class WebFileDialogs implements FileDialogs
                                                  fsContext,
                                                  operation);
 
+      dialog.setInvokeOperationEvenOnCancel(true);
+
       finishInit(fsContext, initialFilePath, dialog);
    }
 
@@ -47,6 +49,9 @@ public class WebFileDialogs implements FileDialogs
                                                  fsContext,
                                                  transform,
                                                  operation);
+
+      dialog.setInvokeOperationEvenOnCancel(true);
+
       finishInit(fsContext, initialFilePath, dialog);
    }
 
@@ -58,6 +63,7 @@ public class WebFileDialogs implements FileDialogs
       ChooseFolderDialog2 dialog = new ChooseFolderDialog2(caption,
                                                            fsContext,
                                                            operation);
+      dialog.setInvokeOperationEvenOnCancel(true);
       if (initialDir != null)
          fsContext.cd(initialDir.getPath());
       else

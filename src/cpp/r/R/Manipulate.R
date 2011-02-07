@@ -27,9 +27,9 @@
    return (manipulator)
 })
 
-.rs.addGlobalFunction( "slider", function(value,
-                                          min,
+.rs.addGlobalFunction( "slider", function(min,
                                           max,
+                                          value = min,
                                           label = NULL,
                                           step = NULL,
                                           ticks = if (is.null(step)) FALSE else TRUE)
@@ -38,11 +38,11 @@
   if (!is.numeric(value) || !is.numeric(min) || !is.numeric(max))
     stop("min, max, amd value must all be numeric values")
   else if (value < min)
-    stop(paste("value", value, "is less than the specified minimum"))
+    stop(paste("slider value", value, "is less than the specified minimum"))
   else if (value > max)
-    stop(paste("value", value, "is greater than the specified maximum"))
+    stop(paste("slider value", value, "is greater than the specified maximum"))
   else if (min > max)
-    stop(paste(type, "maximum is greater than minimum"))
+    stop(paste("slider maximum is greater than minimum"))
   else if ( !is.null(step) )
   {
     if ( !is.numeric(step) )
@@ -71,20 +71,35 @@
   return (slider)
 })
 
-.rs.addGlobalFunction( "picker", function(choices, value = choices[1], label = NULL)
+.rs.addGlobalFunction( "picker", function(..., 
+                                          choices = character(0), 
+                                          value = NULL, 
+                                          label = NULL)
 {
+  # get var args and coerce to chracter, then append to choices
+  varargs <- as.character(list(...))
+  choices <- append(choices, varargs)
+  
   # validate inputs
-  if ( !is.character(value) || (length(value) != 1) )
-    stop("value must be a character object")
-  else if ( !is.character(choices) )
+  if ( !is.character(choices) )
     stop("choices is not a character vector")
   else if ( length(choices) < 1 )
     stop("choices must contain at least one value")
-  else if ( !(value %in% choices) )
-    stop("value doesn't match one of the supplied choices") 
+  else if ( !is.null(value) )
+  {
+    if ( !is.character(value) || (length(value) != 1) )
+      stop("value is not of type character")
+    else if ( !(value %in% choices) )
+      stop("value doesn't match one of the supplied choices") 
+  }
   else if ( !is.null(label) && !is.character(label) )
     stop("label is not a character value")
    
+  # provide default value if necessary
+  if ( is.null(value) )
+    value <- choices[1]
+
+  # create picker
   picker <- list(type = 1,
                  choices = choices,
                  initialValue = value,
@@ -93,7 +108,7 @@
   return (picker) 
 })
 
-.rs.addGlobalFunction( "checkbox", function(label, value = FALSE)
+.rs.addGlobalFunction( "checkbox", function(value, label)
 {
   # validate inputs
   if ( !is.character(label) )

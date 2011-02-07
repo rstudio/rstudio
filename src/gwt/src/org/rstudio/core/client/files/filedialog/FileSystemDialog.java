@@ -99,9 +99,10 @@ public abstract class FileSystemDialog extends ModalDialogBase
       addCancelButton(new ThemedButton("Cancel", new ClickHandler() {
          public void onClick(ClickEvent event) {
             if (invokeOperationEvenOnCancel_)
+            {
                operation_.execute(null, FileSystemDialog.this);
-            else
-               closeDialog();
+            }
+            closeDialog();
          }
       }));
 

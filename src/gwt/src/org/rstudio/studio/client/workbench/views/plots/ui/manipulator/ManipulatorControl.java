@@ -22,6 +22,12 @@ public abstract class ManipulatorControl extends Composite implements CanFocus
       changedHandler_ = changedHandler;
    }
    
+   protected void addControlStyle(String derivedStyleName)
+   {
+      addStyleName(ManipulatorResources.INSTANCE.manipulatorStyles().control());
+      addStyleName(derivedStyleName);
+   }
+   
    protected String getLabel()
    {
       return label_;
