@@ -30,18 +30,19 @@ public class ValidateGwtTest extends AbstractValidationTest {
     delegate.testConstraintDescriptorWithoutExplicitGroup();
   }
 
-  @Failing(issue = 5882)
   public void testConstraintViolation() {
     delegate.testConstraintViolation();
   }
 
-  @Failing(issue = 5930)
+  @Failing(issue = 5982)
   public void testGraphValidationWithArray() {
+    fail("Force an early failure for Issue 5982 to prevent all following tests from failing.");
     delegate.testGraphValidationWithArray();
   }
 
-  @Failing(issue = 5930)
+  @Failing(issue = 5982)
   public void testGraphValidationWithList() {
+    fail("Force an early failure for Issue 5982 to prevent all following tests from failing.");
     delegate.testGraphValidationWithList();
   }
 

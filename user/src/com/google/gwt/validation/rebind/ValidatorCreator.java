@@ -18,6 +18,7 @@ package com.google.gwt.validation.rebind;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
@@ -40,7 +41,7 @@ import javax.validation.metadata.BeanDescriptor;
 public class ValidatorCreator extends AbstractCreator {
 
   /**
-   * The beans to validate in source declaratoin order.
+   * The beans to validate in source declaration order.
    */
   private final List<BeanHelper> beansToValidate = Lists.newArrayList();
   private final GwtValidation gwtValidation;
@@ -49,7 +50,7 @@ public class ValidatorCreator extends AbstractCreator {
   public ValidatorCreator(JClassType validatorType, //
       GwtValidation gwtValidation, //
       TreeLogger logger, //
-      GeneratorContext context) {
+      GeneratorContext context) throws UnableToCompleteException {
     super(context, logger, validatorType);
     this.gwtValidation = gwtValidation;
 
@@ -76,17 +77,17 @@ public class ValidatorCreator extends AbstractCreator {
 
   @Override
   protected void writeClassBody(SourceWriter sourceWriter) {
-      writeTypeSupport(sourceWriter);
-      sourceWriter.println();
-      writeConstructor(sourceWriter);
-      sourceWriter.println();
-      writeValidate(sourceWriter);
-      sourceWriter.println();
-      writeValidateProperty(sourceWriter);
-      sourceWriter.println();
-      writeValidateValue(sourceWriter);
-      sourceWriter.println();
-      writeGetConstraintsForClass(sourceWriter);
+    writeConstructor(sourceWriter);
+    sourceWriter.println();
+    writeValidate(sourceWriter);
+    sourceWriter.println();
+    writeValidateProperty(sourceWriter);
+    sourceWriter.println();
+    writeValidateValue(sourceWriter);
+    sourceWriter.println();
+    writeGetConstraintsForClass(sourceWriter);
+    sourceWriter.println();
+    writeGwtValidate(sourceWriter);
   }
 
   private String getSimpleName() {
@@ -117,17 +118,28 @@ public class ValidatorCreator extends AbstractCreator {
 
 
   private void writeContext(SourceWriter sw, BeanHelper bean, String objectName) {
-    // GwtValidationContext<T> context =
-    // new GwtValidationContext<T>(object,myBeanValidator.getConstraints(),
-    // getMessageInterpolator());
+    // GwtValidationContext<T> context = new GwtValidationContext<T>(
     sw.print(GwtValidationContext.class.getSimpleName());
     sw.print("<T> context =");
     sw.print("    new " + GwtValidationContext.class.getSimpleName());
-    sw.print("<T>(" + objectName + ", ");
-    sw.print(bean.getValidatorInstanceName());
-    sw.print(".getConstraints(), ");
-    sw.print("getMessageInterpolator()");
-    sw.println(");");
+    sw.println("<T>" + "(");
+    sw.indent();
+    sw.indent();
+
+    // object,
+    sw.println(objectName + ", ");
+
+    // MyBeanValidator.INSTANCE.getConstraints(),
+    sw.print(bean.getFullyQualifiedValidatorName());
+    sw.println(".INSTANCE.getConstraints(), ");
+
+    // getMessageInterpolator(),
+    sw.println("getMessageInterpolator(), ");
+
+    // this);
+    sw.println("this);");
+    sw.outdent();
+    sw.outdent();
   }
 
   private void writeGetConstraintsForClass(SourceWriter sw) {
@@ -155,9 +167,61 @@ public class ValidatorCreator extends AbstractCreator {
     sw.println("if (clazz.equals(" + bean.getTypeCanonicalName() + ".class)) {");
     sw.indent();
 
-    // return myBeanValidator.getConstraints();
+    // return MyBeanValidator.INSTANCE.getConstraints();
     sw.print("return ");
-    sw.print(bean.getValidatorInstanceName() + ".getConstraints();");
+    sw.print(bean.getFullyQualifiedValidatorName());
+    sw.println(".INSTANCE.getConstraints();");
+
+    // }
+    sw.outdent();
+    sw.println("}");
+  }
+
+  private void writeGwtValidate(SourceWriter sw) {
+    // public <T> Set<ConstraintViolation<T>> validate(GwtValidationContext<T>
+    // context,
+    sw.print("public <T> Set<ConstraintViolation<T>> ");
+    sw.println("validate(GwtValidationContext<T> context,");
+    sw.indent();
+    sw.indent();
+
+    // Object object, Class<?>... groups) {
+    sw.println("Object object, Class<?>... groups) {");
+    sw.outdent();
+
+    sw.println("checkNotNull(context, \"context\");");
+    sw.println("checkNotNull(object, \"object\");");
+    sw.println("checkNotNull(groups, \"groups\");");
+    sw.println("checkGroups(groups);");
+
+    for (BeanHelper bean : Util.sortMostSpecificFirst(
+        BeanHelper.getBeanHelpers().values(), BeanHelper.TO_CLAZZ)) {
+      writeGwtValidate(sw, bean);
+    }
+
+    // TODO(nchalko) log warning instead.
+    writeThrowIllegalArgumnet(sw, "object.getClass().getName()");
+
+    sw.outdent();
+    sw.println("}");
+  }
+
+  private void writeGwtValidate(SourceWriter sw, BeanHelper bean) {
+    writeIfInstanceofBeanType(sw, bean);
+    sw.indent();
+
+    // return PersonValidator.INSTANCE
+
+    sw.print("return ");
+    sw.println(bean.getFullyQualifiedValidatorName() + ".INSTANCE");
+    sw.indent();
+    sw.indent();
+    // .validate(context, (<<MyBean>>) object, groups);
+    sw.print(".validate(context, ");
+    sw.print("(" + bean.getTypeCanonicalName() + ") object, ");
+    sw.println("groups);");
+    sw.outdent();
+    sw.outdent();
 
     // }
     sw.outdent();
@@ -192,11 +256,6 @@ public class ValidatorCreator extends AbstractCreator {
     sourceWriter.outdent();
   }
 
-  private void writeTypeSupport(SourceWriter sw) {
-    for (BeanHelper bean : beansToValidate) {
-      writeValidatorInstance(sw, bean);
-    }
-  }
 
   private void writeValidate(SourceWriter sw) {
     // public <T> Set<ConstraintViolation<T>> validate(T object, Class<?>...
@@ -224,13 +283,20 @@ public class ValidatorCreator extends AbstractCreator {
 
     writeContext(sw, bean, "object");
 
-    // return personValidator.validate(context, (<<MyBean>>) object, groups);
+    // return PersonValidator.INSTANCE
     sw.print("return ");
-    sw.print(bean.getValidatorInstanceName() + ".validate(");
-    sw.print("context, ");
+    sw.println(bean.getFullyQualifiedValidatorName() + ".INSTANCE");
+    sw.indent();
+    sw.indent();
+
+    // .validate(context, (<<MyBean>>) object, groups);
+    sw.print(".validate(context, ");
     sw.print("(" + bean.getTypeCanonicalName() + ") object, ");
     sw.println("groups);");
+    sw.outdent();
+    sw.outdent();
 
+    // }
     sw.outdent();
     sw.println("}");
   }
@@ -258,11 +324,23 @@ public class ValidatorCreator extends AbstractCreator {
     writeIfInstanceofBeanType(sw, bean);
     sw.indent();
     writeContext(sw, bean, "object");
-    sw.print("return " + bean.getValidatorInstanceName()
-        + ".validateProperty(context, (" + bean.getTypeCanonicalName()
-        + ") object, propertyName, ");
+
+    // return PersonValidator.INSTANCE
+    sw.print("return ");
+    sw.println(bean.getFullyQualifiedValidatorName() + ".INSTANCE");
+    sw.indent();
+    sw.indent();
+
+    // .validateProperty(context, (MyBean) object, propertyName, groups);
+    sw.print(".validateProperty(context, (");
+    sw.print(bean.getTypeCanonicalName());
+    sw.print(") object, propertyName, ");
     sw.println("groups);");
-    sw.outdent(); // if
+    sw.outdent();
+    sw.outdent();
+
+    // }
+    sw.outdent();
     sw.println("}");
   }
 
@@ -290,10 +368,23 @@ public class ValidatorCreator extends AbstractCreator {
         + ".class)) {");
     sw.indent();
     writeContext(sw, bean, "null");
-    sw.println("return " + bean.getValidatorInstanceName()
-        + ".validateValue(context, (Class<" + bean.getTypeCanonicalName()
-        + ">)beanType, propertyName, value, groups);");
-    sw.outdent(); // if
+
+    // return PersonValidator.INSTANCE
+    sw.print("return ");
+    sw.println(bean.getFullyQualifiedValidatorName() + ".INSTANCE");
+    sw.indent();
+    sw.indent();
+
+    // .validateValue(context, (Class<MyBean> beanType, propertyName, value,
+    // groups);
+    sw.print(".validateValue(context, (Class<");
+    sw.print(bean.getTypeCanonicalName());
+    sw.println(">)beanType, propertyName, value, groups);");
+    sw.outdent();
+    sw.outdent();
+
+    // }
+    sw.outdent();
     sw.println("}");
   }
 }

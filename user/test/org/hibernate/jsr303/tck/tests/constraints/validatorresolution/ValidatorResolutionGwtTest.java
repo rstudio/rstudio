@@ -37,6 +37,7 @@ public class ValidatorResolutionGwtTest extends GWTTestCase {
   @Failing(issue = 5882)
   public void testResolutionOfMinMaxForDifferentTypes() {
     delegate.testResolutionOfMinMaxForDifferentTypes();
+    fail("This test only fails on IE.  Forcing it to fail here to keep the counts even. See issue 5882.");
   }
 
   @Failing(issue = 5806)
@@ -56,7 +57,6 @@ public class ValidatorResolutionGwtTest extends GWTTestCase {
     delegate.testTargetTypeIsClass();
   }
 
-  @Failing(issue = 5806)
   public void testTargetTypeIsInterface() {
     delegate.testTargetTypeIsInterface();
   }

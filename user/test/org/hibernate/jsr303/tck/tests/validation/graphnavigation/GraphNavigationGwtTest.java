@@ -20,7 +20,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 import org.hibernate.jsr303.tck.util.client.Failing;
 
 /**
- * Test wrapper for {@link ValidationTest}.
+ * Test wrapper for {@link GraphNavigationTest}.
  */
 public class GraphNavigationGwtTest extends GWTTestCase {
 
@@ -31,7 +31,6 @@ public class GraphNavigationGwtTest extends GWTTestCase {
     return "org.hibernate.jsr303.tck.tests.validation.graphnavigation.TckTest";
   }
 
-  @Failing(issue = 5946)
   public void testContainedIterable() {
     delegate.testContainedIterable();
   }
@@ -41,7 +40,6 @@ public class GraphNavigationGwtTest extends GWTTestCase {
     delegate.testContainedMap();
   }
 
-  @Failing(issue = 5946)
   public void testContainedSet() {
     delegate.testContainedSet();
   }

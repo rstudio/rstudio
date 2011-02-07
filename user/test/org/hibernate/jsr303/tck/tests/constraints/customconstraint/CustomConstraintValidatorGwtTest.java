@@ -33,6 +33,7 @@ public class CustomConstraintValidatorGwtTest extends GWTTestCase {
   @Failing(issue = 5882)
   public void testDefaultPropertyPath() {
     delegate.testDefaultPropertyPath();
+    fail("This test only fails on IE.  Forcing it to fail here to keep the counts even. See issue 5882.");
   }
 
   @Failing(issue = 5800)

@@ -43,11 +43,13 @@ public class ConstraintCompositionGwtTest extends GWTTestCase {
   @Failing(issue = 5882)
   public void testComposedConstraints() {
     delegate.testComposedConstraints();
+    fail("This test only fails on IE.  Forcing it to fail here to keep the counts even. See issue 5882.");
   }
 
   @Failing(issue = 5882)
   public void testComposedConstraintsAreRecursive() {
     delegate.testComposedConstraintsAreRecursive();
+    fail("This test only fails on IE.  Forcing it to fail here to keep the counts even. See issue 5882.");
   }
 
   @Failing(issue = 5799)

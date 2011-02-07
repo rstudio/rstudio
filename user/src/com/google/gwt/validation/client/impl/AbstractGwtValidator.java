@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.validation.ConstraintValidatorFactory;
+import javax.validation.ConstraintViolation;
 import javax.validation.MessageInterpolator;
 import javax.validation.TraversableResolver;
 import javax.validation.ValidationException;
@@ -57,6 +58,10 @@ public abstract class AbstractGwtValidator implements Validator {
   public <T> T unwrap(Class<T> type) {
     throw new ValidationException();
   }
+
+  public abstract <T> Set<ConstraintViolation<T>> validate(
+      GwtValidationContext<T> context, Object object, Class<?>... groups)
+      throws ValidationException;
 
   protected void checkGroups(Class<?>... groups) {
     // an empty list of valid groups means all groups are valid.

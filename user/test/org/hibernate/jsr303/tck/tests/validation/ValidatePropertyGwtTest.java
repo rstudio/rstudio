@@ -49,6 +49,7 @@ public class ValidatePropertyGwtTest extends AbstractValidationTest {
   @Failing(issue = 5882)
   public void testValidateProperty() {
     delegate.testValidateProperty();
+    fail("This test only fails on IE.  Forcing it to fail here to keep the counts even. See issue 5882.");
   }
 
   public void testValidatePropertyWithEmptyProperty() {
