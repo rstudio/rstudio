@@ -93,7 +93,8 @@ public class AceEditorNative extends JavaScriptObject {
               demo: "../demo",
               ace: "../lib/ace",
               pilot: "../support/pilot/lib/pilot",
-              mode: "../../js/acemode"
+              mode: "../../js/acemode",
+              theme: "../../js/acetheme"
           }
       };
 
@@ -104,7 +105,8 @@ public class AceEditorNative extends JavaScriptObject {
                    "demo/demo",
                    "mode/r",
                    "mode/tex",
-                   "mode/sweave" ];
+                   "mode/sweave",
+                   "theme/default"];
 
       require(config);
       require(deps, function() {
@@ -125,7 +127,6 @@ public class AceEditorNative extends JavaScriptObject {
       var event = require("pilot/event");
       var Editor = require("ace/editor").Editor;
       var Renderer = require("ace/virtual_renderer").VirtualRenderer;
-      var theme = require("ace/theme/textmate");
       var EditSession = require("ace/edit_session").EditSession;
       var UndoManager = require("ace/undomanager").UndoManager;
 
@@ -133,6 +134,7 @@ public class AceEditorNative extends JavaScriptObject {
       var RMode = require("mode/r").Mode;
       var TexMode = require("mode/tex").Mode;
       var SweaveMode = require("mode/sweave").Mode;
+      var theme = require("theme/default");
 
       var vim = require("ace/keyboard/keybinding/vim").Vim;
       var emacs = require("ace/keyboard/keybinding/emacs").Emacs;
