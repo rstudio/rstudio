@@ -98,7 +98,7 @@ public class ManipulatorControlSlider extends ManipulatorControl
       // add slider bar and fully initialize widget
       panel.add(sliderBar_);
       initWidget(panel);
-      setStyleName(styles.slider());
+      addControlStyle(styles.slider());
    }
    
    @Override

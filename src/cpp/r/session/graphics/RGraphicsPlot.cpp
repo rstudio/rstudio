@@ -52,9 +52,6 @@ Plot::Plot(const GraphicsDeviceFunctions& graphicsDevice,
      needsUpdate_(false),
      manipulator_()
 {
-   // read the manipulator from disk if we have one
-   loadManipulator();
-
    // invalidate if the image file doesn't exist (allows the server
    // to migrate between different image backends e.g. png, jpeg, svg)
    if (!imageFilePath(storageUuid_).exists())
@@ -73,20 +70,38 @@ void Plot::invalidate()
 
 bool Plot::hasManipulator() const
 {
-   return !manipulator_.empty();
+   // check is a bit complicated because defer loading the manipulator
+   // until it is asked for
+
+   return !manipulator_.empty() || hasManipulatorFile();
 }
 
 SEXP Plot::manipulatorSEXP() const
 {
+   if (hasManipulator())
+   {
+      loadManipulatorIfNecessary();
+      return manipulator_.sexp();
+   }
+   else
+   {
+      return R_NilValue;
+   }
+
    return manipulator_.sexp();
 }
    
 void Plot::manipulatorAsJson(json::Value* pValue) const
 {
-   if (!manipulator_.empty())
+   if (hasManipulator())
+   {
+      loadManipulatorIfNecessary();
       manipulator_.asJson(pValue);
+   }
    else
+   {
       *pValue = json::Value();
+   }
 }
 
 void Plot::saveManipulator() const
@@ -213,6 +228,16 @@ Error Plot::removeFiles()
       return Success();
 }
 
+void Plot::purgeInMemoryResources()
+{
+   manipulator_.clear();
+}
+
+bool Plot::hasStorage() const
+{
+   return !storageUuid_.empty();
+}
+
 FilePath Plot::snapshotFilePath() const
 {
    return snapshotFilePath(storageUuid());
@@ -230,16 +255,21 @@ FilePath Plot::imageFilePath(const std::string& storageUuid) const
    return baseDirPath_.complete(storageUuid + "." + extension);
 }
 
+bool Plot::hasManipulatorFile() const
+{
+   return hasStorage() && manipulatorFilePath(storageUuid()).exists();
+}
+
 FilePath Plot::manipulatorFilePath(const std::string& storageUuid) const
 {
    return baseDirPath_.complete(storageUuid + ".manipulator");
 }
 
-void Plot::loadManipulator()
-{
-   FilePath manipPath = manipulatorFilePath(storageUuid());
-   if (manipPath.exists())
+void Plot::loadManipulatorIfNecessary() const
+{   
+   if (manipulator_.empty() && hasManipulatorFile())
    {
+      FilePath manipPath = manipulatorFilePath(storageUuid());
       Error error = manipulator_.load(manipPath);
       if (error)
          LOG_ERROR(error);
