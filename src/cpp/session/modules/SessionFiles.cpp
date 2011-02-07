@@ -88,7 +88,8 @@ bool isVisible(const FilePath& file)
    std::string ext = file.extensionLowerCase();
    if (ext == ".rprofile" ||
        ext == ".rdata"    ||
-       ext == ".rhistory" )
+       ext == ".rhistory" ||
+       ext == ".renviron" )
    {
       return true;
    }

@@ -27,9 +27,9 @@
    return (manipulator)
 })
 
-.rs.addGlobalFunction( "slider", function(min,
+.rs.addGlobalFunction( "slider", function(value,
+                                          min,
                                           max,
-                                          value = min,
                                           label = NULL,
                                           step = NULL,
                                           ticks = if (is.null(step)) FALSE else TRUE)
@@ -38,9 +38,9 @@
   if (!is.numeric(value) || !is.numeric(min) || !is.numeric(max))
     stop("min, max, amd value must all be numeric values")
   else if (value < min)
-    stop(paste(type, "value", value, "is less than the specified minimum"))
+    stop(paste("value", value, "is less than the specified minimum"))
   else if (value > max)
-    stop(paste(type, "value", value, "is greater than the specified maximum"))
+    stop(paste("value", value, "is greater than the specified maximum"))
   else if (min > max)
     stop(paste(type, "maximum is greater than minimum"))
   else if ( !is.null(step) )
