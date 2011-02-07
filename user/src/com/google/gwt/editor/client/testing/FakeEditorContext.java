@@ -126,7 +126,6 @@ public class FakeEditorContext<T> implements EditorContext<T> {
   /**
    * No-op.
    */
-  @Override
   public void traverseSyntheticCompositeEditor(EditorVisitor visitor) {
   }
 }

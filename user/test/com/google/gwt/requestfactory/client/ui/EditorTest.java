@@ -56,7 +56,6 @@ public class EditorTest extends RequestFactoryTestBase {
     protected final SimpleEditor<String> userName = SimpleEditor.of();
     RequestContext ctx;
 
-    @Override
     public void setRequestContext(RequestContext ctx) {
       this.ctx = ctx;
     }

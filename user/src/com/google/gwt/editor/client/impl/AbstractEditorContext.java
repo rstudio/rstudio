@@ -132,7 +132,6 @@ public abstract class AbstractEditorContext<T> implements EditorContext<T> {
     visitor.endVisit(this);
   }
 
-  @Override
   public void traverseSyntheticCompositeEditor(EditorVisitor visitor) {
     if (asCompositeEditor() == null) {
       throw new IllegalStateException();

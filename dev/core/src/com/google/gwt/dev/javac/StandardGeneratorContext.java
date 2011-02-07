@@ -567,7 +567,6 @@ public class StandardGeneratorContext implements GeneratorContextExt {
     return generatorResultCachingEnabled;
   }
 
-  @Override
   public boolean isProdMode() {
     return isProdMode;
   }

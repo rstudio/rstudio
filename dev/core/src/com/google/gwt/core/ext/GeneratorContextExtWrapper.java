@@ -88,7 +88,6 @@ public class GeneratorContextExtWrapper implements GeneratorContextExt {
     return false;
   }
 
-  @Override
   public boolean isProdMode() {
     throw new UnsupportedOperationException(
         "isProdMode is only available from GeneratorContextExt.");
