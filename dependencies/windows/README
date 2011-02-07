@@ -35,16 +35,22 @@ directory prior to building. You can download these dependencies at:
 https://s3.amazonaws.com/rstudio-buildtools/gin.zip
 https://s3.amazonaws.com/rstudio-buildtools/guice.zip
 https://s3.amazonaws.com/rstudio-buildtools/gwt-2.0.4.zip
+https://s3.amazonaws.com/rstudio-buildtools/gwt-incubator-20100204-r1747.jar
 
-Unzip these archives into the src/gwt directory. After extraction you should
+Place the unzipped archives into the src/gwt directory. After extraction you should
 ensure that the resulting directory structure is:
 
 src
   gwt
     lib
       gin
+        <extracted files>
       guice
+        <extracted files>
+      gwt-incubator
+        gwt-incubator-20100204-r1747.jar
     sdk
+       <extracted files>
 
 Note that the gwt-2.0.4 directory should be renamed to "sdk" and placed
 in the root of the src/gwt directory.
