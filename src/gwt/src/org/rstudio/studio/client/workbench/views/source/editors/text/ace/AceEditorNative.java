@@ -141,8 +141,11 @@ public class AceEditorNative extends JavaScriptObject {
       var HashHandler = require("ace/keyboard/hash_handler").HashHandler;
 
       env.editor = new Editor(new Renderer(container, theme));
-      env.editor.getSession().setMode(new RMode());
-      env.editor.getSession().setUndoManager(new UndoManager());
+      var session = env.editor.getSession();
+      session.setMode(new RMode());
+      session.setUndoManager(new UndoManager());
+      session.setUseSoftTabs(true);
+      session.setTabSize(2);
 
       return env.editor;
    }-*/;
