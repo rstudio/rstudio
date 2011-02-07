@@ -15,11 +15,12 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.jjs.Correlation.Literal;
 import com.google.gwt.dev.jjs.CorrelationFactory;
+import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
-import com.google.gwt.dev.jjs.Correlation.Literal;
 import com.google.gwt.dev.jjs.ast.JField.Disposition;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsonObject;
@@ -107,7 +108,7 @@ public class JProgram extends JNode {
   private static final int IS_NULL = 0;
 
   private static final Map<String, JPrimitiveType> primitiveTypes = new HashMap<String, JPrimitiveType>();
-  
+
   @Deprecated
   private static final Map<String, JPrimitiveType> primitiveTypesDeprecated = new HashMap<String, JPrimitiveType>();
 
@@ -398,7 +399,7 @@ public class JProgram extends JNode {
   private JClassType typeString;
 
   public JProgram() {
-    this(new CorrelationFactory.DummyCorrelationFactory());
+    this(DummyCorrelationFactory.INSTANCE);
   }
 
   /**

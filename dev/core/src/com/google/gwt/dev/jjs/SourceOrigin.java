@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs;
 
 import com.google.gwt.dev.jjs.Correlation.Axis;
+import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
 import com.google.gwt.dev.util.StringInterner;
 
 import java.util.Collections;
@@ -56,7 +57,7 @@ public class SourceOrigin implements SourceInfo {
     public int getStartPos() {
       return startPos;
     }
-    
+
     // super.equals and hashCode call getStartPos() and getEndPos(),
     // so there is no need to implement them in this subclass
   }
@@ -148,6 +149,11 @@ public class SourceOrigin implements SourceInfo {
     return Collections.emptyList();
   }
 
+  @Override
+  public CorrelationFactory getCorrelationFactory() {
+    return DummyCorrelationFactory.INSTANCE;
+  }
+
   public int getEndPos() {
     return -1;
   }
@@ -167,7 +173,7 @@ public class SourceOrigin implements SourceInfo {
   public Set<Correlation> getPrimaryCorrelations() {
     return Collections.emptySet();
   }
-  
+
   public Correlation[] getPrimaryCorrelationsArray() {
     return new Correlation[0];
   }
@@ -193,6 +199,11 @@ public class SourceOrigin implements SourceInfo {
   public SourceInfo makeChild(Class<?> caller, String description,
       SourceInfo... merge) {
     return this;
+  }
+
+  @Override
+  public SourceInfo makeChild(SourceOrigin origin) {
+    return origin;
   }
 
   public void merge(SourceInfo... sourceInfos) {

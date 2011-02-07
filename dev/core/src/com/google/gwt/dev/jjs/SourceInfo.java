@@ -49,6 +49,11 @@ public interface SourceInfo extends Serializable {
    */
   List<Correlation> getAllCorrelations(Axis axis);
 
+  /**
+   * Returns the correlation factory that created this node.
+   */
+  CorrelationFactory getCorrelationFactory();
+  
   int getEndPos();
 
   String getFileName();
@@ -64,11 +69,11 @@ public interface SourceInfo extends Serializable {
    * has been set.
    */
   Set<Correlation> getPrimaryCorrelations();
-  
+
   /**
    * Returns the first Correlations added along each Axis on which a Correlation
-   * has been set.  Some entries may be null and should be ignored.  The
-   * returned array must not be modified.
+   * has been set. Some entries may be null and should be ignored. The returned
+   * array must not be modified.
    */
   Correlation[] getPrimaryCorrelationsArray();
 
@@ -91,6 +96,13 @@ public interface SourceInfo extends Serializable {
    * object on which the method is invoked.
    */
   SourceInfo makeChild(Class<?> caller, String description, SourceInfo... merge);
+
+  /**
+   * Create a child node of the same type as this node, but with a new Origin.
+   * If data accumulation is enabled, the derived node will inherit its
+   * Correlations from this node.
+   */
+  SourceInfo makeChild(SourceOrigin origin);
 
   /**
    * Add additional ancestor SourceInfos. These SourceInfo objects indicate that

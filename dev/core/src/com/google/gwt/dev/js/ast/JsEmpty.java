@@ -22,8 +22,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
  */
 public class JsEmpty extends JsStatement {
 
-  // Interned by JsProgram
-  JsEmpty(SourceInfo sourceInfo) {
+  public JsEmpty(SourceInfo sourceInfo) {
     super(sourceInfo);
   }
 

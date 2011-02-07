@@ -37,7 +37,7 @@ public class JsSymbolResolver {
         name = getScope().findExistingName(ident);
         if (name == null) {
           // No clue what this is; create a new unobfuscatable name
-          name = program.getRootScope().declareName(ident);
+          name = program.getScope().declareName(ident);
           name.setObfuscatable(false);
         }
       } else {

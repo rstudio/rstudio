@@ -28,6 +28,7 @@ import com.google.gwt.dev.js.ast.JsConditional;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsContinue;
 import com.google.gwt.dev.js.ast.JsDoWhile;
+import com.google.gwt.dev.js.ast.JsEmpty;
 import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFor;
@@ -291,7 +292,7 @@ public class JsStaticEval {
         if (ctx.canRemove()) {
           ctx.removeMe();
         } else {
-          ctx.replaceMe(program.getEmptyStmt());
+          ctx.replaceMe(new JsEmpty(x.getSourceInfo()));
         }
       }
     }
@@ -623,7 +624,7 @@ public class JsStaticEval {
         // "undefined" is not a JsValueLiteral, so the only way
         // the result can be true is if exp is itself a JsNullLiteral
         boolean result = exp instanceof JsNullLiteral;
-        return program.getBooleanLiteral(result);
+        return JsBooleanLiteral.get(result);
       }
 
       // no simplification made
@@ -640,7 +641,7 @@ public class JsStaticEval {
         // "undefined" is not a JsValueLiteral, so the only way
         // the result can be false is if exp is itself a JsNullLiteral
         boolean result = !(exp instanceof JsNullLiteral);
-        return program.getBooleanLiteral(result);
+        return JsBooleanLiteral.get(result);
       }
 
       // no simplification made
@@ -653,18 +654,19 @@ public class JsStaticEval {
     private void trySimplifyAdd(JsExpression original, JsExpression arg1,
         JsExpression arg2, JsContext ctx) {
       if (arg1 instanceof JsValueLiteral && arg2 instanceof JsValueLiteral) {
+        SourceInfo info = original.getSourceInfo();
         // case: number + number
         if (arg1 instanceof JsNumberLiteral && arg2 instanceof JsNumberLiteral) {
           double value = ((JsNumberLiteral) arg1).getValue()
               + ((JsNumberLiteral) arg2).getValue();
-          ctx.replaceMe(program.getNumberLiteral(value));
+          ctx.replaceMe(new JsNumberLiteral(info, value));
         } else {
           // cases: number + string or string + number
           StringBuilder result = new StringBuilder();
           if (appendLiteral(result, (JsValueLiteral) arg1)
               && appendLiteral(result, (JsValueLiteral) arg2)) {
-            ctx.replaceMe(program.getStringLiteral(original.getSourceInfo(),
-                result.toString()));
+            info.merge(arg1.getSourceInfo(), arg2.getSourceInfo());
+            ctx.replaceMe(new JsStringLiteral(info, result.toString()));
           }
         }
       }

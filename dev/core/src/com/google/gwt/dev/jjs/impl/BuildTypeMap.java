@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -110,7 +110,7 @@ public class BuildTypeMap {
    * corresponding JNode for each created method and variable. 4) Maps all
    * synthetic arguments and fields for nested and local classes. 5) Slurps in
    * JSNI code for native methods as an opaque string.
-   *
+   * 
    * Note that methods and fields are not added to their classes here, that
    * isn't done until {@link GenerateJavaAST}.
    */
@@ -292,13 +292,10 @@ public class BuildTypeMap {
 
     private SourceInfo makeSourceInfo(AbstractMethodDeclaration methodDecl,
         HasSourceInfo enclosing) {
-      CompilationResult compResult = methodDecl.compilationResult;
-      int[] indexes = compResult.lineSeparatorPositions;
-      String fileName = String.valueOf(compResult.fileName);
-      int startLine = Util.getLineNumber(methodDecl.sourceStart, indexes, 0,
-          indexes.length - 1);
+      int startLine = Util.getLineNumber(methodDecl.sourceStart,
+          currentSeparatorPositions, 0, currentSeparatorPositions.length - 1);
       SourceInfo toReturn = program.createSourceInfo(methodDecl.sourceStart,
-          methodDecl.bodyEnd, startLine, fileName);
+          methodDecl.bodyEnd, startLine, currentFileName);
 
       // The SourceInfo will inherit Correlations from its enclosing object
       if (enclosing != null) {

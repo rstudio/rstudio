@@ -27,6 +27,7 @@ import com.google.gwt.dev.js.ast.JsArrayLiteral;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBinaryOperator;
 import com.google.gwt.dev.js.ast.JsBlock;
+import com.google.gwt.dev.js.ast.JsBooleanLiteral;
 import com.google.gwt.dev.js.ast.JsCatch;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsExprStmt;
@@ -39,10 +40,13 @@ import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsNode;
+import com.google.gwt.dev.js.ast.JsNullLiteral;
+import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsReturn;
+import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsThrow;
@@ -50,9 +54,9 @@ import com.google.gwt.dev.js.ast.JsTry;
 import com.google.gwt.dev.js.ast.JsUnaryOperation;
 import com.google.gwt.dev.js.ast.JsUnaryOperator;
 import com.google.gwt.dev.js.ast.JsVars;
+import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.js.ast.JsWhile;
-import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.collect.Maps;
 
@@ -278,7 +282,7 @@ public class JsStackEmulator {
         // There is a finally block, so we need to set the early-exit flag
         JsBinaryOperation asg = new JsBinaryOperation(x.getSourceInfo(),
             JsBinaryOperator.ASG, earlyExitRef(outerFinallyBlock),
-            program.getBooleanLiteral(true));
+            JsBooleanLiteral.get(true));
         if (x.getExpr() == null) {
           if (ctx.canInsert()) {
             // exitingEarly = true; return;
@@ -507,7 +511,7 @@ public class JsStackEmulator {
      */
     private JsExpression pop(SourceInfo info) {
       JsBinaryOperation sub = new JsBinaryOperation(info, JsBinaryOperator.SUB,
-          stackIndexRef(info), program.getNumberLiteral(1));
+          stackIndexRef(info), new JsNumberLiteral(info, 1));
       JsBinaryOperation op = new JsBinaryOperation(info, JsBinaryOperator.ASG,
           stackDepth.makeRef(info), sub);
       return op;
@@ -525,7 +529,7 @@ public class JsStackEmulator {
       JsExpression currentFunctionRef;
       if (currentFunction.getName() == null) {
         // Anonymous
-        currentFunctionRef = program.getNullLiteral();
+        currentFunctionRef = JsNullLiteral.INSTANCE;
       } else {
         currentFunctionRef = currentFunction.getName().makeRef(info);
       }
@@ -737,11 +741,11 @@ public class JsStackEmulator {
           "Synthetic location data");
 
       // ($locations[stackIndex] = fileName + lineNumber, x)
-      JsExpression location = program.getStringLiteral(info,
+      JsExpression location = new JsStringLiteral(info,
           String.valueOf(lastLine = info.getStartLine()));
       if (recordFileNames) {
         // 'fileName:' + lineNumber
-        JsStringLiteral stringLit = program.getStringLiteral(info,
+        JsStringLiteral stringLit = new JsStringLiteral(info,
             baseName(lastFile = info.getFileName()) + ":");
         location = new JsBinaryOperation(info, JsBinaryOperator.ADD, stringLit,
             location);
@@ -770,13 +774,10 @@ public class JsStackEmulator {
    * with references to our locally-defined, obfuscatable names.
    */
   private class ReplaceUnobfuscatableNames extends JsModVisitor {
-    private final JsName rootLineNumbers = program.getRootScope().findExistingUnobfuscatableName(
-        "$location");
     // See JsRootScope for the definition of these names
-    private final JsName rootStack = program.getRootScope().findExistingUnobfuscatableName(
-        "$stack");
-    private final JsName rootStackDepth = program.getRootScope().findExistingUnobfuscatableName(
-        "$stackDepth");
+    private final JsName rootLineNumbers = JsRootScope.INSTANCE.findExistingUnobfuscatableName("$location");
+    private final JsName rootStack = JsRootScope.INSTANCE.findExistingUnobfuscatableName("$stack");
+    private final JsName rootStackDepth = JsRootScope.INSTANCE.findExistingUnobfuscatableName("$stackDepth");
 
     @Override
     public void endVisit(JsNameRef x, JsContext ctx) {
@@ -896,7 +897,7 @@ public class JsStackEmulator {
     JsVar stackVar = new JsVar(info, stack);
     stackVar.setInitExpr(new JsArrayLiteral(info));
     JsVar stackDepthVar = new JsVar(info, stackDepth);
-    stackDepthVar.setInitExpr(program.getNumberLiteral(info, -1));
+    stackDepthVar.setInitExpr(new JsNumberLiteral(info, (-1)));
     JsVar lineNumbersVar = new JsVar(info, lineNumbers);
     lineNumbersVar.setInitExpr(new JsArrayLiteral(info));
 

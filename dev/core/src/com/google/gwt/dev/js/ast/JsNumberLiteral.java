@@ -24,8 +24,7 @@ public final class JsNumberLiteral extends JsValueLiteral {
 
   private final double value;
 
-  // Should be interned by JsProgram
-  JsNumberLiteral(SourceInfo sourceInfo, double value) {
+  public JsNumberLiteral(SourceInfo sourceInfo, double value) {
     super(sourceInfo);
     this.value = value;
   }

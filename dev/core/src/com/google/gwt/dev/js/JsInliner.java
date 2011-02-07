@@ -26,9 +26,11 @@ import com.google.gwt.dev.js.ast.JsBinaryOperator;
 import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsBooleanLiteral;
 import com.google.gwt.dev.js.ast.JsCase;
+import com.google.gwt.dev.js.ast.JsCatchScope;
 import com.google.gwt.dev.js.ast.JsConditional;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsDefault;
+import com.google.gwt.dev.js.ast.JsEmpty;
 import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFor;
@@ -48,9 +50,9 @@ import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
 import com.google.gwt.dev.js.ast.JsProgram;
-import com.google.gwt.dev.js.ast.JsProgramFragment;
 import com.google.gwt.dev.js.ast.JsRegExp;
 import com.google.gwt.dev.js.ast.JsReturn;
+import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
@@ -89,11 +91,9 @@ public class JsInliner {
    */
   private static class AffectedBySideEffectsVisitor extends JsVisitor {
     private boolean affectedBySideEffects;
-    private final JsProgram program;
     private final JsScope safeScope;
 
-    public AffectedBySideEffectsVisitor(JsProgram program, JsScope safeScope) {
-      this.program = program;
+    public AffectedBySideEffectsVisitor(JsScope safeScope) {
       this.safeScope = safeScope;
     }
 
@@ -125,7 +125,7 @@ public class JsInliner {
     public void endVisit(JsNameRef x, JsContext ctx) {
       if (x.getQualifier() == null && x.getName() != null) {
         // Special case the undefined literal.
-        if (x.getName() == program.getUndefinedLiteral().getName()) {
+        if (x.getName() == JsRootScope.INSTANCE.getUndefined()) {
           return;
         }
         // Locals in a safe scope are unaffected.
@@ -423,7 +423,7 @@ public class JsInliner {
             return false;
           } else {
             // The return value from an XO function is never used
-            ctx.replaceMe(program.getNullLiteral());
+            ctx.replaceMe(JsNullLiteral.INSTANCE);
             return false;
           }
 
@@ -489,7 +489,7 @@ public class JsInliner {
         if (ctx.canRemove()) {
           ctx.removeMe();
         } else {
-          ctx.replaceMe(program.getEmptyStmt());
+          ctx.replaceMe(new JsEmpty(x.getSourceInfo()));
         }
         return false;
 
@@ -604,8 +604,11 @@ public class JsInliner {
    * invocations occur.
    */
   private static class EvaluationOrderVisitor extends JsVisitor {
-    public static final JsName THIS_NAME = (new JsScope("fake scope") {
-    }).declareName("this");
+    /**
+     * A dummy name to represent 'this' refs.
+     */
+    public static final JsName THIS_NAME = new JsCatchScope(
+        JsRootScope.INSTANCE, "this").getAllNames().next();
 
     private boolean maintainsOrder = true;
     private final List<JsName> toEvaluate;
@@ -777,7 +780,6 @@ public class JsInliner {
     private final Stack<JsFunction> functionStack = new Stack<JsFunction>();
     private final InvocationCountingVisitor invocationCountingVisitor = new InvocationCountingVisitor();
     private final Stack<List<JsName>> newLocalVariableStack = new Stack<List<JsName>>();
-    private final JsProgram program;
 
     /**
      * A map containing the next integer to try as an identifier suffix for a
@@ -791,7 +793,6 @@ public class JsInliner {
     private JsFunction programFunction;
 
     public InliningVisitor(JsProgram program) {
-      this.program = program;
       invocationCountingVisitor.accept(program);
     }
 
@@ -856,7 +857,7 @@ public class JsInliner {
         if (ctx.canRemove()) {
           ctx.removeMe();
         } else {
-          ctx.replaceMe(program.getEmptyStmt());
+          ctx.replaceMe(new JsEmpty(x.getSourceInfo()));
         }
 
       } else if (x.getExpression() != statements.get(0).getExpression()) {
@@ -969,7 +970,7 @@ public class JsInliner {
     }
 
     @Override
-    public void endVisit(JsProgramFragment x, JsContext ctx) {
+    public void endVisit(JsProgram x, JsContext ctx) {
       if (!functionStack.pop().equals(programFunction)) {
         throw new InternalCompilerException("Unexpected function popped");
       }
@@ -1003,9 +1004,8 @@ public class JsInliner {
      * top-level of the program.
      */
     @Override
-    public boolean visit(JsProgramFragment x, JsContext ctx) {
-      programFunction = new JsFunction(program.getSourceInfo(),
-          program.getScope());
+    public boolean visit(JsProgram x, JsContext ctx) {
+      programFunction = new JsFunction(x.getSourceInfo(), x.getScope());
       programFunction.setBody(new JsBlock(x.getSourceInfo()));
       functionStack.push(programFunction);
       newLocalVariableStack.push(new ArrayList<JsName>());
@@ -1097,8 +1097,7 @@ public class JsInliner {
          * distinct objects, it would not be possible to substitute different
          * JsNameRefs at different call sites.
          */
-        JsExpression h = hoistedExpression(program, statement,
-            localVariableNames);
+        JsExpression h = hoistedExpression(statement, localVariableNames);
         if (h == null) {
           return x;
         }
@@ -1117,7 +1116,8 @@ public class JsInliner {
        * JsExprStmt.
        */
       if (!sawReturnStatement) {
-        hoisted.add(program.getUndefinedLiteral());
+        hoisted.add(new JsNameRef(x.getSourceInfo(),
+            JsRootScope.INSTANCE.getUndefined()));
       }
 
       assert (hoisted.size() > 0);
@@ -1141,7 +1141,7 @@ public class JsInliner {
       }
 
       // Confirm that the expression conforms to the desired heuristics
-      if (!isInlinable(program, callerFunction, invokedFunction, thisExpr,
+      if (!isInlinable(callerFunction, invokedFunction, thisExpr,
           x.getArguments(), op)) {
         return x;
       }
@@ -1618,8 +1618,8 @@ public class JsInliner {
    * the generated output. Increasing this number will allow larger sections of
    * code to be inlined, but at a cost of larger JS output.
    */
-  private static final double MAX_COMPLEXITY_INCREASE = 
-      Double.parseDouble(System.getProperty("gwt.jsinlinerRatio", "5.0"));
+  private static final double MAX_COMPLEXITY_INCREASE = Double.parseDouble(System.getProperty(
+      "gwt.jsinlinerRatio", "5.0"));
 
   /**
    * Static entry point used by JavaToJavaScriptCompiler.
@@ -1637,8 +1637,8 @@ public class JsInliner {
    * The context parameter provides a scope in which local (and therefore
    * immutable) variables are defined.
    */
-  private static boolean affectedBySideEffects(JsProgram program,
-      List<JsExpression> list, JsFunction context) {
+  private static boolean affectedBySideEffects(List<JsExpression> list,
+      JsFunction context) {
     /*
      * If the caller contains no nested functions, none of its locals can
      * possibly be affected by side effects.
@@ -1647,8 +1647,7 @@ public class JsInliner {
     if (context != null && !containsNestedFunctions(context)) {
       safeScope = context.getScope();
     }
-    AffectedBySideEffectsVisitor v = new AffectedBySideEffectsVisitor(program,
-        safeScope);
+    AffectedBySideEffectsVisitor v = new AffectedBySideEffectsVisitor(safeScope);
     v.acceptList(list);
     return v.affectedBySideEffects();
   }
@@ -1762,8 +1761,8 @@ public class JsInliner {
    * @return a JsExpression representing all expressions that would have been
    *         evaluated by the statement
    */
-  private static JsExpression hoistedExpression(JsProgram program,
-      JsStatement statement, List<JsName> localVariableNames) {
+  private static JsExpression hoistedExpression(JsStatement statement,
+      List<JsName> localVariableNames) {
     JsExpression expression;
     if (statement instanceof JsExprStmt) {
       // Extract the expression
@@ -1775,7 +1774,8 @@ public class JsInliner {
       JsReturn ret = (JsReturn) statement;
       expression = ret.getExpr();
       if (expression == null) {
-        expression = program.getUndefinedLiteral();
+        expression = new JsNameRef(ret.getSourceInfo(),
+            JsRootScope.INSTANCE.getUndefined());
       }
 
     } else if (statement instanceof JsVars) {
@@ -1783,7 +1783,7 @@ public class JsInliner {
       JsVars vars = (JsVars) statement;
 
       // Rely on comma expression cleanup to remove this later.
-      expression = program.getNullLiteral();
+      expression = JsNullLiteral.INSTANCE;
 
       for (JsVar var : vars) {
         // Record the locally-defined variable
@@ -1854,9 +1854,8 @@ public class JsInliner {
   /**
    * Determine if a statement can be inlined into a call site.
    */
-  private static boolean isInlinable(JsProgram program, JsFunction caller,
-      JsFunction callee, JsExpression thisExpr, List<JsExpression> arguments,
-      JsNode toInline) {
+  private static boolean isInlinable(JsFunction caller, JsFunction callee,
+      JsExpression thisExpr, List<JsExpression> arguments, JsNode toInline) {
 
     /*
      * This will happen with varargs-style JavaScript functions that rely on the
@@ -1913,21 +1912,21 @@ public class JsInliner {
      * effects. This will determine how aggressively the parameters may be
      * reordered.
      */
-    if (isVolatile(program, evalArgs, caller)) {
+    if (isVolatile(evalArgs, caller)) {
       /*
        * Determine the order in which the parameters must be evaluated. This
        * will vary between call sites, based on whether or not the invocation's
        * arguments can be repeated without ill effect.
        */
       List<JsName> requiredOrder = new ArrayList<JsName>();
-      if (thisExpr != null && isVolatile(program, thisExpr, callee)) {
+      if (thisExpr != null && isVolatile(thisExpr, callee)) {
         requiredOrder.add(EvaluationOrderVisitor.THIS_NAME);
       }
       for (int i = 0; i < arguments.size(); i++) {
         JsExpression e = arguments.get(i);
         JsParameter p = callee.getParameters().get(i);
 
-        if (isVolatile(program, e, callee)) {
+        if (isVolatile(e, callee)) {
           requiredOrder.add(p.getName());
         }
       }
@@ -1974,9 +1973,8 @@ public class JsInliner {
    * affected by side effects when evaluated within a particular function
    * context.
    */
-  private static boolean isVolatile(JsProgram program, JsExpression e,
-      JsFunction context) {
-    return isVolatile(program, Collections.singletonList(e), context);
+  private static boolean isVolatile(JsExpression e, JsFunction context) {
+    return isVolatile(Collections.singletonList(e), context);
   }
 
   /**
@@ -1984,10 +1982,8 @@ public class JsInliner {
    * affected by side effects when evaluated within a particular function
    * context.
    */
-  private static boolean isVolatile(JsProgram program, List<JsExpression> list,
-      JsFunction context) {
-    return hasSideEffects(list)
-        || affectedBySideEffects(program, list, context);
+  private static boolean isVolatile(List<JsExpression> list, JsFunction context) {
+    return hasSideEffects(list) || affectedBySideEffects(list, context);
   }
 
   /**

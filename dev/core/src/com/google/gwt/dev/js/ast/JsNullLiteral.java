@@ -16,14 +16,17 @@
 package com.google.gwt.dev.js.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 
 /**
  * A JavaScript null literal.
  */
 public final class JsNullLiteral extends JsValueLiteral {
 
-  // Should only be instantiated in JsProgram
-  JsNullLiteral(SourceInfo sourceInfo) {
+  public static final JsNullLiteral INSTANCE = new JsNullLiteral(
+      SourceOrigin.UNKNOWN);
+
+  private JsNullLiteral(SourceInfo sourceInfo) {
     super(sourceInfo);
   }
 
@@ -48,5 +51,13 @@ public final class JsNullLiteral extends JsValueLiteral {
   public void traverse(JsVisitor v, JsContext ctx) {
     v.visit(this, ctx);
     v.endVisit(this, ctx);
+  }
+
+  /**
+   * Note, if this ever becomes not-a-singleton, we'll need to check the
+   * SourceInfo == SourceOrigin.UNKNOWN.
+   */
+  private Object readResolve() {
+    return INSTANCE;
   }
 }

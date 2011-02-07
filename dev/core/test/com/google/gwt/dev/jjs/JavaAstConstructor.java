@@ -152,7 +152,7 @@ public class JavaAstConstructor {
       code.append("  private final String name;\n");
       code.append("  private final int ordinal;\n");
       code.append("  public final String name() { return name; }\n");
-      code.append("  public final int ordinal() { return ordinal; }\n"); 
+      code.append("  public final int ordinal() { return ordinal; }\n");
       code.append("}\n");
       return code;
     }
@@ -231,7 +231,7 @@ public class JavaAstConstructor {
 
     JavaToJavaScriptCompiler.checkForErrors(logger, goldenCuds, true);
 
-    CorrelationFactory correlator = new DummyCorrelationFactory();
+    CorrelationFactory correlator = DummyCorrelationFactory.INSTANCE;
     JProgram jprogram = new JProgram(correlator);
     JsProgram jsProgram = new JsProgram(correlator);
 

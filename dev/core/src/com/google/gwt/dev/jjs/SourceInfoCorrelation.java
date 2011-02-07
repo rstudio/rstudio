@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs;
 
 import com.google.gwt.dev.jjs.Correlation.Axis;
+import com.google.gwt.dev.jjs.CorrelationFactory.RealCorrelationFactory;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -36,7 +37,7 @@ public class SourceInfoCorrelation implements SourceInfo, Serializable {
    * Micro-opt for {@link #makeChild(Class, String)}.
    */
   private static final SourceInfo[] EMPTY_SOURCEINFO_ARRAY = new SourceInfo[0];
-  
+
   private static final int numCorrelationAxes = Axis.values().length;
 
   private static int numCorrelationAxes() {
@@ -66,18 +67,17 @@ public class SourceInfoCorrelation implements SourceInfo, Serializable {
     primaryCorrelations = new Correlation[numCorrelationAxes()];
   }
 
+  private SourceInfoCorrelation(SourceInfoCorrelation parent,
+      SourceOrigin origin) {
+    this.origin = origin;
+    this.allCorrelations = new ArrayList<Correlation>(parent.allCorrelations);
+    primaryCorrelations = parent.primaryCorrelations.clone();
+  }
+
   private SourceInfoCorrelation(SourceInfoCorrelation parent, String caller,
       SourceInfo... additionalAncestors) {
-    assert parent != null;
+    this(parent, parent.origin);
     assert caller != null;
-    this.origin = parent.origin;
-
-    this.allCorrelations = new ArrayList<Correlation>(parent.allCorrelations);
-    primaryCorrelations = new Correlation[numCorrelationAxes()];
-    for (int i = 0; i < numCorrelationAxes(); i++) {
-      primaryCorrelations[i] = parent.primaryCorrelations[i];
-    }
-
     merge(additionalAncestors);
   }
 
@@ -134,6 +134,11 @@ public class SourceInfoCorrelation implements SourceInfo, Serializable {
     return toReturn;
   }
 
+  @Override
+  public CorrelationFactory getCorrelationFactory() {
+    return RealCorrelationFactory.INSTANCE;
+  }
+
   public int getEndPos() {
     return getOrigin().getEndPos();
   }
@@ -167,7 +172,7 @@ public class SourceInfoCorrelation implements SourceInfo, Serializable {
     }
     return toReturn;
   }
-  
+
   public Correlation[] getPrimaryCorrelationsArray() {
     return primaryCorrelations;
   }
@@ -200,6 +205,11 @@ public class SourceInfoCorrelation implements SourceInfo, Serializable {
       SourceInfo... merge) {
     String callerName = caller == null ? "Unrecorded caller" : caller.getName();
     return new SourceInfoCorrelation(this, callerName, merge);
+  }
+
+  @Override
+  public SourceInfo makeChild(SourceOrigin origin) {
+    return new SourceInfoCorrelation(this, origin);
   }
 
   /**

@@ -114,11 +114,6 @@ public class JsniCollector {
     }
 
     @Override
-    public JsProgram program() {
-      return func.getScope().getProgram();
-    }
-
-    @Override
     public String toString() {
       return func.toString();
     }
@@ -251,8 +246,8 @@ public class JsniCollector {
     int jsLine = info.getStartLine()
         + countLines(indexes, info.getStartPos(), absoluteJsStartPos);
 
-    SourceInfo jsInfo = SourceOrigin.create(jsStartPos, jsEndPos, jsLine,
-        info.getFileName());
+    SourceInfo jsInfo = jsProgram.createSourceInfo(jsStartPos, jsEndPos,
+        jsLine, info.getFileName());
     try {
       List<JsStatement> result = JsParser.parse(jsInfo, jsProgram.getScope(),
           sr);

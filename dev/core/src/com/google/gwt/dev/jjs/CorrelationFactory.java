@@ -40,6 +40,16 @@ public abstract class CorrelationFactory implements Serializable {
    * A dummy factory that always returns <code>null</code>.
    */
   public static final class DummyCorrelationFactory extends CorrelationFactory {
+    public static final CorrelationFactory INSTANCE = new DummyCorrelationFactory();
+
+    private DummyCorrelationFactory() {
+    }
+
+    @Override
+    public Correlation by(JDeclaredType type) {
+      return null;
+    }
+
     @Override
     public Correlation by(JField field) {
       return null;
@@ -47,11 +57,6 @@ public abstract class CorrelationFactory implements Serializable {
 
     @Override
     public Correlation by(JMethod method) {
-      return null;
-    }
-
-    @Override
-    public Correlation by(JDeclaredType type) {
       return null;
     }
 
@@ -99,6 +104,8 @@ public abstract class CorrelationFactory implements Serializable {
      * public-API consumers of the Correlation.
      */
 
+    public static final CorrelationFactory INSTANCE = new RealCorrelationFactory();
+
     /**
      * Correlations based on Literals are all the same, so we'll just cook up a
      * Map to make {@link #by(Literal)} fast.
@@ -108,8 +115,8 @@ public abstract class CorrelationFactory implements Serializable {
 
     static {
       for (Literal l : Literal.values()) {
-        LITERAL_CORRELATIONS.put(l, new Correlation(Axis.LITERAL,
-            l.getDescription(), l));
+        LITERAL_CORRELATIONS.put(l,
+            new Correlation(Axis.LITERAL, l.getDescription(), l));
       }
     }
 
@@ -132,6 +139,19 @@ public abstract class CorrelationFactory implements Serializable {
     private final Map<Object, Correlation> canonicalMap = Collections.synchronizedMap(new ReferenceMap(
         ReferenceMap.WEAK, ReferenceMap.WEAK));
 
+    private RealCorrelationFactory() {
+    }
+
+    @Override
+    public Correlation by(JDeclaredType type) {
+      Correlation toReturn = canonicalMap.get(type);
+      if (toReturn == null) {
+        toReturn = new Correlation(Axis.CLASS, type.getName(), type);
+        canonicalMap.put(type, toReturn);
+      }
+      return toReturn;
+    }
+
     @Override
     public Correlation by(JField field) {
       Correlation toReturn = canonicalMap.get(field);
@@ -150,16 +170,6 @@ public abstract class CorrelationFactory implements Serializable {
 
         toReturn = new Correlation(Axis.METHOD, getMethodIdent(method), method);
         canonicalMap.put(method, toReturn);
-      }
-      return toReturn;
-    }
-
-    @Override
-    public Correlation by(JDeclaredType type) {
-      Correlation toReturn = canonicalMap.get(type);
-      if (toReturn == null) {
-        toReturn = new Correlation(Axis.CLASS, type.getName(), type);
-        canonicalMap.put(type, toReturn);
       }
       return toReturn;
     }
@@ -221,11 +231,11 @@ public abstract class CorrelationFactory implements Serializable {
     }
   }
 
+  public abstract Correlation by(JDeclaredType type);
+
   public abstract Correlation by(JField field);
 
   public abstract Correlation by(JMethod method);
-
-  public abstract Correlation by(JDeclaredType type);
 
   public abstract Correlation by(JsFunction function);
 

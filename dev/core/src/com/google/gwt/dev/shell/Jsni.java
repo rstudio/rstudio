@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.shell;
 
-import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.javac.JsniMethod;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.js.JsSourceGenerationVisitor;
@@ -25,7 +24,8 @@ import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsInvocation;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNode;
-import com.google.gwt.dev.js.ast.JsProgram;
+import com.google.gwt.dev.js.ast.JsNullLiteral;
+import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.TextOutput;
 
@@ -85,14 +85,11 @@ public class Jsni {
       JsSourceGenerationVisitor {
     private final DispatchIdOracle dispatchInfo;
     private final TextOutput out;
-    private final JsProgram program;
 
-    public JsSourceGenWithJsniIdentFixup(TextOutput out, DispatchIdOracle ccl,
-        JsProgram program) {
+    public JsSourceGenWithJsniIdentFixup(TextOutput out, DispatchIdOracle ccl) {
       super(out);
       this.dispatchInfo = ccl;
       this.out = out;
-      this.program = program;
     }
 
     /**
@@ -149,11 +146,11 @@ public class Jsni {
 
         List<JsExpression> arguments = rewritten.getArguments();
         if (q == null) {
-          q = program.getNullLiteral();
+          q = JsNullLiteral.INSTANCE;
         }
         arguments.add(q);
-        arguments.add(program.getNumberLiteral(dispId));
-        arguments.add(program.getNumberLiteral(paramCount));
+        arguments.add(new JsNumberLiteral(newSourceInfo, dispId));
+        arguments.add(new JsNumberLiteral(newSourceInfo, paramCount));
 
         accept(rewritten);
         return false;
@@ -210,17 +207,18 @@ public class Jsni {
             JsInvocation inner = new JsInvocation(newSourceInfo);
             inner.setQualifier(new JsNameRef(newSourceInfo,
                 "__gwt_makeJavaInvoke"));
-            inner.getArguments().add(program.getNumberLiteral(paramCount));
+            inner.getArguments().add(
+                new JsNumberLiteral(newSourceInfo, paramCount));
 
             JsInvocation outer = new JsInvocation(newSourceInfo);
             outer.setQualifier(inner);
             JsExpression q = ref.getQualifier();
             if (q == null) {
-              q = program.getNullLiteral();
+              q = JsNullLiteral.INSTANCE;
             }
             List<JsExpression> arguments = outer.getArguments();
             arguments.add(q);
-            arguments.add(program.getNumberLiteral(dispId));
+            arguments.add(new JsNumberLiteral(newSourceInfo, dispId));
             arguments.addAll(x.getArguments());
 
             accept(outer);
@@ -240,14 +238,13 @@ public class Jsni {
    * 
    * @param logger a TreeLogger
    */
-  public static String getJavaScriptForHostedMode(TreeLogger logger,
+  public static String getJavaScriptForHostedMode(
       DispatchIdOracle dispatchInfo, JsniMethod jsniMethod) {
     JsFunction func = jsniMethod.function();
     if (func == null) {
       return null;
     }
-    return generateJavaScriptForHostedMode(dispatchInfo, jsniMethod.program(),
-        func.getBody());
+    return generateJavaScriptForHostedMode(dispatchInfo, func.getBody());
   }
 
   /**
@@ -255,10 +252,10 @@ public class Jsni {
    * JSNI idents have been replaced with legal JavaScript for hosted mode.
    */
   private static String generateJavaScriptForHostedMode(
-      DispatchIdOracle dispatchInfo, JsProgram program, JsNode node) {
+      DispatchIdOracle dispatchInfo, JsNode node) {
     DefaultTextOutput out = new DefaultTextOutput(false);
     JsSourceGenWithJsniIdentFixup vi = new JsSourceGenWithJsniIdentFixup(out,
-        dispatchInfo, program);
+        dispatchInfo);
     vi.accept(node);
     return out.toString();
   }

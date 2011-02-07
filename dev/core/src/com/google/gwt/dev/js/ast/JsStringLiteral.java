@@ -25,8 +25,7 @@ public final class JsStringLiteral extends JsValueLiteral {
 
   private final String value;
 
-  // These only get created by JsProgram so that they can be interned.
-  JsStringLiteral(SourceInfo sourceInfo, String value) {
+  public JsStringLiteral(SourceInfo sourceInfo, String value) {
     super(sourceInfo);
     this.value = StringInterner.get().intern(value);
   }

@@ -16,7 +16,6 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.js.ast.JsFunction;
-import com.google.gwt.dev.js.ast.JsProgram;
 
 /**
  * Represents a single JsniMethod in a compiled class file.
@@ -53,9 +52,4 @@ public abstract class JsniMethod {
    * The parameter names.
    */
   public abstract String[] paramNames();
-
-  /**
-   * Gets the JsProgram in which this method is located.
-   */
-  public abstract JsProgram program();
 }

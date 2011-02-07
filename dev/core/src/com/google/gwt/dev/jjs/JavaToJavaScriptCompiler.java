@@ -541,7 +541,7 @@ public class JavaToJavaScriptCompiler {
     checkForErrors(logger, goldenCuds, false);
 
     CorrelationFactory correlator = options.isSoycExtra()
-        ? new RealCorrelationFactory() : new DummyCorrelationFactory();
+        ? RealCorrelationFactory.INSTANCE : DummyCorrelationFactory.INSTANCE;
     JProgram jprogram = new JProgram(correlator);
     JsProgram jsProgram = new JsProgram(correlator);
 

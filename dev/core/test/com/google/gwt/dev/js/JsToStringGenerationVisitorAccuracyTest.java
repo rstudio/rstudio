@@ -18,6 +18,7 @@ package com.google.gwt.dev.js;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
+import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.TextOutput;
@@ -192,8 +193,7 @@ public class JsToStringGenerationVisitorAccuracyTest extends TestCase {
   }
 
   private void doTestEscapes(String value, String expected) {
-    String actual = new JsProgram().getStringLiteral(SourceOrigin.UNKNOWN,
-        value).toString();
+    String actual = new JsStringLiteral(SourceOrigin.UNKNOWN, value).toString();
     assertEquals(expected, actual);
   }
 

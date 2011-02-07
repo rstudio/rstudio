@@ -68,7 +68,7 @@ public final class JsFunction extends JsLiteral implements HasName {
     setName(name);
     String scopeName = (name == null) ? "<anonymous>" : name.getIdent();
     scopeName = "function " + scopeName;
-    this.scope = new JsScope(parent, scopeName);
+    this.scope = new JsNormalScope(parent, scopeName);
   }
 
   public JsBlock getBody() {

@@ -49,7 +49,7 @@ public class ModuleSpaceOOPHM extends ModuleSpace {
       if (jsniMethod.isScriptOnly()) {
         continue;
       }
-      String body = Jsni.getJavaScriptForHostedMode(logger, dispatchIdOracle,
+      String body = Jsni.getJavaScriptForHostedMode(dispatchIdOracle,
           jsniMethod);
       if (body == null) {
         // The error has been logged; just ignore it for now.

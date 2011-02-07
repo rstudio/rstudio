@@ -89,10 +89,7 @@ public final class JsNameRef extends JsExpression implements CanBooleanEval,
 
   @Override
   public boolean isDefinitelyNull() {
-    if (name != null) {
-      return (name.getEnclosing().getProgram().getUndefinedLiteral().getName() == name);
-    }
-    return false;
+    return name == JsRootScope.INSTANCE.getUndefined();
   }
 
   @Override

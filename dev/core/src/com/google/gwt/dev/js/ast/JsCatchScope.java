@@ -15,14 +15,14 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import java.util.Collections;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 /**
  * A special scope used only for catch blocks. It only holds a single symbol:
  * the catch argument's name.
  */
-public class JsCatchScope extends JsScope {
+public class JsCatchScope extends JsNestingScope {
 
   private final JsName name;
 
@@ -32,45 +32,14 @@ public class JsCatchScope extends JsScope {
   }
 
   @Override
-  public JsName declareName(String ident) {
-    // Declare into parent scope!
-    return getParent().declareName(ident);
-  }
-
-  @Override
-  public JsName declareName(String ident, String shortIdent) {
-    // Declare into parent scope!
-    return getParent().declareName(ident, shortIdent);
-  }
-
-  @Override
   public Iterator<JsName> getAllNames() {
-    return new Iterator<JsName>() {
-      private boolean didIterate = false;
-
-      public boolean hasNext() {
-        return !didIterate;
-      }
-
-      public JsName next() {
-        if (didIterate) {
-          throw new NoSuchElementException();
-        }
-        didIterate = true;
-        return name;
-      }
-
-      public void remove() {
-        throw new UnsupportedOperationException();
-      }
-
-    };
+    return Collections.singleton(name).iterator();
   }
 
   @Override
   protected JsName doCreateName(String ident, String shortIdent) {
-    throw new UnsupportedOperationException(
-        "Cannot create a name in a catch scope");
+    // Declare into parent scope!
+    return getParent().declareName(ident, shortIdent);
   }
 
   @Override

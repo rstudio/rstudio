@@ -17,14 +17,10 @@ package com.google.gwt.dev.js.ast;
 
 import com.google.gwt.dev.js.JsKeywords;
 import com.google.gwt.dev.util.StringInterner;
-import com.google.gwt.dev.util.collect.Lists;
-import com.google.gwt.dev.util.collect.Maps;
 
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A scope is a factory for creating and allocating
@@ -51,7 +47,7 @@ import java.util.Map;
  * qualifier and could therefore never be confused with the global scope
  * hierarchy.
  */
-public class JsScope implements Serializable {
+public abstract class JsScope implements Serializable {
 
   /**
    * Prevents the client from programmatically creating an illegal ident.
@@ -63,27 +59,10 @@ public class JsScope implements Serializable {
     return StringInterner.get().intern(ident);
   }
 
-  private List<JsScope> children = Collections.emptyList();
   private final String description;
-  private Map<String, JsName> names = Collections.emptyMap();
-  private final JsScope parent;
 
-  /**
-   * Create a scope with parent.
-   */
-  public JsScope(JsScope parent, String description) {
-    assert (parent != null);
-    this.description = StringInterner.get().intern(description);
-    this.parent = parent;
-    parent.children = Lists.add(parent.children, this);
-  }
-
-  /**
-   * Subclasses can be parentless.
-   */
   protected JsScope(String description) {
     this.description = StringInterner.get().intern(description);
-    this.parent = null;
   }
 
   /**
@@ -92,7 +71,7 @@ public class JsScope implements Serializable {
    * 
    * @param ident An identifier that is unique within this scope.
    */
-  public JsName declareName(String ident) {
+  public final JsName declareName(String ident) {
     ident = maybeMangleKeyword(ident);
     JsName name = findExistingNameNoRecurse(ident);
     if (name != null) {
@@ -110,7 +89,7 @@ public class JsScope implements Serializable {
    * @throws IllegalArgumentException if ident already exists in this scope but
    *           the requested short name does not match the existing short name.
    */
-  public JsName declareName(String ident, String shortIdent) {
+  public final JsName declareName(String ident, String shortIdent) {
     ident = maybeMangleKeyword(ident);
     shortIdent = maybeMangleKeyword(shortIdent);
     JsName name = findExistingNameNoRecurse(ident);
@@ -134,8 +113,8 @@ public class JsScope implements Serializable {
   public final JsName findExistingName(String ident) {
     ident = maybeMangleKeyword(ident);
     JsName name = findExistingNameNoRecurse(ident);
-    if (name == null && parent != null) {
-      return parent.findExistingName(ident);
+    if (name == null && getParent() != null) {
+      return getParent().findExistingName(ident);
     }
     return name;
   }
@@ -152,8 +131,8 @@ public class JsScope implements Serializable {
     if (name != null && name.isObfuscatable()) {
       name = null;
     }
-    if (name == null && parent != null) {
-      return parent.findExistingUnobfuscatableName(ident);
+    if (name == null && getParent() != null) {
+      return getParent().findExistingUnobfuscatableName(ident);
     }
     return name;
   }
@@ -161,52 +140,34 @@ public class JsScope implements Serializable {
   /**
    * Returns an iterator for all the names defined by this scope.
    */
-  public Iterator<JsName> getAllNames() {
-    return names.values().iterator();
-  }
+  public abstract Iterator<JsName> getAllNames();
 
   /**
    * Returns a list of this scope's child scopes.
    */
-  public final List<JsScope> getChildren() {
-    return children;
-  }
+  public abstract List<JsScope> getChildren();
 
   /**
    * Returns the parent scope of this scope, or <code>null</code> if this is the
    * root scope.
    */
-  public final JsScope getParent() {
-    return parent;
-  }
-
-  /**
-   * Returns the associated program.
-   */
-  public JsProgram getProgram() {
-    assert (parent != null) : "Subclasses must override getProgram() if they do not set a parent";
-    return parent.getProgram();
-  }
+  public abstract JsScope getParent();
 
   @Override
   public final String toString() {
-    if (parent != null) {
-      return description + "->" + parent;
+    if (getParent() != null) {
+      return description + "->" + getParent();
     } else {
       return description;
     }
   }
 
+  protected abstract void addChild(JsScope child);
+
   /**
    * Creates a new name in this scope.
    */
-  protected JsName doCreateName(String ident, String shortIdent) {
-    ident = StringInterner.get().intern(ident);
-    shortIdent = StringInterner.get().intern(shortIdent);
-    JsName name = new JsName(this, ident, shortIdent);
-    names = Maps.putOrdered(names, ident, name);
-    return name;
-  }
+  protected abstract JsName doCreateName(String ident, String shortIdent);
 
   /**
    * Attempts to find the name object for the specified ident, searching in this
@@ -214,8 +175,5 @@ public class JsScope implements Serializable {
    * 
    * @return <code>null</code> if the identifier has no associated name
    */
-  protected JsName findExistingNameNoRecurse(String ident) {
-    return names.get(ident);
-  }
-
+  protected abstract JsName findExistingNameNoRecurse(String ident);
 }

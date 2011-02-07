@@ -538,7 +538,7 @@ public class FragmentExtractor {
        * An empty JsVars seems possibly surprising; return a true empty
        * statement instead.
        */
-      return jsprogram.getEmptyStmt();
+      return new JsEmpty(stat.getSourceInfo());
     }
   }
 

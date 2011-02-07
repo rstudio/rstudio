@@ -26,11 +26,14 @@ import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.dev.js.ast.JsBooleanLiteral;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsNameRef;
+import com.google.gwt.dev.js.ast.JsNullLiteral;
+import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
-import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsPropertyInitializer;
+import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.lang.LongLib;
 
@@ -44,36 +47,31 @@ import java.util.Stack;
  */
 public class GenerateJavaScriptLiterals extends JVisitor {
 
-  private final JsProgram program;
   private final Stack<JsVisitable> nodeStack = new Stack<JsVisitable>();
-
-  public GenerateJavaScriptLiterals(JsProgram program) {
-    this.program = program;
-  }
 
   @Override
   public final void endVisit(JBooleanLiteral x, Context ctx) {
-    push(x.getValue() ? program.getTrueLiteral() : program.getFalseLiteral());
+    push(JsBooleanLiteral.get(x.getValue()));
   }
 
   @Override
   public final void endVisit(JCharLiteral x, Context ctx) {
-    push(program.getNumberLiteral(x.getSourceInfo(), x.getValue()));
+    push(new JsNumberLiteral(x.getSourceInfo(), x.getValue()));
   }
 
   @Override
   public final void endVisit(JDoubleLiteral x, Context ctx) {
-    push(program.getNumberLiteral(x.getSourceInfo(), x.getValue()));
+    push(new JsNumberLiteral(x.getSourceInfo(), x.getValue()));
   }
 
   @Override
   public final void endVisit(JFloatLiteral x, Context ctx) {
-    push(program.getNumberLiteral(x.getSourceInfo(), x.getValue()));
+    push(new JsNumberLiteral(x.getSourceInfo(), x.getValue()));
   }
 
   @Override
   public final void endVisit(JIntLiteral x, Context ctx) {
-    push(program.getNumberLiteral(x.getSourceInfo(), x.getValue()));
+    push(new JsNumberLiteral(x.getSourceInfo(), x.getValue()));
   }
 
   @Override
@@ -85,9 +83,9 @@ public class GenerateJavaScriptLiterals extends JVisitor {
     JsExpression label0 = new JsNameRef(sourceInfo, "l");
     JsExpression label1 = new JsNameRef(sourceInfo, "m");
     JsExpression label2 = new JsNameRef(sourceInfo, "h");
-    JsExpression value0 = program.getNumberLiteral(sourceInfo, intArray[0]);
-    JsExpression value1 = program.getNumberLiteral(sourceInfo, intArray[1]);
-    JsExpression value2 = program.getNumberLiteral(sourceInfo, intArray[2]);
+    JsExpression value0 = new JsNumberLiteral(sourceInfo, intArray[0]);
+    JsExpression value1 = new JsNumberLiteral(sourceInfo, intArray[1]);
+    JsExpression value2 = new JsNumberLiteral(sourceInfo, intArray[2]);
     inits.add(new JsPropertyInitializer(sourceInfo, label0, value0));
     inits.add(new JsPropertyInitializer(sourceInfo, label1, value1));
     inits.add(new JsPropertyInitializer(sourceInfo, label2, value2));
@@ -96,12 +94,12 @@ public class GenerateJavaScriptLiterals extends JVisitor {
 
   @Override
   public final void endVisit(JNullLiteral x, Context ctx) {
-    push(program.getNullLiteral());
+    push(JsNullLiteral.INSTANCE);
   }
 
   @Override
   public final void endVisit(JStringLiteral x, Context ctx) {
-    push(program.getStringLiteral(x.getSourceInfo(), x.getValue()));
+    push(new JsStringLiteral(x.getSourceInfo(), x.getValue()));
   }
 
   @SuppressWarnings("unchecked")

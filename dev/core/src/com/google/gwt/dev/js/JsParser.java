@@ -15,7 +15,9 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.gwt.dev.jjs.Correlation.Literal;
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.js.ast.JsArrayAccess;
 import com.google.gwt.dev.js.ast.JsArrayLiteral;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
@@ -27,8 +29,10 @@ import com.google.gwt.dev.js.ast.JsCase;
 import com.google.gwt.dev.js.ast.JsCatch;
 import com.google.gwt.dev.js.ast.JsConditional;
 import com.google.gwt.dev.js.ast.JsContinue;
+import com.google.gwt.dev.js.ast.JsDebugger;
 import com.google.gwt.dev.js.ast.JsDefault;
 import com.google.gwt.dev.js.ast.JsDoWhile;
+import com.google.gwt.dev.js.ast.JsEmpty;
 import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFor;
@@ -41,14 +45,16 @@ import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsNode;
+import com.google.gwt.dev.js.ast.JsNullLiteral;
+import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
-import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsPropertyInitializer;
 import com.google.gwt.dev.js.ast.JsRegExp;
 import com.google.gwt.dev.js.ast.JsReturn;
+import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
@@ -80,7 +86,7 @@ public class JsParser {
 
   public static List<JsStatement> parse(SourceInfo rootSourceInfo,
       JsScope scope, Reader r) throws IOException, JsParserException {
-    return new JsParser(scope.getProgram()).parseImpl(rootSourceInfo, scope, r);
+    return new JsParser().parseImpl(rootSourceInfo, scope, r);
   }
 
   public static void parseInto(SourceInfo rootSourceInfo, JsScope scope,
@@ -90,13 +96,10 @@ public class JsParser {
     parentStmts.addAll(childStmts);
   }
 
-  private JsProgram program;
-
   private final Stack<JsScope> scopeStack = new Stack<JsScope>();
   private final Stack<SourceInfo> sourceInfoStack = new Stack<SourceInfo>();
 
-  private JsParser(JsProgram program) {
-    this.program = program;
+  private JsParser() {
   }
 
   List<JsStatement> parseImpl(final SourceInfo rootSourceInfo, JsScope scope,
@@ -155,9 +158,20 @@ public class JsParser {
       // Rhino only reports line numbers for statement nodes, not expressions
       return parent;
     }
-    SourceInfo toReturn = program.createSourceInfo(lineno, parent.getFileName());
-    toReturn.copyMissingCorrelationsFrom(parent);
-    return toReturn;
+    return parent.makeChild(SourceOrigin.create(lineno, parent.getFileName()));
+  }
+
+  /**
+   * Force a distinct child to be created, so correlations can be added.
+   */
+  private SourceInfo makeSourceInfoDistinct(Node node) {
+    SourceInfo parent = sourceInfoStack.peek();
+    int lineno = node.getLineno();
+    if (lineno == -1) {
+      // Rhino only reports line numbers for statement nodes, not expressions
+      lineno = parent.getStartLine();
+    }
+    return parent.makeChild(SourceOrigin.create(lineno, parent.getFileName()));
   }
 
   private JsNode map(Node node) throws JsParserException {
@@ -170,7 +184,7 @@ public class JsParser {
       }
 
       case TokenStream.DEBUGGER:
-        return mapDebuggerStatement();
+        return mapDebuggerStatement(node);
 
       case TokenStream.VOID:
         // VOID = nothing was parsed for this node
@@ -236,10 +250,11 @@ public class JsParser {
       case TokenStream.HOOK:
         return mapConditional(node);
 
-      case TokenStream.STRING:
-        return program.getStringLiteral(
-            sourceInfoStack.peek().makeChild(JsParser.class,
-                "JS String literal"), node.getString());
+      case TokenStream.STRING: {
+        SourceInfo info = makeSourceInfoDistinct(node);
+        info.addCorrelation(info.getCorrelationFactory().by(Literal.JS_STRING));
+        return new JsStringLiteral(info, node.getString());
+      }
 
       case TokenStream.NUMBER:
         return mapNumber(node);
@@ -484,10 +499,10 @@ public class JsParser {
     }
   }
 
-  private JsStatement mapDebuggerStatement() {
+  private JsStatement mapDebuggerStatement(Node node) {
     // Calls an optional method to invoke the debugger.
     //
-    return program.getDebuggerStmt();
+    return new JsDebugger(makeSourceInfo(node));
   }
 
   private JsExpression mapDeleteProp(Node node) throws JsParserException {
@@ -597,6 +612,7 @@ public class JsParser {
     Node fromIncr = fromTest.getNext();
     Node fromBody = fromIncr.getNext();
 
+    SourceInfo info = makeSourceInfo(forNode);
     if (fromBody == null) {
       // This could be a "for...in" structure.
       // We could based on the different child layout.
@@ -612,7 +628,7 @@ public class JsParser {
         Node fromIterVarName = fromIter.getFirstChild();
         String fromName = fromIterVarName.getString();
         JsName toName = getScope().declareName(fromName);
-        toForIn = new JsForIn(makeSourceInfo(forNode), toName);
+        toForIn = new JsForIn(info, toName);
         Node fromIterInit = fromIterVarName.getFirstChild();
         if (fromIterInit != null) {
           // That has an initializer expression (useful only for side effects).
@@ -622,7 +638,7 @@ public class JsParser {
       } else {
         // An unnamed iterator var.
         //
-        toForIn = new JsForIn(makeSourceInfo(forNode));
+        toForIn = new JsForIn(info);
         toForIn.setIterExpr(mapExpression(fromIter));
       }
       toForIn.setObjExpr(mapExpression(fromObjExpr));
@@ -633,14 +649,14 @@ public class JsParser {
       if (bodyStmt != null) {
         toForIn.setBody(bodyStmt);
       } else {
-        toForIn.setBody(program.getEmptyStmt());
+        toForIn.setBody(new JsEmpty(info));
       }
 
       return toForIn;
     } else {
       // Regular ol' for loop.
       //
-      JsFor toFor = new JsFor(makeSourceInfo(forNode));
+      JsFor toFor = new JsFor(info);
 
       // The first item is either an expression or a JsVars.
       JsNode initThingy = map(fromInit);
@@ -659,7 +675,7 @@ public class JsParser {
       if (bodyStmt != null) {
         toFor.setBody(bodyStmt);
       } else {
-        toFor.setBody(program.getEmptyStmt());
+        toFor.setBody(new JsEmpty(info));
       }
       return toFor;
     }
@@ -821,7 +837,8 @@ public class JsParser {
   }
 
   private JsExpression mapNumber(Node numberNode) {
-    return program.getNumberLiteral(numberNode.getDouble());
+    return new JsNumberLiteral(makeSourceInfo(numberNode),
+        numberNode.getDouble());
   }
 
   private JsExpression mapObjectLit(Node objLitNode) throws JsParserException {
@@ -887,16 +904,20 @@ public class JsParser {
         return new JsThisRef(makeSourceInfo(node));
 
       case TokenStream.TRUE:
-        return program.getTrueLiteral();
+        return JsBooleanLiteral.TRUE;
 
       case TokenStream.FALSE:
-        return program.getFalseLiteral();
+        return JsBooleanLiteral.FALSE;
 
       case TokenStream.NULL:
-        return program.getNullLiteral();
+        return JsNullLiteral.INSTANCE;
 
-      case TokenStream.UNDEFINED:
-        return program.getUndefinedLiteral();
+      case TokenStream.UNDEFINED: {
+        SourceInfo info = makeSourceInfoDistinct(node);
+        info.addCorrelation(info.getCorrelationFactory().by(
+            Literal.JS_UNDEFINED));
+        return new JsNameRef(info, JsRootScope.INSTANCE.getUndefined());
+      }
 
       default:
         throw createParserException("Unknown primary: " + node.getIntDatum(),
@@ -1017,7 +1038,7 @@ public class JsParser {
     } else {
       // When map() returns null, we return an empty statement.
       //
-      return program.getEmptyStmt();
+      return new JsEmpty(makeSourceInfo(nodeStmt));
     }
   }
 

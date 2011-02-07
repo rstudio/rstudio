@@ -2995,8 +2995,7 @@ public class GenerateJavaAST {
           JLiteral initializer = field.getConstInitializer();
           JType type = initializer.getType();
           if (type instanceof JPrimitiveType || program.isJavaLangString(type)) {
-            GenerateJavaScriptLiterals generator = new GenerateJavaScriptLiterals(
-                jsProgram);
+            GenerateJavaScriptLiterals generator = new GenerateJavaScriptLiterals();
             generator.accept(initializer);
             JsExpression result = generator.peek();
             assert (result != null);

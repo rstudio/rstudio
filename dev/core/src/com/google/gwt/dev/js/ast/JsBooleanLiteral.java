@@ -16,16 +16,26 @@
 package com.google.gwt.dev.js.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 
 /**
  * Represents a JavaScript literal boolean expression.
  */
 public final class JsBooleanLiteral extends JsValueLiteral {
 
+  public static final JsBooleanLiteral FALSE = new JsBooleanLiteral(
+      SourceOrigin.UNKNOWN, false);
+
+  public static final JsBooleanLiteral TRUE = new JsBooleanLiteral(
+      SourceOrigin.UNKNOWN, true);
+
+  public static JsBooleanLiteral get(boolean value) {
+    return value ? TRUE : FALSE;
+  }
+
   private final boolean value;
 
-  // Should be interned by JsProgram
-  JsBooleanLiteral(SourceInfo sourceInfo, boolean value) {
+  private JsBooleanLiteral(SourceInfo sourceInfo, boolean value) {
     super(sourceInfo);
     this.value = value;
   }
@@ -55,5 +65,9 @@ public final class JsBooleanLiteral extends JsValueLiteral {
   public void traverse(JsVisitor v, JsContext ctx) {
     v.visit(this, ctx);
     v.endVisit(this, ctx);
+  }
+
+  private Object readResolve() {
+    return get(value);
   }
 }

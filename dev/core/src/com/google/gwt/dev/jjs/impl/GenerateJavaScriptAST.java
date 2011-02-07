@@ -105,6 +105,7 @@ import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsContinue;
 import com.google.gwt.dev.js.ast.JsDefault;
 import com.google.gwt.dev.js.ast.JsDoWhile;
+import com.google.gwt.dev.js.ast.JsEmpty;
 import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFor;
@@ -118,6 +119,7 @@ import com.google.gwt.dev.js.ast.JsNameOf;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsNode;
+import com.google.gwt.dev.js.ast.JsNormalScope;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
@@ -125,6 +127,7 @@ import com.google.gwt.dev.js.ast.JsPrefixOperation;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsPropertyInitializer;
 import com.google.gwt.dev.js.ast.JsReturn;
+import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsSwitch;
@@ -295,7 +298,7 @@ public class GenerateJavaScriptAST {
         if (parentScope == objectScope) {
           parentScope = interfaceScope;
         }
-        myScope = new JsScope(parentScope, "class " + x.getShortName());
+        myScope = new JsNormalScope(parentScope, "class " + x.getShortName());
       }
       classScopes.put(x, myScope);
 
@@ -532,10 +535,6 @@ public class GenerateJavaScriptAST {
       arrayLength.setObfuscatable(false);
     }
 
-    public GenerateJavaScriptVisitor() {
-      super(jsProgram);
-    }
-
     @Override
     public void endVisit(JAbsentArrayDimension x, Context ctx) {
       throw new InternalCompilerException("Should not get here.");
@@ -594,7 +593,7 @@ public class GenerateJavaScriptAST {
       Iterator<JsStatement> iterator = stmts.iterator();
       while (iterator.hasNext()) {
         JsStatement stmt = iterator.next();
-        if (stmt == jsProgram.getEmptyStmt()) {
+        if (stmt instanceof JsEmpty) {
           iterator.remove();
         }
       }
@@ -755,7 +754,7 @@ public class GenerateJavaScriptAST {
       if (x.getBody() != null) {
         stmt.setBody((JsStatement) pop()); // body
       } else {
-        stmt.setBody(jsProgram.getEmptyStmt());
+        stmt.setBody(new JsEmpty(x.getSourceInfo()));
       }
       stmt.setCondition((JsExpression) pop()); // testExpr
       push(stmt);
@@ -843,7 +842,7 @@ public class GenerateJavaScriptAST {
       if (x.getBody() != null) {
         jsFor.setBody((JsStatement) pop());
       } else {
-        jsFor.setBody(jsProgram.getEmptyStmt());
+        jsFor.setBody(new JsEmpty(x.getSourceInfo()));
       }
 
       // increments
@@ -892,7 +891,7 @@ public class GenerateJavaScriptAST {
       if (x.getThenStmt() != null) {
         stmt.setThenStmt((JsStatement) pop()); // thenStmt
       } else {
-        stmt.setThenStmt(jsProgram.getEmptyStmt());
+        stmt.setThenStmt(new JsEmpty(x.getSourceInfo()));
       }
 
       stmt.setIfExpr((JsExpression) pop()); // ifExpr
@@ -1092,7 +1091,8 @@ public class GenerateJavaScriptAST {
       }
       if (cur == null) {
         // the multi-expression was empty; use undefined
-        cur = jsProgram.getUndefinedLiteral();
+        cur = new JsNameRef(x.getSourceInfo(),
+            JsRootScope.INSTANCE.getUndefined());
       }
       push(cur);
     }
@@ -1284,7 +1284,7 @@ public class GenerateJavaScriptAST {
       if (x.getBody() != null) {
         stmt.setBody((JsStatement) pop()); // body
       } else {
-        stmt.setBody(jsProgram.getEmptyStmt());
+        stmt.setBody(new JsEmpty(x.getSourceInfo()));
       }
       stmt.setCondition((JsExpression) pop()); // testExpr
       push(stmt);
@@ -1593,8 +1593,7 @@ public class GenerateJavaScriptAST {
       SourceInfo sourceInfo = program.createSourceInfoSynthetic(
           GenerateJavaScriptAST.class, "gwtOnLoad");
 
-      JsName entryName = topScope.findExistingName("$entry");
-      entryName.setObfuscatable(true);
+      JsName entryName = topScope.declareName("$entry");
       JsVar entryVar = new JsVar(sourceInfo, entryName);
       JsInvocation registerEntryCall = new JsInvocation(sourceInfo);
       JsFunction registerEntryFunction = indexedFunctions.get("Impl.registerEntry");
@@ -1746,8 +1745,8 @@ public class GenerateJavaScriptAST {
          * primitive with a modified prototype.
          */
         JsNameRef rhs = prototype.makeRef(sourceInfo);
-        rhs.setQualifier(jsProgram.getRootScope().declareName("String").makeRef(
-            sourceInfo));
+        rhs.setQualifier(JsRootScope.INSTANCE.findExistingUnobfuscatableName(
+            "String").makeRef(sourceInfo));
         JsExpression tmpAsg = createAssignment(globalTemp.makeRef(sourceInfo),
             rhs);
         JsExprStmt tmpAsgStmt = tmpAsg.makeStmt();
@@ -2114,7 +2113,7 @@ public class GenerateJavaScriptAST {
     this.jsProgram = jsProgram;
     topScope = jsProgram.getScope();
     objectScope = jsProgram.getObjectScope();
-    interfaceScope = new JsScope(objectScope, "Interfaces");
+    interfaceScope = new JsNormalScope(objectScope, "Interfaces");
     this.output = output;
     this.symbolTable = symbolTable;
 
