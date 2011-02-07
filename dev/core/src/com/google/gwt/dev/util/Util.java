@@ -83,10 +83,6 @@ public final class Util {
 
   public static final String[] EMPTY_ARRAY_STRING = new String[0];
 
-  public static char[] HEX_CHARS = new char[] {
-      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
-      'E', 'F'};
-
   /**
    * The size of a {@link #threadLocalBuf}, which should be large enough for
    * efficient data transfer but small enough to fit easily into the L2 cache of
@@ -176,7 +172,7 @@ public final class Util {
     for (int i = 0; i < contents.length; i++) {
       md5.update(contents[i]);
     }
-    return toHexString(md5.digest());
+    return Utility.toHexString(md5.digest());
   }
 
   public static void copy(InputStream is, OutputStream os) throws IOException {
@@ -436,16 +432,6 @@ public final class Util {
     String installPath = Utility.getInstallPath();
     File file = new File(installPath + '/' + relativePath);
     return readFileAsString(file);
-  }
-
-  /**
-   * A 4-digit hex result.
-   */
-  public static void hex4(char c, StringBuffer sb) {
-    sb.append(HEX_CHARS[(c & 0xF000) >> 12]);
-    sb.append(HEX_CHARS[(c & 0x0F00) >> 8]);
-    sb.append(HEX_CHARS[(c & 0x00F0) >> 4]);
-    sb.append(HEX_CHARS[c & 0x000F]);
   }
 
   /**
@@ -1021,25 +1007,6 @@ public final class Util {
       a[i] = iter.next();
     }
     return a;
-  }
-
-  /**
-   * Returns a string representation of the byte array as a series of
-   * hexadecimal characters.
-   *
-   * @param bytes byte array to convert
-   * @return a string representation of the byte array as a series of
-   *         hexadecimal characters
-   */
-  public static String toHexString(byte[] bytes) {
-    char[] hexString = new char[2 * bytes.length];
-    int j = 0;
-    for (int i = 0; i < bytes.length; i++) {
-      hexString[j++] = Util.HEX_CHARS[(bytes[i] & 0xF0) >> 4];
-      hexString[j++] = Util.HEX_CHARS[bytes[i] & 0x0F];
-    }
-
-    return new String(hexString);
   }
 
   /**
