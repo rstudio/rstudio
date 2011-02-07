@@ -3,6 +3,7 @@ package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.MiniDialogPopupPanel;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
 
 import com.google.gwt.core.client.JsArrayString;
@@ -16,12 +17,13 @@ import com.google.gwt.user.client.ui.Widget;
 public class ManipulatorPopupPanel extends MiniDialogPopupPanel 
                              
 {
-   public ManipulatorPopupPanel(final ManipulatorChangedHandler changedHandler)
+   public ManipulatorPopupPanel(final ManipulatorChangedHandler changedHandler,
+                                Commands commands)
    {
       super(true, false);
       
       changedHandler_ = changedHandler;
-      
+      commands_ = commands;
       
       setCaption("Manipulate");
    
@@ -144,6 +146,9 @@ public class ManipulatorPopupPanel extends MiniDialogPopupPanel
                nativeEvent.stopPropagation();
                event.cancel();
                hideMiniDialog();
+               // if you hide the manpulate dialog with the keyboard then
+               // focus appears to go nowhere. put it back in the console.
+               commands_.activateConsole().execute();
                break;
          } 
       }
@@ -152,5 +157,6 @@ public class ManipulatorPopupPanel extends MiniDialogPopupPanel
    private VerticalPanel mainPanel_;
    private ManipulatorControl firstControl_;
    private final ManipulatorChangedHandler changedHandler_;
+   private final Commands commands_;
 
 }
