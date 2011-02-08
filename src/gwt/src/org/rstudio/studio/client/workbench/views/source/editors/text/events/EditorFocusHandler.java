@@ -1,5 +1,5 @@
 /*
- * CodeMirrorKeyHandler.java
+ * EditorFocusHandler.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -10,15 +10,11 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.codemirror.client;
+package org.rstudio.studio.client.workbench.views.source.editors.text.events;
 
-import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.shared.EventHandler;
 
-public interface CodeMirrorKeyHandler
+public interface EditorFocusHandler extends EventHandler
 {
-   /**
-    * @return true if the event was handled by the handler, false
-    * if the normal behavior should ensue.
-    */
-   public boolean handleKey(NativeEvent event);
+   void onEditorFocus(EditorFocusEvent e);
 }

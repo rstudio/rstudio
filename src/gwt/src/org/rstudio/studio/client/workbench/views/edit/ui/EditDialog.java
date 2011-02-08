@@ -20,23 +20,16 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomMetrics;
-import org.rstudio.core.client.widget.ModalDialogBase;
-import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.core.client.widget.ProgressOperationWithInput;
-import org.rstudio.core.client.widget.ThemedButton;
-import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
-import org.rstudio.studio.client.common.reditor.REditor;
-import org.rstudio.studio.client.common.reditor.model.REditorServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 
 public class EditDialog extends ModalDialogBase
 {
    public static void edit(
          final String text,
-         final ProgressOperationWithInput<String> operation,
-         final EventBus events,
-         final REditorServerOperations server)
+         final ProgressOperationWithInput<String> operation)
    {
       AceEditor.create(new CommandWithArg<AceEditor>()
       {
@@ -44,8 +37,6 @@ public class EditDialog extends ModalDialogBase
          {
             new EditDialog(text,
                            operation,
-                           events,
-                           server,
                            editor).showModal();
          }
       });
@@ -53,15 +44,11 @@ public class EditDialog extends ModalDialogBase
 
    private EditDialog(String text,
                       final ProgressOperationWithInput<String> operation,
-                      EventBus events,
-                      REditorServerOperations server,
                       AceEditor editor)
    {
-      server_ = server;
       editor_ = editor;
       setText("Edit");
       sourceText_ = text;
-      events_ = events;
 
       setEscapeDisabled(true);
 
@@ -86,7 +73,13 @@ public class EditDialog extends ModalDialogBase
       setButtonAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
    }
 
-  
+   private static Size measureText(String text)
+   {
+      return DomMetrics.measureHTML(
+            "<pre>" + DomUtils.textToPreHtml(text) + "</pre>",
+            "ace_editor " + FontSizer.getNormalFontSizeClass());
+   }
+
    @Override
    protected Widget createMainWidget()
    {
@@ -94,7 +87,7 @@ public class EditDialog extends ModalDialogBase
       final int LINE_NUMBERS_WIDTH = 100;
 
       // calculate the size of the text the adjust for line numbers
-      Size textSize = REditor.measureText(sourceText_);
+      Size textSize = measureText(sourceText_);
       textSize = new Size(textSize.width + LINE_NUMBERS_WIDTH,
                           textSize.height);
 
@@ -128,6 +121,4 @@ public class EditDialog extends ModalDialogBase
 
    private final String sourceText_ ;
    private AceEditor editor_ ;
-   private final EventBus events_;
-   private final REditorServerOperations server_;
 }

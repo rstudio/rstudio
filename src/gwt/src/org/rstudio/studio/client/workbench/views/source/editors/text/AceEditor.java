@@ -17,7 +17,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import org.rstudio.codemirror.client.events.EditorFocusHandler;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.dom.IFrameElementEx;
@@ -41,6 +40,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorFocusHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedHandler;
 
@@ -111,6 +111,8 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
          public void onEditorLoaded(EditorLoadedEvent event)
          {
             updateLanguage();
+            if (focusOnLoad_)
+               widget_.getEditor().focus();
          }
       });
    }
@@ -144,7 +146,7 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       if (fileType_ == null)
          return;
       
-      if (fileType_.canExecuteCode())
+      if (fileType_.getEditorLanguage().useRCompletion())
       {
          completionManager_ = new RCompletionManager(this,
                                                      new CompletionPopupPanel(),
@@ -180,7 +182,10 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
 
    public void focus()
    {
-      widget_.getEditor().focus();
+      if (isEditorLoaded())
+         widget_.getEditor().focus();
+      else
+         focusOnLoad_ = true;
    }
 
    public void print()
@@ -508,4 +513,5 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
    private CompletionManager completionManager_;
    private CodeToolsServerOperations server_;
    private TextFileType fileType_;
+   private boolean focusOnLoad_;
 }

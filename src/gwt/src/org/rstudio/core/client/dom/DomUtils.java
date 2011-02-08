@@ -508,7 +508,7 @@ public class DomUtils
          text.replaceAll("&", "&amp;")
              .replaceAll("<", "&lt;")
              .replaceAll(">", "&gt;")
-             .replaceAll("\\t", "    ");
+             .replaceAll("\\t", "  ");
    }
 
    public static String htmlToText(String html)

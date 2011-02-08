@@ -10,28 +10,28 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.codemirror.client.events;
+package org.rstudio.studio.client.workbench.views.source.editors.text.events;
 
 import com.google.gwt.event.shared.GwtEvent;
 
-public class EditorBlurEvent extends GwtEvent<EditorBlurHandler>
+public class EditorFocusEvent extends GwtEvent<EditorFocusHandler>
 {
-   public static Type<EditorBlurHandler> TYPE =
-         new Type<EditorBlurHandler>();
+   public static Type<EditorFocusHandler> TYPE =
+         new Type<EditorFocusHandler>();
 
-   public EditorBlurEvent()
+   public EditorFocusEvent()
    {
    }
 
    @Override
-   public Type<EditorBlurHandler> getAssociatedType()
+   public Type<EditorFocusHandler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(EditorBlurHandler handler)
+   protected void dispatch(EditorFocusHandler handler)
    {
-      handler.onEditorBlur(this);
+      handler.onEditorFocus(this);
    }
 }

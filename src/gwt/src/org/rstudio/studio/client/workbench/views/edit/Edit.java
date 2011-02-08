@@ -17,7 +17,6 @@ import org.rstudio.core.client.AsyncShim;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.reditor.model.REditorServerOperations;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.edit.events.ShowEditorEvent;
 import org.rstudio.studio.client.workbench.views.edit.events.ShowEditorHandler;
@@ -35,13 +34,11 @@ public class Edit implements ShowEditorHandler
    public static interface Display
    {
       void show(String text,
-                REditorServerOperations server,
                 ProgressOperationWithInput<String> operation);
    }
 
    @Inject
    public Edit(Display view,
-               EventBus events,
                EditServerOperations server)
    {
       view_ = view ;
@@ -51,7 +48,6 @@ public class Edit implements ShowEditorHandler
    public void onShowEditor(ShowEditorEvent event)
    {
       view_.show(event.getContent(),
-                 server_,
                  new ProgressOperationWithInput<String>() {
 
          public void execute(final String input,

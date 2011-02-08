@@ -12,10 +12,6 @@
  */
 package org.rstudio.studio.client.common.reditor;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArrayString;
-import org.rstudio.studio.client.common.reditor.resources.REditorResources;
-
 /**
  * Models a language for CodeMirror.
  *
@@ -31,57 +27,30 @@ import org.rstudio.studio.client.common.reditor.resources.REditorResources;
  */
 public class EditorLanguage
 {
-   public static final String STYLES_URL =
-         REditorResources.INSTANCE.colors().getUrl();
-
-   // All possible parser URLs we might want to use must be listed here.
-   // CodeMirror must have access to them all at startup or else it won't
-   // be able to dynamically switch between them.
-   private static final String[] ALL_PARSER_URLS = {
-         REditorResources.INSTANCE.parser_r().getUrl(),
-         REditorResources.INSTANCE.parser_latex().getUrl(),
-         REditorResources.INSTANCE.parser_sweave().getUrl(),
-         REditorResources.INSTANCE.parser_dummy().getUrl(),
-   };
-
    public static final EditorLanguage LANG_R = new EditorLanguage(
-         0, "mode/r", true);
+         "mode/r", true);
    public static final EditorLanguage LANG_TEX = new EditorLanguage(
-         1, "mode/tex", false);
+         "mode/tex", false);
    public static final EditorLanguage LANG_SWEAVE = new EditorLanguage(
-         2, "mode/sweave", true);
+         "mode/sweave", true);
    public static final EditorLanguage LANG_PLAIN = new EditorLanguage(
-         3, "ace/mode/text", false);
+         "ace/mode/text", false);
 
    /**
     *
-    * @param parserIndex The index within ALL_PARSER_URLS that corresponds with
-    *    this language's parser.
     * @param parserName The name of the parser--it's found at the top of the
-    *    parser .js file. This MUST match the value inside the .js file or else
+    *    parser .js fil
+    * e. This MUST match the value inside the .js file or else
     *    dynamic language switching (Save As... with a different extension)
     *    won't work.
     * @param useRCompletion If true, then Tab is intercepted for completion
-    *    purposes. If not, then CodeMirror always handles it.
     */
-   public EditorLanguage(int parserIndex,
-                         String parserName,
-                         boolean useRCompletion)
+   public EditorLanguage(
+         String parserName,
+         boolean useRCompletion)
    {
-      parserIndex_ = parserIndex;
       parserName_ = parserName;
       useRCompletion_ = useRCompletion;
-   }
-
-   public JsArrayString getAllParserUrlsWithThisOneLast()
-   {
-      JsArrayString arr = JavaScriptObject.createArray().cast();
-      for (int i = 0; i < ALL_PARSER_URLS.length; i++)
-      {
-         arr.push(ALL_PARSER_URLS[i]);
-      }
-      arr.push(ALL_PARSER_URLS[parserIndex_]);
-      return arr;
    }
 
    public String getParserName()
@@ -94,7 +63,6 @@ public class EditorLanguage
       return useRCompletion_;
    }
 
-   private final int parserIndex_;
    private final String parserName_;
    private final boolean useRCompletion_;
 }

@@ -12,11 +12,10 @@
  */
 package org.rstudio.studio.client.workbench.views.edit.model;
 
-import org.rstudio.studio.client.common.reditor.model.REditorServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
-public interface EditServerOperations extends REditorServerOperations
+public interface EditServerOperations
 {
    // indicate that modal editing of an object has completed successfully
    void editCompleted(String text, ServerRequestCallback<Void> requestCallback);

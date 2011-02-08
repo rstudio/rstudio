@@ -30,7 +30,6 @@
 
    <!-- RStudio module dependencies                                -->
    <inherits name='org.rstudio.core.Core' />
-   <inherits name='org.rstudio.codemirror.CodeMirror' />
    
    <!-- Specify the app entry point class.                         -->
    <entry-point class='org.rstudio.studio.client.RStudio'/>

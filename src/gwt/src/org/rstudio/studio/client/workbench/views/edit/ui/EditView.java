@@ -15,23 +15,13 @@ package org.rstudio.studio.client.workbench.views.edit.ui;
 import com.google.inject.Inject;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.reditor.model.REditorServerOperations;
 import org.rstudio.studio.client.workbench.views.edit.Edit.Display;
 
 public class EditView implements Display
 {
-   @Inject
-   public EditView(EventBus events)
-   {
-      events_ = events;
-   }
-
    public void show(String text,
-                    REditorServerOperations server,
                     ProgressOperationWithInput<String> operation)
    {
-      EditDialog.edit(text, operation, events_, server);
+      EditDialog.edit(text, operation);
    }
-
-   private final EventBus events_;
 }

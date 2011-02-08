@@ -24,7 +24,7 @@ public class DomMetrics
    {
       // create HTML widget which matches the specified style
       HTML measureHTML = new HTML();
-      measureHTML.setStylePrimaryName(styleName);
+      measureHTML.setStyleName(styleName);
       measureHTML.getElement().getStyle().setFloat(Style.Float.LEFT);
       measureHTML.setWordWrap(false);
       

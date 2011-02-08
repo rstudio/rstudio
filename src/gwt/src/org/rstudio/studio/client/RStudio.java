@@ -23,7 +23,6 @@ import com.google.gwt.dom.client.StyleInjector;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
-import org.rstudio.codemirror.client.resources.CodeMirrorResources;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.filedialog.FileDialogResources;
 import org.rstudio.core.client.resources.CoreResources;
@@ -37,7 +36,6 @@ import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPa
 import org.rstudio.studio.client.application.ui.serializationprogress.ApplicationSerializationProgress;
 import org.rstudio.studio.client.application.ui.support.SupportPopupMenu;
 import org.rstudio.studio.client.common.StudioResources;
-import org.rstudio.studio.client.common.reditor.resources.REditorResources;
 import org.rstudio.studio.client.impl.BrowserFence;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.history.view.HistoryPane;
@@ -113,9 +111,7 @@ public class RStudio implements EntryPoint
       CoreResources.INSTANCE.styles().ensureInjected();
       StudioResources.INSTANCE.styles().ensureInjected();
       ConsoleResources.INSTANCE.consoleStyles().ensureInjected();
-      REditorResources.INSTANCE.styles().ensureInjected(); 
       FileDialogResources.INSTANCE.styles().ensureInjected();
-      CodeMirrorResources.INSTANCE.linenumbers().ensureInjected();
       ManipulatorResources.INSTANCE.manipulatorStyles().ensureInjected();
       
       SupportPopupMenu.ensureStylesInjected();
