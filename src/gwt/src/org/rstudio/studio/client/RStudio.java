@@ -138,18 +138,7 @@ public class RStudio implements EntryPoint
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");
 
-      String aceJs = AceResources.INSTANCE.acejs().getUrl();
-      final String aceSupportJs = AceResources.INSTANCE.acesupportjs().getUrl();
-      ExternalJavaScriptLoader.loadSequentially(
-            new String[] {aceJs, aceSupportJs},
-            new Callback()
-            {
-               public void onLoaded()
-               {
-                  RStudioGinjector.INSTANCE.getApplication().go(
-                        RootLayoutPanel.get(),
-                        dismissProgressAnimation);
-               }
-            });
+      RStudioGinjector.INSTANCE.getApplication().go(RootLayoutPanel.get(),
+                                                    dismissProgressAnimation);
    }
 }

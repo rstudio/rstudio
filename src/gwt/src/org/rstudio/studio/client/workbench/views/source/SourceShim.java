@@ -29,6 +29,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileHandler;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.events.*;
 
 public class SourceShim extends Composite
@@ -127,6 +128,7 @@ public class SourceShim extends Composite
    public void forceLoad()
    {
       asyncSource_.forceLoad(false);
+      AceEditor.preload();
    }
 
    public void onBeforeShow()

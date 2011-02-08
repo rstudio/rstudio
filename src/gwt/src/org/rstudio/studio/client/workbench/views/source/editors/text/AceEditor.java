@@ -18,6 +18,8 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.ExternalJavaScriptLoader;
+import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
@@ -92,6 +94,46 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       }
    }
 
+   public static void preload()
+   {
+      load(null);
+   }
+
+   public static void create(final CommandWithArg<AceEditor> callback)
+   {
+      load(new Command()
+      {
+         public void execute()
+         {
+            AceEditorWidget.create(new CommandWithArg<AceEditorWidget>()
+            {
+               public void execute(AceEditorWidget arg)
+               {
+                  callback.execute(new AceEditor(arg));
+               }
+            });
+         }
+      });
+   }
+
+   private static void load(final Command command)
+   {
+      aceLoader_.addCallback(new Callback()
+      {
+         public void onLoaded()
+         {
+            aceSupportLoader_.addCallback(new Callback()
+            {
+               public void onLoaded()
+               {
+                  if (command != null)
+                     command.execute();
+               }
+            });
+         }
+      });
+   }
+
    private AceEditor(AceEditorWidget widget)
    {
       widget_ = widget;
@@ -123,17 +165,6 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       server_ = server;
    }
 
-   public static void create(final CommandWithArg<AceEditor> callback)
-   {
-      AceEditorWidget.create(new CommandWithArg<AceEditorWidget>()
-      {
-         public void execute(AceEditorWidget arg)
-         {
-            callback.execute(new AceEditor(arg));
-         }
-      });
-   }
-
    public void setFileType(TextFileType fileType)
    {
       fileType_ = fileType;
@@ -145,7 +176,7 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
    {
       if (fileType_ == null)
          return;
-      
+
       if (fileType_.getEditorLanguage().useRCompletion())
       {
          completionManager_ = new RCompletionManager(this,
@@ -514,4 +545,9 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
    private CodeToolsServerOperations server_;
    private TextFileType fileType_;
    private boolean focusOnLoad_;
+
+   private static final ExternalJavaScriptLoader aceLoader_ =
+         new ExternalJavaScriptLoader(AceResources.INSTANCE.acejs().getUrl());
+   private static final ExternalJavaScriptLoader aceSupportLoader_ =
+         new ExternalJavaScriptLoader(AceResources.INSTANCE.acesupportjs().getUrl());
 }
