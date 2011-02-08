@@ -23,12 +23,33 @@ import com.google.gwt.core.client.GwtScriptOnly;
  */
 @GwtScriptOnly
 public class ReflectionHelper {
-  public static Class<?> loadClass(String name) throws Exception {
+  
+  public static Object getField(Class<?> klass, Object obj, String name) {
     throw new RuntimeException("ReflectionHelper can't be used from web mode.");
   }
 
-  public static <T> T newInstance(Class<T> klass)
-      throws Exception {
+  /**
+   * Loads {@code klass} using Class.forName.
+   */
+  public static Class<?> loadClass(String klass) {
+    throw new RuntimeException("ReflectionHelper can't be used from web mode.");
+  }
+
+  /**
+   * Creates a new instance of {@code klass}. The class must have a no-arg
+   * constructor. The constructor may have any access modifier (for example,
+   * private).
+   */
+  @SuppressWarnings("unchecked")
+  public static <T> T newInstance(Class<T> klass) {
+    throw new RuntimeException("ReflectionHelper can't be used from web mode.");
+  }
+
+  /**
+   * Sets the value of a field.
+   */
+  public static void setField(Class<?> klass, Object obj, String name,
+      Object value) {
     throw new RuntimeException("ReflectionHelper can't be used from web mode.");
   }
 }

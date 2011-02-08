@@ -18,6 +18,7 @@ package com.google.gwt.user.rebind.rpc;
 import com.google.gwt.core.client.UnsafeNativeLong;
 import com.google.gwt.core.client.impl.WeakMapping;
 import com.google.gwt.core.ext.GeneratorContext;
+import com.google.gwt.core.ext.GeneratorContextExt;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
@@ -33,6 +34,7 @@ import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 import com.google.gwt.user.client.rpc.core.java.lang.Object_Array_CustomFieldSerializer;
+import com.google.gwt.user.client.rpc.impl.ReflectionHelper;
 import com.google.gwt.user.client.rpc.impl.TypeHandler;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
@@ -51,8 +53,17 @@ import java.io.PrintWriter;
  */
 public class FieldSerializerCreator {
 
+  /* NB: FieldSerializerCreator generates two different sets of code for 
+   * DevMode and ProdMode. In ProdMode, the generated code uses the JSNI    
+   * violator pattern to access private class members. In DevMode, the generated
+   * code uses ReflectionHelper instead of JSNI to avoid the many JSNI 
+   * boundary-crossings which are slow in DevMode. 
+   */
+  
   private static final String WEAK_MAPPING_CLASS_NAME = WeakMapping.class.getName();
 
+  private final GeneratorContextExt context;
+  
   private final JClassType customFieldSerializer;
 
   private final boolean customFieldSerializerHasInstantiate;
@@ -61,6 +72,12 @@ public class FieldSerializerCreator {
 
   private final boolean isJRE;
 
+  private final boolean isProd;
+
+  private final String methodEnd;
+  
+  private final String methodStart;
+  
   private final JClassType serializableClass;
 
   private final JField[] serializableFields;
@@ -76,15 +93,19 @@ public class FieldSerializerCreator {
   /**
    * Constructs a field serializer for the class.
    */
-  public FieldSerializerCreator(TypeOracle typeOracle,
+  public FieldSerializerCreator(GeneratorContextExt context,
       SerializableTypeOracle typesSentFromBrowser,
       SerializableTypeOracle typesSentToBrowser, JClassType requestedClass,
       JClassType customFieldSerializer) {
+    this.context = context;
+    this.isProd = context.isProdMode();
+    methodStart = isProd ? "/*-{" : "{";  
+    methodEnd = isProd ? "}-*/;" : "}";
     this.customFieldSerializer = customFieldSerializer;
     assert (requestedClass != null);
     assert (requestedClass.isClass() != null || requestedClass.isArray() != null);
 
-    this.typeOracle = typeOracle;
+    this.typeOracle = context.getTypeOracle();    
     this.typesSentFromBrowser = typesSentFromBrowser;
     this.typesSentToBrowser = typesSentToBrowser;
     serializableClass = requestedClass;
@@ -191,6 +212,7 @@ public class FieldSerializerCreator {
     composerFactory.addImport(SerializationException.class.getCanonicalName());
     composerFactory.addImport(SerializationStreamReader.class.getCanonicalName());
     composerFactory.addImport(SerializationStreamWriter.class.getCanonicalName());
+    composerFactory.addImport(ReflectionHelper.class.getCanonicalName());
     composerFactory.addAnnotationDeclaration("@SuppressWarnings(\"deprecation\")");
     if (needsTypeHandler()) {
       composerFactory.addImplementedInterface(TypeHandler.class.getCanonicalName());
@@ -298,8 +320,10 @@ public class FieldSerializerCreator {
     JClassType isClass = serializableClass.isClass();
 
     boolean useViolator = false;
+    boolean isAccessible = true;
     if (isEnum == null && isClass != null) {
-      useViolator = !classIsAccessible() || !ctorIsAccessible();
+      isAccessible = classIsAccessible() && ctorIsAccessible(); 
+      useViolator = !isAccessible && isProd;
     }
 
     sourceWriter.print("public static" + (useViolator ? " native " : " "));
@@ -319,8 +343,14 @@ public class FieldSerializerCreator {
           + qualifiedSourceName + ".values();");
       sourceWriter.println("assert (ordinal >= 0 && ordinal < values.length);");
       sourceWriter.println("return values[ordinal];");
-    } else if (useViolator) {
-      sourceWriter.println("return @" + qualifiedSourceName + "::new()();");
+    } else if (!isAccessible) {
+      if (isProd) {
+        sourceWriter.println("return @" + qualifiedSourceName + "::new()();");
+      } else {
+        sourceWriter.println(
+            "return ReflectionHelper.newInstance(" + qualifiedSourceName
+                + ".class);");
+      }
     } else {
       sourceWriter.println("return new " + qualifiedSourceName + "();");
     }
@@ -634,26 +664,42 @@ public class FieldSerializerCreator {
   private void writeFieldGet(JField serializableField) {
     JType fieldType = serializableField.getType();
     String fieldTypeQualifiedSourceName = fieldType.getQualifiedSourceName();
+    String serializableClassQualifedName = serializableClass.getQualifiedSourceName();
     String fieldName = serializableField.getName();
 
     maybeSuppressLongWarnings(fieldType);
-    sourceWriter.print("private static native ");
+    sourceWriter.print("private static " + (isProd ? "native " : ""));    
     sourceWriter.print(fieldTypeQualifiedSourceName);
     sourceWriter.print(" get");
     sourceWriter.print(Shared.capitalize(fieldName));
     sourceWriter.print("(");
-    sourceWriter.print(serializableClass.getQualifiedSourceName());
-    sourceWriter.println(" instance) /*-{");
+    sourceWriter.print(serializableClassQualifedName);
+    sourceWriter.print(" instance) ");    
+    sourceWriter.println(methodStart);
+    
     sourceWriter.indent();
 
-    sourceWriter.print("return instance.@");
-    sourceWriter.print(SerializationUtils.getRpcTypeName(serializableClass));
-    sourceWriter.print("::");
-    sourceWriter.print(fieldName);
-    sourceWriter.println(";");
+    if (context.isProdMode()) {
+      sourceWriter.print("return instance.@");
+      sourceWriter.print(SerializationUtils.getRpcTypeName(serializableClass));
+      sourceWriter.print("::");
+      sourceWriter.print(fieldName);
+      sourceWriter.println(";");
+    } else {
+      sourceWriter.print("return ");
+      JPrimitiveType primType = fieldType.isPrimitive();
+      if (primType != null) {
+        sourceWriter.print("(" + primType.getQualifiedBoxedSourceName() + ") ");
+      } else {
+        sourceWriter.print("(" + fieldTypeQualifiedSourceName + ") "); 
+      }
+      sourceWriter.println(
+          "ReflectionHelper.getField(" + serializableClassQualifedName
+              + ".class, instance, \"" + fieldName + "\");");
+    }
 
     sourceWriter.outdent();
-    sourceWriter.println("}-*/;");
+    sourceWriter.println(methodEnd);
     sourceWriter.println();
   }
 
@@ -667,24 +713,32 @@ public class FieldSerializerCreator {
     String fieldName = serializableField.getName();
 
     maybeSuppressLongWarnings(fieldType);
-    sourceWriter.print("private static native void ");
+    sourceWriter.print("private static " + (isProd ? "native " : "") + "void");
     sourceWriter.print(" set");
     sourceWriter.print(Shared.capitalize(fieldName));
     sourceWriter.print("(");
     sourceWriter.print(serializableClassQualifedName);
     sourceWriter.print(" instance, ");
     sourceWriter.print(fieldTypeQualifiedSourceName);
-    sourceWriter.println(" value) /*-{");
+    sourceWriter.println(" value) ");
+    sourceWriter.println(methodStart);
+    
     sourceWriter.indent();
 
-    sourceWriter.print("instance.@");
-    sourceWriter.print(SerializationUtils.getRpcTypeName(serializableClass));
-    sourceWriter.print("::");
-    sourceWriter.print(fieldName);
-    sourceWriter.println(" = value;");
+    if (context.isProdMode()) {
+      sourceWriter.print("instance.@");
+      sourceWriter.print(SerializationUtils.getRpcTypeName(serializableClass));
+      sourceWriter.print("::");
+      sourceWriter.print(fieldName);
+      sourceWriter.println(" = value;");
+    } else {
+      sourceWriter.println(
+          "ReflectionHelper.setField(" + serializableClassQualifedName
+              + ".class, instance, \"" + fieldName + "\", value);");
+    }
 
     sourceWriter.outdent();
-    sourceWriter.println("}-*/;");
+    sourceWriter.println(methodEnd);
     sourceWriter.println();
   }
 

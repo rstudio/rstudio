@@ -234,7 +234,7 @@ public class TypeSerializerCreator {
   
       JClassType customFieldSerializer = SerializableTypeOracleBuilder.findCustomFieldSerializer(
           typeOracle, type);
-      FieldSerializerCreator creator = new FieldSerializerCreator(typeOracle,
+      FieldSerializerCreator creator = new FieldSerializerCreator(context,
           serializationOracle, deserializationOracle, (JClassType) type,
           customFieldSerializer);
       creator.realize(logger, ctx);
