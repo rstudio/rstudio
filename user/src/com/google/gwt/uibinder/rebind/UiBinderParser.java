@@ -130,7 +130,7 @@ public class UiBinderParser {
     }
 
     if (!TAG.equals(elem.getLocalName())) {
-      writer.die(elem, "Root element must be %s:%", elem.getPrefix(), TAG);
+      writer.die(elem, "Root element must be %s:%s", elem.getPrefix(), TAG);
     }
 
     findResources(elem);
