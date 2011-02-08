@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -24,7 +24,6 @@ import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
-import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
@@ -35,18 +34,24 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.cellview.client.HasDataPresenter.LoadingState;
+import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.LoadingState;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.AttachDetachException;
+import com.google.gwt.user.client.ui.DeckPanel;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.SelectionModel;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 /**
  * A single column list of cells.
- *
+ * 
  * <p>
  * <h3>Examples</h3>
  * <dl>
@@ -58,7 +63,7 @@ import java.util.Set;
  * <dd>{@example com.google.gwt.examples.view.KeyProviderExample}</dd>
  * </dl>
  * </p>
- *
+ * 
  * @param <T> the data type of list items
  */
 public class CellList<T> extends AbstractHasData<T> {
@@ -148,9 +153,14 @@ public class CellList<T> extends AbstractHasData<T> {
   private final Cell<T> cell;
   private boolean cellIsEditing;
   private final Element childContainer;
-
   private SafeHtml emptyListMessage = SafeHtmlUtils.fromSafeConstant("");
-  private final Element emptyMessageElem;
+  private final SimplePanel emptyListWidgetContainer = new SimplePanel();
+  private final SimplePanel loadingIndicatorContainer = new SimplePanel();
+
+  /**
+   * A {@link DeckPanel} to hold widgets associated with various loading states.
+   */
+  private final DeckPanel messagesPanel = new DeckPanel();
 
   private final Style style;
 
@@ -158,7 +168,7 @@ public class CellList<T> extends AbstractHasData<T> {
 
   /**
    * Construct a new {@link CellList}.
-   *
+   * 
    * @param cell the cell used to render each item
    */
   public CellList(final Cell<T> cell) {
@@ -167,7 +177,7 @@ public class CellList<T> extends AbstractHasData<T> {
 
   /**
    * Construct a new {@link CellList} with the specified {@link Resources}.
-   *
+   * 
    * @param cell the cell used to render each item
    * @param resources the resources used for this widget
    */
@@ -176,26 +186,28 @@ public class CellList<T> extends AbstractHasData<T> {
   }
 
   /**
-   * Construct a new {@link CellList} with the specified {@link ProvidesKey key provider}.
-   *
+   * Construct a new {@link CellList} with the specified {@link ProvidesKey key
+   * provider}.
+   * 
    * @param cell the cell used to render each item
    * @param keyProvider an instance of ProvidesKey<T>, or null if the record
-   *        object should act as its own key
+   *          object should act as its own key
    */
   public CellList(final Cell<T> cell, ProvidesKey<T> keyProvider) {
     this(cell, getDefaultResources(), keyProvider);
   }
 
   /**
-   * Construct a new {@link CellList} with the specified {@link Resources}
-   * and {@link ProvidesKey key provider}.
-   *
+   * Construct a new {@link CellList} with the specified {@link Resources} and
+   * {@link ProvidesKey key provider}.
+   * 
    * @param cell the cell used to render each item
    * @param resources the resources used for this widget
    * @param keyProvider an instance of ProvidesKey<T>, or null if the record
-   *        object should act as its own key
+   *          object should act as its own key
    */
-  public CellList(final Cell<T> cell, Resources resources, ProvidesKey<T> keyProvider) {
+  public CellList(final Cell<T> cell, Resources resources,
+      ProvidesKey<T> keyProvider) {
     super(Document.get().createDivElement(), DEFAULT_PAGE_SIZE, keyProvider);
     this.cell = cell;
     this.style = resources.cellListStyle();
@@ -207,15 +219,16 @@ public class CellList<T> extends AbstractHasData<T> {
       addStyleName(widgetStyle);
     }
 
-    // Create the DOM hierarchy.
+    // Add the child container.
     childContainer = Document.get().createDivElement();
-
-    emptyMessageElem = Document.get().createDivElement();
-    showOrHide(emptyMessageElem, false);
-
     DivElement outerDiv = getElement().cast();
     outerDiv.appendChild(childContainer);
-    outerDiv.appendChild(emptyMessageElem);
+
+    // Attach the message panel.
+    outerDiv.appendChild(messagesPanel.getElement());
+    adopt(messagesPanel);
+    messagesPanel.add(emptyListWidgetContainer);
+    messagesPanel.add(loadingIndicatorContainer);
 
     // Sink events that the cell consumes.
     CellBasedWidgetImpl.get().sinkEvents(this, cell.getConsumedEvents());
@@ -223,18 +236,38 @@ public class CellList<T> extends AbstractHasData<T> {
 
   /**
    * Get the message that is displayed when there is no data.
-   *
+   * 
    * @return the empty message
    * @see #setEmptyListMessage(SafeHtml)
+   * @deprecated as of GWT 2.3, use {@link #getEmptyListWidget()} instead
    */
+  @Deprecated
   public SafeHtml getEmptyListMessage() {
     return emptyListMessage;
   }
 
   /**
+   * Get the widget displayed when the list has no rows.
+   * 
+   * @return the empty list widget
+   */
+  public Widget getEmptyListWidget() {
+    return emptyListWidgetContainer.getWidget();
+  }
+
+  /**
+   * Get the widget displayed when the data is loading.
+   * 
+   * @return the loading indicator
+   */
+  public Widget getLoadingIndicator() {
+    return loadingIndicatorContainer.getWidget();
+  }
+
+  /**
    * Get the {@link Element} for the specified index. If the element has not
    * been created, null is returned.
-   *
+   * 
    * @param indexOnPage the index on the page
    * @return the element, or null if it doesn't exists
    * @throws IndexOutOfBoundsException if the index is outside of the current
@@ -251,18 +284,40 @@ public class CellList<T> extends AbstractHasData<T> {
 
   /**
    * Set the message to display when there is no data.
-   *
+   * 
    * @param html the message to display when there are no results
    * @see #getEmptyListMessage()
+   * @deprecated as of GWT 2.3, use
+   *             {@link #setEmptyDataWidget(com.google.gwt.user.client.ui.Widget)}
+   *             instead
    */
+  @Deprecated
   public void setEmptyListMessage(SafeHtml html) {
     this.emptyListMessage = html;
-    emptyMessageElem.setInnerHTML(html.asString());
+    setEmptyListWidget(html == null ? null : new HTML(html));
+  }
+
+  /**
+   * Set the widget to display when the list has no rows.
+   * 
+   * @param widget the empty data widget
+   */
+  public void setEmptyListWidget(Widget widget) {
+    emptyListWidgetContainer.setWidget(widget);
+  }
+
+  /**
+   * Set the widget to display when the data is loading.
+   * 
+   * @param widget the loading indicator
+   */
+  public void setLoadingIndicator(Widget widget) {
+    loadingIndicatorContainer.setWidget(widget);
   }
 
   /**
    * Set the value updater to use when cells modify items.
-   *
+   * 
    * @param valueUpdater the {@link ValueUpdater}
    */
   public void setValueUpdater(ValueUpdater<T> valueUpdater) {
@@ -272,6 +327,24 @@ public class CellList<T> extends AbstractHasData<T> {
   @Override
   protected boolean dependsOnSelection() {
     return cell.dependsOnSelection();
+  }
+
+  @Override
+  protected void doAttachChildren() {
+    try {
+      doAttach(messagesPanel);
+    } catch (Throwable e) {
+      throw new AttachDetachException(Collections.singleton(e));
+    }
+  }
+
+  @Override
+  protected void doDetachChildren() {
+    try {
+      doDetach(messagesPanel);
+    } catch (Throwable e) {
+      throw new AttachDetachException(Collections.singleton(e));
+    }
   }
 
   /**
@@ -323,7 +396,7 @@ public class CellList<T> extends AbstractHasData<T> {
   /**
    * Get the parent element that wraps the cell from the list item. Override
    * this method if you add structure to the element.
-   *
+   * 
    * @param item the row element that wraps the list item
    * @return the parent element of the cell
    */
@@ -429,6 +502,35 @@ public class CellList<T> extends AbstractHasData<T> {
     }
   }
 
+  /**
+   * Called when the loading state changes.
+   * 
+   * @param state the new loading state
+   */
+  @Override
+  protected void onLoadingStateChanged(LoadingState state) {
+    Widget message = null;
+    if (state == LoadingState.LOADING) {
+      // Loading indicator.
+      message = loadingIndicatorContainer;
+    } else if (state == LoadingState.LOADED && getPresenter().isEmpty()) {
+      // Empty table.
+      message = emptyListWidgetContainer;
+    }
+
+    // Switch out the message to display.
+    if (message != null) {
+      messagesPanel.showWidget(messagesPanel.getWidgetIndex(message));
+    }
+
+    // Show the correct container.
+    showOrHide(getChildContainer(), message == null);
+    messagesPanel.setVisible(message != null);
+
+    // Fire an event.
+    super.onLoadingStateChanged(state);
+  }
+
   @Override
   protected void renderRowValues(SafeHtmlBuilder sb, List<T> values, int start,
       SelectionModel<? super T> selectionModel) {
@@ -514,25 +616,5 @@ public class CellList<T> extends AbstractHasData<T> {
   @Deprecated
   protected void setSelected(Element elem, boolean selected) {
     setStyleName(elem, style.cellListSelectedItem(), selected);
-  }
-
-  @Override
-  void setLoadingState(LoadingState state) {
-    showOrHide(emptyMessageElem, state == LoadingState.EMPTY);
-    // TODO(jlabanca): Add a loading icon.
-  }
-
-  /**
-   * Show or hide an element.
-   *
-   * @param element the element
-   * @param show true to show, false to hide
-   */
-  private void showOrHide(Element element, boolean show) {
-    if (show) {
-      element.getStyle().clearDisplay();
-    } else {
-      element.getStyle().setDisplay(Display.NONE);
-    }
   }
 }

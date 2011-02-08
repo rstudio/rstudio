@@ -37,8 +37,8 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.cellview.client.HasDataPresenter.LoadingState;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
+import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.LoadingState;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.impl.FocusImpl;
 import com.google.gwt.view.client.CellPreviewEvent;
@@ -252,7 +252,8 @@ class CellTreeNodeView<T> extends UIObject {
 
       public void setLoadingState(LoadingState state) {
         nodeView.updateImage(state == LoadingState.LOADING);
-        showOrHide(nodeView.emptyMessageElem, state == LoadingState.EMPTY);
+        showOrHide(nodeView.emptyMessageElem, state == LoadingState.LOADED
+            && presenter.isEmpty());
       }
 
       /**

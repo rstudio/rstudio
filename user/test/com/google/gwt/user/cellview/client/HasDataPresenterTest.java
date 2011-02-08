@@ -23,10 +23,10 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.user.cellview.client.HasDataPresenter.LoadingState;
 import com.google.gwt.user.cellview.client.HasDataPresenter.View;
 import com.google.gwt.user.cellview.client.HasKeyboardPagingPolicy.KeyboardPagingPolicy;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
+import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.LoadingState;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.MockHasData;
 import com.google.gwt.view.client.MockHasData.MockRangeChangeHandler;
@@ -497,6 +497,31 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(5, presenter.getCurrentPageSize());
   }
 
+  public void testIsEmpty() {
+    HasData<String> listView = new MockHasData<String>();
+    MockView<String> view = new MockView<String>();
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
+        view, 10, null);
+
+    // Non-zero row count.
+    presenter.setRowCount(1, true);
+    populatePresenter(presenter);
+    presenter.flush();
+    assertFalse(presenter.isEmpty());
+
+    // Zero row count with unknown size.
+    presenter.setRowCount(0, false);
+    populatePresenter(presenter);
+    presenter.flush();
+    assertFalse(presenter.isEmpty());
+
+    // Zero row count with known size.
+    presenter.setRowCount(0, true);
+    populatePresenter(presenter);
+    presenter.flush();
+    assertFalse(presenter.isEmpty());
+  }
+  
   public void testKeyboardNavigationChangePage() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
@@ -1246,7 +1271,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(0, presenter.getRowCount());
     assertTrue(presenter.isRowCountExact());
     presenter.flush();
-    view.assertLoadingState(LoadingState.EMPTY);
+    view.assertLoadingState(LoadingState.LOADED);
   }
 
   public void testSetRowCountNoBoolean() {

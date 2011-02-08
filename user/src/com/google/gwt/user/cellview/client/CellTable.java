@@ -25,7 +25,6 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NodeList;
-import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.TableLayout;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableCellElement;
@@ -47,11 +46,15 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
-import com.google.gwt.user.cellview.client.HasDataPresenter.LoadingState;
+import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.LoadingState;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.SelectionModel;
@@ -317,9 +320,6 @@ public class CellTable<T> extends AbstractHasData<T> {
     @Template("<div style=\"outline:none;\" tabindex=\"{0}\" accessKey=\"{1}\">{2}</div>")
     SafeHtml divFocusableWithKey(int tabIndex, char accessKey, SafeHtml contents);
 
-    @Template("<div class=\"{0}\"></div>")
-    SafeHtml loading(String loading);
-
     @Template("<table><tbody>{0}</tbody></table>")
     SafeHtml tbody(SafeHtml rowHtml);
 
@@ -493,6 +493,7 @@ public class CellTable<T> extends AbstractHasData<T> {
    */
   private boolean dependsOnSelection;
 
+  private final SimplePanel emptyTableWidgetContainer = new SimplePanel();
   private final List<Header<?>> footers = new ArrayList<Header<?>>();
 
   /**
@@ -510,6 +511,12 @@ public class CellTable<T> extends AbstractHasData<T> {
   private boolean isInteractive;
 
   private int keyboardSelectedColumn = 0;
+  private final SimplePanel loadingIndicatorContainer = new SimplePanel();
+
+  /**
+   * A {@link DeckPanel} to hold widgets associated with various loading states.
+   */
+  private final DeckPanel messagesPanel = new DeckPanel();
 
   private final Resources resources;
   private RowStyles<T> rowStyles;
@@ -520,6 +527,7 @@ public class CellTable<T> extends AbstractHasData<T> {
   private final TableElement table;
   private final TableSectionElement tbody;
   private final TableSectionElement tbodyLoading;
+  private final TableCellElement tbodyLoadingCell;
   private final TableSectionElement tfoot;
   private final TableSectionElement thead;
   private boolean updatingSortList;
@@ -621,16 +629,22 @@ public class CellTable<T> extends AbstractHasData<T> {
     tfoot = table.createTFoot();
     setStyleName(this.style.cellTableWidget());
 
-    // Create the loading indicator.
+    // Attach the messages panel.
     {
-      TableCellElement td = Document.get().createTDElement();
+      tbodyLoadingCell = Document.get().createTDElement();
       TableRowElement tr = Document.get().createTRElement();
       tbodyLoading.appendChild(tr);
-      tr.appendChild(td);
-      td.setAlign("center");
-      td.setInnerHTML(template.loading(style.cellTableLoading()).asString());
-      setLoadingIconVisible(false);
+      tr.appendChild(tbodyLoadingCell);
+      tbodyLoadingCell.setAlign("center");
+      tbodyLoadingCell.appendChild(messagesPanel.getElement());
+      adopt(messagesPanel);
+      messagesPanel.add(emptyTableWidgetContainer);
+      messagesPanel.add(loadingIndicatorContainer);
+      loadingIndicatorContainer.setStyleName(style.cellTableLoading());
     }
+
+    // Set the default loading indicator.
+    setLoadingIndicator(new Image(resources.cellTableLoading()));
 
     // Sink events.
     Set<String> eventTypes = new HashSet<String>();
@@ -800,6 +814,15 @@ public class CellTable<T> extends AbstractHasData<T> {
   }
 
   /**
+   * Get the widget displayed when the table has no rows.
+   * 
+   * @return the empty table widget
+   */
+  public Widget getEmptyTableWidget() {
+    return emptyTableWidgetContainer.getWidget();
+  }
+
+  /**
    * Return the height of the table header.
    * 
    * @return an int representing the header height
@@ -807,6 +830,15 @@ public class CellTable<T> extends AbstractHasData<T> {
   public int getHeaderHeight() {
     int height = getClientHeight(thead);
     return height;
+  }
+
+  /**
+   * Get the widget displayed when the data is loading.
+   * 
+   * @return the loading indicator
+   */
+  public Widget getLoadingIndicator() {
+    return loadingIndicatorContainer.getWidget();
   }
 
   /**
@@ -1066,6 +1098,24 @@ public class CellTable<T> extends AbstractHasData<T> {
   }
 
   /**
+   * Set the widget to display when the table has no rows.
+   * 
+   * @param widget the empty table widget
+   */
+  public void setEmptyTableWidget(Widget widget) {
+    emptyTableWidgetContainer.setWidget(widget);
+  }
+
+  /**
+   * Set the widget to display when the data is loading.
+   * 
+   * @param widget the loading indicator
+   */
+  public void setLoadingIndicator(Widget widget) {
+    loadingIndicatorContainer.setWidget(widget);
+  }
+
+  /**
    * Sets the object used to determine how a row is styled; the change will take
    * effect the next time that the table is rendered.
    * 
@@ -1322,6 +1372,38 @@ public class CellTable<T> extends AbstractHasData<T> {
     }
   }
 
+  /**
+   * Called when the loading state changes.
+   * 
+   * @param state the new loading state
+   */
+  @Override
+  protected void onLoadingStateChanged(LoadingState state) {
+    Widget message = null;
+    if (state == LoadingState.LOADING) {
+      // Loading indicator.
+      message = loadingIndicatorContainer;
+    } else if (state == LoadingState.LOADED && getPresenter().isEmpty()) {
+      // Empty table.
+      message = emptyTableWidgetContainer;
+    }
+
+    // Switch out the message to display.
+    if (message != null) {
+      messagesPanel.showWidget(messagesPanel.getWidgetIndex(message));
+    }
+
+    // Adjust the colspan of the messages panel container.
+    tbodyLoadingCell.setColSpan(Math.max(1, columns.size()));
+
+    // Show the correct container.
+    showOrHide(getChildContainer(), message == null);
+    showOrHide(tbodyLoading, message != null);
+
+    // Fire an event.
+    super.onLoadingStateChanged(state);
+  }
+
   @Override
   protected void renderRowValues(SafeHtmlBuilder sb, List<T> values, int start,
       SelectionModel<? super T> selectionModel) {
@@ -1499,11 +1581,6 @@ public class CellTable<T> extends AbstractHasData<T> {
     TableRowElement tr = elem.cast();
     setRowStyleName(tr, style.cellTableSelectedRow(),
         style.cellTableSelectedRowCell(), selected);
-  }
-
-  @Override
-  void setLoadingState(LoadingState state) {
-    setLoadingIconVisible(state == LoadingState.LOADING);
   }
 
   /**
@@ -1886,26 +1963,6 @@ public class CellTable<T> extends AbstractHasData<T> {
     Cell<C> cell = column.getCell();
     Context context = new Context(row + getPageStart(), col, key);
     return cell.resetFocus(context, parent, cellValue);
-  }
-
-  /**
-   * Show or hide the loading icon.
-   * 
-   * @param visible true to show, false to hide.
-   */
-  private void setLoadingIconVisible(boolean visible) {
-    // Clear the current data.
-    if (visible) {
-      tbody.getStyle().setDisplay(Display.NONE);
-    } else {
-      tbody.getStyle().clearDisplay();
-    }
-
-    // Update the colspan.
-    TableCellElement td = tbodyLoading.getRows().getItem(0).getCells().getItem(
-        0);
-    td.setColSpan(Math.max(1, columns.size()));
-    setVisible(tbodyLoading, visible);
   }
 
   /**

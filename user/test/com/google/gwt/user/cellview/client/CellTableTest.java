@@ -33,6 +33,7 @@ import com.google.gwt.user.cellview.client.CellTable.Resources;
 import com.google.gwt.user.cellview.client.CellTable.Style;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 
 import java.util.ArrayList;
@@ -422,6 +423,32 @@ public class CellTableTest extends AbstractHasDataTestBase {
     table.setColumnWidth(column0, 30.1, Unit.PCT);
     assertEquals("30.1%", col0.getStyle().getWidth().toLowerCase());
     assertEquals("", col1.getStyle().getWidth());
+  }
+
+  public void testSetEmptyListWidget() {
+    CellTable<String> table = createAbstractHasData(new TextCell());
+
+    // Set a widget.
+    Label l = new Label("Empty");
+    table.setEmptyTableWidget(l);
+    assertEquals(l, table.getEmptyTableWidget());
+
+    // Null widget.
+    table.setEmptyTableWidget(null);
+    assertNull(table.getEmptyTableWidget());
+  }
+
+  public void testSetLoadingIndicator() {
+    CellTable<String> table = createAbstractHasData(new TextCell());
+
+    // Set a widget.
+    Label l = new Label("Loading");
+    table.setLoadingIndicator(l);
+    assertEquals(l, table.getLoadingIndicator());
+
+    // Null widget.
+    table.setLoadingIndicator(null);
+    assertNull(table.getLoadingIndicator());
   }
 
   public void testSetTableLayoutFixed() {

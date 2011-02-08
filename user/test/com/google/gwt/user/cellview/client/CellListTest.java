@@ -21,6 +21,8 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.view.client.ProvidesKey;
 
@@ -87,6 +89,39 @@ public class CellListTest extends AbstractHasDataTestBase {
     cellList.setRowData(createData(0, 10));
     cellList.getPresenter().flush();
     assertEquals(10, rendered.size());
+  }
+
+  @SuppressWarnings("deprecation")
+  public void testSetEmptyListWidget() {
+    CellList<String> cellList = createAbstractHasData(new TextCell());
+
+    // Set a widget.
+    Label l = new Label("Empty");
+    cellList.setEmptyListWidget(l);
+    assertEquals(l, cellList.getEmptyListWidget());
+
+    // Set a message.
+    SafeHtml message = SafeHtmlUtils.fromString("empty");
+    cellList.setEmptyListMessage(message);
+    assertEquals(message, cellList.getEmptyListMessage());
+    assertNotSame(l, cellList.getEmptyListWidget());
+
+    // Null widget.
+    cellList.setEmptyListWidget(null);
+    assertNull(cellList.getEmptyListWidget());
+  }
+
+  public void testSetLoadingIndicator() {
+    CellList<String> cellList = createAbstractHasData(new TextCell());
+
+    // Set a widget.
+    Label l = new Label("Loading");
+    cellList.setLoadingIndicator(l);
+    assertEquals(l, cellList.getLoadingIndicator());
+
+    // Null widget.
+    cellList.setLoadingIndicator(null);
+    assertNull(cellList.getLoadingIndicator());
   }
 
   @Override

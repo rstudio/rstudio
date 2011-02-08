@@ -20,6 +20,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -28,7 +29,7 @@ import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.user.cellview.client.HasDataPresenter.LoadingState;
+import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.LoadingState;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Focusable;
@@ -125,7 +126,7 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
 
     public void setLoadingState(LoadingState state) {
       hasData.isRefreshing = true;
-      hasData.setLoadingState(state);
+      hasData.onLoadingStateChanged(state);
       hasData.isRefreshing = false;
     }
 
@@ -136,8 +137,7 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
       // Use an anonymous class to override ValueChangeEvents's protected
       // constructor. We can't call ValueChangeEvent.fire() because this class
       // doesn't implement HasValueChangeHandlers.
-      hasData.fireEvent(new ValueChangeEvent<List<T>>(
-          hasData.getVisibleItems()) {
+      hasData.fireEvent(new ValueChangeEvent<List<T>>(hasData.getVisibleItems()) {
       });
     }
   }
@@ -279,13 +279,24 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
     CellBasedWidgetImpl.get().sinkEvents(this, eventTypes);
 
     // Add a default selection event manager.
-    selectionManagerReg = addCellPreviewHandler(
-        DefaultSelectionEventManager.<T> createDefaultManager());
+    selectionManagerReg = addCellPreviewHandler(DefaultSelectionEventManager.<T> createDefaultManager());
   }
 
   public HandlerRegistration addCellPreviewHandler(
       CellPreviewEvent.Handler<T> handler) {
     return presenter.addCellPreviewHandler(handler);
+  }
+
+  /**
+   * Add a {@link LoadingStateChangeEvent.Handler} to be notified of changes in
+   * the loading state.
+   * 
+   * @param handler the handle
+   * @return the registration for the handler
+   */
+  public HandlerRegistration addLoadingStateChangeHandler(
+      LoadingStateChangeEvent.Handler handler) {
+    return presenter.addLoadingStateChangeHandler(handler);
   }
 
   public HandlerRegistration addRangeChangeHandler(
@@ -750,6 +761,16 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
   protected void onFocus() {
   }
 
+  /**
+   * Called when the loading state changes. By default, this implementation
+   * fires a {@link LoadingStateChangeEvent}.
+   * 
+   * @param state the new loading state
+   */
+  protected void onLoadingStateChanged(LoadingState state) {
+    fireEvent(new LoadingStateChangeEvent(state));
+  }
+
   @Override
   protected void onUnload() {
     isFocused = false;
@@ -870,15 +891,51 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
     return addHandler(handler, ValueChangeEvent.getType());
   }
 
+  /**
+   * Adopt the specified widget.
+   * 
+   * @param child the child to adopt
+   */
+  native void adopt(Widget child) /*-{
+    child.@com.google.gwt.user.client.ui.Widget::setParent(Lcom/google/gwt/user/client/ui/Widget;)(this);
+  }-*/;
+
+  /**
+   * Attach a child.
+   * 
+   * @param child the child to attach
+   */
+  native void doAttach(Widget child) /*-{
+    child.@com.google.gwt.user.client.ui.Widget::onAttach()();
+  }-*/;
+
+  /**
+   * Detach a child.
+   * 
+   * @param child the child to detach
+   */
+  native void doDetach(Widget child) /*-{
+    child.@com.google.gwt.user.client.ui.Widget::onDetach()();
+  }-*/;
+
   HasDataPresenter<T> getPresenter() {
     return presenter;
   }
 
   /**
-   * Set the current loading state of the data.
-   *
-   * @param state the loading state
+   * Show or hide an element.
+   * 
+   * @param element the element
+   * @param show true to show, false to hide
    */
-  void setLoadingState(LoadingState state) {
+  void showOrHide(Element element, boolean show) {
+    if (element == null) {
+      return;
+    }
+    if (show) {
+      element.getStyle().clearDisplay();
+    } else {
+      element.getStyle().setDisplay(Display.NONE);
+    }
   }
 }

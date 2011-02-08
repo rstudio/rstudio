@@ -23,7 +23,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
+import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.LoadingState;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.HasKeyProvider;
@@ -80,16 +80,6 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
      * @throws IllegalStateException if {@link #next()} has not been called
      */
     void setSelected(boolean selected) throws IllegalStateException;
-  }
-
-  /**
-   * The loading state of the data.
-   */
-  static enum LoadingState {
-    LOADING, // Waiting for data to load.
-    PARTIALLY_LOADED, // Partial page data loaded.
-    LOADED, // All page data loaded.
-    EMPTY; // The data size is 0.
   }
 
   /**
@@ -474,6 +464,11 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     return view.addHandler(handler, CellPreviewEvent.getType());
   }
 
+  public HandlerRegistration addLoadingStateChangeHandler(
+      LoadingStateChangeEvent.Handler handler) {
+    return view.addHandler(handler, LoadingStateChangeEvent.TYPE);
+  }
+
   public HandlerRegistration addRangeChangeHandler(
       RangeChangeEvent.Handler handler) {
     return view.addHandler(handler, RangeChangeEvent.getType());
@@ -655,6 +650,16 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
    */
   public boolean hasPendingState() {
     return pendingState != null;
+  }
+
+  /**
+   * Check whether or not the data set is empty. That is, the row count is
+   * exactly 0.
+   * 
+   * @return true if data set is empty
+   */
+  public boolean isEmpty() {
+    return isRowCountExact() && getRowCount() == 0;
   }
 
   public boolean isRowCountExact() {
@@ -1512,9 +1517,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
   private void updateLoadingState() {
     int cacheSize = getVisibleItemCount();
     int curPageSize = isRowCountExact() ? getCurrentPageSize() : getPageSize();
-    if (getRowCount() == 0 && isRowCountExact()) {
-      view.setLoadingState(LoadingState.EMPTY);
-    } else if (cacheSize >= curPageSize) {
+    if (cacheSize >= curPageSize) {
       view.setLoadingState(LoadingState.LOADED);
     } else if (cacheSize == 0) {
       view.setLoadingState(LoadingState.LOADING);
