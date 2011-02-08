@@ -107,15 +107,15 @@ public class AceEditorNative extends JavaScriptObject {
                    "theme/default"];
 
       require(config);
-      require(deps, function() {
+      require(deps, $entry(function() {
           var catalog = require("pilot/plugin_manager").catalog;
-          catalog.registerPlugins([ "pilot/index" ]).then(function() {
+          catalog.registerPlugins([ "pilot/index" ]).then($entry(function() {
               var env = require("pilot/environment").create();
               catalog.startupPlugins({ env: env }).then($entry(function() {
                   callback.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(env);
               }));
-          });
-      });
+          }));
+      }));
    }-*/;
 
    public static native AceEditorNative createEditor(
