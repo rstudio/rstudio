@@ -184,7 +184,7 @@ public class TextEditingTargetWidget extends ResizeComposite implements Display
 
    public void onActivate()
    {
-      editor_.updateBodyMinHeight();
+      editor_.onActivate();
    }
 
    public void setFontSize(Size size)

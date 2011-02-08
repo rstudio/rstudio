@@ -18,7 +18,6 @@ import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.dom.IFrameElementEx;
-import org.rstudio.core.client.events.NativeKeyDownHandler;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.FontSizer.Size;
@@ -443,9 +442,10 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
          return range.getEnd().getColumn();
    }
 
-   public void updateBodyMinHeight()
+   public void onActivate()
    {
       widget_.onResize();
+      widget_.onActivate();
    }
 
    public void setFontSize(Size size)

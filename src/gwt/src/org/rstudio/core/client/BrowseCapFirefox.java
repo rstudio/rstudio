@@ -21,12 +21,6 @@ public class BrowseCapFirefox extends BrowseCap
    }
 
    @Override
-   public boolean mozEmptyContentEditableHack()
-   {
-      return true;
-   }
-
-   @Override
    public boolean suppressBrowserForwardBack()
    {
       return true;

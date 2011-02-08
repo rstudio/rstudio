@@ -14,11 +14,6 @@ package org.rstudio.core.client;
 
 public class BrowseCapIE8 extends BrowseCap
 {
-   @Override
-   public boolean suppressCodeMirrorCompletion()
-   {
-      return true;
-   }
 
    @Override
    public boolean suppressBraceHighlighting()

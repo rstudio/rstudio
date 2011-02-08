@@ -127,7 +127,7 @@ public class TextEditingTarget implements EditingTarget
       int getSelectionOffset(boolean start);
 
       // Fix bug 964
-      void updateBodyMinHeight();
+      void onActivate();
 
       void setFontSize(Size size);
    }

@@ -19,11 +19,6 @@ public class BrowseCap
 {
    public static final BrowseCap INSTANCE = GWT.create(BrowseCap.class);
 
-   public boolean suppressCodeMirrorCompletion()
-   {
-      return false;
-   }
-
    public boolean suppressBraceHighlighting()
    {
       return false;
@@ -34,7 +29,7 @@ public class BrowseCap
       return false;
    }
 
-   public boolean mozEmptyContentEditableHack()
+   public boolean aceVerticalScrollBarIssue()
    {
       return false;
    }

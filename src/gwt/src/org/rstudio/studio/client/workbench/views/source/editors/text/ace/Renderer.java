@@ -23,4 +23,12 @@ public class Renderer extends JavaScriptObject
                                                                  int col) /*-{
       return this.textToScreenCoordinates(row, col);
    }-*/;
+
+   public native final void forceScrollbarUpdate() /*-{
+      // WebKit-based browsers have problems repainting the scrollbar after
+      // the editor is hidden and then made visible again. Poking the style
+      // a little bit seems to force a redraw.
+      var style = this.scrollBar.element.style;
+      style.marginBottom = (style.marginBottom == "-1px") ? "0" : "-1px";     
+   }-*/;
 }
