@@ -23,6 +23,27 @@ public class ExternalJavaScriptLoader
       Error
    }
 
+   public static void loadSequentially(String[] urls, final Callback callback)
+   {
+      final LinkedList<ExternalJavaScriptLoader> loaders =
+            new LinkedList<ExternalJavaScriptLoader>();
+
+      for (String url : urls)
+         loaders.add(new ExternalJavaScriptLoader(url));
+
+      Callback innerCallback = new Callback()
+      {
+         public void onLoaded()
+         {
+            if (!loaders.isEmpty())
+               loaders.remove().addCallback(this);
+            else
+               callback.onLoaded();
+         }
+      };
+      innerCallback.onLoaded();
+   }
+
    public ExternalJavaScriptLoader(String url)
    {
       url_ = url;
