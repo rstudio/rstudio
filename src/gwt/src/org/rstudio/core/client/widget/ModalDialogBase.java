@@ -105,6 +105,16 @@ public abstract class ModalDialogBase extends DialogBox
       super.onUnload();
    }
 
+   public boolean isEscapeDisabled()
+   {
+      return escapeDisabled_;
+   }
+
+   public void setEscapeDisabled(boolean escapeDisabled)
+   {
+      escapeDisabled_ = escapeDisabled;
+   }
+
    public void showModal()
    {
       if (mainWidget_ == null)
@@ -352,6 +362,8 @@ public abstract class ModalDialogBase extends DialogBox
                }
                break;
             case KeyCodes.KEY_ESCAPE:
+               if (escapeDisabled_)
+                  break;
                if (cancelButton_ == null)
                {
                   if ((okButton_ != null) && okButton_.isEnabled())
@@ -383,7 +395,8 @@ public abstract class ModalDialogBase extends DialogBox
 
    private static final ArrayList<ModalDialogBase> allActiveDialogs_ =
                                                new ArrayList<ModalDialogBase>();
-  
+
+   private boolean escapeDisabled_;
    private SimplePanel containerPanel_;
    private VerticalPanel mainPanel_ ;
    private HorizontalPanel bottomPanel_;

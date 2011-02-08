@@ -38,7 +38,7 @@
 
 @external Caption;
 
-@external rCodeEditor-EditDialog;
+@external EditDialog;
 
 @external avoid-move-cursor;
 
@@ -837,7 +837,7 @@ body.windows .searchBox {
    background-color: #f2f2f2;
 }
 
-.rCodeEditor-EditDialog {
+.EditDialog {
    border: 1px solid #BBB;  
    background-color: white;
 }

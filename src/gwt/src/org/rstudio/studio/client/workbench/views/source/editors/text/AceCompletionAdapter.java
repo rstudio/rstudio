@@ -12,13 +12,16 @@ public class AceCompletionAdapter
    }
 
    public native final KeyboardHandler getKeyboardHandler() /*-{
+      var event = $wnd.require("pilot/event");
       var self = this;
       var noop = {command: "null"};
       return {
          handleKeyboard: $entry(function(data, hashId, keyOrText, keyCode, e) {
             if (hashId != 0 || keyCode != 0) {
-               if (self.@org.rstudio.studio.client.workbench.views.source.editors.text.AceCompletionAdapter::onKeyDown(Lcom/google/gwt/dom/client/NativeEvent;)(e))
+               if (self.@org.rstudio.studio.client.workbench.views.source.editors.text.AceCompletionAdapter::onKeyDown(Lcom/google/gwt/dom/client/NativeEvent;)(e)) {
+                  event.stopEvent(e);
                   return noop; // perform a no-op
+               }
                else
                   return false; // allow default behavior
             }

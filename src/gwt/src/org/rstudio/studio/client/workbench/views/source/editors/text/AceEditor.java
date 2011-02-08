@@ -22,7 +22,6 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
-import org.rstudio.core.client.events.NativeKeyPressHandler;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.FontSizer.Size;
@@ -497,6 +496,11 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
    public HandlerRegistration addFocusHandler(FocusHandler handler)
    {
       return widget_.addFocusHandler(handler);
+   }
+
+   public Widget getWidget()
+   {
+      return widget_;
    }
 
    private final HandlerManager handlers_ = new HandlerManager(this);

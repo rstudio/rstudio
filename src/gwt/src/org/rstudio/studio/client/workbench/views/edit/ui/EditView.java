@@ -30,7 +30,7 @@ public class EditView implements Display
                     REditorServerOperations server,
                     ProgressOperationWithInput<String> operation)
    {
-      new EditDialog(text, operation, events_, server).showModal();
+      EditDialog.edit(text, operation, events_, server);
    }
 
    private final EventBus events_;
