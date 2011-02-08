@@ -19,12 +19,12 @@ package com.google.gwt.dom.client;
  * Mozilla implementation of StandardBrowser.
  */
 class DOMImplMozilla extends DOMImplStandard {
-  
+
   private static native int getGeckoVersion() /*-{
-    var result = /rv:([0-9]+)\.([0-9]+)\.([0-9]+)?/.exec(navigator.userAgent.toLowerCase());
+    var result = /rv:([0-9]+)\.([0-9]+)(\.([0-9]+))?.*?/.exec(navigator.userAgent.toLowerCase());
     if (result && result.length >= 3) {
-      var version = (parseInt(result[1]) * 1000000) + (parseInt(result[2]) * 1000) + 
-        parseInt(result.length == 4 ? result[3] : 0);
+      var version = (parseInt(result[1]) * 1000000) + (parseInt(result[2]) * 1000) +
+        parseInt(result.length >= 5 && !isNaN(result[4]) ? result[4] : 0);
       return version;
     }
     return -1; // not gecko
@@ -40,7 +40,7 @@ class DOMImplMozilla extends DOMImplStandard {
     int geckoVersion = getGeckoVersion();
     return (geckoVersion != -1) && (geckoVersion <= 1009000);
   }
-  
+
   /**
    * Return true if using Gecko 1.9.1 (Firefox 3.5) or earlier.
    * 
