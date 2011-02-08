@@ -7,11 +7,11 @@ info@rstudio.org. We will then provide you with access to our github
 repository which will enable downloading the source code using the
 links below.
 
-You can download the source code for this version of RStudio at:
+You can obtain the source code for this version of RStudio at:
 
-  https://github.com/rstudio/rstudio/tarball/${RSTUDIO_GIT_REVISION_HASH}
+  https://github.com/rstudio/rstudio/tree/${RSTUDIO_GIT_REVISION_HASH}
 
-You can download the source code for the latest version of RStudio at:
+You can obtain the source code for the latest version of RStudio at:
 
   https://github.com/rstudio/rstudio/
 
