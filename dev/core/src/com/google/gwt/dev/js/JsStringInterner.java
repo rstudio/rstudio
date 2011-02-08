@@ -131,6 +131,12 @@ public class JsStringInterner {
    * on the fly.
    */
   private static class StringVisitor extends JsModVisitor {
+    /*
+     * Minimum number of times a string must occur to be interned.
+     */
+    private static final Integer INTERN_THRESHOLD = Integer.parseInt(
+        System.getProperty("gwt.jjs.stringInternerThreshold", "2"));
+
     /**
      * The current fragment being visited.
      */
@@ -144,12 +150,6 @@ public class JsStringInterner {
         LITERAL_COMPARATOR);
 
     /**
-     * Minimum number of times a string must occur to be interned.
-     */
-    private static final Integer INTERN_THRESHOLD = Integer.parseInt(
-        System.getProperty("gwt.jjs.stringInternerThreshold", "2"));
-
-    /**
      * A counter used for assigning ids to Strings. Even though it's unlikely
      * that someone would actually have two billion strings in their
      * application, it doesn't hurt to think ahead.
@@ -158,7 +158,7 @@ public class JsStringInterner {
 
     /**
      * Count of # of occurences of each String literal, or null if
-     * count-sensitive interning is off
+     * count-sensitive interning is off.
      */
     private Map<String, Integer> occurenceMap;
 
