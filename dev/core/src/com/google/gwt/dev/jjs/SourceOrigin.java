@@ -149,7 +149,6 @@ public class SourceOrigin implements SourceInfo {
     return Collections.emptyList();
   }
 
-  @Override
   public CorrelationFactory getCorrelationFactory() {
     return DummyCorrelationFactory.INSTANCE;
   }
@@ -201,7 +200,6 @@ public class SourceOrigin implements SourceInfo {
     return this;
   }
 
-  @Override
   public SourceInfo makeChild(SourceOrigin origin) {
     return origin;
   }

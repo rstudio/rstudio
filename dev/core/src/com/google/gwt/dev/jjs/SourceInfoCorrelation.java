@@ -134,7 +134,6 @@ public class SourceInfoCorrelation implements SourceInfo, Serializable {
     return toReturn;
   }
 
-  @Override
   public CorrelationFactory getCorrelationFactory() {
     return RealCorrelationFactory.INSTANCE;
   }
@@ -207,7 +206,6 @@ public class SourceInfoCorrelation implements SourceInfo, Serializable {
     return new SourceInfoCorrelation(this, callerName, merge);
   }
 
-  @Override
   public SourceInfo makeChild(SourceOrigin origin) {
     return new SourceInfoCorrelation(this, origin);
   }
