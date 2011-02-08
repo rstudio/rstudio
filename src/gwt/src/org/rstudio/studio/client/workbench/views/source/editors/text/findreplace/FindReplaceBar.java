@@ -56,7 +56,14 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       shelf.addLeftWidget(txtReplace_ = new FindTextBox("Replace"));
       shelf.addLeftWidget(btnReplace_ = new SmallButton("Replace"));
       shelf.addLeftWidget(btnReplaceAll_ = new SmallButton("All"));
-
+      
+      // remove SmallButton instances from tab order since (a) they aren't
+      // capable of showing a focused state; and (b) enter is already a
+      // keyboard shortcut for both find and replace
+      btnFindNext_.setTabIndex(-1);
+      btnReplace_.setTabIndex(-1);
+      btnReplaceAll_.setTabIndex(-1);
+     
       shelf.addRightWidget(btnClose_ = new Button());
       btnClose_.setStyleName(RES.styles().closeButton());
       btnClose_.addStyleName(ThemeStyles.INSTANCE.closeTabButton());
