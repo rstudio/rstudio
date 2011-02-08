@@ -355,11 +355,28 @@ public class JavaToJavaScriptCompiler {
         }
       }
 
+      // detect if browser is ie6 or not known
+      boolean isIE6orUnknown = false;
+      for (PropertyOracle oracle : propertyOracles) {
+        try {
+          SelectionProperty userAgentProperty = oracle.getSelectionProperty(
+              logger, "user.agent");
+          if ("ie6".equals(userAgentProperty.getCurrentValue())) {
+            isIE6orUnknown = true;
+            break;
+          }
+        } catch (BadPropertyValueException e) {
+          // user agent unknown; play it safe
+          isIE6orUnknown = true;
+          break;
+        }
+      }
+
       // (10.5) Obfuscate
       Map<JsName, String> obfuscateMap = Maps.create();
       switch (options.getOutput()) {
         case OBFUSCATED:
-          obfuscateMap = JsStringInterner.exec(jprogram, jsProgram);
+          obfuscateMap = JsStringInterner.exec(jprogram, jsProgram, isIE6orUnknown);
           JsObfuscateNamer.exec(jsProgram);
           if (options.isAggressivelyOptimize()) {
             if (JsStackEmulator.getStackMode(propertyOracles) == JsStackEmulator.StackMode.STRIP) {
@@ -380,7 +397,7 @@ public class JavaToJavaScriptCompiler {
           JsPrettyNamer.exec(jsProgram);
           break;
         case DETAILED:
-          obfuscateMap = JsStringInterner.exec(jprogram, jsProgram);
+          obfuscateMap = JsStringInterner.exec(jprogram, jsProgram, isIE6orUnknown);
           JsVerboseNamer.exec(jsProgram);
           break;
         default:
@@ -398,21 +415,7 @@ public class JavaToJavaScriptCompiler {
       // http://code.google.com/p/google-web-toolkit/issues/detail?id=1440
       // note, JsIEBlockTextTransformer now handles restructuring top level
       // blocks, this class now handles non-top level blocks only.
-      boolean splitBlocks = false;
-      for (PropertyOracle oracle : propertyOracles) {
-        try {
-          SelectionProperty userAgentProperty = oracle.getSelectionProperty(
-              logger, "user.agent");
-          if ("ie6".equals(userAgentProperty.getCurrentValue())) {
-            splitBlocks = true;
-            break;
-          }
-        } catch (BadPropertyValueException e) {
-          // user agent unknown; play it safe
-          splitBlocks = true;
-          break;
-        }
-      }
+      boolean splitBlocks = isIE6orUnknown;
 
       if (splitBlocks) {
         JsIEBlockSizeVisitor.exec(jsProgram);

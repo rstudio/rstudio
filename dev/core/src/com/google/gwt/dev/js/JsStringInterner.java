@@ -22,6 +22,7 @@ import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsName;
+import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
 import com.google.gwt.dev.js.ast.JsProgram;
@@ -31,6 +32,7 @@ import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
+import com.google.gwt.dev.js.ast.JsVisitor;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -44,13 +46,86 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
- * Interns all String literals in a JsProgram. Each unique String will be
- * assigned to a variable in an appropriate program fragment and the
- * JsStringLiteral will be replaced with a JsNameRef. This optimization is
- * complete in a single pass, although it may be performed multiple times
- * without duplicating the intern pool.
+ * Interns conditionally either all String literals in a JsProgram, or Strings
+ * which exceed a certain usage count. Each unique String will be assigned to a
+ * variable in an appropriate program fragment and the JsStringLiteral will be
+ * replaced with a JsNameRef. This optimization is complete in a single pass,
+ * although it may be performed multiple times without duplicating the intern
+ * pool.
  */
 public class JsStringInterner {
+
+  /**
+   * Counts occurences of each potentially internable String literal.
+   */
+  private static class OccurenceCounter extends JsVisitor {
+
+    private Map<String, Integer> occurenceMap = new HashMap<String, Integer>();
+
+    public Map<String, Integer> buildOccurenceMap() {
+      return occurenceMap;
+    }
+
+    /**
+     * Prevents 'fixing' an otherwise illegal operation.
+     */
+    @Override
+    public boolean visit(JsBinaryOperation x, JsContext ctx) {
+      return !x.getOperator().isAssignment()
+          || !(x.getArg1() instanceof JsStringLiteral);
+    }
+
+    /**
+     * Prevents 'fixing' an otherwise illegal operation.
+     */
+    @Override
+    public boolean visit(JsPostfixOperation x, JsContext ctx) {
+      return !(x.getArg() instanceof JsStringLiteral);
+    }
+
+    /**
+     * Prevents 'fixing' an otherwise illegal operation.
+     */
+    @Override
+    public boolean visit(JsPrefixOperation x, JsContext ctx) {
+      return !(x.getArg() instanceof JsStringLiteral);
+    }
+
+    /**
+     * We ignore property initializer labels in object literals, but do process
+     * the expression. This is because the LHS is always treated as a string,
+     * and never evaluated as an expression.
+     */
+    @Override
+    public boolean visit(JsPropertyInitializer x, JsContext ctx) {
+      accept(x.getValueExpr());
+      return false;
+    }
+
+    /**
+     * Count occurences of String literal.
+     */
+    @Override
+    public boolean visit(JsStringLiteral x, JsContext ctx) {
+      String literal = x.getValue();
+      Integer occurs = occurenceMap.get(literal);
+      if (occurs == null) {
+        occurs = 0;
+      }
+      occurenceMap.put(literal, ++occurs);
+      return false;
+    }
+
+    /**
+     * This prevents duplicating the intern pool by not traversing JsVar
+     * declarations that look like they were created by the interner.
+     */
+    @Override
+    public boolean visit(JsVar x, JsContext ctx) {
+      return !(x.getName().getIdent().startsWith(PREFIX));
+    }
+  }
+
   /**
    * Replaces JsStringLiterals with JsNameRefs, creating new JsName allocations
    * on the fly.
@@ -69,11 +144,23 @@ public class JsStringInterner {
         LITERAL_COMPARATOR);
 
     /**
+     * Minimum number of times a string must occur to be interned.
+     */
+    private static final Integer INTERN_THRESHOLD = Integer.parseInt(
+        System.getProperty("gwt.jjs.stringInternerThreshold", "2"));
+
+    /**
      * A counter used for assigning ids to Strings. Even though it's unlikely
      * that someone would actually have two billion strings in their
      * application, it doesn't hurt to think ahead.
      */
     private long lastId = 0;
+
+    /**
+     * Count of # of occurences of each String literal, or null if
+     * count-sensitive interning is off
+     */
+    private Map<String, Integer> occurenceMap;
 
     /**
      * Only used to get fragment load order so strings used in multiple
@@ -97,11 +184,13 @@ public class JsStringInterner {
      * Constructor.
      * 
      * @param scope specifies the scope in which the interned strings should be
-     *          created.
+     * @param occurenceMap
      */
-    public StringVisitor(JProgram program, JsScope scope) {
+    public StringVisitor(JProgram program, JsScope scope,
+        Map<String, Integer> occurenceMap) {
       this.program = program;
       this.scope = scope;
+      this.occurenceMap = occurenceMap;
     }
 
     @Override
@@ -150,6 +239,13 @@ public class JsStringInterner {
      */
     @Override
     public boolean visit(JsStringLiteral x, JsContext ctx) {
+      if (occurenceMap != null) {
+        Integer occurences = occurenceMap.get(x.getValue());
+        assert occurences != null;
+        if (occurences < INTERN_THRESHOLD) {
+          return false;
+        }
+      }
       JsName name = toCreate.get(x);
       if (name == null) {
         String ident = PREFIX + lastId++;
@@ -208,10 +304,13 @@ public class JsStringInterner {
    * @param jprogram the JProgram that has fragment dependency data for
    *          <code>program</code>
    * @param program the JsProgram
+   * @param alwaysIntern true for browsers like IE which must always intern literals
    * @return a map describing the interning that occurred
    */
-  public static Map<JsName, String> exec(JProgram jprogram, JsProgram program) {
-    StringVisitor v = new StringVisitor(jprogram, program.getScope());
+  public static Map<JsName, String> exec(JProgram jprogram, JsProgram program,
+      boolean alwaysIntern) {
+    StringVisitor v = new StringVisitor(jprogram, program.getScope(), alwaysIntern ? null :
+      getOccurenceMap(program));
     v.accept(program);
 
     Map<Integer, SortedSet<JsStringLiteral>> bins = new HashMap<Integer, SortedSet<JsStringLiteral>>();
@@ -238,10 +337,13 @@ public class JsStringInterner {
    * 
    * @param block the block to visit
    * @param scope the JsScope in which to reserve the new identifiers
+   * @param alwaysIntern true for browsers like IE which must always intern literals
    * @return <code>true</code> if any changes were made to the block
    */
-  public static boolean exec(JsProgram program, JsBlock block, JsScope scope) {
-    StringVisitor v = new StringVisitor(null, scope);
+  public static boolean exec(JsProgram program, JsBlock block, JsScope scope,
+      boolean alwaysIntern) {
+    StringVisitor v = new StringVisitor(null, scope, alwaysIntern ? null :
+        getOccurenceMap(block));
     v.accept(block);
 
     createVars(program, block, v.toCreate.keySet(), v.toCreate);
@@ -268,6 +370,12 @@ public class JsStringInterner {
       }
       block.getStatements().add(0, vars);
     }
+  }
+
+  private static Map<String, Integer> getOccurenceMap(JsNode node) {
+    OccurenceCounter oc = new OccurenceCounter();
+    oc.accept(node);
+    return oc.buildOccurenceMap();
   }
 
   private static Map<JsName, String> reverse(

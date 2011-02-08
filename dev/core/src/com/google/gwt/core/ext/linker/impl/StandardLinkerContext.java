@@ -92,7 +92,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
 
     @Override
     public boolean visit(JsFunction x, JsContext ctx) {
-      didChange |= JsStringInterner.exec(program, x.getBody(), x.getScope());
+      didChange |= JsStringInterner.exec(program, x.getBody(), x.getScope(), true);
       return false;
     }
   }
