@@ -39,7 +39,7 @@ define("mode/sweave_highlight_rules", function(require, exports, module) {
 
 var oop = require("pilot/oop");
 var TexHighlightRules = require("mode/tex_highlight_rules").TexHighlightRules;
-var RHighlightRules = require("mode/r_highlight_rules").RScriptHighlightRules;
+var RHighlightRules = require("mode/r_highlight_rules").RHighlightRules;
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 
 var SweaveHighlightRules = function() {
