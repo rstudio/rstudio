@@ -15,8 +15,12 @@
  */
 package com.google.gwt.user.rebind.rpc;
 
+import com.google.gwt.core.ext.GeneratorContextExt;
+import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.Artifact;
+import com.google.gwt.core.ext.linker.GeneratedResource;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JGenericType;
@@ -37,7 +41,9 @@ import com.google.gwt.dev.javac.TypeOracleTestingUtils;
 import com.google.gwt.dev.javac.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.impl.MockJavaResource;
 import com.google.gwt.dev.javac.impl.StaticJavaResource;
+import com.google.gwt.dev.javac.rebind.CachedRebindResult;
 import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.user.rebind.rpc.testcases.client.AbstractSerializableTypes;
 import com.google.gwt.user.rebind.rpc.testcases.client.ClassWithTypeParameterThatErasesToObject;
@@ -47,6 +53,7 @@ import com.google.gwt.user.rebind.rpc.testcases.client.NotAllSubtypesAreSerializ
 
 import junit.framework.TestCase;
 
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -61,7 +68,72 @@ import java.util.TreeSet;
  * Used to test the {@link SerializableTypeOracleBuilder}.
  */
 public class SerializableTypeOracleBuilderTest extends TestCase {
+  /**
+   * Just enough of a {@code GeneratorContextExt} to satisfy 
+   * {@code SerializableTypeOracleBuilder}.
+   */
+  static class MockContext implements GeneratorContextExt {    
+    private TypeOracle typeOracle;
+    
+    MockContext(TypeOracle typeOracle) {
+      this.typeOracle = typeOracle;  
+    }
 
+    public void commit(TreeLogger logger, PrintWriter pw) {
+    }
+
+    public void commitArtifact(TreeLogger logger, Artifact<?> artifact)
+        throws UnableToCompleteException {
+    }
+
+    public GeneratedResource commitResource(TreeLogger logger, OutputStream os)
+        throws UnableToCompleteException {
+      return null;
+    }
+    
+    public CachedRebindResult getCachedGeneratorResult() {
+      return null;
+    }
+
+    public PropertyOracle getPropertyOracle() {
+      return null;
+    }
+
+    public ResourceOracle getResourcesOracle() {
+      return null;
+    }
+
+    public long getSourceLastModifiedTime(JClassType sourceType) {
+      return 0;
+    }
+
+    public TypeOracle getTypeOracle() {
+      return typeOracle;
+    }
+
+    public boolean isGeneratorResultCachingEnabled() {
+      return false;
+    }
+
+    public boolean isProdMode() {
+      return true;
+    }
+
+    public boolean reuseTypeFromCacheIfAvailable(String typeName) {
+      return false;
+    }
+
+    public PrintWriter tryCreate(TreeLogger logger, String packageName,
+        String simpleName) {
+      return null;
+    }
+
+    public OutputStream tryCreateResource(TreeLogger logger, String partialPath)
+        throws UnableToCompleteException {
+      return null;
+    }
+  }
+  
   /**
    * Used to test the results produced by the {@link SerializableTypeOracle}.
    */
@@ -188,7 +260,8 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
     // Make an empty property oracle.
     StaticPropertyOracle propertyOracle = new StaticPropertyOracle(
         new BindingProperty[0], new String[0], new ConfigurationProperty[0]);
-    return new SerializableTypeOracleBuilder(logger, propertyOracle, to);
+    return new SerializableTypeOracleBuilder(logger, propertyOracle, 
+        new MockContext(to));
   }
 
   private static TypeInfo[] getActualTypeInfo(SerializableTypeOracle sto) {
@@ -1738,7 +1811,6 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void testRawCollection() throws UnableToCompleteException,
       NotFoundException {
-
     Set<Resource> resources = new HashSet<Resource>();
     addStandardClasses(resources);
 

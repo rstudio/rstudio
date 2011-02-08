@@ -253,6 +253,9 @@ public class ProblemReport {
    */
   private void doReport(TreeLogger logger, Type level,
       Map<JClassType, List<Problem>> problems) {
+    if (!logger.isLoggable(level)) {
+      return;
+    }
     for (List<Problem> problemList : problems.values()) {
       for (Problem problem : problemList) {
         if (problem.hasSubMessages()) {

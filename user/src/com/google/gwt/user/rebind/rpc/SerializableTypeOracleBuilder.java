@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.rebind.rpc;
 
+import com.google.gwt.core.ext.GeneratorContextExt;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -699,6 +700,9 @@ public class SerializableTypeOracleBuilder {
 
   private static void logSerializableTypes(TreeLogger logger,
       Set<JClassType> fieldSerializableTypes) {
+    if (!logger.isLoggable(TreeLogger.DEBUG)) {
+      return;
+    }
     TreeLogger localLogger = logger.branch(TreeLogger.DEBUG, "Identified "
         + fieldSerializableTypes.size() + " serializable type"
         + ((fieldSerializableTypes.size() == 1) ? "" : "s"), null);
@@ -716,6 +720,8 @@ public class SerializableTypeOracleBuilder {
    */
   private final JGenericType collectionClass;
 
+  private final GeneratorContextExt context;
+  
   private Set<String> enhancedClasses = null;
 
   private PrintWriter logOutputWriter;
@@ -765,9 +771,10 @@ public class SerializableTypeOracleBuilder {
    *           types
    */
   public SerializableTypeOracleBuilder(TreeLogger logger,
-      PropertyOracle propertyOracle, TypeOracle typeOracle)
+      PropertyOracle propertyOracle, GeneratorContextExt context)
       throws UnableToCompleteException {
-    this.typeOracle = typeOracle;
+    this.context = context;
+    this.typeOracle = context.getTypeOracle();
     typeConstrainer = new TypeConstrainer(typeOracle);
 
     try {
@@ -1125,9 +1132,11 @@ public class SerializableTypeOracleBuilder {
             continue;
           }
 
-          covariantArrayLogger.branch(
-              TreeLogger.DEBUG,
-              getArrayType(typeOracle, array.getRank(), instantiableType).getParameterizedQualifiedSourceName());
+          if (covariantArrayLogger.isLoggable(TreeLogger.DEBUG)) {
+            covariantArrayLogger.branch(TreeLogger.DEBUG,
+                getArrayType(typeOracle, array.getRank(),
+                    instantiableType).getParameterizedQualifiedSourceName());
+          }
 
           markArrayTypesInstantiable(instantiableType, array.getRank(), path);
         }
@@ -1528,6 +1537,10 @@ public class SerializableTypeOracleBuilder {
   }
 
   private void logReachableTypes(TreeLogger logger) {
+    if (!context.isProdMode() && !logger.isLoggable(TreeLogger.DEBUG)) {
+      return;
+    }
+
     if (logOutputWriter != null) {
       // Route the TreeLogger output to an output stream.
       PrintWriterTreeLogger printWriterTreeLogger = new PrintWriterTreeLogger(

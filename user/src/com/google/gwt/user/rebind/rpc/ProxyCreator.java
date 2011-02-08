@@ -286,10 +286,10 @@ public class ProxyCreator {
     Event event = SpeedTracerLogger.start(CompilerEventType.GENERATOR_RPC_STOB);
     
     SerializableTypeOracleBuilder typesSentFromBrowserBuilder = new SerializableTypeOracleBuilder(
-        logger, propertyOracle, typeOracle);
+        logger, propertyOracle, context);
     typesSentFromBrowserBuilder.setTypeFilter(blacklistTypeFilter);
     SerializableTypeOracleBuilder typesSentToBrowserBuilder = new SerializableTypeOracleBuilder(
-        logger, propertyOracle, typeOracle);
+        logger, propertyOracle, context);
     typesSentToBrowserBuilder.setTypeFilter(blacklistTypeFilter);
 
     addRoots(logger, typeOracle, typesSentFromBrowserBuilder,
@@ -359,11 +359,13 @@ public class ProxyCreator {
 
     srcWriter.commit(logger);
 
-    // Create an artifact explaining STOB's decisions. It will be emitted by
-    // RpcLogLinker
-    context.commitArtifact(logger, new RpcLogArtifact(
-        serviceIntf.getQualifiedSourceName(), serializationPolicyStrongName,
-        rpcLog));
+    if (context.isProdMode() || logger.isLoggable(TreeLogger.DEBUG)) {
+      // Create an artifact explaining STOB's decisions. It will be emitted by
+      // RpcLogLinker
+      context.commitArtifact(logger,
+          new RpcLogArtifact(serviceIntf.getQualifiedSourceName(),
+              serializationPolicyStrongName, rpcLog));
+    }
 
     return getProxyQualifiedName();
   }
