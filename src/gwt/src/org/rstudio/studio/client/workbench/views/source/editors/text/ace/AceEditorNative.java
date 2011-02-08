@@ -2,12 +2,12 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Command;
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.events.NativeKeyDownEvent;
-import org.rstudio.core.client.events.NativeKeyPressEvent;
+
+import java.util.LinkedList;
 
 public class AceEditorNative extends JavaScriptObject {
 
@@ -56,33 +56,45 @@ public class AceEditorNative extends JavaScriptObject {
               }));
    }-*/;
 
-   public native final void onKeyDown(HasHandlers handlers) /*-{
-      var event = $wnd.require("pilot/event");
-      event.addListener(this.textInput.getElement(), "keydown", $entry(function(e) {
-         return @org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative::fireKeyDown(Lcom/google/gwt/dom/client/NativeEvent;Lcom/google/gwt/event/shared/HasHandlers;)(e, handlers);
-      }));
-   }-*/;
-
-   public native final void onKeyPress(HasHandlers handlers) /*-{
-      var event = $wnd.require("pilot/event");
-      event.addListener(this.textInput.getElement(), "keypress", $entry(function(e) {
-         return @org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative::fireKeyPress(Lcom/google/gwt/dom/client/NativeEvent;Lcom/google/gwt/event/shared/HasHandlers;)(e, handlers);
-      }));
-   }-*/;
-
-   @SuppressWarnings("unused")
-   private static boolean fireKeyDown(NativeEvent event,
-                                      HasHandlers handlers)
+   public final HandlerRegistration delegateEventsTo(HasHandlers handlers)
    {
-      return !NativeKeyDownEvent.fire(event, handlers);
+      final LinkedList<JavaScriptObject> handles = new LinkedList<JavaScriptObject>();
+      handles.add(addDomListener(getTextInputElement(), "keydown", handlers));
+      handles.add(addDomListener(getTextInputElement(), "keypress", handlers));
+      handles.add(addDomListener(this.<Element>cast(), "focus", handlers));
+      handles.add(addDomListener(this.<Element>cast(), "blur", handlers));
+
+      return new HandlerRegistration()
+      {
+         public void removeHandler()
+         {
+            while (!handles.isEmpty())
+               removeDomListener(handles.remove());
+         }
+      };
    }
 
-   @SuppressWarnings("unused")
-   private static boolean fireKeyPress(NativeEvent event,
-                                       HasHandlers handlers)
-   {
-      return !NativeKeyPressEvent.fire(event, handlers);
-   }
+   private native Element getTextInputElement() /*-{
+      return this.textInput.getElement();
+   }-*/;
+
+   private native static JavaScriptObject addDomListener(
+         Element element,
+         String eventName,
+         HasHandlers hasHandlers) /*-{
+      var event = $wnd.require("pilot/event");
+      var listener = $entry(function(e) {
+         @com.google.gwt.event.dom.client.DomEvent::fireNativeEvent(Lcom/google/gwt/dom/client/NativeEvent;Lcom/google/gwt/event/shared/HasHandlers;Lcom/google/gwt/dom/client/Element;)(e, hasHandlers, element);
+      }); 
+      event.addListener(element, eventName, listener);
+      return $entry(function() {
+         event.removeListener(element, eventName, listener);
+      });
+   }-*/;
+
+   private native static void removeDomListener(JavaScriptObject handle) /*-{
+      handle();
+   }-*/;
 
    public static native void createEnvironment(
          CommandWithArg<JavaScriptObject> callback) /*-{

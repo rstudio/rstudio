@@ -16,6 +16,9 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.HasFocusHandlers;
 import com.google.gwt.event.logical.shared.*;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
@@ -27,8 +30,6 @@ import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorFocusEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorFocusHandler;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
@@ -104,7 +105,8 @@ public class TextEditingTarget implements EditingTarget
    }
 
    public interface DocDisplay extends HasValueChangeHandlers<Void>,
-                                       Widgetable
+                                       Widgetable,
+                                       HasFocusHandlers
    {
 
       void setFileType(TextFileType fileType);
@@ -119,7 +121,6 @@ public class TextEditingTarget implements EditingTarget
       boolean moveSelectionToNextLine();
       ChangeTracker getChangeTracker();
       void setTextWrapping(boolean wrap);
-      HandlerRegistration addEditorFocusHandler(EditorFocusHandler handler);
       HandlerRegistration addNativeKeyDownHandler(NativeKeyDownHandler handler);
 
       void markScrollPosition();
@@ -267,9 +268,9 @@ public class TextEditingTarget implements EditingTarget
          }
       });
 
-      docDisplay_.addEditorFocusHandler(new EditorFocusHandler()
+      docDisplay_.addFocusHandler(new FocusHandler()
       {
-         public void onEditorFocus(EditorFocusEvent e)
+         public void onFocus(FocusEvent event)
          {
             checkForExternalEdit();
          }

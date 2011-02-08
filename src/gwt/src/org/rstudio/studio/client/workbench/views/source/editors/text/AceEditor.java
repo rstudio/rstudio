@@ -7,10 +7,9 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.FocusHandler;
-import com.google.gwt.event.dom.client.KeyCodeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -42,54 +41,32 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorFocusHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedHandler;
 
 public class AceEditor implements DocDisplay, InputEditorDisplay
 {
-   /**
-    * jcheng 2010-03-09: This exists merely to let me use the nice accessors on
-    * KeyCodeEvent that decode NativeEvent info. Previously I would use
-    * DomEvent.fireNativeEvent but that causes assertions sometimes under
-    * OOPHM.
-    */
-   private class FakeKeyCodeEvent extends KeyCodeEvent<EventHandler>
-   {
-      public FakeKeyCodeEvent(NativeEvent nativeEvent)
-      {
-         super();
-         setNativeEvent(nativeEvent);
-      }
-
-      @Override
-      public Type<EventHandler> getAssociatedType()
-      {
-         assert false;
-         return null;
-      }
-
-      @Override
-      protected void dispatch(EventHandler handler)
-      {
-         assert false;
-      }
-   }
-
    private class Filter implements InitCompletionFilter
    {
       public boolean shouldComplete(NativeEvent event)
       {
+         // Never complete if there's an active selection
          Range range = getSession().getSelection().getRange();
          if (!range.isEmpty())
             return false;
+
+         // Don't consider Tab to be a completion if we're at the start of a
+         // line (e.g. only zero or more whitespace characters between the
+         // beginning of the line and the cursor)
+
+         if (event.getKeyCode() != KeyCodes.KEY_TAB)
+            return true;
 
          int col = range.getStart().getColumn();
          if (col == 0)
             return false;
 
          String row = getSession().getLine(range.getStart().getRow());
-
          return row.substring(0, col).trim().length() != 0;
       }
    }
@@ -159,6 +136,7 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       });
    }
 
+   @SuppressWarnings("unused")
    @Inject
    void initialize(CodeToolsServerOperations server)
    {
@@ -400,11 +378,6 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
    public void setTextWrapping(boolean wrap)
    {
       //To change body of implemented methods use File | Settings | File Templates.
-   }
-
-   public HandlerRegistration addEditorFocusHandler(EditorFocusHandler handler)
-   {
-      return null;  //To change body of implemented methods use File | Settings | File Templates.
    }
 
    public HandlerRegistration addNativeKeyDownHandler(NativeKeyDownHandler handler)

@@ -3,9 +3,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.event.dom.client.BlurHandler;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -65,8 +63,7 @@ public class AceEditorWidget extends Composite
             editor_.setShowPrintMargin(false);
             editor_.setPrintMarginColumn(0);
             editor_.setHighlightActiveLine(false);
-            editor_.onKeyDown(AceEditorWidget.this);
-            editor_.onKeyPress(AceEditorWidget.this);
+            editor_.delegateEventsTo(AceEditorWidget.this);
             if (initialCode_ != null)
             {
                editor_.getSession().setValue(initialCode_);
@@ -125,17 +122,17 @@ public class AceEditorWidget extends Composite
 
    public HandlerRegistration addFocusHandler(FocusHandler handler)
    {
-      return null;  //To change body of created methods use File | Settings | File Templates.
+      return addHandler(handler, FocusEvent.getType());
    }
 
    public HandlerRegistration addBlurHandler(BlurHandler handler)
    {
-      return null;  //To change body of created methods use File | Settings | File Templates.
+      return addHandler(handler, BlurEvent.getType());
    }
 
    public HandlerRegistration addClickHandler(ClickHandler handler)
    {
-      return null;  //To change body of created methods use File | Settings | File Templates.
+      return addDomHandler(handler, ClickEvent.getType());
    }
 
    public HandlerRegistration addEditorLoadedHandler(EditorLoadedHandler handler)
