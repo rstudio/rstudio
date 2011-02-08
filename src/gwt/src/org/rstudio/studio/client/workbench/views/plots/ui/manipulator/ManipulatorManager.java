@@ -37,7 +37,7 @@ public class ManipulatorManager
       manipulatorButton_.setVisible(false);
       
       // create manipulator popup panel
-      manipulatorPopup_ = new ManipulatorPopupPanel(changedHandler, commands);
+      manipulatorPopup_ = new ManipulatorPopupPanel(changedHandler);
    }
    
    
