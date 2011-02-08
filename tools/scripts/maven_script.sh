@@ -15,7 +15,7 @@
 # the License.
 
 MAVEN_REPO=${MAVEN_REPO:-"~/.m2/repository"}
-GWT_VERSION=${GWT_VERSION:-"2.2-rc1"}
+GWT_VERSION=${GWT_VERSION:-"2.2.0"}
 GWT_DIR=${GWT_DIR:-"build/lib"}
 
 echo "Pushing GWT jars from ${GWT_DIR} into local maven repo with version ${GWT_VERSION}."
