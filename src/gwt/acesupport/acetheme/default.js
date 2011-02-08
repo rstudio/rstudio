@@ -35,13 +35,15 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-define(function(require, exports, module) {
+define("theme/default", function(require, exports, module) {
 
     var dom = require("pilot/dom");
+/*
     var cssText = require("text!./tm.css");
 
     // import CSS once
     dom.importCssString(cssText);
+*/
 
     exports.cssClass = "ace-tm";
 });

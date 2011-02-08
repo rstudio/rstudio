@@ -90,7 +90,6 @@ public class AceEditorNative extends JavaScriptObject {
 
       var config = {
           paths: {
-              demo: "../demo",
               ace: "../lib/ace",
               pilot: "../support/pilot/lib/pilot",
               mode: "../../js/acemode",
@@ -102,7 +101,6 @@ public class AceEditorNative extends JavaScriptObject {
                    "pilot/plugin_manager",
                    "pilot/settings",
                    "pilot/environment",
-                   "demo/demo",
                    "mode/r",
                    "mode/tex",
                    "mode/sweave",

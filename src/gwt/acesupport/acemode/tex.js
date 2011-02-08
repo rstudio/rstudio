@@ -35,16 +35,16 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-define(function(require, exports, module) {
+define("mode/tex", function(require, exports, module) {
 
 var oop = require("pilot/oop");
 var TextMode = require("ace/mode/text").Mode;
 var Tokenizer = require("ace/tokenizer").Tokenizer;
-var RHighlightRules = require("./r_highlight_rules").RHighlightRules;
+var TexHighlightRules = require("mode/tex_highlight_rules").TexHighlightRules;
 var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
 
 var Mode = function() {
-    this.$tokenizer = new Tokenizer(new RHighlightRules().getRules());
+    this.$tokenizer = new Tokenizer(new TexHighlightRules().getRules());
     this.$outdent = new MatchingBraceOutdent();
 };
 oop.inherits(Mode, TextMode);

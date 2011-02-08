@@ -35,14 +35,23 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-define(function(require, exports, module) {
+define("mode/r_highlight_rules", function(require, exports, module) {
 
 var oop = require("pilot/oop");
 var lang = require("pilot/lang");
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 
-TexHighlightRules = function() {
+var RHighlightRules = function() {
 
+    var keywords = lang.arrayToMap(
+        ("function|while|repeat|for|if|in|else|next|break").split("|")
+    );
+    
+    var buildinConstants = lang.arrayToMap(
+        ("NULL|NA|TRUE|FALSE|T|F|Inf|NaN|NA_integer_|NA_real_|NA_character_|" +
+		"NA_complex_").split("|")
+    );
+    
     // regexp must not have capturing parentheses. Use (?:) instead.
     // regexps are ordered -> the first match is used
 
@@ -50,21 +59,60 @@ TexHighlightRules = function() {
         "start" : [
 	        {
 	            token : "comment",
-	            regex : "%.*$"
+	            regex : "#.*$"
 	        }, {
-	            token : "text", // non-command
-	            regex : "\\\\[$&%#\\{\\}]"
+	            token : "string.regexp",
+	            regex : "[/](?:(?:\\[(?:\\\\]|[^\\]])+\\])|(?:\\\\/|[^\\]/]))*[/]\\w*\\s*(?=[).,;]|$)"
 	        }, {
-	            token : "keyword", // command
-	            regex : "\\\\(?:[a-zA-z0-9]+|[^a-zA-z0-9])"
+	            token : "string", // single line
+	            regex : '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
 	        }, {
-	            token : "string", // double quoted string
-	            regex : "``",
-				next : "qqstring"
+	            token : "string", // multi line string start
+	            regex : '["].*$',
+	            next : "qqstring"
 	        }, {
-	            token : "string", // single quoted string
-	            regex : "`",
+	            token : "string", // single line
+	            regex : "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
+	        }, {
+	            token : "string", // multi line string start
+	            regex : "['].*$",
 	            next : "qstring"
+	        }, {
+	            token : "constant.numeric", // hex
+	            regex : "0[xX][0-9a-fA-F]+[Li]?\\b"
+	        }, {
+	            token : "constant.numeric", // explicit integer
+	            regex : "\\d+L\\b"
+	        }, {
+	            token : "constant.numeric", // number
+	            regex : "\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b"
+	        }, {
+	            token : "constant.numeric", // number with leading decimal
+	            regex : "\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b"
+	        }, {
+	            token : "constant.language.boolean",
+	            regex : "(?:TRUE|FALSE|T|F)\\b"
+	        }, {
+	            token : "identifier",
+	            regex : "`.*`"
+	        }, {
+	            token : function(value) {
+	                if (keywords[value])
+	                    return "keyword";
+	                else if (buildinConstants[value])
+	                    return "constant.language";
+	                else if (value == '...' || value.match(/^\.\.\d+$/))
+	                    return "variable.language";
+	                else
+	                    return "identifier";
+	            },
+	            regex : "[a-zA-Z.][a-zA-Z0-9._]*\\b"
+	        }, {
+	            token : "keyword.operator",
+	            regex : "[+\\-*\\/^><!&|~$:=]"
+	        }, {
+	            token : "keyword.operator", // infix operators
+	            regex : "%.*%"
 	        }, {
 	            token : "paren",
 	            regex : "[[({]"
@@ -77,65 +125,29 @@ TexHighlightRules = function() {
 	        }
         ],
         "qqstring" : [
-	        {
+            {
 	            token : "string",
-	            regex : "['][']",
+	            regex : '(?:(?:\\\\.)|(?:[^"\\\\]))*?"',
 	            next : "start"
 	        }, {
-	            token : "comment",
-	            regex : "%.*$"
-	        }, {
-	            token : "string", // non-command
-	            regex : "\\\\[$&%#\\{\\}]"
-	        }, {
-	            token : "keyword", // command
-	            regex : "\\\\(?:[a-zA-z0-9]+|[^a-zA-z0-9])"
-	        }, {
-	            token : "paren",
-	            regex : "[[({]"
-	        }, {
-	            token : "paren",
-	            regex : "[\\])}]"
-	        }, {
 	            token : "string",
-	            regex : "[^\\\\'[({\\])}%]+"
-	        }, {
-		        token : "string",
-				regex : "."
-			}
+	            regex : '.+'
+	        }
         ],
         "qstring" : [
 	        {
 	            token : "string",
-	            regex : "['](?!['])",
+	            regex : "(?:(?:\\\\.)|(?:[^'\\\\]))*?'",
 	            next : "start"
 	        }, {
-	            token : "comment",
-	            regex : "%.*$"
-	        }, {
-	            token : "string", // non-command
-	            regex : "\\\\[$&%#\\{\\}]"
-	        }, {
-	            token : "keyword", // command
-	            regex : "\\\\(?:[a-zA-z0-9]+|[^a-zA-z0-9])"
-	        }, {
-	            token : "paren",
-	            regex : "[[({]"
-	        }, {
-	            token : "paren",
-	            regex : "[\\])}]"
-	        }, {
 	            token : "string",
-	            regex : "[^\\\\'[({\\])}%]+"
-	        }, {
-		        token : "string",
-				regex : "."
-			}
+	            regex : '.+'
+	        }
         ]
     };
 };
 
-oop.inherits(TexHighlightRules, TextHighlightRules);
+oop.inherits(RHighlightRules, TextHighlightRules);
 
-exports.TexHighlightRules = TexHighlightRules;
+exports.RHighlightRules = RHighlightRules;
 });

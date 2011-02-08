@@ -15,7 +15,10 @@
 -->
 
 <project name="client" default="build" basedir=".">
-	
+
+  <taskdef name="jscomp"
+           classname="com.google.javascript.jscomp.ant.CompileTask"
+           classpath="./tools/compiler/compiler.jar"/> 
   <!-- Configure path to GWT SDK -->
   <property name="gwt.sdk" value="sdk"/>
 
@@ -34,6 +37,26 @@
   	 <pathelement location="lib/guice/aopalliance.jar"/>
   </path>
   
+  <target name="acecompile">
+    <jscomp compilationLevel="simple" warning="default" 
+            debug="false" output="www/js/acesupport.js">
+      <externs dir="acesupport">
+        <file name="extern.js"/>
+      </externs>
+      <sources dir="acesupport/acemode">
+        <file name="r_highlight_rules.js"/>
+        <file name="r.js"/>
+        <file name="tex_highlight_rules.js"/>
+        <file name="tex.js"/>
+        <file name="sweave_highlight_rules.js"/>
+        <file name="sweave.js"/>
+      </sources>
+      <sources dir="acesupport/acetheme">
+        <file name="default.js"/>
+      </sources>
+    </jscomp>
+  </target>
+
   <target name="javac" description="Compile java source">
     <mkdir dir="bin"/>
     <javac srcdir="src" includes="**" encoding="utf-8"
@@ -49,7 +72,7 @@
     </copy>
   </target>
 
-  <target name="gwtc" depends="javac" description="GWT compile to JavaScript">
+  <target name="gwtc" depends="acecompile,javac" description="GWT compile to JavaScript">
     <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler">
       <classpath>
         <pathelement location="src"/>
@@ -96,7 +119,7 @@
      </antcall>
    </target>
 
-  <target name="devmode" depends="javac" description="Run development mode">
+  <target name="devmode" depends="acecompile,javac" description="Run development mode">
     <java failonerror="true" fork="true" classname="com.google.gwt.dev.DevMode">
       <classpath>
         <pathelement location="src"/>
@@ -121,6 +144,7 @@
   <target name="clean" description="Cleans this project">
     <delete dir="bin" failonerror="false" />
     <delete dir="www/rstudio" failonerror="false" />
+    <delete file="www/js/acesupport.js" failonerror="false" />
     <delete dir="gen" failonerror="false" />
     <delete dir="extras" failonerror="false" />
    </target>

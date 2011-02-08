@@ -35,12 +35,12 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-define(function(require, exports, module) {
+define("mode/sweave", function(require, exports, module) {
 
 var oop = require("pilot/oop");
 var TextMode = require("ace/mode/text").Mode;
 var Tokenizer = require("ace/tokenizer").Tokenizer;
-var SweaveHighlightRules = require("./sweave_highlight_rules").SweaveHighlightRules;
+var SweaveHighlightRules = require("mode/sweave_highlight_rules").SweaveHighlightRules;
 var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
 
 var Mode = function() {
