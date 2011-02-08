@@ -6,14 +6,10 @@ function loadExternalStylesheets() {
 
   function installOneStylesheet(stylesheetUrl, hrefExpr) {
     if (!__gwt_stylesLoaded[stylesheetUrl]) {
-      if (isBodyLoaded()) {
-        var l = $doc.createElement('link');
-        l.setAttribute('rel', 'stylesheet');
-        l.setAttribute('href', hrefExpr);
-        $doc.getElementsByTagName('head')[0].appendChild(l);
-      } else {
-        $doc.write("<link id='' rel='stylesheet' href='" + hrefExpr + "'></li" + "nk>");
-      }
+      var l = $doc.createElement('link');
+      l.setAttribute('rel', 'stylesheet');
+      l.setAttribute('href', hrefExpr);
+      $doc.getElementsByTagName('head')[0].appendChild(l);
       __gwt_stylesLoaded[stylesheetUrl] = true;
     }
   }
