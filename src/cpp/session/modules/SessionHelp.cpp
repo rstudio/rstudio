@@ -131,7 +131,7 @@ bool handleLocalHttpUrl(const std::string& url)
    
    // check for custom
    std::string customPath;
-   if (isLocalURL(url, kCustomLocation, &customPath))
+   if (isLocalURL(url, "custom", &customPath))
    {
       std::string customURL = "/" + customPath;
       ClientEvent event = browseUrlEvent(customURL);
