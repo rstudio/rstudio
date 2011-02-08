@@ -45,5 +45,5 @@ define("theme/default", function(require, exports, module) {
     dom.importCssString(cssText);
 */
 
-    exports.cssClass = "ace-tm";
+    exports.cssClass = "ace-rs";
 });
