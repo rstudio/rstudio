@@ -28,22 +28,25 @@ import java.util.Map;
  * allows its last widget to take up the remaining space in its center.
  * 
  * <p>
- * This widget will <em>only</em> work in quirks mode. If your application is in
- * Standards Mode, use {@link DockLayoutPanel} instead.
+ * This widget has limitations in standards mode that did not exist in quirks
+ * mode. The child Widgets contained within a DockPanel cannot be sized using
+ * percentages. Setting a child widget's height to <code>100%</code> will
+ * <em>NOT</em> cause the child to fill the available height.
+ * </p>
+ * 
+ * <p>
+ * If you need to work around these limitations, use {@link DockLayoutPanel}
+ * instead, but understand that it is not a drop in replacement for this class.
+ * It requires standards mode, and is most easily used under a
+ * {@link RootLayoutPanel} (as opposed to a {@link RootPanel}).
  * </p>
  * 
  * <p>
  * <img class='gallery' src='doc-files/DockPanel.png'/>
  * </p>
  * 
- * @deprecated Use {@link DockLayoutPanel} instead, but understand that it is
- *             not a drop in replacement for this class. It requires standards
- *             mode, and is most easily used under a {@link RootLayoutPanel} (as
- *             opposed to a {@link RootPanel}
- * 
  * @see DockLayoutPanel
  */
-@Deprecated
 public class DockPanel extends CellPanel implements HasAlignment {
 
   /**
