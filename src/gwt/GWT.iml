@@ -41,6 +41,7 @@
     <orderEntry type="library" name="guice" level="project" />
     <orderEntry type="library" name="gwt-user" level="project" />
     <orderEntry type="library" name="gwt-dev" level="project" />
+    <orderEntry type="library" name="gwt-incubator" level="project" />
   </component>
 </module>
 
