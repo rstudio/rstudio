@@ -24,6 +24,8 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ExternalJavaScriptLoader;
+import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.files.filedialog.FileDialogResources;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -44,6 +46,7 @@ import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialo
 import org.rstudio.studio.client.workbench.views.plots.ui.ExportDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.PrintDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorResources;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceResources;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.PublishPdfDialog;
 import org.rstudio.studio.client.workbench.views.workspace.dataimport.ImportFileSettingsDialog;
@@ -105,7 +108,7 @@ public class RStudio implements EntryPoint
       });
    }
 
-   private void load(Command dismissProgressAnimation)
+   private void load(final Command dismissProgressAnimation)
    {
       ThemeResources.INSTANCE.themeStyles().ensureInjected();
       CoreResources.INSTANCE.styles().ensureInjected();
@@ -113,7 +116,8 @@ public class RStudio implements EntryPoint
       ConsoleResources.INSTANCE.consoleStyles().ensureInjected();
       FileDialogResources.INSTANCE.styles().ensureInjected();
       ManipulatorResources.INSTANCE.manipulatorStyles().ensureInjected();
-      
+      AceResources.INSTANCE.themecss().ensureInjected();
+
       SupportPopupMenu.ensureStylesInjected();
       SlideLabel.ensureStylesInjected();
       ThemedButton.ensureStylesInjected();
@@ -134,7 +138,25 @@ public class RStudio implements EntryPoint
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");
 
-      RStudioGinjector.INSTANCE.getApplication().go(RootLayoutPanel.get(),
-                                                    dismissProgressAnimation);
+      String aceJs = AceResources.INSTANCE.acejs().getUrl();
+      final String aceSupportJs = AceResources.INSTANCE.acesupportjs().getUrl();
+      new ExternalJavaScriptLoader(aceJs).addCallback(
+            new Callback()
+            {
+               public void onLoaded()
+               {
+                  new ExternalJavaScriptLoader(aceSupportJs).addCallback(
+                        new Callback()
+                        {
+                           public void onLoaded()
+                           {
+                              RStudioGinjector.INSTANCE.getApplication().go(
+                                    RootLayoutPanel.get(),
+                                    dismissProgressAnimation);
+                           }
+                        });
+               }
+            }
+      );
    }
 }

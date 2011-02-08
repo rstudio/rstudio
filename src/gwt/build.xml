@@ -38,9 +38,10 @@
   </path>
   
   <target name="ace">
-    <copy todir="www/js" file="tools/ace/build/src/ace.js"/>
+    <copy todir="src/org/rstudio/studio/client/workbench/views/source/editors/text/ace"
+          file="tools/ace/build/src/ace.js"/>
     <jscomp compilationLevel="simple" warning="default"
-            debug="false" output="www/js/acesupport.js">
+            debug="false" output="src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/acesupport.js">
       <externs dir="acesupport">
         <file name="extern.js"/>
       </externs>
