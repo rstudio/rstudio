@@ -4,3 +4,4 @@ build-*
 qtcreator-build
 .DS_Store
 src/gwt/www/js/acesupport.js
+src/gwt/www/js/ace.js

@@ -37,8 +37,9 @@
   	 <pathelement location="lib/guice/aopalliance.jar"/>
   </path>
   
-  <target name="acecompile">
-    <jscomp compilationLevel="simple" warning="default" 
+  <target name="ace">
+    <copy todir="www/js" file="tools/ace/build/src/ace.js"/>
+    <jscomp compilationLevel="simple" warning="default"
             debug="false" output="www/js/acesupport.js">
       <externs dir="acesupport">
         <file name="extern.js"/>
@@ -72,7 +73,7 @@
     </copy>
   </target>
 
-  <target name="gwtc" depends="acecompile,javac" description="GWT compile to JavaScript">
+  <target name="gwtc" depends="ace,javac" description="GWT compile to JavaScript">
     <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler">
       <classpath>
         <pathelement location="src"/>
@@ -119,7 +120,7 @@
      </antcall>
    </target>
 
-  <target name="devmode" depends="acecompile,javac" description="Run development mode">
+  <target name="devmode" depends="ace,javac" description="Run development mode">
     <java failonerror="true" fork="true" classname="com.google.gwt.dev.DevMode">
       <classpath>
         <pathelement location="src"/>
