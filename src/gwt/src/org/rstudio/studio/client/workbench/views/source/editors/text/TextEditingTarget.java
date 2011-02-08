@@ -16,9 +16,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.FocusEvent;
-import com.google.gwt.event.dom.client.FocusHandler;
-import com.google.gwt.event.dom.client.HasFocusHandlers;
+import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.*;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
@@ -106,7 +104,8 @@ public class TextEditingTarget implements EditingTarget
 
    public interface DocDisplay extends HasValueChangeHandlers<Void>,
                                        Widgetable,
-                                       HasFocusHandlers
+                                       HasFocusHandlers,
+                                       HasKeyDownHandlers
    {
 
       void setFileType(TextFileType fileType);
@@ -120,8 +119,6 @@ public class TextEditingTarget implements EditingTarget
       void replaceSelection(String code);
       boolean moveSelectionToNextLine();
       ChangeTracker getChangeTracker();
-      void setTextWrapping(boolean wrap);
-      HandlerRegistration addNativeKeyDownHandler(NativeKeyDownHandler handler);
 
       void markScrollPosition();
       void restoreScrollPosition();
@@ -207,17 +204,18 @@ public class TextEditingTarget implements EditingTarget
    public void setEditor(AceEditor editor)
    {
       docDisplay_ = editor;
-      docDisplay_.addNativeKeyDownHandler(new NativeKeyDownHandler()
+      docDisplay_.addKeyDownHandler(new KeyDownHandler()
       {
-         public void onKeyDown(NativeKeyDownEvent event)
+         public void onKeyDown(KeyDownEvent event)
          {
-            NativeEvent ne = event.getEvent();
-            if ((ne.getMetaKey() || ne.getCtrlKey())
+            NativeEvent ne = event.getNativeEvent();
+            if ((ne.getMetaKey() ^ ne.getCtrlKey())
                 && !ne.getAltKey()
                 && !ne.getShiftKey()
                 && ne.getKeyCode() == 'F')
             {
-               event.cancel();
+               event.preventDefault();
+               event.stopPropagation();
                commands_.findReplace().execute();
             }
          }

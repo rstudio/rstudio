@@ -115,7 +115,6 @@ public class TextEditingTargetWidget extends ResizeComposite implements Display
    public void adaptToFileType(TextFileType fileType)
    {
       editor_.setFileType(fileType);
-      editor_.setTextWrapping(fileType.getWordWrap());
       sourceOnSave_.setVisible(fileType.canSourceOnSave());
       codeTransform_.setVisible(fileType.canExecuteCode());
    }

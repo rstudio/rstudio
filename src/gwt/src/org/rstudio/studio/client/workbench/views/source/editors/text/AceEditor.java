@@ -4,10 +4,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.PreElement;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.BlurHandler;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.FocusHandler;
-import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -375,16 +372,6 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       return new EventBasedChangeTracker<Void>(this);
    }
 
-   public void setTextWrapping(boolean wrap)
-   {
-      //To change body of implemented methods use File | Settings | File Templates.
-   }
-
-   public HandlerRegistration addNativeKeyDownHandler(NativeKeyDownHandler handler)
-   {
-      return widget_.addNativeKeyDownHandler(handler);
-   }
-
    public void markScrollPosition()
    {
       //To change body of implemented methods use File | Settings | File Templates.
@@ -510,6 +497,11 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
    public Widget getWidget()
    {
       return widget_;
+   }
+
+   public HandlerRegistration addKeyDownHandler(KeyDownHandler handler)
+   {
+      return widget_.addKeyDownHandler(handler);
    }
 
    private final HandlerManager handlers_ = new HandlerManager(this);

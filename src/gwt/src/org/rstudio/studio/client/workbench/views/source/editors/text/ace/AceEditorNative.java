@@ -148,6 +148,15 @@ public class AceEditorNative extends JavaScriptObject {
       session.setUseSoftTabs(true);
       session.setTabSize(2);
 
+      // We handle these commands ourselves.
+      var canon = require("pilot/canon");
+      canon.removeCommand("findnext");
+      canon.removeCommand("findprevious");
+      canon.removeCommand("find");
+      canon.removeCommand("replace");
+      canon.removeCommand("togglecomment");
+      canon.removeCommand("gotoline");
+
       return env.editor;
    }-*/;
 }
