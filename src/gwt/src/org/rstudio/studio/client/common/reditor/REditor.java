@@ -31,6 +31,7 @@ import org.rstudio.codemirror.client.CodeMirrorConfig;
 import org.rstudio.codemirror.client.CodeMirrorEditor;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
@@ -215,7 +216,8 @@ public class REditor extends CodeMirrorEditor
             if (evt.isCanceled())
                return;
 
-            FakeKeyCodeEvent event = new FakeKeyCodeEvent(evt.getEvent());
+            NativeEvent event = evt.getEvent();
+
             if (completionManager_.previewKeyDown(event))
             {
                evt.cancel();
@@ -223,12 +225,9 @@ public class REditor extends CodeMirrorEditor
             }
 
             boolean handled = false;
-            if (!event.isAltKeyDown()
-                && !event.isShiftKeyDown()
-                && !event.isMetaKeyDown()
-                && event.isControlKeyDown())
+            if (KeyboardShortcut.getModifierValue(event) == KeyboardShortcut.CTRL)
             {
-               switch (event.getNativeKeyCode())
+               switch (event.getKeyCode())
                {
                   case 'U':
                      handled = true;
@@ -371,9 +370,9 @@ public class REditor extends CodeMirrorEditor
    
    private class Filter implements InitCompletionFilter
    {
-      public boolean shouldComplete(KeyCodeEvent<?> event)
+      public boolean shouldComplete(NativeEvent event)
       {
-         if (event.getNativeKeyCode() != KeyCodes.KEY_TAB)
+         if (event.getKeyCode() != KeyCodes.KEY_TAB)
             return true ;
          
          // When hitting Tab, only do completion if we're not at

@@ -6,12 +6,8 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Command;
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.events.HasNativeKeyHandlers;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
-import org.rstudio.core.client.events.NativeKeyDownHandler;
 import org.rstudio.core.client.events.NativeKeyPressEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.EditSession;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer;
 
 public class AceEditorNative extends JavaScriptObject {
 
@@ -47,6 +43,10 @@ public class AceEditorNative extends JavaScriptObject {
 
    public native final void blur() /*-{
       this.blur();
+   }-*/;
+
+   public native final void setKeyboardHandler(KeyboardHandler keyboardHandler) /*-{
+      this.setKeyboardHandler(keyboardHandler);
    }-*/;
 
    public native final void onChange(Command command) /*-{
@@ -124,25 +124,16 @@ public class AceEditorNative extends JavaScriptObject {
          JavaScriptObject env,
          Element container) /*-{
       var require = $wnd.require;
-      var event = require("pilot/event");
       var Editor = require("ace/editor").Editor;
       var Renderer = require("ace/virtual_renderer").VirtualRenderer;
-      var EditSession = require("ace/edit_session").EditSession;
       var UndoManager = require("ace/undomanager").UndoManager;
 
       var TextMode = require("ace/mode/text").Mode;
-      var RMode = require("mode/r").Mode;
-      var TexMode = require("mode/tex").Mode;
-      var SweaveMode = require("mode/sweave").Mode;
       var theme = require("theme/default");
-
-      var vim = require("ace/keyboard/keybinding/vim").Vim;
-      var emacs = require("ace/keyboard/keybinding/emacs").Emacs;
-      var HashHandler = require("ace/keyboard/hash_handler").HashHandler;
 
       env.editor = new Editor(new Renderer(container, theme));
       var session = env.editor.getSession();
-      session.setMode(new RMode());
+      session.setMode(new TextMode());
       session.setUndoManager(new UndoManager());
       session.setUseSoftTabs(true);
       session.setTabSize(2);

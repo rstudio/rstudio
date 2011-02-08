@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
@@ -24,6 +25,7 @@ import com.google.gwt.user.client.Event.NativePreviewHandler;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
@@ -102,7 +104,7 @@ public class RCompletionManager implements CompletionManager
       return requiredInvalidateCount == invalidateCount_ ;
    }
    
-   public boolean previewKeyDown(KeyCodeEvent<?> event)
+   public boolean previewKeyDown(NativeEvent event)
    {
       /**
        * KEYS THAT MATTER
@@ -121,8 +123,8 @@ public class RCompletionManager implements CompletionManager
       
       if (!popup_.isShowing())
       {
-         if (event.getNativeKeyCode() == KeyCodes.KEY_TAB
-               || (event.getNativeKeyCode() == ' ' && event.isControlKeyDown()))
+         if (event.getKeyCode() == KeyCodes.KEY_TAB
+               || (event.getKeyCode() == ' ' && event.getCtrlKey()))
          {
             if (initFilter_ == null || initFilter_.shouldComplete(event))
             {
@@ -132,7 +134,7 @@ public class RCompletionManager implements CompletionManager
       }
       else
       {
-         switch (event.getNativeKeyCode())
+         switch (event.getKeyCode())
          {
          case KeyCodes.KEY_SHIFT:
          case KeyCodes.KEY_CTRL:
@@ -140,16 +142,16 @@ public class RCompletionManager implements CompletionManager
             return false ; // bare modifiers should do nothing
          }
          
-         if (!event.isAnyModifierKeyDown())
+         if (KeyboardShortcut.getModifierValue(event) == KeyboardShortcut.NONE)
          {
-            if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE)
+            if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
             {
                invalidatePendingRequests() ;
                return true ;
             }
-            else if (event.getNativeKeyCode() == KeyCodes.KEY_TAB
-                  || event.getNativeKeyCode() == KeyCodes.KEY_ENTER
-                  || event.isRightArrow())
+            else if (event.getKeyCode() == KeyCodes.KEY_TAB
+                  || event.getKeyCode() == KeyCodes.KEY_ENTER
+                  || event.getKeyCode() == KeyCodes.KEY_RIGHT)
             {
                QualifiedName value = popup_.getSelectedValue() ;
                if (value != null)
@@ -158,24 +160,24 @@ public class RCompletionManager implements CompletionManager
                   return true ;
                }
             }
-            else if (event.isUpArrow())
+            else if (event.getKeyCode() == KeyCodes.KEY_UP)
                return popup_.selectPrev() ;
-            else if (event.isDownArrow())
+            else if (event.getKeyCode() == KeyCodes.KEY_DOWN)
                return popup_.selectNext() ;
-            else if (event.getNativeKeyCode() == KeyCodes.KEY_PAGEUP)
+            else if (event.getKeyCode() == KeyCodes.KEY_PAGEUP)
                return popup_.selectPrevPage() ;
-            else if (event.getNativeKeyCode() == KeyCodes.KEY_PAGEDOWN)
+            else if (event.getKeyCode() == KeyCodes.KEY_PAGEDOWN)
                return popup_.selectNextPage() ;
-            else if (event.getNativeKeyCode() == KeyCodes.KEY_HOME)
+            else if (event.getKeyCode() == KeyCodes.KEY_HOME)
                return popup_.selectFirst() ;
-            else if (event.getNativeKeyCode() == KeyCodes.KEY_END)
+            else if (event.getKeyCode() == KeyCodes.KEY_END)
                return popup_.selectLast() ;
-            else if (event.isLeftArrow())
+            else if (event.getKeyCode() == KeyCodes.KEY_LEFT)
             {
                invalidatePendingRequests() ;
                return true ;
             }
-            else if (event.getNativeKeyCode() == 112) // F1
+            else if (event.getKeyCode() == 112) // F1
             {
                context_.showHelpTopic() ;
                return true ;
@@ -213,26 +215,26 @@ public class RCompletionManager implements CompletionManager
       return false ;
    }
    
-   private static boolean isIdentifierKey(KeyCodeEvent<?> event)
+   private static boolean isIdentifierKey(NativeEvent event)
    {
-      if (event.isAltKeyDown() 
-            || event.isControlKeyDown() 
-            || event.isMetaKeyDown())
+      if (event.getAltKey()
+            || event.getCtrlKey()
+            || event.getMetaKey())
       {
          return false ;
       }
       
-      int keyCode = event.getNativeEvent().getKeyCode() ;
+      int keyCode = event.getKeyCode() ;
       if (keyCode >= 'a' && keyCode <= 'z')
          return true ;
       if (keyCode >= 'A' && keyCode <= 'Z')
          return true ;
-      if (keyCode == 189 && event.isShiftKeyDown()) // underscore
+      if (keyCode == 189 && event.getShiftKey()) // underscore
          return true ;
-      if (keyCode == 186 && event.isShiftKeyDown()) // colon
+      if (keyCode == 186 && event.getShiftKey()) // colon
          return true ;
       
-      if (event.isShiftKeyDown())
+      if (event.getShiftKey())
          return false ;
       
       if (keyCode >= '0' && keyCode <= '9')

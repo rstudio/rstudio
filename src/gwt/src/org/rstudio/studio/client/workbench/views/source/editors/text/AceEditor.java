@@ -21,9 +21,7 @@ import org.rstudio.codemirror.client.events.EditorFocusHandler;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.dom.IFrameElementEx;
-import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
-import org.rstudio.core.client.events.NativeKeyPressEvent;
 import org.rstudio.core.client.events.NativeKeyPressHandler;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
@@ -79,7 +77,7 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
 
    private class Filter implements InitCompletionFilter
    {
-      public boolean shouldComplete(KeyCodeEvent<?> event)
+      public boolean shouldComplete(NativeEvent event)
       {
          Range range = getSession().getSelection().getRange();
          if (!range.isEmpty())
@@ -114,33 +112,6 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
          public void onEditorLoaded(EditorLoadedEvent event)
          {
             updateLanguage();
-         }
-      });
-
-      addNativeKeyPressHandler(new NativeKeyPressHandler()
-      {
-         public void onKeyPress(NativeKeyPressEvent evt)
-         {
-            if (evt.isCanceled())
-               return;
-            if (completionManager_.previewKeyPress(evt.getCharCode()))
-            {
-               evt.cancel();
-            }
-         }
-      });
-
-      addNativeKeyDownHandler(new NativeKeyDownHandler()
-      {
-         public void onKeyDown(NativeKeyDownEvent evt)
-         {
-            if (evt.isCanceled())
-               return;
-            FakeKeyCodeEvent event = new FakeKeyCodeEvent(evt.getEvent());
-            if (completionManager_.previewKeyDown(event))
-            {
-               evt.cancel();
-            }
          }
       });
    }
@@ -183,6 +154,9 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       }
       else
          completionManager_ = new NullCompletionManager();
+
+      widget_.getEditor().setKeyboardHandler(
+            new AceCompletionAdapter(completionManager_).getKeyboardHandler());
 
       getSession().setEditorMode(fileType_.getEditorLanguage().getParserName());
       getSession().setUseWrapMode(fileType_.getWordWrap());
@@ -401,11 +375,6 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
    public HandlerRegistration addNativeKeyDownHandler(NativeKeyDownHandler handler)
    {
       return widget_.addNativeKeyDownHandler(handler);
-   }
-
-   public HandlerRegistration addNativeKeyPressHandler(NativeKeyPressHandler handler)
-   {
-      return widget_.addNativeKeyPressHandler(handler);
    }
 
    public void markScrollPosition()

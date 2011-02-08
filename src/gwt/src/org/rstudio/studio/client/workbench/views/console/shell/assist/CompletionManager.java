@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodeEvent;
 import org.rstudio.studio.client.workbench.views.console.shell.KeyDownPreviewHandler;
 import org.rstudio.studio.client.workbench.views.console.shell.KeyPressPreviewHandler;
@@ -21,7 +22,7 @@ public interface CompletionManager extends KeyDownPreviewHandler,
 {
    interface InitCompletionFilter
    {
-      boolean shouldComplete(KeyCodeEvent<?> event) ;
+      boolean shouldComplete(NativeEvent keyDownEvent) ;
    }
    
    void close();

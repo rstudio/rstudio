@@ -12,9 +12,9 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell;
 
-import com.google.gwt.event.dom.client.KeyCodeEvent;
+import com.google.gwt.dom.client.NativeEvent;
 
 public interface KeyDownPreviewHandler
 {
-   boolean previewKeyDown(KeyCodeEvent<?> event) ;
+   boolean previewKeyDown(NativeEvent event) ;
 }

@@ -12,7 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
-import com.google.gwt.event.dom.client.KeyCodeEvent;
+import com.google.gwt.dom.client.NativeEvent;
 
 public class NullCompletionManager implements CompletionManager
 {
@@ -20,7 +20,7 @@ public class NullCompletionManager implements CompletionManager
    {
    }
 
-   public boolean previewKeyDown(KeyCodeEvent<?> event)
+   public boolean previewKeyDown(NativeEvent event)
    {
       return false;
    }

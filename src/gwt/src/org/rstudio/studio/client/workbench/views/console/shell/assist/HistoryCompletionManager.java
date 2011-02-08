@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
@@ -38,12 +39,12 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
       server_ = server;
    }
 
-   public boolean previewKeyDown(KeyCodeEvent<?> event)
+   public boolean previewKeyDown(NativeEvent event)
    {
       if (popup_ == null)
       {
-         if (event.getNativeKeyCode() == KeyCodes.KEY_UP
-             && (event.isControlKeyDown() || event.isMetaKeyDown()))
+         if (event.getKeyCode() == KeyCodes.KEY_UP
+             && (event.getCtrlKey() || event.getMetaKey()))
          {
             beginSuggest();
             return true;
@@ -51,7 +52,7 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
       }
       else
       {
-         switch (event.getNativeKeyCode())
+         switch (event.getKeyCode())
          {
          case KeyCodes.KEY_SHIFT:
          case KeyCodes.KEY_CTRL:
@@ -59,40 +60,40 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
             return false ; // bare modifiers should do nothing
          }
          
-         if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE)
+         if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
          {
             dismiss();
             return true;
          }
-         else if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
+         else if (event.getKeyCode() == KeyCodes.KEY_ENTER)
          {
             input_.setText(popup_.getSelectedValue());
             dismiss();
             return true;
          }
-         else if (event.getNativeKeyCode() == KeyCodes.KEY_UP)
+         else if (event.getKeyCode() == KeyCodes.KEY_UP)
          {
             popup_.selectPrev();
             return true;
          }
-         else if (event.getNativeKeyCode() == KeyCodes.KEY_DOWN)
+         else if (event.getKeyCode() == KeyCodes.KEY_DOWN)
          {
             popup_.selectNext();
             return true;
          }
-         else if (event.isUpArrow())
+         else if (event.getKeyCode() == KeyCodes.KEY_UP)
             return popup_.selectPrev() ;
-         else if (event.isDownArrow())
+         else if (event.getKeyCode() == KeyCodes.KEY_DOWN)
             return popup_.selectNext() ;
-         else if (event.getNativeKeyCode() == KeyCodes.KEY_PAGEUP)
+         else if (event.getKeyCode() == KeyCodes.KEY_PAGEUP)
             return popup_.selectPrevPage() ;
-         else if (event.getNativeKeyCode() == KeyCodes.KEY_PAGEDOWN)
+         else if (event.getKeyCode() == KeyCodes.KEY_PAGEDOWN)
             return popup_.selectNextPage() ;
-         else if (event.getNativeKeyCode() == KeyCodes.KEY_HOME)
+         else if (event.getKeyCode() == KeyCodes.KEY_HOME)
             return popup_.selectFirst() ;
-         else if (event.getNativeKeyCode() == KeyCodes.KEY_END)
+         else if (event.getKeyCode() == KeyCodes.KEY_END)
             return popup_.selectLast() ;
-         else if (event.isLeftArrow())
+         else if (event.getKeyCode() == KeyCodes.KEY_LEFT)
          {
             dismiss();
             return true ;

@@ -319,7 +319,7 @@ public class Shell implements ConsoleInputHandler,
 
          for (KeyDownPreviewHandler handler : keyDownPreviewHandlers_)
          {
-            if (handler.previewKeyDown(event))
+            if (handler.previewKeyDown(event.getNativeEvent()))
             {
                event.preventDefault() ;
                event.stopPropagation() ;
