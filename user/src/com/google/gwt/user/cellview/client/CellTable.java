@@ -643,8 +643,14 @@ public class CellTable<T> extends AbstractHasData<T> {
       loadingIndicatorContainer.setStyleName(style.cellTableLoading());
     }
 
-    // Set the default loading indicator.
-    setLoadingIndicator(new Image(resources.cellTableLoading()));
+    /*
+     * Set the default loading indicator to use if the user provided a loading
+     * image resource.
+     */
+    ImageResource loadingImg = resources.cellTableLoading();
+    if (loadingImg != null) {
+      setLoadingIndicator(new Image(loadingImg));
+    }
 
     // Sink events.
     Set<String> eventTypes = new HashSet<String>();

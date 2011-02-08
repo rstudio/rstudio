@@ -27,6 +27,7 @@ import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.CellTable.Resources;
@@ -223,6 +224,44 @@ public class CellTableTest extends AbstractHasDataTestBase {
 
     // Ensure that calling getRowElement() flushes all pending changes.
     assertNotNull(table.getRowElement(9));
+  }
+
+  public void testNullLoadingImage() {
+    // Create a Resources instance that does not include a loading image.
+    CellTable.Resources resources = new CellTable.Resources() {
+      private final CellTable.Resources defaultRes = GWT.create(CellTable.Resources.class);
+
+      public ImageResource cellTableFooterBackground() {
+        return defaultRes.cellTableFooterBackground();
+      }
+
+      public ImageResource cellTableHeaderBackground() {
+        return defaultRes.cellTableHeaderBackground();
+      }
+
+      public ImageResource cellTableLoading() {
+        return null;
+      }
+
+      public ImageResource cellTableSelectedBackground() {
+        return defaultRes.cellTableSelectedBackground();
+      }
+
+      public ImageResource cellTableSortAscending() {
+        return defaultRes.cellTableSortAscending();
+      }
+
+      public ImageResource cellTableSortDescending() {
+        return defaultRes.cellTableSortDescending();
+      }
+
+      public Style cellTableStyle() {
+        return defaultRes.cellTableStyle();
+      }
+    };
+
+    CellTable<String> table = new CellTable<String>(25, resources);
+    assertNull(table.getLoadingIndicator());
   }
 
   public void testInsertColumn() {
@@ -453,16 +492,13 @@ public class CellTableTest extends AbstractHasDataTestBase {
 
   public void testSetTableLayoutFixed() {
     CellTable<String> table = createAbstractHasData(new TextCell());
-    assertNotSame("fixed",
-        table.getElement().getStyle().getTableLayout());
+    assertNotSame("fixed", table.getElement().getStyle().getTableLayout());
 
     table.setTableLayoutFixed(true);
-    assertEquals("fixed",
-        table.getElement().getStyle().getTableLayout());
+    assertEquals("fixed", table.getElement().getStyle().getTableLayout());
 
     table.setTableLayoutFixed(false);
-    assertNotSame("fixed",
-        table.getElement().getStyle().getTableLayout());
+    assertNotSame("fixed", table.getElement().getStyle().getTableLayout());
   }
 
   public void testSortableColumn() {
