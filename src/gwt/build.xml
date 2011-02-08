@@ -24,6 +24,7 @@
 
   <property name="gwt.extra.args" value=""/>
   <property name="gwt.main.module" value="org.rstudio.studio.RStudio"/>
+  <property name="ace.bin" value="src/org/rstudio/studio/client/workbench/views/source/editors/text/ace"/>
   
   <path id="project.class.path">
     <pathelement location="bin"/>
@@ -38,10 +39,10 @@
   </path>
   
   <target name="ace">
-    <copy todir="src/org/rstudio/studio/client/workbench/views/source/editors/text/ace"
+    <copy todir="${ace.bin}"
           file="tools/ace/build/src/ace.js"/>
     <jscomp compilationLevel="simple" warning="default"
-            debug="false" output="src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/acesupport.js">
+            debug="false" output="${ace.bin}/acesupport.js">
       <externs dir="acesupport">
         <file name="extern.js"/>
       </externs>
@@ -146,7 +147,8 @@
   <target name="clean" description="Cleans this project">
     <delete dir="bin" failonerror="false" />
     <delete dir="www/rstudio" failonerror="false" />
-    <delete file="www/js/acesupport.js" failonerror="false" />
+     <delete file="${ace.bin}/ace.js" failonerror="false" />
+     <delete file="${ace.bin}/acesupport.js" failonerror="false" />
     <delete dir="gen" failonerror="false" />
     <delete dir="extras" failonerror="false" />
    </target>
