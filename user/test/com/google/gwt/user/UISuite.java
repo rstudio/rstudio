@@ -38,6 +38,7 @@ import com.google.gwt.user.client.ui.DOMRtlTest;
 import com.google.gwt.user.client.ui.DOMTest;
 import com.google.gwt.user.client.ui.DateBoxTest;
 import com.google.gwt.user.client.ui.DatePickerTest;
+import com.google.gwt.user.client.ui.DeckLayoutPanelTest;
 import com.google.gwt.user.client.ui.DeckPanelTest;
 import com.google.gwt.user.client.ui.DecoratedPopupTest;
 import com.google.gwt.user.client.ui.DecoratedStackPanelTest;
@@ -144,6 +145,7 @@ public class UISuite {
     suite.addTestSuite(DateBoxTest.class);
     suite.addTestSuite(DateChangeEventTest.class);
     suite.addTestSuite(DatePickerTest.class);
+    suite.addTestSuite(DeckLayoutPanelTest.class);
     suite.addTestSuite(DeckPanelTest.class);
     suite.addTestSuite(DecoratedPopupTest.class);
     suite.addTestSuite(DecoratedStackPanelTest.class);

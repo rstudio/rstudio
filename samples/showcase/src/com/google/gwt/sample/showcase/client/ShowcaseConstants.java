@@ -46,7 +46,7 @@ import com.google.gwt.sample.showcase.client.content.panels.CwDockPanel;
 import com.google.gwt.sample.showcase.client.content.panels.CwFlowPanel;
 import com.google.gwt.sample.showcase.client.content.panels.CwHorizontalPanel;
 import com.google.gwt.sample.showcase.client.content.panels.CwHorizontalSplitPanel;
-import com.google.gwt.sample.showcase.client.content.panels.CwTabPanel;
+import com.google.gwt.sample.showcase.client.content.panels.CwTabLayoutPanel;
 import com.google.gwt.sample.showcase.client.content.panels.CwVerticalPanel;
 import com.google.gwt.sample.showcase.client.content.panels.CwVerticalSplitPanel;
 import com.google.gwt.sample.showcase.client.content.popups.CwBasicPopup;
@@ -71,7 +71,7 @@ public interface ShowcaseConstants extends MenuConstants,
     CwBasicButton.CwConstants, CwCustomButton.CwConstants,
     CwListBox.CwConstants, CwSuggestBox.CwConstants, CwTree.CwConstants,
     CwMenuBar.CwConstants, CwFlowPanel.CwConstants,
-    CwDisclosurePanel.CwConstants, CwTabPanel.CwConstants,
+    CwDisclosurePanel.CwConstants, CwTabLayoutPanel.CwConstants,
     CwDockPanel.CwConstants, CwHorizontalPanel.CwConstants,
     CwHorizontalSplitPanel.CwConstants, CwVerticalPanel.CwConstants,
     CwVerticalSplitPanel.CwConstants, CwBasicPopup.CwConstants,

@@ -17,6 +17,7 @@ package com.google.gwt.sample.showcase.client.content.panels;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.Showcase;
@@ -24,10 +25,10 @@ import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.DecoratedTabPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
@@ -36,7 +37,7 @@ import com.google.gwt.user.client.ui.Widget;
 @ShowcaseStyle({
     ".gwt-DecoratedTabBar", "html>body .gwt-DecoratedTabBar",
     "* html .gwt-DecoratedTabBar", ".gwt-TabPanel"})
-public class CwTabPanel extends ContentWidget {
+public class CwTabLayoutPanel extends ContentWidget {
   /**
    * The constants used in this Content Widget.
    */
@@ -64,7 +65,7 @@ public class CwTabPanel extends ContentWidget {
    *
    * @param constants the constants
    */
-  public CwTabPanel(CwConstants constants) {
+  public CwTabLayoutPanel(CwConstants constants) {
     super(constants.cwTabPanelName(), constants.cwTabPanelDescription(), true);
     this.constants = constants;
   }
@@ -72,14 +73,13 @@ public class CwTabPanel extends ContentWidget {
   /**
    * Initialize this example.
    */
-  @SuppressWarnings("deprecation")
   @ShowcaseSource
   @Override
   public Widget onInitialize() {
     // Create a tab panel
-    DecoratedTabPanel tabPanel = new DecoratedTabPanel();
-    tabPanel.setWidth("400px");
-    tabPanel.setAnimationEnabled(true);
+    TabLayoutPanel tabPanel = new TabLayoutPanel(2.0, Unit.EM);
+    tabPanel.setPixelSize(600, 400);
+    tabPanel.setAnimationDuration(1000);
 
     // Add a home tab
     String[] tabTitles = constants.cwTabPanelTabs();
@@ -87,9 +87,9 @@ public class CwTabPanel extends ContentWidget {
     tabPanel.add(homeText, tabTitles[0]);
 
     // Add a tab with an image
-    VerticalPanel vPanel = new VerticalPanel();
-    vPanel.add(new Image(Showcase.images.gwtLogo()));
-    tabPanel.add(vPanel, tabTitles[1]);
+    SimplePanel imageContainer = new SimplePanel();
+    imageContainer.setWidget(new Image(Showcase.images.gwtLogo()));
+    tabPanel.add(imageContainer, tabTitles[1]);
 
     // Add a tab
     HTML moreInfo = new HTML(constants.cwTabPanelTab2());
@@ -103,7 +103,7 @@ public class CwTabPanel extends ContentWidget {
 
   @Override
   protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
-    GWT.runAsync(CwTabPanel.class, new RunAsyncCallback() {
+    GWT.runAsync(CwTabLayoutPanel.class, new RunAsyncCallback() {
 
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);

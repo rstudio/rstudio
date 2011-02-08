@@ -48,7 +48,7 @@ import com.google.gwt.sample.showcase.client.content.panels.CwDockPanel;
 import com.google.gwt.sample.showcase.client.content.panels.CwFlowPanel;
 import com.google.gwt.sample.showcase.client.content.panels.CwHorizontalPanel;
 import com.google.gwt.sample.showcase.client.content.panels.CwHorizontalSplitPanel;
-import com.google.gwt.sample.showcase.client.content.panels.CwTabPanel;
+import com.google.gwt.sample.showcase.client.content.panels.CwTabLayoutPanel;
 import com.google.gwt.sample.showcase.client.content.panels.CwVerticalPanel;
 import com.google.gwt.sample.showcase.client.content.panels.CwVerticalSplitPanel;
 import com.google.gwt.sample.showcase.client.content.popups.CwBasicPopup;
@@ -346,8 +346,8 @@ public class MainMenuTreeViewModel implements TreeViewModel {
           RunAsyncCode.runAsyncCode(CwDockPanel.class));
       category.addExample(new CwDisclosurePanel(constants),
           RunAsyncCode.runAsyncCode(CwDisclosurePanel.class));
-      category.addExample(new CwTabPanel(constants),
-          RunAsyncCode.runAsyncCode(CwTabPanel.class));
+      category.addExample(new CwTabLayoutPanel(constants),
+          RunAsyncCode.runAsyncCode(CwTabLayoutPanel.class));
       category.addExample(new CwHorizontalSplitPanel(constants),
           RunAsyncCode.runAsyncCode(CwHorizontalSplitPanel.class));
       category.addExample(new CwVerticalSplitPanel(constants),

@@ -151,6 +151,7 @@ public class LayoutImplIE8 extends LayoutImpl {
 
       default:
         value = value * getUnitSizeInPixels(layer.container, unit, vertical);
+        value = (int) (value + 0.5); // Round to the nearest pixel.
         unit = Unit.PX;
         break;
     }
@@ -161,8 +162,7 @@ public class LayoutImplIE8 extends LayoutImpl {
       }
     }
 
-    layer.getContainerElement().getStyle().setProperty(prop,
-        (int) (value + 0.5), unit);
+    layer.getContainerElement().getStyle().setProperty(prop, value, unit);
   }
 
   private void updateVisibility(Element container) {

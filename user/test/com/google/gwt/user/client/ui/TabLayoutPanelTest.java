@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -266,15 +266,20 @@ public class TabLayoutPanelTest extends GWTTestCase {
 
     assertEquals("", p.getTabWidget(insert).getElement().getInnerHTML());
     assertEquals("", p.getTabWidget(add).getElement().getInnerHTML());
-    assertEquals("inserted text", p.getTabWidget(insText).getElement().getInnerHTML());
-    assertEquals("added text", p.getTabWidget(addText).getElement().getInnerHTML());
-    assertEquals("<b>inserted html</b>", p.getTabWidget(insHtml).getElement().getInnerHTML().toLowerCase());
-    assertEquals("<b>added html</b>", p.getTabWidget(addHtml).getElement().getInnerHTML().toLowerCase());
+    assertEquals("inserted text",
+        p.getTabWidget(insText).getElement().getInnerHTML());
+    assertEquals("added text",
+        p.getTabWidget(addText).getElement().getInnerHTML());
+    assertEquals("<b>inserted html</b>",
+        p.getTabWidget(insHtml).getElement().getInnerHTML().toLowerCase());
+    assertEquals("<b>added html</b>",
+        p.getTabWidget(addHtml).getElement().getInnerHTML().toLowerCase());
     assertEquals(inserted.w, p.getTabWidget(insWidget));
     assertEquals(added.w, p.getTabWidget(addWidget));
 
     class Handler implements SelectionHandler<Integer> {
       boolean fired = false;
+
       public void onSelection(SelectionEvent<Integer> event) {
         fired = true;
       }
@@ -322,6 +327,48 @@ public class TabLayoutPanelTest extends GWTTestCase {
     assertTrue(p.getWidget(1) == baz);
   }
 
+  /**
+   * Test that removing a widget removes the associated tab.
+   */
+  public void testRemoveWidgetFromParent() {
+    TabLayoutPanel p = new TabLayoutPanel(2, Unit.EM);
+
+    Label content0 = new Label("Content 0");
+    Label header0 = new Label("Header 0");
+    p.add(content0, header0);
+    Label content1 = new Label("Content 1");
+    Label header1 = new Label("Header 1");
+    p.add(content1, header1);
+    Label content2 = new Label("Content 2");
+    Label header2 = new Label("Header 2");
+    p.add(content2, header2);
+    assertEquals(3, p.getWidgetCount());
+    assertEquals(content0, p.getWidget(0));
+    assertEquals(content1, p.getWidget(1));
+    assertEquals(content2, p.getWidget(2));
+    assertEquals(header0, p.getTabWidget(0));
+    assertEquals(header1, p.getTabWidget(1));
+    assertEquals(header2, p.getTabWidget(2));
+
+    // Remove content.
+    content1.removeFromParent();
+    assertNull(content1.getParent());
+    assertNull(header1.getParent());
+    assertEquals(2, p.getWidgetCount());
+    assertEquals(content0, p.getWidget(0));
+    assertEquals(content2, p.getWidget(1));
+    assertEquals(header0, p.getTabWidget(0));
+    assertEquals(header2, p.getTabWidget(1));
+
+    // Remove a header.
+    header2.removeFromParent();
+    assertNull(content2.getParent());
+    assertNull(header2.getParent());
+    assertEquals(1, p.getWidgetCount());
+    assertEquals(content0, p.getWidget(0));
+    assertEquals(header0, p.getTabWidget(0));
+  }
+
   public void testSelectionEvents() {
     TabLayoutPanel p = new TabLayoutPanel(2, Unit.EM);
     RootPanel.get().add(p);
@@ -366,6 +413,7 @@ public class TabLayoutPanelTest extends GWTTestCase {
     }
 
     // Initially, the first widget should be visible.
+    p.forceLayout();
     assertTrue(labels[0].isVisible());
     assertFalse(labels[1].isVisible());
     assertFalse(labels[2].isVisible());
@@ -373,12 +421,14 @@ public class TabLayoutPanelTest extends GWTTestCase {
     // Show widget at index 1, make sure it becomes visible, and the one at
     // index 0 is hidden.
     p.selectTab(1);
+    p.forceLayout();
     assertFalse(labels[0].isVisible());
     assertTrue(labels[1].isVisible());
     assertFalse(labels[2].isVisible());
 
     // Show widget at index 0, make sure it changed back to the initial state.
     p.selectTab(0);
+    p.forceLayout();
     assertTrue(labels[0].isVisible());
     assertFalse(labels[1].isVisible());
     assertFalse(labels[2].isVisible());
@@ -419,7 +469,7 @@ public class TabLayoutPanelTest extends GWTTestCase {
     p.add(new Button("foo"), new Label("foo"));
     p.add(new Button("bar"), new Label("bar"));
 
-    assertEquals(p.getTabWidget(0).getElement().getOffsetTop(), p.getTabWidget(
-        1).getElement().getOffsetTop());
+    assertEquals(p.getTabWidget(0).getElement().getOffsetTop(),
+        p.getTabWidget(1).getElement().getOffsetTop());
   }
 }

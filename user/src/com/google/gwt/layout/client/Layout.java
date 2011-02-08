@@ -480,6 +480,11 @@ public class Layout {
    * @param callback the animation callback
    */
   public void layout(int duration, final AnimationCallback callback) {
+    // Cancel the old animation, if there is one.
+    if (animation != null) {
+      animation.cancel();
+    }
+
     // If there's no actual animation going on, don't do any of the expensive
     // constraint calculations or anything like that.
     if (duration == 0) {
@@ -523,11 +528,6 @@ public class Layout {
       adjustVerticalConstraints(parentHeight, l);
     }
 
-    // Cancel the old animation, if there is one.
-    if (animation != null) {
-      animation.cancel();
-    }
-
     animation = new Animation() {
       @Override
       protected void onCancel() {
@@ -536,11 +536,11 @@ public class Layout {
 
       @Override
       protected void onComplete() {
+        animation = null;
         layout();
         if (callback != null) {
           callback.onAnimationComplete();
         }
-        animation = null;
       }
 
       @Override

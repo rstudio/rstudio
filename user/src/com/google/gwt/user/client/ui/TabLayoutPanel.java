@@ -17,7 +17,6 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -29,6 +28,8 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.layout.client.Layout.Alignment;
+import com.google.gwt.layout.client.Layout.AnimationCallback;
+import com.google.gwt.resources.client.CommonResources;
 import com.google.gwt.safehtml.shared.SafeHtml;
 
 import java.util.ArrayList;
@@ -94,10 +95,10 @@ import java.util.Iterator;
  * </pre>
  */
 public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
-    ProvidesResize, IndexedPanel.ForIsWidget,
+    ProvidesResize, IndexedPanel.ForIsWidget, AnimatedLayout,
     HasBeforeSelectionHandlers<Integer>, HasSelectionHandlers<Integer> {
 
-  private static class Tab extends SimplePanel {
+  private class Tab extends SimplePanel {
     private Element inner;
 
     public Tab(Widget child) {
@@ -108,15 +109,27 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
       setStyleName(TAB_STYLE);
       inner.setClassName(TAB_INNER_STYLE);
 
-      // TODO: float:left may not be enough. If there are tabs of differing
-      // heights, the shorter ones will top-align, rather than bottom-align,
-      // which is what we would want. display:inline-block fixes this, but
-      // needs lots of cross-browser hacks to work properly.
-      getElement().getStyle().setFloat(Style.Float.LEFT);
+      getElement().addClassName(CommonResources.getInlineBlockStyle());
     }
 
     public HandlerRegistration addClickHandler(ClickHandler handler) {
       return addDomHandler(handler, ClickEvent.getType());
+    }
+
+    @Override
+    public boolean remove(Widget w) {
+      /*
+       * Removal of items from the TabBar is delegated to the TabLayoutPanel to
+       * ensure consistency.
+       */
+      int index = tabs.indexOf(this);
+      if (index < 0) {
+        // This tab is no longer in the panel, so just remove the widget.
+        return super.remove(w);
+      } else {
+        // Delegate to the TabLayoutPanel.
+        return TabLayoutPanel.this.remove(index);
+      }
     }
 
     public void setSelected(boolean selected) {
@@ -132,6 +145,59 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
       return inner.cast();
     }
   }
+
+  /**
+   * This extension of DeckLayoutPanel overrides the public mutator methods to
+   * prevent external callers from adding to the state of the DeckPanel.
+   * <p>
+   * Removal of Widgets is supported so that WidgetCollection.WidgetIterator
+   * operates as expected.
+   * </p>
+   * <p>
+   * We ensure that the DeckLayoutPanel cannot become of of sync with its
+   * associated TabBar by delegating all mutations to the TabBar to this
+   * implementation of DeckLayoutPanel.
+   * </p>
+   */
+  private class TabbedDeckLayoutPanel extends DeckLayoutPanel {
+
+    @Override
+    public void add(Widget w) {
+      throw new UnsupportedOperationException(
+          "Use TabLayoutPanel.add() to alter the DeckLayoutPanel");
+    }
+
+    @Override
+    public void clear() {
+      throw new UnsupportedOperationException(
+          "Use TabLayoutPanel.clear() to alter the DeckLayoutPanel");
+    }
+
+    @Override
+    public void insert(Widget w, int beforeIndex) {
+      throw new UnsupportedOperationException(
+          "Use TabLayoutPanel.insert() to alter the DeckLayoutPanel");
+    }
+
+    @Override
+    public boolean remove(Widget w) {
+      /*
+       * Removal of items from the DeckLayoutPanel is delegated to the
+       * TabLayoutPanel to ensure consistency.
+       */
+      return TabLayoutPanel.this.remove(w);
+    }
+
+    protected void insertProtected(Widget w, int beforeIndex) {
+      super.insert(w, beforeIndex);
+    }
+
+    protected void removeProtected(Widget w) {
+      super.remove(w);
+    }
+  }
+
+  private static final String CONTENT_CONTAINER_STYLE = "gwt-TabLayoutPanelContentContainer";
   private static final String CONTENT_STYLE = "gwt-TabLayoutPanelContent";
   private static final String TAB_STYLE = "gwt-TabLayoutPanelTab";
 
@@ -139,12 +205,9 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
 
   private static final int BIG_ENOUGH_TO_NOT_WRAP = 16384;
 
-  private final WidgetCollection children = new WidgetCollection(this);
+  private final TabbedDeckLayoutPanel deckPanel = new TabbedDeckLayoutPanel();
   private final FlowPanel tabBar = new FlowPanel();
   private final ArrayList<Tab> tabs = new ArrayList<Tab>();
-  private final double barHeight;
-  private final Unit barUnit;
-  private final LayoutPanel panel;
   private int selectedIndex = -1;
 
   /**
@@ -154,16 +217,20 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
    * @param barUnit the unit in which the tab bar size is specified
    */
   public TabLayoutPanel(double barHeight, Unit barUnit) {
-    this.barHeight = barHeight;
-    this.barUnit = barUnit;
-
-    panel = new LayoutPanel();
+    LayoutPanel panel = new LayoutPanel();
     initWidget(panel);
 
+    // Add the tab bar to the panel.
     panel.add(tabBar);
     panel.setWidgetLeftRight(tabBar, 0, Unit.PX, 0, Unit.PX);
     panel.setWidgetTopHeight(tabBar, 0, Unit.PX, barHeight, barUnit);
     panel.setWidgetVerticalPosition(tabBar, Alignment.END);
+
+    // Add the deck panel to the panel.
+    deckPanel.addStyleName(CONTENT_CONTAINER_STYLE);
+    panel.add(deckPanel);
+    panel.setWidgetLeftRight(deckPanel, 0, Unit.PX, 0, Unit.PX);
+    panel.setWidgetTopBottom(deckPanel, barHeight, barUnit, 0, Unit.PX);
 
     // Make the tab bar extremely wide so that tabs themselves never wrap.
     // (Its layout container is overflow:hidden)
@@ -260,12 +327,33 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
     return addHandler(handler, SelectionEvent.getType());
   }
 
+  public void animate(int duration) {
+    animate(duration, null);
+  }
+
+  public void animate(int duration, AnimationCallback callback) {
+    deckPanel.animate(duration, callback);
+  }
+
   public void clear() {
     Iterator<Widget> it = iterator();
     while (it.hasNext()) {
       it.next();
       it.remove();
     }
+  }
+
+  public void forceLayout() {
+    deckPanel.forceLayout();
+  }
+
+  /**
+   * Get the duration of the animated transition between tabs.
+   * 
+   * @return the duration in milliseconds
+   */
+  public int getAnimationDuration() {
+    return deckPanel.getAnimationDuration();
   }
 
   /**
@@ -310,15 +398,14 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
    * Returns the widget at the given index.
    */
   public Widget getWidget(int index) {
-    checkIndex(index);
-    return children.get(index);
+    return deckPanel.getWidget(index);
   }
 
   /**
    * Returns the number of tabs and widgets.
    */
   public int getWidgetCount() {
-    return children.size();
+    return deckPanel.getWidgetCount();
   }
 
   /**
@@ -332,7 +419,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
    * Returns the index of the given child, or -1 if it is not a child.
    */
   public int getWidgetIndex(Widget child) {
-    return children.indexOf(child);
+    return deckPanel.getWidgetIndex(child);
   }
 
   /**
@@ -429,8 +516,18 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
     insert(child, new Tab(tab), beforeIndex);
   }
 
+  /**
+   * Check whether or not transitions slide in vertically or horizontally.
+   * Defaults to horizontally.
+   * 
+   * @return true for vertical transitions, false for horizontal
+   */
+  public boolean isAnimationVertical() {
+    return deckPanel.isAnimationVertical();
+  }
+
   public Iterator<Widget> iterator() {
-    return children.iterator();
+    return deckPanel.iterator();
   }
 
   public boolean remove(int index) {
@@ -438,13 +535,13 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
       return false;
     }
 
-    Widget child = children.get(index);
+    Widget child = getWidget(index);
     tabBar.remove(index);
-    panel.remove(child);
+    deckPanel.removeProtected(child);
     child.removeStyleName(CONTENT_STYLE);
 
-    children.remove(index);
-    tabs.remove(index);
+    Tab tab = tabs.remove(index);
+    tab.getWidget().removeFromParent();
 
     if (index == selectedIndex) {
       // If the selected tab is being removed, select the first tab (if there
@@ -462,7 +559,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
   }
 
   public boolean remove(Widget w) {
-    int index = children.indexOf(w);
+    int index = getWidgetIndex(w);
     if (index == -1) {
       return false;
     }
@@ -503,13 +600,10 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
 
     // Update the tabs being selected and unselected.
     if (selectedIndex != -1) {
-      Widget child = children.get(selectedIndex);
-      panel.setWidgetVisible(child, false);
       tabs.get(selectedIndex).setSelected(false);
     }
 
-    Widget child = children.get(index);
-    panel.setWidgetVisible(child, true);
+    deckPanel.showWidget(index);
     tabs.get(index).setSelected(true);
     selectedIndex = index;
 
@@ -553,6 +647,24 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
   }
 
   /**
+   * Set the duration of the animated transition between tabs.
+   * 
+   * @param duration the duration in milliseconds.
+   */
+  public void setAnimationDuration(int duration) {
+    deckPanel.setAnimationDuration(duration);
+  }
+
+  /**
+   * Set whether or not transitions slide in vertically or horizontally.
+   * 
+   * @param isVertical true for vertical transitions, false for horizontal
+   */
+  public void setAnimationVertical(boolean isVertical) {
+    deckPanel.setAnimationVertical(isVertical);
+  }
+
+  /**
    * Sets a tab's HTML contents.
    *
    * Use care when setting an object's HTML; it is an easy way to expose
@@ -590,11 +702,11 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
   }
 
   private void checkChild(Widget child) {
-    assert children.contains(child);
+    assert getWidgetIndex(child) >= 0 : "Child is not a part of this panel";
   }
 
   private void checkIndex(int index) {
-    assert (index >= 0) && (index < children.size()) : "Index out of bounds";
+    assert (index >= 0) && (index < getWidgetCount()) : "Index out of bounds";
   }
 
   private void insert(final Widget child, Tab tab, int beforeIndex) {
@@ -610,7 +722,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
       }
     }
 
-    children.insert(child, beforeIndex);
+    deckPanel.insertProtected(child, beforeIndex);
     tabs.add(beforeIndex, tab);
 
     tabBar.insert(tab, beforeIndex);
@@ -620,8 +732,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
       }
     });
 
-    panel.insert(child, beforeIndex);
-    layoutChild(child);
+    child.addStyleName(CONTENT_STYLE);
 
     if (selectedIndex == -1) {
       selectTab(0);
@@ -630,13 +741,5 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
       // increased.
       selectedIndex++;
     }
-  }
-
-  private void layoutChild(Widget child) {
-    panel.setWidgetLeftRight(child, 0, Unit.PX, 0, Unit.PX);
-    panel.setWidgetTopBottom(child, barHeight, barUnit, 0, Unit.PX);
-    panel.setWidgetVisible(child, false);
-    child.addStyleName(CONTENT_STYLE);
-    child.setVisible(false);
   }
 }
