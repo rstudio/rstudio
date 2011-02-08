@@ -27,10 +27,10 @@ import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.FocusWidget;
 import org.rstudio.core.client.command.AppCommand;
 
-public class SmallButton extends Widget
+public class SmallButton extends FocusWidget
    implements HasClickHandlers
 {
    interface MyBinder extends UiBinder<Element, SmallButton> {}
