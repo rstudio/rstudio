@@ -24,6 +24,9 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/.settings" />
+      <excludeFolder url="file://$MODULE_DIR$/extras" />
+      <excludeFolder url="file://$MODULE_DIR$/gen" />
+      <excludeFolder url="file://$MODULE_DIR$/sdk" />
       <excludeFolder url="file://$MODULE_DIR$/www" />
     </content>
     <orderEntry type="inheritedJdk" />
