@@ -16,11 +16,11 @@
 package com.google.gwt.autobean.rebind;
 
 import com.google.gwt.autobean.client.impl.AbstractAutoBeanFactory;
-import com.google.gwt.autobean.rebind.model.JBeanMethod;
 import com.google.gwt.autobean.rebind.model.AutoBeanFactoryMethod;
 import com.google.gwt.autobean.rebind.model.AutoBeanFactoryModel;
 import com.google.gwt.autobean.rebind.model.AutoBeanMethod;
 import com.google.gwt.autobean.rebind.model.AutoBeanType;
+import com.google.gwt.autobean.rebind.model.JBeanMethod;
 import com.google.gwt.autobean.shared.AutoBean;
 import com.google.gwt.autobean.shared.AutoBeanFactory;
 import com.google.gwt.autobean.shared.AutoBeanUtils;
@@ -30,6 +30,7 @@ import com.google.gwt.autobean.shared.AutoBeanVisitor.MapPropertyContext;
 import com.google.gwt.autobean.shared.AutoBeanVisitor.PropertyContext;
 import com.google.gwt.autobean.shared.impl.AbstractAutoBean;
 import com.google.gwt.autobean.shared.impl.AbstractAutoBean.OneShotContext;
+import com.google.gwt.autobean.shared.impl.AbstractPropertyContext;
 import com.google.gwt.core.client.impl.WeakMapping;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
@@ -39,6 +40,7 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JEnumConstant;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
+import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
@@ -101,6 +103,19 @@ public class AutoBeanFactoryGenerator extends Generator {
     sw.commit(logger);
 
     return factory.getCreatedClassName();
+  }
+
+  /**
+   * Flattens a parameterized type into a simple list of types.
+   */
+  private void createTypeList(List<JType> accumulator, JType type) {
+    accumulator.add(type);
+    JParameterizedType hasParams = type.isParameterized();
+    if (hasParams != null) {
+      for (JClassType arg : hasParams.getTypeArgs()) {
+        createTypeList(accumulator, arg);
+      }
+    }
   }
 
   private String getBaseMethodDeclaration(JMethod jmethod) {
@@ -254,9 +269,13 @@ public class AutoBeanFactoryGenerator extends Generator {
         }
           break;
         case SET:
+        case SET_BUILDER:
           // values.put("foo", parameter);
           sw.println("values.put(\"%s\", %s);", method.getPropertyName(),
               jmethod.getParameters()[0].getName());
+          if (JBeanMethod.SET_BUILDER.equals(method.getAction())) {
+            sw.println("return this;");
+          }
           break;
         case CALL:
           // return com.example.Owner.staticMethod(Outer.this, param,
@@ -490,6 +509,7 @@ public class AutoBeanFactoryGenerator extends Generator {
           sw.println("return toReturn;");
           break;
         case SET:
+        case SET_BUILDER:
           sw.println("%s.this.checkFrozen();", type.getSimpleSourceName());
           // getWrapped().setFoo(foo);
           sw.println("%s.this.getWrapped().%s(%s);",
@@ -497,6 +517,9 @@ public class AutoBeanFactoryGenerator extends Generator {
           // FooAutoBean.this.set("setFoo", foo);
           sw.println("%s.this.set(\"%s\", %s);", type.getSimpleSourceName(),
               methodName, parameters[0].getName());
+          if (JBeanMethod.SET_BUILDER.equals(method.getAction())) {
+            sw.println("return this;");
+          }
           break;
         case CALL:
           // XXX How should freezing and calls work together?
@@ -567,7 +590,9 @@ public class AutoBeanFactoryGenerator extends Generator {
       // If it's not a simple bean type, try to find a real setter method
       if (!type.isSimpleBean()) {
         for (AutoBeanMethod maybeSetter : type.getMethods()) {
-          if (maybeSetter.getAction().equals(JBeanMethod.SET)
+          boolean isASetter = maybeSetter.getAction().equals(JBeanMethod.SET)
+              || maybeSetter.getAction().equals(JBeanMethod.SET_BUILDER);
+          if (isASetter
               && maybeSetter.getPropertyName().equals(method.getPropertyName())) {
             setter = maybeSetter;
             break;
@@ -598,6 +623,11 @@ public class AutoBeanFactoryGenerator extends Generator {
         propertyContextType = PropertyContext.class;
       }
 
+      // Map<List<Foo>, Bar> --> Map, List, Foo, Bar
+      List<JType> typeList = new ArrayList<JType>();
+      createTypeList(typeList, method.getMethod().getReturnType());
+      assert typeList.size() > 0;
+
       /*
        * Make the PropertyContext that lets us call the setter. We allow
        * multiple methods to be bound to the same property (e.g. to allow JSON
@@ -606,30 +636,45 @@ public class AutoBeanFactoryGenerator extends Generator {
        */
       String propertyContextName = names.createName("_"
           + method.getPropertyName() + "PropertyContext");
-      sw.println("class %s implements %s {", propertyContextName,
+      sw.println("class %s extends %s implements %s {", propertyContextName,
+          AbstractPropertyContext.class.getCanonicalName(),
           propertyContextType.getCanonicalName());
       sw.indent();
-      sw.println("public boolean canSet() { return %s; }", type.isSimpleBean()
-          || setter != null);
-      if (method.isCollection()) {
-        // Will return the collection's element type or null if not a collection
-        sw.println(
-            "public Class<?> getElementType() { return %s.class; }",
-            ModelUtils.ensureBaseType(method.getElementType()).getQualifiedSourceName());
-      } else if (method.isMap()) {
-        // Will return the map's value type
-        sw.println(
-            "public Class<?> getValueType() { return %s.class; }",
-            ModelUtils.ensureBaseType(method.getValueType()).getQualifiedSourceName());
-        // Will return the map's key type
-        sw.println(
-            "public Class<?> getKeyType() { return %s.class; }",
-            ModelUtils.ensureBaseType(method.getKeyType()).getQualifiedSourceName());
+      sw.println("%s() {", propertyContextName);
+      sw.indent();
+      sw.print("super(new Class<?>[] {");
+      boolean first = true;
+      for (JType lit : typeList) {
+        if (first) {
+          first = false;
+        } else {
+          sw.print(", ");
+        }
+        sw.print("%s.class",
+            ModelUtils.ensureBaseType(lit).getQualifiedSourceName());
       }
-      // Return the property type
-      sw.println(
-          "public Class<?> getType() { return %s.class; }",
-          ModelUtils.ensureBaseType(method.getMethod().getReturnType()).getQualifiedSourceName());
+      sw.println("}, new int[] {");
+      first = true;
+      for (JType lit : typeList) {
+        if (first) {
+          first = false;
+        } else {
+          sw.print(", ");
+        }
+        JParameterizedType hasParam = lit.isParameterized();
+        if (hasParam == null) {
+          sw.print("0");
+        } else {
+          sw.print(String.valueOf(hasParam.getTypeArgs().length));
+        }
+      }
+      sw.println("});");
+      sw.outdent();
+      sw.println("}");
+      // Base method returns true.
+      if (!type.isSimpleBean() && setter == null) {
+        sw.println("public boolean canSet() { return false; }");
+      }
       sw.println("public void set(Object obj) { ");
       if (setter != null) {
         // Prefer the setter if one exists
@@ -666,7 +711,7 @@ public class AutoBeanFactoryGenerator extends Generator {
       sw.println("visitor.endVisit%sProperty(\"%s\", value, %s);", visitMethod,
           method.getPropertyName(), propertyContextName);
       sw.outdent();
-      sw.print("}");
+      sw.println("}");
     }
     sw.outdent();
     sw.println("}");

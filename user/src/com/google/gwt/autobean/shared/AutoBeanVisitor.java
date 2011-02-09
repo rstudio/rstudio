@@ -62,9 +62,72 @@ public class AutoBeanVisitor {
   }
 
   /**
+   * The ParameterizationVisitor provides access to more complete type
+   * information than a simple class literal can provide.
+   * <p>
+   * The order of traversal reflects the declared parameterization of the
+   * property. For example, a {@code Map<String, List<Foo>>} would be traversed
+   * via the following sequence:
+   * 
+   * <pre>
+   * visitType(Map.class);
+   *   visitParameter();
+   *     visitType(String.class);
+   *     endVisitType(String.class);
+   *   endVisitParameter();
+   *   visitParameter();
+   *     visitType(List.class);
+   *       visitParameter();
+   *         visitType(Foo.class);
+   *         endVisitType(Foo.class);
+   *       endParameter();
+   *     endVisitType(List.class);
+   *   endVisitParameter();
+   * endVisitType(Map.class);
+   * </pre>
+   */
+  public static class ParameterizationVisitor {
+    /**
+     * Called when finished with a type parameter.
+     */
+    public void endVisitParameter() {
+    }
+
+    /**
+     * Called when finished with a type.
+     */
+    public void endVisitType(Class<?> type) {
+    }
+
+    /**
+     * Called when visiting a type parameter.
+     * 
+     * @return {@code true} if the type parameter should be visited
+     */
+    public boolean visitParameter() {
+      return true;
+    }
+
+    /**
+     * Called when visiting a possibly parameterized type.
+     * 
+     * @return {@code true} if the type should be visited
+     */
+    public boolean visitType(Class<?> type) {
+      return true;
+    }
+  }
+
+  /**
    * Allows properties to be reset.
    */
   public interface PropertyContext {
+    /**
+     * Allows deeper inspection of the declared parameterization of the
+     * property.
+     */
+    void accept(ParameterizationVisitor visitor);
+
     /**
      * Indicates if the {@link #set} method will succeed.
      * 

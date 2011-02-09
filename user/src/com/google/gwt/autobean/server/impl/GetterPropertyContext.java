@@ -34,7 +34,7 @@ class GetterPropertyContext extends MethodPropertyContext {
     Method found = null;
     String name = BeanMethod.GET.inferName(getter);
     for (Method m : getter.getDeclaringClass().getMethods()) {
-      if (BeanMethod.SET.matches(m)) {
+      if (BeanMethod.SET.matches(m) || BeanMethod.SET_BUILDER.matches(m)) {
         if (BeanMethod.SET.inferName(m).equals(name)
             && getter.getReturnType().isAssignableFrom(m.getParameterTypes()[0])) {
           found = m;

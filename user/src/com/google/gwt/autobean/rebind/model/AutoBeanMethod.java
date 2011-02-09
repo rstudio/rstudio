@@ -40,7 +40,8 @@ public class AutoBeanMethod {
 
     public AutoBeanMethod build() {
       if (toReturn.action.equals(JBeanMethod.GET)
-          || toReturn.action.equals(JBeanMethod.SET)) {
+          || toReturn.action.equals(JBeanMethod.SET)
+          || toReturn.action.equals(JBeanMethod.SET_BUILDER)) {
         PropertyName annotation = toReturn.method.getAnnotation(PropertyName.class);
         if (annotation != null) {
           toReturn.propertyName = annotation.value();

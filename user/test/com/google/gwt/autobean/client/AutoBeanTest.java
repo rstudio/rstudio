@@ -20,12 +20,15 @@ import com.google.gwt.autobean.shared.AutoBeanFactory;
 import com.google.gwt.autobean.shared.AutoBeanFactory.Category;
 import com.google.gwt.autobean.shared.AutoBeanUtils;
 import com.google.gwt.autobean.shared.AutoBeanVisitor;
+import com.google.gwt.autobean.shared.AutoBeanVisitor.ParameterizationVisitor;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 
 /**
  * Tests runtime behavior of AutoBean framework.
@@ -58,7 +61,13 @@ public class AutoBeanTest extends GWTTestCase {
 
     AutoBean<HasCall> hasCall();
 
+    AutoBean<HasChainedSetters> hasChainedSetters();
+
     AutoBean<HasList> hasList();
+
+    AutoBean<HasComplexTypes> hasListOfList();
+
+    AutoBean<HasMoreChainedSetters> hasMoreChainedSetters();
 
     AutoBean<Intf> intf();
 
@@ -68,27 +77,53 @@ public class AutoBeanTest extends GWTTestCase {
   }
 
   interface HasBoolean {
-    boolean isIs();
-
     boolean getGet();
 
     boolean hasHas();
 
-    void setIs(boolean value);
+    boolean isIs();
 
     void setGet(boolean value);
 
     void setHas(boolean value);
+
+    void setIs(boolean value);
   }
 
   interface HasCall {
     int add(int a, int b);
   }
 
+  interface HasChainedSetters {
+    int getInt();
+
+    String getString();
+
+    HasChainedSetters setInt(int value);
+
+    HasChainedSetters setString(String value);
+  }
+
+  interface HasComplexTypes {
+    List<List<Intf>> getList();
+
+    List<Map<String, Intf>> getListOfMap();
+
+    Map<Map<String, String>, List<List<Intf>>> getMap();
+  }
+
   interface HasList {
     List<Intf> getList();
 
     void setList(List<Intf> list);
+  }
+
+  interface HasMoreChainedSetters extends HasChainedSetters {
+    boolean isBoolean();
+
+    HasMoreChainedSetters setBoolean(boolean value);
+
+    HasMoreChainedSetters setInt(int value);
   }
 
   interface Intf {
@@ -102,15 +137,15 @@ public class AutoBeanTest extends GWTTestCase {
   }
 
   interface OtherIntf {
-    Intf getIntf();
-
     HasBoolean getHasBoolean();
+
+    Intf getIntf();
 
     UnreferencedInFactory getUnreferenced();
 
-    void setIntf(Intf intf);
-
     void setHasBoolean(HasBoolean value);
+
+    void setIntf(Intf intf);
   }
 
   static class RealIntf implements Intf {
@@ -151,6 +186,41 @@ public class AutoBeanTest extends GWTTestCase {
   interface UnreferencedInFactory {
   }
 
+  private static class ParameterizationTester extends ParameterizationVisitor {
+    private final StringBuilder sb;
+    private Stack<Boolean> isOpen = new Stack<Boolean>();
+
+    private ParameterizationTester(StringBuilder sb) {
+      this.sb = sb;
+    }
+
+    @Override
+    public void endVisitType(Class<?> type) {
+      if (isOpen.pop()) {
+        sb.append(">");
+      }
+    }
+
+    @Override
+    public boolean visitParameter() {
+      if (isOpen.peek()) {
+        sb.append(",");
+      } else {
+        sb.append("<");
+        isOpen.pop();
+        isOpen.push(true);
+      }
+      return true;
+    }
+
+    @Override
+    public boolean visitType(Class<?> type) {
+      sb.append(type.getName());
+      isOpen.push(false);
+      return true;
+    }
+  }
+
   protected Factory factory;
 
   @Override
@@ -178,6 +248,19 @@ public class AutoBeanTest extends GWTTestCase {
     call.setTag("offset", 1);
     assertEquals(6, call.as().add(2, 3));
     assertEquals(6, CallImpl.seen);
+  }
+
+  public void testChainedSetters() {
+    AutoBean<HasChainedSetters> bean = factory.hasChainedSetters();
+    bean.as().setInt(42).setString("Blah");
+    assertEquals(42, bean.as().getInt());
+    assertEquals("Blah", bean.as().getString());
+
+    AutoBean<HasMoreChainedSetters> more = factory.hasMoreChainedSetters();
+    more.as().setInt(42).setBoolean(true).setString("Blah");
+    assertEquals(42, more.as().getInt());
+    assertTrue(more.as().isBoolean());
+    assertEquals("Blah", more.as().getString());
   }
 
   public void testClone() {
@@ -339,6 +422,55 @@ public class AutoBeanTest extends GWTTestCase {
     Intf retrieved = other.getIntf();
     assertEquals("Hello world!", retrieved.getString());
     assertNotNull(AutoBeanUtils.getAutoBean(retrieved));
+  }
+
+  public void testParameterizationVisitor() {
+    AutoBean<HasComplexTypes> auto = factory.hasListOfList();
+    auto.accept(new AutoBeanVisitor() {
+      int count = 0;
+
+      @Override
+      public void endVisit(AutoBean<?> bean, Context ctx) {
+        assertEquals(3, count);
+      }
+
+      @Override
+      public void endVisitCollectionProperty(String propertyName,
+          AutoBean<Collection<?>> value, CollectionPropertyContext ctx) {
+        check(propertyName, ctx);
+      }
+
+      @Override
+      public void endVisitMapProperty(String propertyName,
+          AutoBean<Map<?, ?>> value, MapPropertyContext ctx) {
+        check(propertyName, ctx);
+      }
+
+      private void check(String propertyName, PropertyContext ctx) {
+        count++;
+        StringBuilder sb = new StringBuilder();
+        ctx.accept(new ParameterizationTester(sb));
+
+        if ("list".equals(propertyName)) {
+          // List<List<Intf>>
+          assertEquals(List.class.getName() + "<" + List.class.getName() + "<"
+              + Intf.class.getName() + ">>", sb.toString());
+        } else if ("listOfMap".equals(propertyName)) {
+          // List<Map<String, Intf>>
+          assertEquals(List.class.getName() + "<" + Map.class.getName() + "<"
+              + String.class.getName() + "," + Intf.class.getName() + ">>",
+              sb.toString());
+        } else if ("map".equals(propertyName)) {
+          // Map<Map<String, String>, List<List<Intf>>>
+          assertEquals(Map.class.getName() + "<" + Map.class.getName() + "<"
+              + String.class.getName() + "," + String.class.getName() + ">,"
+              + List.class.getName() + "<" + List.class.getName() + "<"
+              + Intf.class.getName() + ">>>", sb.toString());
+        } else {
+          throw new RuntimeException(propertyName);
+        }
+      }
+    });
   }
 
   /**

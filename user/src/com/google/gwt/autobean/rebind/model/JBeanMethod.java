@@ -20,6 +20,7 @@ import static com.google.gwt.autobean.server.impl.BeanMethod.HAS_PREFIX;
 import static com.google.gwt.autobean.server.impl.BeanMethod.IS_PREFIX;
 import static com.google.gwt.autobean.server.impl.BeanMethod.SET_PREFIX;
 
+import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
@@ -83,6 +84,24 @@ public enum JBeanMethod {
     @Override
     public boolean matches(JMethod method) {
       if (!JPrimitiveType.VOID.equals(method.getReturnType())) {
+        return false;
+      }
+      if (method.getParameters().length != 1) {
+        return false;
+      }
+      String name = method.getName();
+      if (name.startsWith(SET_PREFIX) && name.length() > 3) {
+        return true;
+      }
+      return false;
+    }
+  },
+  SET_BUILDER {
+    @Override
+    public boolean matches(JMethod method) {
+      JClassType returnClass = method.getReturnType().isClassOrInterface();
+      if (returnClass == null
+          || !returnClass.isAssignableFrom(method.getEnclosingType())) {
         return false;
       }
       if (method.getParameters().length != 1) {

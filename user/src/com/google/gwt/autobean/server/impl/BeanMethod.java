@@ -115,6 +115,27 @@ public enum BeanMethod {
     }
   },
   /**
+   * A setter that returns a type assignable from the interface in which the
+   * method is declared to support chained, builder-pattern setters. For
+   * example, {@code foo.setBar(1).setBaz(42)}.
+   */
+  SET_BUILDER {
+    @Override
+    Object invoke(SimpleBeanHandler<?> handler, Method method, Object[] args) {
+      handler.getBean().getValues().put(inferName(method), args[0]);
+      return handler.getBean().as();
+    }
+
+    @Override
+    boolean matches(SimpleBeanHandler<?> handler, Method method) {
+      String name = method.getName();
+      return name.startsWith(SET_PREFIX)
+          && name.length() > 3
+          && method.getParameterTypes().length == 1
+          && method.getReturnType().isAssignableFrom(method.getDeclaringClass());
+    }
+  },
+  /**
    * Domain methods.
    */
   CALL {

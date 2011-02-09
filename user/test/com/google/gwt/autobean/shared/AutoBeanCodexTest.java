@@ -34,7 +34,7 @@ public class AutoBeanCodexTest extends GWTTestCase {
    * Protected so that the JRE-only test can instantiate instances.
    */
   protected interface Factory extends AutoBeanFactory {
-    AutoBean<HasAutoBean> hasAutoBean();
+    AutoBean<HasSplittable> hasAutoBean();
 
     AutoBean<HasCycle> hasCycle();
 
@@ -63,20 +63,6 @@ public class AutoBeanCodexTest extends GWTTestCase {
 
   enum EnumReachableThroughMapValue {
     FOO_VALUE
-  }
-
-  interface HasAutoBean {
-    Splittable getSimple();
-
-    List<Splittable> getSimpleList();
-
-    Splittable getString();
-
-    void setSimple(Splittable simple);
-
-    void setSimpleList(List<Splittable> simple);
-
-    void setString(Splittable s);
   }
 
   /**
@@ -119,9 +105,13 @@ public class AutoBeanCodexTest extends GWTTestCase {
   interface HasMap {
     Map<Simple, Simple> getComplexMap();
 
+    Map<Map<String, String>, Map<String, String>> getNestedMap();
+
     Map<String, Simple> getSimpleMap();
 
     void setComplexMap(Map<Simple, Simple> map);
+
+    void setNestedMap(Map<Map<String, String>, Map<String, String>> map);
 
     void setSimpleMap(Map<String, Simple> map);
   }
@@ -130,6 +120,24 @@ public class AutoBeanCodexTest extends GWTTestCase {
     Simple getSimple();
 
     void setSimple(Simple s);
+  }
+
+  interface HasSplittable {
+    Splittable getSimple();
+
+    List<Splittable> getSimpleList();
+
+    Map<Splittable, Splittable> getSplittableMap();
+
+    Splittable getString();
+
+    void setSimple(Splittable simple);
+
+    void setSimpleList(List<Splittable> simple);
+
+    void setSplittableMap(Map<Splittable, Splittable> map);
+
+    void setString(Splittable s);
   }
 
   enum MyEnum {
@@ -264,6 +272,26 @@ public class AutoBeanCodexTest extends GWTTestCase {
     }
   }
 
+  /**
+   * Verify that arbitrarily complicated Maps of Maps work.
+   */
+  public void testNestedMap() {
+    Map<String, String> key = new HashMap<String, String>();
+    key.put("a", "b");
+
+    Map<String, String> value = new HashMap<String, String>();
+    value.put("c", "d");
+
+    Map<Map<String, String>, Map<String, String>> test = new HashMap<Map<String, String>, Map<String, String>>();
+    test.put(key, value);
+
+    AutoBean<HasMap> bean = f.hasMap();
+    bean.as().setNestedMap(test);
+
+    AutoBean<HasMap> decoded = checkEncode(bean);
+    assertEquals(1, decoded.as().getNestedMap().size());
+  }
+
   public void testNull() {
     AutoBean<Simple> bean = f.simple();
     AutoBean<Simple> decodedBean = checkEncode(bean);
@@ -308,20 +336,27 @@ public class AutoBeanCodexTest extends GWTTestCase {
   public void testSplittable() {
     AutoBean<Simple> simple = f.simple();
     simple.as().setString("Simple");
-    AutoBean<HasAutoBean> bean = f.hasAutoBean();
+    AutoBean<HasSplittable> bean = f.hasAutoBean();
     bean.as().setSimple(AutoBeanCodex.encode(simple));
     bean.as().setString(ValueCodex.encode("Hello ['\"] world"));
     List<Splittable> testList = Arrays.asList(AutoBeanCodex.encode(simple),
         null, AutoBeanCodex.encode(simple));
     bean.as().setSimpleList(testList);
+    Map<Splittable, Splittable> testMap = Collections.singletonMap(
+        ValueCodex.encode("12345"), ValueCodex.encode("5678"));
+    bean.as().setSplittableMap(testMap);
 
-    AutoBean<HasAutoBean> decoded = checkEncode(bean);
+    AutoBean<HasSplittable> decoded = checkEncode(bean);
     Splittable toDecode = decoded.as().getSimple();
     AutoBean<Simple> decodedSimple = AutoBeanCodex.decode(f, Simple.class,
         toDecode);
     assertEquals("Simple", decodedSimple.as().getString());
     assertEquals("Hello ['\"] world",
         ValueCodex.decode(String.class, decoded.as().getString()));
+    assertEquals("12345",
+        decoded.as().getSplittableMap().keySet().iterator().next().asString());
+    assertEquals("5678",
+        decoded.as().getSplittableMap().values().iterator().next().asString());
 
     List<Splittable> list = decoded.as().getSimpleList();
     assertEquals(3, list.size());

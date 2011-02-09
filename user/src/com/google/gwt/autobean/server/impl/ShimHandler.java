@@ -18,7 +18,6 @@ package com.google.gwt.autobean.server.impl;
 import com.google.gwt.autobean.shared.AutoBean;
 import com.google.gwt.autobean.shared.AutoBeanUtils;
 
-import java.lang.reflect.Array;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -80,7 +79,8 @@ class ShimHandler<T> implements InvocationHandler {
     } else if (BeanMethod.GET.matches(method)) {
       toReturn = method.invoke(toWrap, args);
       toReturn = bean.get(name, toReturn);
-    } else if (BeanMethod.SET.matches(method)) {
+    } else if (BeanMethod.SET.matches(method)
+        || BeanMethod.SET_BUILDER.matches(method)) {
       bean.checkFrozen();
       toReturn = method.invoke(toWrap, args);
       bean.set(name, args[0]);
@@ -117,12 +117,11 @@ class ShimHandler<T> implements InvocationHandler {
       return toReturn;
     }
     if (toReturn.getClass().isArray()) {
-      for (int i = 0, j = Array.getLength(toReturn); i < j; i++) {
-        Object value = Array.get(toReturn, i);
-        if (value != null) {
-          Array.set(toReturn, i, maybeWrap(value.getClass(), value));
-        }
-      }
+      /*
+       * We can't reliably wrap arrays, but the only time we typically see an
+       * array is with toArray() call on a collection, since arrays aren't
+       * supported property types.
+       */
       return toReturn;
     }
     ProxyAutoBean<Object> newBean = new ProxyAutoBean<Object>(

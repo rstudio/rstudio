@@ -17,6 +17,7 @@ package com.google.gwt.autobean.server.impl;
 
 import com.google.gwt.autobean.shared.AutoBeanVisitor.CollectionPropertyContext;
 import com.google.gwt.autobean.shared.AutoBeanVisitor.MapPropertyContext;
+import com.google.gwt.autobean.shared.AutoBeanVisitor.ParameterizationVisitor;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -31,9 +32,10 @@ import java.util.WeakHashMap;
 abstract class MethodPropertyContext implements CollectionPropertyContext,
     MapPropertyContext {
   private static class Data {
+    Class<?> elementType;
+    Type genericType;
     Class<?> keyType;
     Class<?> valueType;
-    Class<?> elementType;
     Class<?> type;
   }
 
@@ -41,7 +43,6 @@ abstract class MethodPropertyContext implements CollectionPropertyContext,
    * Save prior instances in order to decrease the amount of data computed.
    */
   private static final Map<Method, Data> cache = new WeakHashMap<Method, Data>();
-
   private final Data data;
 
   public MethodPropertyContext(Method getter) {
@@ -53,6 +54,7 @@ abstract class MethodPropertyContext implements CollectionPropertyContext,
       }
 
       this.data = new Data();
+      data.genericType = getter.getGenericReturnType();
       data.type = getter.getReturnType();
       // Compute collection element type
       if (Collection.class.isAssignableFrom(getType())) {
@@ -67,6 +69,10 @@ abstract class MethodPropertyContext implements CollectionPropertyContext,
       }
       cache.put(getter, data);
     }
+  }
+
+  public void accept(ParameterizationVisitor visitor) {
+    traverse(visitor, data.genericType);
   }
 
   public abstract boolean canSet();
@@ -88,4 +94,18 @@ abstract class MethodPropertyContext implements CollectionPropertyContext,
   }
 
   public abstract void set(Object value);
+
+  private void traverse(ParameterizationVisitor visitor, Type type) {
+    Class<?> base = TypeUtils.ensureBaseType(type);
+    if (visitor.visitType(base)) {
+      Type[] params = TypeUtils.getParameterization(base, type);
+      for (Type t : params) {
+        if (visitor.visitParameter()) {
+          traverse(visitor, t);
+        }
+        visitor.endVisitParameter();
+      }
+    }
+    visitor.endVisitType(base);
+  }
 }

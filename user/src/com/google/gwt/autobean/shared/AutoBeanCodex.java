@@ -15,6 +15,7 @@
  */
 package com.google.gwt.autobean.shared;
 
+import com.google.gwt.autobean.shared.AutoBeanVisitor.ParameterizationVisitor;
 import com.google.gwt.autobean.shared.impl.EnumMap;
 import com.google.gwt.autobean.shared.impl.LazySplittable;
 import com.google.gwt.autobean.shared.impl.StringQuoter;
@@ -23,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,455 +36,113 @@ import java.util.Stack;
  * encode cycles, but it will detect them.
  */
 public class AutoBeanCodex {
-  static class Decoder extends AutoBeanVisitor {
-    private final Stack<AutoBean<?>> beanStack = new Stack<AutoBean<?>>();
-    private final Stack<Splittable> dataStack = new Stack<Splittable>();
-    private AutoBean<?> bean;
-    private Splittable data;
-    private final AutoBeanFactory factory;
 
-    public Decoder(AutoBeanFactory factory) {
-      this.factory = factory;
-    }
+  /**
+   * Describes a means of encoding or decoding a particular type of data to or
+   * from a wire format representation.
+   */
+  interface Coder {
+    Object decode(Splittable data);
 
-    @SuppressWarnings("unchecked")
-    public <T> AutoBean<T> decode(Splittable data, Class<T> type) {
-      push(data, type);
-      bean.accept(this);
-      return (AutoBean<T>) pop();
-    }
+    void encode(StringBuilder sb, Object value);
+  }
 
-    @Override
-    public boolean visitCollectionProperty(String propertyName,
-        AutoBean<Collection<?>> value, CollectionPropertyContext ctx) {
-      if (data.isNull(propertyName)) {
-        return false;
-      }
-
-      Collection<Object> collection;
-      if (List.class.equals(ctx.getType())) {
-        collection = new ArrayList<Object>();
-      } else if (Set.class.equals(ctx.getType())) {
-        collection = new HashSet<Object>();
-      } else {
-        throw new UnsupportedOperationException("Only List and Set supported");
-      }
-
-      boolean isValue = ValueCodex.canDecode(ctx.getElementType());
-      boolean isEncoded = Splittable.class.equals(ctx.getElementType());
-      Splittable listData = data.get(propertyName);
-      for (int i = 0, j = listData.size(); i < j; i++) {
-        if (listData.isNull(i)) {
-          collection.add(null);
-        } else {
-          if (isValue) {
-            collection.add(decodeValue(ctx.getElementType(), listData.get(i)));
-          } else if (isEncoded) {
-            collection.add(listData.get(i));
-          } else {
-            collection.add(decode(listData.get(i), ctx.getElementType()).as());
-          }
-        }
-      }
-      ctx.set(collection);
-      return false;
-    }
+  /**
+   * Creates a Coder that is capable of operating on a particular
+   * parameterization of a datastructure (e.g. {@code Map<String, List<String>>}
+   * ).
+   */
+  class CoderCreator extends ParameterizationVisitor {
+    private Stack<Coder> stack = new Stack<Coder>();
 
     @Override
-    public boolean visitMapProperty(String propertyName,
-        AutoBean<Map<?, ?>> value, MapPropertyContext ctx) {
-      if (data.isNull(propertyName)) {
-        return false;
-      }
-
-      Map<?, ?> map;
-      if (ValueCodex.canDecode(ctx.getKeyType())) {
-        map = decodeValueKeyMap(data.get(propertyName), ctx.getKeyType(),
-            ctx.getValueType());
+    public void endVisitType(Class<?> type) {
+      if (List.class.equals(type) || Set.class.equals(type)) {
+        stack.push(new CollectionCoder(type, stack.pop()));
+      } else if (Map.class.equals(type)) {
+        // Note that the parameters are passed in reverse order
+        stack.push(new MapCoder(stack.pop(), stack.pop()));
+      } else if (Splittable.class.equals(type)) {
+        stack.push(new SplittableDecoder());
+      } else if (type.getEnumConstants() != null) {
+        @SuppressWarnings(value = {"rawtypes", "unchecked"})
+        EnumCoder decoder = new EnumCoder(type);
+        stack.push(decoder);
+      } else if (ValueCodex.canDecode(type)) {
+        stack.push(new ValueCoder(type));
       } else {
-        map = decodeObjectKeyMap(data.get(propertyName), ctx.getKeyType(),
-            ctx.getValueType());
+        stack.push(new ObjectCoder(type));
       }
-      ctx.set(map);
-      return false;
     }
 
-    @Override
-    public boolean visitReferenceProperty(String propertyName,
-        AutoBean<?> value, PropertyContext ctx) {
-      if (data.isNull(propertyName)) {
-        return false;
-      }
-
-      if (Splittable.class.equals(ctx.getType())) {
-        ctx.set(data.get(propertyName));
-        return false;
-      }
-
-      push(data.get(propertyName), ctx.getType());
-      bean.accept(this);
-      ctx.set(pop().as());
-      return false;
-    }
-
-    @Override
-    public boolean visitValueProperty(String propertyName, Object value,
-        PropertyContext ctx) {
-      if (!data.isNull(propertyName)) {
-        Object object;
-        Splittable propertyValue = data.get(propertyName);
-        Class<?> type = ctx.getType();
-        object = decodeValue(type, propertyValue);
-        ctx.set(object);
-      }
-      return false;
-    }
-
-    private Map<?, ?> decodeObjectKeyMap(Splittable map, Class<?> keyType,
-        Class<?> valueType) {
-      boolean isEncodedKey = Splittable.class.equals(keyType);
-      boolean isEncodedValue = Splittable.class.equals(valueType);
-      boolean isValueValue = Splittable.class.equals(valueType);
-
-      Splittable keyList = map.get(0);
-      Splittable valueList = map.get(1);
-      assert keyList.size() == valueList.size();
-
-      Map<Object, Object> toReturn = new HashMap<Object, Object>(keyList.size());
-      for (int i = 0, j = keyList.size(); i < j; i++) {
-        Object key;
-        if (isEncodedKey) {
-          key = keyList.get(i);
-        } else {
-          key = decode(keyList.get(i), keyType).as();
-        }
-
-        Object value;
-        if (valueList.isNull(i)) {
-          value = null;
-        } else if (isEncodedValue) {
-          value = keyList.get(i);
-        } else if (isValueValue) {
-          value = decodeValue(valueType, keyList.get(i));
-        } else {
-          value = decode(valueList.get(i), valueType).as();
-        }
-
-        toReturn.put(key, value);
-      }
-      return toReturn;
-    }
-
-    private Object decodeValue(Class<?> type, Splittable propertyValue) {
-      return decodeValue(type, propertyValue.asString());
-    }
-
-    private Object decodeValue(Class<?> type, String propertyValue) {
-      Object object;
-      if (type.isEnum() && bean.getFactory() instanceof EnumMap) {
-        // The generics kind of get in the way here
-        @SuppressWarnings({"unchecked", "rawtypes"})
-        Class<Enum> enumType = (Class<Enum>) type;
-        @SuppressWarnings("unchecked")
-        Enum<?> e = ((EnumMap) bean.getFactory()).getEnum(enumType,
-            propertyValue);
-        object = e;
-      } else {
-        object = ValueCodex.decode(type, propertyValue);
-      }
-      return object;
-    }
-
-    private Map<?, ?> decodeValueKeyMap(Splittable map, Class<?> keyType,
-        Class<?> valueType) {
-      Map<Object, Object> toReturn = new HashMap<Object, Object>();
-
-      boolean isEncodedValue = Splittable.class.equals(valueType);
-      boolean isValueValue = ValueCodex.canDecode(valueType);
-      for (String encodedKey : map.getPropertyKeys()) {
-        Object key = decodeValue(keyType, encodedKey);
-        Object value;
-        if (map.isNull(encodedKey)) {
-          value = null;
-        } else if (isEncodedValue) {
-          value = map.get(encodedKey);
-        } else if (isValueValue) {
-          value = decodeValue(valueType, map.get(encodedKey));
-        } else {
-          value = decode(map.get(encodedKey), valueType).as();
-        }
-        toReturn.put(key, value);
-      }
-
-      return toReturn;
-    }
-
-    private AutoBean<?> pop() {
-      dataStack.pop();
-      if (dataStack.isEmpty()) {
-        data = null;
-      } else {
-        data = dataStack.peek();
-      }
-      AutoBean<?> toReturn = beanStack.pop();
-      if (beanStack.isEmpty()) {
-        bean = null;
-      } else {
-        bean = beanStack.peek();
-      }
-      return toReturn;
-    }
-
-    private void push(Splittable data, Class<?> type) {
-      this.data = data;
-      bean = factory.create(type);
-      if (bean == null) {
-        throw new IllegalArgumentException(
-            "The AutoBeanFactory cannot create a " + type.getName());
-      }
-      dataStack.push(data);
-      beanStack.push(bean);
+    public Coder getCoder() {
+      assert stack.size() == 1 : "Incorrect size: " + stack.size();
+      return stack.pop();
     }
   }
 
-  static class Encoder extends AutoBeanVisitor {
-    private EnumMap enumMap;
-    private Set<AutoBean<?>> seen = new HashSet<AutoBean<?>>();
-    private Stack<StringBuilder> stack = new Stack<StringBuilder>();
-    private StringBuilder sb;
+  class CollectionCoder implements Coder {
+    private final Coder elementDecoder;
+    private final Class<?> type;
 
-    public Encoder(AutoBeanFactory factory) {
-      if (factory instanceof EnumMap) {
-        enumMap = (EnumMap) factory;
-      }
+    public CollectionCoder(Class<?> type, Coder elementDecoder) {
+      this.elementDecoder = elementDecoder;
+      this.type = type;
     }
 
-    @Override
-    public void endVisit(AutoBean<?> bean, Context ctx) {
-      if (sb.length() == 0) {
-        // No properties
-        sb.append("{");
+    public Object decode(Splittable data) {
+      Collection<Object> collection;
+      if (List.class.equals(type)) {
+        collection = new ArrayList<Object>();
+      } else if (Set.class.equals(type)) {
+        collection = new HashSet<Object>();
       } else {
-        sb.setCharAt(0, '{');
+        // Should not reach here
+        throw new RuntimeException(type.getName());
       }
-      sb.append("}");
+      for (int i = 0, j = data.size(); i < j; i++) {
+        Object element = data.isNull(i) ? null
+            : elementDecoder.decode(data.get(i));
+        collection.add(element);
+      }
+      return collection;
     }
 
-    @Override
-    public void endVisitReferenceProperty(String propertyName,
-        AutoBean<?> value, PropertyContext ctx) {
-      StringBuilder popped = pop();
-      if (popped.length() > 0) {
-        sb.append(",\"").append(propertyName).append("\":").append(
-            popped.toString());
-      }
-    }
-
-    @Override
-    public boolean visitCollectionProperty(String propertyName,
-        AutoBean<Collection<?>> value, CollectionPropertyContext ctx) {
-      push(new StringBuilder());
-
+    public void encode(StringBuilder sb, Object value) {
       if (value == null) {
-        return false;
+        sb.append("null");
+        return;
       }
 
-      Collection<?> collection = value.as();
-      if (collection.isEmpty()) {
-        sb.append("[]");
-        return false;
-      }
-
-      if (ValueCodex.canDecode(ctx.getElementType())) {
-        for (Object element : collection) {
-          sb.append(",").append(
-              encodeValue(ctx.getElementType(), element).getPayload());
-        }
-      } else {
-        boolean isEncoded = Splittable.class.equals(ctx.getElementType());
-        for (Object element : collection) {
+      Iterator<?> it = ((Collection<?>) value).iterator();
+      sb.append("[");
+      if (it.hasNext()) {
+        elementDecoder.encode(sb, it.next());
+        while (it.hasNext()) {
           sb.append(",");
-          if (element == null) {
-            sb.append("null");
-          } else if (isEncoded) {
-            sb.append(((Splittable) element).getPayload());
-          } else {
-            encodeToStringBuilder(sb, element);
-          }
+          elementDecoder.encode(sb, it.next());
         }
       }
-      sb.setCharAt(0, '[');
       sb.append("]");
-      return false;
+    }
+  }
+
+  class EnumCoder<E extends Enum<E>> implements Coder {
+    private final Class<E> type;
+
+    public EnumCoder(Class<E> type) {
+      this.type = type;
     }
 
-    @Override
-    public boolean visitMapProperty(String propertyName,
-        AutoBean<Map<?, ?>> value, MapPropertyContext ctx) {
-      push(new StringBuilder());
+    public Object decode(Splittable data) {
+      return enumMap.getEnum(type, data.asString());
+    }
 
+    public void encode(StringBuilder sb, Object value) {
       if (value == null) {
-        return false;
+        sb.append("null");
       }
-
-      Map<?, ?> map = value.as();
-      if (map.isEmpty()) {
-        sb.append("{}");
-        return false;
-      }
-
-      Class<?> keyType = ctx.getKeyType();
-      Class<?> valueType = ctx.getValueType();
-      boolean isEncodedKey = Splittable.class.equals(keyType);
-      boolean isEncodedValue = Splittable.class.equals(valueType);
-      boolean isValueKey = ValueCodex.canDecode(keyType);
-      boolean isValueValue = ValueCodex.canDecode(valueType);
-
-      if (isValueKey) {
-        writeValueKeyMap(map, keyType, valueType, isEncodedValue, isValueValue);
-      } else {
-        writeObjectKeyMap(map, valueType, isEncodedKey, isEncodedValue,
-            isValueValue);
-      }
-
-      return false;
-    }
-
-    @Override
-    public boolean visitReferenceProperty(String propertyName,
-        AutoBean<?> value, PropertyContext ctx) {
-      push(new StringBuilder());
-
-      if (value == null) {
-        return false;
-      }
-
-      if (Splittable.class.equals(ctx.getType())) {
-        sb.append(((Splittable) value.as()).getPayload());
-        return false;
-      }
-
-      if (seen.contains(value)) {
-        haltOnCycle();
-      }
-
-      return true;
-    }
-
-    @Override
-    public boolean visitValueProperty(String propertyName, Object value,
-        PropertyContext ctx) {
-      // Skip primitive types whose values are uninteresting.
-      Class<?> type = ctx.getType();
-      Object blankValue = ValueCodex.getUninitializedFieldValue(type);
-      if (value == blankValue || value != null && value.equals(blankValue)) {
-        return false;
-      }
-
-      // Special handling for enums if we have an obfuscation map
-      Splittable split;
-      split = encodeValue(type, value);
-      sb.append(",\"").append(propertyName).append("\":").append(
-          split.getPayload());
-      return false;
-    }
-
-    StringBuilder pop() {
-      StringBuilder toReturn = stack.pop();
-      sb = stack.peek();
-      return toReturn;
-    }
-
-    void push(StringBuilder sb) {
-      stack.push(sb);
-      this.sb = sb;
-    }
-
-    private void encodeToStringBuilder(StringBuilder accumulator, Object value) {
-      push(new StringBuilder());
-      AutoBean<?> bean = AutoBeanUtils.getAutoBean(value);
-      if (!seen.add(bean)) {
-        haltOnCycle();
-      }
-      bean.accept(this);
-      accumulator.append(pop().toString());
-      seen.remove(bean);
-    }
-
-    /**
-     * Encodes a value, with special handling for enums to allow the field name
-     * to be overridden.
-     */
-    private Splittable encodeValue(Class<?> expectedType, Object value) {
-      Splittable split;
-      if (value instanceof Enum<?> && enumMap != null) {
-        split = ValueCodex.encode(String.class,
-            enumMap.getToken((Enum<?>) value));
-      } else {
-        split = ValueCodex.encode(expectedType, value);
-      }
-      return split;
-    }
-
-    private void haltOnCycle() {
-      throw new HaltException(new UnsupportedOperationException(
-          "Cycle detected"));
-    }
-
-    /**
-     * Writes a map JSON literal where the keys are object types. This is
-     * encoded as a list of two lists, since it's possible that two distinct
-     * objects have the same encoded form.
-     */
-    private void writeObjectKeyMap(Map<?, ?> map, Class<?> valueType,
-        boolean isEncodedKey, boolean isEncodedValue, boolean isValueValue) {
-      StringBuilder keys = new StringBuilder();
-      StringBuilder values = new StringBuilder();
-
-      for (Map.Entry<?, ?> entry : map.entrySet()) {
-        if (isEncodedKey) {
-          keys.append(",").append(((Splittable) entry.getKey()).getPayload());
-        } else {
-          encodeToStringBuilder(keys.append(","), entry.getKey());
-        }
-
-        if (isEncodedValue) {
-          values.append(",").append(
-              ((Splittable) entry.getValue()).getPayload());
-        } else if (isValueValue) {
-          values.append(",").append(
-              encodeValue(valueType, entry.getValue()).getPayload());
-        } else {
-          encodeToStringBuilder(values.append(","), entry.getValue());
-        }
-      }
-      keys.setCharAt(0, '[');
-      keys.append("]");
-      values.setCharAt(0, '[');
-      values.append("]");
-
-      sb.append("[").append(keys.toString()).append(",").append(
-          values.toString()).append("]");
-    }
-
-    /**
-     * Writes a map JSON literal where the keys are value types.
-     */
-    private void writeValueKeyMap(Map<?, ?> map, Class<?> keyType,
-        Class<?> valueType, boolean isEncodedValue, boolean isValueValue) {
-      for (Map.Entry<?, ?> entry : map.entrySet()) {
-        sb.append(",").append(encodeValue(keyType, entry.getKey()).getPayload()).append(
-            ":");
-        if (isEncodedValue) {
-          sb.append(((Splittable) entry.getValue()).getPayload());
-        } else if (isValueValue) {
-          sb.append(encodeValue(valueType, entry.getValue()).getPayload());
-        } else {
-          encodeToStringBuilder(sb, entry.getValue());
-        }
-      }
-      sb.setCharAt(0, '{');
-      sb.append("}");
+      sb.append(StringQuoter.quote(enumMap.getToken((Enum<?>) value)));
     }
   }
 
@@ -500,9 +160,250 @@ public class AutoBeanCodex {
     }
   }
 
+  class MapCoder implements Coder {
+    private final Coder keyDecoder;
+    private final Coder valueDecoder;
+
+    /**
+     * Parameters in reversed order to accommodate stack-based setup.
+     */
+    public MapCoder(Coder valueDecoder, Coder keyDecoder) {
+      this.keyDecoder = keyDecoder;
+      this.valueDecoder = valueDecoder;
+    }
+
+    public Object decode(Splittable data) {
+      Map<Object, Object> toReturn = new HashMap<Object, Object>();
+      if (data.isIndexed()) {
+        assert data.size() == 2 : "Wrong data size: " + data.size();
+        Splittable keys = data.get(0);
+        Splittable values = data.get(1);
+        for (int i = 0, j = keys.size(); i < j; i++) {
+          Object key = keys.isNull(i) ? null : keyDecoder.decode(keys.get(i));
+          Object value = values.isNull(i) ? null
+              : valueDecoder.decode(values.get(i));
+          toReturn.put(key, value);
+        }
+      } else {
+        ValueCoder keyValueDecoder = (ValueCoder) keyDecoder;
+        for (String rawKey : data.getPropertyKeys()) {
+          Object key = keyValueDecoder.decode(rawKey);
+          Object value = data.isNull(rawKey) ? null
+              : valueDecoder.decode(data.get(rawKey));
+          toReturn.put(key, value);
+        }
+      }
+      return toReturn;
+    }
+
+    public void encode(StringBuilder sb, Object value) {
+      if (value == null) {
+        sb.append("null");
+        return;
+      }
+
+      Map<?, ?> map = (Map<?, ?>) value;
+      boolean isSimpleMap = keyDecoder instanceof ValueCoder;
+      if (isSimpleMap) {
+        boolean first = true;
+        sb.append("{");
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+          Object mapKey = entry.getKey();
+          if (mapKey == null) {
+            // A null key in a simple map is meaningless
+            continue;
+          }
+          Object mapValue = entry.getValue();
+          if (mapValue == null) {
+            // A null value can be ignored
+            continue;
+          }
+
+          if (first) {
+            first = false;
+          } else {
+            sb.append(",");
+          }
+
+          keyDecoder.encode(sb, mapKey);
+          sb.append(":");
+          valueDecoder.encode(sb, mapValue);
+        }
+        sb.append("}");
+      } else {
+        List<Object> keys = new ArrayList<Object>(map.size());
+        List<Object> values = new ArrayList<Object>(map.size());
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+          keys.add(entry.getKey());
+          values.add(entry.getValue());
+        }
+        sb.append("[");
+        new CollectionCoder(List.class, keyDecoder).encode(sb, keys);
+        sb.append(",");
+        new CollectionCoder(List.class, valueDecoder).encode(sb, values);
+        sb.append("]");
+      }
+    }
+  }
+
+  class ObjectCoder implements Coder {
+    private final Class<?> type;
+
+    public ObjectCoder(Class<?> type) {
+      this.type = type;
+    }
+
+    public Object decode(Splittable data) {
+      AutoBean<?> bean = doDecode(type, data);
+      return bean == null ? null : bean.as();
+    }
+
+    public void encode(StringBuilder sb, Object value) {
+      if (value == null) {
+        sb.append("null");
+        return;
+      }
+      doEncode(sb, AutoBeanUtils.getAutoBean(value));
+    }
+  }
+
+  /**
+   * Extracts properties from a bean and turns them into JSON text.
+   */
+  class PropertyGetter extends AutoBeanVisitor {
+    private boolean first = true;
+    private final StringBuilder sb;
+
+    public PropertyGetter(StringBuilder sb) {
+      this.sb = sb;
+    }
+
+    @Override
+    public void endVisit(AutoBean<?> bean, Context ctx) {
+      sb.append("}");
+      seen.pop();
+    }
+
+    @Override
+    public boolean visit(AutoBean<?> bean, Context ctx) {
+      if (seen.contains(bean)) {
+        throw new HaltException(new UnsupportedOperationException(
+            "Cycles not supported"));
+      }
+      seen.push(bean);
+      sb.append("{");
+      return true;
+    }
+
+    @Override
+    public boolean visitReferenceProperty(String propertyName,
+        AutoBean<?> value, PropertyContext ctx) {
+      if (value != null) {
+        encodeProperty(propertyName, value.as(), ctx);
+      }
+      return false;
+    }
+
+    @Override
+    public boolean visitValueProperty(String propertyName, Object value,
+        PropertyContext ctx) {
+      if (value != null
+          && !value.equals(ValueCodex.getUninitializedFieldValue(ctx.getType()))) {
+        encodeProperty(propertyName, value, ctx);
+      }
+      return false;
+    }
+
+    private void encodeProperty(String propertyName, Object value,
+        PropertyContext ctx) {
+      CoderCreator pd = new CoderCreator();
+      ctx.accept(pd);
+      Coder decoder = pd.getCoder();
+      if (first) {
+        first = false;
+      } else {
+        sb.append(",");
+      }
+      sb.append(StringQuoter.quote(propertyName));
+      sb.append(":");
+      decoder.encode(sb, value);
+    }
+  }
+
+  /**
+   * Populates beans with data extracted from an evaluated JSON payload.
+   */
+  class PropertySetter extends AutoBeanVisitor {
+    private Splittable data;
+
+    public void decodeInto(Splittable data, AutoBean<?> bean) {
+      this.data = data;
+      bean.accept(this);
+    }
+
+    @Override
+    public boolean visitReferenceProperty(String propertyName,
+        AutoBean<?> value, PropertyContext ctx) {
+      decodeProperty(propertyName, ctx);
+      return false;
+    }
+
+    @Override
+    public boolean visitValueProperty(String propertyName, Object value,
+        PropertyContext ctx) {
+      decodeProperty(propertyName, ctx);
+      return false;
+    }
+
+    protected void decodeProperty(String propertyName, PropertyContext ctx) {
+      if (!data.isNull(propertyName)) {
+        CoderCreator pd = new CoderCreator();
+        ctx.accept(pd);
+        Coder decoder = pd.getCoder();
+        Object propertyValue = decoder.decode(data.get(propertyName));
+        ctx.set(propertyValue);
+      }
+    }
+  }
+
+  class SplittableDecoder implements Coder {
+    public Object decode(Splittable data) {
+      return data;
+    }
+
+    public void encode(StringBuilder sb, Object value) {
+      if (value == null) {
+        sb.append("null");
+        return;
+      }
+      sb.append(((Splittable) value).getPayload());
+    }
+  }
+
+  class ValueCoder implements Coder {
+    private final Class<?> type;
+
+    public ValueCoder(Class<?> type) {
+      assert type.getEnumConstants() == null : "Should use EnumTypeCodex";
+      this.type = type;
+    }
+
+    public Object decode(Splittable propertyValue) {
+      return decode(propertyValue.asString());
+    }
+
+    public Object decode(String propertyValue) {
+      return ValueCodex.decode(type, propertyValue);
+    }
+
+    public void encode(StringBuilder sb, Object value) {
+      sb.append(ValueCodex.encode(value).getPayload());
+    }
+  }
+
   public static <T> AutoBean<T> decode(AutoBeanFactory factory, Class<T> clazz,
       Splittable data) {
-    return new Decoder(factory).decode(data, clazz);
+    return new AutoBeanCodex(factory).doDecode(clazz, data);
   }
 
   /**
@@ -534,21 +435,38 @@ public class AutoBeanCodex {
     }
 
     StringBuilder sb = new StringBuilder();
-    encodeForJsoPayload(sb, bean);
+    new AutoBeanCodex(bean.getFactory()).doEncode(sb, bean);
     return new LazySplittable(sb.toString());
   }
 
-  // ["prop",value,"prop",value, ...]
-  private static void encodeForJsoPayload(StringBuilder sb, AutoBean<?> bean) {
-    Encoder e = new Encoder(bean.getFactory());
-    e.push(sb);
+  private final EnumMap enumMap;
+  private final AutoBeanFactory factory;
+  private final Stack<AutoBean<?>> seen = new Stack<AutoBean<?>>();
+
+  private AutoBeanCodex(AutoBeanFactory factory) {
+    this.factory = factory;
+    this.enumMap = factory instanceof EnumMap ? (EnumMap) factory : null;
+  }
+
+  <T> AutoBean<T> doDecode(Class<T> clazz, Splittable data) {
+    AutoBean<T> toReturn = factory.create(clazz);
+    if (toReturn == null) {
+      throw new IllegalArgumentException(clazz.getName());
+    }
+    doDecodeInto(data, toReturn);
+    return toReturn;
+  }
+
+  void doDecodeInto(Splittable data, AutoBean<?> bean) {
+    new PropertySetter().decodeInto(data, bean);
+  }
+
+  void doEncode(StringBuilder sb, AutoBean<?> bean) {
+    PropertyGetter e = new PropertyGetter(sb);
     try {
       bean.accept(e);
     } catch (HaltException ex) {
       throw ex.getCause();
     }
-  }
-
-  private AutoBeanCodex() {
   }
 }
