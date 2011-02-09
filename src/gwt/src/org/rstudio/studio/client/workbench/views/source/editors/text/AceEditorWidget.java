@@ -1,6 +1,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
@@ -60,6 +61,19 @@ public class AceEditorWidget extends Composite
             onResize();
          }
       });
+
+      // On Windows desktop sometimes we inexplicably end up at the wrong size
+      // if the editor is being resized while it's loading (such as when a new
+      // document is created while the source pane is hidden)
+      Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
+      {
+         public boolean execute()
+         {
+            if (isAttached())
+               onResize();
+            return false;
+         }
+      }, 500);
    }
 
    public void onResize()
