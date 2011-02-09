@@ -120,11 +120,13 @@ public class RCompletionManager implements CompletionManager
        * [identifier] - narrow suggestions--or if we're lame, just dismiss
        * All others - dismiss popup
        */
-      
+
+      int modifier = KeyboardShortcut.getModifierValue(event);
+
       if (!popup_.isShowing())
       {
-         if (event.getKeyCode() == KeyCodes.KEY_TAB
-               || (event.getKeyCode() == ' ' && event.getCtrlKey()))
+         if ((event.getKeyCode() == KeyCodes.KEY_TAB && modifier == KeyboardShortcut.NONE)
+               || (event.getKeyCode() == ' ' && modifier == KeyboardShortcut.CTRL))
          {
             if (initFilter_ == null || initFilter_.shouldComplete(event))
             {
@@ -142,7 +144,7 @@ public class RCompletionManager implements CompletionManager
             return false ; // bare modifiers should do nothing
          }
          
-         if (KeyboardShortcut.getModifierValue(event) == KeyboardShortcut.NONE)
+         if (modifier == KeyboardShortcut.NONE)
          {
             if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
             {

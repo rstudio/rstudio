@@ -49,5 +49,11 @@ var Mode = function() {
 };
 oop.inherits(Mode, TextMode);
 
+(function() {
+    this.getNextLineIndent = function(state, line, tab) {
+        return this.$getIndent(line);
+    };
+}).call(Mode.prototype);
+
 exports.Mode = Mode;
 });
