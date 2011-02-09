@@ -37,8 +37,8 @@ public class StandardConfigurationProperty implements ConfigurationProperty {
       throw new IllegalArgumentException("values is null");
     }
     if (!p.allowsMultipleValues() && values.size() != 1) {
-      throw new IllegalArgumentException(
-          "p is single-valued but values.size != 1");
+      throw new IllegalArgumentException(p.getName()
+          + " property requires exactly one value but values = " + values);
     }
   }
 
