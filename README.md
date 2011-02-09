@@ -55,4 +55,4 @@ See also the following files included with the distribution:
 
 If you have problems or want to share feedback with us please visit our
 [support website](http://support.rstudio.org/). For other inquiries you can
-also email us at [info@rstudio.org](info@rstudio.org). 
+also email us at [info@rstudio.org](mailto:info@rstudio.org). 
