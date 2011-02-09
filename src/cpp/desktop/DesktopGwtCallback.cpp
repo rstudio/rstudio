@@ -31,6 +31,7 @@
 #include "DesktopBrowserWindow.hpp"
 #include "DesktopWindowTracker.hpp"
 #include "DesktopInputDialog.hpp"
+#include "DesktopSecondaryWindow.hpp"
 
 using namespace core;
 
@@ -59,7 +60,31 @@ void GwtCallback::browseUrl(QString url)
    }
 #endif
 
-   QDesktopServices::openUrl(qurl);
+   if (qurl.isRelative())
+   {
+      // use SecondaryWindow for any relative urls
+
+      // TODO: this should really be handled within GlobalDisplay -- rather
+      // than checking for a relative URL here GlobalDisplay should determine
+      // that a URL is relative and invoke the SecondaryWindow itself.
+
+      // compute local url
+      QUrl localUrl;
+      localUrl.setScheme("http");
+      localUrl.setHost("localhost");
+      localUrl.setPort(options().portNumber().toInt());
+      localUrl.setEncodedPath(url.toAscii());
+
+      // show in a secondary window
+      SecondaryWindow* pBrowser = new SecondaryWindow(localUrl);
+      pBrowser->webView()->load(localUrl);
+      pBrowser->show();
+      pBrowser->activateWindow();
+   }
+   else
+   {
+      QDesktopServices::openUrl(qurl);
+   };
 }
 
 namespace {
