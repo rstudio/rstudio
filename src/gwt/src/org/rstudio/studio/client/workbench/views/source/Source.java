@@ -171,7 +171,7 @@ public class Source implements InsertSourceHandler,
                   new SimpleRequestCallback<SourceDocument>("Edit Data Frame") {
                      public void onResponseReceived(SourceDocument response)
                      {
-                        addTab(response, null);
+                        addTab(response);
                      }
                   });
          }
@@ -204,6 +204,25 @@ public class Source implements InsertSourceHandler,
 
       restoreDocuments(session);
 
+      new IntStateValue(MODULE_SOURCE, KEY_ACTIVETAB, true,
+                        session.getSessionInfo().getClientState())
+      {
+         @Override
+         protected void onInit(Integer value)
+         {
+            if (value == null)
+               return;
+            if (value >= 0 && view_.getTabCount() > value)
+               view_.selectTab(value);
+         }
+
+         @Override
+         protected Integer getValue()
+         {
+            return view_.getActiveTabIndex();
+         }
+      };
+      
       initialized_ = true;
       // As tabs were added before, manageCommands() was suppressed due to
       // initialized_ being false, so we need to run it explicitly
@@ -239,40 +258,12 @@ public class Source implements InsertSourceHandler,
    private void restoreDocuments(final Session session)
    {
       final JsArray<SourceDocument> docs =
-                                 session.getSessionInfo().getSourceDocuments();
+            session.getSessionInfo().getSourceDocuments();
 
-      new CommandWithArg<EditingTarget>()
+      for (int i = 0; i < docs.length(); i++)
       {
-         public void execute(EditingTarget arg)
-         {
-            if (docs.length() > 0)
-            {
-               SourceDocument doc = docs.shift();
-               addTab(doc, this);
-            }
-            else
-            {
-               new IntStateValue(MODULE_SOURCE, KEY_ACTIVETAB, true,
-                                 session.getSessionInfo().getClientState())
-               {
-                  @Override
-                  protected void onInit(Integer value)
-                  {
-                     if (value == null)
-                        return;
-                     if (value >= 0 && view_.getTabCount() > value)
-                        view_.selectTab(value);
-                  }
-
-                  @Override
-                  protected Integer getValue()
-                  {
-                     return view_.getActiveTabIndex();
-                  }
-               };
-            }
-         }
-      }.execute(null);
+         addTab(docs.get(i));
+      }
    }
    
    public void onShowContent(ShowContentEvent event)
@@ -287,7 +278,7 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onResponseReceived(SourceDocument response)
                {
-                  addTab(response, null);
+                  addTab(response);
                }
             });
    }
@@ -317,7 +308,7 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onResponseReceived(SourceDocument response)
                {
-                  addTab(response, null);
+                  addTab(response);
                }
             });
    }
@@ -342,7 +333,9 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onResponseReceived(SourceDocument newDoc)
                {
-                  addTab(newDoc, executeOnSuccess);
+                  EditingTarget target = addTab(newDoc);
+                  if (executeOnSuccess != null)
+                     executeOnSuccess.execute(target);
                }
             });
    }
@@ -490,31 +483,25 @@ public class Source implements InsertSourceHandler,
          }
       }
 
-      editingTargetSource_.getEditingTarget(
-            fileType,
-            new CommandWithArg<EditingTarget>()
+      EditingTarget target = editingTargetSource_.getEditingTarget(fileType);
+
+      if (file.getLength() > target.getFileSizeLimit())
+      {
+         showFileTooLargeWarning(file, target.getFileSizeLimit());
+      }
+      else if (file.getLength() > target.getLargeFileSize())
+      {
+         confirmOpenLargeFile(file,  new Operation() {
+            public void execute()
             {
-               public void execute(EditingTarget target)
-               {
-                  if (file.getLength() > target.getFileSizeLimit())
-                  {
-                     showFileTooLargeWarning(file, target.getFileSizeLimit());
-                  }
-                  else if (file.getLength() > target.getLargeFileSize())
-                  {
-                     confirmOpenLargeFile(file,  new Operation() {
-                        public void execute()
-                        {
-                           openFileFromServer(file, fileType);
-                        }
-                     });
-                  }
-                  else
-                  {
-                     openFileFromServer(file, fileType);
-                  }
-               }
-            });
+               openFileFromServer(file, fileType);
+            }
+         });
+      }
+      else
+      {
+         openFileFromServer(file, fileType);
+      }
    }
 
    private void showFileTooLargeWarning(FileSystemItem file,
@@ -573,81 +560,71 @@ public class Source implements InsertSourceHandler,
                {
                   dismissProgress.execute();
                   mruList_.add(document.getPath());
-                  addTab(document, null);
+                  addTab(document);
                }
             });
    }
 
 
-   private void addTab(SourceDocument doc,
-                       final CommandWithArg<EditingTarget> callback)
+   private EditingTarget addTab(SourceDocument doc)
    {
-      newTabPending_++;
-      editingTargetSource_.getEditingTarget(
+      final EditingTarget target = editingTargetSource_.getEditingTarget(
             doc, fileContext_, new Provider<String>()
             {
                public String get()
                {
                   return getNextDefaultName();
                }
-            },
-            new CommandWithArg<EditingTarget>()
-            {
-               public void execute(final EditingTarget target)
-               {
-                  newTabPending_--;
-
-                  final Widget widget = target.toWidget();
-
-                  editors_.add(target);
-                  view_.addTab(widget,
-                               target.getIcon(),
-                               target.getName().getValue(),
-                               target.getTabTooltip(), // used as tooltip, if non-null
-                               true);
-                  fireDocTabsChanged();
-
-                  target.getName().addValueChangeHandler(new ValueChangeHandler<String>()
-                  {
-                     public void onValueChange(ValueChangeEvent<String> event)
-                     {
-                        view_.renameTab(widget,
-                                        target.getIcon(),
-                                        event.getValue(),
-                                        target.getPath());
-                        fireDocTabsChanged();
-                     }
-                  });
-
-                  view_.setDirty(widget, target.dirtyState().getValue());
-                  target.dirtyState().addValueChangeHandler(new ValueChangeHandler<Boolean>()
-                  {
-                     public void onValueChange(ValueChangeEvent<Boolean> event)
-                     {
-                        view_.setDirty(widget, event.getValue());
-                     }
-                  });
-
-                  target.addEnsureVisibleHandler(new EnsureVisibleHandler()
-                  {
-                     public void onEnsureVisible(EnsureVisibleEvent event)
-                     {
-                        view_.selectTab(widget);
-                     }
-                  });
-
-                  target.addCloseHandler(new CloseHandler<Void>()
-                  {
-                     public void onClose(CloseEvent<Void> voidCloseEvent)
-                     {
-                        view_.closeTab(widget, false);
-                     }
-                  });
-
-                  if (callback != null)
-                     callback.execute(target);
-               }
             });
+      
+      final Widget widget = target.toWidget();
+
+      editors_.add(target);
+      view_.addTab(widget,
+                   target.getIcon(),
+                   target.getName().getValue(),
+                   target.getTabTooltip(), // used as tooltip, if non-null
+                   true);
+      fireDocTabsChanged();
+
+      target.getName().addValueChangeHandler(new ValueChangeHandler<String>()
+      {
+         public void onValueChange(ValueChangeEvent<String> event)
+         {
+            view_.renameTab(widget,
+                            target.getIcon(),
+                            event.getValue(),
+                            target.getPath());
+            fireDocTabsChanged();
+         }
+      });
+
+      view_.setDirty(widget, target.dirtyState().getValue());
+      target.dirtyState().addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            view_.setDirty(widget, event.getValue());
+         }
+      });
+
+      target.addEnsureVisibleHandler(new EnsureVisibleHandler()
+      {
+         public void onEnsureVisible(EnsureVisibleEvent event)
+         {
+            view_.selectTab(widget);
+         }
+      });
+
+      target.addCloseHandler(new CloseHandler<Void>()
+      {
+         public void onClose(CloseEvent<Void> voidCloseEvent)
+         {
+            view_.closeTab(widget, false);
+         }
+      });
+
+      return target;
    }
 
    private String getNextDefaultName()

@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.views.source;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import org.rstudio.core.client.AsyncShim;
@@ -64,23 +65,30 @@ public class SourceShim extends Composite
       public abstract void onSwitchToTab();
 
       @Override
-      protected void onDelayLoadSuccess(Source obj)
+      protected void onDelayLoadSuccess(final Source obj)
       {
-         final Widget child = obj.toWidget();
-         if (child instanceof HasEnsureVisibleHandlers)
+         AceEditor.load(new Command()
          {
-            ((HasEnsureVisibleHandlers)child).addEnsureVisibleHandler(new EnsureVisibleHandler()
+            public void execute()
             {
-               public void onEnsureVisible(EnsureVisibleEvent event)
+               final Widget child = obj.toWidget();
+               if (child instanceof HasEnsureVisibleHandlers)
                {
-                  parent_.fireEvent(new EnsureVisibleEvent());
+                  ((HasEnsureVisibleHandlers)child).addEnsureVisibleHandler(
+                        new EnsureVisibleHandler()
+                  {
+                     public void onEnsureVisible(EnsureVisibleEvent event)
+                     {
+                        parent_.fireEvent(new EnsureVisibleEvent());
+                     }
+                  });
                }
-            });
-         }
-         child.setSize("100%", "100%");
-         parent_.panel_.add(child);
-         parent_.panel_.setWidgetTopBottom(child, 0, Unit.PX, 0, Unit.PX);
-         parent_.panel_.setWidgetLeftRight(child, 0, Unit.PX, 0, Unit.PX);
+               child.setSize("100%", "100%");
+               parent_.panel_.add(child);
+               parent_.panel_.setWidgetTopBottom(child, 0, Unit.PX, 0, Unit.PX);
+               parent_.panel_.setWidgetLeftRight(child, 0, Unit.PX, 0, Unit.PX);
+            }
+         });
       }
 
       public void setParent(SourceShim parent)

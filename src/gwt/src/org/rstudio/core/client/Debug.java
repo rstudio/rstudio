@@ -26,6 +26,7 @@ public class Debug
             @org.rstudio.core.client.Debug::log(Ljava/lang/String;)(message);
          })
       };
+      $wnd['$Debug'] = $Debug;
    }-*/;
 
    public static void log(String message)

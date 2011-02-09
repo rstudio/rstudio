@@ -26,12 +26,10 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 public interface EditingTargetSource
 {
-   void getEditingTarget(FileType fileType,
-                         CommandWithArg<EditingTarget> callback);
-   void getEditingTarget(SourceDocument document,
-                         RemoteFileSystemContext fileContext,
-                         Provider<String> defaultNameProvider,
-                         CommandWithArg<EditingTarget> callback);
+   EditingTarget getEditingTarget(FileType fileType);
+   EditingTarget getEditingTarget(SourceDocument document,
+                                  RemoteFileSystemContext fileContext,
+                                  Provider<String> defaultNameProvider);
 
    public static class Impl implements EditingTargetSource
    {
@@ -47,31 +45,21 @@ public interface EditingTargetSource
          pUrlContentEditingTarget_ = pUrlContentEditingTarget;
       }
 
-      public void getEditingTarget(FileType type,
-                                   final CommandWithArg<EditingTarget> callback)
+      public EditingTarget getEditingTarget(FileType type)
       {
          if (type instanceof TextFileType)
-         {
-            AceEditor.create(new CommandWithArg<AceEditor>()
-            {
-               public void execute(AceEditor arg)
-               {
-                  TextEditingTarget tet = pTextEditingTarget_.get();
-                  tet.setEditor(arg);
-                  callback.execute(tet);
-               }
-            });
-         }
+            return pTextEditingTarget_.get();
          else if (type instanceof DataFrameType)
-            callback.execute(pDataEditingTarget_.get());
+            return pDataEditingTarget_.get();
          else if (type instanceof UrlContentType)
-            callback.execute(pUrlContentEditingTarget_.get());
+            return pUrlContentEditingTarget_.get();
+         else
+            return null;
       }
 
-      public void getEditingTarget(final SourceDocument document,
+      public EditingTarget getEditingTarget(final SourceDocument document,
                                    final RemoteFileSystemContext fileContext,
-                                   final Provider<String> defaultNameProvider,
-                                   final CommandWithArg<EditingTarget> callback)
+                                   final Provider<String> defaultNameProvider)
       {
          FileType type = registry_.getTypeByTypeName(document.getType());
          if (type == null)
@@ -80,17 +68,12 @@ public interface EditingTargetSource
             type = FileTypeRegistry.TEXT;
          }
          final FileType finalType = type;
-         getEditingTarget(type, new CommandWithArg<EditingTarget>()
-         {
-            public void execute(EditingTarget target)
-            {
-               target.initialize(document,
-                                 fileContext,
-                                 finalType,
-                                 defaultNameProvider);
-               callback.execute(target);
-            }
-         });
+         EditingTarget target = getEditingTarget(type);
+         target.initialize(document,
+                           fileContext,
+                           finalType,
+                           defaultNameProvider);
+         return target;
       }
 
       private final FileTypeRegistry registry_;

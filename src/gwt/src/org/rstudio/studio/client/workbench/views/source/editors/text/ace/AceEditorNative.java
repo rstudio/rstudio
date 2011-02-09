@@ -96,21 +96,9 @@ public class AceEditorNative extends JavaScriptObject {
       handle();
    }-*/;
 
-   public static native void createEnvironment(
-         CommandWithArg<JavaScriptObject> callback) /*-{
-      var require = $wnd.require;
-
-      var loader = require("rstudio/loader");
-      loader.loadEnv($entry(function(env) {
-         callback.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(env);
-      }));
-   }-*/;
-
-   public static native AceEditorNative createEditor(
-         JavaScriptObject env,
-         Element container) /*-{
+   public static native AceEditorNative createEditor(Element container) /*-{
       var require = $wnd.require;
       var loader = require("rstudio/loader");
-      return loader.loadEditor(env, container);
+      return loader.loadEditor(container);
    }-*/;
 }

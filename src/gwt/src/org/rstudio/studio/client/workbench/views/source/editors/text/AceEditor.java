@@ -72,24 +72,7 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       load(null);
    }
 
-   public static void create(final CommandWithArg<AceEditor> callback)
-   {
-      load(new Command()
-      {
-         public void execute()
-         {
-            AceEditorWidget.create(new CommandWithArg<AceEditorWidget>()
-            {
-               public void execute(AceEditorWidget arg)
-               {
-                  callback.execute(new AceEditor(arg));
-               }
-            });
-         }
-      });
-   }
-
-   private static void load(final Command command)
+   public static void load(final Command command)
    {
       aceLoader_.addCallback(new Callback()
       {
@@ -107,9 +90,10 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       });
    }
 
-   private AceEditor(AceEditorWidget widget)
+   @Inject
+   public AceEditor()
    {
-      widget_ = widget;
+      widget_ = new AceEditorWidget();
       completionManager_ = new NullCompletionManager();
       RStudioGinjector.INSTANCE.injectMembers(this);
 

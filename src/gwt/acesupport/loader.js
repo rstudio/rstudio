@@ -12,17 +12,19 @@
  */
 define("rstudio/loader", function(require, exports, module) {
 
-function loadEnv(onSuccess) {
+function loadEditor(container) {
     var catalog = require("pilot/plugin_manager").catalog;
+	var env = null;
+	var loaded = false;
     catalog.registerPlugins(["pilot/index"]).then(function() {
-        var env = require("pilot/environment").create();
+        env = require("pilot/environment").create();
         catalog.startupPlugins({ env: env }).then(function() {
-            onSuccess(env);
+			loaded = true;
         });
     });
-}
+	if (!loaded)
+		throw new Error("Environment loading was not synchronous");
 
-function loadEditor(env, container) {
 	var Editor = require("ace/editor").Editor;
 	var Renderer = require("ace/virtual_renderer").VirtualRenderer;
 	var UndoManager = require("ace/undomanager").UndoManager;
@@ -48,6 +50,5 @@ function loadEditor(env, container) {
 	return env.editor;
 }
 
-exports.loadEnv = loadEnv;
 exports.loadEditor = loadEditor;
 });

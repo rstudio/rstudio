@@ -1,6 +1,5 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.*;
@@ -13,7 +12,6 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
@@ -25,22 +23,8 @@ public class AceEditorWidget extends Composite
                  HasValueChangeHandlers<Void>,
                  HasKeyDownHandlers
 {
-   public static void create(final CommandWithArg<AceEditorWidget> callback)
+   public AceEditorWidget()
    {
-      AceEditorNative.createEnvironment(new CommandWithArg<JavaScriptObject>()
-      {
-         public void execute(JavaScriptObject environment)
-         {
-            callback.execute(new AceEditorWidget(environment));
-         }
-      });
-   }
-
-   protected AceEditorWidget(JavaScriptObject environment)
-   {
-      super();
-      env_ = environment;
-
       initWidget(new HTML());
       FontSizer.applyNormalFontSize(this);
       setSize("100%", "100%");
@@ -59,7 +43,7 @@ public class AceEditorWidget extends Composite
       {
          public void execute()
          {
-            editor_ = AceEditorNative.createEditor(env_, getElement());
+            editor_ = AceEditorNative.createEditor(getElement());
             editor_.setShowPrintMargin(false);
             editor_.setPrintMarginColumn(0);
             editor_.setHighlightActiveLine(false);
@@ -142,6 +126,5 @@ public class AceEditorWidget extends Composite
    }
 
    private AceEditorNative editor_;
-   private JavaScriptObject env_;
    private String initialCode_;
 }

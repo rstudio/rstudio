@@ -22,6 +22,6 @@ public class EditView implements Display
    public void show(String text,
                     ProgressOperationWithInput<String> operation)
    {
-      EditDialog.edit(text, operation);
+      new EditDialog(text, operation).showModal();
    }
 }

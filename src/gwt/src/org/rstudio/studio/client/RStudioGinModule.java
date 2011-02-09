@@ -72,6 +72,8 @@ import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperatio
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourcePane;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.workspace.Workspace;
 import org.rstudio.studio.client.workbench.views.workspace.WorkspacePane;
@@ -142,6 +144,8 @@ public class RStudioGinModule extends AbstractGinModule
       bind(EditServerOperations.class).to(RemoteServer.class) ;
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
+
+      bind(DocDisplay.class).to(AceEditor.class);
    }
 
    private <T extends WorkbenchTab> void bindTab(String name, Class<T> clazz)

@@ -17,7 +17,6 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.dom.DomUtils;
@@ -27,26 +26,10 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 
 public class EditDialog extends ModalDialogBase
 {
-   public static void edit(
-         final String text,
-         final ProgressOperationWithInput<String> operation)
+   public EditDialog(String text,
+                      final ProgressOperationWithInput<String> operation)
    {
-      AceEditor.create(new CommandWithArg<AceEditor>()
-      {
-         public void execute(AceEditor editor)
-         {
-            new EditDialog(text,
-                           operation,
-                           editor).showModal();
-         }
-      });
-   }
-
-   private EditDialog(String text,
-                      final ProgressOperationWithInput<String> operation,
-                      AceEditor editor)
-   {
-      editor_ = editor;
+      editor_ = new AceEditor();
       setText("Edit");
       sourceText_ = text;
 

@@ -188,7 +188,8 @@ public class TextEditingTarget implements EditingTarget
                             FileTypeRegistry fileTypeRegistry,
                             Provider<PublishPdf> pPublishPdf,
                             Session session,
-                            FontSizeManager fontSizeManager)
+                            FontSizeManager fontSizeManager,
+                            DocDisplay docDisplay)
    {
       commands_ = commands;
       server_ = server;
@@ -199,11 +200,8 @@ public class TextEditingTarget implements EditingTarget
       session_ = session;
       fontSizeManager_ = fontSizeManager;
       pPublishPdf_ = pPublishPdf;
-   }
 
-   public void setEditor(AceEditor editor)
-   {
-      docDisplay_ = editor;
+      docDisplay_ = docDisplay;
       docDisplay_.addKeyDownHandler(new KeyDownHandler()
       {
          public void onKeyDown(KeyDownEvent event)
