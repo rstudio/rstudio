@@ -15,13 +15,10 @@ define("rstudio/loader", function(require, exports, module) {
 function loadEditor(container) {
     var catalog = require("pilot/plugin_manager").catalog;
 	var env = null;
-	var loaded = false;
-    catalog.registerPlugins(["pilot/index"]).then(function() {
-        env = require("pilot/environment").create();
-        catalog.startupPlugins({ env: env }).then(function() {
-			loaded = true;
-        });
-    });
+	var loaded = catalog.registerPlugins(["pilot/index"]).isResolved();
+    env = require("pilot/environment").create();
+    loaded = catalog.startupPlugins({ env: env }).isResolved() && loaded;
+
 	if (!loaded)
 		throw new Error("Environment loading was not synchronous");
 
