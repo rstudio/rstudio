@@ -96,9 +96,13 @@ public class UserAgentPropertyGenerator implements PropertyProviderGenerator {
       String fallback, SortedSet<ConfigurationProperty> configProperties) {
     for (String value : possibleValues) {
       if (!VALID_VALUES.contains(value)) {
-        logger.log(TreeLogger.ERROR, "Unrecognized user.agent property value '"
+        logger.log(TreeLogger.ERROR, "Unrecognized "
+            + UserAgentGenerator.PROPERTY_USER_AGENT + " property value '"
             + value + "', possibly due to UserAgent.gwt.xml and "
-            + UserAgentPropertyGenerator.class.getName() + " being out of sync");
+            + UserAgentPropertyGenerator.class.getName()
+            + " being out of sync." + " Use <set-configuration-property name=\""
+            + UserAgentGenerator.PROPERTY_USER_AGENT_RUNTIME_WARNING
+            + "\" value=\"false\"/> to suppress this warning message.");
       }
     }
 

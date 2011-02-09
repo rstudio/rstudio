@@ -33,6 +33,8 @@ public class UserAgentAsserter implements EntryPoint {
    * <code>user.agent</code> selection property value.
    */
   interface UserAgentProperty {
+    boolean getUserAgentRuntimeWarning();
+    
     String getCompileTimeValue();
 
     String getRuntimeValue();
@@ -40,6 +42,10 @@ public class UserAgentAsserter implements EntryPoint {
 
   public void onModuleLoad() {
     UserAgentProperty impl = GWT.create(UserAgentProperty.class);
+    if (!impl.getUserAgentRuntimeWarning()) {
+      return;
+    }
+    
     String compileTimeValue = impl.getCompileTimeValue();
     String runtimeValue = impl.getRuntimeValue();
 

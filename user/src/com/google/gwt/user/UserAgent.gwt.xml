@@ -23,7 +23,14 @@
 
   <property-provider name="user.agent" generator="com.google.gwt.user.rebind.UserAgentPropertyGenerator"/>
 
-  <!-- Asserts the the compile time value matches the runtime user.agent value -->
+  <!-- Set to false to avoid runtime warnings for mismatched runtime and -->
+  <!-- compile time user.agent values -->
+  <define-configuration-property name="user.agent.runtimeWarning"
+    is-multi-valued="false" />
+  <set-configuration-property name="user.agent.runtimeWarning" value="true"/>
+
+  <!-- Asserts that the compile time user.agent value matches the runtime -->
+  <!-- user.agent value -->
   <entry-point class="com.google.gwt.user.client.UserAgentAsserter" />
 
   <generate-with class="com.google.gwt.user.rebind.UserAgentGenerator">
