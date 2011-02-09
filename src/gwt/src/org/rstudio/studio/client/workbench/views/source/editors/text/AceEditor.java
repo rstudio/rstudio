@@ -169,6 +169,7 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       final IFrameElementEx iframe = Document.get().createIFrameElement().cast();
       iframe.getStyle().setPosition(com.google.gwt.dom.client.Style.Position.ABSOLUTE);
       iframe.getStyle().setLeft(-5000, Unit.PX);
+      iframe.setSrc("about:blank");
       Document.get().getBody().appendChild(iframe);
       Document childDoc = iframe.getContentWindow().getDocument();
       PreElement pre = childDoc.createPreElement();

@@ -44,6 +44,10 @@ bool WebPage::acceptNavigationRequest(QWebFrame*,
                                        NavigationType navType)
 {
    QUrl url = request.url();
+
+   if (url.toString() == "about:blank")
+      return true;
+
    if (url.scheme() != "http"
        && url.scheme() != "https"
        && url.scheme() != "mailto")
