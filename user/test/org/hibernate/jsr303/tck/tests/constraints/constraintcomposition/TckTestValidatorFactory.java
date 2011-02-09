@@ -31,8 +31,7 @@ public final class TckTestValidatorFactory extends AbstractGwtValidatorFactory {
    * Marker Interface for {@link GWT#create(Class)}.
    */
   @GwtValidation(value = {
-      // German and French must be listed before the Address Super class
-      GermanAddress.class, FrenchAddress.class, Address.class, Friend.class,
+      Address.class, FrenchAddress.class, Friend.class, GermanAddress.class,
       Shoe.class
       // TODO(nchalko) handle ConstraintDefinitionException
       // ConstraintCompositionGwtTest.DummyEntityWithZipCode.class

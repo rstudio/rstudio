@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -22,10 +22,10 @@ import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
-import com.google.gwt.thirdparty.guava.common.collect.Ordering;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -37,14 +37,14 @@ class Util {
   /**
    * Creates a Predicate that returns false if source contains an associated
    * class that is a super type of the class associated with the tested T.
-   * 
+   *
    * @param <T> the type to test
-   * @param source the Set of <T> to look for class matches.
+   * @param source the set of <T> to look for class matches.
    * @param toClass Function from T to Class
    * @return newly create predicate.
    */
-  static <T> Predicate<T> createMostSpecificMatchPredicate(final Set<T> source,
-      final Function<T, Class<?>> toClass) {
+  static <T> Predicate<T> createMostSpecificMatchPredicate(
+      final Iterable<T> source, final Function<T, Class<?>> toClass) {
     return new Predicate<T>() {
 
       public boolean apply(T input) {
@@ -62,7 +62,7 @@ class Util {
   /**
    * Selects first only the classes that are assignable from the target, and
    * then returns the most specific matching classes.
-   * 
+   *
    * @param target the Class to match
    * @param availableClasses classes to search
    * @return Set of only the most specific classes that match the target.
@@ -91,16 +91,24 @@ class Util {
    */
   static <T> ImmutableList<T> sortMostSpecificFirst(Iterable<T> classes,
       Function<T, Class<?>> toClass) {
-    Set<T> working = Sets.newHashSet(classes);
+    List<T> working = Lists.newArrayList();
+    // strip duplicates
+    for (T t : classes) {
+      if (!working.contains(t)) {
+        working.add(t);
+      }
+    }
     List<T> sorted = Lists.newArrayList();
-    Predicate<T> mostSpecific = createMostSpecificMatchPredicate(working, toClass);
+    Predicate<T> mostSpecific = createMostSpecificMatchPredicate(working,
+        toClass);
     boolean changed = false;
     do {
       changed = false;
-      for (T t : Ordering.usingToString().sortedCopy(working)) {
+      for (Iterator<T> iterator = working.iterator(); iterator.hasNext();) {
+        T t = iterator.next();
         if (mostSpecific.apply(t)) {
           sorted.add(t);
-          working.remove(t);
+          iterator.remove();
           changed = true;
         }
       }

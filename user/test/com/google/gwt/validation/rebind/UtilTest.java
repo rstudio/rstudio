@@ -57,46 +57,56 @@ public class UtilTest extends TestCase {
 
   private static void assertContentsInOrder(List<Class<?>> actual,
       Class<?>... classes) {
-    assertEquals(ImmutableList.copyOf(classes), actual);
+    assertEquals(ImmutableList.copyOf(classes), ImmutableList.copyOf(actual));
   }
 
-  private static ImmutableSet<Class<?>> of(Class<?>... classes) {
+  private static ImmutableList<Class<?>> list(Class<?>... classes) {
+    return ImmutableList.copyOf(classes);
+  }
+
+  private static ImmutableSet<Class<?>> set(Class<?>... classes) {
     return ImmutableSet.copyOf(classes);
   }
 
   public void testBestMatches_Bobby2() {
     Set<Class<?>> actual = findBestMatches(Bobby2.class,
-        of(Alice.class, Bob.class, Bobby.class));
+        set(Alice.class, Bob.class, Bobby.class));
     assertEquals(1, actual.size());
     assertEquals(Bobby.class, Iterables.get(actual, 0));
   }
 
   public void testBestMatches_none() {
-    Set<Class<?>> actual = Util.findBestMatches(Bob.class, of(Alice.class));
+    Set<Class<?>> actual = Util.findBestMatches(Bob.class, set(Alice.class));
     assertEquals(0, actual.size());
   }
 
   public void testBestMatches_one() {
     Set<Class<?>> actual = findBestMatches(Bob.class,
-        of(Alice.class, Bob.class));
+        set(Alice.class, Bob.class));
     assertEquals(1, actual.size());
     assertEquals(Bob.class, Iterables.get(actual, 0));
   }
 
   public void testBestMatches_two() {
-    Set<Class<?>> actual = findBestMatches(Chuck.class, of(C1.class, C2.class));
+    Set<Class<?>> actual = findBestMatches(Chuck.class, set(C1.class, C2.class));
     assertEquals(2, actual.size());
   }
 
   public void testSortMostSpecificFirst_chuck() {
 
     List<Class<?>> actual = Util.sortMostSpecificFirst(
-        of(C2.class, C1.class, Chuck.class), classIdentity);
-    assertContentsInOrder(actual, Chuck.class, C1.class, C2.class);
+        list(C2.class, C1.class, Chuck.class), classIdentity);
+    assertContentsInOrder(actual, Chuck.class, C2.class, C1.class);
+  }
+
+  public void testSortMostSpecificFirst_double() {
+    List<Class<?>> actual = Util.sortMostSpecificFirst(
+        list(Alice.class, Alice.class, Bob.class), classIdentity);
+    assertContentsInOrder(actual, Alice.class, Bob.class);
   }
 
   public void testSortMostSpecificFirst_one() {
-    List<Class<?>> actual = Util.sortMostSpecificFirst(of(Alice.class),
+    List<Class<?>> actual = Util.sortMostSpecificFirst(list(Alice.class),
         classIdentity);
     assertContentsInOrder(actual, Alice.class);
   }

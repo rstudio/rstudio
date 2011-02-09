@@ -35,10 +35,9 @@ public final class TckTestValidatorFactory extends AbstractGwtValidatorFactory {
    * Marker Interface for {@link GWT#create(Class)}.
    */
   @GwtValidation(value = {
-      // Actor must be after its subclasses
-      ActorDB.class, ActorArrayBased.class, ActorListBased.class, Actor.class,
-      Address.class, BadlyBehavedEntity.class, Car.class,
-      Customer.class, Engine.class, Order.class, VerySpecialClass.class})
+      ActorArrayBased.class, ActorDB.class, ActorListBased.class, Actor.class,
+      Address.class, BadlyBehavedEntity.class, Car.class, Customer.class,
+      Engine.class, Order.class, VerySpecialClass.class})
   public static interface GwtValidator extends Validator {
   }
 
