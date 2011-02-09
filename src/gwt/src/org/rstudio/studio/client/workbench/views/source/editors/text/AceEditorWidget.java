@@ -34,12 +34,6 @@ public class AceEditorWidget extends Composite
       editor_.setPrintMarginColumn(0);
       editor_.setHighlightActiveLine(false);
       editor_.delegateEventsTo(AceEditorWidget.this);
-      if (initialCode_ != null)
-      {
-         editor_.getSession().setValue(initialCode_);
-         initialCode_ = null;
-      }
-
       editor_.onChange(new Command()
       {
          public void execute()
@@ -70,8 +64,7 @@ public class AceEditorWidget extends Composite
 
    public void onResize()
    {
-      if (editor_ != null)
-         editor_.resize();
+      editor_.resize();
    }
 
    public void onActivate()
@@ -82,10 +75,7 @@ public class AceEditorWidget extends Composite
 
    public void setCode(String code)
    {
-      if (editor_ != null)
-         editor_.getSession().setValue(code);
-      else
-         initialCode_ = code;
+      editor_.getSession().setValue(code);
    }
 
    public HandlerRegistration addValueChangeHandler(ValueChangeHandler<Void> handler)
@@ -118,6 +108,5 @@ public class AceEditorWidget extends Composite
       return addHandler(handler, KeyDownEvent.getType());
    }
 
-   private AceEditorNative editor_;
-   private String initialCode_;
+   private final AceEditorNative editor_;
 }
