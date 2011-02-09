@@ -93,6 +93,8 @@ public class ManipulatorManager
       // show it if necessary
       if (!manipulatorPopup_.isShowing())
       {
+         manipulatorPopup_.recordPreviouslyFocusedElement();
+         
          manipulatorPopup_.setPopupPositionAndShow(new PositionCallback(){
             @Override
             public void setPosition(int offsetWidth, int offsetHeight)

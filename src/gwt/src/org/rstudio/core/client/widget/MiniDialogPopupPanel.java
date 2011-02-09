@@ -1,7 +1,10 @@
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.DecoratedPopupPanel;
@@ -82,9 +85,52 @@ public abstract class MiniDialogPopupPanel extends DecoratedPopupPanel
    protected void hideMiniDialog()
    {
       hide();
+      restorePreviouslyFocusedElement();
+   }
+   
+   // TODO: refactor so the originally active element code is
+   // shared between MiniDialogPopupPanel and ModalDialogBase 
+   
+   public void recordPreviouslyFocusedElement()
+   {
+      // be defensive since we are making this change right before v1.0
+      try
+      {
+         originallyActiveElement_ = DomUtils.getActiveElement();
+      }
+      catch(Exception e)
+      {
+      }
+   }
+   
+   protected void restorePreviouslyFocusedElement()
+   { 
+      try
+      {
+         if (originallyActiveElement_ != null
+             && !originallyActiveElement_.getTagName().equalsIgnoreCase("body"))
+         {
+            Document doc = originallyActiveElement_.getOwnerDocument();
+            if (doc != null)
+            {
+               originallyActiveElement_.focus();
+            }
+         }
+      }
+      catch (Exception e)
+      {
+         // focus() fail if the element is no longer visible. It's
+         // easier to just catch this than try to detect it.
+   
+         // Also originallyActiveElement_.getTagName() can fail with:
+         // "Permission denied to access property 'tagName' from a non-chrome context"
+         // possibly due to Firefox "anonymous div" issue.
+      }
+      originallyActiveElement_ = null;
    }
    
    private VerticalPanel verticalPanel_;
    private Label captionLabel_ ;
+   private com.google.gwt.dom.client.Element originallyActiveElement_ = null;
 
 }

@@ -72,13 +72,11 @@
 })
 
 .rs.addGlobalFunction( "picker", function(..., 
-                                          choices = character(0), 
                                           value = NULL, 
                                           label = NULL)
 {
-  # get var args and coerce to chracter, then append to choices
-  varargs <- as.character(list(...))
-  choices <- append(choices, varargs)
+  # get var args and coerce to chracter
+  choices <- as.character(unlist(list(...), recursive=TRUE, use.names=FALSE))
   
   # validate inputs
   if ( !is.character(choices) )

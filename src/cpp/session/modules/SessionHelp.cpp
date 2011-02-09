@@ -133,8 +133,7 @@ bool handleLocalHttpUrl(const std::string& url)
    std::string customPath;
    if (isLocalURL(url, "custom", &customPath))
    {
-      std::string customURL = "/" + customPath;
-      ClientEvent event = browseUrlEvent(customURL);
+      ClientEvent event = browseUrlEvent(customPath);
       module_context::enqueClientEvent(event);
       return true;
    }
