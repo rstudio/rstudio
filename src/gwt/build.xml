@@ -39,13 +39,15 @@
   </path>
   
   <target name="ace">
-    <copy todir="${ace.bin}"
-          file="tools/ace/build/src/ace.js"/>
+    <copy tofile="${ace.bin}/ace.js" file="tools/ace/build/src/ace.js"/>
     <jscomp compilationLevel="simple" warning="default"
             debug="false" output="${ace.bin}/acesupport.js">
       <externs dir="acesupport">
         <file name="extern.js"/>
       </externs>
+      <sources dir="acesupport">
+        <file name="loader.js"/>
+      </sources>
       <sources dir="acesupport/acemode">
         <file name="r_highlight_rules.js"/>
         <file name="r.js"/>

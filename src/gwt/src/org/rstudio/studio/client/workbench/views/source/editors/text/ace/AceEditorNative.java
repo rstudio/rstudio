@@ -100,33 +100,9 @@ public class AceEditorNative extends JavaScriptObject {
          CommandWithArg<JavaScriptObject> callback) /*-{
       var require = $wnd.require;
 
-      var config = {
-          paths: {
-              ace: "../lib/ace",
-              pilot: "../support/pilot/lib/pilot",
-              mode: "../../js/acemode",
-              theme: "../../js/acetheme"
-          }
-      };
-
-      var deps = [ "pilot/fixoldbrowsers",
-                   "pilot/plugin_manager",
-                   "pilot/settings",
-                   "pilot/environment",
-                   "mode/r",
-                   "mode/tex",
-                   "mode/sweave",
-                   "theme/default"];
-
-      require(config);
-      require(deps, $entry(function() {
-          var catalog = require("pilot/plugin_manager").catalog;
-          catalog.registerPlugins([ "pilot/index" ]).then($entry(function() {
-              var env = require("pilot/environment").create();
-              catalog.startupPlugins({ env: env }).then($entry(function() {
-                  callback.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(env);
-              }));
-          }));
+      var loader = require("rstudio/loader");
+      loader.loadEnv($entry(function(env) {
+         callback.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(env);
       }));
    }-*/;
 
@@ -134,29 +110,7 @@ public class AceEditorNative extends JavaScriptObject {
          JavaScriptObject env,
          Element container) /*-{
       var require = $wnd.require;
-      var Editor = require("ace/editor").Editor;
-      var Renderer = require("ace/virtual_renderer").VirtualRenderer;
-      var UndoManager = require("ace/undomanager").UndoManager;
-
-      var TextMode = require("ace/mode/text").Mode;
-      var theme = require("theme/default");
-
-      env.editor = new Editor(new Renderer(container, theme));
-      var session = env.editor.getSession();
-      session.setMode(new TextMode());
-      session.setUndoManager(new UndoManager());
-      session.setUseSoftTabs(true);
-      session.setTabSize(2);
-
-      // We handle these commands ourselves.
-      var canon = require("pilot/canon");
-      canon.removeCommand("findnext");
-      canon.removeCommand("findprevious");
-      canon.removeCommand("find");
-      canon.removeCommand("replace");
-      canon.removeCommand("togglecomment");
-      canon.removeCommand("gotoline");
-
-      return env.editor;
+      var loader = require("rstudio/loader");
+      return loader.loadEditor(env, container);
    }-*/;
 }
