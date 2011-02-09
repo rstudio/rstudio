@@ -28,6 +28,25 @@ public class AceEditorWidget extends Composite
       initWidget(new HTML());
       FontSizer.applyNormalFontSize(this);
       setSize("100%", "100%");
+
+      editor_ = AceEditorNative.createEditor(getElement());
+      editor_.setShowPrintMargin(false);
+      editor_.setPrintMarginColumn(0);
+      editor_.setHighlightActiveLine(false);
+      editor_.delegateEventsTo(AceEditorWidget.this);
+      if (initialCode_ != null)
+      {
+         editor_.getSession().setValue(initialCode_);
+         initialCode_ = null;
+      }
+
+      editor_.onChange(new Command()
+      {
+         public void execute()
+         {
+            ValueChangeEvent.fire(AceEditorWidget.this, null);
+         }
+      });
    }
 
    public AceEditorNative getEditor() {
@@ -39,38 +58,12 @@ public class AceEditorWidget extends Composite
    {
       super.onLoad();
 
+      fireEvent(new EditorLoadedEvent());
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          public void execute()
          {
-            editor_ = AceEditorNative.createEditor(getElement());
-            editor_.setShowPrintMargin(false);
-            editor_.setPrintMarginColumn(0);
-            editor_.setHighlightActiveLine(false);
-            editor_.delegateEventsTo(AceEditorWidget.this);
-            if (initialCode_ != null)
-            {
-               editor_.getSession().setValue(initialCode_);
-               initialCode_ = null;
-            }
-
-            editor_.onChange(new Command()
-            {
-               public void execute()
-               {
-                  ValueChangeEvent.fire(AceEditorWidget.this, null);
-               }
-            });
-
-            fireEvent(new EditorLoadedEvent());
-
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
-            {
-               public void execute()
-               {
-                  onResize();
-               }
-            });
+            onResize();
          }
       });
    }

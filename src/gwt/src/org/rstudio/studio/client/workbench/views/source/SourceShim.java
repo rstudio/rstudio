@@ -65,30 +65,30 @@ public class SourceShim extends Composite
       public abstract void onSwitchToTab();
 
       @Override
+      protected void preInstantiationHook(Command continuation)
+      {
+         AceEditor.load(continuation);
+      }
+
+      @Override
       protected void onDelayLoadSuccess(final Source obj)
       {
-         AceEditor.load(new Command()
+         final Widget child = obj.toWidget();
+         if (child instanceof HasEnsureVisibleHandlers)
          {
-            public void execute()
-            {
-               final Widget child = obj.toWidget();
-               if (child instanceof HasEnsureVisibleHandlers)
-               {
-                  ((HasEnsureVisibleHandlers)child).addEnsureVisibleHandler(
-                        new EnsureVisibleHandler()
+            ((HasEnsureVisibleHandlers)child).addEnsureVisibleHandler(
+                  new EnsureVisibleHandler()
                   {
                      public void onEnsureVisible(EnsureVisibleEvent event)
                      {
                         parent_.fireEvent(new EnsureVisibleEvent());
                      }
                   });
-               }
-               child.setSize("100%", "100%");
-               parent_.panel_.add(child);
-               parent_.panel_.setWidgetTopBottom(child, 0, Unit.PX, 0, Unit.PX);
-               parent_.panel_.setWidgetLeftRight(child, 0, Unit.PX, 0, Unit.PX);
-            }
-         });
+         }
+         child.setSize("100%", "100%");
+         parent_.panel_.add(child);
+         parent_.panel_.setWidgetTopBottom(child, 0, Unit.PX, 0, Unit.PX);
+         parent_.panel_.setWidgetLeftRight(child, 0, Unit.PX, 0, Unit.PX);
       }
 
       public void setParent(SourceShim parent)

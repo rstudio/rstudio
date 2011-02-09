@@ -12,16 +12,24 @@
  */
 package org.rstudio.studio.client.workbench.views.edit.ui;
 
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.views.edit.Edit.Display;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 
 public class EditView implements Display
 {
-   public void show(String text,
-                    ProgressOperationWithInput<String> operation)
+   public void show(final String text,
+                    final ProgressOperationWithInput<String> operation)
    {
-      new EditDialog(text, operation).showModal();
+      AceEditor.load(new Command()
+      {
+         public void execute()
+         {
+            new EditDialog(text, operation).showModal();
+         }
+      });
    }
 }

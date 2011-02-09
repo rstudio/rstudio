@@ -80,6 +80,17 @@ public abstract class AsyncShim<TTarget>
    }
 
    /**
+    * You can override this to do something asynchronous between when the
+    * code loads and when the instance is created.
+    * @param continuation You MUST call this (eventually) to allow execution
+    *    to proceed
+    */
+   protected void preInstantiationHook(Command continuation)
+   {
+      continuation.execute();
+   }
+
+   /**
     * You can override this to do something with the delayed type once the
     * code loads and the instance is created.
     * @param obj
