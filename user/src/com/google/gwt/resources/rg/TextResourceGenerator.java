@@ -24,6 +24,7 @@ import com.google.gwt.resources.client.TextResource;
 import com.google.gwt.resources.ext.AbstractResourceGenerator;
 import com.google.gwt.resources.ext.ResourceContext;
 import com.google.gwt.resources.ext.ResourceGeneratorUtil;
+import com.google.gwt.resources.ext.SupportsGeneratorResultCaching;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.user.rebind.StringSourceWriter;
 
@@ -32,7 +33,8 @@ import java.net.URL;
 /**
  * Provides implementations of TextResource.
  */
-public final class TextResourceGenerator extends AbstractResourceGenerator {
+public final class TextResourceGenerator extends AbstractResourceGenerator
+    implements SupportsGeneratorResultCaching {
   /**
    * Java compiler has a limit of 2^16 bytes for encoding string constants in a
    * class file. Since the max size of a character is 4 bytes, we'll limit the

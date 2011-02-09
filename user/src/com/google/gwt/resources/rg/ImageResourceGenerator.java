@@ -32,6 +32,7 @@ import com.google.gwt.resources.ext.ClientBundleFields;
 import com.google.gwt.resources.ext.ClientBundleRequirements;
 import com.google.gwt.resources.ext.ResourceContext;
 import com.google.gwt.resources.ext.ResourceGeneratorUtil;
+import com.google.gwt.resources.ext.SupportsGeneratorResultCaching;
 import com.google.gwt.resources.rg.ImageBundleBuilder.Arranger;
 import com.google.gwt.resources.rg.ImageBundleBuilder.ImageRect;
 import com.google.gwt.user.rebind.SourceWriter;
@@ -48,7 +49,8 @@ import java.util.Set;
 /**
  * Builds an image strip for all ImageResources defined within an ClientBundle.
  */
-public final class ImageResourceGenerator extends AbstractResourceGenerator {
+public final class ImageResourceGenerator extends AbstractResourceGenerator
+    implements SupportsGeneratorResultCaching {
   /**
    * Represents a file that contains multiple image regions.
    */
@@ -602,6 +604,10 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator {
     try {
       String locale = context.getGeneratorContext().getPropertyOracle().getSelectionProperty(
           TreeLogger.NULL, "locale").getCurrentValue();
+
+      // add the locale selection property as a permuation axis for our requirements
+      context.getRequirements().addPermutationAxis("locale");
+
       sb.append(locale);
     } catch (BadPropertyValueException e) {
       // OK, locale isn't defined

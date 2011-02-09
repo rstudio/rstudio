@@ -68,6 +68,7 @@ import com.google.gwt.resources.ext.AbstractResourceGenerator;
 import com.google.gwt.resources.ext.ClientBundleRequirements;
 import com.google.gwt.resources.ext.ResourceContext;
 import com.google.gwt.resources.ext.ResourceGeneratorUtil;
+import com.google.gwt.resources.ext.SupportsGeneratorResultCaching;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.user.rebind.StringSourceWriter;
 
@@ -88,7 +89,8 @@ import java.util.zip.Adler32;
 /**
  * Provides implementations of CSSResources.
  */
-public final class CssResourceGenerator extends AbstractResourceGenerator {
+public final class CssResourceGenerator extends AbstractResourceGenerator 
+    implements SupportsGeneratorResultCaching {
 
   @SuppressWarnings("serial")
   static class JClassOrderComparator implements Comparator<JClassType>,
@@ -125,8 +127,11 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
   private static final String KEY_CLASS_PREFIX = "prefix";
   private static final String KEY_CLASS_COUNTER = "counter";
   private static final String KEY_HAS_CACHED_DATA = "hasCachedData";
-  private static final String KEY_SHARED_METHODS = "sharedMethods";
+  private static final String KEY_MERGE_ENABLED = "CssResource.mergeEnabled";
+  private static final String KEY_OBFUSCATION_PREFIX = "CssResource.obfuscationPrefix";
   private static final String KEY_RESERVED_PREFIXES = "CssResource.reservedClassPrefixes";
+  private static final String KEY_SHARED_METHODS = "sharedMethods";
+  private static final String KEY_STYLE = "CssResource.style";
 
   /**
    * This character must not appear in {@link #BASE32_CHARS}.
@@ -451,6 +456,9 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
             '$', '.'));
         assert importType != null : "TypeOracle does not have type "
             + clazz.getName();
+        
+        // add this import type as a requirement for this generator
+        context.getRequirements().addTypeHierarchy(importType);
 
         String prefix = getImportPrefix(importType);
 
@@ -499,17 +507,27 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
       throws UnableToCompleteException {
     String classPrefix;
     try {
-      PropertyOracle propertyOracle = context.getGeneratorContext().getPropertyOracle();
-      ConfigurationProperty styleProp = propertyOracle.getConfigurationProperty("CssResource.style");
+      PropertyOracle propertyOracle = 
+        context.getGeneratorContext().getPropertyOracle();
+      ConfigurationProperty styleProp = 
+        propertyOracle.getConfigurationProperty(KEY_STYLE);
       String style = styleProp.getValues().get(0);
       prettyOutput = style.equals("pretty");
 
-      ConfigurationProperty mergeProp = propertyOracle.getConfigurationProperty("CssResource.mergeEnabled");
+      ConfigurationProperty mergeProp = 
+        propertyOracle.getConfigurationProperty(KEY_MERGE_ENABLED);
       String merge = mergeProp.getValues().get(0);
       enableMerge = merge.equals("true");
 
-      ConfigurationProperty classPrefixProp = propertyOracle.getConfigurationProperty("CssResource.obfuscationPrefix");
+      ConfigurationProperty classPrefixProp = 
+        propertyOracle.getConfigurationProperty(KEY_OBFUSCATION_PREFIX);
       classPrefix = classPrefixProp.getValues().get(0);
+      
+      // add these configuration properties to our requirements
+      ClientBundleRequirements requirements = context.getRequirements();
+      requirements.addConfigurationProperty(KEY_STYLE);
+      requirements.addConfigurationProperty(KEY_MERGE_ENABLED);
+      requirements.addConfigurationProperty(KEY_OBFUSCATION_PREFIX);
     } catch (BadPropertyValueException e) {
       logger.log(TreeLogger.ERROR, "Unable to query module property", e);
       throw new UnableToCompleteException();
@@ -553,7 +571,7 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
     // Create the AST and do a quick scan for requirements
     CssStylesheet sheet = GenerateCssAst.exec(logger, resources);
     stylesheetMap.put(method, sheet);
-    (new RequirementsCollector(logger, requirements)).accept(sheet);
+    (new RequirementsCollector(logger, context.getRequirements())).accept(sheet);
   }
 
   /**
@@ -773,8 +791,12 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
       ConfigurationProperty prop;
       TreeSet<String> reservedPrefixes = new TreeSet<String>();
       try {
-        prop = context.getGeneratorContext().getPropertyOracle().getConfigurationProperty(
-            KEY_RESERVED_PREFIXES);
+        prop = context.getGeneratorContext().getPropertyOracle()
+            .getConfigurationProperty(KEY_RESERVED_PREFIXES);
+
+        // add this configuration property to our requirements
+        context.getRequirements().addConfigurationProperty(KEY_RESERVED_PREFIXES);
+
         for (String value : prop.getValues()) {
           value = value.trim();
           if (value.length() == 0) {

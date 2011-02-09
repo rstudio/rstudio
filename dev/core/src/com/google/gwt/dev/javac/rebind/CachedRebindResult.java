@@ -18,6 +18,7 @@ package com.google.gwt.dev.javac.rebind;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.dev.javac.GeneratedUnit;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,21 +28,21 @@ import java.util.Map;
  * cached and presented to subsequent rebind operations, providing the generator
  * information needed to decide whether full or partial re-generation is required.
  */
-public class CachedRebindResult {
+public class CachedRebindResult implements Serializable {
   private final ArtifactSet artifacts;
   private final Map<String, GeneratedUnit> generatedUnitMap;
   private final String returnedTypeName;
   private final long timeGenerated;
-  private final Object clientData;
+  private final CachedClientDataMap clientDataMap;
 
   public CachedRebindResult(String resultTypeName, ArtifactSet artifacts, 
       Map<String, GeneratedUnit> generatedUnitMap, 
-      long timeGenerated, Object clientData) {
+      long timeGenerated, CachedClientDataMap clientDataMap) {
     this.returnedTypeName = resultTypeName;
     this.artifacts = new ArtifactSet(artifacts);
     this.generatedUnitMap = new HashMap<String, GeneratedUnit>(generatedUnitMap);
     this.timeGenerated = timeGenerated;
-    this.clientData = clientData;
+    this.clientDataMap = clientDataMap;
   }
   
   public CachedRebindResult(String resultTypeName, ArtifactSet artifacts, 
@@ -53,8 +54,16 @@ public class CachedRebindResult {
     return artifacts;
   }
   
-  public Object getClientData() {
-    return clientData;
+  public Object getClientData(String key) {
+    if (clientDataMap == null) {
+      return null;
+    } else {
+      return clientDataMap.get(key);
+    }
+  }
+  
+  public CachedClientDataMap getClientDataMap() {
+    return clientDataMap;
   }
   
   public GeneratedUnit getGeneratedUnit(String typeName) {

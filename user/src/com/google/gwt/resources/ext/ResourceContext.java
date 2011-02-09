@@ -133,7 +133,14 @@ public interface ResourceContext {
    *           {@link ResourceGenerator#prepare} methods.
    */
   String getImplementationSimpleSourceName() throws IllegalStateException;
-
+  
+  /**
+   * Returns a {@link ClientBundleRequirements} object, which can be used to
+   * track deferred-binding and configuration properties that are relevant to a
+   * resource context.
+   */
+  ClientBundleRequirements getRequirements();
+  
   /**
    * Store data in the ResourceContext. ResourceGenerators may reduce the amount
    * of recomputation performed by caching data the ResourceContext. This cache

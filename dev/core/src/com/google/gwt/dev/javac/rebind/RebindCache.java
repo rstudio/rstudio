@@ -17,6 +17,7 @@ package com.google.gwt.dev.javac.rebind;
 
 import com.google.gwt.dev.cfg.Rule;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,7 +25,7 @@ import java.util.Map;
  * A cache for storing {@link CachedRebindResult} entries.  Entries are keyed
  * by rebind Rule and queryTypeName.
  */
-public class RebindCache {
+public class RebindCache implements Serializable {
  
   private final Map<String, Map<String, CachedRebindResult>> rebindResults;
   

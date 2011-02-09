@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2011 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,18 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.core.ext.typeinfo;
+package com.google.gwt.resources.ext;
 
 /**
- * Type representing a Java class or interface type that a user would declare.
+ * A marker interface that a {@link ResourceGenerator} can implement to indicate 
+ * it supports generator result caching.
  */
-public interface JRealClassType extends JClassType {
-  
-  /**
-   * EXPERIMENTAL and subject to change. Do not use this in production code.
-   * 
-   * Generate a hash to be used as a signature for comparing versions of the 
-   * structure of a type.  
-   */
-  String getTypeStrongHash();
+public interface SupportsGeneratorResultCaching {
 }

@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -29,7 +30,7 @@ import java.util.List;
  * A container for saving lists of deferred-binding and configuration properties
  * to be compared subsequently with a PropertyOracle.
  */
-public class CachedPropertyInformation {
+public class CachedPropertyInformation implements Serializable {
   
   private final List<SelectionProperty> selectionProperties;
   private final List<ConfigurationProperty> configProperties;

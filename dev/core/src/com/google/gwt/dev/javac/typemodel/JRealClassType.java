@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.dev.util.StringInterner;
+import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.collect.IdentitySets;
 import com.google.gwt.dev.util.collect.Lists;
 
@@ -51,6 +52,8 @@ public class JRealClassType extends JClassType implements
   private String lazyQualifiedBinaryName;
 
   private String lazyQualifiedName;
+  
+  private String lazyTypeStrongHash;
 
   private final Members members = new Members(this);
 
@@ -63,6 +66,8 @@ public class JRealClassType extends JClassType implements
   private final TypeOracle oracle;
 
   private JClassType superclass;
+  
+  private byte[] byteCode;
 
   /**
    * Create a class type that reflects an actual type.
@@ -72,7 +77,6 @@ public class JRealClassType extends JClassType implements
    * @param enclosingTypeName the fully qualified source name of the enclosing
    *          class or null if a top-level class - setEnclosingType must be
    *          called later with the proper enclosing type if this is non-null
-   * @param isLocalType
    * @param name
    * @param isInterface
    */
@@ -98,6 +102,10 @@ public class JRealClassType extends JClassType implements
       // setEnclosingType().
     }
     oracle.addNewType(this);
+  }
+  
+  public void addByteCode(byte[] byteCode) {
+    this.byteCode = byteCode;
   }
 
   @Override
@@ -267,6 +275,27 @@ public class JRealClassType extends JClassType implements
   @Override
   public JClassType getSuperclass() {
     return superclass;
+  }
+  
+  /**
+   * EXPERIMENTAL and subject to change. Do not use this in production code.
+   * 
+   * Generate a hash to be used as a signature for comparing versions of the 
+   * structure of a type.
+   * 
+   * TODO(jbrosenberg): Note, this implementation is based on the entire byte 
+   * code for a class, which is probably overkill, since we only need a hash 
+   * based on the type's structure (but not all of its code).  Need to come up
+   * with an efficient way to compute a hash of a type's structure.  For now,
+   * using the raw bytes directly is quick relative to making multiple api calls
+   * into type oracle to determine the type's structure.
+   */ 
+  public String getTypeStrongHash() {
+    if (lazyTypeStrongHash != null) {
+      return lazyTypeStrongHash;
+    }
+    lazyTypeStrongHash = Util.computeStrongName(byteCode);
+    return lazyTypeStrongHash;
   }
 
   @Override

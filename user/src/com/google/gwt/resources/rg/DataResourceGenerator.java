@@ -24,6 +24,7 @@ import com.google.gwt.resources.client.DataResource.DoNotEmbed;
 import com.google.gwt.resources.ext.AbstractResourceGenerator;
 import com.google.gwt.resources.ext.ResourceContext;
 import com.google.gwt.resources.ext.ResourceGeneratorUtil;
+import com.google.gwt.resources.ext.SupportsGeneratorResultCaching;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.user.rebind.StringSourceWriter;
 
@@ -32,7 +33,8 @@ import java.net.URL;
 /**
  * Provides implementations of DataResource.
  */
-public final class DataResourceGenerator extends AbstractResourceGenerator {
+public final class DataResourceGenerator extends AbstractResourceGenerator
+    implements SupportsGeneratorResultCaching {
   @Override
   public String createAssignment(TreeLogger logger, ResourceContext context,
       JMethod method) throws UnableToCompleteException {

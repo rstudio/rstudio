@@ -22,11 +22,13 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.resources.ext.AbstractResourceGenerator;
 import com.google.gwt.resources.ext.ResourceContext;
+import com.google.gwt.resources.ext.SupportsGeneratorResultCaching;
 
 /**
  * This is a special case of ResourceGenerator that handles nested bundles.
  */
-public final class BundleResourceGenerator extends AbstractResourceGenerator {
+public final class BundleResourceGenerator extends AbstractResourceGenerator 
+    implements SupportsGeneratorResultCaching {
 
   @Override
   public String createAssignment(TreeLogger logger, ResourceContext context,

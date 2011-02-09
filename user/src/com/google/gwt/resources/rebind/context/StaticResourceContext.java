@@ -49,6 +49,7 @@ class StaticResourceContext extends AbstractResourceContext {
     String enableRenaming = null;
     try {
       ConfigurationProperty prop = propertyOracle.getConfigurationProperty(ENABLE_RENAMING);
+      getRequirements().addConfigurationProperty(ENABLE_RENAMING);
       enableRenaming = prop.getValues().get(0);
     } catch (BadPropertyValueException e) {
       logger.log(TreeLogger.ERROR, "Bad value for " + ENABLE_RENAMING, e);

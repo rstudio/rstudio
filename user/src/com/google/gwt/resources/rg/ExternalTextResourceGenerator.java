@@ -32,6 +32,7 @@ import com.google.gwt.resources.ext.ClientBundleFields;
 import com.google.gwt.resources.ext.ClientBundleRequirements;
 import com.google.gwt.resources.ext.ResourceContext;
 import com.google.gwt.resources.ext.ResourceGeneratorUtil;
+import com.google.gwt.resources.ext.SupportsGeneratorResultCaching;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.user.rebind.StringSourceWriter;
 
@@ -43,7 +44,7 @@ import java.util.Map;
  * Adds {@link ExternalTextResourcePrototype} objects to the bundle.
  */
 public final class ExternalTextResourceGenerator extends
-    AbstractResourceGenerator {
+    AbstractResourceGenerator implements SupportsGeneratorResultCaching {
   /**
    * The name of a deferred binding property that determines whether or not this
    * generator will use JSONP to fetch the files.
@@ -177,6 +178,9 @@ public final class ExternalTextResourceGenerator extends
       ConfigurationProperty prop = context.getGeneratorContext()
         .getPropertyOracle().getConfigurationProperty(USE_JSONP);
       useJsonpProp = prop.getValues().get(0);
+      
+      // add this configuration property to our requirements
+      context.getRequirements().addConfigurationProperty(USE_JSONP);
     } catch (BadPropertyValueException e) {
       logger.log(TreeLogger.ERROR, "Bad value for " + USE_JSONP, e);
       return false;

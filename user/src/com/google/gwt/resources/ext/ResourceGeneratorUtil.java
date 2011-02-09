@@ -16,6 +16,7 @@
 package com.google.gwt.resources.ext;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
+import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
@@ -61,10 +62,10 @@ public final class ResourceGeneratorUtil {
    * A locator which will use files published via
    * {@link ResourceGeneratorUtil#addNamedFile(String, File)}.
    */
-  private static class FileLocator implements Locator {
-    public static final FileLocator INSTANCE = new FileLocator();
+  private static class NamedFileLocator implements Locator {
+    public static final NamedFileLocator INSTANCE = new NamedFileLocator();
 
-    private FileLocator() {
+    private NamedFileLocator() {
     }
 
     public URL locate(String resourceName) {
@@ -285,12 +286,7 @@ public final class ResourceGeneratorUtil {
   public static URL[] findResources(TreeLogger logger, ResourceContext context,
       JMethod method, String[] defaultSuffixes)
       throws UnableToCompleteException {
-    Locator[] locators = {
-        FileLocator.INSTANCE,
-        new ResourceOracleLocator(
-            context.getGeneratorContext().getResourcesOracle()),
-        new ClassLoaderLocator(Thread.currentThread().getContextClassLoader())};
-
+    Locator[] locators = getDefaultLocators(context.getGeneratorContext());
     URL[] toReturn = findResources(logger, locators, context, method,
         defaultSuffixes);
     return toReturn;
@@ -370,7 +366,46 @@ public final class ResourceGeneratorUtil {
 
     return currentMethod;
   }
+  
+  /**
+   * Try to find a resource with the given resourceName.  It will use the default
+   * search order to locate the resource as is used by {@link #findResources}.
+   * 
+   * @param logger
+   * @param context
+   * @param resourceName
+   * @return a URL for the resource, if found
+   */
+  public static URL tryFindResource(TreeLogger logger,
+      GeneratorContext genContext, ResourceContext resourceContext,
+      String resourceName) {
+    String locale = getLocale(logger, genContext);
+    Locator[] locators = getDefaultLocators(genContext);
+    for (Locator locator : locators) {
+      URL toReturn = tryFindResource(locator, resourceContext, resourceName,
+          locale);
+      if (toReturn != null) {
+        return toReturn;
+      }
+    }
+    return null;
+  }
 
+  /**
+   * Add the type dependency requirements for a method, to the context.
+   * 
+   * @param context
+   * @param method
+   */
+  private static void addTypeRequirementsForMethod(ResourceContext context, 
+      JMethod method) {
+    ClientBundleRequirements reqs = context.getRequirements();
+    if (reqs != null) {
+      reqs.addTypeHierarchy(method.getEnclosingType());
+      reqs.addTypeHierarchy((JClassType) method.getReturnType());
+    }
+  }
+  
   /**
    * We want to warn the user about any annotations from ImageBundle or the old
    * incubator code.
@@ -387,7 +422,7 @@ public final class ResourceGeneratorUtil {
       }
     }
   }
-
+  
   /**
    * Main implementation of findResources.
    */
@@ -396,14 +431,7 @@ public final class ResourceGeneratorUtil {
       throws UnableToCompleteException {
     logger = logger.branch(TreeLogger.DEBUG, "Finding resources");
 
-    String locale;
-    try {
-      PropertyOracle oracle = context.getGeneratorContext().getPropertyOracle();
-      SelectionProperty prop = oracle.getSelectionProperty(logger, "locale");
-      locale = prop.getCurrentValue();
-    } catch (BadPropertyValueException e) {
-      locale = null;
-    }
+    String locale = getLocale(logger, context.getGeneratorContext());
 
     checkForDeprecatedAnnotations(logger, method);
 
@@ -416,13 +444,13 @@ public final class ResourceGeneratorUtil {
         for (String extension : defaultSuffixes) {
           logger.log(TreeLogger.SPAM, "Trying default extension " + extension);
           for (Locator locator : locators) {
-            URL resourceUrl = tryFindResource(locator,
-                getPathRelativeToPackage(
-                    method.getEnclosingType().getPackage(), method.getName()
-                        + extension), locale);
+            URL resourceUrl = tryFindResource(locator, context,
+                getPathRelativeToPackage(method.getEnclosingType().getPackage(), 
+                    method.getName() + extension), locale);
 
+            // Take the first match
             if (resourceUrl != null) {
-              // Take the first match
+              addTypeRequirementsForMethod(context, method);
               return new URL[] {resourceUrl};
             }
           }
@@ -446,15 +474,16 @@ public final class ResourceGeneratorUtil {
         URL resourceURL = null;
 
         for (Locator locator : locators) {
-          resourceURL = tryFindResource(locator, getPathRelativeToPackage(
-              method.getEnclosingType().getPackage(), resource), locale);
+          resourceURL = tryFindResource(locator, context,
+              getPathRelativeToPackage(method.getEnclosingType().getPackage(),
+                  resource), locale);
 
           /*
            * If we didn't find the resource relative to the package, assume it
            * is absolute.
            */
           if (resourceURL == null) {
-            resourceURL = tryFindResource(locator, resource, locale);
+            resourceURL = tryFindResource(locator, context, resource, locale);
           }
 
           // If we have found a resource, take the first match
@@ -478,9 +507,44 @@ public final class ResourceGeneratorUtil {
       throw new UnableToCompleteException();
     }
 
+    addTypeRequirementsForMethod(context, method);
     return toReturn;
   }
-
+ 
+  /**
+   * Get default list of resource Locators, in the default order.
+   * 
+   * @param context
+   * @return an ordered array of Locator[]
+   */
+  private static Locator[] getDefaultLocators(GeneratorContext genContext) {
+    Locator[] locators = {
+      NamedFileLocator.INSTANCE,
+      new ResourceOracleLocator(genContext.getResourcesOracle()),
+      new ClassLoaderLocator(Thread.currentThread().getContextClassLoader())};
+    
+    return locators;
+  }
+ 
+  /**
+   * Get the current locale string.
+   * 
+   * @param logger
+   * @param context
+   * @return the current locale
+   */
+  private static String getLocale(TreeLogger logger, GeneratorContext genContext) {
+    String locale;
+    try {
+      PropertyOracle oracle = genContext.getPropertyOracle();
+      SelectionProperty prop = oracle.getSelectionProperty(logger, "locale");
+      locale = prop.getCurrentValue();
+    } catch (BadPropertyValueException e) {
+      locale = null;
+    }
+    return locale;
+  }
+ 
   /**
    * Converts a package relative path into an absolute path.
    *
@@ -529,6 +593,31 @@ public final class ResourceGeneratorUtil {
       toReturn = locator.locate(resourceName);
     }
 
+    return toReturn;
+  }
+ 
+  /**
+   * Performs the locale lookup function for a given resource name.  Will also
+   * add the located resource to the requirements object for the context.
+   *
+   * @param locator the Locator to use to load the resources
+   * @param context the ResourceContext
+   * @param resourceName the string name of the desired resource
+   * @param locale the locale of the current rebind permutation
+   * @return a URL by which the resource can be loaded, <code>null</code> if one
+   *         cannot be found
+   */
+  private static URL tryFindResource(Locator locator, ResourceContext context,
+      String resourceName, String locale) {
+    
+    URL toReturn = tryFindResource(locator, resourceName, locale);
+    if (toReturn != null && context != null) {
+      ClientBundleRequirements reqs = context.getRequirements();
+      if (reqs != null) {
+        reqs.addResolvedResource(resourceName, toReturn);
+      }
+    }
+    
     return toReturn;
   }
 

@@ -17,8 +17,9 @@ package com.google.gwt.resources.rebind.context;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.ext.BadPropertyValueException;
-import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
+import com.google.gwt.core.ext.GeneratorContextExt;
+import com.google.gwt.core.ext.GeneratorExt;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
@@ -27,9 +28,15 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JGenericType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
+import com.google.gwt.core.ext.typeinfo.JRealClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.generator.NameFactory;
+import com.google.gwt.dev.javac.rebind.CachedClientDataMap;
+import com.google.gwt.dev.javac.rebind.CachedPropertyInformation;
+import com.google.gwt.dev.javac.rebind.CachedRebindResult;
+import com.google.gwt.dev.javac.rebind.RebindResult;
+import com.google.gwt.dev.javac.rebind.RebindStatus;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ClientBundleWithLookup;
@@ -39,12 +46,19 @@ import com.google.gwt.resources.ext.ClientBundleRequirements;
 import com.google.gwt.resources.ext.ResourceContext;
 import com.google.gwt.resources.ext.ResourceGenerator;
 import com.google.gwt.resources.ext.ResourceGeneratorType;
+import com.google.gwt.resources.ext.ResourceGeneratorUtil;
+import com.google.gwt.resources.ext.SupportsGeneratorResultCaching;
 import com.google.gwt.resources.rg.BundleResourceGenerator;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.user.rebind.StringSourceWriter;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.JarURLConnection;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -52,6 +66,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 /**
@@ -97,7 +112,13 @@ import java.util.Set;
  * of an instance of the ClientBundle type so that resources can refer to one
  * another by simply emitting a call to <code>resource()</code>.
  */
-public abstract class AbstractClientBundleGenerator extends Generator {
+public abstract class AbstractClientBundleGenerator extends GeneratorExt {
+
+  private static final String FILE_PROTOCOL = "file";
+  private static final String JAR_PROTOCOL = "jar";
+  private static final String CACHED_PROPERTY_INFORMATION = "cpi";
+  private static final String CACHED_RESOURCE_INFORMATION = "cri";
+  private static final String CACHED_TYPE_INFORMATION = "cti";
 
   /**
    * An implementation of ClientBundleFields.
@@ -176,31 +197,145 @@ public abstract class AbstractClientBundleGenerator extends Generator {
   }
 
   private static class RequirementsImpl implements ClientBundleRequirements {
-    private final Set<String> axes = new HashSet<String>();
-    private final PropertyOracle oracle;
+    private final Set<String> axes;
+    private boolean axesLocked = false;
+    private final boolean canBeCacheable;
+    private final Set<String> configProps;
+    private final PropertyOracle propertyOracle;
+    private final Map<String, URL> resolvedResources;
+    private final Set<JClassType> types;
 
-    public RequirementsImpl(PropertyOracle oracle) {
-      this.oracle = oracle;
+    public RequirementsImpl(PropertyOracle propertyOracle, boolean canBeCacheable) {
+      this.propertyOracle = propertyOracle;
+      this.canBeCacheable = canBeCacheable;
+      
+      // always need to track permuationAxes
+      axes = new HashSet<String>();
+      
+      // only need to track these if generator caching is a possibility
+      if (canBeCacheable) {
+        configProps = new HashSet<String>();
+        types = new HashSet<JClassType>();
+        resolvedResources = new HashMap<String, URL>();
+      } else {
+        configProps = null;
+        types = null;
+        resolvedResources = null;
+      }
+    }
+
+    public void addConfigurationProperty(String propertyName) 
+        throws BadPropertyValueException {
+      
+      if (!canBeCacheable) {
+        return;
+      }
+      // Ensure the property exists
+      propertyOracle.getConfigurationProperty(propertyName).getValues();
+      configProps.add(propertyName);
     }
 
     public void addPermutationAxis(String propertyName)
         throws BadPropertyValueException {
+
+      if (axes.contains(propertyName)) {
+        return;
+      }
+
+      // Ensure adding of permutationAxes has not been locked
+      if (axesLocked) {
+        throw new IllegalStateException(
+            "addPermutationAxis failed, axes have been locked");
+      }
+
       // Ensure the property exists and add a permutation axis if the
       // property is a deferred binding property.
       try {
-        oracle.getSelectionProperty(TreeLogger.NULL, propertyName).getCurrentValue();
+        propertyOracle.getSelectionProperty(
+            TreeLogger.NULL, propertyName).getCurrentValue();
         axes.add(propertyName);
       } catch (BadPropertyValueException e) {
-        oracle.getConfigurationProperty(propertyName).getValues();
+        addConfigurationProperty(propertyName);
       }
+    }
+
+    public void addResolvedResource(String partialPath, URL resolvedResourceUrl) {
+      if (!canBeCacheable) {
+        return;
+      }
+      resolvedResources.put(partialPath, resolvedResourceUrl);
+    }
+
+    public void addTypeHierarchy(JClassType type) {
+      if (!canBeCacheable) {
+        return;
+      }
+      if (!types.add(type)) {
+        return;
+      }
+      Set<? extends JClassType> superTypes = type.getFlattenedSupertypeHierarchy();
+      types.addAll(superTypes);
+    }
+
+    public Collection<String> getConfigurationPropertyNames() {
+      if (!canBeCacheable) {
+        return null;
+      }
+      return configProps;
+    }
+
+    public Collection<String> getPermutationAxes() {
+      return axes;
+    }
+
+    public Map<String, URL> getResolvedResources() {
+      if (!canBeCacheable) {
+        return null;
+      }
+      return resolvedResources;
+    }
+
+    public Map<String, String> getTypeSignatures() {
+      if (!canBeCacheable) {
+        return null;
+      }
+      Map<String, String> typeSignatures = new HashMap<String, String>();
+      for (JClassType type : types) {
+        String typeName = type.getQualifiedSourceName();
+        if (type instanceof JRealClassType) {
+          JRealClassType sourceRealType = (JRealClassType) type;
+          String typeSignature = sourceRealType.getTypeStrongHash();
+          typeSignatures.put(typeName, typeSignature);
+        } else {
+          typeSignatures.put(typeName, "");
+        }
+      }
+      return typeSignatures;
+    }
+
+    /*
+     * No further permutation axes can be added after this is called
+     */
+    public void lockPermutationAxes() {
+      axesLocked = true;
     }
   }
 
   @Override
-  public final String generate(TreeLogger logger,
-      GeneratorContext generatorContext, String typeName)
+  public RebindResult generateIncrementally(TreeLogger logger,
+      GeneratorContextExt generatorContext, String typeName)
       throws UnableToCompleteException {
 
+    /*
+     * Do a series of checks to see if we can use a previously cached result,
+     * and if so, we can skip further execution and return immediately.
+     */
+    if (checkPropertyCacheability(logger, generatorContext)
+        && checkSourceTypeCacheability(generatorContext)
+        && checkDependentResourceCacheability(logger, generatorContext, null)) {
+      return new RebindResult(RebindStatus.USE_ALL_CACHED, typeName);
+    }
+      
     // The TypeOracle knows about all types in the type system
     TypeOracle typeOracle = generatorContext.getTypeOracle();
 
@@ -227,14 +362,28 @@ public abstract class AbstractClientBundleGenerator extends Generator {
         logger, typeOracle, sourceType);
 
     /*
+     * Check the resource generators associated with our taskList, and see if
+     * they all support generator result caching.
+     */
+    boolean canBeCacheable = checkResourceGeneratorCacheability(
+        generatorContext, taskList);
+
+    /*
      * Additional objects that hold state during the generation process.
      */
     AbstractResourceContext resourceContext = createResourceContext(logger,
         generatorContext, sourceType);
     FieldsImpl fields = new FieldsImpl();
     RequirementsImpl requirements = new RequirementsImpl(
-        generatorContext.getPropertyOracle());
+        generatorContext.getPropertyOracle(), canBeCacheable);
+    resourceContext.setRequirements(requirements);
     doAddFieldsAndRequirements(logger, generatorContext, fields, requirements);
+
+    /*
+     * Add our source type (and it's supertypes) as a requirement.  Note further
+     * types may be added during the processing of the taskList.
+     */
+    requirements.addTypeHierarchy(sourceType);
 
     /*
      * Initialize the ResourceGenerators and prepare them for subsequent code
@@ -309,8 +458,32 @@ public abstract class AbstractClientBundleGenerator extends Generator {
     finish(logger, resourceContext, generators.keySet());
     doFinish(logger);
 
-    // Return the name of the concrete class
-    return createdClassName;
+    if (canBeCacheable) {
+      // remember the current set of required properties, and their values
+      CachedPropertyInformation cpi = new CachedPropertyInformation(logger, 
+          generatorContext.getPropertyOracle(), 
+          requirements.getPermutationAxes(), 
+          requirements.getConfigurationPropertyNames());
+
+      // remember the type signatures for required source types
+      Map<String, String> cti = requirements.getTypeSignatures();
+
+      // remember the required resources
+      Map<String, URL> cri = requirements.getResolvedResources();
+
+      // create data map to be returned the next time the generator is run
+      CachedClientDataMap data = new CachedClientDataMap();
+      data.put(CACHED_PROPERTY_INFORMATION, cpi);
+      data.put(CACHED_RESOURCE_INFORMATION, cri);
+      data.put(CACHED_TYPE_INFORMATION, cti);
+
+      // Return a new cacheable result
+      return new RebindResult(RebindStatus.USE_ALL_NEW, createdClassName, data);
+    } else {
+      // If we can't be cacheable, don't return a cacheable result
+      return new RebindResult(RebindStatus.USE_ALL_NEW_WITH_NO_CACHING,
+          createdClassName);
+    }
   }
 
   /**
@@ -362,6 +535,200 @@ public abstract class AbstractClientBundleGenerator extends Generator {
    * @throws UnableToCompleteException if an error occurs.
    */
   protected void doFinish(TreeLogger logger) throws UnableToCompleteException {
+  }
+
+  /**
+   * Check that the map of cached type signatures matches those from the current
+   * typeOracle.
+   */
+  private boolean checkCachedTypeSignatures(
+      GeneratorContextExt generatorContext, Map<String, String> typeSignatures) {
+    
+    TypeOracle oracle = generatorContext.getTypeOracle();
+    
+    for (String sourceTypeName : typeSignatures.keySet()) {
+      JClassType sourceType = oracle.findType(sourceTypeName);
+      if (sourceType == null || !(sourceType instanceof JRealClassType)) {
+        return false;
+      }
+      JRealClassType sourceRealType = (JRealClassType) sourceType;
+      
+      String signature = sourceRealType.getTypeStrongHash();
+      if (!signature.equals(typeSignatures.get(sourceTypeName))) {
+        return false;
+      }
+    }
+    
+    return true;
+  }
+
+  /**
+   * Check dependent resources for cacheability.
+   */
+  private boolean checkDependentResourceCacheability(TreeLogger logger,
+      GeneratorContextExt genContext, ResourceContext resourceContext) {
+
+    CachedRebindResult lastRebindResult = genContext.getCachedGeneratorResult();
+
+    if (lastRebindResult == null 
+        || !genContext.isGeneratorResultCachingEnabled()) {
+      return false;
+    }
+    long lastTimeGenerated = lastRebindResult.getTimeGenerated();
+
+    // check that resource URL's haven't moved, and haven't been modified
+    @SuppressWarnings("unchecked")
+    Map<String, URL> cachedResolvedResources = (Map<String, URL>)
+      lastRebindResult.getClientData(CACHED_RESOURCE_INFORMATION);
+    
+    if (cachedResolvedResources == null) {
+      return false;
+    }
+    
+    for (Entry<String, URL> entry : cachedResolvedResources.entrySet()) {
+      String resourceName = entry.getKey();
+      URL resolvedUrl = entry.getValue();
+      URL currentUrl = ResourceGeneratorUtil.tryFindResource(logger, genContext,
+          resourceContext, resourceName);
+      if (currentUrl == null || resolvedUrl == null
+          || !resolvedUrl.toExternalForm().equals(currentUrl.toExternalForm())) {
+        return false;
+      }
+      
+      if (!checkDependentResourceUpToDate(lastTimeGenerated, resolvedUrl)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Checks whether a dependent resource referenced by the provided URL is
+   * up to date, based on the provided referenceTime.
+   */
+  private boolean checkDependentResourceUpToDate(long referenceTime, URL url) {
+    try {
+      if (url.getProtocol().equals(JAR_PROTOCOL)) {
+        /*
+         * If this resource is contained inside a jar file, such as can
+         * happen if it's bundled in a 3rd-party library, we use the jar 
+         * file itself to test whether it's up to date.  We don't want
+         * to call JarURLConnection.getLastModified(), as this is much
+         * slower than using the jar File resource directly.
+         */
+        JarURLConnection jarConn = (JarURLConnection) url.openConnection();
+        url = jarConn.getJarFileURL();
+      }
+
+      long lastModified;
+      if (url.getProtocol().equals(FILE_PROTOCOL)) {
+        /*
+         * Need to handle possibly wonky syntax in a file URL resource.
+         * Modeled after suggestion in this blog entry:
+         * http://weblogs.java.net/blog/2007/04/25/how-convert-javaneturl-javaiofile
+         */
+        File file;
+        try {
+          file = new File(url.toURI());
+        } catch (URISyntaxException uriEx) {
+          file = new File(url.getPath());
+        }
+        lastModified = file.lastModified();
+      } else {
+        /*
+         * Don't attempt to handle any other protocol
+         */
+        return false;
+      }
+      if (lastModified == 0L ||
+          lastModified > referenceTime) {
+        return false;
+      }
+    } catch (IOException ioEx) {
+      return false;
+    } catch (RuntimeException ruEx) {
+      /*
+       * Return false for any RuntimeException (e.g. a SecurityException), and 
+       * allow the cacheability check to fail, since we don't want to change the 
+       * behavior that would be encountered if no cache is available.  Force 
+       * resource generators to utilize their own exception handling.
+       */
+      return false;
+    }
+    return true;
+  }
+
+  /*
+   * Check properties for cacheability
+   */
+  private boolean checkPropertyCacheability(TreeLogger logger,
+      GeneratorContextExt genContext) {
+
+    CachedRebindResult lastRebindResult = genContext.getCachedGeneratorResult();
+
+    if (lastRebindResult == null 
+        || !genContext.isGeneratorResultCachingEnabled()) {
+      return false;
+    }
+
+    /*
+     * Do a check of deferred-binding and configuration properties, comparing
+     * the cached values saved previously with the current properties.
+     */
+    CachedPropertyInformation cpi = (CachedPropertyInformation) 
+        lastRebindResult.getClientData(CACHED_PROPERTY_INFORMATION);
+      
+    return cpi != null && cpi.checkPropertiesWithPropertyOracle(logger, 
+        genContext.getPropertyOracle());
+  }
+  
+  /**
+   * Check cacheability for resource generators in taskList.
+   */
+  private boolean checkResourceGeneratorCacheability(
+      GeneratorContextExt genContext,
+      Map<Class<? extends ResourceGenerator>, List<JMethod>> taskList) {
+    
+    if (!genContext.isGeneratorResultCachingEnabled()) {
+      return false;
+    }
+
+    /*
+     * Loop through each of our ResouceGenerator classes, and check those that
+     * implement the SupportsGeneratorResultCaching interface.
+     */
+    for (Class<? extends ResourceGenerator> rgClass : taskList.keySet()) {
+      if (!SupportsGeneratorResultCaching.class.isAssignableFrom(rgClass)) {
+        return false;
+      }
+    } 
+    return true;
+  }
+
+  /*
+   * Check source types for cacheability
+   */
+  private boolean checkSourceTypeCacheability(GeneratorContextExt genContext) {
+
+    CachedRebindResult lastRebindResult = genContext.getCachedGeneratorResult();
+
+    if (lastRebindResult == null 
+        || !genContext.isGeneratorResultCachingEnabled()) {
+      return false;
+    }
+
+    /*
+     * Do a check over the cached list of types that were previously flagged as
+     * required.  Check that none of these types has undergone a version change
+     * since the previous cached result was generated.
+     */
+    @SuppressWarnings("unchecked")
+    Map<String, String> cachedTypeSignatures = (Map<String, String>)
+      lastRebindResult.getClientData(CACHED_TYPE_INFORMATION);
+
+    return cachedTypeSignatures != null 
+      && checkCachedTypeSignatures(genContext, cachedTypeSignatures);
   }
 
   /**
@@ -567,19 +934,24 @@ public abstract class AbstractClientBundleGenerator extends Generator {
   /**
    * Given a user-defined type name, determine the type name for the generated
    * class based on accumulated requirements.
-   * 
-   * @throws UnableToCompleteException if an error occurs.
    */
   private String generateSimpleSourceName(TreeLogger logger,
       ResourceContext context, RequirementsImpl requirements) {
     StringBuilder toReturn = new StringBuilder(
         context.getClientBundleType().getName().replaceAll("[.$]", "_"));
-    Set<String> permutationAxes = new HashSet<String>(requirements.axes);
-    permutationAxes.add("locale");
 
     try {
+      // always add the locale property
+      requirements.addPermutationAxis("locale");
+    } catch (BadPropertyValueException e) {
+    }
+
+    try {
+      // no further additions to the permutation axes allowed after this point
+      requirements.lockPermutationAxes();
+      
       PropertyOracle oracle = context.getGeneratorContext().getPropertyOracle();
-      for (String property : permutationAxes) {
+      for (String property : requirements.getPermutationAxes()) {
         SelectionProperty prop = oracle.getSelectionProperty(logger, property);
         String value = prop.getCurrentValue();
         toReturn.append("_" + value);

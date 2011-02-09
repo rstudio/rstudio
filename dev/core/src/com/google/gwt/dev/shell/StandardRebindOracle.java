@@ -181,7 +181,7 @@ public class StandardRebindOracle implements RebindOracle {
           // use all new results, add a new cache entry
           cachedResult = new CachedRebindResult(newResult.getReturnedTypeName(),
               genCtx.getArtifacts(), genCtx.getGeneratedUnitMap(), 
-              System.currentTimeMillis(), newResult.getClientData());
+              System.currentTimeMillis(), newResult.getClientDataMap());
           rebindCachePut(rule, typeName, cachedResult);
           break;
           
@@ -210,7 +210,7 @@ public class StandardRebindOracle implements RebindOracle {
            */
           cachedResult = new CachedRebindResult(newResult.getReturnedTypeName(),
               genCtx.getArtifacts(), genCtx.getGeneratedUnitMap(), 
-              System.currentTimeMillis(), newResult.getClientData());
+              System.currentTimeMillis(), newResult.getClientDataMap());
           rebindCachePut(rule, typeName, cachedResult);
           break;
       }
@@ -237,7 +237,7 @@ public class StandardRebindOracle implements RebindOracle {
 
   /**
    * Invalidates the given source type name, so the next rebind request will
-   * generate type again.
+   * generate the type again.
    */
   public void invalidateRebind(String sourceTypeName) {
     typeNameBindingMap.remove(sourceTypeName);

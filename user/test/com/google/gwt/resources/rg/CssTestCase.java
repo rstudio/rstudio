@@ -24,6 +24,7 @@ import com.google.gwt.resources.css.ast.CssNode;
 import com.google.gwt.resources.css.ast.CssStylesheet;
 import com.google.gwt.resources.css.ast.CssVisitor;
 import com.google.gwt.resources.css.ast.HasNodes;
+import com.google.gwt.resources.ext.ClientBundleRequirements;
 import com.google.gwt.resources.ext.ResourceContext;
 
 import junit.framework.TestCase;
@@ -108,6 +109,10 @@ public class CssTestCase extends TestCase {
 
     public String getImplementationSimpleSourceName()
         throws IllegalStateException {
+      return null;
+    }
+    
+    public ClientBundleRequirements getRequirements() {
       return null;
     }
 

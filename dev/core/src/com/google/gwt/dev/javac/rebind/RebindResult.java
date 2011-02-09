@@ -19,13 +19,12 @@ package com.google.gwt.dev.javac.rebind;
  * A class for returning the result of a rebind operation.
  */
 public class RebindResult {
-
   private final RebindStatus resultStatus;
   private final String returnedTypeName;
-  private final Object clientData;
-  
+  private final CachedClientDataMap clientData;
+ 
   public RebindResult(RebindStatus resultStatus, 
-      String returnedType, Object clientData) {
+      String returnedType, CachedClientDataMap clientData) {
     this.resultStatus = resultStatus;
     this.returnedTypeName = returnedType;
     this.clientData = clientData;
@@ -34,11 +33,19 @@ public class RebindResult {
   public RebindResult(RebindStatus resultStatus, String returnedType) {
     this(resultStatus, returnedType, null);
   }
-  
-  public Object getClientData() {
+ 
+  public Object getClientData(String key) {
+    if (clientData == null) {
+      return null;
+    } else {
+      return clientData.get(key);
+    }
+  }
+ 
+  public CachedClientDataMap getClientDataMap() {
     return clientData;
   }
-  
+ 
   public RebindStatus getResultStatus() {
     return resultStatus;
   }

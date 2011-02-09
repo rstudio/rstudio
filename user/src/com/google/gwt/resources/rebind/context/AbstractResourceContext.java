@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.resources.ext.ClientBundleRequirements;
 import com.google.gwt.resources.ext.ResourceContext;
 import com.google.gwt.resources.ext.ResourceGenerator;
 import com.google.gwt.resources.ext.ResourceGeneratorUtil;
@@ -46,8 +47,9 @@ public abstract class AbstractResourceContext implements ResourceContext {
 
   private final TreeLogger logger;
   private final ClientBundleContext clientBundleCtx;
-  private String currentResourceGeneratorType;
   private final GeneratorContext context;
+  private String currentResourceGeneratorType;
+  private ClientBundleRequirements requirements = null;
   private final JClassType resourceBundleType;
   private String simpleSourceName;
 
@@ -100,10 +102,18 @@ public abstract class AbstractResourceContext implements ResourceContext {
     }
     return simpleSourceName;
   }
+  
+  public ClientBundleRequirements getRequirements() {
+    return requirements;
+  }
 
   public <T> boolean putCachedData(String key, T value) {
     key = currentResourceGeneratorType + ":" + key;
     return value != clientBundleCtx.putCachedData(key, value);
+  }
+  
+  public void setRequirements(ClientBundleRequirements requirements) {
+    this.requirements = requirements;
   }
 
   protected GeneratorContext getContext() {
