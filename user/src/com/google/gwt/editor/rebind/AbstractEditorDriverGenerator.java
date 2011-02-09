@@ -27,7 +27,6 @@ import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.EditorVisitor;
 import com.google.gwt.editor.client.impl.AbstractEditorContext;
-import com.google.gwt.editor.client.impl.AbstractEditorDelegate;
 import com.google.gwt.editor.client.impl.RootEditorContext;
 import com.google.gwt.editor.rebind.model.EditorData;
 import com.google.gwt.editor.rebind.model.EditorModel;
@@ -192,17 +191,18 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
         sw.println("getEditorChain().accept(visitor);");
       }
       for (EditorData d : data) {
+        if (d.isDelegateRequired()) {
+          sw.println("if (%s != null) ", delegateFields.get(d));
+        }
         sw.println("{");
         sw.indent();
         String editorContextName = getEditorContext(delegateData, d);
+        sw.println(
+            "%s ctx = new %s(getObject(), editor.%s, appendPath(\"%s\"));",
+            editorContextName, editorContextName, d.getSimpleExpression(),
+            d.getDeclaredPath());
         if (d.isDelegateRequired()) {
-          sw.println("%s ctx = new %s(getObject(), %s);", editorContextName,
-              editorContextName, delegateFields.get(d));
-        } else {
-          sw.println(
-              "%s ctx = new %s(getObject(), editor.%s, appendPath(\"%s\"));",
-              editorContextName, editorContextName, d.getSimpleExpression(),
-              d.getDeclaredPath());
+          sw.println("ctx.setEditorDelegate(%s);", delegateFields.get(d));
         }
         sw.println("ctx.traverse(visitor, %s);", d.isDelegateRequired()
             ? delegateFields.get(d) : "null");
@@ -250,19 +250,13 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
     if (pw != null) {
       ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
           pkg, simpleName);
-      String editedSourceName = data.getEditedType().getQualifiedSourceName();
+      String editedSourceName = data.getEditedType().getParameterizedQualifiedSourceName();
       f.setSuperclass(AbstractEditorContext.class.getCanonicalName() + "<"
           + editedSourceName + ">");
       SourceWriter sw = f.createSourceWriter(context, pw);
 
       String parentSourceName = parent.getEditedType().getQualifiedSourceName();
       sw.println("private final %s parent;", parentSourceName);
-      sw.println("public %s(%s parent, %s<%s, ?> delegate) {", simpleName,
-          parentSourceName, AbstractEditorDelegate.class.getCanonicalName(),
-          editedSourceName);
-      sw.indentln("super(delegate);");
-      sw.indentln("this.parent = parent;");
-      sw.println("}");
 
       sw.println("public %s(%s parent, %s<%s> editor, String path) {",
           simpleName, parentSourceName, Editor.class.getCanonicalName(),
@@ -283,8 +277,8 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
       sw.println("}");
 
       sw.println(
-          "@Override public Class<%1$s> getEditedType() { return %1$s.class; }",
-          editedSourceName);
+          "@Override public Class getEditedType() { return %s.class; }",
+          data.getEditedType().getQualifiedSourceName());
 
       sw.println("@Override public %s getFromModel() {", editedSourceName);
       sw.indentln("return (parent != null && %s) ? parent%s%s : null;",

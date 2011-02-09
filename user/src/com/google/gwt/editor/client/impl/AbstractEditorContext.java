@@ -41,11 +41,6 @@ public abstract class AbstractEditorContext<T> implements EditorContext<T> {
   private final LeafValueEditor<T> leafValueEditor;
   private final ValueAwareEditor<T> valueAwareEditor;
 
-  public AbstractEditorContext(AbstractEditorDelegate<T, ?> delegate) {
-    this(delegate.getEditor(), delegate.getPath());
-    this.delegate = delegate;
-  }
-
   public AbstractEditorContext(Editor<T> editor, String path) {
     this.editor = editor;
     this.path = path;
@@ -121,6 +116,10 @@ public abstract class AbstractEditorContext<T> implements EditorContext<T> {
 
   public boolean isHalted() {
     return isHalted;
+  }
+
+  public void setEditorDelegate(AbstractEditorDelegate<T, ?> delegate) {
+    this.delegate = delegate;
   }
 
   public abstract void setInModel(T data);

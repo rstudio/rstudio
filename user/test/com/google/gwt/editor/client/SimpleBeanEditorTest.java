@@ -321,6 +321,37 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     assertEquals("Should see this", person.getName());
   }
 
+  public void testEditorWithNullSubEditor() {
+    PersonEditor editor = new PersonEditor();
+    editor.addressEditor = null;
+    PersonEditorDriver driver = GWT.create(PersonEditorDriver.class);
+    driver.initialize(editor);
+    driver.edit(person);
+
+    assertEquals("Alice", editor.name.getValue());
+    editor.name.setValue("New name");
+    driver.flush();
+    assertEquals("New name", person.getName());
+
+    /*
+     * Verify that changing the editor structure without re-initializing is a
+     * no-op.
+     */
+    editor.name.setValue("Should see this");
+    editor.addressEditor = new AddressEditor();
+    editor.addressEditor.city.setValue("Should not see this");
+    driver.flush();
+    assertEquals("Should see this", person.getName());
+    assertEquals("City", person.getAddress().getCity());
+
+    // Re-initialize and check that flushing works again
+    driver.initialize(editor);
+    driver.edit(person);
+    editor.addressEditor.city.setValue("Should see this");
+    driver.flush();
+    assertEquals("Should see this", person.getAddress().getCity());
+  }
+
   /**
    * Test the use of the IsEditor interface that allows a view object to
    * encapsulate its Editor.

@@ -28,7 +28,8 @@ public class RootEditorContext<T> extends AbstractEditorContext<T> {
 
   public RootEditorContext(AbstractEditorDelegate<T, ?> editorDelegate,
       Class<T> editedType, T value) {
-    super(editorDelegate);
+    super(editorDelegate.getEditor(), editorDelegate.getPath());
+    setEditorDelegate(editorDelegate);
     this.editedType = editedType;
     this.value = value;
   }
