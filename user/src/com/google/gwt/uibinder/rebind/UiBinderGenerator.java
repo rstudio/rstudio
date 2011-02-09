@@ -15,8 +15,10 @@
  */
 package com.google.gwt.uibinder.rebind;
 
+import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
+import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
@@ -115,9 +117,21 @@ public class UiBinderGenerator extends Generator {
         packageName);
     PrintWriter printWriter = writers.tryToMakePrintWriterFor(implName);
 
+    Class<?> elementFactoryClass;
+    HtmlElementFactory elementFactory = null;
+    try {
+      PropertyOracle propertyOracle = genCtx.getPropertyOracle();
+      ConfigurationProperty factoryProperty = propertyOracle
+          .getConfigurationProperty("uibinder.html.elementfactory");
+      elementFactoryClass = Class.forName(factoryProperty.getValues().get(0));
+      elementFactory = (HtmlElementFactory) elementFactoryClass.newInstance();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
     if (printWriter != null) {
       generateOnce(interfaceType, implName, printWriter, logger, oracle,
-          resourceOracle, writers, designTime);
+          resourceOracle, writers, designTime, elementFactory);
     }
     return packageName + "." + implName;
   }
@@ -125,7 +139,8 @@ public class UiBinderGenerator extends Generator {
   private void generateOnce(JClassType interfaceType, String implName,
       PrintWriter binderPrintWriter, TreeLogger treeLogger, TypeOracle oracle,
       ResourceOracle resourceOracle, PrintWriterManager writerManager,
-      DesignTimeUtils designTime) throws UnableToCompleteException {
+      DesignTimeUtils designTime,
+      HtmlElementFactory elementFactory) throws UnableToCompleteException {
 
     MortalLogger logger = new MortalLogger(treeLogger);
     String templatePath = deduceTemplateFile(logger, interfaceType);
@@ -134,7 +149,7 @@ public class UiBinderGenerator extends Generator {
 
     UiBinderWriter uiBinderWriter = new UiBinderWriter(interfaceType, implName,
         templatePath, oracle, logger, new FieldManager(oracle, logger),
-        messages, designTime, uiBinderCtx);
+        messages, designTime, uiBinderCtx, elementFactory);
 
     Document doc = getW3cDoc(logger, designTime, resourceOracle, templatePath);
     designTime.rememberPathForElements(doc);

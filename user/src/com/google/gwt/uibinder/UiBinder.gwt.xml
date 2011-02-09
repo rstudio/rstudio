@@ -18,7 +18,9 @@
   
   <source path="client"/>
   <source path="resources"/>
-  
+  <!-- Pluggable factory for creating field types for HTML elements -->
+  <define-configuration-property name="uibinder.html.elementfactory" is-multi-valued="false"/>  
+  <set-configuration-property name="uibinder.html.elementfactory" value="com.google.gwt.uibinder.rebind.GwtDomHtmlElementFactory"/>
   <generate-with class="com.google.gwt.uibinder.rebind.UiBinderGenerator">
     <when-type-assignable class="com.google.gwt.uibinder.client.UiBinder"/>
   </generate-with>

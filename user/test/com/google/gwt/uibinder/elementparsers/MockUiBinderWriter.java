@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.uibinder.rebind.DesignTimeUtilsStub;
 import com.google.gwt.uibinder.rebind.FieldManager;
 import com.google.gwt.uibinder.rebind.MortalLogger;
+import com.google.gwt.uibinder.rebind.HtmlElementFactory;
 import com.google.gwt.uibinder.rebind.UiBinderContext;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
@@ -34,10 +35,11 @@ class MockUiBinderWriter extends UiBinderWriter {
 
   public MockUiBinderWriter(JClassType baseClass, String implClassName,
       String templatePath, TypeOracle oracle, MortalLogger logger,
-      FieldManager fieldManager, MessagesWriter messagesWriter)
-      throws UnableToCompleteException {
+      FieldManager fieldManager, MessagesWriter messagesWriter, 
+      HtmlElementFactory factory) throws UnableToCompleteException {
     super(baseClass, implClassName, templatePath, oracle, logger, fieldManager,
-        messagesWriter, DesignTimeUtilsStub.EMPTY, new UiBinderContext());
+	  messagesWriter, DesignTimeUtilsStub.EMPTY, new UiBinderContext(),
+          factory);
   }
 
   @Override

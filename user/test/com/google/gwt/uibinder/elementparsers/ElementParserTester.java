@@ -30,6 +30,8 @@ import com.google.gwt.uibinder.rebind.DesignTimeUtilsStub;
 import com.google.gwt.uibinder.rebind.FieldManager;
 import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.uibinder.rebind.MockMortalLogger;
+import com.google.gwt.uibinder.rebind.HtmlElementFactory;
+import com.google.gwt.uibinder.rebind.GwtDomHtmlElementFactory;
 import com.google.gwt.uibinder.rebind.W3cDomHelper;
 import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.uibinder.rebind.XMLElementProvider;
@@ -113,8 +115,9 @@ class ElementParserTester {
     MessagesWriter messages = new MessagesWriter(BINDER_URI, logger,
         templatePath, baseType.getPackage().getName(), implName);
 
+    HtmlElementFactory elementFactory = new GwtDomHtmlElementFactory();
     writer = new MockUiBinderWriter(baseType, implName, templatePath, types,
-        logger, fieldManager, messages);
+        logger, fieldManager, messages, elementFactory);
     fieldManager.registerField(types.findType(parsedTypeName), FIELD_NAME);
     parsedType = types.findType(parsedTypeName);
   }
