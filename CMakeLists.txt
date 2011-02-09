@@ -33,7 +33,7 @@ if (NOT RSTUDIO_SESSION_WIN64)
     ")
 
    # install root docs
-   install(FILES README
+   install(FILES README.md
                  INSTALL
                  COPYING
                  NOTICE
