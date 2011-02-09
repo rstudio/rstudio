@@ -555,7 +555,7 @@ public class ControlFlowAnalyzer {
        * Track references and instantiability at the granularity of run-time
        * types. For example, ignore nullness.
        */
-      type = program.getRunTimeType(type);
+      type = type.getUnderlyingType();
 
       boolean doVisit = false;
       if (isInstantiated && !instantiatedTypes.contains(type)) {

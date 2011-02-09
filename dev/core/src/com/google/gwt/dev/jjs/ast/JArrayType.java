@@ -22,24 +22,15 @@ import com.google.gwt.dev.jjs.SourceOrigin;
  */
 public class JArrayType extends JReferenceType {
 
-  private static String calcName(JType leafType, int dims) {
-    String name = leafType.getName();
-    for (int i = 0; i < dims; ++i) {
-      name = name + "[]";
-    }
-    return name;
-  }
+  private transient int dims = 0;
+  private final JType elementType;
+  private transient JType leafType = null;
 
-  private int dims;
-  private JType elementType;
-  private JType leafType;
-
-  public JArrayType(JType elementType, JType leafType, int dims) {
-    super(leafType.getSourceInfo().makeChild(SourceOrigin.UNKNOWN), calcName(
-        leafType, dims));
+  public JArrayType(JType elementType) {
+    super(elementType.getSourceInfo().makeChild(SourceOrigin.UNKNOWN),
+        elementType.getName() + "[]");
+    assert !(elementType instanceof JNonNullType);
     this.elementType = elementType;
-    this.leafType = leafType;
-    this.dims = dims;
   }
 
   @Override
@@ -48,6 +39,12 @@ public class JArrayType extends JReferenceType {
   }
 
   public int getDims() {
+    if (dims == 0) {
+      dims = 1;
+      if (elementType instanceof JArrayType) {
+        dims += ((JArrayType) elementType).getDims();
+      }
+    }
     return dims;
   }
 
@@ -57,23 +54,22 @@ public class JArrayType extends JReferenceType {
 
   @Override
   public String getJavahSignatureName() {
-    String s = leafType.getJavahSignatureName();
-    for (int i = 0; i < dims; ++i) {
-      s = "_3" + s;
-    }
-    return s;
+    return "_3" + elementType.getJavahSignatureName();
   }
 
   @Override
   public String getJsniSignatureName() {
-    String s = leafType.getJsniSignatureName();
-    for (int i = 0; i < dims; ++i) {
-      s = "[" + s;
-    }
-    return s;
+    return "[" + elementType.getJsniSignatureName();
   }
 
   public JType getLeafType() {
+    if (leafType == null) {
+      if (elementType instanceof JArrayType) {
+        leafType = ((JArrayType) elementType).getLeafType();
+      } else {
+        leafType = elementType;
+      }
+    }
     return leafType;
   }
 
@@ -87,7 +83,7 @@ public class JArrayType extends JReferenceType {
   }
 
   public boolean isFinal() {
-    return leafType.isFinal();
+    return elementType.isFinal();
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

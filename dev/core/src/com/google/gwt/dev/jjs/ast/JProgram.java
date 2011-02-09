@@ -46,7 +46,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * Root for the AST representing an entire Java program.
@@ -317,15 +316,11 @@ public class JProgram extends JNode {
   public final JTypeOracle typeOracle = new JTypeOracle(this);
 
   /**
-   * Sorted to avoid nondeterministic iteration.
-   */
-  private final Set<JArrayType> allArrayTypes = new TreeSet<JArrayType>(
-      ARRAYTYPE_COMPARATOR);
-
-  /**
    * Special serialization treatment.
    */
   private transient List<JDeclaredType> allTypes = new ArrayList<JDeclaredType>();
+
+  private final HashMap<JType, JArrayType> arrayTypes = new HashMap<JType, JArrayType>();
 
   private final Map<JType, JClassLiteral> classLiterals = new IdentityHashMap<JType, JClassLiteral>();
 
@@ -333,13 +328,6 @@ public class JProgram extends JNode {
    * A factory to create correlations.
    */
   private final CorrelationFactory correlator;
-
-  /**
-   * Each entry is a HashMap(JType => JArrayType), arranged such that the number
-   * of dimensions is that index (plus one) at which the JArrayTypes having that
-   * number of dimensions resides.
-   */
-  private final ArrayList<HashMap<JType, JArrayType>> dimensions = new ArrayList<HashMap<JType, JArrayType>>();
 
   private final Map<String, JField> indexedFields = new HashMap<String, JField>();
 
@@ -775,11 +763,14 @@ public class JProgram extends JNode {
   }
 
   /**
-   * Returns a sorted set of array types, so the returned set can be iterated
+   * Returns a sorted list of array types, so the returned set can be iterated
    * over without introducing nondeterminism.
    */
-  public Set<JArrayType> getAllArrayTypes() {
-    return allArrayTypes;
+  public List<JArrayType> getAllArrayTypes() {
+    ArrayList<JArrayType> result = new ArrayList<JArrayType>(
+        arrayTypes.values());
+    Collections.sort(result, ARRAYTYPE_COMPARATOR);
+    return result;
   }
 
   public List<JMethod> getAllEntryMethods() {
@@ -981,7 +972,7 @@ public class JProgram extends JNode {
   }
 
   public int getQueryId(JReferenceType elementType) {
-    assert (elementType == getRunTimeType(elementType));
+    assert (elementType == elementType.getUnderlyingType());
     Integer integer = queryIds.get(elementType);
     if (integer == null) {
       return 0;
@@ -994,25 +985,6 @@ public class JProgram extends JNode {
     return runAsyncReplacements;
   }
 
-  /**
-   * A run-time type is a type at the granularity that GWT tests at run time.
-   * These include declared types, arrays of declared types, arrays of
-   * primitives, and null. This is also the granularity for the notion of
-   * instantiability recorded in {@link JTypeOracle}. This method returns the
-   * narrowest supertype of <code>type</code> that is a run-time type.
-   */
-  public JReferenceType getRunTimeType(JReferenceType type) {
-    type = type.getUnderlyingType();
-    if (type instanceof JArrayType) {
-      JArrayType typeArray = (JArrayType) type;
-      if (typeArray.getLeafType() instanceof JNonNullType) {
-        JNonNullType leafType = (JNonNullType) typeArray.getLeafType();
-        type = getTypeArray(leafType.getUnderlyingType(), typeArray.getDims());
-      }
-    }
-    return type;
-  }
-
   public List<Integer> getSplitPointInitialSequence() {
     return splitPointInitialSequence;
   }
@@ -1021,43 +993,24 @@ public class JProgram extends JNode {
     return instanceToStaticMap.get(method);
   }
 
-  public JArrayType getTypeArray(JType leafType, int dimensions) {
-    assert (!(leafType instanceof JArrayType));
-    HashMap<JType, JArrayType> typeToArrayType;
-
-    // Create typeToArrayType maps for index slots that don't exist yet.
-    //
-    for (int i = this.dimensions.size(); i < dimensions; ++i) {
-      typeToArrayType = new HashMap<JType, JArrayType>();
-      this.dimensions.add(typeToArrayType);
-    }
-
-    // Get the map for array having this number of dimensions (biased by one
-    // since we don't store non-arrays in there -- thus index 0 => 1 dim).
-    //
-    typeToArrayType = this.dimensions.get(dimensions - 1);
-
-    JArrayType arrayType = typeToArrayType.get(leafType);
+  public JArrayType getTypeArray(JType elementType) {
+    JArrayType arrayType = arrayTypes.get(elementType);
     if (arrayType == null) {
-      JType elementType;
-      if (dimensions == 1) {
-        elementType = leafType;
-      } else {
-        elementType = getTypeArray(leafType, dimensions - 1);
-      }
-      arrayType = new JArrayType(elementType, leafType, dimensions);
-      allArrayTypes.add(arrayType);
-
-      /*
-       * TODO(later): should we setup the various array types as an inheritance
-       * heirarchy? Currently we're just doing all the heavy lifting in
-       * JTypeOracle. If we tried to setup inheritance, we'd have to recompute
-       * JTypeOracle if anything changed, so maybe this is better.
-       */
-      typeToArrayType.put(leafType, arrayType);
+      arrayType = new JArrayType(elementType);
+      arrayTypes.put(elementType, arrayType);
     }
-
     return arrayType;
+  }
+
+  public JArrayType getTypeArray(JType leafType, int dimensions) {
+    assert dimensions > 0;
+    assert (!(leafType instanceof JArrayType));
+    JArrayType result = getTypeArray(leafType);
+    while (dimensions > 1) {
+      result = getTypeArray(result);
+      --dimensions;
+    }
+    return result;
   }
 
   public JClassType getTypeClassLiteralHolder() {

@@ -881,7 +881,7 @@ public class JTypeOracle implements Serializable {
    */
   private boolean isInstantiatedType(JReferenceType type,
       Set<JReferenceType> instantiatedTypes) {
-    type = program.getRunTimeType(type);
+    type = type.getUnderlyingType();
 
     if (type.isExternal()) {
       // TODO(tobyr) I don't know under what situations it is safe to assume

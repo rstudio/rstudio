@@ -190,7 +190,7 @@ public class ArrayNormalizer {
       JType elementType = type.getElementType();
       int leafQueryId = -1;
       if (elementType instanceof JReferenceType) {
-        leafQueryId = program.getQueryId(program.getRunTimeType((JReferenceType) elementType));
+        leafQueryId = program.getQueryId(((JReferenceType) elementType).getUnderlyingType());
       }
       return leafQueryId;
     }

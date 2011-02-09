@@ -693,7 +693,7 @@ public class TypeTightener {
       if (elementType instanceof JReferenceType) {
         JReferenceType refType = (JReferenceType) elementType;
         if (!program.typeOracle.isInstantiatedType(refType)) {
-          return program.getTypeArray(JNullType.INSTANCE, 1);
+          return program.getTypeArray(JNullType.INSTANCE);
         } else if (elementType instanceof JArrayType) {
           JArrayType newElementType = nullifyArrayType((JArrayType) elementType);
           return program.getTypeArray(newElementType.getLeafType(),

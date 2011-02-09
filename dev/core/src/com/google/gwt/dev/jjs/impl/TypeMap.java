@@ -16,7 +16,6 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.InternalCompilerException;
-import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
@@ -221,20 +220,11 @@ public class TypeMap {
       }
     } else if (binding instanceof ArrayBinding) {
       ArrayBinding arrayBinding = (ArrayBinding) binding;
-
-      // Compute the JType for the leaf type
-      JType leafType = (JType) get(arrayBinding.leafComponentType, failOnNull);
-
-      if (leafType == null) {
+      JType elementType = (JType) get(arrayBinding.elementsType(), failOnNull);
+      if (elementType == null) {
         return null;
       }
-      
-      // Don't create a new JArrayType; use TypeMap to get the singleton
-      // instance
-      JArrayType arrayType = program.getTypeArray(leafType,
-          arrayBinding.dimensions);
-
-      return arrayType;
+      return program.getTypeArray(elementType);
     } else if (binding instanceof BinaryTypeBinding) {
       BinaryTypeBinding binaryBinding = (BinaryTypeBinding) binding;
       String name = BuildTypeMap.dotify(binaryBinding.compoundName);

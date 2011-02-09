@@ -2904,7 +2904,7 @@ public class GenerateJavaAST {
       {
         // $VALUES = new E[]{A,B,B};
         SourceInfo fieldInfo = type.getSourceInfo().makeChild();
-        JArrayType enumArrayType = program.getTypeArray(type, 1);
+        JArrayType enumArrayType = program.getTypeArray(type);
         valuesField = program.createField(fieldInfo, "$VALUES", type,
             enumArrayType, true, Disposition.FINAL);
         fieldInfo.addCorrelation(program.getCorrelator().by(valuesField));

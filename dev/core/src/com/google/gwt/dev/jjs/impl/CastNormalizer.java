@@ -199,7 +199,7 @@ public class CastNormalizer {
       if (type == null || alreadyRan.contains(type)) {
         return;
       }
-      assert (type == program.getRunTimeType(type));
+      assert (type == type.getUnderlyingType());
 
       alreadyRan.add(type);
 
@@ -274,9 +274,9 @@ public class CastNormalizer {
 
     private void recordCast(JType targetType, JExpression rhs) {
       if (targetType instanceof JReferenceType) {
-        targetType = program.getRunTimeType((JReferenceType) targetType);
+        targetType = ((JReferenceType) targetType).getUnderlyingType();
         // unconditional cast b/c it would've been a semantic error earlier
-        JReferenceType rhsType = program.getRunTimeType((JReferenceType) rhs.getType());
+        JReferenceType rhsType = ((JReferenceType) rhs.getType()).getUnderlyingType();
         // don't record a type for trivial casts that won't generate code
         if (program.typeOracle.canTriviallyCast(rhsType,
             (JReferenceType) targetType)) {
@@ -294,8 +294,8 @@ public class CastNormalizer {
 
     private void recordCastInternal(JReferenceType toType,
         JReferenceType rhsType) {
-      toType = program.getRunTimeType(toType);
-      rhsType = program.getRunTimeType(rhsType);
+      toType = toType.getUnderlyingType();
+      rhsType = rhsType.getUnderlyingType();
       Set<JReferenceType> querySet = queriedTypes.get(toType);
       if (querySet == null) {
         queryIds.put(toType, nextQueryId++);
@@ -420,7 +420,7 @@ public class CastNormalizer {
         replaceExpr = call;
       } else if (toType instanceof JReferenceType) {
         JExpression curExpr = expr;
-        JReferenceType refType = program.getRunTimeType((JReferenceType) toType);
+        JReferenceType refType = ((JReferenceType) toType).getUnderlyingType();
         JReferenceType argType = (JReferenceType) expr.getType();
         if (program.typeOracle.canTriviallyCast(argType, refType)) {
           // just remove the cast
@@ -536,7 +536,7 @@ public class CastNormalizer {
       JReferenceType argType = (JReferenceType) x.getExpr().getType();
       JReferenceType toType = x.getTestType();
       // Only tests on run-time types are supported
-      assert (toType == program.getRunTimeType(toType));
+      assert (toType == toType.getUnderlyingType());
       if (program.typeOracle.canTriviallyCast(argType, toType)) {
         // trivially true if non-null; replace with a null test
         JNullLiteral nullLit = program.getLiteralNull();

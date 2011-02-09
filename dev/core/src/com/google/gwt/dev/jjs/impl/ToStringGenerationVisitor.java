@@ -213,10 +213,8 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
 
   @Override
   public boolean visit(JArrayType x, Context ctx) {
-    accept(x.getLeafType());
-    for (int i = 0, c = x.getDims(); i < c; ++i) {
-      print("[]");
-    }
+    accept(x.getElementType());
+    print("[]");
     return false;
   }
 

@@ -526,7 +526,7 @@ public class CodeSplitter {
      * initializer, of new int[0].
      */
     constructorCall.setArg(1, JNewArray.createInitializers(program, info,
-        program.getTypeArray(JPrimitiveType.INT, 1), intExprs));
+        program.getTypeArray(JPrimitiveType.INT), intExprs));
   }
 
   private static <T> T last(T[] array) {

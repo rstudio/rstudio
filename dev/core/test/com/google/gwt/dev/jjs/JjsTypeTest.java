@@ -270,12 +270,12 @@ public class JjsTypeTest extends TestCase {
     classBnn = classB.getNonNull();
     classBaseNn = classBase.getNonNull();
 
-    arrayOfA = program.getTypeArray(classA, 1);
-    arrayOfB = program.getTypeArray(classB, 1);
-    arrayOfBSub = program.getTypeArray(classBSub, 1);
-    arrayOfC = program.getTypeArray(classC, 1);
-    arrayOfObject = program.getTypeArray(classObject, 1);
-    arrayOfInt = program.getTypeArray(program.getTypePrimitiveInt(), 1);
+    arrayOfA = program.getTypeArray(classA);
+    arrayOfB = program.getTypeArray(classB);
+    arrayOfBSub = program.getTypeArray(classBSub);
+    arrayOfC = program.getTypeArray(classC);
+    arrayOfObject = program.getTypeArray(classObject);
+    arrayOfInt = program.getTypeArray(program.getTypePrimitiveInt());
     arrayOfArrayOfInt = program.getTypeArray(program.getTypePrimitiveInt(), 2);
 
     arrayOfArrayOfB = program.getTypeArray(classB, 2);

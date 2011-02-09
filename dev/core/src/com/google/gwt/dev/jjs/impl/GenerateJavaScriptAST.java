@@ -144,7 +144,6 @@ import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.collect.Maps;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -262,7 +261,7 @@ public class GenerateJavaScriptAST {
        * Make sure we record all of the program's array types since
        * JProgram.traverse() doesn't iterate over them.
        */
-      accept(new ArrayList<JArrayType>(program.getAllArrayTypes()));
+      accept(program.getAllArrayTypes());
     }
 
     @Override
