@@ -315,7 +315,8 @@ public final class TestUtil {
           String indexed = matcher.getGroup(2);
           String index = matcher.getGroup(3);
           NodeImpl node = new NodeImpl(value);
-          if (indexed != null) {
+
+          if (indexed != null && indexed.length() > 0) {
             node.setInIterable(true);
           }
           if (index != null && index.length() > 0) {
@@ -332,7 +333,7 @@ public final class TestUtil {
           throw new IllegalArgumentException("Unable to parse property path "
               + property);
         }
-      } while (tmp != null);
+      } while (tmp != null && tmp.length() > 0);
       return path;
     }
   }

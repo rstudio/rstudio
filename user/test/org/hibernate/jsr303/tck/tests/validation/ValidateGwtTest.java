@@ -30,10 +30,8 @@ public class ValidateGwtTest extends AbstractValidationTest {
     delegate.testConstraintDescriptorWithoutExplicitGroup();
   }
 
-  @Failing(issue = 5882)
   public void testConstraintViolation() {
     delegate.testConstraintViolation();
-    fail("This test only fails on IE.  Forcing it to fail here to keep the counts even. See issue 5882.");
   }
 
   @Failing(issue = 5982)

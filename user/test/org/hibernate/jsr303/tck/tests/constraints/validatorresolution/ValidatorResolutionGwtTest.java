@@ -34,10 +34,8 @@ public class ValidatorResolutionGwtTest extends GWTTestCase {
     delegate.testAmbiguousValidatorResolution();
   }
 
-  @Failing(issue = 5882)
   public void testResolutionOfMinMaxForDifferentTypes() {
     delegate.testResolutionOfMinMaxForDifferentTypes();
-    fail("This test only fails on IE.  Forcing it to fail here to keep the counts even. See issue 5882.");
   }
 
   @Failing(issue = 5806)
