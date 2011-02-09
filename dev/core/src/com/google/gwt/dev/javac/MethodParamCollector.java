@@ -40,7 +40,7 @@ public class MethodParamCollector {
 
     @Override
     protected void processMethod(TypeDeclaration typeDecl,
-        AbstractMethodDeclaration method, String enclosingType, String loc) {
+        AbstractMethodDeclaration method, String enclosingType) {
       methodArgs.store(enclosingType, method);
     }
   }

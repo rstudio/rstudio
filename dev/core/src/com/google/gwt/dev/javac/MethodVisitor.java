@@ -54,21 +54,21 @@ public abstract class MethodVisitor {
    * 
    * @param cud
    */
-  public final void collect(final CompilationUnitDeclaration cud) {
+  public void collect(final CompilationUnitDeclaration cud) {
     cud.traverse(new SafeASTVisitor() {
       @Override
       public void endVisit(TypeDeclaration type, ClassScope scope) {
-        collectMethods(cud, type);
+        collectMethods(type);
       }
 
       @Override
       public void endVisit(TypeDeclaration type, CompilationUnitScope scope) {
-        collectMethods(cud, type);
+        collectMethods(type);
       }
 
       @Override
       public void endVisitValid(TypeDeclaration type, BlockScope scope) {
-        collectMethods(cud, type);
+        collectMethods(type);
       }
     }, cud.scope);
   }
@@ -94,7 +94,7 @@ public abstract class MethodVisitor {
    * @param loc
    */
   protected abstract void processMethod(TypeDeclaration typeDecl,
-      AbstractMethodDeclaration method, String enclosingType, String loc);
+      AbstractMethodDeclaration method, String enclosingType);
 
   /**
    * Collect data about interesting methods on a particular type in a
@@ -103,8 +103,7 @@ public abstract class MethodVisitor {
    * @param cud
    * @param typeDecl
    */
-  private void collectMethods(CompilationUnitDeclaration cud,
-      TypeDeclaration typeDecl) {
+  private void collectMethods(TypeDeclaration typeDecl) {
     AbstractMethodDeclaration[] methods = typeDecl.methods;
     if (methods == null) {
       return;
@@ -112,7 +111,6 @@ public abstract class MethodVisitor {
 
     // Lazy initialize these when an interesting method is actually hit.
     String enclosingType = null;
-    String loc = null;
     boolean lazyInitialized = false;
 
     for (AbstractMethodDeclaration method : methods) {
@@ -122,10 +120,9 @@ public abstract class MethodVisitor {
 
       if (!lazyInitialized) {
         enclosingType = InternalName.toBinaryName(String.valueOf(typeDecl.binding.constantPoolName()));
-        loc = String.valueOf(cud.getFileName());
         lazyInitialized = true;
       }
-      processMethod(typeDecl, method, enclosingType, loc);
+      processMethod(typeDecl, method, enclosingType);
     }
   }
 }

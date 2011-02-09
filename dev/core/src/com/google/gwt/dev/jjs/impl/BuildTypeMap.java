@@ -351,8 +351,8 @@ public class BuildTypeMap {
       char[] source = methodDeclaration.compilationResult().getCompilationUnit().getContents();
       String unitSource = String.valueOf(source);
       JsFunction jsFunction = JsniCollector.parseJsniFunction(
-          methodDeclaration, unitSource, enclosingType.getName(),
-          info.getFileName(), jsProgram);
+          methodDeclaration, unitSource, enclosingType.getName(), info,
+          jsProgram.getScope());
       if (jsFunction != null) {
         jsFunction.setFromJava(true);
         ((JsniMethodBody) newMethod.getBody()).setFunc(jsFunction);

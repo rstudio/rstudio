@@ -20,7 +20,8 @@ import com.google.gwt.dev.javac.CompilationUnitBuilder.GeneratedCompilationUnitB
 import com.google.gwt.dev.javac.CompilationUnitBuilder.ResourceCompilationUnitBuilder;
 import com.google.gwt.dev.javac.JdtCompiler.AdditionalTypeProviderDelegate;
 import com.google.gwt.dev.javac.JdtCompiler.UnitProcessor;
-import com.google.gwt.dev.js.ast.JsProgram;
+import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
+import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
@@ -65,7 +66,8 @@ public class CompilationStateBuilder {
         Event compilationStateBuilderProcess = SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
         try {
           Map<MethodDeclaration, JsniMethod> jsniMethods = JsniCollector.collectJsniMethods(
-              cud, builder.getSource(), jsProgram);
+              cud, builder.getSource(), JsRootScope.INSTANCE,
+              DummyCorrelationFactory.INSTANCE);
 
           JSORestrictionsChecker.check(jsoState, cud);
 
@@ -295,11 +297,6 @@ public class CompilationStateBuilder {
   public static CompilationStateBuilder get() {
     return instance;
   }
-
-  /**
-   * JsProgram for collecting JSNI methods.
-   */
-  private final JsProgram jsProgram = new JsProgram();
 
   /**
    * This map of weak keys to hard values exists solely to keep the most recent

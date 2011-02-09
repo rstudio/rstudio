@@ -17,6 +17,7 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.client.GwtScriptOnly;
 import com.google.gwt.core.ext.TreeLogger.HelpInfo;
+import com.google.gwt.dev.jjs.CorrelationFactory;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
@@ -26,7 +27,7 @@ import com.google.gwt.dev.js.JsParserException.SourceDetail;
 import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsParameter;
-import com.google.gwt.dev.js.ast.JsProgram;
+import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
 import com.google.gwt.dev.util.collect.IdentityMaps;
@@ -69,8 +70,8 @@ public class JsniCollector {
 
   private static final class JsniMethodImpl extends JsniMethod {
     private final JsFunction func;
-    private final String name;
     private boolean isScriptOnly;
+    private final String name;
 
     public JsniMethodImpl(String name, JsFunction func, boolean isScriptOnly) {
       this.name = name;
@@ -134,15 +135,25 @@ public class JsniCollector {
       return false;
     }
 
+    private final CorrelationFactory correlator;
     private final Map<MethodDeclaration, JsniMethod> jsniMethods;
-    private final JsProgram jsProgram;
+    private final JsScope scope;
     private final String source;
+    private SourceInfo cudInfo;
 
-    public Visitor(String source, JsProgram program,
+    public Visitor(String source, JsScope scope, CorrelationFactory correlator,
         Map<MethodDeclaration, JsniMethod> jsniMethods) {
-      this.jsProgram = program;
       this.jsniMethods = jsniMethods;
       this.source = source;
+      this.scope = scope;
+      this.correlator = correlator;
+    }
+
+    @Override
+    public void collect(CompilationUnitDeclaration cud) {
+      cudInfo = correlator.makeSourceInfo(SourceOrigin.create(0,
+          String.valueOf(cud.getFileName())));
+      super.collect(cud);
     }
 
     @Override
@@ -152,9 +163,9 @@ public class JsniCollector {
 
     @Override
     protected void processMethod(TypeDeclaration typeDecl,
-        AbstractMethodDeclaration method, String enclosingType, String loc) {
+        AbstractMethodDeclaration method, String enclosingType) {
       JsFunction jsFunction = parseJsniFunction(method, source, enclosingType,
-          loc, jsProgram);
+          cudInfo, scope);
       if (jsFunction != null) {
         String jsniSignature = getJsniSignature(enclosingType, method);
         jsniMethods.put((MethodDeclaration) method, new JsniMethodImpl(
@@ -168,22 +179,22 @@ public class JsniCollector {
   public static final String JSNI_BLOCK_START = "/*-{";
 
   public static Map<MethodDeclaration, JsniMethod> collectJsniMethods(
-      final CompilationUnitDeclaration cud, final String source,
-      final JsProgram program) {
+      CompilationUnitDeclaration cud, String source, JsScope scope,
+      CorrelationFactory correlator) {
     Map<MethodDeclaration, JsniMethod> jsniMethods = new IdentityHashMap<MethodDeclaration, JsniMethod>();
-    new Visitor(source, program, jsniMethods).collect(cud);
+    new Visitor(source, scope, correlator, jsniMethods).collect(cud);
     return IdentityMaps.normalizeUnmodifiable(jsniMethods);
   }
 
   public static JsFunction parseJsniFunction(AbstractMethodDeclaration method,
-      String unitSource, String enclosingType, String fileName,
-      JsProgram jsProgram) {
+      String unitSource, String enclosingType, SourceInfo baseInfo,
+      JsScope scope) {
     CompilationResult compResult = method.compilationResult;
     int[] indexes = compResult.lineSeparatorPositions;
     int startLine = Util.getLineNumber(method.sourceStart, indexes, 0,
         indexes.length - 1);
-    SourceInfo info = SourceOrigin.create(method.sourceStart, method.bodyEnd,
-        startLine, fileName);
+    SourceInfo info = baseInfo.makeChild(SourceOrigin.create(
+        method.sourceStart, method.bodyEnd, startLine, baseInfo.getFileName()));
 
     // Handle JSNI block
     String jsniCode = unitSource.substring(method.bodyStart, method.bodyEnd + 1);
@@ -246,11 +257,10 @@ public class JsniCollector {
     int jsLine = info.getStartLine()
         + countLines(indexes, info.getStartPos(), absoluteJsStartPos);
 
-    SourceInfo jsInfo = jsProgram.createSourceInfo(jsStartPos, jsEndPos,
-        jsLine, info.getFileName());
+    SourceInfo jsInfo = baseInfo.makeChild(SourceOrigin.create(jsStartPos,
+        jsEndPos, jsLine, baseInfo.getFileName()));
     try {
-      List<JsStatement> result = JsParser.parse(jsInfo, jsProgram.getScope(),
-          sr);
+      List<JsStatement> result = JsParser.parse(jsInfo, scope, sr);
       JsExprStmt jsExprStmt = (JsExprStmt) result.get(0);
       return (JsFunction) jsExprStmt.getExpression();
     } catch (IOException e) {
