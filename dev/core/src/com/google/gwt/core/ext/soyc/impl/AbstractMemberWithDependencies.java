@@ -17,7 +17,6 @@ package com.google.gwt.core.ext.soyc.impl;
 
 import com.google.gwt.core.ext.soyc.HasDependencies;
 import com.google.gwt.core.ext.soyc.Member;
-import com.google.gwt.dev.jjs.SourceInfo;
 
 import java.util.Collections;
 import java.util.SortedSet;
@@ -31,10 +30,6 @@ public abstract class AbstractMemberWithDependencies extends AbstractMember
   private final SortedSet<Member> dependencies = new TreeSet<Member>(
       Member.TYPE_AND_SOURCE_NAME_COMPARATOR);
   private final SortedSet<Member> dependenciesView = Collections.unmodifiableSortedSet(dependencies);
-
-  protected AbstractMemberWithDependencies(SourceInfo info) {
-    super(info);
-  }
 
   /**
    * Add a dependency.

@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.impl.OptimizerStats;
 import com.google.gwt.dev.js.ast.CanBooleanEval;
@@ -119,12 +118,10 @@ public class JsStaticEval {
 
     @Override
     public void endVisit(JsVars x, JsContext ctx) {
-      JsVars strippedVars = new JsVars(x.getSourceInfo().makeChild(
-          MustExecVisitor.class, "Simplified execution"));
+      JsVars strippedVars = new JsVars(x.getSourceInfo());
       boolean mustReplace = false;
       for (JsVar var : x) {
-        JsVar strippedVar = new JsVar(var.getSourceInfo().makeChild(
-            MustExecVisitor.class, "Simplified execution"), var.getName());
+        JsVar strippedVar = new JsVar(var.getSourceInfo(), var.getName());
         strippedVars.add(strippedVar);
         if (var.getInitExpr() != null) {
           mustReplace = true;
@@ -245,15 +242,13 @@ public class JsStaticEval {
       if (condExpr instanceof CanBooleanEval) {
         CanBooleanEval condEval = (CanBooleanEval) condExpr;
         if (condEval.isBooleanTrue()) {
-          JsBinaryOperation binOp = new JsBinaryOperation(makeSourceInfo(x,
-              "Simplified always-true condition"), JsBinaryOperator.AND,
-              condExpr, thenExpr);
+          JsBinaryOperation binOp = new JsBinaryOperation(x.getSourceInfo(),
+              JsBinaryOperator.AND, condExpr, thenExpr);
           ctx.replaceMe(accept(binOp));
         } else if (condEval.isBooleanFalse()) {
           // e.g. (false() ? then : else) -> false() || else
-          JsBinaryOperation binOp = new JsBinaryOperation(makeSourceInfo(x,
-              "Simplified always-false condition"), JsBinaryOperator.OR,
-              condExpr, elseExpr);
+          JsBinaryOperation binOp = new JsBinaryOperation(x.getSourceInfo(),
+              JsBinaryOperator.OR, condExpr, elseExpr);
           ctx.replaceMe(accept(binOp));
         }
       }
@@ -276,8 +271,7 @@ public class JsStaticEval {
           FindBreakContinueStatementsVisitor visitor = new FindBreakContinueStatementsVisitor();
           visitor.accept(x.getBody());
           if (!visitor.hasBreakContinueStatements()) {
-            JsBlock block = new JsBlock(makeSourceInfo(x,
-                "Simplified always-false condition"));
+            JsBlock block = new JsBlock(x.getSourceInfo());
             block.getStatements().add(x.getBody());
             block.getStatements().add(expr.makeStmt());
             ctx.replaceMe(accept(block));
@@ -310,8 +304,7 @@ public class JsStaticEval {
 
         // If false, replace with initializers and condition.
         if (cond.isBooleanFalse()) {
-          JsBlock block = new JsBlock(makeSourceInfo(x,
-              "Simplified always-false condition"));
+          JsBlock block = new JsBlock(x.getSourceInfo());
           if (x.getInitExpr() != null) {
             block.getStatements().add(x.getInitExpr().makeStmt());
           }
@@ -354,35 +347,29 @@ public class JsStaticEval {
         ctx.replaceMe(condExpr.makeStmt());
       } else if (thenExpr != null && elseExpr != null) {
         // Convert "if (a()) {b()} else {c()}" => "a()?b():c()".
-        JsConditional cond = new JsConditional(makeSourceInfo(x,
-            "Replaced if statement with conditional"), x.getIfExpr(), thenExpr,
-            elseExpr);
+        JsConditional cond = new JsConditional(x.getSourceInfo(),
+            x.getIfExpr(), thenExpr, elseExpr);
         ctx.replaceMe(accept(cond.makeStmt()));
       } else if (thenIsEmpty && elseExpr != null) {
         // Convert "if (a()) {} else {b()}" => a()||b().
-        JsBinaryOperation op = new JsBinaryOperation(makeSourceInfo(x,
-            "Replaced if statement with ||"), JsBinaryOperator.OR,
-            x.getIfExpr(), elseExpr);
+        JsBinaryOperation op = new JsBinaryOperation(x.getSourceInfo(),
+            JsBinaryOperator.OR, x.getIfExpr(), elseExpr);
         ctx.replaceMe(accept(op.makeStmt()));
       } else if (thenIsEmpty && !elseIsEmpty) {
         // Convert "if (a()) {} else {stuff}" => "if (!a()) {stuff}".
         JsUnaryOperation negatedOperation = new JsPrefixOperation(
-            makeSourceInfo(x, "Simplified if with empty then statement"),
-            JsUnaryOperator.NOT, x.getIfExpr());
-        JsIf newIf = new JsIf(makeSourceInfo(x,
-            "Simplified if with empty then statement"), negatedOperation,
-            elseStmt, null);
+            x.getSourceInfo(), JsUnaryOperator.NOT, x.getIfExpr());
+        JsIf newIf = new JsIf(x.getSourceInfo(), negatedOperation, elseStmt,
+            null);
         ctx.replaceMe(accept(newIf));
       } else if (elseIsEmpty && thenExpr != null) {
         // Convert "if (a()) {b()}" => "a()&&b()".
-        JsBinaryOperation op = new JsBinaryOperation(makeSourceInfo(x,
-            "Replaced if statement with &&"), JsBinaryOperator.AND,
-            x.getIfExpr(), thenExpr);
+        JsBinaryOperation op = new JsBinaryOperation(x.getSourceInfo(),
+            JsBinaryOperator.AND, x.getIfExpr(), thenExpr);
         ctx.replaceMe(accept(op.makeStmt()));
       } else if (elseIsEmpty && elseStmt != null) {
         // Convert "if (a()) {b()} else {}" => "if (a()) {b()}".
-        JsIf newIf = new JsIf(makeSourceInfo(x, "Pruned empty else statement"),
-            x.getIfExpr(), thenStmt, null);
+        JsIf newIf = new JsIf(x.getSourceInfo(), x.getIfExpr(), thenStmt, null);
         ctx.replaceMe(accept(newIf));
       }
     }
@@ -421,8 +408,7 @@ public class JsStaticEval {
 
         // If false, replace with condition.
         if (cond.isBooleanFalse()) {
-          JsBlock block = new JsBlock(makeSourceInfo(x,
-              "Simplified always-false condition"));
+          JsBlock block = new JsBlock(x.getSourceInfo());
           block.getStatements().add(expr.makeStmt());
           JsStatement decls = ensureDeclarations(x.getBody());
           if (decls != null) {
@@ -557,8 +543,7 @@ public class JsStaticEval {
       } else if (stmts.size() == 1) {
         return stmts.get(0);
       } else {
-        JsBlock jsBlock = new JsBlock(makeSourceInfo(stmt,
-            "Ensuring declarations"));
+        JsBlock jsBlock = new JsBlock(stmt.getSourceInfo());
         jsBlock.getStatements().addAll(stmts);
         return jsBlock;
       }
@@ -576,10 +561,6 @@ public class JsStaticEval {
         num = fixNum;
       }
       return num;
-    }
-
-    private SourceInfo makeSourceInfo(HasSourceInfo x, String m) {
-      return x.getSourceInfo().makeChild(StaticEvalVisitor.class, m);
     }
 
     private JsExpression simplifyEq(JsExpression original, JsExpression arg1,
@@ -791,8 +772,7 @@ public class JsStaticEval {
       JsStatement thenStmt = x.getThenStmt();
       JsStatement elseStmt = x.getElseStmt();
       if (cond.isBooleanTrue()) {
-        JsBlock block = new JsBlock(makeSourceInfo(x,
-            "Simplified always-true condition"));
+        JsBlock block = new JsBlock(x.getSourceInfo());
         block.getStatements().add(x.getIfExpr().makeStmt());
         if (thenStmt != null) {
           block.getStatements().add(thenStmt);
@@ -804,8 +784,7 @@ public class JsStaticEval {
         ctx.replaceMe(accept(block));
         return true;
       } else if (cond.isBooleanFalse()) {
-        JsBlock block = new JsBlock(makeSourceInfo(x,
-            "Simplified always-false condition"));
+        JsBlock block = new JsBlock(x.getSourceInfo());
         block.getStatements().add(x.getIfExpr().makeStmt());
         if (elseStmt != null) {
           block.getStatements().add(elseStmt);

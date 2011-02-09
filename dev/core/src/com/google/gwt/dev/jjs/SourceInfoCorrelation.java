@@ -33,11 +33,6 @@ import java.util.Set;
  */
 public class SourceInfoCorrelation implements SourceInfo, Serializable {
 
-  /**
-   * Micro-opt for {@link #makeChild(Class, String)}.
-   */
-  private static final SourceInfo[] EMPTY_SOURCEINFO_ARRAY = new SourceInfo[0];
-
   private static final int numCorrelationAxes = Axis.values().length;
 
   private static int numCorrelationAxes() {
@@ -72,13 +67,6 @@ public class SourceInfoCorrelation implements SourceInfo, Serializable {
     this.origin = origin;
     this.allCorrelations = new ArrayList<Correlation>(parent.allCorrelations);
     primaryCorrelations = parent.primaryCorrelations.clone();
-  }
-
-  private SourceInfoCorrelation(SourceInfoCorrelation parent, String caller,
-      SourceInfo... additionalAncestors) {
-    this(parent, parent.origin);
-    assert caller != null;
-    merge(additionalAncestors);
   }
 
   /**
@@ -190,20 +178,8 @@ public class SourceInfoCorrelation implements SourceInfo, Serializable {
    * derived node will inherit its Origin and Correlations from the SourceInfo
    * object on which the method is invoked.
    */
-  public SourceInfo makeChild(Class<?> caller, String description) {
-    return makeChild(caller, description, EMPTY_SOURCEINFO_ARRAY);
-  }
-
-  /**
-   * If data accumulation is enabled, create a derived SourceInfo object that
-   * indicates that one or more AST nodes were merged to create a new node. The
-   * derived node will inherit its Origin and Correlations from the SourceInfo
-   * object on which the method is invoked.
-   */
-  public SourceInfoCorrelation makeChild(Class<?> caller, String description,
-      SourceInfo... merge) {
-    String callerName = caller == null ? "Unrecorded caller" : caller.getName();
-    return new SourceInfoCorrelation(this, callerName, merge);
+  public SourceInfo makeChild() {
+    return new SourceInfoCorrelation(this, this.origin);
   }
 
   public SourceInfo makeChild(SourceOrigin origin) {

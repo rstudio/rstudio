@@ -18,8 +18,6 @@ package com.google.gwt.core.ext.soyc.impl;
 import com.google.gwt.core.ext.soyc.ClassMember;
 import com.google.gwt.core.ext.soyc.Member;
 import com.google.gwt.core.ext.soyc.MethodMember;
-import com.google.gwt.dev.jjs.Correlation;
-import com.google.gwt.dev.jjs.Correlation.Axis;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JType;
 
@@ -32,7 +30,6 @@ import java.util.TreeSet;
  */
 public class StandardMethodMember extends AbstractMemberWithDependencies
     implements MethodMember {
-  private final SortedSet<String> aliasesView;
   private final ClassMember enclosing;
   private final String sourceName;
   private final SortedSet<MethodMember> overridesView;
@@ -41,7 +38,6 @@ public class StandardMethodMember extends AbstractMemberWithDependencies
    * Constructed by {@link MemberFactory#get(JMethod)}.
    */
   public StandardMethodMember(MemberFactory factory, JMethod method) {
-    super(method.getSourceInfo());
     this.enclosing = factory.get(method.getEnclosingType());
 
     StringBuilder sb = new StringBuilder();
@@ -54,13 +50,6 @@ public class StandardMethodMember extends AbstractMemberWithDependencies
     sb.append(method.getOriginalReturnType().getJsniSignatureName());
     this.sourceName = sb.toString();
 
-    SortedSet<String> aliases = new TreeSet<String>();
-    for (Correlation c : method.getSourceInfo().getAllCorrelations(
-        Axis.JS_ALIAS)) {
-      aliases.add(c.getName().getShortIdent());
-    }
-    aliasesView = Collections.unmodifiableSortedSet(aliases);
-
     SortedSet<MethodMember> overrides = new TreeSet<MethodMember>(
         Member.SOURCE_NAME_COMPARATOR);
     for (JMethod override : method.getOverrides()) {
@@ -71,10 +60,6 @@ public class StandardMethodMember extends AbstractMemberWithDependencies
 
   public ClassMember getEnclosing() {
     return enclosing;
-  }
-
-  public SortedSet<String> getJsAliases() {
-    return aliasesView;
   }
 
   public SortedSet<MethodMember> getOverrides() {

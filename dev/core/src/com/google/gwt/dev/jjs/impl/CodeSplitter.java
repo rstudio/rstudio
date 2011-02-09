@@ -516,8 +516,7 @@ public class CodeSplitter {
     assert ((JReferenceType) constructorCall.getArgs().get(1).getType()).getUnderlyingType() instanceof JArrayType;
     assert ((JArrayType) ((JReferenceType) constructorCall.getArgs().get(1).getType()).getUnderlyingType()).getElementType() == JPrimitiveType.INT;
 
-    SourceInfo info = program.createSourceInfoSynthetic(ReplaceRunAsyncs.class,
-        "array with initial load sequence");
+    SourceInfo info = program.createSourceInfoSynthetic(ReplaceRunAsyncs.class);
     List<JExpression> intExprs = new ArrayList<JExpression>();
     for (int sp : initialLoadSequence) {
       intExprs.add(program.getLiteralInt(sp));

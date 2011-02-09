@@ -136,8 +136,7 @@ public class ArrayNormalizer {
     private void processDims(JNewArray x, Context ctx, JArrayType arrayType,
         int dims) {
       // override the type of the called method with the array's type
-      SourceInfo sourceInfo = x.getSourceInfo().makeChild(ArrayVisitor.class,
-          "Creating dimensions");
+      SourceInfo sourceInfo = x.getSourceInfo();
       JMethodCall call = new JMethodCall(sourceInfo, null, initDims, arrayType);
       JsonArray classLitList = new JsonArray(sourceInfo,
           program.getJavaScriptObject());
@@ -172,8 +171,7 @@ public class ArrayNormalizer {
     private void processInitializers(JNewArray x, Context ctx,
         JArrayType arrayType) {
       // override the type of the called method with the array's type
-      SourceInfo sourceInfo = x.getSourceInfo().makeChild(ArrayVisitor.class,
-          "Array initializer");
+      SourceInfo sourceInfo = x.getSourceInfo();
       JMethodCall call = new JMethodCall(sourceInfo, null, initValues,
           arrayType);
       JLiteral classLit = x.getClassLiteral();

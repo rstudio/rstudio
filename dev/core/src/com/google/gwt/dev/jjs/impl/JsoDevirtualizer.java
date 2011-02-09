@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConditional;
@@ -126,12 +127,11 @@ public class JsoDevirtualizer {
    */
   private JMethod createDevirtualMethod(JMethod objectMethod, JMethod jsoImpl) {
     JClassType jsoType = program.getJavaScriptObject();
-    SourceInfo sourceInfo = jsoType.getSourceInfo();
+    SourceInfo sourceInfo = jsoType.getSourceInfo().makeChild(SourceOrigin.UNKNOWN);
 
     // Create the new method.
     String name = objectMethod.getName() + "__devirtual$";
-    JMethod newMethod = program.createMethod(sourceInfo.makeChild(
-        JsoDevirtualizer.class, "Devirtualized method"), name, jsoType,
+    JMethod newMethod = program.createMethod(sourceInfo, name, jsoType,
         objectMethod.getType(), false, true, true, false, false);
     newMethod.setSynthetic();
 
@@ -144,6 +144,7 @@ public class JsoDevirtualizer {
     }
     newMethod.freezeParamTypes();
     newMethod.addThrownExceptions(objectMethod.getThrownExceptions());
+    sourceInfo.addCorrelation(program.getCorrelator().by(newMethod));
 
     // Build from bottom up.
     JMethodCall condition = new JMethodCall(sourceInfo, null,

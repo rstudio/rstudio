@@ -257,8 +257,7 @@ public class HandleCrossFragmentReferences {
    * references.
    */
   private void defineJsLink() {
-    SourceInfo info = jsProgram.createSourceInfoSynthetic(
-        HandleCrossFragmentReferences.class, "defining jslink");
+    SourceInfo info = jsProgram.createSourceInfoSynthetic(HandleCrossFragmentReferences.class);
     jslink = jsProgram.getScope().declareName("jslink");
     JsVars vars = new JsVars(info);
     JsVar var = new JsVar(info, jslink);

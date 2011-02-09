@@ -131,9 +131,7 @@ public class EvalFunctionsAtTopScope extends JsModVisitor {
       itr.previous();
       itr.add(x.makeStmt());
       itr.next();
-      ctx.replaceMe(x.getName().makeRef(
-          x.getSourceInfo().makeChild(EvalFunctionsAtTopScope.class,
-              "Shuffled evaluation order")));
+      ctx.replaceMe(x.getName().makeRef(x.getSourceInfo().makeChild()));
     }
 
     // Dive into the function itself.

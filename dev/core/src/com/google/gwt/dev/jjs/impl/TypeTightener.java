@@ -260,9 +260,10 @@ public class TypeTightener {
       // Fake an assignment-to-self on all args to prevent tightening
       JMethod method = x.getTarget();
       for (JParameter param : method.getParams()) {
-        addAssignment(param, new JParameterRef(
-            program.createSourceInfoSynthetic(RecordVisitor.class,
-                "Fake assignment"), param));
+        addAssignment(
+            param,
+            new JParameterRef(
+                program.createSourceInfoSynthetic(RecordVisitor.class), param));
       }
     }
 

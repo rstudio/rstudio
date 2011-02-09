@@ -58,6 +58,8 @@ public interface SourceInfo extends Serializable {
 
   String getFileName();
 
+  SourceOrigin getOrigin();
+
   /**
    * Returns the first Correlation that had been set with a given Axis, or
    * <code>null</code> if no Correlation has been set on the given axis.
@@ -82,20 +84,11 @@ public interface SourceInfo extends Serializable {
   int getStartPos();
 
   /**
-   * If data accumulation is enabled, create a derived SourceInfo object that
-   * indicates that one or more AST nodes were merged to create a new node. The
-   * derived node will inherit its Origin and Correlations from the SourceInfo
-   * object on which the method is invoked.
+   * Create a child node of the same type and Origin as this node. If data
+   * accumulation is enabled, the derived node will inherit its Correlations
+   * from this node.
    */
-  SourceInfo makeChild(Class<?> caller, String description);
-
-  /**
-   * If data accumulation is enabled, create a derived SourceInfo object that
-   * indicates that one or more AST nodes were merged to create a new node. The
-   * derived node will inherit its Origin and Correlations from the SourceInfo
-   * object on which the method is invoked.
-   */
-  SourceInfo makeChild(Class<?> caller, String description, SourceInfo... merge);
+  SourceInfo makeChild();
 
   /**
    * Create a child node of the same type as this node, but with a new Origin.

@@ -30,7 +30,6 @@ public class StandardFieldMember extends AbstractMember implements FieldMember {
    * Constructed by {@link MemberFactory#get(JFieldType)}.
    */
   public StandardFieldMember(MemberFactory factory, JField field) {
-    super(field.getSourceInfo());
     this.enclosing = factory.get(field.getEnclosingType());
     this.sourceName = field.getEnclosingType().getName() + "::"
         + field.getName();

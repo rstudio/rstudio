@@ -38,17 +38,6 @@ public interface Member extends Serializable {
   Comparator<Member> TYPE_AND_SOURCE_NAME_COMPARATOR = new TypeAndSourceNameComparator();
 
   /**
-   * Returns the (possibly obfuscated) identifier used in the output.
-   */
-  String getJsName();
-
-  /**
-   * Returns a description of where the source for the Member originated.
-   * Usually, but not always, a URL.
-   */
-  String getSourceLocation();
-
-  /**
    * Returns the name of the Member in the original source code.
    */
   String getSourceName();
@@ -62,11 +51,6 @@ public interface Member extends Serializable {
    * Returns the Member if it is a FieldMember or <code>null</code>.
    */
   FieldMember isField();
-
-  /**
-   * Returns the Member if it is a FunctionMember or <code>null</code>.
-   */
-  FunctionMember isFunction();
 
   /**
    * Returns the Member if it is a MethodMember or <code>null</code>.

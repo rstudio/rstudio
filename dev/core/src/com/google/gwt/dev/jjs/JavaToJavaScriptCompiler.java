@@ -565,8 +565,7 @@ public class JavaToJavaScriptCompiler {
       jprogram.typeOracle.computeBeforeAST();
 
       // (2) Create our own Java AST from the JDT AST.
-      GenerateJavaAST.exec(allTypeDeclarations, typeMap, jprogram, jsProgram,
-          options);
+      GenerateJavaAST.exec(allTypeDeclarations, typeMap, jprogram, options);
 
       // GenerateJavaAST can uncover semantic JSNI errors; report & abort
       checkForErrors(logger, goldenCuds, true);
@@ -938,9 +937,8 @@ public class JavaToJavaScriptCompiler {
               + originalMainClassName + "' must not be abstract", null);
       throw new UnableToCompleteException();
     }
-    SourceInfo sourceInfo = entryClass.getSourceInfo().makeChild(
-        JavaToJavaScriptCompiler.class, "Rebound entry point");
 
+    SourceInfo sourceInfo = entryClass.getSourceInfo();
     JExpression qualifier = null;
     if (!entryMethod.isStatic()) {
       qualifier = JGwtCreate.createInstantiationExpression(sourceInfo,
@@ -963,8 +961,7 @@ public class JavaToJavaScriptCompiler {
       RebindPermutationOracle rpo, String[] mainClassNames, JProgram program)
       throws UnableToCompleteException {
     Event findEntryPointsEvent = SpeedTracerLogger.start(CompilerEventType.FIND_ENTRY_POINTS);
-    SourceInfo sourceInfo = program.createSourceInfoSynthetic(
-        JavaToJavaScriptCompiler.class, "Bootstrap method");
+    SourceInfo sourceInfo = program.createSourceInfoSynthetic(JavaToJavaScriptCompiler.class);
     JMethod bootStrapMethod = program.createMethod(sourceInfo, "init",
         program.getIndexedType("EntryMethodHolder"), program.getTypeVoid(),
         false, true, true, false, false);
@@ -1283,8 +1280,7 @@ public class JavaToJavaScriptCompiler {
    */
   private static JStatement makeStatsCalls(JProgram program,
       String mainClassName) {
-    SourceInfo sourceInfo = program.createSourceInfoSynthetic(
-        JavaToJavaScriptCompiler.class, "onModuleStart() stats call");
+    SourceInfo sourceInfo = program.createSourceInfoSynthetic(JavaToJavaScriptCompiler.class);
     JMethod isStatsAvailableMethod = program.getIndexedMethod("Stats.isStatsAvailable");
     JMethod onModuleStartMethod = program.getIndexedMethod("Stats.onModuleStart");
 

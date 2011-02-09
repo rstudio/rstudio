@@ -45,15 +45,14 @@ public class StandardClassMember extends AbstractMemberWithDependencies
   private final String packageName;
   private final String sourceName;
   private final JDeclaredType type;
-  
+
   /**
    * Constructed by {@link MemberFactory#get(JReferenceType)}.
    */
   public StandardClassMember(MemberFactory factory, JDeclaredType type) {
-    super(type.getSourceInfo());
     this.factory = factory;
     this.type = type;
-    
+
     int index = type.getName().lastIndexOf('.');
     if (index < 0) {
       packageName = "";

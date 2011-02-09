@@ -17,18 +17,15 @@ package com.google.gwt.core.ext.soyc.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.soyc.ClassMember;
-import com.google.gwt.core.ext.soyc.FunctionMember;
 import com.google.gwt.core.ext.soyc.Member;
 import com.google.gwt.core.ext.soyc.Range;
 import com.google.gwt.core.ext.soyc.Story;
-import com.google.gwt.core.ext.soyc.Story.Origin;
 import com.google.gwt.dev.jjs.Correlation;
-import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.Correlation.Axis;
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.util.tools.Utility;
 
@@ -125,8 +122,6 @@ public class StoryRecorder {
       // Record what we've seen so far
       TreeSet<ClassMember> classesMutable = new TreeSet<ClassMember>(
           Member.SOURCE_NAME_COMPARATOR);
-      TreeSet<FunctionMember> functionsMutable = new TreeSet<FunctionMember>(
-          Member.SOURCE_NAME_COMPARATOR);
       Set<SourceInfo> sourceInfoSeen = new HashSet<SourceInfo>();
 
       builder.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<soyc>\n<stories>\n");
@@ -134,8 +129,8 @@ public class StoryRecorder {
       int fragment = 0;
       for (Map<Range, SourceInfo> sourceInfoMap : sourceInfoMaps) {
         lastEnd = 0;
-        analyzeFragment(memberFactory, classesMutable, functionsMutable,
-            sourceInfoMap, sourceInfoSeen, fragment++);
+        analyzeFragment(memberFactory, classesMutable, sourceInfoMap,
+            sourceInfoSeen, fragment++);
         
         // Flush output to improve memory locality
         flushOutput();
@@ -161,7 +156,6 @@ public class StoryRecorder {
   
   private void analyzeFragment(MemberFactory memberFactory,
       TreeSet<ClassMember> classesMutable,
-      TreeSet<FunctionMember> functionsMutable,
       Map<Range, SourceInfo> sourceInfoMap, Set<SourceInfo> sourceInfoSeen,
       int fragment) throws IOException {
     /*
@@ -217,13 +211,6 @@ public class StoryRecorder {
               membersByCorrelation.put(c, member);
               break;
             }
-            case FUNCTION: {
-              JsFunction function = c.getFunction();
-              StandardFunctionMember member = memberFactory.get(function);
-              membersByCorrelation.put(c, member);
-              functionsMutable.add(member);
-              break;
-            }
             case METHOD: {
               JMethod method = c.getMethod();
               JDeclaredType type = c.getType();
@@ -269,21 +256,6 @@ public class StoryRecorder {
       builder.append(story.getLiteralTypeName());
     }
     builder.append("\">\n");
-
-    Set<Origin> origins = story.getSourceOrigin();
-    if (origins.size() > 0) {
-      builder.append("<origins>\n");
-      for (Origin origin : origins) {
-        builder.append("<origin lineNumber=\"");
-        builder.append(origin.getLineNumber());
-        builder.append("\" location=\"");
-        builder.append(origin.getLocation());
-        builder.append("\"/>\n");
-        
-        flushOutput();
-      }
-      builder.append("</origins>\n");
-    }
 
     Set<Member> correlations = story.getMembers();
     if (correlations.size() > 0) {
@@ -373,16 +345,10 @@ public class StoryRecorder {
     if (!storyCache.containsKey(info)) {
       SortedSet<Member> members = new TreeSet<Member>(
           Member.TYPE_AND_SOURCE_NAME_COMPARATOR);
-      Set<Origin> origins = new HashSet<Origin>();
-
       for (Correlation c : info.getAllCorrelations()) {
         Member m = membersByCorrelation.get(c);
         if (m != null) {
           members.add(m);
-        }
-        
-        if (c.getAxis() == Axis.ORIGIN) {
-          origins.add(new OriginImpl(c.getOrigin()));
         }
       }
 
@@ -392,8 +358,8 @@ public class StoryRecorder {
         literalType = literalCorrelation.getLiteral().getDescription();
       }
 
-      theStory = new StoryImpl(storyCache.size(), members, origins,
-          literalType, fragment, length);
+      theStory = new StoryImpl(storyCache.size(), members, literalType,
+          fragment, length);
       storyCache.put(info, theStory);
     } else {
       // Use a copy-constructed instance

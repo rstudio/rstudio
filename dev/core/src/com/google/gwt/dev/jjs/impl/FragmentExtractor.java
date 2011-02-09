@@ -223,8 +223,7 @@ public class FragmentExtractor {
     for (JMethod entryMethod : jprogram.entryMethods.get(splitPoint)) {
       JsName name = map.nameForMethod(entryMethod);
       assert name != null;
-      SourceInfo sourceInfo = jsprogram.getSourceInfo().makeChild(
-          FragmentExtractor.class, "call to entry function " + splitPoint);
+      SourceInfo sourceInfo = jsprogram.getSourceInfo();
       JsInvocation call = new JsInvocation(sourceInfo);
       call.setQualifier(wrapWithEntry(name.makeRef(sourceInfo)));
       callStats.add(call.makeStmt());
@@ -240,9 +239,7 @@ public class FragmentExtractor {
   public List<JsStatement> createCallToLeftoversFragmentHasLoaded() {
     JMethod loadedMethod = jprogram.getIndexedMethod("AsyncFragmentLoader.browserLoaderLeftoversFragmentHasLoaded");
     JsName loadedMethodName = map.nameForMethod(loadedMethod);
-    SourceInfo sourceInfo = jsprogram.getSourceInfo().makeChild(
-        FragmentExtractor.class,
-        "call to browserLoaderLeftoversFragmentHasLoaded ");
+    SourceInfo sourceInfo = jsprogram.getSourceInfo();
     JsInvocation call = new JsInvocation(sourceInfo);
     call.setQualifier(wrapWithEntry(loadedMethodName.makeRef(sourceInfo)));
     List<JsStatement> newStats = Collections.<JsStatement> singletonList(call.makeStmt());
@@ -513,8 +510,7 @@ public class FragmentExtractor {
   private JsStatement removeSomeVars(JsVars stat,
       LivenessPredicate currentLivenessPredicate,
       LivenessPredicate alreadyLoadedPredicate) {
-    JsVars newVars = new JsVars(stat.getSourceInfo().makeChild(
-        FragmentExtractor.class, "subsetting of interned values"));
+    JsVars newVars = new JsVars(stat.getSourceInfo());
 
     for (JsVar var : stat) {
       if (isLive(var, currentLivenessPredicate)
@@ -550,24 +546,21 @@ public class FragmentExtractor {
    */
   private JsStatement vtableStatFor(JClassType vtableType) {
     JsNameRef prototypeField = new JsNameRef(
-        jsprogram.createSourceInfoSynthetic(FragmentExtractor.class,
-            "prototype field"), "prototype");
+        jsprogram.createSourceInfoSynthetic(FragmentExtractor.class),
+        "prototype");
     JsExpression constructorRef;
-    SourceInfo sourceInfoVtableSetup = jsprogram.createSourceInfoSynthetic(
-        FragmentExtractor.class, "vtable setup");
+    SourceInfo sourceInfoVtableSetup = jsprogram.createSourceInfoSynthetic(FragmentExtractor.class);
     if (vtableType == jprogram.getTypeJavaLangString()) {
       // The methods of java.lang.String are put onto JavaScript's String
       // prototype
-      SourceInfo sourceInfoConstructorRef = jsprogram.createSourceInfoSynthetic(
-          FragmentExtractor.class, "String constructor");
+      SourceInfo sourceInfoConstructorRef = jsprogram.createSourceInfoSynthetic(FragmentExtractor.class);
       constructorRef = new JsNameRef(sourceInfoConstructorRef, "String");
     } else {
       constructorRef = map.nameForType(vtableType).makeRef(
           sourceInfoVtableSetup);
     }
     prototypeField.setQualifier(constructorRef);
-    SourceInfo underlineSourceInfo = jsprogram.createSourceInfoSynthetic(
-        FragmentExtractor.class, "global _ field");
+    SourceInfo underlineSourceInfo = jsprogram.createSourceInfoSynthetic(FragmentExtractor.class);
     return (new JsBinaryOperation(sourceInfoVtableSetup, JsBinaryOperator.ASG,
         jsprogram.getScope().declareName("_").makeRef(underlineSourceInfo),
         prototypeField)).makeStmt();
@@ -634,8 +627,7 @@ public class FragmentExtractor {
    * Wrap an expression with a call to $entry.
    */
   private JsInvocation wrapWithEntry(JsExpression exp) {
-    SourceInfo sourceInfo = exp.getSourceInfo().makeChild(
-        FragmentExtractor.class, "wrapping with a call to $entry");
+    SourceInfo sourceInfo = exp.getSourceInfo();
     JsInvocation call = new JsInvocation(sourceInfo);
     JsName entryFunctionName = jsprogram.getScope().findExistingName("$entry");
     call.setQualifier(entryFunctionName.makeRef(sourceInfo));

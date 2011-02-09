@@ -31,7 +31,6 @@
 package com.google.gwt.core.ext.soyc;
 
 import java.io.Serializable;
-import java.util.Set;
 import java.util.SortedSet;
 
 /**
@@ -39,32 +38,6 @@ import java.util.SortedSet;
  * metadata is available.
  */
 public interface Story extends Serializable {
-  /*
-   * Corresponds to a SourceInfo.
-   */
-
-  /**
-   * Describes the physical or virtual source location from which a Story
-   * originated.
-   */
-  public interface Origin extends Serializable {
-    /*
-     * Corresponds to a SourceOrigin.
-     */
-
-    /**
-     * Returns the line number, or <code>0</code> if there is no physical
-     * location.
-     */
-    int getLineNumber();
-
-    /**
-     * This is usually, but not always, a URL. If it is not a URL, it will
-     * typically be a Java class name.
-     */
-    String getLocation();
-  }
-
   /**
    * If the Story represents a literal value, this method will return a
    * description of the type of literal. If the Story does not represent a
@@ -77,11 +50,4 @@ public interface Story extends Serializable {
    * Gets the Members of the compilation that the Story is about.
    */
   SortedSet<Member> getMembers();
-
-  /**
-   * Returns the locations of the Story's source. Identical structures (such as
-   * string literals) that appear in multiple locations in the source may be
-   * merged by the compiler into a single Story.
-   */
-  Set<Origin> getSourceOrigin();
 }

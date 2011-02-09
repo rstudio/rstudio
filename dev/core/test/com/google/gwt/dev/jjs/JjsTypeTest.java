@@ -230,8 +230,7 @@ public class JjsTypeTest extends TestCase {
     // Make the program itself
     program = new JProgram();
     typeOracle = program.typeOracle;
-    synthSource = program.createSourceInfoSynthetic(JjsTypeTest.class,
-        "synthetic node used for testing");
+    synthSource = program.createSourceInfoSynthetic(JjsTypeTest.class);
 
     classObject = createClass("java.lang.Object", null, false, false);
     classString = createClass("java.lang.String", classObject, false, true);

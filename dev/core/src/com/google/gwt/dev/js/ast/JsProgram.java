@@ -71,9 +71,8 @@ public final class JsProgram extends JsNode {
     return correlator.makeSourceInfo(SourceOrigin.create(lineNumber, location));
   }
 
-  public SourceInfo createSourceInfoSynthetic(Class<?> caller,
-      String description) {
-    return createSourceInfo(0, caller.getName()).makeChild(caller, description);
+  public SourceInfo createSourceInfoSynthetic(Class<?> caller) {
+    return createSourceInfo(0, caller.getName());
   }
 
   public JsBlock getFragmentBlock(int fragment) {
@@ -113,8 +112,8 @@ public final class JsProgram extends JsNode {
   public void setFragmentCount(int fragments) {
     this.fragments = new JsProgramFragment[fragments];
     for (int i = 0; i < fragments; i++) {
-      this.fragments[i] = new JsProgramFragment(createSourceInfoSynthetic(
-          JsProgram.class, "fragment " + i));
+      this.fragments[i] = new JsProgramFragment(
+          createSourceInfoSynthetic(JsProgram.class));
     }
   }
 

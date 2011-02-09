@@ -18,8 +18,6 @@ package com.google.gwt.dev.jjs;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.js.ast.JsFunction;
-import com.google.gwt.dev.js.ast.JsName;
 
 import java.io.Serializable;
 import java.util.Comparator;
@@ -51,105 +49,38 @@ public final class Correlation implements Serializable {
     /**
      * A Java class or interface type.
      */
-    CLASS(true, false),
+    CLASS,
 
     /**
      * A field defined within a Java type.
      */
-    FIELD(true, false),
-
-    /**
-     * A JavaScript function derived from a class or method.
-     */
-    FUNCTION(false, true),
-
-    /**
-     * Objects with global names may be aliased (e.g. polymorphic method
-     * dispatch).
-     */
-    JS_ALIAS(false, true),
-
-    /**
-     * The globally-unique identifier used to represent the Member in the
-     * compiled output.
-     */
-    JS_NAME(false, true),
+    FIELD,
 
     /**
      * Indicates a literal value in the original source.
      */
-    LITERAL(true, true),
+    LITERAL,
 
     /**
      * A Java method.
      */
-    METHOD(true, false),
-
-    /**
-     * Represents a physical source file.
-     */
-    ORIGIN(true, true);
-
-    private final boolean isJava;
-    private final boolean isJs;
-
-    /**
-     * Arguments indicate which AST the axis is relevant to.
-     */
-    private Axis(boolean isJava, boolean isJs) {
-      this.isJava = isJava;
-      this.isJs = isJs;
-    }
-
-    public boolean isJava() {
-      return isJava;
-    }
-
-    public boolean isJs() {
-      return isJs;
-    }
+    METHOD;
   }
 
   /**
    * Specifies the type of literal value.
    */
   public enum Literal {
-    VOID("void"), NULL("null"), BYTE("byte"), SHORT("short"), INT("int"), LONG(
-        "long"), FLOAT("float"), DOUBLE("double"), BOOLEAN("boolean"), CHAR(
-        "char"), STRING("string"), CLASS("class"), JS_BOOLEAN("boolean", true), JS_NUMBER(
-        "number", true), JS_NULL("null", true), JS_STRING("string", true),
-    /**
-     * undefined isn't actually a literal in JS, but we more-or-less treat it as
-     * though it were.
-     */
-    JS_UNDEFINED("undefined", true);
+    STRING("string"), CLASS("class");
 
     private final String description;
-    private final boolean isJava;
-    private final boolean isJs;
 
     private Literal(String description) {
       this.description = description;
-      isJava = true;
-      isJs = false;
-    }
-
-    private Literal(String description, boolean isJs) {
-      this.description = description;
-      isJava = !isJs;
-      this.isJs = isJs;
     }
 
     public String getDescription() {
       return description;
-    }
-
-    public boolean isJava() {
-      return isJava;
-    }
-
-    public boolean isJs() {
-      return isJs;
     }
   }
 
@@ -222,14 +153,6 @@ public final class Correlation implements Serializable {
     }
   }
 
-  public JsFunction getFunction() {
-    if (axis == Axis.FUNCTION) {
-      return (JsFunction) astReference;
-    } else {
-      return null;
-    }
-  }
-
   /**
    * Returns a human-readable identifier that can be used to identify the
    * Correlation within its axis.
@@ -249,22 +172,6 @@ public final class Correlation implements Serializable {
   public JMethod getMethod() {
     if (axis == Axis.METHOD) {
       return (JMethod) astReference;
-    } else {
-      return null;
-    }
-  }
-
-  public JsName getName() {
-    if (axis == Axis.JS_NAME || axis == Axis.JS_ALIAS) {
-      return (JsName) astReference;
-    } else {
-      return null;
-    }
-  }
-
-  public SourceOrigin getOrigin() {
-    if (axis == Axis.ORIGIN) {
-      return (SourceOrigin) astReference;
     } else {
       return null;
     }

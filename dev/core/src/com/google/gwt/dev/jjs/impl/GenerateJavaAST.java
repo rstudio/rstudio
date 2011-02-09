@@ -101,7 +101,6 @@ import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsNameRef;
-import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.collect.Maps;
@@ -696,8 +695,7 @@ public class GenerateJavaAST {
       // May be processing an annotation
       SourceInfo info = currentMethod == null ? currentClass.getSourceInfo()
           : currentMethod.getSourceInfo();
-      return program.getLiteralString(
-          info.makeChild(JavaASTGenerationVisitor.class, "String literal"),
+      return program.getLiteralString(info.makeChild(),
           x.stringValue().toCharArray());
     }
 
@@ -2109,8 +2107,7 @@ public class GenerateJavaAST {
      */
     private void createBridgeMethod(JClassType clazz,
         SyntheticMethodBinding jdtBridgeMethod, JMethod implmeth) {
-      SourceInfo info = implmeth.getSourceInfo().makeChild(
-          GenerateJavaAST.class, "bridge method");
+      SourceInfo info = implmeth.getSourceInfo().makeChild();
       // create the method itself
       JMethod bridgeMethod = program.createMethod(info,
           String.valueOf(jdtBridgeMethod.selector), clazz,
@@ -2122,13 +2119,14 @@ public class GenerateJavaAST {
       for (TypeBinding jdtParamType : jdtBridgeMethod.parameters) {
         JParameter param = implParams.get(paramIdx++);
         JType paramType = (JType) typeMap.get(jdtParamType.erasure());
-        JParameter newParam = new JParameter(param.getSourceInfo().makeChild(
-            GenerateJavaAST.class, "bridge method"), param.getName(),
+        JParameter newParam = new JParameter(
+            info.makeChild(param.getSourceInfo().getOrigin()), param.getName(),
             paramType, true, false, bridgeMethod);
         bridgeMethod.addParam(newParam);
       }
       addThrownExceptions(jdtBridgeMethod, bridgeMethod);
       bridgeMethod.freezeParamTypes();
+      info.addCorrelation(program.getCorrelator().by(bridgeMethod));
 
       // create a call
       JMethodCall call = new JMethodCall(info, new JThisRef(info, clazz),
@@ -2284,9 +2282,7 @@ public class GenerateJavaAST {
                 "FieldRef referencing field in a different type.");
           }
         }
-        return new JFieldRef(info.makeChild(JavaASTGenerationVisitor.class,
-            "Reference", variable.getSourceInfo()), instance, field,
-            currentClass);
+        return new JFieldRef(info, instance, field, currentClass);
       }
       throw new InternalCompilerException("Unknown JVariable subclass.");
     }
@@ -2860,23 +2856,27 @@ public class GenerateJavaAST {
          * 
          * class Map { $MAP = Enum.createValueOfMap($VALUES); }
          */
-        SourceInfo sourceInfo = type.getSourceInfo().makeChild(
-            JavaASTGenerationVisitor.class, "Enum$Map");
-        JClassType mapClass = program.createClass(sourceInfo, type.getName()
+        SourceInfo typeInfo = type.getSourceInfo().makeChild();
+        JClassType mapClass = program.createClass(typeInfo, type.getName()
             + "$Map", false, true);
+        typeInfo.addCorrelation(program.getCorrelator().by(mapClass));
         mapClass.setSuperClass(program.getTypeJavaLangObject());
-        mapField = program.createField(sourceInfo, "$MAP", mapClass,
+        SourceInfo fieldInfo = typeInfo.makeChild();
+        mapField = program.createField(fieldInfo, "$MAP", mapClass,
             program.getJavaScriptObject(), true, Disposition.FINAL);
+        fieldInfo.addCorrelation(program.getCorrelator().by(mapField));
 
-        JMethodCall call = new JMethodCall(sourceInfo, null,
+        SourceInfo methodInfo = typeInfo.makeChild();
+        JMethodCall call = new JMethodCall(methodInfo, null,
             program.getIndexedMethod("Enum.createValueOfMap"));
-        call.addArg(new JFieldRef(sourceInfo, null, valuesField, type));
-        JFieldRef mapRef = new JFieldRef(sourceInfo, null, mapField, type);
-        JDeclarationStatement declStmt = new JDeclarationStatement(sourceInfo,
+        call.addArg(new JFieldRef(methodInfo, null, valuesField, type));
+        JFieldRef mapRef = new JFieldRef(methodInfo, null, mapField, type);
+        JDeclarationStatement declStmt = new JDeclarationStatement(methodInfo,
             mapRef, call);
-        JMethod clinit = program.createMethod(sourceInfo, "$clinit", mapClass,
+        JMethod clinit = program.createMethod(methodInfo, "$clinit", mapClass,
             program.getTypeVoid(), false, true, true, true, false);
         clinit.freezeParamTypes();
+        methodInfo.addCorrelation(program.getCorrelator().by(clinit));
         JBlock clinitBlock = ((JMethodBody) clinit.getBody()).getBlock();
         clinitBlock.addStmt(declStmt);
         mapField.setInitializer(declStmt);
@@ -2903,20 +2903,20 @@ public class GenerateJavaAST {
       JField valuesField;
       {
         // $VALUES = new E[]{A,B,B};
-        SourceInfo sourceInfo = type.getSourceInfo().makeChild(
-            JavaASTGenerationVisitor.class, "$VALUES");
+        SourceInfo fieldInfo = type.getSourceInfo().makeChild();
         JArrayType enumArrayType = program.getTypeArray(type, 1);
-        valuesField = program.createField(sourceInfo, "$VALUES", type,
+        valuesField = program.createField(fieldInfo, "$VALUES", type,
             enumArrayType, true, Disposition.FINAL);
+        fieldInfo.addCorrelation(program.getCorrelator().by(valuesField));
         List<JExpression> initializers = new ArrayList<JExpression>();
         for (JEnumField field : type.getEnumList()) {
-          JFieldRef fieldRef = new JFieldRef(sourceInfo, null, field, type);
+          JFieldRef fieldRef = new JFieldRef(fieldInfo, null, field, type);
           initializers.add(fieldRef);
         }
-        JNewArray newExpr = JNewArray.createInitializers(program, sourceInfo,
+        JNewArray newExpr = JNewArray.createInitializers(program, fieldInfo,
             enumArrayType, initializers);
-        JFieldRef valuesRef = new JFieldRef(sourceInfo, null, valuesField, type);
-        JDeclarationStatement declStmt = new JDeclarationStatement(sourceInfo,
+        JFieldRef valuesRef = new JFieldRef(fieldInfo, null, valuesField, type);
+        JDeclarationStatement declStmt = new JDeclarationStatement(fieldInfo,
             valuesRef, newExpr);
         JBlock clinitBlock = ((JMethodBody) type.getMethods().get(0).getBody()).getBlock();
 
@@ -3047,14 +3047,11 @@ public class GenerateJavaAST {
 
     private final Map<JsniMethodBody, AbstractMethodDeclaration> jsniMethodMap;
 
-    private final JsProgram jsProgram;
-
     private final JProgram program;
 
-    public JsniRefGenerationVisitor(JProgram program, JsProgram jsProgram,
+    public JsniRefGenerationVisitor(JProgram program,
         Map<JsniMethodBody, AbstractMethodDeclaration> jsniMethodMap) {
       this.program = program;
-      this.jsProgram = jsProgram;
       this.jsniMethodMap = jsniMethodMap;
     }
 
@@ -3085,7 +3082,7 @@ public class GenerateJavaAST {
    * a JProgram structure.
    */
   public static void exec(TypeDeclaration[] types, TypeMap typeMap,
-      JProgram jprogram, JsProgram jsProgram, JJSOptions options) {
+      JProgram jprogram, JJSOptions options) {
     Event generateJavaAstEvent = SpeedTracerLogger.start(CompilerEventType.GENERATE_JAVA_AST);
     // Construct the basic AST.
     JavaASTGenerationVisitor v = new JavaASTGenerationVisitor(typeMap,
@@ -3100,7 +3097,7 @@ public class GenerateJavaAST {
 
     // Process JSNI.
     Map<JsniMethodBody, AbstractMethodDeclaration> jsniMethodMap = v.getJsniMethodMap();
-    new JsniRefGenerationVisitor(jprogram, jsProgram, jsniMethodMap).accept(jprogram);
+    new JsniRefGenerationVisitor(jprogram, jsniMethodMap).accept(jprogram);
     generateJavaAstEvent.end();
   }
 

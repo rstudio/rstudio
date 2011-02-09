@@ -253,9 +253,8 @@ public class JsInliner {
        * Create a new comma expression with the original LHS and the LHS of the
        * nested comma expression.
        */
-      JsBinaryOperation newOp = new JsBinaryOperation(
-          x.getSourceInfo().makeChild(CommaNormalizer.class,
-              "Simplifying comma expression"), JsBinaryOperator.COMMA);
+      JsBinaryOperation newOp = new JsBinaryOperation(x.getSourceInfo(),
+          JsBinaryOperator.COMMA);
       newOp.setArg1(x.getArg1());
       newOp.setArg2(toUpdate.getArg1());
 
@@ -870,8 +869,7 @@ public class JsInliner {
            * single JsExprStmt with a JsBlock that contains all of the
            * statements.
            */
-          JsBlock b = new JsBlock(x.getSourceInfo().makeChild(
-              InliningVisitor.class, "Block required for control function"));
+          JsBlock b = new JsBlock(x.getSourceInfo());
           b.getStatements().addAll(statements);
           ctx.replaceMe(b);
           return;
@@ -1025,8 +1023,7 @@ public class JsInliner {
       assert !statements.isEmpty();
 
       // Find or create the JsVars as the first statement
-      SourceInfo sourceInfo = x.getSourceInfo().makeChild(
-          InliningVisitor.class, "Synthetic locals");
+      SourceInfo sourceInfo = x.getSourceInfo();
       JsVars vars;
       if (statements.get(0) instanceof JsVars) {
         vars = (JsVars) statements.get(0);
@@ -1128,8 +1125,7 @@ public class JsInliner {
        * ensures that this logic will function correctly in the case of a single
        * expression.
        */
-      SourceInfo sourceInfo = x.getSourceInfo().makeChild(
-          InliningVisitor.class, "Inlined invocation");
+      SourceInfo sourceInfo = x.getSourceInfo();
       ListIterator<JsExpression> i = hoisted.listIterator(hoisted.size());
       JsExpression op = i.previous();
       while (i.hasPrevious()) {
@@ -1308,9 +1304,8 @@ public class JsInliner {
         return;
       }
 
-      JsExpression replacement = tryGetReplacementExpression(
-          x.getSourceInfo().makeChild(NameRefReplacerVisitor.class,
-              "Inlined expression"), x.getName());
+      JsExpression replacement = tryGetReplacementExpression(x.getSourceInfo(),
+          x.getName());
 
       if (replacement != null) {
         ctx.replaceMe(replacement);
@@ -1792,8 +1787,7 @@ public class JsInliner {
         // Extract the initialization expression
         JsExpression init = var.getInitExpr();
         if (init != null) {
-          SourceInfo sourceInfo = var.getSourceInfo().makeChild(
-              JsInliner.class, "Hoisted initializer into inline site");
+          SourceInfo sourceInfo = var.getSourceInfo();
           JsBinaryOperation assignment = new JsBinaryOperation(sourceInfo,
               JsBinaryOperator.ASG);
           assignment.setArg1(var.getName().makeRef(sourceInfo));

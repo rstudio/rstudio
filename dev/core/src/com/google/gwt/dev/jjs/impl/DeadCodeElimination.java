@@ -172,7 +172,7 @@ public class DeadCodeElimination {
           simplifyAdd(lhs, rhs, ctx, x.getType());
           break;
         case CONCAT:
-          evalConcat(lhs, rhs, ctx);
+          evalConcat(x.getSourceInfo(), lhs, rhs, ctx);
           break;
         case SUB:
           simplifySub(lhs, rhs, ctx, x.getType());
@@ -713,14 +713,13 @@ public class DeadCodeElimination {
       return new JMethodCall(sourceInfo, null, clinit);
     }
 
-    private void evalConcat(JExpression lhs, JExpression rhs, Context ctx) {
+    private void evalConcat(SourceInfo info, JExpression lhs, JExpression rhs,
+        Context ctx) {
       if (lhs instanceof JValueLiteral && rhs instanceof JValueLiteral) {
         Object lhsObj = ((JValueLiteral) lhs).getValueObj();
         Object rhsObj = ((JValueLiteral) rhs).getValueObj();
-        ctx.replaceMe(program.getLiteralString(
-            lhs.getSourceInfo().makeChild(DeadCodeVisitor.class,
-                "String concatenation", rhs.getSourceInfo()),
-            String.valueOf(lhsObj) + String.valueOf(rhsObj)));
+        ctx.replaceMe(program.getLiteralString(info, String.valueOf(lhsObj)
+            + String.valueOf(rhsObj)));
       }
     }
 
@@ -1632,8 +1631,8 @@ public class DeadCodeElimination {
         }
         Object result = actual.invoke(instance, paramValues);
         if (result instanceof String) {
-          ctx.replaceMe(program.getLiteralString(x.getSourceInfo().makeChild(
-              DeadCodeVisitor.class, "Optimized String call"), (String) result));
+          ctx.replaceMe(program.getLiteralString(x.getSourceInfo(),
+              (String) result));
         } else if (result instanceof Boolean) {
           ctx.replaceMe(program.getLiteralBoolean(((Boolean) result).booleanValue()));
         } else if (result instanceof Character) {

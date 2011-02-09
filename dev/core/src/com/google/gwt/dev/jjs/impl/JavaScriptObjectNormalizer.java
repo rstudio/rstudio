@@ -115,9 +115,7 @@ public class JavaScriptObjectNormalizer {
       JDeclaredType targetClass = x.getTarget().getEnclosingType();
       if (program.typeOracle.getSingleJsoImpl(targetClass) != null) {
 
-        SourceInfo info = x.getSourceInfo().makeChild(
-            JavaScriptObjectNormalizer.class,
-            "Polymorphic invocation of SingleJsoImpl interface");
+        SourceInfo info = x.getSourceInfo();
 
         // Find the method in the JSO type
         JMethod jsoMethod = findJsoMethod(x.getTarget());
@@ -232,9 +230,7 @@ public class JavaScriptObjectNormalizer {
          * variable if its evaluation would produce side-effects. The
          * multi-expression is used for this purpose.
          */
-        SourceInfo info = instance.getSourceInfo().makeChild(
-            JavaScriptObjectNormalizer.class,
-            "Temporary assignment for instance with side-effects");
+        SourceInfo info = instance.getSourceInfo();
         JLocal local = JProgram.createLocal(info, "maybeJsoInvocation",
             instance.getType(), true, currentMethodBody.peek());
         multi.exprs.add(JProgram.createAssignmentStmt(info,

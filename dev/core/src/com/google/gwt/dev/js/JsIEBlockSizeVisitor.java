@@ -80,8 +80,7 @@ public class JsIEBlockSizeVisitor {
      * necessary to prevent any given block from exceeding the maximum size.
      */
     private void restructure(List<JsStatement> statements) {
-      SourceInfo sourceInfo = program.createSourceInfoSynthetic(
-          JsIEBlockSizeVisitor.class, "Restructured to reduce block size");
+      SourceInfo sourceInfo = program.createSourceInfoSynthetic(JsIEBlockSizeVisitor.class);
       // This outer loop will collapse the newly-created block into super-blocks
       while (statements.size() > MAX_BLOCK_SIZE) {
         ListIterator<JsStatement> i = statements.listIterator();

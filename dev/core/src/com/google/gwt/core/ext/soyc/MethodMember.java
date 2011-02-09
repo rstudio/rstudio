@@ -21,6 +21,6 @@ package com.google.gwt.core.ext.soyc;
 /**
  * Represents compiled JS code derived from a Java method.
  */
-public interface MethodMember extends HasAliases, HasDependencies,
-    HasEnclosing, HasOverrides<MethodMember>, Member {
+public interface MethodMember extends HasDependencies, HasEnclosing,
+    HasOverrides<MethodMember>, Member {
 }

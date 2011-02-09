@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.jjs.SourceOrigin;
+
 /**
  * Instances are shared.
  */
@@ -33,8 +35,8 @@ public class JArrayType extends JReferenceType {
   private JType leafType;
 
   public JArrayType(JType elementType, JType leafType, int dims) {
-    super(leafType.getSourceInfo().makeChild(JArrayType.class, "Array type"),
-        calcName(leafType, dims));
+    super(leafType.getSourceInfo().makeChild(SourceOrigin.UNKNOWN), calcName(
+        leafType, dims));
     this.elementType = elementType;
     this.leafType = leafType;
     this.dims = dims;

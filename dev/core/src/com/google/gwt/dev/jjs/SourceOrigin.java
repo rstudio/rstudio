@@ -62,7 +62,7 @@ public class SourceOrigin implements SourceInfo {
     // so there is no need to implement them in this subclass
   }
 
-  public static final SourceInfo UNKNOWN = new SourceOrigin("Unknown", 0) {
+  public static final SourceOrigin UNKNOWN = new SourceOrigin("Unknown", 0) {
     private Object readResolve() {
       return UNKNOWN;
     }
@@ -191,12 +191,7 @@ public class SourceOrigin implements SourceInfo {
         + 31 * getEndPos();
   }
 
-  public SourceInfo makeChild(Class<?> caller, String description) {
-    return this;
-  }
-
-  public SourceInfo makeChild(Class<?> caller, String description,
-      SourceInfo... merge) {
+  public SourceInfo makeChild() {
     return this;
   }
 

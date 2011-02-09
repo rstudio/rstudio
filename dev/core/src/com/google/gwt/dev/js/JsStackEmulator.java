@@ -123,8 +123,7 @@ public class JsStackEmulator {
       }
 
       // $stackDepth = stackIndex
-      SourceInfo info = x.getSourceInfo().makeChild(JsStackEmulator.class,
-          "Resetting stack depth");
+      SourceInfo info = x.getSourceInfo();
       JsBinaryOperation reset = new JsBinaryOperation(info,
           JsBinaryOperator.ASG, stackDepth.makeRef(info),
           eeVisitor.stackIndexRef(info));
@@ -303,8 +302,7 @@ public class JsStackEmulator {
       } else {
         if (x.getExpr() != null && x.getExpr().hasSideEffects()) {
           // temp = expr; pop(); return temp;
-          SourceInfo info = x.getSourceInfo().makeChild(JsStackEmulator.class,
-              "Flow break with side-effect");
+          SourceInfo info = x.getSourceInfo();
           JsBinaryOperation asg = new JsBinaryOperation(info,
               JsBinaryOperator.ASG, returnTempRef(info), x.getExpr());
           x.setExpr(returnTempRef(info));
@@ -416,8 +414,7 @@ public class JsStackEmulator {
       }
 
       // pop()
-      SourceInfo info = x.getSourceInfo().makeChild(JsStackEmulator.class,
-          "Stack exit");
+      SourceInfo info = x.getSourceInfo();
       JsExpression op = pop(info);
 
       if (checkEarlyExit) {
@@ -452,8 +449,7 @@ public class JsStackEmulator {
       /*
        * catch (e) { e = caught(e); throw e; }
        */
-      SourceInfo info = x.getSourceInfo().makeChild(JsStackEmulator.class,
-          "Synthetic catch block to fix stack depth");
+      SourceInfo info = x.getSourceInfo();
 
       JsCatch c = new JsCatch(info, currentFunction.getScope(), "e");
       JsName paramName = c.getParameter().getName();
@@ -485,8 +481,7 @@ public class JsStackEmulator {
      */
     private void pop(JsStatement x, JsExpression expr, JsContext ctx) {
       // $stackDepth = stackIndex - 1
-      SourceInfo info = x.getSourceInfo().makeChild(JsStackEmulator.class,
-          "Stack exit");
+      SourceInfo info = x.getSourceInfo();
 
       JsExpression op = pop(info);
 
@@ -521,8 +516,7 @@ public class JsStackEmulator {
      * Create the function-entry code.
      */
     private JsStatement push(HasSourceInfo x) {
-      SourceInfo info = x.getSourceInfo().makeChild(JsStackEmulator.class,
-          "Stack entry code");
+      SourceInfo info = x.getSourceInfo();
 
       JsNameRef stackRef = stack.makeRef(info);
       JsNameRef stackDepthRef = stackDepth.makeRef(info);
@@ -737,8 +731,7 @@ public class JsStackEmulator {
         return;
       }
 
-      SourceInfo info = x.getSourceInfo().makeChild(JsStackEmulator.class,
-          "Synthetic location data");
+      SourceInfo info = x.getSourceInfo();
 
       // ($locations[stackIndex] = fileName + lineNumber, x)
       JsExpression location = new JsStringLiteral(info,
@@ -892,8 +885,7 @@ public class JsStackEmulator {
   }
 
   private void makeVars() {
-    SourceInfo info = program.getSourceInfo().makeChild(JsStackEmulator.class,
-        "Emulated stack data");
+    SourceInfo info = program.createSourceInfoSynthetic(getClass());
     JsVar stackVar = new JsVar(info, stack);
     stackVar.setInitExpr(new JsArrayLiteral(info));
     JsVar stackDepthVar = new JsVar(info, stackDepth);

@@ -98,8 +98,6 @@ public class JsBreakUpLargeVarStatements extends JsModVisitor {
    * Make a new, empty {@link JsVars} that is a child of x.
    */
   private JsVars makeNewChildVars(JsVars x) {
-    return new JsVars(x.getSourceInfo().makeChild(
-        JsBreakUpLargeVarStatements.class,
-        "breaking up a large vars statement into smaller ones"));
+    return new JsVars(x.getSourceInfo());
   }
 }

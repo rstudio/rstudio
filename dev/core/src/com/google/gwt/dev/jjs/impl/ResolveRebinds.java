@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JCaseStatement;
@@ -55,8 +56,8 @@ public class ResolveRebinds {
     public void endVisit(JGwtCreate x, Context ctx) {
 
       if (isSoftRebind(x.getSourceType())) {
-        JMethod method = rebindMethod(x.getSourceInfo(), x.getSourceType(),
-            x.getResultTypes(), x.getInstantiationExpressions());
+        JMethod method = rebindMethod(x.getSourceType(), x.getResultTypes(),
+            x.getInstantiationExpressions());
         JMethodCall call = new JMethodCall(x.getSourceInfo(), null, method);
         ctx.replaceMe(call);
         return;
@@ -80,8 +81,8 @@ public class ResolveRebinds {
     public void endVisit(JReboundEntryPoint x, Context ctx) {
 
       if (isSoftRebind(x.getSourceType())) {
-        JMethod method = rebindMethod(x.getSourceInfo(), x.getSourceType(),
-            x.getResultTypes(), x.getEntryCalls());
+        JMethod method = rebindMethod(x.getSourceType(), x.getResultTypes(),
+            x.getEntryCalls());
         JMethodCall call = new JMethodCall(x.getSourceInfo(), null, method);
         ctx.replaceMe(call.makeStatement());
         return;
@@ -171,7 +172,7 @@ public class ResolveRebinds {
     return !hardRebindAnswers.containsKey(reqType);
   }
 
-  private JMethod rebindMethod(SourceInfo info, JReferenceType requestType,
+  private JMethod rebindMethod(JReferenceType requestType,
       List<JClassType> resultTypes, List<JExpression> instantiationExpressions) {
     assert resultTypes.size() == instantiationExpressions.size();
 
@@ -180,8 +181,8 @@ public class ResolveRebinds {
       return toReturn;
     }
 
-    info = info.makeChild(ResolveRebinds.class, "Rebind factory for "
-        + requestType.getName());
+    SourceInfo info = requestType.getSourceInfo().makeChild(
+        SourceOrigin.UNKNOWN);
 
     // Maps the result types to the various virtual permutation ids
     Map<JClassType, List<Integer>> resultsToPermutations = new LinkedHashMap<JClassType, List<Integer>>();
@@ -217,11 +218,12 @@ public class ResolveRebinds {
     assert mostUsed != null;
 
     // c_g_g_d_c_i_DOMImpl
-    toReturn = program.createMethod(info, requestType.getName().replace("_",
-        "_1").replace('.', '_'), holderType,
-        program.getTypeJavaLangObject().getNonNull(), false, true,
-        true, false, false);
+    toReturn = program.createMethod(info,
+        requestType.getName().replace("_", "_1").replace('.', '_'), holderType,
+        program.getTypeJavaLangObject().getNonNull(), false, true, true, false,
+        false);
     toReturn.freezeParamTypes();
+    info.addCorrelation(program.getCorrelator().by(toReturn));
     rebindMethods.put(requestType, toReturn);
 
     // Used in the return statement at the end

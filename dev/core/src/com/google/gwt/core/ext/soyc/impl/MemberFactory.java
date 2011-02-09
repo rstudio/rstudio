@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.soyc.Member;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.js.ast.JsFunction;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -44,10 +43,6 @@ public class MemberFactory {
 
   public StandardClassMember get(JDeclaredType type) {
     return getOrCreate(type, StandardClassMember.class, JDeclaredType.class);
-  }
-
-  public StandardFunctionMember get(JsFunction function) {
-    return getOrCreate(function, StandardFunctionMember.class, JsFunction.class);
   }
 
   @SuppressWarnings("unchecked")

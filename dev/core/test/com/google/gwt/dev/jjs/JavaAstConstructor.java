@@ -253,8 +253,7 @@ public class JavaAstConstructor {
     // (2) Create our own Java AST from the JDT AST.
     JJSOptionsImpl options = new JJSOptionsImpl();
     options.setEnableAssertions(true);
-    GenerateJavaAST.exec(allTypeDeclarations, typeMap, jprogram, jsProgram,
-        options);
+    GenerateJavaAST.exec(allTypeDeclarations, typeMap, jprogram, options);
 
     // GenerateJavaAST can uncover semantic JSNI errors; report & abort
     JavaToJavaScriptCompiler.checkForErrors(logger, goldenCuds, true);

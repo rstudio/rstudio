@@ -620,8 +620,7 @@ public class BuildTypeMap {
   private JField createField(SyntheticArgumentBinding binding,
       JDeclaredType enclosingType, Disposition disposition) {
     JType type = getType(binding.type);
-    SourceInfo info = enclosingType.getSourceInfo().makeChild(
-        BuildDeclMapVisitor.class, "Field " + String.valueOf(binding.name));
+    SourceInfo info = enclosingType.getSourceInfo().makeChild();
     JField field = program.createField(info, String.valueOf(binding.name),
         enclosingType, type, false, disposition);
     info.addCorrelation(program.getCorrelator().by(field));
@@ -666,8 +665,7 @@ public class BuildTypeMap {
       String argName, JMethod enclosingMethod) {
     JType type = getType(arg.type);
     JParameter param = JProgram.createParameter(
-        enclosingMethod.getSourceInfo().makeChild(BuildTypeMap.class,
-            "Parameter " + argName), argName, type, true, false,
+        enclosingMethod.getSourceInfo(), argName, type, true, false,
         enclosingMethod);
     return param;
   }
@@ -719,20 +717,20 @@ public class BuildTypeMap {
      * more like output JavaScript. Clinit is always in slot 0, init (if it
      * exists) is always in slot 1.
      */
-    JMethod clinit = program.createMethod(
-        info.makeChild(BuildTypeMapVisitor.class, "Class initializer"),
-        "$clinit", newType, program.getTypeVoid(), false, true, true, true,
-        false);
+    SourceInfo child = info.makeChild();
+    JMethod clinit = program.createMethod(child, "$clinit", newType,
+        program.getTypeVoid(), false, true, true, true, false);
     clinit.freezeParamTypes();
     clinit.setSynthetic();
+    child.addCorrelation(program.getCorrelator().by(clinit));
 
     if (newType instanceof JClassType) {
-      JMethod init = program.createMethod(
-          info.makeChild(BuildTypeMapVisitor.class, "Instance initializer"),
-          "$init", newType, program.getTypeVoid(), false, false, true, true,
-          false);
+      child = info.makeChild();
+      JMethod init = program.createMethod(child, "$init", newType,
+          program.getTypeVoid(), false, false, true, true, false);
       init.freezeParamTypes();
       init.setSynthetic();
+      child.addCorrelation(program.getCorrelator().by(init));
     }
 
     newType.setExternal(linker.isExternalType(newType.getName()));
@@ -819,13 +817,14 @@ public class BuildTypeMap {
       if (type instanceof JClassType
           && type != program.getTypeJavaLangObject()) {
 
+        SourceInfo info = type.getSourceInfo().makeChild();
         JMethod getClassMethod = program.createMethod(
-            type.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
-                "Synthetic getClass()"), "getClass", type,
+            info, "getClass", type,
             program.getTypeJavaLangClass(), false, false, false, false, false);
         assert (type.getMethods().get(2) == getClassMethod);
         getClassMethod.freezeParamTypes();
         getClassMethod.setSynthetic();
+        info.addCorrelation(program.getCorrelator().by(getClassMethod));
       }
 
       if (binding.isNestedType() && !binding.isStatic()
@@ -983,10 +982,8 @@ public class BuildTypeMap {
         } else if (parameters.length == 1) {
           assert newMethod.getName().equals("valueOf");
           assert typeMap.get(parameters[0]) == program.getTypeJavaLangString();
-          JProgram.createParameter(
-              newMethod.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
-                  "name parameter"), "name", program.getTypeJavaLangString(),
-              true, false, newMethod);
+          JProgram.createParameter(newMethod.getSourceInfo(), "name",
+              program.getTypeJavaLangString(), true, false, newMethod);
         } else {
           assert false;
         }

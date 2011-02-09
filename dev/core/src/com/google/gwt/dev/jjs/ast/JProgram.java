@@ -376,10 +376,6 @@ public class JProgram extends JNode {
 
   private final Map<JMethod, JMethod> staticToInstanceMap = new IdentityHashMap<JMethod, JMethod>();
 
-  private final Map<String, JStringLiteral> stringLiteralMap = new HashMap<String, JStringLiteral>();
-
-  private final SourceInfo stringPoolSourceInfo;
-
   private JClassType typeClass;
 
   private JInterfaceType typeJavaIoSerializable;
@@ -416,9 +412,6 @@ public class JProgram extends JNode {
 
     this.correlator = correlator;
     intrinsic = createSourceInfo(0, getClass().getName());
-
-    stringPoolSourceInfo = createLiteralSourceInfo("String pool",
-        Literal.STRING);
   }
 
   public void addEntryMethod(JMethod entryPoint) {
@@ -590,9 +583,10 @@ public class JProgram extends JNode {
    * Create a SourceInfo object when the source is created by the compiler
    * itself.
    */
-  public SourceInfo createSourceInfoSynthetic(Class<?> caller,
-      String description) {
-    return createSourceInfo(0, caller.getName()).makeChild(caller, description);
+  public SourceInfo createSourceInfoSynthetic(Class<?> caller) {
+    // TODO: consider using Java stack frames to discover the caller's file
+    // and line number.
+    return createSourceInfo(0, caller.getName());
   }
 
   /**
@@ -805,8 +799,8 @@ public class JProgram extends JNode {
     JsonObject returnMap = castableTypeMaps.get(referenceType);
     if (returnMap == null) {
       // add a new empty map
-      returnMap = new JsonObject(createSourceInfoSynthetic(JProgram.class,
-          "empty map"), getJavaScriptObject());
+      returnMap = new JsonObject(createSourceInfoSynthetic(JProgram.class),
+          getJavaScriptObject());
       castableTypeMaps.put(referenceType, returnMap);
     }
     return returnMap;
@@ -923,8 +917,7 @@ public class JProgram extends JNode {
         clinitBody.getBlock().addStmt(decl);
       }
 
-      SourceInfo literalInfo = createSourceInfoSynthetic(JProgram.class,
-          "class literal for " + type.getName());
+      SourceInfo literalInfo = createSourceInfoSynthetic(JProgram.class);
       literalInfo.addCorrelation(correlator.by(Literal.CLASS));
       classLiteral = new JClassLiteral(literalInfo, type, field);
       classLiterals.put(type, classLiteral);
@@ -966,30 +959,22 @@ public class JProgram extends JNode {
   }
 
   public JStringLiteral getLiteralString(SourceInfo sourceInfo, String s) {
-    JStringLiteral toReturn = stringLiteralMap.get(s);
-    if (toReturn == null) {
-      toReturn = new JStringLiteral(stringPoolSourceInfo.makeChild(
-          JProgram.class, "String literal: " + s), s, typeString);
-      stringLiteralMap.put(s, toReturn);
-    }
-    toReturn.getSourceInfo().merge(sourceInfo);
-    return toReturn;
+    sourceInfo.addCorrelation(correlator.by(Literal.STRING));
+    return new JStringLiteral(sourceInfo, s, typeString);
   }
 
   public JField getNullField() {
     if (nullField == null) {
-      nullField = new JField(createSourceInfoSynthetic(JProgram.class,
-          "Null field"), "nullField", null, JNullType.INSTANCE, false,
-          Disposition.FINAL);
+      nullField = new JField(createSourceInfoSynthetic(JProgram.class),
+          "nullField", null, JNullType.INSTANCE, false, Disposition.FINAL);
     }
     return nullField;
   }
 
   public JMethod getNullMethod() {
     if (nullMethod == null) {
-      nullMethod = new JMethod(createSourceInfoSynthetic(JProgram.class,
-          "Null method"), "nullMethod", null, JNullType.INSTANCE, false, false,
-          true, false);
+      nullMethod = new JMethod(createSourceInfoSynthetic(JProgram.class),
+          "nullMethod", null, JNullType.INSTANCE, false, false, true, false);
       nullMethod.setSynthetic();
     }
     return nullMethod;
@@ -1289,16 +1274,6 @@ public class JProgram extends JNode {
       ++count;
     }
     return count;
-  }
-
-  private SourceInfo createLiteralSourceInfo(String description) {
-    return intrinsic.makeChild(getClass(), description);
-  }
-
-  private SourceInfo createLiteralSourceInfo(String description, Literal literal) {
-    SourceInfo child = createLiteralSourceInfo(description);
-    child.addCorrelation(correlator.by(literal));
-    return child;
   }
 
   /**

@@ -252,7 +252,7 @@ public class JsParser {
 
       case TokenStream.STRING: {
         SourceInfo info = makeSourceInfoDistinct(node);
-        info.addCorrelation(info.getCorrelationFactory().by(Literal.JS_STRING));
+        info.addCorrelation(info.getCorrelationFactory().by(Literal.STRING));
         return new JsStringLiteral(info, node.getString());
       }
 
@@ -912,12 +912,9 @@ public class JsParser {
       case TokenStream.NULL:
         return JsNullLiteral.INSTANCE;
 
-      case TokenStream.UNDEFINED: {
-        SourceInfo info = makeSourceInfoDistinct(node);
-        info.addCorrelation(info.getCorrelationFactory().by(
-            Literal.JS_UNDEFINED));
-        return new JsNameRef(info, JsRootScope.INSTANCE.getUndefined());
-      }
+      case TokenStream.UNDEFINED:
+        return new JsNameRef(makeSourceInfo(node),
+            JsRootScope.INSTANCE.getUndefined());
 
       default:
         throw createParserException("Unknown primary: " + node.getIntDatum(),

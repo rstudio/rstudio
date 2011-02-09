@@ -327,9 +327,6 @@ public class GenerateJavaScriptAST {
           } else {
             polyName = interfaceScope.declareName(mangleName, name);
           }
-          // Record this as an alias, not the primary name
-          x.getSourceInfo().addCorrelation(
-              program.getCorrelator().by(polyName, true));
           polymorphicNames.put(x, polyName);
         }
       }
@@ -351,7 +348,6 @@ public class GenerateJavaScriptAST {
        */
       if (!stripStack || !polymorphicNames.containsKey(x) || x.isNative()) {
         globalName = topScope.declareName(mangleName, name);
-        x.getSourceInfo().addCorrelation(program.getCorrelator().by(globalName));
         names.put(x, globalName);
         recordSymbol(x, globalName);
       }
@@ -362,9 +358,6 @@ public class GenerateJavaScriptAST {
         jsFunction = body.getFunc();
         jsFunction.setName(globalName);
       } else {
-        // create a new peer JsFunction
-        SourceInfo sourceInfo = x.getSourceInfo().makeChild(
-            CreateNamesAndScopesVisitor.class, "Translated JS function");
         /*
          * It would be more correct here to check for an inline assignment, such
          * as var foo = function blah() {} and introduce a separate scope for
@@ -374,16 +367,13 @@ public class GenerateJavaScriptAST {
          * 1:1 mapping to obfuscated symbols. Leaving them in global scope
          * causes no harm.
          */
-        jsFunction = new JsFunction(sourceInfo, topScope, globalName, true);
+        jsFunction = new JsFunction(x.getSourceInfo(), topScope, globalName,
+            true);
       }
       if (polymorphicNames.containsKey(x)) {
         polymorphicJsFunctions.add(jsFunction);
       }
       methodBodyMap.put(x.getBody(), jsFunction);
-      if (globalName != null) {
-        jsFunction.getSourceInfo().addCorrelation(
-            program.getCorrelator().by(globalName));
-      }
       push(jsFunction.getScope());
 
       if (program.getIndexedMethods().contains(x)) {
@@ -1182,19 +1172,15 @@ public class GenerateJavaScriptAST {
       if (!nonInitialEntries.isEmpty()) {
         JMethod loadedMethod = program.getIndexedMethod("AsyncFragmentLoader.browserLoaderLeftoversFragmentHasLoaded");
         JsName loadedMethodName = names.get(loadedMethod);
-        SourceInfo sourceInfo = jsProgram.getSourceInfo().makeChild(
-            GenerateJavaScriptAST.class, "call to leftoversFragmentHasLoaded ");
-        JsInvocation call = new JsInvocation(sourceInfo);
-        call.setQualifier(loadedMethodName.makeRef(sourceInfo));
+        JsInvocation call = new JsInvocation(jsProgram.getSourceInfo());
+        call.setQualifier(loadedMethodName.makeRef(jsProgram.getSourceInfo().makeChild()));
         globalStmts.add(call.makeStmt());
       }
       for (JsFunction func : nonInitialEntries) {
         if (func != null) {
-          SourceInfo sourceInfo = jsProgram.getSourceInfo().makeChild(
-              GenerateJavaScriptAST.class,
-              "call to entry non-initial entry function");
-          JsInvocation call = new JsInvocation(sourceInfo);
-          call.setQualifier(func.getName().makeRef(sourceInfo));
+          JsInvocation call = new JsInvocation(jsProgram.getSourceInfo());
+          call.setQualifier(func.getName().makeRef(
+              jsProgram.getSourceInfo().makeChild()));
           globalStmts.add(call.makeStmt());
         }
       }
@@ -1513,8 +1499,7 @@ public class GenerateJavaScriptAST {
           return;
         }
 
-        SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic(
-            GenerateJavaScriptAST.class, "Castable type map");
+        SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic(GenerateJavaScriptAST.class);
 
         accept(castableTypeMap);
         JsExpression objExpr = pop();
@@ -1590,8 +1575,7 @@ public class GenerateJavaScriptAST {
        * }
        * </pre>
        */
-      SourceInfo sourceInfo = program.createSourceInfoSynthetic(
-          GenerateJavaScriptAST.class, "gwtOnLoad");
+      SourceInfo sourceInfo = program.createSourceInfoSynthetic(GenerateJavaScriptAST.class);
 
       JsName entryName = topScope.declareName("$entry");
       JsVar entryVar = new JsVar(sourceInfo, entryName);
@@ -1672,9 +1656,7 @@ public class GenerateJavaScriptAST {
       for (Entry<Long, JsName> entry : longLits.entrySet()) {
         JsName jsName = entry.getValue();
         JsExpression longObjectAlloc = longObjects.get(jsName);
-        JsVar var = new JsVar(vars.getSourceInfo().makeChild(
-            GenerateJavaScriptVisitor.class, "Long literal " + entry.getKey()),
-            jsName);
+        JsVar var = new JsVar(vars.getSourceInfo(), jsName);
         var.setInitExpr(longObjectAlloc);
         vars.add(var);
       }
@@ -1682,8 +1664,7 @@ public class GenerateJavaScriptAST {
 
     private void generateNullFunc(List<JsStatement> globalStatements) {
       // handle null method
-      SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic(
-          GenerateJavaScriptAST.class, "Null function");
+      SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic(GenerateJavaScriptAST.class);
       JsFunction nullFunc = new JsFunction(sourceInfo, topScope,
           nullMethodName, true);
       nullFunc.setBody(new JsBlock(sourceInfo));
@@ -1693,8 +1674,7 @@ public class GenerateJavaScriptAST {
 
     private void generateSeedFuncAndPrototype(JClassType x,
         List<JsStatement> globalStmts) {
-      SourceInfo sourceInfo = x.getSourceInfo().makeChild(
-          GenerateJavaScriptVisitor.class, "Seed and function prototype");
+      SourceInfo sourceInfo = x.getSourceInfo();
       if (x != program.getTypeJavaLangString()) {
         JsName seedFuncName = names.get(x);
 
@@ -1759,8 +1739,7 @@ public class GenerateJavaScriptAST {
         List<JsStatement> globalStmts) {
       JMethod toStringMeth = program.getIndexedMethod("Object.toString");
       if (x.getMethods().contains(toStringMeth)) {
-        SourceInfo sourceInfo = x.getSourceInfo().makeChild(
-            GenerateJavaScriptVisitor.class, "_.toString");
+        SourceInfo sourceInfo = x.getSourceInfo();
         // _.toString = function(){return this.java_lang_Object_toString();}
 
         // lhs
@@ -1796,8 +1775,7 @@ public class GenerateJavaScriptAST {
         // Was pruned; this compilation must have no JSO instanceof tests.
         return;
       }
-      SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic(
-          GenerateJavaScriptAST.class, "Type marker");
+      SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic(GenerateJavaScriptAST.class);
       JsNameRef fieldRef = typeMarkerName.makeRef(sourceInfo);
       fieldRef.setQualifier(globalTemp.makeRef(sourceInfo));
       JsExpression asg = createAssignment(fieldRef,
@@ -1809,8 +1787,7 @@ public class GenerateJavaScriptAST {
 
     private void generateVTables(JClassType x, List<JsStatement> globalStmts) {
       for (JMethod method : x.getMethods()) {
-        SourceInfo sourceInfo = method.getSourceInfo().makeChild(
-            GenerateJavaScriptVisitor.class, "vtable assignment");
+        SourceInfo sourceInfo = method.getSourceInfo();
         if (method.needsVtable() && !method.isAbstract()) {
           JsNameRef lhs = polymorphicNames.get(method).makeRef(sourceInfo);
           lhs.setQualifier(globalTemp.makeRef(sourceInfo));
@@ -1831,8 +1808,7 @@ public class GenerateJavaScriptAST {
       clinitFunc.setExecuteOnce(true);
       clinitFunc.setImpliedExecute(superClinit);
       List<JsStatement> statements = clinitFunc.getBody().getStatements();
-      SourceInfo sourceInfo = clinitFunc.getSourceInfo().makeChild(
-          GenerateJavaScriptVisitor.class, "clinit reassignment");
+      SourceInfo sourceInfo = clinitFunc.getSourceInfo();
       // self-assign to the null method immediately (to prevent reentrancy)
       JsExpression asg = createAssignment(
           clinitFunc.getName().makeRef(sourceInfo),
@@ -1853,8 +1829,7 @@ public class GenerateJavaScriptAST {
       }
 
       JMethod clinitMethod = targetType.getMethods().get(0);
-      SourceInfo sourceInfo = x.getSourceInfo().makeChild(
-          GenerateJavaScriptVisitor.class, "clinit invocation");
+      SourceInfo sourceInfo = x.getSourceInfo();
       JsInvocation jsInvocation = new JsInvocation(sourceInfo);
       jsInvocation.setQualifier(names.get(clinitMethod).makeRef(sourceInfo));
       return jsInvocation;
@@ -1877,8 +1852,7 @@ public class GenerateJavaScriptAST {
       }
 
       JMethod clinitMethod = enclosingType.getClinitTarget().getMethods().get(0);
-      SourceInfo sourceInfo = x.getSourceInfo().makeChild(
-          GenerateJavaScriptVisitor.class, "clinit call");
+      SourceInfo sourceInfo = x.getSourceInfo();
       JsInvocation jsInvocation = new JsInvocation(sourceInfo);
       jsInvocation.setQualifier(names.get(clinitMethod).makeRef(sourceInfo));
       return jsInvocation;

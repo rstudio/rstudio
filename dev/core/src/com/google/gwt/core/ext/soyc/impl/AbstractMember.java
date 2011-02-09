@@ -17,37 +17,13 @@ package com.google.gwt.core.ext.soyc.impl;
 
 import com.google.gwt.core.ext.soyc.ClassMember;
 import com.google.gwt.core.ext.soyc.FieldMember;
-import com.google.gwt.core.ext.soyc.FunctionMember;
 import com.google.gwt.core.ext.soyc.Member;
 import com.google.gwt.core.ext.soyc.MethodMember;
-import com.google.gwt.dev.jjs.Correlation;
-import com.google.gwt.dev.jjs.SourceInfo;
-import com.google.gwt.dev.jjs.Correlation.Axis;
 
 /**
  * Provides implementation of common Member functions.
  */
 public abstract class AbstractMember implements Member {
-  private final String jsName;
-  private final String sourceLocation;
-
-  public AbstractMember(SourceInfo info) {
-    Correlation nameCorrelation = info.getPrimaryCorrelation(Axis.JS_NAME);
-    if (nameCorrelation != null) {
-      jsName = nameCorrelation.getName().getShortIdent();
-    } else {
-      jsName = null;
-    }
-    sourceLocation = info.getFileName();
-  }
-
-  public String getJsName() {
-    return jsName;
-  }
-
-  public String getSourceLocation() {
-    return sourceLocation;
-  }
 
   public abstract String getSourceName();
 
@@ -57,10 +33,6 @@ public abstract class AbstractMember implements Member {
 
   public FieldMember isField() {
     return this instanceof FieldMember ? (FieldMember) this : null;
-  }
-
-  public FunctionMember isFunction() {
-    return this instanceof FunctionMember ? (FunctionMember) this : null;
   }
 
   public MethodMember isMethod() {

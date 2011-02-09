@@ -139,18 +139,17 @@ public class Jsni {
 
         // Use a clone instead of modifying the original JSNI
         // __gwt_makeTearOff(obj, dispId, paramCount)
-        SourceInfo newSourceInfo = x.getSourceInfo().makeChild(getClass(),
-            "Replace JSNI ref for hosted mode");
-        JsInvocation rewritten = new JsInvocation(newSourceInfo);
-        rewritten.setQualifier(new JsNameRef(newSourceInfo, "__gwt_makeTearOff"));
+        SourceInfo info = x.getSourceInfo();
+        JsInvocation rewritten = new JsInvocation(info);
+        rewritten.setQualifier(new JsNameRef(info, "__gwt_makeTearOff"));
 
         List<JsExpression> arguments = rewritten.getArguments();
         if (q == null) {
           q = JsNullLiteral.INSTANCE;
         }
         arguments.add(q);
-        arguments.add(new JsNumberLiteral(newSourceInfo, dispId));
-        arguments.add(new JsNumberLiteral(newSourceInfo, paramCount));
+        arguments.add(new JsNumberLiteral(info, dispId));
+        arguments.add(new JsNumberLiteral(info, paramCount));
 
         accept(rewritten);
         return false;
@@ -202,15 +201,12 @@ public class Jsni {
               paramCount = ((Constructor<?>) member).getParameterTypes().length;
             }
 
-            SourceInfo newSourceInfo = x.getSourceInfo().makeChild(getClass(),
-                "Replace JSNI ref for hosted mode");
-            JsInvocation inner = new JsInvocation(newSourceInfo);
-            inner.setQualifier(new JsNameRef(newSourceInfo,
-                "__gwt_makeJavaInvoke"));
-            inner.getArguments().add(
-                new JsNumberLiteral(newSourceInfo, paramCount));
+            SourceInfo info = x.getSourceInfo();
+            JsInvocation inner = new JsInvocation(info);
+            inner.setQualifier(new JsNameRef(info, "__gwt_makeJavaInvoke"));
+            inner.getArguments().add(new JsNumberLiteral(info, paramCount));
 
-            JsInvocation outer = new JsInvocation(newSourceInfo);
+            JsInvocation outer = new JsInvocation(info);
             outer.setQualifier(inner);
             JsExpression q = ref.getQualifier();
             if (q == null) {
@@ -218,7 +214,7 @@ public class Jsni {
             }
             List<JsExpression> arguments = outer.getArguments();
             arguments.add(q);
-            arguments.add(new JsNumberLiteral(newSourceInfo, dispId));
+            arguments.add(new JsNumberLiteral(info, dispId));
             arguments.addAll(x.getArguments());
 
             accept(outer);

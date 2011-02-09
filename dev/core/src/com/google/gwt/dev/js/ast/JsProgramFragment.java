@@ -25,8 +25,7 @@ public class JsProgramFragment extends JsNode {
 
   public JsProgramFragment(SourceInfo sourceInfo) {
     super(sourceInfo);
-    this.globalBlock = new JsGlobalBlock(sourceInfo.makeChild(
-        JsProgramFragment.class, "global block for a fragment"));
+    this.globalBlock = new JsGlobalBlock(sourceInfo.makeChild());
   }
 
   public JsBlock getGlobalBlock() {

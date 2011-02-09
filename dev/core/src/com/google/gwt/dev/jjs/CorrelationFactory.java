@@ -21,8 +21,6 @@ import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JType;
-import com.google.gwt.dev.js.ast.JsFunction;
-import com.google.gwt.dev.js.ast.JsName;
 
 import org.apache.commons.collections.map.ReferenceMap;
 
@@ -61,27 +59,7 @@ public abstract class CorrelationFactory implements Serializable {
     }
 
     @Override
-    public Correlation by(JsFunction function) {
-      return null;
-    }
-
-    @Override
-    public Correlation by(JsName name) {
-      return null;
-    }
-
-    @Override
-    public Correlation by(JsName name, boolean isAlias) {
-      return null;
-    }
-
-    @Override
     public Correlation by(Literal type) {
-      return null;
-    }
-
-    @Override
-    public Correlation by(SourceOrigin origin) {
       return null;
     }
 
@@ -175,54 +153,9 @@ public abstract class CorrelationFactory implements Serializable {
     }
 
     @Override
-    public Correlation by(JsFunction function) {
-      Correlation toReturn = canonicalMap.get(function);
-      if (toReturn == null) {
-        toReturn = new Correlation(Axis.FUNCTION,
-            function.getName().getIdent(), function);
-        canonicalMap.put(function, toReturn);
-      }
-      return toReturn;
-    }
-
-    /**
-     * Creates a JS_NAME Correlation.
-     */
-    @Override
-    public Correlation by(JsName name) {
-      return by(name, false);
-    }
-
-    /**
-     * Creates either a JS_NAME or JS_ALIAS correlation, based on the value of
-     * <code>isAlias</code>.
-     */
-    @Override
-    public Correlation by(JsName name, boolean isAlias) {
-      Correlation toReturn = canonicalMap.get(name);
-      if (toReturn == null) {
-        toReturn = new Correlation(isAlias ? Axis.JS_ALIAS : Axis.JS_NAME,
-            name.getIdent(), name);
-        canonicalMap.put(name, toReturn);
-      }
-      return toReturn;
-    }
-
-    @Override
     public Correlation by(Literal type) {
       assert LITERAL_CORRELATIONS.containsKey(type);
       return LITERAL_CORRELATIONS.get(type);
-    }
-
-    @Override
-    public Correlation by(SourceOrigin origin) {
-      Correlation toReturn = canonicalMap.get(origin);
-      if (toReturn == null) {
-        toReturn = new Correlation(Axis.ORIGIN, origin.getFileName() + ":"
-            + origin.getStartLine(), origin);
-        canonicalMap.put(origin, toReturn);
-      }
-      return toReturn;
     }
 
     @Override
@@ -237,15 +170,7 @@ public abstract class CorrelationFactory implements Serializable {
 
   public abstract Correlation by(JMethod method);
 
-  public abstract Correlation by(JsFunction function);
-
-  public abstract Correlation by(JsName name);
-
-  public abstract Correlation by(JsName name, boolean isAlias);
-
   public abstract Correlation by(Literal type);
-
-  public abstract Correlation by(SourceOrigin origin);
 
   public abstract SourceInfo makeSourceInfo(SourceOrigin origin);
 }

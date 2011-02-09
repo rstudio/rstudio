@@ -245,8 +245,7 @@ public class CastNormalizer {
       }
 
       // Create a sparse lookup object.
-      SourceInfo sourceInfo = program.createSourceInfoSynthetic(
-          AssignTypeCastabilityVisitor.class, "typeinfo lookup");
+      SourceInfo sourceInfo = program.createSourceInfoSynthetic(AssignTypeCastabilityVisitor.class);
       JsonObject jsonObject = new JsonObject(sourceInfo,
           program.getJavaScriptObject());
       // Start at 1; 0 is Object and always true.
