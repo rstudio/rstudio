@@ -69,6 +69,14 @@ public class JParameter implements com.google.gwt.core.ext.typeinfo.JParameter {
     return annotations.getAnnotation(annotationClass);
   }
 
+  public Annotation[] getAnnotations() {
+    return annotations.getAnnotations();
+  }
+
+  public Annotation[] getDeclaredAnnotations() {
+    return annotations.getDeclaredAnnotations();
+  }
+
   public JAbstractMethod getEnclosingMethod() {
     return enclosingMethod;
   }
@@ -106,20 +114,6 @@ public class JParameter implements com.google.gwt.core.ext.typeinfo.JParameter {
     sb.append(" ");
     sb.append(getName());
     return sb.toString();
-  }
-
-  /**
-   * NOTE: This method is for testing purposes only.
-   */
-  Annotation[] getAnnotations() {
-    return annotations.getAnnotations();
-  }
-
-  /**
-   * NOTE: This method is for testing purposes only.
-   */
-  Annotation[] getDeclaredAnnotations() {
-    return annotations.getDeclaredAnnotations();
   }
 
   // Only called by JAbstractMethod after real parameter names are fetched.

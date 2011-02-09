@@ -70,6 +70,11 @@ public class JArrayType extends JClassType implements
     return null;
   }
 
+  @Override
+  public Annotation[] getAnnotations() {
+    return TypeOracle.NO_ANNOTATIONS;
+  }
+
   public JType getComponentType() {
     return componentType;
   }
@@ -83,6 +88,11 @@ public class JArrayType extends JClassType implements
   @Override
   public JConstructor[] getConstructors() {
     return TypeOracle.NO_JCTORS;
+  }
+
+  @Override
+  public Annotation[] getDeclaredAnnotations() {
+    return TypeOracle.NO_ANNOTATIONS;
   }
 
   @Override
@@ -411,22 +421,6 @@ public class JArrayType extends JClassType implements
   @Override
   JClassType findNestedTypeImpl(String[] typeName, int index) {
     return null;
-  }
-
-  /**
-   * NOTE: This method is for testing purposes only.
-   */
-  @Override
-  Annotation[] getAnnotations() {
-    return TypeOracle.NO_ANNOTATIONS;
-  }
-
-  /**
-   * NOTE: This method is for testing purposes only.
-   */
-  @Override
-  Annotation[] getDeclaredAnnotations() {
-    return TypeOracle.NO_ANNOTATIONS;
   }
 
   @Override

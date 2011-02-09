@@ -63,6 +63,11 @@ abstract class JDelegatingClassType extends JClassType {
     return baseType.getAnnotation(annotationClass);
   }
 
+  @Override
+  public Annotation[] getAnnotations() {
+    return baseType.getAnnotations();
+  }
+
   public JClassType getBaseType() {
     return baseType;
   }
@@ -82,6 +87,11 @@ abstract class JDelegatingClassType extends JClassType {
   @Override
   public JConstructor[] getConstructors() {
     return TypeOracle.NO_JCTORS;
+  }
+
+  @Override
+  public Annotation[] getDeclaredAnnotations() {
+    return baseType.getDeclaredAnnotations();
   }
 
   @Override
@@ -346,22 +356,6 @@ abstract class JDelegatingClassType extends JClassType {
   @Override
   JClassType findNestedTypeImpl(String[] typeName, int index) {
     return baseType.findNestedTypeImpl(typeName, index);
-  }
-
-  /**
-   * NOTE: This method is for testing purposes only.
-   */
-  @Override
-  Annotation[] getAnnotations() {
-    return baseType.getAnnotations();
-  }
-
-  /**
-   * NOTE: This method is for testing purposes only.
-   */
-  @Override
-  Annotation[] getDeclaredAnnotations() {
-    return baseType.getDeclaredAnnotations();
   }
 
   @Override

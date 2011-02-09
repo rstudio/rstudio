@@ -49,6 +49,14 @@ public class JPackage implements com.google.gwt.core.ext.typeinfo.JPackage {
     return annotations.getAnnotation(annotationClass);
   }
 
+  public Annotation[] getAnnotations() {
+    return annotations.getAnnotations();
+  }
+
+  public Annotation[] getDeclaredAnnotations() {
+    return annotations.getDeclaredAnnotations();
+  }
+
   public String getName() {
     return name;
   }

@@ -77,6 +77,14 @@ public abstract class JAbstractMethod implements
     return annotations.getAnnotation(annotationClass);
   }
 
+  public Annotation[] getAnnotations() {
+    return annotations.getAnnotations();
+  }
+
+  public Annotation[] getDeclaredAnnotations() {
+    return annotations.getDeclaredAnnotations();
+  }
+
   /**
    * Gets the type in which this method or constructor was declared.
    */
@@ -231,20 +239,6 @@ public abstract class JAbstractMethod implements
 
   void addThrows(JClassType type) {
     thrownTypes = Lists.add(thrownTypes, type);
-  }
-
-  /**
-   * NOTE: This method is for testing purposes only.
-   */
-  Annotation[] getAnnotations() {
-    return annotations.getAnnotations();
-  }
-
-  /**
-   * NOTE: This method is for testing purposes only.
-   */
-  Annotation[] getDeclaredAnnotations() {
-    return annotations.getDeclaredAnnotations();
   }
 
   // Called only by a JParameter, passing itself as a reference for lookup.

@@ -445,10 +445,14 @@ public abstract class JClassType implements
   public abstract <T extends Annotation> T getAnnotation(
       Class<T> annotationClass);
 
+  public abstract Annotation[] getAnnotations();
+
   public abstract JConstructor getConstructor(JType[] paramTypes)
       throws NotFoundException;
 
   public abstract JConstructor[] getConstructors();
+
+  public abstract Annotation[] getDeclaredAnnotations();
 
   public abstract JClassType getEnclosingType();
 
@@ -769,20 +773,6 @@ public abstract class JClassType implements
   abstract void addNestedType(JClassType type);
 
   abstract JClassType findNestedTypeImpl(String[] typeName, int index);
-
-  /**
-   * Returns all of the annotations declared or inherited by this instance.
-   * 
-   * NOTE: This method is for testing purposes only.
-   */
-  abstract Annotation[] getAnnotations();
-
-  /**
-   * Returns all of the annotations declared on this instance.
-   * 
-   * NOTE: This method is for testing purposes only.
-   */
-  abstract Annotation[] getDeclaredAnnotations();
 
   /**
    * Returns either the substitution of this type based on the parameterized

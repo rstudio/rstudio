@@ -21,7 +21,10 @@ import com.google.gwt.dev.util.collect.Maps;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Inherited;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -29,6 +32,18 @@ import java.util.Map.Entry;
  * Default implementation of the {@link HasAnnotations} interface.
  */
 class Annotations implements HasAnnotations {
+
+  private static final Comparator<Annotation> ANNOTATION_COMPARATOR = new Comparator<Annotation>() {
+    /**
+     * An element can only be annotated with one annotation of a particular
+     * type. So we only need to sort by annotation type name, since there won't
+     * be any duplicates.
+     */
+    public int compare(Annotation o1, Annotation o2) {
+      return o1.annotationType().getName().compareTo(
+          o2.annotationType().getName());
+    }
+  };
 
   private static Map<Class<? extends Annotation>, Annotation> copyOfAnnotations(
       Annotations otherAnnotations) {
@@ -90,12 +105,16 @@ class Annotations implements HasAnnotations {
 
   public Annotation[] getAnnotations() {
     initializeAnnotations();
-    Collection<Annotation> values = lazyAnnotations.values();
+    List<Annotation> values = new ArrayList<Annotation>(
+        lazyAnnotations.values());
+    Collections.sort(values, ANNOTATION_COMPARATOR);
     return values.toArray(new Annotation[values.size()]);
   }
 
   public Annotation[] getDeclaredAnnotations() {
-    Collection<Annotation> values = declaredAnnotations.values();
+    List<Annotation> values = new ArrayList<Annotation>(
+        declaredAnnotations.values());
+    Collections.sort(values, ANNOTATION_COMPARATOR);
     return values.toArray(new Annotation[values.size()]);
   }
 

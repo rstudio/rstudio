@@ -61,6 +61,14 @@ public class JField implements com.google.gwt.core.ext.typeinfo.JField {
     return annotations.getAnnotation(annotationClass);
   }
 
+  public Annotation[] getAnnotations() {
+    return annotations.getAnnotations();
+  }
+
+  public Annotation[] getDeclaredAnnotations() {
+    return annotations.getDeclaredAnnotations();
+  }
+
   public JClassType getEnclosingType() {
     return enclosingType;
   }
@@ -146,20 +154,6 @@ public class JField implements com.google.gwt.core.ext.typeinfo.JField {
 
   void addModifierBits(int modifierBits) {
     this.modifierBits |= modifierBits;
-  }
-
-  /**
-   * NOTE: This method is for testing purposes only.
-   */
-  Annotation[] getAnnotations() {
-    return annotations.getAnnotations();
-  }
-
-  /**
-   * NOTE: This method is for testing purposes only.
-   */
-  Annotation[] getDeclaredAnnotations() {
-    return annotations.getDeclaredAnnotations();
   }
 
   void setType(JType type) {

@@ -139,6 +139,11 @@ public class JRealClassType extends JClassType implements
   }
 
   @Override
+  public Annotation[] getAnnotations() {
+    return annotations.getAnnotations();
+  }
+
+  @Override
   public JConstructor getConstructor(JType[] paramTypes)
       throws NotFoundException {
     return members.getConstructor(paramTypes);
@@ -147,6 +152,11 @@ public class JRealClassType extends JClassType implements
   @Override
   public JConstructor[] getConstructors() {
     return members.getConstructors();
+  }
+
+  @Override
+  public Annotation[] getDeclaredAnnotations() {
+    return annotations.getDeclaredAnnotations();
   }
 
   @Override
@@ -527,22 +537,6 @@ public class JRealClassType extends JClassType implements
   void addImplementedInterface(JClassType intf) {
     assert (intf != null);
     interfaces = Lists.add(interfaces, intf);
-  }
-
-  /**
-   * NOTE: This method is for testing purposes only.
-   */
-  @Override
-  Annotation[] getAnnotations() {
-    return annotations.getAnnotations();
-  }
-
-  /**
-   * NOTE: This method is for testing purposes only.
-   */
-  @Override
-  Annotation[] getDeclaredAnnotations() {
-    return annotations.getDeclaredAnnotations();
   }
 
   @Override

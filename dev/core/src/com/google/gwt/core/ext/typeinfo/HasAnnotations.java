@@ -36,6 +36,17 @@ public interface HasAnnotations {
   <T extends Annotation> T getAnnotation(Class<T> annotationClass);
 
   /**
+   * Returns all the annotations present on this element.
+   */
+  Annotation[] getAnnotations();
+
+  /**
+   * Returns the annotations declared directly on this element; does not include
+   * any inherited annotations.
+   */
+  Annotation[] getDeclaredAnnotations();
+
+  /**
    * Returns <code>true</code> if this item has an annotation of the specified
    * type.
    * 
