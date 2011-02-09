@@ -14,6 +14,8 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
@@ -29,6 +31,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.IntervalTracker;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.StringUtil;
@@ -38,8 +41,6 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
-import org.rstudio.core.client.events.NativeKeyDownEvent;
-import org.rstudio.core.client.events.NativeKeyDownHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.files.FilenameTransform;
@@ -100,6 +101,8 @@ public class TextEditingTarget implements EditingTarget
       void showFindReplace();
       void onActivate();
       void setFontSize(FontSizer.Size size);
+
+      boolean isAttached();
    }
 
    public interface DocDisplay extends HasValueChangeHandlers<Void>,
@@ -268,7 +271,15 @@ public class TextEditingTarget implements EditingTarget
       {
          public void onFocus(FocusEvent event)
          {
-            checkForExternalEdit();
+            Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
+            {
+               public boolean execute()
+               {
+                  if (view_.isAttached())
+                     checkForExternalEdit();
+                  return false;
+               }
+            }, 500);
          }
       });
 
@@ -884,6 +895,10 @@ public class TextEditingTarget implements EditingTarget
 
    public void checkForExternalEdit()
    {
+      if (externalEditCheckInterval_.hasElapsed())
+         return;
+      externalEditCheckInterval_.reset();
+
       externalEditCheckInvalidation_.invalidate();
       final Token token = externalEditCheckInvalidation_.getInvalidationToken();
 
@@ -919,6 +934,7 @@ public class TextEditingTarget implements EditingTarget
                            {
                               public void execute()
                               {
+                                 externalEditCheckInterval_.reset();
                                  ignoreDeletes_ = true;
                                  dirtyState_.setValue(true, true);
                               }
@@ -937,6 +953,7 @@ public class TextEditingTarget implements EditingTarget
                      }
                      else
                      {
+                        externalEditCheckInterval_.reset();
                         globalDisplay_.showYesNoMessage(
                               GlobalDisplay.MSG_WARNING,
                               "File Changed",
@@ -955,6 +972,7 @@ public class TextEditingTarget implements EditingTarget
                               {
                                  public void execute()
                                  {
+                                    externalEditCheckInterval_.reset();
                                     docUpdateSentinel_.ignoreExternalEdit();
                                     // Should already be dirty, but whatever,
                                     // we'll just make extra sure.
@@ -997,6 +1015,10 @@ public class TextEditingTarget implements EditingTarget
    private final Provider<PublishPdf> pPublishPdf_;
    private boolean ignoreDeletes_;
 
+   // Allows external edit checks to supercede one another
    private final Invalidation externalEditCheckInvalidation_ =
          new Invalidation();
+   // Prevents external edit checks from happening too soon after each other
+   private final IntervalTracker externalEditCheckInterval_ =
+         new IntervalTracker(1000, true);
 }
