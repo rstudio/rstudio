@@ -1,5 +1,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.PreElement;
@@ -11,6 +13,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
@@ -163,7 +166,7 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
    public void print()
    {
       String code = getCode();
-      IFrameElementEx iframe = Document.get().createIFrameElement().cast();
+      final IFrameElementEx iframe = Document.get().createIFrameElement().cast();
       iframe.getStyle().setPosition(com.google.gwt.dom.client.Style.Position.ABSOLUTE);
       iframe.getStyle().setLeft(-5000, Unit.PX);
       Document.get().getBody().appendChild(iframe);
@@ -173,7 +176,23 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       pre.getStyle().setProperty("whiteSpace", "pre-wrap");
       childDoc.getBody().appendChild(pre);
       iframe.getContentWindow().print();
-      iframe.removeFromParent();
+
+      // Bug 1224: ace: print from source causes inability to reconnect
+      // This was caused by the iframe being removed from the document too
+      // quickly after the print job was sent. As a result, attempting to
+      // navigate away from the page at any point afterwards would result
+      // in the error "Document cannot change while printing or in Print
+      // Preview". The only thing you could do is close the browser tab.
+      // By inserting a 5-minute delay hopefully Firefox would be done with
+      // whatever print related operations are important.
+      Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
+      {
+         public boolean execute()
+         {
+            iframe.removeFromParent();
+            return false;
+         }
+      }, 1000 * 60 * 5);
    }
 
    public String getText()
