@@ -21,6 +21,34 @@ package com.google.gwt.user.client.ui;
  */
 public class DeckLayoutPanelTest extends PanelTestBase<DeckLayoutPanel> {
 
+  /**
+   * Test that forcing layout without changing the widget doesn't cause the
+   * widget to disappear.
+   */
+  public void testForceLayoutSameWidget() {
+    DeckLayoutPanel deck = createPanel();
+    Label[] labels = new Label[2];
+    for (int i = 0; i < labels.length; i++) {
+      labels[i] = new Label("content" + i);
+      deck.add(labels[i]);
+    }
+
+    // Show widget at index 1, make sure it becomes visible.
+    deck.showWidget(1);
+    assertEquals(1, deck.getVisibleWidgetIndex());
+    assertEquals(labels[1], deck.getVisibleWidget());
+    deck.forceLayout();
+    assertFalse(labels[0].isVisible());
+    assertTrue(labels[1].isVisible());
+
+    // Force layout and make sure that widget 1 is still visible.
+    deck.forceLayout();
+    assertEquals(1, deck.getVisibleWidgetIndex());
+    assertEquals(labels[1], deck.getVisibleWidget());
+    assertFalse(labels[0].isVisible());
+    assertTrue(labels[1].isVisible());
+  }
+
   public void testSetWidget() {
     DeckLayoutPanel deck = createPanel();
     Label[] labels = new Label[2];
@@ -91,6 +119,36 @@ public class DeckLayoutPanelTest extends PanelTestBase<DeckLayoutPanel> {
     assertTrue(labels[0].isVisible());
     assertFalse(labels[1].isVisible());
     assertFalse(labels[2].isVisible());
+  }
+
+  /**
+   * Test that toggling a widget out and back in within the same event loop
+   * doesn't cause the widget to be hidden.
+   */
+  public void testShowWidgetToggle() {
+    DeckLayoutPanel deck = createPanel();
+    Label[] labels = new Label[2];
+    for (int i = 0; i < labels.length; i++) {
+      labels[i] = new Label("content" + i);
+      deck.add(labels[i]);
+    }
+
+    // Show widget at index 1, make sure it becomes visible.
+    deck.showWidget(1);
+    assertEquals(1, deck.getVisibleWidgetIndex());
+    assertEquals(labels[1], deck.getVisibleWidget());
+    deck.forceLayout();
+    assertFalse(labels[0].isVisible());
+    assertTrue(labels[1].isVisible());
+
+    // Toggle the widget out and back in.
+    deck.showWidget(0);
+    deck.showWidget(1);
+    assertEquals(1, deck.getVisibleWidgetIndex());
+    assertEquals(labels[1], deck.getVisibleWidget());
+    deck.forceLayout();
+    assertFalse(labels[0].isVisible());
+    assertTrue(labels[1].isVisible());
   }
 
   @Override

@@ -332,20 +332,29 @@ public class DeckLayoutPanel extends ComplexPanel implements AnimatedLayout,
     double hDirection = isAnimationVertical ? 0.0
         : LocaleInfo.getCurrentLocale().isRTL() ? -direction : direction;
 
-    // Position the layers in their start positions.
-    if (oldLayer != null) {
-      // The old layer starts centered in the panel.
-      oldLayer.setTopHeight(0.0, Unit.PCT, 100.0, Unit.PCT);
-      oldLayer.setLeftWidth(0.0, Unit.PCT, 100.0, Unit.PCT);
-      setWidgetVisible(lastVisibleWidget, oldLayer, true);
+    /*
+     * Position the old widget in the center of the panel, and the new widget
+     * off to one side. If the old widget is the same as the new widget, then
+     * skip this step.
+     */
+    hidingWidget = null;
+    if (visibleWidget != lastVisibleWidget) {
+      // Position the layers in their start positions.
+      if (oldLayer != null) {
+        // The old layer starts centered in the panel.
+        oldLayer.setTopHeight(0.0, Unit.PCT, 100.0, Unit.PCT);
+        oldLayer.setLeftWidth(0.0, Unit.PCT, 100.0, Unit.PCT);
+        setWidgetVisible(lastVisibleWidget, oldLayer, true);
+      }
+      if (newLayer != null) {
+        // The new layer starts off to one side.
+        newLayer.setTopHeight(vDirection, Unit.PCT, 100.0, Unit.PCT);
+        newLayer.setLeftWidth(hDirection, Unit.PCT, 100.0, Unit.PCT);
+        setWidgetVisible(visibleWidget, newLayer, true);
+      }
+      layout.layout();
+      hidingWidget = lastVisibleWidget;
     }
-    if (newLayer != null) {
-      // The new layer starts off to one side.
-      newLayer.setTopHeight(vDirection, Unit.PCT, 100.0, Unit.PCT);
-      newLayer.setLeftWidth(hDirection, Unit.PCT, 100.0, Unit.PCT);
-      setWidgetVisible(visibleWidget, newLayer, true);
-    }
-    layout.layout();
 
     // Set the end positions of the layers.
     if (oldLayer != null) {
@@ -367,7 +376,6 @@ public class DeckLayoutPanel extends ComplexPanel implements AnimatedLayout,
       setWidgetVisible(visibleWidget, newLayer, true);
     }
 
-    hidingWidget = lastVisibleWidget;
     lastVisibleWidget = visibleWidget;
   }
 
