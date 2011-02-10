@@ -31,4 +31,8 @@ public class Renderer extends JavaScriptObject
       var style = this.scrollBar.element.style;
       style.marginBottom = (style.marginBottom == "-1px") ? "0" : "-1px";     
    }-*/;
+
+   public native final void onResize(boolean force) /*-{
+      this.onResize(force);
+   }-*/;
 }

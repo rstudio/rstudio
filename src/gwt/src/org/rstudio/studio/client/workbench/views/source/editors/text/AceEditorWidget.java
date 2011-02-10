@@ -126,5 +126,10 @@ public class AceEditorWidget extends Composite
       return addHandler(handler, KeyDownEvent.getType());
    }
 
+   public void forceResize()
+   {
+      editor_.getRenderer().onResize(true);
+   }
+
    private final AceEditorNative editor_;
 }

@@ -2,6 +2,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.PreElement;
@@ -440,7 +441,9 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
 
    public void setFontSize(Size size)
    {
-      // No change needed--the AceEditorWidget uses the "normalSize" style 
+      // No change needed--the AceEditorWidget uses the "normalSize" style
+      // However, we do need to resize the gutter
+      widget_.forceResize();
    }
 
    public HandlerRegistration addValueChangeHandler(
