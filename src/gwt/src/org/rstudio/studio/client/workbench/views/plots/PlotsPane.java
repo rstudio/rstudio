@@ -18,9 +18,9 @@ import com.google.gwt.event.logical.shared.HasResizeHandlers;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Panel;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Size;
@@ -71,7 +71,7 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
       // interfere with dragging the workbench pane sizer. also provide
       // a widget container where adornments can be added on top fo the
       // plots panel (e.g. manipulator button)
-      plotsSurface_ = new SimplePanel();
+      plotsSurface_ = new FlowPanel();
       plotsSurface_.setSize("100%", "100%");
       panel_.add(plotsSurface_);
       panel_.setWidgetTopBottom(plotsSurface_, 0, Unit.PX, 0, Unit.PX);
@@ -150,7 +150,7 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
    private String plotUrl_;
    private final Commands commands_;
    private PlotsToolbar plotsToolbar_ = null;
-   private SimplePanel plotsSurface_ = null;
+   private FlowPanel plotsSurface_ = null;
    private Plots.Parent plotsParent_ = new Plots.Parent() { 
       public void add(Widget w)
       {

@@ -107,6 +107,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
          }
       });
 
+      // manipulator
       manipulatorManager_ = new ManipulatorManager(
          view_.getPlotsSurface(),
          commands,
@@ -115,12 +116,28 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
             @Override
             public void onManipulatorChanged(JSONObject values)
             {
-               // always set progress because this will run R code
-               // to regenerate the plot
-               view_.setProgress(true);
+               // show progress
+               manipulatorManager_.setProgress(true);
                
                // set values
-               server_.setManipulatorValues(values, new PlotRequestCallback());
+               server_.setManipulatorValues(values, 
+                                            new ServerRequestCallback<Void>() {
+                  @Override
+                  public void onResponseReceived(Void response)
+                  {
+                     // we don't clear the progress until the GraphicsOutput
+                     // event is received (enables us to wait for rendering
+                     // to complete before clearing progress)
+                  }
+                  
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     manipulatorManager_.setProgress(false);
+                     globalDisplay_.showErrorMessage("Server Error", 
+                                                     error.getUserMessage());
+                  }
+               });
             }
          });
       
@@ -165,6 +182,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
         
       // clear progress 
       view_.setProgress(false);
+      manipulatorManager_.setProgress(false);
       
       // if this is the empty plot then clear the display
       // NOTE: we currently return a zero byte PNG as our "empty.png" from
