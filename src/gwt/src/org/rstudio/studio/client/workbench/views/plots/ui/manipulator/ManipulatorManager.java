@@ -122,7 +122,7 @@ public class ManipulatorManager
             public void setPosition(int offsetWidth, int offsetHeight)
             {
                manipulatorPopup_.setPopupPosition(
-                     plotsSurface_.getAbsoluteLeft() - offsetWidth + 22,
+                     plotsSurface_.getAbsoluteLeft() - offsetWidth + 20,
                      plotsSurface_.getAbsoluteTop() - 6);
                
                manipulatorPopup_.focusFirstControl();
