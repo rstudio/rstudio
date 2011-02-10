@@ -65,7 +65,10 @@ public class ManipulatorControlSlider extends ManipulatorControl
       if (slider.getTicks())
       {
          double numTicks = range / step;
-         sliderBar_.setNumTicks(new Double(numTicks).intValue());
+         if (numTicks <= 25) // no more than 25 ticks
+            sliderBar_.setNumTicks(new Double(numTicks).intValue());
+         else
+            sliderBar_.setNumTicks(1);
       }
       else 
       {
