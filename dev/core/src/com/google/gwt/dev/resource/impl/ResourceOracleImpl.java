@@ -24,6 +24,9 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.dev.util.msg.Message0;
 import com.google.gwt.dev.util.msg.Message1String;
 
+import org.apache.commons.collections.map.AbstractReferenceMap;
+import org.apache.commons.collections.map.ReferenceMap;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -141,7 +144,9 @@ public class ResourceOracleImpl implements ResourceOracle {
     }
   }
 
-  private static final Map<ClassLoader, List<ClassPathEntry>> classPathCache = new HashMap<ClassLoader, List<ClassPathEntry>>();
+  @SuppressWarnings("unchecked")
+  private static final Map<ClassLoader, List<ClassPathEntry>> classPathCache = new ReferenceMap(
+      AbstractReferenceMap.WEAK, AbstractReferenceMap.HARD);
 
   public static ClassPathEntry createEntryForUrl(TreeLogger logger, URL url)
       throws URISyntaxException, IOException {
