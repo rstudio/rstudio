@@ -58,4 +58,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
 
    void checkForUpdates();
    void showAboutDialog();
+
+   boolean suppressSyntaxHighlighting();
 }

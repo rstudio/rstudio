@@ -40,11 +40,15 @@ define("mode/tex", function(require, exports, module) {
 var oop = require("pilot/oop");
 var TextMode = require("ace/mode/text").Mode;
 var Tokenizer = require("ace/tokenizer").Tokenizer;
+var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 var TexHighlightRules = require("mode/tex_highlight_rules").TexHighlightRules;
 var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
 
-var Mode = function() {
-    this.$tokenizer = new Tokenizer(new TexHighlightRules().getRules());
+var Mode = function(suppressHighlighting) {
+	if (suppressHighlighting)
+    	this.$tokenizer = new Tokenizer(new TextHighlightRules().getRules());
+	else
+    	this.$tokenizer = new Tokenizer(new RHighlightRules().getRules());
     this.$outdent = new MatchingBraceOutdent();
 };
 oop.inherits(Mode, TextMode);

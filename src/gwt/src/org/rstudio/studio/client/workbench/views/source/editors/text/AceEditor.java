@@ -24,6 +24,7 @@ import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.FontSizer.Size;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
@@ -137,7 +138,9 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       widget_.getEditor().setKeyboardHandler(
             new AceCompletionAdapter(completionManager_).getKeyboardHandler());
 
-      getSession().setEditorMode(fileType_.getEditorLanguage().getParserName());
+      getSession().setEditorMode(
+            fileType_.getEditorLanguage().getParserName(),
+            Desktop.isDesktop() && Desktop.getFrame().suppressSyntaxHighlighting());
       getSession().setUseWrapMode(fileType_.getWordWrap());
    }
 

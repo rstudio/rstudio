@@ -78,6 +78,7 @@ public slots:
 
    void checkForUpdates();
    void showAboutDialog();
+   bool suppressSyntaxHighlighting();
 
 private:
    void doAction(QKeySequence::StandardKey key);
