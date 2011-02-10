@@ -48,7 +48,7 @@ var Mode = function(suppressHighlighting) {
 	if (suppressHighlighting)
     	this.$tokenizer = new Tokenizer(new TextHighlightRules().getRules());
 	else
-    	this.$tokenizer = new Tokenizer(new RHighlightRules().getRules());
+    	this.$tokenizer = new Tokenizer(new TexHighlightRules().getRules());
     this.$outdent = new MatchingBraceOutdent();
 };
 oop.inherits(Mode, TextMode);
