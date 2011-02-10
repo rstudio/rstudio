@@ -76,18 +76,24 @@ void Options::saveMainWindowBounds(QMainWindow* win)
 
 QString Options::portNumber() const
 {
-   // First look for a persisted setting
-   QString port = settings_.value("rsession/www-port").toString();
-   if (!port.isNull() && !port.isEmpty())
+   // lookup / generate on demand
+   if (portNumber_.length() == 0)
    {
-      // make sure it's a number
-      int portNum = port.toInt();
-      if (portNum > 0 && portNum <= 65535)
-         return QString::number(portNum);
+      // First look for a persisted setting
+      QString port = settings_.value("rsession/www-port").toString();
+      if (!port.isNull() && !port.isEmpty())
+      {
+         // make sure it's a number
+         int portNum = port.toInt();
+         if (portNum > 0 && portNum <= 65535)
+            portNumber_ = QString::number(portNum);
+      }
+
+      // If that didn't work, make a random port number
+      portNumber_ = QString::number((rand() % 40000) + 8080);
    }
 
-   // If that didn't work, make a random port number
-   return QString::number((rand() % 40000) + 8080);
+   return portNumber_;
 }
 
 namespace {
