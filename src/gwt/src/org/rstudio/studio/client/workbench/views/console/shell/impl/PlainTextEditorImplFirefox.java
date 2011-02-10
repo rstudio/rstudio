@@ -12,11 +12,13 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.impl;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Text;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import org.rstudio.core.client.dom.DomUtils;
@@ -44,6 +46,23 @@ public class PlainTextEditorImplFirefox extends PlainTextEditorImpl
       textContainer_ = textContainer;
       return textContainer_;
    }
+
+   @Override
+   public void relayFocusEvents(HasHandlers handlers)
+   {
+      addDomListener(textContainer_, "focus", handlers);
+      addDomListener(textContainer_, "blur", handlers);
+   }
+
+   private native static JavaScriptObject addDomListener(
+         com.google.gwt.dom.client.Element element,
+         String eventName,
+         HasHandlers hasHandlers) /*-{
+      var listener = $entry(function(e) {
+         @com.google.gwt.event.dom.client.DomEvent::fireNativeEvent(Lcom/google/gwt/dom/client/NativeEvent;Lcom/google/gwt/event/shared/HasHandlers;Lcom/google/gwt/dom/client/Element;)(e, hasHandlers, element);
+      });
+      element.addEventListener(eventName, listener, false);
+   }-*/;
 
    @Override
    public void poll()

@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.impl;
 
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import org.rstudio.core.client.dom.ElementEx;
@@ -35,6 +36,10 @@ public class PlainTextEditorImpl
    {
       DOM.setElementPropertyBoolean(element, "contentEditable", true) ;
       return (ElementEx) element;
+   }
+
+   public void relayFocusEvents(HasHandlers handlers)
+   {
    }
 
    public void poll()

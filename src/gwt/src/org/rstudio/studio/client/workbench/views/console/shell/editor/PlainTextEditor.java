@@ -418,6 +418,7 @@ public class PlainTextEditor
       super.onLoad() ;
       
       textContainer_ = impl.setupTextContainer(getElement()) ;
+      impl.relayFocusEvents(this);
       
       addClickHandler(new ClickHandler() {
          public void onClick(ClickEvent event)
