@@ -212,7 +212,7 @@ function embedPlugin() {
 
   var obj = document.createElement('object');
   obj.id = 'pluginObject';
-  obj.CLASSID = 'CLSID:1D6156B6-002B-49E7-B5CA-C138FB843B4E';
+  obj.classid = 'clsid:1D6156B6-002B-49E7-B5CA-C138FB843B4E';
 
   document.body.appendChild(embed);
   document.body.appendChild(obj);
