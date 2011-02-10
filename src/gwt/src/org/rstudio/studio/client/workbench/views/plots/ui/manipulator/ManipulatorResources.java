@@ -12,5 +12,5 @@ public interface ManipulatorResources extends ClientBundle
    ManipulatorStyles manipulatorStyles();
    
    ImageResource manipulateButton();
-   
+   ImageResource manipulateProgress();
 }
