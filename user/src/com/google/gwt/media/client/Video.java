@@ -81,13 +81,6 @@ public class Video extends FocusWidget {
   }
 
   /**
-   * Creates a Video widget.
-   */
-  public Video() {
-    setElement(Document.get().createVideoElement());
-  }
-  
-  /**
    * Creates a Video widget with a given source URL.
    * 
    * @param src a String URL
@@ -117,7 +110,7 @@ public class Video extends FocusWidget {
      * @return true if supported, false otherwise.
      */
     static native boolean isSupportedRunTime(VideoElement element) /*-{
-      return !!element.getContext;
+      return !!element.play;
     }-*/;
 
     /**

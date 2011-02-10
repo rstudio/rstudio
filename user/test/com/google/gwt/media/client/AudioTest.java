@@ -33,9 +33,9 @@ import com.google.gwt.user.client.ui.RootPanel;
 public class AudioTest extends MediaTest {
   Audio audio;
 
-  final static String audioUrlMp3 = "jabberwocky.mp3";
+  final static String audioUrlMp3 = "smallmp3.mp3";
   final static String audioFormatMp3 = "audio/mpeg";
-  final static String audioUrlOgg = "jabberwocky.ogg";
+  final static String audioUrlOgg = "smallogg.ogg";
   final static String audioFormatOgg = "audio/ogg";
 
   @Override

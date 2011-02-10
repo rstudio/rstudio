@@ -35,13 +35,13 @@ public class VideoTest extends MediaTest {
   Video video;
 
   final static String posterUrl = "poster.jpg";
-  final static String videoUrlH264 = "testh264.mp4";
+  final static String videoUrlH264 = "smallh264.mp4";
   final static String videoFormatH264 = "video/mp4; codecs=\"avc1.42E01E, mp4a.40.2\"";
-  final static String videoUrlOgg = "testogg.ogv";
-  final static String videoFormatOgg = "video/ogg; codecs=\"theora, vorbis\"";
+  final static String videoUrlOgv = "smalltheora.ogv";
+  final static String videoFormatOgv = "video/ogg; codecs=\"theora, vorbis\"";
 
-  final static int videoWidth = 480;
-  final static int videoHeight = 270;
+  final static int videoWidth = 32;
+  final static int videoHeight = 18;
 
   @Override
   public MediaElement getElement() {
@@ -56,7 +56,7 @@ public class VideoTest extends MediaTest {
     StringBuilder sb = new StringBuilder();
     VideoElement e = video.getVideoElement();
 
-    sb.append("AudioElement[");
+    sb.append("VideoElement[");
     sb.append("currentSrc=");
     sb.append(e.getCurrentSrc());
     sb.append(",currentTime=");
@@ -163,9 +163,9 @@ public class VideoTest extends MediaTest {
     if (!element.canPlayType(videoFormatH264).equalsIgnoreCase(
         MediaElement.CANNOT_PLAY)) {
       element.setSrc(videoUrlH264);
-    } else if (!element.canPlayType(videoFormatOgg).equalsIgnoreCase(
+    } else if (!element.canPlayType(videoFormatOgv).equalsIgnoreCase(
         MediaElement.CANNOT_PLAY)) {
-      element.setSrc(videoUrlOgg);
+      element.setSrc(videoUrlOgv);
     } else {
       throw new Exception("Could not find suitable video format");
     }

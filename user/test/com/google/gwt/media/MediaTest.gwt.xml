@@ -15,6 +15,10 @@
 <module>
   <!-- Inherit the JUnit support -->
   <inherits name='com.google.gwt.junit.JUnit'/>
+  
+  <inherits name="com.google.gwt.media.Media" />
 
   <source path="client"/>
+
+  <public path="public-test" />
 </module>

@@ -76,20 +76,11 @@ public class Audio extends FocusWidget {
   }
 
   /**
-   * Protected constructor. Use {@link #createIfSupported()} to create an Audio.
+   * Protected constructor. Use {@link #createIfSupported()} to create 
+   * an Audio element.
    */
   private Audio(AudioElement element) {
     setElement(element);
-  }
-
-  /**
-   * Creates an Audio widget with a given source URL.
-   * 
-   * @param src a String URL
-   */
-  public Audio(String src) {
-    setElement(Document.get().createAudioElement());
-    getAudioElement().setSrc(src);
   }
 
   /**
@@ -112,7 +103,7 @@ public class Audio extends FocusWidget {
      * @return true if supported, false otherwise.
      */
     static native boolean isSupportedRunTime(AudioElement element) /*-{
-      return !!element.getContext;
+      return !!element.play;
     }-*/;
 
     /**

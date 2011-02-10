@@ -27,10 +27,10 @@ public class MediaSuite {
   public static Test suite() {
     GWTTestSuite suite = new GWTTestSuite("Test suite for Media GWTTestCases");
     
-    /*
+    /* 
      * Tests disabled temporarily
-     *  suite.addTestSuite(AudioTest.class);
-     *  suite.addTestSuite(VideoTest.class);
+     * suite.addTestSuite(AudioTest.class);
+     * suite.addTestSuite(VideoTest.class);
      */
     
     return suite;

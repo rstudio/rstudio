@@ -16,5 +16,50 @@
 <module>
   <inherits name="com.google.gwt.user.User"/>
   <inherits name="com.google.gwt.media.dom.DOM"/>
+
+  <!-- Define the support property for Video and Audio-->
+  <define-property name="videoElementSupport" values="maybe,no" />
+  <define-property name="audioElementSupport" values="maybe,no" />
+
+  <!-- Give default support value of no -->
+  <set-property name="videoElementSupport" value="no" />
+  <set-property name="audioElementSupport" value="no" />
+
+  <set-property name="videoElementSupport" value="maybe">
+    <any>
+      <when-property-is name="user.agent" value="safari" />
+      <when-property-is name="user.agent" value="gecko1_8" />
+      <when-property-is name="user.agent" value="opera" />
+    </any>
+  </set-property>
+  
+  <set-property name="audioElementSupport" value="maybe">
+    <any>
+      <when-property-is name="user.agent" value="safari" />
+      <when-property-is name="user.agent" value="gecko1_8" />
+      <when-property-is name="user.agent" value="opera" />
+    </any>
+  </set-property>
+
+  <replace-with class="com.google.gwt.media.client.Video.VideoElementSupportDetectedMaybe">
+    <when-type-is class="com.google.gwt.media.client.Video.VideoElementSupportDetector" />
+    <when-property-is name="videoElementSupport" value="maybe" />
+  </replace-with>
+
+  <replace-with class="com.google.gwt.media.client.Video.VideoElementSupportDetectedNo">
+    <when-type-is class="com.google.gwt.media.client.Video.VideoElementSupportDetector" />
+    <when-property-is name="videoElementSupport" value="no" />
+  </replace-with>
+  
+  <replace-with class="com.google.gwt.media.client.Audio.AudioElementSupportDetectedMaybe">
+    <when-type-is class="com.google.gwt.media.client.Audio.AudioElementSupportDetector" />
+    <when-property-is name="videoElementSupport" value="maybe" />
+  </replace-with>
+
+  <replace-with class="com.google.gwt.media.client.Audio.AudioElementSupportDetectedNo">
+    <when-type-is class="com.google.gwt.media.client.Audio.AudioElementSupportDetector" />
+    <when-property-is name="audioElementSupport" value="no" />
+  </replace-with>
+
   <source path="client"/>
 </module>
