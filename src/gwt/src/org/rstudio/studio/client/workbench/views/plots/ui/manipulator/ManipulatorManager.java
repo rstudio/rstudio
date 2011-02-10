@@ -1,5 +1,6 @@
 package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 
+import org.rstudio.core.client.widget.ProgressImage;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
@@ -15,26 +16,33 @@ public class ManipulatorManager
                              Commands commands,
                              ManipulatorChangedHandler changedHandler)
    {
+      ManipulatorResources resources = ManipulatorResources.INSTANCE;
+      ManipulatorStyles styles = ManipulatorStyles.INSTANCE;
+      
       // references
       plotsSurface_ = plotsSurface;
-      
+       
       // no manipulator to start
       manipulator_ = null;
       manipulatorPopup_ = null;
       
       // create manipulator button
       manipulatorButton_ = new ToolbarButton(
-            ManipulatorResources.INSTANCE.manipulateButton(),
+            resources.manipulateButton(),
             new ClickHandler() { 
                public void onClick(ClickEvent event)
                {
                   showManipulatorPopup();
                }
             });
-      manipulatorButton_.addStyleName(ManipulatorStyles.INSTANCE.manipulateButton());
+      manipulatorButton_.addStyleName(styles.manipulateButton());
       manipulatorButton_.setTitle(commands.showManipulator().getTooltip());
       plotsSurface_.add(manipulatorButton_);
       manipulatorButton_.setVisible(false);
+      manipulatorProgress_ = new ProgressImage(resources.manipulateProgress());
+      manipulatorProgress_.addStyleName(styles.manipulateProgress());
+      plotsSurface_.add(manipulatorProgress_);
+      manipulatorProgress_.setVisible(false);
       
       // create manipulator popup panel
       manipulatorPopup_ = new ManipulatorPopupPanel(changedHandler);
@@ -74,6 +82,20 @@ public class ManipulatorManager
          showManipulatorPopup();
    }
    
+   public void setProgress(boolean showProgress)
+   {
+      if (showProgress)
+      {
+         manipulatorButton_.setVisible(false);
+         manipulatorProgress_.show(true);
+      }
+      else
+      {
+         manipulatorProgress_.show(false);
+         manipulatorButton_.setVisible(manipulator_ != null);
+      }
+   }
+   
    private boolean isNewManipulatorState(Manipulator manipulator)
    {
       if (manipulator_ == null && manipulator == null)
@@ -100,7 +122,7 @@ public class ManipulatorManager
             public void setPosition(int offsetWidth, int offsetHeight)
             {
                manipulatorPopup_.setPopupPosition(
-                     plotsSurface_.getAbsoluteLeft() - offsetWidth + 22,
+                     plotsSurface_.getAbsoluteLeft() - offsetWidth + 20,
                      plotsSurface_.getAbsoluteTop() - 6);
                
                manipulatorPopup_.focusFirstControl();
@@ -116,6 +138,7 @@ public class ManipulatorManager
    private final Panel plotsSurface_;
    private Manipulator manipulator_;
    private ToolbarButton manipulatorButton_;
+   private ProgressImage manipulatorProgress_;
    private ManipulatorPopupPanel manipulatorPopup_;
   
 }

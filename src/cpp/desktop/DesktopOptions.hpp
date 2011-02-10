@@ -84,6 +84,7 @@ private:
 
    QSettings settings_;
    mutable core::FilePath supportingFilePath_;
+   mutable QString portNumber_;
 };
 
 } // namespace desktop

@@ -32,7 +32,7 @@
                                           value = min,
                                           label = NULL,
                                           step = NULL,
-                                          ticks = if (is.null(step)) F else T)
+                                          ticks = TRUE)
 {
   # validate inputs
   if (!is.numeric(value) || !is.numeric(min) || !is.numeric(max))
