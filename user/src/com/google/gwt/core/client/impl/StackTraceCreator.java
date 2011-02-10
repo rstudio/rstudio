@@ -384,12 +384,12 @@ public class StackTraceCreator {
 
     @Override
     public void createStackTrace(JavaScriptException e) {
-      e.setStackTrace(new StackTraceElement[0]);
+      // empty, since Throwable.getStackTrace() properly handles null
     }
 
     @Override
     public void fillInStackTrace(Throwable t) {
-      t.setStackTrace(new StackTraceElement[0]);
+      // empty, since Throwable.getStackTrace() properly handles null
     }
   }
   
