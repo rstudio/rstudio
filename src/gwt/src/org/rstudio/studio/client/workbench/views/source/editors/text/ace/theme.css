@@ -13,6 +13,14 @@
   overflow : hidden;
 }
 
+.ace-rs.loading .ace_gutter {
+  color: #e8e8e8 !important;
+}
+
+.ace-rs.loading .ace_content * {
+  color: white !important;
+}
+
 .ace-rs .ace_gutter-layer {
   width: 100%;
   text-align: right;
