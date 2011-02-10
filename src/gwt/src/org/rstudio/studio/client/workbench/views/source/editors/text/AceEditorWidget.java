@@ -30,6 +30,8 @@ public class AceEditorWidget extends Composite
       FontSizer.applyNormalFontSize(this);
       setSize("100%", "100%");
 
+      setVisible(false);
+
       editor_ = AceEditorNative.createEditor(getElement());
       editor_.setShowPrintMargin(false);
       editor_.setPrintMarginColumn(0);
@@ -54,13 +56,15 @@ public class AceEditorWidget extends Composite
       super.onLoad();
 
       fireEvent(new EditorLoadedEvent());
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
       {
-         public void execute()
+         public boolean execute()
          {
             onResize();
+            setVisible(true);
+            return false;
          }
-      });
+      }, 200);
 
       // On Windows desktop sometimes we inexplicably end up at the wrong size
       // if the editor is being resized while it's loading (such as when a new
