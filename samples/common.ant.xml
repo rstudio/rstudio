@@ -103,6 +103,8 @@
               <pathelement location="${sample.build}/war/WEB-INF/classes" />
               <pathelement location="${gwt.user.jar}" />
               <pathelement location="${gwt.dev.jar}" />
+              <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA.jar" />
+              <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA-sources.jar" />
             </classpath>
             <jvmarg value="-Xmx256M" />
             <arg value="-localWorkers" />

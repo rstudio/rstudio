@@ -39,6 +39,8 @@
       <classpath>
         <pathelement location="@srcFolder"/>
         <path refid="project.class.path"/>
+        <pathelement location="@gwtValidationPath" />
+        <pathelement location="@gwtValidationSourcesPath" />
       </classpath>
       <!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
       <jvmarg value="-Xmx256M"/>

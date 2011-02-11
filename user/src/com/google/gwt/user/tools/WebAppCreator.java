@@ -308,6 +308,8 @@ public final class WebAppCreator {
     // GWT libraries
     String gwtUserPath = installPath + '/' + "gwt-user.jar";
     String gwtDevPath = installPath + '/' + "gwt-dev.jar";
+    String gwtValidationPath = installPath + '/' + "validation-api-1.0.0.GA.jar";
+    String gwtValidationSourcesPath = installPath + '/' + "validation-api-1.0.0.GA-sources.jar";
 
     // Public builds generate a DTD reference.
     String gwtModuleDtd = "";
@@ -358,6 +360,8 @@ public final class WebAppCreator {
     replacements.put("@gwtSdk", installPath);
     replacements.put("@gwtUserPath", gwtUserPath);
     replacements.put("@gwtDevPath", gwtDevPath);
+    replacements.put("@gwtValidationPath", gwtValidationPath);
+    replacements.put("@gwtValidationSourcesPath", gwtValidationSourcesPath);
     replacements.put("@gwtVersion", About.getGwtVersionNum());
     replacements.put("@gwtModuleDtd", gwtModuleDtd);
     replacements.put("@shellClass", DevMode.class.getName());

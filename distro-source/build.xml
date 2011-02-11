@@ -30,6 +30,10 @@
       <!-- jni libs-->
       <zipfileset dir="${gwt.build.jni}/windows" prefix="${project.distname}" />
 
+      <!-- external libs -->
+      <zipfileset file="${gwt.tools}/lib/javax/validation/validation-api-1.0.0.GA.jar" prefix="${project.distname}" />
+      <zipfileset file="${gwt.tools}/lib/javax/validation/validation-api-1.0.0.GA-sources.jar" prefix="${project.distname}" />
+
       <!-- raw files -->
       <zipfileset dir="${dist.resources}" prefix="${project.distname}" />
       <zipfileset filemode="755" dir="src" prefix="${project.distname}" />
