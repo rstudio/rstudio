@@ -43,33 +43,7 @@ bool supportedBrowserFilter(const http::Request& request,
    {
       return true;
 	}
-
-   else if (contains(userAgent, "MSIE"))
-   {
-      // distinguish various IE scenarios
-
-      // IE 5 or 6
-      if (contains(userAgent, "MSIE 5") || contains(userAgent, "MSIE 6"))
-      {
-         pResponse->setMovedTemporarily(request, kBrowserUnsupported);
-         return false;
-      }
-
-      // IE 7 (but do special carve out for IE 8 running in compatability mode)
-      else if (contains(userAgent, "MSIE 7") && !contains(userAgent, "Trident"))
-      {
-         pResponse->setMovedTemporarily(request, kBrowserUnsupported);
-         return false;
-      }
-
-      // IE 8 and above
-      else
-      {
-         return true;
-      }
-   }
-
-   else // unknown browser
+   else // unsupported browser
    {
       pResponse->setMovedTemporarily(request, kBrowserUnsupported);
       return false;
