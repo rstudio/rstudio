@@ -32,13 +32,15 @@ public enum CompilerEventType implements EventType {
   GENERATOR_RPC("Generator RPC", "#3300CC"), //
   GENERATOR_RPC_STOB("Generator RPC STOB", "#3300CC"), //
   GENERATOR_RPC_TYPE_SERIALIZER("Generator RPC Type Serializer", "#3300CC"), //
-  GENERATOR_RPC_FIELD_SERIALIZER("Generator RPC Field Serializer", "#3300CC"), //
+  GENERATOR_RPC_FIELD_SERIALIZER(
+      "Generator RPC Field Serializer", "#3300CC"), //
   GENERATOR_UIBINDER("Generator UiBinder", "#FFFF00"), //
   GENERATOR_GIN("Generator GIN", "#009900"), //
   GENERATOR_OTHER("Generator (Other)", "Red"), //
-  JDT_COMPILER("JdtCompiler1", "#6c6"), //
-  JDT_COMPILER2("JdtCompiler2", "#0c0"), //
-  JDT_COMPILER3("JdtCompiler3", "#494"), //
+  JDT_COMPILER("JdtCompiler", "#6c6"), //
+  JDT_COMPILER_CSB_FROM_ORACLE("JdtCompiler CSB FromOracle", "LimeGreen"), //
+  JDT_COMPILER_CSB_GENERATED("JdtCompiler CSB Generated", "DarkSeaGreen"), //
+  JDT_COMPILER_SANDBOX("JdtCompiler Sandbox", "#494"), //
   LINK("Link", "LawnGreen"), //
   MAKE_SOYC_ARTIFACTS("MakeSoycArtifacts", "Chartreuse"), //
   MODULE_DEF("ModuleDef", "BlueViolet"), //
@@ -50,7 +52,7 @@ public enum CompilerEventType implements EventType {
   PRECOMPILE_CORE("CoreCompiler", "Crimson"), //
   WRITE_OBJECT_AS_FILE("WriteObjectAsFile", "Magenta"), //
   BUILD_AST("BuildAST", "DarkGoldenRod"), //
-  FUNCTION_CLUSTER("JsFunctionClusterer","Cornflower"), //
+  FUNCTION_CLUSTER("JsFunctionClusterer", "Cornflower"), //
   BLOCKED("Blocked", "FloralWhite"), //
   GET_ALL_REBINDS("GetAllPossibleRebindAnswers", "Brown"), //
   FIND_ENTRY_POINTS("FindEntryPoints", "SlateGray"), //
@@ -59,11 +61,11 @@ public enum CompilerEventType implements EventType {
   RECORD_REBINDS("RecordRebinds", "Chocolate"), //
   BUILD_TYPE_MAP_FOR_AST("BuildTypeMapForAST", "LightSeaGreen"), //
   GET_COMPILATION_UNITS("GetCompilationUnitDeclarations", "Gainsboro"), //
-  GENERATE_JAVA_AST("GenerateJavaAST", "DodgerBlue"),
+  GENERATE_JAVA_AST("GenerateJavaAST", "DodgerBlue"), //
   ARTIFICIAL_RESCUE_REORDER("ArtificialRescueReorder", "LightCyan"), //
   FIX_ASSIGNMENT_TO_UNBOX("FixAssignmentToUnbox", "Orange"), //
-  ASSERTION_NORMALIZER("AssertionNormalizer","LightPink"), //
-  ASSERTION_REMOVER("AssertionRemover","LightSalmon"), //
+  ASSERTION_NORMALIZER("AssertionNormalizer", "LightPink"), //
+  ASSERTION_REMOVER("AssertionRemover", "LightSalmon"), //
   REPLACE_REBINDS("ReplaceRebinds", "Snow"), //
   CREATE_UNIFIED_AST("CreateUnifiedAST", "BlueViolet"), //
   CHECK_FOR_ERRORS("CheckForErrors", "DimGrey"), //

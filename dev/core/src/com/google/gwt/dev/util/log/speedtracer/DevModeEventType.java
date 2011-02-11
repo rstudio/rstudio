@@ -23,10 +23,11 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.EventType;
  */
 public enum DevModeEventType implements EventType {
   CLASS_BYTES_REWRITE("Class bytes rewrite", "DarkBlue"), //
-  COMPILATION_STATE_BUILDER_PROCESS("CompilationStateBuilder process",
-      "Teal"), //
   CREATE_UI("Create UI", "BlueViolet"), //
-  GENERATED_UNITS_ADD("Generated units add", "Brown"), //
+  CSB_ADD_GENERATED_TYPES("CSB Add Generated Types", "SteelBlue"), //
+  CSB_BUILD_FROM_ORACLE("CSB Build From Oracle", "SlateGray"), //
+  CSB_PROCESS("CSB Process", "Teal"), //
+  COMP_STATE_ADD_GENERATED_UNITS("Comp State Add Generated Units", "Brown"), //
   JAVA_TO_JS_CALL("Java to JS call", "LightSkyBlue"), //
   JETTY_STARTUP("Jetty startup", "Orchid"), //
   JS_TO_JAVA_CALL("JS to Java call", "Orange"), //

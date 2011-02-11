@@ -52,12 +52,12 @@ public class CompilationState {
   private final CompileMoreLater compileMoreLater;
 
   /**
-   * Unmodifiable view of {@link #classFileMap).
+   * Unmodifiable view of {@link #classFileMap}.
    */
   private final Map<String, CompiledClass> exposedClassFileMap = Collections.unmodifiableMap(classFileMap);
 
   /**
-   * Unmodifiable view of {@link #classFileMapBySource).
+   * Unmodifiable view of {@link #classFileMapBySource}.
    */
   private final Map<String, CompiledClass> exposedClassFileMapBySource = Collections.unmodifiableMap(classFileMapBySource);
 
@@ -85,8 +85,7 @@ public class CompilationState {
   public void addGeneratedCompilationUnits(TreeLogger logger,
       Collection<GeneratedUnit> generatedUnits) {
     Event generatedUnitsAddEvent = SpeedTracerLogger.start(
-        DevModeEventType.GENERATED_UNITS_ADD);
-
+        DevModeEventType.COMP_STATE_ADD_GENERATED_UNITS);
     try {
       logger = logger.branch(TreeLogger.DEBUG, "Adding '"
           + generatedUnits.size() + "' new generated units");

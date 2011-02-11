@@ -24,9 +24,11 @@ import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
 import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.StringInterner;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.EventType;
 
 import org.apache.commons.collections.map.AbstractReferenceMap;
 import org.apache.commons.collections.map.ReferenceIdentityMap;
@@ -63,7 +65,7 @@ public class CompilationStateBuilder {
 
       public void process(CompilationUnitBuilder builder,
           CompilationUnitDeclaration cud, List<CompiledClass> compiledClasses) {
-        Event compilationStateBuilderProcess = SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
+        Event event = SpeedTracerLogger.start(DevModeEventType.CSB_PROCESS);
         try {
           Map<MethodDeclaration, JsniMethod> jsniMethods = JsniCollector.collectJsniMethods(
               cud, builder.getSource(), JsRootScope.INSTANCE,
@@ -128,7 +130,7 @@ public class CompilationStateBuilder {
           }
           newlyBuiltUnits.add(unit);
         } finally {
-          compilationStateBuilderProcess.end();
+          event.end();
         }
       }
     }
@@ -159,11 +161,12 @@ public class CompilationStateBuilder {
 
     public Collection<CompilationUnit> addGeneratedTypes(TreeLogger logger,
         Collection<GeneratedUnit> generatedUnits) {
-      Event compilationStateBuilderProcess = SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
+      Event event = 
+        SpeedTracerLogger.start(DevModeEventType.CSB_ADD_GENERATED_TYPES);
       try {
         return doBuildGeneratedTypes(logger, generatedUnits, this);
       } finally {
-        compilationStateBuilderProcess.end();
+        event.end();
       }
     }
 
@@ -181,7 +184,8 @@ public class CompilationStateBuilder {
 
     Collection<CompilationUnit> compile(TreeLogger logger,
         Collection<CompilationUnitBuilder> builders,
-        Map<CompilationUnitBuilder, CompilationUnit> cachedUnits) {
+        Map<CompilationUnitBuilder, CompilationUnit> cachedUnits,
+        EventType eventType) {
       // Initialize the set of valid classes to the initially cached units.
       for (CompilationUnit unit : cachedUnits.values()) {
         for (CompiledClass cc : unit.getCompiledClasses()) {
@@ -196,8 +200,14 @@ public class CompilationStateBuilder {
       do {
         // Compile anything that needs to be compiled.
         this.newlyBuiltUnits = new ArrayList<CompilationUnit>();
-
-        compiler.doCompile(builders);
+        
+        Event jdtCompilerEvent = SpeedTracerLogger.start(eventType);
+        try {
+          compiler.doCompile(builders);
+        } finally {
+          jdtCompilerEvent.end();
+        }
+        
         resultUnits.addAll(this.newlyBuiltUnits);
         builders.clear();
 
@@ -276,21 +286,21 @@ public class CompilationStateBuilder {
 
   public static CompilationState buildFrom(TreeLogger logger,
       Set<Resource> resources) {
-    Event compilationStateBuilderProcessEvent = SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
+    Event event = SpeedTracerLogger.start(DevModeEventType.CSB_BUILD_FROM_ORACLE);
     try {
       return instance.doBuildFrom(logger, resources, null);
     } finally {
-      compilationStateBuilderProcessEvent.end();
+      event.end();
     }
   }
 
   public static CompilationState buildFrom(TreeLogger logger,
       Set<Resource> resources, AdditionalTypeProviderDelegate delegate) {
-    Event compilationStateBuilderProcessEvent = SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
+    Event event = SpeedTracerLogger.start(DevModeEventType.CSB_BUILD_FROM_ORACLE);
     try {
       return instance.doBuildFrom(logger, resources, delegate);
     } finally {
-      compilationStateBuilderProcessEvent.end();
+      event.end();
     }
   }
 
@@ -383,7 +393,7 @@ public class CompilationStateBuilder {
       builders.add(builder);
     }
     Collection<CompilationUnit> resultUnits = compileMoreLater.compile(logger,
-        builders, cachedUnits);
+        builders, cachedUnits, CompilerEventType.JDT_COMPILER_CSB_FROM_ORACLE);
     return new CompilationState(logger, resultUnits, compileMoreLater);
   }
 
@@ -418,6 +428,7 @@ public class CompilationStateBuilder {
         builders.add(builder);
       }
     }
-    return compileMoreLater.compile(logger, builders, cachedUnits);
+    return compileMoreLater.compile(logger, builders, cachedUnits,
+     CompilerEventType.JDT_COMPILER_CSB_GENERATED);
   }
 }

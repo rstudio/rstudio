@@ -165,9 +165,12 @@ public abstract class AbstractCompiler {
       @Override
       public void compile(ICompilationUnit[] sourceUnits) {
         SpeedTracerLogger.Event compileEvent = SpeedTracerLogger.start(
-            CompilerEventType.JDT_COMPILER3);
-        super.compile(sourceUnits);
-        compileEvent.end();
+            CompilerEventType.JDT_COMPILER_SANDBOX);
+        try {
+          super.compile(sourceUnits);
+        } finally {
+          compileEvent.end();
+        }
         cuds = null;
       }
 

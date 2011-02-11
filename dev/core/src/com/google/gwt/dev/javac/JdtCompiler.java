@@ -684,12 +684,9 @@ public class JdtCompiler {
       return false;
     }
 
-    Event jdtCompilerEvent = SpeedTracerLogger.start(
-        CompilerEventType.JDT_COMPILER2, "phase", "compile");
     compilerImpl = new CompilerImpl();
     compilerImpl.compile(icus.toArray(new ICompilationUnit[icus.size()]));
     compilerImpl = null;
-    jdtCompilerEvent.end("# icus", "" + icus.size());
     return true;
   }
 
