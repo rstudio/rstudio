@@ -20,6 +20,7 @@ import com.google.gwt.dev.javac.impl.MockJavaResource;
 import com.google.gwt.dev.javac.impl.MockResourceOracle;
 import com.google.gwt.dev.javac.impl.TweakedMockJavaResource;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -74,7 +75,7 @@ public class CompilationStateTest extends CompilationStateTestBase {
     testCaching(JavaResourceBase.FOO);
   }
 
-  /* test that mutiple generated units, if unchanged, are reused */
+  /* test that multiple generated units, if unchanged, are reused */
   public void testCachingOfMultipleUnits() {
     testCaching(JavaResourceBase.BAR, JavaResourceBase.FOO);
   }
@@ -217,6 +218,55 @@ public class CompilationStateTest extends CompilationStateTestBase {
         JavaResourceBase.BAR.getTypeName());
     assertNotNull(newBar);
     assertNotSame(oldBar, newBar);
+  }
+
+  public void testMethodArgs() {
+    MockJavaResource resource = new MockJavaResource("test.MethodArgsTest") {
+      @Override
+      protected CharSequence getContent() {
+        StringBuffer code = new StringBuffer();
+        code.append("package test;\n");
+        code.append("public abstract class MethodArgsTest {\n");
+        code.append("  public abstract void anAbstractMethod(String aArg1);\n");
+        code.append("  public native void aNativeMethod(String nArg1, int nArg2);\n");
+        code.append("  public void aMethod(String mArg1, int mArg2, char mArg3) {}\n");
+        code.append("  public void aNoArgMethod() {}\n");
+        code.append("}\n");
+        return code;
+      }
+    };
+
+    validateCompilationState();
+    oracle.add(resource);
+    rebuildCompilationState();
+    validateCompilationState();
+    Map<String, CompilationUnit> unitMap = state.getCompilationUnitMap();
+    MethodArgNamesLookup methodArgs = unitMap.get(Shared.getTypeName(resource)).getMethodArgs();
+    String[] methods = methodArgs.getMethods();
+    assertEquals(3, methods.length);
+    Arrays.sort(methods);
+    assertEquals("test.MethodArgsTest.aMethod(Ljava/lang/String;IC)V",
+        methods[0]);
+    assertEquals("test.MethodArgsTest.aNativeMethod(Ljava/lang/String;I)V",
+        methods[1]);
+    assertEquals("test.MethodArgsTest.anAbstractMethod(Ljava/lang/String;)V",
+        methods[2]);
+
+    String[] names;
+    names = methodArgs.lookup(methods[0]);
+    assertEquals(3, names.length);
+    assertEquals("mArg1", names[0]);
+    assertEquals("mArg2", names[1]);
+    assertEquals("mArg3", names[2]);
+
+    names = methodArgs.lookup(methods[1]);
+    assertEquals(2, names.length);
+    assertEquals("nArg1", names[0]);
+    assertEquals("nArg2", names[1]);
+
+    names = methodArgs.lookup(methods[2]);
+    assertEquals(1, names.length);
+    assertEquals("aArg1", names[0]);
   }
 
   public void testSourceOracleAdd() {

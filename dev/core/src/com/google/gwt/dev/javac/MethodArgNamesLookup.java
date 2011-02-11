@@ -22,6 +22,7 @@ import com.google.gwt.dev.util.collect.Maps;
 
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,7 +30,7 @@ import java.util.Map;
  * Keeps track of method argument names that cannot be read from just the
  * bytecode.
  */
-public class MethodArgNamesLookup {
+public class MethodArgNamesLookup implements Serializable {
 
   private Map<String, String[]> methodArgs;
 
@@ -96,5 +97,20 @@ public class MethodArgNamesLookup {
     buf.append(method.binding.signature());
     String key = StringInterner.get().intern(buf.toString());
     methodArgs.put(key, argNames);
+  }
+
+  /**
+   * For Unit Testing: returns an array of methods with arguments.
+   */
+  String[] getMethods() {
+    return methodArgs.keySet().toArray(new String[0]);
+  }
+
+  /**
+   * For Unit Testing: returns an array of argument names for the specified
+   * method.
+   */
+  String[] lookup(String methodName) {
+    return methodArgs.get(methodName);
   }
 }

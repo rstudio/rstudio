@@ -18,6 +18,7 @@ package com.google.gwt.dev.javac;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
+import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 
 /**
  * Collects method parameter names.
@@ -32,10 +33,20 @@ public class MethodParamCollector {
       this.methodArgs = methodArgs;
     }
 
+    /**
+     * Collect information on methods with at least one argument that will be
+     * visible in the TypeOracle.
+     */
     @Override
     protected boolean interestingMethod(AbstractMethodDeclaration method) {
-      return method.arguments != null && method.arguments.length > 0
-          && method.isAbstract();
+      if (method.arguments == null || method.arguments.length == 0) {
+        return false;
+      }
+      MethodBinding binding = method.binding;
+      if (binding == null || binding.declaringClass.isLocalType()) {
+        return false;
+      }
+      return true;
     }
 
     @Override
