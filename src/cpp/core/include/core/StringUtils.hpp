@@ -47,6 +47,32 @@ T hashStable(const std::string& str)
    return hash;
 }
 
+template <typename Iterator, typename InputIterator>
+Error utf8Clean(Iterator begin,
+                InputIterator end,
+                unsigned char replacementChar)
+{
+   using namespace boost::system;
+
+   if (replacementChar > 0x7F)
+      return systemError(errc::invalid_argument,
+                         "Invalid UTF-8 replacement character",
+                         ERROR_LOCATION);
+
+   Error error;
+
+   while (begin != end)
+   {
+      error = utf8Advance(begin, 1, end, &begin);
+      if (error)
+      {
+         *begin = replacementChar;
+      }
+   }
+
+   return Success();
+}
+
 // Moves the begin pointer the specified number of UTF8
 // characters.
 template <typename InputIterator>

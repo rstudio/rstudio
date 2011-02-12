@@ -26,6 +26,7 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import org.rstudio.codemirror.client.resources.CodeMirrorResources;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.filedialog.FileDialogResources;
+import org.rstudio.core.client.jsonrpc.JSON2;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.FontSizer;
@@ -134,6 +135,8 @@ public class RStudio implements EntryPoint
       ImportGoogleSpreadsheetDialog.ensureStylesInjected();
       FindReplaceBar.ensureStylesInjected();
       FontSizer.ensureStylesInjected();
+
+      JSON2.ensureInjected();
 
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");

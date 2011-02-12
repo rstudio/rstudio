@@ -19,6 +19,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
+#include <boost/regex.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <core/Log.hpp>
@@ -195,6 +196,14 @@ Error SourceDocument::setPathAndContents(const std::string& path)
    std::string contents;
    Error error = readStringFromFile(docPath, &contents,
                                     options().sourceLineEnding());
+
+   if (error)
+      return error ;
+
+   // Detect invalid UTF-8 sequences and recover
+   error = string_utils::utf8Clean(contents.begin(),
+                                   contents.end(),
+                                   '?');
    if (error)
       return error ;
 
