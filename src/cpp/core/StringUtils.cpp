@@ -45,7 +45,7 @@ void convertLineEndings(std::string* pStr, LineEnding type)
       return;
    }
 
-   *pStr = boost::regex_replace(*pStr, boost::regex("\\r?\\n"), replacement);
+   *pStr = boost::regex_replace(*pStr, boost::regex("\\r?\\n|\\xE2\\x80[\\xA8\\xA9]"), replacement);
 }
 
 std::string toLower(const std::string& str)

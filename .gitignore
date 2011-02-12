@@ -7,3 +7,4 @@ src/gwt/www/js/acesupport.js
 src/gwt/www/js/ace.js
 src/gwt/src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace.js
 src/gwt/src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/acesupport.js
+src/gwt/src/org/rstudio/core/client/jsonrpc/json2.min.js

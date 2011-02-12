@@ -22,9 +22,9 @@ public class RpcResponse extends JavaScriptObject
    }
    
    public final native static RpcResponse parse(String json) /*-{
-      try 
+      try
       {
-         return eval('(' + json + ')');
+         return $wnd.JSON.parse(json);
       }
       catch( ex )
       {
