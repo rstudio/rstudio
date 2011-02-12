@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.views.history.view;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.*;
 import com.google.gwt.i18n.client.DateTimeFormat;
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.FastSelectTable.ItemCodec;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
@@ -79,12 +80,16 @@ public class HistoryEntryItemCodec implements ItemCodec<HistoryEntry, String, Lo
 
    protected String addBreaks(String val)
    {
-      return val.replace("(", "(\u200b");
+      // This causes an extra space on Ubuntu desktop--disabling until
+      // we can figure out a different way
+      //return val.replace("(", "(\u200b");
+      return val;
    }
 
    protected String stripBreaks(String val)
    {
-      return val.replace("\u200b", "");
+      //return val.replace("\u200b", "");
+      return val;
    }
 
    public String getOutputForRow(TableRowElement row)

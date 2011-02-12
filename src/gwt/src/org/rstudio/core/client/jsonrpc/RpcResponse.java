@@ -28,7 +28,14 @@ public class RpcResponse extends JavaScriptObject
       }
       catch( ex )
       {
-         return null;
+         try
+         {
+            return $wnd.JSON.parse(json);
+         }
+         catch (ex2)
+         {
+            return null;
+         }
       }
    }-*/;
    
