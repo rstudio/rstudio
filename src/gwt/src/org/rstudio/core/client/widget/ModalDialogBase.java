@@ -128,6 +128,8 @@ public abstract class ModalDialogBase extends DialogBox
       }
 
       originallyActiveElement_ = DomUtils.getActiveElement();
+      if (originallyActiveElement_ != null)
+         originallyActiveElement_.blur();
 
       // position the dialog
       positionAndShowDialog();
