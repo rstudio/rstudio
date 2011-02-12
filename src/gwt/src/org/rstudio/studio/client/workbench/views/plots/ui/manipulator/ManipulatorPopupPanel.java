@@ -54,7 +54,7 @@ public class ManipulatorPopupPanel extends MiniDialogPopupPanel
    {  
       mainPanel_.clear();
       
-      if (manipulator != null)
+      if (manipulator != null && manipulator.getVariables() != null)
       {         
          // iterate over the variables
          JsArrayString variables = manipulator.getVariables();
