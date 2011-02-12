@@ -13,7 +13,34 @@
 
 .rs.addFunction( "manipulatorExecute", function(manipulator)
 {
-  eval(get(".code", envir = manipulator), envir = manipulator)
+   # evaulate the expression
+   result <- withVisible(eval(get(".code", envir = manipulator),
+                              envir = manipulator))
+
+   # emulate the behavior of the console by printing the result if it
+   # is visible. this will allow objects returned from e.g. lattice or
+   # ggplot plots to be displayed without requiring an explicit print
+   # statement, whereas plotting functions like plot (or custom user
+   # functions will not print anything assuming they return invisibly.
+   if (result$visible)
+   {
+      # special case for ggplot -- the eval of print(result$value) in
+      # the parent environment of the manipulator doesn't seem to
+      # pick it up so we access it explicitly.
+      # TODO: see if we can eliminate this hack
+      if (inherits(result$value, "ggplot"))
+      {
+         ggplot2:::print.ggplot(result$value)
+      }
+      else
+      {
+         # evaluate print in the context of the manipulator's parent
+         # environment (typically the global environment if manipulate was
+         # entered directly at the consle). this allows the dispatch of the
+         # print generic method to find the appropriate class method
+         eval(print(result$value), enclos=parent.env(manipulator))
+      }
+   }
 })
 
 .rs.addFunction( "manipulatorSave", function(manipulator, filename)
