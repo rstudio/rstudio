@@ -4,23 +4,11 @@ Component Version Requirements
 
 RStudio requires relatively recent versions of a number of components. It is
 therefore likely to only correctly configure and build on more recent Linux
-systems. Specific version requriements for various components include
+systems. Specific version requirements for various components include:
 
-- R 2.10
+- R 2.11.1
 - CMake 2.6
-- Pango 1.20
-- Qt 4.6 (only required for desktop builds)
-
-Linux systems known to conform to all requirements (including Qt version 4.6
-for desktop builds) include:
-
-- Ubuntu 10.04 (or higher)
-- Fedora 13 (or higher) 
-
-Linux systems known to conform to server-only build requirements include:
-
-- Debian 5 (or higher)
-
+- Pango 1.14
 
 Desktop vs. Server Builds
 =============================================================================
@@ -42,15 +30,20 @@ and then executing 'make install' will conform to this requirement as will
 installing it using the system standard package management tools (apt-get, 
 yum, etc).
 
-2) Run the install-dependencies script appropritate to your platform's
+2) Run the install-dependencies script appropriate to your platform's
 package management system (for server-only builds be sure to include the
 --server-only flag as described above)
 
    ./install-dependencies-debian   OR
    ./install-dependencies-yum
 
+If you are installing dependencies for desktop and server builds then the 
+last step of the installation will be the download and install of the Qt
+SDK. Note that this is an interactive install -- you should accept all 
+defaults provided by the Qt SDK installer.
+
 NOTE: If you are installing on a platform that doesn't support the apt-get
 or yum package managers you should review the scripts above and ensure the
-equivilant dependencies have been satisifed on your system. In order
+equivalent dependencies have been satisfied on your system. In order
 to install boost you should use the ./install-boost-linux script which
 is also contained within the dependencies/linux directory.
