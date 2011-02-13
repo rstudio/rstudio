@@ -14,7 +14,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.PreElement;
@@ -26,7 +25,6 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
@@ -162,9 +160,13 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       return getSession().getValue();
    }
 
-   public void setCode(String code)
+   public void setCode(String code, boolean preserveCursorPosition)
    {
       widget_.setCode(code);
+      if (!preserveCursorPosition)
+         widget_.getEditor().getSession().getSelection().moveCursorTo(0,
+                                                                      0,
+                                                                      false);
    }
 
    public void insertCode(String code, boolean blockMode)
@@ -220,7 +222,7 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
 
    public void setText(String string)
    {
-      setCode(string);
+      setCode(string, false);
    }
 
    public boolean hasSelection()
@@ -310,7 +312,7 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
 
    public void clear()
    {
-      setCode("");
+      setCode("", false);
    }
 
    public void collapseSelection(boolean collapseToStart)
@@ -346,6 +348,26 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       return getSession().getLine(row);
    }
 
+   public void replaceCode(String code)
+   {
+      int endRow, endCol;
+
+      endRow = getSession().getLength() - 1;
+      if (endRow < 0)
+      {
+         endRow = 0;
+         endCol = 0;
+      }
+      else
+      {
+         endCol = getSession().getLine(endRow).length();
+      }
+
+      Range range = Range.fromPoints(Position.create(0, 0),
+                                     Position.create(endRow, endCol));
+      getSession().replace(range, code);
+   }
+
    public void replaceSelection(String code)
    {
       Range selRange = getSession().getSelection().getRange();
@@ -372,16 +394,6 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
    public ChangeTracker getChangeTracker()
    {
       return new EventBasedChangeTracker<Void>(this);
-   }
-
-   public void markScrollPosition()
-   {
-      //To change body of implemented methods use File | Settings | File Templates.
-   }
-
-   public void restoreScrollPosition()
-   {
-      //To change body of implemented methods use File | Settings | File Templates.
    }
 
    public void fitSelectionToLines(boolean expand)

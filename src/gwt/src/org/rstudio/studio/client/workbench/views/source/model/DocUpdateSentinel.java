@@ -402,9 +402,7 @@ public class DocUpdateSentinel
                      SourceDocument response)
                {
                   sourceDoc_ = response;
-                  docDisplay_.markScrollPosition();
-                  docDisplay_.setCode(sourceDoc_.getContents());
-                  docDisplay_.restoreScrollPosition();
+                  docDisplay_.setCode(sourceDoc_.getContents(), true);
                   dirtyState_.setValue(false, true);
 
                   if (progress_ != null)

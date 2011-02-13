@@ -180,13 +180,7 @@ public class FindReplace
          }
          result.append(code, pos, code.length());
 
-         Selection selection = editor_.getSession().getSelection();
-         int row = selection.getRange().getStart().getRow();
-         editor_.markScrollPosition();
-         selection.selectAll();
-         editor_.replaceSelection(result.toString());
-         selection.moveCursorTo(row, 0, false);
-         editor_.restoreScrollPosition();
+         editor_.replaceCode(result.toString());
       }
       globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
                                  "Find/Replace",

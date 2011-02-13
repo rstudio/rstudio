@@ -85,7 +85,7 @@ public class EditDialog extends ModalDialogBase
       Widget editWidget = editor_.getWidget();
       editWidget.setSize(editorSize.width + "px", editorSize.height + "px");
 
-      editor_.setCode(sourceText_);
+      editor_.setCode(sourceText_, false);
       editor_.setFileType(FileTypeRegistry.R);
 
       // return the editor

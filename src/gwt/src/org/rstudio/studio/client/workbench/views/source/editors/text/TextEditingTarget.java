@@ -113,7 +113,7 @@ public class TextEditingTarget implements EditingTarget
 
       void setFileType(TextFileType fileType);
       String getCode();
-      void setCode(String code);
+      void setCode(String code, boolean preserveCursorPosition);
       void insertCode(String code, boolean blockMode);
       void focus();
       void print();
@@ -122,9 +122,6 @@ public class TextEditingTarget implements EditingTarget
       void replaceSelection(String code);
       boolean moveSelectionToNextLine();
       ChangeTracker getChangeTracker();
-
-      void markScrollPosition();
-      void restoreScrollPosition();
 
       void fitSelectionToLines(boolean expand);
       int getSelectionOffset(boolean start);
@@ -244,7 +241,7 @@ public class TextEditingTarget implements EditingTarget
             events_);
 
       name_.setValue(getNameFromDocument(document, defaultNameProvider), true);
-      docDisplay_.setCode(document.getContents());
+      docDisplay_.setCode(document.getContents(), false);
 
       // Initialize sourceOnSave, and keep it in sync
       view_.getSourceOnSave().setValue(document.sourceOnSave(), false);
