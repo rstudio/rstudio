@@ -41,9 +41,7 @@ cd ../linux
 # desktop dependencies (qt)
 if [ "$1" != "--server-only" ]
 then
-   sudo zypper --non-interactive in libqt4-devel
-   sudo zypper --non-interactive in libQtWebKit-devel
-   sudo zypper --non-interactive in qt-creator
+   ./install-qt-sdk
 fi
 
 

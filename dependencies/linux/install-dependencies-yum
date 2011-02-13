@@ -42,8 +42,7 @@ cd ../linux
 # desktop dependencies (qt)
 if [ "$1" != "--server-only" ]
 then
-   sudo yum -y install qt4-devel
-   sudo yum -y install qt-creator
+   ./install-qt-sdk
 fi
 
 

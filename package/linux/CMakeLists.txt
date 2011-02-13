@@ -16,18 +16,7 @@ if (NOT PACKAGE_ARCHITECTURE)
 endif()
 
 # configuration specific
-if(RSTUDIO_DESKTOP)
-
-  set(RSTUDIO_DEBIAN_DEPENDS "libqtcore4 (>= 4.6.0),
-                              libqtgui4 (>= 4.6.0),
-                              libqt4-network (>= 4.6.0),
-                              libqt4-webkit (>= 4.6.0),")
-
-  set(RSTUDIO_RPM_DEPENDS "qt4-core (>= 4.6.0),
-                           qt4-gui (>= 4.6.0),
-                           qt4-network (>= 4.6.0),
-                           qt4-webkit (>= 4.6.0),")
-elseif(RSTUDIO_SERVER)
+if(RSTUDIO_SERVER)
 
   # package name
   set(CPACK_PACKAGE_NAME "rstudio-server")
