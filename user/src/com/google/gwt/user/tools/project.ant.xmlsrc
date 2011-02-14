@@ -57,6 +57,8 @@
       <classpath>
         <pathelement location="@srcFolder"/>
         <path refid="project.class.path"/>
+        <pathelement location="@gwtValidationPath" />
+        <pathelement location="@gwtValidationSourcesPath" />
       </classpath>
       <jvmarg value="-Xmx256M"/>
       <arg value="-startupUrl"/>
@@ -89,6 +91,8 @@
         <pathelement location="@srcFolder" />
         <pathelement location="@testFolder" />
         <path refid="project.class.path" />
+        <pathelement location="@gwtValidationPath" />
+        <pathelement location="@gwtValidationSourcesPath" />
         <pathelement location="@junitJar" />
       </classpath>
       <batchtest todir="reports/htmlunit.dev" >
@@ -111,6 +115,8 @@
         <pathelement location="@srcFolder" />
         <pathelement location="@testFolder" />
         <path refid="project.class.path" />
+        <pathelement location="@gwtValidationPath" />
+        <pathelement location="@gwtValidationSourcesPath" />
         <pathelement location="@junitJar" />
       </classpath>
       <batchtest todir="reports/htmlunit.prod" >
