@@ -47,4 +47,8 @@ public class Renderer extends JavaScriptObject
    public native final void onResize(boolean force) /*-{
       this.onResize(force);
    }-*/;
+
+   public native final void setHScrollBarAlwaysVisible(boolean on) /*-{
+      this.setHScrollBarAlwaysVisible(on);
+   }-*/;
 }
