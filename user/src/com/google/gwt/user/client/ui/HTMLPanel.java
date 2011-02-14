@@ -42,6 +42,28 @@ public class HTMLPanel extends ComplexPanel {
   }
 
   /**
+   * Creates an HTML panel that wraps an existing element.
+   * 
+   * This element must already be attached to the document. If the element is
+   * removed from the document, you must call
+   * {@link RootPanel#detachNow(Widget)}.
+   * 
+   * @param element the element to be wrapped
+   */
+  public static HTMLPanel wrap(Element element) {
+    // Assert that the element is attached.
+    assert Document.get().getBody().isOrHasChild(element);
+
+    HTMLPanel html = new HTMLPanel(element);
+
+    // Mark it attached and remember it for cleanup.
+    html.onAttach();
+    RootPanel.detachOnWindowClose(html);
+
+    return html;
+  }
+
+  /**
    * Creates an HTML panel with the specified HTML contents inside a DIV
    * element. Any element within this HTML that has a specified id can contain a
    * child widget.
@@ -100,7 +122,16 @@ public class HTMLPanel extends ComplexPanel {
     setElement(scratchDiv.getFirstChildElement());
     getElement().removeFromParent();
   }
-  
+
+  /**
+   * Construct a new {@link HTMLPanel} with the specified element.
+   *  
+   * @param elem the element at the root of the panel
+   */
+  private HTMLPanel(Element elem) {
+    setElement(elem);
+  }
+
   /**
    * Adds a child widget to the panel.
    * 

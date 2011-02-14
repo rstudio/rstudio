@@ -151,6 +151,18 @@ public class ElementWrappingTest extends GWTTestCase {
   }
 
   /**
+   * Tests {@link HTMLPanel#wrap(Element)}.
+   */
+  public void testHTMLPanel() {
+    ensureDiv().setInnerHTML("<div id='foo'>my<div id='bar'>HTML</div></div>");
+    Element bar = Document.get().getElementById("bar");
+    HTMLPanel html = HTMLPanel.wrap(Document.get().getElementById("foo"));
+
+    assertExistsAndAttached(html);
+    assertTrue(html.getElement().isOrHasChild(bar));
+  }  
+
+  /**
    * Tests {@link Image#wrap(Element)}.
    */
   public void testImage() {
