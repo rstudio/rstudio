@@ -41,7 +41,7 @@ rm -rf $BUILD_DIR/_CPack_Packages
 cmake -DRSTUDIO_TARGET=$1 \
       -DCMAKE_BUILD_TYPE=Release \
       -DRSTUDIO_PAM_AUTH=1 \
-      -DCMAKE_INSTALL_PREFIX=/usr/bin/$INSTALL_DIR \
+      -DCMAKE_INSTALL_PREFIX=/usr/lib/$INSTALL_DIR \
       ../../..
 
 make
