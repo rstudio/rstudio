@@ -29,8 +29,6 @@ import com.google.gwt.i18n.shared.DirectionEstimator;
 import com.google.gwt.i18n.shared.HasDirectionEstimator;
 import com.google.gwt.i18n.shared.WordCountDirectionEstimator;
 
-import java.util.ArrayList;
-
 /**
  * A widget that presents a list of choices to the user, either as a list box or
  * as a drop-down list.
@@ -78,6 +76,12 @@ import java.util.ArrayList;
  *  &lt;/g:item>
  * &lt;/g:ListBox>
  * </pre>
+ * <p>
+ * <h3>Important usage note</h3>
+ * <b>Subclasses should neither read nor write option text directly from the
+ * option elements created by this class, since such text may need to be wrapped
+ * in Unicode bidi formatting characters. They can use the getOptionText and/or
+ * setOptionText methods for this purpose instead.</b>
  */
 @SuppressWarnings("deprecation")
 public class ListBox extends FocusWidget implements SourcesChangeEvents,
@@ -86,6 +90,8 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   public static final DirectionEstimator DEFAULT_DIRECTION_ESTIMATOR =
     WordCountDirectionEstimator.get();
 
+  private static final String BIDI_ATTR_NAME = "bidiwrapped";
+  
   private static final int INSERT_AT_END = -1;
 
   /**
@@ -112,7 +118,6 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   }
 
   private DirectionEstimator estimator;
-  private ArrayList<String> itemTexts = new ArrayList<String>();
 
   /**
    * Creates an empty list box in single selection mode.
@@ -236,7 +241,7 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    */
   public String getItemText(int index) {
     checkIndex(index);
-    return itemTexts.get(index);
+    return getOptionText(getSelectElement().getOptions().getItem(index));
   }
 
   public String getName() {
@@ -340,14 +345,13 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   public void insertItem(String item, Direction dir, String value, int index) {
     SelectElement select = getSelectElement();
     OptionElement option = Document.get().createOptionElement();
-    option.setText(unicodeWrapIfNeeded(item, dir));
+    setOptionText(option, item, dir);
     option.setValue(value);
 
     int itemCount = select.getLength();
     if (index < 0 || index > itemCount) {
       index = itemCount;
     }
-    itemTexts.add(index, item);
     if (index == itemCount) {
       select.add(option, null);
     } else {
@@ -395,7 +399,6 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   public void removeItem(int index) {
     checkIndex(index);
     getSelectElement().remove(index);
-    itemTexts.remove(index);
   }
 
   /**
@@ -456,9 +459,7 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
     if (text == null) {
       throw new NullPointerException("Cannot set an option to have null text");
     }
-    getSelectElement().getOptions().getItem(index).setText(unicodeWrapIfNeeded(
-        text, dir));
-    itemTexts.set(index, text);
+    setOptionText(getSelectElement().getOptions().getItem(index), text, dir);
   }
 
   /**
@@ -522,6 +523,22 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   }
 
   /**
+   * Retrieves the text of an option element. If the text was set by
+   * {@link #setOptionText} and was wrapped with Unicode bidi formatting
+   * characters, also removes those additional formatting characters.
+   *  
+   * @param option an option element
+   * @return the element's text
+   */
+  protected String getOptionText(OptionElement option) {
+    String text = option.getText();
+    if (option.hasAttribute(BIDI_ATTR_NAME) && text.length() > 1) {
+      text = text.substring(1, text.length() - 1);
+    }
+    return text;
+  }
+
+  /**
    * <b>Affected Elements:</b>
    * <ul>
    * <li>-item# = the option at the specified index.</li>
@@ -541,6 +558,38 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
     }
   }
 
+  /**
+   * Sets the text of an option element. If the direction of the text is
+   * opposite to the page's direction, also wraps it with Unicode bidi
+   * formatting characters to prevent garbling, and indicates that this was done
+   * by setting the option's <code>BIDI_ATTR_NAME</code> custom attribute.
+   * 
+   * @param option an option element
+   * @param text text to be set to the element
+   * @param dir the text's direction. If {@code null} and direction estimation
+   *          is turned off, direction is ignored.
+   */
+  protected void setOptionText(OptionElement option, String text,
+      Direction dir) {
+    if (dir == null && estimator != null) {
+      dir = estimator.estimateDirection(text);
+    }
+    if (dir == null) {
+      option.setText(text);
+      option.removeAttribute(BIDI_ATTR_NAME);
+    } else {
+      String formattedText =
+          BidiFormatter.getInstanceForCurrentLocale().unicodeWrapWithKnownDir(
+          dir, text, false /* isHtml */, false /* dirReset */);
+      option.setText(formattedText);
+      if (formattedText.length() > text.length()) {
+        option.setAttribute(BIDI_ATTR_NAME, "");
+      } else {
+        option.removeAttribute(BIDI_ATTR_NAME);
+      }
+    }
+  }
+
   private void checkIndex(int index) {
     if (index < 0 || index >= getItemCount()) {
       throw new IndexOutOfBoundsException();
@@ -549,14 +598,5 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
 
   private SelectElement getSelectElement() {
     return getElement().cast();
-  }
-
-  private String unicodeWrapIfNeeded(String text, Direction dir) {
-    if (dir == null && estimator != null) {
-      dir = estimator.estimateDirection(text);
-    }
-    return dir == null ? text :
-        BidiFormatter.getInstanceForCurrentLocale().unicodeWrapWithKnownDir(dir,
-            text, false /* isHtml */, false /* dirReset */);
   }
 }
