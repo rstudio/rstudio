@@ -241,6 +241,29 @@ public abstract class HTMLTableTestBase extends GWTTestCase {
     formatter.setWidth(0, 2, "100%");
   }
 
+  public void testSetWidgetNull() {
+    HTMLTable t = getTable(1, 2);
+
+    // Set some text and a widget.
+    Label content = new Label("widget");
+    t.setText(0, 0, "hello world");
+    t.setWidget(0, 1, content);
+    assertEquals("hello world", t.getText(0, 0));
+    assertEquals(content, t.getWidget(0, 1));
+
+    // Set the text cell to a null widget.
+    t.setWidget(0, 0, null);
+    assertEquals("text should be cleared when the widget is set to null", "",
+        t.getText(0, 0));
+    assertEquals("widget should be cleared when set to null", content,
+        t.getWidget(0, 1));
+
+    // Set the widget cell to a null widget.
+    t.setWidget(0, 1, null);
+    assertEquals("", t.getText(0, 0));
+    assertNull(t.getWidget(0, 1));
+  }
+
   public void testSafeHtml() {
     HTMLTable table = getTable(1, 1);
     table.setHTML(0, 0, SafeHtmlUtils.fromSafeConstant(html));

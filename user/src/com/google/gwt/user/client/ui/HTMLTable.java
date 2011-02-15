@@ -1091,18 +1091,19 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    * within the Grid's bounding box.
    * </p>
    * 
-   * @param widget The widget to be added
+   * @param widget The widget to be added, or null to clear the cell
    * @param row the cell's row
    * @param column the cell's column
    * @throws IndexOutOfBoundsException
    */
   public void setWidget(int row, int column, Widget widget) {
     prepareCell(row, column);
+
+    // Removes any existing widget.
+    Element td = cleanCell(row, column, true);
+
     if (widget != null) {
       widget.removeFromParent();
-
-      // Removes any existing widget.
-      Element td = cleanCell(row, column, true);
 
       // Logical attach.
       widgetMap.put(widget);
