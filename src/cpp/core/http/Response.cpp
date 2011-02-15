@@ -163,7 +163,6 @@ void Response::setMovedPermanently(const http::Request& request, const std::stri
 {
    std::string uri = URL::complete(request.absoluteUri(), location);
    setError(http::status::MovedPermanently, uri);
-   setChromeFrameCompatible(request);
    setHeader("Location", uri);
 }
 
@@ -171,7 +170,6 @@ void Response::setMovedTemporarily(const http::Request& request, const std::stri
 {
    std::string uri = URL::complete(request.absoluteUri(), location);
    setError(http::status::MovedTemporarily, uri);
-   setChromeFrameCompatible(request);
    setHeader("Location", uri);
 }
    
