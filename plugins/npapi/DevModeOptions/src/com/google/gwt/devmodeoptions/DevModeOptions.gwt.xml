@@ -9,7 +9,7 @@
 
   <!-- TARGETING WEBKIT ONLY -->
   <set-property name='user.agent' value='safari' />
-  <add-linker name="xs" />
+  <add-linker name="xsiframe" />
 
   <!-- Specify the paths for translatable code                    -->
   <source path='client'/>
