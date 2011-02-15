@@ -161,6 +161,8 @@ class AnimationHelper
       if (endWidgetBottom_ != startWidgetBottom_)
          setParentZindex(startWidgetBottom_, -10);
       setParentZindex(endWidgetBottom_, 0);
+
+      panel_.onResize();
    }
 
    private static boolean focusGoesOnTop(LogicalWindow top, LogicalWindow bottom)
