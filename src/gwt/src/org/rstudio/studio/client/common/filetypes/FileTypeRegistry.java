@@ -84,6 +84,7 @@ public class FileTypeRegistry
       register("*.latex", TEX, icons.iconTex());
       register("*.sty", TEX, icons.iconTex());
       register("*.cls", TEX, icons.iconTex());
+      register("*.bbl", TEX, icons.iconTex());
       register("*.bib", TEXT, icons.iconText());
       register("*.rd", RD, icons.iconTex());
       register("*.rdata", RDATA, icons.iconRdata());
