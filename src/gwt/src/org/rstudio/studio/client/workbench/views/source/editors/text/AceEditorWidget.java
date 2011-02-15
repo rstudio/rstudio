@@ -14,7 +14,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -25,6 +24,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
@@ -71,6 +71,8 @@ public class AceEditorWidget extends Composite
       onResize();
       fireEvent(new EditorLoadedEvent());
 
+      int delayMs = initToEmptyString_ ? 100 : 500;
+
       // On Windows desktop sometimes we inexplicably end up at the wrong size
       // if the editor is being resized while it's loading (such as when a new
       // document is created while the source pane is hidden)
@@ -83,7 +85,7 @@ public class AceEditorWidget extends Composite
             removeStyleName("loading");
             return false;
          }
-      }, 500);
+      }, delayMs);
    }
 
    public void onResize()
@@ -99,6 +101,7 @@ public class AceEditorWidget extends Composite
 
    public void setCode(String code)
    {
+      initToEmptyString_ = StringUtil.notNull(code).length() == 0;
       editor_.getSession().setValue(code);
    }
 
@@ -138,4 +141,5 @@ public class AceEditorWidget extends Composite
    }
 
    private final AceEditorNative editor_;
+   private boolean initToEmptyString_ = true;
 }
