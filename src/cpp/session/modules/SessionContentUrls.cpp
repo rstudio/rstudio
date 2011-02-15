@@ -144,9 +144,6 @@ void handleContentRequest(const http::Request& request, http::Response* pRespons
    // set private cache forever headers
    pResponse->setPrivateCacheForeverHeaders();
 
-   // set chrome frame compatible
-   pResponse->setChromeFrameCompatible(request);
-
    // set file
    pResponse->setFile(contentFilePath, request);
 

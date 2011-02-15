@@ -100,12 +100,6 @@ void Response::setNoCacheHeaders()
              "no-cache, no-store, max-age=0, must-revalidate");
 }
 
-void Response::setChromeFrameCompatible(const Request& request)
-{
-	if (boost::algorithm::contains(request.userAgent(), "chromeframe"))
-		 setHeader("X-UA-Compatible", "chrome=1");
-}
-
 void Response::addCookie(const Cookie& cookie) 
 {
 	addHeader("Set-Cookie", cookie.cookieHeaderValue()) ;
@@ -119,8 +113,7 @@ Error Response::setBody(const std::string& content)
 }
 
 void Response::setDynamicHtml(const std::string& html,
-                              const Request& request,
-                              bool chromeFrameCompatible)
+                              const Request& request)
 {
    // dynamic html
    setContentType("text/html");
@@ -129,10 +122,6 @@ void Response::setDynamicHtml(const std::string& html,
    // gzip if possible
    if (request.acceptsEncoding(kGzipEncoding))
       setContentEncoding(kGzipEncoding);
-
-   // chrome frame compatible if requested
-   if (chromeFrameCompatible)
-      setChromeFrameCompatible(request);
 
    // set body
    setBody(html);

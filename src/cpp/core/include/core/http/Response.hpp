@@ -105,8 +105,6 @@ public:
    void setCacheForeverHeaders();
    void setPrivateCacheForeverHeaders();
    void setNoCacheHeaders();
-
-	void setChromeFrameCompatible(const Request& request);
    
    void addCookie(const Cookie& cookie) ;
    
@@ -232,9 +230,7 @@ public:
       return setBody(ifs, filter, buffSize);   
    }
 
-   void setDynamicHtml(const std::string& html,
-                       const Request& request,
-                       bool chromeFrameCompatible = true);
+   void setDynamicHtml(const std::string& html, const Request& request);
    
    void setFile(const FilePath& filePath, const Request& request)
    {
