@@ -25,7 +25,7 @@
   <property name="gwt.extra.args" value=""/>
   <property name="gwt.main.module" value="org.rstudio.studio.RStudio"/>
   <property name="ace.bin" value="src/org/rstudio/studio/client/workbench/views/source/editors/text/ace"/>
-  <property name="json2.bin" value="src/org/rstudio/core/client/jsonrpc"/>
+  <property name="json2.bin" value="www/js"/>
 
   <path id="project.class.path">
     <pathelement location="bin"/>
