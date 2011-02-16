@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dom.client;
 
+import com.google.gwt.core.client.GWT;
+
 /**
  * A Document is the root of the HTML hierarchy and holds the entire content.
  * Besides providing access to the hierarchy, it also provides some convenience
@@ -23,12 +25,30 @@ package com.google.gwt.dom.client;
 public class Document extends Node {
 
   /**
+   * We cache Document.nativeGet() in DevMode, because crossing the JSNI
+   * boundary thousands of times just to read a constant value is slow. 
+   */
+  private static Document doc;
+  
+  /**
    * Gets the default document. This is the document in which the module is
    * running.
    * 
    * @return the default document
    */
-  public static native Document get() /*-{
+  public static Document get() {
+    if (GWT.isScript()) {
+      return nativeGet();
+    }
+    
+    // No need to be MT-safe. Single-threaded JS code.
+    if (doc == null) {
+      doc = nativeGet();
+    }
+    return doc;
+  }
+
+  private static native Document nativeGet() /*-{
     return $doc;
   }-*/;
 
