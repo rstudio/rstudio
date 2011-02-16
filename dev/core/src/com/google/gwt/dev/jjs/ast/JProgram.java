@@ -337,11 +337,6 @@ public class JProgram extends JNode {
 
   private final Map<JMethod, JMethod> instanceToStaticMap = new IdentityHashMap<JMethod, JMethod>();
 
-  /**
-   * The root intrinsic source info.
-   */
-  private final SourceInfo intrinsic;
-
   private IdentityHashMap<JReferenceType, JsonObject> castableTypeMaps;
 
   private JField nullField;
@@ -399,7 +394,6 @@ public class JProgram extends JNode {
         JProgram.class.getName())));
 
     this.correlator = correlator;
-    intrinsic = createSourceInfo(0, getClass().getName());
   }
 
   public void addEntryMethod(JMethod entryPoint) {
@@ -799,10 +793,6 @@ public class JProgram extends JNode {
 
   public String getClassLiteralName(JType type) {
     return type.getJavahSignatureName() + "_classLit";
-  }
-
-  public CorrelationFactory getCorrelator() {
-    return correlator;
   }
 
   public List<JDeclaredType> getDeclaredTypes() {

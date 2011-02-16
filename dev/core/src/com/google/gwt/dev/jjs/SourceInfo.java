@@ -18,8 +18,6 @@ package com.google.gwt.dev.jjs;
 import com.google.gwt.dev.jjs.Correlation.Axis;
 
 import java.io.Serializable;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Tracks file and line information for AST nodes.
@@ -32,52 +30,27 @@ public interface SourceInfo extends Serializable {
   void addCorrelation(Correlation c);
 
   /**
-   * Copy any Correlations from another SourceInfo node if there are no
-   * Correlations on this SourceInfo with the same Axis.
+   * Return the Correlation that has been set for a given Axis, or
+   * <code>null</code> if no Correlation has been set on the given axis.
    */
-  void copyMissingCorrelationsFrom(SourceInfo other);
+  Correlation getCorrelation(Axis axis);
 
   /**
-   * Returns all Correlations applied to this SourceInfo, its parent, additional
-   * ancestor SourceInfo, and any supertype SourceInfos.
+   * Returns the Correlations added along each Axis on which a Correlation has
+   * been set. Some entries may be null and should be ignored.
    */
-  List<Correlation> getAllCorrelations();
-
-  /**
-   * Returns all Correlations along a given axis applied to this SourceInfo, its
-   * parent, additional ancestor SourceInfo, and any supertype SourceInfos.
-   */
-  List<Correlation> getAllCorrelations(Axis axis);
+  Correlation[] getCorrelations();
 
   /**
    * Returns the correlation factory that created this node.
    */
-  CorrelationFactory getCorrelationFactory();
-  
+  CorrelationFactory getCorrelator();
+
   int getEndPos();
 
   String getFileName();
 
   SourceOrigin getOrigin();
-
-  /**
-   * Returns the first Correlation that had been set with a given Axis, or
-   * <code>null</code> if no Correlation has been set on the given axis.
-   */
-  Correlation getPrimaryCorrelation(Axis axis);
-
-  /**
-   * Returns the first Correlations added along each Axis on which a Correlation
-   * has been set.
-   */
-  Set<Correlation> getPrimaryCorrelations();
-
-  /**
-   * Returns the first Correlations added along each Axis on which a Correlation
-   * has been set. Some entries may be null and should be ignored. The returned
-   * array must not be modified.
-   */
-  Correlation[] getPrimaryCorrelationsArray();
 
   int getStartLine();
 
@@ -96,11 +69,4 @@ public interface SourceInfo extends Serializable {
    * Correlations from this node.
    */
   SourceInfo makeChild(SourceOrigin origin);
-
-  /**
-   * Add additional ancestor SourceInfos. These SourceInfo objects indicate that
-   * a merge-type operation took place or that the additional ancestors have a
-   * containment relationship with the SourceInfo.
-   */
-  void merge(SourceInfo... sourceInfos);
 }

@@ -144,7 +144,7 @@ public class JsoDevirtualizer {
     }
     newMethod.freezeParamTypes();
     newMethod.addThrownExceptions(objectMethod.getThrownExceptions());
-    sourceInfo.addCorrelation(program.getCorrelator().by(newMethod));
+    sourceInfo.addCorrelation(sourceInfo.getCorrelator().by(newMethod));
 
     // Build from bottom up.
     JMethodCall condition = new JMethodCall(sourceInfo, null,

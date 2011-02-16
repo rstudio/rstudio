@@ -19,12 +19,6 @@ import com.google.gwt.dev.jjs.Correlation.Axis;
 import com.google.gwt.dev.jjs.CorrelationFactory.RealCorrelationFactory;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Tracks file and line information for AST nodes.
@@ -33,16 +27,7 @@ import java.util.Set;
  */
 public class SourceInfoCorrelation implements SourceInfo, Serializable {
 
-  private static final int numCorrelationAxes = Axis.values().length;
-
-  private static int numCorrelationAxes() {
-    return numCorrelationAxes;
-  }
-
-  /**
-   * Any Correlation associated with the SourceInfo.
-   */
-  private final List<Correlation> allCorrelations;
+  private static final int NUM_AXES = Axis.values().length;
 
   /**
    * Holds the origin data for the SourceInfo.
@@ -50,79 +35,74 @@ public class SourceInfoCorrelation implements SourceInfo, Serializable {
   private final SourceOrigin origin;
 
   /**
+   * My parent node, or <code>null</code> if I have no parent.
+   */
+  private final SourceInfoCorrelation parent;
+
+  /**
    * Records the first Correlation on any given Axis applied to the SourceInfo.
    * Each index of this array corresponds to the Correlation.Axis with the same
    * ordinal().
    */
-  private final Correlation[] primaryCorrelations;
+  private Correlation[] primaryCorrelations = null;
 
   public SourceInfoCorrelation(SourceOrigin origin) {
     this.origin = origin;
-    allCorrelations = new ArrayList<Correlation>();
-    primaryCorrelations = new Correlation[numCorrelationAxes()];
+    this.parent = null;
   }
 
   private SourceInfoCorrelation(SourceInfoCorrelation parent,
       SourceOrigin origin) {
     this.origin = origin;
-    this.allCorrelations = new ArrayList<Correlation>(parent.allCorrelations);
-    primaryCorrelations = parent.primaryCorrelations.clone();
+    this.parent = parent;
   }
 
   /**
    * Add a Correlation to the SourceInfo.
    */
   public void addCorrelation(Correlation c) {
-    if (!isAlreadyInAllCorrelations(c)) {
-      allCorrelations.add(c);
+    if (primaryCorrelations == null) {
+      primaryCorrelations = new Correlation[NUM_AXES];
     }
-
     int index = c.getAxis().ordinal();
-    if (primaryCorrelations[index] == null) {
-      primaryCorrelations[index] = c;
-    }
+    primaryCorrelations[index] = c;
   }
 
-  /**
-   * Copy any Correlations from another SourceInfo node if there are no
-   * Correlations on this SourceInfo with the same Axis.
-   */
-  public void copyMissingCorrelationsFrom(SourceInfo other) {
-    EnumSet<Axis> toAdd = EnumSet.allOf(Axis.class);
-    for (Correlation c : allCorrelations) {
-      toAdd.remove(c.getAxis());
-    }
-
-    for (Correlation c : other.getAllCorrelations()) {
-      if (toAdd.contains(c.getAxis())) {
-        addCorrelation(c);
+  public Correlation getCorrelation(Axis axis) {
+    if (primaryCorrelations != null) {
+      Correlation c = primaryCorrelations[axis.ordinal()];
+      if (c != null) {
+        return c;
       }
     }
-  }
-
-  /**
-   * Returns all Correlations applied to this SourceInfo, its parent, additional
-   * ancestor SourceInfo, and any supertype SourceInfos.
-   */
-  public List<Correlation> getAllCorrelations() {
-    return allCorrelations;
-  }
-
-  /**
-   * Returns all Correlations along a given axis applied to this SourceInfo, its
-   * parent, additional ancestor SourceInfo, and any supertype SourceInfos.
-   */
-  public List<Correlation> getAllCorrelations(Axis axis) {
-    List<Correlation> toReturn = new ArrayList<Correlation>();
-    for (Correlation c : getAllCorrelations()) {
-      if (c.getAxis() == axis) {
-        toReturn.add(c);
-      }
+    if (parent != null) {
+      return parent.getCorrelation(axis);
     }
-    return toReturn;
+    return null;
   }
 
-  public CorrelationFactory getCorrelationFactory() {
+  public Correlation[] getCorrelations() {
+    if (parent == null) {
+      if (primaryCorrelations == null) {
+        return new Correlation[NUM_AXES];
+      } else {
+        return primaryCorrelations.clone();
+      }
+    } else {
+      Correlation[] result = parent.getCorrelations();
+      if (primaryCorrelations != null) {
+        for (int i = 0; i < NUM_AXES; ++i) {
+          Correlation c = primaryCorrelations[i];
+          if (c != null) {
+            result[i] = c;
+          }
+        }
+      }
+      return result;
+    }
+  }
+
+  public CorrelationFactory getCorrelator() {
     return RealCorrelationFactory.INSTANCE;
   }
 
@@ -138,32 +118,6 @@ public class SourceInfoCorrelation implements SourceInfo, Serializable {
     return origin;
   }
 
-  /**
-   * Returns the first Correlation that had been set with a given Axis, or
-   * <code>null</code> if no Correlation has been set on the given axis.
-   */
-  public Correlation getPrimaryCorrelation(Axis axis) {
-    return primaryCorrelations[axis.ordinal()];
-  }
-
-  /**
-   * Returns the first Correlations added along each Axis on which a Correlation
-   * has been set.
-   */
-  public Set<Correlation> getPrimaryCorrelations() {
-    HashSet<Correlation> toReturn = new HashSet<Correlation>();
-    for (Correlation c : primaryCorrelations) {
-      if (c != null) {
-        toReturn.add(c);
-      }
-    }
-    return toReturn;
-  }
-
-  public Correlation[] getPrimaryCorrelationsArray() {
-    return primaryCorrelations;
-  }
-
   public int getStartLine() {
     return getOrigin().getStartLine();
   }
@@ -172,12 +126,6 @@ public class SourceInfoCorrelation implements SourceInfo, Serializable {
     return getOrigin().getStartPos();
   }
 
-  /**
-   * If data accumulation is enabled, create a derived SourceInfo object that
-   * indicates that one or more AST nodes were merged to create a new node. The
-   * derived node will inherit its Origin and Correlations from the SourceInfo
-   * object on which the method is invoked.
-   */
   public SourceInfo makeChild() {
     return new SourceInfoCorrelation(this, this.origin);
   }
@@ -186,46 +134,8 @@ public class SourceInfoCorrelation implements SourceInfo, Serializable {
     return new SourceInfoCorrelation(this, origin);
   }
 
-  /**
-   * Add additional ancestor SourceInfos. These SourceInfo objects indicate that
-   * a merge-type operation took place or that the additional ancestors have a
-   * containment relationship with the SourceInfo.
-   */
-  public void merge(SourceInfo... sourceInfos) {
-    for (SourceInfo info : sourceInfos) {
-      if (this == info) {
-        continue;
-      }
-
-      for (Correlation c : info.getAllCorrelations()) {
-        if (!isAlreadyInAllCorrelations(c)) {
-          allCorrelations.add(c);
-        }
-      }
-
-      for (Correlation c : info.getPrimaryCorrelations()) {
-        int i = c.getAxis().ordinal();
-        if (primaryCorrelations[i] == null) {
-          primaryCorrelations[i] = c;
-        }
-      }
-    }
-  }
-
   @Override
   public String toString() {
     return origin.toString();
-  }
-
-  private boolean isAlreadyInAllCorrelations(Correlation c) {
-    // make sure this correlations is not yet in the allCorrelations list
-    boolean alreadyThere = false;
-    Iterator<Correlation> it = allCorrelations.iterator();
-    while ((alreadyThere == false) && (it.hasNext())) {
-      if (it.next().equals(c)) {
-        alreadyThere = true;
-      }
-    }
-    return alreadyThere;
   }
 }

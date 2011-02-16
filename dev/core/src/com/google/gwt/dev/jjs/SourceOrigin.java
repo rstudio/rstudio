@@ -21,10 +21,8 @@ import com.google.gwt.dev.util.StringInterner;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * Describes where a SourceInfo's node came from. This class currently includes
@@ -83,6 +81,8 @@ public class SourceOrigin implements SourceInfo {
     }
   });
 
+  private static final Correlation[] NO_CORRELATIONS = new Correlation[0];
+
   /**
    * Creates SourceOrigin nodes.
    */
@@ -127,9 +127,6 @@ public class SourceOrigin implements SourceInfo {
   public void addCorrelation(Correlation c) {
   }
 
-  public void copyMissingCorrelationsFrom(SourceInfo other) {
-  }
-
   @Override
   public boolean equals(Object o) {
     if (!(o instanceof SourceOrigin)) {
@@ -141,15 +138,15 @@ public class SourceOrigin implements SourceInfo {
         && fileName.equals(other.fileName);
   }
 
-  public List<Correlation> getAllCorrelations() {
-    return Collections.emptyList();
+  public Correlation getCorrelation(Axis axis) {
+    return null;
   }
 
-  public List<Correlation> getAllCorrelations(Axis axis) {
-    return Collections.emptyList();
+  public Correlation[] getCorrelations() {
+    return NO_CORRELATIONS;
   }
 
-  public CorrelationFactory getCorrelationFactory() {
+  public CorrelationFactory getCorrelator() {
     return DummyCorrelationFactory.INSTANCE;
   }
 
@@ -163,18 +160,6 @@ public class SourceOrigin implements SourceInfo {
 
   public SourceOrigin getOrigin() {
     return this;
-  }
-
-  public Correlation getPrimaryCorrelation(Axis axis) {
-    return null;
-  }
-
-  public Set<Correlation> getPrimaryCorrelations() {
-    return Collections.emptySet();
-  }
-
-  public Correlation[] getPrimaryCorrelationsArray() {
-    return new Correlation[0];
   }
 
   public int getStartLine() {
@@ -197,9 +182,6 @@ public class SourceOrigin implements SourceInfo {
 
   public SourceInfo makeChild(SourceOrigin origin) {
     return origin;
-  }
-
-  public void merge(SourceInfo... sourceInfos) {
   }
 
   @Override

@@ -252,7 +252,7 @@ public class JsParser {
 
       case TokenStream.STRING: {
         SourceInfo info = makeSourceInfoDistinct(node);
-        info.addCorrelation(info.getCorrelationFactory().by(Literal.STRING));
+        info.addCorrelation(info.getCorrelator().by(Literal.STRING));
         return new JsStringLiteral(info, node.getString());
       }
 

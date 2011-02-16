@@ -187,7 +187,7 @@ public class StoryRecorder {
       // Possibly create and record Members
       if (!sourceInfoSeen.contains(info)) {
         sourceInfoSeen.add(info);
-        for (Correlation c : info.getPrimaryCorrelationsArray()) {
+        for (Correlation c : info.getCorrelations()) {
           if (c == null) {
             continue;
           }
@@ -345,7 +345,7 @@ public class StoryRecorder {
     if (!storyCache.containsKey(info)) {
       SortedSet<Member> members = new TreeSet<Member>(
           Member.TYPE_AND_SOURCE_NAME_COMPARATOR);
-      for (Correlation c : info.getAllCorrelations()) {
+      for (Correlation c : info.getCorrelations()) {
         Member m = membersByCorrelation.get(c);
         if (m != null) {
           members.add(m);
@@ -353,7 +353,7 @@ public class StoryRecorder {
       }
 
       String literalType = null;
-      Correlation literalCorrelation = info.getPrimaryCorrelation(Axis.LITERAL);
+      Correlation literalCorrelation = info.getCorrelation(Axis.LITERAL);
       if (literalCorrelation != null) {
         literalType = literalCorrelation.getLiteral().getDescription();
       }

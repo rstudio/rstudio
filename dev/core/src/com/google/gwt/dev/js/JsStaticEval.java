@@ -646,7 +646,6 @@ public class JsStaticEval {
           StringBuilder result = new StringBuilder();
           if (appendLiteral(result, (JsValueLiteral) arg1)
               && appendLiteral(result, (JsValueLiteral) arg2)) {
-            info.merge(arg1.getSourceInfo(), arg2.getSourceInfo());
             ctx.replaceMe(new JsStringLiteral(info, result.toString()));
           }
         }

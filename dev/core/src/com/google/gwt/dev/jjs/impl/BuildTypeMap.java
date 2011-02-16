@@ -21,6 +21,7 @@ import com.google.gwt.dev.jdt.SafeASTVisitor;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
@@ -227,7 +228,7 @@ public class BuildTypeMap {
         JMethod newMethod = processMethodBinding(b, enclosingType, info);
         SourceInfo methodInfo = makeSourceInfo(methodDeclaration, newMethod);
         mapParameters(newMethod, methodDeclaration, methodInfo);
-        info.addCorrelation(program.getCorrelator().by(newMethod));
+        info.addCorrelation(info.getCorrelator().by(newMethod));
 
         if (newMethod.isNative()) {
           processNativeMethod(methodDeclaration, info, enclosingType, newMethod);
@@ -262,7 +263,7 @@ public class BuildTypeMap {
       JField field = program.createEnumField(info,
           String.valueOf(binding.name), (JEnumType) enclosingType,
           (JClassType) type, binding.original().id);
-      info.addCorrelation(program.getCorrelator().by(field));
+      info.addCorrelation(info.getCorrelator().by(field));
       typeMap.put(binding, field);
       return field;
     }
@@ -294,28 +295,22 @@ public class BuildTypeMap {
         HasSourceInfo enclosing) {
       int startLine = Util.getLineNumber(methodDecl.sourceStart,
           currentSeparatorPositions, 0, currentSeparatorPositions.length - 1);
-      SourceInfo toReturn = program.createSourceInfo(methodDecl.sourceStart,
+      SourceOrigin toReturn = SourceOrigin.create(methodDecl.sourceStart,
           methodDecl.bodyEnd, startLine, currentFileName);
-
-      // The SourceInfo will inherit Correlations from its enclosing object
       if (enclosing != null) {
-        toReturn.copyMissingCorrelationsFrom(enclosing.getSourceInfo());
+        return enclosing.getSourceInfo().makeChild(toReturn);
       }
-
       return toReturn;
     }
 
     private SourceInfo makeSourceInfo(Statement stmt, HasSourceInfo enclosing) {
       int startLine = Util.getLineNumber(stmt.sourceStart,
           currentSeparatorPositions, 0, currentSeparatorPositions.length - 1);
-      SourceInfo toReturn = program.createSourceInfo(stmt.sourceStart,
+      SourceOrigin toReturn = SourceOrigin.create(stmt.sourceStart,
           stmt.sourceEnd, startLine, currentFileName);
-
-      // The SourceInfo will inherit Correlations from its enclosing object
       if (enclosing != null) {
-        toReturn.copyMissingCorrelationsFrom(enclosing.getSourceInfo());
+        return enclosing.getSourceInfo().makeChild(toReturn);
       }
-
       return toReturn;
     }
 
@@ -581,9 +576,10 @@ public class BuildTypeMap {
     }
   }
 
-  private JDeclaredType createExternalType(String name,
-      ReferenceBinding binding) {
-    SourceInfo sourceInfo = makeBinarySourceInfo(binding, program);
+  private JDeclaredType createExternalType(String name, ReferenceBinding binding) {
+    char[] chars = binding.getFileName();
+    String fileName = chars == null ? "" : String.valueOf(chars);
+    SourceInfo sourceInfo = SourceOrigin.create(0, fileName);
     JDeclaredType type = createType(name, sourceInfo, binding);
     typeMap.put(binding, type);
     return type;
@@ -613,7 +609,7 @@ public class BuildTypeMap {
     JField field = program.createField(info, String.valueOf(binding.name),
         enclosingType, type, binding.isStatic(), disposition);
     typeMap.put(binding, field);
-    info.addCorrelation(program.getCorrelator().by(field));
+    info.addCorrelation(info.getCorrelator().by(field));
     return field;
   }
 
@@ -623,7 +619,7 @@ public class BuildTypeMap {
     SourceInfo info = enclosingType.getSourceInfo().makeChild();
     JField field = program.createField(info, String.valueOf(binding.name),
         enclosingType, type, false, disposition);
-    info.addCorrelation(program.getCorrelator().by(field));
+    info.addCorrelation(info.getCorrelator().by(field));
     if (binding.matchingField != null) {
       typeMap.put(binding.matchingField, field);
     }
@@ -709,7 +705,7 @@ public class BuildTypeMap {
           "ReferenceBinding is not a class, interface, or enum.");
     }
 
-    info.addCorrelation(program.getCorrelator().by(newType));
+    info.addCorrelation(info.getCorrelator().by(newType));
 
     /**
      * We emulate static initializers and instance initializers as methods.
@@ -722,7 +718,7 @@ public class BuildTypeMap {
         program.getTypeVoid(), false, true, true, true, false);
     clinit.freezeParamTypes();
     clinit.setSynthetic();
-    child.addCorrelation(program.getCorrelator().by(clinit));
+    child.addCorrelation(info.getCorrelator().by(clinit));
 
     if (newType instanceof JClassType) {
       child = info.makeChild();
@@ -730,7 +726,7 @@ public class BuildTypeMap {
           program.getTypeVoid(), false, false, true, true, false);
       init.freezeParamTypes();
       init.setSynthetic();
-      child.addCorrelation(program.getCorrelator().by(init));
+      child.addCorrelation(info.getCorrelator().by(init));
     }
 
     newType.setExternal(linker.isExternalType(newType.getName()));
@@ -778,13 +774,6 @@ public class BuildTypeMap {
     return type;
   }
 
-  private SourceInfo makeBinarySourceInfo(ReferenceBinding typeBinding,
-      JProgram program) {
-    char[] chars = typeBinding.getFileName();
-    String fileName = chars == null ? "" : String.valueOf(chars);
-    return program.createSourceInfo(-1, fileName);
-  }
-
   private void mapParameters(JMethod method, AbstractMethodDeclaration x,
       SourceInfo info) {
     MethodBinding b = x.binding;
@@ -824,7 +813,7 @@ public class BuildTypeMap {
         assert (type.getMethods().get(2) == getClassMethod);
         getClassMethod.freezeParamTypes();
         getClassMethod.setSynthetic();
-        info.addCorrelation(program.getCorrelator().by(getClassMethod));
+        info.addCorrelation(info.getCorrelator().by(getClassMethod));
       }
 
       if (binding.isNestedType() && !binding.isStatic()
@@ -943,7 +932,7 @@ public class BuildTypeMap {
 
     addThrownExceptions(b, newCtor);
 
-    info.addCorrelation(program.getCorrelator().by(newCtor));
+    info.addCorrelation(info.getCorrelator().by(newCtor));
 
     if (declaringClass.isNestedType() && !declaringClass.isStatic()) {
       // add synthetic args for locals

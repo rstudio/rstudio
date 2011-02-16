@@ -223,7 +223,7 @@ public class ResolveRebinds {
         program.getTypeJavaLangObject().getNonNull(), false, true, true, false,
         false);
     toReturn.freezeParamTypes();
-    info.addCorrelation(program.getCorrelator().by(toReturn));
+    info.addCorrelation(info.getCorrelator().by(toReturn));
     rebindMethods.put(requestType, toReturn);
 
     // Used in the return statement at the end

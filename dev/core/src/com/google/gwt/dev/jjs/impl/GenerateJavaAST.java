@@ -2126,7 +2126,7 @@ public class GenerateJavaAST {
       }
       addThrownExceptions(jdtBridgeMethod, bridgeMethod);
       bridgeMethod.freezeParamTypes();
-      info.addCorrelation(program.getCorrelator().by(bridgeMethod));
+      info.addCorrelation(info.getCorrelator().by(bridgeMethod));
 
       // create a call
       JMethodCall call = new JMethodCall(info, new JThisRef(info, clazz),
@@ -2472,13 +2472,10 @@ public class GenerateJavaAST {
     private SourceInfo makeSourceInfo(Statement x) {
       int startLine = Util.getLineNumber(x.sourceStart,
           currentSeparatorPositions, 0, currentSeparatorPositions.length - 1);
-      SourceInfo toReturn = program.createSourceInfo(x.sourceStart,
-          x.sourceEnd, startLine, currentFileName);
-      if (currentClass != null) {
-        toReturn.copyMissingCorrelationsFrom(currentClass.getSourceInfo());
-      }
+      SourceOrigin toReturn = SourceOrigin.create(x.sourceStart, x.sourceEnd,
+          startLine, currentFileName);
       if (currentMethod != null) {
-        toReturn.copyMissingCorrelationsFrom(currentMethod.getSourceInfo());
+        return currentMethod.getSourceInfo().makeChild(toReturn);
       }
       return toReturn;
     }
@@ -2859,12 +2856,12 @@ public class GenerateJavaAST {
         SourceInfo typeInfo = type.getSourceInfo().makeChild();
         JClassType mapClass = program.createClass(typeInfo, type.getName()
             + "$Map", false, true);
-        typeInfo.addCorrelation(program.getCorrelator().by(mapClass));
+        typeInfo.addCorrelation(typeInfo.getCorrelator().by(mapClass));
         mapClass.setSuperClass(program.getTypeJavaLangObject());
         SourceInfo fieldInfo = typeInfo.makeChild();
         mapField = program.createField(fieldInfo, "$MAP", mapClass,
             program.getJavaScriptObject(), true, Disposition.FINAL);
-        fieldInfo.addCorrelation(program.getCorrelator().by(mapField));
+        fieldInfo.addCorrelation(fieldInfo.getCorrelator().by(mapField));
 
         SourceInfo methodInfo = typeInfo.makeChild();
         JMethodCall call = new JMethodCall(methodInfo, null,
@@ -2876,7 +2873,7 @@ public class GenerateJavaAST {
         JMethod clinit = program.createMethod(methodInfo, "$clinit", mapClass,
             program.getTypeVoid(), false, true, true, true, false);
         clinit.freezeParamTypes();
-        methodInfo.addCorrelation(program.getCorrelator().by(clinit));
+        methodInfo.addCorrelation(methodInfo.getCorrelator().by(clinit));
         JBlock clinitBlock = ((JMethodBody) clinit.getBody()).getBlock();
         clinitBlock.addStmt(declStmt);
         mapField.setInitializer(declStmt);
@@ -2907,7 +2904,7 @@ public class GenerateJavaAST {
         JArrayType enumArrayType = program.getTypeArray(type);
         valuesField = program.createField(fieldInfo, "$VALUES", type,
             enumArrayType, true, Disposition.FINAL);
-        fieldInfo.addCorrelation(program.getCorrelator().by(valuesField));
+        fieldInfo.addCorrelation(fieldInfo.getCorrelator().by(valuesField));
         List<JExpression> initializers = new ArrayList<JExpression>();
         for (JEnumField field : type.getEnumList()) {
           JFieldRef fieldRef = new JFieldRef(fieldInfo, null, field, type);

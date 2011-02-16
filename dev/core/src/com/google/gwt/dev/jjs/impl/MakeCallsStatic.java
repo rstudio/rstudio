@@ -173,7 +173,6 @@ public class MakeCallsStatic {
       originalParamTypes.add(enclosingType.getNonNull());
       originalParamTypes.addAll(x.getOriginalParamTypes());
       newMethod.setOriginalTypes(x.getOriginalReturnType(), originalParamTypes);
-      sourceInfo.addCorrelation(program.getCorrelator().by(newMethod));
 
       // Move the body of the instance method to the static method
       JAbstractMethodBody movedBody = x.getBody();
