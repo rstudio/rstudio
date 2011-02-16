@@ -16,6 +16,7 @@
 package com.google.gwt.requestfactory.rebind.model;
 
 import com.google.gwt.autobean.rebind.model.JBeanMethod;
+import com.google.gwt.autobean.shared.Splittable;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
@@ -29,6 +30,8 @@ import com.google.gwt.requestfactory.rebind.model.EntityProxyModel.Type;
 import com.google.gwt.requestfactory.rebind.model.RequestMethod.CollectionType;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.InstanceRequest;
+import com.google.gwt.requestfactory.shared.JsonRpcProxy;
+import com.google.gwt.requestfactory.shared.JsonRpcService;
 import com.google.gwt.requestfactory.shared.ProxyFor;
 import com.google.gwt.requestfactory.shared.ProxyForName;
 import com.google.gwt.requestfactory.shared.Request;
@@ -60,6 +63,10 @@ public class RequestFactoryModel {
         instanceRequestInterface.getSimpleSourceName());
   }
 
+  static String noSettersAllowed(JMethod found) {
+    return String.format("Optional setters not allowed here: ", found.getName());
+  }
+
   static String poisonedMessage() {
     return "Unable to create RequestFactoryModel model due to previous errors";
   }
@@ -71,6 +78,7 @@ public class RequestFactoryModel {
   private final JClassType instanceRequestInterface;
   private final JClassType listInterface;
   private final TreeLogger logger;
+  private final JClassType mapInterface;
   private final TypeOracle oracle;
   /**
    * This map prevents cyclic type dependencies from overflowing the stack.
@@ -81,10 +89,12 @@ public class RequestFactoryModel {
    */
   private final Map<JClassType, EntityProxyModel> peers = new LinkedHashMap<JClassType, EntityProxyModel>();
   private boolean poisoned;
-  private final JClassType setInterface;
   private final JClassType requestContextInterface;
   private final JClassType requestFactoryInterface;
   private final JClassType requestInterface;
+  private final JClassType setInterface;
+  private final JClassType splittableType;
+
   private final JClassType valueProxyInterface;
 
   public RequestFactoryModel(TreeLogger logger, JClassType factoryType)
@@ -96,10 +106,12 @@ public class RequestFactoryModel {
     entityProxyInterface = oracle.findType(EntityProxy.class.getCanonicalName());
     instanceRequestInterface = oracle.findType(InstanceRequest.class.getCanonicalName());
     listInterface = oracle.findType(List.class.getCanonicalName());
-    setInterface = oracle.findType(Set.class.getCanonicalName());
+    mapInterface = oracle.findType(Map.class.getCanonicalName());
     requestContextInterface = oracle.findType(RequestContext.class.getCanonicalName());
     requestFactoryInterface = oracle.findType(RequestFactory.class.getCanonicalName());
     requestInterface = oracle.findType(Request.class.getCanonicalName());
+    setInterface = oracle.findType(Set.class.getCanonicalName());
+    splittableType = oracle.findType(Splittable.class.getCanonicalName());
     valueProxyInterface = oracle.findType(ValueProxy.class.getCanonicalName());
 
     for (JMethod method : factoryType.getOverridableMethods()) {
@@ -165,9 +177,12 @@ public class RequestFactoryModel {
       JClassType contextType) throws UnableToCompleteException {
     Service serviceAnnotation = contextType.getAnnotation(Service.class);
     ServiceName serviceNameAnnotation = contextType.getAnnotation(ServiceName.class);
-    if (serviceAnnotation == null && serviceNameAnnotation == null) {
-      poison("RequestContext subtype %s is missing a @%s annotation",
-          contextType.getQualifiedSourceName(), Service.class.getSimpleName());
+    JsonRpcService jsonRpcAnnotation = contextType.getAnnotation(JsonRpcService.class);
+    if (serviceAnnotation == null && serviceNameAnnotation == null
+        && jsonRpcAnnotation == null) {
+      poison("RequestContext subtype %s is missing a @%s or @%s annotation",
+          contextType.getQualifiedSourceName(), Service.class.getSimpleName(),
+          JsonRpcService.class.getSimpleName());
       return;
     }
 
@@ -181,7 +196,8 @@ public class RequestFactoryModel {
       RequestMethod.Builder methodBuilder = new RequestMethod.Builder();
       methodBuilder.setDeclarationMethod(method);
 
-      if (!validateContextMethodAndSetDataType(methodBuilder, method)) {
+      if (!validateContextMethodAndSetDataType(methodBuilder, method,
+          jsonRpcAnnotation != null)) {
         continue;
       }
 
@@ -227,12 +243,12 @@ public class RequestFactoryModel {
       // Get the server domain object type
       ProxyFor proxyFor = entityProxyType.getAnnotation(ProxyFor.class);
       ProxyForName proxyForName = entityProxyType.getAnnotation(ProxyForName.class);
-      if (proxyFor == null && proxyForName == null) {
-        poison("The %s type does not have a @%s or @%s annotation",
+      JsonRpcProxy jsonRpcProxy = entityProxyType.getAnnotation(JsonRpcProxy.class);
+      if (proxyFor == null && proxyForName == null && jsonRpcProxy == null) {
+        poison("The %s type does not have a @%s, @%s, or @%s annotation",
             entityProxyType.getQualifiedSourceName(),
-            ProxyFor.class.getSimpleName(), ProxyForName.class.getSimpleName());
-        // early exit, because further processing causes NPEs in numerous spots
-        die(poisonedMessage());
+            ProxyFor.class.getSimpleName(), ProxyForName.class.getSimpleName(),
+            JsonRpcProxy.class.getSimpleName());
       }
 
       // Look at the methods declared on the EntityProxy
@@ -259,7 +275,8 @@ public class RequestFactoryModel {
                 propertyName, previouslySeen.getName(), method.getName());
           }
 
-        } else if (JBeanMethod.SET.matches(method)) {
+        } else if (JBeanMethod.SET.matches(method)
+            || JBeanMethod.SET_BUILDER.matches(method)) {
           transportedType = method.getParameters()[0].getType();
 
         } else if (name.equals("stableId")
@@ -293,7 +310,7 @@ public class RequestFactoryModel {
    * Examine a RequestContext method to see if it returns a transportable type.
    */
   private boolean validateContextMethodAndSetDataType(
-      RequestMethod.Builder methodBuilder, JMethod method)
+      RequestMethod.Builder methodBuilder, JMethod method, boolean allowSetters)
       throws UnableToCompleteException {
     JClassType requestReturnType = method.getReturnType().isInterface();
     JClassType invocationReturnType;
@@ -333,6 +350,17 @@ public class RequestFactoryModel {
           && paramsOk;
     }
 
+    // Validate any extra properties on the request type
+    for (JMethod maybeSetter : requestReturnType.getInheritableMethods()) {
+      if (JBeanMethod.SET.matches(maybeSetter)
+          || JBeanMethod.SET_BUILDER.matches(maybeSetter)) {
+        if (allowSetters) {
+          methodBuilder.addExtraSetter(maybeSetter);
+        } else {
+          poison(noSettersAllowed(maybeSetter));
+        }
+      }
+    }
     return validateTransportableType(methodBuilder, invocationReturnType, true);
   }
 
@@ -354,7 +382,8 @@ public class RequestFactoryModel {
       }
     }
 
-    if (ModelUtils.isValueType(oracle, transportedClass)) {
+    if (ModelUtils.isValueType(oracle, transportedClass)
+        || splittableType.equals(transportedClass)) {
       // Simple values, like Integer and String
       methodBuilder.setValueType(true);
     } else if (entityProxyInterface.isAssignableFrom(transportedClass)
@@ -383,6 +412,28 @@ public class RequestFactoryModel {
           collectionInterface, transportedClass)[0];
       methodBuilder.setCollectionElementType(elementType);
       validateTransportableType(methodBuilder, elementType, requireObject);
+    } else if (mapInterface.isAssignableFrom(transportedClass)) {
+      JParameterizedType parameterized = transportedClass.isParameterized();
+      if (parameterized == null) {
+        poison("Requests that return Maps must be parameterized");
+        return false;
+      }
+      if (mapInterface.equals(parameterized.getBaseType())) {
+        methodBuilder.setCollectionType(CollectionType.MAP);
+      } else {
+        poison("Requests that return maps may be declared with" + " %s only",
+            mapInterface.getQualifiedSourceName());
+        return false;
+      }
+      // Also record the element type in the method builder
+      JClassType[] params = ModelUtils.findParameterizationOf(mapInterface,
+          transportedClass);
+      JClassType keyType = params[0];
+      JClassType valueType = params[1];
+      methodBuilder.setMapKeyType(keyType);
+      methodBuilder.setMapValueType(valueType);
+      validateTransportableType(methodBuilder, keyType, requireObject);
+      validateTransportableType(methodBuilder, valueType, requireObject);
     } else {
       // Unknown type, fail
       poison("Invalid Request parameterization %s",

@@ -89,7 +89,7 @@ public class ValueCodex {
 
       @Override
       public Date decode(Class<?> clazz, String value) {
-        return new Date(Long.valueOf(value));
+        return StringQuoter.tryParseDate(value);
       }
 
       @Override

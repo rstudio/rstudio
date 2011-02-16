@@ -17,6 +17,11 @@ package com.google.gwt.requestfactory.rebind.model;
 
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
+import com.google.gwt.requestfactory.shared.JsonRpcWireName;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Represents a method declaration that causes data to be transported. This can
@@ -31,7 +36,19 @@ public class RequestMethod {
   public static class Builder {
     private RequestMethod toReturn = new RequestMethod();
 
+    public void addExtraSetter(JMethod method) {
+      if (toReturn.extraSetters == null) {
+        toReturn.extraSetters = new ArrayList<JMethod>();
+      }
+      toReturn.extraSetters.add(method);
+    }
+
     public RequestMethod build() {
+      if (toReturn.extraSetters == null) {
+        toReturn.extraSetters = Collections.emptyList();
+      } else {
+        toReturn.extraSetters = Collections.unmodifiableList(toReturn.extraSetters);
+      }
       try {
         return toReturn;
       } finally {
@@ -53,6 +70,17 @@ public class RequestMethod {
 
     public void setDeclarationMethod(JMethod declarationMethod) {
       toReturn.declarationMethod = declarationMethod;
+
+      JClassType returnClass = declarationMethod.getReturnType().isClassOrInterface();
+      JsonRpcWireName annotation = returnClass == null ? null
+          : returnClass.getAnnotation(JsonRpcWireName.class);
+      if (annotation == null) {
+        toReturn.operation = declarationMethod.getEnclosingType().getQualifiedBinaryName()
+            + "::" + declarationMethod.getName();
+      } else {
+        toReturn.operation = annotation.value();
+        toReturn.apiVersion = annotation.version();
+      }
     }
 
     public void setEntityType(EntityProxyModel entityType) {
@@ -61,6 +89,14 @@ public class RequestMethod {
 
     public void setInstanceType(EntityProxyModel instanceType) {
       toReturn.instanceType = instanceType;
+    }
+
+    public void setMapKeyType(JClassType elementType) {
+      toReturn.mapKeyType = elementType;
+    }
+
+    public void setMapValueType(JClassType elementType) {
+      toReturn.mapValueType = elementType;
     }
 
     public void setValueType(boolean valueType) {
@@ -72,19 +108,27 @@ public class RequestMethod {
    * Indicates the type of collection that a Request will return.
    */
   public enum CollectionType {
-    // NB: Intended to be extended with a MAP value
-    LIST, SET
+    LIST, SET, MAP
   }
 
+  private String apiVersion;
   private JClassType collectionElementType;
   private CollectionType collectionType;
+  private JClassType dataType;
   private JMethod declarationMethod;
   private EntityProxyModel entityType;
+  private List<JMethod> extraSetters = new ArrayList<JMethod>();
   private EntityProxyModel instanceType;
-  private JClassType dataType;
+  private String operation;
+  private JClassType mapValueType;
+  private JClassType mapKeyType;
   private boolean valueType;
 
   private RequestMethod() {
+  }
+
+  public String getApiVersion() {
+    return apiVersion;
   }
 
   /**
@@ -118,12 +162,28 @@ public class RequestMethod {
     return entityType;
   }
 
+  public List<JMethod> getExtraSetters() {
+    return extraSetters;
+  }
+
   /**
    * If the method is intended to be invoked on an instance of an EntityProxy,
    * returns the EntityProxyModel describing that type.
    */
   public EntityProxyModel getInstanceType() {
     return instanceType;
+  }
+
+  public JClassType getMapKeyType() {
+    return mapKeyType;
+  }
+
+  public JClassType getMapValueType() {
+    return mapValueType;
+  }
+
+  public String getOperation() {
+    return operation;
   }
 
   public boolean isCollectionType() {

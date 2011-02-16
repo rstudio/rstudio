@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2011 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,26 +15,34 @@
  */
 package com.google.gwt.requestfactory.shared.messages;
 
-import com.google.gwt.autobean.shared.AutoBean;
-import com.google.gwt.autobean.shared.AutoBeanFactory;
+import com.google.gwt.autobean.shared.AutoBean.PropertyName;
+import com.google.gwt.autobean.shared.Splittable;
+
+import java.util.Map;
 
 /**
- * The factory for creating RequestFactory wire messages.
+ * A JSON-RPC request payload.
  */
-public interface MessageFactory extends AutoBeanFactory {
-  AutoBean<ServerFailureMessage> failure();
+public interface JsonRpcRequest {
+  String getApiVersion();
 
-  AutoBean<IdMessage> id();
+  int getId();
 
-  AutoBean<InvocationMessage> invocation();
-  
-  AutoBean<JsonRpcRequest> jsonRpcRequest();
+  String getMethod();
 
-  AutoBean<OperationMessage> operation();
+  Map<String, Splittable> getParams();
 
-  AutoBean<RequestMessage> request();
+  @PropertyName("jsonrpc")
+  String getVersion();
 
-  AutoBean<ResponseMessage> response();
+  void setApiVersion(String version);
 
-  AutoBean<ViolationMessage> violation();
+  void setId(int id);
+
+  void setMethod(String method);
+
+  void setParams(Map<String, Splittable> params);
+
+  @PropertyName("jsonrpc")
+  void setVersion(String version);
 }

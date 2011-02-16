@@ -423,6 +423,17 @@ public class AutoBeanCodex {
   }
 
   /**
+   * Copy data from a {@link Splittable} into an AutoBean. Unset values in the
+   * Splittable will not nullify data that already exists in the AutoBean.
+   * 
+   * @param data the source data to copy
+   * @param bean the target AutoBean
+   */
+  public static void decodeInto(Splittable data, AutoBean<?> bean) {
+    new AutoBeanCodex(bean.getFactory()).doDecodeInto(data, bean);
+  }
+
+  /**
    * Encodes an AutoBean. The actual payload contents can be retrieved through
    * {@link Splittable#getPayload()}.
    * 

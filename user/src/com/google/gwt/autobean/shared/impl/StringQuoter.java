@@ -20,10 +20,24 @@ import com.google.gwt.autobean.shared.Splittable;
 
 import org.json.JSONObject;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 /**
  * This class has a super-source version with a client-only implementation.
  */
 public class StringQuoter {
+  private static final String ISO8601_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSz";
+  private static final DateFormat ISO8601 = new SimpleDateFormat(
+      ISO8601_PATTERN, Locale.getDefault());
+
+  private static final String RFC2822_PATTERN = "EEE, d MMM yyyy HH:mm:ss Z";
+  private static final DateFormat RFC2822 = new SimpleDateFormat(
+      RFC2822_PATTERN, Locale.getDefault());
+
   /**
    * Create a quoted JSON string.
    */
@@ -33,5 +47,28 @@ public class StringQuoter {
 
   public static Splittable split(String payload) {
     return JsonSplittable.create(payload);
+  }
+
+  /**
+   * Attempt to parse an ISO-8601 date format. May return {@code null} if the
+   * input cannot be parsed.
+   */
+  public static Date tryParseDate(String date) {
+    try {
+      return new Date(Long.parseLong(date));
+    } catch (NumberFormatException ignored) {
+    }
+    if (date.endsWith("Z")) {
+      date = date.substring(0, date.length() - 1) + "+0000";
+    }
+    try {
+      return ISO8601.parse(date);
+    } catch (ParseException ignored) {
+    }
+    try {
+      return RFC2822.parse(date);
+    } catch (ParseException ignored) {
+    }
+    return null;
   }
 }

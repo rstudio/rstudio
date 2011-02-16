@@ -24,6 +24,9 @@ import com.google.gwt.autobean.shared.AutoBeanUtils;
 import com.google.gwt.autobean.shared.AutoBeanVisitor;
 import com.google.gwt.autobean.shared.Splittable;
 import com.google.gwt.autobean.shared.ValueCodex;
+import com.google.gwt.autobean.shared.impl.EnumMap;
+import com.google.gwt.autobean.shared.impl.LazySplittable;
+import com.google.gwt.autobean.shared.impl.StringQuoter;
 import com.google.gwt.event.shared.UmbrellaException;
 import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.EntityProxy;
@@ -40,6 +43,7 @@ import com.google.gwt.requestfactory.shared.impl.posers.DatePoser;
 import com.google.gwt.requestfactory.shared.messages.IdMessage;
 import com.google.gwt.requestfactory.shared.messages.IdMessage.Strength;
 import com.google.gwt.requestfactory.shared.messages.InvocationMessage;
+import com.google.gwt.requestfactory.shared.messages.JsonRpcRequest;
 import com.google.gwt.requestfactory.shared.messages.MessageFactory;
 import com.google.gwt.requestfactory.shared.messages.OperationMessage;
 import com.google.gwt.requestfactory.shared.messages.RequestMessage;
@@ -63,6 +67,238 @@ import java.util.Set;
  */
 public class AbstractRequestContext implements RequestContext,
     EntityCodex.EntitySource {
+  /**
+   * Allows the payload dialect to be injected into the AbstractRequestContext
+   * without the caller needing to be concerned with how the implementation
+   * object is instantiated.
+   */
+  public enum Dialect {
+    STANDARD {
+      @Override
+      DialectImpl create(AbstractRequestContext context) {
+        return context.new StandardPayloadDialect();
+      }
+    },
+    JSON_RPC {
+      @Override
+      DialectImpl create(AbstractRequestContext context) {
+        return context.new JsonRpcPayloadDialect();
+      }
+    };
+    abstract DialectImpl create(AbstractRequestContext context);
+  }
+
+  interface DialectImpl {
+
+    void addInvocation(AbstractRequest<?> request);
+
+    String makePayload();
+
+    void processPayload(Receiver<Void> receiver, String payload);
+  }
+
+  class JsonRpcPayloadDialect implements DialectImpl {
+    /**
+     * Called by generated subclasses to enqueue a method invocation.
+     */
+    public void addInvocation(AbstractRequest<?> request) {
+      /*
+       * TODO(bobv): Support for multiple invocations per request needs to be
+       * ironed out. Once this is done, addInvocation() can be removed from the
+       * DialectImpl interface and restored to to AbstractRequestContext.
+       */
+      if (!invocations.isEmpty()) {
+        throw new RuntimeException(
+            "Only one invocation per request, pending backend support");
+      }
+      invocations.add(request);
+      for (Object arg : request.getRequestData().getOrderedParameters()) {
+        retainArg(arg);
+      }
+    }
+
+    public String makePayload() {
+      RequestData data = invocations.get(0).getRequestData();
+
+      AutoBean<JsonRpcRequest> bean = MessageFactoryHolder.FACTORY.jsonRpcRequest();
+      JsonRpcRequest request = bean.as();
+
+      request.setVersion("2.0");
+      request.setApiVersion(data.getApiVersion());
+      request.setId(payloadId++);
+
+      Map<String, Splittable> params = new HashMap<String, Splittable>();
+      for (Map.Entry<String, Object> entry : data.getNamedParameters().entrySet()) {
+        Object obj = entry.getValue();
+        Splittable value = encode(obj);
+        params.put(entry.getKey(), value);
+      }
+      if (data.getRequestResource() != null) {
+        params.put("resource", encode(data.getRequestResource()));
+      }
+      request.setParams(params);
+      request.setMethod(data.getOperation());
+
+      return AutoBeanCodex.encode(bean).getPayload();
+    }
+
+    public void processPayload(Receiver<Void> receiver, String payload) {
+      Splittable raw = StringQuoter.split(payload);
+
+      @SuppressWarnings("unchecked")
+      Receiver<Object> callback = (Receiver<Object>) invocations.get(0).getReceiver();
+
+      if (!raw.isNull("error")) {
+        Splittable error = raw.get("error");
+        ServerFailure failure = new ServerFailure(
+            error.get("message").asString());
+        fail(receiver, failure);
+        return;
+      }
+
+      Splittable result = raw.get("result");
+      @SuppressWarnings("unchecked")
+      Class<BaseProxy> target = (Class<BaseProxy>) invocations.get(0).getRequestData().getReturnType();
+
+      SimpleProxyId<BaseProxy> id = getRequestFactory().allocateId(target);
+      AutoBean<BaseProxy> bean = getRequestFactory().createProxy(target, id);
+      AutoBeanCodex.decodeInto(result, bean);
+
+      if (callback != null) {
+        callback.onSuccess(bean.as());
+      }
+      if (receiver != null) {
+        receiver.onSuccess(null);
+      }
+    }
+
+    Splittable encode(Object obj) {
+      Splittable value;
+      if (obj == null) {
+        return LazySplittable.NULL;
+      } else if (obj.getClass().isEnum()
+          && getRequestFactory() instanceof EnumMap) {
+        value = ValueCodex.encode(((EnumMap) getRequestFactory()).getToken((Enum<?>) obj));
+      } else if (ValueCodex.canDecode(obj.getClass())) {
+        value = ValueCodex.encode(obj);
+      } else {
+        // XXX user-provided implementation of interface?
+        value = AutoBeanCodex.encode(AutoBeanUtils.getAutoBean(obj));
+      }
+      return value;
+    }
+  }
+
+  class StandardPayloadDialect implements DialectImpl {
+
+    /**
+     * Called by generated subclasses to enqueue a method invocation.
+     */
+    public void addInvocation(AbstractRequest<?> request) {
+      invocations.add(request);
+      for (Object arg : request.getRequestData().getOrderedParameters()) {
+        retainArg(arg);
+      }
+    }
+
+    /**
+     * Assemble all of the state that has been accumulated in this context. This
+     * includes:
+     * <ul>
+     * <li>Diffs accumulated on objects passed to {@link #edit}.
+     * <li>Invocations accumulated as Request subtypes passed to
+     * {@link #addInvocation}.
+     * </ul>
+     */
+    public String makePayload() {
+      // Get the factory from the runtime-specific holder.
+      MessageFactory f = MessageFactoryHolder.FACTORY;
+
+      List<OperationMessage> operations = makePayloadOperations();
+      List<InvocationMessage> invocationMessages = makePayloadInvocations();
+
+      // Create the outer envelope message
+      AutoBean<RequestMessage> bean = f.request();
+      RequestMessage requestMessage = bean.as();
+      if (!invocationMessages.isEmpty()) {
+        requestMessage.setInvocations(invocationMessages);
+      }
+      if (!operations.isEmpty()) {
+        requestMessage.setOperations(operations);
+      }
+      return AutoBeanCodex.encode(bean).getPayload();
+    }
+
+    public void processPayload(final Receiver<Void> receiver, String payload) {
+      ResponseMessage response = AutoBeanCodex.decode(
+          MessageFactoryHolder.FACTORY, ResponseMessage.class, payload).as();
+      if (response.getGeneralFailure() != null) {
+        ServerFailureMessage failure = response.getGeneralFailure();
+        ServerFailure fail = new ServerFailure(failure.getMessage(),
+            failure.getExceptionType(), failure.getStackTrace(),
+            failure.isFatal());
+
+        fail(receiver, fail);
+        return;
+      }
+
+      // Process violations and then stop
+      if (response.getViolations() != null) {
+        Set<Violation> errors = new HashSet<Violation>();
+        for (ViolationMessage message : response.getViolations()) {
+          errors.add(new MyViolation(message));
+        }
+
+        violation(receiver, errors);
+        return;
+      }
+
+      // Process operations
+      processReturnOperations(response);
+
+      // Send return values
+      Set<Throwable> causes = null;
+      for (int i = 0, j = invocations.size(); i < j; i++) {
+        try {
+          if (response.getStatusCodes().get(i)) {
+            invocations.get(i).onSuccess(response.getInvocationResults().get(i));
+          } else {
+            ServerFailureMessage failure = AutoBeanCodex.decode(
+                MessageFactoryHolder.FACTORY, ServerFailureMessage.class,
+                response.getInvocationResults().get(i)).as();
+            invocations.get(i).onFail(
+                new ServerFailure(failure.getMessage(),
+                    failure.getExceptionType(), failure.getStackTrace(),
+                    failure.isFatal()));
+          }
+        } catch (Throwable t) {
+          if (causes == null) {
+            causes = new HashSet<Throwable>();
+          }
+          causes.add(t);
+        }
+      }
+
+      if (receiver != null) {
+        try {
+          receiver.onSuccess(null);
+        } catch (Throwable t) {
+          if (causes == null) {
+            causes = new HashSet<Throwable>();
+          }
+          causes.add(t);
+        }
+      }
+      // After success, shut down the context
+      editedProxies.clear();
+      invocations.clear();
+      returnedProxies.clear();
+
+      if (causes != null) {
+        throw new UmbrellaException(causes);
+      }
+    }
+  }
   private class MyViolation implements Violation {
 
     private final BaseProxy currentProxy;
@@ -116,18 +352,21 @@ public class AbstractRequestContext implements RequestContext,
 
   private static final WriteOperation[] DELETE_ONLY = {WriteOperation.DELETE};
   private static final WriteOperation[] PERSIST_AND_UPDATE = {
-    WriteOperation.PERSIST, WriteOperation.UPDATE};
+      WriteOperation.PERSIST, WriteOperation.UPDATE};
   private static final WriteOperation[] UPDATE_ONLY = {WriteOperation.UPDATE};
+  private static int payloadId = 100;
 
-  private final List<AbstractRequest<?>> invocations = new ArrayList<AbstractRequest<?>>();
+  protected final List<AbstractRequest<?>> invocations = new ArrayList<AbstractRequest<?>>();
   private boolean locked;
   private final AbstractRequestFactory requestFactory;
+
   /**
    * A map of all EntityProxies that the RequestContext has interacted with.
    * Objects are placed into this map by being passed into {@link #edit} or as
    * an invocation argument.
    */
   private final Map<SimpleProxyId<?>, AutoBean<? extends BaseProxy>> editedProxies = new LinkedHashMap<SimpleProxyId<?>, AutoBean<? extends BaseProxy>>();
+
   /**
    * A map that contains the canonical instance of an entity to return in the
    * return graph, since this is built from scratch.
@@ -142,8 +381,12 @@ public class AbstractRequestContext implements RequestContext,
    */
   private final Map<Integer, SimpleProxyId<?>> syntheticIds = new HashMap<Integer, SimpleProxyId<?>>();
 
-  protected AbstractRequestContext(AbstractRequestFactory factory) {
+  private final DialectImpl dialect;
+
+  protected AbstractRequestContext(AbstractRequestFactory factory,
+      Dialect dialect) {
     this.requestFactory = factory;
+    this.dialect = dialect.create(this);
   }
 
   /**
@@ -291,15 +534,80 @@ public class AbstractRequestContext implements RequestContext,
    */
   public boolean isValueType(Class<?> clazz) {
     return requestFactory.isValueType(clazz);
-  }
+  };
 
   /**
    * Called by generated subclasses to enqueue a method invocation.
    */
   protected void addInvocation(AbstractRequest<?> request) {
-    invocations.add(request);
-    for (Object arg : request.getRequestData().getParameters()) {
-      retainArg(arg);
+    dialect.addInvocation(request);
+  }
+
+  /**
+   * Invoke the appropriate {@code onFailure} callbacks, possibly throwing an
+   * {@link UmbrellaException} if one or more callbacks fails.
+   */
+  protected void fail(Receiver<Void> receiver, ServerFailure failure) {
+    reuse();
+    Set<Throwable> causes = null;
+    for (AbstractRequest<?> request : new ArrayList<AbstractRequest<?>>(
+        invocations)) {
+      try {
+        request.onFail(failure);
+      } catch (Throwable t) {
+        if (causes == null) {
+          causes = new HashSet<Throwable>();
+        }
+        causes.add(t);
+      }
+    }
+    if (receiver != null) {
+      try {
+        receiver.onFailure(failure);
+      } catch (Throwable t) {
+        if (causes == null) {
+          causes = new HashSet<Throwable>();
+        }
+        causes.add(t);
+      }
+    }
+
+    if (causes != null) {
+      throw new UmbrellaException(causes);
+    }
+  }
+
+  /**
+   * Invoke the appropriate {@code onViolation} callbacks, possibly throwing an
+   * {@link UmbrellaException} if one or more callbacks fails.
+   */
+  protected void violation(final Receiver<Void> receiver, Set<Violation> errors) {
+    reuse();
+    Set<Throwable> causes = null;
+    for (AbstractRequest<?> request : new ArrayList<AbstractRequest<?>>(
+        invocations)) {
+      try {
+        request.onViolation(errors);
+      } catch (Throwable t) {
+        if (causes == null) {
+          causes = new HashSet<Throwable>();
+        }
+        causes.add(t);
+      }
+    }
+    if (receiver != null) {
+      try {
+        receiver.onViolation(errors);
+      } catch (Throwable t) {
+        if (causes == null) {
+          causes = new HashSet<Throwable>();
+        }
+        causes.add(t);
+      }
+    }
+
+    if (causes != null) {
+      throw new UmbrellaException(causes);
     }
   }
 
@@ -603,150 +911,14 @@ public class AbstractRequestContext implements RequestContext,
 
     freezeEntities(true);
 
-    String payload = makePayload();
+    String payload = dialect.makePayload();
     requestFactory.getRequestTransport().send(payload, new TransportReceiver() {
       public void onTransportFailure(ServerFailure failure) {
         fail(receiver, failure);
       }
 
       public void onTransportSuccess(String payload) {
-        ResponseMessage response = AutoBeanCodex.decode(
-            MessageFactoryHolder.FACTORY, ResponseMessage.class, payload).as();
-        if (response.getGeneralFailure() != null) {
-          ServerFailureMessage failure = response.getGeneralFailure();
-          ServerFailure fail = new ServerFailure(failure.getMessage(),
-              failure.getExceptionType(), failure.getStackTrace(),
-              failure.isFatal());
-
-          fail(receiver, fail);
-          return;
-        }
-
-        // Process violations and then stop
-        if (response.getViolations() != null) {
-          Set<Violation> errors = new HashSet<Violation>();
-          for (ViolationMessage message : response.getViolations()) {
-            errors.add(new MyViolation(message));
-          }
-
-          violation(receiver, errors);
-          return;
-        }
-
-        // Process operations
-        processReturnOperations(response);
-
-        // Send return values
-        Set<Throwable> causes = null;
-        for (int i = 0, j = invocations.size(); i < j; i++) {
-          try {
-            if (response.getStatusCodes().get(i)) {
-              invocations.get(i).onSuccess(
-                  response.getInvocationResults().get(i));
-            } else {
-              ServerFailureMessage failure = AutoBeanCodex.decode(
-                  MessageFactoryHolder.FACTORY, ServerFailureMessage.class,
-                  response.getInvocationResults().get(i)).as();
-              invocations.get(i).onFail(
-                  new ServerFailure(failure.getMessage(),
-                      failure.getExceptionType(), failure.getStackTrace(),
-                      failure.isFatal()));
-            }
-          } catch (Throwable t) {
-            if (causes == null) {
-              causes = new HashSet<Throwable>();
-            }
-            causes.add(t);
-          }
-        }
-
-        if (receiver != null) {
-          try {
-            receiver.onSuccess(null);
-          } catch (Throwable t) {
-            if (causes == null) {
-              causes = new HashSet<Throwable>();
-            }
-            causes.add(t);
-          }
-        }
-        // After success, shut down the context
-        editedProxies.clear();
-        invocations.clear();
-        returnedProxies.clear();
-
-        if (causes != null) {
-          throw new UmbrellaException(causes);
-        }
-      }
-
-      /**
-       * Invoke the appropriate {@code onFailure} callbacks, possibly throwing
-       * an {@link UmbrellaException} if one or more callbacks fails.
-       */
-      private void fail(Receiver<Void> receiver, ServerFailure failure) {
-        reuse();
-        Set<Throwable> causes = null;
-        for (AbstractRequest<?> request : new ArrayList<AbstractRequest<?>>(
-            invocations)) {
-          try {
-            request.onFail(failure);
-          } catch (Throwable t) {
-            if (causes == null) {
-              causes = new HashSet<Throwable>();
-            }
-            causes.add(t);
-          }
-        }
-        if (receiver != null) {
-          try {
-            receiver.onFailure(failure);
-          } catch (Throwable t) {
-            if (causes == null) {
-              causes = new HashSet<Throwable>();
-            }
-            causes.add(t);
-          }
-        }
-
-        if (causes != null) {
-          throw new UmbrellaException(causes);
-        }
-      }
-
-      /**
-       * Invoke the appropriate {@code onViolation} callbacks, possibly throwing
-       * an {@link UmbrellaException} if one or more callbacks fails.
-       */
-      private void violation(final Receiver<Void> receiver,
-          Set<Violation> errors) {
-        reuse();
-        Set<Throwable> causes = null;
-        for (AbstractRequest<?> request : new ArrayList<AbstractRequest<?>>(
-            invocations)) {
-          try {
-            request.onViolation(errors);
-          } catch (Throwable t) {
-            if (causes == null) {
-              causes = new HashSet<Throwable>();
-            }
-            causes.add(t);
-          }
-        }
-        if (receiver != null) {
-          try {
-            receiver.onViolation(errors);
-          } catch (Throwable t) {
-            if (causes == null) {
-              causes = new HashSet<Throwable>();
-            }
-            causes.add(t);
-          }
-        }
-
-        if (causes != null) {
-          throw new UmbrellaException(causes);
-        }
+        dialect.processPayload(receiver, payload);
       }
     });
   }
@@ -769,34 +941,6 @@ public class AbstractRequestContext implements RequestContext,
     // Act with entity-identity semantics
     toMutate.setTag(REQUEST_CONTEXT, null);
     toMutate.setFrozen(true);
-  }
-
-  /**
-   * Assemble all of the state that has been accumulated in this context. This
-   * includes:
-   * <ul>
-   * <li>Diffs accumulated on objects passed to {@link #edit}.
-   * <li>Invocations accumulated as Request subtypes passed to
-   * {@link #addInvocation}.
-   * </ul>
-   */
-  private String makePayload() {
-    // Get the factory from the runtime-specific holder.
-    MessageFactory f = MessageFactoryHolder.FACTORY;
-
-    List<OperationMessage> operations = makePayloadOperations();
-    List<InvocationMessage> invocationMessages = makePayloadInvocations();
-
-    // Create the outer envelope message
-    AutoBean<RequestMessage> bean = f.request();
-    RequestMessage requestMessage = bean.as();
-    if (!invocationMessages.isEmpty()) {
-      requestMessage.setInvocations(invocationMessages);
-    }
-    if (!operations.isEmpty()) {
-      requestMessage.setOperations(operations);
-    }
-    return AutoBeanCodex.encode(bean).getPayload();
   }
 
   /**
@@ -823,8 +967,8 @@ public class AbstractRequestContext implements RequestContext,
 
       // Parameter values or references
       List<Splittable> parameters = new ArrayList<Splittable>(
-          data.getParameters().length);
-      for (Object param : data.getParameters()) {
+          data.getOrderedParameters().length);
+      for (Object param : data.getOrderedParameters()) {
         parameters.add(EntityCodex.encode(this, param));
       }
       if (!parameters.isEmpty()) {

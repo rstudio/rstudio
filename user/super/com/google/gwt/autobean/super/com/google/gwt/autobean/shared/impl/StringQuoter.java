@@ -15,10 +15,14 @@
  */
 package com.google.gwt.autobean.shared.impl;
 
-import com.google.gwt.core.client.JsonUtils;
 import com.google.gwt.autobean.client.impl.JsoSplittable;
 import com.google.gwt.autobean.shared.Splittable;
+import com.google.gwt.core.client.JavaScriptException;
+import com.google.gwt.core.client.JsDate;
+import com.google.gwt.core.client.JsonUtils;
 import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamWriter;
+
+import java.util.Date;
 
 /**
  * This a super-source version with a client-only implementation.
@@ -38,5 +42,18 @@ public class StringQuoter {
       toReturn = toReturn.get(0);
     }
     return toReturn;
+  }
+
+  public static Date tryParseDate(String date) {
+    try {
+      return new Date(Long.parseLong(date));
+    } catch (NumberFormatException ignored) {
+    }
+    try {
+      JsDate js = JsDate.create(date);
+      return new Date((long) js.getTime());
+    } catch (JavaScriptException ignored) {
+    }
+    return null;
   }
 }

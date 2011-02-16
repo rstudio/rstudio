@@ -24,9 +24,11 @@ import com.google.gwt.requestfactory.server.testing.InProcessRequestContext.Requ
 import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
+import com.google.gwt.requestfactory.shared.JsonRpcService;
 import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.ValueProxy;
+import com.google.gwt.requestfactory.shared.impl.AbstractRequestContext.Dialect;
 import com.google.gwt.requestfactory.shared.impl.AbstractRequestFactory;
 import com.google.gwt.requestfactory.shared.impl.BaseProxyCategory;
 import com.google.gwt.requestfactory.shared.impl.EntityProxyCategory;
@@ -62,8 +64,10 @@ class InProcessRequestFactory extends AbstractRequestFactory {
 
       Class<? extends RequestContext> context = method.getReturnType().asSubclass(
           RequestContext.class);
+      Dialect dialect = method.getReturnType().isAnnotationPresent(
+          JsonRpcService.class) ? Dialect.JSON_RPC : Dialect.STANDARD;
       RequestContextHandler handler = new InProcessRequestContext(
-          InProcessRequestFactory.this).new RequestContextHandler();
+          InProcessRequestFactory.this, dialect).new RequestContextHandler();
       return context.cast(Proxy.newProxyInstance(
           Thread.currentThread().getContextClassLoader(),
           new Class<?>[] {context}, handler));

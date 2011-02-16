@@ -15,6 +15,7 @@
  */
 package com.google.gwt.requestfactory.rebind.model;
 
+import com.google.gwt.autobean.shared.Splittable;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.CompilationState;
@@ -148,13 +149,15 @@ public class RequestFactoryModelTest extends TestCase {
   public void testMissingProxyFor() {
     testModelWithMethodDeclArgs("Request<TestProxy> okMethodProxy();",
         TestContextImpl.class.getName(), null,
-        "The t.TestProxy type does not have a @ProxyFor or @ProxyForName annotation");
+        "The t.TestProxy type does not have a @ProxyFor, "
+            + "@ProxyForName, or @JsonRpcProxy annotation");
   }
 
   public void testMissingService() {
     testModelWithMethodDeclArgs("Request<String> okMethod();", null,
         TestContextImpl.class.getName(),
-        "RequestContext subtype t.TestContext is missing a @Service annotation");
+        "RequestContext subtype t.TestContext is missing a "
+            + "@Service or @JsonRpcService annotation");
   }
 
   public void testModelWithMethodDecl(final String clientMethodDecls,
@@ -296,6 +299,7 @@ public class RequestFactoryModelTest extends TestCase {
         new EmptyMockJavaResource(RequestFactory.class),
         new EmptyMockJavaResource(Receiver.class),
         new EmptyMockJavaResource(ServiceLocator.class),
+        new EmptyMockJavaResource(Splittable.class),
         new EmptyMockJavaResource(ValueProxy.class),
 
         new RealJavaResource(Request.class),

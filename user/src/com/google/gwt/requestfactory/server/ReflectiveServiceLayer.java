@@ -158,7 +158,11 @@ final class ReflectiveServiceLayer extends ServiceLayerDecorator {
 
   @Override
   public Method getSetter(Class<?> domainType, String property) {
-    return getBeanMethod(BeanMethod.SET, domainType, property);
+    Method setter = getBeanMethod(BeanMethod.SET, domainType, property);
+    if (setter == null) {
+      setter = getBeanMethod(BeanMethod.SET_BUILDER, domainType, property);
+    }
+    return setter;
   }
 
   @Override

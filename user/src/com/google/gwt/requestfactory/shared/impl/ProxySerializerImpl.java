@@ -63,7 +63,7 @@ class ProxySerializerImpl extends AbstractRequestContext implements
   private final Map<SimpleProxyId<?>, AutoBean<?>> serialized = new HashMap<SimpleProxyId<?>, AutoBean<?>>();
 
   public ProxySerializerImpl(AbstractRequestFactory factory, ProxyStore store) {
-    super(factory);
+    super(factory, Dialect.STANDARD);
     this.store = store;
   }
 

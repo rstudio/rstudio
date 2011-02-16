@@ -37,7 +37,7 @@ public interface AutoBean<T> {
    */
   @Documented
   @Retention(RetentionPolicy.RUNTIME)
-  @Target(value = {ElementType.METHOD, ElementType.FIELD})
+  @Target(value = {ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
   public @interface PropertyName {
     String value();
   }

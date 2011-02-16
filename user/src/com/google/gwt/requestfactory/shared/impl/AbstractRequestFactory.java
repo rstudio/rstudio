@@ -72,7 +72,7 @@ public abstract class AbstractRequestFactory extends IdFactory implements
     }
 
     AbstractRequestContext context = new AbstractRequestContext(
-        AbstractRequestFactory.this);
+        AbstractRequestFactory.this, AbstractRequestContext.Dialect.STANDARD);
     return new AbstractRequest<P>(context) {
       {
         requestContext.addInvocation(this);
@@ -82,7 +82,7 @@ public abstract class AbstractRequestFactory extends IdFactory implements
       protected RequestData makeRequestData() {
         return new RequestData(
             "com.google.gwt.requestfactory.shared.impl.FindRequest::find",
-            new Object[]{proxyId}, propertyRefs, proxyId.getProxyClass(), null);
+            new Object[] {proxyId}, propertyRefs, proxyId.getProxyClass(), null);
       }
     };
   }

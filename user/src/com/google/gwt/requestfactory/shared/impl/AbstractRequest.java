@@ -83,7 +83,7 @@ public abstract class AbstractRequest<T> implements Request<T>,
    * methods place the instance in the first parameter slot.
    */
   public Request<T> using(BaseProxy instanceObject) {
-    getRequestData().getParameters()[0] = instanceObject;
+    getRequestData().getOrderedParameters()[0] = instanceObject;
     /*
      * Instance methods enqueue themselves when their using() method is called.
      * This ensures that the instance parameter will have been set when
@@ -99,6 +99,10 @@ public abstract class AbstractRequest<T> implements Request<T>,
   }
 
   protected abstract RequestData makeRequestData();
+
+  Receiver<? super T> getReceiver() {
+    return receiver;
+  }
 
   boolean hasReceiver() {
     return receiver != null;

@@ -15,7 +15,9 @@
  */
 package com.google.gwt.requestfactory.rebind;
 
+import com.google.gwt.autobean.rebind.model.JBeanMethod;
 import com.google.gwt.autobean.shared.AutoBean;
+import com.google.gwt.autobean.shared.AutoBean.PropertyName;
 import com.google.gwt.autobean.shared.AutoBeanFactory;
 import com.google.gwt.autobean.shared.AutoBeanFactory.Category;
 import com.google.gwt.autobean.shared.AutoBeanFactory.NoWrap;
@@ -37,8 +39,10 @@ import com.google.gwt.requestfactory.rebind.model.EntityProxyModel.Type;
 import com.google.gwt.requestfactory.rebind.model.RequestFactoryModel;
 import com.google.gwt.requestfactory.rebind.model.RequestMethod;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
+import com.google.gwt.requestfactory.shared.JsonRpcContent;
 import com.google.gwt.requestfactory.shared.impl.AbstractRequest;
 import com.google.gwt.requestfactory.shared.impl.AbstractRequestContext;
+import com.google.gwt.requestfactory.shared.impl.AbstractRequestContext.Dialect;
 import com.google.gwt.requestfactory.shared.impl.AbstractRequestFactory;
 import com.google.gwt.requestfactory.shared.impl.BaseProxyCategory;
 import com.google.gwt.requestfactory.shared.impl.EntityProxyCategory;
@@ -145,15 +149,16 @@ public class RequestFactoryGenerator extends Generator {
       SourceWriter sw = factory.createSourceWriter(context, pw);
 
       // Constructor that accepts the parent RequestFactory
-      sw.println("public %s(%s requestFactory) {super(requestFactory);}",
+      sw.println(
+          "public %s(%s requestFactory) {super(requestFactory, %s.%s);}",
           method.getSimpleSourceName(),
-          AbstractRequestFactory.class.getCanonicalName());
+          AbstractRequestFactory.class.getCanonicalName(),
+          Dialect.class.getCanonicalName(), method.getDialect().name());
 
       // Write each Request method
       for (RequestMethod request : method.getRequestMethods()) {
         JMethod jmethod = request.getDeclarationMethod();
-        String operation = jmethod.getEnclosingType().getQualifiedBinaryName()
-            + "::" + jmethod.getName();
+        String operation = request.getOperation();
 
         // foo, bar, baz
         StringBuilder parameterArray = new StringBuilder();
@@ -223,12 +228,54 @@ public class RequestFactoryGenerator extends Generator {
             returnTypeBaseQualifiedName, elementType);
         sw.println("}");
 
+        /*
+         * Only support extra properties in JSON-RPC payloads. Could add this to
+         * standard requests to provide out-of-band data.
+         */
+        if (method.getDialect().equals(Dialect.JSON_RPC)) {
+          for (JMethod setter : request.getExtraSetters()) {
+            PropertyName propertyNameAnnotation = setter.getAnnotation(PropertyName.class);
+            String propertyName = propertyNameAnnotation == null
+                ? JBeanMethod.SET.inferName(setter)
+                : propertyNameAnnotation.value();
+            String maybeReturn = JBeanMethod.SET_BUILDER.matches(setter)
+                ? "return this;" : "";
+            sw.println(
+                "%s { getRequestData().setNamedParameter(\"%s\", %s); %s}",
+                setter.getReadableDeclaration(false, false, false, false, true),
+                propertyName, setter.getParameters()[0].getName(), maybeReturn);
+          }
+        }
+
         // end class X{}
         sw.outdent();
         sw.println("}");
 
         // Instantiate, enqueue, and return
         sw.println("X x = new X();");
+
+        if (request.getApiVersion() != null) {
+          sw.println("x.getRequestData().setApiVersion(\"%s\");",
+              Generator.escape(request.getApiVersion()));
+        }
+
+        // JSON-RPC payloads send their parameters in a by-name fashion
+        if (method.getDialect().equals(Dialect.JSON_RPC)) {
+          for (JParameter param : jmethod.getParameters()) {
+            PropertyName annotation = param.getAnnotation(PropertyName.class);
+            String propertyName = annotation == null ? param.getName()
+                : annotation.value();
+            boolean isContent = param.isAnnotationPresent(JsonRpcContent.class);
+            if (isContent) {
+              sw.println("x.getRequestData().setRequestContent(%s);",
+                  param.getName());
+            } else {
+              sw.println("x.getRequestData().setNamedParameter(\"%s\", %s);",
+                  propertyName, param.getName());
+            }
+          }
+        }
+
         // See comment in AbstractRequest.using(EntityProxy)
         if (!request.isInstance()) {
           sw.println("addInvocation(x);");

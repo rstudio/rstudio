@@ -17,6 +17,8 @@ package com.google.gwt.requestfactory.rebind.model;
 
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
+import com.google.gwt.requestfactory.shared.JsonRpcService;
+import com.google.gwt.requestfactory.shared.impl.AbstractRequestContext.Dialect;
 
 import java.util.Collections;
 import java.util.List;
@@ -47,6 +49,8 @@ public class ContextMethod {
       toReturn.packageName = returnClass.getPackage().getName();
       toReturn.simpleSourceName = returnClass.getName().replace('.', '_')
           + "Impl";
+      toReturn.dialect = returnClass.isAnnotationPresent(JsonRpcService.class)
+          ? Dialect.JSON_RPC : Dialect.STANDARD;
     }
 
     public void setRequestMethods(List<RequestMethod> requestMethods) {
@@ -54,6 +58,7 @@ public class ContextMethod {
     }
   }
 
+  private Dialect dialect;
   private String interfaceName;
   private String methodName;
   private String packageName;
@@ -61,6 +66,10 @@ public class ContextMethod {
   private String simpleSourceName;
 
   private ContextMethod() {
+  }
+
+  public Dialect getDialect() {
+    return dialect;
   }
 
   /**
