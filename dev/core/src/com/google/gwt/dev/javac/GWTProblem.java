@@ -18,6 +18,7 @@ package com.google.gwt.dev.javac;
 import com.google.gwt.core.ext.TreeLogger.HelpInfo;
 import com.google.gwt.dev.jjs.SourceInfo;
 
+import org.eclipse.jdt.core.compiler.CategorizedProblem;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.ASTNode;
@@ -29,7 +30,7 @@ import org.eclipse.jdt.internal.compiler.util.Util;
 /**
  * A problem specific to compiling for GWT.
  */
-public class GWTProblem extends DefaultProblem {
+public class GWTProblem extends SerializableCategorizedProblem {
 
   public static void recordError(ASTNode node, CompilationUnitDeclaration cud,
       String message, HelpInfo helpInfo) {
@@ -46,10 +47,10 @@ public class GWTProblem extends DefaultProblem {
   public static void recordProblem(ASTNode node, CompilationResult compResult,
       String message, HelpInfo helpInfo, int problemSeverity) {
     int[] lineEnds = compResult.getLineSeparatorPositions();
-    int startLine = Util.getLineNumber(node.sourceStart(), lineEnds, 0,
-        lineEnds.length - 1);
-    int startColumn = Util.searchColumnNumber(lineEnds, startLine,
-        node.sourceStart());
+    int startLine =
+        Util.getLineNumber(node.sourceStart(), lineEnds, 0, lineEnds.length - 1);
+    int startColumn =
+        Util.searchColumnNumber(lineEnds, startLine, node.sourceStart());
     recordProblem(node.sourceStart(), node.sourceEnd(), startLine, startColumn,
         compResult, message, helpInfo, problemSeverity);
   }
@@ -64,8 +65,9 @@ public class GWTProblem extends DefaultProblem {
   private static void recordProblem(int startPos, int endPos, int startLine,
       int startColumn, CompilationResult compResult, String message,
       HelpInfo helpInfo, int problemSeverity) {
-    DefaultProblem problem = new GWTProblem(compResult.fileName, startPos,
-        endPos, startLine, startColumn, message, helpInfo, problemSeverity);
+    CategorizedProblem problem =
+        new GWTProblem(compResult.fileName, startPos, endPos, startLine,
+            startColumn, message, helpInfo, problemSeverity);
     compResult.record(problem, null);
   }
 
@@ -74,8 +76,11 @@ public class GWTProblem extends DefaultProblem {
   private GWTProblem(char[] originatingFileName, int startPosition,
       int endPosition, int line, int column, String message, HelpInfo helpInfo,
       int problemSeverity) {
-    super(originatingFileName, message, IProblem.ExternalProblemNotFixable,
-        null, problemSeverity, startPosition, endPosition, line, column);
+    // Create a {@link DefaultProblem} instance to do all the formatting and
+    // handling of problemSeverity
+    super(new DefaultProblem(originatingFileName, message,
+        IProblem.ExternalProblemNotFixable, null, problemSeverity,
+        startPosition, endPosition, line, column));
     this.helpInfo = helpInfo;
   }
 

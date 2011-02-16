@@ -23,6 +23,12 @@ public interface GeneratedUnit {
 
   String getSource();
 
+  /**
+   * Returns the source code as a token for {@link DiskCache#INSTANCE}, or -1 if
+   * the source is not cached.
+   */
+  long getSourceToken();
+
   String getStrongHash();
 
   String getTypeName();

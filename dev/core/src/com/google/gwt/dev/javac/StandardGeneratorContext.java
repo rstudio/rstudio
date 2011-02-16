@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -93,7 +93,7 @@ public class StandardGeneratorContext implements GeneratorContextExt {
     /**
      * A token to retrieve this object's bytes from the disk cache.
      */
-    protected long cacheToken;
+    protected long sourceToken = -1;
 
     private long creationTime;
 
@@ -118,7 +118,7 @@ public class StandardGeneratorContext implements GeneratorContextExt {
     public void commit() {
       String source = sw.toString();
       strongHash = Util.computeStrongName(Util.getBytes(source));
-      cacheToken = diskCache.writeString(source);
+      sourceToken = diskCache.writeString(source);
       sw = null;
       creationTime = System.currentTimeMillis();
     }
@@ -131,7 +131,14 @@ public class StandardGeneratorContext implements GeneratorContextExt {
       if (sw != null) {
         throw new IllegalStateException("source not committed");
       }
-      return diskCache.readString(cacheToken);
+      return diskCache.readString(sourceToken);
+    }
+
+    public long getSourceToken() {
+      if (sw != null) {
+        throw new IllegalStateException("source not committed");
+      }
+      return sourceToken;
     }
 
     public String getStrongHash() {
@@ -167,7 +174,7 @@ public class StandardGeneratorContext implements GeneratorContextExt {
       FileOutputStream fos = null;
       try {
         fos = new FileOutputStream(file);
-        diskCache.transferToStream(cacheToken, fos);
+        diskCache.transferToStream(sourceToken, fos);
       } catch (IOException e) {
         throw new RuntimeException("Error writing out generated unit at '"
             + file.getAbsolutePath() + "'", e);
@@ -233,15 +240,16 @@ public class StandardGeneratorContext implements GeneratorContextExt {
     }
   }
 
-  private static DiskCache diskCache = new DiskCache();
+  private static DiskCache diskCache = DiskCache.INSTANCE;
 
-  private static final Map<String,CompilerEventType> eventsByGeneratorType = 
-    new HashMap<String,CompilerEventType>();
+  private static final Map<String, CompilerEventType> eventsByGeneratorType =
+      new HashMap<String, CompilerEventType>();
   static {
     eventsByGeneratorType.put(
         "com.google.gwt.resources.rebind.context.InlineClientBundleGenerator",
         CompilerEventType.GENERATOR_CLIENT_BUNDLE);
-    eventsByGeneratorType.put("com.google.gwt.i18n.rebind.LocalizableGenerator",
+    eventsByGeneratorType.put(
+        "com.google.gwt.i18n.rebind.LocalizableGenerator",
         CompilerEventType.GENERATOR_I18N);
     eventsByGeneratorType.put("com.google.gwt.i18n.rebind.LocaleInfoGenerator",
         CompilerEventType.GENERATOR_I18N);
@@ -259,14 +267,15 @@ public class StandardGeneratorContext implements GeneratorContextExt {
     eventsByGeneratorType.put(
         "com.google.gwt.uibinder.rebind.UiBinderGenerator",
         CompilerEventType.GENERATOR_UIBINDER);
-    eventsByGeneratorType.put("com.google.gwt.inject.rebind.GinjectorGenerator",
+    eventsByGeneratorType.put(
+        "com.google.gwt.inject.rebind.GinjectorGenerator",
         CompilerEventType.GENERATOR_GIN);
   }
 
   private final ArtifactSet allGeneratedArtifacts;
 
-  private final Map<String, GeneratedUnit> committedGeneratedCups = 
-    new HashMap<String, GeneratedUnit>();
+  private final Map<String, GeneratedUnit> committedGeneratedCups =
+      new HashMap<String, GeneratedUnit>();
 
   private CompilationState compilationState;
 
@@ -274,8 +283,8 @@ public class StandardGeneratorContext implements GeneratorContextExt {
 
   private final File genDir;
 
-  private final Map<Class<? extends Generator>, Generator> generators = 
-    new IdentityHashMap<Class<? extends Generator>, Generator>();
+  private final Map<Class<? extends Generator>, Generator> generators =
+      new IdentityHashMap<Class<? extends Generator>, Generator>();
 
   private final ModuleDef module;
 
@@ -283,38 +292,38 @@ public class StandardGeneratorContext implements GeneratorContextExt {
 
   private final Set<String> newlyGeneratedTypeNames = new HashSet<String>();
 
-  private final Map<String, PendingResource> pendingResources = 
-    new HashMap<String, PendingResource>();
+  private final Map<String, PendingResource> pendingResources =
+      new HashMap<String, PendingResource>();
 
   private transient PropertyOracle propOracle;
 
-  private final Map<PrintWriter, Generated> uncommittedGeneratedCupsByPrintWriter = 
-    new IdentityHashMap<PrintWriter, Generated>();
-  
+  private final Map<PrintWriter, Generated> uncommittedGeneratedCupsByPrintWriter =
+      new IdentityHashMap<PrintWriter, Generated>();
+
   private CachedRebindResult cachedRebindResult = null;
-  
+
   private boolean generatorResultCachingEnabled = false;
-  
+
   private List<String> cachedTypeNamesToReuse = null;
 
   private boolean isProdMode;
-  
+
   /**
    * Normally, the compiler host would be aware of the same types that are
    * available in the supplied type oracle although it isn't strictly required.
    */
   public StandardGeneratorContext(CompilationState compilationState,
-      ModuleDef module, File genDir, ArtifactSet allGeneratedArtifacts, boolean
-      isProdMode) {
+      ModuleDef module, File genDir, ArtifactSet allGeneratedArtifacts,
+      boolean isProdMode) {
     this.compilationState = compilationState;
     this.module = module;
     this.genDir = genDir;
     this.allGeneratedArtifacts = allGeneratedArtifacts;
     this.isProdMode = isProdMode;
   }
-  
+
   /**
-   * Adds a generated unit to the context if not already present, but will not 
+   * Adds a generated unit to the context if not already present, but will not
    * overwrite an existing unit.
    */
   public void addGeneratedUnit(GeneratedUnit gu) {
@@ -324,7 +333,7 @@ public class StandardGeneratorContext implements GeneratorContextExt {
   }
 
   /**
-   * Adds generated units to the context, but will not overwrite any existing 
+   * Adds generated units to the context, but will not overwrite any existing
    * units that might already be present.
    */
   public void addGeneratedUnits(Collection<GeneratedUnit> generatedUnits) {
@@ -332,25 +341,24 @@ public class StandardGeneratorContext implements GeneratorContextExt {
       addGeneratedUnit(gu);
     }
   }
-  
+
   /**
-   * Adds all available cached generated units to the context.  Existing units
+   * Adds all available cached generated units to the context. Existing units
    * for a given type will not be overwritten.
    */
   public void addGeneratedUnitsFromCache() {
-    if (cachedRebindResult != null 
+    if (cachedRebindResult != null
         && cachedRebindResult.getGeneratedUnits() != null) {
       addGeneratedUnits(cachedRebindResult.getGeneratedUnits());
     }
   }
-  
+
   /**
    * Adds cached generated units to the context that have been marked for reuse.
    * Existing units for a given type will not be overwritten.
    */
   public void addGeneratedUnitsMarkedForReuseFromCache() {
-    if (cachedTypeNamesToReuse != null 
-        && cachedRebindResult != null) {
+    if (cachedTypeNamesToReuse != null && cachedRebindResult != null) {
       for (String typeName : cachedTypeNamesToReuse) {
         GeneratedUnit gu = cachedRebindResult.getGeneratedUnit(typeName);
         if (gu != null) {
@@ -384,10 +392,11 @@ public class StandardGeneratorContext implements GeneratorContextExt {
   }
 
   /**
-   * Adds an Artifact to the context's ArtifactSets.  This will replace a 
-   * pre-existing entry in allGeneratedArtifacts, but will not overwrite an 
-   * entry in the newlyGeneratedArtifacts (since it is assumed by convention 
-   * that only new entries will ever be inserted here for a given generator run).
+   * Adds an Artifact to the context's ArtifactSets. This will replace a
+   * pre-existing entry in allGeneratedArtifacts, but will not overwrite an
+   * entry in the newlyGeneratedArtifacts (since it is assumed by convention
+   * that only new entries will ever be inserted here for a given generator
+   * run).
    */
   public void commitArtifact(TreeLogger logger, Artifact<?> artifact) {
     allGeneratedArtifacts.replace(artifact);
@@ -398,8 +407,7 @@ public class StandardGeneratorContext implements GeneratorContextExt {
    * Commits all available cached Artifacts to the context.
    */
   public void commitArtifactsFromCache(TreeLogger logger) {
-    if (cachedRebindResult != null 
-        && cachedRebindResult.getArtifacts() != null) {
+    if (cachedRebindResult != null && cachedRebindResult.getArtifacts() != null) {
       for (Artifact<?> art : cachedRebindResult.getArtifacts()) {
         commitArtifact(logger, art);
       }
@@ -426,8 +434,9 @@ public class StandardGeneratorContext implements GeneratorContextExt {
     }
 
     // Add the GeneratedResource to the ArtifactSet
-    GeneratedResource toReturn = new StandardGeneratedResource(
-        currentGenerator, partialPath, pendingResource.takeBytes());
+    GeneratedResource toReturn =
+        new StandardGeneratedResource(currentGenerator, partialPath,
+            pendingResource.takeBytes());
     commitArtifact(logger, toReturn);
     pendingResources.remove(pendingResource.getPartialPath());
     return toReturn;
@@ -437,7 +446,7 @@ public class StandardGeneratorContext implements GeneratorContextExt {
    * Call this whenever generators are known to not be running to clear out
    * uncommitted compilation units and to force committed compilation units to
    * be parsed and added to the type oracle.
-   *
+   * 
    * @return any newly generated artifacts since the last call
    */
   public final ArtifactSet finish(TreeLogger logger) {
@@ -453,8 +462,8 @@ public class StandardGeneratorContext implements GeneratorContextExt {
 
         TreeLogger subBranch = null;
         if (branch.isLoggable(TreeLogger.DEBUG)) {
-          subBranch = branch.branch(TreeLogger.DEBUG,
-              "Generated source files...", null);
+          subBranch =
+              branch.branch(TreeLogger.DEBUG, "Generated source files...", null);
         }
 
         for (GeneratedUnit gcup : committedGeneratedCups.values()) {
@@ -472,7 +481,8 @@ public class StandardGeneratorContext implements GeneratorContextExt {
 
       // Remind the user if there uncommitted cups.
       if (!uncommittedGeneratedCupsByPrintWriter.isEmpty()) {
-        String msg = "For the following type(s), generated source was never committed (did you forget to call commit()?)";
+        String msg =
+            "For the following type(s), generated source was never committed (did you forget to call commit()?)";
         logger = logger.branch(TreeLogger.WARN, msg, null);
 
         for (Generated unit : uncommittedGeneratedCupsByPrintWriter.values()) {
@@ -506,7 +516,7 @@ public class StandardGeneratorContext implements GeneratorContextExt {
   public CachedRebindResult getCachedGeneratorResult() {
     return cachedRebindResult;
   }
-  
+
   public GeneratorContext getCanonicalContext() {
     return this;
   }
@@ -517,7 +527,7 @@ public class StandardGeneratorContext implements GeneratorContextExt {
   public Map<String, GeneratedUnit> getGeneratedUnitMap() {
     return committedGeneratedCups;
   }
-  
+
   public final PropertyOracle getPropertyOracle() {
     return propOracle;
   }
@@ -525,44 +535,44 @@ public class StandardGeneratorContext implements GeneratorContextExt {
   public ResourceOracle getResourcesOracle() {
     return module.getResourcesOracle();
   }
- 
+
   /**
-   * EXPERIMENTAL and subject to change. Do not use this in production code. 
+   * EXPERIMENTAL and subject to change. Do not use this in production code.
    * 
-   * Temporary solution to get last modified time for a sourceType.  Finds the
-   * the source file, if possible.  Note, this won't work for sources contained
+   * Temporary solution to get last modified time for a sourceType. Finds the
+   * the source file, if possible. Note, this won't work for sources contained
    * in jar files, or for recently generated source files.
    * 
    * TODO(jbrosenberg): Replace this method by using a getVersion() method from
    * TypeOracle (still under development).
    */
   public long getSourceLastModifiedTime(JClassType sourceType) {
-    
+
     while (sourceType instanceof JArrayType) {
       sourceType = (JClassType) ((JArrayType) sourceType).getComponentType();
     }
-    
+
     JClassType enclosingType;
     while ((enclosingType = sourceType.getEnclosingType()) != null) {
-        sourceType = enclosingType;
+      sourceType = enclosingType;
     }
-    
+
     String sourceName = sourceType.getQualifiedSourceName();
     String sourcePath = sourceName.replace('.', '/') + ".java";
-    
+
     Resource sourceResource = module.findSourceFile(sourcePath);
-    
+
     if (sourceResource == null) {
       return 0L;
-    } 
-    
+    }
+
     return sourceResource.getLastModified();
   }
- 
+
   public final TypeOracle getTypeOracle() {
     return compilationState.getTypeOracle();
   }
-  
+
   public boolean isGeneratorResultCachingEnabled() {
     return generatorResultCachingEnabled;
   }
@@ -570,29 +580,29 @@ public class StandardGeneratorContext implements GeneratorContextExt {
   public boolean isProdMode() {
     return isProdMode;
   }
-  
+
   /**
-   * Adds a type name to the list of types to be reused from cache, if available.
+   * Adds a type name to the list of types to be reused from cache, if
+   * available.
    * 
    * @param typeName The fully qualified name of a type.
    * 
    * @return true, if the type is available in the cache and was successfully
-   *          added to the list for reuse, false otherwise.
+   *         added to the list for reuse, false otherwise.
    */
   public boolean reuseTypeFromCacheIfAvailable(String typeName) {
-    if (!isGeneratorResultCachingEnabled() ||
-        cachedRebindResult == null  || 
-        !cachedRebindResult.isTypeCached(typeName)) {
+    if (!isGeneratorResultCachingEnabled() || cachedRebindResult == null
+        || !cachedRebindResult.isTypeCached(typeName)) {
       return false;
     }
-    
+
     if (cachedTypeNamesToReuse == null) {
       cachedTypeNamesToReuse = new ArrayList<String>();
     }
     cachedTypeNamesToReuse.add(typeName);
     return true;
   }
-  
+
   /**
    * This method is maintained for backwards compatibility.
    * {@link #runGeneratorIncrementally} should be used instead.
@@ -600,22 +610,22 @@ public class StandardGeneratorContext implements GeneratorContextExt {
   public String runGenerator(TreeLogger logger,
       Class<? extends Generator> generatorClass, String typeName)
       throws UnableToCompleteException {
-    
-    RebindResult result = 
+
+    RebindResult result =
         runGeneratorIncrementally(logger, generatorClass, typeName);
-    
+
     return result.getReturnedTypeName();
   }
-  
+
   /**
    * Runs a generator incrementally, with support for managing the returned
    * {@link RebindResult} object, which can contain status and cached results.
    * This is a replacement for the {@link #runGenerator} method.
    * <p>
-   * If the passed in generatorClass is an instance of {@link GeneratorExt}, it's
-   * {@link GeneratorExt#generateIncrementally} method will be called.
+   * If the passed in generatorClass is an instance of {@link GeneratorExt},
+   * it's {@link GeneratorExt#generateIncrementally} method will be called.
    * <p>
-   * Otherwise, for backwards compatibility, the generatorClass will be wrapped 
+   * Otherwise, for backwards compatibility, the generatorClass will be wrapped
    * in a {@link GeneratorExt} instance, and it's {@link Generator#generate}
    * method will be called.
    * 
@@ -649,26 +659,27 @@ public class StandardGeneratorContext implements GeneratorContextExt {
     long before = System.currentTimeMillis();
     String generatorClassName = generator.getClass().getName();
     CompilerEventType type = eventsByGeneratorType.get(generatorClassName);
-    
+
     if (type == null) {
       type = CompilerEventType.GENERATOR_OTHER;
     }
 
-    Event generatorEvent = SpeedTracerLogger.start(type, "class",
-        generatorClassName, "type", typeName);
-    
+    Event generatorEvent =
+        SpeedTracerLogger.start(type, "class", generatorClassName, "type",
+            typeName);
+
     try {
-      
+
       GeneratorExt generatorExt;
       if (generator instanceof GeneratorExt) {
         generatorExt = (GeneratorExt) generator;
       } else {
         generatorExt = GeneratorExtWrapper.newInstance(generator);
       }
-      
+
       RebindResult result;
       result = generatorExt.generateIncrementally(logger, this, typeName);
-      
+
       long after = System.currentTimeMillis();
       if (result.getResultStatus() == RebindStatus.USE_EXISTING) {
         msg = "Generator did not return a new class, type will be used as is";
@@ -698,11 +709,11 @@ public class StandardGeneratorContext implements GeneratorContextExt {
   public void setCachedGeneratorResult(CachedRebindResult cachedRebindResult) {
     this.cachedRebindResult = cachedRebindResult;
   }
-  
+
   public void setCurrentGenerator(Class<? extends Generator> currentGenerator) {
     this.currentGenerator = currentGenerator;
   }
-  
+
   public void setGeneratorResultCachingEnabled(boolean enabled) {
     this.generatorResultCachingEnabled = enabled;
   }
@@ -724,8 +735,8 @@ public class StandardGeneratorContext implements GeneratorContextExt {
       typeName = packageName + '.' + simpleTypeName;
     }
     // Is type already known to the host?
-    JClassType existingType = getTypeOracle().findType(packageName,
-        simpleTypeName);
+    JClassType existingType =
+        getTypeOracle().findType(packageName, simpleTypeName);
     if (existingType != null) {
       logger.log(TreeLogger.DEBUG, "Type '" + typeName
           + "' already exists and will not be re-created ", null);
@@ -772,8 +783,9 @@ public class StandardGeneratorContext implements GeneratorContextExt {
   public OutputStream tryCreateResource(TreeLogger logger, String partialPath)
       throws UnableToCompleteException {
 
-    logger = logger.branch(TreeLogger.DEBUG,
-        "Preparing pending output resource '" + partialPath + "'", null);
+    logger =
+        logger.branch(TreeLogger.DEBUG, "Preparing pending output resource '"
+            + partialPath + "'", null);
 
     // Disallow null or empty names.
     if (partialPath == null || partialPath.trim().equals("")) {
@@ -808,7 +820,8 @@ public class StandardGeneratorContext implements GeneratorContextExt {
     }
 
     // See if the file is already committed.
-    SortedSet<GeneratedResource> resources = allGeneratedArtifacts.find(GeneratedResource.class);
+    SortedSet<GeneratedResource> resources =
+        allGeneratedArtifacts.find(GeneratedResource.class);
     for (GeneratedResource resource : resources) {
       if (partialPath.equals(resource.getPartialPath())) {
         return null;
@@ -834,10 +847,11 @@ public class StandardGeneratorContext implements GeneratorContextExt {
     }
 
     // Warn the user about uncommitted resources.
-    logger = logger.branch(
-        TreeLogger.WARN,
-        "The following resources will not be created because they were never committed (did you forget to call commit()?)",
-        null);
+    logger =
+        logger.branch(
+            TreeLogger.WARN,
+            "The following resources will not be created because they were never committed (did you forget to call commit()?)",
+            null);
 
     for (Entry<String, PendingResource> entry : pendingResources.entrySet()) {
       logger.log(TreeLogger.WARN, entry.getKey());

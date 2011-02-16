@@ -26,6 +26,7 @@ import com.google.gwt.dev.util.collect.HashMap;
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
@@ -41,7 +42,7 @@ import java.util.regex.Pattern;
  * module. State is accumulated throughout the life cycle of the containing
  * module and may be invalidated at certain times and recomputed.
  */
-public abstract class CompilationUnit {
+public abstract class CompilationUnit implements Serializable {
 
   /**
    * Encapsulates the functionality to find all nested classes of this class
@@ -133,8 +134,9 @@ public abstract class CompilationUnit {
      * same location as the location of the mainClass.
      */
     private byte[] getClassBytes(String slashedName) {
-      URL url = Thread.currentThread().getContextClassLoader().getResource(
-          slashedName + ".class");
+      URL url =
+          Thread.currentThread().getContextClassLoader().getResource(
+              slashedName + ".class");
       if (url == null) {
         logger.log(TreeLogger.DEBUG, "Unable to find " + slashedName
             + " on the classPath");
@@ -167,15 +169,17 @@ public abstract class CompilationUnit {
     }
   }
 
-  protected static final DiskCache diskCache = new DiskCache();
+  protected static final DiskCache diskCache = DiskCache.INSTANCE;
 
-  static final Comparator<CompilationUnit> COMPARATOR = new Comparator<CompilationUnit>() {
-    public int compare(CompilationUnit o1, CompilationUnit o2) {
-      return o1.getTypeName().compareTo(o2.getTypeName());
-    }
-  };
+  static final Comparator<CompilationUnit> COMPARATOR =
+      new Comparator<CompilationUnit>() {
+        public int compare(CompilationUnit o1, CompilationUnit o2) {
+          return o1.getTypeName().compareTo(o2.getTypeName());
+        }
+      };
 
-  private static final Pattern GENERATED_CLASSNAME_PATTERN = Pattern.compile(".+\\$\\d.*");
+  private static final Pattern GENERATED_CLASSNAME_PATTERN =
+      Pattern.compile(".+\\$\\d.*");
 
   /**
    * Checks if the class names is generated. Accepts any classes whose names
@@ -201,7 +205,7 @@ public abstract class CompilationUnit {
    * Map from the className in javac to the className in jdt. String represents
    * the part of className after the compilation unit name. Emma-specific.
    */
-  private Map<String, String> anonymousClassMap = null;
+  private transient Map<String, String> anonymousClassMap = null;
 
   @Deprecated
   public final boolean constructAnonymousClassMappings(TreeLogger logger) {
@@ -214,8 +218,8 @@ public abstract class CompilationUnit {
     anonymousClassMap = new HashMap<String, String>();
     for (String topLevelClass : getTopLevelClasses()) {
       // Generate a mapping for each top-level class separately
-      List<String> javacClasses = new GeneratedClassnameFinder(logger,
-          topLevelClass).getClassNames();
+      List<String> javacClasses =
+          new GeneratedClassnameFinder(logger, topLevelClass).getClassNames();
       List<String> jdtClasses = getJdtClassNames(topLevelClass);
       if (javacClasses.size() != jdtClasses.size()) {
         anonymousClassMap = Collections.emptyMap();
@@ -331,6 +335,12 @@ public abstract class CompilationUnit {
   public final String toString() {
     return getDisplayLocation();
   }
+
+  /**
+   * Subclasses must implement explicit serialization. The canonical serialized
+   * form is {@link CachedCompilationUnit}.
+   */
+  protected abstract Object writeReplace();
 
   /**
    * Returns all contained classes.

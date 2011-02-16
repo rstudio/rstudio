@@ -32,7 +32,7 @@ class SourceFileCompilationUnit extends CompilationUnitImpl {
    * much faster to read from the disk cache than to reread individual
    * resources.
    */
-  private long cacheToken = -1;
+  private long sourceToken = -1;
 
   private final Resource sourceFile;
 
@@ -60,12 +60,12 @@ class SourceFileCompilationUnit extends CompilationUnitImpl {
   @Deprecated
   @Override
   public String getSource() {
-    if (cacheToken < 0) {
+    if (sourceToken < 0) {
       String sourceCode = Shared.readSource(sourceFile);
-      cacheToken = diskCache.writeString(sourceCode);
+      sourceToken = diskCache.writeString(sourceCode);
       return sourceCode;
     } else {
-      return diskCache.readString(cacheToken);
+      return diskCache.readString(sourceToken);
     }
   }
 
@@ -88,6 +88,14 @@ class SourceFileCompilationUnit extends CompilationUnitImpl {
   @Override
   public boolean isSuperSource() {
     return sourceFile.wasRerooted();
+  }
+
+  @Override
+  protected Object writeReplace() {
+    if (sourceToken < 0) {
+      sourceToken = diskCache.transferFromStream(sourceFile.openContents());
+    }
+    return new CachedCompilationUnit(this, sourceToken);
   }
 
   @Override

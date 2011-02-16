@@ -32,7 +32,7 @@ import java.io.OutputStream;
  * The standard implementation of {@link GeneratedResource}.
  */
 public class StandardGeneratedResource extends GeneratedResource {
-  private static final DiskCache diskCache = new DiskCache();
+  private static final DiskCache diskCache = DiskCache.INSTANCE;
 
   private final long lastModified = System.currentTimeMillis();
 

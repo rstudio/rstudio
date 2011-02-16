@@ -16,8 +16,9 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.util.DiskCache;
-import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.StringInterner;
+import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.Name.InternalName;
 
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
@@ -33,13 +34,14 @@ import java.io.Serializable;
  */
 public final class CompiledClass implements Serializable {
 
-  private static final DiskCache diskCache = new DiskCache();
+  private static final DiskCache diskCache = DiskCache.INSTANCE;
 
   private final CompiledClass enclosingClass;
   private final String internalName;
   private final boolean isLocal;
   private CompilationUnit unit;
-  
+  private String signatureHash;
+
   /**
    * A token to retrieve this object's bytes from the disk cache. byte code is
    * placed in the cache when the object is deserialized.
@@ -93,6 +95,18 @@ public final class CompiledClass implements Serializable {
   }
 
   /**
+   * Returns a hash code on the byte code of the class.
+   * 
+   * TODO(zundel): should be a hash on only the public API for this class. 
+   */
+  public String getSignatureHash() {
+    if (signatureHash == null) {
+      signatureHash = Util.computeStrongName(getBytes());
+    }
+    return signatureHash;
+  }
+
+  /**
    * Returns the qualified source name, e.g. {@code java.util.Map.Entry}.
    */
   public String getSourceName() {
@@ -119,8 +133,9 @@ public final class CompiledClass implements Serializable {
   NameEnvironmentAnswer getNameEnvironmentAnswer() {
     if (nameEnvironmentAnswer == null) {
       try {
-        ClassFileReader cfr = new ClassFileReader(getBytes(),
-            unit.getDisplayLocation().toCharArray(), true);
+        ClassFileReader cfr =
+            new ClassFileReader(getBytes(),
+                unit.getDisplayLocation().toCharArray(), true);
         nameEnvironmentAnswer = new NameEnvironmentAnswer(cfr, null);
       } catch (ClassFormatException e) {
         throw new RuntimeException("Unexpectedly unable to parse class file", e);
@@ -130,7 +145,6 @@ public final class CompiledClass implements Serializable {
   }
 
   void initUnit(CompilationUnit unit) {
-    assert this.unit == null;
     this.unit = unit;
   }
 
@@ -142,7 +156,6 @@ public final class CompiledClass implements Serializable {
 
   private void writeObject(ObjectOutputStream outputStream) throws IOException {
     outputStream.defaultWriteObject();
-    byte[] byteCode = diskCache.readByteArray(cacheToken);
     diskCache.transferToStream(cacheToken, outputStream);
   }
 }

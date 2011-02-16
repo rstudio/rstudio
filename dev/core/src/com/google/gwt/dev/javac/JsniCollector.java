@@ -45,6 +45,7 @@ import org.eclipse.jdt.internal.compiler.problem.ProblemSeverities;
 import org.eclipse.jdt.internal.compiler.util.Util;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.io.StringReader;
 import java.util.List;
 import java.util.Map;
@@ -68,7 +69,8 @@ public class JsniCollector {
     }
   }
 
-  private static final class JsniMethodImpl extends JsniMethod {
+  private static final class JsniMethodImpl extends JsniMethod implements
+      Serializable {
     private final JsFunction func;
     private boolean isScriptOnly;
     private final String name;
@@ -151,8 +153,8 @@ public class JsniCollector {
 
     @Override
     public void collect(CompilationUnitDeclaration cud) {
-      cudInfo = correlator.makeSourceInfo(SourceOrigin.create(0,
-          String.valueOf(cud.getFileName())));
+      cudInfo = correlator.makeSourceInfo(SourceOrigin.create(0, String
+          .valueOf(cud.getFileName())));
       super.collect(cud);
     }
 
@@ -197,7 +199,8 @@ public class JsniCollector {
         method.sourceStart, method.bodyEnd, startLine, baseInfo.getFileName()));
 
     // Handle JSNI block
-    String jsniCode = unitSource.substring(method.bodyStart, method.bodyEnd + 1);
+    String jsniCode = unitSource
+        .substring(method.bodyStart, method.bodyEnd + 1);
     int startPos = jsniCode.indexOf("/*-{");
     int endPos = jsniCode.lastIndexOf("}-*/");
     if (startPos < 0 && endPos < 0) {
@@ -267,8 +270,8 @@ public class JsniCollector {
       throw new InternalCompilerException("Internal error parsing JSNI in '"
           + enclosingType + '.' + method.toString() + '\'', e);
     } catch (JsParserException e) {
-      int problemCharPos = computeAbsoluteProblemPosition(indexes,
-          e.getSourceDetail());
+      int problemCharPos = computeAbsoluteProblemPosition(indexes, e
+          .getSourceDetail());
       SourceInfo errorInfo = SourceOrigin.create(problemCharPos,
           problemCharPos, e.getSourceDetail().getLine(), info.getFileName());
       // Strip the file/line header because reportJsniError will add that.
@@ -354,9 +357,8 @@ public class JsniCollector {
     HelpInfo jsniHelpInfo = null;
     CompilationResult compResult = methodDeclaration.compilationResult();
     // recalculate startColumn, because SourceInfo does not hold it
-    int startColumn = Util.searchColumnNumber(
-        compResult.getLineSeparatorPositions(), info.getStartLine(),
-        info.getStartPos());
+    int startColumn = Util.searchColumnNumber(compResult
+        .getLineSeparatorPositions(), info.getStartLine(), info.getStartPos());
     GWTProblem.recordProblem(info, startColumn, compResult, message,
         jsniHelpInfo, problemSeverity);
   }

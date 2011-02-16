@@ -37,7 +37,7 @@ public class RpcLogArtifact extends Artifact<RpcLogArtifact> {
    * strong name.
    */
   public static final String UNSPECIFIED_STRONGNAME = "UNSPECIFIED";
-  private static DiskCache diskCache = new DiskCache();
+  private static DiskCache diskCache = DiskCache.INSTANCE;
 
   private long diskCacheToken;
   private final String qualifiedSourceName;

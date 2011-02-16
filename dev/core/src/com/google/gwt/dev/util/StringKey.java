@@ -15,12 +15,14 @@
  */
 package com.google.gwt.dev.util;
 
+import java.io.Serializable;
+
 /**
  * A "typed string" utility class that improves the readability of generic code
  * by using proper types. Equality and comparison are implemented by using both
  * the concrete type and string value.
  */
-public abstract class StringKey implements Comparable<StringKey> {
+public abstract class StringKey implements Comparable<StringKey>, Serializable {
 
   /**
    * The hashcode is computed and stored since this type is expected to be used

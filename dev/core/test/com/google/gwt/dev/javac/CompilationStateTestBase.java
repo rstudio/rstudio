@@ -66,6 +66,10 @@ public abstract class CompilationStateTestBase extends TestCase {
           return sourceFile.getString();
         }
 
+        public long getSourceToken() {
+          return -1;
+        }
+
         public String getStrongHash() {
           return Util.computeStrongName(Util.getBytes(getSource()));
         }
@@ -73,7 +77,7 @@ public abstract class CompilationStateTestBase extends TestCase {
         public String getTypeName() {
           return Shared.getTypeName(sourceFile);
         }
-
+        
         public String optionalFileLocation() {
           return sourceFile.getLocation();
         }

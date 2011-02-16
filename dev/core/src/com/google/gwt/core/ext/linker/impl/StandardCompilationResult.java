@@ -75,7 +75,7 @@ public class StandardCompilationResult extends CompilationResult {
    */
   public static final Comparator<SortedMap<SelectionProperty, String>> MAP_COMPARATOR = new MapComparator();
 
-  private static final DiskCache diskCache = new DiskCache();
+  private static final DiskCache diskCache = DiskCache.INSTANCE;
 
   private final long jsToken[];
 

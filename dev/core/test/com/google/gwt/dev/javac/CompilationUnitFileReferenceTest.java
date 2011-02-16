@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.dev.javac.Dependencies.DirectRef;
+import com.google.gwt.dev.javac.Dependencies.Ref;
 import com.google.gwt.dev.javac.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.impl.MockJavaResource;
 import com.google.gwt.dev.resource.Resource;
@@ -29,77 +31,77 @@ import java.util.Set;
  */
 public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
 
-  public static final MockJavaResource MEMBER_INNER_SUBCLASS = new MockJavaResource(
-      "test.OuterSubclass") {
-    @Override
-    protected CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
-      code.append("package test;\n");
-      code.append("public class OuterSubclass extends Outer {\n");
-      code.append("  public String value() { return \"OuterSubclass\"; }\n");
-      code.append("  public class MemberInnerSubclass extends MemberInner {\n");
-      code.append("    public String value() { return \"MemberInnerSubclass\"; }\n");
-      code.append("  }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
+  public static final MockJavaResource MEMBER_INNER_SUBCLASS =
+      new MockJavaResource("test.OuterSubclass") {
+        @Override
+        protected CharSequence getContent() {
+          StringBuffer code = new StringBuffer();
+          code.append("package test;\n");
+          code.append("public class OuterSubclass extends Outer {\n");
+          code.append("  public String value() { return \"OuterSubclass\"; }\n");
+          code.append("  public class MemberInnerSubclass extends MemberInner {\n");
+          code.append("    public String value() { return \"MemberInnerSubclass\"; }\n");
+          code.append("  }\n");
+          code.append("}\n");
+          return code;
+        }
+      };
 
-  public static final MockJavaResource NOPACKAGE = new MockJavaResource(
-      "NoPackage") {
-    @Override
-    protected CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
-      code.append("public class NoPackage extends test.Top {\n");
-      code.append("  public String value() { return \"NoPackage\"; }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
+  public static final MockJavaResource NOPACKAGE =
+      new MockJavaResource("NoPackage") {
+        @Override
+        protected CharSequence getContent() {
+          StringBuffer code = new StringBuffer();
+          code.append("public class NoPackage extends test.Top {\n");
+          code.append("  public String value() { return \"NoPackage\"; }\n");
+          code.append("}\n");
+          return code;
+        }
+      };
 
-  public static final MockJavaResource NOPACKAGE2 = new MockJavaResource(
-      "NoPackage2") {
-    @Override
-    protected CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
-      code.append("public class NoPackage2 extends NoPackage {\n");
-      code.append("  public String value() { return \"NoPackage2\"; }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
+  public static final MockJavaResource NOPACKAGE2 =
+      new MockJavaResource("NoPackage2") {
+        @Override
+        protected CharSequence getContent() {
+          StringBuffer code = new StringBuffer();
+          code.append("public class NoPackage2 extends NoPackage {\n");
+          code.append("  public String value() { return \"NoPackage2\"; }\n");
+          code.append("}\n");
+          return code;
+        }
+      };
 
-  public static final MockJavaResource OUTER = new MockJavaResource(
-      "test.Outer") {
-    @Override
-    protected CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
-      code.append("package test;\n");
-      code.append("public class Outer {\n");
-      code.append("  public String value() { return \"Outer\"; }\n");
-      code.append("  public static class StaticInner {\n");
-      code.append("    public String value() { return \"StaticInner\"; }\n");
-      code.append("  }\n");
-      code.append("  public class MemberInner {\n");
-      code.append("    public String value() { return \"MemberInner\"; }\n");
-      code.append("  }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
+  public static final MockJavaResource OUTER =
+      new MockJavaResource("test.Outer") {
+        @Override
+        protected CharSequence getContent() {
+          StringBuffer code = new StringBuffer();
+          code.append("package test;\n");
+          code.append("public class Outer {\n");
+          code.append("  public String value() { return \"Outer\"; }\n");
+          code.append("  public static class StaticInner {\n");
+          code.append("    public String value() { return \"StaticInner\"; }\n");
+          code.append("  }\n");
+          code.append("  public class MemberInner {\n");
+          code.append("    public String value() { return \"MemberInner\"; }\n");
+          code.append("  }\n");
+          code.append("}\n");
+          return code;
+        }
+      };
 
-  public static final MockJavaResource STATIC_INNER_SUBCLASS = new MockJavaResource(
-      "test.StaticInnerSubclass") {
-    @Override
-    protected CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
-      code.append("package test;\n");
-      code.append("public class StaticInnerSubclass extends Outer.StaticInner {\n");
-      code.append("  public String value() { return \"StaticInnerSubclass\"; }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
+  public static final MockJavaResource STATIC_INNER_SUBCLASS =
+      new MockJavaResource("test.StaticInnerSubclass") {
+        @Override
+        protected CharSequence getContent() {
+          StringBuffer code = new StringBuffer();
+          code.append("package test;\n");
+          code.append("public class StaticInnerSubclass extends Outer.StaticInner {\n");
+          code.append("  public String value() { return \"StaticInnerSubclass\"; }\n");
+          code.append("}\n");
+          return code;
+        }
+      };
 
   public static final MockJavaResource TOP = new MockJavaResource("test.Top") {
     @Override
@@ -116,24 +118,26 @@ public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
     }
   };
 
-  public static final MockJavaResource TOP3 = new MockJavaResource("test.Top3") {
-    @Override
-    protected CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
-      code.append("package test;\n");
-      code.append("public class Top3 extends Top2 {\n");
-      code.append("  public String value() { return \"Top3\"; }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
+  public static final MockJavaResource TOP3 =
+      new MockJavaResource("test.Top3") {
+        @Override
+        protected CharSequence getContent() {
+          StringBuffer code = new StringBuffer();
+          code.append("package test;\n");
+          code.append("public class Top3 extends Top2 {\n");
+          code.append("  public String value() { return \"Top3\"; }\n");
+          code.append("}\n");
+          return code;
+        }
+      };
 
   /**
    * This map contains the hand-computed set of references we expect each of the
    * test compilation units to have. The actual set of references computed by
    * {@link CompilationState} will be checked against this set.
    */
-  private static final Map<String, Set<String>> EXPECTED_DEPENDENCIES = new HashMap<String, Set<String>>();
+  private static final Map<String, Set<String>> EXPECTED_DEPENDENCIES =
+      new HashMap<String, Set<String>>();
 
   static {
     // Setup EXPECTED_DEPENDENCIES with hand-computed data.
@@ -224,8 +228,17 @@ public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
       String typeName = file.getTypeName();
       Dependencies dependencies = unitMap.get(typeName).getDependencies();
       Set<CompiledClass> classDeps = new HashSet<CompiledClass>();
-      classDeps.addAll(dependencies.qualified.values());
-      classDeps.addAll(dependencies.simple.values());
+      for (Ref ref : dependencies.qualified.values()) {
+        if (ref != null) {
+          assert ref instanceof DirectRef;
+          classDeps.add(((DirectRef) ref).getCompiledClass());
+        }
+      }
+      for (Ref ref : dependencies.simple.values()) {
+        if (ref != null) {
+          classDeps.add(((DirectRef) ref).getCompiledClass());
+        }
+      }
       classDeps.remove(null);
       Set<String> actualTypeNames = new HashSet<String>();
       for (CompiledClass cc : classDeps) {

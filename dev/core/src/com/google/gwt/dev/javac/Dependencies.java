@@ -22,6 +22,7 @@ import com.google.gwt.dev.util.collect.Lists;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,13 +32,77 @@ import java.util.Map.Entry;
  * Tracks dependencies from a {@link CompilationUnit} to {@link CompiledClass
  * CompiledClasses}.
  */
-class Dependencies {
-  Map<String, CompiledClass> qualified = new HashMap<String, CompiledClass>();
-  Map<String, CompiledClass> simple = new HashMap<String, CompiledClass>();
+class Dependencies implements Serializable {
+
+  /**
+   * A {@Ref} that directly holds a {@link CompiledClass}. When
+   * serialized, turns into a {@link SerializedRef}.
+   */
+  static class DirectRef extends Ref {
+    private final CompiledClass target;
+
+    private DirectRef(CompiledClass target) {
+      assert target != null;
+      this.target = target;
+    }
+
+    public CompiledClass getCompiledClass() {
+      return target;
+    }
+
+    @Override
+    public String getInternalName() {
+      return target.getInternalName();
+    }
+
+    @Override
+    public String getSignatureHash() {
+      return target.getSignatureHash();
+    }
+
+    private Object writeReplace() {
+      return new SerializedRef(target.getInternalName(), getSignatureHash());
+    }
+  }
+
+  /**
+   * A Ref can hold either a direct reference to byte code of another class, or
+   * a signature of the byte code. The signature is used when this class is
+   * persisted.
+   */
+  abstract static class Ref implements Serializable {
+    public abstract String getInternalName();
+
+    public abstract String getSignatureHash();
+  }
+
+  /**
+   * Represents a {@link Ref} that has been previously persisted.
+   */
+  private static class SerializedRef extends Ref {
+    private final String internalName;
+    private final String hash;
+
+    private SerializedRef(String internalName, String hash) {
+      this.internalName = internalName;
+      this.hash = hash;
+    }
+
+    @Override
+    public String getInternalName() {
+      return internalName;
+    }
+
+    @Override
+    public String getSignatureHash() {
+      return hash;
+    }
+  }
+
+  Map<String, Ref> qualified = new HashMap<String, Ref>();
+  Map<String, Ref> simple = new HashMap<String, Ref>();
   private final List<String> apiRefs;
   private final String myPackage;
-  private List<String> unresolvedQualified;
-  private List<String> unresolvedSimple;
 
   Dependencies() {
     this.myPackage = "";
@@ -50,10 +115,15 @@ class Dependencies {
    */
   Dependencies(String myPackage, List<String> unresolvedQualified,
       List<String> unresolvedSimple, List<String> apiRefs) {
-    this.myPackage = StringInterner.get().intern(
-        (myPackage.length() == 0) ? "" : (myPackage + '.'));
-    this.unresolvedQualified = unresolvedQualified;
-    this.unresolvedSimple = unresolvedSimple;
+    this.myPackage =
+        StringInterner.get().intern(
+            (myPackage.length() == 0) ? "" : (myPackage + '.'));
+    for (String qualifiedRef : unresolvedQualified) {
+      qualified.put(qualifiedRef, null);
+    }
+    for (String simpleRef : unresolvedSimple) {
+      simple.put(simpleRef, null);
+    }
     this.apiRefs = apiRefs;
   }
 
@@ -75,17 +145,19 @@ class Dependencies {
    * classes. Must be called before {@link #validate(String, Map, Map)}.
    */
   void resolve(Map<String, CompiledClass> allValidClasses) {
-    for (String ref : unresolvedQualified) {
+    for (String ref : qualified.keySet()) {
       CompiledClass cc = allValidClasses.get(ref);
-      qualified.put(ref, cc);
+      if (cc != null) {
+        qualified.put(ref, new DirectRef(cc));
+      }
     }
 
-    for (String ref : unresolvedSimple) {
+    for (String ref : simple.keySet()) {
       CompiledClass cc = findBySimpleName(ref, allValidClasses);
-      allValidClasses.get(ref);
-      simple.put(ref, cc);
+      if (cc != null) {
+        simple.put(ref, new DirectRef(cc));
+      }
     }
-    unresolvedQualified = unresolvedSimple = null;
   }
 
   /**
@@ -96,13 +168,13 @@ class Dependencies {
    */
   boolean validate(Map<String, CompiledClass> allValidClasses,
       Map<CompiledClass, CompiledClass> cachedStructurallySame) {
-    for (Entry<String, CompiledClass> entry : qualified.entrySet()) {
+    for (Entry<String, Ref> entry : qualified.entrySet()) {
       CompiledClass theirs = allValidClasses.get(entry.getKey());
       if (!validateClass(cachedStructurallySame, entry, theirs)) {
         return false;
       }
     }
-    for (Entry<String, CompiledClass> entry : simple.entrySet()) {
+    for (Entry<String, Ref> entry : simple.entrySet()) {
       CompiledClass theirs = findBySimpleName(entry.getKey(), allValidClasses);
       if (!validateClass(cachedStructurallySame, entry, theirs)) {
         return false;
@@ -133,8 +205,26 @@ class Dependencies {
     }
   }
 
-  private boolean structurallySame(CompiledClass mine, CompiledClass theirs,
+  private boolean structurallySame(Ref myRef, CompiledClass theirs,
       Map<CompiledClass, CompiledClass> cachedStructurallySame) {
+    if (myRef == null && theirs == null) {
+      return true;
+    }
+    assert myRef != null;
+    assert theirs != null;
+
+    // TODO(zundel): When we have a better hashing function that only
+    // works on the public type signature, we can always use the hash
+    if (myRef instanceof SerializedRef) {
+      // compare hashes
+      return myRef.getSignatureHash().equals(theirs.getSignatureHash());
+    }
+    assert myRef instanceof DirectRef;
+    CompiledClass mine = ((DirectRef) myRef).getCompiledClass();
+    if (mine == theirs) {
+      // Identical.
+      return true;
+    }
     if (cachedStructurallySame.get(mine) == theirs) {
       return true;
     }
@@ -157,17 +247,16 @@ class Dependencies {
    */
   private boolean validateClass(
       Map<CompiledClass, CompiledClass> cachedStructurallySame,
-      Entry<String, CompiledClass> entry, CompiledClass theirs) {
-    CompiledClass mine = entry.getValue();
+      Entry<String, Ref> entry, CompiledClass theirs) {
+    Ref mine = entry.getValue();
     boolean result;
-    if (mine == theirs) {
-      // Identical.
-      result = true;
-    } else if ((mine == null) != (theirs == null)) {
+    if ((mine == null) != (theirs == null)) {
       result = false;
+    } else if (mine == null && theirs == null) {
+      return true;
     } else if (structurallySame(mine, theirs, cachedStructurallySame)) {
       // Update our entry for identity.
-      entry.setValue(theirs);
+      entry.setValue(new DirectRef(theirs));
       result = true;
     } else {
       result = false;

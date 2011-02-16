@@ -60,12 +60,17 @@ public class DiskCache {
     }
   }
 
+  /**
+   * A global shared Disk cache.
+   */
+  public static DiskCache INSTANCE = new DiskCache();
+
   private static List<WeakReference<DiskCache>> shutdownList;
 
   private boolean atEnd = true;
   private RandomAccessFile file;
 
-  public DiskCache() {
+  protected DiskCache() {
     try {
       File temp = File.createTempFile("gwt", "byte-cache");
       temp.deleteOnExit();

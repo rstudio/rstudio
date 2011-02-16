@@ -71,6 +71,10 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
     public String getTypeName() {
       return "myPackage.InsertedClass";
     }
+    
+    public long getSourceToken() {
+      return -1;
+    }
   }
 
    public boolean insertInsertedClass = false;

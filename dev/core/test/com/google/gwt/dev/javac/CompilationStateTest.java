@@ -15,15 +15,31 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.dev.javac.Dependencies.Ref;
 import com.google.gwt.dev.javac.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.impl.MockJavaResource;
 import com.google.gwt.dev.javac.impl.MockResourceOracle;
 import com.google.gwt.dev.javac.impl.TweakedMockJavaResource;
+import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.dev.js.JsParser;
+import com.google.gwt.dev.js.JsSourceGenerationVisitor;
+import com.google.gwt.dev.js.ast.JsFunction;
+import com.google.gwt.dev.js.ast.JsRootScope;
+import com.google.gwt.dev.js.ast.JsStatement;
+import com.google.gwt.dev.js.ast.JsVisitor;
+import com.google.gwt.dev.util.DefaultTextOutput;
+import com.google.gwt.dev.util.TextOutput;
+import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.collect.Lists;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,32 +48,42 @@ import java.util.Set;
  */
 public class CompilationStateTest extends CompilationStateTestBase {
 
-  private static final MockJavaResource FOO_DIFF_API = new MockJavaResource(
-      "test.Foo") {
-    @Override
-    protected CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
-      code.append("package test;\n");
-      code.append("public class Foo {\n");
-      code.append("  public String value() { return \"Foo\"; }\n");
-      code.append("  public String value2() { return \"Foo2\"; }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
+  private static final MockJavaResource FOO_DIFF_API =
+      new MockJavaResource("test.Foo") {
+        @Override
+        protected CharSequence getContent() {
+          StringBuffer code = new StringBuffer();
+          code.append("package test;\n");
+          code.append("public class Foo {\n");
+          code.append("  public String value() { return \"Foo\"; }\n");
+          code.append("  public String value2() { return \"Foo2\"; }\n");
+          code.append("}\n");
+          return code;
+        }
+      };
 
-  private static final MockJavaResource FOO_SAME_API = new MockJavaResource(
-      "test.Foo") {
-    @Override
-    protected CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
-      code.append("package test;\n");
-      code.append("public class Foo {\n");
-      code.append("  public String value() { return \"Foo2\"; }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
+  private static final MockJavaResource FOO_SAME_API =
+      new MockJavaResource("test.Foo") {
+        @Override
+        protected CharSequence getContent() {
+          StringBuffer code = new StringBuffer();
+          code.append("package test;\n");
+          code.append("public class Foo {\n");
+          code.append("  public String value() { return \"Foo2\"; }\n");
+          code.append("}\n");
+          return code;
+        }
+      };
+
+  private static String parseJs(String js) throws Exception {
+    List<JsStatement> parsed =
+        JsParser.parse(SourceOrigin.UNKNOWN, JsRootScope.INSTANCE,
+            new StringReader(js));
+    TextOutput text = new DefaultTextOutput(false);
+    JsVisitor generator = new JsSourceGenerationVisitor(text);
+    generator.acceptList(parsed);
+    return text.toString();
+  }
 
   public void testAddGeneratedCompilationUnit() {
     validateCompilationState();
@@ -84,12 +110,13 @@ public class CompilationStateTest extends CompilationStateTestBase {
     oracle.add(JavaResourceBase.BAR);
     rebuildCompilationState();
 
-    CompilationUnit badUnit = state.getCompilationUnitMap().get(
-        Shared.getTypeName(JavaResourceBase.BAR));
+    CompilationUnit badUnit =
+        state.getCompilationUnitMap().get(
+            Shared.getTypeName(JavaResourceBase.BAR));
     assertTrue(badUnit.isError());
 
-    Set<CompilationUnit> goodUnits = new HashSet<CompilationUnit>(
-        state.getCompilationUnits());
+    Set<CompilationUnit> goodUnits =
+        new HashSet<CompilationUnit>(state.getCompilationUnits());
     goodUnits.remove(badUnit);
     assertUnitsChecked(goodUnits);
   }
@@ -104,38 +131,40 @@ public class CompilationStateTest extends CompilationStateTestBase {
     assertUnitsChecked(state.getCompilationUnits());
     addGeneratedUnits(JavaResourceBase.BAR);
 
-    CompilationUnit badUnit = state.getCompilationUnitMap().get(
-        Shared.getTypeName(JavaResourceBase.BAR));
+    CompilationUnit badUnit =
+        state.getCompilationUnitMap().get(
+            Shared.getTypeName(JavaResourceBase.BAR));
     assertTrue(badUnit.isError());
 
-    Set<CompilationUnit> goodUnits = new HashSet<CompilationUnit>(
-        state.getCompilationUnits());
+    Set<CompilationUnit> goodUnits =
+        new HashSet<CompilationUnit>(state.getCompilationUnits());
     goodUnits.remove(badUnit);
     assertUnitsChecked(goodUnits);
   }
 
   public void testCompileWithGeneratedUnitsErrorAndDepedentGeneratedUnit() {
     assertUnitsChecked(state.getCompilationUnits());
-    MockJavaResource badFoo = new MockJavaResource(
-        Shared.getTypeName(JavaResourceBase.FOO)) {
-      @Override
-      protected CharSequence getContent() {
-        return "compilation error LOL!";
-      }
-    };
+    MockJavaResource badFoo =
+        new MockJavaResource(Shared.getTypeName(JavaResourceBase.FOO)) {
+          @Override
+          protected CharSequence getContent() {
+            return "compilation error LOL!";
+          }
+        };
     oracle.add(badFoo);
     rebuildCompilationState();
     addGeneratedUnits(JavaResourceBase.BAR);
 
-    CompilationUnit badUnit = state.getCompilationUnitMap().get(
-        Shared.getTypeName(badFoo));
+    CompilationUnit badUnit =
+        state.getCompilationUnitMap().get(Shared.getTypeName(badFoo));
     assertTrue(badUnit.isError());
-    CompilationUnit invalidUnit = state.getCompilationUnitMap().get(
-        Shared.getTypeName(JavaResourceBase.BAR));
+    CompilationUnit invalidUnit =
+        state.getCompilationUnitMap().get(
+            Shared.getTypeName(JavaResourceBase.BAR));
     assertTrue(invalidUnit.isError());
 
-    Set<CompilationUnit> goodUnits = new HashSet<CompilationUnit>(
-        state.getCompilationUnits());
+    Set<CompilationUnit> goodUnits =
+        new HashSet<CompilationUnit>(state.getCompilationUnits());
     goodUnits.remove(badUnit);
     goodUnits.remove(invalidUnit);
     assertUnitsChecked(goodUnits);
@@ -200,8 +229,8 @@ public class CompilationStateTest extends CompilationStateTestBase {
     // add generated units
     addGeneratedUnits(JavaResourceBase.BAR);
     assertUnitsChecked(state.getCompilationUnits());
-    CompilationUnit oldBar = state.getCompilationUnitMap().get(
-        JavaResourceBase.BAR.getTypeName());
+    CompilationUnit oldBar =
+        state.getCompilationUnitMap().get(JavaResourceBase.BAR.getTypeName());
     assertNotNull(oldBar);
 
     // change unit in source oracle
@@ -214,8 +243,8 @@ public class CompilationStateTest extends CompilationStateTestBase {
     addGeneratedUnits(JavaResourceBase.BAR);
     assertUnitsChecked(state.getCompilationUnits());
 
-    CompilationUnit newBar = state.getCompilationUnitMap().get(
-        JavaResourceBase.BAR.getTypeName());
+    CompilationUnit newBar =
+        state.getCompilationUnitMap().get(JavaResourceBase.BAR.getTypeName());
     assertNotNull(newBar);
     assertNotSame(oldBar, newBar);
   }
@@ -241,7 +270,8 @@ public class CompilationStateTest extends CompilationStateTestBase {
     rebuildCompilationState();
     validateCompilationState();
     Map<String, CompilationUnit> unitMap = state.getCompilationUnitMap();
-    MethodArgNamesLookup methodArgs = unitMap.get(Shared.getTypeName(resource)).getMethodArgs();
+    MethodArgNamesLookup methodArgs =
+        unitMap.get(Shared.getTypeName(resource)).getMethodArgs();
     String[] methods = methodArgs.getMethods();
     assertEquals(3, methods.length);
     Arrays.sort(methods);
@@ -267,6 +297,58 @@ public class CompilationStateTest extends CompilationStateTestBase {
     names = methodArgs.lookup(methods[2]);
     assertEquals(1, names.length);
     assertEquals("aArg1", names[0]);
+  }
+
+  public void testSerializeCompilationUnit() throws Exception {
+
+    MockJavaResource resource = new MockJavaResource("test.SerializationTest") {
+      @Override
+      protected CharSequence getContent() {
+        StringBuffer code = new StringBuffer();
+        code.append("package test;\n");
+        code.append("public abstract class SerializationTest {\n");
+        code.append("  public static native boolean getTrue() /*-{ return true; }-*/;\n");
+        code.append("  public abstract String methodArgsTest(int arg1, Object arg2);");
+        code.append("  public final String toString() { return \"SerializationTest\"; }\n");
+        code.append("}\n");
+        return code;
+      }
+    };
+
+    String resourceTypeName = Shared.getTypeName(resource);
+    validateCompilationState();
+    oracle.add(resource);
+    rebuildCompilationState();
+    validateCompilationState();
+
+    Map<String, CompilationUnit> unitMap = state.getCompilationUnitMap();
+    validateSerializedTestUnit(resource, unitMap.get(resourceTypeName));
+
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    for (CompilationUnit unit : unitMap.values()) {
+      Util.writeObjectToStream(outputStream, unitMap.get(unit.getTypeName()));
+    }
+
+    int numUnits = unitMap.size();
+    byte[] streamData = outputStream.toByteArray();
+    ByteArrayInputStream inputStream = new ByteArrayInputStream(streamData);
+    Map<String, CompilationUnit> newUnitMap =
+        new HashMap<String, CompilationUnit>();
+    for (int i = 0; i < numUnits; i++) {
+      CompilationUnit unit =
+          Util.readStreamAsObject(inputStream, CompilationUnit.class);
+      newUnitMap.put(unit.getTypeName(), unit);
+    }
+
+    // Validate all deserialized units against the original units
+    assertEquals(unitMap.size(), newUnitMap.size());
+    for (CompilationUnit unit : unitMap.values()) {
+      CompilationUnit newUnit = newUnitMap.get(unit.getTypeName());
+      validateSerializedUnit(unit, newUnit);
+    }
+
+    // Validate the SerializationTest resource with a specific test.
+    validateSerializedTestUnit(resource, newUnitMap.get(resourceTypeName));
   }
 
   public void testSourceOracleAdd() {
@@ -350,8 +432,8 @@ public class CompilationStateTest extends CompilationStateTestBase {
     assertEquals(oracle.getResources().size(),
         state.getCompilationUnits().size());
     addGeneratedUnits(initialSet);
-    Map<String, CompilationUnit> units1 = new HashMap<String, CompilationUnit>(
-        state.getCompilationUnitMap());
+    Map<String, CompilationUnit> units1 =
+        new HashMap<String, CompilationUnit>(state.getCompilationUnitMap());
     assertEquals(oracle.getResources().size() + initialSet.length,
         units1.size());
     assertUnitsChecked(units1.values());
@@ -361,8 +443,8 @@ public class CompilationStateTest extends CompilationStateTestBase {
     assertEquals(oracle.getResources().size(),
         state.getCompilationUnits().size());
     addGeneratedUnits(updatedSet);
-    Map<String, CompilationUnit> units2 = new HashMap<String, CompilationUnit>(
-        state.getCompilationUnitMap());
+    Map<String, CompilationUnit> units2 =
+        new HashMap<String, CompilationUnit>(state.getCompilationUnitMap());
     assertEquals(oracle.getResources().size() + updatedSet.length,
         units2.size());
     assertUnitsChecked(units2.values());
@@ -382,8 +464,8 @@ public class CompilationStateTest extends CompilationStateTestBase {
     assertEquals(oracle.getResources().size(),
         state.getCompilationUnits().size());
     addGeneratedUnits(updatedSet);
-    Map<String, CompilationUnit> units3 = new HashMap<String, CompilationUnit>(
-        state.getCompilationUnitMap());
+    Map<String, CompilationUnit> units3 =
+        new HashMap<String, CompilationUnit>(state.getCompilationUnitMap());
     assertEquals(oracle.getResources().size() + updatedSet.length,
         units3.size());
     assertUnitsChecked(units3.values());
@@ -392,6 +474,117 @@ public class CompilationStateTest extends CompilationStateTestBase {
     for (MockJavaResource resource : updatedSet) {
       String typeName = resource.getTypeName();
       assertSame(units2.get(typeName), units3.get(typeName));
+    }
+  }
+
+  private void validateSerializedTestUnit(MockJavaResource resource,
+      CompilationUnit unit) throws Exception {
+    assertNotNull(unit);
+    assertEquals(resource.getLastModified(), unit.getLastModified());
+    assertEquals(resource.getString(), unit.getSource());
+
+    // dependencies
+    Dependencies deps = unit.getDependencies();
+    assertObjectInDeps(deps.qualified, deps.simple, "java.lang.Object",
+        "Object");
+    assertObjectInDeps(deps.qualified, deps.simple, "java.lang.String",
+        "String");
+    assertObjectInDeps(deps.qualified, deps.simple, "test.SerializationTest",
+        "SerializationTest");
+
+    // method args lookup
+    MethodArgNamesLookup lookup = unit.getMethodArgs();
+    String methods[] = lookup.getMethods();
+    assertEquals(1, methods.length);
+    assertEquals(
+        "test.SerializationTest.methodArgsTest(ILjava/lang/Object;)Ljava/lang/String;",
+        methods[0]);
+
+    // JSNI methods
+    List<JsniMethod> jsniMethods = unit.getJsniMethods();
+    assertEquals(1, jsniMethods.size());
+    JsniMethod jsniMethod = jsniMethods.get(0);
+    String[] paramNames = jsniMethod.paramNames();
+    assertEquals(0, paramNames.length);
+    assertEquals("@test.SerializationTest::getTrue()", jsniMethod.name());
+    JsFunction jsniFunction = jsniMethod.function();
+    String origFunction = parseJs("function() { return true; }");
+    String newFunction = parseJs("function() " + jsniFunction.getBody().toSource());
+    assertEquals(origFunction, newFunction);
+
+    // Compiled classes
+    List<CompiledClass> compiledClasses =
+        Lists.create(unit.getCompiledClasses());
+    assertEquals(1, compiledClasses.size());
+    CompiledClass compiledClass = compiledClasses.get(0);
+    byte[] byteCode = compiledClass.getBytes();
+    assertNotNull(byteCode);
+    assertEquals("test", compiledClass.getPackageName());
+    assertEquals("test/SerializationTest", compiledClass.getInternalName());
+    assertSame(unit, compiledClass.getUnit());
+  }
+
+  private void assertObjectInDeps(Map<String, Ref> qualified,
+      Map<String, Ref> simple, String qualifiedName, String simpleName) {
+    Ref qualifiedRef = qualified.get(qualifiedName);
+    assertNotNull(qualifiedRef);
+    assertEquals(qualifiedName, qualifiedRef.getInternalName().replace("/", "."));
+    Ref simpleRef = simple.get(simpleName);
+    assertNotNull(simpleRef);
+    assertEquals(qualifiedName,simpleRef.getInternalName().replace("/", "."));
+  }
+
+  private void validateSerializedUnit(CompilationUnit originalUnit,
+      CompilationUnit newUnit) throws Exception {
+
+    // Compare the compiled classes
+    Map<String, CompiledClass> origMap = new HashMap<String, CompiledClass>();
+    for (CompiledClass cc : originalUnit.getCompiledClasses()) {
+      origMap.put(cc.getInternalName(), cc);
+    }
+    Map<String, CompiledClass> newMap = new HashMap<String, CompiledClass>();
+    for (CompiledClass cc : newUnit.getCompiledClasses()) {
+      newMap.put(cc.getInternalName(), cc);
+    }
+    assertEquals(origMap.size(), newMap.size());
+    for (String name : origMap.keySet()) {
+      assertEquals(name, newMap.get(name).getInternalName());
+    }
+
+    // Compare the dependencies
+    Map<String, Ref> origQualified = originalUnit.getDependencies().qualified;
+    Map<String, Ref> newQualified = newUnit.getDependencies().qualified;
+    for (String name : origQualified.keySet()) {
+      Ref origRef = origQualified.get(name);
+      Ref newRef = newQualified.get(name);
+      if (origRef == null) {
+        assertNull(newRef);
+      } else {
+        assertNotNull(newRef);
+        assertEquals(origRef.getSignatureHash(), newRef.getSignatureHash());
+      }
+    }
+
+    // Compare the source
+    assertEquals(originalUnit.getSource(), newUnit.getSource());
+
+    // Compare JSNI Methods
+    List<JsniMethod> origJsniMethods = originalUnit.getJsniMethods();
+    Map<String, JsniMethod> newJsniMethods = new HashMap<String, JsniMethod>();
+    for (JsniMethod jsniMethod : newUnit.getJsniMethods()) {
+      newJsniMethods.put(jsniMethod.name(), jsniMethod);
+    }
+    for (JsniMethod origMethod : origJsniMethods) {
+      JsniMethod newMethod = newJsniMethods.get(origMethod.name());
+      assertNotNull(newMethod);
+      assertEquals(origMethod.paramNames().length,
+          newMethod.paramNames().length);
+      for (int i = 0; i < origMethod.paramNames().length; i++) {
+        assertEquals(origMethod.paramNames()[i], newMethod.paramNames()[i]);
+      }
+      assertEquals(parseJs("function() " + origMethod.function().getBody()),
+          parseJs("function() " + newMethod.function().getBody()));
+      // Need to test deserialization of origMethod.function()?
     }
   }
 }

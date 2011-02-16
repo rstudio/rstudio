@@ -31,7 +31,7 @@ import java.io.OutputStream;
  * Artifacts created by {@link AbstractLinker}.
  */
 public class SyntheticArtifact extends EmittedArtifact {
-  private static final DiskCache diskCache = new DiskCache();
+  private static final DiskCache diskCache = DiskCache.INSTANCE;
 
   private final long lastModified;
   private transient long token;

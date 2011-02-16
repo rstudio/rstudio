@@ -199,6 +199,13 @@ public abstract class CompilationUnitBuilder {
     }
 
     @Override
+    protected Object writeReplace() {
+      long sourceToken = generatedUnit.getSourceToken();
+      assert sourceToken >= 0;
+      return new CachedCompilationUnit(this, sourceToken);
+    }
+    
+    @Override
     ContentId getContentId() {
       return new ContentId(getTypeName(), generatedUnit.getStrongHash());
     }

@@ -61,7 +61,7 @@ public class UnifiedAst implements Serializable {
     }
   }
 
-  private static final DiskCache diskCache = new DiskCache();
+  private static final DiskCache diskCache = DiskCache.INSTANCE;
 
   /**
    * The original AST; nulled out once consumed (by the first call to
