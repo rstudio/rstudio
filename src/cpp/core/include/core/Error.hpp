@@ -123,6 +123,7 @@ Error systemError(int value,
                   const ErrorLocation& location) ;
 
 Error fileExistsError(const ErrorLocation& location);
+Error pathNotFoundError(const ErrorLocation& location);
 
 class ErrorLocation
 {
