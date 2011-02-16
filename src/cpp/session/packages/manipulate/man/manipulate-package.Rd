@@ -1,19 +1,17 @@
-\name{RStudio-package}
-\alias{RStudio-package}
-\alias{RStudio}
+\name{manipulate-package}
+\alias{manipulate-package}
+\alias{manipulate}
 \docType{package}
-\title{Utility functions for use within the RStudio IDE}
+\title{Interactive Graphics for RStudio}
 \description{
 More about what it does (maybe more than one line)
 ~~ A concise (1-5 lines) description of the package ~~
 }
 \details{
 \tabular{ll}{
-Package: \tab RStudio\cr
+Package: \tab manipulate\cr
 Type: \tab Package\cr
-Version: \tab 1.0\cr
-Date: \tab 2011-02-16\cr
-License: \tab What license is it under?\cr
+License: \tab AGPL-3\cr
 LazyLoad: \tab yes\cr
 }
 

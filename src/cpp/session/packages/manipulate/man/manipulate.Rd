@@ -1,11 +1,6 @@
 \name{manipulate}
 \alias{manipulate}
-\alias{slider}
-\alias{picker}
-\alias{checkbox}
-\alias{manipulatorSetState}
-\alias{manipulatorGetState}
-\title{Manipulate: Interactive Plots for RStudio}
+\title{Create Interactive Plot}
 \description{
 Manipulate enables interactive manipulation of plots within RStudio. The \code{manipulate} function accepts a plotting expression and a set of controls (e.g. \code{slider} or \code{picker}) which are used to dynamically change values within the expression. When a value is changed using its corresponding control the expression is automatically re-executed and the plot is redrawn.
 

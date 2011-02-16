@@ -17,23 +17,26 @@ project(PACKAGES)
 set(PACKAGES_LIBRARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/library)
 file(MAKE_DIRECTORY ${PACKAGES_LIBRARY_DIR})
 
-# RStudio package
-set(RSTUDIO_OUTPUT ${PACKAGES_LIBRARY_DIR}/RStudio/DESCRIPTION)
-file(GLOB_RECURSE RSTUDIO_DEPENDENCIES RStudio/*.*)
-set_source_files_properties(${RSTUDIO_DEPENDENCIES} PROPERTIES
+# manipulate package
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/manipulate/DESCRIPTION.in
+               ${CMAKE_CURRENT_SOURCE_DIR}/manipulate/DESCRIPTION)
+
+set(MANIPULATE_OUTPUT ${PACKAGES_LIBRARY_DIR}/manipulate/DESCRIPTION)
+file(GLOB_RECURSE MANIPULATE_DEPENDENCIES manipulate/*.*)
+set_source_files_properties(${MANIPULATE_DEPENDENCIES} PROPERTIES
                             SYMBOLIC TRUE)
-add_custom_command(OUTPUT ${RSTUDIO_OUTPUT}
-                   DEPENDS ${RSTUDIO_DEPENDENCIES}
+add_custom_command(OUTPUT ${MANIPULATE_OUTPUT}
+                   DEPENDS ${MANIPULATE_DEPENDENCIES}
                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                    COMMAND R
-                   ARGS CMD INSTALL -l ${PACKAGES_LIBRARY_DIR} RStudio)
+                   ARGS CMD INSTALL -l ${PACKAGES_LIBRARY_DIR} manipulate)
 
 # add target for building packages
 add_custom_target(build_packages ALL
-                  DEPENDS ${RSTUDIO_OUTPUT})
+                  DEPENDS ${MANIPULATE_OUTPUT})
 
-# install RStudio package
-install(DIRECTORY ${PACKAGES_LIBRARY_DIR}/RStudio
+# install manipulate package
+install(DIRECTORY ${PACKAGES_LIBRARY_DIR}/manipulate
         DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/library)
 
 

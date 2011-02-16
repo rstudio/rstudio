@@ -12,7 +12,6 @@
 #
 
 
-
 slider <- function(min, max, value = min, label = NULL, step = NULL, ticks = TRUE)
 {
   # validate inputs
@@ -190,15 +189,5 @@ manipulate <- function(expr, controls = list(), ..., c = NULL)
   # return invisibly
   invisible(NULL)
 }
-
-
-
-
-
-
-
-
-
-
 
 
