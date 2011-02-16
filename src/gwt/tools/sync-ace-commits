@@ -1,0 +1,24 @@
+#!/bin/sh
+
+set -e
+
+cd ace
+git checkout master
+
+# Point this to the upstream commit that we've tested
+git reset --hard 3d1469e33
+
+git submodule update --init --recursive
+
+# Merge all the bugfix branches
+git merge forked-submodules bugfix-scrollbars bugfix-pagedown bugfix-webkit-paste bugfix-blankline
+
+
+cd support/pilot
+git merge bugfix-safari4
+cd ../..
+
+
+make clean
+make
+git commit -am "Update build"
