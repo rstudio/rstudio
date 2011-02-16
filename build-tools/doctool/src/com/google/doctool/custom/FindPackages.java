@@ -48,11 +48,11 @@ public class FindPackages {
   };
 
   /**
-   * A list of emulated packages under java.lang, to be emitted as
-   * the LANG_PKGS property.  Add packages here as needed.
+   * A list of emulated packages in the java.* namespace, to be emitted as
+   * the JAVA_PKGS property.  Add packages here as needed.
    */
-  private static final String[] LANG_PKGS = {
-      "java.lang", "java.lang.annotation", "java.io", "java.sql", "java.util"};
+  private static final String[] JAVA_PKGS = {
+    "java.lang", "java.lang.annotation", "java.math", "java.io", "java.sql", "java.util", "java.util.logging"};
 
   /**
    * User packages to include, regardless of exclusions.  Add packages here
@@ -115,12 +115,12 @@ public class FindPackages {
       out.println("# This file contains all of the user javadoc packages");
       out.println("#");
       out.println("# JRE emulation packages");
-      out.println("LANG_PKGS=\\");
-      for (int i = 0; i < LANG_PKGS.length; i++) {
-        if (i < LANG_PKGS.length - 1) {
-          out.println(LANG_PKGS[i] + ";\\");
+      out.println("JAVA_PKGS=\\");
+      for (int i = 0; i < JAVA_PKGS.length; i++) {
+        if (i < JAVA_PKGS.length - 1) {
+          out.println(JAVA_PKGS[i] + ";\\");
         } else {
-          out.println(LANG_PKGS[i]);
+          out.println(JAVA_PKGS[i]);
         }
       }
       out.println("# The last package should not have a trailing semicolon");

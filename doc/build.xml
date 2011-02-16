@@ -139,7 +139,7 @@
           <arg value="-sourcepath" />
           <arg path="${gwt.root}/user/super/com/google/gwt/emul:${gwt.root}/dev/core/super/com/google/gwt/dev/jjs/intrinsic" />
           <arg value="-packages" />
-          <arg value="${LANG_PKGS}" />
+          <arg value="${JAVA_PKGS}" />
         </java>
       </sequential>
     </outofdate>
