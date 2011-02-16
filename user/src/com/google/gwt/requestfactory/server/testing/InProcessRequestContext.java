@@ -154,7 +154,6 @@ class InProcessRequestContext extends AbstractRequestContext {
         Class<?> requestType = method.getReturnType().asSubclass(Request.class);
         return Proxy.newProxyInstance(requestType.getClassLoader(),
             new Class<?>[] {requestType}, new InvocationHandler() {
-              @Override
               public Object invoke(Object proxy, Method method, Object[] args)
                   throws Throwable {
                 if (Object.class.equals(method.getDeclaringClass())
