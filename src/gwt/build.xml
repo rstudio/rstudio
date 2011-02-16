@@ -40,7 +40,7 @@
   </path>
 
   <target name="ext">
-    <copy tofile="${ace.bin}/ace.js" file="tools/ace/build/src/ace.js"/>
+    <copy tofile="${ace.bin}/ace.js" file="tools/ace/build/src/ace-uncompressed.js"/>
     <jscomp compilationLevel="simple" warning="default"
             debug="false" output="${ace.bin}/acesupport.js">
       <externs dir="acesupport">
@@ -101,7 +101,7 @@
       <arg value="-XdisableClassMetadata"/>
       <arg value="-XdisableCastChecking"/>
       <arg line="-gen gen"/>
-      <!--<arg line="-style PRETTY"/>-->
+      <arg line="-style PRETTY"/>
       <arg line="-extra extras"/>
       <arg line="${gwt.extra.args}"/>
       <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->

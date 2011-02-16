@@ -101,7 +101,8 @@ public class AceEditorWidget extends Composite
 
    public void setCode(String code)
    {
-      initToEmptyString_ = StringUtil.notNull(code).length() == 0;
+      code = StringUtil.notNull(code);
+      initToEmptyString_ = code.length() == 0;
       editor_.getSession().setValue(code);
    }
 
