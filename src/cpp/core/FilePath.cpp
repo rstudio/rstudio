@@ -541,8 +541,24 @@ FilePath FilePath::childPath(const std::string& path) const
    
 }
 
+namespace {
+
+Error notFoundError(const FilePath& filePath,
+                        const ErrorLocation& location)
+{
+   Error error = pathNotFoundError(location);
+   if (!filePath.empty())
+      error.addProperty("path", filePath.absolutePath());
+   return error;
+}
+
+}
+
 Error FilePath::children(std::vector<FilePath>* pFilePaths) const
 {
+   if (!exists())
+      return notFoundError(*this, ERROR_LOCATION);
+
    using boost::filesystem::directory_iterator ;
 
    try 
@@ -567,6 +583,9 @@ Error FilePath::children(std::vector<FilePath>* pFilePaths) const
 Error FilePath::childrenRecursive(
                         RecursiveIterationFunction iterationFunction) const
 {
+   if (!exists())
+      return notFoundError(*this, ERROR_LOCATION);
+
    using boost::filesystem::recursive_directory_iterator ;
    
    try 

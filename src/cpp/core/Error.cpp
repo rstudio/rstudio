@@ -168,6 +168,15 @@ Error fileExistsError(const ErrorLocation& location)
    return systemError(boost::system::errc::file_exists, location);
 #endif
 }
+
+Error pathNotFoundError(const ErrorLocation& location)
+{
+#ifdef _WIN32
+   return systemError(boost::system::windows_error::path_not_found, location);
+#else
+   return systemError(boost::system::errc::no_such_file_or_directory, location);
+#endif
+}
    
 struct ErrorLocation::Impl 
 {
