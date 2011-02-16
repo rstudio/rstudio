@@ -62,7 +62,7 @@ void safeExecuteManipulator(SEXP manipulatorSEXP)
    try
    {
       // execute the code within the manipulator.
-      Error error = r::exec::RFunction(".rs.manipulatorExecute",
+      Error error = r::exec::RFunction("RStudio:::manipulatorExecute",
                                        manipulatorSEXP).call();
 
       // r code execution errors are expected (e.g. for invalid manipulate
