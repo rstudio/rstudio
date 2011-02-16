@@ -124,6 +124,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("r-modules-source", 
          value<std::string>(&modulesRSourcePath_)->default_value("R/modules"),
          "Modules R source path")
+      ("r-session-packages",
+         value<std::string>(&sessionPackagesPath_)->default_value("R/library"),
+         "R packages path")
       ("r-libs-user",
          value<std::string>(&rLibsUser_)->default_value("~/R/library"),
          "R user library path")
@@ -250,6 +253,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    resolvePath(resourcePath, &wwwLocalPath_);
    resolvePath(resourcePath, &coreRSourcePath_);
    resolvePath(resourcePath, &modulesRSourcePath_);
+   resolvePath(resourcePath, &sessionPackagesPath_);
    resolvePath(resourcePath, &rpostbackPath_);
 
    // shared secret with parent

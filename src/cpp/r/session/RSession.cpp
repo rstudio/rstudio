@@ -316,6 +316,15 @@ Error initialize()
    if (error)
       return error ;
 
+   // append any extra library to the libpaths
+   if (!s_options.rLibsExtra.empty())
+   {
+      error = r::exec::RFunction(".rs.libPathsAppend",
+                                 s_options.rLibsExtra.absolutePath()).call();
+      if (error)
+         return error;
+   }
+
    // source manipulator functions
    FilePath manipFilePath = s_options.rSourcePath.complete("Manipulate.R");
    error = r::sourceManager().sourceLocal(manipFilePath);

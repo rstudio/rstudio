@@ -1667,6 +1667,7 @@ int main (int argc, char * const argv[])
       rOptions.rSourcePath = options.coreRSourcePath();
       if (!desktopMode) // ignore r-libs-user in desktop mode
          rOptions.rLibsUser = options.rLibsUser();
+      rOptions.rLibsExtra = options.sessionPackagesPath();
       rOptions.rCRANRepos = options.rCRANRepos();
       rOptions.rCompatibleGraphicsEngineVersion =
                               options.rCompatibleGraphicsEngineVersion();

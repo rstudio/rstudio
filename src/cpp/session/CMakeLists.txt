@@ -191,4 +191,6 @@ if(RSTUDIO_SESSION_WIN64)
            DESTINATION ${RSTUDIO_INSTALL_BIN})
 endif()
 
+# custom R packages for RStudio
+add_subdirectory(packages)
 

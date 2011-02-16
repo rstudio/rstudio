@@ -237,6 +237,11 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
     })
 })
 
+.rs.addFunction( "libPathsAppend", function(path)
+{
+  .libPaths(append(.libPaths(), path))
+})
+
 
 # Support for implementing json-rpc methods directly in R:
 # 

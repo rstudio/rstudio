@@ -56,6 +56,7 @@ struct ROptions
    core::FilePath userHomePath;
    core::FilePath userScratchPath;
    core::FilePath rSourcePath;
+   core::FilePath rLibsExtra;
    std::string rLibsUser;
    std::string rCRANRepos;
    int rCompatibleGraphicsEngineVersion;
