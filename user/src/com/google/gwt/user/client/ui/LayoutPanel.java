@@ -231,6 +231,16 @@ public class LayoutPanel extends ComplexPanel implements AnimatedLayout,
   }
 
   /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #setWidgetBottomHeight(Widget,double, Unit, double, Unit)
+   */
+  public void setWidgetBottomHeight(IsWidget child, double bottom,
+      Unit bottomUnit, double height, Unit heightUnit) {
+    this.setWidgetBottomHeight(child.asWidget(), bottom, bottomUnit, height, heightUnit);
+  }
+  
+  /**
    * Sets the child widget's horizontal position within its layer.
    * 
    * @param child
@@ -257,6 +267,16 @@ public class LayoutPanel extends ComplexPanel implements AnimatedLayout,
     getLayer(child).setLeftRight(left, leftUnit, right, rightUnit);
     animate(0);
   }
+  
+  /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #setWidgetLeftRight(Widget,double, Unit, double, Unit)
+   */
+  public void setWidgetLeftRight(IsWidget child, double left, Unit leftUnit,
+      double right, Unit rightUnit) {
+    this.setWidgetLeftRight(child.asWidget(), left, leftUnit, right, rightUnit);
+  }
 
   /**
    * Sets the child widget's left and width values.
@@ -272,6 +292,16 @@ public class LayoutPanel extends ComplexPanel implements AnimatedLayout,
     assertIsChild(child);
     getLayer(child).setLeftWidth(left, leftUnit, width, widthUnit);
     animate(0);
+  }
+  
+  /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #setWidgetLeftWidth(Widget,double, Unit, double, Unit)
+   */
+  public void setWidgetLeftWidth(IsWidget child, double left, Unit leftUnit,
+      double width, Unit widthUnit) {
+    this.setWidgetLeftWidth(child.asWidget(), left, leftUnit, width, widthUnit);
   }
 
   /**
@@ -289,6 +319,16 @@ public class LayoutPanel extends ComplexPanel implements AnimatedLayout,
     getLayer(child).setRightWidth(right, rightUnit, width, widthUnit);
     animate(0);
   }
+  
+  /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #setWidgetRightWidth(Widget,double, Unit, double, Unit)
+   */
+  public void setWidgetRightWidth(IsWidget child, double right, Unit rightUnit,
+      double width, Unit widthUnit) {
+    this.setWidgetRightWidth(child.asWidget(), right, rightUnit, width, widthUnit);
+  }
 
   /**
    * Sets the child widget's top and bottom values.
@@ -305,6 +345,16 @@ public class LayoutPanel extends ComplexPanel implements AnimatedLayout,
     getLayer(child).setTopBottom(top, topUnit, bottom, bottomUnit);
     animate(0);
   }
+  
+  /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #setWidgetTopBottom(Widget,double, Unit, double, Unit)
+   */
+  public void setWidgetTopBottom(IsWidget child, double top, Unit topUnit,
+      double bottom, Unit bottomUnit) {
+    this.setWidgetTopBottom(child.asWidget(), top, topUnit, bottom, bottomUnit);
+  }
 
   /**
    * Sets the child widget's top and height values.
@@ -320,6 +370,16 @@ public class LayoutPanel extends ComplexPanel implements AnimatedLayout,
     assertIsChild(child);
     getLayer(child).setTopHeight(top, topUnit, height, heightUnit);
     animate(0);
+  }
+  
+  /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #setWidgetTopHeight(Widget,double, Unit, double, Unit)
+   */
+  public void setWidgetTopHeight(IsWidget child, double top, Unit topUnit,
+      double height, Unit heightUnit) {
+    this.setWidgetTopHeight(child.asWidget(), top, topUnit, height, heightUnit);
   }
 
   /**

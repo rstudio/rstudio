@@ -117,6 +117,15 @@ public class AbsolutePanel extends ComplexPanel implements
     insert(w, beforeIndex);
     verifyPositionNotStatic(w);
   }
+  
+  /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #add(Widget,int,int)
+   */
+  public void add(IsWidget w, int left, int top) {
+    this.add(w.asWidget(),left,top);
+  }
 
   /**
    * Gets the position of the left outer border edge of the widget relative to

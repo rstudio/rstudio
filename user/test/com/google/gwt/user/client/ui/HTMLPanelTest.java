@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -79,10 +79,11 @@ public class HTMLPanelTest extends GWTTestCase {
    */
   public void testAddToElement() {
     Label labelA = new Label("A"), labelB = new Label("B");
-    HTMLPanel p = new HTMLPanel("<div class=\"a\"></div><div class=\"b\"></div>");
+    HTMLPanel p = new HTMLPanel(
+        "<div class=\"a\"></div><div class=\"b\"></div>");
     Element first = p.getElement().getFirstChildElement();
     Element second = first.getNextSiblingElement();
-    
+
     p.add(labelA, first);
     p.add(labelB, second);
     // Ensure that both Label's have the correct parent.
@@ -92,10 +93,10 @@ public class HTMLPanelTest extends GWTTestCase {
 
   /**
    * This is meant to catch an issue created by a faulty optimization. To
-   * optimize add() when the HTMLPanel is unattached, we would originally
-   * move its element to a hidden div so that getElementById() would work.
-   * Unfortunately, we didn't move it back to its original parent, causing
-   * a problem in the case described in this test.
+   * optimize add() when the HTMLPanel is unattached, we would originally move
+   * its element to a hidden div so that getElementById() would work.
+   * Unfortunately, we didn't move it back to its original parent, causing a
+   * problem in the case described in this test.
    */
   public void testAddPartiallyAttached() {
     SimplePanel sp = new SimplePanel();
@@ -145,67 +146,107 @@ public class HTMLPanelTest extends GWTTestCase {
   }
 
   /**
-   * Ensures that addAndReplaceChild() puts the widget in exactly the right place in the DOM.
+   * Ensures that {@link HTMLPanel#addAndReplaceChild(Widget,String)} puts the
+   * widget in exactly the right place in the DOM.
    */
   public void testAddAndReplaceElement() {
-    HTMLPanel hp = new HTMLPanel("<div id='parent'>foo<span id='placeholder'></span>bar</div>");
-
+    HTMLPanel hp = new HTMLPanel(
+        "<div id='parent'>foo<span id='placeholder'></span>bar</div>");
     Button button = new Button("my button");
+
     hp.addAndReplaceElement(button, "placeholder");
 
-    assertEquals("parent", button.getElement().getParentElement().getId());
-
-    Node prev = button.getElement().getPreviousSibling();
-    assertEquals("foo", prev.getNodeValue());
-
-    Node next = button.getElement().getNextSibling();
-    assertEquals("bar", next.getNodeValue());
+    assertParentId(button, "parent");
+    assertIsBetweenSiblings(button, "foo", "bar");
   }
 
   /**
-   * Ensures that addAndReplaceChild() puts the widget in exactly the right place in the DOM.
+   * Ensures that
+   * {@link HTMLPanel#addAndReplaceElement(Widget, com.google.gwt.user.client.Element)}
+   * puts the widget in exactly the right place in the DOM.
    */
   @SuppressWarnings("deprecation")
   public void testAddAndReplaceElementForUserElement() {
-
-    HTMLPanel hp = new HTMLPanel("<div id='parent'>foo<span id='placeholder'></span>bar</div>");
-
+    HTMLPanel hp = new HTMLPanel(
+        "<div id='parent'>foo<span id='placeholder'></span>bar</div>");
     RootPanel.get().add(hp);
     com.google.gwt.user.client.Element placeholder = hp.getElementById("placeholder");
-
     Button button = new Button("my button");
+
     hp.addAndReplaceElement(button, placeholder);
 
-    assertEquals("parent", button.getElement().getParentElement().getId());
-
-    Node prev = button.getElement().getPreviousSibling();
-    assertEquals("foo", prev.getNodeValue());
-
-    Node next = button.getElement().getNextSibling();
-    assertEquals("bar", next.getNodeValue());
+    assertParentId(button, "parent");
+    assertIsBetweenSiblings(button, "foo", "bar");
   }
 
   /**
-   * Ensures that addAndReplaceChild() puts the widget in exactly the right place in the DOM.
+   * Ensures that overloaded version of
+   * {@link HTMLPanel#addAndReplaceElement(IsWidget, com.google.gwt.user.client.Element)}
+   * for IsWidget puts the widget in exactly the right place in the DOM.
    */
-  public void testAddAndReplaceElementForElement() {
-    HTMLPanel hp = new HTMLPanel("<div id='parent'>foo<span id='placeholder'></span>bar</div>");
-
+  public void testAddAndReplaceElementForUserElementAsIsWidget() {
+    HTMLPanel hp = new HTMLPanel(
+        "<div id='parent'>foo<span id='placeholder'></span>bar</div>");
     RootPanel.get().add(hp);
-    Element placeholder = hp.getElementById("placeholder");
-
+    com.google.gwt.user.client.Element placeholder = hp.getElementById("placeholder");
     Button button = new Button("my button");
-    hp.addAndReplaceElement(button, placeholder);
+    // IsWidget reference to call the overloaded version
+    IsWidget isWidget = button;
 
-    assertEquals("parent", button.getElement().getParentElement().getId());
+    hp.addAndReplaceElement(isWidget, placeholder);
 
-    Node prev = button.getElement().getPreviousSibling();
-    assertEquals("foo", prev.getNodeValue());
-
-    Node next = button.getElement().getNextSibling();
-    assertEquals("bar", next.getNodeValue());
+    assertParentId(button, "parent");
+    assertIsBetweenSiblings(button, "foo", "bar");
   }
 
+  /**
+   * Ensures that {@link HTMLPanel#addAndReplaceElement(Widget, Element)} puts
+   * the widget in exactly the right place in the DOM.
+   */
+  public void testAddAndReplaceElementForElement() {
+    HTMLPanel hp = new HTMLPanel(
+        "<div id='parent'>foo<span id='placeholder'></span>bar</div>");
+    RootPanel.get().add(hp);
+    Element placeholder = hp.getElementById("placeholder");
+    Button button = new Button("my button");
+
+    hp.addAndReplaceElement(button, placeholder);
+
+    assertParentId(button, "parent");
+    assertIsBetweenSiblings(button, "foo", "bar");
+  }
+
+  /**
+   * Tests {@link HTMLPanel#addAndReplaceElement(Widget, String)}.
+   */
+  public void testAddAndReplaceElementById() {
+    HTMLPanel hp = new HTMLPanel(
+        "<div id='parent'>foo<span id='placeholder'></span>bar</div>");
+    RootPanel.get().add(hp);
+    Button button = new Button("my button");
+
+    hp.addAndReplaceElement(button, "placeholder");
+
+    assertParentId(button, "parent");
+    assertIsBetweenSiblings(button, "foo", "bar");
+  }
+  
+  /**
+   * Tests {@link HTMLPanel#addAndReplaceElement(IsWidget, String)}.
+   */
+  public void testAddAndReplaceElementByIdAsIsWidget() {
+    HTMLPanel hp = new HTMLPanel(
+        "<div id='parent'>foo<span id='placeholder'></span>bar</div>");
+    RootPanel.get().add(hp);
+    Button button = new Button("my button");
+
+    // IsWidget cast to call the overloaded version
+    hp.addAndReplaceElement((IsWidget) button, "placeholder");
+
+    assertParentId(button, "parent");
+    assertIsBetweenSiblings(button, "foo", "bar");
+  }
+  
   /**
    * Tests table root tag.
    */
@@ -274,7 +315,7 @@ public class HTMLPanelTest extends GWTTestCase {
   public void testSafeHtml() {
     TestTemplates templates = GWT.create(TestTemplates.class);
     SafeHtml table = templates.tableTemplate("Hello");
-    
+
     HTMLPanel hp = new HTMLPanel(table);
     InlineLabel label = new InlineLabel("World");
     hp.addAndReplaceElement(label, "labelHere");
@@ -295,5 +336,31 @@ public class HTMLPanelTest extends GWTTestCase {
     assertNotNull(parent);
     assertEquals("div", parent.getTagName().toLowerCase());
     assertEquals("table", firstChild.getTagName().toLowerCase());
+  }
+
+  /**
+   * Asserts that the widget w is between the given previous and next nodes.
+   * 
+   * @param w the widget
+   * @param previous the expected previous node string representation of the
+   *          widget
+   * @param next the expected next node string representation of the widget
+   */
+  private void assertIsBetweenSiblings(Widget w, String previous, String next) {
+    Node prevNode = w.getElement().getPreviousSibling();
+    assertEquals(previous, prevNode.getNodeValue());
+
+    Node nextNode = w.getElement().getNextSibling();
+    assertEquals(next, nextNode.getNodeValue());
+  }
+
+  /**
+   * Asserts that the parent id of the widget is the given one.
+   * 
+   * @param w the widget
+   * @param expected the expected parent id of w
+   */
+  private void assertParentId(Widget w, String expected) {
+    assertEquals(expected, w.getElement().getParentElement().getId());
   }
 }

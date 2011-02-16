@@ -32,11 +32,38 @@ public class CaptionPanelTest extends GWTTestCase {
     return "com.google.gwt.user.User";
   }
 
+  /**
+   * Tests {@link CaptionPanel#add(IsWidget)}.
+   */
+  public void testAddAsIsWidget() {
+    CaptionPanel panel = createEmptyCaptionPanel();
+    Widget widget = new Label("foo");
+    
+    // IsWidget cast to call the overloaded version
+    panel.add((IsWidget) widget);
+    
+    assertSame(widget,panel.getContentWidget());
+  }
+  
+  /**
+   * Ensures that {@link CaptionPanel#add(IsWidget)} does <b>NOT</b> fail
+   * when the IsWidget argument is <code>null</code>. Not that this is
+   * a great thing, but it works in the add(Widget) case so...
+   */
+  public void testAddNullAsIsWidget() {
+    CaptionPanel panel = createEmptyCaptionPanel();
+    // IsWidget reference to call the overloaded version
+    IsWidget widget = null;
+    
+    panel.add(widget);
+    // ta da...
+  }
+
   public void testHasWidgets() {
     WidgetAdder adder = new HasWidgetsTester.DefaultWidgetAdder();
 
     // With no caption.
-    HasWidgetsTester.testAll(new CaptionPanel(), adder, false);
+    HasWidgetsTester.testAll(createEmptyCaptionPanel(), adder, false);
 
     // With a text caption.
     HasWidgetsTester.testAll(new CaptionPanel("some text"), adder, false);
@@ -75,45 +102,47 @@ public class CaptionPanelTest extends GWTTestCase {
     }
   }
 
-// TODO(bruce): re-active when we ensure that assertions are enabled during unit test runs
-//  /**
-//   * When the caption is null, it needs to be actually removed from the DOM (to
-//   * compensate for browser bugs). This formulation requires no widget to have
-//   * been set first.
-//   */
-//  public void testCaptionAssertsAgainstNull() {
-//    // Ctor.
-//    {
-//      try {
-//        new CaptionPanel(null);
-//        fail("Should've asserted!");
-//      } catch (AssertionError e) {
-//        // good to make it here
-//      }
-//    }
-//
-//    // Setter/HTML.
-//    {
-//      try {
-//        CaptionPanel panel = new CaptionPanel("stuff");
-//        panel.setCaptionHTML(null);
-//        fail("Should've asserted!");
-//      } catch (AssertionError e) {
-//        // good to make it here
-//      }
-//    }
-//
-//    // Setter/Text.
-//    {
-//      try {
-//        CaptionPanel panel = new CaptionPanel("stuff");
-//        panel.setCaptionText(null);
-//        fail("Should've asserted!");
-//      } catch (AssertionError e) {
-//        // good to make it here
-//      }
-//    }
-//  }
+  // TODO(bruce): re-active when we ensure that assertions are enabled during
+  // unit test runs
+  // /**
+  // * When the caption is null, it needs to be actually removed from the DOM
+  // (to
+  // * compensate for browser bugs). This formulation requires no widget to have
+  // * been set first.
+  // */
+  // public void testCaptionAssertsAgainstNull() {
+  // // Ctor.
+  // {
+  // try {
+  // new CaptionPanel(null);
+  // fail("Should've asserted!");
+  // } catch (AssertionError e) {
+  // // good to make it here
+  // }
+  // }
+  //
+  // // Setter/HTML.
+  // {
+  // try {
+  // CaptionPanel panel = new CaptionPanel("stuff");
+  // panel.setCaptionHTML(null);
+  // fail("Should've asserted!");
+  // } catch (AssertionError e) {
+  // // good to make it here
+  // }
+  // }
+  //
+  // // Setter/Text.
+  // {
+  // try {
+  // CaptionPanel panel = new CaptionPanel("stuff");
+  // panel.setCaptionText(null);
+  // fail("Should've asserted!");
+  // } catch (AssertionError e) {
+  // // good to make it here
+  // }
+  // }
+  // }
 
   public void testCtorAsHtmlFlag() {
     String s = "this is <b>not</b> null";
@@ -152,7 +181,7 @@ public class CaptionPanelTest extends GWTTestCase {
   }
 
   public void testDefaultCaptionIsEmptyString() {
-    CaptionPanel panel = new CaptionPanel();
+    CaptionPanel panel = createEmptyCaptionPanel();
     assertEquals("", panel.getCaptionText());
     assertEquals("", panel.getCaptionHTML());
     // Wigets may be supported in the future.
@@ -161,7 +190,7 @@ public class CaptionPanelTest extends GWTTestCase {
   }
 
   public void testGetSetHTMLCaption() {
-    CaptionPanel panel = new CaptionPanel();
+    CaptionPanel panel = createEmptyCaptionPanel();
     panel.setCaptionHTML("<b>bold</b>");
     assertEqualsIgnoreCase("<b>bold</b>", panel.getCaptionHTML());
     assertEquals("bold", panel.getCaptionText());
@@ -169,7 +198,7 @@ public class CaptionPanelTest extends GWTTestCase {
 
   public void testGetSetTextCaption() {
     String s = "this is <b>not</b> null";
-    CaptionPanel panel = new CaptionPanel();
+    CaptionPanel panel = createEmptyCaptionPanel();
     panel.setCaptionText(s);
     assertEquals(s, panel.getCaptionText());
     assertNotEquals(s, panel.getCaptionHTML());
@@ -297,14 +326,18 @@ public class CaptionPanelTest extends GWTTestCase {
 
   public void testSafeHtmlConstructor() {
     CaptionPanel panel = new CaptionPanel(SafeHtmlUtils.fromSafeConstant(html));
-    
+
     assertEquals(html, panel.getCaptionHTML().toLowerCase());
   }
 
   public void testSetCaptionSafeHtml() {
     CaptionPanel panel = new CaptionPanel("hiworld");
     panel.setCaptionHTML(SafeHtmlUtils.fromSafeConstant(html));
-    
+
     assertEquals(html, panel.getCaptionHTML().toLowerCase());
+  }
+
+  private CaptionPanel createEmptyCaptionPanel() {
+    return new CaptionPanel();
   }
 }

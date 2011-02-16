@@ -39,12 +39,40 @@ public class TreeTest extends GWTTestCase {
   public String getModuleName() {
     return "com.google.gwt.user.DebugTest";
   }
+
+  /**
+   * Test for {@link Tree#add(IsWidget)}.
+   */
+  public void testAddAsIsWidget() {
+    Tree t = createTree();
+    Widget widget = new Label("foo");
+
+    // IsWidget cast to call the overloaded version
+    t.add((IsWidget) widget);
+
+    assertEquals("The number of items should be 1", 1, t.getItemCount());
+    assertSame(widget, t.getItem(0).getWidget());
+  }
   
+  /**
+   * Ensures that {@link Tree#add(Widget)} does <b>NOT</b> throws a
+   * {@link NullPointerException} when the Widget argument is <code>null</code>,
+   * for stupidity consistency with add(Widget).
+   */
+  public void testAddNullAsIsWidget() {
+    Tree t = createTree();
+    // IsWidget reference to call the overload version
+    IsWidget widget = null;
+    
+    t.add(widget);
+    // ta da...
+  }
+
   /**
    * Test for {@link Tree#addItem(IsTreeItem)}.
    */
   public void testAddItemIsTreeItem() {
-    Tree t = new Tree();
+    Tree t = createTree();
     TreeItem item = new TreeItem("hello");
     t.addItem((IsTreeItem) item);
     assertEquals(1, t.getItemCount());
@@ -52,16 +80,16 @@ public class TreeTest extends GWTTestCase {
   }
 
   public void testAddItemSafeHtml() {
-    Tree t = new Tree();
+    Tree t = createTree();
     TreeItem item = t.addItem(SafeHtmlUtils.fromSafeConstant(html));
     assertEquals(html, item.getHTML().toLowerCase());
   }
-  
+
   /**
    * Test for {@link Tree#addTextItem(String)}.
    */
   public void testAddTextItem() {
-    Tree t = new Tree();
+    Tree t = createTree();
     String text = "Some<br>text";
     TreeItem item = t.addTextItem(text);
     assertEquals(text, item.getText());
@@ -71,11 +99,11 @@ public class TreeTest extends GWTTestCase {
   }
 
   public void testAttachDetachOrder() {
-    HasWidgetsTester.testAll(new Tree(), new Adder(), true);
+    HasWidgetsTester.testAll(createTree(), new Adder(), true);
   }
 
   public void testClear() {
-    Tree t = new Tree();
+    Tree t = createTree();
     // Adding widget to end of tree, widgets still have their parents set
     // correctly.
     TreeItem a = new TreeItem("a");
@@ -99,7 +127,7 @@ public class TreeTest extends GWTTestCase {
   }
 
   public void testDebugId() {
-    Tree tree = new Tree();
+    Tree tree = createTree();
     TreeItem top0 = tree.addItem("top0");
     TreeItem top1 = tree.addItem("top1");
     TreeItem top2 = tree.addItem("top2");
@@ -131,7 +159,7 @@ public class TreeTest extends GWTTestCase {
   }
 
   public void testInsertSameItemRepeatedly() {
-    Tree t = new Tree();
+    Tree t = createTree();
     TreeItem ti = new TreeItem();
     TreeItem wti = new TreeItem();
     wti.setWidget(new Label("label"));
@@ -145,13 +173,13 @@ public class TreeTest extends GWTTestCase {
   }
 
   public void testInsertItemSafeHtml() {
-    Tree t = new Tree();
+    Tree t = createTree();
     TreeItem item = t.insertItem(0, SafeHtmlUtils.fromSafeConstant(html));
     assertEquals(html, item.getHTML().toLowerCase());
   }
 
   public void testIterator() {
-    Tree tree = new Tree();
+    Tree tree = createTree();
     Iterator<TreeItem> iter = tree.treeItemIterator();
     assertFalse(iter.hasNext());
     TreeItem a = tree.addItem("a");
@@ -180,7 +208,7 @@ public class TreeTest extends GWTTestCase {
 
   public void testNulls() {
     // Checking for setting the widget null then clearing the tree.
-    Tree t = new Tree();
+    Tree t = createTree();
     TreeItem item = new TreeItem();
     item.setWidget(null);
     t.clear();
@@ -192,7 +220,7 @@ public class TreeTest extends GWTTestCase {
   }
 
   public void testRemove() {
-    Tree t = new Tree();
+    Tree t = createTree();
     TreeItem item = t.addItem("a");
     TreeItem itemb = t.addItem("b");
     t.setSelectedItem(item);
@@ -208,12 +236,12 @@ public class TreeTest extends GWTTestCase {
     Iterator<TreeItem> iter2 = t.treeItemIterator();
     assertFalse(iter2.hasNext());
   }
-  
+
   /**
    * Test for {@link Tree#removeItem(IsTreeItem)}.
    */
   public void testRemoveIsTreeItem() {
-    Tree t = new Tree();
+    Tree t = createTree();
     TreeItem itemA = t.addItem("a");
     TreeItem itemB = t.addItem("b");
     // initial state
@@ -227,12 +255,12 @@ public class TreeTest extends GWTTestCase {
     // ignore null
     t.removeItem((IsTreeItem) null);
   }
-  
+
   /**
    * Test for {@link Tree#removeItems()}.
    */
   public void testRemoveItems() {
-    Tree t = new Tree();
+    Tree t = createTree();
     TreeItem itemA = t.addItem("a");
     TreeItem itemB = t.addItem("b");
     // initial state
@@ -245,14 +273,14 @@ public class TreeTest extends GWTTestCase {
   }
 
   public void testRootAdd() {
-    Tree t = new Tree();
+    Tree t = createTree();
     Label l = new Label("hello");
     t.add(l);
     assertEquals(t, l.getParent());
   }
 
   public void testRootInsert() {
-    Tree t = new Tree();
+    Tree t = createTree();
     TreeItem b = t.addItem("b");
     assertEquals(1, t.getItemCount());
     assertEquals(b, t.getItem(0));
@@ -284,7 +312,7 @@ public class TreeTest extends GWTTestCase {
   }
 
   public void testRootInsertInvalidIndex() {
-    Tree t = new Tree();
+    Tree t = createTree();
     t.addItem("a");
     t.addItem("b");
     t.addItem("c");
@@ -307,7 +335,7 @@ public class TreeTest extends GWTTestCase {
   }
 
   public void testSwap() {
-    Tree t = new Tree();
+    Tree t = createTree();
 
     // Start with text.
     TreeItem item = t.addItem("hello");
@@ -342,7 +370,7 @@ public class TreeTest extends GWTTestCase {
 
   public void testTree() {
     // Simple widget
-    Tree t = new Tree();
+    Tree t = createTree();
     Label l = new Label("simple widget");
     TreeItem simple = new TreeItem(l);
     t.addItem(simple);
@@ -385,7 +413,7 @@ public class TreeTest extends GWTTestCase {
     assertEquals(t, eLabel.getParent());
 
     // Tree inside of Tree.
-    Tree childTree = new Tree();
+    Tree childTree = createTree();
     t.addItem(new TreeItem(childTree));
 
     // Swap TreeItems to new Tree.
@@ -398,5 +426,9 @@ public class TreeTest extends GWTTestCase {
     assertNull(dLabel.getParent());
     assertNull(eLabel.getParent());
     assertFalse(childTree.getChildWidgets().containsKey(eLabel.getParent()));
+  }
+
+  private Tree createTree() {
+    return new Tree();
   }
 }

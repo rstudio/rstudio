@@ -22,6 +22,7 @@ import com.google.gwt.user.client.Element;
 /**
  * Tests the DockPanel widget.
  */
+@SuppressWarnings("deprecation")
 public class DockPanelTest extends GWTTestCase {
 
   static class Adder implements HasWidgetsTester.WidgetAdder {
@@ -113,6 +114,16 @@ public class DockPanelTest extends GWTTestCase {
     assertTrue(((DockPanel.LayoutData) l4.getLayoutData()).direction == DockPanel.NORTH);
   }
 
+  public void testAddAsIsWidget() {
+    DockPanel panel = createDockPanel();
+    Widget widget = new Label("foo");
+    
+    panel.add(widget, DockPanel.NORTH);
+    
+    assertLogicalPaternity(panel,widget);
+    assertPhysicalPaternity(panel,widget);
+  }
+  
   public void testAttachDetachOrder() {
     HasWidgetsTester.testAll(new DockPanel(), new Adder(), true);
   }
@@ -159,5 +170,36 @@ public class DockPanelTest extends GWTTestCase {
         DOM.getParent(west2.getElement()));
     UIObjectTest.assertDebugId("myDock-center",
         DOM.getParent(center.getElement()));
+  }
+
+  /**
+   * Asserts that <b>panel</b> is the logical parent of <b>expectedChild</b>.
+   * 
+   * @param panel the parent panel
+   * @param expectedChild the expected child of <b>panel</b>
+   */
+  private void assertLogicalPaternity(DockPanel panel, Widget expectedChild) {
+    assertSame("The parent and the panel must be the same", panel,
+        expectedChild.getParent());
+    assertTrue("The child must be in the childen collection of the panel",
+        panel.getChildren().contains(expectedChild));
+  }
+  
+  /**
+   * Asserts that <b>expectedChild</b> is the first physical child of
+   * <b>parent</b>.
+   * 
+   * @param parent the parent panel
+   * @param expectedChild the expected child of <b>panel</b>
+   */
+  private void assertPhysicalPaternity(Widget parent,
+      Widget expectedChild) {
+    Element panelElement = parent.getElement();
+    Element childElement = expectedChild.getElement();
+    assertTrue("The parent's Element of the child must be the panel's Element", DOM.isOrHasChild(panelElement, childElement));
+  }
+
+  private DockPanel createDockPanel() {
+    return new DockPanel();
   }
 }

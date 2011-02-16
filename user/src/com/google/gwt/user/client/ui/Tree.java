@@ -89,7 +89,7 @@ import java.util.Map;
  * </p>
  */
 @SuppressWarnings("deprecation")
-public class Tree extends Widget implements HasTreeItems, HasWidgets, 
+public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets.ForIsWidget, 
     SourcesTreeEvents, HasFocus, HasAnimation, HasAllKeyHandlers,
     HasAllFocusHandlers, HasSelectionHandlers<TreeItem>,
     HasOpenHandlers<TreeItem>, HasCloseHandlers<TreeItem>, SourcesMouseEvents,
@@ -303,6 +303,15 @@ public class Tree extends Widget implements HasTreeItems, HasWidgets,
   public void add(Widget widget) {
     addItem(widget);
   }
+  
+  /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #add(Widget)
+   */
+  public void add(IsWidget w) {
+    this.add(asWidgetOrNull(w));
+  }
 
   public HandlerRegistration addBlurHandler(BlurHandler handler) {
     return addDomHandler(handler, BlurEvent.getType());
@@ -370,6 +379,15 @@ public class Tree extends Widget implements HasTreeItems, HasWidgets,
    */
   public TreeItem addItem(Widget widget) {
     return root.addItem(widget);
+  }
+  
+  /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #addItem(Widget)
+   */
+  public TreeItem addItem(IsWidget w) {
+    return this.addItem(asWidgetOrNull(w));
   }
 
   /**
@@ -678,6 +696,15 @@ public class Tree extends Widget implements HasTreeItems, HasWidgets,
     // Delegate to TreeItem.setWidget, which performs correct removal.
     item.setWidget(null);
     return true;
+  }
+  
+  /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #remove(Widget)
+   */
+  public boolean remove(IsWidget w) {
+    return this.remove(w.asWidget());
   }
 
   /**

@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.user.client.Window;
@@ -31,7 +32,7 @@ public class AbsolutePanelTest extends PanelTestBase<AbsolutePanel> {
    * would throw an {@link IndexOutOfBoundsException}.
    */
   public void testDoubleAdd() {
-    AbsolutePanel absolutePanel = new AbsolutePanel();
+    AbsolutePanel absolutePanel = createPanel();
     Label label = new Label("label");
 
     absolutePanel.add(label, 10, 10);
@@ -39,13 +40,40 @@ public class AbsolutePanelTest extends PanelTestBase<AbsolutePanel> {
   }
 
   /**
-   * Failed in all modes with absolute positioning.
-   * TODO: (flin) File a new HtmlUnit bug.
+   * Ensures that add(Widget, int, int) adds the Widget as its child.
+   */
+  public void testAdd() {
+    AbsolutePanel absolutePanel = createPanel();
+    Label label = new Label("foo");
+
+    absolutePanel.add(label, 10, 10);
+
+    assertLogicalPaternity(absolutePanel, label);
+    assertPhysicalPaternity(absolutePanel, label);
+  }
+
+  /**
+   * Ensures that add(IsWidget, int, int) adds the Widget as its child.
+   */
+  public void testAddAsIsWidget() {
+    AbsolutePanel absolutePanel = createPanel();
+    Label label = new Label("foo");
+
+    // IsWidget cast to call the overloaded version
+    absolutePanel.add((IsWidget) label, 10, 10);
+
+    assertLogicalPaternity(absolutePanel, label);
+    assertPhysicalPaternity(absolutePanel, label);
+  }
+
+  /**
+   * Failed in all modes with absolute positioning. TODO: (flin) File a new
+   * HtmlUnit bug.
    */
   @DoNotRunWith(Platform.HtmlUnitBug)
   public void testPositioning() {
     // Make an absolute panel with a label at (3, 7).
-    AbsolutePanel abs = new AbsolutePanel();
+    AbsolutePanel abs = createPanel();
     abs.setSize("128px", "128px");
     Label lbl = new Label("foo");
     abs.add(lbl, 3, 7);
@@ -73,7 +101,8 @@ public class AbsolutePanelTest extends PanelTestBase<AbsolutePanel> {
     int absY = lbl.getAbsoluteTop() - Document.get().getBodyOffsetTop();
     assertEquals(3, x);
     assertEquals(7, y);
-    assertEquals("absX should be 103. This will fail in WebKit if run headless", 
+    assertEquals(
+        "absX should be 103. This will fail in WebKit if run headless",
         3 + 100, absX);
     assertEquals(7 + 200, absY);
   }
@@ -81,5 +110,36 @@ public class AbsolutePanelTest extends PanelTestBase<AbsolutePanel> {
   @Override
   protected AbsolutePanel createPanel() {
     return new AbsolutePanel();
+  }
+
+  /**
+   * Asserts that <b>panel</b> is the logical parent of <b>expectedChild</b>.
+   * 
+   * @param panel the parent panel
+   * @param expectedChild the expected child of <b>panel</b>
+   */
+  private void assertLogicalPaternity(ComplexPanel panel, Widget expectedChild) {
+    assertSame("The parent and the panel must be the same", panel,
+        expectedChild.getParent());
+    assertTrue("The child must be in the childen collection of the panel",
+        panel.getChildren().contains(expectedChild));
+  }
+
+  /**
+   * Asserts that <b>expectedFirstChild</b> is the first physical child of
+   * <b>panel</b>.
+   * 
+   * @param panel the parent panel
+   * @param expectedFirstChild the expected first child of <b>panel</b>
+   */
+  private void assertPhysicalPaternity(ComplexPanel panel,
+      Widget expectedFirstChild) {
+    Element panelElement = panel.getElement();
+    Element childElement = expectedFirstChild.getElement();
+    assertSame("The parent's Element of the child must be the panel's Element",
+        panelElement, childElement.getParentElement());
+    assertSame(
+        "The child's Element must be first child of the panel's Element",
+        childElement, panelElement.getFirstChildElement());
   }
 }

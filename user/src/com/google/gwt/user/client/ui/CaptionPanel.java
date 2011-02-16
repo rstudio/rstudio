@@ -31,7 +31,7 @@ import java.util.Iterator;
  * the upper left corner of the border. This is an implementation of the
  * fieldset HTML element.
  */
-public class CaptionPanel extends Composite implements HasWidgets {
+public class CaptionPanel extends Composite implements HasWidgets.ForIsWidget {
   /**
    * Implementation class without browser-specific hacks.
    */
@@ -165,6 +165,15 @@ public class CaptionPanel extends Composite implements HasWidgets {
   public void add(Widget w) {
     ((SimplePanel) getWidget()).add(w);
   }
+  
+  /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #add(Widget)
+   */
+  public void add(IsWidget w) {
+    this.add(asWidgetOrNull(w));
+  }
 
   /**
    * Removes the content widget.
@@ -219,6 +228,15 @@ public class CaptionPanel extends Composite implements HasWidgets {
    */
   public boolean remove(Widget w) {
     return ((SimplePanel) getWidget()).remove(w);
+  }
+  
+  /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #remove(Widget)
+   */
+  public boolean remove(IsWidget w) {
+    return this.remove(asWidgetOrNull(w));
   }
 
   /**

@@ -196,7 +196,16 @@ public class DockPanel extends CellPanel implements HasAlignment {
     // Adopt.
     adopt(widget);
   }
-
+  
+  /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #add(Widget,DockLayoutConstant)
+   */
+  public void add(IsWidget widget, DockLayoutConstant direction) {
+   this.add(widget.asWidget(), direction);
+  }
+  
   public HorizontalAlignmentConstant getHorizontalAlignment() {
     return horzAlign;
   }

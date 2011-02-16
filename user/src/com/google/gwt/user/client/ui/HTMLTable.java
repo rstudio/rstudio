@@ -1114,6 +1114,15 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
       adopt(widget);
     }
   }
+  
+  /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #setWidget(int,int,Widget)
+   */
+  public void setWidget(int row, int column, IsWidget widget) {
+    this.setWidget(row, column, asWidgetOrNull(widget));
+  }
 
   /**
    * Bounds checks that the cell exists at the specified location.

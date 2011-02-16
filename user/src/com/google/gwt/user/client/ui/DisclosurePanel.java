@@ -81,7 +81,7 @@ import java.util.Iterator;
  */
 @SuppressWarnings("deprecation")
 public final class DisclosurePanel extends Composite implements
-    FiresDisclosureEvents, HasWidgets, HasAnimation,
+    FiresDisclosureEvents, HasWidgets.ForIsWidget, HasAnimation,
     HasOpenHandlers<DisclosurePanel>, HasCloseHandlers<DisclosurePanel> {
   interface DefaultImages extends ClientBundle {
     @ImageOptions(flipRtl = true)
@@ -456,6 +456,15 @@ public final class DisclosurePanel extends Composite implements
           "A DisclosurePanel can only contain two Widgets.");
     }
   }
+  
+  /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #add(Widget)
+   */
+  public void add(IsWidget w) {
+    this.add(asWidgetOrNull(w));
+  }
 
   public HandlerRegistration addCloseHandler(
       CloseHandler<DisclosurePanel> handler) {
@@ -537,6 +546,15 @@ public final class DisclosurePanel extends Composite implements
       return true;
     }
     return false;
+  }
+  
+  /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #remove(Widget)
+   */
+  public boolean remove(IsWidget w) {
+    return this.remove(asWidgetOrNull(w));
   }
 
   /**

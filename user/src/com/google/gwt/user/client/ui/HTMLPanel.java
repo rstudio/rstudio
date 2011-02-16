@@ -201,6 +201,16 @@ public class HTMLPanel extends ComplexPanel {
   }
   
   /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #addAndReplaceElement(Widget,Element)
+   */
+  public void addAndReplaceElement(IsWidget widget,
+      com.google.gwt.user.client.Element toReplace) {
+    this.addAndReplaceElement(widget.asWidget(),toReplace);
+  }
+  
+  /**
    * Adds a child widget to the panel, replacing the HTML element specified by a
    * given id.
    * 
@@ -215,6 +225,15 @@ public class HTMLPanel extends ComplexPanel {
     }
     
     addAndReplaceElement(widget, toReplace);
+  }
+  
+  /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #addAndReplaceElement(Widget,String)
+   */
+  public void addAndReplaceElement(IsWidget widget, String id) {
+    this.addAndReplaceElement(widget.asWidget(), id);
   }
   
   /**

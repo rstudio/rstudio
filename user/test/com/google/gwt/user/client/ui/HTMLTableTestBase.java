@@ -229,6 +229,47 @@ public abstract class HTMLTableTestBase extends GWTTestCase {
     assertEquals(columnGroup, formatter.columnGroup);
   }
 
+  /**
+   * Tests {@link HTMLTable#setWidget(int, int, Widget)}.
+   */
+  public void testSetWidget() {
+    HTMLTable t = getTable(2, 2);
+    Widget widget = new Label("foo");
+
+    t.setWidget(1, 1, widget);
+
+    assertLogicalPaternity(t, widget);
+    assertPhysicalPaternityInPosition(t, widget, 1, 1);
+  }
+
+  /**
+   * Tests {@link HTMLTable#setWidget(int, int, IsWidget)}.
+   */
+  public void testSetWidgetAsIsWidget() {
+    HTMLTable t = getTable(2, 2);
+    Widget widget = new Label("foo");
+
+    // IsWidget cast to call the overloaded version
+    t.setWidget(1, 1, (IsWidget) widget);
+
+    assertLogicalPaternity(t, widget);
+    assertPhysicalPaternityInPosition(t, widget, 1, 1);
+  }
+
+  /**
+   * Ensures that {@link HTMLTable#setWidget(int, int, IsWidget)} does
+   * <b>NOT</b> throws a {@link NullPointerException} when the Widget argument
+   * is <code>null</code>, for compatibility with setWidget(Widget) foolishness
+   */
+  public void testSetNullWidgetAsIsWidget() {
+    HTMLTable t = getTable(2, 2);
+    // IsWidget reference to call the overloaded version
+    IsWidget widget = null;
+
+    t.setWidget(1, 1, widget);
+    // ta da...
+  }
+
   public void testSettingCellAttributes() {
     // These tests simple test for errors while setting these fields. The
     // Patient sample under the survey project has the visual part of the test.
@@ -291,5 +332,17 @@ public abstract class HTMLTableTestBase extends GWTTestCase {
     assertEquals("goodbye hello", t.getCellFormatter().getStyleName(2, 2));
     t.getRowFormatter().setStyleName(3, "newStyle");
     assertEquals("newStyle", t.getRowFormatter().getStyleName(3));
+  }
+
+  private void assertPhysicalPaternityInPosition(HTMLTable parent,
+      Widget child, int row, int column) {
+    assertSame("The child should be in te given position", child,
+        parent.getWidget(row, column));
+  }
+
+  private void assertLogicalPaternity(HTMLTable parent, Widget child) {
+    Iterator<Widget> iterator = parent.iterator();
+    assertTrue(iterator.hasNext());
+    assertSame(child, iterator.next());
   }
 }

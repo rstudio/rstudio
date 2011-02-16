@@ -62,12 +62,66 @@ public class StackLayoutPanelTest extends WidgetTestBase {
     }
   }
 
+  /**
+   * Tests {@link StackLayoutPanel#add(Widget, String, boolean, double)}.
+   */
+  public void testAddWithTextHeader() {
+    StackLayoutPanel panel = createStackLayoutPanel(Unit.EM);
+    Widget widget = new Label("foo");
+
+    panel.add(widget, "header", false, 1);
+
+    assertLogicalPaternityOfChild(panel, widget);
+  }
+
+  /**
+   * Tests {@link StackLayoutPanel#add(IsWidget, String, boolean, double)}.
+   */
+  public void testAddWithTextHeaderAsIsWidget() {
+    StackLayoutPanel panel = createStackLayoutPanel(Unit.EM);
+    Widget widget = new Label("foo");
+
+    // IsWidget cast to call the overloaded version
+    panel.add((IsWidget) widget, "header", false, 1);
+
+    assertLogicalPaternityOfChild(panel, widget);
+  }
+
+  /**
+   * Tests {@link StackLayoutPanel#add(Widget, Widget, double)}.
+   */
+  public void testAddWithWidgetHeader() {
+    StackLayoutPanel panel = createStackLayoutPanel(Unit.EM);
+    Widget header = new Label("foo");
+    Widget widget = new Label("bar");
+
+    panel.add(widget, header, 1);
+
+    assertLogicalPaternityOfChild(panel, widget);
+    assertLogicalPaternityOfHeader(panel, widget, header);
+  }
+
+  /**
+   * Tests {@link StackLayoutPanel#add(IsWidget, IsWidget, double)}.
+   */
+  public void testAddWithWidgetHeaderAsIsWidget() {
+    StackLayoutPanel panel = createStackLayoutPanel(Unit.EM);
+    Widget header = new Label("foo");
+    Widget widget = new Label("bar");
+
+    // IsWidget casts to call the overloaded version
+    panel.add((IsWidget) widget, (IsWidget) header, 1);
+
+    assertLogicalPaternityOfChild(panel, widget);
+    assertLogicalPaternityOfHeader(panel, widget, header);
+  }
+
   public void testAddWithSafeHtml() {
     StackLayoutPanel panel = new StackLayoutPanel(Unit.EM);
     panel.add(new HTML("foo"), SafeHtmlUtils.fromSafeConstant(html), 1.0);
-    
+
     assertEquals(1, panel.getWidgetCount());
-    assertEquals(html, 
+    assertEquals(html,
         panel.getHeaderWidget(0).getElement().getInnerHTML().toLowerCase());
   }
 
@@ -123,9 +177,9 @@ public class StackLayoutPanelTest extends WidgetTestBase {
   public void testInsertSafeHtml() {
     StackLayoutPanel panel = new StackLayoutPanel(Unit.EM);
     panel.insert(new HTML("foo"), SafeHtmlUtils.fromSafeConstant(html), 1.0, 0);
-    
+
     assertEquals(1, panel.getWidgetCount());
-    assertEquals(html, 
+    assertEquals(html,
         panel.getHeaderWidget(0).getElement().getInnerHTML().toLowerCase());
   }
 
@@ -227,7 +281,7 @@ public class StackLayoutPanelTest extends WidgetTestBase {
     panel.add(new HTML("bar"), "foo", 1.0);
     panel.setHeaderHTML(0, SafeHtmlUtils.fromSafeConstant(html));
     Widget header = panel.getHeaderWidget(0);
-    
+
     assertEquals(html, header.getElement().getInnerHTML().toLowerCase());
   }
 
@@ -286,5 +340,36 @@ public class StackLayoutPanelTest extends WidgetTestBase {
     // Now ensure that showing l2 works properly.
     p.showWidget(l2);
     assertEquals(l2, p.getVisibleWidget());
+  }
+
+  /**
+   * Asserts that <b>widget</b> is attached to <b>panel</b> as a child in the
+   * logical representation of <b>panel</b>.
+   * 
+   * @param panel the parent panel
+   * @param child a expected child of <b>panel</b>
+   */
+  private void assertLogicalPaternityOfChild(StackLayoutPanel panel,
+      Widget child) {
+    assertTrue("The widget should be a child of the panel",
+        panel.getWidgetIndex(child) >= 0);
+  }
+
+  /**
+   * Asserts that <b>header</b> is attached to <b>panel</b> as a header of
+   * <b>widget</b> in the logical representation of <b>panel</b>.
+   * 
+   * @param panel the parent panel
+   * @param child the child whose header is being tested
+   * @param header the expected header of <b>child</b>
+   */
+  private void assertLogicalPaternityOfHeader(StackLayoutPanel panel,
+      Widget child, Widget header) {
+    assertSame("The header should be attached to the panel.", header,
+        panel.getHeaderWidget(child));
+  }
+
+  private StackLayoutPanel createStackLayoutPanel(Unit unit) {
+    return new StackLayoutPanel(unit);
   }
 }

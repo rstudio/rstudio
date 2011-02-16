@@ -85,6 +85,18 @@ public class HasTreeItemsParserTest extends TestCase {
     assertStatements("fieldName.addItem(<g:Button text='1'>);",
         "fieldName.addItem(<g:Button text='2'>);");
   }
+  
+  public void test_IsWidget() throws Exception {
+    StringBuffer b = new StringBuffer();
+    b.append("<g:Tree>");
+    b.append("  <g:IsWidget />");
+    b.append("  <g:IsWidget />");
+    b.append("</g:Tree>"); 
+    // parse
+    tester.parse(b.toString());
+    assertStatements("fieldName.addItem(<g:IsWidget>);",
+        "fieldName.addItem(<g:IsWidget>);");
+  }
 
   public void test_WidgetItemMix() throws Exception {
     StringBuffer b = new StringBuffer();

@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -34,6 +35,7 @@ public class HasTreeItemsParser implements ElementParser {
     // Prepare base types.
     JClassType itemType = writer.getOracle().findType(TreeItem.class.getName());
     JClassType widgetType = writer.getOracle().findType(Widget.class.getName());
+    JClassType isWidgetType = writer.getOracle().findType(IsWidget.class.getName());
 
     // Parse children.
     for (XMLElement child : elem.consumeChildElements()) {
@@ -46,8 +48,8 @@ public class HasTreeItemsParser implements ElementParser {
         continue;
       }
 
-      // Widget+
-      if (widgetType.isAssignableFrom(childType)) {
+      // Widget+ or IsWidget+
+      if (widgetType.isAssignableFrom(childType) || isWidgetType.isAssignableFrom(childType)) {
         String childFieldName = writer.parseElementToField(child);
         writer.addStatement("%1$s.addItem(%2$s);", fieldName, childFieldName);
         continue;

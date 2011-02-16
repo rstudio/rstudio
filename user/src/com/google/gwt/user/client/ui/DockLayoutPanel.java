@@ -161,6 +161,15 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
   }
 
   /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #addEast(Widget,double)
+   */
+  public void addEast(IsWidget widget, double size) {
+    this.addEast(widget.asWidget(), size);
+  }
+  
+  /**
    * Adds a widget to the end of the line. In LTR mode, the widget is added to
    * the east. In RTL mode, the widget is added to the west.
    *
@@ -191,6 +200,15 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
   public void addNorth(Widget widget, double size) {
     insert(widget, Direction.NORTH, size, null);
   }
+  
+  /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #addNorth(Widget,double)
+   */
+  public void addNorth(IsWidget widget, double size) {
+    this.addNorth(widget.asWidget(), size);
+  }
 
   /**
    * Adds a widget to the south edge of the dock.
@@ -201,6 +219,15 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
   public void addSouth(Widget widget, double size) {
     insert(widget, Direction.SOUTH, size, null);
   }
+  
+  /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #addSouth(Widget,double)
+   */
+  public void addSouth(IsWidget widget, double size) {
+    this.addSouth(widget.asWidget(), size);
+  }
 
   /**
    * Adds a widget to the west edge of the dock.
@@ -210,6 +237,15 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
    */
   public void addWest(Widget widget, double size) {
     insert(widget, Direction.WEST, size, null);
+  }
+  
+  /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #addWest(Widget,double)
+   */
+  public void addWest(IsWidget widget, double size) {
+    this.addWest(widget.asWidget(), size);
   }
 
   public void animate(int duration) {

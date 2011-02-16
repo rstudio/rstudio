@@ -179,6 +179,15 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
   public void add(final Widget widget, String header, boolean asHtml, double headerSize) {
     insert(widget, header, asHtml, headerSize, getWidgetCount());
   }
+  
+  /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #add(Widget,String,boolean,double)
+   */
+  public void add(final IsWidget widget, String header, boolean asHtml, double headerSize) {
+    this.add(widget.asWidget(), header, asHtml, headerSize);
+  }
 
   /**
    * Adds a child widget to this stack, along with a widget representing the
@@ -204,6 +213,15 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
     insert(widget, header, headerSize, getWidgetCount());
   }
 
+  /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #add(Widget,Widget,double)
+   */
+  public void add(final IsWidget widget, IsWidget header, double headerSize) {
+    this.add(widget.asWidget(), header.asWidget(), headerSize);
+  }
+  
   public HandlerRegistration addBeforeSelectionHandler(
       BeforeSelectionHandler<Integer> handler) {
     return addHandler(handler, BeforeSelectionEvent.getType());

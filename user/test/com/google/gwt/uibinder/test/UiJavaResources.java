@@ -300,6 +300,18 @@ public class UiJavaResources {
       return code;
     }
   };
+  public static final MockJavaResource IS_WIDGET = new MockJavaResource(
+      "com.google.gwt.user.client.ui.IsWidget") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("public interface IsWidget  {\n");
+      code.append("  Widget asWidget();\n");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource LABEL = new MockJavaResource(
       "com.google.gwt.user.client.ui.Label") {
     @Override
@@ -635,6 +647,7 @@ public class UiJavaResources {
     rtn.add(GWT_EVENT);
     rtn.add(IMAGE);
     rtn.add(IMAGE_RESOURCE);
+    rtn.add(IS_WIDGET);
     rtn.add(HANDLER_REGISTRATION);
     rtn.add(HAS_CLICK_HANDLERS);
     rtn.add(HAS_HORIZONTAL_ALIGNMENT);

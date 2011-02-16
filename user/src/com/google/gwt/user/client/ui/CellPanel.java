@@ -110,6 +110,15 @@ public abstract class CellPanel extends ComplexPanel {
       td.setPropertyString("height", height);
     }
   }
+  
+  /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #setCellHeight(Widget,String)
+   */
+  public void setCellHeight(IsWidget w, String height) {
+    this.setCellHeight(w.asWidget(), height);
+  }
 
   /**
    * Sets the horizontal alignment of the given widget within its cell.
@@ -125,6 +134,16 @@ public abstract class CellPanel extends ComplexPanel {
       setCellHorizontalAlignment(td, align);
     }
   }
+  
+  /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #setCellHorizontalAlignment(Widget,HorizontalAlignmentConstant)
+   */
+  public void setCellHorizontalAlignment(IsWidget w,
+      HorizontalAlignmentConstant align) {
+    this.setCellHorizontalAlignment(w.asWidget(), align);
+  }
 
   /**
    * Sets the vertical alignment of the given widget within its cell.
@@ -139,6 +158,15 @@ public abstract class CellPanel extends ComplexPanel {
       setCellVerticalAlignment(td, align);
     }
   }
+  
+  /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #setCellVerticalAlignment(Widget,VerticalAlignmentConstant)
+   */
+  public void setCellVerticalAlignment(IsWidget w, VerticalAlignmentConstant align) {
+    this.setCellVerticalAlignment(w.asWidget(),align);
+  }
 
   /**
    * Sets the width of the cell associated with the given widget, related to the
@@ -152,6 +180,15 @@ public abstract class CellPanel extends ComplexPanel {
     if (td != null) {
       td.setPropertyString("width", width);
     }
+  }
+  
+  /**
+   * Overloaded version for IsWidget.
+   * 
+   * @see #setCellWidth(Widget,String)
+   */
+  public void setCellWidth(IsWidget w, String width) {
+    this.setCellWidth(w.asWidget(), width);
   }
 
   /**

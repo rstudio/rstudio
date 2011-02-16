@@ -22,7 +22,14 @@ import com.google.gwt.safehtml.shared.SafeHtml;
  * {@link com.google.gwt.user.client.ui.TreeItem items} and can operate them.
  */
 public interface HasTreeItems {
-  
+
+  /**
+   * Extends this interface with convenience methods to handle {@link IsWidget}.
+   */
+  interface ForIsWidget extends HasTreeItems {
+    TreeItem addItem(IsWidget w);
+  }
+
   /**
    * Adds a simple tree item containing the specified html.
    * 
@@ -37,7 +44,7 @@ public interface HasTreeItems {
    * @param item the item to be added
    */
   void addItem(TreeItem item);
-  
+
   /**
    * Adds an item wrapped by specified {@link IsTreeItem}.
    * 
@@ -52,7 +59,7 @@ public interface HasTreeItems {
    * @return the new item
    */
   TreeItem addItem(Widget widget);
-  
+
   /**
    * Adds a simple tree item containing the specified text.
    * 
@@ -67,7 +74,7 @@ public interface HasTreeItems {
    * @param item the item to be removed
    */
   void removeItem(TreeItem item);
-  
+
   /**
    * Removes an item.
    * 

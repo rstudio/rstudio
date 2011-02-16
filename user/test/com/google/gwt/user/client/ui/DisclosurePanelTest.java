@@ -61,6 +61,32 @@ public class DisclosurePanelTest extends GWTTestCase {
     };
     t.schedule(450);
   }
+  
+  /**
+   * Tests {@link DisclosurePanel#add(IsWidget)}.
+   */
+  public void testAddAsIsWidget() {
+    DisclosurePanel panel = createEmptyDisclourePanel();
+    Widget widget = new Label("foo");
+
+    // IsWidget cast to call the overloaded version
+    panel.add((IsWidget) widget);
+
+    assertSame(widget, panel.getContent());
+  }
+
+  /**
+   * Ensures that {@link DisclosurePanel#add(IsWidget)} does <b>NOT</b> throws a
+   * {@link NullPointerException} when the IsWidget argument is
+   * <code>null</code>. Stupid, but it's what add(Widget) does.
+   */
+  public void testAddNullAsIsWidget() {
+    DisclosurePanel panel = createEmptyDisclourePanel();
+    IsWidget widget = null;
+    
+    panel.add(widget);
+    // ta da...
+  }
 
   public void testAttachDetachOrder() {
     HasWidgetsTester.testAll(new DisclosurePanel(),
@@ -82,20 +108,21 @@ public class DisclosurePanelTest extends GWTTestCase {
 
   public void testEvents() {
     final DisclosurePanel panel = createTestPanel();
-    assertEquals(1, panel.getHandlerManager().getHandlerCount(CloseEvent.getType()));
+    assertEquals(1,
+        panel.getHandlerManager().getHandlerCount(CloseEvent.getType()));
     panel.addCloseHandler(new CloseHandler<DisclosurePanel>() {
 
       public void onClose(CloseEvent<DisclosurePanel> event) {
         // for now nothing.
       }
     });
-    assertEquals(2, panel.getHandlerManager().getHandlerCount(CloseEvent.getType()));
+    assertEquals(2,
+        panel.getHandlerManager().getHandlerCount(CloseEvent.getType()));
   }
 
   /**
    * Test to ensure that event handler dispatch function appropriately.
    */
-  @SuppressWarnings("deprecation")
   public void testEventHandlers() {
 
     final boolean[] aDidFire = new boolean[2];
@@ -127,8 +154,10 @@ public class DisclosurePanelTest extends GWTTestCase {
     panel.addEventHandler(handleA);
     panel.addEventHandler(handleB);
     // There is one to begin with.
-    assertEquals(3, panel.getHandlerManager().getHandlerCount(CloseEvent.getType()));
-    assertEquals(3, panel.getHandlerManager().getHandlerCount(OpenEvent.getType()));
+    assertEquals(3,
+        panel.getHandlerManager().getHandlerCount(CloseEvent.getType()));
+    assertEquals(3,
+        panel.getHandlerManager().getHandlerCount(OpenEvent.getType()));
 
     panel.setOpen(true);
     // We expect onOpen to fire and onClose to not fire.
@@ -145,8 +174,10 @@ public class DisclosurePanelTest extends GWTTestCase {
     aDidFire[OPEN] = bDidFire[CLOSE] = false;
 
     panel.removeEventHandler(handleB);
-    assertEquals(2, panel.getHandlerManager().getHandlerCount(OpenEvent.getType()));
-    assertEquals(2, panel.getHandlerManager().getHandlerCount(CloseEvent.getType()));
+    assertEquals(2,
+        panel.getHandlerManager().getHandlerCount(OpenEvent.getType()));
+    assertEquals(2,
+        panel.getHandlerManager().getHandlerCount(CloseEvent.getType()));
 
     panel.setOpen(true);
     panel.setOpen(false);
@@ -168,6 +199,39 @@ public class DisclosurePanelTest extends GWTTestCase {
     assertEquals(content, panel.getContent());
     content.removeFromParent();
     assertNull(panel.getContent());
+  }
+  
+  /**
+   * Tests {@link DisclosurePanel#remove(IsWidget)}.
+   */
+  public void testRemoveAsIsWidget() {
+    DisclosurePanel panel = createEmptyDisclourePanel();
+    Widget widget = new Label("foo");
+    panel.setContent(widget);
+    assertSame(widget,panel.getContent());
+    
+    boolean wasPresent = panel.remove((IsWidget) widget);
+    
+    assertTrue(wasPresent);
+    assertNull(panel.getContent());
+  }
+  
+  /**
+   * Ensures that {@link DisclosurePanel#remove(IsWidget)} does <b>NOT</b> throws a
+   * {@link NullPointerException} when the IsWidget argument is
+   * <code>null</code>, for consistency with remove(Widget) brain damage.
+   */
+  public void testRemoveNullAsIsWidget() {
+    DisclosurePanel panel = createEmptyDisclourePanel();
+    // IsWidget reference to call the overload version
+    IsWidget widget = null;
+    
+    panel.remove(widget);
+    // ta da...
+  }
+
+  private DisclosurePanel createEmptyDisclourePanel() {
+    return new DisclosurePanel();
   }
 
   private DisclosurePanel createTestPanel() {
