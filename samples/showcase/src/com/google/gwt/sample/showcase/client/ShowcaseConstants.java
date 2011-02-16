@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -45,10 +45,9 @@ import com.google.gwt.sample.showcase.client.content.panels.CwDisclosurePanel;
 import com.google.gwt.sample.showcase.client.content.panels.CwDockPanel;
 import com.google.gwt.sample.showcase.client.content.panels.CwFlowPanel;
 import com.google.gwt.sample.showcase.client.content.panels.CwHorizontalPanel;
-import com.google.gwt.sample.showcase.client.content.panels.CwHorizontalSplitPanel;
+import com.google.gwt.sample.showcase.client.content.panels.CwSplitLayoutPanel;
 import com.google.gwt.sample.showcase.client.content.panels.CwTabLayoutPanel;
 import com.google.gwt.sample.showcase.client.content.panels.CwVerticalPanel;
-import com.google.gwt.sample.showcase.client.content.panels.CwVerticalSplitPanel;
 import com.google.gwt.sample.showcase.client.content.popups.CwBasicPopup;
 import com.google.gwt.sample.showcase.client.content.popups.CwDialogBox;
 import com.google.gwt.sample.showcase.client.content.tables.CwFlexTable;
@@ -73,8 +72,7 @@ public interface ShowcaseConstants extends MenuConstants,
     CwMenuBar.CwConstants, CwFlowPanel.CwConstants,
     CwDisclosurePanel.CwConstants, CwTabLayoutPanel.CwConstants,
     CwDockPanel.CwConstants, CwHorizontalPanel.CwConstants,
-    CwHorizontalSplitPanel.CwConstants, CwVerticalPanel.CwConstants,
-    CwVerticalSplitPanel.CwConstants, CwBasicPopup.CwConstants,
+    CwVerticalPanel.CwConstants, CwBasicPopup.CwConstants,
     CwDialogBox.CwConstants, CwGrid.CwConstants, CwFlexTable.CwConstants,
     CwBasicText.CwConstants, CwRichText.CwConstants, CwFileUpload.CwConstants,
     CwAbsolutePanel.CwConstants, CwHyperlink.CwConstants, CwFrame.CwConstants,
@@ -87,7 +85,7 @@ public interface ShowcaseConstants extends MenuConstants,
     CwDatePicker.CwConstants, CwPluralFormsExample.CwConstants,
     CwCellList.CwConstants, CwCellTable.CwConstants, CwCellTree.CwConstants,
     CwCellBrowser.CwConstants, CwCellValidation.CwConstants,
-    CwCellSampler.CwConstants {
+    CwCellSampler.CwConstants, CwSplitLayoutPanel.CwConstants {
 
   /**
    * The path to source code for examples, raw files, and style definitions.

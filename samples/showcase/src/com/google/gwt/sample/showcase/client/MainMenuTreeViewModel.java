@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -47,10 +47,9 @@ import com.google.gwt.sample.showcase.client.content.panels.CwDisclosurePanel;
 import com.google.gwt.sample.showcase.client.content.panels.CwDockPanel;
 import com.google.gwt.sample.showcase.client.content.panels.CwFlowPanel;
 import com.google.gwt.sample.showcase.client.content.panels.CwHorizontalPanel;
-import com.google.gwt.sample.showcase.client.content.panels.CwHorizontalSplitPanel;
+import com.google.gwt.sample.showcase.client.content.panels.CwSplitLayoutPanel;
 import com.google.gwt.sample.showcase.client.content.panels.CwTabLayoutPanel;
 import com.google.gwt.sample.showcase.client.content.panels.CwVerticalPanel;
-import com.google.gwt.sample.showcase.client.content.panels.CwVerticalSplitPanel;
 import com.google.gwt.sample.showcase.client.content.popups.CwBasicPopup;
 import com.google.gwt.sample.showcase.client.content.popups.CwDialogBox;
 import com.google.gwt.sample.showcase.client.content.tables.CwFlexTable;
@@ -121,8 +120,7 @@ public class MainMenuTreeViewModel implements TreeViewModel {
    */
   private static class ContentWidgetCell extends AbstractCell<ContentWidget> {
     @Override
-    public void render(Context context, ContentWidget value,
-        SafeHtmlBuilder sb) {
+    public void render(Context context, ContentWidget value, SafeHtmlBuilder sb) {
       if (value != null) {
         sb.appendEscaped(value.getName());
       }
@@ -138,8 +136,8 @@ public class MainMenuTreeViewModel implements TreeViewModel {
         new ListDataProvider<ContentWidget>();
     private final String name;
     private NodeInfo<ContentWidget> nodeInfo;
-    private final List<RunAsyncCode> splitPoints = new ArrayList<
-        RunAsyncCode>();
+    private final List<RunAsyncCode> splitPoints =
+        new ArrayList<RunAsyncCode>();
 
     public Category(String name) {
       this.name = name;
@@ -160,20 +158,20 @@ public class MainMenuTreeViewModel implements TreeViewModel {
 
     /**
      * Get the node info for the examples under this category.
-     *
+     * 
      * @return the node info
      */
     public NodeInfo<ContentWidget> getNodeInfo() {
       if (nodeInfo == null) {
-        nodeInfo = new DefaultNodeInfo<ContentWidget>(
-            examples, contentWidgetCell, selectionModel, null);
+        nodeInfo = new DefaultNodeInfo<ContentWidget>(examples,
+            contentWidgetCell, selectionModel, null);
       }
       return nodeInfo;
     }
 
     /**
      * Get the list of split points to prefetch for this category.
-     *
+     * 
      * @return the list of classes in this category
      */
     public Iterable<RunAsyncCode> getSplitPoints() {
@@ -184,14 +182,12 @@ public class MainMenuTreeViewModel implements TreeViewModel {
   /**
    * The top level categories.
    */
-  private final ListDataProvider<Category> categories = new ListDataProvider<
-      Category>();
+  private final ListDataProvider<Category> categories = new ListDataProvider<Category>();
 
   /**
    * A mapping of {@link ContentWidget}s to their associated categories.
    */
-  private final Map<ContentWidget, Category> contentCategory = new HashMap<
-      ContentWidget, Category>();
+  private final Map<ContentWidget, Category> contentCategory = new HashMap<ContentWidget, Category>();
 
   /**
    * The cell used to render examples.
@@ -201,8 +197,7 @@ public class MainMenuTreeViewModel implements TreeViewModel {
   /**
    * A mapping of history tokens to their associated {@link ContentWidget}.
    */
-  private final Map<String, ContentWidget> contentToken = new HashMap<
-      String, ContentWidget>();
+  private final Map<String, ContentWidget> contentToken = new HashMap<String, ContentWidget>();
 
   /**
    * The selection model used to select examples.
@@ -217,7 +212,7 @@ public class MainMenuTreeViewModel implements TreeViewModel {
 
   /**
    * Get the {@link Category} associated with a widget.
-   *
+   * 
    * @param widget the {@link ContentWidget}
    * @return the associated {@link Category}
    */
@@ -227,7 +222,7 @@ public class MainMenuTreeViewModel implements TreeViewModel {
 
   /**
    * Get the content widget associated with the specified history token.
-   *
+   * 
    * @param token the history token
    * @return the associated {@link ContentWidget}
    */
@@ -296,14 +291,14 @@ public class MainMenuTreeViewModel implements TreeViewModel {
     {
       Category category = new Category(constants.categoryLists());
       catList.add(category);
-      category.addExample(
-          new CwListBox(constants), RunAsyncCode.runAsyncCode(CwListBox.class));
+      category.addExample(new CwListBox(constants),
+          RunAsyncCode.runAsyncCode(CwListBox.class));
       category.addExample(new CwSuggestBox(constants),
           RunAsyncCode.runAsyncCode(CwSuggestBox.class));
-      category.addExample(
-          new CwTree(constants), RunAsyncCode.runAsyncCode(CwTree.class));
-      category.addExample(
-          new CwMenuBar(constants), RunAsyncCode.runAsyncCode(CwMenuBar.class));
+      category.addExample(new CwTree(constants),
+          RunAsyncCode.runAsyncCode(CwTree.class));
+      category.addExample(new CwMenuBar(constants),
+          RunAsyncCode.runAsyncCode(CwMenuBar.class));
       category.addExample(new CwStackPanel(constants),
           RunAsyncCode.runAsyncCode(CwStackPanel.class));
     }
@@ -348,18 +343,16 @@ public class MainMenuTreeViewModel implements TreeViewModel {
           RunAsyncCode.runAsyncCode(CwDisclosurePanel.class));
       category.addExample(new CwTabLayoutPanel(constants),
           RunAsyncCode.runAsyncCode(CwTabLayoutPanel.class));
-      category.addExample(new CwHorizontalSplitPanel(constants),
-          RunAsyncCode.runAsyncCode(CwHorizontalSplitPanel.class));
-      category.addExample(new CwVerticalSplitPanel(constants),
-          RunAsyncCode.runAsyncCode(CwVerticalSplitPanel.class));
+      category.addExample(new CwSplitLayoutPanel(constants),
+          RunAsyncCode.runAsyncCode(CwSplitLayoutPanel.class));
     }
 
     // Tables.
     {
       Category category = new Category(constants.categoryTables());
       catList.add(category);
-      category.addExample(
-          new CwGrid(constants), RunAsyncCode.runAsyncCode(CwGrid.class));
+      category.addExample(new CwGrid(constants),
+          RunAsyncCode.runAsyncCode(CwGrid.class));
       category.addExample(new CwFlexTable(constants),
           RunAsyncCode.runAsyncCode(CwFlexTable.class));
     }
@@ -412,8 +405,8 @@ public class MainMenuTreeViewModel implements TreeViewModel {
       catList.add(category);
       category.addExample(new CwAnimation(constants),
           RunAsyncCode.runAsyncCode(CwAnimation.class));
-      category.addExample(
-          new CwCookies(constants), RunAsyncCode.runAsyncCode(CwCookies.class));
+      category.addExample(new CwCookies(constants),
+          RunAsyncCode.runAsyncCode(CwCookies.class));
     }
   }
 }
