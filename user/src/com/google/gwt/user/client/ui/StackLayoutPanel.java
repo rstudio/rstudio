@@ -30,6 +30,7 @@ import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.safehtml.shared.SafeHtml;
 
 import java.util.ArrayList;
@@ -95,7 +96,7 @@ import java.util.NoSuchElementException;
  * </pre>
  */
 public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
-    ProvidesResize, IndexedPanel.ForIsWidget,
+    ProvidesResize, IndexedPanel.ForIsWidget, AnimatedLayout,
     HasBeforeSelectionHandlers<Integer>, HasSelectionHandlers<Integer> {
 
   private class Header extends Composite implements HasClickHandlers {
@@ -135,6 +136,7 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
 
   private static final int ANIMATION_TIME = 250;
 
+  private int animationDuration = ANIMATION_TIME;
   private LayoutPanel layoutPanel;
   private final Unit unit;
   private final ArrayList<LayoutData> layoutData = new ArrayList<LayoutData>();
@@ -232,10 +234,66 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
     return addHandler(handler, SelectionEvent.getType());
   }
 
+  public void animate(int duration) {
+    animate(duration, null);
+  }
+
+  public void animate(int duration, AnimationCallback callback) {
+    // Don't try to animate zero widgets.
+    if (layoutData.size() == 0) {
+      if (callback != null) {
+        callback.onAnimationComplete();
+      }
+      return;
+    }
+
+    double top = 0, bottom = 0;
+    int i = 0;
+    for (; i < layoutData.size(); ++i) {
+      LayoutData data = layoutData.get(i);
+      layoutPanel.setWidgetTopHeight(data.header, top, unit, data.headerSize,
+          unit);
+
+      top += data.headerSize;
+
+      layoutPanel.setWidgetTopHeight(data.widget, top, unit, 0, unit);
+
+      if (i == selectedIndex) {
+        break;
+      }
+    }
+
+    for (int j = layoutData.size() - 1; j > i; --j) {
+      LayoutData data = layoutData.get(j);
+      layoutPanel.setWidgetBottomHeight(data.header, bottom, unit,
+          data.headerSize, unit);
+      layoutPanel.setWidgetBottomHeight(data.widget, bottom, unit, 0, unit);
+      bottom += data.headerSize;
+    }
+
+    LayoutData data = layoutData.get(selectedIndex);
+    layoutPanel.setWidgetTopBottom(data.widget, top, unit, bottom, unit);
+
+    layoutPanel.animate(duration, callback);
+  }
+
   public void clear() {
     layoutPanel.clear();
     layoutData.clear();
     selectedIndex = -1;
+  }
+
+  public void forceLayout() {
+    layoutPanel.forceLayout();
+  }
+
+  /**
+   * Get the duration of the animated transition between children.
+   * 
+   * @return the duration in milliseconds
+   */
+  public int getAnimationDuration() {
+    return animationDuration;
   }
 
   /**
@@ -421,12 +479,26 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
           if (layoutData.size() > 0) {
             showWidget(layoutData.get(0).widget);
           }
+        } else {
+          if (i <= selectedIndex) {
+            selectedIndex--;
+          }
+          animate(animationDuration);
         }
         return true;
       }
     }
 
     return false;
+  }
+
+  /**
+   * Set the duration of the animated transition between children.
+   * 
+   * @param duration the duration in milliseconds.
+   */
+  public void setAnimationDuration(int duration) {
+    this.animationDuration = duration;
   }
 
   /**
@@ -491,7 +563,7 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
    */
   public void showWidget(int index, boolean fireEvents) {
     checkIndex(index);
-    showWidget(index, ANIMATION_TIME, fireEvents);
+    showWidget(index, animationDuration, fireEvents);
   }
 
   /**
@@ -510,49 +582,13 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
    * @param fireEvents true to fire events, false not to
    */
   public void showWidget(Widget child, boolean fireEvents) {
-    showWidget(getWidgetIndex(child), ANIMATION_TIME, fireEvents);
+    showWidget(getWidgetIndex(child), animationDuration, fireEvents);
   }
 
   @Override
   protected void onLoad() {
     // When the widget becomes attached, update its layout.
     animate(0);
-  }
-
-  private void animate(int duration) {
-    // Don't try to animate zero widgets.
-    if (layoutData.size() == 0) {
-      return;
-    }
-
-    double top = 0, bottom = 0;
-    int i = 0;
-    for (; i < layoutData.size(); ++i) {
-      LayoutData data = layoutData.get(i);
-      layoutPanel.setWidgetTopHeight(data.header, top, unit, data.headerSize,
-          unit);
-
-      top += data.headerSize;
-
-      layoutPanel.setWidgetTopHeight(data.widget, top, unit, 0, unit);
-
-      if (i == selectedIndex) {
-        break;
-      }
-    }
-
-    for (int j = layoutData.size() - 1; j > i; --j) {
-      LayoutData data = layoutData.get(j);
-      layoutPanel.setWidgetBottomHeight(data.header, bottom, unit,
-          data.headerSize, unit);
-      layoutPanel.setWidgetBottomHeight(data.widget, bottom, unit, 0, unit);
-      bottom += data.headerSize;
-    }
-
-    LayoutData data = layoutData.get(selectedIndex);
-    layoutPanel.setWidgetTopBottom(data.widget, top, unit, bottom, unit);
-
-    layoutPanel.animate(duration);
   }
 
   private void checkChild(Widget child) {
@@ -577,15 +613,15 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
       }
     }
 
-    beforeIndex *= 2;
-    layoutPanel.insert(child, beforeIndex);
-    layoutPanel.insert(header, beforeIndex);
+    int widgetIndex = beforeIndex * 2;
+    layoutPanel.insert(child, widgetIndex);
+    layoutPanel.insert(header, widgetIndex);
 
     layoutPanel.setWidgetLeftRight(header, 0, Unit.PX, 0, Unit.PX);
     layoutPanel.setWidgetLeftRight(child, 0, Unit.PX, 0, Unit.PX);
 
     LayoutData data = new LayoutData(child, header, headerSize);
-    layoutData.add(data);
+    layoutData.add(beforeIndex, data);
 
     header.addStyleName(HEADER_STYLE);
     child.addStyleName(CONTENT_STYLE);
@@ -612,12 +648,15 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
       // If there's no visible widget, display the first one. The layout will
       // be updated onLoad().
       showWidget(0);
+    } else if (beforeIndex <= selectedIndex) {
+      // If we inserted an item before the selected index, increment it.
+      selectedIndex++;
     }
 
     // If the widget is already attached, we must call animate() to update the
     // layout (if it's not yet attached, then onLoad() will do this).
     if (isAttached()) {
-      animate(ANIMATION_TIME);
+      animate(animationDuration);
     }
   }
 

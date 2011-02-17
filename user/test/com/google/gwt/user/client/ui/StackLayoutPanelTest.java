@@ -204,14 +204,27 @@ public class StackLayoutPanelTest extends WidgetTestBase {
     wc.add(new Label("First"));
     wc.add(new Label("Second"));
 
-    p.add(new Label("Content C"), wc, 1);
-    p.insert(new Label("Content B"), wb, 1, 0);
-    p.insert(new Label("Content A"), wa, 1, 0);
+    Label contentA = new Label("Content A");
+    Label contentB = new Label("Content B");
+    Label contentC = new Label("Content C");
+
+    p.add(contentC, wc, 1);
+    p.insert(contentB, wb, 1, 0);
+    p.showWidget(1);
+
+    // Insert before the visible widget.
+    p.insert(contentA, wa, 1, 0);
+
+    // Check that the visible widget index has been incremented. 
+    assertEquals(2, p.getVisibleIndex());
 
     // Call these to ensure we don't throw an exception.
-    assertNotNull(p.getHeaderWidget(0));
-    assertNotNull(p.getHeaderWidget(1));
-    assertNotNull(p.getHeaderWidget(2));
+    assertEquals(wa, p.getHeaderWidget(0));
+    assertEquals(wb, p.getHeaderWidget(1));
+    assertEquals(wc, p.getHeaderWidget(2));
+    assertEquals(contentA, p.getWidget(0));
+    assertEquals(contentB, p.getWidget(1));
+    assertEquals(contentC, p.getWidget(2));
     assertEquals(3, p.getWidgetCount());
   }
 
@@ -242,6 +255,32 @@ public class StackLayoutPanelTest extends WidgetTestBase {
     assertTrue(p.getWidgetCount() == 2);
     assertTrue(p.getWidget(0) == bar);
     assertTrue(p.getWidget(1) == baz);
+  }
+
+  public void testRemoveBeforeSelectedWidget() {
+    StackLayoutPanel p = new StackLayoutPanel(Unit.EM);
+    p.add(new Label("Content 0"), "Header 0", 1);
+    p.add(new Label("Content 1"), "Header 0", 1);
+    p.add(new Label("Content 2"), "Header 2", 1);
+    p.showWidget(2);
+    assertEquals(2, p.getVisibleIndex());
+    
+    // Remove a widget before the selected index.
+    p.remove(1);
+    assertEquals(1, p.getVisibleIndex());
+  }
+
+  public void testRemoveSelectedWidget() {
+    StackLayoutPanel p = new StackLayoutPanel(Unit.EM);
+    p.add(new Label("Content 0"), "Header 0", 1);
+    p.add(new Label("Content 1"), "Header 0", 1);
+    p.add(new Label("Content 2"), "Header 2", 1);
+    p.showWidget(1);
+    assertEquals(1, p.getVisibleIndex());
+    
+    // Remove the selected widget.
+    p.remove(1);
+    assertEquals(0, p.getVisibleIndex());
   }
 
   public void testSelectionEvents() {
