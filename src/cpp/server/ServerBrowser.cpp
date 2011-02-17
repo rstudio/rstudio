@@ -37,6 +37,7 @@ bool supportedBrowserFilter(const http::Request& request,
    std::string userAgent = request.headerValue("User-Agent");
 
    if (contains(userAgent, "Chrome")      ||
+       contains(userAgent, "chromeframe") ||
        contains(userAgent, "Firefox")     ||
        contains(userAgent, "Safari"))
    {

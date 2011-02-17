@@ -106,6 +106,8 @@ public:
    void setPrivateCacheForeverHeaders();
    void setNoCacheHeaders();
    
+   void setChromeFrameCompatible(const Request& request);
+
    void addCookie(const Cookie& cookie) ;
    
    Error setBody(const std::string& content);
