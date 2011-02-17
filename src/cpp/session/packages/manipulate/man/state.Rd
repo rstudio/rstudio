@@ -4,7 +4,7 @@
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{Custom State Functions}
 \description{
-%%  ~~ A concise (1-5 lines) description of what the function does. ~~
+  Set and get custom manipulator state.
 }
 \usage{
 manipulatorSetState(name, value)

@@ -3,7 +3,7 @@
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{Slider Control}
 \description{
-%%  ~~ A concise (1-5 lines) description of what the function does. ~~
+  Create a slider control.
 }
 \usage{
 slider(min, max, value = min, label = NULL, step = NULL, ticks = TRUE)

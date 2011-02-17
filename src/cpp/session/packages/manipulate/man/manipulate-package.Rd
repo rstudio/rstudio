@@ -1,6 +1,5 @@
 \name{manipulate-package}
 \alias{manipulate-package}
-\alias{manipulate}
 \docType{package}
 \title{Interactive Graphics for RStudio}
 \description{
