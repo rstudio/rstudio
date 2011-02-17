@@ -35,6 +35,15 @@ QUrl UpdateChecker::checkForUpdatesURL()
 {
    QUrl url("http://www.rstudio.org/links/check_for_update");
    url.addQueryItem("version", RSTUDIO_VERSION);
+   QString platform;
+#if defined(_WIN32)
+   platform = "windows";
+#elif defined(__APPLE__)
+   platform = "mac";
+#else
+   platform = "linux";
+#endif
+   url.addQueryItem("os", platform);
    return url;
 }
 

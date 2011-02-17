@@ -16,6 +16,7 @@
 #include <QtGui>
 
 #include <core/Error.hpp>
+#include <core/Random.hpp>
 #include <core/system/System.hpp>
 
 #include "config.h"
@@ -79,18 +80,10 @@ QString Options::portNumber() const
    // lookup / generate on demand
    if (portNumber_.length() == 0)
    {
-      // First look for a persisted setting
-      QString port = settings_.value("rsession/www-port").toString();
-      if (!port.isNull() && !port.isEmpty())
-      {
-         // make sure it's a number
-         int portNum = port.toInt();
-         if (portNum > 0 && portNum <= 65535)
-            portNumber_ = QString::number(portNum);
-      }
-
-      // If that didn't work, make a random port number
-      portNumber_ = QString::number((rand() % 40000) + 8080);
+      // Use a random-ish port number to avoid collisions between different
+      // instances of rdesktop-launched rsessions
+      int base = std::abs(core::random::uniformRandomInteger<int>());
+      portNumber_ = QString::number((base % 40000) + 8080);
    }
 
    return portNumber_;
