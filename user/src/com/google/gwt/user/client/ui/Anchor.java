@@ -55,6 +55,13 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
       DirectionalTextHelper.DEFAULT_DIRECTION_ESTIMATOR;
 
   /**
+   * The default HREF is a no-op javascript statement. We need an href to ensure
+   * that the browser renders the anchor with native styles, such as underline
+   * and font color.
+   */
+  private static final String DEFAULT_HREF = "javascript:;";
+
+  /**
    * Creates an Anchor widget that wraps an existing &lt;a&gt; element.
    * 
    * This element must already be attached to the document. If the element is
@@ -82,12 +89,37 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
 
   /**
    * Creates an empty anchor.
+   * 
+   * <p>
+   * The anchor's href is <em>not</em> set, which means that the widget will not
+   * not be styled with the browser's native link styles (such as underline and
+   * font color). Use {@link #Anchor(boolean)} to add a default no-op href that
+   * does not open a link but ensures the native link styles are applied.
+   * </p>
+   * 
+   * @see #Anchor(boolean)
    */
   public Anchor() {
+    this(false);
+  }
+
+  /**
+   * Creates an anchor.
+   * 
+   * The anchor's href is optionally set to <code>javascript:;</code>, based on
+   * the expectation that listeners will be added to the anchor.
+   * 
+   * @param useDefaultHref true to set the default href to
+   *          <code>javascript:;</code>, false to leave it blank
+   */
+  public Anchor(boolean useDefaultHref) {
     setElement(Document.get().createAnchorElement());
     setStyleName("gwt-Anchor");
     directionalTextHelper = new DirectionalTextHelper(getAnchorElement(),
-        /* is inline */ true);
+        /* is inline */true);
+    if (useDefaultHref) {
+      setHref(DEFAULT_HREF);
+    }
   }
 
   /**
@@ -109,7 +141,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    * @param dir the html's direction
    */
   public Anchor(SafeHtml html, Direction dir) {
-    this(html.asString(), true, dir, "javascript:;");
+    this(html.asString(), true, dir, DEFAULT_HREF);
   }
   
   /**
@@ -124,7 +156,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    *          {@link #DEFAULT_DIRECTION_ESTIMATOR} can be used.
    */
   public Anchor(SafeHtml html, DirectionEstimator directionEstimator) {
-    this(html.asString(), true, directionEstimator, "javascript:;");
+    this(html.asString(), true, directionEstimator, DEFAULT_HREF);
   }
 
   /**
@@ -136,7 +168,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    * @param text the anchor's text
    */
   public Anchor(String text) {
-    this(text, "javascript:;");
+    this(text, DEFAULT_HREF);
   }
 
   /**
@@ -149,7 +181,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    * @param dir the text's direction
    */
   public Anchor(String text, Direction dir) {
-    this(text, dir, "javascript:;");
+    this(text, dir, DEFAULT_HREF);
   }
 
   /**
@@ -164,7 +196,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    *          {@link #DEFAULT_DIRECTION_ESTIMATOR} can be used.
    */
   public Anchor(String text, DirectionEstimator directionEstimator) {
-    this(text, directionEstimator, "javascript:;");
+    this(text, directionEstimator, DEFAULT_HREF);
   }
 
   /**
@@ -177,7 +209,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    * @param asHtml <code>true</code> to treat the specified text as html
    */
   public Anchor(String text, boolean asHtml) {
-    this(text, asHtml, "javascript:;");
+    this(text, asHtml, DEFAULT_HREF);
   }
 
   /**
