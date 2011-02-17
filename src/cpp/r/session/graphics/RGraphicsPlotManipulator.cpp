@@ -54,7 +54,7 @@ void PlotManipulator::clear()
 Error PlotManipulator::save(const FilePath& filePath) const
 {
    // call manipulator save
-   r::exec::RFunction manipSave("RStudio:::manipulatorSave");
+   r::exec::RFunction manipSave("manipulate:::manipulatorSave");
    manipSave.addParam(sexp_.get());
    manipSave.addParam(filePath.absolutePath());
    return manipSave.call();
@@ -63,7 +63,7 @@ Error PlotManipulator::save(const FilePath& filePath) const
 Error PlotManipulator::load(const FilePath& filePath)
 {
    // call manipulator load
-   r::exec::RFunction manipLoad("RStudio:::manipulatorLoad");
+   r::exec::RFunction manipLoad("manipulate:::manipulatorLoad");
    manipLoad.addParam(filePath.absolutePath());
    r::sexp::Protect rProtect;
    SEXP manipSEXP;
