@@ -1,0 +1,35 @@
+
+\documentclass{article}
+
+
+\usepackage{indentfirst}
+
+% \VignetteIndexEntry{Interactive Plots with RStudio Manipulate}
+
+\begin{document}
+
+<<foo,include=FALSE,echo=FALSE>>=
+options(keep.source = TRUE, width = 60)
+@
+
+\title{Interactive Plots with RStudio Manipulate}
+\author{J.J. Allaire}
+\maketitle
+
+\section{Introduction}
+
+This is an example of using the \verb@maniplate@ package in R. Here is some code:
+
+<<manipcode,eval=FALSE>>=
+library(manipualte)
+manipulate(plot(x), x = slider(1, 10))
+@
+
+More content.
+
+
+\section{Another Section}
+
+Here we go again.
+
+\end{document}
