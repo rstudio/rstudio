@@ -74,7 +74,7 @@ var RHighlightRules = function() {
 	            regex : "(?:TRUE|FALSE|T|F)\\b"
 	        }, {
 	            token : "identifier",
-	            regex : "`.*`"
+	            regex : "`.*?`"
 	        }, {
 	            token : function(value) {
 	                if (keywords[value])
@@ -92,7 +92,7 @@ var RHighlightRules = function() {
 	            regex : "[+\\-*\\/^><!&|~$:=]"
 	        }, {
 	            token : "keyword.operator", // infix operators
-	            regex : "%.*%"
+	            regex : "%.*?%"
 	        }, {
 	            token : "paren",
 	            regex : "[[({]"

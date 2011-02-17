@@ -100,6 +100,12 @@ void Response::setNoCacheHeaders()
              "no-cache, no-store, max-age=0, must-revalidate");
 }
 
+void Response::setChromeFrameCompatible(const Request& request)
+{
+    if (boost::algorithm::contains(request.userAgent(), "chromeframe"))
+         setHeader("X-UA-Compatible", "chrome=1");
+}
+
 void Response::addCookie(const Cookie& cookie) 
 {
 	addHeader("Set-Cookie", cookie.cookieHeaderValue()) ;
