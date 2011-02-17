@@ -1,94 +1,64 @@
 \name{slider}
 \alias{slider}
-%- Also NEED an '\alias' for EACH other topic documented here.
-\title{Slider Control}
+\title{Create a slider control}
 \description{
-  Create a slider control.
+  Create a slider control to allow manipulation of a plot variable along a numeric range.
 }
 \usage{
-slider(min, max, value = min, label = NULL, step = NULL, ticks = TRUE)
+slider(min, max, value = min, 
+       label = NULL, step = NULL, ticks = TRUE)
 }
-%- maybe also 'usage' for other objects documented here.
+
 \arguments{
   \item{min}{
-%%     ~~Describe \code{min} here~~
+    Minimum value for slider.
 }
   \item{max}{
-%%     ~~Describe \code{max} here~~
+    Maximum value for slider.
 }
   \item{value}{
-%%     ~~Describe \code{value} here~~
+    Initial value for slider. Defaults to \code{min} if not specified.
 }
   \item{label}{
-%%     ~~Describe \code{label} here~~
+    Display label for slider. Defaults to the variable name if not specified.
 }
   \item{step}{
-%%     ~~Describe \code{step} here~~
+    Step value for slider. If not specified then defaults to 1 for integer ranges and single pixel granularity for floating point ranges (\code{max} - \code{min} divided by the number of pixels in the slider).
 }
   \item{ticks}{
-%%     ~~Describe \code{ticks} here~~
-}
-}
-\details{
-%%  ~~ If necessary, more details than the description above ~~
-}
-\value{
-%%  ~Describe the value returned
-%%  If it is a LIST, use
-%%  \item{comp1 }{Description of 'comp1'}
-%%  \item{comp2 }{Description of 'comp2'}
-%% ...
-}
-\references{
-%% ~put references to the literature/web site here ~
-}
-\author{
-%%  ~~who you are~~
-}
-\note{
-%%  ~~further notes~~
+    Show tick marks on the slider. Note that if the granularity of the step value is very low (more than 25 ticks would be shown) then ticks are automatically turned off.
 }
 
-%% ~Make other sections like Warning with \section{Warning }{....} ~
+}
+
+\value{
+  An object of class "manipulator.slider" which can be passed to the \code{\link{manipulate}} function.
+}
 
 \seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
+\code{\link{manipulate}}, \code{\link{picker}}, \code{\link{checkbox}}
 }
-\examples{
-##---- Should be DIRECTLY executable !! ----
-##-- ==>  Define data, use random,
-##--	or do  help(data=index)  for the standard data sets.
 
-## The function is currently defined as
-function (min, max, value = min, label = NULL, step = NULL, ticks = TRUE) 
-{
-    if (!is.numeric(value) || !is.numeric(min) || !is.numeric(max)) 
-        stop("min, max, amd value must all be numeric values")
-    else if (value < min) 
-        stop(paste("slider value", value, "is less than the specified minimum"))
-    else if (value > max) 
-        stop(paste("slider value", value, "is greater than the specified maximum"))
-    else if (min > max) 
-        stop(paste("slider maximum is greater than minimum"))
-    else if (!is.null(step)) {
-        if (!is.numeric(step)) 
-            stop("step is not a numeric value")
-        if (step > (max - min)) 
-            stop("step is greater than range")
-    }
-    else if (!is.logical(ticks)) 
-        stop("ticks is not a logical value")
-    else if (!is.null(label) && !is.character(label)) 
-        stop("label is not a character value")
-    if (is.null(step)) 
-        step <- -1
-    slider <- list(type = 0, min = min, max = max, initialValue = value, 
-        label = label, step = step, ticks = ticks)
-    class(slider) <- "manipulator.slider"
-    return(slider)
-  }
+\examples{
+\dontrun{
+
+## create a plot with a slider
+manipulate(plot(1:x), x = slider(1, 10))
+
+## specify a custom initial value for a slider
+manipulate(plot(1:x), x = slider(1, 10, value = 5))
+
+## specify a custom label for a slider
+manipulate(plot(1:x), x = slider(1, 10, label = "Scale"))
+
+## specify a step value for a slider
+manipulate(plot(1:x), x = slider(1, 10, step = 2))
+
+## use more than one slider
+manipulate(plot(x:y), 
+           x = slider(1, 10),
+           y = slider(1, 100))
+
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory.
-\keyword{ ~kwd1 }
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+}
+

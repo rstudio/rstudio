@@ -1,65 +1,40 @@
 \name{checkbox}
 \alias{checkbox}
-%- Also NEED an '\alias' for EACH other topic documented here.
-\title{Checkbox Control}
+\title{Create a checkbox control}
 \description{
-  Create a checkbox control.
+  Create a checkbox control to enable manipulation of logical plot variables.
 }
 \usage{
 checkbox(value, label)
 }
-%- maybe also 'usage' for other objects documented here.
+
+
 \arguments{
   \item{value}{
-%%     ~~Describe \code{value} here~~
+    Default value for checkbox. Must be logical (\code{TRUE} or \code{FALSE}).
 }
   \item{label}{
-%%     ~~Describe \code{label} here~~
+    Display label for checkbox.
 }
-}
-\details{
-%%  ~~ If necessary, more details than the description above ~~
-}
-\value{
-%%  ~Describe the value returned
-%%  If it is a LIST, use
-%%  \item{comp1 }{Description of 'comp1'}
-%%  \item{comp2 }{Description of 'comp2'}
-%% ...
-}
-\references{
-%% ~put references to the literature/web site here ~
-}
-\author{
-%%  ~~who you are~~
-}
-\note{
-%%  ~~further notes~~
 }
 
-%% ~Make other sections like Warning with \section{Warning }{....} ~
+\value{
+   An object of class "manipulator.checkbox" which can be passed to the \code{\link{manipulate}} function.
+}
+
 
 \seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
+  \code{\link{manipulate}}, \code{\link{slider}}, \code{\link{picker}}
 }
-\examples{
-##---- Should be DIRECTLY executable !! ----
-##-- ==>  Define data, use random,
-##--	or do  help(data=index)  for the standard data sets.
 
-## The function is currently defined as
-function (value, label) 
-{
-    if (!is.character(label)) 
-        stop("label is not a character value")
-    else if (!is.logical(value)) 
-        stop("value must be a logical")
-    checkbox <- list(type = 2, initialValue = value, label = label)
-    class(checkbox) <- "manipulator.checkbox"
-    return(checkbox)
-  }
+\examples{
+\dontrun{
+
+## toggle boxplot outlier display using checkbox
+manipulate(boxplot(count ~ spray, data = InsectSprays, 
+                   outline = outline),
+           outline = checkbox(FALSE, "Show outliers"))
+
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory.
-\keyword{ ~kwd1 }
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+}
+

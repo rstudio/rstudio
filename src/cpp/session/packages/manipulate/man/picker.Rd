@@ -1,81 +1,50 @@
 \name{picker}
 \alias{picker}
-%- Also NEED an '\alias' for EACH other topic documented here.
-\title{Picker Control}
+\title{Create a picker control}
 \description{
-  Create a picker control.
+  Create a picker control to enable manipulation of plot variables based on a set of fixed choices.
 }
+
 \usage{
 picker(..., value = NULL, label = NULL)
 }
-%- maybe also 'usage' for other objects documented here.
+
+
 \arguments{
   \item{\dots}{
-%%     ~~Describe \code{\dots} here~~
+    List of choices for the picker. Can be provided as a series of arguments, a character vector, or both (all arguments are combined together using \code{\link{unlist}}).
 }
   \item{value}{
-%%     ~~Describe \code{value} here~~
+    Default value for picker. Value must be present in the list of choices specified. If not specified defaults to the first choice.
 }
   \item{label}{
-%%     ~~Describe \code{label} here~~
+    Display label for picker. Defaults to the variable name if not specified.
 }
-}
-\details{
-%%  ~~ If necessary, more details than the description above ~~
-}
-\value{
-%%  ~Describe the value returned
-%%  If it is a LIST, use
-%%  \item{comp1 }{Description of 'comp1'}
-%%  \item{comp2 }{Description of 'comp2'}
-%% ...
-}
-\references{
-%% ~put references to the literature/web site here ~
-}
-\author{
-%%  ~~who you are~~
-}
-\note{
-%%  ~~further notes~~
 }
 
-%% ~Make other sections like Warning with \section{Warning }{....} ~
+\value{
+  An object of class "manipulator.picker" which can be passed to the \code{\link{manipulate}} function.
+}
 
 \seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
+\code{\link{manipulate}}, \code{\link{slider}}, \code{\link{checkbox}}
 }
-\examples{
-##---- Should be DIRECTLY executable !! ----
-##-- ==>  Define data, use random,
-##--	or do  help(data=index)  for the standard data sets.
 
-## The function is currently defined as
-function (..., value = NULL, label = NULL) 
-{
-    choices <- as.character(unlist(list(...), recursive = TRUE, 
-        use.names = FALSE))
-    if (!is.character(choices)) 
-        stop("choices is not a character vector")
-    else if (length(choices) < 1) 
-        stop("choices must contain at least one value")
-    else if (!is.null(value)) {
-        if (!is.character(value) || (length(value) != 1)) 
-            stop("value is not of type character")
-        else if (!(value \%in\% choices)) 
-            stop("value doesn't match one of the supplied choices")
-    }
-    else if (!is.null(label) && !is.character(label)) 
-        stop("label is not a character value")
-    if (is.null(value)) 
-        value <- choices[1]
-    picker <- list(type = 1, choices = choices, initialValue = value, 
-        label = label)
-    class(picker) <- "manipulator.picker"
-    return(picker)
-  }
+
+\examples{
+\dontrun{
+
+## use with ggplot w/ picker for log param
+manipulate(qplot(mpg$displ, mpg$cty, log = log),
+           log = picker("x", "y", "xy"))
+           
+           
+## histogram w/ picker to select type
+require(stats)
+manipulate(histogram( ~ height | voice.part, 
+                     data = singer, type = type),
+           type = picker("percent", "count", "density"))
+
+
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory.
-\keyword{ ~kwd1 }
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+}

@@ -1,7 +1,7 @@
 \name{manipulate-package}
 \alias{manipulate-package}
 \docType{package}
-\title{Interactive Graphics for RStudio}
+\title{Interactive Plots for RStudio}
 \description{
 Interactive plotting functions for use within RStudio.
 }
@@ -24,7 +24,7 @@ After this code is executed the plot is drawn using an initial value of 1 for \c
 }
 
 \author{
-JJ Allaire <jj@rstudio.org>
+JJ Allaire
 
 Maintainer: JJ Allaire <jj@rstudio.org>
 }

@@ -1,67 +1,45 @@
 \name{Manipulator Custom State}
 \alias{manipulatorSetState}
 \alias{manipulatorGetState}
-%- Also NEED an '\alias' for EACH other topic documented here.
-\title{Custom State Functions}
+\title{Modify manipulator state}
 \description{
-  Set and get custom manipulator state.
+  These functions allow the storage of custom state variables across multiple evaluations of manipulator expressions. These functions are useful if the manipulate expression is a custom function (rather than a high level plotting function like \code{\link{plot}}) which requires reading and writing of persistent values.
 }
 \usage{
 manipulatorSetState(name, value)
+manipulatorGetState(name)
 }
-%- maybe also 'usage' for other objects documented here.
+
 \arguments{
   \item{name}{
-%%     ~~Describe \code{name} here~~
+    A chraracter string holding a state variable name.
 }
   \item{value}{
-%%     ~~Describe \code{value} here~~
+    An object holding a state value.
 }
-}
-\details{
-%%  ~~ If necessary, more details than the description above ~~
-}
-\value{
-%%  ~Describe the value returned
-%%  If it is a LIST, use
-%%  \item{comp1 }{Description of 'comp1'}
-%%  \item{comp2 }{Description of 'comp2'}
-%% ...
-}
-\references{
-%% ~put references to the literature/web site here ~
-}
-\author{
-%%  ~~who you are~~
-}
-\note{
-%%  ~~further notes~~
 }
 
-%% ~Make other sections like Warning with \section{Warning }{....} ~
+\value{
+  \code{manipulatorGetState} returns a custom state value which was previously set by \code{manipulatorSetState} (or \code{NULL} if the specified name is not found).
+}
 
 \seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
+  \code{\link{manipulate}}
 }
-\examples{
-##---- Should be DIRECTLY executable !! ----
-##-- ==>  Define data, use random,
-##--	or do  help(data=index)  for the standard data sets.
 
-## The function is currently defined as
-function (name, value) 
-{
-    if (hasActiveManipulator()) {
-        assign(name, value, envir = get(".state", envir = activeManipulator()))
-        ensureManipulatorSaved()
-        invisible(NULL)
-    }
-    else {
-        stop("no plot manipulator currently active")
-    }
-  }
+\examples{
+\dontrun{
+
+## set custom state variable
+manipulatorSetState("last", x)
+
+## get custom state variable
+last <- manipulatorGetState("last")
+if ( !is.null(last) ) {
+  # do something interesting
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory.
-\keyword{ ~kwd1 }
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+
+}
+}
+
+
