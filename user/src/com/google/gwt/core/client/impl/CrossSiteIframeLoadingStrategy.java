@@ -157,8 +157,12 @@ public class CrossSiteIframeLoadingStrategy implements LoadingStrategy {
    * to cache a download failure.
    */
   private String getUrl(int fragment) {
+    // Not appending serial=N to the first attempt improves proxy caching
+    // and makes it easier to write HTML5 AppCache manifests. 
+    int serial = getSerial(fragment);
+    String parameters = ((serial == 0) ? "" : ("?serial=" + serial));
     return GWT.getModuleBaseURL() + getDeferredJavaScriptDirectory()
-        + GWT.getPermutationStrongName() + "/" + fragment + ".cache.js?serial="
-        + getSerial(fragment);
+        + GWT.getPermutationStrongName() + "/" + fragment + ".cache.js"
+        + parameters;
   }
 }
