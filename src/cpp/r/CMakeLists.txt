@@ -52,7 +52,6 @@ set (R_SOURCE_FILES
    session/graphics/RGraphicsUtils.cpp
 )
 
-
 # UNIX specific
 if (UNIX)
 
@@ -94,6 +93,6 @@ target_link_libraries(rstudio-r
 
 # install rules
 if (NOT RSTUDIO_SESSION_WIN64)
-   file(GLOB R_SRC_FILES "R/*.*")
+   file(GLOB R_SRC_FILES "R/*.R")
    install(FILES ${R_SRC_FILES} DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R)
 endif()
