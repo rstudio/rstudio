@@ -31,7 +31,7 @@
   </macrodef>
 
   <property name="gwt.apicheck.config" 
-    location="tools/api-checker/config/gwt21_22userApi.conf"/>
+    location="tools/api-checker/config/gwt22_23userApi.conf"/>
 
   <target name="buildonly"
           description="[action] Minimal one-platform devel build, without distro packaging">
