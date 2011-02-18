@@ -13,6 +13,9 @@
 
 project (R)
 
+# custom R packages for RStudio
+add_subdirectory(R/packages)
+
 #include graphics handler subproject
 add_subdirectory(session/graphics/handler)
 
