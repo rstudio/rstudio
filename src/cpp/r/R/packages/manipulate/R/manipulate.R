@@ -100,6 +100,37 @@ checkbox <- function(value, label)
   return (checkbox)
 }
 
+manipulatorGetState <- function(name)
+{
+  if ( hasActiveManipulator() )
+  {
+    value <- NULL
+    try(silent = TRUE,
+        value <- get(name, 
+                     envir = get(".state", envir = activeManipulator()))
+    )
+    return (value)
+  }
+  else
+  {
+    stop("no plot manipulator currently active")
+  }
+}
+
+manipulatorSetState <- function(name, value)
+{
+  if ( hasActiveManipulator() )
+  {
+     assign(name, value, envir = get(".state", envir = activeManipulator()))
+     ensureManipulatorSaved()
+     invisible(NULL)
+  }
+  else
+  {
+    stop("no plot manipulator currently active")
+  }
+}
+
 manipulate <- function(expr, controls = list(), ..., c = NULL)
 {
   # create new list container for the manipulator
@@ -159,10 +190,4 @@ manipulate <- function(expr, controls = list(), ..., c = NULL)
   invisible(NULL)
 }
 
-# get the current manipulator environment. not exported but here in case
-# users want to get and set custom state 
-manipulator.env <- function()
-{
-  activeManipulator()
-}
 
