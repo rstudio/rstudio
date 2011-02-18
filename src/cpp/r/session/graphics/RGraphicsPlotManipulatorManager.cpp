@@ -11,6 +11,41 @@
  *
  */
 
+/* Manipulator TODO notes
+
+Manipulate work:
+
+- To get choices with names:
+
+  choices <- unlist(list(...))
+  names <- names(choices)
+
+NOTE: this is recursive. if we want to allow lists as values
+then we need to go non-recursive and have an optional explicit
+"choices" parameter. alternatively we can be recursive and allow
+developers to turn off with recursive = FALSE (don't like this)
+
+- BIG ONE: do first? Picker values stored on the server! means they
+don't need to be serializable as json (then can get rid of typecheck
+requirement mentioned below)
+
+- bug 1281: lose manipulator on resume
+- picker named list (note above)
+- picker bind to arbitrary values including lists:
+   - NOTE: "value" is complicated by names -- must be by name?
+   - watch unexpected types! (typecheck each value?)
+   - can't do lists with recursive. need param for flatten/recurse
+   - OR (simpler) could provide an explicit choices argument, then
+     wouldn't recurse and therefore could preserve exact types
+
+
+[DONE] bug 1284: manipulatorSetState, manipulatorGetState
+
+[DONE] bug 1258: can't bind to variable inside list
+   Note: not a bug, trying to use picker to return a boolean
+
+*/
+
 #include "RGraphicsPlotManipulatorManager.hpp"
 
 #include <string>
