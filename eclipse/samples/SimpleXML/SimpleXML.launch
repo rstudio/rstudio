@@ -10,7 +10,7 @@
 <listEntry value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;runtimeClasspathEntry id=&quot;org.eclipse.jdt.launching.classpathentry.defaultClasspath&quot;&gt;&#10;&lt;memento exportedEntriesOnly=&quot;false&quot; project=&quot;SimpleXML&quot;/&gt;&#10;&lt;/runtimeClasspathEntry&gt;&#10;"/>
 </listAttribute>
 <booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="false"/>
-<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.google.gwt.dev.HostedMode"/>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.google.gwt.dev.DevMode"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-startupUrl SimpleXML.html&#13;&#10;com.google.gwt.sample.simplexml.SimpleXML"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="SimpleXML"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-ea&#13;&#10;-Xmx256M&#13;&#10;-Dgwt.devjar=${gwt_devjar}"/>
