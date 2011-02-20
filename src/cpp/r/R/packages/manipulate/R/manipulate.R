@@ -150,6 +150,10 @@ manipulatorSetState <- function(name, value)
 
 manipulate <- function(expr, ..., controls = list())
 {
+  # validate controls
+  if (!is.list(controls))
+    stop("controls must be a list")
+
   # create new list container for the manipulator
   manipulator <- new.env(parent = parent.frame())
   assign(".id", createUUID(), envir = manipulator)
@@ -161,8 +165,17 @@ manipulate <- function(expr, ..., controls = list())
   # to make the display as close to the original text as possible)
   assign(".codeAsText", deparse(substitute(expr), control = NULL), envir = manipulator)
   
-  # get the controls 
-  controls <- append(controls, list(...))
+  # get the controls. do this in a protected context in case the user included a
+  # control whose name partial matched 'expr' in this case expr is actually 
+  # included in the list(...) and is therefore evaluated immediately (and almost
+  # certainly fails due to symbol(s) not found)
+  controls <- tryCatch(append(controls, list(...)), error = function(e) return (NULL))
+  if (is.null(controls))
+  {
+    stop(paste("Invalid control name. Note that controls whose names partially",
+               "match 'expr' ('e', 'ex', 'exp', or 'expr') are not permitted",
+               "since they conflict with the 'expr' argument to manipulate."))
+  }
   
   # get the control names
   controlNames <- names(controls)

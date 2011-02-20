@@ -15,8 +15,6 @@
 
 Manipulate work:
 
-- Can we detect the exp parameter in names section?
-
 - Consider defaulting of checkbox params (FALSE, varname)
 
 - bug 1281: lose manipulator on resume
