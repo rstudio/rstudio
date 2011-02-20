@@ -51,13 +51,10 @@ slider <- function(min, max, value = min, label = NULL, step = NULL, ticks = TRU
   return (slider)
 }
 
-picker <- function(choices = list(), ..., c = NULL, value = NULL, label = NULL)
+picker <- function(..., choices = list(), value = NULL, label = NULL)
 {
-  # get values (special handling for arguments named 'c' -- they seem to show up
-  # as NULL when doing list(...) to get the arguments)
+  # get values
   values <- append(choices, list(...))
-  if (!is.null(c))
-    values$c <- c
   
   # get value names
   valueNames <- names(values)
@@ -151,7 +148,7 @@ manipulatorSetState <- function(name, value)
   }
 }
 
-manipulate <- function(expr, controls = list(), ..., c = NULL)
+manipulate <- function(expr, ..., controls = list())
 {
   # create new list container for the manipulator
   manipulator <- new.env(parent = parent.frame())
@@ -166,11 +163,6 @@ manipulate <- function(expr, controls = list(), ..., c = NULL)
   
   # get the controls 
   controls <- append(controls, list(...))
-  
-  # special handling for arguments named 'c' -- they seem to show up
-  # as NULL when doing list(...) to get the arguments
-  if (!is.null(c))
-    controls$c <- c
   
   # get the control names
   controlNames <- names(controls)

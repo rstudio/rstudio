@@ -15,13 +15,22 @@
 
 Manipulate work:
 
+- Can we detect the exp parameter in names section?
 
-- try to eliminate c arg hack
-
-- firefox manip animation is shifted one pixel
+- Consider defaulting of checkbox params (FALSE, varname)
 
 - bug 1281: lose manipulator on resume
 
+- Eliminate focus indicator on mac
+- UI closer to Paul's design
+
+- Document expr partial matching conflict in manipulate
+- Update documentation to reflect changes in picker and ...
+- Note in docs that manipulate is potentially experimental
+- Play with providing example and/or demo in docs
+
+
+[DONE] allow arbitrary values in picker
 
 [DONE] bug 1284: manipulatorSetState, manipulatorGetState
 
