@@ -91,3 +91,13 @@
    margin-left: 5px;
    margin-top: 5px;
 }
+
+@if user.agent gecko1_8 {
+   .manipulateProgress {
+      margin-left: 6px;
+   }
+}
+
+
+
+
