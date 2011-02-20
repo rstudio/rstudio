@@ -51,33 +51,53 @@ slider <- function(min, max, value = min, label = NULL, step = NULL, ticks = TRU
   return (slider)
 }
 
-picker <- function(..., value = NULL, label = NULL)
+picker <- function(choices = list(), ..., c = NULL, value = NULL, label = NULL)
 {
-  # get var args and coerce to chracter
-  choices <- as.character(unlist(list(...), recursive=TRUE, use.names=FALSE))
+  # get values (special handling for arguments named 'c' -- they seem to show up
+  # as NULL when doing list(...) to get the arguments)
+  values <- append(choices, list(...))
+  if (!is.null(c))
+    values$c <- c
+  
+  # get value names
+  valueNames <- names(values)
+  if (is.null(valueNames))
+    valueNames <- character(length(values))
+ 
+  # default missing names to choice values
+  missingNames <- valueNames == ""
+  valueNames[missingNames] <- paste(values)[missingNames]
+  names(values) <- valueNames
   
   # validate inputs
-  if ( !is.character(choices) )
-    stop("choices is not a character vector")
-  else if ( length(choices) < 1 )
-    stop("choices must contain at least one value")
+  if ( length(values) < 1 )
+  {
+    stop("picker choices must contain at least one value")
+  }
+  else if ( length(valueNames) != length(unique(valueNames)) )
+  {
+    stop("picker choices must have unique names (duplicate detected)")
+  }
   else if ( !is.null(value) )
   {
-    if ( !is.character(value) || (length(value) != 1) )
-      stop("value is not of type character")
-    else if ( !(value %in% choices) )
+    if (length(value) != 1)
+      stop("value must be a single object")
+    else if ( !(value %in% valueNames) )
       stop("value doesn't match one of the supplied choices") 
   }
   else if ( !is.null(label) && !is.character(label) )
+  {
     stop("label is not a character value")
-   
+  }
+
   # provide default value if necessary
   if ( is.null(value) )
-    value <- choices[1]
+    value <- valueNames[1]
 
   # create picker
   picker <- list(type = 1,
-                 choices = choices,
+                 choices = valueNames,
+                 values = values,
                  initialValue = value,
                  label = label)
   class(picker) <- "manipulator.picker"
@@ -179,7 +199,8 @@ manipulate <- function(expr, controls = list(), ..., c = NULL)
     }
       
     # assign the control's default into the list
-    assign(name, control$initialValue, envir = manipulator)
+    value <- manipulatorControlValue(manipulator, name, control$initialValue)
+    assign(name, value, envir = manipulator)
   }
 
   # execute the manipulator -- will execute the code and attach it

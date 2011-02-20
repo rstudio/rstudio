@@ -80,10 +80,14 @@ executeAndAttachManipulator <- function(manipulator)
         manipulator) 
 }
 
-
-
-
-
-
+manipulatorControlValue <- function(manipulator, name, value)
+{
+  controls <- get(".controls", envir = manipulator)
+  control <- controls[[name]]
+  if (inherits(control, "manipulator.picker") && !is.null(control$values))
+    return (control$values[[value]])
+  else
+    return (value)
+}
 
 

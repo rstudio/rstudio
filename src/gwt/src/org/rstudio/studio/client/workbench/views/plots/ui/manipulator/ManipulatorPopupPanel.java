@@ -71,21 +71,21 @@ public class ManipulatorPopupPanel extends MiniDialogPopupPanel
                   Manipulator.Slider slider = control.cast();
                   addedControl = addSliderControl(
                                           variable, 
-                                          manipulator.getDoubleValue(variable), 
+                                          slider.getInitialValue(), 
                                           slider);
                   break;
                case Manipulator.Control.PICKER:
                   Manipulator.Picker picker = control.cast();
                   addedControl = addPickerControl(
                                           variable, 
-                                          manipulator.getStringValue(variable), 
+                                          picker.getInitialValue(), 
                                           picker);
                   break;
                case Manipulator.Control.CHECKBOX:
                   Manipulator.CheckBox checkBox = control.cast();
                   addedControl = addCheckBoxControl(
                                           variable, 
-                                          manipulator.getBooleanValue(variable),
+                                          checkBox.getInitialValue(),
                                           checkBox);
                   break;
                }

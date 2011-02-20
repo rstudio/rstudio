@@ -50,6 +50,8 @@ public:
 private:
    SEXP get(const std::string& name) const;
    core::json::Value getAsJson(const std::string& name) const;
+   core::json::Object getControlAsJson(SEXP controlSEXP) const;
+   core::json::Object getControlsAsJson() const;
    SEXP getValuesList() const;
 
 private:

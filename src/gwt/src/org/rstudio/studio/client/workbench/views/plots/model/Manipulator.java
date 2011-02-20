@@ -65,6 +65,10 @@ public class Manipulator extends JavaScriptObject
          return this.ticks[0];
       }-*/;
       
+      public final native double getInitialValue() /*-{
+         return this.initialValue[0];
+      }-*/;
+      
    }
    
    public static class Picker extends Control
@@ -76,6 +80,11 @@ public class Manipulator extends JavaScriptObject
       public final native JsArrayString getChoices() /*-{
          return this.choices;
       }-*/;
+      
+      public final native String getInitialValue() /*-{
+         return this.initialValue[0];
+      }-*/;
+
    }
    
    public static class CheckBox extends Control
@@ -83,6 +92,10 @@ public class Manipulator extends JavaScriptObject
       protected CheckBox()
       {
       }
+      
+      public final native boolean getInitialValue() /*-{
+         return this.initialValue[0];
+      }-*/;
    }
    
    public final native String getID() /*-{

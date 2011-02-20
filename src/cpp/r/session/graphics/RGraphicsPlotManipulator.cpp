@@ -85,7 +85,7 @@ void PlotManipulator::asJson(core::json::Value* pValue) const
 
       // meta-info
       manipulator["id"] = getAsJson(".id");
-      manipulator["controls"] = getAsJson(".controls");
+      manipulator["controls"] = getControlsAsJson();
       manipulator["variables"] = getAsJson(".variables");
 
       // variable values
@@ -143,6 +143,87 @@ core::json::Value PlotManipulator::getAsJson(const std::string& name) const
    if (error)
       LOG_ERROR(error);
    return value;
+}
+
+core::json::Object PlotManipulator::getControlAsJson(SEXP controlSEXP) const
+{
+   // field names
+   std::vector<std::string> names ;
+   Error error = sexp::getNames(controlSEXP, &names);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return core::json::Object();
+   }
+
+   // json object to return
+   core::json::Object control;
+
+   int length = r::sexp::length(controlSEXP);
+   for (int i=0; i<length; i++)
+   {
+      // get name and control
+      std::string name = names[i];
+
+      // screen out values field
+      if (name == "values")
+         continue;
+
+      // get json for field
+      SEXP fieldSEXP = VECTOR_ELT(controlSEXP, i);
+      core::json::Value fieldValue;
+      Error error = r::json::jsonValueFromObject(fieldSEXP, &fieldValue);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return core::json::Object();
+      }
+
+      // set the field
+      control[name] = fieldValue;
+   }
+
+   // return the control
+   return control;
+}
+
+core::json::Object PlotManipulator::getControlsAsJson() const
+{
+   // extract controls
+   r::sexp::Protect rProtect;
+   SEXP controlsSEXP = get(".controls");
+   if (controlsSEXP != R_NilValue)
+   {
+      rProtect.add(controlsSEXP);
+
+      // control names
+      std::vector<std::string> controlNames ;
+      Error error = sexp::getNames(controlsSEXP, &controlNames);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return core::json::Object();
+      }
+
+      // json object to return
+      core::json::Object controls;
+
+      int length = r::sexp::length(controlsSEXP);
+      for (int i=0; i<length; i++)
+      {
+         // get name and control
+         std::string name = controlNames[i];
+         SEXP controlSEXP = VECTOR_ELT(controlsSEXP, i);
+         controls[name] = getControlAsJson(controlSEXP);
+      }
+
+      // return controls
+      return controls;
+   }
+   else
+   {
+      return core::json::Object();
+   }
 }
 
 SEXP PlotManipulator::getValuesList() const

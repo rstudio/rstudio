@@ -15,35 +15,12 @@
 
 Manipulate work:
 
-- BIG ONE: do first? Picker values stored on the server! means they
-don't need to be serializable as json (then can get rid of typecheck
-requirement mentioned below)
 
-- To get choices with names:
+- try to eliminate c arg hack
 
-  choices <- unlist(list(...))
-  names <- names(choices)
-
-NOTE: this is recursive. if we want to allow lists as values
-then we need to go non-recursive and have an optional explicit
-"choices" parameter. alternatively we can be recursive and allow
-developers to turn off with recursive = FALSE (don't like this)
-
-- To default names to values if they are empty:
-
-   nameList <- c("foo", "", "bar")
-   valList <- c(1, 2, 3)
-   emptyNames <- nameList == ""
-   nameList[emptyNames] <- as.character(valList)[emptyNames]
+- firefox manip animation is shifted one pixel
 
 - bug 1281: lose manipulator on resume
-- picker named list (note above)
-- picker bind to arbitrary values including lists:
-   - NOTE: "value" is complicated by names -- must be by name?
-   - watch unexpected types! (typecheck each value?)
-   - can't do lists with recursive. need param for flatten/recurse
-   - OR (simpler) could provide an explicit choices argument, then
-     wouldn't recurse and therefore could preserve exact types
 
 
 [DONE] bug 1284: manipulatorSetState, manipulatorGetState
@@ -96,7 +73,22 @@ void setManipulatorValue(SEXP manipulatorSEXP,
 void setManipulatorJsonValue(SEXP manipulatorSEXP,
                              const std::pair<std::string,json::Value>& object)
 {
-   setManipulatorValue(manipulatorSEXP, object.first, object.second);
+   // get the actual value to assign
+   r::exec::RFunction controlValueFunction("manipulate:::manipulatorControlValue");
+   controlValueFunction.addParam(manipulatorSEXP);
+   controlValueFunction.addParam(object.first);
+   controlValueFunction.addParam(object.second);
+   r::sexp::Protect rProtect;
+   SEXP valueSEXP;
+   Error error = controlValueFunction.call(&valueSEXP, &rProtect);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // assign it
+   setManipulatorValue(manipulatorSEXP, object.first, valueSEXP);
 }
 
 void safeExecuteManipulator(SEXP manipulatorSEXP)
