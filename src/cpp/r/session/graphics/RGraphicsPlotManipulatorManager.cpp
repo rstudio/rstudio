@@ -15,7 +15,8 @@
 
 Manipulate work:
 
-- Consider defaulting of checkbox params (FALSE, varname)
+
+- consider naming for state functions
 
 - bug 1281: lose manipulator on resume
 
