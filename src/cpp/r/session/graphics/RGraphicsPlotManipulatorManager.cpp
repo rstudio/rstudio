@@ -16,11 +16,8 @@
 Manipulate work:
 
 
-- consider naming for state functions
-
 - bug 1281: lose manipulator on resume
 
-- Eliminate focus indicator on mac
 - UI closer to Paul's design
 
 - Document expr partial matching conflict in manipulate

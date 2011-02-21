@@ -64,6 +64,7 @@
 }
 
 .slider .gwt-SliderBar-shell-focused {
+	outline: gray dotted 1px;
 }
 
 .slider .gwt-SliderBar-shell .gwt-SliderBar-line-sliding {
