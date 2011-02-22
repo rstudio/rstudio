@@ -18,6 +18,8 @@ Manipulate work:
 
 - bug 1281: lose manipulator on resume
 
+- Paul UI improvements
+
 - Play with providing example and/or demo in docs
 
 
