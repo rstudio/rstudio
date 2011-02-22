@@ -85,11 +85,6 @@ public class ValidateGwtTest extends AbstractValidationTest {
     }
   }
 
-  @Failing(issue = 5929)
-  public void testValidatedPropertyDoesNotFollowJavaBeansConvention() {
-    delegate.testValidatedPropertyDoesNotFollowJavaBeansConvention();
-  }
-
   public void testValidateWithNullGroup() {
     try {
       delegate.testValidateWithNullGroup();
@@ -112,5 +107,4 @@ public class ValidateGwtTest extends AbstractValidationTest {
   public void testValidationIsPolymorphic() {
     delegate.testValidationIsPolymorphic();
   }
-
 }

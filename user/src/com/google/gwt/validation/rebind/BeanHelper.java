@@ -18,6 +18,7 @@ package com.google.gwt.validation.rebind;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
@@ -37,6 +38,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.validation.Validation;
+import javax.validation.ValidationException;
 import javax.validation.Validator;
 import javax.validation.metadata.BeanDescriptor;
 import javax.validation.metadata.PropertyDescriptor;
@@ -45,7 +47,7 @@ import javax.validation.metadata.PropertyDescriptor;
  * A simple struct for the various values associated with a Bean that can be
  * validated.
  */
-final class BeanHelper {
+public final class BeanHelper {
 
   public static final Function<BeanHelper, Class<?>> TO_CLAZZ = 
       new Function<BeanHelper, Class<?>>() {
@@ -54,32 +56,33 @@ final class BeanHelper {
     }
   };
 
-  private static final Validator serverSideValidor = Validation.buildDefaultValidatorFactory().getValidator();
+  private static final Validator serverSideValidator = 
+      Validation.buildDefaultValidatorFactory().getValidator();
 
   // stash the map in a ThreadLocal, since each GWT module lives in its own
   // thread in DevMode
   private static final ThreadLocal<Map<JClassType, BeanHelper>> threadLocalHelperMap =
-      new ThreadLocal<Map<JClassType, BeanHelper>>() {
+        new ThreadLocal<Map<JClassType, BeanHelper>>() {
     @Override
     protected synchronized Map<JClassType, BeanHelper> initialValue() {
       return new HashMap<JClassType, BeanHelper>();
     }
   };
 
-  public static Map<JClassType, BeanHelper> getBeanHelpers() {
-    return Collections.unmodifiableMap(threadLocalHelperMap.get());
-  }
-
-  protected static BeanHelper createBeanHelper(Class<?> clazz,
-      TreeLogger logger, GeneratorContext context)
-      throws UnableToCompleteException {
+  public static BeanHelper createBeanHelper(Class<?> clazz, TreeLogger logger,
+      GeneratorContext context) throws UnableToCompleteException {
     JClassType beanType = context.getTypeOracle().findType(
         clazz.getCanonicalName());
     return createBeanHelper(clazz, beanType, logger, context);
   }
 
-  protected static BeanHelper createBeanHelper(JClassType jType, TreeLogger logger,
-      GeneratorContext context) throws UnableToCompleteException {
+  public static Map<JClassType, BeanHelper> getBeanHelpers() {
+    return Collections.unmodifiableMap(threadLocalHelperMap.get());
+  }
+
+  protected static BeanHelper createBeanHelper(JClassType jType,
+      TreeLogger logger, GeneratorContext context)
+      throws UnableToCompleteException {
     JClassType erasedType = jType.getErasedType();
     try {
       Class<?> clazz = Class.forName(erasedType.getQualifiedBinaryName());
@@ -92,7 +95,7 @@ final class BeanHelper {
   }
 
   protected static boolean isClassConstrained(Class<?> clazz) {
-    return serverSideValidor.getConstraintsForClass(clazz).isBeanConstrained();
+    return serverSideValidator.getConstraintsForClass(clazz).isBeanConstrained();
   }
 
   static BeanHelper getBeanHelper(JClassType beanType) {
@@ -140,12 +143,21 @@ final class BeanHelper {
       throws UnableToCompleteException {
     BeanHelper helper = getBeanHelper(beanType);
     if (helper == null) {
-      helper = new BeanHelper(beanType, clazz,
-          serverSideValidor.getConstraintsForClass(clazz));
+      BeanDescriptor bean;
+      try {
+        bean = serverSideValidator.getConstraintsForClass(clazz);
+      } catch (ValidationException e) {
+        logger.log(Type.ERROR,
+            "Unable to create a validator for " + clazz.getCanonicalName()
+                + " because " + e.getMessage(), e);
+        throw new UnableToCompleteException();
+      }
+      helper = new BeanHelper(beanType, clazz, bean);
       addBeanHelper(helper);
       writeInterface(context, logger, helper);
+
       // now recurse on all Cascaded elements
-      for (PropertyDescriptor p : helper.getBeanDescriptor().getConstrainedProperties()) {
+      for (PropertyDescriptor p : bean.getConstrainedProperties()) {
         if (p.isCascaded()) {
           createBeanHelper(p, helper, logger, context);
         }
@@ -170,7 +182,7 @@ final class BeanHelper {
         createBeanHelper(type.getErasedType(), logger, context);
       }
     } else {
-      if (serverSideValidor.getConstraintsForClass(elementClass).isBeanConstrained()) {
+      if (serverSideValidator.getConstraintsForClass(elementClass).isBeanConstrained()) {
         createBeanHelper(elementClass, logger, context);
       }
     }
@@ -190,8 +202,7 @@ final class BeanHelper {
     this.clazz = clazz;
   }
 
-  public  JClassType getAssociationType(PropertyDescriptor p,
-      boolean useField) {
+  public JClassType getAssociationType(PropertyDescriptor p, boolean useField) {
     JType type = this.getElementType(p, useField);
     JArrayType jArray = type.isArray();
     if (jArray != null) {
