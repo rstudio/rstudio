@@ -384,7 +384,8 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
    else
    {
       // allow modules to detect changes after rpc calls
-      detectChanges(module_context::ChangeSourceRPC);
+      if (!jsonRpcResponse.suppressDetectChanges())
+         detectChanges(module_context::ChangeSourceRPC);
       
       // are there (or will there likely be) events pending?
       // (if not then notify the client)
@@ -401,7 +402,8 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
       if (jsonRpcResponse.hasAfterResponse())
       {
          jsonRpcResponse.runAfterResponse();
-         detectChanges(module_context::ChangeSourceRPC);
+         if (!jsonRpcResponse.suppressDetectChanges())
+            detectChanges(module_context::ChangeSourceRPC);
       }
    }
 }
