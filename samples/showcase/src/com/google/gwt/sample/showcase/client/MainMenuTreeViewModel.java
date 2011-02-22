@@ -36,6 +36,7 @@ import com.google.gwt.sample.showcase.client.content.i18n.CwNumberFormat;
 import com.google.gwt.sample.showcase.client.content.i18n.CwPluralFormsExample;
 import com.google.gwt.sample.showcase.client.content.lists.CwListBox;
 import com.google.gwt.sample.showcase.client.content.lists.CwMenuBar;
+import com.google.gwt.sample.showcase.client.content.lists.CwStackLayoutPanel;
 import com.google.gwt.sample.showcase.client.content.lists.CwStackPanel;
 import com.google.gwt.sample.showcase.client.content.lists.CwSuggestBox;
 import com.google.gwt.sample.showcase.client.content.lists.CwTree;
@@ -301,6 +302,8 @@ public class MainMenuTreeViewModel implements TreeViewModel {
           RunAsyncCode.runAsyncCode(CwMenuBar.class));
       category.addExample(new CwStackPanel(constants),
           RunAsyncCode.runAsyncCode(CwStackPanel.class));
+      category.addExample(new CwStackLayoutPanel(constants),
+          RunAsyncCode.runAsyncCode(CwStackLayoutPanel.class));
     }
 
     // Text Input.

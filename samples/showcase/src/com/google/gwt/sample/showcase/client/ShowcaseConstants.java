@@ -33,6 +33,7 @@ import com.google.gwt.sample.showcase.client.content.i18n.CwNumberFormat;
 import com.google.gwt.sample.showcase.client.content.i18n.CwPluralFormsExample;
 import com.google.gwt.sample.showcase.client.content.lists.CwListBox;
 import com.google.gwt.sample.showcase.client.content.lists.CwMenuBar;
+import com.google.gwt.sample.showcase.client.content.lists.CwStackLayoutPanel;
 import com.google.gwt.sample.showcase.client.content.lists.CwStackPanel;
 import com.google.gwt.sample.showcase.client.content.lists.CwSuggestBox;
 import com.google.gwt.sample.showcase.client.content.lists.CwTree;
@@ -85,7 +86,8 @@ public interface ShowcaseConstants extends MenuConstants,
     CwDatePicker.CwConstants, CwPluralFormsExample.CwConstants,
     CwCellList.CwConstants, CwCellTable.CwConstants, CwCellTree.CwConstants,
     CwCellBrowser.CwConstants, CwCellValidation.CwConstants,
-    CwCellSampler.CwConstants, CwSplitLayoutPanel.CwConstants {
+    CwCellSampler.CwConstants, CwSplitLayoutPanel.CwConstants,
+    CwStackLayoutPanel.CwConstants {
 
   /**
    * The path to source code for examples, raw files, and style definitions.

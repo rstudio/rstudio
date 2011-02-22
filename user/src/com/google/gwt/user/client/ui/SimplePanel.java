@@ -36,6 +36,16 @@ public class SimplePanel extends Panel implements HasOneWidget {
   }
 
   /**
+   * Create a panel with the specified child widget.
+   * 
+   * @param child the child to add to the panel
+   */
+  public SimplePanel(Widget child) {
+    this();
+    setWidget(child);
+  }
+
+  /**
    * Creates an empty panel that uses the specified browser element for its
    * contents.
    * 
