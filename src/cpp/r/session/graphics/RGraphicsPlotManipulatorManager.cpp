@@ -18,11 +18,6 @@ Manipulate work:
 
 - bug 1281: lose manipulator on resume
 
-- UI closer to Paul's design
-
-- Document expr partial matching conflict in manipulate
-- Update documentation to reflect changes in picker and ...
-- Note in docs that manipulate is potentially experimental
 - Play with providing example and/or demo in docs
 
 

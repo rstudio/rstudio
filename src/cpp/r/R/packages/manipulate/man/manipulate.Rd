@@ -24,6 +24,8 @@ manipulate(expr, ..., controls = list())
 \details{
     Once a set of manipulator controls are attached to a plot they remain attached and can be recalled whenever viewing the plot (a gear button is added to the top-left of the plot to indicate that it has a manipulator).
     
+    Note that because of R's partial matching rules for function arguments, controls whose names partially match the \code{expr} argument (e.g. '\code{e}', '\code{ex}', etc.) are not permitted since they will conflict with this argument. If you wish to include a control with a name that conflicts then as a workaround you can include it as a named item within the \code{controls} list.
+    
     The \code{expr} parameter is evaluated using \code{\link{withVisible}}. If it's return value is visible then \code{\link{print}} is called. This enables manipulate expressions to behave simillarly to their being executed directly at the console. 
 
   The \code{\link{manipulatorSetState}} and \code{\link{manipulatorGetState}} functions can be used to associate custom state with a manipulator (for example, to track the values used for previous plot executions). These values are stored in a custom environment which is stored along with the rest of the manipulator context.

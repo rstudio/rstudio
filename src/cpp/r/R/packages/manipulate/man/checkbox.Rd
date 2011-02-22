@@ -5,16 +5,16 @@
   Create a checkbox control to enable manipulation of logical plot variables.
 }
 \usage{
-checkbox(value, label)
+checkbox(value = FALSE, label = NULL)
 }
 
 
 \arguments{
   \item{value}{
-    Default value for checkbox. Must be logical (\code{TRUE} or \code{FALSE}).
+    Default value for checkbox. Must be logical (defaults to \code{FALSE}).
 }
   \item{label}{
-    Display label for checkbox.
+    Display label for checkbox. Defaults to the variable name if not specified.
 }
 }
 
