@@ -399,7 +399,7 @@ core::Error readObjectParam(const json::Array& params,
 class JsonRpcResponse
 {
 public:
-   JsonRpcResponse() 
+   JsonRpcResponse() : suppressDetectChanges_(false)
    {
       setResult(json::Value());
    };
@@ -442,6 +442,12 @@ public:
    bool hasAfterResponse() const;
    void runAfterResponse();
 
+   bool suppressDetectChanges() { return suppressDetectChanges_; }
+   void setSuppressDetectChanges(bool suppress)
+   {
+      suppressDetectChanges_ = suppress;
+   }
+
    json::Object getRawResponse();
    
    void write(std::ostream& os) const;
@@ -449,6 +455,7 @@ public:
 private:
    json::Object response_;
    boost::function<void()> afterResponse_ ;
+   bool suppressDetectChanges_;
 };
    
    

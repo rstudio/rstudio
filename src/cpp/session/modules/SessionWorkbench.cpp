@@ -49,6 +49,8 @@ namespace {
 Error setClientState(const json::JsonRpcRequest& request, 
                      json::JsonRpcResponse* pResponse)
 {   
+   pResponse->setSuppressDetectChanges(true);
+
    // extract params
    json::Object temporaryState, persistentState;
    Error error = json::readParams(request.params, 

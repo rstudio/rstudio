@@ -236,11 +236,19 @@ Error writeToPNG(const FilePath& targetPath,
    Error error;
    if (targetPath != pDC->targetPath)
    {
-      error = pDC->targetPath.copy(targetPath);
-
-      Error deleteError = pDC->targetPath.remove();
-      if (deleteError)
+      if (!pDC->targetPath.exists())
+      {
+         error = pathNotFoundError(ERROR_LOCATION);
          LOG_ERROR(error);
+      }
+      else
+      {
+         error = pDC->targetPath.copy(targetPath);
+
+         Error deleteError = pDC->targetPath.remove();
+         if (deleteError)
+            LOG_ERROR(error);
+      }
    }
 
    if (keepContextAlive)

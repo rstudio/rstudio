@@ -222,6 +222,8 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
 {
    using namespace core::string_utils;
 
+   pResponse->setSuppressDetectChanges(true);
+
    // unique id and jsonPath (can be null for auto-save)
    std::string id;
    json::Value jsonPath, jsonType;
@@ -291,6 +293,8 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
 Error checkForExternalEdit(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
+   pResponse->setSuppressDetectChanges(true);
+
    // params
    std::string id ;
    Error error = json::readParams(request.params, &id);
