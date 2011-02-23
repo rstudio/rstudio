@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.DataResource;
 import com.google.gwt.resources.client.ImageResource;
 
 public interface ManipulatorResources extends ClientBundle
@@ -25,4 +26,7 @@ public interface ManipulatorResources extends ClientBundle
    
    ImageResource manipulateButton();
    ImageResource manipulateProgress();
+   
+   @Source("manipulateSliderBar.png")
+   DataResource manipulateSliderBar();
 }
