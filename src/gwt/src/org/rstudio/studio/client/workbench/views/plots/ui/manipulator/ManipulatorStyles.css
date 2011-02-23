@@ -43,15 +43,15 @@
 }
 
 .slider .gwt-SliderBar-shell .gwt-SliderBar-knob {
-  top: 17pt;
-  width: 11px;
-  height: 21px;
+  top: 19pt;
+  width: 13px;
+  height: 18px;
   z-index: 1;
   cursor: pointer;
 }
 
 .slider .gwt-SliderBar-shell .gwt-SliderBar-tick {
-  top: 14pt;
+  top: 16pt;
   width: 1px;
   height: 6pt;
   background-color: #919599;
