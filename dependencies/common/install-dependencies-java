@@ -34,21 +34,6 @@ GWT_DIR=$INSTALL_DIR/../../src/gwt
 LIB_DIR=$GWT_DIR/lib
 mkdir -p $LIB_DIR
 
-# gwt incubator
-GWT_INCUBATOR_JAR=gwt-incubator-20100204-r1747.jar
-INSTALLED_VERSION_FILE=$LIB_DIR/gwt-incubator/installed_version
-INSTALLED_VERSION=`cat $INSTALLED_VERSION_FILE 2>/dev/null`
-if [ "$GWT_INCUBATOR_JAR" != "$INSTALLED_VERSION" ]
-then
-   download $GWT_INCUBATOR_JAR
-   rm -rf $LIB_DIR/gwt-incubator
-   mkdir -p $LIB_DIR/gwt-incubator
-   mv $GWT_INCUBATOR_JAR $LIB_DIR/gwt-incubator
-   echo "$GWT_INCUBATOR_JAR" > $INSTALLED_VERSION_FILE
-else
-   echo "$GWT_INCUBATOR_JAR already installed"
-fi
-
 # guice
 GUICE_ZIP=guice.zip
 INSTALLED_VERSION_FILE=$LIB_DIR/guice/installed_version

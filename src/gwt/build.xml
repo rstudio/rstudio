@@ -33,7 +33,6 @@
     <fileset dir="${gwt.sdk}" includes="gwt-dev*.jar"/>
     <pathelement location="${gwt.sdk}/gwt-soyc-vis.jar"/>
     <!-- Add any additional non-server libs (such as JUnit) -->
-    <pathelement location="lib/gwt-incubator/gwt-incubator-20100204-r1747.jar"/>
   	 <pathelement location="lib/gin/gin.jar"/>
   	 <pathelement location="lib/guice/guice-2.0.jar"/>
   	 <pathelement location="lib/guice/aopalliance.jar"/>
