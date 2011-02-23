@@ -164,6 +164,9 @@ function __gwt_disconnected_impl() {
       + 'REFRESH</a> this page.');
 }
 
+// Keep track of z-index to allow layering of multiple glass messages
+var __gwt_glassMessageZIndex = 2147483647;
+
 // Note this method is also used by ModuleSpace.java
 function __gwt_displayGlassMessage(summary, details) {
   var topWin = window.top;
@@ -171,11 +174,13 @@ function __gwt_displayGlassMessage(summary, details) {
   var outer = topDoc.createElement("div");
   // Do not insert whitespace or outer.firstChild will get a text node.
   outer.innerHTML = 
-    '<div style="position:absolute;z-index:2147483646;left:0px;top:0px;right:0px;bottom:0px;filter:alpha(opacity=75);opacity:0.75;background-color:#000000;"></div>' +
-    '<div style="position:absolute;z-index:2147483647;left:50px;top:50px;width:600px;color:#FFFFFF;font-family:verdana;">' +
-      '<div style="font-size:30px;font-weight:bold;">' + summary + '</div>' +
-      '<p style="font-size:15px;">' + details + '</p>' +
-    '</div>'
+    '<div style="position:absolute;z-index:' + __gwt_glassMessageZIndex-- +
+    ';left:50px;top:50px;width:600px;color:#FFF;font-family:verdana;">' +
+    '<div style="font-size:30px;font-weight:bold;">' + summary + '</div>' +
+    '<div style="font-size:15px;">' + details + '</div>' +
+    '</div>' +
+    '<div style="position:absolute;z-index:' + __gwt_glassMessageZIndex-- +
+    ';left:0px;top:0px;right:0px;bottom:0px;filter:alpha(opacity=60);opacity:0.6;background-color:#000;"></div>'
   ;
   topDoc.body.appendChild(outer);
   var glass = outer.firstChild;

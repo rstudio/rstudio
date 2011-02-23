@@ -611,7 +611,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     String details = "<p>Exception while loading module <b>"
         + entryPointTypeName + "</b>. See Development Mode for details.</p>"
         + "<div style='overflow:visisble;white-space:pre;'>" + stackTrace
-        + "</pre>";
+        + "</div>";
 
     invokeNativeVoid("__gwt_displayGlassMessage", null,
         new Class[]{String.class, String.class},
