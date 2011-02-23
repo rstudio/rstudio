@@ -11,16 +11,6 @@
  *
  */
 
-/* Manipulator TODO notes
-
-Manipulate work:
-
-- Paul UI improvements
-
-- Play with providing example and/or demo in docs
-
-*/
-
 #include "RGraphicsPlotManipulatorManager.hpp"
 
 #include <string>
