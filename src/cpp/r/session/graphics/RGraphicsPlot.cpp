@@ -278,6 +278,7 @@ void Plot::loadManipulatorIfNecessary() const
 
 void Plot::saveManipulator(const std::string& storageUuid) const
 {
+   loadManipulatorIfNecessary();
    if (!manipulator_.empty())
    {
       Error error = manipulator_.save(manipulatorFilePath(storageUuid));
