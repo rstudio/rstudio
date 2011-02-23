@@ -33,6 +33,11 @@ public class CssMediaRule extends CssNode implements HasNodes {
     return nodes;
   }
 
+  @Override
+  public boolean isStatic() {
+    return true;
+  }
+
   public void traverse(CssVisitor visitor, Context context) {
     if (visitor.visit(this, context)) {
       visitor.acceptWithInsertRemove(nodes);

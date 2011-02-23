@@ -31,6 +31,11 @@ public class CssExternalSelectors extends CssNode {
     return classes;
   }
 
+  @Override
+  public boolean isStatic() {
+    return true;
+  }
+  
   public void traverse(CssVisitor visitor, Context context) {
     visitor.visit(this, context);
     visitor.endVisit(this, context);

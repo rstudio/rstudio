@@ -85,25 +85,22 @@ public class ClassRenamer extends CssVisitor {
    * Records replacements that have actually been performed.
    */
   private final Map<JMethod, String> actualReplacements = new IdentityHashMap<JMethod, String>();
+  private final Map<String, Map<JMethod, String>> classReplacementsWithPrefix;
   private final Set<String> cssDefs = new HashSet<String>();
-
-  /**
-   * The task-list of replacements to perform in the stylesheet.
-   */
-  private final Map<String, Replacement> potentialReplacements;
+  private final Set<String> externalClasses;
   private final TreeLogger logger;
   private final Set<JMethod> missingClasses;
   private final boolean strict;
   private final Set<String> unknownClasses = new HashSet<String>();
 
+  
   public ClassRenamer(TreeLogger logger,
       Map<String, Map<JMethod, String>> classReplacementsWithPrefix,
       boolean strict, Set<String> externalClasses) {
     this.logger = logger.branch(TreeLogger.DEBUG, "Replacing CSS class names");
+    this.classReplacementsWithPrefix = classReplacementsWithPrefix;
     this.strict = strict;
-
-    potentialReplacements = computeReplacements(classReplacementsWithPrefix,
-        externalClasses);
+    this.externalClasses = externalClasses;
 
     // Require a definition for all classes in the default namespace
     assert classReplacementsWithPrefix.containsKey("");
@@ -119,6 +116,10 @@ public class ClassRenamer extends CssVisitor {
   @Override
   public void endVisit(CssSelector x, Context ctx) {
 
+    final Map<String, Replacement> potentialReplacements;
+    potentialReplacements = computeReplacements(classReplacementsWithPrefix,
+        externalClasses);
+    
     String sel = x.getSelector();
     int originalLength = sel.length();
 
@@ -246,6 +247,10 @@ public class ClassRenamer extends CssVisitor {
         JMethod method = entry.getKey();
         String sourceClassName = method.getName();
         String obfuscatedClassName = entry.getValue();
+
+        if (cssDefs.contains(sourceClassName)) {
+          continue;
+        }
 
         ClassName className = method.getAnnotation(ClassName.class);
         if (className != null) {

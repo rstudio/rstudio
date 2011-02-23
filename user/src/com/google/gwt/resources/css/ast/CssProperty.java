@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * Maps a named property to a Value.
  */
-public class CssProperty extends CssNode {
+public class CssProperty extends CssNode implements CssSubstitution {
 
   /**
    * Represents a sequence of no-arg method invocations.
@@ -79,6 +79,11 @@ public class CssProperty extends CssNode {
     }
 
     @Override
+    public boolean isStatic() {
+      return false;
+    }
+
+    @Override
     public String toCss() {
       return "value(\"" + path + "\""
           + (suffix == null ? "" : (", \"" + suffix + "\"")) + ")";
@@ -103,6 +108,11 @@ public class CssProperty extends CssNode {
     @Override
     public ExpressionValue isExpressionValue() {
       return this;
+    }
+
+    @Override
+    public boolean isStatic() {
+      return false;
     }
 
     @Override
@@ -188,6 +198,19 @@ public class CssProperty extends CssNode {
     @Override
     public ListValue isListValue() {
       return this;
+    }
+  
+    /**
+     * A ListValue is static if all of its component values are static.
+     */
+    @Override
+    public boolean isStatic() {
+      for (Value value : values) {
+        if (!value.isStatic()) {
+          return false;
+        }
+      }
+      return true;
     }
 
     @Override
@@ -381,6 +404,15 @@ public class CssProperty extends CssNode {
     public boolean isSpaceRequired() {
       return true;
     }
+   
+    /**
+     * Indicates if the value is static.
+     * 
+     * @see CssNode#isStatic()
+     */
+    public boolean isStatic() {
+      return true;
+    }
 
     public StringValue isStringValue() {
       return null;
@@ -422,6 +454,11 @@ public class CssProperty extends CssNode {
 
   public boolean isImportant() {
     return important;
+  }
+
+  @Override
+  public boolean isStatic() {
+    return getValues().isStatic();
   }
 
   public void setImportant(boolean important) {

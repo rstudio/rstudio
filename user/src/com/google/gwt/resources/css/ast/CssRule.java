@@ -33,6 +33,11 @@ public class CssRule extends CssNode implements HasProperties, HasSelectors {
     return selectors;
   }
 
+  @Override
+  public boolean isStatic() {
+    return true;
+  }
+
   public void traverse(CssVisitor visitor, Context context) {
     if (visitor.visit(this, context)) {
       visitor.acceptWithInsertRemove(selectors);

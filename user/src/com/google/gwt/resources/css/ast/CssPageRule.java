@@ -33,6 +33,11 @@ public class CssPageRule extends CssNode implements HasProperties {
     return pseudoPage;
   }
 
+  @Override
+  public boolean isStatic() {
+    return true;
+  }
+
   public void setPseudoPage(String pseudoPage) {
     this.pseudoPage = pseudoPage;
   }

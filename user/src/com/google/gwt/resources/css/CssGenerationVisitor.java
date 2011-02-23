@@ -29,6 +29,7 @@ import com.google.gwt.resources.css.ast.CssProperty;
 import com.google.gwt.resources.css.ast.CssRule;
 import com.google.gwt.resources.css.ast.CssSelector;
 import com.google.gwt.resources.css.ast.CssSprite;
+import com.google.gwt.resources.css.ast.CssSubstitution;
 import com.google.gwt.resources.css.ast.CssUnknownAtRule;
 import com.google.gwt.resources.css.ast.CssUrl;
 import com.google.gwt.resources.css.ast.CssVisitor;
@@ -49,7 +50,7 @@ public class CssGenerationVisitor extends CssVisitor {
 
   private boolean needsComma;
   private final boolean substituteDots;
-  private final SortedMap<Integer, List<CssNode>> substitutionPositions = new TreeMap<Integer, List<CssNode>>();
+  private final SortedMap<Integer, List<CssSubstitution>> substitutionPositions = new TreeMap<Integer, List<CssSubstitution>>();
 
   /**
    * Constructor.
@@ -116,7 +117,7 @@ public class CssGenerationVisitor extends CssVisitor {
     out.print(x.getRule());
   }
 
-  public SortedMap<Integer, List<CssNode>> getSubstitutionPositions() {
+  public SortedMap<Integer, List<CssSubstitution>> getSubstitutionPositions() {
     return substitutionPositions;
   }
 
@@ -262,7 +263,7 @@ public class CssGenerationVisitor extends CssVisitor {
     return false;
   }
 
-  private void addSubstitition(CssNode node) {
+  private <T extends CssNode & CssSubstitution> void addSubstitition(T node) {
     if (substituteDots) {
       out.printOpt(".....");
       out.newlineOpt();
@@ -271,7 +272,7 @@ public class CssGenerationVisitor extends CssVisitor {
       if (substitutionPositions.containsKey(position)) {
         substitutionPositions.get(position).add(node);
       } else {
-        List<CssNode> nodes = new ArrayList<CssNode>();
+        List<CssSubstitution> nodes = new ArrayList<CssSubstitution>();
         nodes.add(node);
         substitutionPositions.put(position, nodes);
       }

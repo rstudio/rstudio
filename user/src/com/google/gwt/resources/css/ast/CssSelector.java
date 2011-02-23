@@ -37,6 +37,11 @@ public class CssSelector extends CssNode {
     return selector;
   }
 
+  @Override
+  public boolean isStatic() {
+    return true;
+  }
+
   public void setSelector(String selector) {
     this.selector = selector;
   }

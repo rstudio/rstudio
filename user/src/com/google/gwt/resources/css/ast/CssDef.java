@@ -38,6 +38,11 @@ public class CssDef extends CssNode {
   public List<Value> getValues() {
     return values;
   }
+  
+  @Override
+  public boolean isStatic() {
+    return true;
+  }
 
   public void traverse(CssVisitor visitor, Context context) {
     visitor.visit(this, context);

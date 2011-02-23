@@ -22,6 +22,13 @@ import com.google.gwt.resources.css.CssGenerationVisitor;
  * The basic type that composes a CSS tree.
  */
 public abstract class CssNode implements CssVisitable {
+  
+  /**
+   * Indicates whether or not the CssNode requires runtime evaluation. This
+   * method should not include any information from child nodes.
+   */
+  public abstract boolean isStatic();
+  
   @Override
   public String toString() {
     DefaultTextOutput out = new DefaultTextOutput(false);

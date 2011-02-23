@@ -47,6 +47,11 @@ public class CssStylesheet extends CssNode implements HasNodes {
     return rules;
   }
 
+  @Override
+  public boolean isStatic() {
+    return true;
+  }
+
   public void traverse(CssVisitor visitor, Context context) {
     if (visitor.visit(this, context)) {
       visitor.acceptWithInsertRemove(rules);

@@ -38,6 +38,11 @@ public class CollapsedNode extends CssNode implements HasNodes {
     return nodes;
   }
 
+  @Override
+  public boolean isStatic() {
+    return true;
+  }
+
   public void traverse(CssVisitor visitor, Context context) {
     visitor.acceptWithInsertRemove(getNodes());
   }

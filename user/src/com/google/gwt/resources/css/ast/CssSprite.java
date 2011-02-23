@@ -30,7 +30,7 @@ import java.util.ListIterator;
  * one well-known property {@value IMAGE_PROPERTY_NAME}, which
  * specifies the name of an ImageResource accessor.
  */
-public class CssSprite extends CssRule {
+public class CssSprite extends CssRule implements CssSubstitution {
 
   public static final String IMAGE_PROPERTY_NAME = "gwt-image";
 
@@ -168,6 +168,11 @@ public class CssSprite extends CssRule {
 
   public DotPathValue getResourceFunction() {
     return resourceFunction;
+  }
+
+  @Override
+  public boolean isStatic() {
+    return true;
   }
 
   public void setResourceFunction(DotPathValue resourceFunction) {

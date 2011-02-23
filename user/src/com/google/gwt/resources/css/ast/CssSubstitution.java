@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2011 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,35 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.google.gwt.resources.css.ast;
 
 /**
- * Represents a CSS at-rule that CssResource is unable to process.
+ * A tag interface that indicates that a CssNode may be used as a substitution
+ * value.
  */
-public class CssUnknownAtRule extends CssNode {
+public interface CssSubstitution { }
 
-  private final String rule;
-
-  public CssUnknownAtRule(String rule) {
-    this.rule = rule;
-  }
-
-  /**
-   * Returns the entire unprocessed at-rule declaration.
-   */
-  public String getRule() {
-    return rule;
-  }
-
-  @Override
-  public boolean isStatic() {
-    return true;
-  }
-
-  public void traverse(CssVisitor visitor, Context context) {
-    if (visitor.visit(this, context)) {
-      // Do nothing
-    }
-    visitor.endVisit(this, context);
-  }
-}

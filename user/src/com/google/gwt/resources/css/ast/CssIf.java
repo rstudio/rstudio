@@ -22,7 +22,7 @@ import java.util.List;
  * A GWTCSS if statement. The elif and else constructs are modeled as nested if
  * statement is the elseNodes.
  */
-public class CssIf extends CssNode implements HasNodes {
+public class CssIf extends CssNode implements CssSubstitution, HasNodes {
   private final List<CssNode> elseNodes = new ArrayList<CssNode>();
   private final List<CssNode> nodes = new ArrayList<CssNode>();
   private String expression;
@@ -52,6 +52,14 @@ public class CssIf extends CssNode implements HasNodes {
 
   public boolean isNegated() {
     return isNegated;
+  }
+
+  /**
+   * A CssIf is static if it uses only a deferred-binding property.
+   */
+  @Override
+  public boolean isStatic() {
+    return expression == null;
   }
 
   public void setExpression(String expression) {

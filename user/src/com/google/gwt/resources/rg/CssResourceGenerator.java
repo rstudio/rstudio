@@ -57,13 +57,14 @@ import com.google.gwt.resources.css.ast.CssDef;
 import com.google.gwt.resources.css.ast.CssIf;
 import com.google.gwt.resources.css.ast.CssNode;
 import com.google.gwt.resources.css.ast.CssProperty;
-import com.google.gwt.resources.css.ast.CssRule;
-import com.google.gwt.resources.css.ast.CssStylesheet;
-import com.google.gwt.resources.css.ast.HasNodes;
 import com.google.gwt.resources.css.ast.CssProperty.DotPathValue;
 import com.google.gwt.resources.css.ast.CssProperty.ListValue;
 import com.google.gwt.resources.css.ast.CssProperty.NumberValue;
 import com.google.gwt.resources.css.ast.CssProperty.Value;
+import com.google.gwt.resources.css.ast.CssRule;
+import com.google.gwt.resources.css.ast.CssStylesheet;
+import com.google.gwt.resources.css.ast.CssSubstitution;
+import com.google.gwt.resources.css.ast.HasNodes;
 import com.google.gwt.resources.ext.AbstractResourceGenerator;
 import com.google.gwt.resources.ext.ClientBundleRequirements;
 import com.google.gwt.resources.ext.ResourceContext;
@@ -74,6 +75,7 @@ import com.google.gwt.user.rebind.StringSourceWriter;
 
 import java.io.Serializable;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -89,7 +91,7 @@ import java.util.zip.Adler32;
 /**
  * Provides implementations of CSSResources.
  */
-public final class CssResourceGenerator extends AbstractResourceGenerator 
+public class CssResourceGenerator extends AbstractResourceGenerator 
     implements SupportsGeneratorResultCaching {
 
   @SuppressWarnings("serial")
@@ -266,7 +268,7 @@ public final class CssResourceGenerator extends AbstractResourceGenerator
     int numExpressions = 0;
 
     b.append('(');
-    for (Map.Entry<Integer, List<CssNode>> entry : v.getSubstitutionPositions().entrySet()) {
+    for (Map.Entry<Integer, List<CssSubstitution>> entry : v.getSubstitutionPositions().entrySet()) {
       // Add the static section between start and the substitution point
       b.append('"');
       b.append(Generator.escape(template.substring(start, entry.getKey())));
@@ -274,7 +276,7 @@ public final class CssResourceGenerator extends AbstractResourceGenerator
       numExpressions = concatOp(numExpressions, b);
 
       // Add the nodes at the substitution point
-      for (CssNode x : entry.getValue()) {
+      for (CssSubstitution x : entry.getValue()) {
         TreeLogger loopLogger = logger.branch(TreeLogger.DEBUG,
             "Performing substitution in node " + x.toString());
 
@@ -421,6 +423,8 @@ public final class CssResourceGenerator extends AbstractResourceGenerator
     }
   }
 
+  protected List<String> ignoredMethods = new ArrayList<String>();
+  protected Map<JMethod, CssStylesheet> stylesheetMap;
   private Counter classCounter;
   private JClassType cssResourceType;
   private JClassType elementType;
@@ -429,7 +433,6 @@ public final class CssResourceGenerator extends AbstractResourceGenerator
   private Map<JClassType, Map<JMethod, String>> replacementsByClassAndMethod;
   private Map<JMethod, String> replacementsForSharedMethods;
   private JClassType stringType;
-  private Map<JMethod, CssStylesheet> stylesheetMap;
 
   @Override
   public String createAssignment(TreeLogger logger, ResourceContext context,
@@ -444,61 +447,29 @@ public final class CssResourceGenerator extends AbstractResourceGenerator
 
     JClassType cssResourceSubtype = method.getReturnType().isInterface();
     assert cssResourceSubtype != null;
-    Map<String, Map<JMethod, String>> replacementsWithPrefix = new HashMap<String, Map<JMethod, String>>();
 
-    replacementsWithPrefix.put("",
-        computeReplacementsForType(cssResourceSubtype));
-    Import imp = method.getAnnotation(Import.class);
-    if (imp != null) {
-      boolean fail = false;
-      for (Class<? extends CssResource> clazz : imp.value()) {
-        JClassType importType = typeOracle.findType(clazz.getName().replace(
-            '$', '.'));
-        assert importType != null : "TypeOracle does not have type "
-            + clazz.getName();
-        
-        // add this import type as a requirement for this generator
-        context.getRequirements().addTypeHierarchy(importType);
-
-        String prefix = getImportPrefix(importType);
-
-        if (replacementsWithPrefix.put(prefix,
-            computeReplacementsForType(importType)) != null) {
-          logger.log(TreeLogger.ERROR,
-              "Multiple imports that would use the prefix " + prefix);
-          fail = true;
-        }
-      }
-      if (fail) {
-        throw new UnableToCompleteException();
-      }
-    }
+    // Compute the local effective namespace
+    Map<String, Map<JMethod, String>> replacementsWithPrefix = processImports(
+        logger, typeOracle, cssResourceSubtype, method, context);
 
     // Methods defined by CssResource interface
     writeEnsureInjected(sw);
     writeGetName(method, sw);
-
-    sw.println("public String getText() {");
-    sw.indent();
-    boolean strict = isStrict(logger, method);
-    Map<JMethod, String> actualReplacements = new IdentityHashMap<JMethod, String>();
-    String cssExpression = makeExpression(logger, context, cssResourceSubtype,
-        stylesheetMap.get(method), replacementsWithPrefix, strict,
-        actualReplacements);
-    sw.println("return " + cssExpression + ";");
-    sw.outdent();
-    sw.println("}");
-
+  
+    // Create the Java expression that generates the CSS
+    Map<JMethod, String> actualReplacements = writeGetText(logger, context,
+        method, sw, cssResourceSubtype, replacementsWithPrefix);
+   
     /*
      * getOverridableMethods is used to handle CssResources extending
      * non-CssResource types. See the discussion in computeReplacementsForType.
      */
     writeUserMethods(logger, sw, stylesheetMap.get(method),
         cssResourceSubtype.getOverridableMethods(), actualReplacements);
-
+   
     sw.outdent();
     sw.println("}");
-
+   
     return sw.toString();
   }
 
@@ -533,20 +504,16 @@ public final class CssResourceGenerator extends AbstractResourceGenerator
       throw new UnableToCompleteException();
     }
 
-    // Find all of the types that we care about in the type system
     TypeOracle typeOracle = context.getGeneratorContext().getTypeOracle();
+    JClassType baseInterface = typeOracle.findType(getBaseInterfaceName());
+    for (JMethod m : baseInterface.getInheritableMethods()) {
+      ignoredMethods.add(m.getName());
+    }
 
-    cssResourceType = typeOracle.findType(CssResource.class.getName());
-    assert cssResourceType != null;
-
-    elementType = typeOracle.findType(Element.class.getName());
-    assert elementType != null;
-
-    stringType = typeOracle.findType(String.class.getName());
-    assert stringType != null;
-
+    // Find all of the types that we care about in the type system
+    checkTypes(context, typeOracle);
     stylesheetMap = new IdentityHashMap<JMethod, CssStylesheet>();
-
+    
     initReplacements(logger, context, classPrefix);
   }
 
@@ -571,7 +538,147 @@ public final class CssResourceGenerator extends AbstractResourceGenerator
     // Create the AST and do a quick scan for requirements
     CssStylesheet sheet = GenerateCssAst.exec(logger, resources);
     stylesheetMap.put(method, sheet);
-    (new RequirementsCollector(logger, context.getRequirements())).accept(sheet);
+    (new RequirementsCollector(logger, context.getRequirements())).accept(sheet);    
+  }
+
+  protected void checkTypes(ResourceContext context, TypeOracle typeOracle) {
+    cssResourceType = typeOracle.findType(CssResource.class.getName());
+    assert cssResourceType != null;
+
+    elementType = typeOracle.findType(Element.class.getName());
+    assert elementType != null;
+
+    stringType = typeOracle.findType(String.class.getName());
+    assert stringType != null;
+  }
+  
+  protected String getBaseInterfaceName() {
+    return CssResource.class.getCanonicalName();
+  }
+  
+  protected String makeExpressionForSheet(
+      TreeLogger logger, ResourceContext context, JClassType cssResourceType,
+      CssStylesheet sheet, boolean prettyOutput) throws UnableToCompleteException {
+    return makeExpression(logger, context, cssResourceType, sheet, prettyOutput);
+  }
+
+  protected void optimize(TreeLogger logger, ResourceContext context,
+      JMethod method,
+      Map<String, Map<JMethod, String>> classReplacementsWithPrefix,
+      Map<JMethod, String> actualReplacements) {
+    boolean strict = isStrict(logger, method);
+    CssStylesheet sheet = stylesheetMap.get(method);
+    
+    // Create CSS sprites
+    (new Spriter(logger, context)).accept(sheet);
+
+    // Perform @def and @eval substitutions
+    SubstitutionCollector collector = new SubstitutionCollector();
+    collector.accept(sheet);
+
+    (new SubstitutionReplacer(logger, context, collector.getSubstitutions()))
+    .accept(sheet);
+
+    // Evaluate @if statements based on deferred binding properties
+    (new IfEvaluator(logger,
+        context.getGeneratorContext().getPropertyOracle())).accept(sheet);
+
+    // Rename css .class selectors. We look for all @external declarations in
+    // the stylesheet and then compute the per-instance replacements.
+    ExternalClassesCollector externalClasses = new ExternalClassesCollector();
+    externalClasses.accept(sheet);
+    ClassRenamer renamer = new ClassRenamer(logger,
+        classReplacementsWithPrefix, strict, externalClasses.getClasses());
+    renamer.accept(sheet);
+    actualReplacements.putAll(renamer.getReplacements());
+
+    // Combine rules with identical selectors
+    if (enableMerge) {
+      (new SplitRulesVisitor()).accept(sheet);
+      (new MergeIdenticalSelectorsVisitor()).accept(sheet);
+      (new MergeRulesByContentVisitor()).accept(sheet);
+    } 
+  }
+
+  /**
+   * Process the Import annotation on the associated JMethod and return a map of
+   * prefixes to JMethods to locally obfuscated names.
+   */
+  protected Map<String, Map<JMethod, String>> processImports(TreeLogger logger,
+      TypeOracle typeOracle, JClassType cssResourceSubtype, JMethod method,
+      ResourceContext context)
+      throws UnableToCompleteException {
+    Map<String, Map<JMethod, String>> replacementsWithPrefix =
+      new HashMap<String, Map<JMethod, String>>();
+
+    replacementsWithPrefix.put("",
+        computeReplacementsForType(cssResourceSubtype));
+    Import imp = method.getAnnotation(Import.class);
+    if (imp != null) {
+      boolean fail = false;
+      for (Class<? extends CssResource> clazz : imp.value()) {
+        JClassType importType = typeOracle.findType(clazz.getName().replace(
+            '$', '.'));
+        assert importType != null : "TypeOracle does not have type "
+            + clazz.getName();
+
+        // add this import type as a requirement for this generator
+        context.getRequirements().addTypeHierarchy(importType);
+        
+        String prefix = getImportPrefix(importType);
+
+        if (replacementsWithPrefix.put(prefix,
+            computeReplacementsForType(importType)) != null) {
+          logger.log(TreeLogger.ERROR,
+              "Multiple imports that would use the prefix " + prefix);
+          fail = true;
+        }
+      }
+      if (fail) {
+        throw new UnableToCompleteException();
+      }  
+    }
+    return replacementsWithPrefix;
+  }
+
+  /**
+   * Write all of the user-defined methods in the CssResource subtype.
+   */
+  protected void writeUserMethods(TreeLogger logger, SourceWriter sw,
+      CssStylesheet sheet, JMethod[] methods,
+      Map<JMethod, String> obfuscatedClassNames)
+      throws UnableToCompleteException {
+
+    // Get list of @defs
+    DefsCollector collector = new DefsCollector();
+    collector.accept(sheet);
+    Set<String> defs = collector.getDefs();
+
+    for (JMethod toImplement : methods) {
+      String name = toImplement.getName();
+      if (ignoredMethods.contains(name)) {
+        continue;
+      }
+
+      // Bomb out if there is a collision between @def and a style name
+      if (defs.contains(name) && obfuscatedClassNames.containsKey(toImplement)) {
+        logger.log(TreeLogger.ERROR, "@def shadows CSS class name: " + name
+            + ". Fix by renaming the @def name or the CSS class name.");
+        throw new UnableToCompleteException();
+      }
+
+      if (defs.contains(toImplement.getName())
+          && toImplement.getParameters().length == 0) {
+        writeDefAssignment(logger, sw, toImplement, sheet);
+      } else if (toImplement.getReturnType().equals(stringType)
+          && toImplement.getParameters().length == 0) {
+        writeClassAssignment(sw, toImplement, obfuscatedClassNames);
+      } else {
+        logger.log(TreeLogger.ERROR, "Don't know how to implement method "
+            + toImplement.getName());
+        throw new UnableToCompleteException();
+      }
+    }
   }
 
   /**
@@ -632,8 +739,7 @@ public final class CssResourceGenerator extends AbstractResourceGenerator
 
       for (JMethod method : type.getOverridableMethods()) {
         String name = method.getName();
-        if ("getName".equals(name) || "getText".equals(name)
-            || !stringType.equals(method.getReturnType())) {
+        if (ignoredMethods.contains(name)) {
           continue;
         }
 
@@ -882,53 +988,25 @@ public final class CssResourceGenerator extends AbstractResourceGenerator
   private String makeExpression(TreeLogger logger, ResourceContext context,
       JClassType cssResourceType, CssStylesheet sheet,
       Map<String, Map<JMethod, String>> classReplacementsWithPrefix,
-      boolean strict, Map<JMethod, String> actualReplacements)
+      JMethod method, Map<JMethod, String> actualReplacements)
       throws UnableToCompleteException {
 
     try {
-
-      // Create CSS sprites
-      (new Spriter(logger, context)).accept(sheet);
-
-      // Perform @def and @eval substitutions
-      SubstitutionCollector collector = new SubstitutionCollector();
-      collector.accept(sheet);
-
-      (new SubstitutionReplacer(logger, context, collector.getSubstitutions())).accept(sheet);
-
-      // Evaluate @if statements based on deferred binding properties
-      (new IfEvaluator(logger,
-          context.getGeneratorContext().getPropertyOracle())).accept(sheet);
-
-      /*
-       * Rename css .class selectors. We look for all @external declarations in
-       * the stylesheet and then compute the per-instance replacements.
-       */
-      ExternalClassesCollector externalClasses = new ExternalClassesCollector();
-      externalClasses.accept(sheet);
-      ClassRenamer renamer = new ClassRenamer(logger,
-          classReplacementsWithPrefix, strict, externalClasses.getClasses());
-      renamer.accept(sheet);
-      actualReplacements.putAll(renamer.getReplacements());
-
-      // Combine rules with identical selectors
-      if (enableMerge) {
-        (new SplitRulesVisitor()).accept(sheet);
-        (new MergeIdenticalSelectorsVisitor()).accept(sheet);
-        (new MergeRulesByContentVisitor()).accept(sheet);
-      }
-
-      String standard = makeExpression(logger, context, cssResourceType, sheet,
-          prettyOutput);
-
+      optimize(logger, context, method, classReplacementsWithPrefix,
+          actualReplacements);
+      
+      String standard = makeExpressionForSheet(logger, context, cssResourceType,
+          sheet, prettyOutput);
       (new RtlVisitor()).accept(sheet);
-
-      String reversed = makeExpression(logger, context, cssResourceType, sheet,
-          prettyOutput);
-
-      return LocaleInfo.class.getName() + ".getCurrentLocale().isRTL() ? ("
-          + reversed + ") : (" + standard + ")";
-
+      String reversed = makeExpressionForSheet(logger, context, cssResourceType,
+          sheet, prettyOutput);
+      
+      if (standard.equals(reversed)) {
+        return standard;
+      } else {
+        return LocaleInfo.class.getName() + ".getCurrentLocale().isRTL() ? ("
+        + reversed + ") : (" + standard + ")";
+      }
     } catch (CssCompilerException e) {
       // Take this as a sign that one of the visitors was unhappy, but only
       // log the stack trace if there's a causal (i.e. unknown) exception.
@@ -1037,44 +1115,20 @@ public final class CssResourceGenerator extends AbstractResourceGenerator
     sw.println("}");
   }
 
-  /**
-   * Write all of the user-defined methods in the CssResource subtype.
-   */
-  private void writeUserMethods(TreeLogger logger, SourceWriter sw,
-      CssStylesheet sheet, JMethod[] methods,
-      Map<JMethod, String> obfuscatedClassNames)
+  private Map<JMethod, String> writeGetText(TreeLogger logger,
+      ResourceContext context, JMethod method, SourceWriter sw,
+      JClassType cssResourceSubtype,
+      Map<String, Map<JMethod, String>> replacementsWithPrefix)
       throws UnableToCompleteException {
-
-    // Get list of @defs
-    DefsCollector collector = new DefsCollector();
-    collector.accept(sheet);
-    Set<String> defs = collector.getDefs();
-
-    for (JMethod toImplement : methods) {
-      String name = toImplement.getName();
-      if ("getName".equals(name) || "getText".equals(name)
-          || "ensureInjected".equals(name)) {
-        continue;
-      }
-
-      // Bomb out if there is a collision between @def and a style name
-      if (defs.contains(name) && obfuscatedClassNames.containsKey(toImplement)) {
-        logger.log(TreeLogger.ERROR, "@def shadows CSS class name: " + name
-            + ". Fix by renaming the @def name or the CSS class name.");
-        throw new UnableToCompleteException();
-      }
-
-      if (defs.contains(toImplement.getName())
-          && toImplement.getParameters().length == 0) {
-        writeDefAssignment(logger, sw, toImplement, sheet);
-      } else if (toImplement.getReturnType().equals(stringType)
-          && toImplement.getParameters().length == 0) {
-        writeClassAssignment(sw, toImplement, obfuscatedClassNames);
-      } else {
-        logger.log(TreeLogger.ERROR, "Don't know how to implement method "
-            + toImplement.getName());
-        throw new UnableToCompleteException();
-      }
-    }
+    sw.println("public String getText() {");
+    sw.indent();
+    Map<JMethod, String> actualReplacements = new IdentityHashMap<JMethod, String>();
+    String cssExpression = makeExpression(logger, context, cssResourceSubtype,
+        stylesheetMap.get(method), replacementsWithPrefix, method,
+        actualReplacements);
+    sw.println("return " + cssExpression + ";");
+    sw.outdent();
+    sw.println("}");
+    return actualReplacements;
   }
 }

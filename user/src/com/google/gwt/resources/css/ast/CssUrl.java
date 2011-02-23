@@ -43,6 +43,11 @@ public class CssUrl extends CssDef {
   }
 
   @Override
+  public boolean isStatic() {
+    return true;
+  }
+
+  @Override
   public void traverse(CssVisitor visitor, Context context) {
     visitor.visit(this, context);
     visitor.endVisit(this, context);
