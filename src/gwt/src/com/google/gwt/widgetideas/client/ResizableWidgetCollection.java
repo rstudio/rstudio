@@ -38,6 +38,7 @@ import java.util.Map;
  * Widgets do not need to be added to a {@link ResizableWidgetCollection} as
  * they cannot be resized.
  */
+@SuppressWarnings("deprecation")
 public class ResizableWidgetCollection implements WindowResizeListener,
     Iterable<ResizableWidget> {
   /**
