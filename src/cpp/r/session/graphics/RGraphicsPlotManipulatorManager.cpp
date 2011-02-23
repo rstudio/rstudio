@@ -15,20 +15,9 @@
 
 Manipulate work:
 
-
-- bug 1281: lose manipulator on resume
-
 - Paul UI improvements
 
 - Play with providing example and/or demo in docs
-
-
-[DONE] allow arbitrary values in picker
-
-[DONE] bug 1284: manipulatorSetState, manipulatorGetState
-
-[DONE] bug 1258: can't bind to variable inside list
-   Note: not a bug, trying to use picker to return a boolean
 
 */
 
