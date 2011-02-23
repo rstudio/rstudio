@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
 /**
  * Deobfuscates stack traces on the server side. This class requires that you
  * have turned on emulated stack traces, via
- * <code>&lt;set-property name="compiler.emulatedStack" value="true" /&gt;</code>
+ * <code>&lt;set-property name="compiler.stackMode" value="emulated" /&gt;</code>
  * in your <code>.gwt.xml</code> module file, and moved your symbol map files to
  * a location accessible by your server sever side code. You can use the GWT
  * compiler <code>-deploy</code> command line argument to specify the location

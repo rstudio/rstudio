@@ -26,7 +26,7 @@
 
   <!-- We do not want stack traces. -->
   <set-configuration-property name="compiler.emulatedStack.recordFileNames" value="false" />
-  <set-property name="compiler.emulatedStack" value="false" />
+  <set-property name="compiler.stackMode" value="native" />
   
   <generate-with class="com.google.gwt.benchmarks.rebind.BenchmarkGenerator">
     <when-type-assignable class="com.google.gwt.benchmarks.client.Benchmark"/>
