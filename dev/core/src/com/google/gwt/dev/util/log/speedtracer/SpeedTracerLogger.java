@@ -35,6 +35,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Logs performance metrics for internal development purposes. The output is
@@ -334,6 +335,7 @@ public final class SpeedTracerLogger {
    * Thread that converts log requests to JSON in the background.
    */
   private class LogWriterThread extends Thread {
+    private static final int FLUSH_TIMER_MSECS = 10000;
     private final String fileName;
     private final BlockingQueue<Event> threadEventQueue;
     private final Writer writer;
@@ -348,13 +350,16 @@ public final class SpeedTracerLogger {
 
     @Override
     public void run() {
+      long nextFlush = System.currentTimeMillis() + FLUSH_TIMER_MSECS;
       try {
-        boolean shuttingDown = false;
-        while (!threadEventQueue.isEmpty() || !shuttingDown) {
-          // Blocks until an event is queued
-          Event event = threadEventQueue.take();
-          if (event == shutDownSentinel) {
-            shuttingDown = true;
+        while (true) {
+          Event event =
+              threadEventQueue.poll(nextFlush - System.currentTimeMillis(),
+                  TimeUnit.MILLISECONDS);
+          if (event == null) {
+            // ignore.
+          } else if (event == shutDownSentinel) {
+            break;
           } else if (event == flushSentinel) {
             writer.flush();
             flushLatch.countDown();
@@ -362,6 +367,10 @@ public final class SpeedTracerLogger {
             JsonObject json = event.toJson();
             json.write(writer);
             writer.write('\n');
+          }
+          if (System.currentTimeMillis() >= nextFlush) {
+            writer.flush();
+            nextFlush = System.currentTimeMillis() + FLUSH_TIMER_MSECS;
           }
         }
         // All queued events have been written.
@@ -670,6 +679,8 @@ public final class SpeedTracerLogger {
 
   /**
    * Notifies the background thread to finish processing all data in the queue.
+   * Blocks the current thread until the data is flushed in the Log Writer
+   * thread.
    */
   void flush() {
     try {
