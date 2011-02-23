@@ -57,32 +57,8 @@ public abstract class AbstractXsrfProtectedServiceServlet extends
    *         otherwise
    */
   protected boolean shouldValidateXsrfToken(Method method) {
-    Class<?> servletClass = method.getDeclaringClass();
-
-    if (method.getAnnotation(NoXsrfProtect.class) != null ||
-          (Util.getClassAnnotation(
-              servletClass, NoXsrfProtect.class) != null &&
-          method.getAnnotation(XsrfProtect.class) == null)) {
-      // XSRF protection is disabled
-      return false;
-    }
-
-    if (Util.getClassAnnotation(servletClass, XsrfProtect.class) != null ||
-          method.getAnnotation(XsrfProtect.class) != null) {
-      return true;
-    }
-
-    // if no explicit annotation is given no XSRF token verification is done,
-    // unless there's a method returning RpcToken in which case XSRF token
-    // verification is performed for all methods
-    Method[] classMethods = servletClass.getMethods();
-    for (Method classMethod : classMethods) {
-      if (RpcToken.class.isAssignableFrom(classMethod.getReturnType()) &&
-          !method.equals(classMethod)) {
-        return true;
-      }
-    }
-    return false;
+    return Util.isMethodXsrfProtected(method, XsrfProtect.class,
+        NoXsrfProtect.class, RpcToken.class);
   }
 
   /**

@@ -16,6 +16,7 @@
 package com.google.gwt.user.server;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -99,6 +100,59 @@ public class Util {
       }
     }
     return cookieToReturn;
+  }
+
+  /**
+   * Checks if specified method is XSRF protected based on the following logic:
+   *
+   * <ul>
+   *  <li>Method level annotations override class level annotations.
+   *  <li>If method is annotated with {@code xsrfAnnotation} this
+   *      method returns {@code true}
+   *  <li>If method is annotated with {@code noXsrfAnnotation}, this method
+   *      returns {@code false}.
+   *  <li>If class is annotated with {@code xsrfAnnotation} and method is not
+   *      annotated, this method returns {@code true}.
+   *  <li>If class is annotated with {@code noXsrfAnnotation} and method is not
+   *      annotated, this method returns {@code false}.
+   *  <li>If no annotations are present and class has a method with return value
+   *      assignable from {@code xsrfTokenInterface}, this method returns
+   *      {@code true}.
+   *  <li>If no annotations are present this method returns {@code false}.
+   * </ul>
+   *
+   * @see com.google.gwt.user.server.rpc.AbstractXsrfProtectedServiceServlet
+   */
+  public static boolean isMethodXsrfProtected(Method method,
+      Class<? extends Annotation> xsrfAnnotation,
+      Class<? extends Annotation> noXsrfAnnotation,
+      Class<?> xsrfTokenInterface) {
+    Class<?> declaringClass = method.getDeclaringClass();
+
+    if (method.getAnnotation(noXsrfAnnotation) != null ||
+          (Util.getClassAnnotation(
+              declaringClass, noXsrfAnnotation) != null &&
+          method.getAnnotation(xsrfAnnotation) == null)) {
+      // XSRF protection is disabled
+      return false;
+    }
+
+    if (Util.getClassAnnotation(declaringClass, xsrfAnnotation) != null ||
+          method.getAnnotation(xsrfAnnotation) != null) {
+      return true;
+    }
+
+    // if no explicit annotation is given no XSRF token verification is done,
+    // unless there's a method returning RpcToken in which case XSRF token
+    // verification is performed for all methods
+    Method[] classMethods = declaringClass.getMethods();
+    for (Method classMethod : classMethods) {
+      if (xsrfTokenInterface.isAssignableFrom(classMethod.getReturnType()) &&
+          !method.equals(classMethod)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private Util() {
