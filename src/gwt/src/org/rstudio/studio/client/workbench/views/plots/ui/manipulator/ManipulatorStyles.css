@@ -9,8 +9,6 @@
 @external .gwt-SliderBar-knob;
 @external .gwt-ListBox;
 
-@url SLIDERBAR manipulateSliderBar;
-
 .captionLabel {
    font-weight: bold;
    margin-right: 8px;
@@ -35,15 +33,16 @@
 }
 
 .slider .gwt-SliderBar-shell .gwt-SliderBar-line {
-  height: 3px;
-  background: SLIDERBAR repeat-x top;
+  border: 1px solid black;
+  background-color: white;
+  height: 4px;
   width: 95%;
-  top: 25pt;
+  top: 22pt;
   overflow: hidden;
 }
 
 .slider .gwt-SliderBar-shell .gwt-SliderBar-knob {
-  top: 17pt;
+  top: 14pt;
   width: 11px;
   height: 21px;
   z-index: 1;
@@ -51,10 +50,10 @@
 }
 
 .slider .gwt-SliderBar-shell .gwt-SliderBar-tick {
-  top: 14pt;
+  top: 12pt;
   width: 1px;
-  height: 6pt;
-  background-color: #919599;
+  height: 8pt;
+  background: black;
   overflow: hidden;
 }
 
@@ -68,6 +67,7 @@
 }
 
 .slider .gwt-SliderBar-shell .gwt-SliderBar-line-sliding {
+  background-color: #DDDDDD;
   cursor: pointer;
 }
 
