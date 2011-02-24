@@ -641,6 +641,20 @@ public class CssResourceGenerator extends AbstractResourceGenerator
     return replacementsWithPrefix;
   }
 
+  protected void writeEnsureInjected(SourceWriter sw) {
+    sw.println("private boolean injected;");
+    sw.println("public boolean ensureInjected() {");
+    sw.indent();
+    sw.println("if (!injected) {");
+    sw.indentln("injected = true;");
+    sw.indentln(StyleInjector.class.getName() + ".inject(getText());");
+    sw.indentln("return true;");
+    sw.println("}");
+    sw.println("return false;");
+    sw.outdent();
+    sw.println("}");
+  }
+
   /**
    * Write all of the user-defined methods in the CssResource subtype.
    */
@@ -1089,20 +1103,6 @@ public class CssResourceGenerator extends AbstractResourceGenerator
     sw.println(" {");
     sw.indent();
     sw.println("return " + returnExpr + ";");
-    sw.outdent();
-    sw.println("}");
-  }
-
-  private void writeEnsureInjected(SourceWriter sw) {
-    sw.println("private boolean injected;");
-    sw.println("public boolean ensureInjected() {");
-    sw.indent();
-    sw.println("if (!injected) {");
-    sw.indentln("injected = true;");
-    sw.indentln(StyleInjector.class.getName() + ".inject(getText());");
-    sw.indentln("return true;");
-    sw.println("}");
-    sw.println("return false;");
     sw.outdent();
     sw.println("}");
   }
