@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 ./make-package Server $1 $2
 
 
