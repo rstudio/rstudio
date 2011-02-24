@@ -17,7 +17,6 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.StringInterner;
-import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.Name.InternalName;
 
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
@@ -96,12 +95,11 @@ public final class CompiledClass implements Serializable {
 
   /**
    * Returns a hash code on the byte code of the class.
-   * 
-   * TODO(zundel): should be a hash on only the public API for this class. 
    */
   public String getSignatureHash() {
     if (signatureHash == null) {
-      signatureHash = Util.computeStrongName(getBytes());
+      signatureHash =
+          BytecodeSignatureMaker.getCompileDependencySignature(getBytes());
     }
     return signatureHash;
   }

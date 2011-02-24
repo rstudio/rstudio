@@ -60,7 +60,7 @@ class Dependencies implements Serializable {
       return target.getSignatureHash();
     }
 
-    private Object writeReplace() {
+    protected Object writeReplace() {
       return new SerializedRef(target.getInternalName(), getSignatureHash());
     }
   }
