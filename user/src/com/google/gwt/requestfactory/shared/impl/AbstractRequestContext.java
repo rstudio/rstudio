@@ -151,7 +151,8 @@ public class AbstractRequestContext implements RequestContext,
       if (!raw.isNull("error")) {
         Splittable error = raw.get("error");
         ServerFailure failure = new ServerFailure(
-            error.get("message").asString());
+          error.get("message").asString(),
+          error.get("code").asString(), payload, true);
         fail(receiver, failure);
         return;
       }
