@@ -127,6 +127,14 @@ public class ManipulatorManager
       // show it if necessary
       if (!manipulatorPopup_.isShowing())
       {
+         // don't do it if the plots tab is currently hidden
+         // NOTE: in this case we should really post back to show the
+         // manipulator after the plots tab finishes animating to full
+         // visibility. this fix at least gets us out of the bizzaro UI
+         // state of the manipulator existing below the workbench
+         if (plotsSurface_.getOffsetHeight() == 0)
+            return;
+
          manipulatorPopup_.recordPreviouslyFocusedElement();
          
          manipulatorPopup_.setPopupPositionAndShow(new PositionCallback(){
