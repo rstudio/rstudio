@@ -178,8 +178,8 @@ public class AbstractRequestContext implements RequestContext,
       if (obj == null) {
         return LazySplittable.NULL;
       } else if (obj.getClass().isEnum()
-          && getRequestFactory() instanceof EnumMap) {
-        value = ValueCodex.encode(((EnumMap) getRequestFactory()).getToken((Enum<?>) obj));
+          && getRequestFactory().getAutoBeanFactory() instanceof EnumMap) {
+        value = ValueCodex.encode(((EnumMap) getRequestFactory().getAutoBeanFactory()).getToken((Enum<?>) obj));
       } else if (ValueCodex.canDecode(obj.getClass())) {
         value = ValueCodex.encode(obj);
       } else {
