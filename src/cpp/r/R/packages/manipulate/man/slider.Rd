@@ -5,7 +5,7 @@
   Create a slider control to allow manipulation of a plot variable along a numeric range.
 }
 \usage{
-slider(min, max, value = min, 
+slider(min, max, initial = min, 
        label = NULL, step = NULL, ticks = TRUE)
 }
 
@@ -46,7 +46,7 @@ slider(min, max, value = min,
 manipulate(plot(1:x), x = slider(1, 10))
 
 ## specify a custom initial value for a slider
-manipulate(plot(1:x), x = slider(1, 10, value = 5))
+manipulate(plot(1:x), x = slider(1, 10, initial = 5))
 
 ## specify a custom label for a slider
 manipulate(plot(1:x), x = slider(1, 10, label = "Scale"))

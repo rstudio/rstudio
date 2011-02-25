@@ -12,15 +12,15 @@
 #
 
 
-slider <- function(min, max, value = min, label = NULL, step = NULL, ticks = TRUE)
+slider <- function(min, max, initial = min, label = NULL, step = NULL, ticks = TRUE)
 {
   # validate inputs
-  if (!is.numeric(value) || !is.numeric(min) || !is.numeric(max))
-    stop("min, max, amd value must all be numeric values")
-  else if (value < min)
-    stop(paste("slider value", value, "is less than the specified minimum"))
-  else if (value > max)
-    stop(paste("slider value", value, "is greater than the specified maximum"))
+  if (!is.numeric(initial) || !is.numeric(min) || !is.numeric(max))
+    stop("min, max, amd initial must all be numeric values")
+  else if (initial < min)
+    stop(paste("slider initial value", initial, "is less than the specified minimum"))
+  else if (initial > max)
+    stop(paste("slider initial value", initial, "is greater than the specified maximum"))
   else if (min > max)
     stop(paste("slider maximum is greater than minimum"))
   else if ( !is.null(step) )
@@ -43,7 +43,7 @@ slider <- function(min, max, value = min, label = NULL, step = NULL, ticks = TRU
   slider <- list(type = 0,
                  min = min,
                  max = max,
-                 initialValue = value,
+                 initialValue = initial,
                  label = label,
                  step = step,
                  ticks = ticks)
@@ -51,7 +51,7 @@ slider <- function(min, max, value = min, label = NULL, step = NULL, ticks = TRU
   return (slider)
 }
 
-picker <- function(..., choices = list(), value = NULL, label = NULL)
+picker <- function(..., choices = list(), initial = NULL, label = NULL)
 {
   # get values
   values <- append(choices, list(...))
@@ -75,12 +75,12 @@ picker <- function(..., choices = list(), value = NULL, label = NULL)
   {
     stop("picker choices must have unique names (duplicate detected)")
   }
-  else if ( !is.null(value) )
+  else if ( !is.null(initial) )
   {
-    if (length(value) != 1)
-      stop("value must be a single object")
-    else if ( !(value %in% valueNames) )
-      stop("value doesn't match one of the supplied choices") 
+    if (length(initial) != 1)
+      stop("initial must be a single object")
+    else if ( !(initial %in% valueNames) )
+      stop("initial doesn't match one of the supplied choices") 
   }
   else if ( !is.null(label) && !is.character(label) )
   {
@@ -88,30 +88,30 @@ picker <- function(..., choices = list(), value = NULL, label = NULL)
   }
 
   # provide default value if necessary
-  if ( is.null(value) )
-    value <- valueNames[1]
+  if ( is.null(initial) )
+    initial <- valueNames[1]
 
   # create picker
   picker <- list(type = 1,
                  choices = valueNames,
                  values = values,
-                 initialValue = value,
+                 initialValue = initial,
                  label = label)
   class(picker) <- "manipulator.picker"
   return (picker) 
 }
 
-checkbox <- function(value = FALSE, label = NULL)
+checkbox <- function(initial = FALSE, label = NULL)
 {
   # validate inputs
-  if ( !is.logical(value) )
-    stop("value must be a logical")
+  if ( !is.logical(initial) )
+    stop("initial must be a logical")
   else if ( !is.null(label) && !is.character(label) )
     stop("label is not a character value")
   
   # create checkbox and return it
   checkbox <- list(type = 2,
-                   initialValue = value,
+                   initialValue = initial,
                    label = label)
   class(checkbox) <- "manipulator.checkbox"
   return (checkbox)

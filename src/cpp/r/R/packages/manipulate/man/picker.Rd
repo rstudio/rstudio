@@ -6,7 +6,7 @@
 }
 
 \usage{
-picker(..., choices = list(), value = NULL, label = NULL)
+picker(..., choices = list(), initial = NULL, label = NULL)
 }
 
 
@@ -17,8 +17,8 @@ picker(..., choices = list(), value = NULL, label = NULL)
   \item{choices}{
     A list of objects to be used as choices for the picker. Display names for objects within the picker are derived using list element names or \code{\link{as.character}} for unnamed items. If both \code{choices} and variable arguments are given then the variable arguments are appended to \code{choices}.
 }
-  \item{value}{
-    Default value for picker. Value must be present in the list of choices specified. If not specified defaults to the first choice.
+  \item{initial}{
+    Initial value for picker. Value must be present in the list of choices specified. If not specified defaults to the first choice.
 }
   \item{label}{
     Display label for picker. Defaults to the variable name if not specified.
