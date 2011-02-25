@@ -40,11 +40,11 @@ slider(min, max, initial = min,
 }
 
 \examples{
-\dontrun{
-
+\donttest{
 ## create a plot with a slider
 manipulate(plot(1:x), x = slider(1, 10))
-
+}
+\dontrun{
 ## specify a custom initial value for a slider
 manipulate(plot(1:x), x = slider(1, 10, initial = 5))
 

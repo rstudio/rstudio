@@ -36,8 +36,7 @@ JJ Allaire <jj@rstudio.org>
 }
 
 \examples{
-\dontrun{
-
+\donttest{
 ## create a plot with a manipulator
 manipulate(plot(1:x), x = slider(1, 10))
 
@@ -45,8 +44,10 @@ manipulate(plot(1:x), x = slider(1, 10))
 manipulate(plot(x:y), 
            x = slider(1, 10),
            y = slider(1, 100))
-
+}
+\dontrun{
 ## use with ggplot w/ picker for log param
+require(ggplot2)
 manipulate(qplot(mpg$displ, mpg$cty, log = log),
            log = picker("x", "y", "xy"))
 

@@ -28,13 +28,11 @@ checkbox(initial = FALSE, label = NULL)
 }
 
 \examples{
-\dontrun{
-
+\donttest{
 ## toggle boxplot outlier display using checkbox
 manipulate(boxplot(count ~ spray, data = InsectSprays, 
                    outline = outline),
            outline = checkbox(FALSE, "Show outliers"))
-
 }
 }
 
