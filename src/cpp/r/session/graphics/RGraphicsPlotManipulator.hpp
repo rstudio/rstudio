@@ -52,7 +52,7 @@ private:
    core::json::Value getAsJson(const std::string& name) const;
    core::json::Object getControlAsJson(SEXP controlSEXP) const;
    core::json::Object getControlsAsJson() const;
-   SEXP getValuesList() const;
+   SEXP getUserVisibleValuesList() const;
 
 private:
    r::sexp::PreservedSEXP sexp_;

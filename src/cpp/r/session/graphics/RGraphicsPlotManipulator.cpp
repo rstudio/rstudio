@@ -90,7 +90,7 @@ void PlotManipulator::asJson(core::json::Value* pValue) const
 
       // variable values
       core::json::Value valuesJson;
-      SEXP valuesSEXP = getValuesList();
+      SEXP valuesSEXP = getUserVisibleValuesList();
       Error error = r::json::jsonValueFromObject(valuesSEXP, &valuesJson);
       if (error)
          LOG_ERROR(error);
@@ -226,17 +226,17 @@ core::json::Object PlotManipulator::getControlsAsJson() const
    }
 }
 
-SEXP PlotManipulator::getValuesList() const
+SEXP PlotManipulator::getUserVisibleValuesList() const
 {
    SEXP variablesSEXP = get(".variables");
    if (variablesSEXP != R_NilValue)
    {
-      r::exec::RFunction mgetFunction("mget");
-      mgetFunction.addParam(variablesSEXP);
-      mgetFunction.addParam("envir", sexp());
+      r::exec::RFunction userValuesFunction("manipulate:::userVisibleValues");
+      userValuesFunction.addParam(sexp());
+      userValuesFunction.addParam(variablesSEXP);
       r::sexp::Protect rProtect;
       SEXP valuesSEXP;
-      Error error = mgetFunction.call(&valuesSEXP, &rProtect);
+      Error error = userValuesFunction.call(&valuesSEXP, &rProtect);
       if (error)
       {
          LOG_ERROR(error);

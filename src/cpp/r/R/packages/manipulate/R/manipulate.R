@@ -176,6 +176,9 @@ manipulate <- function(expr, ..., controls = list())
   # establish state
   assign(".state", new.env(parent = globalenv()), envir = manipulator)
   
+  # establish 'user visible' values (indirection btw e.g. picker choice & value)
+  assign(".userVisibleValues", new.env(parent = globalenv()), envir = manipulator)
+
   # iterate over the names and controls, adding the default values to the env
   for (name in names(controls))
   {
@@ -193,8 +196,7 @@ manipulate <- function(expr, ..., controls = list())
     }
       
     # assign the control's default into the list
-    value <- manipulatorControlValue(manipulator, name, control$initialValue)
-    assign(name, value, envir = manipulator)
+    setManipulatorValue(manipulator, name, control$initialValue)
   }
 
   # execute the manipulator -- will execute the code and attach it

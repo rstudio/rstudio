@@ -262,7 +262,7 @@ bool Plot::hasManipulatorFile() const
 
 FilePath Plot::manipulatorFilePath(const std::string& storageUuid) const
 {
-   return baseDirPath_.complete(storageUuid + ".manipulator");
+   return baseDirPath_.complete(storageUuid + ".manip");
 }
 
 void Plot::loadManipulatorIfNecessary() const

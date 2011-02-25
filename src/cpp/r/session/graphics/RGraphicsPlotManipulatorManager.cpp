@@ -37,39 +37,17 @@ namespace graphics {
 
 namespace {
 
-template <typename T>
-void setManipulatorValue(SEXP manipulatorSEXP,
-                         const std::string& name,
-                         const T& value)
-{
-   r::exec::RFunction assignFunction("assign");
-   assignFunction.addParam(name);
-   assignFunction.addParam(value);
-   assignFunction.addParam("envir", manipulatorSEXP);
-   Error error = assignFunction.call();
-   if (error)
-      LOG_ERROR(error);
-}
-
 void setManipulatorJsonValue(SEXP manipulatorSEXP,
                              const std::pair<std::string,json::Value>& object)
 {
    // get the actual value to assign
-   r::exec::RFunction controlValueFunction("manipulate:::manipulatorControlValue");
-   controlValueFunction.addParam(manipulatorSEXP);
-   controlValueFunction.addParam(object.first);
-   controlValueFunction.addParam(object.second);
-   r::sexp::Protect rProtect;
-   SEXP valueSEXP;
-   Error error = controlValueFunction.call(&valueSEXP, &rProtect);
+   r::exec::RFunction setFunction("manipulate:::setManipulatorValue");
+   setFunction.addParam(manipulatorSEXP);
+   setFunction.addParam(object.first);
+   setFunction.addParam(object.second);
+   Error error = setFunction.call();
    if (error)
-   {
       LOG_ERROR(error);
-      return;
-   }
-
-   // assign it
-   setManipulatorValue(manipulatorSEXP, object.first, valueSEXP);
 }
 
 void safeExecuteManipulator(SEXP manipulatorSEXP)

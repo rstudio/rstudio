@@ -80,14 +80,31 @@ executeAndAttachManipulator <- function(manipulator)
         manipulator) 
 }
 
-manipulatorControlValue <- function(manipulator, name, value)
+setManipulatorValue <- function(manipulator, name, value)
 {
+  # assign the user visible value
+  assign(name, value, envir = get(".userVisibleValues", envir = manipulator))
+
+  # calculate the underlying value. if this was a picker then lookup the
+  # underlying value otherwise use the value passed as-is
+  underlyingValue <- value
   controls <- get(".controls", envir = manipulator)
   control <- controls[[name]]
-  if (inherits(control, "manipulator.picker") && !is.null(control$values))
-    return (control$values[[value]])
-  else
-    return (value)
+  if (inherits(control, "manipulator.picker"))
+    underlyingValue <- (control$values[[value]])
+
+  # assign the value
+  assign(name, underlyingValue, envir = manipulator)
 }
+
+userVisibleValues <- function(manipulator, variables)
+{
+  mget(variables, envir = get(".userVisibleValues", envir = manipulator))
+}
+
+
+
+
+
 
 
