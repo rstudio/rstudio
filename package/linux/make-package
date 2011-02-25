@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 PACKAGE_DIR=`pwd`
 
 if [ "$1" != "Desktop" ] && [ "$1" != "Server" ]

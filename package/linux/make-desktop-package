@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 ./make-package Desktop $1 $2
 
 
