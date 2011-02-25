@@ -12,7 +12,6 @@ git submodule update --init --recursive
 
 # Merge all the bugfix branches
 git merge \
-    origin/forked-submodules \
     origin/bugfix-webkit-paste \
     origin/bugfix-defineargs \
 
