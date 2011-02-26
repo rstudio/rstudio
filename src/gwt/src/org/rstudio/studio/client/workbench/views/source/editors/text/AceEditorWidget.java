@@ -68,6 +68,7 @@ public class AceEditorWidget extends Composite
    {
       super.onLoad();
 
+      editor_.getRenderer().updateFontSize();
       onResize();
       fireEvent(new EditorLoadedEvent());
 
@@ -95,8 +96,12 @@ public class AceEditorWidget extends Composite
 
    public void onActivate()
    {
-      if (BrowseCap.INSTANCE.aceVerticalScrollBarIssue() && editor_ != null)
-         editor_.getRenderer().forceScrollbarUpdate();
+      if (editor_ != null)
+      {
+         if (BrowseCap.INSTANCE.aceVerticalScrollBarIssue())
+            editor_.getRenderer().forceScrollbarUpdate();
+         editor_.getRenderer().updateFontSize();
+      }
    }
 
    public void setCode(String code)

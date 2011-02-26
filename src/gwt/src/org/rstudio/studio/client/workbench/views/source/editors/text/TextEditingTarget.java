@@ -130,6 +130,8 @@ public class TextEditingTarget implements EditingTarget
       void onActivate();
 
       void setFontSize(Size size);
+
+      void onVisibilityChanged(boolean visible);
    }
    private class ExplicitSaveProgressIndicator implements ProgressIndicator
    {
