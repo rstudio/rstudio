@@ -44,6 +44,10 @@ public class Renderer extends JavaScriptObject
       style.marginBottom = (style.marginBottom == "-1px") ? "0" : "-1px";     
    }-*/;
 
+   public native final void updateFontSize() /*-{
+      this.updateFontSize();
+   }-*/;
+
    public native final void onResize(boolean force) /*-{
       this.onResize(force);
    }-*/;

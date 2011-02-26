@@ -24,6 +24,7 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
+import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.widget.BeforeShowCallback;
 import org.rstudio.core.client.widget.Widgetable;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -35,7 +36,7 @@ import org.rstudio.studio.client.workbench.views.source.events.*;
 
 public class SourceShim extends Composite
    implements Widgetable, HasEnsureVisibleHandlers, BeforeShowCallback,
-              ProvidesResize, RequiresResize
+              ProvidesResize, RequiresResize, RequiresVisibilityChanged
 {
    public interface Binder extends CommandBinder<Commands, AsyncSource> {}
 
@@ -149,6 +150,13 @@ public class SourceShim extends Composite
    public void onResize()
    {
       panel_.onResize();
+   }
+
+   public void onVisibilityChanged(boolean visible)
+   {
+      for (Widget w : panel_)
+         if (w instanceof RequiresVisibilityChanged)
+            ((RequiresVisibilityChanged)w).onVisibilityChanged(visible);
    }
 
    private final LayoutPanel panel_;

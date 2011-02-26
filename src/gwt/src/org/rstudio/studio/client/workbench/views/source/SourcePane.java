@@ -27,6 +27,7 @@ import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import org.rstudio.core.client.events.*;
+import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.theme.DocTabLayoutPanel;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -38,7 +39,8 @@ public class SourcePane extends Composite implements Display,
                                                      HasEnsureVisibleHandlers,
                                                      RequiresResize,
                                                      ProvidesResize,
-                                                     BeforeShowCallback
+                                                     BeforeShowCallback,
+                                                     RequiresVisibilityChanged
 {
    @Inject
    public SourcePane()
@@ -235,6 +237,16 @@ public class SourcePane extends Composite implements Display,
    public HandlerRegistration addBeforeShowHandler(BeforeShowHandler handler)
    {
       return addHandler(handler, BeforeShowEvent.TYPE);
+   }
+
+   public void onVisibilityChanged(boolean visible)
+   {
+      if (getActiveTabIndex() >= 0)
+      {
+         Widget w = tabPanel_.getTabWidget(getActiveTabIndex());
+         if (w instanceof RequiresVisibilityChanged)
+            ((RequiresVisibilityChanged)w).onVisibilityChanged(visible);
+      }
    }
 
 

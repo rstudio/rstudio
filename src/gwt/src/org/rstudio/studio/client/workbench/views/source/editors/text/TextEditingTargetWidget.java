@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
+import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.FontSizer.Size;
 import org.rstudio.core.client.widget.Toolbar;
@@ -38,7 +39,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplace;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 
-public class TextEditingTargetWidget extends ResizeComposite implements Display
+public class TextEditingTargetWidget
+      extends ResizeComposite
+      implements Display, RequiresVisibilityChanged
 {
    public TextEditingTargetWidget(Commands commands,
                                   DocDisplay editor,
@@ -195,6 +198,11 @@ public class TextEditingTargetWidget extends ResizeComposite implements Display
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
    {
       return addHandler(handler, EnsureVisibleEvent.TYPE);
+   }
+
+   public void onVisibilityChanged(boolean visible)
+   {
+      editor_.onVisibilityChanged(visible);
    }
 
    private final Commands commands_;

@@ -19,6 +19,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.events.*;
+import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.layout.WindowState;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -92,6 +93,19 @@ public class WindowFrame extends Composite
                                  14, Style.Unit.PX);
 
       initWidget(frame_);
+   }
+
+   @Override
+   public void setVisible(boolean visible)
+   {
+      super.setVisible(visible);
+
+      if (main_ instanceof RequiresVisibilityChanged)
+         ((RequiresVisibilityChanged)main_).onVisibilityChanged(visible);
+      if (fill_ instanceof RequiresVisibilityChanged)
+         ((RequiresVisibilityChanged)fill_).onVisibilityChanged(visible);
+      if (header_ instanceof RequiresVisibilityChanged)
+         ((RequiresVisibilityChanged)header_).onVisibilityChanged(visible);
    }
 
    private void maximize()

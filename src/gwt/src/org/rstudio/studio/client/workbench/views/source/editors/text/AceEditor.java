@@ -463,10 +463,17 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       widget_.onActivate();
    }
 
+   public void onVisibilityChanged(boolean visible)
+   {
+      if (visible)
+         widget_.getEditor().getRenderer().updateFontSize();
+   }
+
    public void setFontSize(Size size)
    {
       // No change needed--the AceEditorWidget uses the "normalSize" style
       // However, we do need to resize the gutter
+      widget_.getEditor().getRenderer().updateFontSize();
       widget_.forceResize();
    }
 
