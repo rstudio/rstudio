@@ -25,6 +25,9 @@ additional directories are available on the path:
 C:\Qt\<QtVersion>\qt\bin
 C:\Qt\<QtVersion>\mingw\bin
 
+Finally, you should also ensure that your R installation's bin directory is
+on the system path.
+
 
 Install Java Libraries
 =============================================================================
