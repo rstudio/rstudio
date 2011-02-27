@@ -13,8 +13,14 @@
 
 # use html help 
 options(help_type = "html")
-if (tools:::httpdPort == 0L)
-   suppressMessages(tools::startDynamicHelp())
+
+# stop the help server if it was previously started e.g. by .Rprofile
+if (tools:::httpdPort > 0L)
+  suppressMessages(tools::startDynamicHelp(start=FALSE))
+
+# now restart the help server (this ensures that it picks up the
+# options("help.ports") value that we set in SessionHelp.cpp)
+suppressMessages(tools::startDynamicHelp())
 
 .rs.addFunction( "handlerLookupError", function(path, query=NULL, ...)
 {

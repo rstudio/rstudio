@@ -25,7 +25,6 @@
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/Log.hpp>
-#include <core/FilePath.hpp>
 
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -37,6 +36,7 @@
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
 #include <r/RFunctionHook.hpp>
+#include <r/ROptions.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -596,6 +596,20 @@ void handleHelpRequest(const http::Request& request, http::Response* pResponse)
                       HelpContentsFilter(request),
                       pResponse);
 }
+
+Error setHelpPort()
+{
+   Options& options = session::options();
+   if (options.programMode() == kSessionProgramModeDesktop)
+   {
+      int port = boost::lexical_cast<int>(session::options().wwwPort());
+      return r::options::setOption("help.ports", port);
+   }
+   else
+   {
+      return Success();
+   }
+}
    
 } // anonymous namespace
    
@@ -613,6 +627,7 @@ Error initialize()
       (bind(registerRBrowseFileHandler, handleRShowDocFile))
       (bind(registerUriHandler, kHelpLocation, handleHelpRequest))
       (bind(registerUriHandler, kCustomLocation, handleCustomRequest))
+      (bind(setHelpPort))
       (bind(sourceModuleRFile, "SessionHelp.R"));
    return initBlock.execute();
 }

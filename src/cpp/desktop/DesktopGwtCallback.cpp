@@ -62,11 +62,12 @@ void GwtCallback::browseUrl(QString url)
 
    if (qurl.isRelative())
    {
-      // use SecondaryWindow for any relative urls
-
       // TODO: this should really be handled within GlobalDisplay -- rather
       // than checking for a relative URL here GlobalDisplay should determine
-      // that a URL is relative and invoke the SecondaryWindow itself.
+      // that a URL is relative and do the right thing (note this needs to
+      // account for our policy regarding /custom/* urls -- below we allow
+      // these to be opened in a standard browser window to match the
+      // behavior of standard CRAN desktop R).
 
       // compute local url
       QUrl localUrl;
@@ -75,11 +76,18 @@ void GwtCallback::browseUrl(QString url)
       localUrl.setPort(options().portNumber().toInt());
       localUrl.setEncodedPath(url.toAscii());
 
-      // show in a secondary window
-      SecondaryWindow* pBrowser = new SecondaryWindow(localUrl);
-      pBrowser->webView()->load(localUrl);
-      pBrowser->show();
-      pBrowser->activateWindow();
+      // show it in a browser or a secondary window as appropriate
+      if (url.startsWith("custom/"))
+      {
+         QDesktopServices::openUrl(localUrl);
+      }
+      else
+      {
+         SecondaryWindow* pBrowser = new SecondaryWindow(localUrl);
+         pBrowser->webView()->load(localUrl);
+         pBrowser->show();
+         pBrowser->activateWindow();
+      }
    }
    else
    {
