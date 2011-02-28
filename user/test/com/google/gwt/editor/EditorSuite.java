@@ -18,6 +18,7 @@ package com.google.gwt.editor;
 import com.google.gwt.editor.client.DirtyEditorTest;
 import com.google.gwt.editor.client.EditorErrorTest;
 import com.google.gwt.editor.client.SimpleBeanEditorTest;
+import com.google.gwt.editor.client.adapters.HasDataEditorTest;
 import com.google.gwt.editor.client.adapters.ListEditorWrapperTest;
 import com.google.gwt.editor.client.impl.DelegateMapTest;
 import com.google.gwt.editor.rebind.model.EditorModelTest;
@@ -37,6 +38,7 @@ public class EditorSuite {
     suite.addTestSuite(DirtyEditorTest.class);
     suite.addTestSuite(EditorModelTest.class);
     suite.addTestSuite(EditorErrorTest.class);
+    suite.addTestSuite(HasDataEditorTest.class);
     suite.addTestSuite(ListEditorWrapperTest.class);
     suite.addTestSuite(SimpleBeanEditorTest.class);
     return suite;

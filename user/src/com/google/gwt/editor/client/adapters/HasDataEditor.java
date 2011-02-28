@@ -39,6 +39,11 @@ public class HasDataEditor<T> extends ListEditor<T, LeafValueEditor<T>> {
     }
 
     @Override
+    public void dispose(LeafValueEditor<T> subEditor) {
+      data.setRowCount(data.getRowCount() - 1);
+    }
+
+    @Override
     public void setIndex(LeafValueEditor<T> editor, int index) {
       ((IndexedEditor<T>) editor).setIndex(index);
     }
