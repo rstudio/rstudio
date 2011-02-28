@@ -213,7 +213,6 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
 
     Predicate<Class<?>> inBest = new Predicate<Class<?>>() {
 
-      @Override
       public boolean apply(Class<?> key) {
         return best.contains(key);
       }
