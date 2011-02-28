@@ -18,6 +18,8 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.i18n.client.HasDirection.Direction;
+import com.google.gwt.i18n.shared.DirectionEstimator;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiConstructor;
 import com.google.gwt.user.client.DOM;
@@ -47,6 +49,9 @@ import com.google.gwt.user.client.Event;
  */
 public class RadioButton extends CheckBox {
 
+  public static final DirectionEstimator DEFAULT_DIRECTION_ESTIMATOR =
+    DirectionalTextHelper.DEFAULT_DIRECTION_ESTIMATOR;
+
   private Boolean oldValue;
 
   /**
@@ -63,7 +68,7 @@ public class RadioButton extends CheckBox {
   public RadioButton(String name) {
     super(DOM.createInputRadio(name));
     setStyleName("gwt-RadioButton");
-    
+
     sinkEvents(Event.ONCLICK);
     sinkEvents(Event.ONMOUSEUP);
     sinkEvents(Event.ONBLUR);
@@ -86,6 +91,35 @@ public class RadioButton extends CheckBox {
   }
 
   /**
+   * @see #RadioButton(String, SafeHtml)
+   * 
+   * @param name the group name with which to associate the radio button
+   * @param label this radio button's html label
+   * @param dir the text's direction. Note that {@code DEFAULT} means direction
+   *          should be inherited from the widget's parent element.
+   */
+  public RadioButton(String name, SafeHtml label, Direction dir) {
+    this(name);
+    setHTML(label, dir);
+  }
+
+  /**
+   * @see #RadioButton(String, SafeHtml)
+   * 
+   * @param name the group name with which to associate the radio button
+   * @param label this radio button's html label
+   * @param directionEstimator A DirectionEstimator object used for automatic
+   *          direction adjustment. For convenience,
+   *          {@link #DEFAULT_DIRECTION_ESTIMATOR} can be used.
+   */
+  public RadioButton(String name, SafeHtml label,
+      DirectionEstimator directionEstimator) {
+    this(name);
+    setDirectionEstimator(directionEstimator);
+    setHTML(label.asString());
+  }
+
+  /**
    * Creates a new radio associated with a particular group, and initialized
    * with the given HTML label. All radio buttons associated with the same group
    * name belong to a mutually-exclusive set.
@@ -98,6 +132,35 @@ public class RadioButton extends CheckBox {
    */
   public RadioButton(String name, String label) {
     this(name);
+    setText(label);
+  }
+
+  /**
+   * @see #RadioButton(String, SafeHtml)
+   * 
+   * @param name the group name with which to associate the radio button
+   * @param label this radio button's label
+   * @param dir the text's direction. Note that {@code DEFAULT} means direction
+   *          should be inherited from the widget's parent element.
+   */
+  public RadioButton(String name, String label, Direction dir) {
+    this(name);
+    setText(label, dir);
+  }
+
+  /**
+   * @see #RadioButton(String, SafeHtml)
+   * 
+   * @param name the group name with which to associate the radio button
+   * @param label this radio button's label
+   * @param directionEstimator A DirectionEstimator object used for automatic
+   *          direction adjustment. For convenience,
+   *          {@link #DEFAULT_DIRECTION_ESTIMATOR} can be used.
+   */
+  public RadioButton(String name, String label,
+      DirectionEstimator directionEstimator) {
+    this(name);
+    setDirectionEstimator(directionEstimator);
     setText(label);
   }
 
