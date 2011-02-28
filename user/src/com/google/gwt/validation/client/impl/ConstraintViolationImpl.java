@@ -171,6 +171,6 @@ public class ConstraintViolationImpl<T> implements ConstraintViolation<T>,
     return "message= " + message //
         + ", path= " + propertyPath //
         + ", invalidValue=" + invalidValue //
-        + " , desc=" + constraintDescriptor;
+        + ", desc=" + constraintDescriptor;
   }
 }

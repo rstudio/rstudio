@@ -18,6 +18,7 @@ package com.google.gwt.validation.tck;
 
 import junit.framework.Test;
 
+import org.hibernate.jsr303.tck.tests.constraints.constraintcomposition.ConstraintCompositionCompileTest;
 import org.hibernate.jsr303.tck.tests.constraints.constraintcomposition.ConstraintCompositionGwtTest;
 import org.hibernate.jsr303.tck.util.TckTestSuiteWrapper;
 
@@ -28,6 +29,7 @@ public class ConstraintCompositionGwtSuite {
   public static Test suite() {
     TckTestSuiteWrapper suite = new TckTestSuiteWrapper(
         "TCK for GWT Validation, constraints composition package");
+    suite.addTestSuite(ConstraintCompositionCompileTest.class);
     suite.addTestSuite(ConstraintCompositionGwtTest.class);
     return suite;
   }

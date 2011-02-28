@@ -41,7 +41,7 @@ public class PatternValidator implements ConstraintValidator<Pattern, String> {
   }
 
   public boolean isValid(String value, ConstraintValidatorContext context) {
-    return value == null || pattern.exec(value) != null;
+    return value == null || pattern.test(value);
   }
 
   private String toString(Flag flag) {

@@ -21,7 +21,7 @@
     <include name="*.java" />
     <exclude name="*CompileTest.java" />
   </source>
-  <replace-with class="org.hibernate.jsr303.tck.tests.constraints.customconstraint.TckTestValidatorFactory">
+  <replace-with class="org.hibernate.jsr303.tck.tests.constraints.constraintcomposition.MustBeApplicableValidatorFactory">
     <when-type-is class="javax.validation.ValidatorFactory"/>
   </replace-with>
 </module>

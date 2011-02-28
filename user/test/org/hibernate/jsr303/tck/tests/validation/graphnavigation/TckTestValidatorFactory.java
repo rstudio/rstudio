@@ -33,7 +33,7 @@ public final class TckTestValidatorFactory extends AbstractGwtValidatorFactory {
   @GwtValidation(value = {
       AnimalCaretaker.class, Condor.class, Elephant.class, GameReserve.class,
       MultiCage.class, MultiCage.class, Parent.class, SingleCage.class,
-      Zebra.class, Zoo.class})
+      User.class, Zebra.class, Zoo.class})
   public static interface GwtValidator extends Validator {
   }
 

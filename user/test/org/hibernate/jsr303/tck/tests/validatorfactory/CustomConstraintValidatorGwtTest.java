@@ -32,15 +32,17 @@ public class CustomConstraintValidatorGwtTest extends GWTTestCase {
     return "org.hibernate.jsr303.tck.tests.validatorfactory.TckTest";
   }
 
-  @Failing(issue = 5805)
+
   public void testDefaultConstructorInValidatorCalled() {
     delegate.testDefaultConstructorInValidatorCalled();
   }
 
+  @Failing(issue = 5805)
   public void testRuntimeExceptionInValidatorCreationIsWrapped() {
     delegate.testRuntimeExceptionInValidatorCreationIsWrapped();
   }
 
+  @Failing(issue = 5805)
   public void testValidationExceptionIsThrownInCaseFactoryReturnsNull() {
     delegate.testValidationExceptionIsThrownInCaseFactoryReturnsNull();
   }

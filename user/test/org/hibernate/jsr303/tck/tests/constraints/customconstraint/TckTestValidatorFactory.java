@@ -21,7 +21,6 @@ import com.google.gwt.validation.client.GwtValidation;
 import com.google.gwt.validation.client.impl.AbstractGwtValidator;
 
 import org.hibernate.jsr303.tck.tests.constraints.customconstraint.CustomConstraintValidatorTest.Freezer;
-import org.hibernate.jsr303.tck.tests.constraints.customconstraint.CustomConstraintValidatorTest.OddShoe;
 import org.hibernate.jsr303.tck.tests.constraints.customconstraint.CustomConstraintValidatorTest.Shoe;
 
 import javax.validation.Validator;
@@ -34,8 +33,7 @@ public final class TckTestValidatorFactory extends AbstractGwtValidatorFactory {
   /**
    * Marker Interface to {@link GWT#create(Class)}.
    */
-  @GwtValidation(value = {
-      Author.class, Freezer.class, OddShoe.class, Shoe.class})
+  @GwtValidation(value = {Author.class, Freezer.class, Shoe.class})
   public static interface GwtValidator extends Validator {
   }
 

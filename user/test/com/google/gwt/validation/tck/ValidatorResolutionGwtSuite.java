@@ -18,6 +18,7 @@ package com.google.gwt.validation.tck;
 
 import junit.framework.Test;
 
+import org.hibernate.jsr303.tck.tests.constraints.validatorresolution.ValidatorResolutionCompileTest;
 import org.hibernate.jsr303.tck.tests.constraints.validatorresolution.ValidatorResolutionGwtTest;
 import org.hibernate.jsr303.tck.util.TckTestSuiteWrapper;
 
@@ -28,6 +29,7 @@ public class ValidatorResolutionGwtSuite {
   public static Test suite() {
     TckTestSuiteWrapper suite = new TckTestSuiteWrapper(
         "TCK for GWT Validation, validator resolution package");
+    suite.addTestSuite(ValidatorResolutionCompileTest.class);
     suite.addTestSuite(ValidatorResolutionGwtTest.class);
     return suite;
   }

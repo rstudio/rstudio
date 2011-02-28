@@ -51,7 +51,6 @@ public class ValidationRequirementGwtTest extends GWTTestCase {
     delegate.testFieldAccess();
   }
 
-  @Failing(issue = 5798)
   public void testFieldAndPropertyVisibilityIsNotConstrained() {
     delegate.testFieldAndPropertyVisibilityIsNotConstrained();
   }

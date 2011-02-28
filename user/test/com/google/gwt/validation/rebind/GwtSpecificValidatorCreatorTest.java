@@ -18,6 +18,7 @@ package com.google.gwt.validation.rebind;
 import static com.google.gwt.validation.rebind.GwtSpecificValidatorCreator.getValidatorForType;
 
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.validation.client.constraints.SizeValidatorForCollection;
 import com.google.gwt.validation.client.constraints.SizeValidatorForString;
 
@@ -25,6 +26,7 @@ import junit.framework.TestCase;
 
 import java.lang.annotation.Annotation;
 import java.util.List;
+import java.util.Set;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.constraints.Size;
@@ -34,20 +36,26 @@ import javax.validation.constraints.Size;
  */
 public class GwtSpecificValidatorCreatorTest extends TestCase {
 
+  private static Set<Class<? extends ConstraintValidator<? extends Annotation, ?>>> copyOf(
+      Class<? extends ConstraintValidator<? extends Annotation, ?>>... classes) {
+    return ImmutableSet.copyOf(classes);
+  }
+
   ImmutableList<Class<? extends ConstraintValidator<Size, ?>>> sizeValidators = ImmutableList.<Class<? extends ConstraintValidator<Size, ?>>> of(
       SizeValidatorForCollection.class, SizeValidatorForString.class);
 
+  @SuppressWarnings("unchecked")
   public void testGetValidatorForType_collection() throws Exception {
-    Class<? extends ConstraintValidator<? extends Annotation, ?>> expected = SizeValidatorForCollection.class;
-    Class<? extends ConstraintValidator<Size, ?>> actual = getValidatorForType(
+    ImmutableSet<Class<? extends ConstraintValidator<Size, ?>>> actual = getValidatorForType(
         List.class, sizeValidators);
-    assertEquals(expected, actual);
+    assertEquals(copyOf(SizeValidatorForCollection.class), actual);
   }
 
+  @SuppressWarnings("unchecked")
   public void testGetValidatorForType_string() throws Exception {
     Class<String> target = String.class;
-    Class<? extends ConstraintValidator<Size, ?>> actual = getValidatorForType(
+    ImmutableSet<Class<? extends ConstraintValidator<Size, ?>>> actual = getValidatorForType(
         target, sizeValidators);
-    assertEquals(SizeValidatorForString.class, actual);
+    assertEquals(copyOf(SizeValidatorForString.class), actual);
   }
 }

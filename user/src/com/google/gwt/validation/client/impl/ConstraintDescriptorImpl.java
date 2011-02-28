@@ -45,8 +45,15 @@ public class ConstraintDescriptorImpl<T extends Annotation> implements
     private Set<Class<? extends Payload>> payload;
     private List<Class<? extends ConstraintValidator<T, ?>>> constraintValidatorClasses;
     private Map<String, Object> attributes;
-    private Set<ConstraintDescriptor<?>> composingConstraints;
+    private Set<ConstraintDescriptor<?>> composingConstraints =
+        new HashSet<ConstraintDescriptor<?>>();
     private boolean reportAsSingleViolation;
+
+    public Builder<T> addComposingConstraint(
+        ConstraintDescriptor<?> composingConstraint) {
+      this.composingConstraints.add(composingConstraint);
+      return this;
+    }
 
     public ConstraintDescriptorImpl<T> build() {
       return new ConstraintDescriptorImpl<T>(//
@@ -69,9 +76,10 @@ public class ConstraintDescriptorImpl<T extends Annotation> implements
       return this;
     }
 
-    public Builder<T> setComposingConstraints(
-        Set<ConstraintDescriptor<?>> composingConstraints) {
-      this.composingConstraints = composingConstraints;
+    public Builder<T> setConstraintValidatorClasses(
+        Class<? extends ConstraintValidator<T, ?>>[] constraintValidatorClasses) {
+      List<Class<? extends ConstraintValidator<T, ?>>> list = Arrays.asList(constraintValidatorClasses);
+      setConstraintValidatorClasses(list);
       return this;
     }
 
@@ -81,14 +89,8 @@ public class ConstraintDescriptorImpl<T extends Annotation> implements
       return this;
     }
 
-    /**
-     * @param classes
-     * @return
-     */
-    public Builder<T> setConstraintValidatorClasses(
-        Class<? extends ConstraintValidator<T, ?>>[] constraintValidatorClasses) {
-      List<Class<? extends ConstraintValidator<T, ?>>> list = Arrays.asList(constraintValidatorClasses);
-      setConstraintValidatorClasses(list);
+    public Builder<T> setGroups(Class<?>[] classes) {
+      setGroups(new HashSet<Class<?>>(Arrays.asList(classes)));
       return this;
     }
 
@@ -97,18 +99,13 @@ public class ConstraintDescriptorImpl<T extends Annotation> implements
       return this;
     }
 
-    public Builder<T> setGroups(Class<?>[] classes) {
-      setGroups(new HashSet<Class<?>>(Arrays.asList(classes)));
+    public Builder<T> setPayload(Class<? extends Payload>[] classes) {
+      setPayload(new HashSet<Class<? extends Payload>>(Arrays.asList(classes)));
       return this;
     }
 
     public Builder<T> setPayload(Set<Class<? extends Payload>> payload) {
       this.payload = payload;
-      return this;
-    }
-
-    public Builder<T> setPayload(Class<? extends Payload>[] classes) {
-      setPayload(new HashSet<Class<? extends Payload>>(Arrays.asList(classes)));
       return this;
     }
 
@@ -181,6 +178,6 @@ public class ConstraintDescriptorImpl<T extends Annotation> implements
    */
   @Override
   public String toString() {
-    return annotation + " " + attributes;
+    return String.valueOf(annotation);
   }
 }

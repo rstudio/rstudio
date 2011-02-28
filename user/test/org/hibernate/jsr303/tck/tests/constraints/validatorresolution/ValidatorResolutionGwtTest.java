@@ -29,11 +29,6 @@ public class ValidatorResolutionGwtTest extends GWTTestCase {
     return "org.hibernate.jsr303.tck.tests.constraints.validatorresolution.TckTest";
   }
 
-  @Failing(issue = 5806)
-  public void testAmbiguousValidatorResolution() {
-    delegate.testAmbiguousValidatorResolution();
-  }
-
   public void testResolutionOfMinMaxForDifferentTypes() {
     delegate.testResolutionOfMinMaxForDifferentTypes();
   }
@@ -59,8 +54,4 @@ public class ValidatorResolutionGwtTest extends GWTTestCase {
     delegate.testTargetTypeIsInterface();
   }
 
-  @Failing(issue = 5806)
-  public void testUnexpectedTypeInValidatorResolution() {
-    delegate.testUnexpectedTypeInValidatorResolution();
-  }
 }

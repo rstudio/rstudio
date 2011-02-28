@@ -17,8 +17,6 @@ package org.hibernate.jsr303.tck.tests.metadata;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-import org.hibernate.jsr303.tck.util.client.Failing;
-
 /**
  * Test wrapper for {@link ConstraintDescriptorTest}.
  */
@@ -30,17 +28,14 @@ public class ConstraintDescriptorGwtTest extends GWTTestCase {
     return "org.hibernate.jsr303.tck.tests.metadata.TckTest";
   }
 
-  @Failing(issue = 5931)
   public void testAnnotationAndMapParametersReflectParameterOverriding() {
     delegate.testAnnotationAndMapParametersReflectParameterOverriding();
   }
 
-  @Failing(issue = 5931)
   public void testComposingConstraints() {
     delegate.testComposingConstraints();
   }
 
-  @Failing(issue = 5931)
   public void testComposingConstraintsPayload() {
     delegate.testComposingConstraintsPayload();
   }
@@ -49,7 +44,6 @@ public class ConstraintDescriptorGwtTest extends GWTTestCase {
     delegate.testDefaultGroupIsReturnedIfNoGroupSpecifiedInDeclaration();
   }
 
-  @Failing(issue = 5931)
   public void testEmptyComposingConstraints() {
     delegate.testEmptyComposingConstraints();
   }

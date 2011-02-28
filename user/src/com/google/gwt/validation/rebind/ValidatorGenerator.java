@@ -34,12 +34,11 @@ public class ValidatorGenerator extends Generator {
   @Override
   public String generate(TreeLogger logger, GeneratorContext context,
       String typeName) throws UnableToCompleteException {
-    JClassType validatorType = context.getTypeOracle().findType(typeName);
     TypeOracle typeOracle = context.getTypeOracle();
     assert (typeOracle != null);
 
-    JClassType validator = typeOracle.findType(typeName);
-    if (validator == null) {
+    JClassType validatorType = typeOracle.findType(typeName);
+    if (validatorType == null) {
       logger.log(TreeLogger.ERROR, "Unable to find metadata for type '"
           + typeName + "'", null);
       throw new UnableToCompleteException();
@@ -61,7 +60,7 @@ public class ValidatorGenerator extends Generator {
     }
 
     TreeLogger validatorLogger = logger.branch(TreeLogger.DEBUG,
-        "Generating Validator for  '" + validator.getQualifiedSourceName()
+        "Generating Validator for  '" + validatorType.getQualifiedSourceName()
             + "'", null);
     AbstractCreator creator = new ValidatorCreator(validatorType,
         gwtValidation,

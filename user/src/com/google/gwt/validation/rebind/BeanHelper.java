@@ -69,6 +69,13 @@ public final class BeanHelper {
     }
   };
 
+  /**
+   * Visible for testing
+   */
+  public static void clearBeanHelpersForTests() {
+    threadLocalHelperMap.get().clear();
+  }
+
   public static BeanHelper createBeanHelper(Class<?> clazz, TreeLogger logger,
       GeneratorContext context) throws UnableToCompleteException {
     JClassType beanType = context.getTypeOracle().findType(
@@ -253,7 +260,7 @@ public final class BeanHelper {
   }
 
   public String getValidatorInstanceName() {
-    return makeJavaSafe(jClass.getName().toLowerCase() + "Validator");
+    return getFullyQualifiedValidatorName() + ".INSTANCE";
   }
 
   public String getValidatorName() {

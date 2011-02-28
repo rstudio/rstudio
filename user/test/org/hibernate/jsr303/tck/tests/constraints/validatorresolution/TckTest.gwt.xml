@@ -19,6 +19,7 @@
   <inherits name="org.hibernate.jsr303.tck.tests.ValidationTck" />
   <source path="">
     <include name="*.java" />
+    <exclude name="*CompileTest.java" />
   </source>
   <replace-with class="org.hibernate.jsr303.tck.tests.constraints.validatorresolution.TckTestValidatorFactory">
     <when-type-is class="javax.validation.ValidatorFactory"/>

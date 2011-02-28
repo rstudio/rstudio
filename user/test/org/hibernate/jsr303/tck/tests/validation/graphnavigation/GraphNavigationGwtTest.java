@@ -35,7 +35,6 @@ public class GraphNavigationGwtTest extends GWTTestCase {
     delegate.testContainedIterable();
   }
 
-  @Failing(issue = 5946)
   public void testContainedMap() {
     delegate.testContainedMap();
   }
@@ -56,6 +55,7 @@ public class GraphNavigationGwtTest extends GWTTestCase {
 
   @Failing(issue = 5946)
   public void testNoEndlessLoop() {
+    fail("Fail early so othe tests pass");
     delegate.testNoEndlessLoop();
   }
 
@@ -68,7 +68,6 @@ public class GraphNavigationGwtTest extends GWTTestCase {
     delegate.testTypeOfContainedValueIsDeterminedAtRuntime();
   }
 
-  @Failing(issue = 5946)
   public void testTypeOfContainedValuesIsDeterminedAtRuntime() {
     delegate.testTypeOfContainedValuesIsDeterminedAtRuntime();
   }

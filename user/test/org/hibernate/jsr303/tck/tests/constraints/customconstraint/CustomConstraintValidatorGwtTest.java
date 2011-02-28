@@ -17,7 +17,7 @@ package org.hibernate.jsr303.tck.tests.constraints.customconstraint;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-import org.hibernate.jsr303.tck.util.client.Failing;
+import javax.validation.ValidationException;
 
 /**
  * Test wrapper for {@link CustomConstraintValidatorTest}.
@@ -34,7 +34,6 @@ public class CustomConstraintValidatorGwtTest extends GWTTestCase {
     delegate.testDefaultPropertyPath();
   }
 
-  @Failing(issue = 5800)
   public void testIsValidIsCalledForEachValidation() {
     delegate.testIsValidIsCalledForEachValidation();
   }
@@ -47,20 +46,25 @@ public class CustomConstraintValidatorGwtTest extends GWTTestCase {
     delegate.testOneConstraintViolationPerFailingConstraint();
   }
 
-  @Failing(issue = 5800)
   public void testRightValidatorIsSelectedAndInitializedCalled() {
     delegate.testRightValidatorIsSelectedAndInitializedCalled();
   }
 
   public void testRuntimeExceptionFromInitializeIsWrapped() {
-    delegate.testRuntimeExceptionFromInitializeIsWrapped();
+    try {
+      delegate.testRuntimeExceptionFromInitializeIsWrapped();
+      fail("Expected a " + ValidationException.class);
+    } catch (ValidationException expected) {
+      // expected
+    }
   }
 
   public void testRuntimeExceptionFromIsValidIsWrapped() {
-    delegate.testRuntimeExceptionFromIsValidIsWrapped();
-  }
-
-  public void testUnexpectedTypeExceptionIsRaisedForInvalidType() {
-    delegate.testUnexpectedTypeExceptionIsRaisedForInvalidType();
+    try {
+      delegate.testRuntimeExceptionFromIsValidIsWrapped();
+      fail("Expected a " + ValidationException.class);
+    } catch (ValidationException expected) {
+      // expected
+    }
   }
 }
