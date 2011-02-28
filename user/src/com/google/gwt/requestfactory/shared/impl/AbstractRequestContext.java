@@ -151,8 +151,8 @@ public class AbstractRequestContext implements RequestContext,
       if (!raw.isNull("error")) {
         Splittable error = raw.get("error");
         ServerFailure failure = new ServerFailure(
-          error.get("message").asString(),
-          error.get("code").asString(), payload, true);
+            error.get("message").asString(), error.get("code").asString(),
+            payload, true);
         fail(receiver, failure);
         return;
       }
@@ -505,11 +505,11 @@ public class AbstractRequestContext implements RequestContext,
      * simple flag-check because of the possibility of "unmaking" a change, per
      * the JavaDoc.
      */
-    for (AutoBean<?> bean : editedProxies.values()) {
+    for (AutoBean<? extends BaseProxy> bean : editedProxies.values()) {
       AutoBean<?> previous = bean.getTag(Constants.PARENT_OBJECT);
       if (previous == null) {
         // Compare to empty object
-        Class<?> proxyClass = ((EntityProxy) bean.as()).stableId().getProxyClass();
+        Class<?> proxyClass = stableId(bean).getProxyClass();
         previous = getRequestFactory().getAutoBeanFactory().create(proxyClass);
       }
       if (!AutoBeanUtils.diff(previous, bean).isEmpty()) {

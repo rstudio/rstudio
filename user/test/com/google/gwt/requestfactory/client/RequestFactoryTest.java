@@ -271,6 +271,22 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     assertFalse(context.isChanged());
   }
 
+  public void testChangedCreateValueProxy() {
+    SimpleFooRequest context = simpleFooRequest();
+
+    // Creates don't cause a change
+    SimpleValueProxy foo = context.create(SimpleValueProxy.class);
+    assertFalse(context.isChanged());
+
+    // Change
+    foo.setString("foo");
+    assertTrue(context.isChanged());
+
+    // Undo the change
+    foo.setString(null);
+    assertFalse(context.isChanged());
+  }
+
   public void testChangedEdit() {
     delayTestFinish(DELAY_TEST_FINISH);
     simpleFooRequest().findSimpleFooById(1L).fire(
