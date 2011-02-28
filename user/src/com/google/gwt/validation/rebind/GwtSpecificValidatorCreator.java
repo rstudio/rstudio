@@ -495,10 +495,9 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     // .setConstrained(true)
     sw.println(".setConstrained(" + beanDescriptor.isBeanConstrained() + ")");
 
-    int count = 0;
-    for (ConstraintDescriptor<? extends Annotation> constraint : beanDescriptor.getConstraintDescriptors()) {
+    for (int count = 0; count < beanDescriptor.getConstraintDescriptors().size(); count++) {
       // .add(c0)
-      sw.println(".add(" + constraintDescriptorVar("this", count++) + ")");
+      sw.println(".add(" + constraintDescriptorVar("this", count) + ")");
     }
 
     // .put("myProperty", myProperty_pd)

@@ -96,7 +96,7 @@ public class XsrfProtectedServiceServlet
     Cookie sessionCookie = Util.getCookie(getThreadLocalRequest(),
         sessionCookieName, false);
     if (sessionCookie == null || sessionCookie.getValue() == null ||
-        sessionCookie.getValue().isEmpty()) {
+        sessionCookie.getValue().length() == 0) {
       throw new RpcTokenException("Session cookie is missing or empty! " +
           "Unable to verify XSRF cookie");
     }

@@ -190,7 +190,7 @@ public class XsrfTokenServiceServlet extends RemoteServiceServlet
     Cookie sessionCookie = Util.getCookie(getThreadLocalRequest(),
         sessionCookieName, false);
     if (sessionCookie == null || sessionCookie.getValue() == null ||
-        sessionCookie.getValue().isEmpty()) {
+        sessionCookie.getValue().length() == 0) {
       throw new RpcTokenException("Session cookie is not set or empty! " +
           "Unable to generate XSRF cookie");
     }
