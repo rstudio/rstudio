@@ -19,6 +19,7 @@ package com.google.doctool.custom;
 import com.sun.javadoc.ClassDoc;
 import com.sun.javadoc.DocErrorReporter;
 import com.sun.javadoc.ExecutableMemberDoc;
+import com.sun.javadoc.FieldDoc;
 import com.sun.javadoc.PackageDoc;
 import com.sun.javadoc.RootDoc;
 
@@ -86,6 +87,19 @@ public class EztDoclet {
     return true;
   }
 
+  private String createFieldList(Collection<FieldDoc> fields) {
+    StringBuffer buffer = new StringBuffer();
+    Iterator<FieldDoc> iter = fields.iterator();
+    while (iter.hasNext()) {
+      FieldDoc field = iter.next();
+      buffer.append(field.name());
+      if (iter.hasNext()) {
+        buffer.append(", ");
+      }
+    }
+    return buffer.toString();
+  }
+
   private String createMemberList(Collection<ExecutableMemberDoc> members) {
     StringBuffer buffer = new StringBuffer();
     Iterator<ExecutableMemberDoc> iter = members.iterator();
@@ -135,6 +149,14 @@ public class EztDoclet {
           // Each class links to Sun's main JavaDoc
           pw.format("  <dt><a href=\"%s%s.html\">%s</a></dt>\n", packURL,
               cls.name(), cls.name());
+
+          // Print out all fields
+          Collection<FieldDoc> fields = new ArrayList<FieldDoc>();
+          fields.addAll(Arrays.asList(cls.fields(true)));
+
+          if (!fields.isEmpty()) {
+            pw.format("  <dd>%s</dd><br>\n", createFieldList(fields));
+          }
 
           // Print out all constructors and methods
           Collection<ExecutableMemberDoc> members = new ArrayList<ExecutableMemberDoc>();
