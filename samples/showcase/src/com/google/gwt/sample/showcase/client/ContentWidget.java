@@ -231,7 +231,7 @@ public abstract class ContentWidget extends LazyPanel
         }
       };
 
-      String srcPath = ShowcaseConstants.DST_SOURCE_STYLE + "standard";
+      String srcPath = ShowcaseConstants.DST_SOURCE_STYLE + Showcase.THEME;
       if (LocaleInfo.getCurrentLocale().isRTL()) {
         srcPath += "_rtl";
       }

@@ -81,11 +81,11 @@ public class CwSplitLayoutPanel extends ContentWidget {
   @Override
   public Widget onInitialize() {
     // Create a Split Panel
-    SplitLayoutPanel splitPanel = new SplitLayoutPanel();
+    SplitLayoutPanel splitPanel = new SplitLayoutPanel(5);
     splitPanel.ensureDebugId("cwSplitLayoutPanel");
     splitPanel.setPixelSize(500, 400);
     splitPanel.getElement().getStyle()
-        .setProperty("border", "3px solid #d0e4f6");
+        .setProperty("border", "3px solid #e7e7e7");
 
     // Add text all around.
     splitPanel.addNorth(new Label(constants.cwSplitLayoutPanelNorth1()), 50);

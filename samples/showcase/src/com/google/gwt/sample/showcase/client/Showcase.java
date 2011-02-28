@@ -61,6 +61,11 @@ public class Showcase implements EntryPoint {
       ShowcaseResources.class);
 
   /**
+   * The name of the style theme used in showcase.
+   */
+  public static final String THEME = "clean";
+
+  /**
    * Get the token for a given content widget.
    *
    * @return the content widget token.
@@ -235,7 +240,7 @@ public class Showcase implements EntryPoint {
    */
   private void injectThemeStyleSheet() {
     // Choose the name style sheet based on the locale.
-    String styleSheet = "gwt/standard/standard";
+    String styleSheet = "gwt/" + THEME + "/" + THEME;
     styleSheet += LocaleInfo.getCurrentLocale().isRTL() ? "_rtl.css" : ".css";
 
     // Load the GWT theme style sheet

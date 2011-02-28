@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.sample.showcase.client.ContentWidget;
+import com.google.gwt.sample.showcase.client.Showcase;
 import com.google.gwt.sample.showcase.client.ShowcaseConstants;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseRaw;
@@ -104,7 +105,7 @@ public class ShowcaseGenerator extends Generator {
     }
 
     // Generate the CSS source files
-    String[] themes = new String[]{"standard"};
+    String[] themes = new String[]{Showcase.THEME};
     for (String theme : themes) {
       String styleDefsLTR = getStyleDefinitions(theme, false);
       String styleDefsRTL = getStyleDefinitions(theme, true);
