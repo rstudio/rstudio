@@ -24,19 +24,15 @@ import com.google.gwt.dev.util.StringInterner;
 public abstract class JType extends JNode implements HasName, CanBeFinal {
 
   protected final String name;
-  private final JLiteral defaultValue;
 
-  public JType(SourceInfo info, String name, JLiteral defaultValue) {
+  public JType(SourceInfo info, String name) {
     super(info);
     this.name = StringInterner.get().intern(name);
-    this.defaultValue = defaultValue;
   }
 
   public abstract String getClassLiteralFactoryMethod();
 
-  public JLiteral getDefaultValue() {
-    return defaultValue;
-  }
+  public abstract JLiteral getDefaultValue();
 
   public abstract String getJavahSignatureName();
 

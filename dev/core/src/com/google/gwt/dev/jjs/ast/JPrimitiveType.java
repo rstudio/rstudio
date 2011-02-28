@@ -25,6 +25,9 @@ import java.util.Map;
  * Base class for all Java primitive types.
  */
 public class JPrimitiveType extends JType {
+  /*
+   * Primitive types are static singletons.  Serialization via readResolve().
+   */
 
   private static final class Singletons {
     public static final Map<String, JPrimitiveType> map = new HashMap<String, JPrimitiveType>();
@@ -57,13 +60,16 @@ public class JPrimitiveType extends JType {
   public static final JPrimitiveType VOID = new JPrimitiveType("void", "V",
       "java.lang.Void", null);
 
-  private final String signatureName;
+  private final transient JValueLiteral defaultValue;
 
-  private final String wrapperTypeName;
+  private final transient String signatureName;
+
+  private final transient String wrapperTypeName;
 
   private JPrimitiveType(String name, String signatureName,
-      String wrapperTypeName, JLiteral defaultValue) {
-    super(SourceOrigin.UNKNOWN, name, defaultValue);
+      String wrapperTypeName, JValueLiteral defaultValue) {
+    super(SourceOrigin.UNKNOWN, name);
+    this.defaultValue = defaultValue;
     this.signatureName = StringInterner.get().intern(signatureName);
     this.wrapperTypeName = StringInterner.get().intern(wrapperTypeName);
     Singletons.map.put(this.name, this);
@@ -74,10 +80,8 @@ public class JPrimitiveType extends JType {
    * if no such coercion is possible.
    */
   public JValueLiteral coerceLiteral(JValueLiteral value) {
-    JLiteral defaultValue = getDefaultValue();
-    if (defaultValue instanceof JValueLiteral) {
-      JValueLiteral defaultValueLiteral = (JValueLiteral) defaultValue;
-      return defaultValueLiteral.cloneFrom(value);
+    if (defaultValue != null) {
+      return defaultValue.cloneFrom(value);
     }
     return null;
   }
@@ -85,6 +89,11 @@ public class JPrimitiveType extends JType {
   @Override
   public String getClassLiteralFactoryMethod() {
     return "Class.createForPrimitive";
+  }
+
+  @Override
+  public final JLiteral getDefaultValue() {
+    return defaultValue;
   }
 
   @Override
@@ -111,6 +120,9 @@ public class JPrimitiveType extends JType {
     visitor.endVisit(this, ctx);
   }
 
+  /**
+   * Canonicalize to singleton; uses {@link JType#name}.
+   */
   private Object readResolve() {
     return Singletons.map.get(name);
   }

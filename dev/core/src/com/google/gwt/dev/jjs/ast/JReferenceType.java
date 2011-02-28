@@ -25,7 +25,7 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
   private transient JNonNullType nonNullType;
 
   public JReferenceType(SourceInfo info, String name) {
-    super(info, name, JNullLiteral.INSTANCE);
+    super(info, name);
   }
 
   /**
@@ -36,6 +36,11 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
    */
   public boolean canBeNull() {
     return true;
+  }
+
+  @Override
+  public final JLiteral getDefaultValue() {
+    return JNullLiteral.INSTANCE;
   }
 
   @Override
