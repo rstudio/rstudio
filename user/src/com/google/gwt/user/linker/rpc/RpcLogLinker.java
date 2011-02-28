@@ -57,9 +57,9 @@ public class RpcLogLinker extends AbstractLinker {
              */
             policyStrongName = result.getStrongName();
           }
-          EmittedArtifact art = emitInputStream(logger,
-              logArt.getContents(logger), logArt.getQualifiedSourceName() + "-"
-                  + policyStrongName + ".rpc.log");
+          EmittedArtifact art = emitBytes(logger, logArt.getContents(),
+              logArt.getQualifiedSourceName() + "-" + policyStrongName
+                  + ".rpc.log");
           art.setVisibility(Visibility.Private);
           toReturn.add(art);
         }

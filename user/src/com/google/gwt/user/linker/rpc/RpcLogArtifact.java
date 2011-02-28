@@ -15,15 +15,10 @@
  */
 package com.google.gwt.user.linker.rpc;
 
-import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.linker.Artifact;
 import com.google.gwt.dev.util.DiskCache;
-import com.google.gwt.dev.util.Util;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
@@ -54,8 +49,8 @@ public class RpcLogArtifact extends Artifact<RpcLogArtifact> {
   /**
    * @param logger a TreeLogger
    */
-  public InputStream getContents(TreeLogger logger) {
-    return new ByteArrayInputStream(diskCache.readByteArray(diskCacheToken));
+  public byte[] getContents() {
+    return diskCache.readByteArray(diskCacheToken);
   }
 
   public String getQualifiedSourceName() {
@@ -89,9 +84,7 @@ public class RpcLogArtifact extends Artifact<RpcLogArtifact> {
   private void readObject(ObjectInputStream stream) throws IOException,
       ClassNotFoundException {
     stream.defaultReadObject();
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    Util.copyNoClose(stream, baos);
-    diskCacheToken = diskCache.writeByteArray(baos.toByteArray());
+    diskCacheToken = diskCache.transferFromStream(stream);
   }
 
   private void writeObject(ObjectOutputStream stream) throws IOException {
