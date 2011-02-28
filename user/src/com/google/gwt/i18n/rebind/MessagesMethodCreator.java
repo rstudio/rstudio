@@ -433,7 +433,8 @@ class MessagesMethodCreator extends AbstractMethodCreator {
           return true;
         }
         out.appendStringValuedExpression(
-            dtFormatClassName + ".getFormat(" + PredefinedFormat.class.getName() + "."
+            dtFormatClassName + ".getFormat("
+                + PredefinedFormat.class.getCanonicalName() + "."
                 + predef.toString() + ").format(" + argName + tzParam + ")");
         return false;
       }

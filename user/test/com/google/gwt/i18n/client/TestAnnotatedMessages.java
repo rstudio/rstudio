@@ -99,6 +99,9 @@ public interface TestAnnotatedMessages extends Messages {
   @DefaultMessage("in timezone: {0,localdatetime:tz=$tz,yMd hms}")
   SafeHtml inTimezoneAsSafeHtml(Date date, @Optional TimeZone tz);
 
+  @DefaultMessage("Short: {0,localdatetime,predef:DATE_SHORT}")
+  String predef(Date date);
+
   @DefaultMessage("Once more, with meaning")
   @Meaning("Mangled quote")
   String withMeaning();

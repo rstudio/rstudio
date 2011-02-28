@@ -454,6 +454,13 @@ public class I18N2Test extends GWTTestCase {
     assertEquals("nested underscore b", m.nestedUnderscore());
   }
 
+  @SuppressWarnings("deprecation")
+  public void testPredefDateFormat() {
+    TestAnnotatedMessages m = GWT.create(TestAnnotatedMessages.class);
+    Date date = new Date(Date.UTC(2010 - 1900, 1, 2, 3, 4, 5));
+    assertEquals("Short: 2010-02-01", m.predef(date));
+  }
+
   public void testSpecialPlurals() {
     TestAnnotatedMessages m = GWT.create(TestAnnotatedMessages.class);
     assertEquals("No widgets", m.specialPlurals(0));
