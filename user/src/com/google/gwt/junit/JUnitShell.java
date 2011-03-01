@@ -434,7 +434,7 @@ public class JUnitShell extends DevMode {
       registerHandler(new ArgHandlerFlag() {
         @Override
         public String getPurpose() {
-          return "Use CSS standards mode (rather than quirks mode) for the hosting page";
+          return "Use a document in standards mode (rather than quirks mode) for the hosting page";
         }
 
         @Override
