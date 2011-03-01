@@ -21,7 +21,7 @@ download()
   CURL=`which curl`
   if [ "$CURL" != "" ]
   then
-    curl -k -L https://s3.amazonaws.com/rstudio-buildtools/$1 > $1
+    curl -L https://s3.amazonaws.com/rstudio-buildtools/$1 > $1
   else
     wget https://s3.amazonaws.com/rstudio-buildtools/$1 -O $1
   fi

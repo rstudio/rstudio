@@ -30,7 +30,7 @@ sudo zypper --non-interactive in pam-devel
 sudo zypper --non-interactive in pango-devel
 
 # gwt prereqs
-sudo zypper --non-interactive in java-1_6_0-openjdk-devel
+sudo zypper --non-interactive in java-1_6_0-openjdk
 sudo zypper --non-interactive in ant
 
 # common
