@@ -39,7 +39,7 @@ abstract class DOMImplStandard extends DOMImpl {
   private static JavaScriptObject dispatchEvent;
 
   @SuppressWarnings("unused")
-  private static JavaScriptObject dispatchOnLoadEvent;
+  private static JavaScriptObject dispatchUnhandledEvent;
 
   @Override
   public Element eventGetFromElement(Event evt) {
@@ -167,8 +167,8 @@ abstract class DOMImplStandard extends DOMImpl {
       return true;
     });
 
-    @com.google.gwt.user.client.impl.DOMImplStandard::dispatchOnLoadEvent = $entry(function(evt) {
-      this.__gwtLastOnLoadEvent = evt.type;
+    @com.google.gwt.user.client.impl.DOMImplStandard::dispatchUnhandledEvent = $entry(function(evt) {
+      this.__gwtLastUnhandledEvent = evt.type;
       @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent.call(this, evt);
     });
 
@@ -248,7 +248,7 @@ abstract class DOMImplStandard extends DOMImpl {
     if (chMask & 0x04000) elem.onscroll      = (bits & 0x04000) ?
         @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     if (chMask & 0x08000) elem.onload        = (bits & 0x08000) ?
-        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchOnLoadEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchUnhandledEvent : null;
     if (chMask & 0x10000) elem.onerror       = (bits & 0x10000) ?
         @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     if (chMask & 0x20000) elem.onmousewheel  = (bits & 0x20000) ? 

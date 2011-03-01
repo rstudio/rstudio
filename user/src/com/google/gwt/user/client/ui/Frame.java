@@ -15,16 +15,10 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.user.client.Event;
-
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.FrameElement;
 import com.google.gwt.dom.client.IFrameElement;
-import com.google.gwt.event.dom.client.HasLoadHandlers;
-import com.google.gwt.event.dom.client.LoadEvent;
-import com.google.gwt.event.dom.client.LoadHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
 
 /**
  * A widget that wraps an IFRAME element, which can contain an arbitrary web
@@ -43,7 +37,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
  * <h3>Example</h3> {@example com.google.gwt.examples.FrameExample}
  * </p>
  */
-public class Frame extends Widget implements HasLoadHandlers {
+public class Frame extends Widget {
 
   static final String DEFAULT_STYLENAME = "gwt-Frame";
 
@@ -75,8 +69,6 @@ public class Frame extends Widget implements HasLoadHandlers {
   public Frame() {
     setElement(Document.get().createIFrameElement());
     setStyleName(DEFAULT_STYLENAME);
-
-    sinkEvents(Event.ONLOAD);
   }
 
   /**
@@ -98,17 +90,6 @@ public class Frame extends Widget implements HasLoadHandlers {
   protected Frame(Element element) {
     IFrameElement.as(element);
     setElement(element);
-  }
-
-  /**
-   * Adds a {@link LoadEvent} load handler which will be called
-   * when the frame loads.
-   *
-   * @param handler the load handler
-   * @return {@link HandlerRegistration} that can be used to remove this handler
-   */
-  public HandlerRegistration addLoadHandler(LoadHandler handler) {
-    return addHandler(handler, LoadEvent.getType());
   }
 
   /**

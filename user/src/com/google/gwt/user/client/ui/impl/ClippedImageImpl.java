@@ -51,7 +51,7 @@ public class ClippedImageImpl {
         + (-top + "px");
 
     String clippedImgHtml = "<img "
-        + "onload='this.__gwtLastOnLoadEvent=\"load\";' src='"
+        + "onload='this.__gwtLastUnhandledEvent=\"load\";' src='"
         + GWT.getModuleBaseURL() + "clear.cache.gif' style='" + style
         + "' border='0'>";
 

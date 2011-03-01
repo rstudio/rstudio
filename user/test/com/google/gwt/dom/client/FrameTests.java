@@ -16,19 +16,11 @@
 package com.google.gwt.dom.client;
 
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.Frame;
-import com.google.gwt.user.client.ui.RootPanel;
-
-import com.google.gwt.event.dom.client.LoadEvent;
-import com.google.gwt.event.dom.client.LoadHandler;
 
 /**
  * Tests for the FrameElement and IFrameElement classes.
  */
 public class FrameTests extends GWTTestCase {
-
-  private static final int FRAME_LOAD_DELAY = 3000;
 
   @Override
   public String getModuleName() {
@@ -41,53 +33,5 @@ public class FrameTests extends GWTTestCase {
     iframe.setSrc("about:blank");
     doc.getBody().appendChild(iframe);
     assertNotNull(iframe.getContentDocument());
-  }
-
-  public void testOnLoadEventFiresWithBrowerEvent() {
-    delayTestFinish(FRAME_LOAD_DELAY);
-
-    Frame frame = new Frame() {
-      public void onBrowserEvent(Event event) {
-        if (event.getTypeInt() == Event.ONLOAD) {
-          finishTest();
-        }
-        super.onBrowserEvent(event);
-      }
-    };
-
-    frame.sinkEvents(Event.ONLOAD);
-    RootPanel.get().add(frame);
-    frame.setUrl("iframetest.html");
-  }
-
-  public void testOnLoadEventFiresWithLoadHandler() {
-    delayTestFinish(FRAME_LOAD_DELAY);
-
-    Frame frame = new Frame();
-    frame.addLoadHandler(new LoadHandler() {
-      public void onLoad(LoadEvent event) {
-        finishTest();
-      }
-    });
-
-    RootPanel.get().add(frame);
-    frame.setUrl("iframetest.html");
-  }
-
-  public void testOnLoadEventFiresWithDomLoadHandler() {
-    delayTestFinish(FRAME_LOAD_DELAY);
-
-    Frame frame = new Frame() {
-      {
-        addDomHandler(new LoadHandler() {
-          public void onLoad(LoadEvent event) {
-            finishTest();
-          }
-        }, LoadEvent.getType());
-      }
-    };
-
-    RootPanel.get().add(frame);
-    frame.setUrl("iframetest.html");
   }
 }
