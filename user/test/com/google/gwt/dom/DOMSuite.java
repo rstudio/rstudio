@@ -18,6 +18,7 @@ package com.google.gwt.dom;
 import com.google.gwt.dom.client.DocumentTest;
 import com.google.gwt.dom.client.ElementTest;
 import com.google.gwt.dom.client.FormTests;
+import com.google.gwt.dom.client.FrameTests;
 import com.google.gwt.dom.client.MapTests;
 import com.google.gwt.dom.client.NodeTest;
 import com.google.gwt.dom.client.SelectTests;
@@ -40,6 +41,7 @@ public class DOMSuite {
     suite.addTestSuite(NodeTest.class);
     suite.addTestSuite(ElementTest.class);
     suite.addTestSuite(FormTests.class);
+    suite.addTestSuite(FrameTests.class);
     suite.addTestSuite(MapTests.class);
     suite.addTestSuite(SelectTests.class);
     suite.addTestSuite(StyleInjectorTest.class);

@@ -31,7 +31,7 @@ public abstract class DOMImplTrident extends DOMImpl {
   private static JavaScriptObject callDispatchDblClickEvent;
 
   @SuppressWarnings("unused")
-  private static JavaScriptObject callDispatchUnhandledEvent;
+  private static JavaScriptObject callDispatchOnLoadEvent;
 
   /**
    * Let every GWT app on the page preview the current event. If any app cancels
@@ -154,8 +154,8 @@ public abstract class DOMImplTrident extends DOMImpl {
       }
     });
 
-    var dispatchUnhandledEvent = $entry(function() {
-      this.__gwtLastUnhandledEvent = $wnd.event.type;
+    var dispatchOnLoadEvent = $entry(function() {
+      this.__gwtLastOnLoadEvent = $wnd.event.type;
       dispatchEvent.call(this);
     });
 
@@ -173,9 +173,9 @@ public abstract class DOMImplTrident extends DOMImpl {
     @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchDblClickEvent = new Function('w',
       'return function() { w.__gwt_dispatchDblClickEvent_' + moduleName + '.call(this)}')($wnd);
  
-    $wnd['__gwt_dispatchUnhandledEvent_' + moduleName] = dispatchUnhandledEvent;
-    @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchUnhandledEvent = new Function('w',
-      'return function() { w.__gwt_dispatchUnhandledEvent_' + moduleName + '.call(this)}')($wnd);
+    $wnd['__gwt_dispatchOnLoadEvent_' + moduleName] = dispatchOnLoadEvent;
+    @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchOnLoadEvent = new Function('w',
+      'return function() { w.__gwt_dispatchOnLoadEvent_' + moduleName + '.call(w.event.srcElement)}')($wnd);
 
     // We need to create these delegate functions to fix up the 'this' context.
     // Normally, 'this' is the firing element, but this is only true for
@@ -268,8 +268,13 @@ public abstract class DOMImplTrident extends DOMImpl {
         @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchEvent : null;
     if (chMask & 0x04000) elem.onscroll      = (bits & 0x04000) ?
         @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchEvent : null;
-    if (chMask & 0x08000) elem.onload        = (bits & 0x08000) ?
-        @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchUnhandledEvent : null;
+    if (chMask & 0x08000) {
+      if (bits & 0x08000) {
+        elem.attachEvent('onload', @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchOnLoadEvent);
+      } else {
+        elem.detachEvent('onload', @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchOnLoadEvent);
+      }
+    }
     if (chMask & 0x10000) elem.onerror       = (bits & 0x10000) ?
         @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchEvent : null;
     if (chMask & 0x20000) elem.onmousewheel  = (bits & 0x20000) ? 

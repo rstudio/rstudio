@@ -117,7 +117,7 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
    * The attribute that is set when an image fires a native load or error event
    * before it is attached.
    */
-  private static final String UNHANDLED_EVENT_ATTR = "__gwtLastUnhandledEvent";
+  private static final String UNHANDLED_EVENT_ATTR = "__gwtLastOnLoadEvent";
 
   /**
    * Implementation of behaviors associated with the clipped state of an image.

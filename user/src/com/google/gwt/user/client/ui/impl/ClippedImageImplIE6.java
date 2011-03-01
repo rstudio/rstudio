@@ -115,7 +115,7 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
      */
     String clippedImgHtml = "<gwt:clipper style=\""
         + clipperStyle
-        + "\"><img onload='this.__gwtLastUnhandledEvent=\"load\";' src='"
+        + "\"><img onload='this.__gwtLastOnLoadEvent=\"load\";' src='"
         + moduleBaseUrlProtocol
         + "' onerror='if(window.__gwt_transparentImgHandler)window.__gwt_transparentImgHandler(this);else this.src=\"" + GWT.getModuleBaseURL() + "clear.cache.gif\"' style=\""
         + imgStyle + "\" width=" + (left + width) + " height=" + (top + height)
