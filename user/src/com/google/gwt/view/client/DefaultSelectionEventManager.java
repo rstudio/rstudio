@@ -20,7 +20,9 @@ import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * An implementation of {@link CellPreviewEvent.Handler} that adds selection
@@ -38,6 +40,69 @@ import java.util.List;
 public class DefaultSelectionEventManager<T> implements
     CellPreviewEvent.Handler<T> {
 
+  /**
+   * An event translator that disables selection for the specified blacklisted
+   * columns.
+   * 
+   * @param <T> the data type
+   */
+  public static class BlacklistEventTranslator<T> implements EventTranslator<T> {
+    private final Set<Integer> blacklist = new HashSet<Integer>();
+
+    /**
+     * Construct a new {@link BlacklistEventTranslator}.
+     * 
+     * @param blacklistedColumns the columns to blacklist
+     */
+    public BlacklistEventTranslator(int... blacklistedColumns) {
+      if (blacklistedColumns != null) {
+        for (int i : blacklistedColumns) {
+          setColumnBlacklisted(i, true);
+        }
+      }
+    }
+
+    /**
+     * Clear all columns from the blacklist.
+     */
+    public void clearBlacklist() {
+      blacklist.clear();
+    }
+
+    public boolean clearCurrentSelection(CellPreviewEvent<T> event) {
+      return false;
+    }
+
+    /**
+     * Check if the specified column is blacklisted.
+     * 
+     * @param index the column index
+     * @return true if blacklisted, false if not
+     */
+    public boolean isColumnBlacklisted(int index) {
+      return blacklist.contains(index);
+    }
+
+    /**
+     * Set whether or not the specified column in blacklisted.
+     * 
+     * @param index the column index
+     * @param isBlacklisted true to blacklist, false to allow selection
+     */
+    public void setColumnBlacklisted(int index, boolean isBlacklisted) {
+      if (isBlacklisted) {
+        blacklist.add(index);
+      } else {
+        blacklist.remove(index);
+      }
+    }
+
+    public SelectAction translateSelectionEvent(CellPreviewEvent<T> event) {
+      return isColumnBlacklisted(event.getColumn()) ? SelectAction.IGNORE
+          : SelectAction.DEFAULT;
+    }
+  }
+  
   /**
    * Implementation of {@link EventTranslator} that only triggers selection when
    * any checkbox is selected.
@@ -133,6 +198,83 @@ public class DefaultSelectionEventManager<T> implements
   }
 
   /**
+   * An event translator that allows selection only for the specified
+   * whitelisted columns.
+   * 
+   * @param <T> the data type
+   */
+  public static class WhitelistEventTranslator<T> implements EventTranslator<T> {
+    private final Set<Integer> whitelist = new HashSet<Integer>();
+
+    /**
+     * Construct a new {@link WhitelistEventTranslator}.
+     * 
+     * @param whitelistedColumns the columns to whitelist
+     */
+    public WhitelistEventTranslator(int... whitelistedColumns) {
+      if (whitelistedColumns != null) {
+        for (int i : whitelistedColumns) {
+          setColumnWhitelisted(i, true);
+        }
+      }
+    }
+
+    public boolean clearCurrentSelection(CellPreviewEvent<T> event) {
+      return false;
+    }
+
+    /**
+     * Clear all columns from the whitelist.
+     */
+    public void clearWhitelist() {
+      whitelist.clear();
+    }
+
+    /**
+     * Check if the specified column is whitelisted.
+     * 
+     * @param index the column index
+     * @return true if whitelisted, false if not
+     */
+    public boolean isColumnWhitelisted(int index) {
+      return whitelist.contains(index);
+    }
+
+    /**
+     * Set whether or not the specified column in whitelisted.
+     * 
+     * @param index the column index
+     * @param isWhitelisted true to whitelist, false to allow disallow selection
+     */
+    public void setColumnWhitelisted(int index, boolean isWhitelisted) {
+      if (isWhitelisted) {
+        whitelist.add(index);
+      } else {
+        whitelist.remove(index);
+      }
+    }
+
+    public SelectAction translateSelectionEvent(CellPreviewEvent<T> event) {
+      return isColumnWhitelisted(event.getColumn()) ? SelectAction.DEFAULT
+          : SelectAction.IGNORE;
+    }
+  }
+
+  /**
+   * Construct a new {@link DefaultSelectionEventManager} that ignores selection
+   * for the columns in the specified blacklist.
+   * 
+   * @param <T> the data type of the display
+   * @param blacklistedColumns the columns to include in the blacklist
+   * @return a {@link DefaultSelectionEventManager} instance
+   */
+  public static <T> DefaultSelectionEventManager<T> createBlacklistManager(
+      int... blacklistedColumns) {
+    return new DefaultSelectionEventManager<T>(new BlacklistEventTranslator<T>(
+        blacklistedColumns));
+  }
+  
+  /**
    * Construct a new {@link DefaultSelectionEventManager} that triggers
    * selection when any checkbox in any column is clicked.
    * 
@@ -180,6 +322,20 @@ public class DefaultSelectionEventManager<T> implements
    */
   public static <T> DefaultSelectionEventManager<T> createDefaultManager() {
     return new DefaultSelectionEventManager<T>(null);
+  }
+
+  /**
+   * Construct a new {@link DefaultSelectionEventManager} that allows selection
+   * only for the columns in the specified whitelist.
+   * 
+   * @param <T> the data type of the display
+   * @param whitelistedColumns the columns to include in the whitelist
+   * @return a {@link DefaultSelectionEventManager} instance
+   */
+  public static <T> DefaultSelectionEventManager<T> createWhitelistManager(
+      int... whitelistedColumns) {
+    return new DefaultSelectionEventManager<T>(new WhitelistEventTranslator<T>(
+        whitelistedColumns));
   }
 
   /**

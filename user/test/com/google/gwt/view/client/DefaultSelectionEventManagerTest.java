@@ -19,7 +19,9 @@ import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.view.client.DefaultSelectionEventManager.BlacklistEventTranslator;
 import com.google.gwt.view.client.DefaultSelectionEventManager.SelectAction;
+import com.google.gwt.view.client.DefaultSelectionEventManager.WhitelistEventTranslator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +44,29 @@ public class DefaultSelectionEventManagerTest extends GWTTestCase {
   @Override
   public String getModuleName() {
     return "com.google.gwt.view.View";
+  }
+
+  public void testBlacklistEventTranslator() {
+    BlacklistEventTranslator<String> translator = new BlacklistEventTranslator<String>(
+        1, 3);
+    assertTrue(translator.isColumnBlacklisted(1));
+    assertFalse(translator.isColumnBlacklisted(2));
+    assertTrue(translator.isColumnBlacklisted(3));
+
+    translator.setColumnBlacklisted(2, true);
+    assertTrue(translator.isColumnBlacklisted(1));
+    assertTrue(translator.isColumnBlacklisted(2));
+    assertTrue(translator.isColumnBlacklisted(3));
+
+    translator.setColumnBlacklisted(2, false);
+    assertTrue(translator.isColumnBlacklisted(1));
+    assertFalse(translator.isColumnBlacklisted(2));
+    assertTrue(translator.isColumnBlacklisted(3));
+
+    translator.clearBlacklist();
+    assertFalse(translator.isColumnBlacklisted(1));
+    assertFalse(translator.isColumnBlacklisted(2));
+    assertFalse(translator.isColumnBlacklisted(3));
   }
 
   public void testClearSelection() {
@@ -382,6 +407,29 @@ public class DefaultSelectionEventManagerTest extends GWTTestCase {
     // Deselect an overlapping range 2-5.
     manager.setRangeSelection(model, display, new Range(2, 4), false, false);
     assertSelected(model, "test 1");
+  }
+
+  public void testWhitelistEventTranslator() {
+    WhitelistEventTranslator<String> translator = new WhitelistEventTranslator<String>(
+        1, 3);
+    assertTrue(translator.isColumnWhitelisted(1));
+    assertFalse(translator.isColumnWhitelisted(2));
+    assertTrue(translator.isColumnWhitelisted(3));
+
+    translator.setColumnWhitelisted(2, true);
+    assertTrue(translator.isColumnWhitelisted(1));
+    assertTrue(translator.isColumnWhitelisted(2));
+    assertTrue(translator.isColumnWhitelisted(3));
+
+    translator.setColumnWhitelisted(2, false);
+    assertTrue(translator.isColumnWhitelisted(1));
+    assertFalse(translator.isColumnWhitelisted(2));
+    assertTrue(translator.isColumnWhitelisted(3));
+
+    translator.clearWhitelist();
+    assertFalse(translator.isColumnWhitelisted(1));
+    assertFalse(translator.isColumnWhitelisted(2));
+    assertFalse(translator.isColumnWhitelisted(3));
   }
 
   /**

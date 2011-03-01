@@ -598,6 +598,24 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
     presenter.setRowData(start, values);
   }
 
+  /**
+   * Set the {@link SelectionModel} used by this {@link HasData}.
+   * 
+   * <p>
+   * By default, selection occurs when the user clicks on a Cell or presses the
+   * spacebar. If you need finer control over selection, you can specify a
+   * {@link DefaultSelectionEventManager} using 
+   * {@link #setSelectionModel(SelectionModel, com.google.gwt.view.client.CellPreviewEvent.Handler)}.
+   * {@link DefaultSelectionEventManager} provides some default
+   * implementations to handle checkbox based selection, as well as a blacklist
+   * or whitelist of columns to prevent or allow selection.
+   * </p>
+   * 
+   * @param selectionModel the {@link SelectionModel}
+   * @see #setSelectionModel(SelectionModel,
+   *      com.google.gwt.view.client.CellPreviewEvent.Handler)
+   * @see #getSelectionModel()
+   */
   public void setSelectionModel(SelectionModel<? super T> selectionModel) {
     presenter.setSelectionModel(selectionModel);
   }
