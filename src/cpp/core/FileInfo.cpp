@@ -23,7 +23,7 @@ FileInfo::FileInfo(const FilePath& filePath)
       size_(0),
       lastWriteTime_(0)
 {
-   if (!isDirectory_)
+   if (!isDirectory_ && filePath.exists())
    {
       size_ = filePath.size();
       lastWriteTime_ = filePath.lastWriteTime();
