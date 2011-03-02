@@ -222,7 +222,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
 
   /**
    * Gets the best {@link ConstraintValidator}.
-   * 
+   *
    * <p>
    * The ConstraintValidator chosen to validate a declared type
    * {@code targetType} is the one where the type supported by the
@@ -230,11 +230,11 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
    * no other ConstraintValidator whose supported type is a supertype of
    * {@code type} and not a supertype of the chosen ConstraintValidator
    * supported type.
-   * 
+   *
    * @param constraint the constraint to find ConstraintValidators for.
    * @param targetType The type to find a ConstraintValidator for.
    * @return ConstraintValidator
-   * 
+   *
    * @throws UnexpectedTypeException if there is not exactly one maximally
    *           specific constraint validator for targetType.
    */
@@ -932,6 +932,9 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
 
     writeNewViolations(sw);
 
+    // context.addValidatedObject(object);
+    sw.println("context.addValidatedObject(object);");
+
     // /// For each group
 
     // TODO(nchalko) handle the sequence in the AbstractValidator
@@ -988,6 +991,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     writeCatchUnexpectedException(sw,
         "\"Error validating " + beanHelper.getTypeCanonicalName() + "\"");
 
+    // }
     sw.outdent();
     sw.println("}");
   }
@@ -1118,11 +1122,11 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     sw.println("int i = 0;");
 
     // for (Object instance : value) {
-    sw.print("for(Object instance : value) {");
+    sw.println("for(Object instance : value) {");
     sw.indent();
 
-    // if(instance != null ) {
-    sw.println(" if(instance != null ) {");
+    // if(instance != null && !context.alreadyValidated(instance)) {
+    sw.println(" if(instance != null  && !context.alreadyValidated(instance)) {");
     sw.indent();
 
     // violations.addAll(
@@ -1160,11 +1164,12 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     // for (Entry<?, Type> entry : value.entrySet()) {
     sw.print("for(");
     sw.print(Entry.class.getCanonicalName());
-    sw.print("<?, ?> entry : value.entrySet()) {");
+    sw.println("<?, ?> entry : value.entrySet()) {");
     sw.indent();
 
-    // if(entry.getValue() != null ) {
-    sw.println(" if(entry.getValue() != null ) {");
+    // if(entry.getValue() != null &&
+    // !context.alreadyValidated(entry.getValue())) {
+    sw.println(" if(entry.getValue() != null && !context.alreadyValidated(entry.getValue())) {");
     sw.indent();
 
     // violations.addAll(
@@ -1363,10 +1368,19 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
         }
       } else {
         createBeanHelper(elementClass);
+
+        // if (!context.alreadyValidated(value)) {
+        sw.println(" if (!context.alreadyValidated(value)) {");
+        sw.indent();
+
         // violations.addAll(myContext.getValidator().validate(context, value,
         // groups));
         sw.print("violations.addAll(");
         sw.println("myContext.getValidator().validate(myContext, value, groups));");
+
+        // }
+        sw.outdent();
+        sw.println("}");
       }
 
       // }

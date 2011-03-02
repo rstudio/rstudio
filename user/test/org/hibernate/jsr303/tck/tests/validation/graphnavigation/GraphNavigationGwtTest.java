@@ -53,9 +53,7 @@ public class GraphNavigationGwtTest extends GWTTestCase {
     delegate.testGraphNavigationDeterminism();
   }
 
-  @Failing(issue = 5946)
   public void testNoEndlessLoop() {
-    fail("Fail early so othe tests pass");
     delegate.testNoEndlessLoop();
   }
 
@@ -63,7 +61,6 @@ public class GraphNavigationGwtTest extends GWTTestCase {
     delegate.testNullReferencesGetIgnored();
   }
 
-  @Failing(issue = 5946)
   public void testTypeOfContainedValueIsDeterminedAtRuntime() {
     delegate.testTypeOfContainedValueIsDeterminedAtRuntime();
   }

@@ -42,7 +42,6 @@ public class GroupGwtTest extends GWTTestCase {
     delegate.testCyclicGroupSequence();
   }
 
-  @Failing(issue = 5801)
   public void testGroups() {
     delegate.testGroups();
   }

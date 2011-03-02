@@ -16,6 +16,8 @@
 package com.google.gwt.validation.client.impl;
 
 import java.lang.annotation.Annotation;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.validation.MessageInterpolator;
 import javax.validation.metadata.BeanDescriptor;
@@ -24,7 +26,11 @@ import javax.validation.metadata.ConstraintDescriptor;
 /**
  * Context for a {@link com.google.gwt.validation.client.GwtValidation}.
  *
+ * <p>
+ * NOTE: This class is not thread safe.
+ *
  * @param <T> the type of the root bean.
+ *
  */
 public class GwtValidationContext<T> {
 
@@ -35,14 +41,36 @@ public class GwtValidationContext<T> {
   private final AbstractGwtValidator validator;
 
   /**
-   *
+   * The set of validated object.
+   * <p>
+   * This set is shared with and updated by children contexts created by
+   * {@link #append(String)}, {@link #appendIndex(String, int)} and
+   * {@link #appendKey(String, String)}.
    */
+  private final Set<Object> validatedObjects;
+
   public GwtValidationContext(T rootBean, BeanDescriptor beanDescriptor,
       MessageInterpolator messageInterpolator, AbstractGwtValidator validator) {
+    this(rootBean, beanDescriptor, messageInterpolator, validator,
+        new HashSet<Object>());
+  }
+
+  private GwtValidationContext(T rootBean, BeanDescriptor beanDescriptor,
+      MessageInterpolator messageInterpolator, AbstractGwtValidator validator,
+      Set<Object> validatedObjects) {
     this.rootBean = rootBean;
     this.beanDescriptor = beanDescriptor;
     this.messageInterpolator = messageInterpolator;
     this.validator = validator;
+    this.validatedObjects = validatedObjects;
+  }
+
+  public final void addValidatedObject(Object o) {
+    validatedObjects.add(o);
+  }
+
+  public final boolean alreadyValidated(Object o) {
+    return validatedObjects.contains(o);
   }
 
   /**
@@ -53,7 +81,7 @@ public class GwtValidationContext<T> {
    */
   public GwtValidationContext<T> append(String name) {
     GwtValidationContext<T> temp = new GwtValidationContext<T>(rootBean,
-        beanDescriptor, messageInterpolator, validator);
+        beanDescriptor, messageInterpolator, validator, validatedObjects);
     temp.path = path.append(name);
     return temp;
   }
@@ -66,7 +94,7 @@ public class GwtValidationContext<T> {
    */
   public GwtValidationContext<T> appendIndex(String name, int index) {
     GwtValidationContext<T> temp = new GwtValidationContext<T>(rootBean,
-        beanDescriptor, messageInterpolator, validator);
+        beanDescriptor, messageInterpolator, validator, validatedObjects);
     temp.path = path.appendIndex(name, index);
     return temp;
   }
@@ -79,7 +107,7 @@ public class GwtValidationContext<T> {
    */
   public GwtValidationContext<T> appendKey(String name, String key) {
     GwtValidationContext<T> temp = new GwtValidationContext<T>(rootBean,
-        beanDescriptor, messageInterpolator, validator);
+        beanDescriptor, messageInterpolator, validator, validatedObjects);
     temp.path = path.appendKey(name, key);
     return temp;
   }
