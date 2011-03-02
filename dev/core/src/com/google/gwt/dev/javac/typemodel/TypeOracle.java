@@ -712,8 +712,9 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
    * directly or via inherited methods).
    */
   private boolean classFullyImplements(JClassType cls, JClassType intf) {
-    // The class must at least nominally implement the interface.
-    if (!intf.isAssignableFrom(cls)) {
+    // If the interface has at least 1 method, then the class must at
+    // least nominally implement the interface.
+    if ((intf.getMethods().length > 0) && !intf.isAssignableFrom(cls)) {
       return false;
     }
 
