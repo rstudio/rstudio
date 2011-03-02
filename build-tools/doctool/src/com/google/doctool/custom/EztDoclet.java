@@ -155,7 +155,7 @@ public class EztDoclet {
           fields.addAll(Arrays.asList(cls.fields(true)));
 
           if (!fields.isEmpty()) {
-            pw.format("  <dd>%s</dd><br>\n", createFieldList(fields));
+            pw.format("  <dd style='margin-bottom: 0.5em;'>%s</dd>\n", createFieldList(fields));
           }
 
           // Print out all constructors and methods
