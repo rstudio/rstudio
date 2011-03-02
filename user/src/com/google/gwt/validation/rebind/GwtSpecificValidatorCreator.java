@@ -1374,9 +1374,18 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
       sw.println("}");
     }
 
+    // It is possible for an annotation with the exact same values to be set on
+    // both the field and the getter.
+    // Keep track of the ones we have used to make sure we don't duplicate.
+    // It doesn't matter which one we use because they have exactly the same
+    // values.
+    Set<Object> includedAnnotations = Sets.newHashSet();
     int count = 0;
     for (ConstraintDescriptor<?> constraint : p.getConstraintDescriptors()) {
-      if (hasMatchingAnnotation(p, useField, constraint)) {
+      Object annotation = constraint.getAnnotation();
+      if (!includedAnnotations.contains(annotation)
+          && hasMatchingAnnotation(p, useField, constraint)) {
+        includedAnnotations.add(annotation);
         String constraintDescriptorVar = constraintDescriptorVar(
             p.getPropertyName(), count);
 

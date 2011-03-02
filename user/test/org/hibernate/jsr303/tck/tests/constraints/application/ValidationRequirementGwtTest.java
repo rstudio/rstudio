@@ -42,7 +42,6 @@ public class ValidationRequirementGwtTest extends GWTTestCase {
     delegate.testClassLevelConstraints();
   }
 
-  @Failing(issue = 5798)
   public void testConstraintAppliedOnFieldAndProperty() {
     delegate.testConstraintAppliedOnFieldAndProperty();
   }
