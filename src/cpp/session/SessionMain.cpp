@@ -1594,7 +1594,8 @@ int main (int argc, char * const argv[])
       core::system::setenv(kRStudioUserIdentity, options.userIdentity());
            
       // ensure we aren't being started as a low (priviliged) account
-      if (core::system::currentUserIsPrivilleged(options.minimumUserId()))
+      if (serverMode &&
+          core::system::currentUserIsPrivilleged(options.minimumUserId()))
       {
          Error error = systemError(boost::system::errc::permission_denied,
                                    ERROR_LOCATION);
