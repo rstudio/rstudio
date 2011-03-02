@@ -87,9 +87,6 @@ public class ArtificialRescueRecorder {
 
       if (instantiable) {
         currentClass.addArtificialRescue(classType);
-
-        // Make sure that a class literal for the type has been allocated
-        program.getLiteralClass(classType);
       }
 
       if (classType instanceof JDeclaredType) {

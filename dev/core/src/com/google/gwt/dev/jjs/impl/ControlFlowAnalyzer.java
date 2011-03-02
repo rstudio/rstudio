@@ -575,7 +575,6 @@ public class ControlFlowAnalyzer {
           for (JNode artificial : ((JDeclaredType) type).getArtificialRescues()) {
             if (artificial instanceof JReferenceType) {
               rescue((JReferenceType) artificial, true, true);
-              rescue(program.getLiteralClass((JReferenceType) artificial).getField());
             } else if (artificial instanceof JVariable) {
               rescue((JVariable) artificial);
             } else if (artificial instanceof JMethod) {
