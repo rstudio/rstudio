@@ -51,7 +51,6 @@ import com.google.gwt.resources.ext.SupportsGeneratorResultCaching;
 import com.google.gwt.resources.rg.BundleResourceGenerator;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
-import com.google.gwt.user.rebind.StringSourceWriter;
 
 import java.io.File;
 import java.io.IOException;
@@ -75,18 +74,25 @@ import java.util.Set;
  * The general structure of the generated class is as follows:
  * 
  * <pre>
- * public ResourceType resource() {
- *   return resource;
- * }
- * private void _init0() {
+ * private void resourceInitializer() {
  *   resource = new Resource();
+ * }
+ * private static class cellTreeClosedItemInitializer {
+ *   // Using a static initializer so the compiler can optimize clinit calls.
+ *   // Refers back to an instance method. See comment below.
+ *   static {
+ *     _instance0.resourceInitializer();
+ *   }
+ *   static ResourceType get() {
+ *     return resource;
+ *   }
+ * }
+ * public ResourceType resource() {
+ *   return cellTreeClosedItemInitializer.get();
  * }
  * // Other ResourceGenerator-defined fields
  * private static ResourceType resource;
  * private static HashMap&lt;String, ResourcePrototype&gt; resourceMap;
- * static {
- *   new ClientBundle()._init0();
- * }
  * public ResourcePrototype[] getResources() {
  *   return new ResourcePrototype[] { resource() };
  * }
@@ -119,6 +125,7 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
   private static final String CACHED_PROPERTY_INFORMATION = "cpi";
   private static final String CACHED_RESOURCE_INFORMATION = "cri";
   private static final String CACHED_TYPE_INFORMATION = "cti";
+  private static final String INSTANCE_NAME = "_instance0";
 
   /**
    * An implementation of ClientBundleFields.
@@ -432,18 +439,16 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
       JParameterizedType hashMapStringResource = getHashMapStringResource(typeOracle);
       String resourceMapField = fields.define(hashMapStringResource, "resourceMap");
 
+      // Write a static instance for use by the static initializers.
+      sw.print("private static " + generatedSimpleSourceName + " ");
+      sw.println(INSTANCE_NAME + " = new " + generatedSimpleSourceName + "();");
+
       // Write the generated code to disk
       createFieldsAndAssignments(logger, sw, generators, resourceContext,
           fields);
 
       // Print the accumulated field definitions
       sw.println(fields.getCode());
-
-      // Print the static initializer after the fields
-      sw.println("static {");
-      sw.indentln("new " + resourceContext.getImplementationSimpleSourceName()
-          + "()._init0();");
-      sw.println("}");
 
       /*
        * The map-accessor methods use JSNI and need a fully-qualified class
@@ -736,7 +741,7 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
    */
   private boolean createFieldsAndAssignments(TreeLogger logger,
       AbstractResourceContext resourceContext, ResourceGenerator rg,
-      List<JMethod> generatorMethods, SourceWriter sw, SourceWriter init,
+      List<JMethod> generatorMethods, SourceWriter sw,
       ClientBundleFields fields) {
 
     // Defer failure until this phase has ended
@@ -770,14 +775,42 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
       String ident = fields.define(m.getReturnType().isClassOrInterface(),
           m.getName(), null, true, false);
 
-      // Strip off all but the access modifiers
-      sw.print(m.getReadableDeclaration(false, true, true, true, true));
-      sw.println(" {");
+      /*
+       * Create an initializer method in the context of an instance so that
+       * resources can refer to one another by simply emitting a call to
+       * <code>resource()</code>.
+       */
+      String initializerName = m.getName() + "Initializer";
+      sw.println("private void " + initializerName + "() {");
+      sw.indentln(ident + " = " + rhs + ";");
+      sw.println("}");
+      
+      /*
+       * Create a static Initializer class to lazily initialize the field on
+       * first access. The compiler can efficiently optimize this static class
+       * using clinits.
+       */
+      sw.println("private static class " + initializerName + " {");
+
+      sw.indent();
+      sw.println("static {");
+      sw.indentln(INSTANCE_NAME + "." + initializerName + "();");
+      sw.println("}");
+
+      sw.print("static ");
+      sw.print(m.getReturnType().getParameterizedQualifiedSourceName());
+      sw.println(" get() {");
       sw.indentln("return " + ident + ";");
       sw.println("}");
 
-      // Record the initialization statement for the one-shot init() method
-      init.println(ident + " = " + rhs + ";");
+      sw.outdent();
+      sw.println("}");
+      
+      // Strip off all but the access modifiers
+      sw.print(m.getReadableDeclaration(false, true, true, true, true));
+      sw.println(" {");
+      sw.indentln("return " + initializerName + ".get();");
+      sw.println("}");
     }
 
     if (fail) {
@@ -797,20 +830,11 @@ public abstract class AbstractClientBundleGenerator extends GeneratorExt {
     // Try to provide as many errors as possible before failing.
     boolean success = true;
 
-    SourceWriter init = new StringSourceWriter();
-    init.println("private void _init0() {");
-    init.indent();
-
     // Run the ResourceGenerators to generate implementations of the methods
     for (Map.Entry<ResourceGenerator, List<JMethod>> entry : generators.entrySet()) {
       success &= createFieldsAndAssignments(logger, resourceContext,
-          entry.getKey(), entry.getValue(), sw, init, fields);
+          entry.getKey(), entry.getValue(), sw, fields);
     }
-
-    init.outdent();
-    init.println("}");
-
-    sw.println(init.toString());
 
     if (!success) {
       throw new UnableToCompleteException();
