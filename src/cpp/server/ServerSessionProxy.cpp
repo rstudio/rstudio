@@ -63,8 +63,8 @@ std::string readLdLibraryPath()
    FilePath ldpathScript(server::options().rldpathPath());
    if (ldpathScript.exists())
    {
-      Error error = system::captureCommand(ldpathScript.absolutePath(),
-                                           &ldLibraryPath);
+      Error error = core::system::captureCommand(ldpathScript.absolutePath(),
+                                                 &ldLibraryPath);
 
       // this is here to enable support for rJava. if it doesn't work for some
       // reason then just log and don't hold up the whole works for this error
