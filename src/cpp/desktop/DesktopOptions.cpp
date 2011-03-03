@@ -103,11 +103,25 @@ QString findFirstMatchingFont(const QStringList& fonts, QString defaultFont)
 QString Options::proportionalFont() const
 {
    QStringList fontList;
+#if defined(_WIN32)
+   fontList <<
+           "Segoe UI" << "Verdana" <<  // Windows
+           "Lucida Sans" << "DejaVu Sans" <<  // Linux
+           "Lucida Grande" <<          // Mac
+           "Helvetica";
+#elif defined(__APPLE__)
+   fontList <<
+           "Lucida Grande" <<          // Mac
+           "Lucida Sans" << "DejaVu Sans" <<  // Linux
+           "Segoe UI" << "Verdana" <<  // Windows
+           "Helvetica";
+#else
    fontList <<
            "Lucida Sans" << "DejaVu Sans" <<  // Linux
            "Lucida Grande" <<          // Mac
            "Segoe UI" << "Verdana" <<  // Windows
            "Helvetica";
+#endif
    return "\"" + findFirstMatchingFont(fontList, "sans-serif") + "\"";
 }
 
