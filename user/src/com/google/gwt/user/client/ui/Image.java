@@ -409,7 +409,6 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
     assert Document.get().getBody().isOrHasChild(element);
 
     Image image = new Image(element);
-    image.changeState(new UnclippedState(element));
 
     // Mark it attached and remember it for cleanup.
     image.onAttach();
@@ -481,6 +480,7 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
   protected Image(Element element) {
     ImageElement.as(element);
     setElement(element);
+    changeState(new UnclippedState(element));
   }
 
   public HandlerRegistration addClickHandler(ClickHandler handler) {

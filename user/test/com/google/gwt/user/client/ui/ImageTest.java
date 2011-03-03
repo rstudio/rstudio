@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ErrorEvent;
 import com.google.gwt.event.dom.client.ErrorHandler;
 import com.google.gwt.event.dom.client.LoadEvent;
@@ -50,6 +51,25 @@ public class ImageTest extends GWTTestCase {
     }
   }
 
+  private static class TestImage extends Image {
+    public TestImage(Element element) {
+      super(element);
+    }
+
+    public static TestImage wrap(Element element) {
+      // Assert that the element is attached.
+      assert Document.get().getBody().isOrHasChild(element);
+
+      TestImage image = new TestImage(element);
+
+      // Mark it attached and remember it for cleanup.
+      image.onAttach();
+      RootPanel.detachOnWindowClose(image);
+
+      return image;
+    }
+  }
+  
   private abstract static class TestLoadHandler implements LoadHandler {
     private boolean finished = false;
 
@@ -554,6 +574,23 @@ public class ImageTest extends GWTTestCase {
     image.setVisibleRect(0, 0, 16, 16);
     image.setVisibleRect(16, 0, 16, 16);
     image.setVisibleRect(16, 8, 8, 8);
+  }
+
+  /**
+   * Tests that it is possible to make a subclass of Image that can be wrapped.
+   */
+  public void testWrapOfSubclass() {
+    String uid = Document.get().createUniqueId();
+    DivElement div = Document.get().createDivElement();
+    div.setInnerHTML("<img id='" + uid + "' src='counting-forward.png'>");
+    Document.get().getBody().appendChild(div);
+
+    final TestImage image = TestImage.wrap(Document.get().getElementById(uid));
+    assertNotNull(image);
+
+    // Cleanup.
+    Document.get().getBody().appendChild(div);
+    RootPanel.detachNow(image);
   }
 
   /**
