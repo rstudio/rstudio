@@ -83,6 +83,8 @@ QString verifyAndNormalizeFilename(QString filename)
 
 int main(int argc, char* argv[])
 {
+   core::system::initHook();
+
    try
    {
       // initialize log

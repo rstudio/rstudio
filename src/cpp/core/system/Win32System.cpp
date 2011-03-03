@@ -38,11 +38,110 @@
 #include <core/DateTime.hpp>
 #include <core/StringUtils.hpp>
 
+#ifndef JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+#define JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE 0x2000
+#endif
+
 namespace core {
 namespace system {
 
 namespace {
 LogWriter* s_pLogWriter = NULL;
+
+Error initJobObject(bool* detachFromJob)
+{
+   /*
+    * Create a Job object and assign this process to it. This will
+    * cause all child processes to be assigned to the same job.
+    * With JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE set, all the child
+    * processes will be killed when this process terminates (since
+    * it is the only one holding a handle to the job).
+    */
+
+   // If detachFromJob is true, it means we need to relaunch this
+   // executable with CREATE_BREAKAWAY_FROM_JOB
+   *detachFromJob = false;
+
+   HANDLE hJob = ::CreateJobObject(NULL, NULL);
+   if (!hJob)
+      return systemError(::GetLastError(), ERROR_LOCATION);
+
+   JOBOBJECT_EXTENDED_LIMIT_INFORMATION jeli = { 0 };
+   jeli.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+   ::SetInformationJobObject(hJob,
+                             JobObjectExtendedLimitInformation,
+                             &jeli,
+                             sizeof(jeli));
+
+   if (::AssignProcessToJobObject(hJob, ::GetCurrentProcess()))
+   {
+      DWORD error = ::GetLastError();
+      if (error == ERROR_ACCESS_DENIED)
+      {
+         // Use an environment variable to prevent us from somehow
+         // getting into an infinite loop of detaching (which would
+         // otherwise occur if ERROR_ACCESS_DENIED is being returned
+         // for some reason other than an existing job object being
+         // attached). This works because environment variables are
+         // inherited by our job-detached child process.
+         if (getenv("_RSTUDIO_LEVEL").empty())
+         {
+            setenv("_RSTUDIO_LEVEL", "1");
+            *detachFromJob = true;
+         }
+      }
+      return systemError(error, ERROR_LOCATION);
+   }
+
+   return Success();
+}
+
+} // anonymous namespace
+
+void initHook()
+{
+   // Logging will NOT work in this function!!
+
+   bool detachFromJob;
+   Error error = initJobObject(&detachFromJob);
+   if (!detachFromJob)
+      return;
+
+   TCHAR path[MAX_PATH];
+   if (!::GetModuleFileName(NULL, path, MAX_PATH))
+      return;  // Couldn't get the path of the current .exe
+
+   STARTUPINFO startupInfo;
+   memset(&startupInfo, 0, sizeof(startupInfo));
+   startupInfo.cb = sizeof(startupInfo);
+   PROCESS_INFORMATION procInfo;
+   memset(&procInfo, 0, sizeof(procInfo));
+
+   if (!::CreateProcess(NULL,
+                        ::GetCommandLine(),
+                        NULL,
+                        NULL,
+                        TRUE,
+                        CREATE_BREAKAWAY_FROM_JOB | ::GetPriorityClass(::GetCurrentProcess()),
+                        NULL,
+                        NULL,
+                        &startupInfo,
+                        &procInfo))
+   {
+      return;  // Couldn't execute
+   }
+
+   ::AllowSetForegroundWindow(procInfo.dwProcessId);
+   ::WaitForSingleObject(procInfo.hProcess, INFINITE);
+
+   DWORD exitCode;
+   if (!::GetExitCodeProcess(procInfo.hProcess, &exitCode))
+      exitCode = ::GetLastError();
+
+   ::CloseHandle(procInfo.hProcess);
+   ::CloseHandle(procInfo.hThread);
+
+   ::ExitProcess(exitCode);
 }
 
 void initializeSystemLog(const std::string& programIdentity, int logLevel)

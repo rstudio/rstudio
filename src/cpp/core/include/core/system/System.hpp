@@ -47,7 +47,8 @@ void addToSystemPath(const FilePath& path, bool prepend = false);
 #ifdef _WIN32
 bool isWin64();
 #endif
-   
+
+void initHook();
 // initialization (not thread safe, call from main thread at app startup)  
 void initializeSystemLog(const std::string& programIdentity, int logLevel);
 void initializeLog(const std::string& programIdentity,
