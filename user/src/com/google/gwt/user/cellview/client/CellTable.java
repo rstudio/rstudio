@@ -482,6 +482,19 @@ public class CellTable<T> extends AbstractHasData<T> {
     return DEFAULT_RESOURCES;
   }
 
+  /**
+   * Create the default loading indicator using the loading image in the
+   * specified {@link Resources}.
+   * 
+   * @param resources the resources
+   * @return a widget loading indicator
+   */
+  private static Widget createDefaultLoadingIndicator(Resources resources) {
+    ImageResource loadingImg = resources.cellTableLoading();
+    return (loadingImg == null) ? null
+        : new Image(resources.cellTableLoading());
+  }
+
   final TableColElement colgroup;
   private boolean cellIsEditing;
 
@@ -593,6 +606,23 @@ public class CellTable<T> extends AbstractHasData<T> {
    */
   public CellTable(final int pageSize, Resources resources,
       ProvidesKey<T> keyProvider) {
+    this(pageSize, resources, keyProvider,
+        createDefaultLoadingIndicator(resources));
+  }
+
+  /**
+   * Constructs a table with the specified page size, {@link Resources}, key
+   * provider, and loading indicator.
+   * 
+   * @param pageSize the page size
+   * @param resources the resources to use for this widget
+   * @param keyProvider an instance of ProvidesKey<T>, or null if the record
+   *          object should act as its own key
+   * @param loadingIndicator the widget to use as a loading indicator, or null
+   *          to disable
+   */
+  public CellTable(final int pageSize, Resources resources,
+      ProvidesKey<T> keyProvider, Widget loadingIndicator) {
     super(Document.get().createTableElement(), pageSize, keyProvider);
     if (TABLE_IMPL == null) {
       TABLE_IMPL = GWT.create(Impl.class);
@@ -643,14 +673,8 @@ public class CellTable<T> extends AbstractHasData<T> {
       loadingIndicatorContainer.setStyleName(style.cellTableLoading());
     }
 
-    /*
-     * Set the default loading indicator to use if the user provided a loading
-     * image resource.
-     */
-    ImageResource loadingImg = resources.cellTableLoading();
-    if (loadingImg != null) {
-      setLoadingIndicator(new Image(loadingImg));
-    }
+    // Set the loading indicator.
+    setLoadingIndicator(loadingIndicator); // Can be null.
 
     // Sink events.
     Set<String> eventTypes = new HashSet<String>();
@@ -1106,7 +1130,7 @@ public class CellTable<T> extends AbstractHasData<T> {
   /**
    * Set the widget to display when the table has no rows.
    * 
-   * @param widget the empty table widget
+   * @param widget the empty table widget, or null to disable
    */
   public void setEmptyTableWidget(Widget widget) {
     emptyTableWidgetContainer.setWidget(widget);
@@ -1115,7 +1139,7 @@ public class CellTable<T> extends AbstractHasData<T> {
   /**
    * Set the widget to display when the data is loading.
    * 
-   * @param widget the loading indicator
+   * @param widget the loading indicator, or null to disable
    */
   public void setLoadingIndicator(Widget widget) {
     loadingIndicatorContainer.setWidget(widget);
