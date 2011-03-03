@@ -404,7 +404,7 @@ SEXP parseRequestBody(const http::Request& request, r::sexp::Protect* pProtect)
    {
       return R_NilValue;
    }
-   else if (!request.formFields().empty())
+   else if (request.contentType() == "application/x-www-form-urlencoded")
    {
       return parseQuery(request.formFields(), pProtect);
    }
@@ -429,6 +429,31 @@ SEXP parseRequestBody(const http::Request& request, r::sexp::Protect* pProtect)
    }
 }
 
+// mirrors collect_buffers in Rhttpd.c
+SEXP headersBuffer(const http::Request& request, r::sexp::Protect* pProtect)
+{
+   // get headers
+   std::string headers;
+   for(http::Headers::const_iterator it = request.headers().begin();
+       it != request.headers().end();
+       ++it)
+   {
+      headers.append(it->name);
+      headers.append(": ");
+      headers.append(it->value);
+      headers.append("\n");
+   }
+
+   // allocate RAWSXP and copy headers to it
+   SEXP headersSEXP = Rf_allocVector(RAWSXP, headers.length());
+   pProtect->add(headersSEXP);
+   char* headersBuffer = (char*) RAW(headersSEXP);
+   headers.copy(headersBuffer, headers.length());
+
+   // return
+   return headersSEXP;
+}
+
 typedef boost::function<SEXP(const std::string&)> HandlerSource;
 
 
@@ -443,20 +468,22 @@ SEXP callHandler(const std::string& path,
    // uri decode the path
    std::string decodedPath = http::util::urlDecode(path, false);
 
-   // construct "try(httpd(url, query, body), silent=TRUE)"
+   // construct "try(httpd(url, query, body, headers), silent=TRUE)"
 
    SEXP trueSEXP;
    pProtect->add(trueSEXP = Rf_ScalarLogical(TRUE));
    SEXP queryStringSEXP = parseQuery(request.queryParams(), pProtect);
    SEXP requestBodySEXP = parseRequestBody(request, pProtect);
+   SEXP headersSEXP = headersBuffer(request, pProtect);
 
    SEXP callSEXP;
    pProtect->add(callSEXP = Rf_lang3(
          Rf_install("try"),
          Rf_lcons( (handlerSource(path)),
-                   (Rf_list3(Rf_mkString(path.c_str()),
+                   (Rf_list4(Rf_mkString(path.c_str()),
                              queryStringSEXP,
-                             requestBodySEXP))),
+                             requestBodySEXP,
+                             headersSEXP))),
          trueSEXP));
 
    SET_TAG(CDR(CDR(callSEXP)), Rf_install("silent"));
