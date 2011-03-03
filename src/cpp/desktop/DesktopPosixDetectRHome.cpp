@@ -13,11 +13,40 @@
 
 #include "DesktopDetectRHome.hpp"
 
+#include <core/FilePath.hpp>
+#include <core/system/System.hpp>
+
+using namespace core;
+
 namespace desktop {
 
-// Under Linux this is a no-op
-bool prepareEnvironment(Options&)
+bool prepareEnvironment(Options& options)
 {
+   // determine path to r-ldpath script (try prod then dev path)
+   FilePath supportingFilePath = options.supportingFilePath();
+   FilePath scriptPath = supportingFilePath.complete("bin/r-ldpath");
+   if (!scriptPath.exists())
+      scriptPath = supportingFilePath.complete("session/r-ldpath");
+   if (scriptPath.exists())
+   {
+      // run script
+      std::string ldLibraryPath;
+      Error error = system::captureCommand(scriptPath.absolutePath(),
+                                           &ldLibraryPath);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return true;
+      }
+
+      // set env var
+      system::setenv("LD_LIBRARY_PATH", ldLibraryPath);
+
+   }
+
+   // always return true -- this function basically allows rJava to work
+   // if it doesn't work for some reason we just log and don't prevent
+   // the whole process from starting
    return true;
 }
 

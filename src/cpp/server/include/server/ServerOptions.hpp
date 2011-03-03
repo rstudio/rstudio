@@ -95,6 +95,11 @@ public:
    { 
       return std::string(rsessionPath_.c_str()); 
    }
+
+   std::string rldpathPath() const
+   {
+      return std::string(rldpathPath_.c_str());
+   }
    
    std::string rsessionConfigFile() const
    { 
@@ -130,6 +135,7 @@ private:
    std::string oauthConsumerKey_;
    std::string oauthConsumerSecret_;
    std::string rsessionPath_;
+   std::string rldpathPath_;
    std::string rsessionConfigFile_;
    int rsessionMemoryLimitMb_;
    int rsessionStackLimitMb_;

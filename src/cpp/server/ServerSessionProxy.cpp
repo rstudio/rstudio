@@ -57,6 +57,24 @@ namespace session_proxy {
    
 namespace {
 
+std::string readLdLibraryPath()
+{
+   std::string ldLibraryPath;
+   FilePath ldpathScript(server::options().rldpathPath());
+   if (ldpathScript.exists())
+   {
+      Error error = system::captureCommand(ldpathScript.absolutePath(),
+                                           &ldLibraryPath);
+
+      // this is here to enable support for rJava. if it doesn't work for some
+      // reason then just log and don't hold up the whole works for this error
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   return ldLibraryPath;
+}
+
 Error launchSession(const std::string& username, PidType* pPid)
 {
    // last ditch user validation -- an invalid user should very rarely
@@ -89,6 +107,11 @@ Error launchSession(const std::string& username, PidType* pPid)
    environment.push_back(std::make_pair(
                            kRStudioLimitRpcClientUid,
                            boost::lexical_cast<std::string>(uid)));
+
+   // pass LD_LIBRARY_PATH
+   std::string ldLibraryPath = readLdLibraryPath();
+   if (!ldLibraryPath.empty())
+      environment.push_back(std::make_pair("LD_LIBRARY_PATH", ldLibraryPath));
 
    // launch the session
    *pPid = -1;

@@ -154,6 +154,14 @@ if(UNIX AND NOT APPLE)
                          INSTALL_RPATH ${LIBR_HOME}/lib)
 endif()
 
+# configure and install r-ldpaths script
+if(UNIX AND NOT APPLE)
+   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/r-ldpath.in
+                  ${CMAKE_CURRENT_BINARY_DIR}/r-ldpath)
+   install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/r-ldpath
+           DESTINATION ${RSTUDIO_INSTALL_BIN})
+endif()
+
 # install binary
 install(TARGETS rsession DESTINATION ${RSTUDIO_INSTALL_BIN})
 

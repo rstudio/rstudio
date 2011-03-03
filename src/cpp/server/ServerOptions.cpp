@@ -95,6 +95,9 @@ ProgramStatus Options::read(int argc, char * const argv[])
       ("rsession-path", 
          value<std::string>(&rsessionPath_)->default_value("bin/rsession"),
          "path to rsession executable")
+      ("rldpath-path",
+         value<std::string>(&rldpathPath_)->default_value("bin/r-ldpath"),
+         "path to r-ldpath script")
       ("rsession-config-file",
          value<std::string>(&rsessionConfigFile_)->default_value(""),
          "path to rsession config file")
@@ -163,6 +166,7 @@ ProgramStatus Options::read(int argc, char * const argv[])
    // path (this allows us to be relocatable)
    resolvePath(installPath, &wwwLocalPath_);
    resolvePath(installPath, &rsessionPath_);
+   resolvePath(installPath, &rldpathPath_);
    resolvePath(installPath, &rsessionConfigFile_);
 
    // return status
