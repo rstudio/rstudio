@@ -66,7 +66,6 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
    */
   private static final String URI_UTILS_FQCN = UriUtils.class.getName();
 
-
   public SafeHtmlTemplatesImplMethodCreator(
       AbstractGeneratorClassCreator classCreator) {
     super(classCreator);
@@ -180,9 +179,7 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
    */
   private void emitMethodBodyFromTemplate(TreeLogger logger, String template,
       JParameter[] params) throws UnableToCompleteException {
-    println("StringBuilder sb = new java.lang.StringBuilder()");
-    indent();
-    indent();
+    println("StringBuilder sb = new java.lang.StringBuilder();");
 
     HtmlTemplateParser parser = new HtmlTemplateParser(logger);
     parser.parseTemplate(template);
@@ -208,7 +205,6 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
             + template);
       }
     }
-    println(";");
     outdent();
     outdent();
     println("return new " + BLESSED_STRING_FQCN + "(sb.toString());");
@@ -233,7 +229,7 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
   private void emitParameterExpression(TreeLogger logger,
       HtmlContext htmlContext, String formalParameterName,
       JType parameterType) {
-    print(".append(");
+    print("sb.append(");
     switch (htmlContext.getType()) {
       case CSS:
         // TODO(xtof): Improve support for CSS.
@@ -267,7 +263,7 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
               "unknown HTML context for formal template parameter "
                   + formalParameterName + ": " + htmlContext);
     }
-    println(")");
+    println(");");
   }
 
   /**
@@ -276,9 +272,9 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
    * @param str the {@link String} to emit as a literal
    */
   private void emitStringLiteral(String str) {
-    print(".append(");
+    print("sb.append(");
     print(wrap(str));
-    println(")");
+    println(");");
   }
 
   /**
@@ -293,7 +289,7 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
    *   <li>If the parameter is of a primitive (e.g., numeric, boolean) type, or
    *       of type {@link SafeHtml}, it is emitted as is, without escaping.
    *   <li>Otherwise, an expression that passes the paramter's value through
-   *       {@link EscapeUtils#htmlEscape(String)} is emitted.
+   *       {@link SafeHtmlUtils#htmlEscape(String)} is emitted.
    * </ul>
    *
    * @param formalParameterName the name of the template method's formal
