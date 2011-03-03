@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -82,15 +82,14 @@ import java.util.Set;
 
 /**
  * Test TypeOracleMediator.
- *
+ * 
  * NOTE: These tests require the test source code to be on the classpath. In
  * Eclipse, make sure your launch configuration includes the 'core/test'
  * directory on the classpath tab.
  */
 public abstract class TypeOracleMediatorTestBase extends TestCase {
 
-  protected static abstract class CheckedJavaResource extends
-      MutableJavaResource {
+  protected static abstract class CheckedJavaResource extends MutableJavaResource {
     private final String[] shortTypeNames;
 
     public CheckedJavaResource(Class<?> clazz, String... shortTypeNames) {
@@ -154,7 +153,7 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
      * This method is used to pull sample source from inside the test case. By
      * default, return <code>null</code> to indicate that source should be on
      * the classpath.
-     *
+     * 
      * @return
      */
     public String getSource() {
@@ -202,8 +201,7 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
           return null;
         }
         assertNotNull("Make sure your runtime environment includes the source "
-            + "for the testcases on the classpath if this assertion fails",
-            source);
+            + "for the testcases on the classpath if this assertion fails", source);
       }
       return source + extraSource;
     }
@@ -211,9 +209,9 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
     private TypeData[] getTypeData(Class<?> aClass) throws IOException {
       List<TypeData> results = new ArrayList<TypeData>();
       String packageName = Shared.getPackageName(aClass.getName());
-      TypeData newData = new TypeData(packageName, aClass.getSimpleName(),
-          aClass.getName().replace(".", "/"), null, getByteCode(aClass),
-          System.currentTimeMillis());
+      TypeData newData =
+          new TypeData(packageName, aClass.getSimpleName(), aClass.getName().replace(".", "/"),
+              null, getByteCode(aClass), System.currentTimeMillis());
       results.add(newData);
       Class<?>[] subclasses = aClass.getDeclaredClasses();
       for (Class<?> subclass : subclasses) {
@@ -232,8 +230,8 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
       assertNotNull(type);
       assertEquals("AfterAssimilate", type.getSimpleSourceName());
       assertNotNull(type.getSuperclass());
-      assertEquals(getPackageName() + ".BeforeAssimilate",
-          type.getSuperclass().getQualifiedSourceName());
+      assertEquals(getPackageName() + ".BeforeAssimilate", type.getSuperclass()
+          .getQualifiedSourceName());
     }
   };
 
@@ -256,8 +254,7 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
   };
 
   protected static final CheckedJavaResource CU_BindToTypeScope = new CheckedJavaResource(
-      BindToTypeScope.class, "BindToTypeScope.Object",
-      "BindToTypeScope.DerivedObject") {
+      BindToTypeScope.class, "BindToTypeScope.Object", "BindToTypeScope.DerivedObject") {
 
     @Override
     public void check(JClassType type) throws NotFoundException {
@@ -317,14 +314,14 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
     }
   };
 
-  protected static final CheckedJavaResource CU_DeclaresInnerGenericInterface = new CheckedJavaResource(
-      DeclaresGenericInnerInterface.class,
-      "DeclaresGenericInnerInterface.Inner") {
-    @Override
-    public void check(JClassType type) throws NotFoundException {
-      assertNotNull(type.isGenericType());
-    }
-  };
+  protected static final CheckedJavaResource CU_DeclaresInnerGenericInterface =
+      new CheckedJavaResource(DeclaresGenericInnerInterface.class,
+          "DeclaresGenericInnerInterface.Inner") {
+        @Override
+        public void check(JClassType type) throws NotFoundException {
+          assertNotNull(type.isGenericType());
+        }
+      };
 
   protected static final CheckedJavaResource CU_DeclaresInnerGenericType = new CheckedJavaResource(
       DeclaresGenericInnerType.class, "DeclaresGenericInnerType.Inner") {
@@ -350,8 +347,8 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
     }
   };
 
-  protected static final CheckedJavaResource CU_Derived = new CheckedJavaResource(
-      Derived.class, "Derived.Nested") {
+  protected static final CheckedJavaResource CU_Derived = new CheckedJavaResource(Derived.class,
+      "Derived.Nested") {
     @Override
     public void check(JClassType type) {
       if ("Derived".equals(type.getSimpleSourceName())) {
@@ -444,10 +441,8 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
 
     public void checkInner(JClassType type) {
       assertEquals("ExtendsInner", type.getSimpleSourceName());
-      assertEquals(getTypeName() + ".ExtendsInner",
-          type.getQualifiedSourceName());
-      assertEquals(getTypeName(),
-          type.getEnclosingType().getQualifiedSourceName());
+      assertEquals(getTypeName() + ".ExtendsInner", type.getQualifiedSourceName());
+      assertEquals(getTypeName(), type.getEnclosingType().getQualifiedSourceName());
     }
 
     public void checkOuter(JClassType type) {
@@ -456,18 +451,17 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
       JClassType[] nested = type.getNestedTypes();
       assertEquals(1, nested.length);
       JClassType inner = nested[0];
-      assertEquals(getTypeName() + ".ExtendsInner",
-          inner.getQualifiedSourceName());
+      assertEquals(getTypeName() + ".ExtendsInner", inner.getQualifiedSourceName());
     }
   };
 
-  protected static final CheckedJavaResource CU_ExtendsParameterizedInterface = new CheckedJavaResource(
-      ExtendsParameterizedInterface.class) {
-    @Override
-    public void check(JClassType type) throws NotFoundException {
-      assertNotNull(type.getSuperclass().isParameterized());
-    }
-  };
+  protected static final CheckedJavaResource CU_ExtendsParameterizedInterface =
+      new CheckedJavaResource(ExtendsParameterizedInterface.class) {
+        @Override
+        public void check(JClassType type) throws NotFoundException {
+          assertNotNull(type.getSuperclass().isParameterized());
+        }
+      };
 
   protected static final CheckedJavaResource CU_FieldsAndTypes = new CheckedJavaResource(
       Fields.class) {
@@ -485,8 +479,7 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
         JType fieldType;
         JArrayType arrayType;
         JType componentType;
-        final JClassType someType = tio.getType(getPackageName(),
-            "DefaultClass");
+        final JClassType someType = tio.getType(getPackageName(), "DefaultClass");
         final JArrayType intArrayType = tio.getArrayType(JPrimitiveType.INT);
         final JArrayType someTypeArrayType = tio.getArrayType(someType);
         final JArrayType intArrayArrayType = tio.getArrayType(intArrayType);
@@ -541,8 +534,7 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
         componentType = arrayType.getComponentType();
         assertNotNull(componentType);
         assertSame(someType, componentType);
-        assertEquals(getPackageName() + ".DefaultClass[]",
-            fieldType.getQualifiedSourceName());
+        assertEquals(getPackageName() + ".DefaultClass[]", fieldType.getQualifiedSourceName());
 
         field = type.getField("intArrayArray");
         fieldType = field.getType();
@@ -587,8 +579,7 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
     public void checkInner(JClassType type) {
       assertEquals("Inner", type.getSimpleSourceName());
       assertEquals(getTypeName() + ".Inner", type.getQualifiedSourceName());
-      assertEquals(getTypeName(),
-          type.getEnclosingType().getQualifiedSourceName());
+      assertEquals(getTypeName(), type.getEnclosingType().getQualifiedSourceName());
     }
 
     public void checkOuter(JClassType type) {
@@ -601,8 +592,7 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
     }
   };
 
-  protected static final CheckedJavaResource CU_List = new CheckedJavaResource(
-      List.class) {
+  protected static final CheckedJavaResource CU_List = new CheckedJavaResource(List.class) {
 
     @Override
     public void check(JClassType type) throws NotFoundException {
@@ -623,8 +613,7 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
     }
   };
 
-  protected static final CheckedJavaResource CU_Object = new CheckedJavaResource(
-      Object.class) {
+  protected static final CheckedJavaResource CU_Object = new CheckedJavaResource(Object.class) {
     @Override
     public void check(JClassType type) {
       assertEquals("Object", type.getSimpleSourceName());
@@ -640,8 +629,8 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
     }
   };
 
-  protected static final CheckedJavaResource CU_OuterInner = new CheckedJavaResource(
-      Outer.class, "Outer.Inner") {
+  protected static final CheckedJavaResource CU_OuterInner = new CheckedJavaResource(Outer.class,
+      "Outer.Inner") {
 
     @Override
     public void check(JClassType type) {
@@ -655,10 +644,8 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
 
     public void checkInner(JClassType type) {
       assertEquals("Inner", type.getSimpleSourceName());
-      assertEquals(CU_OuterInner.getTypeName() + ".Inner",
-          type.getQualifiedSourceName());
-      assertEquals(CU_OuterInner.getTypeName(),
-          type.getEnclosingType().getQualifiedSourceName());
+      assertEquals(CU_OuterInner.getTypeName() + ".Inner", type.getQualifiedSourceName());
+      assertEquals(CU_OuterInner.getTypeName(), type.getEnclosingType().getQualifiedSourceName());
     }
 
     public void checkOuter(JClassType type) {
@@ -667,33 +654,31 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
       JClassType[] nested = type.getNestedTypes();
       assertEquals(1, nested.length);
       JClassType inner = nested[0];
-      assertEquals(CU_OuterInner.getTypeName() + ".Inner",
-          inner.getQualifiedSourceName());
+      assertEquals(CU_OuterInner.getTypeName() + ".Inner", inner.getQualifiedSourceName());
     }
   };
 
-  protected static final CheckedJavaResource CU_ReferencesGenericListConstant = new CheckedJavaResource(
-      ReferencesGenericListConstant.class) {
-    @Override
-    public void check(JClassType type) throws NotFoundException {
-      assertEquals(getTypeName(), type.getQualifiedSourceName());
-    }
-  };
+  protected static final CheckedJavaResource CU_ReferencesGenericListConstant =
+      new CheckedJavaResource(ReferencesGenericListConstant.class) {
+        @Override
+        public void check(JClassType type) throws NotFoundException {
+          assertEquals(getTypeName(), type.getQualifiedSourceName());
+        }
+      };
 
-  protected static final CheckedJavaResource CU_ReferencesParameterizedTypeBeforeItsGenericFormHasBeenProcessed = new CheckedJavaResource(
-      ReferencesParameterizedTypeBeforeItsGenericFormHasBeenProcessed.class) {
+  protected static final CheckedJavaResource CU_ReferencesParameterizedTypeBeforeItsGenericFormHasBeenProcessed =
+      new CheckedJavaResource(ReferencesParameterizedTypeBeforeItsGenericFormHasBeenProcessed.class) {
 
-    @Override
-    public void check(JClassType type) throws NotFoundException {
+        @Override
+        public void check(JClassType type) throws NotFoundException {
 
-      JClassType[] intfs = type.getImplementedInterfaces();
-      assertEquals(1, intfs.length);
-      assertNotNull(intfs[0].isParameterized());
-    }
-  };
+          JClassType[] intfs = type.getImplementedInterfaces();
+          assertEquals(1, intfs.length);
+          assertNotNull(intfs[0].isParameterized());
+        }
+      };
 
-  protected static final CheckedJavaResource CU_String = new CheckedJavaResource(
-      String.class) {
+  protected static final CheckedJavaResource CU_String = new CheckedJavaResource(String.class) {
     @Override
     public void check(JClassType type) {
       assertEquals("String", type.getSimpleSourceName());
@@ -709,27 +694,26 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
     }
   };
 
-  protected static final CheckedJavaResource CU_Throwable = new CheckedJavaResource(
-      Throwable.class) {
+  protected static final CheckedJavaResource CU_Throwable =
+      new CheckedJavaResource(Throwable.class) {
 
-    @Override
-    public void check(JClassType type) {
-      assertEquals("Throwable", type.getSimpleSourceName());
-      assertEquals("java.lang.Throwable", type.getQualifiedSourceName());
-    }
+        @Override
+        public void check(JClassType type) {
+          assertEquals("Throwable", type.getSimpleSourceName());
+          assertEquals("java.lang.Throwable", type.getQualifiedSourceName());
+        }
 
-    @Override
-    public String getSource() {
-      StringBuffer sb = new StringBuffer();
-      sb.append("package java.lang;");
-      sb.append("public class Throwable { }");
-      return sb.toString();
-    }
-  };
+        @Override
+        public String getSource() {
+          StringBuffer sb = new StringBuffer();
+          sb.append("package java.lang;");
+          sb.append("public class Throwable { }");
+          return sb.toString();
+        }
+      };
 
   protected static final CheckedJavaResource CU_UnnestedImplementations = new CheckedJavaResource(
-      Implementations.class, "Implementations.OuterImpl",
-      "Implementations.InnerImpl") {
+      Implementations.class, "Implementations.OuterImpl", "Implementations.InnerImpl") {
     @Override
     public void check(JClassType type) {
       if (type.getSimpleSourceName().equals("Implementations")) {
@@ -739,22 +723,17 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
   };
 
   protected static void assertIsAssignable(JClassType from, JClassType to) {
-    assertTrue("'" + from + "' should be assignable to '" + to + "'",
-        from.isAssignableTo(to));
-    assertTrue("'" + to + "' should be assignable from '" + from + "'",
-        to.isAssignableFrom(from));
+    assertTrue("'" + from + "' should be assignable to '" + to + "'", from.isAssignableTo(to));
+    assertTrue("'" + to + "' should be assignable from '" + from + "'", to.isAssignableFrom(from));
   }
 
   protected static void assertIsNotAssignable(JClassType from, JClassType to) {
-    assertFalse(from + " should not be assignable to " + to,
-        from.isAssignableTo(to));
-    assertFalse(to + " should not be assignable to " + from,
-        to.isAssignableFrom(from));
+    assertFalse(from + " should not be assignable to " + to, from.isAssignableTo(to));
+    assertFalse(to + " should not be assignable to " + from, to.isAssignableFrom(from));
   }
 
-  protected static void recordAssignability(
-      Map<JClassType, Set<JClassType>> assignabilityMap, JClassType from,
-      JClassType to) {
+  protected static void recordAssignability(Map<JClassType, Set<JClassType>> assignabilityMap,
+      JClassType from, JClassType to) {
     Set<JClassType> set = assignabilityMap.get(from);
     if (set == null) {
       set = new HashSet<JClassType>();
@@ -766,10 +745,10 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
   /**
    * Public so that this will be initialized before the CUs.
    */
-  public final Map<String, CheckedJavaResource> publicTypeNameToTestCupMap = new HashMap<String, CheckedJavaResource>();
+  public final Map<String, CheckedJavaResource> publicTypeNameToTestCupMap =
+      new HashMap<String, CheckedJavaResource>();
 
-  protected CheckedJavaResource CU_ListAsField = new CheckedJavaResource(
-      ListAsField.class) {
+  protected CheckedJavaResource CU_ListAsField = new CheckedJavaResource(ListAsField.class) {
     @Override
     public void check(JClassType type) throws NotFoundException {
       assertNull(type.isGenericType());
@@ -777,8 +756,7 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
     }
   };
 
-  protected CheckedJavaResource CU_MethodsAndParams = new CheckedJavaResource(
-      Methods.class) {
+  protected CheckedJavaResource CU_MethodsAndParams = new CheckedJavaResource(Methods.class) {
 
     @Override
     public void check(JClassType type) throws NotFoundException {
@@ -788,8 +766,7 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
       JMethod method;
       JType[] thrownTypes;
       final JClassType javaLangObject = tio.findType("java.lang", "Object");
-      final JClassType javaLangThrowable = tio.findType("java.lang",
-          "Throwable");
+      final JClassType javaLangThrowable = tio.findType("java.lang", "Throwable");
       final JType[] noParamTypes = new JType[0];
 
       method = type.getMethod("returnsInt", noParamTypes);
@@ -822,15 +799,13 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
         assertEquals("overloaded", element.getName());
       }
 
-      method = type.getMethod("overloaded", new JType[]{
-          JPrimitiveType.INT, javaLangObject});
+      method = type.getMethod("overloaded", new JType[]{JPrimitiveType.INT, javaLangObject});
       assertSame(JPrimitiveType.VOID, method.getReturnType());
       thrownTypes = method.getThrows();
       assertEquals(1, thrownTypes.length);
       assertSame(javaLangThrowable, thrownTypes[0]);
 
-      method = type.getMethod("overloaded", new JType[]{
-          JPrimitiveType.INT, JPrimitiveType.CHAR});
+      method = type.getMethod("overloaded", new JType[]{JPrimitiveType.INT, JPrimitiveType.CHAR});
       assertSame(javaLangObject, method.getReturnType());
       thrownTypes = method.getThrows();
       assertEquals(0, thrownTypes.length);
@@ -853,8 +828,7 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
     public void checkInner(JClassType type) {
       assertEquals("InnerInt", type.getSimpleSourceName());
       assertEquals(getTypeName() + ".InnerInt", type.getQualifiedSourceName());
-      assertEquals(getTypeName(),
-          type.getEnclosingType().getQualifiedSourceName());
+      assertEquals(getTypeName(), type.getEnclosingType().getQualifiedSourceName());
     }
 
     public void checkOuter(JClassType type) {
@@ -892,8 +866,8 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
      * with a HARD -> WEAK map, verify that the entry remains if there is no
      * reference to key, but is deleted when the reference to value is gone
      */
-    Map<Integer, Integer> simpleMap = new ReferenceMap(
-        AbstractReferenceMap.HARD, AbstractReferenceMap.WEAK, true);
+    Map<Integer, Integer> simpleMap =
+        new ReferenceMap(AbstractReferenceMap.HARD, AbstractReferenceMap.WEAK, true);
     Integer bar = new Integer(42);
     simpleMap.put(new Integer(32), bar);
     Runtime.getRuntime().gc();
@@ -906,10 +880,9 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
      * with a WEAK -> WEAK map, verify that the entry is gone if there are no
      * references to either the key or the value.
      */
-    simpleMap = new ReferenceMap(AbstractReferenceMap.WEAK,
-        AbstractReferenceMap.WEAK, true);
-    Map<Integer, Integer> reverseMap = new ReferenceMap(
-        AbstractReferenceMap.WEAK, AbstractReferenceMap.WEAK, true);
+    simpleMap = new ReferenceMap(AbstractReferenceMap.WEAK, AbstractReferenceMap.WEAK, true);
+    Map<Integer, Integer> reverseMap =
+        new ReferenceMap(AbstractReferenceMap.WEAK, AbstractReferenceMap.WEAK, true);
     Integer foo = new Integer(32);
     bar = new Integer(42);
     simpleMap.put(foo, bar);
@@ -944,23 +917,19 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
     JClassType obj = typeOracle.findType(CU_Object.getTypeName());
     assertNotNull(obj);
 
-    JClassType inner = typeOracle.findType(CU_OuterInner.getTypeName()
-        + ".Inner");
+    JClassType inner = typeOracle.findType(CU_OuterInner.getTypeName() + ".Inner");
     assertNotNull(inner);
 
     JClassType derived = typeOracle.findType(CU_Derived.getTypeName());
     assertNotNull(derived);
 
-    JClassType nested = typeOracle.findType(CU_Derived.getTypeName()
-        + ".Nested");
+    JClassType nested = typeOracle.findType(CU_Derived.getTypeName() + ".Nested");
     assertNotNull(nested);
 
-    JClassType baseIntf = typeOracle.findType(CU_Derived.getPackageName()
-        + ".BaseInterface");
+    JClassType baseIntf = typeOracle.findType(CU_Derived.getPackageName() + ".BaseInterface");
     assertNotNull(baseIntf);
 
-    JClassType derivedIntf = typeOracle.findType(CU_Derived.getPackageName()
-        + ".DerivedInterface");
+    JClassType derivedIntf = typeOracle.findType(CU_Derived.getPackageName() + ".DerivedInterface");
     assertNotNull(derivedIntf);
 
     recordAssignability(assignabilityMap, derivedIntf, baseIntf);
@@ -1028,8 +997,7 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
     assertNull(fieldParamType.getEnclosingType());
     JGenericType baseType = fieldParamType.getBaseType();
     assertNotNull(baseType);
-    assertEquals(CU_ConstrainedList.getTypeName(),
-        baseType.getQualifiedSourceName());
+    assertEquals(CU_ConstrainedList.getTypeName(), baseType.getQualifiedSourceName());
     JClassType[] typeArgs = fieldParamType.getTypeArgs();
     assertEquals(1, typeArgs.length);
     JWildcardType wildcard = typeArgs[0].isWildcard();
@@ -1038,16 +1006,14 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
     assertEquals("Throwable", upperBound.getSimpleSourceName());
   }
 
-  public void testConstrainedList() throws TypeOracleException, IOException,
-      InterruptedException {
+  public void testConstrainedList() throws TypeOracleException, IOException, InterruptedException {
     addTestResource(CU_Object);
     addTestResource(CU_Throwable);
     addTestResource(CU_ConstrainedList);
 
     buildTypeOracle();
 
-    JClassType type = typeOracle.getType(CU_ConstrainedList.getPackageName()
-        + ".ConstrainedList");
+    JClassType type = typeOracle.getType(CU_ConstrainedList.getPackageName() + ".ConstrainedList");
     JClassType throwable = typeOracle.getType("java.lang.Throwable");
     assertNotNull(throwable);
     assertEquals("Throwable", throwable.getSimpleSourceName());
@@ -1097,10 +1063,9 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
     buildTypeOracle();
 
     // Get the types produced by the TypeOracle
-    JClassType outer = typeOracle.getType(CU_GenericOuterInner.getPackageName()
-        + ".GenericOuter");
-    JClassType inner = typeOracle.getType(CU_GenericOuterInner.getPackageName()
-        + ".GenericOuter.Inner");
+    JClassType outer = typeOracle.getType(CU_GenericOuterInner.getPackageName() + ".GenericOuter");
+    JClassType inner =
+        typeOracle.getType(CU_GenericOuterInner.getPackageName() + ".GenericOuter.Inner");
 
     assertNull(outer.getEnclosingType());
     assertEquals(outer, inner.getEnclosingType());
@@ -1119,10 +1084,11 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
     assertEquals(1, bounds.length);
     assertEquals(typeOracle.getJavaLangObject(), bounds[0]);
 
-    JClassType extendsOuter = typeOracle.getType(CU_GenericOuterInner.getPackageName()
-        + ".ExtendsGenericOuter");
-    JClassType extendsInner = typeOracle.getType(CU_GenericOuterInner.getPackageName()
-        + ".ExtendsGenericOuter.ExtendsInner");
+    JClassType extendsOuter =
+        typeOracle.getType(CU_GenericOuterInner.getPackageName() + ".ExtendsGenericOuter");
+    JClassType extendsInner =
+        typeOracle.getType(CU_GenericOuterInner.getPackageName()
+            + ".ExtendsGenericOuter.ExtendsInner");
     assertNull(extendsOuter.getEnclosingType());
     assertEquals(extendsOuter, extendsInner.getEnclosingType());
 
@@ -1139,7 +1105,7 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
      * This test fails for OpenJDK compiled classes compared to JDT classes. The
      * reason is that the superclass of this type doesn't contain a type
      * signature for OpenJDK byte code.
-     *
+     * 
      * Commenting out this code for the tests: I'm not sure any generators
      * depend on this subtle difference.
      */
@@ -1235,8 +1201,7 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
    * created before the type oracle has had a chance to resolve
    * CU_DeclaresInnerGenericInterface.
    */
-  public void testParameterizedTypeBuildDependencies()
-      throws TypeOracleException {
+  public void testParameterizedTypeBuildDependencies() throws TypeOracleException {
     addTestResource(CU_ReferencesParameterizedTypeBeforeItsGenericFormHasBeenProcessed);
     // Intentionally omitting the ExtendsParameterizedInterface resource
     // addResource(CU_ExtendsParameterizedInterface);
@@ -1251,7 +1216,7 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
   /**
    * Test that modifying a type will cause any types that depend on it to be
    * rebuilt by the TypeOracleBuilder during a refresh.
-   *
+   * 
    * @throws UnableToCompleteException
    * @throws NotFoundException
    * @throws IOException
@@ -1267,7 +1232,8 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
     // Get the types produced by the TypeOracle
     JClassType extendsGenericListType = typeOracle.getType(CU_ExtendsGenericList.getTypeName());
     JClassType genericListType = typeOracle.getType(CU_GenericList.getTypeName());
-    JClassType referencesGenericListConstantType = typeOracle.getType(CU_ReferencesGenericListConstant.getTypeName());
+    JClassType referencesGenericListConstantType =
+        typeOracle.getType(CU_ReferencesGenericListConstant.getTypeName());
 
     /*
      * Invalidate CU_GenericList and simulate a refresh. This should cause
@@ -1276,19 +1242,17 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
     CU_GenericList.touch();
     buildTypeOracle();
 
-    assertNotSame(genericListType.getQualifiedSourceName() + "; ",
-        typeOracle.getType(CU_GenericList.getTypeName()), genericListType);
-    assertNotSame(extendsGenericListType.getQualifiedSourceName() + "; ",
-        typeOracle.getType(CU_ExtendsGenericList.getTypeName()),
-        extendsGenericListType);
+    assertNotSame(genericListType.getQualifiedSourceName() + "; ", typeOracle
+        .getType(CU_GenericList.getTypeName()), genericListType);
+    assertNotSame(extendsGenericListType.getQualifiedSourceName() + "; ", typeOracle
+        .getType(CU_ExtendsGenericList.getTypeName()), extendsGenericListType);
 
     /*
      * Make sure that referencing a constant field will cause a type to be
      * rebuilt if the constant changes.
      */
-    assertNotSame(referencesGenericListConstantType.getQualifiedSourceName(),
-        typeOracle.getType(CU_ReferencesGenericListConstant.getTypeName()),
-        referencesGenericListConstantType);
+    assertNotSame(referencesGenericListConstantType.getQualifiedSourceName(), typeOracle
+        .getType(CU_ReferencesGenericListConstant.getTypeName()), referencesGenericListConstantType);
   }
 
   public void testTypeParams() throws TypeOracleException {
@@ -1298,8 +1262,7 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
     buildTypeOracle();
     JClassType[] types = typeOracle.getTypes();
     assertEquals(6, types.length);
-    JClassType type = typeOracle.findType(CU_UnnestedImplementations.getTypeName()
-        + ".InnerImpl");
+    JClassType type = typeOracle.findType(CU_UnnestedImplementations.getTypeName() + ".InnerImpl");
     assertNotNull(type);
     JClassType[] interfaces = type.getImplementedInterfaces();
     assertEquals(1, interfaces.length);
@@ -1312,7 +1275,7 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
 
   /**
    * Creates a {@link Resource} and adds it the set of resources.
-   *
+   * 
    * @throws UnableToCompleteException
    */
   protected void addResource(String qualifiedTypeName, CharSequence source) {
