@@ -17,8 +17,8 @@ package com.google.gwt.junit;
 
 import com.google.gwt.core.ext.Linker;
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
@@ -52,8 +52,8 @@ import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
 import com.google.gwt.junit.JUnitMessageQueue.ClientStatus;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.junit.client.TimeoutException;
-import com.google.gwt.junit.client.impl.JUnitResult;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
+import com.google.gwt.junit.client.impl.JUnitResult;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerInt;
 import com.google.gwt.util.tools.ArgHandlerString;
@@ -76,8 +76,8 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -125,10 +125,11 @@ public class JUnitShell extends DevMode {
     void processResult(TestCase testCase, JUnitResult result);
   }
 
-  class ArgProcessor extends ArgProcessorBase {
+  static class ArgProcessor extends ArgProcessorBase {
 
     @SuppressWarnings("deprecation")
-    public ArgProcessor() {
+    public ArgProcessor(final JUnitShell shell) {
+      final HostedModeOptionsImpl options = shell.options;
       /*
        * ----- Options from DevModeBase -------
        */
@@ -159,7 +160,7 @@ public class JUnitShell extends DevMode {
        * ----- Options from DevMode -------
        */
       // Hard code the server.
-      options.setServletContainerLauncher(new MyJettyLauncher());
+      options.setServletContainerLauncher(shell.new MyJettyLauncher());
       // DISABLE: ArgHandlerStartupURLs
       registerHandler(new com.google.gwt.dev.ArgHandlerOutDirDeprecated(options));
       registerHandler(new ArgHandlerWarDir(options) {
@@ -221,7 +222,7 @@ public class JUnitShell extends DevMode {
 
         @Override
         public boolean setFlag() {
-          developmentMode = false;
+          shell.developmentMode = false;
           return true;
         }
       });
@@ -239,7 +240,7 @@ public class JUnitShell extends DevMode {
 
         @Override
         public boolean setFlag() {
-          developmentMode = false;
+          shell.developmentMode = false;
           return true;
         }
       });
@@ -272,7 +273,7 @@ public class JUnitShell extends DevMode {
 
         @Override
         public void setInt(int minutes) {
-          baseTestMethodTimeoutMillis = minutes * 60 * 1000;
+          shell.baseTestMethodTimeoutMillis = minutes * 60 * 1000;
         }
       });
 
@@ -305,7 +306,7 @@ public class JUnitShell extends DevMode {
 
         @Override
         public void setInt(int minutes) {
-          baseTestBeginTimeoutMillis = minutes * 60 * 1000;
+          shell.baseTestBeginTimeoutMillis = minutes * 60 * 1000;
         }
       });
 
@@ -336,7 +337,7 @@ public class JUnitShell extends DevMode {
 
         @Override
         public boolean setString(String runStyleArg) {
-          runStyleName = runStyleArg;
+          shell.runStyleName = runStyleArg;
           return true;
         }
       });
@@ -365,11 +366,11 @@ public class JUnitShell extends DevMode {
         @Override
         public boolean setString(String str) {
           if (str.equals("none")) {
-            batchingStrategy = new NoBatchingStrategy();
+            shell.batchingStrategy = new NoBatchingStrategy();
           } else if (str.equals("class")) {
-            batchingStrategy = new ClassBatchingStrategy();
+            shell.batchingStrategy = new ClassBatchingStrategy();
           } else if (str.equals("module")) {
-            batchingStrategy = new ModuleBatchingStrategy();
+            shell.batchingStrategy = new ModuleBatchingStrategy();
           } else {
             return false;
           }
@@ -390,7 +391,7 @@ public class JUnitShell extends DevMode {
 
         @Override
         public boolean setFlag() {
-          JUnitShell.this.setHeadless(false);
+          shell.setHeadless(false);
           return true;
         }
       });
@@ -419,11 +420,11 @@ public class JUnitShell extends DevMode {
         @Override
         public boolean setString(String str) {
           if (str.equals("simple")) {
-            compileStrategy = new SimpleCompileStrategy(JUnitShell.this);
+            shell.compileStrategy = new SimpleCompileStrategy(shell);
           } else if (str.equals("all")) {
-            compileStrategy = new PreCompileStrategy(JUnitShell.this);
+            shell.compileStrategy = new PreCompileStrategy(shell);
           } else if (str.equals("parallel")) {
-            compileStrategy = new ParallelCompileStrategy(JUnitShell.this);
+            shell.compileStrategy = new ParallelCompileStrategy(shell);
           } else {
             return false;
           }
@@ -434,7 +435,7 @@ public class JUnitShell extends DevMode {
       registerHandler(new ArgHandlerFlag() {
         @Override
         public String getPurpose() {
-          return "Use a document in standards mode (rather than quirks mode) for the hosting page";
+          return "Run each test using an HTML document in standards mode (rather than quirks mode)";
         }
 
         @Override
@@ -444,7 +445,25 @@ public class JUnitShell extends DevMode {
 
         @Override
         public boolean setFlag() {
-          setStandardsMode(true);
+          shell.setStandardsMode(true);
+          return true;
+        }
+      });
+
+      registerHandler(new ArgHandlerFlag() {
+        @Override
+        public String getPurpose() {
+          return "Run each test using an HTML document in quirks mode (rather than standards mode)";
+        }
+
+        @Override
+        public String getTag() {
+          return "-quirksMode";
+        }
+
+        @Override
+        public boolean setFlag() {
+          shell.setStandardsMode(false);
           return true;
         }
       });
@@ -477,7 +496,7 @@ public class JUnitShell extends DevMode {
 
         @Override
         public void setInt(int value) {
-          tries = value;
+          shell.tries = value;
         }
       });
 
@@ -500,9 +519,9 @@ public class JUnitShell extends DevMode {
 
         @Override
         public boolean setString(String str) {
-          remoteUserAgents = str.split(",");
-          for (int i = 0; i < remoteUserAgents.length; i++) {
-            remoteUserAgents[i] = remoteUserAgents[i].trim();
+          shell.remoteUserAgents = str.split(",");
+          for (int i = 0; i < shell.remoteUserAgents.length; i++) {
+            shell.remoteUserAgents[i] = shell.remoteUserAgents[i].trim();
           }
           return true;
         }
@@ -669,7 +688,7 @@ public class JUnitShell extends DevMode {
       unitTestShell = new JUnitShell();
       unitTestShell.lastLaunchFailed = true;
       String[] args = unitTestShell.synthesizeArgs();
-      ArgProcessor argProcessor = unitTestShell.new ArgProcessor();
+      ArgProcessor argProcessor = new ArgProcessor(unitTestShell);
       if (!argProcessor.processArgs(args)) {
         throw new JUnitFatalLaunchException("Error processing shell arguments");
       }
@@ -887,10 +906,9 @@ public class JUnitShell extends DevMode {
   private int tries;
 
   /**
-   * Enforce the singleton pattern. The call to {@link GWTShell}'s ctor forces
-   * server mode and disables processing extra arguments as URLs to be shown.
+   * Visible for testing only. (See {@link #getUnitTestShell}.)
    */
-  private JUnitShell() {
+  JUnitShell() {
     setRunTomcat(true);
     setHeadless(true);
   }
@@ -898,14 +916,7 @@ public class JUnitShell extends DevMode {
   public String getModuleUrl(String moduleName) {
     // TODO(jat): consider using DevModeBase.processUrl instead
     String localhost = runStyle.getLocalHostName();
-    String url = "http://" + localhost + ":" + getPort() + "/" + moduleName
-        + (standardsMode ? "/junit-standards.html" : "/junit.html");
-    if (developmentMode) {
-      // CHECKSTYLE_OFF
-      url += "?gwt.codesvr=" + localhost + ":" + codeServerPort;
-      // CHECKSTYLE_ON
-    }
-    return url;
+    return getModuleUrl(localhost, getPort(), moduleName, codeServerPort);
   }
 
   /**
@@ -1084,6 +1095,15 @@ public class JUnitShell extends DevMode {
     // TODO(scottb): prepopulate currentCompilationState somehow?
   }
 
+  String getModuleUrl(String hostName, int port, String moduleName, int codeServerPort) {
+    String url = "http://" + hostName + ":" + port + "/" + moduleName
+        + (standardsMode ? "/junit-standards.html" : "/junit.html");
+    if (developmentMode) {
+      url += "?gwt.codesvr=" + hostName + ":" + codeServerPort;
+    }
+    return url;
+  }
+  
   void maybeCompileForWebMode(ModuleDef module, String... userAgents)
       throws UnableToCompleteException {
     // Load any declared servlets.
