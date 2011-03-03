@@ -22,39 +22,8 @@
 namespace core {
 namespace parent_process_monitor {
 
-#ifndef JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
-#define JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE 0x2000
-#endif
-
 Error wrapFork(boost::function<void()> func)
 {
-   static bool s_initialized = false;
-
-   if (!s_initialized)
-   {
-      /*
-       * Create a Job object and assign this process to it. This will
-       * cause all child processes to be assigned to the same job.
-       * With JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE set, all the child
-       * processes will be killed when this process terminates (since
-       * it is the only one holding a handle to the job).
-       */
-
-      HANDLE hJob = ::CreateJobObject(NULL, NULL);
-
-      JOBOBJECT_EXTENDED_LIMIT_INFORMATION jeli = { 0 };
-      jeli.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
-      ::SetInformationJobObject(hJob,
-                                JobObjectExtendedLimitInformation,
-                                &jeli,
-                                sizeof(jeli));
-
-      if (!::AssignProcessToJobObject(hJob, ::GetCurrentProcess()))
-         return systemError(::GetLastError(), ERROR_LOCATION);
-
-      s_initialized = true;
-   }
-
    func();
 
    return Success();

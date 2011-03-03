@@ -132,6 +132,10 @@ namespace {
 LogWriter* s_pLogWriter = NULL;
 } // anonymous namespace
      
+void initHook()
+{
+}
+
 void initializeSystemLog(const std::string& programIdentity, int logLevel)
 {
    if (s_pLogWriter)
