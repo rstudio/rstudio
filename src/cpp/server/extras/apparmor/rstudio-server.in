@@ -18,8 +18,8 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
   ${CMAKE_INSTALL_PREFIX}/bin/*.so mr,
   ${CMAKE_INSTALL_PREFIX}/bin/rsession ux,
 
-  ${CMAKE_INSTALL_PREFIX}/bin/r-ldpath ix,
-  ${LIBR_HOME}/etc/ldpaths ix,
+  ${CMAKE_INSTALL_PREFIX}/bin/r-ldpath rix,
+  ${LIBR_HOME}/etc/ldpaths rix,
   /etc/R/ldpaths rix,
   /bin/dash ix,
   /etc/ld.so.cache r,
