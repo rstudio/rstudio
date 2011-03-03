@@ -401,6 +401,23 @@ public class TabLayoutPanelTest extends GWTTestCase {
   }
 
   /**
+   * Issue 6034: setTabText() removes the tab.
+   */
+  public void testSetTabText() {
+    TabLayoutPanel p = new TabLayoutPanel(1, Unit.EM);
+    Label[] labels = new Label[3];
+    for (int i = 0; i < labels.length; i++) {
+      labels[i] = new Label("content" + i);
+      p.add(labels[i]);
+    }
+
+    // Set the text of tab 1.
+    p.setTabText(1, "new text");
+    assertEquals(3, p.getWidgetCount());
+    assertEquals("new text", ((HasText) p.getTabWidget(1)).getText());
+  }
+
+  /**
    * Test that {@link TabLayoutPanel} calls widget.setVisible(true/false) on
    * each widget, when it is shown/hidden.
    */

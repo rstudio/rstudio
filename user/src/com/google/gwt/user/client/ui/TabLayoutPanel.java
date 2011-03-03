@@ -100,6 +100,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
 
   private class Tab extends SimplePanel {
     private Element inner;
+    private boolean replacingWidget;
 
     public Tab(Widget child) {
       super(Document.get().createDivElement());
@@ -123,8 +124,11 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
        * ensure consistency.
        */
       int index = tabs.indexOf(this);
-      if (index < 0) {
-        // This tab is no longer in the panel, so just remove the widget.
+      if (replacingWidget || index < 0) {
+        /*
+         * The tab contents are being replaced, or this tab is no longer in the
+         * panel, so just remove the widget.
+         */
         return super.remove(w);
       } else {
         // Delegate to the TabLayoutPanel.
@@ -138,6 +142,13 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
       } else {
         removeStyleDependentName("selected");
       }
+    }
+
+    @Override
+    public void setWidget(Widget w) {
+      replacingWidget = true;
+      super.setWidget(w);
+      replacingWidget = false;
     }
 
     @Override
