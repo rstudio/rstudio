@@ -180,8 +180,8 @@ public abstract class AbstractRequestContext implements RequestContext,
       if (obj == null) {
         return LazySplittable.NULL;
       } else if (obj.getClass().isEnum()
-          && getRequestFactory().getAutoBeanFactory() instanceof EnumMap) {
-        value = ValueCodex.encode(((EnumMap) getRequestFactory().getAutoBeanFactory()).getToken((Enum<?>) obj));
+          && getAutoBeanFactory() instanceof EnumMap) {
+        value = ValueCodex.encode(((EnumMap) getAutoBeanFactory()).getToken((Enum<?>) obj));
       } else if (ValueCodex.canDecode(obj.getClass())) {
         value = ValueCodex.encode(obj);
       } else {
@@ -525,7 +525,7 @@ public abstract class AbstractRequestContext implements RequestContext,
       if (previous == null) {
         // Compare to empty object
         Class<?> proxyClass = stableId(bean).getProxyClass();
-        previous = getRequestFactory().getAutoBeanFactory().create(proxyClass);
+        previous = getAutoBeanFactory().create(proxyClass);
       }
       if (!AutoBeanUtils.diff(previous, bean).isEmpty()) {
         return true;
