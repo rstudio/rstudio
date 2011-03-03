@@ -18,7 +18,6 @@ package com.google.gwt.dev.jjs;
 import com.google.gwt.core.client.impl.ArtificialRescue;
 import com.google.gwt.core.client.impl.ArtificialRescue.Rescue;
 import com.google.gwt.dev.jjs.ast.Context;
-import com.google.gwt.dev.jjs.ast.HasEnclosingType;
 import com.google.gwt.dev.jjs.ast.JAnnotation;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
@@ -26,6 +25,7 @@ import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
+import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.impl.JsniRefLookup;
 import com.google.gwt.dev.util.JsniRef;
@@ -97,7 +97,7 @@ public class ArtificialRescueRecorder {
         for (String name : toRescue) {
           JsniRef ref = JsniRef.parse("@" + classType.getName() + "::" + name);
           final String[] errors = {null};
-          HasEnclosingType node = JsniRefLookup.findJsniRefTarget(ref, program,
+          JNode node = JsniRefLookup.findJsniRefTarget(ref, program,
               new JsniRefLookup.ErrorReporter() {
                 public void reportError(String error) {
                   errors[0] = error;
@@ -109,7 +109,11 @@ public class ArtificialRescueRecorder {
                 "Unable to artificially rescue " + name + ": " + errors[0]);
           }
 
-          currentClass.addArtificialRescue((JNode) node);
+          if (node instanceof JType) {
+            // Already added the type above.
+          } else {
+            currentClass.addArtificialRescue(node);
+          }
           if (node instanceof JField) {
             JField field = (JField) node;
             if (!field.isFinal()) {

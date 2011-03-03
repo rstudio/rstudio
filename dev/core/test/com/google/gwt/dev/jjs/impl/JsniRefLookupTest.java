@@ -17,9 +17,9 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.impl.MockJavaResource;
-import com.google.gwt.dev.jjs.ast.HasEnclosingType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.impl.JsniRefLookup.ErrorReporter;
@@ -238,17 +238,17 @@ public class JsniRefLookupTest extends JJSTestBase {
 
     {
       MockErrorReporter errors = new MockErrorReporter();
-      HasEnclosingType res = lookup("test.Foo::bogoField", errors);
+      lookup("test.Foo::bogoField", errors);
       errors.assertHasError();
     }
     {
       MockErrorReporter errors = new MockErrorReporter();
-      HasEnclosingType res = lookup("test.Foo::bogoMethod()", errors);
+      lookup("test.Foo::bogoMethod()", errors);
       errors.assertHasError();
     }
     {
       MockErrorReporter errors = new MockErrorReporter();
-      HasEnclosingType res = lookup("test.Foo::new(J)", errors);
+      lookup("test.Foo::new(J)", errors);
       errors.assertHasError();
     }
   }
@@ -367,7 +367,7 @@ public class JsniRefLookupTest extends JJSTestBase {
     }
     {
       MockErrorReporter errors = new MockErrorReporter();
-      HasEnclosingType res = lookup("test.Bar::addTwoOverloaded(*)", errors);
+      lookup("test.Bar::addTwoOverloaded(*)", errors);
       errors.assertHasError();
     }
 
@@ -398,7 +398,7 @@ public class JsniRefLookupTest extends JJSTestBase {
     }
     {
       MockErrorReporter errors = new MockErrorReporter();
-      HasEnclosingType res = lookup("test.Bar::foo(*)", errors);
+      lookup("test.Bar::foo(*)", errors);
       errors.assertHasError();
     }
 
@@ -463,7 +463,7 @@ public class JsniRefLookupTest extends JJSTestBase {
     }
     {
       MockErrorReporter errors = new MockErrorReporter();
-      JMethod res = (JMethod) lookup("test.Intf::foo(*)", errors);
+      lookup("test.Intf::foo(*)", errors);
       errors.assertHasError();
     }
   }
@@ -488,12 +488,12 @@ public class JsniRefLookupTest extends JJSTestBase {
     // test private entries in the superclass
     {
       MockErrorReporter errors = new MockErrorReporter();
-      JMethod res = (JMethod) lookup("test.PrivateSub::methodSup()", errors);
+      lookup("test.PrivateSub::methodSup()", errors);
       errors.assertHasError();
     }
     {
       MockErrorReporter errors = new MockErrorReporter();
-      JField res = (JField) lookup("test.PrivateSub::fieldSup", errors);
+      lookup("test.PrivateSub::fieldSup", errors);
       errors.assertHasError();
     }
   }
@@ -508,17 +508,17 @@ public class JsniRefLookupTest extends JJSTestBase {
     }
     {
       MockErrorReporter errors = new MockErrorReporter();
-      HasEnclosingType res = lookup("test.Foo::addTwoOverloaded(*)", errors);
+      lookup("test.Foo::addTwoOverloaded(*)", errors);
       errors.assertHasError();
     }
     {
       MockErrorReporter errors = new MockErrorReporter();
-      HasEnclosingType res = lookup("test.Foo::bogoMethod(*)", errors);
+      lookup("test.Foo::bogoMethod(*)", errors);
       errors.assertHasError();
     }
   }
 
-  private HasEnclosingType lookup(String refString, MockErrorReporter errors) {
+  private JNode lookup(String refString, MockErrorReporter errors) {
     return JsniRefLookup.findJsniRefTarget(JsniRef.parse(refString), program,
         errors);
   }

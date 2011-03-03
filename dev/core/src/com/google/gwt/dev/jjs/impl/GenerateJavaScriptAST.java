@@ -1340,7 +1340,7 @@ public class GenerateJavaScriptAST {
             JsNameRef ref = (JsNameRef) x.getQualifier();
             String ident = ref.getIdent();
             if (isJsniIdent(ident)) {
-              HasEnclosingType node = program.jsniMap.get(ident);
+              JNode node = program.jsniMap.get(ident);
               assert node instanceof JConstructor;
               assert ref.getQualifier() == null;
               JsName jsName = names.get(node);
@@ -1357,8 +1357,12 @@ public class GenerateJavaScriptAST {
         public void endVisit(JsNameRef x, JsContext ctx) {
           String ident = x.getIdent();
           if (isJsniIdent(ident)) {
-            HasEnclosingType node = program.jsniMap.get(ident);
+            JNode node = program.jsniMap.get(ident);
             assert (node != null);
+            if (node instanceof JClassLiteral) {
+              node = ((JClassLiteral) node).getField();
+              assert node != null;
+            }
             if (node instanceof JField) {
               JField field = (JField) node;
               JsName jsName = names.get(field);

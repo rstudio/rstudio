@@ -23,7 +23,6 @@ import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.HasAnnotations;
-import com.google.gwt.dev.jjs.ast.HasEnclosingType;
 import com.google.gwt.dev.jjs.ast.JAnnotation;
 import com.google.gwt.dev.jjs.ast.JAnnotation.Property;
 import com.google.gwt.dev.jjs.ast.JAnnotationArgument;
@@ -39,6 +38,7 @@ import com.google.gwt.dev.jjs.ast.JBreakStatement;
 import com.google.gwt.dev.jjs.ast.JCaseStatement;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JCharLiteral;
+import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JConstructor;
@@ -524,17 +524,18 @@ public class GenerateJavaAST {
             currentClass.getMethods().remove(2);
           } else {
             tryFindUpRefs(method);
+            SourceInfo info = method.getSourceInfo();
             if (isScript(program)
                 && currentClass == program.getIndexedType("Array")) {
               // Special implementation: return this.arrayClass
-              SourceInfo info = method.getSourceInfo();
               implementMethod(
                   method,
                   new JFieldRef(info, new JThisRef(info,
                       (JClassType) currentClass),
                       program.getIndexedField("Array.arrayClass"), currentClass));
             } else {
-              implementMethod(method, program.getLiteralClass(currentClass));
+              implementMethod(method, new JClassLiteral(info.makeChild(),
+                  currentClass));
             }
           }
         }
@@ -919,7 +920,7 @@ public class GenerateJavaAST {
             initializers.add(dispProcessExpression(expression));
           }
         }
-        return JNewArray.createInitializers(program, info, type, initializers);
+        return JNewArray.createInitializers(info, type, initializers);
       } else {
         List<JExpression> dims = new ArrayList<JExpression>();
         for (Expression dimension : x.dimensions) {
@@ -930,7 +931,7 @@ public class GenerateJavaAST {
             dims.add(dispProcessExpression(dimension));
           }
         }
-        return JNewArray.createDims(program, info, type, dims);
+        return JNewArray.createDims(info, type, dims);
       }
     }
 
@@ -944,7 +945,7 @@ public class GenerateJavaAST {
           initializers.add(dispProcessExpression(expression));
         }
       }
-      return JNewArray.createInitializers(program, info, type, initializers);
+      return JNewArray.createInitializers(info, type, initializers);
     }
 
     JExpression processExpression(ArrayReference x) {
@@ -1034,8 +1035,9 @@ public class GenerateJavaAST {
     }
 
     JExpression processExpression(ClassLiteralAccess x) {
+      SourceInfo info = makeSourceInfo(x);
       JType type = (JType) typeMap.get(x.targetType);
-      return program.getLiteralClass(type);
+      return new JClassLiteral(info, type);
     }
 
     JExpression processExpression(CombinedBinaryExpression x) {
@@ -1699,7 +1701,7 @@ public class GenerateJavaAST {
       } else {
         /**
          * <pre>
-         * for (Iterator<T> i$iterator = collection.iterator(); i$iterator.hasNext(); ) {
+         * for (Iterator<T> i$iterator = collection.iterator(); i$iterator.hasNext();) {
          *   T elementVar = i$iterator.next();
          *   // user action
          * }
@@ -2086,8 +2088,8 @@ public class GenerateJavaAST {
         initializers.add(args[i]);
       }
       JArrayType lastParamType = (JArrayType) typeMap.get(params[varArg]);
-      JNewArray newArray = JNewArray.createInitializers(program,
-          SourceOrigin.UNKNOWN, lastParamType, initializers);
+      JNewArray newArray = JNewArray.createInitializers(SourceOrigin.UNKNOWN,
+          lastParamType, initializers);
       call.addArg(newArray);
     }
 
@@ -2571,7 +2573,8 @@ public class GenerateJavaAST {
           type = getOrCreateExternalType(info,
               ((ReferenceBinding) value).compoundName);
         }
-        return Lists.<JAnnotationArgument> create(program.getLiteralClass(type));
+        return Lists.<JAnnotationArgument> create(new JClassLiteral(
+            info.makeChild(), type));
 
       } else if (value instanceof Constant) {
         return Lists.create((JAnnotationArgument) dispatch("processConstant",
@@ -2910,7 +2913,7 @@ public class GenerateJavaAST {
           JFieldRef fieldRef = new JFieldRef(fieldInfo, null, field, type);
           initializers.add(fieldRef);
         }
-        JNewArray newExpr = JNewArray.createInitializers(program, fieldInfo,
+        JNewArray newExpr = JNewArray.createInitializers(fieldInfo,
             enumArrayType, initializers);
         JFieldRef valuesRef = new JFieldRef(fieldInfo, null, valuesField, type);
         JDeclarationStatement declStmt = new JDeclarationStatement(fieldInfo,
@@ -2962,8 +2965,7 @@ public class GenerateJavaAST {
         }
       }
 
-      private HasEnclosingType findJsniRefTarget(final SourceInfo info,
-          String ident) {
+      private JNode findJsniRefTarget(final SourceInfo info, String ident) {
         JsniRef parsed = JsniRef.parse(ident);
         if (parsed == null) {
           JsniCollector.reportJsniError(info, methodDecl,
@@ -2979,6 +2981,11 @@ public class GenerateJavaAST {
                 JsniCollector.reportJsniError(info, methodDecl, error);
               }
             });
+      }
+
+      private void processClassLiteral(JClassLiteral classLiteral, JsContext ctx) {
+        assert !ctx.isLvalue();
+        nativeMethodBody.addClassRef(classLiteral);
       }
 
       private void processField(JsNameRef nameRef, SourceInfo info,
@@ -3020,11 +3027,14 @@ public class GenerateJavaAST {
         // TODO: make this tighter when we have real source info
         // JSourceInfo info = translateInfo(nameRef.getInfo());
         String ident = nameRef.getIdent();
-        HasEnclosingType node = program.jsniMap.get(ident);
+        JNode node = program.jsniMap.get(ident);
         if (node == null) {
           node = findJsniRefTarget(info, ident);
           if (node == null) {
             return; // already reported error
+          }
+          if (node instanceof JType) {
+            node = new JClassLiteral(info.makeChild(), (JType) node);
           }
           program.jsniMap.put(ident, node);
         }
@@ -3033,9 +3043,11 @@ public class GenerateJavaAST {
           processField(nameRef, info, (JField) node, ctx);
         } else if (node instanceof JMethod) {
           processMethod(nameRef, info, (JMethod) node, ctx);
+        } else if (node instanceof JClassLiteral) {
+          processClassLiteral((JClassLiteral) node, ctx);
         } else {
-          throw new InternalCompilerException((HasSourceInfo) node,
-              "JSNI reference to something other than a field or method?", null);
+          throw new InternalCompilerException(node,
+              "JSNI reference to something other than a class, field, or method?", null);
         }
       }
     }

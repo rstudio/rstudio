@@ -20,7 +20,6 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.Context;
-import com.google.gwt.dev.jjs.ast.HasEnclosingType;
 import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
@@ -31,6 +30,7 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNameOf;
+import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
@@ -106,7 +106,7 @@ public class ReplaceRebinds {
 
       if (ref != null) {
         final List<String> errors = new ArrayList<String>();
-        HasEnclosingType node = JsniRefLookup.findJsniRefTarget(ref, program,
+        JNode node = JsniRefLookup.findJsniRefTarget(ref, program,
             new JsniRefLookup.ErrorReporter() {
               public void reportError(String error) {
                 errors.add(error);

@@ -69,7 +69,7 @@ public class JavaScriptObjectNormalizer {
     public void endVisit(JClassLiteral x, Context ctx) {
       JType newType = translate(x.getRefType());
       if (newType != x.getRefType()) {
-        ctx.replaceMe(program.getLiteralClass(newType));
+        ctx.replaceMe(new JClassLiteral(x.getSourceInfo(), newType));
       }
     }
 

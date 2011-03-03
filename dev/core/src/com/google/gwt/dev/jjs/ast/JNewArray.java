@@ -25,8 +25,8 @@ import java.util.List;
  */
 public class JNewArray extends JExpression {
 
-  public static JNewArray createDims(JProgram program, SourceInfo info,
-      JArrayType arrayType, List<JExpression> dims) {
+  public static JNewArray createDims(SourceInfo info, JArrayType arrayType,
+      List<JExpression> dims) {
     List<JClassLiteral> classLiterals = new ArrayList<JClassLiteral>();
 
     // Produce all class literals that will eventually get generated.
@@ -41,7 +41,7 @@ public class JNewArray extends JExpression {
     JType cur = arrayType;
     for (int i = 0; i < realDims; ++i) {
       // Walk down each type from most dims to least.
-      JClassLiteral classLit = program.getLiteralClass(cur);
+      JClassLiteral classLit = new JClassLiteral(info.makeChild(), cur);
       classLiterals.add(classLit);
       cur = ((JArrayType) cur).getElementType();
     }
@@ -49,10 +49,10 @@ public class JNewArray extends JExpression {
         classLiterals);
   }
 
-  public static JNewArray createInitializers(JProgram program, SourceInfo info,
+  public static JNewArray createInitializers(SourceInfo info,
       JArrayType arrayType, List<JExpression> initializers) {
     List<JClassLiteral> classLiterals = new ArrayList<JClassLiteral>();
-    classLiterals.add(program.getLiteralClass(arrayType));
+    classLiterals.add(new JClassLiteral(info.makeChild(), arrayType));
     return new JNewArray(info, arrayType.getNonNull(), null, initializers,
         classLiterals);
   }

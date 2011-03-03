@@ -81,6 +81,7 @@ import com.google.gwt.dev.jjs.impl.FragmentLoaderCreator;
 import com.google.gwt.dev.jjs.impl.GenerateJavaAST;
 import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
 import com.google.gwt.dev.jjs.impl.HandleCrossFragmentReferences;
+import com.google.gwt.dev.jjs.impl.ImplementClassLiteralsAsFields;
 import com.google.gwt.dev.jjs.impl.JavaScriptObjectNormalizer;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.jjs.impl.JsFunctionClusterer;
@@ -622,6 +623,8 @@ public class JavaToJavaScriptCompiler {
       // Replace references to JSO subtypes with JSO itself.
       JavaScriptObjectNormalizer.exec(jprogram);
 
+      ImplementClassLiteralsAsFields.exec(jprogram);
+      
       /*
        * 4) Possibly optimize some.
        * 
@@ -675,12 +678,6 @@ public class JavaToJavaScriptCompiler {
    */
   protected static void draftOptimize(JProgram jprogram) {
     Event draftOptimizeEvent = SpeedTracerLogger.start(CompilerEventType.DRAFT_OPTIMIZE);
-    /*
-     * Record the beginning of optimizations; this turns on certain checks that
-     * guard against problematic late construction of things like class
-     * literals.
-     */
-    jprogram.beginOptimizations();
     Finalizer.exec(jprogram);
     MakeCallsStatic.exec(jprogram);
     jprogram.typeOracle.recomputeAfterOptimizations();
@@ -691,13 +688,6 @@ public class JavaToJavaScriptCompiler {
   protected static void optimize(JJSOptions options, JProgram jprogram)
       throws InterruptedException {
     Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE);
-
-    /*
-     * Record the beginning of optimizations; this turns on certain checks that
-     * guard against problematic late construction of things like class
-     * literals.
-     */
-    jprogram.beginOptimizations();
 
     List<OptimizerStats> allOptimizerStats = new ArrayList<OptimizerStats>();
     int counter = 0;

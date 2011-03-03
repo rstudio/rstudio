@@ -15,14 +15,13 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.gwt.dev.jjs.ast.HasEnclosingType;
 import com.google.gwt.dev.jjs.ast.JArrayType;
-import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -56,8 +55,8 @@ public class JsniRefLookup {
    *         found. If the return value is <code>null</code>,
    *         <code>errorReporter</code> will have been invoked.
    */
-  public static HasEnclosingType findJsniRefTarget(JsniRef ref,
-      JProgram program, JsniRefLookup.ErrorReporter errorReporter) {
+  public static JNode findJsniRefTarget(JsniRef ref, JProgram program,
+      JsniRefLookup.ErrorReporter errorReporter) {
     String className = ref.className();
     JType type = null;
     if (!className.equals("null")) {
@@ -78,8 +77,7 @@ public class JsniRefLookup {
         }
 
       } else if (fieldName.equals(JsniRef.CLASS)) {
-        JClassLiteral lit = program.getLiteralClass(type);
-        return lit.getField();
+        return type;
 
       } else if (type instanceof JPrimitiveType) {
         errorReporter.reportError("May not refer to fields on primitive types");

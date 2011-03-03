@@ -192,6 +192,7 @@ public class ControlFlowAnalyzer {
     @Override
     public boolean visit(JClassLiteral x, Context ctx) {
       JField field = x.getField();
+      assert field != null;
       rescue(field);
       return true;
     }

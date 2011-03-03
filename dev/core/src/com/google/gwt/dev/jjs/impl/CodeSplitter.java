@@ -21,14 +21,12 @@ import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.cfg.Property;
 import com.google.gwt.dev.jjs.InternalCompilerException;
-import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
-import com.google.gwt.dev.jjs.ast.HasEnclosingType;
-import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
+import com.google.gwt.dev.jjs.ast.JIntLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNewArray;
@@ -282,8 +280,8 @@ public class CodeSplitter {
         throw new UnableToCompleteException();
       }
       final String lookupErrorHolder[] = new String[1];
-      HasEnclosingType referent = JsniRefLookup.findJsniRefTarget(jsniRef,
-          program, new JsniRefLookup.ErrorReporter() {
+      JNode referent = JsniRefLookup.findJsniRefTarget(jsniRef, program,
+          new JsniRefLookup.ErrorReporter() {
             public void reportError(String error) {
               lookupErrorHolder[0] = error;
             }
@@ -512,21 +510,15 @@ public class CodeSplitter {
    */
   private static void installInitialLoadSequenceField(JProgram program,
       LinkedHashSet<Integer> initialLoadSequence) {
+     // Arg 1 is initialized in the source as  "new int[]{}".
     JMethodCall constructorCall = ReplaceRunAsyncs.getBrowserLoaderConstructor(program);
-    assert ((JReferenceType) constructorCall.getArgs().get(1).getType()).getUnderlyingType() instanceof JArrayType;
-    assert ((JArrayType) ((JReferenceType) constructorCall.getArgs().get(1).getType()).getUnderlyingType()).getElementType() == JPrimitiveType.INT;
+    JNewArray newArray = (JNewArray) constructorCall.getArgs().get(1);
+    assert newArray.getArrayType().getElementType() == JPrimitiveType.INT;
+    assert newArray.initializers.size() == 0;
 
-    SourceInfo info = program.createSourceInfoSynthetic(ReplaceRunAsyncs.class);
-    List<JExpression> intExprs = new ArrayList<JExpression>();
     for (int sp : initialLoadSequence) {
-      intExprs.add(program.getLiteralInt(sp));
+      newArray.initializers.add(JIntLiteral.get(sp));
     }
-    /*
-     * Note: the following field is known to have a manually installed
-     * initializer, of new int[0].
-     */
-    constructorCall.setArg(1, JNewArray.createInitializers(program, info,
-        program.getTypeArray(JPrimitiveType.INT), intExprs));
   }
 
   private static <T> T last(T[] array) {

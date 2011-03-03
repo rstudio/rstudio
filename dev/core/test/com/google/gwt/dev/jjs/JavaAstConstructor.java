@@ -29,6 +29,7 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.impl.AssertionNormalizer;
 import com.google.gwt.dev.jjs.impl.BuildTypeMap;
+import com.google.gwt.dev.jjs.impl.ImplementClassLiteralsAsFields;
 import com.google.gwt.dev.jjs.impl.TypeLinker;
 import com.google.gwt.dev.jjs.impl.FixAssignmentToUnbox;
 import com.google.gwt.dev.jjs.impl.GenerateJavaAST;
@@ -274,6 +275,8 @@ public class JavaAstConstructor {
     }
     // Replace references to JSO subtypes with JSO itself.
     JavaScriptObjectNormalizer.exec(jprogram);
+
+    ImplementClassLiteralsAsFields.exec(jprogram);
 
     // Tree is now ready to optimize.
     return jprogram;

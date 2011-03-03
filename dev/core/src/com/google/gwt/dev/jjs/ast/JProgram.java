@@ -311,7 +311,7 @@ public class JProgram extends JNode {
    */
   public final List<List<JMethod>> entryMethods = new ArrayList<List<JMethod>>();
 
-  public final Map<String, HasEnclosingType> jsniMap = new HashMap<String, HasEnclosingType>();
+  public final Map<String, JNode> jsniMap = new HashMap<String, JNode>();
 
   public final JTypeOracle typeOracle = new JTypeOracle(this);
 
@@ -321,8 +321,6 @@ public class JProgram extends JNode {
   private transient List<JDeclaredType> allTypes = new ArrayList<JDeclaredType>();
 
   private final HashMap<JType, JArrayType> arrayTypes = new HashMap<JType, JArrayType>();
-
-  private final Map<JType, JClassLiteral> classLiterals = new IdentityHashMap<JType, JClassLiteral>();
 
   /**
    * A factory to create correlations.
@@ -342,11 +340,6 @@ public class JProgram extends JNode {
   private JField nullField;
 
   private JMethod nullMethod;
-
-  /**
-   * Turned on once optimizations begin.
-   */
-  private boolean optimizationsStarted = false;
 
   private Map<JReferenceType, Integer> queryIds;
 
@@ -409,15 +402,6 @@ public class JProgram extends JNode {
     if (!methods.contains(entryPoint)) {
       methods.add(entryPoint);
     }
-  }
-
-  /**
-   * Record the start of optimizations, which disables certain problematic
-   * constructions. In particular, new class literals cannot be created once
-   * optimization starts.
-   */
-  public void beginOptimizations() {
-    optimizationsStarted = true;
   }
 
   public JClassType createClass(SourceInfo info, String name,
@@ -858,61 +842,6 @@ public class JProgram extends JNode {
 
   public JCharLiteral getLiteralChar(char value) {
     return JCharLiteral.get(value);
-  }
-
-  /**
-   * May not be called once optimizations begin; all possible class literals
-   * must be created up front.
-   */
-  public JClassLiteral getLiteralClass(JType type) {
-    JClassLiteral classLiteral = classLiterals.get(type);
-    if (classLiteral == null) {
-      if (optimizationsStarted) {
-        throw new InternalCompilerException(
-            "New class literals cannot be created once optimizations have started; type '"
-                + type + "'");
-      }
-
-      SourceInfo info = typeSpecialClassLiteralHolder.getSourceInfo();
-
-      // Create the allocation expression FIRST since this may be recursive on
-      // super type (this forces the super type classLit to be created first).
-      boolean isObjectExternal = getTypeJavaLangObject().isExternal();
-      JExpression alloc = isObjectExternal ? null :
-          JClassLiteral.computeClassObjectAllocation(this,info, type);
-
-      // Create a field in the class literal holder to hold the object.
-      JField field = new JField(info, getClassLiteralName(type),
-          typeSpecialClassLiteralHolder, getTypeJavaLangClass(),
-          true, Disposition.FINAL);
-      typeSpecialClassLiteralHolder.addField(field);
-
-      // Initialize the field.
-      if (alloc != null) {
-        JFieldRef fieldRef = new JFieldRef(info, null, field,
-            typeSpecialClassLiteralHolder);
-        JDeclarationStatement decl = new JDeclarationStatement(info, fieldRef,
-            alloc);
-        JMethodBody clinitBody = (JMethodBody)
-            typeSpecialClassLiteralHolder.getMethods().get(0).getBody();
-        clinitBody.getBlock().addStmt(decl);
-      }
-
-      SourceInfo literalInfo = createSourceInfoSynthetic(JProgram.class);
-      literalInfo.addCorrelation(correlator.by(Literal.CLASS));
-      classLiteral = new JClassLiteral(literalInfo, type, field);
-      classLiterals.put(type, classLiteral);
-    } else {
-      // Make sure the field hasn't been pruned.
-      JField field = classLiteral.getField();
-      if (optimizationsStarted
-          && !field.getEnclosingType().getFields().contains(field)) {
-        throw new InternalCompilerException(
-            "Getting a class literal whose field holder has already been pruned; type '"
-                + type + " '");
-      }
-    }
-    return classLiteral;
   }
 
   public JDoubleLiteral getLiteralDouble(double d) {
