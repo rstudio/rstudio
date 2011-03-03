@@ -121,16 +121,21 @@ public class AutoBeanMethod {
         map = toReturn.enumMap = new LinkedHashMap<JEnumConstant, String>();
       }
       for (JEnumConstant e : enumType.getEnumConstants()) {
-        String name;
-        PropertyName annotation = e.getAnnotation(PropertyName.class);
-        if (annotation == null) {
-          name = e.getName();
-        } else {
-          name = annotation.value();
-        }
+        String name = getEnumName(e);
         map.put(e, name);
       }
     }
+  }
+
+  static String getEnumName(JEnumConstant e) {
+    String name;
+    PropertyName annotation = e.getAnnotation(PropertyName.class);
+    if (annotation == null) {
+      name = e.getName();
+    } else {
+      name = annotation.value();
+    }
+    return name;
   }
 
   private JBeanMethod action;

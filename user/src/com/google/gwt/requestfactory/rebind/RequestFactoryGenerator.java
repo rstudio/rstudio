@@ -21,21 +21,27 @@ import com.google.gwt.autobean.shared.AutoBean.PropertyName;
 import com.google.gwt.autobean.shared.AutoBeanFactory;
 import com.google.gwt.autobean.shared.AutoBeanFactory.Category;
 import com.google.gwt.autobean.shared.AutoBeanFactory.NoWrap;
+import com.google.gwt.autobean.shared.impl.EnumMap.ExtraEnums;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
+import com.google.gwt.core.ext.typeinfo.JParameterizedType;
+import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.JTypeParameter;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.editor.rebind.model.ModelUtils;
 import com.google.gwt.requestfactory.client.impl.AbstractClientRequestFactory;
+import com.google.gwt.requestfactory.rebind.model.AcceptsModelVisitor;
 import com.google.gwt.requestfactory.rebind.model.ContextMethod;
 import com.google.gwt.requestfactory.rebind.model.EntityProxyModel;
 import com.google.gwt.requestfactory.rebind.model.EntityProxyModel.Type;
+import com.google.gwt.requestfactory.rebind.model.ModelVisitor;
 import com.google.gwt.requestfactory.rebind.model.RequestFactoryModel;
 import com.google.gwt.requestfactory.rebind.model.RequestMethod;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
@@ -52,8 +58,12 @@ import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.io.PrintWriter;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * Generates implementations of
@@ -61,6 +71,72 @@ import java.util.HashSet;
  * and its nested interfaces.
  */
 public class RequestFactoryGenerator extends Generator {
+
+  /**
+   * Visits all types reachable from a RequestContext.
+   */
+  private static class AllReachableTypesVisitor extends
+      RequestMethodTypesVisitor {
+    private final RequestFactoryModel model;
+
+    public AllReachableTypesVisitor(RequestFactoryModel model) {
+      this.model = model;
+    }
+
+    void examineTypeOnce(JClassType type) {
+      // Need this to handle List<Foo>, Map<Foo>
+      JParameterizedType parameterized = type.isParameterized();
+      if (parameterized != null) {
+        for (JClassType arg : parameterized.getTypeArgs()) {
+          maybeVisit(arg);
+        }
+      }
+      JClassType base = ModelUtils.ensureBaseType(type);
+      EntityProxyModel peer = model.getPeer(base);
+      if (peer == null) {
+        return;
+      }
+      peer.accept(this);
+    }
+  }
+
+  /**
+   * Visits all types immediately referenced by methods defined in a
+   * RequestContext.
+   */
+  private abstract static class RequestMethodTypesVisitor extends ModelVisitor {
+    private final Set<JClassType> seen = new HashSet<JClassType>();
+
+    @Override
+    public void endVisit(RequestMethod x) {
+      // Request<Foo> -> Foo
+      maybeVisit(x.getDataType());
+      // InstanceRequest<Proxy, Foo> -> Proxy
+      if (x.getInstanceType() != null) {
+        x.getInstanceType().accept(this);
+      }
+      // Request<Void> doSomething(Foo foo, Bar bar) -> Foo, Bar
+      for (JType param : x.getDeclarationMethod().getParameterTypes()) {
+        maybeVisit(param.isClassOrInterface());
+      }
+      // setFoo(Foo foo) -> Foo
+      for (JMethod method : x.getExtraSetters()) {
+        maybeVisit(method.getParameterTypes()[0].isClassOrInterface());
+      }
+    }
+
+    abstract void examineTypeOnce(JClassType type);
+
+    void maybeVisit(JClassType type) {
+      if (type == null) {
+        return;
+      } else if (!seen.add(type)) {
+        // Short-circuit to prevent type-loops
+        return;
+      }
+      examineTypeOnce(type);
+    }
+  }
 
   private GeneratorContext context;
   private TreeLogger logger;
@@ -93,7 +169,7 @@ public class RequestFactoryGenerator extends Generator {
     factory.setSuperclass(AbstractClientRequestFactory.class.getCanonicalName());
     factory.addImplementedInterface(typeName);
     SourceWriter sw = factory.createSourceWriter(context, pw);
-    writeAutoBeanFactory(sw);
+    writeAutoBeanFactory(sw, model.getAllProxyModels(), findExtraEnums(model));
     writeContextMethods(sw);
     writeContextImplementations();
     writeTypeMap(sw);
@@ -102,7 +178,79 @@ public class RequestFactoryGenerator extends Generator {
     return factory.getCreatedClassName();
   }
 
-  private void writeAutoBeanFactory(SourceWriter sw) {
+  /**
+   * Find enums that needed to be added to the EnumMap that are not referenced
+   * by any of the proxies. This is necessary because the RequestFactory depends
+   * on the AutoBeanCodex to serialize enum values, which in turn depends on the
+   * AutoBeanFactory's enum map. That enum map only contains enum types
+   * reachable from the AutoBean interfaces, which could lead to method
+   * parameters being un-encodable.
+   */
+  private Set<JEnumType> findExtraEnums(AcceptsModelVisitor method) {
+    final Set<JEnumType> toReturn = new LinkedHashSet<JEnumType>();
+    final Set<JEnumType> referenced = new HashSet<JEnumType>();
+
+    // Called from the adder visitor below on each EntityProxy seen
+    final ModelVisitor remover = new AllReachableTypesVisitor(model) {
+      @Override
+      void examineTypeOnce(JClassType type) {
+        JEnumType asEnum = type.isEnum();
+        if (asEnum != null) {
+          referenced.add(asEnum);
+        }
+        super.examineTypeOnce(type);
+      }
+    };
+
+    // Add enums used by RequestMethods
+    method.accept(new RequestMethodTypesVisitor() {
+      @Override
+      public boolean visit(EntityProxyModel x) {
+        x.accept(remover);
+        return false;
+      }
+
+      @Override
+      void examineTypeOnce(JClassType type) {
+        JEnumType asEnum = type.isEnum();
+        if (asEnum != null) {
+          toReturn.add(asEnum);
+        }
+      }
+    });
+    toReturn.removeAll(referenced);
+    if (toReturn.isEmpty()) {
+      return Collections.emptySet();
+    }
+    return Collections.unmodifiableSet(toReturn);
+  }
+
+  /**
+   * Find all EntityProxyModels reachable from a given ContextMethod.
+   */
+  private Set<EntityProxyModel> findReferencedEntities(ContextMethod method) {
+    final Set<EntityProxyModel> models = new LinkedHashSet<EntityProxyModel>();
+    method.accept(new AllReachableTypesVisitor(model) {
+      @Override
+      public void endVisit(EntityProxyModel x) {
+        models.add(x);
+      }
+    });
+    return models;
+  }
+
+  private void writeAutoBeanFactory(SourceWriter sw,
+      Collection<EntityProxyModel> models, Collection<JEnumType> extraEnums) {
+    if (!extraEnums.isEmpty()) {
+      StringBuilder extraClasses = new StringBuilder();
+      for (JEnumType enumType : extraEnums) {
+        if (extraClasses.length() > 0) {
+          extraClasses.append(",");
+        }
+        extraClasses.append(enumType.getQualifiedSourceName()).append(".class");
+      }
+      sw.println("@%s({%s})", ExtraEnums.class.getCanonicalName(), extraClasses);
+    }
     // Map in static implementations of EntityProxy methods
     sw.println("@%s({%s.class, %s.class, %s.class})",
         Category.class.getCanonicalName(),
@@ -116,7 +264,7 @@ public class RequestFactoryGenerator extends Generator {
         AutoBeanFactory.class.getCanonicalName());
     sw.indent();
 
-    for (EntityProxyModel proxy : model.getAllProxyModels()) {
+    for (EntityProxyModel proxy : models) {
       // AutoBean<FooProxy> com_google_FooProxy();
       sw.println("%s<%s> %s();", AutoBean.class.getCanonicalName(),
           proxy.getQualifiedSourceName(),
@@ -126,11 +274,18 @@ public class RequestFactoryGenerator extends Generator {
     sw.println("}");
 
     // public static final Factory FACTORY = GWT.create(Factory.class);
-    sw.println("public static final Factory FACTORY=%s.create(Factory.class);",
-        GWT.class.getCanonicalName());
+    sw.println("public static Factory FACTORY;", GWT.class.getCanonicalName());
 
     // Write public accessor
-    sw.println("@Override public Factory getAutoBeanFactory() { return FACTORY; }");
+    sw.println("@Override public Factory getAutoBeanFactory() {");
+    sw.indent();
+    sw.println("if (FACTORY == null) {");
+    sw.indentln("FACTORY = %s.create(Factory.class);",
+        GWT.class.getCanonicalName());
+    sw.println("}");
+    sw.println("return FACTORY;");
+    sw.outdent();
+    sw.println("}");
   }
 
   private void writeContextImplementations() {
@@ -154,6 +309,10 @@ public class RequestFactoryGenerator extends Generator {
           method.getSimpleSourceName(),
           AbstractRequestFactory.class.getCanonicalName(),
           Dialect.class.getCanonicalName(), method.getDialect().name());
+
+      Set<EntityProxyModel> models = findReferencedEntities(method);
+      Set<JEnumType> extraEnumTypes = findExtraEnums(method);
+      writeAutoBeanFactory(sw, models, extraEnumTypes);
 
       // Write each Request method
       for (RequestMethod request : method.getRequestMethods()) {

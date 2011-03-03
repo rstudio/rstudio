@@ -18,6 +18,7 @@ package com.google.gwt.requestfactory.server.testing;
 import com.google.gwt.autobean.server.impl.BeanMethod;
 import com.google.gwt.autobean.server.impl.TypeUtils;
 import com.google.gwt.autobean.shared.AutoBean.PropertyName;
+import com.google.gwt.autobean.shared.AutoBeanFactory;
 import com.google.gwt.requestfactory.shared.InstanceRequest;
 import com.google.gwt.requestfactory.shared.JsonRpcContent;
 import com.google.gwt.requestfactory.shared.JsonRpcWireName;
@@ -182,5 +183,10 @@ class InProcessRequestContext extends AbstractRequestContext {
       Dialect dialect) {
     super(factory, dialect);
     this.dialect = dialect;
+  }
+
+  @Override
+  protected AutoBeanFactory getAutoBeanFactory() {
+    return ((InProcessRequestFactory) getRequestFactory()).getAutoBeanFactory();
   }
 }

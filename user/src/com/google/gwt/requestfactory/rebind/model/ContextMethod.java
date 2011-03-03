@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * Represents a service endpoint.
  */
-public class ContextMethod {
+public class ContextMethod implements AcceptsModelVisitor {
 
   /**
    * Builds a {@link ContextMethod}.
@@ -66,6 +66,15 @@ public class ContextMethod {
   private String simpleSourceName;
 
   private ContextMethod() {
+  }
+
+  public void accept(ModelVisitor visitor) {
+    if (visitor.visit(this)) {
+      for (RequestMethod method : getRequestMethods()) {
+        method.accept(visitor);
+      }
+    }
+    visitor.endVisit(this);
   }
 
   public Dialect getDialect() {

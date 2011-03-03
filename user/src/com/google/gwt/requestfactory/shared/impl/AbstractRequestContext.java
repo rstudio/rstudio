@@ -17,9 +17,11 @@ package com.google.gwt.requestfactory.shared.impl;
 
 import static com.google.gwt.requestfactory.shared.impl.BaseProxyCategory.stableId;
 import static com.google.gwt.requestfactory.shared.impl.Constants.REQUEST_CONTEXT;
+import static com.google.gwt.requestfactory.shared.impl.Constants.STABLE_ID;
 
 import com.google.gwt.autobean.shared.AutoBean;
 import com.google.gwt.autobean.shared.AutoBeanCodex;
+import com.google.gwt.autobean.shared.AutoBeanFactory;
 import com.google.gwt.autobean.shared.AutoBeanUtils;
 import com.google.gwt.autobean.shared.AutoBeanVisitor;
 import com.google.gwt.autobean.shared.Splittable;
@@ -65,7 +67,7 @@ import java.util.Set;
 /**
  * Base implementations for RequestContext services.
  */
-public class AbstractRequestContext implements RequestContext,
+public abstract class AbstractRequestContext implements RequestContext,
     EntityCodex.EntitySource {
   /**
    * Allows the payload dialect to be injected into the AbstractRequestContext
@@ -162,7 +164,7 @@ public class AbstractRequestContext implements RequestContext,
       Class<BaseProxy> target = (Class<BaseProxy>) invocations.get(0).getRequestData().getReturnType();
 
       SimpleProxyId<BaseProxy> id = getRequestFactory().allocateId(target);
-      AutoBean<BaseProxy> bean = getRequestFactory().createProxy(target, id);
+      AutoBean<BaseProxy> bean = createProxy(target, id);
       AutoBeanCodex.decodeInto(result, bean);
 
       if (callback != null) {
@@ -300,6 +302,7 @@ public class AbstractRequestContext implements RequestContext,
       }
     }
   }
+
   private class MyViolation implements Violation {
 
     private final BaseProxy currentProxy;
@@ -356,18 +359,16 @@ public class AbstractRequestContext implements RequestContext,
       WriteOperation.PERSIST, WriteOperation.UPDATE};
   private static final WriteOperation[] UPDATE_ONLY = {WriteOperation.UPDATE};
   private static int payloadId = 100;
-
   protected final List<AbstractRequest<?>> invocations = new ArrayList<AbstractRequest<?>>();
   private boolean locked;
-  private final AbstractRequestFactory requestFactory;
 
+  private final AbstractRequestFactory requestFactory;
   /**
    * A map of all EntityProxies that the RequestContext has interacted with.
    * Objects are placed into this map by being passed into {@link #edit} or as
    * an invocation argument.
    */
   private final Map<SimpleProxyId<?>, AutoBean<? extends BaseProxy>> editedProxies = new LinkedHashMap<SimpleProxyId<?>, AutoBean<? extends BaseProxy>>();
-
   /**
    * A map that contains the canonical instance of an entity to return in the
    * return graph, since this is built from scratch.
@@ -397,8 +398,22 @@ public class AbstractRequestContext implements RequestContext,
     checkLocked();
 
     SimpleProxyId<T> id = requestFactory.allocateId(clazz);
-    AutoBean<T> created = requestFactory.createProxy(clazz, id);
+    AutoBean<T> created = createProxy(clazz, id);
     return takeOwnership(created);
+  }
+
+  /**
+   * Creates a new proxy with an assigned ID.
+   */
+  public <T extends BaseProxy> AutoBean<T> createProxy(Class<T> clazz,
+      SimpleProxyId<T> id) {
+    AutoBean<T> created = getAutoBeanFactory().create(clazz);
+    if (created == null) {
+      throw new IllegalArgumentException("Unknown proxy type "
+          + clazz.getName());
+    }
+    created.setTag(STABLE_ID, id);
+    return created;
   }
 
   public <T extends BaseProxy> T edit(T object) {
@@ -535,14 +550,14 @@ public class AbstractRequestContext implements RequestContext,
    */
   public boolean isValueType(Class<?> clazz) {
     return requestFactory.isValueType(clazz);
-  };
+  }
 
   /**
    * Called by generated subclasses to enqueue a method invocation.
    */
   protected void addInvocation(AbstractRequest<?> request) {
     dialect.addInvocation(request);
-  }
+  };
 
   /**
    * Invoke the appropriate {@code onFailure} callbacks, possibly throwing an
@@ -577,6 +592,12 @@ public class AbstractRequestContext implements RequestContext,
       throw new UmbrellaException(causes);
     }
   }
+
+  /**
+   * Returns an AutoBeanFactory that can produce the types reachable only from
+   * this RequestContext.
+   */
+  protected abstract AutoBeanFactory getAutoBeanFactory();
 
   /**
    * Invoke the appropriate {@code onViolation} callbacks, possibly throwing an
@@ -633,7 +654,7 @@ public class AbstractRequestContext implements RequestContext,
     AutoBean<Q> bean = (AutoBean<Q>) returnedProxies.get(id);
     if (bean == null) {
       Class<Q> proxyClass = id.getProxyClass();
-      bean = requestFactory.createProxy(proxyClass, id);
+      bean = createProxy(proxyClass, id);
       returnedProxies.put(id, bean);
     }
 
@@ -656,7 +677,7 @@ public class AbstractRequestContext implements RequestContext,
     AutoBean<?> parent;
     if (stableId.isEphemeral()) {
       // Newly-created object, use a blank object to compare against
-      parent = requestFactory.createProxy(stableId.getProxyClass(), stableId);
+      parent = createProxy(stableId.getProxyClass(), stableId);
 
       // Newly-created objects go into the persist operation bucket
       operation.setOperation(WriteOperation.PERSIST);
@@ -665,7 +686,7 @@ public class AbstractRequestContext implements RequestContext,
       operation.setStrength(Strength.EPHEMERAL);
     } else if (stableId.isSynthetic()) {
       // Newly-created object, use a blank object to compare against
-      parent = requestFactory.createProxy(stableId.getProxyClass(), stableId);
+      parent = createProxy(stableId.getProxyClass(), stableId);
 
       // Newly-created objects go into the persist operation bucket
       operation.setOperation(WriteOperation.PERSIST);
@@ -1040,9 +1061,9 @@ public class AbstractRequestContext implements RequestContext,
       for (Object o : (Iterable<?>) arg) {
         retainArg(o);
       }
-    } else if (arg instanceof EntityProxy) {
+    } else if (arg instanceof BaseProxy) {
       // Calling edit will validate and set up the tracking we need
-      edit((EntityProxy) arg);
+      edit((BaseProxy) arg);
     }
   }
 

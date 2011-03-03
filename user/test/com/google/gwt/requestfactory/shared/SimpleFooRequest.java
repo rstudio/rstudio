@@ -82,6 +82,8 @@ public interface SimpleFooRequest extends RequestContext {
 
   Request<String> processString(String value);
 
+  Request<Void> receiveEnum(OnlyUsedByRequestContextMethod value);
+
   InstanceRequest<SimpleFooProxy, Void> receiveNull(String value);
 
   Request<Void> receiveNullList(List<SimpleFooProxy> value);
@@ -103,6 +105,9 @@ public interface SimpleFooRequest extends RequestContext {
   Request<SimpleFooProxy> returnNullSimpleFoo();
 
   Request<String> returnNullString();
+
+  Request<Void> returnOnlyUsedInParameterization(
+      List<OnlyUsedInListProxy> values);
 
   Request<SimpleFooProxy> returnSimpleFooSubclass();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2011 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,21 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.autobean.shared.impl;
+package com.google.gwt.requestfactory.shared;
 
 /**
- * This interface is implemented by our generated AutoBeanFactory types to
- * convert enum values to strings.
+ * Ensures that enums used only by a method in a RequestContext are property
+ * emitted into the EnumMap used to encode values.
  */
-public interface EnumMap {
-  /**
-   * Extra enums that should be included in the AutoBeanFactory.
-   */
-  public @interface ExtraEnums {
-    Class<? extends Enum<?>>[] value();
-  }
-
-  <E extends Enum<E>> E getEnum(Class<E> clazz, String token);
-
-  String getToken(Enum<?> e);
+public enum OnlyUsedByRequestContextMethod {
+  FOO, BAR;
 }

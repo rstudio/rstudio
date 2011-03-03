@@ -15,12 +15,8 @@
  */
 package com.google.gwt.requestfactory.shared.impl;
 
-import static com.google.gwt.requestfactory.shared.impl.Constants.STABLE_ID;
-
-import com.google.gwt.autobean.shared.AutoBean;
 import com.google.gwt.autobean.shared.AutoBeanFactory;
 import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.ProxySerializer;
@@ -52,27 +48,18 @@ public abstract class AbstractRequestFactory extends IdFactory implements
   };
   private RequestTransport transport;
 
-  /**
-   * Creates a new proxy with an assigned ID.
-   */
-  public <T extends BaseProxy> AutoBean<T> createProxy(Class<T> clazz,
-      SimpleProxyId<T> id) {
-    AutoBean<T> created = getAutoBeanFactory().create(clazz);
-    if (created == null) {
-      throw new IllegalArgumentException("Unknown EntityProxy type "
-          + clazz.getName());
-    }
-    created.setTag(STABLE_ID, id);
-    return created;
-  }
-
   public <P extends EntityProxy> Request<P> find(final EntityProxyId<P> proxyId) {
     if (((SimpleEntityProxyId<P>) proxyId).isEphemeral()) {
       throw new IllegalArgumentException("Cannot fetch unpersisted entity");
     }
 
     AbstractRequestContext context = new AbstractRequestContext(
-        AbstractRequestFactory.this, AbstractRequestContext.Dialect.STANDARD);
+        AbstractRequestFactory.this, AbstractRequestContext.Dialect.STANDARD) {
+      @Override
+      protected AutoBeanFactory getAutoBeanFactory() {
+        return AbstractRequestFactory.this.getAutoBeanFactory();
+      }
+    };
     return new AbstractRequest<P>(context) {
       {
         requestContext.addInvocation(this);
@@ -132,7 +119,11 @@ public abstract class AbstractRequestFactory extends IdFactory implements
 
   /**
    * Implementations of EntityProxies are provided by an AutoBeanFactory, which
-   * is itself a generated type.
+   * is itself a generated type. This method knows about all proxy types used in
+   * the RequestFactory interface, which prevents pruning of any proxy type. If
+   * the {@link #find(EntityProxyId)} and {@link #getSerializer(ProxyStore)}
+   * were provided by {@link AbstractRequestContext}, this method could be
+   * removed.
    */
   protected abstract AutoBeanFactory getAutoBeanFactory();
 

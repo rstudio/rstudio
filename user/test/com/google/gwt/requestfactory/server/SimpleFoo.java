@@ -15,6 +15,7 @@
  */
 package com.google.gwt.requestfactory.server;
 
+import com.google.gwt.requestfactory.shared.OnlyUsedByRequestContextMethod;
 import com.google.gwt.requestfactory.shared.SimpleEnum;
 
 import java.math.BigDecimal;
@@ -258,6 +259,12 @@ public class SimpleFoo {
     return string;
   }
 
+  public static void receiveEnum(OnlyUsedByRequestContextMethod value) {
+    if (value != OnlyUsedByRequestContextMethod.FOO) {
+      throw new IllegalArgumentException("Expecting FOO, received " + value);
+    }
+  }
+
   public static void receiveNullList(List<SimpleFoo> value) {
     if (value != null) {
       throw new IllegalArgumentException(
@@ -362,6 +369,9 @@ public class SimpleFoo {
 
   public static String returnNullString() {
     return null;
+  }
+
+  public static void returnOnlyUsedInParameterization(List<SimpleFoo> values) {
   }
 
   public static SimpleFoo returnSimpleFooSubclass() {

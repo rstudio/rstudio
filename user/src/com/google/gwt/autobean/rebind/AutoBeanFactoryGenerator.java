@@ -16,6 +16,8 @@
 package com.google.gwt.autobean.rebind;
 
 import com.google.gwt.autobean.client.impl.AbstractAutoBeanFactory;
+import com.google.gwt.autobean.client.impl.ClientPropertyContext;
+import com.google.gwt.autobean.client.impl.JsniCreatorMap;
 import com.google.gwt.autobean.rebind.model.AutoBeanFactoryMethod;
 import com.google.gwt.autobean.rebind.model.AutoBeanFactoryModel;
 import com.google.gwt.autobean.rebind.model.AutoBeanMethod;
@@ -25,12 +27,10 @@ import com.google.gwt.autobean.shared.AutoBean;
 import com.google.gwt.autobean.shared.AutoBeanFactory;
 import com.google.gwt.autobean.shared.AutoBeanUtils;
 import com.google.gwt.autobean.shared.AutoBeanVisitor;
-import com.google.gwt.autobean.shared.AutoBeanVisitor.CollectionPropertyContext;
-import com.google.gwt.autobean.shared.AutoBeanVisitor.MapPropertyContext;
-import com.google.gwt.autobean.shared.AutoBeanVisitor.PropertyContext;
 import com.google.gwt.autobean.shared.impl.AbstractAutoBean;
 import com.google.gwt.autobean.shared.impl.AbstractAutoBean.OneShotContext;
-import com.google.gwt.autobean.shared.impl.AbstractPropertyContext;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.impl.WeakMapping;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
@@ -44,7 +44,6 @@ import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.generator.NameFactory;
 import com.google.gwt.editor.rebind.model.ModelUtils;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
@@ -308,32 +307,75 @@ public class AutoBeanFactoryGenerator extends Generator {
    * Write an instance initializer block to populate the creators map.
    */
   private void writeDynamicMethods(SourceWriter sw) {
-    sw.println("{");
+    List<JClassType> privatePeers = new ArrayList<JClassType>();
+    sw.println("@Override protected void initializeCreatorMap(%s map) {",
+        JsniCreatorMap.class.getCanonicalName());
     sw.indent();
     for (AutoBeanType type : model.getAllTypes()) {
       if (type.isNoWrap()) {
         continue;
       }
-      sw.println(
-          "creators.put(%s.class, new Creator() {",
-          ModelUtils.ensureBaseType(type.getPeerType()).getQualifiedSourceName());
-      if (type.isSimpleBean()) {
-        sw.indentln("public %1$s create() { return new %1$s(%2$s.this); }",
-            type.getQualifiedSourceName(), simpleSourceName);
+      String classLiteralAccessor;
+      JClassType peer = type.getPeerType();
+      String peerName = ModelUtils.ensureBaseType(peer).getQualifiedSourceName();
+      if (peer.isPublic()) {
+        classLiteralAccessor = peerName + ".class";
       } else {
-        sw.indentln("public %1$s create() { return null; }",
-            type.getQualifiedSourceName());
+        privatePeers.add(peer);
+        classLiteralAccessor = "classLit_" + peerName.replace('.', '_') + "()";
       }
-      // public FooAutoBean create(Object delegate) {
-      // return new FooAutoBean((Foo) delegate); }
-      sw.indentln("public %1$s create(Object delegate) {"
-          + " return new %1$s(%2$s.this, (%3$s) delegate); }",
-          type.getQualifiedSourceName(), simpleSourceName,
-          type.getPeerType().getQualifiedSourceName());
-      sw.println("});");
+      // map.add(Foo.class, getConstructors_com_foo_Bar());
+      sw.println("map.add(%s, getConstructors_%s());", classLiteralAccessor,
+          peerName.replace('.', '_'));
     }
     sw.outdent();
     sw.println("}");
+
+    /*
+     * Create a native method for each peer type that isn't public since Java
+     * class literal references are scoped.
+     */
+    for (JClassType peer : privatePeers) {
+      String peerName = ModelUtils.ensureBaseType(peer).getQualifiedSourceName();
+      sw.println(
+          "private native Class<?> classLit_%s() /*-{return @%s::class;}-*/;",
+          peerName.replace('.', '_'), peerName);
+    }
+
+    /*
+     * Create a method that returns an array containing references to the
+     * constructors.
+     */
+    String factoryJNIName = context.getTypeOracle().findType(
+        AutoBeanFactory.class.getCanonicalName()).getJNISignature();
+    for (AutoBeanType type : model.getAllTypes()) {
+      String peerName = ModelUtils.ensureBaseType(type.getPeerType()).getQualifiedSourceName();
+      String peerJNIName = ModelUtils.ensureBaseType(type.getPeerType()).getJNISignature();
+      /*-
+       * private native JsArray<JSO> getConstructors_com_foo_Bar() {
+       *   return [
+       *     BarProxyImpl::new(ABFactory),
+       *     BarProxyImpl::new(ABFactory, DelegateType)
+       *   ];
+       * }
+       */
+      sw.println("private native %s<%s> getConstructors_%s() /*-{",
+          JsArray.class.getCanonicalName(),
+          JavaScriptObject.class.getCanonicalName(), peerName.replace('.', '_'));
+      sw.indent();
+      sw.println("return [");
+      if (type.isSimpleBean()) {
+        sw.indentln("@%s::new(%s),", type.getQualifiedSourceName(),
+            factoryJNIName);
+      } else {
+        sw.indentln(",");
+      }
+      sw.indentln("@%s::new(%s%s)", type.getQualifiedSourceName(),
+          factoryJNIName, peerJNIName);
+      sw.println("];");
+      sw.outdent();
+      sw.println("}-*/;");
+    }
   }
 
   private void writeEnumSetup(SourceWriter sw) {
@@ -574,12 +616,20 @@ public class AutoBeanFactoryGenerator extends Generator {
    * Generate traversal logic.
    */
   private void writeTraversal(SourceWriter sw, AutoBeanType type) {
-    NameFactory names = new NameFactory();
+    List<AutoBeanMethod> referencedSetters = new ArrayList<AutoBeanMethod>();
     sw.println(
         "@Override protected void traverseProperties(%s visitor, %s ctx) {",
         AutoBeanVisitor.class.getCanonicalName(),
         OneShotContext.class.getCanonicalName());
     sw.indent();
+    sw.println("%s bean;", AbstractAutoBean.class.getCanonicalName());
+    sw.println("Object value;");
+    sw.println("%s propertyContext;",
+        ClientPropertyContext.class.getCanonicalName());
+    // Local variable ref cleans up emitted js
+    sw.println("%1$s as = as();", type.getPeerType().getQualifiedSourceName());
+    sw.println("%s<String, Object> values = this.values;",
+        Map.class.getCanonicalName());
 
     for (AutoBeanMethod method : type.getMethods()) {
       if (!method.getAction().equals(JBeanMethod.GET)) {
@@ -602,26 +652,24 @@ public class AutoBeanFactoryGenerator extends Generator {
 
       // The type of property influences the visitation
       String valueExpression = String.format(
-          "%1$s value = (%1$s) %2$s.getAutoBean(as().%3$s());",
+          "bean = (%1$s) %2$s.getAutoBean(as.%3$s());",
           AbstractAutoBean.class.getCanonicalName(),
           AutoBeanUtils.class.getCanonicalName(), method.getMethod().getName());
       String visitMethod;
-      Class<?> propertyContextType;
+      String visitVariable = "bean";
       if (method.isCollection()) {
-        propertyContextType = CollectionPropertyContext.class;
         visitMethod = "Collection";
       } else if (method.isMap()) {
-        propertyContextType = MapPropertyContext.class;
         visitMethod = "Map";
       } else if (method.isValueType()) {
-        propertyContextType = PropertyContext.class;
-        valueExpression = String.format("Object value = as().%s();",
+        valueExpression = String.format("value = as.%s();",
             method.getMethod().getName());
         visitMethod = "Value";
+        visitVariable = "value";
       } else {
         visitMethod = "Reference";
-        propertyContextType = PropertyContext.class;
       }
+      sw.println(valueExpression);
 
       // Map<List<Foo>, Bar> --> Map, List, Foo, Bar
       List<JType> typeList = new ArrayList<JType>();
@@ -634,86 +682,99 @@ public class AutoBeanFactoryGenerator extends Generator {
        * payloads to be interpreted as different types). The leading underscore
        * allows purely numeric property names, which are valid JSON map keys.
        */
-      String propertyContextName = names.createName("_"
-          + method.getPropertyName() + "PropertyContext");
-      sw.println("class %s extends %s implements %s {", propertyContextName,
-          AbstractPropertyContext.class.getCanonicalName(),
-          propertyContextType.getCanonicalName());
+      // propertyContext = new CPContext(.....);
+      sw.println("propertyContext = new %s(",
+          ClientPropertyContext.class.getCanonicalName());
       sw.indent();
-      sw.println("%s() {", propertyContextName);
-      sw.indent();
-      sw.print("super(new Class<?>[] {");
-      boolean first = true;
-      for (JType lit : typeList) {
-        if (first) {
-          first = false;
+      // The instance on which the context is nominally operating
+      sw.println("as,");
+      // Produce a JSNI reference to a setter function to call
+      {
+        if (setter != null) {
+          // Call a method that returns a JSNI reference to the method to call
+          // setFooMethodReference(),
+          sw.println("%sMethodReference(as),", setter.getMethod().getName());
+          referencedSetters.add(setter);
         } else {
-          sw.print(", ");
-        }
-        sw.print("%s.class",
-            ModelUtils.ensureBaseType(lit).getQualifiedSourceName());
-      }
-      sw.println("}, new int[] {");
-      first = true;
-      for (JType lit : typeList) {
-        if (first) {
-          first = false;
-        } else {
-          sw.print(", ");
-        }
-        JParameterizedType hasParam = lit.isParameterized();
-        if (hasParam == null) {
-          sw.print("0");
-        } else {
-          sw.print(String.valueOf(hasParam.getTypeArgs().length));
+          // Create a function that will update the values map
+          // CPContext.mapSetter(values, "foo");
+          sw.println("%s.mapSetter(values, \"%s\"),",
+              ClientPropertyContext.Setter.class.getCanonicalName(),
+              method.getPropertyName());
         }
       }
-      sw.println("});");
-      sw.outdent();
-      sw.println("}");
-      // Base method returns true.
-      if (!type.isSimpleBean() && setter == null) {
-        sw.println("public boolean canSet() { return false; }");
-      }
-      sw.println("public void set(Object obj) { ");
-      if (setter != null) {
-        // Prefer the setter if one exists
-        // as().setFoo((Foo) obj);
-        sw.indentln(
-            "as().%s((%s) obj);",
-            setter.getMethod().getName(),
-            ModelUtils.ensureBaseType(
-                setter.getMethod().getParameters()[0].getType()).getQualifiedSourceName());
-      } else if (type.isSimpleBean()) {
-        // Otherwise, fall back to a map assignment
-        sw.indentln("values.put(\"%s\", obj);", method.getPropertyName());
+      if (typeList.size() == 1) {
+        sw.println("%s.class",
+            ModelUtils.ensureBaseType(typeList.get(0)).getQualifiedSourceName());
       } else {
-        sw.indentln("throw new UnsupportedOperationException(\"No setter\");");
+        // Produce the array of parameter types
+        sw.print("new Class<?>[] {");
+        boolean first = true;
+        for (JType lit : typeList) {
+          if (first) {
+            first = false;
+          } else {
+            sw.print(", ");
+          }
+          sw.print("%s.class",
+              ModelUtils.ensureBaseType(lit).getQualifiedSourceName());
+        }
+        sw.println("},");
+
+        // Produce the array of parameter counts
+        sw.print("new int[] {");
+        first = true;
+        for (JType lit : typeList) {
+          if (first) {
+            first = false;
+          } else {
+            sw.print(", ");
+          }
+          JParameterizedType hasParam = lit.isParameterized();
+          if (hasParam == null) {
+            sw.print("0");
+          } else {
+            sw.print(String.valueOf(hasParam.getTypeArgs().length));
+          }
+        }
+        sw.println("}");
       }
-      sw.println("}");
       sw.outdent();
-      sw.println("}");
+      sw.println(");");
 
-      sw.print("{");
-      sw.indent();
-      sw.println("%1$s %1$s = new %1$s();", propertyContextName);
-
-      // Call the visit methods
-      sw.println(valueExpression);
       // if (visitor.visitReferenceProperty("foo", value, ctx))
-      sw.println("if (visitor.visit%sProperty(\"%s\", value, %s))",
-          visitMethod, method.getPropertyName(), propertyContextName);
+      sw.println("if (visitor.visit%sProperty(\"%s\", %s, propertyContext)) {",
+          visitMethod, method.getPropertyName(), visitVariable);
       if (!method.isValueType()) {
         // Cycle-detection in AbstractAutoBean.traverse
-        sw.indentln("if (value != null) { value.traverse(visitor, ctx); }");
+        sw.indentln("if (bean != null) { bean.traverse(visitor, ctx); }");
       }
-      // visitor.endVisitorReferenceProperty("foo", value, ctx);
-      sw.println("visitor.endVisit%sProperty(\"%s\", value, %s);", visitMethod,
-          method.getPropertyName(), propertyContextName);
-      sw.outdent();
       sw.println("}");
+      // visitor.endVisitorReferenceProperty("foo", value, ctx);
+      sw.println("visitor.endVisit%sProperty(\"%s\", %s, propertyContext);",
+          visitMethod, method.getPropertyName(), visitVariable);
     }
     sw.outdent();
     sw.println("}");
+
+    for (AutoBeanMethod method : referencedSetters) {
+      JMethod jmethod = method.getMethod();
+      assert jmethod.getParameters().length == 1;
+
+      /*-
+       * Setter setFooMethodReference(Object instance) {
+       *   return instance.@com.example.Blah::setFoo(Lcom/example/Foo;);
+       * }
+       */
+      sw.println(
+          "public static native %s %sMethodReference(Object instance) /*-{",
+          ClientPropertyContext.Setter.class.getCanonicalName(),
+          jmethod.getName());
+      sw.indentln("return instance.@%s::%s(%s);",
+          jmethod.getEnclosingType().getQualifiedSourceName(),
+          jmethod.getName(),
+          jmethod.getParameters()[0].getType().getJNISignature());
+      sw.println("}-*/;");
+    }
   }
 }

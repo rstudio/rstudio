@@ -18,6 +18,8 @@ package com.google.gwt.requestfactory.client;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyChange;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
+import com.google.gwt.requestfactory.shared.OnlyUsedByRequestContextMethod;
+import com.google.gwt.requestfactory.shared.OnlyUsedInListProxy;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.RequestContext;
@@ -473,6 +475,22 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         finishTestAndReset();
       }
     });
+  }
+
+  /**
+   * Tests that enum values used only as method parameters in a RequestContext
+   * are in the EnumMap. This test only applies to GWT-based clients.
+   */
+  public void testEnumOnlyUsedByRequestContext() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    SimpleFooRequest ctx = simpleFooRequest();
+    ctx.receiveEnum(OnlyUsedByRequestContextMethod.FOO).fire(
+        new Receiver<Void>() {
+          @Override
+          public void onSuccess(Void response) {
+            finishTest();
+          }
+        });
   }
 
   /**
@@ -2214,6 +2232,15 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         });
       }
     });
+  }
+
+  /**
+   * Test that a proxy only referenced via a parameterization is available.
+   */
+  public void testOnlyUsedInList() {
+    OnlyUsedInListProxy proxy = simpleFooRequest().create(
+        OnlyUsedInListProxy.class);
+    assertNotNull(proxy);
   }
 
   /**

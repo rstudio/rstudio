@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * Represents an EntityProxy subtype.
  */
-public class EntityProxyModel {
+public class EntityProxyModel implements AcceptsModelVisitor {
   /**
    * Builds {@link EntityProxyModel}.
    */
@@ -81,6 +81,15 @@ public class EntityProxyModel {
   private Type type;
 
   private EntityProxyModel() {
+  }
+
+  public void accept(ModelVisitor visitor) {
+    if (visitor.visit(this)) {
+      for (RequestMethod method : requestMethods) {
+        method.accept(visitor);
+      }
+    }
+    visitor.endVisit(this);
   }
 
   public Class<?> getProxyFor() {

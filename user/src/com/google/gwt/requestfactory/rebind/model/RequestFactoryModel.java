@@ -53,7 +53,7 @@ import java.util.Set;
 /**
  * Represents a RequestFactory interface declaration.
  */
-public class RequestFactoryModel {
+public class RequestFactoryModel implements AcceptsModelVisitor {
   static String badContextReturnType(JMethod method,
       JClassType requestInterface, JClassType instanceRequestInterface) {
     return String.format(
@@ -144,6 +144,18 @@ public class RequestFactoryModel {
     if (poisoned) {
       die(poisonedMessage());
     }
+  }
+
+  public void accept(ModelVisitor visitor) {
+    if (visitor.visit(this)) {
+      for (EntityProxyModel model : getAllProxyModels()) {
+        model.accept(visitor);
+      }
+      for (ContextMethod method : getMethods()) {
+        method.accept(visitor);
+      }
+    }
+    visitor.endVisit(this);
   }
 
   public Collection<EntityProxyModel> getAllProxyModels() {

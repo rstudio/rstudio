@@ -19,10 +19,12 @@ import com.google.gwt.autobean.shared.AutoBean;
 import com.google.gwt.autobean.shared.AutoBeanFactory;
 import com.google.gwt.autobean.shared.AutoBeanFactory.Category;
 import com.google.gwt.autobean.shared.AutoBeanFactory.NoWrap;
+import com.google.gwt.autobean.shared.impl.EnumMap.ExtraEnums;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JEnumConstant;
+import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.core.ext.typeinfo.JGenericType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
@@ -35,7 +37,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -57,7 +58,7 @@ public class AutoBeanFactoryModel {
   private final List<AutoBeanFactoryMethod> methods = new ArrayList<AutoBeanFactoryMethod>();
   private final List<JMethod> objectMethods;
   private final TypeOracle oracle;
-  private final Map<JClassType, AutoBeanType> peers = new HashMap<JClassType, AutoBeanType>();
+  private final Map<JClassType, AutoBeanType> peers = new LinkedHashMap<JClassType, AutoBeanType>();
   private boolean poisoned;
 
   /**
@@ -99,6 +100,17 @@ public class AutoBeanFactoryModel {
       NoWrap noWrapAnnotation = factoryType.getAnnotation(NoWrap.class);
       if (noWrapAnnotation != null) {
         processClassArrayAnnotation(noWrapAnnotation.value(), noWrapTypes);
+      }
+
+      ExtraEnums extraEnumsAnnotation = factoryType.getAnnotation(ExtraEnums.class);
+      if (extraEnumsAnnotation != null) {
+        for (Class<?> clazz : extraEnumsAnnotation.value()) {
+          JEnumType asEnum = oracle.findType(clazz.getCanonicalName()).isEnum();
+          assert asEnum != null;
+          for (JEnumConstant value : asEnum.getEnumConstants()) {
+            allEnumConstants.put(value, AutoBeanMethod.getEnumName(value));
+          }
+        }
       }
     }
 

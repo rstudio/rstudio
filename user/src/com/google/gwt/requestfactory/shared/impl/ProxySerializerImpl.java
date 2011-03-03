@@ -17,6 +17,7 @@ package com.google.gwt.requestfactory.shared.impl;
 
 import com.google.gwt.autobean.shared.AutoBean;
 import com.google.gwt.autobean.shared.AutoBeanCodex;
+import com.google.gwt.autobean.shared.AutoBeanFactory;
 import com.google.gwt.autobean.shared.AutoBeanUtils;
 import com.google.gwt.autobean.shared.AutoBeanVisitor;
 import com.google.gwt.autobean.shared.Splittable;
@@ -138,6 +139,11 @@ class ProxySerializerImpl extends AbstractRequestContext implements
     }
 
     return getRequestFactory().getHistoryToken(id);
+  }
+
+  @Override
+  protected AutoBeanFactory getAutoBeanFactory() {
+    return getRequestFactory().getAutoBeanFactory();
   }
 
   @Override

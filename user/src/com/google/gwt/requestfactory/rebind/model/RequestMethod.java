@@ -28,7 +28,7 @@ import java.util.List;
  * be a method declared in a RequestContext or a getter or setter on an
  * EntityProxy.
  */
-public class RequestMethod {
+public class RequestMethod implements AcceptsModelVisitor {
 
   /**
    * Builds a {@link ContextMethod}.
@@ -125,6 +125,13 @@ public class RequestMethod {
   private boolean valueType;
 
   private RequestMethod() {
+  }
+
+  public void accept(ModelVisitor visitor) {
+    if (visitor.visit(this)) {
+      // Empty
+    }
+    visitor.endVisit(this);
   }
 
   public String getApiVersion() {
