@@ -1343,7 +1343,14 @@ void rCleanup(bool terminatedNormally)
       // very brief interval first to allow the quit or other termination
       // related events to get into the queue
       boost::this_thread::sleep(boost::posix_time::milliseconds(100));
-      clientEventService().stop();
+
+      // only stop the client event service in server mode (because
+      // desktop is able to quit successfully whether or not it gets
+      // the quit event). we do this because we observe osx desktop
+      // crashing deep in the boost timed_wait code during the wait
+      // for the event service to stop
+      if (session::options().programMode() == kSessionProgramModeServer)
+         clientEventService().stop();
 
       // stop the main http listener
       httpConnectionListener().stop();
