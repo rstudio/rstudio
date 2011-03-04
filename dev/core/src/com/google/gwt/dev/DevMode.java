@@ -114,9 +114,10 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       }
       Throwable t;
       try {
-        Class<?> clazz = Class.forName(sclClassName, true,
-            Thread.currentThread().getContextClassLoader());
-        Class<? extends ServletContainerLauncher> sclClass = clazz.asSubclass(ServletContainerLauncher.class);
+        Class<?> clazz =
+            Class.forName(sclClassName, true, Thread.currentThread().getContextClassLoader());
+        Class<? extends ServletContainerLauncher> sclClass =
+            clazz.asSubclass(ServletContainerLauncher.class);
         options.setServletContainerLauncher(sclClass.newInstance());
         options.setServletContainerLauncherArgs(sclArgs);
         return true;
@@ -196,8 +197,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
   /**
    * Options controlling dev mode.
    */
-  protected interface HostedModeOptions extends HostedModeBaseOptions,
-      CompilerOptions {
+  protected interface HostedModeOptions extends HostedModeBaseOptions, CompilerOptions {
     ServletContainerLauncher getServletContainerLauncher();
 
     String getServletContainerLauncherArgs();
@@ -210,8 +210,8 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
   /**
    * Concrete class to implement all hosted mode options.
    */
-  protected static class HostedModeOptionsImpl extends
-      HostedModeBaseOptionsImpl implements HostedModeOptions {
+  protected static class HostedModeOptionsImpl extends HostedModeBaseOptionsImpl implements
+      HostedModeOptions {
     private File extraDir;
     private int localWorkers;
     private ServletContainerLauncher scl;
@@ -223,8 +223,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
      * @return the deploy directory.
      */
     public File getDeployDir() {
-      return (deployDir == null) ? new File(warDir, "WEB-INF/deploy")
-          : deployDir;
+      return (deployDir == null) ? new File(warDir, "WEB-INF/deploy") : deployDir;
     }
 
     public File getExtraDir() {
@@ -290,8 +289,8 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
   /**
    * The pattern for files usable as startup URLs.
    */
-  private static final Pattern STARTUP_FILE_PATTERN = Pattern.compile(
-      ".*\\.(html|jsp)", Pattern.CASE_INSENSITIVE);
+  private static final Pattern STARTUP_FILE_PATTERN = Pattern.compile(".*\\.(html|jsp)",
+      Pattern.CASE_INSENSITIVE);
 
   /**
    * Startup development mode.
@@ -385,13 +384,13 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       }
     }
 
-    TreeLogger branch = getTopLogger().branch(TreeLogger.TRACE,
-        "Linking modules");
+    TreeLogger branch = getTopLogger().branch(TreeLogger.TRACE, "Linking modules");
     Event slowStartupEvent = SpeedTracerLogger.start(DevModeEventType.SLOW_STARTUP);
     try {
       for (ModuleDef module : startupModules.values()) {
-        TreeLogger loadLogger = branch.branch(TreeLogger.DEBUG,
-            "Bootstrap link for command-line module '" + module.getCanonicalName() + "'");
+        TreeLogger loadLogger =
+            branch.branch(TreeLogger.DEBUG, "Bootstrap link for command-line module '"
+                + module.getCanonicalName() + "'");
         link(loadLogger, module);
       }
     } catch (UnableToCompleteException e) {
@@ -430,8 +429,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       }
     }
 
-    TreeLogger branch = getTopLogger().branch(TreeLogger.TRACE,
-        "Loading modules");
+    TreeLogger branch = getTopLogger().branch(TreeLogger.TRACE, "Loading modules");
     try {
       for (String moduleName : options.getModuleNames()) {
         TreeLogger moduleBranch = branch.branch(TreeLogger.TRACE, moduleName);
@@ -441,30 +439,27 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
         startupModules.put(module.getName(), module);
 
         if (!options.isNoServer()) {
-          validateServletTags(moduleBranch, servletValidator, servletWriter,
-              module);
+          validateServletTags(moduleBranch, servletValidator, servletWriter, module);
         }
       }
       if (servletWriter != null) {
         servletWriter.realize(webXml);
       }
     } catch (IOException e) {
-      getTopLogger().log(TreeLogger.WARN,
-          "Unable to generate '" + webXml.getAbsolutePath() + "'");
+      getTopLogger().log(TreeLogger.WARN, "Unable to generate '" + webXml.getAbsolutePath() + "'");
     } catch (UnableToCompleteException e) {
       // Already logged.
       return false;
     }
     return true;
   }
-  
+
   @Override
   protected int doStartUpServer() {
     // Create the war directory if it doesn't exist
     File warDir = options.getWarDir();
     if (!warDir.exists() && !warDir.mkdirs()) {
-      getTopLogger().log(TreeLogger.ERROR,
-          "Unable to create war directory " + warDir);
+      getTopLogger().log(TreeLogger.ERROR, "Unable to create war directory " + warDir);
       return -1;
     }
 
@@ -475,8 +470,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
       ServletContainerLauncher scl = options.getServletContainerLauncher();
 
-      TreeLogger serverLogger = ui.getWebServerLogger(getWebServerName(),
-          scl.getIconBytes());
+      TreeLogger serverLogger = ui.getWebServerLogger(getWebServerName(), scl.getIconBytes());
 
       String sclArgs = options.getServletContainerLauncherArgs();
       if (sclArgs != null) {
@@ -502,17 +496,13 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       }
       scl.setBindAddress(bindAddress);
 
-      serverLogger.log(TreeLogger.TRACE, "Starting HTTP on port " + getPort(),
-          null);
+      serverLogger.log(TreeLogger.TRACE, "Starting HTTP on port " + getPort(), null);
       server = scl.start(serverLogger, getPort(), options.getWarDir());
       assert (server != null);
       clearCallback = false;
       return server.getPort();
     } catch (BindException e) {
-      System.err.println("Port "
-          + bindAddress
-          + ':'
-          + getPort()
+      System.err.println("Port " + bindAddress + ':' + getPort()
           + " is already is use; you probably still have another session active");
     } catch (Exception e) {
       System.err.println("Unable to start embedded HTTP server");
@@ -549,8 +539,8 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
   }
 
   @Override
-  protected ModuleDef loadModule(TreeLogger logger, String moduleName,
-      boolean refresh) throws UnableToCompleteException {
+  protected ModuleDef loadModule(TreeLogger logger, String moduleName, boolean refresh)
+      throws UnableToCompleteException {
     if (startupModules.containsKey(moduleName)) {
       // First load of a startup module; remove from list, no need to refresh.
       return startupModules.remove(moduleName);
@@ -559,28 +549,23 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
   }
 
   @Override
-  protected synchronized void produceOutput(TreeLogger logger,
-      StandardLinkerContext linkerStack, ArtifactSet artifacts,
-      ModuleDef module, boolean isRelink) throws UnableToCompleteException {
-    TreeLogger linkLogger = logger.branch(TreeLogger.DEBUG, "Linking module '"
-        + module.getName() + "'");
+  protected synchronized void produceOutput(TreeLogger logger, StandardLinkerContext linkerStack,
+      ArtifactSet artifacts, ModuleDef module, boolean isRelink) throws UnableToCompleteException {
+    TreeLogger linkLogger =
+        logger.branch(TreeLogger.DEBUG, "Linking module '" + module.getName() + "'");
 
-    OutputFileSetOnDirectory outFileSet = new OutputFileSetOnDirectory(
-        options.getWarDir(), module.getName() + "/");
-    OutputFileSetOnDirectory deployFileSet = new OutputFileSetOnDirectory(
-        options.getDeployDir(), module.getName() + "/");
+    OutputFileSetOnDirectory outFileSet =
+        new OutputFileSetOnDirectory(options.getWarDir(), module.getName() + "/");
+    OutputFileSetOnDirectory deployFileSet =
+        new OutputFileSetOnDirectory(options.getDeployDir(), module.getName() + "/");
     OutputFileSet extraFileSet = new NullOutputFileSet();
     if (options.getExtraDir() != null) {
-      extraFileSet = new OutputFileSetOnDirectory(options.getExtraDir(),
-          module.getName() + "/");
+      extraFileSet = new OutputFileSetOnDirectory(options.getExtraDir(), module.getName() + "/");
     }
 
-    linkerStack.produceOutput(linkLogger, artifacts, Visibility.Public,
-        outFileSet);
-    linkerStack.produceOutput(linkLogger, artifacts, Visibility.Deploy,
-        deployFileSet);
-    linkerStack.produceOutput(linkLogger, artifacts, Visibility.Private,
-        extraFileSet);
+    linkerStack.produceOutput(linkLogger, artifacts, Visibility.Public, outFileSet);
+    linkerStack.produceOutput(linkLogger, artifacts, Visibility.Deploy, deployFileSet);
+    linkerStack.produceOutput(linkLogger, artifacts, Visibility.Private, extraFileSet);
 
     outFileSet.close();
     deployFileSet.close();
@@ -594,23 +579,20 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
   @Override
   protected void warnAboutNoStartupUrls() {
-    getTopLogger().log(
-        TreeLogger.WARN,
-        "No startup URLs supplied and no plausible ones found -- use "
-            + "-startupUrl");
+    getTopLogger().log(TreeLogger.WARN,
+        "No startup URLs supplied and no plausible ones found -- use " + "-startupUrl");
   }
 
-  private void validateServletTags(TreeLogger logger,
-      ServletValidator servletValidator, ServletWriter servletWriter,
-      ModuleDef module) {
+  private void validateServletTags(TreeLogger logger, ServletValidator servletValidator,
+      ServletWriter servletWriter, ModuleDef module) {
     String[] servletPaths = module.getServletPaths();
     if (servletPaths.length == 0) {
       return;
     }
 
-    TreeLogger servletLogger = logger.branch(TreeLogger.DEBUG,
-        "Validating <servlet> tags for module '" + module.getName() + "'",
-        null, new InstalledHelpInfo("servletMappings.html"));
+    TreeLogger servletLogger =
+        logger.branch(TreeLogger.DEBUG, "Validating <servlet> tags for module '" + module.getName()
+            + "'", null, new InstalledHelpInfo("servletMappings.html"));
     for (String servletPath : servletPaths) {
       String servletClass = module.findServletForPath(servletPath);
       assert (servletClass != null);

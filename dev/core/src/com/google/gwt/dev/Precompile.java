@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -94,10 +94,9 @@ public class Precompile {
   /**
    * The set of options for the precompiler.
    */
-  public interface PrecompileOptions extends JJSOptions, CompileTaskOptions,
-      OptionGenDir, OptionValidateOnly, OptionDisableUpdateCheck,
-      OptionEnableGeneratingOnShards, OptionMaxPermsPerPrecompile,
-      PrecompilationResult {
+  public interface PrecompileOptions extends JJSOptions, CompileTaskOptions, OptionGenDir,
+      OptionValidateOnly, OptionDisableUpdateCheck, OptionEnableGeneratingOnShards,
+      OptionMaxPermsPerPrecompile, PrecompilationResult {
   }
 
   static class ArgProcessor extends CompileArgProcessor {
@@ -130,8 +129,8 @@ public class Precompile {
     }
   }
 
-  static class PrecompileOptionsImpl extends CompileTaskOptionsImpl implements
-      PrecompileOptions, Serializable {
+  static class PrecompileOptionsImpl extends CompileTaskOptionsImpl implements PrecompileOptions,
+      Serializable {
     private boolean disableUpdateCheck;
     private boolean enableGeneratingOnShards = true;
     private File genDir;
@@ -265,7 +264,7 @@ public class Precompile {
     public void setGenDir(File genDir) {
       this.genDir = genDir;
     }
-    
+
     public void setGeneratorResultCachingEnabled(boolean enabled) {
       jjsOptions.setGeneratorResultCachingEnabled(enabled);
     }
@@ -320,9 +319,9 @@ public class Precompile {
 
     @Override
     public void run() {
-      SpeedTracerLogger.Event createGraphicsEvent = SpeedTracerLogger.start(
-          CompilerEventType.GRAPHICS_INIT, "java.awt.headless",
-          System.getProperty("java.awt.headless"));
+      SpeedTracerLogger.Event createGraphicsEvent =
+          SpeedTracerLogger.start(CompilerEventType.GRAPHICS_INIT, "java.awt.headless", System
+              .getProperty("java.awt.headless"));
       GraphicsEnvironment.getLocalGraphicsEnvironment();
       createGraphicsEvent.end();
     }
@@ -354,8 +353,7 @@ public class Precompile {
     SpeedTracerLogger.init();
     Event precompileEvent = SpeedTracerLogger.start(CompilerEventType.PRECOMPILE);
     if (System.getProperty("gwt.jjs.dumpAst") != null) {
-      System.out.println("Will dump AST to: "
-          + System.getProperty("gwt.jjs.dumpAst"));
+      System.out.println("Will dump AST to: " + System.getProperty("gwt.jjs.dumpAst"));
     }
 
     /*
@@ -371,8 +369,8 @@ public class Precompile {
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
           FutureTask<UpdateResult> updater = null;
           if (!options.isUpdateCheckDisabled()) {
-            updater = CheckForUpdates.checkForUpdatesInBackgroundThread(logger,
-                CheckForUpdates.ONE_DAY);
+            updater =
+                CheckForUpdates.checkForUpdatesInBackgroundThread(logger, CheckForUpdates.ONE_DAY);
           }
           boolean success = new Precompile(options).run(logger);
           if (success) {
@@ -392,7 +390,7 @@ public class Precompile {
 
   /**
    * Precompiles the given module.
-   *
+   * 
    * @param logger a logger to use
    * @param jjsOptions a set of compiler options
    * @param module the module to compile
@@ -400,24 +398,24 @@ public class Precompile {
    *          <code>null</code>
    * @return the precompilation
    */
-  public static Precompilation precompile(TreeLogger logger,
-      JJSOptions jjsOptions, ModuleDef module, File genDir) {
-    PropertyPermutations allPermutations = new PropertyPermutations(
-        module.getProperties(), module.getActiveLinkerNames());
+  public static Precompilation precompile(TreeLogger logger, JJSOptions jjsOptions,
+      ModuleDef module, File genDir) {
+    PropertyPermutations allPermutations =
+        new PropertyPermutations(module.getProperties(), module.getActiveLinkerNames());
     return precompile(logger, jjsOptions, module, 0, allPermutations, genDir);
   }
 
   /**
    * Validates the given module can be compiled.
-   *
+   * 
    * @param logger a logger to use
    * @param jjsOptions a set of compiler options
    * @param module the module to compile
    * @param genDir optional directory to dump generated source, may be
-   *               <code>null</code>
+   *          <code>null</code>
    */
-  public static boolean validate(TreeLogger logger, JJSOptions jjsOptions,
-      ModuleDef module, File genDir) {
+  public static boolean validate(TreeLogger logger, JJSOptions jjsOptions, ModuleDef module,
+      File genDir) {
     Event validateEvent = SpeedTracerLogger.start(CompilerEventType.VALIDATE);
     try {
       CompilationState compilationState = module.getCompilationState(logger);
@@ -437,16 +435,16 @@ public class Precompile {
       }
 
       ArtifactSet generatorArtifacts = new ArtifactSet();
-      DistillerRebindPermutationOracle rpo = new DistillerRebindPermutationOracle(
-          module, compilationState, generatorArtifacts,
-          new PropertyPermutations(module.getProperties(),
-              module.getActiveLinkerNames()), genDir);
+      DistillerRebindPermutationOracle rpo =
+          new DistillerRebindPermutationOracle(module, compilationState, generatorArtifacts,
+              new PropertyPermutations(module.getProperties(), module.getActiveLinkerNames()),
+              genDir);
       // Allow GC later.
       compilationState = null;
       // Never optimize on a validation run.
       jjsOptions.setOptimizePrecompile(false);
-      getCompiler(module).precompile(logger, module, rpo, declEntryPts,
-          additionalRootTypes, jjsOptions, true, null);
+      getCompiler(module).precompile(logger, module, rpo, declEntryPts, additionalRootTypes,
+          jjsOptions, true, null);
       return true;
     } catch (UnableToCompleteException e) {
       // Already logged.
@@ -461,15 +459,15 @@ public class Precompile {
    * collapsing soft permutations.
    */
   static List<PropertyPermutations> getCollapsedPermutations(ModuleDef module) {
-    PropertyPermutations allPermutations = new PropertyPermutations(
-        module.getProperties(), module.getActiveLinkerNames());
+    PropertyPermutations allPermutations =
+        new PropertyPermutations(module.getProperties(), module.getActiveLinkerNames());
     List<PropertyPermutations> collapsedPermutations = allPermutations.collapseProperties();
     return collapsedPermutations;
   }
 
   static AbstractCompiler getCompiler(ModuleDef module) {
-    ConfigurationProperty compilerClassProp = module.getProperties().createConfiguration(
-        "x.compiler.class", false);
+    ConfigurationProperty compilerClassProp =
+        module.getProperties().createConfiguration("x.compiler.class", false);
     String compilerClassName = compilerClassProp.getValue();
     if (compilerClassName == null || compilerClassName.length() == 0) {
       return new JavaScriptCompiler();
@@ -485,21 +483,18 @@ public class Precompile {
     } catch (IllegalAccessException e) {
       caught = e;
     }
-    throw new RuntimeException("Unable to instantiate compiler class '"
-        + compilerClassName + "'", caught);
+    throw new RuntimeException("Unable to instantiate compiler class '" + compilerClassName + "'",
+        caught);
   }
 
-  static Precompilation precompile(TreeLogger logger, JJSOptions jjsOptions,
-      ModuleDef module, int permutationBase,
-      PropertyPermutations allPermutations, File genDir) {
-    return precompile(logger, jjsOptions, module, permutationBase,
-        allPermutations, genDir,
+  static Precompilation precompile(TreeLogger logger, JJSOptions jjsOptions, ModuleDef module,
+      int permutationBase, PropertyPermutations allPermutations, File genDir) {
+    return precompile(logger, jjsOptions, module, permutationBase, allPermutations, genDir,
         ManagementFactory.getRuntimeMXBean().getStartTime());
   }
 
-  static Precompilation precompile(TreeLogger logger, JJSOptions jjsOptions,
-      ModuleDef module, int permutationBase,
-      PropertyPermutations allPermutations, File genDir,
+  static Precompilation precompile(TreeLogger logger, JJSOptions jjsOptions, ModuleDef module,
+      int permutationBase, PropertyPermutations allPermutations, File genDir,
       long startTimeMilliseconds) {
 
     Event precompileEvent = SpeedTracerLogger.start(CompilerEventType.PRECOMPILE);
@@ -532,15 +527,17 @@ public class Precompile {
       }
 
       ArtifactSet generatedArtifacts = new ArtifactSet();
-      DistillerRebindPermutationOracle rpo = new DistillerRebindPermutationOracle(
-          module, compilationState, generatedArtifacts, allPermutations, genDir);
+      DistillerRebindPermutationOracle rpo =
+          new DistillerRebindPermutationOracle(module, compilationState, generatedArtifacts,
+              allPermutations, genDir);
       // Allow GC later.
       compilationState = null;
-      PrecompilationMetricsArtifact precompilationMetrics = jjsOptions.isCompilerMetricsEnabled()
-          ? new PrecompilationMetricsArtifact(permutationBase) : null;
-      UnifiedAst unifiedAst = getCompiler(module).precompile(logger, module,
-          rpo, declEntryPts, null, jjsOptions, rpo.getPermuationCount() == 1,
-          precompilationMetrics);
+      PrecompilationMetricsArtifact precompilationMetrics =
+          jjsOptions.isCompilerMetricsEnabled()
+              ? new PrecompilationMetricsArtifact(permutationBase) : null;
+      UnifiedAst unifiedAst =
+          getCompiler(module).precompile(logger, module, rpo, declEntryPts, null, jjsOptions,
+              rpo.getPermuationCount() == 1, precompilationMetrics);
 
       if (jjsOptions.isCompilerMetricsEnabled()) {
         ModuleMetricsArtifact moduleMetrics = new ModuleMetricsArtifact();
@@ -550,24 +547,24 @@ public class Precompile {
         moduleMetrics.setInitialTypes(initialTypeOracleTypes);
         // The elapsed time in ModuleMetricsArtifact represents time
         // which could be done once for all permutations.
-        moduleMetrics.setElapsedMilliseconds(moduleLoadFinished
-            - startTimeMilliseconds);
+        moduleMetrics.setElapsedMilliseconds(moduleLoadFinished - startTimeMilliseconds);
         unifiedAst.setModuleMetrics(moduleMetrics);
       }
 
       // Merge all identical permutations together.
-      List<Permutation> permutations = new ArrayList<Permutation>(
-          Arrays.asList(rpo.getPermutations()));
+      List<Permutation> permutations =
+          new ArrayList<Permutation>(Arrays.asList(rpo.getPermutations()));
 
       mergeCollapsedPermutations(permutations);
 
       // Sort the permutations by an ordered key to ensure determinism.
-      SortedMap<RebindAnswersPermutationKey, Permutation> merged = new TreeMap<RebindAnswersPermutationKey, Permutation>();
+      SortedMap<RebindAnswersPermutationKey, Permutation> merged =
+          new TreeMap<RebindAnswersPermutationKey, Permutation>();
       SortedSet<String> liveRebindRequests = unifiedAst.getRebindRequests();
       for (Permutation permutation : permutations) {
         // Construct a key for the live rebind answers.
-        RebindAnswersPermutationKey key = new RebindAnswersPermutationKey(
-            permutation, liveRebindRequests);
+        RebindAnswersPermutationKey key =
+            new RebindAnswersPermutationKey(permutation, liveRebindRequests);
         if (merged.containsKey(key)) {
           Permutation existing = merged.get(key);
           existing.mergeFrom(permutation, liveRebindRequests);
@@ -589,8 +586,7 @@ public class Precompile {
             - startTimeMilliseconds);
         unifiedAst.setPrecompilationMetrics(precompilationMetrics);
       }
-      return new Precompilation(unifiedAst, merged.values(), permutationBase,
-          generatedArtifacts);
+      return new Precompilation(unifiedAst, merged.values(), permutationBase, generatedArtifacts);
     } catch (UnableToCompleteException e) {
       // We intentionally don't pass in the exception here since the real
       // cause has been logged.
@@ -600,12 +596,11 @@ public class Precompile {
     }
   }
 
-  private static void abortDueToStrictMode(TreeLogger logger)
-      throws UnableToCompleteException {
-    logger.log(TreeLogger.ERROR,
-        "Aborting compile due to errors in some input files");
+  private static void abortDueToStrictMode(TreeLogger logger) throws UnableToCompleteException {
+    logger.log(TreeLogger.ERROR, "Aborting compile due to errors in some input files");
     throw new UnableToCompleteException();
   }
+
   /**
    * This merges Permutations that can be considered equivalent by considering
    * their collapsed properties. The list passed into this method may have
@@ -617,7 +612,8 @@ public class Precompile {
     }
 
     // See the doc for CollapsedPropertyKey
-    SortedMap<CollapsedPropertyKey, List<Permutation>> mergedByCollapsedProperties = new TreeMap<CollapsedPropertyKey, List<Permutation>>();
+    SortedMap<CollapsedPropertyKey, List<Permutation>> mergedByCollapsedProperties =
+        new TreeMap<CollapsedPropertyKey, List<Permutation>>();
 
     // This loop creates the equivalence sets
     for (Iterator<Permutation> it = permutations.iterator(); it.hasNext();) {
@@ -636,7 +632,8 @@ public class Precompile {
     }
 
     // This loop merges the Permutations together
-    for (Map.Entry<CollapsedPropertyKey, List<Permutation>> entry : mergedByCollapsedProperties.entrySet()) {
+    for (Map.Entry<CollapsedPropertyKey, List<Permutation>> entry : mergedByCollapsedProperties
+        .entrySet()) {
       Permutation mergeInto = entry.getKey().getPermutation();
 
       /*
@@ -653,6 +650,7 @@ public class Precompile {
       permutations.set(i, new Permutation(i, permutations.get(i)));
     }
   }
+
   private final PrecompileOptionsImpl options;
 
   public Precompile(PrecompileOptions options) {
@@ -675,8 +673,8 @@ public class Precompile {
 
       ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
 
-      StandardLinkerContext linkerContext = new StandardLinkerContext(
-          TreeLogger.NULL, module, options);
+      StandardLinkerContext linkerContext =
+          new StandardLinkerContext(TreeLogger.NULL, module, options);
 
       boolean generateOnShards = true;
 
@@ -684,11 +682,12 @@ public class Precompile {
         logger.log(TreeLogger.INFO, "Precompiling on the start node");
         generateOnShards = false;
       } else if (!linkerContext.allLinkersAreShardable()) {
-        TreeLogger legacyLinkersLogger = logger.branch(TreeLogger.INFO,
-            "Precompiling on the start node, because some linkers are not updated");
+        TreeLogger legacyLinkersLogger =
+            logger.branch(TreeLogger.INFO,
+                "Precompiling on the start node, because some linkers are not updated");
         for (Linker linker : linkerContext.findUnshardableLinkers()) {
-          legacyLinkersLogger.log(TreeLogger.INFO, "Linker"
-              + linker.getClass().getCanonicalName() + " is not updated");
+          legacyLinkersLogger.log(TreeLogger.INFO, "Linker" + linker.getClass().getCanonicalName()
+              + " is not updated");
         }
         generateOnShards = false;
       } else if (options.isValidateOnly()) {
@@ -701,31 +700,30 @@ public class Precompile {
          * Pre-precompile. Count the permutations and plan to do a real
          * precompile in the CompilePerms shards.
          */
-        TreeLogger branch = logger.branch(TreeLogger.INFO,
-            "Precompiling (minimal) module " + module.getName());
+        TreeLogger branch =
+            logger.branch(TreeLogger.INFO, "Precompiling (minimal) module " + module.getName());
         Util.writeObjectAsFile(logger, precompilationFile, options);
-        int numPermutations = new PropertyPermutations(module.getProperties(),
-            module.getActiveLinkerNames()).collapseProperties().size();
-        Util.writeStringAsFile(logger, new File(compilerWorkDir,
-            PERM_COUNT_FILENAME), String.valueOf(numPermutations));
-        branch.log(TreeLogger.INFO,
-            "Precompilation (minimal) succeeded, number of permutations: "
-                + numPermutations);
+        int numPermutations =
+            new PropertyPermutations(module.getProperties(), module.getActiveLinkerNames())
+                .collapseProperties().size();
+        Util.writeStringAsFile(logger, new File(compilerWorkDir, PERM_COUNT_FILENAME), String
+            .valueOf(numPermutations));
+        branch.log(TreeLogger.INFO, "Precompilation (minimal) succeeded, number of permutations: "
+            + numPermutations);
       } else {
         if (options.isValidateOnly()) {
-          TreeLogger branch = logger.branch(TreeLogger.INFO,
-              "Validating compilation " + module.getName());
+          TreeLogger branch =
+              logger.branch(TreeLogger.INFO, "Validating compilation " + module.getName());
           if (!validate(branch, options, module, options.getGenDir())) {
             branch.log(TreeLogger.ERROR, "Validation failed");
             return false;
           }
           branch.log(TreeLogger.INFO, "Validation succeeded");
         } else {
-          TreeLogger branch = logger.branch(TreeLogger.INFO,
-              "Precompiling module " + module.getName());
+          TreeLogger branch =
+              logger.branch(TreeLogger.INFO, "Precompiling module " + module.getName());
 
-          Precompilation precompilation = precompile(branch, options, module,
-              options.getGenDir());
+          Precompilation precompilation = precompile(branch, options, module, options.getGenDir());
           if (precompilation == null) {
             branch.log(TreeLogger.ERROR, "Precompilation failed");
             return false;
@@ -733,11 +731,10 @@ public class Precompile {
           Util.writeObjectAsFile(logger, precompilationFile, precompilation);
 
           int permsPrecompiled = precompilation.getPermutations().length;
-          Util.writeStringAsFile(logger, new File(compilerWorkDir,
-              PERM_COUNT_FILENAME), String.valueOf(permsPrecompiled));
-          branch.log(TreeLogger.INFO,
-              "Precompilation succeeded, number of permutations: "
-                  + permsPrecompiled);
+          Util.writeStringAsFile(logger, new File(compilerWorkDir, PERM_COUNT_FILENAME), String
+              .valueOf(permsPrecompiled));
+          branch.log(TreeLogger.INFO, "Precompilation succeeded, number of permutations: "
+              + permsPrecompiled);
         }
       }
     }

@@ -48,8 +48,8 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 
 /**
  * Manages a centralized cache for compiled units.
@@ -63,29 +63,28 @@ public class CompilationStateBuilder {
 
     private final class UnitProcessorImpl implements UnitProcessor {
 
-      public void process(CompilationUnitBuilder builder,
-          CompilationUnitDeclaration cud, List<CompiledClass> compiledClasses) {
+      public void process(CompilationUnitBuilder builder, CompilationUnitDeclaration cud,
+          List<CompiledClass> compiledClasses) {
         Event event = SpeedTracerLogger.start(DevModeEventType.CSB_PROCESS);
         try {
-          Map<MethodDeclaration, JsniMethod> jsniMethods = JsniCollector.collectJsniMethods(
-              cud, builder.getSource(), JsRootScope.INSTANCE,
-              DummyCorrelationFactory.INSTANCE);
+          Map<MethodDeclaration, JsniMethod> jsniMethods =
+              JsniCollector.collectJsniMethods(cud, builder.getSource(), JsRootScope.INSTANCE,
+                  DummyCorrelationFactory.INSTANCE);
 
           JSORestrictionsChecker.check(jsoState, cud);
 
           // JSNI check + collect dependencies.
           final Set<String> jsniDeps = new HashSet<String>();
           Map<String, Binding> jsniRefs = new HashMap<String, Binding>();
-          JsniChecker.check(cud, jsoState, jsniMethods, jsniRefs,
-              new JsniChecker.TypeResolver() {
-                public ReferenceBinding resolveType(String typeName) {
-                  ReferenceBinding resolveType = compiler.resolveType(typeName);
-                  if (resolveType != null) {
-                    jsniDeps.add(String.valueOf(resolveType.qualifiedSourceName()));
-                  }
-                  return resolveType;
-                }
-              });
+          JsniChecker.check(cud, jsoState, jsniMethods, jsniRefs, new JsniChecker.TypeResolver() {
+            public ReferenceBinding resolveType(String typeName) {
+              ReferenceBinding resolveType = compiler.resolveType(typeName);
+              if (resolveType != null) {
+                jsniDeps.add(String.valueOf(resolveType.qualifiedSourceName()));
+              }
+              return resolveType;
+            }
+          });
 
           ArtificialRescueChecker.check(cud, builder.isGenerated());
           BinaryTypeReferenceRestrictionsChecker.check(cud);
@@ -109,20 +108,19 @@ public class CompilationStateBuilder {
           for (int i = 0; i < apiRefs.size(); ++i) {
             apiRefs.set(i, interner.intern(apiRefs.get(i)));
           }
-          Dependencies dependencies = new Dependencies(packageName,
-              unresolvedQualified, unresolvedSimple, apiRefs);
+          Dependencies dependencies =
+              new Dependencies(packageName, unresolvedQualified, unresolvedSimple, apiRefs);
 
-          CompilationUnit unit = builder.build(compiledClasses, dependencies,
-              jsniMethods.values(), methodArgs,
-              cud.compilationResult().getProblems());
+          CompilationUnit unit =
+              builder.build(compiledClasses, dependencies, jsniMethods.values(), methodArgs, cud
+                  .compilationResult().getProblems());
           addValidUnit(unit);
           // Cache the valid unit for future compiles.
           ContentId contentId = builder.getContentId();
           unitCache.put(contentId, unit);
           if (builder instanceof ResourceCompilationUnitBuilder) {
             ResourceCompilationUnitBuilder rcub = (ResourceCompilationUnitBuilder) builder;
-            ResourceTag resourceTag = new ResourceTag(rcub.getLastModifed(),
-                contentId);
+            ResourceTag resourceTag = new ResourceTag(rcub.getLastModifed(), contentId);
             resourceContentCache.put(builder.getLocation(), resourceTag);
             keepAliveLatestVersion.put(resourceTag, unit);
           } else if (builder instanceof GeneratedCompilationUnitBuilder) {
@@ -145,13 +143,13 @@ public class CompilationStateBuilder {
     /**
      * The JDT compiler.
      */
-    private final JdtCompiler compiler = new JdtCompiler(
-        new UnitProcessorImpl());
+    private final JdtCompiler compiler = new JdtCompiler(new UnitProcessorImpl());
 
     /**
      * Continuation state for JSNI checking.
      */
-    private final JSORestrictionsChecker.CheckerState jsoState = new JSORestrictionsChecker.CheckerState();
+    private final JSORestrictionsChecker.CheckerState jsoState =
+        new JSORestrictionsChecker.CheckerState();
 
     private transient Collection<CompilationUnit> newlyBuiltUnits;
 
@@ -161,8 +159,7 @@ public class CompilationStateBuilder {
 
     public Collection<CompilationUnit> addGeneratedTypes(TreeLogger logger,
         Collection<GeneratedUnit> generatedUnits) {
-      Event event = 
-        SpeedTracerLogger.start(DevModeEventType.CSB_ADD_GENERATED_TYPES);
+      Event event = SpeedTracerLogger.start(DevModeEventType.CSB_ADD_GENERATED_TYPES);
       try {
         return doBuildGeneratedTypes(logger, generatedUnits, this);
       } finally {
@@ -184,8 +181,7 @@ public class CompilationStateBuilder {
 
     Collection<CompilationUnit> compile(TreeLogger logger,
         Collection<CompilationUnitBuilder> builders,
-        Map<CompilationUnitBuilder, CompilationUnit> cachedUnits,
-        EventType eventType) {
+        Map<CompilationUnitBuilder, CompilationUnit> cachedUnits, EventType eventType) {
       // Initialize the set of valid classes to the initially cached units.
       for (CompilationUnit unit : cachedUnits.values()) {
         for (CompiledClass cc : unit.getCompiledClasses()) {
@@ -194,20 +190,21 @@ public class CompilationStateBuilder {
           allValidClasses.put(sourceName, cc);
         }
       }
-      Map<CompiledClass, CompiledClass> cachedStructurallySame = new IdentityHashMap<CompiledClass, CompiledClass>();
+      Map<CompiledClass, CompiledClass> cachedStructurallySame =
+          new IdentityHashMap<CompiledClass, CompiledClass>();
 
       ArrayList<CompilationUnit> resultUnits = new ArrayList<CompilationUnit>();
       do {
         // Compile anything that needs to be compiled.
         this.newlyBuiltUnits = new ArrayList<CompilationUnit>();
-        
+
         Event jdtCompilerEvent = SpeedTracerLogger.start(eventType);
         try {
           compiler.doCompile(builders);
         } finally {
           jdtCompilerEvent.end();
         }
-        
+
         resultUnits.addAll(this.newlyBuiltUnits);
         builders.clear();
 
@@ -220,11 +217,12 @@ public class CompilationStateBuilder {
          * Invalidate any cached units with invalid refs.
          */
         Collection<CompilationUnit> invalidatedUnits = new ArrayList<CompilationUnit>();
-        for (Iterator<Entry<CompilationUnitBuilder, CompilationUnit>> it = cachedUnits.entrySet().iterator(); it.hasNext();) {
+        for (Iterator<Entry<CompilationUnitBuilder, CompilationUnit>> it =
+            cachedUnits.entrySet().iterator(); it.hasNext();) {
           Entry<CompilationUnitBuilder, CompilationUnit> entry = it.next();
           CompilationUnit unit = entry.getValue();
-          boolean isValid = unit.getDependencies().validate(allValidClasses,
-              cachedStructurallySame);
+          boolean isValid =
+              unit.getDependencies().validate(allValidClasses, cachedStructurallySame);
           if (!isValid) {
             invalidatedUnits.add(unit);
             builders.add(entry.getKey());
@@ -245,8 +243,7 @@ public class CompilationStateBuilder {
 
       // Sort, then report all errors (re-report for cached units).
       Collections.sort(resultUnits, CompilationUnit.COMPARATOR);
-      logger = logger.branch(TreeLogger.DEBUG,
-          "Validating newly compiled units");
+      logger = logger.branch(TreeLogger.DEBUG, "Validating newly compiled units");
       for (CompilationUnit unit : resultUnits) {
         CompilationUnitInvalidator.reportErrors(logger, unit);
       }
@@ -284,8 +281,7 @@ public class CompilationStateBuilder {
 
   private static final CompilationStateBuilder instance = new CompilationStateBuilder();
 
-  public static CompilationState buildFrom(TreeLogger logger,
-      Set<Resource> resources) {
+  public static CompilationState buildFrom(TreeLogger logger, Set<Resource> resources) {
     Event event = SpeedTracerLogger.start(DevModeEventType.CSB_BUILD_FROM_ORACLE);
     try {
       return instance.doBuildFrom(logger, resources, null);
@@ -294,8 +290,8 @@ public class CompilationStateBuilder {
     }
   }
 
-  public static CompilationState buildFrom(TreeLogger logger,
-      Set<Resource> resources, AdditionalTypeProviderDelegate delegate) {
+  public static CompilationState buildFrom(TreeLogger logger, Set<Resource> resources,
+      AdditionalTypeProviderDelegate delegate) {
     Event event = SpeedTracerLogger.start(DevModeEventType.CSB_BUILD_FROM_ORACLE);
     try {
       return instance.doBuildFrom(logger, resources, delegate);
@@ -319,8 +315,9 @@ public class CompilationStateBuilder {
    * WRITE-ONLY
    */
   @SuppressWarnings("unchecked")
-  private final Map<ResourceTag, CompilationUnit> keepAliveLatestVersion = Collections.synchronizedMap(new ReferenceIdentityMap(
-      AbstractReferenceMap.WEAK, AbstractReferenceMap.HARD));
+  private final Map<ResourceTag, CompilationUnit> keepAliveLatestVersion = Collections
+      .synchronizedMap(new ReferenceIdentityMap(AbstractReferenceMap.WEAK,
+          AbstractReferenceMap.HARD));
 
   /**
    * This map of hard keys to soft values exists solely to keep the most
@@ -329,15 +326,16 @@ public class CompilationStateBuilder {
    * WRITE-ONLY
    */
   @SuppressWarnings("unchecked")
-  private final Map<String, CompilationUnit> keepAliveRecentlyGenerated = Collections.synchronizedMap(new ReferenceMap(
-      AbstractReferenceMap.HARD, AbstractReferenceMap.SOFT));
+  private final Map<String, CompilationUnit> keepAliveRecentlyGenerated = Collections
+      .synchronizedMap(new ReferenceMap(AbstractReferenceMap.HARD, AbstractReferenceMap.SOFT));
 
   /**
    * Holds a tag for the last seen content for a each resource location. Should
    * be bounded by the total number of accessible Java source files on the
    * system that we try to compile.
    */
-  private final Map<String, ResourceTag> resourceContentCache = Collections.synchronizedMap(new HashMap<String, ResourceTag>());
+  private final Map<String, ResourceTag> resourceContentCache = Collections
+      .synchronizedMap(new HashMap<String, ResourceTag>());
 
   /**
    * A map of all previously compiled units by contentId.
@@ -346,8 +344,8 @@ public class CompilationStateBuilder {
    * compiled multiple ways based on its dependencies.
    */
   @SuppressWarnings("unchecked")
-  private final Map<ContentId, CompilationUnit> unitCache = Collections.synchronizedMap(new ReferenceMap(
-      AbstractReferenceMap.HARD, AbstractReferenceMap.WEAK));
+  private final Map<ContentId, CompilationUnit> unitCache = Collections
+      .synchronizedMap(new ReferenceMap(AbstractReferenceMap.HARD, AbstractReferenceMap.WEAK));
 
   /**
    * Build a new compilation state from a source oracle.
@@ -362,13 +360,14 @@ public class CompilationStateBuilder {
    * 
    * TODO: maybe use a finer brush than to synchronize the whole thing.
    */
-  public synchronized CompilationState doBuildFrom(TreeLogger logger,
-      Set<Resource> resources, AdditionalTypeProviderDelegate compilerDelegate) {
+  public synchronized CompilationState doBuildFrom(TreeLogger logger, Set<Resource> resources,
+      AdditionalTypeProviderDelegate compilerDelegate) {
     // Units we definitely want to build.
     List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
 
     // Units we don't want to rebuild unless we have to.
-    Map<CompilationUnitBuilder, CompilationUnit> cachedUnits = new IdentityHashMap<CompilationUnitBuilder, CompilationUnit>();
+    Map<CompilationUnitBuilder, CompilationUnit> cachedUnits =
+        new IdentityHashMap<CompilationUnitBuilder, CompilationUnit>();
 
     CompileMoreLater compileMoreLater = new CompileMoreLater(compilerDelegate);
 
@@ -376,8 +375,8 @@ public class CompilationStateBuilder {
     for (Resource resource : resources) {
       String typeName = Shared.toTypeName(resource.getPath());
       // Create a builder for all incoming units.
-      ResourceCompilationUnitBuilder builder = new ResourceCompilationUnitBuilder(
-          typeName, resource);
+      ResourceCompilationUnitBuilder builder =
+          new ResourceCompilationUnitBuilder(typeName, resource);
       // Try to get an existing unit from the cache.
       String location = resource.getLocation();
       ResourceTag tag = resourceContentCache.get(location);
@@ -392,8 +391,9 @@ public class CompilationStateBuilder {
       }
       builders.add(builder);
     }
-    Collection<CompilationUnit> resultUnits = compileMoreLater.compile(logger,
-        builders, cachedUnits, CompilerEventType.JDT_COMPILER_CSB_FROM_ORACLE);
+    Collection<CompilationUnit> resultUnits =
+        compileMoreLater.compile(logger, builders, cachedUnits,
+            CompilerEventType.JDT_COMPILER_CSB_FROM_ORACLE);
     return new CompilationState(logger, resultUnits, compileMoreLater);
   }
 
@@ -402,24 +402,23 @@ public class CompilationStateBuilder {
    * 
    * TODO: maybe use a finer brush than to synchronize the whole thing.
    */
-  synchronized Collection<CompilationUnit> doBuildGeneratedTypes(
-      TreeLogger logger, Collection<GeneratedUnit> generatedUnits,
-      CompileMoreLater compileMoreLater) {
+  synchronized Collection<CompilationUnit> doBuildGeneratedTypes(TreeLogger logger,
+      Collection<GeneratedUnit> generatedUnits, CompileMoreLater compileMoreLater) {
 
     // Units we definitely want to build.
     List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
 
     // Units we don't want to rebuild unless we have to.
-    Map<CompilationUnitBuilder, CompilationUnit> cachedUnits = new IdentityHashMap<CompilationUnitBuilder, CompilationUnit>();
+    Map<CompilationUnitBuilder, CompilationUnit> cachedUnits =
+        new IdentityHashMap<CompilationUnitBuilder, CompilationUnit>();
 
     // For each incoming generated Java source file...
     for (GeneratedUnit generatedUnit : generatedUnits) {
       // Create a builder for all incoming units.
-      GeneratedCompilationUnitBuilder builder = new GeneratedCompilationUnitBuilder(
-          generatedUnit);
+      GeneratedCompilationUnitBuilder builder = new GeneratedCompilationUnitBuilder(generatedUnit);
       // Try to get an existing unit from the cache.
-      ContentId contentId = new ContentId(generatedUnit.getTypeName(),
-          generatedUnit.getStrongHash());
+      ContentId contentId =
+          new ContentId(generatedUnit.getTypeName(), generatedUnit.getStrongHash());
       CompilationUnit existingUnit = unitCache.get(contentId);
       if (existingUnit != null) {
         cachedUnits.put(builder, existingUnit);
@@ -429,6 +428,6 @@ public class CompilationStateBuilder {
       }
     }
     return compileMoreLater.compile(logger, builders, cachedUnits,
-     CompilerEventType.JDT_COMPILER_CSB_GENERATED);
+        CompilerEventType.JDT_COMPILER_CSB_GENERATED);
   }
 }

@@ -75,9 +75,8 @@ public abstract class DevModeBase implements DoneCallback {
    */
   public class UiBrowserWidgetHostImpl implements BrowserWidgetHost {
 
-    public ModuleHandle createModuleLogger(String moduleName, String userAgent,
-        String url, String tabKey, String sessionKey,
-        BrowserChannelServer serverChannel, byte[] userAgentIcon) {
+    public ModuleHandle createModuleLogger(String moduleName, String userAgent, String url,
+        String tabKey, String sessionKey, BrowserChannelServer serverChannel, byte[] userAgentIcon) {
       if (sessionKey == null) {
         // if we don't have a unique session key, make one up
         sessionKey = randomString();
@@ -85,15 +84,17 @@ public abstract class DevModeBase implements DoneCallback {
       TreeLogger.Type maxLevel = options.getLogLevel();
       String agentTag = BrowserInfo.getShortName(userAgent);
       String remoteSocket = serverChannel.getRemoteEndpoint();
-      ModuleHandle module = ui.getModuleLogger(userAgent, remoteSocket, url,
-          tabKey, moduleName, sessionKey, agentTag, userAgentIcon, maxLevel);
+      ModuleHandle module =
+          ui.getModuleLogger(userAgent, remoteSocket, url, tabKey, moduleName, sessionKey,
+              agentTag, userAgentIcon, maxLevel);
       return module;
     }
 
-    public ModuleSpaceHost createModuleSpaceHost(ModuleHandle module,
-        String moduleName) throws UnableToCompleteException {
+    public ModuleSpaceHost createModuleSpaceHost(ModuleHandle module, String moduleName)
+        throws UnableToCompleteException {
       Event moduleSpaceHostCreateEvent =
-          SpeedTracerLogger.start(DevModeEventType.MODULE_SPACE_HOST_CREATE, "Module Name", moduleName);
+          SpeedTracerLogger.start(DevModeEventType.MODULE_SPACE_HOST_CREATE, "Module Name",
+              moduleName);
       // TODO(jat): add support for closing an active module
       TreeLogger logger = module.getLogger();
       try {
@@ -101,8 +102,8 @@ public abstract class DevModeBase implements DoneCallback {
         ModuleDef moduleDef = loadModule(logger, moduleName, true);
         assert (moduleDef != null);
 
-        ShellModuleSpaceHost host = doCreateShellModuleSpaceHost(logger,
-            moduleDef.getCompilationState(logger), moduleDef);
+        ShellModuleSpaceHost host =
+            doCreateShellModuleSpaceHost(logger, moduleDef.getCompilationState(logger), moduleDef);
         return host;
       } catch (RuntimeException e) {
         logger.log(TreeLogger.ERROR, "Exception initializing module", e);
@@ -135,8 +136,8 @@ public abstract class DevModeBase implements DoneCallback {
 
     @Override
     public String getPurpose() {
-      return "Specifies the bind address for the code server and web server "
-          + "(defaults to " + DEFAULT_BIND_ADDRESS + ")";
+      return "Specifies the bind address for the code server and web server " + "(defaults to "
+          + DEFAULT_BIND_ADDRESS + ")";
     }
 
     @Override
@@ -219,8 +220,7 @@ public abstract class DevModeBase implements DoneCallback {
 
     @Override
     public String getPurpose() {
-      return "Specifies the TCP port for the code server (defaults to "
-          + DEFAULT_PORT + ")";
+      return "Specifies the TCP port for the code server (defaults to " + DEFAULT_PORT + ")";
     }
 
     @Override
@@ -449,18 +449,17 @@ public abstract class DevModeBase implements DoneCallback {
   /**
    * Base options for dev mode.
    */
-  protected interface HostedModeBaseOptions extends JJSOptions, OptionLogDir,
-      OptionLogLevel, OptionGenDir, OptionNoServer, OptionPort,
-      OptionCodeServerPort, OptionStartupURLs, OptionRemoteUI,
-      OptionBindAddress {
+  protected interface HostedModeBaseOptions extends JJSOptions, OptionLogDir, OptionLogLevel,
+      OptionGenDir, OptionNoServer, OptionPort, OptionCodeServerPort, OptionStartupURLs,
+      OptionRemoteUI, OptionBindAddress {
   }
 
   /**
    * Concrete class to implement all hosted mode base options.
    */
   @SuppressWarnings("serial")
-  protected static class HostedModeBaseOptionsImpl extends
-      PrecompileOptionsImpl implements HostedModeBaseOptions {
+  protected static class HostedModeBaseOptionsImpl extends PrecompileOptionsImpl implements
+      HostedModeBaseOptions {
 
     private String bindAddress;
     private int codeServerPort;
@@ -676,8 +675,7 @@ public abstract class DevModeBase implements DoneCallback {
 
   private static final Random RNG = new Random();
 
-  public static String normalizeURL(String unknownUrlText, boolean isHttps,
-      int port, String host) {
+  public static String normalizeURL(String unknownUrlText, boolean isHttps, int port, String host) {
     if (unknownUrlText.contains("://")) {
       // Assume it's a full url.
       return unknownUrlText;
@@ -724,7 +722,7 @@ public abstract class DevModeBase implements DoneCallback {
     }
     return buf.toString();
   }
-  
+
   protected TreeLogger.Type baseLogLevelForUI = null;
 
   protected String bindAddress;
@@ -773,8 +771,7 @@ public abstract class DevModeBase implements DoneCallback {
    */
   public TreeLogger.Type getBaseLogLevelForUI() {
     if (baseLogLevelForUI == null) {
-      throw new IllegalStateException(
-          "The ui must be created before calling this method.");
+      throw new IllegalStateException("The ui must be created before calling this method.");
     }
 
     return baseLogLevelForUI;
@@ -844,14 +841,11 @@ public abstract class DevModeBase implements DoneCallback {
    * @param moduleDef
    * @return ShellModuleSpaceHost instance
    */
-  protected final ShellModuleSpaceHost doCreateShellModuleSpaceHost(
-      TreeLogger logger, CompilationState compilationState, ModuleDef moduleDef)
-      throws UnableToCompleteException {
-    ArtifactAcceptor artifactAcceptor = createArtifactAcceptor(logger,
-        moduleDef);
-    return new ShellModuleSpaceHost(logger, compilationState, moduleDef,
-        options.getGenDir(), artifactAcceptor, 
-        getRebindCache(moduleDef.getName()));
+  protected final ShellModuleSpaceHost doCreateShellModuleSpaceHost(TreeLogger logger,
+      CompilationState compilationState, ModuleDef moduleDef) throws UnableToCompleteException {
+    ArtifactAcceptor artifactAcceptor = createArtifactAcceptor(logger, moduleDef);
+    return new ShellModuleSpaceHost(logger, compilationState, moduleDef, options.getGenDir(),
+        artifactAcceptor, getRebindCache(moduleDef.getName()));
   }
 
   protected abstract void doShutDownServer();
@@ -896,8 +890,8 @@ public abstract class DevModeBase implements DoneCallback {
       Thread checkerThread = new Thread("GWT Update Checker") {
         @Override
         public void run() {
-          CheckForUpdates.logUpdateAvailable(logger,
-              updateChecker.check(checkForUpdatesInterval()));
+          CheckForUpdates
+              .logUpdateAvailable(logger, updateChecker.check(checkForUpdatesInterval()));
         }
       };
       checkerThread.setDaemon(true);
@@ -915,8 +909,9 @@ public abstract class DevModeBase implements DoneCallback {
   protected void ensureCodeServerListener() {
     if (listener == null) {
       codeServerPort = options.getCodeServerPort();
-      listener = new BrowserListener(getTopLogger(), bindAddress,
-          codeServerPort, new OophmSessionHandler(getTopLogger(), browserHost));
+      listener =
+          new BrowserListener(getTopLogger(), bindAddress, codeServerPort, new OophmSessionHandler(
+              getTopLogger(), browserHost));
       listener.start();
       try {
         // save the port we actually used if it was auto
@@ -958,14 +953,12 @@ public abstract class DevModeBase implements DoneCallback {
    */
   protected final StandardLinkerContext link(TreeLogger logger, ModuleDef module)
       throws UnableToCompleteException {
-    TreeLogger linkLogger = logger.branch(TreeLogger.DEBUG, "Linking module '"
-        + module.getName() + "'");
+    TreeLogger linkLogger =
+        logger.branch(TreeLogger.DEBUG, "Linking module '" + module.getName() + "'");
 
     // Create a new active linker stack for the fresh link.
-    StandardLinkerContext linkerStack = new StandardLinkerContext(linkLogger,
-        module, options);
-    ArtifactSet artifacts = linkerStack.getArtifactsForPublicResources(logger,
-        module);
+    StandardLinkerContext linkerStack = new StandardLinkerContext(linkLogger, module, options);
+    ArtifactSet artifacts = linkerStack.getArtifactsForPublicResources(logger, module);
     artifacts = linkerStack.invokeLegacyLinkers(linkLogger, artifacts);
     artifacts = linkerStack.invokeFinalLink(linkLogger, artifacts);
     produceOutput(linkLogger, linkerStack, artifacts, module, false);
@@ -981,10 +974,9 @@ public abstract class DevModeBase implements DoneCallback {
    * @return the loaded module
    * @throws UnableToCompleteException
    */
-  protected ModuleDef loadModule(TreeLogger logger, String moduleName,
-      boolean refresh) throws UnableToCompleteException {
-    ModuleDef moduleDef = ModuleDefLoader.loadFromClassPath(logger, moduleName,
-        refresh);
+  protected ModuleDef loadModule(TreeLogger logger, String moduleName, boolean refresh)
+      throws UnableToCompleteException {
+    ModuleDef moduleDef = ModuleDefLoader.loadFromClassPath(logger, moduleName, refresh);
     assert (moduleDef != null) : "Required module state is absent";
     return moduleDef;
   }
@@ -1000,8 +992,8 @@ public abstract class DevModeBase implements DoneCallback {
       String path = parsedUrl.getPath();
       String query = parsedUrl.getQuery();
       String hash = parsedUrl.getRef();
-      String hostedParam = BrowserListener.getDevModeURLParams(connectAddress,
-          listener.getSocketPort());
+      String hostedParam =
+          BrowserListener.getDevModeURLParams(connectAddress, listener.getSocketPort());
       if (query == null) {
         query = hostedParam;
       } else {
@@ -1011,8 +1003,7 @@ public abstract class DevModeBase implements DoneCallback {
       if (hash != null) {
         path += '#' + hash;
       }
-      parsedUrl = new URL(parsedUrl.getProtocol(), parsedUrl.getHost(),
-          parsedUrl.getPort(), path);
+      parsedUrl = new URL(parsedUrl.getProtocol(), parsedUrl.getHost(), parsedUrl.getPort(), path);
       url = parsedUrl.toExternalForm();
     } catch (MalformedURLException e) {
       getTopLogger().log(TreeLogger.ERROR, "Invalid URL " + url, e);
@@ -1021,9 +1012,8 @@ public abstract class DevModeBase implements DoneCallback {
     return parsedUrl;
   }
 
-  protected abstract void produceOutput(TreeLogger logger,
-      StandardLinkerContext linkerStack, ArtifactSet artifacts,
-      ModuleDef module, boolean isRelink) throws UnableToCompleteException;
+  protected abstract void produceOutput(TreeLogger logger, StandardLinkerContext linkerStack,
+      ArtifactSet artifacts, ModuleDef module, boolean isRelink) throws UnableToCompleteException;
 
   protected final void setDone() {
     blockUntilDone.release();
@@ -1049,9 +1039,9 @@ public abstract class DevModeBase implements DoneCallback {
     try {
       // See if there was a UI specified by command-line args
       ui = createUI();
-  
+
       started = true;
-  
+
       if (!doStartup()) {
         /*
          * TODO (amitmanjhi): Adding this redundant logging to narrow down a
@@ -1060,7 +1050,7 @@ public abstract class DevModeBase implements DoneCallback {
         getTopLogger().log(TreeLogger.ERROR, "shell failed in doStartup method");
         return false;
       }
-  
+
       if (!options.isNoServer()) {
         int resultPort = doStartUpServer();
         if (resultPort < 0) {
@@ -1068,38 +1058,35 @@ public abstract class DevModeBase implements DoneCallback {
            * TODO (amitmanjhi): Adding this redundant logging to narrow down a
            * failure. Remove soon.
            */
-          getTopLogger().log(TreeLogger.ERROR,
-              "shell failed in doStartupServer method");
+          getTopLogger().log(TreeLogger.ERROR, "shell failed in doStartupServer method");
           return false;
         }
         options.setPort(resultPort);
-        getTopLogger().log(TreeLogger.TRACE,
-            "Started web server on port " + resultPort);
+        getTopLogger().log(TreeLogger.TRACE, "Started web server on port " + resultPort);
       }
-  
+
       if (options.getStartupURLs().isEmpty()) {
         // if no URLs were supplied, try and find plausible ones
         inferStartupUrls();
       }
-  
+
       if (options.getStartupURLs().isEmpty()) {
         // TODO(jat): we could walk public resources to find plausible URLs
         // after the module(s) are loaded
         warnAboutNoStartupUrls();
       }
-  
+
       setStartupUrls(getTopLogger());
-  
+
       if (!doSlowStartup()) {
         /*
          * TODO (amitmanjhi): Adding this redundant logging to narrow down a
          * failure. Remove soon.
          */
-        getTopLogger().log(TreeLogger.ERROR,
-            "shell failed in doSlowStartup method");
+        getTopLogger().log(TreeLogger.ERROR, "shell failed in doSlowStartup method");
         return false;
       }
-      
+
       return true;
     } finally {
       startupEvent.end();
@@ -1112,8 +1099,8 @@ public abstract class DevModeBase implements DoneCallback {
    */
   protected abstract void warnAboutNoStartupUrls();
 
-  private ArtifactAcceptor createArtifactAcceptor(TreeLogger logger,
-      final ModuleDef module) throws UnableToCompleteException {
+  private ArtifactAcceptor createArtifactAcceptor(TreeLogger logger, final ModuleDef module)
+      throws UnableToCompleteException {
     final StandardLinkerContext linkerContext = link(logger, module);
     return new ArtifactAcceptor() {
       public void accept(TreeLogger relinkLogger, ArtifactSet newArtifacts)
@@ -1136,8 +1123,9 @@ public abstract class DevModeBase implements DoneCallback {
     } else {
       if (options.useRemoteUI()) {
         try {
-          newUI = new RemoteUI(options.getRemoteUIHost(),
-              options.getRemoteUIHostPort(), options.getClientId());
+          newUI =
+              new RemoteUI(options.getRemoteUIHost(), options.getRemoteUIHostPort(), options
+                  .getClientId());
           baseLogLevelForUI = TreeLogger.Type.TRACE;
         } catch (Throwable t) {
           System.err.println("Could not connect to remote UI listening at "
@@ -1160,15 +1148,15 @@ public abstract class DevModeBase implements DoneCallback {
   }
 
   private RebindCache getRebindCache(String moduleName) {
-    
+
     if (!options.isGeneratorResultCachingEnabled()) {
       return null;
     }
-    
+
     if (rebindCaches == null) {
       rebindCaches = new HashMap<String, RebindCache>();
     }
-    
+
     RebindCache cache = rebindCaches.get(moduleName);
     if (cache == null) {
       cache = new RebindCache();
@@ -1186,17 +1174,15 @@ public abstract class DevModeBase implements DoneCallback {
    * @param newlyGeneratedArtifacts the set of new artifacts
    * @throws UnableToCompleteException
    */
-  private void relink(TreeLogger logger, StandardLinkerContext linkerContext,
-      ModuleDef module, ArtifactSet newlyGeneratedArtifacts)
-      throws UnableToCompleteException {
-    TreeLogger linkLogger = logger.branch(TreeLogger.DEBUG,
-        "Relinking module '" + module.getName() + "'");
+  private void relink(TreeLogger logger, StandardLinkerContext linkerContext, ModuleDef module,
+      ArtifactSet newlyGeneratedArtifacts) throws UnableToCompleteException {
+    TreeLogger linkLogger =
+        logger.branch(TreeLogger.DEBUG, "Relinking module '" + module.getName() + "'");
 
-    ArtifactSet artifacts = linkerContext.invokeRelink(linkLogger,
-        newlyGeneratedArtifacts);
+    ArtifactSet artifacts = linkerContext.invokeRelink(linkLogger, newlyGeneratedArtifacts);
     produceOutput(linkLogger, linkerContext, artifacts, module, true);
   }
-  
+
   /**
    * Set the set of startup URLs. This is done before launching to allow the UI
    * to better present the options to the user, but note that the UI should not
@@ -1210,16 +1196,13 @@ public abstract class DevModeBase implements DoneCallback {
     ensureCodeServerListener();
     Map<String, URL> startupUrls = new HashMap<String, URL>();
     for (String prenormalized : options.getStartupURLs()) {
-      String startupURL = normalizeURL(prenormalized, isHttps, getPort(),
-          getHost());
-      logger.log(TreeLogger.DEBUG, "URL " + prenormalized + " normalized as "
-          + startupURL, null);
+      String startupURL = normalizeURL(prenormalized, isHttps, getPort(), getHost());
+      logger.log(TreeLogger.DEBUG, "URL " + prenormalized + " normalized as " + startupURL, null);
       try {
         URL url = processUrl(startupURL);
         startupUrls.put(prenormalized, url);
       } catch (UnableToCompleteException e) {
-        logger.log(TreeLogger.ERROR, "Unable to process startup URL "
-            + startupURL, null);
+        logger.log(TreeLogger.ERROR, "Unable to process startup URL " + startupURL, null);
       }
     }
     ui.setStartupUrls(startupUrls);
