@@ -33,6 +33,7 @@ list(REMOVE_ITEM MOC_DESKTOP_HEADER_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopDetectRHome.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopOptions.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopRVersion.hpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DesktopNetworkProxyFactory.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
 )
 
@@ -51,6 +52,7 @@ set(DESKTOP_SOURCE_FILES
   DesktopMain.cpp
   DesktopMainWindow.cpp
   DesktopMenuCallback.cpp
+  DesktopNetworkProxyFactory.cpp
   DesktopOptions.cpp
   DesktopOptionsDialog.cpp
   DesktopURLDownloader.cpp
