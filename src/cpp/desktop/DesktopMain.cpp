@@ -33,6 +33,7 @@
 #include "DesktopSlotBinders.hpp"
 #include "DesktopDetectRHome.hpp"
 #include "DesktopOptions.hpp"
+#include "DesktopNetworkProxyFactory.hpp"
 
 QProcess* pRSessionProcess;
 QString sharedSecret;
@@ -213,7 +214,8 @@ int main(int argc, char* argv[])
          return EXIT_FAILURE;
       }
 
-      QNetworkProxyFactory::setUseSystemConfiguration(true);
+      NetworkProxyFactory proxyFactory;
+      QNetworkProxyFactory::setApplicationProxyFactory(&proxyFactory);
 
       MainWindow* browser = new MainWindow(url);
       pAppLaunch->setActivationWindow(browser);

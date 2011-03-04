@@ -51,6 +51,7 @@ set(DESKTOP_SOURCE_FILES
   DesktopMain.cpp
   DesktopMainWindow.cpp
   DesktopMenuCallback.cpp
+  DesktopNetworkProxyFactory.cpp
   DesktopOptions.cpp
   DesktopOptionsDialog.cpp
   DesktopURLDownloader.cpp
