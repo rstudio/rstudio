@@ -70,9 +70,6 @@ else()
 
 endif()
 
-# enable boost assertion handler
-add_definitions(-DBOOST_ENABLE_ASSERT_HANDLER)
-
 # find boost and required libraries
 set(BOOST_VERSION 1.44.0)
 set(Boost_USE_STATIC_LIBS ON)
