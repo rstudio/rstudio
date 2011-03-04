@@ -805,33 +805,7 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onCompilePDF()
    {
-      server_.isTexInstalled(new ServerRequestCallback<Boolean>()
-      {
-         @Override
-         public void onResponseReceived(Boolean response)
-         {
-            if (response)
-            {
-               view_.hideWarningBar();
-               handlePdfCommand("compilePdf");
-            }
-            else
-            {
-               globalDisplay_.showMessage(
-                     GlobalDisplay.MSG_WARNING,
-                     "TeX Not Installed",
-                     "TeX is not installed" +
-                     (Desktop.isDesktop() ? ". Please install it and try again."
-                                          : " on this server."));
-            }
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            handlePdfCommand("compilePdf");
-         }
-      });
+      handlePdfCommand("compilePdf");
    }
 
    @Handler

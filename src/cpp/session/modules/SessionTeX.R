@@ -74,7 +74,7 @@
 
 .rs.addFunction("is_tex_installed", function()
 {
-    return(.rs.scalar(file.exists(Sys.which('texi2dvi'))))
+    return(.rs.scalar(file.exists(Sys.which('pdflatex'))))
 })
 
 .rs.addJsonRpcHandler("is_tex_installed", .rs.is_tex_installed)
