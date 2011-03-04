@@ -53,9 +53,15 @@ public class Node extends JavaScriptObject {
    * Determines whether the given {@link JavaScriptObject} is a DOM node. A
    * <code>null</code> object will cause this method to return
    * <code>false</code>.
+   * The try catch is needed for the firefox permission error:
+   * "Permission denied to access property 'nodeType'"
    */
   public static native boolean is(JavaScriptObject o) /*-{
-    return (!!o) && (!!o.nodeType);
+    try {
+      return (!!o) && (!!o.nodeType);
+    } catch (e) {
+      return false;
+    }
   }-*/;
 
   protected Node() {
