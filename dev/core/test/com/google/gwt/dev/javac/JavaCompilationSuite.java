@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.dev.BootStrapPlatform;
 import com.google.gwt.dev.javac.asm.CollectClassDataTest;
 import com.google.gwt.dev.javac.asm.CollectReferencesVisitorTest;
 import com.google.gwt.dev.javac.asm.ResolveGenericsTest;
@@ -26,6 +27,16 @@ import junit.framework.TestSuite;
  * Tests script and resource injection.
  */
 public class JavaCompilationSuite {
+  
+  static {
+    /*
+     * Required for OS X Leopard. This call ensures we have a valid context
+     * ClassLoader. Many of the tests test low-level RPC mechanisms and rely on
+     * a ClassLoader to resolve classes and resources.
+     */
+    BootStrapPlatform.applyPlatformHacks();
+  }
+  
   public static Test suite() {
     TestSuite suite = new TestSuite(JavaCompilationSuite.class.getName());
 

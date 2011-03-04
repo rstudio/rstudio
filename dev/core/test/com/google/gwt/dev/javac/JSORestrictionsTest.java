@@ -29,14 +29,6 @@ import java.util.Collections;
  */
 public class JSORestrictionsTest extends TestCase {
 
-  static {
-    // Mac -XstartOnFirstThread bug
-    if (Thread.currentThread().getContextClassLoader() == null) {
-      Thread.currentThread().setContextClassLoader(
-          JSORestrictionsTest.class.getClassLoader());
-    }
-  }
-
   public void testBaseClassFullyImplements() {
     StringBuffer goodCode = new StringBuffer();
     goodCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
@@ -67,6 +59,32 @@ public class JSORestrictionsTest extends TestCase {
 
     shouldGenerateNoError(goodCode);
   }
+
+  /**
+    * Java's version of the 'diamond' type definition pattern. Both a subclass
+    * and superclass implement the same interface via two different chains of
+    * resolution (extended class and inherited interface) Not good style, but
+    * should be allowed.
+    */
+   public void testDiamondInheritance() {
+     StringBuffer goodCode = new StringBuffer();
+     goodCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
+     goodCode.append("public class Buggy {\n");
+     goodCode.append("  public interface Interface {\n");
+     goodCode.append("    void method();\n");
+     goodCode.append("  }\n");
+     goodCode.append("  public static abstract class CommonBase extends JavaScriptObject \n");
+     goodCode.append("      implements Interface {\n");
+     goodCode.append("    protected CommonBase() {}\n");
+     goodCode.append("  }\n");
+     goodCode.append("  public static class Impl extends CommonBase implements Interface {\n");
+     goodCode.append("    protected Impl() {}\n");
+     goodCode.append("    public final void method() {}\n");
+     goodCode.append("  }\n");
+     goodCode.append("}\n");
+
+     shouldGenerateNoError(goodCode);
+   }
 
   public void testFinalClass() {
     StringBuffer code = new StringBuffer();
@@ -146,6 +164,36 @@ public class JSORestrictionsTest extends TestCase {
     shouldGenerateError(buggyCode, "Line 10: "
         + JSORestrictionsChecker.errAlreadyImplemented("Buggy$Squeaks",
             "Buggy$Squeaker", "Buggy$Squeaker2"));
+  }
+
+  /**
+   * Normally, only a single JSO can implement an interface, but if all the
+   * implementations are in a common base class, that should be allowed.
+   */
+  public void testMultipleImplementationsOk() {
+    StringBuffer goodCode = new StringBuffer();
+    goodCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
+    goodCode.append("public class Buggy {\n");
+    goodCode.append("  public interface CommonInterface {\n");
+    goodCode.append("    void method();\n");
+    goodCode.append("  }\n");
+    goodCode.append("  public interface CommonInterfaceExtended extends CommonInterface {}\n");
+    goodCode.append("  public static class CommonBase extends JavaScriptObject\n");
+    goodCode.append("      implements CommonInterface {\n");
+    goodCode.append("    protected CommonBase() {}\n");
+    goodCode.append("    public final void method() {}\n");
+    goodCode.append("  }\n");
+    goodCode.append("  public static class Impl1 extends CommonBase\n");
+    goodCode.append("      implements CommonInterfaceExtended {\n");
+    goodCode.append("    protected Impl1() {}\n");
+    goodCode.append("  }\n");
+    goodCode.append("  public static class Impl2 extends CommonBase\n");
+    goodCode.append("      implements CommonInterfaceExtended {\n");
+    goodCode.append("    protected Impl2() {}\n");
+    goodCode.append("  }\n");
+    goodCode.append("}\n");
+
+    shouldGenerateNoError(goodCode);
   }
 
   public void testNew() {

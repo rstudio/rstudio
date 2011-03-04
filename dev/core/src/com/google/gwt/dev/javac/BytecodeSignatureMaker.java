@@ -190,10 +190,7 @@ public class BytecodeSignatureMaker {
    * @return a hex string representing an MD5 digest.
    */
   public static String getCompileDependencySignature(byte[] byteCode) {
-    ClassReader reader = new ClassReader(byteCode);
-    CompileDependencyVisitor v = new CompileDependencyVisitor();
-    reader.accept(v, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG
-        | ClassReader.SKIP_FRAMES);
+    CompileDependencyVisitor v = visitCompileDependenciesInBytecode(byteCode);
     return v.getSignature();
   }
 
@@ -205,11 +202,16 @@ public class BytecodeSignatureMaker {
    * @return a human readable string of all public API fields
    */
   static String getCompileDependencyRawSignature(byte[] byteCode) {
+    CompileDependencyVisitor v = visitCompileDependenciesInBytecode(byteCode);
+    return v.getRawString();
+  }
+
+  private static CompileDependencyVisitor visitCompileDependenciesInBytecode(byte[] byteCode) {
     ClassReader reader = new ClassReader(byteCode);
     CompileDependencyVisitor v = new CompileDependencyVisitor();
     reader.accept(v, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG
         | ClassReader.SKIP_FRAMES);
-    return v.getRawString();
+    return v;
   }
 
   private BytecodeSignatureMaker() {
