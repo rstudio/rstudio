@@ -1338,19 +1338,12 @@ void rCleanup(bool terminatedNormally)
       // fire shutdown event to modules
       module_context::events().onShutdown(terminatedNormally);
 
-      // wait a bit to allow clientEventService to deliver any pending
-      // events (e.g. quit or suspend) prior to process termination.
+      // cause graceful exit of clientEventService (ensures delivery
+      // of any pending events prior to process termination). wait a
+      // very brief interval first to allow the quit or other termination
+      // related events to get into the queue
       boost::this_thread::sleep(boost::posix_time::milliseconds(100));
-
-      // if we in server mode then explicitly stop the clientEventService
-      // this will do a join of the event service thread which will
-      // allow a bit of extra time for a slow client connection to
-      // connect and get the events. note that on desktop mode we also
-      // had a strong crashing problem during stop() on OSX, and there
-      // really isn't a need for a synced stop on the desktop since
-      // client termination will be handled automatically
-      if (session::options().programMode() == kSessionProgramModeServer)
-         clientEventService().stop();
+      clientEventService().stop();
 
       // stop the main http listener
       httpConnectionListener().stop();
