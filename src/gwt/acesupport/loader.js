@@ -29,6 +29,7 @@ function loadEditor(container) {
 	var TextMode = require("ace/mode/text").Mode;
 	var theme = require("theme/default");
 
+    var emacs = require("ace/keyboard/keybinding/emacs").Emacs
 	env.editor = new Editor(new Renderer(container, theme));
 	var session = env.editor.getSession();
 	session.setMode(new TextMode());

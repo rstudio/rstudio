@@ -56,6 +56,10 @@
         <file name="sweave_highlight_rules.js"/>
         <file name="sweave.js"/>
       </sources>
+      <sources dir="tools/ace/build/src">
+         <file name="keybinding-emacs.js"/>
+         <file name="keybinding-vim.js"/>
+      </sources>
       <sources dir="acesupport/acetheme">
         <file name="default.js"/>
       </sources>
