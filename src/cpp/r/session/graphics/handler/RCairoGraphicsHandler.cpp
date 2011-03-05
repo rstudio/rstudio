@@ -760,7 +760,12 @@ void newPage(const pGEcontext gc, pDevDesc dev)
    cairo_new_path(cc);
    cairo_paint(cc);
 }
-   
+
+void mode(int mode, pDevDesc dev)
+{
+
+}
+
 } // namespace handler
 } // namespace graphics
 } // namespace session

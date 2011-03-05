@@ -161,8 +161,7 @@ void clip(double x0, double x1, double y0, double y1, pDevDesc dev);
 
 void newPage(const pGEcontext gc, pDevDesc dev);
 
-
-
+void mode(int mode, pDevDesc dev);
 
 } // namespace handler
 } // namespace graphics

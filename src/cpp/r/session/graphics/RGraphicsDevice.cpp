@@ -103,6 +103,8 @@ void GD_Mode(int mode, pDevDesc dev)
    // 1 = start drawing
    // 2 = input active
 
+   handler::mode(mode, dev);
+
    s_graphicsDeviceEvents.onDrawing();
 }
 

@@ -420,7 +420,11 @@ void newPage(const pGEcontext gc, pDevDesc dev)
    pngDevDesc->newPage(gc, pngDevDesc);
 }
 
-
+void mode(int mode, pDevDesc dev)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dev);
+   pngDevDesc->mode(mode, pngDevDesc);
+}
    
 } // namespace handler
 } // namespace graphics
