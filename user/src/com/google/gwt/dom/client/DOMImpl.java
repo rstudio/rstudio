@@ -408,11 +408,11 @@ abstract class DOMImpl {
   }-*/;
 
   public native int touchGetScreenX(Touch touch)/*-{
-    return touch.ScreenX;
+    return touch.screenX;
   }-*/;
 
   public native int touchGetScreenY(Touch touch)/*-{
-    return touch.ScreenY;
+    return touch.screenY;
   }-*/;
 
   public native EventTarget touchGetTarget(Touch touch)/*-{

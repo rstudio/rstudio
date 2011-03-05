@@ -15,10 +15,11 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.event.dom.client.HasScrollHandlers;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.touch.client.TouchScroller;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
@@ -27,14 +28,80 @@ import com.google.gwt.user.client.Element;
  */
 @SuppressWarnings("deprecation")
 public class ScrollPanel extends SimplePanel implements SourcesScrollEvents,
-    HasScrollHandlers, RequiresResize, ProvidesResize {
+    RequiresResize, ProvidesResize, HasScrolling {
+
+  /**
+   * Implementation of this widget.
+   */
+  static class Impl {
+    /**
+     * Get the maximum horizontal scroll position.
+     * 
+     * @param scrollable the scrollable element
+     * @return the maximum scroll position
+     */
+    public int getMaximumHorizontalScrollPosition(Element scrollable) {
+      return scrollable.getScrollWidth() - scrollable.getClientWidth();
+    }
+
+    /**
+     * Get the minimum horizontal scroll position.
+     * 
+     * @param scrollable the scrollable element
+     * @return the minimum scroll position
+     */
+    public int getMinimumHorizontalScrollPosition(Element scrollable) {
+      return 0;
+    }
+  }
+
+  /**
+   * Firefox scrolls in the negative direction in RTL mode.
+   */
+  static class ImplRtlReversed extends Impl {
+    @Override
+    public int getMaximumHorizontalScrollPosition(Element scrollable) {
+      return isRtl(scrollable) ? 0 : super
+          .getMaximumHorizontalScrollPosition(scrollable);
+    }
+
+    @Override
+    public int getMinimumHorizontalScrollPosition(Element scrollable) {
+      return isRtl(scrollable) ? scrollable.getClientWidth()
+          - scrollable.getScrollWidth() : 0;
+    }
+
+    /**
+     * Check if the specified element has an RTL direction. We can't base this
+     * on the current locale because the user can modify the direction at the
+     * DOM level.
+     * 
+     * @param scrollable the scrollable element
+     * @return true if the direction is RTL, false if LTR
+     */
+    private native boolean isRtl(Element scrollable) /*-{
+      var computedStyle = $doc.defaultView.getComputedStyle(scrollable, null);
+      return computedStyle.getPropertyValue('direction') == 'rtl';
+    }-*/;
+  }
+
+  private static Impl impl;
 
   private Element containerElem;
 
   /**
+   * The scroller used to support touch events.
+   */
+  private TouchScroller touchScroller;
+  
+  /**
    * Creates an empty scroll panel.
    */
   public ScrollPanel() {
+    if (impl == null) {
+      impl = GWT.create(Impl.class);
+    }
+    
     setAlwaysShowScrollBars(false);
 
     containerElem = DOM.createDiv();
@@ -48,6 +115,9 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents,
     //   http://stackoverflow.com/questions/139000/div-with-overflowauto-and-a-100-wide-table-problem
     DOM.setStyleAttribute(getElement(), "zoom", "1");
     DOM.setStyleAttribute(containerElem, "zoom", "1");
+
+    // Enable touch scrolling.
+    setTouchScrollingDisabled(false);
   }
 
   /**
@@ -93,13 +163,45 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents,
     return DOM.getElementPropertyInt(getElement(), "scrollLeft");
   }
 
+  public int getMaximumHorizontalScrollPosition() {
+    return impl.getMaximumHorizontalScrollPosition(getElement());
+  }
+
+  public int getMaximumVerticalScrollPosition() {
+    return getElement().getScrollHeight() - getElement().getClientHeight();
+  }
+
+  public int getMinimumHorizontalScrollPosition() {
+    return impl.getMinimumHorizontalScrollPosition(getElement());
+  }
+
+  public int getMinimumVerticalScrollPosition() {
+    return 0;
+  }
+
   /**
    * Gets the vertical scroll position.
    * 
    * @return the vertical scroll position, in pixels
+   * @deprecated as of GWT 2.3, replaced by {@link #getVerticalScrollPosition()}
    */
+  @Deprecated
   public int getScrollPosition() {
     return DOM.getElementPropertyInt(getElement(), "scrollTop");
+  }
+
+  public int getVerticalScrollPosition() {
+    return getScrollPosition();
+  }
+
+  /**
+   * Check whether or not touch based scrolling is disabled. This method always
+   * returns false on devices that do not support touch scrolling.
+   * 
+   * @return true if disabled, false if enabled
+   */
+  public boolean isTouchScrollingDisabled() {
+    return touchScroller == null;
   }
 
   public void onResize() {
@@ -183,7 +285,10 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents,
    * Sets the vertical scroll position.
    * 
    * @param position the new vertical scroll position, in pixels
+   * @deprecated as of GWT 2.3, replaced by
+   *             {@link #setVerticalScrollPosition(int)}
    */
+  @Deprecated
   public void setScrollPosition(int position) {
     DOM.setElementPropertyInt(getElement(), "scrollTop", position);
   }
@@ -200,6 +305,34 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents,
   @Override
   public void setSize(String width, String height) {
     super.setSize(width, height);
+  }
+
+  /**
+   * Set whether or not touch scrolling is disabled. By default, touch scrolling
+   * is enabled on devices that support touch events.
+   * 
+   * @param isDisabled true to disable, false to enable
+   * @return true if touch scrolling is enabled and supported, false if disabled
+   *         or not supported
+   */
+  public boolean setTouchScrollingDisabled(boolean isDisabled) {
+    if (isDisabled == isTouchScrollingDisabled()) {
+      return isDisabled;
+    }
+
+    if (isDisabled) {
+      // Detach the touch scroller.
+      touchScroller.setTargetWidget(null);
+      touchScroller = null;
+    } else {
+      // Attach a new touch scroller.
+      touchScroller = TouchScroller.createIfSupported(this);
+    }
+    return isTouchScrollingDisabled();
+  }
+
+  public void setVerticalScrollPosition(int position) {
+    setScrollPosition(position);
   }
 
   /**

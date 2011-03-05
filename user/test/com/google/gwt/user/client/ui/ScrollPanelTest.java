@@ -15,10 +15,58 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
+import com.google.gwt.touch.client.TouchScroller;
+
 /**
  * Tests the ScrollPanel widget.
  */
 public class ScrollPanelTest extends SimplePanelTestBase<ScrollPanel> {
+
+  @DoNotRunWith(Platform.HtmlUnitLayout)
+  public void testGetMaximumScrollPosition() {
+    final ScrollPanel scrollPanel = createPanel();
+    scrollPanel.setPixelSize(200, 300);
+    RootPanel.get().add(scrollPanel);
+
+    Label content = new Label("Hello World");
+    content.setPixelSize(500, 700);
+    scrollPanel.setWidget(content);
+
+    delayTestFinish(3000);
+    Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+      public void execute() {
+        int maxHorizontalPos = scrollPanel.getMaximumHorizontalScrollPosition();
+        int maxVerticalPos = scrollPanel.getMaximumVerticalScrollPosition();
+
+        // Account for scrollbars up to 50 pixels.
+        assertTrue(maxHorizontalPos > 300 && maxHorizontalPos < 350);
+        assertTrue(maxVerticalPos > 400 && maxHorizontalPos < 450);
+        RootPanel.get().remove(scrollPanel);
+        finishTest();
+      }
+    });
+  }
+
+  public void testSetTouchScrollingDisabled() {
+    ScrollPanel scrollPanel = createPanel();
+
+    // Touch support is enabled by default for browsers that support it.
+    assertEquals(TouchScroller.isSupported(),
+        !scrollPanel.isTouchScrollingDisabled());
+
+    // Disable touch support.
+    scrollPanel.setTouchScrollingDisabled(true);
+    assertTrue(scrollPanel.isTouchScrollingDisabled());
+
+    // Enable touch support.
+    scrollPanel.setTouchScrollingDisabled(false);
+    assertEquals(TouchScroller.isSupported(),
+        !scrollPanel.isTouchScrollingDisabled());
+  }
 
   @Override
   protected ScrollPanel createPanel() {
