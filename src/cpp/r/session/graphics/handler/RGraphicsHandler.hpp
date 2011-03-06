@@ -79,7 +79,7 @@ bool initializeSVG(const core::FilePath& filePath,
                    DeviceContext* pDC);
 
 void setSize(pDevDesc pDev);
-void setDeviceAttributes(bool displayListOn, pDevDesc pDev);
+void setDeviceAttributes(pDevDesc pDev);
 
 core::Error writeToPNG(const core::FilePath& targetPath,
                        DeviceContext* pDC,

@@ -446,7 +446,7 @@ SEXP createGD()
 
       // device attributes
       handler::setSize(pDev);
-      handler::setDeviceAttributes(true, pDev);
+      handler::setDeviceAttributes(pDev);
 
       // associate with device description and add it
       s_pGEDevDesc = GEcreateDevDesc(pDev);

@@ -342,7 +342,7 @@ void setSize(pDevDesc pDev)
    dev_desc::setSize(pDev);
 }
 
-void setDeviceAttributes(bool displayListOn, pDevDesc pDev)
+void setDeviceAttributes(pDevDesc pDev)
 {
    int resolution = 72;
    int pointSize = 12;
@@ -363,7 +363,7 @@ void setDeviceAttributes(bool displayListOn, pDevDesc pDev)
    pDev->startlty = LTY_SOLID;
    pDev->startfont = 1;
    pDev->startgamma = 1;
-   pDev->displayListOn = displayListOn ? TRUE : FALSE;
+   pDev->displayListOn = TRUE;
 
    // no support for events yet
    pDev->canGenMouseDown = FALSE;
