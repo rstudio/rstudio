@@ -23,52 +23,39 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import com.google.inject.name.Named;
 import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.TimeBufferedCommand;
-import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
-import org.rstudio.core.client.command.CommandHandler;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
-import org.rstudio.core.client.layout.DualWindowLayoutPanel;
-import org.rstudio.core.client.layout.LogicalWindow;
 import org.rstudio.core.client.layout.WindowState;
-import org.rstudio.core.client.theme.*;
+import org.rstudio.core.client.theme.ModuleTabLayoutPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
-import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.workbench.MRUList;
 import org.rstudio.studio.client.workbench.WorkbenchMainView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
-import org.rstudio.studio.client.workbench.model.helper.BoolStateValue;
-import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
-import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptButton;
-import org.rstudio.studio.client.workbench.views.console.ConsolePane;
+import org.rstudio.studio.client.workbench.ui.PaneManager.Tab;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
 import org.rstudio.studio.client.workbench.views.edit.Edit;
+import org.rstudio.studio.client.workbench.views.edit.Edit.Shim;
 import org.rstudio.studio.client.workbench.views.edit.events.ShowEditorEvent;
 import org.rstudio.studio.client.workbench.views.plots.PlotsTab;
-import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedHandler;
-import org.rstudio.studio.client.workbench.views.workspace.WorkspaceTab;
 
 public class WorkbenchScreen extends Composite 
                              implements WorkbenchMainView,
@@ -81,25 +68,15 @@ public class WorkbenchScreen extends Composite
    @Inject
    public WorkbenchScreen(EventBus eventBus,
                           Session session,
-                          Provider<MainSplitPanel> pSplitPanel,
-                          @Named("Console") final Widget consolePane,
-                          ConsoleInterruptButton consoleInterrupt,
-                          SourceShim source,
-                          @Named("Workspace") final WorkbenchTab workspaceTab,
-                          @Named("History") final WorkbenchTab historyTab,
-                          @Named("Data") final WorkbenchTab dataTab,
-                          @Named("Files") final WorkbenchTab filesTab,
-                          @Named("Plots") final WorkbenchTab plotsTab,
-                          @Named("Packages") final WorkbenchTab packagesTab,
-                          @Named("Help") final WorkbenchTab helpTab,
+                          Provider<PaneManager> pPaneManager,
                           final Edit.Shim edit,
                           Commands commands,
-                          final GlobalDisplay globalDisplay,
                           final Provider<MRUList> mruList,
                           FontSizeManager fontSizeManager)
    {
       eventBus_ = eventBus;
       session_ = session;
+      edit_ = edit;
 
       eventBus_.addHandler(ShowEditorEvent.TYPE, edit);
       eventBus_.addHandler(ChangeFontSizeEvent.TYPE, new ChangeFontSizeHandler()
@@ -119,128 +96,11 @@ public class WorkbenchScreen extends Composite
       });
       FontSizer.setNormalFontSize(Document.get(), fontSizeManager.getSize());
 
-      // create tabsets
-      tabsPanel_ = pSplitPanel.get();
+
+      paneManager_ = pPaneManager.get();
+      tabsPanel_ = paneManager_.getPanel();
       tabsPanel_.setSize("100%", "100%");
       tabsPanel_.addStyleDependentName("Workbench");
-
-      initBoolPref("plotsOnTop", plotsOnTop_, commands.plotsOnTop(), session, globalDisplay);
-      commands.plotsOnTop().setMenuLabel("Plots on " + (plotsOnTop_.getValue() ? "Bottom" : "Top"));
-
-      plotsTab_ = plotsTab;
-
-      final WindowFrame rightTopFrame = new WindowFrame();
-      rightTopTabs_ = new WorkbenchTabPanel(rightTopFrame);
-      rightTopTabs_.add(workspaceTab);
-      rightTopTabs_.add(historyTab);
-      if (plotsOnTop_.getValue())
-         rightTopTabs_.add(plotsTab_);
-      rightTopFrame.setFillWidget(rightTopTabs_);
-
-      // initialize right tabs
-      final WindowFrame rightBottomFrame = new WindowFrame();
-      browseTabs_ = new WorkbenchTabPanel(rightBottomFrame);
-      browseTabs_.add(filesTab);
-      if (!plotsOnTop_.getValue())
-         browseTabs_.add(plotsTab_);
-      browseTabs_.add(packagesTab);
-      browseTabs_.add(helpTab) ;
-      browseTabs_.addSelectionHandler(this);
-      rightBottomFrame.setFillWidget(browseTabs_);
-
-      MinimizedModuleTabLayoutPanel minimizedTopModuleTabs = new MinimizedModuleTabLayoutPanel(
-            new String[] {"Workspace",
-                          "History",
-                          plotsOnTop_.getValue() ? "Plots" : null});
-      minimizedTopModuleTabs.addSelectionHandler(new SelectionHandler<Integer>()
-      {
-         public void onSelection(SelectionEvent<Integer> integerSelectionEvent)
-         {
-            int tab = integerSelectionEvent.getSelectedItem().intValue();
-            rightTopTabs_.selectTab(tab);
-         }
-      });
-      MinimizedModuleTabLayoutPanel minimizedBottomModuleTabs = new MinimizedModuleTabLayoutPanel(
-            new String[] {"Files",
-                          plotsOnTop_.getValue() ? null : "Plots",
-                          "Packages",
-                          "Help"});
-      minimizedBottomModuleTabs.addSelectionHandler(new SelectionHandler<Integer>()
-      {
-         public void onSelection(SelectionEvent<Integer> integerSelectionEvent)
-         {
-            int tab = integerSelectionEvent.getSelectedItem().intValue();
-            browseTabs_.selectTab(tab);
-         }
-      });
-
-      LogicalWindow workspaceLogicalWindow = new LogicalWindow(
-            rightTopFrame,
-            minimizedTopModuleTabs);
-      LogicalWindow plotsLogicalWindow = new LogicalWindow(
-            rightBottomFrame,
-            minimizedBottomModuleTabs);
-
-      LogicalWindow rightTopWindow = workspaceLogicalWindow;
-      LogicalWindow rightBottomWindow = plotsLogicalWindow;
-
-      final DualWindowLayoutPanel rightTabs = new DualWindowLayoutPanel(
-            eventBus,
-            rightTopWindow,
-            rightBottomWindow,
-            session,
-            "right",
-            WindowState.NORMAL,
-            (int) (Window.getClientHeight()*0.6));
-
-      // initialize left tabs
-      consolePane_ = consolePane;
-      consoleFrame_ = new PrimaryWindowFrame("Console", consolePane_);
-      consoleFrame_.setContextButton(consoleInterrupt,
-                                     consoleInterrupt.getWidth(),
-                                     consoleInterrupt.getHeight());
-      consoleLogicalWindow_ = new LogicalWindow(
-            consoleFrame_,
-            new MinimizedWindowFrame("Console"));
-      WindowFrame sourceFrame = new WindowFrame();
-      sourceFrame.setFillWidget(source.toWidget());
-      source.forceLoad();
-      sourceLogicalWindow_ = new LogicalWindow(
-            sourceFrame,
-            new MinimizedWindowFrame("Source"));
-
-      initBoolPref("consoleOnTop", consoleOnTop_, commands.consoleOnTop(), session, globalDisplay);
-      commands.consoleOnTop().setMenuLabel("Console on " + (consoleOnTop_.getValue() ? "Bottom" : "Top"));
-
-      LogicalWindow leftTopWindow = consoleOnTop_.getValue() ? consoleLogicalWindow_
-                                                             : sourceLogicalWindow_;
-      LogicalWindow leftBottomWindow = consoleOnTop_.getValue() ? sourceLogicalWindow_
-                                                                : consoleLogicalWindow_;
-
-      DualWindowLayoutPanel leftTabs = new DualWindowLayoutPanel(
-            eventBus,
-            leftTopWindow,
-            leftBottomWindow,
-            session,
-            "left",
-            WindowState.HIDE,
-            300
-      );
-
-
-      /*
-      JsArray<SourceDocument> srcDocs =
-                                 session.getSessionInfo().getSourceDocuments();
-      if (srcDocs == null || srcDocs.length() < 1)
-      {
-         if (consoleOnTop_)
-            leftTabs.setTopWindowState(WindowState.EXCLUSIVE);
-         else
-            leftTabs.setTopWindowState(WindowState.HIDE);
-      }
-      */
-
-      tabsPanel_.initialize(leftTabs, rightTabs);
 
       // Prevent doOnPaneSizesChanged() from being called more than once
       // every N milliseconds. Note that the act of sending the client metrics
@@ -257,50 +117,11 @@ public class WorkbenchScreen extends Composite
          }
       };
 
-      final SerializedCommandQueue prefetchQueue = new SerializedCommandQueue();
       eventBus.addHandler(SessionInitEvent.TYPE, new SessionInitHandler()
       {
          public void onSessionInit(SessionInitEvent sie)
          {
-            DeferredCommand.addCommand(new Command() {
-               public void execute()
-               {
-                  onPaneSizesChanged();
-               }
-            });
-
-            DeferredCommand.addCommand(new Command()
-            {
-               public void execute()
-               {
-                  WorkbenchTab[] tabs = {
-                        filesTab, plotsTab,
-                        packagesTab, helpTab, dataTab, historyTab, workspaceTab };
-                  for (final WorkbenchTab tab : tabs)
-                     prefetchQueue.addCommand(new SerializedCommand()
-                     {
-                        public void onExecute(Command continuation)
-                        {
-                           tab.prefetch(continuation);
-                        }
-                     });
-                  prefetchQueue.addCommand(new SerializedCommand()
-                  {
-                     public void onExecute(Command continuation)
-                     {
-                        ApplicationEndedPopupPanel.prefetch(continuation);
-                     }
-                  });
-                  prefetchQueue.addCommand(new SerializedCommand()
-                  {
-                     public void onExecute(Command continuation)
-                     {
-                        edit.forceLoad(true, continuation);
-                     }
-                  });
-               }
-            });
-
+            prefetch();
             mruList.get();
          }
       });
@@ -310,7 +131,7 @@ public class WorkbenchScreen extends Composite
       {
          public void onLastSourceDocClosed(LastSourceDocClosedEvent event)
          {
-            sourceLogicalWindow_.onWindowStateChange(
+            paneManager_.getSourceLogicalWindow().onWindowStateChange(
                   new WindowStateChangeEvent(WindowState.HIDE));
          }
       });
@@ -325,7 +146,7 @@ public class WorkbenchScreen extends Composite
                              }
                           });
 
-      ((PlotsTab)plotsTab_).addResizeHandler(new ResizeHandler()
+      ((PlotsTab) paneManager_.getTab(Tab.Plots)).addResizeHandler(new ResizeHandler()
       {
          public void onResize(ResizeEvent event)
          {
@@ -340,86 +161,48 @@ public class WorkbenchScreen extends Composite
          }
       });
 
-      new IntStateValue("workbenchp",
-                        "righttoptab",
-                        true,
-                        session_.getSessionInfo().getClientState()) {
-         @Override
-         protected void onInit(Integer value)
-         {
-            if (value != null)
-               rightTopTabs_.selectTab(value.intValue());
-         }
-
-         @Override
-         protected Integer getValue()
-         {
-            return rightTopTabs_.getSelectedIndex();
-         }
-      };
-
-      new IntStateValue("workbenchp",
-                        "righttab",
-                        true,
-                        session_.getSessionInfo().getClientState()) {
-         @Override
-         protected void onInit(Integer value)
-         {
-            if (value != null)
-               browseTabs_.selectTab(value.intValue());
-//            else
-//               browseTabs_.selectTab(workspaceTab_);
-         }
-
-         @Override
-         protected Integer getValue()
-         {
-            return browseTabs_.getSelectedIndex();
-         }
-      };
-
       // init widget
       initWidget(tabsPanel_);
 
       commandBinder.bind(commands, this);
    }
 
-   private static void initBoolPref(String key,
-                                    final Value<Boolean> val,
-                                    AppCommand command,
-                                    final Session session,
-                                    final GlobalDisplay globalDisplay)
+   private void prefetch()
    {
-      new BoolStateValue("moduleprefs", key, true,
-                         session.getSessionInfo().getClientState())
-      {
-         @Override
-         protected void onInit(Boolean value)
+      final SerializedCommandQueue prefetchQueue = new SerializedCommandQueue();
+      DeferredCommand.addCommand(new Command() {
+         public void execute()
          {
-            val.setValue(value == null ? false : value);
+            onPaneSizesChanged();
          }
+      });
 
-         @Override
-         protected Boolean getValue()
-         {
-            return val.getValue();
-         }
-      };
-      command.addHandler(new CommandHandler()
+      DeferredCommand.addCommand(new Command()
       {
-         public void onCommand(AppCommand command)
+         public void execute()
          {
-            val.setValue(val.getValue() == null
-                         || !val.getValue());
-            session.persistClientState();
-            globalDisplay.showProgress("Saving preferences...");
-            new Timer() {
-               @Override
-               public void run()
+            for (final WorkbenchTab tab : paneManager_.getAllTabs())
+               prefetchQueue.addCommand(new SerializedCommand()
                {
-                  Window.Location.reload();
+                  public void onExecute(Command continuation)
+                  {
+                     tab.prefetch(continuation);
+                  }
+               });
+            prefetchQueue.addCommand(new SerializedCommand()
+            {
+               public void onExecute(Command continuation)
+               {
+                  ApplicationEndedPopupPanel.prefetch(continuation);
                }
-            }.schedule(1500);
+            });
+            prefetchQueue.addCommand(new SerializedCommand()
+            {
+               public void onExecute(Command continuation)
+               {
+                  edit_.forceLoad(true, continuation);
+               }
+            });
          }
       });
    }
@@ -428,7 +211,7 @@ public class WorkbenchScreen extends Composite
    {
       if (!path.endsWith("/"))
          path += "/";
-      consoleFrame_.setSubtitle(path);
+      paneManager_.getConsoleFrame().setSubtitle(path);
    }
 
    public void onResize()
@@ -452,11 +235,10 @@ public class WorkbenchScreen extends Composite
    private void doOnPaneSizesChanged()
    {
       // console width
-      int consoleWidth = ((ConsolePane) consolePane_).getCharacterWidth();
+      int consoleWidth = paneManager_.getConsole().getCharacterWidth();
 
       // plots size (don't allow negative metrics)
-      WorkbenchTabPanel plotPanel = plotsOnTop_.getValue() ? rightTopTabs_
-                                                           : browseTabs_;
+      WorkbenchTabPanel plotPanel = paneManager_.getOwnerTabPanel(Tab.Plots);
       Size deckPanelSize = new Size(
             plotPanel.getOffsetWidth(),
             plotPanel.getOffsetHeight() - ModuleTabLayoutPanel.BAR_HEIGHT);
@@ -487,29 +269,17 @@ public class WorkbenchScreen extends Composite
    }
 
    @Handler
-   void onActivateWorkspace() { rightTopTabs_.selectTab(0); }
+   void onActivateWorkspace() { paneManager_.activateTab(Tab.Workspace); }
    @Handler
-   void onActivateHistory() { rightTopTabs_.selectTab(1); }
+   void onActivateHistory() { paneManager_.activateTab(Tab.History); }
    @Handler
-   void onActivateFiles() { browseTabs_.selectTab(0); }
+   void onActivateFiles() { paneManager_.activateTab(Tab.Files); }
    @Handler
-   void onActivatePlots()
-   {
-      if (plotsOnTop_.getValue())
-         rightTopTabs_.selectTab(2);
-      else
-         browseTabs_.selectTab(1);
-   }
+   void onActivatePlots() { paneManager_.activateTab(Tab.Plots); }
    @Handler
-   void onActivatePackages()
-   {
-      browseTabs_.selectTab(plotsOnTop_.getValue() ? 1 : 2);
-   }
+   void onActivatePackages() { paneManager_.activateTab(Tab.Packages); }
    @Handler
-   void onActivateHelp()
-   {
-      browseTabs_.selectTab(plotsOnTop_.getValue() ? 2 : 3); 
-   }
+   void onActivateHelp() { paneManager_.activateTab(Tab.Help); }
 
    public Widget toWidget()
    {
@@ -522,17 +292,8 @@ public class WorkbenchScreen extends Composite
    
    private final EventBus eventBus_;
    private final Session session_;
+   private final Shim edit_;
 
    private final MainSplitPanel tabsPanel_ ;
-   
-   private final Widget consolePane_;
-   private final WorkbenchTab plotsTab_;
-   
-   private final WorkbenchTabPanel rightTopTabs_;
-   private final WorkbenchTabPanel browseTabs_;
-   private Value<Boolean> consoleOnTop_ = new Value<Boolean>(false);
-   private Value<Boolean> plotsOnTop_ = new Value<Boolean>(false);
-   private LogicalWindow consoleLogicalWindow_;
-   private LogicalWindow sourceLogicalWindow_;
-   private PrimaryWindowFrame consoleFrame_;
+   private PaneManager paneManager_;
 }

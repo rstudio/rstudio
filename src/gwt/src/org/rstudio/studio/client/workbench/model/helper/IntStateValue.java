@@ -23,10 +23,15 @@ public abstract class IntStateValue extends ClientStateValue<Integer>
                         boolean persistent,
                         ClientInitState state)
    {
-      super(group,
-            name,
-            persistent,
-            state);
+      super(group, name, persistent, state);
+   }
+
+   protected IntStateValue(String group,
+                           String name,
+                           boolean persistent,
+                           ClientInitState state, boolean delayedInit)
+   {
+      super(group, name, persistent, state, delayedInit);
    }
 
    @Override
