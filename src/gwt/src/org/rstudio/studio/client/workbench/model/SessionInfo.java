@@ -16,6 +16,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
+import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 public class SessionInfo extends JavaScriptObject
@@ -46,6 +47,10 @@ public class SessionInfo extends JavaScriptObject
 
    public final native String getScratchDir() /*-{
       return this.scratch_dir;
+   }-*/;
+
+   public final native PaneConfig getPaneConfig() /*-{
+      return this.pane_config;
    }-*/;
 
    public final static String DESKTOP_MODE = "desktop";

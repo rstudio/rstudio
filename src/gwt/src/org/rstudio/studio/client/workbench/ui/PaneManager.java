@@ -1,5 +1,6 @@
 package org.rstudio.studio.client.workbench.ui;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Window;
@@ -84,27 +85,52 @@ public class PaneManager
       packagesTab_ = packagesTab;
       helpTab_ = helpTab;
 
-      ArrayList<Tab> tabSet1 = new ArrayList<Tab>();
-      tabSet1.add(Tab.Workspace);
-      tabSet1.add(Tab.History);
-      tabSet1.add(Tab.Packages);
-      ArrayList<Tab> tabSet2 = new ArrayList<Tab>();
-      tabSet2.add(Tab.Files);
-      tabSet2.add(Tab.Plots);
-      tabSet2.add(Tab.Help);
+      ArrayList<LogicalWindow> panes =
+            createPanes(session.getSessionInfo().getPaneConfig());
 
       DualWindowLayoutPanel left = createSplitWindow(
-            createSource(),
-            createTabSet("tabs1", tabSet1),
+            panes.get(0),
+            panes.get(1),
             "left");
 
       DualWindowLayoutPanel right = createSplitWindow(
-            createConsole(),
-            createTabSet("tabs2", tabSet2),
+            panes.get(2),
+            panes.get(3),
             "right");
 
       panel_ = pSplitPanel.get();
       panel_.initialize(left, right);
+   }
+
+   private ArrayList<LogicalWindow> createPanes(PaneConfig config)
+   {
+      if (config == null || !config.isValid())
+         config = PaneConfig.createDefault();
+
+      ArrayList<LogicalWindow> results = new ArrayList<LogicalWindow>();
+
+      JsArrayString panes = config.getPanes();
+      for (int i = 0; i < 4; i++)
+      {
+         String pane = panes.get(i);
+         if (pane.equals("Console"))
+            results.add(createConsole());
+         else if (pane.equals("Source"))
+            results.add(createSource());
+         else if (pane.equals("TabSet1") || pane.equals("TabSet2"))
+         {
+            JsArrayString tabNames = pane.equals("TabSet1")
+                                     ? config.getTabSet1()
+                                     : config.getTabSet2();
+
+            ArrayList<Tab> tabList = new ArrayList<Tab>();
+            for (int j = 0; j < tabNames.length(); j++)
+               tabList.add(Enum.valueOf(Tab.class, tabNames.get(j)));
+            results.add(createTabSet(pane, tabList));
+         }
+      }
+
+      return results;
    }
 
    public MainSplitPanel getPanel()
