@@ -27,7 +27,8 @@ local({
 })
 
 # set default x display (see below for comment on why we need to do this)
-Sys.setenv(DISPLAY = ":0")
+if (is.na(Sys.getenv("DISPLAY", NA)))
+   Sys.setenv(DISPLAY = ":0")
 
 # the above two display oriented command affect the behavior of edit.data.frame
 # and edit.matrix as follows: these methods will use .Internal(edit, ...) rather
