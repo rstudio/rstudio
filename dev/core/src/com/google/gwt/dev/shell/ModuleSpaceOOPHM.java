@@ -110,6 +110,9 @@ public class ModuleSpaceOOPHM extends ModuleSpace {
         "Invoke native method " + name, null);
     Event javaToJsCallEvent =
         SpeedTracerLogger.start(DevModeEventType.JAVA_TO_JS_CALL);
+    if (SpeedTracerLogger.jsniCallLoggingEnabled()) {
+      javaToJsCallEvent.addData("name", name);
+    }
 
     CompilingClassLoader isolatedClassLoader = getIsolatedClassLoader();
     JsValueOOPHM jsthis = new JsValueOOPHM();

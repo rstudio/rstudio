@@ -76,6 +76,11 @@ public final class SpeedTracerLogger {
   private static final boolean logOverheadTime =
     getBooleanProperty("gwt.speedtracer.logOverheadTime");
 
+  // Disable logging of JSNI calls and callbacks to reduce memory usage where
+  // the heap is already tight.
+  private static final boolean jsniCallLoggingEnabled = 
+      !getBooleanProperty("gwt.speedtracer.disableJsniLogging");
+
   /**
    * Represents a node in a tree of SpeedTracer events.
    */
@@ -438,6 +443,13 @@ public final class SpeedTracerLogger {
     get();
   }
 
+  /**
+   * Returns true if JSNI calls and callbacks are being logged.
+   */
+  public static boolean jsniCallLoggingEnabled() {
+    return jsniCallLoggingEnabled;
+  }
+  
   /**
    * Adds a LOG_MESSAGE SpeedTracer event to the log. This represents a single
    * point in time and has a special representation in the SpeedTracer UI.

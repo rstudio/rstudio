@@ -115,6 +115,16 @@ public class OophmSessionHandler extends SessionHandlerServer {
     JsValueOOPHM jsThis = new JsValueOOPHM();
     channel.convertToJsValue(cl, localObjects, thisVal, jsThis);
 
+    if (SpeedTracerLogger.jsniCallLoggingEnabled()) {
+      DispatchClassInfo clsInfo = cl.getClassInfoByDispId(methodDispatchId);
+      if (clsInfo != null) {
+        Member member = clsInfo.getMember(methodDispatchId);
+        if (member != null) {
+          jsToJavaCallEvent.addData("name", member.toString());
+        }
+      }
+    }
+    
     TreeLogger branch = TreeLogger.NULL;
     if (logger.isLoggable(TreeLogger.SPAM)) {
       StringBuffer logMsg = new StringBuffer();
