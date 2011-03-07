@@ -31,6 +31,11 @@ import junit.framework.TestSuite;
 
 /**
  * Suite of RequestFactory tests that require the JRE.
+ * <p>
+ * Note: these tests require gwt-user src on the classpath. To run in
+ * Eclipse, use Google Plugin for Eclipse to run as a GWT JUnit test
+ * or edit the Eclipse launch config and add the src folder to the classpath
+ * (click Classpath tab, User entries, Advanced..., Add folders)
  */
 public class RequestFactoryJreSuite {
   public static Test suite() {
