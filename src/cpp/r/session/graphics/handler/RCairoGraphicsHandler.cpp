@@ -766,6 +766,11 @@ void mode(int mode, pDevDesc dev)
 
 }
 
+void onBeforeExecute(DeviceContext* pDC)
+{
+
+}
+
 } // namespace handler
 } // namespace graphics
 } // namespace session

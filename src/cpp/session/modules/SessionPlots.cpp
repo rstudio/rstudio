@@ -425,6 +425,11 @@ void onDetectChanges(module_context::ChangeSource source)
    }
 }
 
+void onBeforeExecute()
+{
+   r::session::graphics::display().onBeforeExecute();
+}
+
 
 void onShowManipulator()
 {
@@ -462,6 +467,7 @@ Error initialize()
    using boost::bind;
    module_context::events().onClientInit.connect(bind(onClientInit));
    module_context::events().onDetectChanges.connect(bind(onDetectChanges, _1));
+   module_context::events().onBeforeExecute.connect(bind(onBeforeExecute));
 
    using namespace r::session;
    graphics::display().onShowManipulator().connect(bind(onShowManipulator));

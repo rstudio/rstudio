@@ -101,6 +101,8 @@ public:
    virtual boost::signal<void ()>& onShowManipulator() ;
    virtual void setPlotManipulatorValues(const core::json::Object& values);
 
+   virtual void onBeforeExecute();
+
    // manipulate persistent state
    core::Error savePlotsState(const core::FilePath& plotsStateFile);
    core::Error restorePlotsState(const core::FilePath& plotsStateFile);

@@ -399,6 +399,11 @@ void PlotManager::setPlotManipulatorValues(const json::Object& values)
    return plotManipulatorManager().setPlotManipulatorValues(values);
 }
 
+void PlotManager::onBeforeExecute()
+{
+   graphicsDevice_.onBeforeExecute();
+}
+
 Error PlotManager::savePlotsState(const FilePath& plotsStateFile)
 {
    // truncate the plot list based on defined maximum # of saved plots

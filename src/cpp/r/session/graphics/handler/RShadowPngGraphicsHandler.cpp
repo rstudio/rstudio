@@ -436,6 +436,24 @@ void mode(int mode, pDevDesc dev)
    pDevDesc pngDevDesc = shadowDevDesc(dev);
    pngDevDesc->mode(mode, pngDevDesc);
 }
+
+void onBeforeExecute(DeviceContext* pDC)
+{
+   // if the shadow device has somehow become the active device
+   // then switch to the rstudio device. note this can occur if the
+   // user creates another device such as windows() or postscript() and
+   // then does a dev.off
+   pGEDevDesc pCurrentDevice = GEcurrentDevice();
+   ShadowDeviceData* pShadowDevData = (ShadowDeviceData*)pDC->pDeviceSpecific;
+   if (pCurrentDevice != NULL && pShadowDevData != NULL)
+   {
+      if (pCurrentDevice->dev == pShadowDevData->pShadowPngDevice)
+      {
+         // select the rstudio device
+         selectDevice(ndevNumber(pDC->dev));
+      }
+   }
+}
    
 } // namespace handler
 } // namespace graphics

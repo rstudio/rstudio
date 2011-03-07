@@ -57,6 +57,7 @@ struct GraphicsDeviceFunctions
    boost::function<void()> copyToActiveDevice;
    boost::function<std::string()> imageFileExtension;
    boost::function<void()> close;
+   boost::function<void()> onBeforeExecute;
 };  
 
 

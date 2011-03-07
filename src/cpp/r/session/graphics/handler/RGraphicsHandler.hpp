@@ -163,6 +163,8 @@ void newPage(const pGEcontext gc, pDevDesc dev);
 
 void mode(int mode, pDevDesc dev);
 
+void onBeforeExecute(DeviceContext* pDC);
+
 } // namespace handler
 } // namespace graphics
 } // namespace session

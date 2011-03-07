@@ -579,6 +579,16 @@ std::string imageFileExtension()
    return "png";
 }
 
+void onBeforeExecute()
+{
+   if (s_pGEDevDesc != NULL)
+   {
+      DeviceContext* pDC = (DeviceContext*)s_pGEDevDesc->dev->deviceSpecific;
+      if (pDC != NULL)
+         handler::onBeforeExecute(pDC);
+   }
+}
+
 } // anonymous namespace
     
 const int kDefaultWidth = 500;   
@@ -600,6 +610,7 @@ Error initialize(
    graphicsDevice.copyToActiveDevice = copyToActiveDevice;
    graphicsDevice.imageFileExtension = imageFileExtension;
    graphicsDevice.close = close;
+   graphicsDevice.onBeforeExecute = onBeforeExecute;
    Error error = plotManager().initialize(graphicsPath, 
                                           graphicsDevice,
                                           &s_graphicsDeviceEvents);

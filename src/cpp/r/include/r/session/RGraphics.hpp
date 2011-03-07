@@ -103,6 +103,9 @@ public:
 
    // set manipulator values
    virtual void setPlotManipulatorValues(const core::json::Object& values) = 0;
+
+   // notify that we are about to execute code
+   virtual void onBeforeExecute() = 0;
 };
    
 // singleton
