@@ -44,6 +44,8 @@
 
 #include "modules/SessionContentUrls.hpp"
 
+#include "config.h"
+
 using namespace core ;
 
 namespace session {   
@@ -161,6 +163,13 @@ SEXP rs_threadSleep(SEXP secondsSEXP)
    boost::this_thread::sleep(boost::posix_time::seconds(seconds));
    return R_NilValue;
 }
+
+// get rstudio version from R
+SEXP rs_rstudioVersion()
+{
+   r::sexp::Protect rProtect;
+   return r::sexp::create(std::string(RSTUDIO_VERSION), &rProtect);
+}
    
 } // anonymous namespace
 
@@ -207,6 +216,13 @@ Error initialize()
    methodDef6.fun = (DL_FUNC) rs_threadSleep ;
    methodDef6.numArgs = 1;
    r::routines::addCallMethod(methodDef6);
+
+   // register rs_rstudioVersion with R
+   R_CallMethodDef methodDef7 ;
+   methodDef7.name = "rs_rstudioVersion" ;
+   methodDef7.fun = (DL_FUNC) rs_rstudioVersion ;
+   methodDef7.numArgs = 0;
+   r::routines::addCallMethod(methodDef7);
    
    // source the ModuleTools.R file
    FilePath modulesPath = session::options().modulesRSourcePath();
