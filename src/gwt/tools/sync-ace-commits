@@ -2,21 +2,22 @@
 
 set -e
 
+rm -rf ace
 git clone git@github.com:jcheng5/ace.git
 cd ace
 git checkout master
 
 # Point this to the upstream commit that we've tested
-git reset --hard 7c92d113b2b95b2a3ac54ece08667ff42fa70e3c
+git reset --hard 8c35a07
 
 git submodule update --init --recursive
 
 # Merge all the bugfix branches
 git merge \
     origin/bugfix-webkit-paste \
-    origin/bugfix-defineargs \
     origin/bugfix-updatefontsize \
 
 
 make clean
 make
+cp build/src/ace.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/
