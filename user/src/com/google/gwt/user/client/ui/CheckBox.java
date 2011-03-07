@@ -44,7 +44,15 @@ import com.google.gwt.user.client.EventListener;
  * <p>
  * <img class='gallery' src='doc-files/CheckBox.png'/>
  * </p>
- * 
+ *
+ * <p>
+ * <h3>Built-in Bidi Text Support</h3>
+ * This widget is capable of automatically adjusting its direction according to
+ * its content. This feature is controlled by {@link #setDirectionEstimator} or
+ * passing a DirectionEstimator parameter to the constructor, and is off by
+ * default.
+ * </p>
+ *
  * <h3>CSS Style Rules</h3>
  * <dl>
  * <dt>.gwt-CheckBox</dt>
