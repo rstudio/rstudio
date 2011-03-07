@@ -39,7 +39,6 @@
   </path>
 
   <target name="ext">
-    <copy tofile="${ace.bin}/ace.js" file="tools/ace/build/src/ace.js"/>
     <jscomp compilationLevel="simple" warning="default"
             debug="false" output="${ace.bin}/acesupport.js">
       <externs dir="acesupport">

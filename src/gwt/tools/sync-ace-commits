@@ -2,11 +2,12 @@
 
 set -e
 
+git clone git@github.com:jcheng5/ace.git
 cd ace
 git checkout master
 
 # Point this to the upstream commit that we've tested
-git reset --hard stable-baseline
+git reset --hard 7c92d113b2b95b2a3ac54ece08667ff42fa70e3c
 
 git submodule update --init --recursive
 
@@ -17,11 +18,5 @@ git merge \
     origin/bugfix-updatefontsize \
 
 
-
-#cd support/pilot
-#git merge bugfix-safari4
-#cd ../..
-
 make clean
 make
-git commit -am "Update build"
