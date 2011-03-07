@@ -21,20 +21,9 @@ Getting the Code
 -----------------------------------------------------------------------------
 
 RStudio is licensed under the AGPLv3, the terms of which are included in
-the file COPYING. To retreive the most up to date version of the RStudio
-source code you should clone the git repository and then update
-all submodules:
+the file COPYING. You can find our source code repository on GitHub:
 
-    git clone git@github.com:rstudio/rstudio.git
-    git submodule update --init --recursive
-    
-When you want to pull new changes into your local repository you should 
-use the pull script which is located in the root of the distribution. This 
-will ensure that you get changes from both the main RStudio repository
-as well as external submodules:
-
-    ./pull.sh
-    
+    [https://github.com/rstudio/rstudio](https://github.com/rstudio/rstudio)
 
 Documentation
 -----------------------------------------------------------------------------
