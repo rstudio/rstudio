@@ -131,6 +131,19 @@ FilePath tempFile(const std::string& extension)
    return tempFilePath;
 }
 
+
+void shadowDevSync(DeviceContext* pDC)
+{
+   // get the rstudio device number
+   pGEDevDesc rsGEDevDesc = desc2GEDesc(pDC->dev);
+   int rsDeviceNumber = GEdeviceNumber(rsGEDevDesc);
+
+   // copy the rstudio device's display list onto the shadow device
+   PreserveCurrentDeviceScope preserveCurrentDevice;
+   selectDevice(ndevNumber(shadowDevDesc(pDC)));
+   GEcopyDisplayList(rsDeviceNumber);
+}
+
 } // anonymous namespace
 
 
@@ -193,7 +206,7 @@ void setSize(pDevDesc pDev)
    dev_desc::setSize(shadowDevDesc(pDev));
 }
 
-void setDeviceAttributes(bool displayListOn, pDevDesc pDev)
+void setDeviceAttributes(pDevDesc pDev)
 {
    pDevDesc shadowDev = shadowDevDesc(pDev);
 
@@ -215,7 +228,7 @@ void setDeviceAttributes(bool displayListOn, pDevDesc pDev)
    pDev->startfont = shadowDev->startfont;
    pDev->startps = shadowDev->startps;
    pDev->startgamma = shadowDev->startgamma;
-   pDev->displayListOn = displayListOn ? TRUE : FALSE;
+   pDev->displayListOn = TRUE;
 
    // no support for events yet
    pDev->canGenMouseDown = FALSE;
@@ -229,6 +242,9 @@ Error writeToPNG(const FilePath& targetPath,
                  DeviceContext* pDC,
                  bool keepContextAlive)
 {
+   // sync the shadow device to ensure we have the full playlist,
+   shadowDevSync(pDC);
+
    // turn the shadow device off to write the file
    shadowDevOff(pDC);
 
@@ -269,12 +285,7 @@ Error writeToPNG(const FilePath& targetPath,
       handler::setSize(dev);
 
       // replay the rstudio graphics device context onto the png
-      // (use PreserveCurrentDeviceScope to avoid device switch)
-      PreserveCurrentDeviceScope preserveCurrentDevice;
-      pGEDevDesc rsGEDevDesc = desc2GEDesc(pDC->dev);
-      int rsDeviceNumber = GEdeviceNumber(rsGEDevDesc);
-      selectDevice(ndevNumber(shadowDevDesc(pDC)));
-      GEcopyDisplayList(rsDeviceNumber);
+      shadowDevSync(pDC);
    }
 
    // return status
@@ -420,7 +431,11 @@ void newPage(const pGEcontext gc, pDevDesc dev)
    pngDevDesc->newPage(gc, pngDevDesc);
 }
 
-
+void mode(int mode, pDevDesc dev)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dev);
+   pngDevDesc->mode(mode, pngDevDesc);
+}
    
 } // namespace handler
 } // namespace graphics

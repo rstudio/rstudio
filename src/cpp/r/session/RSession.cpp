@@ -193,9 +193,10 @@ Error restoreDefaultGlobalEnvironment()
                                                    TRUE));
       if (error)   
          return error;
+
+      Rprintf("[Workspace restored from ~/.RData]\n\n");
    }
-   
-   Rprintf("[Workspace restored from ~/.RData]\n\n");
+
    return Success();
 }
 

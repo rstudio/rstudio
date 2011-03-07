@@ -79,7 +79,7 @@ bool initializeSVG(const core::FilePath& filePath,
                    DeviceContext* pDC);
 
 void setSize(pDevDesc pDev);
-void setDeviceAttributes(bool displayListOn, pDevDesc pDev);
+void setDeviceAttributes(pDevDesc pDev);
 
 core::Error writeToPNG(const core::FilePath& targetPath,
                        DeviceContext* pDC,
@@ -161,8 +161,7 @@ void clip(double x0, double x1, double y0, double y1, pDevDesc dev);
 
 void newPage(const pGEcontext gc, pDevDesc dev);
 
-
-
+void mode(int mode, pDevDesc dev);
 
 } // namespace handler
 } // namespace graphics

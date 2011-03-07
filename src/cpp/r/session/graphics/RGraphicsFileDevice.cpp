@@ -203,7 +203,7 @@ void createDevice(const std::string& fileType,
 
       // device attributes
       handler::setSize(pDev);
-      handler::setDeviceAttributes(false, pDev);
+      handler::setDeviceAttributes(pDev);
 
       // associate with device description and add it
       pGEDevDesc pDD = GEcreateDevDesc(pDev);

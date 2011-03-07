@@ -35,6 +35,15 @@
 #undef FALSE
 #undef ERROR
 
+#ifdef TRACE_GD_CALLS
+#define TRACE_GD_CALL std::cerr << \
+   std::string(BOOST_CURRENT_FUNCTION).substr( \
+   std::string(BOOST_CURRENT_FUNCTION).find_last_of("::") + 1) \
+   << std::endl;
+#else
+#define TRACE_GD_CALL
+#endif
+
 using namespace core ;
 
 namespace r {
@@ -65,6 +74,8 @@ using namespace handler;
    
 void GD_NewPage(const pGEcontext gc, pDevDesc dev)
 {
+   TRACE_GD_CALL
+
    // delegate
    handler::newPage(gc, dev);
 
@@ -75,6 +86,8 @@ void GD_NewPage(const pGEcontext gc, pDevDesc dev)
 
 Rboolean GD_NewFrameConfirm(pDevDesc dd)
 {   
+   TRACE_GD_CALL
+
    // returning false causes the default implementation (printing a prompt
    // of "Hit <Return> to see next plot:" to the console) to be used. this 
    // seems ideal compared to any custom UI we could produce so we leave it be
@@ -84,9 +97,13 @@ Rboolean GD_NewFrameConfirm(pDevDesc dd)
    
 void GD_Mode(int mode, pDevDesc dev) 
 {
+   TRACE_GD_CALL
+
    // 0 = stop drawing
    // 1 = start drawing
    // 2 = input active
+
+   handler::mode(mode, dev);
 
    s_graphicsDeviceEvents.onDrawing();
 }
@@ -97,14 +114,173 @@ void GD_Size(double *left,
              double *top,
              pDevDesc dev) 
 {
+   TRACE_GD_CALL
+
    *left = 0.0;
    *right = s_width;
    *bottom = s_height;
    *top = 0.0;
 }
-   
+
+void GD_Clip(double x0, double x1, double y0, double y1, pDevDesc dev)
+{
+   TRACE_GD_CALL
+
+   handler::clip(x0, x1, y0, y1, dev);
+}
+
+
+void GD_Rect(double x0,
+             double y0,
+             double x1,
+             double y1,
+             const pGEcontext gc,
+             pDevDesc dev)
+{
+   TRACE_GD_CALL
+
+   handler::rect(x0, y0, x1, y1, gc, dev);
+}
+
+void GD_Path(double *x,
+             double *y,
+             int npoly,
+             int *nper,
+             Rboolean winding,
+             const pGEcontext gc,
+             pDevDesc dd)
+{
+   TRACE_GD_CALL
+
+   handler::path(x, y, npoly, nper, winding, gc, dd);
+}
+
+void GD_Raster(unsigned int *raster,
+               int w,
+               int h,
+               double x,
+               double y,
+               double width,
+               double height,
+               double rot,
+               Rboolean interpolate,
+               const pGEcontext gc,
+               pDevDesc dd)
+{
+   TRACE_GD_CALL
+
+   handler::raster(raster, w, h, x, y, width, height, rot, interpolate, gc, dd);
+}
+
+SEXP GD_Cap(pDevDesc dd)
+{
+   TRACE_GD_CALL
+
+   return handler::cap(dd);
+}
+
+void GD_Circle(double x,
+               double y,
+               double r,
+               const pGEcontext gc,
+               pDevDesc dev)
+{
+   TRACE_GD_CALL
+
+   handler::circle(x, y, r, gc, dev);
+}
+
+void GD_Line(double x1,
+             double y1,
+             double x2,
+             double y2,
+             const pGEcontext gc,
+             pDevDesc dev)
+{
+   TRACE_GD_CALL
+
+   handler::line(x1, y1, x2, y2, gc, dev);
+}
+
+void GD_Polyline(int n,
+                 double *x,
+                 double *y,
+                 const pGEcontext gc,
+                 pDevDesc dev)
+{
+   TRACE_GD_CALL
+
+   handler::polyline(n, x, y, gc, dev);
+}
+
+void GD_Polygon(int n,
+                double *x,
+                double *y,
+                const pGEcontext gc,
+                pDevDesc dev)
+{
+   TRACE_GD_CALL
+
+   handler::polygon(n, x, y, gc, dev);
+}
+
+void GD_MetricInfo(int c,
+                   const pGEcontext gc,
+                   double* ascent,
+                   double* descent,
+                   double* width,
+                   pDevDesc dev)
+{
+   TRACE_GD_CALL
+
+   handler::metricInfo(c, gc, ascent, descent, width, dev);
+}
+
+double GD_StrWidth(const char *str, const pGEcontext gc, pDevDesc dev)
+{
+   TRACE_GD_CALL
+
+   return handler::strWidth(str, gc, dev);
+}
+
+double GD_StrWidthUTF8(const char *str, const pGEcontext gc, pDevDesc dev)
+{
+   TRACE_GD_CALL
+
+   return handler::strWidth(str, gc, dev);
+}
+
+void GD_Text(double x,
+             double y,
+             const char *str,
+             double rot,
+             double hadj,
+             const pGEcontext gc,
+             pDevDesc dev)
+{
+   TRACE_GD_CALL
+
+   handler::text(x, y, str, rot, hadj, gc, dev);
+}
+
+void GD_TextUTF8(double x,
+                 double y,
+                 const char *str,
+                 double rot,
+                 double hadj,
+                 const pGEcontext gc,
+                 pDevDesc dev)
+{
+   TRACE_GD_CALL
+
+   handler::text(x, y, str, rot, hadj, gc, dev);
+}
+
+
 Rboolean GD_Locator(double *x, double *y, pDevDesc dev) 
 {
+   TRACE_GD_CALL
+
    if (s_locatorFunction)
    {
       if(s_locatorFunction(x,y))
@@ -130,16 +306,18 @@ Rboolean GD_Locator(double *x, double *y, pDevDesc dev)
 
 void GD_Activate(pDevDesc dev) 
 {
-
+   TRACE_GD_CALL
 }
 
 void GD_Deactivate(pDevDesc dev) 
 {
-
+   TRACE_GD_CALL
 }   
    
 void GD_Close(pDevDesc dev) 
-{   
+{
+   TRACE_GD_CALL
+
    if (s_pGEDevDesc != NULL)
    {
       // destroy device specific struct
@@ -162,6 +340,8 @@ void GD_Close(pDevDesc dev)
    
 void GD_OnExit(pDevDesc dd)
 {
+   TRACE_GD_CALL
+
    // NOTE: this may be called at various times including during error 
    // handling (jump_to_top_ex). therefore, do not place any process or device
    // final termination code here (even though the name of the function 
@@ -220,20 +400,22 @@ SEXP createGD()
       devDesc.activate = GD_Activate;
       devDesc.deactivate = GD_Deactivate;
       devDesc.size = GD_Size;
-      devDesc.clip = handler::clip;
-      devDesc.rect = handler::rect;
-      devDesc.path = handler::path;
-      devDesc.raster = handler::raster;
-      devDesc.cap = handler::cap;
-      devDesc.circle = handler::circle;
-      devDesc.line = handler::line;
-      devDesc.polyline = handler::polyline;
-      devDesc.polygon = handler::polygon;
+      devDesc.clip = GD_Clip;
+      devDesc.rect = GD_Rect;
+      devDesc.path = GD_Path;
+      devDesc.raster = GD_Raster;
+      devDesc.cap = GD_Cap;
+      devDesc.circle = GD_Circle;
+      devDesc.line = GD_Line;
+      devDesc.polyline = GD_Polyline;
+      devDesc.polygon = GD_Polygon;
       devDesc.locator = GD_Locator;
       devDesc.mode = GD_Mode;
-      devDesc.metricInfo = handler::metricInfo;
-      devDesc.strWidth = devDesc.strWidthUTF8 = handler::strWidth;
-      devDesc.text = devDesc.textUTF8 = handler::text;
+      devDesc.metricInfo = GD_MetricInfo;
+      devDesc.strWidth = GD_StrWidth;
+      devDesc.strWidthUTF8 = GD_StrWidthUTF8;
+      devDesc.text = GD_Text;
+      devDesc.textUTF8 = GD_TextUTF8;
       devDesc.hasTextUTF8 = TRUE;
       devDesc.wantSymbolUTF8 = TRUE;
       devDesc.useRotatedTextInContour = FALSE;
@@ -264,7 +446,7 @@ SEXP createGD()
 
       // device attributes
       handler::setSize(pDev);
-      handler::setDeviceAttributes(true, pDev);
+      handler::setDeviceAttributes(pDev);
 
       // associate with device description and add it
       s_pGEDevDesc = GEcreateDevDesc(pDev);
