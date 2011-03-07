@@ -21,6 +21,7 @@ import com.google.gwt.dev.Compiler;
 import com.google.gwt.dev.DevMode;
 import com.google.gwt.dev.GwtVersion;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.user.tools.util.ArgHandlerIgnore;
 import com.google.gwt.user.tools.util.ArgHandlerOverwrite;
 import com.google.gwt.user.tools.util.CreatorUtilities;
@@ -31,13 +32,21 @@ import com.google.gwt.util.tools.ArgHandlerString;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 /**
  * Creates a GWT application skeleton.
@@ -56,6 +65,7 @@ public final class WebAppCreator {
     public ArgProcessor() {
       registerHandler(new ArgHandlerOverwriteExtension());
       registerHandler(new ArgHandlerIgnoreExtension());
+      registerHandler(new ArgHandlerTemplates());
       registerHandler(new ArgHandlerModuleName());
       registerHandler(new ArgHandlerOutDirExtension());
       registerHandler(new ArgHandlerNoEclipse());
@@ -79,99 +89,6 @@ public final class WebAppCreator {
         return false;
       }
       ignore = true;
-      return true;
-    }
-  }
-
-  private final class ArgHandlerModuleName extends ArgHandlerExtra {
-    @Override
-    public boolean addExtraArg(String arg) {
-      if (moduleName != null) {
-        System.err.println("Too many arguments.");
-        return false;
-      }
-
-      if (!CreatorUtilities.isValidModuleName(arg)) {
-        System.err.println("'"
-            + arg
-            + "' does not appear to be a valid fully-qualified Java class name.");
-        return false;
-      }
-
-      moduleName = arg;
-      return true;
-    }
-
-    @Override
-    public String getPurpose() {
-      return "The name of the module to create (e.g. com.example.myapp.MyApp)";
-    }
-
-    @Override
-    public String[] getTagArgs() {
-      return new String[] {"moduleName"};
-    }
-
-    @Override
-    public boolean isRequired() {
-      return true;
-    }
-  }
-
-  private final class ArgHandlerNoEclipse extends ArgHandlerFlag {
-    @Override
-    public String getPurpose() {
-      return "Do not generate eclipse files";
-    }
-
-    @Override
-    public String getTag() {
-      return "-XnoEclipse";
-    }
-
-    @Override
-    public boolean isUndocumented() {
-      return true;
-    }
-
-    @Override
-    public boolean setFlag() {
-      noEclipse = true;
-      return true;
-    }
-  }
-
-  private final class ArgHandlerOnlyEclipse extends ArgHandlerFlag {
-    @Override
-    public String getPurpose() {
-      return "Generate only eclipse files";
-    }
-
-    @Override
-    public String getTag() {
-      return "-XonlyEclipse";
-    }
-
-    @Override
-    public boolean isUndocumented() {
-      return true;
-    }
-
-    @Override
-    public boolean setFlag() {
-      onlyEclipse = true;
-      return true;
-    }
-  }
-
-  private final class ArgHandlerOverwriteExtension extends ArgHandlerOverwrite {
-    @Override
-    public boolean setFlag() {
-      if (ignore) {
-        System.err.println("-overwrite cannot be used with -ignore");
-        return false;
-      }
-      overwrite = true;
       return true;
     }
   }
@@ -218,7 +135,8 @@ public final class WebAppCreator {
   private final class ArgHandlerMaven extends ArgHandlerFlag {
     @Override
     public String getPurpose() {
-      return "Create a maven2 project structure and pom file (default disabled)";
+      return "Deprecated. Create a maven2 project structure and pom file (default disabled). "
+          + "Equivalent to specifying 'maven' in the list of templates.";
     }
 
     @Override
@@ -228,7 +146,48 @@ public final class WebAppCreator {
 
     @Override
     public boolean setFlag() {
-      maven = true;
+      if (onlyEclipse) {
+        System.err.println("-maven and -XonlyEclipse cannot be used at the same time.");
+        return false;
+      }
+      if (!templates.contains("maven")) {
+        templates.add("maven");
+      }
+      return true;
+    }
+  }
+
+  private final class ArgHandlerModuleName extends ArgHandlerExtra {
+    @Override
+    public boolean addExtraArg(String arg) {
+      if (moduleName != null) {
+        System.err.println("Too many arguments.");
+        return false;
+      }
+
+      if (!CreatorUtilities.isValidModuleName(arg)) {
+        System.err.println("'"
+            + arg
+            + "' does not appear to be a valid fully-qualified Java class name.");
+        return false;
+      }
+
+      moduleName = arg;
+      return true;
+    }
+
+    @Override
+    public String getPurpose() {
+      return "The name of the module to create (e.g. com.example.myapp.MyApp)";
+    }
+
+    @Override
+    public String[] getTagArgs() {
+      return new String[] {"moduleName"};
+    }
+
+    @Override
+    public boolean isRequired() {
       return true;
     }
   }
@@ -236,7 +195,8 @@ public final class WebAppCreator {
   private final class ArgHandlerNoAnt extends ArgHandlerFlag {
     @Override
     public String getPurpose() {
-      return "Do not create an ant configuration file";
+      return "Deprecated. Do not create an ant configuration file. "
+          + "Equivalent to not specifying 'ant' in the list of templates.";
     }
 
     @Override
@@ -246,21 +206,179 @@ public final class WebAppCreator {
 
     @Override
     public boolean setFlag() {
-      ant = false;
+      argProcessingToDos.add(new Procrastinator() {
+        @Override
+        public void stopProcratinating() {
+          if (templates.contains("maven")) {
+            System.err.println("-maven and -noant are redundant. Continuing.");
+          }
+          if (templates.contains("ant")) {
+            System.err.println("Removing ant template from generated output.");
+            templates.remove("ant");
+          }
+        }
+      });
+      return true;
+    }
+  }
+
+  private final class ArgHandlerNoEclipse extends ArgHandlerFlag {
+    @Override
+    public String getPurpose() {
+      return "Deprecated. Do not generate eclipse files. "
+          + "Equivalent to not specifying 'eclipse' in the list of templates";
+    }
+
+    @Override
+    public String getTag() {
+      return "-XnoEclipse";
+    }
+
+    @Override
+    public boolean isUndocumented() {
+      return true;
+    }
+
+    @Override
+    public boolean setFlag() {
+      if (onlyEclipse) {
+        System.err.println("-XonlyEclipse and -XnoEclipse cannot be used at the same time.");
+        return false;
+      }
+      if (!templates.contains("maven")) {
+        System.err.println("-maven and -XnoEclipse are redundant. Continuing.");
+      }
+      noEclipse = true;
+      argProcessingToDos.add(new Procrastinator() {
+        @Override
+        public void stopProcratinating() {
+          if (templates.contains("eclipse")) {
+            System.err.println("Removing eclipse template from generated output.");
+            templates.remove("eclipse");
+          }
+        }
+      });
+      return true;
+    }
+  }
+
+  private final class ArgHandlerOnlyEclipse extends ArgHandlerFlag {
+    @Override
+    public String getPurpose() {
+      return "Deprecated. Generate only eclipse files. "
+          + "Equivalent to only specifying 'eclipse' in the list of templates.";
+    }
+
+    @Override
+    public String getTag() {
+      return "-XonlyEclipse";
+    }
+
+    @Override
+    public boolean isUndocumented() {
+      return true;
+    }
+
+    @Override
+    public boolean setFlag() {
+      if (noEclipse) {
+        System.err.println("-XonlyEclipse and -XnoEclipse cannot be used at the same time.");
+        return false;
+      }
+      if (templates.contains("maven")) {
+        System.err.println("-maven and -XonlyEclipse cannot be used at the same time.");
+        return false;
+      }
+      onlyEclipse = true;
+      argProcessingToDos.add(new Procrastinator() {
+        @Override
+        public void stopProcratinating() {
+          System.err.println("Removing all templates but 'eclipse' from generated output.");
+          templates.clear();
+          templates.add("eclipse");
+        }
+      });
+      return true;
+    }
+  }
+
+  private final class ArgHandlerOverwriteExtension extends ArgHandlerOverwrite {
+    @Override
+    public boolean setFlag() {
+      if (ignore) {
+        System.err.println("-overwrite cannot be used with -ignore");
+        return false;
+      }
+      overwrite = true;
+      return true;
+    }
+  }
+
+  private final class ArgHandlerTemplates extends ArgHandlerString {
+
+    @Override
+    public String[] getDefaultArgs() {
+      return new String[] {getTag(), "sample, ant, eclipse, readme"};
+    }
+
+    @Override
+    public String getPurpose() {
+      return "Specifies the template(s) to use (comma separeted)."
+          + " Defaults to 'sample,ant,eclipse,readme'";
+    }
+
+    @Override
+    public String getTag() {
+      return "-templates";
+    }
+
+    @Override
+    public String[] getTagArgs() {
+      return new String[] {"template1,template2,..."};
+    }
+
+    @Override
+    public boolean isRequired() {
+      return false;
+    }
+
+    @Override
+    public boolean setString(String str) {
+      String[] templateList = str.split(", *");
+      for (String template : templateList) {
+        URL url = getTemplateRoot(template);
+        if (url == null) {
+          System.err.println("Template not found: " + template);
+          return false;
+        }
+        templates.add(template);
+      }
       return true;
     }
   }
 
   private static final class FileCreator {
     private final File destDir;
-    private final String destName;
-    private final String sourceName;
 
-    public FileCreator(File destDir, String destName, String sourceName) {
+    private final String destName;
+    private final boolean isBinary;
+    private final String sourceName;
+    public FileCreator(File destDir, String destName, String sourceName, boolean isBinary) {
       this.destDir = destDir;
       this.sourceName = sourceName;
       this.destName = destName;
+      this.isBinary = isBinary;
     }
+
+    @Override
+    public String toString() {
+      return "FileCreator [destDir=" + destDir + ", destName=" + destName
+          + ", sourceName=" + sourceName + ", isBinary=" + isBinary + "]";
+    }
+  }
+
+  private abstract static class Procrastinator {
+    public abstract void stopProcratinating();
   }
 
   public static void main(String[] args) {
@@ -276,35 +394,64 @@ public final class WebAppCreator {
     return false;
   }
 
-  private boolean ant = true;
+  private static String getTemplateBasePath(String template) {
+    return "/" + WebAppCreator.class.getPackage().getName().replace('.', '/') + "/templates/" 
+        + template + "/";
+  }
+
+  private static URL getTemplateRoot(String template) {
+    return WebAppCreator.class.getResource("templates/" + template);
+  }
+
+  private static String replaceFileName(Map<String, String> replacements, String name) {
+    String replacedContents = name;
+    Set<Entry<String, String>> entries = replacements.entrySet();
+    for (Iterator<Entry<String, String>> iter = entries.iterator(); iter.hasNext();) {
+      Entry<String, String> entry = iter.next();
+      String replaceThis = entry.getKey();
+      replaceThis = replaceThis.replaceAll("@(.*)", "_$1_");
+      String withThis = entry.getValue();
+      withThis = withThis.replaceAll("\\\\", "\\\\\\\\");
+      withThis = withThis.replaceAll("\\$", "\\\\\\$");
+      replacedContents = replacedContents.replaceAll(replaceThis, withThis);
+    }
+    return replacedContents;
+  }
+  private ArrayList<Procrastinator> argProcessingToDos = new ArrayList<Procrastinator>();
   private boolean ignore = false;
-  private boolean maven = false;
+  private String junitPath = null;
   private String moduleName;
   private boolean noEclipse;
   private boolean onlyEclipse;
   private File outDir;
   private boolean overwrite = false;
-  private String junitPath = null;
 
-  /**
-   * Create the sample app.
-   * 
-   * @throws IOException if any disk write fails
-   * @deprecated as of GWT 2.1, replaced by {@link #doRun(String)}
-   */
-  @Deprecated
-  protected void doRun() throws IOException {
-    doRun(Utility.getInstallPath());
+  private HashSet<String> templates = new HashSet<String>();
+
+  public List<FileCreator> getFiles(Map<String, String> replacements)
+      throws IOException, WebAppCreatorException {
+    List<FileCreator> files = new ArrayList<FileCreator>();
+
+    Utility.getDirectory(outDir.getPath(), true);
+
+    for (String template : templates) {
+      URL templateUrl = getTemplateRoot(template);
+      if ("jar".equals(templateUrl.getProtocol())) {
+        files.addAll(getTemplateFilesFromZip(replacements, templateUrl, outDir));
+      } else if ("file".equals(templateUrl.getProtocol())) {
+        File templateRoot = new File(templateUrl.getPath());
+        files.addAll(getTemplateFiles(replacements, templateRoot, outDir,
+            getTemplateBasePath(template)));
+      } else {
+        throw new WebAppCreatorException("Cannot handle template '" + template + "' protocol: " 
+            + templateUrl.getProtocol());
+      }
+    }
+    
+    return files;
   }
 
-  /**
-   * Create the sample app.
-   * 
-   * @param installPath directory containing GWT libraries
-   * @throws IOException if any disk write fails
-   */
-  protected void doRun(String installPath) throws IOException {
-
+  public Map<String, String> getReplacements(String installPath, String theModuleName) {
     // GWT libraries
     String gwtUserPath = installPath + '/' + "gwt-user.jar";
     String gwtDevPath = installPath + '/' + "gwt-dev.jar";
@@ -323,37 +470,54 @@ public final class WebAppCreator {
     }
 
     // Compute module package and name.
-    int pos = moduleName.lastIndexOf('.');
-    String modulePackageName = moduleName.substring(0, pos);
-    String moduleShortName = moduleName.substring(pos + 1);
-
-    // pro-actively let ant user know that this script can also create tests.
-    if (junitPath == null && !maven) {
-      System.err.println("Not creating tests because -junit argument was not specified.\n");
-    }
-
-    // Compute module name and directories
-    String srcFolder = maven ? "src/main/java" : "src";
-    String testFolder = maven ? "src/test/java" : "test";
-    String warFolder = maven ? "src/main/webapp" : "war";
-    File srcDir = Utility.getDirectory(outDir, srcFolder, true);
-    File warDir = Utility.getDirectory(outDir, warFolder, true);
-    File webInfDir = Utility.getDirectory(warDir, "WEB-INF", true);
-    File libDir = Utility.getDirectory(webInfDir, "lib", true);
-    File moduleDir = Utility.getDirectory(srcDir, modulePackageName.replace(
-        '.', '/'), true);
-    File clientDir = Utility.getDirectory(moduleDir, "client", true);
-    File serverDir = Utility.getDirectory(moduleDir, "server", true);
-    File sharedDir = Utility.getDirectory(moduleDir, "shared", true);
-    File moduleTestDir = Utility.getDirectory(outDir, testFolder + "/"
-        + modulePackageName.replace('.', '/'), true);
-    File clientTestDir = Utility.getDirectory(moduleTestDir, "client", true);
+    int pos = theModuleName.lastIndexOf('.');
+    String modulePackageName = theModuleName.substring(0, pos);
+    String moduleShortName = theModuleName.substring(pos + 1);
 
     // Create a map of replacements
     Map<String, String> replacements = new HashMap<String, String>();
+
+    // Compute module name and directories
+    String srcFolder = templates.contains("maven") ? "src/main/java" : "src";
+    String testFolder = templates.contains("maven") ? "src/test/java" : "test";
+    String warFolder = templates.contains("maven") ? "src/main/webapp" : "war";
+
+    {
+      // pro-actively let ant user know that this script can also create tests.
+      if (junitPath == null) {
+        System.err.println("Not creating tests because -junit argument was not specified.\n");
+      }
+
+      String testTargetsBegin = "";
+      String testTargetsEnd = "";
+      String junitJarPath = junitPath;
+      String eclipseTestDir = "";
+      if (junitPath != null) {
+        eclipseTestDir = "\n   <classpathentry kind=\"src\" path=\""
+            + testFolder + "\"/>";
+      }
+      if (junitPath == null) {
+        testTargetsBegin = "\n<!--"
+            + "\n"
+            + "Test targets suppressed because -junit argument was not specified when running"
+            + " webAppCreator.\n";
+        testTargetsEnd = "-->\n";
+        junitJarPath = "path_to_the_junit_jar";
+      }
+      replacements.put("@testTargetsBegin", testTargetsBegin);
+      replacements.put("@testTargetsEnd", testTargetsEnd);
+      replacements.put("@junitJar", junitJarPath);
+      replacements.put("@eclipseTestDir", eclipseTestDir);
+    }
+
+    replacements.put("@srcFolder", srcFolder);
+    replacements.put("@testFolder", testFolder);
+    replacements.put("@warFolder", warFolder);
+
     replacements.put("@moduleShortName", moduleShortName);
     replacements.put("@modulePackageName", modulePackageName);
-    replacements.put("@moduleName", moduleName);
+    replacements.put("@moduleFolder", modulePackageName.replace('.', '/'));
+    replacements.put("@moduleName", theModuleName);
     replacements.put("@clientPackage", modulePackageName + ".client");
     replacements.put("@serverPackage", modulePackageName + ".server");
     replacements.put("@sharedPackage", modulePackageName + ".shared");
@@ -368,24 +532,20 @@ public final class WebAppCreator {
     replacements.put("@compileClass", Compiler.class.getName());
     replacements.put("@startupUrl", moduleShortName + ".html");
     replacements.put("@renameTo", moduleShortName.toLowerCase());
-    replacements.put("@moduleNameJUnit", moduleName + "JUnit");
-    replacements.put("@srcFolder", srcFolder);
-    replacements.put("@testFolder", testFolder);
-    replacements.put("@warFolder", warFolder);
+    replacements.put("@moduleNameJUnit", theModuleName + "JUnit");
 
     // Add command to copy gwt-servlet-deps.jar into libs, unless this is a
     // maven project. Maven projects should include libs as maven dependencies.
     String copyServletDeps = "";
-    if (!maven) {
-      copyServletDeps = "<copy todir=\"" + warFolder + "/WEB-INF/lib\" "
-          + "file=\"${gwt.sdk}/gwt-servlet-deps.jar\" />";
-    }
+    copyServletDeps = "<copy todir=\"" + warFolder + "/WEB-INF/lib\" "
+        + "file=\"${gwt.sdk}/gwt-servlet-deps.jar\" />";
     replacements.put("@copyServletDeps", copyServletDeps);
 
     // Collect the list of server libs to include on the eclipse classpath.
+    File libDirectory = new File(outDir + warFolder + "WEB-INF/lib");
     StringBuilder serverLibs = new StringBuilder();
-    if (libDir.exists()) {
-      for (File file : libDir.listFiles()) {
+    if (libDirectory.exists()) {
+      for (File file : libDirectory.listFiles()) {
         if (file.getName().toLowerCase().endsWith(".jar")) {
           serverLibs.append("   <classpathentry kind=\"lib\" path=\"war/WEB-INF/lib/");
           serverLibs.append(file.getName());
@@ -396,103 +556,103 @@ public final class WebAppCreator {
     replacements.put("@serverClasspathLibs", serverLibs.toString());
 
     String antEclipseRule = "";
-    if (noEclipse) {
+    if (!templates.contains("eclipse")) {
       /*
        * Generate a rule into the build file that allows for the generation of
        * an eclipse project later on. This is primarily for distro samples. This
        * is a quick and dirty way to inject a build rule, but it works.
        */
       antEclipseRule = "\n\n"
-          + "  <target name=\"eclipse.generate\" depends=\"libs\" description=\"Generate eclipse project\">\n"
+          + "  <target name=\"eclipse.generate\" depends=\"libs\" description"
+          + "=\"Generate eclipse project\">\n"
           + "    <java failonerror=\"true\" fork=\"true\" classname=\""
           + this.getClass().getName() + "\">\n" + "      <classpath>\n"
           + "        <path refid=\"project.class.path\"/>\n"
           + "      </classpath>\n" + "      <arg value=\"-XonlyEclipse\"/>\n"
           + "      <arg value=\"-ignore\"/>\n" + "      <arg value=\""
-          + moduleName + "\"/>\n" + "    </java>\n" + "  </target>";
+          + theModuleName + "\"/>\n" + "    </java>\n" + "  </target>";
     } else {
       antEclipseRule = "";
     }
     replacements.put("@antEclipseRule", antEclipseRule);
+    return replacements;
+  }
 
-    {
-      String testTargetsBegin = "";
-      String testTargetsEnd = "";
-      String junitJarPath = junitPath;
-      String eclipseTestDir = "";
-      if (junitPath != null || maven) {
-        eclipseTestDir = "\n   <classpathentry kind=\"src\" path=\""
-            + testFolder + "\"/>";
-      } 
-      if (junitPath == null) {
-        testTargetsBegin = "\n<!--"
-            + "\n"
-            + "Test targets suppressed because -junit argument was not specified when running webAppCreator.\n";
-        testTargetsEnd = "-->\n";
-        junitJarPath = "path_to_the_junit_jar";
-      }
-      replacements.put("@testTargetsBegin", testTargetsBegin);
-      replacements.put("@testTargetsEnd", testTargetsEnd);
-      replacements.put("@junitJar", junitJarPath);
-      replacements.put("@eclipseTestDir", eclipseTestDir);
+  /**
+   * Create the sample app.
+   * 
+   * @throws IOException if any disk write fails
+   * @throws WebAppCreatorException if any tag expansion of template processing fails
+   * @deprecated as of GWT 2.1, replaced by {@link #doRun(String)}
+   */
+  @Deprecated
+  protected void doRun() throws IOException, WebAppCreatorException {
+    doRun(Utility.getInstallPath());
+  }
+
+  /**
+   * Create the sample app.
+   * 
+   * @param installPath directory containing GWT libraries
+   * @throws IOException if any disk write fails
+   * @throws WebAppCreatorException  if any tag expansion of template processing fails
+   */
+  protected void doRun(String installPath) throws IOException, WebAppCreatorException {
+    for (Procrastinator toDo : argProcessingToDos) {
+      toDo.stopProcratinating();
     }
+
+    // Maven projects do not need Ant nor Eclipse files
+    if (templates.contains("maven")) {
+      junitPath = "junit-provided-by-maven";
+
+      if (templates.contains("eclipse")) {
+        System.err.println("'maven' template is being generated removing 'eclipse'"
+            + " template from generated output.");
+        templates.remove("eclipse");            
+      }
+      if (templates.contains("ant")) {
+        System.err.println("'maven' template is being generated removing 'ant'"
+            + " template from generated output.");
+        templates.remove("ant");
+      }
+    }
+
+    // Eagerly look for test templates
+    if (junitPath != null) {
+      ArrayList<String> testTemplates = new ArrayList<String>();
+      for (String template : templates) {
+        String testTemplateName = "_" + template + "-test";
+        if (getTemplateRoot(testTemplateName) != null) {
+          testTemplates.add(testTemplateName);
+        }
+      }
+      templates.addAll(testTemplates);
+    }
+
+    System.out.println("Generating from templates: " + templates);
+
+    // Generate string replacements 
+    Map<String, String> replacements = getReplacements(installPath, moduleName);
 
     // Create a list with the files to create
-    List<FileCreator> files = new ArrayList<FileCreator>();
-    if (!onlyEclipse) {
-      files.add(new FileCreator(moduleDir, moduleShortName + ".gwt.xml",
-          "Module.gwt.xml"));
-      files.add(new FileCreator(warDir, moduleShortName + ".html",
-          "AppHtml.html"));
-      files.add(new FileCreator(warDir, moduleShortName + ".css", "AppCss.css"));
-      files.add(new FileCreator(webInfDir, "web.xml", "web.xml"));
-      files.add(new FileCreator(clientDir, moduleShortName + ".java",
-          "AppClassTemplate.java"));
-      files.add(new FileCreator(clientDir, "GreetingService.java",
-          "RpcClientTemplate.java"));
-      files.add(new FileCreator(clientDir, "GreetingServiceAsync.java",
-          "RpcAsyncClientTemplate.java"));
-      files.add(new FileCreator(serverDir, "GreetingServiceImpl.java",
-          "RpcServerTemplate.java"));
-      files.add(new FileCreator(sharedDir, "FieldVerifier.java",
-          "SharedClassTemplate.java"));
-      if (ant) {
-        files.add(new FileCreator(outDir, "build.xml", "project.ant.xml"));
-      }
-      if (maven) {
-        files.add(new FileCreator(outDir, "pom.xml", "project.maven.xml"));
-      }
-      files.add(new FileCreator(outDir, "README.txt", "README.txt"));
-      if (junitPath != null || maven) {
-        // create the test file.
-        files.add(new FileCreator(moduleTestDir, moduleShortName
-            + "JUnit.gwt.xml", "JUnit.gwt.xml"));
-        files.add(new FileCreator(clientTestDir, moduleShortName + "Test"
-            + ".java", "JUnitClassTemplate.java"));
-      }
-    }
-    if (!noEclipse) {
-      files.add(new FileCreator(outDir, ".project", ".project"));
-      files.add(new FileCreator(outDir, ".classpath", ".classpath"));
-      files.add(new FileCreator(outDir, moduleShortName + ".launch",
-          "App.launch"));
-      if (junitPath != null || maven) {
-        files.add(new FileCreator(outDir, moduleShortName + "Test-dev.launch",
-            "JUnit-dev.launch"));
-        files.add(new FileCreator(outDir, moduleShortName + "Test-prod.launch",
-            "JUnit-prod.launch"));
-      }
-    }
+    List<FileCreator> files = getFiles(replacements);
 
     // copy source files, replacing the content as needed
     for (FileCreator fileCreator : files) {
-      URL url = WebAppCreator.class.getResource(fileCreator.sourceName + "src");
+      URL url = WebAppCreator.class.getResource(fileCreator.sourceName);
       if (url == null) {
-        throw new FileNotFoundException(fileCreator.sourceName + "src");
+        throw new WebAppCreatorException("Could not find " + fileCreator.sourceName);
       }
       File file = Utility.createNormalFile(fileCreator.destDir,
           fileCreator.destName, overwrite, ignore);
-      if (file != null) {
+      if (file == null) {
+        continue;
+      }
+      if (fileCreator.isBinary) {
+        byte[] data = Util.readURLAsBytes(url);
+        Utility.writeTemplateBinaryFile(file, data);
+      } else {
         String data = Util.readURLAsString(url);
         Utility.writeTemplateFile(file, data, replacements);
       }
@@ -506,6 +666,85 @@ public final class WebAppCreator {
     } catch (IOException e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());
       return false;
+    } catch (WebAppCreatorException e) {
+      System.err.println(e.getClass().getName() + ": " + e.getMessage());
+      return false;
     }
   }
+
+  private Collection<? extends FileCreator> getTemplateFiles(
+      Map<String, String> replacements, File srcDirectory, File destDirectory,
+      String templateClassRoot) throws IOException {
+    List<FileCreator> files = new ArrayList<FileCreator>();
+    
+    File[] filesInDir = srcDirectory.listFiles();
+
+    for (File srcFile : filesInDir) {
+      String replacedName = replaceFileName(replacements, srcFile.getName());
+      
+      if (srcFile.isDirectory()) {
+        File newDirectory = Utility.getDirectory(destDirectory, replacedName, true);
+        files.addAll(getTemplateFiles(replacements, srcFile, newDirectory, templateClassRoot
+            + srcFile.getName() + "/"));
+      } else if (srcFile.getName().endsWith("src")) {
+        String srcFilename = templateClassRoot + srcFile.getName();
+        String destName = replacedName.substring(0, replacedName.length() - 3);
+        files.add(new FileCreator(destDirectory, destName, srcFilename, false));
+      } else if (srcFile.getName().endsWith("bin")) {
+        String srcFilename = templateClassRoot + srcFile.getName();
+        String destName = replacedName.substring(0, replacedName.length() - 3);
+        files.add(new FileCreator(destDirectory, destName, srcFilename, true));
+      } // else ... ignore everything not a directory, "*src" nor "*bin"
+    }
+    
+    return files;
+  }
+
+  private Collection<? extends FileCreator> getTemplateFilesFromZip(
+      Map<String, String> replacements, URL zipUrl, File destDirectory)
+      throws WebAppCreatorException, IOException {
+    String zipPath = zipUrl.getFile();
+    int separator = zipPath.indexOf('!');
+
+    if (separator == -1) {
+      throw new WebAppCreatorException("Error opening template zip file. '!' not found in "
+          + zipUrl);
+    }
+
+    String zipFilename = zipPath.substring(0, separator);
+    String templateDirName = zipPath.substring(separator + 2);
+    ZipFile zipFile;
+
+    try {
+      zipFile = new ZipFile(new File(new URI(zipFilename)));
+    } catch (URISyntaxException e) {
+      throw new WebAppCreatorException("Could not open Zip file. Malformed URI", e);
+    }
+
+    Enumeration<? extends ZipEntry> allZipEntries = zipFile.entries();
+
+    ArrayList<FileCreator> templateEntries = new ArrayList<FileCreator>(); 
+
+    while (allZipEntries.hasMoreElements()) {
+      ZipEntry entry = allZipEntries.nextElement();
+      String fullName = entry.getName();
+      if (fullName.startsWith(templateDirName + "/")) {
+        String relativeName = fullName.substring(templateDirName.length());
+        String replacedName = replaceFileName(replacements, relativeName);
+        if (entry.isDirectory()) {
+          Utility.getDirectory(destDirectory, replacedName, true);
+        } else if (fullName.endsWith("src")) {
+          // remove the src suffix 
+          String destName = replacedName.substring(0, replacedName.length() - 3);
+          templateEntries.add(new FileCreator(destDirectory, destName, "/" + fullName, false));
+        } else if (fullName.endsWith("bin")) {
+          String destName = replacedName.substring(0, replacedName.length() - 3);
+          templateEntries.add(new FileCreator(destDirectory, destName, "/" + fullName, true));
+        }
+      } // else ... ignore everything not a directory, "*src" nor "*bin"
+    }
+
+    return templateEntries;
+  }
+
 }

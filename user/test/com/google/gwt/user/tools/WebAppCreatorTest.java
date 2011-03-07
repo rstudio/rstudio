@@ -59,7 +59,7 @@ public class WebAppCreatorTest extends TestCase {
   /**
    * Default options, generate ant and eclipse files.
    */
-  public void testAppCreatorAnt() throws IOException {
+  public void testAppCreatorAnt() throws IOException, WebAppCreatorException {
     runCreator("-out", projectFolder, MY_PROJECT);
     assertFileExists(".project");
     assertFileExists(".classpath");
@@ -84,7 +84,7 @@ public class WebAppCreatorTest extends TestCase {
   /**
    * Adding a valid junit.jar, the test stuff is generated.
    */
-  public void testCreatorAntJunit() throws IOException {
+  public void testCreatorAntJunit() throws IOException, WebAppCreatorException {
     runCreator("-out", projectFolder, "-junit", mockJar, MY_PROJECT);
     assertFileExists(".project");
     assertFileExists(".classpath");
@@ -104,6 +104,14 @@ public class WebAppCreatorTest extends TestCase {
     assertFileExists("src/com/foo/server/GreetingServiceImpl.java");
     assertFileExists("test/com/foo/HelloJUnit.gwt.xml");
     assertFileExists("test/com/foo/client/HelloTest.java");
+  }
+
+  /**
+   * Default options, generate ant template only.
+   */
+  public void testAppCreatorAntOnly() throws IOException, WebAppCreatorException {
+    runCreator("-out", projectFolder, "-templates", "ant", MY_PROJECT);
+    assertFileExists("build.xml");
   }
 
   /**
@@ -131,7 +139,7 @@ public class WebAppCreatorTest extends TestCase {
   /**
    * Do not generate eclipse files.
    */
-  public void testCreatorNoAnt() throws IOException {
+  public void testCreatorNoAnt() throws IOException, WebAppCreatorException {
     runCreator("-out", projectFolder, "-noant", "-junit", mockJar, MY_PROJECT);
     assertFileExists(".project");
     assertFileExists(".classpath");
@@ -156,7 +164,7 @@ public class WebAppCreatorTest extends TestCase {
   /**
    * Do not generate eclipse files.
    */
-  public void testCreatorNoEclipse() throws IOException {
+  public void testCreatorNoEclipse() throws IOException, WebAppCreatorException {
     runCreator("-out", projectFolder, "-XnoEclipse", "-junit", mockJar,
         MY_PROJECT);
     assertFileDoesNotExist(".project");
@@ -182,11 +190,8 @@ public class WebAppCreatorTest extends TestCase {
   /**
    * Generate a maven2 project. Note that -junit option is not needed.
    */
-  public void testCreatorMaven() throws IOException {
+  public void testCreatorMaven() throws IOException, WebAppCreatorException {
     runCreator("-out", projectFolder, "-maven", MY_PROJECT);
-    assertFileExists(".project");
-    assertFileExists(".classpath");
-    assertFileExists("build.xml");
     assertFileExists("pom.xml");
     assertFileExists("README.txt");
     assertFileExists("src/main/java/com/foo/shared/FieldVerifier.java");
@@ -202,15 +207,12 @@ public class WebAppCreatorTest extends TestCase {
     assertFileExists("src/main/webapp/WEB-INF/web.xml");
     assertFileExists("src/test/java/com/foo/client/HelloTest.java");
     assertFileExists("src/test/java/com/foo/HelloJUnit.gwt.xml");
-    assertFileExists("Hello.launch");
-    assertFileExists("HelloTest-dev.launch");
-    assertFileExists("HelloTest-prod.launch");
   }
 
   /**
    * Running generator on existing projects.
    */
-  public void testCreatorMultipleTimes() throws IOException {
+  public void testCreatorMultipleTimes() throws IOException, WebAppCreatorException {
     // Create the project
     runCreator("-out", projectFolder, MY_PROJECT);
 
@@ -239,7 +241,7 @@ public class WebAppCreatorTest extends TestCase {
   /**
    * Generate only eclipse stuff.
    */
-  public void testCreatorOnlyEclipse() throws IOException {
+  public void testCreatorOnlyEclipse() throws IOException, WebAppCreatorException {
     runCreator("-out", projectFolder, "-XonlyEclipse", "-junit", mockJar,
         MY_PROJECT);
     assertFileExists(".project");
@@ -298,8 +300,9 @@ public class WebAppCreatorTest extends TestCase {
 
   /**
    * run appWebCreator.
+   * @throws WebAppCreatorException if any template processing fails
    */
-  private void runCreator(String... args) throws IOException {
+  private void runCreator(String... args) throws IOException, WebAppCreatorException {
     WebAppCreator creator = new WebAppCreator();
     ArgProcessor argProcessor = creator.new ArgProcessor();
     if (!argProcessor.processArgs(args)) {

@@ -19,6 +19,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.LineNumberReader;
@@ -358,6 +359,13 @@ public final class Utility {
     }
 
     return new String(hexString);
+  }
+
+  public static void writeTemplateBinaryFile(File file, byte[] contents) throws IOException {
+
+    FileOutputStream o = new FileOutputStream(file);
+    o.write(contents);
+    close(o);
   }
 
   public static void writeTemplateFile(File file, String contents,

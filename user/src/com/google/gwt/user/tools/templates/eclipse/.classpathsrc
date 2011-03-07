@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<classpath>
+   <classpathentry kind="src" path="@srcFolder"/>@eclipseTestDir
+   <classpathentry kind="lib" path="@gwtUserPath"/>
+   <classpathentry kind="lib" path="@gwtDevPath"/>
+   <classpathentry kind="lib" path="@gwtValidationPath"/>
+   <classpathentry kind="lib" path="@gwtValidationSourcesPath"/>
+   <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+   <classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
+   <classpathentry kind="output" path="@warFolder/WEB-INF/classes"/>
+@serverClasspathLibs
+</classpath>
