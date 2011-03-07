@@ -16,6 +16,7 @@
 NetworkAccessManager::NetworkAccessManager(QString secret, QObject *parent) :
     QNetworkAccessManager(parent), secret_(secret)
 {
+   setProxy(QNetworkProxy::NoProxy);
 }
 
 QNetworkReply* NetworkAccessManager::createRequest(

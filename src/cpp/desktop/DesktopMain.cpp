@@ -214,6 +214,9 @@ int main(int argc, char* argv[])
          return EXIT_FAILURE;
       }
 
+      NetworkProxyFactory* pProxyFactory = new NetworkProxyFactory();
+      QNetworkProxyFactory::setApplicationProxyFactory(pProxyFactory);
+
       MainWindow* browser = new MainWindow(url);
       pAppLaunch->setActivationWindow(browser);
 
