@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -110,14 +110,12 @@ public class ServiceLayerDecorator extends ServiceLayer {
   }
 
   @Override
-  public List<Object> loadDomainObjects(List<Class<?>> classes,
-      List<Object> domainIds) {
+  public List<Object> loadDomainObjects(List<Class<?>> classes, List<Object> domainIds) {
     return getNext().loadDomainObjects(classes, domainIds);
   }
 
   @Override
-  public boolean requiresServiceLocator(Method contextMethod,
-      Method domainMethod) {
+  public boolean requiresServiceLocator(Method contextMethod, Method domainMethod) {
     return getNext().requiresServiceLocator(contextMethod, domainMethod);
   }
 
@@ -127,8 +125,8 @@ public class ServiceLayerDecorator extends ServiceLayer {
   }
 
   @Override
-  public <T> Class<? extends T> resolveClientType(Class<?> domainClass,
-      Class<T> clientType, boolean required) {
+  public <T> Class<? extends T> resolveClientType(
+      Class<?> domainClass, Class<T> clientType, boolean required) {
     return getNext().resolveClientType(domainClass, clientType, required);
   }
 
@@ -148,10 +146,8 @@ public class ServiceLayerDecorator extends ServiceLayer {
   }
 
   @Override
-  public Method resolveRequestContextMethod(String requestContextClass,
-      String methodName) {
-    return getNext().resolveRequestContextMethod(requestContextClass,
-        methodName);
+  public Method resolveRequestContextMethod(String requestContextClass, String methodName) {
+    return getNext().resolveRequestContextMethod(requestContextClass, methodName);
   }
 
   @Override
@@ -166,8 +162,8 @@ public class ServiceLayerDecorator extends ServiceLayer {
   }
 
   @Override
-  public void setProperty(Object domainObject, String property,
-      Class<?> expectedType, Object value) {
+  public void setProperty(
+      Object domainObject, String property, Class<?> expectedType, Object value) {
     getNext().setProperty(domainObject, property, expectedType, value);
   }
 
@@ -181,7 +177,7 @@ public class ServiceLayerDecorator extends ServiceLayer {
    * should be used to provide diagnostic information that will help the
    * end-developer track down problems when that data would expose
    * implementation details of the server to the client.
-   * 
+   *
    * @param e a throwable with more data, may be {@code null}
    * @param message a printf-style format string
    * @param args arguments for the message
@@ -200,7 +196,7 @@ public class ServiceLayerDecorator extends ServiceLayer {
    * should use the instance provided by {@code getTop()} when calling public
    * methods on the ServiceLayer API to allow higher-level decorators to
    * override behaviors built into lower-level decorators.
-   * 
+   *
    * @return the ServiceLayer returned by
    *         {@link #create(ServiceLayerDecorator...)}
    */
@@ -211,7 +207,7 @@ public class ServiceLayerDecorator extends ServiceLayer {
   /**
    * Report an exception thrown by code that is under the control of the
    * end-developer.
-   * 
+   *
    * @param an {@link InvocationTargetException} thrown by an invocation of
    *          user-provided code
    * @throws ReportableException this method never returns normally
@@ -224,14 +220,13 @@ public class ServiceLayerDecorator extends ServiceLayer {
   /**
    * Return a message to the client. This method should not include any data
    * that was not sent to the server by the client to avoid leaking data.
-   * 
+   *
    * @param msg a printf-style format string
    * @param args arguments for the message
    * @throws ReportableException this method never returns normally
    * @see #die(Throwable, String, Object...)
    */
-  protected final <T> T report(String msg, Object... args)
-      throws ReportableException {
+  protected final <T> T report(String msg, Object... args) throws ReportableException {
     throw new ReportableException(String.format(msg, args));
   }
 

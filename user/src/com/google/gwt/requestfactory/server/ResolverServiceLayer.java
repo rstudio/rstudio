@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -43,37 +43,34 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
    * can use a shared validator. The use of the validator should be
    * synchronized, since it is stateful.
    */
-  private static final RequestFactoryInterfaceValidator validator = new RequestFactoryInterfaceValidator(
-      log, new RequestFactoryInterfaceValidator.ClassLoaderLoader(
-          ServiceLayer.class.getClassLoader()));
+  private static final RequestFactoryInterfaceValidator validator =
+      new RequestFactoryInterfaceValidator(log,
+          new RequestFactoryInterfaceValidator.ClassLoaderLoader(
+              ServiceLayer.class.getClassLoader()));
 
   @Override
   public Class<? extends BaseProxy> resolveClass(String typeToken) {
     Class<?> found = forName(typeToken);
-    if (!EntityProxy.class.isAssignableFrom(found)
-        && !ValueProxy.class.isAssignableFrom(found)) {
-      die(null, "The requested type %s is not assignable to %s or %s",
-          typeToken, EntityProxy.class.getCanonicalName(),
-          ValueProxy.class.getCanonicalName());
+    if (!EntityProxy.class.isAssignableFrom(found) && !ValueProxy.class.isAssignableFrom(found)) {
+      die(null, "The requested type %s is not assignable to %s or %s", typeToken,
+          EntityProxy.class.getCanonicalName(), ValueProxy.class.getCanonicalName());
     }
     synchronized (validator) {
       validator.antidote();
       validator.validateProxy(found.getName());
       if (validator.isPoisoned()) {
-        die(null, "The type %s did not pass RequestFactory validation",
-            found.getCanonicalName());
+        die(null, "The type %s did not pass RequestFactory validation", found.getCanonicalName());
       }
     }
     return found.asSubclass(BaseProxy.class);
   }
 
   @Override
-  public <T> Class<? extends T> resolveClientType(Class<?> domainClass,
-      Class<T> clientClass, boolean required) {
+  public <T> Class<? extends T> resolveClientType(
+      Class<?> domainClass, Class<T> clientClass, boolean required) {
     String name;
     synchronized (validator) {
-      name = validator.getEntityProxyTypeName(domainClass.getName(),
-          clientClass.getName());
+      name = validator.getEntityProxyTypeName(domainClass.getName(), clientClass.getName());
     }
     if (name != null) {
       return forName(name).asSubclass(clientClass);
@@ -88,8 +85,7 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
       return domainClass.asSubclass(clientClass);
     }
     if (required) {
-      die(null, "The domain type %s cannot be sent to the client",
-          domainClass.getCanonicalName());
+      die(null, "The domain type %s cannot be sent to the client", domainClass.getCanonicalName());
     }
     return null;
   }
@@ -111,8 +107,8 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
         return toReturn;
       }
     }
-    return die(null, "Could not resolve a domain type for client type %s",
-        clazz.getCanonicalName());
+    return die(
+        null, "Could not resolve a domain type for client type %s", clazz.getCanonicalName());
   }
 
   @Override
@@ -137,12 +133,10 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
     Class<?>[] domainArgs = new Class<?>[parameterTypes.length];
     for (int i = 0, j = domainArgs.length; i < j; i++) {
       if (BaseProxy.class.isAssignableFrom(parameterTypes[i])) {
-        domainArgs[i] = getTop().resolveDomainClass(
-            parameterTypes[i].asSubclass(BaseProxy.class));
+        domainArgs[i] = getTop().resolveDomainClass(parameterTypes[i].asSubclass(BaseProxy.class));
       } else if (EntityProxyId.class.isAssignableFrom(parameterTypes[i])) {
         domainArgs[i] = TypeUtils.ensureBaseType(TypeUtils.getSingleParameterization(
-            EntityProxyId.class,
-            requestContextMethod.getGenericParameterTypes()[i]));
+            EntityProxyId.class, requestContextMethod.getGenericParameterTypes()[i]));
       } else {
         domainArgs[i] = parameterTypes[i];
       }
@@ -154,22 +148,19 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
     } catch (SecurityException e) {
       ex = e;
     } catch (NoSuchMethodException e) {
-      return report("Could not locate domain method %s",
-          requestContextMethod.getName());
+      return report("Could not locate domain method %s", requestContextMethod.getName());
     }
-    return die(ex, "Could not get domain method %s in type %s",
-        requestContextMethod.getName(), searchIn.getCanonicalName());
+    return die(ex, "Could not get domain method %s in type %s", requestContextMethod.getName(),
+        searchIn.getCanonicalName());
   }
 
   @Override
-  public Method resolveRequestContextMethod(String requestContextClass,
-      String methodName) {
+  public Method resolveRequestContextMethod(String requestContextClass, String methodName) {
     synchronized (validator) {
       validator.antidote();
       validator.validateRequestContext(requestContextClass);
       if (validator.isPoisoned()) {
-        die(null, "The RequestContext type %s did not pass validation",
-            requestContextClass);
+        die(null, "The RequestContext type %s did not pass validation", requestContextClass);
       }
     }
     Class<?> searchIn = forName(requestContextClass);
@@ -178,8 +169,8 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
         return method;
       }
     }
-    return report("Could not locate %s method %s::%s",
-        RequestContext.class.getSimpleName(), requestContextClass, methodName);
+    return report("Could not locate %s method %s::%s", RequestContext.class.getSimpleName(),
+        requestContextClass, methodName);
   }
 
   @Override
@@ -193,8 +184,7 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
    */
   private Class<?> forName(String name) {
     try {
-      return Class.forName(name, false,
-          Thread.currentThread().getContextClassLoader());
+      return Class.forName(name, false, Thread.currentThread().getContextClassLoader());
     } catch (ClassNotFoundException e) {
       return die(e, "Could not locate class %s", name);
     }
