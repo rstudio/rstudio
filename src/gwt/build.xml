@@ -160,7 +160,6 @@
   <target name="clean" description="Cleans this project">
     <delete dir="bin" failonerror="false" />
     <delete dir="www/rstudio" failonerror="false" />
-    <delete file="${ace.bin}/ace.js" failonerror="false" />
     <delete file="${ace.bin}/acesupport.js" failonerror="false" />
     <delete file="${json2.bin}/json2.min.js" failonerror="false" />
     <delete dir="gen" failonerror="false" />
