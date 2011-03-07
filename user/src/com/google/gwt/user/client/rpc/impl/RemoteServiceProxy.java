@@ -70,7 +70,7 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
    * Always use this as {@link #isStatsAvailable()} &amp;&amp;
    * {@link #stats(JavaScriptObject)}.
    *
-   * @deprecated use {link RpcStatsContext}.
+   * @deprecated use {@link RpcStatsContext}.
    */
   @Deprecated
   public static boolean stats(JavaScriptObject data) {

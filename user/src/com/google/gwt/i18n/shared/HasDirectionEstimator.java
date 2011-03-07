@@ -37,7 +37,7 @@ public interface HasDirectionEstimator {
   /**
    * Sets the {@link DirectionEstimator} object.
    *
-   * @param directionEstimator The {code DirectionEstimator} to be set. {@code
+   * @param directionEstimator The {@code DirectionEstimator} to be set. {@code
    *        null} means turning off direction estimation.
    */
   void setDirectionEstimator(DirectionEstimator directionEstimator);
