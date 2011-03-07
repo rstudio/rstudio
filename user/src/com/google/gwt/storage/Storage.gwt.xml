@@ -1,0 +1,52 @@
+<!--                                                                        -->
+<!-- Copyright 2011 Google Inc.                                             -->
+<!-- Licensed under the Apache License, Version 2.0 (the "License"); you    -->
+<!-- may not use this file except in compliance with the License. You may   -->
+<!-- may obtain a copy of the License at                                    -->
+<!--                                                                        -->
+<!-- http://www.apache.org/licenses/LICENSE-2.0                             -->
+<!--                                                                        -->
+<!-- Unless required by applicable law or agreed to in writing, software    -->
+<!-- distributed under the License is distributed on an "AS IS" BASIS,      -->
+<!-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or        -->
+<!-- implied. License for the specific language governing permissions and   -->
+<!-- limitations under the License.                                         -->
+
+<module>
+  <inherits name="com.google.gwt.core.Core" />
+  <inherits name="com.google.gwt.user.UserAgent" />
+
+  <!-- Define the storage support property -->
+  <define-property name="storageSupport" values="maybe,no" />
+
+  <!-- Set the default to maybe -->
+  <set-property name="storageSupport" value="maybe" />
+
+  <!-- Older browsers do not support Storage -->
+  <set-property name="storageSupport" value="no">
+    <any>
+      <when-property-is name="user.agent" value="ie6" />
+    </any>
+  </set-property>
+
+  <replace-with class="com.google.gwt.storage.client.Storage.StorageSupportDetectorNo">
+    <when-type-is class="com.google.gwt.storage.client.Storage.StorageSupportDetector" />
+    <when-property-is name="storageSupport" value="no" />
+  </replace-with>
+
+  <replace-with class="com.google.gwt.storage.client.StorageImplMozilla">
+    <when-type-is class="com.google.gwt.storage.client.StorageImpl" />
+    <when-property-is name="user.agent" value="gecko1_8" />
+  </replace-with>
+
+  <replace-with class="com.google.gwt.storage.client.StorageImplNonNativeEvents">
+    <when-type-is class="com.google.gwt.storage.client.StorageImpl" />
+    <when-property-is name="user.agent" value="safari" />
+  </replace-with>
+
+  <replace-with class="com.google.gwt.storage.client.StorageImplIE8">
+    <when-type-is class="com.google.gwt.storage.client.StorageImpl" />
+    <when-property-is name="user.agent" value="ie8" />
+  </replace-with>
+</module>
+

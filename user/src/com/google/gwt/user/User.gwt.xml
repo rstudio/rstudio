@@ -55,6 +55,7 @@
    <inherits name="com.google.gwt.user.datepicker.DatePicker"/>
    <inherits name="com.google.gwt.user.cellview.CellView"/>
    <inherits name="com.google.gwt.safehtml.SafeHtml" />
+   <inherits name="com.google.gwt.storage.Storage" />
 
    <super-source path="translatable"/>
    <source path="client"/>
