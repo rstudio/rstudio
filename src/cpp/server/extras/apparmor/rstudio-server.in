@@ -9,7 +9,7 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
   capability setuid,
   capability sys_resource,
  
-  owner /home/** rw,
+  owner @{HOME}/** rw,
   owner /tmp/** rw,
   /tmp/rsession/streams/** rw,
 
