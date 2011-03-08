@@ -98,6 +98,9 @@ public class ModuleDefSchema extends Schema {
     @SuppressWarnings("unused") // referenced reflectively
     protected final String __extend_property_2_values = null;
 
+    @SuppressWarnings("unused") // referenced reflectively ($ means optional)
+    protected final String __extend_property_3_fallback_value$ = null;
+
     @SuppressWarnings("unused") // referenced reflectively
     protected final String __generate_with_1_class = null;
 
@@ -441,11 +444,25 @@ public class ModuleDefSchema extends Schema {
 
     @SuppressWarnings("unused") // called reflectively
     protected Schema __extend_property_begin(BindingProperty property,
-        PropertyValue[] values) {
+        PropertyValue[] values, PropertyFallbackValue fallbackValue) 
+        throws UnableToCompleteException {
       for (int i = 0; i < values.length; i++) {
         property.addDefinedValue(property.getRootCondition(), values[i].token);
       }
 
+      // validate fallback-property value if present
+      if (fallbackValue != null) {
+        if (!property.isDefinedValue(fallbackValue.token)) {
+        logger.log(TreeLogger.ERROR, "The property " + property.name
+            + " fallback-value was not defined");
+        throw new UnableToCompleteException(); 
+        }
+        // add fallback map to the property
+        for (int i = 0; i < values.length; i++) {
+          property.addFallbackValue(values[i].token, fallbackValue.token);
+        }
+      }
+     
       // No children.
       return null;
     }
@@ -1184,6 +1201,14 @@ public class ModuleDefSchema extends Schema {
     }
   }
 
+  private static class PropertyFallbackValue {
+    public final String token;
+
+    public PropertyFallbackValue(String token) {
+      this.token = token;
+    }
+  }
+  
   /**
    * Converts a comma-separated string into an array of property value tokens.
    */
@@ -1235,6 +1260,24 @@ public class ModuleDefSchema extends Schema {
     }
   }
 
+  /**
+   * Converts a string into a property fallback value, validating it in the process.
+   */
+  private final class PropertyFallbackValueAttrCvt extends AttributeConverter {
+    @Override
+    public Object convertToArg(Schema schema, int line, String elem,
+        String attr, String value) throws UnableToCompleteException {
+      String token = value.trim();
+      if (Util.isValidJavaIdent(token)) {
+        return new PropertyFallbackValue(token);
+      } else {
+        Messages.PROPERTY_VALUE_INVALID.log(logger, token, null);
+        throw new UnableToCompleteException();
+      }
+    }
+  }
+
+  
   /**
    * Converts a comma-separated string into an array of property value tokens.
    */
@@ -1351,6 +1394,7 @@ public class ModuleDefSchema extends Schema {
   private final PropertyNameAttrCvt propNameAttrCvt = new PropertyNameAttrCvt();
   private final PropertyValueArrayAttrCvt propValueArrayAttrCvt = new PropertyValueArrayAttrCvt();
   private final PropertyValueAttrCvt propValueAttrCvt = new PropertyValueAttrCvt();
+  private final PropertyFallbackValueAttrCvt propFallbackValueAttrCvt = new PropertyFallbackValueAttrCvt();
   private final PropertyValueGlobArrayAttrCvt propValueGlobArrayAttrCvt = new PropertyValueGlobArrayAttrCvt();
   private final PropertyValueGlobAttrCvt propValueGlobAttrCvt = new PropertyValueGlobAttrCvt();
 
@@ -1371,6 +1415,7 @@ public class ModuleDefSchema extends Schema {
     registerAttributeConverter(ConfigurationProperty.class,
         configurationPropAttrCvt);
     registerAttributeConverter(PropertyValue.class, propValueAttrCvt);
+    registerAttributeConverter(PropertyFallbackValue.class, propFallbackValueAttrCvt);
     registerAttributeConverter(PropertyValue[].class, propValueArrayAttrCvt);
     registerAttributeConverter(PropertyValueGlob.class, propValueGlobAttrCvt);
     registerAttributeConverter(PropertyValueGlob[].class,

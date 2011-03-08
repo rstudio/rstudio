@@ -23,6 +23,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.collect.Sets;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -69,6 +70,31 @@ public class ConditionWhenPropertyIs extends Condition {
       if (testValue.equals(value)) {
         return true;
       } else {
+        // no exact match was found, see if any fall back 
+        // value would satisfy the condition
+        try {
+          SelectionProperty prop = propertyOracle.getSelectionProperty(logger,
+              propName);
+          List<? extends Set<String>> fallbackValues = prop.getFallbackValues(value);
+          if (fallbackValues != null && fallbackValues.size() > 0) {
+            logger.log(TreeLogger.DEBUG, "Property value '" + value + "'" +
+                " is the fallback of '" + fallbackValues.toString() + "'", null);
+            int cost = -1;
+            for (Set<String> values : fallbackValues) {
+              for (String fallbackValue : values) {
+                if (testValue.equals(fallbackValue)) {
+                  query.setFallbackEvaluationCost(cost);
+                  return false;
+                }
+              }
+              cost--;
+            }
+          }
+        }
+        catch (BadPropertyValueException e) {
+          // do nothing - currently, only selection
+          // properties support fall back values
+        }
         return false;
       }
     } catch (BadPropertyValueException e) {

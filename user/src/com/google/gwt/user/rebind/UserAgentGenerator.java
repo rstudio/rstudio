@@ -80,10 +80,11 @@ public class UserAgentGenerator extends Generator {
     }
 
     String userAgentValue;
+    SelectionProperty selectionProperty;
     try {
-      SelectionProperty property = propertyOracle.getSelectionProperty(logger,
+      selectionProperty = propertyOracle.getSelectionProperty(logger,
           PROPERTY_USER_AGENT);
-      userAgentValue = property.getCurrentValue();
+      userAgentValue = selectionProperty.getCurrentValue();
     } catch (BadPropertyValueException e) {
       logger.log(TreeLogger.ERROR, "Unable to find value for '"
           + PROPERTY_USER_AGENT + "'", e);
@@ -113,7 +114,8 @@ public class UserAgentGenerator extends Generator {
       sw.println();
       sw.println("public native String getRuntimeValue() /*-{");
       sw.indent();
-      UserAgentPropertyGenerator.writeUserAgentPropertyJavaScript(sw);
+      UserAgentPropertyGenerator.writeUserAgentPropertyJavaScript(sw, 
+          selectionProperty.getPossibleValues());
       sw.outdent();
       sw.println("}-*/;");
       sw.println();

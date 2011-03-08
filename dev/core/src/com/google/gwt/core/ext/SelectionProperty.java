@@ -16,6 +16,8 @@
 
 package com.google.gwt.core.ext;
 
+import java.util.List;
+import java.util.Set;
 import java.util.SortedSet;
 
 /**
@@ -45,6 +47,14 @@ public interface SelectionProperty {
    * @return the fallback, or ""
    */
   String getFallbackValue(); 
+
+  /**
+   * Returns the list of fall back values for a given value. 
+   * @param value the property value
+   * @return the fall back list of values by increasing order
+   *         of preference.
+   */
+  List<? extends Set<String>> getFallbackValues(String value);
 
   /**
    * Returns the possible values for the property in sorted order.

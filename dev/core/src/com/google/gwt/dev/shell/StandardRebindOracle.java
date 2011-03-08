@@ -117,6 +117,8 @@ public class StandardRebindOracle implements RebindOracle {
         return null;
       }
 
+      Rule minCostRuleSoFar = null;
+
       for (Iterator<Rule> iter = rules.iterator(); iter.hasNext();) {
         Rule rule = iter.next();
 
@@ -132,7 +134,7 @@ public class StandardRebindOracle implements RebindOracle {
           if (!usedRules.contains(rule)) {
             usedRules.add(rule);
             Messages.TRACE_RULE_MATCHED.log(logger, null);
-
+            
             return rule;
           } else {
             // We are skipping this rule because it has already been used
@@ -141,11 +143,35 @@ public class StandardRebindOracle implements RebindOracle {
           }
         } else {
           Messages.TRACE_RULE_DID_NOT_MATCH.log(logger, null);
+
+          // keep track of fallback partial matches
+          if (minCostRuleSoFar == null) {
+            minCostRuleSoFar = rule;
+          }
+          assert rule.getFallbackEvaluationCost() != 0;
+          // if we found a better match, keep that as the best candidate so far
+          if (rule.getFallbackEvaluationCost() <= minCostRuleSoFar.getFallbackEvaluationCost()) {
+            logger.log(TreeLogger.DEBUG, "Found better fallback match for " + rule);
+            minCostRuleSoFar = rule;
+          }
         }
       }
 
+      // if we reach this point, it means we did not find an exact match
+      // and we may have a partial match based on fall back values
+      assert minCostRuleSoFar != null;
+      if (minCostRuleSoFar.getFallbackEvaluationCost() < Integer.MAX_VALUE) {
+        logger.log(TreeLogger.WARN, "Could not find an exact match rule. Using 'closest' rule " + 
+            minCostRuleSoFar + " based on fall back values. You may need to implement a specific " +
+            "binding in case the fall back behavior does not replace the missing binding");
+        if (!usedRules.contains(minCostRuleSoFar)) {
+          usedRules.add(minCostRuleSoFar);
+          logger.log(TreeLogger.DEBUG, "No exact match was found, using closest match rule " + minCostRuleSoFar);
+          return minCostRuleSoFar;
+        }
+      }
+      
       // No matching rule for this type.
-      //
       return null;
     }
 
@@ -161,14 +187,14 @@ public class StandardRebindOracle implements RebindOracle {
       if (!genCtx.isGeneratorResultCachingEnabled()) {
         return resultTypeName;
       }
-      
+
       RebindStatus status = newResult.getResultStatus();
       switch (status) {
         
         case USE_EXISTING:
           // in this case, no newly generated or cached types are needed
           break; 
-          
+
         case USE_ALL_NEW_WITH_NO_CACHING:
           /*
            * in this case, new artifacts have been generated, but no need to
@@ -176,7 +202,7 @@ public class StandardRebindOracle implements RebindOracle {
            * advantage of caching).
            */
           break;
-          
+
         case USE_ALL_NEW:
           // use all new results, add a new cache entry
           cachedResult = new CachedRebindResult(newResult.getReturnedTypeName(),
@@ -184,18 +210,18 @@ public class StandardRebindOracle implements RebindOracle {
               System.currentTimeMillis(), newResult.getClientDataMap());
           rebindCachePut(rule, typeName, cachedResult);
           break;
-          
+
         case USE_ALL_CACHED:
           // use all cached results
           assert (cachedResult != null);
-          
+
           genCtx.commitArtifactsFromCache(logger);
           genCtx.addGeneratedUnitsFromCache();
-          
+
           // use cached type name
           resultTypeName = cachedResult.getReturnedTypeName();
           break;
-          
+
         case USE_PARTIAL_CACHED:
           /*
            * Add cached generated units marked for reuse to the context.  
@@ -203,7 +229,7 @@ public class StandardRebindOracle implements RebindOracle {
            * as GeneratedUnits.
            */
           genCtx.addGeneratedUnitsMarkedForReuseFromCache();
-          
+
           /*
            * Create a new cache entry using the composite set of new and 
            * reused cached results currently in genCtx.
@@ -267,14 +293,14 @@ public class StandardRebindOracle implements RebindOracle {
   public void setRebindCache(RebindCache cache) {
     this.rebindCache = cache;
   }
-  
+
   private CachedRebindResult rebindCacheGet(Rule rule, String typeName) {
     if (rebindCache != null) {
       return rebindCache.get(rule, typeName);
     }
     return null;
   }
-  
+
   private void rebindCachePut(Rule rule, String typeName, CachedRebindResult result) {
     if (rebindCache != null) {
       rebindCache.put(rule, typeName, result);

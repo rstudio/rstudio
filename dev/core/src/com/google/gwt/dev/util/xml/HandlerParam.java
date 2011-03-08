@@ -81,11 +81,17 @@ public final class HandlerParam {
   private final Class<?> paramType;
 
   private final Field metaField;
+  
+  private final boolean isOptional;
 
   private final String normalizedAttrName;
 
   private HandlerParam(Class<?> paramType, Field metaField,
       String normalizedAttrName) {
+    this.isOptional = normalizedAttrName.endsWith("$");
+    if (isOptional) {
+      normalizedAttrName = normalizedAttrName.substring(0, normalizedAttrName.length() - 1);
+    }
     this.paramType = paramType;
     this.metaField = metaField;
     this.normalizedAttrName = normalizedAttrName;
@@ -115,5 +121,9 @@ public final class HandlerParam {
 
   public Class<?> getParamType() {
     return paramType;
+  }
+  
+  public boolean isOptional() {
+    return isOptional;
   }
 }

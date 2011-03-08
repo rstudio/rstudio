@@ -19,8 +19,11 @@
 <module>
 
   <!-- Browser-sensitive code should use the 'user.agent' property -->
-  <define-property name="user.agent" values="ie6,ie8,gecko1_8,safari,opera"/>
-
+  <define-property name="user.agent" values="ie6" />
+  <extend-property name="user.agent" values="ie8" />
+  <extend-property name="user.agent" values="gecko1_8" />
+  <extend-property name="user.agent" values="safari" />
+  <extend-property name="user.agent" values="opera" />
   <property-provider name="user.agent" generator="com.google.gwt.user.rebind.UserAgentPropertyGenerator"/>
 
   <!-- Set to false to avoid runtime warnings for mismatched runtime and -->

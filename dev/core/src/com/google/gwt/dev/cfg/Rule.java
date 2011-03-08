@@ -24,19 +24,35 @@ import com.google.gwt.dev.javac.rebind.RebindResult;
  * Abstract base class for various kinds of deferred binding rules.
  */
 public abstract class Rule {
-
+  
+  private int fallbackEvalCost = Integer.MAX_VALUE;
   private final ConditionAll rootCondition = new ConditionAll();
 
+  /**
+   * Returns the cost of evaluation fallback binding values.
+   * when isApplicable() is true, this value is meaningless
+   * when isApplicable() is false, [1,Integer.MAX_VALUE-1] means 
+   * a relative scale of cost, where cost c is better than cost c+k
+   * Integer.MAX_VALUE implies no match.
+   * @return cost of evaluating fallback values.
+   */
+  public int getFallbackEvaluationCost() {
+    return fallbackEvalCost;
+  }
+  
   public ConditionAll getRootCondition() {
     return rootCondition;
   }
-
+  
   public boolean isApplicable(TreeLogger logger,
       StandardGeneratorContext context, String typeName)
       throws UnableToCompleteException {
-    return rootCondition.isTrue(logger, new DeferredBindingQuery(
+    DeferredBindingQuery query = new DeferredBindingQuery(
         context.getPropertyOracle(), context.getActiveLinkerNames(),
-        context.getTypeOracle(), typeName));
+        context.getTypeOracle(), typeName);
+    boolean result = rootCondition.isTrue(logger, query);
+    fallbackEvalCost = query.getFallbackEvaluationCost();
+    return result;
   }
 
   public abstract RebindResult realize(TreeLogger logger,

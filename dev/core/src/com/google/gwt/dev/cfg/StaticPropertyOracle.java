@@ -22,6 +22,9 @@ import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 
 import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
 
 /**
@@ -152,7 +155,7 @@ public class StaticPropertyOracle implements PropertyOracle, Serializable {
           possibleValues.add(v);
         }
         return new DefaultSelectionProperty(value, prop.getFallback(), name,
-            possibleValues);
+            possibleValues, (Map<String, List<Set<String>>>) prop.getFallbackValuesMap());
       }
     }
 

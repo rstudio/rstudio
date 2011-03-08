@@ -135,7 +135,8 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
       for (String v : cprop.getDefinedValues()) {
         possibleValues.add(v);
       }
-      return new DefaultSelectionProperty(value, fallback, name, possibleValues);
+      return new DefaultSelectionProperty(value, fallback, name, possibleValues, 
+          cprop.getFallbackValuesMap());
     } else {
       throw new BadPropertyValueException(propertyName);
     }

@@ -28,11 +28,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 /**
@@ -51,6 +53,8 @@ public class BindingProperty extends Property {
   private PropertyProvider provider;
   private Class<? extends PropertyProviderGenerator> providerGenerator;
   private String fallback;
+  private HashMap<String,LinkedList<LinkedHashSet<String>>> fallbackValueMap;
+  private HashMap<String,LinkedList<String>> fallbackValues = new HashMap<String,LinkedList<String>>();
   private final ConditionAll rootCondition = new ConditionAll();
 
   {
@@ -92,6 +96,20 @@ public class BindingProperty extends Property {
       conditionalValues.put(condition, set);
     }
     set.add(newValue);
+  }
+
+  /**
+   * Adds fall back value to given property name. 
+   * @param value the property value.
+   * @param fallbackValue the fall back value for given property value.
+   */
+  public void addFallbackValue(String value, String fallbackValue) {
+    LinkedList<String> values = fallbackValues.get(fallbackValue);
+    if (values == null) {
+      values = new LinkedList<String>();
+      fallbackValues.put(fallbackValue, values);
+    }
+    values.addFirst(value);
   }
 
   /**
@@ -145,6 +163,43 @@ public class BindingProperty extends Property {
     return fallback;
   }
 
+  /**
+   * Returns the map of values to fall back values. the list of fall
+   * back values is in decreasing order of preference.
+   * @return map of property value to fall back values.
+   */
+  public Map<String,? extends List<? extends Set<String>>> getFallbackValuesMap() {
+    if (fallbackValueMap == null) {
+      HashMap<String,LinkedList<LinkedHashSet<String>>> valuesMap = new HashMap<String,LinkedList<LinkedHashSet<String>>>();
+      // compute closure of fall back values preserving order
+      for (Entry<String, LinkedList<String>> e : fallbackValues.entrySet()) {
+        String from = e.getKey();
+        LinkedList<LinkedHashSet<String>> alternates = new LinkedList<LinkedHashSet<String>>();
+        valuesMap.put(from, alternates);
+        LinkedList<String> childList = fallbackValues.get(from);
+        LinkedHashSet<String> children = new LinkedHashSet<String>();
+        children.addAll(childList);
+        while (children != null && children.size() > 0) 
+        {
+          alternates.add(children);
+          LinkedHashSet<String> newChildren = new LinkedHashSet<String>();
+          for (String child : children) {
+            childList = fallbackValues.get(child);
+            if (null == childList) {
+              continue;
+            }
+            for (String val : childList) {
+              newChildren.add(val);
+            }
+          }
+          children = newChildren;
+        }
+      }
+      fallbackValueMap = valuesMap;
+    }
+    return fallbackValueMap;
+  }
+  
   public PropertyProvider getProvider() {
     return provider;
   }

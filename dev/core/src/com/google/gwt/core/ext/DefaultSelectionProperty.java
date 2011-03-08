@@ -15,6 +15,9 @@
  */
 package com.google.gwt.core.ext;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 
 /**
@@ -27,6 +30,7 @@ public class DefaultSelectionProperty implements SelectionProperty {
   private final String fallbackValue;
   private final String name;
   private final SortedSet<String> possibleValues;
+  private final Map<String, ? extends List<? extends Set<String>>> fallbackValueMap;
 
   /**
    * Construct a selection property.
@@ -40,6 +44,23 @@ public class DefaultSelectionProperty implements SelectionProperty {
    */
   public DefaultSelectionProperty(String currentValue, String fallbackValue,
       String name, SortedSet<String> possibleValues) {
+    this(currentValue, fallbackValue, name, possibleValues, null);
+  }
+
+  /**
+   * Construct a selection property.
+   *  
+   * @param currentValue current value of this property, must not be null
+   * @param fallbackValue the fallback value to use, must not be null
+   * @param name the name of this property, must not be null
+   * @param possibleValues the set of possible values, must not be null and
+   *     will be returned to callers, so a copy should be passed into this
+   *     ctor if the caller will use this set later
+   * @param map the map propertyValue to fallback values
+   */
+  public DefaultSelectionProperty(String currentValue, String fallbackValue,
+      String name, SortedSet<String> possibleValues,
+      Map<String, ? extends List<? extends Set<String>>> fallbackValueMap) {
     assert currentValue != null;
     assert fallbackValue != null;
     assert name != null;
@@ -48,6 +69,7 @@ public class DefaultSelectionProperty implements SelectionProperty {
     this.fallbackValue = fallbackValue;
     this.name = name;
     this.possibleValues = possibleValues;
+    this.fallbackValueMap = fallbackValueMap;
   }
 
   @Override
@@ -74,6 +96,10 @@ public class DefaultSelectionProperty implements SelectionProperty {
 
   public String getFallbackValue() {
     return fallbackValue;
+  }
+
+  public List<? extends Set<String>> getFallbackValues(String value) {
+    return (null != fallbackValueMap) ? fallbackValueMap.get(value) : null;
   }
 
   public String getName() {

@@ -63,6 +63,8 @@ public class HandlerArgs {
       AttributeConverter converter = schema.getAttributeConverter(handlerParams[i].getParamType());
       return converter.convertToArg(schema, lineNumber, elemName, attrNames[i],
           value);
+    } else if (handlerParams[i].isOptional()) {
+        return null;
     } else {
       return new NullPointerException("Argument " + i + " was null");
     }
@@ -77,7 +79,7 @@ public class HandlerArgs {
   }
 
   public boolean isArgSet(int i) {
-    if (argValues[i] != null) {
+    if (argValues[i] != null || handlerParams[i].isOptional()) {
       return true;
     } else {
       return false;

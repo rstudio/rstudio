@@ -40,6 +40,51 @@ public class UserAgentPropertyGenerator implements PropertyProviderGenerator {
       "ie6", "ie8", "gecko1_8", "safari", "opera"});
 
   /**
+   * List of predicates to identify user agent.
+   * The order of evaluation is from top to bottom, i.e., the first matching
+   * predicate will have the associated ua token returned.
+   * ua is defined in an outer scope and is therefore visible in
+   * the predicate javascript fragment.
+   */
+  private static UserAgentPropertyGeneratorPredicate[] predicates =
+    new UserAgentPropertyGeneratorPredicate[] {
+
+      // opera
+      new UserAgentPropertyGeneratorPredicate("opera")
+      .getPredicateBlock()
+        .println("return (ua.indexOf('opera') != -1);")
+      .returns("'opera'"),
+
+      // webkit family
+      new UserAgentPropertyGeneratorPredicate("safari")
+      .getPredicateBlock()
+        .println("return (ua.indexOf('webkit') != -1);")
+      .returns("'safari'"),
+
+      // IE8
+      new UserAgentPropertyGeneratorPredicate("ie8")
+      .getPredicateBlock()
+        .println("return (ua.indexOf('msie') != -1 && ($doc.documentMode >= 8));")
+      .returns("'ie8'"),
+
+      // IE6
+      new UserAgentPropertyGeneratorPredicate("ie6")
+      .getPredicateBlock()
+        .println("var result = /msie ([0-9]+)\\.([0-9]+)/.exec(ua);")
+        .println("if (result && result.length == 3)")
+        .indent()
+          .println("return (makeVersion(result) >= 6000);")
+        .outdent()
+      .returns("'ie6'"),
+
+      // gecko family
+      new UserAgentPropertyGeneratorPredicate("gecko1_8")
+      .getPredicateBlock()
+        .println("return (ua.indexOf('gecko') != -1);")
+      .returns("'gecko1_8'"),
+  };
+
+  /**
    * Writes out the JavaScript function body for determining the value of the
    * <code>user.agent</code> selection property. This method is used to create
    * the selection script and by {@link UserAgentGenerator} to assert at runtime
@@ -47,48 +92,29 @@ public class UserAgentPropertyGenerator implements PropertyProviderGenerator {
    * <code>user.agent</code> values listed here should be kept in sync with
    * {@link #VALID_VALUES} and <code>UserAgent.gwt.xml</code>.
    */
-  static void writeUserAgentPropertyJavaScript(SourceWriter body) {
+  static void writeUserAgentPropertyJavaScript(SourceWriter body, 
+      SortedSet<String> possibleValues) {
+
+    // write preamble
     body.println("var ua = navigator.userAgent.toLowerCase();");
     body.println("var makeVersion = function(result) {");
     body.indent();
     body.println("return (parseInt(result[1]) * 1000) + parseInt(result[2]);");
     body.outdent();
     body.println("};");
-    body.println("if (ua.indexOf('opera') != -1) {");
-    body.indent();
-    body.println("return 'opera';");
-    body.outdent();
-    body.println("} else if (ua.indexOf('webkit') != -1) {");
-    body.indent();
-    body.println("return 'safari';");
-    body.outdent();
-    body.println("} else if (ua.indexOf('msie') != -1) {");
-    body.indent();
-    body.println("if ($doc.documentMode >= 8) {");
-    body.indent();
-    body.println("return 'ie8';");
-    body.outdent();
-    body.println("} else {");
-    body.indent();
-    body.println("var result = /msie ([0-9]+)\\.([0-9]+)/.exec(ua);");
-    body.println("if (result && result.length == 3) {");
-    body.indent();
-    body.println("var v = makeVersion(result);");
-    body.println("if (v >= 6000) {");
-    body.indent();
-    body.println("return 'ie6';");
-    body.outdent();
-    body.println("}");
-    body.outdent();
-    body.println("}");
-    body.outdent();
-    body.println("}");
-    body.outdent();
-    body.println("} else if (ua.indexOf('gecko') != -1) {");
-    body.indent();
-    body.println("return 'gecko1_8';");
-    body.outdent();
-    body.println("}");
+
+    // write only selected user agents 
+    for (int i = 0; i < predicates.length; i++) {
+      if (possibleValues.contains(predicates[i].getUserAgent())) {
+        body.println("if ((function() { ");
+        body.indent();
+        body.print(predicates[i].toString());
+        body.outdent();
+        body.println("})()) return " + predicates[i].getReturnValue() + ";");
+      }
+    }
+    
+    // default return
     body.println("return 'unknown';");
   }
 
@@ -105,11 +131,14 @@ public class UserAgentPropertyGenerator implements PropertyProviderGenerator {
             + "\" value=\"false\"/> to suppress this warning message.");
       }
     }
-
+    // make sure that the # of ua in VALID_VALUES
+    // is the same of predicates. maybe should iterate
+    // to make sure each one has a match.
+    assert predicates.length == VALID_VALUES.size();
     StringSourceWriter body = new StringSourceWriter();
     body.println("{");
     body.indent();
-    writeUserAgentPropertyJavaScript(body);
+    writeUserAgentPropertyJavaScript(body, possibleValues);
     body.outdent();
     body.println("}");
 

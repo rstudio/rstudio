@@ -52,7 +52,8 @@ public class JsCoerceIntShiftTest extends TestCase {
       } else {
         SortedSet<String> valueSet = new TreeSet<String>();
         valueSet.add(value);
-        return new DefaultSelectionProperty(value, value, value, valueSet);
+        return new DefaultSelectionProperty(value, value, value, valueSet, 
+            null /* fallbackValueMap */);
       }
     }
 

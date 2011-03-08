@@ -26,6 +26,7 @@ import java.util.Set;
  * against such a query.
  */
 public class DeferredBindingQuery {
+  private int fallbackEvalCost = Integer.MAX_VALUE;
   private final Set<String> linkerNames;
   private final PropertyOracle propertyOracle;
   private final String testType;
@@ -54,6 +55,10 @@ public class DeferredBindingQuery {
     this.testType = testType;
   }
 
+  public int getFallbackEvaluationCost() {
+    return fallbackEvalCost;
+  }
+  
   public Set<String> getLinkerNames() {
     return linkerNames;
   }
@@ -68,5 +73,9 @@ public class DeferredBindingQuery {
 
   public TypeOracle getTypeOracle() {
     return typeOracle;
+  }
+
+  public void setFallbackEvaluationCost(int cost) {
+    fallbackEvalCost = cost;
   }
 }
