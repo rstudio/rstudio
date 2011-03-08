@@ -237,6 +237,12 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
     })
 })
 
+.rs.addFunction( "setMemoryLimit", function(limit)
+{
+   suppressWarnings(utils::memory.limit(limit))
+})
+
+
 .rs.addFunction( "libPathsAppend", function(path)
 {
   .libPaths(append(.libPaths(), path))

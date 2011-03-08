@@ -49,6 +49,7 @@ extern "C" void R_ResetConsole(void);
 #define FORSOURCING		95 /* not DELAYPROMISES, used in edit.c */
 extern "C" SEXP Rf_deparse1(SEXP,Rboolean,int);
 
+
 using namespace core;
 
 namespace r {
@@ -275,6 +276,35 @@ SEXP editHook(SEXP call, SEXP op, SEXP args, SEXP rho)
     return (x);
 }
 
+void setMemoryLimit()
+{
+   // set defaults for R_max_memory. this code is based on similar code
+   // in cmdlineoptions in system.c (but calls memory.limit directly rather
+   // than setting R_max_memory directly, which we can't do because it
+   // isn't exported from the R.dll
+   const DWORDLONG Mega = 1048576;
+   MEMORYSTATUSEX ms;
+   ms.dwLength = sizeof(MEMORYSTATUSEX);
+   ::GlobalMemoryStatusEx(&ms);
+   DWORDLONG virtualMem = ms.ullTotalVirtual;
+   DWORDLONG physicalMem = ms.ullTotalPhys;
+
+ #ifdef WIN64
+   DWORDLONG maxMemory = physicalMem;
+ #else
+   DWORDLONG maxMemory = std::min(virtualMem - 512*Mega, physicalMem);
+ #endif
+   // need enough to start R, with some head room
+   maxMemory = std::max(32 * Mega, maxMemory);
+
+   // call the memory.limit function
+   maxMemory = maxMemory / Mega;
+   r::exec::RFunction memoryLimit(".rs.setMemoryLimit");
+   memoryLimit.addParam((double)maxMemory);
+   Error error = memoryLimit.call();
+   if (error)
+      LOG_ERROR(error);
+}
 
 }
 
@@ -349,6 +379,9 @@ void runEmbeddedR(const core::FilePath& rHome,
 
 Error completeEmbeddedRInitialization()
 {
+   // set memory limit
+   setMemoryLimit();
+
    // from InitEd in edit.c
    EdFileUsed = 0;
    DefaultFileName = R_tmpnam("Redit", R_TempDir);

@@ -60,17 +60,24 @@ if(UNIX)
 else()
    add_definitions(-DWINVER=0x501)
 
-   # increase stack size to 10MB & avoid mingw auto-importing warning
-   set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS}
-      -Wl,--stack=0x00a00000,--enable-auto-import) 
-
    if(RSTUDIO_SESSION_WIN64)
+
+      # increase stack size to 10MB, avoid mingw auto-importing warning,
+      set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS}
+         -Wl,--stack=0x00a00000,--enable-auto-import)
+
       add_definitions(-D_WIN64
                       -D_WIN64_WINNT=0x0501
                       -D_WIN64_IE=0x600
                       -DWIN64_LEAN_AND_MEAN
                       -DBOOST_USE_WINDOWS_H)
    else()
+
+      # increase stack size to 10MB, avoid mingw auto-importing warning,
+      # and ensure that we are large address aware
+      set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS}
+         -Wl,--stack=0x00a00000,--enable-auto-import,--large-address-aware)
+
       add_definitions(-D_WIN32_WINNT=0x0501
                       -D_WIN32_IE=0x600
                       -DWIN32_LEAN_AND_MEAN)
