@@ -36,14 +36,6 @@ if(UNIX)
    # by disabling kqueue support. note that this bug was fixed in boost 1.45
    add_definitions(-DBOOST_ASIO_DISABLE_KQUEUE)
 
-   # on osx, boost::enable_if<boost::filesystem2::is_basic_path checking in
-   # filesystem2 (see operations.hpp) seem to cause a hard abort in release
-   # mode if the file doesn't exist. so disable this check (on osx only)
-   # by forcing use of narrow paths only
-   if(APPLE)
-      add_definitions(-DBOOST_FILESYSTEM2_NARROW_ONLY)
-   endif()
-
    # if present, set osx deployment target variables from environment vars
    if(APPLE)
       if(NOT $ENV{CMAKE_OSX_SYSROOT} STREQUAL "")
@@ -77,6 +69,12 @@ else()
    endif()
 
 endif()
+
+# on osx, boost::enable_if<boost::filesystem2::is_basic_path checking in
+# filesystem2 (see operations.hpp) seem to cause a hard abort in release
+# mode if the file doesn't exist. so disable this check on all platforms
+# (for consistency) by disabling support for wide filenames
+add_definitions(-DBOOST_FILESYSTEM2_NARROW_ONLY)
 
 # find boost and required libraries
 set(BOOST_VERSION 1.44.0)

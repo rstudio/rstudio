@@ -57,7 +57,6 @@ then
      ./bjam variant=release threading=multi link=static \
             architecture=x86 address-model=32_64 \
             macosx-version=10.5 macosx-version-min=10.5 \
-            define=BOOST_FILESYSTEM2_NARROW_ONLY \
             install
    else
      ./bjam variant=release install
