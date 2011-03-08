@@ -35,7 +35,7 @@
     <gwt.javac srcdir="test" destdir="${javac.junit.out}">
       <classpath>
         <pathelement location="${javac.out}" />
-        <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+        <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar" />
         <pathelement location="${gwt.dev.staging.jar}" />
         <pathelement location="${gwt.dev.jar}" />
         <pathelement location="${gwt.build.out}/dev/bin-test" />

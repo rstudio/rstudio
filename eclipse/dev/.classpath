@@ -8,7 +8,7 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2.jar" sourcepath="/GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2-src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/jdt-3.4.2.jar" sourcepath="/GWT_TOOLS/lib/eclipse/jdt-3.4.2-src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jetty/jetty-6.1.11.jar" sourcepath="/GWT_TOOLS/lib/jetty/jetty-6.1.11-src.zip"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/junit/junit-3.8.1.jar" sourcepath="/GWT_TOOLS/lib/junit/junit-3.8.1-src.zip"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/junit/junit-4.8.2.jar" sourcepath="/GWT_TOOLS/lib/junit/junit-4.8.2-src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/ant-launcher-1.6.5.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/catalina-1.0.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/catalina-optional-1.0.jar"/>
@@ -40,6 +40,6 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5940/htmlunit-core-js-r5940.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5940/htmlunit-core-js-r5940-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5940/htmlunit-r5940.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5940/htmlunit-r5940-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/protobuf/protobuf-2.2.0/protobuf-java-rebased-2.2.0.jar"/>
-        <classpathentry kind="var" path="GWT_TOOLS/lib/guava/guava-r06/guava-r06-rebased.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/guava/guava-r06/guava-r06-rebased.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

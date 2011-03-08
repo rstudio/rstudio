@@ -82,17 +82,6 @@ public class TckTestSuiteWrapper extends GWTTestSuite {
     };
   }
 
-  /**
-   * Returns a test which will fail and log a warning message.
-   */
-  private static Test warning(final String message) {
-    return new TestCase("warning") {
-      protected void runTest() {
-        fail(message);
-      }
-    };
-  }
-
   public TckTestSuiteWrapper(String name) {
     super(name);
   }

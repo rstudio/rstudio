@@ -81,7 +81,7 @@
     <pathelement location="${gwt.tools.lib}/jboss/test-harness/jboss-test-harness-api-1.0.0-sources.jar" />
     <pathelement location="${gwt.tools.lib}/jboss/test-harness/jboss-test-harness-api-1.0.0.jar" />
     <pathelement location="${gwt.tools.lib}/testng/testng-5.14.1-sources.jar" />
-    <pathelement location="${gwt.tools.lib}/testng/testng-5.14.1.jar" />
+    <pathelement location="${gwt.tools.lib}/testng/testng-5.14.1-nojunit.jar" />
     <pathelement location="${gwt.dev.jar}" />
   </path>
 
@@ -91,7 +91,7 @@
     <gwt.javac excludes="**/super/**">
       <classpath>
         <pathelement location="${gwt.tools.lib}/tomcat/servlet-api-2.5.jar" />
-        <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+        <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar" />
         <pathelement location="${gwt.tools.lib}/jfreechart/jfreechart-1.0.3.jar" />
         <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
         <pathelement location="${gwt.tools.lib}/w3c/sac/sac-1.3.jar" />
@@ -131,7 +131,7 @@
     <gwt.javac srcdir="test" excludes="com/google/gwt/langtest/**" destdir="${javac.junit.out}">
       <classpath>
         <pathelement location="${javac.out}" />
-        <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+        <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar" />
         <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
         <path refid="test.extraclasspath" />
       </classpath>
