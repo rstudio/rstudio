@@ -351,8 +351,15 @@ void handleClientInit(const boost::function<void()>& initFunction,
    initFunction();
 }
 
+enum ConnectionType
+{
+   ForegroundConnection,
+   BackgroundConnection
+};
+
 void handleRpcRequest(const core::json::JsonRpcRequest& request,
-                      boost::shared_ptr<HttpConnection> ptrConnection)
+                      boost::shared_ptr<HttpConnection> ptrConnection,
+                      ConnectionType connectionType)
 {
    // record the time just prior to execution of the event
    // (so we can determine if any events were added during execution)
@@ -362,6 +369,8 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
    // execute the method
    Error executeError;
    core::json::JsonRpcResponse jsonRpcResponse ;
+   if (connectionType == BackgroundConnection)
+      jsonRpcResponse.setSuppressDetectChanges(true);
    json::JsonRpcMethods::const_iterator it = s_jsonRpcMethods.find(request.method);
    if (it != s_jsonRpcMethods.end())
    {
@@ -462,7 +471,8 @@ bool parseAndValidateJsonRpcConnection(
    return true;
 }
 
-void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection)
+void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
+                      ConnectionType connectionType)
 {
    // check for a uri handler registered by a module
    const http::Request& request = ptrConnection->request();
@@ -524,7 +534,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection)
          // other rpc method, handle it
          else
          {
-            handleRpcRequest(jsonRpcRequest, ptrConnection);
+            handleRpcRequest(jsonRpcRequest, ptrConnection, connectionType);
          }
       }
    }
@@ -581,7 +591,7 @@ void handlePendingConnections()
          }
          else
          {
-            handleConnection(ptrConnection);
+            handleConnection(ptrConnection, BackgroundConnection);
          }
       }
    }
@@ -750,7 +760,7 @@ void waitForMethod(const std::string& method,
          // another connection type, dispatch it
          else
          {
-            handleConnection(ptrConnection);
+            handleConnection(ptrConnection, ForegroundConnection);
          }
 
          // since we got a connection we can reset the timeout time
