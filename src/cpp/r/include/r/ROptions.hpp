@@ -80,7 +80,16 @@ core::Error setOption(const std::string& name, const T& value)
 {
    r::exec::RFunction optionsFunction("options");
    optionsFunction.addParam(name, value);
-   return optionsFunction.call();
+   core::Error error = optionsFunction.call();
+   if (error)
+   {
+      error.addProperty("option-name", name);
+      return error;
+   }
+   else
+   {
+      return core::Success();
+   }
 }
 
 SEXP setOption(SEXP tag, SEXP value);
