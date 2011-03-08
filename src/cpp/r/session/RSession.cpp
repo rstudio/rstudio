@@ -388,7 +388,7 @@ Error initialize()
       FilePath historyFilePath = s_options.userHomePath.complete(kRHistory);
       error = consoleHistory().loadFromFile(historyFilePath, false);
       if (error)
-         return error;
+         LOG_ERROR(error);
       
       // defer loading of global environment
       s_deferredDeserializationAction = restoreDefaultGlobalEnvironment;
