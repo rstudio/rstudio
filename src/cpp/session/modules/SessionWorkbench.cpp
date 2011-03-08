@@ -34,6 +34,7 @@
 #include <r/RFunctionHook.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionUserSettings.hpp>
 
 #include <R_ext/RStartup.h>
 extern "C" SA_TYPE SaveAction;
@@ -85,6 +86,19 @@ Error setWorkbenchMetrics(const json::JsonRpcRequest& request,
    // set the metrics
    r::session::setClientMetrics(metrics);
    
+   return Success();
+}
+
+Error setUiPrefs(const json::JsonRpcRequest& request,
+                 json::JsonRpcResponse* pResponse)
+{
+   json::Object uiPrefs;
+   Error error = json::readParams(request.params, &uiPrefs);
+   if (error)
+      return error;
+
+   userSettings().setUiPrefs(uiPrefs);
+
    return Success();
 }
    
@@ -171,7 +185,8 @@ Error initialize()
       (bind(registerUriHandler, "/file_show", handleFileShow))
       (bind(registerRpcMethod, "set_client_state", setClientState))
       (bind(registerRpcMethod, "set_workbench_metrics", setWorkbenchMetrics))
-      (bind(registerRpcMethod, "set_save_action", setSaveAction));
+      (bind(registerRpcMethod, "set_save_action", setSaveAction))
+      (bind(registerRpcMethod, "set_ui_prefs", setUiPrefs));
    return initBlock.execute();
 }
 

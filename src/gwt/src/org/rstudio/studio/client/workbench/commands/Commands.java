@@ -60,6 +60,8 @@ public abstract class Commands extends CommandBundle
    public abstract AppCommand showFolder();
 
    // View
+   public abstract AppCommand consoleOnTop();
+   public abstract AppCommand plotsOnTop();
    public abstract AppCommand switchToTab();
    public abstract AppCommand previousTab();
    public abstract AppCommand nextTab();

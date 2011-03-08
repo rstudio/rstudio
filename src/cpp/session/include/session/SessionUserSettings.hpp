@@ -20,6 +20,8 @@
 
 #include <core/Settings.hpp>
 
+#include <core/json/Json.hpp>
+
 namespace session {
 
 // singleton
@@ -49,6 +51,9 @@ public:
    // did we already auto-create the profile?
    bool autoCreatedProfile() const;
    void setAutoCreatedProfile(bool autoCreated) ;
+
+   core::json::Object uiPrefs() const;
+   void setUiPrefs(const core::json::Object& prefsObject);
    
    
 private:

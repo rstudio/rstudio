@@ -13,6 +13,8 @@
 
 #include <session/SessionUserSettings.hpp>
 
+#include <iostream>
+
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 
@@ -27,6 +29,7 @@ namespace session {
 namespace {
 const char * const kAgreementHash = kAgreementPrefix "agreedToHash";
 const char * const kAutoCreatedProfile = "autoCreatedProfile";
+const char * const kUiPrefs = "uiPrefs";
 }
    
 UserSettings& userSettings()
@@ -62,7 +65,24 @@ void UserSettings::setAutoCreatedProfile(bool autoCreated)
 {
    settings_.set(kAutoCreatedProfile, autoCreated);
 }
-   
+
+core::json::Object UserSettings::uiPrefs() const
+{
+   std::string value = settings_.get(kUiPrefs, "{}");
+   json::Value jsonValue;
+   bool success = core::json::parse(value, &jsonValue);
+   if (success)
+      return jsonValue.get_obj();
+   else
+      return json::Object();
+}
+
+void UserSettings::setUiPrefs(const core::json::Object& prefsObject)
+{
+   std::ostringstream output;
+   json::writeFormatted(prefsObject, output);
+   settings_.set(kUiPrefs, output.str());
+}
   
    
 } // namespace session

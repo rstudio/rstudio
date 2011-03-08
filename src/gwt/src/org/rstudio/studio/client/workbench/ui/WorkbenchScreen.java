@@ -23,6 +23,7 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -33,6 +34,7 @@ import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.layout.WindowState;
 import org.rstudio.core.client.theme.ModuleTabLayoutPanel;
 import org.rstudio.core.client.widget.FontSizer;
@@ -41,12 +43,16 @@ import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.server.*;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.MRUList;
 import org.rstudio.studio.client.workbench.WorkbenchMainView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
+import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.ui.PaneManager.Tab;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
@@ -72,11 +78,15 @@ public class WorkbenchScreen extends Composite
                           final Edit.Shim edit,
                           Commands commands,
                           final Provider<MRUList> mruList,
-                          FontSizeManager fontSizeManager)
+                          FontSizeManager fontSizeManager,
+                          WorkbenchServerOperations server,
+                          GlobalDisplay globalDisplay)
    {
       eventBus_ = eventBus;
       session_ = session;
       edit_ = edit;
+      server_ = server;
+      globalDisplay_ = globalDisplay;
 
       eventBus_.addHandler(ShowEditorEvent.TYPE, edit);
       eventBus_.addHandler(ChangeFontSizeEvent.TYPE, new ChangeFontSizeHandler()
@@ -101,6 +111,13 @@ public class WorkbenchScreen extends Composite
       tabsPanel_ = paneManager_.getPanel();
       tabsPanel_.setSize("100%", "100%");
       tabsPanel_.addStyleDependentName("Workbench");
+
+      commands.consoleOnTop().setMenuLabel(paneManager_.isConsoleOnTop()
+                                           ? "Console on Bottom"
+                                           : "Console on Top");
+      commands.plotsOnTop().setMenuLabel(paneManager_.isPlotsOnTop()
+                                         ? "Plots on Bottom"
+                                         : "Plots on Top");
 
       // Prevent doOnPaneSizesChanged() from being called more than once
       // every N milliseconds. Note that the act of sending the client metrics
@@ -281,6 +298,43 @@ public class WorkbenchScreen extends Composite
    @Handler
    void onActivateHelp() { paneManager_.activateTab(Tab.Help); }
 
+   @Handler
+   void onConsoleOnTop()
+   {
+      PaneConfig config =
+            paneManager_.setConsoleOnTop(!paneManager_.isConsoleOnTop());
+      updatePaneConfig(config);
+   }
+
+   @Handler
+   void onPlotsOnTop()
+   {
+      PaneConfig config =
+            paneManager_.setPlotsOnTop(!paneManager_.isPlotsOnTop());
+      updatePaneConfig(config);
+   }
+
+   private void updatePaneConfig(PaneConfig config)
+   {
+      JsObject uiPrefs = JsObject.createJsObject();
+      uiPrefs.setObject("pane_config", config);
+      server_.setUiPrefs(uiPrefs, new ServerRequestCallback<Void>()
+      {
+         @Override
+         public void onResponseReceived(Void response)
+         {
+            Window.Location.reload();
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            globalDisplay_.showErrorMessage("Error Saving Preference",
+                                            error.getUserMessage());
+         }
+      });
+   }
+
    public Widget toWidget()
    {
       return this;
@@ -293,6 +347,8 @@ public class WorkbenchScreen extends Composite
    private final EventBus eventBus_;
    private final Session session_;
    private final Shim edit_;
+   private final WorkbenchServerOperations server_;
+   private final GlobalDisplay globalDisplay_;
 
    private final MainSplitPanel tabsPanel_ ;
    private PaneManager paneManager_;

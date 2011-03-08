@@ -22,12 +22,13 @@
 #include <boost/iostreams/copy.hpp>
 
 #include <core/FilePath.hpp>
+#include <core/StringUtils.hpp>
 
 namespace core {
 
 std::string stringifyStringPair(const std::pair<std::string,std::string>& pair)
 {
-   return pair.first + "=" + pair.second ;
+   return pair.first + "=\"" + string_utils::jsLiteralEscape(pair.second) + "\"" ;
 }
 
 Error writeStringMapToFile(const core::FilePath& filePath,
@@ -50,6 +51,10 @@ ReadCollectionAction parseStringPair(
       boost::algorithm::trim(name);
       std::string value = line.substr(pos + 1) ;
       boost::algorithm::trim(value) ;
+      if (value.length() >= 2 && value[0] == '"' && value[value.length() - 1] == '"')
+      {
+         value = string_utils::jsLiteralUnescape(value);
+      }
     
       // HACK: workaround the fact that std::map uses const for the Key
       std::string* pFirst = const_cast<std::string*>(&(pPair->first)) ;

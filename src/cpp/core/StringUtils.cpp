@@ -19,6 +19,9 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/regex.hpp>
 
+#include <core/Log.hpp>
+#include <core/json/Json.hpp>
+
 namespace core {
 namespace string_utils {   
 
@@ -125,6 +128,21 @@ std::string jsLiteralEscape(const std::string& str)
    subs['<'] = "\074";
 
    return escape(escapes, subs, str);
+}
+
+// The str that is passed in should INCLUDE the " " around the value!
+// (Sorry this is inconsistent with jsLiteralEscape, but it's more efficient
+// than adding double-quotes in this function)
+std::string jsLiteralUnescape(const std::string& str)
+{
+   json::Value value;
+   if (!json::parse(str, &value) || !json::isType<std::string>(value))
+   {
+      LOG_ERROR_MESSAGE("Failed to unescape JS literal");
+      return str;
+   }
+
+   return value.get_str();
 }
 
 } // namespace string_utils

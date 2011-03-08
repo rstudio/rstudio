@@ -50,7 +50,7 @@ public class SessionInfo extends JavaScriptObject
    }-*/;
 
    public final native PaneConfig getPaneConfig() /*-{
-      return this.pane_config;
+      return (this.ui_prefs || {}).pane_config;
    }-*/;
 
    public final static String DESKTOP_MODE = "desktop";

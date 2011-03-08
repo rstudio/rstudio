@@ -331,6 +331,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
          session::module_context::isGoogleDocsIntegrationEnabled();
 
    sessionInfo["rstudio_version"] = std::string(RSTUDIO_VERSION);
+
+   sessionInfo["ui_prefs"] = userSettings().uiPrefs();
    
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)

@@ -44,6 +44,9 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
    void setWorkbenchMetrics(WorkbenchMetrics clientMetrics,
                             ServerRequestCallback<Void> requestCallback);
    
+   void setUiPrefs(JavaScriptObject uiPrefs,
+                   ServerRequestCallback<Void> requestCallback);
+
    // Save Action: "yes", "no", or "ask"
    void setSaveAction(String saveAction, 
                       ServerRequestCallback<Void> requestCallback);

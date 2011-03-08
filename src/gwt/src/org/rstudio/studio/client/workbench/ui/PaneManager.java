@@ -8,6 +8,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.layout.DualWindowLayoutPanel;
 import org.rstudio.core.client.layout.LogicalWindow;
 import org.rstudio.core.client.layout.WindowState;
@@ -16,7 +18,10 @@ import org.rstudio.core.client.theme.MinimizedWindowFrame;
 import org.rstudio.core.client.theme.PrimaryWindowFrame;
 import org.rstudio.core.client.theme.WindowFrame;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptButton;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
@@ -61,6 +66,7 @@ public class PaneManager
 
    @Inject
    public PaneManager(Provider<MainSplitPanel> pSplitPanel,
+                      WorkbenchServerOperations server,
                       EventBus eventBus,
                       Session session,
                       @Named("Console") final Widget consolePane,
@@ -85,8 +91,8 @@ public class PaneManager
       packagesTab_ = packagesTab;
       helpTab_ = helpTab;
 
-      ArrayList<LogicalWindow> panes =
-            createPanes(session.getSessionInfo().getPaneConfig());
+      config_ = validateConfig(session.getSessionInfo().getPaneConfig());
+      ArrayList<LogicalWindow> panes = createPanes(config_);
 
       DualWindowLayoutPanel left = createSplitWindow(
             panes.get(0),
@@ -104,9 +110,6 @@ public class PaneManager
 
    private ArrayList<LogicalWindow> createPanes(PaneConfig config)
    {
-      if (config == null || !config.isValid())
-         config = PaneConfig.createDefault();
-
       ArrayList<LogicalWindow> results = new ArrayList<LogicalWindow>();
 
       JsArrayString panes = config.getPanes();
@@ -131,6 +134,18 @@ public class PaneManager
       }
 
       return results;
+   }
+
+   private PaneConfig validateConfig(PaneConfig config)
+   {
+      if (config == null)
+         config = PaneConfig.createDefault();
+      if (!config.isValid())
+      {
+         Debug.log("Pane config is not valid");
+         config = PaneConfig.createDefault();
+      }
+      return config;
    }
 
    public MainSplitPanel getPanel()
@@ -285,6 +300,57 @@ public class PaneManager
       return "??";
    }
 
+   public boolean isConsoleOnTop()
+   {
+      return config_.getPanes().get(0).equals("Console");
+   }
+
+   public boolean isPlotsOnTop()
+   {
+      JsArrayString tabSet1 = config_.getTabSet1();
+      for (int i = 0; i < tabSet1.length(); i++)
+         if (tabSet1.get(i).equals("Plots"))
+            return true;
+      return false;
+   }
+
+   public PaneConfig setConsoleOnTop(boolean onTop)
+   {
+      PaneConfig newConfig = config_.copy();
+      JsArrayString panes = newConfig.getPanes();
+      if (onTop != panes.get(0).equals("Console"))
+      {
+         String tmp = panes.get(0);
+         panes.set(0, panes.get(1));
+         panes.set(1, tmp);
+      }
+      return newConfig;
+   }
+
+   public PaneConfig setPlotsOnTop(boolean onTop)
+   {
+      PaneConfig newConfig = config_.copy();
+
+      JsArrayString tabSet1 = JsArrayString.createArray().cast();
+      JsArrayString tabSet2 = JsArrayString.createArray().cast();
+
+      tabSet1.push("Workspace");
+      tabSet1.push("History");
+      tabSet2.push("Files");
+
+      if (onTop)
+         tabSet1.push("Plots");
+      else
+         tabSet2.push("Plots");
+
+      tabSet2.push("Packages");
+      tabSet2.push("Help");
+      newConfig.setTabSet1(tabSet1);
+      newConfig.setTabSet2(tabSet2);
+
+      return newConfig;
+   }
+
    private final EventBus eventBus_;
    private final Session session_;
    private final ConsolePane consolePane_;
@@ -303,4 +369,5 @@ public class PaneManager
          new HashMap<Tab, WorkbenchTabPanel>();
    private final HashMap<Tab, Integer> tabToIndex_ =
          new HashMap<Tab, Integer>();
+   private PaneConfig config_;
 }

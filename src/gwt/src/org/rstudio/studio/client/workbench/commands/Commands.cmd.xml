@@ -103,6 +103,10 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="activatePackages"/>
          <cmd refid="activateHelp"/>
          <separator/>
+         <menu label="Pane Layout">
+            <cmd refid="consoleOnTop"/>
+            <cmd refid="plotsOnTop"/>
+         </menu>
          <menu label="Font Size">
             <cmd refid="fontSize10"/>
             <cmd refid="fontSize12"/>
@@ -457,6 +461,14 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Refresh"
         buttonLabel=""
         desc="Refresh package listing"/>
+
+   <!-- consoleOnTop has a dynamic menuLabel -->
+   <cmd id="consoleOnTop"
+        menuLabel=""/>
+
+   <!-- plotsOnTop has a dynamic menuLabel -->
+   <cmd id="plotsOnTop"
+        menuLabel=""/>
 
    <cmd id="showOptions"
         menuLabel="Pr_eferences..."/>

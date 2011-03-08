@@ -84,6 +84,13 @@ public class PaneConfig extends JavaScriptObject
       return true;
    }
 
+   public final PaneConfig copy()
+   {
+      return create(copy(getPanes()),
+                    copy(getTabSet1()),
+                    copy(getTabSet2()));
+   }
+
    private boolean sameElements(JsArrayString a, String[] b)
    {
       if (a.length() != b.length)
@@ -111,5 +118,16 @@ public class PaneConfig extends JavaScriptObject
       for (int i = 0; i < b.length(); i++)
          ab.push(b.get(i));
       return ab;
+   }
+
+   private static JsArrayString copy(JsArrayString array)
+   {
+      if (array == null)
+         return null;
+
+      JsArrayString copy = JsArrayString.createArray().cast();
+      for (int i = 0; i < array.length(); i++)
+         copy.push(array.get(i));
+      return copy;
    }
 }
