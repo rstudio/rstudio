@@ -169,7 +169,7 @@ select {
   background: white;
 }
 .gwt-DialogBox .dialogBottomCenter {
-  background: url(images/hborder.png) repeat-x 0px -2145px;
+  background: url(images/hborder.png) repeat-x 0px -2945px;
   -background: url(images/hborder_ie6.png) repeat-x 0px -2144px;
 }
 .gwt-DialogBox .dialogMiddleLeft {
@@ -454,10 +454,10 @@ select {
   background: #f1f1f1;
 }
 .gwt-DecoratedPopupPanel .popupTopCenter {
-  background: url(images/hborder.png) 0px -2137px repeat-x;
+  background: url(images/hborder.png) 0px -2937px repeat-x;
 }
 .gwt-DecoratedPopupPanel .popupBottomCenter {
-  background:  url(images/hborder.png) repeat-x 0px -2138px;
+  background:  url(images/hborder.png) repeat-x 0px -2938px;
   -background: url(images/hborder_ie6.png) repeat-x 0px -2138px;
 }
 .gwt-DecoratedPopupPanel .popupMiddleLeft {
@@ -1144,11 +1144,6 @@ select {
   cursor: hand;
   cursor: pointer;
 }
-.datePickerDayIsToday {
-  padding: 3px;
-  color:#fff;
-  background: url(images/hborder.png) repeat-x 0px -2107px;
-}
 .datePickerDayIsWeekend {
   background: #f7f7f7;
 }
@@ -1172,7 +1167,7 @@ select {
 .datePickerDayIsToday {
   padding: 3px;
   color: #fff;
-  background: url(images/hborder.png) repeat-x 0px -2107px;
+  background: url(images/hborder.png) repeat-x 0px -2607px;
 }
 
 .datePickerMonthSelector {
