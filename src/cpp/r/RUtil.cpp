@@ -18,6 +18,8 @@
 
 #include <core/FilePath.hpp>
 
+#include <r/RExec.hpp>
+
 #include <R_ext/Utils.h>
 
 using namespace core;
@@ -36,6 +38,22 @@ std::string fixPath(const std::string& path)
    std::string fixedPath(path);
    boost::algorithm::replace_all(fixedPath, "//", "/");
    return fixedPath;
+}
+
+bool hasRequiredVersion(const std::string& version)
+{
+   std::string versionTest("getRversion() >= \"" + version + "\"");
+   bool hasRequired;
+   Error error = r::exec::evaluateString(versionTest, &hasRequired);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+   else
+   {
+      return hasRequired;
+   }
 }
    
        

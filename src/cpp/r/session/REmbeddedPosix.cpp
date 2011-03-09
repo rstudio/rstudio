@@ -11,6 +11,8 @@
  *
  */
 
+#include <r/RExec.hpp>
+
 #include <core/FilePath.hpp>
 
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
@@ -19,6 +21,7 @@
 #include "REmbedded.hpp"
 #include <r/RInterface.hpp>
 #include <r/RErrorCategory.hpp>
+#include <r/RUtil.hpp>
 
 #include <R_ext/eventloop.h>
 #include <R_ext/rlocale.h>
@@ -26,7 +29,12 @@
 #include <Rembedded.h>
 
 #ifdef __APPLE__
+#include <dlfcn.h>
 extern "C" void R_ProcessEvents(void);
+extern "C" void (*ptr_R_ProcessEvents)(void);
+#define QCF_SET_PEPTR  1  /* set ProcessEvents function pointer */
+#define QCF_SET_FRONT  2  /* set application mode to front */
+extern "C"  typedef void (*ptr_QuartzCocoa_SetupEventLoop)(int, unsigned long);
 #endif
 
 extern int R_running_as_main_program;  // from unix/system.c
@@ -156,18 +164,123 @@ void (*s_oldPolledEventHandler)(void) = NULL;
 void polledEventHandler()
 {
    s_polledEventHandler();
-   s_oldPolledEventHandler();
+
+   if (s_oldPolledEventHandler != NULL)
+      s_oldPolledEventHandler();
 }
+
+
+#ifdef __APPLE__
+
+void logDLError(const std::string& message, const ErrorLocation& location)
+{
+   std::string errmsg(message);
+   char* dlError = ::dlerror();
+   if (dlError)
+      errmsg += ": " + std::string(dlError);
+   core::log::logErrorMessage(errmsg, location);
+}
+
+// attempt to setup quartz event loop, if this fails then log and
+// return false (as a result we'll have to disable the quartz R
+// function so the user doesn't get in trouble)
+bool setupQuartzEventLoop()
+{
+   // first make sure that the gdDevices pacakage is loaded
+   Error error = r::exec::executeString("library(grDevices)");
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
+   // get a reference to the grDevices library
+   void* pGrDevices = ::dlopen("grDevices.so",
+                               RTLD_LAZY | RTLD_LOCAL | RTLD_NOLOAD);
+   if (pGrDevices)
+   {
+      ptr_QuartzCocoa_SetupEventLoop pSetupEventLoop  =
+               (ptr_QuartzCocoa_SetupEventLoop)::dlsym(
+                                             pGrDevices,
+                                            "QuartzCocoa_SetupEventLoop");
+      if (pSetupEventLoop)
+      {
+         // attempt to setup event loop
+         pSetupEventLoop(QCF_SET_PEPTR|QCF_SET_FRONT, 100);
+
+         // check that we got the ptr_R_ProcessEvents initialized
+         if (ptr_R_ProcessEvents != NULL)
+         {
+            return true;
+         }
+         else
+         {
+            LOG_ERROR_MESSAGE("ptr_R_ProcessEvents not initialized");
+            return false;
+         }
+      }
+      else
+      {
+         logDLError("Error looking up QuartzCocoa_SetupEventLoop",
+                    ERROR_LOCATION);
+         return false;
+      }
+   }
+   else
+   {
+      logDLError("Error loading grDevices.so", ERROR_LOCATION);
+      return false;
+   }
+}
+
+// On versions prior to R 2.12 the event pump is handled by R_ProcessEvents
+// rather than by the expected R_PolledEvents mechanism. On the Mac
+// R_ProcessEvents includes a hook (ptr_R_ProcessEvents) but this is
+// taken by the quartz module. We therefore need a way to hook it but
+// still delegate to quartz so the quartz device works. do this by
+// ensuring quartz is loaded then calling QuartzCocoa_SetupEventLoop
+void installAppleR_2_11_Workaround(void (*newPolledEventHandler)(void))
+{
+   // attempt to initialize the quartz event loop (init ptr_R_ProcessEvents
+   // so that we can delegate to it after we override it)
+   if (!setupQuartzEventLoop())
+   {
+      Error error = r::exec::RFunction(".rs.disableQuartz").call();
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   // copy handler function
+   s_polledEventHandler = newPolledEventHandler;
+
+   // preserve old handler and set new one (note that ptr_R_ProcessEvents
+   // might be NULL if we didn't succeed in setting up the quartz
+   // event loop above. in this case the polled event handler will
+   // ignore it
+   s_oldPolledEventHandler = ptr_R_ProcessEvents;
+   ptr_R_ProcessEvents = polledEventHandler;
+}
+
+#endif
 
 } // anonymous namespace
 
 
 void initializePolledEventHandler(void (*newPolledEventHandler)(void))
 {
-   // implementation based on addTcl() in tcltk_unix.c
-
    // can only call this once
    BOOST_ASSERT(!s_polledEventHandler);
+
+   // special hack for R 2.11.1 on OSX
+#ifdef __APPLE__
+   if (!r::util::hasRequiredVersion("2.12"))
+   {
+      installAppleR_2_11_Workaround(newPolledEventHandler);
+      return;
+   }
+#endif
+
+   // implementation based on addTcl() in tcltk_unix.c
 
    // copy handler function
    s_polledEventHandler = newPolledEventHandler;

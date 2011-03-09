@@ -39,12 +39,18 @@ bool suppressOutput(const std::string& output)
 {
    // tokens to suppress
    const char * const kGlibWarningToken = "GLib-WARNING **: getpwuid_r()";
+   const char * const kAutoreleaseNoPool = "NSAutoreleaseNoPool";
 
    // check tokens
-   if (boost::algorithm::contains(output, kGlibWarningToken))
+   if (boost::algorithm::contains(output, kGlibWarningToken) ||
+       boost::algorithm::contains(output, kAutoreleaseNoPool))
+   {
       return true;
+   }
    else
+   {
       return false;
+   }
 }
 
 void writeStandardOutput(const std::string& output)

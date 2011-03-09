@@ -25,9 +25,10 @@ namespace util {
    
 std::string expandFileName(const std::string& name);
    
-std::string fixPath(const std::string& path);   
+std::string fixPath(const std::string& path);
 
- 
+bool hasRequiredVersion(const std::string& version);
+
 } // namespace util   
 } // namespace r
 
