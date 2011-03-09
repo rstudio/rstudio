@@ -28,19 +28,27 @@ public class PatternValidatorTest extends
     ConstraintValidatorTestCase<Pattern, String> {
 
   @SuppressWarnings("unused")
-  @Pattern(regexp = "good")
+  @Pattern(regexp = "g..d")
   private Date defaultField;
 
-  protected PatternValidator createValidator() {
-    return new PatternValidator();
+  public void testAssertIsValid_goad() {
+    assertConstraintValidator("goad", true);
   }
 
   public void testAssertIsValid_good() {
-    assertConstraintValidator("this is good", true);
+    assertConstraintValidator("good", true);
   }
 
-  public void testAssertIsValid_bad() {
-    assertConstraintValidator("this is bad", false);
+  public void testAssertIsValid_goood() {
+    assertConstraintValidator("goood", false);
+  }
+
+  public void testAssertIsValid_not_good() {
+    assertConstraintValidator("this is not good", false);
+  }
+
+  protected PatternValidator createValidator() {
+    return new PatternValidator();
   }
 
   @Override

@@ -51,7 +51,6 @@ public class GroupGwtTest extends GWTTestCase {
     delegate.testGroupSequence();
   }
 
-  @Failing(issue = 5801)
   public void testGroupSequenceFollowedByGroup() {
     delegate.testGroupSequenceFollowedByGroup();
   }
