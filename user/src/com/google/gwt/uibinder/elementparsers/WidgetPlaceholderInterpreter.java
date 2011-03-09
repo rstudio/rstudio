@@ -132,7 +132,8 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
   }
 
   private String genOpenTag(String name, String idHolder) {
-    String openTag = String.format("<span id='\" + %s + \"'>", idHolder);
+    String openTag = String.format("<span id='%s'>", 
+        uiWriter.tokenForStringExpression(idHolder));
     String openPlaceholder = nextOpenPlaceholder(name + "Begin", openTag);
     return openPlaceholder;
   }
@@ -179,7 +180,8 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
   }
 
   private String handleOpaqueWidgetPlaceholder(String name, String idHolder) {
-    String tag = String.format("<span id='\" + %s + \"'></span>", idHolder);
+    String tag = String.format("<span id='%s'></span>", 
+      uiWriter.tokenForStringExpression(idHolder));
     String placeholder = nextPlaceholder(name, "<span></span>", tag);
     return placeholder;
   }

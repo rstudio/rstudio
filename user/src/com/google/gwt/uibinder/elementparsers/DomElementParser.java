@@ -39,8 +39,9 @@ public class DomElementParser implements ElementParser {
     String html = elem.consumeOpeningTag() + elem.consumeInnerHtml(interpreter)
         + elem.getClosingTag();
     writer.endAttachedSection();
+
     writer.setFieldInitializer(fieldName, String.format(
-        "(%1$s) UiBinderUtil.fromHtml(\"%2$s\")",
-        type.getQualifiedSourceName(), html));
+        "(%1$s) UiBinderUtil.fromHtml(%2$s)",
+        type.getQualifiedSourceName(), writer.declareTemplateCall(html)));
   }
 }

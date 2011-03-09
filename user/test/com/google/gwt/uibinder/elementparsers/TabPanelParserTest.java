@@ -146,7 +146,7 @@ public class TabPanelParserTest extends TestCase {
     tester.parse(b.toString());
 
     assertStatements("fieldName.add(<g:Label id='0'>, \"Foo\");",
-        "fieldName.add(<g:Label id='1'>, \"B<b>a</b>r\", true);");
+        "fieldName.add(<g:Label id='1'>, \"@mockToken-B<b>a</b>r\", true);");
   }
 
   private void assertStatements(String... expected) {

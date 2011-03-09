@@ -43,7 +43,7 @@ public class TextInterpreter implements XMLElement.Interpreter<String> {
     MessagesWriter messages = writer.getMessages();
     if (messages.isMessage(elem)) {
       String messageInvocation = consumeAsTextMessage(elem, messages);
-      return writer.tokenForExpression(messageInvocation);
+      return writer.tokenForStringExpression(messageInvocation);
     }
 
     return new UiTextInterpreter(writer.getLogger()).interpretElement(elem);

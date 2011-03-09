@@ -165,7 +165,7 @@ public class StackLayoutPanelParserTest extends TestCase {
         + "(com.google.gwt.dom.client.Style.Unit.PX)", w.getInitializer());
 
     assertStatements(
-        "fieldName.add(<g:Label id='able'>, \"Re<b>mark</b>able\", true, 3);",
+        "fieldName.add(<g:Label id='able'>, \"@mockToken-Re<b>mark</b>able\", true, 3);",
         "fieldName.add(<g:Label id='baker'>, " + "<g:Label id='custom'>, 3);");
   }
 

@@ -75,8 +75,8 @@ public class StackLayoutPanelParser implements ElementParser {
             writer, fieldName);
         String size = children.header.consumeRequiredDoubleAttribute("size");
         String html = children.header.consumeInnerHtml(htmlInt);
-        writer.addStatement("%s.add(%s, \"%s\", true, %s);", fieldName,
-            childFieldName, html, size);
+        writer.addStatement("%s.add(%s, %s, true, %s);", fieldName,
+            childFieldName, writer.declareTemplateCall(html), size);
       } else if (children.customHeader != null) {
         XMLElement headerElement = children.customHeader.consumeSingleChildElement();
         String size = children.customHeader.consumeRequiredDoubleAttribute("size");

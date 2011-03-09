@@ -32,7 +32,7 @@ import java.util.List;
 
 class MockUiBinderWriter extends UiBinderWriter {
   final List<String> statements = new ArrayList<String>();
-
+  
   public MockUiBinderWriter(JClassType baseClass, String implClassName,
       String templatePath, TypeOracle oracle, MortalLogger logger,
       FieldManager fieldManager, MessagesWriter messagesWriter, 
@@ -46,10 +46,18 @@ class MockUiBinderWriter extends UiBinderWriter {
   public void addStatement(String format, Object... args) {
     statements.add(String.format(format, args));
   }
-
+  
+  /**
+   * Mocked out version of the template declaration. Returns
+   * the template prefixed with "@mockToken-"
+   */
+  public String declareTemplateCall(String html) {
+    return "\"@mockToken-" + html + "\"";
+  }
+  
   @Override
   public String parseElementToField(XMLElement elem)
       throws UnableToCompleteException {
     return elem.consumeOpeningTag();
-  }
+  }  
 }

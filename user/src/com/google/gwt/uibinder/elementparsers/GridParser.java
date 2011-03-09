@@ -93,9 +93,10 @@ public class GridParser implements ElementParser {
       for (List<CellContent> row : matrix) {
         for (CellContent column : row) {
           if (column.getTagName().equals(CELL_TAG)) {
-            writer.addStatement("%s.setHTML(%s, %s, \"%s\");", fieldName,
+            writer.addStatement("%s.setHTML(%s, %s, %s);", fieldName,
                 Integer.toString(matrix.indexOf(row)),
-                Integer.toString(row.indexOf(column)), column.getConent());
+                Integer.toString(row.indexOf(column)), 
+                writer.declareTemplateCall(column.getConent()));
           }
           if (column.getTagName().equals(CUSTOMCELL_TAG)) {
             writer.addStatement("%s.setWidget(%s, %s, %s);", fieldName,

@@ -31,6 +31,7 @@ import com.google.gwt.uibinder.elementparsers.ElementParser;
 import com.google.gwt.uibinder.elementparsers.IsEmptyParser;
 import com.google.gwt.uibinder.elementparsers.UiChildParser;
 import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
+import com.google.gwt.uibinder.rebind.model.HtmlTemplates;
 import com.google.gwt.uibinder.rebind.model.ImplicitClientBundle;
 import com.google.gwt.uibinder.rebind.model.ImplicitCssResource;
 import com.google.gwt.uibinder.rebind.model.OwnerClass;
@@ -169,11 +170,12 @@ public class UiBinderWriter implements Statements {
 
   private final List<String> initStatements = new ArrayList<String>();
   private final List<String> statements = new ArrayList<String>();
+  private final HtmlTemplates htmlTemplates = new HtmlTemplates();
   private final HandlerEvaluator handlerEvaluator;
   private final MessagesWriter messages;
   private final DesignTimeUtils designTime;
   private final Tokenator tokenator = new Tokenator();
-
+  
   private final String templatePath;
   private final TypeOracle oracle;
   /**
@@ -205,7 +207,6 @@ public class UiBinderWriter implements Statements {
   private String gwtPrefix;
 
   private String rendered;
-
   /**
    * Stack of element variable names that have been attached.
    */
@@ -214,14 +215,15 @@ public class UiBinderWriter implements Statements {
    * Maps from field element name to the temporary attach record variable name.
    */
   private final Map<String, String> attachedVars = new HashMap<String, String>();
-  private int nextAttachVar = 0;
 
+  private int nextAttachVar = 0;
   /**
    * Stack of statements to be executed after we detach the current attach
    * section.
    */
   private final LinkedList<List<String>> detachStatementsStack = new LinkedList<List<String>>();
   private final AttributeParsers attributeParsers;
+
   private final BundleAttributeParsers bundleParsers;
 
   private final UiBinderContext uiBinderCtx;
@@ -289,7 +291,7 @@ public class UiBinderWriter implements Statements {
   public void addDetachStatement(String format, Object... args) {
     detachStatementsStack.getFirst().add(String.format(format, args));
   }
-
+  
   /**
    * Add a statement to be run after everything has been instantiated, in the
    * style of {@link String#format}.
@@ -313,8 +315,8 @@ public class UiBinderWriter implements Statements {
    * moment, HasHTMLParser, HTMLPanelParser, and DomElementParser.).
    * <p>
    * Succeeding calls made to {@link #ensureAttached} and
-   * {@link #ensureFieldAttached} must refer to children of this element, until
-   * {@link #endAttachedSection} is called.
+   * {@link #ensureCurrentFieldAttached} must refer to children of this element,
+   * until {@link #endAttachedSection} is called.
    *
    * @param element Java expression for the generated code that will return the
    *          dom element to be attached.
@@ -345,7 +347,8 @@ public class UiBinderWriter implements Statements {
         "%s = com.google.gwt.dom.client.Document.get().getElementById(%s).cast();",
         fieldName, name);
     addInitStatement("%s.removeAttribute(\"id\");", fieldName);
-    return tokenForExpression(name);
+
+    return tokenForStringExpression(name);
   }
 
   /**
@@ -404,11 +407,23 @@ public class UiBinderWriter implements Statements {
   }
 
   /**
-   * Given a string containing tokens returned by {@link #tokenForExpression} or
-   * {@link #declareDomField}, return a string with those tokens replaced by the
-   * appropriate expressions. (It is not normally necessary for an
-   * {@link XMLElement.Interpreter} or {@link ElementParser} to make this call,
-   * as the tokens are typically replaced by the TemplateWriter itself.)
+   * Writes a new SafeHtml template to the generated BinderImpl.
+   * 
+   * @return The invocation of the SafeHtml template function with the arguments
+   * filled in
+   */
+  public String declareTemplateCall(String html) 
+    throws IllegalArgumentException {
+    return htmlTemplates.addSafeHtmlTemplate(html, tokenator);
+  }
+
+  /**
+   * Given a string containing tokens returned by {@link #tokenForStringExpression},
+   * {@link #tokenForSafeHtmlExpression} or {@link #declareDomField}, return a 
+   * string with those tokens replaced by the appropriate expressions. (It is 
+   * not normally necessary for an {@link XMLElement.Interpreter} or 
+   * {@link ElementParser} to make this call, as the tokens are typically 
+   * replaced by the TemplateWriter itself.)
    */
   public String detokenate(String betokened) {
     return tokenator.detokenate(betokened);
@@ -478,7 +493,7 @@ public class UiBinderWriter implements Statements {
   /**
    * Ensure that the specified field is attached to the DOM. The field must hold
    * an object that responds to Element getElement(). Convenience wrapper for
-   * {@link ensureAttached}<code>(field + ".getElement()")</code>.
+   * {@link #ensureAttached}<code>(field + ".getElement()")</code>.
    *
    * @see #beginAttachedSection(String)
    */
@@ -558,7 +573,7 @@ public class UiBinderWriter implements Statements {
   public DesignTimeUtils getDesignTime() {
     return designTime;
   }
-
+  
   /**
    * Returns the logger, at least until we get get it handed off to parsers via
    * constructor args.
@@ -660,16 +675,33 @@ public class UiBinderWriter implements Statements {
   }
 
   /**
+   * Like {@link #tokenForStringExpression}, but used for runtime expressions 
+   * that we trust to be safe to interpret at runtime as HTML without escaping, 
+   * like translated messages with simple formatting. Wrapped in a call to 
+   * {@link com.google.gwt.safehtml.shared.SafeHtmlUtils#fromSafeConstant} to 
+   * keep the expression from being escaped by the SafeHtml template.
+   *
+   * @param expression
+   */
+  public String tokenForSafeHtmlExpression(String expression) {
+    String token =  tokenator.nextToken("SafeHtmlUtils.fromSafeConstant(" +
+        expression + ")");      
+    htmlTemplates.noteSafeConstant("SafeHtmlUtils.fromSafeConstant(" +
+        expression + ")");
+    return token;
+  }
+
+  /**
    * Returns a string token that can be used in place the given expression
    * inside any string literals. Before the generated code is written, the
-   * expression will be stiched back into the generated code in place of the
+   * expression will be stitched back into the generated code in place of the
    * token, surrounded by plus signs. This is useful in strings to be handed to
    * setInnerHTML() and setText() calls, to allow a unique dom id attribute or
    * other runtime expression in the string.
    *
    * @param expression
    */
-  public String tokenForExpression(String expression) {
+  public String tokenForStringExpression(String expression) {
     return tokenator.nextToken(("\" + " + expression + " + \""));
   }
 
@@ -686,7 +718,7 @@ public class UiBinderWriter implements Statements {
   public void warn(String message, Object... params) {
     logger.warn(message, params);
   }
-
+  
   /**
    * Post a warning message.
    */
@@ -716,7 +748,7 @@ public class UiBinderWriter implements Statements {
     this.rendered = tokenator.detokenate(parseDocumentElement(elem));
     printWriter.print(rendered);
   }
-
+  
   private void addElementParser(String gwtClass, String parser) {
     elementParsers.put(gwtClass, parser);
   }
@@ -750,7 +782,7 @@ public class UiBinderWriter implements Statements {
    * Ensures that all of the internal data structures are cleaned up correctly
    * at the end of parsing the document.
    *
-   * @throws UnableToCompleteException
+   * @throws IllegalStateException
    */
   private void ensureAttachmentCleanedUp() {
     if (!attachSectionElements.isEmpty()) {
@@ -1017,6 +1049,9 @@ public class UiBinderWriter implements Statements {
     writeClassOpen(w);
     writeStatics(w);
     w.newline();
+    
+    // Create SafeHtml Template
+    writeSafeHtmlTemplates(w);
 
     // createAndBindUi method
     w.write("public %s createAndBindUi(final %s owner) {",
@@ -1027,7 +1062,7 @@ public class UiBinderWriter implements Statements {
 
     writeGwtFields(w);
     w.newline();
-
+    
     designTime.writeAttributes(this);
     writeAddedStatements(w);
     w.newline();
@@ -1112,6 +1147,11 @@ public class UiBinderWriter implements Statements {
 
   private void writeImports(IndentedWriter w) {
     w.write("import com.google.gwt.core.client.GWT;");
+    if (!(htmlTemplates.isEmpty())) {
+      w.write("import com.google.gwt.safehtml.client.SafeHtmlTemplates;");
+      w.write("import com.google.gwt.safehtml.shared.SafeHtml;");
+      w.write("import com.google.gwt.safehtml.shared.SafeHtmlUtils;");
+    }
     w.write("import com.google.gwt.uibinder.client.UiBinder;");
     w.write("import com.google.gwt.uibinder.client.UiBinderUtil;");
     w.write("import %s.%s;", uiRootType.getPackage().getName(),
@@ -1177,6 +1217,25 @@ public class UiBinderWriter implements Statements {
     }
   }
 
+  /**
+   * Write statements created by {@link HtmlTemplates#addSafeHtmlTemplate}. This 
+   * code must be placed after all instantiation code.
+   */
+  private void writeSafeHtmlTemplates(IndentedWriter w) {
+    if (!(htmlTemplates.isEmpty())) {
+      w.write("interface Template extends SafeHtmlTemplates {");
+      w.indent();
+
+      htmlTemplates.writeTemplates(w);
+      
+      w.outdent();
+      w.write("}");
+      w.newline();
+      w.write("Template template = GWT.create(Template.class);");
+      w.newline();
+    }
+  }  
+  
   /**
    * Generates instances of any bundle classes that have been referenced by a
    * namespace entry in the top level element. This must be called *after* all

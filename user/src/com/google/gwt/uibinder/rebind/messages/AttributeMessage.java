@@ -33,15 +33,6 @@ public class AttributeMessage {
     return attribute;
   }
 
-  /**
-   * Return an expression to fetch the message and escape it, suitable
-   * for concatenation into the middle of an innerHTML string.
-   */
-  public String getMessageAsHtmlAttribute() {
-    return message
-    + ".replaceAll(\"&\", \"&amp;\").replaceAll(\"'\", \"&#39;\")";
-  }
-
   public String getMessageUnescaped() {
     return message;
   }

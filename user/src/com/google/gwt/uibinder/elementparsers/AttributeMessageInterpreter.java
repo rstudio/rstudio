@@ -47,7 +47,7 @@ import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
     MessagesWriter messages = writer.getMessages();
     for (AttributeMessage am : messages.consumeAttributeMessages(elem)) {
       elem.setAttribute(am.getAttribute(),
-        writer.tokenForExpression(am.getMessageAsHtmlAttribute()));
+        writer.tokenForStringExpression(am.getMessageUnescaped()));
     }
 
     /*

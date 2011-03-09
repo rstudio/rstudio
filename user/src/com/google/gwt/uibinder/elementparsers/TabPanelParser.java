@@ -72,8 +72,8 @@ public class TabPanelParser implements ElementParser {
         writer.die(tabElem, "Must have a child widget");
       }
       if (tabHTML != null) {
-        writer.addStatement("%1$s.add(%2$s, \"%3$s\", true);", fieldName,
-            childFieldName, tabHTML);
+        writer.addStatement("%1$s.add(%2$s, %3$s, true);", fieldName,
+            childFieldName, writer.declareTemplateCall(tabHTML));
       } else if (tabCaption != null) {
         writer.addStatement("%1$s.add(%2$s, %3$s);", fieldName, childFieldName,
             tabCaption);

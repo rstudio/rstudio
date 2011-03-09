@@ -53,8 +53,8 @@ public class GridParserTest extends TestCase {
       assertNotNull(tester.logger.died);
     }
   }
-
-  public void testEmtpyChild() throws SAXException {
+  
+  public void testEmptyChild() throws SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:Grid>");
     b.append("  <g:row>");
@@ -140,8 +140,8 @@ public class GridParserTest extends TestCase {
 
     String[] expected = {
         "fieldName.resize(2, 2);",
-        "fieldName.setHTML(0, 0, \"<div>foo HTML element</div>\");",
-        "fieldName.setHTML(0, 1, \"<div>bar HTML element</div>\");",
+        "fieldName.setHTML(0, 0, \"@mockToken-<div>foo HTML element</div>\");",
+        "fieldName.setHTML(0, 1, \"@mockToken-<div>bar HTML element</div>\");",
         "fieldName.setWidget(1, 0, <g:Label>);",
         "fieldName.setWidget(1, 1, <g:Label>);"};
 
@@ -177,7 +177,7 @@ public class GridParserTest extends TestCase {
 
     String[] expected = {
         "fieldName.resize(2, 2);",
-        "fieldName.setHTML(0, 0, \"<div>foo HTML element</div>\");",
+        "fieldName.setHTML(0, 0, \"@mockToken-<div>foo HTML element</div>\");",
         "fieldName.setWidget(1, 0, <g:Label>);",
         "fieldName.setWidget(1, 1, <g:Label>);"};
 

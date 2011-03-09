@@ -77,7 +77,7 @@ public class DialogBoxParser implements ElementParser {
     handleConstructorArgs(elem, fieldName, type, writer, customCaption);
 
     if (caption != null) {
-      writer.addStatement("%s.setHTML(\"%s\");", fieldName, caption);
+      writer.addStatement("%s.setHTML(%s);", fieldName, writer.declareTemplateCall(caption));
     }
     if (body != null) {
       writer.addStatement("%s.setWidget(%s);", fieldName, body);

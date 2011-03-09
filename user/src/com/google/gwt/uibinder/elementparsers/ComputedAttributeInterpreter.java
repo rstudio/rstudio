@@ -50,7 +50,7 @@ class ComputedAttributeInterpreter implements XMLElement.Interpreter<String> {
       if (parser != null) {
         // Legacy res:style='style.pretty'
         String parsedValue = parser.parse(att.consumeRawValue());
-        String attToken = writer.tokenForExpression(parsedValue);
+        String attToken = writer.tokenForStringExpression(parsedValue);
 
         // Use localName so <div res:style='...'> becomes <div style='...'>
         attNameToToken.put(att.getLocalName(), attToken);
@@ -58,7 +58,7 @@ class ComputedAttributeInterpreter implements XMLElement.Interpreter<String> {
       }
 
       if (att.hasComputedValue()) {
-        String attToken = writer.tokenForExpression(att.consumeStringValue());
+        String attToken = writer.tokenForStringExpression(att.consumeStringValue());
         attNameToToken.put(att.getName(), attToken);
       } else {
         /*

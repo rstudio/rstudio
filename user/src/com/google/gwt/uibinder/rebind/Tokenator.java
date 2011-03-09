@@ -15,7 +15,9 @@
  */
 package com.google.gwt.uibinder.rebind;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -53,9 +55,25 @@ public class Tokenator {
     detokenated.append(betokened.substring(index));
     return detokenated.toString();
   }
-
+    
   public static boolean hasToken(String s) {
     return s.matches(".*" + TOKEN_REGEXP + "\\d+" + TOKEN_REGEXP + ".*");
+  }
+
+  private static List<String> getOrderedValues(String betokened, 
+      Resolver resolver) {
+    List<String> values = new ArrayList<String>();
+    
+    int index = 0, nextToken = 0;
+    while ((nextToken = betokened.indexOf(TOKEN, index)) > -1) {
+      int endToken = betokened.indexOf(TOKEN, nextToken + TOKEN.length());
+      String token = betokened.substring(nextToken, endToken + TOKEN.length());
+      values.add(resolver.resolveToken(token));
+      
+      index = endToken + TOKEN.length();
+    }
+    
+    return values;
   }
 
   private static String nextToken() {
@@ -67,6 +85,14 @@ public class Tokenator {
 
   public String detokenate(String betokened) {
     return detokenate(betokened, new Resolver() {
+      public String resolveToken(String token) {
+        return tokenToResolved.get(token);
+      }
+    });
+  }
+  
+  public List<String> getOrderedValues(String betokened) {
+    return getOrderedValues(betokened, new Resolver() {
       public String resolveToken(String token) {
         return tokenToResolved.get(token);
       }
