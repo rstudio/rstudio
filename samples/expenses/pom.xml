@@ -11,8 +11,8 @@
 		<roo.version>1.1.0.RELEASE</roo.version>
 		<spring.version>3.0.3.RELEASE</spring.version>
 		<slf4j.version>1.6.1</slf4j.version>
-	<gae.version>1.4.0</gae.version>
-    <gae-test.version>1.4.0</gae-test.version>
+	<gae.version>1.4.2</gae.version>
+    <gae-test.version>1.4.2</gae-test.version>
     <gae.home>${user.home}/.m2/repository/com/google/appengine/appengine-java-sdk/${gae.version}/appengine-java-sdk-${gae.version}</gae.home>
     <datanucleus.version>1.1.5</datanucleus.version>
     </properties>
@@ -229,7 +229,7 @@
             <groupId>javax.validation</groupId>
             <artifactId>validation-api</artifactId>
             <version>1.0.0.GA</version>
-            <classifier>source</classifier>
+            <classifier>sources</classifier>
         </dependency>
     <dependency>
             <groupId>cglib</groupId>
@@ -438,6 +438,39 @@
 	<build>
 		<plugins>
 			<plugin>
+				<!-- Don't deploy gwt-user jar to GAE -->
+				<artifactId>maven-clean-plugin</artifactId>
+				<version>2.3</version>
+				<executions>
+					<execution>
+						<id>default-clean</id>
+						<phase>clean</phase>
+						<goals>
+							<goal>clean</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>remove-gwt-client-classes</id>
+						<phase>package</phase>
+						<goals>
+							<goal>clean</goal>
+						</goals>
+						<configuration>
+							<excludeDefaultDirectories>true</excludeDefaultDirectories>
+							<filesets>
+								<fileset>
+									<directory>${project.build.directory}/${project.build.finalName}/WEB-INF/lib</directory>
+									<includes>
+										<include>gwt-user*jar</include>
+									</includes>
+								</fileset>
+							</filesets>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-war-plugin</artifactId>
 				<version>2.1-beta-1</version>
@@ -617,7 +650,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>gwt-maven-plugin</artifactId>
-        <version>2.1.0-1</version>
+        <version>2.2.0</version>
         <dependencies>
           <dependency>
             <groupId>com.google.gwt</groupId>
