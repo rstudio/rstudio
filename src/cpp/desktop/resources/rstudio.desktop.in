@@ -1,5 +1,5 @@
 [Desktop Entry]
-Exec=${CMAKE_INSTALL_PREFIX}/${RSTUDIO_INSTALL_BIN}/rdesktop %F
+Exec=${CMAKE_INSTALL_PREFIX}/${RSTUDIO_INSTALL_BIN}/rstudio %F
 Icon=rstudio_logo_32.png
 Type=Application
 Terminal=false

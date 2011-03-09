@@ -114,15 +114,15 @@ qt4_add_resources(DESKTOP_RESOURCES_SOURCES ${DESKTOP_RESOURCES_FILES})
 
 if(WIN32)
 
-   # configure rdesktop.rc
-   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/rdesktop.rc.in
-                   ${CMAKE_CURRENT_BINARY_DIR}/rdesktop.rc)
+   # configure rstudio.rc
+   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/rstudio.rc.in
+                   ${CMAKE_CURRENT_BINARY_DIR}/rstudio.rc)
 
    configure_file (${CMAKE_CURRENT_SOURCE_DIR}/RStudio.ico
                    ${CMAKE_CURRENT_BINARY_DIR}/RStudio.ico COPYONLY)
 
-   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/rdesktop.exe.manifest
-                   ${CMAKE_CURRENT_BINARY_DIR}/rdesktop.exe.manifest COPYONLY)
+   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/rstudio.exe.manifest
+                   ${CMAKE_CURRENT_BINARY_DIR}/rstudio.exe.manifest COPYONLY)
 
    if(MINGW)
       set(LINK_FLAGS -Wl,-subsystem,windows -lversion)
@@ -130,12 +130,12 @@ if(WIN32)
          OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/res.o"
          COMMAND windres.exe
             -I "."
-            -i "rdesktop.rc"
+            -i "rstudio.rc"
             -o "${CMAKE_CURRENT_BINARY_DIR}/res.o"
             -Ocoff
          DEPENDS
-            "${CMAKE_CURRENT_BINARY_DIR}/rdesktop.rc"
-            "${CMAKE_CURRENT_SOURCE_DIR}/rdesktop.exe.manifest"
+            "${CMAKE_CURRENT_BINARY_DIR}/rstudio.rc"
+            "${CMAKE_CURRENT_SOURCE_DIR}/rstudio.exe.manifest"
             "${CMAKE_CURRENT_SOURCE_DIR}/RStudio.ico")
       set(DESKTOP_SOURCE_FILES
          ${DESKTOP_SOURCE_FILES}
@@ -147,31 +147,31 @@ elseif(APPLE)
 endif(WIN32)
 
 
-# define executable
-add_executable(rdesktop
-   ${DESKTOP_SOURCE_FILES}
-   ${MOC_DESKTOP_SOURCE_FILES}
-   ${DESKTOP_RESOURCES_SOURCES}
-   ${DESKTOP_UI_SOURCES}
-)
+# define executable (Windows & Linux)
+if(NOT APPLE)
 
-# add rpath for linux so we can find qt libraries in our bin dir
-if(UNIX AND NOT APPLE)
-   set_target_properties(rdesktop PROPERTIES
-                         INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/bin)
-endif()
+   add_executable(rstudio
+      ${DESKTOP_SOURCE_FILES}
+      ${MOC_DESKTOP_SOURCE_FILES}
+      ${DESKTOP_RESOURCES_SOURCES}
+      ${DESKTOP_UI_SOURCES}
+   )
 
-# set link dependencies
-target_link_libraries(rdesktop
-  ${QT_LIBRARIES}
-  rstudio-core
-  ${LINK_FLAGS}
-)
+   # add rpath for linux so we can find qt libraries in our bin dir
+   if(UNIX)
+      set_target_properties(rstudio PROPERTIES
+                            INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/bin)
+   endif()
 
-# for OSX we also create a bundled executable for the installer. note that
-# we still build the desktop/rdesktop exe on apple (for dev/debug) however
-# we don't install it
-if(APPLE)
+   # set link dependencies
+   target_link_libraries(rstudio
+      ${QT_LIBRARIES}
+      rstudio-core
+      ${LINK_FLAGS}
+   )
+
+# for OSX we create a bundle
+else()
 
    # configure Info.plist
    configure_file (${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in
@@ -196,6 +196,7 @@ if(APPLE)
       ${QT_LIBRARIES}
       rstudio-core
       ${LINK_FLAGS})
+
 endif()
 
 # install target (OSX install goes into the bundle)
@@ -204,7 +205,7 @@ if(APPLE)
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Info.plist
           DESTINATION RStudio.app/Contents)
 else()
-  install(TARGETS rdesktop DESTINATION ${RSTUDIO_INSTALL_BIN})
+  install(TARGETS rstudio DESTINATION ${RSTUDIO_INSTALL_BIN})
 endif()
 
 # bundle qt dependencies
