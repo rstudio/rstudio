@@ -24,9 +24,16 @@ import com.google.gwt.dom.client.NativeEvent;
 public class ButtonCellTest extends CellTestBase<String> {
 
   public void testOnBrowserEvent() {
-    NativeEvent event = Document.get().createClickEvent(0, 0, 0, 0, 0, false,
-        false, false, false);
+    NativeEvent event = Document.get().createClickEvent(0, 0, 0, 0, 0, false, false, false, false);
     testOnBrowserEvent(getExpectedInnerHtml(), event, "clickme", "clickme");
+  }
+
+  /**
+   * Test that events outside of the button element are ignored.
+   */
+  public void testOnBrowserEventOutsideButton() {
+    NativeEvent event = Document.get().createClickEvent(0, 0, 0, 0, 0, false, false, false, false);
+    testOnBrowserEvent(createCell(), getExpectedInnerHtml(), event, "clickme", null, false);
   }
 
   @Override

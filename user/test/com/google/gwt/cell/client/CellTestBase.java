@@ -229,7 +229,7 @@ public abstract class CellTestBase<T> extends GWTTestCase {
    * Test
    * {@link Cell#onBrowserEvent(Element, Object, Object, NativeEvent, ValueUpdater)}
    * with the specified conditions.
-   *
+   * 
    * @param startHtml the innerHTML of the cell before the test starts
    * @param event the event to fire
    * @param value the cell value
@@ -237,16 +237,39 @@ public abstract class CellTestBase<T> extends GWTTestCase {
    *          null if none expected
    * @return the parent element
    */
-  protected Element testOnBrowserEvent(String startHtml, NativeEvent event,
-      final T value, T expectedValue) {
+  protected Element testOnBrowserEvent(String startHtml, NativeEvent event, final T value,
+      T expectedValue) {
+    return testOnBrowserEvent(createCell(), startHtml, event, value, expectedValue, true);
+  }
+
+  /**
+   * Test
+   * {@link Cell#onBrowserEvent(Element, Object, Object, NativeEvent, ValueUpdater)}
+   * with the specified conditions.
+   * 
+   * @param cell the cell to use
+   * @param startHtml the innerHTML of the cell before the test starts
+   * @param event the event to fire
+   * @param value the cell value
+   * @param expectedValue the expected value passed to the value updater, or
+   *          null if none expected
+   * @param dispatchToFirstChild true to dispatch to the first child of the
+   *          rendered parent element, if one is available
+   * @return the parent element
+   */
+  protected Element testOnBrowserEvent(final Cell<T> cell, String startHtml, NativeEvent event,
+      final T value, T expectedValue, boolean dispatchToFirstChild) {
     // Setup the parent element.
     final com.google.gwt.user.client.Element parent = Document.get().createDivElement().cast();
     parent.setInnerHTML(startHtml);
     Document.get().getBody().appendChild(parent);
 
     // If the element has a child, use it as the event target.
-    Element child = parent.getFirstChildElement();
-    Element target = (child == null) ? parent : child;
+    Element target = parent;
+    if (dispatchToFirstChild) {
+      Element child = parent.getFirstChildElement();
+      target = (child == null) ? parent : child;
+    }
 
     // Pass the event to the cell.
     final MockValueUpdater valueUpdater = new MockValueUpdater();
@@ -255,13 +278,11 @@ public abstract class CellTestBase<T> extends GWTTestCase {
         try {
           DOM.setEventListener(parent, null);
           Context context = new Context(0, 0, DEFAULT_KEY);
-          createCell().onBrowserEvent(context, parent, value, event,
-              valueUpdater);
+          cell.onBrowserEvent(context, parent, value, event, valueUpdater);
           parent.removeFromParent();
         } catch (Exception e) {
           // We are in an event loop, so events may not propagate out to JUnit.
-          fail("An exception occured while handling the event: "
-              + e.getMessage());
+          fail("An exception occured while handling the event: " + e.getMessage());
         }
       }
     });

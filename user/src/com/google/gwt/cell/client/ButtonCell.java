@@ -16,6 +16,7 @@
 package com.google.gwt.cell.client;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -48,7 +49,14 @@ public class ButtonCell extends AbstractSafeHtmlCell<String> {
       NativeEvent event, ValueUpdater<String> valueUpdater) {
     super.onBrowserEvent(context, parent, value, event, valueUpdater);
     if ("click".equals(event.getType())) {
-      onEnterKeyDown(context, parent, value, event, valueUpdater);
+      EventTarget eventTarget = event.getEventTarget();
+      if (!Element.is(eventTarget)) {
+        return;
+      }
+      if (parent.getFirstChildElement().isOrHasChild(Element.as(eventTarget))) {
+        // Ignore clicks that occur outside of the main element.
+        onEnterKeyDown(context, parent, value, event, valueUpdater);
+      }
     }
   }
 

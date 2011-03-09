@@ -16,9 +16,7 @@
 package com.google.gwt.cell.client;
 
 import com.google.gwt.cell.client.ActionCell.Delegate;
-import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 
 /**
@@ -47,12 +45,20 @@ public class ActionCellTest extends CellTestBase<String> {
   public void testOnBrowserEvent() {
     MockDelegate<String> delegate = new MockDelegate<String>();
     ActionCell<String> cell = new ActionCell<String>("hello", delegate);
-    Element parent = Document.get().createDivElement();
-    NativeEvent event = Document.get().createClickEvent(0, 0, 0, 0, 0, false,
-        false, false, false);
-    Context context = new Context(0, 0, DEFAULT_KEY);
-    cell.onBrowserEvent(context, parent, "test", event, null);
+    NativeEvent event = Document.get().createClickEvent(0, 0, 0, 0, 0, false, false, false, false);
+    testOnBrowserEvent(cell, getExpectedInnerHtml(), event, "test", null, true);
     delegate.assertLastObject("test");
+  }
+
+  /**
+   * Test that events outside of the button element are ignored.
+   */
+  public void testOnBrowserEventOutsideButton() {
+    MockDelegate<String> delegate = new MockDelegate<String>();
+    ActionCell<String> cell = new ActionCell<String>("hello", delegate);
+    NativeEvent event = Document.get().createClickEvent(0, 0, 0, 0, 0, false, false, false, false);
+    testOnBrowserEvent(cell, getExpectedInnerHtml(), event, "test", null, false);
+    delegate.assertLastObject(null);
   }
 
   @Override
