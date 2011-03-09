@@ -1182,10 +1182,10 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     sw.indent();
     sw.indent();
 
-    // context.appendKey("myProperty",String.valueOf(entry.getKey())),
+    // context.appendKey("myProperty",entry.getKey()),
     sw.print("context.appendKey(\"");
     sw.print(p.getPropertyName());
-    sw.println("\",String.valueOf(entry.getKey())),");
+    sw.println("\",entry.getKey()),");
 
     // entry.getValue(), groups));
     sw.println("entry.getValue(), groups));");

@@ -102,10 +102,9 @@ public class GwtValidationContext<T> {
   /**
    * Append a keyed node to the path.
    *
-   * @param name
    * @return the new GwtValidationContext.
    */
-  public GwtValidationContext<T> appendKey(String name, String key) {
+  public GwtValidationContext<T> appendKey(String name, Object key) {
     GwtValidationContext<T> temp = new GwtValidationContext<T>(rootBean,
         beanDescriptor, messageInterpolator, validator, validatedObjects);
     temp.path = path.appendKey(name, key);

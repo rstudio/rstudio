@@ -48,7 +48,6 @@ public class PropertyPathGwtTest extends AbstractValidationTest {
     delegate.testPropertyPathWithList();
   }
 
-  @Failing(issue = 5803)
   public void testPropertyPathWithMap() {
     delegate.testPropertyPathWithMap();
   }
