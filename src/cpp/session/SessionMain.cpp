@@ -489,7 +489,8 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
       ptrConnection->sendResponse(response);
 
       // allow modules to check for changes after http requests
-      detectChanges(module_context::ChangeSourceURI);
+      if (connectionType == ForegroundConnection)
+         detectChanges(module_context::ChangeSourceURI);
    }
    else if (isJsonRpcRequest(ptrConnection)) // check for json-rpc
    {
