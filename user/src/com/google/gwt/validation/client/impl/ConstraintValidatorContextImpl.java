@@ -58,6 +58,7 @@ public class ConstraintValidatorContextImpl<A extends Annotation, T> implements
     }
 
     public ConstraintValidatorContext addConstraintViolation() {
+      messages.add(new MessageAndPath(context.basePath, messageTemplate));
       return context;
     }
 
@@ -180,7 +181,8 @@ public class ConstraintValidatorContextImpl<A extends Annotation, T> implements
   private final ConstraintDescriptor<A> descriptor;
 
   private boolean disableDefault;
-  private Set<ConstraintViolation<T>> violations = new HashSet<ConstraintViolation<T>>();
+  private final Set<ConstraintViolation<T>> violations = new HashSet<ConstraintViolation<T>>();
+  private final HashSet<MessageAndPath> messages = new HashSet<MessageAndPath>();
 
   public ConstraintValidatorContextImpl(PathImpl path,
       ConstraintDescriptor<A> descriptor) {
@@ -205,10 +207,10 @@ public class ConstraintValidatorContextImpl<A extends Annotation, T> implements
   }
 
   public Set<MessageAndPath> getMessageAndPaths() {
-    // TODO handle custom.
-    HashSet<MessageAndPath> messages = new HashSet<MessageAndPath>();
-    messages.add(new MessageAndPath(this.basePath,
-        this.getDefaultConstraintMessageTemplate()));
+    if (!disableDefault) {
+      messages.add(new MessageAndPath(this.basePath, this
+          .getDefaultConstraintMessageTemplate()));
+    }
     return messages;
   }
 
