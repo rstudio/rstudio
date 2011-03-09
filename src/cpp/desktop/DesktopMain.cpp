@@ -138,20 +138,24 @@ int main(int argc, char* argv[])
 
       // calculate paths to config file and rsession
       FilePath confPath, sessionPath;
-      confPath = installPath.complete("conf/rdesktop-dev.conf");
-      if (confPath.exists()) // dev/debug configuration
+
+      // check for debug configuration
+#ifndef NDEBUG
+      FilePath currentPath = FilePath::safeCurrentPath(installPath);
+      if (currentPath.complete("conf/rdesktop-dev.conf").exists())
       {
-         sessionPath = installPath.complete("session/rsession");
+         confPath = currentPath.complete("conf/rdesktop-dev.conf");
+         sessionPath = currentPath.complete("session/rsession");
 #ifdef _WIN32
          if (version.architecture() == ArchX64)
             sessionPath = installPath.complete("x64/rsession");
 #endif
       }
-      else // release configuration
-      {
-         // no config file in release mode
-         confPath = FilePath();
+#endif
 
+      // if there is no conf path then release mode
+      if (confPath.empty())
+      {
          // default session path (then tweak)
          sessionPath = installPath.complete("bin/rsession");
 
