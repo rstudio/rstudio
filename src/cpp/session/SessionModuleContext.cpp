@@ -36,6 +36,7 @@
 #include <r/RJsonRpc.hpp>
 #include <r/RSourceManager.hpp>
 #include <r/RErrorCategory.hpp>
+#include <r/RFunctionHook.hpp>
 #include <r/session/RSession.hpp>
 #include <r/session/RConsoleActions.hpp>
 
@@ -170,6 +171,21 @@ SEXP rs_rstudioVersion()
    r::sexp::Protect rProtect;
    return r::sexp::create(std::string(RSTUDIO_VERSION), &rProtect);
 }
+
+// override of Sys.sleep to notify listeners of a sleep
+CCODE s_originalSysSleepFunction;
+SEXP sysSleepHook(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+   r::function_hook::checkArity(op, args, call);
+
+   try
+   {
+      events().onSysSleep();
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
+   return s_originalSysSleepFunction(call, op, args, rho);
+}
    
 } // anonymous namespace
 
@@ -224,6 +240,16 @@ Error initialize()
    methodDef7.numArgs = 0;
    r::routines::addCallMethod(methodDef7);
    
+   // register Sys.sleep() hook to notify modules of sleep (currently
+   // used by plots to check for changes on sleep so we can support the
+   // most common means of animating plots in R)
+   Error error = r::function_hook::registerReplaceHook(
+                                              "Sys.sleep",
+                                              sysSleepHook,
+                                              &s_originalSysSleepFunction);
+   if (error)
+      return error;
+
    // source the ModuleTools.R file
    FilePath modulesPath = session::options().modulesRSourcePath();
    return r::sourceManager().sourceLocal(modulesPath.complete("ModuleTools.R"));

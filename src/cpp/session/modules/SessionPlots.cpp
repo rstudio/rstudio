@@ -409,11 +409,8 @@ void onClientInit()
    
 }
 
-void onDetectChanges(module_context::ChangeSource source)
+void detectChanges(bool activatePlots)
 {
-   // activate the plots tab if this came from the user
-   bool activatePlots = source == module_context::ChangeSourceREPL;
-   
    // check for changes
    using namespace r::session;
    if (graphics::display().hasChanges())
@@ -423,6 +420,17 @@ void onDetectChanges(module_context::ChangeSource source)
                                              activatePlots,
                                              false));
    }
+}
+
+void onDetectChanges(module_context::ChangeSource source)
+{
+   bool activatePlots = source == module_context::ChangeSourceREPL;
+   detectChanges(activatePlots);
+}
+
+void onSysSleep()
+{
+   detectChanges(true);
 }
 
 void onBeforeExecute()
@@ -468,6 +476,7 @@ Error initialize()
    module_context::events().onClientInit.connect(bind(onClientInit));
    module_context::events().onDetectChanges.connect(bind(onDetectChanges, _1));
    module_context::events().onBeforeExecute.connect(bind(onBeforeExecute));
+   module_context::events().onSysSleep.connect(bind(onSysSleep));
 
    using namespace r::session;
    graphics::display().onShowManipulator().connect(bind(onShowManipulator));
