@@ -154,7 +154,6 @@ bool initializePNG(const FilePath& filePath,
                    DeviceContext* pDC)
 {
    // initialize file info
-   pDC->fileType = "png";
    if (filePath.empty())
       pDC->targetPath = tempFile("png");
    else
@@ -163,20 +162,6 @@ bool initializePNG(const FilePath& filePath,
    pDC->height = height;
 
    return true;
-}
-
-bool supportsSVG()
-{
-   return false;
-}
-
-bool initializeSVG(const FilePath& filePath,
-                   int width,
-                   int height,
-                   bool displayListOn,
-                   DeviceContext* pDC)
-{
-   return false;
 }
 
 DeviceContext* allocate(pDevDesc dev)

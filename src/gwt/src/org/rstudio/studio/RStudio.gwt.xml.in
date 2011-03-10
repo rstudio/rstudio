@@ -74,11 +74,6 @@
       <when-property-is name="user.agent" value="ie8"/>
    </replace-with>
 
-   <replace-with class="org.rstudio.studio.client.workbench.views.plots.PlotTypeIE8">
-      <when-type-is class="org.rstudio.studio.client.workbench.views.plots.PlotType" />
-      <when-property-is name="user.agent" value="ie8" />
-   </replace-with>
-
    <replace-with class="org.rstudio.studio.client.common.impl.WebWindowOpener">
       <when-type-is class="org.rstudio.studio.client.common.WindowOpener" />
    </replace-with>

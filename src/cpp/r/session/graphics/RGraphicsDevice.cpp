@@ -362,7 +362,7 @@ void resizeGraphicsDevice()
    pDev->deviceSpecific = pDC;
 
    // re-create with the correct size (don't set a file path)
-   if (!handler::initializePNG(s_width, s_height, true, pDC))
+   if (!handler::initialize(s_width, s_height, true, pDC))
    {
       // if this fails we are dead so close the device
       close();
@@ -431,7 +431,7 @@ SEXP createGD()
 
       // allocate and initialize context
       DeviceContext* pDC = handler::allocate(pDev);
-      if (!handler::initializePNG(s_width, s_height, true, pDC))
+      if (!handler::initialize(s_width, s_height, true, pDC))
       {
          handler::destroy(pDC);
 

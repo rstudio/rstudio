@@ -95,14 +95,10 @@ void CFD_Close(pDevDesc dev)
 {   
    DeviceContext* pDC = (DeviceContext*) dev->deviceSpecific;
 
-   // png must be written explicitly (svg is automatically written)
-   if (pDC->fileType == "png")
-   {
-      // write png
-      Error error = handler::writeToPNG(pDC->targetPath, pDC, false);
-      if (error)
-         LOG_ERROR(error);
-   }
+   // write png
+   Error error = handler::writeToPNG(pDC->targetPath, pDC, false);
+   if (error)
+      LOG_ERROR(error);
 
    // destroy deviceSpecific struct
    handler::destroy(pDC);
@@ -125,10 +121,7 @@ void CFD_OnExit(pDevDesc dd)
 }
 
 
-void createDevice(const std::string& fileType,
-                  int width,
-                  int height,
-                  const FilePath& targetPath)
+void createDevice(int width, int height, const FilePath& targetPath)
 {
    R_CheckDeviceAvailable();
 
@@ -171,23 +164,7 @@ void createDevice(const std::string& fileType,
       // allocate and initialize context
       bool initialized = false;
       DeviceContext* pDC = handler::allocate(pDev);
-      if (fileType == "png")
-      {
-         initialized = handler::initializePNG(targetPath,
-                                              width,
-                                              height,
-                                              false,
-                                              pDC);
-      }
-      else if (fileType == "svg")
-      {
-         initialized = handler::initializeSVG(targetPath,
-                                              width,
-                                              height,
-                                              false,
-                                              pDC);
-      }
-
+      initialized = handler::initialize(targetPath, width, height, false, pDC);
       if (!initialized)
       {
          handler::destroy(pDC);
@@ -219,20 +196,11 @@ void createDevice(const std::string& fileType,
 } // anonymous namespace
     
 
-bool supportsSvg()
-{
-   return handler::supportsSVG();
-}
-
-Error create(const std::string& fileType,
-             int width,
-             int height,
-             const FilePath& targetPath)
+Error create(int width, int height, const FilePath& targetPath)
 {
    // execute but catch R errors and convert them to native errors
 
    return r::exec::executeSafely(boost::bind(createDevice,
-                                                fileType,
                                                 width,
                                                 height,
                                                 targetPath));

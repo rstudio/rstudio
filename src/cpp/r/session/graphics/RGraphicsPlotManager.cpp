@@ -228,39 +228,15 @@ Error PlotManager::savePlotAsFile(const std::string& deviceCreationCode)
          boost::bind(r::exec::executeString, deviceCreationCode));
 }
 
-Error PlotManager::savePlotAsFile(const std::string& fileType,
-                                  int width,
-                                  int height,
-                                  const FilePath& targetPath)
-{
-   return savePlotAsFile(boost::bind(file_device::create,
-                                          fileType,
-                                          width,
-                                          height,
-                                          targetPath));
-}
-
-bool PlotManager::supportsSvg()
-{
-   return file_device::supportsSvg();
-}
-
-
 Error PlotManager::savePlotAsPng(const FilePath& filePath, 
                                  int widthPx, 
                                  int heightPx)
 {
-   return savePlotAsFile("png", widthPx, heightPx, filePath);
+   return savePlotAsFile(boost::bind(file_device::create,
+                                          widthPx,
+                                          heightPx,
+                                          filePath));
 }
-
-
-Error PlotManager::savePlotAsSvg(const core::FilePath& filePath,
-                                 int widthPx,
-                                 int heightPx)
-{
-   return savePlotAsFile("svg", widthPx, heightPx, filePath);
-}
-   
 
 
 Error PlotManager::savePlotAsPdf(const FilePath& filePath, 

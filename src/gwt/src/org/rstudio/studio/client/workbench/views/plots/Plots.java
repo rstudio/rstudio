@@ -12,7 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.views.plots;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.HasResizeHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
@@ -296,9 +295,6 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    {
       final int PADDING = 20;
 
-      // determine type
-      PlotType plotType = GWT.create(PlotType.class);
-
       Size currentPlotSize = view_.getPlotFrameSize();
 
       // calculate ideal heigh and width. try to be as large as possible
@@ -316,8 +312,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       // compose url string
       String url = server_.getGraphicsUrl("plot_zoom?" +
                                           "width=" + width + "&" +
-                                          "height=" + height + "&" +
-                                          "type=" + plotType.getType());
+                                          "height=" + height);
 
 
       // open and activate window

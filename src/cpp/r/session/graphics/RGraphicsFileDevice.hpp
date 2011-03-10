@@ -27,10 +27,7 @@ namespace session {
 namespace graphics {
 namespace file_device {
 
-bool supportsSvg();
-
-core::Error create(const std::string& fileType,
-                   int width,
+core::Error create(int width,
                    int height,
                    const core::FilePath& targetPath);
 

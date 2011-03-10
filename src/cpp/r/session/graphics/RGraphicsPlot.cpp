@@ -53,7 +53,7 @@ Plot::Plot(const GraphicsDeviceFunctions& graphicsDevice,
      manipulator_()
 {
    // invalidate if the image file doesn't exist (allows the server
-   // to migrate between different image backends e.g. png, jpeg, svg)
+   // to migrate between different image backends e.g. png, jpeg, etc)
    if (!imageFilePath(storageUuid_).exists())
       invalidate();
 } 
