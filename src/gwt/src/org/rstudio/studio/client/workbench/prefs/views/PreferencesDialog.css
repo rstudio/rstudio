@@ -1,0 +1,47 @@
+@external gwt-CheckBox;
+
+.preferencesDialog .gwt-CheckBox {
+   display: block;
+   margin-top: 8px;
+}
+.preferencesDialog .gwt-CheckBox.first {
+   margin-top: 0;
+}
+
+.sectionChooser {
+   background-color: white;
+   border: 1px solid #999;
+}
+
+.sectionChooserInner {
+   background-color: transparent;
+   width: 100%;
+}
+
+.section {
+   width: 100%;
+   padding: 7px 0 5px 0;
+}
+.section * {
+   cursor: default;
+}
+
+.activeSection {
+   background: #D6E9F8;
+}
+
+.outer {
+   width: 500px;
+   height: 300px;
+}
+
+.indent {
+   margin-left: 20px;
+}
+
+.textBoxWithButton input[type=text] {
+   position: relative;
+   top: 1px;
+   height: 21px;
+   border: 1px solid #999;
+}

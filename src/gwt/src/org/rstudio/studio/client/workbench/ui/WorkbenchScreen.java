@@ -39,6 +39,7 @@ import org.rstudio.core.client.layout.WindowState;
 import org.rstudio.core.client.theme.ModuleTabLayoutPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -53,6 +54,7 @@ import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
+import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
 import org.rstudio.studio.client.workbench.ui.PaneManager.Tab;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
@@ -80,13 +82,15 @@ public class WorkbenchScreen extends Composite
                           final Provider<MRUList> mruList,
                           FontSizeManager fontSizeManager,
                           WorkbenchServerOperations server,
-                          GlobalDisplay globalDisplay)
+                          GlobalDisplay globalDisplay,
+                          Provider<PreferencesDialog> pPrefDialog)
    {
       eventBus_ = eventBus;
       session_ = session;
       edit_ = edit;
       server_ = server;
       globalDisplay_ = globalDisplay;
+      pPrefDialog_ = pPrefDialog;
 
       eventBus_.addHandler(ShowEditorEvent.TYPE, edit);
       eventBus_.addHandler(ChangeFontSizeEvent.TYPE, new ChangeFontSizeHandler()
@@ -335,6 +339,12 @@ public class WorkbenchScreen extends Composite
       });
    }
 
+   @Handler
+   void onShowOptions()
+   {
+      pPrefDialog_.get().showModal();
+   }
+
    public Widget toWidget()
    {
       return this;
@@ -349,6 +359,7 @@ public class WorkbenchScreen extends Composite
    private final Shim edit_;
    private final WorkbenchServerOperations server_;
    private final GlobalDisplay globalDisplay_;
+   private final Provider<PreferencesDialog> pPrefDialog_;
 
    private final MainSplitPanel tabsPanel_ ;
    private PaneManager paneManager_;

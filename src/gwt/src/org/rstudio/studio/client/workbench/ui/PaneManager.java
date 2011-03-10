@@ -23,6 +23,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptButton;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
@@ -69,6 +70,7 @@ public class PaneManager
                       WorkbenchServerOperations server,
                       EventBus eventBus,
                       Session session,
+                      UIPrefs uiPrefs,
                       @Named("Console") final Widget consolePane,
                       ConsoleInterruptButton consoleInterrupt,
                       SourceShim source,
@@ -91,7 +93,7 @@ public class PaneManager
       packagesTab_ = packagesTab;
       helpTab_ = helpTab;
 
-      config_ = validateConfig(session.getSessionInfo().getPaneConfig());
+      config_ = validateConfig(uiPrefs.paneConfig().getValue());
       ArrayList<LogicalWindow> panes = createPanes(config_);
 
       DualWindowLayoutPanel left = createSplitWindow(

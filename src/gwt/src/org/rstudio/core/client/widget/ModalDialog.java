@@ -31,14 +31,19 @@ public abstract class ModalDialog<T> extends ModalDialogBase
                closeDialog();
                if (operation != null)
                   operation.execute(input);
+               onSuccess();
             }      
          }
       });
       
       commonInit(caption, okButton);
    }
-   
-   
+
+   protected void onSuccess()
+   {
+   }
+
+
    public ModalDialog(String caption, 
                       final ProgressOperationWithInput<T> operation)
    {
@@ -52,6 +57,7 @@ public abstract class ModalDialog<T> extends ModalDialogBase
             if (validate(input))
             {
                operation.execute(input, progressIndicator);
+               onSuccess();
             }      
          }
       });

@@ -30,11 +30,8 @@ import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.IntervalTracker;
-import org.rstudio.core.client.Invalidation;
+import org.rstudio.core.client.*;
 import org.rstudio.core.client.Invalidation.Token;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -65,6 +62,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
@@ -78,6 +76,7 @@ import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 
 public class TextEditingTarget implements EditingTarget
@@ -132,6 +131,13 @@ public class TextEditingTarget implements EditingTarget
       void setFontSize(Size size);
 
       void onVisibilityChanged(boolean visible);
+
+      void setHighlightSelectedLine(boolean on);
+      void setShowLineNumbers(boolean on);
+      void setUseSoftTabs(boolean on);
+      void setTabSize(int tabSize);
+      void setShowPrintMargin(boolean on);
+      void setPrintMarginColumn(int column);
    }
    private class ExplicitSaveProgressIndicator implements ProgressIndicator
    {
@@ -191,7 +197,8 @@ public class TextEditingTarget implements EditingTarget
                             Provider<PublishPdf> pPublishPdf,
                             Session session,
                             FontSizeManager fontSizeManager,
-                            DocDisplay docDisplay)
+                            DocDisplay docDisplay,
+                            UIPrefs prefs)
    {
       commands_ = commands;
       server_ = server;
@@ -204,6 +211,7 @@ public class TextEditingTarget implements EditingTarget
       pPublishPdf_ = pPublishPdf;
 
       docDisplay_ = docDisplay;
+      prefs_ = prefs;
       docDisplay_.addKeyDownHandler(new KeyDownHandler()
       {
          public void onKeyDown(KeyDownEvent event)
@@ -244,6 +252,8 @@ public class TextEditingTarget implements EditingTarget
 
       name_.setValue(getNameFromDocument(document, defaultNameProvider), true);
       docDisplay_.setCode(document.getContents(), false);
+
+      registerPrefs();
 
       // Initialize sourceOnSave, and keep it in sync
       view_.getSourceOnSave().setValue(document.sourceOnSave(), false);
@@ -311,7 +321,7 @@ public class TextEditingTarget implements EditingTarget
          });
       }
 
-      changeFontSizeRegistration_ = events_.addHandler(
+      releaseOnDismiss_.add(events_.addHandler(
             ChangeFontSizeEvent.TYPE,
             new ChangeFontSizeHandler()
             {
@@ -319,9 +329,43 @@ public class TextEditingTarget implements EditingTarget
                {
                   view_.setFontSize(event.getFontSize());
                }
-            });
+            }));
       view_.setFontSize(fontSizeManager_.getSize());
 
+   }
+
+   private void registerPrefs()
+   {
+      releaseOnDismiss_.add(prefs_.highlightSelectedLine().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay_.setHighlightSelectedLine(arg);
+               }}));
+      releaseOnDismiss_.add(prefs_.showLineNumbers().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay_.setShowLineNumbers(arg);
+               }}));
+      releaseOnDismiss_.add(prefs_.useSpacesForTab().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay_.setUseSoftTabs(arg);
+               }}));
+      releaseOnDismiss_.add(prefs_.numSpacesForTab().bind(
+            new CommandWithArg<Integer>() {
+               public void execute(Integer arg) {
+                  docDisplay_.setTabSize(arg);
+               }}));
+      releaseOnDismiss_.add(prefs_.showMargin().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay_.setShowPrintMargin(arg);
+               }}));
+      releaseOnDismiss_.add(prefs_.printMarginColumn().bind(
+            new CommandWithArg<Integer>() {
+               public void execute(Integer arg) {
+                  docDisplay_.setPrintMarginColumn(arg);
+               }}));
    }
 
    private String getNameFromDocument(SourceDocument document,
@@ -521,11 +565,9 @@ public class TextEditingTarget implements EditingTarget
       docUpdateSentinel_.stop();
       
       removePublishPdfHandler();
-      if (changeFontSizeRegistration_ != null)
-      {
-         changeFontSizeRegistration_.removeHandler();
-         changeFontSizeRegistration_ = null;
-      }
+
+      while (releaseOnDismiss_.size() > 0)
+         releaseOnDismiss_.remove(0).removeHandler();
    }
 
    public HasValue<Boolean> dirtyState()
@@ -768,7 +810,7 @@ public class TextEditingTarget implements EditingTarget
    {   
       // setup handler for PublishPdfEvent
       removePublishPdfHandler();
-      publishPdfReg_ = events_.addHandler(PublishPdfEvent.TYPE, 
+      publishPdfReg_ = events_.addHandler(PublishPdfEvent.TYPE,
                                           new PublishPdfHandler() {
          public void onPublishPdf(PublishPdfEvent event)
          {
@@ -784,8 +826,8 @@ public class TextEditingTarget implements EditingTarget
                                   docUpdateSentinel_, 
                                   pdfDialog);
             }
-            
-            
+
+
          }
       });
       
@@ -966,6 +1008,7 @@ public class TextEditingTarget implements EditingTarget
    }
 
    private DocDisplay docDisplay_;
+   private final UIPrefs prefs_;
    private Display view_;
    private final Commands commands_;
    private SourceServerOperations server_;
@@ -981,7 +1024,8 @@ public class TextEditingTarget implements EditingTarget
    private String id_;
    private HandlerRegistration commandHandlerReg_;
    private HandlerRegistration publishPdfReg_;
-   private HandlerRegistration changeFontSizeRegistration_;
+   private ArrayList<HandlerRegistration> releaseOnDismiss_ =
+         new ArrayList<HandlerRegistration>();
    private final Value<Boolean> dirtyState_ = new Value<Boolean>(false);
    private HandlerManager handlers_ = new HandlerManager(this);
    private FileSystemContext fileContext_;

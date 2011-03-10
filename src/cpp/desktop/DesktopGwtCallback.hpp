@@ -54,8 +54,14 @@ public slots:
    QString getUriForPath(QString path);
    void onWorkbenchInitialized(QString scratchPath);
    void showFolder(QString path);
-   void showOptions();
+
+   int getSaveAction();
+   void setSaveAction(int index);
+   QString getCRANMirror();
    QString chooseCRANmirror();
+   QString getRVersion();
+   QString chooseRVersion();
+   bool canChooseRVersion();
 
    void close();
    void openMinimalWindow(QString name, QString url, int width, int height);

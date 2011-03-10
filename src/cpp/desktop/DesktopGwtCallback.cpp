@@ -255,10 +255,19 @@ void GwtCallback::showFolder(QString path)
    }
 }
 
-void GwtCallback::showOptions()
+int GwtCallback::getSaveAction()
 {
-   OptionsDialog* optionsDialog = new OptionsDialog(pOwnerWindow_);
-   optionsDialog->show();
+   return options().saveWorkspaceOnExit();
+}
+
+void GwtCallback::setSaveAction(int index)
+{
+   options().setSaveWorkspaceOnExit(index);
+}
+
+QString GwtCallback::getCRANMirror()
+{
+   return options().defaultCRANmirrorName();
 }
 
 QString GwtCallback::chooseCRANmirror()
@@ -268,9 +277,28 @@ QString GwtCallback::chooseCRANmirror()
    {
       options().setDefaultCRANmirror(dialog.selectedName(),
                                      dialog.selectedURL());
-      return dialog.selectedURL();
+      return dialog.selectedName();
    }
    return QString();
+}
+
+QString GwtCallback::getRVersion()
+{
+   return QString();
+}
+
+QString GwtCallback::chooseRVersion()
+{
+   return QString();
+}
+
+bool GwtCallback::canChooseRVersion()
+{
+#ifdef Q_OS_WIN32
+   return true;
+#else
+   return false;
+#endif
 }
 
 void GwtCallback::close()

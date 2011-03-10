@@ -55,4 +55,16 @@ public class Renderer extends JavaScriptObject
    public native final void setHScrollBarAlwaysVisible(boolean on) /*-{
       this.setHScrollBarAlwaysVisible(on);
    }-*/;
+
+   public native final void setShowGutter(boolean on) /*-{
+      this.setShowGutter(on);
+   }-*/;
+
+   public native final void setShowPrintMargin(boolean on) /*-{
+      this.setShowPrintMargin(on);
+   }-*/;
+
+   public native final void setPrintMarginColumn(int column) /*-{
+      this.setPrintMarginColumn(column);
+   }-*/;
 }

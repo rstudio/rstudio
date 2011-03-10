@@ -15,8 +15,9 @@ package org.rstudio.studio.client.workbench.model;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
-import org.rstudio.studio.client.workbench.ui.PaneConfig;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 public class SessionInfo extends JavaScriptObject
@@ -49,8 +50,8 @@ public class SessionInfo extends JavaScriptObject
       return this.scratch_dir;
    }-*/;
 
-   public final native PaneConfig getPaneConfig() /*-{
-      return (this.ui_prefs || {}).pane_config;
+   public final native JsObject getUiPrefs() /*-{
+      return this.ui_prefs || {};
    }-*/;
 
    public final static String DESKTOP_MODE = "desktop";
@@ -107,5 +108,4 @@ public class SessionInfo extends JavaScriptObject
    public final native String getRstudioVersion() /*-{
       return this.rstudio_version;
    }-*/;
-   
 }
