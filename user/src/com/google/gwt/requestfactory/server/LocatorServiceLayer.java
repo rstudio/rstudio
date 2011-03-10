@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -113,8 +113,9 @@ final class LocatorServiceLayer extends ServiceLayerDecorator {
     } else if (ln != null && ln.locator().length() > 0) {
       try {
         @SuppressWarnings("unchecked")
-        Class<? extends Locator<?, ?>> found = (Class<? extends Locator<?, ?>>) Class.forName(
-            ln.locator(), false, domainType.getClassLoader()).asSubclass(Locator.class);
+        Class<? extends Locator<?, ?>> found =
+            (Class<? extends Locator<?, ?>>) Class.forName(ln.locator(), false,
+                getTop().getDomainClassLoader()).asSubclass(Locator.class);
         locatorType = found;
       } catch (ClassNotFoundException e) {
         return die(e, "Could not find the locator type specified in the @%s annotation %s",
@@ -128,8 +129,8 @@ final class LocatorServiceLayer extends ServiceLayerDecorator {
   }
 
   @Override
-  public Class<? extends ServiceLocator> resolveServiceLocator(
-      Method contextMethod, Method domainMethod) {
+  public Class<? extends ServiceLocator> resolveServiceLocator(Method contextMethod,
+      Method domainMethod) {
     Class<? extends ServiceLocator> locatorType;
 
     // Look at the RequestContext
@@ -141,7 +142,7 @@ final class LocatorServiceLayer extends ServiceLayerDecorator {
     } else if (ln != null && ln.locator().length() > 0) {
       try {
         locatorType =
-            Class.forName(ln.locator(), false, requestContextClass.getClassLoader()).asSubclass(
+            Class.forName(ln.locator(), false, getTop().getDomainClassLoader()).asSubclass(
                 ServiceLocator.class);
       } catch (ClassNotFoundException e) {
         return die(e, "Could not find the locator type specified in the @%s annotation %s",
@@ -211,7 +212,7 @@ final class LocatorServiceLayer extends ServiceLayerDecorator {
     } catch (IllegalAccessException e) {
       ex = e;
     }
-    return this.<T> die(ex, "Could not instantiate %s %s. Is it default-instantiable?",
-        base.getSimpleName(), clazz.getCanonicalName());
+    return this.<T> die(ex, "Could not instantiate %s %s. Is it default-instantiable?", base
+        .getSimpleName(), clazz.getCanonicalName());
   }
 }

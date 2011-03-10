@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -57,6 +57,11 @@ public class ServiceLayerDecorator extends ServiceLayer {
   @Override
   public Object createServiceInstance(Method contextMethod, Method domainMethod) {
     return getNext().createServiceInstance(contextMethod, domainMethod);
+  }
+
+  @Override
+  public ClassLoader getDomainClassLoader() {
+    return getNext().getDomainClassLoader();
   }
 
   @Override
@@ -125,8 +130,8 @@ public class ServiceLayerDecorator extends ServiceLayer {
   }
 
   @Override
-  public <T> Class<? extends T> resolveClientType(
-      Class<?> domainClass, Class<T> clientType, boolean required) {
+  public <T> Class<? extends T> resolveClientType(Class<?> domainClass, Class<T> clientType,
+      boolean required) {
     return getNext().resolveClientType(domainClass, clientType, required);
   }
 
@@ -151,8 +156,8 @@ public class ServiceLayerDecorator extends ServiceLayer {
   }
 
   @Override
-  public Class<? extends ServiceLocator> resolveServiceLocator(
-      Method contextMethod, Method domainMethod) {
+  public Class<? extends ServiceLocator> resolveServiceLocator(Method contextMethod,
+      Method domainMethod) {
     return getNext().resolveServiceLocator(contextMethod, domainMethod);
   }
 
@@ -162,8 +167,7 @@ public class ServiceLayerDecorator extends ServiceLayer {
   }
 
   @Override
-  public void setProperty(
-      Object domainObject, String property, Class<?> expectedType, Object value) {
+  public void setProperty(Object domainObject, String property, Class<?> expectedType, Object value) {
     getNext().setProperty(domainObject, property, expectedType, value);
   }
 
@@ -177,15 +181,14 @@ public class ServiceLayerDecorator extends ServiceLayer {
    * should be used to provide diagnostic information that will help the
    * end-developer track down problems when that data would expose
    * implementation details of the server to the client.
-   *
+   * 
    * @param e a throwable with more data, may be {@code null}
    * @param message a printf-style format string
    * @param args arguments for the message
    * @throws UnexpectedException this method never returns normally
    * @see #report(String, Object...)
    */
-  protected final <T> T die(Throwable e, String message, Object... args)
-      throws UnexpectedException {
+  protected final <T> T die(Throwable e, String message, Object... args) throws UnexpectedException {
     String msg = String.format(message, args);
     log.log(Level.SEVERE, msg, e);
     throw new UnexpectedException(msg, e);
@@ -196,18 +199,18 @@ public class ServiceLayerDecorator extends ServiceLayer {
    * should use the instance provided by {@code getTop()} when calling public
    * methods on the ServiceLayer API to allow higher-level decorators to
    * override behaviors built into lower-level decorators.
-   *
+   * 
    * @return the ServiceLayer returned by
    *         {@link #create(ServiceLayerDecorator...)}
    */
-  protected ServiceLayer getTop() {
+  protected final ServiceLayer getTop() {
     return top;
   }
 
   /**
    * Report an exception thrown by code that is under the control of the
    * end-developer.
-   *
+   * 
    * @param an {@link InvocationTargetException} thrown by an invocation of
    *          user-provided code
    * @throws ReportableException this method never returns normally
@@ -220,7 +223,7 @@ public class ServiceLayerDecorator extends ServiceLayer {
   /**
    * Return a message to the client. This method should not include any data
    * that was not sent to the server by the client to avoid leaking data.
-   *
+   * 
    * @param msg a printf-style format string
    * @param args arguments for the message
    * @throws ReportableException this method never returns normally

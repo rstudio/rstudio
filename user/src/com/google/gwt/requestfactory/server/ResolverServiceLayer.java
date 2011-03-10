@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -45,15 +45,20 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
    */
   private static final RequestFactoryInterfaceValidator validator =
       new RequestFactoryInterfaceValidator(log,
-          new RequestFactoryInterfaceValidator.ClassLoaderLoader(
-              ServiceLayer.class.getClassLoader()));
+          new RequestFactoryInterfaceValidator.ClassLoaderLoader(ServiceLayer.class
+              .getClassLoader()));
+
+  @Override
+  public ClassLoader getDomainClassLoader() {
+    return Thread.currentThread().getContextClassLoader();
+  }
 
   @Override
   public Class<? extends BaseProxy> resolveClass(String typeToken) {
     Class<?> found = forName(typeToken);
     if (!EntityProxy.class.isAssignableFrom(found) && !ValueProxy.class.isAssignableFrom(found)) {
-      die(null, "The requested type %s is not assignable to %s or %s", typeToken,
-          EntityProxy.class.getCanonicalName(), ValueProxy.class.getCanonicalName());
+      die(null, "The requested type %s is not assignable to %s or %s", typeToken, EntityProxy.class
+          .getCanonicalName(), ValueProxy.class.getCanonicalName());
     }
     synchronized (validator) {
       validator.antidote();
@@ -66,8 +71,8 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
   }
 
   @Override
-  public <T> Class<? extends T> resolveClientType(
-      Class<?> domainClass, Class<T> clientClass, boolean required) {
+  public <T> Class<? extends T> resolveClientType(Class<?> domainClass, Class<T> clientClass,
+      boolean required) {
     String name;
     synchronized (validator) {
       name = validator.getEntityProxyTypeName(domainClass.getName(), clientClass.getName());
@@ -107,8 +112,7 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
         return toReturn;
       }
     }
-    return die(
-        null, "Could not resolve a domain type for client type %s", clazz.getCanonicalName());
+    return die(null, "Could not resolve a domain type for client type %s", clazz.getCanonicalName());
   }
 
   @Override
@@ -125,8 +129,8 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
       searchIn = forName(sn.value());
     }
     if (searchIn == null) {
-      die(null, "The %s type %s did not specify a service type",
-          RequestContext.class.getSimpleName(), enclosing.getCanonicalName());
+      die(null, "The %s type %s did not specify a service type", RequestContext.class
+          .getSimpleName(), enclosing.getCanonicalName());
     }
 
     Class<?>[] parameterTypes = requestContextMethod.getParameterTypes();
@@ -135,8 +139,9 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
       if (BaseProxy.class.isAssignableFrom(parameterTypes[i])) {
         domainArgs[i] = getTop().resolveDomainClass(parameterTypes[i].asSubclass(BaseProxy.class));
       } else if (EntityProxyId.class.isAssignableFrom(parameterTypes[i])) {
-        domainArgs[i] = TypeUtils.ensureBaseType(TypeUtils.getSingleParameterization(
-            EntityProxyId.class, requestContextMethod.getGenericParameterTypes()[i]));
+        domainArgs[i] =
+            TypeUtils.ensureBaseType(TypeUtils.getSingleParameterization(EntityProxyId.class,
+                requestContextMethod.getGenericParameterTypes()[i]));
       } else {
         domainArgs[i] = parameterTypes[i];
       }
@@ -184,7 +189,7 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
    */
   private Class<?> forName(String name) {
     try {
-      return Class.forName(name, false, Thread.currentThread().getContextClassLoader());
+      return Class.forName(name, false, getTop().getDomainClassLoader());
     } catch (ClassNotFoundException e) {
       return die(e, "Could not locate class %s", name);
     }

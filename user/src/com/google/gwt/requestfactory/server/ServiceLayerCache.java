@@ -44,6 +44,7 @@ class ServiceLayerCache extends ServiceLayerDecorator {
 
   private static final Method createLocator;
   private static final Method createServiceInstance;
+  private static final Method getDomainClassLoader;
   private static final Method getGetter;
   private static final Method getIdType;
   private static final Method getRequestReturnType;
@@ -60,34 +61,29 @@ class ServiceLayerCache extends ServiceLayerDecorator {
 
   static {
     createLocator = getMethod("createLocator", Class.class);
-    createServiceInstance = getMethod("createServiceInstance", Method.class,
-        Method.class);
+    createServiceInstance = getMethod("createServiceInstance", Method.class, Method.class);
+    getDomainClassLoader = getMethod("getDomainClassLoader");
     getGetter = getMethod("getGetter", Class.class, String.class);
     getIdType = getMethod("getIdType", Class.class);
     getRequestReturnType = getMethod("getRequestReturnType", Method.class);
     getSetter = getMethod("getSetter", Class.class, String.class);
-    requiresServiceLocator = getMethod("requiresServiceLocator", Method.class,
-        Method.class);
+    requiresServiceLocator = getMethod("requiresServiceLocator", Method.class, Method.class);
     resolveClass = getMethod("resolveClass", String.class);
-    resolveClientType = getMethod("resolveClientType", Class.class,
-        Class.class, boolean.class);
+    resolveClientType = getMethod("resolveClientType", Class.class, Class.class, boolean.class);
     resolveDomainClass = getMethod("resolveDomainClass", Class.class);
     resolveDomainMethod = getMethod("resolveDomainMethod", Method.class);
     resolveLocator = getMethod("resolveLocator", Class.class);
-    resolveRequestContextMethod = getMethod("resolveRequestContextMethod",
-        String.class, String.class);
-    resolveServiceLocator = getMethod("resolveServiceLocator", Method.class,
-        Method.class);
+    resolveRequestContextMethod =
+        getMethod("resolveRequestContextMethod", String.class, String.class);
+    resolveServiceLocator = getMethod("resolveServiceLocator", Method.class, Method.class);
     resolveTypeToken = getMethod("resolveTypeToken", Class.class);
   }
 
   private static Map<Method, Map<Object, Object>> getCache() {
-    Map<Method, Map<Object, Object>> toReturn = methodCache == null ? null
-        : methodCache.get();
+    Map<Method, Map<Object, Object>> toReturn = methodCache == null ? null : methodCache.get();
     if (toReturn == null) {
       toReturn = new ConcurrentHashMap<Method, Map<Object, Object>>();
-      methodCache = new SoftReference<Map<Method, Map<Object, Object>>>(
-          toReturn);
+      methodCache = new SoftReference<Map<Method, Map<Object, Object>>>(toReturn);
     }
     return toReturn;
   }
@@ -96,11 +92,9 @@ class ServiceLayerCache extends ServiceLayerDecorator {
     try {
       return ServiceLayer.class.getMethod(name, argTypes);
     } catch (SecurityException e) {
-      throw new RuntimeException("Could not set up ServiceLayerCache Methods",
-          e);
+      throw new RuntimeException("Could not set up ServiceLayerCache Methods", e);
     } catch (NoSuchMethodException e) {
-      throw new RuntimeException("Could not set up ServiceLayerCache Methods",
-          e);
+      throw new RuntimeException("Could not set up ServiceLayerCache Methods", e);
     }
   }
 
@@ -113,14 +107,19 @@ class ServiceLayerCache extends ServiceLayerDecorator {
 
   @Override
   public Object createServiceInstance(Method contextMethod, Method domainMethod) {
-    return getOrCache(createServiceInstance, new Pair<Method, Method>(
-        contextMethod, domainMethod), Object.class, contextMethod, domainMethod);
+    return getOrCache(createServiceInstance, new Pair<Method, Method>(contextMethod, domainMethod),
+        Object.class, contextMethod, domainMethod);
+  }
+
+  @Override
+  public ClassLoader getDomainClassLoader() {
+    return getOrCache(getDomainClassLoader, NULL_MARKER, ClassLoader.class);
   }
 
   @Override
   public Method getGetter(Class<?> domainType, String property) {
-    return getOrCache(getGetter, new Pair<Class<?>, String>(domainType,
-        property), Method.class, domainType, property);
+    return getOrCache(getGetter, new Pair<Class<?>, String>(domainType, property), Method.class,
+        domainType, property);
   }
 
   @Override
@@ -130,21 +129,19 @@ class ServiceLayerCache extends ServiceLayerDecorator {
 
   @Override
   public Type getRequestReturnType(Method contextMethod) {
-    return getOrCache(getRequestReturnType, contextMethod, Type.class,
-        contextMethod);
+    return getOrCache(getRequestReturnType, contextMethod, Type.class, contextMethod);
   }
 
   @Override
   public Method getSetter(Class<?> domainType, String property) {
-    return getOrCache(getSetter, new Pair<Class<?>, String>(domainType,
-        property), Method.class, domainType, property);
+    return getOrCache(getSetter, new Pair<Class<?>, String>(domainType, property), Method.class,
+        domainType, property);
   }
 
   @Override
-  public boolean requiresServiceLocator(Method contextMethod,
-      Method domainMethod) {
-    return getOrCache(requiresServiceLocator, new Pair<Method, Method>(
-        contextMethod, domainMethod), Boolean.class, contextMethod,
+  public boolean requiresServiceLocator(Method contextMethod, Method domainMethod) {
+    return getOrCache(requiresServiceLocator,
+        new Pair<Method, Method>(contextMethod, domainMethod), Boolean.class, contextMethod,
         domainMethod);
   }
 
@@ -155,11 +152,11 @@ class ServiceLayerCache extends ServiceLayerDecorator {
   }
 
   @Override
-  public <T> Class<? extends T> resolveClientType(Class<?> domainClass,
-      Class<T> clientType, boolean required) {
-    Class<?> clazz = getOrCache(resolveClientType,
-        new Pair<Class<?>, Class<?>>(domainClass, clientType), Class.class,
-        domainClass, clientType, required);
+  public <T> Class<? extends T> resolveClientType(Class<?> domainClass, Class<T> clientType,
+      boolean required) {
+    Class<?> clazz =
+        getOrCache(resolveClientType, new Pair<Class<?>, Class<?>>(domainClass, clientType),
+            Class.class, domainClass, clientType, required);
     return clazz == null ? null : clazz.asSubclass(clientType);
   }
 
@@ -170,8 +167,7 @@ class ServiceLayerCache extends ServiceLayerDecorator {
 
   @Override
   public Method resolveDomainMethod(Method requestContextMethod) {
-    return getOrCache(resolveDomainMethod, requestContextMethod, Method.class,
-        requestContextMethod);
+    return getOrCache(resolveDomainMethod, requestContextMethod, Method.class, requestContextMethod);
   }
 
   @Override
@@ -181,19 +177,17 @@ class ServiceLayerCache extends ServiceLayerDecorator {
   }
 
   @Override
-  public Method resolveRequestContextMethod(String requestContextClass,
-      String methodName) {
-    return getOrCache(resolveRequestContextMethod, new Pair<String, String>(
-        requestContextClass, methodName), Method.class, requestContextClass,
-        methodName);
+  public Method resolveRequestContextMethod(String requestContextClass, String methodName) {
+    return getOrCache(resolveRequestContextMethod, new Pair<String, String>(requestContextClass,
+        methodName), Method.class, requestContextClass, methodName);
   }
 
   @Override
-  public Class<? extends ServiceLocator> resolveServiceLocator(
-      Method contextMethod, Method domainMethod) {
-    Class<?> clazz = getOrCache(resolveServiceLocator,
-        new Pair<Method, Method>(contextMethod, domainMethod), Class.class,
-        contextMethod, domainMethod);
+  public Class<? extends ServiceLocator> resolveServiceLocator(Method contextMethod,
+      Method domainMethod) {
+    Class<?> clazz =
+        getOrCache(resolveServiceLocator, new Pair<Method, Method>(contextMethod, domainMethod),
+            Class.class, contextMethod, domainMethod);
     return clazz == null ? null : clazz.asSubclass(ServiceLocator.class);
   }
 
@@ -202,8 +196,7 @@ class ServiceLayerCache extends ServiceLayerDecorator {
     return getOrCache(resolveTypeToken, domainClass, String.class, domainClass);
   }
 
-  private <K, T> T getOrCache(Method method, K key, Class<T> valueType,
-      Object... args) {
+  private <K, T> T getOrCache(Method method, K key, Class<T> valueType, Object... args) {
     Map<Object, Object> map = methodMap.get(method);
     if (map == null) {
       map = new ConcurrentHashMap<Object, Object>();
