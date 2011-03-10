@@ -161,9 +161,10 @@ public class StandardRebindOracle implements RebindOracle {
       // and we may have a partial match based on fall back values
       assert minCostRuleSoFar != null;
       if (minCostRuleSoFar.getFallbackEvaluationCost() < Integer.MAX_VALUE) {
-        logger.log(TreeLogger.WARN, "Could not find an exact match rule. Using 'closest' rule " + 
-            minCostRuleSoFar + " based on fall back values. You may need to implement a specific " +
-            "binding in case the fall back behavior does not replace the missing binding");
+        // todo - enable 
+        // logger.log(TreeLogger.WARN, "Could not find an exact match rule. Using 'closest' rule " + 
+        //    minCostRuleSoFar + " based on fall back values. You may need to implement a specific " +
+        //    "binding in case the fall back behavior does not replace the missing binding");
         if (!usedRules.contains(minCostRuleSoFar)) {
           usedRules.add(minCostRuleSoFar);
           logger.log(TreeLogger.DEBUG, "No exact match was found, using closest match rule " + minCostRuleSoFar);

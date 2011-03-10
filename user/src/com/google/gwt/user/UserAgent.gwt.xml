@@ -24,6 +24,7 @@
   <extend-property name="user.agent" values="gecko1_8" />
   <extend-property name="user.agent" values="safari" />
   <extend-property name="user.agent" values="opera" />
+  <extend-property name="user.agent" values="ie9" fallback-value="ie8" />
   <property-provider name="user.agent" generator="com.google.gwt.user.rebind.UserAgentPropertyGenerator"/>
 
   <!-- Set to false to avoid runtime warnings for mismatched runtime and -->

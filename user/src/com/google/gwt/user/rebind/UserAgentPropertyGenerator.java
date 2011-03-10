@@ -37,7 +37,7 @@ public class UserAgentPropertyGenerator implements PropertyProviderGenerator {
    * class.
    */
   private static final List<String> VALID_VALUES = Arrays.asList(new String[]{
-      "ie6", "ie8", "gecko1_8", "safari", "opera"});
+      "ie6", "ie8", "gecko1_8", "safari", "opera", "ie9"});
 
   /**
    * List of predicates to identify user agent.
@@ -61,6 +61,12 @@ public class UserAgentPropertyGenerator implements PropertyProviderGenerator {
         .println("return (ua.indexOf('webkit') != -1);")
       .returns("'safari'"),
 
+      // IE9
+      new UserAgentPropertyGeneratorPredicate("ie9")
+      .getPredicateBlock()
+        .println("return (ua.indexOf('msie') != -1 && ($doc.documentMode >= 9));")
+      .returns("'ie9'"),
+      
       // IE8
       new UserAgentPropertyGeneratorPredicate("ie8")
       .getPredicateBlock()
@@ -122,7 +128,7 @@ public class UserAgentPropertyGenerator implements PropertyProviderGenerator {
       String fallback, SortedSet<ConfigurationProperty> configProperties) {
     for (String value : possibleValues) {
       if (!VALID_VALUES.contains(value)) {
-        logger.log(TreeLogger.ERROR, "Unrecognized "
+        logger.log(TreeLogger.WARN, "Unrecognized "
             + UserAgentGenerator.PROPERTY_USER_AGENT + " property value '"
             + value + "', possibly due to UserAgent.gwt.xml and "
             + UserAgentPropertyGenerator.class.getName()
