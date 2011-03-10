@@ -79,7 +79,7 @@ picker <- function(..., choices = list(), initial = NULL, label = NULL)
   {
     if (length(initial) != 1)
       stop("initial must be a single object")
-    else if ( !(initial %in% valueNames) )
+    else if ( !(as.character(initial) %in% valueNames) )
       stop("initial doesn't match one of the supplied choices") 
   }
   else if ( !is.null(label) && !is.character(label) )
