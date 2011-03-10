@@ -23,6 +23,9 @@ import com.google.gwt.dom.client.OListElement;
 import com.google.gwt.dom.client.ParagraphElement;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.TableElement;
+import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.i18n.client.NumberFormat;
+import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.DataResource;
 import com.google.gwt.resources.client.ImageResource;
@@ -83,6 +86,9 @@ public class WidgetBasedUi extends Composite {
   
   @UiField(provided = true)
   final WidgetBasedUiExternalResources external = GWT.create(WidgetBasedUiExternalResources.class);
+  
+  public static final DateTimeFormat MY_DATE_FORMAT = DateTimeFormat.getFormat(PredefinedFormat.DATE_FULL);
+  public static final NumberFormat MY_NUMBER_FORMAT = NumberFormat.getDecimalFormat();
 
   @UiField(provided = true)
   final Label bundledLabel =  new Label();
@@ -183,7 +189,9 @@ public class WidgetBasedUi extends Composite {
   @UiField Widget myAbsolutePanelItemC;
   @UiField NamedFrame myNamedFrame;
   @UiField DateLabel myDateLabel;
+  @UiField DateLabel myDateLabel2;
   @UiField NumberLabel<Float> myNumberLabel;
+  @UiField NumberLabel<Float> myNumberLabel2;
   @UiField(provided = true) @SuppressWarnings("unchecked")
   Renderer doubleRenderer = DoubleRenderer.instance();
   @UiField ValueLabel<Double> myValueLabel;

@@ -98,13 +98,13 @@ public class NumberLabelParserTest extends TestCase {
     b.append("<ui:UiBinder xmlns:ui='" + ElementParserTester.BINDER_URI + "'");
     b.append("    xmlns:my='urn:import:my'");
     b.append("    xmlns:g='urn:import:com.google.gwt.user.client.ui'>");
-    b.append("  <my:MyConstructedNumberLabel format='{someDateTimeFormat}' /> ");
+    b.append("  <my:MyConstructedNumberLabel format='{someNumberFormat}' /> ");
     b.append("</ui:UiBinder>");
 
     parser.parse(tester.getElem(b.toString(), "my:MyConstructedNumberLabel"),
         "fieldName", tester.parsedType, tester.writer);
     FieldWriter w = tester.fieldManager.lookup("fieldName");
-    assertEquals("new my.MyConstructedNumberLabel(someDateTimeFormat)",
+    assertEquals("new my.MyConstructedNumberLabel(someNumberFormat)",
         w.getInitializer());
 
     assertTrue(tester.writer.statements.isEmpty());
@@ -178,8 +178,8 @@ public class NumberLabelParserTest extends TestCase {
       tester.parse(b.toString());
       fail();
     } catch (UnableToCompleteException e) {
-      assertTrue("Expect to hear about DateTimeFormat",
-          tester.logger.died.contains("DateTimeFormat"));
+      assertTrue("Expect to hear about NumberFormat",
+          tester.logger.died.contains("NumberFormat"));
     }
   }
 

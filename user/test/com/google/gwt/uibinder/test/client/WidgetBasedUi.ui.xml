@@ -88,6 +88,14 @@
   Tests the static import of an enum into the local namespace.
 </ui:import>
 
+<ui:import field='com.google.gwt.uibinder.test.client.WidgetBasedUi.MY_DATE_FORMAT'>
+  Tests a DateTimeFormat using for the DateTimeLabel.
+</ui:import>
+
+<ui:import field='com.google.gwt.uibinder.test.client.WidgetBasedUi.MY_NUMBER_FORMAT'>
+  Tests a NumberFormat using for the NumberLabel.
+</ui:import>
+
 <!--
   Tests creating a CssResource from an external file.
  -->
@@ -654,8 +662,10 @@
   <gwt:NamedFrame ui:field='myNamedFrame' name='myName'/>
 
   <gwt:DateLabel ui:field='myDateLabel' predefinedFormat='DATE_FULL' />
+  <gwt:DateLabel ui:field='myDateLabel2' format='{MY_DATE_FORMAT}' />
 
   <gwt:NumberLabel ui:field='myNumberLabel' predefinedFormat='SCIENTIFIC' />
+  <gwt:NumberLabel ui:field='myNumberLabel2' format='{MY_NUMBER_FORMAT}' />
 
   <gwt:ValueLabel ui:field='myValueLabel' renderer='{doubleRenderer}' />
 

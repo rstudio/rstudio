@@ -20,7 +20,6 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.i18n.client.CurrencyData;
-import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
@@ -79,7 +78,7 @@ public class NumberLabelParser implements ElementParser {
   private String consumeFormat(XMLElement elem, UiBinderWriter writer)
       throws UnableToCompleteException {
     String format = elem.consumeAttribute("format",
-        writer.getOracle().findType(DateTimeFormat.class.getCanonicalName()));
+        writer.getOracle().findType(NumberFormat.class.getCanonicalName()));
     String predefinedFormat = elem.consumeRawAttribute("predefinedFormat");
     String customFormat = elem.consumeStringAttribute("customFormat");
 
