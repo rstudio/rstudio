@@ -147,11 +147,11 @@ void shadowDevSync(DeviceContext* pDC)
 } // anonymous namespace
 
 
-bool initializePNG(const FilePath& filePath,
-                   int width,
-                   int height,
-                   bool displayListon,
-                   DeviceContext* pDC)
+bool initialize(const FilePath& filePath,
+                int width,
+                int height,
+                bool displayListon,
+                DeviceContext* pDC)
 {
    // initialize file info
    if (filePath.empty())
@@ -263,7 +263,7 @@ Error writeToPNG(const FilePath& targetPath,
       dev->deviceSpecific = pDC;
 
       // re-create with the correct size (don't set a file path)
-      if (!handler::initializePNG(width, height, true, pDC))
+      if (!handler::initialize(width, height, true, pDC))
          return systemError(boost::system::errc::not_connected, ERROR_LOCATION);
 
       // now update the device structure
