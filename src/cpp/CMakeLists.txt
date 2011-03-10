@@ -77,14 +77,14 @@ else()
 
 endif()
 
-# on osx, boost::enable_if<boost::filesystem2::is_basic_path checking in
-# filesystem2 (see operations.hpp) seem to cause a hard abort in release
+# on osx, boost::enable_if<boost::filesystem::is_basic_path checking in
+# filesystem (see operations.hpp) seem to cause a hard abort in release
 # mode if the file doesn't exist. so disable this check on all platforms
 # (for consistency) by disabling support for wide filenames
-add_definitions(-DBOOST_FILESYSTEM2_NARROW_ONLY)
+add_definitions(-DBOOST_FILESYSTEM_NARROW_ONLY -DBOOST_FILESYSTEM2_NARROW_ONLY)
 
 # find boost and required libraries
-set(BOOST_VERSION 1.44.0)
+set(BOOST_VERSION 1.40.0)
 set(Boost_USE_STATIC_LIBS ON)
 list(APPEND BOOST_LIBS
    date_time
