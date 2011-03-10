@@ -41,8 +41,21 @@ class PathCollector extends EditorVisitor {
 
   public <T> boolean visit(EditorContext<T> ctx) {
     String path = ctx.getAbsolutePath();
-    if (path.length() > 0 && !ValueCodex.canDecode(ctx.getEditedType())) {
-      paths.add(path);
+    if (path.length() > 0) {
+      if (ValueCodex.canDecode(ctx.getEditedType())) {
+        /*
+         * If there's an @Path("foo.bar.valueField") annotation, we want to
+         * collect the containing "foo.bar" path.
+         */
+        int dotPosition = path.lastIndexOf('.');
+        if (dotPosition > 0) {
+          String parentPath = path.substring(0, dotPosition);
+          paths.add(parentPath);
+        }
+      } else {
+        // Always collect @Path("foo.bar.baz") field, when baz isn't a value
+        paths.add(path);
+      }
     }
     if (ctx.asCompositeEditor() != null) {
       ctx.traverseSyntheticCompositeEditor(this);

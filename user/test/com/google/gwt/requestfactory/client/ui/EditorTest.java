@@ -61,8 +61,12 @@ public class EditorTest extends RequestFactoryTestBase {
     }
   }
 
-  static class SimpleFooBarOnlyEditor implements Editor<SimpleFooProxy> {
-    SimpleBarEditor barField = new SimpleBarEditor();
+  static class SimpleFooBarNameOnlyEditor implements Editor<SimpleFooProxy> {
+    /**
+     * Test nested path access.
+     */
+    @Path("barField.userName")
+    final SimpleEditor<String> barName = SimpleEditor.of();
   }
 
   interface SimpleFooDriver extends
@@ -81,10 +85,10 @@ public class EditorTest extends RequestFactoryTestBase {
     @Path("barField.userName")
     final SimpleEditor<String> barName = SimpleEditor.of();
 
-    final ListEditor<SimpleFooProxy, SimpleFooBarOnlyEditor> selfOneToManyField = ListEditor.of(new EditorSource<SimpleFooBarOnlyEditor>() {
+    final ListEditor<SimpleFooProxy, SimpleFooBarNameOnlyEditor> selfOneToManyField = ListEditor.of(new EditorSource<SimpleFooBarNameOnlyEditor>() {
       @Override
-      public SimpleFooBarOnlyEditor create(int index) {
-        return new SimpleFooBarOnlyEditor();
+      public SimpleFooBarNameOnlyEditor create(int index) {
+        return new SimpleFooBarNameOnlyEditor();
       }
     });
 
@@ -128,8 +132,8 @@ public class EditorTest extends RequestFactoryTestBase {
     final SimpleFooDriver driver = GWT.create(SimpleFooDriver.class);
     driver.initialize(req, editor);
     final String[] paths = driver.getPaths();
-    assertEquals(Arrays.asList("selfOneToManyField",
-        "selfOneToManyField.barField", "barField"), Arrays.asList(paths));
+    assertEquals(Arrays.asList("barField", "selfOneToManyField",
+        "selfOneToManyField.barField"), Arrays.asList(paths));
 
     req.simpleFooRequest().findSimpleFooById(1L).with(paths).fire(
         new Receiver<SimpleFooProxy>() {
@@ -155,7 +159,9 @@ public class EditorTest extends RequestFactoryTestBase {
             editor.userName.setValue("EditorFooTest");
             // When there are duplicate paths, last declared editor wins
             editor.barEditor().userName.setValue("EditorBarTest");
-            editor.barName.setValue("ignored");
+            editor.barName.setValue("ignored 1");
+            editor.selfOneToManyField.getEditors().get(0).barName.setValue(
+                "ignored 2");
             driver.flush().fire();
           }
         });
@@ -222,8 +228,8 @@ public class EditorTest extends RequestFactoryTestBase {
     driver.initialize(req, editor);
 
     String[] paths = driver.getPaths();
-    assertEquals(Arrays.asList("selfOneToManyField",
-        "selfOneToManyField.barField", "barField"), Arrays.asList(paths));
+    assertEquals(Arrays.asList("barField", "selfOneToManyField",
+        "selfOneToManyField.barField"), Arrays.asList(paths));
 
     req.simpleFooRequest().findSimpleFooById(1L).with(paths).fire(
         new Receiver<SimpleFooProxy>() {
