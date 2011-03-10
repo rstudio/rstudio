@@ -13,6 +13,8 @@
 #
 #
 
+set -e
+
 # build/development tools
 sudo zypper --non-interactive in make
 sudo zypper --non-interactive in gcc
@@ -26,22 +28,26 @@ sudo zypper --non-interactive in libuuid-devel
 sudo zypper --non-interactive in libopenssl-devel
 sudo zypper --non-interactive in pam-devel
 
+# boost
+sudo zypper --non-interactive in boost-devel
+
 # pango cairo
 sudo zypper --non-interactive in pango-devel
 
 # gwt prereqs
-sudo zypper --non-interactive in java-1_6_0-openjdk
+sudo zypper --non-interactive in java-1_6_0-openjdk-devel
 sudo zypper --non-interactive in ant
 
-# common
+# gwt
 cd ../common
-./install-dependencies-common
+./install-gwt
 cd ../linux
 
 # desktop dependencies (qt)
 if [ "$1" != "--server-only" ]
 then
-   ./install-qt-sdk
+   sudo zypper --non-interactive in libqt4-devel
+   sudo zypper --non-interactive in libQtWebKit-devel
 fi
 
 

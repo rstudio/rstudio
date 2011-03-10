@@ -1,0 +1,41 @@
+
+Installing Components for Packaging
+=============================================================================
+
+RStudio's binary linux packages are built using the scripts found in 
+rstudio/package/linux. These packages are intended to run on the widest
+possible variety of target systems so as a result they use embedded
+versions of the Boost 1.44 and Qt 4.7 libraries.
+
+The following script installs both Boost and Qt:
+
+   ./install-packaging-dependencies
+
+The components are installed in the following locations:
+
+   - Boost 1.44 in /usr/local/include
+   - Qt 4.7 in /opt/qtsdk-<version>
+
+
+Additional Notes
+=============================================================================
+
+- The Qt installation prompts for confirmation of the install location
+and approval of the Qt license. 
+
+- The Boost libraries are not built and installed if the directory
+/usr/local/include/boost already exists. 
+
+- The Boost libraries are built static/multithreaded.
+
+- For packaged builds of RStudio (when the RSTUDIO_PACKAGE_BUILD CMake 
+variable is defined) the RStudio CMake configuration files will look for
+Boost and Qt in the locations installed to by this script first, 
+in preference to the standard install locations for system package manager
+dependencies (e.g. /usr/lib). Further, the Boost libraries will be linked
+statically and the Qt libraries will be bundled into the redistributable
+binary package. This bundling enables the RStudio packaged binaries to run
+on the widest possible variety of target systems.
+
+
+

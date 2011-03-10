@@ -84,8 +84,10 @@ endif()
 add_definitions(-DBOOST_FILESYSTEM_NARROW_ONLY -DBOOST_FILESYSTEM2_NARROW_ONLY)
 
 # find boost and required libraries
+if(RSTUDIO_PACKAGE_BUILD)
+   set(Boost_USE_STATIC_LIBS ON)
+endif()
 set(BOOST_VERSION 1.40.0)
-set(Boost_USE_STATIC_LIBS ON)
 list(APPEND BOOST_LIBS
    date_time
    filesystem
@@ -99,10 +101,8 @@ list(APPEND BOOST_LIBS
 
 # UNIX BOOST
 if(UNIX)
-   # if it exists then hard-code boost libs to /usr/local/lib on unix
-   # (done to ensure that the version of boost we link against is the
-   # one we built during dependency installation
-   if(EXISTS /usr/local/include/boost)
+   # for package builds hard-code to /usr/local/include/boost
+   if(RSTUDIO_PACKAGE_BUILD AND EXISTS /usr/local/include/boost)
       # first find headers
       set(BOOST_INCLUDEDIR /usr/local/include)
       find_package(Boost ${BOOST_VERSION} REQUIRED)
@@ -118,6 +118,8 @@ if(UNIX)
 
 # WIN32 BOOST
 else()
+     # hard-code to our own prebuilt boost libs
+     set(Boost_USE_STATIC_LIBS ON)
      set(RSTUDIO_WINDOWS_DEPENDENCIES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../dependencies/windows")
      if(RSTUDIO_SESSION_WIN64)
         set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-win/boost64")
@@ -125,7 +127,6 @@ else()
         set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-win/boost32")
      endif()
      set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-1_44")
-
 
    find_package(Boost ${BOOST_VERSION} REQUIRED COMPONENTS ${BOOST_LIBS})
 endif()

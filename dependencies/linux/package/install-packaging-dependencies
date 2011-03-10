@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# install-common
+# install-packaging-dependencies
 #
 # Copyright (C) 2009-11 by RStudio, Inc.
 #
@@ -13,8 +13,20 @@
 #
 #
 
-# java dependencies
-./install-dependencies-java
+set -e
 
-# boost
+# install qt sdk (prompts for license approval)
+./install-qt-sdk
+
+# install boost
+cd ../../common
 sudo ./install-boost
+cd ../linux/package
+
+
+
+
+
+
+
+

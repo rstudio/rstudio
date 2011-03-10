@@ -42,7 +42,7 @@ rm -f CMakeCache.txt
 rm -rf $BUILD_DIR/_CPack_Packages
 cmake -DRSTUDIO_TARGET=$1 \
       -DCMAKE_BUILD_TYPE=Release \
-      -DRSTUDIO_PAM_AUTH=1 \
+      -DRSTUDIO_PACKAGE_BUILD=1 \
       -DCMAKE_INSTALL_PREFIX=/usr/lib/$INSTALL_DIR \
       ../../..
 

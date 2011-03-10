@@ -13,6 +13,8 @@
 #
 #
 
+set -e
+
 # install dir 
 INSTALL_DIR=`pwd`
 
