@@ -175,7 +175,7 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
           sw.indent();
           sw.println("%s = new %s();", delegateFields.get(d), subDelegateType);
           sw.println("addSubDelegate(%s, appendPath(\"%s\"), editor.%s);",
-              delegateFields.get(d), d.getPropertyName(),
+              delegateFields.get(d), d.getDeclaredPath(),
               d.getSimpleExpression());
           sw.outdent();
           sw.println("}");

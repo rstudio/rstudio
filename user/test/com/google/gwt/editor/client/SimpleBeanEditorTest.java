@@ -33,8 +33,7 @@ import java.util.TreeMap;
  * AbstractEditorDriverGenerator.
  */
 public class SimpleBeanEditorTest extends GWTTestCase {
-  class AddressCoEditorView extends LeafAddressEditor implements
-      IsEditor<LeafAddressEditor> {
+  class AddressCoEditorView extends LeafAddressEditor implements IsEditor<LeafAddressEditor> {
     private LeafAddressEditor addressEditor = new LeafAddressEditor();
 
     public LeafAddressEditor asEditor() {
@@ -58,8 +57,7 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     }
   }
 
-  class LeafAddressEditor extends AddressEditor implements
-      LeafValueEditor<Address> {
+  class LeafAddressEditor extends AddressEditor implements LeafValueEditor<Address> {
     /*
      * These two fields are used to ensure that getValue() and setValue() aren't
      * called excessively.
@@ -79,8 +77,7 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     }
   }
 
-  interface ListEditorDriver
-      extends
+  interface ListEditorDriver extends
       SimpleBeanEditorDriver<List<String>, ListEditor<String, SimpleEditor<String>>> {
   }
 
@@ -118,8 +115,7 @@ public class SimpleBeanEditorTest extends GWTTestCase {
       SimpleBeanEditorDriver<Person, PersonEditorWithCoAddressEditorView> {
   }
 
-  static class PersonEditorWithDelegate extends PersonEditor implements
-      HasEditorDelegate<Person> {
+  static class PersonEditorWithDelegate extends PersonEditor implements HasEditorDelegate<Person> {
     EditorDelegate<Person> delegate;
 
     public void setDelegate(EditorDelegate<Person> delegate) {
@@ -140,6 +136,16 @@ public class SimpleBeanEditorTest extends GWTTestCase {
 
   interface PersonEditorWithLeafAddressEditorDriver extends
       SimpleBeanEditorDriver<Person, PersonEditorWithLeafAddressEditor> {
+  }
+
+  class PersonEditorWithManagerNameWithDelegate implements Editor<Person> {
+    @Path("manager.name")
+    SimpleEditorWithDelegate<String> managerName = new SimpleEditorWithDelegate<String>(
+        UNINITIALIZED);
+  }
+
+  interface PersonEditorWithManagerNameWithDelegateDriver extends
+      SimpleBeanEditorDriver<Person, PersonEditorWithManagerNameWithDelegate> {
   }
 
   class PersonEditorWithMultipleBindings implements Editor<Person> {
@@ -185,8 +191,7 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     SimpleEditor<String> managerName = SimpleEditor.of(UNINITIALIZED);
   }
 
-  interface PersonEditorWithValueAwareLeafAddressEditorDriver
-      extends
+  interface PersonEditorWithValueAwareLeafAddressEditorDriver extends
       SimpleBeanEditorDriver<Person, PersonEditorWithValueAwareLeafAddressEditor> {
   }
 
@@ -205,20 +210,32 @@ public class SimpleBeanEditorTest extends GWTTestCase {
 
   class PersonWithListEditor implements Editor<PersonWithList> {
     SimpleEditor<String> nameEditor = SimpleEditor.of(UNINITIALIZED);
-    ListEditor<Address, AddressEditor> addressesEditor = ListEditor.of(new EditorSource<AddressEditor>() {
-      @Override
-      public AddressEditor create(int index) {
-        return new AddressEditor();
-      }
-    });
+    ListEditor<Address, AddressEditor> addressesEditor = ListEditor
+        .of(new EditorSource<AddressEditor>() {
+          @Override
+          public AddressEditor create(int index) {
+            return new AddressEditor();
+          }
+        });
   }
 
   interface PersonWithListEditorDriver extends
       SimpleBeanEditorDriver<PersonWithList, PersonWithListEditor> {
   }
 
-  class ValueAwareAddressEditor extends AddressEditor implements
-      ValueAwareEditor<Address> {
+  class SimpleEditorWithDelegate<T> extends SimpleEditor<T> implements HasEditorDelegate<T> {
+    EditorDelegate<T> delegate;
+
+    public SimpleEditorWithDelegate(T value) {
+      super(value);
+    }
+
+    public void setDelegate(EditorDelegate<T> delegate) {
+      this.delegate = delegate;
+    }
+  }
+
+  class ValueAwareAddressEditor extends AddressEditor implements ValueAwareEditor<Address> {
     int flushCalled;
     int setDelegateCalled;
     int setValueCalled;
@@ -244,8 +261,7 @@ public class SimpleBeanEditorTest extends GWTTestCase {
   /**
    * All the mix-ins. Not that this seems like a good idea...
    */
-  class ValueAwareLeafAddressEditor extends LeafAddressEditor implements
-      ValueAwareEditor<Address> {
+  class ValueAwareLeafAddressEditor extends LeafAddressEditor implements ValueAwareEditor<Address> {
     int flushCalled;
     int setDelegateCalled;
 
@@ -300,7 +316,8 @@ public class SimpleBeanEditorTest extends GWTTestCase {
 
   public void testAliasedEditors() {
     PersonEditorWithAliasedSubEditors editor = new PersonEditorWithAliasedSubEditors();
-    PersonEditorWithAliasedSubEditorsDriver driver = GWT.create(PersonEditorWithAliasedSubEditorsDriver.class);
+    PersonEditorWithAliasedSubEditorsDriver driver =
+        GWT.create(PersonEditorWithAliasedSubEditorsDriver.class);
     driver.initialize(editor);
     driver.edit(person);
 
@@ -319,6 +336,16 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     editor.e2.name.setValue("Should see this");
     driver.flush();
     assertEquals("Should see this", person.getName());
+  }
+
+  public void testDelegatePath() {
+    PersonEditorWithManagerNameWithDelegate editor = new PersonEditorWithManagerNameWithDelegate();
+    PersonEditorWithManagerNameWithDelegateDriver driver =
+        GWT.create(PersonEditorWithManagerNameWithDelegateDriver.class);
+    driver.initialize(editor);
+    driver.edit(person);
+
+    assertEquals("manager.name", editor.managerName.delegate.getPath());
   }
 
   public void testEditorWithNullSubEditor() {
@@ -358,9 +385,9 @@ public class SimpleBeanEditorTest extends GWTTestCase {
    */
   public void testIsEditorView() {
     PersonEditorWithAddressEditorView personEditor = new PersonEditorWithAddressEditorView();
-    PersonEditorWithAddressEditorViewDriver driver = GWT.create(PersonEditorWithAddressEditorViewDriver.class);
-    testLeafAddressEditor(driver, personEditor,
-        personEditor.addressEditor.asEditor(), true);
+    PersonEditorWithAddressEditorViewDriver driver =
+        GWT.create(PersonEditorWithAddressEditorViewDriver.class);
+    testLeafAddressEditor(driver, personEditor, personEditor.addressEditor.asEditor(), true);
   }
 
   /**
@@ -369,9 +396,9 @@ public class SimpleBeanEditorTest extends GWTTestCase {
    */
   public void testIsEditorViewWithCoEditorA() {
     PersonEditorWithCoAddressEditorView personEditor = new PersonEditorWithCoAddressEditorView();
-    PersonEditorWithCoAddressEditorViewDriver driver = GWT.create(PersonEditorWithCoAddressEditorViewDriver.class);
-    testLeafAddressEditor(driver, personEditor, personEditor.addressEditor,
-        true);
+    PersonEditorWithCoAddressEditorViewDriver driver =
+        GWT.create(PersonEditorWithCoAddressEditorViewDriver.class);
+    testLeafAddressEditor(driver, personEditor, personEditor.addressEditor, true);
   }
 
   /**
@@ -380,9 +407,9 @@ public class SimpleBeanEditorTest extends GWTTestCase {
    */
   public void testIsEditorViewWithCoEditorB() {
     PersonEditorWithCoAddressEditorView personEditor = new PersonEditorWithCoAddressEditorView();
-    PersonEditorWithCoAddressEditorViewDriver driver = GWT.create(PersonEditorWithCoAddressEditorViewDriver.class);
-    testLeafAddressEditor(driver, personEditor,
-        personEditor.addressEditor.asEditor(), true);
+    PersonEditorWithCoAddressEditorViewDriver driver =
+        GWT.create(PersonEditorWithCoAddressEditorViewDriver.class);
+    testLeafAddressEditor(driver, personEditor, personEditor.addressEditor.asEditor(), true);
   }
 
   /**
@@ -392,7 +419,8 @@ public class SimpleBeanEditorTest extends GWTTestCase {
    */
   public void testLeafValueEditorDeclaredInSlot() {
     PersonEditorWithLeafAddressEditor personEditor = new PersonEditorWithLeafAddressEditor();
-    PersonEditorWithLeafAddressEditorDriver driver = GWT.create(PersonEditorWithLeafAddressEditorDriver.class);
+    PersonEditorWithLeafAddressEditorDriver driver =
+        GWT.create(PersonEditorWithLeafAddressEditorDriver.class);
     LeafAddressEditor addressEditor = personEditor.addressEditor;
 
     testLeafAddressEditor(driver, personEditor, addressEditor, true);
@@ -436,7 +464,8 @@ public class SimpleBeanEditorTest extends GWTTestCase {
    * Test a top-level ListEditor.
    */
   public void testListEditor() {
-    final SortedMap<Integer, SimpleEditor<String>> positionMap = new TreeMap<Integer, SimpleEditor<String>>();
+    final SortedMap<Integer, SimpleEditor<String>> positionMap =
+        new TreeMap<Integer, SimpleEditor<String>>();
     @SuppressWarnings("unchecked")
     final SimpleEditor<String>[] disposed = new SimpleEditor[1];
     class StringSource extends EditorSource<SimpleEditor<String>> {
@@ -462,16 +491,14 @@ public class SimpleBeanEditorTest extends GWTTestCase {
 
     driver.initialize(editor);
 
-    List<String> rawData = new ArrayList<String>(Arrays.asList("foo", "bar",
-        "baz"));
+    List<String> rawData = new ArrayList<String>(Arrays.asList("foo", "bar", "baz"));
     driver.edit(rawData);
 
     List<SimpleEditor<String>> editors = editor.getEditors();
     assertEquals(rawData.size(), editors.size());
-    assertEquals(rawData, Arrays.asList(editors.get(0).getValue(),
-        editors.get(1).getValue(), editors.get(2).getValue()));
-    assertEquals(editors,
-        new ArrayList<SimpleEditor<String>>(positionMap.values()));
+    assertEquals(rawData, Arrays.asList(editors.get(0).getValue(), editors.get(1).getValue(),
+        editors.get(2).getValue()));
+    assertEquals(editors, new ArrayList<SimpleEditor<String>>(positionMap.values()));
 
     List<String> mutableList = editor.getList();
     assertEquals(rawData, mutableList);
@@ -490,8 +517,7 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     mutableList.add("quux");
     assertEquals(4, editors.size());
     assertEquals("quux", editors.get(3).getValue());
-    assertEquals(editors,
-        new ArrayList<SimpleEditor<String>>(positionMap.values()));
+    assertEquals(editors, new ArrayList<SimpleEditor<String>>(positionMap.values()));
 
     // Delete an element
     SimpleEditor<String> expectedDisposed = editors.get(0);
@@ -499,8 +525,7 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     assertSame(expectedDisposed, disposed[0]);
     assertEquals(3, editors.size());
     assertEquals("quux", editors.get(2).getValue());
-    assertEquals(editors,
-        new ArrayList<SimpleEditor<String>>(positionMap.values()));
+    assertEquals(editors, new ArrayList<SimpleEditor<String>>(positionMap.values()));
   }
 
   /**
@@ -531,8 +556,7 @@ public class SimpleBeanEditorTest extends GWTTestCase {
 
     // Edit
     driver.edit(person);
-    AddressEditor addressEditor = personEditor.addressesEditor.getEditors().get(
-        1);
+    AddressEditor addressEditor = personEditor.addressesEditor.getEditors().get(1);
     assertEquals("a2City", addressEditor.city.getValue());
     addressEditor.city.setValue("edited");
 
@@ -542,7 +566,8 @@ public class SimpleBeanEditorTest extends GWTTestCase {
   }
 
   public void testMultipleBinding() {
-    PersonEditorWithMultipleBindingsDriver driver = GWT.create(PersonEditorWithMultipleBindingsDriver.class);
+    PersonEditorWithMultipleBindingsDriver driver =
+        GWT.create(PersonEditorWithMultipleBindingsDriver.class);
     PersonEditorWithMultipleBindings editor = new PersonEditorWithMultipleBindings();
 
     driver.initialize(editor);
@@ -559,12 +584,13 @@ public class SimpleBeanEditorTest extends GWTTestCase {
   }
 
   public void testOptionalField() {
-    PersonEditorWithOptionalAddressDriver driver = GWT.create(PersonEditorWithOptionalAddressDriver.class);
+    PersonEditorWithOptionalAddressDriver driver =
+        GWT.create(PersonEditorWithOptionalAddressDriver.class);
     person.address = null;
 
     AddressEditor delegate = new AddressEditor();
-    PersonEditorWithOptionalAddressEditor editor = new PersonEditorWithOptionalAddressEditor(
-        delegate);
+    PersonEditorWithOptionalAddressEditor editor =
+        new PersonEditorWithOptionalAddressEditor(delegate);
     driver.initialize(editor);
 
     // Make sure we don't blow up with the null field
@@ -583,8 +609,10 @@ public class SimpleBeanEditorTest extends GWTTestCase {
   }
 
   public void testValueAwareEditorInDeclaredSlot() {
-    PersonEditorWithValueAwareAddressEditorDriver driver = GWT.create(PersonEditorWithValueAwareAddressEditorDriver.class);
-    PersonEditorWithValueAwareAddressEditor personEditor = new PersonEditorWithValueAwareAddressEditor();
+    PersonEditorWithValueAwareAddressEditorDriver driver =
+        GWT.create(PersonEditorWithValueAwareAddressEditorDriver.class);
+    PersonEditorWithValueAwareAddressEditor personEditor =
+        new PersonEditorWithValueAwareAddressEditor();
     ValueAwareAddressEditor addressEditor = personEditor.addressEditor;
 
     testValueAwareAddressEditor(driver, personEditor, addressEditor);
@@ -606,8 +634,10 @@ public class SimpleBeanEditorTest extends GWTTestCase {
   }
 
   public void testValueAwareLeafValueEditorInDeclaredSlot() {
-    PersonEditorWithValueAwareLeafAddressEditor personEditor = new PersonEditorWithValueAwareLeafAddressEditor();
-    PersonEditorWithValueAwareLeafAddressEditorDriver driver = GWT.create(PersonEditorWithValueAwareLeafAddressEditorDriver.class);
+    PersonEditorWithValueAwareLeafAddressEditor personEditor =
+        new PersonEditorWithValueAwareLeafAddressEditor();
+    PersonEditorWithValueAwareLeafAddressEditorDriver driver =
+        GWT.create(PersonEditorWithValueAwareLeafAddressEditorDriver.class);
     ValueAwareLeafAddressEditor addressEditor = personEditor.addressEditor;
 
     testLeafAddressEditor(driver, personEditor, addressEditor, true);
@@ -646,8 +676,8 @@ public class SimpleBeanEditorTest extends GWTTestCase {
   }
 
   private <T extends Editor<Person>> void testLeafAddressEditor(
-      SimpleBeanEditorDriver<Person, T> driver, T personEditor,
-      LeafAddressEditor addressEditor, boolean declaredAsLeaf) {
+      SimpleBeanEditorDriver<Person, T> driver, T personEditor, LeafAddressEditor addressEditor,
+      boolean declaredAsLeaf) {
     Address oldAddress = person.address;
     // Initialize
     driver.initialize(personEditor);

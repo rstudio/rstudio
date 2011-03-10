@@ -19,6 +19,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.editor.client.Address;
 import com.google.gwt.editor.client.AddressEditor;
 import com.google.gwt.editor.client.Editor;
+import com.google.gwt.editor.client.EditorDelegate;
+import com.google.gwt.editor.client.HasEditorDelegate;
 import com.google.gwt.editor.client.IsEditor;
 import com.google.gwt.editor.client.Person;
 import com.google.gwt.editor.client.SimpleBeanEditorDriver;
@@ -33,8 +35,7 @@ import java.util.List;
  * Tests for DelegateMap.
  */
 public class DelegateMapTest extends GWTTestCase {
-  class AddressCoEditorView extends AddressEditor implements
-      IsEditor<AddressEditor> {
+  class AddressCoEditorView extends AddressEditor implements IsEditor<AddressEditor> {
     private AddressEditor addressEditor = new AddressEditor();
 
     public AddressEditor asEditor() {
@@ -46,22 +47,53 @@ public class DelegateMapTest extends GWTTestCase {
     AddressCoEditorView addressEditor = new AddressCoEditorView();
     SimpleEditor<String> name = SimpleEditor.of("uninitialized");
     @Path("manager.name")
-    SimpleEditor<String> managerName = SimpleEditor.of("uninitialized");
+    SimpleEditorWithDelegate<String> managerName = new SimpleEditorWithDelegate<String>(
+        "uninitialized");
   }
 
   interface PersonEditorWithCoAddressEditorViewDriver extends
       SimpleBeanEditorDriver<Person, PersonEditorWithCoAddressEditorView> {
   }
 
-  @Override
-  public String getModuleName() {
-    return "com.google.gwt.editor.Editor";
+  class SimpleEditorWithDelegate<T> extends SimpleEditor<T> implements HasEditorDelegate<T> {
+    EditorDelegate<T> delegate;
+
+    public SimpleEditorWithDelegate(T value) {
+      super(value);
+    }
+
+    public void setDelegate(EditorDelegate<T> delegate) {
+      this.delegate = delegate;
+    }
   }
 
   private AbstractSimpleBeanEditorDriver<Person, PersonEditorWithCoAddressEditorView> driver;
   private PersonEditorWithCoAddressEditorView editor;
   private DelegateMap map;
   private Person person;
+
+  @Override
+  public String getModuleName() {
+    return "com.google.gwt.editor.Editor";
+  }
+
+  public void test() {
+    // Test by-object
+    assertEquals(Arrays.asList(editor), editors(map, person));
+    assertEquals(Arrays.asList(editor.addressEditor.addressEditor, editor.addressEditor), editors(
+        map, person.getAddress()));
+
+    // Test by-path
+    assertEquals(Arrays.asList(editor), editors(map, ""));
+    assertEquals(Arrays.asList(editor.addressEditor.addressEditor, editor.addressEditor), editors(
+        map, "address"));
+    assertEquals(Arrays.<Editor<?>> asList(editor.managerName), editors(map, "manager.name"));
+  }
+
+  public void testSimplePath() {
+    assertSame(editor.name, map.getEditorByPath("name").get(0));
+    assertSame(editor.managerName, map.getEditorByPath("manager.name").get(0));
+  }
 
   @Override
   protected void gwtSetUp() throws Exception {
@@ -83,25 +115,6 @@ public class DelegateMapTest extends GWTTestCase {
     driver.edit(person);
 
     map = DelegateMap.of(driver, DelegateMap.IDENTITY);
-  }
-
-  public void test() {
-    // Test by-object
-    assertEquals(Arrays.asList(editor), editors(map, person));
-    assertEquals(
-        Arrays.asList(editor.addressEditor.addressEditor, editor.addressEditor),
-        editors(map, person.getAddress()));
-
-    // Test by-path
-    assertEquals(Arrays.asList(editor), editors(map, ""));
-    assertEquals(
-        Arrays.asList(editor.addressEditor.addressEditor, editor.addressEditor),
-        editors(map, "address"));
-  }
-
-  public void testSimplePath() {
-    assertSame(editor.name, map.getEditorByPath("name").get(0));
-    assertSame(editor.managerName, map.getEditorByPath("manager.name").get(0));
   }
 
   private List<Editor<?>> editors(DelegateMap map, Object o) {
