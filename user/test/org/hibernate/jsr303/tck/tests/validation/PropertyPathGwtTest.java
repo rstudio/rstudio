@@ -32,9 +32,7 @@ public class PropertyPathGwtTest extends AbstractValidationTest {
     delegate.testPropertyPathTraversedObject();
   }
 
-  @Failing(issue = 5982)
   public void testPropertyPathWithArray() {
-    fail("Force an early failure for Issue 5982 to prevent all following tests from failing.");
     delegate.testPropertyPathWithArray();
   }
 
@@ -42,9 +40,7 @@ public class PropertyPathGwtTest extends AbstractValidationTest {
     delegate.testPropertyPathWithConstraintViolationForRootObject();
   }
 
-  @Failing(issue = 5982)
   public void testPropertyPathWithList() {
-    fail("Force an early failure for Issue 5982 to prevent all following tests from failing.");
     delegate.testPropertyPathWithList();
   }
 

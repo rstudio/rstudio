@@ -1139,10 +1139,18 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     sw.indent();
     sw.indent();
 
-    // context.appendIndex("myProperty",i++),
-    sw.print("context.appendIndex(\"");
-    sw.print(p.getPropertyName());
-    sw.println("\",i++),");
+    Class<?> elementClass = p.getElementClass();
+    if (elementClass.isArray() || List.class.isAssignableFrom(elementClass)) {
+      // context.appendIndex("myProperty",i++),
+      sw.print("context.appendIndex(\"");
+      sw.print(p.getPropertyName());
+      sw.println("\",i),");
+    } else {
+      // context.appendIterable("myProperty"),
+      sw.print("context.appendIterable(\"");
+      sw.print(p.getPropertyName());
+      sw.println("\"),");
+    }
 
     // instance, groups));
     sw.println("instance, groups));");
@@ -1154,6 +1162,9 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     // }
     sw.outdent();
     sw.println("}");
+
+    // i++;
+    sw.println("i++;");
 
     // }
     sw.outdent();

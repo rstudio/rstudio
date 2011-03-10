@@ -24,21 +24,25 @@ import javax.validation.Path.Node;
  */
 public class NodeImplTest extends TestCase {
 
-  public void testRoot() throws Exception {
-    assertNode(NodeImpl.ROOT_NODE, null, false, null, null);
+  public void testFoo() throws Exception {
+    assertNode(NodeImpl.createNode("foo"), "foo", false, null, null);
   }
 
-  public void testFoo() throws Exception {
-    assertNode(new NodeImpl("foo"), "foo", false, null, null);
+  public void testFoo_iterable() throws Exception {
+    assertNode(NodeImpl.createIterableNode("foo"), "foo", true, null, null);
   }
 
   public void testFoo1() throws Exception {
-    assertNode(new NodeImpl("foo", 1), "foo", true, null,
+    assertNode(NodeImpl.createIndexedNode("foo", 1), "foo", true, null,
         Integer.valueOf(1));
   }
 
   public void testFooBar() throws Exception {
-    assertNode(new NodeImpl("foo", "bar"), "foo", true, "bar", null);
+    assertNode(NodeImpl.createKeyedNode("foo", "bar"), "foo", true, "bar", null);
+  }
+
+  public void testRoot() throws Exception {
+    assertNode(NodeImpl.ROOT_NODE, null, false, null, null);
   }
 
   protected void assertNode(Node node, String expectedName,

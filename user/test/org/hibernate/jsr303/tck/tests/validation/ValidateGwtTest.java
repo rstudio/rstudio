@@ -34,15 +34,13 @@ public class ValidateGwtTest extends AbstractValidationTest {
     delegate.testConstraintViolation();
   }
 
-  @Failing(issue = 5982)
+  @Failing(issue = 5930)
   public void testGraphValidationWithArray() {
-    fail("Force an early failure for Issue 5982 to prevent all following tests from failing.");
     delegate.testGraphValidationWithArray();
   }
 
-  @Failing(issue = 5982)
+  @Failing(issue = 5930)
   public void testGraphValidationWithList() {
-    fail("Force an early failure for Issue 5982 to prevent all following tests from failing.");
     delegate.testGraphValidationWithList();
   }
 
@@ -103,7 +101,6 @@ public class ValidateGwtTest extends AbstractValidationTest {
     }
   }
 
-  @Failing(issue = 5930)
   public void testValidationIsPolymorphic() {
     delegate.testValidationIsPolymorphic();
   }

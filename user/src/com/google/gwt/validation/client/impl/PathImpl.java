@@ -54,11 +54,11 @@ public class PathImpl implements Path, Serializable {
    * @return The new path with appended node.
    */
   public PathImpl append(String name) {
-    return new PathImpl(this, new NodeImpl(name));
+    return new PathImpl(this, NodeImpl.createNode(name));
   }
 
   /**
-   * Create a new path with a indexed node named <code>name</code> appended to
+   * Create a new path with an indexed node named <code>name</code> appended to
    * the existing path.
    *
    * @param name
@@ -66,7 +66,18 @@ public class PathImpl implements Path, Serializable {
    * @return The new path with appended node.
    */
   public PathImpl appendIndex(String name, int index) {
-    return new PathImpl(this, new NodeImpl(name, index));
+    return new PathImpl(this, NodeImpl.createIndexedNode(name, index));
+  }
+
+  /**
+   * Create a new path with an iterable node named <code>name</code> appended to
+   * the existing path.
+   *
+   * @param name
+   * @return The new path with appended node.
+   */
+  public PathImpl appendIterable(String name) {
+    return new PathImpl(this, NodeImpl.createIterableNode(name));
   }
 
   /**
@@ -78,7 +89,7 @@ public class PathImpl implements Path, Serializable {
    * @return The new path with appended node.
    */
   public PathImpl appendKey(String name, Object key) {
-    return new PathImpl(this, new NodeImpl(name, key));
+    return new PathImpl(this, NodeImpl.createKeyedNode(name, key));
   }
 
   @Override

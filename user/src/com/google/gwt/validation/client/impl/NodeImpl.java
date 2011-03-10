@@ -25,51 +25,36 @@ import javax.validation.Path.Node;
 class NodeImpl implements Node, Serializable {
 
   private static final long serialVersionUID = 1L;
-  public static final Node ROOT_NODE = new NodeImpl(null);
+  public static final Node ROOT_NODE = new NodeImpl(null, null, null, false);
 
+  static Node createIndexedNode(String name, Integer index) {
+    return new NodeImpl(name, null, index, true);
+  }
+
+  static Node createIterableNode(String name) {
+    return new NodeImpl(name, null, null, true);
+  }
+
+  static Node createKeyedNode(String name, Object key) {
+    return new NodeImpl(name, key, null, true);
+  }
+
+  static Node createNode(String name) {
+    return new NodeImpl(name, null, null, false);
+  }
+
+  private final boolean isInIterable;
   private final String name;
   private final Integer index;
+
   private final Object key;
 
-  /**
-   * Create a non iterable node.
-   *
-   * @param name the possibly <code>null</code> name.
-   */
-  public NodeImpl(String name) {
-    this.name = name;
-    this.index = null;
-    this.key = null;
-  }
 
-  /**
-   * Create an iterable node with an index.
-   *
-   * @param name the possibly <code>null</code> name.
-   * @param index the zero based index.
-   */
-  public NodeImpl(String name, int index) {
-    if (index < 0) {
-      throw new IllegalArgumentException("Index can not be negative.");
-    }
+  private NodeImpl(String name, Object key, Integer index, boolean iterable) {
     this.name = name;
-    this.index = Integer.valueOf(index);
-    this.key = null;
-  }
-
-  /**
-   * Create an iterable node with a key.
-   *
-   * @param name the possibly <code>null</code> name.
-   * @param key the lookup key for this node.
-   */
-  public NodeImpl(String name, Object key) {
-    if (key == null) {
-      throw new NullPointerException();
-    }
-    this.name = name;
-    this.index = null;
     this.key = key;
+    this.index = index;
+    this.isInIterable = iterable;
   }
 
   @Override
@@ -81,9 +66,11 @@ class NodeImpl implements Node, Serializable {
       return false;
     }
     NodeImpl that = (NodeImpl) obj;
-    return (this.name == null ? that.name == null : this.name == that.name)
-        && (this.index == null ? that.index == null : this.index == that.index)
-        && (this.key == null ? that.key == null : this.key == that.key);
+    return (this.name == null ? that.name == null : this.name.equals(that.name))
+        && (this.index == null ? that.index == null : this.index
+            .equals(that.index))
+        && (this.key == null ? that.key == null : this.key.equals(that.key))
+        && this.isInIterable == that.isInIterable;
   }
 
   public Integer getIndex() {
@@ -105,11 +92,12 @@ class NodeImpl implements Node, Serializable {
     result = prime * result + ((index == null) ? 0 : index.hashCode());
     result = prime * result + ((key == null) ? 0 : key.hashCode());
     result = prime * result + ((name == null) ? 0 : name.hashCode());
+    result = prime * result + (isInIterable ? 0 : 1);
     return result;
   }
 
   public boolean isInIterable() {
-    return index != null || key != null;
+    return isInIterable;
   }
 
   @Override
@@ -122,7 +110,7 @@ class NodeImpl implements Node, Serializable {
       sb.append('[');
       if (key != null) {
         sb.append(key);
-      } else {
+      } else if (index != null) {
         sb.append(index);
       }
       sb.append(']');

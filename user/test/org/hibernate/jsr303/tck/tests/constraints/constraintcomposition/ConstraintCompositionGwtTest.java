@@ -43,7 +43,6 @@ public class ConstraintCompositionGwtTest extends GWTTestCase {
     delegate.testComposedConstraintsAreRecursive();
   }
 
-  @Failing(issue = 5799)
   public void testEachFailingConstraintCreatesConstraintViolation() {
     delegate.testEachFailingConstraintCreatesConstraintViolation();
   }

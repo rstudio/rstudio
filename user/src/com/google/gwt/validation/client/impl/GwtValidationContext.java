@@ -76,7 +76,6 @@ public class GwtValidationContext<T> {
   /**
    * Append a node named name to the path..
    *
-   * @param name
    * @return the new GwtValidationContext.
    */
   public GwtValidationContext<T> append(String name) {
@@ -87,15 +86,26 @@ public class GwtValidationContext<T> {
   }
 
   /**
-   * Append a indexed node to the path.
+   * Append an indexed node to the path.
    *
-   * @param name
    * @return the new GwtValidationContext.
    */
   public GwtValidationContext<T> appendIndex(String name, int index) {
     GwtValidationContext<T> temp = new GwtValidationContext<T>(rootBean,
         beanDescriptor, messageInterpolator, validator, validatedObjects);
     temp.path = path.appendIndex(name, index);
+    return temp;
+  }
+
+  /**
+   * Append an iterable node to the path.
+   *
+   * @return the new GwtValidationContext.
+   */
+  public GwtValidationContext<T> appendIterable(String name) {
+    GwtValidationContext<T> temp = new GwtValidationContext<T>(rootBean,
+        beanDescriptor, messageInterpolator, validator, validatedObjects);
+    temp.path = path.appendIterable(name);
     return temp;
   }
 
