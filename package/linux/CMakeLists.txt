@@ -34,6 +34,10 @@ if(RSTUDIO_SERVER)
   set(CPACK_RPM_POST_INSTALL_SCRIPT_FILE "${CMAKE_CURRENT_BINARY_DIR}/rpm-script/postinst.sh")
   set(CPACK_RPM_POST_UNINSTALL_SCRIPT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/rpm-script/postrm.sh")
 
+  # depend on psmisc (for killall)
+  set(RSTUDIO_DEBIAN_DEPENDS "psmisc, ")
+  set(RSTUDIO_RPM_DEPENDS "psmisc, ")
+
 endif()
 
 # package file name
