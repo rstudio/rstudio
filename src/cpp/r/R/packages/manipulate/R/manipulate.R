@@ -51,10 +51,10 @@ slider <- function(min, max, initial = min, label = NULL, step = NULL, ticks = T
   return (slider)
 }
 
-picker <- function(..., choices = list(), initial = NULL, label = NULL)
+picker <- function(..., initial = NULL, label = NULL)
 {
   # get values
-  values <- append(choices, list(...))
+  values <- resolveVariableArguments(list(...))
   
   # get value names
   valueNames <- names(values)
@@ -148,36 +148,32 @@ manipulatorSetState <- function(name, value)
   }
 }
 
-manipulate <- function(expr, ..., controls = list())
+manipulate <- function(`_expr`, ...)
 {
-  # validate inputs
-  if (!is.list(controls))
-    stop("controls must be a list")
-
   # create new list container for the manipulator
   manipulator <- new.env(parent = parent.frame())
-  assign(".id", createUUID(), envir = manipulator)
+  manipulator$.id <- createUUID()
   
   # save the unevaluated expression as the code
-  assign(".code", substitute(expr), envir = manipulator) 
+  manipulator$.code <- substitute(`_expr`)
   
   # save a human readable version of the code (specify control = NULL
   # to make the display as close to the original text as possible)
-  assign(".codeAsText", deparse(substitute(expr), control = NULL), envir = manipulator)
+  manipulator$.codeAsText <- deparse(substitute(`_expr`), control = NULL)
   
   # get the controls and control names
-  controls <- append(controls, list(...))
+  controls <- resolveVariableArguments(list(...))
   controlNames <- names(controls)
  
   # save the controls and their names into the manipulator
-  assign(".controls", controls, envir = manipulator)
-  assign(".variables", controlNames, envir = manipulator)
+  manipulator$.controls <- controls
+  manipulator$.variables <- controlNames
   
   # establish state
-  assign(".state", new.env(parent = globalenv()), envir = manipulator)
+  manipulator$.state <- new.env(parent = globalenv())
   
   # establish 'user visible' values (indirection btw e.g. picker choice & value)
-  assign(".userVisibleValues", new.env(parent = globalenv()), envir = manipulator)
+  manipulator$.userVisibleValues <- new.env(parent = globalenv())
 
   # iterate over the names and controls, adding the default values to the env
   for (name in names(controls))

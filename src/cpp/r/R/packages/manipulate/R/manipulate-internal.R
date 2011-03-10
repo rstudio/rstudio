@@ -14,8 +14,7 @@
 manipulatorExecute <- function(manipulator)
 {
    # evaulate the expression
-   result <- withVisible(eval(get(".code", envir = manipulator),
-                              envir = manipulator))
+   result <- withVisible(eval(manipulator$.code, envir = manipulator))
 
    # emulate the behavior of the console by printing the result if it
    # is visible. this will allow objects returned from e.g. lattice or
@@ -100,6 +99,21 @@ setManipulatorValue <- function(manipulator, name, value)
 userVisibleValues <- function(manipulator, variables)
 {
   mget(variables, envir = get(".userVisibleValues", envir = manipulator))
+}
+
+resolveVariableArguments <- function(args)
+{
+  # if the first argument is an unnamed list then just use this list
+  if ( (length(args) == 1L) &&
+       is.list(args[[1L]])  &&
+       (is.null(names(args)) || (names(args)[[1L]] == "")) )
+  {
+    return (args[[1L]])
+  }
+  else
+  {
+    return (args)
+  }
 }
 
 
