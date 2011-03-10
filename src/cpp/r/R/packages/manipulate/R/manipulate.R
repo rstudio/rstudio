@@ -164,7 +164,12 @@ manipulate <- function(`_expr`, ...)
   # get the controls and control names
   controls <- resolveVariableArguments(list(...))
   controlNames <- names(controls)
- 
+
+  # validate that all controls have unique names
+  duplicatedIndex <- anyDuplicated(controlNames)
+  if (duplicatedIndex > 0)
+    stop(paste("duplicated control name:", controlNames[[duplicatedIndex]]))
+
   # save the controls and their names into the manipulator
   manipulator$.controls <- controls
   manipulator$.variables <- controlNames
