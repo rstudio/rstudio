@@ -9,12 +9,20 @@ public class SelectWidget extends Composite
 {
    public SelectWidget(String label, String[] options)
    {
+      this(label, options, null);
+   }
+
+   public SelectWidget(String label, String[] options, String[] values)
+   {
+      if (values == null)
+         values = options;
+
       FlowPanel flowPanel = new FlowPanel();
       flowPanel.add(new SpanLabel(label, true));
 
       listBox_ = new ListBox(false);
-      for (String option : options)
-         listBox_.addItem(option);
+      for (int i = 0; i < options.length; i++)
+         listBox_.addItem(options[i], values[i]);
       listBox_.getElement().getStyle().setMarginLeft(0.6, Unit.EM);
       flowPanel.add(listBox_);
 

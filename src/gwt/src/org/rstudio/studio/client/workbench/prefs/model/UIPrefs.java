@@ -63,4 +63,9 @@ public class UIPrefs extends Prefs
    {
       return bool("soft_wrap_r_files", false);
    }
+
+   public PrefValue<String> fontSize()
+   {
+      return string("font_size", "Pt12");
+   }
 }

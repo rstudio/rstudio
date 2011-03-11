@@ -68,13 +68,6 @@ public abstract class Commands extends CommandBundle
    public abstract AppCommand firstTab();
    public abstract AppCommand lastTab();
 
-   // Font Sizes
-   public abstract AppCommand fontSize10();
-   public abstract AppCommand fontSize12();
-   public abstract AppCommand fontSize14();
-   public abstract AppCommand fontSize16();
-   public abstract AppCommand fontSize18();
-
    // History
    public abstract AppCommand historySendToSource();
    public abstract AppCommand historySendToConsole();
