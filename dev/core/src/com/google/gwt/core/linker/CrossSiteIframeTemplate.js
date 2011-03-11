@@ -95,6 +95,9 @@ function __MODULE_FUNC__() {
   // Provides the computeScriptBase() function
   __COMPUTE_SCRIPT_BASE__
 
+  // Provides the computeUrlForResource() function
+  __COMPUTE_URL_FOR_RESOURCE__
+
   // Provides the getCompiledCodeFilename() function which sets the 
   // __gwt_isKnownPropertyValue, MODULE_FUNC__.__computePropValue and
   // __MODULE_FUNC__.__softPermutationId variables if needed

@@ -42,7 +42,7 @@ function getCompiledCodeFilename() {
   
   sendStats('bootstrap', 'selectingPermutation');
   if (isHostedMode()) {
-    return __MODULE_FUNC__.__moduleBase + "__HOSTED_FILENAME__"; 
+    return computeUrlForResource("__HOSTED_FILENAME__"); 
   }
   var strongName;
   try {
@@ -59,5 +59,5 @@ function getCompiledCodeFilename() {
     // intentionally silent on property failure
   }
   __MODULE_FUNC__.__softPermutationId = softPermutationId;
-  return __MODULE_FUNC__.__moduleBase + strongName + '.cache.js';
+  return computeUrlForResource(strongName + '.cache.js');
 }

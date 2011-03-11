@@ -4,11 +4,11 @@ function loadExternalStylesheets() {
   // change across GWT versions.
   if (!$wnd.__gwt_stylesLoaded) { $wnd.__gwt_stylesLoaded = {}; }
 
-  function installOneStylesheet(stylesheetUrl, hrefExpr) {
+  function installOneStylesheet(stylesheetUrl) {
     if (!__gwt_stylesLoaded[stylesheetUrl]) {
       var l = $doc.createElement('link');
       l.setAttribute('rel', 'stylesheet');
-      l.setAttribute('href', hrefExpr);
+      l.setAttribute('href', computeUrlForResource(stylesheetUrl));
       $doc.getElementsByTagName('head')[0].appendChild(l);
       __gwt_stylesLoaded[stylesheetUrl] = true;
     }

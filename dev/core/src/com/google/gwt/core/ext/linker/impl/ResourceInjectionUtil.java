@@ -55,14 +55,19 @@ public class ResourceInjectionUtil {
   
   /**
    * Installs stylesheets using the installOneStylesheet method, which is
-   * assumed to be defined on the page.
+   * assumed to be defined on the page.  The installOneStylesheet() 
+   * helper function is invoked as follows:
+   * 
+   * <pre>
+   * installOneStylesheet(URL);
+   * </pre>
    */
   public static StringBuffer injectStylesheets(StringBuffer selectionScript,
       ArtifactSet artifacts) {
     int startPos = selectionScript.indexOf("// __MODULE_STYLES__");
     if (startPos != -1) {
       for (StylesheetReference resource : artifacts.find(StylesheetReference.class)) {
-        String text = generateNewStylesheetInjector(resource.getSrc());
+        String text = "installOneStylesheet('" + resource.getSrc() + "');\n";
         selectionScript.insert(startPos, text);
         startPos += text.length();
       }
@@ -70,22 +75,6 @@ public class ResourceInjectionUtil {
     return selectionScript;
   }
   
-  /**
-   * Generate a Snippet of JavaScript to inject an external stylesheet using
-   * the installOneStylesheet helper function (which is assumed to already
-   * be defined on the page.
-   * 
-   * <pre>
-   * installOneStylesheet(URL, HREF_EXPR);
-   * </pre>
-   */
-  private static String generateNewStylesheetInjector(String stylesheetUrl) {
-    String hrefExpr = "'" + stylesheetUrl + "'";
-    if (isRelativeURL(stylesheetUrl)) {
-      hrefExpr = "__MODULE_FUNC__.__moduleBase + " + hrefExpr;
-    }
-    return "installOneStylesheet('" + stylesheetUrl + "', " + hrefExpr + ");\n";
-  }
   
   private static String generateScriptInjector(String scriptUrl) {
     if (isRelativeURL(scriptUrl)) {
