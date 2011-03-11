@@ -21,7 +21,10 @@ package com.google.gwt.i18n.rebind.keygen;
  * 
  * Implementations of this interface are executed at compile time, and
  * therefore must not contain any JSNI code.
+ *
+ * @deprecated Use {@link com.google.gwt.i18n.server.KeyGenerator} instead.
  */
+@Deprecated
 public interface KeyGenerator {
 
   /**
@@ -35,5 +38,6 @@ public interface KeyGenerator {
    * @return the lookup key as a string or null if the key cannot be computed (for
    *     example, if text is null but this generator requires it)
    */
-  String generateKey(String className, String methodName, String text, String meaning);
+  String generateKey(String className, String methodName, String text,
+      String meaning);
 }

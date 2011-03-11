@@ -1380,11 +1380,9 @@ class MessagesMethodCreator extends AbstractMethodCreator {
         throw error(logger, "Incorrect number of selector forms for "
             + m.getName() + " - '" + form + "'");
       }
-      boolean seenEquals = false;
       boolean allOther = true;
       for (String splitForm : splitForms) {
         if (splitForm.startsWith("=")) {
-          seenEquals = true;
           allOther = false;
         } else if (!"other".equals(splitForm)) {
           allOther = false;

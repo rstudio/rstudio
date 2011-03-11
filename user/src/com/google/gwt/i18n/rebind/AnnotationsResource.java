@@ -26,9 +26,6 @@ import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JRawType;
 import com.google.gwt.core.ext.typeinfo.JType;
-import com.google.gwt.i18n.client.Messages.AlternateMessage;
-import com.google.gwt.i18n.client.Messages.Select;
-import com.google.gwt.i18n.client.PluralRule;
 import com.google.gwt.i18n.client.Constants.DefaultBooleanValue;
 import com.google.gwt.i18n.client.Constants.DefaultDoubleValue;
 import com.google.gwt.i18n.client.Constants.DefaultFloatValue;
@@ -41,13 +38,18 @@ import com.google.gwt.i18n.client.LocalizableResource.Description;
 import com.google.gwt.i18n.client.LocalizableResource.GenerateKeys;
 import com.google.gwt.i18n.client.LocalizableResource.Key;
 import com.google.gwt.i18n.client.LocalizableResource.Meaning;
+import com.google.gwt.i18n.client.Messages.AlternateMessage;
 import com.google.gwt.i18n.client.Messages.DefaultMessage;
 import com.google.gwt.i18n.client.Messages.Example;
 import com.google.gwt.i18n.client.Messages.Optional;
 import com.google.gwt.i18n.client.Messages.PluralCount;
-import com.google.gwt.i18n.client.Messages.PluralText;
-import com.google.gwt.i18n.rebind.keygen.KeyGenerator;
-import com.google.gwt.i18n.rebind.keygen.MethodNameKeyGenerator;
+import com.google.gwt.i18n.client.Messages.Select;
+import com.google.gwt.i18n.client.PluralRule;
+import com.google.gwt.i18n.server.KeyGenerator;
+import com.google.gwt.i18n.server.Message;
+import com.google.gwt.i18n.server.MessageInterface;
+import com.google.gwt.i18n.server.MessageUtils;
+import com.google.gwt.i18n.server.MessageUtils.KeyGeneratorException;
 import com.google.gwt.i18n.shared.GwtLocale;
 
 import java.util.ArrayList;
@@ -59,6 +61,7 @@ import java.util.Set;
 /**
  * AbstractResource implementation which looks up text annotations on classes.
  */
+@SuppressWarnings("deprecation")
 public class AnnotationsResource extends AbstractResource {
 
   /**
@@ -190,18 +193,14 @@ public class AnnotationsResource extends AbstractResource {
     } catch (AnnotationsError e) {
       return null;
     }
-    String meaningString = null;
-    Meaning meaning = method.getAnnotation(Meaning.class);
-    if (meaning != null) {
-      meaningString = meaning.value();
-    }
     if (keyGenerator == null) {
       // Gracefully handle the case of an invalid KeyGenerator classname
       return null;
     }
-    String keyStr = keyGenerator.generateKey(
-        method.getEnclosingType().getQualifiedSourceName(), method.getName(),
-        text, meaningString);
+    MessageInterface msgIntf = new KeyGenMessageInterface(
+        method.getEnclosingType());
+    Message msg = new KeyGenMessage(method);
+    String keyStr = keyGenerator.generateKey(msg);
     if (keyStr == null) {
       if (text == null) {
         logger.log(
@@ -230,25 +229,11 @@ public class AnnotationsResource extends AbstractResource {
   public static KeyGenerator getKeyGenerator(JClassType targetClass)
       throws AnnotationsError {
     GenerateKeys generator = getClassAnnotation(targetClass, GenerateKeys.class);
-    if (generator != null) {
-      String className = generator.value();
-      try {
-        Class<? extends KeyGenerator> keyGeneratorClass = Class.forName(
-            className, false, KeyGenerator.class.getClassLoader()).asSubclass(
-            KeyGenerator.class);
-        return keyGeneratorClass.newInstance();
-      } catch (InstantiationException e) {
-        throw new AnnotationsError("@GenerateKeys: unable to instantiate "
-            + className);
-      } catch (IllegalAccessException e) {
-        throw new AnnotationsError("@GenerateKeys: unable to instantiate "
-            + className);
-      } catch (ClassNotFoundException e) {
-        throw new AnnotationsError("Invalid class specified to @GenerateKeys: "
-            + className);
-      }
+    try {
+      return MessageUtils.getKeyGenerator(generator);
+    } catch (KeyGeneratorException e) {
+      throw new AnnotationsError(e.getMessage());
     }
-    return new MethodNameKeyGenerator();
   }
 
   /**
@@ -479,14 +464,13 @@ public class AnnotationsResource extends AbstractResource {
       if (keyAnnot != null) {
         key = keyAnnot.value();
       } else {
-        key = keyGenerator.generateKey(
-            method.getEnclosingType().getQualifiedSourceName(),
-            method.getName(), textString, meaningString);
-      }
-      if (key == null) {
-        throw new AnnotationsError("Could not compute key for "
-            + method.getEnclosingType().getQualifiedSourceName() + "."
-            + method.getName());
+        Message msg = new KeyGenMessage(method);
+        key = keyGenerator.generateKey(msg);
+        if (key == null) {
+          throw new AnnotationsError("Could not compute key for "
+              + method.getEnclosingType().getQualifiedSourceName() + "."
+              + method.getName() + " using " + keyGenerator);
+        }
       }
       MethodEntry entry = new MethodEntry(textString, meaningString);
       map.put(key, entry);
@@ -494,8 +478,12 @@ public class AnnotationsResource extends AbstractResource {
       if (description != null) {
         entry.description = description.value();
       }
-      PluralText pluralText = method.getAnnotation(PluralText.class);
+      // use full name to avoid deprecation warnings in the imports
+      @SuppressWarnings("deprecation")
+      com.google.gwt.i18n.client.Messages.PluralText pluralText = method
+          .getAnnotation(com.google.gwt.i18n.client.Messages.PluralText.class);
       if (pluralText != null) {
+        @SuppressWarnings("deprecation")
         String[] pluralForms = pluralText.value();
         if ((pluralForms.length & 1) != 0) {
           throw new AnnotationsError(

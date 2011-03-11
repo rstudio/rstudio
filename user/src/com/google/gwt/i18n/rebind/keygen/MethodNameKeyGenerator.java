@@ -19,10 +19,15 @@ package com.google.gwt.i18n.rebind.keygen;
  * Key generator using just the method name as the lookup key. Note: this is
  * prone to collisions if multiple Messages classes are aggregated for
  * translation, and is therefore only recommended for simple 1:1 uses.
+ *
+ * @deprecated Use
+ * {@link com.google.gwt.i18n.server.keygen.MethodNameKeyGenerator} instead.
  */
+@Deprecated
 public class MethodNameKeyGenerator implements KeyGenerator {
 
-  public String generateKey(String className, String methodName, String text, String meaning) {
+  public String generateKey(String className, String methodName, String text,
+      String meaning) {
     return methodName;
   }
 }

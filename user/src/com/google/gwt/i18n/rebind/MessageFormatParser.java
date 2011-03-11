@@ -25,7 +25,10 @@ import java.util.Map;
 
 /**
  * Helper class for parsing MessageFormat-style format strings.
+ *
+ * @deprecated use {@link com.google.gwt.i18n.server.MessageFormatUtils} instead
  */
+@Deprecated
 public class MessageFormatParser {
 
   /**

@@ -15,12 +15,15 @@
  */
 package com.google.gwt.i18n.client;
 
+import com.google.gwt.i18n.client.LocalizableResource.Generate;
+
 import java.util.Map;
 
 /**
  * Interface to represent the contents of resourcePattern bundle
  * com/google/gwt/i18n/client/TestConstants.properties.
  */
+@Generate(format = "com.google.gwt.i18n.server.PropertyCatalogFactory")
 public interface TestConstants extends com.google.gwt.i18n.client.Constants {
 
   boolean booleanFalse();

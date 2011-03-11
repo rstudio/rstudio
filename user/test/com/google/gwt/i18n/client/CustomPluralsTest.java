@@ -51,7 +51,7 @@ public class CustomPluralsTest extends GWTTestCase {
     }
 
     @DefaultMessage("other: {0}")
-    @PluralText({"0", "zero", "1", "one"})
+    @AlternateMessage({"0", "zero", "1", "one"})
     String customPlural(@PluralCount(CustomPluralRule.class) int cnt);
   }
 

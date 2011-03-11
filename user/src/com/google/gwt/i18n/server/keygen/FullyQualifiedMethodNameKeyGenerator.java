@@ -13,20 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.i18n.rebind.keygen;
+package com.google.gwt.i18n.server.keygen;
+
+import com.google.gwt.i18n.server.KeyGenerator;
+import com.google.gwt.i18n.server.Message;
 
 /**
  * Key generator using the fully-qualified method name.
- * 
- * @deprecated Use
- * {@link com.google.gwt.i18n.server.keygen.FullyQualifiedMethodNameKeyGenerator}
- * instead.
  */
-@Deprecated
 public class FullyQualifiedMethodNameKeyGenerator implements KeyGenerator {
 
-  public String generateKey(String className, String methodName, String text,
-      String meaning) {
-    return className + "." + methodName;
+  public String generateKey(Message msg) {
+    return msg.getMessageInterface().getQualifiedName() + "."
+        + msg.getMethodName();
   }
 }

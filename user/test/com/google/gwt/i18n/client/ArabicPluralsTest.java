@@ -23,6 +23,15 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class ArabicPluralsTest extends GWTTestCase {
 
+  /**
+   * Shorter message for just testing that Arabic plurals work properly.
+   */
+  public interface PluralMessage extends Messages {
+    @DefaultMessage("{0} widgets")
+    @AlternateMessage({"one", "A widget"})
+    String pluralWidgetsOther(@PluralCount int count);
+  }
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.i18n.I18NTest_ar";
@@ -31,7 +40,7 @@ public class ArabicPluralsTest extends GWTTestCase {
   public void testPlurals() {
     // Note that all text is actually in English, but written according to
     // Arabic plural rules.
-    TestAnnotatedMessages m = GWT.create(TestAnnotatedMessages.class);
+    PluralMessage m = GWT.create(PluralMessage.class);
     assertEquals("No widgets", m.pluralWidgetsOther(0));
     assertEquals("A widget", m.pluralWidgetsOther(1));
     assertEquals("Both widgets", m.pluralWidgetsOther(2));

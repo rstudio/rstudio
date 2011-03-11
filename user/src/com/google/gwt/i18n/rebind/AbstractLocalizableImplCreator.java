@@ -32,8 +32,14 @@ import com.google.gwt.i18n.client.LocalizableResource.Key;
 import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
 import com.google.gwt.i18n.rebind.AnnotationsResource.AnnotationsError;
 import com.google.gwt.i18n.rebind.format.MessageCatalogFormat;
-import com.google.gwt.i18n.rebind.keygen.KeyGenerator;
+import com.google.gwt.i18n.server.KeyGenerator;
+import com.google.gwt.i18n.server.MessageCatalogFactory;
+import com.google.gwt.i18n.server.MessageInterface;
+import com.google.gwt.i18n.server.MessageProcessingException;
+import com.google.gwt.i18n.server.MessageCatalogFactory.Context;
+import com.google.gwt.i18n.server.MessageCatalogFactory.Writer;
 import com.google.gwt.i18n.shared.GwtLocale;
+import com.google.gwt.i18n.shared.GwtLocaleFactory;
 import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
 import com.google.gwt.user.rebind.AbstractMethodCreator;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
@@ -41,6 +47,7 @@ import com.google.gwt.user.rebind.SourceWriter;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -51,8 +58,89 @@ import java.util.MissingResourceException;
  * Represents generic functionality needed for <code>Constants</code> and
  * <code>Messages</code> classes.
  */
+@SuppressWarnings("deprecation")
 abstract class AbstractLocalizableImplCreator extends
     AbstractGeneratorClassCreator {
+
+  public static class MessageCatalogContextImpl
+      implements Context {
+
+    private final GeneratorContext context;
+    private final TreeLogger logger;
+
+    public MessageCatalogContextImpl(GeneratorContext context,
+        TreeLogger logger) {
+      this.context = context;
+      this.logger = logger;
+    }
+
+    public OutputStream createBinaryFile(String catalogName) {
+      try {
+        final OutputStream ostr = context.tryCreateResource(logger, catalogName);
+        if (ostr != null) {
+          // wrap the stream so we can commit the resource on close
+          return new OutputStream() {
+
+            @Override
+            public void close() throws IOException {
+              try {
+                context.commitResource(logger, ostr).setVisibility(
+                    Visibility.Private);
+              } catch (UnableToCompleteException e) {
+                // error already logged, anything more to do?
+              }
+            }
+
+            @Override
+            public void write(byte[] b, int off, int len) throws IOException {
+              ostr.write(b, off, len);
+            }
+
+            @Override
+            public void write(int b) throws IOException {
+              ostr.write(b);
+            }
+          };
+        }
+      } catch (UnableToCompleteException e) {
+        // error already logged, anything more to do?
+      }
+      return null;
+    }
+
+    public PrintWriter createTextFile(String catalogName, String charSet) {
+      OutputStream outStr = createBinaryFile(catalogName);
+      if (outStr != null) {
+        try {
+          return new PrintWriter(new BufferedWriter(
+              new OutputStreamWriter(outStr, "UTF-8")), false);
+        } catch (UnsupportedEncodingException e) {
+          error("UTF-8 not supported", e);
+        }
+      }
+      return null;
+    }
+
+    public void error(String msg) {
+      logger.log(TreeLogger.ERROR, msg);
+    }
+
+    public void error(String msg, Throwable cause) {
+      logger.log(TreeLogger.ERROR, msg, cause);
+    }
+
+    public GwtLocaleFactory getLocaleFactory() {
+      return LocaleUtils.getLocaleFactory();
+    }
+
+    public void warning(String msg) {
+      logger.log(TreeLogger.WARN, msg);
+    }
+
+    public void warning(String msg, Throwable cause) {
+      logger.log(TreeLogger.WARN, msg, cause);
+    }
+  }
 
   static String generateConstantOrMessageClass(TreeLogger logger,
       GeneratorContext context, GwtLocale locale, JClassType targetClass)
@@ -158,8 +246,8 @@ abstract class AbstractLocalizableImplCreator extends
             // Locale "default" gets special handling because of property
             // fallbacks; "default" might be mapped to any real locale.
             try {
-              SelectionProperty localeProp = 
-                  context.getPropertyOracle().getSelectionProperty(logger, "locale");
+              SelectionProperty localeProp = context.getPropertyOracle()
+                  .getSelectionProperty(logger, "locale");
               String defaultLocale = localeProp.getFallbackValue();
               if (defaultLocale.length() > 0) {
                 genLocale = defaultLocale;
@@ -180,12 +268,27 @@ abstract class AbstractLocalizableImplCreator extends
       if (found) {
         for (String genClassName : generate.format()) {
           MessageCatalogFormat msgWriter = null;
+          MessageCatalogFactory msgCatFactory = null;
           try {
-            Class<? extends MessageCatalogFormat> msgFormatClass = Class.forName(
-                genClassName, false,
-                MessageCatalogFormat.class.getClassLoader()).asSubclass(
-                MessageCatalogFormat.class);
-            msgWriter = msgFormatClass.newInstance();
+            // TODO(jat): if GWT is ever modified to take a classpath for user
+            // code as an option, we would need to use the user classloader here
+            Class<?> clazz = Class.forName(genClassName, false,
+                MessageCatalogFormat.class.getClassLoader());
+            if (MessageCatalogFormat.class.isAssignableFrom(clazz)) {
+              Class<? extends MessageCatalogFormat> msgFormatClass
+                  = clazz.asSubclass(MessageCatalogFormat.class);
+              msgWriter = msgFormatClass.newInstance();
+            } else if (MessageCatalogFactory.class.isAssignableFrom(clazz)) {
+              Class<? extends MessageCatalogFactory> msgFactoryClass
+                  = clazz.asSubclass(MessageCatalogFactory.class);
+              msgCatFactory = msgFactoryClass.newInstance();
+            } else {
+              logger.log(TreeLogger.ERROR, "Class specified in @Generate must "
+                  + "either be a subtype of MessageCatalogFormat or "
+                  + "MessageCatalogFactory");
+              seenError = true;
+              continue;
+            }
           } catch (InstantiationException e) {
             logger.log(TreeLogger.ERROR, "Error instantiating @Generate class "
                 + genClassName, e);
@@ -209,31 +312,13 @@ abstract class AbstractLocalizableImplCreator extends
             // locale.
             genPath += '_' + locale.toString();
           }
-          genPath += msgWriter.getExtension();
-          OutputStream outStr = context.tryCreateResource(logger, genPath);
-          if (outStr != null) {
-            TreeLogger branch = logger.branch(TreeLogger.TRACE, "Generating "
-                + genPath + " from " + className + " for locale " + locale,
-                null);
-            PrintWriter out = null;
-            try {
-              out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
-                  outStr, "UTF-8")), false);
-            } catch (UnsupportedEncodingException e) {
-              throw error(logger, e.getMessage());
-            }
-            try {
-              // TODO(jat): change writer interface to use GwtLocale
-              msgWriter.write(branch, locale.toString(), resourceList, out,
-                  targetClass);
-              out.flush();
-              context.commitResource(logger, outStr).setVisibility(
-                  Visibility.Private);
-            } catch (UnableToCompleteException e) {
-              // msgWriter should have already logged an error message.
-              // Keep going for now so we can find other errors.
-              seenError = true;
-            }
+          if (msgCatFactory != null) {
+            seenError |= generateToMsgCatFactory(logger, context, locale,
+                targetClass, seenError, resourceList, msgCatFactory, genPath);
+          } else if (msgWriter != null) {
+            seenError |= generateToLegacyMsgCatFormat(logger, context, locale,
+                targetClass, seenError, resourceList, className, msgWriter,
+                genPath);
           }
         }
       }
@@ -243,6 +328,106 @@ abstract class AbstractLocalizableImplCreator extends
       throw new UnableToCompleteException();
     }
     return packageName + "." + className;
+  }
+
+  /**
+   * Write translation source files to the old-style
+   * {@link MessageCatalogFormat}.
+   *
+   * @param logger
+   * @param context
+   * @param locale
+   * @param targetClass
+   * @param seenError
+   * @param resourceList
+   * @param className
+   * @param msgWriter
+   * @param genPath
+   * @return true if an error occurred (already logged)
+   * @throws UnableToCompleteException
+   */
+  
+  private static boolean generateToLegacyMsgCatFormat(TreeLogger logger,
+      GeneratorContext context, GwtLocale locale, JClassType targetClass,
+      boolean seenError, ResourceList resourceList, String className,
+      MessageCatalogFormat msgWriter, String genPath)
+      throws UnableToCompleteException {
+    genPath += msgWriter.getExtension();
+    OutputStream outStr = context.tryCreateResource(logger, genPath);
+    if (outStr != null) {
+      TreeLogger branch = logger.branch(TreeLogger.TRACE, "Generating "
+          + genPath + " from " + className + " for locale " + locale,
+          null);
+      PrintWriter out = null;
+      try {
+        out = new PrintWriter(new BufferedWriter(
+            new OutputStreamWriter(outStr, "UTF-8")), false);
+      } catch (UnsupportedEncodingException e) {
+        throw error(logger, "UTF-8 not supported", e);
+      }
+      try {
+        msgWriter.write(branch, locale.toString(), resourceList, out,
+            targetClass);
+        out.flush();
+        context.commitResource(logger, outStr).setVisibility(
+            Visibility.Private);
+      } catch (UnableToCompleteException e) {
+        // msgWriter should have already logged an error message.
+        // Keep going for now so we can find other errors.
+        seenError = true;
+      }
+    }
+    return seenError;
+  }
+
+  /**
+   * Write translation source files to a {@link MessageCatalogFactory}.
+   *
+   * @param logger
+   * @param context
+   * @param locale 
+   * @param targetClass
+   * @param seenError
+   * @param resourceList
+   * @param msgCatFactory
+   * @param genPath
+   * @return true if an error occurred (already logged)
+   */
+  private static boolean generateToMsgCatFactory(TreeLogger logger,
+      GeneratorContext context, GwtLocale locale, JClassType targetClass, boolean seenError,
+      ResourceList resourceList, MessageCatalogFactory msgCatFactory,
+      String genPath) {
+    // TODO(jat): maintain MessageCatalogWriter instances across
+    // generator runs so they can save state.  One problem is knowing
+    // when the last generator has been run.
+    Writer catWriter = null;
+    try {
+      String catalogName = genPath + msgCatFactory.getExtension();
+      Context ctx = new MessageCatalogContextImpl(
+          context, logger);
+      MessageInterface msgIntf = new TypeOracleMessageInterface(
+          LocaleUtils.getLocaleFactory(), targetClass, resourceList);
+      catWriter = msgCatFactory.getWriter(ctx, catalogName);
+      if (catWriter == null) {
+        logger.log(TreeLogger.TRACE, "Already generated " + catalogName);
+        return false;
+      }
+      msgIntf.accept(catWriter.visitClass());
+    } catch (MessageProcessingException e) {
+      logger.log(TreeLogger.ERROR, e.getMessage(), e);
+      seenError = true;
+    } finally {
+      if (catWriter != null) {
+        try {
+          catWriter.close();
+        } catch (IOException e) {
+          logger.log(TreeLogger.ERROR,
+              "IO error closing catalog writer", e);
+          seenError = true;
+        }
+      }
+    }
+    return seenError;
   }
 
   /**

@@ -71,12 +71,12 @@ public interface LocalizableResource extends Localizable {
    * 
    * Examples:
    * <ul>
-   * <li>{@code @Generate(format = "com.google.gwt.i18n.rebind.format.Properties")}
+   * <li>&#64;Generate(format = "com.google.gwt.i18n.server.PropertyCatalogFactory")
    * <br>generates properties files for all locales, and the names will be
    *      of the form MyMessages_locale.properties
-   * <li>{@code @Generate(format = {"com.example.ProprietaryFormat1",
+   * <li>&#64;Generate(format = {"com.example.ProprietaryFormat1",
    *    "com.example.ProprietaryFormat2"},
-   *    fileName = "myapp_translate_source", locales = {"default"})}
+   *    fileName = "myapp_translate_source", locales = {"default"})
    * <br>generates default files in two proprietary formats, with filenames like
    *      myapp_translate_source.p1 and myapp_translate_source.p2
    * </pre></code>  
@@ -92,15 +92,17 @@ public interface LocalizableResource extends Localizable {
     String DEFAULT = "[default]";
     
     /**
-     * Fully-qualified class names of the generator classes. Each class must implement
-     * com.google.gwt.i18n.rebind.format.MessageCatalogFormat.
+     * Fully-qualified class names of the generator classes. Each class must
+     * implement com.google.gwt.i18n.server.MessageCatalogFactory
+     * (com.google.gwt.i18n.rebind.format.MessageCatalogFormat still works, but
+     * is deprecated).
      * 
-     * Strings are used here instead of class literals because the generators will
-     * likely contain non-translatable code and thus can't be referenced from
-     * translatable code directly.
+     * Strings are used here instead of class literals because the generators
+     * will likely contain non-translatable code and thus can't be referenced
+     * from translatable code directly.
      * 
-     * Each generator may define additional annotations to supply other necessary
-     * parameters.
+     * Each generator may define additional annotations to supply other
+     * necessary parameters.
      */
     String[] format();
 
@@ -141,18 +143,18 @@ public interface LocalizableResource extends Localizable {
   }
 
   /**
-   * Requests that the keys for messages be generated automatically.  The
-   * default value is to use an MD5 hash of the text and meaning.  If this
-   * annotation is not supplied, the keys will be the unqualified method
-   * names.
+   * Requests that the keys for messages be generated automatically.  If the
+   * annotation is supplied with no value, the default is to use an MD5 hash of
+   * the text and meaning.  If this annotation is not supplied, the keys will be
+   * the unqualified method names.
    * 
-   * The value is either the name of an inner class of {@code KeyGenerator} or the
+   * <p>The value is either the name of an inner class of {@code KeyGenerator} or the
    * fully-qualified class name of some implementation of {@code KeyGenerator}.
    */
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.TYPE)
   public @interface GenerateKeys {
-    String value() default "com.google.gwt.i18n.rebind.keygen.MD5KeyGenerator";
+    String value() default "com.google.gwt.i18n.server.keygen.MD5KeyGenerator";
   }
 
   /**

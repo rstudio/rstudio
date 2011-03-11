@@ -76,7 +76,7 @@ class ConstantsMapMethodCreator extends AbstractLocalizableMethodCreator {
     println("args = new " + constantMapClassName + "(new String[] {");
     String keyString;
     try {
-      keyString = resourceList.getRequiredStringExt(mapName, null);
+      keyString = resourceList.getRequiredString(mapName);
     } catch (MissingResourceException e) {
       e.setDuring("getting key list");
       throw e;
@@ -92,7 +92,13 @@ class ConstantsMapMethodCreator extends AbstractLocalizableMethodCreator {
       }
 
       try {
-        String value = resources.getRequiredString(key);
+        // check for "map[key]=value" first
+        String value = resources.getStringExt(mapName, key);
+        if (value == null) {
+          // for backwards compatibility, check for "key=value", which must be
+          // present if the form above isn't present.
+          value = resources.getRequiredString(key);
+        }
         map.put(key, value);
       } catch (MissingResourceException e) {
         e.setDuring("implementing map");

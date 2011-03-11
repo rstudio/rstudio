@@ -13,8 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.i18n.rebind.keygen;
+package com.google.gwt.i18n.server.keygen;
 
+import com.google.gwt.i18n.server.KeyGenerator;
+import com.google.gwt.i18n.server.Message;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.UnsupportedEncodingException;
@@ -23,14 +25,12 @@ import java.security.NoSuchAlgorithmException;
 
 /**
  * Key generator using the MD5 hash of the text and meaning.
- * @deprecated Use {@link com.google.gwt.i18n.server.keygen.MD5KeyGenerator}
- * instead.
  */
-@Deprecated
 public class MD5KeyGenerator implements KeyGenerator {
 
-  public String generateKey(String className, String methodName, String text,
-      String meaning) {
+  public String generateKey(Message msg) {
+    String text = msg.getDefaultMessage();
+    String meaning = msg.getMeaning();
     /*
      * This does not use Util.computeStrongName because we would have
      * to concatenate the text and meaning into a temporary buffer.

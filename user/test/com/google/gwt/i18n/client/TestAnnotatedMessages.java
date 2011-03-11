@@ -27,11 +27,9 @@ import java.util.List;
  * Test of Messages generation using annotations.
  */
 @DefaultLocale("en-US")
-// @GenerateKeys("com.google.gwt.i18n.rebind.keygen.MD5KeyGenerator")
-@GenerateKeys("com.google.gwt.i18n.rebind.keygen.MethodNameKeyGenerator")
-// default
-@Generate(format = "com.google.gwt.i18n.rebind.format.PropertiesFormat")
-@SuppressWarnings("deprecation")
+// @GenerateKeys("com.google.gwt.i18n.server.keygen.MD5KeyGenerator")
+@GenerateKeys("com.google.gwt.i18n.server.keygen.MethodNameKeyGenerator") // default
+@Generate(format = "com.google.gwt.i18n.server.PropertyCatalogFactory")
 public interface TestAnnotatedMessages extends Messages {
 
   /**
@@ -254,28 +252,29 @@ public interface TestAnnotatedMessages extends Messages {
       String name1, String name2, @PluralCount int msgCount,
       @Select Gender gender);
 
+  @SuppressWarnings("deprecation")
   @DefaultMessage("{0} widgets")
   @PluralText({"one", "A widget"})
   String pluralWidgetsOther(@PluralCount int count);
 
   @DefaultMessage("{0} widgets")
-  @PluralText({"one", "A widget"})
+  @AlternateMessage({"one", "A widget"})
   @Key("pluralWidgetsOther")
   SafeHtml pluralWidgetsOtherAsSafeHtml(@PluralCount int count);
 
   @DefaultMessage("{1} {0}")
-  @PluralText({"one", "A {0}"})
+  @AlternateMessage({"one", "A {0}"})
   String twoParamPlural(String name, @PluralCount int count);
 
   @DefaultMessage("{0} widgets")
-  @PluralText({"=0", "No widgets",
+  @AlternateMessage({"=0", "No widgets",
       "=1", "A widget",
       "one", "{0} widget"
   })
   String specialPlurals(@Optional @PluralCount int count);
 
   @DefaultMessage("{0} widgets")
-  @PluralText({"=0", "No widgets",
+  @AlternateMessage({"=0", "No widgets",
       "=1", "A widget",
       "one", "{0} widget"
   })
@@ -290,12 +289,12 @@ public interface TestAnnotatedMessages extends Messages {
   SafeHtml staticArgsSafeHtml();
 
   @DefaultMessage("{1} {0}")
-  @PluralText({"one", "A {0}"})
+  @AlternateMessage({"one", "A {0}"})
   @Key("twoParamPlural")
   SafeHtml twoParamPluralAsSafeHtml(String name, @PluralCount int count);
 
   @DefaultMessage("{1} {0}")
-  @PluralText({"one", "A {0}"})
+  @AlternateMessage({"one", "A {0}"})
   @Key("twoParamPlural")
   SafeHtml twoParamPluralAsSafeHtml(SafeHtml name, @PluralCount int count);
   
@@ -306,7 +305,7 @@ public interface TestAnnotatedMessages extends Messages {
   String withNumberExponent(Number value);
 
   @DefaultMessage("{1}, {2}, and {0,number} others have reviewed this movie")
-  @PluralText({
+  @AlternateMessage({
     "=0", "No one has reviewed this movie",
     "=1", "{1} has reviewed this movie",
     "=2", "{1} and {2} have reviewed this movie",
@@ -315,7 +314,7 @@ public interface TestAnnotatedMessages extends Messages {
        String name1, String name2);
 
   @DefaultMessage("{1}, {2}, and {0,number} others have reviewed this movie")
-  @PluralText({
+  @AlternateMessage({
     "=0", "No one has reviewed this movie",
     "=1", "{1} has reviewed this movie",
     "=2", "{1} and {2} have reviewed this movie",
@@ -325,41 +324,41 @@ public interface TestAnnotatedMessages extends Messages {
        String name1, SafeHtml name2);
 
   @DefaultMessage("The values are {0,list,number}")
-  @PluralText({
+  @AlternateMessage({
     "=0", "There are no values",
     "=1", "The value is {0,list,number}"})
   String valuesArray(@PluralCount int[] values);
 
   @DefaultMessage("The values are {0,list,number}")
-  @PluralText({
+  @AlternateMessage({
     "=0", "There are no values",
     "=1", "The value is {0,list,number}"})
   @Key("valuesArray")
   String valuesList(@PluralCount List<Integer> list);
 
   @DefaultMessage("The values are {0,list,number}")
-  @PluralText({
+  @AlternateMessage({
     "=0", "There are no values",
     "=1", "The value is {0,list,number}"})
   @Key("valuesArray")
   String valuesVarArgs(@PluralCount int... values);
 
   @DefaultMessage("The values are {0,list,number}")
-  @PluralText({
+  @AlternateMessage({
     "=0", "There are no values",
     "=1", "The value is {0,list,number}"})
   @Key("valuesArray")
   SafeHtml valuesArrayAsSafeHtml(@PluralCount int[] values);
 
   @DefaultMessage("The values are {0,list,number}")
-  @PluralText({
+  @AlternateMessage({
     "=0", "There are no values",
     "=1", "The value is {0,list,number}"})
   @Key("valuesArray")
   SafeHtml valuesListAsSafeHtml(@PluralCount List<Integer> list);
 
   @DefaultMessage("The names are {0,list}")
-  @PluralText({
+  @AlternateMessage({
     "=0", "There are no names",
     "=1", "The name is {0,list}"})
   SafeHtml valuesVarArgsAsSafeHtml(@PluralCount SafeHtml... values);

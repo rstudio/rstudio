@@ -26,8 +26,8 @@ import java.util.Map;
  * Test of Constants generation using annotations.
  */
 @DefaultLocale("en-US")
-@GenerateKeys("com.google.gwt.i18n.rebind.keygen.MethodNameKeyGenerator") // default
-@Generate(format = "com.google.gwt.i18n.rebind.format.PropertiesFormat")
+@GenerateKeys("com.google.gwt.i18n.server.keygen.MethodNameKeyGenerator") // default
+@Generate(format = "com.google.gwt.i18n.server.PropertyCatalogFactory")
 public interface TestAnnotatedConstants extends Constants {
 
   @DefaultIntValue(14)
@@ -55,7 +55,7 @@ public interface TestAnnotatedConstants extends Constants {
   @DefaultStringMapValue({"key1", "value1", "key2", "value2"})
   Map<String, String> stringMap();
 
-  @SuppressWarnings("unchecked") // intentional test of raw Map type
+  @SuppressWarnings({"rawtypes"}) // intentional test of raw Map type
   @DefaultStringMapValue({"key1", "value1", "key2", "value2"})
   Map rawMap();
 

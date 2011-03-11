@@ -25,6 +25,8 @@ import com.google.gwt.safehtml.shared.SafeHtml;
  * then verifying that keys in the subinterface are looked up with
  * MD5 hashes rather than method names.
  */
+// Note specifically using the old MD5KeyGenerator to make sure still have some
+// coverage of it.
 @GenerateKeys("com.google.gwt.i18n.rebind.keygen.MD5KeyGenerator")
 public interface CommonInterfaceAnnotations extends Messages {
 

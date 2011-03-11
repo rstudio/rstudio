@@ -224,7 +224,6 @@ public class GwtLocaleTest extends TestCase {
     assertEquals(aliases.get(0), zhCN);
     assertContainsAndGetPosition(aliases, factory.fromString("zh_Hans_CN"));
     assertContainsAndGetPosition(aliases, zhHans);
-    GwtLocale pa = factory.fromString("pa");
     GwtLocale paPK = factory.fromString("pa_PK");
     GwtLocale paArabPK = factory.fromString("pa_Arab_PK");
     aliases = paPK.getAliases();
