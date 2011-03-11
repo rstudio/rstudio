@@ -3232,5 +3232,4 @@ public class GwtAstBuilder {
       throw ice;
     }
   }
-
 }
