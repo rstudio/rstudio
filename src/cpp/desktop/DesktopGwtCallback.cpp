@@ -20,18 +20,22 @@
 #endif
 
 #include <QtGui/QFileDialog>
+#include <QFileDialog>
+#include <QDesktopServices>
+#include <QMessageBox>
 
 #include <core/FilePath.hpp>
 #include <core/system/System.hpp>
 
 #include "DesktopAboutDialog.hpp"
 #include "DesktopCRANMirrorDialog.hpp"
-#include "DesktopOptionsDialog.hpp"
 #include "DesktopOptions.hpp"
 #include "DesktopBrowserWindow.hpp"
 #include "DesktopWindowTracker.hpp"
 #include "DesktopInputDialog.hpp"
 #include "DesktopSecondaryWindow.hpp"
+#include "DesktopRVersion.hpp"
+#include "DesktopMainWindow.hpp"
 
 using namespace core;
 
@@ -284,12 +288,28 @@ QString GwtCallback::chooseCRANmirror()
 
 QString GwtCallback::getRVersion()
 {
+#ifdef Q_OS_WIN32
+   bool defaulted = options().rBinDir().isEmpty();
+   QString rDesc = defaulted
+                   ? QString("[Default] ") + autoDetect().description()
+                   : RVersion(options().rBinDir()).description();
+   return rDesc;
+#else
    return QString();
+#endif
 }
 
 QString GwtCallback::chooseRVersion()
 {
+#ifdef Q_OS_WIN32
+   RVersion rVersion = desktop::detectRVersion(true, pOwnerWindow_);
+   if (rVersion.isValid())
+      return getRVersion();
+   else
+      return QString();
+#else
    return QString();
+#endif
 }
 
 bool GwtCallback::canChooseRVersion()

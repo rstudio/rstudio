@@ -54,7 +54,6 @@ set(DESKTOP_SOURCE_FILES
   DesktopMenuCallback.cpp
   DesktopNetworkProxyFactory.cpp
   DesktopOptions.cpp
-  DesktopOptionsDialog.cpp
   DesktopURLDownloader.cpp
   DesktopWebPage.cpp
   DesktopWebView.cpp
@@ -105,7 +104,6 @@ qt4_wrap_ui(DESKTOP_UI_SOURCES
    DesktopChooseRHome.ui
    DesktopCRANMirrorDialog.ui
    DesktopInputDialog.ui
-   DesktopOptionsDialog.ui
    DesktopUpdateAvailableDialog.ui
 )
 
