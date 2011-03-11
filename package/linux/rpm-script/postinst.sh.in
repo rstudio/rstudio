@@ -25,7 +25,7 @@ service rstudio-server start
 # add pam profile
 if [ ! -e /etc/pam.d/rstudio ]
 then
-   cp ${CMAKE_INSTALL_PREFIX}/extras/pam/redhat/rstudio /etc/pam.d/
+   cp /etc/pam.d/login /etc/pam.d/rstudio
 fi
 
 # clear error termination state
