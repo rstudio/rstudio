@@ -62,7 +62,7 @@ public class ImplicitClientBundle {
    * @param body the inline css text
    * @param importTypes for the {@literal @}Import annotation, if any. LinkedHashSet
    *          to enforce deterministic order across recompiles
-   * @return
+   * @return the newly-created CssResource 
    */
   public ImplicitCssResource createCssResource(String name, String[] source,
       JClassType extendedInterface, String body, LinkedHashSet<JClassType> importTypes) {
@@ -78,7 +78,7 @@ public class ImplicitClientBundle {
    * 
    * @param name the method name and the ui:field name
    * @param source path to the resource
-   * @return
+   * @return the newly-created DataResource
    */
   public ImplicitDataResource createDataResource(String name, String source) {
     ImplicitDataResource data = new ImplicitDataResource(name, source);
@@ -95,7 +95,7 @@ public class ImplicitClientBundle {
    *          specified
    * @param repeatStyle value of the RepeatStyle ImageOption, or null if none
    *          was specified
-   * @return
+   * @return the newly-created ImageResource
    */
   public ImplicitImageResource createImageResource(String name, String source,
       Boolean flipRtl, RepeatStyle repeatStyle) {

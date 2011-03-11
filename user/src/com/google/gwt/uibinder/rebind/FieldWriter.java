@@ -72,16 +72,15 @@ public interface FieldWriter {
 
   /**
    * Used to provide an initializer string to use instead of a
-   * {@link com.google.gwt.core.client.GWT#create()} call. Note that this is an
+   * {@link com.google.gwt.core.client.GWT#create} call. Note that this is an
    * RHS expression. Don't include the leading '=', and don't end it with ';'.
    *
-   * @throws UnableToCompleteException
    * @throws IllegalStateException on second attempt to set the initializer
    */
   void setInitializer(String initializer);
 
   /**
-   * Write the field delcaration.
+   * Write the field declaration.
    */
   void write(IndentedWriter w) throws UnableToCompleteException;
 }

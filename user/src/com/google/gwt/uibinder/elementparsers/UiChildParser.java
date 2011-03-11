@@ -97,7 +97,8 @@ public class UiChildParser implements ElementParser {
   }
 
   /**
-   * Process a child element that should be added using a {@link UiChild} method.
+   * Process a child element that should be added using a 
+   * {@link com.google.gwt.uibinder.client.UiChild UiChild} method.
    */
   private void handleChild(XMLElement child) throws UnableToCompleteException {
     String tag = child.getLocalName();

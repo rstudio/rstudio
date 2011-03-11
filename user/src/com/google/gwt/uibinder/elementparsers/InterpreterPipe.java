@@ -45,10 +45,10 @@ import java.util.List;
 
   /**
    * Interpreters are fired in the order they were handed to the constructor. If
-   * an interpretter gives a non-null result, downstream interpretters don't
+   * an interpreter gives a non-null result, downstream interpreters don't
    * fire.
    *
-   * @return The T or null returned by the last pipelined interpretter to run
+   * @return The T or null returned by the last pipelined interpreter to run
    * @throws UnableToCompleteException on error
    */
   public T interpretElement(XMLElement elem) throws UnableToCompleteException {

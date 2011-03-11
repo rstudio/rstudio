@@ -22,7 +22,6 @@ import junit.framework.TestCase;
 
 import org.xml.sax.SAXException;
 
-import java.io.IOException;
 import java.util.Iterator;
 
 /**
@@ -40,7 +39,7 @@ public class DockLayoutPanelParserTest extends TestCase {
     tester = new ElementParserTester(PARSED_TYPE, new DockLayoutPanelParser());
   }
 
-  public void testBadChild() throws SAXException, IOException {
+  public void testBadChild() throws SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:DockLayoutPanel unit='EM'>");
     b.append("  <g:west><foo/></g:west>");
@@ -55,8 +54,7 @@ public class DockLayoutPanelParserTest extends TestCase {
     }
   }
 
-  public void testHappy() throws UnableToCompleteException, SAXException,
-      IOException {
+  public void testHappy() throws UnableToCompleteException, SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:DockLayoutPanel unit='EM'>");
     b.append("  <g:north size='5'>");
@@ -83,8 +81,7 @@ public class DockLayoutPanelParserTest extends TestCase {
     assertNull(tester.logger.died);
   }
 
-  public void testNiceCenter() throws UnableToCompleteException, SAXException,
-      IOException {
+  public void testNiceCenter() throws UnableToCompleteException, SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:DockLayoutPanel unit='EM'>");
     b.append("  <g:center>");
@@ -110,7 +107,7 @@ public class DockLayoutPanelParserTest extends TestCase {
     assertFalse(i.hasNext());
   }
 
-  public void testTooManyCenters() throws SAXException, IOException {
+  public void testTooManyCenters() throws SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:DockLayoutPanel unit='EM'>");
     b.append("  <g:center>");
@@ -129,8 +126,7 @@ public class DockLayoutPanelParserTest extends TestCase {
     }
   }
 
-  public void testNoUnits() throws SAXException, IOException,
-      UnableToCompleteException {
+  public void testNoUnits() throws SAXException, UnableToCompleteException {
     StringBuffer b = new StringBuffer();
     b.append("<g:DockLayoutPanel>");
     b.append("</g:DockLayoutPanel>");
@@ -143,7 +139,7 @@ public class DockLayoutPanelParserTest extends TestCase {
     assertFalse(i.hasNext());
   }
 
-  public void testNoSize() throws SAXException, IOException {
+  public void testNoSize() throws SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:DockLayoutPanel>");
     b.append("  <g:north>");

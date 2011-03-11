@@ -87,8 +87,8 @@ public class FieldManager {
    * When making a field we peek at the {@link #parsedFieldStack} to make sure
    * that the field that holds the widget currently being parsed will depended
    * upon the field being declared. This ensures, for example, that dom id
-   * fields (see {@link #declareDomIdHolder()}) used by an HTMLPanel will be
-   * declared before it is.
+   * fields (see {@link UiBinderWriter#declareDomIdHolder()}) used by an HTMLPanel 
+   * will be declared before it is.
    * 
    * @param fieldType the type of the new field
    * @param fieldName the name of the new field
@@ -112,8 +112,8 @@ public class FieldManager {
    * When making a field we peek at the {@link #parsedFieldStack} to make sure
    * that the field that holds the widget currently being parsed will depended
    * upon the field being declared. This ensures, for example, that dom id
-   * fields (see {@link #declareDomIdHolder()}) used by an HTMLPanel will be
-   * declared before it is.
+   * fields (see {@link UiBinderWriter#declareDomIdHolder()}) used by an HTMLPanel
+   * will be declared before it is.
    * 
    * @throws UnableToCompleteException on duplicate name
    * @return a new {@link FieldWriter} instance
@@ -134,8 +134,8 @@ public class FieldManager {
    * When making a field we peek at the {@link #parsedFieldStack} to make sure
    * that the field that holds the widget currently being parsed will depended
    * upon the field being declared. This ensures, for example, that dom id
-   * fields (see {@link #declareDomIdHolder()}) used by an HTMLPanel will be
-   * declared before it is.
+   * fields (see {@link UiBinderWriter#declareDomIdHolder()}) used by an HTMLPanel
+   * will be declared before it is.
    * 
    * @param assignableType class or interface extened or implemented by this
    *          type
@@ -156,8 +156,6 @@ public class FieldManager {
   /**
    * Called to register a <code>{field.reference}</code> encountered during
    * parsing, to be validated against the type oracle once parsing is complete.
-   * 
-   * @throws UnableToCompleteException
    */
   public void registerFieldReference(String fieldReferenceString, JType type) {
     FieldReference fieldReference = fieldReferences.get(fieldReferenceString);

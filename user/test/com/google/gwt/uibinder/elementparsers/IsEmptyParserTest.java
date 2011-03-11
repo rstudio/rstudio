@@ -21,8 +21,6 @@ import junit.framework.TestCase;
 
 import org.xml.sax.SAXException;
 
-import java.io.IOException;
-
 /**
  * A unit test. Guess what of.
  */
@@ -37,7 +35,7 @@ public class IsEmptyParserTest extends TestCase {
     tester = new ElementParserTester(PARSED_TYPE, new IsEmptyParser());
   }
 
-  public void testExtraText() throws SAXException, IOException {
+  public void testExtraText() throws SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:UIObject>");
     b.append("  I have some extra");
@@ -52,7 +50,7 @@ public class IsEmptyParserTest extends TestCase {
     }
   }
 
-  public void testExtraChildren() throws SAXException, IOException {
+  public void testExtraChildren() throws SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:UIObject>");
     b.append("  <blorp />");
@@ -67,7 +65,7 @@ public class IsEmptyParserTest extends TestCase {
     }
   }
   
-  public void testExtraAttributes() throws SAXException, IOException {
+  public void testExtraAttributes() throws SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:UIObject blip='blap' blorp='bloop'>");
     b.append("</g:UIObject>");

@@ -23,8 +23,6 @@ import junit.framework.TestCase;
 
 import org.xml.sax.SAXException;
 
-import java.io.IOException;
-
 /**
  * Eponymous unit test.
  */
@@ -66,7 +64,7 @@ public class ImageParserTest extends TestCase {
   }
 
   public void testHappyWithDefaultInstantiableSubclass()
-      throws UnableToCompleteException, SAXException, IOException {
+      throws UnableToCompleteException, SAXException {
     tester = new ElementParserTester("my.MyImage", new ImageParser(),
         IMAGE_SUBCLASS_NO_CONSTRUCTOR, IMAGE_SUBCLASS_RESOURCE_CONSTRUCTOR);
     ImageParser parser = new ImageParser();
@@ -88,7 +86,7 @@ public class ImageParserTest extends TestCase {
   }
 
   public void testHappyWithSubclassWithImageResourceConstructor()
-      throws UnableToCompleteException, SAXException, IOException {
+      throws UnableToCompleteException, SAXException {
     ImageParser parser = new ImageParser();
     tester = new ElementParserTester("my.MyConstructedImage", new ImageParser(),
         IMAGE_SUBCLASS_NO_CONSTRUCTOR, IMAGE_SUBCLASS_RESOURCE_CONSTRUCTOR);
@@ -112,7 +110,7 @@ public class ImageParserTest extends TestCase {
   }
 
   public void testHappyWithResource() throws UnableToCompleteException,
-      SAXException, IOException {
+      SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<ui:Image field='someImageResource' />");
     b.append("<g:Image resource='{someImageResource}' >");
@@ -127,7 +125,7 @@ public class ImageParserTest extends TestCase {
   }
 
   public void testHappyWithNoResource() throws UnableToCompleteException,
-      SAXException, IOException {
+      SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:Image>");
     b.append("</g:Image>");
@@ -139,7 +137,7 @@ public class ImageParserTest extends TestCase {
     assertNull(tester.logger.died);
   }
 
-  public void testChokeOnNonResource() throws SAXException, IOException {
+  public void testChokeOnNonResource() throws SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:Image resource='someString' >");
     b.append("</g:Image>");

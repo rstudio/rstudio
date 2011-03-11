@@ -112,7 +112,7 @@ public abstract class PlaceholderInterpreter implements
    * @param name
    * @param example
    * @param value
-   * @return
+   * @return the token to replace the input String's placeholder
    */
   protected String nextPlaceholder(String name, String example, String value) {
     message.addPlaceholder(new PlaceholderWriter(name, example, value));

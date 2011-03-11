@@ -24,7 +24,6 @@ import junit.framework.TestCase;
 
 import org.xml.sax.SAXException;
 
-import java.io.IOException;
 import java.util.Iterator;
 
 /**
@@ -69,8 +68,7 @@ public class DialogBoxParserTest extends TestCase {
     tester = new ElementParserTester(PARSED_TYPE, new DialogBoxParser());
   }
 
-  public void testHappy() throws UnableToCompleteException, SAXException,
-      IOException {
+  public void testHappy() throws UnableToCompleteException, SAXException {
     StringBuffer b = new StringBuffer();
 
     b.append("<g:DialogBox autoHide='true' modal='true'>");
@@ -93,8 +91,7 @@ public class DialogBoxParserTest extends TestCase {
     assertNull(tester.logger.died);
   }
 
-  public void testNoCaption() throws UnableToCompleteException, SAXException,
-      IOException {
+  public void testNoCaption() throws UnableToCompleteException, SAXException {
     StringBuffer b = new StringBuffer();
 
     b.append("<g:DialogBox autoHide='true' modal='true'>");
@@ -110,8 +107,7 @@ public class DialogBoxParserTest extends TestCase {
     assertNull(tester.logger.died);
   }
 
-  public void testDefaults() throws UnableToCompleteException, SAXException,
-      IOException {
+  public void testDefaults() throws UnableToCompleteException, SAXException {
     StringBuffer b = new StringBuffer();
 
     b.append("<g:DialogBox/> ");
@@ -124,7 +120,7 @@ public class DialogBoxParserTest extends TestCase {
     assertNull(tester.logger.died);
   }
 
-  public void testCustomCaptionAndCaption() throws SAXException, IOException,
+  public void testCustomCaptionAndCaption() throws SAXException, 
       UnableToCompleteException {
     StringBuffer b = new StringBuffer();
 
@@ -151,7 +147,7 @@ public class DialogBoxParserTest extends TestCase {
     }
   }
 
-  public void testWidgetInCaption() throws SAXException, IOException {
+  public void testWidgetInCaption() throws SAXException {
     StringBuffer b = new StringBuffer();
 
     b.append("<g:DialogBox autoHide='true' modal='true'>");
@@ -168,7 +164,7 @@ public class DialogBoxParserTest extends TestCase {
     }
   }
 
-  public void testTooManyCaptionWidgets() throws SAXException, IOException,
+  public void testTooManyCaptionWidgets() throws SAXException,
       UnableToCompleteException {
 
     StringBuffer b = new StringBuffer();
@@ -194,8 +190,7 @@ public class DialogBoxParserTest extends TestCase {
     }
   }
 
-  public void testCustomCaption() throws SAXException, IOException,
-      UnableToCompleteException {
+  public void testCustomCaption() throws SAXException, UnableToCompleteException {
     StringBuffer b = new StringBuffer();
 
     DialogBoxParser parser = new DialogBoxParser();
@@ -229,8 +224,7 @@ public class DialogBoxParserTest extends TestCase {
     assertNull(tester.logger.died);
   }
 
-  public void testCaptionWidgetDoesntImplementCaption() throws SAXException,
-      IOException {
+  public void testCaptionWidgetDoesntImplementCaption() throws SAXException {
 
     StringBuffer b = new StringBuffer();
 
@@ -248,7 +242,7 @@ public class DialogBoxParserTest extends TestCase {
     }
   }
 
-  public void testTooManyBodies() throws SAXException, IOException {
+  public void testTooManyBodies() throws SAXException {
     StringBuffer b = new StringBuffer();
 
     b.append("<g:DialogBox autoHide='true' modal='true'>");
@@ -264,7 +258,7 @@ public class DialogBoxParserTest extends TestCase {
     }
   }
 
-  public void testTooManyCaptions() throws SAXException, IOException {
+  public void testTooManyCaptions() throws SAXException {
     StringBuffer b = new StringBuffer();
 
     b.append("<g:DialogBox autoHide='true' modal='true'>");
@@ -280,7 +274,7 @@ public class DialogBoxParserTest extends TestCase {
     }
   }
 
-  public void testBadCaptionWidgetContent() throws SAXException, IOException {
+  public void testBadCaptionWidgetContent() throws SAXException {
 
     StringBuffer b = new StringBuffer();
 
@@ -298,7 +292,7 @@ public class DialogBoxParserTest extends TestCase {
     }
   }
 
-  public void testBadElemContent() throws SAXException, IOException {
+  public void testBadElemContent() throws SAXException {
     StringBuffer b = new StringBuffer();
 
     b.append("<g:DialogBox autoHide='true' modal='true'>");
@@ -313,7 +307,7 @@ public class DialogBoxParserTest extends TestCase {
     }
   }
 
-  public void testBadTextContent() throws SAXException, IOException {
+  public void testBadTextContent() throws SAXException {
     StringBuffer b = new StringBuffer();
 
     b.append("<g:DialogBox autoHide='true' modal='true'>");
@@ -331,7 +325,7 @@ public class DialogBoxParserTest extends TestCase {
   }
 
   public void testSubclassOkay() throws UnableToCompleteException,
-      SAXException, IOException {
+      SAXException {
     DialogBoxParser parser = new DialogBoxParser();
     String typeName = "my.MyDialogBox";
     tester = new ElementParserTester(typeName, parser, DIALOG_SUBCLASS);

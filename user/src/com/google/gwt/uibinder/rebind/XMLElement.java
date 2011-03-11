@@ -419,9 +419,9 @@ public class XMLElement {
    * <p>
    * This call requires an interpreter to make sense of any special children.
    * The odds are you want to use
-   * {@link com.google.gwt.uibinder.elementparsers.templates.parsers.HtmlInterpreter}
+   * {@link com.google.gwt.uibinder.elementparsers.HtmlInterpreter}
    * for an HTML value, or
-   * {@link com.google.gwt.uibinder.elementparsers.templates.parsers.TextInterpreter}
+   * {@link com.google.gwt.uibinder.elementparsers.TextInterpreter}
    * for text.
    *
    * @param interpreter Called for each element, expected to return a string
@@ -467,7 +467,7 @@ public class XMLElement {
    * <p>
    * This call requires an interpreter to make sense of any special children.
    * The odds are you want to use
-   * {@link com.google.gwt.uibinder.elementparsers.templates.parsers.TextInterpreter}
+   * {@link com.google.gwt.uibinder.elementparsers.TextInterpreter}
    *
    * @throws UnableToCompleteException If any elements present are not consumed
    *           by the interpreter

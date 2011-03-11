@@ -26,11 +26,9 @@ import org.w3c.dom.Text;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.ext.DefaultHandler2;
 
-import java.io.IOException;
 import java.util.Stack;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -100,7 +98,7 @@ class W3cDocumentBuilder extends DefaultHandler2 {
 
   @Override
   public InputSource resolveEntity(String name, String publicId,
-      String baseURI, String systemId) throws SAXException, IOException {
+      String baseURI, String systemId) {
     return resolver.resolveEntity(publicId, systemId);
   }
 

@@ -21,7 +21,6 @@ import junit.framework.TestCase;
 
 import org.xml.sax.SAXException;
 
-import java.io.IOException;
 import java.util.Iterator;
 
 /**
@@ -38,7 +37,7 @@ public class ListBoxParserTest extends TestCase {
     tester = new ElementParserTester(PARSED_TYPE, new ListBoxParser());
   }
   
-  public void testChildWithWhitespaces() throws UnableToCompleteException, SAXException, IOException {
+  public void testChildWithWhitespaces() throws UnableToCompleteException, SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:ListBox>");
     b.append("  <g:item>    </g:item>");
@@ -57,7 +56,7 @@ public class ListBoxParserTest extends TestCase {
     assertNull(tester.logger.died);
   }
   
-  public void testEmtpyChild() throws UnableToCompleteException, SAXException, IOException {
+  public void testEmptyChild() throws UnableToCompleteException, SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:ListBox>");
     b.append("  <g:item></g:item>");
@@ -76,7 +75,7 @@ public class ListBoxParserTest extends TestCase {
     assertNull(tester.logger.died);
   }
   
-  public void testInvalidChild() throws SAXException, IOException {
+  public void testInvalidChild() throws SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:ListBox>");
     b.append("  <foo/>");
@@ -90,8 +89,7 @@ public class ListBoxParserTest extends TestCase {
     }
   }
   
-  public void testValidChild() throws UnableToCompleteException, SAXException,
-  IOException {
+  public void testValidChild() throws UnableToCompleteException, SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:ListBox>");
     b.append("  <g:item>");
@@ -117,7 +115,7 @@ public class ListBoxParserTest extends TestCase {
     assertNull(tester.logger.died);
   }
   
-  public void testWidgetAsChild() throws SAXException, IOException {
+  public void testWidgetAsChild() throws SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:ListBox>");
     b.append("  <g:item>");

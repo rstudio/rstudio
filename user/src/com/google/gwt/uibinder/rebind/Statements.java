@@ -47,7 +47,7 @@ public interface Statements {
    * 
    * @param format
    * @param args
-   * @see #beginAttachedSection(String)
+   * @see UiBinderWriter#beginAttachedSection(String)
    */
   void addDetachStatement(String format, Object... args);
 

@@ -21,7 +21,6 @@ import junit.framework.TestCase;
 
 import org.xml.sax.SAXException;
 
-import java.io.IOException;
 import java.util.Iterator;
 
 /**
@@ -38,8 +37,7 @@ public class UIObjectParserTest extends TestCase {
     tester = new ElementParserTester(PARSED_TYPE, new UIObjectParser());
   }
 
-  public void testHappy() throws UnableToCompleteException, SAXException,
-      IOException {
+  public void testHappy() throws UnableToCompleteException, SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:UIObject debugId='blat' styleName='primary' "
         + "addStyleNames='foo, bar baz'");
@@ -65,8 +63,7 @@ public class UIObjectParserTest extends TestCase {
     assertNull(tester.logger.died);
   }
 
-  public void testSetPrimary() throws UnableToCompleteException, SAXException,
-      IOException {
+  public void testSetPrimary() throws UnableToCompleteException, SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:UIObject stylePrimaryName='primary' >");
     b.append("</g:UIObject>");
@@ -83,7 +80,7 @@ public class UIObjectParserTest extends TestCase {
     assertNull(tester.logger.died);
   }
 
-  public void testStyleConflict() throws SAXException, IOException {
+  public void testStyleConflict() throws SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:UIObject stylePrimaryName='primary' styleName='otherPrimary'>");
     b.append("</g:UIObject>");

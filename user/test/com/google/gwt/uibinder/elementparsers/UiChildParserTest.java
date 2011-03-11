@@ -134,25 +134,23 @@ public class UiChildParserTest extends TestCase {
     assertNull("Parser should never set an initializer.", w.getInitializer());
   }
 
-  public void testIncompatibleChild() throws SAXParseException,
-      UnableToCompleteException {
+  public void testIncompatibleChild() throws SAXParseException {
     String b = UIBINDER.replaceAll(CHILDREN, "<g:child> <div/> </g:child>");
 
     try {
-      FieldWriter w = tester.parse(b);
+      tester.parse(b);
       fail("Incompatible type should have thrown an error.");
     } catch (UnableToCompleteException exception) {
       assertEquals(0, tester.writer.statements.size());
     }
   }
 
-  public void testMultipleChildrenInvalid() throws SAXParseException,
-      UnableToCompleteException {
+  public void testMultipleChildrenInvalid() throws SAXParseException {
     String b = UIBINDER.replaceAll(CHILDREN,
         "<g:child ><g:Label/><g:Label/></g:child>");
 
     try {
-      FieldWriter w = tester.parse(b.toString());
+      tester.parse(b.toString());
       fail("Cannot have multiple children under an @UiChild tag.");
     } catch (UnableToCompleteException exception) {
       assertEquals(0, tester.writer.statements.size());

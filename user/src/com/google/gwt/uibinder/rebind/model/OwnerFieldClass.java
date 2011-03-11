@@ -368,7 +368,7 @@ public class OwnerFieldClass {
    *  
    * The cost mapping is defined in 
    * {@link #TYPE_RANK typeRank }
-   * @param method.
+   * @param method
    * @return the rank of the method.
    */
   private int rankMethodOnParameters(JMethod method) {

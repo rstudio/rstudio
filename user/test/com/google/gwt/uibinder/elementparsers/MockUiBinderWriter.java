@@ -56,8 +56,7 @@ class MockUiBinderWriter extends UiBinderWriter {
   }
   
   @Override
-  public String parseElementToField(XMLElement elem)
-      throws UnableToCompleteException {
+  public String parseElementToField(XMLElement elem) {
     return elem.consumeOpeningTag();
   }  
 }
