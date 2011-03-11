@@ -106,7 +106,7 @@
               <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA.jar" />
               <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA-sources.jar" />
             </classpath>
-            <jvmarg value="-Xmx256M" />
+            <jvmarg value="-Xmx384M" />
             <arg value="-localWorkers" />
             <arg value="${gwt.samples.localworkers}" />
             <arg value="-war" />
