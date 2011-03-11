@@ -15,6 +15,9 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
+import com.google.gwt.dev.util.collect.Lists;
+
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 
 import java.io.IOException;
@@ -104,6 +107,12 @@ public class CachedCompilationUnit extends CompilationUnit {
   @Override
   public String getTypeName() {
     return typeName;
+  }
+
+  @Override
+  public List<JDeclaredType> getTypes() {
+    // TODO(scottb): implement.
+    return Lists.create();
   }
 
   @Override

@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.asm.ClassReader;
 import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.commons.EmptyVisitor;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.collect.HashMap;
@@ -290,6 +291,11 @@ public abstract class CompilationUnit implements Serializable {
    * Returns the fully-qualified name of the top level public type.
    */
   public abstract String getTypeName();
+
+  /**
+   * Returns the GWT AST types in this unit.
+   */
+  public abstract List<JDeclaredType> getTypes();
 
   @Deprecated
   public final boolean hasAnonymousClasses() {

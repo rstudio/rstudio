@@ -21,6 +21,8 @@ import com.google.gwt.dev.javac.CompilationUnitBuilder.ResourceCompilationUnitBu
 import com.google.gwt.dev.javac.JdtCompiler.AdditionalTypeProviderDelegate;
 import com.google.gwt.dev.javac.JdtCompiler.UnitProcessor;
 import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
+import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
 import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.StringInterner;
@@ -111,9 +113,17 @@ public class CompilationStateBuilder {
           Dependencies dependencies =
               new Dependencies(packageName, unresolvedQualified, unresolvedSimple, apiRefs);
 
+          List<JDeclaredType> types = Collections.emptyList();
+          if (GwtAstBuilder.ENABLED) {
+            if (!cud.compilationResult().hasErrors()) {
+              // Make a GWT AST.
+              types = astBuilder.process(cud, jsniMethods, jsniRefs);
+            }
+          }
+
           CompilationUnit unit =
-              builder.build(compiledClasses, dependencies, jsniMethods.values(), methodArgs, cud
-                  .compilationResult().getProblems());
+              builder.build(compiledClasses, types, dependencies, jsniMethods.values(), methodArgs,
+                  cud.compilationResult().getProblems());
           addValidUnit(unit);
           // Cache the valid unit for future compiles.
           ContentId contentId = builder.getContentId();
@@ -139,6 +149,8 @@ public class CompilationStateBuilder {
      * they can be recompiled if necessary.
      */
     private final Map<String, CompiledClass> allValidClasses = new HashMap<String, CompiledClass>();
+
+    private final GwtAstBuilder astBuilder = new GwtAstBuilder();
 
     /**
      * The JDT compiler.

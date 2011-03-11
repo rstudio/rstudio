@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.util.collect.Lists;
 
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
@@ -26,15 +27,18 @@ abstract class CompilationUnitImpl extends CompilationUnit {
 
   private final Dependencies dependencies;
   private final List<CompiledClass> exposedCompiledClasses;
+  private final List<JDeclaredType> exposedTypes;
   private final boolean hasErrors;
   private final List<JsniMethod> jsniMethods;
   private final MethodArgNamesLookup methodArgs;
   private final CategorizedProblem[] problems;
 
   public CompilationUnitImpl(List<CompiledClass> compiledClasses,
-      Dependencies dependencies, Collection<? extends JsniMethod> jsniMethods,
+      List<JDeclaredType> types, Dependencies dependencies,
+      Collection<? extends JsniMethod> jsniMethods,
       MethodArgNamesLookup methodArgs, CategorizedProblem[] problems) {
     this.exposedCompiledClasses = Lists.normalizeUnmodifiable(compiledClasses);
+    this.exposedTypes = Lists.normalizeUnmodifiable(types);
     this.dependencies = dependencies;
     this.jsniMethods = Lists.create(jsniMethods.toArray(new JsniMethod[jsniMethods.size()]));
     this.methodArgs = methodArgs;
@@ -61,6 +65,11 @@ abstract class CompilationUnitImpl extends CompilationUnit {
   @Override
   public MethodArgNamesLookup getMethodArgs() {
     return methodArgs;
+  }
+
+  @Override
+  public List<JDeclaredType> getTypes() {
+    return exposedTypes;
   }
 
   @Override

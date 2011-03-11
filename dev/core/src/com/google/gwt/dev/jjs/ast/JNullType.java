@@ -27,7 +27,7 @@ public class JNullType extends JReferenceType {
   public static final JNullType INSTANCE = new JNullType(SourceOrigin.UNKNOWN);
 
   private JNullType(SourceInfo sourceInfo) {
-    super(sourceInfo, "<null>");
+    super(sourceInfo, "null");
   }
 
   @Override

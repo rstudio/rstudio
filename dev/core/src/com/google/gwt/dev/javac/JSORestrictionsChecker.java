@@ -257,18 +257,11 @@ public class JSORestrictionsChecker {
     checker.check();
   }
 
-  static String errAlreadyImplemented(String intfName, String impl1,
-      String impl2) {
-    return "Only one JavaScriptObject type may implement the methods of an "
-        + "interface that declared methods. The interface (" + intfName
-        + ") is implemented by both (" + impl1 + ") and (" + impl2 + ")";
-  }
-
   /**
    * Returns {@code true} if {@code typeBinding} is {@code JavaScriptObject} or
    * any subtype.
    */
-  static boolean isJso(TypeBinding typeBinding) {
+  public static boolean isJso(TypeBinding typeBinding) {
     if (!(typeBinding instanceof ReferenceBinding)) {
       return false;
     }
@@ -286,12 +279,19 @@ public class JSORestrictionsChecker {
    * Returns {@code true} if {@code typeBinding} is a subtype of
    * {@code JavaScriptObject}, but not {@code JavaScriptObject} itself.
    */
-  static boolean isJsoSubclass(TypeBinding typeBinding) {
+  public static boolean isJsoSubclass(TypeBinding typeBinding) {
     if (!(typeBinding instanceof ReferenceBinding)) {
       return false;
     }
     ReferenceBinding binding = (ReferenceBinding) typeBinding;
     return isJso(binding.superclass());
+  }
+
+  static String errAlreadyImplemented(String intfName, String impl1,
+      String impl2) {
+    return "Only one JavaScriptObject type may implement the methods of an "
+        + "interface that declared methods. The interface (" + intfName
+        + ") is implemented by both (" + impl1 + ") and (" + impl2 + ")";
   }
 
   private static void errorOn(ASTNode node, CompilationUnitDeclaration cud,

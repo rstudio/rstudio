@@ -143,6 +143,8 @@ public class JavaResourceBase {
       code.append("import java.io.Serializable;\n");
       code.append("public abstract class Enum<E extends Enum<E>> implements Serializable {\n");
       code.append("  protected Enum(String name, int ordinal) {}\n");
+      code.append("  protected static Object createValueOfMap(Enum[] constants) { return null; }\n");
+      code.append("  protected static Enum valueOf(Object map, String name) { return null; }\n");
       code.append("}\n");
       return code;
     }

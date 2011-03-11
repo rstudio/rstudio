@@ -17,6 +17,7 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.jdt.TypeRefVisitor;
 import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
@@ -124,7 +125,8 @@ public class JdtCompiler {
 
     public void process(CompilationUnitBuilder builder,
         CompilationUnitDeclaration cud, List<CompiledClass> compiledClasses) {
-      CompilationUnit unit = builder.build(compiledClasses, new Dependencies(),
+      CompilationUnit unit = builder.build(compiledClasses,
+          Collections.<JDeclaredType> emptyList(), new Dependencies(),
           Collections.<JsniMethod> emptyList(), new MethodArgNamesLookup(),
           cud.compilationResult().getProblems());
       results.add(unit);

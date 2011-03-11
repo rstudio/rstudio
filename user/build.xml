@@ -35,6 +35,9 @@
   <property name="gwt.tck.testcase.dev.includes" value="com/google/gwt/validation/tck/**/*GwtSuite.class" />
   <property name="gwt.tct.testcase.dev.excludes" value="" />
 
+  <property name="gwt.nongwt.testcase.includes" value="com/google/gwt/dev/jjs/GwtAstBuilderTest.class" />
+  <property name="gwt.nongwt.testcase.excludes" value="" />
+
   <!--
     Test args can be specified per test target type.
   -->
@@ -522,6 +525,7 @@
       <antcall target="test.web.htmlunit"/>
       <antcall target="test.draft.htmlunit"/>
       <antcall target="test.nometa.htmlunit"/>
+      <antcall target="test.nongwt"/>
     </parallel>
     </limit>
   </target>
@@ -545,6 +549,24 @@
       <antcall target="test.nometa.htmlunit"/>
     </parallel>
     </limit>
+  </target>
+
+  <target name="test.nongwt"
+      depends="compile, compile.tests"
+      description="Run JRE-only tests."
+      unless="test.nongwt.disable">
+    <fileset id="test.nongwt.tests" dir="${javac.junit.out}"
+        includes="${gwt.nongwt.testcase.includes}"
+        excludes="${gwt.nongwt.testcase.excludes}" />
+    <gwt.junit test.name="test.nongwt"
+        test.args="${test.args}"
+        test.jvmargs="${test.jvmargs}"
+        test.out="${junit.out}/nongwt"
+        test.cases="test.nongwt.tests" >
+      <extraclasspaths>
+        <path refid="test.extraclasspath" />
+      </extraclasspaths>
+    </gwt.junit>
   </target>
 
   <target name="test.dev"

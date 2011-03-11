@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.resource.Resource;
 
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
@@ -39,10 +40,11 @@ class SourceFileCompilationUnit extends CompilationUnitImpl {
   private final ContentId contentId;
 
   public SourceFileCompilationUnit(Resource sourceFile, ContentId contentId,
-      List<CompiledClass> compiledClasses, Dependencies dependencies,
-      Collection<? extends JsniMethod> jsniMethods,
+      List<CompiledClass> compiledClasses, List<JDeclaredType> types,
+      Dependencies dependencies, Collection<? extends JsniMethod> jsniMethods,
       MethodArgNamesLookup methodArgs, CategorizedProblem[] problems) {
-    super(compiledClasses, dependencies, jsniMethods, methodArgs, problems);
+    super(compiledClasses, types, dependencies, jsniMethods, methodArgs,
+        problems);
     this.sourceFile = sourceFile;
     this.contentId = contentId;
   }

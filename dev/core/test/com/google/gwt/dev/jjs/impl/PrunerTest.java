@@ -112,7 +112,7 @@ public class PrunerTest extends OptimizerTestBase {
     assertNull(result.findClass("UninstantiatedClass"));
 
     assertEquals(
-        "public static <null> returnUninstantiatedClass(){\n" + 
+        "public static null returnUninstantiatedClass(){\n" + 
         "  return null;\n" +
         "}", 
         result.findMethod("returnUninstantiatedClass").toSource());
@@ -123,11 +123,11 @@ public class PrunerTest extends OptimizerTestBase {
         result.findMethod("methodWithUninstantiatedParam").toSource());
 
     assertEquals(
-        "[final <null> nullField, int field2]", 
+        "[final null nullField, int field2]", 
         ((JsniMethodBody) result.findMethod("usedNativeMethod").getBody()).
         getJsniFieldRefs().toString());
     assertEquals(
-        "[public final <null> nullMethod(), public void method2()]", 
+        "[public final null nullMethod(), public void method2()]", 
         ((JsniMethodBody) result.findMethod("usedNativeMethod").getBody()).
         getJsniMethodRefs().toString());
 

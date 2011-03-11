@@ -92,6 +92,15 @@ public abstract class JDeclaredType extends JReferenceType implements
   }
 
   /**
+   * TODO: remove me, just for source compatibility.
+   */
+  @Deprecated
+  public void addField(int index, JField field) {
+    assert field.getEnclosingType() == this;
+    fields = Lists.add(fields, index, field);
+  }
+
+  /**
    * Adds a field to this type.
    */
   public void addField(JField field) {
@@ -298,7 +307,7 @@ public abstract class JDeclaredType extends JReferenceType implements
     annotations = (List<JAnnotation>) stream.readObject();
   }
 
-/**
+  /**
    * See {@link #writeMethodBodies(ObjectOutputStream).
    * 
    * @see #writeMethodBodies(ObjectOutputStream)
