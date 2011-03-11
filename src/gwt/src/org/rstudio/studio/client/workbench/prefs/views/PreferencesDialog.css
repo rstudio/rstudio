@@ -32,7 +32,7 @@
 
 .outer {
    width: 550px;
-   height: 380px;
+   height: 420px;
 }
 
 .indent {
@@ -48,7 +48,7 @@
 
 .paneLayoutTable td.paneLayoutTable {
    background-color: white;
-   height: 135px;
+   height: 155px;
    vertical-align: top;
    -moz-border-radius: 6px;
    -webkit-border-radius: 6px;
