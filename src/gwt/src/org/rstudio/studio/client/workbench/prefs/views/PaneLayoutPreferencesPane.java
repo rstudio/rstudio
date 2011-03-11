@@ -1,14 +1,280 @@
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.ui.PaneConfig;
+
+import java.util.ArrayList;
 
 public class PaneLayoutPreferencesPane extends PreferencesPane
 {
+   private static class Item
+   {
+      private Item(String label, String value)
+      {
+         this.label = label;
+         this.value = value;
+      }
+
+      public final String label;
+      public final String value;
+   }
+
+   class ExclusiveSelectionMaintainer
+   {
+      class ListChangeHandler implements ChangeHandler
+      {
+         ListChangeHandler(int whichList)
+         {
+            whichList_ = whichList;
+         }
+
+         public void onChange(ChangeEvent event)
+         {
+            int selectedIndex = lists_[whichList_].getSelectedIndex();
+
+            for (int i = 0; i < lists_.length; i++)
+            {
+               if (i != whichList_
+                   && lists_[i].getSelectedIndex() == selectedIndex)
+               {
+                  lists_[i].setSelectedIndex(notSelectedIndex());
+               }
+            }
+
+            updateTabSetPositions();
+         }
+
+         private Integer notSelectedIndex()
+         {
+            boolean[] seen = new boolean[4];
+            for (ListBox listBox : lists_)
+               seen[listBox.getSelectedIndex()] = true;
+            for (int i = 0; i < seen.length; i++)
+               if (!seen[i])
+                  return i;
+            return null;
+         }
+
+         private final int whichList_;
+      }
+
+      ExclusiveSelectionMaintainer(ListBox[] lists)
+      {
+         lists_ = lists;
+         for (int i = 0; i < lists.length; i++)
+            lists[i].addChangeHandler(new ListChangeHandler(i));
+      }
+
+      private final ListBox[] lists_;
+   }
+
+   class ModuleList extends Composite implements ValueChangeHandler<Boolean>,
+                                                 HasValueChangeHandlers<ArrayList<Boolean>>
+   {
+      ModuleList()
+      {
+         checkBoxes_ = new ArrayList<CheckBox>();
+         VerticalPanel panel = new VerticalPanel();
+         for (String module : PaneConfig.getAllTabs())
+         {
+            CheckBox checkBox = new CheckBox(module, false);
+            checkBox.addValueChangeHandler(this);
+            checkBoxes_.add(checkBox);
+            panel.add(checkBox);
+         }
+         initWidget(panel);
+      }
+
+      public void onValueChange(ValueChangeEvent<Boolean> event)
+      {
+         if (getValue().size() > 0)
+            ValueChangeEvent.fire(this, getSelectedIndices());
+         else
+         {
+            ((CheckBox)event.getSource()).setValue(true, false);
+         }
+      }
+
+      public ArrayList<Boolean> getSelectedIndices()
+      {
+         ArrayList<Boolean> results = new ArrayList<Boolean>();
+         for (CheckBox checkBox : checkBoxes_)
+            results.add(checkBox.getValue());
+         return results;
+      }
+
+      public void setSelectedIndices(ArrayList<Boolean> selected)
+      {
+         for (int i = 0; i < selected.size(); i++)
+            checkBoxes_.get(i).setValue(selected.get(i), false);
+      }
+
+      public ArrayList<String> getValue()
+      {
+         ArrayList<String> value = new ArrayList<String>();
+         for (CheckBox checkBox : checkBoxes_)
+         {
+            if (checkBox.getValue())
+               value.add(checkBox.getText());
+         }
+         return value;
+      }
+
+      public void setValue(ArrayList<String> tabs)
+      {
+         for (CheckBox checkBox : checkBoxes_)
+            checkBox.setValue(tabs.contains(checkBox.getText()), false);
+      }
+
+      public HandlerRegistration addValueChangeHandler(
+            ValueChangeHandler<ArrayList<Boolean>> handler)
+      {
+         return addHandler(handler, ValueChangeEvent.getType());
+      }
+
+      private final ArrayList<CheckBox> checkBoxes_;
+   }
+
+
    @Inject
-   public PaneLayoutPreferencesPane(PreferencesDialogResources res)
+   public PaneLayoutPreferencesPane(PreferencesDialogResources res,
+                                    UIPrefs uiPrefs)
    {
       res_ = res;
+      uiPrefs_ = uiPrefs;
+
+      add(new Label("Choose the layout of the panes in RStudio by selecting from the controls in each quadrant.", true));
+
+      String[] allPanes = PaneConfig.getAllPanes();
+
+      leftTop_ = new ListBox();
+      leftBottom_ = new ListBox();
+      rightTop_ = new ListBox();
+      rightBottom_ = new ListBox();
+      allPanes_ = new ListBox[]{leftTop_, leftBottom_, rightTop_, rightBottom_};
+      for (ListBox lb : allPanes_)
+      {
+         for (String value : allPanes)
+            lb.addItem(value);
+      }
+
+      PaneConfig value = uiPrefs.paneConfig().getValue();
+      if (value == null || value.isValid())
+         uiPrefs.paneConfig().setValue(PaneConfig.createDefault());
+
+      JsArrayString origPanes = uiPrefs.paneConfig().getValue().getPanes();
+      for (int i = 0; i < 4; i++)
+      {
+         boolean success = selectByValue(allPanes_[i], origPanes.get(i));
+         if (!success)
+         {
+            Debug.log("Bad config! Falling back to a reasonable default");
+            leftTop_.setSelectedIndex(0);
+            leftBottom_.setSelectedIndex(1);
+            rightTop_.setSelectedIndex(2);
+            rightBottom_.setSelectedIndex(3);
+            break;
+         }
+      }
+
+      new ExclusiveSelectionMaintainer(allPanes_);
+
+      Grid grid = new Grid(2, 2);
+      grid.addStyleName(res.styles().paneLayoutTable());
+      grid.setCellSpacing(8);
+      grid.setCellPadding(6);
+      grid.setWidget(0, 0, leftTopPanel_ = createPane(leftTop_));
+      grid.setWidget(1, 0, leftBottomPanel_ = createPane(leftBottom_));
+      grid.setWidget(0, 1, rightTopPanel_ = createPane(rightTop_));
+      grid.setWidget(1, 1, rightBottomPanel_ = createPane(rightBottom_));
+      for (int row = 0; row < 2; row++)
+         for (int col = 0; col < 2; col++)
+            grid.getCellFormatter().setStyleName(row, col,
+                                                 res.styles().paneLayoutTable());
+      add(grid);
+
+      allPanePanels_ = new VerticalPanel[] {leftTopPanel_, leftBottomPanel_,
+                                            rightTopPanel_, rightBottomPanel_};
+
+      tabSet1ModuleList_ = new ModuleList();
+      tabSet1ModuleList_.setValue(toArrayList(uiPrefs.paneConfig().getValue().getTabSet1()));
+      tabSet2ModuleList_ = new ModuleList();
+      tabSet2ModuleList_.setValue(toArrayList(uiPrefs.paneConfig().getValue().getTabSet2()));
+
+      ValueChangeHandler<ArrayList<Boolean>> vch = new ValueChangeHandler<ArrayList<Boolean>>()
+      {
+         public void onValueChange(ValueChangeEvent<ArrayList<Boolean>> e)
+         {
+            ModuleList source = (ModuleList) e.getSource();
+            ModuleList other = (source == tabSet1ModuleList_)
+                               ? tabSet2ModuleList_
+                               : tabSet1ModuleList_;
+
+            if (source.getValue().size() == PaneConfig.getAllTabs().length)
+            {
+               ArrayList<Boolean> indices = source.getSelectedIndices();
+               ArrayList<Boolean> otherIndices = other.getSelectedIndices();
+               for (int i = 0; i < indices.size(); i++)
+               {
+                  if (otherIndices.get(i))
+                  {
+                     indices.set(i, false);
+                  }
+               }
+               source.setSelectedIndices(indices);
+            }
+            else
+            {
+               ArrayList<Boolean> indices = source.getSelectedIndices();
+               ArrayList<Boolean> otherIndices = new ArrayList<Boolean>();
+               for (Boolean b : indices)
+                  otherIndices.add(!b);
+               other.setSelectedIndices(otherIndices);
+
+               updateTabSetLabels();
+            }
+         }
+      };
+      tabSet1ModuleList_.addValueChangeHandler(vch);
+      tabSet2ModuleList_.addValueChangeHandler(vch);
+
+      updateTabSetPositions();
+      updateTabSetLabels();
+   }
+
+   private VerticalPanel createPane(ListBox listBox)
+   {
+      VerticalPanel vp = new VerticalPanel();
+      vp.add(listBox);
+      return vp;
+   }
+
+   private static boolean selectByValue(ListBox listBox, String value)
+   {
+      for (int i = 0; i < listBox.getItemCount(); i++)
+      {
+         if (listBox.getValue(i).equals(value))
+         {
+            listBox.setSelectedIndex(i);
+            return true;
+         }
+      }
+
+      return false;
    }
 
    @Override
@@ -20,6 +286,26 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    @Override
    public void onApply()
    {
+      PaneConfig config = uiPrefs_.paneConfig().getValue();
+
+      JsArrayString panes = JsArrayString.createArray().cast();
+      panes.push(leftTop_.getValue(leftTop_.getSelectedIndex()));
+      panes.push(leftBottom_.getValue(leftBottom_.getSelectedIndex()));
+      panes.push(rightTop_.getValue(rightTop_.getSelectedIndex()));
+      panes.push(rightBottom_.getValue(rightBottom_.getSelectedIndex()));
+      config.setPanes(panes);
+
+      JsArrayString tabSet1 = JsArrayString.createArray().cast();
+      for (String tab : tabSet1ModuleList_.getValue())
+         tabSet1.push(tab);
+      config.setTabSet1(tabSet1);
+
+      JsArrayString tabSet2 = JsArrayString.createArray().cast();
+      for (String tab : tabSet2ModuleList_.getValue())
+         tabSet2.push(tab);
+      config.setTabSet2(tabSet2);
+
+      uiPrefs_.paneConfig().setValue(config);
    }
 
    @Override
@@ -28,5 +314,47 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       return "Pane Layout";
    }
 
+   private void updateTabSetPositions()
+   {
+      for (int i = 0; i < allPanes_.length; i++)
+      {
+         String value = allPanes_[i].getValue(allPanes_[i].getSelectedIndex());
+         if (value.equals("TabSet1"))
+            allPanePanels_[i].add(tabSet1ModuleList_);
+         else if (value.equals("TabSet2"))
+            allPanePanels_[i].add(tabSet2ModuleList_);
+      }
+   }
+
+   private void updateTabSetLabels()
+   {
+      for (ListBox pane : allPanes_)
+      {
+         pane.setItemText(2, StringUtil.join(tabSet1ModuleList_.getValue(), ", "));
+         pane.setItemText(3, StringUtil.join(tabSet2ModuleList_.getValue(), ", "));
+      }
+   }
+
+   private ArrayList<String> toArrayList(JsArrayString strings)
+   {
+      ArrayList<String> results = new ArrayList<String>();
+      for (int i = 0; i < strings.length(); i++)
+         results.add(strings.get(i));
+      return results;
+   }
+
    private final PreferencesDialogResources res_;
+   private final UIPrefs uiPrefs_;
+   private final ListBox leftTop_;
+   private final ListBox leftBottom_;
+   private final ListBox rightTop_;
+   private final ListBox rightBottom_;
+   private final ListBox[] allPanes_;
+   private final VerticalPanel leftTopPanel_;
+   private final VerticalPanel leftBottomPanel_;
+   private final VerticalPanel rightTopPanel_;
+   private final VerticalPanel rightBottomPanel_;
+   private final VerticalPanel[] allPanePanels_;
+   private final ModuleList tabSet1ModuleList_;
+   private final ModuleList tabSet2ModuleList_;
 }

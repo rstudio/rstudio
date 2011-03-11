@@ -116,13 +116,6 @@ public class WorkbenchScreen extends Composite
       tabsPanel_.setSize("100%", "100%");
       tabsPanel_.addStyleDependentName("Workbench");
 
-      commands.consoleOnTop().setMenuLabel(paneManager_.isConsoleOnTop()
-                                           ? "Console on Bottom"
-                                           : "Console on Top");
-      commands.plotsOnTop().setMenuLabel(paneManager_.isPlotsOnTop()
-                                         ? "Plots on Bottom"
-                                         : "Plots on Top");
-
       // Prevent doOnPaneSizesChanged() from being called more than once
       // every N milliseconds. Note that the act of sending the client metrics
       // to the server also has its own buffer, so this one only needs to
@@ -301,43 +294,6 @@ public class WorkbenchScreen extends Composite
    void onActivatePackages() { paneManager_.activateTab(Tab.Packages); }
    @Handler
    void onActivateHelp() { paneManager_.activateTab(Tab.Help); }
-
-   @Handler
-   void onConsoleOnTop()
-   {
-      PaneConfig config =
-            paneManager_.setConsoleOnTop(!paneManager_.isConsoleOnTop());
-      updatePaneConfig(config);
-   }
-
-   @Handler
-   void onPlotsOnTop()
-   {
-      PaneConfig config =
-            paneManager_.setPlotsOnTop(!paneManager_.isPlotsOnTop());
-      updatePaneConfig(config);
-   }
-
-   private void updatePaneConfig(PaneConfig config)
-   {
-      JsObject uiPrefs = JsObject.createJsObject();
-      uiPrefs.setObject("pane_config", config);
-      server_.setUiPrefs(uiPrefs, new ServerRequestCallback<Void>()
-      {
-         @Override
-         public void onResponseReceived(Void response)
-         {
-            Window.Location.reload();
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            globalDisplay_.showErrorMessage("Error Saving Preference",
-                                            error.getUserMessage());
-         }
-      });
-   }
 
    @Handler
    void onShowOptions()

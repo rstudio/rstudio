@@ -37,6 +37,17 @@ public class PaneConfig extends JavaScriptObject
       return create(panes, tabSet1, tabSet2);
    }
 
+   public static String[] getAllPanes()
+   {
+      return new String[] {"Source", "Console", "TabSet1", "TabSet2"};
+   }
+
+   public static String[] getAllTabs()
+   {
+      return new String[] {"Workspace", "History", "Files", "Plots",
+                           "Packages", "Help"};
+   }
+
    protected PaneConfig()
    {
    }

@@ -4,6 +4,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
@@ -16,6 +18,7 @@ import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
@@ -38,6 +41,16 @@ public class PreferencesDialog extends ModalDialog<Void>
                             GlobalDisplay globalDisplay)
    {
       super("Preferences", (OperationWithInput<Void>)null);
+
+      addButton(new ThemedButton("Apply", new ClickHandler()
+      {
+         public void onClick(ClickEvent event)
+         {
+            if (validate(Void.create()))
+               onSuccess();
+         }
+      }));
+
       session_ = session;
       globalDisplay_ = globalDisplay;
       server_ = server;
