@@ -27,7 +27,7 @@ sudo apt-get -y install libbz2-dev
 sudo apt-get -y install libpam-dev
 
 # boost
-sudo apt-get -y install libboost-dev
+sudo apt-get -y install libboost-all-dev
 
 # pango cairo
 sudo apt-get -y install libpango1.0-dev
