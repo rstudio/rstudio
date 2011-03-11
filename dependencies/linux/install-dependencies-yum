@@ -48,6 +48,7 @@ cd ../linux
 if [ "$1" != "--server-only" ]
 then
    sudo yum -y install qt4-devel
+   sudo yum -y install qt-webkit-devel
 fi
 
 
