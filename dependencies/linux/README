@@ -10,7 +10,7 @@ systems. Specific version requirements for various components include:
 - CMake 2.6
 - Pango 1.14
 - Boost 1.40
-- Qt 4.7
+- Qt 4.7 [Required only for Desktop]
 
 Desktop vs. Server Builds
 =============================================================================
@@ -39,27 +39,51 @@ package management system (for server-only builds be sure to include the
    ./install-dependencies-debian  
    ./install-dependencies-yum
    ./install-dependencies-zypper
+   
+NOTE The versions of Boost (1.40) and Qt (4.7) required by RStudio are
+relatively recent. If you install these components using your system
+package manager then the following minimum OS versions are required:
 
+Desktop Minimum OS Version:
 
-Installing Recent Versions of Boost and Qt 
-=============================================================================
-
-The versions of Boost (1.40) and Qt (4.7) required by RStudio are relatively
-recent. If you install these components using your system package manager
-then the following minimum OS versions are required:
-
-   - Debian 6.0
+   - Debian 6
    - Ubuntu 10.10
    - Fedora 14
+   - OpenSUSE 11.4
+   
+Server Minimum OS Version:
+
+   - Debian 6
+   - Ubuntu 10.04
    - RedHat/CentOS 6
    - OpenSUSE 11.3
 
-If however you want to install from source on an OS version earlier than those 
-listed above then you can install Boost 1.44 and/or Qt 4.7 on any Linux
-system using the following scripts:
+
+Installing Dependencies for Older Systems
+=============================================================================
+
+If you want to install from RStudio from source on an OS version earlier
+than those listed above then you can install Boost 1.44 and/or Qt 4.7 on
+any Linux system using the following scripts:
 
    rstudio/dependencies/common/install-boost 
    rstudio/dependencies/linux/package/install-qt-sdk
 
+This will enable you to build and install RStudio on any OS where at 
+least CMake 2.6 and Pango 1.14 are available, including:
 
+  - Debian 5
+  - Ubuntu 9.10
+  - RedHat/CentOS 5 (with EPEL enabled)
+  - OpenSUSE 11.2
 
+Note that if your system doesn't meet the CMake 2.6 version requirement
+you can download a Linux binary of the latest version of CMake here:
+
+  - http://www.cmake.org/cmake/resources/software.html
+
+The version of Pango required by RStudio (1.14) was released in 2006 so
+most Linux distributions should meet that requirement. If not, you can
+also build Pango from source, see:
+
+  - http://www.pango.org/Download
