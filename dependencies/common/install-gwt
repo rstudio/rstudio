@@ -13,10 +13,11 @@
 #
 #
 
-set -e
-
 # install dir
 INSTALL_DIR=`pwd`
+
+# determine platform
+PLATFORM=`uname`
 
 download()
 {
