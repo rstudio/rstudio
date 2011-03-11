@@ -145,6 +145,13 @@ elseif(APPLE)
 endif(WIN32)
 
 
+# determine whether we should bundle qt
+if(RSTUDIO_PACKAGE_BUILD)
+  set(RSTUDIO_BUNDLE_QT TRUE)
+elseif(${QT_LIBRARY_DIR} MATCHES "/opt/qtsdk*")
+  set(RSTUDIO_BUNDLE_QT TRUE)
+endif()
+
 # define executable (Windows & Linux)
 if(NOT APPLE)
 
@@ -156,7 +163,7 @@ if(NOT APPLE)
    )
 
    # add rpath for linux so we can find qt libraries in our bin dir
-   if(UNIX AND RSTUDIO_PACKAGE_BUILD)
+   if(UNIX AND RSTUDIO_BUNDLE_QT)
       set_target_properties(rstudio PROPERTIES
                             INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/bin)
    endif()
@@ -207,7 +214,7 @@ else()
 endif()
 
 # bundle qt dependencies if this is a package build
-if(RSTUDIO_PACKAGE_BUILD)
+if(RSTUDIO_BUNDLE_QT)
    # install qt conf
    if(APPLE)
       set(QTCONF_DEST_DIR ${RSTUDIO_INSTALL_SUPPORTING})
@@ -258,6 +265,8 @@ if(RSTUDIO_PACKAGE_BUILD)
                        ${QT_RELEASE_LIBRARY_DIR}/libQtSvg.so.${QT_FULL_VERSION}
                        ${QT_RELEASE_LIBRARY_DIR}/libQtXml.so.4
                        ${QT_RELEASE_LIBRARY_DIR}/libQtXml.so.${QT_FULL_VERSION}
+                       ${QT_RELEASE_LIBRARY_DIR}/libQtXmlPatterns.so.4
+                       ${QT_RELEASE_LIBRARY_DIR}/libQtXmlPatterns.so.${QT_FULL_VERSION}
                        ${QT_RELEASE_LIBRARY_DIR}/libphonon.so.4
                        ${QT_RELEASE_LIBRARY_DIR}/libphonon.so.4.4.0
               DESTINATION ${RSTUDIO_INSTALL_BIN})
@@ -275,7 +284,7 @@ if(RSTUDIO_PACKAGE_BUILD)
                        ${QT_BINARY_DIR}/libgcc_s_dw2-1.dll
               DESTINATION ${RSTUDIO_INSTALL_BIN})
    endif()
-endif(RSTUDIO_PACKAGE_BUILD)
+endif(RSTUDIO_BUNDLE_QT)
 
 # install desktop integration files on linux
 if (UNIX AND NOT APPLE)
@@ -286,7 +295,6 @@ if (UNIX AND NOT APPLE)
    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/resources/rstudio.desktop DESTINATION /usr/share/applications)
    install(FILES resources/logo/rstudio_logo_32.png DESTINATION /usr/share/pixmaps)
 endif()
-
 
 
 
