@@ -20,7 +20,7 @@ set -e
 
 # install boost
 cd ../../common
-sudo ./install-boost
+./install-boost
 cd ../linux/package
 
 

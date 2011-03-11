@@ -21,7 +21,7 @@ cd ../common
 ./install-gwt
 
 # boost
-sudo ./install-boost
+./install-boost
 
 cd ../osx
 

@@ -40,8 +40,8 @@ then
    fi
    
    # remove existing boost installation
-   rm -rf /usr/local/include/boost
-   rm -rf /usr/local/lib/libboost_*
+   sudo rm -rf /usr/local/include/boost
+   sudo rm -rf /usr/local/lib/libboost_*
 
    # untar source (remove existing)
    rm -rf $BOOST_BUILD_DIR
@@ -56,18 +56,18 @@ then
    # special variation of build for osx (multi-arch, tied to 10.5)
    if [ "$PLATFORM" == "Darwin" ]
    then
-     ./bjam variant=release threading=multi link=static \
+     sudo ./bjam variant=release threading=multi link=static \
             architecture=x86 address-model=32_64 \
             macosx-version=10.5 macosx-version-min=10.5 \
             install
    else
-     ./bjam variant=release install
+     sudo ./bjam variant=release install
    fi
 
    # go back to the original install dir and remove build dir
    cd $INSTALL_DIR
-   rm -rf $BOOST_TAR
-   rm -rf $BOOST_BUILD_DIR
+   sudo rm -rf $BOOST_TAR
+   sudo rm -rf $BOOST_BUILD_DIR
 
 else
 
