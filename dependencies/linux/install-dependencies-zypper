@@ -19,6 +19,7 @@ set -e
 sudo zypper --non-interactive in make
 sudo zypper --non-interactive in gcc
 sudo zypper --non-interactive in gcc-c++
+sudo zypper --non-interactive in gcc-fortran
 sudo zypper --non-interactive in build
 sudo zypper --non-interactive in cmake
 
