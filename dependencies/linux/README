@@ -46,7 +46,6 @@ package manager then the following minimum OS versions are required:
 
 Desktop Minimum OS Version:
 
-   - Debian 6
    - Ubuntu 10.10
    - Fedora 14
    - OpenSUSE 11.4
@@ -55,9 +54,8 @@ Server Minimum OS Version:
 
    - Debian 6
    - Ubuntu 10.04
-   - RedHat/CentOS 6
+   - Fedora 13
    - OpenSUSE 11.3
-
 
 Installing Dependencies for Older Systems
 =============================================================================
