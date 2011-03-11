@@ -102,7 +102,7 @@ list(APPEND BOOST_LIBS
 # UNIX BOOST
 if(UNIX)
    # for package builds hard-code to /usr/local/include/boost
-   if(RSTUDIO_PACKAGE_BUILD AND EXISTS /usr/local/include/boost)
+   if(EXISTS /usr/local/include/boost)
       # first find headers
       set(BOOST_INCLUDEDIR /usr/local/include)
       find_package(Boost ${BOOST_VERSION} REQUIRED)
