@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2011 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,12 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.user.client.impl;
+package com.google.gwt.dom.client;
 
 /**
- * Safari implementation of {@link com.google.gwt.user.client.impl.DOMImpl}.
- * @deprecated  As of release 2.3, replaced by {@link com.google.gwt.user.client.impl.DOMImplWebkit}
+ * IE9 based implementation of {@link com.google.gwt.user.client.impl.DOMImplStandardBase}.
  */
-@Deprecated
-class DOMImplSafari extends DOMImplWebkit {
+class DOMImplIE9 extends DOMImplStandardBase {
 }
+

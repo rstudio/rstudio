@@ -44,7 +44,7 @@ public class Context2dTest extends GWTTestCase {
   }-*/;
 
   native boolean isWebkit525OrBefore() /*-{
-    return @com.google.gwt.dom.client.DOMImplSafari::isWebkit525OrBefore()();
+    return @com.google.gwt.dom.client.DOMImplWebkit::isWebkit525OrBefore()();
   }-*/;
 
   @Override

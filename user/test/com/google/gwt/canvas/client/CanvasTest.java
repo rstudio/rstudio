@@ -35,7 +35,7 @@ public class CanvasTest extends GWTTestCase {
   protected Canvas canvas2;
 
   native boolean isWebkit525OrBefore() /*-{
-    return @com.google.gwt.dom.client.DOMImplSafari::isWebkit525OrBefore()();
+    return @com.google.gwt.dom.client.DOMImplWebkit::isWebkit525OrBefore()();
   }-*/;
 
   @Override

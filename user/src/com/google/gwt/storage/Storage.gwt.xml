@@ -41,7 +41,10 @@
 
   <replace-with class="com.google.gwt.storage.client.StorageImplNonNativeEvents">
     <when-type-is class="com.google.gwt.storage.client.StorageImpl" />
-    <when-property-is name="user.agent" value="safari" />
+    <any>
+      <when-property-is name="user.agent" value="safari" />
+      <when-property-is name="user.agent" value="ie9" />
+    </any>
   </replace-with>
 
   <replace-with class="com.google.gwt.storage.client.StorageImplIE8">

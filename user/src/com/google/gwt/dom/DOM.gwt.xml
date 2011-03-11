@@ -25,9 +25,14 @@
     <when-property-is name="user.agent" value="opera"/>
   </replace-with>
 
-  <replace-with class="com.google.gwt.dom.client.DOMImplSafari">
+  <replace-with class="com.google.gwt.dom.client.DOMImplWebkit">
     <when-type-is class="com.google.gwt.dom.client.DOMImpl"/>
     <when-property-is name="user.agent" value="safari"/>
+  </replace-with>
+
+  <replace-with class="com.google.gwt.dom.client.DOMImplIE9">
+    <when-type-is class="com.google.gwt.dom.client.DOMImpl"/>
+    <when-property-is name="user.agent" value="ie9"/>
   </replace-with>
 
   <replace-with class="com.google.gwt.dom.client.DOMImplIE8">
@@ -50,6 +55,7 @@
     <any>
       <when-property-is name="user.agent" value="ie6"/>
       <when-property-is name="user.agent" value="ie8"/>
+      <when-property-is name="user.agent" value="ie9"/>
     </any>
   </replace-with>
 </module>

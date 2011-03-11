@@ -43,7 +43,7 @@ public abstract class StorageTest extends GWTTestCase {
   }-*/;
 
   private native boolean isSafari3OrBefore() /*-{
-    return @com.google.gwt.dom.client.DOMImplSafari::isWebkit525OrBefore()();
+    return @com.google.gwt.dom.client.DOMImplWebkit::isWebkit525OrBefore()();
   }-*/;
 
   @Override
