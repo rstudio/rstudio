@@ -12,18 +12,13 @@ public interface PreferencesDialogResources extends ClientBundle
       
       String sectionChooser();
       String sectionChooserInner();
-
       String section();
-
       String activeSection();
-
       String outer();
-
       String indent();
-
       String first();
-
       String textBoxWithButton();
+      String paneLayoutTable();
    }
 
    @Source("PreferencesDialog.css")

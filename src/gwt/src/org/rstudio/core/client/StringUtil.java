@@ -15,6 +15,8 @@ package org.rstudio.core.client;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.NumberFormat;
 
+import java.util.AbstractCollection;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 
@@ -183,6 +185,19 @@ public class StringUtil
          return str;
 
       return indent + str.replaceAll("\n", "\n" + indent);
+   }
+
+   public static String join(AbstractCollection<?> collection,
+                             String delim)
+   {
+      String currDelim = "";
+      StringBuilder output = new StringBuilder();
+      for (Object el : collection)
+      {
+         output.append(currDelim).append(el == null ? "" : el.toString());
+         currDelim = delim;
+      }
+      return output.toString();
    }
 
    private static final long[] SIZES = {

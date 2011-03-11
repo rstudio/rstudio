@@ -31,8 +31,8 @@
 }
 
 .outer {
-   width: 500px;
-   height: 300px;
+   width: 550px;
+   height: 350px;
 }
 
 .indent {
@@ -44,4 +44,23 @@
    top: 1px;
    height: 21px;
    border: 1px solid #999;
+}
+
+.paneLayoutTable td.paneLayoutTable {
+   background-color: white;
+   height: 135px;
+   vertical-align: top;
+   -moz-border-radius: 6px;
+   -webkit-border-radius: 6px;
+   border-radius: 6px;
+}
+
+.paneLayoutTable .gwt-CheckBox {
+   margin: 0 0 0 8px;
+   font-size: 11px;
+}
+
+.paneLayoutTable select {
+   width: 175px;
+   margin-bottom: 8px;
 }

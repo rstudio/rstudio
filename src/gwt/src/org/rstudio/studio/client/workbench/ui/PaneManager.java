@@ -93,8 +93,8 @@ public class PaneManager
       packagesTab_ = packagesTab;
       helpTab_ = helpTab;
 
-      config_ = validateConfig(uiPrefs.paneConfig().getValue());
-      ArrayList<LogicalWindow> panes = createPanes(config_);
+      PaneConfig config = validateConfig(uiPrefs.paneConfig().getValue());
+      ArrayList<LogicalWindow> panes = createPanes(config);
 
       DualWindowLayoutPanel left = createSplitWindow(
             panes.get(0),
@@ -302,57 +302,6 @@ public class PaneManager
       return "??";
    }
 
-   public boolean isConsoleOnTop()
-   {
-      return config_.getPanes().get(0).equals("Console");
-   }
-
-   public boolean isPlotsOnTop()
-   {
-      JsArrayString tabSet1 = config_.getTabSet1();
-      for (int i = 0; i < tabSet1.length(); i++)
-         if (tabSet1.get(i).equals("Plots"))
-            return true;
-      return false;
-   }
-
-   public PaneConfig setConsoleOnTop(boolean onTop)
-   {
-      PaneConfig newConfig = config_.copy();
-      JsArrayString panes = newConfig.getPanes();
-      if (onTop != panes.get(0).equals("Console"))
-      {
-         String tmp = panes.get(0);
-         panes.set(0, panes.get(1));
-         panes.set(1, tmp);
-      }
-      return newConfig;
-   }
-
-   public PaneConfig setPlotsOnTop(boolean onTop)
-   {
-      PaneConfig newConfig = config_.copy();
-
-      JsArrayString tabSet1 = JsArrayString.createArray().cast();
-      JsArrayString tabSet2 = JsArrayString.createArray().cast();
-
-      tabSet1.push("Workspace");
-      tabSet1.push("History");
-      tabSet2.push("Files");
-
-      if (onTop)
-         tabSet1.push("Plots");
-      else
-         tabSet2.push("Plots");
-
-      tabSet2.push("Packages");
-      tabSet2.push("Help");
-      newConfig.setTabSet1(tabSet1);
-      newConfig.setTabSet2(tabSet2);
-
-      return newConfig;
-   }
-
    private final EventBus eventBus_;
    private final Session session_;
    private final ConsolePane consolePane_;
@@ -371,5 +320,4 @@ public class PaneManager
          new HashMap<Tab, WorkbenchTabPanel>();
    private final HashMap<Tab, Integer> tabToIndex_ =
          new HashMap<Tab, Integer>();
-   private PaneConfig config_;
 }
