@@ -69,9 +69,7 @@ a) Acquire administrative rights (if necessary). If you have configured
    administrator (e.g. "su -", "sudo sh", or running a console as an
    Administrator on Windows)
 
-
 b) Change to the build directory where you configured RStudio
-
 
 c) Run the "make install" command:
 
@@ -84,7 +82,39 @@ example of what is required to do this can be found in the package/win32
 directory.
 
 
-4) RStudio Server Extras
+4) RStudio Server: Additional Setup
+----------------------------------------------------------------------------
+
+If you are install RStudio Server on Linux you should also take the
+following additional steps:
+
+a) Create an rstudio-server system account (RStudio will automatically
+   run under this account if it is present). You can do this with:
+
+   sudo useradd -r rstudio-server
+
+
+b) Configure PAM user authentication:
+
+   On Debian and Ubuntu systems RStudio automatically uses the 
+   /etc/pam.d/other PAM profile, which is configured to allow access using
+   system default policies. If you are running on Debian or Ubuntu
+   you don't need any further steps to configure user authentication.
+   
+   On Fedora, RedHat/CentOS, and OpenSUSE systems the default PAM profile
+   denies access to all users. To use the system default configuration
+   you should copy the system login PAM config file:
+   
+   sudo cp /etc/pam.d/login /etc/pam.d/rstudio
+   
+  
+You can find out more about accessing, configuring, and managing RStudio
+server in the online documentation at:
+
+   http://www.rstudio.org/docs/server/getting_started
+
+
+4) RStudio Server: Extras
 ----------------------------------------------------------------------------
 
 If you have installed RStudio Server from source there are a number of 
@@ -92,12 +122,7 @@ optional (but recommended) steps you can take to complete your installation.
 Note that these steps are taken automatically by the DEB and RPM pre-built
 binary distributions of RStudio Server.
 
-a) Create an rstudio-server system user account (RStudio will automatically
-   run under this account if it is present). You can do this with:
-
-   sudo useradd -r rstudio-server
-
-b) Register RStudio as a daemon using an init.d or upstart script 
+a) Register RStudio as a daemon using an init.d or upstart script 
    appropriate for your system. The rstudio-server/extras directory contains
    the following scripts:
 
@@ -110,7 +135,8 @@ b) Register RStudio as a daemon using an init.d or upstart script
       /upstart
          rstudio-server.conf
 
-c) Create a soft link in /usr/sbin to the server administrative script
+
+b) Create a soft link in /usr/sbin to the server administrative script
   
    sudo ln -f -s /usr/local/rstudio-server/bin/rstudio-server /usr/sbin/rstudio-server
 
@@ -122,14 +148,8 @@ c) Create a soft link in /usr/sbin to the server administrative script
   
    Additional commands include stop, restart, offline, online, and others
 
-d) RStudio Server uses PAM to authenticate users. Some Unix systems (such as Ubuntu) use default PAM settings for applications which aren't explicitly registered with PAM. If your system requires explicit registration (default or other profile set to pam_deny) then you need to add an /etc/pam.d/rstudio file to your configuration. You can find a default version of this file for Red Hat server systems at:
 
-   extras
-      /pam
-         /redhat
-            rstudio
-
-e) If your system supports AppArmor you may wish to add an AppArmor profile
+c) If your system supports AppArmor you may wish to add an AppArmor profile
    for RStudio Server. You can find one at:
 
    extras
