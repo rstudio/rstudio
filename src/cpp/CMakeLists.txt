@@ -90,7 +90,7 @@ if(APPLE OR WIN32 OR RSTUDIO_PACKAGE_BUILD)
    set(Boost_USE_STATIC_LIBS ON)
 endif()
 
-set(BOOST_VERSION 1.40.0)
+set(BOOST_VERSION 1.42.0)
 list(APPEND BOOST_LIBS
    date_time
    filesystem
