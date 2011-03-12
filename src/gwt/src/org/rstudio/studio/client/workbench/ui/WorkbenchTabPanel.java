@@ -51,6 +51,9 @@ class WorkbenchTabPanel
       tabPanel_.addBeforeSelectionHandler(new BeforeSelectionHandler<Integer>(){
          public void onBeforeSelection(BeforeSelectionEvent<Integer> event)
          {
+            if (clearing_)
+               return;
+
             WorkbenchTab tab = tabs_.get(event.getItem().intValue());
             tab.onBeforeSelected();
          }
@@ -58,6 +61,9 @@ class WorkbenchTabPanel
       tabPanel_.addSelectionHandler(new SelectionHandler<Integer>() {
          public void onSelection(SelectionEvent<Integer> event)
          {
+            if (clearing_)
+               return;
+
             WorkbenchTab pane = tabs_.get(event.getSelectedItem().intValue());
             pane.onSelected();
          }
@@ -72,7 +78,16 @@ class WorkbenchTabPanel
       }
    }
 
-   public void add(WorkbenchTab tab)
+   public void setTabs(ArrayList<WorkbenchTab> tabs)
+   {
+      tabPanel_.clear();
+      tabs_.clear();
+
+      for (WorkbenchTab tab : tabs)
+         add(tab);
+   }
+
+   private void add(WorkbenchTab tab)
    {
       tabs_.add(tab);
       final Widget widget = tab.toWidget();
@@ -142,6 +157,15 @@ class WorkbenchTabPanel
       return addHandler(handler, EnsureVisibleEvent.TYPE);
    }
 
+   public void clear()
+   {
+      clearing_ = true;
+      tabPanel_.clear();
+      tabs_.clear();
+      clearing_ = false;
+   }
+
    private ModuleTabLayoutPanel tabPanel_;
    private ArrayList<WorkbenchTab> tabs_ = new ArrayList<WorkbenchTab>();
+   private boolean clearing_ = false;
 }

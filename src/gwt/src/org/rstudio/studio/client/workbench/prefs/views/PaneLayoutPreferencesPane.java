@@ -193,6 +193,15 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
       new ExclusiveSelectionMaintainer(allPanes_);
 
+      for (ListBox lb : allPanes_)
+         lb.addChangeHandler(new ChangeHandler()
+         {
+            public void onChange(ChangeEvent event)
+            {
+               dirty_ = true;
+            }
+         });
+
       Grid grid = new Grid(2, 2);
       grid.addStyleName(res.styles().paneLayoutTable());
       grid.setCellSpacing(8);
@@ -219,6 +228,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       {
          public void onValueChange(ValueChangeEvent<ArrayList<Boolean>> e)
          {
+            dirty_ = true;
+
             ModuleList source = (ModuleList) e.getSource();
             ModuleList other = (source == tabSet1ModuleList_)
                                ? tabSet2ModuleList_
@@ -286,26 +297,26 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    @Override
    public void onApply()
    {
-      PaneConfig config = uiPrefs_.paneConfig().getValue();
+      if (dirty_)
+      {
+         JsArrayString panes = JsArrayString.createArray().cast();
+         panes.push(leftTop_.getValue(leftTop_.getSelectedIndex()));
+         panes.push(leftBottom_.getValue(leftBottom_.getSelectedIndex()));
+         panes.push(rightTop_.getValue(rightTop_.getSelectedIndex()));
+         panes.push(rightBottom_.getValue(rightBottom_.getSelectedIndex()));
 
-      JsArrayString panes = JsArrayString.createArray().cast();
-      panes.push(leftTop_.getValue(leftTop_.getSelectedIndex()));
-      panes.push(leftBottom_.getValue(leftBottom_.getSelectedIndex()));
-      panes.push(rightTop_.getValue(rightTop_.getSelectedIndex()));
-      panes.push(rightBottom_.getValue(rightBottom_.getSelectedIndex()));
-      config.setPanes(panes);
+         JsArrayString tabSet1 = JsArrayString.createArray().cast();
+         for (String tab : tabSet1ModuleList_.getValue())
+            tabSet1.push(tab);
 
-      JsArrayString tabSet1 = JsArrayString.createArray().cast();
-      for (String tab : tabSet1ModuleList_.getValue())
-         tabSet1.push(tab);
-      config.setTabSet1(tabSet1);
+         JsArrayString tabSet2 = JsArrayString.createArray().cast();
+         for (String tab : tabSet2ModuleList_.getValue())
+            tabSet2.push(tab);
 
-      JsArrayString tabSet2 = JsArrayString.createArray().cast();
-      for (String tab : tabSet2ModuleList_.getValue())
-         tabSet2.push(tab);
-      config.setTabSet2(tabSet2);
+         uiPrefs_.paneConfig().setValue(PaneConfig.create(panes, tabSet1, tabSet2));
 
-      uiPrefs_.paneConfig().setValue(config);
+         dirty_ = false;
+      }
    }
 
    @Override
@@ -357,4 +368,5 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private final VerticalPanel[] allPanePanels_;
    private final ModuleList tabSet1ModuleList_;
    private final ModuleList tabSet2ModuleList_;
+   private boolean dirty_ = false;
 }

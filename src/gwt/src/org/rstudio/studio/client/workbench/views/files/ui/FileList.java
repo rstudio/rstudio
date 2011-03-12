@@ -50,13 +50,6 @@ public class FileList extends Composite
       setStylePrimaryName(ThemeStyles.INSTANCE.fileList());
    }
    
-   @Override 
-   protected void onUnload()
-   {
-      clearFiles();
-      super.onUnload();
-   }
-   
    public void clearFiles()
    {
       containingPath_ = null;

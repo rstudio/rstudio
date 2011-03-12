@@ -370,17 +370,14 @@ public class DualWindowLayoutPanel extends SimplePanel
                                 final WindowState topWindowDefaultState,
                                 final int defaultSplitterPos)
    {
+      windowA_ = windowA;
+      windowB_ = windowB;
       session_ = session;
       setSize("100%", "100%");
       layout_ = new BinarySplitLayoutPanel(new Widget[] {
             windowA.getNormal(), windowA.getMinimized(),
             windowB.getNormal(), windowB.getMinimized()}, 3);
       layout_.setSize("100%", "100%");
-
-      AnimationHelper.setParentZindex(windowA.getNormal(), -10);
-      AnimationHelper.setParentZindex(windowA.getMinimized(), -10);
-      AnimationHelper.setParentZindex(windowB.getNormal(), -10);
-      AnimationHelper.setParentZindex(windowB.getMinimized(), -10);
 
       topWindowStateChangeManager_ = new WindowStateChangeManager(session,
                                                                   windowA,
@@ -480,6 +477,14 @@ public class DualWindowLayoutPanel extends SimplePanel
       }
    }
 
+   public void reloadPanes()
+   {
+      layout_.setWidgets(new Widget[] {
+            windowA_.getNormal(), windowA_.getMinimized(),
+            windowB_.getNormal(), windowB_.getMinimized() });
+      layout(windowA_, windowB_);
+   }
+
    public void onResize()
    {
       if (layout_ != null)
@@ -507,6 +512,8 @@ public class DualWindowLayoutPanel extends SimplePanel
 
    private BinarySplitLayoutPanel layout_;
    private NormalHeight normalHeight_;
+   private final LogicalWindow windowA_;
+   private final LogicalWindow windowB_;
    private final Session session_;
    private WindowStateChangeManager topWindowStateChangeManager_;
 

@@ -3,13 +3,16 @@ package org.rstudio.studio.client.workbench.ui;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.Triad;
+import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.layout.DualWindowLayoutPanel;
 import org.rstudio.core.client.layout.LogicalWindow;
 import org.rstudio.core.client.layout.WindowState;
@@ -18,8 +21,6 @@ import org.rstudio.core.client.theme.MinimizedWindowFrame;
 import org.rstudio.core.client.theme.PrimaryWindowFrame;
 import org.rstudio.core.client.theme.WindowFrame;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
@@ -94,20 +95,53 @@ public class PaneManager
       helpTab_ = helpTab;
 
       PaneConfig config = validateConfig(uiPrefs.paneConfig().getValue());
-      ArrayList<LogicalWindow> panes = createPanes(config);
+      initPanes(config);
 
-      DualWindowLayoutPanel left = createSplitWindow(
-            panes.get(0),
-            panes.get(1),
-            "left");
-
-      DualWindowLayoutPanel right = createSplitWindow(
-            panes.get(2),
-            panes.get(3),
-            "right");
+      panes_ = createPanes(config);
+      left_ = createSplitWindow(panes_.get(0), panes_.get(1), "left");
+      right_ = createSplitWindow(panes_.get(2), panes_.get(3), "right");
 
       panel_ = pSplitPanel.get();
-      panel_.initialize(left, right);
+      panel_.initialize(left_, right_);
+
+      if (session_.getSessionInfo().getSourceDocuments().length() == 0)
+      {
+         sourceLogicalWindow_.onWindowStateChange(
+               new WindowStateChangeEvent(WindowState.HIDE));
+      }
+
+      uiPrefs.paneConfig().addValueChangeHandler(new ValueChangeHandler<PaneConfig>()
+      {
+         public void onValueChange(ValueChangeEvent<PaneConfig> evt)
+         {
+            WindowFrame[] normals = new WindowFrame[4];
+            MinimizedWindowFrame[] minimized = new MinimizedWindowFrame[4];
+
+            ArrayList<LogicalWindow> newPanes = createPanes(evt.getValue());
+            for (int i = 0; i < newPanes.size(); i++)
+            {
+               normals[i] = newPanes.get(i).getNormal();
+               minimized[i] = newPanes.get(i).getMinimized();
+            }
+
+            for (int i = 0; i < normals.length; i++)
+            {
+               panes_.get(i).replace(normals[i], minimized[i]);
+            }
+
+            panes_ = newPanes;
+
+            left_.reloadPanes();
+            right_.reloadPanes();
+
+            tabSet1TabPanel_.clear();
+            tabSet2TabPanel_.clear();
+            populateTabPanel(tabNamesToTabs(evt.getValue().getTabSet1()),
+                             tabSet1TabPanel_, tabSet1MinPanel_);
+            populateTabPanel(tabNamesToTabs(evt.getValue().getTabSet2()),
+                             tabSet2TabPanel_, tabSet2MinPanel_);
+         }
+      });
    }
 
    private ArrayList<LogicalWindow> createPanes(PaneConfig config)
@@ -117,25 +151,38 @@ public class PaneManager
       JsArrayString panes = config.getPanes();
       for (int i = 0; i < 4; i++)
       {
-         String pane = panes.get(i);
-         if (pane.equals("Console"))
-            results.add(createConsole());
-         else if (pane.equals("Source"))
-            results.add(createSource());
-         else if (pane.equals("TabSet1") || pane.equals("TabSet2"))
-         {
-            JsArrayString tabNames = pane.equals("TabSet1")
-                                     ? config.getTabSet1()
-                                     : config.getTabSet2();
-
-            ArrayList<Tab> tabList = new ArrayList<Tab>();
-            for (int j = 0; j < tabNames.length(); j++)
-               tabList.add(Enum.valueOf(Tab.class, tabNames.get(j)));
-            results.add(createTabSet(pane, tabList));
-         }
+         results.add(panesByName_.get(panes.get(i)));
       }
-
       return results;
+   }
+
+   private void initPanes(PaneConfig config)
+   {
+      panesByName_ = new HashMap<String, LogicalWindow>();
+      panesByName_.put("Console", createConsole());
+      panesByName_.put("Source", createSource());
+
+      Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> ts1 = createTabSet(
+            "TabSet1",
+            tabNamesToTabs(config.getTabSet1()));
+      panesByName_.put("TabSet1", ts1.first);
+      tabSet1TabPanel_ = ts1.second;
+      tabSet1MinPanel_ = ts1.third;
+
+      Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> ts2 = createTabSet(
+            "TabSet2",
+            tabNamesToTabs(config.getTabSet2()));
+      panesByName_.put("TabSet2", ts2.first);
+      tabSet2TabPanel_ = ts2.second;
+      tabSet2MinPanel_ = ts2.third;
+   }
+
+   private ArrayList<Tab> tabNamesToTabs(JsArrayString tabNames)
+   {
+      ArrayList<Tab> tabList = new ArrayList<Tab>();
+      for (int j = 0; j < tabNames.length(); j++)
+         tabList.add(Enum.valueOf(Tab.class, tabNames.get(j)));
+      return tabList;
    }
 
    private PaneConfig validateConfig(PaneConfig config)
@@ -240,25 +287,17 @@ public class PaneManager
             new MinimizedWindowFrame("Source"));
    }
 
-   private LogicalWindow createTabSet(String persisterName,
-                                      ArrayList<Tab> tabs)
+   private
+         Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel>
+         createTabSet(String persisterName, ArrayList<Tab> tabs)
    {
       final WindowFrame frame = new WindowFrame();
       final WorkbenchTabPanel tabPanel = new WorkbenchTabPanel(frame);
-      for (int i = 0; i < tabs.size(); i++)
-      {
-         Tab tab = tabs.get(i);
-         tabPanel.add(getTab(tab));
-         tabToPanel_.put(tab, tabPanel);
-         tabToIndex_.put(tab, i);
-      }
-      frame.setFillWidget(tabPanel);
+      MinimizedModuleTabLayoutPanel minimized = new MinimizedModuleTabLayoutPanel();
 
-      String[] labels = new String[tabs.size()];
-      for (int i = 0; i < labels.length; i++)
-         labels[i] = getTabLabel(tabs.get(i));
-      MinimizedModuleTabLayoutPanel minimized =
-            new MinimizedModuleTabLayoutPanel(labels);
+      populateTabPanel(tabs, tabPanel, minimized);
+
+      frame.setFillWidget(tabPanel);
 
       minimized.addSelectionHandler(new SelectionHandler<Integer>()
       {
@@ -279,7 +318,30 @@ public class PaneManager
 
       new SelectedTabStateValue(persisterName, tabPanel);
 
-      return new LogicalWindow(frame, minimized);
+      return new Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel>(
+            new LogicalWindow(frame, minimized),
+            tabPanel,
+            minimized);
+   }
+
+   private void populateTabPanel(ArrayList<Tab> tabs,
+                                 WorkbenchTabPanel tabPanel,
+                                 MinimizedModuleTabLayoutPanel minimized)
+   {
+      ArrayList<WorkbenchTab> tabList = new ArrayList<WorkbenchTab>();
+      for (int i = 0; i < tabs.size(); i++)
+      {
+         Tab tab = tabs.get(i);
+         tabList.add(getTab(tab));
+         tabToPanel_.put(tab, tabPanel);
+         tabToIndex_.put(tab, i);
+      }
+      tabPanel.setTabs(tabList);
+
+      String[] labels = new String[tabs.size()];
+      for (int i = 0; i < labels.length; i++)
+         labels[i] = getTabLabel(tabs.get(i));
+      minimized.setTabs(labels);
    }
 
    private String getTabLabel(Tab tab)
@@ -320,4 +382,12 @@ public class PaneManager
          new HashMap<Tab, WorkbenchTabPanel>();
    private final HashMap<Tab, Integer> tabToIndex_ =
          new HashMap<Tab, Integer>();
+   private HashMap<String, LogicalWindow> panesByName_;
+   private DualWindowLayoutPanel left_;
+   private DualWindowLayoutPanel right_;
+   private ArrayList<LogicalWindow> panes_;
+   private WorkbenchTabPanel tabSet1TabPanel_;
+   private MinimizedModuleTabLayoutPanel tabSet1MinPanel_;
+   private WorkbenchTabPanel tabSet2TabPanel_;
+   private MinimizedModuleTabLayoutPanel tabSet2MinPanel_;
 }

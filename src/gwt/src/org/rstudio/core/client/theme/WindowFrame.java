@@ -290,6 +290,11 @@ public class WindowFrame extends Composite
          ((BeforeShowCallback)fill_).onBeforeShow();
    }
 
+   public Widget getFillWidget()
+   {
+      return fill_;
+   }
+
    private final LayoutPanel frame_;
    private final ShadowBorder border_;
    private final SimplePanel borderPositioner_;
