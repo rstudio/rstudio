@@ -145,10 +145,13 @@ elseif(APPLE)
 endif(WIN32)
 
 
-# determine whether we should bundle qt
-if(RSTUDIO_PACKAGE_BUILD)
-  set(RSTUDIO_BUNDLE_QT TRUE)
-elseif(${QT_LIBRARY_DIR} MATCHES "/opt/qtsdk*")
+# determine whether we should bundle Qt. we pretty much always want to
+# bundle it unless we are building on linux and NOT linking against the
+# qtsdk -- in that case we are linking against system versions of the
+# qt libraries which should therefore not be bundled
+if(APPLE OR WIN32 OR
+   RSTUDIO_PACKAGE_BUILD OR
+   (${QT_LIBRARY_DIR} MATCHES ".*qtsdk.*"))
   set(RSTUDIO_BUNDLE_QT TRUE)
 endif()
 
