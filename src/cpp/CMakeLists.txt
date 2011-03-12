@@ -83,10 +83,13 @@ endif()
 # (for consistency) by disabling support for wide filenames
 add_definitions(-DBOOST_FILESYSTEM_NARROW_ONLY -DBOOST_FILESYSTEM2_NARROW_ONLY)
 
-# find boost and required libraries
-if(RSTUDIO_PACKAGE_BUILD)
+# determine whether we should statically link boost. we always do this
+# unless we are building a non-packaged build on linux (in which case
+# boost dynamic libraries are presumed to be installed on the system ldpath)
+if(APPLE OR WIN32 OR RSTUDIO_PACKAGE_BUILD)
    set(Boost_USE_STATIC_LIBS ON)
 endif()
+
 set(BOOST_VERSION 1.40.0)
 list(APPEND BOOST_LIBS
    date_time
@@ -101,13 +104,15 @@ list(APPEND BOOST_LIBS
 
 # UNIX BOOST
 if(UNIX)
-   # for package builds hard-code to /usr/local/include/boost
+   # prefer static link to /usr/local/include/boost (user custom built version)
    if(EXISTS /usr/local/include/boost)
-      # first find headers
+
+      # find headers
+      set(Boost_USE_STATIC_LIBS ON)
       set(BOOST_INCLUDEDIR /usr/local/include)
       find_package(Boost ${BOOST_VERSION} REQUIRED)
 
-      # define list of libraries manually
+      # define library list manually (find_package doesn't always pick them up)
       set(BOOST_LIB_DIR /usr/local/lib)
       foreach(BOOST_LIB ${BOOST_LIBS})
          list(APPEND Boost_LIBRARIES ${BOOST_LIB_DIR}/libboost_${BOOST_LIB}.a)
@@ -119,7 +124,6 @@ if(UNIX)
 # WIN32 BOOST
 else()
      # hard-code to our own prebuilt boost libs
-     set(Boost_USE_STATIC_LIBS ON)
      set(RSTUDIO_WINDOWS_DEPENDENCIES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../dependencies/windows")
      if(RSTUDIO_SESSION_WIN64)
         set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-win/boost64")
