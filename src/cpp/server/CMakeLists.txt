@@ -145,12 +145,6 @@ if (UNIX AND NOT APPLE)
    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${RSERVER_INITD_REDHAT_SCRIPT}
            DESTINATION ${RSERVER_INITD_REDHAT_DIR})
 
-   # install redhat pam profile
-   set(RSERVER_PAM_REDHAT_DIR "extras/pam/redhat")
-   set(RSERVER_PAM_REDHAT_PROFILE "${RSERVER_PAM_REDHAT_DIR}/rstudio")
-   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${RSERVER_PAM_REDHAT_PROFILE}
-           DESTINATION ${RSERVER_PAM_REDHAT_DIR})
-
    # install configured apparmor profile
    set(RSERVER_APPARMOR_DIR "extras/apparmor")
    set(RSERVER_APPARMOR_PROFILE "${RSERVER_APPARMOR_DIR}/rstudio-server")
