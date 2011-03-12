@@ -46,8 +46,8 @@ b) Configure the build using cmake as appopriate, e.g.
    CMAKE_BUILD_TYPE      Debug, Release, RelMinSize, or RelWithDebInfo
 
    CMAKE_INSTALL_PREFIX  Defaults:
-                           Linux (Desktop):     /usr/local/rstudio 
-                           Linux (Server):      /usr/local/rstudio-server
+                           Linux (Desktop):     /usr/local/lib/rstudio 
+                           Linux (Server):      /usr/local/lib/rstudio-server
                            OSX:                 /Applications/RStudio
                            Windows:             C:\Program Files\RStudio
            
