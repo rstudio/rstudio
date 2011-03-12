@@ -59,15 +59,25 @@ Installing Dependencies for Older Systems
 
 If you want to install from RStudio from source on an OS version earlier
 than those listed above then you can install Boost 1.44 and/or Qt 4.7 on
-any Linux system using the following scripts:
+any Linux system using the scripts in rstudio/dependencies/linux/older 
+   
+   dependencies
+     linux
+       older
+         install-boost
+         install-qt-sdk
+         
+Notes on using these scripts:
 
-   rstudio/dependencies/common/install-boost 
-   rstudio/dependencies/linux/package/install-qt-sdk
+QT: The Qt installation prompts for confirmation of the install location
+and approval of the Qt license. When installing the Qt SDK you should
+accept the default installation path of /opt/qtsdk-<version>. This 
+ensures that RStudio will use the sdk in preference to any version of
+Qt installed in /usr/lib.
 
-NOTE: when installing the Qt SDK you should accept the default installation
-path of /opt/qtsdk-<version>. Doing this enables the RStudio build 
-configuration to detect that you are using the Qt SDK and ensure that its
-generated binaries have the correct library dependencies (SDK not /usr/lib).
+BOOST: The Boost libraries are not built if the directory 
+/usr/local/include/boost already exists. The Boost libraries are built
+static and multithreaded.
 
 This will enable you to build and install RStudio on any OS where at 
 least CMake 2.6 and Pango 1.14 are available, including:
