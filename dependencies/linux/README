@@ -76,8 +76,7 @@ ensures that RStudio will use the sdk in preference to any version of
 Qt installed in /usr/lib.
 
 BOOST: The Boost libraries are not built if the directory 
-/usr/local/include/boost already exists. The Boost libraries are built
-static and multithreaded.
+/usr/local/include/boost already exists.
 
 This will enable you to build and install RStudio on any OS where at 
 least CMake 2.6 and Pango 1.14 are available, including:
