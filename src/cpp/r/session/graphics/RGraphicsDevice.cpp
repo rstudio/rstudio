@@ -448,10 +448,18 @@ SEXP createGD()
       handler::setSize(pDev);
       handler::setDeviceAttributes(pDev);
 
+      // notify handler we are about to add (enables shadow device
+      // to close itself so it doesn't show up in the dev.list()
+      // in front of us
+      handler::onBeforeAddInteractiveDevice(pDC);
+
       // associate with device description and add it
       s_pGEDevDesc = GEcreateDevDesc(pDev);
       GEaddDevice2(s_pGEDevDesc, kRStudioDevice);
       
+      // notify handler we have added (so it can regenerate its context)
+      handler::onAfterAddInteractiveDevice(pDC);
+
       // make us active
       Rf_selectDevice(Rf_ndevNumber(s_pGEDevDesc->dev)); 
    } 

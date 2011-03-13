@@ -73,6 +73,9 @@ inline bool initialize(int width,
 void setSize(pDevDesc pDev);
 void setDeviceAttributes(pDevDesc pDev);
 
+void onBeforeAddInteractiveDevice(DeviceContext* pDC);
+void onAfterAddInteractiveDevice(DeviceContext* pDC);
+
 core::Error writeToPNG(const core::FilePath& targetPath,
                        DeviceContext* pDC,
                        bool keepContextAlive);

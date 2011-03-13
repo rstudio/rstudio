@@ -322,6 +322,15 @@ void setDeviceAttributes(pDevDesc pDev)
    pDev->gettingEvent = FALSE;
 }
 
+void onBeforeAddInteractiveDevice(DeviceContext* pDC)
+{
+}
+
+void onAfterAddInteractiveDevice(DeviceContext* pDC)
+{
+}
+
+
 Error writeToPNG(const FilePath& targetPath,
                  DeviceContext* pDC,
                  bool /* keepContextAlive */)
