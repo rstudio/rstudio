@@ -22,6 +22,7 @@
 #include <boost/function.hpp>
 #include <boost/signal.hpp>
 #include <boost/regex.hpp>
+#include <boost/circular_buffer.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -140,12 +141,6 @@ private:
 
    std::string emptyImageFilename() const ;
 
-   bool hasStorageUuid(const PtrPlot& ptrPlot,
-                       const std::string& storageUuid) const;
-   void removeIfGarbage(const core::FilePath& imageFilePath) const;
-   void collectPlotFileGarbage() const;
-   void truncatePlotList();
-
 private:   
    friend class SuppressDeviceEventsScope;
 
@@ -160,7 +155,7 @@ private:
    bool suppressDeviceEvents_;
    
    int activePlot_;
-   std::vector<PtrPlot> plots_ ;
+   boost::circular_buffer<PtrPlot> plots_ ;
    
    boost::regex plotInfoRegex_;
 };
