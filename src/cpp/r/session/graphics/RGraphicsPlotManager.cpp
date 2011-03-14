@@ -58,7 +58,7 @@ PlotManager::PlotManager()
       activePlot_(-1),
       plotInfoRegex_("([A-Za-z0-9\\-]+):([0-9]+),([0-9]+)")
 {
-   plots_.set_capacity(50);
+   plots_.set_capacity(30);
 }
       
 Error PlotManager::initialize(const FilePath& graphicsPath,
