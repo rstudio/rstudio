@@ -13,6 +13,8 @@
 
 #include "DesktopDetectRHome.hpp"
 
+#include <vector>
+
 #include <boost/algorithm/string/trim.hpp>
 
 #include <QtCore>
@@ -30,9 +32,35 @@ namespace {
 
 FilePath detectRHome()
 {
+   // scan possible locations for R (need these because on the mac
+   // our path as a GUI app is very limited)
+   FilePath rPath;
+   std::vector<std::string> rPaths;
+   rPaths.push_back("/usr/bin/R");
+   rPaths.push_back("/usr/local/bin/R");
+   rPaths.push_back("/opt/local/bin/R");
+   for(std::vector<std::string>::const_iterator it = rPaths.begin();
+       it != rPaths.end(); ++it)
+   {
+      FilePath candidatePath(*it);
+      if (candidatePath.exists())
+      {
+         rPath = candidatePath ;
+         break;
+      }
+   }
+
+   // if we didn't find one then bail
+   if (rPath.empty())
+   {
+      LOG_ERROR_MESSAGE("Couldn't find R on known path");
+      return FilePath();
+   }
+
    // run R to detect R home
    std::string output;
-   Error error = core::system::captureCommand("R RHOME", &output);
+   std::string command = rPath.absolutePath() + " RHOME";
+   Error error = core::system::captureCommand(command, &output);
    if (error)
    {
       LOG_ERROR(error);
