@@ -23,30 +23,22 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import org.rstudio.core.client.SerializedCommand;
-import org.rstudio.core.client.SerializedCommandQueue;
-import org.rstudio.core.client.Size;
-import org.rstudio.core.client.TimeBufferedCommand;
+import org.rstudio.core.client.*;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
-import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.layout.WindowState;
 import org.rstudio.core.client.theme.ModuleTabLayoutPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.Toolbar;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.server.*;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.MRUList;
 import org.rstudio.studio.client.workbench.WorkbenchMainView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -54,7 +46,6 @@ import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
-import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
 import org.rstudio.studio.client.workbench.ui.PaneManager.Tab;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
@@ -83,14 +74,14 @@ public class WorkbenchScreen extends Composite
                           FontSizeManager fontSizeManager,
                           WorkbenchServerOperations server,
                           GlobalDisplay globalDisplay,
-                          Provider<PreferencesDialog> pPrefDialog)
+                          OptionsLoader.Shim optionsLoader)
    {
       eventBus_ = eventBus;
       session_ = session;
       edit_ = edit;
       server_ = server;
       globalDisplay_ = globalDisplay;
-      pPrefDialog_ = pPrefDialog;
+      optionsLoader_ = optionsLoader;
 
       eventBus_.addHandler(ShowEditorEvent.TYPE, edit);
       eventBus_.addHandler(ChangeFontSizeEvent.TYPE, new ChangeFontSizeHandler()
@@ -217,6 +208,13 @@ public class WorkbenchScreen extends Composite
                   edit_.forceLoad(true, continuation);
                }
             });
+            prefetchQueue.addCommand(new SerializedCommand()
+            {
+               public void onExecute(Command continuation)
+               {
+                  optionsLoader_.forceLoad(true, continuation);
+               }
+            });
          }
       });
    }
@@ -298,7 +296,7 @@ public class WorkbenchScreen extends Composite
    @Handler
    void onShowOptions()
    {
-      pPrefDialog_.get().showModal();
+      optionsLoader_.showOptions();
    }
 
    public Widget toWidget()
@@ -315,7 +313,7 @@ public class WorkbenchScreen extends Composite
    private final Shim edit_;
    private final WorkbenchServerOperations server_;
    private final GlobalDisplay globalDisplay_;
-   private final Provider<PreferencesDialog> pPrefDialog_;
+   private final org.rstudio.studio.client.workbench.ui.OptionsLoader.Shim optionsLoader_;
 
    private final MainSplitPanel tabsPanel_ ;
    private PaneManager paneManager_;
