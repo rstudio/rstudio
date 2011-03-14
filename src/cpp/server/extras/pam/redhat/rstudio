@@ -1,0 +1,5 @@
+#%PAM-1.0
+auth      requisite      pam_succeed_if.so uid >= 500 quiet
+auth      required       pam_unix.so nodelay
+
+account   required       pam_unix.so
