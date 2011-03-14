@@ -139,7 +139,8 @@ d) Create a soft link in /usr/sbin to the server administrative script
 
 
 e) If your system supports AppArmor you may wish to add an AppArmor profile
-   for RStudio Server. You can find one at:
+   for RStudio Server. You can find one which is compatible with the
+   Ubuntu implementation of AppArmor here:
 
    extras
       /apparmor
