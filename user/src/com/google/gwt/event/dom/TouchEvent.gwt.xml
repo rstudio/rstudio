@@ -13,5 +13,25 @@
 <!-- limitations under the License.                                         -->
 <module>
   <inherits name="com.google.gwt.user.User" />
-  <source path="client"/>
+
+  <!-- Define the support property -->
+  <define-property name="touchEventSupport" values="maybe,no" />
+
+  <!--
+    Modern browsers either support touch events or will probably add touch
+    support in the future.
+  -->
+  <set-property name="touchEventSupport" value="maybe" />
+
+  <!-- Older browsers do not support touch events. -->
+  <set-property name="touchEventSupport" value="no">
+    <any>
+      <when-property-is name="user.agent" value="ie6" />
+    </any>
+  </set-property>
+
+  <replace-with class="com.google.gwt.event.dom.TouchEvent.TouchSupportDetectorNo">
+    <when-type-is class="com.google.gwt.event.dom.TouchEvent.TouchSupportDetector" />
+    <when-property-is name="touchEventSupport" value="no" />
+  </replace-with>
 </module>

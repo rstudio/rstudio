@@ -15,6 +15,7 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Touch;
 import com.google.gwt.event.shared.EventHandler;
@@ -27,6 +28,53 @@ import com.google.gwt.event.shared.EventHandler;
  */
 public abstract class TouchEvent<H extends EventHandler>
     extends HumanInputEvent<H> {
+
+  /**
+   * Dectector for browser support for touch events.
+   */
+  private static class TouchSupportDetector {
+
+    private final boolean isSupported = detectTouchSupport();
+
+    public boolean isSupported() {
+      return isSupported;
+    }
+
+    private native boolean detectTouchSupport() /*-{
+      var elem = document.createElement('div');
+      elem.setAttribute('ontouchstart', 'return;');
+      return (typeof elem.ontouchstart) == "function";
+    }-*/;
+  }
+
+  /**
+   * Detector for browsers that do not support touch events.
+   */
+  @SuppressWarnings("unused")
+  private static class TouchSupportDetectorNo extends TouchSupportDetector {
+    @Override
+    public boolean isSupported() {
+      return false;
+    }
+  }
+
+  /**
+   * The implementation singleton.
+   */
+  private static TouchSupportDetector impl;
+
+  /**
+   * Runtime check for whether touch scrolling is supported in this browser. Returns true if touch
+   * events are supported but touch based scrolling is not natively supported.
+   * 
+   * @return true if touch events are supported, false if not
+   */
+  public static boolean isSupported() {
+    if (impl == null) {
+      impl = GWT.create(TouchSupportDetector.class);
+    }
+    return impl.isSupported();
+  }
 
   /**
    * Get an array of {@link Touch touches} which have changed since the last

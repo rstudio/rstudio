@@ -257,7 +257,7 @@ public class TouchScrollTest extends GWTTestCase {
   public void testCreateIfSupported() {
     // createIfSupported()
     TouchScroller scroller = TouchScroller.createIfSupported();
-    if (isTouchSupported()) {
+    if (TouchScroller.isSupported()) {
       assertNotNull("TouchScroll not created, but touch is supported", scroller);
       assertNull(scroller.getTargetWidget());
 
@@ -268,7 +268,7 @@ public class TouchScrollTest extends GWTTestCase {
     // createIfSupported(HasScrolling)
     HasScrolling target = new ScrollPanel();
     scroller = TouchScroller.createIfSupported(target);
-    if (isTouchSupported()) {
+    if (TouchScroller.isSupported()) {
       assertNotNull("TouchScroll not created, but touch is supported", scroller);
       assertEquals(target, scroller.getTargetWidget());
 
@@ -511,10 +511,4 @@ public class TouchScrollTest extends GWTTestCase {
     scrollPanel = null;
     scroller = null;
   }
-
-  private native boolean isTouchSupported() /*-{
-    var elem = document.createElement('div');
-    elem.setAttribute('ontouchstart', 'return;');
-    return (typeof elem.ontouchstart) == "function";
-  }-*/;
 }

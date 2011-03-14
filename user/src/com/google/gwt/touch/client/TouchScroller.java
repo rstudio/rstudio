@@ -16,7 +16,6 @@
 package com.google.gwt.touch.client;
 
 import com.google.gwt.core.client.Duration;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
@@ -43,6 +42,11 @@ import java.util.List;
 
 /**
  * Adds touch based scrolling to a scroll panel.
+ * 
+ * <p>
+ * Touch based scrolling is only supported on devices that support touch events
+ * and do not implement native touch based scrolling.
+ * </p>
  */
 @PartialSupport
 public class TouchScroller {
@@ -138,35 +142,6 @@ public class TouchScroller {
   }
 
   /**
-   * Dectector for browser support for touch events.
-   */
-  private static class TouchSupportDetector {
-
-    private final boolean isSupported = detectTouchSupport();
-
-    public boolean isSupported() {
-      return isSupported;
-    }
-
-    private native boolean detectTouchSupport() /*-{
-      var elem = document.createElement('div');
-      elem.setAttribute('ontouchstart', 'return;');
-      return (typeof elem.ontouchstart) == "function";
-    }-*/;
-  }
-
-  /**
-   * Detector for browsers that do not support touch events.
-   */
-  @SuppressWarnings("unused")
-  private static class TouchSupportDetectorNo extends TouchSupportDetector {
-    @Override
-    public boolean isSupported() {
-      return false;
-    }
-  }
-
-  /**
    * The number of frames per second the animation should run at.
    */
   private static final double FRAMES_PER_SECOND = 60;
@@ -193,9 +168,10 @@ public class TouchScroller {
   private static final int MS_PER_FRAME = (int) (1000 / FRAMES_PER_SECOND);
 
   /**
-   * The implementation singleton.
+   * A cached boolean indicating whether or not touch scrolling is supported.
+   * Set to a non-null value the first time {@link #isSupported()} is called.
    */
-  private static TouchSupportDetector impl;
+  private static Boolean isSupported;
 
   /**
    * Return a new {@link TouchScroller}.
@@ -222,25 +198,35 @@ public class TouchScroller {
   }
 
   /**
-   * Runtime check for whether touch events are supported in this browser.
+   * Runtime check for whether touch scrolling is supported in this browser.
+   * Returns true if touch events are supported but touch based scrolling is not
+   * natively supported.
    * 
-   * @return true if touch events are is supported, false it not
+   * @return true if touch scrolling is supported, false if not
    */
   public static boolean isSupported() {
-    return impl().isSupported();
+    if (isSupported == null) {
+      /*
+       * Android 3.0 devices support touch scrolling natively.
+       * 
+       * TODO(jlabanca): Find a more reliable way to detect if native touch
+       * scrolling is supported.
+       */
+      isSupported = TouchEvent.isSupported() && !isAndroid3();
+    }
+    return isSupported;
   }
 
   /**
-   * Get the implementation of this widget.
+   * Check if the user agent is android 3.0 or greater.
    * 
-   * @return the implementation
+   * @return true if android 3.0+
+   * 
    */
-  private static TouchSupportDetector impl() {
-    if (impl == null) {
-      impl = GWT.create(TouchSupportDetector.class);
-    }
-    return impl;
-  }
+  private static native boolean isAndroid3() /*-{
+    var ua = navigator.userAgent.toLowerCase();
+    return /android ([3-9]+)\.([0-9]+)/.exec(ua) != null;
+  }-*/;
 
   /**
    * The registration for the preview handler used to bust click events.
