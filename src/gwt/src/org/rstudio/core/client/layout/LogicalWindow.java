@@ -12,6 +12,8 @@
  */
 package org.rstudio.core.client.layout;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Widget;
@@ -53,7 +55,13 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
 
       setFrames(normal, minimized);
 
-      transitionToState(state_);
+      Scheduler.get().scheduleFinally(new ScheduledCommand()
+      {
+         public void execute()
+         {
+            transitionToState(state_);
+         }
+      });
    }
 
    private void setFrames(WindowFrame normal, MinimizedWindowFrame minimized)
