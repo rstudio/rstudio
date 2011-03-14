@@ -104,7 +104,8 @@ public class PaneManager
       panel_ = pSplitPanel.get();
       panel_.initialize(left_, right_);
 
-      if (session_.getSessionInfo().getSourceDocuments().length() == 0)
+      if (session_.getSessionInfo().getSourceDocuments().length() == 0
+            && sourceLogicalWindow_.getState() != WindowState.HIDE)
       {
          sourceLogicalWindow_.onWindowStateChange(
                new WindowStateChangeEvent(WindowState.HIDE));
