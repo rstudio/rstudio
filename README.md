@@ -21,9 +21,7 @@ Getting the Code
 -----------------------------------------------------------------------------
 
 RStudio is licensed under the AGPLv3, the terms of which are included in
-the file COPYING. You can find our source code repository on GitHub:
-
-[https://github.com/rstudio/rstudio](https://github.com/rstudio/rstudio)
+the file COPYING. You can find our source code repository on GitHub at [https://github.com/rstudio/rstudio](https://github.com/rstudio/rstudio).
 
 Documentation
 -----------------------------------------------------------------------------
