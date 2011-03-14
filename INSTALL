@@ -127,7 +127,7 @@ c) Register RStudio as a daemon using an init.d (for most systems) or
 
 d) Create a soft link in /usr/sbin to the server administrative script
   
-   sudo ln -f -s /usr/local/rstudio-server/bin/rstudio-server /usr/sbin/rstudio-server
+   sudo ln -f -s /usr/local/lib/rstudio-server/bin/rstudio-server /usr/sbin/rstudio-server
 
    Assuming you have previously installed an init.d or upstart script (as
    described above) then you should now be able start the server with the
