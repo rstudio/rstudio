@@ -84,22 +84,36 @@ example of what is required to do this can be found in the package/win32
 directory.
 
 
-4) RStudio Server Extras
+4) Initial Configuration
 ----------------------------------------------------------------------------
 
-If you have installed RStudio Server from source there are a number of 
-optional (but recommended) steps you can take to complete your installation.
-Note that these steps are taken automatically by the DEB and RPM pre-built
-binary distributions of RStudio Server.
+If you have installed RStudio Server from source there are a number of other
+steps (some required, some optional) you can take to complete your
+installation. Note that these steps are taken automatically by the DEB 
+and RPM pre-built binary distributions of RStudio Server.
 
 a) Create an rstudio-server system user account (RStudio will automatically
    run under this account if it is present). You can do this with:
 
    sudo useradd -r rstudio-server
+ 
+   
+b) RStudio Server uses PAM to authenticate users. Some Unix systems (such 
+   as Debian and Ubuntu) use default PAM settings for applications which
+   aren't explicitly registered with PAM, so don't require additional PAM
+   configuration. If however your system requires explicit registration 
+   (i.e. Redhat, Fedora, openSUSE) then you need to add an
+   /etc/pam.d/rstudio file to your configuration. You can find a default
+  version of this file at:
 
-b) Register RStudio as a daemon using an init.d or upstart script 
-   appropriate for your system. The rstudio-server/extras directory contains
-   the following scripts:
+      extras
+         /pam
+            rstudio
+
+
+c) Register RStudio as a daemon using an init.d (for most systems) or 
+   upstart (for Ubuntu) script appropriate to your system. 
+   The rstudio/server/extras directory contains the following scripts:
 
    extras
       /init.d
@@ -110,7 +124,8 @@ b) Register RStudio as a daemon using an init.d or upstart script
       /upstart
          rstudio-server.conf
 
-c) Create a soft link in /usr/sbin to the server administrative script
+
+d) Create a soft link in /usr/sbin to the server administrative script
   
    sudo ln -f -s /usr/local/rstudio-server/bin/rstudio-server /usr/sbin/rstudio-server
 
@@ -122,11 +137,6 @@ c) Create a soft link in /usr/sbin to the server administrative script
   
    Additional commands include stop, restart, offline, online, and others
 
-d) RStudio Server uses PAM to authenticate users. Some Unix systems (such as Ubuntu) use default PAM settings for applications which aren't explicitly registered with PAM. If your system requires explicit registration (default or other profile set to pam_deny) then you need to add an /etc/pam.d/rstudio file to your configuration. You can find a default version of this file at:
-
-   extras
-      /pam
-         rstudio
 
 e) If your system supports AppArmor you may wish to add an AppArmor profile
    for RStudio Server. You can find one at:
