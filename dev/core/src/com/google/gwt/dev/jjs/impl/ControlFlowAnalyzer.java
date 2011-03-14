@@ -182,10 +182,25 @@ public class ControlFlowAnalyzer {
     public boolean visit(JCastOperation x, Context ctx) {
       // Rescue any JavaScriptObject type that is the target of a cast.
       JType targetType = x.getCastType();
-      if (program.isJavaScriptObject(targetType)) {
+      if (program.typeOracle.canBeJavaScriptObject(targetType)) {
         rescue((JReferenceType) targetType, true, true);
+        JType exprType = x.getExpr().getType();
+        if (program.typeOracle.isSingleJsoImpl(targetType)) {
+          /*
+            * It's a JSO interface, check if the source expr can be a live JSO
+            * 1) source is java.lang.Object (JSO could have been assigned to it)
+            * 2) source is JSO
+            * 3) source is SingleJSO interface whose implementor is live
+            */
+          if (program.getTypeJavaLangObject() == exprType
+              || program.typeOracle.canBeJavaScriptObject(exprType)) {
+            // source is JSO or SingleJso interface whose implementor is live
+            JClassType jsoImplementor =
+                program.typeOracle.getSingleJsoImpl((JReferenceType) targetType);
+            rescue(jsoImplementor, true, true);
+          }
+        }
       }
-
       return true;
     }
 
@@ -294,7 +309,6 @@ public class ControlFlowAnalyzer {
       }
 
       rescueMethodsIfInstantiable(type);
-
       return false;
     }
 
@@ -486,7 +500,8 @@ public class ControlFlowAnalyzer {
      */
     private void maybeRescueJavaScriptObjectPassingIntoJava(JType type) {
       boolean doIt = false;
-      if (program.isJavaScriptObject(type) || program.isJavaLangString(type)) {
+      if (program.typeOracle.canBeJavaScriptObject(type)
+          || program.isJavaLangString(type)) {
         doIt = true;
       } else if (type instanceof JArrayType) {
         /*
@@ -497,12 +512,17 @@ public class ControlFlowAnalyzer {
         JType elementType = arrayType.getElementType();
         if (elementType instanceof JPrimitiveType
             || program.isJavaLangString(elementType)
-            || program.isJavaScriptObject(elementType)) {
+            || program.typeOracle.canBeJavaScriptObject(elementType)) {
           doIt = true;
         }
       }
       if (doIt) {
         rescue((JReferenceType) type, true, true);
+        if (program.typeOracle.isSingleJsoImpl(type)) {
+          // Cast of JSO into SingleJso interface, rescue the implementor
+          rescue(program.typeOracle.getSingleJsoImpl((JReferenceType) type),
+              true, true);
+        }
       }
     }
 

@@ -273,6 +273,23 @@ public class ImplementClassLiteralsAsFields {
     return typeName;
   }
 
+
+  private JType normalizeJsoType(JType type) {
+    if (program.isJavaScriptObject(type)) {
+      return program.getJavaScriptObject();
+    }
+
+    if (type instanceof JArrayType) {
+      JArrayType aType = (JArrayType) type;
+      if (program.isJavaScriptObject(aType.getLeafType())) {
+        return program.getTypeArray(program.getJavaScriptObject(),
+            aType.getDims());
+      }
+    }
+
+    return type;
+  }
+
   /**
    * Takes the form:
    * 
@@ -285,6 +302,7 @@ public class ImplementClassLiteralsAsFields {
    */
   private JField resolveClassLiteralField(JClassLiteral classLiteral) {
     JType type = classLiteral.getRefType();
+    type = normalizeJsoType(type);
     JField field = classLiteralFields.get(type);
     if (field == null) {
       // Create the allocation expression FIRST since this may be recursive on

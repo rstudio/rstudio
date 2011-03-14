@@ -25,6 +25,7 @@ import com.google.gwt.dev.util.collect.Lists;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -280,6 +281,19 @@ public class JTypeOracle implements Serializable {
     this.program = program;
   }
 
+  /**
+   * True if the type is a JSO or interface implemented by JSO..
+   * @param type
+   * @return
+   */
+  public boolean canBeJavaScriptObject(JType type) {
+    if (type instanceof JNonNullType) {
+      type = ((JNonNullType) type).getUnderlyingType();
+    }
+    return program.isJavaScriptObject(type)
+        || program.typeOracle.isSingleJsoImpl(type);
+  }
+
   public boolean canTheoreticallyCast(JReferenceType type, JReferenceType qType) {
     if (!type.canBeNull() && qType == program.getTypeNull()) {
       // Cannot cast non-nullable to null
@@ -295,6 +309,14 @@ public class JTypeOracle implements Serializable {
       return true;
     }
 
+    /**
+     * Cross-cast allowed in theory, prevents TypeTightener from turning
+     * cross-casts into null-casts.
+     */
+    if (canBeJavaScriptObject(type) && canBeJavaScriptObject(qType)) {
+      return true;
+    }
+    
     if (canTriviallyCast(type, qType)) {
       return true;
     }
@@ -401,12 +423,6 @@ public class JTypeOracle implements Serializable {
         if (isSuperClass(cType, qcType)) {
           return true;
         }
-        // All JavaScriptObject types can be freely cast to each other.
-        JClassType jsoType = program.getJavaScriptObject();
-        if (jsoType != null) {
-          return isSameOrSuper(cType, jsoType)
-              && isSameOrSuper(qcType, jsoType);
-        }
       } else if (qType instanceof JInterfaceType) {
         return implementsInterface(cType, (JInterfaceType) qType);
       }
@@ -458,20 +474,17 @@ public class JTypeOracle implements Serializable {
       }
     }
 
-    /*
-     * Now that the basic type hierarchy is computed, move all interfaces that
-     * are implemented by overlay types onto JavaScriptObject itself before
-     * building the full maps.
+    /*                                                                                                 
+     * Now that the basic type hierarchy is computed, compute which
+     * JSOs implement interfaces singlely or dually.
      */
     JClassType jsoType = program.getJavaScriptObject();
     List<JClassType> jsoSubTypes = Lists.create();
     if (jsoType != null) {
-      assert jsoType.getImplements().size() == 0;
       jsoSubTypes = new ArrayList<JClassType>(get(subClassMap, jsoType));
       Collections.sort(jsoSubTypes, new HasNameSort());
       for (JClassType jsoSubType : jsoSubTypes) {
         for (JInterfaceType intf : jsoSubType.getImplements()) {
-          jsoType.addImplements(intf);
           jsoSingleImpls.put(intf, jsoSubType);
           for (JInterfaceType superIntf : get(superInterfaceMap, intf)) {
             if (!jsoSingleImpls.containsKey(superIntf)) {
@@ -499,14 +512,13 @@ public class JTypeOracle implements Serializable {
     }
 
     // Create dual mappings for any jso interface with a Java implementor.
-    int totalJsoTypes = jsoSubTypes.size() + 1;
     for (JInterfaceType jsoIntf : jsoSingleImpls.keySet()) {
       Set<JClassType> implementors = get(isImplementedMap, jsoIntf);
-      if (implementors.size() == totalJsoTypes) {
-        assert implementors.contains(jsoType);
-      } else {
-        assert implementors.size() > totalJsoTypes;
-        dualImpls.add(jsoIntf);
+      for (JClassType implementor : implementors) {
+        if (!program.isJavaScriptObject(implementor)) {
+          dualImpls.add(jsoIntf);
+          break;
+        }
       }
     }
   }
@@ -536,6 +548,10 @@ public class JTypeOracle implements Serializable {
     Set<JMethod> results = new IdentityHashSet<JMethod>();
     getAllRealOverrides(method, results);
     return results;
+  }
+
+  public Set<JClassType> getAllSubClasses(JReferenceType type) {
+    return subClassMap.get(type);
   }
 
   /**
@@ -574,8 +590,31 @@ public class JTypeOracle implements Serializable {
     return dualImpls.contains(maybeDualImpl.getUnderlyingType());
   }
 
+  /**
+    * True if either a JSO, or is an interface that is ONLY
+    * implemented by a JSO.
+    */
+   public boolean isEffectivelyJavaScriptObject(JType type) {
+     if (type instanceof JReferenceType) {
+       JReferenceType refType = (JReferenceType) type;
+       return program.isJavaScriptObject(refType) ||
+         (isSingleJsoImpl(refType) && !isDualJsoInterface(refType));
+     } else {
+       return false;
+     }
+   }
+
   public boolean isInstantiatedType(JReferenceType type) {
     return isInstantiatedType(type, instantiatedTypes);
+  }
+
+  public boolean isSameOrSuper(JClassType type, JClassType qType) {
+     return (type == qType || isSuperClass(type, qType));
+  }
+
+  public boolean isSingleJsoImpl(JType type) {
+    return type instanceof JReferenceType
+        && getSingleJsoImpl((JReferenceType) type) != null;
   }
 
   /**
@@ -598,8 +637,31 @@ public class JTypeOracle implements Serializable {
    */
   public void recomputeAfterOptimizations() {
     Set<JDeclaredType> computed = new IdentityHashSet<JDeclaredType>();
+
     for (JDeclaredType type : program.getDeclaredTypes()) {
       computeClinitTarget(type, computed);
+    }
+    nextDual: for (Iterator<JInterfaceType> it = dualImpls.iterator();
+        it.hasNext();) {
+      JInterfaceType dualIntf = it.next();
+      Set<JClassType> implementors = get(isImplementedMap, dualIntf);
+      for (JClassType implementor : implementors) {
+        if (isInstantiatedType(implementor)
+            && !program.isJavaScriptObject(implementor)) {
+          // This dual is still implemented by a Java class.
+          continue nextDual;
+        }
+      }
+      // No Java implementors.
+      it.remove();
+    }
+
+    // Prune jsoSingleImpls when implementor isn't live
+    Iterator<JClassType> jit = jsoSingleImpls.values().iterator();
+    while (jit.hasNext()) {
+      if (!isInstantiatedType(jit.next())) {
+        jit.remove();
+      }
     }
   }
 
@@ -910,10 +972,6 @@ public class JTypeOracle implements Serializable {
       }
     }
     return instantiatedTypes.contains(type);
-  }
-
-  private boolean isSameOrSuper(JClassType type, JClassType qType) {
-    return (type == qType || isSuperClass(type, qType));
   }
 
   /**

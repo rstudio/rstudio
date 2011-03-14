@@ -82,7 +82,6 @@ import com.google.gwt.dev.jjs.impl.GenerateJavaAST;
 import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
 import com.google.gwt.dev.jjs.impl.HandleCrossFragmentReferences;
 import com.google.gwt.dev.jjs.impl.ImplementClassLiteralsAsFields;
-import com.google.gwt.dev.jjs.impl.JavaScriptObjectNormalizer;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.jjs.impl.JsFunctionClusterer;
 import com.google.gwt.dev.jjs.impl.JsIEBlockTextTransformer;
@@ -619,9 +618,6 @@ public class JavaToJavaScriptCompiler {
 
       // Resolve entry points, rebinding non-static entry points.
       findEntryPoints(logger, rpo, declEntryPts, jprogram);
-
-      // Replace references to JSO subtypes with JSO itself.
-      JavaScriptObjectNormalizer.exec(jprogram);
 
       ImplementClassLiteralsAsFields.exec(jprogram);
       

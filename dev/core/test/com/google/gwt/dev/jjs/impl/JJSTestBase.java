@@ -109,6 +109,15 @@ public abstract class JJSTestBase extends TestCase {
     return findMethod(mainType, methodName);
   }
 
+  public static JMethod findQualifiedMethod(JProgram program, String methodName) {
+    int pos = methodName.lastIndexOf('.');
+    assertTrue(pos > 0);
+    String typeName = methodName.substring(0, pos);
+    String unqualMethodName = methodName.substring(pos + 1);
+    JDeclaredType type = findType(program, typeName);
+    return findMethod(type, unqualMethodName);
+  }
+
   /**
    * Finds a type by name. The type name may be short, e.g. <code>"Foo"</code>,
    * or fully-qualified, e.g. <code>"com.google.example.Foo"</code>. If a short

@@ -33,7 +33,6 @@ import com.google.gwt.dev.jjs.impl.ImplementClassLiteralsAsFields;
 import com.google.gwt.dev.jjs.impl.TypeLinker;
 import com.google.gwt.dev.jjs.impl.FixAssignmentToUnbox;
 import com.google.gwt.dev.jjs.impl.GenerateJavaAST;
-import com.google.gwt.dev.jjs.impl.JavaScriptObjectNormalizer;
 import com.google.gwt.dev.jjs.impl.TypeMap;
 import com.google.gwt.dev.js.ast.JsProgram;
 
@@ -273,8 +272,6 @@ public class JavaAstConstructor {
         }
       }
     }
-    // Replace references to JSO subtypes with JSO itself.
-    JavaScriptObjectNormalizer.exec(jprogram);
 
     ImplementClassLiteralsAsFields.exec(jprogram);
 

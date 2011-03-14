@@ -60,6 +60,7 @@ public class JjsTypeTest extends TestCase {
   private JInterfaceType intfI;
   private JInterfaceType intfIBase;
   private JInterfaceType intfJ;
+  private JInterfaceType intfK;
   private JProgram program;
   private SourceInfo synthSource;
   private JReferenceType typeNull;
@@ -136,11 +137,16 @@ public class JjsTypeTest extends TestCase {
     assertTrue(typeOracle.canTriviallyCast(arrayOfArrayOfB, arrayOfObject));
     assertFalse(typeOracle.canTriviallyCast(arrayOfObject, arrayOfArrayOfB));
 
-    assertTrue(typeOracle.canTriviallyCast(classJso1, classJso2));
-    assertTrue(typeOracle.canTriviallyCast(classJso2, classJso1));
+    assertTrue(typeOracle.canTheoreticallyCast(classJso1, classJso2));
+    assertTrue(typeOracle.canTheoreticallyCast(classJso2, classJso1));
 
-    assertTrue(typeOracle.canTriviallyCast(classJso, classJso1));
-    assertTrue(typeOracle.canTriviallyCast(classJso, classJso1));
+    assertTrue(typeOracle.canTheoreticallyCast(classJso1, intfK));
+    assertTrue(typeOracle.canTheoreticallyCast(intfK, classJso1));
+
+    assertTrue(typeOracle.canTheoreticallyCast(intfJ, intfK));
+    assertTrue(typeOracle.canTheoreticallyCast(intfK, intfJ));
+
+    assertTrue(typeOracle.canTriviallyCast(classJso1, classJso));
 
     assertTrue(typeOracle.canTriviallyCast(arrayOfA, intfSerializable));
     assertFalse(typeOracle.canTriviallyCast(intfSerializable, arrayOfA));
@@ -150,15 +156,13 @@ public class JjsTypeTest extends TestCase {
 
     /*
      * Test that two types cannot both be trivially castable to each other,
-     * unless they are the same type. Or, unless they are both JSOs.
+     * unless they are the same type.
      */
     for (JReferenceType type1 : severalTypes()) {
       for (JReferenceType type2 : severalTypes()) {
         if (type1 != type2) {
-          if (!isJso(type1) || !isJso(type2)) {
-            assertFalse(typeOracle.canTriviallyCast(type1, type2)
-                && typeOracle.canTriviallyCast(type2, type1));
-          }
+          assertFalse(typeOracle.canTriviallyCast(type1, type2)
+              && typeOracle.canTriviallyCast(type2, type1));
         }
       }
     }
@@ -246,6 +250,7 @@ public class JjsTypeTest extends TestCase {
     intfI.addImplements(intfIBase);
 
     intfJ = createInterface("J");
+    intfK = createInterface("K");
 
     classBase = createClass("Base", classObject, false, false);
 
@@ -260,8 +265,10 @@ public class JjsTypeTest extends TestCase {
     classBSub = createClass("BSub", classB, false, false);
 
     classJso1 = createClass("Jso1", classJso, false, false);
+    classJso1.addImplements(intfJ);
     classJso2 = createClass("Jso2", classJso, false, false);
-
+    classJso2.addImplements(intfK);
+    
     program.typeOracle.computeBeforeAST();
 
     // Save off some miscellaneous types to test against
@@ -289,10 +296,6 @@ public class JjsTypeTest extends TestCase {
     return program.generalizeTypes(types);
   }
 
-  private boolean isJso(JReferenceType type) {
-    return typeOracle.canTriviallyCast(type, classJso);
-  }
-
   /**
    * Return several types, for exhaustively testing basic properties.
    */
@@ -313,6 +316,7 @@ public class JjsTypeTest extends TestCase {
     types.add(classString);
     types.add(intfI);
     types.add(intfJ);
+    types.add(intfK);
     types.add(intfIBase);
     types.add(classJso1);
     types.add(classJso2);
