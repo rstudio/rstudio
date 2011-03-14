@@ -37,6 +37,9 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
    {
       normal_ = normal;
       minimized_ = minimized;
+
+      normal_.addWindowStateChangeHandler(this);
+      minimized_.addWindowStateChangeHandler(this);
    }
 
    public WindowFrame getNormal()
