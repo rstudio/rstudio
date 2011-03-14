@@ -1,0 +1,75 @@
+#!/bin/sh
+#
+### BEGIN INIT INFO
+# Provides:          rstudio-server
+# Required-Start:    $local_fs $remote_fs $syslog $network $named
+# Required-Stop:     $local_fs $remote_fs $syslog $network $named
+# Default-Start:     3 5
+# Default-Stop:      0 1 2 6
+# Short-Description: RStudio server provides a web interface to R
+# Description:       RStudio server provides a web interface to R
+### END INIT INFO
+
+# Check for missing binaries 
+RSERVER_BIN="${CMAKE_INSTALL_PREFIX}/bin/rserver"
+test -x $RSERVER_BIN || { echo "$RSERVER_BIN not installed"; 
+	if [ "$1" = "stop" ]; then exit 0;
+	else exit 5; fi; }
+
+
+# Source LSB init functions
+. /etc/rc.status
+
+# Reset status of this service
+rc_reset
+
+case "$1" in
+    start)
+	echo -n "Starting rstudio-server "
+
+	## Start daemon with startproc(8). If this fails
+	## the return value is set appropriately by startproc.
+	/sbin/startproc $RSERVER_BIN
+
+	# Remember status and be verbose
+	rc_status -v
+	;;
+    stop)
+	echo -n "Shutting down rstudio-server "
+
+	## Stop daemon with killproc(8) and if this fails
+	## killproc sets the return value according to LSB.
+	/sbin/killproc $RSERVER_BIN
+
+	# Remember status and be verbose
+	rc_status -v
+	;;
+    restart)
+	## Stop the service and regardless of whether it was
+	## running or not, start it again.
+	$0 stop
+	$0 start
+
+	# Remember status and be quiet
+	rc_status
+	;;
+    reload)
+	## we don't support reload
+	rc_failed 3
+	rc_status -v
+	;;
+    status)
+	echo -n "Checking for service rstudio-server"
+
+	## Check status with checkproc(8), if process is running
+	## checkproc will return with exit status 0.
+	/sbin/checkproc $RSERVER_BIN
+
+	# Remember status and be verbose
+	rc_status -v
+	;;
+esac
+rc_exit
+
+
+

@@ -121,8 +121,18 @@ c) Register RStudio as a daemon using an init.d (for most systems) or
             rstudio-server
          /redhat
             rstudio-server
+         /suse
+            rstudio-server
       /upstart
          rstudio-server.conf
+
+   NOTE: installation of init.d scripts require both copying them
+   into /etc/init.d, making them executable (chmod +x), as well as
+   executing a system dependent command to ensure that the service
+   is registered with the appropriate runlevels. For example:
+
+   Debian:      sudo update-rc.d rstudio-server defaults
+   Redhat/SUSE: sudo /sbin/chkconfig --add rstudio-server
 
 
 d) Create a soft link in /usr/sbin to the server administrative script
