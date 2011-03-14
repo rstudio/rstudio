@@ -35,7 +35,8 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
    public LogicalWindow(WindowFrame normal,
                         MinimizedWindowFrame minimized)
    {
-      setFrames(normal, minimized);
+      normal_ = normal;
+      minimized_ = minimized;
    }
 
    public WindowFrame getNormal()
@@ -46,31 +47,6 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
    public MinimizedWindowFrame getMinimized()
    {
       return minimized_;
-   }
-
-   public void replace(WindowFrame normal, MinimizedWindowFrame minimized)
-   {
-      regNormal_.removeHandler();
-      regMin_.removeHandler();
-
-      setFrames(normal, minimized);
-
-      Scheduler.get().scheduleFinally(new ScheduledCommand()
-      {
-         public void execute()
-         {
-            transitionToState(state_);
-         }
-      });
-   }
-
-   private void setFrames(WindowFrame normal, MinimizedWindowFrame minimized)
-   {
-      normal_ = normal;
-      minimized_ = minimized;
-
-      regNormal_ = normal_.addWindowStateChangeHandler(this);
-      regMin_ = minimized_.addWindowStateChangeHandler(this);
    }
 
    public void focus()
@@ -139,6 +115,4 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
    private WindowFrame normal_;
    private MinimizedWindowFrame minimized_;
    private WindowState state_;
-   private HandlerRegistration regMin_;
-   private HandlerRegistration regNormal_;
 }

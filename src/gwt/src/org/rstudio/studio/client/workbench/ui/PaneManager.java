@@ -115,32 +115,10 @@ public class PaneManager
       {
          public void onValueChange(ValueChangeEvent<PaneConfig> evt)
          {
-            WindowFrame[] normals = new WindowFrame[4];
-            MinimizedWindowFrame[] minimized = new MinimizedWindowFrame[4];
-
             ArrayList<LogicalWindow> newPanes = createPanes(evt.getValue());
-            for (int i = 0; i < newPanes.size(); i++)
-            {
-               normals[i] = newPanes.get(i).getNormal();
-               minimized[i] = newPanes.get(i).getMinimized();
-            }
-
-            for (int i = 0; i < normals.length; i++)
-            {
-               panes_.get(i).replace(normals[i], minimized[i]);
-            }
-
             panes_ = newPanes;
-
-            panesByName_.clear();
-            for (int i = 0; i < newPanes.size(); i++)
-            {
-               panesByName_.put(evt.getValue().getPanes().get(i),
-                                newPanes.get(i));
-            }
-
-            left_.reloadPanes();
-            right_.reloadPanes();
+            left_.replaceWindows(newPanes.get(0), newPanes.get(1));
+            right_.replaceWindows(newPanes.get(2), newPanes.get(3));
 
             tabSet1TabPanel_.clear();
             tabSet2TabPanel_.clear();

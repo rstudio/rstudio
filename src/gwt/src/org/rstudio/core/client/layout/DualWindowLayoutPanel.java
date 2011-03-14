@@ -13,11 +13,14 @@
 package org.rstudio.core.client.layout;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.events.WindowStateChangeHandler;
 import org.rstudio.core.client.js.JsObject;
@@ -90,13 +93,9 @@ public class DualWindowLayoutPanel extends SimplePanel
    private class WindowStateChangeManager
          implements WindowStateChangeHandler
    {
-      public WindowStateChangeManager(Session session,
-                                      LogicalWindow top,
-                                      LogicalWindow bottom)
+      public WindowStateChangeManager(Session session)
       {
          session_ = session;
-         this.top = top;
-         this.bottom = bottom;
       }
 
       public void onWindowStateChange(WindowStateChangeEvent event)
@@ -104,29 +103,29 @@ public class DualWindowLayoutPanel extends SimplePanel
          switch (event.getNewState())
          {
             case EXCLUSIVE:
-               top.transitionToState(EXCLUSIVE);
-               bottom.transitionToState(HIDE);
-               layout(top, bottom);
+               windowA_.transitionToState(EXCLUSIVE);
+               windowB_.transitionToState(HIDE);
+               layout(windowA_, windowB_);
                break;
             case MAXIMIZE:
-               top.transitionToState(MAXIMIZE);
-               bottom.transitionToState(MINIMIZE);
-               layout(top, bottom);
+               windowA_.transitionToState(MAXIMIZE);
+               windowB_.transitionToState(MINIMIZE);
+               layout(windowA_, windowB_);
                break;
             case MINIMIZE:
-               top.transitionToState(MINIMIZE);
-               bottom.transitionToState(MAXIMIZE);
-               layout(top, bottom);
+               windowA_.transitionToState(MINIMIZE);
+               windowB_.transitionToState(MAXIMIZE);
+               layout(windowA_, windowB_);
                break;
             case NORMAL:
-               top.transitionToState(NORMAL);
-               bottom.transitionToState(NORMAL);
-               layout(top, bottom);
+               windowA_.transitionToState(NORMAL);
+               windowB_.transitionToState(NORMAL);
+               layout(windowA_, windowB_);
                break;
             case HIDE:
-               top.transitionToState(HIDE);
-               bottom.transitionToState(EXCLUSIVE);
-               layout(top, bottom);
+               windowA_.transitionToState(HIDE);
+               windowB_.transitionToState(EXCLUSIVE);
+               layout(windowA_, windowB_);
                break;
          }
 
@@ -141,8 +140,6 @@ public class DualWindowLayoutPanel extends SimplePanel
       }
 
       private final Session session_;
-      private final LogicalWindow top;
-      private final LogicalWindow bottom;
    }
 
    private static class State extends JavaScriptObject
@@ -232,8 +229,7 @@ public class DualWindowLayoutPanel extends SimplePanel
     */
    private class WindowLayoutStateValue extends JSObjectStateValue
    {
-      public WindowLayoutStateValue(LogicalWindow windowA,
-                                    ClientInitState clientState,
+      public WindowLayoutStateValue(ClientInitState clientState,
                                     String clientStateKeyName,
                                     WindowState topWindowDefaultState,
                                     int defaultSplitterPos)
@@ -243,7 +239,6 @@ public class DualWindowLayoutPanel extends SimplePanel
                true,
                clientState,
                true);
-         windowA_ = windowA;
          topWindowDefaultState_ = topWindowDefaultState;
          defaultSplitterPos_ = defaultSplitterPos;
 
@@ -357,7 +352,6 @@ public class DualWindowLayoutPanel extends SimplePanel
       }
 
       private State lastKnownValue_;
-      private final LogicalWindow windowA_;
       private final WindowState topWindowDefaultState_;
       private final int defaultSplitterPos_;
    }
@@ -379,47 +373,44 @@ public class DualWindowLayoutPanel extends SimplePanel
             windowB.getNormal(), windowB.getMinimized()}, 3);
       layout_.setSize("100%", "100%");
 
-      topWindowStateChangeManager_ = new WindowStateChangeManager(session,
-                                                                  windowA,
-                                                                  windowB);
-      windowA.addWindowStateChangeHandler(topWindowStateChangeManager_);
-      windowB.addWindowStateChangeHandler(
-            new WindowStateChangeHandler()
+      topWindowStateChangeManager_ = new WindowStateChangeManager(session);
+      bottomWindowStateChangeManager_ = new WindowStateChangeHandler()
+      {
+         public void onWindowStateChange(WindowStateChangeEvent event)
+         {
+            WindowState topState;
+            switch (event.getNewState())
             {
-               public void onWindowStateChange(WindowStateChangeEvent event)
-               {
-                  WindowState topState;
-                  switch (event.getNewState())
-                  {
-                     case NORMAL:
-                        topState = NORMAL;
-                        break;
-                     case MAXIMIZE:
-                        topState = MINIMIZE;
-                        break;
-                     case MINIMIZE:
-                        topState = MAXIMIZE;
-                        break;
-                     case HIDE:
-                        topState = EXCLUSIVE;
-                        break;
-                     case EXCLUSIVE:
-                        topState = HIDE;
-                        break;
-                     default:
-                        throw new IllegalArgumentException(
-                              "Unknown WindowState " + event.getNewState());
-                  }
-                  windowA.onWindowStateChange(
-                                          new WindowStateChangeEvent(topState));
-               }
-            });
+               case NORMAL:
+                  topState = NORMAL;
+                  break;
+               case MAXIMIZE:
+                  topState = MINIMIZE;
+                  break;
+               case MINIMIZE:
+                  topState = MAXIMIZE;
+                  break;
+               case HIDE:
+                  topState = EXCLUSIVE;
+                  break;
+               case EXCLUSIVE:
+                  topState = HIDE;
+                  break;
+               default:
+                  throw new IllegalArgumentException(
+                        "Unknown WindowState " + event.getNewState());
+            }
+            windowA_.onWindowStateChange(
+                                    new WindowStateChangeEvent(topState));
+         }
+      };
 
-      new WindowLayoutStateValue(windowA,
-                               session.getSessionInfo().getClientState(),
-                               clientStateKeyName,
-                               topWindowDefaultState,
-                               defaultSplitterPos);
+      hookEvents();
+
+      new WindowLayoutStateValue(session.getSessionInfo().getClientState(),
+                                 clientStateKeyName,
+                                 topWindowDefaultState,
+                                 defaultSplitterPos);
 
       setWidget(layout_);
 
@@ -477,12 +468,38 @@ public class DualWindowLayoutPanel extends SimplePanel
       }
    }
 
-   public void reloadPanes()
+   private void hookEvents()
    {
+      registrations_.add(
+            windowA_.addWindowStateChangeHandler(topWindowStateChangeManager_));
+      registrations_.add(
+            windowB_.addWindowStateChangeHandler(bottomWindowStateChangeManager_));
+   }
+
+   private void unhookEvents()
+   {
+      registrations_.removeHandler();
+   }
+
+   public void replaceWindows(LogicalWindow windowA,
+                              LogicalWindow windowB)
+   {
+      unhookEvents();
+      windowA_ = windowA;
+      windowB_ = windowB;
+      hookEvents();
+
       layout_.setWidgets(new Widget[] {
             windowA_.getNormal(), windowA_.getMinimized(),
             windowB_.getNormal(), windowB_.getMinimized() });
-      layout(windowA_, windowB_);
+
+      Scheduler.get().scheduleFinally(new ScheduledCommand()
+      {
+         public void execute()
+         {
+            windowA_.onWindowStateChange(new WindowStateChangeEvent(NORMAL));
+         }
+      });
    }
 
    public void onResize()
@@ -512,10 +529,12 @@ public class DualWindowLayoutPanel extends SimplePanel
 
    private BinarySplitLayoutPanel layout_;
    private NormalHeight normalHeight_;
-   private final LogicalWindow windowA_;
-   private final LogicalWindow windowB_;
+   private LogicalWindow windowA_;
+   private LogicalWindow windowB_;
    private final Session session_;
    private WindowStateChangeManager topWindowStateChangeManager_;
+   private WindowStateChangeHandler bottomWindowStateChangeManager_;
+   private HandlerRegistrations registrations_ = new HandlerRegistrations();
 
    private NormalHeight snapMinimizeNormalHeight_;
 }
