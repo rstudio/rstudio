@@ -25,4 +25,5 @@
   <extend-property name="locale" values="zh"/>
   <set-property-fallback name="locale" value="en"/>
   <set-configuration-property name="locale.cookie" value="SHOWCASE_LOCALE"/>
+  <set-configuration-property name="locale.useragent" value="Y"/>
 </module>

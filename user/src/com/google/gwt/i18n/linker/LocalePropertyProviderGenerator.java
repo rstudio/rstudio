@@ -280,9 +280,15 @@ public class LocalePropertyProviderGenerator implements PropertyProviderGenerato
         + "navigator.browserLanguage : navigator.language;");
     body.println("if (language) {");
     body.indent();
-    body.println("locale = language.replace(/-/g, \"_\");");
+    body.println("var parts = language.split(/[-_]/);");
+    body.println("if (parts.length > 1) {");
+    body.indent();
+    body.println("parts[1] = parts[1].toUpperCase();");
     body.outdent();
-    body.println();
+    body.println("}");
+    body.println("locale = parts.join(\"_\");");
+    body.outdent();
+    body.println("}");
   }
 
   /**
