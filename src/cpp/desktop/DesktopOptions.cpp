@@ -183,7 +183,11 @@ QString Options::rHome() const
 #ifdef _WIN32
    return binDirToHomeDir(rBinDir());
 #else
-   return CONFIG_R_HOME_PATH;
+   std::string rHomeDir = core::system::getenv("R_HOME");
+   if (!rHomeDir.empty())
+      return QString::fromStdString(rHomeDir);
+   else
+      return CONFIG_R_HOME_PATH;
 #endif
 }
 
@@ -196,7 +200,11 @@ QString Options::rDocPath() const
    else
       return QString();
 #else
-   return CONFIG_R_DOC_PATH;
+   std::string rDocDir = core::system::getenv("R_DOC_DIR");
+   if (!rDocDir.empty())
+      return QString::fromStdString(rDocDir);
+   else
+      return CONFIG_R_DOC_PATH;
 #endif
 }
 

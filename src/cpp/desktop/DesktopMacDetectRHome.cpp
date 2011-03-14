@@ -13,6 +13,8 @@
 
 #include "DesktopDetectRHome.hpp"
 
+#include <boost/algorithm/string/trim.hpp>
+
 #include <QtCore>
 #include <QMessageBox>
 
@@ -26,59 +28,91 @@ namespace desktop {
 
 namespace {
 
-bool detectR(FilePath* pLibraryPath)
+FilePath detectRHome()
 {
-   FilePath realPath;
-   Error error = core::system::realPath(
-         "/Library/Frameworks/R.framework/Versions/Current",
-         &realPath);
+   // run R to detect R home
+   std::string output;
+   Error error = core::system::captureCommand("R RHOME", &output);
    if (error)
-      return false;
+   {
+      LOG_ERROR(error);
+      return FilePath();
+   }
+   boost::algorithm::trim(output);
 
-   // set library path
-   *pLibraryPath = realPath.complete("Resources/lib");
+   // return the home path if we got one
+   if (!output.empty())
+      return FilePath(output);
+   else
+      return FilePath();
+}
 
-   QString version = QString::fromStdString(realPath.filename());
-   QRegExp regexp("^(\\d+)\\.(\\d+)(?:\\.(\\d+))*$");
-   int index = regexp.indexIn(version);
-   if (index != 0)
-      return false;
-
-   int major = 0, minor = 0;
-
-   bool success;
-   major = regexp.cap(1).toInt(&success);
-   if (!success)
-      return false;
-
-   minor = regexp.cap(2).toInt(&success);
-   if (!success)
-      return false;
-
-   if (major > RSTUDIO_R_MAJOR_VERSION_REQUIRED)
-      return true;
-   if (major < RSTUDIO_R_MAJOR_VERSION_REQUIRED)
-      return false;
-   return minor*10 >= (RSTUDIO_R_MINOR_VERSION_REQUIRED +
-                       RSTUDIO_R_PATCH_VERSION_REQUIRED);
+void showRNotFoundError(const std::string& msg)
+{
+   QMessageBox::critical(NULL, "R Not Found", QString::fromStdString(msg));
 }
 
 } // anonymous namespace
 
 bool prepareEnvironment(Options&)
 {
-   FilePath libraryPath;
-   if (!detectR(&libraryPath))
+   FilePath homePath = detectRHome();
+   if (homePath.empty())
    {
-      QMessageBox::critical(NULL,
-                            "R Not Found",
-                            "Please make sure a compatible version of R is "
-                            "installed, then try again.");
+      showRNotFoundError("Unable to detect a version of R on your system. "
+                         "Is the R executable on your system path?");
       return false;
    }
 
-   // set DYLD_LIBRARY_PATH
-   core::system::setenv("DYLD_LIBRARY_PATH", libraryPath.absolutePath());
+   // verify set home path
+   if (homePath.exists())
+   {
+      core::system::setenv("R_HOME", homePath.absolutePath());
+   }
+   else
+   {
+      showRNotFoundError("R home path (" + homePath.absolutePath() +
+                         ") does not exist.");
+      return false;
+   }
+
+   // verify and set doc dir
+   FilePath rDocDir = homePath.complete("doc");
+   if (rDocDir.exists())
+   {
+       core::system::setenv("R_DOC_DIR", rDocDir.absolutePath());
+   }
+   else
+   {
+      showRNotFoundError("R doc directory (" + rDocDir.absolutePath() +
+                         ") does not exist.");
+      return false;
+   }
+
+   // verify and set library path
+   FilePath rLibPath = homePath.complete("lib");
+   if (rLibPath.exists())
+   {
+      // make sure the R lib was built
+      FilePath libRpath = rLibPath.complete("libR.dylib");
+      if (libRpath.exists())
+      {
+         core::system::setenv("DYLD_LIBRARY_PATH", rLibPath.absolutePath());
+      }
+      else
+      {
+         showRNotFoundError(rLibPath.filename() + " not found in R library "
+                            "path. If this is a custom build of R, was it "
+                            "built with the --enable-R-shlib option?");
+         return false;
+      }
+   }
+   else
+   {
+      showRNotFoundError("R library directory (" + rLibPath.absolutePath() +
+                         ") does not exist.");
+      return false;
+   }
 
    return true;
 }
