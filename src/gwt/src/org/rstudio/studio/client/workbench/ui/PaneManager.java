@@ -132,6 +132,13 @@ public class PaneManager
 
             panes_ = newPanes;
 
+            panesByName_.clear();
+            for (int i = 0; i < newPanes.size(); i++)
+            {
+               panesByName_.put(evt.getValue().getPanes().get(i),
+                                newPanes.get(i));
+            }
+
             left_.reloadPanes();
             right_.reloadPanes();
 
