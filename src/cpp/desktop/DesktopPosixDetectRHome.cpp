@@ -51,7 +51,7 @@ namespace {
  }
 
  // no extra paths on the mac
- std::string extraLibraryPaths()
+ std::string extraLibraryPaths(const std::string& rHome)
  {
     return std::string();
  }
@@ -74,7 +74,7 @@ namespace {
  }
 
  // extra paths from R (for rjava) on linux
- std::string extraLibraryPaths()
+ std::string extraLibraryPaths(const std::string& rHome)
  {
     std::string libraryPaths;
 
@@ -85,6 +85,7 @@ namespace {
     if (scriptPath.exists())
     {
        // run script
+       std::string command = scriptPath.absolutePath() + " " + rHome;
        Error error = system::captureCommand(scriptPath.absolutePath(),
                                             &libraryPaths);
        if (error)
@@ -218,7 +219,7 @@ bool prepareEnvironment(Options&)
          if (!libraryPath.empty())
             libraryPath.append(":");
          libraryPath.append(rLibPath.absolutePath());
-         std::string extraPaths = extraLibraryPaths();
+         std::string extraPaths = extraLibraryPaths(homePath.absolutePath());
          if (!extraPaths.empty())
             libraryPath.append(":" + extraPaths);
 

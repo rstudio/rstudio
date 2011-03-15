@@ -13,6 +13,14 @@
 #
 #
 
-. ${LIBR_HOME}/etc/ldpaths
+# take an optional RHOME dir override
+if [ -n "$1" ]
+then
+   RHOME=$1
+else
+   RHOME=${LIBR_HOME}
+fi
+
+. $RHOME/etc/ldpaths
 echo -n $LD_LIBRARY_PATH
 

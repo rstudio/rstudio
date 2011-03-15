@@ -50,6 +50,7 @@
 
 #include <server/ServerOptions.hpp>
 
+
 using namespace core ;
 
 namespace server {
@@ -57,14 +58,14 @@ namespace session_proxy {
    
 namespace {
 
-std::string readRLdLibraryPath()
+std::string readRLdLibraryPath(const std::string& rHome)
 {
    std::string ldLibraryPath;
    FilePath ldpathScript(server::options().rldpathPath());
    if (ldpathScript.exists())
    {
-      Error error = core::system::captureCommand(ldpathScript.absolutePath(),
-                                                 &ldLibraryPath);
+      std::string command = ldpathScript.absolutePath() + " " + rHome;
+      Error error = core::system::captureCommand(command, &ldLibraryPath);
 
       // this is here to enable support for rJava. if it doesn't work for some
       // reason then just log and don't hold up the whole works for this error
@@ -118,7 +119,7 @@ Error launchSession(const std::string& username, PidType* pPid)
    if (!ldLibraryPath.empty())
       ldLibraryPath.append(":");
    ldLibraryPath.append(options.rLibDir());
-   std::string rLdLibraryPath = readRLdLibraryPath();
+   std::string rLdLibraryPath = readRLdLibraryPath(options.rHome());
    if (!rLdLibraryPath.empty())
       ldLibraryPath.append(":" + rLdLibraryPath);
    environment.push_back(std::make_pair("LD_LIBRARY_PATH", ldLibraryPath));

@@ -20,6 +20,8 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
 
   ${CMAKE_INSTALL_PREFIX}/bin/r-ldpath rix,
   ${LIBR_HOME}/etc/ldpaths rix,
+  /usr/lib{,32,64}/R/etc/ldpaths rix,
+  /usr/local/lib{,32,64}/R/etc/ldpaths rix,
   /etc/R/ldpaths rix,
   /bin/dash ix,
   /etc/ld.so.cache r,
