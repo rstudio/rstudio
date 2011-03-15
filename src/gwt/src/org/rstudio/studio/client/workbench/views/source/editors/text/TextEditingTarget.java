@@ -35,6 +35,7 @@ import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
@@ -217,14 +218,20 @@ public class TextEditingTarget implements EditingTarget
          public void onKeyDown(KeyDownEvent event)
          {
             NativeEvent ne = event.getNativeEvent();
-            if ((ne.getMetaKey() ^ ne.getCtrlKey())
-                && !ne.getAltKey()
-                && !ne.getShiftKey()
+            int mod = KeyboardShortcut.getModifierValue(ne);
+            if ((mod == KeyboardShortcut.META || mod == KeyboardShortcut.CTRL)
                 && ne.getKeyCode() == 'F')
             {
                event.preventDefault();
                event.stopPropagation();
                commands_.findReplace().execute();
+            }
+            else if (mod == KeyboardShortcut.ALT
+                     && ne.getKeyCode() == 189) // hyphen
+            {
+               event.preventDefault();
+               event.stopPropagation();
+               docDisplay_.insertCode(" <- ", false);
             }
          }
       });

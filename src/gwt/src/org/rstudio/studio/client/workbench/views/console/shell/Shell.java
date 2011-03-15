@@ -20,6 +20,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.inject.Inject;
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -453,6 +454,17 @@ public class Shell implements ConsoleInputHandler,
                      event.preventDefault();
                      event.stopPropagation();
                      InputEditorUtil.moveSelectionToLineEnd(input_);
+                     break;
+               }
+            }
+            else if (mod == KeyboardShortcut.ALT)
+            {
+               switch (keyCode)
+               {
+                  case 189: // hyphen
+                     event.preventDefault();
+                     event.stopPropagation();
+                     input_.replaceSelection(" <- ", true);
                      break;
                }
             }
