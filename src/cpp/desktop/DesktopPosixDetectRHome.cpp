@@ -86,8 +86,7 @@ namespace {
     {
        // run script
        std::string command = scriptPath.absolutePath() + " " + rHome;
-       Error error = system::captureCommand(scriptPath.absolutePath(),
-                                            &libraryPaths);
+       Error error = system::captureCommand(command, &libraryPaths);
        if (error)
           LOG_ERROR(error);
     }
