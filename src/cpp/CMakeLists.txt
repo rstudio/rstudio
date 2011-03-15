@@ -142,7 +142,7 @@ endif()
 find_package(LibR REQUIRED)
 
 # verify we got the required R version
-if(LIBR_FOUND)
+if(LIBR_FOUND AND RSTUDIO_VERIFY_R_VERSION)
    include(CheckCSourceRuns)
    set(CMAKE_REQUIRED_INCLUDES ${LIBR_INCLUDE_DIRS})
    check_c_source_runs("

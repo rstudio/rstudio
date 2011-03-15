@@ -58,8 +58,17 @@ endif()
 
 # required R version
 set(RSTUDIO_R_MAJOR_VERSION_REQUIRED 2)
-set(RSTUDIO_R_MINOR_VERSION_REQUIRED 10)
-set(RSTUDIO_R_PATCH_VERSION_REQUIRED 0)
+set(RSTUDIO_R_MINOR_VERSION_REQUIRED 11)
+set(RSTUDIO_R_PATCH_VERSION_REQUIRED 1)
+
+# allow opting out of version checking (for building on older distros)
+if(NOT DEFINED RSTUDIO_VERIFY_R_VERSION)
+   if(RSTUDIO_PACKAGE_BUILD)
+      set(RSTUDIO_VERIFY_R_VERSION FALSE)
+   else()
+      set(RSTUDIO_VERIFY_R_VERSION TRUE)
+   endif()
+endif()
 
 # cmake modules (compute path relative to this file)
 get_filename_component(ROOT_SRC_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)

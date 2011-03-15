@@ -162,6 +162,10 @@ find_package_handle_standard_args(LibR DEFAULT_MSG
    LIBR_DOC_DIR
 )
 
+if(LIBR_FOUND)
+   message(STATUS "Found R: ${LIBR_HOME}")
+endif()
+
 # mark low-level variables from FIND_* calls as advanced
 mark_as_advanced(
    LIBR_EXECUTABLE
