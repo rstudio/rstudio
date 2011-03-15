@@ -124,6 +124,9 @@ Error systemError(int value,
 
 Error fileExistsError(const ErrorLocation& location);
 Error pathNotFoundError(const ErrorLocation& location);
+Error pathNotFoundError(const std::string& path,
+                        const ErrorLocation& location);
+
 
 class ErrorLocation
 {

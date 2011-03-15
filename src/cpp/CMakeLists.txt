@@ -169,7 +169,7 @@ add_subdirectory(r)
 if(RSTUDIO_DESKTOP)
 
    add_subdirectory(desktop)
-   configure_file(rdesktop-dev ${CMAKE_CURRENT_BINARY_DIR}/rdesktop-dev)
+   configure_file(rdesktop-dev.in ${CMAKE_CURRENT_BINARY_DIR}/rdesktop-dev)
    configure_file(conf/rdesktop-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf)
 
 endif()

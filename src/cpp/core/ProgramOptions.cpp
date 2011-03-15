@@ -33,16 +33,6 @@ namespace program_options {
  
 namespace {
 
-
-void reportError(const std::string& errorMessage,
-                 const ErrorLocation& location)
-{
-   if (core::system::stderrIsTerminal())
-      std::cerr << errorMessage << std::endl;
-   else
-      core::log::logErrorMessage(errorMessage, location);
-}
-
 bool validateOptionsProvided(const variables_map& vm,
                              const options_description& optionsDescription,
                              const std::string& configFile = std::string())
@@ -67,6 +57,15 @@ bool validateOptionsProvided(const variables_map& vm,
 
 }
   
+void reportError(const std::string& errorMessage, const ErrorLocation& location)
+{
+   if (core::system::stderrIsTerminal())
+      std::cerr << errorMessage << std::endl;
+   else
+      core::log::logErrorMessage(errorMessage, location);
+}
+
+
 ProgramStatus read(const OptionsDescription& optionsDescription,
                    int argc, 
                    char * const argv[])

@@ -11,6 +11,4 @@
  *
  */
 
-#define CONFIG_R_HOME_PATH "${LIBR_HOME}"
-#define CONFIG_R_DOC_PATH  "${LIBR_DOC_DIR}"
 
