@@ -69,15 +69,8 @@ public:
    virtual core::Error setActivePlot(int index) = 0;
    virtual core::Error removePlot(int index) = 0;
 
-   // capabilities
-   virtual bool supportsSvg() = 0;
-   
    // actions on active plot   
    virtual core::Error savePlotAsPng(const core::FilePath& filePath,
-                                     int widthPx,
-                                     int heightPx) = 0;
-
-   virtual core::Error savePlotAsSvg(const core::FilePath& filePath,
                                      int widthPx,
                                      int heightPx) = 0;
    

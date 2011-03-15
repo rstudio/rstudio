@@ -29,18 +29,17 @@ public class MinimizedModuleTabLayoutPanel
       extends MinimizedWindowFrame
    implements HasSelectionHandlers<Integer>
 {
-   public MinimizedModuleTabLayoutPanel(String[] tabNames)
+   public MinimizedModuleTabLayoutPanel()
    {
       super(null, new HorizontalPanel());
       addStyleName(ThemeResources.INSTANCE.themeStyles().moduleTabPanel());
       addStyleName(ThemeResources.INSTANCE.themeStyles().minimized());
-
-      addTabs(tabNames);
    }
 
-   private void addTabs(String[] tabNames)
+   public void setTabs(String[] tabNames)
    {
       HorizontalPanel horiz = (HorizontalPanel) getExtraWidget();
+      horiz.clear();
 
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       for (int i = 0; i < tabNames.length; i++)

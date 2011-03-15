@@ -6,16 +6,13 @@
 }
 
 \usage{
-picker(..., choices = list(), initial = NULL, label = NULL)
+picker(..., initial = NULL, label = NULL)
 }
 
 
 \arguments{
   \item{\dots}{
-    Arguments containing objects to be presented as choices for the picker. If an argument is named then the name is used to display it within the picker. If an argument is not named then it is displayed within the picker using \code{\link{as.character}}). 
-}
-  \item{choices}{
-    A list of objects to be used as choices for the picker. Display names for objects within the picker are derived using list element names or \code{\link{as.character}} for unnamed items. If both \code{choices} and variable arguments are given then the variable arguments are appended to \code{choices}.
+    Arguments containing objects to be presented as choices for the picker (or a list containing the choices). If an element is named then the name is used to display it within the picker. If an element is not named then it is displayed within the picker using \code{\link{as.character}}. 
 }
   \item{initial}{
     Initial value for picker. Value must be present in the list of choices specified. If not specified defaults to the first choice.

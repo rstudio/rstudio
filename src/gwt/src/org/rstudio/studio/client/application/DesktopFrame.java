@@ -34,8 +34,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    String getUriForPath(String path);
    void onWorkbenchInitialized(String scratchDir);
    void showFolder(String path);
-   void showOptions();
-   String chooseCRANmirror();
    void close();
    void openMinimalWindow(String name, String url, int width, int height);
    void copyImageToClipboard(int clientLeft,
@@ -60,4 +58,12 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void showAboutDialog();
 
    boolean suppressSyntaxHighlighting();
+
+   int getSaveAction();
+   void setSaveAction(int index);
+   String getCRANMirror();
+   String chooseCRANmirror();
+   String getRVersion();
+   String chooseRVersion();
+   boolean canChooseRVersion();
 }

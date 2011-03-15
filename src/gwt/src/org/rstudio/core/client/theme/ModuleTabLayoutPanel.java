@@ -20,6 +20,7 @@ import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.layout.WindowState;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -129,7 +130,7 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
    @Override
    public void selectTab(int index)
    {
-      super.selectTab(index);
+      super.selectTab(Math.max(0, Math.min(index, getWidgetCount() - 1)));
       if (index == 0)
          owner_.addStyleName(styles_.firstTabSelected());
       else

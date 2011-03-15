@@ -26,6 +26,7 @@ export CMAKE_OSX_DEPLOYMENT_TARGET="10.5"
 
 cmake -DRSTUDIO_TARGET=Desktop \
       -DCMAKE_BUILD_TYPE=Release \
+      -DRSTUDIO_PACKAGE_BUILD=1 \
       ../../..
 
 make

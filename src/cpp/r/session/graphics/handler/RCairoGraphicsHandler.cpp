@@ -17,11 +17,6 @@
 // them as Rboolean enumerated values)
 #include <pango/pango.h>
 #include <pango/pangocairo.h>
-
-#ifdef CAIRO_HAS_SVG_SURFACE
-#include <cairo-svg.h>
-#endif
-
 #undef TRUE
 #undef FALSE
 
@@ -237,14 +232,13 @@ bool completeInitialization(CairoDeviceData* pCDD)
 } // anonymous namespace
 
 
-bool initializePNG(const FilePath& filePath,
-                   int width,
-                   int height,
-                   bool displayListOn,
-                   DeviceContext* pDC)
+bool initialize(const FilePath& filePath,
+                int width,
+                int height,
+                bool displayListOn,
+                DeviceContext* pDC)
 {
    // initialize file info
-   pDC->fileType = "png";
    pDC->targetPath = filePath;
    pDC->width = width;
    pDC->height = height;
@@ -262,51 +256,6 @@ bool initializePNG(const FilePath& filePath,
    // complete initialization
    return completeInitialization(pCDD);
 
-}
-
-bool supportsSVG()
-{
-   // disable svg for all platforms now (b/c couldn't figure out
-   // how to accurately detect working svg implementation on redhat
-   return false;
-/*
-#ifdef CAIRO_HAS_SVG_SURFACE
-   return true;
-#else
-   return false;
-#endif
-*/
-}
-
-bool initializeSVG(const FilePath& filePath,
-                   int width,
-                   int height,
-                   bool displayListOn,
-                   DeviceContext* pDC)
-{
-#ifdef CAIRO_HAS_SVG_SURFACE
-   // initialize file info
-   pDC->fileType = "svg";
-   pDC->targetPath = filePath;
-   pDC->width = width;
-   pDC->height = height;
-
-   // initialize cairo context
-   CairoDeviceData* pCDD = (CairoDeviceData*)pDC->pDeviceSpecific;
-   pCDD->surface = NULL;
-   pCDD->context = NULL;
-
-   // create surface
-   pCDD->surface = cairo_svg_surface_create(filePath.absolutePath().c_str(),
-                                            width,
-                                            height);
-
-
-   // complete initialization
-   return completeInitialization(pCDD);
-#else
-   return false;
-#endif
 }
 
 DeviceContext* allocate(pDevDesc dev)
@@ -372,6 +321,15 @@ void setDeviceAttributes(pDevDesc pDev)
    pDev->canGenKeybd = FALSE;
    pDev->gettingEvent = FALSE;
 }
+
+void onBeforeAddInteractiveDevice(DeviceContext* pDC)
+{
+}
+
+void onAfterAddInteractiveDevice(DeviceContext* pDC)
+{
+}
+
 
 Error writeToPNG(const FilePath& targetPath,
                  DeviceContext* pDC,

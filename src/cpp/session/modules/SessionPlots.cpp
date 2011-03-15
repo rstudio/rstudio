@@ -164,22 +164,7 @@ void setImageFileResponse(const FilePath& imageFilePath,
       pResponse->setContentEncoding(http::kGzipEncoding);
    
    // set file
-   Error error;
-   if (imageFilePath.extensionLowerCase() == ".svg")
-   {
-      // filter for making sure width and height are 100%
-      boost::iostreams::basic_regex_filter<char> sizeFilter(
-            boost::regex("width=\"[0-9].*pt\" height=\"[0-9].*pt\" viewBox="),
-            "width=\"100%\" height=\"100%\" viewBox=");
-   
-      error = pResponse->setBody(imageFilePath, sizeFilter);
-   }
-   else
-   {
-      error = pResponse->setBody(imageFilePath);
-   }
-   
-   // report error to client if one occurred
+   Error error = pResponse->setBody(imageFilePath);
    if (error)
    {
       LOG_ERROR(error);
@@ -213,38 +198,10 @@ void handleZoomRequest(const http::Request& request, http::Response* pResponse)
    if (!extractSizeParams(request, 100, 3000, &width, &height, pResponse))
      return ;
 
-   // get the type (force png if the back end doesn't support svg)
-   std::string type;
-   if (!graphics::display().supportsSvg())
-   {
-      type = "png";
-   }
-   else
-   {
-      type = request.queryParamValue("type");
-      if (type != "png")
-         type = "svg";
-   }
 
    // generate the file
-   FilePath imagePath = module_context::tempFile("plot", type);
-   Error saveError;
-   if (type == "png")
-   {
-      saveError = graphics::display().savePlotAsPng(imagePath, width, height);
-   }
-   else // svg 
-   {
-      // scale the size down by 20% so we provide some "zoom" effect (larger
-      // typefaces and other plot features)
-      width -= (width/5);
-      height -= (height/5);
-      
-      // generate the file
-      saveError = graphics::display().savePlotAsSvg(imagePath, width, height);
-   }
-   
-   // check for error
+   FilePath imagePath = module_context::tempFile("plot", "png");
+   Error saveError = graphics::display().savePlotAsPng(imagePath, width, height);
    if (saveError)
    {
       pResponse->setError(http::status::InternalServerError, 
@@ -320,10 +277,10 @@ void handlePngRequest(const http::Request& request,
 
 // NOTE: this function assumes it is retreiving the image for the currently
 // active plot (the assumption is implied by the fact that file not found
-// on the requested svg results in a redirect to the currently active
-// plot's svg). to handle this redirection we should always maintain an
+// on the requested png results in a redirect to the currently active
+// plot's png). to handle this redirection we should always maintain an
 // entry point with these semantics. if we wish to have an entry point
-// for obtaining arbitrary svgs then it should be separate from this.
+// for obtaining arbitrary pngs then it should be separate from this.
    
 void handleGraphicsRequest(const http::Request& request, 
                            http::Response* pResponse)
@@ -341,7 +298,7 @@ void handleGraphicsRequest(const http::Request& request,
    }
    std::string filename = uri.substr(lastSlashPos+1);
  
-   // calculate the path to the svg
+   // calculate the path to the png
    using namespace r::session;
    FilePath imagePath = graphics::display().imagePath(filename);
       
@@ -356,7 +313,7 @@ void handleGraphicsRequest(const http::Request& request,
    }
    else
    {
-      // redirect to svg for currently active plot
+      // redirect to png for currently active plot
       if (graphics::display().hasOutput())
       {
          // calculate location of current image

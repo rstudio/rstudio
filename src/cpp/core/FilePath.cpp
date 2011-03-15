@@ -17,6 +17,15 @@
 
 #include <boost/filesystem.hpp>
 
+// detect filesystem3 so we can conditionally compile away breaking changes
+#if defined(BOOST_FILESYSTEM_VERSION) && BOOST_FILESYSTEM_VERSION != 2
+#define BOOST_FS_STRING(str) ((str).string())
+#define BOOST_FS_COMPLETE(p, base) boost::filesystem::absolute(p, base)
+#else
+#define BOOST_FS_STRING(str) str
+#define BOOST_FS_COMPLETE(p, base) boost::filesystem::complete(p, base)
+#endif
+
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
 
@@ -169,17 +178,17 @@ uintmax_t FilePath::size() const
 
 std::string FilePath::filename() const
 {
-   return pImpl_->path.filename() ;
+   return BOOST_FS_STRING(pImpl_->path.filename()) ;
 }
 
 std::string FilePath::stem() const 
 {
-   return pImpl_->path.stem();
+   return BOOST_FS_STRING(pImpl_->path.stem());
 }
 
 std::string FilePath::extension() const
 {
-   return pImpl_->path.extension() ;
+   return BOOST_FS_STRING(pImpl_->path.extension()) ;
 }
    
 std::string FilePath::extensionLowerCase() const
@@ -443,7 +452,7 @@ Error FilePath::createDirectory(const std::string& name) const
       if (name.empty())
          targetDirectory = pImpl_->path ;
       else
-         targetDirectory = boost::filesystem::complete(name, pImpl_->path) ;
+         targetDirectory = BOOST_FS_COMPLETE(name, pImpl_->path) ;
       boost::filesystem::create_directories(targetDirectory) ;
       return Success() ;
    }
@@ -475,8 +484,7 @@ FilePath FilePath::complete(const std::string& path) const
    // this path is returned)
    try
    {
-      return FilePath(boost::filesystem::complete(
-                                          path, pImpl_->path).string());
+      return FilePath(BOOST_FS_COMPLETE(path, pImpl_->path).string());
    }
    catch(const boost::filesystem::filesystem_error& e)
    {

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# install-dependencies-java
+# install-gwt
 #
 # Copyright (C) 2009-11 by RStudio, Inc.
 #
@@ -16,10 +16,12 @@
 # install dir
 INSTALL_DIR=`pwd`
 
+# determine platform
+PLATFORM=`uname`
+
 download()
 {
-  CURL=`which curl`
-  if [ "$CURL" != "" ]
+  if [ "$PLATFORM" == "Darwin" ]
   then
     curl -L https://s3.amazonaws.com/rstudio-buildtools/$1 > $1
   else

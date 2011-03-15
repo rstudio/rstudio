@@ -362,7 +362,7 @@ void resizeGraphicsDevice()
    pDev->deviceSpecific = pDC;
 
    // re-create with the correct size (don't set a file path)
-   if (!handler::initializePNG(s_width, s_height, true, pDC))
+   if (!handler::initialize(s_width, s_height, true, pDC))
    {
       // if this fails we are dead so close the device
       close();
@@ -431,7 +431,7 @@ SEXP createGD()
 
       // allocate and initialize context
       DeviceContext* pDC = handler::allocate(pDev);
-      if (!handler::initializePNG(s_width, s_height, true, pDC))
+      if (!handler::initialize(s_width, s_height, true, pDC))
       {
          handler::destroy(pDC);
 
@@ -448,10 +448,18 @@ SEXP createGD()
       handler::setSize(pDev);
       handler::setDeviceAttributes(pDev);
 
+      // notify handler we are about to add (enables shadow device
+      // to close itself so it doesn't show up in the dev.list()
+      // in front of us
+      handler::onBeforeAddInteractiveDevice(pDC);
+
       // associate with device description and add it
       s_pGEDevDesc = GEcreateDevDesc(pDev);
       GEaddDevice2(s_pGEDevDesc, kRStudioDevice);
       
+      // notify handler we have added (so it can regenerate its context)
+      handler::onAfterAddInteractiveDevice(pDC);
+
       // make us active
       Rf_selectDevice(Rf_ndevNumber(s_pGEDevDesc->dev)); 
    } 

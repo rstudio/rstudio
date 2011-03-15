@@ -469,6 +469,36 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
          widget_.getEditor().getRenderer().updateFontSize();
    }
 
+   public void setHighlightSelectedLine(boolean on)
+   {
+      widget_.getEditor().setHighlightActiveLine(on);
+   }
+
+   public void setShowLineNumbers(boolean on)
+   {
+      widget_.getEditor().getRenderer().setShowGutter(on);
+   }
+
+   public void setUseSoftTabs(boolean on)
+   {
+      getSession().setUseSoftTabs(on);
+   }
+
+   public void setTabSize(int tabSize)
+   {
+      getSession().setTabSize(tabSize);
+   }
+
+   public void setShowPrintMargin(boolean on)
+   {
+      widget_.getEditor().getRenderer().setShowPrintMargin(on);
+   }
+
+   public void setPrintMarginColumn(int column)
+   {
+      widget_.getEditor().getRenderer().setPrintMarginColumn(column);
+   }
+
    public void setFontSize(Size size)
    {
       // No change needed--the AceEditorWidget uses the "normalSize" style

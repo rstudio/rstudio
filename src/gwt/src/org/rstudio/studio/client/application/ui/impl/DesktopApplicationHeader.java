@@ -129,12 +129,6 @@ public class DesktopApplicationHeader implements ApplicationHeader
    }
 
    @Handler
-   void onShowOptions()
-   {
-      Desktop.getFrame().showOptions();
-   }
-
-   @Handler
    void onShowLogFiles()
    {
       Desktop.getFrame().showFolder(session_.getSessionInfo().getLogDir());

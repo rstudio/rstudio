@@ -181,6 +181,30 @@ void logDLError(const std::string& message, const ErrorLocation& location)
    core::log::logErrorMessage(errmsg, location);
 }
 
+// Note that when we passed QCF_SET_FRONT to QuartzCocoa_SetupEventLoop
+// sometimes this resulted in our application having a "bouncing"
+// state which we couldn't rid ourselves of.
+//
+// Note that in researching the way R implements QCF_SET_FRONT I discovered
+// that a depricated API is called AND an explicit call to SetFront. Another
+// way to go would be to call the TransformProcessType API:
+//
+//   http://www.cocoadev.com/index.pl?TransformProcessType
+//   http://developer.apple.com/library/mac/#documentation/Carbon/Reference/Process_Manager/Reference/reference.html%23//apple_ref/c/func/TransformProcessType
+//
+// Note this would look something like (cmake and includes for completeness):
+/*
+   find_library(CARBON_LIBRARY NAMES Carbon)
+   set(LINK_FLAGS ${CARBON_LIBRARY})
+
+   #include <Carbon/Carbon.h>
+   #undef TRUE
+   #undef FALSE
+
+   static const ProcessSerialNumber thePSN = { 0, kCurrentProcess };
+   ::TransformProcessType(&thePSN, kProcessTransformToForegroundApplication);
+*/
+
 // attempt to setup quartz event loop, if this fails then log and
 // return false (as a result we'll have to disable the quartz R
 // function so the user doesn't get in trouble)
@@ -206,7 +230,7 @@ bool setupQuartzEventLoop()
       if (pSetupEventLoop)
       {
          // attempt to setup event loop
-         pSetupEventLoop(QCF_SET_PEPTR|QCF_SET_FRONT, 100);
+         pSetupEventLoop(QCF_SET_PEPTR, 100);
 
          // check that we got the ptr_R_ProcessEvents initialized
          if (ptr_R_ProcessEvents != NULL)

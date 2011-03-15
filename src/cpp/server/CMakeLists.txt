@@ -145,11 +145,19 @@ if (UNIX AND NOT APPLE)
    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${RSERVER_INITD_REDHAT_SCRIPT}
            DESTINATION ${RSERVER_INITD_REDHAT_DIR})
 
-   # install redhat pam profile
-   set(RSERVER_PAM_REDHAT_DIR "extras/pam/redhat")
-   set(RSERVER_PAM_REDHAT_PROFILE "${RSERVER_PAM_REDHAT_DIR}/rstudio")
-   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${RSERVER_PAM_REDHAT_PROFILE}
-           DESTINATION ${RSERVER_PAM_REDHAT_DIR})
+   # install configured suse init.d script
+   set(RSERVER_INITD_SUSE_DIR "extras/init.d/suse")
+   set(RSERVER_INITD_SUSE_SCRIPT "${RSERVER_INITD_SUSE_DIR}/rstudio-server")
+   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${RSERVER_INITD_SUSE_SCRIPT}.in
+                  ${CMAKE_CURRENT_BINARY_DIR}/${RSERVER_INITD_SUSE_SCRIPT})
+   install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${RSERVER_INITD_SUSE_SCRIPT}
+           DESTINATION ${RSERVER_INITD_SUSE_DIR})
+
+   # install pam profile
+   set(RSERVER_PAM_DIR "extras/pam")
+   set(RSERVER_PAM_PROFILE "${RSERVER_PAM_DIR}/rstudio")
+   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${RSERVER_PAM_PROFILE}
+           DESTINATION ${RSERVER_PAM_DIR})
 
    # install configured apparmor profile
    set(RSERVER_APPARMOR_DIR "extras/apparmor")

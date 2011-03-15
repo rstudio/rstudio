@@ -147,14 +147,13 @@ void shadowDevSync(DeviceContext* pDC)
 } // anonymous namespace
 
 
-bool initializePNG(const FilePath& filePath,
-                   int width,
-                   int height,
-                   bool displayListon,
-                   DeviceContext* pDC)
+bool initialize(const FilePath& filePath,
+                int width,
+                int height,
+                bool displayListon,
+                DeviceContext* pDC)
 {
    // initialize file info
-   pDC->fileType = "png";
    if (filePath.empty())
       pDC->targetPath = tempFile("png");
    else
@@ -163,20 +162,6 @@ bool initializePNG(const FilePath& filePath,
    pDC->height = height;
 
    return true;
-}
-
-bool supportsSVG()
-{
-   return false;
-}
-
-bool initializeSVG(const FilePath& filePath,
-                   int width,
-                   int height,
-                   bool displayListOn,
-                   DeviceContext* pDC)
-{
-   return false;
 }
 
 DeviceContext* allocate(pDevDesc dev)
@@ -238,6 +223,23 @@ void setDeviceAttributes(pDevDesc pDev)
    pDev->gettingEvent = FALSE;
 }
 
+// the shadow device is created during creation of the main RStudio
+// interactive graphics device (so we can copy its underlying device
+// attributes into the RStudio device) however if we don't turn the
+// shadow device off before adding the RStudio device then it shows
+// up in the display list AHEAD of the RStudio device. This is a very
+// bad state because it leaves the shadow device as the default
+// device whenever another device (e.g. png, pdf, x11, etc.) is closed
+void onBeforeAddInteractiveDevice(DeviceContext* pDC)
+{
+   shadowDevOff(pDC);
+}
+void onAfterAddInteractiveDevice(DeviceContext* pDC)
+{
+   shadowDevDesc(pDC);
+}
+
+
 Error writeToPNG(const FilePath& targetPath,
                  DeviceContext* pDC,
                  bool keepContextAlive)
@@ -278,7 +280,7 @@ Error writeToPNG(const FilePath& targetPath,
       dev->deviceSpecific = pDC;
 
       // re-create with the correct size (don't set a file path)
-      if (!handler::initializePNG(width, height, true, pDC))
+      if (!handler::initialize(width, height, true, pDC))
          return systemError(boost::system::errc::not_connected, ERROR_LOCATION);
 
       // now update the device structure

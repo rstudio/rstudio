@@ -15,6 +15,7 @@
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
+#include <core/system/System.hpp>
 
 #include <r/RErrorCategory.hpp>
 
@@ -53,8 +54,21 @@ Error discoverR(RLocations* pLocations)
 
 Error discoverR(RLocations* pLocations)
 {
-   pLocations->homePath = CONFIG_R_HOME_PATH;
-   pLocations->docPath = CONFIG_R_DOC_PATH;
+   // use environment variables and default back to configured path
+   // if they don't exists
+
+   std::string rHome = core::system::getenv("R_HOME");
+   if (!rHome.empty())
+      pLocations->homePath = rHome;
+   else
+      pLocations->homePath = CONFIG_R_HOME_PATH;
+
+   std::string rDocDir = core::system::getenv("R_DOC_DIR");
+   if (!rDocDir.empty())
+      pLocations->docPath = rDocDir;
+   else
+      pLocations->docPath = CONFIG_R_DOC_PATH;
+
    return Success();
 }
 

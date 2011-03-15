@@ -121,6 +121,13 @@ SEXP dataViewerHook(SEXP call, SEXP op, SEXP args, SEXP rho)
                               "invalid data argument (names not specified)");
       }
 
+      // get column count
+      int columnCount = r::sexp::length(dataSEXP);
+
+      // calculate columns to display
+      const int kMaxColumns = 100;
+      int displayedColumns = std::min(columnCount, kMaxColumns);
+
       // extract title and column names
       std::string title = r::sexp::asString(titleSEXP);
       std::vector<std::string> columnNames;
@@ -129,13 +136,15 @@ SEXP dataViewerHook(SEXP call, SEXP op, SEXP args, SEXP rho)
          throw r::exec::RErrorException("invalid names: " +
                                         error.code().message());
 
+      // truncate columns names to displayedColumns
+      columnNames.resize(displayedColumns);
+
       // get column lenghts and then calculate # of rows based on the maximum #
       // of elements in single column (technically R can pass columns which have
       // a disparate # of rows to this method)
-      int columnCount = r::sexp::length(dataSEXP);
       int rowCount = 0;
       std::vector<int> columnLengths;
-      for (int i=0; i<columnCount; i++)
+      for (int i=0; i<displayedColumns; i++)
       {
           // get the column and record its length (updating rowCount)
           SEXP columnSEXP = VECTOR_ELT(dataSEXP, i);
@@ -157,9 +166,9 @@ SEXP dataViewerHook(SEXP call, SEXP op, SEXP args, SEXP rho)
 
       // format the data for presentation
       r::sexp::Protect rProtect;
-      SEXP formattedDataSEXP = Rf_allocVector(VECSXP, columnCount);
+      SEXP formattedDataSEXP = Rf_allocVector(VECSXP, displayedColumns);
       rProtect.add(formattedDataSEXP);
-      for (int i=0; i<columnCount; i++)
+      for (int i=0; i<displayedColumns; i++)
       {
          SEXP columnSEXP = VECTOR_ELT(dataSEXP, i);
          SEXP formattedColumnSEXP;
@@ -236,6 +245,7 @@ SEXP dataViewerHook(SEXP call, SEXP op, SEXP args, SEXP rho)
       dataItem["totalObservations"] = rowCount;
       dataItem["displayedObservations"] = displayedRows;
       dataItem["variables"] = columnCount;
+      dataItem["displayedVariables"] = displayedColumns;
       dataItem["contentUrl"] = content_urls::provision(title, html, ".htm");
       ClientEvent event(client_events::kShowData, dataItem);
       module_context::enqueClientEvent(event);

@@ -50,6 +50,14 @@ public class EditSession extends JavaScriptObject
       return this.setUseWrapMode(useWrapMode);
    }-*/;
 
+   public native final void setUseSoftTabs(boolean on) /*-{
+      this.setUseSoftTabs(on);
+   }-*/;
+
+   public native final void setTabSize(int tabSize) /*-{
+      this.setTabSize(tabSize);
+   }-*/;
+
    /**
     * Number of rows
     */

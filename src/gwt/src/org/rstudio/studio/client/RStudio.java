@@ -37,6 +37,7 @@ import org.rstudio.studio.client.application.ui.serializationprogress.Applicatio
 import org.rstudio.studio.client.application.ui.support.SupportPopupMenu;
 import org.rstudio.studio.client.common.StudioResources;
 import org.rstudio.studio.client.impl.BrowserFence;
+import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.history.view.HistoryPane;
 import org.rstudio.studio.client.workbench.views.history.view.Shelf;
@@ -132,6 +133,7 @@ public class RStudio implements EntryPoint
       ImportGoogleSpreadsheetDialog.ensureStylesInjected();
       FindReplaceBar.ensureStylesInjected();
       FontSizer.ensureStylesInjected();
+      PreferencesDialog.ensureStylesInjected();
 
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");

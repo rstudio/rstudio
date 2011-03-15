@@ -13,6 +13,8 @@
 #
 #
 
+set -e
+
 # build/development tools
 sudo yum install -y make
 sudo yum install -y gcc
@@ -26,6 +28,9 @@ sudo yum install -y openssl-devel
 sudo yum install -y bzip2-devel
 sudo yum install -y pam-devel
 
+# boost
+sudo yum install -y boost-devel
+
 # pango cairo
 sudo yum install -y pango-devel
 
@@ -34,15 +39,16 @@ sudo yum install -y java-1.6.0-openjdk
 sudo yum install -y ant
 sudo yum install -y xml-commons-apis
 
-# common
+# gwt
 cd ../common
-./install-dependencies-common
+./install-gwt
 cd ../linux
 
 # desktop dependencies (qt)
 if [ "$1" != "--server-only" ]
 then
-   ./install-qt-sdk
+   sudo yum -y install qt4-devel
+   sudo yum -y install qt-webkit-devel
 fi
 
 

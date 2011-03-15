@@ -10,7 +10,7 @@ mkdir build
 cd build
 del CMakeCache.txt
 rmdir /s /q build\_CPack_Packages
-cmake -G"MinGW Makefiles" -DRSTUDIO_TARGET=Desktop -DCMAKE_BUILD_TYPE=Release ..\..\..
+cmake -G"MinGW Makefiles" -DRSTUDIO_TARGET=Desktop -DCMAKE_BUILD_TYPE=Release -DRSTUDIO_PACKAGE_BUILD=1 ..\..\..
 mingw32-make 
 cd ..
 

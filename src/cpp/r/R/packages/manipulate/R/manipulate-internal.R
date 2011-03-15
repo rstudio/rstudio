@@ -14,8 +14,7 @@
 manipulatorExecute <- function(manipulator)
 {
    # evaulate the expression
-   result <- withVisible(eval(get(".code", envir = manipulator),
-                              envir = manipulator))
+   result <- withVisible(eval(manipulator$.code, envir = manipulator))
 
    # emulate the behavior of the console by printing the result if it
    # is visible. this will allow objects returned from e.g. lattice or
@@ -24,22 +23,11 @@ manipulatorExecute <- function(manipulator)
    # functions will not print anything assuming they return invisibly.
    if (result$visible)
    {
-      # special case for ggplot -- the eval of print(result$value) in
-      # the parent environment of the manipulator doesn't seem to
-      # pick it up so we access it explicitly.
-      # TODO: see if we can eliminate this hack
-      if (inherits(result$value, "ggplot"))
-      {
-         ggplot2:::print.ggplot(result$value)
-      }
-      else
-      {
-         # evaluate print in the context of the manipulator's parent
-         # environment (typically the global environment if manipulate was
-         # entered directly at the consle). this allows the dispatch of the
-         # print generic method to find the appropriate class method
-         eval(print(result$value), enclos=parent.env(manipulator))
-      }
+     # evaluate print in the context of the manipulator's parent
+     # environment (typically the global environment if manipulate was
+     # entered directly at the consle). this allows the dispatch of the
+     # print generic method to find the appropriate class method
+     eval(print(result$value), enclos=parent.env(manipulator))
    }
 }
 
@@ -100,6 +88,21 @@ setManipulatorValue <- function(manipulator, name, value)
 userVisibleValues <- function(manipulator, variables)
 {
   mget(variables, envir = get(".userVisibleValues", envir = manipulator))
+}
+
+resolveVariableArguments <- function(args)
+{
+  # if the first argument is an unnamed list then just use this list
+  if ( (length(args) == 1L) &&
+       is.list(args[[1L]])  &&
+       (is.null(names(args)) || (names(args)[[1L]] == "")) )
+  {
+    return (args[[1L]])
+  }
+  else
+  {
+    return (args)
+  }
 }
 
 

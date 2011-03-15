@@ -112,18 +112,21 @@ public class HelpPane extends WorkbenchPane
    protected void onLoad()
    {
       super.onLoad() ;
-      
-      initHelpNavigateCallback() ;
-      
-      iframe_ = frame_.getElement().cast() ;
 
-      DeferredCommand.addCommand(new Command()
+      if (!initialized_)
       {
-         public void execute()
+         initialized_ = true;
+
+         initHelpNavigateCallback() ;
+
+         DeferredCommand.addCommand(new Command()
          {
-            manageTitleLabelMaxSize();
-         }
-      });
+            public void execute()
+            {
+               manageTitleLabelMaxSize();
+            }
+         });
+      }
    }
    
    public final native void initHelpNavigateCallback() /*-{
@@ -249,15 +252,15 @@ public class HelpPane extends WorkbenchPane
 
    public String getUrl()
    {
-      if (iframe_ != null)
-         return iframe_.getContentWindow().getLocationHref() ;
+      if (getIFrameEx() != null)
+         return getIFrameEx().getContentWindow().getLocationHref() ;
       else
          return null;
    }
    
    public String getDocTitle()
    {
-      return iframe_.getContentDocument().getTitle() ;
+      return getIFrameEx().getContentDocument().getTitle() ;
    }
 
    public void showHelp(String url)
@@ -265,16 +268,15 @@ public class HelpPane extends WorkbenchPane
       ensureWidget();
       bringToFront();
       navStack_.navigate(url) ;
-      setLocation(url) ;
+      setLocation(url);
       navigated_ = true;
    }
    
    private void setLocation(String url)
    {
-      if (iframe_ == null)
-         frame_.setUrl(url);
-      else
-         iframe_.getContentWindow().replaceLocationHref(url) ;
+      if (getIFrameEx() != null)
+         getIFrameEx().getContentWindow().replaceLocationHref(url) ;
+      frame_.setUrl(url);
    }
    
    public void refresh()
@@ -286,7 +288,7 @@ public class HelpPane extends WorkbenchPane
 
    private WindowEx getContentWindow()
    {
-      return iframe_ != null ? iframe_.getContentWindow() : null ;
+      return getIFrameEx() != null ? getIFrameEx().getContentWindow() : null ;
    }
 
    public void back()
@@ -335,16 +337,21 @@ public class HelpPane extends WorkbenchPane
       return navigated_;
    }
 
+   private IFrameElementEx getIFrameEx()
+   {
+      return frame_.getElement().cast();
+   }
+
    private final VirtualHistory navStack_ = new VirtualHistory() ;
    private final ToolbarLinkMenu history_ ;
    private final ToolbarLinkMenu favorites_ ;
 
    private Label title_ ;
    private Frame frame_ ;
-   private IFrameElementEx iframe_ ;
    private final Provider<Search> searchProvider_ ;
    private GlobalDisplay globalDisplay_;
    private final Commands commands_;
    private Widget searchWidget_;
    private boolean navigated_;
+   private boolean initialized_;
 }

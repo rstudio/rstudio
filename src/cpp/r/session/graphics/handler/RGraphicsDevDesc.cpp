@@ -279,10 +279,10 @@ void copyCommonMembers(const DevDescVersion8& sourceDevDesc,
    pTargetDevDesc->xCharOffset = sourceDevDesc.xCharOffset;
    pTargetDevDesc->yCharOffset = sourceDevDesc.yCharOffset;
    pTargetDevDesc->yLineBias = sourceDevDesc.yLineBias;
+   pTargetDevDesc->ipr[0] = sourceDevDesc.ipr[0];
    pTargetDevDesc->ipr[1] = sourceDevDesc.ipr[1];
-   pTargetDevDesc->ipr[2] = sourceDevDesc.ipr[2];
+   pTargetDevDesc->cra[0] = sourceDevDesc.cra[0];
    pTargetDevDesc->cra[1] = sourceDevDesc.cra[1];
-   pTargetDevDesc->cra[2] = sourceDevDesc.cra[2];
    pTargetDevDesc->gamma = sourceDevDesc.gamma;
    pTargetDevDesc->canClip = sourceDevDesc.canClip;
    pTargetDevDesc->canChangeGamma = sourceDevDesc.canChangeGamma;

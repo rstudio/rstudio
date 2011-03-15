@@ -77,15 +77,20 @@ else()
 
 endif()
 
-# on osx, boost::enable_if<boost::filesystem2::is_basic_path checking in
-# filesystem2 (see operations.hpp) seem to cause a hard abort in release
+# on osx, boost::enable_if<boost::filesystem::is_basic_path checking in
+# filesystem (see operations.hpp) seem to cause a hard abort in release
 # mode if the file doesn't exist. so disable this check on all platforms
 # (for consistency) by disabling support for wide filenames
-add_definitions(-DBOOST_FILESYSTEM2_NARROW_ONLY)
+add_definitions(-DBOOST_FILESYSTEM_NARROW_ONLY -DBOOST_FILESYSTEM2_NARROW_ONLY)
 
-# find boost and required libraries
-set(BOOST_VERSION 1.44.0)
-set(Boost_USE_STATIC_LIBS ON)
+# determine whether we should statically link boost. we always do this
+# unless we are building a non-packaged build on linux (in which case
+# boost dynamic libraries are presumed to be installed on the system ldpath)
+if(APPLE OR WIN32 OR RSTUDIO_PACKAGE_BUILD)
+   set(Boost_USE_STATIC_LIBS ON)
+endif()
+
+set(BOOST_VERSION 1.42.0)
 list(APPEND BOOST_LIBS
    date_time
    filesystem
@@ -99,15 +104,15 @@ list(APPEND BOOST_LIBS
 
 # UNIX BOOST
 if(UNIX)
-   # if it exists then hard-code boost libs to /usr/local/lib on unix
-   # (done to ensure that the version of boost we link against is the
-   # one we built during dependency installation
+   # prefer static link to /usr/local/include/boost (user custom built version)
    if(EXISTS /usr/local/include/boost)
-      # first find headers
+
+      # find headers
+      set(Boost_USE_STATIC_LIBS ON)
       set(BOOST_INCLUDEDIR /usr/local/include)
       find_package(Boost ${BOOST_VERSION} REQUIRED)
 
-      # define list of libraries manually
+      # define library list manually (find_package doesn't always pick them up)
       set(BOOST_LIB_DIR /usr/local/lib)
       foreach(BOOST_LIB ${BOOST_LIBS})
          list(APPEND Boost_LIBRARIES ${BOOST_LIB_DIR}/libboost_${BOOST_LIB}.a)
@@ -118,6 +123,7 @@ if(UNIX)
 
 # WIN32 BOOST
 else()
+     # hard-code to our own prebuilt boost libs
      set(RSTUDIO_WINDOWS_DEPENDENCIES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../dependencies/windows")
      if(RSTUDIO_SESSION_WIN64)
         set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-win/boost64")
@@ -125,7 +131,6 @@ else()
         set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-win/boost32")
      endif()
      set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-1_44")
-
 
    find_package(Boost ${BOOST_VERSION} REQUIRED COMPONENTS ${BOOST_LIBS})
 endif()

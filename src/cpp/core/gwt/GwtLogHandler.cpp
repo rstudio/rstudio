@@ -41,7 +41,7 @@ void handleLogRequest(const std::string& username,
    }
    
    // read params
-   int level;
+   int level = 0;
    std::string message ;
    Error error = json::readParams(jsonRpcRequest.params, &level, &message);
    if (error)

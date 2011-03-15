@@ -14,7 +14,7 @@ Building RStudio requires installations of a number of applications
 Satisfy Additional Dependencies
 =============================================================================
 
-Additional dependencies (principally boost) can be satisfied by running the
+Additional dependencies (boost and gwt) can be satisfied by running the
 following script:
 
 ./install-dependencies-osx

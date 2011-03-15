@@ -41,6 +41,7 @@
 .buttonLeft {
    background: BUTTONLEFTENABLED no-repeat;
    width: 8px;
+   min-width: 8px;
    height: 29px;
 }
 
@@ -54,6 +55,7 @@
 .buttonRight {
    background: BUTTONRIGHTENABLED no-repeat;
    width: 8px;
+   min-width: 8px;
    height: 29px;
 }
 

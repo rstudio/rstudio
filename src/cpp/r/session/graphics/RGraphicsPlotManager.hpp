@@ -22,6 +22,7 @@
 #include <boost/function.hpp>
 #include <boost/signal.hpp>
 #include <boost/regex.hpp>
+#include <boost/circular_buffer.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -70,18 +71,11 @@ public:
    virtual core::Error setActivePlot(int index) ;
    virtual core::Error removePlot(int index);
    
-   // capabilities
-   virtual bool supportsSvg();
-
    // actions on active plot
    virtual core::Error savePlotAsPng(const core::FilePath& filePath,
                                      int widthPx,
                                      int heightPx);
       
-   virtual core::Error savePlotAsSvg(const core::FilePath& filePath,
-                                     int widthPx,
-                                     int heightPx);
-
    virtual core::Error savePlotAsPdf(const core::FilePath& filePath,
                                      double widthInches,
                                      double heightInches);
@@ -147,12 +141,6 @@ private:
 
    std::string emptyImageFilename() const ;
 
-   bool hasStorageUuid(const PtrPlot& ptrPlot,
-                       const std::string& storageUuid) const;
-   void removeIfGarbage(const core::FilePath& imageFilePath) const;
-   void collectPlotFileGarbage() const;
-   void truncatePlotList();
-
 private:   
    friend class SuppressDeviceEventsScope;
 
@@ -167,7 +155,7 @@ private:
    bool suppressDeviceEvents_;
    
    int activePlot_;
-   std::vector<PtrPlot> plots_ ;
+   boost::circular_buffer<PtrPlot> plots_ ;
    
    boost::regex plotInfoRegex_;
 };

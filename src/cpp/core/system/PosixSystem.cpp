@@ -611,27 +611,15 @@ Error captureCommand(const std::string& command, std::string* pOutput)
    while (::fgets(buffer, kBuffSize, fp) != NULL)
       *pOutput += buffer;
 
-   // check if an error terminated our output
-   Error error ;
-   if (::ferror(fp))
-      error = systemError(boost::system::errc::io_error, ERROR_LOCATION);
-
    // close file
    if (::pclose(fp) == -1)
    {
       // ECHILD expected if process was reaped elsewhere by wait or waitpid
       if (errno != ECHILD)
-      {
-         // log existing error before overwriting it
-         if (error)
-            LOG_ERROR(error);
-
-         error = systemError(errno, ERROR_LOCATION);
-      }
+         return systemError(errno, ERROR_LOCATION);
    }
 
-   // return status
-   return error;
+   return Success();
 }
 
 bool isHiddenFile(const FilePath& filePath) 

@@ -54,7 +54,6 @@ set(DESKTOP_SOURCE_FILES
   DesktopMenuCallback.cpp
   DesktopNetworkProxyFactory.cpp
   DesktopOptions.cpp
-  DesktopOptionsDialog.cpp
   DesktopURLDownloader.cpp
   DesktopWebPage.cpp
   DesktopWebView.cpp
@@ -105,7 +104,6 @@ qt4_wrap_ui(DESKTOP_UI_SOURCES
    DesktopChooseRHome.ui
    DesktopCRANMirrorDialog.ui
    DesktopInputDialog.ui
-   DesktopOptionsDialog.ui
    DesktopUpdateAvailableDialog.ui
 )
 
@@ -147,6 +145,16 @@ elseif(APPLE)
 endif(WIN32)
 
 
+# determine whether we should bundle Qt. we pretty much always want to
+# bundle it unless we are building on linux and NOT linking against the
+# qtsdk -- in that case we are linking against system versions of the
+# qt libraries which should therefore not be bundled
+if(APPLE OR WIN32 OR
+   RSTUDIO_PACKAGE_BUILD OR
+   (${QT_LIBRARY_DIR} MATCHES ".*qtsdk.*"))
+  set(RSTUDIO_BUNDLE_QT TRUE)
+endif()
+
 # define executable (Windows & Linux)
 if(NOT APPLE)
 
@@ -158,7 +166,7 @@ if(NOT APPLE)
    )
 
    # add rpath for linux so we can find qt libraries in our bin dir
-   if(UNIX)
+   if(UNIX AND RSTUDIO_BUNDLE_QT)
       set_target_properties(rstudio PROPERTIES
                             INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/bin)
    endif()
@@ -208,76 +216,78 @@ else()
   install(TARGETS rstudio DESTINATION ${RSTUDIO_INSTALL_BIN})
 endif()
 
-# bundle qt dependencies
-   
-# install qt conf
-if(APPLE)
-   set(QTCONF_DEST_DIR ${RSTUDIO_INSTALL_SUPPORTING})
-   set(QTPLUGINS_DEST_DIR RStudio.app/Contents)
-else()
-   set(QTCONF_DEST_DIR ${RSTUDIO_INSTALL_BIN})
-   set(QTPLUGINS_DEST_DIR ${RSTUDIO_INSTALL_BIN})
-endif()
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/qt.conf
-        DESTINATION ${QTCONF_DEST_DIR})
+# bundle qt dependencies if this is a package build
+if(RSTUDIO_BUNDLE_QT)
+   # install qt conf
+   if(APPLE)
+      set(QTCONF_DEST_DIR ${RSTUDIO_INSTALL_SUPPORTING})
+      set(QTPLUGINS_DEST_DIR RStudio.app/Contents)
+   else()
+      set(QTCONF_DEST_DIR ${RSTUDIO_INSTALL_BIN})
+      set(QTPLUGINS_DEST_DIR ${RSTUDIO_INSTALL_BIN})
+   endif()
+   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/qt.conf
+           DESTINATION ${QTCONF_DEST_DIR})
 
-# copy qt plugins
-set(QT_IMAGEFORMATS_DIR "${QT_PLUGINS_DIR}/imageformats")
-install(DIRECTORY "${QT_PLUGINS_DIR}/imageformats"
-        DESTINATION ${QTPLUGINS_DEST_DIR}/plugins
-        PATTERN "*.a" EXCLUDE
-        PATTERN "*d4.dll" EXCLUDE)
+   # copy qt plugins
+   set(QT_IMAGEFORMATS_DIR "${QT_PLUGINS_DIR}/imageformats")
+   install(DIRECTORY "${QT_PLUGINS_DIR}/imageformats"
+           DESTINATION ${QTPLUGINS_DEST_DIR}/plugins
+           PATTERN "*.a" EXCLUDE
+           PATTERN "*d4.dll" EXCLUDE)
 
-# fixup bundle on osx
-if(APPLE)
-   set(APPS "\${CMAKE_INSTALL_PREFIX}/RStudio.app")
-   set(DIRS ${QT_LIBRARY_DIRS})
-   INSTALL(CODE "
-       file(GLOB_RECURSE QTPLUGINS
-         \"\${CMAKE_INSTALL_PREFIX}/${QTPLUGINS_DEST_DIR}/plugins/*${CMAKE_SHARED_LIBRARY_SUFFIX}\")
-       include(BundleUtilities)
-       fixup_bundle(\"${APPS}\" \"\${QTPLUGINS}\" \"${DIRS}\")
-       ")
+   # fixup bundle on osx
+   if(APPLE)
+      set(APPS "\${CMAKE_INSTALL_PREFIX}/RStudio.app")
+      set(DIRS ${QT_LIBRARY_DIRS})
+      INSTALL(CODE "
+          file(GLOB_RECURSE QTPLUGINS
+            \"\${CMAKE_INSTALL_PREFIX}/${QTPLUGINS_DEST_DIR}/plugins/*${CMAKE_SHARED_LIBRARY_SUFFIX}\")
+          include(BundleUtilities)
+          fixup_bundle(\"${APPS}\" \"\${QTPLUGINS}\" \"${DIRS}\")
+          ")
 
-# copy qt shared objects directly to bin on unix (fixed up rpath above)
-elseif(UNIX)
-   # compute path to release libs
-   get_filename_component(QT_RELEASE_LIBRARY_DIR "${QT_LIBRARY_DIR}/../../lib" REALPATH)
+   # copy qt shared objects directly to bin on unix (fixed up rpath above)
+   elseif(UNIX)
+      # compute path to release libs
+      get_filename_component(QT_RELEASE_LIBRARY_DIR "${QT_LIBRARY_DIR}/../../lib" REALPATH)
 
-   # install dependent libraries
-   set(QT_FULL_VERSION "${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH}")
-   install(PROGRAMS ${QT_RELEASE_LIBRARY_DIR}/libQtCore.so.4
-                    ${QT_RELEASE_LIBRARY_DIR}/libQtCore.so.${QT_FULL_VERSION}
-                    ${QT_RELEASE_LIBRARY_DIR}/libQtDBus.so.4
-                    ${QT_RELEASE_LIBRARY_DIR}/libQtDBus.so.${QT_FULL_VERSION}
-                    ${QT_RELEASE_LIBRARY_DIR}/libQtGui.so.4
-                    ${QT_RELEASE_LIBRARY_DIR}/libQtGui.so.${QT_FULL_VERSION}
-                    ${QT_RELEASE_LIBRARY_DIR}/libQtNetwork.so.4
-                    ${QT_RELEASE_LIBRARY_DIR}/libQtNetwork.so.${QT_FULL_VERSION}
-                    ${QT_RELEASE_LIBRARY_DIR}/libQtWebKit.so.4
-                    ${QT_RELEASE_LIBRARY_DIR}/libQtWebKit.so.${QT_FULL_VERSION}
-                    ${QT_RELEASE_LIBRARY_DIR}/libQtSvg.so.4
-                    ${QT_RELEASE_LIBRARY_DIR}/libQtSvg.so.${QT_FULL_VERSION}
-                    ${QT_RELEASE_LIBRARY_DIR}/libQtXml.so.4
-                    ${QT_RELEASE_LIBRARY_DIR}/libQtXml.so.${QT_FULL_VERSION}
-                    ${QT_RELEASE_LIBRARY_DIR}/libphonon.so.4
-                    ${QT_RELEASE_LIBRARY_DIR}/libphonon.so.4.4.0
-           DESTINATION ${RSTUDIO_INSTALL_BIN})
+      # install dependent libraries
+      set(QT_FULL_VERSION "${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH}")
+      install(PROGRAMS ${QT_RELEASE_LIBRARY_DIR}/libQtCore.so.4
+                       ${QT_RELEASE_LIBRARY_DIR}/libQtCore.so.${QT_FULL_VERSION}
+                       ${QT_RELEASE_LIBRARY_DIR}/libQtDBus.so.4
+                       ${QT_RELEASE_LIBRARY_DIR}/libQtDBus.so.${QT_FULL_VERSION}
+                       ${QT_RELEASE_LIBRARY_DIR}/libQtGui.so.4
+                       ${QT_RELEASE_LIBRARY_DIR}/libQtGui.so.${QT_FULL_VERSION}
+                       ${QT_RELEASE_LIBRARY_DIR}/libQtNetwork.so.4
+                       ${QT_RELEASE_LIBRARY_DIR}/libQtNetwork.so.${QT_FULL_VERSION}
+                       ${QT_RELEASE_LIBRARY_DIR}/libQtWebKit.so.4
+                       ${QT_RELEASE_LIBRARY_DIR}/libQtWebKit.so.${QT_FULL_VERSION}
+                       ${QT_RELEASE_LIBRARY_DIR}/libQtSvg.so.4
+                       ${QT_RELEASE_LIBRARY_DIR}/libQtSvg.so.${QT_FULL_VERSION}
+                       ${QT_RELEASE_LIBRARY_DIR}/libQtXml.so.4
+                       ${QT_RELEASE_LIBRARY_DIR}/libQtXml.so.${QT_FULL_VERSION}
+                       ${QT_RELEASE_LIBRARY_DIR}/libQtXmlPatterns.so.4
+                       ${QT_RELEASE_LIBRARY_DIR}/libQtXmlPatterns.so.${QT_FULL_VERSION}
+                       ${QT_RELEASE_LIBRARY_DIR}/libphonon.so.4
+                       ${QT_RELEASE_LIBRARY_DIR}/libphonon.so.4.4.0
+              DESTINATION ${RSTUDIO_INSTALL_BIN})
 
-# copy qt dlls directly to bin on win32
-elseif(WIN32)
-   install(PROGRAMS ${QT_BINARY_DIR}/QtCore4.dll
-                    ${QT_BINARY_DIR}/QtGui4.dll
-                    ${QT_BINARY_DIR}/QtNetwork4.dll
-                    ${QT_BINARY_DIR}/QtWebKit4.dll
-                    ${QT_BINARY_DIR}/QtSvg4.dll
-                    ${QT_BINARY_DIR}/QtXml4.dll
-                    ${QT_BINARY_DIR}/phonon4.dll
-                    ${QT_BINARY_DIR}/mingwm10.dll
-                    ${QT_BINARY_DIR}/libgcc_s_dw2-1.dll
-           DESTINATION ${RSTUDIO_INSTALL_BIN})
-endif()
-
+   # copy qt dlls directly to bin on win32
+   elseif(WIN32)
+      install(PROGRAMS ${QT_BINARY_DIR}/QtCore4.dll
+                       ${QT_BINARY_DIR}/QtGui4.dll
+                       ${QT_BINARY_DIR}/QtNetwork4.dll
+                       ${QT_BINARY_DIR}/QtWebKit4.dll
+                       ${QT_BINARY_DIR}/QtSvg4.dll
+                       ${QT_BINARY_DIR}/QtXml4.dll
+                       ${QT_BINARY_DIR}/phonon4.dll
+                       ${QT_BINARY_DIR}/mingwm10.dll
+                       ${QT_BINARY_DIR}/libgcc_s_dw2-1.dll
+              DESTINATION ${RSTUDIO_INSTALL_BIN})
+   endif()
+endif(RSTUDIO_BUNDLE_QT)
 
 # install desktop integration files on linux
 if (UNIX AND NOT APPLE)
@@ -288,7 +298,6 @@ if (UNIX AND NOT APPLE)
    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/resources/rstudio.desktop DESTINATION /usr/share/applications)
    install(FILES resources/logo/rstudio_logo_32.png DESTINATION /usr/share/pixmaps)
 endif()
-
 
 
 

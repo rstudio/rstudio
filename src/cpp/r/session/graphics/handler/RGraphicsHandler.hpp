@@ -43,7 +43,6 @@ struct DeviceContext
    void* pDeviceSpecific;
 
    // file info
-   std::string fileType;
    core::FilePath targetPath;
    int width;
    int height;
@@ -56,30 +55,26 @@ DeviceContext* allocate(pDevDesc dev);
 void destroy(DeviceContext* pDC);
 
 
-bool initializePNG(const core::FilePath& filePath,
-                   int width,
-                   int height,
-                   bool displayListOn,
-                   DeviceContext* pDC);
+bool initialize(const core::FilePath& filePath,
+                int width,
+                int height,
+                bool displayListOn,
+                DeviceContext* pDC);
 
-inline bool initializePNG(int width,
-                          int height,
-                          bool displayListOn,
-                          DeviceContext* pDC)
+inline bool initialize(int width,
+                       int height,
+                       bool displayListOn,
+                       DeviceContext* pDC)
 {
-   return initializePNG(core::FilePath(), width, height, displayListOn, pDC);
+   return initialize(core::FilePath(), width, height, displayListOn, pDC);
 }
 
-bool supportsSVG();
-
-bool initializeSVG(const core::FilePath& filePath,
-                   int width,
-                   int height,
-                   bool displayListOn,
-                   DeviceContext* pDC);
 
 void setSize(pDevDesc pDev);
 void setDeviceAttributes(pDevDesc pDev);
+
+void onBeforeAddInteractiveDevice(DeviceContext* pDC);
+void onAfterAddInteractiveDevice(DeviceContext* pDC);
 
 core::Error writeToPNG(const core::FilePath& targetPath,
                        DeviceContext* pDC,

@@ -29,13 +29,7 @@ public class BinarySplitLayoutPanel extends LayoutPanel
       widgets_ = widgets;
       splitterHeight_ = splitterHeight;
 
-      for (Widget w : widgets)
-      {
-         add(w);
-         setWidgetLeftRight(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
-         setWidgetTopHeight(w, 0, Style.Unit.PX, 100, Style.Unit.PX);
-         w.setVisible(false);
-      }
+      setWidgets(widgets);
 
       splitterPos_ = 300;
       topIsFixed_ = false;
@@ -50,6 +44,27 @@ public class BinarySplitLayoutPanel extends LayoutPanel
       setWidgetBottomHeight(splitter_,
                             splitterPos_, Style.Unit.PX,
                             splitterHeight_, Style.Unit.PX);
+   }
+
+   public void setWidgets(Widget[] widgets)
+   {
+      for (Widget w : widgets_)
+         remove(w);
+
+      widgets_ = widgets;
+      for (Widget w : widgets)
+      {
+         add(w);
+         setWidgetLeftRight(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
+         setWidgetTopHeight(w, 0, Style.Unit.PX, 100, Style.Unit.PX);
+         w.setVisible(false);
+         AnimationHelper.setParentZindex(w, -10);
+      }
+
+      if (top_ >= 0)
+         setTopWidget(top_, true);
+      if (bottom_ >= 0)
+         setBottomWidget(bottom_, true);
    }
 
    @Override
@@ -309,7 +324,7 @@ public class BinarySplitLayoutPanel extends LayoutPanel
    // If true, then bottom widget should scale and top widget should stay
    // fixed. If false, then vice versa.
    private boolean topIsFixed_ = true;
-   private final Widget[] widgets_;
+   private Widget[] widgets_;
    private boolean resizing_;
    private int offsetHeight_;
 }

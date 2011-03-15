@@ -13,6 +13,8 @@
 #
 #
 
+set -e
+
 # build/development tools
 sudo apt-get -y install build-essential
 sudo apt-get -y install pkg-config
@@ -24,6 +26,9 @@ sudo apt-get -y install libssl-dev
 sudo apt-get -y install libbz2-dev
 sudo apt-get -y install libpam-dev
 
+# boost
+sudo apt-get -y install libboost-all-dev
+
 # pango cairo
 sudo apt-get -y install libpango1.0-dev
 
@@ -31,19 +36,16 @@ sudo apt-get -y install libpango1.0-dev
 sudo apt-get -y install openjdk-6-jdk 
 sudo apt-get -y install ant
 
-# common prereqs
+# gwt
 sudo apt-get -y install unzip
-
-# common
 cd ../common
-./install-dependencies-common
+./install-gwt
 cd ../linux
 
 # desktop dependencies (qt)
 if [ "$1" != "--server-only" ]
 then
-   ./install-qt-sdk
-   sudo apt-get -y install libglib2.0-dev libSM-dev libxrender-dev libfontconfig1-dev libxext-dev
+   sudo apt-get -y install qt4-dev-tools
 fi
 
 

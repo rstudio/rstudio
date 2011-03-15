@@ -58,6 +58,7 @@ PlotManager::PlotManager()
       activePlot_(-1),
       plotInfoRegex_("([A-Za-z0-9\\-]+):([0-9]+),([0-9]+)")
 {
+   plots_.set_capacity(30);
 }
       
 Error PlotManager::initialize(const FilePath& graphicsPath,
@@ -228,39 +229,15 @@ Error PlotManager::savePlotAsFile(const std::string& deviceCreationCode)
          boost::bind(r::exec::executeString, deviceCreationCode));
 }
 
-Error PlotManager::savePlotAsFile(const std::string& fileType,
-                                  int width,
-                                  int height,
-                                  const FilePath& targetPath)
-{
-   return savePlotAsFile(boost::bind(file_device::create,
-                                          fileType,
-                                          width,
-                                          height,
-                                          targetPath));
-}
-
-bool PlotManager::supportsSvg()
-{
-   return file_device::supportsSvg();
-}
-
-
 Error PlotManager::savePlotAsPng(const FilePath& filePath, 
                                  int widthPx, 
                                  int heightPx)
 {
-   return savePlotAsFile("png", widthPx, heightPx, filePath);
+   return savePlotAsFile(boost::bind(file_device::create,
+                                          widthPx,
+                                          heightPx,
+                                          filePath));
 }
-
-
-Error PlotManager::savePlotAsSvg(const core::FilePath& filePath,
-                                 int widthPx,
-                                 int heightPx)
-{
-   return savePlotAsFile("svg", widthPx, heightPx, filePath);
-}
-   
 
 
 Error PlotManager::savePlotAsPdf(const FilePath& filePath, 
@@ -406,9 +383,6 @@ void PlotManager::onBeforeExecute()
 
 Error PlotManager::savePlotsState(const FilePath& plotsStateFile)
 {
-   // truncate the plot list based on defined maximum # of saved plots
-   truncatePlotList();
-
    // list to write
    std::vector<std::string> plots ;
    
@@ -417,7 +391,7 @@ Error PlotManager::savePlotsState(const FilePath& plotsStateFile)
       plots.push_back(activePlot().storageUuid());
 
    // build sequence of plot info (id:width,height)
-   for (std::vector<PtrPlot>::const_iterator it = plots_.begin();
+   for (boost::circular_buffer<PtrPlot>::const_iterator it = plots_.begin();
         it != plots_.end();
         ++it)
    {
@@ -545,6 +519,14 @@ void PlotManager::onDeviceNewPage(SEXP previousPageSnapshot)
                                graphicsPath_,
                                plotManipulatorManager().pendingManipulatorSEXP()));
 
+      // if we're full then remove the first plot's files before adding a new one
+      if (plots_.full())
+      {
+         Error error = plots_.front()->removeFiles();
+         if (error)
+            LOG_ERROR(error);
+      }
+
       // add the plot
       plots_.push_back(ptrPlot);
       activePlot_ = plots_.size() - 1  ;
@@ -642,66 +624,6 @@ Error PlotManager::plotIndexError(int index, const ErrorLocation& location)
 std::string PlotManager::emptyImageFilename() const
 {
    return "empty." + graphicsDevice_.imageFileExtension();
-}
-
-bool PlotManager::hasStorageUuid(const PtrPlot& ptrPlot,
-                                 const std::string& storageUuid) const
-{
-   return ptrPlot->storageUuid() == storageUuid;
-}
-
-void PlotManager::removeIfGarbage(const core::FilePath& imageFilePath) const
-{
-    // if we can't find the storage uuid within the list of plots then remove
-
-   std::string storageUuid = imageFilePath.stem();
-   boost::function<bool(const PtrPlot&)> predicate =
-         boost::bind(&PlotManager::hasStorageUuid, this, _1, storageUuid);
-
-   if (std::find_if(plots_.begin(), plots_.end(), predicate) == plots_.end())
-   {
-      Error error = imageFilePath.removeIfExists();
-      if (error)
-         LOG_ERROR(error);
-   }
-}
-
-void PlotManager::collectPlotFileGarbage() const
-{
-   // get all of the plot files
-   std::vector<FilePath> plotFiles;
-   Error error = graphicsPath_.children(&plotFiles);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-
-   // remove garbage
-   std::for_each(plotFiles.begin(),
-                 plotFiles.end(),
-                 boost::bind(&PlotManager::removeIfGarbage, this, _1));
-}
-
-void PlotManager::truncatePlotList()
-{
-   // truncate the plot list to a reasonable maximum (20)
-   // only truncate if the active plot is the last one, otherwise we could
-   // have bugs related to removing plots that are active or getting the wrong
-   // plots state because the previous plot was removed
-   if (hasPlot() && (activePlot_ == (plotCount()-1)))
-   {
-      const std::size_t kMaxPlots = 20;
-      if (plots_.size() > kMaxPlots)
-      {
-         // fixup plots list
-         std::size_t eraseCount = plots_.size() - kMaxPlots;
-         plots_.erase(plots_.begin(), plots_.begin() + eraseCount);
-
-         // collect plot file garbage
-         collectPlotFileGarbage();
-      }
-   }
 }
 
 } // namespace graphics
