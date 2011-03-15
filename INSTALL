@@ -78,17 +78,20 @@ c) Run the "make install" command:
    Linux & OSX:  sudo make install        OR
    Windows:      mingw32-make install 
 
-Note that if you wish to also build and install 64-bit support on Windows
-then you'll need to also perform a separate 64-bit configuration/build. An 
-example of what is required to do this can be found in the package/win32
-directory.
+   NOTE: For RStudio Desktop on Linux, make install automatically creates
+   an entry in the Applications -> Programming menu for RStudio.
 
 
-4) Initial Configuration
+d) If you are installing RStudio Server some additional configuration
+   steps are required to complete the installation. These steps are
+   detailed in the section below.
+
+
+4) RStudio Server Configuration
 ----------------------------------------------------------------------------
 
 If you have installed RStudio Server from source there are a number of other
-steps (some required, some optional) you can take to complete your
+steps (some required, some optional) you should take to complete your
 installation. Note that these steps are taken automatically by the DEB 
 and RPM pre-built binary distributions of RStudio Server.
 
@@ -104,11 +107,11 @@ b) RStudio Server uses PAM to authenticate users. Some Unix systems (such
    configuration. If however your system requires explicit registration 
    (i.e. Redhat, Fedora, openSUSE) then you need to add an
    /etc/pam.d/rstudio file to your configuration. You can find a default
-  version of this file at:
+   version of this file at:
 
-      extras
-         /pam
-            rstudio
+   extras
+      /pam
+         rstudio
 
 
 c) Register RStudio as a daemon using an init.d (for most systems) or 
