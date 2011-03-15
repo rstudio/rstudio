@@ -51,7 +51,7 @@ namespace {
  }
 
  // no extra paths on the mac
- std::string extraLibrayPaths()
+ std::string extraLibraryPaths()
  {
     return std::string();
  }
