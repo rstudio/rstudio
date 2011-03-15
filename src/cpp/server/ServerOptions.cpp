@@ -66,16 +66,16 @@ bool Options::resolveRPaths()
    {
       // probe for one of the standard R home paths
       std::vector<FilePath> rHomePaths;
-      rHomePaths.push_back(FilePath("/usr/local/lib64/R"));
-      rHomePaths.push_back(FilePath("/usr/local/lib/R"));
-      rHomePaths.push_back(FilePath("/usr/lib64/R"));
-      rHomePaths.push_back(FilePath("/usr/lib/R"));
+      rHomePaths.push_back(FilePath("/usr/local/lib64/R/bin"));
+      rHomePaths.push_back(FilePath("/usr/local/lib/R/bin"));
+      rHomePaths.push_back(FilePath("/usr/lib64/R/bin"));
+      rHomePaths.push_back(FilePath("/usr/lib/R/bin"));
       for(std::vector<FilePath>::const_iterator it = rHomePaths.begin();
           it != rHomePaths.end(); ++it)
       {
          if (it->exists())
          {
-            rHome_ = it->absolutePath();
+            rHome_ = it->parent().absolutePath();
             break;
          }
       }
