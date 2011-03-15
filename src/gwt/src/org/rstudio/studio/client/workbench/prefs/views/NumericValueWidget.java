@@ -1,5 +1,6 @@
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -24,6 +25,8 @@ public class NumericValueWidget extends Composite
       flowPanel.add(textBox_);
 
       initWidget(flowPanel);
+      PreferencesDialogResources res = GWT.create(PreferencesDialogResources.class);
+      addStyleName(res.styles().numericValueWidget());
    }
 
    public String getValue()

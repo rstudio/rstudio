@@ -17,7 +17,6 @@ import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -34,7 +33,7 @@ public class PreferencesDialog extends ModalDialog<Void>
                             Session session,
                             PreferencesDialogResources res,
                             final SectionChooser sectionChooser,
-                            Provider<RPreferencesPane> pR,
+                            Provider<GeneralPreferencesPane> pR,
                             EditingPreferencesPane source,
                             AppearancePreferencesPane appearance,
                             PaneLayoutPreferencesPane paneLayout,
@@ -60,9 +59,7 @@ public class PreferencesDialog extends ModalDialog<Void>
 
       addStyleName(res.styles().preferencesDialog());
 
-      panes_ = Desktop.isDesktop()
-               ? new PreferencesPane[] {pR.get(), source, appearance, paneLayout}
-               : new PreferencesPane[] {source, appearance, paneLayout};
+      panes_ = new PreferencesPane[] {pR.get(), source, appearance, paneLayout};
 
       for (final PreferencesPane pane : panes_)
       {

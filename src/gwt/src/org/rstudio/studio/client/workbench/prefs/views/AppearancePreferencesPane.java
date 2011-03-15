@@ -44,6 +44,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    @Override
    public void onApply()
    {
+      super.onApply();
       ListBox list = fontSize_.getListBox();
       uiPrefs_.fontSize().setValue(list.getValue(list.getSelectedIndex()));
    }

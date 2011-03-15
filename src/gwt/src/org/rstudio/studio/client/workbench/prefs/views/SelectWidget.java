@@ -1,5 +1,6 @@
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -27,6 +28,8 @@ public class SelectWidget extends Composite
       flowPanel.add(listBox_);
 
       initWidget(flowPanel);
+      PreferencesDialogResources res = GWT.create(PreferencesDialogResources.class);
+      addStyleName(res.styles().selectWidget());
    }
 
    public ListBox getListBox()

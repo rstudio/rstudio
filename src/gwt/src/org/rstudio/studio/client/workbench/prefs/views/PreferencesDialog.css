@@ -1,11 +1,17 @@
-@external gwt-CheckBox;
+@external gwt-CheckBox, gwt-RadioButton;
 
-.preferencesDialog .gwt-CheckBox {
+.preferencesDialog .gwt-CheckBox,
+.preferencesDialog .gwt-RadioButton {
    display: block;
-   margin-top: 8px;
+   margin-bottom: 8px;
 }
-.preferencesDialog .gwt-CheckBox.first {
-   margin-top: 0;
+
+.selectWidget, .numericValueWidget {
+   margin-bottom: 8px;
+}
+
+.preferencesDialog .tight {
+   margin-bottom: 0;
 }
 
 .sectionChooser {

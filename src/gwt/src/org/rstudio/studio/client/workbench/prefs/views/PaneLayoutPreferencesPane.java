@@ -297,6 +297,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    @Override
    public void onApply()
    {
+      super.onApply();
+
       if (dirty_)
       {
          JsArrayString panes = JsArrayString.createArray().cast();
