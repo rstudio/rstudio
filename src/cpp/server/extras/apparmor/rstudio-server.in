@@ -28,6 +28,11 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
   /lib/*.so* mr,
   /dev/tty rw,
 
+  /usr/lib{,32,64}/ r,
+  /usr/lib{,32,64}/R/ r,
+  /usr/local/lib{,32,64}/ r,
+  /usr/local/lib{,32,64}/R/ r,
+
   ${CMAKE_INSTALL_PREFIX}/www/** r,
 
   /etc/rstudio/*.conf r,

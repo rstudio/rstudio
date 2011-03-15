@@ -59,9 +59,31 @@ bool Options::resolveRPaths()
    // resolve r-home
    bool customRHome = false;
    if (!rHome_.empty())
+   {
       customRHome = true;
+   }
    else
-      rHome_ = CONFIG_R_HOME_PATH;
+   {
+      // probe for one of the standard R home paths
+      std::vector<FilePath> rHomePaths;
+      rHomePaths.push_back(FilePath("/usr/local/lib64/R"));
+      rHomePaths.push_back(FilePath("/usr/local/lib/R"));
+      rHomePaths.push_back(FilePath("/usr/lib64/R"));
+      rHomePaths.push_back(FilePath("/usr/lib/R"));
+      for(std::vector<FilePath>::const_iterator it = rHomePaths.begin();
+          it != rHomePaths.end(); ++it)
+      {
+         if (it->exists())
+         {
+            rHome_ = it->absolutePath();
+            break;
+         }
+      }
+
+      // if we still didn't find a home path then use configured value
+      if (rHome_.empty())
+         rHome_ = CONFIG_R_HOME_PATH;
+   }
 
    // verify r-home
    FilePath rHomePath(rHome_);
@@ -71,14 +93,17 @@ bool Options::resolveRPaths()
       return false;
    }
 
-   // resolve and verify r-doc-dir
-   if (rDocDir_.empty())
-   {
-      if (customRHome)
-         rDocDir_ = rHomePath.complete("doc").absolutePath();
-      else
-         rDocDir_ = CONFIG_R_DOC_PATH;
-   }
+   // if there was no explicit doc dir then complete off of detected home
+   if (rDocDir_.empty())  
+      rDocDir_ = rHomePath.complete("doc").absolutePath();
+
+   // if that doesn't exist then last ditch is configured path
+   // (note this is necessary for debian r-base since it locates
+   // R_DOC_DIR in /usr/share)
+   if (!FilePath(rDocDir_).exists())
+      rDocDir_ = CONFIG_R_DOC_PATH;
+
+   // check for doc path existing
    if (!FilePath(rDocDir_).exists())
    {
       reportMissingRPathError("doc dir", rDocDir_, ERROR_LOCATION);
