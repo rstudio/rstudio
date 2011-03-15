@@ -356,6 +356,8 @@ public class Shell implements ConsoleInputHandler,
          }
          else if (keyCode == KeyCodes.KEY_ESCAPE)
          {
+            event.preventDefault();
+
             if (input_.getText().length() == 0)
             {
                // view_.isPromptEmpty() is to check for cases where the
