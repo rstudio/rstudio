@@ -24,6 +24,12 @@
 
 #include "config.h"
 
+#ifdef __APPLE__
+#define SHARED_LIB_EXT "dylib"
+#else
+#define SHARED_LIB_EXT "so"
+#endif
+
 using namespace core ;
 
 namespace server {
@@ -120,7 +126,7 @@ bool Options::resolveRPaths()
    }
 
    // verify that we have libR.so
-   FilePath rLibRPath = rLibDirPath.complete("libR.so");
+   FilePath rLibRPath = rLibDirPath.complete("libR." SHARED_LIB_EXT);
    if (!rLibRPath.exists())
    {
       program_options::reportError("Error: libR.so not found in R lib path (" +
