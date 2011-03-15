@@ -24,6 +24,7 @@ import static org.hibernate.jsr303.tck.util.TckGeneratorTestUtils.getFullyQaulif
 
 import org.hibernate.jsr303.tck.util.TckCompileTestCase;
 
+import javax.validation.ConstraintDefinitionException;
 import javax.validation.UnexpectedTypeException;
 
 /**
@@ -53,4 +54,30 @@ public class ConstraintCompositionCompileTest extends TckCompileTestCase {
         MustBeApplicableValidatorFactory.MustBeApplicableValidator.class,
         Shoe.class);
   }
+
+  /**
+   * Replacement for
+   * {@link ConstraintCompositionTest#testOverriddenAttributesMustMatchInType()}
+   * 
+   * @throws UnableToCompleteException
+   */
+  public void testOverriddenAttributesMustMatchInType()
+      throws UnableToCompleteException {
+    UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
+    builder.expect(Type.ERROR, "Unable to create a validator for "
+        + "org.hibernate.jsr303.tck.tests.constraints.constraintcomposition."
+        + "ConstraintCompositionTest.DummyEntityWithZipCode "
+        + "because The overriding type of a composite constraint must be "
+        + "identical to the overridden one. "
+        + "Expected int found class java.lang.String",
+        ConstraintDefinitionException.class);
+    builder.setLowestLogLevel(Type.INFO);
+    UnitTestTreeLogger testLogger = builder.createLogger();
+    assertModuleFails(
+        testLogger,
+        getFullyQaulifiedModuleName(getClass(),
+            "OverriddenAttributesMustMatchInTypeTest"),
+        OverriddenAttributesMustMatchInTypeValidatorFactory.OverriddenAttributesMustMatchInTypeValidator.class);
+  }
+
 }

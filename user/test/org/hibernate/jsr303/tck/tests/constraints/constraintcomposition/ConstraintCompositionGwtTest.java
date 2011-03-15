@@ -56,11 +56,6 @@ public class ConstraintCompositionGwtTest extends GWTTestCase {
     delegate.testOnlySingleConstraintViolation();
   }
 
-  @Failing(issue = 5799)
-  public void testOverriddenAttributesMustMatchInType() {
-    delegate.testOverriddenAttributesMustMatchInType();
-  }
-
   public void testPayloadPropagationInComposedConstraints() {
     delegate.testPayloadPropagationInComposedConstraints();
   }

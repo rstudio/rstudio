@@ -39,7 +39,7 @@ public abstract class TckCompileTestCase extends GWTTestCase {
 
   @Override
   protected void gwtTearDown() throws Exception {
-   BeanHelper.clearBeanHelpersForTests();
+    BeanHelper.clearBeanHelpersForTests();
     super.gwtTearDown();
   }
 
