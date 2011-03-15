@@ -36,7 +36,7 @@ namespace {
 // MacOS X Specific
 #ifdef __APPLE__
 
-#define kLibRFileName            "libR.dylib "
+#define kLibRFileName            "libR.dylib"
 #define kLibraryPathEnvVariable  "DYLD_LIBRARY_PATH"
 
  // define search paths to match shell search path behavior (including
@@ -227,8 +227,8 @@ bool prepareEnvironment(Options&)
       }
       else
       {
-         showRNotFoundError(rLibPath.filename() + " not found in R library "
-                            "path. If this is a custom build of R, was it "
+         showRNotFoundError(rLibPath.absolutePath() + " not found. "
+                            "If this is a custom build of R, was it "
                             "built with the --enable-R-shlib option?");
          return false;
       }
