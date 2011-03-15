@@ -144,16 +144,6 @@ target_link_libraries(rsession
    ${SESSION_SYSTEM_LIBRARIES}
 )
 
-# make sure rsession can find libR.so when installed on unix
-# note this can also be done automatically for all non-system
-# dependencies using INSTALL_RPATH_USE_LINK_PATH TRUE however
-# we set it explicitly to the R lib dir so there are no
-# unexpected additions to the rpath
-if(UNIX AND NOT APPLE)
-   set_target_properties(rsession PROPERTIES
-                         INSTALL_RPATH ${LIBR_HOME}/lib)
-endif()
-
 # configure and install r-ldpaths script
 if(UNIX AND NOT APPLE)
    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/r-ldpath.in

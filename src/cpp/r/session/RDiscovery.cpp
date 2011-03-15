@@ -24,8 +24,6 @@
 #endif
 #include <Rembedded.h>
 
-#include "config.h"
-
 using namespace core;
 
 namespace r {
@@ -49,25 +47,24 @@ Error discoverR(RLocations* pLocations)
    return Success();
 }
 
-// Use configured / hard-coded paths for unix & osx
+// Use environment variables for unix & osx
 #else
 
 Error discoverR(RLocations* pLocations)
 {
-   // use environment variables and default back to configured path
-   // if they don't exists
-
+   // rhome
    std::string rHome = core::system::getenv("R_HOME");
-   if (!rHome.empty())
+   if (rHome.empty() || !FilePath(rHome).exists())
+      return core::pathNotFoundError(rHome, ERROR_LOCATION);
+   else
       pLocations->homePath = rHome;
-   else
-      pLocations->homePath = CONFIG_R_HOME_PATH;
 
+   // rdocdir
    std::string rDocDir = core::system::getenv("R_DOC_DIR");
-   if (!rDocDir.empty())
-      pLocations->docPath = rDocDir;
+   if (rDocDir.empty() || !FilePath(rDocDir).exists())
+      return core::pathNotFoundError(rDocDir, ERROR_LOCATION);
    else
-      pLocations->docPath = CONFIG_R_DOC_PATH;
+      pLocations->docPath = rDocDir;
 
    return Success();
 }

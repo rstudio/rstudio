@@ -77,16 +77,8 @@ if(WIN32)
 else()
   set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
     DesktopPosixApplicationLaunch.cpp
+    DesktopPosixDetectRHome.cpp
   )
-  if(APPLE)
-    set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
-      DesktopMacDetectRHome.cpp
-    )
-  else()
-    set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
-      DesktopPosixDetectRHome.cpp
-    )
-  endif(APPLE)
 endif(WIN32)
 
 # include directories

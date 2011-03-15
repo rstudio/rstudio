@@ -57,7 +57,7 @@ namespace session_proxy {
    
 namespace {
 
-std::string readLdLibraryPath()
+std::string readRLdLibraryPath()
 {
    std::string ldLibraryPath;
    FilePath ldpathScript(server::options().rldpathPath());
@@ -108,10 +108,20 @@ Error launchSession(const std::string& username, PidType* pPid)
                            kRStudioLimitRpcClientUid,
                            boost::lexical_cast<std::string>(uid)));
 
-   // pass LD_LIBRARY_PATH
-   std::string ldLibraryPath = readLdLibraryPath();
+
+   // set R_HOME and R_DOC_DIR
+   environment.push_back(std::make_pair("R_HOME", options.rHome()));
+   environment.push_back(std::make_pair("R_DOC_DIR", options.rDocDir()));
+
+   // compute and set LD_LIBRARY_PATH
+   std::string ldLibraryPath = core::system::getenv("LD_LIBRARY_PATH");
    if (!ldLibraryPath.empty())
-      environment.push_back(std::make_pair("LD_LIBRARY_PATH", ldLibraryPath));
+      ldLibraryPath.append(":");
+   ldLibraryPath.append(options.rLibDir());
+   std::string rLdLibraryPath = readRLdLibraryPath();
+   if (!rLdLibraryPath.empty())
+      ldLibraryPath.append(":" + rLdLibraryPath);
+   environment.push_back(std::make_pair("LD_LIBRARY_PATH", ldLibraryPath));
 
    // launch the session
    *pPid = -1;

@@ -48,6 +48,9 @@ struct OptionsDescription
 ProgramStatus read(const OptionsDescription& optionsDescription,
                    int argc, 
                    char * const argv[]);
+
+void reportError(const std::string& errorMessage,
+                 const ErrorLocation& location);
    
 } // namespace program_options
 } // namespace core 

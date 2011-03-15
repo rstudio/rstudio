@@ -177,6 +177,13 @@ Error pathNotFoundError(const ErrorLocation& location)
    return systemError(boost::system::errc::no_such_file_or_directory, location);
 #endif
 }
+
+Error pathNotFoundError(const std::string& path, const ErrorLocation& location)
+{
+   Error error = pathNotFoundError(location);
+   error.addProperty("path", path);
+   return error;
+}
    
 struct ErrorLocation::Impl 
 {
