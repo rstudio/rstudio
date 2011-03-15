@@ -21,3 +21,4 @@ git merge \
 make clean
 make
 cp build/src/ace.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/
+cp build/src/ace-uncompressed.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/
