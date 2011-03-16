@@ -318,6 +318,8 @@ public class Shell implements ConsoleInputHandler,
       {
          int keyCode = event.getNativeKeyCode();
 
+         lastKeyCodeWasZero_ = keyCode == 0;
+
          for (KeyDownPreviewHandler handler : keyDownPreviewHandlers_)
          {
             if (handler.previewKeyDown(event.getNativeEvent()))
@@ -473,7 +475,7 @@ public class Shell implements ConsoleInputHandler,
 
       public void onKeyPress(KeyPressEvent event)
       {
-         if (event.getCharCode() == 13)
+         if (lastKeyCodeWasZero_ && event.getCharCode() == 13)
          {
             // On QtWebKit for Windows, the Enter key (on numpad) doesn't get
             // caught in onKeyDown because the keyCode is incorrectly set to 0.
@@ -495,6 +497,8 @@ public class Shell implements ConsoleInputHandler,
             }
          }
       }
+
+      private boolean lastKeyCodeWasZero_;
    }
 
    private void navigateHistory(int offset)
