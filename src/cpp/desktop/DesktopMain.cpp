@@ -218,8 +218,13 @@ int main(int argc, char* argv[])
          return EXIT_FAILURE;
       }
 
-      NetworkProxyFactory* pProxyFactory = new NetworkProxyFactory();
-      QNetworkProxyFactory::setApplicationProxyFactory(pProxyFactory);
+      // jcheng 03/16/2011: Due to crashing caused by authenticating
+      // proxies, bypass all proxies from Qt until we can get the problem
+      // completely solved. This is only expected to affect CRAN mirror
+      // selection (which falls back to local mirror list) and update
+      // checking.
+      //NetworkProxyFactory* pProxyFactory = new NetworkProxyFactory();
+      //QNetworkProxyFactory::setApplicationProxyFactory(pProxyFactory);
 
       MainWindow* browser = new MainWindow(url);
       pAppLaunch->setActivationWindow(browser);
