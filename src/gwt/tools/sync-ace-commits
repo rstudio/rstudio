@@ -8,7 +8,7 @@ cd ace
 git checkout master
 
 # Point this to the upstream commit that we've tested
-git reset --hard 8c35a07
+git reset --hard af5d1177
 
 git submodule update --init --recursive
 
