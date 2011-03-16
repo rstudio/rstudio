@@ -33,6 +33,14 @@ public class IdentityHashSet<E> extends HashSet<E> {
     super(c);
   }
 
+  /**
+   * Works just like {@link #HashSet(Collection)}, but for arrays. Used to avoid
+   * having to synthesize a collection in {@link IdentitySets}.
+   */
+  IdentityHashSet(E[] c) {
+    super(c);
+  }
+
   @Override
   protected boolean itemEquals(Object a, Object b) {
     return a == b;

@@ -22,6 +22,7 @@ import java.io.Serializable;
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.Collection;
+import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -43,38 +44,43 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
    */
   private static final int INITIAL_TABLE_SIZE = 4;
 
-  private class EntryIterator implements Iterator<Entry<K, V>> {
+  private abstract class BaseIterator<E> implements Iterator<E> {
+    private Object[] coModCheckKeys = keys;
     private int index = 0;
     private int last = -1;
 
-    {
-      advanceToItem();
-    }
-
     public boolean hasNext() {
+      if (coModCheckKeys != keys) {
+        throw new ConcurrentModificationException();
+      }
+      advanceToItem();
       return index < keys.length;
     }
 
-    public Entry<K, V> next() {
+    public E next() {
       if (!hasNext()) {
         throw new NoSuchElementException();
       }
       last = index;
-      Entry<K, V> toReturn = new HashEntry(index++);
-      advanceToItem();
-      return toReturn;
+      return iteratorItem(index++);
     }
 
     public void remove() {
       if (last < 0) {
         throw new IllegalStateException();
       }
+      if (coModCheckKeys != keys) {
+        throw new ConcurrentModificationException();
+      }
       internalRemove(last);
       if (keys[last] != null) {
+        // Hole was plugged.
         index = last;
       }
       last = -1;
     }
+
+    protected abstract E iteratorItem(int index);
 
     private void advanceToItem() {
       for (; index < keys.length; ++index) {
@@ -82,6 +88,13 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
           return;
         }
       }
+    }
+  }
+
+  private class EntryIterator extends BaseIterator<Entry<K, V>> {
+    @Override
+    protected Entry<K, V> iteratorItem(int index) {
+      return new HashEntry(index);
     }
   }
 
@@ -95,7 +108,7 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
 
     @Override
     public boolean addAll(Collection<? extends Entry<K, V>> c) {
-      HashMap.this.ensureSizeFor(size() + c.size());
+      HashMap.this.resizeForJoin(c.size());
       return super.addAll(c);
     }
 
@@ -201,46 +214,11 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
     }
   }
 
-  private class KeyIterator implements Iterator<K> {
-    private int index = 0;
-    private int last = -1;
-
-    {
-      advanceToItem();
-    }
-
-    public boolean hasNext() {
-      return index < keys.length;
-    }
-
+  private class KeyIterator extends BaseIterator<K> {
     @SuppressWarnings("unchecked")
-    public K next() {
-      if (!hasNext()) {
-        throw new NoSuchElementException();
-      }
-      last = index;
-      Object toReturn = unmaskNullKey(keys[index++]);
-      advanceToItem();
-      return (K) toReturn;
-    }
-
-    public void remove() {
-      if (last < 0) {
-        throw new IllegalStateException();
-      }
-      internalRemove(last);
-      if (keys[last] != null) {
-        index = last;
-      }
-      last = -1;
-    }
-
-    private void advanceToItem() {
-      for (; index < keys.length; ++index) {
-        if (keys[index] != null) {
-          return;
-        }
-      }
+    @Override
+    protected K iteratorItem(int index) {
+      return (K) unmaskNullKey(keys[index]);
     }
   }
 
@@ -297,46 +275,11 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
     }
   }
 
-  private class ValueIterator implements Iterator<V> {
-    private int index = 0;
-    private int last = -1;
-
-    {
-      advanceToItem();
-    }
-
-    public boolean hasNext() {
-      return index < keys.length;
-    }
-
+  private class ValueIterator extends BaseIterator<V> {
     @SuppressWarnings("unchecked")
-    public V next() {
-      if (!hasNext()) {
-        throw new NoSuchElementException();
-      }
-      last = index;
-      Object toReturn = values[index++];
-      advanceToItem();
-      return (V) toReturn;
-    }
-
-    public void remove() {
-      if (last < 0) {
-        throw new IllegalStateException();
-      }
-      internalRemove(last);
-      if (keys[last] != null) {
-        index = last;
-      }
-      last = -1;
-    }
-
-    private void advanceToItem() {
-      for (; index < keys.length; ++index) {
-        if (keys[index] != null) {
-          return;
-        }
-      }
+    @Override
+    protected V iteratorItem(int index) {
+      return (V) values[index];
     }
   }
 
@@ -446,7 +389,7 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
     }
 
     initTable(newCapacity);
-    internalPutAll(m);
+    putAll(m);
   }
 
   public void clear() {
@@ -517,14 +460,18 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
 
   @SuppressWarnings("unchecked")
   public V put(K key, V value) {
-    ensureSizeFor(size + 1);
     int index = findKeyOrEmpty(key);
     if (keys[index] == null) {
-      ++size;
+      // Not in the map, may need to grow.
+      if (ensureSizeFor(++size)) {
+        // If we had to grow the table, must recompute the index.
+        index = findKeyOrEmpty(key);
+      }
       keys[index] = maskNullKey(key);
       values[index] = value;
       return null;
     } else {
+      // In the map, set a new value;
       Object previousValue = values[index];
       values[index] = value;
       return (V) previousValue;
@@ -532,8 +479,10 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
   }
 
   public void putAll(Map<? extends K, ? extends V> m) {
-    ensureSizeFor(size + m.size());
-    internalPutAll(m);
+    resizeForJoin(m.size());
+    for (Entry<? extends K, ? extends V> entry : m.entrySet()) {
+      put(entry.getKey(), entry.getValue());
+    }
   }
 
   @SuppressWarnings("unchecked")
@@ -644,9 +593,9 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
    * Ensures the map is large enough to contain the specified number of entries.
    * Default access to avoid synthetic accessors from inner classes.
    */
-  void ensureSizeFor(int expectedSize) {
+  boolean ensureSizeFor(int expectedSize) {
     if (keys.length * 3 >= expectedSize * 4) {
-      return;
+      return false;
     }
 
     int newCapacity = keys.length << 1;
@@ -670,6 +619,7 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
         values[newIndex] = oldValues[i];
       }
     }
+    return true;
   }
 
   /**
@@ -727,6 +677,27 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
     plugHole(index);
   }
 
+  /**
+   * Resizes this map to accommodate the minimum size required to join this map
+   * with another map. This is an optimization to prevent multiple resizes
+   * during the join operation. Naively, it would seem like we should resize to
+   * hold {@code (size + otherSize)}. However, the incoming map might have
+   * duplicates with this map; it might even be all duplicates. The correct
+   * behavior when the incoming map is all duplicates is NOT to resize, and
+   * therefore not to invalidate any iterators.
+   * <p>
+   * In practice, this strategy results in a worst-case of two resizes. In the
+   * worst case, where {@code size} and {@code otherSize} are roughly equal and
+   * the sets are completely disjoint, we might do 1 initial rehash and then 1
+   * additional rehash down the road. But this is an edge case that requires
+   * getting unlucky on both boundaries. Most of the time, we do either 1
+   * initial rehash or 1 down the road, because doubling the capacity generally
+   * allows this map to absorb an equally-sized disjoint map.
+   */
+  boolean resizeForJoin(int sizeOther) {
+    return ensureSizeFor(Math.max(size, sizeOther));
+  }
+
   private int getKeyIndex(Object k) {
     int h = keyHashCode(k);
     // Copied from Apache's AbstractHashedMap; prevents power-of-two collisions.
@@ -741,21 +712,6 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
   private void initTable(int capacity) {
     keys = new Object[capacity];
     values = new Object[capacity];
-  }
-
-  private void internalPutAll(Map<? extends K, ? extends V> m) {
-    for (Entry<? extends K, ? extends V> entry : m.entrySet()) {
-      K key = entry.getKey();
-      V value = entry.getValue();
-      int index = findKeyOrEmpty(key);
-      if (keys[index] == null) {
-        ++size;
-        keys[index] = maskNullKey(key);
-        values[index] = value;
-      } else {
-        values[index] = value;
-      }
-    }
   }
 
   /**

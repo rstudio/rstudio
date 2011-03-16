@@ -22,6 +22,7 @@ import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.util.AbstractSet;
 import java.util.Collection;
+import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -33,14 +34,15 @@ import java.util.NoSuchElementException;
 public class HashSet<E> extends AbstractSet<E> implements Serializable {
 
   private class SetIterator implements Iterator<E> {
+    private Object[] coModCheckTable = table;
     private int index = 0;
     private int last = -1;
 
-    public SetIterator() {
-      advanceToItem();
-    }
-
     public boolean hasNext() {
+      if (coModCheckTable != table) {
+        throw new ConcurrentModificationException();
+      }
+      advanceToItem();
       return index < table.length;
     }
 
@@ -50,17 +52,19 @@ public class HashSet<E> extends AbstractSet<E> implements Serializable {
         throw new NoSuchElementException();
       }
       last = index;
-      E toReturn = (E) unmaskNull(table[index++]);
-      advanceToItem();
-      return toReturn;
+      return (E) unmaskNull(table[index++]);
     }
 
     public void remove() {
       if (last < 0) {
         throw new IllegalStateException();
       }
+      if (coModCheckTable != table) {
+        throw new ConcurrentModificationException();
+      }
       internalRemove(last);
       if (table[last] != null) {
+        // Hole was plugged.
         index = last;
       }
       last = -1;
@@ -124,12 +128,32 @@ public class HashSet<E> extends AbstractSet<E> implements Serializable {
     super.addAll(c);
   }
 
+  /**
+   * Works just like {@link #HashSet(Collection)}, but for arrays. Used to avoid
+   * having to synthesize a collection in {@link Sets}.
+   */
+  HashSet(E[] c) {
+    int newCapacity = INITIAL_TABLE_SIZE;
+    int expectedSize = c.length;
+    while (newCapacity * 3 < expectedSize * 4) {
+      newCapacity <<= 1;
+    }
+
+    table = new Object[newCapacity];
+    for (E e : c) {
+      add(e);
+    }
+  }
+
   @Override
   public boolean add(E e) {
-    ensureSizeFor(size + 1);
     int index = findOrEmpty(e);
     if (table[index] == null) {
-      ++size;
+      // Not in the map, may need to grow.
+      if (ensureSizeFor(++size)) {
+        // If we had to grow the table, must recompute the index.
+        index = findOrEmpty(e);
+      }
       table[index] = maskNull(e);
       return true;
     }
@@ -138,7 +162,7 @@ public class HashSet<E> extends AbstractSet<E> implements Serializable {
 
   @Override
   public boolean addAll(Collection<? extends E> c) {
-    ensureSizeFor(size + c.size());
+    resizeForJoin(c.size());
     return super.addAll(c);
   }
 
@@ -239,21 +263,6 @@ public class HashSet<E> extends AbstractSet<E> implements Serializable {
   }
 
   /**
-   * Works just like {@link #addAll(Collection)}, but for arrays. Used to avoid
-   * having to synthesize a collection in {@link Sets}.
-   */
-  void addAll(E[] elements) {
-    ensureSizeFor(size + elements.length);
-    for (E e : elements) {
-      int index = findOrEmpty(e);
-      if (table[index] == null) {
-        ++size;
-        table[index] = maskNull(e);
-      }
-    }
-  }
-
-  /**
    * Removes the item at the specified index, and performs internal management
    * to make sure we don't wind up with a hole in the table. Default access to
    * avoid synthetic accessors from inner classes.
@@ -267,9 +276,9 @@ public class HashSet<E> extends AbstractSet<E> implements Serializable {
   /**
    * Ensures the set is large enough to contain the specified number of entries.
    */
-  private void ensureSizeFor(int expectedSize) {
+  private boolean ensureSizeFor(int expectedSize) {
     if (table.length * 3 >= expectedSize * 4) {
-      return;
+      return false;
     }
 
     int newCapacity = table.length << 1;
@@ -290,6 +299,7 @@ public class HashSet<E> extends AbstractSet<E> implements Serializable {
         table[newIndex] = o;
       }
     }
+    return true;
   }
 
   /**
@@ -389,6 +399,27 @@ public class HashSet<E> extends AbstractSet<E> implements Serializable {
       ClassNotFoundException {
     in.defaultReadObject();
     doReadObject(in);
+  }
+
+  /**
+   * Resizes this set to accommodate the minimum size required to join this set
+   * with another set. This is an optimization to prevent multiple resizes
+   * during the join operation. Naively, it would seem like we should resize to
+   * hold {@code (size + otherSize)}. However, the incoming set might have
+   * duplicates with this set; it might even be all duplicates. The correct
+   * behavior when the incoming set is all duplicates is NOT to resize, and
+   * therefore not to invalidate any iterators.
+   * <p>
+   * In practice, this strategy results in a worst-case of two resizes. In the
+   * worst case, where {@code size} and {@code otherSize} are roughly equal and
+   * the sets are completely disjoint, we might do 1 initial rehash and then 1
+   * additional rehash down the road. But this is an edge case that requires
+   * getting unlucky on both boundaries. Most of the time, we do either 1
+   * initial rehash or 1 down the road, because doubling the capacity generally
+   * allows this set to absorb an equally-sized disjoint set.
+   */
+  private void resizeForJoin(int sizeOther) {
+    ensureSizeFor(Math.max(size, sizeOther));
   }
 
   private void writeObject(ObjectOutputStream out) throws IOException {

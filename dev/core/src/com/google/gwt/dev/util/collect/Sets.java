@@ -93,9 +93,7 @@ public class Sets {
       case 1:
         return create(items[0]);
       default:
-        HashSet<T> result = new HashSet<T>();
-        result.addAll(items);
-        return result;
+        return new HashSet<T>(items);
     }
   }
 

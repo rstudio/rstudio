@@ -146,9 +146,7 @@ public class IdentitySets {
       case 1:
         return create(items[0]);
       default:
-        IdentityHashSet<T> result = new IdentityHashSet<T>();
-        result.addAll(items);
-        return result;
+        return new IdentityHashSet<T>(items);
     }
   }
 
