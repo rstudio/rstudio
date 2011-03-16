@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.model;
 import com.google.gwt.core.client.JavaScriptObject;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.views.choosefile.model.ChooseFileServerOperations;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.data.model.DataServerOperations;
@@ -47,9 +48,14 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
    void setUiPrefs(JavaScriptObject uiPrefs,
                    ServerRequestCallback<Void> requestCallback);
 
+   void getRPrefs(ServerRequestCallback<RPrefs> requestCallback);
+
    // Save Action: "yes", "no", or "ask"
-   void setSaveAction(String saveAction, 
-                      ServerRequestCallback<Void> requestCallback);
+   void setRPrefs(int saveAction,
+                  boolean loadRData,
+                  boolean persistWorkingDirectory,
+                  String initialWorkingDirectory,
+                  ServerRequestCallback<Void> requestCallback);
 
    void updateClientState(JavaScriptObject temporary,
                           JavaScriptObject persistent,

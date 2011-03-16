@@ -36,7 +36,6 @@ public slots:
    void invokeCommand(QString commandId);
    void manageCommand(QString cmdId, QAction* pAction);
    void openFileInRStudio(QString path);
-   void setSaveWorkspace(int value);
    void checkForUpdates();
 signals:
    void workbenchInitialized();

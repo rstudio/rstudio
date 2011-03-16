@@ -225,27 +225,6 @@ void MainWindow::openFileInRStudio(QString path)
          "window.desktopHooks.openFile(\"" + path + "\")");
 }
 
-void MainWindow::setSaveWorkspace(int value)
-{
-   QString action;
-   switch (value)
-   {
-   case SAVE_YES:
-      action = "yes";
-      break;
-   case SAVE_NO:
-      action = "no";
-      break;
-   case SAVE_ASK:
-   default:
-      action = "ask";
-      break;
-   }
-
-   webView()->page()->mainFrame()->evaluateJavaScript(
-         "window.desktopHooks.setSaveWorkspace(\"" + action + "\")");
-}
-
 void MainWindow::checkForUpdates()
 {
    updateChecker_.performCheck(true);

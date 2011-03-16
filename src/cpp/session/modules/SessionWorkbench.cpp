@@ -101,6 +101,43 @@ Error setUiPrefs(const json::JsonRpcRequest& request,
 
    return Success();
 }
+
+Error getRPrefs(const json::JsonRpcRequest& request,
+                json::JsonRpcResponse* pResponse)
+{
+   json::Object result;
+
+   result["save_action"] = userSettings().saveAction();
+   result["load_rdata"] = userSettings().loadRData();
+   result["persist_working_dir"] = userSettings().persistWorkingDirectory();
+   result["initial_working_dir"] = module_context::createAliasedPath(
+         userSettings().initialWorkingDirectory());
+
+   pResponse->setResult(result);
+
+   return Success();
+}
+
+Error setRPrefs(const json::JsonRpcRequest& request,
+                json::JsonRpcResponse* pResponse)
+{
+   int saveAction;
+   bool loadRData;
+   bool persistWorkingDir;
+   std::string initialWorkingDir;
+   json::readParams(request.params,
+                    &saveAction,
+                    &loadRData,
+                    &persistWorkingDir,
+                    &initialWorkingDir);
+
+   userSettings().setSaveAction(saveAction);
+   userSettings().setLoadRData(loadRData);
+   userSettings().setPersistWorkingDirectory(persistWorkingDir);
+   userSettings().setInitialWorkingDirectory(FilePath(initialWorkingDir));
+
+   return Success();
+}
    
 // options("pdfviewer")
 void viewPdfPostback(const std::string& pdfPath)
@@ -121,27 +158,6 @@ void handleFileShow(const http::Request& request, http::Response* pResponse)
 
    // send it back
    pResponse->setCacheableFile(filePath, request);
-}
-
-Error setSaveAction(const json::JsonRpcRequest& request,
-                    json::JsonRpcResponse* pResponse)
-{
-   // read params
-   std::string saveAction;
-   Error error = json::readParams(request.params, &saveAction);
-   if (error)
-      return error;
-
-   if (saveAction == "yes")
-      SaveAction = SA_SAVE;
-   else if (saveAction == "no")
-      SaveAction = SA_NOSAVE;
-   else if (saveAction == "ask")
-      SaveAction = SA_SAVEASK;
-   else
-      return Error(json::errc::ParamInvalid, ERROR_LOCATION);
-
-   return Success();
 }
 
 SEXP capabilitiesX11Hook(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -185,8 +201,9 @@ Error initialize()
       (bind(registerUriHandler, "/file_show", handleFileShow))
       (bind(registerRpcMethod, "set_client_state", setClientState))
       (bind(registerRpcMethod, "set_workbench_metrics", setWorkbenchMetrics))
-      (bind(registerRpcMethod, "set_save_action", setSaveAction))
-      (bind(registerRpcMethod, "set_ui_prefs", setUiPrefs));
+      (bind(registerRpcMethod, "set_ui_prefs", setUiPrefs))
+      (bind(registerRpcMethod, "get_r_prefs", getRPrefs))
+      (bind(registerRpcMethod, "set_r_prefs", setRPrefs));
    return initBlock.execute();
 }
 

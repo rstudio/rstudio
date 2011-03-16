@@ -19,6 +19,7 @@
 #include <boost/utility.hpp>
 
 #include <core/Settings.hpp>
+#include <core/FilePath.hpp>
 
 #include <core/json/Json.hpp>
 
@@ -54,7 +55,19 @@ public:
 
    core::json::Object uiPrefs() const;
    void setUiPrefs(const core::json::Object& prefsObject);
-   
+
+   int saveAction() const;
+   void setSaveAction(int saveAction);
+   void applySaveAction() const;
+
+   bool loadRData() const;
+   void setLoadRData(bool loadRData);
+
+   bool persistWorkingDirectory() const;
+   void setPersistWorkingDirectory(bool persist);
+
+   core::FilePath initialWorkingDirectory() const;
+   void setInitialWorkingDirectory(const core::FilePath& filePath);
    
 private:
    core::Settings settings_;

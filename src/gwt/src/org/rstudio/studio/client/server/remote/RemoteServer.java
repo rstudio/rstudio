@@ -36,6 +36,7 @@ import org.rstudio.studio.client.workbench.model.Agreement;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
+import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.views.files.model.FileUploadToken;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 import org.rstudio.studio.client.workbench.views.help.model.Link;
@@ -191,11 +192,30 @@ public class RemoteServer implements Server
                   uiPrefs,
                   requestCallback);
    }
-   
-   public void setSaveAction(String saveAction, 
-                             ServerRequestCallback<Void> requestCallback)
+
+   public void getRPrefs(ServerRequestCallback<RPrefs> requestCallback)
    {
-      sendRequest(RPC_SCOPE, SET_SAVE_ACTION, saveAction, requestCallback);
+      sendRequest(RPC_SCOPE,
+                  GET_R_PREFS,
+                  requestCallback);
+   }
+
+   public void setRPrefs(int saveAction,
+                         boolean loadRData,
+                         boolean persistWorkingDirectory,
+                         String initialWorkingDirectory,
+                         ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONNumber(saveAction));
+      params.set(1, JSONBoolean.getInstance(loadRData));
+      params.set(2, JSONBoolean.getInstance(persistWorkingDirectory));
+      params.set(3, new JSONString(initialWorkingDirectory));
+
+      sendRequest(RPC_SCOPE,
+                  SET_R_PREFS,
+                  params,
+                  requestCallback);
    }
 
    public void updateClientState(JavaScriptObject temporary,
@@ -1311,7 +1331,8 @@ public class RemoteServer implements Server
    
    private static final String SET_WORKBENCH_METRICS = "set_workbench_metrics";
    private static final String SET_UI_PREFS = "set_ui_prefs";
-   private static final String SET_SAVE_ACTION = "set_save_action";
+   private static final String GET_R_PREFS = "get_r_prefs";
+   private static final String SET_R_PREFS = "set_r_prefs";
    private static final String SET_CLIENT_STATE = "set_client_state";
    private static final String USER_PROMPT_COMPLETED = "user_prompt_completed";
    

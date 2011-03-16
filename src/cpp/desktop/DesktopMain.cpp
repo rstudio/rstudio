@@ -197,16 +197,6 @@ int main(int argc, char* argv[])
       if (!options.defaultCRANmirrorURL().isEmpty())
          argList << "--r-cran-repos" << options.defaultCRANmirrorURL();
 
-      switch (options.saveWorkspaceOnExit())
-      {
-      case SAVE_YES:
-         argList << "--r-save-workspace" << "yes";
-         break;
-      case SAVE_NO:
-         argList << "--r-save-workspace" << "no";
-         break;
-      }
-
       error = parent_process_monitor::wrapFork(
             boost::bind(launchProcess,
                         sessionPath.absolutePath(),

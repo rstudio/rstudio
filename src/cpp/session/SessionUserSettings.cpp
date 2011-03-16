@@ -18,7 +18,11 @@
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 
+#include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
+
+#include <R_ext/RStartup.h>
+extern "C" SA_TYPE SaveAction;
 
 using namespace core ;
 
@@ -30,6 +34,10 @@ namespace {
 const char * const kAgreementHash = kAgreementPrefix "agreedToHash";
 const char * const kAutoCreatedProfile = "autoCreatedProfile";
 const char * const kUiPrefs = "uiPrefs";
+const char * const kSaveAction = "saveAction";
+const char * const kLoadRData = "loadRData";
+const char * const kPersistWorkingDirectory = "persistWorkingDirectory";
+const char * const kInitialWorkingDirectory = "initialWorkingDirectory";
 }
    
 UserSettings& userSettings()
@@ -83,6 +91,66 @@ void UserSettings::setUiPrefs(const core::json::Object& prefsObject)
    json::writeFormatted(prefsObject, output);
    settings_.set(kUiPrefs, output.str());
 }
-  
+
+int UserSettings::saveAction() const
+{
+   return settings_.getInt(kSaveAction, -1);
+}
+
+void UserSettings::setSaveAction(int saveAction)
+{
+   settings_.set(kSaveAction, saveAction);
+   applySaveAction();
+}
+
+void UserSettings::applySaveAction() const
+{
+   switch (saveAction())
+   {
+   case 1:
+      SaveAction = SA_SAVE;
+      break;
+   case 0:
+      SaveAction = SA_NOSAVE;
+      break;
+   default:
+      SaveAction = SA_SAVEASK;
+      break;
+   }
+}
+
+bool UserSettings::loadRData() const
+{
+   return settings_.getBool(kLoadRData, true);
+}
+
+void UserSettings::setLoadRData(bool loadRData)
+{
+   settings_.set(kLoadRData, loadRData);
+}
+
+bool UserSettings::persistWorkingDirectory() const
+{
+   return settings_.getBool(kPersistWorkingDirectory, false);
+}
+
+void UserSettings::setPersistWorkingDirectory(bool persist)
+{
+   settings_.set(kPersistWorkingDirectory, persist);
+}
+
+core::FilePath UserSettings::initialWorkingDirectory() const
+{
+   return module_context::resolveAliasedPath(
+         settings_.get(kInitialWorkingDirectory, "~"));
+}
+
+void UserSettings::setInitialWorkingDirectory(const core::FilePath& filePath)
+{
+   if (module_context::createAliasedPath(filePath) == "~")
+      settings_.set(kInitialWorkingDirectory, std::string("~"));
+   else
+      settings_.set(kInitialWorkingDirectory, filePath.absolutePath());
+}
    
 } // namespace session

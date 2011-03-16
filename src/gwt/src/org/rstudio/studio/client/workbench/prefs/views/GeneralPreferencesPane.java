@@ -5,6 +5,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
@@ -16,8 +17,11 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.Value;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
+import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 
 /**
  * TODO: Apply new settings
@@ -83,31 +87,12 @@ public class GeneralPreferencesPane extends PreferencesPane
                   "Never",
                   "Ask me every time"
             });
-      if (Desktop.isDesktop())
-      {
-         saveWorkspace_.getListBox().setSelectedIndex(
-               Desktop.getFrame().getSaveAction());
-      }
-      else
-      {
-         // TODO
-      }
       add(saveWorkspace_);
 
-
-      add(checkboxPref("Load .RData at startup", new Value<Boolean>(false)));
-
+      add(loadRData_ = new CheckBox("Load .RData at startup"));
 
       tight(radioPreserve_ = new RadioButton("workDir", "Preserve working directory"));
       tight(radioInitial_ = new RadioButton("workDir", "Always initialize working directory to:"));
-      radioInitial_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
-      {
-         public void onValueChange(ValueChangeEvent<Boolean> evt)
-         {
-            if (evt.getValue() && initialDir_ == null)
-               dirChooser_.click();
-         }
-      });
       dirChooser_ = new TextBoxWithButton(null, "Browse...", new ClickHandler()
       {
          public void onClick(ClickEvent event)
@@ -115,20 +100,15 @@ public class GeneralPreferencesPane extends PreferencesPane
             fileDialogs_.chooseFolder(
                   "Initial Working Directory",
                   fsContext_,
-                  initialDir_,
+                  FileSystemItem.createDir(dirChooser_.getText()),
                   new ProgressOperationWithInput<FileSystemItem>()
                   {
                      public void execute(FileSystemItem input,
                                          ProgressIndicator indicator)
                      {
                         if (input == null)
-                        {
-                           if (initialDir_ == null)
-                              radioPreserve_.setValue(true);
                            return;
-                        }
 
-                        initialDir_ = input;
                         dirChooser_.setText(input.getPath());
                         radioInitial_.setValue(true, false);
                         indicator.onCompleted();
@@ -143,7 +123,28 @@ public class GeneralPreferencesPane extends PreferencesPane
       add(radioInitial_);
       add(dirChooser_);
 
-      radioPreserve_.setValue(true);
+      server_.getRPrefs(new SimpleRequestCallback<RPrefs>()
+      {
+         @Override
+         public void onResponseReceived(RPrefs response)
+         {
+            int saveWorkspaceIndex;
+            switch (response.getSaveAction())
+            {
+               case 0: saveWorkspaceIndex = 1; break; // no
+               case 1: saveWorkspaceIndex = 0; break; // yes
+               default: saveWorkspaceIndex = 2; break; // ask 
+            }
+            saveWorkspace_.getListBox().setSelectedIndex(saveWorkspaceIndex);
+
+            loadRData_.setValue(response.getLoadRData());
+            if (response.getPersistWorkingDirectory())
+               radioPreserve_.setValue(true);
+            else
+               radioInitial_.setValue(true);
+            dirChooser_.setText(response.getInitialWorkingDirectory());
+         }
+      });
    }
 
    @Override
@@ -157,26 +158,25 @@ public class GeneralPreferencesPane extends PreferencesPane
    {
       super.onApply();
       
-      String saveAction;
-      int index = saveWorkspace_.getListBox().getSelectedIndex();
-      switch (index)
+      int saveAction;
+      switch (saveWorkspace_.getListBox().getSelectedIndex())
       {
-         case 0:
-            saveAction = "yes";
-            break;
-         case 1:
-            saveAction = "no";
-            break;
+         case 0: saveAction = 1; break; // yes
+         case 1: saveAction = 0; break; // no
          case 2:
-         default:
-            saveAction = "ask";
-            break;
+         default: saveAction = -1; break; // ask
+      }
+      if (Desktop.isDesktop())
+      {
+         Desktop.getFrame().setSaveAction(
+               saveWorkspace_.getListBox().getSelectedIndex());
       }
 
-      Desktop.getFrame().setSaveAction(index);
-      server_.setSaveAction(
-            saveAction,
-            new SimpleRequestCallback<org.rstudio.studio.client.server.Void>());
+      server_.setRPrefs(saveAction,
+                        loadRData_.getValue(),
+                        radioPreserve_.getValue(),
+                        dirChooser_.getText(),
+                        new SimpleRequestCallback<org.rstudio.studio.client.server.Void>());
    }
 
    @Override
@@ -195,5 +195,5 @@ public class GeneralPreferencesPane extends PreferencesPane
    private RadioButton radioPreserve_;
    private RadioButton radioInitial_;
    private TextBoxWithButton dirChooser_;
-   private FileSystemItem initialDir_;
+   private CheckBox loadRData_;
 }

@@ -39,6 +39,11 @@ public class TextBoxWithButton extends Composite
       textBox_.setText(text);
    }
 
+   public String getText()
+   {
+      return textBox_.getText();
+   }
+
    public void click()
    {
       themedButton_.click();

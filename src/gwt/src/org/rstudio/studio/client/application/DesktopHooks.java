@@ -170,11 +170,6 @@ public class DesktopHooks
       events_.fireEvent(new FileEditEvent(FileSystemItem.createFile(filePath)));
    }
 
-   void setSaveWorkspace(String val)
-   {
-      server_.setSaveAction(val, new SimpleRequestCallback<Void>());
-   }
-
    private final Commands commands_;
    private final EventBus events_;
    private final GlobalDisplay globalDisplay_;
