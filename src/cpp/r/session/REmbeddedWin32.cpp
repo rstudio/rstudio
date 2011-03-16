@@ -382,6 +382,11 @@ Error completeEmbeddedRInitialization()
    // set memory limit
    setMemoryLimit();
 
+   // use IE proxy settings
+   Error error = r::exec::executeString("utils::setInternet2()");
+   if (error)
+      LOG_ERROR(error);
+
    // from InitEd in edit.c
    EdFileUsed = 0;
    DefaultFileName = R_tmpnam("Redit", R_TempDir);
