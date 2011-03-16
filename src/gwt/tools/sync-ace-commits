@@ -16,6 +16,7 @@ git submodule update --init --recursive
 git merge \
     origin/bugfix-webkit-paste \
     origin/bugfix-updatefontsize \
+    origin/bugfix-ctrl-backspace \
 
 
 make clean

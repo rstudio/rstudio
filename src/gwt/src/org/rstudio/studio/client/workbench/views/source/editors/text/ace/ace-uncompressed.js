@@ -7407,7 +7407,7 @@ canon.addCommand({
 canon.addCommand({
     name: "backspace",
     bindKey: bindKey(
-        "Ctrl-Backspace|Command-Backspace|Option-Backspace|Shift-Backspace|Backspace",
+        "Command-Backspace|Option-Backspace|Shift-Backspace|Backspace",
         "Ctrl-Backspace|Command-Backspace|Shift-Backspace|Backspace|Ctrl-H"
     ),
     exec: function(env, args, request) { env.editor.removeLeft(); }
@@ -7424,7 +7424,7 @@ canon.addCommand({
 });
 canon.addCommand({
     name: "removewordleft",
-    bindKey: bindKey(null, "Alt-Backspace|Ctrl-Alt-Backspace"),
+    bindKey: bindKey("Ctrl-Backspace", "Alt-Backspace|Ctrl-Alt-Backspace"),
     exec: function(env, args, request) { env.editor.removeWordLeft(); }
 });
 canon.addCommand({
