@@ -794,24 +794,46 @@ void waitForMethod(const std::string& method,
                  allowSuspend,
                  pRequest);
 }
-   
+
+void addToConsoleInputBuffer(const r::session::RConsoleInput& consoleInput)
+{
+   if (consoleInput.cancel || consoleInput.text.find('\n') == std::string::npos)
+   {
+      s_consoleInputBuffer.push(consoleInput);
+      return;
+   }
+
+   // split input into list of commands
+   boost::char_separator<char> lineSep("\n");
+   boost::tokenizer<boost::char_separator<char> > lines(consoleInput.text, lineSep);
+   for (boost::tokenizer<boost::char_separator<char> >::iterator
+        lineIter = lines.begin();
+        lineIter != lines.end();
+        ++lineIter)
+   {
+      // get line
+      std::string line(*lineIter);
+
+      // add to buffer
+      s_consoleInputBuffer.push(line);
+   }
+}
 
 // extract console input -- can be either null (user hit escape) or a string
-Error extractConsoleInput(const json::JsonRpcRequest& request,
-                          r::session::RConsoleInput* pConsoleInput)
+Error extractConsoleInput(const json::JsonRpcRequest& request)
 {
    if (request.params.size() == 1)
    {
       if (request.params[0].is_null())
       {
-         *pConsoleInput = r::session::RConsoleInput();
+         addToConsoleInputBuffer(r::session::RConsoleInput());
          return Success();
       }
       else if (request.params[0].type() == json::StringType)
       {
          // get console input to return to R
          std::string text = request.params[0].get_str();
-         *pConsoleInput = r::session::RConsoleInput(text);
+         addToConsoleInputBuffer(r::session::RConsoleInput(text));
 
          // return success
          return Success();
@@ -834,16 +856,7 @@ Error bufferConsoleInput(const core::json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
    // extract the input
-   r::session::RConsoleInput consoleInput;
-   Error error = extractConsoleInput(request, &consoleInput);
-   if (error)
-      return error;
-
-   // add it to the buffer
-   s_consoleInputBuffer.push(consoleInput);
-
-   // return Success
-   return Success();
+   return extractConsoleInput(request);
 }
 
 Error startHttpConnectionListener()
@@ -1077,12 +1090,14 @@ bool rConsoleRead(const std::string& prompt,
       // extract console input. if there is an error during extraction we log it
       // but still return and empty string and true (returning false will cause R
       // to abort)
-      Error error = extractConsoleInput(request, pConsoleInput);
+      Error error = extractConsoleInput(request);
       if (error)
       {
          LOG_ERROR(error);
          *pConsoleInput = r::session::RConsoleInput("");
       }
+      *pConsoleInput = s_consoleInputBuffer.front();
+      s_consoleInputBuffer.pop();
    }
 
    // fire onBeforeExecute event if this isn't a cancel
