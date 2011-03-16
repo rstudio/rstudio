@@ -37,5 +37,15 @@ public class SelectWidget extends Composite
       return listBox_;
    }
 
+   public void setEnabled(boolean enabled)
+   {
+      listBox_.setEnabled(enabled);
+   }
+
+   public boolean isEnabled()
+   {
+      return listBox_.isEnabled();
+   }
+
    private final ListBox listBox_;
 }

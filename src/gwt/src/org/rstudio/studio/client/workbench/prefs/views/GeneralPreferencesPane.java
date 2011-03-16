@@ -123,17 +123,29 @@ public class GeneralPreferencesPane extends PreferencesPane
       add(radioInitial_);
       add(dirChooser_);
 
+      saveWorkspace_.setEnabled(false);
+      loadRData_.setEnabled(false);
+      radioPreserve_.setEnabled(false);
+      radioInitial_.setEnabled(false);
+      dirChooser_.setEnabled(false);
+
       server_.getRPrefs(new SimpleRequestCallback<RPrefs>()
       {
          @Override
          public void onResponseReceived(RPrefs response)
          {
+            saveWorkspace_.setEnabled(true);
+            loadRData_.setEnabled(true);
+            radioPreserve_.setEnabled(true);
+            radioInitial_.setEnabled(true);
+            dirChooser_.setEnabled(true);
+
             int saveWorkspaceIndex;
             switch (response.getSaveAction())
             {
                case 0: saveWorkspaceIndex = 1; break; // no
                case 1: saveWorkspaceIndex = 0; break; // yes
-               default: saveWorkspaceIndex = 2; break; // ask 
+               default: saveWorkspaceIndex = 2; break; // ask
             }
             saveWorkspace_.getListBox().setSelectedIndex(saveWorkspaceIndex);
 
@@ -157,26 +169,29 @@ public class GeneralPreferencesPane extends PreferencesPane
    public void onApply()
    {
       super.onApply();
-      
-      int saveAction;
-      switch (saveWorkspace_.getListBox().getSelectedIndex())
-      {
-         case 0: saveAction = 1; break; // yes
-         case 1: saveAction = 0; break; // no
-         case 2:
-         default: saveAction = -1; break; // ask
-      }
-      if (Desktop.isDesktop())
-      {
-         Desktop.getFrame().setSaveAction(
-               saveWorkspace_.getListBox().getSelectedIndex());
-      }
 
-      server_.setRPrefs(saveAction,
-                        loadRData_.getValue(),
-                        radioPreserve_.getValue(),
-                        dirChooser_.getText(),
-                        new SimpleRequestCallback<org.rstudio.studio.client.server.Void>());
+      if (saveWorkspace_.isEnabled())
+      {
+         int saveAction;
+         switch (saveWorkspace_.getListBox().getSelectedIndex())
+         {
+            case 0: saveAction = 1; break; // yes
+            case 1: saveAction = 0; break; // no
+            case 2:
+            default: saveAction = -1; break; // ask
+         }
+         if (Desktop.isDesktop())
+         {
+            Desktop.getFrame().setSaveAction(
+                  saveWorkspace_.getListBox().getSelectedIndex());
+         }
+
+         server_.setRPrefs(saveAction,
+                           loadRData_.getValue(),
+                           radioPreserve_.getValue(),
+                           dirChooser_.getText(),
+                           new SimpleRequestCallback<org.rstudio.studio.client.server.Void>());
+      }
    }
 
    @Override
