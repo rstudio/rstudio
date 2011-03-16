@@ -17,6 +17,7 @@ package com.google.gwt.requestfactory.server;
 
 import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.Locator;
+import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.ServiceLocator;
 
 import java.lang.reflect.InvocationTargetException;
@@ -153,6 +154,11 @@ public class ServiceLayerDecorator extends ServiceLayer {
   @Override
   public Method resolveRequestContextMethod(String requestContextClass, String methodName) {
     return getNext().resolveRequestContextMethod(requestContextClass, methodName);
+  }
+
+  @Override
+  public Class<?> resolveServiceClass(Class<? extends RequestContext> requestContextClass) {
+    return getNext().resolveServiceClass(requestContextClass);
   }
 
   @Override

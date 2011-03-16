@@ -17,6 +17,7 @@ package com.google.gwt.requestfactory.server;
 
 import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.Locator;
+import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.ServiceLocator;
 
 import java.lang.reflect.Method;
@@ -331,6 +332,15 @@ public abstract class ServiceLayer {
    *         exist
    */
   public abstract Method resolveRequestContextMethod(String requestContextClass, String methodName);
+
+  /**
+   * Given a {@link RequestContext} method, find the service class referenced in
+   * the {@link Service} or {@link ServiceName} annotation.
+   *
+   * @param requestContextClass a RequestContext interface
+   * @return the type of service to use
+   */
+  public abstract Class<?> resolveServiceClass(Class<? extends RequestContext> requestContextClass);
 
   /**
    * Given a RequestContext method declaration, resolve the

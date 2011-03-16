@@ -117,22 +117,9 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
 
   @Override
   public Method resolveDomainMethod(Method requestContextMethod) {
-    Class<?> enclosing = requestContextMethod.getDeclaringClass();
-
-    Class<?> searchIn = null;
-    Service s = enclosing.getAnnotation(Service.class);
-    if (s != null) {
-      searchIn = s.value();
-    }
-    ServiceName sn = enclosing.getAnnotation(ServiceName.class);
-    if (sn != null) {
-      searchIn = forName(sn.value());
-    }
-    if (searchIn == null) {
-      die(null, "The %s type %s did not specify a service type", RequestContext.class
-          .getSimpleName(), enclosing.getCanonicalName());
-    }
-
+    Class<?> declaringClass = requestContextMethod.getDeclaringClass();
+    Class<?> searchIn =
+        getTop().resolveServiceClass((Class<? extends RequestContext>) declaringClass);
     Class<?>[] parameterTypes = requestContextMethod.getParameterTypes();
     Class<?>[] domainArgs = new Class<?>[parameterTypes.length];
     for (int i = 0, j = domainArgs.length; i < j; i++) {
@@ -176,6 +163,25 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
     }
     return report("Could not locate %s method %s::%s", RequestContext.class.getSimpleName(),
         requestContextClass, methodName);
+  }
+
+  @Override
+  public Class<?> resolveServiceClass(Class<? extends RequestContext> requestContextClass) {
+    Class<?> searchIn = null;
+    Service s = requestContextClass.getAnnotation(Service.class);
+    // TODO Handle case when both annotations are present
+    if (s != null) {
+      searchIn = s.value();
+    }
+    ServiceName sn = requestContextClass.getAnnotation(ServiceName.class);
+    if (sn != null) {
+      searchIn = forName(sn.value());
+    }
+    if (searchIn == null) {
+      die(null, "The %s type %s did not specify a service type", RequestContext.class
+          .getSimpleName(), requestContextClass.getCanonicalName());
+    }
+    return searchIn;
   }
 
   @Override

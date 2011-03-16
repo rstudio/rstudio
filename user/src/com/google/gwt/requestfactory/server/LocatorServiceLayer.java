@@ -20,6 +20,7 @@ import com.google.gwt.requestfactory.shared.Locator;
 import com.google.gwt.requestfactory.shared.ProxyFor;
 import com.google.gwt.requestfactory.shared.ProxyForName;
 import com.google.gwt.requestfactory.shared.Request;
+import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.requestfactory.shared.ServiceLocator;
 import com.google.gwt.requestfactory.shared.ServiceName;
@@ -52,7 +53,11 @@ final class LocatorServiceLayer extends ServiceLayerDecorator {
     Class<? extends ServiceLocator> locatorType =
         getTop().resolveServiceLocator(contextMethod, domainMethod);
     ServiceLocator locator = newInstance(locatorType, ServiceLocator.class);
-    return locator.getInstance(domainMethod.getDeclaringClass());
+    // Enclosing class may be a parent class, so invoke on service class
+    Class<?> declaringClass = contextMethod.getDeclaringClass();
+    Class<?> serviceClass =
+        getTop().resolveServiceClass((Class<? extends RequestContext>) declaringClass);
+    return locator.getInstance(serviceClass);
   }
 
   @Override
