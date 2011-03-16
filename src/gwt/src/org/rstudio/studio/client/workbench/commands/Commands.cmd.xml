@@ -174,6 +174,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="openSourceDoc" value="Cmd+O"/>
       <shortcut refid="newSourceDoc" value="Cmd+Shift+N"/>
       <shortcut refid="closeSourceDoc" value="Cmd+Shift+L"/>
+      <shortcut refid="compilePDF" value="Cmd+Shift+P"/>
       <shortcut refid="executeCode" value="Cmd+Enter"/>
       <shortcut refid="executeAllCode" value="Cmd+Shift+Enter"/>
       <shortcut refid="extractFunction" value="Cmd+Alt+F"/>
