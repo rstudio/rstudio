@@ -213,6 +213,33 @@ Error restoreDefaultGlobalEnvironment()
    return Success();
 }
 
+void reportHistoryAccessError(const std::string& context,
+                              const FilePath& historyFilePath,
+                              const Error& error)
+{
+   // always log
+   LOG_ERROR(error);
+
+   // default summary
+   std::string summary = error.summary();
+
+   // if the file exists and we still got no such file or directory
+   // then it is almost always permission denied. this seems to happen
+   // somewhat frequently on linux systems where the user was root for
+   // an operation and ended up writing a .Rhistory
+   if (historyFilePath.exists() &&
+       (error.code() == boost::system::errc::no_such_file_or_directory))
+   {
+      summary = "permission denied (is the .Rhistory file owned by root?)";
+   }
+
+   // notify the user
+   std::string path = FilePath::createAliasedPath(historyFilePath,
+                                                  s_options.userHomePath);
+   std::string errmsg = context + " " + path + ": " + summary;
+   REprintf(("Error attempting to " + errmsg + "\n").c_str());
+}
+
 // save our session state when the quit function is called
 void saveHistoryAndClientState(bool savedEnvironment)
 {
@@ -222,15 +249,7 @@ void saveHistoryAndClientState(bool savedEnvironment)
       FilePath historyPath = sessionStateFilePath(kRHistory);
       Error error = consoleHistory().saveToFile(historyPath);
       if (error)
-      {
-         // log the error
-         LOG_ERROR(error);
-
-         // notify the user
-         std::string errmsg = "Error attempting to save history to " +
-               historyPath.absolutePath() + ": " + error.summary();
-         REprintf((errmsg + "\n").c_str());
-      }
+         reportHistoryAccessError("write history to", historyPath, error);
    }
 
    // commit persistent client state
@@ -408,18 +427,10 @@ Error initialize()
    else
    {  
       // restore console history from current working directory
-      FilePath historyFilePath = sessionStateFilePath(kRHistory);
-      error = consoleHistory().loadFromFile(historyFilePath, false);
+      FilePath historyPath = sessionStateFilePath(kRHistory);
+      error = consoleHistory().loadFromFile(historyPath, false);
       if (error)
-      {
-         // log the error
-         LOG_ERROR(error);
-
-         // notify the user
-         std::string errmsg = "Error attempting to load history from " +
-            historyFilePath.absolutePath() + ": " + error.summary();
-         REprintf((errmsg + "\n").c_str());
-      }
+         reportHistoryAccessError("read history from", historyPath, error);
       
       // defer loading of global environment
       if (s_options.restoreWorkspace)
