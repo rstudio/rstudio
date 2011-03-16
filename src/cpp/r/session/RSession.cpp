@@ -214,13 +214,24 @@ Error restoreDefaultGlobalEnvironment()
 }
 
 // save our session state when the quit function is called
-void saveHistoryAndClientState()
+void saveHistoryAndClientState(bool savedEnvironment)
 {
-   // save history (log errors)
-   FilePath historyPath = sessionStateFilePath(kRHistory);
-   Error error = consoleHistory().saveToFile(historyPath);
-   if (error)
-      LOG_ERROR(error);
+   // save history if the environment was saved
+   if (savedEnvironment)
+   {
+      FilePath historyPath = sessionStateFilePath(kRHistory);
+      Error error = consoleHistory().saveToFile(historyPath);
+      if (error)
+      {
+         // log the error
+         LOG_ERROR(error);
+
+         // notify the user
+         std::string errmsg = "Error attempting to save history to " +
+               historyPath.absolutePath() + ": " + error.summary();
+         REprintf((errmsg + "\n").c_str());
+      }
+   }
 
    // commit persistent client state
    r::session::clientState().commit(ClientStateCommitPersistentOnly,
@@ -400,7 +411,15 @@ Error initialize()
       FilePath historyFilePath = sessionStateFilePath(kRHistory);
       error = consoleHistory().loadFromFile(historyFilePath, false);
       if (error)
+      {
+         // log the error
          LOG_ERROR(error);
+
+         // notify the user
+         std::string errmsg = "Error attempting to load history from " +
+            historyFilePath.absolutePath() + ": " + error.summary();
+         REprintf((errmsg + "\n").c_str());
+      }
       
       // defer loading of global environment
       if (s_options.restoreWorkspace)
@@ -977,7 +996,7 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
          }
 
          // save other persistent session state (history and client state)
-         saveHistoryAndClientState();
+         saveHistoryAndClientState(savedEnvironment);
 
          // clear display (closes the device). need to do this here
          // so that all of the graphics files are deleted
@@ -1161,8 +1180,6 @@ void ensureDeserialized()
          // report to user
          std::string errMsg = r::endUserErrorMessage(error);
          REprintf((errMsg + "\n").c_str());
-         REprintf("IMPORTANT: This error may have resulted in data loss. "
-                  "Please report it immediately!\n");
       }
       
       s_deferredDeserializationAction.clear();
