@@ -121,7 +121,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     }
     replaceAll(ss, "__MODULE_FUNC__", context.getModuleFunctionName());
     replaceAll(ss, "__MODULE_NAME__", context.getModuleName());
-    replaceAll(ss, "__HOSTED_FILENAME__", getHostedFilename());
+    replaceAll(ss, "__HOSTED_FILENAME__", getHostedFilenameFull(context));
 
     return ss.toString();
   }
@@ -134,6 +134,10 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
   @Override
   protected String getHostedFilename() {
     return "devmode.js";
+  }
+
+  protected String getHostedFilenameFull(LinkerContext context) {
+    return context.getModuleName() + "." + getHostedFilename();
   }
 
   protected String getJsComputeScriptBase(LinkerContext context) {
@@ -266,7 +270,15 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
 
     String outputFilename = filename;
     if (result != null) {
+      // If we're including bootstrap in the primary fragment, we generate a
+      // devmode.js for each permutation, and it's name is XXX.devmode.js,
+      // where XXX is the md5 hash for this permutation
       outputFilename = result.getStrongName() + "." + outputFilename;
+    } else {
+      // If we're not including bootstrap in the primary fragment, we generate
+      // a devmode.js for this module and it's name is XXX.devmode.js, where
+      // XXX is the module name.
+      outputFilename = getHostedFilenameFull(context);
     }
 
     String script =
