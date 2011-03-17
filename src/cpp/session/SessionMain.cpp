@@ -1691,8 +1691,8 @@ int main (int argc, char * const argv[])
          return sessionExitFailure(error, ERROR_LOCATION) ;
 
       // set working directory
-      FilePath userHomePath = getInitialWorkingDirectory();
-      error = userHomePath.makeCurrentPath();
+      FilePath workingDir = getInitialWorkingDirectory();
+      error = workingDir.makeCurrentPath();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
       
@@ -1723,12 +1723,12 @@ int main (int argc, char * const argv[])
 
          // ensure the user has an R library directory
          if (!options.rLibsUser().empty())
-            ensureRLibsUser(userHomePath, options.rLibsUser());
+            ensureRLibsUser(options.userHomePath(), options.rLibsUser());
       }
 
       // r options
       r::session::ROptions rOptions ;
-      rOptions.userHomePath = userHomePath;
+      rOptions.userHomePath = options.userHomePath();
       rOptions.userScratchPath = userScratchPath;
       rOptions.rSourcePath = options.coreRSourcePath();
       if (!desktopMode) // ignore r-libs-user in desktop mode
