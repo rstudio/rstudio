@@ -26,7 +26,6 @@
    margin: 0;
 }
 .output .command, .input {
-   color: blue;
 }
 
 .error {}
@@ -40,7 +39,6 @@
 }
 
 .console .prompt {
-   color: navy;
    white-space: pre;
 }
 

@@ -115,7 +115,6 @@ public class RStudio implements EntryPoint
       ConsoleResources.INSTANCE.consoleStyles().ensureInjected();
       FileDialogResources.INSTANCE.styles().ensureInjected();
       ManipulatorResources.INSTANCE.manipulatorStyles().ensureInjected();
-      AceResources.INSTANCE.themecss().ensureInjected();
 
       SupportPopupMenu.ensureStylesInjected();
       SlideLabel.ensureStylesInjected();

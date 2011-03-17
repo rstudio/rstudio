@@ -28,8 +28,4 @@ public interface AceResources extends ClientBundle
 
    @Source("acesupport.js")
    StaticDataResource acesupportjs();
-
-   @Source("theme.css")
-   @NotStrict
-   CssResource themecss();
 }

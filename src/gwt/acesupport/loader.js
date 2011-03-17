@@ -27,14 +27,12 @@ function loadEditor(container) {
 	var UndoManager = require("ace/undomanager").UndoManager;
 
 	var TextMode = require("ace/mode/text").Mode;
-	var theme = require("theme/default");
+	var theme = {}; // prevent default textmate theme from loading
 
 	env.editor = new Editor(new Renderer(container, theme));
 	var session = env.editor.getSession();
 	session.setMode(new TextMode());
 	session.setUndoManager(new UndoManager());
-	session.setUseSoftTabs(true);
-	session.setTabSize(2);
 
 	// We handle these commands ourselves.
 	var canon = require("pilot/canon");

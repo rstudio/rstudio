@@ -47,5 +47,15 @@ public class SelectWidget extends Composite
       return listBox_.isEnabled();
    }
 
+   public void setValue(String value)
+   {
+      for (int i = 0; i < listBox_.getItemCount(); i++)
+         if (value.equals(listBox_.getValue(i)))
+         {
+            listBox_.setSelectedIndex(i);
+            return;
+         }
+   }
+
    private final ListBox listBox_;
 }

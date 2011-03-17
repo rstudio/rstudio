@@ -51,7 +51,9 @@ public class SessionInfo extends JavaScriptObject
    }-*/;
 
    public final native JsObject getUiPrefs() /*-{
-      return this.ui_prefs || {};
+      if (!this.ui_prefs)
+         this.ui_prefs = {};
+      return this.ui_prefs;
    }-*/;
 
    public final static String DESKTOP_MODE = "desktop";

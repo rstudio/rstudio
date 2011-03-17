@@ -49,10 +49,12 @@ public class ShellPane extends Composite implements Shell.Display,
 
       prompt_ = new HTML() ;
       prompt_.setStylePrimaryName(styles_.prompt()) ;
+      prompt_.addStyleName(KEYWORD_CLASS_NAME);
 
       input_ = editor ;
       input_.addClickHandler(secondaryInputHandler) ;
       input_.setStylePrimaryName(styles_.input());
+      input_.addStyleName(KEYWORD_CLASS_NAME);
 
       inputLine_ = new DockPanel();
       inputLine_.setHorizontalAlignment(DockPanel.ALIGN_LEFT);
@@ -65,6 +67,8 @@ public class ShellPane extends Composite implements Shell.Display,
 
       verticalPanel_ = new VerticalPanel() ;
       verticalPanel_.setStylePrimaryName(styles_.console());
+      verticalPanel_.addStyleName("ace_text-layer");
+      verticalPanel_.addStyleName("ace_line");
       FontSizer.applyNormalFontSize(verticalPanel_);
       verticalPanel_.add(output_) ;
       verticalPanel_.add(inputLine_) ;
@@ -72,6 +76,8 @@ public class ShellPane extends Composite implements Shell.Display,
 
       scrollPanel_ = new ClickableScrollPanel() ;
       scrollPanel_.setWidget(verticalPanel_) ;
+      scrollPanel_.addStyleName("ace_editor");
+      scrollPanel_.addStyleName("ace_scroller");
       scrollPanel_.addClickHandler(secondaryInputHandler);
       scrollPanel_.addKeyDownHandler(secondaryInputHandler);
 
@@ -191,7 +197,7 @@ public class ShellPane extends Composite implements Shell.Display,
                {
                   case ConsoleAction.INPUT:
                      canContinue = output(action.getData() + "\n",
-                                          styles_.command(),
+                                          styles_.command() + " " + KEYWORD_CLASS_NAME,
                                           true);
                      break;
                   case ConsoleAction.OUTPUT:
@@ -206,7 +212,7 @@ public class ShellPane extends Composite implements Shell.Display,
                      break;
                   case ConsoleAction.PROMPT:
                      canContinue = output(action.getData(),
-                                          styles_.prompt(),
+                                          styles_.prompt() + " " + KEYWORD_CLASS_NAME,
                                           true);
                      break;
                }
@@ -361,8 +367,10 @@ public class ShellPane extends Composite implements Shell.Display,
       String commandText = input_.getText();
       input_.setText("");
       prompt_.setHTML("");
-      output(promptText, styles_.prompt(), false);
-      output(commandText + "\n", styles_.command(), false);
+      output(promptText, styles_.prompt() + " " + KEYWORD_CLASS_NAME, false);
+      output(commandText + "\n",
+             styles_.command() + " " + KEYWORD_CLASS_NAME, 
+             false);
       ensureInputVisible();
 
       return commandText ;
@@ -444,4 +452,6 @@ public class ShellPane extends Composite implements Shell.Display,
    private final VerticalPanel verticalPanel_ ;
    private final ClickableScrollPanel scrollPanel_ ;
    private ConsoleResources.ConsoleStyles styles_;
+
+   private static final String KEYWORD_CLASS_NAME = " ace_keyword";
 }

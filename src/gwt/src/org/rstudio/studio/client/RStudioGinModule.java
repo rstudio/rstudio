@@ -74,6 +74,7 @@ import org.rstudio.studio.client.workbench.views.source.SourcePane;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.workspace.Workspace;
 import org.rstudio.studio.client.workbench.views.workspace.WorkspacePane;
@@ -91,6 +92,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(Commands.class).in(Singleton.class);
 
       bind(ChooseFile.class).asEagerSingleton();
+      bind(AceThemes.class).asEagerSingleton();
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;

@@ -4,12 +4,14 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.inject.Inject;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 public class AppearancePreferencesPane extends PreferencesPane
 {
    @Inject
    public AppearancePreferencesPane(PreferencesDialogResources res,
-                                    UIPrefs uiPrefs)
+                                    UIPrefs uiPrefs,
+                                    AceThemes themes)
    {
       res_ = res;
       uiPrefs_ = uiPrefs;
@@ -33,6 +35,12 @@ public class AppearancePreferencesPane extends PreferencesPane
          fontSize_.getListBox().setSelectedIndex(1);
 
       add(fontSize_);
+
+      theme_ = new SelectWidget("Editor Theme",
+                                themes.getThemeNames(),
+                                themes.getThemeNames());
+      add(theme_);
+      theme_.setValue(themes.getEffectiveThemeName(uiPrefs_.theme().getValue()));
    }
 
    @Override
@@ -47,6 +55,8 @@ public class AppearancePreferencesPane extends PreferencesPane
       super.onApply();
       ListBox list = fontSize_.getListBox();
       uiPrefs_.fontSize().setValue(list.getValue(list.getSelectedIndex()));
+      uiPrefs_.theme().setValue(theme_.getListBox().getValue(
+            theme_.getListBox().getSelectedIndex()));
    }
 
    @Override
@@ -58,4 +68,5 @@ public class AppearancePreferencesPane extends PreferencesPane
    private final PreferencesDialogResources res_;
    private final UIPrefs uiPrefs_;
    private SelectWidget fontSize_;
+   private SelectWidget theme_;
 }

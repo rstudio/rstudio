@@ -122,6 +122,10 @@ pre {
   font-size: 12px;
 }
 
+.ace_editor {
+   border: none !important;
+}
+
 .ace_editor, .ace_text-layer {
   font-family: fixedWidthFont !important;
 }

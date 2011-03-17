@@ -1,0 +1,20 @@
+#!/usr/bin/ruby
+
+require 'find'
+
+Find.find('ace/lib/ace/theme/') do |file|
+  next if FileTest.directory?(file)
+
+  contents = File.read(file)
+  next unless contents =~ /cssText = "(.*?)";/m
+  rules = $1
+  rules.gsub!(/\\$/, '')
+
+  next unless contents =~ /exports\.cssClass = "(.*?)";/
+  style_name = $1
+
+  rules.gsub!(/\.#{style_name} ?/, '')
+
+  puts "#{File.basename(file)} #{style_name}"
+  puts rules
+end
