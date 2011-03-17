@@ -167,7 +167,7 @@ public final class Impl {
     if (@com.google.gwt.core.client.GWT::isScript()()) {
       return jsFunction.apply(thisObj, arguments);
     } else {
-      _ = jsFunction.apply(thisObj, arguments);
+      var _ = jsFunction.apply(thisObj, arguments);
       if (_ != null) {
         // Wrap for Development Mode
         _ = Object(_);

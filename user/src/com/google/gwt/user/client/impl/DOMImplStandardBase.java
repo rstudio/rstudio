@@ -16,7 +16,7 @@
 package com.google.gwt.user.client.impl;
 
 /**
- * Safari implementation of {@link com.google.gwt.user.client.impl.DOMImpl}.
+ * StandardBase implementation of {@link com.google.gwt.user.client.impl.DOMImpl}.
  */
 class DOMImplStandardBase extends DOMImplStandard {
 }
