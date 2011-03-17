@@ -68,11 +68,17 @@ FilePath FilePath::safeCurrentPath(const FilePath& revertToPath)
    {
       if (e.code() == boost::system::errc::no_such_file_or_directory)
       {
-         Error error = revertToPath.makeCurrentPath();
+         // revert to the specified path if it exists, otherwise
+         // take the user home path from the system
+         FilePath safePath = revertToPath;
+         if (!safePath.exists())
+            safePath = core::system::userHomePath();
+
+         Error error = safePath.makeCurrentPath();
          if (error)
             LOG_ERROR(error);
 
-         return revertToPath;
+         return safePath;
       }
       else
       {

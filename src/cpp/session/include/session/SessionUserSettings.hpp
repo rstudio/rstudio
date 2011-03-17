@@ -66,9 +66,17 @@ public:
    bool persistWorkingDirectory() const;
    void setPersistWorkingDirectory(bool persist);
 
+   core::FilePath lastWorkingDirectory() const;
+   void setLastWorkingDirectory(const core::FilePath& filePath);
+
    core::FilePath initialWorkingDirectory() const;
    void setInitialWorkingDirectory(const core::FilePath& filePath);
-   
+
+private:
+   core::FilePath getWorkingDirectoryValue(const std::string& key) const;
+   void setWorkingDirectoryValue(const std::string& key,
+                                 const core::FilePath& filePath) ;
+
 private:
    core::Settings settings_;
 };

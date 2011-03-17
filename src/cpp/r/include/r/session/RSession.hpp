@@ -49,6 +49,7 @@ struct ROptions
          serverMode(false),
          autoReloadSource(false),
          shellEscape(false),
+         restoreWorkspace(true),
          saveWorkspace(SA_SAVEASK),
          consoleHistorySize(250)
    {
@@ -63,6 +64,7 @@ struct ROptions
    bool serverMode;
    bool autoReloadSource ;
    bool shellEscape;
+   bool restoreWorkspace;
    SA_TYPE saveWorkspace;
    int consoleHistorySize;
 };

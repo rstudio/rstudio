@@ -38,6 +38,7 @@ const char * const kSaveAction = "saveAction";
 const char * const kLoadRData = "loadRData";
 const char * const kPersistWorkingDirectory = "persistWorkingDirectory";
 const char * const kInitialWorkingDirectory = "initialWorkingDirectory";
+const char * const kLastWorkingDirectory = "lastWorkingDirectory";
 }
    
 UserSettings& userSettings()
@@ -139,18 +140,40 @@ void UserSettings::setPersistWorkingDirectory(bool persist)
    settings_.set(kPersistWorkingDirectory, persist);
 }
 
+FilePath UserSettings::lastWorkingDirectory() const
+{
+   return getWorkingDirectoryValue(kLastWorkingDirectory);
+}
+
+void UserSettings::setLastWorkingDirectory(const FilePath& filePath)
+{
+   setWorkingDirectoryValue(kLastWorkingDirectory, filePath);
+}
+
+
 core::FilePath UserSettings::initialWorkingDirectory() const
 {
-   return module_context::resolveAliasedPath(
-         settings_.get(kInitialWorkingDirectory, "~"));
+   return getWorkingDirectoryValue(kInitialWorkingDirectory);
 }
 
 void UserSettings::setInitialWorkingDirectory(const core::FilePath& filePath)
 {
-   if (module_context::createAliasedPath(filePath) == "~")
-      settings_.set(kInitialWorkingDirectory, std::string("~"));
-   else
-      settings_.set(kInitialWorkingDirectory, filePath.absolutePath());
+   setWorkingDirectoryValue(kInitialWorkingDirectory, filePath);
 }
-   
+
+FilePath UserSettings::getWorkingDirectoryValue(const std::string& key) const
+{
+   return module_context::resolveAliasedPath(settings_.get(key, "~"));
+}
+
+
+void UserSettings::setWorkingDirectoryValue(const std::string& key,
+                                            const FilePath& filePath)
+{
+   if (module_context::createAliasedPath(filePath) == "~")
+      settings_.set(key, std::string("~"));
+   else
+      settings_.set(key, filePath.absolutePath());
+}
+
 } // namespace session

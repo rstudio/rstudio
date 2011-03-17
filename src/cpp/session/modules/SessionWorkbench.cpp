@@ -131,10 +131,12 @@ Error setRPrefs(const json::JsonRpcRequest& request,
                     &persistWorkingDir,
                     &initialWorkingDir);
 
+   userSettings().beginUpdate();
    userSettings().setSaveAction(saveAction);
    userSettings().setLoadRData(loadRData);
    userSettings().setPersistWorkingDirectory(persistWorkingDir);
    userSettings().setInitialWorkingDirectory(FilePath(initialWorkingDir));
+   userSettings().endUpdate();
 
    return Success();
 }

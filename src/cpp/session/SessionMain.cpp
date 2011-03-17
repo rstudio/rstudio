@@ -1338,6 +1338,14 @@ void rResumed()
       
 void rQuit(bool workspaceSaved)
 {   
+   // persist the last working directory if requested
+   if (userSettings().persistWorkingDirectory())
+   {
+      FilePath userHomePath = session::options().userHomePath();
+      FilePath workingDir = FilePath::safeCurrentPath(userHomePath);
+      userSettings().setLastWorkingDirectory(workingDir);
+   }
+
    // enque a quit event
    ClientEvent quitEvent(kQuit, workspaceSaved);
    session::clientEventQueue().add(quitEvent);
@@ -1501,6 +1509,26 @@ void detectParentTermination()
    }
 }
 
+FilePath getInitialWorkingDirectory()
+{
+   // calculate the initial working directory
+   FilePath initialWorkingDir;
+   if (userSettings().persistWorkingDirectory())
+   {
+      initialWorkingDir = userSettings().lastWorkingDirectory();
+   }
+   else
+   {
+      initialWorkingDir = userSettings().initialWorkingDirectory();
+   }
+
+   // return it if it exists, otherwise use the default user home path
+   if (initialWorkingDir.exists())
+      return initialWorkingDir;
+   else
+      return session::options().userHomePath();
+}
+
 } // anonymous namespace
 
 
@@ -1651,15 +1679,20 @@ int main (int argc, char * const argv[])
       if (desktopMode)
          core::thread::safeLaunchThread(detectParentTermination);
 
-      // set working directory 
-      FilePath userHomePath = options.userHomePath();
-      error = userHomePath.makeCurrentPath();
-      if (error)
-         return sessionExitFailure(error, ERROR_LOCATION);
-      
       // ensure that the user scratch path exists
       FilePath userScratchPath = options.userScratchPath();
       error = userScratchPath.ensureDirectory();
+      if (error)
+         return sessionExitFailure(error, ERROR_LOCATION);
+
+      // initialize user settings
+      error = userSettings().initialize();
+      if (error)
+         return sessionExitFailure(error, ERROR_LOCATION) ;
+
+      // set working directory
+      FilePath userHomePath = getInitialWorkingDirectory();
+      error = userHomePath.makeCurrentPath();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
       
@@ -1673,11 +1706,6 @@ int main (int argc, char * const argv[])
       error = runPreflightScript();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
-
-      // initialize user settings
-      error = userSettings().initialize();
-      if (error)
-         return sessionExitFailure(error, ERROR_LOCATION) ;
 
       // initialize persistent state
       error = session::persistentState().initialize();
@@ -1712,6 +1740,7 @@ int main (int argc, char * const argv[])
       rOptions.serverMode = serverMode;
       rOptions.autoReloadSource = options.autoReloadSource();
       rOptions.shellEscape = options.rShellEscape();
+      rOptions.restoreWorkspace = userSettings().loadRData();
       rOptions.saveWorkspace = options.saveWorkspace();
       rOptions.consoleHistorySize = 250;
       

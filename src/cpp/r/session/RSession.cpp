@@ -391,7 +391,8 @@ Error initialize()
          LOG_ERROR(error);
       
       // defer loading of global environment
-      s_deferredDeserializationAction = restoreDefaultGlobalEnvironment;
+      if (s_options.restoreWorkspace)
+         s_deferredDeserializationAction = restoreDefaultGlobalEnvironment;
    }
    
    // initialize client
