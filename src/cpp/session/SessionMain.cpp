@@ -1740,9 +1740,16 @@ int main (int argc, char * const argv[])
       rOptions.serverMode = serverMode;
       rOptions.autoReloadSource = options.autoReloadSource();
       rOptions.shellEscape = options.rShellEscape();
-      rOptions.restoreWorkspace = userSettings().loadRData();
-      rOptions.saveWorkspace = options.saveWorkspace();
       rOptions.consoleHistorySize = 250;
+      rOptions.restoreWorkspace = userSettings().loadRData();
+      // save action
+      int saveAction = userSettings().saveAction();
+      if (saveAction == r::session::kSaveActionAlways)
+         rOptions.saveWorkspace = SA_SAVE;
+      else if (saveAction == r::session::kSaveActionNever)
+         rOptions.saveWorkspace = SA_NOSAVE;
+      else
+         rOptions.saveWorkspace = SA_SAVEASK;
       
       // r callbacks 
       r::session::RCallbacks rCallbacks;

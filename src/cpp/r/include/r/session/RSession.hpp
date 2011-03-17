@@ -141,6 +141,12 @@ void reportAndLogWarning(const std::string& warning);
 bool isSuspendable(const std::string& prompt);
 bool suspend(bool force);
    
+// set save action
+extern const int kSaveActionNever;
+extern const int kSaveActionAlways;
+extern const int kSaveActionAsk;
+void setSaveAction(int saveAction);
+
 // quit
 void quit(bool saveWorkspace);
 

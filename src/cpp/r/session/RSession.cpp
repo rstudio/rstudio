@@ -51,6 +51,8 @@
 #include <Rembedded.h>
 #include <R_ext/Utils.h>
 #include <R_ext/Rdynload.h>
+#include <R_ext/RStartup.h>
+extern "C" SA_TYPE SaveAction;
 
 // get rid of windows TRUE and FALSE definitions
 #undef TRUE
@@ -96,8 +98,6 @@ public:
    ~SuppressOutputInScope() { s_suppressOuput = false; }
 };
 
-// default save action
-const SA_TYPE kDefaultSaveAction = SA_SAVEASK;
 
 // R history file
 const char * const kRHistory = ".Rhistory";
@@ -919,7 +919,7 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
    {
       // set to default if requested
       if (saveact == SA_DEFAULT)
-         saveact = kDefaultSaveAction ;
+         saveact = SaveAction ;
       
       // prompt user to resolve SA_SAVEASK into SA_SAVE or SA_NOSAVE
       if (saveact == SA_SAVEASK) 
@@ -1246,6 +1246,29 @@ bool suspend(bool force)
    {
       return false;
    }
+}
+
+// set save action
+const int kSaveActionNever = 0;
+const int kSaveActionAlways = 1;
+const int kSaveActionAsk = 2;
+
+void setSaveAction(int saveAction)
+{
+   switch(saveAction)
+   {
+   case kSaveActionNever:
+      SaveAction = SA_NOSAVE;
+      break;
+   case kSaveActionAlways:
+      SaveAction = SA_SAVE;
+      break;
+   case kSaveActionAsk:
+   default:
+      SaveAction = SA_SAVEASK;
+      break;
+   }
+
 }
    
 void quit(bool saveWorkspace)

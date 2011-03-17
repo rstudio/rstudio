@@ -136,9 +136,6 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("r-auto-reload-source",
          value<bool>(&autoReloadSource_)->default_value(false),
          "Reload R source if it changes during the session")
-      ("r-save-workspace",
-         value<std::string>(&saveWorkspace_)->default_value("ask"),
-         "Whether R should save the workspace on exit")
       ("r-compatible-graphics-engine-version",
          value<int>(&rCompatibleGraphicsEngineVersion_)->default_value(8),
          "Maximum graphics engine version we are compatible with")

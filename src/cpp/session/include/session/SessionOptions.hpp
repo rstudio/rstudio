@@ -148,16 +148,6 @@ public:
 
    bool autoReloadSource() const { return autoReloadSource_; }
 
-   SA_TYPE saveWorkspace() const
-   {
-      if (saveWorkspace_ == "yes")
-         return SA_SAVE;
-      else if (saveWorkspace_ == "no")
-         return SA_NOSAVE;
-      else
-         return SA_SAVEASK;
-   }
-   
    // limits
    int limitFileUploadSizeMb() const { return limitFileUploadSizeMb_; }
    int limitCpuTimeMinutes() const { return limitCpuTimeMinutes_; }
@@ -236,7 +226,6 @@ private:
    std::string rLibsUser_;
    std::string rCRANRepos_;
    bool autoReloadSource_ ;
-   std::string saveWorkspace_ ;
    int rCompatibleGraphicsEngineVersion_;
    std::string rHelpCssFilePath_;
    bool rShellEscape_;

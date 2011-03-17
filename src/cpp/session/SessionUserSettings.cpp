@@ -21,8 +21,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
 
-#include <R_ext/RStartup.h>
-extern "C" SA_TYPE SaveAction;
+#include <r/session/RSession.hpp>
 
 using namespace core ;
 
@@ -106,18 +105,7 @@ void UserSettings::setSaveAction(int saveAction)
 
 void UserSettings::applySaveAction() const
 {
-   switch (saveAction())
-   {
-   case 1:
-      SaveAction = SA_SAVE;
-      break;
-   case 0:
-      SaveAction = SA_NOSAVE;
-      break;
-   default:
-      SaveAction = SA_SAVEASK;
-      break;
-   }
+   r::session::setSaveAction(saveAction());
 }
 
 bool UserSettings::loadRData() const
