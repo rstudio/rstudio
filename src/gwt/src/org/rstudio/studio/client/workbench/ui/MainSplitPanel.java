@@ -13,6 +13,8 @@
 package org.rstudio.studio.client.workbench.ui;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Window;
@@ -140,6 +142,14 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
             {
                addEast(right_, Window.getClientWidth() * 0.45);
             }
+
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               public void execute()
+               {
+                  enforceBoundaries();
+               }
+            });
          }
 
          @Override
@@ -179,15 +189,20 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
 
    public void onSplitterResized(SplitterResizedEvent event)
    {
+      enforceBoundaries();
+      deferredSaveWidthPercent();
+   }
+
+   private void enforceBoundaries()
+   {
       LayoutData layoutData = (LayoutData) right_.getLayoutData();
       if (layoutData != null
           && getOffsetWidth() != 0
-          && layoutData.size > getOffsetWidth())
+          && layoutData.size > getOffsetWidth() - 3)
       {
          layoutData.size = getOffsetWidth() - 3;
          forceLayout();
       }
-      deferredSaveWidthPercent();
    }
 
    private void deferredSaveWidthPercent()
