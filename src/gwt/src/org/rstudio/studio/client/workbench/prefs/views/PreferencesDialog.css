@@ -3,11 +3,11 @@
 .preferencesDialog .gwt-CheckBox,
 .preferencesDialog .gwt-RadioButton {
    display: block;
-   margin-bottom: 8px;
+   margin-bottom: 12px;
 }
 
-.selectWidget, .numericValueWidget {
-   margin-bottom: 8px;
+.selectWidget, .numericValueWidget, .spaced {
+   margin-bottom: 12px;
 }
 
 .preferencesDialog .tight {
@@ -67,6 +67,11 @@
 }
 
 .paneLayoutTable select {
-   width: 175px;
-   margin-bottom: 8px;
+   width: 195px;
+   margin-bottom: 12px;
+}
+
+.themeChooser select {
+   width: 138px;
+   height: 200px;
 }

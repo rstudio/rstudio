@@ -19,8 +19,6 @@ public class AceEditorPreview extends DynamicIFrame
       style.setBorderColor("#CCC");
       style.setBorderWidth(1, Unit.PX);
       style.setBorderStyle(BorderStyle.SOLID);
-      style.setWidth(85, Unit.PCT);
-
    }
 
    @Override

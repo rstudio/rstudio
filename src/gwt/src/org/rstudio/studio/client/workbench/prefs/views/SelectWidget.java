@@ -4,27 +4,30 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 
 public class SelectWidget extends Composite
 {
    public SelectWidget(String label, String[] options)
    {
-      this(label, options, null);
+      this(label, options, null, false);
    }
 
-   public SelectWidget(String label, String[] options, String[] values)
+   public SelectWidget(String label,
+                       String[] options,
+                       String[] values,
+                       boolean isMultipleSelect)
    {
       if (values == null)
          values = options;
 
       FlowPanel flowPanel = new FlowPanel();
-      flowPanel.add(new SpanLabel(label, true));
+      flowPanel.add(new Label(label, true));
 
-      listBox_ = new ListBox(false);
+      listBox_ = new ListBox(isMultipleSelect);
       for (int i = 0; i < options.length; i++)
          listBox_.addItem(options[i], values[i]);
-      listBox_.getElement().getStyle().setMarginLeft(0.6, Unit.EM);
       flowPanel.add(listBox_);
 
       initWidget(flowPanel);
