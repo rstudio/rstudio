@@ -469,6 +469,8 @@ public class Files
    void onSyncWorkingDir()
    {
       String escaped = currentPath_.getPath().replaceAll("\\\\", "\\\\\\\\");
+      if (escaped.equals("~"))
+         escaped = "~/";
       eventBus_.fireEvent(
             new SendToConsoleEvent("setwd(\"" + escaped + "\")", true));
    }

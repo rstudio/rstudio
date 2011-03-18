@@ -15,7 +15,7 @@
 {
    # manage working directory
    previousWd = getwd()
-   setwd("~")
+   setwd("~/")
    on.exit(setwd(previousWd))
 
    writeChar(contents, "~/.active.document", eos=NULL)
