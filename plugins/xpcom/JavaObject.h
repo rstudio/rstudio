@@ -39,7 +39,13 @@ public:
   static JSObject* construct(JSContext* ctx, SessionData* data, int objectRef);
   static int getObjectId(JSContext* ctx, JSObject* obj);
   static JSBool getProperty(JSContext* ctx, JSObject* obj, jsid id, jsval* vp);
+
+#if GECKO_VERSION < 2000
   static JSBool setProperty(JSContext* ctx, JSObject* obj, jsid id, jsval* vp);
+#else
+  static JSBool setProperty(JSContext* ctx, JSObject* obj, jsid id, JSBool strict, jsval* vp);
+#endif //GECKO_VERSION
+
   static JSBool resolve(JSContext* ctx, JSObject* obj, jsval id);
   static JSBool convert(JSContext* cx, JSObject* obj, JSType type, jsval* vp);
   static JSBool enumerate(JSContext* ctx, JSObject* obj, JSIterateOp op, jsval* statep, jsid* idp);

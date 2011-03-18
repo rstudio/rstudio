@@ -169,8 +169,14 @@ JSBool JavaObject::getProperty(JSContext* ctx, JSObject* obj, jsid id,
   return JS_TRUE;
 }
 
+#if GECKO_VERSION < 2000
 JSBool JavaObject::setProperty(JSContext* ctx, JSObject* obj, jsid id,
     jsval* vp) {
+#else
+JSBool JavaObject::setProperty(JSContext* ctx, JSObject* obj, jsid id,
+    JSBool strict, jsval* vp) {
+#endif //GECKO_VERSION
+
   Debug::log(Debug::Spam) << "JavaObject::setProperty obj=" << obj << Debug::flush;
   if (!JSID_IS_INT(id)) {
     Debug::log(Debug::Error) << "  Error: setting string property id" << Debug::flush;
