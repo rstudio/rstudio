@@ -77,6 +77,12 @@ public class FilesPane extends WorkbenchPane implements Files.Display
          if (observer_ != null)
             observer_.onSelectAllValueChanged(value);
       }
+      
+      public void onSetwd()
+      {
+         if (observer_ != null)
+            observer_.onSetwd();
+      }
    }
     
    public void listDirectory(final FileSystemItem directory, 

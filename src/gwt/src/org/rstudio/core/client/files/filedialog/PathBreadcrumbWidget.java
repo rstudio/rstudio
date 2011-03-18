@@ -18,6 +18,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
@@ -27,6 +28,7 @@ import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 
@@ -36,6 +38,7 @@ public class PathBreadcrumbWidget
               RequiresResize
 {
    public PathBreadcrumbWidget(FileSystemContext context, 
+                               final Command setwdCommand,
                                boolean includeBrowseButton)
    {
       context_ = context;
@@ -100,6 +103,22 @@ public class PathBreadcrumbWidget
             public void onClick(ClickEvent event)
             {
                browse();
+            }
+         });
+      }
+
+      // add setwd button
+      if (setwdCommand != null)
+      {
+         SmallButton setwdButton = new SmallButton();
+         setwdButton.setText("setwd");
+         setwdButton.addStyleName(STYLES.setwdButton());
+         frame.addEast(setwdButton, 40);
+         setwdButton.addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent event)
+            {
+               setwdCommand.execute();   
             }
          });
       }
