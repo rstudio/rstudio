@@ -67,6 +67,11 @@
 }
 
 .paneLayoutTable select {
-   width: 175px;
+   width: 195px;
    margin-bottom: 8px;
+}
+
+.themeChooser select {
+   width: 138px;
+   height: 200px;
 }
