@@ -5,6 +5,7 @@ import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.inject.Inject;
+import org.rstudio.core.client.widget.FontSizer.Size;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
@@ -24,17 +25,15 @@ public class AppearancePreferencesPane extends PreferencesPane
       fontSize_ = new SelectWidget("Console/Source Font Size",
                                              labels,
                                              values);
-      String value = uiPrefs.fontSize().getValue();
-      boolean matched = false;
-      for (int i = 0; i < values.length; i++)
-         if (values[i].equals(value))
-         {
-            fontSize_.getListBox().setSelectedIndex(i);
-            matched = true;
-            break;
-         }
-      if (!matched)
+      if (!fontSize_.setValue(uiPrefs.fontSize().getValue()))
          fontSize_.getListBox().setSelectedIndex(1);
+      fontSize_.getListBox().addChangeHandler(new ChangeHandler()
+      {
+         public void onChange(ChangeEvent event)
+         {
+            preview_.setFontSize(Size.valueOf(fontSize_.getValue()));
+         }
+      });
 
       add(fontSize_);
 
@@ -45,9 +44,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       {
          public void onChange(ChangeEvent event)
          {
-            ListBox list = theme_.getListBox();
-            preview_.setTheme(
-                  themes.getThemeUrl(list.getValue(list.getSelectedIndex())));
+            preview_.setTheme(themes.getThemeUrl(theme_.getValue()));
          }
       });
       add(theme_);
@@ -55,6 +52,7 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       preview_ = new AceEditorPreview();
       preview_.setTheme(themes.getThemeUrl(uiPrefs_.theme().getValue()));
+      preview_.setFontSize(Size.valueOf(fontSize_.getValue()));
       add(preview_);
    }
 
@@ -68,10 +66,8 @@ public class AppearancePreferencesPane extends PreferencesPane
    public void onApply()
    {
       super.onApply();
-      ListBox list = fontSize_.getListBox();
-      uiPrefs_.fontSize().setValue(list.getValue(list.getSelectedIndex()));
-      uiPrefs_.theme().setValue(theme_.getListBox().getValue(
-            theme_.getListBox().getSelectedIndex()));
+      uiPrefs_.fontSize().setValue(fontSize_.getValue());
+      uiPrefs_.theme().setValue(theme_.getValue());
    }
 
    @Override

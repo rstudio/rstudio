@@ -5,7 +5,10 @@ import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.dom.client.Style.Unit;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
+import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.DynamicIFrame;
+import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.core.client.widget.FontSizer.Size;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceResources;
 
 public class AceEditorPreview extends DynamicIFrame
@@ -26,6 +29,8 @@ public class AceEditorPreview extends DynamicIFrame
       isFrameLoaded_ = true;
       if (initialThemeUrl_ != null)
          setTheme(initialThemeUrl_);
+      if (hasInitialFontSize_)
+         setFontSize(initialFontSize_);
 
       final Document doc = getDocument();
       final BodyElement body = doc.getBody();
@@ -33,7 +38,11 @@ public class AceEditorPreview extends DynamicIFrame
 
       StyleElement style = doc.createStyleElement();
       style.setType("text/css");
-      style.setInnerText(".ace_editor {border: none !important;}");
+      style.setInnerText(
+            ".ace_editor {\n" +
+            "border: none !important;\n" +
+            "font-family: " + ThemeFonts.getFixedWidthFont() + " !important;\n" +
+            "}");
       body.appendChild(style);
 
       DivElement div = doc.createDivElement();
@@ -43,16 +52,29 @@ public class AceEditorPreview extends DynamicIFrame
       div.setInnerText("hello");
       body.appendChild(div);
 
-      ExternalJavaScriptLoader loader = new ExternalJavaScriptLoader(
-            doc, AceResources.INSTANCE.acejs().getUrl());
-      loader.addCallback(new Callback()
+      FontSizer.injectStylesIntoDocument(doc);
+      FontSizer.applyNormalFontSize(div);
+
+      new ExternalJavaScriptLoader(doc, AceResources.INSTANCE.acejs().getUrl())
+            .addCallback(new Callback()
       {
          public void onLoaded()
          {
-            body.appendChild(doc.createScriptElement(
-                  "var editor = ace.edit('editor');\n" +
-                  "editor.renderer.setHScrollBarAlwaysVisible(false);\n" +
-                  "editor.setHighlightActiveLine(false);"));
+            new ExternalJavaScriptLoader(doc, AceResources.INSTANCE.acesupportjs().getUrl())
+                  .addCallback(new Callback()
+                  {
+                     public void onLoaded()
+                     {
+                        body.appendChild(doc.createScriptElement(
+                              "var editor = ace.edit('editor');\n" +
+                              "editor.renderer.setHScrollBarAlwaysVisible(false);\n" +
+                              "editor.renderer.setTheme({});\n" +
+                              "editor.setHighlightActiveLine(false);\n" +
+                              "editor.renderer.setShowGutter(false);\n" +
+                              "var RMode = require('mode/r').Mode;\n" +
+                              "editor.getSession().setMode(new RMode(false));"));
+                     }
+                  });
          }
       });
    }
@@ -76,7 +98,21 @@ public class AceEditorPreview extends DynamicIFrame
       doc.getBody().appendChild(currentStyleLink_);
    }
 
+   public void setFontSize(Size fontSize)
+   {
+      if (!isFrameLoaded_)
+      {
+         hasInitialFontSize_ = true;
+         initialFontSize_ = fontSize;
+         return;
+      }
+
+      FontSizer.setNormalFontSize(getDocument(), fontSize);
+   }
+
    private LinkElement currentStyleLink_;
    private boolean isFrameLoaded_;
    private String initialThemeUrl_;
+   private boolean hasInitialFontSize_;
+   private Size initialFontSize_;
 }
