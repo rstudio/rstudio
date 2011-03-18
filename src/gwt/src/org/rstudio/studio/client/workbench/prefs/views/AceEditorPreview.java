@@ -35,12 +35,15 @@ public class AceEditorPreview extends DynamicIFrame
       final Document doc = getDocument();
       final BodyElement body = doc.getBody();
       body.getStyle().setMargin(0, Unit.PX);
+      body.getStyle().setBackgroundColor("white");
 
       StyleElement style = doc.createStyleElement();
       style.setType("text/css");
       style.setInnerText(
             ".ace_editor {\n" +
             "border: none !important;\n" +
+            "}\n" +
+            ".ace_editor, .ace_text-layer {\n" +
             "font-family: " + ThemeFonts.getFixedWidthFont() + " !important;\n" +
             "}");
       body.appendChild(style);
