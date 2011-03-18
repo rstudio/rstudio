@@ -65,7 +65,6 @@ public class Files
       {
          void onFileNavigation(FileSystemItem file);
          void onSelectAllValueChanged(boolean value);
-         void onSetwd();
       }
       
       public interface Observer extends NavigationObserver
@@ -197,18 +196,6 @@ public class Files
             view_.selectAll();
          else
             view_.selectNone();
-      }
-      
-      public void onSetwd()
-      {
-         // workaround R not liking naked ~
-         String setwdPath = currentPath_.getPath();
-         if (setwdPath.equals("~"))
-            setwdPath = "~/";
-         
-         // send to console
-         eventBus_.fireEvent(
-            new SendToConsoleEvent("setwd(\"" + setwdPath + "\")", true));
       }
    };
     

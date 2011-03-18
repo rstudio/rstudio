@@ -36,6 +36,4 @@ public interface FileDialogStyles extends CssResource
    String columnName();
    String columnSize();
    String columnDate();
-   
-   String setwdButton();
 }

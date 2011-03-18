@@ -16,7 +16,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.events.SelectionCommitEvent;
@@ -107,14 +106,7 @@ public class FilePathToolbar extends Composite
             assert false : "Not implemented";
          }
       });
-      
-      Command setwdCommand = new Command() { public void execute() 
-      {
-         navigationObserver_.onSetwd();  
-      }};
-      
       pathBreadcrumbWidget_ = new PathBreadcrumbWidget(fileSystemContext_,
-                                                       setwdCommand,
                                                        Desktop.isDesktop());
       pathBreadcrumbWidget_.addStyleDependentName("filepane");
       pathBreadcrumbWidget_.addSelectionCommitHandler(
