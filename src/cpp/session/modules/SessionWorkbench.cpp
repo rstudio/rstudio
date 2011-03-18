@@ -109,7 +109,6 @@ Error getRPrefs(const json::JsonRpcRequest& request,
 
    result["save_action"] = userSettings().saveAction();
    result["load_rdata"] = userSettings().loadRData();
-   result["persist_working_dir"] = userSettings().persistWorkingDirectory();
    result["initial_working_dir"] = module_context::createAliasedPath(
          userSettings().initialWorkingDirectory());
 
@@ -123,18 +122,15 @@ Error setRPrefs(const json::JsonRpcRequest& request,
 {
    int saveAction;
    bool loadRData;
-   bool persistWorkingDir;
    std::string initialWorkingDir;
    json::readParams(request.params,
                     &saveAction,
                     &loadRData,
-                    &persistWorkingDir,
                     &initialWorkingDir);
 
    userSettings().beginUpdate();
    userSettings().setSaveAction(saveAction);
    userSettings().setLoadRData(loadRData);
-   userSettings().setPersistWorkingDirectory(persistWorkingDir);
    userSettings().setInitialWorkingDirectory(FilePath(initialWorkingDir));
    userSettings().endUpdate();
 

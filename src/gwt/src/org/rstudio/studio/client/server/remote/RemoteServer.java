@@ -202,15 +202,13 @@ public class RemoteServer implements Server
 
    public void setRPrefs(int saveAction,
                          boolean loadRData,
-                         boolean persistWorkingDirectory,
                          String initialWorkingDirectory,
                          ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONNumber(saveAction));
       params.set(1, JSONBoolean.getInstance(loadRData));
-      params.set(2, JSONBoolean.getInstance(persistWorkingDirectory));
-      params.set(3, new JSONString(initialWorkingDirectory));
+      params.set(2, new JSONString(initialWorkingDirectory));
 
       sendRequest(RPC_SCOPE,
                   SET_R_PREFS,

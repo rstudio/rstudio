@@ -63,12 +63,6 @@ public:
    bool loadRData() const;
    void setLoadRData(bool loadRData);
 
-   bool persistWorkingDirectory() const;
-   void setPersistWorkingDirectory(bool persist);
-
-   core::FilePath lastWorkingDirectory() const;
-   void setLastWorkingDirectory(const core::FilePath& filePath);
-
    core::FilePath initialWorkingDirectory() const;
    void setInitialWorkingDirectory(const core::FilePath& filePath);
 

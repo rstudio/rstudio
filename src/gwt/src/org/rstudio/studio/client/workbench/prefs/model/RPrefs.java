@@ -14,10 +14,6 @@ public class RPrefs extends JavaScriptObject
       return this.load_rdata;
    }-*/;
 
-   public native final boolean getPersistWorkingDirectory() /*-{
-      return this.persist_working_dir;
-   }-*/;
-
    public native final String getInitialWorkingDirectory() /*-{
       return this.initial_working_dir;
    }-*/;

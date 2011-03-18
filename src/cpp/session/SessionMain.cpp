@@ -1338,14 +1338,6 @@ void rResumed()
       
 void rQuit(bool workspaceSaved)
 {   
-   // persist the last working directory if requested
-   if (userSettings().persistWorkingDirectory())
-   {
-      FilePath userHomePath = session::options().userHomePath();
-      FilePath workingDir = FilePath::safeCurrentPath(userHomePath);
-      userSettings().setLastWorkingDirectory(workingDir);
-   }
-
    // enque a quit event
    ClientEvent quitEvent(kQuit, workspaceSaved);
    session::clientEventQueue().add(quitEvent);
@@ -1512,15 +1504,7 @@ void detectParentTermination()
 FilePath getInitialWorkingDirectory()
 {
    // calculate the initial working directory
-   FilePath initialWorkingDir;
-   if (userSettings().persistWorkingDirectory())
-   {
-      initialWorkingDir = userSettings().lastWorkingDirectory();
-   }
-   else
-   {
-      initialWorkingDir = userSettings().initialWorkingDirectory();
-   }
+   FilePath initialWorkingDir = userSettings().initialWorkingDirectory();
 
    // return it if it exists, otherwise use the default user home path
    if (initialWorkingDir.exists())

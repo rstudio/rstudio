@@ -53,7 +53,6 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
    // Save Action: "yes", "no", or "ask"
    void setRPrefs(int saveAction,
                   boolean loadRData,
-                  boolean persistWorkingDirectory,
                   String initialWorkingDirectory,
                   ServerRequestCallback<Void> requestCallback);
 

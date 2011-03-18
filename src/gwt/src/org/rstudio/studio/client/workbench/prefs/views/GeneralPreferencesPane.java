@@ -4,6 +4,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
@@ -85,8 +86,7 @@ public class GeneralPreferencesPane extends PreferencesPane
 
       add(loadRData_ = new CheckBox("Load .RData at startup"));
 
-      tight(radioPreserve_ = new RadioButton("workDir", "Preserve working directory"));
-      tight(radioInitial_ = new RadioButton("workDir", "Always initialize working directory to:"));
+      tight(defaultWorkingDir_ = new Label("Default working directory:"));
       dirChooser_ = new TextBoxWithButton(null, "Browse...", new ClickHandler()
       {
          public void onClick(ClickEvent event)
@@ -104,7 +104,6 @@ public class GeneralPreferencesPane extends PreferencesPane
                            return;
 
                         dirChooser_.setText(input.getPath());
-                        radioInitial_.setValue(true, false);
                         indicator.onCompleted();
                      }
                   });
@@ -113,14 +112,11 @@ public class GeneralPreferencesPane extends PreferencesPane
       dirChooser_.setWidth("80%");
       dirChooser_.addStyleName(res.styles().indent());
 
-      add(radioPreserve_);
-      add(radioInitial_);
+      add(defaultWorkingDir_);
       add(dirChooser_);
-
       saveWorkspace_.setEnabled(false);
       loadRData_.setEnabled(false);
-      radioPreserve_.setEnabled(false);
-      radioInitial_.setEnabled(false);
+     
       dirChooser_.setEnabled(false);
 
       server_.getRPrefs(new SimpleRequestCallback<RPrefs>()
@@ -130,8 +126,6 @@ public class GeneralPreferencesPane extends PreferencesPane
          {
             saveWorkspace_.setEnabled(true);
             loadRData_.setEnabled(true);
-            radioPreserve_.setEnabled(true);
-            radioInitial_.setEnabled(true);
             dirChooser_.setEnabled(true);
 
             int saveWorkspaceIndex;
@@ -144,10 +138,6 @@ public class GeneralPreferencesPane extends PreferencesPane
             saveWorkspace_.getListBox().setSelectedIndex(saveWorkspaceIndex);
 
             loadRData_.setValue(response.getLoadRData());
-            if (response.getPersistWorkingDirectory())
-               radioPreserve_.setValue(true);
-            else
-               radioInitial_.setValue(true);
             dirChooser_.setText(response.getInitialWorkingDirectory());
          }
       });
@@ -182,7 +172,6 @@ public class GeneralPreferencesPane extends PreferencesPane
 
          server_.setRPrefs(saveAction,
                            loadRData_.getValue(),
-                           radioPreserve_.getValue(),
                            dirChooser_.getText(),
                            new SimpleRequestCallback<org.rstudio.studio.client.server.Void>());
       }
@@ -201,8 +190,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private SelectWidget saveWorkspace_;
    private TextBoxWithButton rVersion_;
    private TextBoxWithButton cranMirror_;
-   private RadioButton radioPreserve_;
-   private RadioButton radioInitial_;
+   private Label defaultWorkingDir_;
    private TextBoxWithButton dirChooser_;
    private CheckBox loadRData_;
 }

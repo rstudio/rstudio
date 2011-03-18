@@ -35,9 +35,7 @@ const char * const kAutoCreatedProfile = "autoCreatedProfile";
 const char * const kUiPrefs = "uiPrefs";
 const char * const kSaveAction = "saveAction";
 const char * const kLoadRData = "loadRData";
-const char * const kPersistWorkingDirectory = "persistWorkingDirectory";
 const char * const kInitialWorkingDirectory = "initialWorkingDirectory";
-const char * const kLastWorkingDirectory = "lastWorkingDirectory";
 }
    
 UserSettings& userSettings()
@@ -117,27 +115,6 @@ void UserSettings::setLoadRData(bool loadRData)
 {
    settings_.set(kLoadRData, loadRData);
 }
-
-bool UserSettings::persistWorkingDirectory() const
-{
-   return settings_.getBool(kPersistWorkingDirectory, false);
-}
-
-void UserSettings::setPersistWorkingDirectory(bool persist)
-{
-   settings_.set(kPersistWorkingDirectory, persist);
-}
-
-FilePath UserSettings::lastWorkingDirectory() const
-{
-   return getWorkingDirectoryValue(kLastWorkingDirectory);
-}
-
-void UserSettings::setLastWorkingDirectory(const FilePath& filePath)
-{
-   setWorkingDirectoryValue(kLastWorkingDirectory, filePath);
-}
-
 
 core::FilePath UserSettings::initialWorkingDirectory() const
 {
