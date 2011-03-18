@@ -1,5 +1,7 @@
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.inject.Inject;
@@ -11,7 +13,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    @Inject
    public AppearancePreferencesPane(PreferencesDialogResources res,
                                     UIPrefs uiPrefs,
-                                    AceThemes themes)
+                                    final AceThemes themes)
    {
       res_ = res;
       uiPrefs_ = uiPrefs;
@@ -39,8 +41,21 @@ public class AppearancePreferencesPane extends PreferencesPane
       theme_ = new SelectWidget("Editor Theme",
                                 themes.getThemeNames(),
                                 themes.getThemeNames());
+      theme_.getListBox().addChangeHandler(new ChangeHandler()
+      {
+         public void onChange(ChangeEvent event)
+         {
+            ListBox list = theme_.getListBox();
+            preview_.setTheme(
+                  themes.getThemeUrl(list.getValue(list.getSelectedIndex())));
+         }
+      });
       add(theme_);
       theme_.setValue(themes.getEffectiveThemeName(uiPrefs_.theme().getValue()));
+
+      preview_ = new AceEditorPreview();
+      preview_.setTheme(themes.getThemeUrl(uiPrefs_.theme().getValue()));
+      add(preview_);
    }
 
    @Override
@@ -69,4 +84,5 @@ public class AppearancePreferencesPane extends PreferencesPane
    private final UIPrefs uiPrefs_;
    private SelectWidget fontSize_;
    private SelectWidget theme_;
+   private AceEditorPreview preview_;
 }

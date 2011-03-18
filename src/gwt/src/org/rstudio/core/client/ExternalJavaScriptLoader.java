@@ -58,6 +58,12 @@ public class ExternalJavaScriptLoader
 
    public ExternalJavaScriptLoader(String url)
    {
+      this(Document.get(), url);
+   }
+   
+   public ExternalJavaScriptLoader(Document document, String url)
+   {
+      document_ = document;
       url_ = url;
    }
 
@@ -83,11 +89,11 @@ public class ExternalJavaScriptLoader
    private void startLoading()
    {
       assert state_ == State.Start;
-      ScriptElement script = Document.get().createScriptElement();
+      ScriptElement script = document_.createScriptElement();
       script.setType("text/javascript");
       script.setSrc(url_);
       registerCallback(script);
-      Element head = Document.get().getElementsByTagName("head").getItem(0);
+      Element head = document_.getElementsByTagName("head").getItem(0);
       head.appendChild(script);
    }
 
@@ -121,4 +127,5 @@ public class ExternalJavaScriptLoader
    private LinkedList<Callback> callbacks_ = new LinkedList<Callback>();
    private State state_ = State.Start;
    private final String url_;
+   private final Document document_;
 }

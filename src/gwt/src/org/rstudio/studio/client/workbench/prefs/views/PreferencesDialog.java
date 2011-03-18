@@ -64,6 +64,7 @@ public class PreferencesDialog extends ModalDialog<Void>
       for (final PreferencesPane pane : panes_)
       {
          sectionChooser.addSection(pane.getIcon(), pane.getName());
+         pane.setWidth("100%");
          container_.add(pane);
          container_.setWidgetLeftRight(pane, 12, Unit.PX, 0, Unit.PX);
          container_.setWidgetTopBottom(pane, 0, Unit.PX, 0, Unit.PX);
