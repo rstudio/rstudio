@@ -72,6 +72,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       hpanel.setCellWidth(leftPanel, "150px");
       hpanel.add(previewPanel);
 
+      add(spaced(new Label("Console/Editor Appearance")));
       add(hpanel);
    }
 

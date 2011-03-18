@@ -75,6 +75,12 @@ public abstract class PreferencesPane extends VerticalPanel
       return widget;
    }
 
+   protected Widget spaced(Widget widget)
+   {
+      widget.addStyleName(res_.styles().spaced());
+      return widget;
+   }
+
    protected NumericValueWidget numericPref(String label,
                                             final HasValue<Integer> prefValue)
    {
