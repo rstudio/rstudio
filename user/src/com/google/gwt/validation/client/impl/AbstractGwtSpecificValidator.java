@@ -65,7 +65,24 @@ public abstract class AbstractGwtSpecificValidator<G> implements
     return new AttributeBuilder();
   }
 
-  protected <A extends Annotation, T, V> void validate(
+  protected <V, T, A extends Annotation> void addSingleViolation(
+      GwtValidationContext<T> context, Set<ConstraintViolation<T>> violations,
+      G object, V value, ConstraintDescriptorImpl<A> constraintDescriptor) {
+    ConstraintValidatorContextImpl<A, V> constraintValidatorContext =
+      context.createConstraintValidatorContext(constraintDescriptor);
+    addViolations(context, violations, object, value, constraintDescriptor,
+        constraintValidatorContext);
+  }
+
+  /**
+   * Perform the actual validation of a single {@link ConstraintValidator}.
+   * <p>
+   * As a side effect {@link ConstraintViolation}s may be added to
+   * {@code violations}.
+   * 
+   * @return true if there was any constraint violations
+   */
+  protected <A extends Annotation, T, V> boolean validate(
       GwtValidationContext<T> context, Set<ConstraintViolation<T>> violations,
       G object, V value, ConstraintValidator<A, ? super V> validator,
       ConstraintDescriptorImpl<A> constraintDescriptor, Class<?>[] groups) {
@@ -85,7 +102,7 @@ public abstract class AbstractGwtSpecificValidator<G> implements
 
     // check group
     if (!containsAny(groups, constraintGroup)) {
-      return;
+      return false;
     }
 
     if (!validator.isValid(value, constraintValidatorContext)) {
@@ -96,7 +113,9 @@ public abstract class AbstractGwtSpecificValidator<G> implements
           value, //
           constraintDescriptor, //
           constraintValidatorContext);
+      return true;
     }
+    return false;
   }
 
   private <V, T, A extends Annotation> void addViolations(

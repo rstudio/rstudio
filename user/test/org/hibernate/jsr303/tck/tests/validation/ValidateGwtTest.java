@@ -44,7 +44,6 @@ public class ValidateGwtTest extends AbstractValidationTest {
     delegate.testGraphValidationWithList();
   }
 
-  @Failing(issue = 5930)
   public void testMultipleConstraintViolationOfDifferentTypes() {
     delegate.testMultipleConstraintViolationOfDifferentTypes();
   }

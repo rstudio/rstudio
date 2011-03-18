@@ -80,14 +80,15 @@ import javax.validation.metadata.PropertyDescriptor;
  * This class is not thread safe.
  */
 public class GwtSpecificValidatorCreator extends AbstractCreator {
-
   private static enum Stage {
     OBJECT, PROPERTY, VALUE
   }
 
-  private static final Annotation[] NO_ANNOTATIONS = new Annotation[]{};
-
   static final JType[] NO_ARGS = new JType[]{};
+
+  private static final String DEFAULT_VIOLATION_VAR = "violations";
+
+  private static final Annotation[] NO_ANNOTATIONS = new Annotation[]{};
 
   private static Function<java.beans.PropertyDescriptor, String>
       PROPERTY_DESCRIPTOR_TO_NAME =
@@ -845,12 +846,18 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
   }
 
   private void writeNewViolations(SourceWriter sw) {
+    writeNewViolations(sw, DEFAULT_VIOLATION_VAR);
+  }
+
+  private void writeNewViolations(SourceWriter sw, String violationName) {
     // Set<ConstraintViolation<T>> violations =
-    // new HashSet<ConstraintViolation<T>>();
-    sw.println("Set<ConstraintViolation<T>> violations = ");
+    sw.print("Set<ConstraintViolation<T>> ");
+    sw.print(violationName);
+    sw.println(" = ");
     sw.indent();
     sw.indent();
 
+    // new HashSet<ConstraintViolation<T>>();
     sw.println("new HashSet<ConstraintViolation<T>>();");
     sw.outdent();
     sw.outdent();
@@ -999,8 +1006,52 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
   private void writeValidateConstraint(SourceWriter sw, PropertyDescriptor p,
       Class<?> elementClass, ConstraintDescriptor<?> constraint,
       String constraintDescriptorVar) throws UnableToCompleteException {
-    if (!constraint.getConstraintValidatorClasses().isEmpty()) {
+    writeValidateConstraint(sw, p, elementClass, constraint,
+        constraintDescriptorVar, DEFAULT_VIOLATION_VAR);
+  }
 
+  /**
+   * Writes the call to actually validate a constraint, including its composite
+   * constraints.
+   * <p>
+   * If the constraint is annotated as
+   * {@link javax.validation.ReportAsSingleViolation ReportAsSingleViolation},
+   * then is called recursively and the {@code violationsVar} is changed to
+   * match the the {@code constraintDescriptorVar}.
+   * 
+   * @param sw the Source Writer
+   * @param p the property
+   * @param elementClass The class of the Element
+   * @param constraint the constraint to validate.
+   * @param constraintDescriptorVar the name of the constraintDescriptor
+   *          variable.
+   * @param violationsVar the name of the variable to hold violations
+   * @throws UnableToCompleteException
+   */
+  private void writeValidateConstraint(SourceWriter sw, PropertyDescriptor p,
+      Class<?> elementClass, ConstraintDescriptor<?> constraint,
+      String constraintDescriptorVar, String violationsVar)
+      throws UnableToCompleteException {
+    boolean isComposite = !constraint.getComposingConstraints().isEmpty();
+    boolean firstReportAsSingleViolation = 
+        constraint.isReportAsSingleViolation()
+        && violationsVar.equals(DEFAULT_VIOLATION_VAR) && isComposite;
+    boolean reportAsSingleViolation = firstReportAsSingleViolation
+        || !violationsVar.equals(DEFAULT_VIOLATION_VAR);
+    boolean hasValidator = !constraint.getConstraintValidatorClasses()
+        .isEmpty();
+    String compositeViolationsVar = constraintDescriptorVar + "_violations";
+
+    // Only do this the first time in a constraint composition.
+    if (firstReportAsSingleViolation) {
+      // Report myConstraint as Single Violation
+      sw.print("// Report ");
+      sw.print(constraint.getAnnotation().annotationType().getCanonicalName());
+      sw.println(" as Single Violation");
+      writeNewViolations(sw, compositeViolationsVar);
+    }
+
+    if (hasValidator) {
       Class<? extends ConstraintValidator<? extends Annotation, ?>> validatorClass;
       try {
         validatorClass = getValidatorForType(constraint, elementClass);
@@ -1008,25 +1059,87 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
         throw error(logger, e);
       }
 
-      // validate(myContext, violations, object, value, new MyValidator(),
-      // constraintDescriptor, groups);
-      sw.print("validate(myContext, violations, object, value, ");
+      if (firstReportAsSingleViolation) {
+        // if (!
+        sw.println("if (!");
+        sw.indent();
+        sw.indent();
+      }
+
+      // validate(myContext, violations object, value, new MyValidator(),
+      // constraintDescriptor, groups));
+      sw.print("validate(myContext, ");
+      sw.print(violationsVar);
+      sw.print(", object, value, ");
       sw.print("new "); // TODO(nchalko) use ConstraintValidatorFactory
       sw.print(validatorClass.getCanonicalName());
       sw.print("(), ");
       sw.print(constraintDescriptorVar);
-      sw.println(", groups);");
-    } else if (constraint.getComposingConstraints().isEmpty()) {
-        // TODO(nchalko) What does the spec say to do here.
-        logger.log(Type.WARN, "No ConstraintValidator of " + constraint
-            + " for " + p.getPropertyName() + " of type " + elementClass);
+      sw.print(", groups)");
+      if (firstReportAsSingleViolation) {
+        // ) {
+        sw.println(") {");
+        sw.outdent();
+
+      } else if (!reportAsSingleViolation) {
+        // ;
+        sw.println(";");
+      } else if (isComposite) {
+        // ||
+        sw.println(" ||");
+      }
+    } else if (!isComposite) {
+      // TODO(nchalko) What does the spec say to do here.
+      logger.log(Type.WARN, "No ConstraintValidator of " + constraint + " for "
+          + p.getPropertyName() + " of type " + elementClass);
     }
-    // TODO(nchalko) handle constraint.isReportAsSingleViolation()
+
+    if (firstReportAsSingleViolation) {
+      // if (
+      sw.print("if (");
+      sw.indent();
+      sw.indent();
+    }
     int count = 0;
-    for (ConstraintDescriptor<?> compositeConstraint : constraint.getComposingConstraints()) {
+
+    for (ConstraintDescriptor<?> compositeConstraint : constraint
+        .getComposingConstraints()) {
       String compositeVar = constraintDescriptorVar + "_" + count++;
       writeValidateConstraint(sw, p, elementClass, compositeConstraint,
-          compositeVar);
+          compositeVar, firstReportAsSingleViolation ? compositeViolationsVar
+              : violationsVar);
+      if (!reportAsSingleViolation) {
+        // ;
+        sw.println(";");
+      } else {
+        // ||
+        sw.println(" ||");
+      }
+    }
+    if (isComposite && reportAsSingleViolation) {
+      // false
+      sw.print("false");
+    }
+    if (firstReportAsSingleViolation) {
+      // ) {
+      sw.println(" ) {");
+      sw.outdent();
+
+      // addSingleViolation(myContext, violations, object, value,
+      // constraintDescriptor);
+      sw.print("addSingleViolation(myContext, violations, object, value, ");
+      sw.print(constraintDescriptorVar);
+      sw.println(");");
+
+      // }
+      sw.outdent();
+      sw.println("}");
+
+      if (hasValidator) {
+        // }
+        sw.outdent();
+        sw.println("}");
+      }
     }
   }
 

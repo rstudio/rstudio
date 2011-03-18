@@ -17,8 +17,6 @@ package org.hibernate.jsr303.tck.tests.constraints.constraintcomposition;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-import org.hibernate.jsr303.tck.util.client.Failing;
-
 /**
  * Wraps {@link ConstraintCompositionTest}.
  */
@@ -51,7 +49,6 @@ public class ConstraintCompositionGwtTest extends GWTTestCase {
     delegate.testGroupsDefinedOnMainAnnotationAreInherited();
   }
 
-  @Failing(issue = 5799)
   public void testOnlySingleConstraintViolation() {
     delegate.testOnlySingleConstraintViolation();
   }
