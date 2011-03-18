@@ -105,8 +105,8 @@ const char * const kRHistory = ".Rhistory";
    
 FilePath sessionStateFilePath(const std::string& filename)
 {
-   FilePath currentPath = FilePath::safeCurrentPath(s_options.userHomePath);
-   return currentPath.complete(filename);
+   FilePath sessionStatePath = s_options.sessionStatePath();
+   return sessionStatePath.complete(filename);
 }
    
 class SerializationCallbackScope : boost::noncopyable

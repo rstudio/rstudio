@@ -1395,7 +1395,7 @@ void rSerialization(int action)
    ClientEvent event(kSessionSerialization, serializationActionObject);
    session::clientEventQueue().add(event);
 }
-   
+
    
 void ensureRProfile()
 {
@@ -1511,6 +1511,18 @@ FilePath getInitialWorkingDirectory()
       return initialWorkingDir;
    else
       return session::options().userHomePath();
+}
+
+FilePath sessionStatePath()
+{
+   if (session::options().programMode() == kSessionProgramModeDesktop)
+   {
+      return FilePath::safeCurrentPath(session::options().userHomePath());
+   }
+   else
+   {
+      return getInitialWorkingDirectory();
+   }
 }
 
 } // anonymous namespace
@@ -1714,6 +1726,7 @@ int main (int argc, char * const argv[])
       r::session::ROptions rOptions ;
       rOptions.userHomePath = options.userHomePath();
       rOptions.userScratchPath = userScratchPath;
+      rOptions.sessionStatePath = boost::bind(sessionStatePath);
       rOptions.rSourcePath = options.coreRSourcePath();
       if (!desktopMode) // ignore r-libs-user in desktop mode
          rOptions.rLibsUser = options.rLibsUser();

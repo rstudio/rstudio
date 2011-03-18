@@ -56,6 +56,7 @@ struct ROptions
    }
    core::FilePath userHomePath;
    core::FilePath userScratchPath;
+   boost::function<core::FilePath()> sessionStatePath;
    core::FilePath rSourcePath;
    core::FilePath rLibsExtra;
    std::string rLibsUser;
