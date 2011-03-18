@@ -50,6 +50,11 @@
 
 #include <server/ServerOptions.hpp>
 
+#ifdef __APPLE__
+#define kLibraryPathEnvVariable  "DYLD_LIBRARY_PATH"
+#else
+#define kLibraryPathEnvVariable  "LD_LIBRARY_PATH"
+#endif
 
 using namespace core ;
 
@@ -114,15 +119,16 @@ Error launchSession(const std::string& username, PidType* pPid)
    environment.push_back(std::make_pair("R_HOME", options.rHome()));
    environment.push_back(std::make_pair("R_DOC_DIR", options.rDocDir()));
 
-   // compute and set LD_LIBRARY_PATH
-   std::string ldLibraryPath = core::system::getenv("LD_LIBRARY_PATH");
+   // compute and set library path
+   std::string ldLibraryPath = core::system::getenv(kLibraryPathEnvVariable);
    if (!ldLibraryPath.empty())
       ldLibraryPath.append(":");
    ldLibraryPath.append(options.rLibDir());
    std::string rLdLibraryPath = readRLdLibraryPath(options.rHome());
    if (!rLdLibraryPath.empty())
       ldLibraryPath.append(":" + rLdLibraryPath);
-   environment.push_back(std::make_pair("LD_LIBRARY_PATH", ldLibraryPath));
+   environment.push_back(std::make_pair(kLibraryPathEnvVariable,
+                                        ldLibraryPath));
 
    // launch the session
    *pPid = -1;
