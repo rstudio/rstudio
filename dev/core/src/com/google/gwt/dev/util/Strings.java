@@ -15,23 +15,47 @@
  */
 package com.google.gwt.dev.util;
 
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
+
+import java.util.ArrayList;
+
 /**
  * String manipulation utilities.
  */
 public class Strings {
+
   /**
-   * Join strings inserting separator between them. 
+   * Join strings inserting separator between them.
    */
   public static String join(String[] strings, String separator) {
     StringBuffer result = new StringBuffer();
-    
+
     for (String s : strings) {
       if (result.length() != 0) {
         result.append(separator);
       }
       result.append(s);
     }
-    
+
     return result.toString();
+  }
+
+  /**
+   * @return the path components, result of splitting by "/".
+   */
+  public static String[] splitPath(String path) {
+    ArrayList<String> result = Lists.newArrayList();
+    int length = path.length();
+    int begin = 0;
+    for (int i = 0; i < length; i++) {
+      if (path.charAt(i) == '/') {
+        result.add(path.substring(begin, i));
+        begin = i + 1;
+      }
+    }
+    if (begin < length) {
+      result.add(path.substring(begin));
+    }
+    return result.toArray(new String[result.size()]);
   }
 }

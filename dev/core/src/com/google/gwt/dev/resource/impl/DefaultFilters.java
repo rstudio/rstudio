@@ -53,29 +53,29 @@ public class DefaultFilters {
       public boolean allows(String path) {
         return defaultAntIncludes.allows(path) && matches(path);
       }
-    };    
-    
+    };
+
     private final ResourceFilter defaultFilter = new ResourceFilter() {
 
       public boolean allows(String path) {
         return getFileTypeFilter().allows(path)
-        && !defaultExcludesPattern.matcher(path).matches();
+        && !isDefaultExcluded(path);
       }
     };
-    
+
     private FilterFileType(String suffix) {
       this.suffix = suffix;
     }
-    
+
     public ResourceFilter getDefaultFilter() {
       return defaultFilter;
     }
-    
+
     /* used when defaultExcludes is false */
     public ResourceFilter getFileTypeFilter() {
       return justThisFileTypeFilter;
     }
-    
+
     public String getSuffix() {
       return suffix;
     }
@@ -87,35 +87,9 @@ public class DefaultFilters {
       return path.endsWith(suffix);
     }
   }
-  
-  /*
-   * list copied from {@link org.apache.tools.ant.DirectoryScanner}
-   */
-  private static final String DEFAULT_EXCLUDES[] = new String[]{
-  // Miscellaneous typical temporary files
-      "**/*~", "**/#*#", "**/.#*", "**/%*%", "**/._*",
-
-      // CVS
-      "**/CVS", "**/CVS/**",
-      // to not hit the weird formatting error.
-      "**/.cvsignore",
-
-      // SCCS
-      "**/SCCS", "**/SCCS/**",
-
-      // Visual SourceSafe
-      "**/vssver.scc",
-
-      // Subversion
-      "**/.svn", "**/.svn/**",
-
-      // Mac
-      "**/.DS_Store",};
 
   // \w (word character), ., $, /, -, *, ~, #, %
   private static final Pattern antPattern = Pattern.compile("^[\\w\\.\\$/\\-\\*~#%]*$");
-
-  private static final Pattern defaultExcludesPattern = getPatternFromAntStrings(DEFAULT_EXCLUDES);
 
   // accepts all but paths starting with '/'. Default include list is '**'
   private static final ResourceFilter defaultAntIncludes = new ResourceFilter() {
@@ -123,6 +97,40 @@ public class DefaultFilters {
       return path.charAt(0) != '/';
     }
   };
+
+  /**
+   * @return <code>true</code> if given path should be excluded from resources.
+   */
+  private static boolean isDefaultExcluded(String path) {
+    // CVS
+    if (path.endsWith("/CVS") || path.contains("/CVS/") || path.startsWith("CVS/")
+        || path.endsWith("/.cvsignore")) {
+      return true;
+    }
+    // Subversion
+    if (path.endsWith("/.svn") || path.contains("/.svn/") || path.startsWith(".svn/")
+        || path.endsWith("/.svnignore")) {
+      return true;
+    }
+    // Git
+    if (path.endsWith("/.git") || path.contains("/.git/") || path.startsWith(".git/")
+        || path.endsWith("/.gitignore")) {
+      return true;
+    }
+    // SCCS
+    if (path.endsWith("/SCCS") || path.contains("/SCCS/")) {
+      return true;
+    }
+    // Visual SourceSafe
+    if (path.endsWith("/vssver.scc")) {
+      return true;
+    }
+    // Mac
+    if (path.endsWith("/.DS_Store")) {
+      return true;
+    }
+    return false;
+  }
 
   /**
    * Returns a pattern string that can be passed in Java Pattern.compile(..).
@@ -254,20 +262,6 @@ public class DefaultFilters {
     }
     return answer;
   }
-  
-  private static Pattern getPatternFromAntStrings(String... antPatterns) {
-    String patternStrings[] = new String[antPatterns.length];
-    int count = 0;
-    for (String antPatternString : antPatterns) {
-      String patternString = getPatternFromAntPattern(antPatternString);
-      if (patternString == null) {
-        throw new RuntimeException("Unable to convert " + antPatternString
-            + " to java code");
-      }
-      patternStrings[count++] = patternString;
-    }
-    return getPatternFromStrings(patternStrings);
-  }
 
   private static Pattern getPatternFromStrings(String... patterns) {
     StringBuffer entirePattern = new StringBuffer("^");
@@ -310,7 +304,7 @@ public class DefaultFilters {
     return getCustomFilter(includeList, excludeList, skipList, defaultExcludes,
         caseSensitive, FilterFileType.RESOURCE_FILES);
   }
-  
+
   /**
    * Return a customResourceFiter that handles all the argument. If unable to
    * create a customResourceFilter that handles the arguments, catchAll is used
@@ -349,7 +343,7 @@ public class DefaultFilters {
           return false;
         }
         if (defaultExcludes) {
-          return !defaultExcludesPattern.matcher(path).matches();
+          return !isDefaultExcluded(path);
         }
         return true;
       }

@@ -111,9 +111,9 @@ public class DefaultFiltersTest extends TestCase {
 
   static class BasicPaths {
     String baseIncluded[] = {
-        "foo", "/foo", "foo/bar", "/foo/bar", "/foo/bar", "/foo$/$", "/foo-_",
-        "123FOO123", "cvs", "cvs/cvs/svn", ".foo_bar$", "foo/asvn"};
-    String baseExcluded[] = {"foo/CVS/bar", "foo/.svn/bar", "foo/SCCS/bar",};
+        "foo", "/foo", "foo/bar", "/foo/bar", "/foo/bar", "/foo$/$", "/foo-_", "123FOO123", "cvs",
+        "cvs/cvs/svn", ".foo_bar$", "foo/asvn"};
+    String baseExcluded[] = {"foo/CVS/bar", "CVS/bar", "foo/.svn/bar", ".svn/bar", "foo/SCCS/bar",};
     String baseSuffixExcluded[] = {
         "foo/.cvsignore", "foo/CVS", "foo/.svn", "foo/SCCS",
         "foo/bar/vssver.scc", "/foo/bar/.DS_Store"};

@@ -220,6 +220,14 @@ public class PathPrefixSet {
    *         match or the most specific prefix excludes the resource.
    */
   public PathPrefix includesResource(String resourceAbstractPathName) {
+    String[] parts = resourceAbstractPathName.split("/");
+    return includesResource(resourceAbstractPathName, parts);
+  }
+
+  /**
+   * Implementation of {@link #includesDirectory(String)}.
+   */
+  public PathPrefix includesResource(String resourceAbstractPathName, String[] parts) {
     /*
      * Algorithm: dive down the package hierarchy looking for the most specific
      * package that applies to this resource. The filter of the most specific
@@ -234,7 +242,7 @@ public class PathPrefixSet {
     PathPrefix mostSpecificPrefix = rootTrieNode.getPathPrefix();
 
     // Walk all but the last path part, which is assumed to be a file name.
-    for (String part : resourceAbstractPathName.split("/")) {
+    for (String part : parts) {
       assert (!"".equals(part));
       TrieNode childNode = currentNode.findChild(part);
       if (childNode != null) {

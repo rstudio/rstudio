@@ -28,7 +28,6 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 /**
@@ -78,7 +77,7 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
 
   private final ZipFile zipFile;
 
-  public ZipFileClassPathEntry(File zipFile) throws ZipException, IOException {
+  public ZipFileClassPathEntry(File zipFile) throws IOException {
     assert zipFile.isAbsolute();
     this.zipFile = new ZipFile(zipFile);
     this.location = zipFile.toURI().toString();
@@ -147,8 +146,9 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
     Map<AbstractResource, PathPrefix> results = new IdentityHashMap<AbstractResource, PathPrefix>();
     for (ZipFileResource r : allZipFileResources) {
       String path = r.getPath();
+      String[] pathParts = r.getPathParts();
       PathPrefix prefix = null;
-      if ((prefix = pathPrefixSet.includesResource(path)) != null) {
+      if ((prefix = pathPrefixSet.includesResource(path, pathParts)) != null) {
         Messages.INCLUDING_RESOURCE.log(logger, path, null);
         results.put(r, prefix);
       } else {
