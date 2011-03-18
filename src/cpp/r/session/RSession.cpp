@@ -99,9 +99,15 @@ public:
 };
 
 
-// R history file
+// R history and data files
+const char * const kRData = ".RData";
 const char * const kRHistory = ".Rhistory";
    
+FilePath sessionStateFilePath(const std::string& filename)
+{
+   FilePath currentPath = FilePath::safeCurrentPath(s_options.userHomePath);
+   return currentPath.complete(filename);
+}
    
 class SerializationCallbackScope : boost::noncopyable
 {
@@ -160,8 +166,10 @@ Error saveDefaultGlobalEnvironment()
    r::exec::IgnoreInterruptsScope ignoreInterrupts;
          
    // save global environment
-   Error error = r::exec::executeSafely(boost::bind(R_SaveGlobalEnvToFile,
-                                                       "~/.RData"));
+   FilePath globalEnvPath = sessionStateFilePath(kRData);
+   Error error = r::exec::executeSafely(
+                        boost::bind(R_SaveGlobalEnvToFile,
+                                    globalEnvPath.absolutePath().c_str()));
    
    if (error)
    {
@@ -185,16 +193,21 @@ Error restoreDefaultGlobalEnvironment()
    r::exec::IgnoreInterruptsScope ignoreInterrupts;
    
    // restore the default global environment if there is one
-   if (s_options.userHomePath.complete(".RData").exists())
+   FilePath globalEnvPath = sessionStateFilePath(kRData);
+   if (globalEnvPath.exists())
    {
       Error error = r::exec::executeSafely(boost::bind(
-                                                   R_RestoreGlobalEnvFromFile,
-                                                   "~/.RData", 
-                                                   TRUE));
+                                        R_RestoreGlobalEnvFromFile,
+                                        globalEnvPath.absolutePath().c_str(),
+                                        TRUE));
       if (error)   
          return error;
 
-      Rprintf("[Workspace restored from ~/.RData]\n\n");
+      // print path to console
+      std::string aliasedPath = FilePath::createAliasedPath(
+                                                    globalEnvPath,
+                                                     s_options.userHomePath);
+      Rprintf(("[Workspace restored from " + aliasedPath + "]\n\n").c_str());
    }
 
    return Success();
@@ -204,7 +217,7 @@ Error restoreDefaultGlobalEnvironment()
 void saveHistoryAndClientState()
 {
    // save history (log errors)
-   FilePath historyPath = s_options.userHomePath.complete(kRHistory);
+   FilePath historyPath = sessionStateFilePath(kRHistory);
    Error error = consoleHistory().saveToFile(historyPath);
    if (error)
       LOG_ERROR(error);
@@ -383,9 +396,8 @@ Error initialize()
    // new session
    else
    {  
-      // restore console history (for serialized sessions this was already 
-      // handled as part of deserializeSession)
-      FilePath historyFilePath = s_options.userHomePath.complete(kRHistory);
+      // restore console history from current working directory
+      FilePath historyFilePath = sessionStateFilePath(kRHistory);
       error = consoleHistory().loadFromFile(historyFilePath, false);
       if (error)
          LOG_ERROR(error);
