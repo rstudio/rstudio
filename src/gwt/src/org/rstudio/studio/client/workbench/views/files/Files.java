@@ -27,6 +27,7 @@ import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.WorkbenchEventHelper;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserHandler;
@@ -468,11 +469,7 @@ public class Files
    @Handler
    void onSyncWorkingDir()
    {
-      String escaped = currentPath_.getPath().replaceAll("\\\\", "\\\\\\\\");
-      if (escaped.equals("~"))
-         escaped = "~/";
-      eventBus_.fireEvent(
-            new SendToConsoleEvent("setwd(\"" + escaped + "\")", true));
+      WorkbenchEventHelper.sendSetWdToConsole(currentPath_, eventBus_);
    }
 
    @Handler

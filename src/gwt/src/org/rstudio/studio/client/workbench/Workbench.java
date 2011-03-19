@@ -12,17 +12,28 @@
  */
 package org.rstudio.studio.client.workbench;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.WorkbenchEventHelper;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.*;
+import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
+import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
 
 public class Workbench implements BusyHandler,
                                   ShowErrorMessageHandler,
@@ -30,19 +41,30 @@ public class Workbench implements BusyHandler,
                                   QuotaStatusHandler,
                                   OAuthApprovalHandler,
                                   WorkbenchLoadedHandler,
-                                  WorkbenchMetricsChangedHandler
+                                  WorkbenchMetricsChangedHandler,
+                                  WorkingDirChangedHandler
 {
+   interface Binder extends CommandBinder<Commands, Workbench> {}
+   
    @Inject
    public Workbench(WorkbenchMainView view, 
                     GlobalDisplay globalDisplay,
                     EventBus eventBus,
                     Server server,
-                    RemoteFileSystemContext fsContext)
+                    Commands commands,
+                    RemoteFileSystemContext fsContext,
+                    FileDialogs fileDialogs)
    {
       view_ = view;
       globalDisplay_ = globalDisplay;
+      eventBus_ = eventBus;
       server_ = server;
+      fsContext_ = fsContext;
+      fileDialogs_ = fileDialogs;
+      currentWorkingDir_ = FileSystemItem.home();
      
+      ((Binder)GWT.create(Binder.class)).bind(commands, this);
+      
       // edit
       eventBus.addHandler(BusyEvent.TYPE, this);
       eventBus.addHandler(ShowErrorMessageEvent.TYPE, this);
@@ -51,6 +73,7 @@ public class Workbench implements BusyHandler,
       eventBus.addHandler(OAuthApprovalEvent.TYPE, this);
       eventBus.addHandler(WorkbenchLoadedEvent.TYPE, this);
       eventBus.addHandler(WorkbenchMetricsChangedEvent.TYPE, this);
+      eventBus.addHandler(WorkingDirChangedEvent.TYPE, this);
 
       // We don't want to send setWorkbenchMetrics more than once per 1/2-second
       metricsChangedCommand_ = new TimeBufferedCommand(-1, -1, 500)
@@ -165,10 +188,40 @@ public class Workbench implements BusyHandler,
       
    }
    
+   public void onWorkingDirChanged(WorkingDirChangedEvent event)
+   {
+      currentWorkingDir_ = FileSystemItem.createDir(event.getPath());
+   }
+   
+   @Handler
+   public void onSetWorkingDir()
+   {
+      fileDialogs_.chooseFolder(
+            "Set Working Directory",
+            fsContext_,
+            currentWorkingDir_,
+            new ProgressOperationWithInput<FileSystemItem>()
+            {
+               public void execute(FileSystemItem input,
+                                   ProgressIndicator indicator)
+               {
+                  if (input == null)
+                     return;
+
+                  WorkbenchEventHelper.sendSetWdToConsole(input, eventBus_); 
+                  
+                  indicator.onCompleted();
+               }
+            });
+   }
+   
    private final Server server_;
+   private final EventBus eventBus_;
    private final WorkbenchMainView view_;
    GlobalDisplay globalDisplay_;
-
+   private final RemoteFileSystemContext fsContext_;
+   private final FileDialogs fileDialogs_;
+   private FileSystemItem currentWorkingDir_;
    private final TimeBufferedCommand metricsChangedCommand_;
    private WorkbenchMetrics lastWorkbenchMetrics_;
    private boolean nearQuotaWarningShown_ = false; 

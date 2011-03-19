@@ -20,6 +20,9 @@ public abstract class Commands extends CommandBundle
 {
    public abstract void mainMenu(MenuCallback callback);
 
+   // Workbench
+   public abstract AppCommand setWorkingDir();
+   
    // Source
    public abstract AppCommand newSourceDoc();
    public abstract AppCommand openSourceDoc();

@@ -56,6 +56,8 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="closeSourceDoc"/>
          <!--<cmd refid="closeAllSourceDocs"/>-->
          <separator/>
+         <cmd refid="setWorkingDir"/>
+         <separator/>
          <cmd refid="quitSession"/>
       </menu>
 
@@ -223,6 +225,11 @@ well as menu structures (for main menu and popup menus).
       visible      [true|false] Whether the command should start out as visible
                    or hidden. Defaults to true.
    -->
+
+   <cmd id="setWorkingDir"
+        buttonLabel=""
+        menuLabel="Set _Working Dir..."
+        desc="Set the current working directory"/>
 
    <cmd id="newSourceDoc"
         buttonLabel=""
