@@ -39,22 +39,20 @@ namespace {
 #define kLibRFileName            "libR.dylib"
 #define kLibraryPathEnvVariable  "DYLD_LIBRARY_PATH"
 
- // define search paths to match shell search path behavior (including
- // /opt/local/bin being first since that is where macports puts it)
- std::vector<std::string> rSearchPaths()
- {
-    std::vector<std::string> rPaths;
-    rPaths.push_back("/opt/local/bin/R");
-    rPaths.push_back("/usr/bin/R");
-    rPaths.push_back("/usr/local/bin/R");
-    return rPaths;
- }
+// define additional search paths for R. match shell search path behavior
+// (including /opt/local/bin being first since that is where macports puts it)
+void appendRPaths(std::vector<std::string>* pRPaths)
+{
+   pRPaths->push_back("/opt/local/bin/R");
+   pRPaths->push_back("/usr/bin/R");
+   pRPaths->push_back("/usr/local/bin/R");
+}
 
- // no extra paths on the mac
- std::string extraLibraryPaths(const std::string& rHome)
- {
-    return std::string();
- }
+// no extra paths on the mac
+std::string extraLibraryPaths(const std::string& rHome)
+{
+ return std::string();
+}
 
 
 // Linux specific
@@ -63,47 +61,88 @@ namespace {
 #define kLibRFileName            "libR.so"
 #define kLibraryPathEnvVariable  "LD_LIBRARY_PATH"
 
- // define search paths to match shell search path behavior (note differs
- // from macox by having /usr/local/bin first)
- std::vector<std::string> rSearchPaths()
- {
-    std::vector<std::string> rPaths;
-    rPaths.push_back("/usr/local/bin/R");
-    rPaths.push_back("/usr/bin/R");
-    return rPaths;
- }
+// define additional search paths for R. match typical shell search path behavior
+// (note differs from macox by having /usr/local/bin first)
+void appendRPaths(std::vector<std::string>* pRPaths)
+{
+   pRPaths->push_back("/usr/local/bin/R");
+   pRPaths->push_back("/usr/bin/R");
+}
 
- // extra paths from R (for rjava) on linux
- std::string extraLibraryPaths(const std::string& rHome)
- {
-    std::string libraryPaths;
+// extra paths from R (for rjava) on linux
+std::string extraLibraryPaths(const std::string& rHome)
+{
+   std::string libraryPaths;
 
-    FilePath supportingFilePath = desktop::options().supportingFilePath();
-    FilePath scriptPath = supportingFilePath.complete("bin/r-ldpath");
-    if (!scriptPath.exists())
+   FilePath supportingFilePath = desktop::options().supportingFilePath();
+   FilePath scriptPath = supportingFilePath.complete("bin/r-ldpath");
+   if (!scriptPath.exists())
       scriptPath = supportingFilePath.complete("session/r-ldpath");
-    if (scriptPath.exists())
-    {
-       // run script
-       std::string command = scriptPath.absolutePath() + " " + rHome;
-       Error error = system::captureCommand(command, &libraryPaths);
-       if (error)
-          LOG_ERROR(error);
-    }
+   if (scriptPath.exists())
+   {
+      // run script
+      std::string command = scriptPath.absolutePath() + " " + rHome;
+      Error error = system::captureCommand(command, &libraryPaths);
+      if (error)
+         LOG_ERROR(error);
+   }
 
-    return libraryPaths;
- }
+   return libraryPaths;
+}
 
 
 #endif
 
+
+FilePath systemDefaultR()
+{
+   // ask system which R to use
+   std::string whichOutput;
+   Error error = core::system::captureCommand("which R", &whichOutput);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return FilePath();
+   }
+   boost::algorithm::trim(whichOutput);
+
+   // check for nothing returned
+   if (whichOutput.empty())
+      return FilePath();
+
+   // verify that the alias points to a real version of R
+   FilePath rBinaryPath;
+   error = core::system::realPath(whichOutput, &rBinaryPath);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return FilePath();
+   }
+
+   // check for real path doesn't exist
+   if (!rBinaryPath.exists())
+      return FilePath();
+
+   // got a valid R binary
+   return rBinaryPath;
+}
 
 FilePath detectRHome()
 {
    // scan possible locations for R (need these because on the mac
    // our path as a GUI app is very limited)
    FilePath rPath;
-   std::vector<std::string> rPaths = rSearchPaths();
+   std::vector<std::string> rPaths;
+
+   // system default goes first (and will always be used if known)
+   FilePath systemDefaultRPath = systemDefaultR();
+   if (!systemDefaultRPath.empty())
+      rPaths.push_back(systemDefaultRPath.absolutePath());
+
+   // platfom specific additional paths to look for R binary
+   appendRPaths(&rPaths);
+
+   // scan the paths for a file that exists
    for(std::vector<std::string>::const_iterator it = rPaths.begin();
        it != rPaths.end(); ++it)
    {
