@@ -112,7 +112,11 @@ public class MediaElement extends Element {
    *         {@link #CANNOT_PLAY}
    */
   public final native String canPlayType(String type) /*-{
-    return this.canPlayType(type);
+    var canPlayType = this.canPlayType(type);
+     // Some browsers report "no" instead of the empty string.
+     // See http://gwt-voices.appspot.com/
+    return canPlayType == "no" ?
+        @com.google.gwt.dom.client.MediaElement::CANNOT_PLAY : canPlayType;
   }-*/;
 
   /**
