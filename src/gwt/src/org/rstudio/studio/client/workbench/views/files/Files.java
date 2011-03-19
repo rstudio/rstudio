@@ -40,6 +40,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientInitState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -141,9 +142,11 @@ public class Files
 
    private void initSession()
    {
-      ClientInitState state = session_.getSessionInfo().getClientState();
+      final SessionInfo sessionInfo = session_.getSessionInfo();
+      ClientInitState state = sessionInfo.getClientState();
 
-      new StringStateValue(MODULE_FILES, KEY_PATH, true, state) {
+      // navigate to previous directory (works for resumed case)
+      new StringStateValue(MODULE_FILES, KEY_PATH, false, state) {
          @Override
          protected void onInit(final String value)
          {
@@ -153,7 +156,8 @@ public class Files
                {
                   FileSystemItem start = value != null
                                     ? FileSystemItem.createDir(value)
-                                    : FileSystemItem.home();
+                                    : FileSystemItem.createDir(
+                                          sessionInfo.getInitialWorkingDir());
                   navigateToDirectory(start);
                }
             });
@@ -578,7 +582,7 @@ public class Files
    private FileSystemItem currentPath_ = FileSystemItem.home();
    private final Provider<FilesCopy> pFilesCopy_;
    private final Provider<FilesUpload> pFilesUpload_;
-   private static final String MODULE_FILES = "filesp";
+   private static final String MODULE_FILES = "module_files";
    private static final String KEY_PATH = "path";
   
 }

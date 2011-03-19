@@ -237,6 +237,18 @@ void ensureSessionInitialized()
    r::session::ensureDeserialized();
 }
 
+FilePath getInitialWorkingDirectory()
+{
+   // calculate the initial working directory
+   FilePath initialWorkingDir = userSettings().initialWorkingDirectory();
+
+   // return it if it exists, otherwise use the default user home path
+   if (initialWorkingDir.exists())
+      return initialWorkingDir;
+   else
+      return session::options().userHomePath();
+}
+
 void handleClientInit(const boost::function<void()>& initFunction,
                       boost::shared_ptr<HttpConnection> ptrConnection)
 {
@@ -334,6 +346,12 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["ui_prefs"] = userSettings().uiPrefs();
    
+
+   std::string initialWorkingDir = FilePath::createAliasedPath(
+                                                   getInitialWorkingDirectory(),
+                                                   options.userHomePath());
+   sessionInfo["initial_working_dir"] = initialWorkingDir;
+
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)
    json::JsonRpcResponse jsonRpcResponse ;
@@ -1499,18 +1517,6 @@ void detectParentTermination()
    {
       LOG_ERROR_MESSAGE("waitForParentTermination failed");
    }
-}
-
-FilePath getInitialWorkingDirectory()
-{
-   // calculate the initial working directory
-   FilePath initialWorkingDir = userSettings().initialWorkingDirectory();
-
-   // return it if it exists, otherwise use the default user home path
-   if (initialWorkingDir.exists())
-      return initialWorkingDir;
-   else
-      return session::options().userHomePath();
 }
 
 FilePath sessionStatePath()

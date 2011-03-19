@@ -110,4 +110,10 @@ public class SessionInfo extends JavaScriptObject
    public final native String getRstudioVersion() /*-{
       return this.rstudio_version;
    }-*/;
+
+   public final native String getInitialWorkingDir() /*-{
+      if (!this.initial_working_dir)
+         this.initial_working_dir = "~/";
+      return this.initial_working_dir;
+   }-*/;
 }
