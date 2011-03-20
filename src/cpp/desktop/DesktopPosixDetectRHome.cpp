@@ -24,160 +24,13 @@
 #include <core/Log.hpp>
 #include <core/FilePath.hpp>
 #include <core/system/System.hpp>
-
-#include "config.h"
+#include <core/r_util/REnvironment.hpp>
 
 using namespace core;
 
 namespace desktop {
 
 namespace {
-
-// MacOS X Specific
-#ifdef __APPLE__
-
-#define kLibRFileName            "libR.dylib"
-#define kLibraryPathEnvVariable  "DYLD_LIBRARY_PATH"
-
-// define additional search paths for R. match shell search path behavior
-// (including /opt/local/bin being first since that is where macports puts it)
-void appendRPaths(std::vector<std::string>* pRPaths)
-{
-   pRPaths->push_back("/opt/local/bin/R");
-   pRPaths->push_back("/usr/bin/R");
-   pRPaths->push_back("/usr/local/bin/R");
-}
-
-// no extra paths on the mac
-std::string extraLibraryPaths(const std::string& rHome)
-{
- return std::string();
-}
-
-
-// Linux specific
-#else
-
-#define kLibRFileName            "libR.so"
-#define kLibraryPathEnvVariable  "LD_LIBRARY_PATH"
-
-// define additional search paths for R. match typical shell search path behavior
-// (note differs from macox by having /usr/local/bin first)
-void appendRPaths(std::vector<std::string>* pRPaths)
-{
-   pRPaths->push_back("/usr/local/bin/R");
-   pRPaths->push_back("/usr/bin/R");
-}
-
-// extra paths from R (for rjava) on linux
-std::string extraLibraryPaths(const std::string& rHome)
-{
-   std::string libraryPaths;
-
-   FilePath supportingFilePath = desktop::options().supportingFilePath();
-   FilePath scriptPath = supportingFilePath.complete("bin/r-ldpath");
-   if (!scriptPath.exists())
-      scriptPath = supportingFilePath.complete("session/r-ldpath");
-   if (scriptPath.exists())
-   {
-      // run script
-      std::string command = scriptPath.absolutePath() + " " + rHome;
-      Error error = system::captureCommand(command, &libraryPaths);
-      if (error)
-         LOG_ERROR(error);
-   }
-
-   return libraryPaths;
-}
-
-
-#endif
-
-
-FilePath systemDefaultR()
-{
-   // ask system which R to use
-   std::string whichOutput;
-   Error error = core::system::captureCommand("which R", &whichOutput);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return FilePath();
-   }
-   boost::algorithm::trim(whichOutput);
-
-   // check for nothing returned
-   if (whichOutput.empty())
-      return FilePath();
-
-   // verify that the alias points to a real version of R
-   FilePath rBinaryPath;
-   error = core::system::realPath(whichOutput, &rBinaryPath);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return FilePath();
-   }
-
-   // check for real path doesn't exist
-   if (!rBinaryPath.exists())
-      return FilePath();
-
-   // got a valid R binary
-   return rBinaryPath;
-}
-
-FilePath detectRHome()
-{
-   // scan possible locations for R (need these because on the mac
-   // our path as a GUI app is very limited)
-   FilePath rPath;
-   std::vector<std::string> rPaths;
-
-   // system default goes first (and will always be used if known)
-   FilePath systemDefaultRPath = systemDefaultR();
-   if (!systemDefaultRPath.empty())
-      rPaths.push_back(systemDefaultRPath.absolutePath());
-
-   // platfom specific additional paths to look for R binary
-   appendRPaths(&rPaths);
-
-   // scan the paths for a file that exists
-   for(std::vector<std::string>::const_iterator it = rPaths.begin();
-       it != rPaths.end(); ++it)
-   {
-      FilePath candidatePath(*it);
-      if (candidatePath.exists())
-      {
-         rPath = candidatePath ;
-         break;
-      }
-   }
-
-   // if we didn't find one then bail
-   if (rPath.empty())
-   {
-      LOG_ERROR_MESSAGE("Couldn't find R on known path");
-      return FilePath();
-   }
-
-   // run R to detect R home
-   std::string output;
-   std::string command = rPath.absolutePath() + " RHOME";
-   Error error = core::system::captureCommand(command, &output);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return FilePath();
-   }
-   boost::algorithm::trim(output);
-
-   // return the home path if we got one
-   if (!output.empty())
-      return FilePath(output);
-   else
-      return FilePath();
-}
 
 void showRNotFoundError(const std::string& msg)
 {
@@ -186,99 +39,55 @@ void showRNotFoundError(const std::string& msg)
 
 } // anonymous namespace
 
-bool prepareEnvironment(Options&)
+bool prepareEnvironment(Options& options)
 {
-   // declare home path and doc dir -- can get them from the environment
-   // or by probing the system
-   FilePath homePath, rDocDir;
-
-   // first check environment
-   std::string home = core::system::getenv("R_HOME");
-   if (!home.empty())
-      homePath = FilePath(home);
-   std::string doc = core::system::getenv("R_DOC_DIR");
-   if (!doc.empty())
-      rDocDir = FilePath(doc);
-
-   // probe for home path if necessary
-   if (homePath.empty())
-      homePath = detectRHome();
-
-   // if that didn't work then try the configured path as a last ditch
-   if (!homePath.exists())
-      homePath = FilePath(CONFIG_R_HOME_PATH);
-
-   // verify and set home path
-   if (homePath.exists())
+   // check for r script override
+   FilePath rWhichRPath;
+   std::string rScriptVal = core::system::getenv("RSTUDIO_WHICH_R");
+   if (!rScriptVal.empty())
    {
-      core::system::setenv("R_HOME", homePath.absolutePath());
-   }
-   else
-   {
-      showRNotFoundError("R home path (" + homePath.absolutePath() +
-                         ") does not exist. Is R installed on "
-                         "this system?");
-      return false;
-   }
+      // set it
+      rWhichRPath = FilePath(rScriptVal);
 
-   // complete doc dir if necesary
-   if (rDocDir.empty())
-      rDocDir = homePath.complete("doc");
-
-   // doc dir may be in configured location (/usr/share) rather than
-   // a subdirectory of R_HOME (this is in fact the case for the
-   // debian r-base package). so check the configuired location as
-   // a last ditch
-   if (!rDocDir.exists())
-      rDocDir = FilePath(CONFIG_R_DOC_PATH);
-
-   // verify and set doc dir
-   if (rDocDir.exists())
-   {
-       core::system::setenv("R_DOC_DIR", rDocDir.absolutePath());
-   }
-   else
-   {
-      showRNotFoundError("R doc directory (" + rDocDir.absolutePath() +
-                         ") does not exist.");
-      return false;
-   }
-
-   // verify and set library path
-   FilePath rLibPath = homePath.complete("lib");
-   if (rLibPath.exists())
-   {
-      // make sure the R lib was built
-      FilePath libRpath = rLibPath.complete(kLibRFileName);
-      if (libRpath.exists())
+      // but warn (and ignore) if it doesn't exist
+      if (!rWhichRPath.exists())
       {
-         // initialize library path from existing value + any extras
-         std::string libraryPath = core::system::getenv(kLibraryPathEnvVariable);
-         if (!libraryPath.empty())
-            libraryPath.append(":");
-         libraryPath.append(rLibPath.absolutePath());
-         std::string extraPaths = extraLibraryPaths(homePath.absolutePath());
-         if (!extraPaths.empty())
-            libraryPath.append(":" + extraPaths);
-
-         // set it
-         core::system::setenv(kLibraryPathEnvVariable, libraryPath);
+         LOG_WARNING_MESSAGE("Specified RSTUDIO_WHICH_R (" + rScriptVal +
+                             ") does not exist (ignoring)");
+         rWhichRPath = FilePath();
       }
-      else
+
+      // also warn and ignore if it is a directory
+      else if (rWhichRPath.isDirectory())
       {
-         showRNotFoundError(rLibPath.absolutePath() + " not found. "
-                            "If this is a custom build of R, was it "
-                            "built with the --enable-R-shlib option?");
-         return false;
+         LOG_WARNING_MESSAGE("Specified RSTUDIO_WHICH_R (" + rScriptVal +
+                             ") is a directory rather than file (ignoring)");
+         rWhichRPath = FilePath();
       }
    }
-   else
+
+   // determine rLdPaths script location
+   FilePath supportingFilePath = options.supportingFilePath();
+   FilePath rLdScriptPath = supportingFilePath.complete("bin/r-ldpath");
+   if (!rLdScriptPath.exists())
+      rLdScriptPath = supportingFilePath.complete("session/r-ldpath");
+
+   // attempt to detect R environment
+   std::string errMsg;
+   r_util::EnvironmentVars rEnvVars;
+   bool success = r_util::detectREnvironment(rWhichRPath,
+                                             rLdScriptPath,
+                                             &rEnvVars,
+                                             &errMsg);
+   if (!success)
    {
-      showRNotFoundError("R library directory (" + rLibPath.absolutePath() +
-                         ") does not exist.");
+      LOG_ERROR_MESSAGE(errMsg);
+      showRNotFoundError(errMsg);
       return false;
    }
 
+   // set environment and return true
+   r_util::setREnvironmentVars(rEnvVars);
    return true;
 }
 

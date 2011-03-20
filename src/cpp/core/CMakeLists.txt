@@ -19,6 +19,7 @@ file(GLOB_RECURSE CORE_HEADER_FILES "*.h*")
 # source files
 set (CORE_SOURCE_FILES
    BoostErrors.cpp
+   ConfigUtils.cpp
    DateTime.cpp
    Error.cpp 
    Exec.cpp
@@ -94,6 +95,7 @@ if (UNIX)
    # source files
    set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
       ${DIRECTORY_MONITOR_CPP}
+      r_util/REnvironmentPosix.cpp
       SyslogLogWriter.cpp
       system/PosixParentProcessMonitor.cpp
       system/PosixOutputCapture.cpp

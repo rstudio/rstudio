@@ -19,8 +19,6 @@
 #include <core/Random.hpp>
 #include <core/system/System.hpp>
 
-#include "config.h"
-
 using namespace core;
 
 namespace desktop {
@@ -183,11 +181,8 @@ QString Options::rHome() const
 #ifdef _WIN32
    return binDirToHomeDir(rBinDir());
 #else
-   std::string rHomeDir = core::system::getenv("R_HOME");
-   if (!rHomeDir.empty())
-      return QString::fromStdString(rHomeDir);
-   else
-      return CONFIG_R_HOME_PATH;
+   std::string rHomeDir = core::system::getenv("R_HOME"); 
+   return QString::fromStdString(rHomeDir);
 #endif
 }
 
@@ -201,10 +196,7 @@ QString Options::rDocPath() const
       return QString();
 #else
    std::string rDocDir = core::system::getenv("R_DOC_DIR");
-   if (!rDocDir.empty())
-      return QString::fromStdString(rDocDir);
-   else
-      return CONFIG_R_DOC_PATH;
+   return QString::fromStdString(rDocDir);
 #endif
 }
 

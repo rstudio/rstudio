@@ -357,7 +357,10 @@ bool FilePath::isWithin(const FilePath& scopePath) const
 
 std::string FilePath::absolutePath() const
 {
-   return pImpl_->path.string() ;
+   if (empty())
+      return std::string();
+   else
+      return pImpl_->path.string() ;
 }
 
 Error FilePath::remove() const

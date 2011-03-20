@@ -1,5 +1,5 @@
 /*
- * config.h.in
+ * ConfigUtils.hpp
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -11,9 +11,26 @@
  *
  */
 
-#define RSTUDIO_VERSION "${CPACK_PACKAGE_VERSION}"
+#ifndef CORE_CONFIG_UTILS_HPP
+#define CORE_CONFIG_UTILS_HPP
 
-#define RSTUDIO_R_MAJOR_VERSION_REQUIRED ${RSTUDIO_R_MAJOR_VERSION_REQUIRED}
-#define RSTUDIO_R_MINOR_VERSION_REQUIRED ${RSTUDIO_R_MINOR_VERSION_REQUIRED}
-#define RSTUDIO_R_PATCH_VERSION_REQUIRED ${RSTUDIO_R_PATCH_VERSION_REQUIRED}
+#include <string>
+#include <vector>
+
+namespace core {
+
+class Error;
+class FilePath;
+
+namespace config_utils {
+   
+typedef std::vector<std::pair<std::string,std::string> > Variables;
+
+Error extractVariables(const FilePath& file, Variables* pVariables);
+
+} // namespace config_utils
+} // namespace core 
+
+
+#endif // CORE_CONFIG_UTILS_HPP
 
