@@ -262,7 +262,7 @@ public:
 
 const boost::system::error_category& jsonRpcCategory()
 {
-   static const JsonRpcErrorCategory jsonRpcErrorCategoryConst ;
+   static JsonRpcErrorCategory jsonRpcErrorCategoryConst ;
    return jsonRpcErrorCategoryConst ;
 }
 

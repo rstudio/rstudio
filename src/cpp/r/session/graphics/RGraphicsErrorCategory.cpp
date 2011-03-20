@@ -28,7 +28,7 @@ public:
 
 const boost::system::error_category& rGraphicsCategory()
 {
-   static const RGraphicsErrorCategory rGraphicsErrorCategoryConst ;
+   static RGraphicsErrorCategory rGraphicsErrorCategoryConst ;
    return rGraphicsErrorCategoryConst ;
 }
 

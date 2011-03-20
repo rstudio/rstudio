@@ -24,7 +24,7 @@ public:
 
 const boost::system::error_category& rCategory()
 {
-	static const RErrorCategory rErrorCategoryConst ;
+   static RErrorCategory rErrorCategoryConst ;
 	return rErrorCategoryConst ;
 }
 

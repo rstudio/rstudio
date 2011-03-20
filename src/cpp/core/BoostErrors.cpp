@@ -39,7 +39,7 @@ public:
 
 const error_category& interprocess_category()
 {
-   static const interprocess_error_category interprocessCategoryConst ;
+   static interprocess_error_category interprocessCategoryConst ;
    return interprocessCategoryConst ;
 }
 
@@ -173,7 +173,7 @@ public:
 
 const error_category& thread_category()
 {
-   static const thread_error_category threadCategoryConst ;
+   static thread_error_category threadCategoryConst ;
    return threadCategoryConst ;
 }
 
