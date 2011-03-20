@@ -347,9 +347,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["ui_prefs"] = userSettings().uiPrefs();
    
 
-   std::string initialWorkingDir = FilePath::createAliasedPath(
-                                                   getInitialWorkingDirectory(),
-                                                   options.userHomePath());
+   std::string initialWorkingDir = module_context::createAliasedPath(
+                                                   getInitialWorkingDirectory());
    sessionInfo["initial_working_dir"] = initialWorkingDir;
 
    // send response  (we always set kEventsPending to false so that the client
