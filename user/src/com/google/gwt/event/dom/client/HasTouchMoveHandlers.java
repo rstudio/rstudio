@@ -26,7 +26,7 @@ public interface HasTouchMoveHandlers extends HasHandlers {
   /**
    * Adds a {@link TouchMoveEvent} handler.
    *
-   * @param handler the mouse down handler
+   * @param handler the touch move handler
    * @return {@link HandlerRegistration} used to remove this handler
    */
   HandlerRegistration addTouchMoveHandler(TouchMoveHandler handler);

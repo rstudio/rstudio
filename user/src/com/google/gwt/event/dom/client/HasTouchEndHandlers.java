@@ -26,7 +26,7 @@ public interface HasTouchEndHandlers extends HasHandlers {
   /**
    * Adds a {@link TouchEndEvent} handler.
    *
-   * @param handler the mouse down handler
+   * @param handler the touch end handler
    * @return {@link HandlerRegistration} used to remove this handler
    */
   HandlerRegistration addTouchEndHandler(TouchEndHandler handler);

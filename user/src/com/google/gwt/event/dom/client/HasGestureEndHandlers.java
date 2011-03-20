@@ -26,7 +26,7 @@ public interface HasGestureEndHandlers extends HasHandlers {
   /**
    * Adds a {@link GestureEndEvent} handler.
    *
-   * @param handler the mouse down handler
+   * @param handler the gesture end handler
    * @return {@link HandlerRegistration} used to remove this handler
    */
   HandlerRegistration addGestureEndHandler(GestureEndHandler handler);

@@ -26,7 +26,7 @@ public interface HasTouchCancelHandlers extends HasHandlers {
   /**
    * Adds a {@link TouchCancelEvent} handler.
    *
-   * @param handler the mouse down handler
+   * @param handler the touch cancel handler
    * @return {@link HandlerRegistration} used to remove this handler
    */
   HandlerRegistration addTouchCancelHandler(TouchCancelHandler handler);

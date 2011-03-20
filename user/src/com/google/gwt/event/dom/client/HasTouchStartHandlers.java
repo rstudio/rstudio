@@ -26,7 +26,7 @@ public interface HasTouchStartHandlers extends HasHandlers {
   /**
    * Adds a {@link TouchStartEvent} handler.
    *
-   * @param handler the mouse down handler
+   * @param handler the touch start handler
    * @return {@link HandlerRegistration} used to remove this handler
    */
   HandlerRegistration addTouchStartHandler(TouchStartHandler handler);

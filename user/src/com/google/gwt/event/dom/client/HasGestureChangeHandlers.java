@@ -26,7 +26,7 @@ public interface HasGestureChangeHandlers extends HasHandlers {
   /**
    * Adds a {@link GestureChangeEvent} handler.
    *
-   * @param handler the mouse down handler
+   * @param handler the gesture change handler
    * @return {@link HandlerRegistration} used to remove this handler
    */
   HandlerRegistration addGestureChangeHandler(GestureChangeHandler handler);
