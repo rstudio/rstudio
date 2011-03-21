@@ -9,6 +9,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -55,7 +56,8 @@ public class PreferencesDialog extends ModalDialog<Void>
       server_ = server;
       panel_ = new DockLayoutPanel(Unit.PX);
       panel_.setStyleName(res.styles().outer());
-      container_ = new LayoutPanel();
+      container_ = new FlowPanel();
+      container_.getElement().getStyle().setPaddingLeft(12, Unit.PX);
 
       addStyleName(res.styles().preferencesDialog());
 
@@ -66,8 +68,6 @@ public class PreferencesDialog extends ModalDialog<Void>
          sectionChooser.addSection(pane.getIcon(), pane.getName());
          pane.setWidth("100%");
          container_.add(pane);
-         container_.setWidgetLeftRight(pane, 12, Unit.PX, 0, Unit.PX);
-         container_.setWidgetTopBottom(pane, 0, Unit.PX, 0, Unit.PX);
          setPaneVisibility(pane, false);
          pane.addEnsureVisibleHandler(new EnsureVisibleHandler()
          {
@@ -102,8 +102,9 @@ public class PreferencesDialog extends ModalDialog<Void>
 
    private void setPaneVisibility(PreferencesPane pane, boolean visible)
    {
-      Element el = container_.getWidgetContainerElement(pane);
-      el.getStyle().setDisplay(visible ? Display.BLOCK : Display.NONE);
+      pane.getElement().getStyle().setDisplay(visible
+                                              ? Display.BLOCK
+                                              : Display.NONE);
    }
 
    @Override
@@ -152,7 +153,7 @@ public class PreferencesDialog extends ModalDialog<Void>
 
    private DockLayoutPanel panel_;
    private PreferencesPane[] panes_;
-   private LayoutPanel container_;
+   private FlowPanel container_;
    private Integer currentIndex_;
    private final WorkbenchServerOperations server_;
    private final Session session_;
