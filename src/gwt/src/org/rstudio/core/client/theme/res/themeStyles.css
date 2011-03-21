@@ -1,7 +1,7 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
-@external ace_editor, ace_text-layer;
+@external ace_editor, ace_text-layer, ace_gutter;
 @external cueText;
 @external search;
 @external highlight, disabled;
@@ -128,6 +128,10 @@ pre {
 
 .ace_editor, .ace_text-layer {
   font-family: fixedWidthFont !important;
+}
+
+.ace_editor .ace_gutter {
+   width: 3.5em !important;
 }
 
 .gwt-MenuBar {
