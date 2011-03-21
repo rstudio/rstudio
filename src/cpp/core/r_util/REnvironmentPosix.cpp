@@ -34,9 +34,10 @@ namespace {
 #define kLibraryPathEnvVariable  "DYLD_LIBRARY_PATH"
 
 // no extra paths on the mac
-std::string extraLibraryPaths(const std::string& rHome)
+std::string extraLibraryPaths(const FilePath& ldPathsScript,
+                              const std::string& rHome)
 {
- return std::string();
+   return std::string();
 }
 
 // Linux specific
