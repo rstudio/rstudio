@@ -67,6 +67,7 @@
 
 .paneLayoutTable .gwt-CheckBox {
    margin: 0 0 0 8px;
+   max-height: 18px;
    font-size: 11px;
 }
 
