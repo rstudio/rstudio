@@ -208,15 +208,6 @@ int main(int argc, char * const argv[])
       if ( status.exit() )
          return status.exitCode() ;
       
-      // detect R environment variables
-      std::string errMsg;
-      bool detected = r_environment::initialize(&errMsg);
-      if (!detected)
-      {
-         program_options::reportError(errMsg, ERROR_LOCATION);
-         return EXIT_FAILURE;
-      }
-
       // daemonize if requested
       if (options.serverDaemonize())
       {
@@ -230,6 +221,16 @@ int main(int argc, char * const argv[])
 
          // set file creation mask to 022 (might have inherted 0 from init)
          setUMask(util::system::OthersNoWriteMask);
+      }
+
+      // detect R environment variables (calls R (and this forks) so must
+      // happen after daemonize so that upstart script can correctly track us
+      std::string errMsg;
+      bool detected = r_environment::initialize(&errMsg);
+      if (!detected)
+      {
+         program_options::reportError(errMsg, ERROR_LOCATION);
+         return EXIT_FAILURE;
       }
 
       // increase the number of open files allowed (need more files
