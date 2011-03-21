@@ -224,7 +224,6 @@
       <src path="core/src" />
       <classpath>
         <pathelement location="${alldeps.jar}" />
-        <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar" />
       </classpath>
     </gwt.javac>
     <copy todir="${javac.out}">
