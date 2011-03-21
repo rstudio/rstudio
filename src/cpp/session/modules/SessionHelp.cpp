@@ -134,6 +134,15 @@ bool handleLocalHttpUrl(const std::string& url)
    if (s_localPort.empty())
       return false;
    
+   // check for helpr
+   std::string helprPath;
+   if (isLocalURL(url, "custom/helpr", &helprPath))
+   {
+      ClientEvent helpEvent(client_events::kShowHelp, helprPath);
+      module_context::enqueClientEvent(helpEvent);
+      return true;
+   }
+
    // check for custom
    std::string customPath;
    if (isLocalURL(url, "custom", &customPath))
