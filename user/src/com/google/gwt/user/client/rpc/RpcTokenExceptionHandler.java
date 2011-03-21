@@ -25,5 +25,5 @@ public interface RpcTokenExceptionHandler {
    * 
    * @param exception exception that occurred during RPC token processing.
    */
-  public void onRpcTokenException(RpcTokenException exception);
+  void onRpcTokenException(RpcTokenException exception);
 }

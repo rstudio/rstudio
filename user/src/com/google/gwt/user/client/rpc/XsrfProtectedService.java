@@ -21,7 +21,6 @@ import com.google.gwt.user.server.rpc.XsrfProtect;
  * XSRF protected equivalent of {@link RemoteService}.
  * All calls on RPC interfaces extending this interface will be XSRF protected.
  */
-@SuppressWarnings("rpc-validation")
 @XsrfProtect
 public interface XsrfProtectedService extends RemoteService {
 }

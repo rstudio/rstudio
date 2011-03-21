@@ -15,7 +15,6 @@
  */
 package com.google.gwt.place.shared;
 
-
 import junit.framework.TestCase;
 
 /**

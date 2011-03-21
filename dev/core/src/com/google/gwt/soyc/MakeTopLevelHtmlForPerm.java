@@ -253,7 +253,6 @@ public class MakeTopLevelHtmlForPerm {
       }
       outFile.println("];");
 
-
       // array of split point descriptions
       outFile.println("  var spl = [");
       for (int sp = 1; sp <= globalInformation.getNumSplitPoints(); sp++) {

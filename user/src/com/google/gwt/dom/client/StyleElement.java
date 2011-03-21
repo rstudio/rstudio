@@ -50,6 +50,7 @@ public class StyleElement extends Element {
    * Enables/disables the style sheet.
    * @deprecated use {@link #isDisabled()} instead
    */
+  @Deprecated
   public final native boolean getDisabled() /*-{
      return !!this.disabled;
    }-*/;

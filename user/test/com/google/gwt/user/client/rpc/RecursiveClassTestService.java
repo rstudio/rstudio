@@ -38,7 +38,6 @@ public interface RecursiveClassTestService extends RemoteService {
     public String data;
     public T next;
 
-
     public ResultNode() {
     }
   }

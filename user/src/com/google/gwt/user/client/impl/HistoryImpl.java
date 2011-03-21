@@ -21,7 +21,6 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.event.shared.HasHandlers;
 
 /**
  * Native implementation associated with
@@ -33,7 +32,7 @@ import com.google.gwt.event.shared.HasHandlers;
  * determine when the URL hash identifier changes.
  * </p>
  */
-public class HistoryImpl implements HasValueChangeHandlers<String>, HasHandlers {
+public class HistoryImpl implements HasValueChangeHandlers<String> {
 
   private static String token = "";
 

@@ -217,6 +217,7 @@ public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
   /**
    * Allow access by {@link ShimHandler}.
    */
+  @Override
   protected T getWrapped() {
     return super.getWrapped();
   }

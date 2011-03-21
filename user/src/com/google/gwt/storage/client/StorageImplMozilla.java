@@ -16,7 +16,6 @@
 
 package com.google.gwt.storage.client;
 
-
 /**
  * Mozilla-specific implementation of a Storage.
  *

@@ -61,7 +61,6 @@ public abstract class CellTestBase<T> extends GWTTestCase {
     public void assertLastParentElement(Element expected) {
       assertEquals(expected, lastParentElement);
     }
-
     
     @Override
     public boolean dependsOnSelection() {

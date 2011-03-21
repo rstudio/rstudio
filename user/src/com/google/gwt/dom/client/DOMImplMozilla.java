@@ -35,7 +35,6 @@ class DOMImplMozilla extends DOMImplStandard {
    * 
    * @return true if using Gecko 1.9.0 (Firefox 3) or earlier
    */
-  @SuppressWarnings("unused")
   private static boolean isGecko190OrBefore() {
     int geckoVersion = getGeckoVersion();
     return (geckoVersion != -1) && (geckoVersion <= 1009000);
@@ -46,7 +45,6 @@ class DOMImplMozilla extends DOMImplStandard {
    * 
    * @return true if using Gecko 1.9.1 (Firefox 3.5) or earlier
    */
-  @SuppressWarnings("unused")
   private static boolean isGecko191OrBefore() {
     int geckoVersion = getGeckoVersion();
     return (geckoVersion != -1) && (geckoVersion <= 1009001);
@@ -57,7 +55,6 @@ class DOMImplMozilla extends DOMImplStandard {
    * 
    * @return true if using Gecko 2.0.0 (Firefox 4.0) or earlier
    */
-  @SuppressWarnings("unused")
   private static boolean isGecko2OrBefore() {
     int geckoVersion = getGeckoVersion();
     return (geckoVersion != -1) && (geckoVersion < 2000000);

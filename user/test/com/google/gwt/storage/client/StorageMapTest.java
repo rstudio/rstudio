@@ -22,7 +22,7 @@ import com.google.gwt.junit.Platform;
 import java.util.Map;
 
 /**
- * Tests {@link StorageMap}
+ * Tests {@link StorageMap}.
  * 
  * Because HtmlUnit does not support Storage, you will need to run these tests
  * manually by adding this line to your VM args: -Dgwt.args="-runStyle Manual:1"

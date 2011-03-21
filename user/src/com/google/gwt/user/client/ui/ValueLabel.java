@@ -99,7 +99,6 @@ public class ValueLabel<T> extends LabelBase<T> implements TakesValue<T>,
   /**
    * Creates an empty value label.
    * 
-   * @param inline
    * @param renderer
    */
   @UiConstructor

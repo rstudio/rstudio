@@ -42,6 +42,7 @@ public final class Short_CustomFieldSerializer extends
     streamWriter.writeShort(instance.shortValue());
   }
 
+  @Override
   public void deserializeInstance(SerializationStreamReader streamReader,
       Short instance) throws SerializationException {
     deserialize(streamReader, instance);
@@ -58,6 +59,7 @@ public final class Short_CustomFieldSerializer extends
     return instantiate(streamReader);
   }
 
+  @Override
   public void serializeInstance(SerializationStreamWriter streamWriter,
       Short instance) throws SerializationException {
     serialize(streamWriter, instance);

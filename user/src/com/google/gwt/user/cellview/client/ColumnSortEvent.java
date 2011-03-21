@@ -46,7 +46,8 @@ public class ColumnSortEvent extends GwtEvent<ColumnSortEvent.Handler> {
 
   /**
    * A default handler used with views attached to asynchronous data providers
-   * such as {@link AsyncDataProvider}. This handler calls
+   * such as {@link com.google.gwt.view.client.AsyncDataProvider AsyncDataProvider}.
+   * This handler calls
    * {@link HasData#setVisibleRangeAndClearData(com.google.gwt.view.client.Range, boolean)},
    * which clears the current data and triggers the data provider's range change
    * handler.

@@ -59,7 +59,7 @@ public interface EditorDriver<T> {
 
   /**
    * Returns {@code true} if any of the Editors in the hierarchy have been
-   * modified relative to the last value passed into {@link #edit(Object)}.
+   * modified relative to the last value passed into {@link SimpleBeanEditorDriver#edit(Object)}.
    * <p>
    * This method is not affected by {@link #flush()} to support the following
    * workflow:

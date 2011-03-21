@@ -217,9 +217,9 @@ class Resolver {
       return domain;
     } else if (maybeEntityProxy instanceof Collection<?>) {
       Collection<Object> accumulator;
-      if (maybeEntityProxy instanceof List) {
+      if (maybeEntityProxy instanceof List<?>) {
         accumulator = new ArrayList<Object>();
-      } else if (maybeEntityProxy instanceof Set) {
+      } else if (maybeEntityProxy instanceof Set<?>) {
         accumulator = new HashSet<Object>();
       } else {
         throw new ReportableException("Unsupported collection type "

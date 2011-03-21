@@ -194,7 +194,7 @@ public abstract class BidiFormatterBase {
   }
 
   /**
-   * @see BidiFormatter#knownDirAttr(Direction)
+   * @see BidiFormatter#knownDirAttr(HasDirection.Direction)
    *
    * @param dir Given direction
    * @return "dir=rtl" for RTL text in non-RTL context; "dir=ltr" for LTR text
@@ -246,7 +246,7 @@ public abstract class BidiFormatterBase {
   }
 
   /**
-   * @see BidiFormatter#spanWrapWithKnownDir(Direction, String, boolean, boolean)
+   * @see BidiFormatter#spanWrapWithKnownDir(HasDirection.Direction, String, boolean, boolean)
    *
    * @param dir {@code str}'s direction
    * @param str The input string
@@ -304,7 +304,7 @@ public abstract class BidiFormatterBase {
   }
 
   /**
-   * @see BidiFormatter#unicodeWrapWithKnownDir(Direction, String, boolean, boolean)
+   * @see BidiFormatter#unicodeWrapWithKnownDir(HasDirection.Direction, String, boolean, boolean)
    *
    * @param dir {@code str}'s direction
    * @param str The input string

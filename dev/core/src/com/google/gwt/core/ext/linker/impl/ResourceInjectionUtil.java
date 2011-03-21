@@ -28,7 +28,7 @@ import java.net.URL;
  */
 public class ResourceInjectionUtil {
   /**
-   * Installs stylesheets and scripts
+   * Installs stylesheets and scripts.
    */
   public static StringBuffer injectResources(StringBuffer selectionScript,
       ArtifactSet artifacts) {
@@ -74,7 +74,6 @@ public class ResourceInjectionUtil {
     }
     return selectionScript;
   }
-  
   
   private static String generateScriptInjector(String scriptUrl) {
     if (isRelativeURL(scriptUrl)) {

@@ -18,14 +18,12 @@ package com.google.gwt.dev.jjs;
 import com.google.gwt.dev.jjs.Correlation.Axis;
 import com.google.gwt.dev.jjs.CorrelationFactory.RealCorrelationFactory;
 
-import java.io.Serializable;
-
 /**
  * Tracks file and line information for AST nodes.
  * 
  * TODO: make this package-protected?
  */
-public class SourceInfoCorrelation implements SourceInfo, Serializable {
+public class SourceInfoCorrelation implements SourceInfo {
 
   private static final int NUM_AXES = Axis.values().length;
 

@@ -38,7 +38,7 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 
 /**
- * An in-process implementation of RequestContext
+ * An in-process implementation of RequestContext.
  */
 class InProcessRequestContext extends AbstractRequestContext {
   class RequestContextHandler implements InvocationHandler {

@@ -73,14 +73,17 @@ public abstract class SimpleViolation {
       this.v = v;
     }
 
+    @Override
     public Object getKey() {
       return v.getLeafBean();
     }
 
+    @Override
     public String getMessage() {
       return v.getMessage();
     }
 
+    @Override
     public String getPath() {
       /*
        * TODO(bobv,nchalko): Determine the correct way to extract this
@@ -89,6 +92,7 @@ public abstract class SimpleViolation {
       return v.getPropertyPath().toString();
     }
 
+    @Override
     public Object getUserDataObject() {
       return v;
     }

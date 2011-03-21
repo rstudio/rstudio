@@ -23,7 +23,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Timer;
 
 /**
- * Tests {@link Storage}
+ * Tests {@link Storage}.
  * 
  * Because HtmlUnit does not support Storage, you will need to run these tests
  * manually by adding this line to your VM args: -Dgwt.args="-runStyle Manual:1"

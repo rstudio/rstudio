@@ -41,7 +41,6 @@ public interface Momentum {
      *          current position
      * @param initialVelocity the initial velocity in pixels per millisecond,
      *          which is also set to the current velocity
-     * @param elapsedMillis the elapsed time since the momentum took over
      */
     public State(Point initialPosition, Point initialVelocity) {
       this.initialPosition = initialPosition;

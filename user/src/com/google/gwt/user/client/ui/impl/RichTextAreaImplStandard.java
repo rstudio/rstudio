@@ -25,9 +25,7 @@ import com.google.gwt.user.client.ui.RichTextArea.Justification;
 /**
  * Basic rich text platform implementation.
  */
-@SuppressWarnings("deprecation")
 public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implements
-    RichTextArea.BasicFormatter, RichTextArea.ExtendedFormatter,
     RichTextArea.Formatter {
 
   /**

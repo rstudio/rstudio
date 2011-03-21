@@ -1277,7 +1277,6 @@ public class ModuleDefSchema extends Schema {
     }
   }
 
-  
   /**
    * Converts a comma-separated string into an array of property value tokens.
    */

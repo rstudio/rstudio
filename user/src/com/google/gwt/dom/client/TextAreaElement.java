@@ -67,6 +67,7 @@ public class TextAreaElement extends Element {
   /**
    * @deprecated use {@link #isDisabled()} instead
    */
+  @Deprecated
   public final native boolean getDisabled() /*-{
     return !!this.disabled;
   }-*/;
@@ -91,6 +92,7 @@ public class TextAreaElement extends Element {
   /**
    * @deprecated use {@link #isReadOnly()} instead.
    */
+  @Deprecated
   public final native boolean getReadOnly() /*-{
     return !!this.readOnly;
   }-*/;

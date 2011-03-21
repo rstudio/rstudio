@@ -105,7 +105,7 @@ import java.util.List;
  */
 @SuppressWarnings("deprecation")
 public class SuggestBox extends Composite implements HasText, HasFocus,
-    HasAnimation, SourcesClickEvents, SourcesFocusEvents, SourcesChangeEvents,
+    HasAnimation, SourcesClickEvents, SourcesChangeEvents,
     SourcesKeyboardEvents, FiresSuggestionEvents, HasAllKeyHandlers,
     HasValue<String>, HasSelectionHandlers<Suggestion>,
     IsEditor<LeafValueEditor<String>> {

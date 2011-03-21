@@ -90,8 +90,7 @@ public class ConditionWhenPropertyIs extends Condition {
               cost--;
             }
           }
-        }
-        catch (BadPropertyValueException e) {
+        } catch (BadPropertyValueException e) {
           // do nothing - currently, only selection
           // properties support fall back values
         }

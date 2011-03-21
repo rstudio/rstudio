@@ -967,7 +967,7 @@ public class GWTShellServlet extends HttpServlet {
 
         // We create proxies for ServletContext and ServletConfig to enable
         // RemoteServiceServlets to load public and generated resources via
-        // ServeletContext.getResourceAsStream()
+        // ServletContext.getResourceAsStream()
         //
         ServletContext context = new HostedModeServletContextProxy(
             getServletContext(), moduleDef, getShellWorkDirs());

@@ -185,7 +185,7 @@ class RequestState implements EntityCodex.EntitySource {
 
   /**
    * If the given domain object has been previously associated with an id,
-   * return it
+   * return it.
    */
   public SimpleProxyId<?> getStableId(Object domain) {
     return domainObjectsToId.get(domain);

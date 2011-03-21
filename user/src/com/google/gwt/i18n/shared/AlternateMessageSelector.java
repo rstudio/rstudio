@@ -15,7 +15,6 @@
  */
 package com.google.gwt.i18n.shared;
 
-
 /**
  * Defines a way of choosing between alternate messages based on a parameter
  * value.

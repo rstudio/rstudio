@@ -44,6 +44,7 @@ public final class Timestamp_CustomFieldSerializer extends
     streamWriter.writeInt(instance.getNanos());
   }
 
+  @Override
   public void deserializeInstance(SerializationStreamReader streamReader,
       Timestamp instance) throws SerializationException {
     deserialize(streamReader, instance);
@@ -60,6 +61,7 @@ public final class Timestamp_CustomFieldSerializer extends
     return instantiate(streamReader);
   }
 
+  @Override
   public void serializeInstance(SerializationStreamWriter streamWriter,
       Timestamp instance) throws SerializationException {
     serialize(streamWriter, instance);

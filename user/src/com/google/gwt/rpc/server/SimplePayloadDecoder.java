@@ -205,7 +205,7 @@ public class SimplePayloadDecoder {
         // use ordinal (and not name), since name might have been obfuscated
         int ordinal = readCommand(IntValueCommand.class).getValue();
 
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings("rawtypes")
         Class<? extends Enum> clazz = findClass(token).asSubclass(Enum.class);
         
         /*

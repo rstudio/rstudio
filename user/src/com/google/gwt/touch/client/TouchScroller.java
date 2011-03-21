@@ -305,7 +305,6 @@ public class TouchScroller {
    * Construct a new {@link TouchScroller}. This constructor should be called
    * using the static method {@link #createIfSupported()}.
    * 
-   * @param widget the widget to augment
    * @see #createIfSupported()
    */
   protected TouchScroller() {

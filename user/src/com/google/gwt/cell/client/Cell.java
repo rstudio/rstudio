@@ -94,7 +94,7 @@ public interface Cell<C> {
   /**
    * Get the set of events that this cell consumes. The container that uses this
    * cell should only pass these events to
-   * {@link #onBrowserEvent(Context, Element, Object, NativeEvent, ValueUpdater))}
+   * {@link #onBrowserEvent(Context, Element, Object, NativeEvent, ValueUpdater)}
    * when the event occurs.
    * 
    * <p>
@@ -170,8 +170,8 @@ public interface Cell<C> {
   /**
    * This method may be used by cell containers to set the value on a single
    * cell directly, rather than using {@link Element#setInnerHTML(String)}. See
-   * {@link AbstractCell#setValue(Context)} for a default implementation that
-   * uses {@link #render(Context, SafeHtmlBuilder))}.
+   * {@link AbstractCell#setValue(Context, Element, Object)} for a default
+   * implementation that uses {@link #render(Context, Object, SafeHtmlBuilder)}.
    * 
    * @param context the {@link Context} of the cell
    * @param parent the parent Element

@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * Custom field serializer for {@link java.util.LinkedHashMap} for the server
  * (uses reflection).
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings("rawtypes")
 public final class LinkedHashMap_CustomFieldSerializer extends
     CustomFieldSerializer<LinkedHashMap> {
 
@@ -62,6 +62,7 @@ public final class LinkedHashMap_CustomFieldSerializer extends
    * @param instance the instance to check
    * @return the value of instance.accessOrder
    */
+  @SuppressWarnings("unchecked")
   public static boolean getAccessOrderNoReflection(LinkedHashMap instance) {
     /*
      * Clone the instance so our modifications won't affect the original. In
@@ -129,6 +130,7 @@ public final class LinkedHashMap_CustomFieldSerializer extends
     return getAccessOrderNoReflection(instance);
   }
 
+  @Override
   public void deserializeInstance(SerializationStreamReader streamReader,
       LinkedHashMap instance) throws SerializationException {
     deserialize(streamReader, instance);
@@ -145,6 +147,7 @@ public final class LinkedHashMap_CustomFieldSerializer extends
     return instantiate(streamReader);
   }
 
+  @Override
   public void serializeInstance(SerializationStreamWriter streamWriter,
       LinkedHashMap instance) throws SerializationException {
     serialize(streamWriter, instance);

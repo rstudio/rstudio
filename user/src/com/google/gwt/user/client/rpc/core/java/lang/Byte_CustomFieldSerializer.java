@@ -42,6 +42,7 @@ public final class Byte_CustomFieldSerializer extends
     streamWriter.writeByte(instance.byteValue());
   }
 
+  @Override
   public void deserializeInstance(SerializationStreamReader streamReader,
       Byte instance) throws SerializationException {
     deserialize(streamReader, instance);
@@ -58,6 +59,7 @@ public final class Byte_CustomFieldSerializer extends
     return instantiate(streamReader);
   }
 
+  @Override
   public void serializeInstance(SerializationStreamWriter streamWriter,
       Byte instance) throws SerializationException {
     serialize(streamWriter, instance);

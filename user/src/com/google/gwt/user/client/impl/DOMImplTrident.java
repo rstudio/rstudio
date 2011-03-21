@@ -24,16 +24,12 @@ import com.google.gwt.user.client.Event;
  * {@link com.google.gwt.user.client.impl.DOMImpl}.
  */
 public abstract class DOMImplTrident extends DOMImpl {
-  @SuppressWarnings("unused")
   private static JavaScriptObject callDispatchEvent;
 
-  @SuppressWarnings("unused")
   private static JavaScriptObject callDispatchDblClickEvent;
 
-  @SuppressWarnings("unused")
   private static JavaScriptObject callDispatchOnLoadEvent;
 
-  @SuppressWarnings("unused")
   private static JavaScriptObject callDispatchUnhandledEvent;
 
   /**
@@ -42,7 +38,6 @@ public abstract class DOMImplTrident extends DOMImpl {
    * 
    * @return <code>false</code> to cancel the event
    */
-  @SuppressWarnings("unused")
   private static native boolean previewEventImpl() /*-{
     var isCancelled = false; 
     for (var i = 0; i < $wnd.__gwt_globalEventArray.length; i++) {

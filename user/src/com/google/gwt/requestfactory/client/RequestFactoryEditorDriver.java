@@ -44,8 +44,7 @@ import com.google.gwt.requestfactory.shared.Violation;
  * @param <P> the type of Proxy being edited
  * @param <E> the type of Editor that will edit the Record
  * @see HasRequestContext
- * @see {@link com.google.gwt.requestfactory.client.testing.MockRequestFactoryEditorDriver
- *      MockRequestFactoryEditorDriver}
+ * @see com.google.gwt.requestfactory.client.testing.MockRequestFactoryEditorDriver MockRequestFactoryEditorDriver
  */
 public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>>
     extends EditorDriver<RequestContext> {

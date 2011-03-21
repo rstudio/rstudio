@@ -42,6 +42,7 @@ public final class Float_CustomFieldSerializer extends
     streamWriter.writeFloat(instance.floatValue());
   }
 
+  @Override
   public void deserializeInstance(SerializationStreamReader streamReader,
       Float instance) throws SerializationException {
     deserialize(streamReader, instance);
@@ -58,6 +59,7 @@ public final class Float_CustomFieldSerializer extends
     return instantiate(streamReader);
   }
 
+  @Override
   public void serializeInstance(SerializationStreamWriter streamWriter,
       Float instance) throws SerializationException {
     serialize(streamWriter, instance);

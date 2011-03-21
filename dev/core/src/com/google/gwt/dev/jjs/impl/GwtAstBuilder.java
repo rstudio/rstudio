@@ -1608,6 +1608,7 @@ public class GwtAstBuilder {
       }
     }
 
+    @Override
     public boolean visit(ForStatement x, BlockScope scope) {
       // SEE NOTE ON JDT FORCED OPTIMIZATIONS
       if (isOptimizedFalse(x.condition)) {
@@ -1616,6 +1617,7 @@ public class GwtAstBuilder {
       return true;
     }
 
+    @Override
     public boolean visit(IfStatement x, BlockScope scope) {
       // SEE NOTE ON JDT FORCED OPTIMIZATIONS
       if (isOptimizedFalse(x.condition)) {
@@ -1716,7 +1718,8 @@ public class GwtAstBuilder {
     public boolean visit(TypeDeclaration x, CompilationUnitScope scope) {
       return visit(x);
     }
-
+    
+    @Override
     public boolean visit(WhileStatement x, BlockScope scope) {
       // SEE NOTE ON JDT FORCED OPTIMIZATIONS
       if (isOptimizedFalse(x.condition)) {

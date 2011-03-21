@@ -35,8 +35,8 @@ public class Logging {
   /**
    * Logs a message.
    * 
-   * @param serializedLogRecordString a json serialized LogRecord, as provided by
-   * {@link com.google.gwt.logging.client.JsonLogRecordClientUtil.logRecordAsJsonObject(LogRecord)}
+   * @param logRecordJson a json serialized LogRecord, as provided by
+   * {@link com.google.gwt.logging.client.JsonLogRecordClientUtil#logRecordAsJsonObject(LogRecord)}
    * @throws RemoteLoggingException if logging fails
    */
   public static void logMessage(String logRecordJson)

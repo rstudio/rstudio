@@ -43,6 +43,7 @@ public class LinkElement extends Element {
    * links, and may be used to activate or deactivate style sheets.
    * @deprecated use {@link #isDisabled()} instead.
    */
+  @Deprecated
   public final native boolean getDisabled() /*-{
     return !!this.disabled;
   }-*/;

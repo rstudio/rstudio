@@ -49,7 +49,6 @@ class NodeImpl implements Node, Serializable {
 
   private final Object key;
 
-
   private NodeImpl(String name, Object key, Integer index, boolean iterable) {
     this.name = name;
     this.key = key;

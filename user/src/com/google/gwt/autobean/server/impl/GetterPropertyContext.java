@@ -15,7 +15,6 @@
  */
 package com.google.gwt.autobean.server.impl;
 
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 

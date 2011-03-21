@@ -30,8 +30,9 @@ public class Pair<A, B> {
     this.b = b;
   }
 
+  @Override
   public boolean equals(Object o) {
-    if (!(o instanceof Pair)) {
+    if (!(o instanceof Pair<?, ?>)) {
       return false;
     }
     Pair<?, ?> other = (Pair<?, ?>) o;
@@ -46,6 +47,7 @@ public class Pair<A, B> {
     return b;
   }
 
+  @Override
   public int hashCode() {
     return a.hashCode() * 13 + b.hashCode() * 7;
   }

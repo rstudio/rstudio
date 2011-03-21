@@ -25,7 +25,6 @@ public class JSONArray extends JSONValue {
   /**
    * Called from {@link #getUnwrapper()}. 
    */
-  @SuppressWarnings("unused")
   private static JavaScriptObject unwrap(JSONArray value) {
     return value.jsArray;
   }

@@ -40,7 +40,7 @@ public final class CodeDownloadException extends RuntimeException {
     this.reason = reason;
   }
 
-  public final Reason getReason() {
+  public Reason getReason() {
     return reason;
   }
 }

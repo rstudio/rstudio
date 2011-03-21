@@ -45,7 +45,6 @@ public class JSONBoolean extends JSONValue {
   /**
    * Called from {@link #getUnwrapper()}. 
    */
-  @SuppressWarnings("unused")
   private static boolean unwrap(JSONBoolean value) {
     return value.value;
   }

@@ -47,7 +47,7 @@ public final class StorageEvent extends JavaScriptObject {
    * 
    * <p>
    * Apply your StorageEventHandler using
-   * {@link Storage#addStorageEventHandler(Handler)}.
+   * {@link Storage#addStorageEventHandler(StorageEvent.Handler)}.
    * </p>
    * 
    * @see StorageEvent
@@ -124,4 +124,3 @@ public final class StorageEvent extends JavaScriptObject {
     return this.url || this.uri;  // Older Safari browsers have 'uri' instead of 'url'
   }-*/;
 }
-

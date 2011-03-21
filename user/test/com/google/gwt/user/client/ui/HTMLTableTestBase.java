@@ -259,7 +259,7 @@ public abstract class HTMLTableTestBase extends GWTTestCase {
   /**
    * Ensures that {@link HTMLTable#setWidget(int, int, IsWidget)} does
    * <b>NOT</b> throws a {@link NullPointerException} when the Widget argument
-   * is <code>null</code>, for compatibility with setWidget(Widget) foolishness
+   * is <code>null</code>, for compatibility with setWidget(Widget) foolishness.
    */
   public void testSetNullWidgetAsIsWidget() {
     HTMLTable t = getTable(2, 2);

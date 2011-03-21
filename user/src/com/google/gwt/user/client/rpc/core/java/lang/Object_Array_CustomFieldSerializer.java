@@ -42,11 +42,13 @@ public class Object_Array_CustomFieldSerializer extends
     }
   }
 
+  @Override
   public void deserializeInstance(SerializationStreamReader streamReader,
       Object[] instance) throws SerializationException {
     deserialize(streamReader, instance);
   }
 
+  @Override
   public void serializeInstance(SerializationStreamWriter streamWriter,
       Object[] instance) throws SerializationException {
     serialize(streamWriter, instance);

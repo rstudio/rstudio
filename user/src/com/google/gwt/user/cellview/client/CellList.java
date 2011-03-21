@@ -288,7 +288,7 @@ public class CellList<T> extends AbstractHasData<T> {
    * @param html the message to display when there are no results
    * @see #getEmptyListMessage()
    * @deprecated as of GWT 2.3, use
-   *             {@link #setEmptyDataWidget(com.google.gwt.user.client.ui.Widget)}
+   *             {@link #setEmptyListWidget(com.google.gwt.user.client.ui.Widget)}
    *             instead
    */
   @Deprecated

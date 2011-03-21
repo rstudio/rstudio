@@ -283,8 +283,7 @@ public abstract class ServiceLayer {
    * @param domainClass the server-side type to be transported to the client
    * @param clientType the type to which the returned type must be assignable
    * @param required if {@code true} and no mapping is available, throw an
-   *          {@link UnexpectedException}, othrewise the method will return
-   *          {@code null}
+   *          exception, otherwise the method will return {@code null}
    * @return a class that represents {@code domainClass} on the client which is
    *         assignable to {@code clientType}
    */
@@ -335,7 +334,7 @@ public abstract class ServiceLayer {
   /**
    * Given a RequestContext method declaration, resolve the
    * {@link ServiceLocator} that should be used when invoking the domain method.
-   * This method will only be called if {@link #requiresServiceLocator(Method)}
+   * This method will only be called if {@link #requiresServiceLocator(Method, Method)}
    * returned {@code true} for the associated domain method.
    * 
    * @param contextMethod a RequestContext method declaration

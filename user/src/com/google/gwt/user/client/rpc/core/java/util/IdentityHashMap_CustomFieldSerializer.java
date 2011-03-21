@@ -25,26 +25,27 @@ import java.util.IdentityHashMap;
 /**
  * Custom field serializer for {@link java.util.HashMap}.
  */
+@SuppressWarnings("rawtypes")
 public final class IdentityHashMap_CustomFieldSerializer extends
     CustomFieldSerializer<IdentityHashMap> {
 
-  @SuppressWarnings("unchecked")
   public static void deserialize(SerializationStreamReader streamReader,
       IdentityHashMap instance) throws SerializationException {
     Map_CustomFieldSerializerBase.deserialize(streamReader, instance);
   }
 
-  @SuppressWarnings("unchecked")
   public static void serialize(SerializationStreamWriter streamWriter,
       IdentityHashMap instance) throws SerializationException {
     Map_CustomFieldSerializerBase.serialize(streamWriter, instance);
   }
 
+  @Override
   public void deserializeInstance(SerializationStreamReader streamReader,
       IdentityHashMap instance) throws SerializationException {
     deserialize(streamReader, instance);
   }
 
+  @Override
   public void serializeInstance(SerializationStreamWriter streamWriter,
       IdentityHashMap instance) throws SerializationException {
     serialize(streamWriter, instance);

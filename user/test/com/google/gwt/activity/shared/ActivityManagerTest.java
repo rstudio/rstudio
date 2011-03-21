@@ -353,7 +353,7 @@ public class ActivityManagerTest extends TestCase {
   }
   
   /**
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=5375
+   * @see http://code.google.com/p/google-web-toolkit/issues/detail?id=5375
    */
   public void testNullDisplayOnPlaceChange() {
     manager.setDisplay(realDisplay);

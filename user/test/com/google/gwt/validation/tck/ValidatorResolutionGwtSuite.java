@@ -15,7 +15,6 @@
  */
 package com.google.gwt.validation.tck;
 
-
 import junit.framework.Test;
 
 import org.hibernate.jsr303.tck.tests.constraints.validatorresolution.ValidatorResolutionCompileTest;

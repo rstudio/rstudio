@@ -53,7 +53,6 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
    * goes away?
    */
 
-
   /**
    * File name for computeScriptBase.js.
    */
@@ -78,7 +77,6 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
    * File name for processMetas.js.
    */
   protected static final String PROCESS_METAS_JS = "com/google/gwt/core/ext/linker/impl/processMetasOld.js";
-
 
   protected static void replaceAll(StringBuffer buf, String search,
       String replace) {
@@ -181,7 +179,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   
   /**
    * Generate a selection script. The selection information should previously
-   * have been scanned using {@link #setupPermutationsMap(ArtifactSet)}.
+   * have been scanned using {@link PermutationsUtil#setupPermutationsMap(ArtifactSet)}.
    */
   protected String fillSelectionScriptTemplate(StringBuffer selectionScript,
       TreeLogger logger, LinkerContext context, ArtifactSet artifacts,
@@ -299,7 +297,6 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   
   protected abstract String getSelectionScriptTemplate(TreeLogger logger,
       LinkerContext context) throws UnableToCompleteException;
-
   
   /**
    * Add the Development Mode file to the artifact set.

@@ -84,10 +84,6 @@ public class TypeConstrainer {
     return false;
   }
 
-  private static JClassType[] makeArray(JClassType... classTypes) {
-    return classTypes;
-  }
-
   /**
    * Check whether <code>param</code> occurs anywhere within <code>type</code>.
    */

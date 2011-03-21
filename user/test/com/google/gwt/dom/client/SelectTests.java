@@ -131,7 +131,7 @@ public class SelectTests extends GWTTestCase {
   }
   
   /**
-   * optgroups
+   * Test optgroups.
    * 
    * @see <a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=4916">Issue 4916</a>
    */

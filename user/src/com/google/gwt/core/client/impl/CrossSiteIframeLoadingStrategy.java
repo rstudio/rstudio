@@ -43,7 +43,6 @@ public class CrossSiteIframeLoadingStrategy implements LoadingStrategy {
       return (IntToIntMap) JavaScriptObject.createArray();
     }
 
-    @SuppressWarnings("unused")
     protected IntToIntMap() {
     }
 
@@ -69,7 +68,6 @@ public class CrossSiteIframeLoadingStrategy implements LoadingStrategy {
    * chain of references between the script tag and the function callback, and
    * IE 6/7 can't garbage collect them.
    */
-  @SuppressWarnings("unused")
   private static native void clearCallbacks(JavaScriptObject script) /*-{
     var nop = new Function('');
     script.onerror = script.onload = script.onreadystatechange = nop;
@@ -78,7 +76,6 @@ public class CrossSiteIframeLoadingStrategy implements LoadingStrategy {
   /**
    * Clear the success callback for fragment <code>fragment</code>.
    */
-  @SuppressWarnings("unused")
   private static native void clearOnSuccess(int fragment) /*-{
     delete __gwtModuleFunction['runAsyncCallback'+fragment];
   }-*/;

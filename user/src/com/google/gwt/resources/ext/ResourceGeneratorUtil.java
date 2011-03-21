@@ -366,13 +366,14 @@ public final class ResourceGeneratorUtil {
 
     return currentMethod;
   }
-  
+
   /**
    * Try to find a resource with the given resourceName.  It will use the default
    * search order to locate the resource as is used by {@link #findResources}.
    * 
    * @param logger
-   * @param context
+   * @param genContext
+   * @param resourceContext
    * @param resourceName
    * @return a URL for the resource, if found
    */
@@ -397,7 +398,7 @@ public final class ResourceGeneratorUtil {
    * @param context
    * @param method
    */
-  private static void addTypeRequirementsForMethod(ResourceContext context, 
+  private static void addTypeRequirementsForMethod(ResourceContext context,
       JMethod method) {
     ClientBundleRequirements reqs = context.getRequirements();
     if (reqs != null) {
@@ -405,7 +406,7 @@ public final class ResourceGeneratorUtil {
       reqs.addTypeHierarchy((JClassType) method.getReturnType());
     }
   }
-  
+
   /**
    * We want to warn the user about any annotations from ImageBundle or the old
    * incubator code.
@@ -422,7 +423,7 @@ public final class ResourceGeneratorUtil {
       }
     }
   }
-  
+
   /**
    * Main implementation of findResources.
    */
@@ -445,7 +446,7 @@ public final class ResourceGeneratorUtil {
           logger.log(TreeLogger.SPAM, "Trying default extension " + extension);
           for (Locator locator : locators) {
             URL resourceUrl = tryFindResource(locator, context,
-                getPathRelativeToPackage(method.getEnclosingType().getPackage(), 
+                getPathRelativeToPackage(method.getEnclosingType().getPackage(),
                     method.getName() + extension), locale);
 
             // Take the first match
@@ -510,7 +511,7 @@ public final class ResourceGeneratorUtil {
     addTypeRequirementsForMethod(context, method);
     return toReturn;
   }
- 
+
   /**
    * Get default list of resource Locators, in the default order.
    * 
@@ -522,10 +523,10 @@ public final class ResourceGeneratorUtil {
       NamedFileLocator.INSTANCE,
       new ResourceOracleLocator(genContext.getResourcesOracle()),
       new ClassLoaderLocator(Thread.currentThread().getContextClassLoader())};
-    
+
     return locators;
   }
- 
+
   /**
    * Get the current locale string.
    * 
@@ -595,7 +596,7 @@ public final class ResourceGeneratorUtil {
 
     return toReturn;
   }
- 
+
   /**
    * Performs the locale lookup function for a given resource name.  Will also
    * add the located resource to the requirements object for the context.
@@ -609,7 +610,7 @@ public final class ResourceGeneratorUtil {
    */
   private static URL tryFindResource(Locator locator, ResourceContext context,
       String resourceName, String locale) {
-    
+
     URL toReturn = tryFindResource(locator, resourceName, locale);
     if (toReturn != null && context != null) {
       ClientBundleRequirements reqs = context.getRequirements();
@@ -617,7 +618,7 @@ public final class ResourceGeneratorUtil {
         reqs.addResolvedResource(resourceName, toReturn);
       }
     }
-    
+
     return toReturn;
   }
 

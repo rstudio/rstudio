@@ -233,7 +233,7 @@ public class LayoutPanel extends ComplexPanel implements AnimatedLayout,
   /**
    * Overloaded version for IsWidget.
    * 
-   * @see #setWidgetBottomHeight(Widget,double, Unit, double, Unit)
+   * @see #setWidgetBottomHeight(Widget,double, Style.Unit, double, Style.Unit)
    */
   public void setWidgetBottomHeight(IsWidget child, double bottom,
       Unit bottomUnit, double height, Unit heightUnit) {
@@ -271,7 +271,7 @@ public class LayoutPanel extends ComplexPanel implements AnimatedLayout,
   /**
    * Overloaded version for IsWidget.
    * 
-   * @see #setWidgetLeftRight(Widget,double, Unit, double, Unit)
+   * @see #setWidgetLeftRight(Widget,double, Style.Unit, double, Style.Unit)
    */
   public void setWidgetLeftRight(IsWidget child, double left, Unit leftUnit,
       double right, Unit rightUnit) {
@@ -297,7 +297,7 @@ public class LayoutPanel extends ComplexPanel implements AnimatedLayout,
   /**
    * Overloaded version for IsWidget.
    * 
-   * @see #setWidgetLeftWidth(Widget,double, Unit, double, Unit)
+   * @see #setWidgetLeftWidth(Widget,double, Style.Unit, double, Style.Unit)
    */
   public void setWidgetLeftWidth(IsWidget child, double left, Unit leftUnit,
       double width, Unit widthUnit) {
@@ -323,7 +323,7 @@ public class LayoutPanel extends ComplexPanel implements AnimatedLayout,
   /**
    * Overloaded version for IsWidget.
    * 
-   * @see #setWidgetRightWidth(Widget,double, Unit, double, Unit)
+   * @see #setWidgetRightWidth(Widget,double, Style.Unit, double, Style.Unit)
    */
   public void setWidgetRightWidth(IsWidget child, double right, Unit rightUnit,
       double width, Unit widthUnit) {
@@ -349,7 +349,7 @@ public class LayoutPanel extends ComplexPanel implements AnimatedLayout,
   /**
    * Overloaded version for IsWidget.
    * 
-   * @see #setWidgetTopBottom(Widget,double, Unit, double, Unit)
+   * @see #setWidgetTopBottom(Widget,double, Style.Unit, double, Style.Unit)
    */
   public void setWidgetTopBottom(IsWidget child, double top, Unit topUnit,
       double bottom, Unit bottomUnit) {
@@ -375,7 +375,7 @@ public class LayoutPanel extends ComplexPanel implements AnimatedLayout,
   /**
    * Overloaded version for IsWidget.
    * 
-   * @see #setWidgetTopHeight(Widget,double, Unit, double, Unit)
+   * @see #setWidgetTopHeight(Widget,double, Style.Unit, double, Style.Unit)
    */
   public void setWidgetTopHeight(IsWidget child, double top, Unit topUnit,
       double height, Unit heightUnit) {

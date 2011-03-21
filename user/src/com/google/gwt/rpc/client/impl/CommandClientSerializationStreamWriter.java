@@ -189,7 +189,6 @@ public class CommandClientSerializationStreamWriter extends
     return x;
   }
 
-  @SuppressWarnings("unused")
   @UnsafeNativeLong
   private native ValueCommand makeValue(Object value) /*-{
     var type;

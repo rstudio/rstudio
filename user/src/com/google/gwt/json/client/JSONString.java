@@ -26,7 +26,6 @@ public class JSONString extends JSONValue {
   /**
    * Called from {@link #getUnwrapper()}. 
    */
-  @SuppressWarnings("unused")
   private static String unwrap(JSONString value) {
     return value.value;
   }

@@ -109,7 +109,6 @@ public class GWTTestSuite extends TestSuite {
    * Breaks non-homogeneous suites into two or more homogeneous suites. A
    * homogeneous suite is one in which all tests run within a single module.
    */
-  @SuppressWarnings("unchecked")
   private TestSuite[] homogenize(TestSuite suite) {
     String suiteName = suite.getName();
 

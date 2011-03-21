@@ -37,7 +37,6 @@ class StorageImplNonNativeEvents extends StorageImpl {
     };
   }-*/;
 
-  @SuppressWarnings("unused")
   private static void fireStorageEvent(
       String key, String oldValue, String newValue, String storage) {
     if (hasStorageEventHandlers()) {
@@ -46,6 +45,7 @@ class StorageImplNonNativeEvents extends StorageImpl {
     }
   }
 
+  @Override
   public void clear(String storage) {
     super.clear(storage);
     fireStorageEvent(null, null, null, storage);

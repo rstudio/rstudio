@@ -42,6 +42,7 @@ public final class Integer_CustomFieldSerializer extends
     streamWriter.writeInt(instance.intValue());
   }
 
+  @Override
   public void deserializeInstance(SerializationStreamReader streamReader,
       Integer instance) throws SerializationException {
     deserialize(streamReader, instance);
@@ -58,6 +59,7 @@ public final class Integer_CustomFieldSerializer extends
     return instantiate(streamReader);
   }
 
+  @Override
   public void serializeInstance(SerializationStreamWriter streamWriter,
       Integer instance) throws SerializationException {
     serialize(streamWriter, instance);

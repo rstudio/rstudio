@@ -163,8 +163,9 @@ public class WrapLayout extends FlowLayout {
 
       int targetWidth = target.getSize().width;
 
-      if (targetWidth == 0)
+      if (targetWidth == 0) {
         targetWidth = Integer.MAX_VALUE;
+      }
 
       int hgap = getHgap();
       int vgap = getVgap();

@@ -36,7 +36,6 @@ public class NamedFrame extends Frame {
 
   // Used inside JSNI, so please don't delete this field just because
   // your compiler or IDE says it's unused.
-  @SuppressWarnings("unused")
   private static JavaScriptObject PATTERN_NAME;
 
   static {

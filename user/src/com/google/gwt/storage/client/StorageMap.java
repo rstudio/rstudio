@@ -49,7 +49,7 @@ import java.util.Set;
  * (or other Collection) methods mandate the use of a
  * {@link NullPointerException} if some argument is <code>null</code> (e.g.
  * {@link #remove(Object)} remove(null)). this Map emits
- * {@link JavaScriptException}s instead;</li>
+ * {@link com.google.gwt.core.client.JavaScriptException}s instead;</li>
  * <li><em>String values and keys</em> - All keys and values in this Map are
  * String types.</li>
  * </ol>
@@ -67,7 +67,7 @@ public class StorageMap extends AbstractMap<String, String> {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("rawtypes")
     public boolean equals(Object obj) {
       if (obj == null) {
         return false;
@@ -145,11 +145,13 @@ public class StorageMap extends AbstractMap<String, String> {
    * Represents a Set<Map.Entry> over all Storage items
    */
   private class StorageEntrySet extends AbstractSet<Map.Entry<String, String>> {
+    @Override
     public void clear() {
       StorageMap.this.clear();
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("rawtypes")
+    @Override
     public boolean contains(Object o) {
       if (o == null || !(o instanceof Map.Entry)) {
         return false;
@@ -159,11 +161,13 @@ public class StorageMap extends AbstractMap<String, String> {
       return key != null && containsKey(key) && eq(get(key), e.getValue());
     }
 
+    @Override
     public Iterator<Map.Entry<String, String>> iterator() {
       return new StorageEntryIterator();
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("rawtypes")
+    @Override
     public boolean remove(Object o) {
       if (o == null || !(o instanceof Map.Entry)) {
         return false;
@@ -180,6 +184,7 @@ public class StorageMap extends AbstractMap<String, String> {
       return false;
     }
 
+    @Override
     public int size() {
       return StorageMap.this.size();
     }
@@ -205,6 +210,7 @@ public class StorageMap extends AbstractMap<String, String> {
    *
    * @see Storage#clear()
    */
+  @Override
   public void clear() {
     storage.clear();
   }
@@ -213,6 +219,7 @@ public class StorageMap extends AbstractMap<String, String> {
    * Returns <code>true</code> if the Storage contains the specified key, <code>
    * false</code> otherwise.
    */
+  @Override
   public boolean containsKey(Object key) {
     return storage.getItem(key.toString()) != null;
   }
@@ -222,6 +229,7 @@ public class StorageMap extends AbstractMap<String, String> {
    * <code>false</code> otherwise (or if the specified key is <code>null</code>
    * ).
    */
+  @Override
   public boolean containsValue(Object value) {
     int s = size();
     for (int i = 0; i < s; i++) {
@@ -235,6 +243,7 @@ public class StorageMap extends AbstractMap<String, String> {
   /**
    * Returns a Set containing all entries of the Storage.
    */
+  @Override
   public Set<Map.Entry<String, String>> entrySet() {
     if (entrySet == null) {
       entrySet = new StorageEntrySet();
@@ -248,6 +257,7 @@ public class StorageMap extends AbstractMap<String, String> {
    * @param key the key identifying the value
    * @see Storage#getItem(String)
    */
+  @Override
   public String get(Object key) {
     if (key == null) {
       return null;
@@ -262,6 +272,7 @@ public class StorageMap extends AbstractMap<String, String> {
    * @param value the value associated with the key (not <code>null</code>)
    * @see Storage#setItem(String, String)
    */
+  @Override
   public String put(String key, String value) {
     if (key == null || value == null) {
       throw new IllegalArgumentException("Key and value cannot be null!");
@@ -279,6 +290,7 @@ public class StorageMap extends AbstractMap<String, String> {
    *         was not present in the Storage
    * @see Storage#removeItem(String)
    */
+  @Override
   public String remove(Object key) {
     String k = key.toString();
     String old = storage.getItem(k);
@@ -292,6 +304,7 @@ public class StorageMap extends AbstractMap<String, String> {
    * @return the number of items
    * @see Storage#getLength()
    */
+  @Override
   public int size() {
     return storage.getLength();
   }

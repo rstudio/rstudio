@@ -46,6 +46,7 @@ public final class Time_CustomFieldSerializer extends
     streamWriter.writeLong(instance.getTime());
   }
 
+  @Override
   public void deserializeInstance(SerializationStreamReader streamReader,
       Time instance) throws SerializationException {
     deserialize(streamReader, instance);
@@ -62,6 +63,7 @@ public final class Time_CustomFieldSerializer extends
     return instantiate(streamReader);
   }
 
+  @Override
   public void serializeInstance(SerializationStreamWriter streamWriter,
       Time instance) throws SerializationException {
     serialize(streamWriter, instance);

@@ -83,7 +83,7 @@ public class Link {
   /**
    * Options for Link.
    */
-  public interface LinkOptions extends CompileTaskOptions, OptionExtraDir,
+  public interface LinkOptions extends OptionExtraDir,
       OptionWarDir, OptionDeployDir, LegacyLinkOptions {
   }
 
@@ -211,7 +211,6 @@ public class Link {
    * permutation. It sees the generated artifacts for one permutation compile,
    * and it runs the per-permutation part of each shardable linker.
    */
-  @SuppressWarnings("unchecked")
   public static void linkOnePermutationToJar(TreeLogger logger,
       ModuleDef module, ArtifactSet generatedArtifacts,
       PermutationResult permResult, File jarFile,
@@ -307,7 +306,7 @@ public class Link {
    * emitted artifacts, and all other artifacts are dropped except @Transferable
    * ones. This method simulates the thinning that happens in a parallel build.
    */
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings("rawtypes")
   public static ArtifactSet simulateTransferThinning(ArtifactSet artifacts,
       StandardLinkerContext context) {
     ArtifactSet thinnedArtifacts = new ArtifactSet();

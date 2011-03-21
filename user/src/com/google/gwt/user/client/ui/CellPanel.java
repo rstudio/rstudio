@@ -138,7 +138,7 @@ public abstract class CellPanel extends ComplexPanel {
   /**
    * Overloaded version for IsWidget.
    * 
-   * @see #setCellHorizontalAlignment(Widget,HorizontalAlignmentConstant)
+   * @see #setCellHorizontalAlignment(Widget,HasHorizontalAlignment.HorizontalAlignmentConstant)
    */
   public void setCellHorizontalAlignment(IsWidget w,
       HorizontalAlignmentConstant align) {
@@ -152,7 +152,7 @@ public abstract class CellPanel extends ComplexPanel {
    * @param align the widget's vertical alignment, as defined in
    *          {@link HasVerticalAlignment}.
    */
-  public void setCellVerticalAlignment(Widget w, VerticalAlignmentConstant align) {
+  public void setCellVerticalAlignment(Widget w, HasVerticalAlignment.VerticalAlignmentConstant align) {
     Element td = getWidgetTd(w);
     if (td != null) {
       setCellVerticalAlignment(td, align);
@@ -162,7 +162,7 @@ public abstract class CellPanel extends ComplexPanel {
   /**
    * Overloaded version for IsWidget.
    * 
-   * @see #setCellVerticalAlignment(Widget,VerticalAlignmentConstant)
+   * @see #setCellVerticalAlignment(Widget,HasVerticalAlignment.VerticalAlignmentConstant)
    */
   public void setCellVerticalAlignment(IsWidget w, VerticalAlignmentConstant align) {
     this.setCellVerticalAlignment(w.asWidget(),align);

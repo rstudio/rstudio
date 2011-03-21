@@ -56,7 +56,7 @@ public class DefaultSelectionProperty implements SelectionProperty {
    * @param possibleValues the set of possible values, must not be null and
    *     will be returned to callers, so a copy should be passed into this
    *     ctor if the caller will use this set later
-   * @param map the map propertyValue to fallback values
+   * @param fallbackValueMap the map propertyValue to fallback values
    */
   public DefaultSelectionProperty(String currentValue, String fallbackValue,
       String name, SortedSet<String> possibleValues,

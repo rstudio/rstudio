@@ -18,7 +18,6 @@ package com.google.gwt.dev.js.ast;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.Maps;
 
-import java.io.Serializable;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
@@ -26,7 +25,7 @@ import java.util.Map;
 /**
  * A normal scope that has a parent and children.
  */
-public class JsNormalScope extends JsNestingScope implements Serializable {
+public class JsNormalScope extends JsNestingScope {
 
   private Map<String, JsName> names = Collections.emptyMap();
 

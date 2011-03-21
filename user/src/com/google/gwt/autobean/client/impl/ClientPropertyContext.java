@@ -18,7 +18,6 @@ package com.google.gwt.autobean.client.impl;
 import com.google.gwt.autobean.shared.AutoBeanVisitor.CollectionPropertyContext;
 import com.google.gwt.autobean.shared.AutoBeanVisitor.MapPropertyContext;
 import com.google.gwt.autobean.shared.AutoBeanVisitor.ParameterizationVisitor;
-import com.google.gwt.autobean.shared.AutoBeanVisitor.PropertyContext;
 import com.google.gwt.core.client.JavaScriptObject;
 
 import java.util.List;
@@ -28,8 +27,7 @@ import java.util.Set;
 /**
  * Provides base methods for generated implementations of PropertyContext.
  */
-public final class ClientPropertyContext implements PropertyContext,
-    CollectionPropertyContext, MapPropertyContext {
+public final class ClientPropertyContext implements CollectionPropertyContext, MapPropertyContext {
 
   /**
    * A reference to an instance setter method.

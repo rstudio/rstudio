@@ -142,7 +142,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
         return sb.toString();
       }
 
-      if (value instanceof Class) {
+      if (value instanceof Class<?>) {
         return ((Class<?>) ((Class<?>) value)).getCanonicalName() + ".class";
       }
       if (value instanceof Double) {
@@ -1632,7 +1632,6 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
       }
     }
   }
-
 
   private void writeWrappers(SourceWriter sw) {
     sw.println("// Write the wrappers after we know which are needed");

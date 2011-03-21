@@ -43,7 +43,6 @@ class Flusher extends EditorVisitor {
     assert delegate != null;
 
     if (asValue != null) {
-      assert delegate != null : "ValueAwareEditor without delegate";
       if (delegate.shouldFlush()) {
         asValue.flush();
       }

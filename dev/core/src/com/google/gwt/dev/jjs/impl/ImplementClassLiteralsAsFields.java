@@ -273,7 +273,6 @@ public class ImplementClassLiteralsAsFields {
     return typeName;
   }
 
-
   private JType normalizeJsoType(JType type) {
     if (program.isJavaScriptObject(type)) {
       return program.getJavaScriptObject();
@@ -291,7 +290,7 @@ public class ImplementClassLiteralsAsFields {
   }
 
   /**
-   * Takes the form:
+   * Resolve a class literal field.  Takes the form:
    * 
    * <pre>
    * class ClassLiteralHolder {

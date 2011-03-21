@@ -85,7 +85,7 @@ public class EntityProxyChange<P extends EntityProxy> extends
   /**
    * Returns the type associated with this instance.
    *
-   * @return an instance of {@link GwtEvent.Type} of type Handler&lt;P&gt
+   * @return an instance of {@link com.google.gwt.event.shared.GwtEvent.Type Type} of type Handler&lt;P&gt
    */
   @SuppressWarnings({"unchecked", "rawtypes"})
   @Override

@@ -211,8 +211,8 @@ public class ServiceLayerDecorator extends ServiceLayer {
    * Report an exception thrown by code that is under the control of the
    * end-developer.
    * 
-   * @param an {@link InvocationTargetException} thrown by an invocation of
-   *          user-provided code
+   * @param userGeneratedException an {@link InvocationTargetException} thrown
+   *          by an invocation of user-provided code
    * @throws ReportableException this method never returns normally
    */
   protected final <T> T report(InvocationTargetException userGeneratedException)

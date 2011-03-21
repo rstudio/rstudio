@@ -49,7 +49,6 @@ class CellBasedWidgetImplStandard extends CellBasedWidgetImpl {
    *
    * @param event the event to handle.
    */
-  @SuppressWarnings("unused")
   private static void handleNonBubblingEvent(Event event) {
     // Get the event target.
     EventTarget eventTarget = event.getEventTarget();

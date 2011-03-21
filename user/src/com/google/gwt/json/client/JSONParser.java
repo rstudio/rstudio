@@ -99,7 +99,6 @@ public class JSONParser {
   /**
    * Called from {@link #initTypeMap()}.
    */
-  @SuppressWarnings("unused")
   private static JSONValue createBoolean(boolean v) {
     return JSONBoolean.getInstance(v);
   }
@@ -107,7 +106,6 @@ public class JSONParser {
   /**
    * Called from {@link #initTypeMap()}.
    */
-  @SuppressWarnings("unused")
   private static JSONValue createNumber(double v) {
     return new JSONNumber(v);
   }
@@ -117,7 +115,6 @@ public class JSONParser {
    * either <code>null</code> (not <code>undefined</code>) or a JavaScript
    * object.
    */
-  @SuppressWarnings("unused")
   private static native JSONValue createObject(Object o) /*-{
     if (!o) {
       return @com.google.gwt.json.client.JSONNull::getInstance()();
@@ -143,7 +140,6 @@ public class JSONParser {
   /**
    * Called from {@link #initTypeMap()}.
    */
-  @SuppressWarnings("unused")
   private static JSONValue createString(String v) {
     return new JSONString(v);
   }
@@ -152,7 +148,6 @@ public class JSONParser {
    * Called from {@link #initTypeMap()}. This method returns a <code>null</code>
    * pointer, representing JavaScript <code>undefined</code>.
    */
-  @SuppressWarnings("unused")
   private static JSONValue createUndefined() {
     return null;
   }

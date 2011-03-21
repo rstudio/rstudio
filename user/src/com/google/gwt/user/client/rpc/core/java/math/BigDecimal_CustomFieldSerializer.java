@@ -49,6 +49,7 @@ public class BigDecimal_CustomFieldSerializer extends
     streamWriter.writeString(instance.toString());
   }
 
+  @Override
   public void deserializeInstance(SerializationStreamReader streamReader,
       BigDecimal instance) throws SerializationException {
     deserialize(streamReader, instance);
@@ -65,6 +66,7 @@ public class BigDecimal_CustomFieldSerializer extends
     return instantiate(streamReader);
   }
 
+  @Override
   public void serializeInstance(SerializationStreamWriter streamWriter,
       BigDecimal instance) throws SerializationException {
     serialize(streamWriter, instance);

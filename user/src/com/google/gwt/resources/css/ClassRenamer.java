@@ -93,7 +93,6 @@ public class ClassRenamer extends CssVisitor {
   private final boolean strict;
   private final Set<String> unknownClasses = new HashSet<String>();
 
-  
   public ClassRenamer(TreeLogger logger,
       Map<String, Map<JMethod, String>> classReplacementsWithPrefix,
       boolean strict, Set<String> externalClasses) {

@@ -497,10 +497,12 @@ public class RequestFactoryInterfaceValidator {
       return found.toArray(new Type[found.size()]);
     }
 
+    @Override
     public SignatureVisitor visitArrayType() {
       return this;
     }
 
+    @Override
     public SignatureVisitor visitClassBound() {
       return this;
     }
@@ -510,30 +512,37 @@ public class RequestFactoryInterfaceValidator {
       found.add(Type.getObjectType(name));
     }
 
+    @Override
     public SignatureVisitor visitExceptionType() {
       return this;
     }
 
+    @Override
     public SignatureVisitor visitInterface() {
       return this;
     }
 
+    @Override
     public SignatureVisitor visitInterfaceBound() {
       return this;
     }
 
+    @Override
     public SignatureVisitor visitParameterType() {
       return this;
     }
 
+    @Override
     public SignatureVisitor visitReturnType() {
       return this;
     }
 
+    @Override
     public SignatureVisitor visitSuperclass() {
       return this;
     }
 
+    @Override
     public SignatureVisitor visitTypeArgument(char wildcard) {
       return this;
     }

@@ -382,7 +382,7 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML,
 
   /**
    * Sets the html string inside the caption by calling its
-   * {@link #setHTML(SafeHTML)} method.
+   * {@link #setHTML(SafeHtml)} method.
    *
    * Use {@link #setWidget(Widget)} to set the contents inside the
    * {@link DialogBox}.

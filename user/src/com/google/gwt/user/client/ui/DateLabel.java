@@ -34,7 +34,7 @@ import java.util.Date;
  * The format can be given with one of these attributes:
  * <dl>
  * <dt>format</dt><dd>a reference to a {@link DateTimeFormat} instance.</dd>
- * <dt>predefinedFormat</dt><dd>a {@link DateTimeFormat.PredefinedFormat}.</dd>
+ * <dt>predefinedFormat</dt><dd>a {@link com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat DateTimeFormat.PredefinedFormat}.</dd>
  * <dt>customFormat</dt><dd>a date time pattern that can be passed to {@link DateTimeFormat#getFormat(String)}.</dd>
  * </dl>
  * <p>

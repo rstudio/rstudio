@@ -404,7 +404,7 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   /**
    * {@inheritDoc}
    * See note at
-   * {@link #setDirectionEstimator(com.google.gwt.i18n.shared.DirectionEstimator)}
+   * {@link #setDirectionEstimator(com.google.gwt.i18n.shared.DirectionEstimator)}.
    */
   public void setDirectionEstimator(boolean enabled) {
     setDirectionEstimator(enabled ? DEFAULT_DIRECTION_ESTIMATOR : null);

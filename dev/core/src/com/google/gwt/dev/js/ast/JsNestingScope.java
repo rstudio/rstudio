@@ -17,13 +17,12 @@ package com.google.gwt.dev.js.ast;
 
 import com.google.gwt.dev.util.collect.Lists;
 
-import java.io.Serializable;
 import java.util.List;
 
 /**
  * A normal scope that has a parent and children.
  */
-public abstract class JsNestingScope extends JsScope implements Serializable {
+public abstract class JsNestingScope extends JsScope {
 
   /**
    * Transient because children will add themselves to the parent after

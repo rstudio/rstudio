@@ -95,6 +95,8 @@ public class AutoBeanVisitor {
 
     /**
      * Called when finished with a type.
+     * 
+     * @param type a Class object
      */
     public void endVisitType(Class<?> type) {
     }
@@ -111,6 +113,7 @@ public class AutoBeanVisitor {
     /**
      * Called when visiting a possibly parameterized type.
      * 
+     * @param type a Class object
      * @return {@code true} if the type should be visited
      */
     public boolean visitType(Class<?> type) {

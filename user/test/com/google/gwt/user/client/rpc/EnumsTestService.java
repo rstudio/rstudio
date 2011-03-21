@@ -92,7 +92,7 @@ public interface EnumsTestService extends RemoteService {
   }
   
   /**
-   * Wrapper class containing an enum field
+   * Wrapper class containing an enum field.
    */
   public class FieldEnumWrapper implements Serializable {
     private FieldEnum fieldEnum = FieldEnum.Z;

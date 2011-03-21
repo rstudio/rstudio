@@ -33,7 +33,6 @@ public class XMLParserImplSafari extends XMLParserImplStandard {
     return ((result) ? parseInt(result[1]) : 0) || 0;
   }-*/;
   
-  @SuppressWarnings("unused")
   private static void throwDOMParseException(String message) {
     throw new DOMParseException(message);
   }

@@ -135,7 +135,11 @@ public class ValueCodex {
       @Override
       public String toJsonExpression(Object value) {
         // Longs cannot be expressed as a JS double
-        return StringQuoter.quote(String.valueOf((Long) value));
+        if (value instanceof Long) {
+          return StringQuoter.quote(String.valueOf(value));
+        } else {
+          throw new IllegalArgumentException("value should be a Long");
+        }
       }
     },
     SHORT(Short.class, short.class, (short) 0) {
@@ -178,6 +182,8 @@ public class ValueCodex {
     /**
      * Determines whether or not the Type can handle the given value via
      * upcasting semantics.
+     * 
+     * @param value a value Object
      */
     public boolean canUpcast(Object value) {
       // Most value types are final, so this method is meaningless

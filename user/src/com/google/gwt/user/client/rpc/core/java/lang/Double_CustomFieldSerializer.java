@@ -42,6 +42,7 @@ public final class Double_CustomFieldSerializer extends
     streamWriter.writeDouble(instance.doubleValue());
   }
 
+  @Override
   public void deserializeInstance(SerializationStreamReader streamReader,
       Double instance) throws SerializationException {
     deserialize(streamReader, instance);
@@ -58,6 +59,7 @@ public final class Double_CustomFieldSerializer extends
     return instantiate(streamReader);
   }
 
+  @Override
   public void serializeInstance(SerializationStreamWriter streamWriter,
       Double instance) throws SerializationException {
     serialize(streamWriter, instance);

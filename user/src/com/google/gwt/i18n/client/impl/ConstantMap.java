@@ -98,7 +98,6 @@ public class ConstantMap extends AbstractMap<String, String> {
    * Stores a fast lookup in a JSO using ':' to prevent conflict with built-in
    * JavaScript properties.
    */
-  @SuppressWarnings("unused")
   private JavaScriptObject map;
 
   public ConstantMap(String keys[], String values[]) {

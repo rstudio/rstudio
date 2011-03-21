@@ -42,6 +42,7 @@ public final class Long_CustomFieldSerializer extends
     streamWriter.writeLong(instance.longValue());
   }
 
+  @Override
   public void deserializeInstance(SerializationStreamReader streamReader,
       Long instance) throws SerializationException {
     deserialize(streamReader, instance);
@@ -58,6 +59,7 @@ public final class Long_CustomFieldSerializer extends
     return instantiate(streamReader);
   }
 
+  @Override
   public void serializeInstance(SerializationStreamWriter streamWriter,
       Long instance) throws SerializationException {
     serialize(streamWriter, instance);

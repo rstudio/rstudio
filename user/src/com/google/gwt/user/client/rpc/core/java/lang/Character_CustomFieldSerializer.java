@@ -42,6 +42,7 @@ public final class Character_CustomFieldSerializer extends
     streamWriter.writeChar(instance.charValue());
   }
 
+  @Override
   public void deserializeInstance(SerializationStreamReader streamReader,
       Character instance) throws SerializationException {
     deserialize(streamReader, instance);
@@ -58,6 +59,7 @@ public final class Character_CustomFieldSerializer extends
     return instantiate(streamReader);
   }
 
+  @Override
   public void serializeInstance(SerializationStreamWriter streamWriter,
       Character instance) throws SerializationException {
     serialize(streamWriter, instance);

@@ -185,7 +185,7 @@ public class CompositeCell<C> extends AbstractCell<C> {
    * focus away from the containing widget.
    * </p>
    * 
-   * @param context the {@link Context} of the cell
+   * @param context the {@link com.google.gwt.cell.client.Cell.Context Context} of the cell
    * @param value the cell value to be rendered
    * @param sb the {@link SafeHtmlBuilder} to be written to
    * @param hasCell a {@link HasCell} instance containing the cells to be

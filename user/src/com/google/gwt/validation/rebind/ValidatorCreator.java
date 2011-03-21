@@ -117,7 +117,6 @@ public class ValidatorCreator extends AbstractCreator {
     sw.println("}");
   }
 
-
   private void writeContext(SourceWriter sw, BeanHelper bean, String objectName) {
     // GwtValidationContext<T> context = new GwtValidationContext<T>(
     sw.print(GwtValidationContext.class.getSimpleName());
@@ -256,7 +255,6 @@ public class ValidatorCreator extends AbstractCreator {
     sourceWriter.outdent();
     sourceWriter.outdent();
   }
-
 
   private void writeValidate(SourceWriter sw) {
     // public <T> Set<ConstraintViolation<T>> validate(T object, Class<?>...

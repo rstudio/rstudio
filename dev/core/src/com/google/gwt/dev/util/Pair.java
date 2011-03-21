@@ -32,7 +32,7 @@ public class Pair<L, R> {
     this.right = right;
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings("rawtypes")
   @Override
   public boolean equals(Object obj) {
     if (this == obj) {

@@ -42,6 +42,7 @@ public final class Void_CustomFieldSerializer extends
       Void instance) throws SerializationException {
   }
 
+  @Override
   public void deserializeInstance(SerializationStreamReader streamReader,
       Void instance) throws SerializationException {
     deserialize(streamReader, instance);
@@ -58,6 +59,7 @@ public final class Void_CustomFieldSerializer extends
     return instantiate(streamReader);
   }
 
+  @Override
   public void serializeInstance(SerializationStreamWriter streamWriter,
       Void instance) throws SerializationException {
     serialize(streamWriter, instance);

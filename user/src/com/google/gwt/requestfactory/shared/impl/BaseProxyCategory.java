@@ -54,7 +54,7 @@ public class BaseProxyCategory {
       return toReturn;
     }
 
-    if (returnValue instanceof Poser) {
+    if (returnValue instanceof Poser<?>) {
       ((Poser<?>) returnValue).setFrozen(false);
     }
 

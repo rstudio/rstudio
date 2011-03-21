@@ -54,21 +54,25 @@ public class ValueBoxBase<T> extends FocusWidget implements
    */
   public enum TextAlignment {
     CENTER {
+      @Override
       String getTextAlignString() {
         return "center";
       }
     },
     JUSTIFY {
+      @Override
       String getTextAlignString() {
         return "justify";
       }
     },
     LEFT {
+      @Override
       String getTextAlignString() {
         return "left";
       }
     },
     RIGHT {
+      @Override
       String getTextAlignString() {
         return "right";
       }

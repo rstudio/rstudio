@@ -34,7 +34,6 @@ public class JsonpRequest<T> {
   /**
    * A global JS variable that holds the next index to use.
    */
-  @SuppressWarnings("unused") // accessed from JSNI
   private static final String CALLBACKS_COUNTER_NAME = "__gwt_jsonp_counter__";
 
   /**
@@ -44,7 +43,7 @@ public class JsonpRequest<T> {
   private static final JavaScriptObject CALLBACKS = getOrCreateCallbacksObject();
 
   /**
-   * Prefix appended to all id's that are determined by the callbacks counter
+   * Prefix appended to all id's that are determined by the callbacks counter.
    */
   private static final String INCREMENTAL_ID_PREFIX = "P";
 
@@ -99,7 +98,6 @@ public class JsonpRequest<T> {
   /**
    * Whether the result is expected to be an integer or not.
    */
-  @SuppressWarnings("unused") // used by JSNI
   private final boolean expectInteger;
 
   private final String callbackParam;
@@ -225,7 +223,6 @@ public class JsonpRequest<T> {
     getHeadElement().appendChild(script);
   }
   
-  @SuppressWarnings("unused") // used by JSNI
   private void onFailure(String message) {
     onFailure(new Exception(message));
   }
@@ -241,7 +238,6 @@ public class JsonpRequest<T> {
     }
   }
 
-  @SuppressWarnings("unused") // used by JSNI
   private void onSuccess(T data) {
     timer.cancel();
     try {

@@ -25,7 +25,7 @@ import com.google.gwt.event.shared.GwtEvent.Type;
  * While widget authors should continue to use
  * {@link com.google.gwt.user.client.ui.Widget#addDomHandler(EventHandler, com.google.gwt.event.dom.client.DomEvent.Type)}
  * and
- * {@link com.google.gwt.user.client.ui.Widget#addHandler(EventHandler, Type)},
+ * {@link com.google.gwt.user.client.ui.Widget#addHandler(EventHandler, com.google.gwt.event.shared.GwtEvent.Type)},
  * application developers are strongly discouraged from using a HandlerManager
  * instance as a global event dispatch mechanism.
  */

@@ -25,7 +25,6 @@ public class JSONNumber extends JSONValue {
   /**
    * Called from {@link #getUnwrapper()}. 
    */
-  @SuppressWarnings("unused")
   private static double unwrap(JSONNumber value) {
     return value.value;
   }

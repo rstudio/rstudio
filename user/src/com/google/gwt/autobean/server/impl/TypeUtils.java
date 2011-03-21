@@ -50,7 +50,7 @@ public class TypeUtils {
     temp.put(char.class, (char) 0);
     temp.put(double.class, (double) 0);
     temp.put(float.class, (float) 0);
-    temp.put(int.class, (int) 0);
+    temp.put(int.class, 0);
     temp.put(long.class, (long) 0);
     temp.put(short.class, (short) 0);
     temp.put(void.class, null);

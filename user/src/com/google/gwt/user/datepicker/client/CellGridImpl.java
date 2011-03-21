@@ -34,7 +34,6 @@ import java.util.Iterator;
  * 
  * @param <V> type of value in grid.
  */
-@SuppressWarnings("unchecked")
 abstract class CellGridImpl<V> extends Grid {
 
   /**

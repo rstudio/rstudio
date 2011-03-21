@@ -339,7 +339,6 @@ public class MessageFormatUtils {
       }
     };
 
-
     /**
      * Assemble a message from its parsed chunks.
      * 

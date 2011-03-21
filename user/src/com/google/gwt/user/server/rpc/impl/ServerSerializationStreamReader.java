@@ -885,7 +885,7 @@ public final class ServerSerializationStreamReader extends
       IllegalArgumentException, InvocationTargetException,
       NoSuchMethodException, SerializationException {
     if (customSerializer != null) {
-      CustomFieldSerializer customFieldSerializer =
+      CustomFieldSerializer<?> customFieldSerializer =
           SerializabilityUtil.loadCustomFieldSerializer(customSerializer);
       if (customFieldSerializer == null) {
         for (Method method : customSerializer.getMethods()) {

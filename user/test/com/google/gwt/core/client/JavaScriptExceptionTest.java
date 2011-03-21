@@ -77,9 +77,11 @@ public class JavaScriptExceptionTest extends GWTTestCase {
         assertFalse(
             "message contains 'extraField', but shouldn't: " + e.getMessage(),
             e.getMessage().contains("extraField"));
+        // CHECKSTYLE_OFF
         assertFalse(
             "message contains 'extraData', but shouldn't:" + e.getMessage(),
             e.getMessage().contains("extraData"));
+        // CHECKSTYLE_ON
       }
     }
   }

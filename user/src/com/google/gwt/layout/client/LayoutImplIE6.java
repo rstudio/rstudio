@@ -52,7 +52,6 @@ class LayoutImplIE6 extends LayoutImplIE8 {
     return styleRuler;
   }
 
-  @SuppressWarnings("unused") // called from JSNI
   private static void hookWindowResize(final Element elem) {
     Window.addResizeHandler(new ResizeHandler() {
       public void onResize(ResizeEvent event) {
@@ -61,7 +60,6 @@ class LayoutImplIE6 extends LayoutImplIE8 {
     });
   }
 
-  @SuppressWarnings("unused") // called from JSNI
   private static native void measureDecoration(Element elem) /*-{
     var ruler = elem.__styleRuler;
     var inner = ruler.children[0];
@@ -246,7 +244,6 @@ class LayoutImplIE6 extends LayoutImplIE8 {
     ruler.onresize = null;
   }-*/;
 
-  @SuppressWarnings("unused") // called from JSNI
   private void resizeHandler(Element parent) {
     resizeHandler(parent, false);
   }

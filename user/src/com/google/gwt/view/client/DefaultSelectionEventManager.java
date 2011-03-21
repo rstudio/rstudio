@@ -473,7 +473,7 @@ public class DefaultSelectionEventManager<T> implements
         : translator.translateSelectionEvent(event);
 
     // Handle the event based on the SelectionModel type.
-    if (selectionModel instanceof MultiSelectionModel) {
+    if (selectionModel instanceof MultiSelectionModel<?>) {
       // Add shift key support for MultiSelectionModel.
       handleMultiSelectionEvent(event, action,
           (MultiSelectionModel<? super T>) selectionModel);

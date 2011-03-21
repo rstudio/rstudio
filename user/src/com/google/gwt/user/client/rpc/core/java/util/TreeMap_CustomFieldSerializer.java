@@ -26,7 +26,7 @@ import java.util.TreeMap;
 /**
  * Custom field serializer for {@link java.util.TreeMap}.
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings("rawtypes")
 public class TreeMap_CustomFieldSerializer extends
     CustomFieldSerializer<TreeMap> {
 
@@ -36,6 +36,7 @@ public class TreeMap_CustomFieldSerializer extends
     Map_CustomFieldSerializerBase.deserialize(streamReader, instance);
   }
 
+  @SuppressWarnings("unchecked")
   public static TreeMap instantiate(SerializationStreamReader streamReader)
       throws SerializationException {
     return new TreeMap((Comparator) streamReader.readObject());
@@ -47,6 +48,7 @@ public class TreeMap_CustomFieldSerializer extends
     Map_CustomFieldSerializerBase.serialize(streamWriter, instance);
   }
 
+  @Override
   public void deserializeInstance(SerializationStreamReader streamReader,
       TreeMap instance) throws SerializationException {
     deserialize(streamReader, instance);
@@ -63,6 +65,7 @@ public class TreeMap_CustomFieldSerializer extends
     return instantiate(streamReader);
   }
 
+  @Override
   public void serializeInstance(SerializationStreamWriter streamWriter,
       TreeMap instance) throws SerializationException {
     serialize(streamWriter, instance);

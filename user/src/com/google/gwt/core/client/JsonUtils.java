@@ -19,10 +19,8 @@ package com.google.gwt.core.client;
  * Provides JSON-related utility methods.
  */
 public class JsonUtils {
-  @SuppressWarnings("unused")
   private static JavaScriptObject escapeTable = initEscapeTable();
 
-  @SuppressWarnings("unused")
   private static final boolean hasJsonParse = hasJsonParse();
 
   /**
@@ -120,7 +118,6 @@ public class JsonUtils {
     throw new IllegalArgumentException(message);
   }
 
-  @SuppressWarnings("unused")
   private static native String escapeChar(String c) /*-{
     var lookedUp = @com.google.gwt.core.client.JsonUtils::escapeTable[c.charCodeAt(0)];
     return (lookedUp == null) ? c : lookedUp;

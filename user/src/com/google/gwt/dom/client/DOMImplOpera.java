@@ -108,7 +108,6 @@ class DOMImplOpera extends DOMImplStandard {
     elem.scrollIntoView();
   }-*/;
 
-  @SuppressWarnings("unused")
   private native NativeEvent createKeyEvent(Document doc, String type,
       boolean canBubble, boolean cancelable, boolean ctrlKey, boolean altKey,
       boolean shiftKey, boolean metaKey) /*-{

@@ -59,7 +59,7 @@ public class PlaceHistoryHandler {
      * Adds a {@link com.google.gwt.event.logical.shared.ValueChangeEvent}
      * handler to be informed of changes to the browser's history stack.
      * 
-     * @param handler the handler
+     * @param valueChangeHandler the handler
      * @return the registration used to remove this value change handler
      */
     HandlerRegistration addValueChangeHandler(

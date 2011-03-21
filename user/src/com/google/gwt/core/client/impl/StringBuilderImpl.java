@@ -82,7 +82,6 @@ public class StringBuilderImpl {
    * strings.
    */
   public static class ImplPush extends StringBuilderImpl {
-    @SuppressWarnings("unused")
     private String[] array = new String[0];
 
     @Override

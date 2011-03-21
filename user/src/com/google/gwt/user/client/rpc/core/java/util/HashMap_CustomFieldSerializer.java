@@ -25,26 +25,27 @@ import java.util.HashMap;
 /**
  * Custom field serializer for {@link java.util.HashMap}.
  */
+@SuppressWarnings("rawtypes")
 public final class HashMap_CustomFieldSerializer extends
     CustomFieldSerializer<HashMap> {
 
-  @SuppressWarnings("unchecked")
   public static void deserialize(SerializationStreamReader streamReader,
       HashMap instance) throws SerializationException {
     Map_CustomFieldSerializerBase.deserialize(streamReader, instance);
   }
 
-  @SuppressWarnings("unchecked")
   public static void serialize(SerializationStreamWriter streamWriter,
       HashMap instance) throws SerializationException {
     Map_CustomFieldSerializerBase.serialize(streamWriter, instance);
   }
 
+  @Override
   public void deserializeInstance(SerializationStreamReader streamReader,
       HashMap instance) throws SerializationException {
     deserialize(streamReader, instance);
   }
 
+  @Override
   public void serializeInstance(SerializationStreamWriter streamWriter,
       HashMap instance) throws SerializationException {
     serialize(streamWriter, instance);

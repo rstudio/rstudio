@@ -135,7 +135,7 @@ public class SingleScriptLinker extends SelectionScriptLinker {
 
   /**
    * Unimplemented. Normally required by
-   * {@link #doEmitCompilation(TreeLogger, LinkerContext, CompilationResult)}.
+   * {@link #doEmitCompilation(TreeLogger, LinkerContext, CompilationResult, ArtifactSet)}.
    */
   @Override
   protected String getCompilationExtension(TreeLogger logger,
@@ -145,7 +145,7 @@ public class SingleScriptLinker extends SelectionScriptLinker {
 
   /**
    * Unimplemented. Normally required by
-   * {@link #doEmitCompilation(TreeLogger, LinkerContext, CompilationResult)}.
+   * {@link #doEmitCompilation(TreeLogger, LinkerContext, CompilationResult, ArtifactSet)}.
    */
   @Override
   protected String getModulePrefix(TreeLogger logger, LinkerContext context,
@@ -155,7 +155,7 @@ public class SingleScriptLinker extends SelectionScriptLinker {
 
   /**
    * Unimplemented. Normally required by
-   * {@link #doEmitCompilation(TreeLogger, LinkerContext, CompilationResult)}.
+   * {@link #doEmitCompilation(TreeLogger, LinkerContext, CompilationResult, ArtifactSet)}.
    */
   @Override
   protected String getModuleSuffix(TreeLogger logger, LinkerContext context)

@@ -23,14 +23,14 @@ import com.google.gwt.core.client.GWT;
 public class RpcTokenTest extends RpcTestBase {
 
   /**
-   * First RpcToken implementation
+   * First RpcToken implementation.
    */
   public static class TestRpcToken implements RpcToken {
     String tokenValue;
   }
 
   /**
-   * Second RpcToken implementation
+   * Second RpcToken implementation.
    */
   public static class AnotherTestRpcToken implements RpcToken {
     int token;

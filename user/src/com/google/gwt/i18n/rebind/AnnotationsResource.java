@@ -479,11 +479,9 @@ public class AnnotationsResource extends AbstractResource {
         entry.description = description.value();
       }
       // use full name to avoid deprecation warnings in the imports
-      @SuppressWarnings("deprecation")
       com.google.gwt.i18n.client.Messages.PluralText pluralText = method
           .getAnnotation(com.google.gwt.i18n.client.Messages.PluralText.class);
       if (pluralText != null) {
-        @SuppressWarnings("deprecation")
         String[] pluralForms = pluralText.value();
         if ((pluralForms.length & 1) != 0) {
           throw new AnnotationsError(

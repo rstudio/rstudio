@@ -25,6 +25,7 @@ import com.google.gwt.editor.client.ValueAwareEditor;
  * the editor and delegate hiererchy.
  */
 public class Refresher extends EditorVisitor {
+  @Override
   public <Q> boolean visit(EditorContext<Q> ctx) {
     Q toSet = ctx.getFromModel();
     @SuppressWarnings("unchecked")

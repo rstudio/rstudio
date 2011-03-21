@@ -48,6 +48,7 @@ public final class StackTraceElement_CustomFieldSerializer extends
     streamWriter.writeInt(instance.getLineNumber());
   }
 
+  @Override
   public void deserializeInstance(SerializationStreamReader streamReader,
       StackTraceElement instance) throws SerializationException {
     deserialize(streamReader, instance);
@@ -64,6 +65,7 @@ public final class StackTraceElement_CustomFieldSerializer extends
     return instantiate(streamReader);
   }
 
+  @Override
   public void serializeInstance(SerializationStreamWriter streamWriter,
       StackTraceElement instance) throws SerializationException {
     serialize(streamWriter, instance);

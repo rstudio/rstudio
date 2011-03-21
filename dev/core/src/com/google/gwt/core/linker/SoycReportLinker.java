@@ -140,7 +140,7 @@ public class SoycReportLinker extends Linker {
   }
 
   /**
-   * Check whether an artifact set contains any compilerMetrics
+   * Check whether an artifact set contains any compilerMetrics.
    */  
   boolean anyCompilerMetricsPresent(ArtifactSet artifacts) {
     return  !artifacts.find(ModuleMetricsArtifact.class).isEmpty(); 

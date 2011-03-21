@@ -18,7 +18,6 @@ package com.google.gwt.core.ext.soyc.impl;
 import com.google.gwt.core.ext.soyc.Member;
 import com.google.gwt.core.ext.soyc.Story;
 
-import java.io.Serializable;
 import java.util.Comparator;
 import java.util.SortedSet;
 
@@ -31,7 +30,7 @@ import java.util.SortedSet;
  * 
  * @see SnippetIterator#next()
  */
-public class StoryImpl implements Story, Serializable {
+public class StoryImpl implements Story {
   /**
    * Orders StoryImpl's by their id number.
    */

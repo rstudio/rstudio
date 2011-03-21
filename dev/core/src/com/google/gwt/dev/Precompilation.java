@@ -24,14 +24,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.Collection;
 
 /**
  * The result of compilation phase 1, includes a unified AST and metadata
  * relevant to each permutation.
  */
-public class Precompilation implements Serializable, PrecompilationResult {
+public class Precompilation implements PrecompilationResult {
   /*
    * TODO: don't make this whole class serializable, instead dump the
    * independent members out to a file so that the generated artifacts are

@@ -48,15 +48,15 @@ public abstract class AbstractEditorContext<T> implements EditorContext<T> {
      * TODO(bobv): Determine if pre-casting is better than demand-casting or
      * generating the asFoo methods.
      */
-    compositeEditor = editor instanceof CompositeEditor
+    compositeEditor = editor instanceof CompositeEditor<?, ?, ?>
         ? (CompositeEditor<?, ?, ?>) editor : null;
-    hasEditorDelegate = editor instanceof HasEditorDelegate
+    hasEditorDelegate = editor instanceof HasEditorDelegate<?>
         ? (HasEditorDelegate<T>) editor : null;
-    hasEditorErrors = editor instanceof HasEditorErrors
+    hasEditorErrors = editor instanceof HasEditorErrors<?>
         ? (HasEditorErrors<T>) editor : null;
-    leafValueEditor = editor instanceof LeafValueEditor
+    leafValueEditor = editor instanceof LeafValueEditor<?>
         ? (LeafValueEditor<T>) editor : null;
-    valueAwareEditor = editor instanceof ValueAwareEditor
+    valueAwareEditor = editor instanceof ValueAwareEditor<?>
         ? (ValueAwareEditor<T>) editor : null;
   }
 

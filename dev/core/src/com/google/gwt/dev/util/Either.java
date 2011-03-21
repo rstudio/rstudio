@@ -46,7 +46,7 @@ public class Either<L, R> {
     right = b;
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings("rawtypes")
   @Override
   public boolean equals(Object obj) {
     if (this == obj) {

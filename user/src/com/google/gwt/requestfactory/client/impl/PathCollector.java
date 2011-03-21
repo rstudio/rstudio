@@ -39,6 +39,7 @@ class PathCollector extends EditorVisitor {
     return new ArrayList<String>(paths);
   }
 
+  @Override
   public <T> boolean visit(EditorContext<T> ctx) {
     String path = ctx.getAbsolutePath();
     if (path.length() > 0) {

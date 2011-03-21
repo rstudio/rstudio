@@ -442,9 +442,9 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
    * has a stable identity so as to guarantee that all calls to this method with
    * the same arguments return the same object.
    * 
-   * @param genericType a generic base class
-   * @param enclosingType
-   * @param typeArgs the type arguments bound to the specified generic type
+   * @param extGenericType a generic base class
+   * @param extEnclosingType
+   * @param extTypeArgs the type arguments bound to the specified generic type
    * @return a type object representing this particular binding of type
    *         arguments to the specified generic
    * @throws IllegalArgumentException if the parameterization of a non-static

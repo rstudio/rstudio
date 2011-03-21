@@ -26,19 +26,14 @@ import com.google.gwt.user.client.Event;
  */
 abstract class DOMImplStandard extends DOMImpl {
 
-  @SuppressWarnings("unused")
   private static JavaScriptObject captureElem;
 
-  @SuppressWarnings("unused")
   private static JavaScriptObject dispatchCapturedEvent;
 
-  @SuppressWarnings("unused")
   private static JavaScriptObject dispatchCapturedMouseEvent;
 
-  @SuppressWarnings("unused")
   private static JavaScriptObject dispatchEvent;
 
-  @SuppressWarnings("unused")
   private static JavaScriptObject dispatchUnhandledEvent;
 
   @Override

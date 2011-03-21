@@ -24,7 +24,6 @@ class DOMImplStandardBase extends DOMImplStandard {
 
   private static class ClientRect extends JavaScriptObject {
     
-    @SuppressWarnings("unused")
     protected ClientRect() {
     }
 
@@ -281,7 +280,6 @@ class DOMImplStandardBase extends DOMImplStandard {
     doc.getBody().setScrollTop(top);
   }
 
-  @SuppressWarnings("unused")
   private native NativeEvent createKeyEvent(Document doc, String type,
       boolean canBubble, boolean cancelable, boolean ctrlKey, boolean altKey,
       boolean shiftKey, boolean metaKey) /*-{

@@ -72,7 +72,6 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.awt.GraphicsEnvironment;
 import java.io.File;
-import java.io.Serializable;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -129,8 +128,7 @@ public class Precompile {
     }
   }
 
-  static class PrecompileOptionsImpl extends CompileTaskOptionsImpl implements PrecompileOptions,
-      Serializable {
+  static class PrecompileOptionsImpl extends CompileTaskOptionsImpl implements PrecompileOptions {
     private boolean disableUpdateCheck;
     private boolean enableGeneratingOnShards = true;
     private File genDir;

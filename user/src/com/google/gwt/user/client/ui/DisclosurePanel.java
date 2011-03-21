@@ -427,6 +427,7 @@ public final class DisclosurePanel extends Composite implements
    * @param header the widget to be used as a header
    * @deprecated use {@link #DisclosurePanel()} and {@link #setHeader(Widget)}
    */
+  @Deprecated
   public DisclosurePanel(Widget header) {
     this();
     setHeader(header);

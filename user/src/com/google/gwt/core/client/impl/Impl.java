@@ -193,7 +193,6 @@ public final class Impl {
   /**
    * Implements {@link #entry(JavaScriptObject)}.
    */
-  @SuppressWarnings("unused")
   private static Object entry0(Object jsFunction, Object thisObj,
       Object arguments) throws Throwable {
     boolean initialEntry = enter();
@@ -252,7 +251,6 @@ public final class Impl {
    * <li>{@link com.google.gwt.user.client.rpc.impl.SerializerBase}</li>
    * </ul>
    */
-  @SuppressWarnings("unused")
   private static int getNextHashId() {
     return ++sNextHashId;
   }

@@ -23,7 +23,6 @@ import com.google.gwt.autobean.shared.AutoBeanFactory.Category;
 import com.google.gwt.autobean.shared.AutoBeanFactory.NoWrap;
 import com.google.gwt.autobean.shared.impl.EnumMap;
 
-
 /**
  * Generates JVM-compatible implementations of AutoBeanFactory and AutoBean
  * types.

@@ -27,7 +27,6 @@ class XMLParserImplIE6 extends XMLParserImpl {
    * different versions of IE and Windows having different available DOM
    * implementations.
    */
-  @SuppressWarnings("unused")
   private static native JavaScriptObject selectDOMDocumentVersion() /*-{
     try { return new ActiveXObject("Msxml2.DOMDocument"); } catch (e) { }
     try { return new ActiveXObject("MSXML.DOMDocument"); } catch (e) { }

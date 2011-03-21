@@ -43,6 +43,7 @@ public class OptGroupElement extends Element {
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled">W3C HTML Specification</a>
    * @deprecated use {@link #isDisabled()} instead.
    */
+  @Deprecated
   public final native String getDisabled() /*-{
      return this.disabled;
    }-*/;

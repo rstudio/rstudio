@@ -117,7 +117,7 @@ public class DefaultRequestTransport implements RequestTransport {
    * {@link com.google.gwt.requestfactory.shared.RequestTransport.TransportReceiver
    * TransportReceiver} interface.
    * 
-   * @param receiver a {@link TransportReceiver}
+   * @param receiver a {@link com.google.gwt.requestfactory.shared.RequestTransport.TransportReceiver TransportReceiver}
    * @return a {@link RequestCallback} instance
    */
   protected RequestCallback createRequestCallback(

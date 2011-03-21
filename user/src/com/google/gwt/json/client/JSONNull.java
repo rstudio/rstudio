@@ -34,7 +34,6 @@ public class JSONNull extends JSONValue {
   /**
    * Called from {@link #getUnwrapper()}. 
    */
-  @SuppressWarnings("unused")
   private static JavaScriptObject unwrap() {
     return null;
   }

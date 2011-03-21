@@ -70,7 +70,7 @@ public final class BeanHelper {
   };
 
   /**
-   * Visible for testing
+   * Visible for testing.
    */
   public static void clearBeanHelpersForTests() {
     threadLocalHelperMap.get().clear();

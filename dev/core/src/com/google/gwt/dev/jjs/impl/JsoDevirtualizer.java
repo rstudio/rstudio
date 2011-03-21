@@ -192,7 +192,6 @@ public class JsoDevirtualizer {
     return findOverridingMethod(method, target.getSuperClass());
   }
 
-
   /**
     * Create a conditional method to discriminate between static and virtual
     * dispatch.
@@ -219,7 +218,6 @@ public class JsoDevirtualizer {
     if (polyMethodToDevirtualMethods.containsKey(polyMethod)) {
       return polyMethodToDevirtualMethods.get(polyMethod);
     }
-
 
     JClassType jsoType = program.getJavaScriptObject();
     SourceInfo sourceInfo = jsoType.getSourceInfo()
@@ -281,7 +279,6 @@ public class JsoDevirtualizer {
     JConditional conditional = new JConditional(sourceInfo,
         polyMethod.getType(),
         condition, thenValue, elseValue);
-
 
     multi.exprs.add(conditional);
 

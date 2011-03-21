@@ -58,7 +58,6 @@ import java.util.MissingResourceException;
  * Represents generic functionality needed for <code>Constants</code> and
  * <code>Messages</code> classes.
  */
-@SuppressWarnings("deprecation")
 abstract class AbstractLocalizableImplCreator extends
     AbstractGeneratorClassCreator {
 

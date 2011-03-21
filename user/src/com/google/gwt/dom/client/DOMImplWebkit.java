@@ -25,7 +25,6 @@ class DOMImplWebkit extends DOMImplStandardBase {
    * 
    * @return true if using Webkit 525.x (Safari 3) or earlier.
    */
-  @SuppressWarnings("unused")
   private static native boolean isWebkit525OrBefore() /*-{
     var result = /safari\/([\d.]+)/.exec(navigator.userAgent.toLowerCase());
     if (result) {

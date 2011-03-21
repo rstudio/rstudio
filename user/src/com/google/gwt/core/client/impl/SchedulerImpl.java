@@ -134,7 +134,6 @@ public class SchedulerImpl extends Scheduler {
   /**
    * Called from scheduledFixedInterval to give $entry a static function.
    */
-  @SuppressWarnings("unused")
   private static boolean execute(RepeatingCommand cmd) {
     return cmd.execute();
   }

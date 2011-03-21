@@ -46,9 +46,6 @@ public class RpcLogArtifact extends Artifact<RpcLogArtifact> {
     diskCacheToken = diskCache.writeString(rpcLog);
   }
 
-  /**
-   * @param logger a TreeLogger
-   */
   public byte[] getContents() {
     return diskCache.readByteArray(diskCacheToken);
   }

@@ -25,26 +25,27 @@ import java.util.Vector;
 /**
  * Custom field serializer for {@link java.util.Vector}.
  */
+@SuppressWarnings("rawtypes")
 public final class Vector_CustomFieldSerializer extends
     CustomFieldSerializer<Vector> {
 
-  @SuppressWarnings("unchecked")
   public static void deserialize(SerializationStreamReader streamReader,
       Vector instance) throws SerializationException {
     Collection_CustomFieldSerializerBase.deserialize(streamReader, instance);
   }
 
-  @SuppressWarnings("unchecked")
   public static void serialize(SerializationStreamWriter streamWriter,
       Vector instance) throws SerializationException {
     Collection_CustomFieldSerializerBase.serialize(streamWriter, instance);
   }
 
+  @Override
   public void deserializeInstance(SerializationStreamReader streamReader,
       Vector instance) throws SerializationException {
     deserialize(streamReader, instance);
   }
 
+  @Override
   public void serializeInstance(SerializationStreamWriter streamWriter,
       Vector instance) throws SerializationException {
     serialize(streamWriter, instance);

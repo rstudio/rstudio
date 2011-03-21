@@ -231,8 +231,6 @@ public class Jsni {
   /**
    * Gets the body of a JSNI method, with Java refs escaped for hosted mode
    * injection.
-   * 
-   * @param logger a TreeLogger
    */
   public static String getJavaScriptForHostedMode(
       DispatchIdOracle dispatchInfo, JsniMethod jsniMethod) {

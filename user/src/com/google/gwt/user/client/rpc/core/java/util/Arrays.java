@@ -31,6 +31,7 @@ public final class Arrays {
   /**
    * Custom field serializer for {@link java.util.Arrays.ArrayList}.
    */
+  @SuppressWarnings("rawtypes")
   public static final class ArrayList_CustomFieldSerializer extends
       CustomFieldSerializer<List> {
 
@@ -70,6 +71,7 @@ public final class Arrays {
       streamWriter.writeObject(array);
     }
 
+    @Override
     public void deserializeInstance(SerializationStreamReader streamReader,
         List instance) throws SerializationException {
       deserialize(streamReader, instance);
@@ -86,6 +88,7 @@ public final class Arrays {
       return instantiate(streamReader);
     }
 
+    @Override
     public void serializeInstance(SerializationStreamWriter streamWriter,
         List instance) throws SerializationException {
       serialize(streamWriter, instance);

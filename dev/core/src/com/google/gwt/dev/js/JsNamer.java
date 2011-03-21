@@ -39,30 +39,37 @@ public abstract class JsNamer {
   private static Set<JsName> collectReferencedNames(JsProgram program) {
     final Set<JsName> referenced = new HashSet<JsName>();
     new JsVisitor() {
+      @Override
       public void endVisit(JsForIn x, JsContext ctx) {
         reference(x.getIterVarName());
       }
 
+      @Override
       public void endVisit(JsFunction x, JsContext ctx) {
         reference(x.getName());
       };
 
+      @Override
       public void endVisit(JsLabel x, JsContext ctx) {
         reference(x.getName());
       };
 
+      @Override
       public void endVisit(JsNameOf x, JsContext ctx) {
         reference(x.getName());
       };
 
+      @Override
       public void endVisit(JsNameRef x, JsContext ctx) {
         reference(x.getName());
       };
 
+      @Override
       public void endVisit(JsParameter x, JsContext ctx) {
         reference(x.getName());
       };
 
+      @Override
       public void endVisit(JsVars.JsVar x, JsContext ctx) {
         reference(x.getName());
       };

@@ -280,7 +280,6 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
    * RpcToken.RpcTokenImplementation} annotation.
    *
    * @param token currently set {@link RpcToken}.
-   * @throws RpcTokenException if types mismatch.
    */
   protected void checkRpcTokenType(RpcToken token) {
   }

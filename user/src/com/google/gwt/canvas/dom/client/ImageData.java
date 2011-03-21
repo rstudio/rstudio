@@ -30,7 +30,6 @@ public class ImageData extends JavaScriptObject {
    * 
    * Because image data is stored as RGBA, this is 4.
    */
-  @SuppressWarnings("unused")
   private static final int NUM_COLORS = 4;
 
   /**

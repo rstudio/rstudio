@@ -129,7 +129,6 @@ public abstract class UIObject {
    * Stores a regular expression object to extract float values from the
    * leading portion of an input string.
    */
-  @SuppressWarnings("unused")
   private static JavaScriptObject numberRegex;
 
   /*

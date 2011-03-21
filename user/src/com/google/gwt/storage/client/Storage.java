@@ -43,6 +43,11 @@ import com.google.gwt.event.shared.HandlerRegistration;
  * Note: Storage events into other windows are not supported.
  * </p>
  *
+ *
+ * <p>
+ * This may not be supported on all browsers.
+ * </p>
+ *
  * @see <a href="http://www.w3.org/TR/webstorage/#storage-0">W3C Web Storage -
  *      Storage</a>
  * @see <a
@@ -51,11 +56,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
  *      Key-Value Storage</a>
  * @see <a href="http://quirksmode.org/dom/html5.html#t00">Quirksmode.org -
  *      HTML5 Compatibility - Storage</a>
- * @see <a
- *      href="http://code.google.com/p/gwt-mobile-webkit/wiki/StorageApi">Wiki
- *      - Quickstart Guide</a>
- *
- *      This may not be supported on all browsers.
+ * @see <a href="http://code.google.com/p/gwt-mobile-webkit/wiki/StorageApi">Wiki - Quickstart Guide</a>
  */
 // TODO(pdr): Add support for Object values, instead of just Strings. The
 // Storage API spec specifies this, but browser support poor at the moment.

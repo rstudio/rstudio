@@ -69,7 +69,7 @@ public interface JType {
   String getSimpleSourceName();
 
   /**
-   * Returns this instance as a {@link JAnnotationType#} if it is a annotation
+   * Returns this instance as a {@link JAnnotationType} if it is an annotation
    * or <code>null</code> if it is not.
    */
   JAnnotationType isAnnotation();
@@ -95,7 +95,7 @@ public interface JType {
   JPrimitiveType isPrimitive();
 
   /**
-   * Returns the raw type if this is a {@link JRawType#}, otherwise returns
+   * Returns the raw type if this is a {@link JRawType}, otherwise returns
    * <code>null</code>.
    */
   JRawType isRawType();

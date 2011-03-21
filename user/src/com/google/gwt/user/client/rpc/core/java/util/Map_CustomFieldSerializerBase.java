@@ -26,6 +26,7 @@ import java.util.Map.Entry;
 /**
  * Custom field serializer for {@link java.util.HashMap}.
  */
+@SuppressWarnings("rawtypes")
 public final class Map_CustomFieldSerializerBase {
 
   @SuppressWarnings("unchecked")
@@ -52,5 +53,4 @@ public final class Map_CustomFieldSerializerBase {
       streamWriter.writeObject(entry.getValue());
     }
   }
-
 }

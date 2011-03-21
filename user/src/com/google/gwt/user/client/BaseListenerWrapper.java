@@ -173,7 +173,7 @@ public abstract class BaseListenerWrapper<T> implements EventHandler {
    */
   // This is an internal helper method with the current formulation, we have
   // lost the info needed to make it safe by this point.
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings("rawtypes")
   protected static <H extends EventHandler> void baseRemove(
       HandlerManager manager, Object listener, Type... types) {
     if (manager != null) {

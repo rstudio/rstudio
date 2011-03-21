@@ -642,6 +642,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     simpleFooRequest().getTripletReference().with(
         "selfOneToManyField.selfOneToManyField.fooField").fire(
         new Receiver<SimpleFooProxy>() {
+          @Override
           public void onSuccess(SimpleFooProxy response) {
             response = checkSerialization(response);
             assertNotNull(response.getSelfOneToManyField().get(0));

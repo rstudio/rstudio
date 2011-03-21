@@ -881,50 +881,48 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     // Ensure that the item is selected.
     selectItem(item);
 
-    if (item != null) {
-      // if the command should be fired and the item has one, fire it
-      if (fireCommand && item.getCommand() != null) {
-        // Close this menu and all of its parents.
-        closeAllParents();
+    // if the command should be fired and the item has one, fire it
+    if (fireCommand && item.getCommand() != null) {
+      // Close this menu and all of its parents.
+      closeAllParents();
 
-        // Fire the item's command. The command must be fired in the same event
-        // loop or popup blockers will prevent popups from opening.
-        final Command cmd = item.getCommand();
-        Scheduler.get().scheduleFinally(new Scheduler.ScheduledCommand() {
-          public void execute() {
-            cmd.execute();
-          }
-        });
+      // Fire the item's command. The command must be fired in the same event
+      // loop or popup blockers will prevent popups from opening.
+      final Command cmd = item.getCommand();
+      Scheduler.get().scheduleFinally(new Scheduler.ScheduledCommand() {
+        public void execute() {
+          cmd.execute();
+        }
+      });
 
-        // hide any open submenus of this item
-        if (shownChildMenu != null) {
-          shownChildMenu.onHide(focus);
-          popup.hide();
-          shownChildMenu = null;
-          selectItem(null);
-        }
-      } else if (item.getSubMenu() != null) {
-        if (shownChildMenu == null) {
-          // open this submenu
-          openPopup(item);
-        } else if (item.getSubMenu() != shownChildMenu) {
-          // close the other submenu and open this one
-          shownChildMenu.onHide(focus);
-          popup.hide();
-          openPopup(item);
-        } else if (fireCommand && !autoOpen) {
-          // close this submenu
-          shownChildMenu.onHide(focus);
-          popup.hide();
-          shownChildMenu = null;
-          selectItem(item);
-        }
-      } else if (autoOpen && shownChildMenu != null) {
-        // close submenu
+      // hide any open submenus of this item
+      if (shownChildMenu != null) {
         shownChildMenu.onHide(focus);
         popup.hide();
         shownChildMenu = null;
+        selectItem(null);
       }
+    } else if (item.getSubMenu() != null) {
+      if (shownChildMenu == null) {
+        // open this submenu
+        openPopup(item);
+      } else if (item.getSubMenu() != shownChildMenu) {
+        // close the other submenu and open this one
+        shownChildMenu.onHide(focus);
+        popup.hide();
+        openPopup(item);
+      } else if (fireCommand && !autoOpen) {
+        // close this submenu
+        shownChildMenu.onHide(focus);
+        popup.hide();
+        shownChildMenu = null;
+        selectItem(item);
+      }
+    } else if (autoOpen && shownChildMenu != null) {
+      // close submenu
+      shownChildMenu.onHide(focus);
+      popup.hide();
+      shownChildMenu = null;
     }
   }
 

@@ -802,7 +802,7 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
    */
   // This is an internal helper method with the current formulation, we have
   // lost the info needed to make it safe by this point.
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings("rawtypes")
   protected static <H extends EventHandler> void baseRemove(Widget eventSource,
       EventListener listener, Type... types) {
     HandlerManager manager = eventSource.getHandlerManager();

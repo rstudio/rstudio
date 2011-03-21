@@ -52,7 +52,7 @@ import java.util.SortedSet;
 public class CrossSiteIframeLinker extends SelectionScriptLinker {
   /**
    * A configuration property that can be used to have the linker ignore the
-   * script tags in gwt.xml rather than fail to compile if they are present
+   * script tags in gwt.xml rather than fail to compile if they are present.
    */
   private static final String FAIL_IF_SCRIPT_TAG_PROPERTY = "xsiframe.failIfScriptTag";
 
@@ -95,6 +95,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
         }
       }
       if (failIfScriptTags) {
+        // CHECKSTYLE_OFF
         String msg =
             "The " + getDescription()
                 + " linker does not support <script> tags in the gwt.xml files, but the"
@@ -105,6 +106,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
                 + " this error, you will need to remove the script tags from the"
                 + " gwt.xml file, or add this property to the gwt.xml file:"
                 + " <set-configuration-property name='xsiframe.failIfScriptTag' value='FALSE'/>";
+        // CHECKSTYLE_ON
         logger.log(TreeLogger.ERROR, msg);
         throw new UnableToCompleteException();
       } else {
@@ -140,40 +142,96 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     return context.getModuleName() + "." + getHostedFilename();
   }
 
+  /**
+   * Returns the name of the {@code ComputeScriptBase} script.  By default,
+   * returns {@code "com/google/gwt/core/ext/linker/impl/computeScriptBase.js"}.
+   *
+   * @param context a LinkerContext
+   */
   protected String getJsComputeScriptBase(LinkerContext context) {
     return "com/google/gwt/core/ext/linker/impl/computeScriptBase.js";
   }
 
+  /**
+   * Returns the name of the {@code UrlForResource} script.  By default,
+   * returns {@code "com/google/gwt/core/ext/linker/impl/computeUrlForResource.js"}.
+   *
+   * @param context a LinkerContext
+   */
   protected String getJsComputeUrlForResource(LinkerContext context) {
     return "com/google/gwt/core/ext/linker/impl/computeUrlForResource.js";
   }
 
+  /**
+   * Returns the name of the {@code JsInstallLocation} script.  By default,
+   * returns {@code "com/google/gwt/core/ext/linker/impl/installLocationIframe.js"}.
+   *
+   * @param context a LinkerContext
+   */
   protected String getJsInstallLocation(LinkerContext context) {
     return "com/google/gwt/core/ext/linker/impl/installLocationIframe.js";
   }
 
-  // If you override this to return installScriptDirect.js, then you should
-  // also override shouldInstallCode() to return false
+  /**
+   * Returns the name of the {@code JsInstallScript} script.  By default,
+   * returns {@code "com/google/gwt/core/ext/linker/impl/installScriptEarlyDownload.js"}.
+   *
+   * <p> If you override this to return {@code installScriptDirect.js}, then you
+   * should also override {@link #shouldInstallCode(LinkerContext)} to return
+   * {@code false}.
+   *
+   * @param context a LinkerContext
+   */
   protected String getJsInstallScript(LinkerContext context) {
     return "com/google/gwt/core/ext/linker/impl/installScriptEarlyDownload.js";
   }
 
+  /**
+   * Returns the name of the {@code JsLoadExternalStylesheets} script.  By default,
+   * returns {@code "com/google/gwt/core/ext/linker/impl/loadExternalStylesheets.js"}.
+   *
+   * @param context a LinkerContext
+   */
   protected String getJsLoadExternalStylesheets(LinkerContext context) {
     return "com/google/gwt/core/ext/linker/impl/loadExternalStylesheets.js";
   }
 
+  /**
+   * Returns the name of the {@code JsPermutations} script.  By default,
+   * returns {@code "com/google/gwt/core/ext/linker/impl/permutations.js"}.
+   *
+   * @param context a LinkerContext
+   */
   protected String getJsPermutations(LinkerContext context) {
     return "com/google/gwt/core/ext/linker/impl/permutations.js";
   }
 
+  /**
+   * Returns the name of the {@code JsProcessMetas} script.  By default,
+   * returns {@code "com/google/gwt/core/ext/linker/impl/processMetas.js"}.
+   *
+   * @param context a LinkerContext
+   */
   protected String getJsProcessMetas(LinkerContext context) {
     return "com/google/gwt/core/ext/linker/impl/processMetas.js";
   }
 
+  /**
+   * Returns the name of the {@code JsProperties} script.  By default,
+   * returns {@code "com/google/gwt/core/ext/linker/impl/properties.js"}.
+   *
+   * @param context a LinkerContext
+   */
   protected String getJsProperties(LinkerContext context) {
     return "com/google/gwt/core/ext/linker/impl/properties.js";
   }
 
+  /**
+   * Returns the name of the {@code JsWaitForBodyLoaded} script.  By default,
+   * returns {@code "com/google/gwt/core/ext/linker/impl/waitForBodyLoaded.js"}.
+   *
+   * @param context a LinkerContext
+   */
   protected String getJsWaitForBodyLoaded(LinkerContext context) {
     return "com/google/gwt/core/ext/linker/impl/waitForBodyLoaded.js";
   }
@@ -305,7 +363,9 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     EmittedArtifact serializedMap;
     try {
       String mappings = mappingArtifact.getSerialized();
+      // CHECKSTYLE_OFF
       mappings = mappings.concat("Devmode:" + getHostedFilename());
+      // CHECKSTYLE_ON
       serializedMap = emitString(logger, mappings, "compilation-mappings.txt");
       // TODO(unnurg): make this Deploy
       serializedMap.setVisibility(Visibility.Public);

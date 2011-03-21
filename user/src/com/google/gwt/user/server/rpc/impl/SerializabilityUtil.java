@@ -100,7 +100,7 @@ public class SerializabilityUtil {
    * Custom Field Serializer does not implement the
    * {@link CustomFieldSerializer} interface.
    */
-  private static final CustomFieldSerializer NO_SUCH_SERIALIZER =
+  private static final CustomFieldSerializer<?> NO_SUCH_SERIALIZER =
       new CustomFieldSerializer<Object>() {
         @Override
         public void deserializeInstance(SerializationStreamReader
@@ -303,7 +303,7 @@ public class SerializabilityUtil {
       if (CustomFieldSerializer.class.isAssignableFrom(customSerializerClass)) {
         try {
           customFieldSerializer =
-              (CustomFieldSerializer) customSerializerClass.newInstance();
+              (CustomFieldSerializer<?>) customSerializerClass.newInstance();
         } catch (InstantiationException e) {
           throw new SerializationException(e);
 

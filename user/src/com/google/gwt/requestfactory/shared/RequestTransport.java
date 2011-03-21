@@ -36,7 +36,8 @@ public interface RequestTransport {
     /**
      * Called to report a transmission failure as a ServerFailure.
      * 
-     * @param message the String error message
+     * @param failure a ServerFailure instance indicating the nature
+     *     of the failure
      */
     void onTransportFailure(ServerFailure failure);
   }
@@ -45,7 +46,8 @@ public interface RequestTransport {
    * Called by the RequestFactory implementation.
    * 
    * @param payload the String payload
-   * @param receiver a {@link TransportReceiver} instance
+   * @param receiver the {@link TransportReceiver} instance that will
+   *    receive the payload
    */
   void send(String payload, TransportReceiver receiver);
 }

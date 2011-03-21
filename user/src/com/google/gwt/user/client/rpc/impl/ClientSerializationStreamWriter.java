@@ -30,7 +30,6 @@ public final class ClientSerializationStreamWriter extends
   /**
    * Used by JSNI, see {@link #quoteString(String)}.
    */
-  @SuppressWarnings("unused")
   private static JavaScriptObject regex = getQuotingRegex();
 
   /**

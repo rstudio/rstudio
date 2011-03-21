@@ -52,6 +52,7 @@ public class MathContext_CustomFieldSerializer extends
     streamWriter.writeInt(instance.getRoundingMode().ordinal());
   }
 
+  @Override
   public void deserializeInstance(SerializationStreamReader streamReader,
       MathContext instance) throws SerializationException {
     deserialize(streamReader, instance);
@@ -68,6 +69,7 @@ public class MathContext_CustomFieldSerializer extends
     return instantiate(streamReader);
   }
 
+  @Override
   public void serializeInstance(SerializationStreamWriter streamWriter,
       MathContext instance) throws SerializationException {
     serialize(streamWriter, instance);

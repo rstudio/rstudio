@@ -60,18 +60,22 @@ public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
       this.v = v;
     }
 
+    @Override
     public Object getKey() {
       return v.getOriginalProxy();
     }
 
+    @Override
     public String getMessage() {
       return v.getMessage();
     }
 
+    @Override
     public String getPath() {
       return v.getPath();
     }
 
+    @Override
     public Object getUserDataObject() {
       return v;
     }

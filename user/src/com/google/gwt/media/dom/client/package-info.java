@@ -15,7 +15,6 @@
  */
 
 /**
- * <p>
  * DOM classes for HTML Audio and Video support.
  */
 @com.google.gwt.util.PreventSpuriousRebuilds

@@ -33,8 +33,8 @@ public interface HasRequestContext<T> extends Editor<T> {
    * {@code null} if {@link RequestFactoryEditorDriver#display(Object)
    * display()} is called.
    * 
-   * @param the RequestContext associated with the current editing session which
-   *          may be {@code null}
+   * @param ctx the RequestContext associated with the current editing session
+   *          which may be {@code null}
    */
   void setRequestContext(RequestContext ctx);
 }

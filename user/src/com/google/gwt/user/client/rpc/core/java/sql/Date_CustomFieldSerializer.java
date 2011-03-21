@@ -46,6 +46,7 @@ public final class Date_CustomFieldSerializer extends
     streamWriter.writeLong(instance.getTime());
   }
 
+  @Override
   public void deserializeInstance(SerializationStreamReader streamReader,
       Date instance) throws SerializationException {
     deserialize(streamReader, instance);
@@ -62,6 +63,7 @@ public final class Date_CustomFieldSerializer extends
     return instantiate(streamReader);
   }
 
+  @Override
   public void serializeInstance(SerializationStreamWriter streamWriter,
       Date instance) throws SerializationException {
     serialize(streamWriter, instance);

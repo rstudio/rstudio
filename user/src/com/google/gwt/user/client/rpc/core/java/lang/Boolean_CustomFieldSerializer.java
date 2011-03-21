@@ -41,7 +41,8 @@ public final class Boolean_CustomFieldSerializer extends
       Boolean instance) throws SerializationException {
     streamWriter.writeBoolean(instance.booleanValue());
   }
-
+  
+  @Override
   public void deserializeInstance(SerializationStreamReader streamReader,
       Boolean instance) throws SerializationException {
     deserialize(streamReader, instance);
@@ -57,7 +58,8 @@ public final class Boolean_CustomFieldSerializer extends
       throws SerializationException {
     return instantiate(streamReader);
   }
-
+  
+  @Override
   public void serializeInstance(SerializationStreamWriter streamWriter,
       Boolean instance) throws SerializationException {
     serialize(streamWriter, instance);

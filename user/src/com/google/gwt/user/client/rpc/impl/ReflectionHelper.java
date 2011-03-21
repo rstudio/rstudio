@@ -49,8 +49,8 @@ public class ReflectionHelper {
     }
   }
 
-  private static final Cache<Class<?>, Constructor> constructorCache
-      = new Cache<Class<?>, Constructor>();
+  private static final Cache<Class<?>, Constructor<?>> constructorCache
+      = new Cache<Class<?>, Constructor<?>>();
 
   private static final Cache<Pair<Class<?>,String>, Field> fieldCache
       = new Cache<Pair<Class<?>,String>, Field>();

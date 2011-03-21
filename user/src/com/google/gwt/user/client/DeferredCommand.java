@@ -90,6 +90,7 @@ public class DeferredCommand {
    * @deprecated with no replacement because the presence of this method causes
    *             arbitrary scheduling decisions
    */
+  @Deprecated
   public static void addPause() {
     commandExecutor.submit((Command) null);
   }

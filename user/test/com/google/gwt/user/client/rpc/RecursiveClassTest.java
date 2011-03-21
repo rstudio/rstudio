@@ -18,7 +18,6 @@ package com.google.gwt.user.client.rpc;
 import com.google.gwt.user.client.rpc.RecursiveClassTestService.ResultNode;
 import com.google.gwt.core.client.GWT;
 
-
 /**
  * Class used to test generics with wild cards and recursive references.
  */
