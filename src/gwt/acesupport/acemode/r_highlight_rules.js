@@ -24,7 +24,7 @@ var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightR
 var RHighlightRules = function() {
 
     var keywords = lang.arrayToMap(
-        ("function|while|repeat|for|if|in|else|next|break").split("|")
+        ("function|while|repeat|for|if|in|else|next|break|return").split("|")
     );
     
     var buildinConstants = lang.arrayToMap(
@@ -94,10 +94,16 @@ var RHighlightRules = function() {
 	            token : "keyword.operator", // infix operators
 	            regex : "%.*?%"
 	        }, {
-	            token : "paren",
+	            // Obviously these are neither keywords nor operators, but
+	            // labelling them as such was the easiest way to get them
+	            // to be colored distinctly from regular text
+	            token : "paren.keyword.operator",
 	            regex : "[[({]"
 	        }, {
-	            token : "paren",
+	            // Obviously these are neither keywords nor operators, but
+	            // labelling them as such was the easiest way to get them
+	            // to be colored distinctly from regular text
+	            token : "paren.keyword.operator",
 	            regex : "[\\])}]"
 	        }, {
 	            token : "text",
