@@ -144,9 +144,14 @@ bool validateREnvironment(const EnvironmentVars& vars, std::string* pErrMsg)
                  "built with the --enable-R-shlib option?";
       return false;
    }
+   else if (!rDocPath.exists())
+   {
+      *pErrMsg = "R doc dir (" + rDocPath.absolutePath() + ") not found.";
+      return false;
+   }
 
    // log warnings for other missing paths (rsession can still start but
-   // won't be able to find these paths)
+   // won't be able to find these env variables)
 
    if (!rSharePath.exists())
    {
@@ -154,17 +159,9 @@ bool validateREnvironment(const EnvironmentVars& vars, std::string* pErrMsg)
                           ") not found");
    }
 
-   // merely log warnings for other missing paths
    if (!rIncludePath.exists())
    {
       LOG_WARNING_MESSAGE("R include path (" + rIncludePath.absolutePath() +
-                          ") not found");
-   }
-
-   // merely log warnings for other missing paths
-   if (!rDocPath.exists())
-   {
-      LOG_WARNING_MESSAGE("R doc path (" + rDocPath.absolutePath() +
                           ") not found");
    }
 
@@ -222,8 +219,16 @@ bool detectREnvironment(const FilePath& whichRScript,
       return false;
    }
 
-   // set r home path
+   // error if `R RHOME` yields file that doesn't exist
    FilePath rHomePath(rHomeOutput);
+   if (!rHomePath.exists())
+   {
+      *pErrMsg = "R home path (" + rHomeOutput + ") not found";
+      LOG_ERROR(pathNotFoundError(*pErrMsg, ERROR_LOCATION));
+      return false;
+   }
+
+   // set r home path
    pVars->push_back(std::make_pair("R_HOME", rHomePath.absolutePath()));
 
    // scan R script for other locations and append them to our vars
