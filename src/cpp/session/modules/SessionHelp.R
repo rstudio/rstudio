@@ -22,6 +22,16 @@ if (tools:::httpdPort > 0L)
 # options("help.ports") value that we set in SessionHelp.cpp)
 suppressMessages(tools::startDynamicHelp())
 
+.rs.addFunction( "setHelprLoadHook", function()
+{
+   setHook(packageEvent("helpr", "onLoad"),
+      function(...)
+      {
+         helpr:::deactivate_internetz()
+         helpr:::set_router_custom_route(TRUE)
+      })
+})
+
 .rs.addFunction( "handlerLookupError", function(path, query=NULL, ...)
 {
    payload = paste(
@@ -53,7 +63,9 @@ suppressMessages(tools::startDynamicHelp())
                               pkgname, 
                               "/html/", 
                               basename(file),
-			      ".html", sep=""))$payload
+                              ".html", sep=""),
+                        NULL,
+                        NULL)$payload
 
    match = suppressWarnings(regexpr('<body>.*</body>', html))
    if (match < 0)

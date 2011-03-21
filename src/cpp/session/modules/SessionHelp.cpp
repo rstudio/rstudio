@@ -676,7 +676,16 @@ Error initialize()
       (bind(registerUriHandler, kCustomLocation, handleCustomRequest))
       (bind(setHelpPort))
       (bind(sourceModuleRFile, "SessionHelp.R"));
-   return initBlock.execute();
+   Error error = initBlock.execute();
+   if (error)
+      return error;
+
+   // set the helpr load hook
+   error = r::exec::RFunction(".rs.setHelprLoadHook").call();
+   if (error)
+      LOG_ERROR(error);
+
+   return Success();
 }
 
 
