@@ -6,8 +6,12 @@
    margin-bottom: 12px;
 }
 
-.selectWidget, .numericValueWidget, .spaced {
+.selectWidget, .numericValueWidget, .textBoxWithButton, .spaced {
    margin-bottom: 12px;
+}
+
+.extraSpaced {
+   margin-bottom: 30px;
 }
 
 .preferencesDialog .tight {

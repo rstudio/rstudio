@@ -23,6 +23,7 @@ public interface PreferencesDialogResources extends ClientBundle
       String numericValueWidget();
       String themeChooser();
       String spaced();
+      String extraSpaced();
    }
 
    @Source("PreferencesDialog.css")

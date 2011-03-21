@@ -71,28 +71,18 @@ public class GeneralPreferencesPane extends PreferencesPane
                });
          cranMirror_.setWidth("100%");
          cranMirror_.setText(Desktop.getFrame().getCRANMirror());
+         cranMirror_.addStyleName(res.styles().extraSpaced());
 
          add(cranMirror_);
       }
-      
-      saveWorkspace_ = new SelectWidget(
-            "Save workspace on exit?",
-            new String[] {
-                  "Always",
-                  "Never",
-                  "Ask me every time"
-            });
-      add(saveWorkspace_);
 
-      add(loadRData_ = new CheckBox("Load .RData at startup"));
-
-      tight(defaultWorkingDir_ = new Label("Default working directory:"));
-      dirChooser_ = new TextBoxWithButton(null, "Browse...", new ClickHandler()
+      add(tight(defaultWorkingDir_ = new Label("Default working directory")));
+      add(dirChooser_ = new TextBoxWithButton(null, "Browse...", new ClickHandler()
       {
          public void onClick(ClickEvent event)
          {
             fileDialogs_.chooseFolder(
-                  "Initial Working Directory",
+                  "Default Working Directory",
                   fsContext_,
                   FileSystemItem.createDir(dirChooser_.getText()),
                   new ProgressOperationWithInput<FileSystemItem>()
@@ -108,17 +98,25 @@ public class GeneralPreferencesPane extends PreferencesPane
                      }
                   });
          }
-      });
+      }));
       dirChooser_.setWidth("80%");
-      dirChooser_.addStyleName(res.styles().indent());
+      dirChooser_.addStyleName(res.styles().extraSpaced());
 
-      add(defaultWorkingDir_);
-      add(dirChooser_);
+
+      add(loadRData_ = new CheckBox("Load .RData into workspace at startup"));
+
+      saveWorkspace_ = new SelectWidget(
+            "Save workspace to .RData on exit?",
+            new String[] {
+                  "Always",
+                  "Never",
+                  "Ask me every time"
+            });
+      add(saveWorkspace_);
+
       saveWorkspace_.setEnabled(false);
       loadRData_.setEnabled(false);
-     
       dirChooser_.setEnabled(false);
-
       server_.getRPrefs(new SimpleRequestCallback<RPrefs>()
       {
          @Override
