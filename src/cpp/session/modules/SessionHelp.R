@@ -97,6 +97,19 @@ suppressMessages(tools::startDynamicHelp())
    list('html' = html, 'signature' = sig, 'pkgname' = pkgname)
 });
 
+.rs.addFunction("helprIsActive", function()
+{
+   if ("helpr" %in% .packages())
+   {
+      return ( !identical(helpr:::router_url(), "") &&
+               helpr:::router_custom_route())
+   }
+   else
+   {
+      return (FALSE)
+   }
+})
+
 .rs.addJsonRpcHandler("show_help_topic", function(topic, package)
 {
    print(help(topic, help_type="html"))

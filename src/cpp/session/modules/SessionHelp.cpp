@@ -534,12 +534,28 @@ void handleHttpdRequest(const std::string& location,
    // was url encoding dashes in e.g. help for memory-limits)
    std::string path = http::util::urlDecode(uri);
 
+   // server custom css file if necessary
    if (path == "/library/R.css" || path == "/doc/html/R.css")
    {
       core::FilePath cssFile = options().rHelpCssFilePath();
       if (cssFile.exists())
       {
          pResponse->setFile(cssFile, request, filter);
+         return;
+      }
+   }
+
+   // redirect from stock home to helpr home if it is active
+   if (path == "/doc/html/index.html")
+   {
+      bool helprActive = false;
+      Error error = r::exec::RFunction(".rs.helprIsActive").call(&helprActive);
+      if (error)
+         LOG_ERROR(error);
+
+      if (helprActive)
+      {
+         pResponse->setMovedTemporarily(request, "/custom/helpr/index.html");
          return;
       }
    }
