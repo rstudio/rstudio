@@ -105,8 +105,12 @@
 
 .rs.addJsonRpcHandler( "list_packages", function()
 {
-   # get all installed packages and exclude base
-   x <- suppressWarnings(library())
+   # calculate unique libpaths
+   libPaths <- utils::normalizePath(.libPaths())
+   uniqueLibPaths <- subset(libPaths, !duplicated(libPaths))
+
+   # get packages
+   x <- suppressWarnings(library(lib.loc=uniqueLibPaths))
    x <- x$results[x$results[, 1] != "base", ]
    
    # extract/compute required fields 
@@ -129,8 +133,7 @@
                          check.rows = TRUE,
                          stringsAsFactors = FALSE)
 
-   # remove duplicates (required for ubuntu /usr/lib{64} duping) and sort
-   packages <- subset(packages, !duplicated(packages$name))
+   # sort and return
    packages[order(packages$name),]
 })
 
