@@ -582,7 +582,7 @@ public class Files
    private FileSystemItem currentPath_ = FileSystemItem.home();
    private final Provider<FilesCopy> pFilesCopy_;
    private final Provider<FilesUpload> pFilesUpload_;
-   private static final String MODULE_FILES = "module_files";
+   private static final String MODULE_FILES = "filespane";
    private static final String KEY_PATH = "path";
   
 }

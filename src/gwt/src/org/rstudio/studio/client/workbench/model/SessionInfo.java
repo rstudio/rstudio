@@ -111,6 +111,9 @@ public class SessionInfo extends JavaScriptObject
       return this.rstudio_version;
    }-*/;
 
+   // TODO: The check for null was for migration in the presence of 
+   // sessions that couldn't suspend (3/21/2011). Remove this check
+   // once we are sufficiently clear of this date window.
    public final native String getInitialWorkingDir() /*-{
       if (!this.initial_working_dir)
          this.initial_working_dir = "~/";
