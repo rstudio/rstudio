@@ -147,6 +147,7 @@ bool handleLocalHttpUrl(const std::string& url)
    std::string helpPath;
    if (isLocalURL(url, "", &helpPath))
    {
+      helpPath = "help/" + helpPath;
       ClientEvent helpEvent(client_events::kShowHelp, helpPath);
       module_context::enqueClientEvent(helpEvent);
       return true;

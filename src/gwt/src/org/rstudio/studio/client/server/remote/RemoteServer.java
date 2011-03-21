@@ -462,12 +462,6 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_HELP, params, requestCallback);
    }
    
-   public String getHelpUrl(String topicURI)
-   {
-      String helpUrl = getApplicationURL(HELP_SCOPE) + "/" + topicURI;
-      return helpUrl;
-   }
-   
    public void showHelpTopic(String topic, String pkgName)
    {
       JSONArray params = new JSONArray() ;

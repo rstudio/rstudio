@@ -132,7 +132,7 @@ public class Help extends BasePresenter implements ShowHelpHandler
 
    public void onShowHelp(ShowHelpEvent event)
    {
-      view_.showHelp(server_.getHelpUrl(event.getTopicUrl()));
+      view_.showHelp(server_.getApplicationURL(event.getTopicUrl()));
       view_.bringToFront();
    }
 
@@ -204,8 +204,8 @@ public class Help extends BasePresenter implements ShowHelpHandler
 
    private void home()
    {
-      String url = "doc/html/index.html" ;
-      view_.showHelp(server_.getHelpUrl(url));
+      String url = "help/doc/html/index.html" ;
+      view_.showHelp(server_.getApplicationURL(url));
    }
    
    public Display getDisplay()

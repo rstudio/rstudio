@@ -54,7 +54,7 @@ public interface HelpServerOperations
                 int options,
                 ServerRequestCallback<HelpInfo> requestCallback);
    
-   String getHelpUrl(String topicURI);
+   String getApplicationURL(String topicURI);
 
    void showHelpTopic(String topic, String pkgName) ;
 
