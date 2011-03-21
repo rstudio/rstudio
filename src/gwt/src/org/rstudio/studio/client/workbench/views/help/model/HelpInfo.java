@@ -17,6 +17,7 @@ import com.google.gwt.dom.client.*;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NodePredicate;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class HelpInfo extends JavaScriptObject
@@ -51,10 +52,19 @@ public class HelpInfo extends JavaScriptObject
             }
          }
    
-         NodeList<Element> headings = div.getElementsByTagName("h3") ;
-         for (int i = 0; i < headings.getLength(); i++)
+         // get all h2 and h3 headings
+         NodeList<Element> h2headings = div.getElementsByTagName("h2") ;
+         NodeList<Element> h3headings = div.getElementsByTagName("h3") ;
+         ArrayList<Element> headings = new ArrayList<Element>();
+         for (int i = 0; i<h2headings.getLength(); i++)
+            headings.add(h2headings.getItem(i));
+         for (int i = 0; i<h3headings.getLength(); i++)
+            headings.add(h3headings.getItem(i));
+         
+         // iterate through them
+         for (int i = 0; i < headings.size(); i++)
          {
-            Element heading = headings.getItem(i) ;
+            Element heading = headings.get(i) ;
             String name = heading.getInnerText() ;
             if (name.equals("Arguments"))
             {
@@ -63,6 +73,7 @@ public class HelpInfo extends JavaScriptObject
             StringBuffer value = new StringBuffer() ;
             Node sibling = heading.getNextSibling() ;
             while (sibling != null
+                  && !sibling.getNodeName().toLowerCase().equals("h2")
                   && !sibling.getNodeName().toLowerCase().equals("h3"))
             {
                value.append(DomUtils.getHtml(sibling)) ;
