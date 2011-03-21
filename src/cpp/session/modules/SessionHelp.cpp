@@ -37,6 +37,7 @@
 #include <r/RExec.hpp>
 #include <r/RFunctionHook.hpp>
 #include <r/ROptions.hpp>
+#include <r/RUtil.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -57,6 +58,10 @@ std::string s_localIP;
 std::string s_localPort;
 const char * const kHelpLocation = "/help";
 const char * const kCustomLocation = "/custom";
+
+// flag indicating whether we should send headers to custom handlers
+// (only do this for 2.13 or higher)
+bool s_provideHeaders = false;
 
 std::string localURL(const std::string& address)
 {
@@ -476,20 +481,32 @@ SEXP callHandler(const std::string& path,
    SEXP requestBodySEXP = parseRequestBody(request, pProtect);
    SEXP headersSEXP = headersBuffer(request, pProtect);
 
+   // only provide headers if appropriate
+   SEXP argsSEXP;
+   if (s_provideHeaders)
+   {
+      argsSEXP = Rf_list4(Rf_mkString(path.c_str()),
+                          queryStringSEXP,
+                          requestBodySEXP,
+                          headersSEXP);
+   }
+   else
+   {
+      argsSEXP = Rf_list3(Rf_mkString(path.c_str()),
+                          queryStringSEXP,
+                          requestBodySEXP);
+   }
+   pProtect->add(argsSEXP);
+
+   // form the call expression
    SEXP callSEXP;
    pProtect->add(callSEXP = Rf_lang3(
          Rf_install("try"),
-         Rf_lcons( (handlerSource(path)),
-                   (Rf_list4(Rf_mkString(path.c_str()),
-                             queryStringSEXP,
-                             requestBodySEXP,
-                             headersSEXP))),
+         Rf_lcons( (handlerSource(path)), argsSEXP),
          trueSEXP));
-
    SET_TAG(CDR(CDR(callSEXP)), Rf_install("silent"));
 
    // execute and return
-
    SEXP resultSEXP;
    pProtect->add(resultSEXP = Rf_eval(callSEXP,
                                       R_FindNamespace(Rf_mkString("tools"))));
@@ -642,6 +659,9 @@ Error setHelpPort()
    
 Error initialize()
 {
+   // determine whether we should provide headers to custom handlers
+   s_provideHeaders = r::util::hasRequiredVersion("2.13");
+
    using boost::bind;
    using core::http::UriHandler;
    using namespace module_context;
