@@ -90,23 +90,12 @@ public:
       return std::string(authRequiredUserGroup_.c_str());
    }
 
-   // r
-   std::string rHome() const
-   {
-      return std::string(rHome_.c_str());
-   }
-
-   std::string rDocDir() const
-   {
-      return std::string(rDocDir_.c_str());
-   }
-
-   std::string rLibDir() const
-   {
-      return std::string(rLibDir_.c_str());
-   }
-
    // rsession
+   std::string rsessionWhichR() const
+   {
+      return std::string(rsessionWhichR_.c_str());
+   }
+
    std::string rsessionPath() const
    { 
       return std::string(rsessionPath_.c_str()); 
@@ -138,9 +127,6 @@ public:
    }
 
 private:
-   bool resolveRPaths();
-
-private:
    std::string serverWorkingDir_;
    std::string serverUser_;
    bool serverDaemonize_;
@@ -151,9 +137,7 @@ private:
    int wwwThreadPoolSize_;
    bool authValidateUsers_;
    std::string authRequiredUserGroup_;
-   std::string rHome_;
-   std::string rDocDir_;
-   std::string rLibDir_;
+   std::string rsessionWhichR_;
    std::string rsessionPath_;
    std::string rldpathPath_;
    std::string rsessionConfigFile_;

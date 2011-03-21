@@ -23,6 +23,7 @@ set(SERVER_SOURCE_FILES
    ServerOffline.cpp
    ServerOptions.cpp
    ServerPAMAuth.cpp
+   ServerREnvironment.cpp
    ServerSessionProxy.cpp
    auth/ServerAuthHandler.cpp
    auth/ServerSecureCookie.cpp

@@ -13,6 +13,7 @@
 
 #include <core/Error.hpp>
 #include <core/ProgramStatus.hpp>
+#include <core/ProgramOptions.hpp>
 
 #include <core/text/TemplateFilter.hpp>
 
@@ -43,6 +44,7 @@
 #include "ServerOffline.hpp"
 #include "ServerPAMAuth.hpp"
 #include "ServerSessionProxy.hpp"
+#include "ServerREnvironment.hpp"
 
 using namespace core ;
 using namespace server;
@@ -206,6 +208,15 @@ int main(int argc, char * const argv[])
       if ( status.exit() )
          return status.exitCode() ;
       
+      // detect R environment variables
+      std::string errMsg;
+      bool detected = r_environment::initialize(&errMsg);
+      if (!detected)
+      {
+         program_options::reportError(errMsg, ERROR_LOCATION);
+         return EXIT_FAILURE;
+      }
+
       // daemonize if requested
       if (options.serverDaemonize())
       {

@@ -22,14 +22,6 @@
 #include <server/util/system/System.hpp>
 #include <server/util/system/User.hpp>
 
-#include "config.h"
-
-#ifdef __APPLE__
-#define SHARED_LIB_EXT "dylib"
-#else
-#define SHARED_LIB_EXT "so"
-#endif
-
 using namespace core ;
 
 namespace server {
@@ -43,14 +35,6 @@ void resolvePath(const FilePath& installPath, std::string* pPath)
    *pPath = installPath.complete(*pPath).absolutePath();
 }
 
-void reportMissingRPathError(const std::string& name,
-                      const std::string& path,
-                      const core::ErrorLocation& location)
-{
-   program_options::reportError(
-                        "Error: R " + name + " (" + path + ") does not exist",
-                        ERROR_LOCATION);
-}
 
 } // anonymous namespace
 
@@ -58,85 +42,6 @@ Options& options()
 {
    static Options instance ;
    return instance ;
-}
-
-bool Options::resolveRPaths()
-{
-   // resolve r-home
-   bool customRHome = false;
-   if (!rHome_.empty())
-   {
-      customRHome = true;
-   }
-   else
-   {
-      // probe for one of the standard R home paths
-      std::vector<FilePath> rHomePaths;
-      rHomePaths.push_back(FilePath("/usr/local/lib64/R/bin"));
-      rHomePaths.push_back(FilePath("/usr/local/lib/R/bin"));
-      rHomePaths.push_back(FilePath("/usr/lib64/R/bin"));
-      rHomePaths.push_back(FilePath("/usr/lib/R/bin"));
-      for(std::vector<FilePath>::const_iterator it = rHomePaths.begin();
-          it != rHomePaths.end(); ++it)
-      {
-         if (it->exists())
-         {
-            rHome_ = it->parent().absolutePath();
-            break;
-         }
-      }
-
-      // if we still didn't find a home path then use configured value
-      if (rHome_.empty())
-         rHome_ = CONFIG_R_HOME_PATH;
-   }
-
-   // verify r-home
-   FilePath rHomePath(rHome_);
-   if (!rHomePath.exists())
-   {
-      reportMissingRPathError("home path", rHome_, ERROR_LOCATION);
-      return false;
-   }
-
-   // if there was no explicit doc dir then complete off of detected home
-   if (rDocDir_.empty())  
-      rDocDir_ = rHomePath.complete("doc").absolutePath();
-
-   // if that doesn't exist then last ditch is configured path
-   // (note this is necessary for debian r-base since it locates
-   // R_DOC_DIR in /usr/share)
-   if (!FilePath(rDocDir_).exists())
-      rDocDir_ = CONFIG_R_DOC_PATH;
-
-   // check for doc path existing
-   if (!FilePath(rDocDir_).exists())
-   {
-      reportMissingRPathError("doc dir", rDocDir_, ERROR_LOCATION);
-      return false;
-   }
-
-   // resolve and verify rlibdir
-   FilePath rLibDirPath = rHomePath.complete("lib");
-   rLibDir_ = rLibDirPath.absolutePath();
-   if (!rLibDirPath.exists())
-   {
-      reportMissingRPathError("lib dir", rLibDir_, ERROR_LOCATION);
-      return false;
-   }
-
-   // verify that we have libR.so
-   FilePath rLibRPath = rLibDirPath.complete("libR." SHARED_LIB_EXT);
-   if (!rLibRPath.exists())
-   {
-      program_options::reportError("Error: libR.so not found in R lib path (" +
-                                   rLibDir_ + "). Was R built with " +
-                                   "--enable-R-shlib?",
-                                   ERROR_LOCATION);
-      return false;
-   }
-
-   return true;
 }
 
 ProgramStatus Options::read(int argc, char * const argv[])
@@ -185,19 +90,12 @@ ProgramStatus Options::read(int argc, char * const argv[])
          value<int>(&wwwThreadPoolSize_)->default_value(2),
          "thread pool size");
 
-   // r
-   options_description r("r");
-   r.add_options()
-      ("r-home",
-         value<std::string>(&rHome_)->default_value(""),
-         "path to R home directory")
-      ("r-doc-dir",
-         value<std::string>(&rDocDir_)->default_value(""),
-         "path to R docs directory ");
-
    // rsession
    options_description rsession("rsession");
    rsession.add_options()
+      ("rsession-which-r",
+         value<std::string>(&rsessionWhichR_)->default_value(""),
+         "path to main R program (e.g. /usr/bin/R)")
       ("rsession-path", 
          value<std::string>(&rsessionPath_)->default_value("bin/rsession"),
          "path to rsession executable")
@@ -232,8 +130,8 @@ ProgramStatus Options::read(int argc, char * const argv[])
    std::string configFile = defaultConfigPath.exists() ?
                                  defaultConfigPath.absolutePath() : "";
    program_options::OptionsDescription optionsDesc("rserver", configFile);
-   optionsDesc.commandLine.add(server).add(www).add(r).add(rsession).add(auth);
-   optionsDesc.configFile.add(server).add(www).add(r).add(rsession).add(auth);
+   optionsDesc.commandLine.add(server).add(www).add(rsession).add(auth);
+   optionsDesc.configFile.add(server).add(www).add(rsession).add(auth);
  
    // read options
    ProgramStatus status = core::program_options::read(optionsDesc, argc, argv);
@@ -267,10 +165,6 @@ ProgramStatus Options::read(int argc, char * const argv[])
          }
       }
    }
-
-   // resolve R paths
-   if (!resolveRPaths())
-      return ProgramStatus::exitFailure();
 
    // convert relative paths by completing from the system installation
    // path (this allows us to be relocatable)

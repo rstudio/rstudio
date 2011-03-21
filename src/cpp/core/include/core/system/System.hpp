@@ -59,6 +59,8 @@ Error setExitFunction(void (*exitFunction) (void));
    
 // exit
 int exitFailure(const Error& error, const ErrorLocation& loggedFromLocation);
+int exitFailure(const std::string& errMsg,
+                const ErrorLocation& loggedFromLocation);
    
 // signals 
    

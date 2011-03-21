@@ -183,8 +183,35 @@ bool detectREnvironment(const FilePath& whichRScript,
                         EnvironmentVars* pVars,
                         std::string* pErrMsg)
 {
-   // determine R script path. use either system default or user override
-   FilePath rScriptPath = whichRScript;
+   // if there is a which R script override then validate it (but only
+   // log a warning then move on to the system default)
+   FilePath rScriptPath;
+   if (!whichRScript.empty())
+   {
+      // but warn (and ignore) if it doesn't exist
+      if (!whichRScript.exists())
+      {
+         LOG_WARNING_MESSAGE("Override for which R (" +
+                             whichRScript.absolutePath() +
+                             ") does not exist (ignoring)");
+      }
+
+      // also warn and ignore if it is a directory
+      else if (whichRScript.isDirectory())
+      {
+         LOG_WARNING_MESSAGE("Override for which R (" +
+                             whichRScript.absolutePath() +
+                             ") is a directory rather than a file (ignoring)");
+      }
+
+      // otherwise set it
+      else
+      {
+         rScriptPath = whichRScript;
+      }
+   }
+
+   // if don't have an override (or it was invalid) then use system default
    if (rScriptPath.empty())
       rScriptPath = systemDefaultRScript();
 

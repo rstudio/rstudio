@@ -50,11 +50,7 @@
 
 #include <server/ServerOptions.hpp>
 
-#ifdef __APPLE__
-#define kLibraryPathEnvVariable  "DYLD_LIBRARY_PATH"
-#else
-#define kLibraryPathEnvVariable  "LD_LIBRARY_PATH"
-#endif
+#include "ServerREnvironment.hpp"
 
 using namespace core ;
 
@@ -62,24 +58,6 @@ namespace server {
 namespace session_proxy {
    
 namespace {
-
-std::string readRLdLibraryPath(const std::string& rHome)
-{
-   std::string ldLibraryPath;
-   FilePath ldpathScript(server::options().rldpathPath());
-   if (ldpathScript.exists())
-   {
-      std::string command = ldpathScript.absolutePath() + " " + rHome;
-      Error error = core::system::captureCommand(command, &ldLibraryPath);
-
-      // this is here to enable support for rJava. if it doesn't work for some
-      // reason then just log and don't hold up the whole works for this error
-      if (error)
-         LOG_ERROR(error);
-   }
-
-   return ldLibraryPath;
-}
 
 Error launchSession(const std::string& username, PidType* pPid)
 {
@@ -115,20 +93,9 @@ Error launchSession(const std::string& username, PidType* pPid)
                            boost::lexical_cast<std::string>(uid)));
 
 
-   // set R_HOME and R_DOC_DIR
-   environment.push_back(std::make_pair("R_HOME", options.rHome()));
-   environment.push_back(std::make_pair("R_DOC_DIR", options.rDocDir()));
-
-   // compute and set library path
-   std::string ldLibraryPath = core::system::getenv(kLibraryPathEnvVariable);
-   if (!ldLibraryPath.empty())
-      ldLibraryPath.append(":");
-   ldLibraryPath.append(options.rLibDir());
-   std::string rLdLibraryPath = readRLdLibraryPath(options.rHome());
-   if (!rLdLibraryPath.empty())
-      ldLibraryPath.append(":" + rLdLibraryPath);
-   environment.push_back(std::make_pair(kLibraryPathEnvVariable,
-                                        ldLibraryPath));
+   // append R environment variables
+   core::system::Options rEnvVars = r_environment::variables();
+   environment.insert(environment.end(), rEnvVars.begin(), rEnvVars.end());
 
    // launch the session
    *pPid = -1;

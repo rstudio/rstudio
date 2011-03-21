@@ -18,6 +18,24 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
   ${CMAKE_INSTALL_PREFIX}/bin/*.so mr,
   ${CMAKE_INSTALL_PREFIX}/bin/rsession ux,
 
+  # execution and reading of R script to detect R HOME
+  /bin/uname rix,
+  /bin/which rix,
+  /usr/bin/which rix,
+  ${LIBR_EXECUTABLE} rix,
+  /usr/bin/R rix,
+  /usr/local/bin/R rix,
+
+  # directory probing for validating discovered R paths
+  ${LIBR_HOME}/ r,
+  ${LIBR_HOME}/lib/ r,
+  /usr/lib{,32,64}/R/ r,
+  /usr/lib{,32,64}/R/lib/ r,
+  /usr/local/lib{,32,64}/R/ r,
+  /usr/local/lib{,32,64}/R/lib/ r,
+  /usr/share/R/ r,
+
+  # execution of R ldpaths script 
   ${CMAKE_INSTALL_PREFIX}/bin/r-ldpath rix,
   ${LIBR_HOME}/etc/ldpaths rix,
   /usr/lib{,32,64}/R/etc/ldpaths rix,
@@ -27,9 +45,6 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
   /etc/ld.so.cache r,
   /lib/*.so* mr,
   /dev/tty rw,
-
-  /usr/lib{,32,64}/R/ r,
-  /usr/local/lib{,32,64}/R/ r,
 
   ${CMAKE_INSTALL_PREFIX}/www/** r,
 

@@ -23,6 +23,13 @@ int exitFailure(const Error& error, const ErrorLocation& loggedFromLocation)
    core::log::logError(error, loggedFromLocation);
    return EXIT_FAILURE;
 }
+
+int exitFailure(const std::string& errMsg,
+                const ErrorLocation& loggedFromLocation)
+{
+   core::log::logErrorMessage(errMsg, loggedFromLocation);
+   return EXIT_FAILURE;
+}
    
 int exitSuccess()
 {

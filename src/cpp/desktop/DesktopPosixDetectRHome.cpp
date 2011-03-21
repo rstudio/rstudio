@@ -41,30 +41,11 @@ void showRNotFoundError(const std::string& msg)
 
 bool prepareEnvironment(Options& options)
 {
-   // check for r script override
+   // check for which R override
    FilePath rWhichRPath;
-   std::string rScriptVal = core::system::getenv("RSTUDIO_WHICH_R");
-   if (!rScriptVal.empty())
-   {
-      // set it
-      rWhichRPath = FilePath(rScriptVal);
-
-      // but warn (and ignore) if it doesn't exist
-      if (!rWhichRPath.exists())
-      {
-         LOG_WARNING_MESSAGE("Specified RSTUDIO_WHICH_R (" + rScriptVal +
-                             ") does not exist (ignoring)");
-         rWhichRPath = FilePath();
-      }
-
-      // also warn and ignore if it is a directory
-      else if (rWhichRPath.isDirectory())
-      {
-         LOG_WARNING_MESSAGE("Specified RSTUDIO_WHICH_R (" + rScriptVal +
-                             ") is a directory rather than file (ignoring)");
-         rWhichRPath = FilePath();
-      }
-   }
+   std::string whichROverride = core::system::getenv("RSTUDIO_WHICH_R");
+   if (!whichROverride.empty())
+      rWhichRPath = FilePath(whichROverride);
 
    // determine rLdPaths script location
    FilePath supportingFilePath = options.supportingFilePath();
