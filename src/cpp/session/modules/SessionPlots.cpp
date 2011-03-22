@@ -116,10 +116,18 @@ Error refreshPlot(const json::JsonRpcRequest& request,
 Error exportPlot(const json::JsonRpcRequest& request,
                   json::JsonRpcResponse* pResponse)
 {
+   // get args
    std::string path;
    int width, height;
-   json::readParams(request.params, &path, &width, &height);
-   return r::session::graphics::display().savePlotAsPng(FilePath(path),
+   Error error = json::readParams(request.params, &path, &width, &height);
+   if (error)
+      return error;
+
+   // resolve path
+   FilePath plotPath = module_context::resolveAliasedPath(path);
+
+   // save plot
+   return r::session::graphics::display().savePlotAsPng(plotPath,
                                                         width,
                                                         height);
 }
