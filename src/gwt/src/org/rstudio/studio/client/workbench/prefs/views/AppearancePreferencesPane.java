@@ -59,7 +59,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       FlowPanel previewPanel = new FlowPanel();
       previewPanel.setSize("100%", "100%");
       previewPanel.add(new Label("Preview"));
-      preview_ = new AceEditorPreview();
+      preview_ = new AceEditorPreview(CODE_SAMPLE);
       preview_.setHeight("300px");
       preview_.setWidth("288px");
       preview_.setTheme(themes.getThemeUrl(uiPrefs_.theme().getValue()));
@@ -101,4 +101,35 @@ public class AppearancePreferencesPane extends PreferencesPane
    private SelectWidget fontSize_;
    private SelectWidget theme_;
    private AceEditorPreview preview_;
+
+   private static final String CODE_SAMPLE =
+         "# function for plotting of R objects\n" +
+         "plot <- function (x, y, ...)\n" +
+         "{\n" +
+         "  if (is.function(x) && \n" +
+         "      is.null(attr(x, \"class\"))) {\n" +
+         "    \n" +
+         "    if (missing(y))\n" +
+         "      y <- NULL\n" +
+         "    \n" +
+         "    # check for ylab argument\n" +
+         "    hasylab <- function(...) \n" +
+         "      !all(is.na(\n" +
+         "        pmatch(names(list(...)),\n" +
+         "              \"ylab\")))\n" +
+         "    \n" +
+         "    if (hasylab(...))\n" +
+         "      plot.function(x, y, ...)\n" +
+         "    \n" +
+         "    else \n" +
+         "      plot.function(\n" +
+         "          x, y, \n" +
+         "          ylab = paste(deparse(\n" +
+         "                  substitute(x)),\n" +
+         "          \"(x)\"), ...)\n" +
+         "    }\n" +
+         "    \n" +
+         "    else \n" +
+         "      UseMethod(\"plot\")\n" +
+         "}\n";
 }

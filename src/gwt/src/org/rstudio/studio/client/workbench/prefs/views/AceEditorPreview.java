@@ -13,8 +13,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceReso
 
 public class AceEditorPreview extends DynamicIFrame
 {
-   public AceEditorPreview()
+   public AceEditorPreview(String code)
    {
+      code_ = code;
       Style style = getStyleElement().getStyle();
       style.setBorderColor("#CCC");
       style.setBorderWidth(1, Unit.PX);
@@ -50,7 +51,7 @@ public class AceEditorPreview extends DynamicIFrame
       div.setId("editor");
       div.getStyle().setWidth(100, Unit.PCT);
       div.getStyle().setHeight(100, Unit.PCT);
-      div.setInnerText("hello");
+      div.setInnerText(code_);
       body.appendChild(div);
 
       FontSizer.injectStylesIntoDocument(doc);
@@ -116,4 +117,5 @@ public class AceEditorPreview extends DynamicIFrame
    private String initialThemeUrl_;
    private boolean hasInitialFontSize_;
    private Size initialFontSize_;
+   private final String code_;
 }
