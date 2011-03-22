@@ -13,31 +13,53 @@
 
 #include <core/ConfigUtils.hpp>
 
+#include <algorithm>
+
+#include <boost/regex.hpp>
+#include <boost/bind.hpp>
+#include <boost/algorithm/string/trim.hpp>
+
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
-#include <core/Settings.hpp>
+#include <core/FileSerializer.hpp>
 
 namespace core {
 namespace config_utils {
 
+namespace {
+
+void extractToMap(const std::string& keyAndValue,
+                  std::map<std::string,std::string>* pMap)
+{
+   std::string::size_type pos = keyAndValue.find("=") ;
+   if ( pos != std::string::npos )
+   {
+      std::string key = keyAndValue.substr(0, pos) ;
+      boost::algorithm::trim(key);
+      std::string value = keyAndValue.substr(pos + 1) ;
+      boost::algorithm::trim(value) ;
+      pMap->operator[](key) = value;
+   }
+}
+
+}
+
 Error extractVariables(const FilePath& file, Variables* pVariables)
 {
-   // treat as a settings file
-   Settings settings;
-   Error error = settings.initialize(file);
+   // read in the file
+   std::string contents;
+   Error error = readStringFromFile(file,
+                                    &contents,
+                                    string_utils::LineEndingPosix);
    if (error)
       return error;
 
-   // look for each of the specified variables
-   for (Variables::iterator it = pVariables->begin();
-        it != pVariables->end();
-        ++it)
-   {
-      // reset its value to what was in the config file
-      it->second = settings.get(it->first, it->second);
-   }
+   // scan for variables via regex iterator
+   boost::regex var("^([A-Za-z0-9_]+=[^\n]+)$");
+   boost::sregex_token_iterator it(contents.begin(), contents.end(), var, 0);
+   boost::sregex_token_iterator end;
+   std::for_each(it, end, boost::bind(extractToMap, _1, pVariables));
 
-   // return success
    return Success();
 }
 

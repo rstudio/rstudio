@@ -74,6 +74,25 @@ FilePath systemDefaultRScript()
    return FilePath();
 }
 
+bool getRHomePath(const FilePath& rScriptPath,
+                  const config_utils::Variables& scriptVars,
+                  std::string* pRHome,
+                  std::string* pErrMsg)
+{
+   config_utils::Variables::const_iterator it = scriptVars.find("R_HOME_DIR");
+   if (it != scriptVars.end())
+   {
+      *pRHome = it->second;
+      return true;
+   }
+   else
+   {
+      *pErrMsg = "Unable to find R_HOME_DIR in " + rScriptPath.absolutePath();
+      LOG_ERROR_MESSAGE(*pErrMsg);
+      return false;
+   }
+}
+
 // Linux specific
 #else
 
@@ -133,6 +152,30 @@ FilePath systemDefaultRScript()
 
    // got a valid R binary
    return rBinaryPath;
+}
+
+bool getRHomePath(const FilePath& rScriptPath,
+                  const config_utils::Variables& scriptVars,
+                  std::string* pRHome,
+                  std::string* pErrMsg)
+{
+   // run R script to detect R home
+   std::string rHomeOutput;
+   std::string command = rScriptPath.absolutePath() + " RHOME";
+   Error error = core::system::captureCommand(command, &rHomeOutput);
+   if (error)
+   {
+      LOG_ERROR(error);
+      *pErrMsg = "Error running R (" + rScriptPath.absolutePath() + "): " +
+                 error.summary();
+      return false;
+   }
+   else
+   {
+      boost::algorithm::trim(rHomeOutput);
+      *pRHome = rHomeOutput;
+      return true;
+   }
 }
 
 
@@ -259,21 +302,27 @@ bool detectREnvironment(const FilePath& whichRScript,
       return false;
    }
 
-   // run R script to detect R home
-   std::string rHomeOutput;
-   std::string command = rScriptPath.absolutePath() + " RHOME";
-   Error error = core::system::captureCommand(command, &rHomeOutput);
+   // scan R script for other locations and append them to our vars
+   config_utils::Variables scriptVars;
+   Error error = config_utils::extractVariables(rScriptPath, &scriptVars);
    if (error)
    {
       LOG_ERROR(error);
-      *pErrMsg = "Error running R (" + rScriptPath.absolutePath() + "): " +
-                 error.summary();
+      *pErrMsg = "Error reading R script (" + rScriptPath.absolutePath() +
+                 "), " + error.summary();
       return false;
    }
-   boost::algorithm::trim(rHomeOutput);
+   pVars->push_back(std::make_pair("R_SHARE_DIR", scriptVars["R_SHARE_DIR"]));
+   pVars->push_back(std::make_pair("R_INCLUDE_DIR", scriptVars["R_INCLUDE_DIR"]));
+   pVars->push_back(std::make_pair("R_DOC_DIR", scriptVars["R_DOC_DIR"]));
 
-   // error if we got no output
-   if (rHomeOutput.empty())
+   // get r home path
+   std::string rHome;
+   if (!getRHomePath(rScriptPath, scriptVars, &rHome, pErrMsg))
+      return false;
+
+   // validate: error if we got no output
+   if (rHome.empty())
    {
       *pErrMsg = "Unable to determine R home directory";
       LOG_ERROR(systemError(boost::system::errc::not_supported,
@@ -282,32 +331,17 @@ bool detectREnvironment(const FilePath& whichRScript,
       return false;
    }
 
-   // error if `R RHOME` yields file that doesn't exist
-   FilePath rHomePath(rHomeOutput);
+   // validate: error if `R RHOME` yields file that doesn't exist
+   FilePath rHomePath(rHome);
    if (!rHomePath.exists())
    {
-      *pErrMsg = "R home path (" + rHomeOutput + ") not found";
+      *pErrMsg = "R home path (" + rHome + ") not found";
       LOG_ERROR(pathNotFoundError(*pErrMsg, ERROR_LOCATION));
       return false;
    }
 
-   // set r home path
+   // set R home path
    pVars->push_back(std::make_pair("R_HOME", rHomePath.absolutePath()));
-
-   // scan R script for other locations and append them to our vars
-   config_utils::Variables locationVars;
-   locationVars.push_back(std::make_pair("R_SHARE_DIR", ""));
-   locationVars.push_back(std::make_pair("R_INCLUDE_DIR", ""));
-   locationVars.push_back(std::make_pair("R_DOC_DIR", ""));
-   error = config_utils::extractVariables(rScriptPath, &locationVars);
-   if (error)
-   {
-      LOG_ERROR(error);
-      *pErrMsg = "Error reading R script (" + rScriptPath.absolutePath() +
-                 "), " + error.summary();
-      return false;
-   }
-   pVars->insert(pVars->end(), locationVars.begin(), locationVars.end());
 
    // determine library path (existing + r lib dir + r extra lib dirs)
    std::string libraryPath = core::system::getenv(kLibraryPathEnvVariable);

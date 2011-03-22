@@ -15,7 +15,7 @@
 #define CORE_CONFIG_UTILS_HPP
 
 #include <string>
-#include <vector>
+#include <map>
 
 namespace core {
 
@@ -24,7 +24,7 @@ class FilePath;
 
 namespace config_utils {
    
-typedef std::vector<std::pair<std::string,std::string> > Variables;
+typedef std::map<std::string,std::string> Variables;
 
 Error extractVariables(const FilePath& file, Variables* pVariables);
 
