@@ -40,6 +40,40 @@ std::string extraLibraryPaths(const FilePath& ldPathsScript,
    return std::string();
 }
 
+FilePath systemDefaultRScript()
+{
+   // define potential paths
+   std::vector<std::string> rScriptPaths;
+   rScriptPaths.push_back("/usr/bin/R");
+   rScriptPaths.push_back("/usr/local/bin/R");
+   rScriptPaths.push_back("/opt/local/bin/R");
+
+   // iterate over paths
+   for (std::vector<std::string>::const_iterator it = rScriptPaths.begin();
+        it != rScriptPaths.end();
+        ++it)
+   {
+      FilePath rScriptPath(*it);
+      if (rScriptPath.exists())
+      {
+         // verify that the alias points to a real version of R
+         Error error = core::system::realPath(*it, &rScriptPath);
+         if (!error)
+         {
+            return rScriptPath;
+         }
+         else
+         {
+            LOG_ERROR(error);
+            continue;
+         }
+      }
+   }
+
+   // didn't find it
+   return FilePath();
+}
+
 // Linux specific
 #else
 
@@ -67,8 +101,6 @@ std::string extraLibraryPaths(const FilePath& ldPathsScript,
    boost::algorithm::trim(libraryPaths);
    return libraryPaths;
 }
-
-#endif
 
 FilePath systemDefaultRScript()
 {
@@ -102,6 +134,10 @@ FilePath systemDefaultRScript()
    // got a valid R binary
    return rBinaryPath;
 }
+
+
+#endif
+
 
 bool validateREnvironment(const EnvironmentVars& vars, std::string* pErrMsg)
 {
