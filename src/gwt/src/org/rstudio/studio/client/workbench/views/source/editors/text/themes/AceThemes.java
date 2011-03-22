@@ -26,21 +26,21 @@ public class AceThemes
       themes_ = new ArrayList<String>();
       themesByName_ = new HashMap<String, String>();
 
-      addTheme("Clouds", res.clouds());
-      addTheme("Clouds Midnight", res.clouds_midnight());
-      addTheme("Cobalt", res.cobalt());
-      addTheme("Dawn", res.dawn());
+      addTheme("TextMate", res.textmate());
       addTheme("Eclipse", res.eclipse());
       addTheme("idle Fingers", res.idle_fingers());
-      addTheme("krTheme", res.kr_theme());
-      addTheme("Merbivore", res.merbivore());
-      addTheme("Merbivore Soft", res.merbivore_soft());
-      addTheme("Mono Industrial", res.mono_industrial());
-      addTheme("Monokai", res.monokai());
-      addTheme("Pastel on Dark", res.pastel_on_dark());
-      addTheme("TextMate", res.textmate());
       addTheme("Twilight", res.twilight());
-      addTheme("Vibrant Ink", res.vibrant_ink());
+      addTheme("Cobalt", res.cobalt());
+//      addTheme("Clouds", res.clouds());
+//      addTheme("Clouds Midnight", res.clouds_midnight());
+//      addTheme("Dawn", res.dawn());
+//      addTheme("krTheme", res.kr_theme());
+//      addTheme("Merbivore", res.merbivore());
+//      addTheme("Merbivore Soft", res.merbivore_soft());
+//      addTheme("Mono Industrial", res.mono_industrial());
+//      addTheme("Monokai", res.monokai());
+//      addTheme("Pastel on Dark", res.pastel_on_dark());
+//      addTheme("Vibrant Ink", res.vibrant_ink());
 
       eventBus.addHandler(SessionInitEvent.TYPE, new SessionInitHandler()
       {
