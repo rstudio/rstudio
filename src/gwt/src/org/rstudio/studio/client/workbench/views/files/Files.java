@@ -44,6 +44,8 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
+import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateHandler;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.files.events.ShowFolderEvent;
@@ -56,7 +58,9 @@ import java.util.ArrayList;
 
 public class Files
       extends BasePresenter
-      implements FileChangeHandler, OpenFileInBrowserHandler
+      implements FileChangeHandler, 
+                 OpenFileInBrowserHandler,
+                 DirectoryNavigateHandler
 {
    interface Binder extends CommandBinder<Commands, Files> {}
 
@@ -136,6 +140,7 @@ public class Files
 
       
       eventBus_.addHandler(FileChangeEvent.TYPE, this);
+      eventBus_.addHandler(DirectoryNavigateEvent.TYPE, this);
 
       initSession();
    }
@@ -496,6 +501,11 @@ public class Files
       {
          globalDisplay_.openWindow(fileURL);
       }
+   }
+   
+   public void onDirectoryNavigate(DirectoryNavigateEvent event)
+   {
+      navigateToDirectory(event.getDirectory());
    }
   
    private void navigateToDirectory(FileSystemItem directoryEntry)
