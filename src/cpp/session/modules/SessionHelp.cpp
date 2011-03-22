@@ -58,6 +58,7 @@ std::string s_localIP;
 std::string s_localPort;
 const char * const kHelpLocation = "/help";
 const char * const kCustomLocation = "/custom";
+const char * const kCustomHelprLocation = "/custom/helpr";
 
 // flag indicating whether we should send headers to custom handlers
 // (only do this for 2.13 or higher)
@@ -183,6 +184,13 @@ bool handleRShowDocFile(const core::FilePath& filePath)
       return false;
    }
 }
+
+// javascript callbacks to inject into page so that next/prev buttons work
+const char * const kJsNavigateCallbacks =
+      "<script type=\"text/javascript\">\n"
+      "if (window.parent.helpNavigated)\n"
+      "   window.parent.helpNavigated(document, window);"
+      "</script>";
    
 class HelpContentsFilter : public boost::iostreams::aggregate_filter<char>
 {
@@ -216,17 +224,26 @@ public:
             "src=\"" + baseUrl + "/");
       
       // append javascript callbacks
-      std::string js( "<script type=\"text/javascript\">\n"
-                      "if (window.parent.helpNavigated)\n"
-                      "   window.parent.helpNavigated(document, window);"
-                      "</script>");
+      std::string js(kJsNavigateCallbacks);
       std::copy(js.begin(), js.end(), std::back_inserter(dest));
    }
 private:
    std::string requestUri_;
 };
 
-   
+
+class CustomHelprContentsFilter
+   : public boost::iostreams::aggregate_filter<char>
+{
+   void do_filter(const std::vector<char>& src, std::vector<char>& dest)
+   {
+      std::string js(kJsNavigateCallbacks);
+      std::copy(src.begin(), src.end(), std::back_inserter(dest));
+      std::copy(js.begin(), js.end(), std::back_inserter(dest));
+   }
+};
+
+
 template <typename Filter>
 void setDynamicContentResponse(const std::string& content,
                                const http::Request& request,
@@ -643,6 +660,16 @@ SEXP lookupCustomHandler(const std::string& uri)
    return r::sexp::findFunction(".rs.handlerLookupError");
 }
 
+
+void handleCustomHelprRequest(const http::Request& request,
+                              http::Response* pResponse)
+{
+   handleHttpdRequest("",
+                      lookupCustomHandler,
+                      request,
+                      CustomHelprContentsFilter(),
+                      pResponse);
+}
    
 // .httpd.handlers.env
 void handleCustomRequest(const http::Request& request, 
@@ -699,6 +726,7 @@ Error initialize()
       (bind(registerRBrowseUrlHandler, handleLocalHttpUrl))
       (bind(registerRBrowseFileHandler, handleRShowDocFile))
       (bind(registerUriHandler, kHelpLocation, handleHelpRequest))
+      (bind(registerUriHandler, kCustomHelprLocation, handleCustomHelprRequest))
       (bind(registerUriHandler, kCustomLocation, handleCustomRequest))
       (bind(setHelpPort))
       (bind(sourceModuleRFile, "SessionHelp.R"));
