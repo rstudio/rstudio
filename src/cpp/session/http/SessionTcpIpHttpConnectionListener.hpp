@@ -44,16 +44,21 @@ protected:
       if (secret_.empty())
          return true;
 
-      // Allow /custom/* urls -- this is because the creators of custom http
-      // apps for R (either using tools:::http.handlers.env directly or
-      // using Rack) will often instruct their users to paste the url e.g.
-      // http://localhost:34302/custom/appname into their browser address
-      // bar. This of course won't work with our shared secret scheme.
+      // Allow /help/* and /custom/* urls -- this is because the creators
+      // of custom http apps for R (either using tools:::http.handlers.env
+      // directly or using Rack) will often instruct their users to paste
+      // the url e.g. http://localhost:34302/custom/appname into their browser
+      // address bar. This of course won't work with our shared secret scheme.
       // We allow this exception to our security policy because doing
-      // so makes us no less secure than standard CRAN desktop R.
+      // so makes us no less secure than standard CRAN desktop R. We also
+      // allow help as a convenience to the user (since the same security
+      // logic applies)
       std::string uri = ptrConnection->request().uri();
-      if (boost::algorithm::starts_with(uri, "/custom/"))
+      if (boost::algorithm::starts_with(uri, "/custom/") ||
+          boost::algorithm::starts_with(uri, "/help/"))
+      {
          return true;
+      }
 
       // validate against shared secret
       return secret_ == ptrConnection->request().headerValue("X-Shared-Secret");

@@ -36,6 +36,7 @@ import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.help.Help.LinkMenu;
@@ -314,7 +315,9 @@ public class HelpPane extends WorkbenchPane
    public void popout()
    {
       String href = getContentWindow().getLocationHref() ;
-      globalDisplay_.openWindow(href);
+      NewWindowOptions options = new NewWindowOptions();
+      options.setAlwaysUseBrowser(true);
+      globalDisplay_.openWindow(href, options);
    }
    
    public HandlerRegistration addHelpNavigateHandler(HelpNavigateHandler handler)
