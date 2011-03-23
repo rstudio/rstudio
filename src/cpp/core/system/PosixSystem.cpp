@@ -662,29 +662,11 @@ std::string generateUuid(bool includeDashes)
    return uuidStr;
 }
 
-namespace {
-
-Error installPath(const std::string& executablePath,
-                  const std::string& relativeToExecutable,
-                  FilePath* pInstallPath)
- {
-    FilePath exeFilePath;
-    Error error = realPath(executablePath, &exeFilePath);
-    if (error)
-       return error;
-
-    // fully resolve installation path relative to executable
-    FilePath installPath = exeFilePath.parent().complete(relativeToExecutable);
-    return realPath(installPath.absolutePath(), pInstallPath);
- }
-
-} // anonymous namespace
-
-// installation path
-Error installPath(const std::string& relativeToExecutable,
-                  int argc, char * const argv[],
-                  FilePath* pInstallPath)
+Error executablePath(int argc, char * const argv[],
+                     FilePath* pExecutablePath)
 {
+   std::string executablePath;
+
 #if defined(__APPLE__)
 
    // get path to current executable
@@ -696,13 +678,13 @@ Error installPath(const std::string& relativeToExecutable,
       _NSGetExecutablePath(&(buffer[0]), &buffSize);
    }
 
-   // calculate install path
-   return installPath(&(buffer[0]), relativeToExecutable, pInstallPath);
+   // set it
+   executablePath = std::string(&(buffer[0]));
+
 
 #elif defined(HAVE_PROCSELF)
 
-   // calcluate install path
-   return installPath("/proc/self/exe", relativeToExecutable, pInstallPath);
+   executablePath = std::string("/proc/self/exe");
 
 #else
 
@@ -713,14 +695,28 @@ Error installPath(const std::string& relativeToExecutable,
 
    // use argv[0] and initial path
    FilePath initialPath = FilePath::initialPath();
-   std::string exePath = initialPath.complete(argv[0]).absolutePath();
-
-   // calculate install path
-   return installPath(exePath, relativeToExecutable, pInstallPath);
+   executablePath = initialPath.complete(argv[0]).absolutePath();
 
 #endif
 
+   // return realPath of executable path
+   return realPath(executablePath, pExecutablePath);
+}
 
+// installation path
+Error installPath(const std::string& relativeToExecutable,
+                  int argc, char * const argv[],
+                  FilePath* pInstallPath)
+{
+   // get executable path
+   FilePath executablePath;
+   Error error = system::executablePath(argc, argv, &executablePath);
+   if (error)
+      return error;
+
+   // fully resolve installation path relative to executable
+   FilePath installPath = executablePath.parent().complete(relativeToExecutable);
+   return realPath(installPath.absolutePath(), pInstallPath);
 }
 
 void fixupExecutablePath(FilePath* pExePath)

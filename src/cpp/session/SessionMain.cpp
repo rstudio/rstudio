@@ -239,11 +239,20 @@ void ensureSessionInitialized()
 
 FilePath getInitialWorkingDirectory()
 {
-   // calculate the initial working directory
+   // first see if there is an override from the environment
+   std::string envWorkingDir = core::system::getenv("RS_INITIAL_WD");
+   if (!envWorkingDir.empty())
+   {
+      FilePath workingDirPath(envWorkingDir);
+      if (workingDirPath.exists() && workingDirPath.isDirectory())
+         return workingDirPath;
+   }
+
+   // calculate using user settings
    FilePath initialWorkingDir = userSettings().initialWorkingDirectory();
 
    // return it if it exists, otherwise use the default user home path
-   if (initialWorkingDir.exists())
+   if (initialWorkingDir.exists() && initialWorkingDir.isDirectory())
       return initialWorkingDir;
    else
       return session::options().userHomePath();
