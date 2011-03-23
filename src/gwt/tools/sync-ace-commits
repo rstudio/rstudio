@@ -17,6 +17,7 @@ git merge \
     origin/bugfix-webkit-paste2 \
     origin/bugfix-updatefontsize \
     origin/bugfix-ctrl-backspace \
+	origin/bugfix-wide-characters \
 
 
 make clean
