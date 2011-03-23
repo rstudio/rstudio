@@ -316,7 +316,7 @@ public class HelpPane extends WorkbenchPane
    {
       String href = getContentWindow().getLocationHref() ;
       NewWindowOptions options = new NewWindowOptions();
-      options.setAlwaysUseBrowser(true);
+      options.setAlwaysUseBrowser(false);
       globalDisplay_.openWindow(href, options);
    }
    
