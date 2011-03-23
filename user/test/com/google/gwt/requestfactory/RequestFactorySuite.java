@@ -26,6 +26,7 @@ import com.google.gwt.requestfactory.client.ui.EditorTest;
 import com.google.gwt.requestfactory.shared.BoxesAndPrimitivesTest;
 import com.google.gwt.requestfactory.shared.ComplexKeysTest;
 import com.google.gwt.requestfactory.shared.LocatorTest;
+import com.google.gwt.requestfactory.shared.ServiceInheritanceTest;
 
 import junit.framework.Test;
 
@@ -46,6 +47,7 @@ public class RequestFactorySuite {
     suite.addTestSuite(RequestFactoryExceptionPropagationTest.class);
     suite.addTestSuite(RequestFactoryPolymorphicTest.class);
     suite.addTestSuite(RequestFactoryUnicodeEscapingTest.class);
+    suite.addTestSuite(ServiceInheritanceTest.class);
     return suite;
   }
 }
