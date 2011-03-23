@@ -6601,7 +6601,7 @@ var TextInput = function(parentNode, host) {
     event.addListener(text, "paste", function(e) {
         // Some browsers support the event.clipboardData API. Use this to get
         // the pasted content which increases speed if pasting a lot of lines.
-        if (!(useragent.isWin && window.navigator.userAgent.indexOf("Qt/") >= 0) && e.clipboardData && e.clipboardData.getData) {
+        if (window.navigator.userAgent.indexOf("Qt/") < 0 && e.clipboardData && e.clipboardData.getData) {
             sendText(e.clipboardData.getData("text/plain"));
             e.preventDefault();
         } else
