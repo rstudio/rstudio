@@ -22,6 +22,10 @@ import com.google.gwt.dev.util.collect.IdentityMaps;
 import com.google.gwt.dev.util.collect.Sets;
 import com.google.gwt.dev.util.msg.Message1String;
 
+import org.apache.commons.collections.map.AbstractReferenceMap;
+import org.apache.commons.collections.map.ReferenceIdentityMap;
+import org.apache.commons.collections.map.ReferenceMap;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Enumeration;
@@ -66,18 +70,46 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
     }
   }
 
+  /**
+   * Memory-sensitive cache of indexed {@link ZipFileClassPathEntry}s. URI of file is most probably
+   * not referenced anywhere else, so we use hard reference, and soft reference on
+   * {@link ZipFileClassPathEntry} allows its clearing in response to memory demand.
+   */
+  @SuppressWarnings("unchecked")
+  private static final Map<String, ZipFileClassPathEntry> entryCache = new ReferenceMap(
+      AbstractReferenceMap.HARD, AbstractReferenceMap.SOFT);
+
+  /**
+   * @return the {@link ZipFileClassPathEntry} instance for given jar or zip
+   *         file, may be shared with other users.
+   */
+  public static synchronized ZipFileClassPathEntry get(File zipFile) throws IOException {
+    String location = zipFile.toURI().toString();
+    ZipFileClassPathEntry entry = entryCache.get(location);
+    if (entry == null) {
+      entry = new ZipFileClassPathEntry(zipFile);
+      entryCache.put(location, entry);
+    }
+    return entry;
+  }
+
   private Set<ZipFileResource> allZipFileResources;
 
   /**
-   * Currently gwt has just 2 ResourceOracles.
+   * The lifetime of the {@link PathPrefixSet} pins the life time of the associated
+   * {@link ZipFileSnapshot}; this is because the {@link PathPrefixSet} is referenced from module,
+   * and {@link ZipFileSnapshot} is not referenced anywhere outside of {@link ZipFileClassPathEntry}
+   * . When the module dies, the {@link ZipFileSnapshot} needs to die also.
    */
-  private final Map<PathPrefixSet, ZipFileSnapshot> cachedSnapshots = new IdentityHashMap<PathPrefixSet, ZipFileSnapshot>();
+  @SuppressWarnings("unchecked")
+  private final Map<PathPrefixSet, ZipFileSnapshot> cachedSnapshots = new ReferenceIdentityMap(
+      AbstractReferenceMap.WEAK, AbstractReferenceMap.HARD, true);
 
   private final String location;
 
   private final ZipFile zipFile;
 
-  public ZipFileClassPathEntry(File zipFile) throws IOException {
+  private ZipFileClassPathEntry(File zipFile) throws IOException {
     assert zipFile.isAbsolute();
     this.zipFile = new ZipFile(zipFile);
     this.location = zipFile.toURI().toString();
@@ -87,7 +119,7 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
    * Indexes the zip file on-demand, and only once over the life of the process.
    */
   @Override
-  public Map<AbstractResource, PathPrefix> findApplicableResources(
+  public synchronized Map<AbstractResource, PathPrefix> findApplicableResources(
       TreeLogger logger, PathPrefixSet pathPrefixSet) {
     index(logger);
     ZipFileSnapshot snapshot = cachedSnapshots.get(pathPrefixSet);

@@ -156,14 +156,14 @@ public class ResourceOracleImpl implements ResourceOracle {
       if (f.isDirectory()) {
         return new DirectoryClassPathEntry(f);
       } else if (f.isFile() && lowerCaseFileName.endsWith(".jar")) {
-        return new ZipFileClassPathEntry(f);
+        return ZipFileClassPathEntry.get(f);
       } else if (f.isFile() && lowerCaseFileName.endsWith(".zip")) {
-        return new ZipFileClassPathEntry(f);
+        return ZipFileClassPathEntry.get(f);
       } else {
         // It's a file ending in neither jar nor zip, speculatively try to
         // open as jar/zip anyway.
         try {
-          return new ZipFileClassPathEntry(f);
+          return ZipFileClassPathEntry.get(f);
         } catch (Exception ignored) {
         }
         logger.log(TreeLogger.TRACE, "Unexpected entry in classpath; " + f

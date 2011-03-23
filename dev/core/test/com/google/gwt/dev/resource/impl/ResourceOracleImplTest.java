@@ -193,7 +193,7 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
       URISyntaxException {
     TreeLogger logger = createTestTreeLogger();
     File jarFile = findFile("com/google/gwt/dev/resource/impl/testdata/cpe1.jar");
-    ClassPathEntry cpe1jar = new ZipFileClassPathEntry(jarFile);
+    ClassPathEntry cpe1jar = ZipFileClassPathEntry.get(jarFile);
 
     // test basic caching
     PathPrefixSet pps1 = new PathPrefixSet();

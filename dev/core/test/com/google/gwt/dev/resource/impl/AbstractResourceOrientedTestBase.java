@@ -193,12 +193,12 @@ public abstract class AbstractResourceOrientedTestBase extends TestCase {
   protected ClassPathEntry getClassPathEntry1AsJar() throws IOException,
       URISyntaxException {
     File file = findFile("com/google/gwt/dev/resource/impl/testdata/cpe1.jar");
-    return new ExcludeSvnClassPathEntry(new ZipFileClassPathEntry(file));
+    return new ExcludeSvnClassPathEntry(ZipFileClassPathEntry.get(file));
   }
   
   protected ClassPathEntry getClassPathEntry1AsZip() throws IOException, URISyntaxException {
     File file = findFile("com/google/gwt/dev/resource/impl/testdata/cpe1.zip");
-    return new ExcludeSvnClassPathEntry(new ZipFileClassPathEntry(file));
+    return new ExcludeSvnClassPathEntry(ZipFileClassPathEntry.get(file));
   }
 
   protected ClassPathEntry getClassPathEntry1AsMock() {
@@ -214,12 +214,12 @@ public abstract class AbstractResourceOrientedTestBase extends TestCase {
   protected ClassPathEntry getClassPathEntry2AsJar() throws URISyntaxException,
       IOException {
     File file = findFile("com/google/gwt/dev/resource/impl/testdata/cpe2.jar");
-    return new ExcludeSvnClassPathEntry(new ZipFileClassPathEntry(file));
+    return new ExcludeSvnClassPathEntry(ZipFileClassPathEntry.get(file));
   }
   
   protected ClassPathEntry getClassPathEntry2AsZip() throws URISyntaxException, IOException {
     File file = findFile("com/google/gwt/dev/resource/impl/testdata/cpe2.zip");
-    return new ExcludeSvnClassPathEntry(new ZipFileClassPathEntry(file));
+    return new ExcludeSvnClassPathEntry(ZipFileClassPathEntry.get(file));
   }
 
   protected ClassPathEntry getClassPathEntry2AsMock() {
