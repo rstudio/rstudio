@@ -29,6 +29,8 @@ std::string fixPath(const std::string& path);
 
 bool hasRequiredVersion(const std::string& version);
 
+std::string rconsole2utf8(const std::string& encoded);
+
 } // namespace util   
 } // namespace r
 

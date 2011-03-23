@@ -655,6 +655,7 @@ void RWriteConsoleEx (const char *buf, int buflen, int otype)
       {
          // get output
          std::string output = std::string(buf,buflen);
+         output = util::rconsole2utf8(output);
          
          // add to console actions
          int type = otype == 1 ? kConsoleActionOutputError :

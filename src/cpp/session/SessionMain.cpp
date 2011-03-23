@@ -850,7 +850,7 @@ Error extractConsoleInput(const json::JsonRpcRequest& request)
       {
          // get console input to return to R
          std::string text = request.params[0].get_str();
-         string_utils::utf8ToSystem(text, &text, true);
+         text = string_utils::utf8ToSystem(text, true);
          addToConsoleInputBuffer(r::session::RConsoleInput(text));
 
          // return success
@@ -1222,7 +1222,7 @@ void rBusy(bool busy)
       
 void rConsoleWrite(const std::string& output, int otype)   
 {
-   int event = otype == 1 ? kConsoleWriteError : kConsoleWriteOutput;  
+   int event = otype == 1 ? kConsoleWriteError : kConsoleWriteOutput;
    ClientEvent writeEvent(event, output);
    session::clientEventQueue().add(writeEvent);
 }

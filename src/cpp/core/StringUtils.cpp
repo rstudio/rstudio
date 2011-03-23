@@ -57,17 +57,19 @@ void convertLineEndings(std::string* pStr, LineEnding type)
    *pStr = boost::regex_replace(*pStr, boost::regex("\\r?\\n|\\xE2\\x80[\\xA8\\xA9]"), replacement);
 }
 
-void utf8ToSystem(const std::string& str,
-                  std::string* pOutput,
-                  bool escapeInvalidChars)
+std::string utf8ToSystem(const std::string& str,
+                         bool escapeInvalidChars)
 {
+   if (str.empty())
+      return std::string();
+
 #ifdef _WIN32
    wchar_t wide[str.length() + 1];
    int chars = ::MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, wide, sizeof(wide));
    if (chars < 0)
    {
-      *pOutput = str;
-      return;
+      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      return str;
    }
 
    std::ostringstream output;
@@ -80,15 +82,47 @@ void utf8ToSystem(const std::string& str,
          if (escapeInvalidChars)
             output << "\\u{" << std::hex << wide[i] << "}";
          else
-            output << "?";
+            output << "?"; // TODO: Use GetCPInfo()
       }
       else
          output.write(mbbuf, mbc);
    }
-   *pOutput = output.str();
+   return output.str();
 #else
    // Assumes that UTF8 is the locale on POSIX
-   *pOutput = str;
+   return str;
+#endif
+}
+
+std::string systemToUtf8(const std::string& str)
+{
+   if (str.empty())
+      return std::string();
+
+#ifdef _WIN32
+   wchar_t wide[str.length() + 1];
+   int chars = ::MultiByteToWideChar(CP_ACP, 0, str.c_str(), str.length(), wide, sizeof(wide));
+   if (chars < 0)
+   {
+      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      return str;
+   }
+
+   int bytesRequired = ::WideCharToMultiByte(CP_UTF8, 0, wide, chars,
+                                             NULL, 0,
+                                             NULL, NULL);
+   if (bytesRequired == 0)
+   {
+      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      return str;
+   }
+   std::vector<char> buf(bytesRequired, 0);
+   int bytesWritten = ::WideCharToMultiByte(CP_UTF8, 0, wide, chars,
+                                            &(buf[0]), buf.size(),
+                                            NULL, NULL);
+   return std::string(buf.begin(), buf.end());
+#else
+   return str;
 #endif
 }
 
