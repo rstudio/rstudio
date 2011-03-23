@@ -30,7 +30,6 @@ public class ServiceInheritanceTest extends GWTTestCase {
    * specified in the @{@link Service} annotation.
    */
   public static class SumServiceLocator implements ServiceLocator {
-    @Override
     public Object getInstance(Class<?> clazz) {
       if (BaseImpl.class.equals(clazz)) {
         return new BaseImpl();
@@ -68,7 +67,7 @@ public class ServiceInheritanceTest extends GWTTestCase {
   }
 
   /**
-   * Base implementation of {@link SumService}
+   * Base implementation of {@link SumServiceBase}
    */
   static class BaseImpl {
     protected int initialValue;
@@ -87,7 +86,7 @@ public class ServiceInheritanceTest extends GWTTestCase {
   }
 
   /**
-   * Subclass implementation of {@link SumService}
+   * Subclass implementation of {@link SumServiceSub}
    * inherits the add() method
    */
   static class SubclassImpl extends BaseImpl {
@@ -163,7 +162,7 @@ public class ServiceInheritanceTest extends GWTTestCase {
   }
 
   @Override
-  protected void gwtSetUp() throws Exception {
+  protected void gwtSetUp() {
     factory = createFactory();
   }
 
