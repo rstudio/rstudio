@@ -453,6 +453,7 @@ Error executablePath(int argc, char * const argv[],
                      FilePath* pExecutablePath)
 {
    *pExecutablePath = FilePath(_pgmptr);
+   return Success();
 }
 
 // installation path
