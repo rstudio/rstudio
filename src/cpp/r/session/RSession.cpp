@@ -99,14 +99,13 @@ public:
 };
 
 
-// R history and data files
-const char * const kRData = ".RData";
+// R history file
 const char * const kRHistory = ".Rhistory";
    
-FilePath sessionStateFilePath(const std::string& filename)
+FilePath rGlobalEnvironmentFilePath()
 {
-   FilePath sessionStatePath = s_options.sessionStatePath();
-   return sessionStatePath.complete(filename);
+   FilePath rEnvironmentDir = s_options.rEnvironmentDir();
+   return rEnvironmentDir.complete(".RData");
 }
    
 class SerializationCallbackScope : boost::noncopyable
@@ -166,7 +165,7 @@ Error saveDefaultGlobalEnvironment()
    r::exec::IgnoreInterruptsScope ignoreInterrupts;
          
    // save global environment
-   FilePath globalEnvPath = sessionStateFilePath(kRData);
+   FilePath globalEnvPath = rGlobalEnvironmentFilePath();
    Error error = r::exec::executeSafely(
                         boost::bind(R_SaveGlobalEnvToFile,
                                     globalEnvPath.absolutePath().c_str()));
@@ -193,7 +192,7 @@ Error restoreDefaultGlobalEnvironment()
    r::exec::IgnoreInterruptsScope ignoreInterrupts;
    
    // restore the default global environment if there is one
-   FilePath globalEnvPath = sessionStateFilePath(kRData);
+   FilePath globalEnvPath = rGlobalEnvironmentFilePath();
    if (globalEnvPath.exists())
    {
       Error error = r::exec::executeSafely(boost::bind(

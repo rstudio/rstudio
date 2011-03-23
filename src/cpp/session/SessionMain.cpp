@@ -1533,7 +1533,7 @@ void detectParentTermination()
    }
 }
 
-FilePath sessionStatePath()
+FilePath rEnvironmentDir()
 {
    if (session::options().programMode() == kSessionProgramModeDesktop)
    {
@@ -1747,7 +1747,7 @@ int main (int argc, char * const argv[])
       rOptions.userHomePath = options.userHomePath();
       rOptions.userScratchPath = userScratchPath;
       rOptions.defaultWorkingDir = getDefaultWorkingDirectory();
-      rOptions.sessionStatePath = boost::bind(sessionStatePath);
+      rOptions.rEnvironmentDir = boost::bind(rEnvironmentDir);
       rOptions.rSourcePath = options.coreRSourcePath();
       if (!desktopMode) // ignore r-libs-user in desktop mode
          rOptions.rLibsUser = options.rLibsUser();
