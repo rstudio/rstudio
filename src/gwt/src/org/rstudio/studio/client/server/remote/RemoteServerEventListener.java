@@ -603,8 +603,7 @@ class RemoteServerEventListener
             sessionWasQuit_ = true;
         
             // fire event
-            Bool workspaceSaved = event.getData();
-            eventBus.fireEvent(new QuitEvent(workspaceSaved.getValue()));
+            eventBus.fireEvent(new QuitEvent());
          }
          else if (type.equals(ClientEvent.Suicide))
          {

@@ -34,15 +34,9 @@ import org.rstudio.core.client.widget.FocusHelper;
 
 public class ApplicationEndedPopupPanel extends PopupPanel
 {
-   public static void showQuit(boolean savedWorkspace)
+   public static void showQuit()
    {
-      String description ;
-      if (savedWorkspace)
-         description = "The workspace image was saved.";
-      else
-         description = "The workspace image was not saved.";
-      
-      asyncShow(QUIT, description, null);
+      asyncShow(QUIT, "", null);
    }
    
    public static void showSuicide(String reason)

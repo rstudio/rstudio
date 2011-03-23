@@ -341,7 +341,7 @@ public class Application implements ApplicationEventHandlers,
       // only show the quit state in server mode (in desktop mode the
       // window will close)
       if (!Desktop.isDesktop())
-         view_.showApplicationQuit(event.getWorkspaceSaved());
+         view_.showApplicationQuit();
    }
    
    public void onSuicide(SuicideEvent event)

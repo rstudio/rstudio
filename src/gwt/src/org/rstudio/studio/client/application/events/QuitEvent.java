@@ -19,14 +19,8 @@ public class QuitEvent extends GwtEvent<QuitHandler>
    public static final GwtEvent.Type<QuitHandler> TYPE =
       new GwtEvent.Type<QuitHandler>();
    
-   public QuitEvent(boolean workspaceSaved)
+   public QuitEvent()
    {
-      workspaceSaved_ = workspaceSaved;
-   }
-   
-   public boolean getWorkspaceSaved()
-   {
-      return workspaceSaved_;
    }
    
    @Override
@@ -40,6 +34,4 @@ public class QuitEvent extends GwtEvent<QuitHandler>
    {
       return TYPE;
    }
-   
-   private boolean workspaceSaved_;
 }

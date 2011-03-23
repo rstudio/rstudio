@@ -121,7 +121,7 @@ struct RCallbacks
    boost::function<void(bool)> busy;
    boost::function<void()> suspended;
    boost::function<void()> resumed;
-   boost::function<void(bool)> quit;
+   boost::function<void()> quit;
    boost::function<void(const std::string&)> suicide;
    boost::function<void(bool)> cleanup;
    boost::function<void(int)> serialization;

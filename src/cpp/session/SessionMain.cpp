@@ -1368,10 +1368,10 @@ void rResumed()
    module_context::onResumed(persistentState().settings());
 }
       
-void rQuit(bool workspaceSaved)
+void rQuit()
 {   
    // enque a quit event
-   ClientEvent quitEvent(kQuit, workspaceSaved);
+   ClientEvent quitEvent(kQuit);
    session::clientEventQueue().add(quitEvent);
 }
    

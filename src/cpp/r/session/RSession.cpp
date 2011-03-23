@@ -965,8 +965,13 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
       
       // prompt user to resolve SA_SAVEASK into SA_SAVE or SA_NOSAVE
       if (saveact == SA_SAVEASK) 
-         saveact = saveAsk();
-      
+      {
+         if (imageIsDirty())
+            saveact = saveAsk();
+         else
+            saveact = SA_NOSAVE; // auto-resolve to no save when not dirty
+      }
+
       // if the session was quit by the user then run our termination code
       bool sessionQuitByUser = (saveact != SA_SUICIDE) && !s_suspended ;
       if (sessionQuitByUser)
@@ -976,10 +981,9 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
             R_dot_Last();
          
          // save environment and history 
-         bool savedEnvironment = false;
          if (saveact == SA_SAVE)
          {
-            // attempt save
+            // attempt save if the image is dirty
             if (imageIsDirty())
             {
                // attempt to save global environment. raise error (longjmp 
@@ -990,7 +994,6 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
             }
             
             // update state
-            savedEnvironment = true; // flag for quit callback
             saveact = SA_NOSAVE;     // prevent R from saving
          }
          
@@ -1019,7 +1022,7 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
          r::exec::printWarnings();
          
          // notify client that the session has been quit
-         s_callbacks.quit(savedEnvironment);
+         s_callbacks.quit();
       }
 
       // allow client to cleanup
