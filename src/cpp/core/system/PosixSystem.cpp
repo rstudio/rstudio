@@ -615,8 +615,16 @@ Error captureCommand(const std::string& command, std::string* pOutput)
    if (::pclose(fp) == -1)
    {
       // ECHILD expected if process was reaped elsewhere by wait or waitpid
+      // NOTE: only log errors so we don't get spurious failures b/c
+      // we can't pclose. the calling semantics of popen are already such
+      // that all variety of errors (including file not found, non-zero
+      // exit code, printing to stderr, etc.) are already manifested as
+      // no output captured, so a pclose error can join this group. the
+      // benefit of doing this is that if output was indeed captured and
+      // the error is spurious then the calling program can continue
+      // executing.
       if (errno != ECHILD)
-         return systemError(errno, ERROR_LOCATION);
+         LOG_ERROR(systemError(errno, ERROR_LOCATION));
    }
 
    return Success();
