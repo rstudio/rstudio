@@ -31,7 +31,7 @@ public class JUnitShellTest extends TestCase {
 
   public void testDefaultModuleUrl() throws Exception {
     parseGoodArgs();
-    assertEquals("http://localhost:1234/example/junit.html?gwt.codesvr=localhost:456",
+    assertEquals("http://localhost:1234/example/junit-standards.html?gwt.codesvr=localhost:456",
         shell.getModuleUrl("localhost", 1234, "example", 456));
   }
 

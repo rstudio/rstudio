@@ -874,7 +874,7 @@ public class JUnitShell extends DevMode {
    */
   private String runStyleName = "HtmlUnit";
 
-  private boolean standardsMode = false;
+  private boolean standardsMode = true;
 
   /**
    * Test method timeout as modified by the batching strategy.
