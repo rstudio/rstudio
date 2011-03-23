@@ -753,6 +753,18 @@ public abstract class UIObject {
   }
 
   /**
+   * Sinks a named event. Note that only {@link Widget widgets} may actually
+   * receive events, but can receive events from all objects contained within
+   * them.
+   * 
+   * @param eventTypeName name of the event to sink on this element
+   * @see com.google.gwt.user.client.Event
+   */
+  public void sinkBitlessEvent(String eventTypeName) {
+    DOM.sinkBitlessEvent(getElement(), eventTypeName);
+  }
+  
+  /**
    * Adds a set of events to be sunk by this object. Note that only
    * {@link Widget widgets} may actually receive events, but can receive events
    * from all objects contained within them.

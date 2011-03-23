@@ -14,31 +14,18 @@
  * the License.
  */
 
-package com.google.gwt.media;
-
-import com.google.gwt.junit.tools.GWTTestSuite;
-import com.google.gwt.user.client.MediaEventsSinkTest;
-
-import junit.framework.Test;
+package com.google.gwt.event.dom.client;
 
 /**
- * Tests of Media.
+ * This is a convenience interface that includes all media handlers defined by
+ * the core GWT system.
+ * 
+ * <p>
+ * <span style="color:red">Experimental API: This API is still under development
+ * and is subject to change.
+ * </span>
+ * </p>
  */
-public class MediaSuite {
-  public static Test suite() {
-    GWTTestSuite suite = new GWTTestSuite("Test suite for Media GWTTestCases");
-    
-    suite.addTestSuite(MediaEventsSinkTest.class);
-
-    /* 
-     * Tests disabled temporarily
-     * suite.addTestSuite(AudioTest.class);
-     * suite.addTestSuite(VideoTest.class);
-     */
-    
-    return suite;
-  }
-
-  private MediaSuite() {
-  }
+public interface HasAllMediaHandlers extends HasEndedHandlers,
+    HasProgressHandlers, HasCanPlayThroughHandlers {
 }

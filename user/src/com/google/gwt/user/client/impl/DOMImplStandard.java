@@ -133,6 +133,12 @@ abstract class DOMImplStandard extends DOMImpl {
   }
 
   @Override
+  public void sinkBitlessEvent(Element elem, String eventTypeName) {
+    maybeInitializeEventSystem();
+    sinkBitlessEventImpl(elem, eventTypeName);
+  }
+  
+  @Override
   public void sinkEvents(Element elem, int bits) {
     maybeInitializeEventSystem();
     sinkEventsImpl(elem, bits);
@@ -205,6 +211,17 @@ abstract class DOMImplStandard extends DOMImpl {
     $wnd.addEventListener('gestureend', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent, true);
   }-*/;
 
+  protected native void sinkBitlessEventImpl(Element elem, String eventTypeName) /*-{
+    if (eventTypeName == "dragenter")
+      elem.ondragenter = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent;
+    if (eventTypeName == "dragexit")
+      elem.ondragexit  = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent;
+    if (eventTypeName == "dragover")
+      elem.ondragover  = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent;
+    if (eventTypeName == "drop")
+      elem.ondrop      = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent;
+  }-*/;
+  
   protected native void sinkEventsImpl(Element elem, int bits) /*-{
     var chMask = (elem.__eventBits || 0) ^ bits;
     elem.__eventBits = bits;

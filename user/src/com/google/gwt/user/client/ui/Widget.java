@@ -64,6 +64,28 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
   }
 
   /**
+   * For <a href=
+   * "http://code.google.com/p/google-web-toolkit/wiki/UnderstandingMemoryLeaks"
+   * >browsers which do not leak</a>, adds a native event handler to the widget.
+   * Note that, unlike the
+   * {@link #addDomHandler(EventHandler, com.google.gwt.event.dom.client.DomEvent.Type)}
+   * implementation, there is no need to attach the widget to the DOM in order
+   * to cause the event handlers to be attached.
+   *
+   * @param <H> the type of handler to add
+   * @param type the event key
+   * @param handler the handler
+   * @return {@link HandlerRegistration} used to remove the handler
+   */
+  public final <H extends EventHandler> HandlerRegistration addBitlessDomHandler(
+      final H handler, DomEvent.Type<H> type) {
+    assert handler != null : "handler must not be null";
+    assert type != null : "type must not be null";
+    sinkBitlessEvent(type.getName());
+    return ensureHandlers().addHandler(type, handler);
+  }
+
+  /**
    * Adds a native event handler to the widget and sinks the corresponding
    * native event. If you do not want to sink the native event, use the generic
    * addHandler method instead.

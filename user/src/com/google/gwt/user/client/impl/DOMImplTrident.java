@@ -219,6 +219,11 @@ public abstract class DOMImplTrident extends DOMImpl {
   }
 
   @Override
+  public void sinkBitlessEvent(Element elem, String eventTypeName) {
+    // not supported
+  }
+
+  @Override
   public void sinkEvents(Element elem, int bits) {
     maybeInitializeEventSystem();
     sinkEventsImpl(elem, bits);

@@ -13,32 +13,25 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+package com.google.gwt.event.dom.client;
 
-package com.google.gwt.media;
-
-import com.google.gwt.junit.tools.GWTTestSuite;
-import com.google.gwt.user.client.MediaEventsSinkTest;
-
-import junit.framework.Test;
+import com.google.gwt.event.shared.EventHandler;
 
 /**
- * Tests of Media.
+ * Handler interface for {@link EndedEvent} events.
+ * 
+ * <p>
+ * <span style="color:red">Experimental API: This API is still under development
+ * and is subject to change.
+ * </span>
+ * </p>
  */
-public class MediaSuite {
-  public static Test suite() {
-    GWTTestSuite suite = new GWTTestSuite("Test suite for Media GWTTestCases");
-    
-    suite.addTestSuite(MediaEventsSinkTest.class);
+public interface EndedHandler extends EventHandler {
 
-    /* 
-     * Tests disabled temporarily
-     * suite.addTestSuite(AudioTest.class);
-     * suite.addTestSuite(VideoTest.class);
-     */
-    
-    return suite;
-  }
-
-  private MediaSuite() {
-  }
+  /**
+   * Called when EndedEvent is fired.
+   *
+   * @param event the {@link EndedEvent} that was fired
+   */
+  void onEnded(EndedEvent event);
 }

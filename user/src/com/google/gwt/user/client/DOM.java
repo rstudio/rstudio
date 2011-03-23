@@ -1211,6 +1211,17 @@ public class DOM {
   }
 
   /**
+   * Sinks a named event. Events will be fired to the nearest
+   * {@link EventListener} specified on any of the element's parents.
+   * 
+   * @param elem the element whose events are to be retrieved
+   * @param eventTypeName name of the event to sink on this element
+   */
+  public static void sinkBitlessEvent(Element elem, String eventTypeName) {
+    impl.sinkBitlessEvent(elem, eventTypeName);
+  }
+  
+  /**
    * Sets the current set of events sunk by a given element. These events will
    * be fired to the nearest {@link EventListener} specified on any of the
    * element's parents.

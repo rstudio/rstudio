@@ -92,6 +92,9 @@ public abstract class DOMImpl {
     case "gesturestart": return 0x1000000;
     case "gesturechange": return 0x2000000;
     case "gestureend": return 0x4000000;
+    case "ended": return 0x8000000;
+    case "progress": return 0x10000000;
+    case "canplaythrough": return 0x20000000;
     default: return -1;
     }
   }-*/; 
@@ -130,6 +133,8 @@ public abstract class DOMImpl {
   public native void setEventListener(Element elem, EventListener listener) /*-{
     elem.__listener = listener;
   }-*/;
+
+  public abstract void sinkBitlessEvent(Element elem, String eventTypeName);
 
   public abstract void sinkEvents(Element elem, int eventBits);
 

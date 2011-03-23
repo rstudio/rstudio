@@ -19,6 +19,14 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.AudioElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.PartialSupport;
+import com.google.gwt.event.dom.client.CanPlayThroughEvent;
+import com.google.gwt.event.dom.client.CanPlayThroughHandler;
+import com.google.gwt.event.dom.client.EndedEvent;
+import com.google.gwt.event.dom.client.EndedHandler;
+import com.google.gwt.event.dom.client.HasAllMediaHandlers;
+import com.google.gwt.event.dom.client.ProgressEvent;
+import com.google.gwt.event.dom.client.ProgressHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.FocusWidget;
 
 /**
@@ -34,7 +42,7 @@ import com.google.gwt.user.client.ui.FocusWidget;
  * This widget may not be supported on all browsers.
  */
 @PartialSupport
-public class Audio extends FocusWidget {
+public class Audio extends FocusWidget implements HasAllMediaHandlers {
   private static AudioElementSupportDetector detector;
 
   /**
@@ -81,6 +89,18 @@ public class Audio extends FocusWidget {
    */
   private Audio(AudioElement element) {
     setElement(element);
+  }
+
+  public HandlerRegistration addCanPlayThroughHandler(CanPlayThroughHandler handler) {
+    return addDomHandler(handler, CanPlayThroughEvent.getType());
+  }
+
+  public HandlerRegistration addEndedHandler(EndedHandler handler) {
+    return addDomHandler(handler, EndedEvent.getType());
+  }
+
+  public HandlerRegistration addProgressHandler(ProgressHandler handler) {
+    return addDomHandler(handler, ProgressEvent.getType());
   }
 
   /**

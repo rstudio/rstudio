@@ -237,6 +237,11 @@ public final class JsRootScope extends JsScope {
       "ongesturechange",
       "ongestureend",
 
+      // Media events
+      "oncanplaythrough",
+      "onended",
+      "onprogress",
+      
       // extra window methods
       "uneval",
 

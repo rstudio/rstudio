@@ -18,6 +18,14 @@ package com.google.gwt.media.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.VideoElement;
+import com.google.gwt.event.dom.client.CanPlayThroughEvent;
+import com.google.gwt.event.dom.client.CanPlayThroughHandler;
+import com.google.gwt.event.dom.client.EndedEvent;
+import com.google.gwt.event.dom.client.EndedHandler;
+import com.google.gwt.event.dom.client.HasAllMediaHandlers;
+import com.google.gwt.event.dom.client.ProgressEvent;
+import com.google.gwt.event.dom.client.ProgressHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.FocusWidget;
 
 /**
@@ -32,7 +40,7 @@ import com.google.gwt.user.client.ui.FocusWidget;
  * 
  * This widget may not be supported on all browsers.
  */
-public class Video extends FocusWidget {
+public class Video extends FocusWidget implements HasAllMediaHandlers {
   private static VideoElementSupportDetector detector;
 
   /**
@@ -88,6 +96,18 @@ public class Video extends FocusWidget {
   public Video(String src) {
     setElement(Document.get().createVideoElement());
     getVideoElement().setSrc(src);
+  }
+
+  public HandlerRegistration addCanPlayThroughHandler(CanPlayThroughHandler handler) {
+    return addDomHandler(handler, CanPlayThroughEvent.getType());
+  }
+
+  public HandlerRegistration addEndedHandler(EndedHandler handler) {
+    return addDomHandler(handler, EndedEvent.getType());
+  }
+
+  public HandlerRegistration addProgressHandler(ProgressHandler handler) {
+    return addDomHandler(handler, ProgressEvent.getType());
   }
 
   /**
