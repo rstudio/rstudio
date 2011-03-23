@@ -148,6 +148,10 @@ extern const int kSaveActionAlways;
 extern const int kSaveActionAsk;
 void setSaveAction(int saveAction);
 
+// image dirty state
+void markImageClean();
+bool imageIsDirty();
+
 // quit
 void quit(bool saveWorkspace);
 

@@ -210,6 +210,10 @@ Error restoreDefaultGlobalEnvironment()
       Rprintf(("[Workspace restored from " + aliasedPath + "]\n\n").c_str());
    }
 
+   // mark image clean (we need to do this due to our delayed handling
+   // of workspace restoration)
+   markImageClean();
+
    return Success();
 }
 
@@ -980,7 +984,7 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
          if (saveact == SA_SAVE)
          {
             // attempt save
-            if (R_DirtyImage)
+            if (imageIsDirty())
             {
                // attempt to save global environment. raise error (longjmp 
                // back to REPL) if there was a problem saving
@@ -1309,6 +1313,16 @@ void setSaveAction(int saveAction)
       break;
    }
 
+}
+
+void markImageClean()
+{
+   R_DirtyImage = 0;
+}
+
+bool imageIsDirty()
+{
+   return R_DirtyImage != 0;
 }
    
 void quit(bool saveWorkspace)
