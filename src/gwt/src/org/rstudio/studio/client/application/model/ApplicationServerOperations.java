@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.application.model;
 
 import com.google.gwt.core.client.JsArray;
+
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.Agreement;
@@ -38,7 +39,10 @@ public interface ApplicationServerOperations
    
    // suspend the current session
    void suspendSession(ServerRequestCallback<Void> requestCallback) ;
-   
+
+   // check whether the workspace is dirty
+   void workspaceIsDirty(ServerRequestCallback<Boolean> requestCallback);
+
    // quit the current session
    void quitSession(boolean saveWorkspace, 
                     ServerRequestCallback<Void> requestCallback);

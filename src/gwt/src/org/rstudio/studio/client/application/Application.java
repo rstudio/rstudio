@@ -212,6 +212,7 @@ public class Application implements ApplicationEventHandlers,
       $wnd.welfkjweg();
    }-*/;
    
+
    @Handler
    public void onQuitSession()
    {
@@ -222,9 +223,9 @@ public class Application implements ApplicationEventHandlers,
       else
       {
          // quit session operation paramaterized by whether we save changes
-         class QuitSessionOperation implements ProgressOperation
+         class QuitOperation implements ProgressOperation
          {
-            QuitSessionOperation(boolean saveChanges)
+            QuitOperation(boolean saveChanges)
             {
                saveChanges_ = saveChanges;
             }
@@ -237,14 +238,41 @@ public class Application implements ApplicationEventHandlers,
             private final boolean saveChanges_ ;
          }
 
-         // confirm quit and do it
-         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-                                         "Quit R Session",
-                                         "Save workspace image?",
-                                         true,
-                                         new QuitSessionOperation(true),
-                                         new QuitSessionOperation(false),
-                                         true);
+         // if the workspace is dirty then prompt to save
+         server_.workspaceIsDirty(new ServerRequestCallback<Boolean>() {
+
+            @Override
+            public void onResponseReceived(Boolean dirty)
+            {
+               if (dirty)
+               {
+                  // confirm quit and do it
+                  globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
+                                                  "Quit R Session",
+                                                  "Save workspace image?",
+                                                  true,
+                                                  new QuitOperation(true),
+                                                  new QuitOperation(false),
+                                                  true);
+               }
+               else
+               {
+                  // do the quit without prompting
+                  ProgressIndicator indicator =
+                     globalDisplay_.getProgressIndicator("Error Quitting R");
+
+                  new QuitOperation(false).execute(indicator);
+               }
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               globalDisplay_.showErrorMessage(
+                     "Error Communicating with RStudio Server",
+                     error.getUserMessage());
+            }
+         });
       }
    }
 

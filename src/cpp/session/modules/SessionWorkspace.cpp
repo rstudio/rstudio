@@ -29,6 +29,7 @@
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RErrorCategory.hpp>
+#include <r/session/RSession.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -41,7 +42,15 @@ namespace modules {
 namespace workspace {
 
 namespace {
-      
+
+Error workspaceIsDirty(const json::JsonRpcRequest&,
+                       json::JsonRpcResponse* pResponse)
+{
+   pResponse->setResult(r::session::imageIsDirty());
+
+   return Success();
+}
+
 bool handleRBrowseEnv(const core::FilePath& filePath)
 {
    if (filePath.filename() == "wsbrowser.html")
@@ -272,14 +281,16 @@ Error initialize()
 {         
    // subscribe to events
    using boost::bind;
-   module_context::events().onClientInit.connect(bind(onClientInit));
-   module_context::events().onDetectChanges.connect(bind(onDetectChanges, _1));
+   using namespace session::module_context;
+   events().onClientInit.connect(bind(onClientInit));
+   events().onDetectChanges.connect(bind(onDetectChanges, _1));
    
    // register handlers
    ExecBlock initBlock ;
    initBlock.addFunctions()
-      (bind(module_context::registerRBrowseFileHandler, handleRBrowseEnv))
-      (bind(module_context::sourceModuleRFile, "SessionWorkspace.R"));
+      (bind(registerRpcMethod, "workspace_is_dirty", workspaceIsDirty))
+      (bind(registerRBrowseFileHandler, handleRBrowseEnv))
+      (bind(sourceModuleRFile, "SessionWorkspace.R"));
    return initBlock.execute();
 }
    
