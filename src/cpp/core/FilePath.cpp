@@ -21,11 +21,24 @@
 
 #if defined(_WIN32) || defined(__APPLE__)
 #define BOOST_FILESYSTEM_VERSION 3
+#else
 #endif
-
+#define BOOST_FILESYSTEM_NARROW_ONLY
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include <boost/filesystem.hpp>
 
+#include <core/StringUtils.hpp>
+#include <core/system/System.hpp>
+
+#include <core/Log.hpp>
+#include <core/Error.hpp>
+
+
+typedef boost::filesystem::path path_t;
+
+namespace core {
+
+namespace {
 
 // We use boost::filesystem in one of three different ways:
 // - On Windows, we use Filesystem v3 with wide character paths. This is
@@ -37,14 +50,16 @@
 //   versions that we still want to support.
 #ifdef _WIN32
 
-#define BOOST_FS_STRING(str) toString((str).generic_wstring())
+#define BOOST_FS_STRING(path) toString((path).generic_wstring())
+#define BOOST_FS_PATH2STR(path) toString((path).generic_wstring())
 #define BOOST_FS_COMPLETE(p, base) boost::filesystem::absolute(fromString(p), base)
 typedef boost::filesystem::directory_iterator dir_iterator;
 typedef boost::filesystem::recursive_directory_iterator recursive_dir_iterator;
 
 #elif defined(BOOST_FILESYSTEM_VERSION) && BOOST_FILESYSTEM_VERSION != 2
 
-#define BOOST_FS_STRING(str) ((str).generic_string())
+#define BOOST_FS_STRING(path) ((path).generic_string())
+#define BOOST_FS_PATH2STR(path) ((path).generic_string())
 #define BOOST_FS_COMPLETE(p, base) boost::filesystem::absolute(p, base)
 typedef boost::filesystem::directory_iterator dir_iterator;
 typedef boost::filesystem::recursive_directory_iterator recursive_dir_iterator;
@@ -52,25 +67,14 @@ typedef boost::filesystem::recursive_directory_iterator recursive_dir_iterator;
 #else
 
 #define BOOST_FS_STRING(str) (str)
+#define BOOST_FS_PATH2STR(str) ((str).string())
 #define BOOST_FS_COMPLETE(p, base) boost::filesystem::complete(p, base)
-typedef basic_directory_iterator<path_t> dir_iterator;
+typedef boost::filesystem::basic_directory_iterator<path_t> dir_iterator;
 typedef boost::filesystem::basic_recursive_directory_iterator<path_t> recursive_dir_iterator;
 
 #endif
 
 
-
-#include <core/StringUtils.hpp>
-#include <core/system/System.hpp>
-
-#include <core/Log.hpp>
-#include <core/Error.hpp>
-
-namespace core {
-
-namespace {
-
-typedef boost::filesystem::path path_t;
 
 #ifdef _WIN32
 
@@ -167,7 +171,7 @@ FilePath FilePath::safeCurrentPath(const FilePath& revertToPath)
 {
    try
    {
-      return FilePath(boost::filesystem::current_path().string()) ;
+      return FilePath(boost::filesystem::current_path<path_t>().string()) ;
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
@@ -441,7 +445,7 @@ std::string FilePath::relativePath(const FilePath& parentPath) const
          relativePath /= *mmit ;
          mmit++ ;
       }
-      return BOOST_FS_STRING(relativePath) ;
+      return BOOST_FS_PATH2STR(relativePath) ;
    }
    else
    {
@@ -464,7 +468,7 @@ std::string FilePath::absolutePath() const
    if (empty())
       return std::string();
    else
-      return BOOST_FS_STRING(pImpl_->path) ;
+      return BOOST_FS_PATH2STR(pImpl_->path) ;
 }
 
 Error FilePath::remove() const
@@ -599,7 +603,7 @@ FilePath FilePath::complete(const std::string& path) const
    {
       // NOTE: The path gets round-tripped through toString/fromString, would
       //   be nice to have a direct constructor
-      return FilePath(BOOST_FS_STRING(BOOST_FS_COMPLETE(path, pImpl_->path)));
+      return FilePath(BOOST_FS_PATH2STR(BOOST_FS_COMPLETE(path, pImpl_->path)));
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
@@ -617,7 +621,7 @@ FilePath FilePath::parent() const
    {
       // NOTE: The path gets round-tripped through toString/fromString, would
       //   be nice to have a direct constructor
-      return FilePath(BOOST_FS_STRING(pImpl_->path.parent_path()));
+      return FilePath(BOOST_FS_PATH2STR(pImpl_->path.parent_path()));
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
@@ -691,7 +695,7 @@ Error FilePath::children(std::vector<FilePath>* pFilePaths) const
       {
          // NOTE: The path gets round-tripped through toString/fromString, would
          //   be nice to have a direct constructor
-         std::string itemPath = BOOST_FS_STRING(itr->path());
+         std::string itemPath = BOOST_FS_PATH2STR(itr->path());
          pFilePaths->push_back(FilePath(itemPath)) ;
       }
       return Success() ;
@@ -719,7 +723,7 @@ Error FilePath::childrenRecursive(
       {
          // NOTE: The path gets round-tripped through toString/fromString, would
          //   be nice to have a direct constructor
-         iterationFunction(itr.level(),FilePath(BOOST_FS_STRING(itr->path())));
+         iterationFunction(itr.level(),FilePath(BOOST_FS_PATH2STR(itr->path())));
       }
       
       return Success() ;
@@ -795,7 +799,7 @@ void logError(path_t path,
 
 void addErrorProperties(path_t path, Error* pError)
 {
-   pError->addProperty("path", BOOST_FS_STRING(path)) ;
+   pError->addProperty("path", BOOST_FS_PATH2STR(path)) ;
 }
 }
 
