@@ -17,11 +17,12 @@ package com.google.gwt.widget.client;
 
 import com.google.gwt.cell.client.TextButtonCell;
 import com.google.gwt.cell.client.TextButtonCell.Appearance;
+import com.google.gwt.user.client.ui.HasText;
 
 /**
  * A button that displays text and an optional icon.
  */
-public class TextButton extends ButtonBase<String> {
+public class TextButton extends ButtonBase<String> implements HasText {
 
   /**
    * Construct a new {@link TextButton} using the default {@link Appearance}.
@@ -70,5 +71,13 @@ public class TextButton extends ButtonBase<String> {
    */
   protected TextButton(TextButtonCell cell, String text) {
     super(cell, text);
+  }
+
+  public String getText() {
+    return getValue();
+  }
+
+  public void setText(String text) {
+    setValue(text);
   }
 }

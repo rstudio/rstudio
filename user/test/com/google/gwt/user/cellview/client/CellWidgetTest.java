@@ -16,10 +16,12 @@
 package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.cell.client.AbstractCell;
+import com.google.gwt.cell.client.TextButtonCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -55,8 +57,8 @@ public class CellWidgetTest extends GWTTestCase {
     }
 
     @Override
-    public void onBrowserEvent(Context context, Element parent, String value,
-        NativeEvent event, ValueUpdater<String> valueUpdater) {
+    public void onBrowserEvent(Context context, Element parent, String value, NativeEvent event,
+        ValueUpdater<String> valueUpdater) {
       lastEventValue = value;
       lastEventKey = context.getKey();
       if (valueUpdater != null) {
@@ -77,8 +79,7 @@ public class CellWidgetTest extends GWTTestCase {
    * 
    * @param <C> the data type
    */
-  private static class MockValueChangeHandler<C> implements
-      ValueChangeHandler<C> {
+  private static class MockValueChangeHandler<C> implements ValueChangeHandler<C> {
 
     private boolean onValueChangeCalled = false;
     private C lastValue;
@@ -125,8 +126,7 @@ public class CellWidgetTest extends GWTTestCase {
       }
     };
     CustomCell cell = new CustomCell();
-    final CellWidget<String> cw = new CellWidget<String>(cell, "test",
-        keyProvider);
+    final CellWidget<String> cw = new CellWidget<String>(cell, "test", keyProvider);
     assertEquals("test", cw.getValue());
     assertEquals(keyProvider, cw.getKeyProvider());
 
@@ -153,7 +153,28 @@ public class CellWidgetTest extends GWTTestCase {
     handler.assertLastValue("newValue");
   }
 
-  public void testRedraw() {
+  /**
+   * Test that a cell that defines an HTML elment can be rendered.
+   */
+  public void testRedrawWithInnerChild() {
+    CellWidget<String> cw = new CellWidget<String>(new TextButtonCell());
+
+    // Set value without redrawing.
+    cw.setValue("test123", false, false);
+    assertEquals("", cw.getElement().getInnerText());
+
+    // Redraw.
+    cw.redraw();
+    assertTrue(cw.getElement().getInnerText().contains("test123"));
+    Style firstChildStyle = cw.getElement().getFirstChildElement().getStyle();
+    assertTrue(firstChildStyle.getHeight().matches("100(.0)?%"));
+    assertTrue(firstChildStyle.getWidth().matches("100(.0)?%"));
+  }
+
+  /**
+   * Test that a cell that defines no HTML elments can be rendered.
+   */
+  public void testRedrawWithoutInnerChild() {
     CellWidget<String> cw = new CellWidget<String>(new CustomCell());
 
     // Set value without redrawing.

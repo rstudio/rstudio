@@ -20,6 +20,7 @@ import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -36,8 +37,7 @@ import com.google.gwt.view.client.ProvidesKey;
  * 
  * @param <C> the type that the Cell represents
  */
-public class CellWidget<C> extends Widget implements HasKeyProvider<C>,
-    HasValue<C> {
+public class CellWidget<C> extends Widget implements HasKeyProvider<C>, HasValue<C> {
 
   /**
    * Create the default element used to wrap the Cell. The default element is a
@@ -128,8 +128,7 @@ public class CellWidget<C> extends Widget implements HasKeyProvider<C>,
    * @param keyProvider the key provider used to get keys from values
    * @param elem the browser element to use
    */
-  protected CellWidget(Cell<C> cell, C initialValue,
-      ProvidesKey<C> keyProvider, Element elem) {
+  protected CellWidget(Cell<C> cell, C initialValue, ProvidesKey<C> keyProvider, Element elem) {
     this.cell = cell;
     this.keyProvider = keyProvider;
     setElement(elem);
@@ -166,8 +165,7 @@ public class CellWidget<C> extends Widget implements HasKeyProvider<C>,
     // Forward the event to the cell.
     String eventType = event.getType();
     if (cell.getConsumedEvents().contains(eventType)) {
-      cell.onBrowserEvent(createContext(), getElement(), value, event,
-          valueUpdater);
+      cell.onBrowserEvent(createContext(), getElement(), value, event, valueUpdater);
     }
   }
 
@@ -178,6 +176,16 @@ public class CellWidget<C> extends Widget implements HasKeyProvider<C>,
     SafeHtmlBuilder sb = new SafeHtmlBuilder();
     cell.render(createContext(), value, sb);
     getElement().setInnerHTML(sb.toSafeHtml().asString());
+
+    /*
+     * The rendered Cell should fill the root element so height and width styles
+     * applied to the widget also apply to the Cell.
+     */
+    Element child = getElement().getFirstChildElement();
+    if (child != null) {
+      child.getStyle().setHeight(100, Unit.PCT);
+      child.getStyle().setWidth(100, Unit.PCT);
+    }
   }
 
   /**
@@ -240,7 +248,6 @@ public class CellWidget<C> extends Widget implements HasKeyProvider<C>,
    * @return the key
    */
   private Object getKey(C value) {
-    return (keyProvider == null || value == null) ? value
-        : keyProvider.getKey(value);
+    return (keyProvider == null || value == null) ? value : keyProvider.getKey(value);
   }
 }
