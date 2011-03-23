@@ -27,6 +27,10 @@ enum LineEnding {
    LineEndingPassthrough
 };
 
+void utf8ToSystem(const std::string& str,
+                  std::string* pOutput,
+                  bool escapeInvalidChars=false);
+
 std::string toLower(const std::string& str);
 std::string textToHtml(const std::string& str);
 
