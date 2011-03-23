@@ -118,7 +118,7 @@
    pkgs.name <- x[, 1]
    pkgs.library <- x[, 2]
    pkgs.desc <- x[, 3]
-   pkgs.url <- file.path("library", 
+   pkgs.url <- file.path("help/library",
                          pkgs.name, 
                          "html", 
                          "00Index.html")
