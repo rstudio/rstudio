@@ -153,10 +153,10 @@ public class SelectTests extends GWTTestCase {
     opt2.setValue("2");
     group1.setLabel("group1");
 
-    select.appendChild(opt0);
-    select.appendChild(group1);
+    select.appendChild(opt0);   // select child 0
+    select.appendChild(group1); // select child 1
     group1.appendChild(opt1);
-    select.appendChild(opt2);
+    select.appendChild(opt2);   // select child 2
 
     assertEquals("3 options expected", 3, select.getOptions().getLength());
     assertEquals("[0] == opt0", opt0, select.getOptions().getItem(0));
@@ -164,7 +164,10 @@ public class SelectTests extends GWTTestCase {
     assertEquals("[2] == opt2", opt2, select.getOptions().getItem(2));
 
     select.remove(1);
-    assertNull("null parent expected when removed", opt1.getParentElement());
+    // IE9 seems to have a stricter behavior. removing 1 actually removes the group
+    // but opt1 is still a child of group1. 
+    assertTrue("null parent expected when removed", 
+      opt1.getParentElement() == null || group1.getParentElement() == null);
 
     select.add(opt1, opt0);
     assertEquals("[0] == opt1", opt1, select.getOptions().getItem(0));
