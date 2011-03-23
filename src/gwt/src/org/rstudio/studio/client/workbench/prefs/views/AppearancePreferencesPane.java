@@ -1,5 +1,6 @@
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -52,6 +53,8 @@ public class AppearancePreferencesPane extends PreferencesPane
             preview_.setTheme(themes.getThemeUrl(theme_.getValue()));
          }
       });
+      theme_.getListBox().getElement().<SelectElement>cast().setSize(
+            themes.getThemeNames().length);
       theme_.addStyleName(res.styles().themeChooser());
       leftPanel.add(theme_);
       theme_.setValue(themes.getEffectiveThemeName(uiPrefs_.theme().getValue()));
@@ -60,7 +63,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       previewPanel.setSize("100%", "100%");
       previewPanel.add(new Label("Preview"));
       preview_ = new AceEditorPreview(CODE_SAMPLE);
-      preview_.setHeight("300px");
+      preview_.setHeight("375px");
       preview_.setWidth("288px");
       preview_.setTheme(themes.getThemeUrl(uiPrefs_.theme().getValue()));
       preview_.setFontSize(Size.valueOf(fontSize_.getValue()));
