@@ -30,6 +30,7 @@ import com.google.gwt.cell.client.ImageLoadingCellTest;
 import com.google.gwt.cell.client.ImageResourceCellTest;
 import com.google.gwt.cell.client.NumberCellTest;
 import com.google.gwt.cell.client.SelectionCellTest;
+import com.google.gwt.cell.client.TextButtonCellTest;
 import com.google.gwt.cell.client.TextCellTest;
 import com.google.gwt.cell.client.TextInputCellTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
@@ -58,6 +59,7 @@ public class CellSuite {
     suite.addTestSuite(ImageResourceCellTest.class);
     suite.addTestSuite(NumberCellTest.class);
     suite.addTestSuite(SelectionCellTest.class);
+    suite.addTestSuite(TextButtonCellTest.class);
     suite.addTestSuite(TextCellTest.class);
     suite.addTestSuite(TextInputCellTest.class);
     return suite;

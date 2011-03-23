@@ -38,7 +38,7 @@ public class SimpleSafeHtmlRenderer implements SafeHtmlRenderer<String> {
   }
 
   public SafeHtml render(String object) {
-    return SafeHtmlUtils.fromString(object);
+    return (object == null) ? SafeHtmlUtils.EMPTY_SAFE_HTML : SafeHtmlUtils.fromString(object);
   }
 
   public void render(String object, SafeHtmlBuilder appendable) {

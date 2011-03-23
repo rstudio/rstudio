@@ -16,12 +16,9 @@
 package com.google.gwt.cell.client;
 
 import com.google.gwt.cell.client.Cell.Context;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 
@@ -29,15 +26,6 @@ import com.google.gwt.user.client.ui.HasVerticalAlignment;
  * Tests for {@link IconCellDecorator}.
  */
 public class IconCellDecoratorTest extends CellTestBase<String> {
-
-  /**
-   * The images used for this test.
-   */
-  static interface Images extends ClientBundle {
-    ImageResource prettyPiccy();
-  }
-
-  private Images images;
 
   /**
    * Verify that events are sent to the inner cell.
@@ -50,11 +38,10 @@ public class IconCellDecoratorTest extends CellTestBase<String> {
   }
 
   public void testRenderNoImage() {
-    Images images = getImages();
     MockCell<String> innerCell = new MockCell<String>(true,
         "newValueFromInnerCell", "click");
     IconCellDecorator<String> cell = new IconCellDecorator<String>(
-        images.prettyPiccy(), innerCell) {
+        Resources.prettyPiccy(), innerCell) {
       @Override
       protected boolean isIconUsed(String value) {
         return false;
@@ -68,7 +55,7 @@ public class IconCellDecoratorTest extends CellTestBase<String> {
 
     // Compare the expected render string.
     String expected = "<div style=\"position:relative;padding-left:64px;zoom:1;\">";
-    expected += cell.getImageHtml(images.prettyPiccy(),
+    expected += cell.getImageHtml(Resources.prettyPiccy(),
         HasVerticalAlignment.ALIGN_MIDDLE, true).asString();
     expected += "<div>helloworld</div>";
     expected += "</div>";
@@ -79,7 +66,7 @@ public class IconCellDecoratorTest extends CellTestBase<String> {
     MockCell<String> innerCell = new MockCell<String>(true,
         "newValueFromInnerCell", "click");
     IconCellDecorator<String> iconCell = new IconCellDecorator<String>(
-        getImages().prettyPiccy(), innerCell);
+        Resources.prettyPiccy(), innerCell);
     assertTrue(iconCell.dependsOnSelection());
     assertTrue(iconCell.handlesSelection());
   }
@@ -101,7 +88,7 @@ public class IconCellDecoratorTest extends CellTestBase<String> {
     MockCell<String> innerCell = new MockCell<String>(false,
         "newValueFromInnerCell", "click");
     IconCellDecorator<String> iconCell = new IconCellDecorator<String>(
-        getImages().prettyPiccy(), innerCell);
+        Resources.prettyPiccy(), innerCell);
     return iconCell;
   }
 
@@ -138,12 +125,5 @@ public class IconCellDecoratorTest extends CellTestBase<String> {
     html += "<div></div>";
     html += "</div>";
     return html;
-  }
-
-  private Images getImages() {
-    if (images == null) {
-      images = GWT.create(Images.class);
-    }
-    return images;
   }
 }

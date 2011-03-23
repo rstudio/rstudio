@@ -1,0 +1,65 @@
+@sprite .buttonCellBase {
+  gwt-image: 'buttonCellBaseBackground';
+  height: auto;
+  background-color: #f1f1f1;
+  margin: 0;
+  padding: 5px 7px;
+  text-decoration: none;
+  cursor: pointer;
+  cursor: hand;
+  font-size: small;
+  border: 1px solid #bbb;
+  border-bottom: 1px solid #a0a0a0;
+  border-radius: 5px;
+  -moz-border-radius: 5px;
+}
+
+.buttonCellBaseDefault {
+  
+}
+
+.buttonCellBasePrimary {
+  background: #666;
+  color: white;
+}
+
+.buttonCellBaseNegative {
+  background: #940000;
+  color: white;
+}
+
+.buttonCellBase:active { /* Only works in webkit based browsers. */
+  
+}
+
+.buttonCellBase:hover {
+  border-color: #939393;
+}
+
+.buttonCellBase[disabled] {
+  cursor: default;
+  color: #888;
+}
+
+.buttonCellBase[disabled]:hover {
+  border-color: #bbb #bbb #a0a0a0;
+}
+
+.buttonCellBasePushing {
+  border: 1px inset #ccc;
+}
+
+.buttonCellBaseCollapseLeft {
+  border-top-left-radius: 0px;
+  border-bottom-left-radius: 0px;
+  -moz-border-radius-topleft: 0px;
+  -moz-border-radius-bottomleft: 0px;
+}
+
+.buttonCellBaseCollapseRight {
+  border-right: none;
+  border-top-right-radius: 0px;
+  border-bottom-right-radius: 0px;
+  -moz-border-radius-topright: 0px;
+  -moz-border-radius-bottomright: 0px;
+}
