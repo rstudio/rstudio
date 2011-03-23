@@ -850,7 +850,6 @@ Error extractConsoleInput(const json::JsonRpcRequest& request)
       {
          // get console input to return to R
          std::string text = request.params[0].get_str();
-         text = string_utils::utf8ToSystem(text, true);
          addToConsoleInputBuffer(r::session::RConsoleInput(text));
 
          // return success
