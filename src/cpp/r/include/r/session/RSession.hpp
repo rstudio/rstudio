@@ -56,6 +56,7 @@ struct ROptions
    }
    core::FilePath userHomePath;
    core::FilePath userScratchPath;
+   core::FilePath defaultWorkingDir;
    boost::function<core::FilePath()> sessionStatePath;
    core::FilePath rSourcePath;
    core::FilePath rLibsExtra;

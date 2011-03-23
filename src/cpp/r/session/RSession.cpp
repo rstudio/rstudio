@@ -245,16 +245,13 @@ void reportHistoryAccessError(const std::string& context,
 }
 
 // save our session state when the quit function is called
-void saveHistoryAndClientState(bool savedEnvironment)
+void saveHistoryAndClientState()
 {
-   // save history if the environment was saved
-   if (savedEnvironment)
-   {
-      FilePath historyPath = sessionStateFilePath(kRHistory);
-      Error error = consoleHistory().saveToFile(historyPath);
-      if (error)
-         reportHistoryAccessError("write history to", historyPath, error);
-   }
+   // save history
+   FilePath historyPath = s_options.defaultWorkingDir.complete(kRHistory);
+   Error error = consoleHistory().saveToFile(historyPath);
+   if (error)
+      reportHistoryAccessError("write history to", historyPath, error);
 
    // commit persistent client state
    r::session::clientState().commit(ClientStateCommitPersistentOnly,
@@ -430,8 +427,8 @@ Error initialize()
    // new session
    else
    {  
-      // restore console history from current working directory
-      FilePath historyPath = sessionStateFilePath(kRHistory);
+      // restore console history from default working directory
+      FilePath historyPath = s_options.defaultWorkingDir.complete(kRHistory);
       error = consoleHistory().loadFromFile(historyPath, false);
       if (error)
          reportHistoryAccessError("read history from", historyPath, error);
@@ -1011,7 +1008,7 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
          }
 
          // save other persistent session state (history and client state)
-         saveHistoryAndClientState(savedEnvironment);
+         saveHistoryAndClientState();
 
          // clear display (closes the device). need to do this here
          // so that all of the graphics files are deleted

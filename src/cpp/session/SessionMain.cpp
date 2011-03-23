@@ -237,6 +237,18 @@ void ensureSessionInitialized()
    r::session::ensureDeserialized();
 }
 
+FilePath getDefaultWorkingDirectory()
+{
+   // calculate using user settings
+   FilePath defaultWorkingDir = userSettings().initialWorkingDirectory();
+
+   // return it if it exists, otherwise use the default user home path
+   if (defaultWorkingDir.exists() && defaultWorkingDir.isDirectory())
+      return defaultWorkingDir;
+   else
+      return session::options().userHomePath();
+}
+
 FilePath getInitialWorkingDirectory()
 {
    // first see if there is an override from the environment
@@ -248,14 +260,8 @@ FilePath getInitialWorkingDirectory()
          return workingDirPath;
    }
 
-   // calculate using user settings
-   FilePath initialWorkingDir = userSettings().initialWorkingDirectory();
-
-   // return it if it exists, otherwise use the default user home path
-   if (initialWorkingDir.exists() && initialWorkingDir.isDirectory())
-      return initialWorkingDir;
-   else
-      return session::options().userHomePath();
+   // if not then just return default working dir
+   return getDefaultWorkingDirectory();
 }
 
 void handleClientInit(const boost::function<void()>& initFunction,
@@ -1740,6 +1746,7 @@ int main (int argc, char * const argv[])
       r::session::ROptions rOptions ;
       rOptions.userHomePath = options.userHomePath();
       rOptions.userScratchPath = userScratchPath;
+      rOptions.defaultWorkingDir = getDefaultWorkingDirectory();
       rOptions.sessionStatePath = boost::bind(sessionStatePath);
       rOptions.rSourcePath = options.coreRSourcePath();
       if (!desktopMode) // ignore r-libs-user in desktop mode
