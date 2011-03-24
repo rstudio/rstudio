@@ -197,6 +197,12 @@ public class GWTShell extends DevModeBase {
   }
 
   @Override
+  protected boolean doStartup() {
+    File persistentCacheDir = new File(options.getWorkDir(), "gwt-unitCache");
+    return super.doStartup(persistentCacheDir);
+  }
+
+  @Override
   protected int doStartUpServer() {
     // TODO(jat): find a safe way to get an icon for Tomcat
     TreeLogger logger = ui.getWebServerLogger("Tomcat", null);

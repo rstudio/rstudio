@@ -106,7 +106,7 @@ public abstract class AbstractCompiler {
     }
 
     public char[] getFileName() {
-      return unit.getDisplayLocation().toCharArray();
+      return unit.getResourceLocation().toCharArray();
     }
 
     public char[] getMainTypeName() {
@@ -369,7 +369,7 @@ public abstract class AbstractCompiler {
         CompilationUnit unit = findCompilationUnit(qname);
         if (unit != null) {
           branch.log(TreeLogger.SPAM, "Found type in compilation unit: "
-              + unit.getDisplayLocation());
+              + unit.getResourceLocation());
           ICompilationUnit icu = new CompilationUnitAdapter(unit);
           return new NameEnvironmentAnswer(icu, null);
         } else {

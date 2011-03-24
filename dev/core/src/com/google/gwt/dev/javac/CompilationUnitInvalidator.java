@@ -40,9 +40,9 @@ public class CompilationUnitInvalidator {
   @SuppressWarnings("deprecation")
   public static void reportErrors(TreeLogger logger, CompilationUnit unit) {
     TreeLogger branch = reportErrors(logger, unit.getProblems(),
-        unit.getDisplayLocation(), unit.isError());
+        unit.getResourceLocation(), unit.isError());
     if (branch != null) {
-      Util.maybeDumpSource(branch, unit.getDisplayLocation(), unit.getSource(),
+      Util.maybeDumpSource(branch, unit.getResourceLocation(), unit.getSource(),
           unit.getTypeName());
     }
   }

@@ -339,7 +339,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     assertNotNull(originalClass);
 
     assertSignaturesEqual(originalClass, buildClass(CLASS_DEP_NO_CHANGE));
-    assertSignaturesEqual(originalClass, buildClass(CLASS_DEP_NO_PRIVATE));
+    assertSignaturesNotEqual(originalClass, buildClass(CLASS_DEP_NO_PRIVATE));
     assertSignaturesNotEqual(originalClass,
         buildClass(CLASS_DEP_NO_PUBLIC_FIELD));
     assertSignaturesNotEqual(originalClass,

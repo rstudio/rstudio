@@ -23,6 +23,7 @@ import com.google.gwt.dev.Link.LinkOptionsImpl;
 import com.google.gwt.dev.Precompile.PrecompileOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
+import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.shell.CheckForUpdates;
@@ -198,6 +199,8 @@ public class Compiler {
       if (options.isSoycEnabled() && options.getExtraDir() == null) {
         options.setExtraDir(new File("extras"));
       }
+
+      CompilationStateBuilder.init(logger, new File(options.getWarDir(), "WEB-INF"));
 
       for (ModuleDef module : modules) {
         String moduleName = module.getCanonicalName();

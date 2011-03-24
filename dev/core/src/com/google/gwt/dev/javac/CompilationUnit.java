@@ -62,8 +62,7 @@ public abstract class CompilationUnit implements Serializable {
       }
 
       @Override
-      public void visitInnerClass(String name, String outerName,
-          String innerName, int access) {
+      public void visitInnerClass(String name, String outerName, String innerName, int access) {
         if ((access & Opcodes.ACC_SYNTHETIC) == 0) {
           classNames.add(name);
         }
@@ -104,8 +103,7 @@ public abstract class CompilationUnit implements Serializable {
          * javac weirdness issue where javac refers a class but does not
          * generate it.
          */
-        if (isClassnameGenerated(lookupName)
-            && !allGeneratedClasses.contains(lookupName)) {
+        if (isClassnameGenerated(lookupName) && !allGeneratedClasses.contains(lookupName)) {
           allGeneratedClasses.add(lookupName);
         }
         AnonymousClassVisitor cv = new AnonymousClassVisitor();
@@ -135,12 +133,9 @@ public abstract class CompilationUnit implements Serializable {
      * same location as the location of the mainClass.
      */
     private byte[] getClassBytes(String slashedName) {
-      URL url =
-          Thread.currentThread().getContextClassLoader().getResource(
-              slashedName + ".class");
+      URL url = Thread.currentThread().getContextClassLoader().getResource(slashedName + ".class");
       if (url == null) {
-        logger.log(TreeLogger.DEBUG, "Unable to find " + slashedName
-            + " on the classPath");
+        logger.log(TreeLogger.DEBUG, "Unable to find " + slashedName + " on the classPath");
         return null;
       }
       String urlStr = url.toExternalForm();
@@ -151,8 +146,7 @@ public abstract class CompilationUnit implements Serializable {
         assert mainUrlBase != null;
         if (!mainUrlBase.equals(urlStr.substring(0, urlStr.lastIndexOf('/')))) {
           logger.log(TreeLogger.DEBUG, "Found " + slashedName + " at " + urlStr
-              + " The base location is different from  that of " + mainUrlBase
-              + " Not loading");
+              + " The base location is different from  that of " + mainUrlBase + " Not loading");
           return null;
         }
       }
@@ -162,8 +156,8 @@ public abstract class CompilationUnit implements Serializable {
         URLConnection conn = url.openConnection();
         return Util.readURLConnectionAsBytes(conn);
       } catch (IOException ignored) {
-        logger.log(TreeLogger.DEBUG, "Unable to load " + urlStr
-            + ", in trying to load " + slashedName);
+        logger.log(TreeLogger.DEBUG, "Unable to load " + urlStr + ", in trying to load "
+            + slashedName);
         // Fall through.
       }
       return null;
@@ -172,15 +166,13 @@ public abstract class CompilationUnit implements Serializable {
 
   protected static final DiskCache diskCache = DiskCache.INSTANCE;
 
-  static final Comparator<CompilationUnit> COMPARATOR =
-      new Comparator<CompilationUnit>() {
-        public int compare(CompilationUnit o1, CompilationUnit o2) {
-          return o1.getTypeName().compareTo(o2.getTypeName());
-        }
-      };
+  static final Comparator<CompilationUnit> COMPARATOR = new Comparator<CompilationUnit>() {
+    public int compare(CompilationUnit o1, CompilationUnit o2) {
+      return o1.getTypeName().compareTo(o2.getTypeName());
+    }
+  };
 
-  private static final Pattern GENERATED_CLASSNAME_PATTERN =
-      Pattern.compile(".+\\$\\d.*");
+  private static final Pattern GENERATED_CLASSNAME_PATTERN = Pattern.compile(".+\\$\\d.*");
 
   /**
    * Checks if the class names is generated. Accepts any classes whose names
@@ -263,12 +255,6 @@ public abstract class CompilationUnit implements Serializable {
     return anonymousClassMap;
   }
 
-  /**
-   * Returns the user-relevant location of the source file. No programmatic
-   * assumptions should be made about the return value.
-   */
-  public abstract String getDisplayLocation();
-
   public abstract List<JsniMethod> getJsniMethods();
 
   /**
@@ -280,6 +266,14 @@ public abstract class CompilationUnit implements Serializable {
    * @return a way to lookup method argument names for this compilation unit.
    */
   public abstract MethodArgNamesLookup getMethodArgs();
+
+  /**
+   * This is the resource location from the classpath or some deterministic
+   * virtual location (in the case of generators or mock data) where the source
+   * for this unit originated. This should be unique for each unit compiled to
+   * create a module.
+   */
+  public abstract String getResourceLocation();
 
   /**
    * Returns the source code for this unit.
@@ -335,11 +329,11 @@ public abstract class CompilationUnit implements Serializable {
   public abstract boolean isSuperSource();
 
   /**
-   * Overridden to finalize; always returns {@link #getDisplayLocation()}.
+   * Overridden to finalize; always returns {@link #getResourceLocation()}.
    */
   @Override
   public final String toString() {
-    return getDisplayLocation();
+    return getResourceLocation();
   }
 
   /**
@@ -368,8 +362,7 @@ public abstract class CompilationUnit implements Serializable {
   private List<String> getJdtClassNames(String topLevelClass) {
     List<String> classNames = new ArrayList<String>();
     for (CompiledClass cc : getCompiledClasses()) {
-      if (isAnonymousClass(cc)
-          && cc.getInternalName().startsWith(topLevelClass + "$")) {
+      if (isAnonymousClass(cc) && cc.getInternalName().startsWith(topLevelClass + "$")) {
         classNames.add(cc.getInternalName());
       }
     }

@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.gwt.dev.javac.Dependencies.DirectRef;
 import com.google.gwt.dev.javac.Dependencies.Ref;
 import com.google.gwt.dev.javac.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.impl.MockJavaResource;
@@ -141,31 +140,32 @@ public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
 
   static {
     // Setup EXPECTED_DEPENDENCIES with hand-computed data.
-    initializeExpectedDependency(JavaResourceBase.FOO, JavaResourceBase.STRING);
-    initializeExpectedDependency(JavaResourceBase.BAR, JavaResourceBase.STRING,
-        JavaResourceBase.FOO);
+    initializeExpectedDependency(JavaResourceBase.FOO, JavaResourceBase.STRING.getTypeName());
+    initializeExpectedDependency(JavaResourceBase.BAR, JavaResourceBase.STRING.getTypeName(),
+        JavaResourceBase.FOO.getTypeName());
 
-    initializeExpectedDependency(NOPACKAGE, JavaResourceBase.STRING, TOP);
-    initializeExpectedDependency(NOPACKAGE2, NOPACKAGE,
-        JavaResourceBase.STRING, TOP);
+    initializeExpectedDependency(NOPACKAGE, JavaResourceBase.STRING.getTypeName(), TOP
+        .getTypeName());
+    initializeExpectedDependency(NOPACKAGE2, NOPACKAGE.getTypeName(), JavaResourceBase.STRING
+        .getTypeName(), TOP.getTypeName());
 
-    initializeExpectedDependency(TOP, JavaResourceBase.STRING);
-    initializeExpectedDependency(TOP3, JavaResourceBase.STRING, TOP);
+    initializeExpectedDependency(TOP, JavaResourceBase.STRING.getTypeName(), "test.Top2");
+    initializeExpectedDependency(TOP3, JavaResourceBase.STRING.getTypeName(), TOP.getTypeName(), "test.Top2");
 
-    initializeExpectedDependency(OUTER, JavaResourceBase.STRING);
-    initializeExpectedDependency(MEMBER_INNER_SUBCLASS,
-        JavaResourceBase.STRING, OUTER);
+    initializeExpectedDependency(OUTER, JavaResourceBase.STRING.getTypeName(), "test.Outer$MemberInner");
+    initializeExpectedDependency(MEMBER_INNER_SUBCLASS, JavaResourceBase.STRING.getTypeName(),
+        OUTER.getTypeName(), "test.Outer$MemberInner");
 
-    initializeExpectedDependency(OUTER, JavaResourceBase.STRING);
-    initializeExpectedDependency(STATIC_INNER_SUBCLASS,
-        JavaResourceBase.STRING, OUTER);
+    initializeExpectedDependency(OUTER, JavaResourceBase.STRING.getTypeName());
+    initializeExpectedDependency(STATIC_INNER_SUBCLASS, JavaResourceBase.STRING.getTypeName(),
+        OUTER.getTypeName(), "test.Outer$StaticInner");
   }
 
   private static void initializeExpectedDependency(MockJavaResource source,
-      MockJavaResource... targets) {
+      String... typeNames) {
     Set<String> targetSet = new HashSet<String>();
-    for (MockJavaResource target : targets) {
-      targetSet.add(target.getTypeName());
+    for (String typeName : typeNames) {
+      targetSet.add(typeName);
     }
     EXPECTED_DEPENDENCIES.put(source.getTypeName(), targetSet);
   }
@@ -227,29 +227,24 @@ public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
     for (MockJavaResource file : files) {
       String typeName = file.getTypeName();
       Dependencies dependencies = unitMap.get(typeName).getDependencies();
-      Set<CompiledClass> classDeps = new HashSet<CompiledClass>();
+      Set<String> actualTypeNames = new HashSet<String>();
       for (Ref ref : dependencies.qualified.values()) {
         if (ref != null) {
-          assert ref instanceof DirectRef;
-          classDeps.add(((DirectRef) ref).getCompiledClass());
+          actualTypeNames.add(ref.getInternalName().replace('/', '.'));
         }
       }
       for (Ref ref : dependencies.simple.values()) {
         if (ref != null) {
-          classDeps.add(((DirectRef) ref).getCompiledClass());
+          actualTypeNames.add(ref.getInternalName().replace('/', '.'));
         }
       }
-      classDeps.remove(null);
-      Set<String> actualTypeNames = new HashSet<String>();
-      for (CompiledClass cc : classDeps) {
-        actualTypeNames.add(cc.getUnit().getTypeName());
-      }
+      actualTypeNames.remove(null);
       // Not tracking deps on Object.
       actualTypeNames.remove("java.lang.Object");
       // Don't care about self dep.
       actualTypeNames.remove(typeName);
       Set<String> expectedTypeNames = EXPECTED_DEPENDENCIES.get(typeName);
-      assertEquals(expectedTypeNames, actualTypeNames);
+      assertEquals("Resource: " + file, expectedTypeNames, actualTypeNames);
     }
   }
 

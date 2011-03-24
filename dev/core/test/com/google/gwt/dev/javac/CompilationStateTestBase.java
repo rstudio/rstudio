@@ -31,8 +31,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Base class for tests that need a mock type compilation state and everything
@@ -96,7 +96,7 @@ public abstract class CompilationStateTestBase extends TestCase {
   /**
    * Ensure a clean cache at the beginning of every test run!
    */
-  protected CompilationStateBuilder isolatedBuilder = new CompilationStateBuilder();
+  protected final CompilationStateBuilder isolatedBuilder = new CompilationStateBuilder();
 
   protected MockResourceOracle oracle = new MockResourceOracle(
       JavaResourceBase.getStandardResources());

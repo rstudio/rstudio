@@ -34,9 +34,13 @@ import java.util.Map;
 public class BytecodeSignatureMaker {
 
   /**
-   * This visitor looks at public/protected members and methods to compute a
-   * signature. This is intended for determining if a type needs to be
-   * recompiled if byte code it depends on changes.
+   * This visitor looks at methods and members to compute a signature. This is
+   * intended for determining if a type needs to be recompiled if byte code it
+   * depends on changes.
+   * 
+   * At first, you'd think only public and protected members should be
+   * considered, but the JSNI violator pattern means that even a change in a
+   * private member might invalidate an access from another class.
    */
   private static class CompileDependencyVisitor implements ClassVisitor {
     /**
@@ -45,8 +49,7 @@ public class BytecodeSignatureMaker {
      */
     private static final int ACCESS_FILTER_MASK =
         ~(Opcodes.ACC_DEPRECATED | Opcodes.ACC_NATIVE | Opcodes.ACC_STRICT
-            | Opcodes.ACC_SYNCHRONIZED | Opcodes.ACC_SUPER
-            | Opcodes.ACC_TRANSIENT | Opcodes.ACC_VOLATILE);
+            | Opcodes.ACC_SYNCHRONIZED | Opcodes.ACC_SUPER | Opcodes.ACC_TRANSIENT | Opcodes.ACC_VOLATILE);
 
     private String header;
     private Map<String, String> fields = new HashMap<String, String>();
@@ -56,8 +59,8 @@ public class BytecodeSignatureMaker {
       return Util.computeStrongName(Util.getBytes(getRawString()));
     }
 
-    public void visit(int version, int access, String name, String signature,
-        String superName, String[] interfaces) {
+    public void visit(int version, int access, String name, String signature, String superName,
+        String[] interfaces) {
       StringBuilder headerBuilder = new StringBuilder();
       // ignoring version
       headerBuilder.append(access & ACCESS_FILTER_MASK);
@@ -94,11 +97,11 @@ public class BytecodeSignatureMaker {
       // unused
     }
 
-    public FieldVisitor visitField(int access, String name, String desc,
-        String signature, Object value) {
+    public FieldVisitor visitField(int access, String name, String desc, String signature,
+        Object value) {
       StringBuilder fieldBuilder = new StringBuilder();
-      // We don't care about private or synthetic fields
-      if ((access & (Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC)) == 0) {
+      // We don't care about synthetic fields
+      if ((access & (Opcodes.ACC_SYNTHETIC)) == 0) {
         fieldBuilder.append(access & ACCESS_FILTER_MASK);
         fieldBuilder.append(":");
         fieldBuilder.append(name);
@@ -119,15 +122,14 @@ public class BytecodeSignatureMaker {
       return null;
     }
 
-    public void visitInnerClass(String name, String outerName,
-        String innerName, int access) {
+    public void visitInnerClass(String name, String outerName, String innerName, int access) {
       // ignored
     }
 
-    public MethodVisitor visitMethod(int access, String name, String desc,
-        String signature, String[] exceptions) {
-      // We don't care about private or synthetic methods
-      if ((access & (Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC)) == 0) {
+    public MethodVisitor visitMethod(int access, String name, String desc, String signature,
+        String[] exceptions) {
+      // We don't care about synthetic methods
+      if ((access & (Opcodes.ACC_SYNTHETIC)) == 0) {
         StringBuilder methodBuilder = new StringBuilder();
         methodBuilder.append(access & ACCESS_FILTER_MASK);
         methodBuilder.append(":");
@@ -196,7 +198,7 @@ public class BytecodeSignatureMaker {
 
   /**
    * Returns a raw string used to compute the hash from the
-   * non-private/non-synthetic members and methods in a class.
+   * non-synthetic members and methods in a class.
    * 
    * @param byteCode byte code for class to analyze.
    * @return a human readable string of all public API fields
@@ -209,8 +211,7 @@ public class BytecodeSignatureMaker {
   private static CompileDependencyVisitor visitCompileDependenciesInBytecode(byte[] byteCode) {
     ClassReader reader = new ClassReader(byteCode);
     CompileDependencyVisitor v = new CompileDependencyVisitor();
-    reader.accept(v, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG
-        | ClassReader.SKIP_FRAMES);
+    reader.accept(v, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
     return v;
   }
 

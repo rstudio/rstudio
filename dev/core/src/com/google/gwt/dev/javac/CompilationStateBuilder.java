@@ -32,15 +32,13 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.EventType;
 
-import org.apache.commons.collections.map.AbstractReferenceMap;
-import org.apache.commons.collections.map.ReferenceIdentityMap;
-import org.apache.commons.collections.map.ReferenceMap;
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,8 +48,8 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Manages a centralized cache for compiled units.
@@ -125,17 +123,6 @@ public class CompilationStateBuilder {
               builder.build(compiledClasses, types, dependencies, jsniMethods.values(), methodArgs,
                   cud.compilationResult().getProblems());
           addValidUnit(unit);
-          // Cache the valid unit for future compiles.
-          ContentId contentId = builder.getContentId();
-          unitCache.put(contentId, unit);
-          if (builder instanceof ResourceCompilationUnitBuilder) {
-            ResourceCompilationUnitBuilder rcub = (ResourceCompilationUnitBuilder) builder;
-            ResourceTag resourceTag = new ResourceTag(rcub.getLastModifed(), contentId);
-            resourceContentCache.put(builder.getLocation(), resourceTag);
-            keepAliveLatestVersion.put(resourceTag, unit);
-          } else if (builder instanceof GeneratedCompilationUnitBuilder) {
-            keepAliveRecentlyGenerated.put(unit.getTypeName(), unit);
-          }
           newlyBuiltUnits.add(unit);
         } finally {
           event.end();
@@ -144,9 +131,9 @@ public class CompilationStateBuilder {
     }
 
     /**
-     * A global cache of all currently-valid class files. This is used to
-     * validate dependencies when reusing previously cached units, to make sure
-     * they can be recompiled if necessary.
+     * A global cache of all currently-valid class files keyed by source name.
+     * This is used to validate dependencies when reusing previously cached
+     * units, to make sure they can be recompiled if necessary.
      */
     private final Map<String, CompiledClass> allValidClasses = new HashMap<String, CompiledClass>();
 
@@ -202,8 +189,6 @@ public class CompilationStateBuilder {
           allValidClasses.put(sourceName, cc);
         }
       }
-      Map<CompiledClass, CompiledClass> cachedStructurallySame =
-          new IdentityHashMap<CompiledClass, CompiledClass>();
 
       ArrayList<CompilationUnit> resultUnits = new ArrayList<CompilationUnit>();
       do {
@@ -233,13 +218,17 @@ public class CompilationStateBuilder {
             cachedUnits.entrySet().iterator(); it.hasNext();) {
           Entry<CompilationUnitBuilder, CompilationUnit> entry = it.next();
           CompilationUnit unit = entry.getValue();
-          boolean isValid =
-              unit.getDependencies().validate(allValidClasses, cachedStructurallySame);
+          boolean isValid = unit.getDependencies().validate(logger, allValidClasses);
           if (!isValid) {
+            logger.log(TreeLogger.TRACE, "Invalid Unit: " + unit.getTypeName());
             invalidatedUnits.add(unit);
             builders.add(entry.getKey());
             it.remove();
           }
+        }
+
+        if (invalidatedUnits.size() > 0) {
+          logger.log(TreeLogger.TRACE, "Invalid units found: " + invalidatedUnits.size());
         }
 
         // Any units we invalidated must now be removed from the valid classes.
@@ -250,8 +239,16 @@ public class CompilationStateBuilder {
         }
       } while (builders.size() > 0);
 
+      for (CompilationUnit unit : resultUnits) {
+        unitCache.add(unit);
+      }
+
       // Any remaining cached units are valid now.
       resultUnits.addAll(cachedUnits.values());
+
+      // Done with a pass of the build - tell the cache its OK to cleanup
+      // stale cache files.
+      unitCache.cleanup(logger);
 
       // Sort, then report all errors (re-report for cached units).
       Collections.sort(resultUnits, CompilationUnit.COMPARATOR);
@@ -260,34 +257,6 @@ public class CompilationStateBuilder {
         CompilationUnitInvalidator.reportErrors(logger, unit);
       }
       return resultUnits;
-    }
-  }
-
-  /**
-   * A snapshot of a source file at a particular point in time.
-   */
-  static class ResourceTag {
-    /**
-     * A Java type name + content hash. E.g.
-     * <code>"java.lang.String:1234DEADBEEF"</code>.
-     */
-    private final ContentId contentId;
-    /**
-     * The last modification time, for quick freshness checks.
-     */
-    private final long lastModified;
-
-    public ResourceTag(long lastModified, ContentId contentId) {
-      this.lastModified = lastModified;
-      this.contentId = contentId;
-    }
-
-    public ContentId getContentId() {
-      return contentId;
-    }
-
-    public long getLastModified() {
-      return lastModified;
     }
   }
 
@@ -317,47 +286,18 @@ public class CompilationStateBuilder {
   }
 
   /**
-   * This map of weak keys to hard values exists solely to keep the most recent
-   * version of any unit from being eagerly garbage collected.
-   * 
-   * Once a resource gets its tag updated, the {@link #resourceContentCache}
-   * will drop the only hard reference to that resourceTag which transitively
-   * removes the old value from this cache.
-   * 
-   * WRITE-ONLY
+   * Called to setup the directory where the persistent {@link ComplationUnit}
+   * cache should be stored. Only the first call to init() will have an effect.
    */
-  @SuppressWarnings("unchecked")
-  private final Map<ResourceTag, CompilationUnit> keepAliveLatestVersion = Collections
-      .synchronizedMap(new ReferenceIdentityMap(AbstractReferenceMap.WEAK,
-          AbstractReferenceMap.HARD));
+  public static synchronized void init(TreeLogger logger, File cacheDirectory) {
+    instance.unitCache = UnitCacheFactory.get(logger, cacheDirectory);
+  }
 
   /**
-   * This map of hard keys to soft values exists solely to keep the most
-   * recently generated version of a type from being eagerly garbage collected.
-   * 
-   * WRITE-ONLY
+   * A cache to store compilation units. This value may be overridden with an
+   * explicit call to {@link #init(TreeLogger, File)}.
    */
-  @SuppressWarnings("unchecked")
-  private final Map<String, CompilationUnit> keepAliveRecentlyGenerated = Collections
-      .synchronizedMap(new ReferenceMap(AbstractReferenceMap.HARD, AbstractReferenceMap.SOFT));
-
-  /**
-   * Holds a tag for the last seen content for a each resource location. Should
-   * be bounded by the total number of accessible Java source files on the
-   * system that we try to compile.
-   */
-  private final Map<String, ResourceTag> resourceContentCache = Collections
-      .synchronizedMap(new HashMap<String, ResourceTag>());
-
-  /**
-   * A map of all previously compiled units by contentId.
-   * 
-   * TODO: ideally this would be a list of units because the same unit can be
-   * compiled multiple ways based on its dependencies.
-   */
-  @SuppressWarnings("unchecked")
-  private final Map<ContentId, CompilationUnit> unitCache = Collections
-      .synchronizedMap(new ReferenceMap(AbstractReferenceMap.HARD, AbstractReferenceMap.WEAK));
+  private UnitCache unitCache = new MemoryUnitCache();
 
   /**
    * Build a new compilation state from a source oracle.
@@ -374,6 +314,7 @@ public class CompilationStateBuilder {
    */
   public synchronized CompilationState doBuildFrom(TreeLogger logger, Set<Resource> resources,
       AdditionalTypeProviderDelegate compilerDelegate) {
+
     // Units we definitely want to build.
     List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
 
@@ -389,20 +330,21 @@ public class CompilationStateBuilder {
       // Create a builder for all incoming units.
       ResourceCompilationUnitBuilder builder =
           new ResourceCompilationUnitBuilder(typeName, resource);
-      // Try to get an existing unit from the cache.
-      String location = resource.getLocation();
-      ResourceTag tag = resourceContentCache.get(location);
-      if (tag != null && tag.getLastModified() == resource.getLastModified()) {
-        ContentId contentId = tag.getContentId();
-        CompilationUnit existingUnit = unitCache.get(contentId);
-        if (existingUnit != null) {
-          cachedUnits.put(builder, existingUnit);
-          compileMoreLater.addValidUnit(existingUnit);
+
+      CompilationUnit cachedUnit = unitCache.find(resource.getLocation());
+      if (cachedUnit != null) {
+        if (cachedUnit.getLastModified() == resource.getLastModified()) {
+          cachedUnits.put(builder, cachedUnit);
+          compileMoreLater.addValidUnit(cachedUnit);
           continue;
         }
+        unitCache.remove(cachedUnit);
       }
       builders.add(builder);
     }
+    logger.log(TreeLogger.TRACE, "Found " + cachedUnits.size() + " cached units.  Used "
+        + cachedUnits.size() + " / " + resources.size() + " units from cache.");
+
     Collection<CompilationUnit> resultUnits =
         compileMoreLater.compile(logger, builders, cachedUnits,
             CompilerEventType.JDT_COMPILER_CSB_FROM_ORACLE);
@@ -431,13 +373,15 @@ public class CompilationStateBuilder {
       // Try to get an existing unit from the cache.
       ContentId contentId =
           new ContentId(generatedUnit.getTypeName(), generatedUnit.getStrongHash());
-      CompilationUnit existingUnit = unitCache.get(contentId);
-      if (existingUnit != null) {
-        cachedUnits.put(builder, existingUnit);
-        compileMoreLater.addValidUnit(existingUnit);
-      } else {
-        builders.add(builder);
+
+      // Look for units previously compiled
+      CompilationUnit cachedUnit = unitCache.find(contentId);
+      if (cachedUnit != null) {
+        cachedUnits.put(builder, cachedUnit);
+        compileMoreLater.addValidUnit(cachedUnit);
+        continue;
       }
+      builders.add(builder);
     }
     return compileMoreLater.compile(logger, builders, cachedUnits,
         CompilerEventType.JDT_COMPILER_CSB_GENERATED);

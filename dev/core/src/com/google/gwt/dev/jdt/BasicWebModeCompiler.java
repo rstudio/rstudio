@@ -97,7 +97,7 @@ public class BasicWebModeCompiler extends AbstractCompiler {
         icus.add(new CompilationUnitAdapter(unit));
       } else {
         logger.log(TreeLogger.WARN, "Duplicate compilation unit '"
-            + unit.getDisplayLocation() + "'in seed types");
+            + unit.getResourceLocation() + "' in seed types");
       }
     }
 
@@ -112,7 +112,7 @@ public class BasicWebModeCompiler extends AbstractCompiler {
       if (alreadyAdded.add(unit)) {
         icus.add(new CompilationUnitAdapter(unit));
         logger.log(TreeLogger.SPAM, "Forced compilation of unit '"
-            + unit.getDisplayLocation()
+            + unit.getResourceLocation()
             + "' becasue it contains a SingleJsoImpl type");
       }
     }

@@ -23,6 +23,7 @@ import com.google.gwt.dev.Precompile.PrecompileOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.javac.CompilationState;
+import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.rebind.RebindCache;
 import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.shell.ArtifactAcceptor;
@@ -44,8 +45,8 @@ import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.OptionGenDir;
 import com.google.gwt.dev.util.arg.OptionLogLevel;
-import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerString;
@@ -862,6 +863,8 @@ public abstract class DevModeBase implements DoneCallback {
     return true;
   }
 
+  protected abstract boolean doStartup();
+
   /**
    * Perform any startup tasks, including initializing the UI (if any) and the
    * logger, updates checker, and the development mode code server.
@@ -872,13 +875,15 @@ public abstract class DevModeBase implements DoneCallback {
    * 
    * @return true if startup was successful
    */
-  protected boolean doStartup() {
+  protected boolean doStartup(File persistentCacheDir) {
     bindAddress = options.getBindAddress();
     connectAddress = options.getConnectAddress();
 
     // Create the main app window.
     ui.initialize(options.getLogLevel());
     topLogger = ui.getTopLogger();
+
+    CompilationStateBuilder.init(getTopLogger(), persistentCacheDir);
 
     // Set done callback
     ui.setCallback(DoneEvent.getType(), this);

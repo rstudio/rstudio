@@ -414,7 +414,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
     scanThread.setPriority((Thread.MIN_PRIORITY + Thread.NORM_PRIORITY) / 2);
     scanThread.start();
 
-    if (!super.doStartup()) {
+    if (!super.doStartup(new File(options.getWarDir(), "WEB-INF"))) {
       return false;
     }
 

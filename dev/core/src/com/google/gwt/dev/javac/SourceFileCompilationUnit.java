@@ -38,25 +38,29 @@ class SourceFileCompilationUnit extends CompilationUnitImpl {
   private final Resource sourceFile;
 
   private final ContentId contentId;
+  
+  private final long lastModified;
 
   public SourceFileCompilationUnit(Resource sourceFile, ContentId contentId,
       List<CompiledClass> compiledClasses, List<JDeclaredType> types,
       Dependencies dependencies, Collection<? extends JsniMethod> jsniMethods,
-      MethodArgNamesLookup methodArgs, CategorizedProblem[] problems) {
+      MethodArgNamesLookup methodArgs, CategorizedProblem[] problems, long lastModified) {
     super(compiledClasses, types, dependencies, jsniMethods, methodArgs,
         problems);
     this.sourceFile = sourceFile;
+    // The resource can be updated out from underneath, affecting future comparisons.
+    this.lastModified = lastModified;
     this.contentId = contentId;
   }
 
   @Override
-  public String getDisplayLocation() {
-    return sourceFile.getLocation();
+  public long getLastModified() {
+    return lastModified;
   }
 
   @Override
-  public long getLastModified() {
-    return sourceFile.getLastModified();
+  public String getResourceLocation() {
+    return sourceFile.getLocation();
   }
 
   @Deprecated

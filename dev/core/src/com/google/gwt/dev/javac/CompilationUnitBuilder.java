@@ -98,10 +98,13 @@ public abstract class CompilationUnitBuilder {
 
     @Override
     public ContentId getContentId() {
+      if (contentId == null) {
+        getSource();
+      }
       return contentId;
     }
 
-    public long getLastModifed() {
+    public long getLastModified() {
       if (lastModifed < 0) {
         return resource.getLastModified();
       } else {
@@ -151,14 +154,14 @@ public abstract class CompilationUnitBuilder {
         MethodArgNamesLookup methodArgs, CategorizedProblem[] problems) {
       return new SourceFileCompilationUnit(getResource(), contentId,
           compiledClasses, types, dependencies, jsniMethods, methodArgs,
-          problems);
+          problems, getLastModified());
     }
   }
 
   private static final class GeneratedCompilationUnit extends
       CompilationUnitImpl {
     private final GeneratedUnit generatedUnit;
-
+    
     public GeneratedCompilationUnit(GeneratedUnit generatedUnit,
         List<CompiledClass> compiledClasses, List<JDeclaredType> types,
         Dependencies dependencies,
@@ -170,13 +173,13 @@ public abstract class CompilationUnitBuilder {
     }
 
     @Override
-    public String getDisplayLocation() {
-      return getLocationFor(generatedUnit);
+    public long getLastModified() {
+      return generatedUnit.creationTime();
     }
 
     @Override
-    public long getLastModified() {
-      return generatedUnit.creationTime();
+    public String getResourceLocation() {
+      return getLocationFor(generatedUnit);
     }
 
     @Deprecated
@@ -208,7 +211,7 @@ public abstract class CompilationUnitBuilder {
       assert sourceToken >= 0;
       return new CachedCompilationUnit(this, sourceToken);
     }
-    
+
     @Override
     ContentId getContentId() {
       return new ContentId(getTypeName(), generatedUnit.getStrongHash());

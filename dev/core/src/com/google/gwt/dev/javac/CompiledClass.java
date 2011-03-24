@@ -133,7 +133,7 @@ public final class CompiledClass implements Serializable {
       try {
         ClassFileReader cfr =
             new ClassFileReader(getBytes(),
-                unit.getDisplayLocation().toCharArray(), true);
+                unit.getResourceLocation().toCharArray(), true);
         nameEnvironmentAnswer = new NameEnvironmentAnswer(cfr, null);
       } catch (ClassFormatException e) {
         throw new RuntimeException("Unexpectedly unable to parse class file", e);

@@ -33,7 +33,7 @@ public class CachedCompilationUnit extends CompilationUnit {
   private final Collection<CompiledClass> compiledClasses;
   private final ContentId contentId;
   private final Dependencies dependencies;
-  private final String displayLocation;
+  private final String resourceLocation;
   private final List<JsniMethod> jsniMethods;
   private final long lastModified;
   private final MethodArgNamesLookup methodArgNamesLookup;
@@ -52,12 +52,13 @@ public class CachedCompilationUnit extends CompilationUnit {
    *          you don't have a valid disk cache token, use another constructor
    *          to provide the source code.
    */
+  @SuppressWarnings("deprecation")
   CachedCompilationUnit(CompilationUnit unit, long sourceToken) {
     assert unit != null;
     this.compiledClasses = unit.getCompiledClasses();
     this.contentId = unit.getContentId();
     this.dependencies = unit.getDependencies();
-    this.displayLocation = unit.getDisplayLocation();
+    this.resourceLocation = unit.getResourceLocation();
     this.jsniMethods = unit.getJsniMethods();
     this.lastModified = unit.getLastModified();
     this.methodArgNamesLookup = unit.getMethodArgs();
@@ -79,11 +80,6 @@ public class CachedCompilationUnit extends CompilationUnit {
   }
 
   @Override
-  public String getDisplayLocation() {
-    return displayLocation;
-  }
-
-  @Override
   public List<JsniMethod> getJsniMethods() {
     return jsniMethods;
   }
@@ -96,6 +92,11 @@ public class CachedCompilationUnit extends CompilationUnit {
   @Override
   public MethodArgNamesLookup getMethodArgs() {
     return methodArgNamesLookup;
+  }
+
+  @Override
+  public String getResourceLocation() {
+    return resourceLocation;
   }
 
   @Override
