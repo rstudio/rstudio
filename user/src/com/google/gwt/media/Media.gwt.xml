@@ -21,23 +21,21 @@
   <define-property name="videoElementSupport" values="maybe,no" />
   <define-property name="audioElementSupport" values="maybe,no" />
 
-  <!-- Give default support value of no -->
-  <set-property name="videoElementSupport" value="no" />
-  <set-property name="audioElementSupport" value="no" />
+  <!-- Give default support value of maybe -->
+  <set-property name="videoElementSupport" value="maybe" />
+  <set-property name="audioElementSupport" value="maybe" />
 
-  <set-property name="videoElementSupport" value="maybe">
+  <set-property name="videoElementSupport" value="no">
     <any>
-      <when-property-is name="user.agent" value="safari" />
-      <when-property-is name="user.agent" value="gecko1_8" />
-      <when-property-is name="user.agent" value="opera" />
+      <when-property-is name="user.agent" value="ie6" />
+      <when-property-is name="user.agent" value="ie8" />
     </any>
   </set-property>
   
-  <set-property name="audioElementSupport" value="maybe">
+  <set-property name="audioElementSupport" value="no">
     <any>
-      <when-property-is name="user.agent" value="safari" />
-      <when-property-is name="user.agent" value="gecko1_8" />
-      <when-property-is name="user.agent" value="opera" />
+      <when-property-is name="user.agent" value="ie6" />
+      <when-property-is name="user.agent" value="ie8" />
     </any>
   </set-property>
 
@@ -53,7 +51,7 @@
   
   <replace-with class="com.google.gwt.media.client.Audio.AudioElementSupportDetectedMaybe">
     <when-type-is class="com.google.gwt.media.client.Audio.AudioElementSupportDetector" />
-    <when-property-is name="videoElementSupport" value="maybe" />
+    <when-property-is name="audioElementSupport" value="maybe" />
   </replace-with>
 
   <replace-with class="com.google.gwt.media.client.Audio.AudioElementSupportDetectedNo">

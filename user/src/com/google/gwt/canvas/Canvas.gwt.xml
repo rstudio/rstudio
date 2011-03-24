@@ -20,14 +20,14 @@
   <!-- Define the support property -->
   <define-property name="canvasElementSupport" values="maybe,no" />
 
-  <!-- Give default support value of no -->
-  <set-property name="canvasElementSupport" value="no" />
+  <!-- Give default support value of maybe -->
+  <set-property name="canvasElementSupport" value="maybe" />
 
-  <set-property name="canvasElementSupport" value="maybe">
+  <!-- Give default support value of no to unsupported browsers -->
+  <set-property name="canvasElementSupport" value="no">
     <any>
-      <when-property-is name="user.agent" value="safari" />
-      <when-property-is name="user.agent" value="gecko1_8" />
-      <when-property-is name="user.agent" value="opera" />
+      <when-property-is name="user.agent" value="ie6" />
+      <when-property-is name="user.agent" value="ie8" />
     </any>
   </set-property>
 
