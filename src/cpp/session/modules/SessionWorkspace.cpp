@@ -44,24 +44,6 @@ namespace workspace {
 
 namespace {
 
-Error getSaveAction(const json::JsonRpcRequest&,
-                    json::JsonRpcResponse* pResponse)
-{  
-   json::Object saveAction;
-   if (r::session::imageIsDirty())
-   {
-      saveAction["action"] = userSettings().saveAction();
-   }
-   else
-   {
-      saveAction["action"] = r::session::kSaveActionNoSave;
-   }
-
-   pResponse->setResult(saveAction);
-
-   return Success();
-}
-
 bool handleRBrowseEnv(const core::FilePath& filePath)
 {
    if (filePath.filename() == "wsbrowser.html")
@@ -171,6 +153,37 @@ void enqueAssignedEvent(const r::sexp::Variable& variable)
    module_context::enqueClientEvent(assignedEvent);
 }
 
+// last save action.
+// NOTE: we don't persist this (or the workspace dirty state) during suspends in
+// server mode. this means that if you are ever suspended then you will always
+// end up with a 'dirty' workspace. not a big deal considering how infrequently
+// quit occurs in server mode.
+int s_lastSaveAction = r::session::kSaveActionAsk;
+
+void enqueSaveActionChanged()
+{
+   json::Object saveAction;
+   saveAction["action"] = s_lastSaveAction;
+   ClientEvent event(client_events::kSaveActionChanged, saveAction);
+   module_context::enqueClientEvent(event);
+}
+
+void checkForSaveActionChanged()
+{
+   // compute current save action
+   int currentSaveAction = r::session::imageIsDirty() ?
+                                          userSettings().saveAction() :
+                                          r::session::kSaveActionNoSave;
+
+   // compare and fire event if necessary
+   if (s_lastSaveAction != currentSaveAction)
+   {
+      s_lastSaveAction = currentSaveAction;
+      enqueSaveActionChanged();
+   }
+}
+
+
 // detect changes in the environment by inspecting the list of variable
 // names as well as the SEXP pointers (a new pointer implies a mutation of
 // an object)
@@ -270,7 +283,7 @@ private:
    std::vector<r::sexp::Variable> lastEnv_; 
    bool initialized_ ;
 };
-   
+
 // global environment monitor
 GlobalEnvironmentMonitor s_globalEnvironmentMonitor;
    
@@ -279,11 +292,18 @@ void onClientInit()
    // reset monitor and check for changes for brand new client
    s_globalEnvironmentMonitor.reset();
    s_globalEnvironmentMonitor.checkForChanges();
+
+   // enque save action changed
+   enqueSaveActionChanged();
 }
  
 void onDetectChanges(module_context::ChangeSource source)
 {
+   // check global environment
    s_globalEnvironmentMonitor.checkForChanges();
+
+   // check for save action changed
+   checkForSaveActionChanged();
 }
 
 } // anonymous namespace
@@ -299,7 +319,6 @@ Error initialize()
    // register handlers
    ExecBlock initBlock ;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "get_save_action", getSaveAction))
       (bind(registerRBrowseFileHandler, handleRBrowseEnv))
       (bind(sourceModuleRFile, "SessionWorkspace.R"));
    return initBlock.execute();

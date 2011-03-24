@@ -21,9 +21,14 @@ public class SaveAction extends JavaScriptObject
    public final static int SAVEASK = -1;
    
    protected SaveAction()
-   {
-      
+   {  
    }
+   
+   public native static final SaveAction saveAsk() /*-{
+      var saveAction = new Object();
+      saveAction.action = -1;
+      return saveAction
+   }-*/;
 
    public native final int getAction() /*-{
       return this.action;

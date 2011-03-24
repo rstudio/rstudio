@@ -97,6 +97,7 @@ public class Application implements ApplicationEventHandlers,
       events.addHandler(ServerUnavailableEvent.TYPE, this);
       events.addHandler(InvalidClientVersionEvent.TYPE, this);
       events.addHandler(ServerOfflineEvent.TYPE, this);
+      events.addHandler(SaveActionChangedEvent.TYPE, this);
       
       // set uncaught exception handler (first save default so we can call it)
       defaultUncaughtExceptionHandler_ = GWT.getUncaughtExceptionHandler();
@@ -212,8 +213,7 @@ public class Application implements ApplicationEventHandlers,
    public final native void onRaiseException2() /*-{
       $wnd.welfkjweg();
    }-*/;
-   
-
+  
    @Handler
    public void onQuitSession()
    {
@@ -239,43 +239,27 @@ public class Application implements ApplicationEventHandlers,
             private final boolean saveChanges_ ;
          }
 
-         // if the workspace is dirty then prompt to save
-         server_.getSaveAction(new ServerRequestCallback<SaveAction>() {
+         if (saveAction_.getAction() == SaveAction.SAVEASK) 
+         {
+            // confirm quit and do it
+            globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
+                                            "Quit R Session",
+                                            "Save workspace image?",
+                                            true,
+                                            new QuitOperation(true),
+                                            new QuitOperation(false),
+                                            true);
+         }
+         else
+         {
+            // do the quit without prompting 
+            
+            ProgressIndicator indicator =
+               globalDisplay_.getProgressIndicator("Error Quitting R");
 
-            @Override
-            public void onResponseReceived(SaveAction saveAction)
-            {
-               if (saveAction.getAction() == SaveAction.SAVEASK) 
-               {
-                  // confirm quit and do it
-                  globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-                                                  "Quit R Session",
-                                                  "Save workspace image?",
-                                                  true,
-                                                  new QuitOperation(true),
-                                                  new QuitOperation(false),
-                                                  true);
-               }
-               else
-               {
-                  // do the quit without prompting 
-                  
-                  ProgressIndicator indicator =
-                     globalDisplay_.getProgressIndicator("Error Quitting R");
-
-                  boolean save = saveAction.getAction() == SaveAction.SAVE;
-                  new QuitOperation(save).execute(indicator);
-               }
-            }
-
-            @Override
-            public void onError(ServerError error)
-            {
-               globalDisplay_.showErrorMessage(
-                     "Error Communicating with RStudio Server",
-                     error.getUserMessage());
-            }
-         });
+            boolean save = saveAction_.getAction() == SaveAction.SAVE;
+            new QuitOperation(save).execute(indicator);
+         }
       }
    }
 
@@ -313,6 +297,11 @@ public class Application implements ApplicationEventHandlers,
    {
       Element el = DomUtils.getActiveElement();
       DomUtils.dump(el, "Focused Element: ");
+   }
+  
+   public void onSaveActionChanged(SaveActionChangedEvent event)
+   {
+      saveAction_ = event.getAction();
    }
    
    public void onSessionSerialization(SessionSerializationEvent event)
@@ -569,6 +558,8 @@ public class Application implements ApplicationEventHandlers,
    private final Provider<ApplicationClientInit> pClientInit_;
 
    private ClientStateUpdater clientStateUpdaterInstance_;
+   
+   private SaveAction saveAction_ = SaveAction.saveAsk();
    
    private final UncaughtExceptionHandler defaultUncaughtExceptionHandler_ ;
 }

@@ -312,13 +312,6 @@ public class RemoteServer implements Server
                   requestCallback);
    }
 
-   public void getSaveAction(ServerRequestCallback<SaveAction> requestCallback)
-   {
-      sendRequest(RPC_SCOPE,
-                  GET_SAVE_ACTION,
-                  requestCallback);
-   }
-
    public void saveWorkspace(String filename,
                              ServerRequestCallback<Void> requestCallback)
    {
@@ -1315,7 +1308,6 @@ public class RemoteServer implements Server
    private static final String RPC_SCOPE = "rpc";
    private static final String FILES_SCOPE = "files";
    private static final String EVENTS_SCOPE = "events";
-   private static final String HELP_SCOPE = "help";
    private static final String UPLOAD_SCOPE = "upload";
    private static final String EXPORT_SCOPE = "export";
    private static final String GRAPHICS_SCOPE = "graphics";   
@@ -1347,7 +1339,6 @@ public class RemoteServer implements Server
    private static final String REMOVE_ALL_OBJECTS = "remove_all_objects";
    private static final String SET_OBJECT_VALUE = "set_object_value";
    private static final String GET_OBJECT_VALUE = "get_object_value";
-   private static final String GET_SAVE_ACTION = "get_save_action";
    private static final String SAVE_WORKSPACE = "save_workspace";
    private static final String LOAD_WORKSPACE = "load_workspace";
    private static final String LIST_GOOGLE_SPREADSHEETS = "list_google_spreadsheets";
