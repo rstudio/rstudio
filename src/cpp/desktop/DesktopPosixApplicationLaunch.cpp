@@ -13,11 +13,13 @@
 
 #include "DesktopApplicationLaunch.hpp"
 
-#include "3rdparty/qtsingleapplication/QtSingleApplication"
+#include "DesktopPosixApplication.hpp"
+
 
 namespace desktop {
 
 namespace {
+
 
 QtSingleApplication* app()
 {
@@ -41,7 +43,7 @@ void ApplicationLaunch::init(QString appName,
                              boost::scoped_ptr<ApplicationLaunch>* ppAppLaunch)
 {
    // Immediately stuffed into scoped_ptr
-   QtSingleApplication* pSingleApplication = new QtSingleApplication(appName, argc, argv);
+   PosixApplication* pSingleApplication = new PosixApplication(appName, argc, argv);
    pSingleApplication->setApplicationName(appName);
    ppApp->reset(pSingleApplication);
 

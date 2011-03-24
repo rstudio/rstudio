@@ -2,6 +2,40 @@
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+   <key>CFBundleDocumentTypes</key>
+   <array>
+      <dict>
+         <key>CFBundleTypeExtensions</key>
+         <array>
+             <string>R</string>
+             <string>r</string>
+         </array>
+         <key>CFBundleTypeIconFile</key>
+         <string>RSource.icns</string>
+         <key>CFBundleTypeName</key>
+         <string>R Source File</string>
+         <key>CFBundleTypeRole</key>
+         <string>Editor</string>
+         <key>LSIsAppleDefaultForType</key>
+         <true/>
+      </dict>
+      <dict>
+         <key>CFBundleTypeExtensions</key>
+         <array>
+            <string>RData</string>
+         </array>
+         <key>CFBundleTypeIconFile</key>
+         <string>RData.icns</string>
+         <key>CFBundleTypeName</key>
+         <string>R Data File</string>
+         <key>CFBundleTypeRole</key>
+         <string>Editor</string>
+         <key>LSIsAppleDefaultForType</key>
+         <true/>
+         <key>LSTypeIsPackage</key>
+         <false/>
+      </dict>
+   </array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
