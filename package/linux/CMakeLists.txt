@@ -18,8 +18,9 @@ endif()
 # configuration specific
 if(RSTUDIO_SERVER)
 
-  # package name
+  # package name and description
   set(CPACK_PACKAGE_NAME "rstudio-server")
+  set(CPACK_PACKAGE_DESCRIPTION "RStudio Server")
 
   # debian control files
   set(DEBIAN_POSTINST postinst.in)
