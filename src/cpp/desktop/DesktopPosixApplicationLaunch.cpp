@@ -41,7 +41,7 @@ void ApplicationLaunch::init(QString appName,
                              boost::scoped_ptr<ApplicationLaunch>* ppAppLaunch)
 {
    // Immediately stuffed into scoped_ptr
-   QtSingleApplication* pSingleApplication = new QtSingleApplication(argc, argv);
+   QtSingleApplication* pSingleApplication = new QtSingleApplication(appName, argc, argv);
    pSingleApplication->setApplicationName(appName);
    ppApp->reset(pSingleApplication);
 
