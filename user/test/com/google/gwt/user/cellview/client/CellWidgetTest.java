@@ -16,6 +16,7 @@
 package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.cell.client.AbstractCell;
+import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.TextButtonCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.dom.client.Document;
@@ -156,7 +157,33 @@ public class CellWidgetTest extends GWTTestCase {
   /**
    * Test that a cell that defines an HTML elment can be rendered.
    */
-  public void testRedrawWithInnerChild() {
+  public void testRedrawWithMultipleInnerChildren() {
+    Cell<String> cell = new AbstractCell<String>() {
+      @Override
+      public void render(com.google.gwt.cell.client.Cell.Context context, String value,
+          SafeHtmlBuilder sb) {
+        sb.appendHtmlConstant("<div>").appendEscaped(value).appendHtmlConstant("</div>");
+        sb.appendHtmlConstant("<div>child2</div>");
+      }
+    };
+    CellWidget<String> cw = new CellWidget<String>(cell);
+
+    // Set value without redrawing.
+    cw.setValue("test123", false, false);
+    assertEquals("", cw.getElement().getInnerText());
+
+    // Redraw.
+    cw.redraw();
+    assertTrue(cw.getElement().getInnerText().contains("test123"));
+    Style firstChildStyle = cw.getElement().getFirstChildElement().getStyle();
+    assertFalse(firstChildStyle.getHeight().matches("100(.0)?%"));
+    assertFalse(firstChildStyle.getWidth().matches("100(.0)?%"));
+  }
+
+  /**
+   * Test that a cell that defines an HTML elment can be rendered.
+   */
+  public void testRedrawWithOneInnerChild() {
     CellWidget<String> cw = new CellWidget<String>(new TextButtonCell());
 
     // Set value without redrawing.

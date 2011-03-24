@@ -179,10 +179,11 @@ public class CellWidget<C> extends Widget implements HasKeyProvider<C>, HasValue
 
     /*
      * The rendered Cell should fill the root element so height and width styles
-     * applied to the widget also apply to the Cell.
+     * applied to the widget also apply to the Cell. If there is exactly one
+     * child element, the height and width are set to 100% to fill the parent.
      */
     Element child = getElement().getFirstChildElement();
-    if (child != null) {
+    if (child != null && child.getNextSiblingElement() == null) {
       child.getStyle().setHeight(100, Unit.PCT);
       child.getStyle().setWidth(100, Unit.PCT);
     }
