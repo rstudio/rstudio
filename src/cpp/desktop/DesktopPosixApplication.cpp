@@ -26,10 +26,7 @@ bool PosixApplication::event(QEvent* pEvent)
    {
    case QEvent::FileOpen:
    {
-      QString file = static_cast<QFileOpenEvent*>(pEvent)->file();
-
-      LOG_WARNING_MESSAGE("Opening file: " + file.toStdString());
-
+      openFileRequest_ = static_cast<QFileOpenEvent*>(pEvent)->file();
       return true;
    }
 

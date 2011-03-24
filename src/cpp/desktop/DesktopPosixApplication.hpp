@@ -23,14 +23,23 @@ class PosixApplication : public QtSingleApplication
     Q_OBJECT
 public:
 
-    PosixApplication(QString appName, int& argc, char* argv[])
-       : QtSingleApplication(appName, argc, argv)
-    {
-       setApplicationName(appName);
-    }
+   PosixApplication(QString appName, int& argc, char* argv[])
+    : QtSingleApplication(appName, argc, argv)
+   {
+      setApplicationName(appName);
+   }
+
+   QString openFileRequest() const
+   {
+      return openFileRequest_;
+   }
 
 protected:
     virtual bool event(QEvent* pEvent);
+
+private:
+    QString openFileRequest_;
+
 };
 
 

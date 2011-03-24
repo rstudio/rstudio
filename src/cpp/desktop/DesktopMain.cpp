@@ -183,6 +183,18 @@ int main(int argc, char* argv[])
       if (pAppLaunch->sendMessage(filename))
          return 0;
 
+#ifdef __APPLE__
+
+      // allow the open file apple-event to be delivered
+      pApp->processEvents(QEventLoop::AllEvents, 100);
+
+      // allow open file request to override anything passed on cmd line
+      QString openFileRequest = pAppLaunch->openFileRequest();
+      if (openFileRequest.size() > 0)
+         filenameArg = openFileRequest;
+
+#endif
+
       pApp->setAttribute(Qt::AA_MacDontSwapCtrlAndMeta);
 
       initializeSharedSecret();

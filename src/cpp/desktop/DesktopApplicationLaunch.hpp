@@ -33,6 +33,8 @@ public:
 
    void setActivationWindow(QWidget* pWindow);
 
+   QString openFileRequest() const;
+
 protected:
     explicit ApplicationLaunch();
 #ifdef _WIN32

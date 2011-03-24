@@ -21,9 +21,9 @@ namespace desktop {
 namespace {
 
 
-QtSingleApplication* app()
+PosixApplication* app()
 {
-   return qobject_cast<QtSingleApplication*>(qApp);
+   return qobject_cast<PosixApplication*>(qApp);
 }
 
 } // anonymous namespace
@@ -59,6 +59,11 @@ void ApplicationLaunch::setActivationWindow(QWidget* pWindow)
 bool ApplicationLaunch::sendMessage(QString filename)
 {
    return app()->sendMessage(filename);
+}
+
+QString ApplicationLaunch::openFileRequest() const
+{
+   return app()->openFileRequest();
 }
 
 } // namespace desktop
