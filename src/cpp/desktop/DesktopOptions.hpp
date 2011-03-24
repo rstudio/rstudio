@@ -30,10 +30,6 @@
 
 namespace desktop {
 
-#define SAVE_YES 0
-#define SAVE_NO 1
-#define SAVE_ASK 2
-
 class Options;
 Options& options();
 
@@ -66,9 +62,6 @@ public:
    QString defaultCRANmirrorURL() const;
    void setDefaultCRANmirror(QString name,
                              QString url);
-
-   int saveWorkspaceOnExit() const;
-   void setSaveWorkspaceOnExit(int value);
 
    QStringList ignoredUpdateVersions() const;
    void setIgnoredUpdateVersions(const QStringList& ignoredVersions);

@@ -259,16 +259,6 @@ void GwtCallback::showFolder(QString path)
    }
 }
 
-int GwtCallback::getSaveAction()
-{
-   return options().saveWorkspaceOnExit();
-}
-
-void GwtCallback::setSaveAction(int index)
-{
-   options().setSaveWorkspaceOnExit(index);
-}
-
 QString GwtCallback::getCRANMirror()
 {
    return options().defaultCRANmirrorName();

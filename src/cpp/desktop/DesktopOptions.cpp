@@ -236,17 +236,6 @@ void Options::setDefaultCRANmirror(QString name, QString url)
    settings_.setValue("CRANMirrorURL", url);
 }
 
-// Returns SAVE_YES, SAVE_NO, or SAVE_ASK
-int Options::saveWorkspaceOnExit() const
-{
-   return settings_.value("saveWorkspace", 2).toInt();
-}
-
-void Options::setSaveWorkspaceOnExit(int value)
-{
-   settings_.setValue("saveWorkspace", value);
-}
-
 QStringList Options::ignoredUpdateVersions() const
 {
    return settings_.value("ignoredUpdateVersions", QStringList()).toStringList();

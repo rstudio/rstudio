@@ -176,11 +176,6 @@ public class GeneralPreferencesPane extends PreferencesPane
                saveAction = SaveAction.SAVEASK; 
                break; 
          }
-         if (Desktop.isDesktop())
-         {
-            Desktop.getFrame().setSaveAction(
-                  saveWorkspace_.getListBox().getSelectedIndex());
-         }
 
          server_.setRPrefs(saveAction,
                            loadRData_.getValue(),

@@ -25,6 +25,9 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.BaseExpression;
 import org.rstudio.core.client.js.JsObjectInjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
+import org.rstudio.studio.client.application.events.SaveActionChangedHandler;
+import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.Server;
@@ -87,6 +90,16 @@ public class DesktopHooks
       events_ = events;
       globalDisplay_ = globalDisplay;
       server_ = server;
+      
+      events_.addHandler(SaveActionChangedEvent.TYPE, 
+                         new SaveActionChangedHandler() 
+      {
+         public void onSaveActionChanged(SaveActionChangedEvent event)
+         {
+            saveAction_ = event.getAction();  
+         }
+      });
+      
       injector.injectObject(this);
    }
 
@@ -169,9 +182,16 @@ public class DesktopHooks
    {
       events_.fireEvent(new FileEditEvent(FileSystemItem.createFile(filePath)));
    }
+   
+   int getSaveAction()
+   {
+      return saveAction_.getAction();
+   }
 
    private final Commands commands_;
    private final EventBus events_;
    private final GlobalDisplay globalDisplay_;
    private final Server server_;
+   
+   private SaveAction saveAction_ = SaveAction.saveAsk();
 }
