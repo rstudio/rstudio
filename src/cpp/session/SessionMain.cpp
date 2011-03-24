@@ -62,6 +62,7 @@
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/RGraphics.hpp>
 #include <r/session/REventLoop.hpp>
+#include <R/R_ext/rlocale.h>
 
 #include <session/SessionConstants.hpp>
 #include <session/SessionOptions.hpp>
@@ -126,6 +127,9 @@ bool s_rSessionResumed = false;
 
 // manage global state indicating whether R is processing input
 bool s_rProcessingInput = false;
+
+// did we fail to coerce the charset to UTF-8
+bool s_printCharsetWarning = false;
 
 std::queue<r::session::RConsoleInput> s_consoleInputBuffer;
 
@@ -1051,7 +1055,10 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
          session::clientEventQueue().add(abendWarningEvent);
       }
    }
-   
+
+   if (s_printCharsetWarning)
+      r::exec::warning("Character set is not UTF-8; please change your locale");
+
    // set flag indicating we had an abnormal end (if this doesn't get
    // unset by the time we launch again then we didn't terminate normally
    // i.e. either the process dying unexpectedly or a call to R_Suicide)
@@ -1618,6 +1625,75 @@ int sessionExitFailure(const core::Error& cause,
    return EXIT_FAILURE;
 }
 
+std::string ctypeEnvName()
+{
+   if (!core::system::getenv("LC_ALL").empty())
+      return "LC_ALL";
+   if (!core::system::getenv("LC_CTYPE").empty())
+      return "LC_CTYPE";
+   if (!core::system::getenv("LANG").empty())
+      return "LANG";
+   return "LC_CTYPE";
+}
+
+/*
+If possible, we want to coerce the character set to UTF-8.
+We can't do this by directly calling setlocale because R
+will override those settings when it starts up. Instead we
+set the corresponding environment variables, which R will
+use.
+
+The exception is Win32, which doesn't allow UTF-8 to be used
+as an ANSI codepage.
+
+Returns false if we tried and failed to set the charset to
+UTF-8, either because we didn't recognize the locale string
+format or because the system didn't accept our new locale
+string.
+*/
+bool ensureUtf8Charset()
+{
+#if _WIN32
+   return true;
+#else
+   std::string charset(locale2charset(NULL));
+   if (charset == "UTF-8")
+      return true;
+
+   std::string name = ctypeEnvName();
+   std::string ctype = core::system::getenv(name);
+
+   std::string newCType;
+   if (ctype.empty() || ctype == "C" || ctype == "POSIX")
+   {
+      newCType = "en_US.UTF-8";
+   }
+   else
+   {
+      using namespace boost;
+
+      smatch match;
+      if (regex_match(ctype, match, regex("(\\w+_\\w+)(\\.[^@]+)?(@.+)?")))
+      {
+         // Try to replace the charset while keeping everything else the same.
+         newCType = match[1] + ".UTF-8" + match[3];
+      }
+   }
+
+   if (!newCType.empty())
+   {
+      if (setlocale(LC_CTYPE, newCType.c_str()))
+      {
+         core::system::setenv(name, newCType);
+         setlocale(LC_CTYPE, "");
+         return true;
+      }
+   }
+
+   return false;
+#endif
+}
+
 } // anonymous namespace
 
 // run session
@@ -1630,6 +1706,8 @@ int main (int argc, char * const argv[])
       // will get re-initialized below)
       initializeSystemLog("rsession-" + core::system::username(),
                           core::system::kLogLevelWarning);
+
+      s_printCharsetWarning = !ensureUtf8Charset();
 
       // read program options
       Options& options = session::options();
