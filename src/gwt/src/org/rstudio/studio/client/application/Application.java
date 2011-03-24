@@ -38,6 +38,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.studio.client.application.events.*;
+import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.application.ui.RequestLogVisualization;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -239,12 +240,12 @@ public class Application implements ApplicationEventHandlers,
          }
 
          // if the workspace is dirty then prompt to save
-         server_.workspaceIsDirty(new ServerRequestCallback<Boolean>() {
+         server_.getSaveAction(new ServerRequestCallback<SaveAction>() {
 
             @Override
-            public void onResponseReceived(Boolean dirty)
+            public void onResponseReceived(SaveAction saveAction)
             {
-               if (dirty)
+               if (saveAction.getAction() == SaveAction.SAVEASK) 
                {
                   // confirm quit and do it
                   globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
@@ -257,11 +258,13 @@ public class Application implements ApplicationEventHandlers,
                }
                else
                {
-                  // do the quit without prompting
+                  // do the quit without prompting 
+                  
                   ProgressIndicator indicator =
                      globalDisplay_.getProgressIndicator("Error Quitting R");
 
-                  new QuitOperation(false).execute(indicator);
+                  boolean save = saveAction.getAction() == SaveAction.SAVE;
+                  new QuitOperation(save).execute(indicator);
                }
             }
 

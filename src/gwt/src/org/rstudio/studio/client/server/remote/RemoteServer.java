@@ -28,6 +28,7 @@ import org.rstudio.core.client.jsonrpc.*;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.HttpLogEntry;
+import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
@@ -311,10 +312,10 @@ public class RemoteServer implements Server
                   requestCallback);
    }
 
-   public void workspaceIsDirty(ServerRequestCallback<Boolean> requestCallback)
+   public void getSaveAction(ServerRequestCallback<SaveAction> requestCallback)
    {
       sendRequest(RPC_SCOPE,
-                  WORKSPACE_IS_DIRTY,
+                  GET_SAVE_ACTION,
                   requestCallback);
    }
 
@@ -1346,7 +1347,7 @@ public class RemoteServer implements Server
    private static final String REMOVE_ALL_OBJECTS = "remove_all_objects";
    private static final String SET_OBJECT_VALUE = "set_object_value";
    private static final String GET_OBJECT_VALUE = "get_object_value";
-   private static final String WORKSPACE_IS_DIRTY = "workspace_is_dirty";
+   private static final String GET_SAVE_ACTION = "get_save_action";
    private static final String SAVE_WORKSPACE = "save_workspace";
    private static final String LOAD_WORKSPACE = "load_workspace";
    private static final String LIST_GOOGLE_SPREADSHEETS = "list_google_spreadsheets";

@@ -1292,18 +1292,18 @@ bool suspend(bool force)
 }
 
 // set save action
-const int kSaveActionNever = 0;
-const int kSaveActionAlways = 1;
-const int kSaveActionAsk = 2;
+const int kSaveActionNoSave = 0;
+const int kSaveActionSave = 1;
+const int kSaveActionAsk = -1;
 
 void setSaveAction(int saveAction)
 {
    switch(saveAction)
    {
-   case kSaveActionNever:
+   case kSaveActionNoSave:
       SaveAction = SA_NOSAVE;
       break;
-   case kSaveActionAlways:
+   case kSaveActionSave:
       SaveAction = SA_SAVE;
       break;
    case kSaveActionAsk:

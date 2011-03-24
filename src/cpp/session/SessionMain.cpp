@@ -1762,9 +1762,9 @@ int main (int argc, char * const argv[])
       rOptions.restoreWorkspace = userSettings().loadRData();
       // save action
       int saveAction = userSettings().saveAction();
-      if (saveAction == r::session::kSaveActionAlways)
+      if (saveAction == r::session::kSaveActionSave)
          rOptions.saveWorkspace = SA_SAVE;
-      else if (saveAction == r::session::kSaveActionNever)
+      else if (saveAction == r::session::kSaveActionNoSave)
          rOptions.saveWorkspace = SA_NOSAVE;
       else
          rOptions.saveWorkspace = SA_SAVEASK;

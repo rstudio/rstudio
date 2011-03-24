@@ -13,6 +13,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
@@ -129,9 +130,16 @@ public class GeneralPreferencesPane extends PreferencesPane
             int saveWorkspaceIndex;
             switch (response.getSaveAction())
             {
-               case 0: saveWorkspaceIndex = 1; break; // no
-               case 1: saveWorkspaceIndex = 0; break; // yes
-               default: saveWorkspaceIndex = 2; break; // ask
+               case SaveAction.NOSAVE: 
+                  saveWorkspaceIndex = 1; 
+                  break;
+               case SaveAction.SAVE: 
+                  saveWorkspaceIndex = 0; 
+                  break; 
+               case SaveAction.SAVEASK:
+               default: 
+                  saveWorkspaceIndex = 2; 
+                  break; 
             }
             saveWorkspace_.getListBox().setSelectedIndex(saveWorkspaceIndex);
 
@@ -157,10 +165,16 @@ public class GeneralPreferencesPane extends PreferencesPane
          int saveAction;
          switch (saveWorkspace_.getListBox().getSelectedIndex())
          {
-            case 0: saveAction = 1; break; // yes
-            case 1: saveAction = 0; break; // no
+            case 0: 
+               saveAction = SaveAction.SAVE; 
+               break; 
+            case 1: 
+               saveAction = SaveAction.NOSAVE; 
+               break; 
             case 2:
-            default: saveAction = -1; break; // ask
+            default: 
+               saveAction = SaveAction.SAVEASK; 
+               break; 
          }
          if (Desktop.isDesktop())
          {

@@ -40,8 +40,8 @@ public interface ApplicationServerOperations
    // suspend the current session
    void suspendSession(ServerRequestCallback<Void> requestCallback) ;
 
-   // check whether the workspace is dirty
-   void workspaceIsDirty(ServerRequestCallback<Boolean> requestCallback);
+   // check for the current save action
+   void getSaveAction(ServerRequestCallback<SaveAction> requestCallback);
 
    // quit the current session
    void quitSession(boolean saveWorkspace, 

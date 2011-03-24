@@ -32,6 +32,7 @@
 #include <r/session/RSession.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionUserSettings.hpp>
 
 using namespace core ;
 using namespace r::sexp;
@@ -43,10 +44,20 @@ namespace workspace {
 
 namespace {
 
-Error workspaceIsDirty(const json::JsonRpcRequest&,
-                       json::JsonRpcResponse* pResponse)
-{
-   pResponse->setResult(r::session::imageIsDirty());
+Error getSaveAction(const json::JsonRpcRequest&,
+                    json::JsonRpcResponse* pResponse)
+{  
+   json::Object saveAction;
+   if (r::session::imageIsDirty())
+   {
+      saveAction["action"] = userSettings().saveAction();
+   }
+   else
+   {
+      saveAction["action"] = r::session::kSaveActionNoSave;
+   }
+
+   pResponse->setResult(saveAction);
 
    return Success();
 }
@@ -288,7 +299,7 @@ Error initialize()
    // register handlers
    ExecBlock initBlock ;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "workspace_is_dirty", workspaceIsDirty))
+      (bind(registerRpcMethod, "get_save_action", getSaveAction))
       (bind(registerRBrowseFileHandler, handleRBrowseEnv))
       (bind(sourceModuleRFile, "SessionWorkspace.R"));
    return initBlock.execute();

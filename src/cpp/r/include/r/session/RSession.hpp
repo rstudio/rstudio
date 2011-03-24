@@ -144,8 +144,8 @@ bool isSuspendable(const std::string& prompt);
 bool suspend(bool force);
    
 // set save action
-extern const int kSaveActionNever;
-extern const int kSaveActionAlways;
+extern const int kSaveActionNoSave;
+extern const int kSaveActionSave;
 extern const int kSaveActionAsk;
 void setSaveAction(int saveAction);
 
