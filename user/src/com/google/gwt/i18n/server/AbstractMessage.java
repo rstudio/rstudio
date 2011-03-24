@@ -105,7 +105,7 @@ public abstract class AbstractMessage implements Message {
       boolean allOther = true;
       for (int i = 0; i < forms.size(); ++i) {
         lastForm[i] = forms.get(i).getName();
-        if (!"other".equals(lastForm[i])) {
+        if (!AlternateMessageSelector.OTHER_FORM_NAME.equals(lastForm[i])) {
           allOther = false;
         }
       }
@@ -260,7 +260,7 @@ public abstract class AbstractMessage implements Message {
         nonOther = false;
         break;
       }
-      if (isStringMap || !"other".equals(formName)) {
+      if (isStringMap || !AlternateMessageSelector.OTHER_FORM_NAME.equals(formName)) {
         nonOther = true;
       }
       forms.add(new AlternateForm(formName, formName));
@@ -354,7 +354,7 @@ public abstract class AbstractMessage implements Message {
         };
       } else {
         selectors[i] = params.get(selIdx).getAlternateMessageSelector();
-        defaultForms.add(AlternateMessageSelector.OTHER);
+        defaultForms.add(AlternateMessageSelector.OTHER_FORM);
       }
     }
   }

@@ -141,7 +141,7 @@ public abstract class AbstractParameter implements Parameter {
       final String[] validValues = type.getEnumValues();
       return new AlternateMessageSelector() {
         public boolean isFormAcceptable(String form) {
-          if (validValues == null) {
+          if (validValues == null || AlternateMessageSelector.OTHER_FORM_NAME.equals(form)) {
             return true;
           }
           for (String value : validValues) {

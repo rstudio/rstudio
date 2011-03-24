@@ -48,6 +48,7 @@ import com.google.gwt.i18n.rebind.MessageFormatParser.DefaultTemplateChunkVisito
 import com.google.gwt.i18n.rebind.MessageFormatParser.StaticArgChunk;
 import com.google.gwt.i18n.rebind.MessageFormatParser.StringChunk;
 import com.google.gwt.i18n.rebind.MessageFormatParser.TemplateChunk;
+import com.google.gwt.i18n.shared.AlternateMessageSelector;
 import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.safehtml.shared.OnlyToBeUsedInGeneratedCodeStringBlessedAsSafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -275,7 +276,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
         } else {
           startedIfChain = true;
         }
-        if ("other".equals(value)) {
+        if (AlternateMessageSelector.OTHER_FORM_NAME.equals(value)) {
           out.println("{  // other");
         } else {
           value = value.replace("\"", "\\\"");
@@ -283,7 +284,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
               + ")) {");
         }
       } else {
-        if ("other".equals(value)) {
+        if (AlternateMessageSelector.OTHER_FORM_NAME.equals(value)) {
           out.println("default:  // other");
         } else if (enumType != null) {
           JField field = enumType.findField(value);
@@ -696,7 +697,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
           method.getEnclosingType().getOracle(), ruleClass, locale);
       missingPluralForms = new HashSet<String>();
       for (PluralForm form : pluralRule.pluralForms()) {
-        if (form.getWarnIfMissing() && !"other".equals(form.getName())) {
+        if (form.getWarnIfMissing() && !AlternateMessageSelector.OTHER_FORM_NAME.equals(form.getName())) {
           missingPluralForms.add(form.getName());
         }
       }
@@ -808,7 +809,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
         out.println("switch (arg" + argNumber + "_form) {");
         out.indent();
       }
-      if ("other".equals(value)) {
+      if (AlternateMessageSelector.OTHER_FORM_NAME.equals(value)) {
         out.println("default: // other");
         out.indent();
         return;
@@ -1254,8 +1255,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
           }
 
           @Override
-          public void visit(StringChunk stringChunk)
-          throws UnableToCompleteException {
+          public void visit(StringChunk stringChunk) {
             gen.appendStringLiteral(stringChunk.getString());
           }
         });
@@ -1384,7 +1384,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
       for (String splitForm : splitForms) {
         if (splitForm.startsWith("=")) {
           allOther = false;
-        } else if (!"other".equals(splitForm)) {
+        } else if (!AlternateMessageSelector.OTHER_FORM_NAME.equals(splitForm)) {
           allOther = false;
         }
       }
@@ -1474,7 +1474,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
           }
 
           @Override
-          public void visit(StaticArgChunk staticArgChunk) throws UnableToCompleteException {
+          public void visit(StaticArgChunk staticArgChunk) {
             buf.appendStringLiteral(staticArgChunk.getReplacement());
           }
 

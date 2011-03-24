@@ -22,6 +22,11 @@ package com.google.gwt.i18n.shared;
 public interface AlternateMessageSelector {
 
   /**
+   * Name of the "other" form.
+   */
+  public static final String OTHER_FORM_NAME = "other";
+
+  /**
    * Represents an alternate form of a message.
    */
   public static class AlternateForm implements Comparable<AlternateForm> {
@@ -105,7 +110,7 @@ public interface AlternateMessageSelector {
     }
   }
 
-  AlternateForm OTHER = new AlternateForm("other",
+  AlternateForm OTHER_FORM = new AlternateForm(OTHER_FORM_NAME,
       "Default value if no other forms apply");
 
   /**

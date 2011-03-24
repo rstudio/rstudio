@@ -24,6 +24,7 @@ import com.google.gwt.i18n.server.Type.ListType;
 import com.google.gwt.i18n.server.impl.ReflectionMessageInterface;
 import com.google.gwt.i18n.server.keygen.MD5KeyGenerator;
 import com.google.gwt.i18n.server.testing.Child;
+import com.google.gwt.i18n.shared.AlternateMessageSelector;
 import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.i18n.shared.AlternateMessageSelector.AlternateForm;
 
@@ -58,7 +59,7 @@ public abstract class MessageInterfaceTestBase extends TestCase {
           break;
         case 11:
           assertEquals(0, level);
-          assertEquals("other", formName);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formName);
           break;
         case 19: // mutliSelect, first arg
           assertEquals(0, level);
@@ -109,7 +110,7 @@ public abstract class MessageInterfaceTestBase extends TestCase {
         case 149: // other/one
         case 162:
           assertEquals(2, level);
-          assertEquals("other", formName);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formName);
           break;
         case 34: // mutliSelect, second arg
         case 64: // =1
@@ -117,7 +118,7 @@ public abstract class MessageInterfaceTestBase extends TestCase {
         case 124: // one
         case 154: // other
           assertEquals(1, level);
-          assertEquals("other", formName);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formName);
           break;
         case 49: // mutliSelect, first arg
           assertEquals(0, level);
@@ -133,7 +134,7 @@ public abstract class MessageInterfaceTestBase extends TestCase {
           break;
         case 139: // mutliSelect, first arg
           assertEquals(0, level);
-          assertEquals("other", formName);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formName);
           break;
         case 178: // inheritedMap
           assertEquals(0, level);
@@ -212,7 +213,7 @@ public abstract class MessageInterfaceTestBase extends TestCase {
           break;
         case 13:
           assertEquals(0, level);
-          assertEquals("other", formName);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formName);
           break;
         case 25: // mutliSelect, third arg
         case 38:
@@ -251,7 +252,7 @@ public abstract class MessageInterfaceTestBase extends TestCase {
         case 151: // other/one
         case 164:
           assertEquals(2, level);
-          assertEquals("other", formName);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formName);
           break;
         case 33: // mutliSelect, second arg
         case 63: // =1
@@ -267,7 +268,7 @@ public abstract class MessageInterfaceTestBase extends TestCase {
         case 136: // one
         case 166: // other
           assertEquals(1, level);
-          assertEquals("other", formName);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formName);
           break;
         case 48: // mutliSelect, first arg
           assertEquals(0, level);
@@ -287,7 +288,7 @@ public abstract class MessageInterfaceTestBase extends TestCase {
           break;
         case 168: // mutliSelect, first arg
           assertEquals(0, level);
-          assertEquals("other", formName);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formName);
           break;
         case 180: // inheritedMap
           assertEquals(0, level);
@@ -467,7 +468,7 @@ public abstract class MessageInterfaceTestBase extends TestCase {
       selectorTracker.visitForms(formNames);
       boolean shouldBeDefault = true;
       for (String form : formNames) {
-        if (!"other".equals(form)) {
+        if (!AlternateMessageSelector.OTHER_FORM_NAME.equals(form)) {
           shouldBeDefault = false;
           break;
         }
@@ -489,7 +490,7 @@ public abstract class MessageInterfaceTestBase extends TestCase {
           break;
         case 12:
           assertEquals(1, formNames.length);
-          assertEquals("other", formNames[0]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[0]);
           assertTrue(isDefault);
           assertEquals("{1} wants to sell their car", msg);
           break;
@@ -511,28 +512,28 @@ public abstract class MessageInterfaceTestBase extends TestCase {
           assertEquals(3, formNames.length);
           assertEquals("=0", formNames[0]);
           assertEquals("one", formNames[1]);
-          assertEquals("other", formNames[2]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[2]);
           assertEquals("Nobody liked their message", msg);
           break;
         case 37:
           assertEquals(3, formNames.length);
           assertEquals("=0", formNames[0]);
-          assertEquals("other", formNames[1]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[1]);
           assertEquals("FEMALE", formNames[2]);
           assertEquals("Nobody liked her {3} messages", msg);
           break;
         case 40:
           assertEquals(3, formNames.length);
           assertEquals("=0", formNames[0]);
-          assertEquals("other", formNames[1]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[1]);
           assertEquals("MALE", formNames[2]);
           assertEquals("Nobody liked his {3} messages", msg);
           break;
         case 43:
           assertEquals(3, formNames.length);
           assertEquals("=0", formNames[0]);
-          assertEquals("other", formNames[1]);
-          assertEquals("other", formNames[2]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[1]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[2]);
           assertEquals("Nobody liked their {3} messages", msg);
           break;
         case 54:
@@ -553,28 +554,28 @@ public abstract class MessageInterfaceTestBase extends TestCase {
           assertEquals(3, formNames.length);
           assertEquals("=1", formNames[0]);
           assertEquals("one", formNames[1]);
-          assertEquals("other", formNames[2]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[2]);
           assertEquals("{1} liked their message", msg);
           break;
         case 67:
           assertEquals(3, formNames.length);
           assertEquals("=1", formNames[0]);
-          assertEquals("other", formNames[1]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[1]);
           assertEquals("FEMALE", formNames[2]);
           assertEquals("{1} liked her {3} messages", msg);
           break;
         case 70:
           assertEquals(3, formNames.length);
           assertEquals("=1", formNames[0]);
-          assertEquals("other", formNames[1]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[1]);
           assertEquals("MALE", formNames[2]);
           assertEquals("{1} liked his {3} messages", msg);
           break;
         case 73:
           assertEquals(3, formNames.length);
           assertEquals("=1", formNames[0]);
-          assertEquals("other", formNames[1]);
-          assertEquals("other", formNames[2]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[1]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[2]);
           assertEquals("{1} liked their {3} messages", msg);
           break;
         case 84:
@@ -595,28 +596,28 @@ public abstract class MessageInterfaceTestBase extends TestCase {
           assertEquals(3, formNames.length);
           assertEquals("=2", formNames[0]);
           assertEquals("one", formNames[1]);
-          assertEquals("other", formNames[2]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[2]);
           assertEquals("{1} and {2} liked their message", msg);
           break;
         case 97:
           assertEquals(3, formNames.length);
           assertEquals("=2", formNames[0]);
-          assertEquals("other", formNames[1]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[1]);
           assertEquals("FEMALE", formNames[2]);
           assertEquals("{1} and {2} liked her {3} messages", msg);
           break;
         case 100:
           assertEquals(3, formNames.length);
           assertEquals("=2", formNames[0]);
-          assertEquals("other", formNames[1]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[1]);
           assertEquals("MALE", formNames[2]);
           assertEquals("{1} and {2} liked his {3} messages", msg);
           break;
         case 103:
           assertEquals(3, formNames.length);
           assertEquals("=2", formNames[0]);
-          assertEquals("other", formNames[1]);
-          assertEquals("other", formNames[2]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[1]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[2]);
           assertEquals("{1} and {2} liked their {3} messages", msg);
           break;
         case 114:
@@ -637,68 +638,68 @@ public abstract class MessageInterfaceTestBase extends TestCase {
           assertEquals(3, formNames.length);
           assertEquals("one", formNames[0]);
           assertEquals("one", formNames[1]);
-          assertEquals("other", formNames[2]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[2]);
           assertEquals("{1}, {2}, and one other liked their message", msg);
           break;
         case 127:
           assertEquals(3, formNames.length);
           assertEquals("one", formNames[0]);
-          assertEquals("other", formNames[1]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[1]);
           assertEquals("FEMALE", formNames[2]);
           assertEquals("{1}, {2}, and one other liked her {3} messages", msg);
           break;
         case 130:
           assertEquals("one", formNames[0]);
-          assertEquals("other", formNames[1]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[1]);
           assertEquals("MALE", formNames[2]);
           assertEquals("{1}, {2}, and one other liked his {3} messages", msg);
           break;
         case 133:
           assertEquals(3, formNames.length);
           assertEquals("one", formNames[0]);
-          assertEquals("other", formNames[1]);
-          assertEquals("other", formNames[2]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[1]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[2]);
           assertEquals("{1}, {2}, and one other liked their {3} messages", msg);
           break;
         case 144:
           assertEquals(3, formNames.length);
-          assertEquals("other", formNames[0]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[0]);
           assertEquals("one", formNames[1]);
           assertEquals("FEMALE", formNames[2]);
           assertEquals("{1}, {2}, and {0} others liked her message", msg);
           break;
         case 147:
           assertEquals(3, formNames.length);
-          assertEquals("other", formNames[0]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[0]);
           assertEquals("one", formNames[1]);
           assertEquals("MALE", formNames[2]);
           assertEquals("{1}, {2}, and {0} others liked his message", msg);
           break;
         case 150:
           assertEquals(3, formNames.length);
-          assertEquals("other", formNames[0]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[0]);
           assertEquals("one", formNames[1]);
-          assertEquals("other", formNames[2]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[2]);
           assertEquals("{1}, {2}, and {0} others liked their message", msg);
           break;
         case 157:
           assertEquals(3, formNames.length);
-          assertEquals("other", formNames[0]);
-          assertEquals("other", formNames[1]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[0]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[1]);
           assertEquals("FEMALE", formNames[2]);
           assertEquals("{1}, {2}, and {0} others liked her {3} messages", msg);
           break;
         case 160:
-          assertEquals("other", formNames[0]);
-          assertEquals("other", formNames[1]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[0]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[1]);
           assertEquals("MALE", formNames[2]);
           assertEquals("{1}, {2}, and {0} others liked his {3} messages", msg);
           break;
         case 163:
           assertEquals(3, formNames.length);
-          assertEquals("other", formNames[0]);
-          assertEquals("other", formNames[1]);
-          assertEquals("other", formNames[2]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[0]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[1]);
+          assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, formNames[2]);
           assertEquals("{1}, {2}, and {0} others liked their {3} messages", msg);
           break;
         case 173:
@@ -854,7 +855,7 @@ public abstract class MessageInterfaceTestBase extends TestCase {
     mapping = formIter.next();
     forms = mapping.getForms();
     assertEquals(1, forms.size());
-    assertEquals("other", forms.get(0).getName());
+    assertEquals(AlternateMessageSelector.OTHER_FORM_NAME, forms.get(0).getName());
     assertFalse(formIter.hasNext());
   }
 
