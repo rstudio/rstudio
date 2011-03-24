@@ -949,6 +949,18 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
   }
 
   /**
+   * Schedules the command.
+   *
+   * <p>
+   * Protected so that subclasses can override to use an alternative
+   * scheduler.
+   * </p>
+   */
+  protected void scheduleFinally(ScheduledCommand command) {
+    Scheduler.get().scheduleFinally(pendingStateCommand);
+  }
+
+  /**
    * Combine the modified row indexes into as many as two {@link Range}s,
    * optimizing to have the fewest unmodified rows within the ranges. Using two
    * ranges covers the most common use cases of selecting one row, selecting a
@@ -1043,7 +1055,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
         }
       }
     };
-    Scheduler.get().scheduleFinally(pendingStateCommand);
+    scheduleFinally(pendingStateCommand);
 
     // Return the pending state.
     return pendingState;
