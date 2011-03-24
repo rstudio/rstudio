@@ -47,11 +47,16 @@
      if ( !.Call("rs_validateTexFile", fileName) )
         return ()
    }
+
+   # workaround for: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=577741
+   # set index = FALSE on unix to force use of pdflatex rather than
+   # texi2dvi (the bug is that texi2dvi doesn't escape tildes)
+   index = !identical(.Platform$OS.type, "unix")
     
    # run texi2dvi
    cat("\n")
    cat("Running texi2dvi...")
-   tools:::texi2dvi(file=fileName, pdf=TRUE, clean=TRUE)
+   tools:::texi2dvi(file=fileName, pdf=TRUE, clean=TRUE, index=index)
    cat("completed\n\n")
  
    # check for completed action
