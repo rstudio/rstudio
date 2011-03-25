@@ -40,7 +40,7 @@ public class PreferencesDialog extends ModalDialog<Void>
                             PaneLayoutPreferencesPane paneLayout,
                             GlobalDisplay globalDisplay)
    {
-      super("Preferences", (OperationWithInput<Void>)null);
+      super("Options", (OperationWithInput<Void>)null);
 
       addButton(new ThemedButton("Apply", new ClickHandler()
       {

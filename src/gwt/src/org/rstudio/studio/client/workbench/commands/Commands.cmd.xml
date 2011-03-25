@@ -56,8 +56,6 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="closeSourceDoc"/>
          <!--<cmd refid="closeAllSourceDocs"/>-->
          <separator/>
-         <cmd refid="setWorkingDir"/>
-         <separator/>
          <cmd refid="quitSession"/>
       </menu>
 
@@ -80,9 +78,6 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="commentUncomment"/>
          <separator/>
          <cmd refid="consoleClear"/>
-         <cmd refid="interruptR"/>
-         <separator/>
-         <cmd refid="showOptions"/>
       </menu>
 
       <separator/>
@@ -139,6 +134,15 @@ well as menu structures (for main menu and popup menus).
       </menu>
       
       <separator/>
+      
+      
+      <menu label="_Tools">
+         <cmd refid="interruptR"/>
+         <separator/>
+         <cmd refid="setWorkingDir"/>
+         <separator/>
+         <cmd refid="showOptions"/>
+      </menu>
 
       <menu label="_Help">
          <cmd refid="helpHome"/>
@@ -201,6 +205,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="showManipulator" value="Cmd+Shift+M"/>
       <shortcut refid="showRequestLog" value="Ctrl+`" />
       <shortcut refid="logFocusedElement" value="Ctrl+Shift+`" />
+      <shortcut refid="setWorkingDir" value="Ctrl+Shift+D" />
    </shortcuts>
 
    <!--
@@ -228,8 +233,8 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="setWorkingDir"
         buttonLabel=""
-        menuLabel="Set _Working Dir..."
-        desc="Set the current working directory"/>
+        menuLabel="Change Working _Dir..."
+        desc="Change the current working directory"/>
 
    <cmd id="newSourceDoc"
         buttonLabel=""
@@ -453,7 +458,7 @@ well as menu structures (for main menu and popup menus).
         desc="Refresh package listing"/>
 
    <cmd id="showOptions"
-        menuLabel="Pr_eferences..."/>
+        menuLabel="_Options..."/>
 
    <cmd id="checkForUpdates"
         menuLabel="Check for _Updates"

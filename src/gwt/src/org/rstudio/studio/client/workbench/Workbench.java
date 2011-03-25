@@ -198,7 +198,7 @@ public class Workbench implements BusyHandler,
    public void onSetWorkingDir()
    {
       fileDialogs_.chooseFolder(
-            "Set Working Directory",
+            "Change Working Directory",
             fsContext_,
             currentWorkingDir_,
             new ProgressOperationWithInput<FileSystemItem>()
