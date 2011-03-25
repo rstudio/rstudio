@@ -294,11 +294,14 @@ endif(RSTUDIO_BUNDLE_QT)
 # install desktop integration files on linux
 if (UNIX AND NOT APPLE)
 
-   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/resources/rstudio.desktop.in
-                   ${CMAKE_CURRENT_BINARY_DIR}/resources/rstudio.desktop)
+   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/resources/freedesktop/rstudio.desktop.in
+                   ${CMAKE_CURRENT_BINARY_DIR}/resources/freedesktop/rstudio.desktop)
 
-   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/resources/rstudio.desktop DESTINATION /usr/share/applications)
-   install(FILES resources/logo/rstudio_logo_32.png DESTINATION /usr/share/pixmaps)
+   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/resources/logo/rstudio_logo_48.png
+                   ${CMAKE_CURRENT_BINARY_DIR}/resources/logo/rstudio.png COPYONLY)
+
+   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/resources/freedesktop/rstudio.desktop DESTINATION /usr/share/applications)
+   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/resources/logo/rstudio.png DESTINATION /usr/share/icons/hicolor/48x48/apps)
 endif()
 
 
