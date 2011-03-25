@@ -15,6 +15,10 @@
 
 #include <algorithm>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include <boost/filesystem.hpp>
 
 // detect filesystem3 so we can conditionally compile away breaking changes
@@ -36,19 +40,52 @@ namespace core {
 
 namespace {
 
-#if FALSE
+#ifdef _WIN32
 
 typedef boost::filesystem::wpath path_type;
 typedef std::wstring internal_string;
 
 std::string toString(const internal_string& value)
 {
-   return string_utils::wstringToUtf8(value);
+   const wchar_t * cstr = value.c_str();
+   int chars = ::WideCharToMultiByte(CP_UTF8, 0,
+                                     cstr, -1,
+                                     NULL, 0, NULL, NULL);
+   if (chars == 0)
+   {
+      // TODO: What to do here??
+      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      return std::string();
+   }
+
+   std::vector<char> result(chars, 0);
+   chars = ::WideCharToMultiByte(CP_UTF8, 0,
+                                 cstr, -1,
+                                 &(result[0]), result.size(),
+                                 NULL, NULL);
+
+   return std::string(&(result[0]));
 }
 
 internal_string fromString(const std::string& value)
 {
-   return string_utils::utf8ToWstring(value);
+   const char * cstr = value.c_str();
+   int chars = ::MultiByteToWideChar(CP_UTF8, 0,
+                                     cstr, -1,
+                                     NULL, 0);
+   if (chars == 0)
+   {
+      // TODO: What to do here??
+      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      return std::wstring();
+   }
+
+   std::vector<wchar_t> result(chars, 0);
+   chars = ::MultiByteToWideChar(CP_UTF8, 0,
+                                 cstr, -1,
+                                 &(result[0]), result.size());
+
+   return std::wstring(&(result[0]));
 }
 
 #else
