@@ -26,6 +26,7 @@ import org.rstudio.core.client.jsonrpc.RpcRequest;
 import org.rstudio.core.client.jsonrpc.RpcRequestCallback;
 import org.rstudio.core.client.jsonrpc.RpcResponse;
 import org.rstudio.studio.client.application.events.*;
+import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.ServerError;
@@ -102,6 +103,7 @@ class RemoteServerEventListener
       public static final String ShowContent = "show_content";
       public static final String ShowData = "show_data";
       public static final String AsyncCompletion = "async_completion";
+      public static final String SaveActionChanged = "save_action_changed";
 
       protected ClientEvent()
       {
@@ -603,8 +605,7 @@ class RemoteServerEventListener
             sessionWasQuit_ = true;
         
             // fire event
-            Bool workspaceSaved = event.getData();
-            eventBus.fireEvent(new QuitEvent(workspaceSaved.getValue()));
+            eventBus.fireEvent(new QuitEvent());
          }
          else if (type.equals(ClientEvent.Suicide))
          {
@@ -632,6 +633,11 @@ class RemoteServerEventListener
                // to complete.
                asyncResponses_.put(handle, completion.getResponse());
             }
+         }
+         else if (type.equals(ClientEvent.SaveActionChanged))
+         {
+            SaveAction action = event.getData();
+            eventBus.fireEvent(new SaveActionChangedEvent(action));
          }
          else
          {

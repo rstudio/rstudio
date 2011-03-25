@@ -21,6 +21,7 @@
 #include <boost/scoped_ptr.hpp>
 
 #include <core/Log.hpp>
+
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/SafeConvert.hpp>
@@ -58,6 +59,71 @@ void initializeSharedSecret()
                   + QString::number(rand());
    std::string value = sharedSecret.toStdString();
    core::system::setenv("RS_SHARED_SECRET", value);
+}
+
+void initializeWorkingDirectory(int argc,
+                                char* argv[],
+                                const QString& filename)
+{
+   // calculate what our initial working directory should be
+   std::string workingDir;
+
+   // if there is a filename passed to us then use it's path
+   if (filename != "")
+   {
+      FilePath filePath(filename.toStdString());
+      if (filePath.exists())
+      {
+         if (filePath.isDirectory())
+            workingDir = filePath.absolutePath();
+         else
+            workingDir = filePath.parent().absolutePath();
+      }
+   }
+
+   // do additinal detection if necessary
+   if (workingDir.empty())
+   {
+      // get current path
+      FilePath currentPath = FilePath::safeCurrentPath(
+                                       core::system::userHomePath());
+
+#if defined(_WIN32) || defined(__APPLE__)
+
+      // detect whether we were launched from the system application menu
+      // (e.g. Dock, Program File icon, etc.). we do this by checking
+      // whether the executable path is within the current path. if we
+      // weren't launched from the system app menu that set the initial
+      // wd to the current path
+
+      FilePath exePath;
+      Error error = core::system::executablePath(argc, argv, &exePath);
+      if (!error)
+      {
+         if (!exePath.isWithin(currentPath))
+            workingDir = currentPath.absolutePath();
+      }
+      else
+      {
+         LOG_ERROR(error);
+      }
+
+#else
+
+      // on linux we take the current working dir if we were launched
+      // from within a terminal
+      if (core::system::stdoutIsTerminal())
+      {
+         workingDir = currentPath.absolutePath();
+      }
+
+#endif
+
+   }
+
+   // set the working dir if we have one
+   if (!workingDir.empty())
+      core::system::setenv("RS_INITIAL_WD", workingDir);
 }
 
 void launchProcess(std::string absPath, QStringList argList, QProcess** ppProc)
@@ -106,18 +172,33 @@ int main(int argc, char* argv[])
                               &pApp,
                               &pAppLaunch);
 
+      QString filenameArg;
       QString filename;
       if (pApp->arguments().size() > 1)
       {
-         filename = verifyAndNormalizeFilename(pApp->arguments().last());
+         filenameArg = pApp->arguments().last();
+         filename = verifyAndNormalizeFilename(filenameArg);
       }
 
       if (pAppLaunch->sendMessage(filename))
          return 0;
 
+#ifdef __APPLE__
+
+      // allow the open file apple-event to be delivered
+      pApp->processEvents(QEventLoop::AllEvents, 100);
+
+      // allow open file request to override anything passed on cmd line
+      QString openFileRequest = pAppLaunch->openFileRequest();
+      if (openFileRequest.size() > 0)
+         filenameArg = openFileRequest;
+
+#endif
+
       pApp->setAttribute(Qt::AA_MacDontSwapCtrlAndMeta);
 
       initializeSharedSecret();
+      initializeWorkingDirectory(argc, argv, filenameArg);
 
       Options& options = desktop::options();
       if (!prepareEnvironment(options))

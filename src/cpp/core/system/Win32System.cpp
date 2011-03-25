@@ -449,13 +449,23 @@ std::string generateUuid(bool includeDashes)
    return uuidStr;
 }
 
+Error executablePath(int argc, char * const argv[],
+                     FilePath* pExecutablePath)
+{
+   *pExecutablePath = FilePath(_pgmptr);
+   return Success();
+}
+
 // installation path
 Error installPath(const std::string& relativeToExecutable,
                   int argc, char * const argv[],
                   FilePath* pInstallationPath)
 {
    // get full executable path
-   FilePath exePath(_pgmptr);
+   FilePath exePath;
+   Error error = executablePath(argc, argv, &exePath);
+   if (error)
+      return error;
 
    // resolve to install path using given relative path
    if (relativeToExecutable == "..") // common case

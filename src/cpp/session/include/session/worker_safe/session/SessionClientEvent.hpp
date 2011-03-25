@@ -58,7 +58,7 @@ extern const int kFileEdit;
 extern const int kShowContent;
 extern const int kShowData;
 extern const int kAsyncCompletion;
-   
+extern const int kSaveActionChanged;
 }
    
 class ClientEvent

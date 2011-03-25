@@ -106,7 +106,8 @@
 .rs.addJsonRpcHandler( "list_packages", function()
 {
    # calculate unique libpaths
-   libPaths <- utils::normalizePath(.libPaths())
+   require(utils)
+   libPaths <- normalizePath(.libPaths())
    uniqueLibPaths <- subset(libPaths, !duplicated(libPaths))
 
    # get packages
@@ -117,7 +118,7 @@
    pkgs.name <- x[, 1]
    pkgs.library <- x[, 2]
    pkgs.desc <- x[, 3]
-   pkgs.url <- file.path("library", 
+   pkgs.url <- file.path("help/library",
                          pkgs.name, 
                          "html", 
                          "00Index.html")

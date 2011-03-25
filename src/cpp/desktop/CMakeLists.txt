@@ -76,6 +76,7 @@ if(WIN32)
   )
 else()
   set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
+    DesktopPosixApplication.cpp
     DesktopPosixApplicationLaunch.cpp
     DesktopPosixDetectRHome.cpp
   )
@@ -179,7 +180,10 @@ else()
 
    # set our icns as the bundle icon
    set(MACOSX_BUNDLE_ICON_FILE RStudio.icns)
-   set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/RStudio.icns
+   set_source_files_properties(
+      ${CMAKE_CURRENT_SOURCE_DIR}/RStudio.icns
+      ${CMAKE_CURRENT_SOURCE_DIR}/RSource.icns
+      ${CMAKE_CURRENT_SOURCE_DIR}/RData.icns
       PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
    # define bundle name and executable
@@ -190,7 +194,9 @@ else()
       ${MOC_DESKTOP_SOURCE_FILES}
       ${DESKTOP_RESOURCES_SOURCES}
       ${DESKTOP_UI_SOURCES}
-      RStudio.icns)
+      RStudio.icns
+      RData.icns
+      RSource.icns)
 
    target_link_libraries(RStudio
       ${QT_LIBRARIES}

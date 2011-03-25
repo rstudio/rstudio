@@ -99,14 +99,13 @@ public:
 };
 
 
-// R history and data files
-const char * const kRData = ".RData";
+// R history file
 const char * const kRHistory = ".Rhistory";
    
-FilePath sessionStateFilePath(const std::string& filename)
+FilePath rGlobalEnvironmentFilePath()
 {
-   FilePath sessionStatePath = s_options.sessionStatePath();
-   return sessionStatePath.complete(filename);
+   FilePath rEnvironmentDir = s_options.rEnvironmentDir();
+   return rEnvironmentDir.complete(".RData");
 }
    
 class SerializationCallbackScope : boost::noncopyable
@@ -166,7 +165,7 @@ Error saveDefaultGlobalEnvironment()
    r::exec::IgnoreInterruptsScope ignoreInterrupts;
          
    // save global environment
-   FilePath globalEnvPath = sessionStateFilePath(kRData);
+   FilePath globalEnvPath = rGlobalEnvironmentFilePath();
    Error error = r::exec::executeSafely(
                         boost::bind(R_SaveGlobalEnvToFile,
                                     globalEnvPath.absolutePath().c_str()));
@@ -193,7 +192,7 @@ Error restoreDefaultGlobalEnvironment()
    r::exec::IgnoreInterruptsScope ignoreInterrupts;
    
    // restore the default global environment if there is one
-   FilePath globalEnvPath = sessionStateFilePath(kRData);
+   FilePath globalEnvPath = rGlobalEnvironmentFilePath();
    if (globalEnvPath.exists())
    {
       Error error = r::exec::executeSafely(boost::bind(
@@ -209,6 +208,10 @@ Error restoreDefaultGlobalEnvironment()
                                                      s_options.userHomePath);
       Rprintf(("[Workspace restored from " + aliasedPath + "]\n\n").c_str());
    }
+
+   // mark image clean (we need to do this due to our delayed handling
+   // of workspace restoration)
+   markImageClean();
 
    return Success();
 }
@@ -241,16 +244,13 @@ void reportHistoryAccessError(const std::string& context,
 }
 
 // save our session state when the quit function is called
-void saveHistoryAndClientState(bool savedEnvironment)
+void saveHistoryAndClientState()
 {
-   // save history if the environment was saved
-   if (savedEnvironment)
-   {
-      FilePath historyPath = sessionStateFilePath(kRHistory);
-      Error error = consoleHistory().saveToFile(historyPath);
-      if (error)
-         reportHistoryAccessError("write history to", historyPath, error);
-   }
+   // save history
+   FilePath historyPath = s_options.defaultWorkingDir.complete(kRHistory);
+   Error error = consoleHistory().saveToFile(historyPath);
+   if (error)
+      reportHistoryAccessError("write history to", historyPath, error);
 
    // commit persistent client state
    r::session::clientState().commit(ClientStateCommitPersistentOnly,
@@ -426,8 +426,8 @@ Error initialize()
    // new session
    else
    {  
-      // restore console history from current working directory
-      FilePath historyPath = sessionStateFilePath(kRHistory);
+      // restore console history from default working directory
+      FilePath historyPath = s_options.defaultWorkingDir.complete(kRHistory);
       error = consoleHistory().loadFromFile(historyPath, false);
       if (error)
          reportHistoryAccessError("read history from", historyPath, error);
@@ -967,8 +967,13 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
       
       // prompt user to resolve SA_SAVEASK into SA_SAVE or SA_NOSAVE
       if (saveact == SA_SAVEASK) 
-         saveact = saveAsk();
-      
+      {
+         if (imageIsDirty())
+            saveact = saveAsk();
+         else
+            saveact = SA_NOSAVE; // auto-resolve to no save when not dirty
+      }
+
       // if the session was quit by the user then run our termination code
       bool sessionQuitByUser = (saveact != SA_SUICIDE) && !s_suspended ;
       if (sessionQuitByUser)
@@ -978,11 +983,10 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
             R_dot_Last();
          
          // save environment and history 
-         bool savedEnvironment = false;
          if (saveact == SA_SAVE)
          {
-            // attempt save
-            if (R_DirtyImage)
+            // attempt save if the image is dirty
+            if (imageIsDirty())
             {
                // attempt to save global environment. raise error (longjmp 
                // back to REPL) if there was a problem saving
@@ -992,7 +996,6 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
             }
             
             // update state
-            savedEnvironment = true; // flag for quit callback
             saveact = SA_NOSAVE;     // prevent R from saving
          }
          
@@ -1009,7 +1012,7 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
          }
 
          // save other persistent session state (history and client state)
-         saveHistoryAndClientState(savedEnvironment);
+         saveHistoryAndClientState();
 
          // clear display (closes the device). need to do this here
          // so that all of the graphics files are deleted
@@ -1021,7 +1024,7 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
          r::exec::printWarnings();
          
          // notify client that the session has been quit
-         s_callbacks.quit(savedEnvironment);
+         s_callbacks.quit();
       }
 
       // allow client to cleanup
@@ -1291,18 +1294,18 @@ bool suspend(bool force)
 }
 
 // set save action
-const int kSaveActionNever = 0;
-const int kSaveActionAlways = 1;
-const int kSaveActionAsk = 2;
+const int kSaveActionNoSave = 0;
+const int kSaveActionSave = 1;
+const int kSaveActionAsk = -1;
 
 void setSaveAction(int saveAction)
 {
    switch(saveAction)
    {
-   case kSaveActionNever:
+   case kSaveActionNoSave:
       SaveAction = SA_NOSAVE;
       break;
-   case kSaveActionAlways:
+   case kSaveActionSave:
       SaveAction = SA_SAVE;
       break;
    case kSaveActionAsk:
@@ -1311,6 +1314,16 @@ void setSaveAction(int saveAction)
       break;
    }
 
+}
+
+void markImageClean()
+{
+   R_DirtyImage = 0;
+}
+
+bool imageIsDirty()
+{
+   return R_DirtyImage != 0;
 }
    
 void quit(bool saveWorkspace)

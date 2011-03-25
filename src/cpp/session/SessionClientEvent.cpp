@@ -59,6 +59,7 @@ const int kFileEdit = 32;
 const int kShowContent = 33;
 const int kShowData = 34;
 const int kAsyncCompletion = 35;
+const int kSaveActionChanged = 36;
 
 }   
 
@@ -145,6 +146,8 @@ std::string ClientEvent::typeName() const
          return "show_data";
       case client_events::kAsyncCompletion:
          return "async_completion";
+      case client_events::kSaveActionChanged:
+         return "save_action_changed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              boost::lexical_cast<std::string>(type_));

@@ -72,6 +72,11 @@ void ApplicationLaunch::setActivationWindow(QWidget* pWindow)
    pMainWindow_ = pWindow;
 }
 
+QString ApplicationLaunch::openFileRequest() const
+{
+   return QString();
+}
+
 namespace {
 
 bool acquireLock()

@@ -56,7 +56,8 @@ struct ROptions
    }
    core::FilePath userHomePath;
    core::FilePath userScratchPath;
-   boost::function<core::FilePath()> sessionStatePath;
+   core::FilePath defaultWorkingDir;
+   boost::function<core::FilePath()> rEnvironmentDir;
    core::FilePath rSourcePath;
    core::FilePath rLibsExtra;
    std::string rLibsUser;
@@ -120,7 +121,7 @@ struct RCallbacks
    boost::function<void(bool)> busy;
    boost::function<void()> suspended;
    boost::function<void()> resumed;
-   boost::function<void(bool)> quit;
+   boost::function<void()> quit;
    boost::function<void(const std::string&)> suicide;
    boost::function<void(bool)> cleanup;
    boost::function<void(int)> serialization;
@@ -143,10 +144,14 @@ bool isSuspendable(const std::string& prompt);
 bool suspend(bool force);
    
 // set save action
-extern const int kSaveActionNever;
-extern const int kSaveActionAlways;
+extern const int kSaveActionNoSave;
+extern const int kSaveActionSave;
 extern const int kSaveActionAsk;
 void setSaveAction(int saveAction);
+
+// image dirty state
+void markImageClean();
+bool imageIsDirty();
 
 // quit
 void quit(bool saveWorkspace);

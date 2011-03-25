@@ -55,8 +55,6 @@ public slots:
    void onWorkbenchInitialized(QString scratchPath);
    void showFolder(QString path);
 
-   int getSaveAction();
-   void setSaveAction(int index);
    QString getCRANMirror();
    QString chooseCRANmirror();
    QString getRVersion();

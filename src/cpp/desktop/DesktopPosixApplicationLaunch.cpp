@@ -13,15 +13,17 @@
 
 #include "DesktopApplicationLaunch.hpp"
 
-#include "3rdparty/qtsingleapplication/QtSingleApplication"
+#include "DesktopPosixApplication.hpp"
+
 
 namespace desktop {
 
 namespace {
 
-QtSingleApplication* app()
+
+PosixApplication* app()
 {
-   return qobject_cast<QtSingleApplication*>(qApp);
+   return qobject_cast<PosixApplication*>(qApp);
 }
 
 } // anonymous namespace
@@ -41,7 +43,7 @@ void ApplicationLaunch::init(QString appName,
                              boost::scoped_ptr<ApplicationLaunch>* ppAppLaunch)
 {
    // Immediately stuffed into scoped_ptr
-   QtSingleApplication* pSingleApplication = new QtSingleApplication(argc, argv);
+   PosixApplication* pSingleApplication = new PosixApplication(appName, argc, argv);
    pSingleApplication->setApplicationName(appName);
    ppApp->reset(pSingleApplication);
 
@@ -57,6 +59,11 @@ void ApplicationLaunch::setActivationWindow(QWidget* pWindow)
 bool ApplicationLaunch::sendMessage(QString filename)
 {
    return app()->sendMessage(filename);
+}
+
+QString ApplicationLaunch::openFileRequest() const
+{
+   return app()->openFileRequest();
 }
 
 } // namespace desktop

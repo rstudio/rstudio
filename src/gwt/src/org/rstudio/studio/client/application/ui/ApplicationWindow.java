@@ -84,9 +84,9 @@ public class ApplicationWindow extends Composite
       return this ;
    }
    
-   public void showApplicationQuit(boolean workspaceSaved)
+   public void showApplicationQuit()
    {
-      ApplicationEndedPopupPanel.showQuit(workspaceSaved);
+      ApplicationEndedPopupPanel.showQuit();
    }
    
    public void showApplicationSuicide(String reason)

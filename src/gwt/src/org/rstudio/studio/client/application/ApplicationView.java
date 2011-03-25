@@ -28,7 +28,7 @@ public interface ApplicationView
    void showWorkbenchView(Widget widget);
    
    // application exit states
-   void showApplicationQuit(boolean workspaceSaved);
+   void showApplicationQuit();
    void showApplicationSuicide(String reason);
    void showApplicationDisconnected();
    void showApplicationOffline();

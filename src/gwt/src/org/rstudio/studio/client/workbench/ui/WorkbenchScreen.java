@@ -263,10 +263,9 @@ public class WorkbenchScreen extends Composite
                                                          plotsSize.width,
                                                          plotsSize.height);
 
-      // make sure we don't send the same metrics value twice (it is
-      // an expensive operation since it
-      //  involves at least 2 http req)
-      if (!metrics.equalTo(lastMetrics_))
+      // make sure we don't send very similar metrics values twice (it is
+      // an expensive operation since it involves at least 2 http requests)
+      if (!metrics.closeEnoughToPrevious(lastMetrics_))
       {
          lastMetrics_ = metrics;
          eventBus_.fireEvent(new WorkbenchMetricsChangedEvent(metrics));

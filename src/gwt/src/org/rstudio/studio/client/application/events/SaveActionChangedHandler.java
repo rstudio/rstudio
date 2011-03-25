@@ -1,5 +1,5 @@
 /*
- * QuitEvent.java
+ * SessionSerializationHandler.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -12,26 +12,9 @@
  */
 package org.rstudio.studio.client.application.events;
 
-import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.EventHandler;
 
-public class QuitEvent extends GwtEvent<QuitHandler>
+public interface SaveActionChangedHandler extends EventHandler
 {
-   public static final GwtEvent.Type<QuitHandler> TYPE =
-      new GwtEvent.Type<QuitHandler>();
-   
-   public QuitEvent()
-   {
-   }
-   
-   @Override
-   protected void dispatch(QuitHandler handler)
-   {
-      handler.onQuit(this);
-   }
-
-   @Override
-   public GwtEvent.Type<QuitHandler> getAssociatedType()
-   {
-      return TYPE;
-   }
+   void onSaveActionChanged(SaveActionChangedEvent event);
 }

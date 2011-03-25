@@ -615,8 +615,16 @@ Error captureCommand(const std::string& command, std::string* pOutput)
    if (::pclose(fp) == -1)
    {
       // ECHILD expected if process was reaped elsewhere by wait or waitpid
+      // NOTE: only log errors so we don't get spurious failures b/c
+      // we can't pclose. the calling semantics of popen are already such
+      // that all variety of errors (including file not found, non-zero
+      // exit code, printing to stderr, etc.) are already manifested as
+      // no output captured, so a pclose error can join this group. the
+      // benefit of doing this is that if output was indeed captured and
+      // the error is spurious then the calling program can continue
+      // executing.
       if (errno != ECHILD)
-         return systemError(errno, ERROR_LOCATION);
+         LOG_ERROR(systemError(errno, ERROR_LOCATION));
    }
 
    return Success();
@@ -654,29 +662,11 @@ std::string generateUuid(bool includeDashes)
    return uuidStr;
 }
 
-namespace {
-
-Error installPath(const std::string& executablePath,
-                  const std::string& relativeToExecutable,
-                  FilePath* pInstallPath)
- {
-    FilePath exeFilePath;
-    Error error = realPath(executablePath, &exeFilePath);
-    if (error)
-       return error;
-
-    // fully resolve installation path relative to executable
-    FilePath installPath = exeFilePath.parent().complete(relativeToExecutable);
-    return realPath(installPath.absolutePath(), pInstallPath);
- }
-
-} // anonymous namespace
-
-// installation path
-Error installPath(const std::string& relativeToExecutable,
-                  int argc, char * const argv[],
-                  FilePath* pInstallPath)
+Error executablePath(int argc, char * const argv[],
+                     FilePath* pExecutablePath)
 {
+   std::string executablePath;
+
 #if defined(__APPLE__)
 
    // get path to current executable
@@ -688,13 +678,13 @@ Error installPath(const std::string& relativeToExecutable,
       _NSGetExecutablePath(&(buffer[0]), &buffSize);
    }
 
-   // calculate install path
-   return installPath(&(buffer[0]), relativeToExecutable, pInstallPath);
+   // set it
+   executablePath = std::string(&(buffer[0]));
+
 
 #elif defined(HAVE_PROCSELF)
 
-   // calcluate install path
-   return installPath("/proc/self/exe", relativeToExecutable, pInstallPath);
+   executablePath = std::string("/proc/self/exe");
 
 #else
 
@@ -705,14 +695,28 @@ Error installPath(const std::string& relativeToExecutable,
 
    // use argv[0] and initial path
    FilePath initialPath = FilePath::initialPath();
-   std::string exePath = initialPath.complete(argv[0]).absolutePath();
-
-   // calculate install path
-   return installPath(exePath, relativeToExecutable, pInstallPath);
+   executablePath = initialPath.complete(argv[0]).absolutePath();
 
 #endif
 
+   // return realPath of executable path
+   return realPath(executablePath, pExecutablePath);
+}
 
+// installation path
+Error installPath(const std::string& relativeToExecutable,
+                  int argc, char * const argv[],
+                  FilePath* pInstallPath)
+{
+   // get executable path
+   FilePath executablePath;
+   Error error = system::executablePath(argc, argv, &executablePath);
+   if (error)
+      return error;
+
+   // fully resolve installation path relative to executable
+   FilePath installPath = executablePath.parent().complete(relativeToExecutable);
+   return realPath(installPath.absolutePath(), pInstallPath);
 }
 
 void fixupExecutablePath(FilePath* pExePath)

@@ -30,7 +30,9 @@ import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.HttpLogEntry;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.codetools.Completions;
-import org.rstudio.studio.client.server.*;
+import org.rstudio.studio.client.server.Server;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.remote.RemoteServerEventListener.ClientEvent;
 import org.rstudio.studio.client.workbench.model.Agreement;
@@ -48,11 +50,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListRe
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
 import org.rstudio.studio.client.workbench.views.source.model.PublishPdfResult;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
-import org.rstudio.studio.client.workbench.views.workspace.model.DataPreviewResult;
-import org.rstudio.studio.client.workbench.views.workspace.model.DownloadInfo;
-import org.rstudio.studio.client.workbench.views.workspace.model.GoogleSpreadsheetImportSpec;
-import org.rstudio.studio.client.workbench.views.workspace.model.GoogleSpreadsheetInfo;
-import org.rstudio.studio.client.workbench.views.workspace.model.WorkspaceObjectInfo;
+import org.rstudio.studio.client.workbench.views.workspace.model.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -1327,7 +1325,6 @@ public class RemoteServer implements Server
    private static final String RPC_SCOPE = "rpc";
    private static final String FILES_SCOPE = "files";
    private static final String EVENTS_SCOPE = "events";
-   private static final String HELP_SCOPE = "help";
    private static final String UPLOAD_SCOPE = "upload";
    private static final String EXPORT_SCOPE = "export";
    private static final String GRAPHICS_SCOPE = "graphics";   

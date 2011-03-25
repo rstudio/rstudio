@@ -38,6 +38,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.studio.client.application.events.*;
+import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.application.ui.RequestLogVisualization;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -96,6 +97,7 @@ public class Application implements ApplicationEventHandlers,
       events.addHandler(ServerUnavailableEvent.TYPE, this);
       events.addHandler(InvalidClientVersionEvent.TYPE, this);
       events.addHandler(ServerOfflineEvent.TYPE, this);
+      events.addHandler(SaveActionChangedEvent.TYPE, this);
       
       // set uncaught exception handler (first save default so we can call it)
       defaultUncaughtExceptionHandler_ = GWT.getUncaughtExceptionHandler();
@@ -211,7 +213,7 @@ public class Application implements ApplicationEventHandlers,
    public final native void onRaiseException2() /*-{
       $wnd.welfkjweg();
    }-*/;
-   
+  
    @Handler
    public void onQuitSession()
    {
@@ -222,9 +224,9 @@ public class Application implements ApplicationEventHandlers,
       else
       {
          // quit session operation paramaterized by whether we save changes
-         class QuitSessionOperation implements ProgressOperation
+         class QuitOperation implements ProgressOperation
          {
-            QuitSessionOperation(boolean saveChanges)
+            QuitOperation(boolean saveChanges)
             {
                saveChanges_ = saveChanges;
             }
@@ -237,14 +239,27 @@ public class Application implements ApplicationEventHandlers,
             private final boolean saveChanges_ ;
          }
 
-         // confirm quit and do it
-         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-                                         "Quit R Session",
-                                         "Save workspace image?",
-                                         true,
-                                         new QuitSessionOperation(true),
-                                         new QuitSessionOperation(false),
-                                         true);
+         if (saveAction_.getAction() == SaveAction.SAVEASK) 
+         {
+            // confirm quit and do it
+            globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
+                                            "Quit R Session",
+                                            "Save workspace image?",
+                                            true,
+                                            new QuitOperation(true),
+                                            new QuitOperation(false),
+                                            true);
+         }
+         else
+         {
+            // do the quit without prompting 
+            
+            ProgressIndicator indicator =
+               globalDisplay_.getProgressIndicator("Error Quitting R");
+
+            boolean save = saveAction_.getAction() == SaveAction.SAVE;
+            new QuitOperation(save).execute(indicator);
+         }
       }
    }
 
@@ -282,6 +297,11 @@ public class Application implements ApplicationEventHandlers,
    {
       Element el = DomUtils.getActiveElement();
       DomUtils.dump(el, "Focused Element: ");
+   }
+  
+   public void onSaveActionChanged(SaveActionChangedEvent event)
+   {
+      saveAction_ = event.getAction();
    }
    
    public void onSessionSerialization(SessionSerializationEvent event)
@@ -341,7 +361,7 @@ public class Application implements ApplicationEventHandlers,
       // only show the quit state in server mode (in desktop mode the
       // window will close)
       if (!Desktop.isDesktop())
-         view_.showApplicationQuit(event.getWorkspaceSaved());
+         view_.showApplicationQuit();
    }
    
    public void onSuicide(SuicideEvent event)
@@ -538,6 +558,8 @@ public class Application implements ApplicationEventHandlers,
    private final Provider<ApplicationClientInit> pClientInit_;
 
    private ClientStateUpdater clientStateUpdaterInstance_;
+   
+   private SaveAction saveAction_ = SaveAction.saveAsk();
    
    private final UncaughtExceptionHandler defaultUncaughtExceptionHandler_ ;
 }

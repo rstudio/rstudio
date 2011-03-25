@@ -43,9 +43,33 @@ public class WorkbenchMetrics extends JavaScriptObject
    }-*/;
    
    public final boolean equalTo(WorkbenchMetrics other)
-   {
-      return (getConsoleWidth() == other.getConsoleWidth() &&
+   {  
+      return (other != null &&
+              getConsoleWidth() == other.getConsoleWidth() &&
               getGraphicsWidth() == other.getGraphicsWidth() && 
               getGraphicsHeight() == other.getGraphicsHeight());
+   }
+   
+   // are the metrics "close enough"to the previous ones such that we don't 
+   // need to send an update? graphics always have to be equal but if the 
+   // console width has gotten 1 or 2 characters wider then we can 
+   // suppress sending. note we do this to avoid chatty set_workbench_metrics
+   // calls (failing to increase the width of the console merely results 
+   // in some extra whitespace at the right margin)
+   public final boolean closeEnoughToPrevious(WorkbenchMetrics previous)
+   {  
+      // if previous is null then we're not close enough
+      if (previous == null)
+         return false;
+      
+      // new width offset
+      int newWidthOffset = getConsoleWidth() - previous.getConsoleWidth();
+      
+      // if it's 0, 1, or 2 larger then it's close enough
+      boolean consoleCloseEnough = newWidthOffset >= 0 && newWidthOffset <= 2;
+         
+      return (consoleCloseEnough &&
+              (getGraphicsWidth() == previous.getGraphicsWidth()) && 
+              (getGraphicsHeight() == previous.getGraphicsHeight()));
    }
 }

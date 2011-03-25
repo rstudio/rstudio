@@ -147,7 +147,11 @@ bool stdoutIsTerminal();
 // uuid
 std::string generateUuid(bool includeDashes = true);
 
-// installation path
+// executable and installation path
+
+Error executablePath(int argc, char * const argv[],
+                     FilePath* pExecutablePath);
+
 Error installPath(const std::string& relativeToExecutable,
                   int argc, char * const argv[],
                   FilePath* pInstallationPath);

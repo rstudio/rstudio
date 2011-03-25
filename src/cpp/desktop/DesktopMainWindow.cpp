@@ -154,16 +154,20 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
    }
    else
    {
+      // determine saveAction by calling hook
+      QVariant saveAction = pFrame->evaluateJavaScript(
+                                       "window.desktopHooks.getSaveAction()");
+
       bool save;
-      switch (desktop::options().saveWorkspaceOnExit())
+      switch (saveAction.toInt())
       {
-      case SAVE_YES:
-         save = true;
-         break;
-      case SAVE_NO:
+      case 0:
          save = false;
          break;
-      case SAVE_ASK:
+      case 1:
+         save = true;
+         break;
+      case -1:
       default:
          QMessageBox prompt(QMessageBox::Warning,
                             "Quit R Session",

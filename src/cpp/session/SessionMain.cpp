@@ -241,16 +241,31 @@ void ensureSessionInitialized()
    r::session::ensureDeserialized();
 }
 
-FilePath getInitialWorkingDirectory()
+FilePath getDefaultWorkingDirectory()
 {
-   // calculate the initial working directory
-   FilePath initialWorkingDir = userSettings().initialWorkingDirectory();
+   // calculate using user settings
+   FilePath defaultWorkingDir = userSettings().initialWorkingDirectory();
 
    // return it if it exists, otherwise use the default user home path
-   if (initialWorkingDir.exists())
-      return initialWorkingDir;
+   if (defaultWorkingDir.exists() && defaultWorkingDir.isDirectory())
+      return defaultWorkingDir;
    else
       return session::options().userHomePath();
+}
+
+FilePath getInitialWorkingDirectory()
+{
+   // first see if there is an override from the environment
+   std::string envWorkingDir = core::system::getenv("RS_INITIAL_WD");
+   if (!envWorkingDir.empty())
+   {
+      FilePath workingDirPath(envWorkingDir);
+      if (workingDirPath.exists() && workingDirPath.isDirectory())
+         return workingDirPath;
+   }
+
+   // if not then just return default working dir
+   return getDefaultWorkingDirectory();
 }
 
 void handleClientInit(const boost::function<void()>& initFunction,
@@ -1360,10 +1375,10 @@ void rResumed()
    module_context::onResumed(persistentState().settings());
 }
       
-void rQuit(bool workspaceSaved)
+void rQuit()
 {   
    // enque a quit event
-   ClientEvent quitEvent(kQuit, workspaceSaved);
+   ClientEvent quitEvent(kQuit);
    session::clientEventQueue().add(quitEvent);
 }
    
@@ -1525,7 +1540,7 @@ void detectParentTermination()
    }
 }
 
-FilePath sessionStatePath()
+FilePath rEnvironmentDir()
 {
    if (session::options().programMode() == kSessionProgramModeDesktop)
    {
@@ -1809,7 +1824,8 @@ int main (int argc, char * const argv[])
       r::session::ROptions rOptions ;
       rOptions.userHomePath = options.userHomePath();
       rOptions.userScratchPath = userScratchPath;
-      rOptions.sessionStatePath = boost::bind(sessionStatePath);
+      rOptions.defaultWorkingDir = getDefaultWorkingDirectory();
+      rOptions.rEnvironmentDir = boost::bind(rEnvironmentDir);
       rOptions.rSourcePath = options.coreRSourcePath();
       if (!desktopMode) // ignore r-libs-user in desktop mode
          rOptions.rLibsUser = options.rLibsUser();
@@ -1824,9 +1840,9 @@ int main (int argc, char * const argv[])
       rOptions.restoreWorkspace = userSettings().loadRData();
       // save action
       int saveAction = userSettings().saveAction();
-      if (saveAction == r::session::kSaveActionAlways)
+      if (saveAction == r::session::kSaveActionSave)
          rOptions.saveWorkspace = SA_SAVE;
-      else if (saveAction == r::session::kSaveActionNever)
+      else if (saveAction == r::session::kSaveActionNoSave)
          rOptions.saveWorkspace = SA_NOSAVE;
       else
          rOptions.saveWorkspace = SA_SAVEASK;
