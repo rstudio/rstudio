@@ -140,7 +140,7 @@ QString verifyAndNormalizeFilename(QString filename)
       return QString();
 
    QFileInfo fileInfo(filename);
-   if (fileInfo.exists() && fileInfo.isFile())
+   if (fileInfo.exists())
       return fileInfo.absoluteFilePath();
    else
       return QString();
@@ -172,33 +172,26 @@ int main(int argc, char* argv[])
                               &pApp,
                               &pAppLaunch);
 
-      QString filenameArg;
+      // determine the filename that was passed to us
       QString filename;
+#ifdef __APPLE__
+      // get filename from OpenFile apple-event (pump to ensure delivery)
+      pApp->processEvents();
+      filename = verifyAndNormalizeFilename(pAppLaunch->openFileRequest());
+#else
+      // get filename from command line arguments
       if (pApp->arguments().size() > 1)
-      {
-         filenameArg = pApp->arguments().last();
-         filename = verifyAndNormalizeFilename(filenameArg);
-      }
+         filename = verifyAndNormalizeFilename(pApp->arguments().last());
+#endif
 
+      // try to activate existing instance...exit if we do
       if (pAppLaunch->sendMessage(filename))
          return 0;
-
-#ifdef __APPLE__
-
-      // allow the open file apple-event to be delivered
-      pApp->processEvents(QEventLoop::AllEvents, 100);
-
-      // allow open file request to override anything passed on cmd line
-      QString openFileRequest = pAppLaunch->openFileRequest();
-      if (openFileRequest.size() > 0)
-         filenameArg = openFileRequest;
-
-#endif
 
       pApp->setAttribute(Qt::AA_MacDontSwapCtrlAndMeta);
 
       initializeSharedSecret();
-      initializeWorkingDirectory(argc, argv, filenameArg);
+      initializeWorkingDirectory(argc, argv, filename);
 
       Options& options = desktop::options();
       if (!prepareEnvironment(options))

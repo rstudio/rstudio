@@ -13,8 +13,6 @@
 
 #include "DesktopPosixApplication.hpp"
 
-#include <core/Log.hpp>
-#include <core/Error.hpp>
 
 #include <QFileOpenEvent>
 
@@ -26,7 +24,22 @@ bool PosixApplication::event(QEvent* pEvent)
    {
    case QEvent::FileOpen:
    {
-      openFileRequest_ = static_cast<QFileOpenEvent*>(pEvent)->file();
+      // get filename
+      QString filename = static_cast<QFileOpenEvent*>(pEvent)->file();
+
+      if (activationWindow() == NULL)
+      {
+         // if we don't yet have an activation window then this is a startup
+         // request -- save it so DesktopMain can pull it out later
+         openFileRequest_ = filename;
+      }
+      else
+      {
+         // otherwise we are already running so this is an apple event
+         // targeted at opening a file in an existing instance
+         QtSingleApplication::sendMessage(filename);
+      }
+
       return true;
    }
 
