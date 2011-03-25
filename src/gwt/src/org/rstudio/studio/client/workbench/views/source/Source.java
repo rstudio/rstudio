@@ -52,6 +52,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
@@ -122,7 +123,8 @@ public class Source implements InsertSourceHandler,
                  RemoteFileSystemContext fileContext,
                  EventBus events,
                  Session session,
-                 MRUList mruList)
+                 MRUList mruList,
+                 UIPrefs uiPrefs)
    {
       commands_ = commands;
       view_ = view;
@@ -134,6 +136,7 @@ public class Source implements InsertSourceHandler,
       fileContext_ = fileContext;
       events_ = events;
       mruList_ = mruList;
+      uiPrefs_ = uiPrefs;
 
       view_.addTabClosingHandler(this);
       view_.addTabClosedHandler(this);
@@ -168,6 +171,7 @@ public class Source implements InsertSourceHandler,
          {
             server_.newDocument(
                   FileTypeRegistry.DATAFRAME.getTypeId(),
+                  null,
                   JsObject.createJsObject(),
                   new SimpleRequestCallback<SourceDocument>("Edit Data Frame") {
                      public void onResponseReceived(SourceDocument response)
@@ -273,6 +277,7 @@ public class Source implements InsertSourceHandler,
       ContentItem content = event.getContent();
       server_.newDocument(
             FileTypeRegistry.URLCONTENT.getTypeId(),
+            null,
             (JsObject) content.cast(),
             new SimpleRequestCallback<SourceDocument>("Show")
             {
@@ -303,6 +308,7 @@ public class Source implements InsertSourceHandler,
 
       server_.newDocument(
             FileTypeRegistry.DATAFRAME.getTypeId(),
+            null,
             (JsObject) data.cast(),
             new SimpleRequestCallback<SourceDocument>("Show Data Frame")
             {
@@ -318,15 +324,17 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewSourceDoc()
    {
-      newDoc(FileTypeRegistry.R, null);
+      newDoc(FileTypeRegistry.R, uiPrefs_.defaultEncoding().getValue(), null);
    }
 
    private void newDoc(EditableFileType fileType,
+                       String encoding,
                        final CommandWithArg<EditingTarget> executeOnSuccess)
    {
       ensureVisible(true);
       server_.newDocument(
             fileType.getTypeId(),
+            encoding,
             JsObject.createJsObject(),
             new SimpleRequestCallback<SourceDocument>(
                   "Error Creating New Document")
@@ -468,7 +476,7 @@ public class Source implements InsertSourceHandler,
 
       if (file == null)
       {
-         newDoc(fileType, null);
+         newDoc(fileType, encoding, null);
          return;
       }
 
@@ -662,7 +670,9 @@ public class Source implements InsertSourceHandler,
       }
       else
       {
-         newDoc(FileTypeRegistry.R, new CommandWithArg<EditingTarget>()
+         newDoc(FileTypeRegistry.R,
+                uiPrefs_.defaultEncoding().getValue(),
+                new CommandWithArg<EditingTarget>()
          {
             public void execute(EditingTarget arg)
             {
@@ -830,6 +840,7 @@ public class Source implements InsertSourceHandler,
    private final RemoteFileSystemContext fileContext_;
    private final EventBus events_;
    private final MRUList mruList_;
+   private final UIPrefs uiPrefs_;
    private HashSet<AppCommand> activeCommands_ = new HashSet<AppCommand>();
    private final HashSet<AppCommand> dynamicCommands_;
 

@@ -22,6 +22,7 @@ import com.google.gwt.json.client.*;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.*;
@@ -733,12 +734,14 @@ public class RemoteServer implements Server
    }
 
    public void newDocument(String filetype,
+                           String encoding,
                            JsObject properties,
                            ServerRequestCallback<SourceDocument> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(filetype));
-      params.set(1, new JSONObject(properties));
+      params.set(1, new JSONString(StringUtil.notNull(encoding)));
+      params.set(2, new JSONObject(properties));
       sendRequest(RPC_SCOPE, NEW_DOCUMENT, params, requestCallback);
    }
 

@@ -1,6 +1,8 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.ui;
 
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -72,6 +74,9 @@ public class ChooseEncodingDialog extends ModalDialog<String>
                setEncodings(commonEncodings_, currentEncoding_);
          }
       });
+      showAll.getElement().getStyle().setDisplay(Display.BLOCK);
+      showAll.getElement().getStyle().setMarginTop(8, Unit.PX);
+      showAll.getElement().getStyle().setMarginBottom(12, Unit.PX);
 
       VerticalPanel panel = new VerticalPanel();
       panel.add(listBox_);

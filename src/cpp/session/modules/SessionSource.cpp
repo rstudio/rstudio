@@ -52,13 +52,18 @@ Error newDocument(const json::JsonRpcRequest& request,
 {
    // params
    std::string type;
+   std::string encoding;
    json::Object properties;
-   Error error = json::readParams(request.params, &type, &properties);
+   Error error = json::readParams(request.params,
+                                  &type,
+                                  &encoding,
+                                  &properties);
    if (error)
       return error ;
 
    // create the new doc and write it to the database
    SourceDocument doc(type) ;
+   doc.setEncoding(encoding);
 
    doc.editProperties(properties);
 
