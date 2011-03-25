@@ -267,4 +267,9 @@ void Options::cleanUpScratchTempDir()
       temp.removeIfExists();
 }
 
+bool Options::webkitDevTools()
+{
+   return settings_.value("webkitDevTools", false).toBool();
+}
+
 } // namespace desktop

@@ -69,6 +69,8 @@ public:
    core::FilePath scratchTempDir(core::FilePath defaultPath=core::FilePath());
    void cleanUpScratchTempDir();
 
+   bool webkitDevTools();
+
 private:
    Options() : settings_(FORMAT, QSettings::UserScope, "RStudio", "desktop")
    {

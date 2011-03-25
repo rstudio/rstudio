@@ -34,7 +34,8 @@ WebView::WebView(QUrl baseUrl, QWidget *parent) :
    setPage(new WebPage(baseUrl, this));
 
    page()->setForwardUnsupportedContent(true);
-   //page()->settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
+   if (desktop::options().webkitDevTools())
+      page()->settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
 
    connect(page(), SIGNAL(downloadRequested(QNetworkRequest)),
            this, SLOT(downloadRequested(QNetworkRequest)));
