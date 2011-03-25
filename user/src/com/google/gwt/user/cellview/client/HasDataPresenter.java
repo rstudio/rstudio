@@ -950,14 +950,15 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
 
   /**
    * Schedules the command.
-   *
+   * 
    * <p>
-   * Protected so that subclasses can override to use an alternative
-   * scheduler.
+   * Protected so that subclasses can override to use an alternative scheduler.
    * </p>
+   * 
+   * @param command the command to execute
    */
   protected void scheduleFinally(ScheduledCommand command) {
-    Scheduler.get().scheduleFinally(pendingStateCommand);
+    Scheduler.get().scheduleFinally(command);
   }
 
   /**
