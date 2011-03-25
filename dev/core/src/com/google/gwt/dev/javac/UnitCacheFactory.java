@@ -16,6 +16,7 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 
 import java.io.File;
 
@@ -36,10 +37,11 @@ public class UnitCacheFactory {
    * into memory in a background thread. If the cache is not enabled, it clears
    * out any old cached files.
    * 
-   * Only one instance of the cache is instantiated. If a previously created cache
-   * exists, the previous instance is returned.
+   * Only one instance of the cache is instantiated. If a previously created
+   * cache exists, the previous instance is returned.
    */
-  public static synchronized UnitCache get(TreeLogger logger, File cacheDir) {
+  public static synchronized UnitCache get(TreeLogger logger, File cacheDir)
+      throws UnableToCompleteException {
     assert logger != null;
     if (instance == null) {
       if (usePersistent) {

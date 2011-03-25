@@ -16,6 +16,7 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.CompilationUnitBuilder.GeneratedCompilationUnitBuilder;
 import com.google.gwt.dev.javac.CompilationUnitBuilder.ResourceCompilationUnitBuilder;
 import com.google.gwt.dev.javac.JdtCompiler.AdditionalTypeProviderDelegate;
@@ -289,7 +290,8 @@ public class CompilationStateBuilder {
    * Called to setup the directory where the persistent {@link ComplationUnit}
    * cache should be stored. Only the first call to init() will have an effect.
    */
-  public static synchronized void init(TreeLogger logger, File cacheDirectory) {
+  public static synchronized void init(TreeLogger logger, File cacheDirectory)
+      throws UnableToCompleteException {
     instance.unitCache = UnitCacheFactory.get(logger, cacheDirectory);
   }
 

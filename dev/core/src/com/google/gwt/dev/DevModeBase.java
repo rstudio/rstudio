@@ -883,7 +883,11 @@ public abstract class DevModeBase implements DoneCallback {
     ui.initialize(options.getLogLevel());
     topLogger = ui.getTopLogger();
 
-    CompilationStateBuilder.init(getTopLogger(), persistentCacheDir);
+    try {
+      CompilationStateBuilder.init(getTopLogger(), persistentCacheDir);
+    } catch (UnableToCompleteException ex) {
+      return false;
+    }
 
     // Set done callback
     ui.setCallback(DoneEvent.getType(), this);

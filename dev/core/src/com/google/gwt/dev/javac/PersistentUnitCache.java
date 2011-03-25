@@ -16,6 +16,7 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -284,14 +285,19 @@ class PersistentUnitCache extends MemoryUnitCache {
    */
   private File currentCacheFile;
 
-  PersistentUnitCache(TreeLogger logger, File cacheDir) {
+  PersistentUnitCache(TreeLogger logger, File cacheDir) throws UnableToCompleteException {
     assert cacheDir != null;
 
     this.cacheDirectory = new File(cacheDir, UNIT_CACHE_PREFIX);
     logger.log(TreeLogger.TRACE, "Persistent unit cache dir set to: "
         + this.cacheDirectory.getAbsolutePath());
 
-    cacheDirectory.mkdir();
+    if (!cacheDirectory.exists() && !cacheDirectory.mkdir()) {
+      logger.log(TreeLogger.ERROR, "Unable to initialize cache. Couldn't create directory "
+          + cacheDirectory.getAbsolutePath() + ".");
+      throw new UnableToCompleteException();
+    }
+
     long timestamp = System.currentTimeMillis();
     do {
       currentCacheFile =
@@ -415,7 +421,7 @@ class PersistentUnitCache extends MemoryUnitCache {
       Arrays.sort(retFiles);
       return retFiles;
     }
-    return null;
+    return new File[0];
   }
 
   /**

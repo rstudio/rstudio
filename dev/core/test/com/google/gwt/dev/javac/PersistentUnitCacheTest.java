@@ -16,6 +16,7 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.Util;
 
 import junit.framework.TestCase;
@@ -31,11 +32,14 @@ public class PersistentUnitCacheTest extends TestCase {
   File lastCacheDir = null;
 
   public void tearDown() {
-    Util.recursiveDelete(lastCacheDir, false);
+    if (lastCacheDir != null) {
+      Util.recursiveDelete(lastCacheDir, false);
+    }
     lastCacheDir = null;
   }
 
-  public void testPersistentCache() throws IOException, InterruptedException {
+  public void testPersistentCache() throws IOException, InterruptedException,
+      UnableToCompleteException {
     TreeLogger logger = TreeLogger.NULL;
 
     File cacheDir = null;
@@ -63,7 +67,6 @@ public class PersistentUnitCacheTest extends TestCase {
     result = cache.find(bar1.getContentId());
     assertNotNull(result);
     assertEquals("com.example.Bar", result.getTypeName());
-    System.err.println("resource loc: " + bar1.getResourceLocation());
 
     // Find by type name
     result = cache.find("/mock/com/example/Foo.java");
@@ -165,6 +168,20 @@ public class PersistentUnitCacheTest extends TestCase {
     cache.cleanup(logger);
     cache.shutdown();
     assertNumCacheFiles(unitCacheDir, 1);
+  }
+
+  public void testBadDir() {
+    TreeLogger logger = TreeLogger.NULL;
+    File badDir = new File("sHoUlDnOtExi57");
+    boolean caught = false;
+    try {
+      PersistentUnitCache puc = new PersistentUnitCache(logger, badDir);
+    } catch (UnableToCompleteException ex) {
+      // expected
+      caught = true;
+    } finally {
+      assertTrue("Did not catch UnableToCompleteException", caught);
+    }
   }
 
   private void assertNumCacheFiles(File unitCacheDir, int expected) {
