@@ -81,7 +81,9 @@ endif()
 # filesystem (see operations.hpp) seem to cause a hard abort in release
 # mode if the file doesn't exist. so disable this check on all platforms
 # (for consistency) by disabling support for wide filenames
-add_definitions(-DBOOST_FILESYSTEM_NARROW_ONLY -DBOOST_FILESYSTEM2_NARROW_ONLY)
+if(APPLE)
+   add_definitions(-DBOOST_FILESYSTEM_NARROW_ONLY -DBOOST_FILESYSTEM2_NARROW_ONLY)
+endif()
 
 # determine whether we should statically link boost. we always do this
 # unless we are building a non-packaged build on linux (in which case

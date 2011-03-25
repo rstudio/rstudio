@@ -1,6 +1,5 @@
 package org.rstudio.studio.client.workbench.prefs.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -73,5 +72,10 @@ public class UIPrefs extends Prefs
    public PrefValue<String> theme()
    {
       return string("theme", null);
+   }
+
+   public PrefValue<String> defaultEncoding()
+   {
+      return string("default_encoding", "UTF-8");
    }
 }

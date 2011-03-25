@@ -24,6 +24,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.NewFileMenu;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.DocsMenu;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 
@@ -46,4 +47,5 @@ public interface RStudioGinjector extends Ginjector
    RemoteFileSystemContext getRemoteFileSystemContext();
    FileDialogs getFileDialogs();
    Commands getCommands();
+   UIPrefs getUIPrefs();
 }

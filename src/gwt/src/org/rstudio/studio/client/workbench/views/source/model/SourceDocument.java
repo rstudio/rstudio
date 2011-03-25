@@ -91,6 +91,14 @@ public class SourceDocument extends JavaScriptObject
       this.source_on_save = sourceOnSave;
    }-*/;
 
+   public native final String getEncoding() /*-{
+      return this.encoding || "UTF-8";
+   }-*/;
+
+   public native final void setEncoding(String encoding) /*-{
+      this.encoding = encoding;
+   }-*/;
+
    public native final JsObject getProperties() /*-{
       if (!this.properties)
          this.properties = {};

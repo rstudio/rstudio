@@ -70,6 +70,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PublishPdfEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PublishPdfHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.PublishPdfDialog;
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
@@ -614,6 +615,32 @@ public class TextEditingTarget implements EditingTarget
    public String getTabTooltip()
    {
       return getPath();
+   }
+
+   @Handler
+   void onReopenSourceDocWithEncoding()
+   {
+      server_.iconvlist(new SimpleRequestCallback<IconvListResult>()
+      {
+         @Override
+         public void onResponseReceived(IconvListResult response)
+         {
+            String currentEncoding = docUpdateSentinel_.getEncoding();
+
+            new ChooseEncodingDialog(
+                  response.getCommon(), response.getAll(), currentEncoding,
+                  new OperationWithInput<String>()
+                  {
+                     public void execute(String encoding)
+                     {
+                        if (encoding == null)
+                           return;
+
+                        docUpdateSentinel_.reopenWithEncoding(encoding);
+                     }
+                  }).showModal();
+         }
+      });
    }
 
    @Handler

@@ -41,6 +41,31 @@ import java.util.Map;
 public class DocUpdateSentinel
       implements ValueChangeHandler<Void>
 {
+   private class ReopenFileCallback extends ServerRequestCallback<SourceDocument>
+   {
+
+      @Override
+      public void onResponseReceived(
+            SourceDocument response)
+      {
+         sourceDoc_ = response;
+         docDisplay_.setCode(sourceDoc_.getContents(), true);
+         dirtyState_.setValue(false, true);
+
+         if (progress_ != null)
+            progress_.onCompleted();
+      }
+
+      @Override
+      public void onError(ServerError error)
+      {
+         if (progress_ != null)
+         {
+            progress_.onError(error.getUserMessage());
+         }
+      }
+   }
+
    public DocUpdateSentinel(SourceServerOperations server,
                             DocDisplay docDisplay,
                             SourceDocument sourceDoc,
@@ -395,29 +420,15 @@ public class DocUpdateSentinel
       server_.revertDocument(
             sourceDoc_.getId(),
             sourceDoc_.getType(),
-            new ServerRequestCallback<SourceDocument>() {
+            new ReopenFileCallback());
+   }
 
-               @Override
-               public void onResponseReceived(
-                     SourceDocument response)
-               {
-                  sourceDoc_ = response;
-                  docDisplay_.setCode(sourceDoc_.getContents(), true);
-                  dirtyState_.setValue(false, true);
-
-                  if (progress_ != null)
-                     progress_.onCompleted();
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  if (progress_ != null)
-                  {
-                     progress_.onError(error.getUserMessage());
-                  }
-               }
-            });
+   public void reopenWithEncoding(String encoding)
+   {
+      server_.reopenWithEncoding(
+            sourceDoc_.getId(),
+            encoding,
+            new ReopenFileCallback());
    }
 
    public void ignoreExternalEdit()
@@ -426,6 +437,11 @@ public class DocUpdateSentinel
       // but we don't use it.
       server_.ignoreExternalEdit(sourceDoc_.getId(),
                                  new SimpleRequestCallback<Void>());
+   }
+
+   public String getEncoding()
+   {
+      return sourceDoc_.getEncoding();
    }
 
    private boolean changesPending_ = false;

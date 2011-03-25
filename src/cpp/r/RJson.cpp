@@ -94,7 +94,7 @@ Error jsonValueFromVectorElement(SEXP vectorSEXP,
          SEXP stringSEXP = STRING_ELT(vectorSEXP, i);
          if (stringSEXP != NA_STRING)
          {
-            std::string value(Rf_translateChar(stringSEXP)); 
+            std::string value(Rf_translateCharUTF8(stringSEXP));
             *pValue = value;
          }
          break;

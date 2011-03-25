@@ -14,6 +14,7 @@
 #include <core/StringUtils.hpp>
 
 #include <map>
+#include <ostream>
 
 #include <algorithm>
 #include <boost/algorithm/string/replace.hpp>
@@ -21,6 +22,11 @@
 
 #include <core/Log.hpp>
 #include <core/json/Json.hpp>
+
+#ifdef _WIN32
+#include <windows.h>
+#include <winnls.h>
+#endif
 
 namespace core {
 namespace string_utils {   
@@ -49,6 +55,75 @@ void convertLineEndings(std::string* pStr, LineEnding type)
    }
 
    *pStr = boost::regex_replace(*pStr, boost::regex("\\r?\\n|\\xE2\\x80[\\xA8\\xA9]"), replacement);
+}
+
+std::string utf8ToSystem(const std::string& str,
+                         bool escapeInvalidChars)
+{
+   if (str.empty())
+      return std::string();
+
+#ifdef _WIN32
+   wchar_t wide[str.length() + 1];
+   int chars = ::MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, wide, sizeof(wide));
+   if (chars < 0)
+   {
+      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      return str;
+   }
+
+   std::ostringstream output;
+   char mbbuf[10];
+   for (int i = 0; i < chars; i++)
+   {
+      int mbc = wctomb(mbbuf, wide[i]);
+      if (mbc == -1)
+      {
+         if (escapeInvalidChars)
+            output << "\\u{" << std::hex << wide[i] << "}";
+         else
+            output << "?"; // TODO: Use GetCPInfo()
+      }
+      else
+         output.write(mbbuf, mbc);
+   }
+   return output.str();
+#else
+   // Assumes that UTF8 is the locale on POSIX
+   return str;
+#endif
+}
+
+std::string systemToUtf8(const std::string& str)
+{
+   if (str.empty())
+      return std::string();
+
+#ifdef _WIN32
+   wchar_t wide[str.length() + 1];
+   int chars = ::MultiByteToWideChar(CP_ACP, 0, str.c_str(), str.length(), wide, sizeof(wide));
+   if (chars < 0)
+   {
+      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      return str;
+   }
+
+   int bytesRequired = ::WideCharToMultiByte(CP_UTF8, 0, wide, chars,
+                                             NULL, 0,
+                                             NULL, NULL);
+   if (bytesRequired == 0)
+   {
+      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      return str;
+   }
+   std::vector<char> buf(bytesRequired, 0);
+   int bytesWritten = ::WideCharToMultiByte(CP_UTF8, 0, wide, chars,
+                                            &(buf[0]), buf.size(),
+                                            NULL, NULL);
+   return std::string(buf.begin(), buf.end());
+#else
+   return str;
+#endif
 }
 
 std::string toLower(const std::string& str)

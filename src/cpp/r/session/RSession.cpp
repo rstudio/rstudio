@@ -607,6 +607,7 @@ int RReadConsole (const char *prompt,
             
             // ensure that our input fits within the buffer
             std::string::size_type maxLen = buflen - 2; // for \n\0
+            rInput = string_utils::utf8ToSystem(rInput, true);
             if (rInput.length() > maxLen)
                rInput.resize(maxLen);
             std::string::size_type inputLen = rInput.length();
@@ -655,6 +656,7 @@ void RWriteConsoleEx (const char *buf, int buflen, int otype)
       {
          // get output
          std::string output = std::string(buf,buflen);
+         output = util::rconsole2utf8(output);
          
          // add to console actions
          int type = otype == 1 ? kConsoleActionOutputError :

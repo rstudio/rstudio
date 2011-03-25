@@ -31,6 +31,46 @@
    return()
 })
 
+.rs.addJsonRpcHandler("iconvlist", function()
+{
+   common <- c(
+      'ASCII', 'UTF-8',
+      # Western
+      'ISO-8859-1', 'MacRoman', 'Windows-1252',
+      # Japanese
+      'Shift-JIS', 'ISO-2022-JP', #'EUC-JP', 'Shift-JISX0213',
+      # Trad Chinese
+      'Big5', #'Big5-HKSCS',
+      # Korean
+      'ISO-2022-KR',
+      # Arabic
+      #'ISO-8859-6', #'Windows-1256',
+      # Hebrew
+      #'ISO-8859-8', #'Windows-1255',
+      # Greek
+      'ISO-8859-7', #'Windows-1253',
+      # Cyrillic
+      #'ISO-8859-5', 'MacCyrillic', 'KOI8-R', 'Windows-1251',
+      # Ukranian
+      #'KOI8-U',
+      # Simplified Chinese
+      'GB2312', 'HZ-GB-2312',
+      # Chinese
+      'GB18030',
+      # Central European
+      'ISO-8859-2' #'ISO-8859-4', 'MacCentralEurope', 'Windows-1250'
+      # Vietnamese
+      #'Windows-1258',
+      # Turkish
+      #'ISO-8859-5', 'Windows-1254',
+      # Baltic
+      #'Windows-1257'
+   )
+
+   list(common=sort(intersect(toupper(common), toupper(iconvlist()))),
+        all=sort(iconvlist()))
+})
+
 
 ### Detect free variables ###
 

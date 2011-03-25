@@ -1,20 +1,26 @@
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.HasValue;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-
-import java.util.ArrayList;
+import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 public class EditingPreferencesPane extends PreferencesPane
 {
    @Inject
-   public EditingPreferencesPane(UIPrefs prefs, PreferencesDialogResources res)
+   public EditingPreferencesPane(SourceServerOperations server,
+                                 UIPrefs prefs,
+                                 PreferencesDialogResources res)
    {
+      server_ = server;
+      prefs_ = prefs;
       res_ = res;
 
       add(checkboxPref("Highlight selected line", prefs.highlightSelectedLine()));
@@ -25,6 +31,40 @@ public class EditingPreferencesPane extends PreferencesPane
       add(indent(marginCol_ = numericPref("Margin column", prefs.printMarginColumn())));
 //      add(checkboxPref("Automatically insert matching parens/quotes", prefs_.insertMatching()));
 //      add(checkboxPref("Soft-wrap R files", prefs_.softWrapRFiles()));
+
+      add(encoding_ = new TextBoxWithButton(
+            "Default encoding",
+            "Change...",
+            new ClickHandler()
+            {
+               public void onClick(ClickEvent event)
+               {
+                  server_.iconvlist(new SimpleRequestCallback<IconvListResult>()
+                  {
+                     @Override
+                     public void onResponseReceived(IconvListResult response)
+                     {
+                        new ChooseEncodingDialog(
+                              response.getCommon(),
+                              response.getAll(),
+                              encoding_.getText(),
+                              new OperationWithInput<String>()
+                              {
+                                 public void execute(String encoding)
+                                 {
+                                    if (encoding == null)
+                                       return;
+
+                                    encoding_.setText(encoding);
+                                 }
+                              }).showModal();
+                     }
+                  });
+
+               }
+            }));
+      encoding_.setWidth("250px");
+      encoding_.setText(prefs.defaultEncoding().getValue());
    }
 
 
@@ -47,9 +87,19 @@ public class EditingPreferencesPane extends PreferencesPane
       return "Editing";
    }
 
+   @Override
+   public void onApply()
+   {
+      super.onApply();
+      prefs_.defaultEncoding().setValue(encoding_.getText());
+   }
+
+   private final SourceServerOperations server_;
+   private final UIPrefs prefs_;
    private final PreferencesDialogResources res_;
    private final NumericValueWidget tabWidth_;
    private final NumericValueWidget marginCol_;
-   private CheckBox spacesForTab_;
-   private CheckBox showMargin_;
+   private final TextBoxWithButton encoding_;
+   private final CheckBox spacesForTab_;
+   private final CheckBox showMargin_;
 }
