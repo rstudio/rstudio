@@ -28,9 +28,10 @@ public class AceThemes
 
       addTheme("TextMate", res.textmate());
       addTheme("Eclipse", res.eclipse());
-      addTheme("idle Fingers", res.idle_fingers());
-      addTheme("Twilight", res.twilight());
       addTheme("Cobalt", res.cobalt());
+      addTheme("Idle Fingers", res.idle_fingers());
+      addTheme("Twilight", res.twilight());
+      
 //      addTheme("Clouds", res.clouds());
 //      addTheme("Clouds Midnight", res.clouds_midnight());
 //      addTheme("Dawn", res.dawn());
