@@ -79,9 +79,9 @@ std::string rconsole2utf8(const std::string& encoded)
    return output;
 }
 
-core::Error iconv(const std::string value,
-                  const std::string from,
-                  const std::string to,
+core::Error iconv(const std::string& value,
+                  const std::string& from,
+                  const std::string& to,
                   std::string* pResult)
 {
    std::string effectiveFrom = from;
@@ -103,9 +103,7 @@ core::Error iconv(const std::string value,
    func.addParam("to", effectiveTo);
    func.addParam("sub", "?");
 
-   func.call(pResult);
-
-   return Success();
+   return func.call(pResult);
 }
 
 } // namespace util
