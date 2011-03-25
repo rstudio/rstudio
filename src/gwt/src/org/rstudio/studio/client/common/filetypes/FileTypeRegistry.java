@@ -88,6 +88,7 @@ public class FileTypeRegistry
       register("*.bib", TEXT, icons.iconText());
       register("*.rd", RD, icons.iconTex());
       register("*.rdata", RDATA, icons.iconRdata());
+      register("*.rda", RDATA, icons.iconRdata());
       defaultType_ = BROWSER;
 
       registerIcon(".jpg", icons.iconPng());
