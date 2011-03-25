@@ -15,8 +15,10 @@ package org.rstudio.studio.client.workbench.views.source.model;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 
 import java.util.HashMap;
 
@@ -45,6 +47,7 @@ public interface SourceServerOperations
     */
    void openDocument(String path,
                      String fileType,
+                     String encoding,
                      ServerRequestCallback<SourceDocument> requestCallback);
 
    /**
@@ -144,9 +147,16 @@ public interface SourceServerOperations
                        String fileType,
                        ServerRequestCallback<SourceDocument> requestCallback);
    
+   void reopenWithEncoding(
+                       String id,
+                       String encoding,
+                       ServerRequestCallback<SourceDocument> requestCallback);
+
    void removeContentUrl(String contentUrl,
                          ServerRequestCallback<Void> requestCallback);
 
    void detectFreeVars(String code,
                        ServerRequestCallback<JsArrayString> requestCallback);
+
+   void iconvlist(SimpleRequestCallback<IconvListResult> requestCallback);
 }

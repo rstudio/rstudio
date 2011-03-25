@@ -20,11 +20,19 @@ public class OpenSourceFileEvent extends GwtEvent<OpenSourceFileHandler>
 {
    public static final GwtEvent.Type<OpenSourceFileHandler> TYPE =
       new GwtEvent.Type<OpenSourceFileHandler>();
-   
+
    public OpenSourceFileEvent(FileSystemItem file, TextFileType fileType)
+   {
+      this(file, fileType, null);
+   }
+
+   public OpenSourceFileEvent(FileSystemItem file,
+                              TextFileType fileType,
+                              String encoding)
    {
       file_ = file;
       fileType_ = fileType;
+      encoding_ = encoding;
    }
    
    public FileSystemItem getFile()
@@ -35,6 +43,11 @@ public class OpenSourceFileEvent extends GwtEvent<OpenSourceFileHandler>
    public TextFileType getFileType()
    {
       return fileType_;
+   }
+
+   public String getEncoding()
+   {
+      return encoding_;
    }
 
    @Override
@@ -51,4 +64,5 @@ public class OpenSourceFileEvent extends GwtEvent<OpenSourceFileHandler>
    
    private final FileSystemItem file_;
    private final TextFileType fileType_;
+   private final String encoding_;
 }

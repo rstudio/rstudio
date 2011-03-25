@@ -28,6 +28,7 @@ import org.rstudio.core.client.jsonrpc.*;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.HttpLogEntry;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
@@ -43,6 +44,7 @@ import org.rstudio.studio.client.workbench.views.help.model.Link;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.plots.model.Point;
+import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
 import org.rstudio.studio.client.workbench.views.source.model.PublishPdfResult;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -744,11 +746,14 @@ public class RemoteServer implements Server
 
    public void openDocument(String path,
                             String filetype,
+                            String encoding,
                             ServerRequestCallback<SourceDocument> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(path));
       params.set(1, new JSONString(filetype));
+      params.set(2, encoding != null ? new JSONString(encoding) 
+                                     : JSONNull.getInstance());
       sendRequest(RPC_SCOPE, OPEN_DOCUMENT, params, requestCallback);
    }
 
@@ -900,6 +905,16 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, REVERT_DOCUMENT, params, requestCallback);
    }
    
+   public void reopenWithEncoding(String id,
+                              String encoding,
+                              ServerRequestCallback<SourceDocument> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(id));
+      params.set(1, new JSONString(encoding));
+      sendRequest(RPC_SCOPE, REOPEN_WITH_ENCODING, params, requestCallback);
+   }
+
    public void removeContentUrl(String contentUrl,
                                 ServerRequestCallback<Void> requestCallback)
    {
@@ -910,6 +925,11 @@ public class RemoteServer implements Server
                               ServerRequestCallback<JsArrayString> requestCallback)
    {
       sendRequest(RPC_SCOPE, DETECT_FREE_VARS, code, requestCallback);
+   }
+
+   public void iconvlist(SimpleRequestCallback<IconvListResult> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, ICONVLIST, requestCallback);      
    }
 
    public void getHistory(
@@ -1395,8 +1415,10 @@ public class RemoteServer implements Server
    private static final String SAVE_ACTIVE_DOCUMENT = "save_active_document";
    private static final String MODIFY_DOCUMENT_PROPERTIES = "modify_document_properties";
    private static final String REVERT_DOCUMENT = "revert_document";
+   private static final String REOPEN_WITH_ENCODING = "reopen_with_encoding";
    private static final String REMOVE_CONTENT_URL = "remove_content_url";
    private static final String DETECT_FREE_VARS = "detect_free_vars";
+   private static final String ICONVLIST = "iconvlist";
    private static final String PUBLISH_PDF = "publish_pdf";
    private static final String IS_TEX_INSTALLED = "is_tex_installed";
 

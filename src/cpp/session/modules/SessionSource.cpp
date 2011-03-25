@@ -30,6 +30,7 @@
 #include <r/RExec.hpp>
 #include <r/RInternal.hpp>
 #include <r/RFunctionHook.hpp>
+#include <r/RUtil.hpp>
 
 #include <session/SessionSourceDatabase.hpp>
 
@@ -85,6 +86,11 @@ Error openDocument(const json::JsonRpcRequest& request,
    error = json::readParam(request.params, 1, &type);
    if (error)
       return error ;
+
+   std::string encoding;
+   error = json::readParam(request.params, 2, &encoding);
+   if (error && error.code() != core::json::errc::ParamTypeMismatch)
+      return error ;
    
    // ensure the file exists
    FilePath documentPath = module_context::resolveAliasedPath(path);
@@ -96,6 +102,7 @@ Error openDocument(const json::JsonRpcRequest& request,
    
    // set the doc contents to the specified file
    SourceDocument doc(type) ;
+   doc.setEncoding(encoding);
    error = doc.setPathAndContents(path);
    if (error)
       return error ;
@@ -145,8 +152,8 @@ Error saveDocumentCore(const std::string& contents,
    bool hasPath = json::isType<std::string>(jsonPath);
    if (hasPath)
    {
-       path = jsonPath.get_str();
-       fullDocPath = module_context::resolveAliasedPath(path);
+      path = jsonPath.get_str();
+      fullDocPath = module_context::resolveAliasedPath(path);
    }
    
    // update dirty state: dirty if there was no path (and was thus an autosave)
@@ -163,8 +170,13 @@ Error saveDocumentCore(const std::string& contents,
    // handle document (varies depending upon whether we have a path)
    if (hasPath)
    {
+      std::string encoded;
+      error = r::util::iconv(contents, "UTF-8", pDoc->encoding(), &encoded);
+      if (error)
+         return error;
+
       // write the contents to the file
-      error = writeStringToFile(fullDocPath, contents,
+      error = writeStringToFile(fullDocPath, encoded,
                                 options().sourcePersistLineEnding());
       if (error)
          return error ;
@@ -174,11 +186,10 @@ Error saveDocumentCore(const std::string& contents,
       if (error)
          return error ;
    }
-   else
-   {
-      // just update the contents
-      pDoc->setContents(contents);
-   }
+
+   // always update the contents so it holds the original UTF-8 data
+   pDoc->setContents(contents);
+
    return Success();
 }
 
@@ -343,20 +354,22 @@ Error checkForExternalEdit(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error revertDocument(const json::JsonRpcRequest& request,
-                     json::JsonRpcResponse* pResponse)
-{
-   std::string id, fileType ;
-   Error error = json::readParams(request.params, &id, &fileType) ;
-   if (error)
-      return error;
+namespace {
 
+Error reopen(std::string id, std::string fileType, std::string encoding,
+             json::JsonRpcResponse* pResponse)
+{
    SourceDocument doc ;
-   error = source_database::get(id, &doc);
+   Error error = source_database::get(id, &doc);
    if (error)
       return error ;
 
-   doc.setType(fileType) ;
+   if (!encoding.empty())
+      doc.setEncoding(encoding);
+
+   if (!fileType.empty())
+      doc.setType(fileType);
+
    error = doc.setPathAndContents(doc.path());
    if (error)
       return error ;
@@ -371,6 +384,30 @@ Error revertDocument(const json::JsonRpcRequest& request,
    pResponse->setResult(resultObj);
 
    return Success();
+}
+
+} // anonymous namespace
+
+Error revertDocument(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   std::string id, fileType ;
+   Error error = json::readParams(request.params, &id, &fileType) ;
+   if (error)
+      return error;
+
+   return reopen(id, fileType, std::string(), pResponse);
+}
+
+Error reopenWithEncoding(const json::JsonRpcRequest& request,
+                         json::JsonRpcResponse* pResponse)
+{
+   std::string id, encoding;
+   Error error = json::readParams(request.params, &id, &encoding);
+   if (error)
+      return error;
+
+   return reopen(id, std::string(), encoding, pResponse);
 }
 
 Error ignoreExternalEdit(const json::JsonRpcRequest& request,
@@ -531,6 +568,7 @@ Error initialize()
       (bind(registerRpcMethod, "set_source_document_on_save", setSourceDocumentOnSave))
       (bind(registerRpcMethod, "modify_document_properties", modifyDocumentProperties))
       (bind(registerRpcMethod, "revert_document", revertDocument))
+      (bind(registerRpcMethod, "reopen_with_encoding", reopenWithEncoding))
       (bind(registerRpcMethod, "close_document", closeDocument))
       (bind(registerRpcMethod, "close_all_documents", closeAllDocuments))
       (bind(sourceModuleRFile, "SessionSource.R"));

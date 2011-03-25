@@ -142,6 +142,7 @@ public class Source implements InsertSourceHandler,
 
       dynamicCommands_ = new HashSet<AppCommand>();
       dynamicCommands_.add(commands.saveSourceDoc());
+      dynamicCommands_.add(commands.reopenSourceDocWithEncoding());
       dynamicCommands_.add(commands.saveSourceDocAs());
       dynamicCommands_.add(commands.printSourceDoc());
       dynamicCommands_.add(commands.executeCode());
@@ -449,7 +450,7 @@ public class Source implements InsertSourceHandler,
 
    public void onOpenSourceFile(final OpenSourceFileEvent event)
    {
-      openFile(event.getFile(), event.getFileType());
+      openFile(event.getFile(), event.getFileType(), event.getEncoding());
    }
    
    // top-level wrapper for opening files. takes care of:
@@ -459,7 +460,9 @@ public class Source implements InsertSourceHandler,
    //  - confirmation of opening large files (>100KB)
    //  - finally, actually opening the file from the server
    //    via the call to the lower level openFile method
-   private void openFile(final FileSystemItem file, final TextFileType fileType)
+   private void openFile(final FileSystemItem file,
+                         final TextFileType fileType,
+                         final String encoding)
    {
       ensureVisible(true);
 
@@ -494,13 +497,13 @@ public class Source implements InsertSourceHandler,
          confirmOpenLargeFile(file,  new Operation() {
             public void execute()
             {
-               openFileFromServer(file, fileType);
+               openFileFromServer(file, fileType, encoding);
             }
          });
       }
       else
       {
-         openFileFromServer(file, fileType);
+         openFileFromServer(file, fileType, encoding);
       }
    }
 
@@ -535,7 +538,8 @@ public class Source implements InsertSourceHandler,
    }
 
    private void openFileFromServer(final FileSystemItem file,
-                                   final TextFileType fileType)
+                                   final TextFileType fileType,
+                                   String encoding)
    {
       final Command dismissProgress = globalDisplay_.showProgress(
                                                          "Opening file...");
@@ -543,6 +547,7 @@ public class Source implements InsertSourceHandler,
       server_.openDocument(
             file.getPath(),
             fileType.getTypeId(),
+            encoding,
             new ServerRequestCallback<SourceDocument>()
             {
                @Override

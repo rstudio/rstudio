@@ -19,6 +19,7 @@
 
 #include <core/FilePath.hpp>
 #include <core/StringUtils.hpp>
+#include <core/Error.hpp>
 
 #include <r/RExec.hpp>
 
@@ -76,6 +77,35 @@ std::string rconsole2utf8(const std::string& encoded)
       output.append(string_utils::systemToUtf8(std::string(pos, encoded.end())));
 
    return output;
+}
+
+core::Error iconv(const std::string value,
+                  const std::string from,
+                  const std::string to,
+                  std::string* pResult)
+{
+   std::string effectiveFrom = from;
+   if (effectiveFrom.empty())
+      effectiveFrom = "UTF-8";
+   std::string effectiveTo = to;
+   if (effectiveTo.empty())
+      effectiveTo = "UTF-8";
+
+   if (effectiveFrom == effectiveTo)
+   {
+      *pResult = value;
+      return Success();
+   }
+
+   r::exec::RFunction func("iconv");
+   func.addParam("x", value);
+   func.addParam("from", effectiveFrom);
+   func.addParam("to", effectiveTo);
+   func.addParam("sub", "?");
+
+   func.call(pResult);
+
+   return Success();
 }
 
 } // namespace util
