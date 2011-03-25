@@ -242,6 +242,7 @@ if(RSTUDIO_BUNDLE_QT)
           file(GLOB_RECURSE QTPLUGINS
             \"\${CMAKE_INSTALL_PREFIX}/${QTPLUGINS_DEST_DIR}/plugins/*${CMAKE_SHARED_LIBRARY_SUFFIX}\")
           include(BundleUtilities)
+          file(REMOVE \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/MacOS/rsession\")
           fixup_bundle(\"${APPS}\" \"\${QTPLUGINS}\" \"${DIRS}\")
           ")
 
