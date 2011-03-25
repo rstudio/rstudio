@@ -114,7 +114,6 @@ public class Workspace
       eventBus_.addHandler(WorkspaceRefreshEvent.TYPE, this);
       eventBus_.addHandler(WorkspaceObjectAssignedEvent.TYPE, this);
       eventBus_.addHandler(WorkspaceObjectRemovedEvent.TYPE, this);
-      eventBus_.addHandler(OpenDataFileEvent.TYPE, this);
    }
    
    @Override

@@ -16,6 +16,9 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.filetypes.events.OpenDataFileEvent;
+import org.rstudio.studio.client.common.filetypes.events.OpenDataFileHandler;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
@@ -28,6 +31,7 @@ public class WorkspaceTab extends DelayLoadWorkbenchTab<Workspace>
 
    public abstract static class Shim extends
          DelayLoadTabShim<Workspace, WorkspaceTab>
+         implements OpenDataFileHandler
    {
       @Handler
       public abstract void onLoadWorkspace();
@@ -48,9 +52,13 @@ public class WorkspaceTab extends DelayLoadWorkbenchTab<Workspace>
    }
 
    @Inject
-   public WorkspaceTab(Shim shim, Binder binder, Commands commands)
+   public WorkspaceTab(Shim shim, 
+                       Binder binder, 
+                       Commands commands,
+                       EventBus eventBus)
    {
       super("Workspace", shim);
       binder.bind(commands, shim);
+      eventBus.addHandler(OpenDataFileEvent.TYPE, shim);
    }
 }
