@@ -40,7 +40,7 @@
              <string>Rd</string>
          </array>
          <key>CFBundleTypeIconFile</key>
-         <string>RSource.icns</string>
+         <string>RDoc.icns</string>
          <key>CFBundleTypeName</key>
          <string>R Doc File</string>
          <key>CFBundleTypeRole</key>

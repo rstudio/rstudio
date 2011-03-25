@@ -40,13 +40,13 @@ public class FileTypeRegistry
 
    public static final TextFileType RD =
       new TextFileType("r_doc", "R Documentation", EditorLanguage.LANG_TEX, ".Rd",
-                       ICONS.iconTex(),
+                       ICONS.iconRd(),
                        true,
                        false, false, false, false);
 
    public static final TextFileType SWEAVE =
          new TextFileType("sweave", "Sweave Document", EditorLanguage.LANG_SWEAVE, ".Rnw",
-                          ICONS.iconTex(),
+                          ICONS.iconRsweave(),
                           true,
                           false, true, true, true);
 
@@ -77,16 +77,16 @@ public class FileTypeRegistry
       register("*.r", R, icons.iconRdoc());
       register(".rprofile", R, icons.iconRprofile());
       register(".rhistory", R, icons.iconRhistory());
-      register("*.rnw", SWEAVE, icons.iconTex());
-      register("*.snw", SWEAVE, icons.iconTex());
-      register("*.nw", SWEAVE, icons.iconText());
+      register("*.rnw", SWEAVE, icons.iconRsweave());
+      register("*.snw", SWEAVE, icons.iconRsweave());
+      register("*.nw", SWEAVE, icons.iconRsweave());
       register("*.tex", TEX, icons.iconTex());
       register("*.latex", TEX, icons.iconTex());
       register("*.sty", TEX, icons.iconTex());
       register("*.cls", TEX, icons.iconTex());
       register("*.bbl", TEX, icons.iconTex());
       register("*.bib", TEXT, icons.iconText());
-      register("*.rd", RD, icons.iconTex());
+      register("*.rd", RD, icons.iconRd());
       register("*.rdata", RDATA, icons.iconRdata());
       register("*.rda", RDATA, icons.iconRdata());
       defaultType_ = BROWSER;
