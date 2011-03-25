@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
@@ -45,6 +46,8 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -94,12 +97,21 @@ import java.util.TreeSet;
  * method of an enum constant that has been ordinalized.
  */
 public class EnumOrdinalizer {
-  public static String NAME = EnumOrdinalizer.class.getSimpleName();
-  public static Tracker tracker = null;
+  public static final String NAME = EnumOrdinalizer.class.getSimpleName();
+  
+  private static Tracker tracker = null;
+  private static boolean trackerEnabled = 
+      (System.getProperty("gwt.enableEnumOrdinalizerTracking") != null);
+  
+  public static void enableTracker() {
+    trackerEnabled = true;
+  }
   
   public static OptimizerStats exec(JProgram program) {
     Event optimizeEvent = SpeedTracerLogger.start(
         CompilerEventType.OPTIMIZE, "optimizer", NAME);
+    
+    startTracker();
     OptimizerStats stats = new EnumOrdinalizer(program).execImpl();
     optimizeEvent.end("didChange", "" + stats.didChange());
     return stats;
@@ -109,12 +121,17 @@ public class EnumOrdinalizer {
     return tracker;
   }
   
-  public static void startTracker() {
-    tracker = new Tracker();
+  public static void resetTracker() {
+    if (tracker != null) {
+      tracker = null;
+      startTracker();
+    }
   }
   
-  public static void stopTracker() {
-    tracker = null;
+  private static void startTracker() {
+    if (trackerEnabled && tracker == null) {
+      tracker = new Tracker();
+    }
   }
   
   private final JProgram program;
@@ -195,7 +212,7 @@ public class EnumOrdinalizer {
    */
   private class CannotBeOrdinalAnalyzer extends ImplicitUpcastAnalyzer {
     
-    private final Set<String> jsniClassLiteralsVisited = new HashSet<String>();
+    private final Map<String, SourceInfo> jsniClassLiteralsInfo = new HashMap<String, SourceInfo>();
     private final Stack<JCastOperation> castOpsToIgnore =
         new Stack<JCastOperation>();
   
@@ -208,10 +225,10 @@ public class EnumOrdinalizer {
      */
     public void afterVisitor() {
       // black-list any Jsni enum ClassLiteralsVisited
-      for (String classLiteralName : jsniClassLiteralsVisited) {
+      for (String classLiteralName : jsniClassLiteralsInfo.keySet()) {
         JEnumType enumFromLiteral = enumsVisited.get(classLiteralName);
         if (enumFromLiteral != null) {
-          addToBlackList(enumFromLiteral);
+          addToBlackList(enumFromLiteral, jsniClassLiteralsInfo.get(classLiteralName));
         }
       }
     }
@@ -226,8 +243,8 @@ public class EnumOrdinalizer {
       }
       
       // check for explicit cast (check both directions)
-      blackListIfEnumCast(x.getExpr().getType(), x.getCastType());
-      blackListIfEnumCast(x.getCastType(), x.getExpr().getType());
+      blackListIfEnumCast(x.getExpr().getType(), x.getCastType(), x.getSourceInfo());
+      blackListIfEnumCast(x.getCastType(), x.getExpr().getType(), x.getSourceInfo());
     }
     
     @Override
@@ -243,7 +260,7 @@ public class EnumOrdinalizer {
        */
       JEnumType type = getEnumType(x.getRefType());
       if (type != null) {
-        blackListIfEnum(type);
+        blackListIfEnum(type, x.getSourceInfo());
       }
     }
     
@@ -254,7 +271,7 @@ public class EnumOrdinalizer {
       if (rescues != null && rescues.size() > 0) {
         for (JNode rescueNode : rescues) {
           if (rescueNode instanceof JType) {
-            blackListIfEnum((JType) rescueNode);
+            blackListIfEnum((JType) rescueNode, x.getSourceInfo());
           }
         }
       }
@@ -310,7 +327,7 @@ public class EnumOrdinalizer {
          * class itself.  This can occur when a call to the values() method gets
          * inlined, etc.  Also check here for any user defined static fields.
          */
-        blackListIfEnum(x.getField().getEnclosingType());
+        blackListIfEnum(x.getField().getEnclosingType(), x.getSourceInfo());
       }
     }
     
@@ -324,13 +341,13 @@ public class EnumOrdinalizer {
        */ 
       
       // check the field type
-      blackListIfEnum(x.getField().getType());
+      blackListIfEnum(x.getField().getType(), x.getSourceInfo());
       
       // check the referrer
       if (x.getInstance() != null) {
         blackListIfEnumExpression(x.getInstance());
       } else {
-        blackListIfEnum(x.getField().getEnclosingType());
+        blackListIfEnum(x.getField().getEnclosingType(), x.getSourceInfo());
       }
       
       /*
@@ -343,7 +360,7 @@ public class EnumOrdinalizer {
         JExpression initializer = x.getField().getInitializer();
         if (initializer instanceof JMethodCall) {
           if (((JMethodCall) initializer).getTarget() == classCreateForEnumMethod) {
-            jsniClassLiteralsVisited.add(x.getField().getName());
+            jsniClassLiteralsInfo.put(x.getField().getName(), x.getSourceInfo());
           }
         }
       }
@@ -368,7 +385,7 @@ public class EnumOrdinalizer {
          */ 
         if (this.currentMethod.getEnclosingType() != 
                       x.getTarget().getEnclosingType()) {
-          blackListIfEnum(x.getTarget().getEnclosingType());
+          blackListIfEnum(x.getTarget().getEnclosingType(), x.getSourceInfo());
         }
       }
       
@@ -388,7 +405,7 @@ public class EnumOrdinalizer {
          */ 
         if (this.currentMethod.getEnclosingType() != 
                       x.getTarget().getEnclosingType()) {
-          blackListIfEnum(x.getTarget().getEnclosingType());
+          blackListIfEnum(x.getTarget().getEnclosingType(), x.getSourceInfo());
         }
       }
       
@@ -509,35 +526,39 @@ public class EnumOrdinalizer {
      * which will be called for any implicit upcast.
      */
     @Override
-    protected void processImplicitUpcast(JType fromType, JType destType) {
+    protected void processImplicitUpcast(JType fromType, JType destType, SourceInfo info) {
       if (fromType == nullType) {
         // handle case where a nullType is cast to an enum
-        blackListIfEnum(destType);
+        blackListIfEnum(destType, info);
       } else if (fromType == javaScriptObjectType) {
         // handle case where a javaScriptObject is cast to an enum
-        blackListIfEnum(destType);
+        blackListIfEnum(destType, info);
       } else {
-        blackListIfEnumCast(fromType, destType);
+        blackListIfEnumCast(fromType, destType, info);
       }
     }
     
-    private void addToBlackList(JEnumType enumType) {
+    private void addToBlackList(JEnumType enumType, SourceInfo info) {
       ordinalizationBlackList.add(enumType);
+      
+      if (tracker != null) {
+        tracker.addEnumNotOrdinalizedInfo(enumType.getName(), info);
+      }
     }
     
-    private void blackListIfEnum(JType maybeEnum) {
+    private void blackListIfEnum(JType maybeEnum, SourceInfo info) {
       JEnumType actualEnum = getEnumType(maybeEnum);
       if (actualEnum != null) {
-        addToBlackList(actualEnum);
+        addToBlackList(actualEnum, info);
       }
     }
     
-    private void blackListIfEnumCast(JType maybeEnum, JType destType) {
+    private void blackListIfEnumCast(JType maybeEnum, JType destType, SourceInfo info) {
       JEnumType actualEnum = getEnumType(maybeEnum);
       JEnumType actualDestType = getEnumType(destType);
       if (actualEnum != null) {
         if (actualDestType != actualEnum) {
-          addToBlackList(actualEnum);
+          addToBlackList(actualEnum, info);
         }
         return;
       }
@@ -547,14 +568,14 @@ public class EnumOrdinalizer {
       actualDestType = getEnumTypeFromArrayLeafType(destType);
       if (actualEnum != null) {
         if (actualDestType != actualEnum) {
-          addToBlackList(actualEnum);
+          addToBlackList(actualEnum, info);
         }
       }
     }
     
     private void blackListIfEnumExpression(JExpression instance) {
       if (instance != null) {
-        blackListIfEnum(instance.getType());
+        blackListIfEnum(instance.getType(), instance.getSourceInfo());
       }
     }
   }
@@ -863,6 +884,7 @@ public class EnumOrdinalizer {
     private final Set<String> allEnumsOrdinalized;
     private final List<Set<String>> enumsVisitedPerPass;
     private final List<Set<String>> enumsOrdinalizedPerPass;
+    private final Map<String, List<SourceInfo>> enumInfoMap;
     private int runCount = -1;
     
     // use TreeSets, for nice sorted iteration for output
@@ -871,10 +893,22 @@ public class EnumOrdinalizer {
       allEnumsOrdinalized = new TreeSet<String>();
       enumsVisitedPerPass = new ArrayList<Set<String>>();
       enumsOrdinalizedPerPass = new ArrayList<Set<String>>();
+      enumInfoMap = new HashMap<String, List<SourceInfo>>();
       
       // add entry for initial pass
       enumsVisitedPerPass.add(new TreeSet<String>());
       enumsOrdinalizedPerPass.add(new TreeSet<String>());
+    }
+    
+    public void addEnumNotOrdinalizedInfo(String enumName, SourceInfo info) {
+      List<SourceInfo> infos = enumInfoMap.get(enumName);
+      if (infos == null) {
+        infos = new ArrayList<SourceInfo>();
+        enumInfoMap.put(enumName, infos);
+      }
+      if (!infos.contains(info)) {
+        infos.add(info);
+      }
     }
     
     public void addOrdinalized(String ordinalized) {
@@ -885,6 +919,13 @@ public class EnumOrdinalizer {
     public void addVisited(String visited) {
       enumsVisitedPerPass.get(runCount).add(visited);
       allEnumsVisited.add(visited);
+    }
+    
+    public String getInfoString(SourceInfo info) {
+      if (info != null) {
+        return info.getFileName() + ": Line " + info.getStartLine();
+      }
+      return null;
     }
     
     public int getNumOrdinalized() {
@@ -911,17 +952,44 @@ public class EnumOrdinalizer {
     
     public void logEnumsNotOrdinalized(TreeLogger logger, TreeLogger.Type logType) {
       if (logger != null) {
-        logger = logger.branch(logType, "Enums Not Ordinalized:");
+        boolean initialMessageLogged = false;
         for (String enumVisited : allEnumsVisited) {
           if (!isOrdinalized(enumVisited)) {
-            logger.branch(logType, enumVisited);
+            if (!initialMessageLogged) {
+              logger = logger.branch(logType, "Enums Not Ordinalized:");
+              initialMessageLogged = true;
+            }
+            TreeLogger subLogger = logger.branch(logType, enumVisited);
+            List<SourceInfo> infos = enumInfoMap.get(enumVisited);
+            if (infos == null) {
+              continue;
+            }
+
+            Collections.sort(infos, new Comparator<SourceInfo>() {
+              public int compare(SourceInfo s1, SourceInfo s2) {
+                int fileNameComp = s1.getFileName().compareTo(s2.getFileName());
+                if (fileNameComp != 0) {
+                  return fileNameComp;
+                }
+                if (s1.getStartLine() < s2.getStartLine()) {
+                  return -1;
+                } else if (s1.getStartLine() > s2.getStartLine()) {
+                  return 1;
+                }
+                return 0;
+              }
+            });
+
+            for (SourceInfo info : infos) {
+              subLogger.branch(logType, getInfoString(info));
+            }
           }
         }
       }
     }
         
     public void logEnumsOrdinalized(TreeLogger logger, TreeLogger.Type logType) {
-      if (logger != null) {
+      if (logger != null && allEnumsOrdinalized.size() > 0) {
         logger = logger.branch(logType, "Enums Ordinalized:");
         for (String enumOrdinalized : allEnumsOrdinalized) {
           logger.branch(logType, enumOrdinalized);
@@ -934,7 +1002,6 @@ public class EnumOrdinalizer {
         if (allEnumsOrdinalized.size() == 0) {
           return;
         }
-        logger = logger.branch(logType, "Enums Ordinalized per Optimization Pass:");
         int pass = 0;
         for (Set<String> enumsOrdinalized : enumsOrdinalizedPerPass) {
           pass++;
@@ -954,7 +1021,6 @@ public class EnumOrdinalizer {
         if (allEnumsVisited.size() == 0) {
           return;
         }
-        logger = logger.branch(logType, "Enums Visited per Optimization Pass:");
         int pass = 0;
         for (Set<String> enumsVisited : enumsVisitedPerPass) {
           pass++;
@@ -985,7 +1051,7 @@ public class EnumOrdinalizer {
     public TreeLogger logResultsSummary(TreeLogger logger, TreeLogger.Type logType) {
       if (logger != null) {
         logger = logger.branch(logType, "EnumOrdinalizer Results:");
-        logger.branch(logType, "After pass " + (runCount + 1));
+        logger.branch(logType, (runCount + 1) + " ordinalization passes completed");
         logger.branch(logType, allEnumsOrdinalized.size() + " of " + 
                                     allEnumsVisited.size() + " ordinalized");
         return logger;

@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
@@ -60,11 +61,11 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
   @Override
   public void endVisit(JBinaryOperation x, Context ctx) {
     if (x.isAssignment()) {
-      processIfTypesNotEqual(x.getRhs().getType(), x.getLhs().getType());
+      processIfTypesNotEqual(x.getRhs().getType(), x.getLhs().getType(), x.getSourceInfo());
     } else if (x.getRhs().getType() == nullType) {
-      processIfTypesNotEqual(nullType, x.getLhs().getType());
+      processIfTypesNotEqual(nullType, x.getLhs().getType(), x.getSourceInfo());
     } else if (x.getLhs().getType() == nullType) {
-      processIfTypesNotEqual(nullType, x.getRhs().getType());
+      processIfTypesNotEqual(nullType, x.getRhs().getType(), x.getSourceInfo());
     } else if (x.getOp() == JBinaryOperator.CONCAT ||
                 x.getOp() == JBinaryOperator.EQ ||
                 x.getOp() == JBinaryOperator.NEQ) {
@@ -73,22 +74,22 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
        * primitive types, we limit handling here to CONCAT, EQ and NEQ.
        * Need to do both directions.
        */
-      processIfTypesNotEqual(x.getLhs().getType(), x.getRhs().getType());
-      processIfTypesNotEqual(x.getRhs().getType(), x.getLhs().getType());
+      processIfTypesNotEqual(x.getLhs().getType(), x.getRhs().getType(), x.getSourceInfo());
+      processIfTypesNotEqual(x.getRhs().getType(), x.getLhs().getType(), x.getSourceInfo());
     }
   }
   
   @Override
   public void endVisit(JConditional x, Context ctx) {
-    processIfTypesNotEqual(x.getThenExpr().getType(), x.getType());
-    processIfTypesNotEqual(x.getElseExpr().getType(), x.getType());
+    processIfTypesNotEqual(x.getThenExpr().getType(), x.getType(), x.getSourceInfo());
+    processIfTypesNotEqual(x.getElseExpr().getType(), x.getType(), x.getSourceInfo());
   }
   
   @Override
   public void endVisit(JDeclarationStatement x, Context ctx) {
     if (x.getInitializer() != null) {
       processIfTypesNotEqual(x.getInitializer().getType(), 
-                              x.getVariableRef().getType());
+                              x.getVariableRef().getType(), x.getSourceInfo());
     }
   }
   
@@ -97,7 +98,7 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
     if (x.getInitializer() == null && !x.isFinal()) {
       if (!(x.getType() instanceof JPrimitiveType)) {
         // if it is declared without an initial value, it defaults to null
-        processIfTypesNotEqual(nullType, x.getType());
+        processIfTypesNotEqual(nullType, x.getType(), x.getSourceInfo());
       }
     }
   }
@@ -109,7 +110,7 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
     if (overrides != null && overrides.size() > 0) {
       // only check the first one, since other ones will be checked when those
       // overridden methods are visited, don't want to do redundant work
-      processIfTypesNotEqual(x.getType(), overrides.get(0).getType());
+      processIfTypesNotEqual(x.getType(), overrides.get(0).getType(), x.getSourceInfo());
     }
     
     if (x.getBody() != null && x.getBody().isNative()) {
@@ -119,7 +120,7 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
        */ 
       List<JParameter> params = x.getParams();
       for (int i = 0; i < params.size(); i++) {
-        processIfTypesNotEqual(params.get(i).getType(), javaScriptObjectType);
+        processIfTypesNotEqual(params.get(i).getType(), javaScriptObjectType, x.getSourceInfo());
       }
       
       /*
@@ -127,7 +128,7 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
        * it will be implicitly cast from JavaScriptObject
        */
       if (x.getType() != JPrimitiveType.VOID) {
-        processIfTypesNotEqual(javaScriptObjectType, x.getType());
+        processIfTypesNotEqual(javaScriptObjectType, x.getType(), x.getSourceInfo());
       }
     }
   }
@@ -141,7 +142,7 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
     for (int i = 0; i < args.size(); i++) {
       // make sure the param wasn't pruned
       if (i < params.size()) {
-        processIfTypesNotEqual(args.get(i).getType(), params.get(i).getType());
+        processIfTypesNotEqual(args.get(i).getType(), params.get(i).getType(), x.getSourceInfo());
       }
     }
   }
@@ -150,13 +151,13 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
   public void endVisit(JsniMethodRef x, Context ctx) {
     // the return type of this method ref will be cast to JavaScriptObject
     if (x.getTarget().getType() != JPrimitiveType.VOID) {
-      processIfTypesNotEqual(x.getTarget().getType(), javaScriptObjectType);
+      processIfTypesNotEqual(x.getTarget().getType(), javaScriptObjectType, x.getSourceInfo());
     }
     
     // check referenced method's params, which are passed as JavaScriptObjects
     List<JParameter> params = x.getTarget().getParams();
     for (int i = 0; i < params.size(); i++) {
-      processIfTypesNotEqual(javaScriptObjectType, params.get(i).getType());
+      processIfTypesNotEqual(javaScriptObjectType, params.get(i).getType(), x.getSourceInfo());
     }
   }
   
@@ -164,7 +165,7 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
   public void endVisit(JReturnStatement x, Context ctx) {
     if (x.getExpr() != null) {
       // check against the current method return type
-      processIfTypesNotEqual(x.getExpr().getType(), currentMethod.getType());
+      processIfTypesNotEqual(x.getExpr().getType(), currentMethod.getType(), x.getSourceInfo());
     }
   }
   
@@ -175,7 +176,7 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
     if (type instanceof JReferenceType) {
       type = ((JReferenceType) type).getUnderlyingType();
     }
-    processIfTypesNotEqual(type, throwableType);
+    processIfTypesNotEqual(type, throwableType, x.getSourceInfo());
   }
   
   @Override
@@ -190,13 +191,13 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
    * @param fromType
    * @param destType
    */
-  protected void processImplicitUpcast(JType fromType, JType destType) {
+  protected void processImplicitUpcast(JType fromType, JType destType, SourceInfo info) {
     // override
   }
 
-  private void processIfTypesNotEqual(JType fromType, JType destType) {
+  private void processIfTypesNotEqual(JType fromType, JType destType, SourceInfo info) {
     if (fromType != destType) {
-      processImplicitUpcast(fromType, destType);
+      processImplicitUpcast(fromType, destType, info);
     }
   }
 }

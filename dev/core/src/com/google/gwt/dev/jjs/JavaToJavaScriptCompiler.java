@@ -452,6 +452,7 @@ public class JavaToJavaScriptCompiler {
           obfuscateMap, unifiedAst.getModuleMetrics(),
           unifiedAst.getPrecompilationMetrics(), compilationMetrics));
 
+      logTrackingStats(logger);
       logger.log(TreeLogger.TRACE,
           "Permutation took " + (System.currentTimeMillis() - permStart)
               + " ms");
@@ -656,6 +657,8 @@ public class JavaToJavaScriptCompiler {
       if (options.isCompilerMetricsEnabled()) {
         precompilationMetrics.setAstTypes(getReferencedJavaClasses(jprogram));
       }
+
+      logTrackingStats(logger);
 
       Event createUnifiedAstEvent = SpeedTracerLogger.start(CompilerEventType.CREATE_UNIFIED_AST);
       UnifiedAst result = new UnifiedAst(options, new AST(jprogram, jsProgram),
@@ -1153,6 +1156,17 @@ public class JavaToJavaScriptCompiler {
     } else {
       logger.log(TreeLogger.ERROR, "Unexpected internal compiler error", e);
       return new UnableToCompleteException();
+    }
+  }
+
+  /*
+   * This method is intended as a central location for producing optional tracking output.
+   * This will be called after all optimization/normalization passes have completed.
+   */
+  private static void logTrackingStats(TreeLogger logger) {
+    EnumOrdinalizer.Tracker eot = EnumOrdinalizer.getTracker();
+    if (eot != null) {
+      eot.logResultsDetailed(logger, TreeLogger.WARN);
     }
   }
 
