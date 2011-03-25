@@ -91,12 +91,14 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
     var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
     var body = elem.contentWindow.document.body;
 
-    var handler = $entry(function() {
+    var handler = $entry(function(evt) {
       if (elem.__listener) {
         if (@com.google.gwt.user.client.impl.DOMImpl::isMyListener(Ljava/lang/Object;)(elem.__listener)) {
           // Weird: this code has the context of the script frame, but we need the
           // event from the edit iframe's window.
-          var evt = elem.contentWindow.event;
+          // this code is shared with all IE implementations (see RichText.gwt.xml)
+          // the event can be passed in as argument (IE9) or from the content window (IE8/7/6)
+          evt = evt || elem.contentWindow.event;
           @com.google.gwt.user.client.DOM::dispatchEvent(Lcom/google/gwt/user/client/Event;Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/EventListener;)(evt, elem, elem.__listener);
         }
       }
