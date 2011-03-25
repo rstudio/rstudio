@@ -30,6 +30,7 @@ import org.rstudio.studio.client.application.events.SaveActionChangedHandler;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.Void;
@@ -84,12 +85,14 @@ public class DesktopHooks
    public DesktopHooks(Commands commands,
                        EventBus events,
                        GlobalDisplay globalDisplay,
-                       Server server)
+                       Server server,
+                       FileTypeRegistry fileTypeRegistry)
    {
       commands_ = commands;
       events_ = events;
       globalDisplay_ = globalDisplay;
       server_ = server;
+      fileTypeRegistry_ = fileTypeRegistry;
       
       events_.addHandler(SaveActionChangedEvent.TYPE, 
                          new SaveActionChangedHandler() 
@@ -180,7 +183,17 @@ public class DesktopHooks
 
    void openFile(String filePath)
    {
-      events_.fireEvent(new FileEditEvent(FileSystemItem.createFile(filePath)));
+      // get the file system item
+      FileSystemItem file = FileSystemItem.createFile(filePath);
+      
+      // don't open directories (these can sneak in if the user 
+      // passes a directory on the command line)
+      if (!file.isDirectory())
+      {
+         // open the file. pass false for second param to prevent
+         // the default handler (the browser) from taking it
+         fileTypeRegistry_.openFile(file, false);
+      }
    }
    
    int getSaveAction()
@@ -192,6 +205,7 @@ public class DesktopHooks
    private final EventBus events_;
    private final GlobalDisplay globalDisplay_;
    private final Server server_;
+   private final FileTypeRegistry fileTypeRegistry_;
    
    private SaveAction saveAction_ = SaveAction.saveAsk();
 }

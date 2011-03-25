@@ -110,9 +110,21 @@ public class FileTypeRegistry
 
    public void openFile(FileSystemItem file)
    {
-      FileType fileType = getTypeForFile(file);
+      openFile(file, true);
+   }
+   
+   public boolean openFile(FileSystemItem file, boolean canUseDefault)
+   {
+      FileType fileType = getTypeForFile(file, canUseDefault);
       if (fileType != null)
+      {
          fileType.openFile(file, eventBus_);
+         return true;
+      }
+      else
+      {
+         return false;
+      }
    }
 
    public void editFile(FileSystemItem file)
@@ -132,6 +144,11 @@ public class FileTypeRegistry
 
    public FileType getTypeForFile(FileSystemItem file)
    {
+      return getTypeForFile(file, true);
+   }
+   
+   public FileType getTypeForFile(FileSystemItem file, boolean canUseDefault)
+   {
       if (file != null)
       {
          String filename = file.getName().toLowerCase();
@@ -144,7 +161,11 @@ public class FileTypeRegistry
          if (result != null)
             return result;
       }
-      return defaultType_;
+      
+      if (canUseDefault)
+         return defaultType_;
+      else
+         return null;
    }
 
    public TextFileType getTextTypeForFile(FileSystemItem file)
