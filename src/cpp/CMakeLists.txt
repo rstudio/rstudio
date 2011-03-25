@@ -104,8 +104,9 @@ list(APPEND BOOST_LIBS
 
 # UNIX BOOST
 if(UNIX)
-   # prefer static link to /usr/local/include/boost (user custom built version)
-   if(EXISTS /usr/local/include/boost)
+   # prefer static link to /usr/local/include/boost (our custom built version)
+   if(EXISTS /usr/local/include/boost AND
+      EXISTS /usr/local/lib/libboost_system.a)
 
       # find headers
       set(Boost_USE_STATIC_LIBS ON)
