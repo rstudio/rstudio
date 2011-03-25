@@ -17,12 +17,14 @@ package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.Lists;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,6 +36,25 @@ import java.util.Set;
 public class JMethod extends JNode implements HasAnnotations, HasEnclosingType,
     HasName, HasType, CanBeAbstract, CanBeSetFinal, CanBeNative, CanBeStatic {
 
+  private static class ExternalSerializedForm implements Serializable {
+
+    private final JDeclaredType enclosingType;
+    private final String signature;
+
+    public ExternalSerializedForm(JMethod method) {
+      enclosingType = method.getEnclosingType();
+      signature = method.getSignature();
+    }
+
+    private Object readResolve() {
+      String name = signature.substring(0, signature.indexOf('('));
+      JMethod result = new JMethod(SourceOrigin.UNKNOWN, name, enclosingType,
+          null, false, false, false, false);
+      result.signature = signature;
+      return result;
+    }
+  }
+
   private static final String TRACE_METHOD_WILDCARD = "*";
 
   private static void trace(String title, String code) {
@@ -42,6 +63,8 @@ public class JMethod extends JNode implements HasAnnotations, HasEnclosingType,
     System.out.println("---------------------------");
     System.out.println(code);
   }
+
+  protected transient String signature;
 
   private List<JAnnotation> annotations = Lists.create();
 
@@ -162,9 +185,6 @@ public class JMethod extends JNode implements HasAnnotations, HasEnclosingType,
   }
 
   public List<JType> getOriginalParamTypes() {
-    if (originalParamTypes == null) {
-      return null;
-    }
     return originalParamTypes;
   }
 
@@ -184,6 +204,21 @@ public class JMethod extends JNode implements HasAnnotations, HasEnclosingType,
    */
   public List<JParameter> getParams() {
     return params;
+  }
+
+  public String getSignature() {
+    if (signature == null) {
+      StringBuilder sb = new StringBuilder();
+      sb.append(getName());
+      sb.append('(');
+      for (JType type : getOriginalParamTypes()) {
+        sb.append(type.getJsniSignatureName());
+      }
+      sb.append(')');
+      sb.append(getOriginalReturnType().getJsniSignatureName());
+      signature = sb.toString();
+    }
+    return signature;
   }
 
   public List<JClassType> getThrownExceptions() {
@@ -327,6 +362,14 @@ public class JMethod extends JNode implements HasAnnotations, HasEnclosingType,
     params = visitor.acceptImmutable(params);
     if (body != null) {
       body = (JAbstractMethodBody) visitor.accept(body);
+    }
+  }
+
+  protected Object writeReplace() {
+    if (enclosingType != null && enclosingType.isExternal()) {
+      return new ExternalSerializedForm(this);
+    } else {
+      return this;
     }
   }
 

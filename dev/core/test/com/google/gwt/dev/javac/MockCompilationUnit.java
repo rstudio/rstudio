@@ -15,8 +15,6 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.gwt.dev.jjs.ast.JDeclaredType;
-
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 
 import java.util.Collection;
@@ -30,15 +28,20 @@ class MockCompilationUnit extends CompilationUnit {
   private static final AtomicInteger nextTimestamp = new AtomicInteger(1);
 
   private final ContentId contentId;
-  private final String typeName;
-  private final String source;
   private final long lastModified;
+  private final String source;
+  private final String typeName;
 
   public MockCompilationUnit(String typeName, String source) {
     this.typeName = typeName;
     this.source = source;
     contentId = new ContentId(typeName, source);
     lastModified = nextTimestamp.getAndIncrement();
+  }
+
+  @Override
+  public Collection<CompiledClass> getCompiledClasses() {
+    return null;
   }
 
   @Override
@@ -72,7 +75,7 @@ class MockCompilationUnit extends CompilationUnit {
   }
 
   @Override
-  public List<JDeclaredType> getTypes() {
+  public byte[] getTypesSerialized() {
     return null;
   }
 
@@ -93,11 +96,6 @@ class MockCompilationUnit extends CompilationUnit {
 
   protected Object writeReplace() {
     return this;
-  }
-
-  @Override
-  Collection<CompiledClass> getCompiledClasses() {
-    return null;
   }
 
   @Override

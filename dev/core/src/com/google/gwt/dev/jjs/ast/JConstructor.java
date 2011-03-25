@@ -16,13 +16,33 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * A Java constructor method.
  */
 public class JConstructor extends JMethod {
+
+  private static class ExternalSerializedForm implements Serializable {
+
+    private final JClassType enclosingType;
+    private final String signature;
+
+    public ExternalSerializedForm(JConstructor ctor) {
+      enclosingType = ctor.getEnclosingType();
+      signature = ctor.getSignature();
+    }
+
+    private Object readResolve() {
+      JConstructor result = new JConstructor(SourceOrigin.UNKNOWN,
+          enclosingType);
+      result.signature = signature;
+      return result;
+    }
+  }
 
   /**
    * Caches whether or not this constructor does any work. Once true, we never
@@ -105,6 +125,14 @@ public class JConstructor extends JMethod {
     }
     visitor.endVisit(this, ctx);
     traceAfter(visitor, before);
+  }
+
+  protected Object writeReplace() {
+    if (getEnclosingType() != null && getEnclosingType().isExternal()) {
+      return new ExternalSerializedForm(this);
+    } else {
+      return this;
+    }
   }
 
 }

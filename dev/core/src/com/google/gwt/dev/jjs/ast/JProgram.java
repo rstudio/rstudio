@@ -202,6 +202,19 @@ public class JProgram extends JNode {
     return x;
   }
 
+  public static List<JDeclaredType> deserializeTypes(ObjectInputStream stream)
+      throws IOException, ClassNotFoundException {
+    @SuppressWarnings("unchecked")
+    List<JDeclaredType> types = (List<JDeclaredType>) stream.readObject();
+    for (JDeclaredType type : types) {
+      type.readMembers(stream);
+    }
+    for (JDeclaredType type : types) {
+      type.readMethodBodies(stream);
+    }
+    return types;
+  }
+
   public static String getJsniSig(JMethod method) {
     return getJsniSig(method, true);
   }
@@ -254,6 +267,17 @@ public class JProgram extends JNode {
           frag);
     }
     return latest;
+  }
+
+  public static void serializeTypes(List<JDeclaredType> types,
+      ObjectOutputStream stream) throws IOException {
+    stream.writeObject(types);
+    for (JDeclaredType type : types) {
+      type.writeMembers(stream);
+    }
+    for (JDeclaredType type : types) {
+      type.writeMethodBodies(stream);
+    }
   }
 
   /**
@@ -1153,16 +1177,9 @@ public class JProgram extends JNode {
    * 
    * @see #writeObject(ObjectOutputStream)
    */
-  @SuppressWarnings("unchecked")
   private void readObject(ObjectInputStream stream) throws IOException,
       ClassNotFoundException {
-    allTypes = (List<JDeclaredType>) stream.readObject();
-    for (JDeclaredType type : allTypes) {
-      type.readMembers(stream);
-    }
-    for (JDeclaredType type : allTypes) {
-      type.readMethodBodies(stream);
-    }
+    allTypes = deserializeTypes(stream);
     stream.defaultReadObject();
   }
 
@@ -1188,13 +1205,7 @@ public class JProgram extends JNode {
    * recursion chains would result.
    */
   private void writeObject(ObjectOutputStream stream) throws IOException {
-    stream.writeObject(allTypes);
-    for (JDeclaredType type : allTypes) {
-      type.writeMembers(stream);
-    }
-    for (JDeclaredType type : allTypes) {
-      type.writeMethodBodies(stream);
-    }
+    serializeTypes(allTypes, stream);
     stream.defaultWriteObject();
   }
 }

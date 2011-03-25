@@ -287,6 +287,12 @@ public abstract class JDeclaredType extends JReferenceType implements
   }
 
   /**
+   * Subclasses must replace themselves with a shallow reference when
+   * {@link #isExternal()} is <code>true</code>.
+   */
+  protected abstract Object writeReplace();
+
+  /**
    * Clears all existing implemented interfaces.
    */
   void clearImplements() {
@@ -308,7 +314,7 @@ public abstract class JDeclaredType extends JReferenceType implements
   }
 
   /**
-   * See {@link #writeMethodBodies(ObjectOutputStream).
+   * See {@link #writeMethodBodies(ObjectOutputStream)}.
    * 
    * @see #writeMethodBodies(ObjectOutputStream)
    */

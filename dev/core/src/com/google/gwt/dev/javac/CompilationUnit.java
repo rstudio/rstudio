@@ -20,13 +20,16 @@ import com.google.gwt.dev.asm.ClassReader;
 import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.commons.EmptyVisitor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
+import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.collect.HashMap;
 
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.net.URL;
 import java.net.URLConnection;
@@ -255,6 +258,11 @@ public abstract class CompilationUnit implements Serializable {
     return anonymousClassMap;
   }
 
+  /**
+   * Returns all contained classes.
+   */
+  public abstract Collection<CompiledClass> getCompiledClasses();
+
   public abstract List<JsniMethod> getJsniMethods();
 
   /**
@@ -289,7 +297,25 @@ public abstract class CompilationUnit implements Serializable {
   /**
    * Returns the GWT AST types in this unit.
    */
-  public abstract List<JDeclaredType> getTypes();
+  public List<JDeclaredType> getTypes() {
+    try {
+      byte[] bytes = getTypesSerialized();
+      ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(
+          bytes));
+      return JProgram.deserializeTypes(ois);
+    } catch (IOException e) {
+      throw new RuntimeException("Unexpected IOException on in-memory stream",
+          e);
+    } catch (ClassNotFoundException e) {
+      throw new RuntimeException("Unexpected error deserializing AST for '" + getTypeName() + "'",
+          e);
+    }
+  }
+
+  /**
+   * Returns the GWT AST types in this unit in serialized form.
+   */
+  public abstract byte[] getTypesSerialized();
 
   @Deprecated
   public final boolean hasAnonymousClasses() {
@@ -341,11 +367,6 @@ public abstract class CompilationUnit implements Serializable {
    * form is {@link CachedCompilationUnit}.
    */
   protected abstract Object writeReplace();
-
-  /**
-   * Returns all contained classes.
-   */
-  abstract Collection<CompiledClass> getCompiledClasses();
 
   /**
    * Returns the content ID for the source with which this unit was compiled.

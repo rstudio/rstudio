@@ -39,6 +39,7 @@ public class DiskCacheToken implements Serializable {
    * Create a wrapper for a token associated with the given diskCache.
    */
   DiskCacheToken(DiskCache diskCache, long token) {
+    assert token >= 0;
     this.diskCache = diskCache;
     this.token = token;
   }

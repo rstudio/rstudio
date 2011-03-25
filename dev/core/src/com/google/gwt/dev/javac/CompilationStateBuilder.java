@@ -51,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Manages a centralized cache for compiled units.
@@ -120,11 +121,14 @@ public class CompilationStateBuilder {
             }
           }
 
-          CompilationUnit unit =
-              builder.build(compiledClasses, types, dependencies, jsniMethods.values(), methodArgs,
+          for (CompiledClass cc : compiledClasses) {
+            allValidClasses.put(cc.getSourceName(), cc);
+          }
+
+          builder.setClasses(compiledClasses).setTypes(types).setDependencies(dependencies)
+              .setJsniMethods(jsniMethods.values()).setMethodArgs(methodArgs).setProblems(
                   cud.compilationResult().getProblems());
-          addValidUnit(unit);
-          newlyBuiltUnits.add(unit);
+          buildQueue.add(builder);
         } finally {
           event.end();
         }
@@ -140,6 +144,8 @@ public class CompilationStateBuilder {
 
     private final GwtAstBuilder astBuilder = new GwtAstBuilder();
 
+    private transient LinkedBlockingQueue<CompilationUnitBuilder> buildQueue;
+
     /**
      * The JDT compiler.
      */
@@ -150,8 +156,6 @@ public class CompilationStateBuilder {
      */
     private final JSORestrictionsChecker.CheckerState jsoState =
         new JSORestrictionsChecker.CheckerState();
-
-    private transient Collection<CompilationUnit> newlyBuiltUnits;
 
     public CompileMoreLater(AdditionalTypeProviderDelegate delegate) {
       compiler.setAdditionalTypeProviderDelegate(delegate);
@@ -174,8 +178,7 @@ public class CompilationStateBuilder {
     void addValidUnit(CompilationUnit unit) {
       compiler.addCompiledUnit(unit);
       for (CompiledClass cc : unit.getCompiledClasses()) {
-        String sourceName = cc.getSourceName();
-        allValidClasses.put(sourceName, cc);
+        allValidClasses.put(cc.getSourceName(), cc);
       }
     }
 
@@ -194,20 +197,54 @@ public class CompilationStateBuilder {
       ArrayList<CompilationUnit> resultUnits = new ArrayList<CompilationUnit>();
       do {
         // Compile anything that needs to be compiled.
-        this.newlyBuiltUnits = new ArrayList<CompilationUnit>();
-
+        buildQueue = new LinkedBlockingQueue<CompilationUnitBuilder>();
+        final ArrayList<CompilationUnit> newlyBuiltUnits = new ArrayList<CompilationUnit>();
+        final CompilationUnitBuilder sentinel = CompilationUnitBuilder.create((GeneratedUnit) null);
+        final Throwable[] workerException = new Throwable[1];
+        Thread buildThread = new Thread() {
+          @Override
+          public void run() {
+            try {
+              do {
+                CompilationUnitBuilder builder = buildQueue.take();
+                if (builder == sentinel) {
+                  return;
+                }
+                // Expensive, must serialize GWT AST types to bytes.
+                CompilationUnit unit = builder.build();
+                newlyBuiltUnits.add(unit);
+              } while (true);
+            } catch (Throwable e) {
+              workerException[0] = e;
+            }
+          }
+        };
+        buildThread.setName("CompilationUnitBuilder");
+        buildThread.start();
         Event jdtCompilerEvent = SpeedTracerLogger.start(eventType);
         try {
           compiler.doCompile(builders);
         } finally {
           jdtCompilerEvent.end();
         }
-
-        resultUnits.addAll(this.newlyBuiltUnits);
+        buildQueue.add(sentinel);
+        try {
+          buildThread.join();
+          if (workerException[0] != null) {
+            throw workerException[0];
+          }
+        } catch (RuntimeException e) {
+          throw e;
+        } catch (Throwable e) {
+          throw new RuntimeException("Exception processing units", e);
+        } finally {
+          buildQueue = null;
+        }
+        resultUnits.addAll(newlyBuiltUnits);
         builders.clear();
 
         // Resolve all newly built unit deps against the global classes.
-        for (CompilationUnit unit : this.newlyBuiltUnits) {
+        for (CompilationUnit unit : newlyBuiltUnits) {
           unit.getDependencies().resolve(allValidClasses);
         }
 

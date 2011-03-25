@@ -16,11 +16,28 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
+
+import java.io.Serializable;
 
 /**
  * Java interface type definition.
  */
 public class JInterfaceType extends JDeclaredType {
+
+  private static class ExternalSerializedForm implements Serializable {
+    private final String name;
+
+    public ExternalSerializedForm(JInterfaceType interfaceType) {
+      name = interfaceType.getName();
+    }
+
+    private Object readResolve() {
+      JInterfaceType result = new JInterfaceType(SourceOrigin.UNKNOWN, name);
+      result.setExternal(true);
+      return result;
+    }
+  }
 
   public JInterfaceType(SourceInfo info, String name) {
     super(info, name);
@@ -51,5 +68,14 @@ public class JInterfaceType extends JDeclaredType {
       methods = visitor.acceptWithInsertRemoveImmutable(methods);
     }
     visitor.endVisit(this, ctx);
+  }
+
+  @Override
+  protected Object writeReplace() {
+    if (isExternal()) {
+      return new ExternalSerializedForm(this);
+    } else {
+      return this;
+    }
   }
 }

@@ -16,6 +16,9 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
+
+import java.io.Serializable;
 
 /**
  * Java field definition.
@@ -44,11 +47,31 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
     }
   }
 
+  private static class ExternalSerializedForm implements Serializable {
+
+    private final JDeclaredType enclosingType;
+    private final String signature;
+
+    public ExternalSerializedForm(JField field) {
+      enclosingType = field.getEnclosingType();
+      signature = field.getSignature();
+    }
+
+    private Object readResolve() {
+      String name = signature.substring(0, signature.indexOf(':'));
+      JField result = new JField(SourceOrigin.UNKNOWN, name, enclosingType,
+          JNullType.INSTANCE, false, Disposition.NONE);
+      result.signature = signature;
+      return result;
+    }
+  }
+
   private final JDeclaredType enclosingType;
   private final boolean isCompileTimeConstant;
   private final boolean isStatic;
   private boolean isThisRef;
   private boolean isVolatile;
+  private transient String signature;
 
   public JField(SourceInfo info, String name, JDeclaredType enclosingType, JType type,
       boolean isStatic, Disposition disposition) {
@@ -71,6 +94,17 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
       return (JValueLiteral) initializer;
     }
     return null;
+  }
+
+  public String getSignature() {
+    if (signature == null) {
+      StringBuilder sb = new StringBuilder();
+      sb.append(getName());
+      sb.append(':');
+      sb.append(getType().getJsniSignatureName());
+      signature = sb.toString();
+    }
+    return signature;
   }
 
   public boolean isCompileTimeConstant() {
@@ -114,6 +148,14 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
       // Do not visit declStmt, it gets visited within its own code block.
     }
     visitor.endVisit(this, ctx);
+  }
+
+  protected Object writeReplace() {
+    if (enclosingType != null && enclosingType.isExternal()) {
+      return new ExternalSerializedForm(this);
+    } else {
+      return this;
+    }
   }
 
 }

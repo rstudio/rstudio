@@ -125,11 +125,11 @@ public class JdtCompiler {
 
     public void process(CompilationUnitBuilder builder,
         CompilationUnitDeclaration cud, List<CompiledClass> compiledClasses) {
-      CompilationUnit unit = builder.build(compiledClasses,
-          Collections.<JDeclaredType> emptyList(), new Dependencies(),
-          Collections.<JsniMethod> emptyList(), new MethodArgNamesLookup(),
-          cud.compilationResult().getProblems());
-      results.add(unit);
+      builder.setClasses(compiledClasses).setTypes(Collections.<JDeclaredType> emptyList())
+          .setDependencies(new Dependencies()).setJsniMethods(Collections.<JsniMethod> emptyList())
+          .setMethodArgs(new MethodArgNamesLookup()).setProblems(
+              cud.compilationResult().getProblems());
+      results.add(builder.build());
     }
   }
   /**

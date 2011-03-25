@@ -16,18 +16,26 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
+import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.util.collect.Lists;
 
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.Collection;
 import java.util.List;
 
 abstract class CompilationUnitImpl extends CompilationUnit {
 
+  /**
+   * Handle to serialized GWT AST.
+   */
+  protected transient long astToken;
+
   private final Dependencies dependencies;
   private final List<CompiledClass> exposedCompiledClasses;
-  private final List<JDeclaredType> exposedTypes;
   private final boolean hasErrors;
   private final List<JsniMethod> jsniMethods;
   private final MethodArgNamesLookup methodArgs;
@@ -38,7 +46,6 @@ abstract class CompilationUnitImpl extends CompilationUnit {
       Collection<? extends JsniMethod> jsniMethods,
       MethodArgNamesLookup methodArgs, CategorizedProblem[] problems) {
     this.exposedCompiledClasses = Lists.normalizeUnmodifiable(compiledClasses);
-    this.exposedTypes = Lists.normalizeUnmodifiable(types);
     this.dependencies = dependencies;
     this.jsniMethods = Lists.create(jsniMethods.toArray(new JsniMethod[jsniMethods.size()]));
     this.methodArgs = methodArgs;
@@ -55,6 +62,21 @@ abstract class CompilationUnitImpl extends CompilationUnit {
     for (CompiledClass cc : compiledClasses) {
       cc.initUnit(this);
     }
+    try {
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      ObjectOutputStream out = new ObjectOutputStream(baos);
+      JProgram.serializeTypes(types, out);
+      out.close();
+      astToken = diskCache.writeByteArray(baos.toByteArray());
+    } catch (IOException e) {
+      throw new RuntimeException("Unexpected IOException on in-memory stream",
+          e);
+    }
+  }
+
+  @Override
+  public Collection<CompiledClass> getCompiledClasses() {
+    return exposedCompiledClasses;
   }
 
   @Override
@@ -68,21 +90,13 @@ abstract class CompilationUnitImpl extends CompilationUnit {
   }
 
   @Override
-  public List<JDeclaredType> getTypes() {
-    return exposedTypes;
+  public byte[] getTypesSerialized() {
+    return diskCache.readByteArray(astToken);
   }
 
   @Override
   public boolean isError() {
     return hasErrors;
-  }
-
-  /**
-   * Returns all contained classes.
-   */
-  @Override
-  Collection<CompiledClass> getCompiledClasses() {
-    return exposedCompiledClasses;
   }
 
   @Override

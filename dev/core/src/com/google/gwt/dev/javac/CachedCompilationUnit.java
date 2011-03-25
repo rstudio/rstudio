@@ -15,14 +15,10 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.gwt.dev.jjs.ast.JDeclaredType;
-import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.dev.util.DiskCacheToken;
 
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.Collection;
 import java.util.List;
 
@@ -30,6 +26,7 @@ import java.util.List;
  * This class provides a Convenient way to serialize a {@CompilationUnit}.
  */
 public class CachedCompilationUnit extends CompilationUnit {
+  private final DiskCacheToken astToken;
   private final Collection<CompiledClass> compiledClasses;
   private final ContentId contentId;
   private final Dependencies dependencies;
@@ -42,18 +39,17 @@ public class CachedCompilationUnit extends CompilationUnit {
   private final boolean isGenerated;
   private final boolean isSuperSource;
   private final CategorizedProblem[] problems;
-  private transient long sourceToken = -1;
+  private final DiskCacheToken sourceToken;
 
   /**
    * Create a compilation unit that can be serialized from another {@link CompilationUnit}.
    * 
    * @param unit A unit to copy
-   * @param sourceToken A valid {@DiskCache} token for this unit's source code. If
-   *          you don't have a valid disk cache token, use another constructor
-   *          to provide the source code.
+   * @param sourceToken A valid {@DiskCache} token for this unit's source code.
+   * @param astToken A valid {@DiskCache} token for this unit's serialized AST types.
    */
   @SuppressWarnings("deprecation")
-  CachedCompilationUnit(CompilationUnit unit, long sourceToken) {
+  CachedCompilationUnit(CompilationUnit unit, long sourceToken, long astToken) {
     assert unit != null;
     this.compiledClasses = unit.getCompiledClasses();
     this.contentId = unit.getContentId();
@@ -75,8 +71,13 @@ public class CachedCompilationUnit extends CompilationUnit {
         this.problems[i] = new SerializableCategorizedProblem(problemsIn[i]);
       }
     }
-    assert sourceToken >= 0;
-    this.sourceToken = sourceToken;
+    this.astToken = new DiskCacheToken(astToken);
+    this.sourceToken = new DiskCacheToken(sourceToken);
+  }
+
+  @Override
+  public Collection<CompiledClass> getCompiledClasses() {
+    return compiledClasses;
   }
 
   @Override
@@ -102,7 +103,7 @@ public class CachedCompilationUnit extends CompilationUnit {
   @Override
   @Deprecated
   public String getSource() {
-    return diskCache.readString(sourceToken);
+    return sourceToken.readString();
   }
 
   @Override
@@ -111,9 +112,8 @@ public class CachedCompilationUnit extends CompilationUnit {
   }
 
   @Override
-  public List<JDeclaredType> getTypes() {
-    // TODO(scottb): implement.
-    return Lists.create();
+  public byte[] getTypesSerialized() {
+    return astToken.readByteArray();
   }
 
   @Override
@@ -139,11 +139,6 @@ public class CachedCompilationUnit extends CompilationUnit {
   }
 
   @Override
-  Collection<CompiledClass> getCompiledClasses() {
-    return compiledClasses;
-  }
-
-  @Override
   ContentId getContentId() {
     return contentId;
   }
@@ -156,16 +151,5 @@ public class CachedCompilationUnit extends CompilationUnit {
   @Override
   CategorizedProblem[] getProblems() {
     return problems;
-  }
-
-  private void readObject(ObjectInputStream inputStream)
-      throws ClassNotFoundException, IOException {
-    inputStream.defaultReadObject();
-    sourceToken = diskCache.transferFromStream(inputStream);
-  }
-
-  private void writeObject(ObjectOutputStream outputStream) throws IOException {
-    outputStream.defaultWriteObject();
-    diskCache.transferToStream(sourceToken, outputStream);
   }
 }

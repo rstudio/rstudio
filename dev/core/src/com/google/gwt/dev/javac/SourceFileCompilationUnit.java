@@ -101,7 +101,7 @@ class SourceFileCompilationUnit extends CompilationUnitImpl {
     if (sourceToken < 0) {
       sourceToken = diskCache.transferFromStream(sourceFile.openContents());
     }
-    return new CachedCompilationUnit(this, sourceToken);
+    return new CachedCompilationUnit(this, sourceToken, astToken);
   }
 
   @Override

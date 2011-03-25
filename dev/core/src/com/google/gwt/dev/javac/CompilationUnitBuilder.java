@@ -209,7 +209,7 @@ public abstract class CompilationUnitBuilder {
     protected Object writeReplace() {
       long sourceToken = generatedUnit.getSourceToken();
       assert sourceToken >= 0;
-      return new CachedCompilationUnit(this, sourceToken);
+      return new CachedCompilationUnit(this, sourceToken, astToken);
     }
 
     @Override
@@ -239,20 +239,30 @@ public abstract class CompilationUnitBuilder {
         + Shared.toPath(generatedUnit.getTypeName());
   }
 
+  private List<CompiledClass> compiledClasses;
+  private Dependencies dependencies;
+  private Collection<? extends JsniMethod> jsniMethods;
+  private MethodArgNamesLookup methodArgs;
+  private CategorizedProblem[] problems;
+
   /**
    * Caches source until JSNI methods can be collected.
    */
   private transient String source;
 
+  private List<JDeclaredType> types;
+
   protected CompilationUnitBuilder() {
   }
 
-  public CompilationUnit build(List<CompiledClass> compiledClasses,
-      List<JDeclaredType> types, Dependencies dependencies,
-      Collection<? extends JsniMethod> jsniMethods,
-      MethodArgNamesLookup methodArgs, CategorizedProblem[] problems) {
+  public CompilationUnit build() {
     // Free the source now.
     source = null;
+    assert compiledClasses != null;
+    assert types != null;
+    assert dependencies != null;
+    assert jsniMethods != null;
+    assert methodArgs != null;
     return makeUnit(compiledClasses, types, dependencies, jsniMethods,
         methodArgs, problems);
   }
@@ -269,6 +279,48 @@ public abstract class CompilationUnitBuilder {
   }
 
   public abstract String getTypeName();
+
+  public CompilationUnitBuilder setClasses(List<CompiledClass> compiledClasses) {
+    this.compiledClasses = compiledClasses;
+    return this;
+  }
+
+  public CompilationUnitBuilder setCompiledClasses(
+      List<CompiledClass> compiledClasses) {
+    this.compiledClasses = compiledClasses;
+    return this;
+  }
+
+  public CompilationUnitBuilder setDependencies(Dependencies dependencies) {
+    this.dependencies = dependencies;
+    return this;
+  }
+
+  public CompilationUnitBuilder setJsniMethods(
+      Collection<? extends JsniMethod> jsniMethods) {
+    this.jsniMethods = jsniMethods;
+    return this;
+  }
+
+  public CompilationUnitBuilder setMethodArgs(MethodArgNamesLookup methodArgs) {
+    this.methodArgs = methodArgs;
+    return this;
+  }
+
+  public CompilationUnitBuilder setProblems(CategorizedProblem[] problems) {
+    this.problems = problems;
+    return this;
+  }
+
+  public CompilationUnitBuilder setSource(String source) {
+    this.source = source;
+    return this;
+  }
+
+  public CompilationUnitBuilder setTypes(List<JDeclaredType> types) {
+    this.types = types;
+    return this;
+  }
 
   @Override
   public final String toString() {

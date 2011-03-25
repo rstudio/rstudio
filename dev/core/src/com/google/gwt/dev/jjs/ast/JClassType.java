@@ -16,11 +16,29 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
+
+import java.io.Serializable;
 
 /**
  * Java class type reference expression.
  */
 public class JClassType extends JDeclaredType implements CanBeSetFinal {
+
+  private static class ExternalSerializedForm implements Serializable {
+    private final String name;
+
+    public ExternalSerializedForm(JClassType classType) {
+      name = classType.getName();
+    }
+
+    private Object readResolve() {
+      JClassType result = new JClassType(SourceOrigin.UNKNOWN, name, false,
+          false);
+      result.setExternal(true);
+      return result;
+    }
+  }
 
   private final boolean isAbstract;
   private boolean isFinal;
@@ -80,5 +98,14 @@ public class JClassType extends JDeclaredType implements CanBeSetFinal {
       methods = visitor.acceptWithInsertRemoveImmutable(methods);
     }
     visitor.endVisit(this, ctx);
+  }
+
+  @Override
+  protected Object writeReplace() {
+    if (isExternal()) {
+      return new ExternalSerializedForm(this);
+    } else {
+      return this;
+    }
   }
 }
