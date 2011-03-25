@@ -62,7 +62,7 @@
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/RGraphics.hpp>
 #include <r/session/REventLoop.hpp>
-#include <R/R_ext/rlocale.h>
+#include <R_ext/rlocale.h>
 
 #include <session/SessionConstants.hpp>
 #include <session/SessionOptions.hpp>
