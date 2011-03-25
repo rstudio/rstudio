@@ -70,7 +70,7 @@ public class DiskCache {
   private boolean atEnd = true;
   private RandomAccessFile file;
 
-  protected DiskCache() {
+  DiskCache() {
     try {
       File temp = File.createTempFile("gwt", "byte-cache");
       temp.deleteOnExit();
@@ -87,10 +87,9 @@ public class DiskCache {
   }
 
   /**
-   * Read some bytes off disk.
+   * Retrieve the underlying bytes.
    * 
-   * @param token a handle previously returned from
-   *          {@link #writeByteArray(byte[])}
+   * @param token a previously returned token
    * @return the bytes that were written
    */
   public synchronized byte[] readByteArray(long token) {
@@ -106,24 +105,30 @@ public class DiskCache {
     }
   }
 
+  /**
+   * Deserialize the underlying bytes as an object.
+   * 
+   * @param <T> the type of the object to deserialize
+   * @param token a previously returned token
+   * @param type the type of the object to deserialize
+   * @return the deserialized object
+   */
   public <T> T readObject(long token, Class<T> type) {
     try {
       byte[] bytes = readByteArray(token);
       ByteArrayInputStream in = new ByteArrayInputStream(bytes);
       return Util.readStreamAsObject(in, type);
     } catch (ClassNotFoundException e) {
-      throw new RuntimeException(
-          "Unexpected exception deserializing from disk cache", e);
+      throw new RuntimeException("Unexpected exception deserializing from disk cache", e);
     } catch (IOException e) {
-      throw new RuntimeException(
-          "Unexpected exception deserializing from disk cache", e);
+      throw new RuntimeException("Unexpected exception deserializing from disk cache", e);
     }
   }
 
   /**
-   * Read a String from disk.
+   * Read the underlying bytes as a String.
    * 
-   * @param token a handle previously returned from {@link #writeString(String)}
+   * @param token a previously returned token
    * @return the String that was written
    */
   public String readString(long token) {
@@ -133,7 +138,7 @@ public class DiskCache {
   /**
    * Write the rest of the data in an input stream to disk.
    * 
-   * @return a handle to retrieve it later
+   * @return a token to retrieve the data later
    */
   public synchronized long transferFromStream(InputStream in) {
     byte[] buf = Util.takeThreadLocalBuf();
@@ -165,8 +170,10 @@ public class DiskCache {
   }
 
   /**
-   * Reads bytes of data back from disk and writes them into the specified
-   * output stream.
+   * Writes the underlying bytes into the specified output stream.
+   * 
+   * @param token a previously returned token
+   * @param out the stream to write into
    */
   public synchronized void transferToStream(long token, OutputStream out) {
     byte[] buf = Util.takeThreadLocalBuf();
@@ -195,7 +202,7 @@ public class DiskCache {
   /**
    * Write a byte array to disk.
    * 
-   * @return a handle to retrieve it later
+   * @return a token to retrieve the data later
    */
   public synchronized long writeByteArray(byte[] bytes) {
     try {
@@ -208,21 +215,25 @@ public class DiskCache {
     }
   }
 
+  /**
+   * Serialize an Object to disk.
+   * 
+   * @return a token to retrieve the data later
+   */
   public long writeObject(Object object) {
     try {
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       Util.writeObjectToStream(out, object);
       return writeByteArray(out.toByteArray());
     } catch (IOException e) {
-      throw new RuntimeException("Unexpected IOException on in-memory stream",
-          e);
+      throw new RuntimeException("Unexpected IOException on in-memory stream", e);
     }
   }
 
   /**
-   * Write a String to disk.
+   * Write a String to disk as bytes.
    * 
-   * @return a handle to retrieve it later
+   * @return a token to retrieve the data later
    */
   public long writeString(String str) {
     return writeByteArray(Util.getBytes(str));
