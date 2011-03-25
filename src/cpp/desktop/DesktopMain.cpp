@@ -177,7 +177,8 @@ int main(int argc, char* argv[])
 #ifdef __APPLE__
       // get filename from OpenFile apple-event (pump to ensure delivery)
       pApp->processEvents();
-      filename = verifyAndNormalizeFilename(pAppLaunch->openFileRequest());
+      filename = verifyAndNormalizeFilename(
+                              pAppLaunch->startupOpenFileRequest());
 #else
       // get filename from command line arguments
       if (pApp->arguments().size() > 1)

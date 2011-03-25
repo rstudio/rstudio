@@ -29,16 +29,19 @@ public:
       setApplicationName(appName);
    }
 
-   QString openFileRequest() const
+   QString startupOpenFileRequest() const
    {
-      return openFileRequest_;
+      return startupOpenFileRequest_;
    }
+
+signals:
+    void openFileRequest(QString filename);
 
 protected:
     virtual bool event(QEvent* pEvent);
 
 private:
-    QString openFileRequest_;
+    QString startupOpenFileRequest_;
 
 };
 

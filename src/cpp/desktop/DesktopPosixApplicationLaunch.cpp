@@ -43,11 +43,17 @@ void ApplicationLaunch::init(QString appName,
                              boost::scoped_ptr<ApplicationLaunch>* ppAppLaunch)
 {
    // Immediately stuffed into scoped_ptr
-   PosixApplication* pSingleApplication = new PosixApplication(appName, argc, argv);
+   PosixApplication* pSingleApplication = new PosixApplication(appName,
+                                                               argc,
+                                                               argv);
    pSingleApplication->setApplicationName(appName);
    ppApp->reset(pSingleApplication);
 
    ppAppLaunch->reset(new ApplicationLaunch());
+
+   // connect app open file signal to app launch
+   connect(app(), SIGNAL(openFileRequest(QString)),
+           ppAppLaunch->get(), SIGNAL(openFileRequest(QString)));
 }
 
 void ApplicationLaunch::setActivationWindow(QWidget* pWindow)
@@ -61,9 +67,9 @@ bool ApplicationLaunch::sendMessage(QString filename)
    return app()->sendMessage(filename);
 }
 
-QString ApplicationLaunch::openFileRequest() const
+QString ApplicationLaunch::startupOpenFileRequest() const
 {
-   return app()->openFileRequest();
+   return app()->startupOpenFileRequest();
 }
 
 } // namespace desktop

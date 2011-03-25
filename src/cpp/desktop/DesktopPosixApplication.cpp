@@ -31,13 +31,13 @@ bool PosixApplication::event(QEvent* pEvent)
       {
          // if we don't yet have an activation window then this is a startup
          // request -- save it so DesktopMain can pull it out later
-         openFileRequest_ = filename;
+         startupOpenFileRequest_ = filename;
       }
       else
       {
          // otherwise we are already running so this is an apple event
          // targeted at opening a file in an existing instance
-         QtSingleApplication::sendMessage(filename);
+         openFileRequest(filename);
       }
 
       return true;
