@@ -19,11 +19,11 @@
 
 // detect filesystem3 so we can conditionally compile away breaking changes
 #if defined(BOOST_FILESYSTEM_VERSION) && BOOST_FILESYSTEM_VERSION != 2
-#define BOOST_FS_STRING(str) ((str).string())
-#define BOOST_FS_COMPLETE(p, base) boost::filesystem::absolute(p, base)
+#define BOOST_FS_STRING(str) toString((str).string())
+#define BOOST_FS_COMPLETE(p, base) boost::filesystem::absolute(fromString(p), base)
 #else
-#define BOOST_FS_STRING(str) str
-#define BOOST_FS_COMPLETE(p, base) boost::filesystem::complete(p, base)
+#define BOOST_FS_STRING(str) toString(str)
+#define BOOST_FS_COMPLETE(p, base) boost::filesystem::complete(fromString(p), base)
 #endif
 
 #include <core/StringUtils.hpp>
@@ -35,10 +35,43 @@
 namespace core {
 
 namespace {
-void logError(boost::filesystem::path path,
+
+#if FALSE
+
+typedef boost::filesystem::wpath path_type;
+typedef std::wstring internal_string;
+
+std::string toString(const internal_string& value)
+{
+   return string_utils::wstringToUtf8(value);
+}
+
+internal_string fromString(const std::string& value)
+{
+   return string_utils::utf8ToWstring(value);
+}
+
+#else
+
+typedef boost::filesystem::path path_type;
+typedef std::string internal_string;
+
+std::string toString(const internal_string& value)
+{
+   return value;
+}
+
+internal_string fromString(const std::string& value)
+{
+   return value;
+}
+
+#endif
+
+void logError(path_type path,
               const boost::filesystem::filesystem_error& e,
               const ErrorLocation& errorLocation);
-void addErrorProperties(boost::filesystem::path path, Error* pError) ;
+void addErrorProperties(path_type path, Error* pError) ;
 }
 
 struct FilePath::Impl
@@ -46,11 +79,11 @@ struct FilePath::Impl
    Impl()
    {
    }
-   Impl(boost::filesystem::path path)
+   Impl(path_type path)
       : path(path)
    {
    }
-   boost::filesystem::path path ;
+   path_type path ;
 };
   
 FilePath FilePath::initialPath() 
@@ -141,12 +174,12 @@ FilePath::FilePath()
 {
 }
    
-FilePath::FilePath(const std::string& absolutePath) 
-   : pImpl_(new Impl(std::string(absolutePath.c_str()))) // thwart ref-count
+FilePath::FilePath(const std::string& absolutePath)
+   : pImpl_(new Impl(fromString(std::string(absolutePath.c_str())))) // thwart ref-count
 {
 }
-   
-FilePath::~FilePath() 
+
+FilePath::~FilePath()
 {
 }
 
@@ -315,29 +348,28 @@ std::time_t FilePath::lastWriteTime() const
 std::string FilePath::relativePath(const FilePath& parentPath) const
 {
    // get iterators to this path and parent path
-   using boost::filesystem::path ;
-   path::iterator thisBegin = pImpl_->path.begin() ;
-   path::iterator thisEnd = pImpl_->path.end() ;
-   path::iterator parentBegin = parentPath.pImpl_->path.begin();
-   path::iterator parentEnd = parentPath.pImpl_->path.end() ;
+   path_type::iterator thisBegin = pImpl_->path.begin() ;
+   path_type::iterator thisEnd = pImpl_->path.end() ;
+   path_type::iterator parentBegin = parentPath.pImpl_->path.begin();
+   path_type::iterator parentEnd = parentPath.pImpl_->path.end() ;
    
    // if the child is fully prefixed by the parent
-   path::iterator it = std::search(thisBegin, thisEnd, parentBegin, parentEnd);
+   path_type::iterator it = std::search(thisBegin, thisEnd, parentBegin, parentEnd);
    if ( it == thisBegin )
    {
       // search for mismatch location
-      std::pair<path::iterator,path::iterator> mmPair = 
+      std::pair<path_type::iterator,path_type::iterator> mmPair =
                               std::mismatch(thisBegin, thisEnd, parentBegin);
       
       // build relative path from mismatch on
-      path relativePath ;
-      path::iterator mmit = mmPair.first ;
+      path_type relativePath ;
+      path_type::iterator mmit = mmPair.first ;
       while (mmit != thisEnd)
       {
          relativePath /= *mmit ;
          mmit++ ;
       }
-      return relativePath.string() ;
+      return toString(relativePath.string()) ;
    }
    else
    {
@@ -360,7 +392,7 @@ std::string FilePath::absolutePath() const
    if (empty())
       return std::string();
    else
-      return pImpl_->path.string() ;
+      return toString(pImpl_->path.string()) ;
 }
 
 Error FilePath::remove() const
@@ -457,7 +489,7 @@ Error FilePath::createDirectory(const std::string& name) const
 {
    try
    {
-      boost::filesystem::path targetDirectory ;
+      path_type targetDirectory ;
       if (name.empty())
          targetDirectory = pImpl_->path ;
       else
@@ -493,7 +525,9 @@ FilePath FilePath::complete(const std::string& path) const
    // this path is returned)
    try
    {
-      return FilePath(BOOST_FS_COMPLETE(path, pImpl_->path).string());
+      // TODO: The path gets round-tripped through toString/fromString, would
+      //   be nice to have a direct constructor
+      return FilePath(toString(BOOST_FS_COMPLETE(path, pImpl_->path).string()));
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
@@ -509,7 +543,9 @@ FilePath FilePath::parent() const
 {
    try
    {
-      return FilePath(pImpl_->path.parent_path().string());
+      // TODO: The path gets round-tripped through toString/fromString, would
+      //   be nice to have a direct constructor
+      return FilePath(toString(pImpl_->path.parent_path().string()));
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
@@ -534,7 +570,7 @@ FilePath FilePath::childPath(const std::string& path) const
       else
       {
          // confirm this is a relative path
-         boost::filesystem::path relativePath(path);
+         path_type relativePath(fromString(path));
          if (relativePath.has_root_path())
          {
             throw boost::filesystem::filesystem_error(
@@ -576,14 +612,16 @@ Error FilePath::children(std::vector<FilePath>* pFilePaths) const
    if (!exists())
       return notFoundError(*this, ERROR_LOCATION);
 
-   using boost::filesystem::directory_iterator ;
+   using boost::filesystem::basic_directory_iterator ;
 
    try 
    {
-      directory_iterator end ;
-      for (directory_iterator itr(pImpl_->path); itr != end; ++itr)
+      basic_directory_iterator<path_type> end ;
+      for (basic_directory_iterator<path_type> itr(pImpl_->path); itr != end; ++itr)
       {
-         std::string itemPath = itr->path().string();
+         // TODO: The path gets round-tripped through toString/fromString, would
+         //   be nice to have a direct constructor
+         std::string itemPath = toString(itr->path().string());
          pFilePaths->push_back(FilePath(itemPath)) ;
       }
       return Success() ;
@@ -603,14 +641,18 @@ Error FilePath::childrenRecursive(
    if (!exists())
       return notFoundError(*this, ERROR_LOCATION);
 
-   using boost::filesystem::recursive_directory_iterator ;
+   using boost::filesystem::basic_recursive_directory_iterator ;
    
    try 
    {
-      recursive_directory_iterator end ;
+      basic_recursive_directory_iterator<path_type> end ;
       
-      for (recursive_directory_iterator itr(pImpl_->path); itr != end; ++itr)
-         iterationFunction(itr.level(),FilePath(itr->path().string()));
+      for (basic_recursive_directory_iterator<path_type> itr(pImpl_->path); itr != end; ++itr)
+      {
+         // TODO: The path gets round-tripped through toString/fromString, would
+         //   be nice to have a direct constructor
+         iterationFunction(itr.level(),FilePath(toString(itr->path().string())));
+      }
       
       return Success() ;
    }
@@ -674,7 +716,7 @@ bool compareAbsolutePathNoCase(const FilePath& file1, const FilePath& file2)
 }
 
 namespace { 
-void logError(boost::filesystem::path path,
+void logError(path_type path,
               const boost::filesystem::filesystem_error& e,
               const core::ErrorLocation& errorLocation)
 {
@@ -683,9 +725,9 @@ void logError(boost::filesystem::path path,
    core::log::logError(error, errorLocation) ;
 }
 
-void addErrorProperties(boost::filesystem::path path, Error* pError) 
+void addErrorProperties(path_type path, Error* pError)
 {
-   pError->addProperty("path", path.string()) ;
+   pError->addProperty("path", toString(path.string())) ;
 }
 }
 
