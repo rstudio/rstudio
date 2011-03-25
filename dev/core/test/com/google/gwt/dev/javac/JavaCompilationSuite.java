@@ -42,15 +42,20 @@ public class JavaCompilationSuite {
 
     suite.addTestSuite(ArtificialRescueCheckerTest.class);
     suite.addTestSuite(BinaryTypeReferenceRestrictionsCheckerTest.class);
+    suite.addTestSuite(BytecodeSignatureMakerTest.class);
     suite.addTestSuite(CompilationStateTest.class);
     suite.addTestSuite(CompilationUnitFileReferenceTest.class);
+    suite.addTestSuite(CompiledClassTest.class);
     suite.addTestSuite(GWTProblemTest.class);
     suite.addTestSuite(JavaSourceParserTest.class);
     suite.addTestSuite(JdtBehaviorTest.class);
     suite.addTestSuite(JdtCompilerTest.class);
-    suite.addTestSuite(JSORestrictionsTest.class);
     suite.addTestSuite(JsniCheckerTest.class);
     suite.addTestSuite(JsniCollectorTest.class);
+    suite.addTestSuite(JSORestrictionsTest.class);
+    suite.addTestSuite(MemoryUnitCacheTest.class);
+    suite.addTestSuite(PersistentUnitCacheTest.class);
+    suite.addTestSuite(TypeOracleMediatorFromByteCodeTest.class);
     suite.addTestSuite(TypeOracleMediatorFromSourceTest.class);
 
     suite.addTestSuite(CollectClassDataTest.class);
