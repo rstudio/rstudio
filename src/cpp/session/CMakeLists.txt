@@ -169,6 +169,7 @@ if (NOT RSTUDIO_SESSION_WIN64)
    # install 64 bit binaries if we are on win64
    if(WIN32)
       if(NOT ("$ENV{PROGRAMW6432}" STREQUAL ""))
+         file(MAKE_DIRECTORY  "${CMAKE_CURRENT_BINARY_DIR}/x64")
          install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x64"
                  USE_SOURCE_PERMISSIONS
                  DESTINATION  ${RSTUDIO_INSTALL_BIN})
