@@ -74,6 +74,9 @@ if(WIN32)
     DesktopRVersion.cpp
     DesktopWin32DetectRHome.cpp
   )
+  list(REMOVE_ITEM MOC_DESKTOP_HEADER_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/DesktopPosixApplication.hpp
+  )
 else()
   set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
     DesktopPosixApplication.cpp
