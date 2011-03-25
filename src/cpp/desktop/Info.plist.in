@@ -2,8 +2,25 @@
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-   <key>CFBundleDocumentTypes</key>
-   <array>
+      <key>CFBundleDocumentTypes</key>
+      <array>
+      <dict>
+         <key>CFBundleTypeExtensions</key>
+         <array>
+            <string>RData</string>
+            <string>Rdata</string>
+            <string>rdata</string>
+            <string>rda</string>
+         </array>
+         <key>CFBundleTypeIconFile</key>
+         <string>RData.icns</string>
+         <key>CFBundleTypeName</key>
+         <string>R Data File</string>
+         <key>CFBundleTypeRole</key>
+         <string>Editor</string>
+         <key>LSTypeIsPackage</key>
+         <false/>
+      </dict>
       <dict>
          <key>CFBundleTypeExtensions</key>
          <array>
@@ -16,24 +33,51 @@
          <string>R Source File</string>
          <key>CFBundleTypeRole</key>
          <string>Editor</string>
-         <key>LSIsAppleDefaultForType</key>
+      </dict>
+      <dict>
+         <key>CFBundleTypeExtensions</key>
+         <array>
+             <string>Rd</string>
+         </array>
+         <key>CFBundleTypeIconFile</key>
+         <string>RSource.icns</string>
+         <key>CFBundleTypeName</key>
+         <string>R Doc File</string>
+         <key>CFBundleTypeRole</key>
+         <string>Editor</string>
+      </dict>
+      <dict>
+         <key>CFBundleTypeExtensions</key>
+         <array>
+             <string>Rnw</string>
+             <string>rnw</string>
+             <string>Snw</string>
+             <string>snw</string>
+             <string>nw</string>
+         </array>
+         <key>CFBundleTypeIconFile</key>
+         <string>RSweave.icns</string>
+         <key>CFBundleTypeName</key>
+         <string>Sweave File</string>
+         <key>CFBundleTypeRole</key>
          <true/>
       </dict>
       <dict>
          <key>CFBundleTypeExtensions</key>
          <array>
-            <string>RData</string>
+             <string>tex</string>
+             <string>latex</string>
+             <string>sty</string>
+             <string>cls</string>
+             <string>bbl</string>
+             <string>bib</string>
          </array>
          <key>CFBundleTypeIconFile</key>
-         <string>RData.icns</string>
+         <string>RTex.icns</string>
          <key>CFBundleTypeName</key>
-         <string>R Data File</string>
+         <string>TeX File</string>
          <key>CFBundleTypeRole</key>
          <string>Editor</string>
-         <key>LSIsAppleDefaultForType</key>
-         <true/>
-         <key>LSTypeIsPackage</key>
-         <false/>
       </dict>
    </array>
 	<key>CFBundleDevelopmentRegion</key>

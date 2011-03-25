@@ -183,12 +183,12 @@ else()
    configure_file (${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in
                    ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
 
+   # collect list of icns files
+   file(GLOB ICNS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/icns/*.icns)
+
    # set our icns as the bundle icon
    set(MACOSX_BUNDLE_ICON_FILE RStudio.icns)
-   set_source_files_properties(
-      ${CMAKE_CURRENT_SOURCE_DIR}/RStudio.icns
-      ${CMAKE_CURRENT_SOURCE_DIR}/RSource.icns
-      ${CMAKE_CURRENT_SOURCE_DIR}/RData.icns
+   set_source_files_properties(${ICNS_FILES}
       PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
    # define bundle name and executable
@@ -199,9 +199,7 @@ else()
       ${MOC_DESKTOP_SOURCE_FILES}
       ${DESKTOP_RESOURCES_SOURCES}
       ${DESKTOP_UI_SOURCES}
-      RStudio.icns
-      RData.icns
-      RSource.icns)
+      ${ICNS_FILES})
 
    target_link_libraries(RStudio
       ${QT_LIBRARIES}
