@@ -304,6 +304,7 @@ if (UNIX AND NOT APPLE)
                    ${CMAKE_CURRENT_BINARY_DIR}/resources/logo/rstudio.png COPYONLY)
 
    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/resources/freedesktop/rstudio.desktop DESTINATION /usr/share/applications)
+   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/freedesktop/mime/rstudio.xml DESTINATION /usr/share/mime/packages)
    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/resources/logo/rstudio.png DESTINATION /usr/share/icons/hicolor/48x48/apps)
 endif()
 
