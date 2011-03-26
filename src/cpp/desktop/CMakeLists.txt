@@ -297,10 +297,44 @@ endif(RSTUDIO_BUNDLE_QT)
 # install desktop integration files on linux
 if (UNIX AND NOT APPLE)
 
-   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/resources/freedesktop/rstudio.desktop.in
-                   ${CMAKE_CURRENT_BINARY_DIR}/resources/freedesktop/rstudio.desktop)
+   # define freedesktop dirs
+   set(RSTUDIO_FREEDESKTOP_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/resources/freedesktop)
+   set(RSTUDIO_FREEDESKTOP_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/resources/freedesktop)
 
-   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/resources/freedesktop/rstudio.desktop DESTINATION /usr/share/applications)
-   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/freedesktop/rstudio.xml DESTINATION /usr/share/mime/packages)
-   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/freedesktop/icons/48x48/rstudio.png DESTINATION /usr/share/icons/hicolor/48x48/apps)
+   # desktop file (dynamically configured with paths)
+   configure_file (${RSTUDIO_FREEDESKTOP_SOURCE_DIR}/rstudio.desktop.in
+                   ${RSTUDIO_FREEDESKTOP_BINARY_DIR}/rstudio.desktop)
+   install(FILES ${RSTUDIO_FREEDESKTOP_BINARY_DIR}/rstudio.desktop
+           DESTINATION /usr/share/applications)
+
+   # mime types
+   install(FILES ${RSTUDIO_FREEDESKTOP_SOURCE_DIR}/rstudio.xml
+           DESTINATION /usr/share/mime/packages)
+
+   # define icon dirs
+   set(RSTUDIO_ICONS_16 ${RSTUDIO_FREEDESKTOP_SOURCE_DIR}/icons/16x16)
+   set(RSTUDIO_ICONS_32 ${RSTUDIO_FREEDESKTOP_SOURCE_DIR}/icons/32x32)
+   set(RSTUDIO_ICONS_48 ${RSTUDIO_FREEDESKTOP_SOURCE_DIR}/icons/48x48)
+   set(RSTUDIO_ICONS_256 ${RSTUDIO_FREEDESKTOP_SOURCE_DIR}/icons/256x256)
+
+   # application icon
+   install(FILES ${RSTUDIO_ICONS_16}/rstudio.png
+           DESTINATION /usr/share/icons/hicolor/16x16/apps)
+   install(FILES ${RSTUDIO_ICONS_32}/rstudio.png
+           DESTINATION /usr/share/icons/hicolor/32x32/apps)
+   install(FILES ${RSTUDIO_ICONS_48}/rstudio.png
+           DESTINATION /usr/share/icons/hicolor/48x48/apps)
+   install(FILES ${RSTUDIO_ICONS_256}/rstudio.png
+           DESTINATION /usr/share/icons/hicolor/256x256/apps)
+
+   # .RData icon
+   install(FILES ${RSTUDIO_ICONS_16}/application-x-r-data.png
+           DESTINATION /usr/share/icons/hicolor/16x16/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_32}/application-x-r-data.png
+           DESTINATION /usr/share/icons/hicolor/32x32/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_48}/application-x-r-data.png
+           DESTINATION /usr/share/icons/hicolor/48x48/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_256}/application-x-r-data.png
+           DESTINATION /usr/share/icons/hicolor/256x256/mimetypes)
+
 endif()
