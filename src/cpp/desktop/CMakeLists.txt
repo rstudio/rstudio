@@ -313,6 +313,7 @@ if (UNIX AND NOT APPLE)
 
    # define icon dirs
    set(RSTUDIO_ICONS_16 ${RSTUDIO_FREEDESKTOP_SOURCE_DIR}/icons/16x16)
+   set(RSTUDIO_ICONS_24 ${RSTUDIO_FREEDESKTOP_SOURCE_DIR}/icons/24x24)
    set(RSTUDIO_ICONS_32 ${RSTUDIO_FREEDESKTOP_SOURCE_DIR}/icons/32x32)
    set(RSTUDIO_ICONS_48 ${RSTUDIO_FREEDESKTOP_SOURCE_DIR}/icons/48x48)
    set(RSTUDIO_ICONS_256 ${RSTUDIO_FREEDESKTOP_SOURCE_DIR}/icons/256x256)
@@ -322,6 +323,8 @@ if (UNIX AND NOT APPLE)
            DESTINATION /usr/share/pixmaps)
    install(FILES ${RSTUDIO_ICONS_16}/rstudio.png
            DESTINATION /usr/share/icons/hicolor/16x16/apps)
+   install(FILES ${RSTUDIO_ICONS_24}/rstudio.png
+           DESTINATION /usr/share/icons/hicolor/24x24/apps)
    install(FILES ${RSTUDIO_ICONS_32}/rstudio.png
            DESTINATION /usr/share/icons/hicolor/32x32/apps)
    install(FILES ${RSTUDIO_ICONS_48}/rstudio.png
@@ -332,6 +335,8 @@ if (UNIX AND NOT APPLE)
    # .RData icon
    install(FILES ${RSTUDIO_ICONS_16}/application-x-r-data.png
            DESTINATION /usr/share/icons/hicolor/16x16/mimetypes)
+   install(FILES ${RSTUDIO_ICONS_24}/application-x-r-data.png
+           DESTINATION /usr/share/icons/hicolor/24x24/mimetypes)
    install(FILES ${RSTUDIO_ICONS_32}/application-x-r-data.png
            DESTINATION /usr/share/icons/hicolor/32x32/mimetypes)
    install(FILES ${RSTUDIO_ICONS_48}/application-x-r-data.png
