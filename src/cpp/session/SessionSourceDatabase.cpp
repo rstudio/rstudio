@@ -34,6 +34,8 @@
 
 #include <core/http/Util.hpp>
 
+#include <r/RUtil.hpp>
+
 #include <session/SessionModuleContext.hpp>
 
 // NOTE: if a file is deleted then its properties database entry is not
@@ -193,12 +195,18 @@ Error SourceDocument::setPathAndContents(const std::string& path)
    FilePath docPath = module_context::resolveAliasedPath(path);
 
    // read contents
-   std::string contents;
-   Error error = readStringFromFile(docPath, &contents,
+   std::string encodedContents;
+   Error error = readStringFromFile(docPath, &encodedContents,
                                     options().sourceLineEnding());
 
    if (error)
       return error ;
+
+   std::string contents;
+   error = r::util::iconv(encodedContents, encoding(), "UTF-8",
+                          &contents);
+   if (error)
+      return error;
 
    // Detect invalid UTF-8 sequences and recover
    error = string_utils::utf8Clean(contents.begin(),
@@ -287,6 +295,9 @@ Error SourceDocument::readFromJson(json::Object* pDocJson)
                             ? lastKnownWriteTime.get_int64()
                             : 0;
 
+   json::Value encoding = docJson["encoding"];
+   encoding_ = !encoding.is_null() ? encoding.get_str() : std::string();
+
    return Success();
 }
    
@@ -304,6 +315,7 @@ void SourceDocument::writeToJson(json::Object* pDocJson) const
    jsonDoc["properties"] = properties();
    jsonDoc["lastKnownWriteTime"] = json::Value(
          static_cast<boost::int64_t>(lastKnownWriteTime_));
+   jsonDoc["encoding"] = encoding_;
 }
 
 void SourceDocument::editProperty(const json::Object::value_type& property)

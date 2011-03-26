@@ -336,7 +336,7 @@ void runEmbeddedR(const core::FilePath& rHome,
    pRP->home = const_cast<char*>(pUserHome->c_str());
 
    // more configuration
-   pRP->CharacterMode = LinkDLL;
+   pRP->CharacterMode = RGui;
    pRP->R_Slave = FALSE;
    pRP->R_Quiet = newSession ? FALSE : TRUE;
    pRP->R_Interactive = TRUE;

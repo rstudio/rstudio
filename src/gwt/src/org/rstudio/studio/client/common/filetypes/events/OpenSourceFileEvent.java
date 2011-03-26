@@ -13,18 +13,38 @@
 package org.rstudio.studio.client.common.filetypes.events;
 
 import com.google.gwt.event.shared.GwtEvent;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 public class OpenSourceFileEvent extends GwtEvent<OpenSourceFileHandler>
 {
    public static final GwtEvent.Type<OpenSourceFileHandler> TYPE =
       new GwtEvent.Type<OpenSourceFileHandler>();
-   
+
    public OpenSourceFileEvent(FileSystemItem file, TextFileType fileType)
+   {
+      this(file, fileType, null);
+   }
+
+   public OpenSourceFileEvent(FileSystemItem file,
+                              TextFileType fileType,
+                              String encoding)
    {
       file_ = file;
       fileType_ = fileType;
+
+      if (!StringUtil.isNullOrEmpty(encoding))
+      {
+         encoding_ = encoding;
+      }
+      else
+      {
+         UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
+         encoding_ = uiPrefs.defaultEncoding().getValue();
+      }
    }
    
    public FileSystemItem getFile()
@@ -35,6 +55,11 @@ public class OpenSourceFileEvent extends GwtEvent<OpenSourceFileHandler>
    public TextFileType getFileType()
    {
       return fileType_;
+   }
+
+   public String getEncoding()
+   {
+      return encoding_;
    }
 
    @Override
@@ -51,4 +76,5 @@ public class OpenSourceFileEvent extends GwtEvent<OpenSourceFileHandler>
    
    private final FileSystemItem file_;
    private final TextFileType fileType_;
+   private final String encoding_;
 }

@@ -42,6 +42,7 @@ public:
    const std::string& type() const { return type_; }
    const std::string& contents() const { return contents_; }
    const std::string& hash() const { return hash_; }
+   const std::string& encoding() const { return encoding_; }
    bool dirty() const { return dirty_; }
    double created() const { return created_; }
    bool sourceOnSave() const { return sourceOnSave_; }
@@ -65,6 +66,11 @@ public:
    void setSourceOnSave(bool sourceOnSave)
    {
       sourceOnSave_ = sourceOnSave;
+   }
+
+   void setEncoding(const std::string& encoding)
+   {
+      encoding_ = encoding;
    }
 
    void checkForExternalEdit(std::time_t* pTime);
@@ -95,6 +101,7 @@ private:
    std::string type_;
    std::string contents_;
    std::string hash_;
+   std::string encoding_;
    std::time_t lastKnownWriteTime_;
    bool dirty_;
    double created_;
