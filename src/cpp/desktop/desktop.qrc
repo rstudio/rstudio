@@ -9,6 +9,6 @@
         <file>forward_mac.png</file>
         <file>print_mac.png</file>
         <file>reload_mac.png</file>
-        <file>resources/logo/rstudio_logo_64.png</file>
+        <file>resources/freedesktop/icons/64x64/rstudio.png</file>
     </qresource>
 </RCC>
