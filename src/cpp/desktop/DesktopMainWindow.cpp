@@ -51,6 +51,7 @@ MainWindow::MainWindow(QUrl url) :
    pMainMenuStub->addMenu("View");
    pMainMenuStub->addMenu("Workspace");
    pMainMenuStub->addMenu("Plots");
+   pMainMenuStub->addMenu("Tools");
    pMainMenuStub->addMenu("Help");
    setMenuBar(pMainMenuStub);
 
