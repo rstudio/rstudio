@@ -318,6 +318,8 @@ if (UNIX AND NOT APPLE)
    set(RSTUDIO_ICONS_256 ${RSTUDIO_FREEDESKTOP_SOURCE_DIR}/icons/256x256)
 
    # application icon
+   install(FILES ${RSTUDIO_ICONS_32}/rstudio.png
+           DESTINATION /usr/share/pixmaps)
    install(FILES ${RSTUDIO_ICONS_16}/rstudio.png
            DESTINATION /usr/share/icons/hicolor/16x16/apps)
    install(FILES ${RSTUDIO_ICONS_32}/rstudio.png
