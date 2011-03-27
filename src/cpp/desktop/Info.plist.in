@@ -12,10 +12,6 @@
             <string>rdata</string>
             <string>rda</string>
          </array>
-         <key>CFBundleTypeMIMETypes</key>
-         <array>
-            <string>application/x-r-data</string>
-         </array>
          <key>CFBundleTypeIconFile</key>
          <string>RData.icns</string>
          <key>CFBundleTypeName</key>
@@ -31,10 +27,6 @@
              <string>R</string>
              <string>r</string>
          </array>
-         <key>CFBundleTypeMIMETypes</key>
-         <array>
-            <string>text/x-r-source</string>
-         </array>
          <key>CFBundleTypeIconFile</key>
          <string>RSource.icns</string>
          <key>CFBundleTypeName</key>
@@ -46,11 +38,6 @@
          <key>CFBundleTypeExtensions</key>
          <array>
              <string>Rd</string>
-             <string>rd</string>
-         </array>
-         <key>CFBundleTypeMIMETypes</key>
-         <array>
-            <string>text/x-r-doc</string>
          </array>
          <key>CFBundleTypeIconFile</key>
          <string>RDoc.icns</string>
@@ -68,10 +55,6 @@
              <string>snw</string>
              <string>nw</string>
          </array>
-         <key>CFBundleTypeMIMETypes</key>
-         <array>
-            <string>text/x-r-sweave</string>
-         </array>
          <key>CFBundleTypeIconFile</key>
          <string>RSweave.icns</string>
          <key>CFBundleTypeName</key>
@@ -88,10 +71,6 @@
              <string>cls</string>
              <string>bbl</string>
              <string>bib</string>
-         </array>
-         <key>CFBundleTypeMIMETypes</key>
-         <array>
-            <string>text/x-tex</string>
          </array>
          <key>CFBundleTypeIconFile</key>
          <string>RTex.icns</string>
