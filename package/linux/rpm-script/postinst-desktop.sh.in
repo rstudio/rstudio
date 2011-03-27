@@ -6,5 +6,8 @@ set +e
 # create softlink to rstudio in /usr/bin
 ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/rstudio /usr/bin/rstudio
 
+# update mime database
+update-mime-database /usr/share/mime
+
 # clear error termination state
 set -e
