@@ -23,7 +23,7 @@
       <string/>
      </property>
      <property name="pixmap">
-      <pixmap>resources/logo/rstudio_logo_64.png</pixmap>
+      <pixmap>resources/freedesktop/icons/64x64/rstudio.png</pixmap>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>

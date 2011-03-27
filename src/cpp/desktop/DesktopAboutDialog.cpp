@@ -28,7 +28,7 @@ AboutDialog::AboutDialog(QWidget *parent) :
       ui(new Ui::AboutDialog())
 {
    ui->setupUi(this);
-   ui->lblIcon->setPixmap(QPixmap(":/icons/resources/logo/rstudio_logo_64.png"));
+   ui->lblIcon->setPixmap(QPixmap(":/icons/resources/freedesktop/icons/64x64/rstudio.png"));
    ui->lblVersion->setText("Version " RSTUDIO_VERSION);
 
    setWindowModality(Qt::ApplicationModal);

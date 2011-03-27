@@ -28,7 +28,7 @@
         <string/>
        </property>
        <property name="pixmap">
-        <pixmap resource="desktop.qrc">:/icons/resources/logo/rstudio_logo_64.png</pixmap>
+        <pixmap resource="desktop.qrc">:/icons/resources/freedesktop/icons/64x64/rstudio.png</pixmap>
        </property>
       </widget>
      </item>
