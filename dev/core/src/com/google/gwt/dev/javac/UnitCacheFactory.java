@@ -45,15 +45,13 @@ public class UnitCacheFactory {
     assert logger != null;
     if (instance == null) {
       if (usePersistent) {
-        if (cacheDir == null) {
-          String dirProp = "gwt.persistentunitcachedir";
-          String propertyCacheDir = System.getProperty(dirProp);
-          if (propertyCacheDir != null) {
-            cacheDir = new File(propertyCacheDir);
-          } else {
-            throw new IllegalArgumentException("Expected " + dirProp
-                + " system property to be set.");
-          }
+        String dirProp = "gwt.persistentunitcachedir";
+        String propertyCacheDir = System.getProperty(dirProp);
+        if (propertyCacheDir != null) {
+          cacheDir = new File(propertyCacheDir);
+        } else if (cacheDir == null) {
+          throw new IllegalArgumentException("Expected " + dirProp
+              + " system property to be set.");
         }
         instance = new PersistentUnitCache(logger, cacheDir);
       } else {

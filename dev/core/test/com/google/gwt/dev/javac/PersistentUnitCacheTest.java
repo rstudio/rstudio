@@ -38,6 +38,31 @@ public class PersistentUnitCacheTest extends TestCase {
     lastCacheDir = null;
   }
 
+  public void testBadDir() {
+    TreeLogger logger = TreeLogger.NULL;
+    File badDir = new File("sHoUlDnOtExi57");
+    try {
+      new PersistentUnitCache(logger, badDir);
+      fail("Expected an exception to be thrown");
+    } catch (UnableToCompleteException expected) {
+    }
+  }
+
+  /**
+   * Test if a file already exists with the name we want to put the
+   * cache dir in.
+   */
+  public void testFileInTheWay() throws IOException {
+    TreeLogger logger = TreeLogger.NULL;
+    File fileInTheWay = File.createTempFile("PersistentUnitTest-inTheWay", "");
+    fileInTheWay.deleteOnExit();
+    try {
+      new PersistentUnitCache(logger, fileInTheWay);
+      fail("Expected an exception to be thrown");
+    } catch (UnableToCompleteException expected) {
+    }
+  }
+
   public void testPersistentCache() throws IOException, InterruptedException,
       UnableToCompleteException {
     TreeLogger logger = TreeLogger.NULL;
@@ -168,20 +193,6 @@ public class PersistentUnitCacheTest extends TestCase {
     cache.cleanup(logger);
     cache.shutdown();
     assertNumCacheFiles(unitCacheDir, 1);
-  }
-
-  public void testBadDir() {
-    TreeLogger logger = TreeLogger.NULL;
-    File badDir = new File("sHoUlDnOtExi57");
-    boolean caught = false;
-    try {
-      PersistentUnitCache puc = new PersistentUnitCache(logger, badDir);
-    } catch (UnableToCompleteException ex) {
-      // expected
-      caught = true;
-    } finally {
-      assertTrue("Did not catch UnableToCompleteException", caught);
-    }
   }
 
   private void assertNumCacheFiles(File unitCacheDir, int expected) {

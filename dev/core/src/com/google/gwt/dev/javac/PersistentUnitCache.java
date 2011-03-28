@@ -22,6 +22,7 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.util.tools.Utility;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.EOFException;
 import java.io.File;
@@ -43,13 +44,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  * A class that manages a persistent cache of {@link CompilationUnit} instances.
  * Writes out {@CompilationUnit} instances to a cache in a
  * background thread.
- * 
+ * <p>
  * The persistent cache is implemented as a directory of log files with a date
  * timestamp. A new log file gets created each time a new PersistentUnitCache is
  * instantiated, (once per invocation of the compiler or DevMode). The design is
  * intended to support only a single PersistentUnitCache instance in the
  * compiler at a time.
- * 
+ * <p>
  * As new units are compiled, the cache data is appended to a log. This allows
  * Java serialization to efficiently store references. The next time the cache
  * is started, all logs are replayed and loaded into the cache in chronological
@@ -59,7 +60,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * {@link PersistentUnitCache#CACHE_FILE_THRESHOLD} , the cache files are
  * consolidated back into a single file.
  * 
- * System Properties:
+ * <p>
+ * System Properties (see {@link UnitCacheFactory}).
  * 
  * <ul>
  * <li>gwt.persistentunitcache : enables the persistent cache (eventually will
@@ -67,6 +69,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <li>gwt.persistentunitcachedir=<dir>: sets or overrides the cache directory</li>
  * </ul>
  * 
+ * <p>
  * Known Issues:
  * 
  * <ul>
@@ -292,7 +295,7 @@ class PersistentUnitCache extends MemoryUnitCache {
     logger.log(TreeLogger.TRACE, "Persistent unit cache dir set to: "
         + this.cacheDirectory.getAbsolutePath());
 
-    if (!cacheDirectory.exists() && !cacheDirectory.mkdir()) {
+    if (!cacheDirectory.isDirectory() && !cacheDirectory.mkdir()) {
       logger.log(TreeLogger.ERROR, "Unable to initialize cache. Couldn't create directory "
           + cacheDirectory.getAbsolutePath() + ".");
       throw new UnableToCompleteException();
@@ -308,7 +311,9 @@ class PersistentUnitCache extends MemoryUnitCache {
     try {
       currentCacheFile.createNewFile();
     } catch (IOException ex) {
-      // ignore, we'll try again later in the writer thread.
+      logger.log(TreeLogger.ERROR, "Unable to create new cache log file "
+          + currentCacheFile.getAbsolutePath() + ".", ex);
+      throw new UnableToCompleteException();
     }
 
     unitCacheMapLoader = new UnitCacheMapLoader(logger);
@@ -444,17 +449,19 @@ class PersistentUnitCache extends MemoryUnitCache {
         File[] files = getCacheFiles();
         for (File cacheFile : files) {
           FileInputStream fis = null;
+          BufferedInputStream bis = null;
           ObjectInputStream inputStream = null;
           if (cacheFile.equals(currentCacheFile)) {
             continue;
           }
           try {
             fis = new FileInputStream(cacheFile);
+            bis = new BufferedInputStream(fis);
             /*
              * It is possible for the next call to throw an exception, leaving
              * inputStream null and fis still live.
              */
-            inputStream = new ObjectInputStream(fis);
+            inputStream = new ObjectInputStream(bis);
             while (true) {
               CompilationUnit unit = (CompilationUnit) inputStream.readObject();
               if (unit == null) {
@@ -481,6 +488,7 @@ class PersistentUnitCache extends MemoryUnitCache {
                 + cacheFile.getAbsolutePath(), ex);
           } finally {
             Utility.close(inputStream);
+            Utility.close(bis);
             Utility.close(fis);
             logger.log(TreeLogger.TRACE, cacheFile.getName() + ": Load complete");
           }
