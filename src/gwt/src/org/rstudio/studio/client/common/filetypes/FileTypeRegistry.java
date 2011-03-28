@@ -33,10 +33,9 @@ public class FileTypeRegistry
                           false, false, false, false);
 
    public static final TextFileType R =
-         new TextFileType("r_source", "R Script", EditorLanguage.LANG_R, ".R",
-                          ICONS.iconRdoc(),
-                          false,
-                          true, true, true, false);
+         new RFileType("r_source", "R Script", EditorLanguage.LANG_R, ".R",
+                       ICONS.iconRdoc(),
+                       true, true, true, false);
 
    public static final TextFileType RD =
       new TextFileType("r_doc", "R Documentation", EditorLanguage.LANG_TEX, ".Rd",

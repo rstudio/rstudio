@@ -30,7 +30,7 @@ public class EditingPreferencesPane extends PreferencesPane
       add(tight(showMargin_ = checkboxPref("Show margin", prefs.showMargin())));
       add(indent(marginCol_ = numericPref("Margin column", prefs.printMarginColumn())));
 //      add(checkboxPref("Automatically insert matching parens/quotes", prefs_.insertMatching()));
-//      add(checkboxPref("Soft-wrap R files", prefs_.softWrapRFiles()));
+      add(checkboxPref("Soft-wrap R files", prefs_.softWrapRFiles()));
 
       add(encoding_ = new TextBoxWithButton(
             "Default encoding",
