@@ -13026,7 +13026,7 @@ define("text/ace/css/editor.css", ".ace_editor {" +
   "}" +
   "" +
   ".ace_editor .ace_print_margin_layer {" +
-  "    z-index: 0;" +
+  "    z-index: 1;" +
   "    position: absolute;" +
   "    overflow: hidden;" +
   "    margin: 0;" +
@@ -13109,7 +13109,7 @@ define("text/ace/css/editor.css", ".ace_editor {" +
   "" +
   ".ace_marker-layer .ace_active_line {" +
   "    position: absolute;" +
-  "    z-index: 2;" +
+  "    z-index: 0;" +
   "}" +
   "" +
   ".ace_marker-layer .ace_selected_word {" +
