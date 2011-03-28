@@ -42,18 +42,28 @@ namespace {
 
 #ifdef _WIN32
 
+// For Windows only, we need to use the wide character versions of the file
+// APIs in order to deal properly with characters that cannot be represented
+// in the default system encoding. (It would be preferable if UTF-8 were the
+// system encoding, but Windows doesn't support that.) However, we can't give
+// FilePath a wide character API because Mac needs to use narrow characters
+// (see note below). So we use wstring internally, and translate to/from UTF-8
+// narrow strings that are used in the API.
+
 typedef boost::filesystem::wpath path_type;
 typedef std::wstring internal_string;
 
 std::string toString(const internal_string& value)
 {
+   if (value.size() == 0)
+      return std::string();
+
    const wchar_t * cstr = value.c_str();
    int chars = ::WideCharToMultiByte(CP_UTF8, 0,
                                      cstr, -1,
                                      NULL, 0, NULL, NULL);
    if (chars == 0)
    {
-      // TODO: What to do here??
       LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
       return std::string();
    }
@@ -69,13 +79,15 @@ std::string toString(const internal_string& value)
 
 internal_string fromString(const std::string& value)
 {
+   if (value.size() == 0)
+      return std::wstring();
+
    const char * cstr = value.c_str();
    int chars = ::MultiByteToWideChar(CP_UTF8, 0,
                                      cstr, -1,
                                      NULL, 0);
    if (chars == 0)
    {
-      // TODO: What to do here??
       LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
       return std::wstring();
    }
@@ -89,6 +101,10 @@ internal_string fromString(const std::string& value)
 }
 
 #else
+
+// Mac can't use wide strings because of Boost asserts that cause the process
+// to exit unless we compile with -DBOOST_FILESYSTEM_NARROW_ONLY. That's OK
+// because we only support running with UTF-8 codeset on Mac and Linux.
 
 typedef boost::filesystem::path path_type;
 typedef std::string internal_string;
@@ -562,7 +578,7 @@ FilePath FilePath::complete(const std::string& path) const
    // this path is returned)
    try
    {
-      // TODO: The path gets round-tripped through toString/fromString, would
+      // NOTE: The path gets round-tripped through toString/fromString, would
       //   be nice to have a direct constructor
       return FilePath(toString(BOOST_FS_COMPLETE(path, pImpl_->path).string()));
    }
@@ -580,7 +596,7 @@ FilePath FilePath::parent() const
 {
    try
    {
-      // TODO: The path gets round-tripped through toString/fromString, would
+      // NOTE: The path gets round-tripped through toString/fromString, would
       //   be nice to have a direct constructor
       return FilePath(toString(pImpl_->path.parent_path().string()));
    }
@@ -656,7 +672,7 @@ Error FilePath::children(std::vector<FilePath>* pFilePaths) const
       basic_directory_iterator<path_type> end ;
       for (basic_directory_iterator<path_type> itr(pImpl_->path); itr != end; ++itr)
       {
-         // TODO: The path gets round-tripped through toString/fromString, would
+         // NOTE: The path gets round-tripped through toString/fromString, would
          //   be nice to have a direct constructor
          std::string itemPath = toString(itr->path().string());
          pFilePaths->push_back(FilePath(itemPath)) ;
@@ -686,7 +702,7 @@ Error FilePath::childrenRecursive(
       
       for (basic_recursive_directory_iterator<path_type> itr(pImpl_->path); itr != end; ++itr)
       {
-         // TODO: The path gets round-tripped through toString/fromString, would
+         // NOTE: The path gets round-tripped through toString/fromString, would
          //   be nice to have a direct constructor
          iterationFunction(itr.level(),FilePath(toString(itr->path().string())));
       }
