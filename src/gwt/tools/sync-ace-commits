@@ -19,6 +19,7 @@ git merge \
     origin/bugfix-ctrl-backspace \
     origin/bugfix-wide-characters \
     origin/bugfix-active-line-back \
+    origin/bugfix-eclipse-print-margin \
 
 
 make clean

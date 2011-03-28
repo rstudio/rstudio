@@ -22,7 +22,12 @@
   padding-right: 6px;
 }
 
-.ace_text-layer {
+.ace_print_margin {
+  width: 1px;
+  background: #e8e8e8;
+}
+
+.ace_gutter {
   cursor: text;
 }
 
