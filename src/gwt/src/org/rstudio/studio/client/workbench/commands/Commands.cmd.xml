@@ -136,7 +136,6 @@ well as menu structures (for main menu and popup menus).
       
       <separator/>
       
-      
       <menu label="_Tools">
          <cmd refid="interruptR"/>
          <separator/>
@@ -144,6 +143,8 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="showOptions"/>
       </menu>
+
+      <separator/>
 
       <menu label="_Help">
          <cmd refid="helpHome"/>
