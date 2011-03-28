@@ -321,8 +321,8 @@ class LongLibBase {
   }
 
   private static native LongEmul create0(int l, int m, int h) /*-{
-    return (a = @com.google.gwt.lang.LongLibBase$LongEmul::getInstance()(),
-        a.l = l, a.m = m, a.h = h, a);
+    return (_ = @com.google.gwt.lang.LongLibBase$LongEmul::getInstance()(),
+        _.l = l, _.m = m, _.h = h, _);
   }-*/;
 
   private static LongEmul divModByMinValue(LongEmul a, boolean computeRemainder) {
