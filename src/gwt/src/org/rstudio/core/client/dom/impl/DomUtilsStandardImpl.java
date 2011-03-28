@@ -95,11 +95,14 @@ public class DomUtilsStandardImpl implements DomUtilsImpl
    public Rectangle getCursorBounds(Document doc)
    {
 
-      Range rng = Selection.get(NativeWindow.get(doc)).getRangeAt(0);
-      if (rng == null)
+      Selection sel = Selection.get(NativeWindow.get(doc));
+      Range selRng = sel.getRangeAt(0);
+      if (selRng == null)
          return null;
+      sel.removeAllRanges();
       SpanElement span = doc.createSpanElement() ;
 
+      Range rng = selRng.cloneRange();
       rng.collapse(true);
       rng.insertNode(span) ;
 
@@ -112,6 +115,7 @@ public class DomUtilsStandardImpl implements DomUtilsImpl
       ElementEx parent = (ElementEx)span.getParentElement() ;
       parent.removeChild(span) ;
       parent.normalize() ;
+      sel.setRange(selRng);
       return result;
    }
 
