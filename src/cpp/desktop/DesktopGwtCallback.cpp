@@ -103,7 +103,7 @@ namespace {
 
 FilePath userHomePath()
 {
-   return core::system::userHomePath("R_USER");
+   return core::system::userHomePath("R_USER|HOME");
 }
 
 QString createAliasedPath(const QString& path)

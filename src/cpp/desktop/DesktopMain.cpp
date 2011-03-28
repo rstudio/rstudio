@@ -155,7 +155,7 @@ int main(int argc, char* argv[])
    try
    {
       // initialize log
-      FilePath userHomePath = core::system::userHomePath("R_USER");
+      FilePath userHomePath = core::system::userHomePath("R_USER|HOME");
       FilePath logPath = core::system::userSettingsPath(
             userHomePath,
             "RStudio-Desktop").childPath("log");

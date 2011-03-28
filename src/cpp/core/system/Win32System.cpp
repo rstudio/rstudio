@@ -27,7 +27,9 @@
 
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/range.hpp>
 #include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <core/Log.hpp>
@@ -206,17 +208,25 @@ std::string username()
    return system::getenv("USERNAME");
 }
 
-FilePath userHomePath(const std::string& envOverride)
+FilePath userHomePath(std::string envOverride)
 {
+   using namespace boost::algorithm;
+
    // use environment override if specified
    if (!envOverride.empty())
    {
-      std::string envHomePath = system::getenv(envOverride);
-      if (!envHomePath.empty())
+      for (split_iterator<std::string::iterator> it =
+           make_split_iterator(envOverride, first_finder("|", is_iequal()));
+           it != split_iterator<std::string::iterator>();
+           ++it)
       {
-         FilePath userHomePath(envHomePath);
-         if (userHomePath.exists())
-            return userHomePath;
+         std::string envHomePath = system::getenv(boost::copy_range<std::string>(*it));
+         if (!envHomePath.empty())
+         {
+            FilePath userHomePath(envHomePath);
+            if (userHomePath.exists())
+               return userHomePath;
+         }
       }
    }
 

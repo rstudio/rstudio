@@ -117,7 +117,7 @@ void unsetenv(const std::string& name);
 
 // user info
 std::string username();
-FilePath userHomePath(const std::string& envOverride = std::string());
+FilePath userHomePath(std::string envOverride = std::string());
 FilePath userSettingsPath(const FilePath& userHomeDirectory,
                           const std::string& appName);
 bool currentUserIsPrivilleged(unsigned int minimumUserId);

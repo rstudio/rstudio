@@ -219,7 +219,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    programIdentity_ = "rsession-" + userIdentity_;
 
    // compute user home path
-   FilePath userHomePath = core::system::userHomePath("R_USER");
+   FilePath userHomePath = core::system::userHomePath("R_USER|HOME");
    userHomePath_ = userHomePath.absolutePath();
 
    // compute user scratch path
