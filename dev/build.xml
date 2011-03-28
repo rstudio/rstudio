@@ -213,7 +213,6 @@
           <pathelement location="${gwt.tools.lib}/apache/ant-1.6.5.jar" />
           <pathelement location="${gwt.tools.lib}/eclipse/jdt-3.4.2.jar" />
           <pathelement location="${gwt.tools.lib}/tomcat/commons-collections-3.1.jar" />
-          <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar" />
           <pathelement location="${gwt.tools.lib}/guava/guava-r06/guava-r06-rebased-2.jar" />
       </classpath>
     </gwt.javac>
