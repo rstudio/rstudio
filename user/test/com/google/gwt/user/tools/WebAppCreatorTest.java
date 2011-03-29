@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.tools;
 
+import com.google.gwt.dev.util.Util;
 import com.google.gwt.user.tools.WebAppCreator.ArgProcessor;
 
 import junit.framework.TestCase;
@@ -262,6 +263,32 @@ public class WebAppCreatorTest extends TestCase {
     assertFileDoesNotExist("src/com/foo/server/GreetingServiceImpl.java");
     assertFileDoesNotExist("test/com/foo/HelloJUnit.gwt.xml");
     assertFileDoesNotExist("test/com/foo/client/HelloTest.java");
+  }
+
+  /**
+   * Generate a .classpath containing a .jar in war/WEB-INF/lib
+   */
+  public void testCreatorOnlyEclipseWithJars() throws IOException, WebAppCreatorException {
+    runCreator("-out", projectFolder, "-XnoEclipse", "-junit", mockJar,
+        MY_PROJECT);
+
+    String libDir = "war" + File.separatorChar
+        + "WEB-INF" + File.separatorChar
+        + "lib";
+    assertTrue(new File(projectFolder + File.separatorChar + libDir).mkdirs());
+
+    String libJarName = libDir + File.separatorChar + "foo.jar";
+    File libFile = new File(projectFolder + File.separatorChar + libJarName);
+    assertTrue(libFile.createNewFile());
+
+    runCreator("-out", projectFolder, "-XonlyEclipse", "-junit", mockJar,
+        MY_PROJECT);
+
+    assertFileExists(".classpath");
+    File classpathFile = new File(projectFolder + File.separatorChar + ".classpath");
+    String classpathContents = Util.readURLAsString(classpathFile.toURI().toURL());
+    assertTrue(".classpath does not contain " + libJarName,
+        classpathContents.contains(libJarName));
   }
 
   /**

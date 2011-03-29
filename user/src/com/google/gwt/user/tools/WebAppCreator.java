@@ -542,7 +542,7 @@ public final class WebAppCreator {
     replacements.put("@copyServletDeps", copyServletDeps);
 
     // Collect the list of server libs to include on the eclipse classpath.
-    File libDirectory = new File(outDir + warFolder + "WEB-INF/lib");
+    File libDirectory = new File(outDir + "/" + warFolder + "/WEB-INF/lib");
     StringBuilder serverLibs = new StringBuilder();
     if (libDirectory.exists()) {
       for (File file : libDirectory.listFiles()) {
