@@ -34,6 +34,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
@@ -47,6 +48,7 @@ import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.ClientStateUpdater;
 import org.rstudio.studio.client.workbench.Workbench;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Agreement;
@@ -67,6 +69,7 @@ public class Application implements ApplicationEventHandlers,
                       Commands commands,
                       Server server,
                       Session session,
+                      WorkbenchContext workbenchContext,
                       Provider<Workbench> workbench,
                       Provider<EventBus> eventBusProvider,
                       Provider<ClientStateUpdater> clientStateUpdater,
@@ -77,6 +80,7 @@ public class Application implements ApplicationEventHandlers,
       globalDisplay_ = globalDisplay;
       events_ = events;
       session_ = session;
+      workbenchContext_ = workbenchContext;
       commands_ = commands;
       clientStateUpdater_ = clientStateUpdater;
       server_ = server;
@@ -240,11 +244,13 @@ public class Application implements ApplicationEventHandlers,
          }
 
          if (saveAction_.getAction() == SaveAction.SAVEASK) 
-         {
+         {    
             // confirm quit and do it
+            String prompt = "Save workspace image to " + 
+                            workbenchContext_.getREnvironmentPath() + "?";
             globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
                                             "Quit R Session",
-                                            "Save workspace image?",
+                                            prompt,
                                             true,
                                             new QuitOperation(true),
                                             new QuitOperation(false),
@@ -568,6 +574,7 @@ public class Application implements ApplicationEventHandlers,
    private final GlobalDisplay globalDisplay_ ;
    private final EventBus events_;
    private final Session session_;
+   private final WorkbenchContext workbenchContext_;
    private final Commands commands_;
    private final Provider<ClientStateUpdater> clientStateUpdater_;
    private final Server server_;
