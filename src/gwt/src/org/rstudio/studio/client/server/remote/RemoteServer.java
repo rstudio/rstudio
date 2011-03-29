@@ -312,24 +312,7 @@ public class RemoteServer implements Server
                   requestCallback);
    }
 
-   public void saveWorkspace(String filename,
-                             ServerRequestCallback<Void> requestCallback)
-   {
-      sendRequest(RPC_SCOPE,
-                  SAVE_WORKSPACE,
-                  filename,
-                  requestCallback);
-   }
-   
-   public void loadWorkspace(String filename,
-                             ServerRequestCallback<Void> requestCallback)
-   {
-      sendRequest(RPC_SCOPE,
-                  LOAD_WORKSPACE,
-                  filename,
-                  requestCallback);
-   }
-   
+ 
    public void listGoogleSpreadsheets(
          String titlePattern,             // null for all spreadsheets
          int maxResults,
@@ -1359,8 +1342,6 @@ public class RemoteServer implements Server
    private static final String REMOVE_ALL_OBJECTS = "remove_all_objects";
    private static final String SET_OBJECT_VALUE = "set_object_value";
    private static final String GET_OBJECT_VALUE = "get_object_value";
-   private static final String SAVE_WORKSPACE = "save_workspace";
-   private static final String LOAD_WORKSPACE = "load_workspace";
    private static final String LIST_GOOGLE_SPREADSHEETS = "list_google_spreadsheets";
    private static final String IMPORT_GOOGLE_SPREADSHEET = "import_google_spreadsheet";
    private static final String DOWNLOAD_DATA_FILE = "download_data_file";

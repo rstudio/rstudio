@@ -11,35 +11,6 @@
 #
 #
 
-.rs.addJsonRpcHandler("save_workspace", function(filename)
-{
-   # remember whether the file is new (for file change event)
-   if (file.exists(filename))
-      fileChangeType = 4
-   else
-      fileChangeType = 1
-   
-   # save the file 
-   save.image(filename)
-})
-
-# NOTE: rpc calls should really be returning structured error values
-# that the client can translate into end user error messages. the below
-# implementation actually invokes an error dialog on the client directly
-# which is definitley not the right long-term direction!
-.rs.addJsonRpcHandler("load_workspace", function(filename)
-{
-   if (file.exists(filename))
-   {
-      load(filename, envir=globalenv())
-   }
-   else
-   {
-      .rs.showErrorMessage("Workspace Error",
-                          paste("The file", filename, "does not exist."));
-   }
-})
-
 .rs.addFunction("valueAsString", function(val)
 {
    tryCatch(

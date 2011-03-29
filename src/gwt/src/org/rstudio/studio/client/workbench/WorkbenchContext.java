@@ -28,7 +28,7 @@ public class WorkbenchContext
    }
    
   
-   FileSystemItem getCurrentWorkingDir()
+   public FileSystemItem getCurrentWorkingDir()
    {
       return currentWorkingDir_;
    }

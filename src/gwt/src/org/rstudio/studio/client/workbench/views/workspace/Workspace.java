@@ -13,9 +13,6 @@
 package org.rstudio.studio.client.workbench.views.workspace;
 
 
-import com.gargoylesoftware.htmlunit.util.StringUtils;
-import com.google.gwt.http.client.URL;
-import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
@@ -31,8 +28,8 @@ import org.rstudio.studio.client.common.filetypes.events.OpenDataFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileHandler;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
@@ -67,35 +64,13 @@ public class Workspace
       WorkspaceObjectTable getWorkspaceObjectTable();
    }
 
-   private class RequestCallback extends ServerRequestCallback<Void>
-   {
-      public RequestCallback(Command dismissProgress)
-      {
-         dismissProgress_ = dismissProgress;
-      }
-
-      @Override
-      public void onError(ServerError error)
-      {
-         dismissProgress_.execute();
-         globalDisplay_.showErrorMessage("Error", error.getUserMessage());
-      }
-
-      @Override
-      public void onResponseReceived(Void response)
-      {
-         dismissProgress_.execute();
-      }
-
-      private final Command dismissProgress_;
-   }
-
    @Inject
    public Workspace(Workspace.Display view,
                     EventBus eventBus,
                     WorkspaceServerOperations server,
-                    final GlobalDisplay globalDisplay,
+                    GlobalDisplay globalDisplay,
                     FileDialogs fileDialogs,
+                    WorkbenchContext workbenchContext,
                     RemoteFileSystemContext fsContext,
                     Commands commands,
                     Binder binder)
@@ -107,6 +82,7 @@ public class Workspace
       eventBus_ = eventBus;
       server_ = server;
       globalDisplay_ = globalDisplay ;
+      workbenchContext_ = workbenchContext;
       fsContext_ = fsContext;
       objects_ = view_.getWorkspaceObjectTable();
 
@@ -213,7 +189,7 @@ public class Workspace
       fileDialogs_.saveFile(
             "Save Workspace",
             fsContext_,
-            getLastWorkspaceFileItem(),
+            workbenchContext_.getCurrentWorkingDir(),
             new FilenameTransform()
             {
                public String transform(String filename)
@@ -233,49 +209,18 @@ public class Workspace
                {
                   if (input == null)
                      return;
-
-                  indicator.onProgress("Saving workspace...");
                   
-                  String workspaceFileName = input.getPath();
-                  
-                  lastWorkspaceFileName_ = workspaceFileName;
-
-                  server_.saveWorkspace(workspaceFileName,
-                                        new VoidServerRequestCallback(indicator));
+                  sendWorkspaceCommandToConsole("save.image", input);
+                  indicator.onCompleted();
                }
             });
    }
 
-   private FileSystemItem getLastWorkspaceFileItem()
-   {
-      return lastWorkspaceFileName_ != null
-                           ? FileSystemItem.createFile(lastWorkspaceFileName_)
-                           : null;
-   }
-
-
+  
    void onSaveDefaultWorkspace()
    {
       view_.bringToFront();
-      globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_WARNING,
-            
-            "Confirm Overwrite",
-            
-            "This will overwrite your current default workspace. " +
-            "Are you sure you want to save the current workspace as your " +
-            "new default?", 
-            
-            new ProgressOperation() {
-               public void execute(ProgressIndicator indicator)
-               {
-                  indicator.onProgress("Saving default workspace...");
-                  server_.saveWorkspace(
-                           "~/.RData", 
-                           new VoidServerRequestCallback(indicator));
-               }
-            }, 
-            
-            true);
+      sendDefaultWorkspaceCommandToConsole("save.image");
    }
 
 
@@ -285,18 +230,16 @@ public class Workspace
       fileDialogs_.openFile(
             "Load Workspace",
             fsContext_,
-            getLastWorkspaceFileItem(),
+            workbenchContext_.getCurrentWorkingDir(),
             new ProgressOperationWithInput<FileSystemItem>()
             {
                public void execute(FileSystemItem input, ProgressIndicator indicator)
                {
                   if (input == null)
                      return;
-
-                  indicator.onProgress("Loading workspace...");
-                  lastWorkspaceFileName_ = input.getPath();
-                  server_.loadWorkspace(input.getPath(),
-                                        new VoidServerRequestCallback(indicator));
+                  
+                  sendWorkspaceCommandToConsole("load", input);
+                  indicator.onCompleted();
                }
             });
    }
@@ -305,17 +248,7 @@ public class Workspace
    void onLoadDefaultWorkspace()
    {
       view_.bringToFront();
-      // set progress and create command to dismiss it
-      view_.setProgress(true);
-      Command dismissProgress = new Command() {
-         public void execute()
-         {
-            view_.setProgress(false);
-         }
-      };
-                      
-      // load the workspace
-      server_.loadWorkspace("~/.RData", new RequestCallback(dismissProgress));
+      sendDefaultWorkspaceCommandToConsole("load");
    }
    
    public void onOpenDataFile(OpenDataFileEvent event)
@@ -331,16 +264,31 @@ public class Workspace
             new ProgressOperation() {
                 public void execute(ProgressIndicator indicator)
                 {
-                   indicator.onProgress("Loading workspsace...");
-                   server_.loadWorkspace(
-                                   dataFilePath, 
-                                   new VoidServerRequestCallback(indicator));
-                                          
+                   sendWorkspaceCommandToConsole(
+                         "load", 
+                         FileSystemItem.createFile(dataFilePath));
+                   
+                   indicator.onCompleted();
                 }
            },
            
            true);   
    }
+   
+   private void sendDefaultWorkspaceCommandToConsole(String command)
+   {
+      FileSystemItem cwd = workbenchContext_.getCurrentWorkingDir();
+      FileSystemItem wsPath = FileSystemItem.createFile(cwd.completePath(".RData"));
+      sendWorkspaceCommandToConsole(command, wsPath);
+   }
+   
+   private void sendWorkspaceCommandToConsole(String command, 
+                                              FileSystemItem workspaceFile)
+   {
+      String code = command + "(\"" + workspaceFile.getPath() + "\")";
+      eventBus_.fireEvent(new SendToConsoleEvent(code, true));
+   }
+   
    
    
    void onImportDatasetFromFile()
@@ -349,7 +297,7 @@ public class Workspace
       fileDialogs_.openFile(
             "Select File to Import",
             fsContext_,
-            getLastWorkspaceFileItem(),
+            workbenchContext_.getCurrentWorkingDir(),
             new ProgressOperationWithInput<FileSystemItem>()
             {
                public void execute(
@@ -366,6 +314,7 @@ public class Workspace
             });
    }
    
+  
    private void showImportFileDialog(FileSystemItem input, String varname)
    {
       ImportFileSettingsDialog dialog = new ImportFileSettingsDialog(
@@ -565,6 +514,7 @@ public class Workspace
       });
    }
    
+   
    public boolean containsObject(RpcObjectList<WorkspaceObjectInfo> objects,
                                  String name)
    {
@@ -583,7 +533,7 @@ public class Workspace
    private final GlobalDisplay globalDisplay_ ;
    private final EventBus eventBus_;
    private final WorkspaceObjectTable objects_;
+   private final WorkbenchContext workbenchContext_;
    private final RemoteFileSystemContext fsContext_;
-   private String lastWorkspaceFileName_;
    private final FileDialogs fileDialogs_;
 }

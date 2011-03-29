@@ -77,8 +77,15 @@ public class WebFileDialogs implements FileDialogs
    {
       if (initialFilePath != null)
       {
-         dialog.setFilename(initialFilePath.getName());
-         fsContext.cd(initialFilePath.getParentPathString());
+         if (initialFilePath.isDirectory())
+         {
+            fsContext.cd(initialFilePath.getPath());
+         }
+         else
+         {
+            dialog.setFilename(initialFilePath.getName());
+            fsContext.cd(initialFilePath.getParentPathString());
+         }
       }
       else
       {

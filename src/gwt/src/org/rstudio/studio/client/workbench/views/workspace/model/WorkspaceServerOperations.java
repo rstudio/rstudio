@@ -33,13 +33,6 @@ public interface WorkspaceServerOperations
    void getObjectValue(String objectName,
                   ServerRequestCallback<RpcObjectList<WorkspaceObjectInfo>> serverRequestCallback);
 
-   void saveWorkspace(String filename,
-                      ServerRequestCallback<Void> serverRequestCallback);
-
-   void loadWorkspace(String filename,
-                      ServerRequestCallback<Void> serverRequestCallback);
-   
- 
    void listGoogleSpreadsheets(
          String titlePattern,             // null for all spreadsheets
          int maxResults,
