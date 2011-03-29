@@ -840,7 +840,7 @@ void addToConsoleInputBuffer(const r::session::RConsoleInput& consoleInput)
    }
 
    // split input into list of commands
-   boost::char_separator<char> lineSep("\n");
+   boost::char_separator<char> lineSep("\n", "", boost::keep_empty_tokens);
    boost::tokenizer<boost::char_separator<char> > lines(consoleInput.text, lineSep);
    for (boost::tokenizer<boost::char_separator<char> >::iterator
         lineIter = lines.begin();
