@@ -42,11 +42,11 @@ std::string extraLibraryPaths(const FilePath& ldPathsScript,
 
 FilePath systemDefaultRScript()
 {
-   // define potential paths
+   // define potential paths (use same order as in conventional osx PATH)
    std::vector<std::string> rScriptPaths;
+   rScriptPaths.push_back("/opt/local/bin/R");
    rScriptPaths.push_back("/usr/bin/R");
    rScriptPaths.push_back("/usr/local/bin/R");
-   rScriptPaths.push_back("/opt/local/bin/R");
 
    // iterate over paths
    for (std::vector<std::string>::const_iterator it = rScriptPaths.begin();
