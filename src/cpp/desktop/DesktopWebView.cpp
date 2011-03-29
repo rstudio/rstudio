@@ -75,24 +75,14 @@ QString WebView::promptForFilename(const QNetworkRequest& request,
 
 void WebView::keyPressEvent(QKeyEvent* pEv)
 {
-   // Work around bug in Qt 4.6 and earlier where arrow keys
-   // on Mac result in keyCode=0 in the DOM's keydown events.
+   // Work around bugs in QtWebKit that result in numpad key
+   // presses resulting in keyCode=0 in the DOM's keydown events.
    // This is due to some missing switch cases in the case
    // where the keypad modifier bit is on, so we turn it off.
 
-   Qt::KeyboardModifiers modifiers(pEv->modifiers());
-   switch (pEv->key())
-   {
-   case Qt::Key_Up:
-   case Qt::Key_Down:
-   case Qt::Key_Left:
-   case Qt::Key_Right:
-      modifiers &= ~Qt::KeypadModifier;
-   }
-
    QKeyEvent newEv(pEv->type(),
                    pEv->key(),
-                   modifiers,
+                   pEv->modifiers() & ~Qt::KeypadModifier,
                    pEv->text(),
                    pEv->isAutoRepeat(),
                    pEv->count());

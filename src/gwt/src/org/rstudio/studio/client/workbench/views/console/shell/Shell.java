@@ -318,8 +318,6 @@ public class Shell implements ConsoleInputHandler,
       {
          int keyCode = event.getNativeKeyCode();
 
-         lastKeyCodeWasZero_ = keyCode == 0;
-
          for (KeyDownPreviewHandler handler : keyDownPreviewHandlers_)
          {
             if (handler.previewKeyDown(event.getNativeEvent()))
@@ -475,18 +473,6 @@ public class Shell implements ConsoleInputHandler,
 
       public void onKeyPress(KeyPressEvent event)
       {
-         if (lastKeyCodeWasZero_ && event.getCharCode() == 13)
-         {
-            // On QtWebKit for Windows, the Enter key (on numpad) doesn't get
-            // caught in onKeyDown because the keyCode is incorrectly set to 0.
-            // We can catch it here instead.
-
-            event.preventDefault();
-            event.stopPropagation();
-            restoreFocus_ = true;
-            processCommandEntry();
-         }
-
          for (KeyPressPreviewHandler handler : keyPressPreviewHandlers_)
          {
             if (handler.previewKeyPress(event.getCharCode()))
