@@ -5,6 +5,10 @@
       <key>CFBundleDocumentTypes</key>
       <array>
       <dict>
+         <key>CFBundleTypeOSTypes</key>
+         <array>
+            <string>fold</string>
+         </array>
          <key>CFBundleTypeExtensions</key>
          <array>
             <string>RData</string>
