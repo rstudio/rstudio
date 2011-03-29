@@ -111,15 +111,17 @@ FilePath rGlobalEnvironmentFilePath()
 class SerializationCallbackScope : boost::noncopyable
 {
 public:
-   SerializationCallbackScope(int action)
+   SerializationCallbackScope(int action,
+                              const FilePath& targetPath = FilePath())
    {
-      s_callbacks.serialization(action);
+      s_callbacks.serialization(action, targetPath);
    }
    
    ~SerializationCallbackScope()
    {
       try {
-         s_callbacks.serialization(kSerializationActionCompleted);
+         s_callbacks.serialization(kSerializationActionCompleted,
+                                   FilePath());
       } catch(...) {}
    }
 };
@@ -158,14 +160,17 @@ Error deferredRestoreSessionState(
 
 Error saveDefaultGlobalEnvironment()
 {
+   // path to save to
+   FilePath globalEnvPath = rGlobalEnvironmentFilePath();
+
    // notify client of serialization status
-   SerializationCallbackScope cb(kSerializationActionSaveDefaultWorkspace);
+   SerializationCallbackScope cb(kSerializationActionSaveDefaultWorkspace,
+                                 globalEnvPath);
 
    // suppress interrupts which occur during saving
    r::exec::IgnoreInterruptsScope ignoreInterrupts;
          
    // save global environment
-   FilePath globalEnvPath = rGlobalEnvironmentFilePath();
    Error error = r::exec::executeSafely(
                         boost::bind(R_SaveGlobalEnvToFile,
                                     globalEnvPath.absolutePath().c_str()));
@@ -182,19 +187,21 @@ Error saveDefaultGlobalEnvironment()
    
 Error restoreDefaultGlobalEnvironment()
 {
-   // notify client of serialization status
-   SerializationCallbackScope cb(kSerializationActionLoadDefaultWorkspace);
-   
-   // ignore interrupts which occur during restoring of the global env
-   // the restoration will run to completion in any case and then the
-   // next thing the user does will be "interrupted" -- clearly not
-   // what they intended
-   r::exec::IgnoreInterruptsScope ignoreInterrupts;
-   
    // restore the default global environment if there is one
    FilePath globalEnvPath = rGlobalEnvironmentFilePath();
    if (globalEnvPath.exists())
    {
+      // notify client of serialization status
+      SerializationCallbackScope cb(kSerializationActionLoadDefaultWorkspace,
+                                    globalEnvPath);
+
+      // ignore interrupts which occur during restoring of the global env
+      // the restoration will run to completion in any case and then the
+      // next thing the user does will be "interrupted" -- clearly not
+      // what they intended
+      r::exec::IgnoreInterruptsScope ignoreInterrupts;
+
+
       Error error = r::exec::executeSafely(boost::bind(
                                         R_RestoreGlobalEnvFromFile,
                                         globalEnvPath.absolutePath().c_str(),

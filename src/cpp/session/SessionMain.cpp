@@ -1426,10 +1426,15 @@ void rCleanup(bool terminatedNormally)
 
 }   
    
-void rSerialization(int action)
+void rSerialization(int action, const FilePath& targetPath)
 {
    json::Object serializationActionObject ;
    serializationActionObject["type"] = action;
+   if (!targetPath.empty())
+   {
+      serializationActionObject["targetPath"] =
+                           module_context::createAliasedPath(targetPath);
+   }
    
    ClientEvent event(kSessionSerialization, serializationActionObject);
    session::clientEventQueue().add(event);

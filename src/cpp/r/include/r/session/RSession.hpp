@@ -124,7 +124,7 @@ struct RCallbacks
    boost::function<void()> quit;
    boost::function<void(const std::string&)> suicide;
    boost::function<void(bool)> cleanup;
-   boost::function<void(int)> serialization;
+   boost::function<void(int,const core::FilePath&)> serialization;
 };
 
 // run the session   

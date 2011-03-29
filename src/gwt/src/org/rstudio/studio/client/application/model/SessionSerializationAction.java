@@ -30,4 +30,8 @@ public class SessionSerializationAction extends JavaScriptObject
    public native final int getType() /*-{
       return this.type;
    }-*/;
+   
+   public native final String getTargetPath() /*-{
+      return this.targetPath;
+   }-*/;
 }

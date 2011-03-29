@@ -304,13 +304,14 @@ public class Application implements ApplicationEventHandlers,
       saveAction_ = event.getAction();
    }
    
+   
    public void onSessionSerialization(SessionSerializationEvent event)
    {
       switch(event.getAction().getType())
       {
       case SessionSerializationAction.LOAD_DEFAULT_WORKSPACE:
          view_.showSerializationProgress(
-                         "Restoring workspace from ~/.RData...",
+                         "Restoring workspace" + getSuffix(event), 
                          false, // non-modal, appears to user as std latency
                          500,   // willing to show progress earlier since
                                 // this will always be at workbench startup
@@ -318,7 +319,7 @@ public class Application implements ApplicationEventHandlers,
          break;
       case SessionSerializationAction.SAVE_DEFAULT_WORKSPACE:
          view_.showSerializationProgress(
-                          "Saving workspace image to ~/.RData...",
+                          "Saving workspace image" + getSuffix(event), 
                           true, // modal, inputs will fall dead anyway
                           0,    // show immediately
                           0);   // no timeout
@@ -346,6 +347,23 @@ public class Application implements ApplicationEventHandlers,
       case SessionSerializationAction.COMPLETED:
          view_.hideSerializationProgress();
          break;
+      }
+   }
+   
+   private String getSuffix(SessionSerializationEvent event)
+   {
+      SessionSerializationAction action = event.getAction();
+      String targetPath = action.getTargetPath();
+      if (targetPath != null)
+      {
+         String verb = " from ";
+         if (action.getType() == SessionSerializationAction.SAVE_DEFAULT_WORKSPACE)
+            verb = " to ";
+         return verb + targetPath + "...";
+      }
+      else
+      {
+         return "...";
       }
    }
    
