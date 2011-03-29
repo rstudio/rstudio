@@ -107,6 +107,11 @@ FilePath rGlobalEnvironmentFilePath()
    FilePath rEnvironmentDir = s_options.rEnvironmentDir();
    return rEnvironmentDir.complete(".RData");
 }
+
+std::string createAliasedPath(const FilePath& filePath)
+{
+   return FilePath::createAliasedPath(filePath, s_options.userHomePath);
+}
    
 class SerializationCallbackScope : boost::noncopyable
 {
@@ -210,9 +215,7 @@ Error restoreDefaultGlobalEnvironment()
          return error;
 
       // print path to console
-      std::string aliasedPath = FilePath::createAliasedPath(
-                                                    globalEnvPath,
-                                                     s_options.userHomePath);
+      std::string aliasedPath = createAliasedPath(globalEnvPath);
       Rprintf(("[Workspace restored from " + aliasedPath + "]\n\n").c_str());
    }
 
@@ -244,8 +247,7 @@ void reportHistoryAccessError(const std::string& context,
    }
 
    // notify the user
-   std::string path = FilePath::createAliasedPath(historyFilePath,
-                                                  s_options.userHomePath);
+   std::string path = createAliasedPath(historyFilePath);
    std::string errmsg = context + " " + path + ": " + summary;
    REprintf(("Error attempting to " + errmsg + "\n").c_str());
 }
@@ -905,7 +907,13 @@ SA_TYPE saveAsk()
    // NOTE: we don't check R_Interactive (as Rstd_CleanUp does) here because 
    // we are always interactive. If we ever support a non-interactive mode
    // then we need to update the logic to reflect this
-   
+
+   // TODO: this will leak if the user executes a cancel. we should wrap
+   // this in a try/catch(JumpToTopException) construct
+   std::string prompt = "Save workspace image to " +
+                        createAliasedPath(rGlobalEnvironmentFilePath()) +
+                        "? [y/n/c]: ";
+
    SA_TYPE saveact = SA_SAVEASK;
    
    CONSOLE_BUFFER_CHAR buf[1024];
@@ -913,8 +921,7 @@ qask:
    // prompt the user 
    R_ClearerrConsole();
    R_FlushConsole();
-   RReadConsole("Save workspace image? [y/n/c]: ",
-                buf, 128, 0);
+   RReadConsole(prompt.c_str(), buf, 128, 0);
    
    switch (buf[0]) 
    {
