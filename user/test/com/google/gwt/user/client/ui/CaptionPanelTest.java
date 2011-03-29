@@ -184,7 +184,7 @@ public class CaptionPanelTest extends GWTTestCase {
     CaptionPanel panel = createEmptyCaptionPanel();
     assertEquals("", panel.getCaptionText());
     assertEquals("", panel.getCaptionHTML());
-    // Wigets may be supported in the future.
+    // Widgets may be supported in the future.
     // assertNull(panel.getCaptionWidget());
     assertNull(panel.getElement().getFirstChild());
   }
