@@ -58,4 +58,62 @@ public class ResettableEventBusTest extends HandlerTestBase {
     });
     assertNotFired(mouse1, mouse2, mouse3);
   }
+  
+  public void testNestedResetInnerFirst() {
+    CountingEventBus wrapped = new CountingEventBus();
+    ResettableEventBus wideScope = new ResettableEventBus(wrapped);
+    ResettableEventBus narrowScope = new ResettableEventBus(wideScope);
+    
+    Type<MouseDownHandler> type = MouseDownEvent.getType();
+    
+    wideScope.addHandler(type, mouse1);
+    narrowScope.addHandler(type, mouse2);
+    
+    wrapped.fireEvent(new MouseDownEvent() {
+    });
+    assertFired(mouse1, mouse2);
+    
+    reset();
+
+    /*
+     * When I remove handlers from the narrow resettable, it should have no effect
+     * on handlers registered with the wider instance.
+     */
+    
+    narrowScope.removeHandlers();
+    
+    wrapped.fireEvent(new MouseDownEvent() {
+    });
+    assertFired(mouse1);
+    assertNotFired(mouse2);
+  }
+
+  public void testNestedResetOuterFirst() {
+    CountingEventBus wrapped = new CountingEventBus();
+    ResettableEventBus wideScope = new ResettableEventBus(wrapped);
+    ResettableEventBus narrowScope = new ResettableEventBus(wideScope);
+    
+    Type<MouseDownHandler> type = MouseDownEvent.getType();
+    
+    wideScope.addHandler(type, mouse1);
+    narrowScope.addHandler(type, mouse2);
+    
+    wrapped.fireEvent(new MouseDownEvent() {
+    });
+    assertFired(mouse1, mouse2);
+    
+    reset();
+    
+    /*
+     * When I remove handlers from the first resettable, handlers registered
+     * by the narrower scoped one that wraps it should also be severed.
+     */
+    
+    wideScope.removeHandlers();
+    
+    wrapped.fireEvent(new MouseDownEvent() {
+    });
+    assertNotFired(mouse1);
+    assertNotFired(mouse2);
+  }
 }
