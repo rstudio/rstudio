@@ -157,7 +157,10 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
    {
       // determine saveAction by calling hook
       QVariant saveAction = pFrame->evaluateJavaScript(
-                                       "window.desktopHooks.getSaveAction()");
+                               "window.desktopHooks.getSaveAction()");
+
+      QVariant rEnvPath = pFrame->evaluateJavaScript(
+                               "window.desktopHooks.getREnvironmentPath()");
 
       bool save;
       switch (saveAction.toInt())
@@ -172,7 +175,8 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
       default:
          QMessageBox prompt(QMessageBox::Warning,
                             "Quit R Session",
-                            "Save workspace image?",
+                            "Save workspace image to " +
+                            rEnvPath.toString() + "?",
                             QMessageBox::NoButton,
                             this,
                             Qt::Sheet | Qt::Dialog |

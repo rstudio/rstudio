@@ -35,6 +35,7 @@ import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
@@ -86,13 +87,15 @@ public class DesktopHooks
                        EventBus events,
                        GlobalDisplay globalDisplay,
                        Server server,
-                       FileTypeRegistry fileTypeRegistry)
+                       FileTypeRegistry fileTypeRegistry,
+                       WorkbenchContext workbenchContext)
    {
       commands_ = commands;
       events_ = events;
       globalDisplay_ = globalDisplay;
       server_ = server;
       fileTypeRegistry_ = fileTypeRegistry;
+      workbenchContext_ = workbenchContext;
       
       events_.addHandler(SaveActionChangedEvent.TYPE, 
                          new SaveActionChangedHandler() 
@@ -200,12 +203,18 @@ public class DesktopHooks
    {
       return saveAction_.getAction();
    }
+   
+   String getREnvironmentPath()
+   {
+      return workbenchContext_.getREnvironmentPath();
+   }
 
    private final Commands commands_;
    private final EventBus events_;
    private final GlobalDisplay globalDisplay_;
    private final Server server_;
    private final FileTypeRegistry fileTypeRegistry_;
+   private final WorkbenchContext workbenchContext_;
    
    private SaveAction saveAction_ = SaveAction.saveAsk();
 }
