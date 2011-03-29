@@ -236,18 +236,6 @@ public class TextEditingTarget implements EditingTarget
             }
          }
       });
-
-      final String rTypeId = FileTypeRegistry.R.getTypeId();
-      releaseOnDismiss_.add(prefs.softWrapRFiles().addValueChangeHandler(
-            new ValueChangeHandler<Boolean>()
-            {
-               public void onValueChange(ValueChangeEvent<Boolean> evt)
-               {
-                  if (fileType_.getTypeId().equals(rTypeId))
-                     view_.adaptToFileType(fileType_);
-               }
-            }
-      ));
    }
 
    public void initialize(SourceDocument document,
@@ -352,6 +340,17 @@ public class TextEditingTarget implements EditingTarget
             }));
       view_.setFontSize(fontSizeManager_.getSize());
 
+      final String rTypeId = FileTypeRegistry.R.getTypeId();
+      releaseOnDismiss_.add(prefs_.softWrapRFiles().addValueChangeHandler(
+            new ValueChangeHandler<Boolean>()
+            {
+               public void onValueChange(ValueChangeEvent<Boolean> evt)
+               {
+                  if (fileType_.getTypeId().equals(rTypeId))
+                     view_.adaptToFileType(fileType_);
+               }
+            }
+      ));
    }
 
    private void registerPrefs()
