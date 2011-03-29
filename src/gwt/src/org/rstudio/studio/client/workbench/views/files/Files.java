@@ -18,6 +18,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -140,7 +141,6 @@ public class Files
 
       
       eventBus_.addHandler(FileChangeEvent.TYPE, this);
-      eventBus_.addHandler(DirectoryNavigateEvent.TYPE, this);
 
       initSession();
    }
@@ -159,6 +159,11 @@ public class Files
             {
                public void execute()
                {
+                  // if we've already navigated to a directory then
+                  // we don't need to initialize from client state
+                  if (hasNavigatedToDirectory_)
+                     return;
+
                   FileSystemItem start = value != null
                                     ? FileSystemItem.createDir(value)
                                     : FileSystemItem.createDir(
@@ -510,6 +515,7 @@ public class Files
   
    private void navigateToDirectory(FileSystemItem directoryEntry)
    {
+      hasNavigatedToDirectory_ = true;
       currentPath_ = directoryEntry;
       view_.listDirectory(currentPath_, currentPathFilesDS_);
       session_.persistClientState();
@@ -590,6 +596,7 @@ public class Files
    private final RemoteFileSystemContext fileSystemContext_;
    private final Session session_;
    private FileSystemItem currentPath_ = FileSystemItem.home();
+   private boolean hasNavigatedToDirectory_ = false;
    private final Provider<FilesCopy> pFilesCopy_;
    private final Provider<FilesUpload> pFilesUpload_;
    private static final String MODULE_FILES = "filespane";
