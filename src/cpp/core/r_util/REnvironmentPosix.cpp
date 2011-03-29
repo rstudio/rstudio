@@ -74,16 +74,39 @@ FilePath systemDefaultRScript()
    return FilePath();
 }
 
-bool getRHomePath(const FilePath& rScriptPath,
-                  const config_utils::Variables& scriptVars,
-                  std::string* pRHome,
-                  std::string* pErrMsg)
+bool getRHomeAndLibPath(const FilePath& rScriptPath,
+                        const config_utils::Variables& scriptVars,
+                        std::string* pRHome,
+                        std::string* pRLibPath,
+                        std::string* pErrMsg)
 {
    config_utils::Variables::const_iterator it = scriptVars.find("R_HOME_DIR");
    if (it != scriptVars.end())
    {
+      // get R home
       *pRHome = it->second;
-      return true;
+
+      // get R lib path (probe subdiretories if necessary)
+      FilePath libPath = FilePath(*pRHome).complete("lib");
+
+      // check for dylib in lib and lib/x86_64
+      if (libPath.complete(kLibRFileName).exists())
+      {
+         *pRLibPath = libPath.absolutePath();
+         return true;
+      }
+      else if (libPath.complete("x86_64/" kLibRFileName).exists())
+      {
+         *pRLibPath = libPath.complete("x86_64").absolutePath();
+         return true;
+      }
+      else
+      {
+         *pErrMsg = "Unable to find " kLibRFileName " in expected locations"
+                    "within R Home directory " + *pRHome;
+         LOG_ERROR_MESSAGE(*pErrMsg);
+         return false;
+      }
    }
    else
    {
@@ -154,10 +177,11 @@ FilePath systemDefaultRScript()
    return rBinaryPath;
 }
 
-bool getRHomePath(const FilePath& rScriptPath,
-                  const config_utils::Variables& scriptVars,
-                  std::string* pRHome,
-                  std::string* pErrMsg)
+bool getRHomeAndLibPath(const FilePath& rScriptPath,
+                        const config_utils::Variables& scriptVars,
+                        std::string* pRHome,
+                        std::string* pRLibPath,
+                        std::string* pErrMsg)
 {
    // run R script to detect R home
    std::string rHomeOutput;
@@ -174,6 +198,7 @@ bool getRHomePath(const FilePath& rScriptPath,
    {
       boost::algorithm::trim(rHomeOutput);
       *pRHome = rHomeOutput;
+      *pRLibPath = FilePath(*pRHome).complete("lib").absolutePath();
       return true;
    }
 }
@@ -182,10 +207,12 @@ bool getRHomePath(const FilePath& rScriptPath,
 #endif
 
 
-bool validateREnvironment(const EnvironmentVars& vars, std::string* pErrMsg)
+bool validateREnvironment(const EnvironmentVars& vars,
+                          const FilePath& rLibPath,
+                          std::string* pErrMsg)
 {
    // first extract paths
-   FilePath rHomePath, rSharePath, rIncludePath, rDocPath, rLibPath, rLibRPath;
+   FilePath rHomePath, rSharePath, rIncludePath, rDocPath, rLibRPath;
    for (EnvironmentVars::const_iterator it = vars.begin();
         it != vars.end();
         ++it)
@@ -200,8 +227,7 @@ bool validateREnvironment(const EnvironmentVars& vars, std::string* pErrMsg)
          rDocPath = FilePath(it->second);
    }
 
-   // resolve derivitive paths
-   rLibPath = rHomePath.complete("lib");
+   // resolve libR path
    rLibRPath = rLibPath.complete(kLibRFileName);
 
    // validate required paths (if these don't exist then rsession won't
@@ -317,8 +343,8 @@ bool detectREnvironment(const FilePath& whichRScript,
    pVars->push_back(std::make_pair("R_DOC_DIR", scriptVars["R_DOC_DIR"]));
 
    // get r home path
-   std::string rHome;
-   if (!getRHomePath(rScriptPath, scriptVars, &rHome, pErrMsg))
+   std::string rHome, rLib;
+   if (!getRHomeAndLibPath(rScriptPath, scriptVars, &rHome, &rLib, pErrMsg))
       return false;
 
    // validate: error if we got no output
@@ -344,17 +370,18 @@ bool detectREnvironment(const FilePath& whichRScript,
    pVars->push_back(std::make_pair("R_HOME", rHomePath.absolutePath()));
 
    // determine library path (existing + r lib dir + r extra lib dirs)
+   FilePath rLibPath(rLib);
    std::string libraryPath = core::system::getenv(kLibraryPathEnvVariable);
    if (!libraryPath.empty())
       libraryPath.append(":");
-   libraryPath.append(rHomePath.complete("lib").absolutePath());
+   libraryPath.append(rLibPath.absolutePath());
    std::string extraPaths = extraLibraryPaths(ldPathsScript,
                                               rHomePath.absolutePath());
    if (!extraPaths.empty())
       libraryPath.append(":" + extraPaths);
    pVars->push_back(std::make_pair(kLibraryPathEnvVariable, libraryPath));
 
-   return validateREnvironment(*pVars, pErrMsg);
+   return validateREnvironment(*pVars, rLibPath, pErrMsg);
 }
 
 
