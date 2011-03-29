@@ -42,13 +42,13 @@ public class Workbench implements BusyHandler,
                                   QuotaStatusHandler,
                                   OAuthApprovalHandler,
                                   WorkbenchLoadedHandler,
-                                  WorkbenchMetricsChangedHandler,
-                                  WorkingDirChangedHandler
+                                  WorkbenchMetricsChangedHandler
 {
    interface Binder extends CommandBinder<Commands, Workbench> {}
    
    @Inject
    public Workbench(WorkbenchMainView view, 
+                    WorkbenchContext workbenchContext,
                     GlobalDisplay globalDisplay,
                     EventBus eventBus,
                     Server server,
@@ -57,12 +57,12 @@ public class Workbench implements BusyHandler,
                     FileDialogs fileDialogs)
    {
       view_ = view;
+      workbenchContext_ = workbenchContext;
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
       server_ = server;
       fsContext_ = fsContext;
       fileDialogs_ = fileDialogs;
-      currentWorkingDir_ = FileSystemItem.home();
      
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
       
@@ -74,7 +74,6 @@ public class Workbench implements BusyHandler,
       eventBus.addHandler(OAuthApprovalEvent.TYPE, this);
       eventBus.addHandler(WorkbenchLoadedEvent.TYPE, this);
       eventBus.addHandler(WorkbenchMetricsChangedEvent.TYPE, this);
-      eventBus.addHandler(WorkingDirChangedEvent.TYPE, this);
 
       // We don't want to send setWorkbenchMetrics more than once per 1/2-second
       metricsChangedCommand_ = new TimeBufferedCommand(-1, -1, 500)
@@ -189,18 +188,13 @@ public class Workbench implements BusyHandler,
       
    }
    
-   public void onWorkingDirChanged(WorkingDirChangedEvent event)
-   {
-      currentWorkingDir_ = FileSystemItem.createDir(event.getPath());
-   }
-   
    @Handler
    public void onSetWorkingDir()
    {
       fileDialogs_.chooseFolder(
             "Change Working Directory",
             fsContext_,
-            currentWorkingDir_,
+            workbenchContext_.getCurrentWorkingDir(),
             new ProgressOperationWithInput<FileSystemItem>()
             {
                public void execute(FileSystemItem input,
@@ -226,7 +220,7 @@ public class Workbench implements BusyHandler,
    GlobalDisplay globalDisplay_;
    private final RemoteFileSystemContext fsContext_;
    private final FileDialogs fileDialogs_;
-   private FileSystemItem currentWorkingDir_;
+   private final WorkbenchContext workbenchContext_;
    private final TimeBufferedCommand metricsChangedCommand_;
    private WorkbenchMetrics lastWorkbenchMetrics_;
    private boolean nearQuotaWarningShown_ = false; 
