@@ -62,6 +62,9 @@ public class SafeHtmlTemplatesTest extends GWTTestCase {
 
     @Template("<span><img src=\"{0}/{1}\"/></span>")
     SafeHtml templateWithTwoPartUriAttribute(String baseUrl, String urlPart);
+
+    @Template("<span style='{0}; color: green;'></span>")
+    SafeHtml templateWithStyleAttribute(String style);
   }
 
   public void testSimpleTemplate() {
@@ -106,5 +109,11 @@ public class SafeHtmlTemplatesTest extends GWTTestCase {
         "<span><img src=\"#/x&amp;y\"/></span>",
         templates.templateWithTwoPartUriAttribute(
             BAD_URL, "x&y").asString());
+  }
+  
+  public void testTemplateWithStyleAttribute() {
+    Assert.assertEquals(
+        "<span style='background: purple; color: green;'></span>",
+        templates.templateWithStyleAttribute("background: purple").asString());
   }
 }

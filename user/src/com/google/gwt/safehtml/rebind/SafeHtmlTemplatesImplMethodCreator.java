@@ -245,6 +245,7 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
         break;
 
       case CSS_ATTRIBUTE:
+      case CSS_ATTRIBUTE_START:
         // TODO(xtof): Improve support for CSS.
         logger.log(TreeLogger.WARN, "Template with variable in CSS context: "
             + "The template code generator cannot guarantee HTML-safety of "
