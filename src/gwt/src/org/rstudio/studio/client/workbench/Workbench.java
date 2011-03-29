@@ -32,8 +32,6 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.*;
-import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
-import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 
 public class Workbench implements BusyHandler,
