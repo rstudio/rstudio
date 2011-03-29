@@ -16,16 +16,20 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Text;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
+import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.IncrementalCommand;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
@@ -115,6 +119,9 @@ public class ShellPane extends Composite implements Shell.Display,
 
    public void consolePrompt(String prompt)
    {
+      if (prompt != null)
+         prompt = VirtualConsole.consolify(prompt);
+
       prompt_.getElement().setInnerText(prompt);
       //input_.clear() ;
       ensureInputVisible();
@@ -135,26 +142,91 @@ public class ShellPane extends Composite implements Shell.Display,
                           boolean addToTop)
    {
       Node node;
-      if (StringUtil.isNullOrEmpty(className)
-          || className.equals(styles_.output()))
-      {
-         node = Document.get().createTextNode(text);
-      }
-      else
-      {
-         SpanElement span = Document.get().createSpanElement();
-         span.setClassName(className);
-         span.setInnerText(text);
-         node = span;
-      }
+      boolean isOutput = StringUtil.isNullOrEmpty(className)
+                         || className.equals(styles_.output());
 
-      if (addToTop)
-         output_.getElement().insertFirst(node);
+      if (isOutput && !addToTop && trailingOutput_ != null)
+      {
+         // Short-circuit the case where we're appending output to the
+         // bottom, and there's already some output there. We need to
+         // treat this differently in case the new output uses control
+         // characters to pound over parts of the previous output.
+
+         int oldLineCount = DomUtils.countLines(trailingOutput_, true);
+         trailingOutputConsole_.submit(text);
+         trailingOutput_.setNodeValue(
+               ensureNewLine(trailingOutputConsole_.toString()));
+         int newLineCount = DomUtils.countLines(trailingOutput_, true);
+         lines_ += newLineCount - oldLineCount;
+      }
       else
-         output_.getElement().appendChild(node);
-      
-      lines_ += DomUtils.countLines(node, true);
+      {
+         Element outEl = output_.getElement();
+
+         text = VirtualConsole.consolify(text);
+         if (isOutput)
+         {
+            VirtualConsole console = new VirtualConsole();
+            console.submit(text);
+            String consoleSnapshot = console.toString();
+
+            // We use ensureNewLine to make sure that even if output
+            // doesn't end with \n, a prompt will appear on its own line.
+            // However, if we call ensureNewLine indiscriminantly (i.e.
+            // on an output that's going to be followed by another output)
+            // we can end up inserting newlines where they don't belong.
+            //
+            // It's safe to add a newline when we're appending output to
+            // the end of the console, because if the next append is also
+            // output, we'll use the contents of VirtualConsole and the
+            // newline we add here will be plowed over.
+            //
+            // If we're prepending output to the top of the console, then
+            // it's safe to add a newline if the next chunk (which is already
+            // there) is something besides output.
+            if (!addToTop ||
+                (!outEl.hasChildNodes()
+                 || outEl.getFirstChild().getNodeType() != Node.TEXT_NODE))
+            {
+               consoleSnapshot = ensureNewLine(consoleSnapshot);
+            }
+
+            node = Document.get().createTextNode(consoleSnapshot);
+            if (!addToTop)
+            {
+               trailingOutput_ = (Text) node;
+               trailingOutputConsole_ = console;
+            }
+         }
+         else
+         {
+            SpanElement span = Document.get().createSpanElement();
+            span.setClassName(className);
+            span.setInnerText(text);
+            node = span;
+            if (!addToTop)
+            {
+               trailingOutput_ = null;
+               trailingOutputConsole_ = null;
+            }
+         }
+
+         if (addToTop)
+            outEl.insertFirst(node);
+         else
+            outEl.appendChild(node);
+
+         lines_ += DomUtils.countLines(node, true);
+      }
       return !trimExcess();
+   }
+
+   private String ensureNewLine(String s)
+   {
+      if (s.length() == 0 || s.charAt(s.length() - 1) == '\n')
+         return s;
+      else
+         return s + '\n';
    }
 
    private boolean trimExcess()
@@ -446,6 +518,10 @@ public class ShellPane extends Composite implements Shell.Display,
    private int maxLines_ = -1;
    private boolean cleared_ = false;
    private final PreWidget output_ ;
+   // Save a reference to the most recent output text node in case the
+   // next bit of output contains \b or \r control characters
+   private Text trailingOutput_ ;
+   private VirtualConsole trailingOutputConsole_ ;
    private final HTML prompt_ ;
    private final PlainTextEditor input_ ; 
    private final DockPanel inputLine_ ;
