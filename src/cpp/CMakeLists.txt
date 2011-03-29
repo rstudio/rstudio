@@ -77,6 +77,11 @@ else()
 
 endif()
 
+# force use of boost filesystem version 2 so our FilePath character
+# encoding changes compile on boost 1.46.
+# TODO: make FilePath compatible with boost filesystem v3
+add_definitions(-DBOOST_FILESYSTEM_VERSION=2)
+
 # on osx, boost::enable_if<boost::filesystem::is_basic_path checking in
 # filesystem (see operations.hpp) seem to cause a hard abort in release
 # mode if the file doesn't exist. so disable this check on all platforms
