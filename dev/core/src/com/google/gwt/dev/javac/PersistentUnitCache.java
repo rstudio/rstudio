@@ -295,7 +295,7 @@ class PersistentUnitCache extends MemoryUnitCache {
     logger.log(TreeLogger.TRACE, "Persistent unit cache dir set to: "
         + this.cacheDirectory.getAbsolutePath());
 
-    if (!cacheDirectory.isDirectory() && !cacheDirectory.mkdir()) {
+    if (!cacheDirectory.isDirectory() && !cacheDirectory.mkdirs()) {
       logger.log(TreeLogger.ERROR, "Unable to initialize cache. Couldn't create directory "
           + cacheDirectory.getAbsolutePath() + ".");
       throw new UnableToCompleteException();
