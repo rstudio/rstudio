@@ -74,10 +74,14 @@ import java.util.regex.Pattern;
  * <dd>This context corresponds to a parameter that appears at the very start of
  * a URL-valued HTML attribute's value; in the above example this applies to
  * parameter #1.
+ * <dt>{@link HtmlContext.Type#CSS_ATTRIBUTE_START}
+ * <dd>This context corresponds to a parameter that appears at the very
+ * beginning of a {@code style} attribute's value; in the above example this
+ * applies to parameter #0.
  * <dt>{@link HtmlContext.Type#CSS_ATTRIBUTE}
  * <dd>This context corresponds to a parameter that appears in the context of a
- * {@code style} attribute; in the above example this applies to
- * parameter #0.
+ * {@code style} attribute, except at the very beginning of the attribute's
+ * value.
  * <dt>{@link HtmlContext.Type#ATTRIBUTE_VALUE}
  * <dd>This context corresponds to a parameter that appears within an attribute
  * and is not in one of the more specific in-attribute contexts above. In
@@ -210,7 +214,11 @@ final class HtmlTemplateParser {
    */
   private HtmlContext getHtmlContextFromParseState()
       throws UnableToCompleteException {
-
+    // TODO(xtof): Consider refactoring such that state related to the position
+    // of the template variable in an attribute is exposed separately (as
+    // HtmlContext#isAttributeStart(), etc). In doing so, consider trade off
+    // between combinatorial explosion of possible states vs. complexity of
+    // client code.
     if (streamHtmlParser.getState().equals(HtmlParser.STATE_ERROR)) {
       logger.log(TreeLogger.ERROR,
           "Parsing template resulted in parse error: "
@@ -250,7 +258,11 @@ final class HtmlTemplateParser {
       if (streamHtmlParser.isUrlStart()) {
         return new HtmlContext(HtmlContext.Type.URL_START, tag, attribute);
       } else if (streamHtmlParser.inCss()) {
-        return new HtmlContext(HtmlContext.Type.CSS_ATTRIBUTE, tag, attribute);
+        if (streamHtmlParser.getValueIndex() == 0) {
+          return new HtmlContext(HtmlContext.Type.CSS_ATTRIBUTE_START, tag, attribute);
+        } else {
+          return new HtmlContext(HtmlContext.Type.CSS_ATTRIBUTE, tag, attribute);
+        }
       } else {
         return new HtmlContext(
             HtmlContext.Type.ATTRIBUTE_VALUE, tag, attribute);

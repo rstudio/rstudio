@@ -64,7 +64,11 @@ final class ParsedHtmlTemplate {
       /**
        * CSS (style) attribute context.
        */
-      CSS_ATTRIBUTE
+      CSS_ATTRIBUTE,
+      /**
+       * At the very start of a CSS (style) attribute context.
+       */
+      CSS_ATTRIBUTE_START
     }
 
     private final Type type;

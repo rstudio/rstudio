@@ -134,9 +134,14 @@ public final class HtmlTemplateParserTest extends TestCase {
     // Test correct detection of CSS context.
     assertParseTemplateResult(
         "[L(<div class=\"), P((ATTRIBUTE_VALUE,div,class),0), L(\" style=\"), "
-            + "P((CSS_ATTRIBUTE,div,style),2), L(\">Hello ), "
+            + "P((CSS_ATTRIBUTE_START,div,style),2), L(\">Hello ), "
             + "P((TEXT,null,null),1)]",
         "<div class=\"{0}\" style=\"{2}\">Hello {1}");
+    assertParseTemplateResult(
+        "[L(<div class=\"), P((ATTRIBUTE_VALUE,div,class),0), L(\" style=\"color:green; ), "
+            + "P((CSS_ATTRIBUTE,div,style),2), L(\">Hello ), "
+            + "P((TEXT,null,null),1)]",
+        "<div class=\"{0}\" style=\"color:green; {2}\">Hello {1}");
     assertParseTemplateResult(
         "[L(<div>), P((TEXT,null,null),0), L(<style>foo ), "
             + "P((CSS,null,null),1), L(</style>)]",
