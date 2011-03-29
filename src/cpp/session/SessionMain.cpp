@@ -253,19 +253,20 @@ FilePath getDefaultWorkingDirectory()
       return session::options().userHomePath();
 }
 
+
 FilePath getInitialWorkingDirectory()
 {
    // first see if there is an override from the environment
-   std::string envWorkingDir = core::system::getenv("RS_INITIAL_WD");
-   if (!envWorkingDir.empty())
+   FilePath workingDirPath = session::options().initialWorkingDirOverride();
+   if (workingDirPath.exists() && workingDirPath.isDirectory())
    {
-      FilePath workingDirPath(envWorkingDir);
-      if (workingDirPath.exists() && workingDirPath.isDirectory())
-         return workingDirPath;
+      return workingDirPath;
    }
-
-   // if not then just return default working dir
-   return getDefaultWorkingDirectory();
+   else
+   {
+      // if not then just return default working dir
+      return getDefaultWorkingDirectory();
+   }
 }
 
 void handleClientInit(const boost::function<void()>& initFunction,
@@ -1557,6 +1558,15 @@ FilePath rEnvironmentDir()
    }
 }
 
+FilePath getStartupEnvironmentFilePath()
+{
+   FilePath envFile = session::options().initialEnvironmentFileOverride();
+   if (!envFile.empty())
+      return envFile;
+   else
+      return rEnvironmentDir().complete(".RData");
+}
+
 } // anonymous namespace
 
 
@@ -1830,6 +1840,7 @@ int main (int argc, char * const argv[])
       rOptions.userHomePath = options.userHomePath();
       rOptions.userScratchPath = userScratchPath;
       rOptions.defaultWorkingDir = getDefaultWorkingDirectory();
+      rOptions.startupEnvironmentFilePath = getStartupEnvironmentFilePath();
       rOptions.rEnvironmentDir = boost::bind(rEnvironmentDir);
       rOptions.rSourcePath = options.coreRSourcePath();
       if (!desktopMode) // ignore r-libs-user in desktop mode

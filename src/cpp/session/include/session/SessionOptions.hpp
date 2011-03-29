@@ -183,6 +183,23 @@ public:
       return userScratchPath().childPath("log");
    }
 
+   core::FilePath initialWorkingDirOverride()
+   {
+      if (!initialWorkingDirOverride_.empty())
+         return core::FilePath(initialWorkingDirOverride_.c_str());
+      else
+         return core::FilePath();
+   }
+
+   core::FilePath initialEnvironmentFileOverride()
+   {
+      if (!initialEnvironmentFileOverride_.empty())
+         return core::FilePath(initialEnvironmentFileOverride_.c_str());
+      else
+         return core::FilePath();
+   }
+
+
    // The line ending we use when working with source documents
    // in memory. This doesn't really make sense for the user to
    // change.
@@ -243,6 +260,10 @@ private:
    std::string userIdentity_;
    std::string userHomePath_;
    std::string userScratchPath_;   
+
+   // overrides
+   std::string initialWorkingDirOverride_;
+   std::string initialEnvironmentFileOverride_;
 };
   
 } // namespace session

@@ -126,6 +126,24 @@ void initializeWorkingDirectory(int argc,
       core::system::setenv("RS_INITIAL_WD", workingDir);
 }
 
+void initializeStartupEnvironment(QString* pFilename)
+{
+   // if the filename ends with .RData or .rda then this is an
+   // environment file. we handle this by setting an environment
+   // var and then resetting the pFilename so it isn't processed
+   // using the standard open file logic
+   FilePath filePath(pFilename->toStdString());
+   if (filePath.exists())
+   {
+      std::string ext = filePath.extensionLowerCase();
+      if (ext == ".rdata" || ext == ".rda")
+      {
+         core::system::setenv("RS_INITIAL_ENV", filePath.absolutePath());
+         pFilename->clear();
+      }
+   }
+}
+
 void launchProcess(std::string absPath, QStringList argList, QProcess** ppProc)
 {
    QProcess* pProcess = new QProcess();
@@ -193,6 +211,7 @@ int main(int argc, char* argv[])
 
       initializeSharedSecret();
       initializeWorkingDirectory(argc, argv, filename);
+      initializeStartupEnvironment(&filename);
 
       Options& options = desktop::options();
       if (!prepareEnvironment(options))

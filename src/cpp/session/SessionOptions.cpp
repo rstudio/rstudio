@@ -257,6 +257,14 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    secret_ = core::system::getenv("RS_SHARED_SECRET");
    core::system::unsetenv("RS_SHARED_SECRET");
 
+   // initial working dir override
+   initialWorkingDirOverride_ = core::system::getenv("RS_INITIAL_WD");
+   core::system::unsetenv("RS_INITIAL_WD");
+
+   // initial environment file override
+   initialEnvironmentFileOverride_ = core::system::getenv("RS_INITIAL_ENV");
+   core::system::unsetenv("RS_INITIAL_ENV");
+
    // limit rpc client uid
    limitRpcClientUid_ = -1;
    std::string limitUid = core::system::getenv(kRStudioLimitRpcClientUid);

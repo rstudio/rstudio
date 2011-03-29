@@ -57,6 +57,7 @@ struct ROptions
    core::FilePath userHomePath;
    core::FilePath userScratchPath;
    core::FilePath defaultWorkingDir;
+   core::FilePath startupEnvironmentFilePath;
    boost::function<core::FilePath()> rEnvironmentDir;
    core::FilePath rSourcePath;
    core::FilePath rLibsExtra;

@@ -102,7 +102,7 @@ public:
 // R history file
 const char * const kRHistory = ".Rhistory";
    
-FilePath rGlobalEnvironmentFilePath()
+FilePath rSaveGlobalEnvironmentFilePath()
 {
    FilePath rEnvironmentDir = s_options.rEnvironmentDir();
    return rEnvironmentDir.complete(".RData");
@@ -166,7 +166,7 @@ Error deferredRestoreSessionState(
 Error saveDefaultGlobalEnvironment()
 {
    // path to save to
-   FilePath globalEnvPath = rGlobalEnvironmentFilePath();
+   FilePath globalEnvPath = rSaveGlobalEnvironmentFilePath();
 
    // notify client of serialization status
    SerializationCallbackScope cb(kSerializationActionSaveDefaultWorkspace,
@@ -193,7 +193,7 @@ Error saveDefaultGlobalEnvironment()
 Error restoreDefaultGlobalEnvironment()
 {
    // restore the default global environment if there is one
-   FilePath globalEnvPath = rGlobalEnvironmentFilePath();
+   FilePath globalEnvPath = s_options.startupEnvironmentFilePath;
    if (globalEnvPath.exists())
    {
       // notify client of serialization status
@@ -216,7 +216,7 @@ Error restoreDefaultGlobalEnvironment()
 
       // print path to console
       std::string aliasedPath = createAliasedPath(globalEnvPath);
-      Rprintf(("[Workspace restored from " + aliasedPath + "]\n\n").c_str());
+      Rprintf(("[Workspace loaded from " + aliasedPath + "]\n\n").c_str());
    }
 
    // mark image clean (we need to do this due to our delayed handling
@@ -911,7 +911,7 @@ SA_TYPE saveAsk()
    // TODO: this will leak if the user executes a cancel. we should wrap
    // this in a try/catch(JumpToTopException) construct
    std::string prompt = "Save workspace image to " +
-                        createAliasedPath(rGlobalEnvironmentFilePath()) +
+                        createAliasedPath(rSaveGlobalEnvironmentFilePath()) +
                         "? [y/n/c]: ";
 
    SA_TYPE saveact = SA_SAVEASK;

@@ -317,7 +317,7 @@ public class Application implements ApplicationEventHandlers,
       {
       case SessionSerializationAction.LOAD_DEFAULT_WORKSPACE:
          view_.showSerializationProgress(
-                         "Restoring workspace" + getSuffix(event), 
+                         "Loading workspace" + getSuffix(event), 
                          false, // non-modal, appears to user as std latency
                          500,   // willing to show progress earlier since
                                 // this will always be at workbench startup
