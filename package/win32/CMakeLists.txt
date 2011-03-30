@@ -9,6 +9,26 @@ set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "RStudio")
 set(CPACK_PACKAGE_EXECUTABLES "rstudio" "RStudio")
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY 0)
 
+# registry keys
+set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
+   WriteRegStr HKLM 'Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\App Paths\\\\rstudio.exe' '' '$INSTDIR\\\\bin\\\\rstudio.exe'
+
+   WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\shell\\\\open\\\\command' '' '$INSTDIR\\\\bin\\\\rstudio.exe \\\"%1\\\"'
+
+   WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.R' ''
+   WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.RData' ''
+   WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.rda' ''
+   WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rd' ''
+   WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rnw' ''
+
+   System::Call 'Shell32::SHChangeNotify(i 0x8000000, i 0, i 0, i 0)'
+")
+
+set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
+   DeleteRegKey HKLM 'Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\App Paths\\\\rstudio.exe'
+   DeleteRegKey HKCR 'Applications\\\\rstudio.exe'
+#")
+
 # build installer
 include(CPack)
 
