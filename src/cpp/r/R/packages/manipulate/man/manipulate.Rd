@@ -33,7 +33,7 @@ JJ Allaire <jj@rstudio.org>
 }
 
 \examples{
-\donttest{
+\dontrun{
 ## Create a plot with a manipulator
 manipulate(barplot(1:x), x=slider(5, 10))
 

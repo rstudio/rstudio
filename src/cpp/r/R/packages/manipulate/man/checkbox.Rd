@@ -28,7 +28,7 @@ checkbox(initial = FALSE, label = NULL)
 }
 
 \examples{
-\donttest{
+\dontrun{
 ## Using checkboxes for boolean parameters
 manipulate(
   plot(cars, axes=x, ann=y), 
