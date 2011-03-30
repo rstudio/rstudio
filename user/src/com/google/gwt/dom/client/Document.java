@@ -174,7 +174,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final InputElement createCheckInputElement() {
-    return DOMImpl.impl.createInputElement(this, "checkbox");
+    return DOMImpl.impl.createCheckInputElement(this);
   }
 
   /**

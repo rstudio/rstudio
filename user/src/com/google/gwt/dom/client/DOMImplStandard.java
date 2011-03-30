@@ -36,6 +36,7 @@ abstract class DOMImplStandard extends DOMImpl {
     var elem = doc.createElement("INPUT");
     elem.type = 'radio';
     elem.name = name;
+    elem.value = 'on';
     return elem;
   }-*/;
 

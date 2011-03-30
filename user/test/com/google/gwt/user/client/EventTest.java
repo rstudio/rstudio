@@ -562,6 +562,8 @@ public class EventTest extends GWTTestCase {
   }
 
   private native boolean isInternetExplorer() /*-{
-    return navigator.userAgent.toLowerCase().indexOf("msie") != -1;
+    // rely on IE9 behavior being closer to Standard/Chrome/Safari
+    return navigator.userAgent.toLowerCase().indexOf("msie") != -1 &&
+      document.documentMode != 9;
   }-*/;
 }

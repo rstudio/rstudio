@@ -32,6 +32,13 @@ abstract class DOMImpl {
     return e;
   }-*/;
 
+  public native InputElement createCheckInputElement(Document doc) /*-{
+    var e = doc.createElement("INPUT");
+    e.type = 'checkbox';
+    e.value = 'on';
+    return e;
+  }-*/;
+
   public native Element createElement(Document doc, String tag) /*-{
     return doc.createElement(tag);
   }-*/;
