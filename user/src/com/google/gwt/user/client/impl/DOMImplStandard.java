@@ -281,6 +281,17 @@ abstract class DOMImplStandard extends DOMImpl {
         @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     if (chMask & 0x4000000) elem.ongestureend    = (bits & 0x4000000) ? 
         @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
+
+    if (bits & 0x8000000) {
+      elem.addEventListener('ended', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent, false);
+    } else {
+      elem.removeEventListener('ended', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent, false);
+    }
+    if (bits & 0x10000000) {
+      elem.addEventListener('progress', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent, false);
+    } else {
+      elem.removeEventListener('progress', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent, false);
+    }
   }-*/;
 
   private native void releaseCaptureImpl(Element elem) /*-{
