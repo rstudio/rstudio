@@ -1,4 +1,4 @@
-@external gwt-CheckBox, gwt-RadioButton;
+@external gwt-CheckBox, gwt-RadioButton, gwt-Label;
 
 .preferencesDialog .gwt-CheckBox,
 .preferencesDialog .gwt-RadioButton {
@@ -10,12 +10,16 @@
    margin-bottom: 12px;
 }
 
+.selectWidget .gwt-Label {
+   margin-right: 4px;	
+}
+
 .extraSpaced {
-   margin-bottom: 30px;
+   margin-bottom: 23px;
 }
 
 .preferencesDialog .tight {
-   margin-bottom: 0;
+   margin-bottom: 2px;
 }
 
 .sectionChooser {
@@ -54,6 +58,10 @@
    top: 1px;
    height: 21px;
    border: 1px solid #999;
+}
+
+.encodingChooser {
+   margin-top: 15px;	
 }
 
 .paneLayoutTable td.paneLayoutTable {

@@ -1,7 +1,6 @@
 package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.dom.client.SelectElement;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
@@ -26,7 +25,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       String[] labels = {"10", "12", "14", "16", "18"};
       String[] values = {"Pt10", "Pt12", "Pt14", "Pt16", "Pt18"};
 
-      fontSize_ = new SelectWidget("Font Size",
+      fontSize_ = new SelectWidget("Font size:",
                                    labels,
                                    values,
                                    false);
@@ -42,7 +41,7 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       leftPanel.add(fontSize_);
 
-      theme_ = new SelectWidget("Editor Theme",
+      theme_ = new SelectWidget("Editor theme:",
                                 themes.getThemeNames(),
                                 themes.getThemeNames(),
                                 true);
@@ -61,7 +60,6 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       FlowPanel previewPanel = new FlowPanel();
       previewPanel.setSize("100%", "100%");
-      previewPanel.add(new Label("Preview"));
       preview_ = new AceEditorPreview(CODE_SAMPLE);
       preview_.setHeight("375px");
       preview_.setWidth("288px");
@@ -75,7 +73,6 @@ public class AppearancePreferencesPane extends PreferencesPane
       hpanel.setCellWidth(leftPanel, "150px");
       hpanel.add(previewPanel);
 
-      add(spaced(new Label("Console/Editor Appearance")));
       add(hpanel);
    }
 

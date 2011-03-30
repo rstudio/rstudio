@@ -5,7 +5,6 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.RadioButton;
 import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
@@ -42,7 +41,7 @@ public class GeneralPreferencesPane extends PreferencesPane
          if (Desktop.getFrame().canChooseRVersion())
          {
             rVersion_ = new TextBoxWithButton(
-                  "R Installation",
+                  "R version:",
                   "Change...",
                   new ClickHandler()
                   {
@@ -59,7 +58,7 @@ public class GeneralPreferencesPane extends PreferencesPane
          }
 
          cranMirror_ = new TextBoxWithButton(
-               "Default CRAN Mirror",
+               "Default CRAN mirror:",
                "Change...",
                new ClickHandler()
                {
@@ -77,13 +76,13 @@ public class GeneralPreferencesPane extends PreferencesPane
          add(cranMirror_);
       }
 
-      add(tight(defaultWorkingDir_ = new Label("Default working directory")));
+      add(tight(new Label("Initial working directory:")));
       add(dirChooser_ = new TextBoxWithButton(null, "Browse...", new ClickHandler()
       {
          public void onClick(ClickEvent event)
          {
             fileDialogs_.chooseFolder(
-                  "Default Working Directory",
+                  "Choose Directory",
                   fsContext_,
                   FileSystemItem.createDir(dirChooser_.getText()),
                   new ProgressOperationWithInput<FileSystemItem>()
@@ -101,19 +100,18 @@ public class GeneralPreferencesPane extends PreferencesPane
          }
       }));
       dirChooser_.setWidth("80%");
-      dirChooser_.addStyleName(res.styles().extraSpaced());
 
-
-      add(loadRData_ = new CheckBox("Load .RData into workspace at startup"));
+      add(loadRData_ = new CheckBox("Restore .RData into workspace at startup"));
 
       saveWorkspace_ = new SelectWidget(
-            "Save workspace to .RData on exit?",
+            "Save workspace to .RData on exit:",
             new String[] {
                   "Always",
                   "Never",
-                  "Ask me every time"
+                  "Ask"
             });
       add(saveWorkspace_);
+     
 
       saveWorkspace_.setEnabled(false);
       loadRData_.setEnabled(false);
@@ -197,7 +195,6 @@ public class GeneralPreferencesPane extends PreferencesPane
    private SelectWidget saveWorkspace_;
    private TextBoxWithButton rVersion_;
    private TextBoxWithButton cranMirror_;
-   private Label defaultWorkingDir_;
    private TextBoxWithButton dirChooser_;
    private CheckBox loadRData_;
 }

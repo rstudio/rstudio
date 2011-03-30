@@ -30,10 +30,10 @@ public class EditingPreferencesPane extends PreferencesPane
       add(tight(showMargin_ = checkboxPref("Show margin", prefs.showMargin())));
       add(indent(marginCol_ = numericPref("Margin column", prefs.printMarginColumn())));
 //      add(checkboxPref("Automatically insert matching parens/quotes", prefs_.insertMatching()));
-      add(checkboxPref("Soft-wrap R files", prefs_.softWrapRFiles()));
-
+      add(checkboxPref("Soft-wrap R source files", prefs_.softWrapRFiles()));
+ 
       add(encoding_ = new TextBoxWithButton(
-            "Default encoding",
+            "Default text encoding:",
             "Change...",
             new ClickHandler()
             {
@@ -64,6 +64,7 @@ public class EditingPreferencesPane extends PreferencesPane
                }
             }));
       encoding_.setWidth("250px");
+      encoding_.addStyleName(res_.styles().encodingChooser());
       encoding_.setText(prefs.defaultEncoding().getValue());
    }
 

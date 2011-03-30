@@ -3,8 +3,6 @@ package org.rstudio.studio.client.workbench.prefs.views;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -21,18 +19,6 @@ import java.util.ArrayList;
 
 public class PaneLayoutPreferencesPane extends PreferencesPane
 {
-   private static class Item
-   {
-      private Item(String label, String value)
-      {
-         this.label = label;
-         this.value = value;
-      }
-
-      public final String label;
-      public final String value;
-   }
-
    class ExclusiveSelectionMaintainer
    {
       class ListChangeHandler implements ChangeHandler
