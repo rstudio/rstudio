@@ -13,8 +13,9 @@
 
 #include "DesktopDownloadHelper.hpp"
 #include <QFile>
-#include <QMessageBox>
 #include <core/Log.hpp>
+
+#include "DesktopUtils.hpp"
 
 namespace desktop {
 
@@ -32,10 +33,10 @@ void DownloadHelper::onDownloadFinished()
 
    if (pReply->error() != QNetworkReply::NoError)
    {
-      QMessageBox::warning(NULL,
-                           "Download Failed",
-                           "An error occurred during download:\n\n"
-                           + pReply->errorString());
+      showWarning(NULL,
+                  "Download Failed",
+                  "An error occurred during download:\n\n"
+                  + pReply->errorString());
       return;
    }
 

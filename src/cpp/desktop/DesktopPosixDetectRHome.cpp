@@ -26,6 +26,8 @@
 #include <core/system/System.hpp>
 #include <core/r_util/REnvironment.hpp>
 
+#include "DesktopUtils.hpp"
+
 using namespace core;
 
 namespace desktop {
@@ -34,7 +36,10 @@ namespace {
 
 void showRNotFoundError(const std::string& msg)
 {
-   QMessageBox::critical(NULL, "R Not Found", QString::fromStdString(msg));
+   showMessageBox(QMessageBox::Critical,
+                  NULL,
+                  "R Not Found",
+                  QString::fromStdString(msg));
 }
 
 } // anonymous namespace

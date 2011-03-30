@@ -26,6 +26,7 @@
 #include "DesktopWebView.hpp"
 #include "DesktopOptions.hpp"
 #include "DesktopSlotBinders.hpp"
+#include "DesktopUtils.hpp"
 
 using namespace core;
 
@@ -173,7 +174,7 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
          break;
       case -1:
       default:
-         QMessageBox prompt(QMessageBox::Warning,
+         QMessageBox prompt(safeMessageBoxIcon(QMessageBox::Warning),
                             "Quit R Session",
                             "Save workspace image to " +
                             rEnvPath.toString() + "?",

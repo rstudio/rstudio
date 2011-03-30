@@ -36,6 +36,7 @@
 #include "DesktopSecondaryWindow.hpp"
 #include "DesktopRVersion.hpp"
 #include "DesktopMainWindow.hpp"
+#include "DesktopUtils.hpp"
 
 using namespace core;
 
@@ -378,7 +379,7 @@ int GwtCallback::showMessageBox(int type,
                                 int defaultButton,
                                 int cancelButton)
 {
-   QMessageBox msgBox(static_cast<QMessageBox::Icon>(type),
+   QMessageBox msgBox(safeMessageBoxIcon(static_cast<QMessageBox::Icon>(type)),
                        caption,
                        message,
                        QMessageBox::NoButton,

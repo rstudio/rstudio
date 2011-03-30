@@ -35,6 +35,7 @@
 #include "DesktopDetectRHome.hpp"
 #include "DesktopOptions.hpp"
 #include "DesktopNetworkProxyFactory.hpp"
+#include "DesktopUtils.hpp"
 
 QProcess* pRSessionProcess;
 QString sharedSecret;
@@ -363,7 +364,7 @@ int main(int argc, char* argv[])
          }
 
          result = boost::system::errc::timed_out;
-         QMessageBox errorMsg(QMessageBox::Critical,
+         QMessageBox errorMsg(safeMessageBoxIcon(QMessageBox::Critical),
                               "RStudio",
                               errorMessage,
                               QMessageBox::Ok);

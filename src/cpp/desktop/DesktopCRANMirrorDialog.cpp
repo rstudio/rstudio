@@ -23,6 +23,7 @@
 
 #include "DesktopOptions.hpp"
 #include "DesktopURLDownloader.hpp"
+#include "DesktopUtils.hpp"
 
 const int ROLE_URL = Qt::UserRole;
 
@@ -95,7 +96,7 @@ std::string lookup(const std::map<std::string, std::string>& data, const std::st
 void CRANMirrorDialog::showNetworkError(const QString& errorString)
 {
    QMessageBox errorDialog(
-         QMessageBox::Warning,
+         safeMessageBoxIcon(QMessageBox::Warning),
          "Error Download Mirror List",
          "An error occurred while retrieving mirrors from CRAN:<br/><br/><i>"
          + Qt::escape(errorString)

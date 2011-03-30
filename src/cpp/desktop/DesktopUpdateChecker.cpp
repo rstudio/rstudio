@@ -25,6 +25,8 @@
 #include "DesktopURLDownloader.hpp"
 #include "DesktopUpdateAvailableDialog.hpp"
 
+#include "DesktopUtils.hpp"
+
 #include "config.h"
 
 using namespace core;
@@ -73,7 +75,7 @@ void UpdateChecker::manifestDownloadError(const QString &message)
    {
       // WA_DeleteOnClose
       QMessageBox* pMsg = new QMessageBox(
-            QMessageBox::Warning,
+            safeMessageBoxIcon(QMessageBox::Warning),
             "Error Checking for Updates",
             "An error occurred while checking for updates:\n\n"
             + message,
@@ -139,7 +141,7 @@ void UpdateChecker::manifestDownloadComplete(const QByteArray& data)
       {
          // WA_DeleteOnClose
          QMessageBox* pMsg = new QMessageBox(
-               QMessageBox::Warning,
+               safeMessageBoxIcon(QMessageBox::Warning),
                "No Update Available",
                "You're using the newest version of RStudio.",
                QMessageBox::Ok,
