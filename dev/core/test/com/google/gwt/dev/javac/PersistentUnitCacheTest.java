@@ -38,14 +38,18 @@ public class PersistentUnitCacheTest extends TestCase {
     lastCacheDir = null;
   }
 
-  public void testBadDir() {
+  /**
+   * The cache should recursively create the directories it needs.
+   */
+  public void testNewDir() throws IOException, UnableToCompleteException {
     TreeLogger logger = TreeLogger.NULL;
-    File badDir = new File("sHoUlDnOtExi57");
-    try {
-      new PersistentUnitCache(logger, badDir);
-      fail("Expected an exception to be thrown");
-    } catch (UnableToCompleteException expected) {
-    }
+    File baseDir = File.createTempFile("PersistentUnitTest-newDir", "");
+    assertNotNull(baseDir);
+    assertTrue(baseDir.exists());
+    assertTrue(baseDir.delete());
+    File newDir = lastCacheDir = new File(baseDir, "sHoUlDnOtExi57");
+    new PersistentUnitCache(logger, newDir);
+    assertTrue(newDir.isDirectory());
   }
 
   /**
@@ -55,6 +59,8 @@ public class PersistentUnitCacheTest extends TestCase {
   public void testFileInTheWay() throws IOException {
     TreeLogger logger = TreeLogger.NULL;
     File fileInTheWay = File.createTempFile("PersistentUnitTest-inTheWay", "");
+    assertNotNull(fileInTheWay);
+    assertTrue(fileInTheWay.exists());
     fileInTheWay.deleteOnExit();
     try {
       new PersistentUnitCache(logger, fileInTheWay);
