@@ -74,7 +74,8 @@ std::string utf8ToSystem(const std::string& str,
 
    std::ostringstream output;
    char mbbuf[10];
-   for (int i = 0; i < chars; i++)
+   // Only go up to chars - 1 because last char is \0
+   for (int i = 0; i < chars - 1; i++)
    {
       int mbc = wctomb(mbbuf, wide[i]);
       if (mbc == -1)
