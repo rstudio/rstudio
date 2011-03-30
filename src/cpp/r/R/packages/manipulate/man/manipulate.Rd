@@ -34,25 +34,39 @@ JJ Allaire <jj@rstudio.org>
 
 \examples{
 \donttest{
-## create a plot with a manipulator
-manipulate(plot(1:x), x = slider(1, 10))
+## Create a plot with a manipulator
+manipulate(barplot(1:x), x=slider(5, 10))
 
-## use more than one slider
-manipulate(plot(x:y), 
-           x = slider(1, 10),
-           y = slider(1, 100))
-}
-\dontrun{
-## use with ggplot w/ picker for log param
-require(ggplot2)
-manipulate(qplot(mpg$displ, mpg$cty, log = log),
-           log = picker("x", "y", "xy"))
+## Using more than one slider
+manipulate(
+  plot(cars, xlim=c(x.min,x.max)), 
+  x.min=slider(0,15), 
+  x.max=slider(15,30))
 
-## specify controls as a dynamically built list
-controls <- list()
-controls$x <- slider(1, 10)
-controls$y <- slider(1, 100)
-manipulate(plot(x:y), controls)
+## Displaying options with a picker
+manipulate(
+  barplot(1:10, col=color), 
+  color=picker("red", "blue", "green"))
+
+## Displaying parameter choices with a picker
+manipulate(
+  plot(pressure, type=type), 
+  type=picker("p", "l", "b", "c", "o", "h", "s", "S", "n"))
+
+## Using checkboxes for boolean parameters
+manipulate(
+  plot(cars, axes=x, ann=y), 
+  x=checkbox(initial=TRUE, label="Draw Axes"), 
+  y=checkbox(initial=TRUE, label="Draw Labels"))
+
+## Combining controls
+manipulate(
+  plot(cars, xlim=c(x.min,x.max), type=type, axes=x, ann=y),
+  x.min=slider(0,15),
+  x.max=slider(15,30, initial=25),
+  type=picker("p", "l", "b", "c", "o", "h", "s", "S", "n"),
+  x=checkbox(initial=TRUE, label="Draw Axes"),
+  y=checkbox(label="Draw Labels"))
 }
 }
 

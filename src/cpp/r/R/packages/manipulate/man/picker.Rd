@@ -36,14 +36,15 @@ picker(..., initial = NULL, label = NULL)
 ## histogram w/ picker to select type
 require(lattice)
 require(stats)
-manipulate(histogram( ~ height | voice.part, 
-                     data = singer, type = type),
-           type = picker("percent", "count", "density"))
+manipulate(
+  histogram(~ height | voice.part, data = singer, type = type),
+  type = picker("percent", "count", "density"))
 }
 \dontrun{
 ## use with ggplot w/ picker for log param
 require(ggplot2)
-manipulate(qplot(mpg$displ, mpg$cty, log = log),
-           log = picker("x", "y", "xy"))  
+manipulate(
+  qplot(mpg$displ, mpg$cty, log = log),
+  log = picker("x", "y", "xy"))  
 }
 }

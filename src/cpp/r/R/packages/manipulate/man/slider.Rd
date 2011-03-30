@@ -41,24 +41,24 @@ slider(min, max, initial = min,
 
 \examples{
 \donttest{
-## create a plot with a slider
-manipulate(plot(1:x), x = slider(1, 10))
+## Create a plot with a slider
+manipulate(barplot(1:x), x=slider(5, 10))
+
+## Use multiple sliders
+manipulate(plot(cars, xlim=c(x.min,x.max)), 
+                x.min=slider(0,15),
+                x.max=slider(15,30))
+
 }
 \dontrun{
-## specify a custom initial value for a slider
-manipulate(plot(1:x), x = slider(1, 10, initial = 5))
+## Specify a custom initial value for a slider
+manipulate(barplot(1:x), x=slider(5, 25, initial=10))
 
-## specify a custom label for a slider
-manipulate(plot(1:x), x = slider(1, 10, label = "Scale"))
+## Specify a custom label for a slider
+manipulate(barplot(1:x), x=slider(5, 25, label="Limit"))
 
-## specify a step value for a slider
-manipulate(plot(1:x), x = slider(1, 10, step = 2))
-
-## use more than one slider
-manipulate(plot(x:y), 
-           x = slider(1, 10),
-           y = slider(1, 100))
-
+## Specify a step value for a slider
+manipulate(barplot(1:x), x=slider(5, 25, step = 5))
 }
 }
 
