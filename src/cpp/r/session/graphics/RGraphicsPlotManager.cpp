@@ -460,9 +460,14 @@ Error PlotManager::restorePlotsState(const FilePath& plotsStateFile)
          activePlot_ = i;
    }
    
-   // if we didn't find the active plot then set it to the last one
-   if (activePlot_ == -1)
+   // if we didn't find the active plot or if it exceeds the size
+   // of the circular buffer (would happen when migrating from a
+   // suspended session that allowed more plots)
+   if ((activePlot_ == -1) ||
+       (activePlot_ > (static_cast<int>(plots_.size()) - 1)))
+   {
       activePlot_ = plots_.size() - 1;
+   }
    
    // restore snapshot for the active plot
    if (hasPlot())
