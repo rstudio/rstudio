@@ -10,6 +10,14 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
+      if (!String.prototype.trimRight) {
+         var trimEndRegexp = /\s\s*$/;
+         String.prototype.trimRight = function () {
+            return String(this).replace(trimEndRegexp, '');
+         };
+      }
+
 define("rstudio/loader", function(require, exports, module) {
 
 function loadEditor(container) {
