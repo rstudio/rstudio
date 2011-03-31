@@ -171,7 +171,11 @@ FilePath FilePath::safeCurrentPath(const FilePath& revertToPath)
 {
    try
    {
+#if defined(BOOST_FILESYSTEM_VERSION) && BOOST_FILESYSTEM_VERSION != 2
+      return FilePath(boost::filesystem::current_path().string()) ;
+#else
       return FilePath(boost::filesystem::current_path<path_t>().string()) ;
+#endif
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
