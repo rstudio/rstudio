@@ -55,9 +55,6 @@
          <array>
              <string>Rnw</string>
              <string>rnw</string>
-             <string>Snw</string>
-             <string>snw</string>
-             <string>nw</string>
          </array>
          <key>CFBundleTypeIconFile</key>
          <string>RSweave.icns</string>
@@ -70,11 +67,6 @@
          <key>CFBundleTypeExtensions</key>
          <array>
              <string>tex</string>
-             <string>latex</string>
-             <string>sty</string>
-             <string>cls</string>
-             <string>bbl</string>
-             <string>bib</string>
          </array>
          <key>CFBundleTypeIconFile</key>
          <string>RTex.icns</string>
