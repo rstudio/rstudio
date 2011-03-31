@@ -383,7 +383,7 @@ Error completeEmbeddedRInitialization()
    setMemoryLimit();
 
    // use IE proxy settings
-   Error error = r::exec::executeString("utils::setInternet2()");
+   Error error = r::exec::executeString("suppressWarnings(utils::setInternet2())");
    if (error)
       LOG_ERROR(error);
 
