@@ -20,9 +20,6 @@
     <comment>R Sweave File</comment>
     <glob pattern="*.Rnw"/>
     <glob pattern="*.rnw"/>
-    <glob pattern="*.Snw"/>
-    <glob pattern="*.snw"/>
-    <glob pattern="*.nw"/>
   </mime-type>
 
   <mime-type type="application/x-r-data">
