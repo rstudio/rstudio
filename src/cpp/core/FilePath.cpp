@@ -53,8 +53,8 @@ typedef boost::filesystem::recursive_directory_iterator recursive_dir_iterator;
 
 #define BOOST_FS_STRING(str) (str)
 #define BOOST_FS_COMPLETE(p, base) boost::filesystem::complete(p, base)
-typedef basic_directory_iterator<path_type> dir_iterator;
-typedef boost::filesystem::basic_recursive_directory_iterator<path_type> recursive_dir_iterator;
+typedef basic_directory_iterator<path_t> dir_iterator;
+typedef boost::filesystem::basic_recursive_directory_iterator<path_t> recursive_dir_iterator;
 
 #endif
 
@@ -70,6 +70,8 @@ namespace core {
 
 namespace {
 
+typedef boost::filesystem::path path_t;
+
 #ifdef _WIN32
 
 // For Windows only, we need to use the wide character versions of the file
@@ -80,7 +82,6 @@ namespace {
 // (see note below). So we use wstring internally, and translate to/from UTF-8
 // narrow strings that are used in the API.
 
-typedef boost::filesystem::path path_type;
 typedef std::wstring internal_string;
 
 std::string toString(const internal_string& value)
@@ -132,19 +133,22 @@ internal_string fromString(const std::string& value)
 
 #else
 
-// Mac can't use wide strings because of Boost asserts that cause the process
-// to exit unless we compile with -DBOOST_FILESYSTEM_NARROW_ONLY. That's OK
-// because we only support running with UTF-8 codeset on Mac and Linux.
+// We only support running with UTF-8 codeset on Mac and Linux, so
+// strings are a passthrough.
 
-typedef boost::filesystem::path path_type;
 typedef std::string internal_string;
+
+internal_string fromString(const std::string& value)
+{
+   return value;
+}
 
 #endif
 
-void logError(path_type path,
+void logError(path_t path,
               const boost::filesystem::filesystem_error& e,
               const ErrorLocation& errorLocation);
-void addErrorProperties(path_type path, Error* pError) ;
+void addErrorProperties(path_t path, Error* pError) ;
 }
 
 struct FilePath::Impl
@@ -152,11 +156,11 @@ struct FilePath::Impl
    Impl()
    {
    }
-   Impl(path_type path)
+   Impl(path_t path)
       : path(path)
    {
    }
-   path_type path ;
+   path_t path ;
 };
   
 FilePath FilePath::safeCurrentPath(const FilePath& revertToPath)
@@ -416,22 +420,22 @@ std::time_t FilePath::lastWriteTime() const
 std::string FilePath::relativePath(const FilePath& parentPath) const
 {
    // get iterators to this path and parent path
-   path_type::iterator thisBegin = pImpl_->path.begin() ;
-   path_type::iterator thisEnd = pImpl_->path.end() ;
-   path_type::iterator parentBegin = parentPath.pImpl_->path.begin();
-   path_type::iterator parentEnd = parentPath.pImpl_->path.end() ;
+   path_t::iterator thisBegin = pImpl_->path.begin() ;
+   path_t::iterator thisEnd = pImpl_->path.end() ;
+   path_t::iterator parentBegin = parentPath.pImpl_->path.begin();
+   path_t::iterator parentEnd = parentPath.pImpl_->path.end() ;
    
    // if the child is fully prefixed by the parent
-   path_type::iterator it = std::search(thisBegin, thisEnd, parentBegin, parentEnd);
+   path_t::iterator it = std::search(thisBegin, thisEnd, parentBegin, parentEnd);
    if ( it == thisBegin )
    {
       // search for mismatch location
-      std::pair<path_type::iterator,path_type::iterator> mmPair =
+      std::pair<path_t::iterator,path_t::iterator> mmPair =
                               std::mismatch(thisBegin, thisEnd, parentBegin);
       
       // build relative path from mismatch on
-      path_type relativePath ;
-      path_type::iterator mmit = mmPair.first ;
+      path_t relativePath ;
+      path_t::iterator mmit = mmPair.first ;
       while (mmit != thisEnd)
       {
          relativePath /= *mmit ;
@@ -557,7 +561,7 @@ Error FilePath::createDirectory(const std::string& name) const
 {
    try
    {
-      path_type targetDirectory ;
+      path_t targetDirectory ;
       if (name.empty())
          targetDirectory = pImpl_->path ;
       else
@@ -638,7 +642,7 @@ FilePath FilePath::childPath(const std::string& path) const
       else
       {
          // confirm this is a relative path
-         path_type relativePath(fromString(path));
+         path_t relativePath(fromString(path));
          if (relativePath.has_root_path())
          {
             throw boost::filesystem::filesystem_error(
@@ -780,7 +784,7 @@ bool compareAbsolutePathNoCase(const FilePath& file1, const FilePath& file2)
 }
 
 namespace { 
-void logError(path_type path,
+void logError(path_t path,
               const boost::filesystem::filesystem_error& e,
               const core::ErrorLocation& errorLocation)
 {
@@ -789,7 +793,7 @@ void logError(path_type path,
    core::log::logError(error, errorLocation) ;
 }
 
-void addErrorProperties(path_type path, Error* pError)
+void addErrorProperties(path_t path, Error* pError)
 {
    pError->addProperty("path", BOOST_FS_STRING(path)) ;
 }
