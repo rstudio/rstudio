@@ -1412,16 +1412,16 @@ void rCleanup(bool terminatedNormally)
       // related events to get into the queue
       boost::this_thread::sleep(boost::posix_time::milliseconds(100));
 
-      // only stop the client event service in server mode (because
-      // desktop is able to quit successfully whether or not it gets
-      // the quit event). we do this because we observe osx desktop
-      // crashing deep in the boost timed_wait code during the wait
-      // for the event service to stop
+      // only stop the http services if we are in server mode. in desktop
+      // mode we had issues with both OSX crashing and with Windows taking
+      // the full 3 seconds to terminate. the cleanup is kind of a nice
+      // to have and most important on the server where we delete the
+      // unix domain socket file so it is no big deal to bypass it
       if (session::options().programMode() == kSessionProgramModeServer)
+      {
          clientEventService().stop();
-
-      // stop the main http listener
-      httpConnectionListener().stop();
+         httpConnectionListener().stop();
+      }
    }
    CATCH_UNEXPECTED_EXCEPTION
 
