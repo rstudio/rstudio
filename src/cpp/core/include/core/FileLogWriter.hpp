@@ -37,7 +37,6 @@ private:
     std::string programIdentity_;
     int logLevel_;
     FilePath logFile_;
-    FilePath logFileArchived_;
 };
 
 } // namespace core

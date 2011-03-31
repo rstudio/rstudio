@@ -32,7 +32,6 @@ FileLogWriter::FileLogWriter(const std::string& programIdentity,
    logDir.ensureDirectory();
 
    logFile_ = logDir.childPath(programIdentity + ".log");
-   logFileArchived_ = FilePath(logFile_.absolutePath() + ".1");
 }
 
 FileLogWriter::~FileLogWriter()
@@ -78,12 +77,12 @@ std::string FileLogWriter::formatLogEntry(const std::string& message)
    return ostr.str();
 }
 
-#define LOGMAX (512*1024)  // rotate every 0.5 megabyte
+#define LOGMAX (4096*1024)  // remove every 4 megabytes
 bool FileLogWriter::rotateLogFile()
 {
    if (logFile_.exists() && logFile_.size() > LOGMAX)
    {
-      logFile_.move(logFileArchived_);
+      logFile_.remove();
       return true;
    }
    return false;
