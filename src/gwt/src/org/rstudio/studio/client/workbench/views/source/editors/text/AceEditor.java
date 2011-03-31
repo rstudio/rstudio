@@ -17,7 +17,7 @@ import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.PreElement;
-import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Style.*;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -25,6 +25,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
@@ -33,6 +34,7 @@ import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.widget.DynamicIFrame;
 import org.rstudio.core.client.widget.FontSizer.Size;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
@@ -50,6 +52,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
 
 public class AceEditor implements DocDisplay, InputEditorDisplay
@@ -181,37 +184,52 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       widget_.getEditor().focus();
    }
 
+   class PrintIFrame extends DynamicIFrame
+   {
+      public PrintIFrame(String code)
+      {
+         code_ = code;
+
+         getElement().getStyle().setPosition(com.google.gwt.dom.client.Style.Position.ABSOLUTE);
+         getElement().getStyle().setLeft(-5000, Unit.PX);
+      }
+
+      @Override
+      protected void onFrameLoaded()
+      {
+         Document doc = getDocument();
+         PreElement pre = doc.createPreElement();
+         pre.setInnerText(code_);
+         pre.getStyle().setProperty("whiteSpace", "pre-wrap");
+         doc.getBody().appendChild(pre);
+
+         getWindow().print();
+
+         // Bug 1224: ace: print from source causes inability to reconnect
+         // This was caused by the iframe being removed from the document too
+         // quickly after the print job was sent. As a result, attempting to
+         // navigate away from the page at any point afterwards would result
+         // in the error "Document cannot change while printing or in Print
+         // Preview". The only thing you could do is close the browser tab.
+         // By inserting a 5-minute delay hopefully Firefox would be done with
+         // whatever print related operations are important.
+         Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
+         {
+            public boolean execute()
+            {
+               PrintIFrame.this.removeFromParent();
+               return false;
+            }
+         }, 1000 * 60 * 5);
+      }
+
+      private final String code_;
+   }
+
    public void print()
    {
-      String code = getCode();
-      final IFrameElementEx iframe = Document.get().createIFrameElement().cast();
-      iframe.getStyle().setPosition(com.google.gwt.dom.client.Style.Position.ABSOLUTE);
-      iframe.getStyle().setLeft(-5000, Unit.PX);
-      iframe.setSrc("about:blank");
-      Document.get().getBody().appendChild(iframe);
-      Document childDoc = iframe.getContentWindow().getDocument();
-      PreElement pre = childDoc.createPreElement();
-      pre.setInnerText(code);
-      pre.getStyle().setProperty("whiteSpace", "pre-wrap");
-      childDoc.getBody().appendChild(pre);
-      iframe.getContentWindow().print();
-
-      // Bug 1224: ace: print from source causes inability to reconnect
-      // This was caused by the iframe being removed from the document too
-      // quickly after the print job was sent. As a result, attempting to
-      // navigate away from the page at any point afterwards would result
-      // in the error "Document cannot change while printing or in Print
-      // Preview". The only thing you could do is close the browser tab.
-      // By inserting a 5-minute delay hopefully Firefox would be done with
-      // whatever print related operations are important.
-      Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
-      {
-         public boolean execute()
-         {
-            iframe.removeFromParent();
-            return false;
-         }
-      }, 1000 * 60 * 5);
+      PrintIFrame printIFrame = new PrintIFrame(getCode());
+      RootPanel.get().add(printIFrame);
    }
 
    public String getText()
