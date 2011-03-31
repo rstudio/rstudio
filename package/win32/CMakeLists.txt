@@ -26,6 +26,7 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
    WriteRegStr HKCR '.rda\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.Rd\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.Rnw\\\\OpenWithList\\\\rstudio.exe' '' ''
+   WriteRegStr HKCR '.tex\\\\OpenWithList\\\\rstudio.exe' '' ''
 
    System::Call 'Shell32::SHChangeNotify(i 0x8000000, i 0, i 0, i 0)'
 ")
@@ -38,6 +39,7 @@ set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
    DeleteRegKey HKCR '.rda\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR '.Rd\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR '.Rnw\\\\OpenWithList\\\\rstudio.exe'
+   DeleteRegKey HKCR '.tex\\\\OpenWithList\\\\rstudio.exe'
 #")
 
 # build installer
