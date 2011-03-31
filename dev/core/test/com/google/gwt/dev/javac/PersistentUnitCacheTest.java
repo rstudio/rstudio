@@ -153,14 +153,14 @@ public class PersistentUnitCacheTest extends TestCase {
     assertEquals(foo2.getContentId(), result.getContentId());
     cache.cleanup(logger);
 
-    // Now there should be 2 files.
+    // We didn't write anything, still 1 file.
     cache.shutdown();
-    assertNumCacheFiles(unitCacheDir, 2);
+    assertNumCacheFiles(unitCacheDir, 1);
 
     // keep making more files
     MockCompilationUnit lastUnit = null;
     assertTrue(PersistentUnitCache.CACHE_FILE_THRESHOLD > 3);
-    for (int i = 3; i < PersistentUnitCache.CACHE_FILE_THRESHOLD; ++i) {
+    for (int i = 2; i < PersistentUnitCache.CACHE_FILE_THRESHOLD; ++i) {
       cache = new PersistentUnitCache(logger, cacheDir);
       lastUnit = new MockCompilationUnit("com.example.Foo", "Foo Source" + i);
       cache.add(lastUnit);

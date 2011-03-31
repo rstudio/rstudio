@@ -184,7 +184,8 @@ class PersistentUnitCache extends MemoryUnitCache {
         logger.log(TreeLogger.ERROR, "Error creating cache " + currentCacheFile
             + ". Disabling cache.", ex);
       }
-      int unitsWritten = 0;
+      int recentUnitsWritten = 0;
+      int totalUnitsWritten = 0;
       try {
         while (true) {
           UnitWriteMessage msg = null;
@@ -202,9 +203,9 @@ class PersistentUnitCache extends MemoryUnitCache {
           try {
             if (msg != null) {
               if (msg == UnitWriteMessage.DELETE_OLD_CACHE_FILES) {
-                logger.log(TreeLogger.TRACE, "Wrote " + unitsWritten
+                logger.log(TreeLogger.TRACE, "Wrote " + recentUnitsWritten
                     + " units to persistent cache.");
-                unitsWritten = 0;
+                recentUnitsWritten = 0;
                 deleteOldCacheFiles(logger, currentCacheFile);
               } else if (msg == UnitWriteMessage.SHUTDOWN_THREAD) {
                 stream.flush();
@@ -214,7 +215,8 @@ class PersistentUnitCache extends MemoryUnitCache {
                 CompilationUnit unit = msg.unitCacheEntry.getUnit();
                 assert unit != null;
                 stream.writeObject(unit);
-                unitsWritten++;
+                recentUnitsWritten++;
+                totalUnitsWritten++;
               }
             }
 
@@ -234,6 +236,10 @@ class PersistentUnitCache extends MemoryUnitCache {
         // Paranoia - close all streams
         Utility.close(bstream);
         Utility.close(fstream);
+        if (totalUnitsWritten == 0) {
+          // Remove useless empty output.
+          currentCacheFile.delete();
+        }
         shutDownLatch.countDown();
         logger.log(TreeLogger.TRACE, "Shutting down PersistentUnitCache thread");
       }
