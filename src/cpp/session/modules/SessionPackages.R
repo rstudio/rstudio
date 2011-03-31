@@ -106,7 +106,6 @@
 .rs.addJsonRpcHandler( "list_packages", function()
 {
    # calculate unique libpaths
-   require(utils)
    libPaths <- normalizePath(.libPaths())
    uniqueLibPaths <- subset(libPaths, !duplicated(libPaths))
 
