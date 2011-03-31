@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * Test of Messages generation using annotations.
  */
-@DefaultLocale("en-US")
+@DefaultLocale("en")
 // @GenerateKeys("com.google.gwt.i18n.server.keygen.MD5KeyGenerator")
 @GenerateKeys("com.google.gwt.i18n.server.keygen.MethodNameKeyGenerator") // default
 @Generate(format = "com.google.gwt.i18n.server.PropertyCatalogFactory")
@@ -238,7 +238,7 @@ public interface TestAnnotatedMessages extends Messages {
     "=2|one|MALE", "{1} and {2} liked his message",
     "one|other|other", "{1}, {2}, and one other liked their {3} messages",
     "one|other|FEMALE", "{1}, {2}, and one other liked her {3} messages",
-    "one|other|MALE", "{1}, {2}, and one other liked his {3} messages",
+    "one|other|MALE", "{1}, {2}, and one other liked his {#} messages",
     "one|one|other", "{1}, {2}, and one other liked their message",
     "one|one|FEMALE", "{1}, {2}, and one other liked her message",
     "one|one|MALE", "{1}, {2}, and one other liked his message",

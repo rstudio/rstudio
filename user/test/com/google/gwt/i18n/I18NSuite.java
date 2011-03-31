@@ -27,6 +27,7 @@ import com.google.gwt.i18n.client.DateTimeParse_en_Test;
 import com.google.gwt.i18n.client.DateTimeParse_zh_CN_Test;
 import com.google.gwt.i18n.client.I18N2Test;
 import com.google.gwt.i18n.client.I18NTest;
+import com.google.gwt.i18n.client.I18N_en_US_Test;
 import com.google.gwt.i18n.client.I18N_es_MX_RuntimeTest;
 import com.google.gwt.i18n.client.I18N_es_MX_Test;
 import com.google.gwt.i18n.client.I18N_iw_Test;
@@ -92,6 +93,7 @@ public class I18NSuite {
     suite.addTestSuite(I18N_iw_Test.class);
     suite.addTestSuite(I18N_es_MX_Test.class);
     suite.addTestSuite(I18N_es_MX_RuntimeTest.class);
+    suite.addTestSuite(I18N_en_US_Test.class);
     suite.addTestSuite(I18N_nb_Test.class);
     suite.addTestSuite(LocaleInfo_ar_Test.class);
     suite.addTestSuite(LocaleInfoTest.class);

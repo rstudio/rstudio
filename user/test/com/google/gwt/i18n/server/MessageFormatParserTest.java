@@ -60,7 +60,20 @@ public class MessageFormatParserTest extends TestCase {
     assertEquals(0, args.size());
     args = chunk.getFormatArgs();
     assertEquals(0, args.size());
-}
+  }
+
+  public void testParseInnerPlural() throws ParseException {
+    String str = "You have {#} widgets";
+    List<TemplateChunk> parsed = MessageStyle.MESSAGE_FORMAT.parse(str);
+    assertEquals(3, parsed.size());
+    StringChunk stringChunk = (StringChunk) parsed.get(0);
+    assertEquals("You have ", stringChunk.getString());
+    ArgumentChunk argChunk = (ArgumentChunk) parsed.get(1);
+    assertEquals(-1, argChunk.getArgumentNumber());
+    assertEquals("{#}", argChunk.getAsMessageFormatString());
+    stringChunk = (StringChunk) parsed.get(2);
+    assertEquals(" widgets", stringChunk.getString());
+  }
 
   public void testParseLiteral() throws ParseException {
     String str = "Simple string literal";

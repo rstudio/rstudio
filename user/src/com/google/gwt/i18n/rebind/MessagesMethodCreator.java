@@ -1039,6 +1039,21 @@ class MessagesMethodCreator extends AbstractMethodCreator {
     this.writer = writer;
   }
 
+  /**
+   * Append an argument to the output without doing any formatting.
+   * 
+   * @param buf
+   * @param argExpr Java source for expression to produce argument value
+   * @param argType type of the argument being appended
+   */
+  private void appendUnformattedArg(StringGenerator buf, String argExpr, JType argType) {
+    boolean isSafeHtmlTyped = SAFE_HTML_FQCN.equals(argType.getQualifiedSourceName());
+    boolean isPrimitiveType = (argType.isPrimitive() != null);
+    boolean needsConversionToString =
+        !("java.lang.String".equals(argType.getQualifiedSourceName()));
+    buf.appendExpression(argExpr, isSafeHtmlTyped, isPrimitiveType, needsConversionToString);
+  }
+
   @Override
   public void createMethodFor(TreeLogger logger, JMethod m, String key,
       ResourceList resourceList, GwtLocale locale)
@@ -1052,6 +1067,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
     boolean seenSelect = false;
 
     int numParams = params.length;
+    int lastPluralArgNumber = -1;
     List<AlternateFormSelector> selectors = new ArrayList<AlternateFormSelector>();
     // See if any parameter is tagged as a PluralCount or Select parameter.
     for (int i = 0; i < numParams; ++i) {
@@ -1075,6 +1091,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
           resourceList.setPluralForms(key, pluralSelector.getPluralForms());
         }
         seenPluralCount = true;
+        lastPluralArgNumber = i;
       }
       if (selector != null) {
         selectors.add(selector);
@@ -1159,8 +1176,8 @@ class MessagesMethodCreator extends AbstractMethodCreator {
       String[] forms = resourceForms.toArray(new String[resourceForms.size()]);
       Arrays.sort(forms, new ExactValueComparator());
 
-      generateMessageSelectors(logger, m, locale,
-          resourceEntry, selectors, paramsAccessor, isSafeHtml, forms);
+      generateMessageSelectors(logger, m, locale, resourceEntry, selectors, paramsAccessor,
+          isSafeHtml, forms, lastPluralArgNumber);
       for (AlternateFormSelector selector : selectors) {
         selector.issueWarnings(logger, m, locale);
       }
@@ -1172,7 +1189,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
     }
     writer.print("return ");
     generateString(logger, locale, template, paramsAccessor, writer,
-        isSafeHtml);
+        isSafeHtml, lastPluralArgNumber);
     writer.println(";");
 
     // Generate an error if any required parameter was not used somewhere.
@@ -1205,11 +1222,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
     }
     // no format specified or unknown format
     // have to ensure that the result is stringified if necessary
-    boolean isSafeHtmlTyped = SAFE_HTML_FQCN.equals(paramType.getQualifiedSourceName());
-    boolean isPrimitiveType = (paramType.isPrimitive() != null);
-    boolean needsConversionToString =
-        !("java.lang.String".equals(paramType.getQualifiedSourceName()));
-    buf.appendExpression(argExpr, isSafeHtmlTyped, isPrimitiveType, needsConversionToString);
+    appendUnformattedArg(buf, argExpr, paramType);
   }
 
   /**
@@ -1365,12 +1378,14 @@ class MessagesMethodCreator extends AbstractMethodCreator {
    * @param paramsAccessor
    * @param isSafeHtml
    * @param forms
+   * @param lastPluralArgNumber index of most recent plural argument, used for
+   *     processing inner-plural arguments ({#})
    * @throws UnableToCompleteException
    */
   private void generateMessageSelectors(TreeLogger logger, JMethod m,
       GwtLocale locale, ResourceEntry resourceEntry,
       List<AlternateFormSelector> selectors, Parameters paramsAccessor,
-      boolean isSafeHtml, String[] forms)
+      boolean isSafeHtml, String[] forms, int lastPluralArgNumber)
       throws UnableToCompleteException {
     int numSelectors = selectors.size();
     String[] lastForm = new String[numSelectors];
@@ -1424,7 +1439,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
       }
       writer.print("returnVal = ");
       generateString(logger, locale, resourceEntry.getForm(form),
-          paramsAccessor, writer, isSafeHtml);
+          paramsAccessor, writer, isSafeHtml, lastPluralArgNumber);
       writer.println(";");
     }
     for (int i = numSelectors; i-- > 0; ) {
@@ -1442,12 +1457,13 @@ class MessagesMethodCreator extends AbstractMethodCreator {
    * @param template
    * @param paramsAccessor
    * @param writer
+   * @param lastPluralArgNumber index of most recent plural argument, used for
+   *     processing inner-plural arguments ({#})
    * @throws UnableToCompleteException
    */
-  private void generateString(final TreeLogger logger,final GwtLocale locale,
-      final String template,final Parameters paramsAccessor,
-      SourceWriter writer, final boolean isSafeHtml)
-      throws UnableToCompleteException {
+  private void generateString(final TreeLogger logger, final GwtLocale locale,
+      final String template, final Parameters paramsAccessor, SourceWriter writer,
+      final boolean isSafeHtml, final int lastPluralArgNumber) throws UnableToCompleteException {
     StringBuffer outputBuf = new StringBuffer();
     final StringGenerator buf = new StringGenerator(outputBuf, isSafeHtml);
     final int n = paramsAccessor.getCount();
@@ -1458,8 +1474,13 @@ class MessagesMethodCreator extends AbstractMethodCreator {
           public void visit(ArgumentChunk argChunk) throws UnableToCompleteException {
             int argNumber = argChunk.getArgumentNumber();
             if (argNumber >= n) {
-              throw error(
-                  logger, "Argument " + argNumber + " beyond range of arguments: " + template);
+              throw error(logger, "Argument " + argNumber + " beyond range of arguments: " + template);
+            }
+            if (argNumber < 0) {
+              if (lastPluralArgNumber < 0) {
+                throw error(logger, "Inner-plural notation {#} used outside in non-plural message");
+              }
+              argNumber = lastPluralArgNumber;
             }
             JParameter param = paramsAccessor.getParameter(argNumber);
             String arg = "arg" + argNumber;

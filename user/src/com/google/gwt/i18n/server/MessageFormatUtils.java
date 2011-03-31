@@ -53,6 +53,12 @@ public class MessageFormatUtils {
       visitor.visit(this);
     }
 
+    /**
+     * Get the argument number this chunk refers to.
+     * 
+     * @return the argument number or -1 to refer to the right-most plural
+     *     argument
+     */
     public int getArgumentNumber() {
       return argNumber;
     }
@@ -87,7 +93,11 @@ public class MessageFormatUtils {
     protected String getStringValue(boolean quote) {
       StringBuilder buf = new StringBuilder();
       buf.append('{');
-      buf.append(argNumber);
+      if (argNumber < 0) {
+        buf.append('#');
+      } else {
+        buf.append(argNumber);
+      }
       Map<String, String> map = listArgs;
       if (map != null) {
         buf.append(",list");
@@ -271,11 +281,14 @@ public class MessageFormatUtils {
                 format = arg.substring(firstComma + 1);
                 arg = arg.substring(0, firstComma);
               }
-              if (!Character.isDigit(arg.charAt(0))) {
+              if (!"#".equals(arg) && !Character.isDigit(arg.charAt(0))) {
                 // static argument
                 chunks.add(new StaticArgChunk(arg, format));
               } else {
-                int argNumber = Integer.valueOf(arg);
+                int argNumber = -1;
+                if (!"#".equals(arg)) {
+                  argNumber = Integer.valueOf(arg);
+                }
                 Map<String, String> formatArgs = new HashMap<String, String>();
                 Map<String, String> listArgs = null;
                 String subFormat = null;
@@ -407,8 +420,10 @@ public class MessageFormatUtils {
     @Override
     protected String getStringValue(boolean quoted) {
       StringBuilder buf = new StringBuilder();
-      buf.append('{').append(argName).append(',');
-      buf.append(quoteMessageFormatChars(replacement, quoted));
+      buf.append('{').append(argName);
+      if (replacement != null) {
+        buf.append(',').append(quoteMessageFormatChars(replacement, quoted));
+      }
       buf.append('}');
       return buf.toString();
     }
