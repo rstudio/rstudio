@@ -77,19 +77,6 @@ else()
 
 endif()
 
-# force use of boost filesystem version 2 so our FilePath character
-# encoding changes compile on boost 1.46.
-# TODO: make FilePath compatible with boost filesystem v3
-add_definitions(-DBOOST_FILESYSTEM_VERSION=2)
-
-# on osx, boost::enable_if<boost::filesystem::is_basic_path checking in
-# filesystem (see operations.hpp) seem to cause a hard abort in release
-# mode if the file doesn't exist. so disable this check on all platforms
-# (for consistency) by disabling support for wide filenames
-if(APPLE)
-   add_definitions(-DBOOST_FILESYSTEM_NARROW_ONLY -DBOOST_FILESYSTEM2_NARROW_ONLY)
-endif()
-
 # determine whether we should statically link boost. we always do this
 # unless we are building a non-packaged build on linux (in which case
 # boost dynamic libraries are presumed to be installed on the system ldpath)

@@ -19,16 +19,46 @@
 #include <windows.h>
 #endif
 
+#if defined(_WIN32) || defined(__APPLE__)
+#define BOOST_FILESYSTEM_VERSION 3
+#endif
+
+#define BOOST_FILESYSTEM_NO_DEPRECATED
 #include <boost/filesystem.hpp>
 
-// detect filesystem3 so we can conditionally compile away breaking changes
-#if defined(BOOST_FILESYSTEM_VERSION) && BOOST_FILESYSTEM_VERSION != 2
-#define BOOST_FS_STRING(str) toString((str).string())
+
+// We use boost::filesystem in one of three different ways:
+// - On Windows, we use Filesystem v3 with wide character paths. This is
+//   because narrow character paths on Windows can't cover the entire
+//   Unicode space since there is no ANSI code page for UTF-8.
+// - On non-Windows, if Filesystem v3 is available, we use it.
+// - Otherwise, we use Filesystem v2. This is necessary for older versions
+//   of Boost that come preinstalled on some long-term-stable Linux distro
+//   versions that we still want to support.
+#ifdef _WIN32
+
+#define BOOST_FS_STRING(str) toString((str).wstring())
 #define BOOST_FS_COMPLETE(p, base) boost::filesystem::absolute(fromString(p), base)
+typedef boost::filesystem::directory_iterator dir_iterator;
+typedef boost::filesystem::recursive_directory_iterator recursive_dir_iterator;
+
+#elif defined(BOOST_FILESYSTEM_VERSION) && BOOST_FILESYSTEM_VERSION != 2
+
+#define BOOST_FS_STRING(str) ((str).string())
+#define BOOST_FS_COMPLETE(p, base) boost::filesystem::absolute(p, base)
+typedef boost::filesystem::directory_iterator dir_iterator;
+typedef boost::filesystem::recursive_directory_iterator recursive_dir_iterator;
+
 #else
-#define BOOST_FS_STRING(str) toString(str)
-#define BOOST_FS_COMPLETE(p, base) boost::filesystem::complete(fromString(p), base)
+
+#define BOOST_FS_STRING(str) (str)
+#define BOOST_FS_COMPLETE(p, base) boost::filesystem::complete(p, base)
+typedef basic_directory_iterator<path_type> dir_iterator;
+typedef boost::filesystem::basic_recursive_directory_iterator<path_type> recursive_dir_iterator;
+
 #endif
+
+
 
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
@@ -50,7 +80,7 @@ namespace {
 // (see note below). So we use wstring internally, and translate to/from UTF-8
 // narrow strings that are used in the API.
 
-typedef boost::filesystem::wpath path_type;
+typedef boost::filesystem::path path_type;
 typedef std::wstring internal_string;
 
 std::string toString(const internal_string& value)
@@ -109,16 +139,6 @@ internal_string fromString(const std::string& value)
 typedef boost::filesystem::path path_type;
 typedef std::string internal_string;
 
-std::string toString(const internal_string& value)
-{
-   return value;
-}
-
-internal_string fromString(const std::string& value)
-{
-   return value;
-}
-
 #endif
 
 void logError(path_type path,
@@ -139,11 +159,6 @@ struct FilePath::Impl
    path_type path ;
 };
   
-FilePath FilePath::initialPath() 
-{
-   return FilePath(boost::filesystem::initial_path().string()) ;
-}
-
 FilePath FilePath::safeCurrentPath(const FilePath& revertToPath)
 {
    try
@@ -422,7 +437,7 @@ std::string FilePath::relativePath(const FilePath& parentPath) const
          relativePath /= *mmit ;
          mmit++ ;
       }
-      return toString(relativePath.string()) ;
+      return BOOST_FS_STRING(relativePath) ;
    }
    else
    {
@@ -445,7 +460,7 @@ std::string FilePath::absolutePath() const
    if (empty())
       return std::string();
    else
-      return toString(pImpl_->path.string()) ;
+      return BOOST_FS_STRING(pImpl_->path) ;
 }
 
 Error FilePath::remove() const
@@ -580,7 +595,7 @@ FilePath FilePath::complete(const std::string& path) const
    {
       // NOTE: The path gets round-tripped through toString/fromString, would
       //   be nice to have a direct constructor
-      return FilePath(toString(BOOST_FS_COMPLETE(path, pImpl_->path).string()));
+      return FilePath(BOOST_FS_STRING(BOOST_FS_COMPLETE(path, pImpl_->path)));
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
@@ -598,7 +613,7 @@ FilePath FilePath::parent() const
    {
       // NOTE: The path gets round-tripped through toString/fromString, would
       //   be nice to have a direct constructor
-      return FilePath(toString(pImpl_->path.parent_path().string()));
+      return FilePath(BOOST_FS_STRING(pImpl_->path.parent_path()));
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
@@ -665,16 +680,14 @@ Error FilePath::children(std::vector<FilePath>* pFilePaths) const
    if (!exists())
       return notFoundError(*this, ERROR_LOCATION);
 
-   using boost::filesystem::basic_directory_iterator ;
-
    try 
    {
-      basic_directory_iterator<path_type> end ;
-      for (basic_directory_iterator<path_type> itr(pImpl_->path); itr != end; ++itr)
+      dir_iterator end ;
+      for (dir_iterator itr(pImpl_->path); itr != end; ++itr)
       {
          // NOTE: The path gets round-tripped through toString/fromString, would
          //   be nice to have a direct constructor
-         std::string itemPath = toString(itr->path().string());
+         std::string itemPath = BOOST_FS_STRING(itr->path());
          pFilePaths->push_back(FilePath(itemPath)) ;
       }
       return Success() ;
@@ -694,17 +707,15 @@ Error FilePath::childrenRecursive(
    if (!exists())
       return notFoundError(*this, ERROR_LOCATION);
 
-   using boost::filesystem::basic_recursive_directory_iterator ;
-   
-   try 
+   try
    {
-      basic_recursive_directory_iterator<path_type> end ;
+      recursive_dir_iterator end ;
       
-      for (basic_recursive_directory_iterator<path_type> itr(pImpl_->path); itr != end; ++itr)
+      for (recursive_dir_iterator itr(pImpl_->path); itr != end; ++itr)
       {
          // NOTE: The path gets round-tripped through toString/fromString, would
          //   be nice to have a direct constructor
-         iterationFunction(itr.level(),FilePath(toString(itr->path().string())));
+         iterationFunction(itr.level(),FilePath(BOOST_FS_STRING(itr->path())));
       }
       
       return Success() ;
@@ -780,7 +791,7 @@ void logError(path_type path,
 
 void addErrorProperties(path_type path, Error* pError)
 {
-   pError->addProperty("path", toString(path.string())) ;
+   pError->addProperty("path", BOOST_FS_STRING(path)) ;
 }
 }
 

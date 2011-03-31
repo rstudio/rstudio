@@ -40,8 +40,6 @@ public:
                                                 RecursiveIterationFunction;
 
 public:
-   static FilePath initialPath() ;
-
    // special accessor which detects when the current path no longer exists
    // and switches to the specified alternate path if it doesn't
    static FilePath safeCurrentPath(const FilePath& revertToPath) ;
