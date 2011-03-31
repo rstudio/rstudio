@@ -37,14 +37,14 @@
 //   versions that we still want to support.
 #ifdef _WIN32
 
-#define BOOST_FS_STRING(str) toString((str).wstring())
+#define BOOST_FS_STRING(str) toString((str).generic_wstring())
 #define BOOST_FS_COMPLETE(p, base) boost::filesystem::absolute(fromString(p), base)
 typedef boost::filesystem::directory_iterator dir_iterator;
 typedef boost::filesystem::recursive_directory_iterator recursive_dir_iterator;
 
 #elif defined(BOOST_FILESYSTEM_VERSION) && BOOST_FILESYSTEM_VERSION != 2
 
-#define BOOST_FS_STRING(str) ((str).string())
+#define BOOST_FS_STRING(str) ((str).generic_string())
 #define BOOST_FS_COMPLETE(p, base) boost::filesystem::absolute(p, base)
 typedef boost::filesystem::directory_iterator dir_iterator;
 typedef boost::filesystem::recursive_directory_iterator recursive_dir_iterator;
