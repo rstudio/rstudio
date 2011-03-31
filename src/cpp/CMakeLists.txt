@@ -84,7 +84,13 @@ if(APPLE OR WIN32 OR RSTUDIO_PACKAGE_BUILD)
    set(Boost_USE_STATIC_LIBS ON)
 endif()
 
-set(BOOST_VERSION 1.42.0)
+if(APPLE OR WIN32)
+   # Require Boost 1.44 on Windows and Mac to avoid bugs in Boost Filesystem v2
+   # that cause the process to abort instead of returning errors
+   set(BOOST_VERSION 1.44.0)
+else()
+   set(BOOST_VERSION 1.42.0)
+endif()
 list(APPEND BOOST_LIBS
    date_time
    filesystem

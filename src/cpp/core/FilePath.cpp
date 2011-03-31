@@ -19,9 +19,9 @@
 #include <windows.h>
 #endif
 
-#if defined(_WIN32) || defined(__APPLE__)
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 104400
 #define BOOST_FILESYSTEM_VERSION 3
-#else
 #endif
 #define BOOST_FILESYSTEM_NARROW_ONLY
 #define BOOST_FILESYSTEM_NO_DEPRECATED
