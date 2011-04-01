@@ -50,7 +50,7 @@ public class ResettableEventBusTest extends HandlerTestBase {
     assertFired(mouse1, mouse2, mouse3);
 
     reset();
-    
+
     subject.removeHandlers();
     assertEquals(0, wrapped.getCount(type));
 
@@ -58,30 +58,30 @@ public class ResettableEventBusTest extends HandlerTestBase {
     });
     assertNotFired(mouse1, mouse2, mouse3);
   }
-  
+
   public void testNestedResetInnerFirst() {
     CountingEventBus wrapped = new CountingEventBus();
     ResettableEventBus wideScope = new ResettableEventBus(wrapped);
     ResettableEventBus narrowScope = new ResettableEventBus(wideScope);
-    
+
     Type<MouseDownHandler> type = MouseDownEvent.getType();
-    
+
     wideScope.addHandler(type, mouse1);
     narrowScope.addHandler(type, mouse2);
-    
+
     wrapped.fireEvent(new MouseDownEvent() {
     });
     assertFired(mouse1, mouse2);
-    
+
     reset();
 
     /*
-     * When I remove handlers from the narrow resettable, it should have no effect
-     * on handlers registered with the wider instance.
+     * When I remove handlers from the narrow resettable, it should have no
+     * effect on handlers registered with the wider instance.
      */
-    
+
     narrowScope.removeHandlers();
-    
+
     wrapped.fireEvent(new MouseDownEvent() {
     });
     assertFired(mouse1);
@@ -92,28 +92,90 @@ public class ResettableEventBusTest extends HandlerTestBase {
     CountingEventBus wrapped = new CountingEventBus();
     ResettableEventBus wideScope = new ResettableEventBus(wrapped);
     ResettableEventBus narrowScope = new ResettableEventBus(wideScope);
-    
+
     Type<MouseDownHandler> type = MouseDownEvent.getType();
-    
+
     wideScope.addHandler(type, mouse1);
     narrowScope.addHandler(type, mouse2);
-    
+
     wrapped.fireEvent(new MouseDownEvent() {
     });
     assertFired(mouse1, mouse2);
-    
+
     reset();
-    
+
     /*
-     * When I remove handlers from the first resettable, handlers registered
-     * by the narrower scoped one that wraps it should also be severed.
+     * When I remove handlers from the first resettable, handlers registered by
+     * the narrower scoped one that wraps it should also be severed.
      */
-    
+
     wideScope.removeHandlers();
-    
+
     wrapped.fireEvent(new MouseDownEvent() {
     });
     assertNotFired(mouse1);
     assertNotFired(mouse2);
   }
+
+  public void testManualRemoveMemory() {
+    SimpleEventBus eventBus = new SimpleEventBus();
+    ResettableEventBus subject = new ResettableEventBus(eventBus);
+
+    Type<MouseDownHandler> type = MouseDownEvent.getType();
+
+    HandlerRegistration registration1 = subject.addHandler(type, mouse1);
+    HandlerRegistration registration2 = subject.addHandler(type, mouse2);
+    HandlerRegistration registration3 = subject.addHandler(type, mouse3);
+
+    registration1.removeHandler();
+    registration2.removeHandler();
+    registration3.removeHandler();
+
+    /*
+     * removing handlers manually should remove registration from the internal
+     * set.
+     */
+
+    assertEquals(0, subject.getRegistrationSize());
+
+    subject.removeHandlers();
+    
+    // Expect nothing to happen. Especially no exceptions.
+    registration1.removeHandler();
+  }
+
+  public void testNestedRemoveMemory() {
+    SimpleEventBus eventBus = new SimpleEventBus();
+    ResettableEventBus wideScope = new ResettableEventBus(eventBus);
+    ResettableEventBus narrowScope = new ResettableEventBus(wideScope);
+
+    Type<MouseDownHandler> type = MouseDownEvent.getType();
+    wideScope.addHandler(type, mouse1);
+    narrowScope.addHandler(type, mouse2);
+    narrowScope.addHandler(type, mouse3);
+
+    narrowScope.removeHandlers();
+    wideScope.removeHandlers();
+
+    /*
+     * Internal registeration should be empty after calling removeHandlers
+     */
+
+    assertEquals(0, wideScope.getRegistrationSize());
+    assertEquals(0, narrowScope.getRegistrationSize());
+
+    wideScope.addHandler(type, mouse1);
+    narrowScope.addHandler(type, mouse2);
+
+    /*
+     * Reverse remove order
+     */
+
+    wideScope.removeHandlers();
+    narrowScope.removeHandlers();
+
+    assertEquals(0, wideScope.getRegistrationSize());
+    assertEquals(0, narrowScope.getRegistrationSize());
+  }
+
 }

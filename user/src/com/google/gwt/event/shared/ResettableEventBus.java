@@ -18,6 +18,7 @@ package com.google.gwt.event.shared;
 import com.google.gwt.event.shared.GwtEvent.Type;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -25,6 +26,7 @@ import java.util.Set;
  * easily all be cleared at once.
  */
 public class ResettableEventBus extends EventBus {
+
   private final EventBus wrapped;
   private final Set<HandlerRegistration> registrations = new HashSet<HandlerRegistration>();
 
@@ -33,20 +35,16 @@ public class ResettableEventBus extends EventBus {
   }
 
   @Override
-  public <H extends EventHandler> HandlerRegistration addHandler(Type<H> type,
-      H handler) {
+  public <H extends EventHandler> HandlerRegistration addHandler(Type<H> type, H handler) {
     HandlerRegistration rtn = wrapped.addHandler(type, handler);
-    registrations.add(rtn);
-    return rtn;
+    return doRegisterHandler(rtn);
   }
 
   @Override
-  public <H extends EventHandler> HandlerRegistration addHandlerToSource(
-      GwtEvent.Type<H> type, Object source, H handler) {
-    HandlerRegistration rtn = wrapped.addHandlerToSource(type, source,
-        handler);
-    registrations.add(rtn);
-    return rtn;
+  public <H extends EventHandler> HandlerRegistration addHandlerToSource(GwtEvent.Type<H> type,
+      Object source, H handler) {
+    HandlerRegistration rtn = wrapped.addHandlerToSource(type, source, handler);
+    return doRegisterHandler(rtn);
   }
 
   @Override
@@ -63,9 +61,38 @@ public class ResettableEventBus extends EventBus {
    * Remove all handlers that have been added through this wrapper.
    */
   public void removeHandlers() {
-    for (HandlerRegistration r : registrations) {
+    Iterator<HandlerRegistration> it = registrations.iterator();
+    while (it.hasNext()) {
+      HandlerRegistration r = it.next();
+
+      /*
+       * must remove before we call removeHandler. Might have come from nested
+       * ResettableEventBus
+       */
+      it.remove();
+
       r.removeHandler();
     }
-    registrations.clear();
+  }
+
+  // Visible for testing
+  int getRegistrationSize() {
+    return registrations.size();
+  }
+
+  private HandlerRegistration doRegisterHandler(final HandlerRegistration registration) {
+    registrations.add(registration);
+    return new HandlerRegistration() {
+      public void removeHandler() {
+        doUnregisterHandler(registration);
+      }
+    };
+  }
+
+  private void doUnregisterHandler(HandlerRegistration registration) {
+    if (registrations.contains(registration)) {
+      registration.removeHandler();
+      registrations.remove(registration);
+    }
   }
 }
