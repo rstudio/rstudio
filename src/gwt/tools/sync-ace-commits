@@ -20,6 +20,7 @@ git merge \
     origin/bugfix-wide-characters \
     origin/bugfix-active-line-back \
     origin/bugfix-eclipse-print-margin \
+    origin/bugfix-selecttostartend \
 
 
 make clean

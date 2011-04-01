@@ -7251,7 +7251,7 @@ canon.addCommand({
 });
 canon.addCommand({
     name: "selecttostart",
-    bindKey: bindKey("Alt-Shift-Up", "Command-Shift-Up"),
+    bindKey: bindKey("Alt-Shift-Up|Ctrl-Shift-Home", "Command-Shift-Up"),
     exec: function(env, args, request) { env.editor.getSelection().selectFileStart(); }
 });
 canon.addCommand({
@@ -7281,7 +7281,7 @@ canon.addCommand({
 });
 canon.addCommand({
     name: "selecttoend",
-    bindKey: bindKey("Alt-Shift-Down", "Command-Shift-Down"),
+    bindKey: bindKey("Alt-Shift-Down|Ctrl-Shift-End", "Command-Shift-Down"),
     exec: function(env, args, request) { env.editor.getSelection().selectFileEnd(); }
 });
 canon.addCommand({
