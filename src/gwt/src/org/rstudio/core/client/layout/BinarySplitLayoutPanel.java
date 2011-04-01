@@ -176,7 +176,8 @@ public class BinarySplitLayoutPanel extends LayoutPanel
                                 splitterPos);
       }
 
-      splitterPos = Math.max(splitterHeight_, splitterPos);
+      if (splitter_.isVisible())
+         splitterPos = Math.max(splitterHeight_, splitterPos);
 
       if (splitterPos_ == splitterPos
           && topIsFixed_ == fromTop
