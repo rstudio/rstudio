@@ -366,8 +366,8 @@ int main(int argc, char* argv[])
          result = boost::system::errc::timed_out;
          QMessageBox errorMsg(safeMessageBoxIcon(QMessageBox::Critical),
                               "RStudio",
-                              errorMessage,
-                              QMessageBox::Ok);
+                              errorMessage);
+         errorMsg.addButton(new QPushButton("OK"), QMessageBox::AcceptRole);
          errorMsg.show();
          pApp->exec();
       }

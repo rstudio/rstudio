@@ -20,14 +20,19 @@ namespace desktop {
 
 QMessageBox::Icon safeMessageBoxIcon(QMessageBox::Icon icon);
 
+bool showYesNoDialog(QMessageBox::Icon icon,
+                     QWidget *parent,
+                     const QString &title,
+                     const QString& text);
+
 void showMessageBox(QMessageBox::Icon icon,
                     QWidget *parent,
                     const QString &title,
                     const QString& text);
 
-void showWarning(QWidget *parent,
-                 const QString &title,
-                 const QString& text);
+void showWarning(QWidget *parent, const QString &title, const QString& text);
+
+void showInfo(QWidget* parent, const QString& title, const QString& text);
 
 } // namespace desktop
 

@@ -23,6 +23,7 @@
 
 #include "DesktopDetectRHome.hpp"
 #include "DesktopRVersion.hpp"
+#include "DesktopUtils.hpp"
 
 using namespace desktop;
 
@@ -115,7 +116,7 @@ void ChooseRHome::chooseOther()
 
    if (versions.size() == 0)
    {
-      QMessageBox::warning(
+      showWarning(
             this,
             "Invalid R Directory",
             "This directory does not appear to contain a "
@@ -155,14 +156,14 @@ void ChooseRHome::chooseOther()
    case desktop::ValidateSuccess:
       break;
    case desktop::ValidateNotFound:
-      QMessageBox::warning(
+      showWarning(
             this,
             "Invalid R Directory",
             "This directory does not appear to contain a "
             "valid R installation.\n\nPlease try again.");
       return;
    case desktop::ValidateBadArchitecture:
-      QMessageBox::warning(
+      showWarning(
             this,
             "Incompatible R Build",
             "The version of R you've selected was built "
@@ -171,7 +172,7 @@ void ChooseRHome::chooseOther()
       return;
    case desktop::ValidateVersionTooOld:
    default:
-      QMessageBox::warning(
+      showWarning(
             this,
             "Incompatible R Build",
             "The version of R you've selected is not "
@@ -207,7 +208,7 @@ void ChooseRHome::done(int r)
             {
                QString name = preferR64() ? "R64" : "R";
 
-               QMessageBox::warning(
+               showWarning(
                      this,
                      QString("No %1 Installation Detected").arg(name),
                      QString("No compatible %1 version was found. If you "
@@ -220,15 +221,14 @@ void ChooseRHome::done(int r)
             }
             else
             {
-               if (QMessageBox::warning(
+               if (showYesNoDialog(
+                     QMessageBox::Warning,
                      this,
                      QString("R Not Installed"),
                      QString("R does not appear to be installed. Please "
                              "install R before using RStudio.\n\n"
                              "You can download R from the official R Project "
-                             "website. Would you like to go there now?"),
-                     QMessageBox::Yes | QMessageBox::No,
-                     QMessageBox::Yes) == QMessageBox::Yes)
+                             "website. Would you like to go there now?")))
                {
                   QDesktopServices::openUrl(QUrl("http://www.rstudio.org/links/r-project"));
                }

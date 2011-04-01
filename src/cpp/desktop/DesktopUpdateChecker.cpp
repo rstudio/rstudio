@@ -15,6 +15,7 @@
 
 #include <QDesktopServices>
 #include <QMessageBox>
+#include <QPushButton>
 
 #include <core/Log.hpp>
 #include <core/Error.hpp>
@@ -79,11 +80,12 @@ void UpdateChecker::manifestDownloadError(const QString &message)
             "Error Checking for Updates",
             "An error occurred while checking for updates:\n\n"
             + message,
-            QMessageBox::Ok,
+            QMessageBox::NoButton,
             pOwnerWindow_,
             Qt::Sheet | Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint);
       pMsg->setWindowModality(Qt::WindowModal);
       pMsg->setAttribute(Qt::WA_DeleteOnClose);
+      pMsg->addButton(new QPushButton("OK"), QMessageBox::AcceptRole);
       pMsg->show();
    }
 }
@@ -141,14 +143,15 @@ void UpdateChecker::manifestDownloadComplete(const QByteArray& data)
       {
          // WA_DeleteOnClose
          QMessageBox* pMsg = new QMessageBox(
-               safeMessageBoxIcon(QMessageBox::Warning),
+               safeMessageBoxIcon(QMessageBox::Information),
                "No Update Available",
                "You're using the newest version of RStudio.",
-               QMessageBox::Ok,
+               QMessageBox::NoButton,
                pOwnerWindow_,
                Qt::Sheet | Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint);
          pMsg->setWindowModality(Qt::WindowModal);
          pMsg->setAttribute(Qt::WA_DeleteOnClose);
+         pMsg->addButton(new QPushButton("OK"), QMessageBox::AcceptRole);
          pMsg->show();
       }
    }

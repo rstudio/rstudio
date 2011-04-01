@@ -107,9 +107,10 @@ void CRANMirrorDialog::showNetworkError(const QString& errorString)
          "An error occurred while retrieving mirrors from CRAN:<br/><br/><i>"
          + Qt::escape(errorString)
          + "</i><br/><br/>Using local mirror list instead.",
-         QMessageBox::Ok,
+         QMessageBox::NoButton,
          this);
    errorDialog.setTextFormat(Qt::RichText);
+   errorDialog.addButton(new QPushButton("OK"), QMessageBox::AcceptRole);
    errorDialog.exec();
 
    QDir rDocPath(desktop::options().rDocPath());

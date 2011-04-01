@@ -13,6 +13,8 @@
 
 #include "DesktopUtils.hpp"
 
+#include <QPushButton>
+
 namespace desktop {
 
 QMessageBox::Icon safeMessageBoxIcon(QMessageBox::Icon icon)
@@ -26,28 +28,58 @@ QMessageBox::Icon safeMessageBoxIcon(QMessageBox::Icon icon)
 #endif
 }
 
+
+bool showYesNoDialog(QMessageBox::Icon icon,
+                     QWidget *parent,
+                     const QString &title,
+                     const QString& text)
+{
+   // basic message box attributes
+   QMessageBox messageBox(safeMessageBoxIcon(icon),
+                          title,
+                          text,
+                          QMessageBox::NoButton,
+                          parent);
+   messageBox.setWindowModality(Qt::WindowModal);
+
+   // initialize buttons
+   QPushButton* pYes = new QPushButton("Yes");
+   messageBox.addButton(pYes, QMessageBox::YesRole);
+   messageBox.addButton(new QPushButton("No"), QMessageBox::NoRole);
+   messageBox.setDefaultButton(pYes);
+
+   // show the dialog modally
+   messageBox.exec();
+
+   // return true if the user clicked yes
+   return messageBox.clickedButton() == pYes;
+}
+
 void showMessageBox(QMessageBox::Icon icon,
                     QWidget *parent,
                     const QString &title,
                     const QString& text)
 {
+   // basic message box attributes
    QMessageBox messageBox(safeMessageBoxIcon(icon),
                           title,
                           text,
-                          QMessageBox::Ok,
-                           parent);
+                          QMessageBox::NoButton,
+                          parent);
    messageBox.setWindowModality(Qt::WindowModal);
-   messageBox.show();
+   messageBox.addButton(new QPushButton("OK"), QMessageBox::AcceptRole);
+   messageBox.exec();
 }
 
-void showWarning(QWidget *parent,
-                 const QString &title,
-                 const QString& text)
+void showWarning(QWidget *parent, const QString &title, const QString& text)
 {
    showMessageBox(QMessageBox::Warning, parent, title, text);
 }
 
-
+void showInfo(QWidget* parent, const QString& title, const QString& text)
+{
+   showMessageBox(QMessageBox::Information, parent, title, text);
+}
 
 
 } // namespace desktop
