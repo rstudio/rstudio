@@ -16,6 +16,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
@@ -158,6 +159,7 @@ public class TextEditingTarget implements EditingTarget
       public void onCompleted()
       {
          ignoreDeletes_ = false;
+         commands_.reopenSourceDocWithEncoding().setEnabled(true);         
          name_.setValue(file_.getName(), true);
          // Make sure tooltip gets updated, even if name hasn't changed
          name_.fireChangeEvent(); 
@@ -452,6 +454,20 @@ public class TextEditingTarget implements EditingTarget
          commandHandlerReg_ = null;
       }
       commandHandlerReg_ = commandBinder.bind(commands_, this);
+
+      Scheduler.get().scheduleFinally(new ScheduledCommand()
+      {
+         public void execute()
+         {
+            // This has to be executed in a scheduleFinally because
+            // Source.manageCommands gets called after this.onActivate,
+            // and if we're going from a non-editor (like data view) to
+            // an editor, setEnabled(true) will be called on the command
+            // in manageCommands. 
+            commands_.reopenSourceDocWithEncoding().setEnabled(
+                  docUpdateSentinel_.getPath() != null);
+         }
+      });
 
       view_.onActivate();
    }
