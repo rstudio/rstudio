@@ -331,6 +331,11 @@ void onAfterAddInteractiveDevice(DeviceContext* pDC)
 }
 
 
+bool resyncDisplayListBeforeWriteToPNG()
+{
+   return true;
+}
+
 Error writeToPNG(const FilePath& targetPath,
                  DeviceContext* pDC,
                  bool /* keepContextAlive */)

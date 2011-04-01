@@ -123,16 +123,12 @@ Error Plot::renderFromDisplay()
    // generate a new storage uuid
    std::string storageUuid = core::system::generateUuid();
    
-   // generate snapshot file 
-   Error error = graphicsDevice_.saveSnapshot(snapshotFilePath(storageUuid));
+   // generate snapshot and image files
+   Error error = graphicsDevice_.saveSnapshot(snapshotFilePath(storageUuid),
+                                              imageFilePath(storageUuid));
    if (error)
       return Error(errc::PlotRenderingError, error, ERROR_LOCATION);
    
-   // generate image file
-   error = graphicsDevice_.saveAsImageFile(imageFilePath(storageUuid));   
-   if (error)
-      return Error(errc::PlotRenderingError, error, ERROR_LOCATION);
-
    // save rendered size
    renderedSize_ = graphicsDevice_.displaySize();
    
@@ -164,7 +160,7 @@ Error Plot::renderFromDisplaySnapshot(SEXP snapshot)
       return error ;
 
    //
-   // we can't generate an image file by calling graphicsDevice_.saveAsImageFile
+   // we can't generate an image file at this point in the processing
    // because the GraphicsDevice has already moved on to the next page. this is
    // OK though because we simply set needsUpdate_ = true below and the next
    // time renderFromDisplay is called it will be rendered

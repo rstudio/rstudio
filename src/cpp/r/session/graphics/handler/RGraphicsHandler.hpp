@@ -76,6 +76,8 @@ void setDeviceAttributes(pDevDesc pDev);
 void onBeforeAddInteractiveDevice(DeviceContext* pDC);
 void onAfterAddInteractiveDevice(DeviceContext* pDC);
 
+bool resyncDisplayListBeforeWriteToPNG();
+
 core::Error writeToPNG(const core::FilePath& targetPath,
                        DeviceContext* pDC,
                        bool keepContextAlive);

@@ -348,15 +348,15 @@ void GD_OnExit(pDevDesc dd)
    // suggests you might want to do this!)
 }
 
-void resizeGraphicsDevice()
+void resyncDisplayList()
 {
    // get pointers to device desc and cairo data
    pDevDesc pDev = s_pGEDevDesc->dev;
    DeviceContext* pDC = (DeviceContext*)pDev->deviceSpecific;
-   
+
    // destroy existing device context
    handler::destroy(pDC);
-    
+
    // allocate a new one and set it to be the device specific ptr
    pDC = handler::allocate(pDev);
    pDev->deviceSpecific = pDC;
@@ -368,7 +368,7 @@ void resizeGraphicsDevice()
       close();
       return;
    }
-   
+
    // now update the device structure
    handler::setSize(pDev);
 
@@ -377,6 +377,12 @@ void resizeGraphicsDevice()
       SuppressDeviceEventsScope scope(plotManager());
       GEplayDisplayList(s_pGEDevDesc);
    }
+}
+
+void resizeGraphicsDevice()
+{
+   // resync display list
+   resyncDisplayList();
 
    // notify listeners of resize
    s_graphicsDeviceEvents.onResized();
@@ -536,16 +542,30 @@ DisplaySize displaySize()
    return DisplaySize(s_width, s_height);
 }
 
-Error saveSnapshot(const core::FilePath& snapshotFile)
+Error saveSnapshot(const core::FilePath& snapshotFile,
+                   const core::FilePath& imageFile)
 {
    // ensure we are active
    Error error = makeActive();
    if (error)
       return error ;
    
-   // save 
-   return r::exec::RFunction(".rs.saveGraphics",
-                             snapshotFile.absolutePath()).call();
+   // save snaphot file
+   error = r::exec::RFunction(".rs.saveGraphics",
+                              snapshotFile.absolutePath()).call();
+   if (error)
+      return error;
+
+   // resync display list before saving png if necessary. for unknown reasons
+   // there are permutations of plotting code which leaves the underlying PNG
+   // in the RCairoGraphicsHandler not containing the full graphics context, so
+   // we need to perform a re-synch of display list before rendering the PNG
+   if (handler::resyncDisplayListBeforeWriteToPNG())
+      resyncDisplayList();
+
+   // save png file
+   DeviceContext* pDC = (DeviceContext*)s_pGEDevDesc->dev->deviceSpecific;
+   return handler::writeToPNG(imageFile, pDC, true);
 }
 
 Error restoreSnapshot(const core::FilePath& snapshotFile)
@@ -559,23 +579,7 @@ Error restoreSnapshot(const core::FilePath& snapshotFile)
    return r::exec::RFunction(".rs.restoreGraphics",
                              snapshotFile.absolutePath()).call();
 }
-   
-   
-   
-// render the current display. note that this function properly defends itself
-// against the state of no RStudio device loaded so can be called at any time. 
-// in this case it simply writes an "empty" image
-Error saveAsImageFile(const FilePath& targetFile)
-{
-   // verify the device is alive
-   if (s_pGEDevDesc == NULL)
-      return Error(errc::DeviceNotAvailable, ERROR_LOCATION);
-   
-   // write as png
-   DeviceContext* pDC = (DeviceContext*)s_pGEDevDesc->dev->deviceSpecific;
-   return handler::writeToPNG(targetFile, pDC, true);
-}
-   
+    
 void copyToActiveDevice()
 {
    int rsDeviceNumber = GEdeviceNumber(s_pGEDevDesc);
@@ -614,7 +618,6 @@ Error initialize(
    graphicsDevice.displaySize = displaySize;
    graphicsDevice.saveSnapshot = saveSnapshot;
    graphicsDevice.restoreSnapshot = restoreSnapshot;
-   graphicsDevice.saveAsImageFile = saveAsImageFile;
    graphicsDevice.copyToActiveDevice = copyToActiveDevice;
    graphicsDevice.imageFileExtension = imageFileExtension;
    graphicsDevice.close = close;

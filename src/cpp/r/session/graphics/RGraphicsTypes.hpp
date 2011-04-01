@@ -51,9 +51,9 @@ struct DisplaySize
 struct GraphicsDeviceFunctions
 {
    boost::function<DisplaySize()> displaySize;
-   boost::function<core::Error(const core::FilePath&)> saveSnapshot;
+   boost::function<core::Error(const core::FilePath&,
+                               const core::FilePath&)> saveSnapshot;
    boost::function<core::Error(const core::FilePath&)> restoreSnapshot;
-   boost::function<core::Error(const core::FilePath&)> saveAsImageFile;
    boost::function<void()> copyToActiveDevice;
    boost::function<std::string()> imageFileExtension;
    boost::function<void()> close;

@@ -239,6 +239,12 @@ void onAfterAddInteractiveDevice(DeviceContext* pDC)
    shadowDevDesc(pDC);
 }
 
+// we do our own internal re-sync via shadowDevSync so we don't
+// need the graphics device controlling code to do it for us
+bool resyncDisplayListBeforeWriteToPNG()
+{
+   return false;
+}
 
 Error writeToPNG(const FilePath& targetPath,
                  DeviceContext* pDC,
