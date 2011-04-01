@@ -58,8 +58,8 @@ manipulate(
 ## Using checkboxes for boolean parameters
 manipulate(
   plot(cars, axes=x, ann=y), 
-  x=checkbox(initial=TRUE, label="Draw Axes"), 
-  y=checkbox(initial=TRUE, label="Draw Labels"))
+  x=checkbox(TRUE, "Draw Axes"), 
+  y=checkbox(TRUE, "Draw Labels"))
 
 ## Combining controls
 manipulate(
@@ -67,8 +67,8 @@ manipulate(
   x.min=slider(0,15),
   x.max=slider(15,30, initial=25),
   type=picker("p", "l", "b", "c", "o", "h", "s", "S", "n"),
-  x=checkbox(initial=TRUE, label="Draw Axes"),
-  y=checkbox(label="Draw Labels"))
+  x=checkbox(TRUE, "Draw Axes"),
+  y=checkbox(FALSE, "Draw Labels"))
 }
 }
 

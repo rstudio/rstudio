@@ -32,8 +32,8 @@ checkbox(initial = FALSE, label = NULL)
 ## Using checkboxes for boolean parameters
 manipulate(
   plot(cars, axes=x, ann=y), 
-  x=checkbox(initial=TRUE, label="Draw Axes"), 
-  y=checkbox(initial=TRUE, label="Draw Labels"))
+  x=checkbox(TRUE, "Draw Axes"), 
+  y=checkbox(TRUE, "Draw Labels"))
 
 ## Toggle boxplot outlier display using checkbox
 manipulate(
