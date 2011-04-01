@@ -17,6 +17,7 @@
 @external gwt-SuggestBoxPopup, item-selected;
 @external gwt-TabLayoutPanelTab, gwt-TabLayoutPanelTab-selected;
 @external gwt-TabLayoutPanelTabs;
+@external gwt-DecoratedPopupPanel;
 
 @external windowframe, windowframe-maximized, windowframe-exclusive;
 
@@ -214,7 +215,7 @@ pre {
 	right: -12px;
 }
 
-.gwt-DialogBox-ModalDialog {
+.gwt-DialogBox-ModalDialog, .gwt-DecoratedPopupPanel {
    z-index: 1001;
 }
 
