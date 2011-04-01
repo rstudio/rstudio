@@ -15,8 +15,6 @@ package org.rstudio.studio.client.workbench.ui;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.widget.FontSizer;
-import org.rstudio.core.client.widget.FontSizer.Size;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -28,15 +26,15 @@ public class FontSizeManager
    public FontSizeManager(final EventBus events,
                           UIPrefs prefs)
    {
-      prefs.fontSize().bind(new CommandWithArg<String>()
+      prefs.fontSize().bind(new CommandWithArg<Integer>()
       {
-         public void execute(String value)
+         public void execute(Integer value)
          {
-            final Size DEFAULT_SIZE = Size.Pt12;
+            final int DEFAULT_SIZE = 9;
             try
             {
                if (value != null)
-                  size_ = FontSizer.Size.valueOf(value);
+                  size_ = value;
                else
                   size_ = DEFAULT_SIZE;
             }
@@ -49,10 +47,10 @@ public class FontSizeManager
       });
    }
 
-   public Size getSize()
+   public int getSize()
    {
       return size_;
    }
 
-   private Size size_;
+   private int size_;
 }

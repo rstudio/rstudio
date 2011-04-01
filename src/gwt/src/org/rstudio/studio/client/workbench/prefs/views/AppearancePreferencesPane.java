@@ -6,7 +6,6 @@ import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
-import org.rstudio.core.client.widget.FontSizer.Size;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
@@ -22,20 +21,19 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       VerticalPanel leftPanel = new VerticalPanel();
 
-      String[] labels = {"10", "12", "14", "16", "18"};
-      String[] values = {"Pt10", "Pt12", "Pt14", "Pt16", "Pt18"};
+      String[] sizes = {"7", "8", "9", "10", "11", "12", "13", "14", "16", "18"};
 
       fontSize_ = new SelectWidget("Font size:",
-                                   labels,
-                                   values,
+                                   sizes,
+                                   sizes,
                                    false);
-      if (!fontSize_.setValue(uiPrefs.fontSize().getValue()))
+      if (!fontSize_.setValue(uiPrefs.fontSize().getValue() + ""))
          fontSize_.getListBox().setSelectedIndex(1);
       fontSize_.getListBox().addChangeHandler(new ChangeHandler()
       {
          public void onChange(ChangeEvent event)
          {
-            preview_.setFontSize(Size.valueOf(fontSize_.getValue()));
+            preview_.setFontSize(Integer.parseInt(fontSize_.getValue()));
          }
       });
 
@@ -64,7 +62,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       preview_.setHeight("375px");
       preview_.setWidth("288px");
       preview_.setTheme(themes.getThemeUrl(uiPrefs_.theme().getValue()));
-      preview_.setFontSize(Size.valueOf(fontSize_.getValue()));
+      preview_.setFontSize(Integer.parseInt(fontSize_.getValue()));
       previewPanel.add(preview_);
 
       HorizontalPanel hpanel = new HorizontalPanel();
@@ -86,7 +84,8 @@ public class AppearancePreferencesPane extends PreferencesPane
    public void onApply()
    {
       super.onApply();
-      uiPrefs_.fontSize().setValue(fontSize_.getValue());
+      int fontSize = Integer.parseInt(fontSize_.getValue());
+      uiPrefs_.fontSize().setValue(fontSize);
       uiPrefs_.theme().setValue(theme_.getValue());
    }
 

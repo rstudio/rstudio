@@ -24,7 +24,6 @@ import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.theme.res.ThemeResources;
-import org.rstudio.core.client.widget.FontSizer.Size;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -190,7 +189,7 @@ public class TextEditingTargetWidget
       editor_.onActivate();
    }
 
-   public void setFontSize(Size size)
+   public void setFontSize(int size)
    {
       editor_.setFontSize(size);
    }

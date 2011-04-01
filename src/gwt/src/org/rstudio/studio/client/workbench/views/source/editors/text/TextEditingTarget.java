@@ -45,7 +45,6 @@ import org.rstudio.core.client.files.FilenameTransform;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.*;
-import org.rstudio.core.client.widget.FontSizer.Size;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
@@ -101,7 +100,7 @@ public class TextEditingTarget implements EditingTarget
       void hideWarningBar();
       void showFindReplace();
       void onActivate();
-      void setFontSize(FontSizer.Size size);
+      void setFontSize(int size);
 
       boolean isAttached();
    }
@@ -130,7 +129,7 @@ public class TextEditingTarget implements EditingTarget
       // Fix bug 964
       void onActivate();
 
-      void setFontSize(Size size);
+      void setFontSize(int size);
 
       void onVisibilityChanged(boolean visible);
 

@@ -8,7 +8,6 @@ import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.DynamicIFrame;
 import org.rstudio.core.client.widget.FontSizer;
-import org.rstudio.core.client.widget.FontSizer.Size;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceResources;
 
 public class AceEditorPreview extends DynamicIFrame
@@ -28,7 +27,7 @@ public class AceEditorPreview extends DynamicIFrame
       isFrameLoaded_ = true;
       if (initialThemeUrl_ != null)
          setTheme(initialThemeUrl_);
-      if (hasInitialFontSize_)
+      if (initialFontSize_ != null)
          setFontSize(initialFontSize_);
 
       final Document doc = getDocument();
@@ -100,11 +99,10 @@ public class AceEditorPreview extends DynamicIFrame
       doc.getBody().appendChild(currentStyleLink_);
    }
 
-   public void setFontSize(Size fontSize)
+   public void setFontSize(int fontSize)
    {
       if (!isFrameLoaded_)
       {
-         hasInitialFontSize_ = true;
          initialFontSize_ = fontSize;
          return;
       }
@@ -115,7 +113,6 @@ public class AceEditorPreview extends DynamicIFrame
    private LinkElement currentStyleLink_;
    private boolean isFrameLoaded_;
    private String initialThemeUrl_;
-   private boolean hasInitialFontSize_;
-   private Size initialFontSize_;
+   private Integer initialFontSize_;
    private final String code_;
 }

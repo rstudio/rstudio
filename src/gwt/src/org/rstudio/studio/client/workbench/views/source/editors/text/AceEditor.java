@@ -34,7 +34,6 @@ import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DynamicIFrame;
-import org.rstudio.core.client.widget.FontSizer.Size;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
@@ -518,7 +517,7 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       widget_.getEditor().getRenderer().setPrintMarginColumn(column);
    }
 
-   public void setFontSize(Size size)
+   public void setFontSize(int size)
    {
       // No change needed--the AceEditorWidget uses the "normalSize" style
       // However, we do need to resize the gutter

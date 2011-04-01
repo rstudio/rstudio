@@ -64,9 +64,9 @@ public class UIPrefs extends Prefs
       return bool("soft_wrap_r_files", false);
    }
 
-   public PrefValue<String> fontSize()
+   public PrefValue<Integer> fontSize()
    {
-      return string("font_size", "Pt12");
+      return integer("font_size_points", 9);
    }
 
    public PrefValue<String> theme()
