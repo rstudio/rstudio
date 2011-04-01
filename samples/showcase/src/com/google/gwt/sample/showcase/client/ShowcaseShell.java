@@ -228,6 +228,13 @@ public class ShowcaseShell extends Composite {
   }
 
   /**
+   * Returns the currently displayed content. (Used by tests.)
+   */
+  public ContentWidget getContent() {
+    return content;
+  }
+
+  /**
    * Get the main menu used to select examples.
    *
    * @return the main menu
@@ -307,13 +314,6 @@ public class ShowcaseShell extends Composite {
 
     // Show the widget.
     showExample();
-  }
-
-  /**
-   * Returns the currently displayed content. (Used by tests.)
-   */
-  public ContentWidget getContent() {
-    return content;
   }
 
   /**
