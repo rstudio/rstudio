@@ -121,7 +121,7 @@ public class TextEditingTarget implements EditingTarget
       String getSelectionValue();
       String getCurrentLine();
       void replaceSelection(String code);
-      boolean moveSelectionToNextLine();
+      boolean moveSelectionToNextLine(boolean skipBlankLines);
       ChangeTracker getChangeTracker();
 
       void fitSelectionToLines(boolean expand);
@@ -810,7 +810,7 @@ public class TextEditingTarget implements EditingTarget
       if (code == null || code.length() == 0)
       {
          code = docDisplay_.getCurrentLine();
-         docDisplay_.moveSelectionToNextLine();
+         docDisplay_.moveSelectionToNextLine(true);
       }
       else
       {

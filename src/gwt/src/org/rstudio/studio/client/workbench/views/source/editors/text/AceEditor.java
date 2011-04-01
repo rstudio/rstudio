@@ -31,7 +31,6 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
-import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DynamicIFrame;
@@ -394,16 +393,18 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       getSession().getSelection().setSelectionRange(range);
    }
 
-   public boolean moveSelectionToNextLine()
+   public boolean moveSelectionToNextLine(boolean skipBlankLines)
    {
       int curRow = getSession().getSelection().getCursor().getRow();
-      if (curRow < getSession().getLength() - 1)
+      while (++curRow < getSession().getLength())
       {
-         String line = getSession().getLine(curRow + 1);
+         String line = getSession().getLine(curRow);
          Pattern pattern = Pattern.create("[^\\s]");
          Match match = pattern.match(line, 0);
+         if (skipBlankLines && match == null)
+            continue;
          int col =  (match != null) ? match.getIndex() : 0;
-         getSession().getSelection().moveCursorTo(curRow+1, col, false);
+         getSession().getSelection().moveCursorTo(curRow, col, false);
          return true;
       }
       return false;
