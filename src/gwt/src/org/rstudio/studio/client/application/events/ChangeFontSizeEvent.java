@@ -18,17 +18,17 @@ public class ChangeFontSizeEvent extends GwtEvent<ChangeFontSizeHandler>
 {
    public static final Type<ChangeFontSizeHandler> TYPE = new Type<ChangeFontSizeHandler>();
 
-   public ChangeFontSizeEvent(int fontSize)
+   public ChangeFontSizeEvent(double fontSize)
    {
       fontSize_ = fontSize;
    }
 
-   public int getFontSize()
+   public double getFontSize()
    {
       return fontSize_;
    }
 
-   private final int fontSize_;
+   private final double fontSize_;
 
    @Override
    public Type<ChangeFontSizeHandler> getAssociatedType()

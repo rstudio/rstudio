@@ -100,7 +100,7 @@ public class TextEditingTarget implements EditingTarget
       void hideWarningBar();
       void showFindReplace();
       void onActivate();
-      void setFontSize(int size);
+      void setFontSize(double size);
 
       boolean isAttached();
    }
@@ -129,7 +129,7 @@ public class TextEditingTarget implements EditingTarget
       // Fix bug 964
       void onActivate();
 
-      void setFontSize(int size);
+      void setFontSize(double size);
 
       void onVisibilityChanged(boolean visible);
 

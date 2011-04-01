@@ -81,6 +81,29 @@ public class JsObject extends JavaScriptObject
       this[key] = value;
    }-*/;
 
+   public final Double getDouble(String key)
+   {
+      if (!hasKey(key) || !getValueType(key).equals("number"))
+         return null;
+      return _getDouble(key);
+   }
+
+   public final native double _getDouble(String key) /*-{
+      return this[key];
+   }-*/;
+
+   public final void setDouble(String key, Double value)
+   {
+      if (value == null)
+         setObject(key, null);
+      else
+         _setDouble(key, value.doubleValue());
+   }
+
+   public final native void _setDouble(String key, double value) /*-{
+      this[key] = value;
+   }-*/;
+
    public final Boolean getBoolean(String key)
    {
       if (!hasKey(key) || !getValueType(key).equals("boolean"))

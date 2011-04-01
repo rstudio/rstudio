@@ -126,6 +126,26 @@ public abstract class Prefs
       }
    }
 
+   private class DoubleValue extends JsonValue<Double>
+   {
+      private DoubleValue(String name, Double defaultValue)
+      {
+         super(name, defaultValue);
+      }
+
+      @Override
+      public Double doGetValue()
+      {
+         return root_.getDouble(name_);
+      }
+
+      @Override
+      protected void doSetValue(String name, Double value)
+      {
+         root_.setDouble(name, value);
+      }
+   }
+
    private class StringValue extends JsonValue<String>
    {
       private StringValue(String name, String defaultValue)
@@ -190,6 +210,18 @@ public abstract class Prefs
       if (val == null)
       {
          val = new IntValue(name, defaultValue);
+         values_.put(name, val);
+      }
+      return val;
+   }
+
+   @SuppressWarnings("unchecked")
+   protected PrefValue<Double> dbl(String name, Double defaultValue)
+   {
+      PrefValue<Double> val = (PrefValue<Double>) values_.get(name);
+      if (val == null)
+      {
+         val = new DoubleValue(name, defaultValue);
          values_.put(name, val);
       }
       return val;

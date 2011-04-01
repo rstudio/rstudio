@@ -26,9 +26,9 @@ public class FontSizeManager
    public FontSizeManager(final EventBus events,
                           UIPrefs prefs)
    {
-      prefs.fontSize().bind(new CommandWithArg<Integer>()
+      prefs.fontSize().bind(new CommandWithArg<Double>()
       {
-         public void execute(Integer value)
+         public void execute(Double value)
          {
             final int DEFAULT_SIZE = 9;
             try
@@ -47,10 +47,10 @@ public class FontSizeManager
       });
    }
 
-   public int getSize()
+   public double getSize()
    {
       return size_;
    }
 
-   private int size_;
+   private double size_;
 }

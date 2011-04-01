@@ -189,7 +189,7 @@ public class TextEditingTargetWidget
       editor_.onActivate();
    }
 
-   public void setFontSize(int size)
+   public void setFontSize(double size)
    {
       editor_.setFontSize(size);
    }

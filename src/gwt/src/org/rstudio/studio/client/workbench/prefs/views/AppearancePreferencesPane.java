@@ -21,19 +21,22 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       VerticalPanel leftPanel = new VerticalPanel();
 
-      String[] sizes = {"7", "8", "9", "10", "11", "12", "13", "14", "16", "18"};
+      String[] labels = {"7", "8", "9", "10", "11", "12", "13", "14", "16", "18"};
+      String[] values = new String[labels.length];
+      for (int i = 0; i < labels.length; i++)
+         values[i] = Double.parseDouble(labels[i]) + "";
 
       fontSize_ = new SelectWidget("Font size:",
-                                   sizes,
-                                   sizes,
+                                   labels,
+                                   values,
                                    false);
       if (!fontSize_.setValue(uiPrefs.fontSize().getValue() + ""))
-         fontSize_.getListBox().setSelectedIndex(1);
+         fontSize_.getListBox().setSelectedIndex(3);
       fontSize_.getListBox().addChangeHandler(new ChangeHandler()
       {
          public void onChange(ChangeEvent event)
          {
-            preview_.setFontSize(Integer.parseInt(fontSize_.getValue()));
+            preview_.setFontSize(Double.parseDouble(fontSize_.getValue()));
          }
       });
 
@@ -62,7 +65,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       preview_.setHeight("375px");
       preview_.setWidth("288px");
       preview_.setTheme(themes.getThemeUrl(uiPrefs_.theme().getValue()));
-      preview_.setFontSize(Integer.parseInt(fontSize_.getValue()));
+      preview_.setFontSize(Double.parseDouble(fontSize_.getValue()));
       previewPanel.add(preview_);
 
       HorizontalPanel hpanel = new HorizontalPanel();
@@ -84,7 +87,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    public void onApply()
    {
       super.onApply();
-      int fontSize = Integer.parseInt(fontSize_.getValue());
+      double fontSize = Double.parseDouble(fontSize_.getValue());
       uiPrefs_.fontSize().setValue(fontSize);
       uiPrefs_.theme().setValue(theme_.getValue());
    }

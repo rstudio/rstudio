@@ -66,7 +66,7 @@ public class FontSizer
       return styles.normalSize();
    }
 
-   public static void setNormalFontSize(Document document, int size)
+   public static void setNormalFontSize(Document document, double size)
    {
       final String STYLE_EL_ID = "__rstudio_normal_size";
 

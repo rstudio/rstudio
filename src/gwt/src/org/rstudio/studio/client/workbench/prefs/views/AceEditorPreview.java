@@ -99,7 +99,7 @@ public class AceEditorPreview extends DynamicIFrame
       doc.getBody().appendChild(currentStyleLink_);
    }
 
-   public void setFontSize(int fontSize)
+   public void setFontSize(double fontSize)
    {
       if (!isFrameLoaded_)
       {
@@ -113,6 +113,6 @@ public class AceEditorPreview extends DynamicIFrame
    private LinkElement currentStyleLink_;
    private boolean isFrameLoaded_;
    private String initialThemeUrl_;
-   private Integer initialFontSize_;
+   private Double initialFontSize_;
    private final String code_;
 }

@@ -517,7 +517,7 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       widget_.getEditor().getRenderer().setPrintMarginColumn(column);
    }
 
-   public void setFontSize(int size)
+   public void setFontSize(double size)
    {
       // No change needed--the AceEditorWidget uses the "normalSize" style
       // However, we do need to resize the gutter

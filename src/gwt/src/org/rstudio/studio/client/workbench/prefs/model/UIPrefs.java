@@ -65,9 +65,9 @@ public class UIPrefs extends Prefs
       return bool("soft_wrap_r_files", false);
    }
 
-   public PrefValue<Integer> fontSize()
+   public PrefValue<Double> fontSize()
    {
-      return integer("font_size_points", BrowseCap.hasMetaKey() ? 9 : 10);
+      return dbl("font_size_points", BrowseCap.hasMetaKey() ? 9.0 : 10.0);
    }
 
    public PrefValue<String> theme()
