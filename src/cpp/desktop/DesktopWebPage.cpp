@@ -36,7 +36,7 @@ void WebPage::javaScriptConsoleMessage(const QString& message, int /*lineNumber*
 
 QString WebPage::userAgentForUrl(const QUrl &url) const
 {
-   return this->QWebPage::userAgentForUrl(url);
+   return this->QWebPage::userAgentForUrl(url) + " Qt/" + qVersion();
 }
 
 bool WebPage::acceptNavigationRequest(QWebFrame*,
