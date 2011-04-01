@@ -173,7 +173,10 @@ public class DocTabLayoutPanel
                protected void onComplete()
                {
                   if (this == currentAnimation_)
+                  {
+                     tabBarParent.setScrollLeft(finalEnd);
                      currentAnimation_ = null;
+                  }
                }
             };
             currentAnimation_.run(Math.max(200,
