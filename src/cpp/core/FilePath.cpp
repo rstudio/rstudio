@@ -24,6 +24,7 @@
 #define BOOST_FILESYSTEM_VERSION 3
 #endif
 #define BOOST_FILESYSTEM_NARROW_ONLY
+#define BOOST_FILESYSTEM2_NARROW_ONLY
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include <boost/filesystem.hpp>
 
