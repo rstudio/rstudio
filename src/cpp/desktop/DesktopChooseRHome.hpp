@@ -47,6 +47,7 @@ protected:
 
 private:
    Ui::ChooseRHome *ui;
+   QPushButton* pOK_;
    QString lastDir_;
 };
 

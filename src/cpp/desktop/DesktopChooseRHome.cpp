@@ -47,7 +47,8 @@ RVersion toVersion(QListWidgetItem* pItem)
 
 ChooseRHome::ChooseRHome(QList<RVersion> list, QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::ChooseRHome())
+    ui(new Ui::ChooseRHome()),
+    pOK_(NULL)
 {
     ui->setupUi(this);
     if (!core::system::isWin64())
@@ -59,6 +60,12 @@ ChooseRHome::ChooseRHome(QList<RVersion> list, QWidget *parent) :
           (windowFlags() | Qt::Dialog)
           & ~Qt::WindowContextHelpButtonHint
           );
+
+    pOK_ = new QPushButton("OK");
+    ui->buttonBox->addButton(pOK_, QDialogButtonBox::AcceptRole);
+
+    QPushButton* pCancel = new QPushButton("Cancel");
+    ui->buttonBox->addButton(pCancel, QDialogButtonBox::RejectRole);
 
     for (int i = 0; i < list.size(); i++)
     {
@@ -241,14 +248,13 @@ void ChooseRHome::validateSelection()
    if (!ui->radioCustom->isChecked())
       ui->listHomeDir->setCurrentRow(-1);
 
-   QPushButton* ok = ui->buttonBox->button(QDialogButtonBox::Ok);
    if (ui->radioCustom->isChecked())
    {
-      ok->setEnabled(this->value().isValid());
+      pOK_->setEnabled(this->value().isValid());
    }
    else
    {
-      ok->setEnabled(true);
+      pOK_->setEnabled(true);
    }
 }
 
