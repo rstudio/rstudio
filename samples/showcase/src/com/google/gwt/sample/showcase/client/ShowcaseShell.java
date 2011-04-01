@@ -16,10 +16,10 @@
 package com.google.gwt.sample.showcase.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableElement;
-import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -28,8 +28,8 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.http.client.UrlBuilder;
-import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.i18n.client.HasDirection.Direction;
+import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.CellTree;
@@ -182,6 +182,7 @@ public class ShowcaseShell extends Composite {
     mainMenu = new CellTree(treeModel, null);
     mainMenu.setAnimationEnabled(true);
     mainMenu.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
+    mainMenu.ensureDebugId("mainMenu");
 
     // Initialize the ui binder.
     initWidget(uiBinder.createAndBindUi(this));
@@ -222,6 +223,7 @@ public class ShowcaseShell extends Composite {
     });
 
     // Default to no content.
+    contentPanel.ensureDebugId("contentPanel");
     setContent(null);
   }
 
@@ -305,6 +307,13 @@ public class ShowcaseShell extends Composite {
 
     // Show the widget.
     showExample();
+  }
+
+  /**
+   * Returns the currently displayed content. (Used by tests.)
+   */
+  public ContentWidget getContent() {
+    return content;
   }
 
   /**
