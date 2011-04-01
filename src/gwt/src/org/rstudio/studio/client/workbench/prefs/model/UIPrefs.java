@@ -2,6 +2,7 @@ package org.rstudio.studio.client.workbench.prefs.model;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 
@@ -66,7 +67,7 @@ public class UIPrefs extends Prefs
 
    public PrefValue<Integer> fontSize()
    {
-      return integer("font_size_points", 9);
+      return integer("font_size_points", BrowseCap.hasMetaKey() ? 9 : 10);
    }
 
    public PrefValue<String> theme()
