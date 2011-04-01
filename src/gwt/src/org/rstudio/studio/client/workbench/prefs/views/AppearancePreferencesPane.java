@@ -105,12 +105,12 @@ public class AppearancePreferencesPane extends PreferencesPane
    private AceEditorPreview preview_;
 
    private static final String CODE_SAMPLE =
-         "# function for plotting of R objects\n" +
+         "# plotting of R objects\n" +
          "plot <- function (x, y, ...)\n" +
          "{\n" +
          "  if (is.function(x) && \n" +
-         "      is.null(attr(x, \"class\"))) {\n" +
-         "    \n" +
+         "      is.null(attr(x, \"class\")))\n" +
+         "  {\n" +
          "    if (missing(y))\n" +
          "      y <- NULL\n" +
          "    \n" +
@@ -125,13 +125,13 @@ public class AppearancePreferencesPane extends PreferencesPane
          "    \n" +
          "    else \n" +
          "      plot.function(\n" +
-         "          x, y, \n" +
-         "          ylab = paste(deparse(\n" +
-         "                  substitute(x)),\n" +
-         "          \"(x)\"), ...)\n" +
-         "    }\n" +
-         "    \n" +
-         "    else \n" +
-         "      UseMethod(\"plot\")\n" +
+         "        x, y, \n" +
+         "        ylab = paste(\n" +
+         "          deparse(substitute(x)),\n" +
+         "          \"(x)\"), \n" + 
+         "        ...)\n" +
+         "  }\n" +
+         "  else \n" +
+         "    UseMethod(\"plot\")\n" +
          "}\n";
 }
