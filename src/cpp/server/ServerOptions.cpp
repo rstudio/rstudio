@@ -32,7 +32,8 @@ const char * const kDefaultProgramUser = "rstudio-server";
 
 void resolvePath(const FilePath& installPath, std::string* pPath)
 {
-   *pPath = installPath.complete(*pPath).absolutePath();
+   if (!pPath->empty())
+      *pPath = installPath.complete(*pPath).absolutePath();
 }
 
 
