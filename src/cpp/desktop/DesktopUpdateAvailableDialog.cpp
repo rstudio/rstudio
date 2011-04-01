@@ -28,20 +28,17 @@ DesktopUpdateAvailableDialog::DesktopUpdateAvailableDialog(
    ui->label->setText(updateInfo.updateMessage);
 
    ui->buttonBox->clear();
-   QPushButton* pDownload = ui->buttonBox->addButton(
-         "Download...",
-         QDialogButtonBox::AcceptRole);
+   QPushButton* pDownload = new QPushButton("Download...");
+   ui->buttonBox->addButton(pDownload, QDialogButtonBox::AcceptRole);
    pDownload->setAutoDefault(false);
    pDownload->setDefault(true);
 
-   QPushButton* pRemindLater = ui->buttonBox->addButton(
-         "Remind Later",
-         QDialogButtonBox::RejectRole);
+   QPushButton* pRemindLater = new QPushButton("Remind Later");
+   ui->buttonBox->addButton(pRemindLater, QDialogButtonBox::RejectRole);
    pRemindLater->setAutoDefault(false);
 
-   QPushButton* pIgnoreUpdate = ui->buttonBox->addButton(
-         "Ignore Update",
-         QDialogButtonBox::DestructiveRole);
+   QPushButton* pIgnoreUpdate = new QPushButton("Ignore Update");
+   ui->buttonBox->addButton(pIgnoreUpdate, QDialogButtonBox::DestructiveRole);
    pIgnoreUpdate->setAutoDefault(false);
    pIgnoreUpdate->setEnabled(!updateInfo.isUrgent);
    connect(pIgnoreUpdate, SIGNAL(clicked()),

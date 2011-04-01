@@ -18,6 +18,8 @@
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 
+#include <QPushButton>
+
 #include "DesktopOptions.hpp"
 #include "config.h"
 
@@ -28,6 +30,10 @@ AboutDialog::AboutDialog(QWidget *parent) :
       ui(new Ui::AboutDialog())
 {
    ui->setupUi(this);
+
+   ui->buttonBox->addButton(new QPushButton("OK"),
+                            QDialogButtonBox::AcceptRole);
+
    ui->lblIcon->setPixmap(QPixmap(":/icons/resources/freedesktop/icons/64x64/rstudio.png"));
    ui->lblVersion->setText("Version " RSTUDIO_VERSION);
 

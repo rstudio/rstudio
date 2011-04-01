@@ -31,9 +31,16 @@ using namespace desktop;
 
 CRANMirrorDialog::CRANMirrorDialog(QWidget *parent) :
    QDialog(parent),
-   ui(new Ui::CRANMirrorDialog())
+   ui(new Ui::CRANMirrorDialog()),
+   pOK_(NULL)
 {
     ui->setupUi(this);
+
+    pOK_ = new QPushButton("OK");
+    ui->buttonBox->addButton(pOK_, QDialogButtonBox::AcceptRole);
+
+    QPushButton* pCancel = new QPushButton("Cancel");
+    ui->buttonBox->addButton(pCancel, QDialogButtonBox::RejectRole);
 
     connect(ui->listWidget, SIGNAL(itemSelectionChanged()),
             this, SLOT(manageButtons()));
@@ -75,8 +82,7 @@ QString CRANMirrorDialog::selectedURL()
 
 void CRANMirrorDialog::manageButtons()
 {
-   ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(
-         ui->listWidget->selectedItems().size());
+   pOK_->setEnabled(ui->listWidget->selectedItems().size());
 }
 
 namespace {

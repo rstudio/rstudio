@@ -37,6 +37,7 @@ public:
 
 private:
     Ui::InputDialog *ui;
+    QPushButton* pOK_;
 };
 
 #endif // DESKTOPINPUTDIALOG_HPP

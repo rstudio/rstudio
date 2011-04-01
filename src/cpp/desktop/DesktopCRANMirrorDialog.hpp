@@ -39,6 +39,7 @@ public:
 
 private:
     Ui::CRANMirrorDialog *ui;
+    QPushButton* pOK_;
     std::vector<std::string> headers_;
 };
 

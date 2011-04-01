@@ -18,10 +18,17 @@
 
 InputDialog::InputDialog(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::InputDialog())
+    ui(new Ui::InputDialog()),
+    pOK_(NULL)
 {
    ui->setupUi(this);
    setWindowFlags(Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint);
+
+   pOK_ = new QPushButton("OK");
+   ui->buttonBox->addButton(pOK_, QDialogButtonBox::AcceptRole);
+
+   QPushButton* pCancel = new QPushButton("Cancel");
+   ui->buttonBox->addButton(pCancel, QDialogButtonBox::RejectRole);
 }
 
 InputDialog::~InputDialog()
@@ -60,6 +67,5 @@ void InputDialog::setSelection(int offset, int length)
 
 void InputDialog::setOkButtonLabel(QString label)
 {
-   QPushButton* pBtn = ui->buttonBox->button(QDialogButtonBox::Ok);
-   pBtn->setText(label);
+   pOK_->setText(label);
 }

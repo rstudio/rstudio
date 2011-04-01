@@ -139,7 +139,7 @@ version 3 of the GNU &lt;a href=&quot;http://www.gnu.org/licenses/agpl-3.0.txt&q
       <enum>Qt::Horizontal</enum>
      </property>
      <property name="standardButtons">
-      <set>QDialogButtonBox::Ok</set>
+      <set>QDialogButtonBox::NoButton</set>
      </property>
     </widget>
    </item>

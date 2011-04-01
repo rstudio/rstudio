@@ -81,7 +81,7 @@
       <enum>Qt::Horizontal</enum>
      </property>
      <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Discard|QDialogButtonBox::Ok</set>
+      <set>QDialogButtonBox::NoButton</set>
      </property>
      <property name="centerButtons">
       <bool>false</bool>
