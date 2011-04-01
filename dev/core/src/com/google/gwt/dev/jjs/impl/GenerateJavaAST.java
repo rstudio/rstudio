@@ -1639,7 +1639,9 @@ public class GenerateJavaAST {
         body = (JBlock) action;
       } else {
         body = new JBlock(info);
-        body.addStmt(action);
+        if (action != null) {
+          body.addStmt(action);
+        }
       }
 
       JLocal elementVar = (JLocal) typeMap.get(x.elementVariable.binding);

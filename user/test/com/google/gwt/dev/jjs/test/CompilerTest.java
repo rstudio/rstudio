@@ -20,6 +20,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 
 import junit.framework.Assert;
 
+import java.util.ArrayList;
 import java.util.EventListener;
 
 /**
@@ -722,6 +723,12 @@ public class CompilerTest extends GWTTestCase {
     do; while (b);
 
     for (; b;);
+
+    for (int i = 0; i < 10; ++i);
+
+    for (int i : new int[10]);
+
+    for (Integer i : new ArrayList<Integer>());
 
     for (;;)
       break;
