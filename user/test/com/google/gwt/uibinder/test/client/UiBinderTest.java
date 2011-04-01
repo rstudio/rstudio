@@ -624,6 +624,10 @@ public class UiBinderTest extends GWTTestCase {
     assertInOrder(innerHtml2, "align=left", "a stackpanel");
   }
   
+  public void testUrlResource() {
+    assertEquals(new FakeBundle().aUrl(), widgetUi.myImage.getSrc());
+  }
+  
   /**
    * Assert that the expect strings are found in body, and in the order given.
    * WARNING: both body and expected are normalized to lower case, to get around

@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DListElement;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.dom.client.OListElement;
 import com.google.gwt.dom.client.ParagraphElement;
 import com.google.gwt.dom.client.SpanElement;
@@ -195,6 +196,7 @@ public class WidgetBasedUi extends Composite {
   @UiField(provided = true) @SuppressWarnings("unchecked")
   Renderer doubleRenderer = DoubleRenderer.instance();
   @UiField ValueLabel<Double> myValueLabel;
+  @UiField ImageElement myImage;
 
   public WidgetBasedUi() {
     external.style().ensureInjected();

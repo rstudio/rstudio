@@ -50,4 +50,8 @@ public class FakeBundle {
   public ArbitraryPojo pojo() {
     return new ArbitraryPojo();
   }
+  
+  public String aUrl() {
+    return "http://www.google.com/images/logo_sm.gif";
+  }
 }

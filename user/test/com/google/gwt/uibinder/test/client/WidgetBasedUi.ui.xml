@@ -669,6 +669,8 @@
 
   <gwt:ValueLabel ui:field='myValueLabel' renderer='{doubleRenderer}' />
 
+  <img src="{values.aUrl}" ui:field='myImage'/>
+
    </gwt:HTMLPanel>
   </gwt:Dock>
 </gwt:DockPanel>
