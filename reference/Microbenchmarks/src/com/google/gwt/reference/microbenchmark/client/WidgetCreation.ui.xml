@@ -1,0 +1,26 @@
+<ui:UiBinder
+  xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+
+  <g:HTMLPanel
+    ui:field="root">
+    <b>
+      Time for creating, attaching and detaching
+      <g:TextBox
+        ui:field="number"
+        visibleLength="7" />
+      instances, in MS
+    </b>
+    <br />
+
+    <g:CheckBox
+      ui:field="includeLargeWidget">Click to include a large widget on the page while running the
+      test</g:CheckBox>
+    <br />
+    <br />
+
+    <g:Grid
+      ui:field="grid" />
+  </g:HTMLPanel>
+
+</ui:UiBinder>

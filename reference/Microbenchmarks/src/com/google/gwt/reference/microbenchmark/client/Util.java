@@ -24,7 +24,11 @@ class Util {
     +       "<span id='span2'></span>" 
     +     "</div>" 
     +   "</div>";
-  
+
+  static final int TABLE_ROW_COUNT = 40;
+
+  static final int TABLE_COLUMN_COUNT = 10;
+
   static final String TEXTY_OUTER_HTML = "<div>" + Util.TEXTY_INNER_HTML + "</div>";
   
   static final String TEXTY_INNER_HTML = "Div root start" 
@@ -43,7 +47,27 @@ class Util {
   static void addText(Element elm, String text) {
     elm.appendChild(Document.get().createTextNode(text));
   }
-  
+
+  static String createTableHtml() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("<table>");
+    for (int row = 0; row < Util.TABLE_ROW_COUNT; row++) {
+      if (row % 2 == 0) {
+        sb.append("<tr class=\"evenRow\">");
+      } else {
+        sb.append("<tr class=\"oddRow\">");
+      }
+      for (int column = 0; column < Util.TABLE_COLUMN_COUNT; column++) {
+        sb.append("<td align=\"center\" valign=\"middle\"><div>");
+        sb.append("Cell " + row + ":" + column);
+        sb.append("</div></td>");
+      }
+      sb.append("</tr>");
+    }
+    sb.append("</table>");
+    return sb.toString();
+  }
+
   static String format(double median) {
     return NumberFormat.getFormat("0").format(median);
   }
