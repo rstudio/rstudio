@@ -18,13 +18,13 @@
    setwd("~/")
    on.exit(setwd(previousWd))
 
-   writeChar(contents, "~/.active.document", eos=NULL)
+   writeChar(contents, "~/.active.rstudio.document", eos=NULL)
    if (sweave)
    {
       op <- function() {
-         utils::Stangle("~/.active.document")
-         file.remove("~/.active.document")
-         file.rename("~/.active.document.R", "~/.active.document")
+         utils::Stangle("~/.active.rstudio.document")
+         file.remove("~/.active.rstudio.document")
+         file.rename("~/.active.rstudio.document.R", "~/.active.rstudio.document")
       }
       capture.output(op())
    }
