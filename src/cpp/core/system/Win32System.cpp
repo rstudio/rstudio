@@ -421,13 +421,28 @@ Error captureCommand(const std::string& command, std::string* pOutput)
 
 bool isHiddenFile(const FilePath& filePath)
 {
-   DWORD attribs = ::GetFileAttributes(filePath.absolutePath().c_str());
+   DWORD attribs = ::GetFileAttributesA(filePath.absolutePath().c_str());
    if (attribs == INVALID_FILE_ATTRIBUTES)
       return false;
    else if (attribs & FILE_ATTRIBUTE_HIDDEN)
       return true;
    else
       return false;
+}
+
+Error makeFileHidden(const FilePath& path)
+{
+   std::string filePath = path.absolutePath();
+   LPCSTR lpszPath = filePath.c_str();
+
+   DWORD attribs = ::GetFileAttributesA(lpszPath);
+   if (attribs == INVALID_FILE_ATTRIBUTES)
+      return systemError(GetLastError(), ERROR_LOCATION);
+
+   if (!::SetFileAttributesA(lpszPath, attribs | FILE_ATTRIBUTE_HIDDEN))
+      return systemError(GetLastError(), ERROR_LOCATION);
+
+   return Success();
 }
 
 bool stderrIsTerminal()

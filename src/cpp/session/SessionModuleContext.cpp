@@ -172,6 +172,23 @@ SEXP rs_rstudioVersion()
    return r::sexp::create(std::string(RSTUDIO_VERSION), &rProtect);
 }
 
+// ensure file hidden
+SEXP rs_ensureFileHidden(SEXP fileSEXP)
+{
+#ifdef _WIN32
+   std::string file = r::sexp::asString(fileSEXP);
+   if (!file.empty())
+   {
+      FilePath filePath = module_context::resolveAliasedPath(file);
+      Error error = core::system::makeFileHidden(filePath);
+      if (error)
+         LOG_ERROR(error);
+   }
+#endif
+
+   return R_NilValue;
+}
+
 // override of Sys.sleep to notify listeners of a sleep
 CCODE s_originalSysSleepFunction;
 SEXP sysSleepHook(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -239,6 +256,13 @@ Error initialize()
    methodDef7.fun = (DL_FUNC) rs_rstudioVersion ;
    methodDef7.numArgs = 0;
    r::routines::addCallMethod(methodDef7);
+
+   // register rs_ensureFileHidden with R
+   R_CallMethodDef methodDef8;
+   methodDef8.name = "rs_ensureFileHidden" ;
+   methodDef8.fun = (DL_FUNC) rs_ensureFileHidden ;
+   methodDef8.numArgs = 1;
+   r::routines::addCallMethod(methodDef8);
    
    // register Sys.sleep() hook to notify modules of sleep (currently
    // used by plots to check for changes on sleep so we can support the

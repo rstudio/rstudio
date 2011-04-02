@@ -552,10 +552,22 @@ SEXP fileEditHook(SEXP call, SEXP op, SEXP args, SEXP rho)
    return R_NilValue;
 }
 
+void onShutdown(bool terminatedNormally)
+{
+   FilePath activeDocumentFile =
+         module_context::resolveAliasedPath("~/.active.rstudio.document");
+   Error error = activeDocumentFile.removeIfExists();
+   if (error)
+      LOG_ERROR(error);
+}
+
 } // anonymous namespace
 
 Error initialize()
-{
+{   
+   // connect to shutdown event
+   module_context::events().onShutdown.connect(onShutdown);
+
    // install rpc methods
    using boost::bind;
    using namespace module_context;

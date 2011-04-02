@@ -18,7 +18,11 @@
    setwd("~/")
    on.exit(setwd(previousWd))
 
+   if (file.exists("~/.active.rstudio.document"))
+      file.remove("~/.active.rstudio.document")
+
    writeChar(contents, "~/.active.rstudio.document", eos=NULL)
+
    if (sweave)
    {
       op <- function() {
@@ -28,6 +32,9 @@
       }
       capture.output(op())
    }
+
+   .Call("rs_ensureFileHidden", "~/.active.rstudio.document")
+
    return()
 })
 
