@@ -555,7 +555,7 @@ SEXP fileEditHook(SEXP call, SEXP op, SEXP args, SEXP rho)
 void onShutdown(bool terminatedNormally)
 {
    FilePath activeDocumentFile =
-         module_context::resolveAliasedPath("~/.active.rstudio.document");
+         module_context::resolveAliasedPath("~/.active-rstudio-document");
    Error error = activeDocumentFile.removeIfExists();
    if (error)
       LOG_ERROR(error);

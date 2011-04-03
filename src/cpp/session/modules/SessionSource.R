@@ -18,22 +18,23 @@
    setwd("~/")
    on.exit(setwd(previousWd))
 
-   if (file.exists("~/.active.rstudio.document"))
-      file.remove("~/.active.rstudio.document")
+   activeRStudioDoc <- "~/.active-rstudio-document"
+   if (file.exists(activeRStudioDoc))
+      file.remove(activeRStudioDoc)
 
-   writeChar(contents, "~/.active.rstudio.document", eos=NULL)
+   writeChar(contents, activeRStudioDoc, eos=NULL)
 
    if (sweave)
    {
       op <- function() {
-         utils::Stangle("~/.active.rstudio.document")
-         file.remove("~/.active.rstudio.document")
-         file.rename("~/.active.rstudio.document.R", "~/.active.rstudio.document")
+         utils::Stangle(activeRStudioDoc)
+         file.remove(activeRStudioDoc)
+         file.rename(paste(activeRStudioDoc, ".R", sep=""), activeRStudioDoc)
       }
       capture.output(op())
    }
 
-   .Call("rs_ensureFileHidden", "~/.active.rstudio.document")
+   .Call("rs_ensureFileHidden", activeRStudioDoc)
 
    return()
 })
