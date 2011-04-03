@@ -508,18 +508,27 @@ void handleFilesRequest(const http::Request& request,
       return;
    }
    
-   // compute path to file and validate that it exists
+   // compute path to file
    int prefixLen = prefix.length();
    std::string relativePath = http::util::urlDecode(uri.substr(prefixLen));
-   FilePath filePath = module_context::userHomePath().complete(relativePath);
-   if (filePath.empty())
+   if (relativePath.empty())
    {
-      pResponse->setError(http::status::NotFound, 
-                          request.uri() + " not found");
+      pResponse->setError(http::status::NotFound, request.uri() + " not found");
       return;
    }
-   
-   // return the file
+
+   // complete path to file
+   FilePath filePath = module_context::userHomePath().complete(relativePath);
+
+   // no directory listing available
+   if (filePath.isDirectory())
+   {
+      pResponse->setError(http::status::NotFound,
+                          "No listing available for " + request.uri());
+      return;
+   }
+
+
    pResponse->setNoCacheHeaders();
    pResponse->setFile(filePath, request);
 }

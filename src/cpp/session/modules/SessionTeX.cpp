@@ -80,8 +80,14 @@ SEXP rs_validateTexFile(SEXP texFileSEXP)
    // used to protect return value
    r::sexp::Protect rProtect;
 
-   // get path to TeX file and read its contents
+   // get path to TeX file
    std::string texFile = r::sexp::asString(texFileSEXP);
+
+   // false if no file passed
+   if (texFile.empty())
+      return r::sexp::create(false, &rProtect);
+
+   // read its contents
    FilePath texFilePath = module_context::safeCurrentPath().complete(texFile);
    if (!texFilePath.exists())
       return r::sexp::create(false, &rProtect);

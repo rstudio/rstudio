@@ -500,6 +500,10 @@ Error closeAllDocuments(const json::JsonRpcRequest& request,
 
 void enqueFileEditEvent(const std::string& file)
 {
+   // ignore if no file passed
+   if (file.empty())
+      return;
+
    // calculate full path
    FilePath filePath = module_context::safeCurrentPath().complete(file);
 
