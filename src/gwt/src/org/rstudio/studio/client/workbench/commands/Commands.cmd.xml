@@ -186,7 +186,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="compilePDF" value="Cmd+Shift+P"/>
       <shortcut refid="executeCode" value="Cmd+Enter"/>
       <shortcut refid="executeAllCode" value="Cmd+Shift+Enter"/>
-      <shortcut refid="extractFunction" value="Cmd+Alt+F"/>
+      <shortcut refid="extractFunction" value="Cmd+Shift+F"/>
       <shortcut refid="commentUncomment" value="Cmd+/"/>
       <shortcut refid="consoleClear" value="Ctrl+L"/>
       <shortcut refid="activateSource" value="Ctrl+1"/>
