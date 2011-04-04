@@ -33,6 +33,7 @@ import com.google.gwt.dev.util.OutputFileSet;
 import com.google.gwt.dev.util.OutputFileSetOnDirectory;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerDeployDir;
+import com.google.gwt.dev.util.arg.ArgHandlerDisableUpdateCheck;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
 import com.google.gwt.dev.util.arg.ArgHandlerModuleName;
 import com.google.gwt.dev.util.arg.ArgHandlerWarDir;
@@ -180,6 +181,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       registerHandler(new ArgHandlerDeployDir(options));
       registerHandler(new ArgHandlerExtraDir(options));
       registerHandler(new ArgHandlerWorkDirOptional(options));
+      registerHandler(new ArgHandlerDisableUpdateCheck(options));
       registerHandler(new ArgHandlerModuleName(options) {
         @Override
         public String getPurpose() {

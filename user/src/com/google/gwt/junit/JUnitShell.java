@@ -38,6 +38,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableCastChecking;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableClassMetadata;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableRunAsync;
+import com.google.gwt.dev.util.arg.ArgHandlerDisableUpdateCheck;
 import com.google.gwt.dev.util.arg.ArgHandlerDraftCompile;
 import com.google.gwt.dev.util.arg.ArgHandlerEnableAssertions;
 import com.google.gwt.dev.util.arg.ArgHandlerEnableGeneratorResultCaching;
@@ -187,6 +188,7 @@ public class JUnitShell extends DevMode {
       registerHandler(new ArgHandlerDisableClassMetadata(options));
       registerHandler(new ArgHandlerDisableCastChecking(options));
       registerHandler(new ArgHandlerDisableRunAsync(options));
+      registerHandler(new ArgHandlerDisableUpdateCheck(options));
       registerHandler(new ArgHandlerDraftCompile(options));
       registerHandler(new ArgHandlerEnableGeneratorResultCaching(options));
       registerHandler(new ArgHandlerMaxPermsPerPrecompile(options));

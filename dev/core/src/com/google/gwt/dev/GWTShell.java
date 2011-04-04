@@ -24,6 +24,7 @@ import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.shell.WorkDirs;
 import com.google.gwt.dev.shell.tomcat.EmbeddedTomcatServer;
 import com.google.gwt.dev.util.OutputFileSetOnDirectory;
+import com.google.gwt.dev.util.arg.ArgHandlerDisableUpdateCheck;
 import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
 import com.google.gwt.util.tools.ArgHandlerExtra;
 
@@ -77,6 +78,7 @@ public class GWTShell extends DevModeBase {
         registerHandler(new ArgHandlerStartupURLsExtra(options));
       }
       registerHandler(new ArgHandlerOutDir(options));
+      registerHandler(new ArgHandlerDisableUpdateCheck(options));
     }
 
     @Override

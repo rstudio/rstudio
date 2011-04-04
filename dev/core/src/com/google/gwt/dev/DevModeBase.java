@@ -43,6 +43,7 @@ import com.google.gwt.dev.util.BrowserInfo;
 import com.google.gwt.dev.util.arg.ArgHandlerEnableGeneratorResultCaching;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
+import com.google.gwt.dev.util.arg.OptionDisableUpdateCheck;
 import com.google.gwt.dev.util.arg.OptionGenDir;
 import com.google.gwt.dev.util.arg.OptionLogLevel;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
@@ -452,7 +453,7 @@ public abstract class DevModeBase implements DoneCallback {
    */
   protected interface HostedModeBaseOptions extends JJSOptions, OptionLogDir, OptionLogLevel,
       OptionGenDir, OptionNoServer, OptionPort, OptionCodeServerPort, OptionStartupURLs,
-      OptionRemoteUI, OptionBindAddress {
+      OptionRemoteUI, OptionBindAddress, OptionDisableUpdateCheck {
   }
 
   /**
@@ -893,18 +894,20 @@ public abstract class DevModeBase implements DoneCallback {
     ui.setCallback(DoneEvent.getType(), this);
 
     // Check for updates
-    final TreeLogger logger = getTopLogger();
-    final CheckForUpdates updateChecker = CheckForUpdates.createUpdateChecker(logger);
-    if (updateChecker != null) {
-      Thread checkerThread = new Thread("GWT Update Checker") {
-        @Override
-        public void run() {
-          CheckForUpdates
-              .logUpdateAvailable(logger, updateChecker.check(checkForUpdatesInterval()));
-        }
-      };
-      checkerThread.setDaemon(true);
-      checkerThread.start();
+    if (!options.isUpdateCheckDisabled()) {
+      final TreeLogger logger = getTopLogger();
+      final CheckForUpdates updateChecker = CheckForUpdates.createUpdateChecker(logger);
+      if (updateChecker != null) {
+        Thread checkerThread = new Thread("GWT Update Checker") {
+          @Override
+          public void run() {
+            CheckForUpdates.logUpdateAvailable(logger, updateChecker
+                .check(checkForUpdatesInterval()));
+          }
+        };
+        checkerThread.setDaemon(true);
+        checkerThread.start();
+      }
     }
 
     // Accept connections from OOPHM clients
