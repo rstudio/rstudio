@@ -34,16 +34,12 @@
     <when-property-is name="storageSupport" value="no" />
   </replace-with>
 
-  <replace-with class="com.google.gwt.storage.client.StorageImplMozilla">
-    <when-type-is class="com.google.gwt.storage.client.StorageImpl" />
-    <when-property-is name="user.agent" value="gecko1_8" />
-  </replace-with>
-
   <replace-with class="com.google.gwt.storage.client.StorageImplNonNativeEvents">
     <when-type-is class="com.google.gwt.storage.client.StorageImpl" />
     <any>
       <when-property-is name="user.agent" value="safari" />
       <when-property-is name="user.agent" value="ie9" />
+      <when-property-is name="user.agent" value="gecko1_8" />
     </any>
   </replace-with>
 

@@ -25,17 +25,6 @@ package com.google.gwt.storage.client;
  */
 class StorageImplIE8 extends StorageImplNonNativeEvents {
   /*
-   * IE8 will throw "JavaScriptException: (Error): Invalid argument." for
-   * indices outside the range of 0 - storage.length(). In this impl method, we
-   * return null instead, in order to match the Storage spec.
-   */
-  @Override
-  public native String key(String storage, int index) /*-{
-    return (index >= 0 && index < $wnd[storage].length) ? 
-      $wnd[storage].key(index) : null;
-  }-*/;
-
-  /*
    * IE8 will throw "Class doesn't support Automation" error when comparing
    * $wnd["localStorage"] === $wnd["localStorage"]. In this impl method, we
    * work around it by using an attribute on the StorageEvent.

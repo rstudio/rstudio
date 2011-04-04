@@ -305,10 +305,15 @@ public class WindowTest extends GWTTestCase {
         return;
       }
 
+      // FF4 on win can start in 'almost' fullscreen when the window title bar 
+      // is hidden but accounted incorrectly, so, move the window and resize to 
+      // smaller size first, to take it out of 'full screen mode'.
+      Window.moveTo(10,10);
+      Window.resizeTo(700, 500);
+
       // store the original size (to be used in restoreSize)
       clientHeight = Window.getClientHeight();
       clientWidth = Window.getClientWidth();
-
       // IE cannot resize window out of the screen, so we need to move the
       // window such that it can be resized to below size.
       // We do not have method to return the window coordinates (screenLeft,
@@ -321,9 +326,11 @@ public class WindowTest extends GWTTestCase {
       // sizes as requested.
       // If the sizes are too big, for example, height > screen.availHeight + 40
       // on FF, resizeTo silently sets the height to screen.availHeight + 40.
-      Window.resizeTo(800, 600);
-      extraHeight = 600 - Window.getClientHeight();
-      extraWidth = 800 - Window.getClientWidth();
+      // hive machines are configured at this time as 800x600, reduce the size 
+      // to give some 'buffer'
+      Window.resizeTo(750, 550);
+      extraWidth = 750 - Window.getClientWidth();
+      extraHeight = 550 - Window.getClientHeight();
       initialized = true;
       restoreSize();
     }
@@ -363,13 +370,14 @@ public class WindowTest extends GWTTestCase {
       public void execute() {
         // Sizes must be appropriate, otherwise browsers may not resize as
         // requested. See comments in ResizeHelper.
-        int width = 900;
+        int width = 600;
         int height = 500;
         // ensureInitialized could fail on Chrome
         if (!ResizeHelper.resizeTo(width, height)) {
           handlerRegistration.removeHandler();
           finishTest(); // nothing we can test
         }
+
         assertEquals(width, Window.getClientWidth() + ResizeHelper.getExtraWidth());
         assertEquals(height, Window.getClientHeight() + ResizeHelper.getExtraHeight());
         // TODO: TestResizeHandler.getWidth() returns 0 -- need to investigate
@@ -380,7 +388,7 @@ public class WindowTest extends GWTTestCase {
         assertEquals(height + 20, Window.getClientHeight() + ResizeHelper.getExtraHeight());
         // assertEquals(resizeHandler.getWidth(), Window.getClientWidth());
         // assertEquals(resizeHandler.getHeight(), Window.getClientHeight());
-    
+
         // Cleanup the window
         handlerRegistration.removeHandler();
         ResizeHelper.restoreSize();

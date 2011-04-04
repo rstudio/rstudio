@@ -146,7 +146,13 @@ class StorageImpl {
    *      Storage - Storage.key(n)</a>
    */
   public native String key(String storage, int index) /*-{
-    return $wnd[storage].key(index);
+    // few browsers implement retrieval correctly when index is out of range.
+    // compensate to preserve API expectation. According to W3C Web Storage spec
+    // <a href="http://www.w3.org/TR/webstorage/#dom-storage-key">
+    // "If n is greater than or equal to the number of key/value pairs in the
+    // object, then this method must return null."
+    return (index >= 0 && index < $wnd[storage].length) ?
+      $wnd[storage].key(index) : null;
   }-*/;
 
   /**
