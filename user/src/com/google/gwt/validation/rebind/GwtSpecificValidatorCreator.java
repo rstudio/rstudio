@@ -110,57 +110,68 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
   }
 
   /**
-     * Returns the literal value of an object that is suitable for inclusion in
-     * Java Source code.
-     *
-     * <p>
-     * Supports all types that {@link Annotation) value can have.
-     *
-     *
-     * @throws IllegalArgumentException if the type of the object does not have a java literal form.
-     */
-    public static String asLiteral(Object value) throws IllegalArgumentException {
-      Class<?> clazz = value.getClass();
-      JProgram jProgram = new JProgram();
+   * Returns the literal value of an object that is suitable for inclusion in
+   * Java Source code.
+   *
+   * <p>
+   * Supports all types that {@link Annotation) value can have.
+   *
+   *
+   * @throws IllegalArgumentException if the type of the object does not have a java literal form.
+   */
+  public static String asLiteral(Object value) throws IllegalArgumentException {
+    Class<?> clazz = value.getClass();
+    JProgram jProgram = new JProgram();
 
-      if (clazz.isArray()) {
-        StringBuilder sb = new StringBuilder();
-        Object[] array = (Object[]) value;
+    if (clazz.isArray()) {
+      StringBuilder sb = new StringBuilder();
+      Object[] array = (Object[]) value;
 
-        sb.append("new " + clazz.getComponentType().getCanonicalName() + "[] ");
-        sb.append("{");
-        boolean first = true;
-        for (Object object : array) {
-          if (first) {
-            first = false;
-          } else {
-            sb.append(",");
-          }
-          sb.append(asLiteral(object));
+      sb.append("new " + clazz.getComponentType().getCanonicalName() + "[] ");
+      sb.append("{");
+      boolean first = true;
+      for (Object object : array) {
+        if (first) {
+          first = false;
+        } else {
+          sb.append(",");
         }
-        sb.append("}");
-        return sb.toString();
+        sb.append(asLiteral(object));
       }
-
-      if (value instanceof Class<?>) {
-        return ((Class<?>) ((Class<?>) value)).getCanonicalName() + ".class";
-      }
-      if (value instanceof Double) {
-        return jProgram.getLiteralDouble(((Double) value).doubleValue()).toSource();
-      }
-      if (value instanceof Integer) {
-        return jProgram.getLiteralInt(((Integer) value).intValue()).toSource();
-      }
-      if (value instanceof Long) {
-        return jProgram.getLiteralLong(((Long) value).intValue()).toSource();
-      }
-      if (value instanceof String) {
-        return '"' + Generator.escape((String) value) + '"';
-      }
-      // TODO(nchalko) handle the rest of the literal types
-      throw new IllegalArgumentException(value.getClass()
-          + " is can not be represented as a Java Literal.");
+      sb.append("}");
+      return sb.toString();
     }
+
+    if (value instanceof Boolean) {
+      return jProgram.getLiteralBoolean(((Boolean) value).booleanValue())
+          .toSource();
+    } else if (value instanceof Byte) {
+      return jProgram.getLiteralInt(((Byte) value).byteValue()).toSource();
+    } else if (value instanceof Character) {
+      return jProgram.getLiteralChar(((Character) value).charValue())
+          .toSource();
+    } else if (value instanceof Class<?>) {
+      return ((Class<?>) ((Class<?>) value)).getCanonicalName() + ".class";
+    } else if (value instanceof Double) {
+      return jProgram.getLiteralDouble(((Double) value).doubleValue())
+          .toSource();
+    } else if (value instanceof Enum) {
+      return value.getClass().getCanonicalName() + "."
+          + ((Enum<?>) value).name();
+    } else if (value instanceof Float) {
+      return jProgram.getLiteralFloat(((Float) value).floatValue()).toSource();
+    } else if (value instanceof Integer) {
+      return jProgram.getLiteralInt(((Integer) value).intValue()).toSource();
+    } else if (value instanceof Long) {
+      return jProgram.getLiteralLong(((Long) value).intValue()).toSource();
+    } else if (value instanceof String) {
+      return '"' + Generator.escape((String) value) + '"';
+    } else {
+      // TODO(nchalko) handle Annotation types
+      throw new IllegalArgumentException(value.getClass()
+          + " can not be represented as a Java Literal.");
+    }
+  }
 
   public static String capitalizeFirstLetter(String propertyName) {
     if (propertyName == null) {

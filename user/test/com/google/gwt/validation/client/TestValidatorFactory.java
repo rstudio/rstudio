@@ -15,26 +15,30 @@
  */
 package com.google.gwt.validation.client;
 
-import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.validation.client.constraints.PatternValidatorGwtTest.Flagged;
+import com.google.gwt.validation.client.impl.AbstractGwtValidator;
 
-import javax.validation.Validation;
 import javax.validation.Validator;
 
 /**
- * Base {@link GWTTestCase} for Validation Client tests.
+ * Factory to create the Validator specified by {@link GwtValidator}.
+ * 
+ * GWT.create instances of this class
  */
-public abstract class ValidationClientGwtTestCase extends GWTTestCase {
+public class TestValidatorFactory extends AbstractGwtValidatorFactory {
 
-  protected Validator validator;
-
-  @Override
-  public final String getModuleName() {
-    return "com.google.gwt.validation.ValidationTest";
+  /**
+   * Validator Interface annotated with the list of classes to validate on the
+   * client.
+   */
+  @GwtValidation(
+value = {Flagged.class})
+  public interface GwtValidator extends Validator {
   }
 
   @Override
-  protected void gwtSetUp() throws Exception {
-    super.gwtSetUp();
-    validator = Validation.buildDefaultValidatorFactory().getValidator();
+  public AbstractGwtValidator createValidator() {
+    return GWT.create(GwtValidator.class);
   }
 }

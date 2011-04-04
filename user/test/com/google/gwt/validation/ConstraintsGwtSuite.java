@@ -17,6 +17,7 @@ package com.google.gwt.validation;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
 import com.google.gwt.validation.client.constraints.GwtCompileTest;
+import com.google.gwt.validation.client.constraints.PatternValidatorGwtTest;
 
 import junit.framework.Test;
 
@@ -28,6 +29,7 @@ public class ConstraintsGwtSuite {
     GWTTestSuite suite = new GWTTestSuite(
         "Validation Constraint tests that require GWT");
     suite.addTestSuite(GwtCompileTest.class);
+    suite.addTestSuite(PatternValidatorGwtTest.class);
     return suite;
   }
 

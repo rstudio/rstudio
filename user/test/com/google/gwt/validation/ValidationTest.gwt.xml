@@ -18,6 +18,8 @@
 <module>
   <inherits name="com.google.gwt.user.User" />
   <inherits name="org.hibernate.validator.HibernateValidator" />
-  <source path="client">
-  </source>
+  <source path="client"/>
+  <replace-with class="com.google.gwt.validation.client.TestValidatorFactory">
+    <when-type-is class="javax.validation.ValidatorFactory"/>
+  </replace-with>
 </module>
