@@ -269,7 +269,9 @@ public class BinarySplitLayoutPanel extends LayoutPanel
    public void onResize()
    {
       super.onResize();
-      if (offsetHeight_ > 0 && splitter_.isVisible())
+      // getOffsetHeight() > 0 is to deal with Firefox tab tear-off, which
+      // causes us to be resized to 0 (bug 1586)
+      if (offsetHeight_ > 0 && splitter_.isVisible() && getOffsetHeight() > 0)
       {
          double pct = ((double)splitterPos_ / offsetHeight_);
          int newPos = (int) Math.round(getOffsetHeight() * pct);
