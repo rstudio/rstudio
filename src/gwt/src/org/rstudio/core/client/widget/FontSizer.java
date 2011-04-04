@@ -20,6 +20,7 @@ import com.google.gwt.dom.client.StyleElement;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.UIObject;
+import org.rstudio.core.client.BrowseCap;
 
 import java.util.ArrayList;
 
@@ -68,6 +69,8 @@ public class FontSizer
 
    public static void setNormalFontSize(Document document, double size)
    {
+      size = size + BrowseCap.getFontSkew();
+
       final String STYLE_EL_ID = "__rstudio_normal_size";
 
       Element oldStyle = document.getElementById(STYLE_EL_ID);

@@ -67,7 +67,7 @@ public class UIPrefs extends Prefs
 
    public PrefValue<Double> fontSize()
    {
-      return dbl("font_size_points", BrowseCap.hasMetaKey() ? 9.0 : 10.0);
+      return dbl("font_size_points", 10.0);
    }
 
    public PrefValue<String> theme()

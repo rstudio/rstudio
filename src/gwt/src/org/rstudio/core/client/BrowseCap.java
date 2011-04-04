@@ -17,6 +17,14 @@ import com.google.gwt.dom.client.Document;
 
 public class BrowseCap
 {
+   public static double getFontSkew()
+   {
+      if (hasMetaKey())
+         return -1;
+      else
+         return 0;
+   }
+
    public static final BrowseCap INSTANCE = GWT.create(BrowseCap.class);
 
    public boolean suppressBraceHighlighting()
