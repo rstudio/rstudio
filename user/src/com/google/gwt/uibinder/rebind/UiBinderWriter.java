@@ -517,19 +517,29 @@ public class UiBinderWriter implements Statements {
     }
 
     String ns = elem.getNamespaceUri();
+    String packageName = ns;
+    String className = tagName;
 
-    JPackage pkg = parseNamespacePackage(ns);
-    if (pkg == null) {
-      throw new RuntimeException("No such package: " + ns);
+    while (true) {
+      JPackage pkg = parseNamespacePackage(packageName);
+      if (pkg == null) {
+        throw new RuntimeException("No such package: " + packageName);
+      }
+
+      JClassType rtn = pkg.findType(className);
+      if (rtn != null) {
+        return rtn;
+      }
+
+      // Try again: shift one element of the class name onto the package name.
+      // If the class name has only one element left, fail.
+      int index = className.indexOf(".");
+      if (index == -1) {
+        die(elem, "No class matching \"%s\" in %s", tagName, ns);
+      }
+      packageName = packageName + "." + className.substring(0, index);
+      className = className.substring(index + 1);
     }
-
-    JClassType rtn = null;
-    rtn = pkg.findType(tagName);
-    if (rtn == null) {
-      die(elem, "No class matching \"%s\" in %s", tagName, ns);
-    }
-
-    return rtn;
   }
 
   /**

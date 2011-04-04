@@ -47,6 +47,8 @@
 
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
   xmlns:gwt='urn:import:com.google.gwt.user.client.ui'
+  xmlns:gwt2='urn:import:com.google.gwt.user.client'
+  xmlns:gwt3='urn:import:com'
   xmlns:demo='urn:import:com.google.gwt.uibinder.test.client'
 
   xmlns:legacyValuesForBeans='urn:with:com.google.gwt.uibinder.test.client.WidgetBasedUi.FakeBundle2'
@@ -665,9 +667,9 @@
   <gwt:DateLabel ui:field='myDateLabel2' format='{MY_DATE_FORMAT}' />
 
   <gwt:NumberLabel ui:field='myNumberLabel' predefinedFormat='SCIENTIFIC' />
-  <gwt:NumberLabel ui:field='myNumberLabel2' format='{MY_NUMBER_FORMAT}' />
+  <gwt2:ui.NumberLabel ui:field='myNumberLabel2' format='{MY_NUMBER_FORMAT}' />
 
-  <gwt:ValueLabel ui:field='myValueLabel' renderer='{doubleRenderer}' />
+  <gwt3:google.gwt.user.client.ui.ValueLabel ui:field='myValueLabel' renderer='{doubleRenderer}' />
 
   <img src="{values.aUrl}" ui:field='myImage'/>
 
