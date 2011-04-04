@@ -326,7 +326,7 @@ public class WindowTest extends GWTTestCase {
       // sizes as requested.
       // If the sizes are too big, for example, height > screen.availHeight + 40
       // on FF, resizeTo silently sets the height to screen.availHeight + 40.
-      // hive machines are configured at this time as 800x600, reduce the size 
+      // Some test machines are configured at this time as 800x600, reduce the size 
       // to give some 'buffer'
       Window.resizeTo(750, 550);
       extraWidth = 750 - Window.getClientWidth();
