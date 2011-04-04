@@ -149,6 +149,7 @@ Error listDocuments(const json::JsonRpcRequest& request,
 Error saveDocumentCore(const std::string& contents,
                        const json::Value& jsonPath,
                        const json::Value& jsonType,
+                       const json::Value& jsonEncoding,
                        SourceDocument* pDoc)
 {
    // check whether we have a path and if we do get/resolve its value
@@ -172,6 +173,12 @@ Error saveDocumentCore(const std::string& contents,
    
    Error error;
    
+   bool hasEncoding = json::isType<std::string>(jsonEncoding);
+   if (hasEncoding)
+   {
+      pDoc->setEncoding(jsonEncoding.get_str());
+   }
+
    // handle document (varies depending upon whether we have a path)
    if (hasPath)
    {
@@ -204,11 +211,12 @@ Error saveDocument(const json::JsonRpcRequest& request,
 {
    // params
    std::string id, contents;
-   json::Value jsonPath, jsonType;
+   json::Value jsonPath, jsonType, jsonEncoding;
    Error error = json::readParams(request.params, 
                                   &id, 
                                   &jsonPath, 
                                   &jsonType, 
+                                  &jsonEncoding,
                                   &contents);
    if (error)
       return error ;
@@ -219,7 +227,7 @@ Error saveDocument(const json::JsonRpcRequest& request,
    if (error)
       return error ;
    
-   error = saveDocumentCore(contents, jsonPath, jsonType, &doc);
+   error = saveDocumentCore(contents, jsonPath, jsonType, jsonEncoding, &doc);
    if (error)
       return error;
    
@@ -242,7 +250,7 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
 
    // unique id and jsonPath (can be null for auto-save)
    std::string id;
-   json::Value jsonPath, jsonType;
+   json::Value jsonPath, jsonType, jsonEncoding;
    
    // This is a chunk of text that should be inserted into the
    // current document. It replaces the subrange [offset, offset+length).
@@ -259,6 +267,7 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
                                   &id,
                                   &jsonPath,
                                   &jsonType,
+                                  &jsonEncoding,
                                   &replacement,
                                   &offset,
                                   &length,
@@ -292,7 +301,8 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
       contents.erase(rangeBegin, rangeEnd);
       contents.insert(rangeBegin, replacement.begin(), replacement.end());
       
-      error = saveDocumentCore(contents, jsonPath, jsonType, &doc);
+      error = saveDocumentCore(contents, jsonPath, jsonType, jsonEncoding,
+                               &doc);
       if (error)
          return error;
       

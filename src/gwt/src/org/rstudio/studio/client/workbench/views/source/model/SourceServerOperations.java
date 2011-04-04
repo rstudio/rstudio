@@ -73,6 +73,7 @@ public interface SourceServerOperations
    void saveDocument(String id,
                      String path,
                      String fileType,
+                     String encoding,
                      String contents,
                      ServerRequestCallback<String> requestCallback);
 
@@ -91,6 +92,7 @@ public interface SourceServerOperations
    void saveDocumentDiff(String id,
                          String path,
                          String fileType,
+                         String encoding,
                          String replacement,
                          int offset,
                          int length,

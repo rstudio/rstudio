@@ -113,7 +113,8 @@ public class DocUpdateSentinel
                   // We're quitting. Save one last time.
 
                   final Token token = event.acquire();
-                  boolean saving = doSave(null, null, new ProgressIndicator()
+                  boolean saving = doSave(null, null, null,
+                                          new ProgressIndicator()
                   {
                      public void onProgress(String message)
                      {
@@ -147,7 +148,7 @@ public class DocUpdateSentinel
    {
       if (changeTracker_.hasChanged())
       {
-         return doSave(null, null, progress_);
+         return doSave(null, null, null, progress_);
       }
       else
       {
@@ -159,13 +160,15 @@ public class DocUpdateSentinel
    public void save(String path,
                     // fileType==null means don't change value
                     String fileType,
+                    // encoding==null means don't change value
+                    String encoding,
                     final ProgressIndicator progress)
    {
       assert path != null;
       if (path == null)
          throw new IllegalArgumentException("Path cannot be null");
       bufferedCommand_.suspend();
-      doSave(path, fileType, new ProgressIndicator()
+      doSave(path, fileType, encoding, new ProgressIndicator()
       {
          public void onProgress(String message)
          {
@@ -191,6 +194,7 @@ public class DocUpdateSentinel
 
    private boolean doSave(final String path,
                           final String fileType,
+                          final String encoding,
                           final ProgressIndicator progress)
    {
       /* We need to fork the change tracker so that we can "mark" the moment
@@ -232,6 +236,7 @@ public class DocUpdateSentinel
             sourceDoc_.getId(),
             path,
             fileType,
+            encoding,
             diff.getReplacement(),
             diff.getOffset(),
             diff.getLength(),
@@ -257,7 +262,11 @@ public class DocUpdateSentinel
                      if (!thisChangeTracker.hasChanged())
                         changeTracker_.reset();
 
-                     onSuccessfulUpdate(newContents, newHash, path, fileType);
+                     onSuccessfulUpdate(newContents,
+                                        newHash,
+                                        path,
+                                        fileType,
+                                        encoding);
                      if (progress != null)
                         progress.onCompleted();
                   }
@@ -265,7 +274,7 @@ public class DocUpdateSentinel
                   {
                      // We just hit a race condition where two updates
                      // happened at once. Try again
-                     doSave(path, fileType, progress);
+                     doSave(path, fileType, encoding, progress);
                   }
                   else
                   {
@@ -275,6 +284,7 @@ public class DocUpdateSentinel
                            sourceDoc_.getId(),
                            path,
                            fileType,
+                           encoding,
                            newContents,
                            this);
                   }
@@ -287,7 +297,8 @@ public class DocUpdateSentinel
    private void onSuccessfulUpdate(String contents,
                                    String hash,
                                    String path,
-                                   String fileType)
+                                   String fileType,
+                                   String encoding)
    {
       changesPending_ = false;
       sourceDoc_.setContents(contents);
@@ -301,6 +312,8 @@ public class DocUpdateSentinel
       {
          sourceDoc_.setType(fileType);
       }
+      if (encoding != null)
+         sourceDoc_.setEncoding(encoding);
    }
 
    public boolean sourceOnSave()

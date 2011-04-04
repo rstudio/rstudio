@@ -260,16 +260,42 @@ core::Error readParams(const json::Array& params,
    core::Error error = readParams(params,
                                   pValue1,
                                   pValue2,
-                                  pValue3, 
+                                  pValue3,
                                   pValue4,
                                   pValue5,
                                   pValue6) ;
    if (error)
       return error ;
-   
+
    return readParam(params, 6, pValue7) ;
 }
-   
+
+template <typename T1, typename T2, typename T3, typename T4, typename T5,
+typename T6, typename T7, typename T8>
+core::Error readParams(const json::Array& params,
+                       T1* pValue1,
+                       T2* pValue2,
+                       T3* pValue3,
+                       T4* pValue4,
+                       T5* pValue5,
+                       T6* pValue6,
+                       T7* pValue7,
+                       T8* pValue8)
+{
+   core::Error error = readParams(params,
+                                  pValue1,
+                                  pValue2,
+                                  pValue3,
+                                  pValue4,
+                                  pValue5,
+                                  pValue6,
+                                  pValue7) ;
+   if (error)
+      return error ;
+
+   return readParam(params, 7, pValue8) ;
+}
+
 template <typename T>
 core::Error readObject(const json::Object& object, 
                        const std::string& name, 

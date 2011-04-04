@@ -529,6 +529,7 @@ public class TextEditingTarget implements EditingTarget
 
       docUpdateSentinel_.save(path,
                               null,
+                              null,
                               new ExplicitSaveProgressIndicator(
                                     FileSystemItem.createFile(path),
                                     null,
@@ -575,6 +576,7 @@ public class TextEditingTarget implements EditingTarget
                      docUpdateSentinel_.save(
                            saveItem.getPath(),
                            fileType.getTypeId(),
+                           null,
                            new ExplicitSaveProgressIndicator(saveItem,
                                                              fileType,
                                                              executeOnSuccess));
