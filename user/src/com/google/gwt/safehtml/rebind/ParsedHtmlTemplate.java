@@ -56,7 +56,11 @@ final class ParsedHtmlTemplate {
       /**
        * At the very start of a URL-valued attribute.
        */
-      URL_START,
+      URL_ATTRIBUTE_START,
+      /**
+       * A template parameter that comprises an entire URL-valued attribute.
+       */
+      URL_ATTRIBUTE_ENTIRE,
       /**
        * CSS (style) context.
        */

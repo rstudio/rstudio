@@ -144,7 +144,8 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
       expression = "String.valueOf(" + expression + ")";
     }
 
-    if ((htmlContext.getType() == HtmlContext.Type.URL_START)) {
+    if ((htmlContext.getType() == HtmlContext.Type.URL_ATTRIBUTE_START) ||
+        (htmlContext.getType() == HtmlContext.Type.URL_ATTRIBUTE_ENTIRE)) {
       expression = URI_UTILS_FQCN + ".sanitizeUri(" + expression + ")";
     }
 
@@ -253,7 +254,8 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
         emitAttributeContextParameterExpression(logger, htmlContext,
             formalParameterName, parameterType);
         break;
-      case URL_START:
+      case URL_ATTRIBUTE_START:
+      case URL_ATTRIBUTE_ENTIRE:
       case ATTRIBUTE_VALUE:
         emitAttributeContextParameterExpression(logger, htmlContext,
             formalParameterName, parameterType);

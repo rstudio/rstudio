@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
  *
  * <p>
  * This parser parses templates consisting of HTML markup, with template
- * variables of the form {@code "{n}"}. For example, a template might look like,
+ * variables of the form {@code {n}}. For example, a template might look like,
  *
  * <pre>  {@code
  *   <span style="{0}"><a href="{1}/{2}">{3}</a></span>
@@ -70,10 +70,13 @@ import java.util.regex.Pattern;
  * <dt>{@link HtmlContext.Type#TEXT}
  * <dd>This context corresponds to basic inner text. In the above example,
  * parameter #3 would be tagged with this context.
- * <dt>{@link HtmlContext.Type#URL_START}
+ * <dt>{@link HtmlContext.Type#URL_ATTRIBUTE_START}
  * <dd>This context corresponds to a parameter that appears at the very start of
  * a URL-valued HTML attribute's value; in the above example this applies to
  * parameter #1.
+ * <dt>{@link HtmlContext.Type#URL_ATTRIBUTE_ENTIRE}
+ * <dd>This context corresponds to a parameter that comprises an entire
+ * URL-valued attribute, for example in {@code <img src='{0}'/>}.
  * <dt>{@link HtmlContext.Type#CSS_ATTRIBUTE_START}
  * <dd>This context corresponds to a parameter that appears at the very
  * beginning of a {@code style} attribute's value; in the above example this
@@ -135,6 +138,18 @@ final class HtmlTemplateParser {
   private int parsePosition;
 
   /**
+   * The character preceding a template parameter, at the time a template
+   * parameter is being parsed.
+   */
+  private char lookBehind;
+
+  /**
+   * The character succeeding a template parameter, at the time a template
+   * parameter is being parsed.
+   */
+  private char lookAhead;
+
+  /**
    * Creates a {@link HtmlTemplateParser}.
    *
    * @param logger the {@link TreeLogger} to log to
@@ -163,7 +178,9 @@ final class HtmlTemplateParser {
   // @VisibleForTesting
   void parseTemplate(String template) throws UnableToCompleteException {
     this.template = template;
-    this.parsePosition = 0;
+    parsePosition = 0;
+    lookBehind = 0;
+    lookAhead = 0;
     Matcher match = TEMPLATE_PARAM_PATTERN.matcher(template);
 
     int endOfPreviousMatch = 0;
@@ -174,10 +191,16 @@ final class HtmlTemplateParser {
         parseAndAppendTemplateSegment(
             template.substring(endOfPreviousMatch, match.start()));
         parsePosition = match.start();
+        lookBehind = template.charAt(parsePosition - 1);
       }
 
       int paramIndex = Integer.parseInt(match.group(1));
       parsePosition = match.end();
+      if (parsePosition < template.length()) {
+        lookAhead = template.charAt(parsePosition);
+      } else {
+        lookAhead = 0;
+      }
       parsedTemplate.addParameter(
           new ParameterChunk(getHtmlContextFromParseState(), paramIndex));
 
@@ -255,8 +278,29 @@ final class HtmlTemplateParser {
                 + getTemplateParsedSoFar());
         throw new UnableToCompleteException();
       }
+      if ("meta".equals(tag) && "content".equals(attribute)) {
+        logger.log(TreeLogger.ERROR,
+            "Template variables in content attribute of meta tag are not supported: "
+                + getTemplateParsedSoFar());
+        throw new UnableToCompleteException();
+      }
       if (streamHtmlParser.isUrlStart()) {
-        return new HtmlContext(HtmlContext.Type.URL_START, tag, attribute);
+        // Note that we have established above that the attribute is quoted.
+        // Furthermore, we have ruled out template variables in the content
+        // attribute of a meta tag, which is the only case where isUrlStart()
+        // is true and the URL does not appear at the very beginning of the
+        // attribute.
+        Preconditions.checkState(lookBehind == '"' || lookBehind == '\'',
+            "At the start of a quoted attribute, lookBehind should be a quote character; at %s",
+            getTemplateParsedSoFar());
+        // If the the character immediately succeeding the template parameter is
+        // a quote that matches the one that started the attribute, we know
+        // that the parameter comprises the entire attribute.
+        if (lookAhead == lookBehind) {
+          return new HtmlContext(HtmlContext.Type.URL_ATTRIBUTE_ENTIRE, tag, attribute);
+        } else {
+          return new HtmlContext(HtmlContext.Type.URL_ATTRIBUTE_START, tag, attribute);
+        }
       } else if (streamHtmlParser.inCss()) {
         if (streamHtmlParser.getValueIndex() == 0) {
           return new HtmlContext(HtmlContext.Type.CSS_ATTRIBUTE_START, tag, attribute);

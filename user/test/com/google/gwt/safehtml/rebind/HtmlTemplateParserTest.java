@@ -111,15 +111,20 @@ public final class HtmlTemplateParserTest extends TestCase {
             + "L(</span>)]"),
         "<span>foo&amp;bar<b>{1}</b><![CDATA[foo-cdata <baz>]]>{0}</span>");
 
-    // Check correct handling of ATTRIBUTE_VALUE vs URL_START context.
-    assertParseTemplateResult(("[L(<a href=\"), P((URL_START,a,href),0), "
+    // Check correct handling of ATTRIBUTE_VALUE vs URL_ATTRIBUTE_START and
+    // URL_ATTRIBUTE_ENTIRE context.
+    assertParseTemplateResult(("[L(<a href=\"), P((URL_ATTRIBUTE_ENTIRE,a,href),0), "
         + "L(\">), P((TEXT,null,null),1), L(</a>)]"),
         "<a href=\"{0}\">{1}</a>");
+    // Single quotes work too:
+    assertParseTemplateResult(("[L(<a href='), P((URL_ATTRIBUTE_ENTIRE,a,href),0), "
+        + "L('>), P((TEXT,null,null),1), L(</a>)]"),
+        "<a href='{0}'>{1}</a>");
     assertParseTemplateResult(
         ("[L(<a href=\"http://), P((ATTRIBUTE_VALUE,a,href),0), "
             + "L(\">), P((TEXT,null,null),1), L(</a>)]"),
         "<a href=\"http://{0}\">{1}</a>");
-    assertParseTemplateResult(("[L(<a href=\"), P((URL_START,a,href),0), "
+    assertParseTemplateResult(("[L(<a href=\"), P((URL_ATTRIBUTE_START,a,href),0), "
         + "L(/), P((ATTRIBUTE_VALUE,a,href),1), "
         + "L(\">), P((TEXT,null,null),2), L(</a>)]"),
         "<a href=\"{0}/{1}\">{2}</a>");
@@ -173,6 +178,12 @@ public final class HtmlTemplateParserTest extends TestCase {
         "<div class=\"{0}\" foo=bar>{1}<a");
     assertParsingTemplateEndingInNonInnerHtmlContextFails(
         "<div class=\"{0}\" foo=bar>{1}<a href=");
+
+    // Check that parseTemplate doesn't walk off the end of the string when
+    // extracting lookAhead: We should be getting an error that the template
+    // ends in non-inner-HTML context, and not an IndexOutOfBoundsException.
+    assertParsingTemplateEndingInNonInnerHtmlContextFails("<a href='{0}'");
+    assertParsingTemplateEndingInNonInnerHtmlContextFails("<a href='{0}");
   }
 
   private void assertTemplateVariableInUnquotedAttributeFails(
@@ -245,6 +256,11 @@ public final class HtmlTemplateParserTest extends TestCase {
         "<div style=\"{0}\" {1}=\"{2}\">", "<div style=\"{0}\" {1}");
     assertTemplateVariableInAttributeNameFails(
         "<div style=\"{0}\" foo{1}=\"{2}\">", "<div style=\"{0}\" foo{1}");
+  }
+
+  public void testParseTemplate_templateVariableInMetaContentFails() {
+    assertParseFails("Template variables in content attribute of meta tag are not supported: ",
+        "<meta http-equiv=\"{0}\" content=\"{1}\">", "<meta http-equiv=\"{0}\" content=\"{1}");
   }
 
   private void assertParseFails(
