@@ -120,7 +120,14 @@ suppressMessages(tools::startDynamicHelp())
    exactMatch = help(query, help_type="html")
    if (length(exactMatch) == 1)
    {
-      print(exactMatch)
+      if (.rs.helprIsActive())
+      {
+         helpr::print.help_files_with_topic(exactMatch)
+      }
+      else
+      {
+         print(exactMatch)
+      }
       return ()
    }
    else
