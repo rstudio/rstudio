@@ -208,6 +208,7 @@ Error SourceDocument::setPathAndContents(const std::string& path)
    if (error)
       return error;
 
+   stripBOM(&contents);
    // Detect invalid UTF-8 sequences and recover
    error = string_utils::utf8Clean(contents.begin(),
                                    contents.end(),

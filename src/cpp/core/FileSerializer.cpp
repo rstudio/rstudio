@@ -19,6 +19,7 @@
 #include <sstream>
 
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/iostreams/copy.hpp>
 
 #include <core/FilePath.hpp>
@@ -191,6 +192,26 @@ Error readStringFromFile(const FilePath& filePath,
       error.addProperty("path", file);
       return error;
    }
+}
+
+bool stripBOM(std::string* pStr)
+{
+   if (boost::algorithm::starts_with(*pStr, "\xEF\xBB\xBF"))
+   {
+      pStr->erase(0, 3);
+      return true;
+   }
+   else if (boost::algorithm::starts_with(*pStr, "\xFF\xFE"))
+   {
+      pStr->erase(0, 2);
+      return true;
+   }
+   else if (boost::algorithm::starts_with(*pStr, "\xFE\xFF"))
+   {
+      pStr->erase(0, 2);
+      return true;
+   }
+   return false;
 }
 
 } // namespace core

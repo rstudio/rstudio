@@ -178,6 +178,8 @@ Error readStringFromFile(const core::FilePath& filePath,
                          std::string* pStr,
                          string_utils::LineEnding lineEnding=string_utils::LineEndingPassthrough);
 
+bool stripBOM(std::string* pStr);
+
 } // namespace core
 
 
