@@ -171,7 +171,6 @@ public class Source implements InsertSourceHandler,
          {
             server_.newDocument(
                   FileTypeRegistry.DATAFRAME.getTypeId(),
-                  null,
                   JsObject.createJsObject(),
                   new SimpleRequestCallback<SourceDocument>("Edit Data Frame") {
                      public void onResponseReceived(SourceDocument response)
@@ -277,7 +276,6 @@ public class Source implements InsertSourceHandler,
       ContentItem content = event.getContent();
       server_.newDocument(
             FileTypeRegistry.URLCONTENT.getTypeId(),
-            null,
             (JsObject) content.cast(),
             new SimpleRequestCallback<SourceDocument>("Show")
             {
@@ -308,7 +306,6 @@ public class Source implements InsertSourceHandler,
 
       server_.newDocument(
             FileTypeRegistry.DATAFRAME.getTypeId(),
-            null,
             (JsObject) data.cast(),
             new SimpleRequestCallback<SourceDocument>("Show Data Frame")
             {
@@ -324,17 +321,15 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewSourceDoc()
    {
-      newDoc(FileTypeRegistry.R, uiPrefs_.defaultEncoding().getValue(), null);
+      newDoc(FileTypeRegistry.R, null);
    }
 
    private void newDoc(EditableFileType fileType,
-                       String encoding,
                        final CommandWithArg<EditingTarget> executeOnSuccess)
    {
       ensureVisible(true);
       server_.newDocument(
             fileType.getTypeId(),
-            encoding,
             JsObject.createJsObject(),
             new SimpleRequestCallback<SourceDocument>(
                   "Error Creating New Document")
@@ -458,7 +453,7 @@ public class Source implements InsertSourceHandler,
 
    public void onOpenSourceFile(final OpenSourceFileEvent event)
    {
-      openFile(event.getFile(), event.getFileType(), event.getEncoding());
+      openFile(event.getFile(), event.getFileType());
    }
    
    // top-level wrapper for opening files. takes care of:
@@ -469,14 +464,13 @@ public class Source implements InsertSourceHandler,
    //  - finally, actually opening the file from the server
    //    via the call to the lower level openFile method
    private void openFile(final FileSystemItem file,
-                         final TextFileType fileType,
-                         final String encoding)
+                         final TextFileType fileType)
    {
       ensureVisible(true);
 
       if (file == null)
       {
-         newDoc(fileType, encoding, null);
+         newDoc(fileType, null);
          return;
       }
 
@@ -505,13 +499,13 @@ public class Source implements InsertSourceHandler,
          confirmOpenLargeFile(file,  new Operation() {
             public void execute()
             {
-               openFileFromServer(file, fileType, encoding);
+               openFileFromServer(file, fileType);
             }
          });
       }
       else
       {
-         openFileFromServer(file, fileType, encoding);
+         openFileFromServer(file, fileType);
       }
    }
 
@@ -546,8 +540,7 @@ public class Source implements InsertSourceHandler,
    }
 
    private void openFileFromServer(final FileSystemItem file,
-                                   final TextFileType fileType,
-                                   String encoding)
+                                   final TextFileType fileType)
    {
       final Command dismissProgress = globalDisplay_.showProgress(
                                                          "Opening file...");
@@ -555,7 +548,7 @@ public class Source implements InsertSourceHandler,
       server_.openDocument(
             file.getPath(),
             fileType.getTypeId(),
-            encoding,
+            uiPrefs_.defaultEncoding().getValue(),
             new ServerRequestCallback<SourceDocument>()
             {
                @Override
@@ -671,7 +664,6 @@ public class Source implements InsertSourceHandler,
       else
       {
          newDoc(FileTypeRegistry.R,
-                uiPrefs_.defaultEncoding().getValue(),
                 new CommandWithArg<EditingTarget>()
          {
             public void execute(EditingTarget arg)

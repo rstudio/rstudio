@@ -26,25 +26,8 @@ public class OpenSourceFileEvent extends GwtEvent<OpenSourceFileHandler>
 
    public OpenSourceFileEvent(FileSystemItem file, TextFileType fileType)
    {
-      this(file, fileType, null);
-   }
-
-   public OpenSourceFileEvent(FileSystemItem file,
-                              TextFileType fileType,
-                              String encoding)
-   {
       file_ = file;
       fileType_ = fileType;
-
-      if (!StringUtil.isNullOrEmpty(encoding))
-      {
-         encoding_ = encoding;
-      }
-      else
-      {
-         UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
-         encoding_ = uiPrefs.defaultEncoding().getValue();
-      }
    }
    
    public FileSystemItem getFile()
@@ -55,11 +38,6 @@ public class OpenSourceFileEvent extends GwtEvent<OpenSourceFileHandler>
    public TextFileType getFileType()
    {
       return fileType_;
-   }
-
-   public String getEncoding()
-   {
-      return encoding_;
    }
 
    @Override
@@ -76,5 +54,4 @@ public class OpenSourceFileEvent extends GwtEvent<OpenSourceFileHandler>
    
    private final FileSystemItem file_;
    private final TextFileType fileType_;
-   private final String encoding_;
 }

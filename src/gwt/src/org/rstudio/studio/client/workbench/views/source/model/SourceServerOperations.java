@@ -38,7 +38,6 @@ public interface SourceServerOperations
     * have never been saved.
     */
    void newDocument(String fileType,
-                    String encoding,
                     JsObject properties,
                     ServerRequestCallback<SourceDocument> requestCallback);
 
