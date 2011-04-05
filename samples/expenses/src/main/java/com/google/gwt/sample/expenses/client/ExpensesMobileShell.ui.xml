@@ -2,9 +2,9 @@
 <ui:UiBinder
   xmlns:ui='urn:ui:com.google.gwt.uibinder'
   xmlns:m='urn:import:com.google.gwt.mobile.client'
-  xmlns:r='urn:import:com.google.gwt.requestfactory.ui.client'
   xmlns:g='urn:import:com.google.gwt.user.client.ui'
   xmlns:a='urn:import:com.google.gwt.sample.gaerequest.client'>
+  xmlns:r='urn:import:com.google.web.bindery.requestfactory.ui.client'
 
   <ui:image field='add'/>
   <ui:image field='refresh'/>

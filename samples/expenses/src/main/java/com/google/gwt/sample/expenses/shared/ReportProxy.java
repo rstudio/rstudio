@@ -15,9 +15,9 @@
  */
 package com.google.gwt.sample.expenses.shared;
 
-import com.google.gwt.requestfactory.shared.EntityProxy;
-import com.google.gwt.requestfactory.shared.EntityProxyId;
-import com.google.gwt.requestfactory.shared.ProxyFor;
+import com.google.web.bindery.requestfactory.shared.EntityProxy;
+import com.google.web.bindery.requestfactory.shared.EntityProxyId;
+import com.google.web.bindery.requestfactory.shared.ProxyFor;
 
 import java.util.Date;
 

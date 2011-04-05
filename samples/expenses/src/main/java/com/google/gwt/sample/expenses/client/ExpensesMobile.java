@@ -19,7 +19,6 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.SimpleEventBus;
-import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.sample.expenses.shared.EmployeeProxy;
 import com.google.gwt.sample.expenses.shared.ExpensesRequestFactory;
 import com.google.gwt.sample.gaerequest.client.GaeAuthRequestTransport;
@@ -28,6 +27,7 @@ import com.google.gwt.sample.gaerequest.client.ReloadOnAuthenticationFailure;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.web.bindery.requestfactory.shared.Receiver;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;

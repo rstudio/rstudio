@@ -90,7 +90,7 @@ public class Employee {
       int maxResults) {
     EntityManager em = entityManager();
     try {
-      List resultList = em.createQuery("select o from Employee o").setFirstResult(
+      List<Employee> resultList = em.createQuery("select o from Employee o").setFirstResult(
           firstResult).setMaxResults(maxResults).getResultList();
       // force it to materialize
       resultList.size();
@@ -109,7 +109,7 @@ public class Employee {
       query.setFirstResult(firstResult);
       query.setMaxResults(maxResults);
       query.setParameter("department", department);
-      List resultList = query.getResultList();
+      List<Employee> resultList = query.getResultList();
       // force it to materialize
       resultList.size();
       return resultList;

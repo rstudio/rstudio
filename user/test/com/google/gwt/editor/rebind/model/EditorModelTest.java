@@ -39,14 +39,14 @@ import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.editor.client.ValueAwareEditor;
 import com.google.gwt.editor.client.adapters.SimpleEditor;
 import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
-import com.google.gwt.requestfactory.shared.EntityProxy;
-import com.google.gwt.requestfactory.shared.Request;
-import com.google.gwt.requestfactory.shared.RequestContext;
-import com.google.gwt.requestfactory.shared.RequestFactory;
-import com.google.gwt.requestfactory.shared.Violation;
 import com.google.gwt.user.client.TakesValue;
 import com.google.gwt.user.client.ui.HasText;
+import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryEditorDriver;
+import com.google.web.bindery.requestfactory.shared.EntityProxy;
+import com.google.web.bindery.requestfactory.shared.Request;
+import com.google.web.bindery.requestfactory.shared.RequestContext;
+import com.google.web.bindery.requestfactory.shared.RequestFactory;
+import com.google.web.bindery.requestfactory.shared.Violation;
 
 import junit.framework.TestCase;
 

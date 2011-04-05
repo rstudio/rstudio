@@ -8,7 +8,7 @@
 
   <servlet>
     <servlet-name>requestFactoryServlet</servlet-name>
-    <servlet-class>com.google.gwt.requestfactory.server.RequestFactoryServlet</servlet-class>
+    <servlet-class>com.google.web.bindery.requestfactory.server.RequestFactoryServlet</servlet-class>
     <init-param>
       <param-name>symbolMapsDirectory</param-name>
       <!-- You'll need to compile with -extras and move the symbolMaps directory

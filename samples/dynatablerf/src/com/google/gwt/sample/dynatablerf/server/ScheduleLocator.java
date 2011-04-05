@@ -15,8 +15,8 @@
  */
 package com.google.gwt.sample.dynatablerf.server;
 
-import com.google.gwt.requestfactory.shared.Locator;
 import com.google.gwt.sample.dynatablerf.domain.Schedule;
+import com.google.web.bindery.requestfactory.shared.Locator;
 
 /**
  * This class serves as an example of implementing a Locator to allow

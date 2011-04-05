@@ -15,7 +15,7 @@
  */
 package com.google.gwt.sample.dynatablerf.server;
 
-import com.google.gwt.requestfactory.shared.ServiceLocator;
+import com.google.web.bindery.requestfactory.shared.ServiceLocator;
 
 /**
  * This class provides an example of implementing a ServiceLocator to allow

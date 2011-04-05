@@ -24,6 +24,7 @@ import org.json.JSONObject;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -58,6 +59,24 @@ public class JsonSplittable implements Splittable {
     } catch (JSONException e) {
       throw new RuntimeException("Could not parse payload", e);
     }
+  }
+
+  /**
+   * Private equivalent of org.json.JSONObject.getNames(JSONObject)
+   * since that method is not available in Android 2.2.
+   */
+  private static String[] getNames(JSONObject json) {
+    int length = json.length();
+    if (length == 0) {
+      return null;
+    }
+    String[] names = new String[length];
+    Iterator<?> i = json.keys();
+    int j = 0;
+    while (i.hasNext()) {
+      names[j++] = (String) i.next();
+    }
+    return names;
   }
 
   private final JSONArray array;
@@ -116,7 +135,7 @@ public class JsonSplittable implements Splittable {
   }
 
   public List<String> getPropertyKeys() {
-    String[] names = JSONObject.getNames(obj);
+    String[] names = getNames(obj);
     if (names == null) {
       return Collections.emptyList();
     } else {

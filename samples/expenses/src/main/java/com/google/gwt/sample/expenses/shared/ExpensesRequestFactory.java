@@ -15,8 +15,8 @@
  */
 package com.google.gwt.sample.expenses.shared;
 
-import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.sample.gaerequest.shared.MakesGaeRequests;
+import com.google.web.bindery.requestfactory.shared.RequestFactory;
 
 /**
  * RequestFactory interface. Instances created via {@link com.google.gwt.core.client.GWT#create}

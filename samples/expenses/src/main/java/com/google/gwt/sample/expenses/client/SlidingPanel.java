@@ -69,6 +69,7 @@ public class SlidingPanel extends ResizeComposite implements HasWidgets,
     widgets.clear();
   }
 
+  @Override
   public Widget getWidget() {
     return widgets.get(currentIndex);
   }
@@ -90,7 +91,7 @@ public class SlidingPanel extends ResizeComposite implements HasWidgets,
    * haven't seen it before. Nulls are ignored.
    */
   // Conflict btw deprecated Composite#setWidget and HasOneWidget#setWidget
-  @SuppressWarnings("deprecation")
+  @Override
   public void setWidget(Widget widget) {
     if (widget == null) {
       return;

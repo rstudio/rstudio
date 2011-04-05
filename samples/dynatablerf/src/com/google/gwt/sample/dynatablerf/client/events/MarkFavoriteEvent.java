@@ -17,8 +17,8 @@ package com.google.gwt.sample.dynatablerf.client.events;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
+import com.google.web.bindery.requestfactory.shared.EntityProxyId;
 
 /**
  * Used client-side to add entries to the favorites list.

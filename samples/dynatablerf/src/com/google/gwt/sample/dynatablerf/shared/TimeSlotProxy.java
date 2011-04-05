@@ -15,9 +15,9 @@
  */
 package com.google.gwt.sample.dynatablerf.shared;
 
-import com.google.gwt.requestfactory.shared.ProxyFor;
-import com.google.gwt.requestfactory.shared.ValueProxy;
 import com.google.gwt.sample.dynatablerf.domain.TimeSlot;
+import com.google.web.bindery.requestfactory.shared.ProxyFor;
+import com.google.web.bindery.requestfactory.shared.ValueProxy;
 
 /**
  * TimeSlot DTO.

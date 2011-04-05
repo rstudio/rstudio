@@ -22,13 +22,13 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.place.shared.PlaceController;
 import com.google.gwt.place.shared.PlaceHistoryHandler;
-import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.sample.expenses.client.place.ReportListPlace;
 import com.google.gwt.sample.expenses.client.place.ReportPlace;
 import com.google.gwt.sample.expenses.shared.EmployeeProxy;
 import com.google.gwt.sample.expenses.shared.ReportProxy;
 import com.google.gwt.sample.gaerequest.client.ReloadOnAuthenticationFailure;
 import com.google.gwt.user.client.ui.HasWidgets;
+import com.google.web.bindery.requestfactory.shared.EntityProxyId;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;

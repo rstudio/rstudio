@@ -15,9 +15,9 @@
  */
 package com.google.gwt.sample.gaerequest.shared;
 
-import com.google.gwt.requestfactory.shared.Request;
-import com.google.gwt.requestfactory.shared.RequestContext;
-import com.google.gwt.requestfactory.shared.ServiceName;
+import com.google.web.bindery.requestfactory.shared.Request;
+import com.google.web.bindery.requestfactory.shared.RequestContext;
+import com.google.web.bindery.requestfactory.shared.ServiceName;
 
 /**
  * Makes requests of the Google AppEngine UserService.

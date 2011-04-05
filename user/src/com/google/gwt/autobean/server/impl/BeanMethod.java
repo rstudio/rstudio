@@ -17,7 +17,6 @@ package com.google.gwt.autobean.server.impl;
 
 import com.google.gwt.autobean.shared.AutoBean;
 
-import java.beans.Introspector;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
@@ -62,7 +61,7 @@ public enum BeanMethod {
       if (name.startsWith(IS_PREFIX)) {
         Class<?> returnType = method.getReturnType();
         if (Boolean.TYPE.equals(returnType) || Boolean.class.equals(returnType)) {
-          return Introspector.decapitalize(name.substring(2));
+          return decapitalize(name.substring(2));
         }
       }
       return super.inferName(method);
@@ -205,8 +204,26 @@ public enum BeanMethod {
     return null;
   }
 
+  /**
+   * Private equivalent of Introspector.decapitalize(String)
+   * since java.beans.Introspector is not available in Android 2.2.
+   */
+  private static String decapitalize(String name) {
+    if (name == null) {
+      return null;
+    }
+    int length = name.length();
+    if (length == 0 || (length > 1 && Character.isUpperCase(name.charAt(1)))) {
+      return name;
+    }
+    StringBuilder sb = new StringBuilder(length);
+    sb.append(Character.toLowerCase(name.charAt(0)));
+    sb.append(name.substring(1));
+    return sb.toString();
+  }
+
   public String inferName(Method method) {
-    return Introspector.decapitalize(method.getName().substring(3));
+    return decapitalize(method.getName().substring(3));
   }
 
   /**

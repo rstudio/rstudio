@@ -28,7 +28,7 @@ import javax.validation.ConstraintViolation;
  * 
  * @param <T> the type of data returned from {@link #flush()}
  * @see com.google.gwt.editor.client.SimpleBeanEditorDriver
- * @see com.google.gwt.requestfactory.client.RequestFactoryEditorDriver
+ * @see com.google.web.bindery.requestfactory.gwt.client.RequestFactoryEditorDriver
  */
 public interface EditorDriver<T> {
   /**

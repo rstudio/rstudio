@@ -1,8 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
   xmlns:g='urn:import:com.google.gwt.user.client.ui'
-  xmlns:r='urn:import:com.google.gwt.requestfactory.client'
-  xmlns:a='urn:import:com.google.gwt.app.client'>
+  xmlns:a='urn:import:com.google.gwt.app.client'
+  xmlns:r='urn:import:com.google.web.bindery.requestfactory.client'>
 
   <ui:style field='mobile' src='mobile.css'/>
 

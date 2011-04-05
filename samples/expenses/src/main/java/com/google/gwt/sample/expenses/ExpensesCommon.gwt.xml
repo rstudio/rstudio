@@ -4,9 +4,9 @@
   <inherits name='com.google.gwt.activity.Activity' />
   <inherits name='com.google.gwt.mobile.Mobile'/>
   <inherits name='com.google.gwt.place.Place' />
-  <inherits name='com.google.gwt.requestfactory.RequestFactory'/>
   <inherits name='com.google.gwt.sample.gaerequest.GaeRequest'/>
   <inherits name='com.google.gwt.user.cellview.CellView'/>
+  <inherits name='com.google.web.bindery.requestfactory.RequestFactory'/>
 
   <source path='client'/>
   <source path='shared'/>

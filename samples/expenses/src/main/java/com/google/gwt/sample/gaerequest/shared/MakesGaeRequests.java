@@ -16,7 +16,7 @@
 package com.google.gwt.sample.gaerequest.shared;
 
 /**
- * Implemented by {@link com.google.gwt.requestfactory.shared.RequestFactory}s
+ * Implemented by {@link com.google.web.bindery.requestfactory.shared.RequestFactory}s
  * that vend AppEngine requests.
  */
 public interface MakesGaeRequests {

@@ -19,7 +19,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.editor.client.IsEditor;
 import com.google.gwt.editor.client.adapters.OptionalFieldEditor;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory;
 import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -28,6 +27,7 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.web.bindery.requestfactory.shared.Receiver;
 
 /**
  * This demonstrates how an editor can be constructed to handle optional fields.

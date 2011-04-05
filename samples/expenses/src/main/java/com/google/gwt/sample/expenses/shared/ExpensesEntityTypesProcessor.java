@@ -15,7 +15,7 @@
  */
 package com.google.gwt.sample.expenses.shared;
 
-import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.web.bindery.requestfactory.shared.EntityProxy;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -110,9 +110,9 @@ public abstract class ExpensesEntityTypesProcessor<T> {
    * {@link #getClass()} method of a proxy object, due to limitations of GWT's
    * metadata. It will only work with against class objects in the set returned
    * by {@link #getAll()}, or returned by
-   * {@link com.google.gwt.requestfactory.shared.RequestFactory#getClass(EntityProxy)}
+   * {@link com.google.web.bindery.requestfactory.shared.RequestFactory#getClass(EntityProxy)}
    * or
-   * {@link com.google.gwt.requestfactory.shared.RequestFactory#getClass(String)}
+   * {@link com.google.web.bindery.requestfactory.shared.RequestFactory#getClass(String)}
    * .
    * 
    * @param clazz the proxy type to resolve

@@ -37,8 +37,10 @@
           description="[action] Minimal one-platform devel build, without distro packaging">
     <call-subproject subproject="dev" subtarget="build" />
     <call-subproject subproject="user" subtarget="build" />
+    <call-subproject subproject="requestfactory" subtarget="build" />
     <call-subproject subproject="servlet" subtarget="build" />
     <call-subproject subproject="jni" subtarget="build" />
+    <call-subproject subproject="requestfactory" subtarget="build" />
   </target>
 
   <target name="dist" depends="build, doc" description="[action] Make all the distributions">
@@ -70,6 +72,11 @@
     <gwt.ant dir="tools" />
   </target>
 
+  <target name="requestfactory" description="[subdir] Builds (or runs ${target} if set) only the requestfactory jars">
+    <call-subproject subproject="user" subtarget="build" />
+    <gwt.ant dir="requestfactory" />
+  </target>
+
   <target name="servlet" description="[subdir] Builds (or runs ${target} if set) only the servlet jar">
     <call-subproject subproject="user" subtarget="build" />
     <gwt.ant dir="servlet" />
@@ -94,18 +101,20 @@
   </target>
 
   <target name="build" description="[action] Builds GWT, including samples, but without distro packaging">
-     <call-subproject subproject="dev" subtarget="build"/>
-     <call-subproject subproject="user" subtarget="build"/>
-     <call-subproject subproject="servlet" subtarget="build"/>
-     <call-subproject subproject="tools" subtarget="build"/>
-     <call-subproject subproject="jni" subtarget="build"/>
-     <call-subproject subproject="samples" subtarget="build"/>
+    <call-subproject subproject="dev" subtarget="build"/>
+    <call-subproject subproject="user" subtarget="build"/>
+    <call-subproject subproject="requestfactory" subtarget="build"/>
+    <call-subproject subproject="servlet" subtarget="build"/>
+    <call-subproject subproject="tools" subtarget="build"/>
+    <call-subproject subproject="jni" subtarget="build"/>
+    <call-subproject subproject="samples" subtarget="build"/>
   </target>
 
   <target name="checkstyle" description="[action] Does static analysis of GWT source">
     <call-subproject subproject="buildtools" subtarget="checkstyle" />
     <call-subproject subproject="dev" subtarget="checkstyle" />
     <call-subproject subproject="user" subtarget="checkstyle" />
+    <call-subproject subproject="requestfactory" subtarget="checkstyle" />
     <call-subproject subproject="servlet" subtarget="checkstyle" />
     <call-subproject subproject="tools" subtarget="checkstyle" />
     <call-subproject subproject="samples" subtarget="checkstyle" />
@@ -116,8 +125,16 @@
     <call-subproject subproject="buildtools" subtarget="test" />
     <call-subproject subproject="dev" subtarget="test" />
     <call-subproject subproject="user" subtarget="test" />
+    <call-subproject subproject="requestfactory" subtarget="test" />
     <call-subproject subproject="servlet" subtarget="test" />
     <call-subproject subproject="tools" subtarget="test" />
+  </target>
+
+  <target name="testrf" depends="dist-dev" 
+          description="[action] Runs the GWT RequestFactory tests">
+    <call-subproject subproject="dev" subtarget="compile.tests" />
+    <call-subproject subproject="user" subtarget="compile.tests" />
+    <call-subproject subproject="requestfactory" subtarget="test" />
   </target>
 
   <target name="benchmark" depends="dist-dev" 

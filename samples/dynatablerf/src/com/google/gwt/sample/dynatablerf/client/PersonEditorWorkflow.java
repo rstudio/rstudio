@@ -22,11 +22,6 @@ import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
-import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.Request;
-import com.google.gwt.requestfactory.shared.RequestContext;
-import com.google.gwt.requestfactory.shared.Violation;
 import com.google.gwt.sample.dynatablerf.client.events.EditPersonEvent;
 import com.google.gwt.sample.dynatablerf.client.widgets.MentorSelector;
 import com.google.gwt.sample.dynatablerf.client.widgets.PersonEditor;
@@ -41,6 +36,11 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryEditorDriver;
+import com.google.web.bindery.requestfactory.shared.Receiver;
+import com.google.web.bindery.requestfactory.shared.Request;
+import com.google.web.bindery.requestfactory.shared.RequestContext;
+import com.google.web.bindery.requestfactory.shared.Violation;
 
 import java.util.Set;
 

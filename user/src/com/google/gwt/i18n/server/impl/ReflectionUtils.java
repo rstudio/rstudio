@@ -41,7 +41,7 @@ public class ReflectionUtils {
       if (superClass != null) {
         workQueue.addLast(superClass);
       }
-      workQueue.addAll(Arrays.asList(clazz.getInterfaces()));
+      workQueue.addAll(Arrays.asList((Class<?>[]) clazz.getInterfaces()));
     }
     return null;
   }

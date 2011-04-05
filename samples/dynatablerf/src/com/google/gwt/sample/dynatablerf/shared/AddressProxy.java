@@ -15,9 +15,9 @@
  */
 package com.google.gwt.sample.dynatablerf.shared;
 
-import com.google.gwt.requestfactory.shared.ProxyFor;
-import com.google.gwt.requestfactory.shared.ValueProxy;
 import com.google.gwt.sample.dynatablerf.domain.Address;
+import com.google.web.bindery.requestfactory.shared.ProxyFor;
+import com.google.web.bindery.requestfactory.shared.ValueProxy;
 
 /**
  * Represents an Address in the client code.

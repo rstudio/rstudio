@@ -19,7 +19,6 @@ package com.google.gwt.sample.gaerequest.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.sample.gaerequest.shared.GaeUser;
 import com.google.gwt.sample.gaerequest.shared.GaeUserServiceRequest;
 import com.google.gwt.sample.gaerequest.shared.MakesGaeRequests;
@@ -30,6 +29,7 @@ import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.web.bindery.requestfactory.shared.Receiver;
 
 /**
  * A simple widget which displays info about the user and a logout link. In real
@@ -62,6 +62,7 @@ public class LoginWidget extends Composite {
     GaeUserServiceRequest request = requests.userServiceRequest();
 
     request.createLogoutURL(Location.getHref()).to(new Receiver<String>() {
+      @Override
       public void onSuccess(String response) {
         setLogoutUrl(response);
       }

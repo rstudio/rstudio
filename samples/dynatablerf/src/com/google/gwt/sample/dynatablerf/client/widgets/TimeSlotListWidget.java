@@ -20,7 +20,6 @@ import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.editor.client.EditorDelegate;
 import com.google.gwt.editor.client.ValueAwareEditor;
-import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.sample.dynatablerf.client.widgets.SummaryWidget.TableResources;
 import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory;
 import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory.ScheduleRequest;
@@ -32,6 +31,7 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.web.bindery.requestfactory.shared.Receiver;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -72,6 +72,7 @@ public class TimeSlotListWidget extends Composite implements ValueAwareEditor<Li
         ScheduleRequest context = factory.scheduleRequest();
         context.createTimeSlot(day.ordinal(), hour * 60, hour * 60 + 50).fire(
             new Receiver<TimeSlotProxy>() {
+              @Override
               public void onSuccess(TimeSlotProxy slot) {
                 existingSlots.put(key, slot);
                 backing.add(slot);

@@ -17,7 +17,6 @@ package com.google.gwt.sample.expenses.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.sample.expenses.shared.EmployeeProxy;
 import com.google.gwt.sample.expenses.shared.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.shared.ReportProxy;
@@ -28,6 +27,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.web.bindery.requestfactory.shared.Receiver;
 
 import java.util.Date;
 

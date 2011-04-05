@@ -15,8 +15,8 @@
  */
 package com.google.gwt.sample.gaerequest.shared;
 
-import com.google.gwt.requestfactory.shared.ProxyForName;
-import com.google.gwt.requestfactory.shared.ValueProxy;
+import com.google.web.bindery.requestfactory.shared.ProxyForName;
+import com.google.web.bindery.requestfactory.shared.ValueProxy;
 
 /**
  * Client visible proxy of Google AppEngine User class.

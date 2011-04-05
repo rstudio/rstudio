@@ -20,8 +20,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.SimpleEventBus;
-import com.google.gwt.requestfactory.client.RequestFactoryLogHandler;
-import com.google.gwt.requestfactory.shared.LoggingRequest;
 import com.google.gwt.sample.dynatablerf.client.widgets.DayFilterWidget;
 import com.google.gwt.sample.dynatablerf.client.widgets.FavoritesWidget;
 import com.google.gwt.sample.dynatablerf.client.widgets.SummaryWidget;
@@ -30,6 +28,8 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryLogHandler;
+import com.google.web.bindery.requestfactory.shared.LoggingRequest;
 
 import java.util.ArrayList;
 import java.util.logging.Level;

@@ -16,8 +16,6 @@
 package com.google.gwt.sample.expenses.client;
 
 import com.google.gwt.cell.client.AbstractCell;
-import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.ui.client.EntityProxyKeyProvider;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.sample.expenses.shared.EmployeeProxy;
 import com.google.gwt.sample.expenses.shared.ExpensesRequestFactory;
@@ -30,6 +28,8 @@ import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.NoSelectionModel;
 import com.google.gwt.view.client.SelectionChangeEvent;
+import com.google.web.bindery.requestfactory.gwt.ui.client.EntityProxyKeyProvider;
+import com.google.web.bindery.requestfactory.shared.Receiver;
 
 import java.util.List;
 

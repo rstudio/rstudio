@@ -19,9 +19,9 @@ import com.google.gwt.http.client.URL;
 import com.google.gwt.place.shared.Place;
 import com.google.gwt.place.shared.PlaceTokenizer;
 import com.google.gwt.place.shared.Prefix;
-import com.google.gwt.requestfactory.shared.EntityProxyId;
-import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.sample.expenses.shared.EmployeeProxy;
+import com.google.web.bindery.requestfactory.shared.EntityProxyId;
+import com.google.web.bindery.requestfactory.shared.RequestFactory;
 
 /**
  * A place in the app that shows a list of reports.
