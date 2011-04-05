@@ -17,6 +17,8 @@
 
 #include <boost/bind.hpp>
 
+#include <R_ext/rlocale.h>
+
 #include <core/Log.hpp>
 #include <core/Exec.hpp>
 #include <core/Error.hpp>
@@ -93,6 +95,8 @@ Error openDocument(const json::JsonRpcRequest& request,
    error = json::readParam(request.params, 2, &encoding);
    if (error && error.code() != core::json::errc::ParamTypeMismatch)
       return error ;
+   if (encoding.empty())
+      encoding = ::locale2charset(NULL);
    
    // ensure the file exists
    FilePath documentPath = module_context::resolveAliasedPath(path);
