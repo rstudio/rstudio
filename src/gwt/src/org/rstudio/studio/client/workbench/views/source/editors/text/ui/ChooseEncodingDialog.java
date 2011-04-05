@@ -121,7 +121,7 @@ public class ChooseEncodingDialog extends ModalDialog<String>
 
       if (includePromptForEncoding_)
       {
-         listBox_.addItem("[Ask every time]", "");
+         listBox_.addItem("[Ask]", "");
       }
 
       for (int i = 0; i < encodings.length(); i++)
