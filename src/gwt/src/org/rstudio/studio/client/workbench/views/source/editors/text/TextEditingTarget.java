@@ -967,7 +967,7 @@ public class TextEditingTarget implements EditingTarget
             public void onResponseReceived(Void response)
             {
                events_.fireEvent(new SendToConsoleEvent(
-                     "source(\"~/.active-rstudio-document\", encoding=\"UTF-8\")",
+                     "source(\"~/.active-rstudio-document\")",
                      true));
             }
          });
@@ -1067,17 +1067,10 @@ public class TextEditingTarget implements EditingTarget
          {
             if (fileType_.canSourceOnSave() && docUpdateSentinel_.sourceOnSave())
             {
-               String encodingArg = "";
-               if (!StringUtil.isNullOrEmpty(docUpdateSentinel_.getEncoding()))
-               {
-                  encodingArg = " encoding=\"" + docUpdateSentinel_.getEncoding() + "\"";
-               }
-
                String path = docUpdateSentinel_.getPath();
                String code = "source('"
                              + path.replace("\\", "\\\\").replace("'", "\\'")
                              + "'" +
-                             encodingArg +
                              ")";
                events_.fireEvent(new SendToConsoleEvent(code, true));
             }
