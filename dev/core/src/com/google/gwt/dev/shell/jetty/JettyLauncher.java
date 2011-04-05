@@ -670,8 +670,20 @@ public class JettyLauncher extends ServletContainerLauncher {
     // Now that we're started, log to the top level logger.
     Log.setLog(new JettyTreeLogger(logger));
 
+    // DevMode#doStartUpServer() fails from time to time (rarely) due
+    // to an unknown error. Adding some logging to pinpoint the problem.
+    int connectorPort = connector.getLocalPort();
+    if (connector.getLocalPort() < 0) {
+      branch.log(TreeLogger.ERROR, String.format(
+          "Failed to connect to open channel with port %d (return value %d)",
+          port, connectorPort));
+      if (connector.getConnection() == null ) {
+        branch.log(TreeLogger.TRACE, "Connection is null");
+      }
+    }
+
     return createServletContainer(logger, appRootDir, server, wac,
-        connector.getLocalPort());
+        connectorPort);
   }
 
   protected JettyServletContainer createServletContainer(TreeLogger logger,
