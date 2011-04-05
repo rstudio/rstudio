@@ -52,6 +52,11 @@ public class BrowseCap
       return OPERATING_SYSTEM.equals("macintosh");
    }
 
+   public static boolean isLinux()
+   {
+      return OPERATING_SYSTEM.equals("linux");
+   }
+
    private static native final String getOperatingSystem() /*-{
       var ua = navigator.userAgent.toLowerCase();
       if (ua.indexOf("linux") != -1) {

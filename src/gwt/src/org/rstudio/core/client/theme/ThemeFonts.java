@@ -13,6 +13,7 @@
 package org.rstudio.core.client.theme;
 
 import com.google.gwt.core.client.GWT;
+import org.rstudio.core.client.BrowseCap;
 
 public class ThemeFonts
 {
@@ -58,7 +59,9 @@ public class ThemeFonts
 
       public String getFixedWidthFont()
       {
-         return "\"Droid Sans Mono\", \"DejaVu Sans Mono\", Monaco, Consolas, \"Lucida Console\", monospace";
+         return
+            ((BrowseCap.isLinux()) ? "Monospace, " : "") +
+            "\"Droid Sans Mono\", \"DejaVu Sans Mono\", Monaco, Consolas, \"Lucida Console\", monospace";
       }
    }
 }
