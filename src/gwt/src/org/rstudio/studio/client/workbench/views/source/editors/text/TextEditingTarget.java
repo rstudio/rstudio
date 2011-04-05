@@ -967,8 +967,8 @@ public class TextEditingTarget implements EditingTarget
             public void onResponseReceived(Void response)
             {
                events_.fireEvent(new SendToConsoleEvent(
-                                             "source(\"~/.active-rstudio-document\")",
-                                             true));
+                     "source(\"~/.active-rstudio-document\", encoding=\"UTF-8\")",
+                     true));
             }
          });
       }
