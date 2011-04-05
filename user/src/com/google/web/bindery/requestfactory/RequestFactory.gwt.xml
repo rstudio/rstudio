@@ -22,9 +22,9 @@
   <inherits name='com.google.gwt.http.HTTP'/>
   <inherits name='com.google.gwt.logging.LoggingDisabled'/>
 
-  <source path="client"/>
+  <source path="gwt/client"/>
+  <source path="gwt/ui/client"/>
   <source path="shared"/>
-  <source path="ui/client"/>
   <super-source path="super" />
   <generate-with
     class="com.google.web.bindery.requestfactory.gwt.rebind.RequestFactoryEditorDriverGenerator">

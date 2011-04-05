@@ -85,7 +85,7 @@
   -->
   <target name="test" depends="requestfactory-test+src" description="Run RequestFactoryJreSuite">
     <java failonerror="true" fork="true"
-      classname="com.google.web.bindery.requestfactory.RequestFactoryJreSuite">
+      classname="com.google.web.bindery.requestfactory.vm.RequestFactoryJreSuite">
       <jvmarg value="-Xss8m" />
       <classpath>
         <fileset dir="${gwt.tools.lib}" includes="tomcat/servlet-api-2.5.jar" />
