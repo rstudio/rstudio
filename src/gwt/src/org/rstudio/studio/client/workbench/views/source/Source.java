@@ -147,6 +147,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.saveSourceDoc());
       dynamicCommands_.add(commands.reopenSourceDocWithEncoding());
       dynamicCommands_.add(commands.saveSourceDocAs());
+      dynamicCommands_.add(commands.saveSourceDocWithEncoding());
       dynamicCommands_.add(commands.printSourceDoc());
       dynamicCommands_.add(commands.executeCode());
       dynamicCommands_.add(commands.executeAllCode());
