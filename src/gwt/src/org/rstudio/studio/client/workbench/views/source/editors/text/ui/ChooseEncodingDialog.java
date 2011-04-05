@@ -12,6 +12,8 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.model.Session;
 
 public class ChooseEncodingDialog extends ModalDialog<String>
 {
@@ -28,6 +30,9 @@ public class ChooseEncodingDialog extends ModalDialog<String>
       currentEncoding_ = currentEncoding;
       includePromptForEncoding_ = includePromptForEncoding;
       includeSaveAsDefault_ = includeSaveAsDefault;
+
+      Session session = RStudioGinjector.INSTANCE.getSession();
+      systemEncoding_ = session.getSessionInfo().getSystemEncoding();
    }
 
    private void setCurrentValue(String currentEncoding)
@@ -119,15 +124,26 @@ public class ChooseEncodingDialog extends ModalDialog<String>
    {
       listBox_.clear();
 
-      if (includePromptForEncoding_)
+      for (int i = 0; i < encodings.length(); i++)
       {
-         listBox_.addItem("[Ask]", "");
+         String enc = encodings.get(i);
+         if (isSystemEncoding(enc))
+            listBox_.insertItem(enc + " (System default)", enc, 0);
+         else
+            listBox_.addItem(enc);
       }
 
-      for (int i = 0; i < encodings.length(); i++)
-         listBox_.addItem(encodings.get(i));
+      if (includePromptForEncoding_)
+      {
+         listBox_.insertItem(ASK_LABEL, "", 0);
+      }
 
       setCurrentValue(encoding);
+   }
+
+   private boolean isSystemEncoding(String encoding)
+   {
+      return StringUtil.notNull(encoding).equals(systemEncoding_);
    }
 
    private ListBox listBox_;
@@ -137,4 +153,6 @@ public class ChooseEncodingDialog extends ModalDialog<String>
    private final boolean includePromptForEncoding_;
    private final boolean includeSaveAsDefault_;
    private CheckBox saveAsDefault_;
+   private final String systemEncoding_;
+   public static final String ASK_LABEL = "[Ask]";
 }

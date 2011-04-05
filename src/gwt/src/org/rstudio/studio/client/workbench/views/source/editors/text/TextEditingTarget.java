@@ -584,7 +584,8 @@ public class TextEditingTarget implements EditingTarget
          }
          else
          {
-            withChooseEncoding(encoding, new CommandWithArg<String>()
+            withChooseEncoding(session_.getSessionInfo().getSystemEncoding(),
+                               new CommandWithArg<String>()
             {
                public void execute(String newEncoding)
                {
@@ -781,7 +782,10 @@ public class TextEditingTarget implements EditingTarget
    void onSaveSourceDocWithEncoding()
    {
       withChooseEncoding(
-            docUpdateSentinel_.getEncoding(),
+            StringUtil.firstNotNullOrEmpty(new String[] {
+                  docUpdateSentinel_.getEncoding(),
+                  session_.getSessionInfo().getSystemEncoding()
+            }),
             new CommandWithArg<String>()
             {
                public void execute(String encoding)

@@ -111,6 +111,10 @@ public class SessionInfo extends JavaScriptObject
       return this.rstudio_version;
    }-*/;
 
+   public final native String getSystemEncoding() /*-{
+      return this.system_encoding;
+   }-*/;
+
    // TODO: The check for null was for migration in the presence of 
    // sessions that couldn't suspend (3/21/2011). Remove this check
    // once we are sufficiently clear of this date window.
