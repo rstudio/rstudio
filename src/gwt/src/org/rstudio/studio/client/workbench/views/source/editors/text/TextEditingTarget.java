@@ -971,13 +971,49 @@ public class TextEditingTarget implements EditingTarget
             public void onResponseReceived(Void response)
             {
                events_.fireEvent(new SendToConsoleEvent(
-                     "source(\"~/.active-rstudio-document\")",
+                     createSourceCommand("~/.active-rstudio-document", "UTF-8"),
                      true));
             }
          });
       }
    }
-   
+
+   private String normalizeEncoding(String str)
+   {
+      return StringUtil.notNull(str).replaceAll("[- ]", "").toLowerCase();
+   }
+
+   private String createSourceCommand(String path, String encoding)
+   {
+      boolean isAscii = true;
+      String code = docDisplay_.getCode();
+      for (int i = 0; i < code.length(); i++)
+      {
+         if (code.charAt(i) > 127)
+         {
+            isAscii = false;
+            break;
+         }
+      }
+
+      String systemEncoding = session_.getSessionInfo().getSystemEncoding();
+      boolean isSystemEncoding =
+            normalizeEncoding(encoding).equals(normalizeEncoding(systemEncoding));
+
+      String escapedPath = "'" +
+                           path.replace("\\", "\\\\").replace("'", "\\'") +
+                           "'";
+
+      if (isAscii || isSystemEncoding)
+         return "source(" + escapedPath + ");";
+      else
+      {
+         return "source.with.encoding(" + escapedPath + ", encoding='" +
+                docUpdateSentinel_.getEncoding() +
+                "');";
+      }
+   }
+
    @Handler
    void onPublishPDF()
    {   
@@ -1072,10 +1108,8 @@ public class TextEditingTarget implements EditingTarget
             if (fileType_.canSourceOnSave() && docUpdateSentinel_.sourceOnSave())
             {
                String path = docUpdateSentinel_.getPath();
-               String code = "source('"
-                             + path.replace("\\", "\\\\").replace("'", "\\'")
-                             + "'" +
-                             ")";
+               String code = createSourceCommand(
+                     path, docUpdateSentinel_.getEncoding());
                events_.fireEvent(new SendToConsoleEvent(code, true));
             }
          }
