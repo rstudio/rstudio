@@ -187,10 +187,24 @@ Error saveDocumentCore(const std::string& contents,
       error = r::util::iconvstr(contents,
                                 "UTF-8",
                                 pDoc->encoding(),
-                                true,
+                                false,
                                 &encoded);
       if (error)
-         return error;
+      {
+         error = r::util::iconvstr(contents,
+                                   "UTF-8",
+                                   pDoc->encoding(),
+                                   true,
+                                   &encoded);
+         if (error)
+            return error;
+
+         r::exec::warning("Not all of the characters in " + path +
+                          " could be encoded using " + pDoc->encoding() +
+                          ". To save using a different encoding, choose \"File | "
+                          "Save with Encoding...\" from the main menu.");
+         r::exec::printWarnings();
+      }
 
       // write the contents to the file
       error = writeStringToFile(fullDocPath, encoded,
