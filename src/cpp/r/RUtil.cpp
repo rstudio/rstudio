@@ -23,7 +23,7 @@
 
 #include <r/RExec.hpp>
 
-#include <R_ext/Utils.h>
+#include <R_ext/Riconv.h>
 
 using namespace core;
 
@@ -79,10 +79,11 @@ std::string rconsole2utf8(const std::string& encoded)
    return output;
 }
 
-core::Error iconv(const std::string& value,
-                  const std::string& from,
-                  const std::string& to,
-                  std::string* pResult)
+core::Error iconvstr(const std::string& value,
+                     const std::string& from,
+                     const std::string& to,
+                     bool allowSubstitution,
+                     std::string* pResult)
 {
    std::string effectiveFrom = from;
    if (effectiveFrom.empty())
@@ -97,13 +98,44 @@ core::Error iconv(const std::string& value,
       return Success();
    }
 
-   r::exec::RFunction func("iconv");
-   func.addParam("x", value);
-   func.addParam("from", effectiveFrom);
-   func.addParam("to", effectiveTo);
-   func.addParam("sub", "?");
+   std::vector<char> output;
+   output.reserve(value.length());
 
-   return func.call(pResult);
+   void* handle = ::Riconv_open(to.c_str(), from.c_str());
+   if (handle == (void*)(-1))
+      return systemError(errno, ERROR_LOCATION);
+
+   const char* pIn = value.data();
+   size_t inBytes = value.size();
+
+   char buffer[256];
+   while (inBytes > 0)
+   {
+      char* pOut = buffer;
+      size_t outBytes = sizeof(buffer);
+
+      size_t result = ::Riconv(handle, &pIn, &inBytes, &pOut, &outBytes);
+      if (buffer != pOut)
+         output.insert(output.end(), buffer, pOut);
+
+      if (result == (size_t)(-1))
+      {
+         if ((errno == EILSEQ || errno == EINVAL) && allowSubstitution)
+         {
+            output.push_back('?');
+            pIn++;
+            inBytes--;
+         }
+         else
+         {
+            return systemError(errno, ERROR_LOCATION);
+         }
+      }
+   }
+   ::Riconv_close(handle);
+
+   *pResult = std::string(output.begin(), output.end());
+   return Success();
 }
 
 } // namespace util

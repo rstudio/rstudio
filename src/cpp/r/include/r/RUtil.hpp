@@ -32,10 +32,11 @@ bool hasRequiredVersion(const std::string& version);
 
 std::string rconsole2utf8(const std::string& encoded);
 
-core::Error iconv(const std::string& value,
-                  const std::string& from,
-                  const std::string& to,
-                  std::string* result);
+core::Error iconvstr(const std::string& value,
+                     const std::string& from,
+                     const std::string& to,
+                     bool allowSubstitution,
+                     std::string* result);
 
 } // namespace util   
 } // namespace r

@@ -183,7 +183,11 @@ Error saveDocumentCore(const std::string& contents,
    if (hasPath)
    {
       std::string encoded;
-      error = r::util::iconv(contents, "UTF-8", pDoc->encoding(), &encoded);
+      error = r::util::iconvstr(contents,
+                                "UTF-8",
+                                pDoc->encoding(),
+                                true,
+                                &encoded);
       if (error)
          return error;
 

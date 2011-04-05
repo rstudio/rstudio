@@ -203,8 +203,8 @@ Error SourceDocument::setPathAndContents(const std::string& path)
       return error ;
 
    std::string contents;
-   error = r::util::iconv(encodedContents, encoding(), "UTF-8",
-                          &contents);
+   error = r::util::iconvstr(encodedContents, encoding(), "UTF-8",
+                             true, &contents);
    if (error)
       return error;
 
