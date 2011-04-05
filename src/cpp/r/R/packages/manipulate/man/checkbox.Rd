@@ -29,16 +29,18 @@ checkbox(initial = FALSE, label = NULL)
 
 \examples{
 \dontrun{
+
 ## Using checkboxes for boolean parameters
 manipulate(
-  plot(cars, axes=x, ann=y), 
-  x=checkbox(TRUE, "Draw Axes"), 
-  y=checkbox(TRUE, "Draw Labels"))
+  plot(cars, axes = axes, ann = label), 
+  axes = checkbox(TRUE, "Draw Axes"), 
+  label = checkbox(FALSE, "Draw Labels"))
 
 ## Toggle boxplot outlier display using checkbox
 manipulate(
-  boxplot(count ~ spray, data = InsectSprays, outline = outline),
+  boxplot(Freq ~ Class, data = Titanic, outline = outline),
   outline = checkbox(FALSE, "Show outliers"))
+
 }
 }
 

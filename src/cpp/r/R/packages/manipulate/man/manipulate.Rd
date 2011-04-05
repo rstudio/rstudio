@@ -34,8 +34,9 @@ JJ Allaire <jj@rstudio.org>
 
 \examples{
 \dontrun{
+
 ## Create a plot with a manipulator
-manipulate(barplot(1:x), x=slider(5, 10))
+manipulate(plot(1:x), x = slider(5, 10))
 
 ## Using more than one slider
 manipulate(
@@ -43,30 +44,31 @@ manipulate(
   x.min=slider(0,15), 
   x.max=slider(15,30))
 
-## Displaying options with a picker
+## Filtering data with a picker
 manipulate(
-  barplot(1:10, col=color), 
-  color=picker("red", "blue", "green"))
+  barplot(as.matrix(longley[,factor]), 
+          beside = TRUE, main = factor),
+  factor = picker("GNP", "Unemployed", "Employed"))
 
-## Displaying parameter choices with a picker
+## Create a picker with labels
 manipulate(
-  plot(pressure, type=type), 
-  type=picker("p", "l", "b", "c", "o", "h", "s", "S", "n"))
+  plot(pressure, type = type), 
+  type = picker("points" = "p", "line" = "l", "step" = "s"))
 
-## Using checkboxes for boolean parameters
+## Toggle boxplot outlier display using checkbox
 manipulate(
-  plot(cars, axes=x, ann=y), 
-  x=checkbox(TRUE, "Draw Axes"), 
-  y=checkbox(TRUE, "Draw Labels"))
+  boxplot(Freq ~ Class, data = Titanic, outline = outline),
+  outline = checkbox(FALSE, "Show outliers"))
 
 ## Combining controls
 manipulate(
-  plot(cars, xlim=c(x.min,x.max), type=type, axes=x, ann=y),
-  x.min=slider(0,15),
-  x.max=slider(15,30, initial=25),
-  type=picker("p", "l", "b", "c", "o", "h", "s", "S", "n"),
-  x=checkbox(TRUE, "Draw Axes"),
-  y=checkbox(FALSE, "Draw Labels"))
+  plot(cars, xlim = c(x.min, x.max), type = type, 
+       axes = axes, ann = label),
+  x.min = slider(0,15),
+  x.max = slider(15,30, initial = 25),
+  type = picker("p", "l", "b", "c", "o", "h", "s", "S", "n"),
+  axes = checkbox(TRUE, "Draw Axes"),
+  label = checkbox(FALSE, "Draw Labels"))
 }
 }
 

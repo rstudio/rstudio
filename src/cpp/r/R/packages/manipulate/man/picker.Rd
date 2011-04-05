@@ -33,17 +33,32 @@ picker(..., initial = NULL, label = NULL)
 
 \examples{
 \dontrun{
-## histogram w/ picker to select type
+
+## Filtering data with a picker
+manipulate(
+  barplot(as.matrix(longley[,factor]), 
+          beside = TRUE, main = factor),
+  factor = picker("GNP", "Unemployed", "Employed"))
+
+## Create a picker with labels
+manipulate(
+  plot(pressure, type = type), 
+  type = picker("points" = "p", "line" = "l", "step" = "s"))
+  
+## Picker with groups
+manipulate(
+  barplot(as.matrix(mtcars[group,"mpg"]), beside=TRUE),
+  group = picker("Group 1" = 1:11, 
+                 "Group 2" = 12:22, 
+                 "Group 3" = 23:32))
+
+## Histogram w/ picker to select type
 require(lattice)
 require(stats)
 manipulate(
-  histogram(~ height | voice.part, data = singer, type = type),
+  histogram(~ height | voice.part, 
+            data = singer, type = type),
   type = picker("percent", "count", "density"))
 
-## use with ggplot w/ picker for log param
-require(ggplot2)
-manipulate(
-  qplot(mpg$displ, mpg$cty, log = log),
-  log = picker("x", "y", "xy"))  
 }
 }
