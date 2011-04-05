@@ -47,11 +47,11 @@ well as menu structures (for main menu and popup menus).
             <separator/>
             <cmd refid="clearRecentFiles"/>
          </menu>
-         <separator/>
          <cmd refid="reopenSourceDocWithEncoding"/>
          <separator/>
          <cmd refid="saveSourceDoc"/>
          <cmd refid="saveSourceDocAs"/>
+         <cmd refid="saveSourceDocWithEncoding"/>
          <separator/>
          <cmd refid="printSourceDoc"/>
          <separator/>
@@ -259,6 +259,9 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Save _As..."
         buttonLabel="Save as"
         desc="Save current file to a specific path" />
+   <cmd id="saveSourceDocWithEncoding"
+        menuLabel="Save with Encoding..."
+        desc="Save the current file with a different encoding"/>
    <cmd id="closeSourceDoc"
         menuLabel="_Close"/>
    <cmd id="closeAllSourceDocs"

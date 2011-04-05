@@ -92,7 +92,7 @@ public class SourceDocument extends JavaScriptObject
    }-*/;
 
    public native final String getEncoding() /*-{
-      return this.encoding || "UTF-8";
+      return this.encoding || "";
    }-*/;
 
    public native final void setEncoding(String encoding) /*-{

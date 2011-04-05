@@ -29,6 +29,7 @@ public abstract class Commands extends CommandBundle
    public abstract AppCommand reopenSourceDocWithEncoding();
    public abstract AppCommand saveSourceDoc();
    public abstract AppCommand saveSourceDocAs();
+   public abstract AppCommand saveSourceDocWithEncoding();
    public abstract AppCommand closeSourceDoc();
    public abstract AppCommand closeAllSourceDocs();
    public abstract AppCommand executeAllCode();

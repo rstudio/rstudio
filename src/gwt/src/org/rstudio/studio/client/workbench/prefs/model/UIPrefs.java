@@ -77,6 +77,6 @@ public class UIPrefs extends Prefs
 
    public PrefValue<String> defaultEncoding()
    {
-      return string("default_encoding", "UTF-8");
+      return string("default_encoding", "");
    }
 }

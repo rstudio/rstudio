@@ -63,6 +63,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -193,6 +194,7 @@ public class TextEditingTarget implements EditingTarget
    @Inject
    public TextEditingTarget(Commands commands,
                             SourceServerOperations server,
+                            WorkbenchServerOperations server2,
                             EventBus events,
                             GlobalDisplay globalDisplay,
                             FileDialogs fileDialogs,
@@ -205,6 +207,7 @@ public class TextEditingTarget implements EditingTarget
    {
       commands_ = commands;
       server_ = server;
+      server2_ = server2;
       events_ = events;
       globalDisplay_ = globalDisplay;
       fileDialogs_ = fileDialogs;
@@ -502,7 +505,7 @@ public class TextEditingTarget implements EditingTarget
                          "Do you want to save changes before continuing?",
                          true,
                          new Operation() {
-                            public void execute() { saveThenExecute(command); }
+                            public void execute() { saveThenExecute(null, command); }
                          },
                          new Operation() {
                             public void execute() { command.execute(); }
@@ -518,27 +521,128 @@ public class TextEditingTarget implements EditingTarget
       }
    }
 
-   private void saveThenExecute(Command command)
+   private void saveThenExecute(String encodingOverride, final Command command)
    {
-      String path = docUpdateSentinel_.getPath();
+      final String path = docUpdateSentinel_.getPath();
       if (path == null)
       {
-         saveNewFile(null, command);
+         saveNewFile(null, encodingOverride, command);
          return;
       }
 
-      docUpdateSentinel_.save(path,
-                              null,
-                              null,
-                              new ExplicitSaveProgressIndicator(
-                                    FileSystemItem.createFile(path),
-                                    null,
-                                    command
-                              ));
+      withEncodingRequiredUnlessAscii(
+            encodingOverride,
+            new CommandWithArg<String>()
+            {
+               public void execute(String encoding)
+               {
+                  docUpdateSentinel_.save(path,
+                                          null,
+                                          encoding,
+                                          new ExplicitSaveProgressIndicator(
+                                                FileSystemItem.createFile(path),
+                                                null,
+                                                command
+                                          ));
+               }
+            });
+         }
+
+   private void saveNewFile(final String suggestedPath,
+                            String encodingOverride,
+                            final Command executeOnSuccess)
+   {
+      withEncodingRequiredUnlessAscii(
+            encodingOverride,
+            new CommandWithArg<String>()
+            {
+               public void execute(String encoding)
+               {
+                  saveNewFileWithEncoding(suggestedPath,
+                                          encoding,
+                                          executeOnSuccess);
+               }
+            });
    }
 
-   private void saveNewFile(String suggestedPath,
-                            final Command executeOnSuccess)
+   private void withEncodingRequiredUnlessAscii(
+         final String encodingOverride,
+         final CommandWithArg<String> command)
+   {
+      final String encoding = StringUtil.firstNotNullOrEmpty(new String[] {
+            encodingOverride,
+            docUpdateSentinel_.getEncoding(),
+            prefs_.defaultEncoding().getValue()
+      });
+
+      if (StringUtil.isNullOrEmpty(encoding))
+      {
+         if (docUpdateSentinel_.isAscii())
+         {
+            // Don't bother asking when it's just ASCII
+            command.execute(null);
+         }
+         else
+         {
+            withChooseEncoding(encoding, new CommandWithArg<String>()
+            {
+               public void execute(String newEncoding)
+               {
+                  command.execute(newEncoding);
+               }
+            });
+         }
+      }
+      else
+      {
+         command.execute(encoding);
+      }
+   }
+
+   private void withChooseEncoding(final String defaultEncoding,
+                                   final CommandWithArg<String> command)
+   {
+      server_.iconvlist(new SimpleRequestCallback<IconvListResult>()
+      {
+         @Override
+         public void onResponseReceived(IconvListResult response)
+         {
+            // Stupid compiler. Use this Value shim to make the dialog available
+            // in its own handler.
+            final HasValue<ChooseEncodingDialog> d = new Value<ChooseEncodingDialog>(null);
+            d.setValue(new ChooseEncodingDialog(
+                  response.getCommon(),
+                  response.getAll(),
+                  defaultEncoding,
+                  false,
+                  true,
+                  new OperationWithInput<String>()
+                  {
+                     public void execute(String newEncoding)
+                     {
+                        if (newEncoding == null)
+                           return;
+
+                        if (d.getValue().isSaveAsDefault())
+                        {
+                           prefs_.defaultEncoding().setValue(newEncoding);
+                           server2_.setUiPrefs(
+                                 session_.getSessionInfo().getUiPrefs(), 
+                                 new SimpleRequestCallback<Void>("Error Saving Preference"));
+                        }
+
+                        command.execute(newEncoding);
+                     }
+                  }));
+            d.getValue().showModal();
+         }
+      });
+
+   }
+
+   private void saveNewFileWithEncoding(String suggestedPath,
+                                        final String encoding,
+                                        final Command executeOnSuccess)
    {
       FileSystemItem fsi = suggestedPath != null
                            ? FileSystemItem.createFile(suggestedPath)
@@ -576,7 +680,7 @@ public class TextEditingTarget implements EditingTarget
                      docUpdateSentinel_.save(
                            saveItem.getPath(),
                            fileType.getTypeId(),
-                           null,
+                           encoding,
                            new ExplicitSaveProgressIndicator(saveItem,
                                                              fileType,
                                                              executeOnSuccess));
@@ -648,40 +752,43 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onReopenSourceDocWithEncoding()
    {
-      server_.iconvlist(new SimpleRequestCallback<IconvListResult>()
-      {
-         @Override
-         public void onResponseReceived(IconvListResult response)
-         {
-            String currentEncoding = docUpdateSentinel_.getEncoding();
-
-            new ChooseEncodingDialog(
-                  response.getCommon(), response.getAll(), currentEncoding,
-                  new OperationWithInput<String>()
-                  {
-                     public void execute(String encoding)
-                     {
-                        if (encoding == null)
-                           return;
-
-                        docUpdateSentinel_.reopenWithEncoding(encoding);
-                     }
-                  }).showModal();
-         }
-      });
+      withChooseEncoding(
+            docUpdateSentinel_.getEncoding(),
+            new CommandWithArg<String>()
+            {
+               public void execute(String encoding)
+               {
+                  docUpdateSentinel_.reopenWithEncoding(encoding);
+               }
+            });
    }
 
    @Handler
    void onSaveSourceDoc()
    {
-      saveThenExecute(sourceOnSaveCommandIfApplicable());
+      saveThenExecute(null, sourceOnSaveCommandIfApplicable());
    }
 
    @Handler
    void onSaveSourceDocAs()
    {
       saveNewFile(docUpdateSentinel_.getPath(),
+                  null,
                   sourceOnSaveCommandIfApplicable());
+   }
+
+   @Handler
+   void onSaveSourceDocWithEncoding()
+   {
+      withChooseEncoding(
+            docUpdateSentinel_.getEncoding(),
+            new CommandWithArg<String>()
+            {
+               public void execute(String encoding)
+               {
+                  saveThenExecute(encoding, sourceOnSaveCommandIfApplicable());
+               }
+            });
    }
 
    @Handler
@@ -920,7 +1027,7 @@ public class TextEditingTarget implements EditingTarget
    
    void handlePdfCommand(final String function)
    {
-      saveThenExecute(new Command() {
+      saveThenExecute(null, new Command() {
          public void execute()
          {
             String path = docUpdateSentinel_.getPath();
@@ -960,10 +1067,18 @@ public class TextEditingTarget implements EditingTarget
          {
             if (fileType_.canSourceOnSave() && docUpdateSentinel_.sourceOnSave())
             {
+               String encodingArg = "";
+               if (!StringUtil.isNullOrEmpty(docUpdateSentinel_.getEncoding()))
+               {
+                  encodingArg = " encoding=\"" + docUpdateSentinel_.getEncoding() + "\"";
+               }
+
                String path = docUpdateSentinel_.getPath();
                String code = "source('"
                              + path.replace("\\", "\\\\").replace("'", "\\'")
-                             + "')";
+                             + "'" +
+                             encodingArg +
+                             ")";
                events_.fireEvent(new SendToConsoleEvent(code, true));
             }
          }
@@ -1074,6 +1189,7 @@ public class TextEditingTarget implements EditingTarget
    private Display view_;
    private final Commands commands_;
    private SourceServerOperations server_;
+   private final WorkbenchServerOperations server2_;
    private EventBus events_;
    private final GlobalDisplay globalDisplay_;
    private final FileDialogs fileDialogs_;

@@ -5,6 +5,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.inject.Inject;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -31,7 +32,8 @@ public class EditingPreferencesPane extends PreferencesPane
       add(indent(marginCol_ = numericPref("Margin column", prefs.printMarginColumn())));
 //      add(checkboxPref("Automatically insert matching parens/quotes", prefs_.insertMatching()));
       add(checkboxPref("Soft-wrap R source files", prefs_.softWrapRFiles()));
- 
+
+      encodingValue_ = prefs_.defaultEncoding().getValue();
       add(encoding_ = new TextBoxWithButton(
             "Default text encoding:",
             "Change...",
@@ -47,7 +49,9 @@ public class EditingPreferencesPane extends PreferencesPane
                         new ChooseEncodingDialog(
                               response.getCommon(),
                               response.getAll(),
-                              encoding_.getText(),
+                              encodingValue_,
+                              true,
+                              false,
                               new OperationWithInput<String>()
                               {
                                  public void execute(String encoding)
@@ -55,7 +59,7 @@ public class EditingPreferencesPane extends PreferencesPane
                                     if (encoding == null)
                                        return;
 
-                                    encoding_.setText(encoding);
+                                    setEncoding(encoding);
                                  }
                               }).showModal();
                      }
@@ -65,7 +69,16 @@ public class EditingPreferencesPane extends PreferencesPane
             }));
       encoding_.setWidth("250px");
       encoding_.addStyleName(res_.styles().encodingChooser());
-      encoding_.setText(prefs.defaultEncoding().getValue());
+      setEncoding(prefs.defaultEncoding().getValue());
+   }
+
+   private void setEncoding(String encoding)
+   {
+      encodingValue_ = encoding;
+      if (StringUtil.isNullOrEmpty(encoding))
+         encoding_.setText("[Ask every time]");
+      else
+         encoding_.setText(encoding);
    }
 
 
@@ -92,7 +105,7 @@ public class EditingPreferencesPane extends PreferencesPane
    public void onApply()
    {
       super.onApply();
-      prefs_.defaultEncoding().setValue(encoding_.getText());
+      prefs_.defaultEncoding().setValue(encodingValue_);
    }
 
    private final SourceServerOperations server_;
@@ -101,6 +114,7 @@ public class EditingPreferencesPane extends PreferencesPane
    private final NumericValueWidget tabWidth_;
    private final NumericValueWidget marginCol_;
    private final TextBoxWithButton encoding_;
+   private String encodingValue_;
    private final CheckBox spacesForTab_;
    private final CheckBox showMargin_;
 }

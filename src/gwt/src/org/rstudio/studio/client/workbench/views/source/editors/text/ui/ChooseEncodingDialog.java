@@ -9,6 +9,7 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 
@@ -17,16 +18,24 @@ public class ChooseEncodingDialog extends ModalDialog<String>
    public ChooseEncodingDialog(JsArrayString commonEncodings,
                                JsArrayString allEncodings,
                                String currentEncoding,
+                               boolean includePromptForEncoding,
+                               boolean includeSaveAsDefault,
                                OperationWithInput<String> operation)
    {
       super("Choose Encoding", operation);
       commonEncodings_ = commonEncodings;
       allEncodings_ = allEncodings;
       currentEncoding_ = currentEncoding;
+      includePromptForEncoding_ = includePromptForEncoding;
+      includeSaveAsDefault_ = includeSaveAsDefault;
    }
 
    private void setCurrentValue(String currentEncoding)
    {
+      currentEncoding = StringUtil.notNull(currentEncoding);
+      if (!includePromptForEncoding_ && "".equals(currentEncoding))
+         return;
+
       // Select current value if it exists--if not, add it
       for (int i = 0; i < listBox_.getItemCount(); i++)
          if (listBox_.getValue(i).equalsIgnoreCase(currentEncoding))
@@ -74,20 +83,47 @@ public class ChooseEncodingDialog extends ModalDialog<String>
                setEncodings(commonEncodings_, currentEncoding_);
          }
       });
-      showAll.getElement().getStyle().setDisplay(Display.BLOCK);
-      showAll.getElement().getStyle().setMarginTop(8, Unit.PX);
-      showAll.getElement().getStyle().setMarginBottom(12, Unit.PX);
+      setCheckBoxMargins(showAll, 8, 12);
 
       VerticalPanel panel = new VerticalPanel();
       panel.add(listBox_);
       panel.add(showAll);
 
+      if (includeSaveAsDefault_)
+      {
+         saveAsDefault_ = new CheckBox("Set as default encoding for " +
+                                       "source files");
+         setCheckBoxMargins(showAll, 8, 0);
+         setCheckBoxMargins(saveAsDefault_, 3, 12);
+         panel.add(saveAsDefault_);
+      }
+
       return panel;
+   }
+
+   private void setCheckBoxMargins(CheckBox checkBox,
+                                   int topMargin,
+                                   int bottomMargin)
+   {
+      checkBox.getElement().getStyle().setDisplay(Display.BLOCK);
+      checkBox.getElement().getStyle().setMarginTop(topMargin, Unit.PX);
+      checkBox.getElement().getStyle().setMarginBottom(bottomMargin, Unit.PX);
+   }
+
+   public boolean isSaveAsDefault()
+   {
+      return saveAsDefault_ != null && saveAsDefault_.getValue();
    }
 
    private void setEncodings(JsArrayString encodings, String encoding)
    {
       listBox_.clear();
+
+      if (includePromptForEncoding_)
+      {
+         listBox_.addItem("[Ask every time]", "");
+      }
+
       for (int i = 0; i < encodings.length(); i++)
          listBox_.addItem(encodings.get(i));
 
@@ -98,4 +134,7 @@ public class ChooseEncodingDialog extends ModalDialog<String>
    private final JsArrayString commonEncodings_;
    private final JsArrayString allEncodings_;
    private final String currentEncoding_;
+   private final boolean includePromptForEncoding_;
+   private final boolean includeSaveAsDefault_;
+   private CheckBox saveAsDefault_;
 }

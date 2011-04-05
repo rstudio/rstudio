@@ -200,6 +200,14 @@ public class StringUtil
       return output.toString();
    }
 
+   public static String firstNotNullOrEmpty(String[] strings)
+   {
+      for (String s : strings)
+         if (!isNullOrEmpty(s))
+            return s;
+      return null;
+   }
+
    private static final long[] SIZES = {
          1024L, // kilobyte
          1024L * 1024L, // megabyte

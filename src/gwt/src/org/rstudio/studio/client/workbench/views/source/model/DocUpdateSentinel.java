@@ -457,6 +457,15 @@ public class DocUpdateSentinel
       return sourceDoc_.getEncoding();
    }
 
+   public boolean isAscii()
+   {
+      String code = docDisplay_.getCode();
+      for (int i = 0; i < code.length(); i++)
+         if (code.charAt(i) >= 128)
+            return false;
+      return true;
+   }
+
    private boolean changesPending_ = false;
    private final ChangeTracker changeTracker_;
    private final SourceServerOperations server_;
