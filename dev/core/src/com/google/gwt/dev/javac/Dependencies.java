@@ -84,6 +84,13 @@ class Dependencies implements Serializable {
   }
 
   /**
+   * Returns the list of API references used by {@link TypeOracle} to determine type availability.
+   */
+  List<String> getApiRefs() {
+    return apiRefs;
+  }
+
+  /**
    * Returns the list of deps that cannot be resolved at all.
    */
   List<String> findMissingApiRefs(Set<String> allValidClasses) {
@@ -115,7 +122,7 @@ class Dependencies implements Serializable {
       }
     }
   }
-
+  
   /**
    * Validate that all of my existing dependencies can be found in the global
    * set of valid classes, and resolve to structurally identical APIs.

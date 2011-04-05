@@ -19,7 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.javac.CompilationProblemReporter;
 
 /**
  * A deferred binding condition to determine whether the type being rebound is
@@ -49,7 +49,8 @@ public class ConditionWhenTypeAssignableTo extends Condition {
     String testType = query.getTestType();
     JClassType fromType = typeOracle.findType(testType);
     if (fromType == null) {
-      Util.logMissingTypeErrorWithHints(logger, testType);
+      CompilationProblemReporter.logMissingTypeErrorWithHints(logger, testType,
+          query.getCompilationState());
       throw new UnableToCompleteException();
     }
 

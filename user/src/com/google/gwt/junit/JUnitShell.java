@@ -31,6 +31,7 @@ import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.cfg.Property;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
+import com.google.gwt.dev.javac.CompilationProblemReporter;
 import com.google.gwt.dev.shell.CheckForUpdates;
 import com.google.gwt.dev.shell.jetty.JettyLauncher;
 import com.google.gwt.dev.util.arg.ArgHandlerDeployDir;
@@ -719,7 +720,7 @@ public class JUnitShell extends DevMode {
    * the type oracle, there's no way this test can possibly run. Bail early
    * instead of failing on the client.
    */
-  private static JUnitFatalLaunchException checkTestClassInCurrentModule(
+  private static JUnitFatalLaunchException checkTestClassInCurrentModule(TreeLogger logger,
       CompilationState compilationState, String moduleName, TestCase testCase) {
     TypeOracle typeOracle = compilationState.getTypeOracle();
     String typeName = testCase.getClass().getName();
@@ -735,6 +736,7 @@ public class JUnitShell extends DevMode {
       errMsg = "The test class '" + typeName + "' was not found in module '"
           + moduleName + "'; no compilation unit for that type was seen";
     } else if (unit.isError()) {
+      CompilationProblemReporter.logMissingTypeErrorWithHints(logger, typeName, compilationState);
       errMsg = "The test class '" + typeName
           + "' had compile errors; check log for details";
     } else {
@@ -1341,11 +1343,11 @@ public class JUnitShell extends DevMode {
     if (!sameTest) {
       currentModule = compileStrategy.maybeCompileModule(moduleName,
           syntheticModuleName, strategy, batchingStrategy, getTopLogger());
-      currentCompilationState = currentModule.getCompilationState(getTopLogger());
+      currentCompilationState = currentModule.getCompilationState(getTopLogger(), true);
     }
     assert (currentModule != null);
 
-    JUnitFatalLaunchException launchException = checkTestClassInCurrentModule(
+    JUnitFatalLaunchException launchException = checkTestClassInCurrentModule(getTopLogger(),
         currentCompilationState, moduleName, testCase);
     if (launchException != null) {
       testResult.addError(testCase, launchException);

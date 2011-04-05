@@ -49,7 +49,7 @@ public abstract class Rule {
       throws UnableToCompleteException {
     DeferredBindingQuery query = new DeferredBindingQuery(
         context.getPropertyOracle(), context.getActiveLinkerNames(),
-        context.getTypeOracle(), typeName);
+        context.getCompilationState(), typeName);
     boolean result = rootCondition.isTrue(logger, query);
     fallbackEvalCost = query.getFallbackEvaluationCost();
     return result;

@@ -416,7 +416,7 @@ public class Precompile {
       File genDir) {
     Event validateEvent = SpeedTracerLogger.start(CompilerEventType.VALIDATE);
     try {
-      CompilationState compilationState = module.getCompilationState(logger);
+      CompilationState compilationState = module.getCompilationState(logger, !jjsOptions.isStrict());
       if (jjsOptions.isStrict() && compilationState.hasErrors()) {
         abortDueToStrictMode(logger);
       }
@@ -502,7 +502,7 @@ public class Precompile {
     new GraphicsInitThread().start();
 
     try {
-      CompilationState compilationState = module.getCompilationState(logger);
+      CompilationState compilationState = module.getCompilationState(logger, !jjsOptions.isStrict());
       if (jjsOptions.isStrict() && compilationState.hasErrors()) {
         abortDueToStrictMode(logger);
       }

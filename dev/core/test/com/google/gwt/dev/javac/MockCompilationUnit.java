@@ -29,12 +29,18 @@ class MockCompilationUnit extends CompilationUnit {
 
   private final ContentId contentId;
   private final long lastModified;
+  private final String resourceLocation;
   private final String source;
   private final String typeName;
 
   public MockCompilationUnit(String typeName, String source) {
+    this(typeName, source, "/mock/" + Shared.toPath(typeName));
+  }
+
+  public MockCompilationUnit(String typeName, String source, String resourceLocation) {
     this.typeName = typeName;
     this.source = source;
+    this.resourceLocation = resourceLocation;
     contentId = new ContentId(typeName, source);
     lastModified = nextTimestamp.getAndIncrement();
   }
@@ -61,7 +67,7 @@ class MockCompilationUnit extends CompilationUnit {
 
   @Override
   public String getResourceLocation() {
-    return "/mock/" + Shared.toPath(typeName);
+    return resourceLocation;
   }
 
   @Override

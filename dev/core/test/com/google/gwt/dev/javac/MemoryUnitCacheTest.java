@@ -70,4 +70,20 @@ public class MemoryUnitCacheTest extends TestCase {
     result = cache.find("/mock/com/example.Bar");
     assertNull(result);
   }
+  
+  public void testUnitsWithSameTypeName() {
+    MemoryUnitCache cache = new MemoryUnitCache();
+    CompilationUnit result;
+    
+    MockCompilationUnit foo1 = new MockCompilationUnit("com.example.Foo", "source1", "location1");
+    cache.add(foo1);
+    MockCompilationUnit foo2 = new MockCompilationUnit("com.example.Foo", "source2", "location2");
+    cache.add(foo2);
+    result = cache.find("location1");
+    assertEquals("com.example.Foo", result.getTypeName());
+    assertEquals(foo1.getContentId(), result.getContentId());
+    result = cache.find("location2");
+    assertEquals("com.example.Foo", result.getTypeName());
+    assertEquals(foo2.getContentId(), result.getContentId());    
+  }
 }

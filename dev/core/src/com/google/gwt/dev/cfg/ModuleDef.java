@@ -23,6 +23,7 @@ import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
+import com.google.gwt.dev.javac.CompilationProblemReporter;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dev.resource.impl.DefaultFilters;
@@ -318,12 +319,16 @@ public class ModuleDef {
   public String getCanonicalName() {
     return name;
   }
-
-  public synchronized CompilationState getCompilationState(TreeLogger logger)
+  
+  public CompilationState getCompilationState(TreeLogger logger) throws UnableToCompleteException {
+    return getCompilationState(logger, false);
+  }
+  
+  public synchronized CompilationState getCompilationState(TreeLogger logger, boolean suppressErrors)
       throws UnableToCompleteException {
     doRefresh();
-    CompilationState compilationState = CompilationStateBuilder.buildFrom(
-        logger, lazySourceOracle.getResources());
+    CompilationState compilationState =
+        CompilationStateBuilder.buildFrom(logger, lazySourceOracle.getResources(), null, suppressErrors);
     checkForSeedTypes(logger, compilationState);
     return compilationState;
   }
@@ -499,7 +504,8 @@ public class ModuleDef {
     boolean seedTypesMissing = false;
     TypeOracle typeOracle = compilationState.getTypeOracle();
     if (typeOracle.findType("java.lang.Object") == null) {
-      Util.logMissingTypeErrorWithHints(logger, "java.lang.Object");
+      CompilationProblemReporter.logMissingTypeErrorWithHints(logger, "java.lang.Object",
+          compilationState);
       seedTypesMissing = true;
     } else {
       TreeLogger branch = logger.branch(TreeLogger.TRACE,
@@ -508,7 +514,8 @@ public class ModuleDef {
       for (int i = 0; i < typeNames.length; i++) {
         String typeName = typeNames[i];
         if (typeOracle.findType(typeName) == null) {
-          Util.logMissingTypeErrorWithHints(branch, typeName);
+          CompilationProblemReporter.logMissingTypeErrorWithHints(branch, typeName,
+              compilationState);
           seedTypesMissing = true;
         }
       }

@@ -27,6 +27,7 @@ import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.javac.CompilationProblemReporter;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompiledClass;
@@ -1231,6 +1232,12 @@ public final class CompilingClassLoader extends ClassLoader implements
       }
       classBytes = newBytes;
     }
+    
+    if (unit != null && unit.isError()) {
+      // Compile worked, but the unit had some kind of error (JSNI?)
+      CompilationProblemReporter.reportErrors(logger, unit, false);
+    }
+
     return classBytes;
   }
 

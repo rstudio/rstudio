@@ -31,12 +31,22 @@ import java.util.Set;
  */
 public class TypeOracleTestingUtils {
 
-  public static TypeOracleMediator buildMediator(TreeLogger logger,
-      Set<Resource> resources, Set<GeneratedUnit> generatedUnits) {
-    CompilationState state = CompilationStateBuilder.buildFrom(logger,
-        resources);
+  public static CompilationState buildCompilationState(TreeLogger logger, Set<Resource> resources,
+      Set<GeneratedUnit> generatedUnits) {
+    CompilationState state = CompilationStateBuilder.buildFrom(logger, resources);
     state.addGeneratedCompilationUnits(logger, generatedUnits);
-    return state.getMediator();
+    return state;
+  }
+
+  public static CompilationState buildStandardCompilationStateWith(TreeLogger logger,
+      Resource... resources) {
+    return buildCompilationState(logger, standardBuildersPlus(new HashSet<Resource>(Arrays
+        .asList(resources))), Collections.<GeneratedUnit> emptySet());
+  }
+
+  public static TypeOracleMediator buildMediator(TreeLogger logger, Set<Resource> resources,
+      Set<GeneratedUnit> generatedUnits) {
+    return buildCompilationState(logger, resources, generatedUnits).getMediator();
   }
 
   public static TypeOracleMediator buildMediatorWith(TreeLogger logger,

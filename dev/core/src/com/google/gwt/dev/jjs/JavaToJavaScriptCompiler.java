@@ -40,6 +40,8 @@ import com.google.gwt.core.linker.SoycReportLinker;
 import com.google.gwt.dev.Permutation;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
+import com.google.gwt.dev.javac.CompilationProblemReporter;
+import com.google.gwt.dev.javac.CompilationProblemReporter.SourceFetcher;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
 import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
@@ -139,7 +141,6 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.soyc.SoycDashboard;
 import com.google.gwt.soyc.io.ArtifactsOutputDirectory;
 
-import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
@@ -835,6 +836,17 @@ public class JavaToJavaScriptCompiler {
     return stats;
   }
 
+  /**
+   * Look through the list of compiled units for errors and log them to the
+   * console.
+   * 
+   * @param logger logger to use for compilation errors
+   * @param cuds compiled units to analyze for errors. 
+   * @param itemizeErrors log each error or simply log one message if the build
+   *          failed.
+   * @throws UnableToCompleteException if a compilation error is found in the
+   *           cuds argument.
+   */
   static void checkForErrors(TreeLogger logger,
       CompilationUnitDeclaration[] cuds, boolean itemizeErrors)
       throws UnableToCompleteException {
@@ -843,40 +855,21 @@ public class JavaToJavaScriptCompiler {
     if (cuds.length == 0) {
       compilationFailed = true;
     }
-    Set<IProblem> problemSet = new HashSet<IProblem>();
     for (CompilationUnitDeclaration cud : cuds) {
-      CompilationResult result = cud.compilationResult();
+      final CompilationResult result = cud.compilationResult();
       if (result.hasErrors()) {
         compilationFailed = true;
         // Early out if we don't need to itemize.
         if (!itemizeErrors) {
           break;
         }
-        TreeLogger branch = logger.branch(TreeLogger.ERROR, "Errors in "
-            + String.valueOf(result.getFileName()), null);
-        IProblem[] errors = result.getErrors();
-        for (IProblem problem : errors) {
-          if (problemSet.contains(problem)) {
-            continue;
+        String typeName = new String(cud.getMainTypeName());
+        CompilationProblemReporter.reportErrors(logger, result.getErrors(), new String(cud
+            .getFileName()), true, new SourceFetcher() {
+          public String getSource() {
+            return new String(result.getCompilationUnit().getContents());
           }
-
-          problemSet.add(problem);
-
-          // Strip the initial code from each error.
-          //
-          String msg = problem.toString();
-          msg = msg.substring(msg.indexOf(' '));
-
-          // Append 'file (line): msg' to the error message.
-          //
-          int line = problem.getSourceLineNumber();
-          StringBuffer msgBuf = new StringBuffer();
-          msgBuf.append("Line ");
-          msgBuf.append(line);
-          msgBuf.append(": ");
-          msgBuf.append(msg);
-          branch.log(TreeLogger.ERROR, msgBuf.toString(), null);
-        }
+        }, typeName, false);
       }
     }
     checkForErrorsEvent.end();

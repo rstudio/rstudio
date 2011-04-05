@@ -18,7 +18,7 @@ package com.google.gwt.dev.cfg;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.TypeOracleTestingUtils;
 
 import junit.framework.TestCase;
@@ -32,7 +32,7 @@ import java.util.Set;
  */
 public class ConditionTest extends TestCase {
   private PropertyOracle propertyOracle;
-  private TypeOracle typeOracle;
+  private CompilationState compilationState;
   private static Set<String> activeLinkerNames = new LinkedHashSet<String>(
       Arrays.asList("linker1", "linker2", "xs"));
 
@@ -51,7 +51,7 @@ public class ConditionTest extends TestCase {
     propertyOracle = new StaticPropertyOracle(new BindingProperty[] {binding1},
         new String[] {"true"}, new ConfigurationProperty[] {conf1});
 
-    typeOracle = TypeOracleTestingUtils.buildStandardTypeOracleWith(TreeLogger.NULL);
+    compilationState = TypeOracleTestingUtils.buildStandardCompilationStateWith(TreeLogger.NULL);
   }
 
   public void testBasics() throws UnableToCompleteException {
@@ -107,6 +107,6 @@ public class ConditionTest extends TestCase {
   private boolean isTrue(Condition cond, String testType)
       throws UnableToCompleteException {
     return cond.isTrue(TreeLogger.NULL, new DeferredBindingQuery(
-        propertyOracle, activeLinkerNames, typeOracle, testType));
+        propertyOracle, activeLinkerNames, compilationState, testType));
   }
 }

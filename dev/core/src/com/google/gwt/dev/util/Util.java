@@ -463,24 +463,6 @@ public final class Util {
     }
   }
 
-  public static boolean isCompilationUnitOnDisk(String loc) {
-    try {
-      if (new File(loc).exists()) {
-        return true;
-      }
-
-      URL url = new URL(loc);
-      String s = url.toExternalForm();
-      if (s.startsWith("file:") || s.startsWith("jar:file:")
-          || s.startsWith("zip:file:")) {
-        return true;
-      }
-    } catch (MalformedURLException e) {
-      // Probably not really on disk.
-    }
-    return false;
-  }
-
   public static boolean isValidJavaIdent(String token) {
     if (token.length() == 0) {
       return false;
@@ -514,43 +496,6 @@ public final class Util {
   // }
   // return (String[]) lines.toArray(new String[lines.size()]);
   // }
-
-  public static void logMissingTypeErrorWithHints(TreeLogger logger,
-      String missingType) {
-    logger = logger.branch(TreeLogger.ERROR, "Unable to find type '"
-        + missingType + "'", null);
-
-    ClassLoader cl = Thread.currentThread().getContextClassLoader();
-
-    URL sourceURL = findSourceInClassPath(cl, missingType);
-    if (sourceURL != null) {
-      if (missingType.indexOf(".client.") != -1) {
-        Messages.HINT_PRIOR_COMPILER_ERRORS.log(logger, null);
-        Messages.HINT_CHECK_MODULE_INHERITANCE.log(logger, null);
-      } else {
-        // Give the best possible hint here.
-        //
-        if (findSourceInClassPath(cl, missingType) == null) {
-          Messages.HINT_CHECK_MODULE_NONCLIENT_SOURCE_DECL.log(logger, null);
-        } else {
-          Messages.HINT_PRIOR_COMPILER_ERRORS.log(logger, null);
-        }
-      }
-    } else if (!missingType.equals("java.lang.Object")) {
-      Messages.HINT_CHECK_TYPENAME.log(logger, missingType, null);
-      Messages.HINT_CHECK_CLASSPATH_SOURCE_ENTRIES.log(logger, null);
-    }
-
-    // For Object in particular, there's a special warning.
-    //
-    if (missingType.indexOf("java.lang.") == 0) {
-      Messages.HINT_CHECK_INHERIT_CORE.log(logger, null);
-    } else if (missingType.indexOf("com.google.gwt.core.") == 0) {
-      Messages.HINT_CHECK_INHERIT_CORE.log(logger, null);
-    } else if (missingType.indexOf("com.google.gwt.user.") == 0) {
-      Messages.HINT_CHECK_INHERIT_USER.log(logger, null);
-    }
-  }
 
   /**
    * Attempts to make a path relative to a particular directory.
@@ -612,64 +557,6 @@ public final class Util {
     File f = makeRelativeFile(from, new File(to));
     return (f != null ? f.getPath() : null);
   }
-
-  /**
-   * Give the developer a chance to see the in-memory source that failed.
-   */
-  public static void maybeDumpSource(TreeLogger logger, String location,
-      String source, String typeName) {
-
-    if (location.startsWith("/mock/")) {
-      // Unit test mocks, don't dump to disk.
-      return;
-    }
-
-    if (isCompilationUnitOnDisk(location)) {
-      // Don't write another copy.
-      return;
-    }
-
-    if (!logger.isLoggable(TreeLogger.INFO)) {
-      // Don't bother dumping source if they can't see the related message.
-      return;
-    }
-
-    File tmpSrc;
-    Throwable caught = null;
-    try {
-      // The tempFile prefix must be at least 3 characters
-      while (typeName.length() < 3) {
-        typeName = "_" + typeName;
-      }
-      tmpSrc = File.createTempFile(typeName, ".java");
-      writeStringAsFile(tmpSrc, source);
-      String dumpPath = tmpSrc.getAbsolutePath();
-      logger.log(TreeLogger.INFO, "See snapshot: " + dumpPath, null);
-      return;
-    } catch (IOException e) {
-      caught = e;
-    }
-    logger.log(TreeLogger.INFO, "Unable to dump source to disk", caught);
-  }
-
-  // public static byte[][] readFileAndSplit(File file) {
-  // RandomAccessFile f = null;
-  // try {
-  // f = new RandomAccessFile(file, "r");
-  // int length = f.readInt();
-  // byte[][] results = new byte[length][];
-  // for (int i = 0; i < length; i++) {
-  // int nextLength = f.readInt();
-  // results[i] = new byte[nextLength];
-  // f.read(results[i]);
-  // }
-  // return results;
-  // } catch (IOException e) {
-  // return null;
-  // } finally {
-  // Utility.close(f);
-  // }
-  // }
 
   public static byte[] readFileAsBytes(File file) {
     FileInputStream fileInputStream = null;

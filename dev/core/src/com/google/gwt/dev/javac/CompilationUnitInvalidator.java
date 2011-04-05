@@ -16,11 +16,7 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.TreeLogger.HelpInfo;
-import com.google.gwt.core.ext.TreeLogger.Type;
-import com.google.gwt.dev.util.Util;
 
-import org.eclipse.jdt.core.compiler.CategorizedProblem;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -36,16 +32,6 @@ import java.util.Map.Entry;
  * other invalidate units.
  */
 public class CompilationUnitInvalidator {
-
-  @SuppressWarnings("deprecation")
-  public static void reportErrors(TreeLogger logger, CompilationUnit unit) {
-    TreeLogger branch = reportErrors(logger, unit.getProblems(),
-        unit.getResourceLocation(), unit.isError());
-    if (branch != null) {
-      Util.maybeDumpSource(branch, unit.getResourceLocation(), unit.getSource(),
-          unit.getTypeName());
-    }
-  }
 
   public static void retainValidUnits(TreeLogger logger,
       Collection<CompilationUnit> units, Map<String, CompiledClass> validClasses) {
@@ -92,50 +78,5 @@ public class CompilationUnitInvalidator {
     } while (changed);
 
     units.retainAll(currentlyValidUnits);
-  }
-
-  private static TreeLogger reportErrors(TreeLogger logger,
-      CategorizedProblem[] problems, String fileName, boolean isError) {
-    if (problems == null || problems.length == 0) {
-      return null;
-    }
-    TreeLogger branch = null;
-    // Log the errors and GWT warnings.
-    for (CategorizedProblem problem : problems) {
-      TreeLogger.Type logLevel;
-      if (problem.isError()) {
-        // Log errors.
-        logLevel = TreeLogger.ERROR;
-        // Only log GWT-specific warnings.
-      } else if (problem.isWarning() && problem instanceof GWTProblem) {
-        logLevel = TreeLogger.WARN;
-      } else {
-        // Ignore all other problems.
-        continue;
-      }
-      // Append 'Line #: msg' to the error message.
-      StringBuffer msgBuf = new StringBuffer();
-      int line = problem.getSourceLineNumber();
-      if (line > 0) {
-        msgBuf.append("Line ");
-        msgBuf.append(line);
-        msgBuf.append(": ");
-      }
-      msgBuf.append(problem.getMessage());
-
-      HelpInfo helpInfo = null;
-      if (problem instanceof GWTProblem) {
-        GWTProblem gwtProblem = (GWTProblem) problem;
-        helpInfo = gwtProblem.getHelpInfo();
-      }
-      if (branch == null) {
-        Type branchType = isError ? TreeLogger.ERROR : TreeLogger.WARN;
-        String branchString = isError ? "Errors" : "Warnings";
-        branch = logger.branch(branchType, branchString + " in '" + fileName
-            + "'", null);
-      }
-      branch.log(logLevel, msgBuf.toString(), null, helpInfo);
-    }
-    return branch;
   }
 }

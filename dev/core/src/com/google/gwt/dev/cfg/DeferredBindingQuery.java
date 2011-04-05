@@ -18,6 +18,7 @@ package com.google.gwt.dev.cfg;
 
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.javac.CompilationState;
 
 import java.util.Set;
 
@@ -30,8 +31,7 @@ public class DeferredBindingQuery {
   private final Set<String> linkerNames;
   private final PropertyOracle propertyOracle;
   private final String testType;
-  private final TypeOracle typeOracle;
-
+  private final CompilationState compilationState;
   /**
    * Construct a query for contexts where a type is not available. Such a query
    * also does not need a type oracle.
@@ -44,17 +44,21 @@ public class DeferredBindingQuery {
   /**
    * Construct a fully general query, including a query type and type oracle.
    */
-  public DeferredBindingQuery(PropertyOracle propertyOracle,
-      Set<String> linkerNames, TypeOracle typeOracle, String testType) {
+  public DeferredBindingQuery(PropertyOracle propertyOracle, Set<String> linkerNames,
+      CompilationState compilationState, String testType) {
     assert propertyOracle != null;
     assert linkerNames != null;
 
     this.propertyOracle = propertyOracle;
     this.linkerNames = linkerNames;
-    this.typeOracle = typeOracle;
     this.testType = testType;
+    this.compilationState = compilationState;
   }
 
+  public CompilationState getCompilationState() {
+    return compilationState;
+  }
+  
   public int getFallbackEvaluationCost() {
     return fallbackEvalCost;
   }
@@ -72,7 +76,7 @@ public class DeferredBindingQuery {
   }
 
   public TypeOracle getTypeOracle() {
-    return typeOracle;
+    return compilationState.getTypeOracle();
   }
 
   public void setFallbackEvaluationCost(int cost) {

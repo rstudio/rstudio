@@ -521,6 +521,9 @@ public class StandardGeneratorContext implements GeneratorContextExt {
     return this;
   }
 
+  public CompilationState getCompilationState() {
+    return compilationState;
+  }
   /**
    * Gets all committed Java units.
    */

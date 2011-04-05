@@ -104,8 +104,10 @@ public abstract class DevModeBase implements DoneCallback {
         ModuleDef moduleDef = loadModule(logger, moduleName, true);
         assert (moduleDef != null);
 
+        CompilationState compilationState =
+            moduleDef.getCompilationState(logger, !options.isStrict());
         ShellModuleSpaceHost host =
-            doCreateShellModuleSpaceHost(logger, moduleDef.getCompilationState(logger), moduleDef);
+            doCreateShellModuleSpaceHost(logger, compilationState, moduleDef);
         return host;
       } catch (RuntimeException e) {
         logger.log(TreeLogger.ERROR, "Exception initializing module", e);

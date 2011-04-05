@@ -22,9 +22,9 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JConstructor;
 import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.javac.CompilationProblemReporter;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompilationUnitBuilder;
-import com.google.gwt.dev.javac.CompilationUnitInvalidator;
 import com.google.gwt.dev.javac.JdtCompiler;
 import com.google.gwt.dev.javac.TypeOracleMediatorFromSource;
 import com.google.gwt.dev.resource.Resource;
@@ -193,7 +193,7 @@ public final class ApiContainer {
     TreeLogger branch = logger.branch(TreeLogger.TRACE,
         "Checking for compile errors");
     for (CompilationUnit unit : units) {
-      CompilationUnitInvalidator.reportErrors(branch, unit);
+      CompilationProblemReporter.reportErrors(branch, unit, false);
       anyError |= unit.isError();
     }
     if (anyError) {
