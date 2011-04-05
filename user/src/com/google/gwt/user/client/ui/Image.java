@@ -24,6 +24,14 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
+import com.google.gwt.event.dom.client.DragEnterEvent;
+import com.google.gwt.event.dom.client.DragEnterHandler;
+import com.google.gwt.event.dom.client.DragExitEvent;
+import com.google.gwt.event.dom.client.DragExitHandler;
+import com.google.gwt.event.dom.client.DragOverEvent;
+import com.google.gwt.event.dom.client.DragOverHandler;
+import com.google.gwt.event.dom.client.DropEvent;
+import com.google.gwt.event.dom.client.DropHandler;
 import com.google.gwt.event.dom.client.ErrorEvent;
 import com.google.gwt.event.dom.client.ErrorHandler;
 import com.google.gwt.event.dom.client.GestureChangeEvent;
@@ -32,6 +40,7 @@ import com.google.gwt.event.dom.client.GestureEndEvent;
 import com.google.gwt.event.dom.client.GestureEndHandler;
 import com.google.gwt.event.dom.client.GestureStartEvent;
 import com.google.gwt.event.dom.client.GestureStartHandler;
+import com.google.gwt.event.dom.client.HasAllDragAndDropHandlers;
 import com.google.gwt.event.dom.client.HasAllGestureHandlers;
 import com.google.gwt.event.dom.client.HasAllMouseHandlers;
 import com.google.gwt.event.dom.client.HasAllTouchHandlers;
@@ -110,8 +119,8 @@ import java.util.HashMap;
 @SuppressWarnings("deprecation")
 public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
     HasErrorHandlers, SourcesClickEvents, HasClickHandlers,
-    HasDoubleClickHandlers, HasAllGestureHandlers, HasAllMouseHandlers, HasAllTouchHandlers,
-    SourcesMouseEvents {
+    HasDoubleClickHandlers, HasAllDragAndDropHandlers, HasAllGestureHandlers,
+    HasAllMouseHandlers, HasAllTouchHandlers, SourcesMouseEvents {
 
   /**
    * The attribute that is set when an image fires a native load or error event
@@ -497,6 +506,22 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
 
   public HandlerRegistration addDoubleClickHandler(DoubleClickHandler handler) {
     return addHandler(handler, DoubleClickEvent.getType());
+  }
+
+  public HandlerRegistration addDragEnterHandler(DragEnterHandler handler) {
+    return addBitlessDomHandler(handler, DragEnterEvent.getType());
+  }
+
+  public HandlerRegistration addDragExitHandler(DragExitHandler handler) {
+    return addBitlessDomHandler(handler, DragExitEvent.getType());
+  }
+  
+  public HandlerRegistration addDragOverHandler(DragOverHandler handler) {
+    return addBitlessDomHandler(handler, DragOverEvent.getType());
+  }
+
+  public HandlerRegistration addDropHandler(DropHandler handler) {
+    return addBitlessDomHandler(handler, DropEvent.getType());
   }
 
   public HandlerRegistration addErrorHandler(ErrorHandler handler) {

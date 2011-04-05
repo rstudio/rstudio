@@ -24,12 +24,21 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
+import com.google.gwt.event.dom.client.DragEnterEvent;
+import com.google.gwt.event.dom.client.DragEnterHandler;
+import com.google.gwt.event.dom.client.DragExitEvent;
+import com.google.gwt.event.dom.client.DragExitHandler;
+import com.google.gwt.event.dom.client.DragOverEvent;
+import com.google.gwt.event.dom.client.DragOverHandler;
+import com.google.gwt.event.dom.client.DropEvent;
+import com.google.gwt.event.dom.client.DropHandler;
 import com.google.gwt.event.dom.client.GestureChangeEvent;
 import com.google.gwt.event.dom.client.GestureChangeHandler;
 import com.google.gwt.event.dom.client.GestureEndEvent;
 import com.google.gwt.event.dom.client.GestureEndHandler;
 import com.google.gwt.event.dom.client.GestureStartEvent;
 import com.google.gwt.event.dom.client.GestureStartHandler;
+import com.google.gwt.event.dom.client.HasAllDragAndDropHandlers;
 import com.google.gwt.event.dom.client.HasAllGestureHandlers;
 import com.google.gwt.event.dom.client.HasAllMouseHandlers;
 import com.google.gwt.event.dom.client.HasAllTouchHandlers;
@@ -87,8 +96,9 @@ import com.google.gwt.i18n.shared.DirectionEstimator;
 @SuppressWarnings("deprecation")
 public class Label extends LabelBase<String> implements HasDirectionalText,
     HasDirection, HasClickHandlers, HasDoubleClickHandlers, SourcesClickEvents,
-    SourcesMouseEvents, HasAllGestureHandlers, HasAllMouseHandlers,
-    HasAllTouchHandlers, IsEditor<LeafValueEditor<String>> {
+    SourcesMouseEvents, HasAllDragAndDropHandlers, HasAllGestureHandlers,
+    HasAllMouseHandlers, HasAllTouchHandlers,
+    IsEditor<LeafValueEditor<String>> {
 
   public static final DirectionEstimator DEFAULT_DIRECTION_ESTIMATOR =
       DirectionalTextHelper.DEFAULT_DIRECTION_ESTIMATOR;
@@ -197,6 +207,22 @@ public class Label extends LabelBase<String> implements HasDirectionalText,
 
   public HandlerRegistration addDoubleClickHandler(DoubleClickHandler handler) {
     return addDomHandler(handler, DoubleClickEvent.getType());
+  }
+
+  public HandlerRegistration addDragEnterHandler(DragEnterHandler handler) {
+    return addBitlessDomHandler(handler, DragEnterEvent.getType());
+  }
+
+  public HandlerRegistration addDragExitHandler(DragExitHandler handler) {
+    return addBitlessDomHandler(handler, DragExitEvent.getType());
+  }
+  
+  public HandlerRegistration addDragOverHandler(DragOverHandler handler) {
+    return addBitlessDomHandler(handler, DragOverEvent.getType());
+  }
+
+  public HandlerRegistration addDropHandler(DropHandler handler) {
+    return addBitlessDomHandler(handler, DropEvent.getType());
   }
 
   public HandlerRegistration addGestureChangeHandler(GestureChangeHandler handler) {
