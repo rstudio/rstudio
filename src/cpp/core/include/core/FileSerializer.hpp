@@ -39,10 +39,10 @@ Error writeCollectionToFile(
    using namespace boost::system::errc ;
    
    // open the file stream
-   std::string file = filePath.absolutePath();
-   std::ofstream ofs(file.c_str(), std::ios_base::out | std::ios_base::trunc ) ;
-   if (!ofs)
-      return systemError(no_such_file_or_directory,ERROR_LOCATION);
+   boost::shared_ptr<std::ostream> pOfs;
+   Error error = filePath.open_w(&pOfs, true);
+   if (error)
+      return error;
 
    // write each line 
    for (typename CollectionType::const_iterator 
@@ -50,14 +50,11 @@ Error writeCollectionToFile(
          it != collection.end(); 
          ++it)
    {
-      ofs << stringifyFunction(*it) << std::endl ;
+      *pOfs << stringifyFunction(*it) << std::endl ;
 
-     if (ofs.fail())
+     if (pOfs->fail())
           return systemError(io_error, ERROR_LOCATION);
    }
-
-   // close file
-   ofs.close() ;
 
    return Success() ;
 }
@@ -80,10 +77,10 @@ Error readCollectionFromFile(
    using namespace boost::system::errc ;
    
    // open the file stream
-   std::string file = filePath.absolutePath();
-   std::ifstream ifs(file.c_str()) ;
-   if (!ifs)
-      return systemError(no_such_file_or_directory,ERROR_LOCATION);
+   boost::shared_ptr<std::istream> pIfs;
+   Error error = filePath.open_r(&pIfs);
+   if (error)
+      return error;
    
    // create insert iterator
    std::insert_iterator<CollectionType> insertIterator(*pCollection, 
@@ -94,10 +91,10 @@ Error readCollectionFromFile(
    while (true)
    {
       // read the next line
-      std::getline(ifs, nextLine) ;
-      if (ifs.eof()) 
+      std::getline(*pIfs, nextLine) ;
+      if (pIfs->eof())
          break;
-      else if (ifs.fail())
+      else if (pIfs->fail())
          return systemError(io_error, ERROR_LOCATION);
       
       // trim whitespace then ignore it if it is a blank line
@@ -122,9 +119,6 @@ Error readCollectionFromFile(
       }
    }
    
-   // close file
-   ifs.close() ;
-
    return Success() ;
 }
 
@@ -135,18 +129,17 @@ Error appendToFile(const core::FilePath& filePath,
    using namespace boost::system::errc ;
    
    // open the file stream
-   std::string file = filePath.absolutePath();
-   std::ofstream ofs(file.c_str(), std::ios_base::out | std::ios_base::app) ;
-   if (!ofs)
-      return systemError(no_such_file_or_directory,ERROR_LOCATION);
+   boost::shared_ptr<std::ostream> pOfs;
+   Error error = filePath.open_w(&pOfs, false);
+   if (error)
+      return error;
+
+   pOfs->seekp(0, std::ios_base::end);
    
    // append the content 
-   ofs << content  ;
-   if (ofs.fail())
+   *pOfs << content  ;
+   if (pOfs->fail())
       return systemError(io_error, ERROR_LOCATION);
-   
-   // close file
-   ofs.close() ;
    
    return Success() ;
 }

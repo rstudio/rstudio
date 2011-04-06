@@ -23,6 +23,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
+#include <boost/iostreams/stream.hpp>
 
 #include <boost/utility.hpp>
 
@@ -138,6 +139,9 @@ public:
 
    // make this path the system current directory
    Error makeCurrentPath(bool autoCreate = false) const ;
+
+   Error open_r(boost::shared_ptr<std::istream>* pStream) const;
+   Error open_w(boost::shared_ptr<std::ostream>* pStream, bool truncate = true) const;
 
    // compare two instances (equal if absolutePath == absolutePath)
    bool operator== (const FilePath& filePath) const ;

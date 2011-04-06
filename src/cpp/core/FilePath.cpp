@@ -14,6 +14,7 @@
 #include <core/FilePath.hpp>
 
 #include <algorithm>
+#include <fstream>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -27,6 +28,8 @@
 #define BOOST_FILESYSTEM2_NARROW_ONLY
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include <boost/filesystem.hpp>
+#include <boost/iostreams/stream.hpp>
+#include <boost/iostreams/device/file_descriptor.hpp>
 
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
@@ -762,6 +765,39 @@ Error FilePath::makeCurrentPath(bool autoCreate) const
       addErrorProperties(pImpl_->path, &error) ;
       return error ;
    }
+}
+
+Error FilePath::open_r(boost::shared_ptr<std::istream>* pStream) const
+{
+   pStream->reset(new std::ifstream(absolutePath().c_str(),
+                                    std::ios_base::in | std::ios_base::binary));
+
+   if (!(*pStream))
+   {
+      Error error = systemError(boost::system::errc::no_such_file_or_directory, ERROR_LOCATION);
+      error.addProperty("path", absolutePath());
+   }
+
+   return Success();
+}
+
+Error FilePath::open_w(boost::shared_ptr<std::ostream>* pStream, bool truncate) const
+{
+   using std::ios_base;
+   ios_base::openmode flags = ios_base::out | ios_base::binary;
+   if (truncate)
+      flags |= ios_base::trunc;
+   else
+      flags |= ios_base::app;
+   pStream->reset(new std::ofstream(absolutePath().c_str(), flags));
+
+   if (!(*pStream))
+   {
+      Error error = systemError(boost::system::errc::no_such_file_or_directory, ERROR_LOCATION);
+      error.addProperty("path", absolutePath());
+   }
+
+   return Success();
 }
 
 bool FilePath::operator== (const FilePath& filePath) const 

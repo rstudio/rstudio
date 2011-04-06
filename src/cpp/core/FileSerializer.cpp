@@ -120,25 +120,21 @@ Error writeStringToFile(const FilePath& filePath,
    using namespace boost::system::errc ;
    
    // open file
-   std::string file = filePath.absolutePath();
-   std::ofstream ofs(file.c_str(), std::ios_base::out | std::ios_base::binary);
-   if (!ofs)
-   {
-      Error error = systemError(no_such_file_or_directory,ERROR_LOCATION);
-      error.addProperty("path", file);
+   boost::shared_ptr<std::ostream> pOfs;
+   Error error = filePath.open_w(&pOfs);
+   if (error)
       return error;
-   }
    
    try
    {
       // set exception mask (required for proper reporting of errors)
-      ofs.exceptions(std::istream::failbit | std::istream::badbit);
+      pOfs->exceptions(std::ostream::failbit | std::ostream::badbit);
       
       // copy string to file
       std::string normalized = str;
       string_utils::convertLineEndings(&normalized, lineEnding);
       std::istringstream istr(normalized);
-      boost::iostreams::copy(istr, ofs);
+      boost::iostreams::copy(istr, *pOfs);
       
       // return success
       return Success();
@@ -148,7 +144,7 @@ Error writeStringToFile(const FilePath& filePath,
       Error error = systemError(boost::system::errc::io_error, 
                                 ERROR_LOCATION);
       error.addProperty("what", e.what());
-      error.addProperty("path", file);
+      error.addProperty("path", filePath.absolutePath());
       return error;
    }
 }
@@ -160,24 +156,19 @@ Error readStringFromFile(const FilePath& filePath,
    using namespace boost::system::errc ;
    
    // open file
-   std::string file = filePath.absolutePath();
-   std::ifstream ifs(file.c_str(), std::ios_base::in | std::ios_base::binary) ;
-   if (!ifs)
-   {
-      Error error = systemError(no_such_file_or_directory,ERROR_LOCATION);
-      error.addProperty("path", file);
+   boost::shared_ptr<std::istream> pIfs;
+   Error error = filePath.open_r(&pIfs);
+   if (error)
       return error;
-   }
-   
 
    try
    {
       // set exception mask (required for proper reporting of errors)
-      ifs.exceptions(std::istream::failbit | std::istream::badbit);
+      pIfs->exceptions(std::istream::failbit | std::istream::badbit);
       
       // copy file to string stream
       std::ostringstream ostr;
-      boost::iostreams::copy(ifs, ostr);
+      boost::iostreams::copy(*pIfs, ostr);
       *pStr = ostr.str();
       string_utils::convertLineEndings(pStr, lineEnding);
 
@@ -189,7 +180,7 @@ Error readStringFromFile(const FilePath& filePath,
       Error error = systemError(boost::system::errc::io_error, 
                                 ERROR_LOCATION);
       error.addProperty("what", e.what());
-      error.addProperty("path", file);
+      error.addProperty("path", filePath.absolutePath());
       return error;
    }
 }
