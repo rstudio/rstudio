@@ -76,7 +76,7 @@ public class EditingPreferencesPane extends PreferencesPane
    {
       encodingValue_ = encoding;
       if (StringUtil.isNullOrEmpty(encoding))
-         encoding_.setText("[Ask every time]");
+         encoding_.setText(ChooseEncodingDialog.ASK_LABEL);
       else
          encoding_.setText(encoding);
    }

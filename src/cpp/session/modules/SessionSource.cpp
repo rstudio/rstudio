@@ -109,9 +109,19 @@ Error openDocument(const json::JsonRpcRequest& request,
    // set the doc contents to the specified file
    SourceDocument doc(type) ;
    doc.setEncoding(encoding);
-   error = doc.setPathAndContents(path);
+   error = doc.setPathAndContents(path, false);
    if (error)
-      return error ;
+   {
+      error = doc.setPathAndContents(path, true);
+      if (error)
+         return error ;
+
+      r::exec::warning("Not all characters in " + documentPath.absolutePath() +
+                       " could be decoded using " + encoding + ". To try a "
+                       "different encoding, choose \"File | Reopen with "
+                       "Encoding...\" from the main menu.");
+      r::exec::printWarnings();
+   }
 
    // recover durable properties if they are available
    json::Object properties;
@@ -187,10 +197,24 @@ Error saveDocumentCore(const std::string& contents,
       error = r::util::iconvstr(contents,
                                 "UTF-8",
                                 pDoc->encoding(),
-                                true,
+                                false,
                                 &encoded);
       if (error)
-         return error;
+      {
+         error = r::util::iconvstr(contents,
+                                   "UTF-8",
+                                   pDoc->encoding(),
+                                   true,
+                                   &encoded);
+         if (error)
+            return error;
+
+         r::exec::warning("Not all of the characters in " + path +
+                          " could be encoded using " + pDoc->encoding() +
+                          ". To save using a different encoding, choose \"File | "
+                          "Save with Encoding...\" from the main menu.");
+         r::exec::printWarnings();
+      }
 
       // write the contents to the file
       error = writeStringToFile(fullDocPath, encoded,
@@ -390,9 +414,17 @@ Error reopen(std::string id, std::string fileType, std::string encoding,
    if (!fileType.empty())
       doc.setType(fileType);
 
-   error = doc.setPathAndContents(doc.path());
+   error = doc.setPathAndContents(doc.path(), false);
    if (error)
-      return error ;
+   {
+      error = doc.setPathAndContents(doc.path(), true);
+      if (error)
+         return error ;
+
+      r::exec::warning("Not all characters in " + doc.path() +
+                       " could be decoded using " + encoding + ".");
+      r::exec::printWarnings();
+   }
    doc.setDirty(false);
 
    error = source_database::put(doc);

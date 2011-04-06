@@ -371,6 +371,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
                                                    getInitialWorkingDirectory());
    sessionInfo["initial_working_dir"] = initialWorkingDir;
 
+   sessionInfo["system_encoding"] = std::string(::locale2charset(NULL));
+
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)
    json::JsonRpcResponse jsonRpcResponse ;

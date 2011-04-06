@@ -79,6 +79,21 @@
         all=sort(iconvlist()))
 })
 
+.rs.addGlobalFunction('source.with.encoding',
+   function(path, encoding,
+         echo=getOption('verbose'),
+         print.eval=echo,
+         max.deparse.length=150,
+         chdir=FALSE)
+{
+   con = file(path, open='r', encoding=encoding)
+   on.exit(close(con))
+   source(con,
+          echo=echo,
+          print.eval=print.eval,
+          max.deparse.length=max.deparse.length,
+          chdir=chdir)
+})
 
 ### Detect free variables ###
 

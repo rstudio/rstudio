@@ -189,7 +189,8 @@ void SourceDocument::setContents(const std::string& contents)
 }
 
 // set contents from file
-Error SourceDocument::setPathAndContents(const std::string& path)
+Error SourceDocument::setPathAndContents(const std::string& path,
+                                         bool allowSubstChars)
 {
    // resolve aliased path
    FilePath docPath = module_context::resolveAliasedPath(path);
@@ -204,7 +205,7 @@ Error SourceDocument::setPathAndContents(const std::string& path)
 
    std::string contents;
    error = r::util::iconvstr(encodedContents, encoding(), "UTF-8",
-                             true, &contents);
+                             allowSubstChars, &contents);
    if (error)
       return error;
 
