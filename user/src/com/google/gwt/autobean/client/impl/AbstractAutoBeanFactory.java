@@ -26,8 +26,7 @@ import java.util.Map;
 /**
  * Provides base implementations of AutoBeanFactory methods.
  */
-public abstract class AbstractAutoBeanFactory implements AutoBeanFactory,
-    EnumMap {
+public abstract class AbstractAutoBeanFactory implements AutoBeanFactory, EnumMap {
 
   protected Map<Enum<?>, String> enumToStringMap;
   // This map is almost always one-to-one

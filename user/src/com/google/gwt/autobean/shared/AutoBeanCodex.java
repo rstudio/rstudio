@@ -101,8 +101,7 @@ public class AutoBeanCodex {
         throw new RuntimeException(type.getName());
       }
       for (int i = 0, j = data.size(); i < j; i++) {
-        Object element = data.isNull(i) ? null
-            : elementDecoder.decode(data.get(i));
+        Object element = data.isNull(i) ? null : elementDecoder.decode(data.get(i));
         collection.add(element);
       }
       return collection;
@@ -180,16 +179,14 @@ public class AutoBeanCodex {
         Splittable values = data.get(1);
         for (int i = 0, j = keys.size(); i < j; i++) {
           Object key = keys.isNull(i) ? null : keyDecoder.decode(keys.get(i));
-          Object value = values.isNull(i) ? null
-              : valueDecoder.decode(values.get(i));
+          Object value = values.isNull(i) ? null : valueDecoder.decode(values.get(i));
           toReturn.put(key, value);
         }
       } else {
         ValueCoder keyValueDecoder = (ValueCoder) keyDecoder;
         for (String rawKey : data.getPropertyKeys()) {
           Object key = keyValueDecoder.decode(rawKey);
-          Object value = data.isNull(rawKey) ? null
-              : valueDecoder.decode(data.get(rawKey));
+          Object value = data.isNull(rawKey) ? null : valueDecoder.decode(data.get(rawKey));
           toReturn.put(key, value);
         }
       }
@@ -287,8 +284,7 @@ public class AutoBeanCodex {
     @Override
     public boolean visit(AutoBean<?> bean, Context ctx) {
       if (seen.contains(bean)) {
-        throw new HaltException(new UnsupportedOperationException(
-            "Cycles not supported"));
+        throw new HaltException(new UnsupportedOperationException("Cycles not supported"));
       }
       seen.push(bean);
       sb.append("{");
@@ -296,8 +292,8 @@ public class AutoBeanCodex {
     }
 
     @Override
-    public boolean visitReferenceProperty(String propertyName,
-        AutoBean<?> value, PropertyContext ctx) {
+    public boolean visitReferenceProperty(String propertyName, AutoBean<?> value,
+        PropertyContext ctx) {
       if (value != null) {
         encodeProperty(propertyName, value.as(), ctx);
       }
@@ -305,17 +301,14 @@ public class AutoBeanCodex {
     }
 
     @Override
-    public boolean visitValueProperty(String propertyName, Object value,
-        PropertyContext ctx) {
-      if (value != null
-          && !value.equals(ValueCodex.getUninitializedFieldValue(ctx.getType()))) {
+    public boolean visitValueProperty(String propertyName, Object value, PropertyContext ctx) {
+      if (value != null && !value.equals(ValueCodex.getUninitializedFieldValue(ctx.getType()))) {
         encodeProperty(propertyName, value, ctx);
       }
       return false;
     }
 
-    private void encodeProperty(String propertyName, Object value,
-        PropertyContext ctx) {
+    private void encodeProperty(String propertyName, Object value, PropertyContext ctx) {
       CoderCreator pd = new CoderCreator();
       ctx.accept(pd);
       Coder decoder = pd.getCoder();
@@ -342,15 +335,14 @@ public class AutoBeanCodex {
     }
 
     @Override
-    public boolean visitReferenceProperty(String propertyName,
-        AutoBean<?> value, PropertyContext ctx) {
+    public boolean visitReferenceProperty(String propertyName, AutoBean<?> value,
+        PropertyContext ctx) {
       decodeProperty(propertyName, ctx);
       return false;
     }
 
     @Override
-    public boolean visitValueProperty(String propertyName, Object value,
-        PropertyContext ctx) {
+    public boolean visitValueProperty(String propertyName, Object value, PropertyContext ctx) {
       decodeProperty(propertyName, ctx);
       return false;
     }
@@ -401,8 +393,7 @@ public class AutoBeanCodex {
     }
   }
 
-  public static <T> AutoBean<T> decode(AutoBeanFactory factory, Class<T> clazz,
-      Splittable data) {
+  public static <T> AutoBean<T> decode(AutoBeanFactory factory, Class<T> clazz, Splittable data) {
     return new AutoBeanCodex(factory).doDecode(clazz, data);
   }
 
@@ -416,8 +407,7 @@ public class AutoBeanCodex {
    *          {@link #encode(AutoBean)}
    * @return an AutoBean containing the payload contents
    */
-  public static <T> AutoBean<T> decode(AutoBeanFactory factory, Class<T> clazz,
-      String payload) {
+  public static <T> AutoBean<T> decode(AutoBeanFactory factory, Class<T> clazz, String payload) {
     Splittable data = StringQuoter.split(payload);
     return decode(factory, clazz, data);
   }

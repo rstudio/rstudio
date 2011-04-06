@@ -127,8 +127,8 @@ public final class AutoBeanUtils {
     // Remove the entries that are equal, adding nulls for missing properties
     a.accept(new AutoBeanVisitor() {
       @Override
-      public boolean visitReferenceProperty(String propertyName,
-          AutoBean<?> previousValue, PropertyContext ctx) {
+      public boolean visitReferenceProperty(String propertyName, AutoBean<?> previousValue,
+          PropertyContext ctx) {
         if (toReturn.containsKey(propertyName)) {
           if (equal(propertyName, previousValue)) {
             // No change
@@ -142,8 +142,8 @@ public final class AutoBeanUtils {
       }
 
       @Override
-      public boolean visitValueProperty(String propertyName,
-          Object previousValue, PropertyContext ctx) {
+      public boolean visitValueProperty(String propertyName, Object previousValue,
+          PropertyContext ctx) {
         if (toReturn.containsKey(propertyName)) {
           if (equal(propertyName, previousValue)) {
             // No change
@@ -157,14 +157,14 @@ public final class AutoBeanUtils {
       }
 
       private boolean equal(String propertyName, AutoBean<?> previousValue) {
-        return previousValue == null && toReturn.get(propertyName) == null
-            || previousValue != null && equal(propertyName, previousValue.as());
+        return previousValue == null && toReturn.get(propertyName) == null || previousValue != null
+            && equal(propertyName, previousValue.as());
       }
 
       private boolean equal(String propertyName, Object previousValue) {
         Object currentValue = toReturn.get(propertyName);
-        return previousValue == null && currentValue == null
-            || previousValue != null && previousValue.equals(currentValue);
+        return previousValue == null && currentValue == null || previousValue != null
+            && previousValue.equals(currentValue);
       }
     });
     return toReturn;
@@ -184,15 +184,14 @@ public final class AutoBeanUtils {
     // Look at the previous value of all properties
     bean.accept(new AutoBeanVisitor() {
       @Override
-      public boolean visitReferenceProperty(String propertyName,
-          AutoBean<?> value, PropertyContext ctx) {
+      public boolean visitReferenceProperty(String propertyName, AutoBean<?> value,
+          PropertyContext ctx) {
         toReturn.put(propertyName, value == null ? null : value.as());
         return false;
       }
 
       @Override
-      public boolean visitValueProperty(String propertyName, Object value,
-          PropertyContext ctx) {
+      public boolean visitValueProperty(String propertyName, Object value, PropertyContext ctx) {
         toReturn.put(propertyName, value);
         return false;
       }
@@ -209,8 +208,8 @@ public final class AutoBeanUtils {
    */
   @SuppressWarnings("unchecked")
   public static <T, U extends T> AutoBean<T> getAutoBean(U delegate) {
-    return delegate == null ? null : (AutoBean<T>) WeakMapping.get(delegate,
-        AutoBean.class.getName());
+    return delegate == null ? null : (AutoBean<T>) WeakMapping.get(delegate, AutoBean.class
+        .getName());
   }
 
   /**
@@ -225,8 +224,7 @@ public final class AutoBeanUtils {
 
     if (value instanceof Collection<?> && otherValue instanceof Collection<?>) {
       // Check collections
-      return sameOrEquals((Collection<?>) value, (Collection<?>) otherValue,
-          pending, null);
+      return sameOrEquals((Collection<?>) value, (Collection<?>) otherValue, pending, null);
     }
 
     if (value instanceof Map<?, ?> && otherValue instanceof Map<?, ?>) {
@@ -250,8 +248,7 @@ public final class AutoBeanUtils {
 
     if (value instanceof AutoBean<?> && otherValue instanceof AutoBean<?>) {
       // Check ValueProxies
-      return sameOrEquals((AutoBean<?>) value, (AutoBean<?>) otherValue,
-          pending);
+      return sameOrEquals((AutoBean<?>) value, (AutoBean<?>) otherValue, pending);
     }
 
     if (value == null ^ otherValue == null) {
@@ -270,8 +267,8 @@ public final class AutoBeanUtils {
    * If a comparison between two AutoBeans is currently pending, this method
    * will skip their comparison.
    */
-  private static boolean sameOrEquals(AutoBean<?> value,
-      AutoBean<?> otherValue, Map<PendingComparison, Comparison> pending) {
+  private static boolean sameOrEquals(AutoBean<?> value, AutoBean<?> otherValue,
+      Map<PendingComparison, Comparison> pending) {
     if (value == otherValue) {
       // Simple case
       return true;
@@ -315,8 +312,7 @@ public final class AutoBeanUtils {
    * Compare two collections by size, then by contents. List comparisons will
    * preserve order. All other collections will be treated with bag semantics.
    */
-  private static boolean sameOrEquals(Collection<?> collection,
-      Collection<?> otherCollection,
+  private static boolean sameOrEquals(Collection<?> collection, Collection<?> otherCollection,
       Map<PendingComparison, Comparison> pending, Map<Object, Object> pairs) {
     if (collection.size() != otherCollection.size()
         || !collection.getClass().equals(otherCollection.getClass())) {
@@ -443,8 +439,7 @@ public final class AutoBeanUtils {
       }
 
       // Look at keys only in otherValue, and ensure nullness
-      List<String> otherKeys = new ArrayList<String>(
-          otherValue.getPropertyKeys());
+      List<String> otherKeys = new ArrayList<String>(otherValue.getPropertyKeys());
       otherKeys.removeAll(keys);
       for (String key : otherKeys) {
         if (!value.isNull(key)) {

@@ -109,8 +109,7 @@ public final class JsoSplittable extends JavaScriptObject implements Splittable 
   }
 
   public String getPayload() {
-    throw new UnsupportedOperationException(
-        "Cannot convert JsoSplittable to payload");
+    throw new UnsupportedOperationException("Cannot convert JsoSplittable to payload");
   }
 
   public List<String> getPropertyKeys() {
@@ -136,7 +135,7 @@ public final class JsoSplittable extends JavaScriptObject implements Splittable 
   }-*/;
 
   public native boolean isString() /*-{
-    return typeof(this) == 'string' || this instanceof String;
+    return typeof (this) == 'string' || this instanceof String;
   }-*/;
 
   public native int size() /*-{

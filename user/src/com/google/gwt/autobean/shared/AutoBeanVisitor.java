@@ -169,8 +169,8 @@ public class AutoBeanVisitor {
    * @param value the property value
    * @param ctx a PropertyContext
    */
-  public void endVisitCollectionProperty(String propertyName,
-      AutoBean<Collection<?>> value, CollectionPropertyContext ctx) {
+  public void endVisitCollectionProperty(String propertyName, AutoBean<Collection<?>> value,
+      CollectionPropertyContext ctx) {
     endVisitReferenceProperty(propertyName, value, ctx);
   }
 
@@ -181,8 +181,8 @@ public class AutoBeanVisitor {
    * @param value the property value
    * @param ctx a PropertyContext
    */
-  public void endVisitMapProperty(String propertyName,
-      AutoBean<Map<?, ?>> value, MapPropertyContext ctx) {
+  public void endVisitMapProperty(String propertyName, AutoBean<Map<?, ?>> value,
+      MapPropertyContext ctx) {
     endVisitReferenceProperty(propertyName, value, ctx);
   }
 
@@ -193,8 +193,7 @@ public class AutoBeanVisitor {
    * @param value the property value
    * @param ctx a PropertyContext
    */
-  public void endVisitReferenceProperty(String propertyName, AutoBean<?> value,
-      PropertyContext ctx) {
+  public void endVisitReferenceProperty(String propertyName, AutoBean<?> value, PropertyContext ctx) {
   }
 
   /**
@@ -204,8 +203,7 @@ public class AutoBeanVisitor {
    * @param value the property value
    * @param ctx a PropertyContext
    */
-  public void endVisitValueProperty(String propertyName, Object value,
-      PropertyContext ctx) {
+  public void endVisitValueProperty(String propertyName, Object value, PropertyContext ctx) {
   }
 
   /**
@@ -226,8 +224,8 @@ public class AutoBeanVisitor {
    * @param value the property value
    * @param ctx a PropertyContext
    */
-  public boolean visitCollectionProperty(String propertyName,
-      AutoBean<Collection<?>> value, CollectionPropertyContext ctx) {
+  public boolean visitCollectionProperty(String propertyName, AutoBean<Collection<?>> value,
+      CollectionPropertyContext ctx) {
     return visitReferenceProperty(propertyName, value, ctx);
   }
 
@@ -239,8 +237,8 @@ public class AutoBeanVisitor {
    * @param value the property value
    * @param ctx a PropertyContext
    */
-  public boolean visitMapProperty(String propertyName,
-      AutoBean<Map<?, ?>> value, MapPropertyContext ctx) {
+  public boolean visitMapProperty(String propertyName, AutoBean<Map<?, ?>> value,
+      MapPropertyContext ctx) {
     return visitReferenceProperty(propertyName, value, ctx);
   }
 
@@ -252,8 +250,7 @@ public class AutoBeanVisitor {
    * @param value the property value
    * @param ctx a PropertyContext
    */
-  public boolean visitReferenceProperty(String propertyName, AutoBean<?> value,
-      PropertyContext ctx) {
+  public boolean visitReferenceProperty(String propertyName, AutoBean<?> value, PropertyContext ctx) {
     return true;
   }
 
@@ -264,8 +261,7 @@ public class AutoBeanVisitor {
    * @param value the property value
    * @param ctx a PropertyContext
    */
-  public boolean visitValueProperty(String propertyName, Object value,
-      PropertyContext ctx) {
+  public boolean visitValueProperty(String propertyName, Object value, PropertyContext ctx) {
     return true;
   }
 }

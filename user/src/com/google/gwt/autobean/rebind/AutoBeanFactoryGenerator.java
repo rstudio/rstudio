@@ -67,8 +67,8 @@ public class AutoBeanFactoryGenerator extends Generator {
   private AutoBeanFactoryModel model;
 
   @Override
-  public String generate(TreeLogger logger, GeneratorContext context,
-      String typeName) throws UnableToCompleteException {
+  public String generate(TreeLogger logger, GeneratorContext context, String typeName)
+      throws UnableToCompleteException {
     this.context = context;
     this.logger = logger;
 
@@ -88,8 +88,8 @@ public class AutoBeanFactoryGenerator extends Generator {
 
     model = new AutoBeanFactoryModel(logger, toGenerate);
 
-    ClassSourceFileComposerFactory factory = new ClassSourceFileComposerFactory(
-        packageName, simpleSourceName);
+    ClassSourceFileComposerFactory factory =
+        new ClassSourceFileComposerFactory(packageName, simpleSourceName);
     factory.setSuperclass(AbstractAutoBeanFactory.class.getCanonicalName());
     factory.addImplementedInterface(typeName);
     SourceWriter sw = factory.createSourceWriter(context, pw);
@@ -121,9 +121,8 @@ public class AutoBeanFactoryGenerator extends Generator {
     // Foo foo, Bar bar, Baz baz
     StringBuilder parameters = new StringBuilder();
     for (JParameter param : jmethod.getParameters()) {
-      parameters.append(",").append(
-          ModelUtils.getQualifiedBaseSourceName(param.getType())).append(" ").append(
-          param.getName());
+      parameters.append(",").append(ModelUtils.getQualifiedBaseSourceName(param.getType())).append(
+          " ").append(param.getName());
     }
     if (parameters.length() > 0) {
       parameters = parameters.deleteCharAt(0);
@@ -132,16 +131,15 @@ public class AutoBeanFactoryGenerator extends Generator {
     StringBuilder throwsDeclaration = new StringBuilder();
     if (jmethod.getThrows().length > 0) {
       for (JType thrown : jmethod.getThrows()) {
-        throwsDeclaration.append(". ").append(
-            ModelUtils.getQualifiedBaseSourceName(thrown));
+        throwsDeclaration.append(". ").append(ModelUtils.getQualifiedBaseSourceName(thrown));
       }
       throwsDeclaration.deleteCharAt(0);
       throwsDeclaration.insert(0, "throws ");
     }
     String returnName = ModelUtils.getQualifiedBaseSourceName(jmethod.getReturnType());
     assert !returnName.contains("extends");
-    return String.format("%s %s(%s) %s", returnName, jmethod.getName(),
-        parameters, throwsDeclaration);
+    return String.format("%s %s(%s) %s", returnName, jmethod.getName(), parameters,
+        throwsDeclaration);
   }
 
   /**
@@ -156,23 +154,20 @@ public class AutoBeanFactoryGenerator extends Generator {
         return methodName.equals("hashCode") || methodName.equals("toString");
       case 1:
         return methodName.equals("equals")
-            && parameters[0].getType().equals(
-                context.getTypeOracle().getJavaLangObject());
+            && parameters[0].getType().equals(context.getTypeOracle().getJavaLangObject());
     }
     return false;
   }
 
-  private void writeAutoBean(AutoBeanType type)
-      throws UnableToCompleteException {
-    PrintWriter pw = context.tryCreate(logger, type.getPackageNome(),
-        type.getSimpleSourceName());
+  private void writeAutoBean(AutoBeanType type) throws UnableToCompleteException {
+    PrintWriter pw = context.tryCreate(logger, type.getPackageNome(), type.getSimpleSourceName());
     if (pw == null) {
       // Previously-created
       return;
     }
 
-    ClassSourceFileComposerFactory factory = new ClassSourceFileComposerFactory(
-        type.getPackageNome(), type.getSimpleSourceName());
+    ClassSourceFileComposerFactory factory =
+        new ClassSourceFileComposerFactory(type.getPackageNome(), type.getSimpleSourceName());
     factory.setSuperclass(AbstractAutoBean.class.getCanonicalName() + "<"
         + type.getPeerType().getQualifiedSourceName() + ">");
     SourceWriter sw = factory.createSourceWriter(context, pw);
@@ -180,34 +175,31 @@ public class AutoBeanFactoryGenerator extends Generator {
     writeShim(sw, type);
 
     // Instance initializer code to set the shim's association
-    sw.println("{ %s.set(shim, %s.class.getName(), this); }",
-        WeakMapping.class.getCanonicalName(), AutoBean.class.getCanonicalName());
+    sw.println("{ %s.set(shim, %s.class.getName(), this); }", WeakMapping.class.getCanonicalName(),
+        AutoBean.class.getCanonicalName());
 
     // Only simple wrappers have a default constructor
     if (type.isSimpleBean()) {
       // public FooIntfAutoBean(AutoBeanFactory factory) {}
-      sw.println("public %s(%s factory) {super(factory);}",
-          type.getSimpleSourceName(), AutoBeanFactory.class.getCanonicalName());
+      sw.println("public %s(%s factory) {super(factory);}", type.getSimpleSourceName(),
+          AutoBeanFactory.class.getCanonicalName());
     }
 
     // Clone constructor
     // public FooIntfAutoBean(FooIntfoAutoBean toClone, boolean deepClone) {
-    sw.println("public %1$s(%1$s toClone, boolean deep) {",
-        type.getSimpleSourceName());
+    sw.println("public %1$s(%1$s toClone, boolean deep) {", type.getSimpleSourceName());
     sw.indentln("super(toClone, deep);");
     sw.println("}");
 
     // Wrapping constructor
     // public FooIntfAutoBean(AutoBeanFactory factory, FooIntfo wrapped) {
-    sw.println("public %s(%s factory, %s wrapped) {",
-        type.getSimpleSourceName(), AutoBeanFactory.class.getCanonicalName(),
-        type.getPeerType().getQualifiedSourceName());
+    sw.println("public %s(%s factory, %s wrapped) {", type.getSimpleSourceName(),
+        AutoBeanFactory.class.getCanonicalName(), type.getPeerType().getQualifiedSourceName());
     sw.indentln("super(factory, wrapped);");
     sw.println("}");
 
     // public FooIntf as() {return shim;}
-    sw.println("public %s as() {return shim;}",
-        type.getPeerType().getQualifiedSourceName());
+    sw.println("public %s as() {return shim;}", type.getPeerType().getQualifiedSourceName());
 
     // public FooIntfAutoBean clone(boolean deep) {
     sw.println("public %s clone(boolean deep) {", type.getQualifiedSourceName());
@@ -216,8 +208,8 @@ public class AutoBeanFactoryGenerator extends Generator {
     sw.println("}");
 
     // public Class<Intf> getType() {return Intf.class;}
-    sw.println("public Class<%1$s> getType() {return %1$s.class;}",
-        ModelUtils.ensureBaseType(type.getPeerType()).getQualifiedSourceName());
+    sw.println("public Class<%1$s> getType() {return %1$s.class;}", ModelUtils.ensureBaseType(
+        type.getPeerType()).getQualifiedSourceName());
 
     if (type.isSimpleBean()) {
       writeCreateSimpleBean(sw, type);
@@ -232,8 +224,8 @@ public class AutoBeanFactoryGenerator extends Generator {
    * state to be easily consumed.
    */
   private void writeCreateSimpleBean(SourceWriter sw, AutoBeanType type) {
-    sw.println("@Override protected %s createSimplePeer() {",
-        type.getPeerType().getQualifiedSourceName());
+    sw.println("@Override protected %s createSimplePeer() {", type.getPeerType()
+        .getQualifiedSourceName());
     sw.indent();
     // return new FooIntf() {
     sw.println("return new %s() {", type.getPeerType().getQualifiedSourceName());
@@ -248,22 +240,18 @@ public class AutoBeanFactoryGenerator extends Generator {
           JPrimitiveType primitive = jmethod.getReturnType().isPrimitive();
           if (primitive != null) {
             // Object toReturn = values.get("foo");
-            sw.println("Object toReturn = values.get(\"%s\");",
-                method.getPropertyName());
+            sw.println("Object toReturn = values.get(\"%s\");", method.getPropertyName());
             sw.println("if (toReturn == null) {");
             // return 0;
-            sw.indentln("return %s;",
-                primitive.getUninitializedFieldExpression());
+            sw.indentln("return %s;", primitive.getUninitializedFieldExpression());
             sw.println("} else {");
             // return (BoxedType) toReturn;
-            sw.indentln("return (%s) toReturn;",
-                primitive.getQualifiedBoxedSourceName());
+            sw.indentln("return (%s) toReturn;", primitive.getQualifiedBoxedSourceName());
             sw.println("}");
           } else {
             // return (ReturnType) values.get(\"foo\");
-            sw.println("return (%s) values.get(\"%s\");",
-                ModelUtils.getQualifiedBaseSourceName(jmethod.getReturnType()),
-                method.getPropertyName());
+            sw.println("return (%s) values.get(\"%s\");", ModelUtils
+                .getQualifiedBaseSourceName(jmethod.getReturnType()), method.getPropertyName());
           }
         }
           break;
@@ -283,8 +271,7 @@ public class AutoBeanFactoryGenerator extends Generator {
           if (!jmethod.getReturnType().equals(JPrimitiveType.VOID)) {
             sw.print("return ");
           }
-          sw.print("%s.%s(%s.this",
-              staticImpl.getEnclosingType().getQualifiedSourceName(),
+          sw.print("%s.%s(%s.this", staticImpl.getEnclosingType().getQualifiedSourceName(),
               staticImpl.getName(), type.getSimpleSourceName());
           for (JParameter param : jmethod.getParameters()) {
             sw.print(", %s", param.getName());
@@ -308,8 +295,8 @@ public class AutoBeanFactoryGenerator extends Generator {
    */
   private void writeDynamicMethods(SourceWriter sw) {
     List<JClassType> privatePeers = new ArrayList<JClassType>();
-    sw.println("@Override protected void initializeCreatorMap(%s map) {",
-        JsniCreatorMap.class.getCanonicalName());
+    sw.println("@Override protected void initializeCreatorMap(%s map) {", JsniCreatorMap.class
+        .getCanonicalName());
     sw.indent();
     for (AutoBeanType type : model.getAllTypes()) {
       if (type.isNoWrap()) {
@@ -325,8 +312,8 @@ public class AutoBeanFactoryGenerator extends Generator {
         classLiteralAccessor = "classLit_" + peerName.replace('.', '_') + "()";
       }
       // map.add(Foo.class, getConstructors_com_foo_Bar());
-      sw.println("map.add(%s, getConstructors_%s());", classLiteralAccessor,
-          peerName.replace('.', '_'));
+      sw.println("map.add(%s, getConstructors_%s());", classLiteralAccessor, peerName.replace('.',
+          '_'));
     }
     sw.outdent();
     sw.println("}");
@@ -337,17 +324,17 @@ public class AutoBeanFactoryGenerator extends Generator {
      */
     for (JClassType peer : privatePeers) {
       String peerName = ModelUtils.ensureBaseType(peer).getQualifiedSourceName();
-      sw.println(
-          "private native Class<?> classLit_%s() /*-{return @%s::class;}-*/;",
-          peerName.replace('.', '_'), peerName);
+      sw.println("private native Class<?> classLit_%s() /*-{return @%s::class;}-*/;", peerName
+          .replace('.', '_'), peerName);
     }
 
     /*
      * Create a method that returns an array containing references to the
      * constructors.
      */
-    String factoryJNIName = context.getTypeOracle().findType(
-        AutoBeanFactory.class.getCanonicalName()).getJNISignature();
+    String factoryJNIName =
+        context.getTypeOracle().findType(AutoBeanFactory.class.getCanonicalName())
+            .getJNISignature();
     for (AutoBeanType type : model.getAllTypes()) {
       String peerName = ModelUtils.ensureBaseType(type.getPeerType()).getQualifiedSourceName();
       String peerJNIName = ModelUtils.ensureBaseType(type.getPeerType()).getJNISignature();
@@ -359,19 +346,17 @@ public class AutoBeanFactoryGenerator extends Generator {
        *   ];
        * }
        */
-      sw.println("private native %s<%s> getConstructors_%s() /*-{",
-          JsArray.class.getCanonicalName(),
-          JavaScriptObject.class.getCanonicalName(), peerName.replace('.', '_'));
+      sw.println("private native %s<%s> getConstructors_%s() /*-{", JsArray.class
+          .getCanonicalName(), JavaScriptObject.class.getCanonicalName(), peerName
+          .replace('.', '_'));
       sw.indent();
       sw.println("return [");
       if (type.isSimpleBean()) {
-        sw.indentln("@%s::new(%s),", type.getQualifiedSourceName(),
-            factoryJNIName);
+        sw.indentln("@%s::new(%s),", type.getQualifiedSourceName(), factoryJNIName);
       } else {
         sw.indentln(",");
       }
-      sw.indentln("@%s::new(%s%s)", type.getQualifiedSourceName(),
-          factoryJNIName, peerJNIName);
+      sw.indentln("@%s::new(%s%s)", type.getQualifiedSourceName(), factoryJNIName, peerJNIName);
       sw.println("];");
       sw.outdent();
       sw.println("}-*/;");
@@ -394,32 +379,30 @@ public class AutoBeanFactoryGenerator extends Generator {
     sw.indent();
     for (Map.Entry<JEnumConstant, String> entry : model.getEnumTokenMap().entrySet()) {
       // enumToStringMap.put(Enum.FOO, "FOO");
-      sw.println("enumToStringMap.put(%s.%s, \"%s\");",
-          entry.getKey().getEnclosingType().getQualifiedSourceName(),
-          entry.getKey().getName(), entry.getValue());
+      sw.println("enumToStringMap.put(%s.%s, \"%s\");", entry.getKey().getEnclosingType()
+          .getQualifiedSourceName(), entry.getKey().getName(), entry.getValue());
     }
     for (Map.Entry<String, List<JEnumConstant>> entry : map.entrySet()) {
       String listExpr;
       if (entry.getValue().size() == 1) {
         JEnumConstant e = entry.getValue().get(0);
         // Collections.singletonList(Enum.FOO)
-        listExpr = String.format("%s.<%s<?>> singletonList(%s.%s)",
-            Collections.class.getCanonicalName(),
-            Enum.class.getCanonicalName(),
-            e.getEnclosingType().getQualifiedSourceName(), e.getName());
+        listExpr =
+            String.format("%s.<%s<?>> singletonList(%s.%s)", Collections.class.getCanonicalName(),
+                Enum.class.getCanonicalName(), e.getEnclosingType().getQualifiedSourceName(), e
+                    .getName());
       } else {
         // Arrays.asList(Enum.FOO, OtherEnum.FOO, ThirdEnum,FOO)
         StringBuilder sb = new StringBuilder();
         boolean needsComma = false;
-        sb.append(String.format("%s.<%s<?>> asList(",
-            Arrays.class.getCanonicalName(), Enum.class.getCanonicalName()));
+        sb.append(String.format("%s.<%s<?>> asList(", Arrays.class.getCanonicalName(), Enum.class
+            .getCanonicalName()));
         for (JEnumConstant e : entry.getValue()) {
           if (needsComma) {
             sb.append(",");
           }
           needsComma = true;
-          sb.append(e.getEnclosingType().getQualifiedSourceName()).append(".").append(
-              e.getName());
+          sb.append(e.getEnclosingType().getQualifiedSourceName()).append(".").append(e.getName());
         }
         sb.append(")");
         listExpr = sb.toString();
@@ -434,33 +417,30 @@ public class AutoBeanFactoryGenerator extends Generator {
     for (AutoBeanFactoryMethod method : model.getMethods()) {
       AutoBeanType autoBeanType = method.getAutoBeanType();
       // public AutoBean<Foo> foo(FooSubtype wrapped) {
-      sw.println("public %s %s(%s) {",
-          method.getReturnType().getQualifiedSourceName(), method.getName(),
-          method.isWrapper()
-              ? (method.getWrappedType().getQualifiedSourceName() + " wrapped")
-              : "");
+      sw.println("public %s %s(%s) {", method.getReturnType().getQualifiedSourceName(), method
+          .getName(), method.isWrapper()
+          ? (method.getWrappedType().getQualifiedSourceName() + " wrapped") : "");
       if (method.isWrapper()) {
         sw.indent();
         // AutoBean<Foo> toReturn = AutoBeanUtils.getAutoBean(wrapped);
-        sw.println("%s toReturn = %s.getAutoBean(wrapped);",
-            method.getReturnType().getParameterizedQualifiedSourceName(),
-            AutoBeanUtils.class.getCanonicalName());
+        sw.println("%s toReturn = %s.getAutoBean(wrapped);", method.getReturnType()
+            .getParameterizedQualifiedSourceName(), AutoBeanUtils.class.getCanonicalName());
         sw.println("if (toReturn != null) {return toReturn;}");
         // return new FooAutoBean(Factory.this, wrapped);
-        sw.println("return new %s(%s.this, wrapped);",
-            autoBeanType.getQualifiedSourceName(), simpleSourceName);
+        sw.println("return new %s(%s.this, wrapped);", autoBeanType.getQualifiedSourceName(),
+            simpleSourceName);
         sw.outdent();
       } else {
         // return new FooAutoBean(Factory.this);
-        sw.indentln("return new %s(%s.this);",
-            autoBeanType.getQualifiedSourceName(), simpleSourceName);
+        sw.indentln("return new %s(%s.this);", autoBeanType.getQualifiedSourceName(),
+            simpleSourceName);
       }
       sw.println("}");
     }
   }
 
-  private void writeReturnWrapper(SourceWriter sw, AutoBeanType type,
-      AutoBeanMethod method) throws UnableToCompleteException {
+  private void writeReturnWrapper(SourceWriter sw, AutoBeanType type, AutoBeanMethod method)
+      throws UnableToCompleteException {
     if (!method.isValueType() && !method.isNoWrap()) {
       JMethod jmethod = method.getMethod();
       JClassType returnClass = jmethod.getReturnType().isClassOrInterface();
@@ -468,16 +448,13 @@ public class AutoBeanFactoryGenerator extends Generator {
 
       sw.println("if (toReturn != null) {");
       sw.indent();
-      sw.println("if (%s.this.isWrapped(toReturn)) {",
-          type.getSimpleSourceName());
-      sw.indentln("toReturn = %s.this.getFromWrapper(toReturn);",
-          type.getSimpleSourceName());
+      sw.println("if (%s.this.isWrapped(toReturn)) {", type.getSimpleSourceName());
+      sw.indentln("toReturn = %s.this.getFromWrapper(toReturn);", type.getSimpleSourceName());
       sw.println("} else {");
       sw.indent();
       if (peer != null) {
         // toReturn = new FooAutoBean(getFactory(), toReturn).as();
-        sw.println("toReturn = new %s(getFactory(), toReturn).as();",
-            peer.getQualifiedSourceName());
+        sw.println("toReturn = new %s(getFactory(), toReturn).as();", peer.getQualifiedSourceName());
       }
       sw.outdent();
       sw.println("}");
@@ -489,9 +466,8 @@ public class AutoBeanFactoryGenerator extends Generator {
     JMethod interceptor = type.getInterceptor();
     if (interceptor != null) {
       // toReturn = FooCategory.__intercept(FooAutoBean.this, toReturn);
-      sw.println("toReturn = %s.%s(%s.this, toReturn);",
-          interceptor.getEnclosingType().getQualifiedSourceName(),
-          interceptor.getName(), type.getSimpleSourceName());
+      sw.println("toReturn = %s.%s(%s.this, toReturn);", interceptor.getEnclosingType()
+          .getQualifiedSourceName(), interceptor.getName(), type.getSimpleSourceName());
     }
   }
 
@@ -502,11 +478,10 @@ public class AutoBeanFactoryGenerator extends Generator {
    * between methods in the peer type and methods declared in the AutoBean
    * implementation.
    */
-  private void writeShim(SourceWriter sw, AutoBeanType type)
-      throws UnableToCompleteException {
+  private void writeShim(SourceWriter sw, AutoBeanType type) throws UnableToCompleteException {
     // private final FooImpl shim = new FooImpl() {
-    sw.println("private final %1$s shim = new %1$s() {",
-        type.getPeerType().getQualifiedSourceName());
+    sw.println("private final %1$s shim = new %1$s() {", type.getPeerType()
+        .getQualifiedSourceName());
     sw.indent();
     for (AutoBeanMethod method : type.getMethods()) {
       JMethod jmethod = method.getMethod();
@@ -541,10 +516,9 @@ public class AutoBeanFactoryGenerator extends Generator {
            * definitely wrapped by an AutoBean instance.
            */
           // Foo toReturn=FooAutoBean.this.get("getFoo", getWrapped().getFoo());
-          sw.println(
-              "%s toReturn = %3$s.this.get(\"%2$s\", getWrapped().%2$s());",
-              ModelUtils.getQualifiedBaseSourceName(jmethod.getReturnType()),
-              methodName, type.getSimpleSourceName());
+          sw.println("%s toReturn = %3$s.this.get(\"%2$s\", getWrapped().%2$s());", ModelUtils
+              .getQualifiedBaseSourceName(jmethod.getReturnType()), methodName, type
+              .getSimpleSourceName());
 
           // Non-value types might need to be wrapped
           writeReturnWrapper(sw, type, method);
@@ -554,11 +528,11 @@ public class AutoBeanFactoryGenerator extends Generator {
         case SET_BUILDER:
           sw.println("%s.this.checkFrozen();", type.getSimpleSourceName());
           // getWrapped().setFoo(foo);
-          sw.println("%s.this.getWrapped().%s(%s);",
-              type.getSimpleSourceName(), methodName, parameters[0].getName());
+          sw.println("%s.this.getWrapped().%s(%s);", type.getSimpleSourceName(), methodName,
+              parameters[0].getName());
           // FooAutoBean.this.set("setFoo", foo);
-          sw.println("%s.this.set(\"%s\", %s);", type.getSimpleSourceName(),
-              methodName, parameters[0].getName());
+          sw.println("%s.this.set(\"%s\", %s);", type.getSimpleSourceName(), methodName,
+              parameters[0].getName());
           if (JBeanMethod.SET_BUILDER.equals(method.getAction())) {
             sw.println("return this;");
           }
@@ -568,24 +542,21 @@ public class AutoBeanFactoryGenerator extends Generator {
           // sw.println("checkFrozen();");
           if (JPrimitiveType.VOID.equals(jmethod.getReturnType())) {
             // getWrapped().doFoo(params);
-            sw.println("%s.this.getWrapped().%s(%s);",
-                type.getSimpleSourceName(), methodName, arguments);
+            sw.println("%s.this.getWrapped().%s(%s);", type.getSimpleSourceName(), methodName,
+                arguments);
             // call("doFoo", null, params);
-            sw.println("%s.this.call(\"%s\", null%s %s);",
-                type.getSimpleSourceName(), methodName, arguments.length() > 0
-                    ? "," : "", arguments);
+            sw.println("%s.this.call(\"%s\", null%s %s);", type.getSimpleSourceName(), methodName,
+                arguments.length() > 0 ? "," : "", arguments);
           } else {
             // Type toReturn = getWrapped().doFoo(params);
-            sw.println(
-                "%s toReturn = %s.this.getWrapped().%s(%s);",
-                ModelUtils.ensureBaseType(jmethod.getReturnType()).getQualifiedSourceName(),
-                type.getSimpleSourceName(), methodName, arguments);
+            sw.println("%s toReturn = %s.this.getWrapped().%s(%s);", ModelUtils.ensureBaseType(
+                jmethod.getReturnType()).getQualifiedSourceName(), type.getSimpleSourceName(),
+                methodName, arguments);
             // Non-value types might need to be wrapped
             writeReturnWrapper(sw, type, method);
             // call("doFoo", toReturn, params);
-            sw.println("%s.this.call(\"%s\", toReturn%s %s);",
-                type.getSimpleSourceName(), methodName, arguments.length() > 0
-                    ? "," : "", arguments);
+            sw.println("%s.this.call(\"%s\", toReturn%s %s);", type.getSimpleSourceName(),
+                methodName, arguments.length() > 0 ? "," : "", arguments);
             sw.println("return toReturn;");
           }
           break;
@@ -617,19 +588,15 @@ public class AutoBeanFactoryGenerator extends Generator {
    */
   private void writeTraversal(SourceWriter sw, AutoBeanType type) {
     List<AutoBeanMethod> referencedSetters = new ArrayList<AutoBeanMethod>();
-    sw.println(
-        "@Override protected void traverseProperties(%s visitor, %s ctx) {",
-        AutoBeanVisitor.class.getCanonicalName(),
-        OneShotContext.class.getCanonicalName());
+    sw.println("@Override protected void traverseProperties(%s visitor, %s ctx) {",
+        AutoBeanVisitor.class.getCanonicalName(), OneShotContext.class.getCanonicalName());
     sw.indent();
     sw.println("%s bean;", AbstractAutoBean.class.getCanonicalName());
     sw.println("Object value;");
-    sw.println("%s propertyContext;",
-        ClientPropertyContext.class.getCanonicalName());
+    sw.println("%s propertyContext;", ClientPropertyContext.class.getCanonicalName());
     // Local variable ref cleans up emitted js
     sw.println("%1$s as = as();", type.getPeerType().getQualifiedSourceName());
-    sw.println("%s<String, Object> values = this.values;",
-        Map.class.getCanonicalName());
+    sw.println("%s<String, Object> values = this.values;", Map.class.getCanonicalName());
 
     for (AutoBeanMethod method : type.getMethods()) {
       if (!method.getAction().equals(JBeanMethod.GET)) {
@@ -640,10 +607,10 @@ public class AutoBeanFactoryGenerator extends Generator {
       // If it's not a simple bean type, try to find a real setter method
       if (!type.isSimpleBean()) {
         for (AutoBeanMethod maybeSetter : type.getMethods()) {
-          boolean isASetter = maybeSetter.getAction().equals(JBeanMethod.SET)
-              || maybeSetter.getAction().equals(JBeanMethod.SET_BUILDER);
-          if (isASetter
-              && maybeSetter.getPropertyName().equals(method.getPropertyName())) {
+          boolean isASetter =
+              maybeSetter.getAction().equals(JBeanMethod.SET)
+                  || maybeSetter.getAction().equals(JBeanMethod.SET_BUILDER);
+          if (isASetter && maybeSetter.getPropertyName().equals(method.getPropertyName())) {
             setter = maybeSetter;
             break;
           }
@@ -651,10 +618,10 @@ public class AutoBeanFactoryGenerator extends Generator {
       }
 
       // The type of property influences the visitation
-      String valueExpression = String.format(
-          "bean = (%1$s) %2$s.getAutoBean(as.%3$s());",
-          AbstractAutoBean.class.getCanonicalName(),
-          AutoBeanUtils.class.getCanonicalName(), method.getMethod().getName());
+      String valueExpression =
+          String.format("bean = (%1$s) %2$s.getAutoBean(as.%3$s());", AbstractAutoBean.class
+              .getCanonicalName(), AutoBeanUtils.class.getCanonicalName(), method.getMethod()
+              .getName());
       String visitMethod;
       String visitVariable = "bean";
       if (method.isCollection()) {
@@ -662,8 +629,7 @@ public class AutoBeanFactoryGenerator extends Generator {
       } else if (method.isMap()) {
         visitMethod = "Map";
       } else if (method.isValueType()) {
-        valueExpression = String.format("value = as.%s();",
-            method.getMethod().getName());
+        valueExpression = String.format("value = as.%s();", method.getMethod().getName());
         visitMethod = "Value";
         visitVariable = "value";
       } else {
@@ -683,8 +649,7 @@ public class AutoBeanFactoryGenerator extends Generator {
        * allows purely numeric property names, which are valid JSON map keys.
        */
       // propertyContext = new CPContext(.....);
-      sw.println("propertyContext = new %s(",
-          ClientPropertyContext.class.getCanonicalName());
+      sw.println("propertyContext = new %s(", ClientPropertyContext.class.getCanonicalName());
       sw.indent();
       // The instance on which the context is nominally operating
       sw.println("as,");
@@ -698,14 +663,12 @@ public class AutoBeanFactoryGenerator extends Generator {
         } else {
           // Create a function that will update the values map
           // CPContext.mapSetter(values, "foo");
-          sw.println("%s.mapSetter(values, \"%s\"),",
-              ClientPropertyContext.Setter.class.getCanonicalName(),
-              method.getPropertyName());
+          sw.println("%s.mapSetter(values, \"%s\"),", ClientPropertyContext.Setter.class
+              .getCanonicalName(), method.getPropertyName());
         }
       }
       if (typeList.size() == 1) {
-        sw.println("%s.class",
-            ModelUtils.ensureBaseType(typeList.get(0)).getQualifiedSourceName());
+        sw.println("%s.class", ModelUtils.ensureBaseType(typeList.get(0)).getQualifiedSourceName());
       } else {
         // Produce the array of parameter types
         sw.print("new Class<?>[] {");
@@ -716,8 +679,7 @@ public class AutoBeanFactoryGenerator extends Generator {
           } else {
             sw.print(", ");
           }
-          sw.print("%s.class",
-              ModelUtils.ensureBaseType(lit).getQualifiedSourceName());
+          sw.print("%s.class", ModelUtils.ensureBaseType(lit).getQualifiedSourceName());
         }
         sw.println("},");
 
@@ -743,16 +705,16 @@ public class AutoBeanFactoryGenerator extends Generator {
       sw.println(");");
 
       // if (visitor.visitReferenceProperty("foo", value, ctx))
-      sw.println("if (visitor.visit%sProperty(\"%s\", %s, propertyContext)) {",
-          visitMethod, method.getPropertyName(), visitVariable);
+      sw.println("if (visitor.visit%sProperty(\"%s\", %s, propertyContext)) {", visitMethod, method
+          .getPropertyName(), visitVariable);
       if (!method.isValueType()) {
         // Cycle-detection in AbstractAutoBean.traverse
         sw.indentln("if (bean != null) { bean.traverse(visitor, ctx); }");
       }
       sw.println("}");
       // visitor.endVisitorReferenceProperty("foo", value, ctx);
-      sw.println("visitor.endVisit%sProperty(\"%s\", %s, propertyContext);",
-          visitMethod, method.getPropertyName(), visitVariable);
+      sw.println("visitor.endVisit%sProperty(\"%s\", %s, propertyContext);", visitMethod, method
+          .getPropertyName(), visitVariable);
     }
     sw.outdent();
     sw.println("}");
@@ -766,14 +728,11 @@ public class AutoBeanFactoryGenerator extends Generator {
        *   return instance.@com.example.Blah::setFoo(Lcom/example/Foo;);
        * }
        */
-      sw.println(
-          "public static native %s %sMethodReference(Object instance) /*-{",
-          ClientPropertyContext.Setter.class.getCanonicalName(),
-          jmethod.getName());
-      sw.indentln("return instance.@%s::%s(%s);",
-          jmethod.getEnclosingType().getQualifiedSourceName(),
-          jmethod.getName(),
-          jmethod.getParameters()[0].getType().getJNISignature());
+      sw.println("public static native %s %sMethodReference(Object instance) /*-{",
+          ClientPropertyContext.Setter.class.getCanonicalName(), jmethod.getName());
+      sw.indentln("return instance.@%s::%s(%s);", jmethod.getEnclosingType()
+          .getQualifiedSourceName(), jmethod.getName(), jmethod.getParameters()[0].getType()
+          .getJNISignature());
       sw.println("}-*/;");
     }
   }

@@ -56,8 +56,8 @@ public class Configuration {
      * @return the Builder
      */
     public Builder setCategories(Class<?>... categories) {
-      toReturn.categories = Collections.unmodifiableList(new ArrayList<Class<?>>(
-          Arrays.asList(categories)));
+      toReturn.categories =
+          Collections.unmodifiableList(new ArrayList<Class<?>>(Arrays.asList(categories)));
       return this;
     }
 

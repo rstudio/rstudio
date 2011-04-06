@@ -48,8 +48,7 @@ public final class JsniCreatorMap extends JavaScriptObject {
     return null;
   }
 
-  public <T> AutoBean<T> create(Class<T> clazz,
-      AbstractAutoBeanFactory factory, Object delegate) {
+  public <T> AutoBean<T> create(Class<T> clazz, AbstractAutoBeanFactory factory, Object delegate) {
     JsArray<JavaScriptObject> arr = get(clazz.getName());
     if (arr != null) {
       assert arr.get(1) != null : "No delegate-based constructor";
@@ -62,8 +61,7 @@ public final class JsniCreatorMap extends JavaScriptObject {
     return this[key];
   }-*/;
 
-  private native <T> AutoBean<T> invoke(JavaScriptObject fn, Object arg1,
-      Object arg2)/*-{
+  private native <T> AutoBean<T> invoke(JavaScriptObject fn, Object arg1, Object arg2)/*-{
     return fn(arg1, arg2);
   }-*/;
 

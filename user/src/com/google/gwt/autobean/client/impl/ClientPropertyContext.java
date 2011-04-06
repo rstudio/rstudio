@@ -64,8 +64,7 @@ public final class ClientPropertyContext implements CollectionPropertyContext, M
     this.paramCounts = null;
   }
 
-  public ClientPropertyContext(Object instance, Setter setter,
-      Class<?>[] types, int[] paramCounts) {
+  public ClientPropertyContext(Object instance, Setter setter, Class<?>[] types, int[] paramCounts) {
     this.instance = instance;
     this.setter = setter;
     this.simpleType = null;
@@ -77,14 +76,14 @@ public final class ClientPropertyContext implements CollectionPropertyContext, M
      * plus one for the root type, equals the total number of types passed in.
      */
     if (ClientPropertyContext.class.desiredAssertionStatus()) {
-      assert types.length == paramCounts.length : "Length mismatch "
-          + types.length + " != " + paramCounts.length;
+      assert types.length == paramCounts.length : "Length mismatch " + types.length + " != "
+          + paramCounts.length;
       int count = 1;
       for (int i = 0, j = paramCounts.length; i < j; i++) {
         count += paramCounts[i];
       }
-      assert count == types.length : "Mismatch in total parameter count "
-          + count + " != " + types.length;
+      assert count == types.length : "Mismatch in total parameter count " + count + " != "
+          + types.length;
     }
   }
 

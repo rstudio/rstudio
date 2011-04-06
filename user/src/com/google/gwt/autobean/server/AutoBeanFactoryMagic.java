@@ -68,8 +68,7 @@ public class AutoBeanFactoryMagic {
    * @param clazz the interface type implemented by the AutoBean
    * @return an instance of an AutoBean
    */
-  public static <T> AutoBean<T> createBean(Class<T> clazz,
-      Configuration configuration) {
+  public static <T> AutoBean<T> createBean(Class<T> clazz, Configuration configuration) {
     return new ProxyAutoBean<T>(EMPTY, clazz, configuration);
   }
 }
