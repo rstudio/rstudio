@@ -28,7 +28,7 @@ import com.google.web.bindery.requestfactory.shared.ServerFailure;
  * ServiceLayer serviceLayer = ServiceLayer.create();
  * SimpleRequestProcessor processor = new SimpleRequestProcessor(serviceLayer);
  * EventBus eventBus = new SimpleEventBus();
- * MyRequestFactory f = RequestFactoryMagic.create(MyRequestFactory.class);
+ * MyRequestFactory f = RequestFactorySource.create(MyRequestFactory.class);
  * f.initialize(eventBus, new InProcessRequestTransport(processor));
  * </pre>
  * 
