@@ -15,7 +15,6 @@
 
 #include <string>
 #include <iostream>
-#include <fstream>
 
 #include <boost/foreach.hpp>
 
@@ -104,8 +103,9 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
       // open the config file
       if (!configFile.empty())
       {
-         std::ifstream ifs(configFile.c_str()) ;
-         if (!ifs)
+         boost::shared_ptr<std::istream> pIfs;
+         Error error = FilePath(configFile).open_r(&pIfs);
+         if (error)
          {
             reportError("Unable to open config file: " + configFile,
                         ERROR_LOCATION);
@@ -113,7 +113,7 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
          }
          
          // parse config file
-         store(parse_config_file(ifs, optionsDescription.configFile), vm) ;
+         store(parse_config_file(*pIfs, optionsDescription.configFile), vm) ;
          notify(vm) ;
       }
       

@@ -264,12 +264,10 @@ core::Error createFile(const core::json::JsonRpcRequest& request,
    else
    {
       // create the file
-      std::ofstream ofs(filePath.absolutePath().c_str(), 
-                  std::ios_base::out | std::ios_base::trunc ) ;
-      if (!ofs)
-         return systemError(boost::system::errc::io_error, ERROR_LOCATION);
-
-      ofs.close();
+      boost::shared_ptr<std::ostream> pOfs;
+      error = filePath.open_w(&pOfs);
+      if (error)
+         return error;
    }
 
    return Success() ;

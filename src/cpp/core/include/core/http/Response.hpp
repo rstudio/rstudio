@@ -16,7 +16,6 @@
 
 #include <iostream>
 #include <sstream>
-#include <fstream>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/iostreams/copy.hpp>
 #include <boost/iostreams/concepts.hpp>
@@ -217,19 +216,13 @@ public:
                  std::streamsize buffSize = 128)
    {
       // open the file
-      std::ifstream ifs(filePath.absolutePath().c_str(), 
-                        std::ios_base::in | std::ios_base::binary);
-      if (!ifs)
-      {
-         Error error = systemError(
-                              boost::system::errc::no_such_file_or_directory, 
-                              ERROR_LOCATION);
-         error.addProperty("path", filePath.absolutePath());
+      boost::shared_ptr<std::istream> pIfs;
+      Error error = filePath.open_r(&pIfs);
+      if (error)
          return error;
-      }
       
       // send the file from its stream
-      return setBody(ifs, filter, buffSize);   
+      return setBody(*pIfs, filter, buffSize);
    }
 
    void setDynamicHtml(const std::string& html, const Request& request);

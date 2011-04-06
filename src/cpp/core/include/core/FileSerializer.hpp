@@ -16,7 +16,6 @@
 
 #include <string>
 #include <map>
-#include <fstream>
 #include <iterator>
 
 #include <boost/function.hpp>
