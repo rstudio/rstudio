@@ -199,6 +199,8 @@ public class UiBinderWriter implements Statements {
   private final FieldManager fieldManager;
 
   private final ImplicitClientBundle bundleClass;
+  
+  private final boolean useSafeHtmlTemplates;
 
   private int domId = 0;
 
@@ -232,7 +234,7 @@ public class UiBinderWriter implements Statements {
       String templatePath, TypeOracle oracle, MortalLogger logger,
       FieldManager fieldManager, MessagesWriter messagesWriter,
       DesignTimeUtils designTime, UiBinderContext uiBinderCtx,
-      HtmlElementFactory elementFactory)
+      HtmlElementFactory elementFactory, boolean useSafeHtmlTemplates)
       throws UnableToCompleteException {
     this.baseClass = baseClass;
     this.implClassName = implClassName;
@@ -244,6 +246,7 @@ public class UiBinderWriter implements Statements {
     this.designTime = designTime;
     this.uiBinderCtx = uiBinderCtx;
     this.elementFactory = elementFactory;
+    this.useSafeHtmlTemplates = useSafeHtmlTemplates;
 
     // Check for possible misuse 'GWT.create(UiBinder.class)'
     JClassType uibinderItself = oracle.findType(UiBinder.class.getCanonicalName());
@@ -414,6 +417,10 @@ public class UiBinderWriter implements Statements {
    */
   public String declareTemplateCall(String html) 
     throws IllegalArgumentException {
+    if (!useSafeHtmlTemplates) {
+      return '"' + html + '"';
+    }
+    
     return htmlTemplates.addSafeHtmlTemplate(html, tokenator);
   }
 
@@ -694,6 +701,10 @@ public class UiBinderWriter implements Statements {
    * @param expression
    */
   public String tokenForSafeHtmlExpression(String expression) {
+    if (!useSafeHtmlTemplates) {
+      return tokenForStringExpression(expression);
+    }
+    
     String token =  tokenator.nextToken("SafeHtmlUtils.fromSafeConstant(" +
         expression + ")");      
     htmlTemplates.noteSafeConstant("SafeHtmlUtils.fromSafeConstant(" +
@@ -716,26 +727,33 @@ public class UiBinderWriter implements Statements {
   }
 
   /**
+   * @return true of SafeHtml integration is in effect
+   */
+  public boolean useSafeHtmlTemplates() {
+    return useSafeHtmlTemplates;
+  }
+
+  /**
    * Post a warning message.
    */
   public void warn(String message) {
     logger.warn(message);
   }
-
+  
   /**
    * Post a warning message.
    */
   public void warn(String message, Object... params) {
     logger.warn(message, params);
   }
-  
+
   /**
    * Post a warning message.
    */
   public void warn(XMLElement context, String message, Object... params) {
     logger.warn(context, message, params);
   }
-
+  
   /**
    * Entry point for the code generation logic. It generates the
    * implementation's superstructure, and parses the root widget (leading to all
@@ -758,7 +776,7 @@ public class UiBinderWriter implements Statements {
     this.rendered = tokenator.detokenate(parseDocumentElement(elem));
     printWriter.print(rendered);
   }
-  
+
   private void addElementParser(String gwtClass, String parser) {
     elementParsers.put(gwtClass, parser);
   }
@@ -1225,14 +1243,16 @@ public class UiBinderWriter implements Statements {
       w.write("package %1$s;", packageName);
       w.newline();
     }
-  }
-
+  }  
+  
   /**
    * Write statements created by {@link HtmlTemplates#addSafeHtmlTemplate}. This 
    * code must be placed after all instantiation code.
    */
   private void writeSafeHtmlTemplates(IndentedWriter w) {
     if (!(htmlTemplates.isEmpty())) {
+      assert useSafeHtmlTemplates : "SafeHtml is off, but templates were made.";
+      
       w.write("interface Template extends SafeHtmlTemplates {");
       w.indent();
 
@@ -1244,8 +1264,8 @@ public class UiBinderWriter implements Statements {
       w.write("Template template = GWT.create(Template.class);");
       w.newline();
     }
-  }  
-  
+  }
+
   /**
    * Generates instances of any bundle classes that have been referenced by a
    * namespace entry in the top level element. This must be called *after* all

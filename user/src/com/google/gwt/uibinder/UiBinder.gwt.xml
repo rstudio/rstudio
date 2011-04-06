@@ -18,9 +18,19 @@
   
   <source path="client"/>
   <source path="resources"/>
+  
   <!-- Pluggable factory for creating field types for HTML elements -->
-  <define-configuration-property name="uibinder.html.elementfactory" is-multi-valued="false"/>  
+  <define-configuration-property name="uibinder.html.elementfactory" is-multi-valued="false"/>
   <set-configuration-property name="uibinder.html.elementfactory" value="com.google.gwt.uibinder.rebind.GwtDomHtmlElementFactory"/>
+
+  <!-- By default UiBinder implementations are generated to use SafeHtmlTemplates 
+    to help protect against the introduction of cross-site scripting (XSS) attacks. 
+    This deprecated property can be used to disable that integration while the 
+    kinks are worked out. Its use is strongly discouraged, and the property will 
+    be removed in the near future. -->
+  <define-configuration-property name="UiBinder.useSafeHtmlTemplates" is-multi-valued="false"/>
+  <set-configuration-property name="UiBinder.useSafeHtmlTemplates" value="true"/>
+  
   <generate-with class="com.google.gwt.uibinder.rebind.UiBinderGenerator">
     <when-type-assignable class="com.google.gwt.uibinder.client.UiBinder"/>
   </generate-with>

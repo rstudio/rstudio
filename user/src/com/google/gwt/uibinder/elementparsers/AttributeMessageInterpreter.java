@@ -46,8 +46,16 @@ import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
       throws UnableToCompleteException {
     MessagesWriter messages = writer.getMessages();
     for (AttributeMessage am : messages.consumeAttributeMessages(elem)) {
+      String message = am.getMessageUnescaped();
+      if (!writer.useSafeHtmlTemplates()) {
+        /*
+         * We have to do our own simple escaping to if the SafeHtml integration
+         * is off
+         */
+        message += ".replaceAll(\"&\", \"&amp;\").replaceAll(\"'\", \"&#39;\")";
+      }
       elem.setAttribute(am.getAttribute(),
-        writer.tokenForStringExpression(am.getMessageUnescaped()));
+        writer.tokenForStringExpression(message));
     }
 
     /*

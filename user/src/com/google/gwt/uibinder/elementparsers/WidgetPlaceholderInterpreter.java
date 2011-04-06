@@ -55,8 +55,10 @@ import java.util.Set;
  * message.
  */
 class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
-  // Could break this up into three further classes, for HasText, HasHTML
-  // and Other, but that seems more trouble than it's worth.
+  /*
+   * Could break this up into three further classes, for HasText, HasHTML and
+   * Other, but that seems more trouble than it's worth.
+   */
 
   private int serial = 0;
   private final String ancestorExpression;
@@ -132,8 +134,12 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
   }
 
   private String genOpenTag(String name, String idHolder) {
-    String openTag = String.format("<span id='%s'>", 
-        uiWriter.tokenForStringExpression(idHolder));
+    if (uiWriter.useSafeHtmlTemplates()) {
+      idHolder = uiWriter.tokenForStringExpression(idHolder); 
+    } else {
+      idHolder = "\" + " + idHolder + " + \"";
+    }
+    String openTag = String.format("<span id='%s'>", idHolder);
     String openPlaceholder = nextOpenPlaceholder(name + "Begin", openTag);
     return openPlaceholder;
   }
@@ -180,8 +186,12 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
   }
 
   private String handleOpaqueWidgetPlaceholder(String name, String idHolder) {
-    String tag = String.format("<span id='%s'></span>", 
-      uiWriter.tokenForStringExpression(idHolder));
+    if (uiWriter.useSafeHtmlTemplates()) {
+      idHolder = uiWriter.tokenForStringExpression(idHolder); 
+    } else {
+      idHolder = "\" + " + idHolder + " + \"";
+    }
+    String tag = String.format("<span id='%s'></span>", idHolder);
     String placeholder = nextPlaceholder(name, "<span></span>", tag);
     return placeholder;
   }

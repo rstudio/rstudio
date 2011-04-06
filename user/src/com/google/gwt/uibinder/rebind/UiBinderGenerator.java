@@ -15,6 +15,7 @@
  */
 package com.google.gwt.uibinder.rebind;
 
+import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
@@ -35,6 +36,7 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXParseException;
 
 import java.io.PrintWriter;
+import java.util.List;
 
 /**
  * Generator for implementations of
@@ -42,10 +44,14 @@ import java.io.PrintWriter;
  */
 public class UiBinderGenerator extends Generator {
 
-  private static final String TEMPLATE_SUFFIX = ".ui.xml";
-
   static final String BINDER_URI = "urn:ui:com.google.gwt.uibinder";
 
+  private static final String TEMPLATE_SUFFIX = ".ui.xml";
+
+  private static final String ELEMENT_FACTORY_PROPERTY = "uibinder.html.elementfactory";
+  
+  private static final String XSS_SAFE_CONFIG_PROPERTY = "UiBinder.useSafeHtmlTemplates";
+  
   /**
    * Given a UiBinder interface, return the path to its ui.xml file, suitable
    * for any classloader to find it as a resource.
@@ -117,30 +123,18 @@ public class UiBinderGenerator extends Generator {
         packageName);
     PrintWriter printWriter = writers.tryToMakePrintWriterFor(implName);
 
-    Class<?> elementFactoryClass;
-    HtmlElementFactory elementFactory = null;
-    try {
-      PropertyOracle propertyOracle = genCtx.getPropertyOracle();
-      ConfigurationProperty factoryProperty = propertyOracle
-          .getConfigurationProperty("uibinder.html.elementfactory");
-      elementFactoryClass = Class.forName(factoryProperty.getValues().get(0));
-      elementFactory = (HtmlElementFactory) elementFactoryClass.newInstance();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-
     if (printWriter != null) {
       generateOnce(interfaceType, implName, printWriter, logger, oracle,
-          resourceOracle, writers, designTime, elementFactory);
+          resourceOracle, genCtx.getPropertyOracle(), writers, designTime);
     }
     return packageName + "." + implName;
   }
 
   private void generateOnce(JClassType interfaceType, String implName,
       PrintWriter binderPrintWriter, TreeLogger treeLogger, TypeOracle oracle,
-      ResourceOracle resourceOracle, PrintWriterManager writerManager,
-      DesignTimeUtils designTime,
-      HtmlElementFactory elementFactory) throws UnableToCompleteException {
+      ResourceOracle resourceOracle, PropertyOracle propertyOracle, 
+      PrintWriterManager writerManager,  DesignTimeUtils designTime) 
+  throws UnableToCompleteException {
 
     MortalLogger logger = new MortalLogger(treeLogger);
     String templatePath = deduceTemplateFile(logger, interfaceType);
@@ -149,7 +143,8 @@ public class UiBinderGenerator extends Generator {
 
     UiBinderWriter uiBinderWriter = new UiBinderWriter(interfaceType, implName,
         templatePath, oracle, logger, new FieldManager(oracle, logger),
-        messages, designTime, uiBinderCtx, elementFactory);
+        messages, designTime, uiBinderCtx, getElementFactory(propertyOracle), 
+        useSafeHtmlTemplates(logger, propertyOracle));
 
     Document doc = getW3cDoc(logger, designTime, resourceOracle, templatePath);
     designTime.rememberPathForElements(doc);
@@ -164,6 +159,20 @@ public class UiBinderGenerator extends Generator {
     new BundleWriter(bundleClass, writerManager, oracle, logger).write();
 
     writerManager.commit();
+  }
+
+  private HtmlElementFactory getElementFactory(PropertyOracle propertyOracle) {
+    Class<?> elementFactoryClass;
+
+    try {
+      // TODO(cromwellian) finish this or get it out of here
+      ConfigurationProperty factoryProperty = propertyOracle
+          .getConfigurationProperty(ELEMENT_FACTORY_PROPERTY);
+      elementFactoryClass = Class.forName(factoryProperty.getValues().get(0));
+      return (HtmlElementFactory) elementFactoryClass.newInstance();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private Document getW3cDoc(MortalLogger logger, DesignTimeUtils designTime,
@@ -189,5 +198,31 @@ public class UiBinderGenerator extends Generator {
               + e.getMessage(), e);
     }
     return doc;
+  }
+
+  private Boolean useSafeHtmlTemplates(MortalLogger logger, PropertyOracle propertyOracle) {
+    List<String> values;
+    try {
+      values = propertyOracle.getConfigurationProperty(XSS_SAFE_CONFIG_PROPERTY).getValues();
+    } catch (BadPropertyValueException e) {
+      logger.warn("No value found for configuration property %s.", XSS_SAFE_CONFIG_PROPERTY);
+      return true;
+    }
+
+    String value = values.get(0);
+    if (!value.equals(Boolean.FALSE.toString()) && !value.equals(Boolean.TRUE.toString())) {
+      logger.warn("Unparseable value \"%s\" found for configuration property %s", value,
+          XSS_SAFE_CONFIG_PROPERTY);
+      return true;
+    }
+
+    Boolean rtn = Boolean.valueOf(value);
+
+    if (!rtn) {
+      logger.warn("Configuration property %s is false! UiBinder SafeHtml integration is off, "
+          + "leaving your users more vulnerable to cross-site scripting attacks.",
+          XSS_SAFE_CONFIG_PROPERTY);
+    }
+    return rtn;
   }
 }

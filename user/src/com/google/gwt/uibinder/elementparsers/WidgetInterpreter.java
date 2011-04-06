@@ -91,8 +91,12 @@ class WidgetInterpreter implements XMLElement.Interpreter<String> {
 
       // Create an element to hold the widget.
       String tag = getLegalPlaceholderTag(elem);
-      return "<" + tag + " id='" + uiWriter.tokenForStringExpression(idHolder)
-      + "'></" + tag + ">";
+      if (uiWriter.useSafeHtmlTemplates()) {
+        idHolder = uiWriter.tokenForStringExpression(idHolder);
+      } else {
+        idHolder = "\" + " + idHolder + " + \"";
+      }
+      return "<" + tag + " id='" + idHolder  + "'></" + tag + ">";
     }
     return null;
   }

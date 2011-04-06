@@ -39,7 +39,7 @@ class MockUiBinderWriter extends UiBinderWriter {
       HtmlElementFactory factory) throws UnableToCompleteException {
     super(baseClass, implClassName, templatePath, oracle, logger, fieldManager,
           messagesWriter, DesignTimeUtilsStub.EMPTY, new UiBinderContext(),
-          factory);
+          factory, true);
   }
 
   @Override
