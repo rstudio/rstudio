@@ -24,9 +24,9 @@ After this code is executed the plot is drawn using an initial value of 1 for \c
 }
 
 \author{
-JJ Allaire
+RStudio
 
-Maintainer: JJ Allaire <jj@rstudio.org>
+Maintainer: RStudio <info@rstudio.org>
 }
 
 
