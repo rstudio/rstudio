@@ -54,7 +54,8 @@ public:
    void setContents(const std::string& contents);
 
    // set contents from file
-   core::Error setPathAndContents(const std::string& path);
+   core::Error setPathAndContents(const std::string& path,
+                                  bool allowSubstChars = true);
 
    // set dirty
    void setDirty(bool dirty)
