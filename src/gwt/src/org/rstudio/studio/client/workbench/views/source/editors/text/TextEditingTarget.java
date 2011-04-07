@@ -1009,9 +1009,7 @@ public class TextEditingTarget implements EditingTarget
       else
       {
          return "source.with.encoding(" + escapedPath + ", encoding='" +
-                (!StringUtil.isNullOrEmpty(docUpdateSentinel_.getEncoding())
-                 ? docUpdateSentinel_.getEncoding()
-                 : "UTF-8") +
+                (!StringUtil.isNullOrEmpty(encoding) ? encoding : "UTF-8") +
                 "');";
       }
    }
