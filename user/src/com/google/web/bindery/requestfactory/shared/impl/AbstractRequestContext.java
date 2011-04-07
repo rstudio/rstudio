@@ -26,8 +26,8 @@ import com.google.gwt.autobean.shared.AutoBeanUtils;
 import com.google.gwt.autobean.shared.AutoBeanVisitor;
 import com.google.gwt.autobean.shared.Splittable;
 import com.google.gwt.autobean.shared.ValueCodex;
-import com.google.gwt.autobean.shared.impl.AbstractAutoBean;
 import com.google.gwt.autobean.shared.impl.EnumMap;
+import com.google.gwt.autobean.shared.impl.LazySplittable;
 import com.google.gwt.autobean.shared.impl.StringQuoter;
 import com.google.gwt.event.shared.UmbrellaException;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
@@ -36,13 +36,13 @@ import com.google.web.bindery.requestfactory.shared.EntityProxyChange;
 import com.google.web.bindery.requestfactory.shared.EntityProxyId;
 import com.google.web.bindery.requestfactory.shared.Receiver;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
-import com.google.web.bindery.requestfactory.shared.RequestTransport.TransportReceiver;
 import com.google.web.bindery.requestfactory.shared.ServerFailure;
+import com.google.web.bindery.requestfactory.shared.ValueProxy;
 import com.google.web.bindery.requestfactory.shared.Violation;
 import com.google.web.bindery.requestfactory.shared.WriteOperation;
+import com.google.web.bindery.requestfactory.shared.RequestTransport.TransportReceiver;
 import com.google.web.bindery.requestfactory.shared.impl.posers.DatePoser;
 import com.google.web.bindery.requestfactory.shared.messages.IdMessage;
-import com.google.web.bindery.requestfactory.shared.messages.IdMessage.Strength;
 import com.google.web.bindery.requestfactory.shared.messages.InvocationMessage;
 import com.google.web.bindery.requestfactory.shared.messages.JsonRpcRequest;
 import com.google.web.bindery.requestfactory.shared.messages.MessageFactory;
@@ -51,6 +51,7 @@ import com.google.web.bindery.requestfactory.shared.messages.RequestMessage;
 import com.google.web.bindery.requestfactory.shared.messages.ResponseMessage;
 import com.google.web.bindery.requestfactory.shared.messages.ServerFailureMessage;
 import com.google.web.bindery.requestfactory.shared.messages.ViolationMessage;
+import com.google.web.bindery.requestfactory.shared.messages.IdMessage.Strength;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -66,7 +67,8 @@ import java.util.Set;
 /**
  * Base implementations for RequestContext services.
  */
-public abstract class AbstractRequestContext implements RequestContext, EntityCodex.EntitySource {
+public abstract class AbstractRequestContext implements RequestContext,
+    EntityCodex.EntitySource {
   /**
    * Allows the payload dialect to be injected into the AbstractRequestContext
    * without the caller needing to be concerned with how the implementation
@@ -108,7 +110,8 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
        * DialectImpl interface and restored to to AbstractRequestContext.
        */
       if (!invocations.isEmpty()) {
-        throw new RuntimeException("Only one invocation per request, pending backend support");
+        throw new RuntimeException(
+            "Only one invocation per request, pending backend support");
       }
       invocations.add(request);
       for (Object arg : request.getRequestData().getOrderedParameters()) {
@@ -149,23 +152,20 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
 
       if (!raw.isNull("error")) {
         Splittable error = raw.get("error");
-        ServerFailure failure =
-            new ServerFailure(error.get("message").asString(), error.get("code").asString(),
-                payload, true);
+        ServerFailure failure = new ServerFailure(
+            error.get("message").asString(), error.get("code").asString(),
+            payload, true);
         fail(receiver, failure);
         return;
       }
 
       Splittable result = raw.get("result");
       @SuppressWarnings("unchecked")
-      Class<BaseProxy> target =
-          (Class<BaseProxy>) invocations.get(0).getRequestData().getReturnType();
+      Class<BaseProxy> target = (Class<BaseProxy>) invocations.get(0).getRequestData().getReturnType();
 
       SimpleProxyId<BaseProxy> id = getRequestFactory().allocateId(target);
       AutoBean<BaseProxy> bean = createProxy(target, id);
-      // XXX expose this as a proper API
-      ((AbstractAutoBean<?>) bean).setData(result);
-      // AutoBeanCodex.decodeInto(result, bean);
+      AutoBeanCodex.decodeInto(result, bean);
 
       if (callback != null) {
         callback.onSuccess(bean.as());
@@ -178,8 +178,9 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     Splittable encode(Object obj) {
       Splittable value;
       if (obj == null) {
-        return Splittable.NULL;
-      } else if (obj.getClass().isEnum() && getAutoBeanFactory() instanceof EnumMap) {
+        return LazySplittable.NULL;
+      } else if (obj.getClass().isEnum()
+          && getAutoBeanFactory() instanceof EnumMap) {
         value = ValueCodex.encode(((EnumMap) getAutoBeanFactory()).getToken((Enum<?>) obj));
       } else if (ValueCodex.canDecode(obj.getClass())) {
         value = ValueCodex.encode(obj);
@@ -232,13 +233,13 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     }
 
     public void processPayload(final Receiver<Void> receiver, String payload) {
-      ResponseMessage response =
-          AutoBeanCodex.decode(MessageFactoryHolder.FACTORY, ResponseMessage.class, payload).as();
+      ResponseMessage response = AutoBeanCodex.decode(
+          MessageFactoryHolder.FACTORY, ResponseMessage.class, payload).as();
       if (response.getGeneralFailure() != null) {
         ServerFailureMessage failure = response.getGeneralFailure();
-        ServerFailure fail =
-            new ServerFailure(failure.getMessage(), failure.getExceptionType(), failure
-                .getStackTrace(), failure.isFatal());
+        ServerFailure fail = new ServerFailure(failure.getMessage(),
+            failure.getExceptionType(), failure.getStackTrace(),
+            failure.isFatal());
 
         fail(receiver, fail);
         return;
@@ -265,12 +266,13 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
           if (response.getStatusCodes().get(i)) {
             invocations.get(i).onSuccess(response.getInvocationResults().get(i));
           } else {
-            ServerFailureMessage failure =
-                AutoBeanCodex.decode(MessageFactoryHolder.FACTORY, ServerFailureMessage.class,
-                    response.getInvocationResults().get(i)).as();
+            ServerFailureMessage failure = AutoBeanCodex.decode(
+                MessageFactoryHolder.FACTORY, ServerFailureMessage.class,
+                response.getInvocationResults().get(i)).as();
             invocations.get(i).onFail(
-                new ServerFailure(failure.getMessage(), failure.getExceptionType(), failure
-                    .getStackTrace(), failure.isFatal()));
+                new ServerFailure(failure.getMessage(),
+                    failure.getExceptionType(), failure.getStackTrace(),
+                    failure.isFatal()));
           }
         } catch (Throwable t) {
           if (causes == null) {
@@ -366,14 +368,12 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
    * Objects are placed into this map by being passed into {@link #edit} or as
    * an invocation argument.
    */
-  private final Map<SimpleProxyId<?>, AutoBean<? extends BaseProxy>> editedProxies =
-      new LinkedHashMap<SimpleProxyId<?>, AutoBean<? extends BaseProxy>>();
+  private final Map<SimpleProxyId<?>, AutoBean<? extends BaseProxy>> editedProxies = new LinkedHashMap<SimpleProxyId<?>, AutoBean<? extends BaseProxy>>();
   /**
    * A map that contains the canonical instance of an entity to return in the
    * return graph, since this is built from scratch.
    */
-  private final Map<SimpleProxyId<?>, AutoBean<?>> returnedProxies =
-      new HashMap<SimpleProxyId<?>, AutoBean<?>>();
+  private final Map<SimpleProxyId<?>, AutoBean<?>> returnedProxies = new HashMap<SimpleProxyId<?>, AutoBean<?>>();
 
   /**
    * A map that allows us to handle the case where the server has sent back an
@@ -381,12 +381,12 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
    * client will need to swap out the request-local ids with a regular
    * client-allocated id.
    */
-  private final Map<Integer, SimpleProxyId<?>> syntheticIds =
-      new HashMap<Integer, SimpleProxyId<?>>();
+  private final Map<Integer, SimpleProxyId<?>> syntheticIds = new HashMap<Integer, SimpleProxyId<?>>();
 
   private final DialectImpl dialect;
 
-  protected AbstractRequestContext(AbstractRequestFactory factory, Dialect dialect) {
+  protected AbstractRequestContext(AbstractRequestFactory factory,
+      Dialect dialect) {
     this.requestFactory = factory;
     this.dialect = dialect.create(this);
   }
@@ -405,10 +405,12 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
   /**
    * Creates a new proxy with an assigned ID.
    */
-  public <T extends BaseProxy> AutoBean<T> createProxy(Class<T> clazz, SimpleProxyId<T> id) {
+  public <T extends BaseProxy> AutoBean<T> createProxy(Class<T> clazz,
+      SimpleProxyId<T> id) {
     AutoBean<T> created = getAutoBeanFactory().create(clazz);
     if (created == null) {
-      throw new IllegalArgumentException("Unknown proxy type " + clazz.getName());
+      throw new IllegalArgumentException("Unknown proxy type "
+          + clazz.getName());
     }
     created.setTag(STABLE_ID, id);
     return created;
@@ -479,9 +481,10 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
   /**
    * EntityCodex support.
    */
-  public <Q extends BaseProxy> AutoBean<Q> getBeanForPayload(Splittable serializedProxyId) {
-    IdMessage ref =
-        AutoBeanCodex.decode(MessageFactoryHolder.FACTORY, IdMessage.class, serializedProxyId).as();
+  public <Q extends BaseProxy> AutoBean<Q> getBeanForPayload(
+      Splittable serializedProxyId) {
+    IdMessage ref = AutoBeanCodex.decode(MessageFactoryHolder.FACTORY,
+        IdMessage.class, serializedProxyId).as();
     @SuppressWarnings("unchecked")
     SimpleProxyId<Q> id = (SimpleProxyId<Q>) getId(ref);
     return getProxyForReturnPayloadGraph(id);
@@ -563,7 +566,8 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
   protected void fail(Receiver<Void> receiver, ServerFailure failure) {
     reuse();
     Set<Throwable> causes = null;
-    for (AbstractRequest<?> request : new ArrayList<AbstractRequest<?>>(invocations)) {
+    for (AbstractRequest<?> request : new ArrayList<AbstractRequest<?>>(
+        invocations)) {
       try {
         request.onFail(failure);
       } catch (Throwable t) {
@@ -602,7 +606,8 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
   protected void violation(final Receiver<Void> receiver, Set<Violation> errors) {
     reuse();
     Set<Throwable> causes = null;
-    for (AbstractRequest<?> request : new ArrayList<AbstractRequest<?>>(invocations)) {
+    for (AbstractRequest<?> request : new ArrayList<AbstractRequest<?>>(
+        invocations)) {
       try {
         request.onViolation(errors);
       } catch (Throwable t) {
@@ -635,14 +640,16 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     if (Strength.SYNTHETIC.equals(op.getStrength())) {
       return allocateSyntheticId(op.getTypeToken(), op.getSyntheticId());
     }
-    return requestFactory.getId(op.getTypeToken(), op.getServerId(), op.getClientId());
+    return requestFactory.getId(op.getTypeToken(), op.getServerId(),
+        op.getClientId());
   }
 
   /**
    * Creates or retrieves a new canonical AutoBean to represent the given id in
    * the returned payload.
    */
-  <Q extends BaseProxy> AutoBean<Q> getProxyForReturnPayloadGraph(SimpleProxyId<Q> id) {
+  <Q extends BaseProxy> AutoBean<Q> getProxyForReturnPayloadGraph(
+      SimpleProxyId<Q> id) {
     @SuppressWarnings("unchecked")
     AutoBean<Q> bean = (AutoBean<Q>) returnedProxies.get(id);
     if (bean == null) {
@@ -658,8 +665,8 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
    * Create a single OperationMessage that encapsulates the state of a proxy
    * AutoBean.
    */
-  AutoBean<OperationMessage> makeOperationMessage(SimpleProxyId<BaseProxy> stableId,
-      AutoBean<?> proxyBean, boolean useDelta) {
+  AutoBean<OperationMessage> makeOperationMessage(
+      SimpleProxyId<BaseProxy> stableId, AutoBean<?> proxyBean, boolean useDelta) {
 
     // The OperationMessages describes operations on exactly one entity
     AutoBean<OperationMessage> toReturn = MessageFactoryHolder.FACTORY.operation();
@@ -703,9 +710,8 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     Map<String, Object> diff = Collections.emptyMap();
     if (isEntityType(stableId.getProxyClass())) {
       // Compute what's changed on the client
-      diff =
-          useDelta ? AutoBeanUtils.diff(parent, proxyBean) : AutoBeanUtils
-              .getAllProperties(proxyBean);
+      diff = useDelta ? AutoBeanUtils.diff(parent, proxyBean)
+          : AutoBeanUtils.getAllProperties(proxyBean);
     } else if (isValueType(stableId.getProxyClass())) {
       // Send everything
       diff = AutoBeanUtils.getAllProperties(proxyBean);
@@ -714,7 +720,8 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     if (!diff.isEmpty()) {
       Map<String, Splittable> propertyMap = new HashMap<String, Splittable>();
       for (Map.Entry<String, Object> entry : diff.entrySet()) {
-        propertyMap.put(entry.getKey(), EntityCodex.encode(this, entry.getValue()));
+        propertyMap.put(entry.getKey(),
+            EntityCodex.encode(this, entry.getValue()));
       }
       operation.setPropertyMap(propertyMap);
     }
@@ -728,8 +735,8 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
    * @param returnRecord the JSON map containing property/value pairs
    * @param operations the WriteOperation eventns to broadcast over the EventBus
    */
-  <Q extends BaseProxy> Q processReturnOperation(SimpleProxyId<Q> id, OperationMessage op,
-      WriteOperation... operations) {
+  <Q extends BaseProxy> Q processReturnOperation(SimpleProxyId<Q> id,
+      OperationMessage op, WriteOperation... operations) {
 
     AutoBean<Q> toMutate = getProxyForReturnPayloadGraph(id);
     toMutate.setTag(Constants.VERSION_PROPERTY_B64, op.getVersion());
@@ -739,16 +746,15 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
       // Apply updates
       toMutate.accept(new AutoBeanVisitor() {
         @Override
-        public boolean visitReferenceProperty(String propertyName, AutoBean<?> value,
-            PropertyContext ctx) {
+        public boolean visitReferenceProperty(String propertyName,
+            AutoBean<?> value, PropertyContext ctx) {
           if (ctx.canSet()) {
             if (properties.containsKey(propertyName)) {
               Splittable raw = properties.get(propertyName);
-              Class<?> elementType =
-                  ctx instanceof CollectionPropertyContext ? ((CollectionPropertyContext) ctx)
-                      .getElementType() : null;
-              Object decoded =
-                  EntityCodex.decode(AbstractRequestContext.this, ctx.getType(), elementType, raw);
+              Class<?> elementType = ctx instanceof CollectionPropertyContext
+                  ? ((CollectionPropertyContext) ctx).getElementType() : null;
+              Object decoded = EntityCodex.decode(AbstractRequestContext.this,
+                  ctx.getType(), elementType, raw);
               ctx.set(decoded);
             }
           }
@@ -756,7 +762,8 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
         }
 
         @Override
-        public boolean visitValueProperty(String propertyName, Object value, PropertyContext ctx) {
+        public boolean visitValueProperty(String propertyName, Object value,
+            PropertyContext ctx) {
           if (ctx.canSet()) {
             if (properties.containsKey(propertyName)) {
               Splittable raw = properties.get(propertyName);
@@ -792,8 +799,8 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
           continue;
         }
         requestFactory.getEventBus().fireEventFromSource(
-            new EntityProxyChange<EntityProxy>((EntityProxy) proxy, writeOperation),
-            id.getProxyClass());
+            new EntityProxyChange<EntityProxy>((EntityProxy) proxy,
+                writeOperation), id.getProxyClass());
       }
     }
     return proxy;
@@ -804,8 +811,8 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
    * 
    * @see #syntheticIds
    */
-  private <Q extends BaseProxy> SimpleProxyId<Q> allocateSyntheticId(String typeToken,
-      int syntheticId) {
+  private <Q extends BaseProxy> SimpleProxyId<Q> allocateSyntheticId(
+      String typeToken, int syntheticId) {
     @SuppressWarnings("unchecked")
     SimpleProxyId<Q> toReturn = (SimpleProxyId<Q>) syntheticIds.get(syntheticId);
     if (toReturn == null) {
@@ -854,25 +861,19 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
    * Shallow-clones an autobean and makes duplicates of the collection types. A
    * regular {@link AutoBean#clone} won't duplicate reference properties.
    */
-  private <T extends BaseProxy> AutoBean<T> cloneBeanAndCollections(final AutoBean<T> toClone) {
-    AutoBean<T> clone = toClone.getFactory().create(toClone.getType());
-    clone.setTag(STABLE_ID, toClone.getTag(STABLE_ID));
-    clone.setTag(Constants.VERSION_PROPERTY_B64, toClone.getTag(Constants.VERSION_PROPERTY_B64));
+  private <T extends BaseProxy> AutoBean<T> cloneBeanAndCollections(
+      AutoBean<T> toClone) {
+    AutoBean<T> clone = toClone.clone(false);
     /*
      * Take ownership here to prevent cycles in value objects from overflowing
      * the stack.
      */
     takeOwnership(clone);
     clone.accept(new AutoBeanVisitor() {
-      final Map<String, Object> values = AutoBeanUtils.getAllProperties(toClone);
 
       @Override
-      public boolean visitCollectionProperty(String propertyName, AutoBean<Collection<?>> value,
-          CollectionPropertyContext ctx) {
-        // javac generics bug
-        value =
-            AutoBeanUtils.<Collection<?>, Collection<?>> getAutoBean((Collection<?>) values
-                .get(propertyName));
+      public boolean visitCollectionProperty(String propertyName,
+          AutoBean<Collection<?>> value, CollectionPropertyContext ctx) {
         if (value != null) {
           Collection<Object> collection;
           if (List.class == ctx.getType()) {
@@ -884,20 +885,20 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
             throw new IllegalArgumentException(ctx.getType().getName());
           }
 
-          if (isValueType(ctx.getElementType()) || isEntityType(ctx.getElementType())) {
+          if (isValueType(ctx.getElementType())) {
             /*
-             * Proxies must be edited up-front so that the elements in the
-             * collection have stable identity.
+             * Value proxies must be cloned upfront, since the value is replaced
+             * outright.
              */
             for (Object o : value.as()) {
               if (o == null) {
                 collection.add(null);
               } else {
-                collection.add(editProxy((BaseProxy) o));
+                collection.add(editProxy((ValueProxy) o));
               }
             }
           } else {
-            // For simple values, just copy the values
+            // For entities and simple values, just alias the values
             collection.addAll(value.as());
           }
 
@@ -907,28 +908,19 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
       }
 
       @Override
-      public boolean visitReferenceProperty(String propertyName, AutoBean<?> value,
-          PropertyContext ctx) {
-        value = AutoBeanUtils.getAutoBean(values.get(propertyName));
+      public boolean visitReferenceProperty(String propertyName,
+          AutoBean<?> value, PropertyContext ctx) {
         if (value != null) {
-          if (isValueType(ctx.getType()) || isEntityType(ctx.getType())) {
+          if (isValueType(ctx.getType())) {
             /*
              * Value proxies must be cloned upfront, since the value is replaced
              * outright.
              */
             @SuppressWarnings("unchecked")
-            AutoBean<BaseProxy> valueBean = (AutoBean<BaseProxy>) value;
+            AutoBean<ValueProxy> valueBean = (AutoBean<ValueProxy>) value;
             ctx.set(editProxy(valueBean.as()));
-          } else {
-            ctx.set(value.as());
           }
         }
-        return false;
-      }
-
-      @Override
-      public boolean visitValueProperty(String propertyName, Object value, PropertyContext ctx) {
-        ctx.set(values.get(propertyName));
         return false;
       }
     });
@@ -996,7 +988,8 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
       }
 
       // Parameter values or references
-      List<Splittable> parameters = new ArrayList<Splittable>(data.getOrderedParameters().length);
+      List<Splittable> parameters = new ArrayList<Splittable>(
+          data.getOrderedParameters().length);
       for (Object param : data.getOrderedParameters()) {
         parameters.add(EntityCodex.encode(this, param));
       }
@@ -1015,8 +1008,8 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
   private List<OperationMessage> makePayloadOperations() {
     List<OperationMessage> operations = new ArrayList<OperationMessage>();
     for (AutoBean<? extends BaseProxy> currentView : editedProxies.values()) {
-      OperationMessage operation =
-          makeOperationMessage(BaseProxyCategory.stableId(currentView), currentView, true).as();
+      OperationMessage operation = makeOperationMessage(
+          BaseProxyCategory.stableId(currentView), currentView, true).as();
       operations.add(operation);
     }
     return operations;
@@ -1087,7 +1080,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
    */
   private <T extends BaseProxy> T takeOwnership(AutoBean<T> bean) {
     editedProxies.put(stableId(bean), bean);
-    bean.setTag(REQUEST_CONTEXT, this);
+    bean.setTag(REQUEST_CONTEXT, AbstractRequestContext.this);
     return bean.as();
   }
 }

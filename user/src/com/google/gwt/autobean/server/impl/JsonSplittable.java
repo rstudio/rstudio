@@ -16,39 +16,21 @@
 package com.google.gwt.autobean.server.impl;
 
 import com.google.gwt.autobean.shared.Splittable;
-import com.google.gwt.autobean.shared.impl.HasSplittable;
 import com.google.gwt.autobean.shared.impl.StringQuoter;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.WeakHashMap;
 
 /**
  * Uses the org.json packages to slice and dice request payloads.
  */
-public class JsonSplittable implements Splittable, HasSplittable {
-
-  /**
-   * Ensures that the same JsonSplittable will be returned for a given backing
-   * JSONObject.
-   */
-  private static final Map<Object, Reference<JsonSplittable>> canonical =
-      new WeakHashMap<Object, Reference<JsonSplittable>>();
-
-  public static JsonSplittable create() {
-    return new JsonSplittable(new JSONObject());
-  }
-
+public class JsonSplittable implements Splittable {
   public static Splittable create(String payload) {
     try {
       switch (payload.charAt(0)) {
@@ -57,8 +39,8 @@ public class JsonSplittable implements Splittable, HasSplittable {
         case '[':
           return new JsonSplittable(new JSONArray(payload));
         case '"':
-          return new JsonSplittable(new JSONArray("[" + payload + "]").getString(0));
-        case '-':
+          return new JsonSplittable(
+              new JSONArray("[" + payload + "]").getString(0));
         case '0':
         case '1':
         case '2':
@@ -69,31 +51,19 @@ public class JsonSplittable implements Splittable, HasSplittable {
         case '7':
         case '8':
         case '9':
-          return new JsonSplittable(Double.parseDouble(payload));
-        case 't':
-        case 'f':
-          return new JsonSplittable(Boolean.parseBoolean(payload));
-        case 'n':
-          return null;
+          return new JsonSplittable(payload);
         default:
-          throw new RuntimeException("Could not parse payload: payload[0] = " + payload.charAt(0));
+          throw new RuntimeException("Could not parse payload: payload[0] = "
+              + payload.charAt(0));
       }
     } catch (JSONException e) {
       throw new RuntimeException("Could not parse payload", e);
     }
   }
 
-  public static Splittable createIndexed() {
-    return new JsonSplittable(new JSONArray());
-  }
-
-  public static Splittable createNull() {
-    return new JsonSplittable();
-  }
-
   /**
-   * Private equivalent of org.json.JSONObject.getNames(JSONObject) since that
-   * method is not available in Android 2.2. Used to represent a null value.
+   * Private equivalent of org.json.JSONObject.getNames(JSONObject)
+   * since that method is not available in Android 2.2.
    */
   private static String[] getNames(JSONObject json) {
     int length = json.length();
@@ -109,38 +79,20 @@ public class JsonSplittable implements Splittable, HasSplittable {
     return names;
   }
 
-  private JSONArray array;
-  private Boolean bool;
-  /**
-   * Used to represent a null value.
-   */
-  private boolean isNull;
-  private Double number;
-  private JSONObject obj;
-  private String string;
-  private final Map<String, Object> reified = new HashMap<String, Object>();
-
-  /**
-   * Constructor for a null value.
-   */
-  private JsonSplittable() {
-    isNull = true;
-  }
-
-  private JsonSplittable(boolean value) {
-    this.bool = value;
-  }
-
-  private JsonSplittable(double value) {
-    this.number = value;
-  }
+  private final JSONArray array;
+  private final JSONObject obj;
+  private final String string;
 
   private JsonSplittable(JSONArray array) {
     this.array = array;
+    this.obj = null;
+    this.string = null;
   }
 
   private JsonSplittable(JSONObject obj) {
+    this.array = null;
     this.obj = obj;
+    this.string = null;
   }
 
   private JsonSplittable(String string) {
@@ -149,36 +101,8 @@ public class JsonSplittable implements Splittable, HasSplittable {
     this.string = string;
   }
 
-  public boolean asBoolean() {
-    return bool;
-  }
-
-  public double asNumber() {
-    return number;
-  }
-
-  public void assign(Splittable parent, int index) {
-    try {
-      ((JsonSplittable) parent).array.put(index, value());
-    } catch (JSONException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public void assign(Splittable parent, String propertyName) {
-    try {
-      ((JsonSplittable) parent).obj.put(propertyName, value());
-    } catch (JSONException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   public String asString() {
     return string;
-  }
-
-  public Splittable deepCopy() {
-    return create(getPayload());
   }
 
   public Splittable get(int index) {
@@ -198,9 +122,6 @@ public class JsonSplittable implements Splittable, HasSplittable {
   }
 
   public String getPayload() {
-    if (isNull) {
-      return "null";
-    }
     if (obj != null) {
       return obj.toString();
     }
@@ -209,12 +130,6 @@ public class JsonSplittable implements Splittable, HasSplittable {
     }
     if (string != null) {
       return StringQuoter.quote(string);
-    }
-    if (number != null) {
-      return String.valueOf(number);
-    }
-    if (bool != null) {
-      return String.valueOf(bool);
     }
     throw new RuntimeException("No data in this JsonSplittable");
   }
@@ -226,18 +141,6 @@ public class JsonSplittable implements Splittable, HasSplittable {
     } else {
       return Collections.unmodifiableList(Arrays.asList(names));
     }
-  }
-
-  public Object getReified(String key) {
-    return reified.get(key);
-  }
-
-  public Splittable getSplittable() {
-    return this;
-  }
-
-  public boolean isBoolean() {
-    return bool != null;
   }
 
   public boolean isIndexed() {
@@ -257,37 +160,8 @@ public class JsonSplittable implements Splittable, HasSplittable {
     return !obj.has(key) || obj.isNull(key);
   }
 
-  public boolean isNumber() {
-    return number != null;
-  }
-
-  public boolean isReified(String key) {
-    return reified.containsKey(key);
-  }
-
   public boolean isString() {
     return string != null;
-  }
-
-  public boolean isUndefined(String key) {
-    return !obj.has(key);
-  }
-
-  public void setReified(String key, Object object) {
-    reified.put(key, object);
-  }
-
-  public void setSize(int size) {
-    // This is terrible, but there's no API support for resizing or splicing
-    JSONArray newArray = new JSONArray();
-    for (int i = 0; i < size; i++) {
-      try {
-        newArray.put(i, array.get(i));
-      } catch (JSONException e) {
-        throw new RuntimeException(e);
-      }
-    }
-    array = newArray;
   }
 
   public int size() {
@@ -299,53 +173,23 @@ public class JsonSplittable implements Splittable, HasSplittable {
    */
   @Override
   public String toString() {
-    return getPayload();
-  }
-
-  private synchronized JsonSplittable makeSplittable(Object object) {
-    if (JSONObject.NULL.equals(object)) {
-      return null;
-    }
-    Reference<JsonSplittable> ref = canonical.get(object);
-    JsonSplittable seen = ref == null ? null : ref.get();
-    if (seen == null) {
-      if (object instanceof JSONObject) {
-        seen = new JsonSplittable((JSONObject) object);
-      } else if (object instanceof JSONArray) {
-        seen = new JsonSplittable((JSONArray) object);
-      } else if (object instanceof String) {
-        seen = new JsonSplittable(object.toString());
-      } else if (object instanceof Number) {
-        seen = new JsonSplittable(((Number) object).doubleValue());
-      } else if (object instanceof Boolean) {
-        seen = new JsonSplittable((Boolean) object);
-      } else {
-        throw new RuntimeException("Unhandled type " + object.getClass());
-      }
-      canonical.put(object, new WeakReference<JsonSplittable>(seen));
-    }
-    return seen;
-  }
-
-  private Object value() {
-    if (isNull) {
-      return null;
-    }
     if (obj != null) {
-      return obj;
-    }
-    if (array != null) {
-      return array;
-    }
-    if (string != null) {
+      return obj.toString();
+    } else if (array != null) {
+      return array.toString();
+    } else if (string != null) {
       return string;
     }
-    if (number != null) {
-      return number;
+    return "<Uninitialized>";
+  }
+
+  private JsonSplittable makeSplittable(Object object) {
+    if (object instanceof JSONObject) {
+      return new JsonSplittable((JSONObject) object);
     }
-    if (bool != null) {
-      return bool;
+    if (object instanceof JSONArray) {
+      return new JsonSplittable((JSONArray) object);
     }
-    throw new RuntimeException("No data");
+    return new JsonSplittable(object.toString());
   }
 }

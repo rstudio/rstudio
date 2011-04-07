@@ -15,6 +15,7 @@
  */
 package com.google.gwt.autobean.shared;
 
+import com.google.gwt.autobean.shared.impl.LazySplittable;
 import com.google.gwt.autobean.shared.impl.StringQuoter;
 
 import java.math.BigDecimal;
@@ -37,13 +38,13 @@ public class ValueCodex {
       }
 
       @Override
-      public BigDecimal decode(Class<?> clazz, Splittable value) {
-        return new BigDecimal(value.asString());
+      public BigDecimal decode(Class<?> clazz, String value) {
+        return new BigDecimal(value);
       }
 
       @Override
-      public Splittable encode(Object value) {
-        return StringQuoter.create(((BigDecimal) value).toString());
+      public String toJsonExpression(Object value) {
+        return StringQuoter.quote(((BigDecimal) value).toString());
       }
     },
     BIG_INTEGER(BigInteger.class) {
@@ -53,46 +54,31 @@ public class ValueCodex {
       }
 
       @Override
-      public BigInteger decode(Class<?> clazz, Splittable value) {
-        return new BigInteger(value.asString());
+      public BigInteger decode(Class<?> clazz, String value) {
+        return new BigInteger(value);
       }
 
       @Override
-      public Splittable encode(Object value) {
-        return StringQuoter.create(((BigInteger) value).toString());
+      public String toJsonExpression(Object value) {
+        return StringQuoter.quote(((BigInteger) value).toString());
       }
     },
     BOOLEAN(Boolean.class, boolean.class, false) {
       @Override
-      public Boolean decode(Class<?> clazz, Splittable value) {
-        return value.asBoolean();
-      }
-
-      @Override
-      public Splittable encode(Object value) {
-        return StringQuoter.create((Boolean) value);
+      public Boolean decode(Class<?> clazz, String value) {
+        return Boolean.valueOf(value);
       }
     },
     BYTE(Byte.class, byte.class, (byte) 0) {
       @Override
-      public Byte decode(Class<?> clazz, Splittable value) {
-        return (byte) value.asNumber();
-      }
-
-      @Override
-      public Splittable encode(Object value) {
-        return StringQuoter.create((Byte) value);
+      public Byte decode(Class<?> clazz, String value) {
+        return Byte.valueOf(value);
       }
     },
     CHARACTER(Character.class, char.class, (char) 0) {
       @Override
-      public Character decode(Class<?> clazz, Splittable value) {
-        return value.asString().charAt(0);
-      }
-
-      @Override
-      public Splittable encode(Object value) {
-        return StringQuoter.create(String.valueOf((Character) value));
+      public Character decode(Class<?> clazz, String value) {
+        return value.charAt(0);
       }
     },
     DATE(Date.class) {
@@ -102,111 +88,80 @@ public class ValueCodex {
       }
 
       @Override
-      public Date decode(Class<?> clazz, Splittable value) {
-        return StringQuoter.tryParseDate(value.asString());
+      public Date decode(Class<?> clazz, String value) {
+        return StringQuoter.tryParseDate(value);
       }
 
       @Override
-      public Splittable encode(Object value) {
-        return StringQuoter.create(String.valueOf(((Date) value).getTime()));
+      public String toJsonExpression(Object value) {
+        return String.valueOf(((Date) value).getTime());
       }
     },
     DOUBLE(Double.class, double.class, 0d) {
       @Override
-      public Double decode(Class<?> clazz, Splittable value) {
-        return value.asNumber();
-      }
-
-      @Override
-      public Splittable encode(Object value) {
-        return StringQuoter.create((Double) value);
+      public Double decode(Class<?> clazz, String value) {
+        return Double.valueOf(value);
       }
     },
     ENUM(Enum.class) {
       @Override
-      public Enum<?> decode(Class<?> clazz, Splittable value) {
-        return (Enum<?>) clazz.getEnumConstants()[(int) value.asNumber()];
+      public Enum<?> decode(Class<?> clazz, String value) {
+        return (Enum<?>) clazz.getEnumConstants()[Integer.valueOf(value)];
       }
 
       @Override
-      public Splittable encode(Object value) {
-        return StringQuoter.create(((Enum<?>) value).ordinal());
+      public String toJsonExpression(Object value) {
+        return String.valueOf(((Enum<?>) value).ordinal());
       }
     },
     FLOAT(Float.class, float.class, 0f) {
       @Override
-      public Float decode(Class<?> clazz, Splittable value) {
-        return (float) value.asNumber();
-      }
-
-      @Override
-      public Splittable encode(Object value) {
-        return StringQuoter.create((Float) value);
+      public Float decode(Class<?> clazz, String value) {
+        return Float.valueOf(value);
       }
     },
     INTEGER(Integer.class, int.class, 0) {
       @Override
-      public Integer decode(Class<?> clazz, Splittable value) {
-        return Integer.valueOf((int) value.asNumber());
-      }
-
-      @Override
-      public Splittable encode(Object value) {
-        return StringQuoter.create((Integer) value);
+      public Integer decode(Class<?> clazz, String value) {
+        return Integer.valueOf(value);
       }
     },
     LONG(Long.class, long.class, 0L) {
       @Override
-      public Long decode(Class<?> clazz, Splittable value) {
-        return Long.parseLong(value.asString());
+      public Long decode(Class<?> clazz, String value) {
+        return Long.valueOf(value);
       }
 
       @Override
-      public Splittable encode(Object value) {
-        return StringQuoter.create(String.valueOf((Long) value));
+      public String toJsonExpression(Object value) {
+        // Longs cannot be expressed as a JS double
+        if (value instanceof Long) {
+          return StringQuoter.quote(String.valueOf(value));
+        } else {
+          throw new IllegalArgumentException("value should be a Long");
+        }
       }
     },
     SHORT(Short.class, short.class, (short) 0) {
       @Override
-      public Short decode(Class<?> clazz, Splittable value) {
-        return (short) value.asNumber();
-      }
-
-      @Override
-      public Splittable encode(Object value) {
-        return StringQuoter.create((Short) value);
+      public Short decode(Class<?> clazz, String value) {
+        return Short.valueOf(value);
       }
     },
     STRING(String.class) {
       @Override
-      public String decode(Class<?> clazz, Splittable value) {
-        return value.asString();
-      }
-
-      @Override
-      public Splittable encode(Object value) {
-        return StringQuoter.create((String) value);
-      }
-    },
-    SPLITTABLE(Splittable.class) {
-      @Override
-      public Splittable decode(Class<?> clazz, Splittable value) {
+      public String decode(Class<?> clazz, String value) {
         return value;
       }
 
       @Override
-      public Splittable encode(Object value) {
-        return (Splittable) value;
+      public String toJsonExpression(Object value) {
+        return StringQuoter.quote((String) value);
       }
     },
     VOID(Void.class, void.class, null) {
       @Override
-      public Void decode(Class<?> clazz, Splittable value) {
-        return null;
-      }
-
-      @Override
-      public Splittable encode(Object value) {
+      public Void decode(Class<?> clazz, String value) {
         return null;
       }
     };
@@ -235,9 +190,7 @@ public class ValueCodex {
       return false;
     }
 
-    public abstract Object decode(Class<?> clazz, Splittable value);
-
-    public abstract Splittable encode(Object value);
+    public abstract Object decode(Class<?> clazz, String value);
 
     public Object getDefaultValue() {
       return defaultValue;
@@ -249,6 +202,10 @@ public class ValueCodex {
 
     public Class<?> getType() {
       return type;
+    }
+
+    public String toJsonExpression(Object value) {
+      return String.valueOf(value);
     }
   }
 
@@ -280,23 +237,19 @@ public class ValueCodex {
     return ValueCodexHelper.canDecode(clazz);
   }
 
-  @SuppressWarnings("unchecked")
   public static <T> T decode(Class<T> clazz, Splittable split) {
-    if (split == null || split == Splittable.NULL) {
+    if (split == null || split == LazySplittable.NULL) {
       return null;
     }
-    return (T) getTypeOrDie(clazz).decode(clazz, split);
+    return decode(clazz, split.asString());
   }
 
-  /**
-   * No callers in GWT codebase.
-   * 
-   * @deprecated use {@link #decode(Class, Splittable)} instead.
-   * @throws UnsupportedOperationException
-   */
-  @Deprecated
+  @SuppressWarnings("unchecked")
   public static <T> T decode(Class<T> clazz, String string) {
-    throw new UnsupportedOperationException();
+    if (string == null) {
+      return null;
+    }
+    return (T) getTypeOrDie(clazz).decode(clazz, string);
   }
 
   /**
@@ -305,14 +258,14 @@ public class ValueCodex {
    */
   public static Splittable encode(Class<?> clazz, Object obj) {
     if (obj == null) {
-      return Splittable.NULL;
+      return LazySplittable.NULL;
     }
-    return getTypeOrDie(clazz).encode(obj);
+    return new LazySplittable(getTypeOrDie(clazz).toJsonExpression(obj));
   }
 
   public static Splittable encode(Object obj) {
     if (obj == null) {
-      return Splittable.NULL;
+      return LazySplittable.NULL;
     }
     Type t = findType(obj.getClass());
     // Try upcasting
@@ -327,7 +280,7 @@ public class ValueCodex {
     if (t == null) {
       throw new UnsupportedOperationException(obj.getClass().getName());
     }
-    return t.encode(obj);
+    return new LazySplittable(t.toJsonExpression(obj));
   }
 
   /**

@@ -16,19 +16,20 @@
 package com.google.gwt.autobean.server.impl;
 
 import java.lang.reflect.Method;
+import java.util.Map;
 
 /**
  * A property context that allows setters to be called on a simple peer,
  * regardless of whether or not the interface actually has a setter.
  */
 class BeanPropertyContext extends MethodPropertyContext {
-  private final ProxyAutoBean<?> bean;
   private final String propertyName;
+  private final Map<String, Object> map;
 
   public BeanPropertyContext(ProxyAutoBean<?> bean, Method getter) {
     super(getter);
-    this.bean = bean;
     propertyName = BeanMethod.GET.inferName(getter);
+    map = bean.getPropertyMap();
   }
 
   @Override
@@ -41,6 +42,6 @@ class BeanPropertyContext extends MethodPropertyContext {
     Class<?> maybeAutobox = TypeUtils.maybeAutobox(getType());
     assert value == null || maybeAutobox.isInstance(value) : value.getClass().getCanonicalName()
         + " is not assignable to " + maybeAutobox.getCanonicalName();
-    bean.setProperty(propertyName, maybeAutobox.cast(value));
+    map.put(propertyName, maybeAutobox.cast(value));
   }
 }

@@ -60,17 +60,17 @@ public class JsonUtils {
       try {
         return JSON.parse(json);
       } catch (e) {
-        return @com.google.gwt.core.client.JsonUtils::throwIllegalArgumentException(*)("Error parsing JSON: " + e, json);
+        return @com.google.gwt.core.client.JsonUtils::throwIllegalArgumentException(Ljava/lang/String;)("Error parsing JSON: " + e);
       }
     } else {
       if (!@com.google.gwt.core.client.JsonUtils::safeToEval(Ljava/lang/String;)(json)) {
-        return @com.google.gwt.core.client.JsonUtils::throwIllegalArgumentException(*)("Illegal character in JSON string", json);
+        return @com.google.gwt.core.client.JsonUtils::throwIllegalArgumentException(Ljava/lang/String;)("Illegal character in JSON string");
       }
       json = @com.google.gwt.core.client.JsonUtils::escapeJsonForEval(Ljava/lang/String;)(json);
       try {
         return eval('(' + json + ')');
       } catch (e) {
-        return @com.google.gwt.core.client.JsonUtils::throwIllegalArgumentException(*)("Error parsing JSON: " + e, json);
+        return @com.google.gwt.core.client.JsonUtils::throwIllegalArgumentException(Ljava/lang/String;)("Error parsing JSON: " + e);
       }
     }
   }-*/;
@@ -110,12 +110,12 @@ public class JsonUtils {
     try {
       return eval('(' + escaped + ')');
     } catch (e) {
-      return @com.google.gwt.core.client.JsonUtils::throwIllegalArgumentException(*)("Error parsing JSON: " + e, json);
+      return @com.google.gwt.core.client.JsonUtils::throwIllegalArgumentException(Ljava/lang/String;)("Error parsing JSON: " + e);
     }
   }-*/;
 
-  static void throwIllegalArgumentException(String message, String data) {
-    throw new IllegalArgumentException(message + "\n" + data);
+  static void throwIllegalArgumentException(String message) {
+    throw new IllegalArgumentException(message);
   }
 
   private static native String escapeChar(String c) /*-{

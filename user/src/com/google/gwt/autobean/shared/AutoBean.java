@@ -58,21 +58,16 @@ public interface AutoBean<T> {
   T as();
 
   /**
-   * This method always throws an {@link UnsupportedOperationException}. The
-   * implementation of this method in previous releases was not sufficiently
-   * robust and there are no further uses of this method within the GWT code
-   * base. Furthermore, there are many different semantics that can be applied
-   * to a cloning process that cannot be adequately addressed with a single
-   * implementation.
+   * Creates a copy of the AutoBean.
    * <p>
-   * A simple clone of an acyclic datastructure can be created by using
-   * {@link AutoBeanCodex} to encode and decode the root object. Other cloning
-   * algorithms are best implemented by using an {@link AutoBeanVisitor}.
+   * If the AutoBean has tags, the tags will be copied into the cloned AutoBean.
+   * If any of the tag values are AutoBeans, they will not be cloned, regardless
+   * of the value of <code>deep</code>.
    * 
-   * @throws UnsupportedOperationException
-   * @deprecated with no replacement
+   * @param deep indicates if all referenced AutoBeans should be cloned
+   * @return a copy of this {@link AutoBean}
+   * @throws IllegalStateException if the AutoBean is a wrapper type
    */
-  @Deprecated
   AutoBean<T> clone(boolean deep);
 
   /**

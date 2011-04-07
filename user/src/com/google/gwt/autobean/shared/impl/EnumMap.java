@@ -27,7 +27,7 @@ public interface EnumMap {
     Class<? extends Enum<?>>[] value();
   }
 
-  <E extends Enum<?>> E getEnum(Class<E> clazz, String token);
+  <E extends Enum<E>> E getEnum(Class<E> clazz, String token);
 
   String getToken(Enum<?> e);
 }

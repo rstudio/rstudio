@@ -20,9 +20,6 @@ import com.google.gwt.autobean.shared.AutoBeanFactory;
 import com.google.gwt.autobean.shared.AutoBeanUtils;
 import com.google.gwt.autobean.shared.AutoBeanVisitor;
 import com.google.gwt.autobean.shared.AutoBeanVisitor.Context;
-import com.google.gwt.autobean.shared.Splittable;
-import com.google.gwt.autobean.shared.impl.AutoBeanCodexImpl.Coder;
-import com.google.gwt.autobean.shared.impl.AutoBeanCodexImpl.EncodeState;
 import com.google.gwt.core.client.impl.WeakMapping;
 
 import java.util.HashMap;
@@ -35,7 +32,7 @@ import java.util.Set;
  * 
  * @param <T> the wrapper type
  */
-public abstract class AbstractAutoBean<T> implements AutoBean<T>, HasSplittable {
+public abstract class AbstractAutoBean<T> implements AutoBean<T> {
   /**
    * Used to avoid cycles when visiting.
    */
@@ -47,50 +44,64 @@ public abstract class AbstractAutoBean<T> implements AutoBean<T>, HasSplittable 
     }
   }
 
-  public static final String UNSPLITTABLE_VALUES_KEY = "__unsplittableValues";
   protected static final Object[] EMPTY_OBJECT = new Object[0];
 
   /**
    * Used by {@link #createSimplePeer()}.
    */
-  protected Splittable data;
-  protected T wrapped;
+  protected final Map<String, Object> values;
+
   private final AutoBeanFactory factory;
   private boolean frozen;
+
   /**
    * Lazily initialized by {@link #setTag(String, Object)} because not all
    * instances will make use of tags.
    */
   private Map<String, Object> tags;
   private final boolean usingSimplePeer;
+  private T wrapped;
 
   /**
    * Constructor that will use a generated simple peer.
    */
   protected AbstractAutoBean(AutoBeanFactory factory) {
-    this(factory, StringQuoter.createSplittable());
-  }
-
-  /**
-   * Constructor that will use a generated simple peer, backed with existing
-   * data.
-   */
-  protected AbstractAutoBean(AutoBeanFactory factory, Splittable data) {
-    this.data = data;
     this.factory = factory;
     usingSimplePeer = true;
-    wrapped = createSimplePeer();
+    values = new HashMap<String, Object>();
   }
 
   /**
-   * Constructor that wraps an existing object. The parameters on this method
-   * are reversed to avoid conflicting with the other two-arg constructor for
-   * {@code AutoBean<Splittable>} instances.
+   * Clone constructor.
    */
-  protected AbstractAutoBean(T wrapped, AutoBeanFactory factory) {
+  protected AbstractAutoBean(AbstractAutoBean<T> toClone, boolean deep) {
+    this.factory = toClone.factory;
+    if (!toClone.usingSimplePeer) {
+      throw new IllegalStateException("Cannot clone wrapped bean");
+    }
+    if (toClone.tags != null) {
+      tags = new HashMap<String, Object>(toClone.tags);
+    }
+    usingSimplePeer = true;
+    values = new HashMap<String, Object>(toClone.values);
+
+    if (deep) {
+      for (Map.Entry<String, Object> entry : values.entrySet()) {
+        AutoBean<?> auto = AutoBeanUtils.getAutoBean(entry.getValue());
+        if (auto != null) {
+          entry.setValue(auto.clone(true).as());
+        }
+      }
+    }
+  }
+
+  /**
+   * Constructor that wraps an existing object.
+   */
+  protected AbstractAutoBean(AutoBeanFactory factory, T wrapped) {
     this.factory = factory;
     usingSimplePeer = false;
-    data = null;
+    values = null;
     this.wrapped = wrapped;
 
     // Used by AutoBeanUtils
@@ -103,29 +114,15 @@ public abstract class AbstractAutoBean<T> implements AutoBean<T>, HasSplittable 
 
   public abstract T as();
 
-  public AutoBean<T> clone(boolean deep) {
-    throw new UnsupportedOperationException();
-  }
+  public abstract AutoBean<T> clone(boolean deep);
 
   public AutoBeanFactory getFactory() {
     return factory;
   }
 
-  public Splittable getSplittable() {
-    return data;
-  }
-
   @SuppressWarnings("unchecked")
   public <Q> Q getTag(String tagName) {
     return tags == null ? null : (Q) tags.get(tagName);
-  }
-
-  /**
-   * Indicates that the value returned from {@link #getSplittable()} may not
-   * contain all of the data encapsulated by the AutoBean.
-   */
-  public boolean hasUnsplittableValues() {
-    return data.isReified(UNSPLITTABLE_VALUES_KEY);
   }
 
   public boolean isFrozen() {
@@ -134,16 +131,6 @@ public abstract class AbstractAutoBean<T> implements AutoBean<T>, HasSplittable 
 
   public boolean isWrapper() {
     return !usingSimplePeer;
-  }
-
-  public void setData(Splittable data) {
-    assert data != null : "null data";
-    this.data = data;
-    /*
-     * The simple peer aliases the data object from the enclosing bean to avoid
-     * needing to call up the this.this$0 chain.
-     */
-    wrapped = createSimplePeer();
   }
 
   public void setFrozen(boolean frozen) {
@@ -221,30 +208,11 @@ public abstract class AbstractAutoBean<T> implements AutoBean<T>, HasSplittable 
     return AutoBeanUtils.<W, W> getAutoBean(obj).as();
   }
 
-  /**
-   * Native getters and setters for primitive properties are generated for each
-   * type to ensure inlining.
-   */
-  protected <Q> Q getOrReify(String propertyName) {
-    checkWrapped();
-    if (data.isReified(propertyName)) {
-      @SuppressWarnings("unchecked")
-      Q temp = (Q) data.getReified(propertyName);
-      return temp;
-    }
-    if (data.isNull(propertyName)) {
-      return null;
-    }
-    data.setReified(propertyName, null);
-    Coder coder = AutoBeanCodexImpl.doCoderFor(this, propertyName);
-    @SuppressWarnings("unchecked")
-    Q toReturn = (Q) coder.decode(EncodeState.forDecode(factory), data.get(propertyName));
-    data.setReified(propertyName, toReturn);
-    return toReturn;
-  }
-
   protected T getWrapped() {
-    checkWrapped();
+    if (wrapped == null) {
+      assert usingSimplePeer : "checkWrapped should have failed";
+      wrapped = createSimplePeer();
+    }
     return wrapped;
   }
 
@@ -265,27 +233,6 @@ public abstract class AbstractAutoBean<T> implements AutoBean<T>, HasSplittable 
   protected void set(String method, Object value) {
   }
 
-  protected void setProperty(String propertyName, Object value) {
-    checkWrapped();
-    checkFrozen();
-    data.setReified(propertyName, value);
-    if (value == null) {
-      Splittable.NULL.assign(data, propertyName);
-      return;
-    }
-    Coder coder = AutoBeanCodexImpl.doCoderFor(this, propertyName);
-    Splittable backing = coder.extractSplittable(EncodeState.forDecode(factory), value);
-    if (backing == null) {
-      /*
-       * External data type, such as an ArrayList or a concrete implementation
-       * of a setter's interface type. This means that a slow serialization pass
-       * is necessary.
-       */
-      data.setReified(UNSPLITTABLE_VALUES_KEY, true);
-    } else {
-      backing.assign(data, propertyName);
-    }
-  }
-
-  protected abstract void traverseProperties(AutoBeanVisitor visitor, OneShotContext ctx);
+  protected abstract void traverseProperties(AutoBeanVisitor visitor,
+      OneShotContext ctx);
 }

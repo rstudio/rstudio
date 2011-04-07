@@ -19,7 +19,6 @@ import com.google.gwt.autobean.shared.AutoBean;
 import com.google.gwt.autobean.shared.AutoBeanUtils;
 
 import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
@@ -32,9 +31,11 @@ import java.lang.reflect.Proxy;
 class ShimHandler<T> implements InvocationHandler {
   private final ProxyAutoBean<T> bean;
   private final Method interceptor;
+  private final T toWrap;
 
   public ShimHandler(ProxyAutoBean<T> bean, T toWrap) {
     this.bean = bean;
+    this.toWrap = toWrap;
 
     Method maybe = null;
     for (Class<?> clazz : bean.getConfiguration().getCategories()) {
@@ -66,35 +67,36 @@ class ShimHandler<T> implements InvocationHandler {
     return bean.getWrapped().hashCode();
   }
 
-  public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+  public Object invoke(Object proxy, Method method, Object[] args)
+      throws Throwable {
     method.setAccessible(true);
     Object toReturn;
     String name = method.getName();
+    bean.checkWrapped();
     method.setAccessible(true);
-    try {
-      if (BeanMethod.OBJECT.matches(method)) {
-        return method.invoke(this, args);
-      } else if (BeanMethod.GET.matches(method)) {
-        toReturn = method.invoke(bean.getWrapped(), args);
-        toReturn = bean.get(name, toReturn);
-      } else if (BeanMethod.SET.matches(method) || BeanMethod.SET_BUILDER.matches(method)) {
-        toReturn = method.invoke(bean.getWrapped(), args);
-        bean.set(name, args[0]);
-      } else {
-        // XXX How should freezing and calls work together?
-        toReturn = method.invoke(bean.getWrapped(), args);
-        bean.call(name, toReturn, args);
-      }
-      Class<?> intf = method.getReturnType();
-      if (!Object.class.equals(intf)) {
-        // XXX Need to deal with resolving generic T return types
-        toReturn = maybeWrap(intf, toReturn);
-      }
-      if (interceptor != null) {
-        toReturn = interceptor.invoke(null, bean, toReturn);
-      }
-    } catch (InvocationTargetException e) {
-      throw e.getCause();
+    if (BeanMethod.OBJECT.matches(method)) {
+      return method.invoke(this, args);
+    } else if (BeanMethod.GET.matches(method)) {
+      toReturn = method.invoke(toWrap, args);
+      toReturn = bean.get(name, toReturn);
+    } else if (BeanMethod.SET.matches(method)
+        || BeanMethod.SET_BUILDER.matches(method)) {
+      bean.checkFrozen();
+      toReturn = method.invoke(toWrap, args);
+      bean.set(name, args[0]);
+    } else {
+      // XXX How should freezing and calls work together?
+      // bean.checkFrozen();
+      toReturn = method.invoke(toWrap, args);
+      bean.call(name, toReturn, args);
+    }
+    Class<?> intf = method.getReturnType();
+    if (!Object.class.equals(intf)) {
+      // XXX Need to deal with resolving generic T return types
+      toReturn = maybeWrap(intf, toReturn);
+    }
+    if (interceptor != null) {
+      toReturn = interceptor.invoke(null, bean, toReturn);
     }
     return toReturn;
   }
@@ -108,11 +110,9 @@ class ShimHandler<T> implements InvocationHandler {
     if (toReturn == null) {
       return null;
     }
-    AutoBean<?> returnBean = AutoBeanUtils.getAutoBean(toReturn);
-    if (returnBean != null) {
-      return returnBean.as();
-    }
-    if (TypeUtils.isValueType(intf) || TypeUtils.isValueType(toReturn.getClass())
+    if (TypeUtils.isValueType(intf)
+        || TypeUtils.isValueType(toReturn.getClass())
+        || AutoBeanUtils.getAutoBean(toReturn) != null
         || bean.getConfiguration().getNoWrap().contains(intf)) {
       return toReturn;
     }
@@ -124,8 +124,8 @@ class ShimHandler<T> implements InvocationHandler {
        */
       return toReturn;
     }
-    ProxyAutoBean<Object> newBean =
-        new ProxyAutoBean<Object>(bean.getFactory(), intf, bean.getConfiguration(), toReturn);
+    ProxyAutoBean<Object> newBean = new ProxyAutoBean<Object>(
+        bean.getFactory(), intf, bean.getConfiguration(), toReturn);
     return newBean.as();
   }
 }

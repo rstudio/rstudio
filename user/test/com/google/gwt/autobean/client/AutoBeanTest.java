@@ -263,6 +263,46 @@ public class AutoBeanTest extends GWTTestCase {
     assertEquals("Blah", more.as().getString());
   }
 
+  public void testClone() {
+    AutoBean<Intf> a1 = factory.intf();
+
+    Intf i1 = a1.as();
+    i1.setInt(42);
+
+    AutoBean<Intf> a2 = a1.clone(false);
+    Intf i2 = a2.as();
+
+    // Copies have the same values
+    assertNotSame(i1, i2);
+    assertFalse(i1.equals(i2));
+    assertEquals(i1.getInt(), i2.getInt());
+    assertTrue(AutoBeanUtils.deepEquals(a1, a2));
+
+    // Cloned instances do not affect one another
+    i1.setInt(41);
+    assertEquals(41, i1.getInt());
+    assertEquals(42, i2.getInt());
+  }
+
+  public void testCloneDeep() {
+    AutoBean<OtherIntf> a1 = factory.otherIntf();
+    OtherIntf o1 = a1.as();
+
+    o1.setIntf(factory.intf().as());
+    o1.getIntf().setInt(42);
+
+    AutoBean<OtherIntf> a2 = a1.clone(true);
+    assertTrue(AutoBeanUtils.deepEquals(a1, a2));
+
+    OtherIntf o2 = a2.as();
+
+    assertNotSame(o1.getIntf(), o2.getIntf());
+    assertEquals(o1.getIntf().getInt(), o2.getIntf().getInt());
+
+    o1.getIntf().setInt(41);
+    assertEquals(42, o2.getIntf().getInt());
+  }
+
   public void testDiff() {
     AutoBean<Intf> a1 = factory.intf();
     AutoBean<Intf> a2 = factory.intf();
@@ -273,6 +313,24 @@ public class AutoBeanTest extends GWTTestCase {
     Map<String, Object> diff = AutoBeanUtils.diff(a1, a2);
     assertEquals(1, diff.size());
     assertEquals(42, diff.get("int"));
+  }
+
+  /**
+   * Tests that lists are in fact aliased between AutoBeans after a shallow
+   * clone.
+   */
+  public void testDiffWithCloneAndListMutation() {
+    AutoBean<HasList> a1 = factory.hasList();
+    List<Intf> list = new ArrayList<Intf>();
+    list.add(factory.intf().as());
+    a1.as().setList(list);
+
+    AutoBean<HasList> a2 = a1.clone(false);
+    assertTrue(AutoBeanUtils.diff(a1, a2).isEmpty());
+
+    // Lists are aliased between AutoBeans
+    assertSame(a1.as().getList(), a2.as().getList());
+    assertEquals(a1.as().getList(), a2.as().getList());
   }
 
   public void testDiffWithListPropertyAssignment() {
@@ -377,14 +435,14 @@ public class AutoBeanTest extends GWTTestCase {
       }
 
       @Override
-      public void endVisitCollectionProperty(String propertyName, AutoBean<Collection<?>> value,
-          CollectionPropertyContext ctx) {
+      public void endVisitCollectionProperty(String propertyName,
+          AutoBean<Collection<?>> value, CollectionPropertyContext ctx) {
         check(propertyName, ctx);
       }
 
       @Override
-      public void endVisitMapProperty(String propertyName, AutoBean<Map<?, ?>> value,
-          MapPropertyContext ctx) {
+      public void endVisitMapProperty(String propertyName,
+          AutoBean<Map<?, ?>> value, MapPropertyContext ctx) {
         check(propertyName, ctx);
       }
 
@@ -400,12 +458,14 @@ public class AutoBeanTest extends GWTTestCase {
         } else if ("listOfMap".equals(propertyName)) {
           // List<Map<String, Intf>>
           assertEquals(List.class.getName() + "<" + Map.class.getName() + "<"
-              + String.class.getName() + "," + Intf.class.getName() + ">>", sb.toString());
+              + String.class.getName() + "," + Intf.class.getName() + ">>",
+              sb.toString());
         } else if ("map".equals(propertyName)) {
           // Map<Map<String, String>, List<List<Intf>>>
           assertEquals(Map.class.getName() + "<" + Map.class.getName() + "<"
-              + String.class.getName() + "," + String.class.getName() + ">," + List.class.getName()
-              + "<" + List.class.getName() + "<" + Intf.class.getName() + ">>>", sb.toString());
+              + String.class.getName() + "," + String.class.getName() + ">,"
+              + List.class.getName() + "<" + List.class.getName() + "<"
+              + Intf.class.getName() + ">>>", sb.toString());
         } else {
           throw new RuntimeException(propertyName);
         }
@@ -452,8 +512,8 @@ public class AutoBeanTest extends GWTTestCase {
       boolean seenOther;
 
       @Override
-      public void endVisitReferenceProperty(String propertyName, AutoBean<?> value,
-          PropertyContext ctx) {
+      public void endVisitReferenceProperty(String propertyName,
+          AutoBean<?> value, PropertyContext ctx) {
         if ("hasBoolean".equals(propertyName)) {
           assertSame(hasBoolean, value);
           assertEquals(HasBoolean.class, ctx.getType());
@@ -469,7 +529,8 @@ public class AutoBeanTest extends GWTTestCase {
       }
 
       @Override
-      public void endVisitValueProperty(String propertyName, Object value, PropertyContext ctx) {
+      public void endVisitValueProperty(String propertyName, Object value,
+          PropertyContext ctx) {
         if ("int".equals(propertyName)) {
           assertEquals(42, value);
           assertEquals(int.class, ctx.getType());

@@ -314,7 +314,8 @@ public final class AutoBeanUtils {
    */
   private static boolean sameOrEquals(Collection<?> collection, Collection<?> otherCollection,
       Map<PendingComparison, Comparison> pending, Map<Object, Object> pairs) {
-    if (collection.size() != otherCollection.size()) {
+    if (collection.size() != otherCollection.size()
+        || !collection.getClass().equals(otherCollection.getClass())) {
       return false;
     }
 

@@ -66,14 +66,15 @@ public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
       Class<?>... extraInterfaces) {
     Class<?>[] intfs;
     if (extraInterfaces == null) {
-      intfs = new Class<?>[]{intf};
+      intfs = new Class<?>[] {intf};
     } else {
       intfs = new Class<?>[extraInterfaces.length + 1];
       intfs[0] = intf;
       System.arraycopy(extraInterfaces, 0, intfs, 1, extraInterfaces.length);
     }
 
-    return intf.cast(Proxy.newProxyInstance(intf.getClassLoader(), intfs, handler));
+    return intf.cast(Proxy.newProxyInstance(intf.getClassLoader(), intfs,
+        handler));
   }
 
   private static Data calculateData(Class<?> beanType) {
@@ -116,11 +117,13 @@ public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
   private final Class<T> beanType;
   private final Configuration configuration;
   private final Data data;
+
   private final T shim;
 
   // These constructors mirror the generated constructors.
   @SuppressWarnings("unchecked")
-  public ProxyAutoBean(AutoBeanFactory factory, Class<?> beanType, Configuration configuration) {
+  public ProxyAutoBean(AutoBeanFactory factory, Class<?> beanType,
+      Configuration configuration) {
     super(factory);
     this.beanType = (Class<T>) beanType;
     this.configuration = configuration;
@@ -129,18 +132,34 @@ public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
   }
 
   @SuppressWarnings("unchecked")
-  public ProxyAutoBean(AutoBeanFactory factory, Class<?> beanType, Configuration configuration,
-      T toWrap) {
-    super(toWrap, factory);
+  public ProxyAutoBean(AutoBeanFactory factory, Class<?> beanType,
+      Configuration configuration, T toWrap) {
+    super(factory, toWrap);
+    if (Proxy.isProxyClass(toWrap.getClass())) {
+      System.out.println("blah");
+    }
     this.beanType = (Class<T>) beanType;
     this.configuration = configuration;
     this.data = calculateData(beanType);
     this.shim = createShim();
   }
 
+  private ProxyAutoBean(ProxyAutoBean<T> toClone, boolean deep) {
+    super(toClone, deep);
+    this.beanType = toClone.beanType;
+    this.configuration = toClone.configuration;
+    this.data = toClone.data;
+    this.shim = createShim();
+  }
+
   @Override
   public T as() {
     return shim;
+  }
+
+  @Override
+  public AutoBean<T> clone(boolean deep) {
+    return new ProxyAutoBean<T>(this, deep);
   }
 
   public Configuration getConfiguration() {
@@ -175,13 +194,9 @@ public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
     super.checkWrapped();
   }
 
-  /**
-   * Not used in this implementation. Instead, the simple implementation is
-   * created lazily in {@link #getWrapped()}.
-   */
   @Override
   protected T createSimplePeer() {
-    return null;
+    return ProxyAutoBean.makeProxy(beanType, new SimpleBeanHandler<T>(this));
   }
 
   /**
@@ -193,11 +208,10 @@ public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
   }
 
   /**
-   * Allow access by BeanMethod.
+   * Allow access by {@link BeanMethod}.
    */
-  @Override
-  protected <V> V getOrReify(String propertyName) {
-    return super.<V> getOrReify(propertyName);
+  protected Map<String, Object> getValues() {
+    return values;
   }
 
   /**
@@ -205,9 +219,6 @@ public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
    */
   @Override
   protected T getWrapped() {
-    if (wrapped == null && isUsingSimplePeer()) {
-      wrapped = (T) ProxyAutoBean.makeProxy(beanType, new SimpleBeanHandler<T>(this));
-    }
     return super.getWrapped();
   }
 
@@ -217,11 +228,6 @@ public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
   @Override
   protected void set(String method, Object value) {
     super.set(method, value);
-  }
-
-  @Override
-  protected void setProperty(String propertyName, Object value) {
-    super.setProperty(propertyName, value);
   }
 
   // TODO: Port to model-based when class-based TypeOracle is available.
@@ -251,9 +257,8 @@ public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
       }
 
       // Create the context used for the property visitation
-      MethodPropertyContext x =
-          isUsingSimplePeer() ? new BeanPropertyContext(this, getter) : new GetterPropertyContext(
-              this, getter);
+      MethodPropertyContext x = isUsingSimplePeer() ? new BeanPropertyContext(
+          this, getter) : new GetterPropertyContext(this, getter);
 
       switch (propertyType) {
         case VALUE: {
@@ -308,8 +313,13 @@ public class ProxyAutoBean<T> extends AbstractAutoBean<T> {
     return beanType;
   }
 
+  Map<String, Object> getPropertyMap() {
+    return values;
+  }
+
   private T createShim() {
-    T toReturn = ProxyAutoBean.makeProxy(beanType, new ShimHandler<T>(this, getWrapped()));
+    T toReturn = ProxyAutoBean.makeProxy(beanType, new ShimHandler<T>(this,
+        getWrapped()));
     WeakMapping.set(toReturn, AutoBean.class.getName(), this);
     return toReturn;
   }

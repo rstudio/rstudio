@@ -18,8 +18,6 @@ package com.google.gwt.autobean.client.impl;
 import com.google.gwt.autobean.shared.AutoBeanVisitor.CollectionPropertyContext;
 import com.google.gwt.autobean.shared.AutoBeanVisitor.MapPropertyContext;
 import com.google.gwt.autobean.shared.AutoBeanVisitor.ParameterizationVisitor;
-import com.google.gwt.autobean.shared.AutoBeanVisitor.PropertyContext;
-import com.google.gwt.autobean.shared.impl.AbstractAutoBean;
 import com.google.gwt.core.client.JavaScriptObject;
 
 import java.util.List;
@@ -29,20 +27,18 @@ import java.util.Set;
 /**
  * Provides base methods for generated implementations of PropertyContext.
  */
-public final class ClientPropertyContext implements PropertyContext, CollectionPropertyContext,
-    MapPropertyContext {
+public final class ClientPropertyContext implements CollectionPropertyContext, MapPropertyContext {
 
   /**
    * A reference to an instance setter method.
    */
   public static final class Setter extends JavaScriptObject {
     /**
-     * Create a trivial Setter that calls {@link AbstractAutoBean#setProperty()}
-     * .
+     * Create a trivial Setter that calls {@link Map#put(Object, Object)}.
      */
-    public static native Setter beanSetter(AbstractAutoBean<?> bean, String key) /*-{
+    public static native Setter mapSetter(Map<String, Object> values, String key) /*-{
       return function(value) {
-        bean.@com.google.gwt.autobean.shared.impl.AbstractAutoBean::setProperty(*)(key, value);
+        values.@java.util.Map::put(*)(key, value);
       };
     }-*/;
 

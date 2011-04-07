@@ -15,8 +15,6 @@
  */
 package com.google.gwt.autobean.shared;
 
-import com.google.gwt.autobean.shared.impl.StringQuoter;
-
 import java.util.List;
 
 /**
@@ -26,39 +24,9 @@ import java.util.List;
  */
 public interface Splittable {
   /**
-   * A value that represents {@code null}.
-   */
-  Splittable NULL = StringQuoter.nullValue();
-
-  /**
-   * Returns a boolean representation of the data;
-   */
-  boolean asBoolean();
-
-  /**
-   * Returns a numeric representation of the data.
-   */
-  double asNumber();
-
-  /**
-   * Assign the splittable to the specified index of the {@code parent} object.
-   */
-  void assign(Splittable parent, int index);
-
-  /**
-   * Assign the splittable to the named property of the {@code parent} object.
-   */
-  void assign(Splittable parent, String propertyName);
-
-  /**
    * Returns a string representation of the data.
    */
   String asString();
-
-  /**
-   * Clones the Splittable, ignoring cycles and tags.
-   */
-  Splittable deepCopy();
 
   /**
    * Returns the nth element of a list.
@@ -82,16 +50,6 @@ public interface Splittable {
   List<String> getPropertyKeys();
 
   /**
-   * Returns a value previously set with {@link #setReified(String, Object)}.
-   */
-  Object getReified(String key);
-
-  /**
-   * Returns {@code true} if the value of the Splittable is a boolean.
-   */
-  boolean isBoolean();
-
-  /**
    * Returns {@code} true if {@link #size()} and {@link #get(int)} can be
    * expected to return meaningful values.
    */
@@ -104,25 +62,14 @@ public interface Splittable {
   boolean isKeyed();
 
   /**
-   * Indicates if the nth element of a list is null or undefined.
+   * Indicates if the nth element of a list is null.
    */
   boolean isNull(int index);
 
   /**
-   * Indicates if the named property is null or undefined.
+   * Indicates if the named property is null.
    */
   boolean isNull(String key);
-
-  /**
-   * Returns {@code true} if the value of the Splittable is numeric.
-   */
-  boolean isNumber();
-
-  /**
-   * Returns {@code true} if {@link #setReified(String, Object)} has been called
-   * with the given key.
-   */
-  boolean isReified(String key);
 
   /**
    * Returns {@code} true if {@link #asString()} can be expected to return a
@@ -131,22 +78,7 @@ public interface Splittable {
   boolean isString();
 
   /**
-   * Returns {@code true} if the value of the key is undefined.
-   */
-  boolean isUndefined(String key);
-
-  /**
-   * Associates a tag value with the Splittable.
-   */
-  void setReified(String key, Object object);
-
-  /**
-   * Resets the length of an indexed Splittable.
-   */
-  void setSize(int i);
-
-  /**
-   * Returns the size of an indexed Splittable.
+   * Returns the size of the list.
    */
   int size();
 }
