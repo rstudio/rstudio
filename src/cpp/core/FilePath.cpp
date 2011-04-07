@@ -794,7 +794,7 @@ Error FilePath::open_r(boost::shared_ptr<std::istream>* pStream) const
 #endif
 
    // In case we were able to make the stream but it failed to open
-   if (pResult && !(*pResult))
+   if (!(*pResult))
    {
       delete pResult;
       pResult = NULL;
