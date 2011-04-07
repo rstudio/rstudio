@@ -137,6 +137,33 @@ public class EditTextCellTest extends EditableCellTestBase<String, ViewData> {
     assertEquals("newValue", sb.toSafeHtml().asString());
   }
 
+  /**
+   * Test rendering the cell with a malicious value.
+   */
+  public void testRenderUnsafeHtml() {
+    EditTextCell cell = createCell();
+    SafeHtmlBuilder sb = new SafeHtmlBuilder();
+    Context context = new Context(0, 0, null);
+    cell.render(context, "<script>malicious</script>", sb);
+    assertEquals("&lt;script&gt;malicious&lt;/script&gt;", sb.toSafeHtml().asString());
+  }
+
+  /**
+   * Test rendering the cell with a malicious value in edit mode.
+   */
+  public void testRenderUnsafeHtmlWhenEditing() {
+    EditTextCell cell = createCell();
+    ViewData viewData = new ViewData("originalValue");
+    viewData.setText("<script>malicious</script>");
+    viewData.setEditing(true);
+    cell.setViewData(DEFAULT_KEY, viewData);
+    SafeHtmlBuilder sb = new SafeHtmlBuilder();
+    Context context = new Context(0, 0, DEFAULT_KEY);
+    cell.render(context, "<script>malicious</script>", sb);
+    assertEquals("<input type=\"text\" value=\"&lt;script&gt;malicious&lt;/script&gt;\" "
+        + "tabindex=\"-1\"></input>", sb.toSafeHtml().asString());
+  }
+
   public void testViewData() {
     // Start in edit mode.
     ViewData viewData = new ViewData("originalValue");

@@ -384,7 +384,7 @@ public class DefaultSelectionEventManager<T> implements
    * Update the selection model based on a user selection event.
    * 
    * @param selectionModel the selection model to update
-   * @param row the selected row index relative to the page start
+   * @param row the absolute index of the selected row
    * @param rowValue the selected row value
    * @param action the {@link SelectAction} to apply
    * @param selectRange true to select the range from the last selected row
@@ -621,9 +621,9 @@ public class DefaultSelectionEventManager<T> implements
     // Get the list of values to select.
     List<T> toUpdate = new ArrayList<T>();
     int itemCount = display.getVisibleItemCount();
-    int start = range.getStart();
-    int end = start + range.getLength();
-    for (int i = start; i < end && i < itemCount; i++) {
+    int relativeStart = range.getStart() - display.getVisibleRange().getStart();
+    int relativeEnd = relativeStart + range.getLength();
+    for (int i = relativeStart; i < relativeEnd && i < itemCount; i++) {
       toUpdate.add(display.getVisibleItem(i));
     }
 

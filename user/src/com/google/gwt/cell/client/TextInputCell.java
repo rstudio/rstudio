@@ -23,7 +23,6 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.text.shared.SafeHtmlRenderer;
-import com.google.gwt.text.shared.SimpleSafeHtmlRenderer;
 
 /**
  * An {@link AbstractCell} used to render a text input.
@@ -129,30 +128,26 @@ public class TextInputCell extends
 
   private static Template template;
 
-  private final SafeHtmlRenderer<String> renderer;
-
   /**
    * Constructs a TextInputCell that renders its text without HTML markup.
    */
   public TextInputCell() {
-    this(SimpleSafeHtmlRenderer.getInstance());
+    super("change", "keyup");
+    if (template == null) {
+      template = GWT.create(Template.class);
+    }
   }
 
   /**
    * Constructs a TextInputCell that renders its text using the given
    * {@link SafeHtmlRenderer}.
    *
-   * @param renderer a non-null SafeHtmlRenderer
+   * @param renderer parameter is ignored
+   * @deprecated the value of a text input is never treated as html
    */
+  @Deprecated
   public TextInputCell(SafeHtmlRenderer<String> renderer) {
-    super("change", "keyup");
-    if (template == null) {
-      template = GWT.create(Template.class);
-    }
-    if (renderer == null) {
-      throw new IllegalArgumentException("renderer == null");
-    }
-    this.renderer = renderer;
+    this();
   }
 
   @Override
@@ -194,9 +189,7 @@ public class TextInputCell extends
 
     String s = (viewData != null) ? viewData.getCurrentValue() : value;
     if (s != null) {
-      SafeHtml html = renderer.render(s);
-      // Note: template will not treat SafeHtml specially
-      sb.append(template.input(html.asString()));
+      sb.append(template.input(s));
     } else {
       sb.appendHtmlConstant("<input type=\"text\" tabindex=\"-1\"></input>");
     }

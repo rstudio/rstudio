@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2011 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,13 +19,13 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 
 /**
- * Webkit specified Impl used by cell based widgets.
+ * StandardBase implementation of {@link CellBasedWidgetImpl}.
  */
-public class CellBasedWidgetImplSafari extends CellBasedWidgetImplStandard {
+public class CellBasedWidgetImplStandardBase extends CellBasedWidgetImplStandard {
 
   @Override
   public void resetFocus(ScheduledCommand command) {
-    // Webkit will not focus an element that was created in this event loop.
+    // Some browsers will not focus an element that was created in this event loop.
     Scheduler.get().scheduleDeferred(command);
   }
 }

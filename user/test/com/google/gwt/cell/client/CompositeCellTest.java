@@ -83,6 +83,42 @@ public class CompositeCellTest extends CellTestBase<String> {
     assertFalse(cell.dependsOnSelection());
   }
 
+  public void testIsEditingFalse() {
+    List<HasCell<String, ?>> cells = createHasCells(3);
+    CompositeCell<String> cell = new CompositeCell<String>(cells);
+    Element parent = Document.get().createDivElement();
+    parent.setInnerHTML(getExpectedInnerHtml());
+    assertFalse(cell.isEditing(new Context(0, 0, null), parent, "test"));
+  }
+
+  public void testIsEditingTrue() {
+    List<HasCell<String, ?>> cells = createHasCells(3);
+    // Add a cell that is being edited.
+    final MockCell<String> mock = new MockCell<String>(false, null) {
+      @Override
+      public boolean isEditing(Context context, Element parent, String value) {
+        return true;
+      }
+    };
+    cells.add(new HasCell<String, String>() {
+      public Cell<String> getCell() {
+        return mock;
+      }
+
+      public FieldUpdater<String, String> getFieldUpdater() {
+        return null;
+      }
+
+      public String getValue(String object) {
+        return object;
+      }
+    });
+    CompositeCell<String> cell = new CompositeCell<String>(cells);
+    Element parent = Document.get().createDivElement();
+    parent.setInnerHTML(getExpectedInnerHtml());
+    assertTrue(cell.isEditing(new Context(0, 0, null), parent, "test"));
+  }
+
   /**
    * Fire an event to no cell in particular.
    */
@@ -137,7 +173,7 @@ public class CompositeCellTest extends CellTestBase<String> {
     Cell<String> cell = createCell();
     Element parent = Document.get().createDivElement();
     parent.setInnerHTML(getExpectedInnerHtml());
-    Context context = new Context( 0, 0, null);
+    Context context = new Context(0, 0, null);
     cell.setValue(context, parent, "test");
 
     assertEquals(3, parent.getChildCount());

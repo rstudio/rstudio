@@ -113,6 +113,18 @@ public class CompositeCell<C> extends AbstractCell<C> {
   }
 
   @Override
+  public boolean isEditing(Context context, Element parent, C value) {
+    Element curChild = getContainerElement(parent).getFirstChildElement();
+    for (HasCell<C, ?> hasCell : hasCells) {
+      if (isEditingImpl(context, curChild, value, hasCell)) {
+        return true;
+      }
+      curChild = curChild.getNextSiblingElement();
+    }
+    return false;
+  }
+
+  @Override
   public void onBrowserEvent(Context context, Element parent, C value,
       NativeEvent event, ValueUpdater<C> valueUpdater) {
     int index = 0;
@@ -198,6 +210,11 @@ public class CompositeCell<C> extends AbstractCell<C> {
     cell.render(context, hasCell.getValue(value), sb);
     sb.appendHtmlConstant("</span>");
   }
+
+  private <X> boolean isEditingImpl(Context context, Element cellParent, C object,
+      HasCell<C, X> hasCell) {
+    return hasCell.getCell().isEditing(context, cellParent, hasCell.getValue(object));
+  }  
 
   private <X> void onBrowserEventImpl(Context context, Element parent,
       final C object, NativeEvent event, final ValueUpdater<C> valueUpdater,

@@ -202,6 +202,24 @@ public class DefaultSelectionEventManagerTest extends GWTTestCase {
     assertSelected(model, "test 3");
   }
 
+  /**
+   * Test that selecting a range works when the visible range doesn't start at index 0.
+   */
+  public void testDoMultiSelectionRangeWithPaging() {
+    MultiSelectionModel<String> model = new MultiSelectionModel<String>();
+    display.setVisibleRange(10, 10);
+    display.setRowData(10, createData(10, 10));
+    display.setSelectionModel(model);
+
+    // Select range, but really only one value because nothing is selected.
+    manager.doMultiSelection(model, display, 13, "test 13", null, true, false);
+    assertSelected(model, "test 13");
+
+    // Select a range.
+    manager.doMultiSelection(model, display, 15, "test 15", null, true, false);
+    assertSelected(model, "test 13", "test 14", "test 15");
+  }
+
   public void testDoMultiSelectionSelect() {
     MultiSelectionModel<String> model = new MultiSelectionModel<String>();
     display.setSelectionModel(model);

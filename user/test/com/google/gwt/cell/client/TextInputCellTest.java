@@ -15,8 +15,10 @@
  */
 package com.google.gwt.cell.client;
 
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 /**
  * Tests for {@link TextInputCell}.
@@ -40,6 +42,19 @@ public class TextInputCellTest extends
     expected.setCurrentValue("hello");
     testOnBrowserEvent(getExpectedInnerHtml(), event, "oldValue", null, null,
         expected);
+  }
+
+  /**
+   * Test rendering the cell with a malicious value.
+   */
+  public void testRenderUnsafeHtml() {
+    Cell<String> cell = createCell();
+    SafeHtmlBuilder sb = new SafeHtmlBuilder();
+    Context context = new Context(0, 0, null);
+    cell.render(context, "<script>malicious</script>", sb);
+    assertEquals(
+        "<input type=\"text\" value=\"&lt;script&gt;malicious&lt;/script&gt;\" tabindex=\"-1\">"
+            + "</input>", sb.toSafeHtml().asString());
   }
 
   @Override

@@ -30,10 +30,6 @@ import com.google.gwt.text.shared.SimpleSafeHtmlRenderer;
 
 /**
  * An editable text cell. Click to edit, escape to cancel, return to commit.
- *
- * Important TODO: This cell still treats its value as HTML for rendering
- * purposes, which is entirely wrong. It should be able to treat it as a proper
- * string (especially since that's all the user can enter).
  */
 public class EditTextCell extends
     AbstractEditableCell<String, EditTextCell.ViewData> {
@@ -146,9 +142,11 @@ public class EditTextCell extends
   }
 
   /**
-   * Construct a new EditTextCell that will use a given {@link SafeHtmlRenderer}.
+   * Construct a new EditTextCell that will use a given {@link SafeHtmlRenderer}
+   * to render the value when not in edit mode.
    * 
-   * @param renderer a {@link SafeHtmlRenderer SafeHtmlRenderer<String>} instance
+   * @param renderer a {@link SafeHtmlRenderer SafeHtmlRenderer<String>}
+   *          instance
    */
   public EditTextCell(SafeHtmlRenderer<String> renderer) {
     super("click", "keyup", "keydown", "blur");
@@ -206,17 +204,19 @@ public class EditTextCell extends
 
     if (viewData != null) {
       String text = viewData.getText();
-      SafeHtml html = renderer.render(text);
       if (viewData.isEditing()) {
-        // Note the template will not treat SafeHtml specially
-        sb.append(template.input(html.asString()));
+        /*
+         * Do not use the renderer in edit mode because the value of a text
+         * input element is always treated as text. SafeHtml isn't valid in the
+         * context of the value attribute.
+         */
+        sb.append(template.input(text));
       } else {
         // The user pressed enter, but view data still exists.
-        sb.append(html);
+        sb.append(renderer.render(text));
       }
     } else if (value != null) {
-      SafeHtml html = renderer.render(value);
-      sb.append(html);
+      sb.append(renderer.render(value));
     }
   }
 
