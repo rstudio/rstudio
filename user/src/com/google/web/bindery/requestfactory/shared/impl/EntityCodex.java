@@ -19,7 +19,6 @@ import com.google.gwt.autobean.shared.AutoBean;
 import com.google.gwt.autobean.shared.AutoBeanUtils;
 import com.google.gwt.autobean.shared.Splittable;
 import com.google.gwt.autobean.shared.ValueCodex;
-import com.google.gwt.autobean.shared.impl.LazySplittable;
 import com.google.gwt.autobean.shared.impl.StringQuoter;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxyId;
@@ -42,8 +41,7 @@ public class EntityCodex {
      * Expects an encoded
      * {@link com.google.web.bindery.requestfactory.shared.messages.IdMessage}.
      */
-    <Q extends BaseProxy> AutoBean<Q> getBeanForPayload(
-        Splittable serializedIdMessage);
+    <Q extends BaseProxy> AutoBean<Q> getBeanForPayload(Splittable serializedIdMessage);
 
     /**
      * Should return an encoded
@@ -59,9 +57,9 @@ public class EntityCodex {
   /**
    * Collection support is limited to value types and resolving ids.
    */
-  public static Object decode(EntitySource source, Class<?> type,
-      Class<?> elementType, Splittable split) {
-    if (split == null || split == LazySplittable.NULL) {
+  public static Object decode(EntitySource source, Class<?> type, Class<?> elementType,
+      Splittable split) {
+    if (split == null || split == Splittable.NULL) {
       return null;
     }
 
@@ -99,8 +97,7 @@ public class EntityCodex {
       return collection;
     }
 
-    if (source.isEntityType(type) || source.isValueType(type)
-        || EntityProxyId.class.equals(type)) {
+    if (source.isEntityType(type) || source.isValueType(type) || EntityProxyId.class.equals(type)) {
       return source.getBeanForPayload(split).as();
     }
 
@@ -111,8 +108,8 @@ public class EntityCodex {
   /**
    * Collection support is limited to value types and resolving ids.
    */
-  public static Object decode(EntitySource source, Class<?> type,
-      Class<?> elementType, String jsonPayload) {
+  public static Object decode(EntitySource source, Class<?> type, Class<?> elementType,
+      String jsonPayload) {
     Splittable split = StringQuoter.split(jsonPayload);
     return decode(source, type, elementType, split);
   }
@@ -122,7 +119,7 @@ public class EntityCodex {
    */
   public static Splittable encode(EntitySource source, Object value) {
     if (value == null) {
-      return LazySplittable.NULL;
+      return Splittable.NULL;
     }
 
     if (value instanceof Poser<?>) {
@@ -146,7 +143,7 @@ public class EntityCodex {
         }
       }
       toReturn.append(']');
-      return new LazySplittable(toReturn.toString());
+      return StringQuoter.split(toReturn.toString());
     }
 
     if (value instanceof BaseProxy) {

@@ -37,8 +37,7 @@ class SimpleBeanHandler<T> implements InvocationHandler {
   /**
    * Delegates most work to {@link BeanMethod}.
    */
-  public Object invoke(Object proxy, Method method, Object[] args)
-      throws Throwable {
+  public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     for (BeanMethod type : BeanMethod.values()) {
       if (type.matches(this, method)) {
         Object toReturn = type.invoke(this, method, args);
@@ -47,12 +46,12 @@ class SimpleBeanHandler<T> implements InvocationHandler {
     }
     throw new RuntimeException("Unhandled invocation " + method.getName());
   }
-
+  
   /**
    * For debugging use only.
    */
   @Override
   public String toString() {
-    return bean.getPropertyMap().toString();
+    return bean.getSplittable().getPayload();
   }
 }

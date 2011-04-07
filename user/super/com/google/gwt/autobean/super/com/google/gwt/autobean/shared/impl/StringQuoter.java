@@ -17,6 +17,8 @@ package com.google.gwt.autobean.shared.impl;
 
 import com.google.gwt.autobean.client.impl.JsoSplittable;
 import com.google.gwt.autobean.shared.Splittable;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.GwtScriptOnly;
 import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.client.JsDate;
 import com.google.gwt.core.client.JsonUtils;
@@ -27,18 +29,44 @@ import java.util.Date;
 /**
  * This a super-source version with a client-only implementation.
  */
+@GwtScriptOnly
 public class StringQuoter {
+  public static Splittable create(boolean value) {
+    return JsoSplittable.create(value);
+  }
+
+  public static Splittable create(double value) {
+    return JsoSplittable.create(value);
+  }
+
+  public static Splittable create(String value) {
+    return JsoSplittable.create(value);
+  }
+
+  public static Splittable createIndexed() {
+    return JsoSplittable.createIndexed();
+  }
+
+  public static Splittable createSplittable() {
+    return JsoSplittable.create();
+  }
+
+  public static Splittable nullValue() {
+    return JsoSplittable.nullValue();
+  }
+
   public static String quote(String raw) {
     return JsonUtils.escapeValue(raw);
   }
 
   public static Splittable split(String payload) {
-    boolean isString = payload.charAt(0) == '\"';
-    if (isString) {
+    char c = payload.charAt(0);
+    boolean isSimple = c != '{' && c != '[';
+    if (isSimple) {
       payload = "[" + payload + "]";
     }
-    Splittable toReturn = JsoSplittable.create(JsonUtils.safeEval(payload));
-    if (isString) {
+    Splittable toReturn = JsonUtils.safeEval(payload).<JsoSplittable> cast();
+    if (isSimple) {
       toReturn = toReturn.get(0);
     }
     return toReturn;

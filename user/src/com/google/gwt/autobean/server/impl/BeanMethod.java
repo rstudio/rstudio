@@ -16,6 +16,7 @@
 package com.google.gwt.autobean.server.impl;
 
 import com.google.gwt.autobean.shared.AutoBean;
+import com.google.gwt.autobean.shared.AutoBean.PropertyName;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -38,8 +39,7 @@ public enum BeanMethod {
     }
 
     @Override
-    Object invoke(SimpleBeanHandler<?> handler, Method method, Object[] args)
-        throws Throwable {
+    Object invoke(SimpleBeanHandler<?> handler, Method method, Object[] args) throws Throwable {
       if (CALL.matches(handler, method)) {
         return CALL.invoke(handler, method, args);
       }
@@ -58,7 +58,7 @@ public enum BeanMethod {
     @Override
     public String inferName(Method method) {
       String name = method.getName();
-      if (name.startsWith(IS_PREFIX)) {
+      if (name.startsWith(IS_PREFIX) && !method.isAnnotationPresent(PropertyName.class)) {
         Class<?> returnType = method.getReturnType();
         if (Boolean.TYPE.equals(returnType) || Boolean.class.equals(returnType)) {
           return decapitalize(name.substring(2));
@@ -70,7 +70,7 @@ public enum BeanMethod {
     @Override
     Object invoke(SimpleBeanHandler<?> handler, Method method, Object[] args) {
       String propertyName = inferName(method);
-      Object toReturn = handler.getBean().getValues().get(propertyName);
+      Object toReturn = handler.getBean().getOrReify(propertyName);
       if (toReturn == null && method.getReturnType().isPrimitive()) {
         toReturn = TypeUtils.getDefaultPrimitiveValue(method.getReturnType());
       }
@@ -80,15 +80,14 @@ public enum BeanMethod {
     @Override
     boolean matches(SimpleBeanHandler<?> handler, Method method) {
       Class<?> returnType = method.getReturnType();
-      if (method.getParameterTypes().length != 0
-          || Void.TYPE.equals(returnType)) {
+      if (method.getParameterTypes().length != 0 || Void.TYPE.equals(returnType)) {
         return false;
       }
 
       String name = method.getName();
       if (Boolean.TYPE.equals(returnType) || Boolean.class.equals(returnType)) {
-        if (name.startsWith(IS_PREFIX) && name.length() > 2
-            || name.startsWith(HAS_PREFIX) && name.length() > 3) {
+        if (name.startsWith(IS_PREFIX) && name.length() > 2 || name.startsWith(HAS_PREFIX)
+            && name.length() > 3) {
           return true;
         }
       }
@@ -101,7 +100,7 @@ public enum BeanMethod {
   SET {
     @Override
     Object invoke(SimpleBeanHandler<?> handler, Method method, Object[] args) {
-      handler.getBean().getValues().put(inferName(method), args[0]);
+      handler.getBean().setProperty(inferName(method), args[0]);
       return null;
     }
 
@@ -109,8 +108,7 @@ public enum BeanMethod {
     boolean matches(SimpleBeanHandler<?> handler, Method method) {
       String name = method.getName();
       return name.startsWith(SET_PREFIX) && name.length() > 3
-          && method.getParameterTypes().length == 1
-          && method.getReturnType().equals(Void.TYPE);
+          && method.getParameterTypes().length == 1 && method.getReturnType().equals(Void.TYPE);
     }
   },
   /**
@@ -121,15 +119,15 @@ public enum BeanMethod {
   SET_BUILDER {
     @Override
     Object invoke(SimpleBeanHandler<?> handler, Method method, Object[] args) {
-      handler.getBean().getValues().put(inferName(method), args[0]);
-      return handler.getBean().as();
+      ProxyAutoBean<?> bean = handler.getBean();
+      bean.setProperty(inferName(method), args[0]);
+      return bean.as();
     }
 
     @Override
     boolean matches(SimpleBeanHandler<?> handler, Method method) {
       String name = method.getName();
-      return name.startsWith(SET_PREFIX)
-          && name.length() > 3
+      return name.startsWith(SET_PREFIX) && name.length() > 3
           && method.getParameterTypes().length == 1
           && method.getReturnType().isAssignableFrom(method.getDeclaringClass());
     }
@@ -144,8 +142,7 @@ public enum BeanMethod {
     }
 
     @Override
-    Object invoke(SimpleBeanHandler<?> handler, Method method, Object[] args)
-        throws Throwable {
+    Object invoke(SimpleBeanHandler<?> handler, Method method, Object[] args) throws Throwable {
       if (args == null) {
         args = EMPTY_OBJECT;
       }
@@ -190,8 +187,9 @@ public enum BeanMethod {
           continue;
         }
         // Check the AutoBean parameterization of the 0th argument
-        Class<?> foundAutoBean = TypeUtils.ensureBaseType(TypeUtils.getSingleParameterization(
-            AutoBean.class, found.getGenericParameterTypes()[0]));
+        Class<?> foundAutoBean =
+            TypeUtils.ensureBaseType(TypeUtils.getSingleParameterization(AutoBean.class, found
+                .getGenericParameterTypes()[0]));
         if (!foundAutoBean.isAssignableFrom(autoBeanType)) {
           continue;
         }
@@ -205,8 +203,8 @@ public enum BeanMethod {
   }
 
   /**
-   * Private equivalent of Introspector.decapitalize(String)
-   * since java.beans.Introspector is not available in Android 2.2.
+   * Private equivalent of Introspector.decapitalize(String) since
+   * java.beans.Introspector is not available in Android 2.2.
    */
   private static String decapitalize(String name) {
     if (name == null) {
@@ -223,6 +221,10 @@ public enum BeanMethod {
   }
 
   public String inferName(Method method) {
+    PropertyName prop = method.getAnnotation(PropertyName.class);
+    if (prop != null) {
+      return prop.value();
+    }
     return decapitalize(method.getName().substring(3));
   }
 
@@ -236,8 +238,8 @@ public enum BeanMethod {
   /**
    * Invoke the method.
    */
-  abstract Object invoke(SimpleBeanHandler<?> handler, Method method,
-      Object[] args) throws Throwable;
+  abstract Object invoke(SimpleBeanHandler<?> handler, Method method, Object[] args)
+      throws Throwable;
 
   /**
    * Determine if the method maches the given type.

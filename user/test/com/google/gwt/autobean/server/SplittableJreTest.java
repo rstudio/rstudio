@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2011 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,21 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.autobean.shared.impl;
+package com.google.gwt.autobean.server;
+
+import com.google.gwt.autobean.shared.SplittableTest;
 
 /**
- * This interface is implemented by our generated AutoBeanFactory types to
- * convert enum values to strings.
+ * A JRE-only version of SplittableTest.
  */
-public interface EnumMap {
-  /**
-   * Extra enums that should be included in the AutoBeanFactory.
-   */
-  public @interface ExtraEnums {
-    Class<? extends Enum<?>>[] value();
+public class SplittableJreTest extends SplittableTest {
+  @Override
+  public String getModuleName() {
+    return null;
   }
-
-  <E extends Enum<?>> E getEnum(Class<E> clazz, String token);
-
-  String getToken(Enum<?> e);
 }

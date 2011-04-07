@@ -31,12 +31,36 @@ import java.util.Locale;
  */
 public class StringQuoter {
   private static final String ISO8601_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSz";
-  private static final DateFormat ISO8601 = new SimpleDateFormat(
-      ISO8601_PATTERN, Locale.getDefault());
+  private static final DateFormat ISO8601 = new SimpleDateFormat(ISO8601_PATTERN, Locale
+      .getDefault());
 
   private static final String RFC2822_PATTERN = "EEE, d MMM yyyy HH:mm:ss Z";
-  private static final DateFormat RFC2822 = new SimpleDateFormat(
-      RFC2822_PATTERN, Locale.getDefault());
+  private static final DateFormat RFC2822 = new SimpleDateFormat(RFC2822_PATTERN, Locale
+      .getDefault());
+
+  public static Splittable create(boolean value) {
+    return JsonSplittable.create(String.valueOf(value));
+  }
+
+  public static Splittable create(double value) {
+    return JsonSplittable.create(String.valueOf(value));
+  }
+
+  public static Splittable create(String value) {
+    return JsonSplittable.create(quote(value));
+  }
+
+  public static Splittable createIndexed() {
+    return JsonSplittable.createIndexed();
+  }
+
+  public static Splittable createSplittable() {
+    return JsonSplittable.create();
+  }
+
+  public static Splittable nullValue() {
+    return JsonSplittable.createNull();
+  }
 
   /**
    * Create a quoted JSON string.
