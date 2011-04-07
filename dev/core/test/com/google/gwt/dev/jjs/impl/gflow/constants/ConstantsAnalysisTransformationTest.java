@@ -134,6 +134,21 @@ public class ConstantsAnalysisTransformationTest extends CfgIntegratedAnalysisTe
     transform("boolean", "String s = baz(); if (s == null) return false; return s != null;").into(
         "String s = EntryPoint.baz();", "if (s == null)", "  return false;", "return s != null;");
   }
+  
+  public void testImplicitCasts() throws Exception {
+    transform("long", 
+        "int bar = 0x12345678;",
+        "bar = bar * 1234;",
+        "long lng = bar;",
+        "long lng8 = lng << 8;",
+        "return lng8;"
+        ).into(
+            "  int bar = 305419896;", 
+            "  bar = -1068970384;",
+            "  long lng = -1068970384;", 
+            "  long lng8 = lng << 8;", 
+            "  return lng8;");
+  }
 
   @Override
   protected IntegratedAnalysis<CfgNode<?>, CfgEdge, CfgTransformer, Cfg, 

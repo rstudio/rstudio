@@ -18,6 +18,7 @@ package com.google.gwt.dev.jjs.impl.gflow.constants;
 import com.google.gwt.dev.jjs.ast.JBooleanLiteral;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JLocal;
+import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JValueLiteral;
 import com.google.gwt.dev.jjs.ast.JVariable;
@@ -106,7 +107,14 @@ public class ConstantsFlowFunction implements
           if (expression != null) {
             JValueLiteral valueLiteral = 
               ExpressionEvaluator.evaluate(expression, assumption.unwrap());
-            assumption.set(var, valueLiteral);
+            if (valueLiteral != null && 
+                (valueLiteral.getType() == var.getType() || 
+                 valueLiteral instanceof JNullLiteral)) {
+              assumption.set(var, valueLiteral);
+            } else {
+              // Don't bother to try to get conversions right.
+              assumption.set(var, null);
+            }
           } else {
             assumption.set(var, null);
           }

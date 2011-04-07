@@ -66,7 +66,8 @@ public class CopyFlowFunction implements
         
         if (original != targetVariable) {
           result.kill(targetVariable);
-          if (isSupportedVar(original)) {
+          if (isSupportedVar(original) && 
+              original.getType() == targetVariable.getType()) {
             result.addCopy(original, targetVariable);
           }
         } else {

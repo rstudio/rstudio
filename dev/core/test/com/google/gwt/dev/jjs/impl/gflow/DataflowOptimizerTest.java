@@ -262,6 +262,20 @@ public class DataflowOptimizerTest extends OptimizerTestBase {
        );
   }
 
+  public void testImplicitConversion() throws Exception {
+    optimize("long", 
+        "int bar = 0x12345678;",
+        "bar = bar * 1234;",
+        "long lng = bar;",
+        "long lng8 = lng << 8;",
+        "return lng8;"
+        ).into(
+            "  int bar;", 
+            "  long lng = -1068970384;", 
+            "  long lng8 = lng << 8;", 
+            "  return lng8;");
+  }
+
   @Override
   protected boolean optimizeMethod(JProgram program, JMethod method) {
     return DataflowOptimizer.exec(program, method).didChange();

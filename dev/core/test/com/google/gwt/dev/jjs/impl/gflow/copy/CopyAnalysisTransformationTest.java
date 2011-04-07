@@ -62,6 +62,21 @@ public class CopyAnalysisTransformationTest extends CfgIntegratedAnalysisTestBas
         "return i;");
   }
 
+  public void testImplicitConversion() throws Exception {
+    transform("long", 
+        "int bar = 0x12345678;",
+        "bar = bar * 1234;",
+        "long lng = bar;",
+        "long lng8 = lng << 8;",
+        "return lng8;"
+        ).into(
+            "  int bar = 305419896;", 
+            "  bar = bar * 1234;",
+            "  long lng = bar;", 
+            "  long lng8 = lng << 8;", 
+            "  return lng8;");
+  }
+
   @Override
   protected IntegratedAnalysis<CfgNode<?>, CfgEdge, CfgTransformer, Cfg, CopyAssumption> createIntegratedAnalysis() {
     return new CopyAnalysis();
