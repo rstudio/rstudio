@@ -33,6 +33,7 @@ public class ChooseEncodingDialog extends ModalDialog<String>
 
       Session session = RStudioGinjector.INSTANCE.getSession();
       systemEncoding_ = session.getSessionInfo().getSystemEncoding();
+      systemEncodingNormalized_ = normalizeEncoding(systemEncoding_);
    }
 
    private void setCurrentValue(String currentEncoding)
@@ -126,11 +127,23 @@ public class ChooseEncodingDialog extends ModalDialog<String>
 
       for (int i = 0; i < encodings.length(); i++)
       {
-         String enc = encodings.get(i);
-         if (isSystemEncoding(enc))
-            listBox_.insertItem(enc + " (System default)", enc, 0);
-         else
-            listBox_.addItem(enc);
+         listBox_.addItem(encodings.get(i));
+      }
+
+      int sysIndex = findSystemEncodingIndex();
+      if (!StringUtil.isNullOrEmpty(systemEncoding_))
+      {
+         // Remove the system encoding (if it is present) so we can move it
+         // to the top of the list. If it's already present, use the same
+         // label (un-normalized encoding name) so it's consistent with
+         // related encodings that are also present in the list.
+         String sysEncName = sysIndex < 0 ? systemEncoding_
+                                          : listBox_.getValue(sysIndex);
+         if (sysIndex >= 0)
+            listBox_.removeItem(sysIndex);
+         listBox_.insertItem(sysEncName + " (System default)",
+                             systemEncoding_,
+                             0);
       }
 
       if (includePromptForEncoding_)
@@ -138,12 +151,29 @@ public class ChooseEncodingDialog extends ModalDialog<String>
          listBox_.insertItem(ASK_LABEL, "", 0);
       }
 
-      setCurrentValue(encoding);
+      if (isSystemEncoding(encoding))
+         setCurrentValue(listBox_.getValue(includePromptForEncoding_ ? 1 : 0));
+      else
+         setCurrentValue(encoding);
+   }
+
+   private int findSystemEncodingIndex()
+   {
+      for (int i = 0; i < listBox_.getItemCount(); i++)
+         if (isSystemEncoding(listBox_.getValue(i)))
+            return i;
+      return -1;
    }
 
    private boolean isSystemEncoding(String encoding)
    {
-      return StringUtil.notNull(encoding).equals(systemEncoding_);
+      return !StringUtil.isNullOrEmpty(encoding)
+             && normalizeEncoding(encoding).equals(systemEncodingNormalized_);
+   }
+
+   public static String normalizeEncoding(String encoding)
+   {
+      return StringUtil.notNull(encoding).replaceAll("[- ]", "").toLowerCase();
    }
 
    private ListBox listBox_;
@@ -154,5 +184,6 @@ public class ChooseEncodingDialog extends ModalDialog<String>
    private final boolean includeSaveAsDefault_;
    private CheckBox saveAsDefault_;
    private final String systemEncoding_;
+   private final String systemEncodingNormalized_;
    public static final String ASK_LABEL = "[Ask]";
 }
