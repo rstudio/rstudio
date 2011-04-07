@@ -769,95 +769,118 @@ Error FilePath::makeCurrentPath(bool autoCreate) const
 
 Error FilePath::open_r(boost::shared_ptr<std::istream>* pStream) const
 {
-   std::istream* pResult = NULL;
-#ifdef _WIN32
-   using namespace boost::iostreams;
-   HANDLE hFile = ::CreateFileW(pImpl_->path.wstring().c_str(),
-                                GENERIC_READ,
-                                FILE_SHARE_READ,
-                                NULL,
-                                OPEN_EXISTING,
-                                0,
-                                NULL);
-   if (hFile == INVALID_HANDLE_VALUE)
+   try
    {
-      Error error = systemError(::GetLastError(), ERROR_LOCATION);
+      std::istream* pResult = NULL;
+   #ifdef _WIN32
+      using namespace boost::iostreams;
+      HANDLE hFile = ::CreateFileW(pImpl_->path.wstring().c_str(),
+                                   GENERIC_READ,
+                                   FILE_SHARE_READ,
+                                   NULL,
+                                   OPEN_EXISTING,
+                                   0,
+                                   NULL);
+      if (hFile == INVALID_HANDLE_VALUE)
+      {
+         Error error = systemError(::GetLastError(), ERROR_LOCATION);
+         error.addProperty("path", absolutePath());
+         return error;
+      }
+      boost::iostreams::file_descriptor_source fd;
+      fd.open(hFile, boost::iostreams::close_handle);
+      pResult = new boost::iostreams::stream<file_descriptor_source>(fd);
+   #else
+      pResult = new std::ifstream(absolutePath().c_str(),
+                                  std::ios_base::in | std::ios_base::binary);
+   #endif
+
+      // In case we were able to make the stream but it failed to open
+      if (!(*pResult))
+      {
+         delete pResult;
+         pResult = NULL;
+      }
+
+      // pResult being NULL here means failure
+
+      if (!pResult)
+      {
+         Error error = systemError(boost::system::errc::no_such_file_or_directory, ERROR_LOCATION);
+         error.addProperty("path", absolutePath());
+         return error;
+      }
+      pStream->reset(pResult);
+   }
+   catch(const std::exception& e)
+   {
+      Error error = systemError(boost::system::errc::io_error,
+                                ERROR_LOCATION);
+      error.addProperty("what", e.what());
       error.addProperty("path", absolutePath());
       return error;
    }
-   file_descriptor_source fd;
-   fd.open(hFile, close_handle);
-   pResult = new boost::iostreams::stream<file_descriptor_source>(fd);
-#else
-   pResult = new std::ifstream(absolutePath().c_str(),
-                               std::ios_base::in | std::ios_base::binary);
-#endif
 
-   // In case we were able to make the stream but it failed to open
-   if (!(*pResult))
-   {
-      delete pResult;
-      pResult = NULL;
-   }
-
-   // pResult being NULL here means failure
-
-   if (!pResult)
-   {
-      Error error = systemError(boost::system::errc::no_such_file_or_directory, ERROR_LOCATION);
-      error.addProperty("path", absolutePath());
-      return error;
-   }
-   pStream->reset(pResult);
 
    return Success();
 }
 
 Error FilePath::open_w(boost::shared_ptr<std::ostream>* pStream, bool truncate) const
 {
-   std::ostream* pResult = NULL;
-#ifdef _WIN32
-   using namespace boost::iostreams;
-   HANDLE hFile = ::CreateFileW(pImpl_->path.wstring().c_str(),
-                                GENERIC_WRITE,
-                                0, // exclusive access
-                                NULL,
-                                truncate ? CREATE_ALWAYS : CREATE_NEW,
-                                0,
-                                NULL);
-   if (hFile == INVALID_HANDLE_VALUE)
+   try
    {
-      Error error = systemError(::GetLastError(), ERROR_LOCATION);
+      std::ostream* pResult = NULL;
+   #ifdef _WIN32
+      using namespace boost::iostreams;
+      HANDLE hFile = ::CreateFileW(pImpl_->path.wstring().c_str(),
+                                   GENERIC_WRITE,
+                                   0, // exclusive access
+                                   NULL,
+                                   truncate ? CREATE_ALWAYS : CREATE_NEW,
+                                   0,
+                                   NULL);
+      if (hFile == INVALID_HANDLE_VALUE)
+      {
+         Error error = systemError(::GetLastError(), ERROR_LOCATION);
+         error.addProperty("path", absolutePath());
+         return error;
+      }
+      file_descriptor_sink fd;
+      fd.open(hFile, close_handle);
+      pResult = new boost::iostreams::stream<file_descriptor_sink>(fd);
+   #else
+      using std::ios_base;
+      ios_base::openmode flags = ios_base::out | ios_base::binary;
+      if (truncate)
+         flags |= ios_base::trunc;
+      else
+         flags |= ios_base::app;
+      pResult = new std::ofstream(absolutePath().c_str(), flags);
+
+      if (!(*pResult))
+      {
+         delete pResult;
+         pResult = NULL;
+      }
+   #endif
+
+      if (!pResult)
+      {
+         Error error = systemError(boost::system::errc::no_such_file_or_directory, ERROR_LOCATION);
+         error.addProperty("path", absolutePath());
+         return error;
+      }
+
+      pStream->reset(pResult);
+   }
+   catch(const std::exception& e)
+   {
+      Error error = systemError(boost::system::errc::io_error,
+                                ERROR_LOCATION);
+      error.addProperty("what", e.what());
       error.addProperty("path", absolutePath());
       return error;
    }
-   file_descriptor_sink fd;
-   fd.open(hFile, close_handle);
-   pResult = new boost::iostreams::stream<file_descriptor_sink>(fd);
-#else
-   using std::ios_base;
-   ios_base::openmode flags = ios_base::out | ios_base::binary;
-   if (truncate)
-      flags |= ios_base::trunc;
-   else
-      flags |= ios_base::app;
-   pResult = new std::ofstream(absolutePath().c_str(), flags);
-
-   if (!(*pResult))
-   {
-      delete pResult;
-      pResult = NULL;
-   }
-#endif
-
-   if (!pResult)
-   {
-      Error error = systemError(boost::system::errc::no_such_file_or_directory, ERROR_LOCATION);
-      error.addProperty("path", absolutePath());
-      return error;
-   }
-
-   pStream->reset(pResult);
 
    return Success();
 }
