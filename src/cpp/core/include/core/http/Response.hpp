@@ -222,7 +222,18 @@ public:
          return error;
       
       // send the file from its stream
-      return setBody(*pIfs, filter, buffSize);
+      try
+      {
+         return setBody(*pIfs, filter, buffSize);
+      }
+      catch(const std::exception& e)
+      {
+         Error error = systemError(boost::system::errc::io_error,
+                                   ERROR_LOCATION);
+         error.addProperty("what", e.what());
+         error.addProperty("path", filePath.absolutePath());
+         return error;
+      }
    }
 
    void setDynamicHtml(const std::string& html, const Request& request);

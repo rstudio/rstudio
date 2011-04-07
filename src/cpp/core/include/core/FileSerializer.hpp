@@ -43,16 +43,27 @@ Error writeCollectionToFile(
    if (error)
       return error;
 
-   // write each line 
-   for (typename CollectionType::const_iterator 
-         it = collection.begin(); 
-         it != collection.end(); 
-         ++it)
+   try
    {
-      *pOfs << stringifyFunction(*it) << std::endl ;
+      // write each line
+      for (typename CollectionType::const_iterator
+            it = collection.begin();
+            it != collection.end();
+            ++it)
+      {
+         *pOfs << stringifyFunction(*it) << std::endl ;
 
-     if (pOfs->fail())
-          return systemError(io_error, ERROR_LOCATION);
+        if (pOfs->fail())
+             return systemError(io_error, ERROR_LOCATION);
+      }
+   }
+   catch(const std::exception& e)
+   {
+      Error error = systemError(boost::system::errc::io_error,
+                                ERROR_LOCATION);
+      error.addProperty("what", e.what());
+      error.addProperty("path", filePath.absolutePath());
+      return error;
    }
 
    return Success() ;
@@ -85,37 +96,48 @@ Error readCollectionFromFile(
    std::insert_iterator<CollectionType> insertIterator(*pCollection, 
                                                        pCollection->begin());
 
-   // read each line
-   std::string nextLine ;
-   while (true)
+   try
    {
-      // read the next line
-      std::getline(*pIfs, nextLine) ;
-      if (pIfs->eof())
-         break;
-      else if (pIfs->fail())
-         return systemError(io_error, ERROR_LOCATION);
-      
-      // trim whitespace then ignore it if it is a blank line
-      boost::algorithm::trim(nextLine) ;
-      if (nextLine.empty())
-         continue ;
-      
-      // parse it and add it to the collection
-      typename CollectionType::value_type value ;
-      ReadCollectionAction action = parseFunction(nextLine, &value);
-      if (action == ReadCollectionAddLine)
+      // read each line
+      std::string nextLine ;
+      while (true)
       {
-         *insertIterator++ = value ;
+         // read the next line
+         std::getline(*pIfs, nextLine) ;
+         if (pIfs->eof())
+            break;
+         else if (pIfs->fail())
+            return systemError(io_error, ERROR_LOCATION);
+
+         // trim whitespace then ignore it if it is a blank line
+         boost::algorithm::trim(nextLine) ;
+         if (nextLine.empty())
+            continue ;
+
+         // parse it and add it to the collection
+         typename CollectionType::value_type value ;
+         ReadCollectionAction action = parseFunction(nextLine, &value);
+         if (action == ReadCollectionAddLine)
+         {
+            *insertIterator++ = value ;
+         }
+         else if (action == ReadCollectionIgnoreLine)
+         {
+            // do nothing
+         }
+         else if (action == ReadCollectionTerminate)
+         {
+            break; // exit read loop
+         }
       }
-      else if (action == ReadCollectionIgnoreLine)
-      {
-         // do nothing
-      }
-      else if (action == ReadCollectionTerminate)
-      {
-         break; // exit read loop
-      }
+   }
+   catch(const std::exception& e)
+   {
+      Error error = systemError(boost::system::errc::io_error,
+                                ERROR_LOCATION);
+      error.addProperty("what", e.what());
+      error.addProperty("path", filePath.absolutePath());
+      return error;
    }
    
    return Success() ;
@@ -133,13 +155,24 @@ Error appendToFile(const core::FilePath& filePath,
    if (error)
       return error;
 
-   pOfs->seekp(0, std::ios_base::end);
-   
-   // append the content 
-   *pOfs << content  ;
-   if (pOfs->fail())
-      return systemError(io_error, ERROR_LOCATION);
-   
+   try
+   {
+      pOfs->seekp(0, std::ios_base::end);
+
+      // append the content
+      *pOfs << content  ;
+      if (pOfs->fail())
+         return systemError(io_error, ERROR_LOCATION);
+   }
+   catch(const std::exception& e)
+   {
+      Error error = systemError(boost::system::errc::io_error,
+                                ERROR_LOCATION);
+      error.addProperty("what", e.what());
+      error.addProperty("path", filePath.absolutePath());
+      return error;
+   }
+
    return Success() ;
 }
 

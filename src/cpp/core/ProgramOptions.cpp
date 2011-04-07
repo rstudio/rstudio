@@ -112,9 +112,20 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
             return ProgramStatus::exitFailure() ;
          }
          
-         // parse config file
-         store(parse_config_file(*pIfs, optionsDescription.configFile), vm) ;
-         notify(vm) ;
+         try
+         {
+            // parse config file
+            store(parse_config_file(*pIfs, optionsDescription.configFile), vm) ;
+            notify(vm) ;
+         }
+         catch(const std::exception& e)
+         {
+            reportError(
+              "IO error reading " + configFile + ": " + std::string(e.what()),
+              ERROR_LOCATION);
+
+            return ProgramStatus::exitFailure();
+         }
       }
       
       // show help if requested
