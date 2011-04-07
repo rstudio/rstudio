@@ -44,13 +44,16 @@ function loadEditor(container) {
 
 	// We handle these commands ourselves.
 	var canon = require("pilot/canon");
-	canon.removeCommand("findnext");
-	canon.removeCommand("findprevious");
-	canon.removeCommand("find");
-	canon.removeCommand("replace");
-	canon.removeCommand("togglecomment");
-	canon.removeCommand("gotoline");
-	return env.editor;
+   function squelch(cmd) {
+      canon.getCommand(cmd).exec = function() {};
+   }
+   squelch("findnext");
+   squelch("findprevious");
+   squelch("find");
+   squelch("replace");
+   squelch("togglecomment");
+   squelch("gotoline");
+   return env.editor;
 }
 
 exports.loadEditor = loadEditor;
