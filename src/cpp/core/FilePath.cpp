@@ -799,13 +799,7 @@ Error FilePath::open_r(boost::shared_ptr<std::istream>* pStream) const
       if (!(*pResult))
       {
          delete pResult;
-         pResult = NULL;
-      }
 
-      // pResult being NULL here means failure
-
-      if (!pResult)
-      {
          Error error = systemError(boost::system::errc::no_such_file_or_directory, ERROR_LOCATION);
          error.addProperty("path", absolutePath());
          return error;
@@ -856,16 +850,12 @@ Error FilePath::open_w(boost::shared_ptr<std::ostream>* pStream, bool truncate) 
       else
          flags |= ios_base::app;
       pResult = new std::ofstream(absolutePath().c_str(), flags);
+   #endif
 
       if (!(*pResult))
       {
          delete pResult;
-         pResult = NULL;
-      }
-   #endif
 
-      if (!pResult)
-      {
          Error error = systemError(boost::system::errc::no_such_file_or_directory, ERROR_LOCATION);
          error.addProperty("path", absolutePath());
          return error;
