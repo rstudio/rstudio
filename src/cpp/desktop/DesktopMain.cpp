@@ -173,6 +173,8 @@ int main(int argc, char* argv[])
 
    try
    {
+      QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
+
       // initialize log
       FilePath userHomePath = core::system::userHomePath("R_USER|HOME");
       FilePath logPath = core::system::userSettingsPath(
