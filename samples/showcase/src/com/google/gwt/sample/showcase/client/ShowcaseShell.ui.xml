@@ -107,10 +107,6 @@
       color: #4B4A4A;
       direction: ltr;
     }
-    
-    .contentPanel {
-      padding: 10px 0px;
-    }
   </ui:style>
 
   <g:DockLayoutPanel
@@ -264,8 +260,7 @@
             </g:north>
 
             <g:center>
-              <g:ScrollPanel
-                addStyleNames='{style.contentPanel}'
+              <g:SimpleLayoutPanel
                 ui:field='contentPanel' />
             </g:center>
           </g:DockLayoutPanel>

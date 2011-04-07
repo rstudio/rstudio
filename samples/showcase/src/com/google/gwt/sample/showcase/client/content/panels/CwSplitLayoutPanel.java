@@ -74,6 +74,16 @@ public class CwSplitLayoutPanel extends ContentWidget {
     this.constants = constants;
   }
 
+  @Override
+  public boolean hasMargins() {
+    return false;
+  }
+
+  @Override
+  public boolean hasScrollableContent() {
+    return false;
+  }
+
   /**
    * Initialize this example.
    */
@@ -83,7 +93,6 @@ public class CwSplitLayoutPanel extends ContentWidget {
     // Create a Split Panel
     SplitLayoutPanel splitPanel = new SplitLayoutPanel(5);
     splitPanel.ensureDebugId("cwSplitLayoutPanel");
-    splitPanel.setPixelSize(500, 400);
     splitPanel.getElement().getStyle()
         .setProperty("border", "3px solid #e7e7e7");
 

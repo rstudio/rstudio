@@ -27,7 +27,6 @@ import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -36,8 +35,8 @@ import com.google.gwt.user.client.ui.Widget;
  * Example file.
  */
 @ShowcaseStyle({
-    ".gwt-DecoratedTabBar", "html>body .gwt-DecoratedTabBar",
-    "* html .gwt-DecoratedTabBar", ".gwt-TabPanel"})
+    ".gwt-DecoratedTabBar", "html>body .gwt-DecoratedTabBar", "* html .gwt-DecoratedTabBar",
+    ".gwt-TabPanel"})
 public class CwTabLayoutPanel extends ContentWidget {
   /**
    * The constants used in this Content Widget.
@@ -71,6 +70,11 @@ public class CwTabLayoutPanel extends ContentWidget {
     this.constants = constants;
   }
 
+  @Override
+  public boolean hasScrollableContent() {
+    return false;
+  }
+
   /**
    * Initialize this example.
    */
@@ -80,6 +84,7 @@ public class CwTabLayoutPanel extends ContentWidget {
     // Create a tab panel
     TabLayoutPanel tabPanel = new TabLayoutPanel(2.5, Unit.EM);
     tabPanel.setAnimationDuration(1000);
+    tabPanel.getElement().getStyle().setMarginBottom(10.0, Unit.PX);
 
     // Add a home tab
     String[] tabTitles = constants.cwTabPanelTabs();
@@ -98,11 +103,8 @@ public class CwTabLayoutPanel extends ContentWidget {
     // Return the content
     tabPanel.selectTab(0);
     tabPanel.ensureDebugId("cwTabPanel");
-    
-    ResizeLayoutPanel resizePanel = new ResizeLayoutPanel();
-    resizePanel.setPixelSize(600, 400);
-    resizePanel.setWidget(tabPanel);
-    return resizePanel;
+
+    return tabPanel;
   }
 
   @Override

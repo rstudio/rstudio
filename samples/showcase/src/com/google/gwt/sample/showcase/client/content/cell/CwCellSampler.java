@@ -228,8 +228,7 @@ public class CwCellSampler extends ContentWidget {
    * The list of pending changes.
    */
   @ShowcaseData
-  private List<PendingChange<?>> pendingChanges = new ArrayList<
-      PendingChange<?>>();
+  private List<PendingChange<?>> pendingChanges = new ArrayList<PendingChange<?>>();
 
   /**
    * Constructor.
@@ -237,8 +236,8 @@ public class CwCellSampler extends ContentWidget {
    * @param constants the constants
    */
   public CwCellSampler(CwConstants constants) {
-    super(constants.cwCellSamplerName(), constants.cwCellSamplerDescription(),
-        false, "ContactDatabase.java", "CwCellSampler.ui.xml");
+    super(constants.cwCellSamplerName(), constants.cwCellSamplerDescription(), false,
+        "ContactDatabase.java", "CwCellSampler.ui.xml");
   }
 
   /**
@@ -269,8 +268,7 @@ public class CwCellSampler extends ContentWidget {
           pendingChanges.add(new CategoryChange(object, categories[0]));
         } else {
           // If not a relative, use the Contacts Category.
-          pendingChanges.add(new CategoryChange(object,
-              categories[categories.length - 1]));
+          pendingChanges.add(new CategoryChange(object, categories[categories.length - 1]));
         }
       }
     });
@@ -316,12 +314,11 @@ public class CwCellSampler extends ContentWidget {
     });
 
     // ActionCell.
-    addColumn(new ActionCell<ContactInfo>("Click Me",
-        new ActionCell.Delegate<ContactInfo>() {
-          public void execute(ContactInfo contact) {
-            Window.alert("You clicked " + contact.getFullName());
-          }
-        }), "Action", new GetValue<ContactInfo>() {
+    addColumn(new ActionCell<ContactInfo>("Click Me", new ActionCell.Delegate<ContactInfo>() {
+      public void execute(ContactInfo contact) {
+        Window.alert("You clicked " + contact.getFullName());
+      }
+    }), "Action", new GetValue<ContactInfo>() {
       public ContactInfo getValue(ContactInfo contact) {
         return contact;
       }
@@ -347,41 +344,32 @@ public class CwCellSampler extends ContentWidget {
     }, null);
 
     // DatePickerCell.
-    addColumn(new DatePickerCell(dateFormat), "DatePicker",
-        new GetValue<Date>() {
-          public Date getValue(ContactInfo contact) {
-            return contact.getBirthday();
-          }
-        }, new FieldUpdater<ContactInfo, Date>() {
-          public void update(int index, ContactInfo object, Date value) {
-            pendingChanges.add(new BirthdayChange(object, value));
-          }
-        });
+    addColumn(new DatePickerCell(dateFormat), "DatePicker", new GetValue<Date>() {
+      public Date getValue(ContactInfo contact) {
+        return contact.getBirthday();
+      }
+    }, new FieldUpdater<ContactInfo, Date>() {
+      public void update(int index, ContactInfo object, Date value) {
+        pendingChanges.add(new BirthdayChange(object, value));
+      }
+    });
 
     // NumberCell.
-    Column<ContactInfo, Number> numberColumn = addColumn(new NumberCell(),
-        "Number", new GetValue<Number>() {
-          @SuppressWarnings("deprecation")
+    Column<ContactInfo, Number> numberColumn =
+        addColumn(new NumberCell(), "Number", new GetValue<Number>() {
           public Number getValue(ContactInfo contact) {
-            Date today = new Date();
-            Date birthday = contact.getBirthday();
-            int age = today.getYear() - birthday.getYear();
-            if (today.getMonth() > birthday.getMonth()
-                || (today.getMonth() == birthday.getMonth() && today.getDate() > birthday.getDate())) {
-              age--;
-            }
-            return age;
+            return contact.getAge();
           }
         }, null);
     numberColumn.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LOCALE_END);
 
     // IconCellDecorator.
-    addColumn(new IconCellDecorator<String>(images.contactsGroup(),
-        new TextCell()), "Icon", new GetValue<String>() {
-      public String getValue(ContactInfo contact) {
-        return contact.getCategory().getDisplayName();
-      }
-    }, null);
+    addColumn(new IconCellDecorator<String>(images.contactsGroup(), new TextCell()), "Icon",
+        new GetValue<String>() {
+          public String getValue(ContactInfo contact) {
+            return contact.getCategory().getDisplayName();
+          }
+        }, null);
 
     // ImageCell.
     addColumn(new ImageCell(), "Image", new GetValue<String>() {

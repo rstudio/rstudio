@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -26,9 +26,11 @@ import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.i18n.client.LocaleInfo;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.LazyPanel;
+import com.google.gwt.user.client.ui.SimpleLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
@@ -48,12 +50,12 @@ import java.util.Map;
  * and css tabs are loaded using an RPC call to the server.
  * </p>
  */
-public abstract class ContentWidget extends LazyPanel
-    implements HasValueChangeHandlers<String> {
+public abstract class ContentWidget extends SimpleLayoutPanel implements
+    HasValueChangeHandlers<String> {
 
   /**
    * Generic callback used for asynchronously loaded data.
-   *
+   * 
    * @param <T> the data type
    */
   public static interface Callback<T> {
@@ -64,7 +66,7 @@ public abstract class ContentWidget extends LazyPanel
 
   /**
    * Get the simple filename of a class.
-   *
+   * 
    * @param c the class
    */
   protected static String getSimpleName(Class<?> c) {
@@ -75,7 +77,7 @@ public abstract class ContentWidget extends LazyPanel
   /**
    * A description of the example.
    */
-  private final String description;
+  private final SafeHtml description;
 
   /**
    * True if this example has associated styles, false if not.
@@ -125,13 +127,25 @@ public abstract class ContentWidget extends LazyPanel
 
   /**
    * Construct a {@link ContentWidget}.
-   *
-   * @param name the name of the example
-   * @param description a description of the example
+   * 
+   * @param name the text name of the example
+   * @param description a text description of the example
    * @param hasStyle true if the example has associated styles
    * @param rawSourceFiles the list of raw source files to include
    */
-  public ContentWidget(String name, String description, boolean hasStyle,
+  public ContentWidget(String name, String description, boolean hasStyle, String... rawSourceFiles) {
+    this(name, SafeHtmlUtils.fromString(description), hasStyle, rawSourceFiles);
+  }
+
+  /**
+   * Construct a {@link ContentWidget}.
+   * 
+   * @param name the text name of the example
+   * @param description a safe html description of the example
+   * @param hasStyle true if the example has associated styles
+   * @param rawSourceFiles the list of raw source files to include
+   */
+  public ContentWidget(String name, SafeHtml description, boolean hasStyle,
       String... rawSourceFiles) {
     this.name = name;
     this.description = description;
@@ -143,29 +157,22 @@ public abstract class ContentWidget extends LazyPanel
     }
   }
 
-  public HandlerRegistration addValueChangeHandler(
-      ValueChangeHandler<String> handler) {
+  public HandlerRegistration addValueChangeHandler(ValueChangeHandler<String> handler) {
     return addHandler(handler, ValueChangeEvent.getType());
-  }
-
-  @Override
-  public void ensureWidget() {
-    super.ensureWidget();
-    ensureWidgetInitialized();
   }
 
   /**
    * Get the description of this example.
-   *
+   * 
    * @return a description for this example
    */
-  public final String getDescription() {
+  public final SafeHtml getDescription() {
     return description;
   }
 
   /**
    * Get the name of this example to use as a title.
-   *
+   * 
    * @return a name for this example
    */
   public final String getName() {
@@ -174,12 +181,11 @@ public abstract class ContentWidget extends LazyPanel
 
   /**
    * Get the source code for a raw file.
-   *
+   * 
    * @param filename the filename to load
    * @param callback the callback to call when loaded
    */
-  public void getRawSource(
-      final String filename, final Callback<String> callback) {
+  public void getRawSource(final String filename, final Callback<String> callback) {
     if (rawSource.containsKey(filename)) {
       callback.onSuccess(rawSource.get(filename));
     } else {
@@ -197,14 +203,13 @@ public abstract class ContentWidget extends LazyPanel
 
       String className = this.getClass().getName();
       className = className.substring(className.lastIndexOf(".") + 1);
-      sendSourceRequest(
-          rc, ShowcaseConstants.DST_SOURCE_RAW + filename + ".html");
+      sendSourceRequest(rc, ShowcaseConstants.DST_SOURCE_RAW + filename + ".html");
     }
   }
 
   /**
    * Get the filenames of the raw source files.
-   *
+   * 
    * @return the raw source files.
    */
   public List<String> getRawSourceFilenames() {
@@ -213,7 +218,7 @@ public abstract class ContentWidget extends LazyPanel
 
   /**
    * Request the styles associated with the widget.
-   *
+   * 
    * @param callback the callback used when the styles become available
    */
   public void getStyle(final Callback<String> callback) {
@@ -243,7 +248,7 @@ public abstract class ContentWidget extends LazyPanel
 
   /**
    * Request the source code associated with the widget.
-   *
+   * 
    * @param callback the callback used when the source become available
    */
   public void getSource(final Callback<String> callback) {
@@ -263,8 +268,7 @@ public abstract class ContentWidget extends LazyPanel
 
       String className = this.getClass().getName();
       className = className.substring(className.lastIndexOf(".") + 1);
-      sendSourceRequest(
-          rc, ShowcaseConstants.DST_SOURCE_EXAMPLE + className + ".html");
+      sendSourceRequest(rc, ShowcaseConstants.DST_SOURCE_EXAMPLE + className + ".html");
     }
   }
 
@@ -278,8 +282,17 @@ public abstract class ContentWidget extends LazyPanel
   }
 
   /**
+   * Check if the widget should be wrapped in a scrollable div.
+   * 
+   * @return true to use add scrollbars, false not to
+   */
+  public boolean hasScrollableContent() {
+    return true;
+  }
+
+  /**
    * Returns true if this widget has a style section.
-   *
+   * 
    * @return true if style tab available
    */
   public final boolean hasStyle() {
@@ -290,7 +303,7 @@ public abstract class ContentWidget extends LazyPanel
    * When the widget is first initialized, this method is called. If it returns
    * a Widget, the widget will be added as the first tab. Return null to disable
    * the first tab.
-   *
+   * 
    * @return the widget to add to the first tab
    */
   public abstract Widget onInitialize();
@@ -302,38 +315,32 @@ public abstract class ContentWidget extends LazyPanel
   public void onInitializeComplete() {
   }
 
-  protected abstract void asyncOnInitialize(
-      final AsyncCallback<Widget> callback);
-
-  /**
-   * Initialize this widget by creating the elements that should be added to the
-   * page.
-   */
-  @Override
-  protected final Widget createWidget() {
-    view = new ContentWidgetView(hasMargins());
-    view.setName(getName());
-    view.setDescription(getDescription());
-    return view;
-  }
+  protected abstract void asyncOnInitialize(final AsyncCallback<Widget> callback);
 
   /**
    * Fire a {@link ValueChangeEvent} indicating that the user wishes to see the
    * specified source file.
-   *
+   * 
    * @param filename the filename that the user wishes to see
    */
   protected void fireRawSourceRequest(String filename) {
     if (!rawSourceFilenames.contains(filename)) {
-      throw new IllegalArgumentException(
-          "Filename is not registered with this example: " + filename);
+      throw new IllegalArgumentException("Filename is not registered with this example: "
+          + filename);
     }
     ValueChangeEvent.fire(this, filename);
   }
 
   @Override
   protected void onLoad() {
-    ensureWidget();
+    if (view == null) {
+      view = new ContentWidgetView(hasMargins(), hasScrollableContent());
+      view.setName(getName());
+      view.setDescription(getDescription());
+      setWidget(view);
+    }
+    ensureWidgetInitialized();
+    super.onLoad();
   }
 
   /**
@@ -350,8 +357,7 @@ public abstract class ContentWidget extends LazyPanel
     asyncOnInitialize(new AsyncCallback<Widget>() {
       public void onFailure(Throwable reason) {
         widgetInitializing = false;
-        Window.alert(
-            "Failed to download code for this widget (" + reason + ")");
+        Window.alert("Failed to download code for this widget (" + reason + ")");
       }
 
       public void onSuccess(Widget result) {
@@ -369,13 +375,12 @@ public abstract class ContentWidget extends LazyPanel
 
   /**
    * Send a request for source code.
-   *
+   * 
    * @param callback the {@link RequestCallback} to send
    * @param url the URL to target
    */
   private void sendSourceRequest(RequestCallback callback, String url) {
-    RequestBuilder builder = new RequestBuilder(
-        RequestBuilder.GET, GWT.getModuleBaseURL() + url);
+    RequestBuilder builder = new RequestBuilder(RequestBuilder.GET, GWT.getModuleBaseURL() + url);
     builder.setCallback(callback);
     try {
       builder.send();

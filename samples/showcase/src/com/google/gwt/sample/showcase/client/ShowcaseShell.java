@@ -39,10 +39,11 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Anchor;
-import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.ListBox;
-import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.ResizeComposite;
+import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.SimpleLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.TreeViewModel;
 
@@ -52,7 +53,7 @@ import java.util.List;
 /**
  * Application shell for Showcase sample.
  */
-public class ShowcaseShell extends Composite {
+public class ShowcaseShell extends ResizeComposite {
 
   interface ShowcaseShellUiBinder extends UiBinder<Widget, ShowcaseShell> {
   }
@@ -98,7 +99,7 @@ public class ShowcaseShell extends Composite {
    * The panel that holds the content.
    */
   @UiField
-  SimplePanel contentPanel;
+  SimpleLayoutPanel contentPanel;
 
   /**
    * The container around the links at the top of the app.
@@ -188,8 +189,7 @@ public class ShowcaseShell extends Composite {
     initWidget(uiBinder.createAndBindUi(this));
     initializeLocaleBox();
     contentSource.getElement().getStyle().setBackgroundColor("#eee");
-    contentSource.getElement().getStyle().setMarginLeft(10.0, Unit.PX);
-    contentSource.getElement().getStyle().setMarginRight(10.0, Unit.PX);
+    contentSource.getElement().getStyle().setMargin(10.0, Unit.PX);
     contentSource.getElement().getStyle().setProperty(
         "border", "1px solid #c3c3c3");
     contentSource.getElement().getStyle().setProperty("padding", "10px 2px");
@@ -393,7 +393,7 @@ public class ShowcaseShell extends Composite {
     tabSource.getElement().getStyle().setColor(SELECTED_TAB_COLOR);
 
     contentSource.setHTML(loadingHtml, Direction.LTR);
-    contentPanel.setWidget(contentSource);
+    contentPanel.setWidget(new ScrollPanel(contentSource));
     if (!tabSourceList.isVisible() || tabSourceList.getSelectedIndex() == 0) {
       // If the source list isn't visible or the first item is selected, load
       // the source for the example.
@@ -420,7 +420,7 @@ public class ShowcaseShell extends Composite {
     tabSource.getElement().getStyle().clearColor();
 
     contentSource.setHTML(loadingHtml, Direction.LTR);
-    contentPanel.setWidget(contentSource);
+    contentPanel.setWidget(new ScrollPanel(contentSource));
     content.getStyle(new CustomCallback());
   }
 }

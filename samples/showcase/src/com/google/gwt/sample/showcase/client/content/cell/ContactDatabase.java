@@ -97,6 +97,20 @@ public class ContactDatabase {
     }
 
     /**
+     * @return the contact's age
+     */
+    @SuppressWarnings("deprecation")
+    public int getAge() {
+      Date today = new Date();
+      int age = today.getYear() - birthday.getYear();
+      if (today.getMonth() > birthday.getMonth()
+          || (today.getMonth() == birthday.getMonth() && today.getDate() > birthday.getDate())) {
+        age--;
+      }
+      return age;
+    }
+
+    /**
      * @return the contact's birthday
      */
     public Date getBirthday() {

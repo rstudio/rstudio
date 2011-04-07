@@ -62,7 +62,7 @@ public class ShowMorePagerPanel extends AbstractPager {
       public void onScroll(ScrollEvent event) {
         // If scrolling up, ignore the event.
         int oldScrollPos = lastScrollPos;
-        lastScrollPos = scrollable.getScrollPosition();
+        lastScrollPos = scrollable.getVerticalScrollPosition();
         if (oldScrollPos >= lastScrollPos) {
           return;
         }

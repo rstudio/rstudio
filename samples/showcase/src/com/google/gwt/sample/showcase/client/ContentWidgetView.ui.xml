@@ -8,7 +8,7 @@
       color: #4B4A4A;
       font-size: 17pt;
       font-weight: bold;
-      margin: 0px 10px;
+      margin: 10px 10px 0px;
     }
     
     .description {
@@ -19,15 +19,20 @@
     }
   </ui:style>
 
-  <g:HTMLPanel>
-    <div
-      class='{style.name}'
-      ui:field='nameElem'>Name</div>
-    <div
-      class='{style.description}'
-      ui:field='descElem'>Description</div>
+  <g:HeaderPanel>
+    <!-- Header. -->
+    <g:HTMLPanel>
+      <div
+        class='{style.name}'
+        ui:field='nameElem'>Name</div>
+      <div
+        class='{style.description}'
+        ui:field='descElem'>Description</div>
+    </g:HTMLPanel>
+
+    <!-- Content. -->
     <g:SimplePanel
       ui:field='examplePanel' />
-  </g:HTMLPanel>
+  </g:HeaderPanel>
 
 </ui:UiBinder> 

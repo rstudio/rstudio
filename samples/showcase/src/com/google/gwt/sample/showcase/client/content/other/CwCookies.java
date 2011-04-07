@@ -17,6 +17,8 @@ package com.google.gwt.sample.showcase.client.content.other;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -25,9 +27,7 @@ import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Cookies;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
@@ -215,10 +215,10 @@ public class CwCookies extends ContentWidget {
       }
     }
 
-    // Select the index of the selectedCookie. Use a DeferredCommand to give
+    // Select the index of the selectedCookie. Use a ScheduledCommand to give
     // the options time to register in Opera.
     final int selectedIndexFinal = selectedIndex;
-    DeferredCommand.addCommand(new Command() {
+    Scheduler.get().scheduleDeferred(new ScheduledCommand() {
       public void execute() {
         // Select the default cookie
         if (selectedIndexFinal < existingCookiesBox.getItemCount()) {
