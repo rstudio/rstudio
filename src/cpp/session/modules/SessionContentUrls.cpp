@@ -13,6 +13,10 @@
 
 #include "SessionContentUrls.hpp"
 
+#include <boost/algorithm/string/predicate.hpp>
+
+#include <R_ext/rlocale.h>
+
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/FilePath.hpp>
@@ -147,9 +151,31 @@ void handleContentRequest(const http::Request& request, http::Response* pRespons
    // set file
    pResponse->setFile(contentFilePath, request);
 
+   bool isUtf8 = true;
+   if (boost::algorithm::starts_with(contentFilePath.mimeContentType(), "text/"))
+   {
+      // If the content looks like valid UTF-8, assume it is. Otherwise, assume
+      // it's the system encoding.
+      std::string contents;
+      error = core::readStringFromFile(contentFilePath, &contents);
+      if (!error)
+      {
+         for (std::string::iterator pos = contents.begin(); pos != contents.end(); )
+         {
+            error = string_utils::utf8Advance(pos, 1, contents.end(), &pos);
+            if (error)
+            {
+               isUtf8 = false;
+               break;
+            }
+         }
+      }
+   }
+
    // reset content-type with charset
    pResponse->setContentType(contentFilePath.mimeContentType() +
-                             "; charset=utf-8");
+                             std::string("; charset=") +
+                             (isUtf8 ? "UTF-8" : ::locale2charset(NULL)));
 
    // set title header
    pResponse->setHeader("Title", title);
