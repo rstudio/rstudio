@@ -111,6 +111,7 @@ core::Error iconvstr(const std::string& value,
    char buffer[256];
    while (inBytes > 0)
    {
+      const char* pInOrig = pIn;
       char* pOut = buffer;
       size_t outBytes = sizeof(buffer);
 
@@ -125,6 +126,10 @@ core::Error iconvstr(const std::string& value,
             output.push_back('?');
             pIn++;
             inBytes--;
+         }
+         else if (errno == E2BIG && pInOrig != pIn)
+         {
+            continue;
          }
          else
          {
