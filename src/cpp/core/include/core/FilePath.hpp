@@ -23,7 +23,6 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
-#include <boost/iostreams/stream.hpp>
 
 #include <boost/utility.hpp>
 
