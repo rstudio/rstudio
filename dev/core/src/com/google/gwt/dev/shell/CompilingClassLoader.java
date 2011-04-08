@@ -535,7 +535,7 @@ public final class CompilingClassLoader extends ClassLoader implements
            */
           JClassType implementingType = typeOracle.getSingleJsoImpl(intfMethod.getEnclosingType());
 
-          if (implementingType == null) {
+          if (implementingType == null || implementingType.isAnnotationPresent(GwtScriptOnly.class)) {
             /*
              * This means that there is no concrete implementation of the
              * interface by a JSO. Any implementation that might be created by a

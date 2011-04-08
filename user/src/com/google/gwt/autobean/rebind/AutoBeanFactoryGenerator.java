@@ -27,6 +27,7 @@ import com.google.gwt.autobean.shared.AutoBean;
 import com.google.gwt.autobean.shared.AutoBeanFactory;
 import com.google.gwt.autobean.shared.AutoBeanUtils;
 import com.google.gwt.autobean.shared.AutoBeanVisitor;
+import com.google.gwt.autobean.shared.Splittable;
 import com.google.gwt.autobean.shared.impl.AbstractAutoBean;
 import com.google.gwt.autobean.shared.impl.AbstractAutoBean.OneShotContext;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -185,27 +186,15 @@ public class AutoBeanFactoryGenerator extends Generator {
           AutoBeanFactory.class.getCanonicalName());
     }
 
-    // Clone constructor
-    // public FooIntfAutoBean(FooIntfoAutoBean toClone, boolean deepClone) {
-    sw.println("public %1$s(%1$s toClone, boolean deep) {", type.getSimpleSourceName());
-    sw.indentln("super(toClone, deep);");
-    sw.println("}");
-
     // Wrapping constructor
     // public FooIntfAutoBean(AutoBeanFactory factory, FooIntfo wrapped) {
     sw.println("public %s(%s factory, %s wrapped) {", type.getSimpleSourceName(),
         AutoBeanFactory.class.getCanonicalName(), type.getPeerType().getQualifiedSourceName());
-    sw.indentln("super(factory, wrapped);");
+    sw.indentln("super(wrapped, factory);");
     sw.println("}");
 
     // public FooIntf as() {return shim;}
     sw.println("public %s as() {return shim;}", type.getPeerType().getQualifiedSourceName());
-
-    // public FooIntfAutoBean clone(boolean deep) {
-    sw.println("public %s clone(boolean deep) {", type.getQualifiedSourceName());
-    // return new FooIntfAutoBean(this, deep);
-    sw.indentln("return new %s(this, deep);", type.getSimpleSourceName());
-    sw.println("}");
 
     // public Class<Intf> getType() {return Intf.class;}
     sw.println("public Class<%1$s> getType() {return %1$s.class;}", ModelUtils.ensureBaseType(
@@ -230,45 +219,49 @@ public class AutoBeanFactoryGenerator extends Generator {
     // return new FooIntf() {
     sw.println("return new %s() {", type.getPeerType().getQualifiedSourceName());
     sw.indent();
+    sw.println("private final %s data = %s.this.data;", Splittable.class.getCanonicalName(), type
+        .getQualifiedSourceName());
     for (AutoBeanMethod method : type.getMethods()) {
       JMethod jmethod = method.getMethod();
+      JType returnType = jmethod.getReturnType();
       sw.println("public %s {", getBaseMethodDeclaration(jmethod));
       sw.indent();
       switch (method.getAction()) {
         case GET: {
-          // Must handle de-boxing primitive types
-          JPrimitiveType primitive = jmethod.getReturnType().isPrimitive();
-          if (primitive != null) {
-            // Object toReturn = values.get("foo");
-            sw.println("Object toReturn = values.get(\"%s\");", method.getPropertyName());
-            sw.println("if (toReturn == null) {");
-            // return 0;
-            sw.indentln("return %s;", primitive.getUninitializedFieldExpression());
-            sw.println("} else {");
-            // return (BoxedType) toReturn;
-            sw.indentln("return (%s) toReturn;", primitive.getQualifiedBoxedSourceName());
-            sw.println("}");
+          String castType;
+          if (returnType.isPrimitive() != null) {
+            castType = returnType.isPrimitive().getQualifiedBoxedSourceName();
+            // Boolean toReturn = getOrReify("foo");
+            sw.println("%s toReturn = getOrReify(\"%s\");", castType, method.getPropertyName());
+            // return toReturn == null ? false : toReturn;
+            sw.println("return toReturn == null ? %s : toReturn;", returnType.isPrimitive()
+                .getUninitializedFieldExpression());
+          } else if (returnType.equals(context.getTypeOracle().findType(
+              Splittable.class.getCanonicalName()))) {
+            sw.println("return data.isNull(\"%1$s\") ? null : data.get(\"%1$s\");", method
+                .getPropertyName());
           } else {
-            // return (ReturnType) values.get(\"foo\");
-            sw.println("return (%s) values.get(\"%s\");", ModelUtils
-                .getQualifiedBaseSourceName(jmethod.getReturnType()), method.getPropertyName());
+            // return (ReturnType) values.getOrReify(\"foo\");
+            castType = ModelUtils.getQualifiedBaseSourceName(returnType);
+            sw.println("return (%s) getOrReify(\"%s\");", castType, method.getPropertyName());
           }
         }
           break;
         case SET:
-        case SET_BUILDER:
-          // values.put("foo", parameter);
-          sw.println("values.put(\"%s\", %s);", method.getPropertyName(),
-              jmethod.getParameters()[0].getName());
+        case SET_BUILDER: {
+          JParameter param = jmethod.getParameters()[0];
+          // setProperty("foo", parameter);
+          sw.println("setProperty(\"%s\", %s);", method.getPropertyName(), param.getName());
           if (JBeanMethod.SET_BUILDER.equals(method.getAction())) {
             sw.println("return this;");
           }
           break;
+        }
         case CALL:
           // return com.example.Owner.staticMethod(Outer.this, param,
           // param);
           JMethod staticImpl = method.getStaticImpl();
-          if (!jmethod.getReturnType().equals(JPrimitiveType.VOID)) {
+          if (!returnType.equals(JPrimitiveType.VOID)) {
             sw.print("return ");
           }
           sw.print("%s.%s(%s.this", staticImpl.getEnclosingType().getQualifiedSourceName(),
@@ -506,19 +499,15 @@ public class AutoBeanFactoryGenerator extends Generator {
       sw.println("public %s {", getBaseMethodDeclaration(jmethod));
       sw.indent();
 
-      // Use explicit enclosing this reference to avoid method conflicts
-      sw.println("%s.this.checkWrapped();", type.getSimpleSourceName());
-
       switch (method.getAction()) {
         case GET:
           /*
            * The getter call will ensure that any non-value return type is
            * definitely wrapped by an AutoBean instance.
            */
-          // Foo toReturn=FooAutoBean.this.get("getFoo", getWrapped().getFoo());
-          sw.println("%s toReturn = %3$s.this.get(\"%2$s\", getWrapped().%2$s());", ModelUtils
-              .getQualifiedBaseSourceName(jmethod.getReturnType()), methodName, type
-              .getSimpleSourceName());
+          sw.println("%s toReturn = %s.this.getWrapped().%s();", ModelUtils
+              .getQualifiedBaseSourceName(jmethod.getReturnType()), type.getSimpleSourceName(),
+              methodName);
 
           // Non-value types might need to be wrapped
           writeReturnWrapper(sw, type, method);
@@ -526,7 +515,6 @@ public class AutoBeanFactoryGenerator extends Generator {
           break;
         case SET:
         case SET_BUILDER:
-          sw.println("%s.this.checkFrozen();", type.getSimpleSourceName());
           // getWrapped().setFoo(foo);
           sw.println("%s.this.getWrapped().%s(%s);", type.getSimpleSourceName(), methodName,
               parameters[0].getName());
@@ -596,7 +584,6 @@ public class AutoBeanFactoryGenerator extends Generator {
     sw.println("%s propertyContext;", ClientPropertyContext.class.getCanonicalName());
     // Local variable ref cleans up emitted js
     sw.println("%1$s as = as();", type.getPeerType().getQualifiedSourceName());
-    sw.println("%s<String, Object> values = this.values;", Map.class.getCanonicalName());
 
     for (AutoBeanMethod method : type.getMethods()) {
       if (!method.getAction().equals(JBeanMethod.GET)) {
@@ -662,9 +649,9 @@ public class AutoBeanFactoryGenerator extends Generator {
           referencedSetters.add(setter);
         } else {
           // Create a function that will update the values map
-          // CPContext.mapSetter(values, "foo");
-          sw.println("%s.mapSetter(values, \"%s\"),", ClientPropertyContext.Setter.class
-              .getCanonicalName(), method.getPropertyName());
+          // CPContext.beanSetter(FooBeanImpl.this, "foo");
+          sw.println("%s.beanSetter(%s.this, \"%s\"),", ClientPropertyContext.Setter.class
+              .getCanonicalName(), type.getSimpleSourceName(), method.getPropertyName());
         }
       }
       if (typeList.size() == 1) {

@@ -46,7 +46,7 @@ public abstract class AbstractAutoBeanFactory implements AutoBeanFactory, EnumMa
   /**
    * EnumMap support.
    */
-  public <E extends Enum<E>> E getEnum(Class<E> clazz, String token) {
+  public <E extends Enum<?>> E getEnum(Class<E> clazz, String token) {
     maybeInitializeEnumMap();
     List<Enum<?>> list = stringsToEnumsMap.get(token);
     if (list == null) {

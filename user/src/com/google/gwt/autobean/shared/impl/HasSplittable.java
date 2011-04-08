@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2011 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,19 +15,12 @@
  */
 package com.google.gwt.autobean.shared.impl;
 
+import com.google.gwt.autobean.shared.Splittable;
+
 /**
- * This interface is implemented by our generated AutoBeanFactory types to
- * convert enum values to strings.
+ * Allows reified type facades to return their underlying Splittable
+ * datastructure.
  */
-public interface EnumMap {
-  /**
-   * Extra enums that should be included in the AutoBeanFactory.
-   */
-  public @interface ExtraEnums {
-    Class<? extends Enum<?>>[] value();
-  }
-
-  <E extends Enum<?>> E getEnum(Class<E> clazz, String token);
-
-  String getToken(Enum<?> e);
+public interface HasSplittable {
+  Splittable getSplittable();
 }

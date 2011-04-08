@@ -164,8 +164,9 @@ public class TypeUtils {
     return false;
   }
 
-  public static Class<?> maybeAutobox(Class<?> domainType) {
-    Class<?> autoBoxType = AUTOBOX_MAP.get(domainType);
+  public static <V> Class<V> maybeAutobox(Class<V> domainType) {
+    @SuppressWarnings("unchecked")
+    Class<V> autoBoxType = (Class<V>) AUTOBOX_MAP.get(domainType);
     return autoBoxType == null ? domainType : autoBoxType;
   }
 

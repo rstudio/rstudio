@@ -18,7 +18,9 @@ package com.google.gwt.autobean;
 import com.google.gwt.autobean.client.AutoBeanTest;
 import com.google.gwt.autobean.server.AutoBeanCodexJreTest;
 import com.google.gwt.autobean.server.AutoBeanJreTest;
+import com.google.gwt.autobean.server.SplittableJreTest;
 import com.google.gwt.autobean.shared.AutoBeanCodexTest;
+import com.google.gwt.autobean.shared.SplittableTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
 import junit.framework.Test;
@@ -34,6 +36,8 @@ public class AutoBeanSuite {
     suite.addTestSuite(AutoBeanCodexTest.class);
     suite.addTestSuite(AutoBeanJreTest.class);
     suite.addTestSuite(AutoBeanTest.class);
+    suite.addTestSuite(SplittableJreTest.class);
+    suite.addTestSuite(SplittableTest.class);
     return suite;
   }
 }
