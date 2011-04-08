@@ -9,5 +9,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/cldr-tools"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/gwt-dev"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/icu4j/4.4.2/utilities.jar" sourcepath="/GWT_TOOLS/lib/icu4j/4.4.2/icu4jsrc.jar"/>
+        <classpathentry kind="var" path="GWT_TOOLS/lib/cldr/1.8.1/cldr.jar" />
 	<classpathentry kind="output" path="bin"/>
 </classpath>
