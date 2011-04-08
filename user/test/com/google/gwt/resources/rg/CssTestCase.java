@@ -131,9 +131,9 @@ public class CssTestCase extends TestCase {
   protected static <T extends CssNode & HasNodes> void assertEquals(
       TreeLogger logger, T expected, T test) throws UnableToCompleteException {
     String expectedCss = CssResourceGenerator.makeExpression(logger,
-        new FakeContext(), expected, false);
+        new FakeContext(), null, expected, false);
     String testCss = CssResourceGenerator.makeExpression(logger,
-        new FakeContext(), test, false);
+        new FakeContext(), null, test, false);
     assertEquals(expectedCss, testCss);
   }
 
