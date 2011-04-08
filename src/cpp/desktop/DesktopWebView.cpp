@@ -59,8 +59,8 @@ QString WebView::promptForFilename(const QNetworkRequest& request,
    // default, if present.
    if (pReply && pReply->hasRawHeader("content-disposition"))
    {
-      QString headerValue = pReply->rawHeader("content-disposition");
-      QRegExp regexp("filename=(.+)", Qt::CaseInsensitive);
+      QString headerValue = QString::fromAscii(pReply->rawHeader("content-disposition"));
+      QRegExp regexp(QString::fromAscii("filename=(.+)"), Qt::CaseInsensitive);
       if (regexp.indexIn(headerValue) >= 0)
       {
          defaultFileName = regexp.cap(1);
@@ -123,13 +123,13 @@ void WebView::unsupportedContent(QNetworkReply* pReply)
 
    QString contentType =
          pReply->header(QNetworkRequest::ContentTypeHeader).toString();
-   if (contentType.contains(QRegExp("^\\s*application/pdf($|;)",
+   if (contentType.contains(QRegExp(QString::fromAscii("^\\s*application/pdf($|;)"),
                                     Qt::CaseInsensitive)))
    {
       core::FilePath dir(options().scratchTempDir());
 
-      QTemporaryFile pdfFile(QString::fromStdString(
-            dir.childPath("rstudio-XXXXXX.pdf").absolutePath()));
+      QTemporaryFile pdfFile(QString::fromUtf8(
+            dir.childPath("rstudio-XXXXXX.pdf").absolutePath().c_str()));
       pdfFile.open();
       pdfFile.close();
       // DownloadHelper frees itself when downloading is done

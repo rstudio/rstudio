@@ -21,8 +21,8 @@ QList<QNetworkProxy> NetworkProxyFactory::queryProxy(const QNetworkProxyQuery& q
 {
    QList<QNetworkProxy> results;
 
-   if (query.peerHostName() == "127.0.0.1"
-       || query.peerHostName().toLower() == "localhost")
+   if (query.peerHostName() == QString::fromAscii("127.0.0.1")
+       || query.peerHostName().toLower() == QString::fromAscii("localhost"))
    {
       results.append(QNetworkProxy::NoProxy);
    }

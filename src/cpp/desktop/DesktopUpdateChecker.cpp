@@ -36,17 +36,17 @@ namespace desktop {
 
 QUrl UpdateChecker::checkForUpdatesURL()
 {
-   QUrl url("http://www.rstudio.org/links/check_for_update");
-   url.addQueryItem("version", RSTUDIO_VERSION);
+   QUrl url(QString::fromAscii("http://www.rstudio.org/links/check_for_update"));
+   url.addQueryItem(QString::fromAscii("version"), QString::fromAscii(RSTUDIO_VERSION));
    QString platform;
 #if defined(_WIN32)
-   platform = "windows";
+   platform = QString::fromAscii("windows");
 #elif defined(__APPLE__)
-   platform = "mac";
+   platform = QString::fromAscii("mac");
 #else
-   platform = "linux";
+   platform = QString::fromAscii("linux");
 #endif
-   url.addQueryItem("os", platform);
+   url.addQueryItem(QString::fromAscii("os"), platform);
    return url;
 }
 
@@ -54,7 +54,7 @@ void UpdateChecker::performCheck(bool manuallyInvoked)
 {
    // build URL (specify key-value pair return)
    QUrl url = checkForUpdatesURL();
-   url.addQueryItem("format", "kvp");
+   url.addQueryItem(QString::fromAscii("format"), QString::fromAscii("kvp"));
 
    // download manifest (URL downlader frees itself)
    URLDownloader* pURLDownloader = new URLDownloader(url,
@@ -69,7 +69,7 @@ void UpdateChecker::performCheck(bool manuallyInvoked)
 
 void UpdateChecker::manifestDownloadError(const QString &message)
 {
-   LOG_ERROR_MESSAGE("Error downloading manifest: " + message.toStdString());
+   LOG_ERROR_MESSAGE("Error downloading manifest: " + std::string(message.toUtf8().constData()));
 
    URLDownloader* pURLDownloader = qobject_cast<URLDownloader*>(sender());
    if (pURLDownloader && pURLDownloader->manuallyInvoked())
@@ -77,15 +77,15 @@ void UpdateChecker::manifestDownloadError(const QString &message)
       // WA_DeleteOnClose
       QMessageBox* pMsg = new QMessageBox(
             safeMessageBoxIcon(QMessageBox::Warning),
-            "Error Checking for Updates",
-            "An error occurred while checking for updates:\n\n"
+            QString::fromUtf8("Error Checking for Updates"),
+            QString::fromUtf8("An error occurred while checking for updates:\n\n")
             + message,
             QMessageBox::NoButton,
             pOwnerWindow_,
             Qt::Sheet | Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint);
       pMsg->setWindowModality(Qt::WindowModal);
       pMsg->setAttribute(Qt::WA_DeleteOnClose);
-      pMsg->addButton(new QPushButton("OK"), QMessageBox::AcceptRole);
+      pMsg->addButton(new QPushButton(QString::fromUtf8("OK")), QMessageBox::AcceptRole);
       pMsg->show();
    }
 }
@@ -104,7 +104,7 @@ void UpdateChecker::manifestDownloadComplete(const QByteArray& data)
 
    // is there an update which we haven't already chosen to ignore?
    std::string stdUpdateVersion = http::util::fieldValue(fields, "update-version");
-   QString updateVersion = QString::fromStdString(stdUpdateVersion);
+   QString updateVersion = QString::fromUtf8(stdUpdateVersion.c_str());
    if ( (updateVersion.size() > 0) &&
         (!ignoredVersions.contains(updateVersion) || pURLDownloader->manuallyInvoked()) )
    {
@@ -113,10 +113,10 @@ void UpdateChecker::manifestDownloadComplete(const QByteArray& data)
       std::string updateMessage = http::util::fieldValue(fields, "update-message");
       int isUrgent = http::util::fieldValue<int>(fields, "update-urgent", 0);
       DesktopUpdateInfo updateInfo;
-      updateInfo.currentVersion = RSTUDIO_VERSION;
+      updateInfo.currentVersion = QString::fromUtf8(RSTUDIO_VERSION);
       updateInfo.updatedVersion = updateVersion;
-      updateInfo.updateURL = QString::fromStdString(updateURL);
-      updateInfo.updateMessage = QString::fromStdString(updateMessage);
+      updateInfo.updateURL = QString::fromUtf8(updateURL.c_str());
+      updateInfo.updateMessage = QString::fromUtf8(updateMessage.c_str());
       updateInfo.isUrgent = isUrgent != 0;
 
       // invoke dialog
@@ -144,14 +144,14 @@ void UpdateChecker::manifestDownloadComplete(const QByteArray& data)
          // WA_DeleteOnClose
          QMessageBox* pMsg = new QMessageBox(
                safeMessageBoxIcon(QMessageBox::Information),
-               "No Update Available",
-               "You're using the newest version of RStudio.",
+               QString::fromUtf8("No Update Available"),
+               QString::fromUtf8("You're using the newest version of RStudio."),
                QMessageBox::NoButton,
                pOwnerWindow_,
                Qt::Sheet | Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint);
          pMsg->setWindowModality(Qt::WindowModal);
          pMsg->setAttribute(Qt::WA_DeleteOnClose);
-         pMsg->addButton(new QPushButton("OK"), QMessageBox::AcceptRole);
+         pMsg->addButton(new QPushButton(QString::fromUtf8("OK")), QMessageBox::AcceptRole);
          pMsg->show();
       }
    }

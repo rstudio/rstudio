@@ -81,7 +81,7 @@ QtLocalPeer::QtLocalPeer(QObject* parent, const QString &appId)
 #endif
         prefix = id.section(QLatin1Char('/'), -1);
     }
-    prefix.remove(QRegExp("[^a-zA-Z]"));
+    prefix.remove(QRegExp(QString::fromAscii("[^a-zA-Z]")));
     prefix.truncate(6);
 
     QByteArray idc = id.toUtf8();

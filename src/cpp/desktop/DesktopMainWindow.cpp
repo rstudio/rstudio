@@ -47,13 +47,13 @@ MainWindow::MainWindow(QUrl url) :
    // the real menu bar isn't ready until well
    // after startup.
    QMenuBar* pMainMenuStub = new QMenuBar(this);
-   pMainMenuStub->addMenu("File");
-   pMainMenuStub->addMenu("Edit");
-   pMainMenuStub->addMenu("View");
-   pMainMenuStub->addMenu("Workspace");
-   pMainMenuStub->addMenu("Plots");
-   pMainMenuStub->addMenu("Tools");
-   pMainMenuStub->addMenu("Help");
+   pMainMenuStub->addMenu(QString::fromUtf8("File"));
+   pMainMenuStub->addMenu(QString::fromUtf8("Edit"));
+   pMainMenuStub->addMenu(QString::fromUtf8("View"));
+   pMainMenuStub->addMenu(QString::fromUtf8("Workspace"));
+   pMainMenuStub->addMenu(QString::fromUtf8("Plots"));
+   pMainMenuStub->addMenu(QString::fromUtf8("Tools"));
+   pMainMenuStub->addMenu(QString::fromUtf8("Help"));
    setMenuBar(pMainMenuStub);
 
    connect(&menuCallback_, SIGNAL(menuBarCompleted(QMenuBar*)),
@@ -68,7 +68,7 @@ MainWindow::MainWindow(QUrl url) :
    connect(&gwtCallback_, SIGNAL(workbenchInitialized()),
            this, SLOT(onWorkbenchInitialized()));
 
-   setWindowIcon(QIcon(":/icons/RStudio.ico"));
+   setWindowIcon(QIcon(QString::fromAscii(":/icons/RStudio.ico")));
 
 #ifdef Q_OS_MAC
    QMenuBar* pDefaultMenu = new QMenuBar();
@@ -76,7 +76,7 @@ MainWindow::MainWindow(QUrl url) :
 #endif
 
    //setContentsMargins(10000, 0, -10000, 0);
-   setStyleSheet("QMainWindow { background: #e1e2e5; }");
+   setStyleSheet(QString::fromAscii("QMainWindow { background: #e1e2e5; }"));
 }
 
 void MainWindow::onWorkbenchInitialized()
@@ -85,7 +85,7 @@ void MainWindow::onWorkbenchInitialized()
 
 #ifdef Q_WS_MACX
    webView()->page()->mainFrame()->evaluateJavaScript(
-         "document.body.className = document.body.className + ' avoid-move-cursor'");
+         QString::fromAscii("document.body.className = document.body.className + ' avoid-move-cursor'"));
 #endif
 
    // check for updates
@@ -111,11 +111,11 @@ void MainWindow::quit()
 void MainWindow::onJavaScriptWindowObjectCleared()
 {
    webView()->page()->mainFrame()->addToJavaScriptWindowObject(
-         "desktop",
+         QString::fromAscii("desktop"),
          &gwtCallback_,
          QScriptEngine::QtOwnership);
    webView()->page()->mainFrame()->addToJavaScriptWindowObject(
-         "desktopMenuCallback",
+         QString::fromAscii("desktopMenuCallback"),
          &menuCallback_,
          QScriptEngine::QtOwnership);
 }
@@ -123,18 +123,18 @@ void MainWindow::onJavaScriptWindowObjectCleared()
 void MainWindow::invokeCommand(QString commandId)
 {
    webView()->page()->mainFrame()->evaluateJavaScript(
-         "window.desktopHooks.invokeCommand('" + commandId + "');");
+         QString::fromAscii("window.desktopHooks.invokeCommand('") + commandId + QString::fromAscii("');"));
 }
 
 void MainWindow::manageCommand(QString cmdId, QAction* action)
 {
    QWebFrame* pMainFrame = webView()->page()->mainFrame();
    action->setVisible(pMainFrame->evaluateJavaScript(
-         "window.desktopHooks.isCommandVisible('" + cmdId + "')").toBool());
+         QString::fromAscii("window.desktopHooks.isCommandVisible('") + cmdId + QString::fromAscii("')")).toBool());
    action->setEnabled(pMainFrame->evaluateJavaScript(
-         "window.desktopHooks.isCommandEnabled('" + cmdId + "')").toBool());
+         QString::fromAscii("window.desktopHooks.isCommandEnabled('") + cmdId + QString::fromAscii("')")).toBool());
    action->setText(pMainFrame->evaluateJavaScript(
-         "window.desktopHooks.getCommandLabel('" + cmdId + "')").toString());
+         QString::fromAscii("window.desktopHooks.getCommandLabel('") + cmdId + QString::fromAscii("')")).toString());
 }
 
 void MainWindow::closeEvent(QCloseEvent* pEvent)
@@ -146,7 +146,7 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
        return;
    }
 
-   QVariant hasQuitR = pFrame->evaluateJavaScript("!!window.desktopHooks");
+   QVariant hasQuitR = pFrame->evaluateJavaScript(QString::fromAscii("!!window.desktopHooks"));
 
    if (quitConfirmed_
        || !hasQuitR.toBool()
@@ -158,10 +158,10 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
    {
       // determine saveAction by calling hook
       QVariant saveAction = pFrame->evaluateJavaScript(
-                               "window.desktopHooks.getSaveAction()");
+                               QString::fromAscii("window.desktopHooks.getSaveAction()"));
 
       QVariant rEnvPath = pFrame->evaluateJavaScript(
-                               "window.desktopHooks.getREnvironmentPath()");
+                               QString::fromAscii("window.desktopHooks.getREnvironmentPath()"));
 
       bool save;
       switch (saveAction.toInt())
@@ -175,18 +175,18 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
       case -1:
       default:
          QMessageBox prompt(safeMessageBoxIcon(QMessageBox::Warning),
-                            "Quit R Session",
-                            "Save workspace image to " +
-                            rEnvPath.toString() + "?",
+                            QString::fromUtf8("Quit R Session"),
+                            QString::fromUtf8("Save workspace image to ") +
+                            rEnvPath.toString() + QString::fromUtf8("?"),
                             QMessageBox::NoButton,
                             this,
                             Qt::Sheet | Qt::Dialog |
                             Qt::MSWindowsFixedSizeDialogHint);
          prompt.setWindowModality(Qt::WindowModal);
-         QPushButton* pSave = prompt.addButton("&Save",
+         QPushButton* pSave = prompt.addButton(QString::fromUtf8("&Save"),
                                                    QMessageBox::AcceptRole);
-         prompt.addButton("&Don't Save", QMessageBox::DestructiveRole);
-         QPushButton* pCancel = prompt.addButton("Cancel",
+         prompt.addButton(QString::fromUtf8("&Don't Save"), QMessageBox::DestructiveRole);
+         QPushButton* pCancel = prompt.addButton(QString::fromUtf8("Cancel"),
                                                      QMessageBox::RejectRole);
          prompt.setDefaultButton(pSave);
 
@@ -210,9 +210,9 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
          break;
       }
 
-      pFrame->evaluateJavaScript("window.desktopHooks.quitR(" +
-                                 (save ? QString("true") : QString("false")) +
-                                 ")");
+      pFrame->evaluateJavaScript(QString::fromAscii("window.desktopHooks.quitR(") +
+                                 (save ? QString::fromAscii("true") : QString::fromAscii("false")) +
+                                 QString::fromAscii(")"));
       pEvent->ignore();
    }
 }
@@ -229,10 +229,12 @@ void MainWindow::openFileInRStudio(QString path)
    if (!fileInfo.isAbsolute() || !fileInfo.exists() || !fileInfo.isFile())
       return;
 
-   path = path.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
+   path = path.replace(QString::fromAscii("\\"), QString::fromAscii("\\\\"))
+          .replace(QString::fromAscii("\""), QString::fromAscii("\\\""))
+          .replace(QString::fromAscii("\n"), QString::fromAscii("\\n"));
 
    webView()->page()->mainFrame()->evaluateJavaScript(
-         "window.desktopHooks.openFile(\"" + path + "\")");
+         QString::fromAscii("window.desktopHooks.openFile(\"") + path + QString::fromAscii("\")"));
 }
 
 void MainWindow::checkForUpdates()

@@ -21,11 +21,11 @@ namespace {
 QIcon icon(const char* name)
 {
 #ifdef Q_WS_MACX
-   static QString suffix("_mac");
+   static QString suffix(QString::fromAscii("_mac"));
 #else
-   static QString suffix("");
+   static QString suffix(QString::fromAscii(""));
 #endif
-   return QIcon(QString(":/icons/") + name + suffix + ".png");
+   return QIcon(QString::fromAscii(":/icons/") + QString::fromAscii(name) + suffix + QString::fromAscii(".png"));
 }
 
 }
@@ -42,23 +42,23 @@ SecondaryWindow::SecondaryWindow(QUrl baseUrl, QWidget* pParent) :
    setIconSize(QSize(26, 20));
 #endif
 
-   back_ = pToolbar_->addAction(icon("back"), "Back");
-   back_->setToolTip("Back");
+   back_ = pToolbar_->addAction(icon("back"), QString::fromUtf8("Back"));
+   back_->setToolTip(QString::fromUtf8("Back"));
    connect(back_, SIGNAL(triggered()),
            webView(), SLOT(back()));
 
-   forward_ = pToolbar_->addAction(icon("forward"), "Forward");
-   forward_->setToolTip("Forward");
+   forward_ = pToolbar_->addAction(icon("forward"), QString::fromUtf8("Forward"));
+   forward_->setToolTip(QString::fromUtf8("Forward"));
    connect(forward_, SIGNAL(triggered()),
            webView(), SLOT(forward()));
 
-   reload_ = pToolbar_->addAction(icon("reload"), "Reload");
-   reload_->setToolTip("Reload");
+   reload_ = pToolbar_->addAction(icon("reload"), QString::fromUtf8("Reload"));
+   reload_->setToolTip(QString::fromUtf8("Reload"));
    connect(reload_, SIGNAL(triggered()),
            webView(), SLOT(reload()));
 
-   print_ = pToolbar_->addAction(icon("print"), "Print");
-   print_->setToolTip("Print");
+   print_ = pToolbar_->addAction(icon("print"), QString::fromUtf8("Print"));
+   print_->setToolTip(QString::fromUtf8("Print"));
    connect(print_, SIGNAL(triggered()),
            this, SLOT(print()));
 

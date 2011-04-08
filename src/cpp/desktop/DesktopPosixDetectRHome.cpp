@@ -38,8 +38,8 @@ void showRNotFoundError(const std::string& msg)
 {
    showMessageBox(QMessageBox::Critical,
                   NULL,
-                  "R Not Found",
-                  QString::fromStdString(msg));
+                  QString::fromUtf8("R Not Found"),
+                  QString::fromUtf8(msg.c_str()));
 }
 
 } // anonymous namespace

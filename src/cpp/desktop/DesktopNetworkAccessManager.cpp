@@ -25,7 +25,7 @@ QNetworkReply* NetworkAccessManager::createRequest(
       QIODevice* outgoingData)
 {
    QNetworkRequest req2 = req;
-   req2.setRawHeader(QString("X-Shared-Secret").toAscii(),
+   req2.setRawHeader("X-Shared-Secret",
                      secret_.toAscii());
    return this->QNetworkAccessManager::createRequest(op, req2, outgoingData);
 }

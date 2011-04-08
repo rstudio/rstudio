@@ -38,25 +38,25 @@ Options& options()
 
 void Options::restoreMainWindowBounds(QMainWindow* win)
 {
-   settings_.beginGroup("mainwindow");
+   settings_.beginGroup(QString::fromAscii("mainwindow"));
 
    // If we restore to a smaller monitor than when we saved, let the system
    // decide where to position the window.
-   QSize desktopSize = settings_.value("desktopSize", QSize(0, 0)).toSize();
+   QSize desktopSize = settings_.value(QString::fromAscii("desktopSize"), QSize(0, 0)).toSize();
    QSize curDesktopSize = QApplication::desktop()->size();
    if (desktopSize.width() != 0 && desktopSize.height() != 0
        && desktopSize.width() <= curDesktopSize.width()
        && desktopSize.height() <= curDesktopSize.height())
    {
-      win->move(settings_.value("pos", QPoint(0, 0)).toPoint());
+      win->move(settings_.value(QString::fromAscii("pos"), QPoint(0, 0)).toPoint());
    }
 
-   QSize size = settings_.value("size", QSize(1024, 768)).toSize()
+   QSize size = settings_.value(QString::fromAscii("size"), QSize(1024, 768)).toSize()
           .expandedTo(QSize(200, 200))
           .boundedTo(QApplication::desktop()->availableGeometry(win->pos()).size());
    win->resize(size);
 
-   if (settings_.value("fullScreen", false).toBool())
+   if (settings_.value(QString::fromAscii("fullScreen"), false).toBool())
       win->setWindowState(Qt::WindowMaximized);
 
    settings_.endGroup();
@@ -64,12 +64,12 @@ void Options::restoreMainWindowBounds(QMainWindow* win)
 
 void Options::saveMainWindowBounds(QMainWindow* win)
 {
-   settings_.setValue("mainwindow/fullScreen", win->isFullScreen());
+   settings_.setValue(QString::fromAscii("mainwindow/fullScreen"), win->isFullScreen());
    if (!win->isFullScreen())
    {
-     settings_.setValue("mainwindow/size", win->size());
-     settings_.setValue("mainwindow/pos", win->pos());
-     settings_.setValue("mainwindow/desktopSize", QApplication::desktop()->size());
+     settings_.setValue(QString::fromAscii("mainwindow/size"), win->size());
+     settings_.setValue(QString::fromAscii("mainwindow/pos"), win->pos());
+     settings_.setValue(QString::fromAscii("mainwindow/desktopSize"), QApplication::desktop()->size());
    }
 }
 
@@ -103,24 +103,26 @@ QString Options::proportionalFont() const
    QStringList fontList;
 #if defined(_WIN32)
    fontList <<
-           "Segoe UI" << "Verdana" <<  // Windows
-           "Lucida Sans" << "DejaVu Sans" <<  // Linux
-           "Lucida Grande" <<          // Mac
-           "Helvetica";
+           QString::fromAscii("Segoe UI") << QString::fromAscii("Verdana") <<  // Windows
+           QString::fromAscii("Lucida Sans") << QString::fromAscii("DejaVu Sans") <<  // Linux
+           QString::fromAscii("Lucida Grande") <<          // Mac
+           QString::fromAscii("Helvetica");
 #elif defined(__APPLE__)
    fontList <<
-           "Lucida Grande" <<          // Mac
-           "Lucida Sans" << "DejaVu Sans" <<  // Linux
-           "Segoe UI" << "Verdana" <<  // Windows
-           "Helvetica";
+           QString::fromAscii("Lucida Grande") <<          // Mac
+           QString::fromAscii("Lucida Sans") << QString::fromAscii("DejaVu Sans") <<  // Linux
+           QString::fromAscii("Segoe UI") << QString::fromAscii("Verdana") <<  // Windows
+           QString::fromAscii("Helvetica");
 #else
    fontList <<
-           "Lucida Sans" << "DejaVu Sans" <<  // Linux
-           "Lucida Grande" <<          // Mac
-           "Segoe UI" << "Verdana" <<  // Windows
-           "Helvetica";
+           QString::fromAscii("Lucida Sans") << QString::fromAscii("DejaVu Sans") <<  // Linux
+           QString::fromAscii("Lucida Grande") <<          // Mac
+           QString::fromAscii("Segoe UI") << QString::fromAscii("Verdana") <<  // Windows
+           QString::fromAscii("Helvetica");
 #endif
-   return "\"" + findFirstMatchingFont(fontList, "sans-serif") + "\"";
+   return QString::fromAscii("\"") +
+         findFirstMatchingFont(fontList, QString::fromAscii("sans-serif")) +
+         QString::fromAscii("\"");
 }
 
 QString Options::fixedWidthFont() const
@@ -132,11 +134,13 @@ QString Options::fixedWidthFont() const
    // in the History pane).
    QStringList fontList;
    fontList <<
-           "Monospace" << "Droid Sans Mono" << "DejaVu Sans Mono" << // Linux
-           "Monaco" <<                      // Mac
-           "Lucida Console" << "Consolas"   // Windows;
+           QString::fromAscii("Monospace") << QString::fromAscii("Droid Sans Mono") << QString::fromAscii("DejaVu Sans Mono") << // Linux
+           QString::fromAscii("Monaco") <<                      // Mac
+           QString::fromAscii("Lucida Console") << QString::fromAscii("Consolas")   // Windows;
            ;
-   return "\"" + findFirstMatchingFont(fontList, "monospace") + "\"";
+   return QString::fromAscii("\"") +
+         findFirstMatchingFont(fontList, QString::fromAscii("monospace")) +
+         QString::fromAscii("\"");
 }
 
 
@@ -148,16 +152,16 @@ QString Options::rBinDir() const
    // accept either. We'll distinguish between this case (where preferR64
    // should be ignored) and the other case by using null for this case and
    // empty string for the other.
-   if (!settings_.contains("RBinDir"))
+   if (!settings_.contains(QString::fromAscii("RBinDir")))
       return QString::null;
 
-   QString value = settings_.value("RBinDir").toString();
-   return value.isNull() ? QString("") : value;
+   QString value = settings_.value(QString::fromAscii("RBinDir")).toString();
+   return value.isNull() ? QString() : value;
 }
 
 void Options::setRBinDir(QString path)
 {
-   settings_.setValue("RBinDir", path);
+   settings_.setValue(QString::fromAscii("RBinDir"), path);
 }
 
 bool Options::preferR64() const
@@ -165,14 +169,14 @@ bool Options::preferR64() const
    if (!core::system::isWin64())
       return false;
 
-   if (!settings_.contains("PreferR64"))
+   if (!settings_.contains(QString::fromAscii("PreferR64")))
       return true;
-   return settings_.value("PreferR64").toBool();
+   return settings_.value(QString::fromAscii("PreferR64")).toBool();
 }
 
 void Options::setPreferR64(bool preferR64)
 {
-   settings_.setValue("PreferR64", preferR64);
+   settings_.setValue(QString::fromAscii("PreferR64"), preferR64);
 }
 #endif
 
@@ -182,7 +186,7 @@ QString Options::rHome() const
    return binDirToHomeDir(rBinDir());
 #else
    std::string rHomeDir = core::system::getenv("R_HOME"); 
-   return QString::fromStdString(rHomeDir);
+   return QString::fromUtf8(rHomeDir.c_str());
 #endif
 }
 
@@ -191,12 +195,12 @@ QString Options::rDocPath() const
 #ifdef _WIN32
    QString home = rHome();
    if (!home.isEmpty())
-      return QDir(home).absoluteFilePath("doc");
+      return QDir(home).absoluteFilePath(QString::fromAscii("doc"));
    else
       return QString();
 #else
    std::string rDocDir = core::system::getenv("R_DOC_DIR");
-   return QString::fromStdString(rDocDir);
+   return QString::fromUtf8(rDocDir.c_str());
 #endif
 }
 
@@ -222,33 +226,33 @@ FilePath Options::supportingFilePath() const
 
 QString Options::defaultCRANmirrorName() const
 {
-   return settings_.value("CRANMirrorName").toString();
+   return settings_.value(QString::fromAscii("CRANMirrorName")).toString();
 }
 
 QString Options::defaultCRANmirrorURL() const
 {
-   return settings_.value("CRANMirrorURL").toString();
+   return settings_.value(QString::fromAscii("CRANMirrorURL")).toString();
 }
 
 void Options::setDefaultCRANmirror(QString name, QString url)
 {
-   settings_.setValue("CRANMirrorName", name);
-   settings_.setValue("CRANMirrorURL", url);
+   settings_.setValue(QString::fromAscii("CRANMirrorName"), name);
+   settings_.setValue(QString::fromAscii("CRANMirrorURL"), url);
 }
 
 QStringList Options::ignoredUpdateVersions() const
 {
-   return settings_.value("ignoredUpdateVersions", QStringList()).toStringList();
+   return settings_.value(QString::fromAscii("ignoredUpdateVersions"), QStringList()).toStringList();
 }
 
 void Options::setIgnoredUpdateVersions(const QStringList& ignoredVersions)
 {
-   settings_.setValue("ignoredUpdateVersions", ignoredVersions);
+   settings_.setValue(QString::fromAscii("ignoredUpdateVersions"), ignoredVersions);
 }
 
 core::FilePath Options::scratchTempDir(core::FilePath defaultPath)
 {
-   core::FilePath dir(scratchPath.toStdString());
+   core::FilePath dir(scratchPath.toUtf8().constData());
 
    if (!dir.empty() && dir.exists())
    {
@@ -269,7 +273,7 @@ void Options::cleanUpScratchTempDir()
 
 bool Options::webkitDevTools()
 {
-   return settings_.value("webkitDevTools", false).toBool();
+   return settings_.value(QString::fromAscii("webkitDevTools"), false).toBool();
 }
 
 } // namespace desktop

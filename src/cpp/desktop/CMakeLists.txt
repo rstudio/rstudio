@@ -13,6 +13,8 @@
 
 project(DESKTOP)
 
+add_definitions(-DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII)
+
 # include Qt4
 find_package(Qt4 4.7.0 COMPONENTS QtCore QtGui QtNetwork QtWebKit REQUIRED)
 include(${QT_USE_FILE})

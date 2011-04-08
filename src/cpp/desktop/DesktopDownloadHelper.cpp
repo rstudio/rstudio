@@ -34,8 +34,8 @@ void DownloadHelper::onDownloadFinished()
    if (pReply->error() != QNetworkReply::NoError)
    {
       showWarning(NULL,
-                  "Download Failed",
-                  "An error occurred during download:\n\n"
+                  QString::fromUtf8("Download Failed"),
+                  QString::fromUtf8("An error occurred during download:\n\n")
                   + pReply->errorString());
       return;
    }

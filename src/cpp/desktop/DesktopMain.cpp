@@ -58,7 +58,7 @@ void initializeSharedSecret()
    sharedSecret = QString::number(rand())
                   + QString::number(rand())
                   + QString::number(rand());
-   std::string value = sharedSecret.toStdString();
+   std::string value = sharedSecret.toUtf8().constData();
    core::system::setenv("RS_SHARED_SECRET", value);
 }
 
@@ -70,9 +70,9 @@ void initializeWorkingDirectory(int argc,
    std::string workingDir;
 
    // if there is a filename passed to us then use it's path
-   if (filename != "")
+   if (filename != QString())
    {
-      FilePath filePath(filename.toStdString());
+      FilePath filePath(filename.toUtf8().constData());
       if (filePath.exists())
       {
          if (filePath.isDirectory())
@@ -133,7 +133,7 @@ void initializeStartupEnvironment(QString* pFilename)
    // environment file. we handle this by setting an environment
    // var and then resetting the pFilename so it isn't processed
    // using the standard open file logic
-   FilePath filePath(pFilename->toStdString());
+   FilePath filePath(pFilename->toUtf8().constData());
    if (filePath.exists())
    {
       std::string ext = filePath.extensionLowerCase();
@@ -149,7 +149,7 @@ void launchProcess(std::string absPath, QStringList argList, QProcess** ppProc)
 {
    QProcess* pProcess = new QProcess();
    pProcess->setProcessChannelMode(QProcess::SeparateChannels);
-   pProcess->start(absPath.c_str(), argList);
+   pProcess->start(QString::fromUtf8(absPath.c_str()), argList);
    *ppProc = pProcess;
 }
 
@@ -187,7 +187,7 @@ int main(int argc, char* argv[])
 
       boost::scoped_ptr<QApplication> pApp;
       boost::scoped_ptr<ApplicationLaunch> pAppLaunch;
-      ApplicationLaunch::init("RStudio",
+      ApplicationLaunch::init(QString::fromAscii("RStudio"),
                               argc,
                               argv,
                               &pApp,
@@ -270,29 +270,29 @@ int main(int argc, char* argv[])
       }
       core::system::fixupExecutablePath(&sessionPath);
 
-      QString host("127.0.0.1");
+      QString host = QString::fromAscii("127.0.0.1");
       QString port = options.portNumber();
-      QUrl url("http://" + host + ":" + port + "/");
+      QUrl url(QString::fromAscii("http://") + host + QString::fromAscii(":") + port + QString::fromAscii("/"));
 
       QStringList argList;
       if (!confPath.empty())
       {
-          argList << "--config-file" << confPath.absolutePath().c_str();
+         argList << QString::fromAscii("--config-file") << QString::fromUtf8(confPath.absolutePath().c_str());
        }
       else
       {
-          // explicitly pass "none" so that rsession doesn't read an
-          // /etc/rstudio/rsession.conf file which may be sitting around
-          // from a previous configuratin or install
-          argList << "--config-file" << "none";
-       }
+         // explicitly pass "none" so that rsession doesn't read an
+         // /etc/rstudio/rsession.conf file which may be sitting around
+         // from a previous configuratin or install
+         argList << QString::fromAscii("--config-file") << QString::fromAscii("none");
+      }
 
-      argList << "--program-mode" << "desktop";
+      argList << QString::fromAscii("--program-mode") << QString::fromAscii("desktop");
 
-      argList << "--www-port" << port;
+      argList << QString::fromAscii("--www-port") << port;
 
       if (!options.defaultCRANmirrorURL().isEmpty())
-         argList << "--r-cran-repos" << options.defaultCRANmirrorURL();
+         argList << QString::fromAscii("--r-cran-repos") << options.defaultCRANmirrorURL();
 
       error = parent_process_monitor::wrapFork(
             boost::bind(launchProcess,
@@ -348,7 +348,7 @@ int main(int argc, char* argv[])
       }
       else
       {
-         QString errorMessage = "The R session failed to start.";
+         QString errorMessage = QString::fromUtf8("The R session failed to start.");
 
          // These calls to processEvents() seem to be necessary to get
          // readAllStandardError to work.
@@ -358,18 +358,18 @@ int main(int argc, char* argv[])
 
          if (pRSessionProcess)
          {
-            QString errmsgs = (pRSessionProcess->readAllStandardError());
+            QString errmsgs = QString::fromLatin1(pRSessionProcess->readAllStandardError());
             if (errmsgs.size())
             {
-               errorMessage = errorMessage.append("\n\n").append(errmsgs);
+               errorMessage = errorMessage.append(QString::fromAscii("\n\n")).append(errmsgs);
             }
          }
 
          result = boost::system::errc::timed_out;
          QMessageBox errorMsg(safeMessageBoxIcon(QMessageBox::Critical),
-                              "RStudio",
+                              QString::fromUtf8("RStudio"),
                               errorMessage);
-         errorMsg.addButton(new QPushButton("OK"), QMessageBox::AcceptRole);
+         errorMsg.addButton(new QPushButton(QString::fromUtf8("OK")), QMessageBox::AcceptRole);
          errorMsg.show();
          pApp->exec();
       }

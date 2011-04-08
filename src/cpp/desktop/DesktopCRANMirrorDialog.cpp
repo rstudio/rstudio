@@ -36,10 +36,10 @@ CRANMirrorDialog::CRANMirrorDialog(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    pOK_ = new QPushButton("OK");
+    pOK_ = new QPushButton(QString::fromAscii("OK"));
     ui->buttonBox->addButton(pOK_, QDialogButtonBox::AcceptRole);
 
-    QPushButton* pCancel = new QPushButton("Cancel");
+    QPushButton* pCancel = new QPushButton(QString::fromAscii("Cancel"));
     ui->buttonBox->addButton(pCancel, QDialogButtonBox::RejectRole);
 
     connect(ui->listWidget, SIGNAL(itemSelectionChanged()),
@@ -47,7 +47,7 @@ CRANMirrorDialog::CRANMirrorDialog(QWidget *parent) :
     manageButtons();
 
     // create URL downloader (it deletes itself when completed)
-    QUrl url("http://cran.r-project.org/CRAN_mirrors.csv");
+    QUrl url(QString::fromAscii("http://cran.r-project.org/CRAN_mirrors.csv"));
     URLDownloader* pURLDownloader = new URLDownloader(url, 5000, false, this);
     connect(pURLDownloader, SIGNAL(downloadComplete(const QByteArray&)),
             this, SLOT(loadMirrorCsv(const QByteArray&)));
@@ -103,20 +103,20 @@ void CRANMirrorDialog::showNetworkError(const QString& errorString)
 {
    QMessageBox errorDialog(
          safeMessageBoxIcon(QMessageBox::Warning),
-         "Error Download Mirror List",
-         "An error occurred while retrieving mirrors from CRAN:<br/><br/><i>"
+         QString::fromUtf8("Error Download Mirror List"),
+         QString::fromUtf8("An error occurred while retrieving mirrors from CRAN:<br/><br/><i>")
          + Qt::escape(errorString)
-         + "</i><br/><br/>Using local mirror list instead.",
+         + QString::fromUtf8("</i><br/><br/>Using local mirror list instead."),
          QMessageBox::NoButton,
          this);
    errorDialog.setTextFormat(Qt::RichText);
-   errorDialog.addButton(new QPushButton("OK"), QMessageBox::AcceptRole);
+   errorDialog.addButton(new QPushButton(QString::fromAscii("OK")), QMessageBox::AcceptRole);
    errorDialog.exec();
 
    QDir rDocPath(desktop::options().rDocPath());
    if (rDocPath.exists())
    {
-      QString csvPath = rDocPath.absoluteFilePath("CRAN_mirrors.csv");
+      QString csvPath = rDocPath.absoluteFilePath(QString::fromAscii("CRAN_mirrors.csv"));
       QFile mirrors(csvPath);
       if (mirrors.exists())
       {
@@ -132,7 +132,7 @@ void CRANMirrorDialog::showNetworkError(const QString& errorString)
 void CRANMirrorDialog::requestTimeout()
 {
    if (ui->listWidget->count() == 0)
-      showNetworkError("The CRAN server took too long to respond.");
+      showNetworkError(QString::fromUtf8("The CRAN server took too long to respond."));
 }
 
 void CRANMirrorDialog::loadMirrorCsv(const QByteArray& data)
@@ -175,10 +175,10 @@ void CRANMirrorDialog::loadMirrorCsv(const QByteArray& data)
          QString countryCode = QString::fromAscii(
                lookup(mirror, "CountryCode").c_str());
 
-         QListWidgetItem* item = new QListWidgetItem(name + " - " + host);
+         QListWidgetItem* item = new QListWidgetItem(name + QString::fromUtf8(" - ") + host);
          item->setData(ROLE_URL, url);
 
-         if (countryCode == "us")
+         if (countryCode == QString::fromAscii("us"))
             ui->listWidget->insertItem(usRows++, item);
          else
             ui->listWidget->addItem(item);
@@ -188,5 +188,5 @@ void CRANMirrorDialog::loadMirrorCsv(const QByteArray& data)
    if (ui->listWidget->count() > 0)
       ui->listWidget->item(0)->setSelected(true);
 
-   ui->lblProgress->setText("");
+   ui->lblProgress->setText(QString());
 }

@@ -43,9 +43,9 @@ bool showYesNoDialog(QMessageBox::Icon icon,
    messageBox.setWindowModality(Qt::WindowModal);
 
    // initialize buttons
-   QPushButton* pYes = new QPushButton("Yes");
+   QPushButton* pYes = new QPushButton(QString::fromUtf8("Yes"));
    messageBox.addButton(pYes, QMessageBox::YesRole);
-   messageBox.addButton(new QPushButton("No"), QMessageBox::NoRole);
+   messageBox.addButton(new QPushButton(QString::fromUtf8("No")), QMessageBox::NoRole);
    messageBox.setDefaultButton(pYes);
 
    // show the dialog modally
@@ -67,7 +67,7 @@ void showMessageBox(QMessageBox::Icon icon,
                           QMessageBox::NoButton,
                           parent);
    messageBox.setWindowModality(Qt::WindowModal);
-   messageBox.addButton(new QPushButton("OK"), QMessageBox::AcceptRole);
+   messageBox.addButton(new QPushButton(QString::fromUtf8("OK")), QMessageBox::AcceptRole);
    messageBox.exec();
 }
 

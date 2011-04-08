@@ -36,7 +36,7 @@ void WebPage::javaScriptConsoleMessage(const QString& message, int /*lineNumber*
 
 QString WebPage::userAgentForUrl(const QUrl &url) const
 {
-   return this->QWebPage::userAgentForUrl(url) + " Qt/" + qVersion();
+   return this->QWebPage::userAgentForUrl(url) + QString::fromAscii(" Qt/") + QString::fromAscii(qVersion());
 }
 
 bool WebPage::acceptNavigationRequest(QWebFrame*,
@@ -45,12 +45,12 @@ bool WebPage::acceptNavigationRequest(QWebFrame*,
 {
    QUrl url = request.url();
 
-   if (url.toString() == "about:blank")
+   if (url.toString() == QString::fromAscii("about:blank"))
       return true;
 
-   if (url.scheme() != "http"
-       && url.scheme() != "https"
-       && url.scheme() != "mailto")
+   if (url.scheme() != QString::fromAscii("http")
+       && url.scheme() != QString::fromAscii("https")
+       && url.scheme() != QString::fromAscii("mailto"))
    {
       return false;
    }

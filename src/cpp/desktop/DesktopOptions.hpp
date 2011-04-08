@@ -72,7 +72,9 @@ public:
    bool webkitDevTools();
 
 private:
-   Options() : settings_(FORMAT, QSettings::UserScope, "RStudio", "desktop")
+   Options() : settings_(FORMAT, QSettings::UserScope,
+                         QString::fromAscii("RStudio"),
+                         QString::fromAscii("desktop"))
    {
    }
    friend Options& options();

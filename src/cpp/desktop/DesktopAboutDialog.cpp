@@ -31,11 +31,11 @@ AboutDialog::AboutDialog(QWidget *parent) :
 {
    ui->setupUi(this);
 
-   ui->buttonBox->addButton(new QPushButton("OK"),
+   ui->buttonBox->addButton(new QPushButton(QString::fromAscii("OK")),
                             QDialogButtonBox::AcceptRole);
 
-   ui->lblIcon->setPixmap(QPixmap(":/icons/resources/freedesktop/icons/64x64/rstudio.png"));
-   ui->lblVersion->setText("Version " RSTUDIO_VERSION);
+   ui->lblIcon->setPixmap(QPixmap(QString::fromAscii(":/icons/resources/freedesktop/icons/64x64/rstudio.png")));
+   ui->lblVersion->setText(QString::fromAscii("Version " RSTUDIO_VERSION));
 
    setWindowModality(Qt::ApplicationModal);
 
@@ -52,7 +52,7 @@ AboutDialog::AboutDialog(QWidget *parent) :
 #else
       ui->textBrowser->setFontPointSize(9);
 #endif
-      ui->textBrowser->setText(QString::fromStdString(notice));
+      ui->textBrowser->setText(QString::fromUtf8(notice.c_str()));
    }
 }
 

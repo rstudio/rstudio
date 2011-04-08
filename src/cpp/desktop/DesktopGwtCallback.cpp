@@ -49,17 +49,17 @@ void GwtCallback::browseUrl(QString url)
    QUrl qurl(url);
 
 #ifdef Q_WS_MAC
-   if (qurl.scheme() == "file")
+   if (qurl.scheme() == QString::fromAscii("file"))
    {
       QProcess open;
-      open.start("open", QStringList() << url);
+      open.start(QString::fromAscii("open"), QStringList() << url);
       open.waitForFinished(5000);
       if (open.exitCode() != 0)
       {
          // Probably means that the file doesn't have a registered
          // application or something.
          QProcess reveal;
-         reveal.startDetached("open", QStringList() << "-R" << url);
+         reveal.startDetached(QString::fromAscii("open"), QStringList() << QString::fromAscii("-R") << url);
       }
       return;
    }
@@ -76,13 +76,13 @@ void GwtCallback::browseUrl(QString url)
 
       // compute local url
       QUrl localUrl;
-      localUrl.setScheme("http");
-      localUrl.setHost("localhost");
+      localUrl.setScheme(QString::fromAscii("http"));
+      localUrl.setHost(QString::fromAscii("localhost"));
       localUrl.setPort(options().portNumber().toInt());
       localUrl.setEncodedPath(url.toAscii());
 
       // show it in a browser or a secondary window as appropriate
-      if (url.startsWith("custom/"))
+      if (url.startsWith(QString::fromAscii("custom/")))
       {
          QDesktopServices::openUrl(localUrl);
       }
@@ -110,15 +110,15 @@ FilePath userHomePath()
 QString createAliasedPath(const QString& path)
 {
    std::string aliased = FilePath::createAliasedPath(
-         FilePath(path.toStdString()), userHomePath());
-   return QString::fromStdString(aliased);
+         FilePath(path.toUtf8().constData()), userHomePath());
+   return QString::fromUtf8(aliased.c_str());
 }
 
 QString resolveAliasedPath(const QString& path)
 {
-   FilePath resolved(FilePath::resolveAliasedPath(path.toStdString(),
+   FilePath resolved(FilePath::resolveAliasedPath(path.toUtf8().constData(),
                                                   userHomePath()));
-   return QString::fromStdString(resolved.absolutePath());
+   return QString::fromUtf8(resolved.absolutePath().c_str());
 }
 
 } // anonymous namespace
@@ -324,7 +324,7 @@ void GwtCallback::openMinimalWindow(QString name,
 {
    static WindowTracker windowTracker;
 
-   bool named = !name.isEmpty() && name != "_blank";
+   bool named = !name.isEmpty() && name != QString::fromAscii("_blank");
 
    BrowserWindow* browser = NULL;
    if (named)
@@ -355,17 +355,17 @@ void GwtCallback::copyImageToClipboard(int left, int top, int width, int height)
 namespace {
    QMessageBox::ButtonRole captionToRole(QString caption)
    {
-      if (caption == "OK")
+      if (caption == QString::fromAscii("OK"))
          return QMessageBox::AcceptRole;
-      else if (caption == "Cancel")
+      else if (caption == QString::fromAscii("Cancel"))
          return QMessageBox::RejectRole;
-      else if (caption == "Yes")
+      else if (caption == QString::fromAscii("Yes"))
          return QMessageBox::YesRole;
-      else if (caption == "No")
+      else if (caption == QString::fromAscii("No"))
          return QMessageBox::NoRole;
-      else if (caption == "Save")
+      else if (caption == QString::fromAscii("Save"))
          return QMessageBox::AcceptRole;
-      else if (caption == "Don't Save")
+      else if (caption == QString::fromAscii("Don't Save"))
          return QMessageBox::DestructiveRole;
       else
          return QMessageBox::ActionRole;
@@ -388,7 +388,7 @@ int GwtCallback::showMessageBox(int type,
    msgBox.setWindowModality(Qt::WindowModal);
    msgBox.setTextFormat(Qt::PlainText);
 
-   QStringList buttonList = buttons.split(QChar('|'));
+   QStringList buttonList = buttons.split(QChar::fromAscii('|'));
 
    for (int i = 0; i != buttonList.size(); i++)
    {

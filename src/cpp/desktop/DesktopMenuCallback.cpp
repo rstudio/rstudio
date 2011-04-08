@@ -35,7 +35,7 @@ void MenuCallback::beginMainMenu()
 void MenuCallback::beginMenu(QString label)
 {
 #ifdef Q_OS_MAC
-   if (label == "&Help")
+   if (label == QString::fromUtf8("&Help"))
    {
       pMainMenu_->addMenu(new WindowMenu(pMainMenu_));
    }
@@ -60,7 +60,7 @@ void MenuCallback::addCommand(QString commandId,
                               QString tooltip,
                               QString shortcut)
 {
-   shortcut = shortcut.replace("Enter", "\n");
+   shortcut = shortcut.replace(QString::fromUtf8("Enter"), QString::fromAscii("\n"));
 
    QKeySequence keySequence(shortcut);
 #ifndef Q_WS_MAC
@@ -122,25 +122,25 @@ void MenuCallback::aboutToShowMenu()
    }
 }
 
-WindowMenu::WindowMenu(QWidget *parent) : QMenu("&Window", parent)
+WindowMenu::WindowMenu(QWidget *parent) : QMenu(QString::fromUtf8("&Window"), parent)
 {
-   pMinimize_ = addAction("Minimize");
-   pMinimize_->setShortcut(QKeySequence("Meta+M"));
+   pMinimize_ = addAction(QString::fromUtf8("Minimize"));
+   pMinimize_->setShortcut(QKeySequence(QString::fromAscii("Meta+M")));
    connect(pMinimize_, SIGNAL(triggered()),
            this, SLOT(onMinimize()));
 
-   pZoom_ = addAction("Zoom");
+   pZoom_ = addAction(QString::fromUtf8("Zoom"));
    connect(pZoom_, SIGNAL(triggered()),
            this, SLOT(onZoom()));
 
    addSeparator();
 
-   pWindowPlaceholder_ = addAction("__PLACEHOLDER__");
+   pWindowPlaceholder_ = addAction(QString::fromAscii("__PLACEHOLDER__"));
    pWindowPlaceholder_->setVisible(false);
 
    addSeparator();
 
-   pBringAllToFront_ = addAction("Bring All to Front");
+   pBringAllToFront_ = addAction(QString::fromUtf8("Bring All to Front"));
    connect(pBringAllToFront_, SIGNAL(triggered()),
            this, SLOT(onBringAllToFront()));
 

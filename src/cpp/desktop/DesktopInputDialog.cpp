@@ -24,10 +24,10 @@ InputDialog::InputDialog(QWidget *parent) :
    ui->setupUi(this);
    setWindowFlags(Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint);
 
-   pOK_ = new QPushButton("OK");
+   pOK_ = new QPushButton(QString::fromAscii("OK"));
    ui->buttonBox->addButton(pOK_, QDialogButtonBox::AcceptRole);
 
-   QPushButton* pCancel = new QPushButton("Cancel");
+   QPushButton* pCancel = new QPushButton(QString::fromAscii("Cancel"));
    ui->buttonBox->addButton(pCancel, QDialogButtonBox::RejectRole);
 }
 
