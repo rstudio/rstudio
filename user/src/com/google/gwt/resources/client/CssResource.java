@@ -148,7 +148,7 @@ import java.lang.annotation.Target;
  */
 @DefaultExtensions(value = {".css"})
 @ResourceGeneratorType(CssResourceGenerator.class)
-public interface CssResource extends ResourcePrototype {
+public interface CssResource extends CssResourceBase {
   /**
    * The original CSS class name specified in the resource. This allows CSS
    * classes that do not correspond to Java identifiers to be mapped onto
