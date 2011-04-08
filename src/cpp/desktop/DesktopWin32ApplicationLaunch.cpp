@@ -53,7 +53,7 @@ ApplicationLaunch::ApplicationLaunch() :
     pMainWindow_(NULL)
 {
    setAttribute(Qt::WA_NativeWindow);
-   setWindowTitle(WINDOW_TITLE);
+   setWindowTitle(QString::fromAscii(WINDOW_TITLE));
    ::SetParent(winId(), HWND_MESSAGE);
 }
 
@@ -83,14 +83,18 @@ bool acquireLock()
 {
    // The file is implicitly released/deleted when the process exits
 
-   QString lockFilePath = QDir::temp().absoluteFilePath("rstudio.lock");
-   HANDLE hFile = ::CreateFile(lockFilePath.toLocal8Bit().data(),
-                               GENERIC_WRITE,
-                               0, // exclusive access
-                               NULL,
-                               OPEN_ALWAYS,
-                               FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE,
-                               NULL);
+   QString lockFilePath = QDir::temp().absoluteFilePath(QString::fromAscii("rstudio.lock"));
+   wchar_t path[MAX_PATH + 1];
+   if (lockFilePath.size() + 1 < sizeof(path))
+      return false;
+   lockFilePath.toWCharArray(path);
+   HANDLE hFile = ::CreateFileW(path,
+                                GENERIC_WRITE,
+                                0, // exclusive access
+                                NULL,
+                                OPEN_ALWAYS,
+                                FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE,
+                                NULL);
 
    if (hFile == INVALID_HANDLE_VALUE)
    {

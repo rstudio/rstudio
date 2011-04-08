@@ -128,11 +128,14 @@ Architecture getArch(QString path)
 // to the given version list. The versions may not be valid.
 void versionsFromRHome(QDir rHome, QList<RVersion>* pResults)
 {
-   QStringList dirs = QStringList() << "bin" << "bin/i386" << "bin/x64";
+   QStringList dirs = QStringList() <<
+                      QString::fromUtf8("bin") <<
+                      QString::fromUtf8("bin/i386") <<
+                      QString::fromUtf8("bin/x64");
    for (int i = 0; i < dirs.size(); i++)
    {
       QDir tmp = rHome;
-      if (tmp.cd(dirs.at(i)) && tmp.exists("R.dll"))
+      if (tmp.cd(dirs.at(i)) && tmp.exists(QString::fromUtf8("R.dll")))
          *pResults << RVersion(tmp.absolutePath());
    }
 }
@@ -149,12 +152,12 @@ QString binDirToHomeDir(QString binDir)
       return QString();
 
    // For R-2.12 and later (bin/i386 and bin/x64)
-   if (dir.dirName() != "bin")
-      dir.setPath(QDir::cleanPath(dir.filePath("..")));
+   if (dir.dirName() != QString::fromUtf8("bin"))
+      dir.setPath(QDir::cleanPath(dir.filePath(QString::fromAscii(".."))));
 
    // The parent of the bin dir is the home dir
-   if (dir.dirName() == "bin")
-      return QDir::cleanPath(dir.filePath(".."));
+   if (dir.dirName() == QString::fromUtf8("bin"))
+      return QDir::cleanPath(dir.filePath(QString::fromAscii("..")));
 
    return QString();
 }
@@ -162,10 +165,10 @@ QString binDirToHomeDir(QString binDir)
 QList<RVersion> detectVersionsInDir(QString dir)
 {
    QDir qdir(dir);
-   if (qdir.exists("R.dll"))
+   if (qdir.exists(QString::fromUtf8("R.dll")))
       return QList<RVersion>() << RVersion(qdir.absolutePath());
 
-   if (qdir.dirName() == "bin")
+   if (qdir.dirName() == QString::fromUtf8("bin"))
       qdir.setPath(binDirToHomeDir(qdir.absolutePath()));
 
    QList<RVersion> results;
@@ -179,7 +182,7 @@ void enumProgramFiles(QString progFiles, QList<RVersion>* pResults)
    QDir programFiles(progFiles);
    if (programFiles.isAbsolute() && programFiles.exists())
    {
-      if (programFiles.cd("R"))
+      if (programFiles.cd(QString::fromUtf8("R")))
       {
          QStringList rDirs = programFiles.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
          for (int i = 0; i < rDirs.size(); i++)
@@ -459,7 +462,7 @@ RVersion::RVersion(QString binDir) :
 {
    if (!binDir.isEmpty())
    {
-      QString dllPath = QDir(binDir_).absoluteFilePath("R.dll");
+      QString dllPath = QDir(binDir_).absoluteFilePath(QString::fromUtf8("R.dll"));
       version_ = getVersion(dllPath);
       arch_ = getArch(dllPath);
    }
@@ -482,9 +485,9 @@ QString RVersion::description() const
    if (core::system::isWin64())
    {
       if (architecture() == ArchX64)
-         result.append("[64-bit] ");
+         result.append(QString::fromUtf8("[64-bit] "));
       else if (architecture() == ArchX86)
-         result.append("[32-bit] ");
+         result.append(QString::fromUtf8("[32-bit] "));
    }
 
    result.append(QDir::toNativeSeparators(homeDir_));
@@ -508,7 +511,7 @@ ValidateResult RVersion::validate() const
       return ValidateNotFound;
 
    QDir binDir(binDir_);
-   if (!binDir.exists("R.dll"))
+   if (!binDir.exists(QString::fromUtf8("R.dll")))
       return ValidateNotFound;
 
    if (!confirmMinVersion(version()))

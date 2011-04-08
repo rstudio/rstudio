@@ -358,7 +358,7 @@ int main(int argc, char* argv[])
 
          if (pRSessionProcess)
          {
-            QString errmsgs = QString::fromLatin1(pRSessionProcess->readAllStandardError());
+            QString errmsgs = QString::fromLocal8Bit(pRSessionProcess->readAllStandardError());
             if (errmsgs.size())
             {
                errorMessage = errorMessage.append(QString::fromAscii("\n\n")).append(errmsgs);

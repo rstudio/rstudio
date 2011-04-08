@@ -151,21 +151,21 @@ QString GwtCallback::getExistingDirectory(const QString& caption,
    if (dir.isNull())
    {
       // Bug
-      char szDir[MAX_PATH];
-      BROWSEINFO bi;
+      wchar_t szDir[MAX_PATH];
+      BROWSEINFOW bi;
       bi.hwndOwner = pOwnerWindow_->winId();
       bi.pidlRoot = NULL;
       bi.pszDisplayName = szDir;
-      bi.lpszTitle = "Select a folder:";
+      bi.lpszTitle = L"Select a folder:";
       bi.ulFlags = BIF_RETURNONLYFSDIRS;
       bi.lpfn = NULL;
       bi.lpfn = 0;
       bi.iImage = -1;
-      LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
-      if (!pidl || !SHGetPathFromIDList(pidl, szDir))
-         result = QString("");
+      LPITEMIDLIST pidl = SHBrowseForFolderW(&bi);
+      if (!pidl || !SHGetPathFromIDListW(pidl, szDir))
+         result = QString();
       else
-         result = QString::fromLocal8Bit(szDir);
+         result = QString::fromWCharArray(szDir);
    }
    else
    {
@@ -282,7 +282,7 @@ QString GwtCallback::getRVersion()
 #ifdef Q_OS_WIN32
    bool defaulted = options().rBinDir().isEmpty();
    QString rDesc = defaulted
-                   ? QString("[Default] ") + autoDetect().description()
+                   ? QString::fromUtf8("[Default] ") + autoDetect().description()
                    : RVersion(options().rBinDir()).description();
    return rDesc;
 #else

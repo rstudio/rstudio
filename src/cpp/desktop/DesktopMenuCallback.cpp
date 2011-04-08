@@ -64,7 +64,7 @@ void MenuCallback::addCommand(QString commandId,
 
    QKeySequence keySequence(shortcut);
 #ifndef Q_WS_MAC
-   if (shortcut.contains("\n"))
+   if (shortcut.contains(QString::fromAscii("\n")))
    {
       int value = (keySequence[0] & Qt::MODIFIER_MASK) + Qt::Key_Enter;
       keySequence = QKeySequence(value);

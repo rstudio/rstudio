@@ -55,17 +55,17 @@ ChooseRHome::ChooseRHome(QList<RVersion> list, QWidget *parent) :
     if (!core::system::isWin64())
        ui->radioDefault64->setVisible(false);
 
-    setWindowIcon(QIcon(":/icons/RStudio.ico"));
+    setWindowIcon(QIcon(QString::fromAscii(":/icons/RStudio.ico")));
 
     setWindowFlags(
           (windowFlags() | Qt::Dialog)
           & ~Qt::WindowContextHelpButtonHint
           );
 
-    pOK_ = new QPushButton("OK");
+    pOK_ = new QPushButton(QString::fromUtf8("OK"));
     ui->buttonBox->addButton(pOK_, QDialogButtonBox::AcceptRole);
 
-    QPushButton* pCancel = new QPushButton("Cancel");
+    QPushButton* pCancel = new QPushButton(QString::fromUtf8("Cancel"));
     ui->buttonBox->addButton(pCancel, QDialogButtonBox::RejectRole);
 
     for (int i = 0; i < list.size(); i++)
@@ -96,12 +96,12 @@ void ChooseRHome::chooseOther()
 {
    if (lastDir_.isEmpty())
    {
-      lastDir_ = QString(core::system::getenv("ProgramFiles").c_str());
+      lastDir_ = QString::fromLocal8Bit(core::system::getenv("ProgramFiles").c_str());
    }
 
    QString dir = QFileDialog::getExistingDirectory(
          this,
-         "Choose R Directory",
+         QString::fromUtf8("Choose R Directory"),
          lastDir_,
          QFileDialog::ShowDirsOnly);
 
@@ -118,9 +118,9 @@ void ChooseRHome::chooseOther()
    {
       showWarning(
             this,
-            "Invalid R Directory",
-            "This directory does not appear to contain a "
-            "valid R installation.\n\nPlease try again.");
+            QString::fromUtf8("Invalid R Directory"),
+            QString::fromUtf8("This directory does not appear to contain a "
+            "valid R installation.\n\nPlease try again."));
       return;
    }
    else if (versions.size() > 1)
@@ -133,8 +133,8 @@ void ChooseRHome::chooseOther()
       inputDialog.setOptions(QInputDialog::UseListViewForComboBoxItems);
       inputDialog.setComboBoxItems(items);
       inputDialog.setComboBoxEditable(false);
-      inputDialog.setWindowTitle("Choose Version");
-      inputDialog.setLabelText("Please choose the version to use:");
+      inputDialog.setWindowTitle(QString::fromUtf8("Choose Version"));
+      inputDialog.setLabelText(QString::fromUtf8("Please choose the version to use:"));
 
       if (inputDialog.exec() != QDialog::Accepted)
          return;
@@ -158,26 +158,26 @@ void ChooseRHome::chooseOther()
    case desktop::ValidateNotFound:
       showWarning(
             this,
-            "Invalid R Directory",
-            "This directory does not appear to contain a "
-            "valid R installation.\n\nPlease try again.");
+            QString::fromUtf8("Invalid R Directory"),
+            QString::fromUtf8("This directory does not appear to contain a "
+                              "valid R installation.\n\nPlease try again."));
       return;
    case desktop::ValidateBadArchitecture:
       showWarning(
             this,
-            "Incompatible R Build",
-            "The version of R you've selected was built "
-            "for a different CPU architecture and cannot "
-            "be used with this version of RStudio.");
+            QString::fromUtf8("Incompatible R Build"),
+            QString::fromUtf8("The version of R you've selected was built "
+                              "for a different CPU architecture and cannot "
+                              "be used with this version of RStudio."));
       return;
    case desktop::ValidateVersionTooOld:
    default:
       showWarning(
             this,
-            "Incompatible R Build",
-            "The version of R you've selected is not "
-            "compatible with RStudio. Please install a "
-            "newer version of R.");
+            QString::fromUtf8("Incompatible R Build"),
+            QString::fromUtf8("The version of R you've selected is not "
+                              "compatible with RStudio. Please install a "
+                              "newer version of R."));
       return;
    }
 
@@ -206,15 +206,15 @@ void ChooseRHome::done(int r)
          {
             if (desktop::allRVersions().length() > 0)
             {
-               QString name = preferR64() ? "R64" : "R";
+               QString name = QString::fromUtf8(preferR64() ? "R64" : "R");
 
                showWarning(
                      this,
-                     QString("No %1 Installation Detected").arg(name),
-                     QString("No compatible %1 version was found. If you "
-                             "have a compatible version of %1 installed, "
-                             "please choose it manually."
-                             ).arg(name)
+                     QString::fromUtf8("No %1 Installation Detected").arg(name),
+                     QString::fromUtf8("No compatible %1 version was found. If you "
+                                       "have a compatible version of %1 installed, "
+                                       "please choose it manually."
+                                       ).arg(name)
                      );
                ui->radioCustom->setChecked(true);
                return;
@@ -224,13 +224,13 @@ void ChooseRHome::done(int r)
                if (showYesNoDialog(
                      QMessageBox::Warning,
                      this,
-                     QString("R Not Installed"),
-                     QString("R does not appear to be installed. Please "
-                             "install R before using RStudio.\n\n"
-                             "You can download R from the official R Project "
-                             "website. Would you like to go there now?")))
+                     QString::fromUtf8("R Not Installed"),
+                     QString::fromUtf8("R does not appear to be installed. Please "
+                                       "install R before using RStudio.\n\n"
+                                       "You can download R from the official R Project "
+                                       "website. Would you like to go there now?")))
                {
-                  QDesktopServices::openUrl(QUrl("http://www.rstudio.org/links/r-project"));
+                  QDesktopServices::openUrl(QUrl(QString::fromAscii("http://www.rstudio.org/links/r-project")));
                }
             }
          }
