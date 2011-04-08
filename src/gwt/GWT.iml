@@ -5,8 +5,9 @@
       <configuration>
         <setting name="compilerMaxHeapSize" value="128" />
         <setting name="gwtScriptOutputStyle" value="PRETTY" />
-        <setting name="gwtSdkUrl" value="file://$MODULE_DIR$/sdk" />
+        <setting name="gwtSdkUrl" value="file://$MODULE_DIR$/lib/gwt/2.3.0-m1" />
         <packaging>
+          <module name="com.google.gwt.widgetideas.SliderBar" path="/com.google.gwt.widgetideas.SliderBar" />
           <module name="org.rstudio.codemirror.CodeMirror" path="/com.rstudio.codemirror.CodeMirror" />
           <module name="org.rstudio.core.Core" path="/com.rstudio.core.Core" />
           <module name="org.rstudio.studio.PlainTextEditor" path="/com.rstudio.studio.PlainTextEditor" />
@@ -32,19 +33,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/gwt/gwt-incubator-july-14-2009.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="gin" level="project" />
-    <orderEntry type="library" name="guice" level="project" />
-    <orderEntry type="library" name="gwt-user" level="project" />
-    <orderEntry type="library" name="gwt-dev" level="project" />
+    <orderEntry type="library" name="gwt" level="project" />
   </component>
 </module>
 
