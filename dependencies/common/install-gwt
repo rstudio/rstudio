@@ -13,6 +13,8 @@
 #
 #
 
+set -e
+
 # install dir
 INSTALL_DIR=`pwd`
 
@@ -36,51 +38,33 @@ GWT_DIR=$INSTALL_DIR/../../src/gwt
 LIB_DIR=$GWT_DIR/lib
 mkdir -p $LIB_DIR
 
-# guice
-GUICE_ZIP=guice.zip
-INSTALLED_VERSION_FILE=$LIB_DIR/guice/installed_version
-INSTALLED_VERSION=`cat $INSTALLED_VERSION_FILE 2>/dev/null`
-if [ "$GUICE_ZIP" != "$INSTALLED_VERSION" ]
-then
-   download $GUICE_ZIP
-   rm -rf $LIB_DIR/guice
-   unzip -qd $LIB_DIR $GUICE_ZIP
-   echo "$GUICE_ZIP" > $INSTALLED_VERSION_FILE
-   rm $GUICE_ZIP
-else
-   echo "$GUICE_ZIP already installed"
-fi
-
 # gin
-GIN_ZIP=gin.zip
-INSTALLED_VERSION_FILE=$LIB_DIR/gin/installed_version
-INSTALLED_VERSION=`cat $INSTALLED_VERSION_FILE 2>/dev/null`
-if [ "$GIN_ZIP" != "$INSTALLED_VERSION" ]
+GIN_VER=1.5
+GIN=gin-$GIN_VER
+GIN_ZIP=$GIN.zip
+if [ -d "$LIB_DIR/gin/$GIN_VER" ]
 then
-   download $GIN_ZIP
-   rm -rf $LIB_DIR/gin
-   unzip -qd $LIB_DIR $GIN_ZIP
-   echo "$GIN_ZIP" > $INSTALLED_VERSION_FILE
-   rm $GIN_ZIP
-else
    echo "$GIN_ZIP already installed"
+else
+   download $GIN_ZIP
+   mkdir -p "$LIB_DIR/gin/$GIN_VER"
+   unzip -qd "$LIB_DIR/gin/$GIN_VER" "$GIN_ZIP"
+   rm $GIN_ZIP
 fi
 
 # gwt sdk
-GWT_SDK=gwt-2.0.4
-GWT_SDK_ZIP=$GWT_SDK.zip
-INSTALLED_VERSION_FILE=$GWT_DIR/sdk/installed_version
-INSTALLED_VERSION=`cat $INSTALLED_VERSION_FILE 2>/dev/null`
-if [ "$GWT_SDK_ZIP" != "$INSTALLED_VERSION" ]
+GWT_SDK_VER=2.3.0-m1
+GWT_SDK=gwt-$GWT_SDK_VER
+GWT_SDK_ZIP=gwt-2.3.0.m1.zip
+if [ -d "$LIB_DIR/gwt/$GWT_SDK_VER" ]
 then
-   download $GWT_SDK_ZIP
-   rm -rf $GWT_DIR/sdk
-   unzip -qd $GWT_DIR $GWT_SDK_ZIP
-   mv $GWT_DIR/$GWT_SDK $GWT_DIR/sdk
-   echo "$GWT_SDK_ZIP" > $INSTALLED_VERSION_FILE
-   rm $GWT_SDK_ZIP
-else
    echo "$GWT_SDK_ZIP already installed"
+else
+   download $GWT_SDK_ZIP
+   mkdir -p "$LIB_DIR/gwt"
+   unzip -qd "$LIB_DIR" "$GWT_SDK_ZIP"
+   mv "$LIB_DIR/$GWT_SDK" "$LIB_DIR/gwt/$GWT_SDK_VER"
+   rm $GWT_SDK_ZIP
 fi
 
 # back to install dir

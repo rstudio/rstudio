@@ -36,17 +36,16 @@
       </any>
    </replace-with>
 
-   <replace-with class="org.rstudio.core.client.BrowseCapIE8">
-      <when-type-is class="org.rstudio.core.client.BrowseCap"/>
-      <when-property-is name="user.agent" value="ie8" />
-   </replace-with>
    <replace-with class="org.rstudio.core.client.BrowseCapFirefox">
       <when-type-is class="org.rstudio.core.client.BrowseCap"/>
       <when-property-is name="user.agent" value="gecko1_8" />
    </replace-with>
    <replace-with class="org.rstudio.core.client.BrowseCapSafari">
       <when-type-is class="org.rstudio.core.client.BrowseCap"/>
-      <when-property-is name="user.agent" value="safari" />
+      <any>
+         <when-property-is name="user.agent" value="safari" />
+         <when-property-is name="user.agent" value="ie9" />
+      </any>
    </replace-with>
 
    <replace-with class="org.rstudio.core.client.theme.ThemeFonts.WebThemeFontLoader">

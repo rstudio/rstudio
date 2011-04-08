@@ -20,7 +20,7 @@
            classname="com.google.javascript.jscomp.ant.CompileTask"
            classpath="./tools/compiler/compiler.jar"/> 
   <!-- Configure path to GWT SDK -->
-  <property name="gwt.sdk" value="sdk"/>
+  <property name="gwt.sdk" value="lib/gwt/2.3.0-m1"/>
 
   <property name="gwt.extra.args" value=""/>
   <property name="gwt.main.module" value="org.rstudio.studio.RStudio"/>
@@ -29,13 +29,8 @@
 
   <path id="project.class.path">
     <pathelement location="bin"/>
-    <pathelement location="${gwt.sdk}/gwt-user.jar"/>
-    <fileset dir="${gwt.sdk}" includes="gwt-dev*.jar"/>
-    <pathelement location="${gwt.sdk}/gwt-soyc-vis.jar"/>
-    <!-- Add any additional non-server libs (such as JUnit) -->
-  	 <pathelement location="lib/gin/gin.jar"/>
-  	 <pathelement location="lib/guice/guice-2.0.jar"/>
-  	 <pathelement location="lib/guice/aopalliance.jar"/>
+    <fileset dir="${gwt.sdk}" includes="*.jar"/>
+  	 <fileset dir="lib/gin/1.5" includes="*.jar"/>
   </path>
 
   <target name="ext">
