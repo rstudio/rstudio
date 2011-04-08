@@ -84,11 +84,7 @@ bool acquireLock()
    // The file is implicitly released/deleted when the process exits
 
    QString lockFilePath = QDir::temp().absoluteFilePath(QString::fromAscii("rstudio.lock"));
-   wchar_t path[MAX_PATH + 1];
-   if (lockFilePath.size() + 1 < sizeof(path))
-      return false;
-   lockFilePath.toWCharArray(path);
-   HANDLE hFile = ::CreateFileW(path,
+   HANDLE hFile = ::CreateFileW(lockFilePath.toStdWString().c_str(),
                                 GENERIC_WRITE,
                                 0, // exclusive access
                                 NULL,
