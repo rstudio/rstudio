@@ -63,6 +63,9 @@
 .timestamp {
    color: #999;
    font-family: proportionalFont;
+   white-space: nowrap;
+   overflow-x: hidden;
+   font-size: 11px;
 }
 td.timestamp {
    padding-right: 3px;
