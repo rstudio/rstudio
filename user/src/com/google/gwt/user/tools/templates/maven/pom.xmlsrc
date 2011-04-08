@@ -11,11 +11,11 @@
   <name>@moduleName</name>
   
   <properties>
-      <!-- Convenience property to set the GWT version -->
-      <gwtVersion>@gwtVersion</gwtVersion>
-      <!-- GWT needs at least java 1.5 -->
-      <maven.compiler.source>1.5</maven.compiler.source>
-      <maven.compiler.target>1.5</maven.compiler.target>
+    <!-- Convenience property to set the GWT version -->
+    <gwtVersion>@gwtVersion</gwtVersion>
+    <!-- GWT needs at least java 1.5 -->
+    <maven.compiler.source>1.5</maven.compiler.source>
+    <maven.compiler.target>1.5</maven.compiler.target>
   </properties>
 
   <dependencies>
@@ -135,5 +135,3 @@
     </plugins>
   </build>
 </project>
-
-
