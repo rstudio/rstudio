@@ -16,145 +16,145 @@
 
 <project name="client" default="build" basedir=".">
 
-  <taskdef name="jscomp"
-           classname="com.google.javascript.jscomp.ant.CompileTask"
-           classpath="./tools/compiler/compiler.jar"/> 
-  <!-- Configure path to GWT SDK -->
-  <property name="gwt.sdk" value="lib/gwt/2.3.0-m1"/>
+   <taskdef name="jscomp"
+            classname="com.google.javascript.jscomp.ant.CompileTask"
+            classpath="./tools/compiler/compiler.jar"/>
+   <!-- Configure path to GWT SDK -->
+   <property name="gwt.sdk" value="lib/gwt/2.3.0-m1"/>
 
-  <property name="gwt.extra.args" value=""/>
-  <property name="gwt.main.module" value="org.rstudio.studio.RStudio"/>
-  <property name="ace.bin" value="src/org/rstudio/studio/client/workbench/views/source/editors/text/ace"/>
-  <property name="json2.bin" value="www/js"/>
+   <property name="gwt.extra.args" value=""/>
+   <property name="gwt.main.module" value="org.rstudio.studio.RStudio"/>
+   <property name="ace.bin" value="src/org/rstudio/studio/client/workbench/views/source/editors/text/ace"/>
+   <property name="json2.bin" value="www/js"/>
 
-  <path id="project.class.path">
-    <pathelement location="bin"/>
-    <fileset dir="${gwt.sdk}" includes="*.jar"/>
-  	 <fileset dir="lib/gin/1.5" includes="*.jar"/>
-  </path>
+   <path id="project.class.path">
+      <pathelement location="bin"/>
+      <fileset dir="${gwt.sdk}" includes="*.jar"/>
+      <fileset dir="lib/gin/1.5" includes="*.jar"/>
+   </path>
 
-  <target name="ext">
-    <jscomp compilationLevel="simple" warning="default"
-            debug="false" output="${ace.bin}/acesupport.js">
-      <externs dir="acesupport">
-        <file name="extern.js"/>
-      </externs>
-      <sources dir="acesupport">
-        <file name="loader.js"/>
-      </sources>
-      <sources dir="acesupport/acemode">
-        <file name="r_highlight_rules.js"/>
-        <file name="r.js"/>
-        <file name="tex_highlight_rules.js"/>
-        <file name="tex.js"/>
-        <file name="sweave_highlight_rules.js"/>
-        <file name="sweave.js"/>
-      </sources>
-      <sources dir="acesupport/acetheme">
-        <file name="default.js"/>
-      </sources>
-    </jscomp>
+   <target name="ext">
+      <jscomp compilationLevel="simple" warning="default"
+              debug="false" output="${ace.bin}/acesupport.js">
+         <externs dir="acesupport">
+            <file name="extern.js"/>
+         </externs>
+         <sources dir="acesupport">
+            <file name="loader.js"/>
+         </sources>
+         <sources dir="acesupport/acemode">
+            <file name="r_highlight_rules.js"/>
+            <file name="r.js"/>
+            <file name="tex_highlight_rules.js"/>
+            <file name="tex.js"/>
+            <file name="sweave_highlight_rules.js"/>
+            <file name="sweave.js"/>
+         </sources>
+         <sources dir="acesupport/acetheme">
+            <file name="default.js"/>
+         </sources>
+      </jscomp>
 
-    <jscomp compilationLevel="simple" warning="default"
-            debug="false" output="${json2.bin}/json2.min.js">
-      <sources dir="tools">
-        <file name="json2.js"/>
-      </sources>
-    </jscomp>
+      <jscomp compilationLevel="simple" warning="default"
+              debug="false" output="${json2.bin}/json2.min.js">
+         <sources dir="tools">
+            <file name="json2.js"/>
+         </sources>
+      </jscomp>
 
-  </target>
+   </target>
 
-  <target name="javac" description="Compile java source">
-    <mkdir dir="bin"/>
-    <javac srcdir="src" includes="**" encoding="utf-8"
-        destdir="bin"
-        source="1.5" target="1.5" nowarn="true" deprecation="true"
-        debug="true" debuglevel="lines,vars,source"
-        includeantruntime="false">
-      <classpath refid="project.class.path"/>
-      <compilerarg value="-Xlint"/>
-    </javac>
-    <copy todir="bin">
-      <fileset dir="src" excludes="**/*.java"/>
-    </copy>
-  </target>
+   <target name="javac" description="Compile java source">
+      <mkdir dir="bin"/>
+      <javac srcdir="src" includes="**" encoding="utf-8"
+             destdir="bin"
+             source="1.5" target="1.5" nowarn="true" deprecation="true"
+             debug="true" debuglevel="lines,vars,source"
+             includeantruntime="false">
+         <classpath refid="project.class.path"/>
+         <compilerarg value="-Xlint"/>
+      </javac>
+      <copy todir="bin">
+         <fileset dir="src" excludes="**/*.java"/>
+      </copy>
+   </target>
 
-  <target name="gwtc" depends="ext,javac" description="GWT compile to JavaScript">
-    <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler">
-      <classpath>
-        <pathelement location="src"/>
-        <path refid="project.class.path"/>
-      </classpath>
-      <!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
-      <jvmarg value="-Xmx512M"/>
-      <arg value="-war"/>
-      <arg value="www"/>
-      <arg value="-localWorkers"/>
-      <arg value="2"/>
-      <arg value="-XdisableClassMetadata"/>
-      <arg value="-XdisableCastChecking"/>
-      <arg line="-gen gen"/>
-      <!--<arg line="-style PRETTY"/>-->
-      <arg line="-extra extras"/>
-      <arg line="${gwt.extra.args}"/>
-      <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
-      <arg value="${gwt.main.module}"/>
-    </java>
-  </target>
+   <target name="gwtc" depends="ext,javac" description="GWT compile to JavaScript">
+      <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler">
+         <classpath>
+            <pathelement location="src"/>
+            <path refid="project.class.path"/>
+         </classpath>
+         <!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
+         <jvmarg value="-Xmx512M"/>
+         <arg value="-war"/>
+         <arg value="www"/>
+         <arg value="-localWorkers"/>
+         <arg value="2"/>
+         <arg value="-XdisableClassMetadata"/>
+         <arg value="-XdisableCastChecking"/>
+         <arg line="-gen gen"/>
+         <!--<arg line="-style PRETTY"/>-->
+         <arg line="-extra extras"/>
+         <arg line="${gwt.extra.args}"/>
+         <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
+         <arg value="${gwt.main.module}"/>
+      </java>
+   </target>
 
-  <target name="soyc" description="Generate and show SOYC report">
-    <antcall target="gwtc">
-      <param name="gwt.main.module" value="org.rstudio.studio.RStudioDraft"/>
-      <param name="gwt.extra.args" value="${gwt.extra.args} -compileReport"/>
-    </antcall>
-    <exec executable="open" os="Mac OS X">
-      <arg file="extras/rstudio/soycReport/compile-report/index.html"/>
-    </exec>
-  </target>
+   <target name="soyc" description="Generate and show SOYC report">
+      <antcall target="gwtc">
+         <param name="gwt.main.module" value="org.rstudio.studio.RStudioDraft"/>
+         <param name="gwt.extra.args" value="${gwt.extra.args} -compileReport"/>
+      </antcall>
+      <exec executable="open" os="Mac OS X">
+         <arg file="extras/rstudio/soycReport/compile-report/index.html"/>
+      </exec>
+   </target>
 
    <target name="draft" description="Compile using GWT's draft mode">
-     <echo message="Draft means gwtc will build for Safari, Firefox 3+, and IE8 only, with -draftCompile."/>
-     <antcall target="gwtc">
-       <param name="gwt.extra.args" value="${gwt.extra.args} -draftCompile"/>
-       <param name="gwt.main.module" value="org.rstudio.studio.RStudioDraft"/>
-     </antcall>
+      <echo message="Draft means gwtc will build for Safari, Firefox 3+, and IE8 only, with -draftCompile."/>
+      <antcall target="gwtc">
+         <param name="gwt.extra.args" value="${gwt.extra.args} -draftCompile"/>
+         <param name="gwt.main.module" value="org.rstudio.studio.RStudioDraft"/>
+      </antcall>
    </target>
 
    <target name="desktop" description="Compile only desktop permutation">
-     <antcall target="gwtc">
-       <param name="gwt.main.module" value="org.rstudio.studio.RStudioDesktop"/>
-     </antcall>
+      <antcall target="gwtc">
+         <param name="gwt.main.module" value="org.rstudio.studio.RStudioDesktop"/>
+      </antcall>
    </target>
 
-  <target name="devmode" depends="ext,javac" description="Run development mode">
-    <java failonerror="true" fork="true" classname="com.google.gwt.dev.DevMode">
-      <classpath>
-        <pathelement location="src"/>
-        <path refid="project.class.path"/>
-      </classpath>
-      <jvmarg value="-Xmx512M"/>
-      <arg value="-war"/>
-      <arg value="www"/>
-      <arg value="-noserver"/>
-      <arg value="-startupUrl"/>
-      <arg value="http://localhost:8787"/>
-      <arg line="-bindAddress 0.0.0.0"/>
-      <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
-      <arg value="org.rstudio.studio.RStudioDraft"/>
-    </java>
-  </target>
+   <target name="devmode" depends="ext,javac" description="Run development mode">
+      <java failonerror="true" fork="true" classname="com.google.gwt.dev.DevMode">
+         <classpath>
+            <pathelement location="src"/>
+            <path refid="project.class.path"/>
+         </classpath>
+         <jvmarg value="-Xmx512M"/>
+         <arg value="-war"/>
+         <arg value="www"/>
+         <arg value="-noserver"/>
+         <arg value="-startupUrl"/>
+         <arg value="http://localhost:8787"/>
+         <arg line="-bindAddress 0.0.0.0"/>
+         <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
+         <arg value="org.rstudio.studio.RStudioDraft"/>
+      </java>
+   </target>
 
-  <target name="hosted" depends="devmode"/>
+   <target name="hosted" depends="devmode"/>
 
-  <target name="build" depends="gwtc" description="Build this project" />
+   <target name="build" depends="gwtc" description="Build this project" />
 
-  <target name="clean" description="Cleans this project">
-    <delete dir="bin" failonerror="false" />
-    <delete dir="www/rstudio" failonerror="false" />
-    <delete file="${ace.bin}/acesupport.js" failonerror="false" />
-    <delete file="${json2.bin}/json2.min.js" failonerror="false" />
-    <delete dir="gen" failonerror="false" />
-    <delete dir="extras" failonerror="false" />
+   <target name="clean" description="Cleans this project">
+      <delete dir="bin" failonerror="false" />
+      <delete dir="www/rstudio" failonerror="false" />
+      <delete file="${ace.bin}/acesupport.js" failonerror="false" />
+      <delete file="${json2.bin}/json2.min.js" failonerror="false" />
+      <delete dir="gen" failonerror="false" />
+      <delete dir="extras" failonerror="false" />
    </target>
 
 </project>
