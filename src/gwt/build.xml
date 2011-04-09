@@ -66,7 +66,17 @@
 
    <target name="javac" description="Compile java source">
       <mkdir dir="bin"/>
-      <javac srcdir="src" includes="**" encoding="utf-8"
+      <!-- Compile com.google stuff separately from org.rstudio stuff since
+         theirs have lots of deprecation warnings we can't do anything about -->
+      <javac srcdir="src" includes="com/google/**" encoding="utf-8"
+             destdir="bin"
+             source="1.5" target="1.5" nowarn="true" deprecation="false"
+             debug="true" debuglevel="lines,vars,source"
+             includeantruntime="false">
+         <classpath refid="project.class.path"/>
+         <compilerarg value="-Xlint:-deprecation"/>
+      </javac>
+      <javac srcdir="src" includes="org/rstudio/**" encoding="utf-8"
              destdir="bin"
              source="1.5" target="1.5" nowarn="true" deprecation="true"
              debug="true" debuglevel="lines,vars,source"
