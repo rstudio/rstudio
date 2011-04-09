@@ -64,13 +64,15 @@
    color: #999;
    font-family: proportionalFont;
 }
-td.timestamp {
+.historyTable td.timestamp {
    padding-right: 3px;
-   font-size: 0.8em !important;
+   white-space: nowrap;
+   overflow-x: hidden;
+   font-size: 11px !important;
 }
-tr.timestamp td {
+.historyTable tr.timestamp td {
    padding-top: 6px;
-   font-size: 0.8em !important;
+   font-size: 11px !important;
 }
 .selected td.timestamp {
    color: black;
