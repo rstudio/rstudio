@@ -13,6 +13,8 @@
 package org.rstudio.studio.client.workbench.views.history.view;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableRowElement;
@@ -25,8 +27,6 @@ import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import org.rstudio.core.client.dom.DomUtils;
@@ -330,7 +330,7 @@ public class HistoryPane extends WorkbenchPane
    {
       commandList_.clear();
       commandList_.addItems(entries, true);
-      DeferredCommand.addCommand(new Command()
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          public void execute()
          {
@@ -363,7 +363,7 @@ public class HistoryPane extends WorkbenchPane
          if (topRow == null)
             recentScrollPanel_.scrollToBottom();
          else
-            recentScrollPanel_.setScrollPosition(topRow.getOffsetTop());
+            recentScrollPanel_.setVerticalScrollPosition(topRow.getOffsetTop());
       }
       else
          recentScrollPanel_.onContentSizeChanged();

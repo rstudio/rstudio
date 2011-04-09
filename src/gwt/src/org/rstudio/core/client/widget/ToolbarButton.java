@@ -13,6 +13,8 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.*;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.dom.client.*;
@@ -22,8 +24,6 @@ import com.google.gwt.event.shared.*;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -117,11 +117,11 @@ public class ToolbarButton extends FocusWidget
          public void onClose(CloseEvent<PopupPanel> popupPanelCloseEvent)
          {
             removeStyleName(styles_.toolbarButtonPushed());
-            DeferredCommand.addCommand(new Command()
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
                public void execute()
                {
-                  menuShowing[0] = false;
+                  menuShowing[0] = false;               
                }
             });
          }

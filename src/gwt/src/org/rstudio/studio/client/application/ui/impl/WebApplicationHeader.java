@@ -13,7 +13,8 @@
 
 package org.rstudio.studio.client.application.ui.impl;
 
-import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Position;
@@ -22,8 +23,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import org.rstudio.core.client.BrowseCap;
@@ -38,7 +37,6 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.LogoutRequestedEvent;
 import org.rstudio.studio.client.application.ui.ApplicationHeader;
 import org.rstudio.studio.client.application.ui.impl.header.HeaderPanel;
-import org.rstudio.studio.client.application.ui.support.SupportPopupMenu;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dialog.WebDialogBuilderFactory;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -240,7 +238,7 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
                    popupPanelCloseEvent.getTarget() != null &&
                    subMenu.equals(popupPanelCloseEvent.getTarget().getWidget()))
                {
-                  DeferredCommand.addCommand(new Command()
+                  Scheduler.get().scheduleDeferred(new ScheduledCommand()
                   {
                      public void execute()
                      {

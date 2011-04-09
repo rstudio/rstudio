@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.views.history.view;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.*;
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.FastSelectTable.ItemCodec;
@@ -230,7 +231,7 @@ public class HistoryEntryItemCodec implements ItemCodec<HistoryEntry, String, Lo
       if (time == 0)
          return null;
       Date date = new Date(time);
-      return DateTimeFormat.getShortDateTimeFormat().format(date);
+      return DateTimeFormat.getFormat(PredefinedFormat.DATE_TIME_SHORT).format(date);
    }
 
    private final String commandClass_;

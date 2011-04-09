@@ -13,6 +13,8 @@
 
 package org.rstudio.studio.client.workbench.views.help;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.*;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
@@ -21,8 +23,6 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
@@ -120,7 +120,7 @@ public class HelpPane extends WorkbenchPane
 
          initHelpNavigateCallback() ;
 
-         DeferredCommand.addCommand(new Command()
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
          {
             public void execute()
             {

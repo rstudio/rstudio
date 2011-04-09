@@ -113,9 +113,9 @@ public class HistoryTableWithToolbar extends Composite
          return;
       int height = scrollPanel_.getOffsetHeight();
       if (rect.getHeight() > height)
-         scrollPanel_.setScrollPosition(rect.getTop());
+         scrollPanel_.setVerticalScrollPosition(rect.getTop());
       else
-         scrollPanel_.setScrollPosition(
+         scrollPanel_.setVerticalScrollPosition(
                rect.getTop() - (height - rect.getHeight())/2);
    }
 

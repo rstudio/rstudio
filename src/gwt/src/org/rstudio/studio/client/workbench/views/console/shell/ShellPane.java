@@ -12,6 +12,9 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SpanElement;
@@ -19,17 +22,13 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Text;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
-import com.google.gwt.user.client.IncrementalCommand;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
-import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
@@ -94,7 +93,7 @@ public class ShellPane extends Composite implements Shell.Display,
    protected void onLoad()
    {
       super.onLoad();
-      DeferredCommand.addCommand(new Command()
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          public void execute()
          {
@@ -247,7 +246,7 @@ public class ShellPane extends Composite implements Shell.Display,
 
    public void playbackActions(final RpcObjectList<ConsoleAction> actions)
    {
-      DeferredCommand.addCommand(new IncrementalCommand()
+      Scheduler.get().scheduleIncremental(new RepeatingCommand()
       {
          private int i = actions.length() - 1;
          private int chunksize = 1000;

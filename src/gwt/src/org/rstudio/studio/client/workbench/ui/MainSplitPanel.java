@@ -16,7 +16,6 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.SplitterResizedEvent;
 import com.google.gwt.user.client.ui.SplitterResizedHandler;
@@ -207,7 +206,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
 
    private void deferredSaveWidthPercent()
    {
-      DeferredCommand.addCommand(new Command()
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          public void execute()
          {
@@ -247,7 +246,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                forceLayout();
              }
            };
-           DeferredCommand.addCommand(layoutCommand_);
+           Scheduler.get().scheduleDeferred(layoutCommand_);
          }
       }
    }
