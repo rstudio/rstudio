@@ -48,6 +48,6 @@ cmake -DRSTUDIO_TARGET=$1 \
 
 make
 
-cpack -G $2
+fakeroot cpack -G $2
 
 cd ..

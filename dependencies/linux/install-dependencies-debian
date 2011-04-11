@@ -18,6 +18,7 @@ set -e
 # build/development tools
 sudo apt-get -y install build-essential
 sudo apt-get -y install pkg-config
+sudo apt-get -y install fakeroot
 sudo apt-get -y install cmake
 
 # core system libraries
