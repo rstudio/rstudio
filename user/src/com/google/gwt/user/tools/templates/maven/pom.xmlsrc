@@ -40,8 +40,21 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.4</version>
+      <version>4.8.1</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>javax.validation</groupId>
+      <artifactId>validation-api</artifactId>
+      <version>1.0.0.GA</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>javax.validation</groupId>
+      <artifactId>validation-api</artifactId>
+      <version>1.0.0.GA</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
   
@@ -55,6 +68,24 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>gwt-maven-plugin</artifactId>
+	<version>2.2.0</version>
+	<dependencies>
+          <dependency>
+            <groupId>com.google.gwt</groupId>
+            <artifactId>gwt-user</artifactId>
+            <version>${gwtVersion}</version>
+          </dependency>
+          <dependency>
+            <groupId>com.google.gwt</groupId>
+            <artifactId>gwt-dev</artifactId>
+            <version>${gwtVersion}</version>
+          </dependency>
+          <dependency>
+            <groupId>com.google.gwt</groupId>
+            <artifactId>gwt-servlet</artifactId>
+            <version>${gwtVersion}</version>
+          </dependency>
+	</dependencies>
         <!-- JS is only needed in the package phase, this speeds up testing --> 
         <executions>
           <execution>
@@ -72,13 +103,14 @@
           <!-- Location of the develop-mode web application structure (gwt:run). -->
           <hostedWebapp>target/www</hostedWebapp>
           <!-- Ask GWT to create the Story of Your Compile (SOYC) (gwt:compile) -->
-          <soyc>true</soyc>
+          <compileReport>true</compileReport>
         </configuration>
       </plugin>
 
       <!-- Add source folders to test classpath in order to run gwt-tests as normal junit-tests -->
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
+	<version>2.5</version>
         <configuration>
           <additionalClasspathElements>
             <additionalClasspathElement>${project.build.sourceDirectory}</additionalClasspathElement>
@@ -100,6 +132,7 @@
       <!-- Copy static web files before executing gwt:run -->
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
+        <version>2.4.2</version>
         <executions>
           <execution>
             <phase>compile</phase>
@@ -121,6 +154,7 @@
       <!-- Delete gwt generated stuff -->
       <plugin>
         <artifactId>maven-clean-plugin</artifactId>
+	<version>2.3</version>
         <configuration>
           <filesets>
             <fileset><directory>src/main/webapp/@renameTo</directory></fileset>
@@ -131,7 +165,25 @@
           </filesets>
         </configuration>
       </plugin>
-      
+
+      <plugin>
+	<artifactId>maven-eclipse-plugin</artifactId>
+	<version>2.7</version>  <!--  Note 2.8 does not work with AspectJ aspect path -->
+	<configuration>
+          <downloadSources>true</downloadSources>
+          <downloadJavadocs>false</downloadJavadocs>
+          <wtpversion>2.0</wtpversion>
+          <additionalBuildcommands>
+            <buildCommand>
+              <name>com.google.gwt.eclipse.core.gwtProjectValidator</name>
+            </buildCommand>
+          </additionalBuildcommands>
+          <additionalProjectnatures>
+            <projectnature>com.google.gwt.eclipse.core.gwtNature</projectnature>
+          </additionalProjectnatures>
+	</configuration>
+      </plugin>
+
     </plugins>
   </build>
 </project>
