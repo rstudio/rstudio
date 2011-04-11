@@ -105,25 +105,7 @@ public class DeckPanel extends ComplexPanel implements HasAnimation,
 
       // Start the animation
       if (animate) {
-        // Figure out if the deck panel has a fixed height
-        com.google.gwt.dom.client.Element deckElem = container1.getParentElement();
-        int deckHeight = deckElem.getOffsetHeight();
-        if (growing) {
-          fixedHeight = container2.getOffsetHeight();
-          container2.getStyle().setPropertyPx("height",
-              Math.max(1, fixedHeight - 1));
-        } else {
-          fixedHeight = container1.getOffsetHeight();
-          container1.getStyle().setPropertyPx("height",
-              Math.max(1, fixedHeight - 1));
-        }
-        if (deckElem.getOffsetHeight() != deckHeight) {
-          fixedHeight = -1;
-        }
-
-        // Only scope to the deck if it's fixed height, otherwise it can affect
-        // the rest of the page, even if it's not visible to the user.
-        run(ANIMATION_DURATION, fixedHeight == -1 ? null : deckElem);
+        run(ANIMATION_DURATION);
       } else {
         onInstantaneousRun();
       }
@@ -157,6 +139,22 @@ public class DeckPanel extends ComplexPanel implements HasAnimation,
 
     @Override
     protected void onStart() {
+      // Figure out if the deck panel has a fixed height
+      com.google.gwt.dom.client.Element deckElem = container1.getParentElement();
+      int deckHeight = deckElem.getOffsetHeight();
+      if (growing) {
+        fixedHeight = container2.getOffsetHeight();
+        container2.getStyle().setPropertyPx("height",
+            Math.max(1, fixedHeight - 1));
+      } else {
+        fixedHeight = container1.getOffsetHeight();
+        container1.getStyle().setPropertyPx("height",
+            Math.max(1, fixedHeight - 1));
+      }
+      if (deckElem.getOffsetHeight() != deckHeight) {
+        fixedHeight = -1;
+      }
+
       // Start the animation
       DOM.setStyleAttribute(container1, "overflow", "hidden");
       DOM.setStyleAttribute(container2, "overflow", "hidden");

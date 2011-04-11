@@ -713,7 +713,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
       if (isAnimationEnabled()) {
         // Animate the scrolling.
         startScrollLeft = elem.getScrollLeft();
-        run(250, elem);
+        run(250);
       } else {
         // Scroll instantly.
         onComplete();

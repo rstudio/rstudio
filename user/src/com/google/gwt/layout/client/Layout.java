@@ -578,7 +578,7 @@ public class Layout {
       }
     };
 
-    animation.run(duration, parentElem);
+    animation.run(duration);
   }
 
   /**
