@@ -29,68 +29,13 @@ Finally, you should also ensure that your R installation's bin directory is
 on the system path.
 
 
-Install Java Libraries
+Satisfy Additional Dependencies
 =============================================================================
 
-JAR files for GWT, Guice, and GIN need to be installed in the src/gwt
-directory prior to building. You can download these dependencies at:
+Additional dependencies (boost, mingw64, GWT, and gin) can be satisfied by
+running the following script:
 
-https://s3.amazonaws.com/rstudio-buildtools/gin.zip
-https://s3.amazonaws.com/rstudio-buildtools/guice.zip
-https://s3.amazonaws.com/rstudio-buildtools/gwt-2.0.4.zip
-
-Place the unzipped archives into the src/gwt directory. After extraction you should
-ensure that the resulting directory structure is:
-
-src
-  gwt
-    lib
-      gin
-        <extracted files>
-      guice
-        <extracted files>
-    sdk
-       <extracted files>
-
-Note that the gwt-2.0.4 directory should be renamed to "sdk" and placed
-in the root of the src/gwt directory.
-
-
-Install Boost
-=============================================================================
-
-A set of pre-built boost binaries for Win32 and Win64 are available for
-download at: 
-
-https://s3.amazonaws.com/rstudio-buildtools/boost-1.44-win.zip
-
-You should download and extract this archive into the dependencies/windows
-directory. After extraction you should ensure that the resulting directory
-structure is:
-
-dependencies
-  windows
-    boost-win
-      boost32
-      boost64
-
-
-Install MinGW w64
-=============================================================================
-
-For 32-bit builds RStudio uses the MinGW 32-bit compiler bundled with Qt for
-Windows. For 64-bit builds RStudio uses MinGW-w64. A pre-built version of 
-MinGW-w64 that is hosted on & targets 64-bit windows is available for 
-download at:
-
-https://s3.amazonaws.com/rstudio-buildtools/mingw64-2010-10-03.zip
-
-You should download and extract this archive into the dependencies/windows
-directory. After extraction the directory structure should be:
-
-dependencies
-  windows
-    mingw64
+install-dependencies.cmd
 
 
 NOTE: How to upgrade boost-win.zip
@@ -145,7 +90,3 @@ within BoostErrors.hpp
 
 3) add a dummy definitions for boost::thread::tss_cleanup_implemented
    (see ticket: https://svn.boost.org/trac/boost/ticket/4258)
-
-
-
-
