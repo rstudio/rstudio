@@ -252,7 +252,10 @@ function getCodeServer() {
   var query = $wnd.location.search;
   var idx = query.indexOf("gwt.codesvr=");
   if (idx >= 0) {
-    idx += 12;  // "gwt.codesvr=".length() == 12
+    idx += 12;  // "gwt.codesvr=".length == 12
+  } else {
+    idx = query.indexOf("gwt.codesvr.__MODULE_NAME__=");
+    idx += (13 + "__MODULE_NAME__".length);  // 
   }
   if (idx >= 0) {
     var amp = query.indexOf("&", idx);

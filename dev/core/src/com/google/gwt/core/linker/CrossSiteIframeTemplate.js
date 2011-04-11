@@ -34,7 +34,8 @@ function __MODULE_FUNC__() {
 
   function isHostedMode() {
     var query = $wnd.location.search;
-    return (query.indexOf('gwt.codesvr=') != -1);
+    return ((query.indexOf('gwt.codesvr.__MODULE_NAME__=') != -1) ||
+            (query.indexOf('gwt.codesvr=') != -1));
   }
 
   // Helper function to send statistics to the __gwtStatsEvent function if it

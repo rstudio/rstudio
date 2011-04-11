@@ -339,6 +339,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
       outputFilename = getHostedFilenameFull(context);
     }
 
+    replaceAll(buffer, "__MODULE_NAME__", context.getModuleName());
     String script =
         generatePrimaryFragmentString(logger, context, result, buffer.toString(), 1, artifacts);
 
