@@ -12,8 +12,9 @@
  */
 package org.rstudio.studio.client.common.dialog;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import org.rstudio.core.client.widget.DialogBuilder;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -61,7 +62,7 @@ public class DesktopDialogBuilderFactory implements DialogBuilderFactory
          final ButtonSpec buttonSpec = buttons_.get(result);
          if (buttonSpec.operation != null)
          {
-            DeferredCommand.addCommand(new Command()
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
                public void execute()
                {
@@ -72,7 +73,7 @@ public class DesktopDialogBuilderFactory implements DialogBuilderFactory
          }
          else if (buttonSpec.progressOperation != null)
          {
-            DeferredCommand.addCommand(new Command()
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
                public void execute()
                {

@@ -12,8 +12,9 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.ui.MenuItem;
 import org.rstudio.core.client.command.AppMenuItem;
 import org.rstudio.core.client.command.BaseMenuBar;
@@ -86,7 +87,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       }
       public void execute()
       {
-         DeferredCommand.addCommand(coreCommand_);
+         Scheduler.get().scheduleDeferred(coreCommand_);
          hide();
       }
    

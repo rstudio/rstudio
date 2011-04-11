@@ -12,11 +12,11 @@
  */
 package org.rstudio.core.client.files.filedialog;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.Point;
@@ -24,7 +24,10 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.*;
+import org.rstudio.core.client.widget.ModalDialogBase;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.core.client.widget.ThemedButton;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -159,7 +162,7 @@ public abstract class FileSystemDialog extends ModalDialogBase
    public void showModal()
    {
       super.showModal();
-      DeferredCommand.addCommand(new Command()
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          public void execute()
          {

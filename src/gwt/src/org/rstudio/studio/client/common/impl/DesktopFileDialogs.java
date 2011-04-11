@@ -12,8 +12,8 @@
  */
 package org.rstudio.studio.client.common.impl;
 
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -58,7 +58,7 @@ public class DesktopFileDialogs implements FileDialogs
                             ? fsContext.pwd()
                             : initialFilePath.getPath();
 
-         DeferredCommand.addCommand(new Command()
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
          {
             public void execute()
             {

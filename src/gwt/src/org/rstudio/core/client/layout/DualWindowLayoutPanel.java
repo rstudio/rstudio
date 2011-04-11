@@ -15,8 +15,6 @@ package org.rstudio.core.client.layout;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.Debug;
@@ -130,7 +128,7 @@ public class DualWindowLayoutPanel extends SimplePanel
          }
 
          // Defer this because layout changes are deferred by LayoutPanel.
-         DeferredCommand.addCommand(new Command()
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
          {
             public void execute()
             {

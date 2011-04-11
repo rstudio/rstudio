@@ -12,6 +12,8 @@
  */
 package org.rstudio.studio.client.application.ui;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Overflow;
@@ -23,8 +25,6 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.HasCloseHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
@@ -177,7 +177,7 @@ public class RequestLogVisualization extends Composite
    protected void onLoad()
    {
       super.onLoad();
-      DeferredCommand.addCommand(new Command()
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          public void execute()
          {

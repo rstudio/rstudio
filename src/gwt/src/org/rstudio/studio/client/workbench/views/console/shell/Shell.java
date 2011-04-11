@@ -15,12 +15,11 @@ package org.rstudio.studio.client.workbench.views.console.shell;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.*;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.inject.Inject;
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -180,7 +179,7 @@ public class Shell implements ConsoleInputHandler,
       server_.resetConsoleActions(new VoidServerRequestCallback());
       
       // if we don't bounce setFocus the menu retains focus
-      DeferredCommand.addCommand(new Command() {
+      Scheduler.get().scheduleDeferred(new ScheduledCommand() {
          public void execute()
          {
             view_.getInputEditorDisplay().setFocus(true);

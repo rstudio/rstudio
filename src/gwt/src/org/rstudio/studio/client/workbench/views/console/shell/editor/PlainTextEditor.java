@@ -13,12 +13,13 @@
 package org.rstudio.studio.client.workbench.views.console.shell.editor;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.*;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.BrowseCap;
@@ -111,7 +112,7 @@ public class PlainTextEditor
       events.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
          public void onSessionInit(SessionInitEvent sie)
          {
-            DeferredCommand.addCommand(new Command() {
+            Scheduler.get().scheduleDeferred(new ScheduledCommand() {
                public void execute()
                {
                   forceFocus_Hack() ;
@@ -172,7 +173,7 @@ public class PlainTextEditor
       impl.poll();
       if (focused)
       {
-         DeferredCommand.addCommand(new Command() {
+         Scheduler.get().scheduleDeferred(new ScheduledCommand() {
             public void execute()
             {
                DomUtils.focus(textContainer_, true);

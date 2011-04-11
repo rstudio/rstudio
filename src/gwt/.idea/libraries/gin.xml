@@ -1,13 +1,15 @@
 <component name="libraryTable">
   <library name="gin">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/gin/gin.jar!/" />
+      <root url="file://$PROJECT_DIR$/lib/gin/1.5" />
     </CLASSES>
-    <JAVADOC>
-      <root url="jar://$PROJECT_DIR$/lib/gin/gin-javadoc.zip!/" />
-    </JAVADOC>
+    <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/gin/gin-src.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/gin/1.5/guice-snapshot.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/gin/1.5/guice-assistedinject-snapshot.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/gin/1.5/gin-1.5-post-gwt-2.2.jar!/" />
+      <root url="file://$PROJECT_DIR$/lib/gin/1.5" />
     </SOURCES>
+    <jarDirectory url="file://$PROJECT_DIR$/lib/gin/1.5" recursive="false" />
   </library>
 </component>

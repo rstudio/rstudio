@@ -69,7 +69,7 @@ public class PlainTextEditorImplFirefox extends PlainTextEditorImpl
    {
       // This doesn't work all that well
       /*
-      DeferredCommand.addCommand(new Command()
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          public void execute()
          {

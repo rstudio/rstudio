@@ -177,7 +177,7 @@ public class DefaultGlobalDisplay extends GlobalDisplay
                                   OperationWithInput<WindowEx> openOperation)
    {
       String url = server_.getApplicationURL("progress");
-      url += "?message=" + URL.encodeComponent(message, true);
+      url += "?message=" + URL.encodeQueryString(message);
       NewWindowOptions options = new NewWindowOptions();
       options.setName(name);
       options.setCallback(openOperation);
@@ -239,9 +239,9 @@ public class DefaultGlobalDisplay extends GlobalDisplay
       
       // calculate URL
       String url = gmailURL + "?fs=1&view=cm";
-      url += "&to=" + URL.encodeComponent(to, true);
+      url += "&to=" + URL.encodeQueryString(to);
       if (subject != null)
-         url += "&subject=" + URL.encodeComponent(subject, true);
+         url += "&subject=" + URL.encodeQueryString(subject);
       
       // open window
       openWindow(url);
@@ -253,9 +253,9 @@ public class DefaultGlobalDisplay extends GlobalDisplay
       // build url
       final SessionInfo sessionInfo = session_.getSessionInfo();
       String url = "http://www.rstudio.org/links/" ;
-      url += URL.encodeComponent(linkName) ;
-      url += "?version=" + URL.encodeComponent(sessionInfo.getRstudioVersion(), true);
-      url += "&mode=" + URL.encodeComponent(sessionInfo.getMode(), true);
+      url += URL.encodePathSegment(linkName) ;
+      url += "?version=" + URL.encodeQueryString(sessionInfo.getRstudioVersion());
+      url += "&mode=" + URL.encodeQueryString(sessionInfo.getMode());
       
       // open window
       openWindow(url);

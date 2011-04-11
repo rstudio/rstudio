@@ -12,13 +12,11 @@
  */
 package org.rstudio.studio.client.server.remote;
 
-import java.util.ArrayList;
-
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Random;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FormPanel;
@@ -34,6 +32,8 @@ import org.rstudio.core.client.jsonrpc.RpcResponse;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+
+import java.util.ArrayList;
 
 class RemoteServerAuth
 {
@@ -227,7 +227,7 @@ class RemoteServerAuth
             
             // remove the hidden form (from both last-ditch list and DOM)
             previousUpdateCredentialsForms_.remove(updateCredentialsForm);
-            DeferredCommand.addCommand(new Command() {
+            Scheduler.get().scheduleDeferred(new ScheduledCommand() {
                public void execute()
                {
                   RootPanel.get().remove(updateCredentialsForm);

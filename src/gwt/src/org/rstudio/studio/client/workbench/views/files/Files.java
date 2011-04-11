@@ -14,11 +14,11 @@ package org.rstudio.studio.client.workbench.views.files;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -44,12 +44,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
-import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
-import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
-import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateHandler;
-import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
-import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
-import org.rstudio.studio.client.workbench.views.files.events.ShowFolderEvent;
+import org.rstudio.studio.client.workbench.views.files.events.*;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.files.model.FileSystemItemAction;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
@@ -155,7 +150,7 @@ public class Files
          @Override
          protected void onInit(final String value)
          {
-            DeferredCommand.addCommand(new Command()
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
                public void execute()
                {

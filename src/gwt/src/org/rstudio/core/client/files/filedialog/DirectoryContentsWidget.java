@@ -332,12 +332,12 @@ public class DirectoryContentsWidget
    public Point getScrollPosition()
    {
       return new Point(scrollPanel_.getHorizontalScrollPosition(),
-                       scrollPanel_.getScrollPosition());
+                       scrollPanel_.getVerticalScrollPosition());
    }
 
    public void setScrollPosition(Point p)
    {
-      scrollPanel_.setScrollPosition(p.getY());
+      scrollPanel_.setVerticalScrollPosition(p.getY());
       scrollPanel_.setHorizontalScrollPosition(p.getX());
    }
 

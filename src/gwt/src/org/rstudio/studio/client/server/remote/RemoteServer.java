@@ -609,7 +609,7 @@ public class RemoteServer implements Server
          else
          {
             String url = getApplicationURL(FILE_SHOW);
-            url += "?path=" + URL.encodeComponent(file.getPath(), true);
+            url += "?path=" + URL.encodeQueryString(file.getPath());
             return url;
          }  
       }
@@ -638,8 +638,8 @@ public class RemoteServer implements Server
    public String getFileExportUrl(String name, FileSystemItem file)
    {
       return getApplicationURL(EXPORT_SCOPE) + "?" +
-         "name=" + URL.encodeComponent(name, true) + "&" +
-         "file=" + URL.encodeComponent(file.getPath(), true);
+         "name=" + URL.encodeQueryString(name) + "&" +
+         "file=" + URL.encodeQueryString(file.getPath());
    }
    
    
@@ -651,15 +651,15 @@ public class RemoteServer implements Server
       StringBuilder files = new StringBuilder();
       for (int i = 0; i<filenames.size(); i++)
       {
-         files.append("file" + i + "=");
-         files.append(URL.encodeComponent(filenames.get(i), true));
+         files.append("file").append(i).append("=");
+         files.append(URL.encodeQueryString(filenames.get(i)));
          files.append("&");
       }
          
       // return url
       return getApplicationURL(EXPORT_SCOPE) + "?" +
-        "name=" + URL.encodeComponent(name, true) + "&" +
-        "parent=" + URL.encodeComponent(parentDirectory.getPath(), true) + "&" +
+        "name=" + URL.encodeQueryString(name) + "&" +
+        "parent=" + URL.encodeQueryString(parentDirectory.getPath()) + "&" +
          files.toString();
    }
    
@@ -843,7 +843,7 @@ public class RemoteServer implements Server
    public String getProgressUrl(String message)
    {
       String url = getApplicationURL(SOURCE_SCOPE + "/" + "progress");
-      url += "?message=" + URL.encodeComponent(message, true);
+      url += "?message=" + URL.encodeQueryString(message);
       return url;
    }
    

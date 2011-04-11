@@ -33,9 +33,6 @@ public class GlassPanel extends ResizeComposite
       glassElem.getStyle().setBackgroundColor("white");
       glassElem.getStyle().setProperty("opacity", "0.0");
       glassElem.getStyle().setProperty("filter", "alpha(opacity=0)");
-      panel_.add(glass_);
-      panel_.setWidgetLeftRight(glass_, 0, Unit.PX, 0, Unit.PX);
-      panel_.setWidgetTopBottom(glass_, 0, Unit.PX, 0, Unit.PX);
 
       setGlass(false);
 
@@ -44,8 +41,20 @@ public class GlassPanel extends ResizeComposite
 
    public void setGlass(boolean enabled)
    {
-      Element container = panel_.getWidgetContainerElement(glass_);
-      container.getStyle().setDisplay(enabled ? Display.BLOCK : Display.NONE);
+      if (enabled)
+      {
+         if (glass_.getParent() != panel_)
+         {
+            panel_.add(glass_);
+            panel_.setWidgetLeftRight(glass_, 0, Unit.PX, 0, Unit.PX);
+            panel_.setWidgetTopBottom(glass_, 0, Unit.PX, 0, Unit.PX);
+         }
+      }
+      else
+      {
+         if (glass_.getParent() == panel_)
+            panel_.remove(glass_);
+      }
    }
 
    private LayoutPanel panel_;

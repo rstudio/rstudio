@@ -49,6 +49,9 @@
       </any>
    </replace-with>
    
+   <replace-with class="org.rstudio.studio.client.workbench.views.console.shell.impl.PlainTextEditorImpl">
+      <when-type-is class="org.rstudio.studio.client.workbench.views.console.shell.impl.PlainTextEditorImpl" />
+   </replace-with>
    <replace-with class="org.rstudio.studio.client.workbench.views.console.shell.impl.PlainTextEditorImplFirefox">
       <when-type-is class="org.rstudio.studio.client.workbench.views.console.shell.impl.PlainTextEditorImpl" />
       <any>

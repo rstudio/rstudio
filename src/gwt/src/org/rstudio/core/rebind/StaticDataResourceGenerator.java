@@ -45,7 +45,7 @@ public final class StaticDataResourceGenerator extends AbstractResourceGenerator
     }
 
     URL resource = resources[0];
-    String outputUrlExpression = context.deploy(resource, true);
+    String outputUrlExpression = context.deploy(resource, null, true);
 
     SourceWriter sw = new StringSourceWriter();
     // Write the expression to create the subtype.
