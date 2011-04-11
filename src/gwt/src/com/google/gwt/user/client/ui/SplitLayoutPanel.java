@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,28 +16,32 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Window;
 
 /**
  * A panel that adds user-positioned splitters between each of its child
  * widgets.
- * 
+ *
  * <p>
  * This panel is used in the same way as {@link DockLayoutPanel}, except that
  * its children's sizes are always specified in {@link Unit#PX} units, and each
  * pair of child widgets has a splitter between them that the user can drag.
  * </p>
- * 
+ *
  * <p>
  * This widget will <em>only</em> work in standards mode, which requires that
  * the HTML page in which it is run have an explicit &lt;!DOCTYPE&gt;
  * declaration.
  * </p>
- * 
+ *
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
  * <li>.gwt-SplitLayoutPanel { the panel itself }</li>
@@ -46,7 +50,7 @@ import com.google.gwt.user.client.Event;
  * <li>.gwt-SplitLayoutPanel .gwt-SplitLayoutPanel-VDragger { vertical dragger }
  * </li>
  * </ul>
- * 
+ *
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.SplitLayoutPanelExample}
@@ -57,13 +61,18 @@ public class SplitLayoutPanel extends DockLayoutPanel {
   class HSplitter extends Splitter {
     public HSplitter(Widget target, boolean reverse) {
       super(target, reverse);
-      getElement().getStyle().setPropertyPx("width", SPLITTER_SIZE);
+      getElement().getStyle().setPropertyPx("width", splitterSize);
       setStyleName("gwt-SplitLayoutPanel-HDragger");
     }
 
     @Override
     protected int getAbsolutePosition() {
       return getAbsoluteLeft();
+    }
+
+    @Override
+    protected double getCenterSize() {
+      return getCenterWidth();
     }
 
     @Override
@@ -87,10 +96,12 @@ public class SplitLayoutPanel extends DockLayoutPanel {
 
     private int offset;
     private boolean mouseDown;
-    private Command layoutCommand;
+    private ScheduledCommand layoutCommand;
 
     private final boolean reverse;
     private int minSize;
+
+    private double centerSize, syncedCenterSize;
 
     public Splitter(Widget target, boolean reverse) {
       this.target = target;
@@ -105,8 +116,20 @@ public class SplitLayoutPanel extends DockLayoutPanel {
     public void onBrowserEvent(Event event) {
       switch (event.getTypeInt()) {
         case Event.ONMOUSEDOWN:
-          fireEvent(new SplitterBeforeResizeEvent());
           mouseDown = true;
+
+          /*
+           * Resize glassElem to take up the entire scrollable window area,
+           * which is the greater of the scroll size and the client size.
+           */
+          int width = Math.max(Window.getClientWidth(),
+              Document.get().getScrollWidth());
+          int height = Math.max(Window.getClientHeight(),
+              Document.get().getScrollHeight());
+          glassElem.getStyle().setHeight(height, Unit.PX);
+          glassElem.getStyle().setWidth(width, Unit.PX);
+          Document.get().getBody().appendChild(glassElem);
+
           offset = getEventPosition(event) - getAbsolutePosition();
           Event.setCapture(getElement());
           event.preventDefault();
@@ -114,9 +137,11 @@ public class SplitLayoutPanel extends DockLayoutPanel {
 
         case Event.ONMOUSEUP:
           mouseDown = false;
+
+          glassElem.removeFromParent();
+
           Event.releaseCapture(getElement());
           event.preventDefault();
-          fireEvent(new SplitterResizedEvent());
           break;
 
         case Event.ONMOUSEMOVE:
@@ -146,13 +171,34 @@ public class SplitLayoutPanel extends DockLayoutPanel {
 
     protected abstract int getAbsolutePosition();
 
+    protected abstract double getCenterSize();
+
     protected abstract int getEventPosition(Event event);
 
     protected abstract int getTargetPosition();
 
     protected abstract int getTargetSize();
 
-    private void setAssociatedWidgetSize(int size) {
+    private double getMaxSize() {
+      // To avoid seeing stale center size values due to deferred layout
+      // updates, maintain our own copy up to date and resync when the
+      // DockLayoutPanel value changes.
+      double newCenterSize = getCenterSize();
+      if (syncedCenterSize != newCenterSize) {
+        syncedCenterSize = newCenterSize;
+        centerSize = newCenterSize;
+      }
+
+      return Math.max(((LayoutData) target.getLayoutData()).size + centerSize,
+                0);
+    }
+
+    private void setAssociatedWidgetSize(double size) {
+      double maxSize = getMaxSize();
+      if (size > maxSize) {
+        size = maxSize;
+      }
+
       if (size < minSize) {
         size = minSize;
       }
@@ -162,6 +208,8 @@ public class SplitLayoutPanel extends DockLayoutPanel {
         return;
       }
 
+      // Adjust our view until the deferred layout gets scheduled.
+      centerSize += layout.size - size;
       layout.size = size;
 
       // Defer actually updating the layout, so that if we receive many
@@ -181,13 +229,18 @@ public class SplitLayoutPanel extends DockLayoutPanel {
   class VSplitter extends Splitter {
     public VSplitter(Widget target, boolean reverse) {
       super(target, reverse);
-      getElement().getStyle().setPropertyPx("height", SPLITTER_SIZE);
+      getElement().getStyle().setPropertyPx("height", splitterSize);
       setStyleName("gwt-SplitLayoutPanel-VDragger");
     }
 
     @Override
     protected int getAbsolutePosition() {
       return getAbsoluteTop();
+    }
+
+    @Override
+    protected double getCenterSize() {
+      return getCenterHeight();
     }
 
     @Override
@@ -206,11 +259,59 @@ public class SplitLayoutPanel extends DockLayoutPanel {
     }
   }
 
-  private static final int SPLITTER_SIZE = 3;
+  private static final int DEFAULT_SPLITTER_SIZE = 8;
 
+  /**
+   * The element that masks the screen so we can catch mouse events over
+   * iframes.
+   */
+  private static Element glassElem = null;
+
+  private final int splitterSize;
+
+  /**
+   * Construct a new {@link SplitLayoutPanel} with the default splitter size of
+   * 8px.
+   */
   public SplitLayoutPanel() {
+    this(DEFAULT_SPLITTER_SIZE);
+  }
+
+  /**
+   * Construct a new {@link SplitLayoutPanel} with the specified splitter size
+   * in pixels.
+   *
+   * @param splitterSize the size of the splitter in pixels
+   */
+  public SplitLayoutPanel(int splitterSize) {
     super(Unit.PX);
+    this.splitterSize = splitterSize;
     setStyleName("gwt-SplitLayoutPanel");
+
+    if (glassElem == null) {
+      glassElem = Document.get().createDivElement();
+      glassElem.getStyle().setPosition(Position.ABSOLUTE);
+      glassElem.getStyle().setTop(0, Unit.PX);
+      glassElem.getStyle().setLeft(0, Unit.PX);
+      glassElem.getStyle().setMargin(0, Unit.PX);
+      glassElem.getStyle().setPadding(0, Unit.PX);
+      glassElem.getStyle().setBorderWidth(0, Unit.PX);
+
+      // We need to set the background color or mouse events will go right
+      // through the glassElem. If the SplitPanel contains an iframe, the
+      // iframe will capture the event and the slider will stop moving.
+      glassElem.getStyle().setProperty("background", "white");
+      glassElem.getStyle().setOpacity(0.0);
+    }
+  }
+
+  /**
+   * Return the size of the splitter in pixels.
+   *
+   * @return the splitter size
+   */
+  public int getSplitterSize() {
+    return splitterSize;
   }
 
   @Override
@@ -225,12 +326,13 @@ public class SplitLayoutPanel extends DockLayoutPanel {
   public boolean remove(Widget child) {
     assert !(child instanceof Splitter) : "Splitters may not be directly removed";
 
+    int idx = getWidgetIndex(child);
     if (super.remove(child)) {
       // Remove the associated splitter, if any.
-      int idx = getWidgetIndex(child);
-      if (idx < getWidgetCount() - 1) {
+      // Now that the widget is removed, idx is the index of the splitter.
+      if (idx < getWidgetCount()) {
         // Call super.remove(), or we'll end up recursing.
-        super.remove(getWidget(idx + 1));
+        super.remove(getWidget(idx));
       }
       return true;
     }
@@ -239,19 +341,23 @@ public class SplitLayoutPanel extends DockLayoutPanel {
 
   /**
    * Sets the minimum allowable size for the given widget.
-   * 
+   *
    * <p>
-   * Its assocated splitter cannot be dragged to a position that would make it
+   * Its associated splitter cannot be dragged to a position that would make it
    * smaller than this size. This method has no effect for the
    * {@link DockLayoutPanel.Direction#CENTER} widget.
    * </p>
-   * 
+   *
    * @param child the child whose minimum size will be set
    * @param minSize the minimum size for this widget
    */
   public void setWidgetMinSize(Widget child, int minSize) {
+    assertIsChild(child);
     Splitter splitter = getAssociatedSplitter(child);
-    splitter.setMinSize(minSize);
+    // The splitter is null for the center element.
+    if (splitter != null) {
+      splitter.setMinSize(minSize);
+    }
   }
 
   private Splitter getAssociatedSplitter(Widget child) {
@@ -259,7 +365,7 @@ public class SplitLayoutPanel extends DockLayoutPanel {
     // widget that *isn't* followed by a splitter must be the CENTER, which has
     // no associated splitter.
     int idx = getWidgetIndex(child);
-    if (idx < getWidgetCount() - 2) {
+    if (idx > -1 && idx < getWidgetCount() - 1) {
       Widget splitter = getWidget(idx + 1);
       assert splitter instanceof Splitter : "Expected child widget to be splitter";
       return (Splitter) splitter;
@@ -272,7 +378,7 @@ public class SplitLayoutPanel extends DockLayoutPanel {
 
     LayoutData layout = (LayoutData) widget.getLayoutData();
     Splitter splitter = null;
-    switch (layout.direction) {
+    switch (getResolvedDirection(layout.direction)) {
       case WEST:
         splitter = new HSplitter(widget, false);
         break;
@@ -288,6 +394,7 @@ public class SplitLayoutPanel extends DockLayoutPanel {
       default:
         assert false : "Unexpected direction";
     }
+
     splitter.addHandler(new SplitterBeforeResizeHandler() {
       public void onSplitterBeforeResize(SplitterBeforeResizeEvent event)
       {
@@ -301,17 +408,15 @@ public class SplitLayoutPanel extends DockLayoutPanel {
       }
     }, SplitterResizedEvent.TYPE);
 
-    super.insert(splitter, layout.direction, SPLITTER_SIZE, before);
+    super.insert(splitter, layout.direction, splitterSize, before);
   }
 
-  public HandlerRegistration addSplitterBeforeResizeHandler(
-                                           SplitterBeforeResizeHandler handler)
+  public HandlerRegistration addSplitterBeforeResizeHandler(SplitterBeforeResizeHandler handler)
   {
     return addHandler(handler, SplitterBeforeResizeEvent.TYPE);
   }
 
-  public HandlerRegistration addSplitterResizedHandler(
-                                                SplitterResizedHandler handler)
+  public HandlerRegistration addSplitterResizedHandler(SplitterResizedHandler handler)
   {
     return addHandler(handler, SplitterResizedEvent.TYPE);
   }
