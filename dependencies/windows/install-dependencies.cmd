@@ -15,27 +15,32 @@ set GWT_FILE=gwt-2.3.0.m1.zip
 
 if not exist boost-win (
   wget %WGET_ARGS% "%BASEURL%%BOOST_FILE%"
+  echo Unzipping %BOOST_FILE%
   unzip %UNZIP_ARGS% "%BOOST_FILE%"
-  del "BOOST_FILE%"
+  del "%BOOST_FILE%"
 )
 
 if not exist mingw64 (
   wget %WGET_ARGS% "%BASEURL%%MINGW_FILE%"
+  echo Unzipping %MINGW_FILE%
   unzip %UNZIP_ARGS% "%MINGW_FILE%"
   del "%MINGW_FILE%"
 )
 
+mkdir ..\..\src\gwt\lib
 pushd ..\..\src\gwt\lib
 
 if not exist gin\1.5 (
   wget %WGET_ARGS% "%BASEURL%%GIN_FILE%"
   mkdir gin\1.5
+  echo Unzipping %GIN_FILE%
   unzip %UNZIP_ARGS% "%GIN_FILE%" -d gin\1.5
   del "%GIN_FILE%"
 )
 
 if not exist gwt\2.3.0-m1 (
   wget %WGET_ARGS% "%BASEURL%%GWT_FILE%"
+  echo Unzipping %GWT_FILE%
   unzip %UNZIP_ARGS% "%GWT_FILE%"
   mkdir gwt
   move gwt-2.3.0-m1 gwt\2.3.0-m1
