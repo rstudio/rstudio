@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dom.client.TagName;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.uibinder.attributeparsers.AttributeParser;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
@@ -183,8 +184,6 @@ public class UiBinderWriter implements Statements {
    */
   private final JClassType baseClass;
 
-  private final HtmlElementFactory elementFactory;
-
   /**
    * The name of the class we're creating, e.g. MyUiBinderImpl
    */
@@ -234,7 +233,7 @@ public class UiBinderWriter implements Statements {
       String templatePath, TypeOracle oracle, MortalLogger logger,
       FieldManager fieldManager, MessagesWriter messagesWriter,
       DesignTimeUtils designTime, UiBinderContext uiBinderCtx,
-      HtmlElementFactory elementFactory, boolean useSafeHtmlTemplates)
+      boolean useSafeHtmlTemplates)
       throws UnableToCompleteException {
     this.baseClass = baseClass;
     this.implClassName = implClassName;
@@ -245,7 +244,6 @@ public class UiBinderWriter implements Statements {
     this.messages = messagesWriter;
     this.designTime = designTime;
     this.uiBinderCtx = uiBinderCtx;
-    this.elementFactory = elementFactory;
     this.useSafeHtmlTemplates = useSafeHtmlTemplates;
 
     // Check for possible misuse 'GWT.create(UiBinder.class)'
@@ -827,7 +825,19 @@ public class UiBinderWriter implements Statements {
    * Given a DOM tag name, return the corresponding JSO subclass.
    */
   private JClassType findDomElementTypeForTag(String tag) {
-    return elementFactory.findElementTypeForTag(tag, oracle);
+    JClassType elementClass = oracle.findType("com.google.gwt.dom.client.Element");
+    JClassType[] types = elementClass.getSubtypes();
+    for (JClassType type : types) {
+      TagName annotation = type.getAnnotation(TagName.class);
+      if (annotation != null) {
+        for (String annotationTag : annotation.value()) {
+          if (annotationTag.equals(tag)) {
+            return type;
+          }
+        }
+      }
+    }
+    return elementClass;
   }
 
   /**

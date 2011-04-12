@@ -21,7 +21,6 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.uibinder.rebind.DesignTimeUtilsStub;
 import com.google.gwt.uibinder.rebind.FieldManager;
 import com.google.gwt.uibinder.rebind.MortalLogger;
-import com.google.gwt.uibinder.rebind.HtmlElementFactory;
 import com.google.gwt.uibinder.rebind.UiBinderContext;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
@@ -32,31 +31,29 @@ import java.util.List;
 
 class MockUiBinderWriter extends UiBinderWriter {
   final List<String> statements = new ArrayList<String>();
-  
-  public MockUiBinderWriter(JClassType baseClass, String implClassName,
-      String templatePath, TypeOracle oracle, MortalLogger logger,
-      FieldManager fieldManager, MessagesWriter messagesWriter, 
-      HtmlElementFactory factory) throws UnableToCompleteException {
-    super(baseClass, implClassName, templatePath, oracle, logger, fieldManager,
-          messagesWriter, DesignTimeUtilsStub.EMPTY, new UiBinderContext(),
-          factory, true);
+
+  public MockUiBinderWriter(JClassType baseClass, String implClassName, String templatePath,
+      TypeOracle oracle, MortalLogger logger, FieldManager fieldManager,
+      MessagesWriter messagesWriter) throws UnableToCompleteException {
+    super(baseClass, implClassName, templatePath, oracle, logger, fieldManager, messagesWriter,
+        DesignTimeUtilsStub.EMPTY, new UiBinderContext(), true);
   }
 
   @Override
   public void addStatement(String format, Object... args) {
     statements.add(String.format(format, args));
   }
-  
+
   /**
-   * Mocked out version of the template declaration. Returns
-   * the template prefixed with "@mockToken-"
+   * Mocked out version of the template declaration. Returns the template
+   * prefixed with "@mockToken-"
    */
   public String declareTemplateCall(String html) {
     return "\"@mockToken-" + html + "\"";
   }
-  
+
   @Override
   public String parseElementToField(XMLElement elem) {
     return elem.consumeOpeningTag();
-  }  
+  }
 }

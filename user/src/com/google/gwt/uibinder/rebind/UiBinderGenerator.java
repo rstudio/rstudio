@@ -16,7 +16,6 @@
 package com.google.gwt.uibinder.rebind;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
-import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
@@ -143,7 +142,7 @@ public class UiBinderGenerator extends Generator {
 
     UiBinderWriter uiBinderWriter = new UiBinderWriter(interfaceType, implName,
         templatePath, oracle, logger, new FieldManager(oracle, logger),
-        messages, designTime, uiBinderCtx, getElementFactory(propertyOracle), 
+        messages, designTime, uiBinderCtx, 
         useSafeHtmlTemplates(logger, propertyOracle));
 
     Document doc = getW3cDoc(logger, designTime, resourceOracle, templatePath);
@@ -159,20 +158,6 @@ public class UiBinderGenerator extends Generator {
     new BundleWriter(bundleClass, writerManager, oracle, logger).write();
 
     writerManager.commit();
-  }
-
-  private HtmlElementFactory getElementFactory(PropertyOracle propertyOracle) {
-    Class<?> elementFactoryClass;
-
-    try {
-      // TODO(cromwellian) finish this or get it out of here
-      ConfigurationProperty factoryProperty = propertyOracle
-          .getConfigurationProperty(ELEMENT_FACTORY_PROPERTY);
-      elementFactoryClass = Class.forName(factoryProperty.getValues().get(0));
-      return (HtmlElementFactory) elementFactoryClass.newInstance();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
   }
 
   private Document getW3cDoc(MortalLogger logger, DesignTimeUtils designTime,
