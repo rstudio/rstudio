@@ -70,6 +70,24 @@ public class GwtSafeHtmlBuilderTest extends GWTTestCase {
     }
   }
 
+  public void testAppendChars() {
+    SafeHtmlBuilder b = new SafeHtmlBuilder();
+    b.append('a');
+    b.append('&');
+    b.append('b');
+    b.append('<');
+    b.append('c');
+    b.append('>');
+    b.append('d');
+    b.append('"');
+    b.append('e');
+    b.append('\'');
+    b.append('f');
+
+    SafeHtml html = b.toSafeHtml();
+    assertEquals("a&amp;b&lt;c&gt;d&quot;e&#39;f", html.asString());
+  }
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.safehtml.SafeHtmlTestsModule";

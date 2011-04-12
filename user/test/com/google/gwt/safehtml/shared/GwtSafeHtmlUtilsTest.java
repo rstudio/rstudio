@@ -101,6 +101,26 @@ public class GwtSafeHtmlUtilsTest extends GWTTestCase {
     assertEquals(SafeHtmlUtils.htmlEscape(CONSTANT_HTML), h.asString());
   }
 
+  public void testEscape_chars() {
+    String escaped = SafeHtmlUtils.htmlEscape('a');
+    assertEquals("a", escaped);
+
+    escaped = SafeHtmlUtils.htmlEscape('&');
+    assertEquals("&amp;", escaped);
+
+    escaped = SafeHtmlUtils.htmlEscape('<');
+    assertEquals("&lt;", escaped);
+
+    escaped = SafeHtmlUtils.htmlEscape('>');
+    assertEquals("&gt;", escaped);
+
+    escaped = SafeHtmlUtils.htmlEscape('"');
+    assertEquals("&quot;", escaped);
+
+    escaped = SafeHtmlUtils.htmlEscape('\'');
+    assertEquals("&#39;", escaped);
+  }
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.safehtml.SafeHtmlTestsModule";

@@ -37,7 +37,7 @@ public final class SafeHtmlUtils {
   private static final RegExp QUOT_RE = RegExp.compile("\"", "g");
 
   /**
-   * Returns a SafeHtml constructed from a safe string, i.e., without escaping
+   * Returns a {@link SafeHtml} constructed from a safe string, i.e., without escaping
    * the string.
    *
    * <p>
@@ -85,7 +85,7 @@ public final class SafeHtmlUtils {
    * Returns a {@link SafeHtml} containing the escaped string.
    *
    * @param s the input String
-   * @return a SafeHtml instance
+   * @return a {@link SafeHtml} instance
    */
   public static SafeHtml fromString(String s) {
     return new SafeHtmlString(htmlEscape(s));
@@ -94,13 +94,46 @@ public final class SafeHtmlUtils {
   /**
    * Returns a {@link SafeHtml} constructed from a trusted string, i.e., without
    * escaping the string. No checks are performed. The calling code should be
-   * carefully reviewed to ensure the argument meets the SafeHtml contract.
+   * carefully reviewed to ensure the argument meets the {@link SafeHtml} contract.
    *
    * @param s the input String
-   * @return a SafeHtml instance
+   * @return a {@link SafeHtml} instance
    */
   public static SafeHtml fromTrustedString(String s) {
     return new SafeHtmlString(s);
+  }
+
+  /**
+   * HTML-escapes a character.  HTML meta characters
+   * will be escaped as follows:
+   *
+   * <pre>
+   * &amp; - &amp;amp;
+   * &lt; - &amp;lt;
+   * &gt; - &amp;gt;
+   * &quot; - &amp;quot;
+   * &#39; - &amp;#39;
+   * </pre>
+   *
+   * @param c the character to be escaped
+   * @return a string containing either the input character
+   *     or an equivalent HTML Entity Reference
+   */
+  public static String htmlEscape(char c) {
+    switch (c) {
+      case '&':
+        return "&amp;";
+      case '<':
+        return "&lt;";
+      case '>':
+        return "&gt;";
+      case '"':
+        return "&quot;";
+      case '\'':
+        return "&#39;";
+      default:
+        return "" + c;
+    }
   }
 
   /**
@@ -108,10 +141,12 @@ public final class SafeHtmlUtils {
    *
    * Note: The following variants of this function were profiled on FF36,
    * Chrome6, IE8:
-   * #1) for each case, check indexOf, then use s.replace(regex, string)
-   * #2) for each case, check indexOf, then use s.replaceAll()
-   * #3) check if any metachar is present using a regex, then use #1
-   * #4) for each case, use s.replace(regex, string)
+   * <ol>
+   * <li>For each case, check indexOf, then use s.replace(regex, string)</li>
+   * <li>For each case, check indexOf, then use s.replaceAll()</li>
+   * <li>Check if any metachar is present using a regex, then use #1</li>
+   * <li>For each case, use s.replace(regex, string)</li>
+   * </ol>
    *
    * #1 was found to be the fastest, and is used below.
    *

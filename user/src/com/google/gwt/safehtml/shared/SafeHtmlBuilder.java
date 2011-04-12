@@ -80,9 +80,10 @@ public final class SafeHtmlBuilder {
    *
    * @param c the character whose string representation to append
    * @return a reference to this object
+   * @see SafeHtmlUtils#htmlEscape(char)
    */
   public SafeHtmlBuilder append(char c) {
-    sb.append(c);
+    sb.append(SafeHtmlUtils.htmlEscape(c));
     return this;
   }
 
@@ -147,6 +148,7 @@ public final class SafeHtmlBuilder {
    *
    * @param text the string to append
    * @return a reference to this object
+   * @see SafeHtmlUtils#htmlEscape(String)
    */
   public SafeHtmlBuilder appendEscaped(String text) {
     sb.append(SafeHtmlUtils.htmlEscape(text));
@@ -156,10 +158,11 @@ public final class SafeHtmlBuilder {
   /**
    * Appends a string consisting of several newline-separated lines after
    * HTML-escaping it. Newlines in the original string are converted to {@code
-   * <br>}.
+   * <br>} tags.
    *
    * @param text the string to append
    * @return a reference to this object
+   * @see SafeHtmlUtils#htmlEscape(String)
    */
   public SafeHtmlBuilder appendEscapedLines(String text) {
     sb.append(SafeHtmlUtils.htmlEscape(text).replaceAll("\n", "<br>"));
