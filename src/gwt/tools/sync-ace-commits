@@ -8,7 +8,7 @@ cd ace
 git checkout master
 
 # Point this to the upstream commit that we've tested
-git reset --hard af5d1177
+git reset --hard bc027e927ac64fcb918b
 
 git submodule update --init --recursive
 
@@ -17,7 +17,6 @@ git merge \
     origin/bugfix-webkit-paste2 \
     origin/bugfix-updatefontsize \
     origin/bugfix-ctrl-backspace \
-    origin/bugfix-wide-characters \
     origin/bugfix-active-line-back \
     origin/bugfix-eclipse-print-margin \
     origin/bugfix-selecttostartend \
