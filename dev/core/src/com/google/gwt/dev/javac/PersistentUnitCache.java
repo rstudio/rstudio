@@ -266,7 +266,7 @@ class PersistentUnitCache extends MemoryUnitCache {
    */
   static final String UNIT_CACHE_PREFIX = "gwt-unitCache";
 
-  static final String CACHE_PREFIX = UNIT_CACHE_PREFIX + "-";
+  static final String CACHE_FILE_PREFIX = UNIT_CACHE_PREFIX + "-";
 
   /**
    * If there are more than this many files in the cache, clean up the old
@@ -310,7 +310,7 @@ class PersistentUnitCache extends MemoryUnitCache {
     long timestamp = System.currentTimeMillis();
     do {
       currentCacheFile =
-          new File(cacheDirectory, CACHE_PREFIX + String.format("%016X", timestamp++));
+          new File(cacheDirectory, CACHE_FILE_PREFIX + String.format("%016X", timestamp++));
     } while (currentCacheFile.exists());
 
     // this isn't 100% reliable if multiple processes are in contention
@@ -424,7 +424,7 @@ class PersistentUnitCache extends MemoryUnitCache {
       File[] files = cacheDirectory.listFiles();
       List<File> cacheFiles = new ArrayList<File>();
       for (File file : files) {
-        if (file.getName().startsWith(CACHE_PREFIX)) {
+        if (file.getName().startsWith(CACHE_FILE_PREFIX)) {
           cacheFiles.add(file);
         }
       }
@@ -460,6 +460,7 @@ class PersistentUnitCache extends MemoryUnitCache {
           if (cacheFile.equals(currentCacheFile)) {
             continue;
           }
+          boolean deleteCacheFile = false;
           try {
             fis = new FileInputStream(cacheFile);
             bis = new BufferedInputStream(fis);
@@ -487,15 +488,21 @@ class PersistentUnitCache extends MemoryUnitCache {
           } catch (EOFException ex) {
             // Go on to the next file.
           } catch (IOException ex) {
-            logger.log(TreeLogger.WARN, "Error reading cache file: " + cacheFile.getAbsolutePath(),
-                ex);
+            deleteCacheFile = true;
+            logger.log(TreeLogger.TRACE, "Ignoring and deleting cache log "
+                + cacheFile.getAbsolutePath() + " due to read error.", ex);
           } catch (ClassNotFoundException ex) {
-            logger.log(TreeLogger.ERROR, "Error deserializing CompilationUnit in "
-                + cacheFile.getAbsolutePath(), ex);
+            deleteCacheFile = true;
+            logger.log(TreeLogger.TRACE, "Ignoring and deleting cache log "
+                + cacheFile.getAbsolutePath() + " due to deserialization error.", ex);
           } finally {
             Utility.close(inputStream);
             Utility.close(bis);
             Utility.close(fis);
+          }
+          if (deleteCacheFile) {
+            cacheFile.delete();
+          } else {
             logger.log(TreeLogger.TRACE, cacheFile.getName() + ": Load complete");
           }
         }

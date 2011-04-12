@@ -22,12 +22,31 @@ import com.google.gwt.dev.util.Util;
 import junit.framework.TestCase;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
 /**
  * Unit test for {@link PersistentUnitCache}.
  */
 public class PersistentUnitCacheTest extends TestCase {
+
+  private static class ThrowsClassNotFoundException implements Serializable {
+    @SuppressWarnings("unused")
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+      throw new ClassNotFoundException();
+    }
+  }
+
+  private static class ThrowsIOException implements Serializable {
+    @SuppressWarnings("unused")
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+      throw new IOException();
+    }
+  }
 
   File lastCacheDir = null;
 
@@ -36,6 +55,41 @@ public class PersistentUnitCacheTest extends TestCase {
       Util.recursiveDelete(lastCacheDir, false);
     }
     lastCacheDir = null;
+  }
+
+  /**
+   * When a cache file encounters a serialization error, the logic should assume
+   * the cache log is stale and remove it.
+   */
+  public void testClassNotFoundException() throws IOException, UnableToCompleteException,
+      InterruptedException {
+    checkInvalidObjectInCache(new ThrowsClassNotFoundException());
+  }
+
+  /**
+   * Test if a file already exists with the name we want to put the cache dir
+   * in.
+   */
+  public void testFileInTheWay() throws IOException {
+    TreeLogger logger = TreeLogger.NULL;
+    File fileInTheWay = File.createTempFile("PersistentUnitTest-inTheWay", "");
+    assertNotNull(fileInTheWay);
+    assertTrue(fileInTheWay.exists());
+    fileInTheWay.deleteOnExit();
+    try {
+      new PersistentUnitCache(logger, fileInTheWay);
+      fail("Expected an exception to be thrown");
+    } catch (UnableToCompleteException expected) {
+    }
+  }
+
+  /**
+   * If a cache file has some kind of IO exception, (this can happen with a
+   * stale cache file), then the exception should be ignored and the cache file
+   * removed.
+   */
+  public void testIOException() throws IOException, UnableToCompleteException, InterruptedException {
+    checkInvalidObjectInCache(new ThrowsIOException());
   }
 
   /**
@@ -52,37 +106,13 @@ public class PersistentUnitCacheTest extends TestCase {
     assertTrue(newDir.isDirectory());
   }
 
-  /**
-   * Test if a file already exists with the name we want to put the
-   * cache dir in.
-   */
-  public void testFileInTheWay() throws IOException {
-    TreeLogger logger = TreeLogger.NULL;
-    File fileInTheWay = File.createTempFile("PersistentUnitTest-inTheWay", "");
-    assertNotNull(fileInTheWay);
-    assertTrue(fileInTheWay.exists());
-    fileInTheWay.deleteOnExit();
-    try {
-      new PersistentUnitCache(logger, fileInTheWay);
-      fail("Expected an exception to be thrown");
-    } catch (UnableToCompleteException expected) {
-    }
-  }
-
   public void testPersistentCache() throws IOException, InterruptedException,
       UnableToCompleteException {
     TreeLogger logger = TreeLogger.NULL;
 
-    File cacheDir = null;
-    lastCacheDir = cacheDir = File.createTempFile("persistentCacheTest", "");
-    assertNotNull(cacheDir);
-    // Wait, this needs to be a directory, not a file.
-    assertTrue(cacheDir.delete());
-    // directory will get cleaned up in tearDown()
-    assertTrue(cacheDir.mkdir());
+    File cacheDir = lastCacheDir = File.createTempFile("persistentCacheTest", "");
+    File unitCacheDir = mkCacheDir(cacheDir);
 
-    File unitCacheDir = new File(cacheDir, PersistentUnitCache.UNIT_CACHE_PREFIX);
-    assertNull(unitCacheDir.list());
     PersistentUnitCache cache = new PersistentUnitCache(logger, cacheDir);
 
     MockCompilationUnit foo1 = new MockCompilationUnit("com.example.Foo", "Foo: source1");
@@ -203,5 +233,39 @@ public class PersistentUnitCacheTest extends TestCase {
 
   private void assertNumCacheFiles(File unitCacheDir, int expected) {
     assertEquals(expected, unitCacheDir.list().length);
+  }
+
+  private void checkInvalidObjectInCache(Object toSerialize) throws IOException,
+      FileNotFoundException, UnableToCompleteException, InterruptedException {
+    TreeLogger logger = TreeLogger.NULL;
+    File cacheDir = lastCacheDir = File.createTempFile("PersistentUnitTest-CNF", "");
+    File unitCacheDir = mkCacheDir(cacheDir);
+
+    /*
+     * Create a cache file that has the right filename, but the wrong kind of
+     * object in it.
+     */
+    File errorFile = new File(unitCacheDir, PersistentUnitCache.CACHE_FILE_PREFIX + "12345");
+    ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(errorFile));
+    os.writeObject(toSerialize);
+    os.close();
+
+    assertNumCacheFiles(unitCacheDir, 1);
+
+    PersistentUnitCache cache = new PersistentUnitCache(logger, cacheDir);
+    cache.cleanup(logger);
+    cache.shutdown();
+
+    // The bogus file should have been removed.
+    assertNumCacheFiles(unitCacheDir, 0);
+  }
+
+  private File mkCacheDir(File cacheDir) {
+    assertNotNull(cacheDir);
+    assertTrue(cacheDir.exists());
+    cacheDir.delete();
+    File unitCacheDir = new File(cacheDir, PersistentUnitCache.UNIT_CACHE_PREFIX);
+    unitCacheDir.mkdirs();
+    return unitCacheDir;
   }
 }
