@@ -5,16 +5,9 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
 	<classpathentry kind="con" path="com.google.gwt.eclipse.core.GWT_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/gin/1.5/aopalliance.jar"/>
-	<classpathentry kind="lib" path="lib/gin/1.5/gin-1.5-post-gwt-2.2.jar"/>
+	<classpathentry kind="lib" path="lib/gin/1.5/gin-1.5-post-gwt-2.2.jar" sourcepath="/Users/jcheng/rstudio/src/gwt/lib/gin/1.5/gin-1.5-post-gwt-2.2.jar"/>
 	<classpathentry kind="lib" path="lib/gin/1.5/guice-assistedinject-snapshot.jar"/>
 	<classpathentry kind="lib" path="lib/gin/1.5/guice-snapshot.jar"/>
 	<classpathentry kind="lib" path="lib/gin/1.5/javax.inject.jar"/>
-	<classpathentry kind="lib" path="lib/gwt/2.3.0-m1/gwt-api-checker.jar"/>
-	<classpathentry kind="lib" path="lib/gwt/2.3.0-m1/gwt-dev.jar"/>
-	<classpathentry kind="lib" path="lib/gwt/2.3.0-m1/gwt-servlet-deps"/>
-	<classpathentry kind="lib" path="lib/gwt/2.3.0-m1/gwt-servlet.jar"/>
-	<classpathentry kind="lib" path="lib/gwt/2.3.0-m1/gwt-soyc-vis.jar"/>
-	<classpathentry kind="lib" path="lib/gwt/2.3.0-m1/gwt-user.jar"/>
-	<classpathentry kind="lib" path="lib/gwt/2.3.0-m1/validation-api-1.0.0.GA.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
