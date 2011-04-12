@@ -54,6 +54,9 @@ public:
 public:
    FilePath() ;
    explicit FilePath(const std::string& absolutePath) ;
+#if _WIN32
+   explicit FilePath(const std::wstring& absolutePath) ;
+#endif
    virtual ~FilePath() ;
    // COPYING: via shared_ptr (immutable)
    

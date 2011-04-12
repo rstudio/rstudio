@@ -94,49 +94,12 @@ typedef std::wstring internal_string;
 
 std::string toString(const internal_string& value)
 {
-   if (value.size() == 0)
-      return std::string();
-
-   const wchar_t * cstr = value.c_str();
-   int chars = ::WideCharToMultiByte(CP_UTF8, 0,
-                                     cstr, -1,
-                                     NULL, 0, NULL, NULL);
-   if (chars == 0)
-   {
-      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
-      return std::string();
-   }
-
-   std::vector<char> result(chars, 0);
-   chars = ::WideCharToMultiByte(CP_UTF8, 0,
-                                 cstr, -1,
-                                 &(result[0]), result.size(),
-                                 NULL, NULL);
-
-   return std::string(&(result[0]));
+   return string_utils::wideToUtf8(value);
 }
 
 internal_string fromString(const std::string& value)
 {
-   if (value.size() == 0)
-      return std::wstring();
-
-   const char * cstr = value.c_str();
-   int chars = ::MultiByteToWideChar(CP_UTF8, 0,
-                                     cstr, -1,
-                                     NULL, 0);
-   if (chars == 0)
-   {
-      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
-      return std::wstring();
-   }
-
-   std::vector<wchar_t> result(chars, 0);
-   chars = ::MultiByteToWideChar(CP_UTF8, 0,
-                                 cstr, -1,
-                                 &(result[0]), result.size());
-
-   return std::wstring(&(result[0]));
+   return string_utils::utf8ToWide(value);
 }
 
 #else
@@ -175,7 +138,9 @@ FilePath FilePath::safeCurrentPath(const FilePath& revertToPath)
 {
    try
    {
-#if defined(BOOST_FILESYSTEM_VERSION) && BOOST_FILESYSTEM_VERSION != 2
+#ifdef _WIN32
+      return FilePath(boost::filesystem::current_path().wstring()) ;
+#elif defined(BOOST_FILESYSTEM_VERSION) && BOOST_FILESYSTEM_VERSION != 2
       return FilePath(boost::filesystem::current_path().string()) ;
 #else
       return FilePath(boost::filesystem::current_path<path_t>().string()) ;
@@ -262,6 +227,13 @@ FilePath::FilePath(const std::string& absolutePath)
    : pImpl_(new Impl(fromString(std::string(absolutePath.c_str())))) // thwart ref-count
 {
 }
+
+#if _WIN32
+FilePath::FilePath(const std::wstring& absolutePath)
+   : pImpl_(new Impl(absolutePath)) // thwart ref-count
+{
+}
+#endif
 
 FilePath::~FilePath()
 {

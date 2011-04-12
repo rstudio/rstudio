@@ -112,6 +112,7 @@ else()
 
    # source files
    set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
+      Win32StringUtils.cpp
       system/DirectoryMonitor.cpp
       system/RegistryKey.cpp
       system/Win32ParentProcessMonitor.cpp
