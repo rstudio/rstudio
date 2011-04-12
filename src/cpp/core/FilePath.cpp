@@ -830,7 +830,7 @@ Error FilePath::open_w(boost::shared_ptr<std::ostream>* pStream, bool truncate) 
                                    GENERIC_WRITE,
                                    0, // exclusive access
                                    NULL,
-                                   truncate ? CREATE_ALWAYS : CREATE_NEW,
+                                   truncate ? CREATE_ALWAYS : OPEN_ALWAYS,
                                    0,
                                    NULL);
       if (hFile == INVALID_HANDLE_VALUE)
