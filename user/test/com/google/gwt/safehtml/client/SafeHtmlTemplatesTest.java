@@ -16,6 +16,8 @@
 package com.google.gwt.safehtml.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safecss.shared.SafeStyles;
+import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -60,6 +62,13 @@ public class SafeHtmlTemplatesTest extends GWTTestCase {
     @Template("<div id=\"{0}\">{1}</div>")
     SafeHtml templateWithRegularAttribute(String id, SafeHtml html);
 
+    @Template("<div style=\"{0}\">{1}</div>")
+    SafeHtml templateWithSafeStyleAttributeComplete(SafeStyles styles, SafeHtml html);
+
+    @Template("<div style=\"{0}height:{1}px;\">{2}</div>")
+    SafeHtml templateWithSafeStyleAttributeStart(SafeStyles styles,
+        int height /* generates a compile time warning */, SafeHtml html);
+
     @Template("<span><img src=\"{0}/{1}\"/></span>")
     SafeHtml templateWithTwoPartUriAttribute(String baseUrl, String urlPart);
 
@@ -100,6 +109,20 @@ public class SafeHtmlTemplatesTest extends GWTTestCase {
             BAD_URL, SafeHtmlUtils.fromSafeConstant(HTML_MARKUP)).asString());
   }
   
+  public void testTemplateWithSafeStyleAttributeComplete() {
+    Assert.assertEquals("<div style=\"width:10px;\">" + HTML_MARKUP + "</div>",
+        templates.templateWithSafeStyleAttributeComplete(
+            SafeStylesUtils.fromTrustedString("width:10px;"),
+            SafeHtmlUtils.fromSafeConstant(HTML_MARKUP)).asString());
+  }
+
+  public void testTemplateWithSafeStyleAttributeStart() {
+    Assert.assertEquals("<div style=\"width:10px;height:15px;\">" + HTML_MARKUP + "</div>",
+        templates.templateWithSafeStyleAttributeStart(
+            SafeStylesUtils.fromTrustedString("width:10px;"), 15,
+            SafeHtmlUtils.fromSafeConstant(HTML_MARKUP)).asString());
+  }
+
   public void testTemplateWithTwoPartUriAttribute() {
     Assert.assertEquals(
         "<span><img src=\"" + GOOD_URL_ESCAPED + "/x&amp;y\"/></span>",

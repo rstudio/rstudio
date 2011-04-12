@@ -60,15 +60,17 @@ import java.io.Serializable;
  */
 public interface SafeHtml extends Serializable {
   /*
-   * Notes regarding serialization: - It may be reasonable to allow
-   * deserialization on the client of objects serialized on the server (i.e. RPC
-   * responses), based on the assumption that server code is trusted and would
-   * not provide a malicious serialized form (if a MitM were able to modify
-   * server responses, the client would be fully compromised in any case).
-   * However, the GWT RPC framework currently does not seem to provide a
-   * facility for restricting deserialization on the Server only (thought this
-   * shouldn't be difficult to implement through a custom SerializationPolicy)
-   *
+   * Notes regarding serialization:
+   * 
+   * - It may be reasonable to allow deserialization on the client of objects
+   * serialized on the server (i.e. RPC responses), based on the assumption that
+   * server code is trusted and would not provide a malicious serialized form
+   * (if a MitM were able to modify server responses, the client would be fully
+   * compromised in any case). However, the GWT RPC framework currently does not
+   * seem to provide a facility for restricting deserialization on the Server
+   * only (though this shouldn't be difficult to implement through a custom
+   * SerializationPolicy)
+   * 
    * - Some implementations of SafeHtml would in principle be able to enforce
    * their class invariant on deserialization (e.g., SimpleHtmlSanitizer could
    * apply HTML sanitization on deserialization). However, the GWT RPC framework

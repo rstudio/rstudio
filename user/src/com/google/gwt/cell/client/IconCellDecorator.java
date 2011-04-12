@@ -20,6 +20,9 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safecss.shared.SafeStyles;
+import com.google.gwt.safecss.shared.SafeStylesBuilder;
+import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -38,28 +41,26 @@ import java.util.Set;
 public class IconCellDecorator<C> implements Cell<C> {
 
   interface Template extends SafeHtmlTemplates {
-    @Template("<div style=\"position:relative;padding-{0}:{1}px;zoom:1;\">{2}<div>{3}</div></div>")
-    SafeHtml outerDiv(String direction, int width, SafeHtml icon,
-        SafeHtml cellContents);
+    @Template("<div style=\"{0}position:relative;zoom:1;\">{1}<div>{2}</div></div>")
+    SafeHtml outerDiv(SafeStyles padding, SafeHtml icon, SafeHtml cellContents);
 
     /**
      * The wrapper around the image vertically aligned to the bottom.
      */
-    @Template("<div style=\"position:absolute;{0}:0px;bottom:0px;line-height:0px;\">{1}</div>")
-    SafeHtml imageWrapperBottom(String direction, SafeHtml image);
+    @Template("<div style=\"{0}position:absolute;bottom:0px;line-height:0px;\">{1}</div>")
+    SafeHtml imageWrapperBottom(SafeStyles styles, SafeHtml image);
 
     /**
      * The wrapper around the image vertically aligned to the middle.
      */
-    @Template("<div style=\"position:absolute;{0}:0px;top:50%;line-height:0px;"
-        + "margin-top:-{1}px;\">{2}</div>")
-    SafeHtml imageWrapperMiddle(String direction, int halfHeight, SafeHtml image);
+    @Template("<div style=\"{0}position:absolute;top:50%;line-height:0px;\">{1}</div>")
+    SafeHtml imageWrapperMiddle(SafeStyles styles, SafeHtml image);
 
     /**
      * The wrapper around the image vertically aligned to the top.
      */
-    @Template("<div style=\"position:absolute;{0}:0px;top:0px;line-height:0px;\">{1}</div>")
-    SafeHtml imageWrapperTop(String direction, SafeHtml image);
+    @Template("<div style=\"{0}position:absolute;top:0px;line-height:0px;\">{1}</div>")
+    SafeHtml imageWrapperTop(SafeStyles styles, SafeHtml image);
   }
 
   /**
@@ -78,6 +79,8 @@ public class IconCellDecorator<C> implements Cell<C> {
 
   private final int imageWidth;
 
+  private final SafeStyles outerDivPadding;
+  
   private final SafeHtml placeHolderHtml;
 
   /**
@@ -99,8 +102,8 @@ public class IconCellDecorator<C> implements Cell<C> {
    * @param valign the vertical alignment attribute of the contents
    * @param spacing the pixel space between the icon and the cell
    */
-  public IconCellDecorator(ImageResource icon, Cell<C> cell,
-      VerticalAlignmentConstant valign, int spacing) {
+  public IconCellDecorator(ImageResource icon, Cell<C> cell, VerticalAlignmentConstant valign,
+      int spacing) {
     if (template == null) {
       template = GWT.create(Template.class);
     }
@@ -108,6 +111,8 @@ public class IconCellDecorator<C> implements Cell<C> {
     this.iconHtml = getImageHtml(icon, valign, false);
     this.imageWidth = icon.getWidth() + spacing;
     this.placeHolderHtml = getImageHtml(icon, valign, true);
+    this.outerDivPadding =
+        SafeStylesUtils.fromTrustedString("padding-" + direction + ": " + imageWidth + "px;");
   }
 
   public boolean dependsOnSelection() {
@@ -135,9 +140,8 @@ public class IconCellDecorator<C> implements Cell<C> {
   public void render(Context context, C value, SafeHtmlBuilder sb) {
     SafeHtmlBuilder cellBuilder = new SafeHtmlBuilder();
     cell.render(context, value, cellBuilder);
-
-    sb.append(template.outerDiv(direction, imageWidth, isIconUsed(value)
-        ? getIconHtml(value) : placeHolderHtml, cellBuilder.toSafeHtml()));
+    sb.append(template.outerDiv(outerDivPadding, isIconUsed(value) ? getIconHtml(value)
+        : placeHolderHtml, cellBuilder.toSafeHtml()));
   }
 
   public boolean resetFocus(Context context, Element parent, C value) {
@@ -179,8 +183,7 @@ public class IconCellDecorator<C> implements Cell<C> {
    * @param isPlaceholder if true, do not include the background image
    * @return the rendered HTML
    */
-  SafeHtml getImageHtml(ImageResource res, VerticalAlignmentConstant valign,
-      boolean isPlaceholder) {
+  SafeHtml getImageHtml(ImageResource res, VerticalAlignmentConstant valign, boolean isPlaceholder) {
     // Get the HTML for the image.
     SafeHtml image;
     if (isPlaceholder) {
@@ -191,13 +194,16 @@ public class IconCellDecorator<C> implements Cell<C> {
     }
 
     // Create the wrapper based on the vertical alignment.
+    SafeStylesBuilder cssStyles =
+        new SafeStylesBuilder().appendTrustedString(direction + ":0px;");
     if (HasVerticalAlignment.ALIGN_TOP == valign) {
-      return template.imageWrapperTop(direction, image);
+      return template.imageWrapperTop(cssStyles.toSafeStyles(), image);
     } else if (HasVerticalAlignment.ALIGN_BOTTOM == valign) {
-      return template.imageWrapperBottom(direction, image);
+      return template.imageWrapperBottom(cssStyles.toSafeStyles(), image);
     } else {
       int halfHeight = (int) Math.round(res.getHeight() / 2.0);
-      return template.imageWrapperMiddle(direction, halfHeight, image);
+      cssStyles.appendTrustedString("margin-top:-" + halfHeight + "px;");
+      return template.imageWrapperMiddle(cssStyles.toSafeStyles(), image);
     }
   }
 

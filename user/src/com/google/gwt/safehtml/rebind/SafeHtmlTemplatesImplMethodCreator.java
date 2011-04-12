@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
 import com.google.gwt.i18n.shared.GwtLocale;
+import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates.Template;
 import com.google.gwt.safehtml.rebind.ParsedHtmlTemplate.HtmlContext;
 import com.google.gwt.safehtml.rebind.ParsedHtmlTemplate.LiteralChunk;
@@ -46,9 +47,24 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
   private static final String JAVA_LANG_STRING_FQCN = String.class.getName();
 
   /**
+   * Simple class name of the {@link SafeStyles} interface.
+   */
+  private static final String SAFE_STYLES_CN = SafeStyles.class.getSimpleName();
+
+  /**
+   * Fully-qualified class name of the {@link SafeStyles} interface.
+   */
+  private static final String SAFE_STYLES_FQCN = SafeStyles.class.getName();
+
+  /**
+   * Simple class name of the {@link SafeHtml} interface.
+   */
+  private static final String SAFE_HTML_CN = SafeHtml.class.getSimpleName();
+
+  /**
    * Fully-qualified class name of the {@link SafeHtml} interface.
    */
-  public static final String SAFE_HTML_FQCN = SafeHtml.class.getName();
+  private static final String SAFE_HTML_FQCN = SafeHtml.class.getName();
 
   /**
    * Fully-qualified class name of the StringBlessedAsSafeHtml class.
@@ -104,11 +120,13 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
    * template method parameter:
    *
    * <ul>
-   *   <li>If the parameter is not of type {@link String}, it is first converted
-   *       to {@link String}.
-   *   <li>If the template parameter occurs at the start of a URI-valued
-   *       attribute within the template, it is sanitized to ensure that it
-   *       is safe in this context.  This is done by passing the value through
+   *   <li>If the parameter is of type {@link SafeStyles}, it is converted to a
+   *       string using {@link SafeStyles#asString()}.
+   *   <li>Otherwise, if the parameter is not of type {@link String}, it is first
+   *       converted to {@link String}.
+   *   <li>If the template parameter occurs at the start of a URI-valued attribute
+   *       within the template, it is sanitized to ensure that it is safe in this
+   *       context. This is done by passing the value through
    *       {@link UriUtils#sanitizeUri(String)}.
    *   <li>The result is then HTML-escaped by passing it through
    *       {@link SafeHtmlUtils#htmlEscape(String)}.
@@ -138,9 +156,13 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
      */
     String expression = formalParameterName;
 
-    // The parameter's value must be explicitly converted to String unless it
-    // is already of that type.
-    if (!JAVA_LANG_STRING_FQCN.equals(parameterType.getQualifiedSourceName())) {
+    if (isSafeStyles(parameterType)) {
+      // SafeCss is safe in a CSS context, so we can use its string (but we still
+      // escape it).
+      expression = expression + ".asString()";
+    } else if (!JAVA_LANG_STRING_FQCN.equals(parameterType.getQualifiedSourceName())) {
+      // The parameter's value must be explicitly converted to String unless it
+      // is already of that type.
       expression = "String.valueOf(" + expression + ")";
     }
 
@@ -151,7 +173,6 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
 
     // TODO(xtof): Handle EscapedString subtype of SafeHtml, once it's been
     //     introduced.
-    // TODO(xtof): Throw an exception if using SafeHtml within an attribute.
     expression = ESCAPE_UTILS_FQCN + ".htmlEscape(" + expression + ")";
 
     print(expression);
@@ -226,16 +247,57 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
    *          parameter corresponding to the expression being emitted
    * @param parameterType the Java type of the corresponding template method's
    *          parameter
+   * @throws UnableToCompleteException if the parameterType is not valid for the
+   *           htmlContext
    */
-  private void emitParameterExpression(TreeLogger logger,
-      HtmlContext htmlContext, String formalParameterName,
-      JType parameterType) {
+  private void emitParameterExpression(TreeLogger logger, HtmlContext htmlContext,
+      String formalParameterName, JType parameterType) throws UnableToCompleteException {
+
+    /*
+     * Verify that the parameter type is used in the correct context. Safe
+     * expressions are only safe in specific contexts.
+     */
+    HtmlContext.Type contextType = htmlContext.getType();
+    if (isSafeHtml(parameterType) && HtmlContext.Type.TEXT != contextType) {
+      /*
+       * SafeHtml used in a non-text context. SafeHtml is escaped for a text
+       * context. In a non-text context, the string is not guaranteed to be
+       * safe.
+       */
+      throw error(logger, SAFE_HTML_CN + " used in a non-text context. Did you mean to use "
+          + JAVA_LANG_STRING_FQCN + " or " + SAFE_STYLES_CN + " instead?");
+    } else if (isSafeStyles(parameterType) && HtmlContext.Type.CSS_ATTRIBUTE_START != contextType) {
+      if (HtmlContext.Type.CSS_ATTRIBUTE == contextType) {
+        // SafeStyles can only be used at the start of a CSS attribute.
+        throw error(logger, SAFE_STYLES_CN + " cannot be used in the middle of a CSS attribute. "
+            + "It must be used at the start a CSS attribute.");
+      } else {
+        /*
+         * SafeStyles used in a non-css attribute context. SafeStyles is only
+         * safe in a CSS attribute context. We could treat it as a normal
+         * parameter and escape the string value of the parameter, but it almost
+         * definitely isn't what the developer intended to do.
+         */
+        throw error(logger, SAFE_STYLES_CN
+            + " used in a non-CSS attribute context. Did you mean to use " + JAVA_LANG_STRING_FQCN
+            + " or " + SAFE_HTML_CN + " instead?");
+      }
+    }
+
     print("sb.append(");
-    switch (htmlContext.getType()) {
+    switch (contextType) {
       case CSS:
-        // TODO(xtof): Improve support for CSS.
-        // The stream parser does not parse CSS; we could however improve
-        // safety via sub-formats that specify the in-css context.
+        /*
+         * TODO(jlabanca): Handle CSS in a text context.
+         * 
+         * The stream parser does not parse CSS; we could however improve safety
+         * via sub-formats that specify the in-css context.
+         * 
+         * SafeStyles is safe in a CSS context when used inside of a CSS style
+         * rule, but they are not always safe. We could implement SafeCssRules,
+         * which would consist of SafeStyles inside of a CSS style rules found
+         * in a style tag.
+         */
         logger.log(TreeLogger.WARN, "Template with variable in CSS context: "
             + "The template code generator cannot guarantee HTML-safety of "
             + "the template -- please inspect manually");
@@ -247,10 +309,18 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
 
       case CSS_ATTRIBUTE:
       case CSS_ATTRIBUTE_START:
-        // TODO(xtof): Improve support for CSS.
-        logger.log(TreeLogger.WARN, "Template with variable in CSS context: "
-            + "The template code generator cannot guarantee HTML-safety of "
-            + "the template -- please inspect manually");
+        /*
+         * We already checked if the user tried to use SafeStyles in an invalid
+         * (non-CSS_ATTRIBUTE) context, but now we check if the user could have
+         * used SafeStyles in the current context.
+         */
+        if (!isSafeStyles(parameterType)) {
+          // Warn against using unsafe parameters in a CSS attribute context.  
+          logger.log(TreeLogger.WARN,
+              "Template with variable in CSS attribute context: The template code generator cannot"
+                  + " guarantee HTML-safety of the template -- please inspect manually or use "
+                  + SAFE_STYLES_CN + " to specify arguments in a CSS attribute context");
+        }
         emitAttributeContextParameterExpression(logger, htmlContext,
             formalParameterName, parameterType);
         break;
@@ -262,9 +332,8 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
         break;
 
       default:
-          throw new IllegalStateException(
-              "unknown HTML context for formal template parameter "
-                  + formalParameterName + ": " + htmlContext);
+        throw error(logger, "unknown HTML context for formal template parameter "
+            + formalParameterName + ": " + htmlContext);
     }
     println(");");
   }
@@ -328,5 +397,25 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
       }
       print(")");
     }
+  }
+
+  /**
+   * Check if the specified parameter type represents a {@link SafeHtml}.
+   * 
+   * @param parameterType the Java parameter type
+   * @return true if the type represents a {@link SafeHtml}
+   */
+  private boolean isSafeHtml(JType parameterType) {
+    return parameterType.getQualifiedSourceName().equals(SAFE_HTML_FQCN);
+  }
+
+  /**
+   * Check if the specified parameter type represents a {@link SafeStyles}.
+   * 
+   * @param parameterType the Java parameter type
+   * @return true if the type represents a {@link SafeStyles}
+   */
+  private boolean isSafeStyles(JType parameterType) {
+    return parameterType.getQualifiedSourceName().equals(SAFE_STYLES_FQCN);
   }
 }

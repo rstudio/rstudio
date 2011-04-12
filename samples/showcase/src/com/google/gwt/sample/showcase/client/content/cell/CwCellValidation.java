@@ -25,6 +25,8 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.i18n.client.Constants;
+import com.google.gwt.safecss.shared.SafeStyles;
+import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -63,8 +65,8 @@ public class CwCellValidation extends ContentWidget {
   }
 
   interface Template extends SafeHtmlTemplates {
-    @Template("<input type=\"text\" value=\"{0}\" style=\"color:{1}\" tabindex=\"-1\"/>")
-    SafeHtml input(String value, String color);
+    @Template("<input type=\"text\" value=\"{0}\" style=\"{1}\" tabindex=\"-1\"/>")
+    SafeHtml input(String value, SafeStyles color);
   }
 
   /**
@@ -139,8 +141,9 @@ public class CwCellValidation extends ContentWidget {
       String pendingValue = (viewData == null) ? null : viewData.getValue();
       boolean invalid = (viewData == null) ? false : viewData.isInvalid();
 
-      sb.append(template.input(pendingValue != null ? pendingValue : value,
-          pendingValue != null ? (invalid ? "red" : "blue") : ("black")));
+      String color = pendingValue != null ? (invalid ? "red" : "blue") : "black";
+      SafeStyles safeColor = SafeStylesUtils.fromTrustedString("color: " + color + ";");
+      sb.append(template.input(pendingValue != null ? pendingValue : value, safeColor));
 
       if (invalid) {
         sb.appendHtmlConstant("&nbsp;<span style='color:red;'>");

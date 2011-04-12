@@ -31,6 +31,8 @@ import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
+import com.google.gwt.safecss.shared.SafeStyles;
+import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -439,23 +441,8 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
   }
 
   interface Template extends SafeHtmlTemplates {
-    @Template("<div class=\"{0}\" style=\"position:absolute;{1}:0px;"
-        + "width:{2}px;height:{3}px;\">{4}</div>")
-    SafeHtml imageWrapper(String classes, String direction, int width,
-        int height, SafeHtml image);
-  }
-
-  /**
-   * Implementation of {@link CellTree}.
-   */
-  private static class Impl {
-    /**
-     * Create an image wrapper.
-     */
-    public SafeHtml imageWrapper(String classes, String direction, int width,
-        int height, SafeHtml image) {
-      return template.imageWrapper(classes, direction, width, height, image);
-    }
+    @Template("<div class=\"{0}\" style=\"{1}position:absolute;\">{2}</div>")
+    SafeHtml imageWrapper(String classes, SafeStyles cssLayout, SafeHtml image);
   }
 
   /**
@@ -465,7 +452,6 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
 
   private static Resources DEFAULT_RESOURCES;
 
-  private static Impl TREE_IMPL;
   private static Template template;
 
   private static Resources getDefaultResources() {
@@ -579,9 +565,6 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
     super(viewModel);
     if (template == null) {
       template = GWT.create(Template.class);
-    }
-    if (TREE_IMPL == null) {
-      TREE_IMPL = GWT.create(Impl.class);
     }
     this.style = resources.cellTreeStyle();
     this.style.ensureInjected();
@@ -949,28 +932,32 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
 
   /**
    * Get the HTML representation of an image.
-   *
+   * 
    * @param res the {@link ImageResource} to render as HTML
    * @param isTop true if the image is for a top level element.
    * @return the rendered HTML
    */
   private SafeHtml getImageHtml(ImageResource res, boolean isTop) {
+    // Build the classes.
     StringBuilder classesBuilder = new StringBuilder(style.cellTreeItemImage());
     if (isTop) {
       classesBuilder.append(" ").append(style.cellTreeTopItemImage());
     }
 
-    String direction;
+    // Build the css.
+    SafeStylesBuilder cssBuilder = new SafeStylesBuilder();
     if (LocaleInfo.getCurrentLocale().isRTL()) {
-      direction = "right";
+      cssBuilder.appendTrustedString("right: 0px;");
     } else {
-      direction = "left";
+      cssBuilder.appendTrustedString("left: 0px;");
     }
+    cssBuilder.appendTrustedString("width: " + res.getWidth() + "px;");
+    cssBuilder.appendTrustedString("height: " + res.getHeight() + "px;");
 
     AbstractImagePrototype proto = AbstractImagePrototype.create(res);
     SafeHtml image = SafeHtmlUtils.fromTrustedString(proto.getHTML());
-    return TREE_IMPL.imageWrapper(classesBuilder.toString(), direction,
-        res.getWidth(), res.getHeight(), image);
+    return template
+        .imageWrapper(classesBuilder.toString(), cssBuilder.toSafeStyles(), image);
   }
 
   /**

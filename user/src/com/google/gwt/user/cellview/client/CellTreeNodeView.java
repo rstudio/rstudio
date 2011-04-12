@@ -33,6 +33,8 @@ import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.LocaleInfo;
+import com.google.gwt.safecss.shared.SafeStyles;
+import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -68,14 +70,13 @@ import java.util.Set;
 class CellTreeNodeView<T> extends UIObject {
 
   interface Template extends SafeHtmlTemplates {
-    @Template("<div onclick=\"\" style=\"position:relative;padding-{0}:{1}px;"
-        + "\" class=\"{2}\">{3}<div class=\"{4}\">{5}</div></div>")
-    SafeHtml innerDiv(String paddingDirection, int imageWidth, String classes,
-        SafeHtml image, String itemValueStyle, SafeHtml cellContents);
+    @Template("<div onclick=\"\" style=\"{0}position:relative;\""
+        + " class=\"{1}\">{2}<div class=\"{3}\">{4}</div></div>")
+    SafeHtml innerDiv(SafeStyles cssString, String classes, SafeHtml image,
+        String itemValueStyle, SafeHtml cellContents);
 
-    @Template("<div><div style=\"padding-{0}:{1}px;\" class=\"{2}\">{3}</div></div>")
-    SafeHtml outerDiv(String paddingDirection, int paddingAmount,
-        String classes, SafeHtml content);
+    @Template("<div><div style=\"{0}\" class=\"{1}\">{2}</div></div>")
+    SafeHtml outerDiv(SafeStyles cssString, String classes, SafeHtml content);
   }
 
   private static final Template template = GWT.create(Template.class);
@@ -121,8 +122,7 @@ class CellTreeNodeView<T> extends UIObject {
         SafeHtml openImage = nodeView.tree.getOpenImageHtml(isRootNode);
         SafeHtml closedImage = nodeView.tree.getClosedImageHtml(isRootNode);
         int imageWidth = nodeView.tree.getImageWidth();
-        String paddingDirection = LocaleInfo.getCurrentLocale().isRTL()
-            ? "right" : "left";
+        String paddingDirection = LocaleInfo.getCurrentLocale().isRTL() ? "right" : "left";
         int paddingAmount = imageWidth * nodeView.depth;
 
         // Create a set of currently open nodes.
@@ -176,13 +176,17 @@ class CellTreeNodeView<T> extends UIObject {
           SafeHtmlBuilder cellBuilder = new SafeHtmlBuilder();
           Context context = new Context(i, 0, key);
           cell.render(context, value, cellBuilder);
+          SafeStyles innerPadding =
+              SafeStylesUtils.fromTrustedString("padding-" + paddingDirection + ": " + imageWidth
+                  + "px;");
+          SafeHtml innerDiv =
+              template.innerDiv(innerPadding, innerClasses.toString(), image, itemValueStyle,
+                  cellBuilder.toSafeHtml());
 
-          SafeHtml innerDiv = template.innerDiv(paddingDirection, imageWidth,
-              innerClasses.toString(), image, itemValueStyle,
-              cellBuilder.toSafeHtml());
-
-          sb.append(template.outerDiv(paddingDirection, paddingAmount,
-              outerClasses.toString(), innerDiv));
+          SafeStyles outerPadding =
+              SafeStylesUtils.fromTrustedString("padding-" + paddingDirection + ": " + paddingAmount
+                  + "px;");
+          sb.append(template.outerDiv(outerPadding, outerClasses.toString(), innerDiv));
         }
       }
 

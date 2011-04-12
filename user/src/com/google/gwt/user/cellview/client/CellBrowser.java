@@ -38,6 +38,9 @@ import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
+import com.google.gwt.safecss.shared.SafeStyles;
+import com.google.gwt.safecss.shared.SafeStylesBuilder;
+import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -71,7 +74,7 @@ import java.util.List;
  * the HTML page in which it is run have an explicit &lt;!DOCTYPE&gt;
  * declaration.
  * </p>
- *
+ * 
  * <p>
  * <h3>Example</h3>
  * <dl>
@@ -81,8 +84,8 @@ import java.util.List;
  * <dd>{@example com.google.gwt.examples.cellview.CellBrowserExample2}</dd>
  * </dl>
  */
-public class CellBrowser extends AbstractCellTree implements ProvidesResize,
-    RequiresResize, HasAnimation {
+public class CellBrowser extends AbstractCellTree implements ProvidesResize, RequiresResize,
+    HasAnimation {
 
   /**
    * A ClientBundle that provides images for this widget.
@@ -174,27 +177,28 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
   }
 
   interface Template extends SafeHtmlTemplates {
-    @Template("<div onclick=\"\" __idx=\"{0}\" class=\"{1}\" style=\"position:relative;padding-right:{2}px;outline:none;\">{3}<div>{4}</div></div>")
-    SafeHtml div(int idx, String classes, int imageWidth, SafeHtml imageHtml,
+    @Template("<div onclick=\"\" __idx=\"{0}\" class=\"{1}\""
+        + " style=\"{2}position:relative;outline:none;\">{3}<div>{4}</div></div>")
+    SafeHtml div(int idx, String classes, SafeStyles padding, SafeHtml imageHtml,
         SafeHtml cellContents);
 
-    @Template("<div onclick=\"\" __idx=\"{0}\" class=\"{1}\" style=\"position:relative;padding-right:{2}px;outline:none;\" tabindex=\"{3}\">{4}<div>{5}</div></div>")
-    SafeHtml divFocusable(int idx, String classes, int imageWidth,
-        int tabIndex, SafeHtml imageHtml, SafeHtml cellContents);
+    @Template("<div onclick=\"\" __idx=\"{0}\" class=\"{1}\""
+        + " style=\"{2}position:relative;outline:none;\" tabindex=\"{3}\">{4}<div>{5}</div></div>")
+    SafeHtml divFocusable(int idx, String classes, SafeStyles padding, int tabIndex,
+        SafeHtml imageHtml, SafeHtml cellContents);
 
-    @Template("<div onclick=\"\" __idx=\"{0}\" class=\"{1}\" style=\"position:relative;padding-right:{2}px;outline:none;\" tabindex=\"{3}\" accessKey=\"{4}\">{5}<div>{6}</div></div>")
-    SafeHtml divFocusableWithKey(int idx, String classes, int imageWidth,
-        int tabIndex, char accessKey, SafeHtml imageHtml, SafeHtml cellContents);
+    @Template("<div onclick=\"\" __idx=\"{0}\" class=\"{1}\""
+        + " style=\"{2}position:relative;outline:none;\" tabindex=\"{3}\" accessKey=\"{4}\">{5}<div>{6}</div></div>")
+    SafeHtml divFocusableWithKey(int idx, String classes, SafeStyles padding, int tabIndex,
+        char accessKey, SafeHtml imageHtml, SafeHtml cellContents);
 
-    @Template("<div style=\"position:absolute;{0}:0px;width:{1}px;"
-        + "height:{2}px;\">{3}</div>")
-    SafeHtml imageWrapper(String direction, int width, int height,
-        SafeHtml image);
+    @Template("<div style=\"{0}position:absolute;\">{1}</div>")
+    SafeHtml imageWrapper(SafeStyles css, SafeHtml image);
   }
 
   /**
    * A custom version of cell list used by the browser. Visible for testing.
-   *
+   * 
    * @param <T> the data type of list items
    */
   class BrowserCellList<T> extends CellList<T> {
@@ -224,8 +228,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
      */
     private final Element tmpElem = Document.get().createDivElement();
 
-    public BrowserCellList(final Cell<T> cell, int level,
-        ProvidesKey<T> keyProvider) {
+    public BrowserCellList(final Cell<T> cell, int level, ProvidesKey<T> keyProvider) {
       super(cell, cellListResources, keyProvider);
       this.level = level;
     }
@@ -274,11 +277,10 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
     }
 
     @Override
-    protected void renderRowValues(SafeHtmlBuilder sb, List<T> values,
-        int start, SelectionModel<? super T> selectionModel) {
+    protected void renderRowValues(SafeHtmlBuilder sb, List<T> values, int start,
+        SelectionModel<? super T> selectionModel) {
       Cell<T> cell = getCell();
-      String keyboardSelectedItem = " "
-          + style.cellBrowserKeyboardSelectedItem();
+      String keyboardSelectedItem = " " + style.cellBrowserKeyboardSelectedItem();
       String selectedItem = " " + style.cellBrowserSelectedItem();
       String openItem = " " + style.cellBrowserOpenItem();
       String evenItem = style.cellBrowserEvenItem();
@@ -288,8 +290,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
       int end = start + length;
       for (int i = start; i < end; i++) {
         T value = values.get(i - start);
-        boolean isSelected = selectionModel == null ? false
-            : selectionModel.isSelected(value);
+        boolean isSelected = selectionModel == null ? false : selectionModel.isSelected(value);
         boolean isOpen = isOpen(i);
         StringBuilder classesBuilder = new StringBuilder();
         classesBuilder.append(i % 2 == 0 ? evenItem : oddItem);
@@ -314,6 +315,8 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
           image = closedImageHtml;
         }
 
+        SafeStyles padding =
+            SafeStylesUtils.fromTrustedString("padding-right: " + imageWidth + "px;");
         if (i == keyboardSelectedRow) {
           // This is the focused item.
           if (isFocused) {
@@ -321,16 +324,15 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
           }
           char accessKey = getAccessKey();
           if (accessKey != 0) {
-            sb.append(template.divFocusableWithKey(i,
-                classesBuilder.toString(), imageWidth, getTabIndex(),
-                getAccessKey(), image, cellBuilder.toSafeHtml()));
+            sb.append(template.divFocusableWithKey(i, classesBuilder.toString(), padding,
+                getTabIndex(), getAccessKey(), image, cellBuilder.toSafeHtml()));
           } else {
-            sb.append(template.divFocusable(i, classesBuilder.toString(),
-                imageWidth, getTabIndex(), image, cellBuilder.toSafeHtml()));
+            sb.append(template.divFocusable(i, classesBuilder.toString(), padding, getTabIndex(),
+                image, cellBuilder.toSafeHtml()));
           }
         } else {
-          sb.append(template.div(i, classesBuilder.toString(), imageWidth,
-              image, cellBuilder.toSafeHtml()));
+          sb.append(template.div(i, classesBuilder.toString(), padding, image, cellBuilder
+              .toSafeHtml()));
         }
       }
 
@@ -339,8 +341,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
     }
 
     @Override
-    protected void setKeyboardSelected(int index, boolean selected,
-        boolean stealFocus) {
+    protected void setKeyboardSelected(int index, boolean selected, boolean stealFocus) {
       super.setKeyboardSelected(index, selected, stealFocus);
       if (!isRowWithinBounds(index)) {
         return;
@@ -362,8 +363,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
         image = closedImageHtml;
       }
       tmpElem.setInnerHTML(image.asString());
-      elem.replaceChild(tmpElem.getFirstChildElement(),
-          elem.getFirstChildElement());
+      elem.replaceChild(tmpElem.getFirstChildElement(), elem.getFirstChildElement());
 
       // Update the open state.
       updateChildState(this, true);
@@ -417,7 +417,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * A node in the tree.
-   *
+   * 
    * @param <C> the data type of the children of the node
    */
   class TreeNodeImpl<C> implements TreeNode {
@@ -429,14 +429,14 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
     /**
      * Construct a new {@link TreeNodeImpl}.
-     *
+     * 
      * @param nodeInfo the nodeInfo for the children nodes
      * @param value the value of the node
      * @param display the display associated with the node
      * @param widget the widget that wraps the display
      */
-    public TreeNodeImpl(final NodeInfo<C> nodeInfo, Object value,
-        final BrowserCellList<C> display, Widget widget) {
+    public TreeNodeImpl(final NodeInfo<C> nodeInfo, Object value, final BrowserCellList<C> display,
+        Widget widget) {
       this.display = display;
       this.nodeInfo = nodeInfo;
       this.value = value;
@@ -498,9 +498,8 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
     public boolean isChildOpen(int index) {
       assertNotDestroyed();
       checkChildBounds(index);
-      return (display.focusedKey == null || !display.isFocusedOpen)
-          ? false
-          : display.focusedKey.equals(display.getValueKey(getChildValue(index)));
+      return (display.focusedKey == null || !display.isFocusedOpen) ? false : display.focusedKey
+          .equals(display.getValueKey(getChildValue(index)));
     }
 
     public boolean isDestroyed() {
@@ -567,7 +566,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
     /**
      * Check the child bounds.
-     *
+     * 
      * @param index the index of the child
      * @throws IndexOutOfBoundsException if the child is not in range
      */
@@ -591,7 +590,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
     /**
      * Get the index of the open item.
-     *
+     * 
      * @return the index of the open item, or -1 if not found
      */
     private int getOpenIndex() {
@@ -726,7 +725,8 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
   /**
    * The element used in place of an image when a node has no children.
    */
-  private static final SafeHtml LEAF_IMAGE = SafeHtmlUtils.fromSafeConstant("<div style='position:absolute;display:none;'></div>");
+  private static final SafeHtml LEAF_IMAGE =
+      SafeHtmlUtils.fromSafeConstant("<div style='position:absolute;display:none;'></div>");
 
   private static Template template;
 
@@ -794,7 +794,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Construct a new {@link CellBrowser}.
-   *
+   * 
    * @param <T> the type of data in the root node
    * @param viewModel the {@link TreeViewModel} that backs the tree
    * @param rootValue the hidden root value of the tree
@@ -805,14 +805,13 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Construct a new {@link CellBrowser} with the specified {@link Resources}.
-   *
+   * 
    * @param <T> the type of data in the root node
    * @param viewModel the {@link TreeViewModel} that backs the tree
    * @param rootValue the hidden root value of the tree
    * @param resources the {@link Resources} used for images
    */
-  public <T> CellBrowser(TreeViewModel viewModel, T rootValue,
-      Resources resources) {
+  public <T> CellBrowser(TreeViewModel viewModel, T rootValue, Resources resources) {
     super(viewModel);
     if (template == null) {
       template = GWT.create(Template.class);
@@ -856,7 +855,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Get the default width of new columns.
-   *
+   * 
    * @return the default width in pixels
    * @see #setDefaultColumnWidth(int)
    */
@@ -866,7 +865,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Get the minimum width of columns.
-   *
+   * 
    * @return the minimum width in pixels
    * @see #setMinimumColumnWidth(int)
    */
@@ -904,7 +903,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Set the default width of new columns.
-   *
+   * 
    * @param width the default width in pixels
    * @see #getDefaultColumnWidth()
    */
@@ -928,7 +927,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Set the minimum width of columns.
-   *
+   * 
    * @param minWidth the minimum width in pixels
    * @see #getMinimumColumnWidth()
    */
@@ -938,14 +937,13 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Create a pager to control the list view.
-   *
+   * 
    * @param <C> the item type in the list view
    * @param display the list view to add paging too
    * @return the pager
    */
   protected <C> Widget createPager(HasData<C> display) {
-    PageSizePager pager = new PageSizePager(
-        display.getVisibleRange().getLength());
+    PageSizePager pager = new PageSizePager(display.getVisibleRange().getLength());
     pager.setDisplay(display);
     return pager;
   }
@@ -967,7 +965,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
   /**
    * Create a new {@link TreeNodeImpl} and append it to the end of the
    * LayoutPanel.
-   *
+   * 
    * @param <C> the data type of the children
    * @param nodeInfo the info about the node
    * @param value the value of the open node
@@ -997,8 +995,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
     }
 
     // Create a TreeNode.
-    TreeNodeImpl<C> treeNode = new TreeNodeImpl<C>(nodeInfo, value, view,
-        scrollable);
+    TreeNodeImpl<C> treeNode = new TreeNodeImpl<C>(nodeInfo, value, view, scrollable);
     treeNodes.add(treeNode);
 
     /*
@@ -1022,15 +1019,15 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
   /**
    * Create a {@link HasData} that will display items. The {@link HasData} must
    * extend {@link Widget}.
-   *
+   * 
    * @param <C> the item type in the list view
    * @param nodeInfo the node info with child data
    * @param level the level of the list
    * @return the {@link HasData}
    */
   private <C> BrowserCellList<C> createDisplay(NodeInfo<C> nodeInfo, int level) {
-    BrowserCellList<C> display = new BrowserCellList<C>(nodeInfo.getCell(),
-        level, nodeInfo.getProvidesKey());
+    BrowserCellList<C> display =
+        new BrowserCellList<C>(nodeInfo.getCell(), level, nodeInfo.getProvidesKey());
     display.setValueUpdater(nodeInfo.getValueUpdater());
 
     // Set the keyboard selection policy, but never disable it.
@@ -1041,7 +1038,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Get the HTML representation of an image.
-   *
+   * 
    * @param res the {@link ImageResource} to render as HTML
    * @return the rendered HTML
    */
@@ -1049,8 +1046,16 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
     // Right-justify image if LTR, left-justify if RTL
     AbstractImagePrototype proto = AbstractImagePrototype.create(res);
     SafeHtml image = SafeHtmlUtils.fromTrustedString(proto.getHTML());
-    return template.imageWrapper((LocaleInfo.getCurrentLocale().isRTL()
-        ? "left" : "right"), res.getWidth(), res.getHeight(), image);
+
+    SafeStylesBuilder cssBuilder = new SafeStylesBuilder();
+    if (LocaleInfo.getCurrentLocale().isRTL()) {
+      cssBuilder.appendTrustedString("left:0px;");
+    } else {
+      cssBuilder.appendTrustedString("right:0px;");
+    }
+    cssBuilder.appendTrustedString("width: " + res.getWidth() + "px;");
+    cssBuilder.appendTrustedString("height: " + res.getHeight() + "px;");
+    return template.imageWrapper(cssBuilder.toSafeStyles(), image);
   }
 
   /**
@@ -1062,8 +1067,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
    */
   private KeyboardSelectionPolicy getKeyboardSelectionPolicyForLists() {
     KeyboardSelectionPolicy policy = getKeyboardSelectionPolicy();
-    return KeyboardSelectionPolicy.DISABLED == policy
-        ? KeyboardSelectionPolicy.ENABLED : policy;
+    return KeyboardSelectionPolicy.DISABLED == policy ? KeyboardSelectionPolicy.ENABLED : policy;
   }
 
   /**
@@ -1077,7 +1081,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Reduce the number of {@link HasData}s down to the specified level.
-   *
+   * 
    * @param level the level to trim to
    */
   private void trimToLevel(int level) {
@@ -1111,11 +1115,10 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
    * @param fireEvents true to fireEvents
    * @return the open {@link TreeNode}, or null if not opened
    */
-  private <C> TreeNode updateChildState(BrowserCellList<C> cellList,
-      boolean fireEvents) {
+  private <C> TreeNode updateChildState(BrowserCellList<C> cellList, boolean fireEvents) {
     /*
      * Verify that the specified list is still in the browser. It possible for
-     * the list to receive deferred updates after it has been removed 
+     * the list to receive deferred updates after it has been removed
      */
     if (cellList.isDestroyed) {
       return null;
@@ -1130,8 +1133,8 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
     if (cellList.focusedKey != null && cellList.isFocusedOpen
         && !cellList.focusedKey.equals(newKey)) {
       // Get the node to close.
-      closedNode = (treeNodes.size() > cellList.level + 1)
-          ? treeNodes.get(cellList.level + 1) : null;
+      closedNode =
+          (treeNodes.size() > cellList.level + 1) ? treeNodes.get(cellList.level + 1) : null;
 
       // Close the node.
       trimToLevel(cellList.level);
@@ -1143,13 +1146,11 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
     if (newKey != null) {
       if (newKey.equals(cellList.focusedKey)) {
         // The node is already open.
-        openNode = cellList.isFocusedOpen ? treeNodes.get(cellList.level + 1)
-            : null;
+        openNode = cellList.isFocusedOpen ? treeNodes.get(cellList.level + 1) : null;
       } else {
         // Add the child node.
         cellList.focusedKey = newKey;
-        NodeInfo<?> childNodeInfo = isLeaf(newValue) ? null
-            : getNodeInfo(newValue);
+        NodeInfo<?> childNodeInfo = isLeaf(newValue) ? null : getNodeInfo(newValue);
         if (childNodeInfo != null) {
           cellList.isFocusedOpen = true;
           justOpenedNode = true;
