@@ -16,55 +16,16 @@
 package com.google.gwt.animation.client;
 
 import com.google.gwt.core.client.Duration;
-import com.google.gwt.user.client.Timer;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 
 /**
  * An {@link Animation} is a continuous event that updates progressively over
  * time at a non-fixed frame rate.
  */
 public abstract class Animation {
-  /**
-   * The default time in milliseconds between frames.
-   */
-  private static final int DEFAULT_FRAME_DELAY = 25;
 
-  /**
-   * The {@link Animation Animations} that are currently in progress.
-   */
-  private static List<Animation> animations = null;
-
-  /**
-   * The {@link Timer} that applies the animations.
-   */
-  private static Timer animationTimer = null;
-
-  /**
-   * Update all {@link Animation Animations}.
-   */
-  private static void updateAnimations() {
-    // Duplicate the animations list in case it changes as we iterate over it
-    Animation[] curAnimations = new Animation[animations.size()];
-    curAnimations = animations.toArray(curAnimations);
-
-    // Iterator through the animations
-    double curTime = Duration.currentTimeMillis();
-    for (Animation animation : curAnimations) {
-      if (animation.running && animation.update(curTime)) {
-        // We can't just remove the animation at the index, because calling
-        // animation.update may have the side effect of canceling this
-        // animation, running new animations, or canceling other animations.
-        animations.remove(animation);
-      }
-    }
-
-    // Reschedule the timer
-    if (animations.size() > 0) {
-      animationTimer.schedule(DEFAULT_FRAME_DELAY);
-    }
-  }
+  private AnimationImpl impl = GWT.create(AnimationImpl.class);
 
   /**
    * The duration of the {@link Animation} in milliseconds.
@@ -97,7 +58,7 @@ public abstract class Animation {
       return;
     }
 
-    animations.remove(this);
+    impl.cancel(this);
     onCancel();
     started = false;
     running = false;
@@ -106,22 +67,64 @@ public abstract class Animation {
   /**
    * Immediately run this animation. If the animation is already running, it
    * will be canceled first.
+   * <p>
+   * This is equivalent to <code>run(duration, null)</code>.
    * 
    * @param duration the duration of the animation in milliseconds
+   * @see #run(int, Element)
    */
   public void run(int duration) {
-    run(duration, Duration.currentTimeMillis());
+    run(duration, null);
+  }
+
+  /**
+   * Immediately run this animation. If the animation is already running, it
+   * will be canceled first.
+   * <p>
+   * If the element is not <code>null</code>, the {@link #onUpdate(double)}
+   * method might be called only if the element may be visible (generally left
+   * at the appreciation of the browser). Otherwise, it will be called
+   * unconditionally.
+   * 
+   * @param duration the duration of the animation in milliseconds
+   * @param element the element that visually bounds the entire animation
+   */
+  public void run(int duration, Element element) {
+    run(duration, Duration.currentTimeMillis(), element);
   }
 
   /**
    * Run this animation at the given startTime. If the startTime has already
-   * passed, the animation will be synchronize as if it started at the specified
-   * start time. If the animation is already running, it will be canceled first.
+   * passed, the animation will run synchronously as if it started at the
+   * specified start time. If the animation is already running, it will be
+   * canceled first.
+   * <p>
+   * This is equivalent to <code>run(duration, startTime, null)</code>.
    * 
    * @param duration the duration of the animation in milliseconds
    * @param startTime the synchronized start time in milliseconds
+   * @see #run(int, double, Element)
    */
   public void run(int duration, double startTime) {
+    run(duration, startTime, null);
+  }
+
+  /**
+   * Run this animation at the given startTime. If the startTime has already
+   * passed, the animation will run synchronously as if it started at the
+   * specified start time. If the animation is already running, it will be
+   * canceled first.
+   * <p>
+   * If the element is not <code>null</code>, the {@link #onUpdate(double)}
+   * method might be called only if the element may be visible (generally left
+   * at the appreciation of the browser). Otherwise, it will be called
+   * unconditionally.
+   * 
+   * @param duration the duration of the animation in milliseconds
+   * @param startTime the synchronized start time in milliseconds
+   * @param element the element that visually bounds the entire animation
+   */
+  public void run(int duration, double startTime, Element element) {
     // Cancel the animation if it is running
     cancel();
 
@@ -135,26 +138,7 @@ public abstract class Animation {
       return;
     }
 
-    // Add to the list of animations
-
-    // We use a static list of animations and a single timer, and create them
-    // only if we are the only active animation. This is safe since JS is
-    // single-threaded.
-    if (animations == null) {
-      animations = new ArrayList<Animation>();
-      animationTimer = new Timer() {
-        @Override
-        public void run() {
-          updateAnimations();
-        }
-      };
-    }
-    animations.add(this);
-
-    // Restart the timer if there is the only animation
-    if (animations.size() == 1) {
-      animationTimer.schedule(DEFAULT_FRAME_DELAY);
-    }
+    impl.run(this, element);
   }
 
   /**
@@ -208,12 +192,20 @@ public abstract class Animation {
   protected abstract void onUpdate(double progress);
 
   /**
+   * Is the {@link Animation} running, even if {@link #onStart()} has not yet
+   * been called.
+   */
+  boolean isRunning() {
+    return running;
+  }
+
+  /**
    * Update the {@link Animation}.
    * 
    * @param curTime the current time
    * @return true if the animation is complete, false if still running
    */
-  private boolean update(double curTime) {
+  boolean update(double curTime) {
     boolean finished = curTime >= startTime + duration;
     if (started && !finished) {
       // Animation is in progress.
