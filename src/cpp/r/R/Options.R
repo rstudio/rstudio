@@ -17,6 +17,9 @@ options(browser = function(url)
    .C("rs_browseURL", url) ;
 })
 
+# set max print so that the DOM won't go haywire showing large datasets
+options(max.print = 1000)
+
 # set RStudio as the GUI
 local({
    platform = .Platform
