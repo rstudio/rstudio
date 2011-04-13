@@ -30,11 +30,14 @@ import com.google.gwt.event.dom.client.TouchMoveEvent;
 import com.google.gwt.event.dom.client.TouchMoveHandler;
 import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.event.dom.client.TouchStartHandler;
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.touch.client.Momentum.State;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HasScrolling;
 
 import java.util.ArrayList;
@@ -99,6 +102,7 @@ public class TouchScroller {
     private final Point initialPosition = getWidgetScrollPosition();
     private int lastElapsedMillis = 0;
     private State state;
+    private HandlerRegistration windowResizeHandler;
 
     /**
      * Construct a {@link MomentumCommand}.
@@ -107,6 +111,18 @@ public class TouchScroller {
      */
     public MomentumCommand(Point endVelocity) {
       state = momentum.createState(initialPosition, endVelocity);
+
+      /**
+       * If the user resizes the window (which happens on orientation change of
+       * a mobile device), cancel the momentum. The scrollable widget may be
+       * resized, which will cause its content to reflow and invalidates the
+       * current scrolling position.
+       */
+      windowResizeHandler = Window.addResizeHandler(new ResizeHandler() {
+        public void onResize(ResizeEvent event) {
+          finish();
+        }
+      });
     }
 
     public boolean execute() {
@@ -115,6 +131,7 @@ public class TouchScroller {
        * disabled.
        */
       if (this != momentumCommand) {
+        finish();
         return false;
       }
 
@@ -127,9 +144,9 @@ public class TouchScroller {
       // Calculate the new state.
       boolean notDone = momentum.updateState(state);
 
-      // Momementum is finished, so the user is free to click.
+      // Momentum is finished, so the user is free to click.
       if (!notDone) {
-        setBustNextClick(false);
+        finish();
       }
 
       /*
@@ -138,6 +155,20 @@ public class TouchScroller {
        */
       setWidgetScrollPosition(state.getPosition());
       return notDone;
+    }
+
+    /**
+     * Finish and cleanup this momentum command.
+     */
+    private void finish() {
+      if (windowResizeHandler != null) {
+        windowResizeHandler.removeHandler();
+        windowResizeHandler = null;
+      }
+      if (this == momentumCommand) {
+        momentumCommand = null;
+        setBustNextClick(false);
+      }
     }
   }
 
@@ -493,9 +524,6 @@ public class TouchScroller {
       return;
     }
 
-    // Prevent native scrolling.
-    event.preventDefault();
-
     // Check if we should start dragging.
     Touch touch = getTouchFromEvent(event);
     Point touchPoint = new Point(touch.getPageX(), touch.getPageY());
@@ -506,11 +534,60 @@ public class TouchScroller {
       double absDiffX = Math.abs(diff.getX());
       double absDiffY = Math.abs(diff.getY());
       if (absDiffX > MIN_TRACKING_FOR_DRAG || absDiffY > MIN_TRACKING_FOR_DRAG) {
+        /*
+         * Check if we should defer to native scrolling. If the scrollable
+         * widget is already scrolled as far as it will go, then we don't want
+         * to prevent scrolling of the document.
+         * 
+         * We cannot prevent native scrolling in only one direction (ie. we
+         * cannot allow native horizontal scrolling but prevent native vertical
+         * scrolling), so we make a best guess based on the direction of the
+         * drag.
+         */
+        if (absDiffX > absDiffY) {
+          /*
+           * The user scrolled primarily in the horizontal direction, so check
+           * if we should defer left/right scrolling to the document.
+           */
+          int hPosition = widget.getHorizontalScrollPosition();
+          int hMin = widget.getMinimumHorizontalScrollPosition();
+          int hMax = widget.getMaximumHorizontalScrollPosition();
+          if (diff.getX() < 0 && hMax <= hPosition) {
+            // Already scrolled to the right.
+            cancelAll();
+            return;
+          } else if (diff.getX() > 0 && hMin >= hPosition) {
+            // Already scrolled to the left.
+            cancelAll();
+            return;
+          }
+        } else {
+          /*
+           * The user scrolled primarily in the vertical direction, so check if
+           * we should defer up/down scrolling to the document.
+           */
+          int vPosition = widget.getVerticalScrollPosition();
+          int vMin = widget.getMinimumVerticalScrollPosition();
+          int vMax = widget.getMaximumVerticalScrollPosition();
+          if (diff.getY() < 0 && vMax <= vPosition) {
+            // Already scrolled to the bottom.
+            cancelAll();
+            return;
+          } else if (diff.getY() > 0 && vMin >= vPosition) {
+            // Already scrolled to the top.
+            cancelAll();
+            return;
+          }
+        }
+
         // Start dragging.
         dragging = true;
         onDragStart(event);
       }
     }
+
+    // Prevent native document level scrolling.
+    event.preventDefault();
 
     if (dragging) {
       // Continue dragging.
@@ -647,8 +724,6 @@ public class TouchScroller {
 
   /**
    * Get the scroll position of the widget.
-   * 
-   * @param position the current scroll position
    */
   private Point getWidgetScrollPosition() {
     return new Point(widget.getHorizontalScrollPosition(), widget.getVerticalScrollPosition());
@@ -668,7 +743,7 @@ public class TouchScroller {
             event.getNativeEvent().preventDefault();
             setBustNextClick(false);
           }
-        };
+        }
       });
     } else if (!doBust && bustClickHandler != null) {
       bustClickHandler.removeHandler();

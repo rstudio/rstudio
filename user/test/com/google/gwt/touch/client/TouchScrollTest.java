@@ -16,6 +16,7 @@
 package com.google.gwt.touch.client;
 
 import com.google.gwt.core.client.Duration;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Touch;
 import com.google.gwt.event.dom.client.TouchEvent;
@@ -56,9 +57,9 @@ public class TouchScrollTest extends GWTTestCase {
      */
     public CustomScrollPanel() {
       this.minVerticalScrollPosition = 0;
-      this.maxVerticalScrollPosition = Integer.MAX_VALUE;
+      this.maxVerticalScrollPosition = 5000;
       this.minHorizontalScrollPosition = 0;
-      this.maxHorizontalScrollPosition = Integer.MAX_VALUE;
+      this.maxHorizontalScrollPosition = 5000;
     }
 
     @Override
@@ -206,7 +207,7 @@ public class TouchScrollTest extends GWTTestCase {
     CustomTouchEvent event = new CustomTouchEvent();
     event.setNativeEvent(createNativeTouchEvent());
     return event;
-  };
+  }
 
   /**
    * Create a mock TouchMoveEvent for the specified x and y coordinate.
@@ -218,7 +219,7 @@ public class TouchScrollTest extends GWTTestCase {
   private static TouchEvent<?> createTouchMoveEvent(int x, int y) {
     // TouchScroller doesn't care about the actual event subclass.
     return createTouchStartEvent(x, y);
-  };
+  }
 
   /**
    * Create a mock {@link TouchStartEvent} for the specified x and y coordinate.
@@ -233,7 +234,7 @@ public class TouchScrollTest extends GWTTestCase {
     nativeEvent.getTouches().push(createTouch(x, y));
     event.setNativeEvent(nativeEvent);
     return event;
-  };
+  }
 
   private CustomTouchScroller scroller;
   private CustomScrollPanel scrollPanel;
@@ -277,6 +278,22 @@ public class TouchScrollTest extends GWTTestCase {
     }
   }
 
+  public void testDeferToNativeScrollingBottom() {
+    testDeferToNativeScrolling(0, scrollPanel.getMaximumVerticalScrollPosition(), 0, -100);
+  }
+
+  public void testDeferToNativeScrollingLeft() {
+    testDeferToNativeScrolling(0, 0, 100, 0);
+  }
+
+  public void testDeferToNativeScrollingRight() {
+    testDeferToNativeScrolling(scrollPanel.getMaximumHorizontalScrollPosition(), 0, -100, 0);
+  }
+
+  public void testDeferToNativeScrollingTop() {
+    testDeferToNativeScrolling(0, 0, 0, 100);
+  }
+
   /**
    * Test that touch events correctly initiate drag events.
    */
@@ -295,21 +312,21 @@ public class TouchScrollTest extends GWTTestCase {
     assertFalse(scroller.isDragging());
 
     // Move, but not enough to drag.
-    scroller.onTouchMove(createTouchMoveEvent(1, 0));
+    scroller.onTouchMove(createTouchMoveEvent(-1, 0));
     scroller.assertOnDragStartCalled(false);
     scroller.assertOnDragMoveCalled(false);
     assertTrue(scroller.isTouching());
     assertFalse(scroller.isDragging());
 
     // Move.
-    scroller.onTouchMove(createTouchMoveEvent(100, 0));
+    scroller.onTouchMove(createTouchMoveEvent(-100, 0));
     scroller.assertOnDragStartCalled(true);
     scroller.assertOnDragMoveCalled(true);
     assertTrue(scroller.isTouching());
     assertTrue(scroller.isDragging());
 
     // Move again.
-    scroller.onTouchMove(createTouchMoveEvent(200, 0));
+    scroller.onTouchMove(createTouchMoveEvent(-200, 0));
     scroller.assertOnDragStartCalled(false); // drag already started.
     scroller.assertOnDragMoveCalled(true);
     assertTrue(scroller.isTouching());
@@ -322,6 +339,39 @@ public class TouchScrollTest extends GWTTestCase {
     scroller.assertOnDragEndCalled(true);
     assertFalse(scroller.isTouching());
     assertFalse(scroller.isDragging());
+  }
+
+  /**
+   * Test that when momentum ends, the momentum command is set to null (and
+   * isMomentumActive() returns false).
+   */
+  public void testMomentumEnd() {
+    // Use a short lived momentum.
+    scroller.setMomentum(new DefaultMomentum() {
+      @Override
+      public boolean updateState(State state) {
+        // Immediately end momentum.
+        return false;
+      }
+    });
+
+    // Start a drag sequence.
+    double millis = Duration.currentTimeMillis();
+    scroller.getRecentTouchPosition().setTemporalPoint(new Point(0, 0), millis);
+    scroller.getLastTouchPosition().setTemporalPoint(new Point(100, 100), millis + 100);
+
+    // End the drag sequence.
+    scroller.onDragEnd(createTouchEndEvent());
+    scroller.assertOnDragEndCalled(true);
+    assertFalse(scroller.isTouching());
+    assertFalse(scroller.isDragging());
+    assertTrue(scroller.isMomentumActive());
+
+    // Force momentum to run, which causes it to end.
+    getMomentumCommand(scroller).execute();
+    assertFalse(scroller.isTouching());
+    assertFalse(scroller.isDragging());
+    assertFalse(scroller.isMomentumActive());
   }
 
   public void testOnDragEnd() {
@@ -486,11 +536,13 @@ public class TouchScrollTest extends GWTTestCase {
   protected void gwtSetUp() throws Exception {
     // Create and attach a widget that has scrolling.
     scrollPanel = new CustomScrollPanel();
-    scrollPanel.setTouchScrollingDisabled(true);
     scrollPanel.setPixelSize(500, 500);
     Label content = new Label("Content");
     content.setPixelSize(10000, 10000);
     RootPanel.get().add(scrollPanel);
+
+    // Disabled touch scrolling because we will add our own scroller.
+    scrollPanel.setTouchScrollingDisabled(true);
 
     // Add scrolling support.
     scroller = new CustomTouchScroller(scrollPanel);
@@ -510,5 +562,43 @@ public class TouchScrollTest extends GWTTestCase {
     RootPanel.get().remove(scrollPanel.asWidget());
     scrollPanel = null;
     scroller = null;
+  }
+
+  /**
+   * Get the momentum command from the specified {@link TouchScroller}.
+   */
+  private native RepeatingCommand getMomentumCommand(TouchScroller scroller) /*-{
+    return scroller.@com.google.gwt.touch.client.TouchScroller::momentumCommand;
+  }-*/;
+
+  /**
+   * Test that {@link TouchScroller} defers to native scrolling if the
+   * scrollable widget is already scrolled as far as it can go.
+   * 
+   * @param hStart the starting horizontal scroll position
+   * @param vStart the starting vertical scroll position
+   * @param xEnd the ending x touch coordinate
+   * @param yEnd the ending y touch coordinate
+   */
+  private void testDeferToNativeScrolling(int hStart, int vStart, int xEnd, int yEnd) {
+    // Disable momentum for this test.
+    scroller.setMomentum(null);
+
+    // Scroll to the left.
+    scrollPanel.setHorizontalScrollPosition(hStart);
+    scrollPanel.setVerticalScrollPosition(vStart);
+
+    // Start touching.
+    scroller.onTouchStart(createTouchStartEvent(0, 0));
+    scroller.assertOnDragStartCalled(false);
+    assertTrue(scroller.isTouching());
+    assertFalse(scroller.isDragging());
+
+    // Move to the left.
+    scroller.onTouchMove(createTouchMoveEvent(xEnd, yEnd));
+    scroller.assertOnDragStartCalled(false);
+    scroller.assertOnDragMoveCalled(false);
+    assertFalse(scroller.isTouching());
+    assertFalse(scroller.isDragging());
   }
 }
