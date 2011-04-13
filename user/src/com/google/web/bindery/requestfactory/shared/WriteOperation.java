@@ -16,15 +16,24 @@
 package com.google.web.bindery.requestfactory.shared;
 
 /**
- * The enum used in {@link EntityProxyChange}.
- * <ul>
- * <li>A PERSIST event is fired after a proxy that was created on the client has
- * been persisted on the server.
- * <li>An UPDATE event is fired whenever a client encounters a proxy for the
- * first time, or encounters a proxy whose version number has changed.
- * <li>A DELETE event is fired after a proxy that was deleted on the client is
- * deleted on the server as well.
- * </ul>
+ * The values returned by {@link EntityProxyChange#getWriteOperation()} to
+ * describe the type of change being announced.
+ * 
+ * <dl>
+ * <dt>PERSIST
+ * <dd>An {@link EntityProxy} that was created on the client has been persisted
+ * on the server
+ * 
+ * <dt>UPDATE
+ * <dd>An {@link EntityProxy} has been encountered by the client for the first
+ * time, or its version value has changed
+ * 
+ * <dt>DELETE
+ * <dd>The server has confirmed the success of a client request to delete an
+ * {@link EntityProxy}
+ * </dl>
+ * 
+ * @see EntityProxyChange#getWriteOperation()
  */
 public enum WriteOperation {
   PERSIST("PERSIST"), UPDATE("UPDATE"), DELETE("DELETE");

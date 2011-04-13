@@ -21,17 +21,19 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 
 /**
- * Abstract base class for an event announcing changes to an
- * {@link EntityProxy}.
+ * Event posted by a {@link RequestFactory} when changes to an entity are
+ * detected. Provides a {@link WriteOperation} value describing the change, and
+ * the {@link EntityProxyId} of the entity in question.
  * <p>
- * Note that this event includes an unpopulated copy of the changed proxy
- * &mdash; all properties are undefined except it's id. That is, the event
- * includes only enough information for receivers to issue requests to get
- * themselves fresh copies of the proxy.
- * <p>
- * TODO: use ProxyId rather than an empty proxy
- *
+ * EntityProxyChange events are posted with the relevant EntityProxy
+ * Class as their source, allowing handlers to register for changes only
+ * of the type they care about via
+ * {@link #registerForProxyType(EventBus, Class, Handler)}.
+ * 
  * @param <P> the type of the proxy
+ * 
+ * @see RequestFactory#initialize(EventBus)
+ * @see RequestFactory#find(EntityProxyId)
  */
 public class EntityProxyChange<P extends EntityProxy> extends
     GwtEvent<EntityProxyChange.Handler<P>> {
