@@ -477,8 +477,16 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
 
    public void onActivate()
    {
-      widget_.onResize();
-      widget_.onActivate();
+      Scheduler.get().scheduleFinally(new RepeatingCommand()
+      {
+         public boolean execute()
+         {
+            widget_.onResize();
+            widget_.onActivate();
+
+            return false;
+         }
+      });
    }
 
    public void onVisibilityChanged(boolean visible)
