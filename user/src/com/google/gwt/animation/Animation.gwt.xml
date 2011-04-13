@@ -18,48 +18,7 @@
 <!--                                                                        -->
 <module>
   <inherits name="com.google.gwt.core.Core"/>
-  <inherits name="com.google.gwt.dom.DOM"/>
-  <inherits name="com.google.gwt.user.UserAgent"/>
-
-  <define-property name="animationTimingSupport" values="no,moz,webkit"/>
-  <collapse-property name="animationTimingSupport" values="*"/>
-  <property-provider name="animationTimingSupport"><![CDATA[
-    if ($wnd.webkitRequestAnimationFrame && $wnd.webkitCancelRequestAnimationFrame) {
-      return "webkit";
-    }
-    if ($wnd.mozRequestAnimationFrame) {
-      return "moz";
-    }
-    return "no";
-  ]]></property-provider>
-
-  <set-property name="animationTimingSupport" value="no">
-    <any>
-      <when-property-is name="user.agent" value="ie6" />
-      <when-property-is name="user.agent" value="ie8" />
-      <when-property-is name="user.agent" value="ie9" />
-      <when-property-is name="user.agent" value="opera" />
-    </any>
-  </set-property>
-
-  <!-- Fallback implementation, based on a timer -->
-  <replace-with class="com.google.gwt.animation.client.AnimationImplTimer">
-    <when-type-is class="com.google.gwt.animation.client.AnimationImpl"/>
-  </replace-with>
-
-  <!-- Implementation based on mozRequestAnimationFrame -->
-  <!-- Only used in Firefox when support has been detected -->
-  <replace-with class="com.google.gwt.animation.client.AnimationImplMozAnimTiming">
-    <when-type-is class="com.google.gwt.animation.client.AnimationImpl"/>
-    <when-property-is name="animationTimingSupport" value="moz" />
-    <when-property-is name="user.agent" value="gecko1_8"/>
-  </replace-with>
-
-  <!-- Implementation based on webkitRequestAnimationFrame -->
-  <!-- Only used in WebKit when support has been detected -->
-  <replace-with class="com.google.gwt.animation.client.AnimationImplWebkitAnimTiming">
-    <when-type-is class="com.google.gwt.animation.client.AnimationImpl"/>
-    <when-property-is name="animationTimingSupport" value="webkit" />
-    <when-property-is name="user.agent" value="safari"/>
-  </replace-with>
+  
+  <!-- Include User module to inherit Timer -->
+  <inherits name="com.google.gwt.user.User"/>
 </module>
