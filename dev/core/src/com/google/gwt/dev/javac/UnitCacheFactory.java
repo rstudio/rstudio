@@ -28,8 +28,10 @@ public class UnitCacheFactory {
   /**
    * The API must be enabled explicitly for persistent caching to be live.
    */
-  private static final boolean usePersistent = System.getProperties().containsKey(
-      "gwt.persistentunitcache");
+  private static final String configPropertyValue = System.getProperty("gwt.persistentunitcache",
+      "false");
+  private static final boolean usePersistent = configPropertyValue.length() == 0
+      || Boolean.parseBoolean(configPropertyValue);
   private static UnitCache instance = null;
 
   /**
