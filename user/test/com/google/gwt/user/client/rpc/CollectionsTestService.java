@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2011 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,11 +17,20 @@ package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeArrayList;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeArraysAsList;
-import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmpty;
-import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMap;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyKey;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyList;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptySet;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyValue;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEnum;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMapKey;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMapValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashSet;
-import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMap;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeIdentityHashMapKey;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeIdentityHashMapValue;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMapKey;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMapValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashSet;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedList;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeSingleton;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeSet;
@@ -33,8 +42,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,12 +54,13 @@ import java.util.TreeSet;
 import java.util.Vector;
 
 /**
- * TODO: document me.
+ * The Remote Service for testing GWT RPC for Collections.
  */
+@RemoteServiceRelativePath("collections")
 public interface CollectionsTestService extends RemoteService {
 
   /**
-   * TODO: document me.
+   * A custom exception for the Collection test.
    */
   final class CollectionsTestServiceException extends Exception {
     public CollectionsTestServiceException() {
@@ -63,16 +75,16 @@ public interface CollectionsTestService extends RemoteService {
       throws CollectionsTestServiceException;
 
   // For Collections.emptyList()
-  List<MarkerTypeEmpty> echo(List<MarkerTypeEmpty> value)
-  throws CollectionsTestServiceException;
+  List<MarkerTypeEmptyList> echo(List<MarkerTypeEmptyList> value)
+      throws CollectionsTestServiceException;
 
   // For Collections.emptyMap()
-  Map<MarkerTypeEmpty, MarkerTypeEmpty> echo(Map<MarkerTypeEmpty,
-      MarkerTypeEmpty> value) throws CollectionsTestServiceException;
+  Map<MarkerTypeEmptyKey, MarkerTypeEmptyValue> echo(
+      Map<MarkerTypeEmptyKey, MarkerTypeEmptyValue> value) throws CollectionsTestServiceException;
 
   // For Collections.emptySet()
-  Set<MarkerTypeEmpty> echo(Set<MarkerTypeEmpty> value)
-  throws CollectionsTestServiceException;
+  Set<MarkerTypeEmptySet> echo(Set<MarkerTypeEmptySet> value)
+      throws CollectionsTestServiceException;
 
   boolean[] echo(boolean[] value) throws CollectionsTestServiceException;
 
@@ -98,11 +110,15 @@ public interface CollectionsTestService extends RemoteService {
 
   Float[] echo(Float[] value) throws CollectionsTestServiceException;
 
-  HashMap<String, MarkerTypeHashMap> echo(
-      HashMap<String, MarkerTypeHashMap> value)
+  HashMap<MarkerTypeHashMapKey, MarkerTypeHashMapValue> echo(
+      HashMap<MarkerTypeHashMapKey, MarkerTypeHashMapValue> value)
       throws CollectionsTestServiceException;
 
   HashSet<MarkerTypeHashSet> echo(HashSet<MarkerTypeHashSet> value)
+      throws CollectionsTestServiceException;
+
+  IdentityHashMap<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue> echo(
+      IdentityHashMap<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue> value)
       throws CollectionsTestServiceException;
 
   int[] echo(int[] value) throws CollectionsTestServiceException;
@@ -112,12 +128,15 @@ public interface CollectionsTestService extends RemoteService {
   java.sql.Date[] echo(java.sql.Date[] value)
       throws CollectionsTestServiceException;
 
-  LinkedHashMap<String, MarkerTypeLinkedHashMap> echo(
-      LinkedHashMap<String, MarkerTypeLinkedHashMap> value)
+  LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue> echo(
+      LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue> value)
       throws CollectionsTestServiceException;
 
   LinkedHashSet<MarkerTypeLinkedHashSet> echo(
       LinkedHashSet<MarkerTypeLinkedHashSet> value)
+      throws CollectionsTestServiceException;
+
+  LinkedList<MarkerTypeLinkedList> echo(LinkedList<MarkerTypeLinkedList> value)
       throws CollectionsTestServiceException;
 
   long[] echo(long[] value) throws CollectionsTestServiceException;
@@ -151,6 +170,10 @@ public interface CollectionsTestService extends RemoteService {
 
   List<MarkerTypeArraysAsList> echoArraysAsList(
       List<MarkerTypeArraysAsList> value)
+      throws CollectionsTestServiceException;
+
+  IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue> echoEnumKey(
+      IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue> value)
       throws CollectionsTestServiceException;
 
   // For Collections.singletonList()

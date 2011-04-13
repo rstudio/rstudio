@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2011 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,7 @@ import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClas
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableSubclass;
 
 /**
- * TODO: document me.
+ * Tests RPC serialization of classes without custom serializers.
  */
 public class InheritanceTest extends RpcTestBase {
 

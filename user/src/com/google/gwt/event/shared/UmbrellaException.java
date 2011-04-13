@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2011 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.event.shared;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -30,6 +31,13 @@ public class UmbrellaException extends RuntimeException {
    */
   private Set<Throwable> causes;
 
+  /*
+   * The default constructor enables RPC support.
+   */
+  public UmbrellaException() {
+    this(new HashSet<Throwable>());
+  }
+  
   public UmbrellaException(Set<Throwable> causes) {
     super(
         "One or more exceptions caught, see full set in UmbrellaException#getCauses",

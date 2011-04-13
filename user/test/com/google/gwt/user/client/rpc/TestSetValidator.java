@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2011 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,14 @@
  */
 package com.google.gwt.user.client.rpc;
 
-import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmpty;
+import com.google.gwt.event.shared.UmbrellaException;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyKey;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyList;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptySet;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyValue;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEnum;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeIdentityHashMapKey;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeIdentityHashMapValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeSingleton;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeSet;
@@ -33,9 +40,11 @@ import static junit.framework.Assert.assertSame;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -264,6 +273,34 @@ public class TestSetValidator {
     return true;
   }
 
+  private static boolean equals(Throwable expected, Throwable actual) {
+    // If one is null, both must be null (or vice-versa)
+    if ((expected == null) != (actual == null)) {
+      return false;
+    }
+    // Only check expected for null, as we know that actual is the same.
+    if (actual == null) {
+      return false;
+    }
+
+    String expectedMessage = expected.getMessage();
+    String actualMessage = actual.getMessage();
+    if (!equalsWithNullCheck(expectedMessage, actualMessage)) {
+        return false;
+    }
+
+    /*
+     * The cause field is not serialized, so we cannot verify it.
+     */
+
+    /*
+     * Stack traces are not comparable because they are automatically filled in when
+     * the exception is instantiated, with the instantiation site's stack trace.
+     */
+    
+    return true;
+  }
+
   public static boolean isValid(ArrayList<?> list) {
     if (list == null) {
       return false;
@@ -277,15 +314,15 @@ public class TestSetValidator {
     return reference.equals(list);
   }
 
-  public static boolean isValid(List<MarkerTypeEmpty> list) {
+  public static boolean isValid(List<MarkerTypeEmptyList> list) {
     return list != null && list.size() == 0;
   }
 
-  public static boolean isValid(Map<MarkerTypeEmpty, MarkerTypeEmpty> map) {
+  public static boolean isValid(Map<MarkerTypeEmptyKey, MarkerTypeEmptyValue> map) {
     return map != null && map.size() == 0;
   }
 
-  public static boolean isValid(Set<MarkerTypeEmpty> set) {
+  public static boolean isValid(Set<MarkerTypeEmptySet> set) {
     return set != null && set.size() == 0;
   }
 
@@ -339,6 +376,87 @@ public class TestSetValidator {
 
     return true;
   }
+  
+  public static boolean isValidEnumKey(
+      IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue> expected,
+      IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue> map) {
+    if (map == null) {
+      return false;
+    }
+
+    if (expected.size() != map.size()) {
+      return false;
+    }
+
+    Set<?> entries = expected.entrySet();
+    Iterator<?> entryIter = entries.iterator();
+    while (entryIter.hasNext()) {
+      Entry<?, ?> entry = (Entry<?, ?>) entryIter.next();
+
+      Object value = map.get(entry.getKey());
+
+      if (value != entry.getValue()) {
+        if (value == null || entry.getValue() == null) {
+          return false;
+        }
+
+        if (!map.get(entry.getKey()).equals(entry.getValue())) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  public static boolean isValid(
+      IdentityHashMap<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue> expected,
+      IdentityHashMap<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue> map) {
+    if (map == null) {
+      return false;
+    }
+
+    if (expected.size() != map.size()) {
+      return false;
+    }
+    
+    Set<Entry<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue>> mapEntries =
+        map.entrySet();
+    Set<Entry<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue>> expectedEntries =
+        expected.entrySet();
+
+    /*
+     * An IdentityHashMap uses reference equality for keys. The maps we are
+     * comparing have keys from different sources, so we cannot simply use get
+     * to find one key in the other map. Instead we need to iterate looking for
+     * equality. We do not check for null keys/value; rather, catch them with
+     * NPEs.
+     */
+    Iterator<Entry<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue>> expectedIter =
+        expectedEntries.iterator();
+    while (expectedIter.hasNext()) {
+      Entry<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue> expectedEntry =
+          expectedIter.next();
+
+      Iterator<Entry<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue>> mapIter =
+          mapEntries.iterator();
+      boolean found = false;
+      while (!found && mapIter.hasNext()) {
+        Entry<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue> mapEntry =
+            mapIter.next();
+
+        if (mapEntry.getKey().equals(expectedEntry.getKey())
+            && mapEntry.getValue().equals(expectedEntry.getValue())) {
+          found = true;
+        }
+      }
+      if (!found) {
+        return false;
+      }
+    }
+
+    return true;
+  }
 
   public static boolean isValid(LinkedHashMap<?, ?> expected,
       LinkedHashMap<?, ?> map) {
@@ -357,6 +475,16 @@ public class TestSetValidator {
       return equals(expectedEntries, actualEntries);
     }
     return false;
+  }
+
+  public static boolean isValid(LinkedList<?> expected, LinkedList<?> actual) {
+    if (actual == null) {
+      return false;
+    }
+
+    Iterator<?> expectedEntries = expected.iterator();
+    Iterator<?> actualEntries = actual.iterator();
+    return equals(expectedEntries, actualEntries);
   }
 
   public static boolean isValid(SerializablePrivateNoArg actual) {
@@ -429,6 +557,66 @@ public class TestSetValidator {
     return true;
   }
 
+  public static boolean isValid(UmbrellaException expected, UmbrellaException actual) {
+    if (actual == null) {
+      return false;
+    }
+    
+    /*
+     * Throwable doesn't declare equals.
+     */
+    if (!equals(expected, actual)) {
+      return false;
+    }
+
+    /* Check causes. */
+    Set<Throwable> expectedCauses = expected.getCauses();
+    Set<Throwable> actualCauses = actual.getCauses();
+
+    /* Size. */
+    if (actualCauses.size() != expectedCauses.size()) {
+      return false;
+    }
+    
+    /* Null elements, and make a copy of the actualCauses set */
+    Iterator<Throwable> expectedIter = expectedCauses.iterator();
+    while (expectedIter.hasNext()) {
+      Throwable expectedCause = expectedIter.next();
+      if (expectedCause == null) {
+        return false;
+      }
+    }
+    Iterator<Throwable> actualIter = actualCauses.iterator();
+    while (actualIter.hasNext()) {
+      Throwable actualCause = actualIter.next();
+      if (actualCause == null) {
+        return false;
+      }
+    }
+    
+    /*
+     * The elements themselves. We rely on the fact that the test sets do not
+     * contain duplicates of causes.
+     */
+    expectedIter = expectedCauses.iterator();
+    while (expectedIter.hasNext()) {
+      Throwable expectedCause = expectedIter.next();
+      actualIter = actualCauses.iterator();
+      boolean found = false;
+      while (!found && actualIter.hasNext()) {
+        Throwable actualCause = actualIter.next();
+        if (equals(expectedCause, actualCause)) {
+          found = true;
+        }
+      }
+      if (!found) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+  
   public static boolean isValid(Vector<?> expected, Vector<?> actual) {
     if (actual == null) {
       return false;

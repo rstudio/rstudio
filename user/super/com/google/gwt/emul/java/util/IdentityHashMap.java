@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2011 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,7 +42,7 @@ public class IdentityHashMap<K, V> extends AbstractHashMap<K, V> implements
    * pruned by dead code elimination.
    */
   @SuppressWarnings("unused")
-  private K exposeValue;
+  private V exposeValue;
 
   public IdentityHashMap() {
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2011 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,10 +18,20 @@ package com.google.gwt.user.client.rpc;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeArrayList;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeArraysAsList;
-import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmpty;
-import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMap;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyKey;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyList;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptySet;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyValue;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEnum;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMapKey;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMapValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashSet;
-import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMap;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeIdentityHashMapKey;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeIdentityHashMapValue;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMapKey;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMapValue;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashSet;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedList;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeSingleton;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeSet;
@@ -34,7 +44,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -238,12 +251,12 @@ public class CollectionsTest extends RpcTestBase {
     CollectionsTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
     service.echo(TestSetFactory.createEmptyList(),
-        new AsyncCallback<List<MarkerTypeEmpty>>() {
+        new AsyncCallback<List<MarkerTypeEmptyList>>() {
           public void onFailure(Throwable caught) {
             TestSetValidator.rethrowException(caught);
           }
 
-          public void onSuccess(List<MarkerTypeEmpty> result) {
+          public void onSuccess(List<MarkerTypeEmptyList> result) {
             assertNotNull(result);
             assertTrue(TestSetValidator.isValid(result));
             finishTest();
@@ -255,12 +268,12 @@ public class CollectionsTest extends RpcTestBase {
     CollectionsTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
     service.echo(TestSetFactory.createEmptyMap(),
-        new AsyncCallback<Map<MarkerTypeEmpty, MarkerTypeEmpty>>() {
+        new AsyncCallback<Map<MarkerTypeEmptyKey, MarkerTypeEmptyValue>>() {
           public void onFailure(Throwable caught) {
             TestSetValidator.rethrowException(caught);
           }
 
-          public void onSuccess(Map<MarkerTypeEmpty, MarkerTypeEmpty> result) {
+          public void onSuccess(Map<MarkerTypeEmptyKey, MarkerTypeEmptyValue> result) {
             assertNotNull(result);
             assertTrue(TestSetValidator.isValid(result));
             finishTest();
@@ -272,12 +285,12 @@ public class CollectionsTest extends RpcTestBase {
     CollectionsTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
     service.echo(TestSetFactory.createEmptySet(),
-        new AsyncCallback<Set<MarkerTypeEmpty>>() {
+        new AsyncCallback<Set<MarkerTypeEmptySet>>() {
           public void onFailure(Throwable caught) {
             TestSetValidator.rethrowException(caught);
           }
 
-          public void onSuccess(Set<MarkerTypeEmpty> result) {
+          public void onSuccess(Set<MarkerTypeEmptySet> result) {
             assertNotNull(result);
             assertTrue(TestSetValidator.isValid(result));
             finishTest();
@@ -331,15 +344,15 @@ public class CollectionsTest extends RpcTestBase {
 
   public void testHashMap() {
     CollectionsTestServiceAsync service = getServiceAsync();
-    final HashMap<String, MarkerTypeHashMap> expected = TestSetFactory.createHashMap();
+    final HashMap<MarkerTypeHashMapKey, MarkerTypeHashMapValue> expected = TestSetFactory.createHashMap();
     delayTestFinishForRpc();
     service.echo(expected,
-        new AsyncCallback<HashMap<String, MarkerTypeHashMap>>() {
+        new AsyncCallback<HashMap<MarkerTypeHashMapKey, MarkerTypeHashMapValue>>() {
           public void onFailure(Throwable caught) {
             TestSetValidator.rethrowException(caught);
           }
 
-          public void onSuccess(HashMap<String, MarkerTypeHashMap> result) {
+          public void onSuccess(HashMap<MarkerTypeHashMapKey, MarkerTypeHashMapValue> result) {
             assertNotNull(result);
             assertTrue(TestSetValidator.isValid(expected, result));
             finishTest();
@@ -362,6 +375,47 @@ public class CollectionsTest extends RpcTestBase {
         finishTest();
       }
     });
+  }
+
+  public void testIdentityHashMapEnumKey() {
+    CollectionsTestServiceAsync service = getServiceAsync();
+    final IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue> expected =
+        TestSetFactory.createIdentityHashMapEnumKey();
+    delayTestFinishForRpc();
+    service.echoEnumKey(expected,
+        new AsyncCallback<IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue>>() {
+          public void onFailure(Throwable caught) {
+            TestSetValidator.rethrowException(caught);
+          }
+
+          public void onSuccess(IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue> result) {
+            assertNotNull(result);
+            assertTrue(TestSetValidator.isValidEnumKey(expected, result));
+            finishTest();
+          }
+        });
+  }
+
+  public void testIdentityHashMap() {
+    CollectionsTestServiceAsync service = getServiceAsync();
+    final IdentityHashMap<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue> expected =
+        TestSetFactory.createIdentityHashMap();
+    delayTestFinishForRpc();
+    service
+        .echo(
+            expected,
+            new AsyncCallback<IdentityHashMap<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue>>() {
+              public void onFailure(Throwable caught) {
+                TestSetValidator.rethrowException(caught);
+              }
+
+              public void onSuccess(
+                  IdentityHashMap<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue> result) {
+                assertNotNull(result);
+                assertTrue(TestSetValidator.isValid(expected, result));
+                finishTest();
+              }
+            });
   }
 
   public void testIntegerArray() {
@@ -389,18 +443,19 @@ public class CollectionsTest extends RpcTestBase {
   public void testLinkedHashMap() {
     CollectionsTestServiceAsync service = getServiceAsync();
 
-    final LinkedHashMap<String, MarkerTypeLinkedHashMap> expected = TestSetFactory.createLinkedHashMap();
+    final LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue> expected =
+        TestSetFactory.createLinkedHashMap();
     assertFalse(LinkedHashMap_CustomFieldSerializer.getAccessOrderNoReflection(expected));
 
     delayTestFinishForRpc();
     service.echo(expected,
-        new AsyncCallback<LinkedHashMap<String, MarkerTypeLinkedHashMap>>() {
+        new AsyncCallback<LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue>>() {
           public void onFailure(Throwable caught) {
             TestSetValidator.rethrowException(caught);
           }
 
           public void onSuccess(
-              LinkedHashMap<String, MarkerTypeLinkedHashMap> result) {
+              LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue> result) {
             assertNotNull(result);
             expected.get("SerializableSet");
             result.get("SerializableSet");
@@ -413,18 +468,19 @@ public class CollectionsTest extends RpcTestBase {
   public void testLinkedHashMapLRU() {
     CollectionsTestServiceAsync service = getServiceAsync();
 
-    final LinkedHashMap<String, MarkerTypeLinkedHashMap> expected = TestSetFactory.createLRULinkedHashMap();
+    final LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue> expected =
+        TestSetFactory.createLRULinkedHashMap();
     assertTrue(LinkedHashMap_CustomFieldSerializer.getAccessOrderNoReflection(expected));
 
     delayTestFinishForRpc();
     service.echo(expected,
-        new AsyncCallback<LinkedHashMap<String, MarkerTypeLinkedHashMap>>() {
+        new AsyncCallback<LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue>>() {
           public void onFailure(Throwable caught) {
             TestSetValidator.rethrowException(caught);
           }
 
           public void onSuccess(
-              LinkedHashMap<String, MarkerTypeLinkedHashMap> actual) {
+              LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue> actual) {
             assertNotNull(actual);
             expected.get("SerializableSet");
             actual.get("SerializableSet");
@@ -432,6 +488,42 @@ public class CollectionsTest extends RpcTestBase {
             finishTest();
           }
         });
+  }
+
+  public void testLinkedHashSet() {
+    CollectionsTestServiceAsync service = getServiceAsync();
+    final LinkedHashSet<MarkerTypeLinkedHashSet> expected = TestSetFactory.createLinkedHashSet();
+    delayTestFinishForRpc();
+    service.echo(expected,
+        new AsyncCallback<LinkedHashSet<MarkerTypeLinkedHashSet>>() {
+          public void onFailure(Throwable caught) {
+            TestSetValidator.rethrowException(caught);
+          }
+
+          public void onSuccess(
+              LinkedHashSet<MarkerTypeLinkedHashSet> result) {
+            assertNotNull(result);
+            assertTrue(TestSetValidator.isValid(expected, result));
+            finishTest();
+          }
+        });
+  }
+
+  public void testLinkedList() {
+    CollectionsTestServiceAsync service = getServiceAsync();
+    final LinkedList<MarkerTypeLinkedList> expected = TestSetFactory.createLinkedList();
+    delayTestFinishForRpc();
+    service.echo(expected, new AsyncCallback<LinkedList<MarkerTypeLinkedList>>() {
+      public void onFailure(Throwable caught) {
+        TestSetValidator.rethrowException(caught);
+      }
+
+      public void onSuccess(LinkedList<MarkerTypeLinkedList> result) {
+        assertNotNull(result);
+        assertTrue(TestSetValidator.isValid(expected, result));
+        finishTest();
+      }
+    });
   }
 
   public void testLongArray() {
@@ -798,9 +890,8 @@ public class CollectionsTest extends RpcTestBase {
 
   private CollectionsTestServiceAsync getServiceAsync() {
     if (collectionsTestService == null) {
-      collectionsTestService = (CollectionsTestServiceAsync) GWT.create(CollectionsTestService.class);
-      ((ServiceDefTarget) collectionsTestService).setServiceEntryPoint(GWT.getModuleBaseURL()
-          + "collections");
+      collectionsTestService =
+          (CollectionsTestServiceAsync) GWT.create(CollectionsTestService.class);
     }
     return collectionsTestService;
   }

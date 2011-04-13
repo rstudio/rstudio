@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2011 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.rpc;
 
+import com.google.gwt.event.shared.UmbrellaException;
+
 import java.io.Serializable;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -24,8 +26,10 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -107,8 +111,38 @@ public class TestSetFactory {
    * A single-use marker type to independently check type parameter exposure in
    * various empty collections.
    */
-  public static final class MarkerTypeEmpty extends MarkerBase {
-    MarkerTypeEmpty() {
+  public static final class MarkerTypeEmptyKey extends MarkerBase {
+    MarkerTypeEmptyKey() {
+      super(null);
+    }
+  }
+
+  /**
+   * A single-use marker type to independently check type parameter exposure in
+   * various empty collections.
+   */
+  public static final class MarkerTypeEmptyList extends MarkerBase {
+    MarkerTypeEmptyList() {
+      super(null);
+    }
+  }
+
+  /**
+   * A single-use marker type to independently check type parameter exposure in
+   * various empty collections.
+   */
+  public static final class MarkerTypeEmptySet extends MarkerBase {
+    MarkerTypeEmptySet() {
+      super(null);
+    }
+  }
+
+  /**
+   * A single-use marker type to independently check type parameter exposure in
+   * various empty collections.
+   */
+  public static final class MarkerTypeEmptyValue extends MarkerBase {
+    MarkerTypeEmptyValue() {
       super(null);
     }
   }
@@ -125,17 +159,31 @@ public class TestSetFactory {
    * A single-use marker type to independently check type parameter exposure in
    * various collections.
    */
-  public static final class MarkerTypeHashMap extends MarkerBase {
+  public static final class MarkerTypeHashMapKey extends MarkerBase {
 
-    public MarkerTypeHashMap(String value) {
+    public MarkerTypeHashMapKey(String value) {
       super(value);
     }
 
-    MarkerTypeHashMap() {
+    MarkerTypeHashMapKey() {
       super(null);
     }
   }
 
+  /**
+   * A single-use marker type to independently check type parameter exposure in
+   * various collections.
+   */
+  public static final class MarkerTypeHashMapValue extends MarkerBase {
+
+    public MarkerTypeHashMapValue(String value) {
+      super(value);
+    }
+
+    MarkerTypeHashMapValue() {
+      super(null);
+    }
+  }
   /**
    * A single-use marker type to independently check type parameter exposure in
    * various collections.
@@ -155,13 +203,58 @@ public class TestSetFactory {
    * A single-use marker type to independently check type parameter exposure in
    * various collections.
    */
-  public static final class MarkerTypeLinkedHashMap extends MarkerBase {
+  public static final class MarkerTypeIdentityHashMapKey extends MarkerBase {
 
-    public MarkerTypeLinkedHashMap(String value) {
+    public MarkerTypeIdentityHashMapKey(String value) {
       super(value);
     }
 
-    MarkerTypeLinkedHashMap() {
+    MarkerTypeIdentityHashMapKey() {
+      super(null);
+    }
+  }
+
+  /**
+   * A single-use marker type to independently check type parameter exposure in
+   * various collections.
+   */
+  public static final class MarkerTypeIdentityHashMapValue extends MarkerBase {
+
+    public MarkerTypeIdentityHashMapValue(String value) {
+      super(value);
+    }
+
+    MarkerTypeIdentityHashMapValue() {
+      super(null);
+    }
+  }
+
+  /**
+   * A single-use marker type to independently check type parameter exposure in
+   * various collections.
+   */
+  public static final class MarkerTypeLinkedHashMapKey extends MarkerBase {
+
+    public MarkerTypeLinkedHashMapKey(String value) {
+      super(value);
+    }
+
+    MarkerTypeLinkedHashMapKey() {
+      super(null);
+    }
+  }
+
+  /**
+   * A single-use marker type to independently check type parameter exposure in
+   * various collections.
+   */
+  public static final class MarkerTypeLinkedHashMapValue extends MarkerBase {
+
+    public MarkerTypeLinkedHashMapValue(String value) {
+      super(value);
+    }
+
+    MarkerTypeLinkedHashMapValue() {
       super(null);
     }
   }
@@ -177,6 +270,21 @@ public class TestSetFactory {
     }
 
     MarkerTypeLinkedHashSet() {
+      super(null);
+    }
+  }
+
+  /**
+   * A single-use marker type to independently check type parameter exposure in
+   * various collections.
+   */
+  public static final class MarkerTypeLinkedList extends MarkerBase {
+
+    public MarkerTypeLinkedList(String value) {
+      super(value);
+    }
+
+    MarkerTypeLinkedList() {
       super(null);
     }
   }
@@ -423,15 +531,15 @@ public class TestSetFactory {
         new Double(Double.MAX_VALUE), new Double(Double.MIN_VALUE)};
   }
 
-  public static List<MarkerTypeEmpty> createEmptyList() {
+  public static List<MarkerTypeEmptyList> createEmptyList() {
     return java.util.Collections.emptyList();
   }
 
-  public static Map<MarkerTypeEmpty, MarkerTypeEmpty> createEmptyMap() {
+  public static Map<MarkerTypeEmptyKey, MarkerTypeEmptyValue> createEmptyMap() {
     return java.util.Collections.emptyMap();
   }
 
-  public static Set<MarkerTypeEmpty> createEmptySet() {
+  public static Set<MarkerTypeEmptySet> createEmptySet() {
     return java.util.Collections.emptySet();
   }
 
@@ -446,13 +554,14 @@ public class TestSetFactory {
         new Float(Float.MAX_VALUE), new Float(Float.MIN_VALUE)};
   }
 
-  public static HashMap<String, MarkerTypeHashMap> createHashMap() {
-    HashMap<String, MarkerTypeHashMap> map = new HashMap<String, MarkerTypeHashMap>();
-    map.put("foo", new MarkerTypeHashMap("foo"));
-    map.put("bar", new MarkerTypeHashMap("bar"));
-    map.put("baz", new MarkerTypeHashMap("baz"));
-    map.put("bal", new MarkerTypeHashMap("bal"));
-    map.put("w00t", new MarkerTypeHashMap("w00t"));
+  public static HashMap<MarkerTypeHashMapKey, MarkerTypeHashMapValue> createHashMap() {
+    HashMap<MarkerTypeHashMapKey, MarkerTypeHashMapValue> map =
+        new HashMap<MarkerTypeHashMapKey, MarkerTypeHashMapValue>();
+    map.put(new MarkerTypeHashMapKey("foo"), new MarkerTypeHashMapValue("foo"));
+    map.put(new MarkerTypeHashMapKey("bar"), new MarkerTypeHashMapValue("bar"));
+    map.put(new MarkerTypeHashMapKey("baz"), new MarkerTypeHashMapValue("baz"));
+    map.put(new MarkerTypeHashMapKey("bal"), new MarkerTypeHashMapValue("bal"));
+    map.put(new MarkerTypeHashMapKey("w00t"), new MarkerTypeHashMapValue("w00t"));
     return map;
   }
 
@@ -466,19 +575,50 @@ public class TestSetFactory {
     return set;
   }
 
+  public static IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue> createIdentityHashMapEnumKey() {
+    IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue> map =
+        new IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue>();
+    /*
+     * An Enum hash map lets us check that references to Enums remain constant
+     * across RPC send-receive cycles.
+     */
+    map.put(MarkerTypeEnum.A, new MarkerTypeIdentityHashMapValue("A"));
+    map.put(MarkerTypeEnum.B, new MarkerTypeIdentityHashMapValue("B"));
+    map.put(MarkerTypeEnum.C, new MarkerTypeIdentityHashMapValue("C"));
+    return map;
+  }
+
+  public static IdentityHashMap<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue> createIdentityHashMap() {
+    IdentityHashMap<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue> map =
+        new IdentityHashMap<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue>();
+    /*
+     * The two distinct instances of the Integer 1 will remain distinct in the
+     * IdentityHashMap because they are not reference equal. They should
+     * serialize such that the two distinct entries remain.
+     */
+    map.put(new MarkerTypeIdentityHashMapKey("foo"), new MarkerTypeIdentityHashMapValue("foo1"));
+    map.put(new MarkerTypeIdentityHashMapKey("foo"), new MarkerTypeIdentityHashMapValue("foo2"));
+    map.put(new MarkerTypeIdentityHashMapKey("foo"), new MarkerTypeIdentityHashMapValue("foo3"));
+    map.put(new MarkerTypeIdentityHashMapKey("bar"), new MarkerTypeIdentityHashMapValue("bar"));
+    map.put(new MarkerTypeIdentityHashMapKey("baz"), new MarkerTypeIdentityHashMapValue("baz"));
+    map.put(new MarkerTypeIdentityHashMapKey("bal"), new MarkerTypeIdentityHashMapValue("bal"));
+    return map;
+  }
+
   public static Integer[] createIntegerArray() {
     return new Integer[] {
         new Integer(Integer.MAX_VALUE), new Integer(Integer.MIN_VALUE),
         new Integer(Integer.MAX_VALUE), new Integer(Integer.MIN_VALUE)};
   }
 
-  public static LinkedHashMap<String, MarkerTypeLinkedHashMap> createLinkedHashMap() {
-    LinkedHashMap<String, MarkerTypeLinkedHashMap> map = new LinkedHashMap<String, MarkerTypeLinkedHashMap>();
-    map.put("foo", new MarkerTypeLinkedHashMap("foo"));
-    map.put("bar", new MarkerTypeLinkedHashMap("bar"));
-    map.put("baz", new MarkerTypeLinkedHashMap("baz"));
-    map.put("bal", new MarkerTypeLinkedHashMap("bal"));
-    map.put("w00t", new MarkerTypeLinkedHashMap("w00t"));
+  public static LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue> createLinkedHashMap() {
+    LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue> map =
+        new LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue>();
+    map.put(new MarkerTypeLinkedHashMapKey("foo"), new MarkerTypeLinkedHashMapValue("foo"));
+    map.put(new MarkerTypeLinkedHashMapKey("bar"), new MarkerTypeLinkedHashMapValue("bar"));
+    map.put(new MarkerTypeLinkedHashMapKey("baz"), new MarkerTypeLinkedHashMapValue("baz"));
+    map.put(new MarkerTypeLinkedHashMapKey("bal"), new MarkerTypeLinkedHashMapValue("bal"));
+    map.put(new MarkerTypeLinkedHashMapKey("w00t"), new MarkerTypeLinkedHashMapValue("w00t"));
     return map;
   }
 
@@ -490,6 +630,16 @@ public class TestSetFactory {
     set.add(new MarkerTypeLinkedHashSet("bal"));
     set.add(new MarkerTypeLinkedHashSet("w00t"));
     return set;
+  }
+
+  public static LinkedList<MarkerTypeLinkedList> createLinkedList() {
+    LinkedList<MarkerTypeLinkedList> list = new LinkedList<MarkerTypeLinkedList>();
+    list.add(new MarkerTypeLinkedList("foo"));
+    list.add(new MarkerTypeLinkedList("bar"));
+    list.add(new MarkerTypeLinkedList("baz"));
+    list.add(new MarkerTypeLinkedList("bal"));
+    list.add(new MarkerTypeLinkedList("w00t"));
+    return list;
   }
 
   public static Long[] createLongArray() {
@@ -510,14 +660,14 @@ public class TestSetFactory {
         new Long(a), new Long(b), new Long(c)};
   }
 
-  public static LinkedHashMap<String, MarkerTypeLinkedHashMap> createLRULinkedHashMap() {
-    LinkedHashMap<String, MarkerTypeLinkedHashMap> map = new LinkedHashMap<String, MarkerTypeLinkedHashMap>(
-        100, 1.0f, true);
-    map.put("foo", new MarkerTypeLinkedHashMap("foo"));
-    map.put("bar", new MarkerTypeLinkedHashMap("bar"));
-    map.put("baz", new MarkerTypeLinkedHashMap("baz"));
-    map.put("bal", new MarkerTypeLinkedHashMap("bal"));
-    map.put("w00t", new MarkerTypeLinkedHashMap("w00t"));
+  public static LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue> createLRULinkedHashMap() {
+    LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue> map =
+        new LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue>(100, 1.0f, true);
+    map.put(new MarkerTypeLinkedHashMapKey("foo"), new MarkerTypeLinkedHashMapValue("foo"));
+    map.put(new MarkerTypeLinkedHashMapKey("bar"), new MarkerTypeLinkedHashMapValue("bar"));
+    map.put(new MarkerTypeLinkedHashMapKey("baz"), new MarkerTypeLinkedHashMapValue("baz"));
+    map.put(new MarkerTypeLinkedHashMapKey("bal"), new MarkerTypeLinkedHashMapValue("bal"));
+    map.put(new MarkerTypeLinkedHashMapKey("w00t"), new MarkerTypeLinkedHashMapValue("w00t"));
     return map;
   }
 
@@ -712,5 +862,15 @@ public class TestSetFactory {
     root.setRightChild(root);
 
     return root;
+  }
+
+  public static UmbrellaException createUmbrellaException() {
+    Set<Throwable> causes = new HashSet<Throwable>();
+    UmbrellaException exception = new UmbrellaException(causes);
+    SerializationException e1 = new SerializationException("Test Message 1", exception);
+    SerializationException e2 = new SerializationException("Test Message 2", e1);
+    causes.add(e1);
+    causes.add(e2);
+    return exception;
   }
 }

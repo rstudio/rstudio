@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2011 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,18 +17,27 @@ package com.google.gwt.user.server.rpc;
 
 import com.google.gwt.user.client.rpc.CollectionsTestService;
 import com.google.gwt.user.client.rpc.TestSetFactory;
-import com.google.gwt.user.client.rpc.TestSetValidator;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyKey;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyList;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptySet;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeArrayList;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeArraysAsList;
-import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmpty;
-import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMap;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEnum;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMapKey;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMapValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashSet;
-import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMap;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeIdentityHashMapKey;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeIdentityHashMapValue;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMapKey;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMapValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashSet;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedList;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeSingleton;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeVector;
+import com.google.gwt.user.client.rpc.TestSetValidator;
 
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -37,8 +46,10 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -189,10 +200,10 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
-  public HashMap<String, MarkerTypeHashMap> echo(
-      HashMap<String, MarkerTypeHashMap> actual)
+  public HashMap<MarkerTypeHashMapKey, MarkerTypeHashMapValue> echo(
+      HashMap<MarkerTypeHashMapKey, MarkerTypeHashMapValue> actual)
       throws CollectionsTestServiceException {
-    HashMap<String, MarkerTypeHashMap> expected = TestSetFactory.createHashMap();
+    HashMap<MarkerTypeHashMapKey, MarkerTypeHashMapValue> expected = TestSetFactory.createHashMap();
     if (!TestSetValidator.isValid(expected, actual)) {
       throw new CollectionsTestServiceException("expected: "
           + expected.toString() + " actual: " + actual.toString());
@@ -204,6 +215,18 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
   public HashSet<MarkerTypeHashSet> echo(HashSet<MarkerTypeHashSet> actual)
       throws CollectionsTestServiceException {
     HashSet<MarkerTypeHashSet> expected = TestSetFactory.createHashSet();
+    if (!TestSetValidator.isValid(expected, actual)) {
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
+    }
+
+    return actual;
+  }
+
+  public IdentityHashMap<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue> echo(
+      IdentityHashMap<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue> actual)
+      throws CollectionsTestServiceException {
+    IdentityHashMap<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue> expected = TestSetFactory.createIdentityHashMap();
     if (!TestSetValidator.isValid(expected, actual)) {
       throw new CollectionsTestServiceException("expected: "
           + expected.toString() + " actual: " + actual.toString());
@@ -249,10 +272,10 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
-  public LinkedHashMap<String, MarkerTypeLinkedHashMap> echo(
-      LinkedHashMap<String, MarkerTypeLinkedHashMap> actual)
+  public LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue> echo(
+      LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue> actual)
       throws CollectionsTestServiceException {
-    LinkedHashMap<String, MarkerTypeLinkedHashMap> expected = TestSetFactory.createLinkedHashMap();
+    LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue> expected = TestSetFactory.createLinkedHashMap();
     if (!TestSetValidator.isValid(expected, actual)) {
       throw new CollectionsTestServiceException("expected: "
           + expected.toString() + " actual: " + actual.toString());
@@ -271,7 +294,18 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
-  public List<MarkerTypeEmpty> echo(List<MarkerTypeEmpty> list)
+  public LinkedList<MarkerTypeLinkedList> echo(LinkedList<MarkerTypeLinkedList> actual)
+      throws CollectionsTestServiceException {
+    LinkedList<MarkerTypeLinkedList> expected = TestSetFactory.createLinkedList();
+    if (!TestSetValidator.isValid(expected, actual)) {
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
+    }
+
+    return actual;
+  }
+
+  public List<MarkerTypeEmptyList> echo(List<MarkerTypeEmptyList> list)
       throws CollectionsTestServiceException {
     if (!TestSetValidator.isValid(list)) {
       throw new CollectionsTestServiceException();
@@ -300,8 +334,8 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
-  public Map<MarkerTypeEmpty, MarkerTypeEmpty> echo(
-      Map<MarkerTypeEmpty, MarkerTypeEmpty> map)
+  public Map<MarkerTypeEmptyKey, MarkerTypeEmptyValue> echo(
+      Map<MarkerTypeEmptyKey, MarkerTypeEmptyValue> map)
       throws CollectionsTestServiceException {
     if (!TestSetValidator.isValid(map)) {
       throw new CollectionsTestServiceException();
@@ -310,7 +344,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return map;
   }
 
-  public Set<MarkerTypeEmpty> echo(Set<MarkerTypeEmpty> set)
+  public Set<MarkerTypeEmptySet> echo(Set<MarkerTypeEmptySet> set)
       throws CollectionsTestServiceException {
     if (!TestSetValidator.isValid(set)) {
       throw new CollectionsTestServiceException();
@@ -428,6 +462,18 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     }
 
     return value;
+  }
+
+  public IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue> echoEnumKey(
+      IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue> actual)
+      throws CollectionsTestServiceException {
+    IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue> expected = TestSetFactory.createIdentityHashMapEnumKey();
+    if (!TestSetValidator.isValidEnumKey(expected, actual)) {
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
+    }
+
+    return actual;
   }
 
   public List<MarkerTypeSingleton> echoSingletonList(

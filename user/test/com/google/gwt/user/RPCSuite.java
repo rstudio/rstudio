@@ -32,6 +32,7 @@ import com.google.gwt.user.client.rpc.CustomFieldSerializerTest;
 import com.google.gwt.user.client.rpc.CustomFieldSerializerTestWithTypeObfuscation;
 import com.google.gwt.user.client.rpc.EnumsTest;
 import com.google.gwt.user.client.rpc.EnumsTestWithTypeObfuscation;
+import com.google.gwt.user.client.rpc.ExceptionsTest;
 import com.google.gwt.user.client.rpc.FailedRequestTest;
 import com.google.gwt.user.client.rpc.FailingRequestBuilderTest;
 import com.google.gwt.user.client.rpc.InheritanceTest;
@@ -102,6 +103,7 @@ public class RPCSuite {
     suite.addTestSuite(InheritanceTest.class);
     suite.addTestSuite(CollectionsTest.class);
     suite.addTestSuite(CustomFieldSerializerTest.class);
+    suite.addTestSuite(ExceptionsTest.class);
     suite.addTestSuite(ObjectGraphTest.class);
     suite.addTestSuite(com.google.gwt.user.client.rpc.RemoteServiceServletTest.class);
     suite.addTestSuite(RpcTokenTest.class);

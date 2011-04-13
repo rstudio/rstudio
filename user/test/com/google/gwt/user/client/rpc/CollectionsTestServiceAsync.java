@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2011 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,11 +17,20 @@ package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeArrayList;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeArraysAsList;
-import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmpty;
-import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMap;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyKey;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyList;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptySet;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyValue;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEnum;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMapKey;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMapValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashSet;
-import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMap;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeIdentityHashMapKey;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeIdentityHashMapValue;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMapKey;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMapValue;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashSet;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedList;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeSingleton;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeSet;
@@ -33,8 +42,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,23 +54,23 @@ import java.util.TreeSet;
 import java.util.Vector;
 
 /**
- * TODO: document me.
+ * The Remote Service Async class for GWT RPC Collections testing.
  */
 public interface CollectionsTestServiceAsync {
   void echo(ArrayList<MarkerTypeArrayList> value,
       AsyncCallback<ArrayList<MarkerTypeArrayList>> callback);
 
   // For Collections.emptyList()
-  void echo(List<MarkerTypeEmpty> value,
-      AsyncCallback<List<MarkerTypeEmpty>> callback);
+  void echo(List<MarkerTypeEmptyList> value,
+      AsyncCallback<List<MarkerTypeEmptyList>> callback);
 
   // For Collections.emptyMap()
-  void echo(Map<MarkerTypeEmpty, MarkerTypeEmpty> value,
-      AsyncCallback<Map<MarkerTypeEmpty, MarkerTypeEmpty>> callback);
+  void echo(Map<MarkerTypeEmptyKey, MarkerTypeEmptyValue> value,
+      AsyncCallback<Map<MarkerTypeEmptyKey, MarkerTypeEmptyValue>> callback);
 
   // For Collections.emptySet()
-  void echo(Set<MarkerTypeEmpty> value,
-      AsyncCallback<Set<MarkerTypeEmpty>> callback);
+  void echo(Set<MarkerTypeEmptySet> value,
+      AsyncCallback<Set<MarkerTypeEmptySet>> callback);
 
   void echo(boolean[] value, AsyncCallback<boolean[]> callback);
 
@@ -85,11 +96,14 @@ public interface CollectionsTestServiceAsync {
 
   void echo(Float[] value, AsyncCallback<Float[]> callback);
 
-  void echo(HashMap<String, MarkerTypeHashMap> value,
-      AsyncCallback<HashMap<String, MarkerTypeHashMap>> callback);
+  void echo(HashMap<MarkerTypeHashMapKey, MarkerTypeHashMapValue> value,
+      AsyncCallback<HashMap<MarkerTypeHashMapKey, MarkerTypeHashMapValue>> callback);
 
   void echo(HashSet<MarkerTypeHashSet> value,
       AsyncCallback<HashSet<MarkerTypeHashSet>> callback);
+
+  void echo(IdentityHashMap<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue> value,
+      AsyncCallback<IdentityHashMap<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue>> callback);
 
   void echo(int[] value, AsyncCallback<int[]> callback);
 
@@ -97,11 +111,14 @@ public interface CollectionsTestServiceAsync {
 
   void echo(java.sql.Date[] value, AsyncCallback<java.sql.Date[]> callback);
 
-  void echo(LinkedHashMap<String, MarkerTypeLinkedHashMap> value,
-      AsyncCallback<LinkedHashMap<String, MarkerTypeLinkedHashMap>> callback);
+  void echo(LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue> value,
+      AsyncCallback<LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue>> callback);
 
   void echo(LinkedHashSet<MarkerTypeLinkedHashSet> value,
       AsyncCallback<LinkedHashSet<MarkerTypeLinkedHashSet>> callback);
+
+  void echo(LinkedList<MarkerTypeLinkedList> value,
+      AsyncCallback<LinkedList<MarkerTypeLinkedList>> callback);
 
   void echo(long[] value, AsyncCallback<long[]> callback);
 
@@ -133,6 +150,9 @@ public interface CollectionsTestServiceAsync {
 
   void echoArraysAsList(List<MarkerTypeArraysAsList> value,
       AsyncCallback<List<MarkerTypeArraysAsList>> callback);
+
+  void echoEnumKey(IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue> value,
+      AsyncCallback<IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue>> callback);
 
   // For Collections.singletonList()
   void echoSingletonList(List<MarkerTypeSingleton> value,
