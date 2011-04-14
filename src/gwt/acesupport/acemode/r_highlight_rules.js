@@ -15,125 +15,149 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-define("mode/r_highlight_rules", function(require, exports, module) {
+define("mode/r_highlight_rules", function(require, exports, module)
+{
 
-var oop = require("pilot/oop");
-var lang = require("pilot/lang");
-var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
+   var oop = require("pilot/oop");
+   var lang = require("pilot/lang");
+   var TextHighlightRules = require("ace/mode/text_highlight_rules")
+         .TextHighlightRules;
 
-var RHighlightRules = function() {
+   var RHighlightRules = function()
+   {
 
-    var keywords = lang.arrayToMap(
-        ("function|while|repeat|for|if|in|else|next|break|return").split("|")
-    );
-    
-    var buildinConstants = lang.arrayToMap(
-        ("NULL|NA|TRUE|FALSE|T|F|Inf|NaN|NA_integer_|NA_real_|NA_character_|" +
-		"NA_complex_").split("|")
-    );
-    
-    // regexp must not have capturing parentheses. Use (?:) instead.
-    // regexps are ordered -> the first match is used
+      var keywords = lang.arrayToMap(
+            ("function|while|repeat|for|if|in|else|next|break|return")
+                  .split("|")
+            );
 
-    this.$rules = {
-        "start" : [
-	        {
-	            token : "comment",
-	            regex : "#.*$"
-	        }, {
-	            token : "string.regexp",
-	            regex : "[/](?:(?:\\[(?:\\\\]|[^\\]])+\\])|(?:\\\\/|[^\\]/]))*[/]\\w*\\s*(?=[).,;]|$)"
-	        }, {
-	            token : "string", // single line
-	            regex : '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
-	        }, {
-	            token : "string", // multi line string start
-	            regex : '["].*$',
-	            next : "qqstring"
-	        }, {
-	            token : "string", // single line
-	            regex : "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
-	        }, {
-	            token : "string", // multi line string start
-	            regex : "['].*$",
-	            next : "qstring"
-	        }, {
-	            token : "constant.numeric", // hex
-	            regex : "0[xX][0-9a-fA-F]+[Li]?\\b"
-	        }, {
-	            token : "constant.numeric", // explicit integer
-	            regex : "\\d+L\\b"
-	        }, {
-	            token : "constant.numeric", // number
-	            regex : "\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b"
-	        }, {
-	            token : "constant.numeric", // number with leading decimal
-	            regex : "\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b"
-	        }, {
-	            token : "constant.language.boolean",
-	            regex : "(?:TRUE|FALSE|T|F)\\b"
-	        }, {
-	            token : "identifier",
-	            regex : "`.*?`"
-	        }, {
-	            token : function(value) {
-	                if (keywords[value])
-	                    return "keyword";
-	                else if (buildinConstants[value])
-	                    return "constant.language";
-	                else if (value == '...' || value.match(/^\.\.\d+$/))
-	                    return "variable.language";
-	                else
-	                    return "identifier";
-	            },
-	            regex : "[a-zA-Z.][a-zA-Z0-9._]*\\b"
-	        }, {
-	            token : "keyword.operator",
-	            regex : "[+\\-*\\/^><!&|~$:=]"
-	        }, {
-	            token : "keyword.operator", // infix operators
-	            regex : "%.*?%"
-	        }, {
-	            // Obviously these are neither keywords nor operators, but
-	            // labelling them as such was the easiest way to get them
-	            // to be colored distinctly from regular text
-	            token : "paren.keyword.operator",
-	            regex : "[[({]"
-	        }, {
-	            // Obviously these are neither keywords nor operators, but
-	            // labelling them as such was the easiest way to get them
-	            // to be colored distinctly from regular text
-	            token : "paren.keyword.operator",
-	            regex : "[\\])}]"
-	        }, {
-	            token : "text",
-	            regex : "\\s+"
-	        }
-        ],
-        "qqstring" : [
+      var buildinConstants = lang.arrayToMap(
+            ("NULL|NA|TRUE|FALSE|T|F|Inf|NaN|NA_integer_|NA_real_|NA_character_|" +
+             "NA_complex_").split("|")
+            );
+
+      // regexp must not have capturing parentheses. Use (?:) instead.
+      // regexps are ordered -> the first match is used
+
+      this.$rules = {
+         "start" : [
             {
-	            token : "string",
-	            regex : '(?:(?:\\\\.)|(?:[^"\\\\]))*?"',
-	            next : "start"
-	        }, {
-	            token : "string",
-	            regex : '.+'
-	        }
-        ],
-        "qstring" : [
-	        {
-	            token : "string",
-	            regex : "(?:(?:\\\\.)|(?:[^'\\\\]))*?'",
-	            next : "start"
-	        }, {
-	            token : "string",
-	            regex : '.+'
-	        }
-        ]
-    };
-};
+               token : "comment",
+               regex : "#.*$"
+            },
+            {
+               token : "string.regexp",
+               regex : "[/](?:(?:\\[(?:\\\\]|[^\\]])+\\])|(?:\\\\/|[^\\]/]))*[/]\\w*\\s*(?=[).,;]|$)"
+            },
+            {
+               token : "string", // single line
+               regex : '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
+            },
+            {
+               token : "string", // multi line string start
+               regex : '["].*$',
+               next : "qqstring"
+            },
+            {
+               token : "string", // single line
+               regex : "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
+            },
+            {
+               token : "string", // multi line string start
+               regex : "['].*$",
+               next : "qstring"
+            },
+            {
+               token : "constant.numeric", // hex
+               regex : "0[xX][0-9a-fA-F]+[Li]?\\b"
+            },
+            {
+               token : "constant.numeric", // explicit integer
+               regex : "\\d+L\\b"
+            },
+            {
+               token : "constant.numeric", // number
+               regex : "\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b"
+            },
+            {
+               token : "constant.numeric", // number with leading decimal
+               regex : "\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b"
+            },
+            {
+               token : "constant.language.boolean",
+               regex : "(?:TRUE|FALSE|T|F)\\b"
+            },
+            {
+               token : "identifier",
+               regex : "`.*?`"
+            },
+            {
+               token : function(value)
+               {
+                  if (keywords[value])
+                     return "keyword";
+                  else if (buildinConstants[value])
+                     return "constant.language";
+                  else if (value == '...' || value.match(/^\.\.\d+$/))
+                     return "variable.language";
+                  else
+                     return "identifier";
+               },
+               regex : "[a-zA-Z.][a-zA-Z0-9._]*\\b"
+            },
+            {
+               token : "keyword.operator",
+               regex : "[+\\-*\\/^><!&|~$:=]"
+            },
+            {
+               token : "keyword.operator", // infix operators
+               regex : "%.*?%"
+            },
+            {
+               // Obviously these are neither keywords nor operators, but
+               // labelling them as such was the easiest way to get them
+               // to be colored distinctly from regular text
+               token : "paren.keyword.operator",
+               regex : "[[({]"
+            },
+            {
+               // Obviously these are neither keywords nor operators, but
+               // labelling them as such was the easiest way to get them
+               // to be colored distinctly from regular text
+               token : "paren.keyword.operator",
+               regex : "[\\])}]"
+            },
+            {
+               token : "text",
+               regex : "\\s+"
+            }
+         ],
+         "qqstring" : [
+            {
+               token : "string",
+               regex : '(?:(?:\\\\.)|(?:[^"\\\\]))*?"',
+               next : "start"
+            },
+            {
+               token : "string",
+               regex : '.+'
+            }
+         ],
+         "qstring" : [
+            {
+               token : "string",
+               regex : "(?:(?:\\\\.)|(?:[^'\\\\]))*?'",
+               next : "start"
+            },
+            {
+               token : "string",
+               regex : '.+'
+            }
+         ]
+      };
+   };
 
-oop.inherits(RHighlightRules, TextHighlightRules);
+   oop.inherits(RHighlightRules, TextHighlightRules);
 
-exports.RHighlightRules = RHighlightRules;
+   exports.RHighlightRules = RHighlightRules;
 });
