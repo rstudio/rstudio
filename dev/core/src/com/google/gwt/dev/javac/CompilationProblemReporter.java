@@ -65,17 +65,11 @@ public class CompilationProblemReporter {
 
     URL sourceURL = Util.findSourceInClassPath(cl, missingType);
     if (sourceURL != null) {
+      Messages.HINT_PRIOR_COMPILER_ERRORS.log(logger, null);
       if (missingType.indexOf(".client.") != -1) {
-        Messages.HINT_PRIOR_COMPILER_ERRORS.log(logger, null);
         Messages.HINT_CHECK_MODULE_INHERITANCE.log(logger, null);
       } else {
-        // Give the best possible hint here.
-        //
-        if (Util.findSourceInClassPath(cl, missingType) == null) {
-          Messages.HINT_CHECK_MODULE_NONCLIENT_SOURCE_DECL.log(logger, null);
-        } else {
-          Messages.HINT_PRIOR_COMPILER_ERRORS.log(logger, null);
-        }
+        Messages.HINT_CHECK_MODULE_NONCLIENT_SOURCE_DECL.log(logger, null);
       }
     } else if (!missingType.equals("java.lang.Object")) {
       Messages.HINT_CHECK_TYPENAME.log(logger, missingType, null);
@@ -195,22 +189,26 @@ public class CompilationProblemReporter {
       return false;
     }
     TreeLogger branch =
-        CompilationProblemReporter.reportErrors(logger, unit.getProblems(), unit
-            .getResourceLocation(), unit.isError(), new SourceFetcher() {
+        CompilationProblemReporter.reportErrors(logger, unit.getProblems(),
+            unit.getResourceLocation(), unit.isError(), new SourceFetcher() {
 
-          public String getSource() {
-            return unit.getSource();
-          }
+              public String getSource() {
+                return unit.getSource();
+              }
 
-        }, unit.getTypeName(), suppressErrors);
+            }, unit.getTypeName(), suppressErrors);
     return branch != null;
   }
 
-  private static void addUnitToVisit(Map<String, CompilationUnit> unitMap, String typeName,
-      Queue<CompilationUnit> toVisit) {
-    CompilationUnit found = unitMap.get(typeName);
+  private static void addUnitToVisit(Map<String, CompiledClass> classMap, String typeName,
+      Queue<CompilationUnit> toVisit, Set<CompilationUnit> visited) {
+    CompiledClass found = classMap.get(typeName);
     if (found != null) {
-      toVisit.add(found);
+      CompilationUnit unit = found.getUnit();
+      if (!visited.contains(unit)) {
+        toVisit.add(unit);
+        visited.add(unit);
+      }
     }
   }
 
@@ -235,8 +233,7 @@ public class CompilationProblemReporter {
       CompilationState compilationState) {
     final Set<CompilationUnit> visited = new HashSet<CompilationUnit>();
     final Queue<CompilationUnit> toVisit = new LinkedList<CompilationUnit>();
-
-    Map<String, CompilationUnit> unitMap = compilationState.unitMap;
+    Map<String, CompiledClass> classMap = compilationState.getClassFileMapBySource();
 
     /*
      * Traverses CompilationUnits enqueued in toVisit(), calling {@link
@@ -244,21 +241,17 @@ public class CompilationProblemReporter {
      * CompilationUnit is visited only once, and only if it is reachable via the
      * {@link Dependencies} graph.
      */
-    addUnitToVisit(unitMap, missingType, toVisit);
+    addUnitToVisit(classMap, missingType, toVisit, visited);
 
     while (!toVisit.isEmpty()) {
       CompilationUnit unit = toVisit.remove();
-      if (visited.contains(unit)) {
-        continue;
-      }
-      visited.add(unit);
       CompilationProblemReporter.reportErrors(logger, unit, false);
 
-      Dependencies deps = unit.getDependencies();
-      for (String ref : deps.getApiRefs()) {
-        addUnitToVisit(unitMap, ref, toVisit);
+      for (String apiRef : unit.getDependencies().getApiRefs()) {
+        addUnitToVisit(classMap, apiRef, toVisit, visited);
       }
     }
+    logger.log(TreeLogger.DEBUG, "Checked " + visited.size() + " dependencies for errors.");
   }
 
   /**
