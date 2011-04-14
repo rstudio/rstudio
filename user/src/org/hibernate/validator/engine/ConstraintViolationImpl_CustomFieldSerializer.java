@@ -15,6 +15,7 @@
  */
 package org.hibernate.validator.engine;
 
+import com.google.gwt.user.client.rpc.CustomFieldSerializer;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
@@ -27,8 +28,11 @@ import javax.validation.metadata.ConstraintDescriptor;
 /**
  * Custom Serializer for {@link ConstraintViolationImpl}.
  */
-public class ConstraintViolationImpl_CustomFieldSerializer {
+@SuppressWarnings("rawtypes")
+public class ConstraintViolationImpl_CustomFieldSerializer extends
+    CustomFieldSerializer<ConstraintViolationImpl> {
 
+  @SuppressWarnings("unused")
   public static void deserialize(SerializationStreamReader streamReader,
       ConstraintViolationImpl instance) throws SerializationException {
     // no fields
@@ -77,5 +81,28 @@ public class ConstraintViolationImpl_CustomFieldSerializer {
     streamWriter.writeObject(instance.getPropertyPath());
     // streamWriter.writeObject(instance.getConstraintDescriptor());
     // ElementType
+  }
+
+  @Override
+  public void deserializeInstance(SerializationStreamReader streamReader,
+      ConstraintViolationImpl instance) throws SerializationException {
+    deserialize(streamReader, instance);
+  }
+
+  @Override
+  public boolean hasCustomInstantiateInstance() {
+    return true;
+  }
+
+  @Override
+  public ConstraintViolationImpl instantiateInstance(
+      SerializationStreamReader streamReader) throws SerializationException {
+    return instantiate(streamReader);
+  }
+
+  @Override
+  public void serializeInstance(SerializationStreamWriter streamWriter,
+      ConstraintViolationImpl instance) throws SerializationException {
+    serialize(streamWriter, instance);
   }
 }
