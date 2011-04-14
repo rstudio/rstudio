@@ -118,7 +118,7 @@ public class CompletionRequester
       return new CompletionResult(token, newCompletions, null) ;
    }
 
-   public class CompletionResult
+   public static class CompletionResult
    {
       public CompletionResult(String token, ArrayList<QualifiedName> completions,
                               String guessedFunctionName)
