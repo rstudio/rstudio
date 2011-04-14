@@ -18,9 +18,6 @@ options(save.image.defaults=list(ascii=FALSE, safe=TRUE, compress=FALSE))
 # never allow graphical menus
 options(menu.graphics = FALSE)
 
-# set max print so that the DOM won't go haywire showing large datasets
-options(max.print = 1000)
-
 # no support for email
 options(mailer = "none")
 
