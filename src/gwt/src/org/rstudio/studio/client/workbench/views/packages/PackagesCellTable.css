@@ -34,6 +34,10 @@
 .cellTableCell {
   padding: 2px 15px;
   overflow: hidden;
+  
+  /* CHANGE: use default cursor rather than pointer/caret */
+  cursor: default;
+  
 }
 
 .cellTableFirstColumnFooter {
@@ -85,13 +89,16 @@
   border: selectionBorderWidth solid #f3f7fb;
 }
 
+/* CHANGE: Disable hover effects for NoSelectionModel */
+
 .cellTableHoveredRow {
-  background: #eee;
+  /* background: #eee; */
 }
 
 .cellTableHoveredRowCell {
-  border: selectionBorderWidth solid #eee;
+  /* border: selectionBorderWidth solid #eee; */
 }
+
 
 .cellTableKeyboardSelectedRow {
   background: #ffc;
@@ -116,11 +123,10 @@
  * The keyboard selected cell is visible over selection.
  */
 .cellTableKeyboardSelectedCell {
-  border: selectionBorderWidth solid #d7dde8;
+  border: selectionBorderWidth solid transparent;
 }
 
 .cellTableLoading {
   margin: 30px;
 }
-
 

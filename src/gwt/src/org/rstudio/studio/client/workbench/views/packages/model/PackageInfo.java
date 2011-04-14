@@ -12,13 +12,15 @@
  */
 package org.rstudio.studio.client.workbench.views.packages.model;
 
+
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class PackageInfo extends JavaScriptObject
+public class PackageInfo extends JavaScriptObject 
 {
    protected PackageInfo()
    {
    }
+   
    
    public final native String getName() /*-{
       return this.name;
@@ -34,5 +36,24 @@ public class PackageInfo extends JavaScriptObject
    
    public final native boolean isLoaded() /*-{
       return this.loaded;
+   }-*/;
+   
+   public final PackageInfo asLoaded()
+   {
+      return asLoadedState(true);
+   }
+   
+   public final PackageInfo asUnloaded()
+   {
+      return asLoadedState(false);
+   }
+   
+   private final native PackageInfo asLoadedState(boolean loaded) /*-{
+      var packageInfo = new Object();
+      packageInfo.name = this.name;
+      packageInfo.desc = this.desc;
+      packageInfo.url = this.url;
+      packageInfo.loaded = loaded;
+      return packageInfo;
    }-*/;
 }

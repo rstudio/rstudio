@@ -14,18 +14,27 @@ package org.rstudio.studio.client.workbench.views.packages;
 
 
 import com.google.gwt.cell.client.CheckboxCell;
+import com.google.gwt.cell.client.ClickableTextCell;
+import com.google.gwt.cell.client.FieldUpdater;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.TextColumn;
+import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.*;
+import com.google.gwt.view.client.ListDataProvider;
+import com.google.gwt.view.client.NoSelectionModel;
 import com.google.inject.Inject;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.packages.Packages.Display;
 import org.rstudio.studio.client.workbench.views.packages.model.InstallOptions;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
@@ -51,12 +60,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 
    public void listPackages(List<PackageInfo> packages)
    {
-      // prepare to retreive a new package list
-      setProgress(true);
-
-     
-
-      setProgress(false);
+      packagesTable_.setPageSize(packages.size());
+      packagesDataProvider_.setList(packages);
    }
    
    public void installPackage(String installRepository,
@@ -73,49 +78,54 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 
    public void setPackageStatus(String packageName, int status)
    {
+      int row = packageRow(packageName) ;
       
+      if (row != -1)
+      {
+         List<PackageInfo> packages = packagesDataProvider_.getList();
+        
+         switch (status)
+         {
+         case Display.PACKAGE_NOT_LOADED:
+            packages.set(row, packages.get(row).asUnloaded());
+            break;
+         case Display.PACKAGE_LOADED:
+            packages.set(row, packages.get(row).asLoaded());
+            break;
+         case Display.PACKAGE_PROGRESS:
+            // IGNORE: progress currently not supported 
+            break;
+         }
+      }
    }
 
-  
-   
    public void clearPackageProgress(String packageName)
    {
-     
-      
-    
+      // IGNORE: we never set progress
    }
-
-   @Override
-   protected Widget createMainWidget()
+   
+   private int packageRow(String packageName)
    {
-      packagesTable_ = new CellTable<PackageInfo>();
+      // if we haven't retreived packages yet then return not found
+      if (packagesDataProvider_ == null)
+         return -1;
       
-     
-      Column<PackageInfo, Boolean> loadedColumn = 
-         new Column<PackageInfo, Boolean>(new CheckboxCell(false, false)) {
-           @Override
-           public Boolean getValue(PackageInfo packageInfo) {
-              return packageInfo.isLoaded();
-           }
-         };
-         
-      packagesTable_.addColumn(loadedColumn, SafeHtmlUtils.fromSafeConstant("<br/>"));
-      packagesTable_.setColumnWidth(loadedColumn, 40, Unit.PX);
+      List<PackageInfo> packages = packagesDataProvider_.getList();
       
-      TextColumn<PackageInfo> nameColumn = new TextColumn<PackageInfo>(){
-         @Override
-         public String getValue(PackageInfo packageInfo)
+      // figure out which row of the table includes this package
+      int row = -1;
+      for (int i=0; i<packages.size(); i++)
+      {
+         PackageInfo packageInfo = packages.get(i);
+         if (packageInfo.getName().equals(packageName))
          {
-            return packageInfo.getName();
+            row = i ;
+            break;
          }
-         
-      };
-      packagesTable_.addColumn(nameColumn, SafeHtmlUtils.fromSafeConstant("<br/>"));
-      packagesTable_.setColumnWidth(nameColumn, 100, Unit.PCT);
-      
-      return packagesTable_;
+      }
+      return row ;
    }
-
+   
    @Override
    protected Toolbar createMainToolbar()
    {
@@ -125,8 +135,130 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       toolbar.addRightWidget(commands_.refreshPackages().createToolbarButton());
       return toolbar;
    }
+   
+
+   @Override
+   protected Widget createMainWidget()
+   {
+      packagesTable_ = new CellTable<PackageInfo>(
+                        15,
+                        GWT.<Resources> create(Resources.class));
+      packagesTable_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
+      packagesTable_.setSelectionModel(new NoSelectionModel<PackageInfo>());
+      packagesTable_.setWidth("100%", true);
+  
+       
+      LoadedColumn loadedColumn = new LoadedColumn();
+      packagesTable_.addColumn(loadedColumn);
+      packagesTable_.setColumnWidth(loadedColumn, 35, Unit.PX);
+      
+      NameColumn nameColumn = new NameColumn();
+      packagesTable_.addColumn(nameColumn);
+      packagesTable_.setColumnWidth(nameColumn, 20, Unit.PCT);
+    
+      TextColumn<PackageInfo> descColumn = new TextColumn<PackageInfo>() {
+         public String getValue(PackageInfo packageInfo)
+         {
+            return packageInfo.getDesc();
+         } 
+      };
+      packagesTable_.addColumn(descColumn);
+      packagesTable_.setColumnWidth(descColumn, 80, Unit.PCT);
+      
+      packagesDataProvider_ = new ListDataProvider<PackageInfo>();
+      packagesDataProvider_.addDataDisplay(packagesTable_);
+      
+      ScrollPanel scrollPanel = new ScrollPanel();
+      scrollPanel.setWidget(packagesTable_);
+      return scrollPanel;
+   }
+   
+   
+   class LoadedColumn extends Column<PackageInfo, Boolean>
+   {
+      public LoadedColumn()
+      {
+         super(new CheckboxCell(false, false));
+         
+         setFieldUpdater(new FieldUpdater<PackageInfo,Boolean>() {
+            public void update(int index, PackageInfo packageInfo, Boolean value)
+            {
+               if (value.booleanValue())
+                  observer_.loadPackage(packageInfo.getName()) ;
+               else
+                  observer_.unloadPackage(packageInfo.getName()) ;
+               
+            }    
+         });
+      }
+      
+      @Override
+      public Boolean getValue(PackageInfo packageInfo)
+      {
+         return packageInfo.isLoaded();
+      }
+      
+   }
+   
+   class NameColumn extends Column<PackageInfo, String>
+   {
+      public NameColumn()
+      {
+         super(new ClickableTextCell(){
+            @Override
+            protected void render(Context context, 
+                                  SafeHtml value, 
+                                  SafeHtmlBuilder sb) 
+            {   
+               if (value != null) 
+               {
+                 sb.appendHtmlConstant("<div class=\"" + 
+                                         RESOURCES.styles().packageNameLink() +
+                                         "\">");
+                 sb.append(value);
+                 sb.appendHtmlConstant("</div>");
+               }
+             }
+         });
+         
+         setFieldUpdater(new FieldUpdater<PackageInfo,String>() {
+            @Override
+            public void update(int index, PackageInfo packageInfo, String value)
+            {
+               observer_.showHelp(packageInfo);
+            }
+         });
+      }
+      
+      @Override
+      public String getValue(PackageInfo packageInfo)
+      {
+         return packageInfo.getName();
+      }
+   }
+   
+   static interface Styles extends CssResource
+   {
+      String packageNameLink();
+   }
+  
+   interface Resources extends CellTable.Resources 
+   {
+      @Source("PackagesPane.css")
+      Styles styles();
+      
+      @Source("PackagesCellTable.css")
+      CellTable.Style cellTableStyle();    
+   }
+   
+   static Resources RESOURCES = (Resources)GWT.create(Resources.class) ;
+   public static void ensureStylesInjected()
+   {
+      RESOURCES.styles().ensureInjected();
+   }
 
    private CellTable<PackageInfo> packagesTable_;
+   private ListDataProvider<PackageInfo> packagesDataProvider_;
    private PackagesDisplayObserver observer_ ;
    private final Commands commands_;
 }

@@ -41,6 +41,7 @@ import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.history.view.HistoryPane;
 import org.rstudio.studio.client.workbench.views.history.view.Shelf;
+import org.rstudio.studio.client.workbench.views.packages.PackagesPane;
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.ExportDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.PrintDialog;
@@ -133,6 +134,7 @@ public class RStudio implements EntryPoint
       FindReplaceBar.ensureStylesInjected();
       FontSizer.ensureStylesInjected();
       PreferencesDialog.ensureStylesInjected();
+      PackagesPane.ensureStylesInjected();
 
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");
