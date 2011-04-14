@@ -10,9 +10,9 @@ gwt clients.
     <exclude name="super/" />
   </source>
   <source path="engine">
-    <include name="ConstraintViolationImpl.java"/>
+    <include name="ConstraintViolationImpl*.java"/>
     <include name="NodeImpl.java"/>
-    <include name="PathImpl.java"/>
+    <include name="PathImpl*.java"/>
   </source>
   <source path="">
     <include name="ValidationMessages.java"/>
