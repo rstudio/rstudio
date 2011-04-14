@@ -56,6 +56,11 @@ public class AceCompletionAdapter
    {
       if (text == null)
          return false;
+
+      // Escape key comes in as a character on desktop builds
+      if (text.equals("\u001B"))
+         return true;
+
       for (int i = 0; i < text.length(); i++)
          if (completionManager_.previewKeyPress(text.charAt(i)))
             return true;
