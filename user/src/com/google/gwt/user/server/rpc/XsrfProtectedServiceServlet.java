@@ -64,6 +64,16 @@ public class XsrfProtectedServiceServlet
     this.sessionCookieName = sessionCookieName;
   }
 
+  public XsrfProtectedServiceServlet(Object delegate) {
+    this(delegate, null);
+  }
+
+  public XsrfProtectedServiceServlet(Object delegate,
+      String sessionCookieName) {
+    super(delegate);
+    this.sessionCookieName = sessionCookieName;
+  }
+
   @Override
   public void init() throws ServletException {
     super.init();

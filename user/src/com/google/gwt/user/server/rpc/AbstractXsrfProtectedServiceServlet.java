@@ -42,6 +42,24 @@ import java.lang.reflect.Method;
 public abstract class AbstractXsrfProtectedServiceServlet extends
     RemoteServiceServlet {
 
+  /**
+   * The default constructor used by service implementations that
+   * extend this class.  The servlet will delegate AJAX requests to
+   * the appropriate method in the subclass.
+   */
+  public AbstractXsrfProtectedServiceServlet() {
+    super();
+  }
+
+  /**
+   * The wrapping constructor used by service implementations that are
+   * separate from this class.  The servlet will delegate AJAX
+   * requests to the appropriate method in the given object.
+   */
+  public AbstractXsrfProtectedServiceServlet(Object delegate) {
+    super(delegate);
+  }
+
   @Override
   protected void onAfterRequestDeserialized(RPCRequest rpcRequest) {
     if (shouldValidateXsrfToken(rpcRequest.getMethod())) {

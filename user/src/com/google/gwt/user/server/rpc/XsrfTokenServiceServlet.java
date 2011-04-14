@@ -94,7 +94,7 @@ import javax.servlet.http.Cookie;
  *   public void onSuccess(XsrfToken result) {
  *     MyRpcServiceAsync rpc = (MyRpcServiceAsync)GWT.create(MyRpcService.class);
  *     ((HasRpcToken) rpc).setRpcToken(result);
- *     // make XSRF protection RPC calls using
+ *     // make XSRF protected RPC call
  *     rpc.doStuff(new AsyncCallback&lt;Void&gt;() {
  *       // ...
  *     });
