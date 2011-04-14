@@ -170,12 +170,15 @@ bool isWin64()
          || getenv("PROCESSOR_ARCHITECTURE") == "AMD64";
 }
 
+// Value returned is UTF-8 encoded
 std::string getenv(const std::string& name)
 {
+   std::wstring nameWide(name.begin(), name.end());
+
    // get the variable
    DWORD nSize = 256;
-   std::vector<TCHAR> buffer(nSize);
-   DWORD result = ::GetEnvironmentVariable(name.c_str(), &(buffer[0]), nSize);
+   std::vector<wchar_t> buffer(nSize);
+   DWORD result = ::GetEnvironmentVariableW(nameWide.c_str(), &(buffer[0]), nSize);
    if (result == 0) // not found
    {
       return std::string();
@@ -184,18 +187,19 @@ std::string getenv(const std::string& name)
    {
       nSize = result;
       buffer.resize(nSize);
-      result = ::GetEnvironmentVariable(name.c_str(), &(buffer[0]), nSize);
+      result = ::GetEnvironmentVariableW(nameWide.c_str(), &(buffer[0]), nSize);
       if (result == 0 || result > nSize)
          return std::string(); // VERY unexpected failure case
    }
 
    // return it
-   return std::string(&(buffer[0]));
+   return string_utils::wideToUtf8(&(buffer[0]));
 }
 
 void setenv(const std::string& name, const std::string& value)
 {
-   ::SetEnvironmentVariable(name.c_str(), value.c_str());
+   ::SetEnvironmentVariableW(string_utils::utf8ToWide(name).c_str(),
+                             string_utils::utf8ToWide(value).c_str());
 }
 
 void unsetenv(const std::string& name)
@@ -232,12 +236,12 @@ FilePath userHomePath(std::string envOverride)
 
    // query for My Documents directory
    const DWORD SHGFP_TYPE_CURRENT = 0;
-   TCHAR homePath[MAX_PATH];
-   HRESULT hr = ::SHGetFolderPath(NULL,
-                                  CSIDL_PERSONAL,
-                                  NULL,
-                                  SHGFP_TYPE_CURRENT,
-                                  homePath);
+   wchar_t homePath[MAX_PATH];
+   HRESULT hr = ::SHGetFolderPathW(NULL,
+                                   CSIDL_PERSONAL,
+                                   NULL,
+                                   SHGFP_TYPE_CURRENT,
+                                   homePath);
    if (SUCCEEDED(hr))
    {
       return FilePath(homePath);
@@ -253,13 +257,14 @@ FilePath userHomePath(std::string envOverride)
 FilePath userSettingsPath(const FilePath& userHomeDirectory,
                           const std::string& appName)
 {
-   char path[MAX_PATH];
-   HRESULT hr = ::SHGetFolderPathAndSubDir(
+   wchar_t path[MAX_PATH + 1];
+   std::wstring appNameWide(appName.begin(), appName.end());
+   HRESULT hr = ::SHGetFolderPathAndSubDirW(
          NULL,
          CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE,
          NULL,
          SHGFP_TYPE_CURRENT,
-         appName.c_str(),
+         appNameWide.c_str(),
          path);
 
    if (hr != S_OK)
@@ -269,7 +274,7 @@ FilePath userSettingsPath(const FilePath& userHomeDirectory,
       return FilePath();
    }
 
-   return FilePath(path);
+   return FilePath(std::wstring(path));
 }
 
 bool currentUserIsPrivilleged(unsigned int minimumUserId)

@@ -52,6 +52,9 @@ T hashStable(const std::string& str)
    return hash;
 }
 
+std::string wideToUtf8(const std::wstring& value);
+std::wstring utf8ToWide(const std::string& value);
+
 template <typename Iterator, typename InputIterator>
 Error utf8Clean(Iterator begin,
                 InputIterator end,

@@ -41,6 +41,12 @@ WebView::WebView(QUrl baseUrl, QWidget *parent) :
            this, SLOT(downloadRequested(QNetworkRequest)));
    connect(page(), SIGNAL(unsupportedContent(QNetworkReply*)),
            this, SLOT(unsupportedContent(QNetworkReply*)));
+
+   // Use a timer to reduce the granularity of mouse events on Mac
+   pMouseWheelTimer_ = new QTimer(this);
+   pMouseWheelTimer_->setInterval(20);
+   connect(pMouseWheelTimer_, SIGNAL(timeout()),
+           this, SLOT(mouseWheelTimerFired()));
 }
 
 QWebView* WebView::createWindow(QWebPage::WebWindowType)
@@ -88,6 +94,48 @@ void WebView::keyPressEvent(QKeyEvent* pEv)
                    pEv->count());
 
    this->QWebView::keyPressEvent(&newEv);
+}
+
+void WebView::wheelEvent (QWheelEvent* event)
+{
+#ifdef Q_WS_MAC
+   if (event->orientation() != Qt::Vertical)
+   {
+      this->QWebView::wheelEvent(event);
+      return;
+   }
+
+   this->mouseWheelEvents_.push_back(*event);
+   if (!pMouseWheelTimer_->isActive())
+   {
+      pMouseWheelTimer_->start();
+   }
+#else
+   this->QWebView::wheelEvent(event);
+#endif
+}
+
+void WebView::mouseWheelTimerFired()
+{
+   pMouseWheelTimer_->stop();
+
+   if (mouseWheelEvents_.empty())
+      return;
+
+   int totalDelta = 0;
+   for (int i = 0; i < mouseWheelEvents_.length(); i++)
+   {
+      totalDelta += mouseWheelEvents_.at(i).delta();
+   }
+   QWheelEvent event = mouseWheelEvents_.last();
+   mouseWheelEvents_.clear();
+   QWheelEvent totalEvent(event.pos(),
+                          event.globalPos(),
+                          totalDelta,
+                          event.buttons(),
+                          event.modifiers(),
+                          event.orientation());
+   this->QWebView::wheelEvent(&totalEvent);
 }
 
 void WebView::downloadRequested(const QNetworkRequest& request)
