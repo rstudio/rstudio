@@ -1,0 +1,17 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <script type="text/javascript" src="tools/ace/build_support/mini_require.js"></script>
+  <script type="text/javascript" src="tools/ace/build/src/ace-uncompressed.js"></script>
+  <script type="text/javascript" src="acesupport/acemode/r_highlight_rules.js"></script>
+  <script type="text/javascript" src="acesupport/acemode/r.js"></script>
+</head>
+<body style="margin: 0">
+<div id="editor" style="width: 100%; height: 100%"></div>
+<script type="text/javascript">
+var editor = ace.edit('editor');
+var RMode = require('mode/r').Mode;
+editor.getSession().setMode(new RMode());
+</script>
+</body>
+</html>
