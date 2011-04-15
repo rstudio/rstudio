@@ -682,7 +682,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
     final boolean isMouseDown = "mousedown".equals(eventType);
     final boolean isClick = "click".equals(eventType);
     final CellTreeNodeView<?> nodeView = findItemByChain(chain, 0, rootNode);
-    if (nodeView != null && nodeView != rootNode) {
+    if (nodeView != null) {
       if (isMouseDown) {
         Element showMoreElem = nodeView.getShowMoreElement();
         if (nodeView.getImageElement().isOrHasChild(target)) {
@@ -697,7 +697,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
       }
 
       // Forward the event to the cell
-      if (nodeView.getSelectionElement().isOrHasChild(target)) {
+      if (nodeView != rootNode && nodeView.getSelectionElement().isOrHasChild(target)) {
         // Move the keyboard focus to the clicked item.
         if (isClick) {
           /*
