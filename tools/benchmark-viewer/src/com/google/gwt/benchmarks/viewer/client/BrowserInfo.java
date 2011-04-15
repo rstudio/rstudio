@@ -45,8 +45,7 @@ public class BrowserInfo {
     userAgent = userAgent.toLowerCase();
 
     // browser engine name
-    boolean isGecko = userAgent.indexOf("gecko") != -1
-        && userAgent.indexOf("safari") == -1;
+    boolean isGecko = userAgent.indexOf("gecko") != -1 && userAgent.indexOf("safari") == -1;
     boolean isAppleWebKit = userAgent.indexOf("applewebkit") != -1;
 
     // browser name
@@ -56,40 +55,35 @@ public class BrowserInfo {
     boolean isOpera = userAgent.indexOf("opera") != -1;
     boolean isIcab = userAgent.indexOf("icab") != -1;
     boolean isAol = userAgent.indexOf("aol") != -1;
-    boolean isIE = userAgent.indexOf("msie") != -1 && !isOpera
-        && (userAgent.indexOf("webtv") == -1);
-    boolean isMozilla = isGecko
-        && userAgent.indexOf("gecko/") + 14 == userAgent.length();
-    boolean isFirefox = userAgent.indexOf("firefox/") != -1
-        || userAgent.indexOf("firebird/") != -1;
-    boolean isNS = isGecko ? userAgent.indexOf("netscape") != -1
-        : userAgent.indexOf("mozilla") != -1 && !isOpera && !isSafari
-            && userAgent.indexOf("spoofer") == -1
-            && userAgent.indexOf("compatible") == -1
-            && userAgent.indexOf("webtv") == -1
+    boolean isIE =
+        userAgent.indexOf("msie") != -1 && !isOpera && (userAgent.indexOf("webtv") == -1);
+    boolean isMozilla = isGecko && userAgent.indexOf("gecko/") + 14 == userAgent.length();
+    boolean isFirefox = userAgent.indexOf("firefox/") != -1 || userAgent.indexOf("firebird/") != -1;
+    boolean isNS =
+        isGecko ? userAgent.indexOf("netscape") != -1 : userAgent.indexOf("mozilla") != -1
+            && !isOpera && !isSafari && userAgent.indexOf("spoofer") == -1
+            && userAgent.indexOf("compatible") == -1 && userAgent.indexOf("webtv") == -1
             && userAgent.indexOf("hotjava") == -1;
 
     // spoofing and compatible browsers
     boolean isIECompatible = userAgent.indexOf("msie") != -1 && !isIE;
-    boolean isNSCompatible = userAgent.indexOf("mozilla") != -1 && !isNS
-        && !isMozilla;
+    boolean isNSCompatible = userAgent.indexOf("mozilla") != -1 && !isNS && !isMozilla;
 
     // rendering engine versions
-    String geckoVersion = isGecko ? userAgent.substring(
-        userAgent.lastIndexOf("gecko/") + 6,
-        userAgent.lastIndexOf("gecko/") + 14) : "-1";
-    String equivalentMozilla = isGecko
-        ? userAgent.substring(userAgent.indexOf("rv:") + 3) : "-1";
-    String appleWebKitVersion = isAppleWebKit
-        ? userAgent.substring(userAgent.indexOf("applewebkit/") + 12) : "-1";
+    String geckoVersion =
+        isGecko ? userAgent.substring(userAgent.lastIndexOf("gecko/") + 6, userAgent
+            .lastIndexOf("gecko/") + 14) : "-1";
+    String equivalentMozilla = isGecko ? userAgent.substring(userAgent.indexOf("rv:") + 3) : "-1";
+    String appleWebKitVersion =
+        isAppleWebKit ? userAgent.substring(userAgent.indexOf("applewebkit/") + 12) : "-1";
 
     // float versionMinor = parseFloat(navigator.appVersion);
     String versionMinor = "";
 
     // correct version number
     if (isGecko && !isMozilla) {
-      versionMinor = userAgent.substring(userAgent.indexOf("/",
-          userAgent.indexOf("gecko/") + 6) + 1);
+      versionMinor =
+          userAgent.substring(userAgent.indexOf("/", userAgent.indexOf("gecko/") + 6) + 1);
     } else if (isMozilla) {
       versionMinor = userAgent.substring(userAgent.indexOf("rv:") + 3);
     } else if (isIE) {
@@ -118,15 +112,15 @@ public class BrowserInfo {
 
     // platform
     boolean isWin = userAgent.indexOf("win") != -1;
-    boolean isWin32 = isWin && userAgent.indexOf("95") != -1
-        || userAgent.indexOf("98") != -1 || userAgent.indexOf("nt") != -1
-        || userAgent.indexOf("win32") != -1 || userAgent.indexOf("32bit") != -1
-        || userAgent.indexOf("xp") != -1;
+    boolean isWin32 =
+        isWin && userAgent.indexOf("95") != -1 || userAgent.indexOf("98") != -1
+            || userAgent.indexOf("nt") != -1 || userAgent.indexOf("win32") != -1
+            || userAgent.indexOf("32bit") != -1 || userAgent.indexOf("xp") != -1;
 
     boolean isMac = userAgent.indexOf("mac") != -1;
-    boolean isUnix = userAgent.indexOf("unix") != -1
-        || userAgent.indexOf("sunos") != -1 || userAgent.indexOf("bsd") != -1
-        || userAgent.indexOf("x11") != -1;
+    boolean isUnix =
+        userAgent.indexOf("unix") != -1 || userAgent.indexOf("sunos") != -1
+            || userAgent.indexOf("bsd") != -1 || userAgent.indexOf("x11") != -1;
 
     boolean isLinux = userAgent.indexOf("linux") != -1;
 
@@ -134,11 +128,11 @@ public class BrowserInfo {
     /*
      * this.isNS4x = (this.isNS && this.versionMajor == 4); this.isNS40x =
      * (this.isNS4x && this.versionMinor < 4.5); this.isNS47x = (this.isNS4x &&
-     * this.versionMinor >= 4.7); this.isNS4up = (this.isNS && this.versionMinor >=
-     * 4); this.isNS6x = (this.isNS && this.versionMajor == 6); this.isNS6up =
-     * (this.isNS && this.versionMajor >= 6); this.isNS7x = (this.isNS &&
-     * this.versionMajor == 7); this.isNS7up = (this.isNS && this.versionMajor >=
-     * 7);
+     * this.versionMinor >= 4.7); this.isNS4up = (this.isNS && this.versionMinor
+     * >= 4); this.isNS6x = (this.isNS && this.versionMajor == 6); this.isNS6up
+     * = (this.isNS && this.versionMajor >= 6); this.isNS7x = (this.isNS &&
+     * this.versionMajor == 7); this.isNS7up = (this.isNS && this.versionMajor
+     * >= 7);
      * 
      * this.isIE4x = (this.isIE && this.versionMajor == 4); this.isIE4up =
      * (this.isIE && this.versionMajor >= 4); this.isIE5x = (this.isIE &&
@@ -150,16 +144,14 @@ public class BrowserInfo {
      * this.isIE4xMac = (this.isIE4x && this.isMac);
      */
 
-    String name = isGecko ? "Gecko" : isAppleWebKit ? "Apple WebKit"
-        : isKonqueror ? "Konqueror" : isSafari ? "Safari" : isOpera ? "Opera"
-            : isIE ? "IE" : isMozilla ? "Mozilla" : isFirefox ? "Firefox"
-                : isNS ? "Netscape" : "";
+    String name =
+        isGecko ? "Gecko" : isAppleWebKit ? "Apple WebKit" : isKonqueror ? "Konqueror" : isSafari
+            ? "Safari" : isOpera ? "Opera" : isIE ? "IE" : isMozilla ? "Mozilla" : isFirefox
+                ? "Firefox" : isNS ? "Netscape" : "";
 
-    name += " "
-        + version
-        + " on "
-        + (isWin ? "Windows" : isMac ? "Mac" : isUnix ? "Unix" : isLinux
-            ? "Linux" : "Unknown");
+    name +=
+        " " + version + " on "
+            + (isWin ? "Windows" : isMac ? "Mac" : isUnix ? "Unix" : isLinux ? "Linux" : "Unknown");
 
     return name;
   }

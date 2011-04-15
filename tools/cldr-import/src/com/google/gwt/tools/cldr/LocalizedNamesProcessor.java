@@ -42,7 +42,7 @@ public class LocalizedNamesProcessor extends Processor {
 
     private final int index;
     private final CollationKey key;
-    
+
     public IndexedName(Collator collator, int index, String value) {
       this.index = index;
       this.key = collator.getCollationKey(value);
@@ -76,16 +76,14 @@ public class LocalizedNamesProcessor extends Processor {
 
   private final RegionLanguageData regionLanguageData;
 
-  public LocalizedNamesProcessor(File outputDir, Factory cldrFactory,
-      LocaleData localeData) {
+  public LocalizedNamesProcessor(File outputDir, Factory cldrFactory, LocaleData localeData) {
     super(outputDir, cldrFactory, localeData);
     regionLanguageData = new RegionLanguageData(cldrFactory);
   }
 
   @Override
   protected void cleanupData() {
-    localeData.copyLocaleData("en", "default", "territory", "languages",
-        "scripts", "variants");
+    localeData.copyLocaleData("en", "default", "territory", "languages", "scripts", "variants");
     // Generate a sort order before removing duplicates
     for (GwtLocale locale : localeData.getNonEmptyLocales("territory")) {
       // TODO(jat): deal with language population data that has a script
@@ -97,9 +95,9 @@ public class LocalizedNamesProcessor extends Processor {
           countryCodes.add(regionCode);
         }
       }
-      Locale javaLocale = new Locale(
-          locale.getLanguageNotNull(), locale.getRegionNotNull(),
-          locale.getVariantNotNull());
+      Locale javaLocale =
+          new Locale(locale.getLanguageNotNull(), locale.getRegionNotNull(), locale
+              .getVariantNotNull());
       Collator collator = Collator.getInstance(javaLocale);
       IndexedName[] names = new IndexedName[countryCodes.size()];
       for (int i = 0; i < names.length; ++i) {
@@ -146,19 +144,18 @@ public class LocalizedNamesProcessor extends Processor {
   @Override
   protected void loadData() throws IOException {
     System.out.println("Loading data for localized names");
-    localeData.addEntries("territory", cldrFactory,
-        "//ldml/localeDisplayNames/territories", "territory", "type");
-    localeData.addEntries("language", cldrFactory,
-        "//ldml/localeDisplayNames/languages", "language", "type");
-    localeData.addEntries("script", cldrFactory,
-        "//ldml/localeDisplayNames/scripts", "script", "type");
-    localeData.addEntries("variant", cldrFactory,
-        "//ldml/localeDisplayNames/variants", "variant", "type");
-    localeData.addEntries("localePattern", cldrFactory,
-        "//ldml/localeDisplayNames/localePattern", "localePattern", "unused");
+    localeData.addEntries("territory", cldrFactory, "//ldml/localeDisplayNames/territories",
+        "territory", "type");
+    localeData.addEntries("language", cldrFactory, "//ldml/localeDisplayNames/languages",
+        "language", "type");
+    localeData.addEntries("script", cldrFactory, "//ldml/localeDisplayNames/scripts", "script",
+        "type");
+    localeData.addEntries("variant", cldrFactory, "//ldml/localeDisplayNames/variants", "variant",
+        "type");
+    localeData.addEntries("localePattern", cldrFactory, "//ldml/localeDisplayNames/localePattern",
+        "localePattern", "unused");
     localeData.addEntries("localeSeparator", cldrFactory,
-        "//ldml/localeDisplayNames/localeSeparator", "localeSeparator",
-        "unused");
+        "//ldml/localeDisplayNames/localeSeparator", "localeSeparator", "unused");
   }
 
   @Override
@@ -174,31 +171,28 @@ public class LocalizedNamesProcessor extends Processor {
       }
       String[] sortOrder = getRegionOrder(namesMap.get("!sortorder"));
       String[] likelyOrder = getRegionOrder(namesMap.get("!likelyorder"));
-      if (regionCodesWithNames.isEmpty() && sortOrder == null
-          && likelyOrder == null) {
+      if (regionCodesWithNames.isEmpty() && sortOrder == null && likelyOrder == null) {
         // nothing to do
         return;
       }
       // sort for deterministic output
       Collections.sort(regionCodesWithNames);
       if (locale.isDefault()) {
-        generateDefaultLocale(namesMap, regionCodesWithNames, sortOrder,
-            likelyOrder);
+        generateDefaultLocale(namesMap, regionCodesWithNames, sortOrder, likelyOrder);
       }
-      generateLocale(locale, namesMap, regionCodesWithNames, sortOrder,
-          likelyOrder);
+      generateLocale(locale, namesMap, regionCodesWithNames, sortOrder, likelyOrder);
     }
   }
 
   /**
-   * @param namesMap 
-   * @param regionCodesWithNames 
-   * @param sortOrder 
-   * @param likelyOrder 
+   * @param namesMap
+   * @param regionCodesWithNames
+   * @param sortOrder
+   * @param likelyOrder
    */
   private void generateDefaultLocale(Map<String, String> namesMap,
-      List<String> regionCodesWithNames, String[] sortOrder,
-      String[] likelyOrder) throws IOException {
+      List<String> regionCodesWithNames, String[] sortOrder, String[] likelyOrder)
+      throws IOException {
     PrintWriter pw = null;
     try {
       pw = createOutputFile("client/DefaultLocalizedNames.java");
@@ -207,11 +201,10 @@ public class LocalizedNamesProcessor extends Processor {
       pw.println();
       pw.println("// DO NOT EDIT - GENERATED FROM CLDR DATA");
       pw.println();
-      pw.println("/**"); 
-      pw.println(" * Default LocalizedNames implementation.");   
+      pw.println("/**");
+      pw.println(" * Default LocalizedNames implementation.");
       pw.println(" */");
-      pw.print("public class DefaultLocalizedNames extends "
-          + "DefaultLocalizedNamesBase {");
+      pw.print("public class DefaultLocalizedNames extends " + "DefaultLocalizedNamesBase {");
       if (likelyOrder != null) {
         writeStringListMethod(pw, "loadLikelyRegionCodes", likelyOrder);
       }
@@ -222,8 +215,7 @@ public class LocalizedNamesProcessor extends Processor {
       for (String code : regionCodesWithNames) {
         String name = namesMap.get(code);
         if (name != null) {
-          pw.println("    namesMap.put(\"" + quote(code) + "\", \""
-              + quote(name) + "\");");
+          pw.println("    namesMap.put(\"" + quote(code) + "\", \"" + quote(name) + "\");");
         }
       }
       pw.println("  }");
@@ -240,14 +232,14 @@ public class LocalizedNamesProcessor extends Processor {
 
   /**
    * @param locale
-   * @param likelyOrder 
-   * @param sortOrder 
-   * @param regionCodesWithNames 
-   * @param namesMap 
+   * @param likelyOrder
+   * @param sortOrder
+   * @param regionCodesWithNames
+   * @param namesMap
    */
   private void generateLocale(GwtLocale locale, Map<String, String> namesMap,
-      List<String> regionCodesWithNames, String[] sortOrder,
-      String[] likelyOrder) throws IOException {
+      List<String> regionCodesWithNames, String[] sortOrder, String[] likelyOrder)
+      throws IOException {
     PrintWriter pw = null;
     try {
       pw = createFile("LocalizedNamesImpl", "java", locale.getAsString());
@@ -260,16 +252,14 @@ public class LocalizedNamesProcessor extends Processor {
       }
       pw.println("// DO NOT EDIT - GENERATED FROM CLDR DATA");
       pw.println();
-      pw.println("/**"); 
-      pw.println(" * Localized names for the \"" + locale + "\" locale.");   
+      pw.println("/**");
+      pw.println(" * Localized names for the \"" + locale + "\" locale.");
       pw.println(" */");
-      pw.print("public class LocalizedNamesImpl" + localeSuffix(locale)
-          + " extends ");
+      pw.print("public class LocalizedNamesImpl" + localeSuffix(locale) + " extends ");
       if (locale.isDefault()) {
         pw.print("LocalizedNamesImplBase");
       } else {
-        pw.print("LocalizedNamesImpl" + localeSuffix(localeData.inheritsFrom(
-            locale)));
+        pw.print("LocalizedNamesImpl" + localeSuffix(localeData.inheritsFrom(locale)));
       }
       pw.println(" {");
       if (!locale.isDefault()) {
@@ -287,16 +277,14 @@ public class LocalizedNamesProcessor extends Processor {
           for (String code : regionCodesWithNames) {
             String name = namesMap.get(code);
             if (name != null && !name.equals(code)) {
-              pw.println("    namesMap.put(\"" + quote(code) + "\", \""
-                  + quote(name) + "\");");
+              pw.println("    namesMap.put(\"" + quote(code) + "\", \"" + quote(name) + "\");");
             }
           }
           pw.println("  }");
           pw.println();
           pw.println("  @Override");
           pw.println("  protected JavaScriptObject loadNameMapNative() {");
-          pw.println("    return overrideMap(super.loadNameMapNative(), "
-              + "loadMyNameMap());");
+          pw.println("    return overrideMap(super.loadNameMapNative(), " + "loadMyNameMap());");
           pw.println("  }");
           pw.println();
           pw.println("  private native JavaScriptObject loadMyNameMap() /*-{");
@@ -306,8 +294,7 @@ public class LocalizedNamesProcessor extends Processor {
       } else if (!regionCodesWithNames.isEmpty()) {
         pw.println();
         pw.println("  @Override");
-        pw.println("  protected native JavaScriptObject loadNameMapNative() "
-            + "/*-{");
+        pw.println("  protected native JavaScriptObject loadNameMapNative() " + "/*-{");
         generateNativeMap(pw, regionCodesWithNames, namesMap);
         pw.println("  }-*/;");
       }
@@ -323,8 +310,8 @@ public class LocalizedNamesProcessor extends Processor {
    * @param regionCodesWithNames
    * @param namesMap
    */
-  private void generateNativeMap(PrintWriter pw,
-      List<String> regionCodesWithNames, Map<String, String> namesMap) {
+  private void generateNativeMap(PrintWriter pw, List<String> regionCodesWithNames,
+      Map<String, String> namesMap) {
     pw.println("    return {");
     boolean firstLine = true;
     for (String code : regionCodesWithNames) {
@@ -347,8 +334,9 @@ public class LocalizedNamesProcessor extends Processor {
    * @return region populations speaking this language
    */
   private Set<RegionPopulation> getRegionsForLocale(GwtLocale locale) {
-    Set<RegionPopulation> retVal = regionLanguageData.getRegions(
-        locale.getLanguageNotNull() + "_" + locale.getScriptNotNull());
+    Set<RegionPopulation> retVal =
+        regionLanguageData
+            .getRegions(locale.getLanguageNotNull() + "_" + locale.getScriptNotNull());
     if (retVal.isEmpty()) {
       retVal = regionLanguageData.getRegions(locale.getLanguageNotNull());
     }
@@ -362,8 +350,7 @@ public class LocalizedNamesProcessor extends Processor {
    * @param methodName the name of the method to create
    * @param values the list of string values to return.
    */
-  private void writeStringListMethod(PrintWriter pw, String methodName,
-      String[] values) {
+  private void writeStringListMethod(PrintWriter pw, String methodName, String[] values) {
     pw.println();
     pw.println("  @Override");
     pw.println("  public String[] " + methodName + "() {");

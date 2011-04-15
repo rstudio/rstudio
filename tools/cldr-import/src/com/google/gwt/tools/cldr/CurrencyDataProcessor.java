@@ -42,8 +42,7 @@ public class CurrencyDataProcessor extends Processor {
 
   private Set<String> stillInUse = new HashSet<String>();
 
-  public CurrencyDataProcessor(File outputDir, Factory cldrFactory,
-      LocaleData localeData) {
+  public CurrencyDataProcessor(File outputDir, Factory cldrFactory, LocaleData localeData) {
     super(outputDir, cldrFactory, localeData);
   }
 
@@ -64,8 +63,7 @@ public class CurrencyDataProcessor extends Processor {
   protected void printHeader(PrintWriter pw) {
     pw.println("# Do not edit - generated from Unicode CLDR data");
     pw.println("#");
-    pw.println("# The key is an ISO4217 currency code, and the value is of the "
-        + "form:");
+    pw.println("# The key is an ISO4217 currency code, and the value is of the " + "form:");
     pw.println("#   display name|symbol|decimal digits|not-used-flag");
     pw.println("# If a symbol is not supplied, the currency code will be used");
     pw.println("# If # of decimal digits is omitted, 2 is used");
@@ -73,19 +71,18 @@ public class CurrencyDataProcessor extends Processor {
     pw.println("# Trailing empty fields can be omitted");
     pw.println();
   }
-  
+
   @Override
   protected void writeOutputFiles() throws IOException {
     for (GwtLocale locale : localeData.getNonEmptyLocales()) {
       String path = "client/impl/cldr/CurrencyData";
-      PrintWriter pw = createOutputFile(path + Processor.localeSuffix(locale)
-          + ".properties");
+      PrintWriter pw = createOutputFile(path + Processor.localeSuffix(locale) + ".properties");
       printHeader(pw);
       Map<String, String> map = localeData.getEntries("currency", locale);
       String[] keys = new String[map.size()];
       map.keySet().toArray(keys);
       Arrays.sort(keys);
-      
+
       for (String key : keys) {
         pw.print(key);
         pw.print(" = ");
@@ -96,15 +93,13 @@ public class CurrencyDataProcessor extends Processor {
   }
 
   private void loadLocaleIndependentCurrencyData() {
-    CLDRFile supp = cldrFactory.make("supplementalData", true,
-        DraftStatus.approved);
-    
+    CLDRFile supp = cldrFactory.make("supplementalData", true, DraftStatus.approved);
+
     // load the table of default # of decimal places for each currency
     currencyFractions = new HashMap<String, Integer>();
     defaultCurrencyFraction = 0;
     XPathParts parts = new XPathParts();
-    Iterator<String> iterator = supp.iterator(
-        "//supplementalData/currencyData/fractions/info");
+    Iterator<String> iterator = supp.iterator("//supplementalData/currencyData/fractions/info");
     while (iterator.hasNext()) {
       String path = iterator.next();
       parts.set(supp.getFullXPath(path));
@@ -116,16 +111,15 @@ public class CurrencyDataProcessor extends Processor {
       int digits = Integer.valueOf(attr.get("digits"));
       // TODO(jat): make use of the "rounding" attribute, currently only on CHF
       if ("DEFAULT".equalsIgnoreCase(curCode)) {
-        defaultCurrencyFraction = digits; 
+        defaultCurrencyFraction = digits;
       } else {
         currencyFractions.put(curCode, digits);
       }
     }
-    
+
     // find which currencies are still in use in some region, everything else
     // should be marked as deprecated
-    iterator = supp.iterator(
-        "//supplementalData/currencyData/region");
+    iterator = supp.iterator("//supplementalData/currencyData/region");
     while (iterator.hasNext()) {
       String path = iterator.next();
       parts.set(supp.getFullXPath(path));
@@ -135,8 +129,7 @@ public class CurrencyDataProcessor extends Processor {
       }
       String region = parts.findAttributeValue("region", "iso3166");
       String curCode = attr.get("iso4217");
-      if ("ZZ".equals(region) || "false".equals(attr.get("tender"))
-          || "XXX".equals(curCode)) {
+      if ("ZZ".equals(region) || "false".equals(attr.get("tender")) || "XXX".equals(curCode)) {
         // ZZ is an undefined region, XXX is an unknown currency code (and needs
         // to be special-cased because it is listed as used in Anartica!)
         continue;

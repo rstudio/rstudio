@@ -30,7 +30,7 @@ import java.util.Set;
 public class LocaleDataTest extends TestCase {
 
   private static final GwtLocaleFactoryImpl localeFactory;
-  
+
   static {
     localeFactory = new GwtLocaleFactoryImpl();
   }
@@ -39,8 +39,8 @@ public class LocaleDataTest extends TestCase {
    * Test method for {@link LocaleData#getAllLocales()}.
    */
   public void testGetAllLocales() {
-    LocaleData localeData = new LocaleData(localeFactory, Arrays.asList(
-        "root", "en", "en_US", "ar", "ar_IQ"));
+    LocaleData localeData =
+        new LocaleData(localeFactory, Arrays.asList("root", "en", "en_US", "ar", "ar_IQ"));
     Set<GwtLocale> locales = localeData.getAllLocales();
     assertEquals(5, locales.size());
     GwtLocale localeEn = localeFactory.fromString("en");
@@ -57,8 +57,8 @@ public class LocaleDataTest extends TestCase {
    * Test method for {@link LocaleData#getNonEmptyLocales()}.
    */
   public void testGetNonEmptyLocales() {
-    LocaleData localeData = new LocaleData(localeFactory, Arrays.asList(
-        "root", "en", "en_US", "ar", "ar_IQ"));
+    LocaleData localeData =
+        new LocaleData(localeFactory, Arrays.asList("root", "en", "en_US", "ar", "ar_IQ"));
     Iterator<GwtLocale> it = localeData.getNonEmptyLocales().iterator();
     assertFalse(it.hasNext());
     GwtLocale localeEn = localeFactory.fromString("en");
@@ -81,8 +81,8 @@ public class LocaleDataTest extends TestCase {
    * Test method for {@link LocaleData#getNonEmptyLocales(java.lang.String)}.
    */
   public void testGetNonEmptyLocalesString() {
-    LocaleData localeData = new LocaleData(localeFactory, Arrays.asList(
-        "root", "en", "en_US", "ar", "ar_IQ"));
+    LocaleData localeData =
+        new LocaleData(localeFactory, Arrays.asList("root", "en", "en_US", "ar", "ar_IQ"));
     Iterator<GwtLocale> it = localeData.getNonEmptyLocales("foo").iterator();
     assertFalse(it.hasNext());
     GwtLocale localeEn = localeFactory.fromString("en");
@@ -108,11 +108,13 @@ public class LocaleDataTest extends TestCase {
   }
 
   /**
-   * Test method for {@link LocaleData#inheritsFrom(com.google.gwt.i18n.shared.GwtLocale)}.
+   * Test method for
+   * {@link LocaleData#inheritsFrom(com.google.gwt.i18n.shared.GwtLocale)}.
    */
   public void testInheritsFrom() {
-    LocaleData localeData = new LocaleData(localeFactory, Arrays.asList(
-        "root", "en", "en_US", "en_US_VARIANT", "ar", "ar_IQ"));
+    LocaleData localeData =
+        new LocaleData(localeFactory, Arrays.asList("root", "en", "en_US", "en_US_VARIANT", "ar",
+            "ar_IQ"));
     GwtLocale localeEn = localeFactory.fromString("en");
     localeData.addEntry("foo", localeEn, "k1", "v1");
     GwtLocale localeEnUs = localeFactory.fromString("en_us");
@@ -127,11 +129,14 @@ public class LocaleDataTest extends TestCase {
   }
 
   /**
-   * Test method for {@link LocaleData#inheritsFrom(java.lang.String, com.google.gwt.i18n.shared.GwtLocale)}.
+   * Test method for
+   * {@link LocaleData#inheritsFrom(java.lang.String, com.google.gwt.i18n.shared.GwtLocale)}
+   * .
    */
   public void testInheritsFromWithCategory() {
-    LocaleData localeData = new LocaleData(localeFactory, Arrays.asList(
-        "root", "en", "en_US", "en_US_VARIANT", "ar", "ar_IQ"));
+    LocaleData localeData =
+        new LocaleData(localeFactory, Arrays.asList("root", "en", "en_US", "en_US_VARIANT", "ar",
+            "ar_IQ"));
     GwtLocale localeEn = localeFactory.fromString("en");
     localeData.addEntry("foo", localeEn, "k1", "v1");
     GwtLocale localeEnUs = localeFactory.fromString("en_us");
@@ -151,8 +156,8 @@ public class LocaleDataTest extends TestCase {
    * Test method for {@link LocaleData#removeCompleteDuplicates()}.
    */
   public void testRemoveCompleteDuplicates() {
-    LocaleData localeData = new LocaleData(localeFactory, Arrays.asList(
-        "root", "en", "en_US", "ar", "ar_IQ"));
+    LocaleData localeData =
+        new LocaleData(localeFactory, Arrays.asList("root", "en", "en_US", "ar", "ar_IQ"));
     GwtLocale localeEn = localeFactory.fromString("en");
     GwtLocale localeEnUs = localeFactory.fromString("en_us");
     localeData.addEntry("foo", localeEn, "k1", "v1");
@@ -171,8 +176,8 @@ public class LocaleDataTest extends TestCase {
    * Test method for {@link LocaleData#removeDuplicates()}.
    */
   public void testRemoveDuplicates() {
-    LocaleData localeData = new LocaleData(localeFactory, Arrays.asList(
-        "root", "en", "en_US", "ar", "ar_IQ"));
+    LocaleData localeData =
+        new LocaleData(localeFactory, Arrays.asList("root", "en", "en_US", "ar", "ar_IQ"));
     GwtLocale localeEn = localeFactory.fromString("en");
     GwtLocale localeEnUs = localeFactory.fromString("en_us");
     localeData.addEntry("foo", localeEn, "k1", "v1");

@@ -48,7 +48,7 @@ public abstract class Processor {
   protected static String localeSuffix(GwtLocale locale) {
     return (locale.isDefault() ? "" : "_") + locale.getAsString();
   }
-  
+
   /**
    * @param value
    * @return value with all quotes escaped
@@ -57,7 +57,7 @@ public abstract class Processor {
     return value.replace("\"", "\\\"");
   }
 
-  protected final Factory cldrFactory;  
+  protected final Factory cldrFactory;
 
   protected final LocaleData localeData;
 
@@ -72,8 +72,7 @@ public abstract class Processor {
    * @param cldrFactory CLDR factory used to create new CLDRFile instances
    * @param localeData LocaleData instance to collect data from CLDR files
    */
-  protected Processor(File outputDir, Factory cldrFactory,
-      LocaleData localeData) {
+  protected Processor(File outputDir, Factory cldrFactory, LocaleData localeData) {
     this.outputDir = outputDir;
     this.cldrFactory = cldrFactory;
     this.localeData = localeData;
@@ -83,9 +82,9 @@ public abstract class Processor {
   /**
    * Execute this processor.
    * 
-   * It will call loadData, cleanupData, writeOutputFiles, and then reset on
-   * its localeData instance.
-   *  
+   * It will call loadData, cleanupData, writeOutputFiles, and then reset on its
+   * localeData instance.
+   * 
    * @throws IOException
    */
   public final void run() throws IOException {
@@ -110,14 +109,13 @@ public abstract class Processor {
    * Create an output file including any parent directories.
    * 
    * @param name name of file, which will be prefixed by
-   *     user/src/com/google/gwt/i18n/client/impl/cldr
+   *          user/src/com/google/gwt/i18n/client/impl/cldr
    * @param ext extension for file
    * @param locale locale name or null if not localized
    * @return a PrintWriter instance
    * @throws IOException
    */
-  protected PrintWriter createFile(String name, String ext, String locale)
-      throws IOException {
+  protected PrintWriter createFile(String name, String ext, String locale) throws IOException {
     if (locale == null || locale.length() == 0) {
       locale = "";
     } else {
@@ -126,13 +124,12 @@ public abstract class Processor {
     return createOutputFile("client/impl/cldr/" + name + locale + "." + ext);
   }
 
-  protected PrintWriter createOutputFile(String suffix)
-      throws IOException, FileNotFoundException {
+  protected PrintWriter createOutputFile(String suffix) throws IOException, FileNotFoundException {
     return createOutputFile(I18N_PACKAGE_PATH, suffix);
   }
 
-  protected PrintWriter createOutputFile(String prefix, String suffix)
-      throws IOException, FileNotFoundException {
+  protected PrintWriter createOutputFile(String prefix, String suffix) throws IOException,
+      FileNotFoundException {
     PrintWriter pw;
     File f = new File(outputDir, prefix + suffix);
     File parent = f.getParentFile();
@@ -140,13 +137,14 @@ public abstract class Processor {
       parent.mkdirs();
     }
     f.createNewFile();
-    pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
-        new FileOutputStream(f), "UTF-8")), false);
+    pw =
+        new PrintWriter(
+            new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f), "UTF-8")), false);
     return pw;
   }
 
-  protected void generateIntMethod(PrintWriter pw, String category,
-      GwtLocale locale, String key, String method) {
+  protected void generateIntMethod(PrintWriter pw, String category, GwtLocale locale, String key,
+      String method) {
     String value = localeData.getEntry(category, locale, key);
     if (value != null) {
       pw.println();
@@ -159,14 +157,13 @@ public abstract class Processor {
     }
   }
 
-  protected void generateStringMethod(PrintWriter pw, String category,
-      GwtLocale locale, String key, String method) {
+  protected void generateStringMethod(PrintWriter pw, String category, GwtLocale locale,
+      String key, String method) {
     String value = localeData.getEntry(category, locale, key);
     generateStringValue(pw, method, value);
   }
 
-  protected void generateStringValue(PrintWriter pw, String method,
-      String value) {
+  protected void generateStringValue(PrintWriter pw, String method, String value) {
     if (value != null) {
       pw.println();
       if (useOverride) {
@@ -187,7 +184,7 @@ public abstract class Processor {
 
   /**
    * Load data needed by this processor.
-   *
+   * 
    * @throws IOException
    */
   protected abstract void loadData() throws IOException;
@@ -204,12 +201,10 @@ public abstract class Processor {
     pw.println(" * ");
     pw.println(" * http://www.apache.org/licenses/LICENSE-2.0");
     pw.println(" * ");
-    pw.println(" * Unless required by applicable law or agreed to in writing, "
-        + "software");
+    pw.println(" * Unless required by applicable law or agreed to in writing, " + "software");
     pw.println(" * distributed under the License is distributed on an \"AS "
         + "IS\" BASIS, WITHOUT");
-    pw.println(" * WARRANTIES OR CONDITIONS OF ANY KIND, either express or "
-        + "implied. See the");
+    pw.println(" * WARRANTIES OR CONDITIONS OF ANY KIND, either express or " + "implied. See the");
     pw.println(" * License for the specific language governing permissions and "
         + "limitations under");
     pw.println(" * the License.");
@@ -227,7 +222,7 @@ public abstract class Processor {
 
   /**
    * Write output files produced by this processor.
-   *
+   * 
    * @throws IOException
    */
   protected abstract void writeOutputFiles() throws IOException;

@@ -29,8 +29,7 @@ import java.util.Map;
  */
 public class ListFormattingProcessor extends Processor {
 
-  public ListFormattingProcessor(File outputDir, Factory cldrFactory,
-      LocaleData localeData) {
+  public ListFormattingProcessor(File outputDir, Factory cldrFactory, LocaleData localeData) {
     super(outputDir, cldrFactory, localeData);
   }
 
@@ -42,19 +41,17 @@ public class ListFormattingProcessor extends Processor {
   @Override
   protected void loadData() throws IOException {
     System.out.println("Loading data for list formatting");
-    localeData.addEntries("list", cldrFactory,
-        "//ldml/listPatterns/listPattern", "listPatternPart", "type");
+    localeData.addEntries("list", cldrFactory, "//ldml/listPatterns/listPattern",
+        "listPatternPart", "type");
   }
 
   @Override
   protected void writeOutputFiles() throws IOException {
     for (GwtLocale locale : localeData.getNonEmptyLocales("list")) {
       PrintWriter pw = null;
-      for (Map.Entry<String, String> entry : localeData.getEntries("list",
-          locale).entrySet()) {
+      for (Map.Entry<String, String> entry : localeData.getEntries("list", locale).entrySet()) {
         if (pw == null) {
-          pw = createOutputFile("rebind/cldr/ListPatterns_"
-              + locale.getAsString() + ".properties");
+          pw = createOutputFile("rebind/cldr/ListPatterns_" + locale.getAsString() + ".properties");
         }
         pw.println(entry.getKey() + "=" + entry.getValue());
       }

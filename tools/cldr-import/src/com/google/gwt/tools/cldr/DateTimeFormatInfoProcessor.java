@@ -49,16 +49,15 @@ import java.util.TreeMap;
 public class DateTimeFormatInfoProcessor extends Processor {
 
   private static final String[] DAYS = new String[] {
-    "sun", "mon", "tue", "wed", "thu", "fri", "sat"
-  };
+      "sun", "mon", "tue", "wed", "thu", "fri", "sat"};
 
   /**
-   * Map of skeleton format patterns and the method name suffix that uses them. 
+   * Map of skeleton format patterns and the method name suffix that uses them.
    */
   private static final Map<String, String> FORMATS;
 
   /**
-   * Index of the formats, ordered by the method name. 
+   * Index of the formats, ordered by the method name.
    */
   private static final SortedMap<String, String> FORMAT_BY_METHOD;
 
@@ -112,8 +111,7 @@ public class DateTimeFormatInfoProcessor extends Processor {
 
   private final RegionLanguageData regionLanguageData;
 
-  public DateTimeFormatInfoProcessor(File outputDir, Factory cldrFactory,
-      LocaleData localeData) {
+  public DateTimeFormatInfoProcessor(File outputDir, Factory cldrFactory, LocaleData localeData) {
     super(outputDir, cldrFactory, localeData);
     regionLanguageData = new RegionLanguageData(cldrFactory);
   }
@@ -121,10 +119,9 @@ public class DateTimeFormatInfoProcessor extends Processor {
   @Override
   protected void cleanupData() {
     System.out.println("Removing duplicates from date/time formats");
-    localeData.copyLocaleData("en", "default", "era-wide", "era-abbrev",
-        "quarter-wide", "quarter-abbrev", "day-wide", "day-sa-wide",
-        "day-narrow", "day-sa-narrow", "day-abbrev", "day-sa-abbrev",
-        "month-wide", "month-sa-wide", "month-narrow", "month-sa-narrow",
+    localeData.copyLocaleData("en", "default", "era-wide", "era-abbrev", "quarter-wide",
+        "quarter-abbrev", "day-wide", "day-sa-wide", "day-narrow", "day-sa-narrow", "day-abbrev",
+        "day-sa-abbrev", "month-wide", "month-sa-wide", "month-narrow", "month-sa-narrow",
         "month-abbrev", "month-sa-abbrev");
     removeUnusedFormats();
     localeData.removeDuplicates("predef");
@@ -145,15 +142,15 @@ public class DateTimeFormatInfoProcessor extends Processor {
   /**
    * Generate an override for a method which takes String arguments, which
    * simply redirect to another method based on a default value.
-   *
+   * 
    * @param pw
    * @param category
    * @param locale
    * @param method
    * @param args
    */
-  protected void generateArgMethod(PrintWriter pw, String category,
-      GwtLocale locale, String method, String... args) {
+  protected void generateArgMethod(PrintWriter pw, String category, GwtLocale locale,
+      String method, String... args) {
     String value = localeData.getEntry(category, locale, "default");
     if (value != null && value.length() > 0) {
       pw.println();
@@ -167,8 +164,8 @@ public class DateTimeFormatInfoProcessor extends Processor {
         prefix = ", ";
       }
       pw.println(") {");
-      pw.print("    return " + method + Character.toTitleCase(value.charAt(0))
-          + value.substring(1) + "(");
+      pw.print("    return " + method + Character.toTitleCase(value.charAt(0)) + value.substring(1)
+          + "(");
       prefix = "";
       for (String arg : args) {
         pw.print(prefix + arg);
@@ -181,7 +178,7 @@ public class DateTimeFormatInfoProcessor extends Processor {
 
   /**
    * Generate an override for a method which takes String arguments.
-   *
+   * 
    * @param pw
    * @param category
    * @param locale
@@ -189,8 +186,8 @@ public class DateTimeFormatInfoProcessor extends Processor {
    * @param method
    * @param args
    */
-  protected void generateArgMethodRedirect(PrintWriter pw, String category,
-      GwtLocale locale, String key, String method, final String... args) {
+  protected void generateArgMethodRedirect(PrintWriter pw, String category, GwtLocale locale,
+      String key, String method, final String... args) {
     String value = localeData.getEntry(category, locale, key);
     if (value != null) {
       pw.println();
@@ -211,24 +208,22 @@ public class DateTimeFormatInfoProcessor extends Processor {
         for (TemplateChunk chunk : chunks) {
           chunk.accept(new DefaultTemplateChunkVisitor() {
             @Override
-            public void visit(ArgumentChunk argChunk)
-                throws UnableToCompleteException {
+            public void visit(ArgumentChunk argChunk) throws UnableToCompleteException {
               gen.appendStringValuedExpression(args[argChunk.getArgumentNumber()]);
             }
 
             @Override
-            public void visit(StringChunk stringChunk)
-                throws UnableToCompleteException {
+            public void visit(StringChunk stringChunk) throws UnableToCompleteException {
               gen.appendStringLiteral(stringChunk.getString());
             }
           });
         }
       } catch (ParseException e) {
-        throw new RuntimeException("Unable to parse pattern '" + value
-            + "' for locale " + locale + " key " + category + "/" + key, e);
+        throw new RuntimeException("Unable to parse pattern '" + value + "' for locale " + locale
+            + " key " + category + "/" + key, e);
       } catch (UnableToCompleteException e) {
-        throw new RuntimeException("Unable to parse pattern '" + value
-            + "' for locale " + locale + " key " + category + "/" + key, e);
+        throw new RuntimeException("Unable to parse pattern '" + value + "' for locale " + locale
+            + " key " + category + "/" + key, e);
       }
       gen.completeString();
       pw.println("    return " + buf.toString() + ";");
@@ -244,8 +239,7 @@ public class DateTimeFormatInfoProcessor extends Processor {
    * @param key
    * @param method
    */
-  protected void generateDayNumber(PrintWriter pw, GwtLocale locale,
-      String key, String method) {
+  protected void generateDayNumber(PrintWriter pw, GwtLocale locale, String key, String method) {
     String day = localeData.getEntry("weekdata", locale, key);
     if (day != null) {
       int value = getDayNumber(day);
@@ -268,8 +262,8 @@ public class DateTimeFormatInfoProcessor extends Processor {
    * @param skeleton
    * @param methodSuffix
    */
-  protected void generateFormat(GwtLocale locale, PrintWriter pw,
-      String skeleton, String methodSuffix) {
+  protected void generateFormat(GwtLocale locale, PrintWriter pw, String skeleton,
+      String methodSuffix) {
     String pattern = localeData.getEntry("predef", locale, skeleton);
     generateStringValue(pw, "format" + methodSuffix, pattern);
   }
@@ -284,14 +278,11 @@ public class DateTimeFormatInfoProcessor extends Processor {
    * @param methodPrefix
    * @param keys
    */
-  protected void generateFullStringList(PrintWriter pw, String group,
-      GwtLocale locale, String methodPrefix, String... keys) {
-    generateStringListPair(pw, group, locale, methodPrefix, "Full", "wide",
-        keys);
-    generateStringListPair(pw, group, locale, methodPrefix, "Narrow", "narrow",
-        keys);
-    generateStringListPair(pw, group, locale, methodPrefix, "Short", "abbrev",
-        keys);
+  protected void generateFullStringList(PrintWriter pw, String group, GwtLocale locale,
+      String methodPrefix, String... keys) {
+    generateStringListPair(pw, group, locale, methodPrefix, "Full", "wide", keys);
+    generateStringListPair(pw, group, locale, methodPrefix, "Narrow", "narrow", keys);
+    generateStringListPair(pw, group, locale, methodPrefix, "Short", "abbrev", keys);
   }
 
   /**
@@ -301,14 +292,12 @@ public class DateTimeFormatInfoProcessor extends Processor {
    * @param pw
    * @param methodPrefix
    */
-  protected void generateStandaloneRedirect(PrintWriter pw,
-      String methodPrefix) {
+  protected void generateStandaloneRedirect(PrintWriter pw, String methodPrefix) {
     pw.println();
     if (getOverrides()) {
       pw.println("  @Override");
     }
-    pw.println("  public String[] " + methodPrefix
-        + "Standalone" + "() {");
+    pw.println("  public String[] " + methodPrefix + "Standalone" + "() {");
     pw.println("    return " + methodPrefix + "();");
     pw.println("  }");
   }
@@ -324,21 +313,19 @@ public class DateTimeFormatInfoProcessor extends Processor {
    * @param keys
    * @return true if the method was skipped as identical to its ancestor
    */
-  protected boolean generateStringList(PrintWriter pw, String category,
-      String fallbackCategory, GwtLocale locale, String method,
-      String... keys) {
+  protected boolean generateStringList(PrintWriter pw, String category, String fallbackCategory,
+      GwtLocale locale, String method, String... keys) {
     Map<String, String> map = localeData.getEntries(category, locale);
-    Map<String, String> fallback = fallbackCategory == null ?
-        Collections.<String, String>emptyMap()
-        : localeData.getEntries(fallbackCategory, locale);
-    if (map == null || map.isEmpty() && fallback != null
-        && !fallback.isEmpty()) {
+    Map<String, String> fallback =
+        fallbackCategory == null ? Collections.<String, String> emptyMap() : localeData.getEntries(
+            fallbackCategory, locale);
+    if (map == null || map.isEmpty() && fallback != null && !fallback.isEmpty()) {
       return true;
     }
     if (map != null && !map.isEmpty()) {
       if (fallbackCategory != null) {
         // see if the entry is the same as the fallback
-        boolean different = false; 
+        boolean different = false;
         for (String key : keys) {
           String value = map.get(key);
           if (value != null && !value.equals(fallback.get(key))) {
@@ -363,8 +350,7 @@ public class DateTimeFormatInfoProcessor extends Processor {
           value = fallback.get(key);
         }
         if (value == null) {
-          System.err.println("Missing \"" + key + "\" in " + locale + "/"
-              + category);
+          System.err.println("Missing \"" + key + "\" in " + locale + "/" + category);
           value = "";
         }
         if (first) {
@@ -380,18 +366,16 @@ public class DateTimeFormatInfoProcessor extends Processor {
     return false;
   }
 
-  protected void generateStringListPair(PrintWriter pw, String group,
-      GwtLocale locale, String methodPrefix, String width, String categorySuffix,
-      String... keys) {
-    generateStringList(pw, group + "-" + categorySuffix, null, locale,
-        methodPrefix + width, keys);
-    String redirect = localeData.getEntry(group + "-sa-" + categorySuffix
-        + "-redirect", locale, "redirect");
+  protected void generateStringListPair(PrintWriter pw, String group, GwtLocale locale,
+      String methodPrefix, String width, String categorySuffix, String... keys) {
+    generateStringList(pw, group + "-" + categorySuffix, null, locale, methodPrefix + width, keys);
+    String redirect =
+        localeData.getEntry(group + "-sa-" + categorySuffix + "-redirect", locale, "redirect");
     if ("yes".equals(redirect)) {
       generateStandaloneRedirect(pw, methodPrefix + width);
     } else {
-      generateStringList(pw, group + "-sa-" + categorySuffix, group + "-"
-        + categorySuffix, locale, methodPrefix + width + "Standalone", keys);
+      generateStringList(pw, group + "-sa-" + categorySuffix, group + "-" + categorySuffix, locale,
+          methodPrefix + width + "Standalone", keys);
     }
   }
 
@@ -409,21 +393,17 @@ public class DateTimeFormatInfoProcessor extends Processor {
     // differences that don't matter.
     localeData.addEntries("dayPeriod-abbrev", cldrFactory,
         "//ldml/dates/calendars/calendar[@type=\"gregorian\"]/dayPeriods/"
-        + "dayPeriodContext[@type=\"format\"]/"
-        + "dayPeriodWidth[@type=\"abbreviated\"]/dayPeriod[@type=\"am\"]",
-        "dayPeriod", "type");
+            + "dayPeriodContext[@type=\"format\"]/"
+            + "dayPeriodWidth[@type=\"abbreviated\"]/dayPeriod[@type=\"am\"]", "dayPeriod", "type");
     localeData.addEntries("dayPeriod-abbrev", cldrFactory,
         "//ldml/dates/calendars/calendar[@type=\"gregorian\"]/dayPeriods/"
-        + "dayPeriodContext[@type=\"format\"]/"
-        + "dayPeriodWidth[@type=\"abbreviated\"]/dayPeriod[@type=\"pm\"]",
-        "dayPeriod", "type");
+            + "dayPeriodContext[@type=\"format\"]/"
+            + "dayPeriodWidth[@type=\"abbreviated\"]/dayPeriod[@type=\"pm\"]", "dayPeriod", "type");
 
     localeData.addEntries("era-abbrev", cldrFactory,
-        "//ldml/dates/calendars/calendar[@type=\"gregorian\"]/eras/eraAbbr",
-        "era", "type");
+        "//ldml/dates/calendars/calendar[@type=\"gregorian\"]/eras/eraAbbr", "era", "type");
     localeData.addEntries("era-wide", cldrFactory,
-        "//ldml/dates/calendars/calendar[@type=\"gregorian\"]/eras/eraNames",
-        "era", "type");
+        "//ldml/dates/calendars/calendar[@type=\"gregorian\"]/eras/eraNames", "era", "type");
     localeData.addDateTimeFormatEntries("date", cldrFactory);
     localeData.addDateTimeFormatEntries("time", cldrFactory);
     localeData.addDateTimeFormatEntries("dateTime", cldrFactory);
@@ -460,21 +440,20 @@ public class DateTimeFormatInfoProcessor extends Processor {
       pw.println("// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA");
       pw.println();
       if (locale.isDefault()) {
-        pw.println("/**"); 
+        pw.println("/**");
         pw.println(" * Default implementation of DateTimeFormatInfo interface, "
-            + "using values from");   
+            + "using values from");
         pw.println(" * the CLDR root locale.");
         pw.println(" * <p>");
         pw.println(" * Users who need to create their own DateTimeFormatInfo "
-            + "implementation are");    
+            + "implementation are");
         pw.println(" * encouraged to extend this class so their implementation "
-            + "won't break when   "); 
+            + "won't break when   ");
         pw.println(" * new methods are added.");
         pw.println(" */");
       } else {
-        pw.println("/**"); 
-        pw.println(" * Implementation of DateTimeFormatInfo for the \""
-            + locale + "\" locale.");   
+        pw.println("/**");
+        pw.println(" * Implementation of DateTimeFormatInfo for the \"" + locale + "\" locale.");
         pw.println(" */");
       }
       pw.print("public class " + myClass);
@@ -491,27 +470,25 @@ public class DateTimeFormatInfoProcessor extends Processor {
       pw.println(" {");
 
       // write AM/PM names
-      generateStringList(pw, "dayPeriod-abbrev", null, locale, "ampms", "am",
-          "pm");
+      generateStringList(pw, "dayPeriod-abbrev", null, locale, "ampms", "am", "pm");
 
       // write standard date formats
-      generateArgMethod(pw, "date",    locale, "dateFormat");
+      generateArgMethod(pw, "date", locale, "dateFormat");
       generateStringMethod(pw, "date", locale, "full", "dateFormatFull");
       generateStringMethod(pw, "date", locale, "long", "dateFormatLong");
       generateStringMethod(pw, "date", locale, "medium", "dateFormatMedium");
       generateStringMethod(pw, "date", locale, "short", "dateFormatShort");
 
       // write methods for assembling date/time formats
-      generateArgMethod(pw, "dateTime", locale, "dateTime", "timePattern",
+      generateArgMethod(pw, "dateTime", locale, "dateTime", "timePattern", "datePattern");
+      generateArgMethodRedirect(pw, "dateTime", locale, "full", "dateTimeFull", "timePattern",
           "datePattern");
-      generateArgMethodRedirect(pw, "dateTime", locale, "full", "dateTimeFull",
-          "timePattern", "datePattern");
-      generateArgMethodRedirect(pw, "dateTime", locale, "long", "dateTimeLong",
-          "timePattern", "datePattern");
-      generateArgMethodRedirect(pw, "dateTime", locale, "medium",
-          "dateTimeMedium", "timePattern", "datePattern");
-      generateArgMethodRedirect(pw, "dateTime", locale, "short",
-          "dateTimeShort", "timePattern", "datePattern");
+      generateArgMethodRedirect(pw, "dateTime", locale, "long", "dateTimeLong", "timePattern",
+          "datePattern");
+      generateArgMethodRedirect(pw, "dateTime", locale, "medium", "dateTimeMedium", "timePattern",
+          "datePattern");
+      generateArgMethodRedirect(pw, "dateTime", locale, "short", "dateTimeShort", "timePattern",
+          "datePattern");
 
       // write era names
       generateStringList(pw, "era-wide", null, locale, "erasFull", "0", "1");
@@ -526,24 +503,20 @@ public class DateTimeFormatInfoProcessor extends Processor {
       }
 
       // write month names
-      generateFullStringList(pw, "month", locale, "months", "1", "2", "3", "4",
-          "5", "6", "7", "8", "9", "10", "11", "12");
-      
+      generateFullStringList(pw, "month", locale, "months", "1", "2", "3", "4", "5", "6", "7", "8",
+          "9", "10", "11", "12");
+
       // write quarter names
-      generateStringList(pw, "quarter-wide", null, locale, "quartersFull", "1",
-          "2", "3", "4");
-      generateStringList(pw, "quarter-abbrev", null, locale, "quartersShort",
-          "1", "2", "3", "4");
-      
+      generateStringList(pw, "quarter-wide", null, locale, "quartersFull", "1", "2", "3", "4");
+      generateStringList(pw, "quarter-abbrev", null, locale, "quartersShort", "1", "2", "3", "4");
+
       // write standard time formats
-      generateArgMethod(pw, "time",    locale, "timeFormat");
+      generateArgMethod(pw, "time", locale, "timeFormat");
       generateStringMethod(pw, "time", locale, "full", "timeFormatFull");
       generateStringMethod(pw, "time", locale, "long", "timeFormatLong");
-      generateStringMethod(pw, "time", locale, "medium",
-          "timeFormatMedium");
-      generateStringMethod(pw, "time", locale, "short",
-          "timeFormatShort");
-      
+      generateStringMethod(pw, "time", locale, "medium", "timeFormatMedium");
+      generateStringMethod(pw, "time", locale, "short", "timeFormatShort");
+
       // write weekday names
       generateFullStringList(pw, "day", locale, "weekdays", DAYS);
 
@@ -576,9 +549,8 @@ public class DateTimeFormatInfoProcessor extends Processor {
         String cldrPattern = localeData.getEntry("predef", locale, skeleton);
         String pattern = dtpg.getBestPattern(skeleton);
         if (cldrPattern != null && !cldrPattern.equals(pattern)) {
-          System.err.println("Mismatch on skeleton pattern in locale " + locale
-              + " for skeleton '" + skeleton + "': icu='" + pattern
-              + "', cldr='" + cldrPattern + "'");
+          System.err.println("Mismatch on skeleton pattern in locale " + locale + " for skeleton '"
+              + skeleton + "': icu='" + pattern + "', cldr='" + cldrPattern + "'");
         }
         localeData.addEntry("predef", locale, skeleton, pattern);
       }
@@ -589,14 +561,14 @@ public class DateTimeFormatInfoProcessor extends Processor {
    * Load the week start and weekend range values from CLDR.
    */
   private void loadWeekData() {
-    localeData.addTerritoryEntries("weekdata", cldrFactory,
-        regionLanguageData, "//supplementalData/weekData/firstDay", "firstDay", "day");
-    localeData.addTerritoryEntries("weekdata", cldrFactory,
-        regionLanguageData, "//supplementalData/weekData/weekendStart", "weekendStart", "day");
-    localeData.addTerritoryEntries("weekdata", cldrFactory,
-        regionLanguageData, "//supplementalData/weekData/weekendEnd", "weekendEnd", "day");
-    localeData.addTerritoryEntries("weekdata", cldrFactory,
-        regionLanguageData, "//supplementalData/weekData/minDays", "minDays", "count");
+    localeData.addTerritoryEntries("weekdata", cldrFactory, regionLanguageData,
+        "//supplementalData/weekData/firstDay", "firstDay", "day");
+    localeData.addTerritoryEntries("weekdata", cldrFactory, regionLanguageData,
+        "//supplementalData/weekData/weekendStart", "weekendStart", "day");
+    localeData.addTerritoryEntries("weekdata", cldrFactory, regionLanguageData,
+        "//supplementalData/weekData/weekendEnd", "weekendEnd", "day");
+    localeData.addTerritoryEntries("weekdata", cldrFactory, regionLanguageData,
+        "//supplementalData/weekData/minDays", "minDays", "count");
   }
 
   /**

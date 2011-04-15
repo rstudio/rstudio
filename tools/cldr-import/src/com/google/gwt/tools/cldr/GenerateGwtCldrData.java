@@ -43,14 +43,12 @@ public class GenerateGwtCldrData {
   private static boolean DEBUG = false;
 
   private static final Class<? extends Processor>[] PROCESSORS;
-  
+
   static {
-    PROCESSORS = new Class[] {
-        CurrencyDataProcessor.class,
-        DateTimeFormatInfoProcessor.class,
-        ListFormattingProcessor.class,
-        LocalizedNamesProcessor.class,
-    };
+    PROCESSORS =
+        new Class[] {
+            CurrencyDataProcessor.class, DateTimeFormatInfoProcessor.class,
+            ListFormattingProcessor.class, LocalizedNamesProcessor.class,};
   }
 
   public static void main(String[] args) throws IOException, SecurityException,
@@ -58,13 +56,11 @@ public class GenerateGwtCldrData {
       IllegalAccessException, InvocationTargetException {
     System.out.println("Starting to generate from CLDR data (ignore -D lines "
         + "produced by cldr-tools)");
-    UOption[] options = {
-        UOption.HELP_H(),
-        UOption.HELP_QUESTION_MARK(),
-        UOption.SOURCEDIR().setDefault(CldrUtility.MAIN_DIRECTORY), // C:\cvsdata/unicode\cldr\diff\summary
-        outputDir().setDefault("./"),
-        restrictLocales(),
-      };
+    UOption[] options =
+        {
+            UOption.HELP_H(), UOption.HELP_QUESTION_MARK(),
+            UOption.SOURCEDIR().setDefault(CldrUtility.MAIN_DIRECTORY), // C:\cvsdata/unicode\cldr\diff\summary
+            outputDir().setDefault("./"), restrictLocales(),};
     UOption.parseArgs(args, options);
     String sourceDir = options[2].value; // SOURCEDIR
     String targetDir = options[3].value; // outputDir
@@ -72,17 +68,17 @@ public class GenerateGwtCldrData {
     Factory cldrFactory = Factory.make(sourceDir, ".*");
     Set<String> locales = cldrFactory.getAvailable();
     if (DEBUG) {
-      locales = new HashSet<String>(Arrays.asList(new String[] {
-          "root", "en", "zh", "zh_Hans", "zh_Hant", "zh_CN", "zh_TW"}));
+      locales =
+          new HashSet<String>(Arrays.asList(new String[] {
+              "root", "en", "zh", "zh_Hans", "zh_Hant", "zh_CN", "zh_TW"}));
     }
     System.out.println("Processing " + locales.size() + " locales");
     File outputDir = new File(targetDir);
     LocaleData localeData = new LocaleData(factory, locales);
     for (Class<? extends Processor> processorClass : PROCESSORS) {
-      Constructor<? extends Processor> ctor = processorClass.getConstructor(
-          File.class, Factory.class, LocaleData.class);
-      Processor processor = ctor.newInstance(outputDir, cldrFactory,
-          localeData);
+      Constructor<? extends Processor> ctor =
+          processorClass.getConstructor(File.class, Factory.class, LocaleData.class);
+      Processor processor = ctor.newInstance(outputDir, cldrFactory, localeData);
       processor.run();
     }
     System.out.println("Finished.");

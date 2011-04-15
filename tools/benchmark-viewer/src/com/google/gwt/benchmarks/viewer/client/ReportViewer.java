@@ -53,8 +53,8 @@ import java.util.Map;
  * running within a servlet container.
  * 
  * <code>ReportViewer's</code> GWT XML module is configured to start these
- * servlets by default. Just start <code>ReportViewer</code> in hosted mode,
- * and GWT will run them within its own embedded servlet engine. For example,
+ * servlets by default. Just start <code>ReportViewer</code> in hosted mode, and
+ * GWT will run them within its own embedded servlet engine. For example,
  * 
  * <pre>java -cp &lt;classpath&gt; com.google.gwt.dev.GWTShell -out
  * ReportViewerShell/www
@@ -89,8 +89,7 @@ public class ReportViewer implements EntryPoint, HistoryListener {
     }
   }
 
-  private static final String imageServer = GWT.getModuleBaseURL()
-      + "test_images/";
+  private static final String imageServer = GWT.getModuleBaseURL() + "test_images/";
 
   HTML detailsLabel;
 
@@ -137,8 +136,8 @@ public class ReportViewer implements EntryPoint, HistoryListener {
 
     reportServer.getReportSummaries(new AsyncCallback<List<ReportSummary>>() {
       public void onFailure(Throwable caught) {
-        String msg = "<p>" + caught.toString() + "</p>"
-            + "<p>Is your path to the reports correct?</p>";
+        String msg =
+            "<p>" + caught.toString() + "</p>" + "<p>Is your path to the reports correct?</p>";
         statusLabel.setHTML(msg);
       }
 
@@ -168,8 +167,7 @@ public class ReportViewer implements EntryPoint, HistoryListener {
       return;
     }
     if (currentSelectedRow != -1) {
-      summariesTable.getRowFormatter().removeStyleName(currentSelectedRow,
-          "viewer-SelectedRow");
+      summariesTable.getRowFormatter().removeStyleName(currentSelectedRow, "viewer-SelectedRow");
     }
     currentToken = token;
     currentSelectedRow = row;
@@ -197,8 +195,7 @@ public class ReportViewer implements EntryPoint, HistoryListener {
     tempReportTable.setWidget(0, 1, new Label("GWT Version"));
 
     if (report == null) {
-      tempReportTable.setWidget(1, 0,
-          new Label("No currently selected report."));
+      tempReportTable.setWidget(1, 0, new Label("No currently selected report."));
       tempReportTable.getFlexCellFormatter().setColSpan(1, 0, 3);
       return tempReportTable;
     }
@@ -224,8 +221,7 @@ public class ReportViewer implements EntryPoint, HistoryListener {
         categoryTable.setBorderWidth(0);
         categoryTable.setCellPadding(5);
         categoryTable.setText(0, 0, c.getName());
-        categoryTable.getFlexCellFormatter().setStyleName(0, 0,
-            "benchmark-category");
+        categoryTable.getFlexCellFormatter().setStyleName(0, 0, "benchmark-category");
 
         categoryTable.setWidget(0, 1, new Label("Description"));
         categoryTable.setWidget(1, 0, new Label(c.getName()));
@@ -259,12 +255,10 @@ public class ReportViewer implements EntryPoint, HistoryListener {
           codeHtml = "<i>(source not available)</i>";
         }
         benchmarkTable.setWidget(1, 0, new HTML(codeHtml));
-        benchmarkTable.getFlexCellFormatter().setStyleName(0, 0,
-            "benchmark-name");
+        benchmarkTable.getFlexCellFormatter().setStyleName(0, 0, "benchmark-name");
         // benchmarkTable.getFlexCellFormatter().setStyleName( 0, 1,
         // "benchmark-description" );
-        benchmarkTable.getFlexCellFormatter().setStyleName(1, 0,
-            "benchmark-code");
+        benchmarkTable.getFlexCellFormatter().setStyleName(1, 0, "benchmark-code");
 
         // TODO(tobyr) Provide detailed benchmark information.
         // Following bits of commented code are steps in that direction.
@@ -326,13 +320,11 @@ public class ReportViewer implements EntryPoint, HistoryListener {
 
           // Currently only support graphs for results of 2 variables or less
           if (numVariables <= 2) {
-            resultsTable.setWidget(0, k, new Image(getImageUrl(report.getId(),
-                c.getName(), benchmark.getClassName(), benchmark.getName(),
-                result.getAgent())));
+            resultsTable.setWidget(0, k, new Image(getImageUrl(report.getId(), c.getName(),
+                benchmark.getClassName(), benchmark.getName(), result.getAgent())));
           } else {
             if (k == 0) {
-              resultsTable.setHTML(0, k, "<b>"
-                  + BrowserInfo.getBrowser(result.getAgent())
+              resultsTable.setHTML(0, k, "<b>" + BrowserInfo.getBrowser(result.getAgent())
                   + "</b><br><font size=\"-1\">(Graphs are not yet available "
                   + "for benchmarks with more than two parameters)</font>");
             }
@@ -349,8 +341,8 @@ public class ReportViewer implements EntryPoint, HistoryListener {
            * HasVerticalAlignment.ALIGN_TOP);
            */
 
-          resultsFormatter.setAlignment(2, k,
-              HasHorizontalAlignment.ALIGN_LEFT, HasVerticalAlignment.ALIGN_TOP);
+          resultsFormatter.setAlignment(2, k, HasHorizontalAlignment.ALIGN_LEFT,
+              HasVerticalAlignment.ALIGN_TOP);
 
           // A table of straight data for all trials for an agent
           FlexTable trialsTable = new FlexTable();
@@ -362,8 +354,7 @@ public class ReportViewer implements EntryPoint, HistoryListener {
           if (k == 0) {
             resultsTable.setWidget(1, k, visibilityButton);
             resultsFormatter.setColSpan(1, k, benchmark.getResults().size());
-            resultsFormatter.setAlignment(1, k,
-                HasHorizontalAlignment.ALIGN_LEFT,
+            resultsFormatter.setAlignment(1, k, HasHorizontalAlignment.ALIGN_LEFT,
                 HasVerticalAlignment.ALIGN_MIDDLE);
           }
 
@@ -424,11 +415,9 @@ public class ReportViewer implements EntryPoint, HistoryListener {
     for (int i = 0; i < summaries.size(); ++i) {
       ReportSummary summary = summaries.get(i);
       int index = i + 1;
-      tempSummariesTable.setWidget(index, 0, new Hyperlink(summary.getId(),
-          summary.getId()));
+      tempSummariesTable.setWidget(index, 0, new Hyperlink(summary.getId(), summary.getId()));
       tempSummariesTable.setWidget(index, 1, new Label(summary.getDateString()));
-      tempSummariesTable.setWidget(index, 2, new Label(
-          String.valueOf(summary.getNumTests())));
+      tempSummariesTable.setWidget(index, 2, new Label(String.valueOf(summary.getNumTests())));
     }
 
     tempSummariesTable.addTableListener(new SummariesTableListener());
@@ -472,10 +461,10 @@ public class ReportViewer implements EntryPoint, HistoryListener {
     });
   }
 
-  private String getImageUrl(String report, String category, String testClass,
-      String testMethod, String agent) {
-    return imageServer + encode(report) + "/" + encode(category) + "/"
-        + encode(testClass) + "/" + encode(testMethod) + "/" + encode(agent);
+  private String getImageUrl(String report, String category, String testClass, String testMethod,
+      String agent) {
+    return imageServer + encode(report) + "/" + encode(category) + "/" + encode(testClass) + "/"
+        + encode(testMethod) + "/" + encode(agent);
   }
 
   private void init() {

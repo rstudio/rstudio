@@ -99,8 +99,7 @@ public class ReportImageServer extends HttpServlet {
           || e.getClass().getName().endsWith(".EofException")) {
         // No big deal, the client browser terminated a download.
       } else {
-        logException("An error occured while trying to create the chart.", e,
-            response);
+        logException("An error occured while trying to create the chart.", e, response);
       }
       return;
     }
@@ -197,8 +196,9 @@ public class ReportImageServer extends HttpServlet {
       DefaultCategoryDataset data = new DefaultCategoryDataset();
       data.addValue(firstTrial.getRunTimeMillis(), "result", "result");
 
-      JFreeChart chart = ChartFactory.createBarChart(title, testName,
-          valueTitle, data, PlotOrientation.VERTICAL, false, false, false);
+      JFreeChart chart =
+          ChartFactory.createBarChart(title, testName, valueTitle, data, PlotOrientation.VERTICAL,
+              false, false, false);
       CategoryPlot p = chart.getCategoryPlot();
       ValueAxis axis = p.getRangeAxis();
       axis.setUpperBound(maxTime + maxTime * 0.1);
@@ -221,8 +221,9 @@ public class ReportImageServer extends HttpServlet {
 
       data.addSeries(series);
 
-      JFreeChart chart = ChartFactory.createXYLineChart(title, domainVariable,
-          valueTitle, data, PlotOrientation.VERTICAL, false, false, false);
+      JFreeChart chart =
+          ChartFactory.createXYLineChart(title, domainVariable, valueTitle, data,
+              PlotOrientation.VERTICAL, false, false, false);
       XYPlot plot = chart.getXYPlot();
       plot.getRangeAxis().setUpperBound(maxTime + maxTime * 0.1);
       double maxDomainValue = getMaxValue(comparativeResults, domainVariable);
@@ -249,8 +250,9 @@ public class ReportImageServer extends HttpServlet {
       }
       // TODO(tobyr) - Handle graphs above 2 variables
 
-      JFreeChart chart = ChartFactory.createXYLineChart(title, domainVariable,
-          valueTitle, data, PlotOrientation.VERTICAL, true, true, false);
+      JFreeChart chart =
+          ChartFactory.createXYLineChart(title, domainVariable, valueTitle, data,
+              PlotOrientation.VERTICAL, true, true, false);
       XYPlot plot = chart.getXYPlot();
       plot.getRangeAxis().setUpperBound(maxTime + maxTime * 0.1);
       double maxDomainValue = getMaxValue(comparativeResults, domainVariable);
@@ -268,8 +270,8 @@ public class ReportImageServer extends HttpServlet {
     // Code for creating a category data set - probably better with a bar chart
     // instead of line chart
     /*
-     * DefaultCategoryDataset data = new DefaultCategoryDataset(); String series =
-     * domainVariable;
+     * DefaultCategoryDataset data = new DefaultCategoryDataset(); String series
+     * = domainVariable;
      * 
      * for ( Iterator it = trials.iterator(); it.hasNext(); ) { Trial trial =
      * (Trial) it.next(); double time = trial.getRunTimeMillis(); String
@@ -312,8 +314,7 @@ public class ReportImageServer extends HttpServlet {
     return null;
   }
 
-  private Category getCategoryByName(List<Category> categories,
-      String categoryName) {
+  private Category getCategoryByName(List<Category> categories, String categoryName) {
     for (Category category : categories) {
       if (category.getName().equals(categoryName)) {
         return category;
@@ -337,10 +338,10 @@ public class ReportImageServer extends HttpServlet {
 
     Shape square = new Rectangle2D.Double(-offset, -offset, size, size);
     Shape circle = new Ellipse2D.Double(-offset, -offset, size, size);
-    Shape triangle = new Polygon(new int[] {0, iOffset, -iOffset}, new int[] {
-        -iOffset, iOffset, iOffset}, 3);
-    Shape diamond = new Polygon(new int[] {0, iOffset, 0, -iOffset}, new int[] {
-        -iOffset, 0, iOffset, 0}, 4);
+    Shape triangle =
+        new Polygon(new int[] {0, iOffset, -iOffset}, new int[] {-iOffset, iOffset, iOffset}, 3);
+    Shape diamond =
+        new Polygon(new int[] {0, iOffset, 0, -iOffset}, new int[] {-iOffset, 0, iOffset, 0}, 4);
     Shape ellipse = new Ellipse2D.Double(-offset, -offset / 2, size, size / 2);
 
     return new DefaultDrawingSupplier(colors,
@@ -377,8 +378,8 @@ public class ReportImageServer extends HttpServlet {
     return null;
   }
 
-  private void handleRequest(HttpServletRequest request,
-      HttpServletResponse response) throws IOException {
+  private void handleRequest(HttpServletRequest request, HttpServletResponse response)
+      throws IOException {
 
     String uri = request.getRequestURI();
     String requestString = uri.split("test_images/")[1];
@@ -410,8 +411,7 @@ public class ReportImageServer extends HttpServlet {
     Plot plot = chart.getPlot();
 
     plot.setDrawingSupplier(getDrawingSupplier());
-    plot.setBackgroundPaint(new GradientPaint(0, 0, Color.white, 640, 480,
-        new Color(200, 200, 200)));
+    plot.setBackgroundPaint(new GradientPaint(0, 0, Color.white, 640, 480, new Color(200, 200, 200)));
 
     if (plot instanceof XYPlot) {
       XYPlot xyplot = (XYPlot) plot;
@@ -429,8 +429,8 @@ public class ReportImageServer extends HttpServlet {
 
     // Try to fit all the graphs into a 1024 window, with a min of 240 and a max
     // of 480
-    final int graphWidth = Math.max(240, Math.min(480,
-        (1024 - 10 * results.size()) / results.size()));
+    final int graphWidth =
+        Math.max(240, Math.min(480, (1024 - 10 * results.size()) / results.size()));
     BufferedImage img = chart.createBufferedImage(graphWidth, 240);
     byte[] image = EncoderUtil.encode(img, ImageFormat.PNG);
 
@@ -444,8 +444,7 @@ public class ReportImageServer extends HttpServlet {
     output.write(image);
   }
 
-  private void logException(String msg, Exception e,
-      HttpServletResponse response) {
+  private void logException(String msg, Exception e, HttpServletResponse response) {
     ServletContext servletContext = getServletContext();
     servletContext.log(msg, e);
     response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);

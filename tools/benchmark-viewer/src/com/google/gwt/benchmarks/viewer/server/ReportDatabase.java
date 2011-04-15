@@ -171,8 +171,7 @@ public class ReportDatabase {
     }
 
     synchronized (reportsLock) {
-      List<ReportSummary> summaries = new ArrayList<ReportSummary>(
-          reports.size());
+      List<ReportSummary> summaries = new ArrayList<ReportSummary>(reports.size());
       for (ReportEntry entry : reports.values()) {
         summaries.add(entry.summary);
       }

@@ -51,21 +51,17 @@ import java.util.regex.Pattern;
 public class DateTimeFormatCreator {
 
   private static class DtfiGenerator {
-    
-    private static void buildPatterns(GwtLocale locale,
-        TreeMap<Key, String[]> properties) {
+
+    private static void buildPatterns(GwtLocale locale, TreeMap<Key, String[]> properties) {
       ULocale ulocale = new ULocale(ULocale.canonicalize(locale.getAsString()));
-      DateTimePatternGenerator dtpg = DateTimePatternGenerator.getInstance(
-          ulocale);
+      DateTimePatternGenerator dtpg = DateTimePatternGenerator.getInstance(ulocale);
       for (Map.Entry<String, String> entry : patterns.entrySet()) {
-        properties.put(new Key(locale, "format" + entry.getKey()), new String[] {
-              dtpg.getBestPattern(entry.getValue())
-            });
+        properties.put(new Key(locale, "format" + entry.getKey()), new String[] {dtpg
+            .getBestPattern(entry.getValue())});
       }
     }
 
-    private static GwtLocale findEarliestAncestor(GwtLocale locale,
-        Set<GwtLocale> set) {
+    private static GwtLocale findEarliestAncestor(GwtLocale locale, Set<GwtLocale> set) {
       if (set == null) {
         return null;
       }
@@ -76,7 +72,7 @@ public class DateTimeFormatCreator {
       }
       return null;
     }
- 
+
     private static String quote(String value) {
       return value.replaceAll("\"", "\\\\\"");
     }
@@ -107,6 +103,7 @@ public class DateTimeFormatCreator {
     private File propDir;
 
     private File src;
+
     public DtfiGenerator(File src) {
       this.src = src;
       String packageName = DateTimeConstantsImpl.class.getPackage().getName();
@@ -117,10 +114,8 @@ public class DateTimeFormatCreator {
       }
     }
 
-    public void generate() throws FileNotFoundException,
-        IOException {
-      final Pattern dtcProps = Pattern.compile(
-          "DateTimeConstantsImpl(.*)\\.properties");
+    public void generate() throws FileNotFoundException, IOException {
+      final Pattern dtcProps = Pattern.compile("DateTimeConstantsImpl(.*)\\.properties");
       String[] propFiles = propDir.list(new FilenameFilter() {
         public boolean accept(File dir, String name) {
           return dtcProps.matcher(name).matches();
@@ -133,8 +128,8 @@ public class DateTimeFormatCreator {
       generateSources(properties, parents);
     }
 
-    private void addLocaleParent(Map<GwtLocale, Set<GwtLocale>> parents,
-        GwtLocale keyLocale, GwtLocale parentLocale) {
+    private void addLocaleParent(Map<GwtLocale, Set<GwtLocale>> parents, GwtLocale keyLocale,
+        GwtLocale parentLocale) {
       Set<GwtLocale> parentSet = parents.get(keyLocale);
       if (parentSet == null) {
         parentSet = new HashSet<GwtLocale>();
@@ -144,12 +139,10 @@ public class DateTimeFormatCreator {
     }
 
     @SuppressWarnings("unchecked")
-    private void collectPropertyData(String[] propFiles,
-        TreeMap<Key, String[]> properties, GwtLocaleFactory factory)
-        throws FileNotFoundException, IOException {
+    private void collectPropertyData(String[] propFiles, TreeMap<Key, String[]> properties,
+        GwtLocaleFactory factory) throws FileNotFoundException, IOException {
       for (String propFile : propFiles) {
-        if (!propFile.startsWith("DateTimeConstantsImpl")
-            || !propFile.endsWith(".properties")) {
+        if (!propFile.startsWith("DateTimeConstantsImpl") || !propFile.endsWith(".properties")) {
           continue;
         }
         int len = propFile.length();
@@ -167,8 +160,7 @@ public class DateTimeFormatCreator {
           Map<String, String> map = props.getPropertyMap();
           for (Map.Entry<String, String> entry : map.entrySet()) {
             String[] value = split(entry.getValue());
-            if ("dateFormats".equals(entry.getKey())
-                || "timeFormats".equals(entry.getKey())
+            if ("dateFormats".equals(entry.getKey()) || "timeFormats".equals(entry.getKey())
                 || "weekendRange".equals(entry.getKey())) {
               // split these out into separate fields
               for (int i = 0; i < value.length; ++i) {
@@ -189,8 +181,8 @@ public class DateTimeFormatCreator {
       }
     }
 
-    private PrintWriter createClassSource(String packageName,
-        String className) throws FileNotFoundException {
+    private PrintWriter createClassSource(String packageName, String className)
+        throws FileNotFoundException {
       String path = packageName.replace('.', '/') + "/" + className + ".java";
       File f = new File(src, path);
       FileOutputStream ostr = new FileOutputStream(f);
@@ -203,7 +195,7 @@ public class DateTimeFormatCreator {
       out.println(" * the License at");
       out.println(" * ");
       out.println(" * http://www.apache.org/licenses/LICENSE-2.0");
-      out.println(" *"); 
+      out.println(" *");
       out.println(" * Unless required by applicable law or agreed to in writing, software");
       out.println(" * distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT");
       out.println(" * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the");
@@ -217,8 +209,7 @@ public class DateTimeFormatCreator {
       return out;
     }
 
-    private void generateAlias(GwtLocale locale, GwtLocale parent)
-         throws IOException {
+    private void generateAlias(GwtLocale locale, GwtLocale parent) throws IOException {
       System.out.println("Generating alias " + locale);
       String suffix;
       if (parent.isDefault()) {
@@ -232,22 +223,20 @@ public class DateTimeFormatCreator {
       try {
         out = createClassSource(packageName, className);
         out.println("/**");
-        out.println(" * Locale \"" + locale + "\" is an alias for \"" + parent
-            + "\".");
+        out.println(" * Locale \"" + locale + "\" is an alias for \"" + parent + "\".");
         out.println(" */");
-        out.println("public class " + className
-            + " extends DateTimeFormatInfoImpl" + suffix + " {");
+        out.println("public class " + className + " extends DateTimeFormatInfoImpl" + suffix + " {");
         out.println("}");
       } finally {
         if (out != null) {
           out.close();
         }
       }
-      
+
     }
 
-    private void generateLocale(GwtLocale locale, GwtLocale parent,
-        Map<String, String[]> values) throws IOException {
+    private void generateLocale(GwtLocale locale, GwtLocale parent, Map<String, String[]> values)
+        throws IOException {
       System.out.println("Generating locale " + locale);
       boolean addOverrides = true;
       PrintWriter out = null;
@@ -277,11 +266,10 @@ public class DateTimeFormatCreator {
           String className = "DateTimeFormatInfoImpl_" + locale.getAsString();
           out = createClassSource(packageName, className);
           out.println("/**");
-          out.println(" * Implementation of DateTimeFormatInfo for locale \""
-              + locale + "\".");
+          out.println(" * Implementation of DateTimeFormatInfo for locale \"" + locale + "\".");
           out.println(" */");
-          out.println("public class " + className
-              + " extends DateTimeFormatInfoImpl" + suffix + " {");
+          out.println("public class " + className + " extends DateTimeFormatInfoImpl" + suffix
+              + " {");
         }
         Set<String> keySet = values.keySet();
         String[] keys = keySet.toArray(new String[keySet.size()]);
@@ -320,8 +308,7 @@ public class DateTimeFormatCreator {
           if (addOverrides) {
             out.println("  @Override");
           }
-          out.println("  public " + type.getSimpleName() + " " + name
-              + "() {");
+          out.println("  public " + type.getSimpleName() + " " + name + "() {");
           out.print("    return ");
           if (relayMethod != null) {
             out.println(relayMethod + "();");
@@ -391,43 +378,41 @@ public class DateTimeFormatCreator {
       }
     }
 
-   private void generateSources(TreeMap<Key, String[]> properties,
-      Map<GwtLocale, Set<GwtLocale>> parents) throws IOException {
-    Set<GwtLocale> locales = new HashSet<GwtLocale>();
-    // process sorted locales/keys, generating each locale on change
-    GwtLocale lastLocale = null;
-    Map<String, String[]> thisLocale = new HashMap<String, String[]>();
-    for (Entry<Key, String[]> entry : properties.entrySet()) {
-      if (lastLocale != null && lastLocale != entry.getKey().locale) {
-        GwtLocale parent = findEarliestAncestor(lastLocale,
-            parents.get(lastLocale));
+    private void generateSources(TreeMap<Key, String[]> properties,
+        Map<GwtLocale, Set<GwtLocale>> parents) throws IOException {
+      Set<GwtLocale> locales = new HashSet<GwtLocale>();
+      // process sorted locales/keys, generating each locale on change
+      GwtLocale lastLocale = null;
+      Map<String, String[]> thisLocale = new HashMap<String, String[]>();
+      for (Entry<Key, String[]> entry : properties.entrySet()) {
+        if (lastLocale != null && lastLocale != entry.getKey().locale) {
+          GwtLocale parent = findEarliestAncestor(lastLocale, parents.get(lastLocale));
+          generateLocale(lastLocale, parent, thisLocale);
+          thisLocale.clear();
+          lastLocale = null;
+        }
+        if (lastLocale == null) {
+          lastLocale = entry.getKey().locale;
+          locales.add(lastLocale);
+        }
+        thisLocale.put(entry.getKey().key, entry.getValue());
+      }
+      if (lastLocale != null) {
+        GwtLocale parent = findEarliestAncestor(lastLocale, parents.get(lastLocale));
         generateLocale(lastLocale, parent, thisLocale);
-        thisLocale.clear();
-        lastLocale = null;
       }
-      if (lastLocale == null) {
-        lastLocale = entry.getKey().locale;
-        locales.add(lastLocale);
-      }
-      thisLocale.put(entry.getKey().key, entry.getValue());
-    }
-    if (lastLocale != null) {
-      GwtLocale parent = findEarliestAncestor(lastLocale,
-          parents.get(lastLocale));
-      generateLocale(lastLocale, parent, thisLocale);
-    }
-    Set<GwtLocale> seen = new HashSet<GwtLocale>(locales);
-    for (GwtLocale locale : locales) {
-      for (GwtLocale alias : locale.getAliases()) {
-        if (!seen.contains(alias)) {
-          seen.add(alias);
-//          generateAlias(alias, locale);
+      Set<GwtLocale> seen = new HashSet<GwtLocale>(locales);
+      for (GwtLocale locale : locales) {
+        for (GwtLocale alias : locale.getAliases()) {
+          if (!seen.contains(alias)) {
+            seen.add(alias);
+            // generateAlias(alias, locale);
+          }
         }
       }
     }
-  }
 
- /**
+    /**
      * Check if a given entry within a locale is inherited from a parent.
      * 
      * @param properties
@@ -435,7 +420,7 @@ public class DateTimeFormatCreator {
      * @param key
      * @param value
      * @return true if the value is the same as the first parent defining that
-     *     value
+     *         value
      */
     private boolean isInherited(TreeMap<Key, String[]> properties,
         Map<GwtLocale, Set<GwtLocale>> parents, Key key, String[] value) {
@@ -465,16 +450,14 @@ public class DateTimeFormatCreator {
      * @param properties
      * @return inheritance map
      */
-    private Map<GwtLocale, Set<GwtLocale>> removeInheritedValues(
-        TreeMap<Key, String[]> properties) {
+    private Map<GwtLocale, Set<GwtLocale>> removeInheritedValues(TreeMap<Key, String[]> properties) {
       // remove entries identical to a parent locale
       Map<GwtLocale, Set<GwtLocale>> parents = new HashMap<GwtLocale, Set<GwtLocale>>();
       Set<Entry<Key, String[]>> entrySet = properties.entrySet();
       Iterator<Entry<Key, String[]>> it = entrySet.iterator();
       while (it.hasNext()) {
         Entry<Key, String[]> entry = it.next();
-        if (isInherited(properties, parents, entry.getKey(),
-            entry.getValue())) {
+        if (isInherited(properties, parents, entry.getKey(), entry.getValue())) {
           it.remove();
         }
       }
@@ -544,56 +527,41 @@ public class DateTimeFormatCreator {
 
   static {
     fieldMap.put("ampms", new FieldMapping("ampms", String[].class));
-    fieldMap.put("dateFormats0", new FieldMapping("dateFormatFull",
-        String.class));
-    fieldMap.put("dateFormats1", new FieldMapping("dateFormatLong",
-        String.class));
-    fieldMap.put("dateFormats2", new FieldMapping("dateFormatMedium",
-        String.class));
-    fieldMap.put("dateFormats3", new FieldMapping("dateFormatShort",
-        String.class));
-    fieldMap.put("timeFormats0", new FieldMapping("timeFormatFull",
-        String.class));
-    fieldMap.put("timeFormats1", new FieldMapping("timeFormatLong",
-        String.class));
-    fieldMap.put("timeFormats2", new FieldMapping("timeFormatMedium",
-        String.class));
-    fieldMap.put("timeFormats3", new FieldMapping("timeFormatShort",
-        String.class));
+    fieldMap.put("dateFormats0", new FieldMapping("dateFormatFull", String.class));
+    fieldMap.put("dateFormats1", new FieldMapping("dateFormatLong", String.class));
+    fieldMap.put("dateFormats2", new FieldMapping("dateFormatMedium", String.class));
+    fieldMap.put("dateFormats3", new FieldMapping("dateFormatShort", String.class));
+    fieldMap.put("timeFormats0", new FieldMapping("timeFormatFull", String.class));
+    fieldMap.put("timeFormats1", new FieldMapping("timeFormatLong", String.class));
+    fieldMap.put("timeFormats2", new FieldMapping("timeFormatMedium", String.class));
+    fieldMap.put("timeFormats3", new FieldMapping("timeFormatShort", String.class));
     fieldMap.put("eraNames", new FieldMapping("erasFull", String[].class));
     fieldMap.put("eras", new FieldMapping("erasShort", String[].class));
     fieldMap.put("quarters", new FieldMapping("quartersFull", String[].class));
-    fieldMap.put("shortQuarters", new FieldMapping("quartersShort",
-        String[].class));
-    fieldMap.put("firstDayOfTheWeek", new FieldMapping("firstDayOfTheWeek",
-        Integer.class));
+    fieldMap.put("shortQuarters", new FieldMapping("quartersShort", String[].class));
+    fieldMap.put("firstDayOfTheWeek", new FieldMapping("firstDayOfTheWeek", Integer.class));
     fieldMap.put("months", new FieldMapping("monthsFull", String[].class));
-    fieldMap.put("standaloneMonths", new FieldMapping("monthsFullStandalone",
-        String[].class, "months"));
-    fieldMap.put("narrowMonths", new FieldMapping("monthsNarrow",
-        String[].class));
-    fieldMap.put("standaloneNarrowMonths", new FieldMapping(
-        "monthsNarrowStandalone", String[].class, "narrowMonths"));
-    fieldMap.put("shortMonths", new FieldMapping("monthsShort",
-        String[].class));
-    fieldMap.put("standaloneShortMonths", new FieldMapping(
-        "monthsShortStandalone", String[].class, "shortMonths"));
+    fieldMap.put("standaloneMonths", new FieldMapping("monthsFullStandalone", String[].class,
+        "months"));
+    fieldMap.put("narrowMonths", new FieldMapping("monthsNarrow", String[].class));
+    fieldMap.put("standaloneNarrowMonths", new FieldMapping("monthsNarrowStandalone",
+        String[].class, "narrowMonths"));
+    fieldMap.put("shortMonths", new FieldMapping("monthsShort", String[].class));
+    fieldMap.put("standaloneShortMonths", new FieldMapping("monthsShortStandalone", String[].class,
+        "shortMonths"));
     fieldMap.put("weekendRange0", new FieldMapping("weekendStart", int.class));
     fieldMap.put("weekendRange1", new FieldMapping("weekendEnd", int.class));
-    fieldMap.put("firstDayOfTheWeek", new FieldMapping("firstDayOfTheWeek",
-        int.class));
+    fieldMap.put("firstDayOfTheWeek", new FieldMapping("firstDayOfTheWeek", int.class));
     fieldMap.put("weekdays", new FieldMapping("weekdaysFull", String[].class));
-    fieldMap.put("standaloneWeekdays", new FieldMapping(
-        "weekdaysFullStandalone", String[].class, "weekdays"));
-    fieldMap.put("shortWeekdays", new FieldMapping("weekdaysShort",
-        String[].class));
-    fieldMap.put("standaloneShortWeekdays", new FieldMapping(
-        "weekdaysShortStandalone", String[].class, "shortWeekdays"));
-    fieldMap.put("narrowWeekdays", new FieldMapping("weekdaysNarrow",
-        String[].class));
-    fieldMap.put("standaloneNarrowWeekdays", new FieldMapping(
-        "weekdaysNarrowStandalone", String[].class, "narrowWeekdays"));
-    
+    fieldMap.put("standaloneWeekdays", new FieldMapping("weekdaysFullStandalone", String[].class,
+        "weekdays"));
+    fieldMap.put("shortWeekdays", new FieldMapping("weekdaysShort", String[].class));
+    fieldMap.put("standaloneShortWeekdays", new FieldMapping("weekdaysShortStandalone",
+        String[].class, "shortWeekdays"));
+    fieldMap.put("narrowWeekdays", new FieldMapping("weekdaysNarrow", String[].class));
+    fieldMap.put("standaloneNarrowWeekdays", new FieldMapping("weekdaysNarrowStandalone",
+        String[].class, "narrowWeekdays"));
+
     // patterns to use with DateTimePatternGenerator
     patterns.put("Day", "d");
     patterns.put("Hour12Minute", "hmm");
@@ -625,8 +593,7 @@ public class DateTimeFormatCreator {
    */
   public static void main(String[] args) throws IOException {
     if (args.length != 1) {
-      System.err.println("Usage: "
-          + DateTimeFormatCreator.class.getSimpleName() + " gwt-root-dir");
+      System.err.println("Usage: " + DateTimeFormatCreator.class.getSimpleName() + " gwt-root-dir");
       return;
     }
     File gwt = new File(args[0]);

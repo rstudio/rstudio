@@ -25,8 +25,7 @@ import java.util.List;
 /**
  * Implements the ReportServer RPC interface.
  */
-public class ReportServerImpl extends RemoteServiceServlet implements
-    ReportServer {
+public class ReportServerImpl extends RemoteServiceServlet implements ReportServer {
 
   public Report getReport(String reportId) {
     return ReportDatabase.getInstance().getReport(reportId);
