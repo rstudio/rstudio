@@ -46,10 +46,6 @@ define("mode/r_highlight_rules", function(require, exports, module)
                regex : "#.*$"
             },
             {
-               token : "string.regexp",
-               regex : "[/](?:(?:\\[(?:\\\\]|[^\\]])+\\])|(?:\\\\/|[^\\]/]))*[/]\\w*\\s*(?=[).,;]|$)"
-            },
-            {
                token : "string", // single line
                regex : '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
             },
