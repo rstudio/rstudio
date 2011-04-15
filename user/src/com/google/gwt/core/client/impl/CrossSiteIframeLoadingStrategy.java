@@ -16,7 +16,6 @@
 
 package com.google.gwt.core.client.impl;
 
-import com.google.gwt.core.client.CodeDownloadException;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadTerminatedHandler;
@@ -25,14 +24,6 @@ import com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadingStrategy;
 /**
  * Load runAsync code using a script tag. Intended for use with the
  * {@link com.google.gwt.core.linker.CrossSiteIframeLinker}.
- *
- * <p>
- * The linker wraps its selection script code with a function refered to by
- * <code>__gwtModuleFunction</code>. On that function is a property
- * <code>installCode</code> that can be invoked to eval more code in a scope
- * nested somewhere within that function. The loaded script for fragment 123 is
- * expected to invoke <code>__gwtModuleFunction.runAsyncCallback123</code>
- * as the final thing it does.
  */
 public class CrossSiteIframeLoadingStrategy implements LoadingStrategy {
   /**
@@ -58,10 +49,6 @@ public class CrossSiteIframeLoadingStrategy implements LoadingStrategy {
     }-*/;
   }
 
-  private static final RuntimeException LoadTerminated =
-      new CodeDownloadException("Code download terminated",
-                                CodeDownloadException.Reason.TERMINATED);
-
   /**
    * Clear callbacks on script objects. This is important on IE 6 and 7 to
    * prevent a memory leak. If the callbacks aren't cleared, there is a cyclical
@@ -71,13 +58,6 @@ public class CrossSiteIframeLoadingStrategy implements LoadingStrategy {
   private static native void clearCallbacks(JavaScriptObject script) /*-{
     var nop = new Function('');
     script.onerror = script.onload = script.onreadystatechange = nop;
-  }-*/;
-
-  /**
-   * Clear the success callback for fragment <code>fragment</code>.
-   */
-  private static native void clearOnSuccess(int fragment) /*-{
-    delete __gwtModuleFunction['runAsyncCallback'+fragment];
   }-*/;
 
   private static native JavaScriptObject createScriptTag(String url) /*-{
@@ -97,33 +77,43 @@ public class CrossSiteIframeLoadingStrategy implements LoadingStrategy {
       LoadTerminatedHandler loadFinishedHandler) /*-{
      return function(exception) {
        if (tag.parentNode == null) {
-         // onSuccess or onFailure must have already been called.
+         // This function must have already been called.
          return;
        }
        var head = document.getElementsByTagName('head').item(0);
-       @com.google.gwt.core.client.impl.CrossSiteIframeLoadingStrategy::clearOnSuccess(*)(fragment);
        @com.google.gwt.core.client.impl.CrossSiteIframeLoadingStrategy::clearCallbacks(*)(tag);
        head.removeChild(tag);
+       // It seems unintuitive to call the error function every time, but
+       // it appears that AsyncFragmentLoader::fragmentHasLoaded (which is
+       // called by each fragment) will set the fragmentLoading variable to
+       // -1 when the code in this fragment executes, so this
+       // loadTerminated call will fail the (fragmentLoading == fragment) check
+       // and will immediately exit, so no errors are actually fired.
        function callLoadTerminated() {
          loadFinishedHandler.@com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadTerminatedHandler::loadTerminated(*)(exception);
        }
        $entry(callLoadTerminated)();
      }
    }-*/;
-
+  
   private static native void setOnTerminated(JavaScriptObject script,
       JavaScriptObject callback) /*-{
-    var exception = @com.google.gwt.core.client.impl.CrossSiteIframeLoadingStrategy::LoadTerminated;
     script.onerror = function() {
-      callback(exception);
+      var error = "Code download terminated, onerror called. Script src = " + script.src;
+      callback(@com.google.gwt.core.client.CodeDownloadException::new(Ljava/lang/String;)(error));
     }
     script.onload = function() {
-      callback(exception);
+      var error = "Code download terminated, onload called. Script src = " + script.src;
+      callback(@com.google.gwt.core.client.CodeDownloadException::new(Ljava/lang/String;)(error));
     }
     script.onreadystatechange = function () {
-      if (script.readyState == 'loaded' || script.readyState == 'complete') {
-        script.onreadystatechange = function () { }
-        callback(exception);
+      if (script.readyState == 'loaded') {
+        var error = "Code download terminated, readystate is loaded. Script src = " + script.src;
+        callback(@com.google.gwt.core.client.CodeDownloadException::new(Ljava/lang/String;)(error));
+      }
+      if (script.readyState == 'complete') {
+        var error = "Code download terminated, readystate is complete. Script src = " + script.src;
+        callback(@com.google.gwt.core.client.CodeDownloadException::new(Ljava/lang/String;)(error));
       }
     }
   }-*/;

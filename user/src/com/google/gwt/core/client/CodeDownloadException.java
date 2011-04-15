@@ -30,16 +30,21 @@ public final class CodeDownloadException extends RuntimeException {
     /**
      * Generic code for terminating the download.
      */
-    TERMINATED
+    TERMINATED,
   }
 
   private final Reason reason;
 
+  public CodeDownloadException(String message) {
+    super(message);
+    this.reason = Reason.TERMINATED;
+  }
+  
   public CodeDownloadException(String message, Reason reason) {
     super(message);
     this.reason = reason;
   }
-
+  
   public Reason getReason() {
     return reason;
   }
