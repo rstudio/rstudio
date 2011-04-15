@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,134 +18,19 @@ package com.google.gwt.media.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.VideoElement;
-import com.google.gwt.event.dom.client.CanPlayThroughEvent;
-import com.google.gwt.event.dom.client.CanPlayThroughHandler;
-import com.google.gwt.event.dom.client.EndedEvent;
-import com.google.gwt.event.dom.client.EndedHandler;
-import com.google.gwt.event.dom.client.HasAllMediaHandlers;
-import com.google.gwt.event.dom.client.ProgressEvent;
-import com.google.gwt.event.dom.client.ProgressHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.ui.FocusWidget;
 
 /**
  * <p>
  * A widget representing a &lt;video&gt; element.
- * 
+ *
  * <p>
  * <span style="color:red">Experimental API: This API is still under development
- * and is subject to change.
- * </span>
+ * and is subject to change. </span>
  * </p>
- * 
+ *
  * This widget may not be supported on all browsers.
  */
-public class Video extends FocusWidget implements HasAllMediaHandlers {
-  private static VideoElementSupportDetector detector;
-
-  /**
-   * Return a new {@link Video} if supported,  and null otherwise.
-   * 
-   * @return a new {@link Video} if supported, and null otherwise
-   */
-  public static Video createIfSupported() {
-    if (detector == null) {
-      detector = GWT.create(VideoElementSupportDetector.class);
-    }
-    if (!detector.isSupportedCompileTime()) {
-      return null;
-    }
-    VideoElement element = Document.get().createVideoElement();
-    if (!detector.isSupportedRunTime(element)) {
-      return null;
-    }
-    return new Video(element);
-  }
-
-  /**
-   * Runtime check for whether the video element is supported in this browser.
-   * 
-   * @return whether the video element is supported
-   */
-  public static boolean isSupported() {
-    if (detector == null) {
-      detector = GWT.create(VideoElementSupportDetector.class);
-    }
-    if (!detector.isSupportedCompileTime()) {
-      return false;
-    }
-    VideoElement element = Document.get().createVideoElement();
-    if (!detector.isSupportedRunTime(element)) {
-      return false;
-    }
-    return true;
-  }
-
-  /**
-   * Protected constructor. Use {@link #createIfSupported()} to create a Video.
-   */
-  private Video(VideoElement element) {
-    setElement(element);
-  }
-
-  /**
-   * Creates a Video widget with a given source URL.
-   * 
-   * @param src a String URL
-   */
-  public Video(String src) {
-    setElement(Document.get().createVideoElement());
-    getVideoElement().setSrc(src);
-  }
-
-  public HandlerRegistration addCanPlayThroughHandler(CanPlayThroughHandler handler) {
-    return addDomHandler(handler, CanPlayThroughEvent.getType());
-  }
-
-  public HandlerRegistration addEndedHandler(EndedHandler handler) {
-    return addDomHandler(handler, EndedEvent.getType());
-  }
-
-  public HandlerRegistration addProgressHandler(ProgressHandler handler) {
-    return addDomHandler(handler, ProgressEvent.getType());
-  }
-
-  /**
-   * Returns the attached VideoElement.
-   * 
-   * @return the VideoElement
-   */
-  public VideoElement getVideoElement() {
-    return this.getElement().cast();
-  }
-
-  /**
-   * Detector for browser support of {@link VideoElement}.
-   */
-  private static class VideoElementSupportDetector {
-    /**
-     * Using a run-time check, return true if the {@link VideoElement} is 
-     * supported.
-     * 
-     * @return true if supported, false otherwise.
-     */
-    static native boolean isSupportedRunTime(VideoElement element) /*-{
-      return !!element.play;
-    }-*/;
-
-    /**
-     * Using a compile-time check, return true if {@link VideoElement} might 
-     * be supported.
-     * 
-     * @return true if might be supported, false otherwise.
-     */
-    boolean isSupportedCompileTime() {
-      // will be true in VideoElementSupportDetectedMaybe
-      // will be false in VideoElementSupportDetectedNo
-      return false;
-    }
-  }
-
+public class Video extends MediaBase {
   /**
    * Detector for permutations that might support {@link VideoElement}.
    */
@@ -179,6 +64,144 @@ public class Video extends FocusWidget implements HasAllMediaHandlers {
     @Override
     boolean isSupportedCompileTime() {
       return false;
-    } 
+    }
+  }
+
+  /**
+   * Detector for browser support of {@link VideoElement}.
+   */
+  private static class VideoElementSupportDetector {
+    /**
+     * Using a run-time check, return true if the {@link VideoElement} is
+     * supported.
+     *
+     * @return true if supported, false otherwise.
+     */
+    static native boolean isSupportedRunTime(VideoElement element) /*-{
+      return !!element.play;
+    }-*/;
+
+    /**
+     * Using a compile-time check, return true if {@link VideoElement} might be
+     * supported.
+     *
+     * @return true if might be supported, false otherwise.
+     */
+    boolean isSupportedCompileTime() {
+      // will be true in VideoElementSupportDetectedMaybe
+      // will be false in VideoElementSupportDetectedNo
+      return false;
+    }
+  }
+
+  private static VideoElementSupportDetector detector;
+
+  /**
+   * Return a new {@link Video} if supported, and null otherwise.
+   *
+   * @return a new {@link Video} if supported, and null otherwise
+   */
+  public static Video createIfSupported() {
+    if (detector == null) {
+      detector = GWT.create(VideoElementSupportDetector.class);
+    }
+    if (!detector.isSupportedCompileTime()) {
+      return null;
+    }
+    VideoElement element = Document.get().createVideoElement();
+    if (!detector.isSupportedRunTime(element)) {
+      return null;
+    }
+    return new Video(element);
+  }
+
+  /**
+   * Runtime check for whether the video element is supported in this browser.
+   *
+   * @return whether the video element is supported
+   */
+  public static boolean isSupported() {
+    if (detector == null) {
+      detector = GWT.create(VideoElementSupportDetector.class);
+    }
+    if (!detector.isSupportedCompileTime()) {
+      return false;
+    }
+    VideoElement element = Document.get().createVideoElement();
+    if (!detector.isSupportedRunTime(element)) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Protected constructor. Use {@link #createIfSupported()} to create a Video.
+   */
+  protected Video(VideoElement element) {
+    super(element);
+  }
+
+  /**
+   * Creates a Video widget with a given source URL.
+   * 
+   * @param src a String URL.
+   * @deprecated use {@link #createIfSupported()}.
+   */
+  @Deprecated
+  public Video(String src) {
+    super(Document.get().createVideoElement());
+    getMediaElement().setSrc(src);
+  }
+
+  /**
+   * Returns a poster URL.
+   *
+   * @return a URL containing a poster image
+   *
+   * @see #setPoster(String)
+   */
+  public String getPoster() {
+    return getVideoElement().getPoster();
+  }
+
+  /**
+   * Returns the attached VideoElement.
+   *
+   * @return the VideoElement
+   */
+  public VideoElement getVideoElement() {
+    return getMediaElement().cast();
+  }
+
+  /**
+   * Gets the intrinsic height of video within the element.
+   *
+   * To get the element height, use {@link VideoElement#getOffsetHeight()}
+   *
+   * @return the height, in pixels
+   */
+  public int getVideoHeight() {
+    return getVideoElement().getVideoHeight();
+  }
+
+  /**
+   * Gets the instrinsic width of the video within the element.
+   *
+   * To get the element width, use {@link VideoElement#getOffsetWidth()}
+   *
+   * @return the width, in pixels
+   */
+  public int getVideoWidth() {
+    return getVideoElement().getVideoWidth();
+  }
+
+  /**
+   * Sets the poster URL.
+   *
+   * @param url the poster image URL
+   * @see #getPoster
+   */
+  public void setPoster(String url) {
+    getVideoElement().setPoster(url);
   }
 }

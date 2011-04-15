@@ -15,23 +15,22 @@
  */
 package com.google.gwt.media.client;
 
-import com.google.gwt.dom.client.AudioElement;
 import com.google.gwt.dom.client.MediaElement;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.user.client.ui.RootPanel;
 
 /**
- * Tests {@link AudioElement}.
+ * Tests {@link Audio}.
  *
- * Because HtmlUnit does not support HTML5, you will need to run these tests
+ *  Because HtmlUnit does not support HTML5, you will need to run these tests
  * manually in order to have them run. To do that, go to "run configurations" or
  * "debug configurations", select the test you would like to run, and put this
  * line in the VM args under the arguments tab: -Dgwt.args="-runStyle Manual:1"
  */
 @DoNotRunWith(Platform.HtmlUnitUnknown)
 public class AudioTest extends MediaTest {
-  Audio audio;
+  protected Audio audio;
 
   final static String audioUrlMp3 = "smallmp3.mp3";
   final static String audioFormatMp3 = "audio/mpeg";
@@ -39,46 +38,8 @@ public class AudioTest extends MediaTest {
   final static String audioFormatOgg = "audio/ogg";
 
   @Override
-  public MediaElement getElement() {
-    if (audio == null) {
-      return null;
-    }
-    return audio.getAudioElement();
-  }
-
-  @Override
-  public String getElementState() {
-    StringBuilder sb = new StringBuilder();
-    AudioElement e = audio.getAudioElement();
-    sb.append("AudioElement[");
-    sb.append("currentSrc=");
-    sb.append(e.getCurrentSrc());
-    sb.append(",currentTime=");
-    sb.append(e.getCurrentTime());
-    sb.append(",defaultPlaybackRate=");
-    sb.append(e.getDefaultPlaybackRate());
-    sb.append(",duration=");
-    sb.append(e.getDuration());
-    sb.append(",initialTime=");
-    sb.append(e.getInitialTime());
-    sb.append(",networkState=");
-    sb.append(e.getNetworkState());
-    sb.append(",playbackRate=");
-    sb.append(e.getPlaybackRate());
-    sb.append(",preload=");
-    sb.append(e.getPreload());
-    sb.append(",readyState=");
-    sb.append(e.getReadyState());
-    sb.append(",src=");
-    sb.append(e.getSrc());
-    sb.append(",startOffsetTime=");
-    sb.append(e.getStartOffsetTime());
-    sb.append(",seekable=");
-    sb.append(e.getSeekable());
-    sb.append(",volume=");
-    sb.append(e.getVolume());
-    sb.append("]");
-    return sb.toString();
+  public MediaBase getMedia() {
+    return audio;
   }
 
   @Override
@@ -89,21 +50,25 @@ public class AudioTest extends MediaTest {
   @Override
   protected void gwtSetUp() throws Exception {
     audio = Audio.createIfSupported();
-    
+
     if (audio == null) {
       return; // don't continue if not supported
     }
 
-    AudioElement element = audio.getAudioElement();
-    String canPlayMp3 = element.canPlayType(audioFormatMp3);
-    String canPlayOgg = element.canPlayType(audioFormatOgg);
-    if (!canPlayMp3.equalsIgnoreCase(MediaElement.CANNOT_PLAY)) {
-      element.setSrc(audioUrlMp3);
-    } else if (!canPlayOgg.equalsIgnoreCase(MediaElement.CANNOT_PLAY)) {
-      element.setSrc(audioUrlOgg);
+    String canPlayMp3 = audio.canPlayType(audioFormatMp3);
+    String canPlayOgg = audio.canPlayType(audioFormatOgg);
+    if (canPlayMp3.equals(MediaElement.CAN_PLAY_PROBABLY)) {
+      audio.setSrc(audioUrlMp3);
+    } else if (canPlayOgg.equals(MediaElement.CAN_PLAY_PROBABLY)) {
+      audio.setSrc(audioUrlOgg);
+    } else if (canPlayMp3.equals(MediaElement.CAN_PLAY_MAYBE)) {
+      audio.setSrc(audioUrlMp3);
+    } else if (canPlayOgg.equals(MediaElement.CAN_PLAY_MAYBE)) {
+      audio.setSrc(audioUrlOgg);
     } else {
       throw new Exception("Could not find suitable audio format");
     }
+
     RootPanel.get().add(audio);
   }
 
@@ -112,8 +77,11 @@ public class AudioTest extends MediaTest {
     if (audio == null) {
       return; // don't continue if not supported
     }
-    
-    audio.getAudioElement().pause();
+
+    // clean up
+    audio.pause();
+    audio.setSrc("");
+    audio.load();
     RootPanel.get().remove(audio);
   }
 }

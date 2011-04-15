@@ -250,14 +250,8 @@ class DOMImplMozilla extends DOMImplStandard {
    * @return true if using Gecko 1.9 (Firefox 3) or later
    */
   private native boolean isGecko19() /*-{
-    var result = /rv:([0-9]+)\.([0-9]+)/.exec(navigator.userAgent.toLowerCase());
-    if (result && result.length == 3) {
-      var version = (parseInt(result[1]) * 1000) + parseInt(result[2]);
-      if (version >= 1009) {
-        return true;
-      }
-    }
-    return false;
+    var geckoVersion = @com.google.gwt.dom.client.DOMImplMozilla::getGeckoVersion()();
+    return (geckoVersion != -1) && (geckoVersion >= 1009000);
   }-*/;
 
   private native boolean isRTL(Element elem) /*-{

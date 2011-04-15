@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -19,126 +19,20 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.AudioElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.PartialSupport;
-import com.google.gwt.event.dom.client.CanPlayThroughEvent;
-import com.google.gwt.event.dom.client.CanPlayThroughHandler;
-import com.google.gwt.event.dom.client.EndedEvent;
-import com.google.gwt.event.dom.client.EndedHandler;
-import com.google.gwt.event.dom.client.HasAllMediaHandlers;
-import com.google.gwt.event.dom.client.ProgressEvent;
-import com.google.gwt.event.dom.client.ProgressHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.ui.FocusWidget;
 
 /**
  * <p>
  * A widget representing an &lt;audio&gt; element.
- * 
+ *
  * <p>
  * <span style="color:red">Experimental API: This API is still under development
- * and is subject to change.
- * </span>
+ * and is subject to change. </span>
  * </p>
- * 
+ *
  * This widget may not be supported on all browsers.
  */
 @PartialSupport
-public class Audio extends FocusWidget implements HasAllMediaHandlers {
-  private static AudioElementSupportDetector detector;
-
-  /**
-   * Return a new {@link Audio} if supported,  and null otherwise.
-   * 
-   * @return a new {@link Audio} if supported, and null otherwise
-   */
-  public static Audio createIfSupported() {
-    if (detector == null) {
-      detector = GWT.create(AudioElementSupportDetector.class);
-    }
-    if (!detector.isSupportedCompileTime()) {
-      return null;
-    }
-    AudioElement element = Document.get().createAudioElement();
-    if (!detector.isSupportedRunTime(element)) {
-      return null;
-    }
-    return new Audio(element);
-  }
-
-  /**
-   * Runtime check for whether the audio element is supported in this browser.
-   * 
-   * @return whether the audio element is supported
-   */
-  public static boolean isSupported() {
-    if (detector == null) {
-      detector = GWT.create(AudioElementSupportDetector.class);
-    }
-    if (!detector.isSupportedCompileTime()) {
-      return false;
-    }
-    AudioElement element = Document.get().createAudioElement();
-    if (!detector.isSupportedRunTime(element)) {
-      return false;
-    }
-    return true;
-  }
-
-  /**
-   * Protected constructor. Use {@link #createIfSupported()} to create 
-   * an Audio element.
-   */
-  private Audio(AudioElement element) {
-    setElement(element);
-  }
-
-  public HandlerRegistration addCanPlayThroughHandler(CanPlayThroughHandler handler) {
-    return addDomHandler(handler, CanPlayThroughEvent.getType());
-  }
-
-  public HandlerRegistration addEndedHandler(EndedHandler handler) {
-    return addDomHandler(handler, EndedEvent.getType());
-  }
-
-  public HandlerRegistration addProgressHandler(ProgressHandler handler) {
-    return addDomHandler(handler, ProgressEvent.getType());
-  }
-
-  /**
-   * Returns the attached AudioElement.
-   * 
-   * @return the AudioElement
-   */
-  public AudioElement getAudioElement() {
-    return this.getElement().cast();
-  }
-
-  /**
-   * Detector for browser support of {@link AudioElement}.
-   */
-  private static class AudioElementSupportDetector {
-    /**
-     * Using a run-time check, return true if the {@link AudioElement} is 
-     * supported.
-     * 
-     * @return true if supported, false otherwise.
-     */
-    static native boolean isSupportedRunTime(AudioElement element) /*-{
-      return !!element.play;
-    }-*/;
-
-    /**
-     * Using a compile-time check, return true if {@link AudioElement} might 
-     * be supported.
-     * 
-     * @return true if might be supported, false otherwise.
-     */
-    boolean isSupportedCompileTime() {
-      // will be true in AudioElementSupportDetectedMaybe
-      // will be false in AudioElementSupportDetectedNo
-      return false;
-    }
-  }
-
+public class Audio extends MediaBase {
   /**
    * Detector for permutations that might support {@link AudioElement}.
    */
@@ -172,6 +66,89 @@ public class Audio extends FocusWidget implements HasAllMediaHandlers {
     @Override
     boolean isSupportedCompileTime() {
       return false;
-    } 
+    }
+  }
+
+  /**
+   * Detector for browser support of {@link AudioElement}.
+   */
+  private static class AudioElementSupportDetector {
+    /**
+     * Using a run-time check, return true if the {@link AudioElement} is
+     * supported.
+     *
+     * @return true if supported, false otherwise.
+     */
+    static native boolean isSupportedRunTime(AudioElement element) /*-{
+      return !!element.play;
+    }-*/;
+
+    /**
+     * Using a compile-time check, return true if {@link AudioElement} might be
+     * supported.
+     *
+     * @return true if might be supported, false otherwise.
+     */
+    boolean isSupportedCompileTime() {
+      // will be true in AudioElementSupportDetectedMaybe
+      // will be false in AudioElementSupportDetectedNo
+      return false;
+    }
+  }
+
+  private static AudioElementSupportDetector detector;
+
+  /**
+   * Return a new {@link Audio} if supported, and null otherwise.
+   *
+   * @return a new {@link Audio} if supported, and null otherwise
+   */
+  public static Audio createIfSupported() {
+    if (detector == null) {
+      detector = GWT.create(AudioElementSupportDetector.class);
+    }
+    if (!detector.isSupportedCompileTime()) {
+      return null;
+    }
+    AudioElement element = Document.get().createAudioElement();
+    if (!detector.isSupportedRunTime(element)) {
+      return null;
+    }
+    return new Audio(element);
+  }
+
+  /**
+   * Runtime check for whether the audio element is supported in this browser.
+   *
+   * @return whether the audio element is supported
+   */
+  public static boolean isSupported() {
+    if (detector == null) {
+      detector = GWT.create(AudioElementSupportDetector.class);
+    }
+    if (!detector.isSupportedCompileTime()) {
+      return false;
+    }
+    AudioElement element = Document.get().createAudioElement();
+    if (!detector.isSupportedRunTime(element)) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Protected constructor. Use {@link #createIfSupported()} to create an Audio.
+   */
+  protected Audio(AudioElement element) {
+    super(element);
+  }
+
+  /**
+   * Returns the attached AudioElement.
+   *
+   * @return the AudioElement
+   */
+  public AudioElement getAudioElement() {
+    return getMediaElement().cast();
   }
 }

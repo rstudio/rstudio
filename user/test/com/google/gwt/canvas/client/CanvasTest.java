@@ -23,47 +23,34 @@ import com.google.gwt.user.client.ui.RootPanel;
 
 /**
  * Tests {@link Canvas}.
- * 
- * Because HtmlUnit does not support HTML5, you will need to run these tests manually in order to
- * have them run. To do that, go to "run configurations" or "debug configurations", select the test
- * you would like to run, and put this line in the VM args under the arguments tab:
- * -Dgwt.args="-runStyle Manual:1"
+ *
+ *  Because HtmlUnit does not support HTML5, you will need to run these tests
+ * manually in order to have them run. To do that, go to "run configurations" or
+ * "debug configurations", select the test you would like to run, and put this
+ * line in the VM args under the arguments tab: -Dgwt.args="-runStyle Manual:1"
  */
 @DoNotRunWith(Platform.HtmlUnitUnknown)
 public class CanvasTest extends GWTTestCase {
-  protected Canvas canvas1;
-  protected Canvas canvas2;
+  private static native boolean isFirefox35OrLater() /*-{
+    var geckoVersion = @com.google.gwt.dom.client.DOMImplMozilla::getGeckoVersion()();
+    return (geckoVersion != -1) && (geckoVersion >= 1009001);
+  }-*/;
 
-  native boolean isWebkit525OrBefore() /*-{
+  private static native boolean isIE6() /*-{
+    return @com.google.gwt.dom.client.DOMImplIE6::isIE6()();
+  }-*/;
+
+  private static native boolean isWebkit525OrBefore() /*-{
     return @com.google.gwt.dom.client.DOMImplWebkit::isWebkit525OrBefore()();
   }-*/;
+
+  protected Canvas canvas1;
+
+  protected Canvas canvas2;
 
   @Override
   public String getModuleName() {
     return "com.google.gwt.canvas.Canvas";
-  }
-
-  @Override
-  protected void gwtSetUp() throws Exception {
-    canvas1 = Canvas.createIfSupported();
-    canvas2 = Canvas.createIfSupported();
-    
-    if (canvas1 == null) {
-      return; // don't continue if not supported
-    }
-
-    RootPanel.get().add(canvas1);
-    RootPanel.get().add(canvas2);
-  }
-
-  @Override
-  protected void gwtTearDown() throws Exception {
-    if (canvas1 == null) {
-      return; // don't continue if not supported
-    }
-    
-    RootPanel.get().remove(canvas1);
-    RootPanel.get().remove(canvas2);
   }
 
   /*
@@ -91,7 +78,7 @@ public class CanvasTest extends GWTTestCase {
     assertEquals(0, canvas1.getOffsetWidth());
     canvas1.setCoordinateSpaceHeight(0);
     canvas1.setCoordinateSpaceWidth(0);
-    
+
     String dataUrl = canvas1.toDataUrl();
     assertTrue("toDataURL() should return data:something",
         dataUrl.startsWith("data:"));
@@ -112,9 +99,9 @@ public class CanvasTest extends GWTTestCase {
     canvas1.setWidth("10px");
     canvas1.setCoordinateSpaceHeight(10);
     canvas1.setCoordinateSpaceWidth(10);
-    
+
     String dataUrl = canvas1.toDataUrl("image/png");
-    assertTrue("toDataURL(image/png) should return data:image/png[data]", 
+    assertTrue("toDataURL(image/png) should return data:image/png[data]",
         dataUrl.startsWith("data:image/png"));
   }
 
@@ -139,7 +126,7 @@ public class CanvasTest extends GWTTestCase {
     canvas1.setCoordinateSpaceHeight(140);
     canvas1.setCoordinateSpaceWidth(160);
     context.fillRect(2, 2, 300, 300);
-    
+
     assertEquals(41, canvas1.getOffsetHeight());
     assertEquals(61, canvas1.getOffsetWidth());
   }
@@ -167,7 +154,7 @@ public class CanvasTest extends GWTTestCase {
     assertEquals(60, canvas1.getOffsetWidth());
     assertEquals(140, canvas1.getCoordinateSpaceHeight());
     assertEquals(160, canvas1.getCoordinateSpaceWidth());
-    
+
     // resize internal
     canvas1.setCoordinateSpaceHeight(141);
     canvas1.setCoordinateSpaceWidth(161);
@@ -184,5 +171,38 @@ public class CanvasTest extends GWTTestCase {
       assertTrue(
           "isSupported() should be true when createIfSupported() returns non-null", Canvas.isSupported());
     }
+    // test the isxxxSupported() call if running known-sup or known-not-sup
+    // browsers
+    if (isFirefox35OrLater()) {
+      assertTrue(Canvas.isSupported());
+      assertTrue(Canvas.isSupported());
+    }
+    if (isIE6()) {
+      assertFalse(Canvas.isSupported());
+      assertFalse(Canvas.isSupported());
+    }
+  }
+
+  @Override
+  protected void gwtSetUp() throws Exception {
+    canvas1 = Canvas.createIfSupported();
+    canvas2 = Canvas.createIfSupported();
+
+    if (canvas1 == null) {
+      return; // don't continue if not supported
+    }
+
+    RootPanel.get().add(canvas1);
+    RootPanel.get().add(canvas2);
+  }
+
+  @Override
+  protected void gwtTearDown() throws Exception {
+    if (canvas1 == null) {
+      return; // don't continue if not supported
+    }
+
+    RootPanel.get().remove(canvas1);
+    RootPanel.get().remove(canvas2);
   }
 }

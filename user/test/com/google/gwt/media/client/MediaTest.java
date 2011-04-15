@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -19,17 +19,18 @@ import com.google.gwt.dom.client.MediaElement;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.media.dom.client.MediaError;
 import com.google.gwt.user.client.Timer;
 
 import junit.framework.Assert;
 
 /**
- * Base test for {@link MediaElement}.
- * 
- * Do not call this class directly. To use, extend this class and override the
+ * Base test for {@link MediaBase}.
+ *
+ *  Do not call this class directly. To use, extend this class and override the
  * getElement and isSupported methods.
- * 
- * Because HtmlUnit does not support HTML5, you will need to run these tests
+ *
+ *  Because HtmlUnit does not support HTML5, you will need to run these tests
  * manually in order to have them run. To do that, go to "run configurations" or
  * "debug configurations", select the test you would like to run, and put this
  * line in the VM args under the arguments tab: -Dgwt.args="-runStyle Manual:1"
@@ -37,39 +38,50 @@ import junit.framework.Assert;
 @DoNotRunWith(Platform.HtmlUnitUnknown)
 public abstract class MediaTest extends GWTTestCase {
 
-  native boolean isOldFirefox() /*-{
-    return @com.google.gwt.dom.client.DOMImplMozilla::isGecko191OrBefore()();
+  static native boolean isFirefox35OrLater() /*-{
+    var geckoVersion = @com.google.gwt.dom.client.DOMImplMozilla::getGeckoVersion()();
+    return (geckoVersion != -1) && (geckoVersion >= 1009001);
   }-*/;
 
-  native boolean isFirefox40OrEarlier() /*-{
+  static native boolean isFirefox40OrEarlier() /*-{
     return @com.google.gwt.dom.client.DOMImplMozilla::isGecko2OrBefore()();
   }-*/;
 
-  public void disabled_testCurrentTime() {
-    MediaElement element = getElement();
-    if (element == null) {
+  static native boolean isIE6() /*-{
+    return @com.google.gwt.dom.client.DOMImplIE6::isIE6()();
+  }-*/;
+
+  static native boolean isOldFirefox() /*-{
+    return @com.google.gwt.dom.client.DOMImplMozilla::isGecko191OrBefore()();
+  }-*/;
+
+  public void disabled_testPreload() {
+    final MediaBase media = getMedia();
+    if (media == null) {
       return; // don't continue if not supported
     }
 
-    Assert.assertTrue("currentTime must be positive.",
-        element.getCurrentTime() >= 0.0);
+    if (isFirefox40OrEarlier()) {
+      return; // don't continue on older versions of Firefox.
+    }
 
-    double seekTime = 2.0; // seconds
-    element.setCurrentTime(seekTime);
-    Assert.assertEquals("currentTime must be able to be set.", seekTime,
-        element.getCurrentTime());
+    String state = media.getPreload();
+    assertNotNull(state);
+    assertTrue("Illegal preload state", state.equals(MediaElement.PRELOAD_AUTO)
+        || state.equals(MediaElement.PRELOAD_METADATA)
+        || state.equals(MediaElement.PRELOAD_NONE));
+
+    media.setPreload(MediaElement.PRELOAD_METADATA);
+    assertEquals("Preload should be able to be set.",
+        MediaElement.PRELOAD_METADATA, media.getPreload());
   }
 
   /**
-   * Return the MediaElement associated with the test.
-   * 
-   * @return the MediaElement associated with the test.
+   * Return the Media associated with the test.
+   *
+   * @return the Media associated with the test.
    */
-  public MediaElement getElement() {
-    return null;
-  }
-
-  public abstract String getElementState();
+  public abstract MediaBase getMedia();
 
   @Override
   public String getModuleName() {
@@ -77,70 +89,141 @@ public abstract class MediaTest extends GWTTestCase {
   }
 
   public void testAutoPlay() {
-    MediaElement element = getElement();
-    if (element == null) {
+    final MediaBase media = getMedia();
+    if (media == null) {
       return; // don't continue if not supported
     }
 
-    element.setAutoplay(false);
-    assertFalse("Autoplay should be off.", element.isAutoplay());
-    element.setAutoplay(true);
-    assertTrue("Autoplay should be on.", element.isAutoplay());
+    media.setAutoplay(false);
+    assertFalse("Autoplay should be off.", media.isAutoplay());
+    media.setAutoplay(true);
+    assertTrue("Autoplay should be on.", media.isAutoplay());
   }
 
   public void testControls() {
-    MediaElement element = getElement();
-    if (element == null) {
+    final MediaBase media = getMedia();
+    if (media == null) {
       return; // don't continue if not supported
     }
 
-    element.setControls(false);
-    assertFalse("Controls should be off.", element.hasControls());
-    element.setControls(true);
-    assertTrue("Controls should be on.", element.hasControls());
+    media.setControls(false);
+    assertFalse("Controls should be off.", media.hasControls());
+    media.setControls(true);
+    assertTrue("Controls should be on.", media.hasControls());
   }
 
   public void testCurrentSrc() {
-    MediaElement element = getElement();
-    if (element == null) {
+    final MediaBase media = getMedia();
+    if (media == null) {
       return; // don't continue if not supported
     }
 
-    element.load();
-    Assert.assertNotNull("currentSrc should be set in these tests.",
-        element.getCurrentSrc());
+    media.load();
+    Assert.assertNotNull(
+        "currentSrc should be set in these tests.", media.getCurrentSrc());
+  }
+
+  public void testCurrentTime() {
+    final MediaBase media = getMedia();
+    if (media == null) {
+      return; // don't continue if not supported
+    }
+
+    delayTestFinish(25 * 1000);
+
+    // wait a little, then make sure it played and seek to a previous time
+    new Timer() {
+      @Override
+      public void run() {
+        MediaError error = media.getError();
+        if (error != null) {
+          fail("Media error (" + error.getCode() + ")");
+        }
+
+        // make sure it's playing
+        assertTrue("Media should have played", media.getCurrentTime() > 0);
+
+        // make sure it played enough
+        assertTrue(
+            "Did not play enough", 1000 * media.getCurrentTime() >= 6 * 1000);
+
+        // seek to a previous time
+        media.setCurrentTime(0.0);
+      }
+    }.schedule(15 * 1000);
+
+    // wait an additional 5000ms, then check that the seek was successful
+    new Timer() {
+      @Override
+      public void run() {
+        MediaError error = media.getError();
+        if (error != null) {
+          fail("Media error (" + error.getCode() + ")");
+        }
+
+        assertTrue(1000 * media.getCurrentTime() < 6 * 1000);
+        finishTest();
+      }
+    }.schedule(20 * 1000);
+
+    media.play();
+  }
+
+  public void testLoad() {
+    final MediaBase media = getMedia();
+    if (media == null) {
+      return; // don't continue if not supported
+    }
+
+    // the media resource needs time to load
+    delayTestFinish(20 * 1000);
+
+    // wait a little, then make sure it loaded
+    new Timer() {
+      @Override
+      public void run() {
+        MediaError error = media.getError();
+        if (error != null) {
+          fail("Media error (" + error.getCode() + ")");
+        }
+        finishTest();
+      }
+    }.schedule(15 * 1000);
+
+    media.load();
   }
 
   public void testLoop() {
-    MediaElement element = getElement();
-    if (element == null) {
+    final MediaBase media = getMedia();
+    if (media == null) {
       return; // don't continue if not supported
     }
 
-    element.setLoop(false);
-    assertFalse("Loop should be off.", element.isLoop());
-    element.setLoop(true);
-    assertTrue("Loop should be on.", element.isLoop());
+    media.setLoop(false);
+    assertFalse("Loop should be off.", media.isLoop());
+    media.setLoop(true);
+    assertTrue("Loop should be on.", media.isLoop());
   }
 
   public void testMuted() {
-    MediaElement element = getElement();
-    if (element == null) {
+    final MediaBase media = getMedia();
+    if (media == null) {
       return; // don't continue if not supported
     }
 
-    element.setMuted(true);
-    assertTrue("Muted should be true.", element.isMuted());
-    element.setMuted(false);
-    assertFalse("Muted should be false.", element.isMuted());
+    media.setMuted(true);
+    assertTrue("Muted should be true.", media.isMuted());
+    media.setMuted(false);
+    assertFalse("Muted should be false.", media.isMuted());
   }
 
   public void testNetworkState() {
-    MediaElement element = getElement();
-    if (element == null) {
+    final MediaBase media = getMedia();
+    if (media == null) {
       return; // don't continue if not supported
     }
-    int state = element.getNetworkState();
+
+    int state = media.getNetworkState();
     assertTrue("Illegal network state", state == MediaElement.NETWORK_EMPTY
         || state == MediaElement.NETWORK_IDLE
         || state == MediaElement.NETWORK_LOADING
@@ -148,88 +231,78 @@ public abstract class MediaTest extends GWTTestCase {
   }
 
   public void testPlay() {
-    MediaElement element = getElement();
-    if (element == null) {
+    final MediaBase media = getMedia();
+    if (media == null) {
       return; // don't continue if not supported
     }
 
-    int waitMillis = 10000;
-    delayTestFinish(3 * waitMillis);
-
-    element.setPlaybackRate(1.0);
-    element.play();
+    // the media resource needs time to play
+    delayTestFinish(20 * 1000);
 
     // wait a little, then make sure it played
     new Timer() {
       @Override
       public void run() {
+        MediaError error = media.getError();
+        if (error != null) {
+          fail("Media error (" + error.getCode() + ")");
+        }
+
+        assertTrue(media.getCurrentTime() > 0);
         finishTest();
       }
-    }.schedule(waitMillis);
+    }.schedule(15 * 1000);
+
+    media.play();
   }
 
   public void testPlaybackRate() {
-    final MediaElement element = getElement();
-    if (element == null) {
+    final MediaBase media = getMedia();
+    if (media == null) {
       return; // don't continue if not supported
     }
 
-    int waitMillis = 5000;
-    delayTestFinish(3 * waitMillis);
-
     assertEquals("Default playback rate should be 1.0", 1.0,
-        element.getDefaultPlaybackRate());
+        media.getDefaultPlaybackRate());
 
-    element.play();
+    // the media resource needs time to play
+    delayTestFinish(20 * 1000);
 
-    // wait a little, then make sure it played
+    // wait a little, then change the playback rate
     new Timer() {
       @Override
       public void run() {
+        MediaError error = media.getError();
+        if (error != null) {
+          fail("Media error (" + error.getCode() + ")");
+        }
+
         // set rate to 2.0
         double rate = 2.0;
-        element.setPlaybackRate(rate);
+        media.setPlaybackRate(rate);
         assertEquals("Should be able to change playback rate", rate,
-            element.getPlaybackRate());
+            media.getPlaybackRate());
 
         // return to 1.0
         rate = 1.0;
-        element.setPlaybackRate(rate);
+        media.setPlaybackRate(rate);
         assertEquals("Should be able to change playback rate", rate,
-            element.getPlaybackRate());
+            media.getPlaybackRate());
 
         finishTest();
       }
-    }.schedule(waitMillis);
-  }
+    }.schedule(15 * 1000);
 
-  public void disabled_testPreload() {
-    MediaElement element = getElement();
-    if (element == null) {
-      return; // don't continue if not supported
-    }
-    if (isFirefox40OrEarlier()) {
-      return; // don't continue on older versions of Firefox.
-    }
-    
-    String state = element.getPreload();
-    assertNotNull(state);
-    assertTrue("Illegal preload state", state.equals(MediaElement.PRELOAD_AUTO)
-        || state.equals(MediaElement.PRELOAD_METADATA)
-        || state.equals(MediaElement.PRELOAD_NONE));
-
-    element.setPreload(MediaElement.PRELOAD_METADATA);
-    assertEquals("Preload should be able to be set.",
-        MediaElement.PRELOAD_METADATA, element.getPreload());
+    media.play();
   }
 
   public void testReadyState() {
-    MediaElement element = getElement();
-    if (element == null) {
+    final MediaBase media = getMedia();
+    if (media == null) {
       return; // don't continue if not supported
     }
 
-    int state = element.getReadyState();
+    int state = media.getReadyState();
     assertTrue("Illegal ready state", state == MediaElement.HAVE_CURRENT_DATA
         || state == MediaElement.HAVE_ENOUGH_DATA
         || state == MediaElement.HAVE_FUTURE_DATA
@@ -237,17 +310,29 @@ public abstract class MediaTest extends GWTTestCase {
         || state == MediaElement.HAVE_NOTHING);
   }
 
+  public void testSupported() {
+    // test the isxxxSupported() call if running known sup or not sup browsers.
+    if (isIE6()) {
+      assertFalse(Audio.isSupported());
+      assertFalse(Video.isSupported());
+    }
+    if (isFirefox35OrLater()) {
+      assertTrue(Audio.isSupported());
+      assertTrue(Video.isSupported());
+    }
+  }
+
   public void testVolume() {
-    MediaElement element = getElement();
-    if (element == null) {
+    final MediaBase media = getMedia();
+    if (media == null) {
       return; // don't continue if not supported
     }
 
-    element.setVolume(0.5);
-    assertEquals("Volume should be at one-half loudness.", 0.5,
-        element.getVolume());
-    element.setVolume(0.75);
+    media.setVolume(0.5);
+    assertEquals(
+        "Volume should be at one-half loudness.", 0.5, media.getVolume());
+    media.setVolume(0.75);
     assertEquals("Volume should be at three-quarters loudness.", 0.75,
-        element.getVolume());
+        media.getVolume());
   }
 }
