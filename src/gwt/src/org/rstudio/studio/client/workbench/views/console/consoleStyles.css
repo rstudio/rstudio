@@ -11,7 +11,7 @@
    border: none;
    outline: none;
    word-wrap: break-word;
-   white-space: pre-wrap;
+   white-space: pre-wrap !important;
    cursor: text;
 }
 .console td {
@@ -21,7 +21,7 @@
 .output {
    outline: none;
    border: none;
-   white-space: pre-wrap;
+   white-space: pre-wrap !important;
    margin: 0;
 }
 .output .command, .input {
