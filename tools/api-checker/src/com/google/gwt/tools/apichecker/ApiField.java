@@ -28,8 +28,7 @@ import java.util.Set;
 final class ApiField implements Comparable<ApiField>, ApiElement {
 
   static String computeApiSignature(JField tempField) {
-    return tempField.getEnclosingType().getQualifiedSourceName() + "::"
-        + tempField.getName();
+    return tempField.getEnclosingType().getQualifiedSourceName() + "::" + tempField.getName();
   }
 
   private final ApiClass apiClass;
@@ -115,11 +114,10 @@ final class ApiField implements Comparable<ApiField>, ApiElement {
           + "::"
           + signature
           + " defined in "
-          + (enclosingType == null ? "null enclosing type "
-              : enclosingType.getQualifiedSourceName());
+          + (enclosingType == null ? "null enclosing type " : enclosingType
+              .getQualifiedSourceName());
     }
-    return apiClass.getClassObject().getQualifiedSourceName() + "::"
-        + signature;
+    return apiClass.getClassObject().getQualifiedSourceName() + "::" + signature;
   }
 
 }

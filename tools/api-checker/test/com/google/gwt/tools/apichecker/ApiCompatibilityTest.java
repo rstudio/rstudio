@@ -51,16 +51,12 @@ public class ApiCompatibilityTest extends TestCase {
   private static StaticJavaResource[] getScuArray() {
     return new StaticJavaResource[] {
         new StaticJavaResource("test.apicontainer.ApiClass", getSourceForApiClass()),
-        new StaticJavaResource("test.apicontainer.NonApiClass",
-            getSourceForNonApiClass()),
-        new StaticJavaResource("test.nonapipackage.TestClass",
-            getSourceForTestClass()),
+        new StaticJavaResource("test.apicontainer.NonApiClass", getSourceForNonApiClass()),
+        new StaticJavaResource("test.nonapipackage.TestClass", getSourceForTestClass()),
         new StaticJavaResource("java.lang.Object", getSourceForObject()),
         new StaticJavaResource("java.lang.Throwable", getSourceForThrowable()),
-        new StaticJavaResource("test.apicontainer.OneMoreApiClass",
-            getSourceForOneMoreApiClass()),
-        new StaticJavaResource("java.lang.RuntimeException",
-            getSourceForRuntimeException()),};
+        new StaticJavaResource("test.apicontainer.OneMoreApiClass", getSourceForOneMoreApiClass()),
+        new StaticJavaResource("java.lang.RuntimeException", getSourceForRuntimeException()),};
   }
 
   private static String getSourceForApiClass() {
@@ -149,14 +145,15 @@ public class ApiCompatibilityTest extends TestCase {
     AbstractTreeLogger logger = new PrintWriterTreeLogger();
     logger.setMaxDetail(TreeLogger.ERROR);
 
-    api1 = new ApiContainer("Api1", new HashSet<Resource>(
-        Arrays.asList(ApiContainerTest.getScuArray())), new HashSet<String>(),
-        logger);
-    apiSameAs1 = new ApiContainer("ApiSameAs1", new HashSet<Resource>(
-        Arrays.asList(ApiContainerTest.getScuArray())), new HashSet<String>(),
-        logger);
-    api2 = new ApiContainer("Api2", new HashSet<Resource>(
-        Arrays.asList(getScuArray())), new HashSet<String>(), logger);
+    api1 =
+        new ApiContainer("Api1", new HashSet<Resource>(Arrays
+            .asList(ApiContainerTest.getScuArray())), new HashSet<String>(), logger);
+    apiSameAs1 =
+        new ApiContainer("ApiSameAs1", new HashSet<Resource>(Arrays.asList(ApiContainerTest
+            .getScuArray())), new HashSet<String>(), logger);
+    api2 =
+        new ApiContainer("Api2", new HashSet<Resource>(Arrays.asList(getScuArray())),
+            new HashSet<String>(), logger);
   }
 
   // setup is called before every test*. To avoid the overhead of setUp() each
@@ -168,17 +165,18 @@ public class ApiCompatibilityTest extends TestCase {
 
   private void checkBasicStuff() throws NotFoundException {
     HashSet<String> hashSet = new HashSet<String>();
-    assertEquals(0, ApiCompatibilityChecker.getApiDiff(api1, apiSameAs1,
-        hashSet).size());
+    assertEquals(0, ApiCompatibilityChecker.getApiDiff(api1, apiSameAs1, hashSet).size());
     ApiDiffGenerator apiDiff = new ApiDiffGenerator(api2, api1);
-    String strWithDuplicates = getStringRepresentation(ApiCompatibilityChecker.getApiDiff(
-        apiDiff, hashSet, !ApiCompatibilityChecker.FILTER_DUPLICATES));
+    String strWithDuplicates =
+        getStringRepresentation(ApiCompatibilityChecker.getApiDiff(apiDiff, hashSet,
+            !ApiCompatibilityChecker.FILTER_DUPLICATES));
     if (DEBUG) {
       System.out.println("computing apiDiff, now with duplicates");
       System.out.println(strWithDuplicates);
     }
-    String strWithoutDuplicates = getStringRepresentation(ApiCompatibilityChecker.getApiDiff(
-        apiDiff, hashSet, ApiCompatibilityChecker.FILTER_DUPLICATES));
+    String strWithoutDuplicates =
+        getStringRepresentation(ApiCompatibilityChecker.getApiDiff(apiDiff, hashSet,
+            ApiCompatibilityChecker.FILTER_DUPLICATES));
     if (DEBUG) {
       System.out.println("computing apiDiff, now without duplicates");
       System.out.println(strWithoutDuplicates);
@@ -186,47 +184,44 @@ public class ApiCompatibilityTest extends TestCase {
 
     String delimiter = ApiDiffGenerator.DELIMITER;
     // test if missing packages are reported correctly
-    String statusString = "java.newpackage" + delimiter
-        + ApiChange.Status.MISSING;
+    String statusString = "java.newpackage" + delimiter + ApiChange.Status.MISSING;
     assertEquals(1, countPresence(statusString, strWithDuplicates));
     assertEquals(1, countPresence(statusString, strWithoutDuplicates));
 
     // test if missing classes are reported correctly
-    assertEquals(1, countPresence(
-        "test.apicontainer.NonApiClass.AnotherApiClassInNonApiClass"
-            + delimiter + ApiChange.Status.MISSING, strWithoutDuplicates));
+    assertEquals(1, countPresence("test.apicontainer.NonApiClass.AnotherApiClassInNonApiClass"
+        + delimiter + ApiChange.Status.MISSING, strWithoutDuplicates));
 
     // test if modifier changes of a class are reported
-    assertEquals(1, countPresence(
-        "test.apicontainer.NonApiClass.ApiClassInNonApiClass" + delimiter
-            + ApiChange.Status.ABSTRACT_ADDED, strWithoutDuplicates));
+    assertEquals(1, countPresence("test.apicontainer.NonApiClass.ApiClassInNonApiClass" + delimiter
+        + ApiChange.Status.ABSTRACT_ADDED, strWithoutDuplicates));
 
     // test if methods are still reported even if class becomes abstract (as
     // long as it is sub-classable)
     assertEquals(0, countPresence(
-        "test.apicontainer.NonApiClass.ApiClassInNonApiClass::ApiClassInNonApiClass()"
-            + delimiter + ApiChange.Status.MISSING, strWithoutDuplicates));
+        "test.apicontainer.NonApiClass.ApiClassInNonApiClass::ApiClassInNonApiClass()" + delimiter
+            + ApiChange.Status.MISSING, strWithoutDuplicates));
     assertEquals(0, countPresence(
-        "test.apicontainer.NonApiClass.ApiClassInNonApiClass::protectedMethod()"
-            + delimiter + ApiChange.Status.MISSING, strWithoutDuplicates));
+        "test.apicontainer.NonApiClass.ApiClassInNonApiClass::protectedMethod()" + delimiter
+            + ApiChange.Status.MISSING, strWithoutDuplicates));
 
     // test if modifier changes of fields and methods are reported
     assertEquals(1, countPresence("java.lang.Object::apiField" + delimiter
         + ApiChange.Status.FINAL_ADDED, strWithoutDuplicates));
-    assertEquals(1, countPresence("java.lang.Object::protectedMethod()"
-        + delimiter + ApiChange.Status.FINAL_ADDED, strWithoutDuplicates));
-
-    // test if duplicates are weeded out from intersecting methods
-    assertEquals(4, countPresence("protectedMethod()" + delimiter
-        + ApiChange.Status.FINAL_ADDED, strWithDuplicates));
-    assertEquals(1, countPresence("protectedMethod()" + delimiter
+    assertEquals(1, countPresence("java.lang.Object::protectedMethod()" + delimiter
         + ApiChange.Status.FINAL_ADDED, strWithoutDuplicates));
 
+    // test if duplicates are weeded out from intersecting methods
+    assertEquals(4, countPresence("protectedMethod()" + delimiter + ApiChange.Status.FINAL_ADDED,
+        strWithDuplicates));
+    assertEquals(1, countPresence("protectedMethod()" + delimiter + ApiChange.Status.FINAL_ADDED,
+        strWithoutDuplicates));
+
     // test if duplicates are weeded out from missing fields
-    assertEquals(4, countPresence("apiFieldWillBeMissing" + delimiter
-        + ApiChange.Status.MISSING, strWithDuplicates));
-    assertEquals(1, countPresence("apiFieldWillBeMissing" + delimiter
-        + ApiChange.Status.MISSING, strWithoutDuplicates));
+    assertEquals(4, countPresence("apiFieldWillBeMissing" + delimiter + ApiChange.Status.MISSING,
+        strWithDuplicates));
+    assertEquals(1, countPresence("apiFieldWillBeMissing" + delimiter + ApiChange.Status.MISSING,
+        strWithoutDuplicates));
 
     // test error in non-final version
     String nonFinalMethodSignature = "checkParametersAndReturnTypes(Ltest/apicontainer/ApiClass;)";
@@ -234,11 +229,12 @@ public class ApiCompatibilityTest extends TestCase {
         ApiChange.Status.OVERRIDABLE_METHOD_ARGUMENT_TYPE_CHANGE,
         ApiChange.Status.OVERRIDABLE_METHOD_EXCEPTION_TYPE_CHANGE,
         ApiChange.Status.OVERRIDABLE_METHOD_RETURN_TYPE_CHANGE}) {
-      assertEquals(1, countPresence(nonFinalMethodSignature + delimiter
-          + status, strWithoutDuplicates));
+      assertEquals(1, countPresence(nonFinalMethodSignature + delimiter + status,
+          strWithoutDuplicates));
     }
     // test return type and exception type error in final version
-    String finalMethodSignature = "checkParametersAndReturnTypesFinalVersion(Ltest/apicontainer/ApiClass;)";
+    String finalMethodSignature =
+        "checkParametersAndReturnTypesFinalVersion(Ltest/apicontainer/ApiClass;)";
     assertEquals(1, countPresence(finalMethodSignature + delimiter
         + ApiChange.Status.RETURN_TYPE_ERROR, strWithoutDuplicates));
     assertEquals(1, countPresence(finalMethodSignature + delimiter
@@ -253,26 +249,27 @@ public class ApiCompatibilityTest extends TestCase {
         + ApiChange.Status.OVERLOADED_METHOD_CALL, strWithoutDuplicates));
 
     // test unchecked exceptions
-    assertEquals(0, countPresence("testUncheckedExceptions",
-        strWithoutDuplicates));
+    assertEquals(0, countPresence("testUncheckedExceptions", strWithoutDuplicates));
 
     // test overloaded and overridable detection
-    String methodSignature = "test.apicontainer.OneMoreApiClass::checkOverloadedAndOverridableDetection(Ljava/lang/Object;)";
+    String methodSignature =
+        "test.apicontainer.OneMoreApiClass::checkOverloadedAndOverridableDetection(Ljava/lang/Object;)";
     for (ApiChange.Status status : new ApiChange.Status[] {
         ApiChange.Status.OVERRIDABLE_METHOD_ARGUMENT_TYPE_CHANGE,
         ApiChange.Status.OVERRIDABLE_METHOD_EXCEPTION_TYPE_CHANGE,
         ApiChange.Status.OVERRIDABLE_METHOD_RETURN_TYPE_CHANGE}) {
-      assertEquals(0, countPresence(methodSignature + delimiter + status,
-          strWithoutDuplicates));
+      assertEquals(0, countPresence(methodSignature + delimiter + status, strWithoutDuplicates));
     }
 
     // the method should be satisfied by the method in the super-class
-    methodSignature = "test.apicontainer.OneMoreApiClass::checkOverloadedMethodAccounted(Ltest/apicontainer/OneMoreApiClass;)";
-    assertEquals(0, countPresence(methodSignature + delimiter
-        + ApiChange.Status.MISSING, strWithoutDuplicates));
+    methodSignature =
+        "test.apicontainer.OneMoreApiClass::checkOverloadedMethodAccounted(Ltest/apicontainer/OneMoreApiClass;)";
+    assertEquals(0, countPresence(methodSignature + delimiter + ApiChange.Status.MISSING,
+        strWithoutDuplicates));
 
     // the method should throw unchecked exceptions error
-    methodSignature = "test.apicontainer.OneMoreApiClass::checkOverloadedMethodAccounted(Ljava/lang/Object;)";
+    methodSignature =
+        "test.apicontainer.OneMoreApiClass::checkOverloadedMethodAccounted(Ljava/lang/Object;)";
     assertEquals(1, countPresence(methodSignature + delimiter
         + ApiChange.Status.EXCEPTION_TYPE_ERROR, strWithoutDuplicates));
   }
@@ -280,12 +277,12 @@ public class ApiCompatibilityTest extends TestCase {
   private void checkWhiteList() throws NotFoundException {
     ApiDiffGenerator apiDiff = new ApiDiffGenerator(api2, api1);
     boolean removeDuplicates = false;
-    String whiteList = "java.newpackage" + ApiDiffGenerator.DELIMITER
-        + ApiChange.Status.MISSING;
+    String whiteList = "java.newpackage" + ApiDiffGenerator.DELIMITER + ApiChange.Status.MISSING;
     HashSet<String> hashSet = new HashSet<String>();
     hashSet.add(whiteList);
-    String strWithoutDuplicates = getStringRepresentation(ApiCompatibilityChecker.getApiDiff(
-        apiDiff, hashSet, !removeDuplicates));
+    String strWithoutDuplicates =
+        getStringRepresentation(ApiCompatibilityChecker.getApiDiff(apiDiff, hashSet,
+            !removeDuplicates));
 
     // test if missing packages are reported correctly
     assertEquals(0, countPresence(whiteList, strWithoutDuplicates));

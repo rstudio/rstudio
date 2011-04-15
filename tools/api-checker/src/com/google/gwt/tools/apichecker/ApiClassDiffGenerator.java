@@ -33,8 +33,7 @@ import java.util.Set;
  */
 final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
 
-  static final Collection<ApiChange> EMPTY_COLLECTION = new ArrayList<ApiChange>(
-      0);
+  static final Collection<ApiChange> EMPTY_COLLECTION = new ArrayList<ApiChange>(0);
 
   static String printSetWithHashCode(Set<?> set, String identifier) {
     StringBuffer sb = new StringBuffer();
@@ -66,27 +65,24 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
 
   private final ApiClass oldClass;
 
-  ApiClassDiffGenerator(String className,
-      ApiPackageDiffGenerator apiPackageDiffGenerator) throws NotFoundException {
+  ApiClassDiffGenerator(String className, ApiPackageDiffGenerator apiPackageDiffGenerator)
+      throws NotFoundException {
     this.className = className;
     apiDiffGenerator = apiPackageDiffGenerator.getApiDiffGenerator();
-    this.newClass = apiPackageDiffGenerator.getNewApiPackage().getApiClass(
-        className);
-    this.oldClass = apiPackageDiffGenerator.getOldApiPackage().getApiClass(
-        className);
+    this.newClass = apiPackageDiffGenerator.getNewApiPackage().getApiClass(className);
+    this.oldClass = apiPackageDiffGenerator.getOldApiPackage().getApiClass(className);
     if (newClass == null || oldClass == null) {
-      throw new NotFoundException("for class " + className
-          + ", one of the class objects is null");
+      throw new NotFoundException("for class " + className + ", one of the class objects is null");
     }
 
     intersectingFields = new HashMap<ApiField, Set<ApiChange>>();
-    intersectingMethods = new EnumMap<ApiClass.MethodType, Map<ApiAbstractMethod, Set<ApiChange>>>(
-        ApiClass.MethodType.class);
-    missingMethods = new EnumMap<ApiClass.MethodType, Set<ApiAbstractMethod>>(
-        ApiClass.MethodType.class);
+    intersectingMethods =
+        new EnumMap<ApiClass.MethodType, Map<ApiAbstractMethod, Set<ApiChange>>>(
+            ApiClass.MethodType.class);
+    missingMethods =
+        new EnumMap<ApiClass.MethodType, Set<ApiAbstractMethod>>(ApiClass.MethodType.class);
     for (ApiClass.MethodType methodType : ApiClass.MethodType.values()) {
-      intersectingMethods.put(methodType,
-          new HashMap<ApiAbstractMethod, Set<ApiChange>>());
+      intersectingMethods.put(methodType, new HashMap<ApiAbstractMethod, Set<ApiChange>>());
     }
   }
 
@@ -98,7 +94,7 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
   public int compareTo(ApiClassDiffGenerator other) {
     return getName().compareTo(other.getName());
   }
-  
+
   @Override
   public boolean equals(Object o) {
     if (!(o instanceof ApiClassDiffGenerator)) {
@@ -116,18 +112,15 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
   void computeApiDiff() {
     Set<String> newFieldNames = newClass.getApiFieldNames();
     Set<String> oldFieldNames = oldClass.getApiFieldNames();
-    Set<String> intersection = ApiDiffGenerator.removeIntersection(
-        newFieldNames, oldFieldNames);
+    Set<String> intersection = ApiDiffGenerator.removeIntersection(newFieldNames, oldFieldNames);
     missingFields = oldClass.getApiFieldsBySet(oldFieldNames);
     processFieldsInIntersection(intersection);
 
     for (ApiClass.MethodType methodType : ApiClass.MethodType.values()) {
       Set<String> newMethodNames = newClass.getApiMemberNames(methodType);
       Set<String> oldMethodNames = oldClass.getApiMemberNames(methodType);
-      intersection = ApiDiffGenerator.removeIntersection(newMethodNames,
-          oldMethodNames);
-      missingMethods.put(methodType, oldClass.getApiMembersBySet(
-          oldMethodNames, methodType));
+      intersection = ApiDiffGenerator.removeIntersection(newMethodNames, oldMethodNames);
+      missingMethods.put(methodType, oldClass.getApiMembersBySet(oldMethodNames, methodType));
       processElementsInIntersection(intersection, methodType);
     }
   }
@@ -158,8 +151,7 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
    * Even though the method name is contained in the "property" parameter, the
    * type information is lost. TODO (amitmanjhi): fix this issue later.
    */
-  private <T> void addProperty(Map<T, Set<ApiChange>> hashMap, T key,
-      ApiChange property) {
+  private <T> void addProperty(Map<T, Set<ApiChange>> hashMap, T key, ApiChange property) {
     Set<ApiChange> value = hashMap.get(key);
     if (value == null) {
       value = new HashSet<ApiChange>();
@@ -170,8 +162,7 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
 
   private Collection<ApiChange> getIntersectingFields() {
     Collection<ApiChange> collection = new ArrayList<ApiChange>();
-    List<ApiField> intersectingFieldsList = new ArrayList<ApiField>(
-        intersectingFields.keySet());
+    List<ApiField> intersectingFieldsList = new ArrayList<ApiField>(intersectingFields.keySet());
     Collections.sort(intersectingFieldsList);
     for (ApiField apiField : intersectingFieldsList) {
       for (ApiChange apiChange : intersectingFields.get(apiField)) {
@@ -181,11 +172,10 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
     return collection;
   }
 
-  private Collection<ApiChange> getIntersectingMethods(
-      ApiClass.MethodType methodType) {
+  private Collection<ApiChange> getIntersectingMethods(ApiClass.MethodType methodType) {
     Collection<ApiChange> collection = new ArrayList<ApiChange>();
-    List<ApiAbstractMethod> apiMethodsList = new ArrayList<ApiAbstractMethod>(
-        intersectingMethods.get(methodType).keySet());
+    List<ApiAbstractMethod> apiMethodsList =
+        new ArrayList<ApiAbstractMethod>(intersectingMethods.get(methodType).keySet());
     Collections.sort(apiMethodsList);
     for (ApiAbstractMethod apiMethod : apiMethodsList) {
       collection.addAll(intersectingMethods.get(methodType).get(apiMethod));
@@ -195,8 +185,8 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
 
   private Collection<ApiChange> getMissingMethods(ApiClass.MethodType methodType) {
     Collection<ApiChange> collection = new ArrayList<ApiChange>();
-    List<ApiAbstractMethod> apiMethodsList = new ArrayList<ApiAbstractMethod>(
-        missingMethods.get(methodType));
+    List<ApiAbstractMethod> apiMethodsList =
+        new ArrayList<ApiAbstractMethod>(missingMethods.get(methodType));
     Collections.sort(apiMethodsList);
     for (ApiAbstractMethod apiMethod : apiMethodsList) {
       collection.add(new ApiChange(apiMethod, ApiChange.Status.MISSING));
@@ -214,10 +204,9 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
    * @return the possible incompatibilities due to method overloading.
    */
   private Map<ApiAbstractMethod, ApiChange> getOverloadedMethodIncompatibility(
-      Set<ApiAbstractMethod> methodsInNew,
-      Set<ApiAbstractMethod> methodsInExisting) {
-    if (!ApiCompatibilityChecker.API_SOURCE_COMPATIBILITY
-        || methodsInExisting.size() != 1 || methodsInNew.size() <= 1) {
+      Set<ApiAbstractMethod> methodsInNew, Set<ApiAbstractMethod> methodsInExisting) {
+    if (!ApiCompatibilityChecker.API_SOURCE_COMPATIBILITY || methodsInExisting.size() != 1
+        || methodsInNew.size() <= 1) {
       return Collections.emptyMap();
     }
     ApiAbstractMethod existingMethod = methodsInExisting.toArray(new ApiAbstractMethod[0])[0];
@@ -231,11 +220,12 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
     if (isPairwiseCompatible(matchingMethods)) {
       return Collections.emptyMap();
     }
-    Map<ApiAbstractMethod, ApiChange> incompatibilities = new HashMap<ApiAbstractMethod, ApiChange>();
+    Map<ApiAbstractMethod, ApiChange> incompatibilities =
+        new HashMap<ApiAbstractMethod, ApiChange>();
     incompatibilities.put(existingMethod, new ApiChange(existingMethod,
         ApiChange.Status.OVERLOADED_METHOD_CALL,
-        "Many methods in the new API with similar signatures. Methods = "
-            + methodsInNew + " This might break API source compatibility"));
+        "Many methods in the new API with similar signatures. Methods = " + methodsInNew
+            + " This might break API source compatibility"));
     return incompatibilities;
   }
 
@@ -248,8 +238,7 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
       for (int j = i + 1; j < length; j++) {
         ApiAbstractMethod firstMethod = methods.get(i);
         ApiAbstractMethod secondMethod = methods.get(j);
-        if (!firstMethod.isCompatible(secondMethod)
-            && !secondMethod.isCompatible(firstMethod)) {
+        if (!firstMethod.isCompatible(secondMethod) && !secondMethod.isCompatible(firstMethod)) {
           return false;
         }
       }
@@ -267,23 +256,22 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
       ApiClass.MethodType methodType) {
 
     Set<ApiAbstractMethod> missingElements = missingMethods.get(methodType);
-    Map<ApiAbstractMethod, Set<ApiChange>> intersectingElements = intersectingMethods.get(methodType);
+    Map<ApiAbstractMethod, Set<ApiChange>> intersectingElements =
+        intersectingMethods.get(methodType);
 
     Set<ApiAbstractMethod> onlyInExisting = new HashSet<ApiAbstractMethod>();
     Set<ApiAbstractMethod> onlyInNew = new HashSet<ApiAbstractMethod>();
     Set<String> commonSignature = new HashSet<String>();
 
     for (String elementName : intersection) {
-      Set<ApiAbstractMethod> methodsInNew = newClass.getApiMethodsByName(
-          elementName, methodType);
-      Set<ApiAbstractMethod> methodsInExisting = oldClass.getApiMethodsByName(
-          elementName, methodType);
+      Set<ApiAbstractMethod> methodsInNew = newClass.getApiMethodsByName(elementName, methodType);
+      Set<ApiAbstractMethod> methodsInExisting =
+          oldClass.getApiMethodsByName(elementName, methodType);
       onlyInNew.addAll(methodsInNew);
       onlyInExisting.addAll(methodsInExisting);
-      Map<ApiAbstractMethod, ApiChange> incompatibilityMap = getOverloadedMethodIncompatibility(
-          methodsInNew, methodsInExisting);
-      for (Map.Entry<ApiAbstractMethod, ApiChange> entry
-          : incompatibilityMap.entrySet()) {
+      Map<ApiAbstractMethod, ApiChange> incompatibilityMap =
+          getOverloadedMethodIncompatibility(methodsInNew, methodsInExisting);
+      for (Map.Entry<ApiAbstractMethod, ApiChange> entry : incompatibilityMap.entrySet()) {
         addProperty(intersectingElements, entry.getKey(), entry.getValue());
       }
 
@@ -314,15 +302,12 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
             for (ApiChange.Status status : methodInExisting.getModifierChanges(methodInNew)) {
               currentApiChange.add(new ApiChange(methodInExisting, status));
             }
-            if (methodInNew.getInternalSignature().equals(
-                methodInExisting.getInternalSignature())) {
-              currentApiChange.add(new ApiChange(methodInExisting,
-                  ApiChange.Status.COMPATIBLE));
+            if (methodInNew.getInternalSignature().equals(methodInExisting.getInternalSignature())) {
+              currentApiChange.add(new ApiChange(methodInExisting, ApiChange.Status.COMPATIBLE));
               hasSameSignature = true;
             } else {
               currentApiChange.add(new ApiChange(methodInExisting,
-                  ApiChange.Status.COMPATIBLE_WITH,
-                  methodInNew.getApiSignature()));
+                  ApiChange.Status.COMPATIBLE_WITH, methodInNew.getApiSignature()));
             }
           }
 
@@ -370,8 +355,7 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
       for (ApiAbstractMethod methodInNew : methodsInNew) {
         ApiAbstractMethod sameSignatureMethod = null;
         for (ApiAbstractMethod methodInExisting : methodsInExisting) {
-          if (methodInNew.getInternalSignature().equals(
-              methodInExisting.getInternalSignature())) {
+          if (methodInNew.getInternalSignature().equals(methodInExisting.getInternalSignature())) {
             sameSignatureMethod = methodInExisting;
             break;
           }

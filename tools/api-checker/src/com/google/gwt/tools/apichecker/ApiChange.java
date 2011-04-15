@@ -100,7 +100,7 @@ final class ApiChange implements Comparable<ApiChange> {
   public int compareTo(ApiChange arg0) {
     return this.toString().compareTo(arg0.toString());
   }
-  
+
   @Override
   public boolean equals(Object o) {
     if (!(o instanceof ApiChange)) {
@@ -108,7 +108,7 @@ final class ApiChange implements Comparable<ApiChange> {
     }
     return this.toString().equals(o.toString());
   }
-  
+
   public ApiElement getApiElement() {
     return element;
   }
@@ -123,8 +123,8 @@ final class ApiChange implements Comparable<ApiChange> {
 
   public String getStringRepresentationWithoutMessage() {
     if (stringRepresentationWithoutMessage == null) {
-      stringRepresentationWithoutMessage = element.getRelativeSignature()
-          + ApiDiffGenerator.DELIMITER + status.name();
+      stringRepresentationWithoutMessage =
+          element.getRelativeSignature() + ApiDiffGenerator.DELIMITER + status.name();
     }
     return stringRepresentationWithoutMessage;
   }
@@ -142,8 +142,9 @@ final class ApiChange implements Comparable<ApiChange> {
   @Override
   public String toString() {
     if (stringRepresentation == null) {
-      stringRepresentation = getStringRepresentationWithoutMessage()
-          + (message == null ? "" : (ApiDiffGenerator.DELIMITER + message));
+      stringRepresentation =
+          getStringRepresentationWithoutMessage()
+              + (message == null ? "" : (ApiDiffGenerator.DELIMITER + message));
     }
     return stringRepresentation;
   }

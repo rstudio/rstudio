@@ -56,17 +56,15 @@ final class ApiMethod extends ApiAbstractMethod {
       firstType = ((JMethod) method).getReturnType();
       secondType = ((JMethod) newMethod.getMethod()).getReturnType();
     } else {
-      throw new AssertionError("Different types for method = "
-          + method.getClass() + ", and newMethodObject = "
-          + newMethod.getMethod().getClass() + ", signature = "
+      throw new AssertionError("Different types for method = " + method.getClass()
+          + ", and newMethodObject = " + newMethod.getMethod().getClass() + ", signature = "
           + getApiSignature());
     }
     StringBuffer sb = new StringBuffer();
     if (firstType.getSimpleSourceName().indexOf("void") != -1) {
       return null;
     }
-    boolean compatible = ApiDiffGenerator.isFirstTypeAssignableToSecond(
-        secondType, firstType);
+    boolean compatible = ApiDiffGenerator.isFirstTypeAssignableToSecond(secondType, firstType);
     if (compatible) {
       return null;
     }
@@ -74,8 +72,7 @@ final class ApiMethod extends ApiAbstractMethod {
     sb.append(firstType.getQualifiedSourceName());
     sb.append(" to ");
     sb.append(secondType.getQualifiedSourceName());
-    return new ApiChange(this, ApiChange.Status.RETURN_TYPE_ERROR,
-        sb.toString());
+    return new ApiChange(this, ApiChange.Status.RETURN_TYPE_ERROR, sb.toString());
   }
 
   /**
@@ -94,17 +91,14 @@ final class ApiMethod extends ApiAbstractMethod {
     // check return type
     if (!existingMethod.getReturnType().getJNISignature().equals(
         newMethod.getReturnType().getJNISignature())) {
-      changeApis.add(new ApiChange(this,
-          ApiChange.Status.OVERRIDABLE_METHOD_RETURN_TYPE_CHANGE, " from "
-              + existingMethod.getReturnType() + " to "
-              + newMethod.getReturnType()));
+      changeApis.add(new ApiChange(this, ApiChange.Status.OVERRIDABLE_METHOD_RETURN_TYPE_CHANGE,
+          " from " + existingMethod.getReturnType() + " to " + newMethod.getReturnType()));
     }
     // check argument type
     JParameter[] newParametersList = newMethod.getParameters();
     JParameter[] existingParametersList = existingMethod.getParameters();
     if (newParametersList.length != existingParametersList.length) {
-      changeApis.add(new ApiChange(this,
-          ApiChange.Status.OVERRIDABLE_METHOD_ARGUMENT_TYPE_CHANGE,
+      changeApis.add(new ApiChange(this, ApiChange.Status.OVERRIDABLE_METHOD_ARGUMENT_TYPE_CHANGE,
           "number of parameters changed"));
     } else {
       int length = newParametersList.length;
@@ -112,9 +106,8 @@ final class ApiMethod extends ApiAbstractMethod {
         if (!existingParametersList[i].getType().getJNISignature().equals(
             newParametersList[i].getType().getJNISignature())) {
           changeApis.add(new ApiChange(this,
-              ApiChange.Status.OVERRIDABLE_METHOD_ARGUMENT_TYPE_CHANGE,
-              " at position " + i + " from "
-                  + existingParametersList[i].getType() + " to "
+              ApiChange.Status.OVERRIDABLE_METHOD_ARGUMENT_TYPE_CHANGE, " at position " + i
+                  + " from " + existingParametersList[i].getType() + " to "
                   + newParametersList[i].getType()));
         }
       }
@@ -138,16 +131,13 @@ final class ApiMethod extends ApiAbstractMethod {
     }
     ApiDiffGenerator.removeIntersection(existingExceptionsSet, newExceptionsSet);
     removeUncheckedExceptions(newMethod, newExceptionsSet, newExceptionsMap);
-    removeUncheckedExceptions(existingMethod, existingExceptionsSet,
-        existingExceptionsMap);
+    removeUncheckedExceptions(existingMethod, existingExceptionsSet, existingExceptionsMap);
     if (existingExceptionsSet.size() > 0) {
-      changeApis.add(new ApiChange(this,
-          ApiChange.Status.OVERRIDABLE_METHOD_EXCEPTION_TYPE_CHANGE,
+      changeApis.add(new ApiChange(this, ApiChange.Status.OVERRIDABLE_METHOD_EXCEPTION_TYPE_CHANGE,
           "existing method had more exceptions: " + existingExceptionsSet));
     }
     if (newExceptionsSet.size() > 0) {
-      changeApis.add(new ApiChange(this,
-          ApiChange.Status.OVERRIDABLE_METHOD_EXCEPTION_TYPE_CHANGE,
+      changeApis.add(new ApiChange(this, ApiChange.Status.OVERRIDABLE_METHOD_EXCEPTION_TYPE_CHANGE,
           "new method has more exceptions: " + newExceptionsSet));
     }
     return changeApis;
@@ -169,14 +159,12 @@ final class ApiMethod extends ApiAbstractMethod {
       newjmethod = (JMethod) newMethod.getMethod();
       oldjmethod = (JMethod) method;
     } else {
-      throw new AssertionError("Different types for method = "
-          + method.getClass() + " and newMethod = "
-          + newMethod.getMethod().getClass() + ", signature = "
+      throw new AssertionError("Different types for method = " + method.getClass()
+          + " and newMethod = " + newMethod.getMethod().getClass() + ", signature = "
           + getApiSignature());
     }
     List<ApiChange.Status> statuses = new ArrayList<ApiChange.Status>();
-    if (!oldjmethod.isFinal() && !apiClass.getClassObject().isFinal()
-        && newjmethod.isFinal()) {
+    if (!oldjmethod.isFinal() && !apiClass.getClassObject().isFinal() && newjmethod.isFinal()) {
       statuses.add(ApiChange.Status.FINAL_ADDED);
     }
     if (!oldjmethod.isAbstract() && newjmethod.isAbstract()) {
@@ -189,8 +177,8 @@ final class ApiMethod extends ApiAbstractMethod {
   }
 
   // remove Error.class, RuntimeException.class, and their sub-classes
-  private void removeUncheckedExceptions(JMethod method,
-      Set<String> exceptionsSet, Map<String, JType> exceptionsMap) {
+  private void removeUncheckedExceptions(JMethod method, Set<String> exceptionsSet,
+      Map<String, JType> exceptionsMap) {
     if (exceptionsSet.size() == 0) {
       return;
     }
@@ -201,10 +189,11 @@ final class ApiMethod extends ApiAbstractMethod {
     for (String exceptionString : exceptionsSet) {
       JType exception = exceptionsMap.get(exceptionString);
       assert (exception != null);
-      boolean remove = (errorType != null && ApiDiffGenerator.isFirstTypeAssignableToSecond(
-          exception, errorType))
-          || (rteType != null && ApiDiffGenerator.isFirstTypeAssignableToSecond(
-              exception, rteType));
+      boolean remove =
+          (errorType != null && ApiDiffGenerator
+              .isFirstTypeAssignableToSecond(exception, errorType))
+              || (rteType != null && ApiDiffGenerator.isFirstTypeAssignableToSecond(exception,
+                  rteType));
       if (remove) {
         exceptionsToRemove.add(exceptionString);
       }

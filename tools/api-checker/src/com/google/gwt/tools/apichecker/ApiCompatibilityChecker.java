@@ -126,8 +126,7 @@ public class ApiCompatibilityChecker extends ToolBase {
       try {
         return new FileInputStream(file);
       } catch (FileNotFoundException e) {
-        throw new RuntimeException("Unable to open file '"
-            + file.getAbsolutePath() + "'", e);
+        throw new RuntimeException("Unable to open file '" + file.getAbsolutePath() + "'", e);
       }
     }
 
@@ -187,8 +186,8 @@ public class ApiCompatibilityChecker extends ToolBase {
     private final JarFile jarFiles[];
     private Set<Resource> resources = null;
 
-    JarFileResources(JarFile[] jarFiles, Set<String> includedPaths,
-        Set<String> excludedPaths, TreeLogger logger) {
+    JarFileResources(JarFile[] jarFiles, Set<String> includedPaths, Set<String> excludedPaths,
+        TreeLogger logger) {
       super(logger);
       this.jarFiles = jarFiles;
       this.includedPaths = includedPaths;
@@ -220,8 +219,7 @@ public class ApiCompatibilityChecker extends ToolBase {
           if (fileName.endsWith(".java") && isIncluded(fileName)) {
             // add this compilation unit
             String fileContent = getFileContentsFromJar(jarFile, jarEntry);
-            String packageName = extractPackageName(new StringReader(
-                fileContent));
+            String packageName = extractPackageName(new StringReader(fileContent));
             if (packageName == null) {
               logger.log(TreeLogger.WARN, "Not adding file = " + fileName
                   + ", because packageName = null", null);
@@ -232,13 +230,12 @@ public class ApiCompatibilityChecker extends ToolBase {
                 if (lastModified < 0) {
                   lastModified = System.currentTimeMillis();
                 }
-                resources.add(new StaticResource(packageName + "."
-                    + getClassName(fileName), fileContent, lastModified));
-                logger.log(TreeLogger.DEBUG, "adding pkgName = " + packageName
-                    + ", file = " + fileName, null);
+                resources.add(new StaticResource(packageName + "." + getClassName(fileName),
+                    fileContent, lastModified));
+                logger.log(TreeLogger.DEBUG, "adding pkgName = " + packageName + ", file = "
+                    + fileName, null);
               } else {
-                logger.log(TreeLogger.SPAM, " not adding file " + fileName,
-                    null);
+                logger.log(TreeLogger.SPAM, " not adding file " + fileName, null);
               }
             }
           }
@@ -247,8 +244,7 @@ public class ApiCompatibilityChecker extends ToolBase {
       return resources;
     }
 
-    String getFileContentsFromJar(JarFile jarFile, JarEntry jarEntry)
-        throws IOException {
+    String getFileContentsFromJar(JarFile jarFile, JarEntry jarEntry) throws IOException {
       StringBuffer fileContent = new StringBuffer();
       InputStream is = jarFile.getInputStream(jarEntry);
       BufferedInputStream bis = new BufferedInputStream(is);
@@ -280,8 +276,8 @@ public class ApiCompatibilityChecker extends ToolBase {
       }
       for (String includedPath : includedPaths) {
         if (fileName.startsWith(includedPath)) {
-          logger.log(TreeLogger.SPAM, fileName
-              + " is not excluded, and is included by " + includedPath);
+          logger.log(TreeLogger.SPAM, fileName + " is not excluded, and is included by "
+              + includedPath);
           return true;
         }
       }
@@ -299,8 +295,8 @@ public class ApiCompatibilityChecker extends ToolBase {
       this.logger = logger;
     }
 
-    public abstract Set<Resource> getResources() throws NotFoundException,
-        IOException, UnableToCompleteException;
+    public abstract Set<Resource> getResources() throws NotFoundException, IOException,
+        UnableToCompleteException;
 
     // TODO (amitmanjhi): remove this code. use TypeOracle functionality
     // instead.
@@ -319,8 +315,7 @@ public class ApiCompatibilityChecker extends ToolBase {
       return null;
     }
 
-    protected File getFileFromName(String tag, String pathName)
-        throws FileNotFoundException {
+    protected File getFileFromName(String tag, String pathName) throws FileNotFoundException {
       File file = new File(pathName);
       if (!file.exists()) {
         throw new FileNotFoundException(tag + "file " + pathName + " not found");
@@ -331,8 +326,8 @@ public class ApiCompatibilityChecker extends ToolBase {
     // TODO (amitmanjhi): remove this code. use TypeOracle functionality
     // instead.
     protected boolean isValidPackage(String packageName, String filePath) {
-      logger.log(TreeLogger.SPAM, "packageName = " + packageName
-          + ", filePath = " + filePath, null);
+      logger
+          .log(TreeLogger.SPAM, "packageName = " + packageName + ", filePath = " + filePath, null);
       if (packageName == null) {
         return false;
       }
@@ -342,8 +337,8 @@ public class ApiCompatibilityChecker extends ToolBase {
       }
       String dirPath = filePath.substring(0, lastSlashPosition);
       String packageNameAsPath = packageName.replace('.', '/');
-      logger.log(TreeLogger.SPAM, "packageNameAsPath " + packageNameAsPath
-          + ", dirPath = " + dirPath, null);
+      logger.log(TreeLogger.SPAM, "packageNameAsPath " + packageNameAsPath + ", dirPath = "
+          + dirPath, null);
       return dirPath.endsWith(packageNameAsPath);
     }
   }
@@ -358,16 +353,15 @@ public class ApiCompatibilityChecker extends ToolBase {
     private Set<Resource> units = null;
 
     SourceFileResources(String dirRoot, Set<String> includedPathsAsString,
-        Set<String> excludedPathsAsString, TreeLogger logger)
-        throws FileNotFoundException, IOException {
+        Set<String> excludedPathsAsString, TreeLogger logger) throws FileNotFoundException,
+        IOException {
       super(logger);
       if (dirRoot == null) {
         dirRoot = "";
       }
       includedPaths = new HashSet<File>();
       for (String includedPath : includedPathsAsString) {
-        includedPaths.add(getFileFromName("source file: ", dirRoot
-            + includedPath));
+        includedPaths.add(getFileFromName("source file: ", dirRoot + includedPath));
       }
 
       String fullExcludedPaths[] = new String[excludedPathsAsString.size()];
@@ -409,10 +403,10 @@ public class ApiCompatibilityChecker extends ToolBase {
       return excludeScanner.match(fileName);
     }
 
-    private void updateCompilationUnitsInPath(File sourcePathEntry)
-        throws NotFoundException, IOException, UnableToCompleteException {
-      logger.log(TreeLogger.SPAM, "entering addCompilationUnitsInPath, file = "
-          + sourcePathEntry, null);
+    private void updateCompilationUnitsInPath(File sourcePathEntry) throws NotFoundException,
+        IOException, UnableToCompleteException {
+      logger.log(TreeLogger.SPAM, "entering addCompilationUnitsInPath, file = " + sourcePathEntry,
+          null);
       File[] files = sourcePathEntry.listFiles();
       if (files == null) { // No files found.
         return;
@@ -427,31 +421,26 @@ public class ApiCompatibilityChecker extends ToolBase {
         }
         if (isExcludedFile(file.getAbsolutePath())) {
           // do not process the subtree
-          logger.log(TreeLogger.DEBUG,
-              "not traversing " + file.toURI().toURL(), null);
+          logger.log(TreeLogger.DEBUG, "not traversing " + file.toURI().toURL(), null);
           continue;
         }
         if (file.isFile()) {
           String fileName = file.getName();
           if (file.getName().endsWith("java")) {
-            String className = file.getName().substring(0,
-                fileName.length() - 5);
+            String className = file.getName().substring(0, fileName.length() - 5);
             String pkgName = extractPackageName(new FileReader(file));
             if (pkgName == null) {
-              logger.log(TreeLogger.WARN,
-                  "Not adding file = " + file.toString()
-                      + ", because packageName = null", null);
+              logger.log(TreeLogger.WARN, "Not adding file = " + file.toString()
+                  + ", because packageName = null", null);
             } else {
-              if (isValidPackage(pkgName,
-                  sourcePathEntry.toURI().toURL().toString())) {
+              if (isValidPackage(pkgName, sourcePathEntry.toURI().toURL().toString())) {
                 // Add if the package and fileNames are okay
                 String typeName = Shared.makeTypeName(pkgName, className);
                 units.add(new FileResource(file, Shared.toPath(typeName)));
-                logger.log(TreeLogger.DEBUG, "adding pkgName = " + pkgName
-                    + ", file = " + file.toString(), null);
+                logger.log(TreeLogger.DEBUG, "adding pkgName = " + pkgName + ", file = "
+                    + file.toString(), null);
               } else {
-                logger.log(TreeLogger.SPAM, " not adding file "
-                    + file.toURI().toURL(), null);
+                logger.log(TreeLogger.SPAM, " not adding file " + file.toURI().toURL(), null);
               }
             }
           }
@@ -503,8 +492,8 @@ public class ApiCompatibilityChecker extends ToolBase {
   public static final boolean REMOVE_NON_SUBCLASSABLE_ABSTRACT_CLASS_FROM_API = true;
 
   // remove duplicates by default
-  public static Collection<ApiChange> getApiDiff(ApiContainer newApi,
-      ApiContainer existingApi, Set<String> whiteList) throws NotFoundException {
+  public static Collection<ApiChange> getApiDiff(ApiContainer newApi, ApiContainer existingApi,
+      Set<String> whiteList) throws NotFoundException {
     ApiDiffGenerator apiDiff = new ApiDiffGenerator(newApi, existingApi);
     return getApiDiff(apiDiff, whiteList, FILTER_DUPLICATES);
   }
@@ -521,25 +510,21 @@ public class ApiCompatibilityChecker extends ToolBase {
 
       AbstractTreeLogger logger = new PrintWriterTreeLogger();
       logger.setMaxDetail(checker.type);
-      logger.log(
-          TreeLogger.INFO,
-          "gwtDevJar = " + checker.gwtDevJar + ", userJar = "
-              + checker.gwtUserJar + ", refjars = "
-              + Arrays.toString(checker.refJars) + ", logLevel = "
-              + checker.type + ", printAllApi = " + checker.printAllApi, null);
+      logger.log(TreeLogger.INFO, "gwtDevJar = " + checker.gwtDevJar + ", userJar = "
+          + checker.gwtUserJar + ", refjars = " + Arrays.toString(checker.refJars)
+          + ", logLevel = " + checker.type + ", printAllApi = " + checker.printAllApi, null);
 
       Set<String> excludedPackages = checker.getSetOfExcludedPackages(checker.configProperties);
       if (PROCESS_NEW_API) {
         Set<Resource> resources = new HashSet<Resource>();
-        resources.addAll(new SourceFileResources(
-            checker.configProperties.getProperty("dirRoot_new"),
-            checker.getConfigPropertyAsSet("sourceFiles_new"),
-            checker.getConfigPropertyAsSet("excludedFiles_new"), logger).getResources());
+        resources.addAll(new SourceFileResources(checker.configProperties
+            .getProperty("dirRoot_new"), checker.getConfigPropertyAsSet("sourceFiles_new"), checker
+            .getConfigPropertyAsSet("excludedFiles_new"), logger).getResources());
         resources.addAll(checker.getJavaxValidationCompilationUnits(logger));
         resources.addAll(checker.getGwtCompilationUnits(logger));
-        newApi = new ApiContainer(
-            checker.configProperties.getProperty("name_new"), resources,
-            excludedPackages, logger);
+        newApi =
+            new ApiContainer(checker.configProperties.getProperty("name_new"), resources,
+                excludedPackages, logger);
         if (checker.printAllApi) {
           logger.log(TreeLogger.INFO, newApi.getApiAsString());
         }
@@ -547,28 +532,26 @@ public class ApiCompatibilityChecker extends ToolBase {
       if (PROCESS_EXISTING_API) {
         Set<Resource> resources = new HashSet<Resource>();
         if (checker.refJars == null) {
-          resources.addAll(new SourceFileResources(
-              checker.configProperties.getProperty("dirRoot_old"),
-              checker.getConfigPropertyAsSet("sourceFiles_old"),
+          resources.addAll(new SourceFileResources(checker.configProperties
+              .getProperty("dirRoot_old"), checker.getConfigPropertyAsSet("sourceFiles_old"),
               checker.getConfigPropertyAsSet("excludedFiles_old"), logger).getResources());
         } else {
-          resources.addAll(new JarFileResources(checker.refJars,
-              checker.getConfigPropertyAsSet("sourceFiles_old"),
-              checker.getConfigPropertyAsSet("excludedFiles_old"), logger).getResources());
+          resources.addAll(new JarFileResources(checker.refJars, checker
+              .getConfigPropertyAsSet("sourceFiles_old"), checker
+              .getConfigPropertyAsSet("excludedFiles_old"), logger).getResources());
         }
         resources.addAll(checker.getJavaxValidationCompilationUnits(logger));
         resources.addAll(checker.getGwtCompilationUnits(logger));
-        existingApi = new ApiContainer(
-            checker.configProperties.getProperty("name_old"), resources,
-            excludedPackages, logger);
+        existingApi =
+            new ApiContainer(checker.configProperties.getProperty("name_old"), resources,
+                excludedPackages, logger);
         if (checker.printAllApi) {
           logger.log(TreeLogger.INFO, existingApi.getApiAsString());
         }
       }
 
       if (PROCESS_NEW_API && PROCESS_EXISTING_API) {
-        Collection<ApiChange> apiDifferences = getApiDiff(newApi, existingApi,
-            checker.whiteList);
+        Collection<ApiChange> apiDifferences = getApiDiff(newApi, existingApi, checker.whiteList);
         for (ApiChange apiChange : apiDifferences) {
           System.out.println(apiChange);
         }
@@ -585,7 +568,8 @@ public class ApiCompatibilityChecker extends ToolBase {
       // that the build breaks.
       try {
         t.printStackTrace();
-        System.err.println("To view the help for this tool, execute this tool without any arguments");
+        System.err
+            .println("To view the help for this tool, execute this tool without any arguments");
       } finally {
         System.exit(-1);
       }
@@ -593,8 +577,8 @@ public class ApiCompatibilityChecker extends ToolBase {
   }
 
   // interface for testing, since do not want to build ApiDiff frequently
-  static Collection<ApiChange> getApiDiff(ApiDiffGenerator apiDiff,
-      Set<String> whiteList, boolean removeDuplicates) throws NotFoundException {
+  static Collection<ApiChange> getApiDiff(ApiDiffGenerator apiDiff, Set<String> whiteList,
+      boolean removeDuplicates) throws NotFoundException {
     Collection<ApiChange> collection = apiDiff.getApiDiff();
     if (removeDuplicates) {
       collection = apiDiff.removeDuplicates(collection);
@@ -610,12 +594,10 @@ public class ApiCompatibilityChecker extends ToolBase {
         continue;
       }
       // check for Status.Compatible and Status.Compatible_with
-      if (!PRINT_COMPATIBLE
-          && apiChange.getStatus().equals(ApiChange.Status.COMPATIBLE)) {
+      if (!PRINT_COMPATIBLE && apiChange.getStatus().equals(ApiChange.Status.COMPATIBLE)) {
         continue;
       }
-      if (!PRINT_COMPATIBLE_WITH
-          && apiChange.getStatus().equals(ApiChange.Status.COMPATIBLE_WITH)) {
+      if (!PRINT_COMPATIBLE_WITH && apiChange.getStatus().equals(ApiChange.Status.COMPATIBLE_WITH)) {
         continue;
       }
       prunedCollection.add(apiChange);
@@ -896,14 +878,13 @@ public class ApiCompatibilityChecker extends ToolBase {
     try {
       return new JarFile(str);
     } catch (IOException ex) {
-      System.err.println("exception in getting jar from fileName: " + str
-          + ", message: " + ex.getMessage());
+      System.err.println("exception in getting jar from fileName: " + str + ", message: "
+          + ex.getMessage());
       return null;
     }
   }
 
-  protected void setPropertiesAndWhitelist(String fileName)
-      throws IllegalArgumentException {
+  protected void setPropertiesAndWhitelist(String fileName) throws IllegalArgumentException {
     try {
       // load config properties
       FileInputStream fis = new FileInputStream(fileName);
@@ -934,9 +915,8 @@ public class ApiCompatibilityChecker extends ToolBase {
     return set;
   }
 
-  private Set<Resource> getGwtCompilationUnits(TreeLogger logger)
-      throws FileNotFoundException, IOException, NotFoundException,
-      UnableToCompleteException {
+  private Set<Resource> getGwtCompilationUnits(TreeLogger logger) throws FileNotFoundException,
+      IOException, NotFoundException, UnableToCompleteException {
     Set<Resource> resources = new HashSet<Resource>();
     if (gwtDevJar == null || gwtUserJar == null) {
       if (gwtDevJar != null) {
@@ -948,29 +928,32 @@ public class ApiCompatibilityChecker extends ToolBase {
       return resources;
     }
     // gwt-user.jar
-    Set<String> gwtIncludedPaths = new HashSet<String>(
-        Arrays.asList(new String[] {"com/google/gwt"}));
-    Set<String> gwtExcludedPaths = new HashSet<String>(
-        Arrays.asList(new String[] {
-            "com/google/gwt/benchmarks",
-            "com/google/gwt/i18n/rebind",
-            "com/google/gwt/i18n/tools",
-            "com/google/gwt/json",
-            "com/google/gwt/junit",
-            "com/google/gwt/user/client/rpc/core/java/util/LinkedHashMap_CustomFieldSerializer.java",
-            "com/google/gwt/user/rebind", "com/google/gwt/user/server",
-            "com/google/gwt/user/tools",}));
-    Resources cu = new JarFileResources(new JarFile[] {gwtUserJar},
-        gwtIncludedPaths, gwtExcludedPaths, logger);
+    Set<String> gwtIncludedPaths =
+        new HashSet<String>(Arrays.asList(new String[] {"com/google/gwt"}));
+    Set<String> gwtExcludedPaths =
+        new HashSet<String>(
+            Arrays
+                .asList(new String[] {
+                    "com/google/gwt/benchmarks",
+                    "com/google/gwt/i18n/rebind",
+                    "com/google/gwt/i18n/tools",
+                    "com/google/gwt/json",
+                    "com/google/gwt/junit",
+                    "com/google/gwt/user/client/rpc/core/java/util/LinkedHashMap_CustomFieldSerializer.java",
+                    "com/google/gwt/user/rebind", "com/google/gwt/user/server",
+                    "com/google/gwt/user/tools",}));
+    Resources cu =
+        new JarFileResources(new JarFile[] {gwtUserJar}, gwtIncludedPaths, gwtExcludedPaths, logger);
     resources.addAll(cu.getResources());
 
     // gwt-dev-*.jar
-    gwtIncludedPaths = new HashSet<String>(Arrays.asList(new String[] {
-        "com/google/gwt/core/client",
-        "com/google/gwt/dev/jjs/intrinsic/com/google/gwt/lang",
-        "com/google/gwt/lang",}));
-    cu = new JarFileResources(new JarFile[] {gwtDevJar}, gwtIncludedPaths,
-        new HashSet<String>(), logger);
+    gwtIncludedPaths =
+        new HashSet<String>(Arrays.asList(new String[] {
+            "com/google/gwt/core/client", "com/google/gwt/dev/jjs/intrinsic/com/google/gwt/lang",
+            "com/google/gwt/lang",}));
+    cu =
+        new JarFileResources(new JarFile[] {gwtDevJar}, gwtIncludedPaths, new HashSet<String>(),
+            logger);
     resources.addAll(cu.getResources());
     return resources;
   }
@@ -983,10 +966,10 @@ public class ApiCompatibilityChecker extends ToolBase {
       throws UnableToCompleteException, NotFoundException, IOException {
     Set<Resource> resources = new HashSet<Resource>();
     if (extraSourceJars != null) {
-      Resources extra = new JarFileResources(extraSourceJars,
-          Collections.singleton(""), new HashSet<String>(Arrays.asList(
-              "javax/validation/Validation.java",
-              "javax/validation/constraints/Pattern.java")), logger);
+      Resources extra =
+          new JarFileResources(extraSourceJars, Collections.singleton(""), new HashSet<String>(
+              Arrays.asList("javax/validation/Validation.java",
+                  "javax/validation/constraints/Pattern.java")), logger);
       Set<Resource> loaded = extra.getResources();
       System.out.println("Found " + loaded.size() + " new resources");
       resources.addAll(loaded);

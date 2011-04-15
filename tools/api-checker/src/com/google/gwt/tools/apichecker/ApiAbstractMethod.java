@@ -28,8 +28,7 @@ import java.util.List;
 /**
  * abstract super-class for ApiMethod and ApiConstructor.
  */
-abstract class ApiAbstractMethod implements Comparable<ApiAbstractMethod>,
-    ApiElement {
+abstract class ApiAbstractMethod implements Comparable<ApiAbstractMethod>, ApiElement {
 
   static String computeApiSignature(JAbstractMethod method) {
     String className = method.getEnclosingType().getQualifiedSourceName();
@@ -117,8 +116,8 @@ abstract class ApiAbstractMethod implements Comparable<ApiAbstractMethod>,
       return false;
     }
     for (int i = 0; i < length; i++) {
-      if (!ApiDiffGenerator.isFirstTypeAssignableToSecond(
-          method.getParameters()[i].getType(), parametersInNew[i].getType())) {
+      if (!ApiDiffGenerator.isFirstTypeAssignableToSecond(method.getParameters()[i].getType(),
+          parametersInNew[i].getType())) {
         return false;
       }
     }
@@ -144,11 +143,11 @@ abstract class ApiAbstractMethod implements Comparable<ApiAbstractMethod>,
     apiChanges.add(returnApiChange);
     return apiChanges;
   }
-  
+
   abstract ApiChange checkReturnTypeCompatibility(ApiAbstractMethod newMethod);
 
   abstract List<ApiChange> getAllChangesInApi(ApiAbstractMethod newMethod);
-  
+
   String getApiSignature() {
     if (apiSignature == null) {
       apiSignature = computeApiSignature(method);
@@ -162,7 +161,7 @@ abstract class ApiAbstractMethod implements Comparable<ApiAbstractMethod>,
    * <p>
    * Useful to determine the method overloading because a null could be passed
    * for a primitive type.
-   * <p> 
+   * <p>
    * Not sure if the implementation is sufficient. If need be, look at the
    * implementation below.
    * 
@@ -187,7 +186,7 @@ abstract class ApiAbstractMethod implements Comparable<ApiAbstractMethod>,
    *   return returnStr.toString();
    * }
    * </pre>
-   *
+   * 
    * @return the coarse signature as a String
    */
   String getCoarseSignature() {
@@ -237,8 +236,7 @@ abstract class ApiAbstractMethod implements Comparable<ApiAbstractMethod>,
     for (JType newException : newMethod.getMethod().getThrows()) {
       boolean isSubclass = false;
       for (JType legalType : legalTypes) {
-        if (ApiDiffGenerator.isFirstTypeAssignableToSecond(newException,
-            legalType)) {
+        if (ApiDiffGenerator.isFirstTypeAssignableToSecond(newException, legalType)) {
           isSubclass = true;
           break;
         }
@@ -259,11 +257,10 @@ abstract class ApiAbstractMethod implements Comparable<ApiAbstractMethod>,
           + "::"
           + signature
           + " defined in "
-          + (enclosingType == null ? "null enclosing type "
-              : enclosingType.getQualifiedSourceName());
+          + (enclosingType == null ? "null enclosing type " : enclosingType
+              .getQualifiedSourceName());
     }
-    return apiClass.getClassObject().getQualifiedSourceName() + "::"
-        + signature;
+    return apiClass.getClassObject().getQualifiedSourceName() + "::" + signature;
   }
 
 }

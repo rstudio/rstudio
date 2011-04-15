@@ -63,13 +63,11 @@ public final class ApiContainer {
    * @throws IllegalArgumentException if one of the arguments is illegal
    * @throws UnableToCompleteException if there is a TypeOracle exception
    */
-  ApiContainer(String name, Set<Resource> resources,
-      Set<String> excludedPackages, TreeLogger logger)
+  ApiContainer(String name, Set<Resource> resources, Set<String> excludedPackages, TreeLogger logger)
       throws UnableToCompleteException {
     this.name = name;
     this.logger = logger;
-    logger.log(TreeLogger.INFO, "name = " + name + ", builders.size = "
-        + resources.size(), null);
+    logger.log(TreeLogger.INFO, "name = " + name + ", builders.size = " + resources.size(), null);
     this.typeOracle = createTypeOracle(resources);
     this.excludedPackages = excludedPackages;
     initializeApiPackages();
@@ -83,8 +81,7 @@ public final class ApiContainer {
   public String getApiAsString() {
     StringBuffer sb = new StringBuffer();
     sb.append("Api: " + name + ", size = " + apiPackages.size() + "\n\n");
-    List<ApiPackage> sortedApiPackages = new ArrayList<ApiPackage>(
-        apiPackages.values());
+    List<ApiPackage> sortedApiPackages = new ArrayList<ApiPackage>(apiPackages.values());
     Collections.sort(sortedApiPackages);
     for (ApiPackage apiPackage : sortedApiPackages) {
       sb.append(apiPackage.getApiAsString());
@@ -181,8 +178,7 @@ public final class ApiContainer {
     return false;
   }
 
-  private TypeOracle createTypeOracle(Set<Resource> resources)
-      throws UnableToCompleteException {
+  private TypeOracle createTypeOracle(Set<Resource> resources) throws UnableToCompleteException {
     List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
     for (Resource resource : resources) {
       CompilationUnitBuilder builder = CompilationUnitBuilder.create(resource);
@@ -190,23 +186,20 @@ public final class ApiContainer {
     }
     List<CompilationUnit> units = JdtCompiler.compile(builders);
     boolean anyError = false;
-    TreeLogger branch = logger.branch(TreeLogger.TRACE,
-        "Checking for compile errors");
+    TreeLogger branch = logger.branch(TreeLogger.TRACE, "Checking for compile errors");
     for (CompilationUnit unit : units) {
       CompilationProblemReporter.reportErrors(branch, unit, false);
       anyError |= unit.isError();
     }
     if (anyError) {
-      logger.log(TreeLogger.ERROR, "Unable to build typeOracle for "
-          + getName());
+      logger.log(TreeLogger.ERROR, "Unable to build typeOracle for " + getName());
       throw new UnableToCompleteException();
     }
 
     TypeOracleMediatorFromSource mediator = new TypeOracleMediatorFromSource();
     mediator.addNewUnits(logger, units);
-    logger.log(TreeLogger.INFO, "API " + name
-        + ", Finished with building typeOracle, added " + units.size()
-        + " files", null);
+    logger.log(TreeLogger.INFO, "API " + name + ", Finished with building typeOracle, added "
+        + units.size() + " files", null);
     return mediator.getTypeOracle();
   }
 
@@ -224,8 +217,7 @@ public final class ApiContainer {
    * Purge non API packages.
    */
   private void initializeApiPackages() {
-    Set<JPackage> allPackages = new HashSet<JPackage>(
-        Arrays.asList(typeOracle.getPackages()));
+    Set<JPackage> allPackages = new HashSet<JPackage>(Arrays.asList(typeOracle.getPackages()));
     Set<String> packagesNotAdded = new HashSet<String>();
     for (JPackage packageObject : allPackages) {
       if (isApiPackage(packageObject)) {
@@ -236,12 +228,12 @@ public final class ApiContainer {
       }
     }
     if (packagesNotAdded.size() > 0) {
-      logger.log(TreeLogger.DEBUG, "API " + name + ": not added "
-          + packagesNotAdded.size() + " packages: " + packagesNotAdded, null);
+      logger.log(TreeLogger.DEBUG, "API " + name + ": not added " + packagesNotAdded.size()
+          + " packages: " + packagesNotAdded, null);
     }
     if (apiPackages.size() > 0) {
-      logger.log(TreeLogger.INFO, "API " + name + " " + apiPackages.size()
-          + " Api packages: " + apiPackages.keySet(), null);
+      logger.log(TreeLogger.INFO, "API " + name + " " + apiPackages.size() + " Api packages: "
+          + apiPackages.keySet(), null);
     }
   }
 

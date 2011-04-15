@@ -63,15 +63,11 @@ public class ApiContainerTest extends TestCase {
 
   public static StaticJavaResource[] getScuArray() {
     return new StaticJavaResource[] {
-        new StaticJavaResource("test.apicontainer.ApiClass",
-            getSourceForApiClass()),
-        new StaticJavaResource("test.apicontainer.NonApiClass",
-            getSourceForNonApiClass()),
-        new StaticJavaResource("test.nonapipackage.TestClass",
-            getSourceForTestClass()),
+        new StaticJavaResource("test.apicontainer.ApiClass", getSourceForApiClass()),
+        new StaticJavaResource("test.apicontainer.NonApiClass", getSourceForNonApiClass()),
+        new StaticJavaResource("test.nonapipackage.TestClass", getSourceForTestClass()),
         new StaticJavaResource("java.lang.Object", getSourceForObject()),
-        new StaticJavaResource("test.apicontainer.OneMoreApiClass",
-            getSourceForOneMoreApiClass()),
+        new StaticJavaResource("test.apicontainer.OneMoreApiClass", getSourceForOneMoreApiClass()),
         new StaticJavaResource("java.newpackage.Test", getSourceForTest()),};
   }
 
@@ -162,8 +158,9 @@ public class ApiContainerTest extends TestCase {
   public void setUp() throws UnableToCompleteException {
     logger.setMaxDetail(com.google.gwt.core.ext.TreeLogger.ERROR);
 
-    apiCheck = new ApiContainer("ApiContainerTest", new HashSet<Resource>(
-        Arrays.asList(getScuArray())), new HashSet<String>(), logger);
+    apiCheck =
+        new ApiContainer("ApiContainerTest", new HashSet<Resource>(Arrays.asList(getScuArray())),
+            new HashSet<String>(), logger);
   }
 
   /*
@@ -180,11 +177,10 @@ public class ApiContainerTest extends TestCase {
     sb.append("class Temp {\n");
     sb.append("}");
 
-    ApiContainer apiCheckLoop = new ApiContainer("ApiClassTest",
-        new HashSet<Resource>(
-            Arrays.asList(new StaticJavaResource[] {new StaticJavaResource(
-                "java.lang.Object", sb.toString())})), new HashSet<String>(),
-        logger);
+    ApiContainer apiCheckLoop =
+        new ApiContainer("ApiClassTest", new HashSet<Resource>(Arrays
+            .asList(new StaticJavaResource[] {new StaticJavaResource("java.lang.Object", sb
+                .toString())})), new HashSet<String>(), logger);
     ApiPackage javaLangPackage = apiCheckLoop.getApiPackage("java.lang");
     assertNotNull(javaLangPackage);
     assertNotNull(javaLangPackage.getApiClass("java.lang.Object"));
@@ -211,7 +207,8 @@ public class ApiContainerTest extends TestCase {
     assertNotNull(package1.getApiClass("java.lang.Object"));
     assertNotNull(package2.getApiClass("test.apicontainer.ApiClass"));
     assertNotNull(package2.getApiClass("test.apicontainer.NonApiClass.ApiClassInNonApiClass"));
-    assertNotNull(package2.getApiClass("test.apicontainer.NonApiClass.AnotherApiClassInNonApiClass"));
+    assertNotNull(package2
+        .getApiClass("test.apicontainer.NonApiClass.AnotherApiClassInNonApiClass"));
     assertEquals(1, package1.getApiClassNames().size());
     assertEquals(4, package2.getApiClassNames().size());
   }
@@ -225,18 +222,18 @@ public class ApiContainerTest extends TestCase {
    * 
    */
   void checkApiMembers() {
-    ApiClass object = apiCheck.getApiPackage("java.lang").getApiClass(
-        "java.lang.Object");
-    ApiClass apiClass = apiCheck.getApiPackage("test.apicontainer").getApiClass(
-        "test.apicontainer.ApiClass");
-    ApiClass innerClass = apiCheck.getApiPackage("test.apicontainer").getApiClass(
-        "test.apicontainer.NonApiClass.ApiClassInNonApiClass");
-    ApiClass oneMoreApiClass = apiCheck.getApiPackage("test.apicontainer").getApiClass(
-        "test.apicontainer.OneMoreApiClass");
+    ApiClass object = apiCheck.getApiPackage("java.lang").getApiClass("java.lang.Object");
+    ApiClass apiClass =
+        apiCheck.getApiPackage("test.apicontainer").getApiClass("test.apicontainer.ApiClass");
+    ApiClass innerClass =
+        apiCheck.getApiPackage("test.apicontainer").getApiClass(
+            "test.apicontainer.NonApiClass.ApiClassInNonApiClass");
+    ApiClass oneMoreApiClass =
+        apiCheck.getApiPackage("test.apicontainer")
+            .getApiClass("test.apicontainer.OneMoreApiClass");
 
     // constructors
-    assertEquals(1, innerClass.getApiMemberNames(
-        ApiClass.MethodType.CONSTRUCTOR).size());
+    assertEquals(1, innerClass.getApiMemberNames(ApiClass.MethodType.CONSTRUCTOR).size());
 
     // fields
     assertEquals(3, object.getApiFieldNames().size());
@@ -245,27 +242,24 @@ public class ApiContainerTest extends TestCase {
 
     // methods
     assertEquals(4, object.getApiMemberNames(ApiClass.MethodType.METHOD).size());
-    assertEquals(7,
-        apiClass.getApiMemberNames(ApiClass.MethodType.METHOD).size());
+    assertEquals(7, apiClass.getApiMemberNames(ApiClass.MethodType.METHOD).size());
     // the method definition lowest in the class hierarchy is kept
-    assertNotSame(getMethodByName("apiMethod0", apiClass), getMethodByName(
-        "apiMethod0", object));
-    assertEquals(getMethodByName("protectedMethod0", apiClass),
-        getMethodByName("protectedMethod0", object));
+    assertNotSame(getMethodByName("apiMethod0", apiClass), getMethodByName("apiMethod0", object));
+    assertEquals(getMethodByName("protectedMethod0", apiClass), getMethodByName("protectedMethod0",
+        object));
     assertNotNull(getMethodByName("methodInNonApiClass1", apiClass));
 
-    assertEquals(5, oneMoreApiClass.getApiMemberNames(
-        ApiClass.MethodType.METHOD).size());
-    Set<String> methodNames = new HashSet<String>(
-        Arrays.asList(new String[] {"checkOverloadedAndOverridableDetection1"}));
-    assertEquals(1, oneMoreApiClass.getApiMembersBySet(methodNames,
-        ApiClass.MethodType.METHOD).size());
+    assertEquals(5, oneMoreApiClass.getApiMemberNames(ApiClass.MethodType.METHOD).size());
+    Set<String> methodNames =
+        new HashSet<String>(Arrays.asList(new String[] {"checkOverloadedAndOverridableDetection1"}));
+    assertEquals(1, oneMoreApiClass.getApiMembersBySet(methodNames, ApiClass.MethodType.METHOD)
+        .size());
 
     // checkOverloadedMethodAccounted should appear twice.
-    methodNames = new HashSet<String>(
-        Arrays.asList(new String[] {"checkOverloadedMethodAccounted1"}));
-    assertEquals(2, oneMoreApiClass.getApiMembersBySet(methodNames,
-        ApiClass.MethodType.METHOD).size());
+    methodNames =
+        new HashSet<String>(Arrays.asList(new String[] {"checkOverloadedMethodAccounted1"}));
+    assertEquals(2, oneMoreApiClass.getApiMembersBySet(methodNames, ApiClass.MethodType.METHOD)
+        .size());
   }
 
   /**

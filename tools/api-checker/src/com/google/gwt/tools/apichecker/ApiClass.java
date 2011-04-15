@@ -84,7 +84,7 @@ final class ApiClass implements Comparable<ApiClass>, ApiElement {
   public int compareTo(ApiClass other) {
     return getName().compareTo(other.getName());
   }
-  
+
   @Override
   public boolean equals(Object o) {
     if (!(o instanceof ApiClass)) {
@@ -92,7 +92,7 @@ final class ApiClass implements Comparable<ApiClass>, ApiElement {
     }
     return this.getName().equals(((ApiClass) o).getName());
   }
-  
+
   public String getRelativeSignature() {
     return classType.getQualifiedSourceName();
   }
@@ -111,22 +111,20 @@ final class ApiClass implements Comparable<ApiClass>, ApiElement {
     StringBuffer sb = new StringBuffer();
     sb.append("\t" + getName() + "\n");
     if (apiFields != null) {
-      ArrayList<ApiField> apiFieldsList = new ArrayList<ApiField>(
-          apiFields.values());
+      ArrayList<ApiField> apiFieldsList = new ArrayList<ApiField>(apiFields.values());
       Collections.sort(apiFieldsList);
       for (ApiField apiField : apiFieldsList) {
         sb.append("\t\t" + apiField.getRelativeSignature() + "\n");
       }
     }
-    if (apiMembersByName != null
-        && apiMembersByName.get(MethodType.METHOD) != null) {
+    if (apiMembersByName != null && apiMembersByName.get(MethodType.METHOD) != null) {
       for (MethodType method : MethodType.values()) {
         HashSet<ApiAbstractMethod> apiMethodsSet = new HashSet<ApiAbstractMethod>();
         for (Set<ApiAbstractMethod> methodsSets : apiMembersByName.get(method).values()) {
           apiMethodsSet.addAll(methodsSets);
         }
-        ArrayList<ApiAbstractMethod> apiMethodsList = new ArrayList<ApiAbstractMethod>(
-            apiMethodsSet);
+        ArrayList<ApiAbstractMethod> apiMethodsList =
+            new ArrayList<ApiAbstractMethod>(apiMethodsSet);
         Collections.sort(apiMethodsList);
         for (ApiAbstractMethod apiMethod : apiMethodsList) {
           sb.append("\t\t" + apiMethod.getRelativeSignature() + "\n");
@@ -162,8 +160,7 @@ final class ApiClass implements Comparable<ApiClass>, ApiElement {
     return new HashSet<String>(apiMembersByName.get(type).keySet());
   }
 
-  Set<ApiAbstractMethod> getApiMembersBySet(Set<String> methodNames,
-      MethodType type) {
+  Set<ApiAbstractMethod> getApiMembersBySet(Set<String> methodNames, MethodType type) {
     Map<String, Set<ApiAbstractMethod>> current = apiMembersByName.get(type);
     Set<ApiAbstractMethod> tempMethods = new HashSet<ApiAbstractMethod>();
     for (String methodName : methodNames) {
@@ -295,8 +292,7 @@ final class ApiClass implements Comparable<ApiClass>, ApiElement {
         JMethod existing = methodsBySignature.put(signature, method);
         if (existing != null) {
           // decide which implementation to keep
-          if (existing.getEnclosingType().isAssignableTo(
-              method.getEnclosingType())) {
+          if (existing.getEnclosingType().isAssignableTo(method.getEnclosingType())) {
             methodsBySignature.put(signature, existing);
           }
         }
@@ -321,11 +317,10 @@ final class ApiClass implements Comparable<ApiClass>, ApiElement {
   }
 
   private void initializeApiConstructorsAndMethods() {
-    apiMembersByName = new EnumMap<MethodType, Map<String, Set<ApiAbstractMethod>>>(
-        MethodType.class);
+    apiMembersByName =
+        new EnumMap<MethodType, Map<String, Set<ApiAbstractMethod>>>(MethodType.class);
     for (MethodType method : MethodType.values()) {
-      apiMembersByName.put(method,
-          new HashMap<String, Set<ApiAbstractMethod>>());
+      apiMembersByName.put(method, new HashMap<String, Set<ApiAbstractMethod>>());
       Map<String, Set<ApiAbstractMethod>> pointer = apiMembersByName.get(method);
       List<String> notAddedMembers = new ArrayList<String>();
       JAbstractMethod jams[] = getAccessibleMethods(method);
@@ -352,9 +347,8 @@ final class ApiClass implements Comparable<ApiClass>, ApiElement {
         }
       }
       if (notAddedMembers.size() > 0) {
-        logger.log(TreeLogger.SPAM, "class " + getName() + ", removing "
-            + notAddedMembers.size() + " nonApi members: " + notAddedMembers,
-            null);
+        logger.log(TreeLogger.SPAM, "class " + getName() + ", removing " + notAddedMembers.size()
+            + " nonApi members: " + notAddedMembers, null);
       }
     }
   }

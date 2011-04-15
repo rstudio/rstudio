@@ -88,15 +88,13 @@ public class ApiCompatibilityUnitTest extends TestCase {
 
       // firstApi is the reference Api
       Collection<ApiChange> apiChanges = getApiChanges(firstApi, secondApi);
-      assertEquals(Arrays.asList(new ApiChange[] {new ApiChange(
-          new MockApiElement("java.lang.Object::foo"),
-          ApiChange.Status.FINAL_ADDED),}), apiChanges);
+      assertEquals(Arrays.asList(new ApiChange[] {new ApiChange(new MockApiElement(
+          "java.lang.Object::foo"), ApiChange.Status.FINAL_ADDED),}), apiChanges);
 
       // secondApi is the reference Api
       apiChanges = getApiChanges(secondApi, firstApi);
-      assertEquals(
-          Arrays.asList(new ApiChange[] {new ApiChange(new MockApiElement(
-              "java.lang.Object"), ApiChange.Status.FINAL_ADDED),}), apiChanges);
+      assertEquals(Arrays.asList(new ApiChange[] {new ApiChange(new MockApiElement(
+          "java.lang.Object"), ApiChange.Status.FINAL_ADDED),}), apiChanges);
     }
   }
 
@@ -148,23 +146,20 @@ public class ApiCompatibilityUnitTest extends TestCase {
 
       // firstApi is the reference Api
       Collection<ApiChange> apiChanges = getApiChanges(firstApi, secondApi);
-      assertEquals(
-          Arrays.asList(new ApiChange[] {new ApiChange(new MockApiElement(
-              "java.lang.Object.Bar::Bar(Ljava/lang/Object$Bar;)"),
-              ApiChange.Status.OVERLOADED_METHOD_CALL),}), apiChanges);
+      assertEquals(Arrays.asList(new ApiChange[] {new ApiChange(new MockApiElement(
+          "java.lang.Object.Bar::Bar(Ljava/lang/Object$Bar;)"),
+          ApiChange.Status.OVERLOADED_METHOD_CALL),}), apiChanges);
 
       // secondApi is the reference Api
       apiChanges = getApiChanges(secondApi, firstApi);
       assertEquals(Arrays.asList(new ApiChange[] {
-          new ApiChange(new MockApiElement(
-              "java.lang.Object.Foo::Foo(Ljava/lang/Object;)"),
+          new ApiChange(new MockApiElement("java.lang.Object.Foo::Foo(Ljava/lang/Object;)"),
               ApiChange.Status.MISSING),
-          new ApiChange(new MockApiElement(
-              "java.lang.Object.Bar::Bar(Ljava/lang/Object$Foo;)"),
+          new ApiChange(new MockApiElement("java.lang.Object.Bar::Bar(Ljava/lang/Object$Foo;)"),
               ApiChange.Status.MISSING),}), apiChanges);
     }
   }
-  
+
   /**
    * Test when method overloading results in Api incompatibilities.
    * <p>
@@ -213,19 +208,16 @@ public class ApiCompatibilityUnitTest extends TestCase {
 
       // firstApi is the reference Api
       Collection<ApiChange> apiChanges = getApiChanges(firstApi, secondApi);
-      assertEquals(
-          Arrays.asList(new ApiChange[] {new ApiChange(new MockApiElement(
-              "java.lang.Object::fooBar(Ljava/lang/Object$Foo;)"),
-              ApiChange.Status.OVERLOADED_METHOD_CALL),}), apiChanges);
+      assertEquals(Arrays.asList(new ApiChange[] {new ApiChange(new MockApiElement(
+          "java.lang.Object::fooBar(Ljava/lang/Object$Foo;)"),
+          ApiChange.Status.OVERLOADED_METHOD_CALL),}), apiChanges);
 
       // secondApi is the reference Api
       apiChanges = getApiChanges(secondApi, firstApi);
       assertEquals(Arrays.asList(new ApiChange[] {
-          new ApiChange(new MockApiElement(
-              "java.lang.Object::fooBar(Ljava/lang/Object$Bar;)"),
+          new ApiChange(new MockApiElement("java.lang.Object::fooBar(Ljava/lang/Object$Bar;)"),
               ApiChange.Status.MISSING),
-          new ApiChange(new MockApiElement(
-              "java.lang.Object::fooObject(Ljava/lang/Object;)"),
+          new ApiChange(new MockApiElement("java.lang.Object::fooObject(Ljava/lang/Object;)"),
               ApiChange.Status.MISSING),}), apiChanges);
     }
   }
@@ -291,15 +283,14 @@ public class ApiCompatibilityUnitTest extends TestCase {
     assert apiChange1 != null;
     assert apiChange2 != null;
     assertEquals(apiChange1.getStatus(), apiChange2.getStatus());
-    assertEquals(apiChange1.getApiElement().getRelativeSignature(),
-        apiChange2.getApiElement().getRelativeSignature());
+    assertEquals(apiChange1.getApiElement().getRelativeSignature(), apiChange2.getApiElement()
+        .getRelativeSignature());
   }
 
   /**
    * Assert that two sets of ApiChanges are equal.
    */
-  static void assertEquals(Collection<ApiChange> collection1,
-      Collection<ApiChange> collection2) {
+  static void assertEquals(Collection<ApiChange> collection1, Collection<ApiChange> collection2) {
     assertEquals(collection1.size(), collection2.size());
 
     List<ApiChange> list1 = new ArrayList<ApiChange>();
@@ -322,10 +313,8 @@ public class ApiCompatibilityUnitTest extends TestCase {
    * @param newTypesToSourcesMap new Api
    * @return A collection of ApiChange
    */
-  static Collection<ApiChange> getApiChanges(
-      Map<String, String> existingTypesToSourcesMap,
-      Map<String, String> newTypesToSourcesMap)
-      throws UnableToCompleteException, NotFoundException {
+  static Collection<ApiChange> getApiChanges(Map<String, String> existingTypesToSourcesMap,
+      Map<String, String> newTypesToSourcesMap) throws UnableToCompleteException, NotFoundException {
 
     AbstractTreeLogger logger = new PrintWriterTreeLogger();
     logger.setMaxDetail(TreeLogger.ERROR);
@@ -340,29 +329,24 @@ public class ApiCompatibilityUnitTest extends TestCase {
       set2.add(new StaticJavaResource(type, newTypesToSourcesMap.get(type)));
     }
 
-    ApiContainer existingApi = new ApiContainer("existingApi", set1, emptyList,
-        logger);
+    ApiContainer existingApi = new ApiContainer("existingApi", set1, emptyList, logger);
     ApiContainer newApi = new ApiContainer("newApi", set2, emptyList, logger);
     return ApiCompatibilityChecker.getApiDiff(newApi, existingApi, emptyList);
   }
 
-  public void testConstructorOverloading() throws NotFoundException,
-      UnableToCompleteException {
+  public void testConstructorOverloading() throws NotFoundException, UnableToCompleteException {
     new OverloadedConstructorRefactoring().testBothWays();
   }
-  
-  public void testFinalKeywordRefactoring() throws NotFoundException,
-      UnableToCompleteException {
+
+  public void testFinalKeywordRefactoring() throws NotFoundException, UnableToCompleteException {
     new FinalKeywordRefactoring().testBothWays();
   }
 
-  public void testMethodOverloading() throws NotFoundException,
-      UnableToCompleteException {
+  public void testMethodOverloading() throws NotFoundException, UnableToCompleteException {
     new OverloadedMethodRefactoring().testBothWays();
   }
 
-  public void testSuperClassRefactoring() throws NotFoundException,
-      UnableToCompleteException {
+  public void testSuperClassRefactoring() throws NotFoundException, UnableToCompleteException {
     new SuperClassRefactoring().testBothWays();
   }
 

@@ -51,7 +51,7 @@ final class ApiPackage implements Comparable<ApiPackage>, ApiElement {
   public int compareTo(ApiPackage other) {
     return this.getName().compareTo(other.getName());
   }
-  
+
   @Override
   public boolean equals(Object o) {
     if (!(o instanceof ApiPackage)) {
@@ -75,26 +75,25 @@ final class ApiPackage implements Comparable<ApiPackage>, ApiElement {
   }
 
   List<JClassType> getAllClasses() {
-    List<JClassType> allClasses = new ArrayList<JClassType>(
-        Arrays.asList(packageObject.getTypes()));
-    logger.log(TreeLogger.SPAM, "API " + packageObject + " has "
-        + allClasses.size() + " outer classes", null);
+    List<JClassType> allClasses =
+        new ArrayList<JClassType>(Arrays.asList(packageObject.getTypes()));
+    logger.log(TreeLogger.SPAM, "API " + packageObject + " has " + allClasses.size()
+        + " outer classes", null);
     int index = 0;
     while (index < allClasses.size()) {
       JClassType classObject = allClasses.get(index);
       allClasses.addAll(Arrays.asList(classObject.getNestedTypes()));
       index++;
     }
-    logger.log(TreeLogger.SPAM, "API " + packageObject + " has "
-        + allClasses.size() + " total classes", null);
+    logger.log(TreeLogger.SPAM, "API " + packageObject + " has " + allClasses.size()
+        + " total classes", null);
     return allClasses;
   }
 
   String getApiAsString() {
     StringBuffer sb = new StringBuffer();
     sb.append(name + ", size = " + apiClasses.size() + "\n");
-    ArrayList<ApiClass> apiClassesList = new ArrayList<ApiClass>(
-        apiClasses.values());
+    ArrayList<ApiClass> apiClassesList = new ArrayList<ApiClass>(apiClasses.values());
     Collections.sort(apiClassesList);
     for (ApiClass apiClass : apiClassesList) {
       sb.append(apiClass.getApiAsString());
@@ -138,8 +137,8 @@ final class ApiPackage implements Comparable<ApiPackage>, ApiElement {
     }
     if (notAddedClassNames.size() > 0) {
       logger.log(TreeLogger.SPAM, "API " + apiContainer.getName() + ", package: " + name
-          + ", not adding " + notAddedClassNames.size() + " nonApi classes: "
-          + notAddedClassNames, null);
+          + ", not adding " + notAddedClassNames.size() + " nonApi classes: " + notAddedClassNames,
+          null);
     }
   }
 
