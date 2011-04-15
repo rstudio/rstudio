@@ -656,7 +656,7 @@ public class RequestFactoryJarExtractor {
       SEEDS.put(
           "test" + CODE_AND_SOURCE,
           Collections.unmodifiableList(Arrays.<Class<?>> asList(
-              Class.forName("com.google.web.bindery.requestfactory.RequestFactoryJreSuite"),
+              Class.forName("com.google.web.bindery.requestfactory.vm.RequestFactoryJreSuite"),
               Class.forName("com.google.web.bindery.requestfactory.server.SimpleBar"))));
     } catch (ClassNotFoundException ignored) {
     }
