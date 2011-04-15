@@ -16,6 +16,8 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.ImageElement;
@@ -72,8 +74,6 @@ import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.event.dom.client.TouchStartHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.impl.ClippedImageImpl;
 
@@ -137,6 +137,7 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
 
     private int height = 0;
     private int left = 0;
+    private boolean pendingNativeLoadEvent = true;
     private int top = 0;
     private String url = null;
     private int width = 0;
@@ -186,6 +187,13 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
     }
 
     @Override
+    public void onLoadEvent(Image image) {
+      // A load event has fired.
+      pendingNativeLoadEvent = false;
+      super.onLoadEvent(image);
+    }
+
+    @Override
     public void setUrl(Image image, String url) {
       image.changeState(new UnclippedState(image));
       // Need to make sure we change the state before an onload event can fire,
@@ -194,10 +202,15 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
     }
 
     @Override
-    public void setUrlAndVisibleRect(Image image, String url, int left,
-        int top, int width, int height) {
-      if (!this.url.equals(url) || this.left != left || this.top != top
-          || this.width != width || this.height != height) {
+    public void setUrlAndVisibleRect(Image image, String url, int left, int top, int width,
+        int height) {
+      /*
+       * In the event that the clipping rectangle has not changed, we want to
+       * skip all of the work required with a getImpl().adjust, and we do not
+       * want to fire a load event.
+       */
+      if (!this.url.equals(url) || this.left != left || this.top != top || this.width != width
+          || this.height != height) {
 
         this.url = url;
         this.left = left;
@@ -206,29 +219,22 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
         this.height = height;
 
         impl.adjust(image.getElement(), url, left, top, width, height);
-        fireSyntheticLoadEvent(image);
+
+        /*
+         * The native load event hasn't fired yet, so we don't need to
+         * synthesize an event. If we did synthesize an event, we would get two
+         * load events.
+         */
+        if (!pendingNativeLoadEvent) {
+          fireSyntheticLoadEvent(image);
+        }
       }
     }
 
     @Override
     public void setVisibleRect(Image image, int left, int top, int width,
         int height) {
-      /*
-       * In the event that the clipping rectangle has not changed, we want to
-       * skip all of the work required with a getImpl().adjust, and we do not
-       * want to fire a load event.
-       */
-      if (this.left != left || this.top != top || this.width != width
-          || this.height != height) {
-
-        this.left = left;
-        this.top = top;
-        this.width = width;
-        this.height = height;
-
-        impl.adjust(image.getElement(), url, left, top, width, height);
-        fireSyntheticLoadEvent(image);
-      }
+      setUrlAndVisibleRect(image, url, left, top, width, height);
     }
 
     /* This method is used only by unit tests */
@@ -244,6 +250,11 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
    */
   private abstract static class State {
 
+    /**
+     * The pending command to create a synthetic event.
+     */
+    private ScheduledCommand syntheticEventCommand = null;
+
     public abstract int getHeight(Image image);
 
     public abstract ImageElement getImageElement(Image image);
@@ -256,14 +267,28 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
 
     public abstract int getWidth(Image image);
 
+    /**
+     * Called when the widget is attached to the page. Not to be confused with
+     * the load event that fires when the image loads.
+     * 
+     * @param image the widget
+     */
     public void onLoad(Image image) {
       // If an onload event fired while the image wasn't attached, we need to
       // synthesize one now.
-      String unhandledEvent = getImageElement(image).getPropertyString(
-          UNHANDLED_EVENT_ATTR);
+      String unhandledEvent = getImageElement(image).getPropertyString(UNHANDLED_EVENT_ATTR);
       if ("load".equals(unhandledEvent)) {
         fireSyntheticLoadEvent(image);
       }
+    }
+
+    /**
+     * Called when a load event is handled by the widget.
+     * 
+     * @param image the widget
+     */
+    public void onLoadEvent(Image image) {
+      // Overridden by ClippedState.
     }
 
     public abstract void setUrl(Image image, String url);
@@ -287,12 +312,33 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
        * that a second load event would occur while you are in the load event
        * handler.
        */
-      DeferredCommand.addCommand(new Command() {
+      syntheticEventCommand = new ScheduledCommand() {
         public void execute() {
+          /*
+           * The state has been replaced, or another load event is already
+           * pending.
+           */
+          if (image.state != State.this || this != syntheticEventCommand) {
+            return;
+          }
+          syntheticEventCommand = null;
+
+          /*
+           * The image is not attached, so we cannot safely fire the event. We
+           * still want the event to fire eventually, so we mark an unhandled
+           * load event, which will trigger a new synthetic event the next time
+           * the widget is attached.
+           */
+          if (!image.isAttached()) {
+            getImageElement(image).setPropertyString(UNHANDLED_EVENT_ATTR, "load");
+            return;
+          }
+
           NativeEvent evt = Document.get().createLoadEvent();
           getImageElement(image).dispatchEvent(evt);
         }
-      });
+      };
+      Scheduler.get().scheduleDeferred(syntheticEventCommand);
     }
 
     // This method is used only by unit tests.
@@ -685,6 +731,7 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
     // handlers could trigger onLoad, which would refire the event.
     if (event.getTypeInt() == Event.ONLOAD) {
       clearUnhandledEvent();
+      state.onLoadEvent(this);
     }
 
     super.onBrowserEvent(event);

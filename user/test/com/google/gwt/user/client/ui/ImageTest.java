@@ -117,6 +117,23 @@ public class ImageTest extends GWTTestCase {
   }
 
   /**
+   * The default timeout of asynchronous tests. This should be larger than
+   * LOAD_EVENT_TIMEOUT and SYNTHETIC_LOAD_EVENT_TIMEOUT.
+   */
+  private static final int DEFAULT_TEST_TIMEOUT = 10000;
+
+  /**
+   * The amount of time to wait for a load event to fire in milliseconds.
+   */
+  private static final int LOAD_EVENT_TIMEOUT = 7000;
+
+  /**
+   * The amount of time to wait for a clipped image to fire a synthetic load
+   * event in milliseconds.
+   */
+  private static final int SYNTHETIC_LOAD_EVENT_TIMEOUT = 1000;
+
+  /**
    * Helper method that allows us to 'peek' at the private <code>state</code>
    * field in the Image object, and call the <code>state.getStateName()</code>
    * method.
@@ -128,6 +145,10 @@ public class ImageTest extends GWTTestCase {
   public static native String getCurrentImageStateName(Image image) /*-{
     var imgState = image.@com.google.gwt.user.client.ui.Image::state;
     return imgState.@com.google.gwt.user.client.ui.Image.State::getStateName() ();
+  }-*/;
+
+  private static native boolean isIE6() /*-{
+    return @com.google.gwt.dom.client.DOMImplIE6::isIE6()();
   }-*/;
 
   private int firedError;
@@ -151,6 +172,35 @@ public class ImageTest extends GWTTestCase {
   }
 
   /**
+   * Test that attaching and immediately detaching an element does not cause an
+   * error.
+   */
+  public void testAttachDetach() {
+    /*
+     * This test fails on IE6 due to the way ImageSrcIE6 delays setting the
+     * src of images. It may be a real error, but it doesn't seem to affect
+     * apps and its too obscure to spend time fixing it.  
+     */
+    if (isIE6()) {
+      return;
+    }
+
+    final Image image = new Image("counting-forwards.png");
+    RootPanel.get().add(image);
+    RootPanel.get().remove(image);
+
+    // Wait for the synthetic event to attempt to fire.
+    delayTestFinish(DEFAULT_TEST_TIMEOUT);
+    new Timer() {
+      @Override
+      public void run() {
+        // The synthetic event did not cause an error.
+        finishTest();
+      }
+    }.schedule(SYNTHETIC_LOAD_EVENT_TIMEOUT);
+  }
+
+  /**
    * Tests the transition from the clipped state to the unclipped state.
    */
   @DoNotRunWith(Platform.HtmlUnitUnknown)
@@ -158,7 +208,7 @@ public class ImageTest extends GWTTestCase {
     final Image image = new Image("counting-forwards.png", 12, 13, 8, 8);
     assertEquals("clipped", getCurrentImageStateName(image));
 
-    delayTestFinish(5000);
+    delayTestFinish(DEFAULT_TEST_TIMEOUT);
     image.addErrorHandler(new TestErrorHandler(image));
     image.addLoadHandler(new LoadHandler() {
       private int onLoadEventCount = 0;
@@ -189,7 +239,7 @@ public class ImageTest extends GWTTestCase {
     final Image image = new Image("counting-forwards.png");
     assertEquals("unclipped", getCurrentImageStateName(image));
 
-    delayTestFinish(5000);
+    delayTestFinish(DEFAULT_TEST_TIMEOUT);
     image.addErrorHandler(new TestErrorHandler(image));
     image.addLoadHandler(new LoadHandler() {
       private int onLoadEventCount = 0;
@@ -214,13 +264,68 @@ public class ImageTest extends GWTTestCase {
   }
 
   /**
+   * Tests the transition from the unclipped state to the clipped state
+   * before a load event fires.
+   */
+  @DoNotRunWith(Platform.HtmlUnitUnknown)
+  public void testChangeImageToClippedSynchronously() {
+    /*
+     * This test fails on IE6 due to the way ImageSrcIE6 delays setting the
+     * src of images. It may be a real error, but it doesn't seem to affect
+     * apps and its too obscure to spend time fixing it.  
+     */
+    if (isIE6()) {
+      return;
+    }
+
+    final Image image = new Image("counting-forwards.png");
+    assertEquals("unclipped", getCurrentImageStateName(image));
+
+    image.addErrorHandler(new TestErrorHandler(image));
+    final TestLoadHandler loadHandler = new TestLoadHandler() {
+      public void onLoad(LoadEvent event) {
+        if (isFinished()) {
+          fail("LoadHandler fired twice. Expected it to fire only once.");
+        }
+
+        assertEquals("clipped", getCurrentImageStateName(image));
+        assertEquals(12, image.getOriginLeft());
+        assertEquals(13, image.getOriginTop());
+        assertEquals(8, image.getWidth());
+        assertEquals(8, image.getHeight());
+        finish();
+      }
+    };
+    image.addLoadHandler(loadHandler);
+
+    /*
+     * Change the image to a clipped image before a load event fires. We only
+     * expect one asynchronous load event to fire for the final state. This is
+     * consistent with the expected behavior of changing the source URL multiple
+     * times.
+     */
+    RootPanel.get().add(image);
+    image.setVisibleRect(12, 13, 8, 8);
+    assertEquals("clipped", getCurrentImageStateName(image));
+
+    delayTestFinish(DEFAULT_TEST_TIMEOUT);
+    new Timer() {
+      @Override
+      public void run() {
+        assertTrue(loadHandler.isFinished());
+        finishTest();
+      }
+    }.schedule(SYNTHETIC_LOAD_EVENT_TIMEOUT);
+  }
+
+  /**
    * Tests the creation of an image in unclipped mode.
    */
   @DoNotRunWith(Platform.HtmlUnitUnknown)
   public void testCreateImage() {
     final Image image = new Image("counting-forwards.png");
 
-    delayTestFinish(5000);
+    delayTestFinish(DEFAULT_TEST_TIMEOUT);
     image.addErrorHandler(new TestErrorHandler(image));
     image.addLoadHandler(new LoadHandler() {
       private int onLoadEventCount = 0;
@@ -247,7 +352,7 @@ public class ImageTest extends GWTTestCase {
   public void testCreateImageWithError() {
     final Image image = new Image("imageDoesNotExist.png");
 
-    delayTestFinish(5000);
+    delayTestFinish(DEFAULT_TEST_TIMEOUT);
     image.addErrorHandler(new ErrorHandler() {
       public void onError(ErrorEvent event) {
         finishTest();
@@ -270,7 +375,7 @@ public class ImageTest extends GWTTestCase {
   public void testSetUrlAndLoadEventsOnUnclippedImage() {
     final Image image = new Image();
 
-    delayTestFinish(5000);
+    delayTestFinish(DEFAULT_TEST_TIMEOUT);
     image.addErrorHandler(new TestErrorHandler(image));
     image.addLoadHandler(new LoadHandler() {
       private int onLoadEventCount = 0;
@@ -298,7 +403,7 @@ public class ImageTest extends GWTTestCase {
     final Image image = new Image("counting-backwards.png");
     assertEquals("unclipped", getCurrentImageStateName(image));
 
-    delayTestFinish(5000);
+    delayTestFinish(DEFAULT_TEST_TIMEOUT);
     image.addErrorHandler(new TestErrorHandler(image));
     image.addLoadHandler(new LoadHandler() {
       private int onLoadEventCount = 0;
@@ -329,7 +434,7 @@ public class ImageTest extends GWTTestCase {
   public void testCreateClippedImage() {
     final Image image = new Image("counting-forwards.png", 16, 16, 16, 16);
 
-    delayTestFinish(5000);
+    delayTestFinish(DEFAULT_TEST_TIMEOUT);
     final TestLoadListener listener = new TestLoadListener(image) {
       private int onLoadEventCount = 0;
 
@@ -393,13 +498,48 @@ public class ImageTest extends GWTTestCase {
   }
 
   /**
+   * Test that attaching an image multiple times results in only one load event.
+   */
+  public void testMultipleAttach() {
+    final Image image = new Image("counting-forwards.png");
+
+    final TestLoadHandler loadHandler = new TestLoadHandler() {
+      public void onLoad(LoadEvent event) {
+        if (isFinished()) {
+          fail("LoadHandler fired multiple times.");
+        }
+        finish();
+      }
+    };
+    image.addErrorHandler(new TestErrorHandler(image));
+    image.addLoadHandler(loadHandler);
+
+    RootPanel.get().add(image);
+    RootPanel.get().remove(image);
+    RootPanel.get().add(image);
+    RootPanel.get().remove(image);
+    RootPanel.get().add(image);
+    RootPanel.get().remove(image);
+    RootPanel.get().add(image);
+
+    delayTestFinish(DEFAULT_TEST_TIMEOUT);
+    new Timer() {
+      @Override
+      public void run() {
+        assertTrue(loadHandler.isFinished());
+        finishTest();
+      }
+    }.schedule(LOAD_EVENT_TIMEOUT);
+  }
+
+  /**
    * Verify that detaching and reattaching an image in a handler does not fire a
    * second onload event.
    */
   public void testNoEventOnReattachInHandler() {
     final Image image = new Image("counting-forwards.png");
 
-    delayTestFinish(5000);
+    delayTestFinish(DEFAULT_TEST_TIMEOUT);
     image.addErrorHandler(new TestErrorHandler(image));
     image.addLoadHandler(new LoadHandler() {
       private int onLoadEventCount = 0;
@@ -430,18 +570,18 @@ public class ImageTest extends GWTTestCase {
         finish();
       }
     };
-    delayTestFinish(6000);
+    image.addErrorHandler(new TestErrorHandler(image));
+    image.addLoadHandler(loadHandler);
+
+    RootPanel.get().add(image);
+    delayTestFinish(DEFAULT_TEST_TIMEOUT);
     new Timer() {
       @Override
       public void run() {
         assertTrue(loadHandler.isFinished());
         finishTest();
       }
-    }.schedule(5000);
-    image.addErrorHandler(new TestErrorHandler(image));
-    image.addLoadHandler(loadHandler);
-
-    RootPanel.get().add(image);
+    }.schedule(LOAD_EVENT_TIMEOUT);
   }
 
   public void testOneEventOnlyClippedImage() {
@@ -455,19 +595,19 @@ public class ImageTest extends GWTTestCase {
         finish();
       }
     };
-    delayTestFinish(6000);
+    image.addErrorHandler(new TestErrorHandler(image));
+    image.addLoadHandler(loadHandler);
+
+    RootPanel.get().add(image);
+    delayTestFinish(DEFAULT_TEST_TIMEOUT);
     new Timer() {
       @Override
       public void run() {
         assertTrue(loadHandler.isFinished());
         finishTest();
       }
-    }.schedule(5000);
-    image.addErrorHandler(new TestErrorHandler(image));
-    image.addLoadHandler(loadHandler);
-
-    RootPanel.get().add(image);
-  }
+    }.schedule(LOAD_EVENT_TIMEOUT);
+   }
 
   public void testResourceConstructor() {
     Bundle b = GWT.create(Bundle.class);
@@ -490,47 +630,56 @@ public class ImageTest extends GWTTestCase {
   @SuppressWarnings("deprecation")
   public void testSetUrlAndVisibleRectOnClippedImage() {
     final Image image = new Image("counting-backwards.png", 12, 12, 12, 12);
-    delayTestFinish(5000);
 
     final TestLoadListener listener = new TestLoadListener(image) {
-      private int onLoadEventCount = 0;
-
       public void onLoad(Widget sender) {
-        if (++onLoadEventCount == 2) {
-          assertEquals(0, image.getOriginLeft());
-          assertEquals(16, image.getOriginTop());
-          assertEquals(16, image.getWidth());
-          assertEquals(16, image.getHeight());
-          assertEquals("clipped", getCurrentImageStateName(image));
-          finish();
+        if (isFinished()) {
+          fail("LoadListener fired twice. Expected it to fire only once.");
         }
+
+        assertEquals(0, image.getOriginLeft());
+        assertEquals(16, image.getOriginTop());
+        assertEquals(16, image.getWidth());
+        assertEquals(16, image.getHeight());
+        assertEquals("clipped", getCurrentImageStateName(image));
+        finish();
       }
     };
     image.addLoadListener(listener);
 
-    image.addLoadHandler(new LoadHandler() {
-      private int onLoadEventCount = 0;
-
+    final TestLoadHandler loadHandler = new TestLoadHandler() {
       public void onLoad(LoadEvent event) {
-        if (++onLoadEventCount == 2) {
-          assertEquals(0, image.getOriginLeft());
-          assertEquals(16, image.getOriginTop());
-          assertEquals(16, image.getWidth());
-          assertEquals(16, image.getHeight());
-          assertEquals("clipped", getCurrentImageStateName(image));
-          if (listener.isFinished()) {
-            finishTest();
-          } else {
-            fail("Listener did not fire first");
-          }
+        if (isFinished()) {
+          fail("LoadHandler fired twice. Expected it to fire only once.");
+        }
+        if (listener.isFinished()) {
+          finish();
+        } else {
+          fail("Listener did not fire first");
         }
       }
-    });
+    };
+    image.addLoadHandler(loadHandler);
     image.addErrorHandler(new TestErrorHandler(image));
 
     RootPanel.get().add(image);
     assertEquals("clipped", getCurrentImageStateName(image));
+
+    /*
+     * Change the url and visible rect, but we only expect one asynchronous load
+     * event to fire. This is consistent with the expected behavior of changing
+     * the source URL in the same event loop.
+     */
     image.setUrlAndVisibleRect("counting-forwards.png", 0, 16, 16, 16);
+
+    delayTestFinish(DEFAULT_TEST_TIMEOUT);
+    new Timer() {
+      @Override
+      public void run() {
+        assertTrue(loadHandler.isFinished());
+        finishTest();
+      }
+    }.schedule(SYNTHETIC_LOAD_EVENT_TIMEOUT);
   }
 
   /**
@@ -542,38 +691,51 @@ public class ImageTest extends GWTTestCase {
   public void testSetVisibleRectAndLoadEventsOnClippedImage() {
     final Image image = new Image("counting-backwards.png", 16, 16, 16, 16);
 
-    delayTestFinish(5000);
     final TestLoadListener listener = new TestLoadListener(image) {
-      private int onLoadEventCount = 0;
-
       public void onLoad(Widget sender) {
-        if (++onLoadEventCount == 4) {
-          finish();
+        if (isFinished()) {
+          fail("LoadListener fired twice. Expected it to fire only once.");
         }
+        finish();
       }
     };
     image.addLoadListener(listener);
 
-    image.addLoadHandler(new LoadHandler() {
-      private int onLoadEventCount = 0;
-
+    final TestLoadHandler loadHandler = new TestLoadHandler() {
       public void onLoad(LoadEvent event) {
-        if (++onLoadEventCount == 4) {
-          if (listener.isFinished()) {
-            finishTest();
-          } else {
-            fail("Listener did not fire first");
-          }
+        if (isFinished()) {
+          fail("LoadHandler fired twice. Expected it to fire only once.");
+        }
+        if (listener.isFinished()) {
+          finish();
+        } else {
+          fail("Listener did not fire first");
         }
       }
-    });
+    };
+    image.addLoadHandler(loadHandler);
     image.addErrorHandler(new TestErrorHandler(image));
 
     RootPanel.get().add(image);
+
+    /*
+     * Change the visible rect multiple times, but we only expect one
+     * asynchronous load event to fire after the final change. This is consistent
+     * with the expected behavior of changing the source URL multiple times.
+     */
     image.setVisibleRect(0, 0, 16, 16);
     image.setVisibleRect(0, 0, 16, 16);
     image.setVisibleRect(16, 0, 16, 16);
     image.setVisibleRect(16, 8, 8, 8);
+
+    delayTestFinish(DEFAULT_TEST_TIMEOUT);
+    new Timer() {
+      @Override
+      public void run() {
+        assertTrue(loadHandler.isFinished());
+        finishTest();
+      }
+    }.schedule(SYNTHETIC_LOAD_EVENT_TIMEOUT);
   }
 
   /**
