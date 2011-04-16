@@ -6,3 +6,7 @@
    cursor: hand;
    text-decoration: underline;
 }
+
+.packageNameLinkSelected {
+   color: #FFFFFF;
+}

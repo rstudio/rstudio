@@ -89,7 +89,7 @@
   border: selectionBorderWidth solid #f3f7fb;
 }
 
-/* CHANGE: Disable hover effects for NoSelectionModel */
+/* CHANGE: Disable hover effects */
 
 .cellTableHoveredRow {
   /* background: #eee; */

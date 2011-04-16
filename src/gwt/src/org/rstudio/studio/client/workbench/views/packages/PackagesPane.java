@@ -12,11 +12,14 @@
  */
 package org.rstudio.studio.client.workbench.views.packages;
 
-
 import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.ClickableTextCell;
 import com.google.gwt.cell.client.FieldUpdater;
+import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -27,8 +30,10 @@ import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.ListDataProvider;
-import com.google.gwt.view.client.NoSelectionModel;
+import com.google.gwt.view.client.MultiSelectionModel;
+import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
+
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -104,6 +109,12 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       // IGNORE: we never set progress
    }
    
+   public void clearSelection()
+   {
+      if (selectionModel_ != null)
+         selectionModel_.clear();
+   }
+   
    private int packageRow(String packageName)
    {
       // if we haven't retreived packages yet then return not found
@@ -136,6 +147,11 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       return toolbar;
    }
    
+   @Override
+   public void onBeforeSelected()
+   {
+      clearSelection();
+   }
 
    @Override
    protected Widget createMainWidget()
@@ -144,10 +160,18 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                         15,
                         GWT.<Resources> create(Resources.class));
       packagesTable_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
-      packagesTable_.setSelectionModel(new NoSelectionModel<PackageInfo>());
+      selectionModel_ = new MultiSelectionModel<PackageInfo>(); 
+      selectionModel_.addSelectionChangeHandler(
+                                       new SelectionChangeEvent.Handler() {
+         public void onSelectionChange(SelectionChangeEvent event)
+         {
+            
+            
+         }
+      });
+      packagesTable_.setSelectionModel(selectionModel_);
       packagesTable_.setWidth("100%", true);
-  
-       
+        
       LoadedColumn loadedColumn = new LoadedColumn();
       packagesTable_.addColumn(loadedColumn);
       packagesTable_.setColumnWidth(loadedColumn, 35, Unit.PX);
@@ -161,7 +185,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          {
             return packageInfo.getDesc();
          } 
-      };
+      };  
+      
       packagesTable_.addColumn(descColumn);
       packagesTable_.setColumnWidth(descColumn, 80, Unit.PCT);
       
@@ -200,11 +225,15 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       
    }
    
+   // package name column which includes a hyperlink to package docs
    class NameColumn extends Column<PackageInfo, String>
    {
       public NameColumn()
       {
          super(new ClickableTextCell(){
+            
+            // render anchor using custom styles. detect selection and
+            // add selected style to invert text color
             @Override
             protected void render(Context context, 
                                   SafeHtml value, 
@@ -212,21 +241,44 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
             {   
                if (value != null) 
                {
-                 sb.appendHtmlConstant("<div class=\"" + 
-                                         RESOURCES.styles().packageNameLink() +
-                                         "\">");
+                 Styles styles = RESOURCES.styles();
+                 StringBuilder div = new StringBuilder();
+                 div.append("<div class=\"");
+                 div.append(styles.packageNameLink());
+                 if (selectionModel_.isSelected(
+                    packagesDataProvider_.getList().get(context.getIndex())))
+                 {
+                    div.append(" " + styles.packageNameLinkSelected());
+                 }
+                 div.append("\">");
+                 
+                 sb.appendHtmlConstant(div.toString());
                  sb.append(value);
                  sb.appendHtmlConstant("</div>");
                }
              }
-         });
-         
-         setFieldUpdater(new FieldUpdater<PackageInfo,String>() {
+            
+            // click event which occurs on the actual package link div
+            // results in showing help for that package
             @Override
-            public void update(int index, PackageInfo packageInfo, String value)
+            public void onBrowserEvent(Context context, Element parent, 
+                                       String value, NativeEvent event, 
+                                       ValueUpdater<String> valueUpdater) 
             {
-               observer_.showHelp(packageInfo);
-            }
+              super.onBrowserEvent(context, parent, value, event, valueUpdater);
+              if ("click".equals(event.getType()))
+              {  
+                 // verify that the click was on the package link
+                 JavaScriptObject evTarget = event.getEventTarget().cast();
+                 if (Element.is(evTarget) &&
+                     Element.as(evTarget).getClassName().startsWith(
+                                        RESOURCES.styles().packageNameLink()))
+                 {  
+                    observer_.showHelp(
+                      packagesDataProvider_.getList().get(context.getIndex()));
+                 }
+              }
+            }            
          });
       }
       
@@ -240,6 +292,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    static interface Styles extends CssResource
    {
       String packageNameLink();
+      String packageNameLinkSelected();
    }
   
    interface Resources extends CellTable.Resources 
@@ -258,6 +311,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    }
 
    private CellTable<PackageInfo> packagesTable_;
+   private MultiSelectionModel<PackageInfo> selectionModel_;
    private ListDataProvider<PackageInfo> packagesDataProvider_;
    private PackagesDisplayObserver observer_ ;
    private final Commands commands_;
