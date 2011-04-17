@@ -34,26 +34,29 @@ import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
-import org.rstudio.studio.client.workbench.views.packages.Packages.Display;
 import org.rstudio.studio.client.workbench.views.packages.model.InstallOptions;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
 
 import java.util.List;
+import java.util.Set;
 
 public class PackagesPane extends WorkbenchPane implements Packages.Display
 {
    @Inject
-   public PackagesPane(Commands commands)
+   public PackagesPane(Commands commands, GlobalDisplay globalDisplay)
    {
       super("Packages");
       commands_ = commands;
+      globalDisplay_ = globalDisplay;
      
       ensureWidget();
    }
@@ -67,6 +70,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    {
       packagesTable_.setPageSize(packages.size());
       packagesDataProvider_.setList(packages);
+      clearSelection();
    }
    
    public void installPackage(String installRepository,
@@ -79,9 +83,13 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                                globalDisplay, 
                                operation).showModal();
    }
-      
-
-   public void setPackageStatus(String packageName, int status)
+   
+   public Set<PackageInfo> getSelectedPackages()
+   {
+      return selectionModel_.getSelectedSet();
+   }
+   
+   public void setPackageStatus(String packageName, boolean loaded)
    {
       int row = packageRow(packageName) ;
       
@@ -89,24 +97,9 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       {
          List<PackageInfo> packages = packagesDataProvider_.getList();
         
-         switch (status)
-         {
-         case Display.PACKAGE_NOT_LOADED:
-            packages.set(row, packages.get(row).asUnloaded());
-            break;
-         case Display.PACKAGE_LOADED:
-            packages.set(row, packages.get(row).asLoaded());
-            break;
-         case Display.PACKAGE_PROGRESS:
-            // IGNORE: progress currently not supported 
-            break;
-         }
+         packages.set(row, loaded ? packages.get(row).asLoaded() :
+                                    packages.get(row).asUnloaded());
       }
-   }
-
-   public void clearPackageProgress(String packageName)
-   {
-      // IGNORE: we never set progress
    }
    
    public void clearSelection()
@@ -143,7 +136,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       Toolbar toolbar = new Toolbar();
      
       toolbar.addLeftWidget(commands_.installPackage().createToolbarButton());
-      toolbar.addRightWidget(commands_.refreshPackages().createToolbarButton());
+      toolbar.addLeftWidget(commands_.updatePackages().createToolbarButton());
+      toolbar.addLeftWidget(commands_.removePackage().createToolbarButton());
       return toolbar;
    }
    
@@ -165,8 +159,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                                        new SelectionChangeEvent.Handler() {
          public void onSelectionChange(SelectionChangeEvent event)
          {
-            
-            
+            observer_.onSelectionChanged(
+              selectionModel_.getSelectedSet().size() > 0);
          }
       });
       packagesTable_.setSelectionModel(selectionModel_);
@@ -315,4 +309,5 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private ListDataProvider<PackageInfo> packagesDataProvider_;
    private PackagesDisplayObserver observer_ ;
    private final Commands commands_;
+   private final GlobalDisplay globalDisplay_;
 }
