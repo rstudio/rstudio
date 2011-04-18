@@ -62,9 +62,9 @@
       }
       else if (is.matrix(obj))
       {
-         return(paste(ncol(obj),
+         return(paste(nrow(obj),
                       "x",
-                      nrow(obj),
+                      ncol(obj),
                       " ",
                       typeof(obj),
                       " matrix",

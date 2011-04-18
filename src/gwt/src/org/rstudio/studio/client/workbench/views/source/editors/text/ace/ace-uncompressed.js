@@ -5245,7 +5245,7 @@ var Editor =function(renderer, session) {
         var lineState     = this.bgTokenizer.getState(cursor.row);
         var shouldOutdent = this.mode.checkOutdent(lineState, this.session.getLine(cursor.row), text);
         var line          = this.session.getLine(cursor.row);
-        var lineIndent    = this.mode.getNextLineIndent(lineState, line.slice(0, cursor.column), this.session.getTabString());
+        var lineIndent    = this.mode.getNextLineIndent(lineState, line.slice(0, cursor.column), this.session.getTabString(), this.bgTokenizer, cursor.row);
         var end           = this.session.insert(cursor, text);
 
         

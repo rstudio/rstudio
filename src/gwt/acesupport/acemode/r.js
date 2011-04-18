@@ -18,14 +18,48 @@
 define("mode/r", function(require, exports, module)
 {
 
+   var Range = require("ace/range").Range;
    var oop = require("pilot/oop");
    var TextMode = require("ace/mode/text").Mode;
    var Tokenizer = require("ace/tokenizer").Tokenizer;
    var TextHighlightRules = require("ace/mode/text_highlight_rules")
          .TextHighlightRules;
    var RHighlightRules = require("mode/r_highlight_rules").RHighlightRules;
-   var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent")
-         .MatchingBraceOutdent;
+
+   var MatchingBraceOutdent = function() {};
+
+   (function() {
+      this.checkOutdent = function(line, input) {
+         if (! /^\s+$/.test(line))
+            return false;
+
+         return /^\s*[)}]/.test(input);
+      };
+
+      this.autoOutdent = function(doc, row) {
+         var line = doc.getLine(row);
+         var match = line.match(/^(\s*[)}])/);
+
+         if (!match) return 0;
+
+         var column = match[1].length;
+         var openBracePos = doc.findMatchingBracket({row: row, column: column});
+
+         if (!openBracePos || openBracePos.row == row) return 0;
+
+         var indent = this.$getIndent(doc.getLine(openBracePos.row));
+         doc.replace(new Range(row, 0, row, column-1), indent);
+      };
+
+      this.$getIndent = function(line) {
+         var match = line.match(/^(\s+)/);
+         if (match) {
+            return match[1];
+         }
+
+         return "";
+      };
+   }).call(MatchingBraceOutdent.prototype);
 
    var Mode = function(suppressHighlighting)
    {
@@ -39,27 +73,111 @@ define("mode/r", function(require, exports, module)
 
    (function()
    {
-      this.getNextLineIndent = function(state, line, tab)
+      this.getNextLineIndent = function(state, line, tab, bgTokenizer, row)
       {
          var indent = this.$getIndent(line);
 
-         var tokenizedLine = this.$tokenizer.getLineTokens(line, state);
+         var startState = row == 0 ? "start" : bgTokenizer.getState(row-1);
+         var tokenizedLine = this.$tokenizer.getLineTokens(line, startState);
          var tokens = tokenizedLine.tokens;
          var endState = tokenizedLine.state;
 
-         if (tokens.length && tokens[tokens.length - 1].type == "comment")
-         {
-            return indent;
-         }
+         return this.$getNextLineIndentForTokens(tokens, indent, tab, endState);
+      };
 
-         if (state == "start")
+      this.$getNextLineIndentForTokens = function(tokens, indent, tab, endState)
+      {
+         // filter out whitespace
+         tokens = tokens.filter(function (t) { return !/^\s*$/.test(t.value) });
+
+         // filter out comments
+         tokens = tokens.filter(function (t) { return t.type != "comment"; });
+
+         // If there's nothing significant on this line, don't change indent
+         if (tokens.length == 0)
+            return indent;
+
+         // If we're inside a string, change indent to 0
+         if (endState != "start")
+            return "";
+
+         (function ()
          {
-            var match = line.match(/^.*[\{\(\[]\s*$/);
-            if (match)
+            // Create a string composed of only the braces. Careful not to pick
+            // up braces in strings or comments.
+            var braces = tokens.filter(function(t) { return /\bparen\b/.test(t.type) });
+            var bracesStr = braces.reduce(function (memo, t) { return memo + t.value; }, "");
+
+            function countOpens(str) { return str.replace(/[^\[({]/g, "").length; };
+            function countCloses(str) { return str.replace(/[^\])}]/g, "").length; };
+            var opens = countOpens(bracesStr);
+            var closes = countCloses(bracesStr);
+
+            if (opens > closes)
             {
                indent += tab;
+               return;
             }
-         }
+
+            if (opens < closes)
+            {
+               indent = indent.replace(tab, "");
+               return;
+            }
+
+            if (tokens[0].type === "keyword"
+                  && /^(if|while|for)$/.test(tokens[0].value))
+            {
+               // Check for the case where the previous line was "if (cond)"
+               // cause we want to indent in those cases. But not if it's
+               // "if (cond) expr". Need to be careful here because the
+               // conditional expression can contain parens. So we move
+               // through the token list, waiting for the outermost paren
+               // to be matched. Once we have done that, see if there's
+               // any tokens left. (Note that whitespace and comments have
+               // been stripped at this point so they won't count as expr)
+
+               var postIf = tokens.slice(2);
+               var parenCount = 1;
+               var pos = 0;
+               for (; parenCount > 0 && pos < postIf.length; pos++)
+               {
+                  var t = postIf[pos];
+                  if (/paren/.test(t.type))
+                  {
+                     for (var j = 0; parenCount > 0 && j < t.value.length; j++)
+                     {
+                        if (t.value.charAt(j) == "(")
+                           parenCount++;
+                        else if (t.value.charAt(j) == ")")
+                           parenCount--;
+                     }
+                  }
+               }
+
+               if (pos == postIf.length)
+               {
+                  indent += tab;
+                  return;
+               }
+            }
+
+            // See if we end with a binary operator; that means the operation
+            // isn't done yet
+            var lastToken = tokens[tokens.length - 1];
+            if (/\boperator\b/.test(lastToken.type) && !/\bparen\b/.test(lastToken.type))
+            {
+               indent += tab;
+               return;
+            }
+
+            if (lastToken.type === "keyword" && lastToken.value === "repeat")
+            {
+               indent += tab;
+               return;
+            }
+         })();
+
          return indent;
       };
 
