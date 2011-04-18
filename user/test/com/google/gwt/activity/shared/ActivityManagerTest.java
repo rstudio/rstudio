@@ -53,7 +53,7 @@ public class ActivityManagerTest extends TestCase {
     private static GwtEvent.Type<EventHandler> TYPE = new GwtEvent.Type<EventHandler>();
 
     @Override
-    public com.google.gwt.event.shared.GwtEvent.Type<Handler> getAssociatedType() {
+    public GwtEvent.Type<Handler> getAssociatedType() {
       throw new UnsupportedOperationException("Auto-generated method stub");
     }
 

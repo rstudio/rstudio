@@ -944,6 +944,7 @@ public class EditorModelTest extends TestCase {
         new RealJavaResource(EditorError.class),
         new EmptyMockJavaResource(EntityProxy.class),
         new EmptyMockJavaResource(EventBus.class),
+        new EmptyMockJavaResource(com.google.web.bindery.event.shared.EventBus.class),
         new EmptyMockJavaResource(HasEditorDelegate.class),
         new EmptyMockJavaResource(HasEditorErrors.class),
         new RealJavaResource(HasText.class),

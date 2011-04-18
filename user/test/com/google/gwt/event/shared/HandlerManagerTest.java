@@ -27,7 +27,6 @@ import java.util.Set;
  * Handler manager test. Very redundant with {@link SimpleEventBusTest}, but
  * preserved to guard against regressions.
  */
-@SuppressWarnings("deprecation")
 public class HandlerManagerTest extends HandlerTestBase {
 
   public void testAddAndRemoveHandlers() {

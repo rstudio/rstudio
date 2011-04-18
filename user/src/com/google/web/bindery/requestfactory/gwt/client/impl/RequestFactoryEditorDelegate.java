@@ -18,8 +18,9 @@ package com.google.web.bindery.requestfactory.gwt.client.impl;
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.impl.AbstractEditorDelegate;
 import com.google.gwt.editor.client.impl.Refresher;
-import com.google.gwt.event.shared.EventBus;
+// This import is not an accident, details in subscribe() implementation
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxyChange;
@@ -102,9 +103,20 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
     EntityProxyId<?> stableId = ((EntityProxy) getObject()).stableId();
     @SuppressWarnings("unchecked")
     Class<EntityProxy> clazz = (Class<EntityProxy>) stableId.getProxyClass();
-    HandlerRegistration toReturn = EntityProxyChange.<EntityProxy> registerForProxyType(
-        eventBus, clazz, new SubscriptionHandler());
-    return toReturn;
+
+    /*
+     * Convert to the old gwt HandlerRegistration type required by the
+     * EditorDelegate interface. This can get cleaned up when Editor moves to
+     * com.google.web.bindery.
+     */
+    final com.google.web.bindery.event.shared.HandlerRegistration toReturn =
+        EntityProxyChange.<EntityProxy> registerForProxyType(eventBus, clazz,
+            new SubscriptionHandler());
+    return new HandlerRegistration() {
+      public void removeHandler() {
+        toReturn.removeHandler();
+      }
+    };
   }
 
   @Override

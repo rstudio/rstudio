@@ -17,81 +17,20 @@
 package com.google.gwt.event.shared;
 
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.DomEvent.Type;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
-import com.google.gwt.event.shared.testing.CountingEventBus;
 
 import junit.framework.AssertionFailedError;
 
 import java.util.Set;
 
 /**
- * Eponymous unit test.
+ * Eponymous unit test. Redundant with
+ * {@link com.google.web.bindery.event.shared.SimpleEventBusTest}, here to
+ * ensure legacy compatibility.
  */
 public class SimpleEventBusTest extends HandlerTestBase {
-
-  public void testAddAndRemoveHandlers() {
-    CountingEventBus eventBus = new CountingEventBus(new SimpleEventBus());
-    eventBus.addHandler(MouseDownEvent.getType(), mouse1);
-    eventBus.addHandler(MouseDownEvent.getType(), mouse2);
-    HandlerRegistration reg1 = eventBus.addHandler(MouseDownEvent.getType(),
-        adaptor1);
-    eventBus.fireEvent(new MouseDownEvent() {
-    });
-    assertEquals(3, eventBus.getCount(MouseDownEvent.getType()));
-    assertFired(mouse1, mouse2, adaptor1);
-    eventBus.addHandler(MouseDownEvent.getType(), mouse3);
-    assertEquals(4, eventBus.getCount(MouseDownEvent.getType()));
-
-    eventBus.addHandler(MouseDownEvent.getType(), mouse1);
-    eventBus.addHandler(MouseDownEvent.getType(), mouse2);
-    HandlerRegistration reg2 = eventBus.addHandler(MouseDownEvent.getType(),
-        adaptor1);
-
-    /*
-     * You can indeed add handlers twice, they will only be removed one at a
-     * time though.
-     */
-    assertEquals(7, eventBus.getCount(MouseDownEvent.getType()));
-    eventBus.addHandler(ClickEvent.getType(), adaptor1);
-    eventBus.addHandler(ClickEvent.getType(), click1);
-    eventBus.addHandler(ClickEvent.getType(), click2);
-
-    assertEquals(7, eventBus.getCount(MouseDownEvent.getType()));
-    assertEquals(3, eventBus.getCount(ClickEvent.getType()));
-
-    reset();
-    eventBus.fireEvent(new MouseDownEvent() {
-    });
-    assertFired(mouse1, mouse2, mouse3, adaptor1);
-    assertNotFired(click1, click2);
-
-    // Gets rid of first instance.
-    reg1.removeHandler();
-    eventBus.fireEvent(new MouseDownEvent() {
-    });
-    assertFired(mouse1, mouse2, mouse3, adaptor1);
-    assertNotFired(click1, click2);
-
-    // Gets rid of second instance.
-    reg2.removeHandler();
-    reset();
-    eventBus.fireEvent(new MouseDownEvent() {
-    });
-
-    assertFired(mouse1, mouse2, mouse3);
-    assertNotFired(adaptor1, click1, click2);
-
-    // Checks to see if click events are still working.
-    reset();
-    eventBus.fireEvent(new ClickEvent() {
-    });
-
-    assertNotFired(mouse1, mouse2, mouse3);
-    assertFired(click1, click2, adaptor1);
-  }
 
   public void testConcurrentAdd() {
     final SimpleEventBus eventBus = new SimpleEventBus();
@@ -128,26 +67,6 @@ public class SimpleEventBusTest extends HandlerTestBase {
       add(this);
       r.removeHandler();
     }
-  }
-
-  public void testConcurrentRemove() {
-    final SimpleEventBus eventBus = new SimpleEventBus();
-
-    ShyHandler h = new ShyHandler();
-
-    eventBus.addHandler(MouseDownEvent.getType(), mouse1);
-    h.r = eventBus.addHandler(MouseDownEvent.getType(), h);
-    eventBus.addHandler(MouseDownEvent.getType(), mouse2);
-    eventBus.addHandler(MouseDownEvent.getType(), mouse3);
-
-    eventBus.fireEvent(new MouseDownEvent() {
-    });
-    assertFired(h, mouse1, mouse2, mouse3);
-    reset();
-    eventBus.fireEvent(new MouseDownEvent() {
-    });
-    assertFired(mouse1, mouse2, mouse3);
-    assertNotFired(h);
   }
 
   class SourcedHandler implements MouseDownHandler {
@@ -311,109 +230,6 @@ public class SimpleEventBusTest extends HandlerTestBase {
     assertNotFired(two);
   }
 
-  public void testRemoveSelf() {
-    final SimpleEventBus eventBus = new SimpleEventBus();
-
-    MouseDownHandler h = new MouseDownHandler() {
-      HandlerRegistration reg = eventBus.addHandler(MouseDownEvent.getType(),
-          this);
-
-      public void onMouseDown(MouseDownEvent event) {
-        add(this);
-        reg.removeHandler();
-      }
-    };
-
-    eventBus.fireEvent(new MouseDownEvent() {
-    });
-    assertFired(h);
-
-    reset();
-
-    eventBus.fireEvent(new MouseDownEvent() {
-    });
-    assertNotFired(h);
-  }
-
-  public void testNoDoubleRemove() {
-    final SimpleEventBus eventBus = new SimpleEventBus();
-    HandlerRegistration reg = eventBus.addHandler(MouseDownEvent.getType(),
-        mouse1);
-    reg.removeHandler();
-
-    boolean assertsOn = getClass().desiredAssertionStatus();
-
-    if (assertsOn) {
-      try {
-        reg.removeHandler();
-        fail("Should have thrown on remove");
-      } catch (AssertionError e) { /* pass */
-      }
-    } else {
-      reg.removeHandler();
-      // Succeed on no assert failure
-    }
-  }
-
-  public void testConcurrentAddAfterRemoveIsNotClobbered() {
-    final SimpleEventBus eventBus = new SimpleEventBus();
-
-    MouseDownHandler one = new MouseDownHandler() {
-      HandlerRegistration reg = addIt();
-
-      public void onMouseDown(MouseDownEvent event) {
-        reg.removeHandler();
-        addIt();
-        add(this);
-      }
-
-      private HandlerRegistration addIt() {
-        return eventBus.addHandler(MouseDownEvent.getType(), mouse1);
-      }
-    };
-
-    eventBus.addHandler(MouseDownEvent.getType(), one);
-
-    eventBus.fireEvent(new MouseDownEvent() {
-    });
-    assertFired(one);
-
-    reset();
-
-    eventBus.fireEvent(new MouseDownEvent() {
-    });
-    assertFired(one, mouse1);
-  }
-
-  public void testReverseOrder() {
-    @SuppressWarnings("deprecation")
-    final SimpleEventBus eventBus = new SimpleEventBus(true);
-    final MouseDownHandler handler0 = new MouseDownHandler() {
-      public void onMouseDown(MouseDownEvent event) {
-        add(this);
-      }
-    };
-    final MouseDownHandler handler1 = new MouseDownHandler() {
-      public void onMouseDown(MouseDownEvent event) {
-        assertNotFired(handler0);
-        add(this);
-      }
-    };
-    final MouseDownHandler handler2 = new MouseDownHandler() {
-      public void onMouseDown(MouseDownEvent event) {
-        assertNotFired(handler0, handler1);
-        add(this);
-      }
-    };
-    eventBus.addHandler(MouseDownEvent.getType(), handler0);
-    eventBus.addHandler(MouseDownEvent.getType(), handler1);
-    eventBus.addHandler(MouseDownEvent.getType(), handler2);
-
-    reset();
-    eventBus.fireEvent(new MouseDownEvent() {
-    });
-    assertFired(handler0, handler1, handler2);
-  }
 
   static class ThrowingHandler implements MouseDownHandler {
     private final RuntimeException e;

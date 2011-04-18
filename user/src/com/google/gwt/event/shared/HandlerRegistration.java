@@ -17,19 +17,8 @@
 package com.google.gwt.event.shared;
 
 /**
- * Registration returned from a call to
- * {@link HandlerManager#addHandler(com.google.gwt.event.shared.GwtEvent.Type, EventHandler)}
- * . Use the handler registration to remove handlers when they are no longer
- * needed.
- * 
- * Note, this interface is under the control of the {@link HandlerManager} class
- * and may be expanded over time, so extend {@link DefaultHandlerRegistration}
- * if you do not wish to get compiler errors if we extend the handler registry
- * functionality.
+ * Extends {com.google.bindery.event.shared.HandlerRegistration} for legacy
+ * compatibility.
  */
-public interface HandlerRegistration {
-  /**
-   * Removes the given handler from its manager.
-   */
-  void removeHandler();
+public interface HandlerRegistration extends com.google.web.bindery.event.shared.HandlerRegistration {
 }

@@ -15,87 +15,47 @@
  */
 package com.google.gwt.event.shared.testing;
 
-import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.GwtEvent.Type;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.event.shared.SimpleEventBus;
-
-import java.util.HashMap;
-import java.util.Map;
+import com.google.web.bindery.event.shared.Event;
+import com.google.web.bindery.event.shared.Event.Type;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 
 /**
- * Wraps an {@link EventBus} to keep a count of registered handlers. Handy for
- * tests.
+ * Legacy compatibility wrapper for
+ * {@link com.google.web.bindery.event.shared.testing.CountingEventBus}.
  */
-public class CountingEventBus extends EventBus {
-  private final Map<Type<?>, Integer> counts = new HashMap<GwtEvent.Type<?>, Integer>();
-  private final EventBus wrapped;
-  
+public class CountingEventBus extends com.google.gwt.event.shared.EventBus {
+  private final com.google.web.bindery.event.shared.testing.CountingEventBus real;
+
   public CountingEventBus() {
-    this(new SimpleEventBus());
+    real = new com.google.web.bindery.event.shared.testing.CountingEventBus();
   }
-  
-  public CountingEventBus(EventBus wrapped) {
-    this.wrapped = wrapped;
+
+  public CountingEventBus(com.google.gwt.event.shared.EventBus wrapped) {
+    real = new com.google.web.bindery.event.shared.testing.CountingEventBus(wrapped);
   }
 
   @Override
-  public <H extends EventHandler> HandlerRegistration addHandler(Type<H> type,
-      H handler) {
-    increment(type);
-    final HandlerRegistration superReg = wrapped.addHandler(type, handler);
-    return makeReg(type, superReg);
+  public <H> HandlerRegistration addHandler(Type<H> type, H handler) {
+    return real.addHandler(type, handler);
   }
 
   @Override
-  public <H extends EventHandler> HandlerRegistration addHandlerToSource(
-      final Type<H> type, Object source, H handler) {
-    increment(type);
-    final HandlerRegistration superReg = wrapped.addHandlerToSource(type,
-        source, handler);
-    return makeReg(type, superReg);
+  public <H> HandlerRegistration addHandlerToSource(Type<H> type, Object source, H handler) {
+    return real.addHandlerToSource(type, source, handler);
   }
 
   @Override
-  public void fireEvent(GwtEvent<?> event) {
-    wrapped.fireEvent(event);
+  public void fireEvent(Event<?> event) {
+    real.fireEvent(event);
   }
 
   @Override
-  public void fireEventFromSource(GwtEvent<?> event, Object source) {
-    wrapped.fireEventFromSource(event, source);
+  public void fireEventFromSource(Event<?> event, Object source) {
+    real.fireEventFromSource(event, source);
   }
 
-  public int getCount(Type<?> type) {
-    Integer count = counts.get(type);
-    return count == null ? 0 : count;
-  }
-
-  private void decrement(Type<?> type) {
-    Integer count = counts.get(type);
-    if (count == null) {
-      count = 0;
-    }
-    counts.put(type, count - 1);
-  }
-
-  private <H> void increment(final Type<H> type) {
-    Integer count = counts.get(type);
-    if (count == null) {
-      count = 0;
-    }
-    counts.put(type, count + 1);
-  }
-
-  private <H> HandlerRegistration makeReg(final Type<H> type,
-      final HandlerRegistration superReg) {
-    return new HandlerRegistration() {
-      public void removeHandler() {
-        decrement(type);
-        superReg.removeHandler();
-      }
-    };
+  public int getCount(GwtEvent.Type<?> type) {
+    return real.getCount(type);
   }
 }
