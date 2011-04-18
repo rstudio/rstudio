@@ -17,8 +17,8 @@ package com.google.web.bindery.requestfactory.shared.impl;
 
 import static com.google.web.bindery.requestfactory.shared.impl.BaseProxyCategory.stableId;
 
-import com.google.gwt.autobean.shared.AutoBean;
-import com.google.gwt.autobean.shared.AutoBeanUtils;
+import com.google.web.bindery.autobean.shared.AutoBean;
+import com.google.web.bindery.autobean.shared.AutoBeanUtils;
 import com.google.web.bindery.requestfactory.shared.ValueProxy;
 
 /**

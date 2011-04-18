@@ -15,7 +15,7 @@
  */
 package com.google.web.bindery.requestfactory.shared.impl;
 
-import com.google.gwt.autobean.shared.Splittable;
+import com.google.web.bindery.autobean.shared.Splittable;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
 import com.google.web.bindery.requestfactory.shared.InstanceRequest;
 import com.google.web.bindery.requestfactory.shared.Receiver;

@@ -15,8 +15,8 @@
  */
 package com.google.web.bindery.requestfactory.shared.messages;
 
-import com.google.gwt.autobean.shared.AutoBean;
-import com.google.gwt.autobean.shared.AutoBeanFactory;
+import com.google.web.bindery.autobean.shared.AutoBean;
+import com.google.web.bindery.autobean.shared.AutoBeanFactory;
 
 /**
  * The factory for creating RequestFactory wire messages.

@@ -15,7 +15,7 @@
  */
 package com.google.web.bindery.requestfactory.gwt.client.impl;
 
-import com.google.gwt.autobean.shared.ValueCodex;
+import com.google.web.bindery.autobean.shared.ValueCodex;
 import com.google.gwt.editor.client.EditorContext;
 import com.google.gwt.editor.client.EditorVisitor;
 

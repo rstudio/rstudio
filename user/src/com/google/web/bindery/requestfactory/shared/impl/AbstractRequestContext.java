@@ -19,16 +19,16 @@ import static com.google.web.bindery.requestfactory.shared.impl.BaseProxyCategor
 import static com.google.web.bindery.requestfactory.shared.impl.Constants.REQUEST_CONTEXT;
 import static com.google.web.bindery.requestfactory.shared.impl.Constants.STABLE_ID;
 
-import com.google.gwt.autobean.shared.AutoBean;
-import com.google.gwt.autobean.shared.AutoBeanCodex;
-import com.google.gwt.autobean.shared.AutoBeanFactory;
-import com.google.gwt.autobean.shared.AutoBeanUtils;
-import com.google.gwt.autobean.shared.AutoBeanVisitor;
-import com.google.gwt.autobean.shared.Splittable;
-import com.google.gwt.autobean.shared.ValueCodex;
-import com.google.gwt.autobean.shared.impl.AbstractAutoBean;
-import com.google.gwt.autobean.shared.impl.EnumMap;
-import com.google.gwt.autobean.shared.impl.StringQuoter;
+import com.google.web.bindery.autobean.shared.AutoBean;
+import com.google.web.bindery.autobean.shared.AutoBeanCodex;
+import com.google.web.bindery.autobean.shared.AutoBeanFactory;
+import com.google.web.bindery.autobean.shared.AutoBeanUtils;
+import com.google.web.bindery.autobean.shared.AutoBeanVisitor;
+import com.google.web.bindery.autobean.shared.Splittable;
+import com.google.web.bindery.autobean.shared.ValueCodex;
+import com.google.web.bindery.autobean.shared.impl.AbstractAutoBean;
+import com.google.web.bindery.autobean.shared.impl.EnumMap;
+import com.google.web.bindery.autobean.shared.impl.StringQuoter;
 import com.google.gwt.event.shared.UmbrellaException;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxy;

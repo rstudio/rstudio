@@ -18,8 +18,8 @@ package com.google.web.bindery.requestfactory.shared.impl;
 import static com.google.web.bindery.requestfactory.shared.impl.BaseProxyCategory.requestContext;
 import static com.google.web.bindery.requestfactory.shared.impl.Constants.STABLE_ID;
 
-import com.google.gwt.autobean.shared.AutoBean;
-import com.google.gwt.autobean.shared.AutoBeanUtils;
+import com.google.web.bindery.autobean.shared.AutoBean;
+import com.google.web.bindery.autobean.shared.AutoBeanUtils;
 import com.google.web.bindery.requestfactory.shared.EntityProxy;
 
 /**

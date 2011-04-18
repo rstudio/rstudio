@@ -15,7 +15,7 @@
  */
 package com.google.web.bindery.requestfactory.gwt.rebind.model;
 
-import com.google.gwt.autobean.shared.Splittable;
+import com.google.web.bindery.autobean.shared.Splittable;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.CompilationState;

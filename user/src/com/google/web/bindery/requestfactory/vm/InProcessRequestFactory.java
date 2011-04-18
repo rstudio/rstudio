@@ -15,10 +15,10 @@
  */
 package com.google.web.bindery.requestfactory.vm;
 
-import com.google.gwt.autobean.server.AutoBeanFactoryMagic;
-import com.google.gwt.autobean.shared.AutoBeanFactory;
-import com.google.gwt.autobean.shared.AutoBeanFactory.Category;
-import com.google.gwt.autobean.shared.AutoBeanFactory.NoWrap;
+import com.google.web.bindery.autobean.shared.AutoBeanFactory;
+import com.google.web.bindery.autobean.shared.AutoBeanFactory.Category;
+import com.google.web.bindery.autobean.shared.AutoBeanFactory.NoWrap;
+import com.google.web.bindery.autobean.vm.AutoBeanFactorySource;
 import com.google.gwt.event.shared.EventBus;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxy;
@@ -92,7 +92,7 @@ class InProcessRequestFactory extends AbstractRequestFactory {
 
   @Override
   protected AutoBeanFactory getAutoBeanFactory() {
-    return AutoBeanFactoryMagic.create(Factory.class);
+    return AutoBeanFactorySource.create(Factory.class);
   }
 
   @Override

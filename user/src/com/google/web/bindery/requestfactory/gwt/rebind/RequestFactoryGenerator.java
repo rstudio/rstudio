@@ -15,13 +15,13 @@
  */
 package com.google.web.bindery.requestfactory.gwt.rebind;
 
-import com.google.gwt.autobean.rebind.model.JBeanMethod;
-import com.google.gwt.autobean.shared.AutoBean;
-import com.google.gwt.autobean.shared.AutoBean.PropertyName;
-import com.google.gwt.autobean.shared.AutoBeanFactory;
-import com.google.gwt.autobean.shared.AutoBeanFactory.Category;
-import com.google.gwt.autobean.shared.AutoBeanFactory.NoWrap;
-import com.google.gwt.autobean.shared.impl.EnumMap.ExtraEnums;
+import com.google.web.bindery.autobean.gwt.rebind.model.JBeanMethod;
+import com.google.web.bindery.autobean.shared.AutoBean;
+import com.google.web.bindery.autobean.shared.AutoBean.PropertyName;
+import com.google.web.bindery.autobean.shared.AutoBeanFactory;
+import com.google.web.bindery.autobean.shared.AutoBeanFactory.Category;
+import com.google.web.bindery.autobean.shared.AutoBeanFactory.NoWrap;
+import com.google.web.bindery.autobean.shared.impl.EnumMap.ExtraEnums;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;

@@ -15,10 +15,10 @@
  */
 package com.google.web.bindery.requestfactory.vm;
 
-import com.google.gwt.autobean.server.impl.BeanMethod;
-import com.google.gwt.autobean.server.impl.TypeUtils;
-import com.google.gwt.autobean.shared.AutoBean.PropertyName;
-import com.google.gwt.autobean.shared.AutoBeanFactory;
+import com.google.web.bindery.autobean.shared.AutoBean.PropertyName;
+import com.google.web.bindery.autobean.shared.AutoBeanFactory;
+import com.google.web.bindery.autobean.vm.impl.BeanMethod;
+import com.google.web.bindery.autobean.vm.impl.TypeUtils;
 import com.google.web.bindery.requestfactory.shared.InstanceRequest;
 import com.google.web.bindery.requestfactory.shared.JsonRpcContent;
 import com.google.web.bindery.requestfactory.shared.JsonRpcWireName;

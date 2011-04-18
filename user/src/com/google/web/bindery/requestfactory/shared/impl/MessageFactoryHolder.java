@@ -15,12 +15,12 @@
  */
 package com.google.web.bindery.requestfactory.shared.impl;
 
-import com.google.gwt.autobean.server.AutoBeanFactoryMagic;
+import com.google.web.bindery.autobean.vm.AutoBeanFactorySource;
 import com.google.web.bindery.requestfactory.shared.messages.MessageFactory;
 
 /**
  * This class has a super-source version with a client-only implementation.
  */
 public interface MessageFactoryHolder {
-  MessageFactory FACTORY = AutoBeanFactoryMagic.create(MessageFactory.class);
+  MessageFactory FACTORY = AutoBeanFactorySource.create(MessageFactory.class);
 }

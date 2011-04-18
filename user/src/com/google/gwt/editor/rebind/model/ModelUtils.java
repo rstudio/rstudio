@@ -15,7 +15,7 @@
  */
 package com.google.gwt.editor.rebind.model;
 
-import com.google.gwt.autobean.shared.ValueCodex;
+import com.google.web.bindery.autobean.shared.ValueCodex;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;

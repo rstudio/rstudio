@@ -15,7 +15,7 @@
  */
 package com.google.web.bindery.requestfactory.shared.messages;
 
-import com.google.gwt.autobean.shared.AutoBean.PropertyName;
+import com.google.web.bindery.autobean.shared.AutoBean.PropertyName;
 
 /**
  * Used as a base type for messages that are about a particular id.

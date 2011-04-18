@@ -15,7 +15,7 @@
  */
 package com.google.web.bindery.requestfactory.shared;
 
-import com.google.gwt.autobean.shared.Splittable;
+import com.google.web.bindery.autobean.shared.Splittable;
 
 /**
  * A ProxyStore provides a {@link ProxySerializer} with access to a low-level

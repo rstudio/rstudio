@@ -15,12 +15,12 @@
  */
 package com.google.web.bindery.requestfactory.server;
 
-import com.google.gwt.autobean.server.impl.TypeUtils;
-import com.google.gwt.autobean.shared.AutoBean;
-import com.google.gwt.autobean.shared.AutoBeanUtils;
-import com.google.gwt.autobean.shared.AutoBeanVisitor;
-import com.google.gwt.autobean.shared.Splittable;
-import com.google.gwt.autobean.shared.ValueCodex;
+import com.google.web.bindery.autobean.shared.AutoBean;
+import com.google.web.bindery.autobean.shared.AutoBeanUtils;
+import com.google.web.bindery.autobean.shared.AutoBeanVisitor;
+import com.google.web.bindery.autobean.shared.Splittable;
+import com.google.web.bindery.autobean.shared.ValueCodex;
+import com.google.web.bindery.autobean.vm.impl.TypeUtils;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxyId;

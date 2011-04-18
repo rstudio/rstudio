@@ -15,8 +15,8 @@
  */
 package com.google.web.bindery.requestfactory.shared.messages;
 
-import com.google.gwt.autobean.shared.AutoBean.PropertyName;
-import com.google.gwt.autobean.shared.Splittable;
+import com.google.web.bindery.autobean.shared.AutoBean.PropertyName;
+import com.google.web.bindery.autobean.shared.Splittable;
 
 import java.util.List;
 import java.util.Set;

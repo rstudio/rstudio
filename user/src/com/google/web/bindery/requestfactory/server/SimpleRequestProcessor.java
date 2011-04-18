@@ -15,16 +15,16 @@
  */
 package com.google.web.bindery.requestfactory.server;
 
-import com.google.gwt.autobean.server.AutoBeanFactoryMagic;
-import com.google.gwt.autobean.server.Configuration;
-import com.google.gwt.autobean.server.impl.TypeUtils;
-import com.google.gwt.autobean.shared.AutoBean;
-import com.google.gwt.autobean.shared.AutoBeanCodex;
-import com.google.gwt.autobean.shared.AutoBeanUtils;
-import com.google.gwt.autobean.shared.AutoBeanVisitor;
-import com.google.gwt.autobean.shared.Splittable;
-import com.google.gwt.autobean.shared.ValueCodex;
 import com.google.gwt.user.server.Base64Utils;
+import com.google.web.bindery.autobean.shared.AutoBean;
+import com.google.web.bindery.autobean.shared.AutoBeanCodex;
+import com.google.web.bindery.autobean.shared.AutoBeanUtils;
+import com.google.web.bindery.autobean.shared.AutoBeanVisitor;
+import com.google.web.bindery.autobean.shared.Splittable;
+import com.google.web.bindery.autobean.shared.ValueCodex;
+import com.google.web.bindery.autobean.vm.AutoBeanFactorySource;
+import com.google.web.bindery.autobean.vm.Configuration;
+import com.google.web.bindery.autobean.vm.impl.TypeUtils;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxyId;
 import com.google.web.bindery.requestfactory.shared.InstanceRequest;
@@ -37,6 +37,7 @@ import com.google.web.bindery.requestfactory.shared.impl.EntityCodex;
 import com.google.web.bindery.requestfactory.shared.impl.EntityProxyCategory;
 import com.google.web.bindery.requestfactory.shared.impl.SimpleProxyId;
 import com.google.web.bindery.requestfactory.shared.impl.ValueProxyCategory;
+import com.google.web.bindery.requestfactory.shared.messages.IdMessage.Strength;
 import com.google.web.bindery.requestfactory.shared.messages.InvocationMessage;
 import com.google.web.bindery.requestfactory.shared.messages.MessageFactory;
 import com.google.web.bindery.requestfactory.shared.messages.OperationMessage;
@@ -44,7 +45,6 @@ import com.google.web.bindery.requestfactory.shared.messages.RequestMessage;
 import com.google.web.bindery.requestfactory.shared.messages.ResponseMessage;
 import com.google.web.bindery.requestfactory.shared.messages.ServerFailureMessage;
 import com.google.web.bindery.requestfactory.shared.messages.ViolationMessage;
-import com.google.web.bindery.requestfactory.shared.messages.IdMessage.Strength;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
@@ -86,7 +86,7 @@ public class SimpleRequestProcessor {
   /**
    * Vends message objects.
    */
-  static final MessageFactory FACTORY = AutoBeanFactoryMagic.create(MessageFactory.class);
+  static final MessageFactory FACTORY = AutoBeanFactorySource.create(MessageFactory.class);
 
   static String fromBase64(String encoded) {
     try {

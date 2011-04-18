@@ -15,7 +15,7 @@
  */
 package com.google.web.bindery.requestfactory.shared.impl;
 
-import com.google.gwt.autobean.shared.AutoBeanFactory;
+import com.google.web.bindery.autobean.shared.AutoBeanFactory;
 import com.google.gwt.event.shared.EventBus;
 import com.google.web.bindery.requestfactory.shared.EntityProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxyId;

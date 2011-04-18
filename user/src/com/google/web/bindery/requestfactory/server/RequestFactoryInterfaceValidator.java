@@ -15,7 +15,7 @@
  */
 package com.google.web.bindery.requestfactory.server;
 
-import com.google.gwt.autobean.shared.ValueCodex;
+import com.google.web.bindery.autobean.shared.ValueCodex;
 import com.google.gwt.dev.asm.AnnotationVisitor;
 import com.google.gwt.dev.asm.ClassReader;
 import com.google.gwt.dev.asm.ClassVisitor;
