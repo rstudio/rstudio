@@ -477,12 +477,6 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="Remove"
         desc="Remove selected R package(s)" />
              
-        
-   <cmd id="refreshPackages"
-        menuLabel="Refresh"
-        buttonLabel=""
-        desc="Refresh package listing"/>
-
    <cmd id="showOptions"
         menuLabel="_Options..."/>
 

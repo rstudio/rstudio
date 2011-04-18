@@ -33,8 +33,6 @@ public class PackagesTab extends DelayLoadWorkbenchTab<Packages>
       public abstract void onUpdatePackages();
       @Handler
       public abstract void onRemovePackage();     
-      @Handler
-      public abstract void onRefreshPackages();  
    }
 
    @Inject

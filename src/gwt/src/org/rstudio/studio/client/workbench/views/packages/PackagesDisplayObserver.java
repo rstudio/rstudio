@@ -21,4 +21,5 @@ public interface PackagesDisplayObserver
    void unloadPackage(String pkgName) ;
    void showHelp(PackageInfo packageInfo) ;
    void onSelectionChanged(boolean packagesSelected);
+   void onPackageFilterChanged(String filter);
 }

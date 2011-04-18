@@ -106,7 +106,6 @@ public abstract class Commands extends CommandBundle
    public abstract AppCommand installPackage();
    public abstract AppCommand updatePackages();
    public abstract AppCommand removePackage();
-   public abstract AppCommand refreshPackages();
    public abstract AppCommand activatePackages();
 
    // Tools

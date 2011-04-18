@@ -21,6 +21,8 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -40,11 +42,13 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.help.search.SearchWidget;
 import org.rstudio.studio.client.workbench.views.packages.model.InstallOptions;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -136,6 +140,25 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       toolbar.addLeftWidget(commands_.installPackage().createToolbarButton());
       toolbar.addLeftWidget(commands_.updatePackages().createToolbarButton());
       toolbar.addLeftWidget(commands_.removePackage().createToolbarButton());
+      searchWidget_ = new SearchWidget(new SuggestOracle() {
+         @Override
+         public void requestSuggestions(Request request, Callback callback)
+         {
+            // no suggestions
+            callback.onSuggestionsReady(
+                  request,
+                  new Response(new ArrayList<Suggestion>()));
+         }
+      });
+      searchWidget_.addValueChangeHandler(new ValueChangeHandler<String>() {
+         @Override
+         public void onValueChange(ValueChangeEvent<String> event)
+         {
+            observer_.onPackageFilterChanged(event.getValue());   
+         }
+      });
+      toolbar.addRightWidget(searchWidget_);
+      
       return toolbar;
    }
    
@@ -308,6 +331,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private CellTable<PackageInfo> packagesTable_;
    private MultiSelectionModel<PackageInfo> selectionModel_;
    private ListDataProvider<PackageInfo> packagesDataProvider_;
+   private SearchWidget searchWidget_;
    private PackagesDisplayObserver observer_ ;
    private final Commands commands_;
 }

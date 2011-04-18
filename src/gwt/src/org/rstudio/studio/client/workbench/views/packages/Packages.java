@@ -208,13 +208,6 @@ public class Packages
       }   
    };
       
-
-   void onRefreshPackages()
-   {
-      listPackages();
-   }
-   
-
    public void listPackages()
    {
       view_.setProgress(true);
@@ -232,10 +225,10 @@ public class Packages
          public void onResponseReceived(JsArray<PackageInfo> response)
          {
             // sort the packages
-            List<PackageInfo> packages = new ArrayList<PackageInfo>();
+            allPackages_ = new ArrayList<PackageInfo>();
             for (int i=0; i<response.length(); i++)
-               packages.add(response.get(i));
-            Collections.sort(packages, new Comparator<PackageInfo>() {
+               allPackages_.add(response.get(i));
+            Collections.sort(allPackages_, new Comparator<PackageInfo>() {
                public int compare(PackageInfo o1, PackageInfo o2)
                {
                   return o1.getName().compareToIgnoreCase(o2.getName());
@@ -243,7 +236,7 @@ public class Packages
             });
             
             view_.setProgress(false);
-            view_.listPackages(packages);
+            setViewPackageList();
          }
       });
    }
@@ -299,6 +292,12 @@ public class Packages
    {
       listPackages() ;
    }
+   
+   public void onPackageFilterChanged(String filter)
+   {
+      packageFilter_ = filter;
+      setViewPackageList();
+   }
 
    public void onPackageStatusChanged(PackageStatusChangedEvent event)
    {
@@ -306,8 +305,33 @@ public class Packages
       view_.setPackageStatus(status.getName(), status.isLoaded());
    }
    
+   private void setViewPackageList()
+   {
+      ArrayList<PackageInfo> packages = null; ;
+      
+      // apply filter (if any)
+      if (packageFilter_.length() > 0)
+      {
+         packages = new ArrayList<PackageInfo>();
+         for (PackageInfo pkgInfo : allPackages_)
+         {
+            if (pkgInfo.getName().startsWith(packageFilter_))
+               packages.add(pkgInfo);
+         }
+      }
+      else
+      {
+         packages = allPackages_;
+      }
+      
+      view_.listPackages(packages);
+   }
+
+   
    private final Display view_;
    private final PackagesServerOperations server_;
+   private ArrayList<PackageInfo> allPackages_ = new ArrayList<PackageInfo>();
+   private String packageFilter_ = new String();
    private final EventBus events_ ;
    private final GlobalDisplay globalDisplay_ ;
    private final Commands commands_;
