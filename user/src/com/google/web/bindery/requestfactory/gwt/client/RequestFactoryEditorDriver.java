@@ -17,7 +17,7 @@ package com.google.web.bindery.requestfactory.gwt.client;
 
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.EditorDriver;
-import com.google.web.bindery.event.shared.EventBus;
+import com.google.gwt.event.shared.EventBus;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
 import com.google.web.bindery.requestfactory.shared.RequestFactory;
 import com.google.web.bindery.requestfactory.shared.Violation;
@@ -87,15 +87,6 @@ public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>>
   String[] getPaths();
 
   /**
-   * Initializes a driver that will not be able to support subscriptions. Calls
-   * to {@link com.google.gwt.editor.client.EditorDelegate#subscribe()} will do
-   * nothing.
-   * 
-   * @param editor an {@link Editor} of type E
-   */
-  void initialize(E editor);
-
-  /**
    * Overload of {@link #initialize(RequestFactory, Editor)} to allow a modified
    * {@link EventBus} to be monitored for subscription services.
    * 
@@ -118,6 +109,15 @@ public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>>
    * @see com.google.gwt.editor.client.EditorDelegate#subscribe
    */
   void initialize(RequestFactory requestFactory, E editor);
+
+  /**
+   * Initializes a driver that will not be able to support subscriptions. Calls
+   * to {@link com.google.gwt.editor.client.EditorDelegate#subscribe()} will do
+   * nothing.
+   * 
+   * @param editor an {@link Editor} of type E
+   */
+  void initialize(E editor);
 
   /**
    * Show Violations returned from an attempt to submit a request. The

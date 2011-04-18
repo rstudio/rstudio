@@ -18,7 +18,7 @@ package com.google.web.bindery.requestfactory.gwt.client.testing;
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.EditorError;
 import com.google.gwt.editor.client.EditorVisitor;
-import com.google.web.bindery.event.shared.EventBus;
+import com.google.gwt.event.shared.EventBus;
 import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryEditorDriver;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
 import com.google.web.bindery.requestfactory.shared.RequestFactory;

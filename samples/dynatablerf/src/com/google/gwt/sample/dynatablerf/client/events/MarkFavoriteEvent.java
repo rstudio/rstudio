@@ -15,22 +15,23 @@
  */
 package com.google.gwt.sample.dynatablerf.client.events;
 
+import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
-import com.google.web.bindery.event.shared.Event;
 import com.google.web.bindery.requestfactory.shared.EntityProxyId;
 
 /**
  * Used client-side to add entries to the favorites list.
  */
-public class MarkFavoriteEvent extends Event<MarkFavoriteEvent.Handler> {
+public class MarkFavoriteEvent extends GwtEvent<MarkFavoriteEvent.Handler> {
   /**
    * Handles {@link MarkFavoriteEvent}.
    */
-  public interface Handler {
+  public interface Handler extends EventHandler {
     void onMarkFavorite(MarkFavoriteEvent event);
   }
 
-  public static final Event.Type<Handler> TYPE = new Event.Type<Handler>();
+  public static final Type<Handler> TYPE = new Type<Handler>();
 
   private final EntityProxyId<PersonProxy> id;
   private final boolean isFavorite;
@@ -41,7 +42,7 @@ public class MarkFavoriteEvent extends Event<MarkFavoriteEvent.Handler> {
   }
 
   @Override
-  public Event.Type<Handler> getAssociatedType() {
+  public Type<Handler> getAssociatedType() {
     return TYPE;
   }
 

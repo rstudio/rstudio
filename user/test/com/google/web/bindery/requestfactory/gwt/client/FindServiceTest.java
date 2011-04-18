@@ -15,7 +15,7 @@
  */
 package com.google.web.bindery.requestfactory.gwt.client;
 
-import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.web.bindery.requestfactory.shared.EntityProxyChange;
 import com.google.web.bindery.requestfactory.shared.EntityProxyId;
 import com.google.web.bindery.requestfactory.shared.Receiver;

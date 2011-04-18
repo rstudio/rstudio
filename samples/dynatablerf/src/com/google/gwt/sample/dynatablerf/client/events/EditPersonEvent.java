@@ -15,8 +15,9 @@
  */
 package com.google.gwt.sample.dynatablerf.client.events;
 
+import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
-import com.google.web.bindery.event.shared.Event;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
 
 /**
@@ -24,13 +25,13 @@ import com.google.web.bindery.requestfactory.shared.RequestContext;
  * 
  * TODO: Make this an Activity.
  */
-public class EditPersonEvent extends Event<EditPersonEvent.Handler> {
-  public static final Event.Type<Handler> TYPE = new Event.Type<Handler>();
+public class EditPersonEvent extends GwtEvent<EditPersonEvent.Handler> {
+  public static final Type<Handler> TYPE = new Type<Handler>();
 
   /**
    * Handles {@link EditPersonEvent}.
    */
-  public interface Handler {
+  public interface Handler extends EventHandler {
     void startEdit(PersonProxy person, RequestContext requestContext);
   }
 
@@ -52,7 +53,7 @@ public class EditPersonEvent extends Event<EditPersonEvent.Handler> {
   }
 
   @Override
-  public Event.Type<Handler> getAssociatedType() {
+  public com.google.gwt.event.shared.GwtEvent.Type<Handler> getAssociatedType() {
     return TYPE;
   }
 }

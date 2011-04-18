@@ -30,7 +30,7 @@ import com.google.gwt.dev.asm.Type;
 import com.google.gwt.dev.asm.commons.Method;
 import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.Util;
-import com.google.web.bindery.event.shared.SimpleEventBus;
+import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.web.bindery.requestfactory.server.RequestFactoryInterfaceValidator.ClassLoaderLoader;
 import com.google.web.bindery.requestfactory.server.RequestFactoryInterfaceValidator.ErrorContext;
 import com.google.web.bindery.requestfactory.server.RequestFactoryInterfaceValidator.Loader;
@@ -529,7 +529,7 @@ public class RequestFactoryJarExtractor {
       typeName = type.getClassName();
     }
 
-    public State call() {
+    public State call() throws Exception {
       ClassWriter writer = new ClassWriter(0);
       ClassVisitor cv = writer;
       cv = new ClassProcessor(typeName, cv, state);

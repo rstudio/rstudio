@@ -25,7 +25,7 @@ import com.google.gwt.editor.client.impl.BaseEditorDriver;
 import com.google.gwt.editor.client.impl.DelegateMap;
 import com.google.gwt.editor.client.impl.DelegateMap.KeyMethod;
 import com.google.gwt.editor.client.impl.SimpleViolation;
-import com.google.web.bindery.event.shared.EventBus;
+import com.google.gwt.event.shared.EventBus;
 import com.google.web.bindery.requestfactory.gwt.client.HasRequestContext;
 import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryEditorDriver;
 import com.google.web.bindery.requestfactory.shared.EntityProxy;

@@ -29,7 +29,7 @@ import com.google.web.bindery.autobean.shared.ValueCodex;
 import com.google.web.bindery.autobean.shared.impl.AbstractAutoBean;
 import com.google.web.bindery.autobean.shared.impl.EnumMap;
 import com.google.web.bindery.autobean.shared.impl.StringQuoter;
-import com.google.web.bindery.event.shared.UmbrellaException;
+import com.google.gwt.event.shared.UmbrellaException;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxyChange;

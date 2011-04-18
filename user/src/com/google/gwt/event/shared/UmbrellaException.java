@@ -15,21 +15,43 @@
  */
 package com.google.gwt.event.shared;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Wraps {com.google.web.bindery.event.shared.UmbrellaException} for legacy
- * compatibility.
+ * A {@link RuntimeException} that collects a {@link Set} of child
+ * {@link Throwable}s together. Typically thrown after loop, with all of the
+ * exceptions thrown during that loop, but delayed so that the loop finishes
+ * executing.
  */
-public class UmbrellaException extends com.google.web.bindery.event.shared.UmbrellaException {
+public class UmbrellaException extends RuntimeException {
+
+  /**
+   * The causes of the exception.
+   */
+  private Set<Throwable> causes;
+
+  /*
+   * The default constructor enables RPC support.
+   */
+  public UmbrellaException() {
+    this(new HashSet<Throwable>());
+  }
+  
   public UmbrellaException(Set<Throwable> causes) {
-    super(causes);
+    super(
+        "One or more exceptions caught, see full set in UmbrellaException#getCauses",
+        causes.size() == 0 ? null : causes.toArray(new Throwable[0])[0]);
+    this.causes = causes;
   }
 
   /**
-   * Required for GWT RPC serialization.
+   * Get the set of exceptions that caused the failure.
+   * 
+   * @return the set of causes
    */
-  protected UmbrellaException() {
-    super();
+  public Set<Throwable> getCauses() {
+    return causes;
   }
+
 }

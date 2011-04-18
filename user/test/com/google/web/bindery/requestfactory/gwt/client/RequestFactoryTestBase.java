@@ -15,12 +15,12 @@
  */
 package com.google.web.bindery.requestfactory.gwt.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.junit.client.GWTTestCase;
 import com.google.web.bindery.autobean.shared.AutoBean;
 import com.google.web.bindery.autobean.shared.AutoBeanUtils;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.SimpleEventBus;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.EventBus;
+import com.google.gwt.event.shared.SimpleEventBus;
+import com.google.gwt.junit.client.GWTTestCase;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
 import com.google.web.bindery.requestfactory.shared.DefaultProxyStore;
 import com.google.web.bindery.requestfactory.shared.EntityProxy;

@@ -15,20 +15,16 @@
  */
 package com.google.gwt.event.shared;
 
-import com.google.web.bindery.event.shared.Event;
-
 /**
- * Root of all GWT widget and dom events sourced by a {@link HandlerManager}.
- * All GWT events are considered dead and should no longer be accessed once the
- * {@link HandlerManager} which originally fired the event finishes with it.
- * That is, don't hold on to event objects outside of your handler methods.
- * <p>
- * There is no need for an application's custom event types to extend GwtEvent.
- * Prefer {@link Event} instead.
+ * Root of all GWT events. All GWT events are considered dead and should no
+ * longer be accessed once the {@link HandlerManager} which originally fired the
+ * event finishes with it. That is, don't hold on to event objects outside of
+ * your handler methods.
  * 
  * @param <H> handler type
+ * 
  */
-public abstract class GwtEvent<H extends EventHandler> extends Event<H> {
+public abstract class GwtEvent<H extends EventHandler> {
   /**
    * Type class used to register events with the {@link HandlerManager}.
    * <p>
@@ -38,10 +34,32 @@ public abstract class GwtEvent<H extends EventHandler> extends Event<H> {
    * 
    * @param <H> handler type
    */
-  public static class Type<H> extends com.google.web.bindery.event.shared.Event.Type<H> {
+  public static class Type<H> {
+    private static int nextHashCode;
+    private final int index;
+
+    /**
+     * Constructor.
+     */
+    public Type() {
+      index = ++nextHashCode;
+    }
+
+    // We override hash code to make it as efficient as possible.
+    @Override
+    public final int hashCode() {
+      return index;
+    }
+
+    @Override
+    public String toString() {
+      return "Event type";
+    }
   }
 
   private boolean dead;
+
+  private Object source;
 
   /**
    * Constructor.
@@ -49,13 +67,46 @@ public abstract class GwtEvent<H extends EventHandler> extends Event<H> {
   protected GwtEvent() {
   }
 
-  @Override
-  public abstract GwtEvent.Type<H> getAssociatedType();
+  /**
+   * Returns the type used to register this event. Used by handler manager to
+   * dispatch events to the correct handlers.
+   * 
+   * @return the type
+   */
+  public abstract Type<H> getAssociatedType();
 
-  @Override
+  /**
+   * Returns the source that last fired this event.
+   * 
+   * @return object representing the source of this event
+   */
   public Object getSource() {
     assertLive();
-    return super.getSource();
+    return source;
+  }
+
+  /**
+   * This is a method used primarily for debugging. It gives a string
+   * representation of the event details. This does not override the toString
+   * method because the compiler cannot always optimize toString out correctly.
+   * Event types should override as desired.
+   * 
+   * @return a string representing the event's specifics.
+   */
+  public String toDebugString() {
+    String name = this.getClass().getName();
+    name = name.substring(name.lastIndexOf(".") + 1);
+    return "event: " + name + ":";
+  }
+
+  /**
+   * The toString() for abstract event is overridden to avoid accidently
+   * including class literals in the the compiled output. Use {@link GwtEvent}
+   * #toDebugString to get more information about the event.
+   */
+  @Override
+  public String toString() {
+    return "An event type";
   }
 
   /**
@@ -90,7 +141,7 @@ public abstract class GwtEvent<H extends EventHandler> extends Event<H> {
    */
   protected void kill() {
     dead = true;
-    setSource(null);
+    source = null;
   }
 
   /**
@@ -98,10 +149,16 @@ public abstract class GwtEvent<H extends EventHandler> extends Event<H> {
    */
   protected void revive() {
     dead = false;
-    setSource(null);
+    source = null;
   }
 
-  void overrideSource(Object source) {
-    super.setSource(source);
+  /**
+   * Set the source that triggered this event.
+   * 
+   * @param source the source of this event, should only be set by a
+   *          {@link HandlerManager}
+   */
+  void setSource(Object source) {
+    this.source = source;
   }
 }

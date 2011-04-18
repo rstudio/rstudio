@@ -24,7 +24,6 @@ import com.google.gwt.event.shared.testing.CountingEventBus;
  * Eponymous unit test.
  */
 public class ResettableEventBusTest extends HandlerTestBase {
-
   public void testSimple() {
     CountingEventBus wrapped = new CountingEventBus();
     ResettableEventBus subject = new ResettableEventBus(wrapped);

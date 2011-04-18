@@ -15,8 +15,8 @@
  */
 package com.google.gwt.activity.shared;
 
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.user.client.ui.AcceptsOneWidget;
-import com.google.web.bindery.event.shared.EventBus;
 
 /**
  * Implemented by objects that control a piece of user interface, with a life
@@ -49,7 +49,7 @@ public interface Activity {
    * Called when the Activity should ready its widget for the user. When the
    * widget is ready (typically after an RPC response has been received),
    * receiver should present it by calling
-   * {@link AcceptsOneWidget#setWidget} on the given panel.
+   * {@link AcceptsOneWidget#setWidget(IsWidget)} on the given panel.
    * <p>
    * Any handlers attached to the provided event bus will be de-registered when
    * the activity is stopped, so activities will rarely need to hold on to the

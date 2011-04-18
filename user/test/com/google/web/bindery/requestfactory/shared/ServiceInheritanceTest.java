@@ -16,8 +16,8 @@
 package com.google.web.bindery.requestfactory.shared;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.web.bindery.event.shared.SimpleEventBus;
 
 /**
  * Tests the ability of instance services to inherit methods

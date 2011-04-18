@@ -23,6 +23,7 @@ import com.google.gwt.event.logical.shared.HasAttachHandlers;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
@@ -245,8 +246,8 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
    *
    * @return the {@link HandlerManager} you want to use
    */
-  protected HandlerManager createHandlerManager() {
-    return new HandlerManager(this);
+  protected com.google.gwt.event.shared.HandlerManager createHandlerManager() {
+    return new com.google.gwt.event.shared.HandlerManager(this);
   }
 
   /**
@@ -288,7 +289,7 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
    * @param type the event type
    * @return the number of registered handlers
    */
-  protected int getHandlerCount(GwtEvent.Type<?> type) {
+  protected int getHandlerCount(Type<?> type) {
     return handlerManager == null ? 0 : handlerManager.getHandlerCount(type);
   }
 
@@ -411,12 +412,12 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
    *
    * @return the handler manager
    * */
-  HandlerManager ensureHandlers() {
+  com.google.gwt.event.shared.HandlerManager ensureHandlers() {
     return handlerManager == null ? handlerManager = createHandlerManager()
         : handlerManager;
   }
 
-  HandlerManager getHandlerManager() {
+  com.google.gwt.event.shared.HandlerManager getHandlerManager() {
     return handlerManager;
   }
 

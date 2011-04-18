@@ -15,7 +15,7 @@
  */
 package com.google.web.bindery.requestfactory.shared;
 
-import com.google.web.bindery.event.shared.EventBus;
+import com.google.gwt.event.shared.EventBus;
 
 /**
  * Marker interface for the RequestFactory code generator.

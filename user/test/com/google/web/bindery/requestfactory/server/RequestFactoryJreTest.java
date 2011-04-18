@@ -15,8 +15,8 @@
  */
 package com.google.web.bindery.requestfactory.server;
 
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.SimpleEventBus;
+import com.google.gwt.event.shared.EventBus;
+import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryTest;
 import com.google.web.bindery.requestfactory.server.testing.InProcessRequestTransport;
 import com.google.web.bindery.requestfactory.shared.RequestFactory;

@@ -18,6 +18,8 @@ package com.google.gwt.sample.dynatablerf.client;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
+import com.google.gwt.event.shared.EventBus;
+import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.sample.dynatablerf.client.widgets.DayFilterWidget;
 import com.google.gwt.sample.dynatablerf.client.widgets.FavoritesWidget;
 import com.google.gwt.sample.dynatablerf.client.widgets.SummaryWidget;
@@ -26,8 +28,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryLogHandler;
 import com.google.web.bindery.requestfactory.shared.LoggingRequest;
 
