@@ -27,6 +27,7 @@
    <inherits name="com.google.gwt.layout.Layout"/>
    <inherits name="com.google.gwt.media.Media"/>
    <inherits name="com.google.gwt.resources.Resources"/>
+   <inherits name="com.google.gwt.safecss.SafeCss" />
    <inherits name="com.google.gwt.safehtml.SafeHtml" />
    <inherits name="com.google.gwt.storage.Storage" />
    <inherits name="com.google.gwt.text.Text"/>
@@ -54,15 +55,6 @@
    <inherits name="com.google.gwt.user.SplitPanel"/>
    <inherits name="com.google.gwt.user.TextBox"/>
    <inherits name="com.google.gwt.user.Tree"/>
-   <inherits name="com.google.gwt.user.Hyperlink"/>
-   <inherits name="com.google.gwt.user.FileUpload"/>
-   <inherits name="com.google.gwt.user.ResizeLayoutPanel"/>
-   <inherits name="com.google.gwt.user.ScrollPanel"/>
-   <inherits name="com.google.gwt.user.datepicker.DatePicker"/>
-   <inherits name="com.google.gwt.user.cellview.CellView"/>
-   <inherits name="com.google.gwt.safecss.SafeCss" />
-   <inherits name="com.google.gwt.safehtml.SafeHtml" />
-   <inherits name="com.google.gwt.storage.Storage" />
    <inherits name="com.google.gwt.user.Window" />
    <inherits name="com.google.gwt.widget.Widget"/>
 
