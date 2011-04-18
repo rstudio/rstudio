@@ -140,7 +140,7 @@ public final class Util {
   public static String computeStrongName(byte[] content) {
     return computeStrongName(new byte[][] {content});
   }
-
+  
   /**
    * Computes the MD5 hash of the specified byte arrays.
    *
@@ -174,7 +174,7 @@ public final class Util {
     }
     return Utility.toHexString(md5.digest());
   }
-
+  
   public static void copy(InputStream is, OutputStream os) throws IOException {
     try {
       copyNoClose(is, os);
@@ -435,6 +435,16 @@ public final class Util {
   }
 
   /**
+   * A 4-digit hex result.
+   * 
+   * @deprecated use {@link Utility#hex4(char, StringBuffer)} instead.
+   */
+  @Deprecated
+  public static void hex4(char c, StringBuffer sb) {
+    Utility.hex4(c, sb);
+  }
+
+  /**
    * This method invokes an inaccessible method in another class.
    *
    * @param targetClass the class owning the method
@@ -480,22 +490,6 @@ public final class Util {
 
     return true;
   }
-
-  // /**
-  // * Reads the file as an array of strings.
-  // */
-  // public static String[] readURLAsStrings(URL url) {
-  // ArrayList lines = new ArrayList();
-  // String contents = readURLAsString(url);
-  // if (contents != null) {
-  // StringReader sr = new StringReader(contents);
-  // BufferedReader br = new BufferedReader(sr);
-  // String line;
-  // while (null != (line = readNextLine(br)))
-  // lines.add(line);
-  // }
-  // return (String[]) lines.toArray(new String[lines.size()]);
-  // }
 
   /**
    * Attempts to make a path relative to a particular directory.
@@ -547,6 +541,22 @@ public final class Util {
 
     return relativeFile;
   }
+
+  // /**
+  // * Reads the file as an array of strings.
+  // */
+  // public static String[] readURLAsStrings(URL url) {
+  // ArrayList lines = new ArrayList();
+  // String contents = readURLAsString(url);
+  // if (contents != null) {
+  // StringReader sr = new StringReader(contents);
+  // BufferedReader br = new BufferedReader(sr);
+  // String line;
+  // while (null != (line = readNextLine(br)))
+  // lines.add(line);
+  // }
+  // return (String[]) lines.toArray(new String[lines.size()]);
+  // }
 
   public static String makeRelativePath(File from, File to) {
     File f = makeRelativeFile(from, to);
@@ -894,6 +904,20 @@ public final class Util {
       a[i] = iter.next();
     }
     return a;
+  }
+
+  /**
+   * Returns a string representation of the byte array as a series of
+   * hexadecimal characters.
+   * 
+   * @param bytes byte array to convert
+   * @return a string representation of the byte array as a series of
+   *         hexadecimal characters
+   * @deprecated use {@link Utility#toHexString(byte[])} instead. 
+   */
+  @Deprecated
+  public static String toHexString(byte[] bytes) {
+    return Utility.toHexString(bytes);
   }
 
   /**
