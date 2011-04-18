@@ -217,9 +217,9 @@ endif()
 
 # install target (OSX install goes into the bundle)
 if(APPLE)
+  set_target_properties(RStudio PROPERTIES
+     MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
   install(TARGETS RStudio BUNDLE DESTINATION .)
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Info.plist
-          DESTINATION RStudio.app/Contents)
 else()
   install(TARGETS rstudio DESTINATION ${RSTUDIO_INSTALL_BIN})
 endif()

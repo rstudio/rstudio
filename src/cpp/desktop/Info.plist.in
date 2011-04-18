@@ -22,6 +22,8 @@
          <string>R Data File</string>
          <key>CFBundleTypeRole</key>
          <string>Editor</string>
+         <key>LSIsAppleDefaultForType</key>
+         <true/>
          <key>LSTypeIsPackage</key>
          <false/>
       </dict>
@@ -37,6 +39,8 @@
          <string>R Source File</string>
          <key>CFBundleTypeRole</key>
          <string>Editor</string>
+         <key>LSIsAppleDefaultForType</key>
+         <true/>
       </dict>
       <dict>
          <key>CFBundleTypeExtensions</key>
@@ -49,6 +53,8 @@
          <string>R Doc File</string>
          <key>CFBundleTypeRole</key>
          <string>Editor</string>
+         <key>LSIsAppleDefaultForType</key>
+         <true/>
       </dict>
       <dict>
          <key>CFBundleTypeExtensions</key>
@@ -61,6 +67,8 @@
          <key>CFBundleTypeName</key>
          <string>Sweave File</string>
          <key>CFBundleTypeRole</key>
+         <string>Editor</string>
+         <key>LSIsAppleDefaultForType</key>
          <true/>
       </dict>
       <dict>
