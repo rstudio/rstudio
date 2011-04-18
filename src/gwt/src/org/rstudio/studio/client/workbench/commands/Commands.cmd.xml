@@ -145,7 +145,6 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="installPackage"/>
          <cmd refid="updatePackages"/>
-         <cmd refid="removePackage"/>
          <separator/>
          <cmd refid="showOptions"/>
       </menu>
@@ -471,11 +470,6 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Update Packages..."
         buttonLabel="Update"
         desc="Update R packages" />     
-        
-   <cmd id="removePackage"
-        menuLabel="_Remove Package..."
-        buttonLabel="Remove"
-        desc="Remove selected R package(s)" />
              
    <cmd id="showOptions"
         menuLabel="_Options..."/>

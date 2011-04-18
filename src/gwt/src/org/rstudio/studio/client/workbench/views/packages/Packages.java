@@ -46,7 +46,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 
 public class Packages
       extends BasePresenter
@@ -65,8 +64,6 @@ public class Packages
                           GlobalDisplay globalDisplay,
                           OperationWithInput<InstallOptions> operation);
       
-      Set<PackageInfo> getSelectedPackages();
-      
       void setPackageStatus(String packageName, boolean loaded);
   
       void setObserver(PackagesDisplayObserver observer) ;
@@ -78,14 +75,12 @@ public class Packages
                    EventBus events,
                    PackagesServerOperations server,
                    GlobalDisplay globalDisplay,
-                   Commands commands,
                    Session session)
    {
       super(view);
       view_ = view;
       server_ = server;
       globalDisplay_ = globalDisplay ;
-      commands_ = commands;
       view_.setObserver(this) ;
       events_ = events ;
 
@@ -187,24 +182,7 @@ public class Packages
       @Override
       public void execute()
       {
-         // check for selected
-         Set<PackageInfo> selected = view_.getSelectedPackages();
-         if (selected.isEmpty())
-            return;
          
-         // build list of remove commands
-         StringBuilder command = new StringBuilder();
-         for (PackageInfo pkgInfo : selected)
-         {
-            command.append("remove.packages(\"");
-            command.append(pkgInfo.getName());
-            command.append("\", lib=\"");
-            command.append(pkgInfo.getLibrary());
-            command.append("\")\n");
-         }
-         
-         // execute
-         events_.fireEvent(new SendToConsoleEvent(command.toString(), true));
       }   
    };
       
@@ -283,10 +261,6 @@ public class Packages
       events_.fireEvent(new ShowHelpEvent(packageInfo.getUrl())) ;
    }
    
-   public void onSelectionChanged(boolean packagesSelected)
-   {
-      commands_.removePackage().setEnabled(packagesSelected);
-   }
    
    public void onInstalledPackagesChanged(InstalledPackagesChangedEvent event)
    {
@@ -334,6 +308,5 @@ public class Packages
    private String packageFilter_ = new String();
    private final EventBus events_ ;
    private final GlobalDisplay globalDisplay_ ;
-   private final Commands commands_;
    private String installRepository_;
 }

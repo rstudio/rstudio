@@ -30,9 +30,7 @@ public class PackagesTab extends DelayLoadWorkbenchTab<Packages>
       @Handler
       public abstract void onInstallPackage();
       @Handler
-      public abstract void onUpdatePackages();
-      @Handler
-      public abstract void onRemovePackage();     
+      public abstract void onUpdatePackages();    
    }
 
    @Inject
@@ -40,7 +38,5 @@ public class PackagesTab extends DelayLoadWorkbenchTab<Packages>
    {
       super("Packages", shim);
       binder.bind(commands, shim);
-      
-      commands.removePackage().setEnabled(false);
    }
 }

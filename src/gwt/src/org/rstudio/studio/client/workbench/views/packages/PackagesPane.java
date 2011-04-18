@@ -32,11 +32,9 @@ import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.ListDataProvider;
-import com.google.gwt.view.client.MultiSelectionModel;
-import com.google.gwt.view.client.SelectionChangeEvent;
+import com.google.gwt.view.client.NoSelectionModel;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.CustomSelectionEventManager;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -50,7 +48,6 @@ import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialo
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class PackagesPane extends WorkbenchPane implements Packages.Display
 {
@@ -72,7 +69,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    {
       packagesTable_.setPageSize(packages.size());
       packagesDataProvider_.setList(packages);
-      clearSelection();
    }
    
    public void installPackage(String installRepository,
@@ -86,11 +82,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                                operation).showModal();
    }
    
-   public Set<PackageInfo> getSelectedPackages()
-   {
-      return selectionModel_.getSelectedSet();
-   }
-   
    public void setPackageStatus(String packageName, boolean loaded)
    {
       int row = packageRow(packageName) ;
@@ -102,12 +93,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          packages.set(row, loaded ? packages.get(row).asLoaded() :
                                     packages.get(row).asUnloaded());
       }
-   }
-   
-   public void clearSelection()
-   {
-      if (selectionModel_ != null)
-         selectionModel_.clear();
    }
    
    private int packageRow(String packageName)
@@ -139,7 +124,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
      
       toolbar.addLeftWidget(commands_.installPackage().createToolbarButton());
       toolbar.addLeftWidget(commands_.updatePackages().createToolbarButton());
-      toolbar.addLeftWidget(commands_.removePackage().createToolbarButton());
       searchWidget_ = new SearchWidget(new SuggestOracle() {
          @Override
          public void requestSuggestions(Request request, Callback callback)
@@ -163,31 +147,13 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    }
    
    @Override
-   public void onBeforeSelected()
-   {
-      clearSelection();
-   }
-
-   @Override
    protected Widget createMainWidget()
    {
       packagesTable_ = new CellTable<PackageInfo>(
                         15,
                         GWT.<Resources> create(Resources.class));
       packagesTable_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
-      selectionModel_ = new MultiSelectionModel<PackageInfo>(); 
-      selectionModel_.addSelectionChangeHandler(
-                                       new SelectionChangeEvent.Handler() {
-         public void onSelectionChange(SelectionChangeEvent event)
-         {
-            observer_.onSelectionChanged(
-              selectionModel_.getSelectedSet().size() > 0);
-         }
-      });
-      packagesTable_.setSelectionModel(
-        selectionModel_,
-        CustomSelectionEventManager.createClickToUnselectManager(
-                                                           selectionModel_));
+      packagesTable_.setSelectionModel(new NoSelectionModel<PackageInfo>());
       packagesTable_.setWidth("100%", true);
         
       LoadedColumn loadedColumn = new LoadedColumn();
@@ -263,11 +229,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                  StringBuilder div = new StringBuilder();
                  div.append("<div class=\"");
                  div.append(styles.packageNameLink());
-                 if (selectionModel_.isSelected(
-                    packagesDataProvider_.getList().get(context.getIndex())))
-                 {
-                    div.append(" " + styles.packageNameLinkSelected());
-                 }
                  div.append("\">");
                  
                  sb.appendHtmlConstant(div.toString());
@@ -329,7 +290,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    }
 
    private CellTable<PackageInfo> packagesTable_;
-   private MultiSelectionModel<PackageInfo> selectionModel_;
    private ListDataProvider<PackageInfo> packagesDataProvider_;
    private SearchWidget searchWidget_;
    private PackagesDisplayObserver observer_ ;
