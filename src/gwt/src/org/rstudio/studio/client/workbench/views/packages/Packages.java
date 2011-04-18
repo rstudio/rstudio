@@ -168,23 +168,26 @@ public class Packages
       globalDisplay_.showErrorMessage("Packages", "Update Packages");
    }
    
-   void onRemovePackage()
+   public void removePackage(final PackageInfo packageInfo)
    {
       globalDisplay_.showYesNoMessage(
             MessageDialog.WARNING,
             "Confirm Remove",
-            "Are you sure you want to remove the selected package(s)?",
-            removeSelectedPackagesOperation_,
+            "Are you sure you want to remove the " + 
+            packageInfo.getName() + " package?",
+            new Operation() { public void execute()
+            {
+               StringBuilder command = new StringBuilder();
+               command.append("remove.packages(\"");
+               command.append(packageInfo.getName());
+               command.append("\", lib=\"");
+               command.append(packageInfo.getLibrary());
+               command.append("\")");
+               events_.fireEvent(new SendToConsoleEvent(command.toString(), 
+                                                        true));
+            }},
             false);
    }
-   
-   private Operation removeSelectedPackagesOperation_ = new Operation() {
-      @Override
-      public void execute()
-      {
-         
-      }   
-   };
       
    public void listPackages()
    {

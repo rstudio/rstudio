@@ -32,7 +32,8 @@
 }
 
 .cellTableCell {
-  padding: 2px 15px;
+  /* CHANGE: use less padding (originally was 15px) */
+  padding: 2px 10px;
   overflow: hidden;
   
   /* CHANGE: use default cursor rather than pointer/caret */

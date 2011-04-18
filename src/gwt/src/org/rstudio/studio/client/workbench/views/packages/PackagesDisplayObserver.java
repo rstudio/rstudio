@@ -20,5 +20,6 @@ public interface PackagesDisplayObserver
    void loadPackage(String pkgName) ;
    void unloadPackage(String pkgName) ;
    void showHelp(PackageInfo packageInfo) ;
+   void removePackage(PackageInfo packageInfo);
    void onPackageFilterChanged(String filter);
 }

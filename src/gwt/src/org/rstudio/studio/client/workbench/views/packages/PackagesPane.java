@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.packages;
 
+import com.google.gwt.cell.client.ButtonCell;
 import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.ClickableTextCell;
 import com.google.gwt.cell.client.FieldUpdater;
@@ -35,6 +36,7 @@ import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.NoSelectionModel;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -174,6 +176,11 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packagesTable_.addColumn(descColumn);
       packagesTable_.setColumnWidth(descColumn, 80, Unit.PCT);
       
+      RemoveColumn removeColumn = new RemoveColumn();
+      packagesTable_.addColumn(removeColumn);
+      packagesTable_.setColumnWidth(removeColumn, 33, Unit.PX);
+      
+      
       packagesDataProvider_ = new ListDataProvider<PackageInfo>();
       packagesDataProvider_.addDataDisplay(packagesTable_);
       
@@ -208,6 +215,39 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       }
       
    }
+   
+   class RemoveColumn extends Column<PackageInfo, String>
+   {
+      public RemoveColumn()
+      {
+         super(new ButtonCell(){
+            @Override
+            public void render(Context context, 
+                                  SafeHtml value, 
+                                  SafeHtmlBuilder sb) 
+            {   
+               sb.appendHtmlConstant(closeButtonPrototype_.getHTML());
+            }                                
+         });
+
+         setFieldUpdater(new FieldUpdater<PackageInfo,String>() {
+            public void update(int index, PackageInfo pkgInfo, String value)
+            {
+               observer_.removePackage(pkgInfo);
+            }
+         });
+      }
+
+      @Override
+      public String getValue(PackageInfo object)
+      {
+         return null;
+      }
+   }
+   
+   final static AbstractImagePrototype closeButtonPrototype_ = 
+      AbstractImagePrototype.create(ThemeResources.INSTANCE.clearSearch());
+   
    
    // package name column which includes a hyperlink to package docs
    class NameColumn extends Column<PackageInfo, String>
