@@ -34,8 +34,7 @@ import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.widget.MessageDialog;
-import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.CustomSelectionEventManager;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -52,11 +51,10 @@ import java.util.Set;
 public class PackagesPane extends WorkbenchPane implements Packages.Display
 {
    @Inject
-   public PackagesPane(Commands commands, GlobalDisplay globalDisplay)
+   public PackagesPane(Commands commands)
    {
       super("Packages");
       commands_ = commands;
-      globalDisplay_ = globalDisplay;
      
       ensureWidget();
    }
@@ -163,7 +161,10 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
               selectionModel_.getSelectedSet().size() > 0);
          }
       });
-      packagesTable_.setSelectionModel(selectionModel_);
+      packagesTable_.setSelectionModel(
+        selectionModel_,
+        CustomSelectionEventManager.createClickToUnselectManager(
+                                                           selectionModel_));
       packagesTable_.setWidth("100%", true);
         
       LoadedColumn loadedColumn = new LoadedColumn();
@@ -309,5 +310,4 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private ListDataProvider<PackageInfo> packagesDataProvider_;
    private PackagesDisplayObserver observer_ ;
    private final Commands commands_;
-   private final GlobalDisplay globalDisplay_;
 }

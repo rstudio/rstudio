@@ -25,11 +25,15 @@ public class PackageInfo extends JavaScriptObject
    public final native String getName() /*-{
       return this.name;
    }-*/;
+   
+   public final native String getLibrary() /*-{
+      return this.library;
+   }-*/;
 
    public final native String getDesc() /*-{
       return this.desc;
    }-*/;
-
+   
    public final native String getUrl() /*-{
       return this.url;
    }-*/;
@@ -51,6 +55,7 @@ public class PackageInfo extends JavaScriptObject
    private final native PackageInfo asLoadedState(boolean loaded) /*-{
       var packageInfo = new Object();
       packageInfo.name = this.name;
+      packageInfo.library = this.library;
       packageInfo.desc = this.desc;
       packageInfo.url = this.url;
       packageInfo.loaded = loaded;

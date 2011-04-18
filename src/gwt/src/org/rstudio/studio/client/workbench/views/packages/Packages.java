@@ -192,25 +192,18 @@ public class Packages
          if (selected.isEmpty())
             return;
          
-         // build list of package names
-         StringBuilder packages = new StringBuilder();
+         // build list of remove commands
+         StringBuilder command = new StringBuilder();
          for (PackageInfo pkgInfo : selected)
          {
-            packages.append("\"");
-            packages.append(pkgInfo.getName());
-            packages.append("\", ");
+            command.append("remove.packages(\"");
+            command.append(pkgInfo.getName());
+            command.append("\", lib=\"");
+            command.append(pkgInfo.getLibrary());
+            command.append("\")\n");
          }
-         String pkgList = packages.substring(0, packages.length() - 2);
          
-         // wrap in c if there is more than one
-         if (selected.size() > 1)
-            pkgList = "c(" + pkgList + ")";
-         
-         // build the command and send it to the console
-         StringBuilder command = new StringBuilder();
-         command.append("remove.packages(");
-         command.append(pkgList);
-         command.append(")");
+         // execute
          events_.fireEvent(new SendToConsoleEvent(command.toString(), true));
       }   
    };

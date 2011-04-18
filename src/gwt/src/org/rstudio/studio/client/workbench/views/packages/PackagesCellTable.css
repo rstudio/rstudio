@@ -82,20 +82,22 @@
 }
 
 .cellTableOddRow {
-  background: #f3f7fb;
+  /* CHANGE: use rstudio odd color (defined in themeStyles.css) */	
+  background: #f2f2f2;
 }
 
 .cellTableOddRowCell {
-  border: selectionBorderWidth solid #f3f7fb;
+  /* CHANGE: use rstudio odd color (defined in themeStyles.css) */   
+  border: selectionBorderWidth solid #f2f2f2;
 }
 
-/* CHANGE: Disable hover effects */
-
 .cellTableHoveredRow {
+  /* CHANGE: Disable hover effects */	
   /* background: #eee; */
 }
 
 .cellTableHoveredRowCell {
+  /* CHANGE: Disable hover effects */
   /* border: selectionBorderWidth solid #eee; */
 }
 
@@ -109,14 +111,16 @@
 }
 
 .cellTableSelectedRow {
-  background: #628cd5;
-  color: white;
+  /* CHANGE: use same selected background color as History table */
+  background: rgb(146, 193, 240);
+  /* color: white; */
   height: auto;
   overflow: auto;
 }
 
 .cellTableSelectedRowCell {
-  border: selectionBorderWidth solid #628cd5;
+  /* CHANGE: use same selected background color as History table */
+  border: selectionBorderWidth solid rgb(146, 193, 240);
 }
 
 /**
