@@ -80,7 +80,7 @@ public class Audio extends MediaBase {
      * @return true if supported, false otherwise.
      */
     static native boolean isSupportedRunTime(AudioElement element) /*-{
-      return !!element.play;
+      return !!element.canPlayType;
     }-*/;
 
     /**

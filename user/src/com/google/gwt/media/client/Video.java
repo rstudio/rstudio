@@ -78,7 +78,7 @@ public class Video extends MediaBase {
      * @return true if supported, false otherwise.
      */
     static native boolean isSupportedRunTime(VideoElement element) /*-{
-      return !!element.play;
+      return !!element.canPlayType;
     }-*/;
 
     /**
@@ -143,7 +143,7 @@ public class Video extends MediaBase {
 
   /**
    * Creates a Video widget with a given source URL.
-   * 
+   *
    * @param src a String URL.
    * @deprecated use {@link #createIfSupported()}.
    */
