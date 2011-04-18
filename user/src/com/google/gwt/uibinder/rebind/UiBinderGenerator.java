@@ -47,8 +47,6 @@ public class UiBinderGenerator extends Generator {
 
   private static final String TEMPLATE_SUFFIX = ".ui.xml";
 
-  private static final String ELEMENT_FACTORY_PROPERTY = "uibinder.html.elementfactory";
-  
   private static final String XSS_SAFE_CONFIG_PROPERTY = "UiBinder.useSafeHtmlTemplates";
   
   /**
