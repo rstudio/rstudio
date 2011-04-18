@@ -467,9 +467,9 @@ well as menu structures (for main menu and popup menus).
         desc="Install R packages" />
         
    <cmd id="updatePackages"
-        menuLabel="_Update Packages..."
-        buttonLabel="Update"
-        desc="Update R packages" />     
+        menuLabel="Check for Package _Updates..."
+        buttonLabel="Check for Updates"
+        desc="Check for package updates" />     
              
    <cmd id="showOptions"
         menuLabel="_Options..."/>
