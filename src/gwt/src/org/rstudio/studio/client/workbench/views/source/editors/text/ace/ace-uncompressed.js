@@ -9700,7 +9700,8 @@ var Tokenizer = function(rules) {
                     
                 token = {
                     type: type,
-                    value: value
+                    value: value,
+                    column: match.index
                 };
             } else {
                 token.value += value;

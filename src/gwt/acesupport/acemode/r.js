@@ -101,82 +101,74 @@ define("mode/r", function(require, exports, module)
          if (endState != "start")
             return "";
 
-         (function ()
+         // Create a string composed of only the braces. Careful not to pick
+         // up braces in strings or comments.
+         var braces = tokens.filter(function(t) { return /\bparen\b/.test(t.type) });
+         var bracesStr = braces.reduce(function (memo, t) { return memo + t.value; }, "");
+
+         function countOpens(str) { return str.replace(/[^\[({]/g, "").length; }
+         function countCloses(str) { return str.replace(/[^\])}]/g, "").length; }
+         var opens = countOpens(bracesStr);
+         var closes = countCloses(bracesStr);
+
+         if (opens > closes)
          {
-            // Create a string composed of only the braces. Careful not to pick
-            // up braces in strings or comments.
-            var braces = tokens.filter(function(t) { return /\bparen\b/.test(t.type) });
-            var bracesStr = braces.reduce(function (memo, t) { return memo + t.value; }, "");
+            return indent + tab;
+         }
 
-            function countOpens(str) { return str.replace(/[^\[({]/g, "").length; };
-            function countCloses(str) { return str.replace(/[^\])}]/g, "").length; };
-            var opens = countOpens(bracesStr);
-            var closes = countCloses(bracesStr);
+         if (opens < closes)
+         {
+            return indent.replace(tab, "");
+         }
 
-            if (opens > closes)
+         if (tokens[0].type === "keyword"
+               && /^(if|while|for)$/.test(tokens[0].value))
+         {
+            // Check for the case where the previous line was "if (cond)"
+            // cause we want to indent in those cases. But not if it's
+            // "if (cond) expr". Need to be careful here because the
+            // conditional expression can contain parens. So we move
+            // through the token list, waiting for the outermost paren
+            // to be matched. Once we have done that, see if there's
+            // any tokens left. (Note that whitespace and comments have
+            // been stripped at this point so they won't count as expr)
+
+            var postIf = tokens.slice(2);
+            var parenCount = 1;
+            var pos = 0;
+            for (; parenCount > 0 && pos < postIf.length; pos++)
             {
-               indent += tab;
-               return;
-            }
-
-            if (opens < closes)
-            {
-               indent = indent.replace(tab, "");
-               return;
-            }
-
-            if (tokens[0].type === "keyword"
-                  && /^(if|while|for)$/.test(tokens[0].value))
-            {
-               // Check for the case where the previous line was "if (cond)"
-               // cause we want to indent in those cases. But not if it's
-               // "if (cond) expr". Need to be careful here because the
-               // conditional expression can contain parens. So we move
-               // through the token list, waiting for the outermost paren
-               // to be matched. Once we have done that, see if there's
-               // any tokens left. (Note that whitespace and comments have
-               // been stripped at this point so they won't count as expr)
-
-               var postIf = tokens.slice(2);
-               var parenCount = 1;
-               var pos = 0;
-               for (; parenCount > 0 && pos < postIf.length; pos++)
+               var t = postIf[pos];
+               if (/paren/.test(t.type))
                {
-                  var t = postIf[pos];
-                  if (/paren/.test(t.type))
+                  for (var j = 0; parenCount > 0 && j < t.value.length; j++)
                   {
-                     for (var j = 0; parenCount > 0 && j < t.value.length; j++)
-                     {
-                        if (t.value.charAt(j) == "(")
-                           parenCount++;
-                        else if (t.value.charAt(j) == ")")
-                           parenCount--;
-                     }
+                     if (t.value.charAt(j) == "(")
+                        parenCount++;
+                     else if (t.value.charAt(j) == ")")
+                        parenCount--;
                   }
                }
-
-               if (pos == postIf.length)
-               {
-                  indent += tab;
-                  return;
-               }
             }
 
-            // See if we end with a binary operator; that means the operation
-            // isn't done yet
-            var lastToken = tokens[tokens.length - 1];
-            if (/\boperator\b/.test(lastToken.type) && !/\bparen\b/.test(lastToken.type))
+            if (pos == postIf.length)
             {
-               indent += tab;
-               return;
+               return indent + tab;
             }
+         }
 
-            if (lastToken.type === "keyword" && lastToken.value === "repeat")
-            {
-               indent += tab;
-               return;
-            }
-         })();
+         // See if we end with a binary operator; that means the operation
+         // isn't done yet
+         var lastToken = tokens[tokens.length - 1];
+         if (/\boperator\b/.test(lastToken.type) && !/\bparen\b/.test(lastToken.type))
+         {
+            return indent + tab;
+         }
+
+         if (lastToken.type === "keyword" && lastToken.value === "repeat")
+         {
+            return indent + tab;
+         }
 
          return indent;
       };
