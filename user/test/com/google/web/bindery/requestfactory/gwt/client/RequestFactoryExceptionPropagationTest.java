@@ -16,7 +16,7 @@
 package com.google.web.bindery.requestfactory.gwt.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.UmbrellaException;
+import com.google.web.bindery.event.shared.UmbrellaException;
 import com.google.web.bindery.requestfactory.shared.Receiver;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
 import com.google.web.bindery.requestfactory.shared.ServerFailure;
@@ -302,7 +302,7 @@ public class RequestFactoryExceptionPropagationTest extends
   }
 
   @Override
-  protected void gwtTearDown() throws Exception {
+  protected void gwtTearDown() {
     GWT.setUncaughtExceptionHandler(defaultUncaughtExceptionHandler);
   }
 }

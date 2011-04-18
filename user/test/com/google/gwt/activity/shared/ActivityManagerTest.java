@@ -15,17 +15,16 @@
  */
 package com.google.gwt.activity.shared;
 
-import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.UmbrellaException;
-import com.google.gwt.event.shared.testing.CountingEventBus;
 import com.google.gwt.place.shared.Place;
 import com.google.gwt.place.shared.PlaceChangeEvent;
 import com.google.gwt.place.shared.PlaceChangeRequestEvent;
 import com.google.gwt.user.client.ui.AcceptsOneWidget;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.web.bindery.event.shared.Event;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.UmbrellaException;
+import com.google.web.bindery.event.shared.testing.CountingEventBus;
 
 import junit.framework.TestCase;
 
@@ -49,11 +48,11 @@ public class ActivityManagerTest extends TestCase {
     }
   }
 
-  private static class Event extends GwtEvent<Handler> {
-    private static GwtEvent.Type<EventHandler> TYPE = new GwtEvent.Type<EventHandler>();
+  private static class MyEvent extends Event<Handler> {
+    private static Event.Type<Handler> TYPE = new Event.Type<Handler>();
 
     @Override
-    public com.google.gwt.event.shared.GwtEvent.Type<Handler> getAssociatedType() {
+    public Event.Type<Handler> getAssociatedType() {
       throw new UnsupportedOperationException("Auto-generated method stub");
     }
 
@@ -63,7 +62,7 @@ public class ActivityManagerTest extends TestCase {
     }
   }
 
-  private static class Handler implements EventHandler {
+  private static class Handler {
   };
 
   private static class MyDisplay implements AcceptsOneWidget {
@@ -261,29 +260,29 @@ public class ActivityManagerTest extends TestCase {
   public void testDropHandlersOnStop() {
     manager.setDisplay(realDisplay);
 
-    assertEquals(0, eventBus.getCount(Event.TYPE));
+    assertEquals(0, eventBus.getCount(MyEvent.TYPE));
 
     activity1 = new SyncActivity(null) {
       @Override
       public void start(AcceptsOneWidget panel, EventBus eventBus) {
         super.start(panel, eventBus);
-        bus.addHandler(Event.TYPE, new Handler());
+        bus.addHandler(MyEvent.TYPE, new Handler());
       }
 
       @Override
       public void onStop() {
         super.onStop();
-        bus.addHandler(Event.TYPE, new Handler());
+        bus.addHandler(MyEvent.TYPE, new Handler());
       }
     };
 
     PlaceChangeEvent event = new PlaceChangeEvent(place1);
     eventBus.fireEvent(event);
-    assertEquals(1, eventBus.getCount(Event.TYPE));
+    assertEquals(1, eventBus.getCount(MyEvent.TYPE));
 
     event = new PlaceChangeEvent(place2);
     eventBus.fireEvent(event);
-    assertEquals(0, eventBus.getCount(Event.TYPE));
+    assertEquals(0, eventBus.getCount(MyEvent.TYPE));
 
     // Make sure we didn't nuke the ActivityManager's own handlers
     assertEquals(1, eventBus.getCount(PlaceChangeEvent.TYPE));
@@ -310,12 +309,12 @@ public class ActivityManagerTest extends TestCase {
       @Override
       public void start(AcceptsOneWidget panel, EventBus eventBus) {
         super.start(panel, eventBus);
-        bus.addHandler(Event.TYPE, new Handler());
+        bus.addHandler(MyEvent.TYPE, new Handler());
       }
       @Override
       public void onStop() {
         super.onStop();
-        bus.addHandler(Event.TYPE, new Handler());
+        bus.addHandler(MyEvent.TYPE, new Handler());
         throw new UnsupportedOperationException("Auto-generated method stub");
       }
     };
@@ -333,7 +332,7 @@ public class ActivityManagerTest extends TestCase {
     try {
       PlaceChangeEvent event = new PlaceChangeEvent(place1);
       eventBus.fireEvent(event);
-      assertEquals(1, eventBus.getCount(Event.TYPE));
+      assertEquals(1, eventBus.getCount(MyEvent.TYPE));
 
       event = new PlaceChangeEvent(place2);
       eventBus.fireEvent(event);
@@ -349,7 +348,7 @@ public class ActivityManagerTest extends TestCase {
 
     assertTrue(activity1.stopped);
     assertNotNull(activity2.display);
-    assertEquals(0, eventBus.getCount(Event.TYPE));
+    assertEquals(0, eventBus.getCount(MyEvent.TYPE));
   }
   
   /**

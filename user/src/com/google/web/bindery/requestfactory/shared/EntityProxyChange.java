@@ -15,10 +15,9 @@
  */
 package com.google.web.bindery.requestfactory.shared;
 
-import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.web.bindery.event.shared.Event;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 
 /**
  * Event posted by a {@link RequestFactory} when changes to an entity are
@@ -36,14 +35,14 @@ import com.google.gwt.event.shared.HandlerRegistration;
  * @see RequestFactory#find(EntityProxyId)
  */
 public class EntityProxyChange<P extends EntityProxy> extends
-    GwtEvent<EntityProxyChange.Handler<P>> {
+    Event<EntityProxyChange.Handler<P>> {
 
   /**
    * Implemented by methods that handle EntityProxyChange events.
    *
    * @param <P> the proxy type
    */
-  public interface Handler<P extends EntityProxy> extends EventHandler {
+  public interface Handler<P extends EntityProxy> {
     /**
      * Called when an {@link EntityProxyChange} event is fired.
      *
@@ -87,11 +86,11 @@ public class EntityProxyChange<P extends EntityProxy> extends
   /**
    * Returns the type associated with this instance.
    *
-   * @return an instance of {@link com.google.gwt.event.shared.GwtEvent.Type Type} of type Handler&lt;P&gt
+   * @return an instance of {@link Event.Type Type} of type Handler&lt;P&gt
    */
   @SuppressWarnings({"unchecked", "rawtypes"})
   @Override
-  public GwtEvent.Type<Handler<P>> getAssociatedType() {
+  public Event.Type<Handler<P>> getAssociatedType() {
     /*
      * The instance knows its handler is of type P, but the TYPE field itself
      * does not, so we have to do an unsafe cast here.

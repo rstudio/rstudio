@@ -22,7 +22,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.sample.dynatablerf.client.events.EditPersonEvent;
 import com.google.gwt.sample.dynatablerf.client.events.FilterChangeEvent;
@@ -46,6 +45,7 @@ import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.RangeChangeEvent;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
+import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.requestfactory.shared.EntityProxyChange;
 import com.google.web.bindery.requestfactory.shared.EntityProxyId;
 import com.google.web.bindery.requestfactory.shared.Receiver;
@@ -255,7 +255,7 @@ public class SummaryWidget extends Composite {
   }
 
   private int offsetOf(EntityProxyId<PersonProxy> personId) {
-    List<PersonProxy> displayedItems = table.getDisplayedItems();
+    List<PersonProxy> displayedItems = table.getVisibleItems();
     for (int offset = 0, j = displayedItems.size(); offset < j; offset++) {
       if (personId.equals(displayedItems.get(offset).stableId())) {
         return offset;

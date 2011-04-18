@@ -15,14 +15,14 @@
  */
 package com.google.gwt.activity.shared;
 
-import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.event.shared.ResettableEventBus;
-import com.google.gwt.event.shared.UmbrellaException;
 import com.google.gwt.place.shared.PlaceChangeEvent;
 import com.google.gwt.place.shared.PlaceChangeRequestEvent;
 import com.google.gwt.user.client.ui.AcceptsOneWidget;
 import com.google.gwt.user.client.ui.IsWidget;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.google.web.bindery.event.shared.ResettableEventBus;
+import com.google.web.bindery.event.shared.UmbrellaException;
 
 import java.util.LinkedHashSet;
 import java.util.Set;

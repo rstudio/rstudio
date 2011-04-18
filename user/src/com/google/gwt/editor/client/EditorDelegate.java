@@ -15,7 +15,7 @@
  */
 package com.google.gwt.editor.client;
 
-import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 
 /**
  * Binds an individual Editor to the backing service. Every Editor has a peer

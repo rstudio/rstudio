@@ -15,84 +15,67 @@
  */
 package com.google.gwt.event.shared;
 
-import com.google.gwt.event.shared.GwtEvent.Type;
-
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import com.google.web.bindery.event.shared.Event;
+import com.google.web.bindery.event.shared.Event.Type;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 
 /**
- * Wraps an EventBus to hold on to any HandlerRegistrations, so that they can
- * easily all be cleared at once.
+ * Wraps {com.google.web.bindery.event.shared.ResettableEventBus} for legacy
+ * compatibility.
+ * 
+ * @deprecated Use com.google.web.bindery.event.shared.ResettableEventBus.
  */
+@SuppressWarnings("deprecation")
+@Deprecated
 public class ResettableEventBus extends EventBus {
+  private static class TestableResettableEventBus extends com.google.web.bindery.event.shared.ResettableEventBus {
+    /**
+     * @param wrappedBus
+     */
+    public TestableResettableEventBus(EventBus wrappedBus) {
+      super(wrappedBus);
+    }
 
-  private final EventBus wrapped;
-  private final Set<HandlerRegistration> registrations = new HashSet<HandlerRegistration>();
+    @Override
+    public int getRegistrationSize() {
+      return super.getRegistrationSize();
+    }
+  }
+  
+  private final TestableResettableEventBus real;
 
   public ResettableEventBus(EventBus wrappedBus) {
-    this.wrapped = wrappedBus;
+    real = new TestableResettableEventBus(wrappedBus);
   }
 
   @Override
-  public <H extends EventHandler> HandlerRegistration addHandler(Type<H> type, H handler) {
-    HandlerRegistration rtn = wrapped.addHandler(type, handler);
-    return doRegisterHandler(rtn);
+  public <H> HandlerRegistration addHandler(Type<H> type, H handler) {
+    return real.addHandler(type, handler);
   }
 
   @Override
-  public <H extends EventHandler> HandlerRegistration addHandlerToSource(GwtEvent.Type<H> type,
-      Object source, H handler) {
-    HandlerRegistration rtn = wrapped.addHandlerToSource(type, source, handler);
-    return doRegisterHandler(rtn);
+  public <H> HandlerRegistration addHandlerToSource(Type<H> type, Object source, H handler) {
+    return real.addHandlerToSource(type, source, handler);
   }
 
   @Override
-  public void fireEvent(GwtEvent<?> event) {
-    wrapped.fireEvent(event);
+  public void fireEvent(Event<?> event) {
+    real.fireEvent(event);
   }
 
   @Override
-  public void fireEventFromSource(GwtEvent<?> event, Object source) {
-    wrapped.fireEventFromSource(event, source);
+  public void fireEventFromSource(Event<?> event, Object source) {
+    real.fireEventFromSource(event, source);
+  }
+
+  public void removeHandlers() {
+    real.removeHandlers();
   }
 
   /**
-   * Remove all handlers that have been added through this wrapper.
+   * Visible for testing
    */
-  public void removeHandlers() {
-    Iterator<HandlerRegistration> it = registrations.iterator();
-    while (it.hasNext()) {
-      HandlerRegistration r = it.next();
-
-      /*
-       * must remove before we call removeHandler. Might have come from nested
-       * ResettableEventBus
-       */
-      it.remove();
-
-      r.removeHandler();
-    }
-  }
-
-  // Visible for testing
   int getRegistrationSize() {
-    return registrations.size();
-  }
-
-  private HandlerRegistration doRegisterHandler(final HandlerRegistration registration) {
-    registrations.add(registration);
-    return new HandlerRegistration() {
-      public void removeHandler() {
-        doUnregisterHandler(registration);
-      }
-    };
-  }
-
-  private void doUnregisterHandler(HandlerRegistration registration) {
-    if (registrations.contains(registration)) {
-      registration.removeHandler();
-      registrations.remove(registration);
-    }
+    return real.getRegistrationSize();
   }
 }

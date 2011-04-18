@@ -38,9 +38,9 @@ import com.google.gwt.editor.client.IsEditor;
 import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.editor.client.ValueAwareEditor;
 import com.google.gwt.editor.client.adapters.SimpleEditor;
-import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.user.client.TakesValue;
 import com.google.gwt.user.client.ui.HasText;
+import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryEditorDriver;
 import com.google.web.bindery.requestfactory.shared.EntityProxy;
 import com.google.web.bindery.requestfactory.shared.Request;
@@ -503,6 +503,7 @@ public class EditorModelTest extends TestCase {
     assertNull(editorField.getSetterName());
   }
 
+  @SuppressWarnings("deprecation")
   private Set<Resource> getJavaResources() {
     MockJavaResource[] javaFiles = {new MockJavaResource("t.AddressProxy") {
       @Override
@@ -944,6 +945,7 @@ public class EditorModelTest extends TestCase {
         new RealJavaResource(EditorError.class),
         new EmptyMockJavaResource(EntityProxy.class),
         new EmptyMockJavaResource(EventBus.class),
+        new EmptyMockJavaResource(com.google.gwt.event.shared.EventBus.class),
         new EmptyMockJavaResource(HasEditorDelegate.class),
         new EmptyMockJavaResource(HasEditorErrors.class),
         new RealJavaResource(HasText.class),

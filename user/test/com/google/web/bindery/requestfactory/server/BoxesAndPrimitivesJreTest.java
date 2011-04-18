@@ -113,7 +113,7 @@ public class BoxesAndPrimitivesJreTest extends BoxesAndPrimitivesTest {
   }
 
   @Override
-  protected void gwtSetUp() throws Exception {
+  protected void gwtSetUp() {
     super.gwtSetUp();
     errors = new VisibleErrorContext(Logger.getAnonymousLogger());
     v = new RequestFactoryInterfaceValidator(errors,

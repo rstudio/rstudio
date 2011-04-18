@@ -16,7 +16,7 @@
 package com.google.web.bindery.requestfactory.gwt.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.SimpleEventBus;
+import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.google.web.bindery.requestfactory.shared.SimpleRequestFactory;
 
 /**
