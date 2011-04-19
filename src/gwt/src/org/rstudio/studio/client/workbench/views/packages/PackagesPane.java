@@ -140,7 +140,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          @Override
          public void onValueChange(ValueChangeEvent<String> event)
          {
-            observer_.onPackageFilterChanged(event.getValue());   
+            observer_.onPackageFilterChanged(event.getValue().trim());   
          }
       });
       toolbar.addRightWidget(searchWidget_);

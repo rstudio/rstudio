@@ -272,7 +272,7 @@ public class Packages
    
    public void onPackageFilterChanged(String filter)
    {
-      packageFilter_ = filter;
+      packageFilter_ = filter.toLowerCase();
       setViewPackageList();
    }
 
@@ -290,10 +290,23 @@ public class Packages
       if (packageFilter_.length() > 0)
       {
          packages = new ArrayList<PackageInfo>();
+         
+         // first do prefix search
          for (PackageInfo pkgInfo : allPackages_)
          {
-            if (pkgInfo.getName().startsWith(packageFilter_))
+            if (pkgInfo.getName().toLowerCase().startsWith(packageFilter_))
                packages.add(pkgInfo);
+         }
+         
+         // then do contains search on name & desc
+         for (PackageInfo pkgInfo : allPackages_)
+         { 
+            if (pkgInfo.getName().toLowerCase().contains(packageFilter_) ||
+                pkgInfo.getDesc().toLowerCase().contains(packageFilter_))
+            {
+               if (!packages.contains(pkgInfo))
+                  packages.add(pkgInfo);
+            }
          }
       }
       else
