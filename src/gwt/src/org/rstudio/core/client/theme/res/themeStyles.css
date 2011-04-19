@@ -157,6 +157,9 @@ pre {
    color: #888;
    background-image: none;
 }
+.gwt-MenuItem.disabled img {
+   opacity: 0.3;
+}
 
 .gwt-MenuItemSeparator .menuSeparatorInner{
    border-top: #BABABA 1px solid;
@@ -665,7 +668,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 .toolbarButton[disabled] {
    /* joecheng: This renders poorly in ie8 */
    /*filter: literal("alpha(opacity = 50)") !important;*/
-   opacity: 0.5;
+   opacity: 0.3;
    color: #333;
    cursor: default;
 }
