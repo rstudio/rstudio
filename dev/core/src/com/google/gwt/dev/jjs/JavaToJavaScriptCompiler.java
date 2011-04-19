@@ -172,12 +172,12 @@ public class JavaToJavaScriptCompiler {
   private static class PermutationResultImpl implements PermutationResult {
     private final ArtifactSet artifacts = new ArtifactSet();
     private final byte[][] js;
-    private Permutation permutation;
+    private final Permutation permutation;
     private final byte[] serializedSymbolMap;
     private final StatementRanges[] statementRanges;
 
-    public PermutationResultImpl(String[] js, Permutation permutation,
-        SymbolData[] symbolMap, StatementRanges[] statementRanges) {
+    public PermutationResultImpl(String[] js, Permutation permutation, SymbolData[] symbolMap,
+        StatementRanges[] statementRanges) {
       byte[][] bytes = new byte[js.length][];
       for (int i = 0; i < js.length; ++i) {
         bytes[i] = Util.getBytes(js[i]);
@@ -189,8 +189,7 @@ public class JavaToJavaScriptCompiler {
         Util.writeObjectToStream(baos, (Object) symbolMap);
         this.serializedSymbolMap = baos.toByteArray();
       } catch (IOException e) {
-        throw new RuntimeException("Should never happen with in-memory stream",
-            e);
+        throw new RuntimeException("Should never happen with in-memory stream", e);
       }
       this.statementRanges = statementRanges;
     }
@@ -247,21 +246,19 @@ public class JavaToJavaScriptCompiler {
    * @throws UnableToCompleteException if an error other than
    *           {@link OutOfMemoryError} occurs
    */
-  public static PermutationResult compilePermutation(TreeLogger logger,
-      UnifiedAst unifiedAst, Permutation permutation)
-      throws UnableToCompleteException {
+  public static PermutationResult compilePermutation(TreeLogger logger, UnifiedAst unifiedAst,
+      Permutation permutation) throws UnableToCompleteException {
     JJSOptions options = unifiedAst.getOptions();
     long startTimeMilliseconds = System.currentTimeMillis();
 
-    Event jjsCompilePermutationEvent = SpeedTracerLogger.start(
-        CompilerEventType.JJS_COMPILE_PERMUTATION, "name",
-        permutation.prettyPrint());
+    Event jjsCompilePermutationEvent =
+        SpeedTracerLogger.start(CompilerEventType.JJS_COMPILE_PERMUTATION, "name", permutation
+            .prettyPrint());
 
     InternalCompilerException.preload();
     PropertyOracle[] propertyOracles = permutation.getPropertyOracles();
     int permutationId = permutation.getId();
-    logger.log(TreeLogger.INFO, "Compiling permutation " + permutationId
-        + "...");
+    logger.log(TreeLogger.INFO, "Compiling permutation " + permutationId + "...");
     long permStart = System.currentTimeMillis();
     try {
       if (JProgram.isTracingEnabled()) {
@@ -275,8 +272,8 @@ public class JavaToJavaScriptCompiler {
       JProgram jprogram = ast.getJProgram();
       JsProgram jsProgram = ast.getJsProgram();
 
-      Map<StandardSymbolData, JsName> symbolTable = new TreeMap<StandardSymbolData, JsName>(
-          new SymbolData.ClassIdentComparator());
+      Map<StandardSymbolData, JsName> symbolTable =
+          new TreeMap<StandardSymbolData, JsName>(new SymbolData.ClassIdentComparator());
 
       ResolveRebinds.exec(jprogram, permutation.getOrderedRebindAnswers());
 
@@ -308,8 +305,9 @@ public class JavaToJavaScriptCompiler {
 
       // (7) Generate a JavaScript code DOM from the Java type declarations
       jprogram.typeOracle.recomputeAfterOptimizations();
-      JavaToJavaScriptMap jjsmap = GenerateJavaScriptAST.exec(jprogram,
-          jsProgram, options.getOutput(), symbolTable, propertyOracles);
+      JavaToJavaScriptMap jjsmap =
+          GenerateJavaScriptAST.exec(jprogram, jsProgram, options.getOutput(), symbolTable,
+              propertyOracles);
 
       // (8) Normalize the JS AST.
       // Fix invalid constructs created during JS AST gen.
@@ -345,14 +343,15 @@ public class JavaToJavaScriptCompiler {
       SyntheticArtifact dependencies = null;
       if (options.isRunAsyncEnabled()) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        CodeSplitter.exec(logger, jprogram, jsProgram, jjsmap,
-            chooseDependencyRecorder(options.isSoycEnabled(), baos));
+        CodeSplitter.exec(logger, jprogram, jsProgram, jjsmap, chooseDependencyRecorder(options
+            .isSoycEnabled(), baos));
         if (baos.size() == 0 && options.isSoycEnabled()) {
           recordNonSplitDependencies(jprogram, baos);
         }
         if (baos.size() > 0) {
-          dependencies = new SyntheticArtifact(SoycReportLinker.class,
-              "dependencies" + permutationId + ".xml.gz", baos.toByteArray());
+          dependencies =
+              new SyntheticArtifact(SoycReportLinker.class, "dependencies" + permutationId
+                  + ".xml.gz", baos.toByteArray());
         }
       }
 
@@ -360,8 +359,7 @@ public class JavaToJavaScriptCompiler {
       boolean isIE6orUnknown = false;
       for (PropertyOracle oracle : propertyOracles) {
         try {
-          SelectionProperty userAgentProperty = oracle.getSelectionProperty(
-              logger, "user.agent");
+          SelectionProperty userAgentProperty = oracle.getSelectionProperty(logger, "user.agent");
           if ("ie6".equals(userAgentProperty.getCurrentValue())) {
             isIE6orUnknown = true;
             break;
@@ -384,8 +382,7 @@ public class JavaToJavaScriptCompiler {
               boolean changed = false;
               for (int i = 0; i < jsProgram.getFragmentCount(); i++) {
                 JsBlock fragment = jsProgram.getFragmentBlock(i);
-                changed = JsDuplicateFunctionRemover.exec(jsProgram, fragment)
-                    || changed;
+                changed = JsDuplicateFunctionRemover.exec(jsProgram, fragment) || changed;
               }
               if (changed) {
                 JsUnusedFunctionRemover.exec(jsProgram);
@@ -426,16 +423,16 @@ public class JavaToJavaScriptCompiler {
       // (12) Generate the final output text.
       String[] js = new String[jsProgram.getFragmentCount()];
       StatementRanges[] ranges = new StatementRanges[js.length];
-      SizeBreakdown[] sizeBreakdowns = options.isSoycEnabled()
-          || options.isCompilerMetricsEnabled() ? new SizeBreakdown[js.length]
-          : null;
-      List<Map<Range, SourceInfo>> sourceInfoMaps = options.isSoycExtra()
-          ? new ArrayList<Map<Range, SourceInfo>>() : null;
-      generateJavaScriptCode(options, jsProgram, jjsmap, js, ranges,
-          sizeBreakdowns, sourceInfoMaps, splitBlocks);
+      SizeBreakdown[] sizeBreakdowns =
+          options.isSoycEnabled() || options.isCompilerMetricsEnabled()
+              ? new SizeBreakdown[js.length] : null;
+      List<Map<Range, SourceInfo>> sourceInfoMaps =
+          options.isSoycExtra() ? new ArrayList<Map<Range, SourceInfo>>() : null;
+      generateJavaScriptCode(options, jsProgram, jjsmap, js, ranges, sizeBreakdowns,
+          sourceInfoMaps, splitBlocks);
 
-      PermutationResult toReturn = new PermutationResultImpl(js, permutation,
-          makeSymbolMap(symbolTable), ranges);
+      PermutationResult toReturn =
+          new PermutationResultImpl(js, permutation, makeSymbolMap(symbolTable), ranges);
       CompilationMetricsArtifact compilationMetrics = null;
       if (options.isCompilerMetricsEnabled()) {
         compilationMetrics = new CompilationMetricsArtifact(permutation.getId());
@@ -445,18 +442,16 @@ public class JavaToJavaScriptCompiler {
             - ManagementFactory.getRuntimeMXBean().getStartTime());
         compilationMetrics.setJsSize(sizeBreakdowns);
         compilationMetrics.setPermutationDescription(permutation.prettyPrint());
-        toReturn.addArtifacts(Lists.create(unifiedAst.getModuleMetrics(),
-            unifiedAst.getPrecompilationMetrics(), compilationMetrics));
+        toReturn.addArtifacts(Lists.create(unifiedAst.getModuleMetrics(), unifiedAst
+            .getPrecompilationMetrics(), compilationMetrics));
       }
-      toReturn.addArtifacts(makeSoycArtifacts(logger, permutationId, jprogram,
-          js, sizeBreakdowns, sourceInfoMaps, dependencies, jjsmap,
-          obfuscateMap, unifiedAst.getModuleMetrics(),
+      toReturn.addArtifacts(makeSoycArtifacts(logger, permutationId, jprogram, js, sizeBreakdowns,
+          sourceInfoMaps, dependencies, jjsmap, obfuscateMap, unifiedAst.getModuleMetrics(),
           unifiedAst.getPrecompilationMetrics(), compilationMetrics));
 
       logTrackingStats(logger);
-      logger.log(TreeLogger.TRACE,
-          "Permutation took " + (System.currentTimeMillis() - permStart)
-              + " ms");
+      logger.log(TreeLogger.TRACE, "Permutation took " + (System.currentTimeMillis() - permStart)
+          + " ms");
       return toReturn;
     } catch (Throwable e) {
       throw logAndTranslateException(logger, e);
@@ -466,11 +461,10 @@ public class JavaToJavaScriptCompiler {
   }
 
   public static UnifiedAst precompile(TreeLogger logger, ModuleDef module,
-      RebindPermutationOracle rpo, String[] declEntryPts,
-      String[] additionalRootTypes, JJSOptions options,
-      boolean singlePermutation) throws UnableToCompleteException {
-    return precompile(logger, module, rpo, declEntryPts, additionalRootTypes,
-        options, singlePermutation, null);
+      RebindPermutationOracle rpo, String[] declEntryPts, String[] additionalRootTypes,
+      JJSOptions options, boolean singlePermutation) throws UnableToCompleteException {
+    return precompile(logger, module, rpo, declEntryPts, additionalRootTypes, options,
+        singlePermutation, null);
   }
 
   /**
@@ -493,11 +487,9 @@ public class JavaToJavaScriptCompiler {
    *           {@link OutOfMemoryError} occurs
    */
   public static UnifiedAst precompile(TreeLogger logger, ModuleDef module,
-      RebindPermutationOracle rpo, String[] declEntryPts,
-      String[] additionalRootTypes, JJSOptions options,
-      boolean singlePermutation,
-      PrecompilationMetricsArtifact precompilationMetrics)
-      throws UnableToCompleteException {
+      RebindPermutationOracle rpo, String[] declEntryPts, String[] additionalRootTypes,
+      JJSOptions options, boolean singlePermutation,
+      PrecompilationMetricsArtifact precompilationMetrics) throws UnableToCompleteException {
 
     InternalCompilerException.preload();
 
@@ -524,15 +516,16 @@ public class JavaToJavaScriptCompiler {
     Memory.maybeDumpMemory("CompStateBuilt");
 
     // Compile the source and get the compiler so we can get the parse tree
-    CompilationUnitDeclaration[] goldenCuds = WebModeCompilerFrontEnd.getCompilationUnitDeclarations(
-        logger, allRootTypes.toArray(new String[allRootTypes.size()]), rpo,
-        TypeLinker.NULL_TYPE_LINKER).compiledUnits;
+    CompilationUnitDeclaration[] goldenCuds =
+        WebModeCompilerFrontEnd.getCompilationUnitDeclarations(logger, allRootTypes
+            .toArray(new String[allRootTypes.size()]), rpo, TypeLinker.NULL_TYPE_LINKER).compiledUnits;
 
     List<String> finalTypeOracleTypes = Lists.create();
     if (precompilationMetrics != null) {
-      for (com.google.gwt.core.ext.typeinfo.JClassType type : rpo.getCompilationState().getTypeOracle().getTypes()) {
-        finalTypeOracleTypes = Lists.add(finalTypeOracleTypes,
-            type.getPackage().getName() + "." + type.getName());
+      for (com.google.gwt.core.ext.typeinfo.JClassType type : rpo.getCompilationState()
+          .getTypeOracle().getTypes()) {
+        finalTypeOracleTypes =
+            Lists.add(finalTypeOracleTypes, type.getPackage().getName() + "." + type.getName());
       }
       precompilationMetrics.setFinalTypeOracleTypes(finalTypeOracleTypes);
     }
@@ -545,8 +538,8 @@ public class JavaToJavaScriptCompiler {
     // found here will have already been logged by AbstractCompiler.
     checkForErrors(logger, goldenCuds, false);
 
-    CorrelationFactory correlator = options.isSoycExtra()
-        ? RealCorrelationFactory.INSTANCE : DummyCorrelationFactory.INSTANCE;
+    CorrelationFactory correlator =
+        options.isSoycExtra() ? RealCorrelationFactory.INSTANCE : DummyCorrelationFactory.INSTANCE;
     JProgram jprogram = new JProgram(correlator);
     JsProgram jsProgram = new JsProgram(correlator);
 
@@ -557,8 +550,7 @@ public class JavaToJavaScriptCompiler {
        * all JSNI.
        */
       TypeMap typeMap = new TypeMap(jprogram);
-      TypeDeclaration[] allTypeDeclarations = BuildTypeMap.exec(typeMap,
-          goldenCuds, jsProgram);
+      TypeDeclaration[] allTypeDeclarations = BuildTypeMap.exec(typeMap, goldenCuds, jsProgram);
 
       // BuildTypeMap can uncover syntactic JSNI errors; report & abort
       checkForErrors(logger, goldenCuds, true);
@@ -584,8 +576,8 @@ public class JavaToJavaScriptCompiler {
 
       // See if we should run the EnumNameObfuscator
       if (module != null) {
-        ConfigurationProperty enumNameObfuscationProp = (ConfigurationProperty) module.getProperties().find(
-            ENUM_NAME_OBFUSCATION_PROPERTY);
+        ConfigurationProperty enumNameObfuscationProp =
+            (ConfigurationProperty) module.getProperties().find(ENUM_NAME_OBFUSCATION_PROPERTY);
         if (enumNameObfuscationProp != null
             && Boolean.parseBoolean(enumNameObfuscationProp.getValue())) {
           EnumNameObfuscator.exec(jprogram, logger);
@@ -613,15 +605,14 @@ public class JavaToJavaScriptCompiler {
       // Fix up GWT.runAsync()
       if (module != null && options.isRunAsyncEnabled()) {
         ReplaceRunAsyncs.exec(logger, jprogram);
-        CodeSplitter.pickInitialLoadSequence(logger, jprogram,
-            module.getProperties());
+        CodeSplitter.pickInitialLoadSequence(logger, jprogram, module.getProperties());
       }
 
       // Resolve entry points, rebinding non-static entry points.
       findEntryPoints(logger, rpo, declEntryPts, jprogram);
 
       ImplementClassLiteralsAsFields.exec(jprogram);
-      
+
       /*
        * 4) Possibly optimize some.
        * 
@@ -661,8 +652,8 @@ public class JavaToJavaScriptCompiler {
       logTrackingStats(logger);
 
       Event createUnifiedAstEvent = SpeedTracerLogger.start(CompilerEventType.CREATE_UNIFIED_AST);
-      UnifiedAst result = new UnifiedAst(options, new AST(jprogram, jsProgram),
-          singlePermutation, rebindRequests);
+      UnifiedAst result =
+          new UnifiedAst(options, new AST(jprogram, jsProgram), singlePermutation, rebindRequests);
       createUnifiedAstEvent.end();
       return result;
     } catch (Throwable e) {
@@ -684,8 +675,7 @@ public class JavaToJavaScriptCompiler {
     draftOptimizeEvent.end();
   }
 
-  protected static void optimize(JJSOptions options, JProgram jprogram)
-      throws InterruptedException {
+  protected static void optimize(JJSOptions options, JProgram jprogram) throws InterruptedException {
     Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE);
 
     List<OptimizerStats> allOptimizerStats = new ArrayList<OptimizerStats>();
@@ -693,8 +683,7 @@ public class JavaToJavaScriptCompiler {
     int optimizationLevel = options.getOptimizationLevel();
     while (true) {
       counter++;
-      if (optimizationLevel < OptionOptimize.OPTIMIZE_LEVEL_MAX
-          && counter > optimizationLevel) {
+      if (optimizationLevel < OptionOptimize.OPTIMIZE_LEVEL_MAX && counter > optimizationLevel) {
         break;
       }
       if (Thread.interrupted()) {
@@ -702,8 +691,8 @@ public class JavaToJavaScriptCompiler {
         throw new InterruptedException();
       }
       AstDumper.maybeDumpAST(jprogram);
-      OptimizerStats stats = optimizeLoop("Pass " + counter, jprogram,
-          options.isAggressivelyOptimize());
+      OptimizerStats stats =
+          optimizeLoop("Pass " + counter, jprogram, options.isAggressivelyOptimize());
       allOptimizerStats.add(stats);
       if (!stats.didChange()) {
         break;
@@ -768,15 +757,13 @@ public class JavaToJavaScriptCompiler {
     }
   }
 
-  protected static OptimizerStats optimizeLoop(String passName,
-      JProgram jprogram, boolean isAggressivelyOptimize) {
-    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE,
-        "phase", "loop");
+  protected static OptimizerStats optimizeLoop(String passName, JProgram jprogram,
+      boolean isAggressivelyOptimize) {
+    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "phase", "loop");
 
     // Count the number of nodes in the AST so we can measure the efficiency of
     // the optimizers.
-    Event countEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE,
-        "phase", "countNodes");
+    Event countEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "phase", "countNodes");
     TreeStatistics treeStats = new TreeStatistics();
     treeStats.accept(jprogram);
     int numNodes = treeStats.getNodeCount();
@@ -816,8 +803,7 @@ public class JavaToJavaScriptCompiler {
 
     if (isAggressivelyOptimize) {
       // remove same parameters value
-      stats.add(SameParameterValueOptimizer.exec(jprogram).recordVisits(
-          numNodes));
+      stats.add(SameParameterValueOptimizer.exec(jprogram).recordVisits(numNodes));
 
       /*
        * Enum ordinalization.
@@ -840,15 +826,14 @@ public class JavaToJavaScriptCompiler {
    * console.
    * 
    * @param logger logger to use for compilation errors
-   * @param cuds compiled units to analyze for errors. 
+   * @param cuds compiled units to analyze for errors.
    * @param itemizeErrors log each error or simply log one message if the build
    *          failed.
    * @throws UnableToCompleteException if a compilation error is found in the
    *           cuds argument.
    */
-  static void checkForErrors(TreeLogger logger,
-      CompilationUnitDeclaration[] cuds, boolean itemizeErrors)
-      throws UnableToCompleteException {
+  static void checkForErrors(TreeLogger logger, CompilationUnitDeclaration[] cuds,
+      boolean itemizeErrors) throws UnableToCompleteException {
     Event checkForErrorsEvent = SpeedTracerLogger.start(CompilerEventType.CHECK_FOR_ERRORS);
     boolean compilationFailed = false;
     if (cuds.length == 0) {
@@ -873,14 +858,13 @@ public class JavaToJavaScriptCompiler {
     }
     checkForErrorsEvent.end();
     if (compilationFailed) {
-      logger.log(TreeLogger.ERROR, "Cannot proceed due to previous errors",
-          null);
+      logger.log(TreeLogger.ERROR, "Cannot proceed due to previous errors", null);
       throw new UnableToCompleteException();
     }
   }
 
-  private static MultipleDependencyGraphRecorder chooseDependencyRecorder(
-      boolean soycEnabled, OutputStream out) {
+  private static MultipleDependencyGraphRecorder chooseDependencyRecorder(boolean soycEnabled,
+      OutputStream out) {
     MultipleDependencyGraphRecorder dependencyRecorder = CodeSplitter.NULL_RECORDER;
     if (soycEnabled) {
       dependencyRecorder = new DependencyRecorder(out);
@@ -889,18 +873,18 @@ public class JavaToJavaScriptCompiler {
   }
 
   private static JMethodCall createReboundModuleLoad(TreeLogger logger,
-      JDeclaredType reboundEntryType, String originalMainClassName,
-      JDeclaredType enclosingType) throws UnableToCompleteException {
+      JDeclaredType reboundEntryType, String originalMainClassName, JDeclaredType enclosingType)
+      throws UnableToCompleteException {
     if (!(reboundEntryType instanceof JClassType)) {
-      logger.log(TreeLogger.ERROR, "Module entry point class '"
-          + originalMainClassName + "' must be a class", null);
+      logger.log(TreeLogger.ERROR, "Module entry point class '" + originalMainClassName
+          + "' must be a class", null);
       throw new UnableToCompleteException();
     }
 
     JClassType entryClass = (JClassType) reboundEntryType;
     if (entryClass.isAbstract()) {
-      logger.log(TreeLogger.ERROR, "Module entry point class '"
-          + originalMainClassName + "' must not be abstract", null);
+      logger.log(TreeLogger.ERROR, "Module entry point class '" + originalMainClassName
+          + "' must not be abstract", null);
       throw new UnableToCompleteException();
     }
 
@@ -913,39 +897,34 @@ public class JavaToJavaScriptCompiler {
     }
 
     if (entryMethod.isAbstract()) {
-      logger.log(TreeLogger.ERROR,
-          "Entry method 'onModuleLoad' in entry point class '"
-              + originalMainClassName + "' must not be abstract", null);
+      logger.log(TreeLogger.ERROR, "Entry method 'onModuleLoad' in entry point class '"
+          + originalMainClassName + "' must not be abstract", null);
       throw new UnableToCompleteException();
     }
 
     SourceInfo sourceInfo = entryClass.getSourceInfo();
     JExpression qualifier = null;
     if (!entryMethod.isStatic()) {
-      qualifier = JGwtCreate.createInstantiationExpression(sourceInfo,
-          entryClass, enclosingType);
+      qualifier = JGwtCreate.createInstantiationExpression(sourceInfo, entryClass, enclosingType);
 
       if (qualifier == null) {
-        logger.log(
-            TreeLogger.ERROR,
+        logger.log(TreeLogger.ERROR,
             "No default (zero argument) constructor could be found in entry point class '"
                 + originalMainClassName
-                + "' to qualify a call to non-static entry method 'onModuleLoad'",
-            null);
+                + "' to qualify a call to non-static entry method 'onModuleLoad'", null);
         throw new UnableToCompleteException();
       }
     }
     return new JMethodCall(sourceInfo, qualifier, entryMethod);
   }
 
-  private static void findEntryPoints(TreeLogger logger,
-      RebindPermutationOracle rpo, String[] mainClassNames, JProgram program)
-      throws UnableToCompleteException {
+  private static void findEntryPoints(TreeLogger logger, RebindPermutationOracle rpo,
+      String[] mainClassNames, JProgram program) throws UnableToCompleteException {
     Event findEntryPointsEvent = SpeedTracerLogger.start(CompilerEventType.FIND_ENTRY_POINTS);
     SourceInfo sourceInfo = program.createSourceInfoSynthetic(JavaToJavaScriptCompiler.class);
-    JMethod bootStrapMethod = program.createMethod(sourceInfo, "init",
-        program.getIndexedType("EntryMethodHolder"), program.getTypeVoid(),
-        false, true, true, false, false);
+    JMethod bootStrapMethod =
+        program.createMethod(sourceInfo, "init", program.getIndexedType("EntryMethodHolder"),
+            program.getTypeVoid(), false, true, true, false, false);
     bootStrapMethod.freezeParamTypes();
     bootStrapMethod.setSynthetic();
 
@@ -961,9 +940,8 @@ public class JavaToJavaScriptCompiler {
       JDeclaredType mainType = program.getFromTypeMap(mainClassName);
 
       if (mainType == null) {
-        logger.log(TreeLogger.ERROR,
-            "Could not find module entry point class '" + mainClassName + "'",
-            null);
+        logger.log(TreeLogger.ERROR, "Could not find module entry point class '" + mainClassName
+            + "'", null);
         throw new UnableToCompleteException();
       }
 
@@ -975,29 +953,28 @@ public class JavaToJavaScriptCompiler {
       }
 
       // Couldn't find a static main method; must rebind the class
-      String[] resultTypeNames = rpo.getAllPossibleRebindAnswers(logger,
-          mainClassName);
+      String[] resultTypeNames = rpo.getAllPossibleRebindAnswers(logger, mainClassName);
       List<JClassType> resultTypes = new ArrayList<JClassType>();
       List<JExpression> entryCalls = new ArrayList<JExpression>();
       for (String resultTypeName : resultTypeNames) {
         JDeclaredType resultType = program.getFromTypeMap(resultTypeName);
         if (resultType == null) {
-          logger.log(TreeLogger.ERROR,
-              "Could not find module entry point class '" + resultTypeName
-                  + "' after rebinding from '" + mainClassName + "'", null);
+          logger.log(TreeLogger.ERROR, "Could not find module entry point class '" + resultTypeName
+              + "' after rebinding from '" + mainClassName + "'", null);
           throw new UnableToCompleteException();
         }
 
-        JMethodCall onModuleLoadCall = createReboundModuleLoad(logger,
-            resultType, mainClassName, bootStrapMethod.getEnclosingType());
+        JMethodCall onModuleLoadCall =
+            createReboundModuleLoad(logger, resultType, mainClassName, bootStrapMethod
+                .getEnclosingType());
         resultTypes.add((JClassType) resultType);
         entryCalls.add(onModuleLoadCall);
       }
       if (resultTypes.size() == 1) {
         block.addStmt(entryCalls.get(0).makeStatement());
       } else {
-        JReboundEntryPoint reboundEntryPoint = new JReboundEntryPoint(
-            mainType.getSourceInfo(), mainType, resultTypes, entryCalls);
+        JReboundEntryPoint reboundEntryPoint =
+            new JReboundEntryPoint(mainType.getSourceInfo(), mainType, resultTypes, entryCalls);
         block.addStmt(reboundEntryPoint);
       }
     }
@@ -1042,13 +1019,12 @@ public class JavaToJavaScriptCompiler {
    *          JavaScript
    * @param splitBlocks true if current permutation is for IE6 or unknown
    */
-  private static void generateJavaScriptCode(JJSOptions options,
-      JsProgram jsProgram, JavaToJavaScriptMap jjsMap, String[] js,
-      StatementRanges[] ranges, SizeBreakdown[] sizeBreakdowns,
-      List<Map<Range, SourceInfo>> sourceInfoMaps, boolean splitBlocks) {
+  private static void generateJavaScriptCode(JJSOptions options, JsProgram jsProgram,
+      JavaToJavaScriptMap jjsMap, String[] js, StatementRanges[] ranges,
+      SizeBreakdown[] sizeBreakdowns, List<Map<Range, SourceInfo>> sourceInfoMaps,
+      boolean splitBlocks) {
     for (int i = 0; i < js.length; i++) {
-      DefaultTextOutput out = new DefaultTextOutput(
-          options.getOutput().shouldMinimize());
+      DefaultTextOutput out = new DefaultTextOutput(options.getOutput().shouldMinimize());
       JsSourceGenerationVisitorWithSizeBreakdown v;
       if (sourceInfoMaps != null) {
         v = new JsReportGenerationVisitor(out, jjsMap);
@@ -1062,17 +1038,15 @@ public class JavaToJavaScriptCompiler {
        * the top level blocks into sub-blocks if they exceed 32767 statements.
        */
       Event functionClusterEvent = SpeedTracerLogger.start(CompilerEventType.FUNCTION_CLUSTER);
-      JsFunctionClusterer clusterer = new JsFunctionClusterer(out.toString(),
-          v.getStatementRanges());
+      JsFunctionClusterer clusterer =
+          new JsFunctionClusterer(out.toString(), v.getStatementRanges());
       // only cluster for obfuscated mode
-      if (options.isAggressivelyOptimize()
-          && options.getOutput() == JsOutputOption.OBFUSCATED) {
+      if (options.isAggressivelyOptimize() && options.getOutput() == JsOutputOption.OBFUSCATED) {
         clusterer.exec();
       }
       functionClusterEvent.end();
       // rewrite top-level blocks to limit the number of statements
-      JsIEBlockTextTransformer ieXformer = new JsIEBlockTextTransformer(
-          clusterer);
+      JsIEBlockTextTransformer ieXformer = new JsIEBlockTextTransformer(clusterer);
       if (splitBlocks) {
         ieXformer.exec();
       }
@@ -1108,14 +1082,13 @@ public class JavaToJavaScriptCompiler {
     return v.classNames.toArray(new String[v.classNames.size()]);
   }
 
-  private static UnableToCompleteException logAndTranslateException(
-      TreeLogger logger, Throwable e) {
+  private static UnableToCompleteException logAndTranslateException(TreeLogger logger, Throwable e) {
     if (e instanceof UnableToCompleteException) {
       // just rethrow
       return (UnableToCompleteException) e;
     } else if (e instanceof InternalCompilerException) {
-      TreeLogger topBranch = logger.branch(TreeLogger.ERROR,
-          "An internal compiler exception occurred", e);
+      TreeLogger topBranch =
+          logger.branch(TreeLogger.ERROR, "An internal compiler exception occurred", e);
       List<NodeInfo> nodeTrace = ((InternalCompilerException) e).getNodeTrace();
       for (NodeInfo nodeInfo : nodeTrace) {
         SourceInfo info = nodeInfo.getSourceInfo();
@@ -1152,8 +1125,9 @@ public class JavaToJavaScriptCompiler {
   }
 
   /*
-   * This method is intended as a central location for producing optional tracking output.
-   * This will be called after all optimization/normalization passes have completed.
+   * This method is intended as a central location for producing optional
+   * tracking output. This will be called after all optimization/normalization
+   * passes have completed.
    */
   private static void logTrackingStats(TreeLogger logger) {
     EnumOrdinalizer.Tracker eot = EnumOrdinalizer.getTracker();
@@ -1162,16 +1136,13 @@ public class JavaToJavaScriptCompiler {
     }
   }
 
-  private static Collection<? extends Artifact<?>> makeSoycArtifacts(
-      TreeLogger logger, int permutationId, JProgram jprogram, String[] js,
-      SizeBreakdown[] sizeBreakdowns,
-      List<Map<Range, SourceInfo>> sourceInfoMaps,
-      SyntheticArtifact dependencies, JavaToJavaScriptMap jjsmap,
-      Map<JsName, String> obfuscateMap,
+  private static Collection<? extends Artifact<?>> makeSoycArtifacts(TreeLogger logger,
+      int permutationId, JProgram jprogram, String[] js, SizeBreakdown[] sizeBreakdowns,
+      List<Map<Range, SourceInfo>> sourceInfoMaps, SyntheticArtifact dependencies,
+      JavaToJavaScriptMap jjsmap, Map<JsName, String> obfuscateMap,
       ModuleMetricsArtifact moduleMetricsArtifact,
       PrecompilationMetricsArtifact precompilationMetricsArtifact,
-      CompilationMetricsArtifact compilationMetrics) throws IOException,
-      UnableToCompleteException {
+      CompilationMetricsArtifact compilationMetrics) throws IOException, UnableToCompleteException {
     Memory.maybeDumpMemory("makeSoycArtifactsStart");
     List<SyntheticArtifact> soycArtifacts = new ArrayList<SyntheticArtifact>();
 
@@ -1179,35 +1150,36 @@ public class JavaToJavaScriptCompiler {
 
     Event soycEvent = SpeedTracerLogger.start(CompilerEventType.MAKE_SOYC_ARTIFACTS);
 
-    Event recordSplitPoints = SpeedTracerLogger.start(
-        CompilerEventType.MAKE_SOYC_ARTIFACTS, "phase", "recordSplitPoints");
+    Event recordSplitPoints =
+        SpeedTracerLogger
+            .start(CompilerEventType.MAKE_SOYC_ARTIFACTS, "phase", "recordSplitPoints");
     SplitPointRecorder.recordSplitPoints(jprogram, baos, logger);
-    SyntheticArtifact splitPoints = new SyntheticArtifact(
-        SoycReportLinker.class, "splitPoints" + permutationId + ".xml.gz",
-        baos.toByteArray());
+    SyntheticArtifact splitPoints =
+        new SyntheticArtifact(SoycReportLinker.class, "splitPoints" + permutationId + ".xml.gz",
+            baos.toByteArray());
     soycArtifacts.add(splitPoints);
     recordSplitPoints.end();
 
     SyntheticArtifact sizeMaps = null;
     if (sizeBreakdowns != null) {
-      Event recordSizeMap = SpeedTracerLogger.start(
-          CompilerEventType.MAKE_SOYC_ARTIFACTS, "phase", "recordSizeMap");
+      Event recordSizeMap =
+          SpeedTracerLogger.start(CompilerEventType.MAKE_SOYC_ARTIFACTS, "phase", "recordSizeMap");
       baos.reset();
-      SizeMapRecorder.recordMap(logger, baos, sizeBreakdowns, jjsmap,
-          obfuscateMap);
-      sizeMaps = new SyntheticArtifact(SoycReportLinker.class, "stories"
-          + permutationId + ".xml.gz", baos.toByteArray());
+      SizeMapRecorder.recordMap(logger, baos, sizeBreakdowns, jjsmap, obfuscateMap);
+      sizeMaps =
+          new SyntheticArtifact(SoycReportLinker.class, "stories" + permutationId + ".xml.gz", baos
+              .toByteArray());
       soycArtifacts.add(sizeMaps);
       recordSizeMap.end();
     }
 
     if (sourceInfoMaps != null) {
-      Event recordStories = SpeedTracerLogger.start(
-          CompilerEventType.MAKE_SOYC_ARTIFACTS, "phase", "recordStories");
+      Event recordStories =
+          SpeedTracerLogger.start(CompilerEventType.MAKE_SOYC_ARTIFACTS, "phase", "recordStories");
       baos.reset();
       StoryRecorder.recordStories(logger, baos, sourceInfoMaps, js);
-      soycArtifacts.add(new SyntheticArtifact(SoycReportLinker.class,
-          "detailedStories" + permutationId + ".xml.gz", baos.toByteArray()));
+      soycArtifacts.add(new SyntheticArtifact(SoycReportLinker.class, "detailedStories"
+          + permutationId + ".xml.gz", baos.toByteArray()));
       recordStories.end();
     }
 
@@ -1221,9 +1193,9 @@ public class JavaToJavaScriptCompiler {
     }
 
     if (sizeBreakdowns != null) {
-      Event generateCompileReport = SpeedTracerLogger.start(
-          CompilerEventType.MAKE_SOYC_ARTIFACTS, "phase",
-          "generateCompileReport");
+      Event generateCompileReport =
+          SpeedTracerLogger.start(CompilerEventType.MAKE_SOYC_ARTIFACTS, "phase",
+              "generateCompileReport");
       ArtifactsOutputDirectory outDir = new ArtifactsOutputDirectory();
       SoycDashboard dashboard = new SoycDashboard(outDir);
       dashboard.startNewPermutation(Integer.toString(permutationId));
@@ -1238,20 +1210,16 @@ public class JavaToJavaScriptCompiler {
         Memory.maybeDumpMemory("soycReadDependenciesEnd");
       } catch (ParserConfigurationException e) {
         throw new InternalCompilerException(
-            "Error reading compile report information that was just generated",
-            e);
+            "Error reading compile report information that was just generated", e);
       } catch (SAXException e) {
         throw new InternalCompilerException(
-            "Error reading compile report information that was just generated",
-            e);
+            "Error reading compile report information that was just generated", e);
       }
       dashboard.generateForOnePermutation();
-      if (moduleMetricsArtifact != null
-          && precompilationMetricsArtifact != null
+      if (moduleMetricsArtifact != null && precompilationMetricsArtifact != null
           && compilationMetrics != null) {
-        dashboard.generateCompilerMetricsForOnePermuation(
-            moduleMetricsArtifact, precompilationMetricsArtifact,
-            compilationMetrics);
+        dashboard.generateCompilerMetricsForOnePermuation(moduleMetricsArtifact,
+            precompilationMetricsArtifact, compilationMetrics);
       }
       soycArtifacts.addAll(outDir.getArtifacts());
       generateCompileReport.end();
@@ -1270,27 +1238,23 @@ public class JavaToJavaScriptCompiler {
    *   Stats.onModuleStart("mainClassName");
    * </pre>
    */
-  private static JStatement makeStatsCalls(JProgram program,
-      String mainClassName) {
+  private static JStatement makeStatsCalls(JProgram program, String mainClassName) {
     SourceInfo sourceInfo = program.createSourceInfoSynthetic(JavaToJavaScriptCompiler.class);
     JMethod isStatsAvailableMethod = program.getIndexedMethod("Stats.isStatsAvailable");
     JMethod onModuleStartMethod = program.getIndexedMethod("Stats.onModuleStart");
 
-    JMethodCall availableCall = new JMethodCall(sourceInfo, null,
-        isStatsAvailableMethod);
-    JMethodCall onModuleStartCall = new JMethodCall(sourceInfo, null,
-        onModuleStartMethod);
+    JMethodCall availableCall = new JMethodCall(sourceInfo, null, isStatsAvailableMethod);
+    JMethodCall onModuleStartCall = new JMethodCall(sourceInfo, null, onModuleStartMethod);
     onModuleStartCall.addArg(program.getLiteralString(sourceInfo, mainClassName));
 
-    JBinaryOperation amp = new JBinaryOperation(sourceInfo,
-        program.getTypePrimitiveBoolean(), JBinaryOperator.AND, availableCall,
-        onModuleStartCall);
+    JBinaryOperation amp =
+        new JBinaryOperation(sourceInfo, program.getTypePrimitiveBoolean(), JBinaryOperator.AND,
+            availableCall, onModuleStartCall);
 
     return amp.makeStatement();
   }
 
-  private static SymbolData[] makeSymbolMap(
-      Map<StandardSymbolData, JsName> symbolTable) {
+  private static SymbolData[] makeSymbolMap(Map<StandardSymbolData, JsName> symbolTable) {
 
     SymbolData[] result = new SymbolData[symbolTable.size()];
     int i = 0;
@@ -1305,8 +1269,8 @@ public class JavaToJavaScriptCompiler {
   /**
    * Open an emitted artifact and gunzip its contents.
    */
-  private static GZIPInputStream openWithGunzip(EmittedArtifact artifact)
-      throws IOException, UnableToCompleteException {
+  private static GZIPInputStream openWithGunzip(EmittedArtifact artifact) throws IOException,
+      UnableToCompleteException {
     return new GZIPInputStream(artifact.getContents(TreeLogger.NULL));
   }
 
@@ -1316,8 +1280,7 @@ public class JavaToJavaScriptCompiler {
    * then this method can be used instead to record a single dependency graph
    * for the whole program.
    */
-  private static void recordNonSplitDependencies(JProgram program,
-      OutputStream out) {
+  private static void recordNonSplitDependencies(JProgram program, OutputStream out) {
     DependencyRecorder deps = new DependencyRecorder(out);
     deps.open();
     deps.startDependencyGraph("initial", null);

@@ -25,7 +25,7 @@ public class JNewInstance extends JMethodCall {
   /**
    * The enclosing type of this new operation, used to compute clinit.
    */
-  private JDeclaredType enclosingType;
+  private final JDeclaredType enclosingType;
 
   /**
    * Initialize a new instance operation equivalent to another one. The new
@@ -37,8 +37,7 @@ public class JNewInstance extends JMethodCall {
     this.enclosingType = other.enclosingType;
   }
 
-  public JNewInstance(SourceInfo info, JConstructor ctor,
-      JDeclaredType enclosingType) {
+  public JNewInstance(SourceInfo info, JConstructor ctor, JDeclaredType enclosingType) {
     super(info, null, ctor);
     this.enclosingType = enclosingType;
     setStaticDispatchOnly();

@@ -35,12 +35,12 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
 
   /**
    * Used by isFunctionDeclaration to check a statement is a function
-   * declaration or not. This should match standard declarations,
-   * such as "function a() { ... }" and "jslink.a=function() { ... }".
-   * The latter form is typically emitted by the cross-site linker.
+   * declaration or not. This should match standard declarations, such as
+   * "function a() { ... }" and "jslink.a=function() { ... }". The latter form
+   * is typically emitted by the cross-site linker.
    */
-  private static final Pattern functionDeclarationPattern =
-      Pattern.compile("function |[a-zA-Z][.$_a-zA-Z0-9]*=function");
+  private static final Pattern functionDeclarationPattern = Pattern
+      .compile("function |[a-zA-Z][.$_a-zA-Z0-9]*=function");
 
   /**
    * Functions which have an edit-distance greater than this limit are
@@ -49,8 +49,8 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
   private static final int MAX_DISTANCE_LIMIT = 100;
 
   /**
-   * Maximum number of functions to search for minimal edit-distance
-   * before giving up.
+   * Maximum number of functions to search for minimal edit-distance before
+   * giving up.
    */
   private static final int SEARCH_LIMIT = 10;
 
@@ -99,7 +99,7 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
       // get the last outputted function to match against
       String currentCode = getJsForRange(clusteredIndices[currentFunction]);
       final GeneralEditDistance editDistance =
-        GeneralEditDistances.getLevenshteinDistance(currentCode);
+          GeneralEditDistances.getLevenshteinDistance(currentCode);
 
       int bestIndex = 0;
       int bestFunction = functionIndices.getFirst();

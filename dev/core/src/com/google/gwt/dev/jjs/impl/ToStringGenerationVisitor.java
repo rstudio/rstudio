@@ -347,6 +347,29 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   }
 
   @Override
+  public boolean visit(JConstructor x, Context ctx) {
+    // Modifiers
+    if (x.isPrivate()) {
+      print(CHARS_PRIVATE);
+    } else {
+      print(CHARS_PUBLIC);
+    }
+    printName(x);
+
+    // Parameters
+    printParameterList(x);
+
+    if (x.isAbstract() || !shouldPrintMethodBody()) {
+      semi();
+      newlineOpt();
+    } else {
+      accept(x.getBody());
+    }
+
+    return false;
+  }
+
+  @Override
   public boolean visit(JContinueStatement x, Context ctx) {
     print(CHARS_CONTINUE);
     if (x.getLabel() != null) {
@@ -587,29 +610,6 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   @Override
   public boolean visit(JLongLiteral x, Context ctx) {
     printLongLiteral(x.getValue());
-    return false;
-  }
-
-  @Override
-  public boolean visit(JConstructor x, Context ctx) {
-    // Modifiers
-    if (x.isPrivate()) {
-      print(CHARS_PRIVATE);
-    } else {
-      print(CHARS_PUBLIC);
-    }
-    printName(x);
-
-    // Parameters
-    printParameterList(x);
-
-    if (x.isAbstract() || !shouldPrintMethodBody()) {
-      semi();
-      newlineOpt();
-    } else {
-      accept(x.getBody());
-    }
-
     return false;
   }
 

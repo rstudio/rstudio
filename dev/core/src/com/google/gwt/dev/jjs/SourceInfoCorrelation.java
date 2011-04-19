@@ -49,8 +49,7 @@ public class SourceInfoCorrelation implements SourceInfo {
     this.parent = null;
   }
 
-  private SourceInfoCorrelation(SourceInfoCorrelation parent,
-      SourceOrigin origin) {
+  private SourceInfoCorrelation(SourceInfoCorrelation parent, SourceOrigin origin) {
     this.origin = origin;
     this.parent = parent;
   }

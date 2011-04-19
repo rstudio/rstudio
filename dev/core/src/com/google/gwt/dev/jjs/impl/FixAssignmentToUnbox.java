@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -30,15 +30,15 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 /**
- * Most autoboxing is handled by {@link GenerateJavaAST}. The only cases it
- * does not handle are <code>++</code>, <code>--</code>, and compound
- * assignment operations (<code>+=</code>, etc.) when applied to a boxed
- * type. This class fixes such cases in two steps. First, an internal subclass
- * of {@link CompoundAssignmentNormalizer} simplifies such expressions to a
- * simple assignment expression. Second, this visitor replaces an assignment to
- * an unboxing method (<code>unbox(x) = unbox(x) + 1</code>) with an
- * assignment to the underlying box (<code>x = box(unbox(x) + 1)</code>).
- *
+ * Most autoboxing is handled by {@link GenerateJavaAST}. The only cases it does
+ * not handle are <code>++</code>, <code>--</code>, and compound assignment
+ * operations (<code>+=</code>, etc.) when applied to a boxed type. This class
+ * fixes such cases in two steps. First, an internal subclass of
+ * {@link CompoundAssignmentNormalizer} simplifies such expressions to a simple
+ * assignment expression. Second, this visitor replaces an assignment to an
+ * unboxing method (<code>unbox(x) = unbox(x) + 1</code>) with an assignment to
+ * the underlying box (<code>x = box(unbox(x) + 1)</code>).
+ * 
  * <p>
  * Update: GenerateJavaAST can also leave invalid AST structures of the form
  * <code>(Foo) x = foo</code> due to the way generics are handled. This can
@@ -50,8 +50,7 @@ public class FixAssignmentToUnbox extends JModVisitor {
   /**
    * Normalize compound assignments where the lhs is an unbox operation.
    */
-  private static class CompoundAssignmentToUnboxNormalizer extends
-      CompoundAssignmentNormalizer {
+  private static class CompoundAssignmentToUnboxNormalizer extends CompoundAssignmentNormalizer {
     private final AutoboxUtils autoboxUtils;
 
     protected CompoundAssignmentToUnboxNormalizer(JProgram program) {
@@ -118,8 +117,8 @@ public class FixAssignmentToUnbox extends JModVisitor {
       // unbox(x) = foo -> x = box(foo)
       JClassType boxedType = (JClassType) boxed.getType();
 
-      ctx.replaceMe(new JBinaryOperation(x.getSourceInfo(), boxedType,
-          JBinaryOperator.ASG, boxed, autoboxUtils.box(x.getRhs(), boxedType)));
+      ctx.replaceMe(new JBinaryOperation(x.getSourceInfo(), boxedType, JBinaryOperator.ASG, boxed,
+          autoboxUtils.box(x.getRhs(), boxedType)));
       return;
     }
 
@@ -127,8 +126,9 @@ public class FixAssignmentToUnbox extends JModVisitor {
       // Assignment-to-cast-operation, e.g.
       // (Foo) x = foo -> x = foo
       JCastOperation cast = (JCastOperation) lhs;
-      JBinaryOperation newAsg = new JBinaryOperation(x.getSourceInfo(),
-          x.getType(), JBinaryOperator.ASG, cast.getExpr(), x.getRhs());
+      JBinaryOperation newAsg =
+          new JBinaryOperation(x.getSourceInfo(), x.getType(), JBinaryOperator.ASG, cast.getExpr(),
+              x.getRhs());
       ctx.replaceMe(newAsg);
     }
   }

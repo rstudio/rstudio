@@ -23,17 +23,10 @@ import com.google.gwt.dev.jjs.SourceOrigin;
  */
 public class JNullLiteral extends JValueLiteral {
 
-  public static final JNullLiteral INSTANCE = new JNullLiteral(
-      SourceOrigin.UNKNOWN);
+  public static final JNullLiteral INSTANCE = new JNullLiteral(SourceOrigin.UNKNOWN);
 
   private JNullLiteral(SourceInfo sourceInfo) {
     super(sourceInfo);
-  }
-
-  @Override
-  protected
-  JValueLiteral cloneFrom(JValueLiteral value) {
-    throw new UnsupportedOperationException();
   }
 
   public JType getType() {
@@ -49,6 +42,11 @@ public class JNullLiteral extends JValueLiteral {
     if (visitor.visit(this, ctx)) {
     }
     visitor.endVisit(this, ctx);
+  }
+
+  @Override
+  protected JValueLiteral cloneFrom(JValueLiteral value) {
+    throw new UnsupportedOperationException();
   }
 
   /**

@@ -25,8 +25,7 @@ import java.util.List;
  */
 public class JNewArray extends JExpression {
 
-  public static JNewArray createDims(SourceInfo info, JArrayType arrayType,
-      List<JExpression> dims) {
+  public static JNewArray createDims(SourceInfo info, JArrayType arrayType, List<JExpression> dims) {
     List<JClassLiteral> classLiterals = new ArrayList<JClassLiteral>();
 
     // Produce all class literals that will eventually get generated.
@@ -45,28 +44,26 @@ public class JNewArray extends JExpression {
       classLiterals.add(classLit);
       cur = ((JArrayType) cur).getElementType();
     }
-    return new JNewArray(info, arrayType.getNonNull(), dims, null,
-        classLiterals);
+    return new JNewArray(info, arrayType.getNonNull(), dims, null, classLiterals);
   }
 
-  public static JNewArray createInitializers(SourceInfo info,
-      JArrayType arrayType, List<JExpression> initializers) {
+  public static JNewArray createInitializers(SourceInfo info, JArrayType arrayType,
+      List<JExpression> initializers) {
     List<JClassLiteral> classLiterals = new ArrayList<JClassLiteral>();
     classLiterals.add(new JClassLiteral(info.makeChild(), arrayType));
-    return new JNewArray(info, arrayType.getNonNull(), null, initializers,
-        classLiterals);
+    return new JNewArray(info, arrayType.getNonNull(), null, initializers, classLiterals);
   }
 
   public final List<JExpression> dims;
 
   public final List<JExpression> initializers;
 
-  private JNonNullType type;
-
   /**
    * The list of class literals that will be needed to support this expression.
    */
   private final List<JClassLiteral> classLiterals;
+
+  private JNonNullType type;
 
   public JNewArray(SourceInfo info, JNonNullType type, List<JExpression> dims,
       List<JExpression> initializers, List<JClassLiteral> classLits) {

@@ -24,8 +24,7 @@ public class JLocal extends JVariable implements HasEnclosingMethod {
 
   private final JMethodBody enclosingMethodBody;
 
-  JLocal(SourceInfo info, String name, JType type, boolean isFinal,
-      JMethodBody enclosingMethodBody) {
+  JLocal(SourceInfo info, String name, JType type, boolean isFinal, JMethodBody enclosingMethodBody) {
     super(info, name, type, isFinal);
     this.enclosingMethodBody = enclosingMethodBody;
   }

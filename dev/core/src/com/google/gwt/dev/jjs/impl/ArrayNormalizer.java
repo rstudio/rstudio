@@ -62,14 +62,11 @@ public class ArrayNormalizer {
          */
         if (elementType instanceof JReferenceType) {
           if (!((JReferenceType) elementType).isFinal()
-              || !program.typeOracle.canTriviallyCast(
-                  (JReferenceType) x.getRhs().getType(),
+              || !program.typeOracle.canTriviallyCast((JReferenceType) x.getRhs().getType(),
                   (JReferenceType) elementType)) {
             // replace this assignment with a call to setCheck()
-            JMethodCall call = new JMethodCall(x.getSourceInfo(), null,
-                setCheckMethod);
-            call.addArgs(arrayRef.getInstance(), arrayRef.getIndexExpr(),
-                x.getRhs());
+            JMethodCall call = new JMethodCall(x.getSourceInfo(), null, setCheckMethod);
+            call.addArgs(arrayRef.getInstance(), arrayRef.getIndexExpr(), x.getRhs());
             ctx.replaceMe(call);
           }
         }
@@ -121,31 +118,24 @@ public class ArrayNormalizer {
 
     private void processDim(JNewArray x, Context ctx, JArrayType arrayType) {
       // override the type of the called method with the array's type
-      JMethodCall call = new JMethodCall(x.getSourceInfo(), null, initDim,
-          arrayType);
+      JMethodCall call = new JMethodCall(x.getSourceInfo(), null, initDim, arrayType);
       JLiteral classLit = x.getClassLiteral();
       JsonObject castableTypeMap = program.getCastableTypeMap(arrayType);
       JLiteral queryIdLit = program.getLiteralInt(tryGetQueryId(arrayType));
       JExpression dim = x.dims.get(0);
       JType elementType = arrayType.getElementType();
-      call.addArgs(classLit, castableTypeMap, queryIdLit, dim,
-          getSeedTypeLiteralFor(elementType));
+      call.addArgs(classLit, castableTypeMap, queryIdLit, dim, getSeedTypeLiteralFor(elementType));
       ctx.replaceMe(call);
     }
 
-    private void processDims(JNewArray x, Context ctx, JArrayType arrayType,
-        int dims) {
+    private void processDims(JNewArray x, Context ctx, JArrayType arrayType, int dims) {
       // override the type of the called method with the array's type
       SourceInfo sourceInfo = x.getSourceInfo();
       JMethodCall call = new JMethodCall(sourceInfo, null, initDims, arrayType);
-      JsonArray classLitList = new JsonArray(sourceInfo,
-          program.getJavaScriptObject());
-      JsonArray castableTypeMapList = new JsonArray(sourceInfo,
-          program.getJavaScriptObject());
-      JsonArray queryIdList = new JsonArray(sourceInfo,
-          program.getJavaScriptObject());
-      JsonArray dimList = new JsonArray(sourceInfo,
-          program.getJavaScriptObject());
+      JsonArray classLitList = new JsonArray(sourceInfo, program.getJavaScriptObject());
+      JsonArray castableTypeMapList = new JsonArray(sourceInfo, program.getJavaScriptObject());
+      JsonArray queryIdList = new JsonArray(sourceInfo, program.getJavaScriptObject());
+      JsonArray dimList = new JsonArray(sourceInfo, program.getJavaScriptObject());
       JType cur = arrayType;
       for (int i = 0; i < dims; ++i) {
         // Walk down each type from most dims to least.
@@ -153,7 +143,7 @@ public class ArrayNormalizer {
 
         JLiteral classLit = x.getClassLiterals().get(i);
         classLitList.exprs.add(classLit);
-        
+
         JsonObject castableTypeMap = program.getCastableTypeMap(curArrayType);
         castableTypeMapList.exprs.add(castableTypeMap);
 
@@ -163,22 +153,19 @@ public class ArrayNormalizer {
         dimList.exprs.add(x.dims.get(i));
         cur = curArrayType.getElementType();
       }
-      call.addArgs(classLitList, castableTypeMapList, queryIdList, 
-          dimList, program.getLiteralInt(dims), getSeedTypeLiteralFor(cur));
+      call.addArgs(classLitList, castableTypeMapList, queryIdList, dimList, program
+          .getLiteralInt(dims), getSeedTypeLiteralFor(cur));
       ctx.replaceMe(call);
     }
 
-    private void processInitializers(JNewArray x, Context ctx,
-        JArrayType arrayType) {
+    private void processInitializers(JNewArray x, Context ctx, JArrayType arrayType) {
       // override the type of the called method with the array's type
       SourceInfo sourceInfo = x.getSourceInfo();
-      JMethodCall call = new JMethodCall(sourceInfo, null, initValues,
-          arrayType);
+      JMethodCall call = new JMethodCall(sourceInfo, null, initValues, arrayType);
       JLiteral classLit = x.getClassLiteral();
       JsonObject castableTypeMap = program.getCastableTypeMap(arrayType);
       JLiteral queryIdLit = program.getLiteralInt(tryGetQueryId(arrayType));
-      JsonArray initList = new JsonArray(sourceInfo,
-          program.getJavaScriptObject());
+      JsonArray initList = new JsonArray(sourceInfo, program.getJavaScriptObject());
       for (int i = 0; i < x.initializers.size(); ++i) {
         initList.exprs.add(x.initializers.get(i));
       }

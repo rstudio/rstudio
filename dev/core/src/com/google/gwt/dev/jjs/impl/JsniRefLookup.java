@@ -62,8 +62,7 @@ public class JsniRefLookup {
     if (!className.equals("null")) {
       type = program.getTypeFromJsniRef(className);
       if (type == null) {
-        errorReporter.reportError("Unresolvable native reference to type '"
-            + className + "'");
+        errorReporter.reportError("Unresolvable native reference to type '" + className + "'");
         return null;
       }
     }
@@ -95,15 +94,16 @@ public class JsniRefLookup {
         }
       }
 
-      errorReporter.reportError("Unresolvable native reference to field '"
-          + fieldName + "' in type '" + className + "'");
+      errorReporter.reportError("Unresolvable native reference to field '" + fieldName
+          + "' in type '" + className + "'");
       return null;
     } else if (type instanceof JPrimitiveType) {
       errorReporter.reportError("May not refer to methods on primitive types");
       return null;
     } else {
       // look for a method
-      LinkedHashMap<String, LinkedHashMap<String, JMethod>> matchesBySig = new LinkedHashMap<String, LinkedHashMap<String, JMethod>>();
+      LinkedHashMap<String, LinkedHashMap<String, JMethod>> matchesBySig =
+          new LinkedHashMap<String, LinkedHashMap<String, JMethod>>();
       String methodName = ref.memberName();
       String jsniSig = ref.memberSignature();
       if (type == null) {
@@ -111,8 +111,7 @@ public class JsniRefLookup {
           return program.getNullMethod();
         }
       } else {
-        findMostDerivedMembers(matchesBySig, (JDeclaredType) type, methodName,
-            true);
+        findMostDerivedMembers(matchesBySig, (JDeclaredType) type, methodName, true);
         LinkedHashMap<String, JMethod> matches = matchesBySig.get(jsniSig);
         if (matches != null && matches.size() == 1) {
           /*
@@ -131,8 +130,8 @@ public class JsniRefLookup {
 
       // Not found; signal an error
       if (matchesBySig.isEmpty()) {
-        errorReporter.reportError("Unresolvable native reference to method '"
-            + methodName + "' in type '" + className + "'");
+        errorReporter.reportError("Unresolvable native reference to method '" + methodName
+            + "' in type '" + className + "'");
         return null;
       } else {
         StringBuilder suggestList = new StringBuilder();
@@ -148,9 +147,8 @@ public class JsniRefLookup {
           suggestList.append(comma + "'" + almost + "'");
           comma = ", ";
         }
-        errorReporter.reportError("Unresolvable native reference to method '"
-            + methodName + "' in type '" + className + "' (did you mean "
-            + suggestList.toString() + "?)");
+        errorReporter.reportError("Unresolvable native reference to method '" + methodName
+            + "' in type '" + className + "' (did you mean " + suggestList.toString() + "?)");
         return null;
       }
     }
@@ -164,8 +162,7 @@ public class JsniRefLookup {
    * @param refSig The string used to refer to that member, possibly shortened
    * @param fullSig The fully qualified signature for that member
    */
-  private static void addMember(
-      LinkedHashMap<String, LinkedHashMap<String, JMethod>> matchesBySig,
+  private static void addMember(LinkedHashMap<String, LinkedHashMap<String, JMethod>> matchesBySig,
       JMethod member, String refSig, String fullSig) {
     LinkedHashMap<String, JMethod> matchesByFullSig = matchesBySig.get(refSig);
     if (matchesByFullSig == null) {
@@ -182,9 +179,8 @@ public class JsniRefLookup {
    * methods.
    */
   private static void findMostDerivedMembers(
-      LinkedHashMap<String, LinkedHashMap<String, JMethod>> matchesBySig,
-      JDeclaredType targetType, String memberName,
-      boolean addConstructorsAndPrivates) {
+      LinkedHashMap<String, LinkedHashMap<String, JMethod>> matchesBySig, JDeclaredType targetType,
+      String memberName, boolean addConstructorsAndPrivates) {
     /*
      * Analyze superclasses and interfaces first. More derived members will thus
      * be seen later.
@@ -192,8 +188,7 @@ public class JsniRefLookup {
     if (targetType instanceof JClassType) {
       JClassType targetClass = (JClassType) targetType;
       if (targetClass.getSuperClass() != null) {
-        findMostDerivedMembers(matchesBySig, targetClass.getSuperClass(),
-            memberName, false);
+        findMostDerivedMembers(matchesBySig, targetClass.getSuperClass(), memberName, false);
       }
     }
     for (JDeclaredType intf : targetType.getImplements()) {
@@ -222,8 +217,7 @@ public class JsniRefLookup {
           continue;
         }
         String fullSig = JProgram.getJsniSig(method, false);
-        String wildcardSig = method.getName() + "("
-            + JsniRef.WILDCARD_PARAM_LIST + ")";
+        String wildcardSig = method.getName() + "(" + JsniRef.WILDCARD_PARAM_LIST + ")";
         addMember(matchesBySig, method, fullSig, fullSig);
         addMember(matchesBySig, method, wildcardSig, fullSig);
       }

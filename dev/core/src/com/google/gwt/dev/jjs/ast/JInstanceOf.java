@@ -25,8 +25,7 @@ public class JInstanceOf extends JExpression {
   private JExpression expr;
   private final JReferenceType testType;
 
-  public JInstanceOf(SourceInfo info, JReferenceType testType,
-      JExpression expression) {
+  public JInstanceOf(SourceInfo info, JReferenceType testType, JExpression expression) {
     super(info);
     this.testType = testType;
     this.expr = expression;

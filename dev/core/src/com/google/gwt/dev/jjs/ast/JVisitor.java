@@ -95,8 +95,7 @@ public class JVisitor {
 
   };
 
-  protected static InternalCompilerException translateException(JNode node,
-      Throwable e) {
+  protected static InternalCompilerException translateException(JNode node, Throwable e) {
     if (e instanceof VirtualMachineError) {
       // Always rethrow VM errors (an attempt to wrap may fail).
       throw (VirtualMachineError) e;

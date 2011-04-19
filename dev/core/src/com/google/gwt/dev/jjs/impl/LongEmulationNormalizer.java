@@ -70,20 +70,17 @@ public class LongEmulationNormalizer {
         case SHR:
         case SHRU:
           if (rhsType == longType) {
-            throw new InternalCompilerException(
-                "Expected right operand not to be of type long");
+            throw new InternalCompilerException("Expected right operand not to be of type long");
           }
           break;
         default:
           if (rhsType != longType) {
-            throw new InternalCompilerException(
-                "Expected right operand to be of type long");
+            throw new InternalCompilerException("Expected right operand to be of type long");
           }
       }
 
       JMethod method = program.getIndexedMethod("LongLib." + methodName);
-      JMethodCall call = new JMethodCall(x.getSourceInfo(), null, method,
-          x.getType());
+      JMethodCall call = new JMethodCall(x.getSourceInfo(), null, method, x.getType());
       call.addArgs(x.getLhs(), x.getRhs());
       ctx.replaceMe(call);
     }
@@ -92,8 +89,7 @@ public class LongEmulationNormalizer {
     public void endVisit(JPostfixOperation x, Context ctx) {
       JType argType = x.getArg().getType();
       if (argType == longType) {
-        throw new InternalCompilerException(
-            "Postfix operations on longs should not reach here");
+        throw new InternalCompilerException("Postfix operations on longs should not reach here");
       }
     }
 
@@ -106,8 +102,7 @@ public class LongEmulationNormalizer {
 
       String methodName = getEmulationMethod(x.getOp());
       JMethod method = program.getIndexedMethod("LongLib." + methodName);
-      JMethodCall call = new JMethodCall(x.getSourceInfo(), null, method,
-          x.getType());
+      JMethodCall call = new JMethodCall(x.getSourceInfo(), null, method, x.getType());
       call.addArg(x.getArg());
       ctx.replaceMe(call);
     }
@@ -151,8 +146,7 @@ public class LongEmulationNormalizer {
 
         case AND:
         case OR:
-          throw new InternalCompilerException(
-              "AND and OR should not have long operands");
+          throw new InternalCompilerException("AND and OR should not have long operands");
 
         case ASG:
           // Nothing to do.
@@ -169,8 +163,7 @@ public class LongEmulationNormalizer {
         case ASG_BIT_AND:
         case ASG_BIT_OR:
         case ASG_BIT_XOR:
-          throw new InternalCompilerException(
-              "Modifying long ops should not reach here");
+          throw new InternalCompilerException("Modifying long ops should not reach here");
         default:
           throw new InternalCompilerException("Should not reach here");
       }
@@ -180,13 +173,11 @@ public class LongEmulationNormalizer {
       switch (op) {
         case INC:
         case DEC:
-          throw new InternalCompilerException(
-              "Modifying long ops should not reach here");
+          throw new InternalCompilerException("Modifying long ops should not reach here");
         case NEG:
           return "neg";
         case NOT:
-          throw new InternalCompilerException(
-              "NOT should not have a long operand");
+          throw new InternalCompilerException("NOT should not have a long operand");
         case BIT_NOT:
           return "not";
         default:

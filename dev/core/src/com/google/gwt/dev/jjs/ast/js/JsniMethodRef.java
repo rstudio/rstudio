@@ -32,8 +32,7 @@ public class JsniMethodRef extends JMethodCall {
   private final String ident;
   private final JClassType jsoType;
 
-  public JsniMethodRef(SourceInfo info, String ident, JMethod method,
-      JClassType jsoType) {
+  public JsniMethodRef(SourceInfo info, String ident, JMethod method, JClassType jsoType) {
     // Just use a null literal as the qualifier on a non-static method
     super(info, method.isStatic() ? null : JNullLiteral.INSTANCE, method);
     this.ident = ident;

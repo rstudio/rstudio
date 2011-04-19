@@ -22,8 +22,8 @@ import com.google.gwt.dev.jjs.SourceInfo;
  */
 public class JCastOperation extends JExpression {
 
-  private JExpression expr;
   private final JType castType;
+  private JExpression expr;
 
   public JCastOperation(SourceInfo info, JType castType, JExpression expr) {
     super(info);

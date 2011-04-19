@@ -23,11 +23,9 @@ import com.google.gwt.dev.jjs.SourceOrigin;
  */
 public class JBooleanLiteral extends JValueLiteral {
 
-  public static final JBooleanLiteral FALSE = new JBooleanLiteral(
-      SourceOrigin.UNKNOWN, false);
+  public static final JBooleanLiteral FALSE = new JBooleanLiteral(SourceOrigin.UNKNOWN, false);
 
-  public static final JBooleanLiteral TRUE = new JBooleanLiteral(
-      SourceOrigin.UNKNOWN, true);
+  public static final JBooleanLiteral TRUE = new JBooleanLiteral(SourceOrigin.UNKNOWN, true);
 
   public static JBooleanLiteral get(boolean value) {
     return value ? TRUE : FALSE;

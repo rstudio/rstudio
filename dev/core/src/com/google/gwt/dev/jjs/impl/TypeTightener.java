@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -70,37 +70,30 @@ import java.util.Set;
  * the information to infer places where "tighter" (that is, more specific)
  * types can be inferred for locals, fields, parameters, and method return
  * types. We also optimize dynamic casts and instanceof operations.
- *
+ * 
  * Type flow occurs automatically in most JExpressions. But locals, fields,
  * parameters, and method return types serve as "way points" where type
  * information is fixed based on the declared type. Type tightening can be done
  * by analyzing the types "flowing" into each way point, and then updating the
  * declared type of the way point to be a more specific type than it had before.
- *
+ * 
  * Oddly, it's quite possible to tighten a variable to the Null type, which
  * means either the variable was never assigned, or it was only ever assigned
  * null. This is great for two reasons:
- *
+ * 
  * 1) Once a variable has been tightened to null, it will no longer impact the
  * variables that depend on it.
- *
+ * 
  * 2) It creates some very interesting opportunities to optimize later, since we
  * know statically that the value of the variable is always null.
- *
+ * 
  * Open issue: we don't handle recursion where a method passes (some of) its own
  * args to itself or returns its own call result. With our naive analysis, we
  * can't figure out that tightening might occur.
- *
+ * 
  * Type flow is not supported for primitive types, only reference types.
  */
 public class TypeTightener {
-  private static final String NAME = TypeTightener.class.getSimpleName();
-  
-  /*
-   * TODO(later): handle recursion, self-assignment, arrays, method tightening
-   * on invocations from within JSNI blocks
-   */
-
   /**
    * Replaces dangling null references with dummy calls.
    */
@@ -114,8 +107,8 @@ public class TypeTightener {
         // this doesn't really belong here, but while we're here let's remove
         // non-side-effect qualifiers to statics
         if (!instance.hasSideEffects()) {
-          JFieldRef fieldRef = new JFieldRef(x.getSourceInfo(), null,
-              x.getField(), x.getEnclosingType());
+          JFieldRef fieldRef =
+              new JFieldRef(x.getSourceInfo(), null, x.getField(), x.getEnclosingType());
           ctx.replaceMe(fieldRef);
         }
       } else if (!isStatic && instance.getType() == typeNull
@@ -136,8 +129,7 @@ public class TypeTightener {
         // this doesn't really belong here, but while we're here let's remove
         // non-side-effect qualifiers to statics
         if (!instance.hasSideEffects()) {
-          JMethodCall newCall = new JMethodCall(x.getSourceInfo(), null,
-              x.getTarget());
+          JMethodCall newCall = new JMethodCall(x.getSourceInfo(), null, x.getTarget());
           newCall.addArgs(x.getArgs());
           ctx.replaceMe(newCall);
         }
@@ -157,6 +149,11 @@ public class TypeTightener {
     }
   }
 
+  /*
+   * TODO(later): handle recursion, self-assignment, arrays, method tightening
+   * on invocations from within JSNI blocks
+   */
+
   /**
    * Record "type flow" information. Variables receive type flow via assignment.
    * As a special case, Parameters also receive type flow based on the types of
@@ -164,7 +161,7 @@ public class TypeTightener {
    * of assignment). Method return types receive type flow from their contained
    * return statements, plus the return type of any methods that
    * override/implement them.
-   *
+   * 
    * Note that we only have to run this pass ONCE to record the relationships,
    * because type tightening never changes any relationships, only the types of
    * the things related. In my original implementation, I had naively mapped
@@ -260,10 +257,8 @@ public class TypeTightener {
       // Fake an assignment-to-self on all args to prevent tightening
       JMethod method = x.getTarget();
       for (JParameter param : method.getParams()) {
-        addAssignment(
-            param,
-            new JParameterRef(
-                program.createSourceInfoSynthetic(RecordVisitor.class), param));
+        addAssignment(param, new JParameterRef(program
+            .createSourceInfoSynthetic(RecordVisitor.class), param));
       }
     }
 
@@ -318,8 +313,7 @@ public class TypeTightener {
          */
         JMethod staticImplFor = program.staticImplFor(x);
         if (staticImplFor == null
-            || !staticImplFor.getEnclosingType().getMethods().contains(
-                staticImplFor)) {
+            || !staticImplFor.getEnclosingType().getMethods().contains(staticImplFor)) {
           // The instance method has already been pruned.
           return true;
         }
@@ -354,8 +348,7 @@ public class TypeTightener {
       add(target, implementor, implementors);
     }
 
-    private void addInterfacesImplementorRecursive(JDeclaredType target,
-        JClassType implementor) {
+    private void addInterfacesImplementorRecursive(JDeclaredType target, JClassType implementor) {
       for (JInterfaceType implment : target.getImplements()) {
         addImplementor(implment, implementor);
         addInterfacesImplementorRecursive(implment, implementor);
@@ -375,16 +368,15 @@ public class TypeTightener {
    * Wherever possible, use the type flow information recorded by RecordVisitor
    * to change the declared type of a field, local, parameter, or method to a
    * more specific type.
-   *
+   * 
    * Also optimize dynamic casts and instanceof operations where possible.
    */
   public class TightenTypesVisitor extends JModVisitor {
-    
+
     @Override
     public void endVisit(JCastOperation x, Context ctx) {
       JType argType = x.getExpr().getType();
-      if (!(x.getCastType() instanceof JReferenceType)
-          || !(argType instanceof JReferenceType)) {
+      if (!(x.getCastType() instanceof JReferenceType) || !(argType instanceof JReferenceType)) {
         return;
       }
 
@@ -414,16 +406,15 @@ public class TypeTightener {
         ctx.replaceMe(x.getExpr());
       } else if (triviallyFalse && toType != program.getTypeNull()) {
         // replace with a magic NULL cast, unless it's already a cast to NULL
-        JCastOperation newOp = new JCastOperation(x.getSourceInfo(),
-            program.getTypeNull(), x.getExpr());
+        JCastOperation newOp =
+            new JCastOperation(x.getSourceInfo(), program.getTypeNull(), x.getExpr());
         ctx.replaceMe(newOp);
       } else {
         // If possible, try to use a narrower cast
         JReferenceType tighterType = getSingleConcreteType(toType);
 
         if (tighterType != null && tighterType != toType) {
-          JCastOperation newOp = new JCastOperation(x.getSourceInfo(),
-              tighterType, x.getExpr());
+          JCastOperation newOp = new JCastOperation(x.getSourceInfo(), tighterType, x.getExpr());
           ctx.replaceMe(newOp);
         }
       }
@@ -432,9 +423,9 @@ public class TypeTightener {
     @Override
     public void endVisit(JConditional x, Context ctx) {
       if (x.getType() instanceof JReferenceType) {
-        JReferenceType newType = program.generalizeTypes(
-            (JReferenceType) x.getThenExpr().getType(),
-            (JReferenceType) x.getElseExpr().getType());
+        JReferenceType newType =
+            program.generalizeTypes((JReferenceType) x.getThenExpr().getType(), (JReferenceType) x
+                .getElseExpr().getType());
         if (newType != x.getType()) {
           x.setType(newType);
           madeChanges();
@@ -499,9 +490,9 @@ public class TypeTightener {
       if (triviallyTrue) {
         // replace with a simple null test
         JNullLiteral nullLit = program.getLiteralNull();
-        JBinaryOperation neq = new JBinaryOperation(x.getSourceInfo(),
-            program.getTypePrimitiveBoolean(), JBinaryOperator.NEQ,
-            x.getExpr(), nullLit);
+        JBinaryOperation neq =
+            new JBinaryOperation(x.getSourceInfo(), program.getTypePrimitiveBoolean(),
+                JBinaryOperator.NEQ, x.getExpr(), nullLit);
         ctx.replaceMe(neq);
       } else if (triviallyFalse) {
         // replace with a false literal
@@ -510,8 +501,7 @@ public class TypeTightener {
         // If possible, try to use a narrower cast
         JReferenceType concreteType = getSingleConcreteType(toType);
         if (concreteType != null) {
-          JInstanceOf newOp = new JInstanceOf(x.getSourceInfo(), concreteType,
-              x.getExpr());
+          JInstanceOf newOp = new JInstanceOf(x.getSourceInfo(), concreteType, x.getExpr());
           ctx.replaceMe(newOp);
         }
       }
@@ -596,8 +586,7 @@ public class TypeTightener {
       JMethod target = x.getTarget();
       JMethod concreteMethod = getSingleConcreteMethod(target);
       if (concreteMethod != null) {
-        JMethodCall newCall = new JMethodCall(x.getSourceInfo(),
-            x.getInstance(), concreteMethod);
+        JMethodCall newCall = new JMethodCall(x.getSourceInfo(), x.getInstance(), concreteMethod);
         newCall.addArgs(x.getArgs());
         ctx.replaceMe(newCall);
         target = concreteMethod;
@@ -613,8 +602,7 @@ public class TypeTightener {
         if (myOverriders != null) {
           for (JMethod override : myOverriders) {
             JReferenceType overrideType = override.getEnclosingType();
-            if (program.typeOracle.canTheoreticallyCast(instanceType,
-                overrideType)) {
+            if (program.typeOracle.canTheoreticallyCast(instanceType, overrideType)) {
               // This call is truly polymorphic.
               // TODO: composite types! :)
               return;
@@ -675,14 +663,12 @@ public class TypeTightener {
       if (type instanceof JReferenceType) {
         JReferenceType refType = (JReferenceType) type;
         if (refType.isAbstract()) {
-          JClassType singleConcrete = getSingleConcrete(
-              refType.getUnderlyingType(), implementors);
+          JClassType singleConcrete = getSingleConcrete(refType.getUnderlyingType(), implementors);
           assert (singleConcrete == null || program.typeOracle.isInstantiatedType(singleConcrete));
           if (singleConcrete == null) {
             return null;
           }
-          return refType.canBeNull() ? singleConcrete
-              : singleConcrete.getNonNull();
+          return refType.canBeNull() ? singleConcrete : singleConcrete.getNonNull();
         }
       }
       return null;
@@ -696,8 +682,7 @@ public class TypeTightener {
           return program.getTypeArray(JNullType.INSTANCE);
         } else if (elementType instanceof JArrayType) {
           JArrayType newElementType = nullifyArrayType((JArrayType) elementType);
-          return program.getTypeArray(newElementType.getLeafType(),
-              newElementType.getDims() + 1);
+          return program.getTypeArray(newElementType.getLeafType(), newElementType.getDims() + 1);
         }
       }
       return arrayType;
@@ -797,9 +782,10 @@ public class TypeTightener {
     }
   }
 
+  private static final String NAME = TypeTightener.class.getSimpleName();
+
   public static OptimizerStats exec(JProgram program) {
-    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE,
-        "optimizer", NAME);
+    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
     OptimizerStats stats = new TypeTightener(program).execImpl();
     optimizeEvent.end("didChange", "" + stats.didChange());
     return stats;
@@ -818,8 +804,7 @@ public class TypeTightener {
    * Find exactly one concrete element for a key in a Map of Sets. If there are
    * none or more than one concrete element, return <code>null</code>.
    */
-  private static <B, T extends CanBeAbstract> T getSingleConcrete(B x,
-      Map<? super B, Set<T>> map) {
+  private static <B, T extends CanBeAbstract> T getSingleConcrete(B x, Map<? super B, Set<T>> map) {
 
     Set<T> set = map.get(x);
     // No set, then no concrete version
@@ -844,12 +829,17 @@ public class TypeTightener {
     return toReturn;
   }
 
-  private final Map<JVariable, Set<JExpression>> assignments = new IdentityHashMap<JVariable, Set<JExpression>>();
-  private final Map<JReferenceType, Set<JClassType>> implementors = new IdentityHashMap<JReferenceType, Set<JClassType>>();
-  private final Map<JMethod, Set<JMethod>> overriders = new IdentityHashMap<JMethod, Set<JMethod>>();
-  private final Map<JParameter, Set<JParameter>> paramUpRefs = new IdentityHashMap<JParameter, Set<JParameter>>();
+  private final Map<JVariable, Set<JExpression>> assignments =
+      new IdentityHashMap<JVariable, Set<JExpression>>();
+  private final Map<JReferenceType, Set<JClassType>> implementors =
+      new IdentityHashMap<JReferenceType, Set<JClassType>>();
+  private final Map<JMethod, Set<JMethod>> overriders =
+      new IdentityHashMap<JMethod, Set<JMethod>>();
+  private final Map<JParameter, Set<JParameter>> paramUpRefs =
+      new IdentityHashMap<JParameter, Set<JParameter>>();
   private final JProgram program;
-  private final Map<JMethod, Set<JExpression>> returns = new IdentityHashMap<JMethod, Set<JExpression>>();
+  private final Map<JMethod, Set<JExpression>> returns =
+      new IdentityHashMap<JMethod, Set<JExpression>>();
 
   private final JNullType typeNull;
 
@@ -867,11 +857,11 @@ public class TypeTightener {
      * We must iterate multiple times because each way point we tighten creates
      * more opportunities to do additional tightening for the things that depend
      * on it.
+     * 
+     * TODO(zundel): See if we can remove this loop, or otherwise run to less
+     * than completion if we compile with an option for less than 100% optimized
+     * output.
      */
-
-    // TODO(zundel): See if we can remove this loop, or otherwise run to less 
-    //   than completion if we compile with an option for less than 100% 
-    //   optimized output.
     while (true) {
       TightenTypesVisitor tightener = new TightenTypesVisitor();
       tightener.accept(program);

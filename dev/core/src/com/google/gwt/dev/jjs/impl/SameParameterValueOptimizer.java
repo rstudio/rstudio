@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -49,9 +49,6 @@ import java.util.Set;
 // TODO: this optimization can mistakenly act on methods such as LongLib.fromInt
 // since only one call is seen in LongLib itself.
 public class SameParameterValueOptimizer {
-  private static final String NAME =
-      SameParameterValueOptimizer.class.getSimpleName();
-
   /**
    * Fill parameterValues map.
    */
@@ -137,8 +134,7 @@ public class SameParameterValueOptimizer {
         rescuedMethods.add(x);
       } else {
         JMethod staticImpl = program.staticImplFor(x);
-        if (staticImpl != null
-            && staticImpl.getEnclosingType().getMethods().contains(staticImpl)) {
+        if (staticImpl != null && staticImpl.getEnclosingType().getMethods().contains(staticImpl)) {
           // instance method is still alive.
           rescuedMethods.add(x);
         }
@@ -166,12 +162,11 @@ public class SameParameterValueOptimizer {
    * Substitute all parameter references with expression.
    */
   private class SubstituteParameterVisitor extends JModVisitor {
-    private CloneExpressionVisitor cloner;
+    private final CloneExpressionVisitor cloner;
     private final JExpression expression;
     private final JParameter parameter;
 
-    public SubstituteParameterVisitor(JParameter parameter, 
-        JExpression expression) {
+    public SubstituteParameterVisitor(JParameter parameter, JExpression expression) {
       this.parameter = parameter;
       this.expression = expression;
       cloner = new CloneExpressionVisitor();
@@ -185,33 +180,34 @@ public class SameParameterValueOptimizer {
     }
   }
 
+  private static final String NAME = SameParameterValueOptimizer.class.getSimpleName();
+
   public static OptimizerStats exec(JProgram program) {
-    Event optimizeEvent = SpeedTracerLogger.start(
-        CompilerEventType.OPTIMIZE, "optimizer", NAME);
-    OptimizerStats stats = new SameParameterValueOptimizer(program).execImpl(
-        program);
+    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
+    OptimizerStats stats = new SameParameterValueOptimizer(program).execImpl(program);
     optimizeEvent.end("didChange", "" + stats.didChange());
     return stats;
   }
 
   /**
    * Parameter values.
-   *
+   * 
    * If doesn't contain a parameter, then its value is unknown. If contains
    * parameter, and value is null - the parameter's value is not the same across
    * all calls. If value is not null - the parameter's value is the same across
    * all calls.
    */
-  private Map<JParameter, JValueLiteral> parameterValues = new IdentityHashMap<JParameter, JValueLiteral>();
+  private final Map<JParameter, JValueLiteral> parameterValues =
+      new IdentityHashMap<JParameter, JValueLiteral>();
   private final JProgram program;
 
   /**
    * These methods should not be tried to optimized due to their polymorphic
    * nature.
-   *
+   * 
    * TODO: support polymorphic calls properly.
    */
-  private Set<JMethod> rescuedMethods = new HashSet<JMethod>();
+  private final Set<JMethod> rescuedMethods = new HashSet<JMethod>();
   private final Simplifier simplifier;
 
   private SameParameterValueOptimizer(JProgram program) {
@@ -230,9 +226,11 @@ public class SameParameterValueOptimizer {
       }
       JValueLiteral valueLiteral = parameterValues.get(parameter);
       if (valueLiteral != null) {
-        SubstituteParameterVisitor substituteParameterVisitor = new SubstituteParameterVisitor(parameter, simplifier.cast(parameter.getType(), valueLiteral));
+        SubstituteParameterVisitor substituteParameterVisitor =
+            new SubstituteParameterVisitor(parameter, simplifier.cast(parameter.getType(),
+                valueLiteral));
         substituteParameterVisitor.accept(parameter.getEnclosingMethod());
-        stats.recordModified(substituteParameterVisitor.getNumMods()); 
+        stats.recordModified(substituteParameterVisitor.getNumMods());
       }
     }
     return stats;

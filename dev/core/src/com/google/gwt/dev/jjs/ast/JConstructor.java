@@ -37,8 +37,7 @@ public class JConstructor extends JMethod {
     }
 
     private Object readResolve() {
-      JConstructor result = new JConstructor(SourceOrigin.UNKNOWN,
-          enclosingType);
+      JConstructor result = new JConstructor(SourceOrigin.UNKNOWN, enclosingType);
       result.signature = signature;
       return result;
     }
@@ -51,8 +50,8 @@ public class JConstructor extends JMethod {
   private boolean isEmpty = false;
 
   public JConstructor(SourceInfo info, JClassType enclosingType) {
-    super(info, enclosingType.getShortName(), enclosingType,
-        JPrimitiveType.VOID, false, false, true, false);
+    super(info, enclosingType.getShortName(), enclosingType, JPrimitiveType.VOID, false, false,
+        true, false);
   }
 
   @Override
@@ -127,6 +126,7 @@ public class JConstructor extends JMethod {
     traceAfter(visitor, before);
   }
 
+  @Override
   protected Object writeReplace() {
     if (getEnclosingType() != null && getEnclosingType().isExternal()) {
       return new ExternalSerializedForm(this);

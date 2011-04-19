@@ -88,13 +88,12 @@ public abstract class CorrelationFactory implements Serializable {
      * Correlations based on Literals are all the same, so we'll just cook up a
      * Map to make {@link #by(Literal)} fast.
      */
-    private static final Map<Literal, Correlation> LITERAL_CORRELATIONS = new EnumMap<Literal, Correlation>(
-        Literal.class);
+    private static final Map<Literal, Correlation> LITERAL_CORRELATIONS =
+        new EnumMap<Literal, Correlation>(Literal.class);
 
     static {
       for (Literal l : Literal.values()) {
-        LITERAL_CORRELATIONS.put(l,
-            new Correlation(Axis.LITERAL, l.getDescription(), l));
+        LITERAL_CORRELATIONS.put(l, new Correlation(Axis.LITERAL, l.getDescription(), l));
       }
     }
 
@@ -114,8 +113,8 @@ public abstract class CorrelationFactory implements Serializable {
      * This cuts down on the total number of Correlation objects allocated.
      */
     @SuppressWarnings("unchecked")
-    private final Map<Object, Correlation> canonicalMap = Collections.synchronizedMap(new ReferenceMap(
-        ReferenceMap.WEAK, ReferenceMap.WEAK));
+    private final Map<Object, Correlation> canonicalMap = Collections
+        .synchronizedMap(new ReferenceMap(ReferenceMap.WEAK, ReferenceMap.WEAK));
 
     private RealCorrelationFactory() {
     }
@@ -134,8 +133,9 @@ public abstract class CorrelationFactory implements Serializable {
     public Correlation by(JField field) {
       Correlation toReturn = canonicalMap.get(field);
       if (toReturn == null) {
-        toReturn = new Correlation(Axis.FIELD,
-            field.getEnclosingType().getName() + "::" + field.getName(), field);
+        toReturn =
+            new Correlation(Axis.FIELD,
+                field.getEnclosingType().getName() + "::" + field.getName(), field);
         canonicalMap.put(field, toReturn);
       }
       return toReturn;

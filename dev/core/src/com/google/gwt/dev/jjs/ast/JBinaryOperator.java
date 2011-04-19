@@ -32,9 +32,9 @@ public enum JBinaryOperator {
       SHR), ASG_SHRU(">>>=", 14, SHRU), ASG_BIT_AND("&=", 14, BIT_AND), ASG_BIT_OR(
       "|=", 14, BIT_OR), ASG_BIT_XOR("^=", 14, BIT_XOR);
 
-  private final char[] symbol;
   private final JBinaryOperator nonAsg;
   private final int precedence;
+  private final char[] symbol;
 
   private JBinaryOperator(String symbol, int precedence) {
     this(symbol, precedence, null);

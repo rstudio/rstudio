@@ -76,8 +76,7 @@ public class ControlFlowAnalyzer {
     /**
      * Used to record the dependencies of a specific method.
      */
-    void methodIsLiveBecause(JMethod liveMethod,
-        ArrayList<JMethod> dependencyChain);
+    void methodIsLiveBecause(JMethod liveMethod, ArrayList<JMethod> dependencyChain);
   }
 
   /**
@@ -88,7 +87,7 @@ public class ControlFlowAnalyzer {
    * TODO(later): make RescueVisitor use less stack?
    */
   private class RescueVisitor extends JVisitor {
-    private ArrayList<JMethod> curMethodStack = new ArrayList<JMethod>();
+    private final ArrayList<JMethod> curMethodStack = new ArrayList<JMethod>();
 
     @Override
     public boolean visit(JArrayType type, Context ctx) {
@@ -111,9 +110,8 @@ public class ControlFlowAnalyzer {
       if (!didSuperType) {
         if (dims > 1) {
           // anything[][] -> Object[]
-          rescue(
-              program.getTypeArray(program.getTypeJavaLangObject(), dims - 1),
-              true, isInstantiated);
+          rescue(program.getTypeArray(program.getTypeJavaLangObject(), dims - 1), true,
+              isInstantiated);
         } else {
           // anything[] -> Object
           // But instead of Object, rescue the base Array implementation type.
@@ -187,11 +185,11 @@ public class ControlFlowAnalyzer {
         JType exprType = x.getExpr().getType();
         if (program.typeOracle.isSingleJsoImpl(targetType)) {
           /*
-            * It's a JSO interface, check if the source expr can be a live JSO
-            * 1) source is java.lang.Object (JSO could have been assigned to it)
-            * 2) source is JSO
-            * 3) source is SingleJSO interface whose implementor is live
-            */
+           * It's a JSO interface, check if the source expr can be a live JSO 1)
+           * source is java.lang.Object (JSO could have been assigned to it) 2)
+           * source is JSO 3) source is SingleJSO interface whose implementor is
+           * live
+           */
           if (program.getTypeJavaLangObject() == exprType
               || program.typeOracle.canBeJavaScriptObject(exprType)) {
             // source is JSO or SingleJso interface whose implementor is live
@@ -359,8 +357,7 @@ public class ControlFlowAnalyzer {
     @Override
     public boolean visit(JMethodCall call, Context ctx) {
       JMethod method = call.getTarget();
-      if (method.isStatic()
-          || program.isJavaScriptObject(method.getEnclosingType())
+      if (method.isStatic() || program.isJavaScriptObject(method.getEnclosingType())
           || instantiatedTypes.contains(method.getEnclosingType())) {
         rescue(method);
       } else {
@@ -500,8 +497,7 @@ public class ControlFlowAnalyzer {
      */
     private void maybeRescueJavaScriptObjectPassingIntoJava(JType type) {
       boolean doIt = false;
-      if (program.typeOracle.canBeJavaScriptObject(type)
-          || program.isJavaLangString(type)) {
+      if (program.typeOracle.canBeJavaScriptObject(type) || program.isJavaLangString(type)) {
         doIt = true;
       } else if (type instanceof JArrayType) {
         /*
@@ -510,8 +506,7 @@ public class ControlFlowAnalyzer {
          */
         JArrayType arrayType = (JArrayType) type;
         JType elementType = arrayType.getElementType();
-        if (elementType instanceof JPrimitiveType
-            || program.isJavaLangString(elementType)
+        if (elementType instanceof JPrimitiveType || program.isJavaLangString(elementType)
             || program.typeOracle.canBeJavaScriptObject(elementType)) {
           doIt = true;
         }
@@ -520,8 +515,7 @@ public class ControlFlowAnalyzer {
         rescue((JReferenceType) type, true, true);
         if (program.typeOracle.isSingleJsoImpl(type)) {
           // Cast of JSO into SingleJso interface, rescue the implementor
-          rescue(program.typeOracle.getSingleJsoImpl((JReferenceType) type),
-              true, true);
+          rescue(program.typeOracle.getSingleJsoImpl((JReferenceType) type), true, true);
         }
       }
     }
@@ -566,8 +560,7 @@ public class ControlFlowAnalyzer {
       return false;
     }
 
-    private void rescue(JReferenceType type, boolean isReferenced,
-        boolean isInstantiated) {
+    private void rescue(JReferenceType type, boolean isReferenced, boolean isInstantiated) {
       if (type == null) {
         return;
       }
@@ -638,8 +631,7 @@ public class ControlFlowAnalyzer {
             JField field = (JField) var;
             accept(field.getInitializer());
             referencedTypes.add(field.getEnclosingType());
-            liveFieldsAndMethods.add(field.getEnclosingType().getMethods().get(
-                0));
+            liveFieldsAndMethods.add(field.getEnclosingType().getMethods().get(0));
           }
         }
       }
@@ -656,8 +648,8 @@ public class ControlFlowAnalyzer {
       JPrimitiveType charType = program.getTypePrimitiveChar();
       JClassType stringType = program.getTypeJavaLangString();
       if (type instanceof JReferenceType
-          && !program.typeOracle.canTriviallyCast((JReferenceType) type,
-              stringType) && type != program.getTypeNull()) {
+          && !program.typeOracle.canTriviallyCast((JReferenceType) type, stringType)
+          && type != program.getTypeNull()) {
         /*
          * Any reference types (except String, which works by default) that take
          * part in a concat must rescue java.lang.Object.toString().
@@ -732,7 +724,7 @@ public class ControlFlowAnalyzer {
     }
   }
 
-  private JDeclaredType baseArrayType;
+  private final JDeclaredType baseArrayType;
   private DependencyRecorder dependencyRecorder;
 
   private Set<JField> fieldsWritten = new HashSet<JField>();
@@ -769,8 +761,8 @@ public class ControlFlowAnalyzer {
     referencedTypes = new HashSet<JReferenceType>(cfa.referencedTypes);
     stringValueOfChar = cfa.stringValueOfChar;
     liveStrings = new HashSet<String>(cfa.liveStrings);
-    methodsLiveExceptForInstantiability = new HashSet<JMethod>(
-        cfa.methodsLiveExceptForInstantiability);
+    methodsLiveExceptForInstantiability =
+        new HashSet<JMethod>(cfa.methodsLiveExceptForInstantiability);
     methodsThatOverrideMe = cfa.methodsThatOverrideMe;
   }
 
@@ -819,8 +811,7 @@ public class ControlFlowAnalyzer {
    */
   public void setDependencyRecorder(DependencyRecorder dr) {
     if (dependencyRecorder != null && dr != null) {
-      throw new IllegalArgumentException(
-          "Attempting to set multiple dependency recorders");
+      throw new IllegalArgumentException("Attempting to set multiple dependency recorders");
     }
     this.dependencyRecorder = dr;
   }
@@ -849,7 +840,8 @@ public class ControlFlowAnalyzer {
 
   public void traverseFromLeftoversFragmentHasLoaded() {
     if (program.entryMethods.size() > 1) {
-      traverseFrom(program.getIndexedMethod("AsyncFragmentLoader.browserLoaderLeftoversFragmentHasLoaded"));
+      traverseFrom(program
+          .getIndexedMethod("AsyncFragmentLoader.browserLoaderLeftoversFragmentHasLoaded"));
     }
   }
 

@@ -59,7 +59,7 @@ public class InternalCompilerException extends RuntimeException {
     }
 
     /**
-     * Returns the node's source info, if available; otherwise <code>null</code>.
+     * Returns the node's source info, if available; otherwise {@code null}.
      */
     public SourceInfo getSourceInfo() {
       return sourceInfo;
@@ -69,7 +69,8 @@ public class InternalCompilerException extends RuntimeException {
   /**
    * Tracks if there's a pending addNode() to avoid recursion sickness.
    */
-  private static final ThreadLocal<InternalCompilerException> pendingICE = new ThreadLocal<InternalCompilerException>();
+  private static final ThreadLocal<InternalCompilerException> pendingICE =
+      new ThreadLocal<InternalCompilerException>();
 
   /**
    * Force this class to be preloaded. If we don't preload this class, we can
@@ -87,8 +88,7 @@ public class InternalCompilerException extends RuntimeException {
   /**
    * Constructs a new exception with the specified node, message, and cause.
    */
-  public InternalCompilerException(HasSourceInfo node, String message,
-      Throwable cause) {
+  public InternalCompilerException(HasSourceInfo node, String message, Throwable cause) {
     this(message, cause);
     addNode(node);
   }
@@ -142,8 +142,7 @@ public class InternalCompilerException extends RuntimeException {
    * Adds information about a a node to the end of the node trace. This is
    * similar to how a stack trace works.
    */
-  public void addNode(String className, String description,
-      SourceInfo sourceInfo) {
+  public void addNode(String className, String description, SourceInfo sourceInfo) {
     nodeTrace.add(new NodeInfo(className, description, sourceInfo));
   }
 

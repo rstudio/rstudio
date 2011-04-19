@@ -29,8 +29,7 @@ import com.google.gwt.dev.jjs.ast.JType;
  * Normalize compound assignments as needed after optimization. Integer division
  * and operations on longs need to be broken up.
  */
-public class PostOptimizationCompoundAssignmentNormalizer extends
-    CompoundAssignmentNormalizer {
+public class PostOptimizationCompoundAssignmentNormalizer extends CompoundAssignmentNormalizer {
   public static void exec(JProgram program) {
     new PostOptimizationCompoundAssignmentNormalizer().accept(program);
   }
@@ -44,11 +43,8 @@ public class PostOptimizationCompoundAssignmentNormalizer extends
     JType rhsType = op.getRhs().getType();
     if (lhsType != rhsType) {
       // first widen binary op to encompass both sides, then add narrow cast
-      return new JCastOperation(op.getSourceInfo(), lhsType,
-          new JBinaryOperation(op.getSourceInfo(),
-              widenType(lhsType, rhsType),
-              op.getOp(),
-              op.getLhs(), op.getRhs()));
+      return new JCastOperation(op.getSourceInfo(), lhsType, new JBinaryOperation(op
+          .getSourceInfo(), widenType(lhsType, rhsType), op.getOp(), op.getLhs(), op.getRhs()));
     }
     return op;
   }
@@ -58,8 +54,7 @@ public class PostOptimizationCompoundAssignmentNormalizer extends
     if (x.getType() == JPrimitiveType.LONG) {
       return true;
     }
-    if (x.getOp() == JBinaryOperator.ASG_DIV
-        && x.getType() != JPrimitiveType.FLOAT
+    if (x.getOp() == JBinaryOperator.ASG_DIV && x.getType() != JPrimitiveType.FLOAT
         && x.getType() != JPrimitiveType.DOUBLE) {
       return true;
     }
@@ -96,17 +91,18 @@ public class PostOptimizationCompoundAssignmentNormalizer extends
   }
 
   /**
-   * Implements http://java.sun.com/docs/books/jls/third_edition/html/conversions.html#26917
+   * Implements 5.6 Numeric Promotions.
+   * 
+   * <pre>
+   * http://java.sun.com/docs/books/jls/third_edition/html/conversions.html#26917
+   * </pre>
    */
   private JType widenType(JType lhsType, JType rhsType) {
-    if (lhsType == JPrimitiveType.DOUBLE ||
-        rhsType == JPrimitiveType.DOUBLE) {
+    if (lhsType == JPrimitiveType.DOUBLE || rhsType == JPrimitiveType.DOUBLE) {
       return JPrimitiveType.DOUBLE;
-    } else if (lhsType == JPrimitiveType.FLOAT ||
-        rhsType == JPrimitiveType.FLOAT) {
+    } else if (lhsType == JPrimitiveType.FLOAT || rhsType == JPrimitiveType.FLOAT) {
       return JPrimitiveType.FLOAT;
-    } else if (lhsType == JPrimitiveType.LONG ||
-        rhsType == JPrimitiveType.LONG) {
+    } else if (lhsType == JPrimitiveType.LONG || rhsType == JPrimitiveType.LONG) {
       return JPrimitiveType.LONG;
     } else {
       return JPrimitiveType.INT;

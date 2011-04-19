@@ -254,8 +254,7 @@ public class JModVisitor extends JVisitor {
       throw new InternalCompilerException("Cannot replace with null");
     }
     if (newNode == origNode) {
-      throw new InternalCompilerException(
-          "The replacement is the same as the original");
+      throw new InternalCompilerException("The replacement is the same as the original");
     }
   }
 

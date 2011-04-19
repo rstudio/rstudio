@@ -22,10 +22,10 @@ import com.google.gwt.dev.jjs.SourceInfo;
  */
 public class JEnumField extends JField {
 
-  private int ordinal;
+  private final int ordinal;
 
-  public JEnumField(SourceInfo info, String name, int ordinal,
-      JEnumType enclosingType, JClassType type) {
+  public JEnumField(SourceInfo info, String name, int ordinal, JEnumType enclosingType,
+      JClassType type) {
     super(info, name, enclosingType, type, true, Disposition.FINAL);
     this.ordinal = ordinal;
   }

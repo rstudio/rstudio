@@ -57,8 +57,7 @@ public class MethodInliner {
   /**
    * Clones an expression, ensuring no local or this refs.
    */
-  private static class CloneCalleeExpressionVisitor extends
-      CloneExpressionVisitor {
+  private static class CloneCalleeExpressionVisitor extends CloneExpressionVisitor {
     @Override
     public boolean visit(JLocalRef x, Context ctx) {
       throw new InternalCompilerException(
@@ -110,16 +109,14 @@ public class MethodInliner {
         List<JStatement> stmts = body.getStatements();
 
         if (method.getEnclosingType() != null
-            && method.getEnclosingType().getMethods().get(0) == method
-            && !stmts.isEmpty()) {
+            && method.getEnclosingType().getMethods().get(0) == method && !stmts.isEmpty()) {
           // clinit() calls cannot be inlined unless they are empty
           possibleToInline = false;
         } else if (!body.getLocals().isEmpty()) {
           // methods with local variables cannot be inlined
           possibleToInline = false;
         } else {
-          JMultiExpression multi = createMultiExpressionFromBody(body,
-              ignoringReturnValueFor == x);
+          JMultiExpression multi = createMultiExpressionFromBody(body, ignoringReturnValueFor == x);
           if (multi != null) {
             possibleToInline = tryInlineExpression(x, ctx, multi);
           }
@@ -168,8 +165,7 @@ public class MethodInliner {
       JMethod clinit = targetType.getMethods().get(0);
 
       // If the clinit is a non-native, empty body we can optimize it out here
-      if (!clinit.isNative()
-          && (((JMethodBody) clinit.getBody())).getStatements().size() == 0) {
+      if (!clinit.isNative() && (((JMethodBody) clinit.getBody())).getStatements().size() == 0) {
         return null;
       }
 
@@ -181,8 +177,7 @@ public class MethodInliner {
      * possible clinit. This is a precursor for inlining the remainder of a
      * method.
      */
-    private JMultiExpression createMultiExpressionForInstanceAndClinit(
-        JMethodCall x) {
+    private JMultiExpression createMultiExpressionForInstanceAndClinit(JMethodCall x) {
       JMultiExpression multi = new JMultiExpression(x.getSourceInfo());
 
       // Any instance expression goes first (this can happen even with statics).
@@ -273,8 +268,7 @@ public class MethodInliner {
     /**
      * Inline a call to an expression.
      */
-    private boolean tryInlineExpression(JMethodCall x, Context ctx,
-        JMultiExpression targetExpr) {
+    private boolean tryInlineExpression(JMethodCall x, Context ctx, JMultiExpression targetExpr) {
       /*
        * Limit inlined methods to multiexpressions of length 2 for now. This
        * handles the simple { return JVariableRef; } or { expression; return
@@ -295,8 +289,7 @@ public class MethodInliner {
 
       // Make sure the expression we're about to inline doesn't include a call
       // to the target method!
-      RecursionCheckVisitor recursionCheckVisitor = new RecursionCheckVisitor(
-          x.getTarget());
+      RecursionCheckVisitor recursionCheckVisitor = new RecursionCheckVisitor(x.getTarget());
       recursionCheckVisitor.accept(targetExpr);
       if (recursionCheckVisitor.isRecursive()) {
         return false;
@@ -449,8 +442,7 @@ public class MethodInliner {
 
     @Override
     public void endVisit(JParameterRef x, Context ctx) {
-      int paramIndex = methodCall.getTarget().getParams().indexOf(
-          x.getParameter());
+      int paramIndex = methodCall.getTarget().getParams().indexOf(x.getParameter());
       assert paramIndex != -1;
 
       // Replace with a cloned call argument.
@@ -465,7 +457,7 @@ public class MethodInliner {
 
   private static class RecursionCheckVisitor extends JVisitor {
     private boolean isRecursive = false;
-    private JMethod method;
+    private final JMethod method;
 
     public RecursionCheckVisitor(JMethod method) {
       this.method = method;
@@ -493,8 +485,7 @@ public class MethodInliner {
   public static String NAME = MethodInliner.class.getSimpleName();
 
   public static OptimizerStats exec(JProgram program) {
-    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE,
-        "optimizer", NAME);
+    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
     OptimizerStats stats = new MethodInliner(program).execImpl();
     optimizeEvent.end("didChange", "" + stats.didChange());
     return stats;

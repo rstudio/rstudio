@@ -27,8 +27,8 @@ public class JConditional extends JExpression {
   private JExpression thenExpr;
   private JType type;
 
-  public JConditional(SourceInfo info, JType type, JExpression ifTest,
-      JExpression thenExpr, JExpression elseExpr) {
+  public JConditional(SourceInfo info, JType type, JExpression ifTest, JExpression thenExpr,
+      JExpression elseExpr) {
     super(info);
     this.type = type;
     this.ifTest = ifTest;
@@ -54,8 +54,7 @@ public class JConditional extends JExpression {
 
   @Override
   public boolean hasSideEffects() {
-    return ifTest.hasSideEffects() || thenExpr.hasSideEffects()
-        || elseExpr.hasSideEffects();
+    return ifTest.hasSideEffects() || thenExpr.hasSideEffects() || elseExpr.hasSideEffects();
   }
 
   public void setType(JType newType) {

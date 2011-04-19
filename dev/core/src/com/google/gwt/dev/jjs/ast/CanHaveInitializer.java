@@ -21,6 +21,8 @@ package com.google.gwt.dev.jjs.ast;
  */
 public interface CanHaveInitializer {
   JLiteral getConstInitializer();
+
   boolean hasInitializer();
+
   void setInitializer(JDeclarationStatement declStmt);
 }

@@ -23,8 +23,7 @@ import com.google.gwt.dev.jjs.SourceOrigin;
  */
 public class JIntLiteral extends JValueLiteral {
 
-  public static final JIntLiteral ZERO = new JIntLiteral(SourceOrigin.UNKNOWN,
-      0);
+  public static final JIntLiteral ZERO = new JIntLiteral(SourceOrigin.UNKNOWN, 0);
 
   public static JIntLiteral get(int value) {
     return (value == 0) ? ZERO : new JIntLiteral(SourceOrigin.UNKNOWN, value);

@@ -88,8 +88,7 @@ public abstract class CompoundAssignmentNormalizer {
         JExpression newInstance = possiblyReplace(x.getInstance());
         JExpression newIndexExpr = possiblyReplace(x.getIndexExpr());
         if (newInstance != x.getInstance() || newIndexExpr != x.getIndexExpr()) {
-          JArrayRef newExpr = new JArrayRef(x.getSourceInfo(), newInstance,
-              newIndexExpr);
+          JArrayRef newExpr = new JArrayRef(x.getSourceInfo(), newInstance, newIndexExpr);
           ctx.replaceMe(newExpr);
         }
         return false;
@@ -100,8 +99,8 @@ public abstract class CompoundAssignmentNormalizer {
         if (x.getInstance() != null) {
           JExpression newInstance = possiblyReplace(x.getInstance());
           if (newInstance != x.getInstance()) {
-            JFieldRef newExpr = new JFieldRef(x.getSourceInfo(), newInstance,
-                x.getField(), x.getEnclosingType());
+            JFieldRef newExpr =
+                new JFieldRef(x.getSourceInfo(), newInstance, x.getField(), x.getEnclosingType());
             ctx.replaceMe(newExpr);
           }
         }
@@ -133,8 +132,8 @@ public abstract class CompoundAssignmentNormalizer {
 
         // Create an assignment for this temp and add it to multi.
         JLocalRef tempRef = new JLocalRef(x.getSourceInfo(), tempLocal);
-        JBinaryOperation asg = new JBinaryOperation(x.getSourceInfo(),
-            x.getType(), JBinaryOperator.ASG, tempRef, x);
+        JBinaryOperation asg =
+            new JBinaryOperation(x.getSourceInfo(), x.getType(), JBinaryOperator.ASG, tempRef, x);
         multi.exprs.add(asg);
         // Update me with the temp
         return cloner.cloneExpression(tempRef);
@@ -157,18 +156,19 @@ public abstract class CompoundAssignmentNormalizer {
        * expressions that could have side effects with temporaries, so that they
        * are only run once.
        */
-      ReplaceSideEffectsInLvalue replacer = new ReplaceSideEffectsInLvalue(
-          new JMultiExpression(x.getSourceInfo()));
+      ReplaceSideEffectsInLvalue replacer =
+          new ReplaceSideEffectsInLvalue(new JMultiExpression(x.getSourceInfo()));
       JExpression newLhs = replacer.accept(x.getLhs());
 
-      JExpression operation = new JBinaryOperation(x.getSourceInfo(),
-          newLhs.getType(), op.getNonAssignmentOf(), newLhs, x.getRhs());
+      JExpression operation =
+          new JBinaryOperation(x.getSourceInfo(), newLhs.getType(), op.getNonAssignmentOf(),
+              newLhs, x.getRhs());
       operation = modifyResultOperation((JBinaryOperation) operation);
-      
+
       // newLhs is cloned below because it was used in operation
-      JBinaryOperation asg = new JBinaryOperation(x.getSourceInfo(), newLhs.getType(),
-          JBinaryOperator.ASG, cloner.cloneExpression(newLhs),
-          operation);
+      JBinaryOperation asg =
+          new JBinaryOperation(x.getSourceInfo(), newLhs.getType(), JBinaryOperator.ASG, cloner
+              .cloneExpression(newLhs), operation);
 
       JMultiExpression multiExpr = replacer.getMultiExpr();
       if (multiExpr.exprs.isEmpty()) {
@@ -196,20 +196,19 @@ public abstract class CompoundAssignmentNormalizer {
 
       // First, replace the arg with a non-side-effect causing one.
       JMultiExpression multi = new JMultiExpression(x.getSourceInfo());
-      ReplaceSideEffectsInLvalue replacer = new ReplaceSideEffectsInLvalue(
-          multi);
+      ReplaceSideEffectsInLvalue replacer = new ReplaceSideEffectsInLvalue(multi);
       JExpression newArg = replacer.accept(x.getArg());
 
       JExpression expressionReturn = expressionToReturn(newArg);
 
       // Now generate the appropriate expressions.
-      JLocal tempLocal = createTempLocal(x.getSourceInfo(),
-          expressionReturn.getType());
+      JLocal tempLocal = createTempLocal(x.getSourceInfo(), expressionReturn.getType());
 
       // t = x
       JLocalRef tempRef = new JLocalRef(x.getSourceInfo(), tempLocal);
-      JBinaryOperation asg = new JBinaryOperation(x.getSourceInfo(), x.getType(),
-          JBinaryOperator.ASG, tempRef, expressionReturn);
+      JBinaryOperation asg =
+          new JBinaryOperation(x.getSourceInfo(), x.getType(), JBinaryOperator.ASG, tempRef,
+              expressionReturn);
       multi.exprs.add(asg);
 
       // x += 1
@@ -242,17 +241,15 @@ public abstract class CompoundAssignmentNormalizer {
       ctx.replaceMe(accept(asg));
     }
 
-    private JBinaryOperation createAsgOpFromUnary(JExpression arg,
-        JUnaryOperator op) {
+    private JBinaryOperation createAsgOpFromUnary(JExpression arg, JUnaryOperator op) {
       JBinaryOperator newOp;
       if (op == JUnaryOperator.INC) {
         newOp = JBinaryOperator.ASG_ADD;
       } else if (op == JUnaryOperator.DEC) {
         newOp = JBinaryOperator.ASG_SUB;
       } else {
-        throw new InternalCompilerException(
-            "Unexpected modifying unary operator: "
-                + String.valueOf(op.getSymbol()));
+        throw new InternalCompilerException("Unexpected modifying unary operator: "
+            + String.valueOf(op.getSymbol()));
       }
 
       JExpression one;
@@ -265,8 +262,9 @@ public abstract class CompoundAssignmentNormalizer {
         one = JIntLiteral.get(1);
       }
       // arg is cloned below because the caller is allowed to use it somewhere
-      JBinaryOperation asg = new JBinaryOperation(arg.getSourceInfo(), arg.getType(),
-          newOp, cloner.cloneExpression(arg), one);
+      JBinaryOperation asg =
+          new JBinaryOperation(arg.getSourceInfo(), arg.getType(), newOp, cloner
+              .cloneExpression(arg), one);
       return asg;
     }
   }
@@ -289,14 +287,14 @@ public abstract class CompoundAssignmentNormalizer {
 
   /**
    * Decide what expression to return when breaking up a compound assignment of
-   * the form <code>lhs op= rhs</code>. The breakup creates an expression of
-   * the form <code>lhs = lhs op rhs</code>, and the right hand side of the
-   * newly created expression is passed to this method.
+   * the form <code>lhs op= rhs</code>. The breakup creates an expression of the
+   * form <code>lhs = lhs op rhs</code>, and the right hand side of the newly
+   * created expression is passed to this method.
    */
   protected JExpression modifyResultOperation(JBinaryOperation op) {
     return op;
   }
-  
+
   protected abstract boolean shouldBreakUp(JBinaryOperation x);
 
   protected abstract boolean shouldBreakUp(JPostfixOperation x);

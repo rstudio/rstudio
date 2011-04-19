@@ -51,8 +51,7 @@ import java.util.Set;
  * Root for the AST representing an entire Java program.
  */
 public class JProgram extends JNode {
-  private static final class ArrayTypeComparator implements
-      Comparator<JArrayType>, Serializable {
+  private static final class ArrayTypeComparator implements Comparator<JArrayType>, Serializable {
     public int compare(JArrayType o1, JArrayType o2) {
       int comp = o1.getDims() - o2.getDims();
       if (comp != 0) {
@@ -62,30 +61,22 @@ public class JProgram extends JNode {
     }
   }
 
-  public static final Set<String> CODEGEN_TYPES_SET = new LinkedHashSet<String>(
-      Arrays.asList(
-          "com.google.gwt.lang.Array", "com.google.gwt.lang.Cast",
-          "com.google.gwt.lang.CollapsedPropertyHolder",
-          "com.google.gwt.lang.Exceptions", "com.google.gwt.lang.LongLib",
-          "com.google.gwt.lang.Stats", "com.google.gwt.lang.Util"));
+  public static final Set<String> CODEGEN_TYPES_SET = new LinkedHashSet<String>(Arrays.asList(
+      "com.google.gwt.lang.Array", "com.google.gwt.lang.Cast",
+      "com.google.gwt.lang.CollapsedPropertyHolder", "com.google.gwt.lang.Exceptions",
+      "com.google.gwt.lang.LongLib", "com.google.gwt.lang.Stats", "com.google.gwt.lang.Util"));
 
-  public static final Set<String> INDEX_TYPES_SET = new LinkedHashSet<String>(
-      Arrays.asList(
-          "java.io.Serializable", "java.lang.Object", "java.lang.String",
-          "java.lang.Class", "java.lang.CharSequence", "java.lang.Cloneable",
-          "java.lang.Comparable", "java.lang.Enum", "java.lang.Iterable",
-          "java.util.Iterator", "java.lang.AssertionError", "java.lang.Boolean",
-          "java.lang.Byte", "java.lang.Character", "java.lang.Short",
-          "java.lang.Integer", "java.lang.Float", "java.lang.Double",
-          "java.lang.Throwable",
-          "com.google.gwt.core.client.GWT",
-          "com.google.gwt.core.client.JavaScriptObject",
-          "com.google.gwt.lang.ClassLiteralHolder",
-          "com.google.gwt.core.client.RunAsyncCallback",
-          "com.google.gwt.core.client.impl.AsyncFragmentLoader",
-          "com.google.gwt.core.client.impl.Impl",
-          "com.google.gwt.lang.EntryMethodHolder",
-          "com.google.gwt.core.client.prefetch.RunAsyncCode"));
+  public static final Set<String> INDEX_TYPES_SET = new LinkedHashSet<String>(Arrays.asList(
+      "java.io.Serializable", "java.lang.Object", "java.lang.String", "java.lang.Class",
+      "java.lang.CharSequence", "java.lang.Cloneable", "java.lang.Comparable", "java.lang.Enum",
+      "java.lang.Iterable", "java.util.Iterator", "java.lang.AssertionError", "java.lang.Boolean",
+      "java.lang.Byte", "java.lang.Character", "java.lang.Short", "java.lang.Integer",
+      "java.lang.Float", "java.lang.Double", "java.lang.Throwable",
+      "com.google.gwt.core.client.GWT", "com.google.gwt.core.client.JavaScriptObject",
+      "com.google.gwt.lang.ClassLiteralHolder", "com.google.gwt.core.client.RunAsyncCallback",
+      "com.google.gwt.core.client.impl.AsyncFragmentLoader",
+      "com.google.gwt.core.client.impl.Impl", "com.google.gwt.lang.EntryMethodHolder",
+      "com.google.gwt.core.client.prefetch.RunAsyncCode"));
 
   static final Map<String, Set<String>> traceMethods = new HashMap<String, Set<String>>();
 
@@ -99,10 +90,12 @@ public class JProgram extends JNode {
 
   private static final int IS_NULL = 0;
 
-  private static final Map<String, JPrimitiveType> primitiveTypes = new HashMap<String, JPrimitiveType>();
+  private static final Map<String, JPrimitiveType> primitiveTypes =
+      new HashMap<String, JPrimitiveType>();
 
   @Deprecated
-  private static final Map<String, JPrimitiveType> primitiveTypesDeprecated = new HashMap<String, JPrimitiveType>();
+  private static final Map<String, JPrimitiveType> primitiveTypesDeprecated =
+      new HashMap<String, JPrimitiveType>();
 
   static {
     INDEX_TYPES_SET.addAll(CODEGEN_TYPES_SET);
@@ -144,36 +137,29 @@ public class JProgram extends JNode {
 
     primitiveTypesDeprecated.put(JPrimitiveType.BOOLEAN.getJsniSignatureName(),
         JPrimitiveType.BOOLEAN);
-    primitiveTypesDeprecated.put(JPrimitiveType.BYTE.getJsniSignatureName(),
-        JPrimitiveType.BYTE);
-    primitiveTypesDeprecated.put(JPrimitiveType.CHAR.getJsniSignatureName(),
-        JPrimitiveType.CHAR);
+    primitiveTypesDeprecated.put(JPrimitiveType.BYTE.getJsniSignatureName(), JPrimitiveType.BYTE);
+    primitiveTypesDeprecated.put(JPrimitiveType.CHAR.getJsniSignatureName(), JPrimitiveType.CHAR);
     primitiveTypesDeprecated.put(JPrimitiveType.DOUBLE.getJsniSignatureName(),
         JPrimitiveType.DOUBLE);
-    primitiveTypesDeprecated.put(JPrimitiveType.FLOAT.getJsniSignatureName(),
-        JPrimitiveType.FLOAT);
-    primitiveTypesDeprecated.put(JPrimitiveType.INT.getJsniSignatureName(),
-        JPrimitiveType.INT);
-    primitiveTypesDeprecated.put(JPrimitiveType.LONG.getJsniSignatureName(),
-        JPrimitiveType.LONG);
-    primitiveTypesDeprecated.put(JPrimitiveType.SHORT.getJsniSignatureName(),
-        JPrimitiveType.SHORT);
-    primitiveTypesDeprecated.put(JPrimitiveType.VOID.getJsniSignatureName(),
-        JPrimitiveType.VOID);
+    primitiveTypesDeprecated.put(JPrimitiveType.FLOAT.getJsniSignatureName(), JPrimitiveType.FLOAT);
+    primitiveTypesDeprecated.put(JPrimitiveType.INT.getJsniSignatureName(), JPrimitiveType.INT);
+    primitiveTypesDeprecated.put(JPrimitiveType.LONG.getJsniSignatureName(), JPrimitiveType.LONG);
+    primitiveTypesDeprecated.put(JPrimitiveType.SHORT.getJsniSignatureName(), JPrimitiveType.SHORT);
+    primitiveTypesDeprecated.put(JPrimitiveType.VOID.getJsniSignatureName(), JPrimitiveType.VOID);
   }
 
   /**
    * Helper to create an assignment, used to initalize fields, etc.
    */
-  public static JExpressionStatement createAssignmentStmt(SourceInfo info,
-      JExpression lhs, JExpression rhs) {
-    JBinaryOperation assign = new JBinaryOperation(info, lhs.getType(),
-        JBinaryOperator.ASG, lhs, rhs);
+  public static JExpressionStatement createAssignmentStmt(SourceInfo info, JExpression lhs,
+      JExpression rhs) {
+    JBinaryOperation assign =
+        new JBinaryOperation(info, lhs.getType(), JBinaryOperator.ASG, lhs, rhs);
     return assign.makeStatement();
   }
 
-  public static JLocal createLocal(SourceInfo info, String name, JType type,
-      boolean isFinal, JMethodBody enclosingMethodBody) {
+  public static JLocal createLocal(SourceInfo info, String name, JType type, boolean isFinal,
+      JMethodBody enclosingMethodBody) {
     assert (name != null);
     assert (type != null);
     assert (enclosingMethodBody != null);
@@ -182,21 +168,20 @@ public class JProgram extends JNode {
     return x;
   }
 
-  public static JParameter createParameter(SourceInfo info, String name,
-      JType type, boolean isFinal, boolean isThis, JMethod enclosingMethod) {
+  public static JParameter createParameter(SourceInfo info, String name, JType type,
+      boolean isFinal, boolean isThis, JMethod enclosingMethod) {
     assert (name != null);
     assert (type != null);
     assert (enclosingMethod != null);
 
-    JParameter x = new JParameter(info, name, type, isFinal, isThis,
-        enclosingMethod);
+    JParameter x = new JParameter(info, name, type, isFinal, isThis, enclosingMethod);
 
     enclosingMethod.addParam(x);
     return x;
   }
 
-  public static List<JDeclaredType> deserializeTypes(ObjectInputStream stream)
-      throws IOException, ClassNotFoundException {
+  public static List<JDeclaredType> deserializeTypes(ObjectInputStream stream) throws IOException,
+      ClassNotFoundException {
     @SuppressWarnings("unchecked")
     List<JDeclaredType> types = (List<JDeclaredType>) stream.readObject();
     for (JDeclaredType type : types) {
@@ -229,8 +214,7 @@ public class JProgram extends JNode {
 
   public static boolean isClinit(JMethod method) {
     JDeclaredType enclosingType = method.getEnclosingType();
-    if ((enclosingType != null)
-        && (method == enclosingType.getMethods().get(0))) {
+    if ((enclosingType != null) && (method == enclosingType.getMethods().get(0))) {
       assert (method.getName().equals("$clinit"));
       return true;
     } else {
@@ -252,18 +236,17 @@ public class JProgram extends JNode {
    * @param firstFragment The first fragment to consider
    * @param restFragments The rest of the fragments to consider
    */
-  public static int lastFragmentLoadingBefore(List<Integer> initialSeq,
-      int numSps, int firstFragment, int... restFragments) {
+  public static int lastFragmentLoadingBefore(List<Integer> initialSeq, int numSps,
+      int firstFragment, int... restFragments) {
     int latest = firstFragment;
     for (int frag : restFragments) {
-      latest = pairwiseLastFragmentLoadingBefore(initialSeq, numSps, latest,
-          frag);
+      latest = pairwiseLastFragmentLoadingBefore(initialSeq, numSps, latest, frag);
     }
     return latest;
   }
 
-  public static void serializeTypes(List<JDeclaredType> types,
-      ObjectOutputStream stream) throws IOException {
+  public static void serializeTypes(List<JDeclaredType> types, ObjectOutputStream stream)
+      throws IOException {
     stream.writeObject(types);
     for (JDeclaredType type : types) {
       type.writeMembers(stream);
@@ -277,8 +260,8 @@ public class JProgram extends JNode {
    * The main logic behind {@link #lastFragmentLoadingBefore(int, int...)} and
    * {@link #lastFragmentLoadingBefore(List, int, int, int...)}.
    */
-  private static int pairwiseLastFragmentLoadingBefore(
-      List<Integer> initialSeq, int numSps, int frag1, int frag2) {
+  private static int pairwiseLastFragmentLoadingBefore(List<Integer> initialSeq, int numSps,
+      int frag1, int frag2) {
     if (frag1 == frag2) {
       return frag1;
     }
@@ -339,6 +322,8 @@ public class JProgram extends JNode {
 
   private final HashMap<JType, JArrayType> arrayTypes = new HashMap<JType, JArrayType>();
 
+  private IdentityHashMap<JReferenceType, JsonObject> castableTypeMaps;
+
   /**
    * A factory to create correlations.
    */
@@ -351,8 +336,6 @@ public class JProgram extends JNode {
   private final Map<String, JDeclaredType> indexedTypes = new HashMap<String, JDeclaredType>();
 
   private final Map<JMethod, JMethod> instanceToStaticMap = new IdentityHashMap<JMethod, JMethod>();
-
-  private IdentityHashMap<JReferenceType, JsonObject> castableTypeMaps;
 
   private JField nullField;
 
@@ -400,8 +383,7 @@ public class JProgram extends JNode {
    *          cost of memory and object allocations.
    */
   public JProgram(CorrelationFactory correlator) {
-    super(correlator.makeSourceInfo(SourceOrigin.create(0,
-        JProgram.class.getName())));
+    super(correlator.makeSourceInfo(SourceOrigin.create(0, JProgram.class.getName())));
 
     this.correlator = correlator;
   }
@@ -421,8 +403,7 @@ public class JProgram extends JNode {
     }
   }
 
-  public JClassType createClass(SourceInfo info, String name,
-      boolean isAbstract, boolean isFinal) {
+  public JClassType createClass(SourceInfo info, String name, boolean isAbstract, boolean isFinal) {
     JClassType x = new JClassType(info, name, isAbstract, isFinal);
 
     allTypes.add(x);
@@ -451,13 +432,11 @@ public class JProgram extends JNode {
     return x;
   }
 
-  public JConstructor createConstructor(SourceInfo info,
-      JClassType enclosingType) {
+  public JConstructor createConstructor(SourceInfo info, JClassType enclosingType) {
     JConstructor x = new JConstructor(info, enclosingType);
     x.setBody(new JMethodBody(info));
     if (indexedTypes.containsValue(enclosingType)) {
-      indexedMethods.put(enclosingType.getShortName() + '.'
-          + enclosingType.getShortName(), x);
+      indexedMethods.put(enclosingType.getShortName() + '.' + enclosingType.getShortName(), x);
     }
 
     enclosingType.addMethod(x);
@@ -474,8 +453,8 @@ public class JProgram extends JNode {
     return x;
   }
 
-  public JField createEnumField(SourceInfo info, String name,
-      JEnumType enclosingType, JClassType type, int ordinal) {
+  public JField createEnumField(SourceInfo info, String name, JEnumType enclosingType,
+      JClassType type, int ordinal) {
     assert (name != null);
     assert (type != null);
     assert (ordinal >= 0);
@@ -485,15 +464,13 @@ public class JProgram extends JNode {
     return x;
   }
 
-  public JField createField(SourceInfo info, String name,
-      JDeclaredType enclosingType, JType type, boolean isStatic,
-      Disposition disposition) {
+  public JField createField(SourceInfo info, String name, JDeclaredType enclosingType, JType type,
+      boolean isStatic, Disposition disposition) {
     assert (name != null);
     assert (enclosingType != null);
     assert (type != null);
 
-    JField x = new JField(info, name, enclosingType, type, isStatic,
-        disposition);
+    JField x = new JField(info, name, enclosingType, type, isStatic, disposition);
 
     if (indexedTypes.containsValue(enclosingType)) {
       indexedFields.put(enclosingType.getShortName() + '.' + name, x);
@@ -521,15 +498,15 @@ public class JProgram extends JNode {
     return x;
   }
 
-  public JMethod createMethod(SourceInfo info, String name,
-      JDeclaredType enclosingType, JType returnType, boolean isAbstract,
-      boolean isStatic, boolean isFinal, boolean isPrivate, boolean isNative) {
+  public JMethod createMethod(SourceInfo info, String name, JDeclaredType enclosingType,
+      JType returnType, boolean isAbstract, boolean isStatic, boolean isFinal, boolean isPrivate,
+      boolean isNative) {
     assert (name != null);
     assert (enclosingType != null);
     assert (returnType != null);
     assert (!isAbstract || !isNative);
-    JMethod x = new JMethod(info, name, enclosingType, returnType, isAbstract,
-        isStatic, isFinal, isPrivate);
+    JMethod x =
+        new JMethod(info, name, enclosingType, returnType, isAbstract, isStatic, isFinal, isPrivate);
     if (isNative) {
       x.setBody(new JsniMethodBody(info));
     } else if (!isAbstract) {
@@ -548,10 +525,8 @@ public class JProgram extends JNode {
    * Create a SourceInfo object when the source is derived from a physical
    * location.
    */
-  public SourceInfo createSourceInfo(int startPos, int endPos, int startLine,
-      String fileName) {
-    return correlator.makeSourceInfo(SourceOrigin.create(startPos, endPos,
-        startLine, fileName));
+  public SourceInfo createSourceInfo(int startPos, int endPos, int startLine, String fileName) {
+    return correlator.makeSourceInfo(SourceOrigin.create(startPos, endPos, startLine, fileName));
   }
 
   /**
@@ -576,8 +551,7 @@ public class JProgram extends JNode {
    * Return the least upper bound of a set of types. That is, the smallest type
    * that is a supertype of all the input types.
    */
-  public JReferenceType generalizeTypes(
-      Collection<? extends JReferenceType> types) {
+  public JReferenceType generalizeTypes(Collection<? extends JReferenceType> types) {
     assert (types != null);
     assert (!types.isEmpty());
     Iterator<? extends JReferenceType> it = types.iterator();
@@ -592,8 +566,7 @@ public class JProgram extends JNode {
    * Return the least upper bound of two types. That is, the smallest type that
    * is a supertype of both types.
    */
-  public JReferenceType generalizeTypes(JReferenceType type1,
-      JReferenceType type2) {
+  public JReferenceType generalizeTypes(JReferenceType type1, JReferenceType type2) {
     if (type1 == type2) {
       return type1;
     }
@@ -667,8 +640,7 @@ public class JProgram extends JNode {
           JType leafType1 = aType1.getLeafType();
           JType leafType2 = aType2.getLeafType();
 
-          if (!(leafType1 instanceof JReferenceType)
-              || !(leafType2 instanceof JReferenceType)) {
+          if (!(leafType1 instanceof JReferenceType) || !(leafType2 instanceof JReferenceType)) {
             return minimalGeneralType;
           }
 
@@ -680,8 +652,7 @@ public class JProgram extends JNode {
            */
           JReferenceType leafRefType1 = (JReferenceType) leafType1;
           JReferenceType leafRefType2 = (JReferenceType) leafType2;
-          JReferenceType leafGeneralization = generalizeTypes(leafRefType1,
-              leafRefType2);
+          JReferenceType leafGeneralization = generalizeTypes(leafRefType1, leafRefType2);
           return getTypeArray(leafGeneralization, dims1);
 
         } else {
@@ -762,8 +733,7 @@ public class JProgram extends JNode {
    * over without introducing nondeterminism.
    */
   public List<JArrayType> getAllArrayTypes() {
-    ArrayList<JArrayType> result = new ArrayList<JArrayType>(
-        arrayTypes.values());
+    ArrayList<JArrayType> result = new ArrayList<JArrayType>(arrayTypes.values());
     Collections.sort(result, ARRAYTYPE_COMPARATOR);
     return result;
   }
@@ -785,8 +755,7 @@ public class JProgram extends JNode {
     JsonObject returnMap = castableTypeMaps.get(referenceType);
     if (returnMap == null) {
       // add a new empty map
-      returnMap = new JsonObject(createSourceInfoSynthetic(JProgram.class),
-          getJavaScriptObject());
+      returnMap = new JsonObject(createSourceInfoSynthetic(JProgram.class), getJavaScriptObject());
       castableTypeMaps.put(referenceType, returnMap);
     }
     return returnMap;
@@ -817,8 +786,7 @@ public class JProgram extends JNode {
   public JField getIndexedField(String string) {
     JField field = indexedFields.get(string);
     if (field == null) {
-      throw new InternalCompilerException("Unable to locate index field: "
-          + string);
+      throw new InternalCompilerException("Unable to locate index field: " + string);
     }
     return field;
   }
@@ -826,8 +794,7 @@ public class JProgram extends JNode {
   public JMethod getIndexedMethod(String string) {
     JMethod method = indexedMethods.get(string);
     if (method == null) {
-      throw new InternalCompilerException("Unable to locate index method: "
-          + string);
+      throw new InternalCompilerException("Unable to locate index method: " + string);
     }
     return method;
   }
@@ -839,8 +806,7 @@ public class JProgram extends JNode {
   public JDeclaredType getIndexedType(String string) {
     JDeclaredType type = indexedTypes.get(string);
     if (type == null) {
-      throw new InternalCompilerException("Unable to locate index type: "
-          + string);
+      throw new InternalCompilerException("Unable to locate index type: " + string);
     }
     return type;
   }
@@ -892,16 +858,18 @@ public class JProgram extends JNode {
 
   public JField getNullField() {
     if (nullField == null) {
-      nullField = new JField(createSourceInfoSynthetic(JProgram.class),
-          "nullField", null, JNullType.INSTANCE, false, Disposition.FINAL);
+      nullField =
+          new JField(createSourceInfoSynthetic(JProgram.class), "nullField", null,
+              JNullType.INSTANCE, false, Disposition.FINAL);
     }
     return nullField;
   }
 
   public JMethod getNullMethod() {
     if (nullMethod == null) {
-      nullMethod = new JMethod(createSourceInfoSynthetic(JProgram.class),
-          "nullMethod", null, JNullType.INSTANCE, false, false, true, false);
+      nullMethod =
+          new JMethod(createSourceInfoSynthetic(JProgram.class), "nullMethod", null,
+              JNullType.INSTANCE, false, false, true, false);
       nullMethod.setSynthetic();
     }
     return nullMethod;
@@ -1048,8 +1016,7 @@ public class JProgram extends JNode {
 
   public boolean isJavaScriptObject(JType type) {
     if (type instanceof JReferenceType && typeSpecialJavaScriptObject != null) {
-      return typeOracle.canTriviallyCast((JReferenceType) type,
-          typeSpecialJavaScriptObject);
+      return typeOracle.canTriviallyCast((JReferenceType) type, typeSpecialJavaScriptObject);
     }
     return false;
   }
@@ -1064,8 +1031,8 @@ public class JProgram extends JNode {
    * supplied fragments, or it might be a common predecessor.
    */
   public int lastFragmentLoadingBefore(int firstFragment, int... restFragments) {
-    return lastFragmentLoadingBefore(splitPointInitialSequence,
-        entryMethods.size() - 1, firstFragment, restFragments);
+    return lastFragmentLoadingBefore(splitPointInitialSequence, entryMethods.size() - 1,
+        firstFragment, restFragments);
   }
 
   public void putIntoTypeMap(String qualifiedBinaryName, JDeclaredType type) {
@@ -1170,8 +1137,7 @@ public class JProgram extends JNode {
    * 
    * @see #writeObject(ObjectOutputStream)
    */
-  private void readObject(ObjectInputStream stream) throws IOException,
-      ClassNotFoundException {
+  private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
     allTypes = deserializeTypes(stream);
     stream.defaultReadObject();
   }

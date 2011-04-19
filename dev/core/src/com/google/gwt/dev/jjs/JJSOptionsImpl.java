@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -25,18 +25,18 @@ import java.io.Serializable;
 public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   private boolean aggressivelyOptimize = true;
+  private boolean compilerMetricsEnabled = false;
   private boolean disableCastChecking = false;
   private boolean disableClassMetadata = false;
   private boolean enableAssertions;
   private boolean enableGeneratorResultCaching = false;
+  private int optimizationLevel = OptionOptimize.OPTIMIZE_LEVEL_MAX;
   private boolean optimizePrecompile = false;
   private JsOutputOption output = JsOutputOption.OBFUSCATED;
   private boolean runAsyncEnabled = true;
   private boolean soycEnabled = false;
   private boolean soycExtra = false;
   private boolean strict = false;
-  private int optimizationLevel = OptionOptimize.OPTIMIZE_LEVEL_MAX;
-  private boolean compilerMetricsEnabled = false;
 
   public JJSOptionsImpl() {
   }
@@ -91,7 +91,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   public boolean isEnableAssertions() {
     return enableAssertions;
   }
-  
+
   public boolean isGeneratorResultCachingEnabled() {
     return enableGeneratorResultCaching;
   }
@@ -135,7 +135,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   public void setEnableAssertions(boolean enableAssertions) {
     this.enableAssertions = enableAssertions;
   }
-  
+
   public void setGeneratorResultCachingEnabled(boolean enabled) {
     this.enableGeneratorResultCaching = enabled;
   }

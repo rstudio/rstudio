@@ -71,8 +71,8 @@ public class CatchBlockNormalizer {
         JMethod caughtMethod = program.getIndexedMethod("Exceptions.caught");
         JMethodCall call = new JMethodCall(catchInfo, null, caughtMethod);
         call.addArg(new JLocalRef(catchInfo, exVar));
-        newCatchBlock.addStmt(JProgram.createAssignmentStmt(catchInfo,
-            new JLocalRef(catchInfo, exVar), call));
+        newCatchBlock.addStmt(JProgram.createAssignmentStmt(catchInfo, new JLocalRef(catchInfo,
+            exVar), call));
       }
 
       /*
@@ -82,18 +82,16 @@ public class CatchBlockNormalizer {
        * Go backwards so we can nest the else statements in the correct order!
        */
       // rethrow the current exception if no one caught it
-      JStatement cur = new JThrowStatement(catchInfo, new JLocalRef(catchInfo,
-          exVar));
+      JStatement cur = new JThrowStatement(catchInfo, new JLocalRef(catchInfo, exVar));
       for (int i = x.getCatchBlocks().size() - 1; i >= 0; --i) {
         JBlock block = x.getCatchBlocks().get(i);
         JLocalRef arg = x.getCatchArgs().get(i);
         catchInfo = block.getSourceInfo();
         JReferenceType argType = (JReferenceType) arg.getType();
         // if ($e instanceof ArgType) { var userVar = $e; <user code> }
-        JExpression ifTest = new JInstanceOf(catchInfo, argType, new JLocalRef(
-            catchInfo, exVar));
-        JDeclarationStatement declaration = new JDeclarationStatement(
-            catchInfo, arg, new JLocalRef(catchInfo, exVar));
+        JExpression ifTest = new JInstanceOf(catchInfo, argType, new JLocalRef(catchInfo, exVar));
+        JDeclarationStatement declaration =
+            new JDeclarationStatement(catchInfo, arg, new JLocalRef(catchInfo, exVar));
         block.addStmt(0, declaration);
         // nest the previous as an else for me
         cur = new JIfStatement(catchInfo, ifTest, block, cur);
@@ -153,8 +151,9 @@ public class CatchBlockNormalizer {
 
   private void pushTempLocal(SourceInfo sourceInfo) {
     if (localIndex == tempLocals.size()) {
-      JLocal newTemp = JProgram.createLocal(sourceInfo, "$e" + localIndex,
-          program.getTypeJavaLangObject(), false, currentMethodBody);
+      JLocal newTemp =
+          JProgram.createLocal(sourceInfo, "$e" + localIndex, program.getTypeJavaLangObject(),
+              false, currentMethodBody);
       tempLocals.add(newTemp);
     }
     ++localIndex;

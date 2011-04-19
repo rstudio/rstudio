@@ -22,14 +22,13 @@ import com.google.gwt.dev.jjs.SourceInfo;
  */
 public class JParameter extends JVariable implements HasEnclosingMethod {
 
-  public static JParameter create(SourceInfo info, String name, JType type,
-      boolean isFinal, boolean isThis, JMethod enclosingMethod) {
+  public static JParameter create(SourceInfo info, String name, JType type, boolean isFinal,
+      boolean isThis, JMethod enclosingMethod) {
     assert (name != null);
     assert (type != null);
     assert (enclosingMethod != null);
 
-    JParameter x = new JParameter(info, name, type,
-        isFinal, isThis, enclosingMethod);
+    JParameter x = new JParameter(info, name, type, isFinal, isThis, enclosingMethod);
 
     enclosingMethod.addParam(x);
     return x;
@@ -38,8 +37,8 @@ public class JParameter extends JVariable implements HasEnclosingMethod {
   private final JMethod enclosingMethod;
   private final boolean isThis;
 
-  public JParameter(SourceInfo info, String name, JType type, boolean isFinal,
-      boolean isThis, JMethod enclosingMethod) {
+  public JParameter(SourceInfo info, String name, JType type, boolean isFinal, boolean isThis,
+      JMethod enclosingMethod) {
     super(info, name, type, isFinal);
     this.enclosingMethod = enclosingMethod;
     this.isThis = isThis;
@@ -58,8 +57,7 @@ public class JParameter extends JVariable implements HasEnclosingMethod {
   }
 
   public void setInitializer(JDeclarationStatement declStmt) {
-    throw new UnsupportedOperationException(
-        "A JParameter cannot have an initializer");
+    throw new UnsupportedOperationException("A JParameter cannot have an initializer");
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

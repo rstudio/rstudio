@@ -38,26 +38,26 @@ import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import java.util.List;
 
 /**
- * This class will identify instances of an implicit upcast between non-primitive
- * types, and call the overridable processImplicitUpcast method.
+ * This class will identify instances of an implicit upcast between
+ * non-primitive types, and call the overridable processImplicitUpcast method.
  * 
- * TODO(jbrosenberg): Consider extending to handle implicit upcasts between primitive types.
- * This is not as straightforward as for reference types, because primitives
- * can be boxed and unboxed implicitly as well.
+ * TODO(jbrosenberg): Consider extending to handle implicit upcasts between
+ * primitive types. This is not as straightforward as for reference types,
+ * because primitives can be boxed and unboxed implicitly as well.
  */
 public class ImplicitUpcastAnalyzer extends JVisitor {
-  
+
   protected JMethod currentMethod;
-  private final JType throwableType;
   private final JType javaScriptObjectType;
   private final JType nullType;
-  
+  private final JType throwableType;
+
   public ImplicitUpcastAnalyzer(JProgram program) {
     this.throwableType = program.getIndexedType("Throwable");
     this.javaScriptObjectType = program.getJavaScriptObject();
     this.nullType = program.getTypeNull();
   }
-  
+
   @Override
   public void endVisit(JBinaryOperation x, Context ctx) {
     if (x.isAssignment()) {
@@ -66,33 +66,32 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
       processIfTypesNotEqual(nullType, x.getLhs().getType(), x.getSourceInfo());
     } else if (x.getLhs().getType() == nullType) {
       processIfTypesNotEqual(nullType, x.getRhs().getType(), x.getSourceInfo());
-    } else if (x.getOp() == JBinaryOperator.CONCAT ||
-                x.getOp() == JBinaryOperator.EQ ||
-                x.getOp() == JBinaryOperator.NEQ) {
+    } else if (x.getOp() == JBinaryOperator.CONCAT || x.getOp() == JBinaryOperator.EQ
+        || x.getOp() == JBinaryOperator.NEQ) {
       /*
        * Since we are not attempting to handle detection of upcasts between
-       * primitive types, we limit handling here to CONCAT, EQ and NEQ.
-       * Need to do both directions.
+       * primitive types, we limit handling here to CONCAT, EQ and NEQ. Need to
+       * do both directions.
        */
       processIfTypesNotEqual(x.getLhs().getType(), x.getRhs().getType(), x.getSourceInfo());
       processIfTypesNotEqual(x.getRhs().getType(), x.getLhs().getType(), x.getSourceInfo());
     }
   }
-  
+
   @Override
   public void endVisit(JConditional x, Context ctx) {
     processIfTypesNotEqual(x.getThenExpr().getType(), x.getType(), x.getSourceInfo());
     processIfTypesNotEqual(x.getElseExpr().getType(), x.getType(), x.getSourceInfo());
   }
-  
+
   @Override
   public void endVisit(JDeclarationStatement x, Context ctx) {
     if (x.getInitializer() != null) {
-      processIfTypesNotEqual(x.getInitializer().getType(), 
-                              x.getVariableRef().getType(), x.getSourceInfo());
+      processIfTypesNotEqual(x.getInitializer().getType(), x.getVariableRef().getType(), x
+          .getSourceInfo());
     }
   }
-  
+
   @Override
   public void endVisit(JField x, Context ctx) {
     if (x.getInitializer() == null && !x.isFinal()) {
@@ -102,7 +101,7 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
       }
     }
   }
-  
+
   @Override
   public void endVisit(JMethod x, Context ctx) {
     // check for upcast in return type as compared to an overridden method
@@ -112,27 +111,27 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
       // overridden methods are visited, don't want to do redundant work
       processIfTypesNotEqual(x.getType(), overrides.get(0).getType(), x.getSourceInfo());
     }
-    
+
     if (x.getBody() != null && x.getBody().isNative()) {
       /*
-       * Check if this method has a native (jsni) method body, in which case
-       * all arguments passed in are implicitly cast to JavaScriptObject
-       */ 
+       * Check if this method has a native (jsni) method body, in which case all
+       * arguments passed in are implicitly cast to JavaScriptObject
+       */
       List<JParameter> params = x.getParams();
       for (int i = 0; i < params.size(); i++) {
         processIfTypesNotEqual(params.get(i).getType(), javaScriptObjectType, x.getSourceInfo());
       }
-      
+
       /*
-       * Check if this method has a non-void return type, in which case
-       * it will be implicitly cast from JavaScriptObject
+       * Check if this method has a non-void return type, in which case it will
+       * be implicitly cast from JavaScriptObject
        */
       if (x.getType() != JPrimitiveType.VOID) {
         processIfTypesNotEqual(javaScriptObjectType, x.getType(), x.getSourceInfo());
       }
     }
   }
-  
+
   @Override
   public void endVisit(JMethodCall x, Context ctx) {
     // check for upcast in argument passing
@@ -146,21 +145,7 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
       }
     }
   }
-  
-  @Override
-  public void endVisit(JsniMethodRef x, Context ctx) {
-    // the return type of this method ref will be cast to JavaScriptObject
-    if (x.getTarget().getType() != JPrimitiveType.VOID) {
-      processIfTypesNotEqual(x.getTarget().getType(), javaScriptObjectType, x.getSourceInfo());
-    }
-    
-    // check referenced method's params, which are passed as JavaScriptObjects
-    List<JParameter> params = x.getTarget().getParams();
-    for (int i = 0; i < params.size(); i++) {
-      processIfTypesNotEqual(javaScriptObjectType, params.get(i).getType(), x.getSourceInfo());
-    }
-  }
-  
+
   @Override
   public void endVisit(JReturnStatement x, Context ctx) {
     if (x.getExpr() != null) {
@@ -168,7 +153,21 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
       processIfTypesNotEqual(x.getExpr().getType(), currentMethod.getType(), x.getSourceInfo());
     }
   }
-  
+
+  @Override
+  public void endVisit(JsniMethodRef x, Context ctx) {
+    // the return type of this method ref will be cast to JavaScriptObject
+    if (x.getTarget().getType() != JPrimitiveType.VOID) {
+      processIfTypesNotEqual(x.getTarget().getType(), javaScriptObjectType, x.getSourceInfo());
+    }
+
+    // check referenced method's params, which are passed as JavaScriptObjects
+    List<JParameter> params = x.getTarget().getParams();
+    for (int i = 0; i < params.size(); i++) {
+      processIfTypesNotEqual(javaScriptObjectType, params.get(i).getType(), x.getSourceInfo());
+    }
+  }
+
   @Override
   public void endVisit(JThrowStatement x, Context ctx) {
     // all things thrown are upcast to a Throwable
@@ -178,16 +177,17 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
     }
     processIfTypesNotEqual(type, throwableType, x.getSourceInfo());
   }
-  
+
   @Override
   public boolean visit(JMethod x, Context ctx) {
     // save this, so can use it later for checking JReturnStatement
     currentMethod = x;
     return true;
   }
-  
+
   /**
    * An overriding method will be called for each detected implicit upcast.
+   * 
    * @param fromType
    * @param destType
    */

@@ -126,9 +126,9 @@ public class HandleCrossFragmentReferences {
     @Override
     public void endVisit(JsFunction x, JsContext ctx) {
       if (namesToPredefine.contains(x.getName())) {
-        JsBinaryOperation asg = new JsBinaryOperation(x.getSourceInfo(),
-            JsBinaryOperator.ASG, makeRefViaJslink(x.getName(),
-                x.getSourceInfo()), x);
+        JsBinaryOperation asg =
+            new JsBinaryOperation(x.getSourceInfo(), JsBinaryOperator.ASG, makeRefViaJslink(x
+                .getName(), x.getSourceInfo()), x);
         x.setName(null);
         ctx.replaceMe(asg);
       }
@@ -169,9 +169,9 @@ public class HandleCrossFragmentReferences {
           // The var was predefined
           if (var.getInitExpr() != null) {
             // If it has an initializer, add an assignment statement
-            JsBinaryOperation asg = new JsBinaryOperation(var.getSourceInfo(),
-                JsBinaryOperator.ASG, makeRefViaJslink(var.getName(),
-                    var.getSourceInfo()), var.getInitExpr());
+            JsBinaryOperation asg =
+                new JsBinaryOperation(var.getSourceInfo(), JsBinaryOperator.ASG, makeRefViaJslink(
+                    var.getName(), var.getSourceInfo()), var.getInitExpr());
             ctx.insertBefore(asg.makeStmt());
             currentVar = null;
           }
@@ -197,8 +197,7 @@ public class HandleCrossFragmentReferences {
 
   public static String PROP_PREDECLARE_VARS = "compiler.predeclare.cross.fragment.references";
 
-  public static void exec(TreeLogger logger, JsProgram jsProgram,
-      PropertyOracle[] propertyOracles) {
+  public static void exec(TreeLogger logger, JsProgram jsProgram, PropertyOracle[] propertyOracles) {
     new HandleCrossFragmentReferences(logger, jsProgram, propertyOracles).execImpl();
   }
 
@@ -213,9 +212,9 @@ public class HandleCrossFragmentReferences {
 
   private JsName jslink;
   private final JsProgram jsProgram;
+  private final TreeLogger logger;
   private final Set<JsName> namesToPredefine = new LinkedHashSet<JsName>();
   private final PropertyOracle[] propertyOracles;
-  private final TreeLogger logger;
 
   private HandleCrossFragmentReferences(TreeLogger logger, JsProgram jsProgram,
       PropertyOracle[] propertyOracles) {
@@ -276,8 +275,7 @@ public class HandleCrossFragmentReferences {
     defineJsLink();
     FindNameReferences findNameReferences = new FindNameReferences();
     findNameReferences.accept(jsProgram);
-    chooseNamesToPredefine(findNameReferences.islandsDefining,
-        findNameReferences.islandsUsing);
+    chooseNamesToPredefine(findNameReferences.islandsDefining, findNameReferences.islandsUsing);
     new RewriteDeclsAndRefs().accept(jsProgram);
   }
 
@@ -288,8 +286,8 @@ public class HandleCrossFragmentReferences {
   private boolean shouldPredeclareReferences() {
     for (PropertyOracle props : propertyOracles) {
       try {
-        String propValue = props.getSelectionProperty(logger,
-            PROP_PREDECLARE_VARS).getCurrentValue();
+        String propValue =
+            props.getSelectionProperty(logger, PROP_PREDECLARE_VARS).getCurrentValue();
         if (Boolean.parseBoolean(propValue)) {
           return true;
         }

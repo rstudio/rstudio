@@ -85,8 +85,7 @@ public class Simplifier {
     this.program = program;
   }
 
-  public JExpression cast(JExpression original, SourceInfo info, JType type,
-      JExpression exp) {
+  public JExpression cast(JExpression original, SourceInfo info, JType type, JExpression exp) {
     info = getBestSourceInfo(original, info, exp);
     if (type == exp.getType()) {
       return exp;
@@ -125,9 +124,8 @@ public class Simplifier {
     return cast(null, exp.getSourceInfo(), type, exp);
   }
 
-  public JExpression conditional(JConditional original, SourceInfo info,
-      JType type, JExpression condExpr, JExpression thenExpr,
-      JExpression elseExpr) {
+  public JExpression conditional(JConditional original, SourceInfo info, JType type,
+      JExpression condExpr, JExpression thenExpr, JExpression elseExpr) {
     info = getBestSourceInfo(original, info, condExpr);
     if (condExpr instanceof JMultiExpression) {
       // (a,b,c)?d:e -> a,b,(c?d:e)
@@ -135,8 +133,7 @@ public class Simplifier {
       JMultiExpression condMulti = (JMultiExpression) condExpr;
       JMultiExpression newMulti = new JMultiExpression(info);
       newMulti.exprs.addAll(allButLast(condMulti.exprs));
-      newMulti.exprs.add(conditional(null, info, type, last(condMulti.exprs),
-          thenExpr, elseExpr));
+      newMulti.exprs.add(conditional(null, info, type, last(condMulti.exprs), thenExpr, elseExpr));
       // TODO(spoon): immediately simplify the resulting multi
       return newMulti;
     }
@@ -181,9 +178,8 @@ public class Simplifier {
     return new JConditional(info, type, condExpr, thenExpr, elseExpr);
   }
 
-  public JStatement ifStatement(JIfStatement original, SourceInfo info,
-      JExpression condExpr, JStatement thenStmt, JStatement elseStmt,
-      JMethod currentMethod) {
+  public JStatement ifStatement(JIfStatement original, SourceInfo info, JExpression condExpr,
+      JStatement thenStmt, JStatement elseStmt, JMethod currentMethod) {
     info = getBestSourceInfo(original, info, condExpr);
     if (condExpr instanceof JMultiExpression) {
       // if(a,b,c) d else e -> {a; b; if(c) d else e; }
@@ -192,8 +188,8 @@ public class Simplifier {
       for (JExpression expr : allButLast(condMulti.exprs)) {
         newBlock.addStmt(expr.makeStatement());
       }
-      newBlock.addStmt(ifStatement(null, info, last(condMulti.exprs), thenStmt,
-          elseStmt, currentMethod));
+      newBlock.addStmt(ifStatement(null, info, last(condMulti.exprs), thenStmt, elseStmt,
+          currentMethod));
       // TODO(spoon): immediately simplify the resulting block
       return newBlock;
     }
@@ -225,13 +221,12 @@ public class Simplifier {
         // TODO: this goes away when we normalize the Java AST properly.
         thenStmt = ensureBlock(thenStmt);
         elseStmt = ensureBlock(elseStmt);
-        return ifStatement(null, info, unflipped, elseStmt, thenStmt,
-            currentMethod);
+        return ifStatement(null, info, unflipped, elseStmt, thenStmt, currentMethod);
       }
     }
 
-    JStatement rewritenStatement = rewriteIfIntoBoolean(info, condExpr,
-        thenStmt, elseStmt, currentMethod);
+    JStatement rewritenStatement =
+        rewriteIfIntoBoolean(info, condExpr, thenStmt, elseStmt, currentMethod);
     if (rewritenStatement != null) {
       return rewritenStatement;
     }
@@ -243,8 +238,7 @@ public class Simplifier {
     return new JIfStatement(info, condExpr, thenStmt, elseStmt);
   }
 
-  public JExpression not(JPrefixOperation original, SourceInfo info,
-      JExpression arg) {
+  public JExpression not(JPrefixOperation original, SourceInfo info, JExpression arg) {
     info = getBestSourceInfo(original, info, arg);
     if (arg instanceof JMultiExpression) {
       // !(a,b,c) -> (a,b,!c)
@@ -280,8 +274,8 @@ public class Simplifier {
         newOp = JBinaryOperator.GTE;
       }
       if (newOp != null) {
-        JBinaryOperation newBinOp = new JBinaryOperation(info, argOp.getType(),
-            newOp, argOp.getLhs(), argOp.getRhs());
+        JBinaryOperation newBinOp =
+            new JBinaryOperation(info, argOp.getType(), newOp, argOp.getLhs(), argOp.getRhs());
         return newBinOp;
       }
     } else if (arg instanceof JPrefixOperation) {
@@ -315,8 +309,8 @@ public class Simplifier {
    * if (isWhatever() && false) -> if (false), unless side effects
    * </pre>
    */
-  public JExpression shortCircuitAnd(JBinaryOperation original,
-      SourceInfo info, JExpression lhs, JExpression rhs) {
+  public JExpression shortCircuitAnd(JBinaryOperation original, SourceInfo info, JExpression lhs,
+      JExpression rhs) {
     info = getBestSourceInfo(original, info, lhs);
     if (lhs instanceof JBooleanLiteral) {
       JBooleanLiteral booleanLiteral = (JBooleanLiteral) lhs;
@@ -338,8 +332,7 @@ public class Simplifier {
     if (original != null) {
       return original;
     }
-    return new JBinaryOperation(info, rhs.getType(), JBinaryOperator.AND, lhs,
-        rhs);
+    return new JBinaryOperation(info, rhs.getType(), JBinaryOperator.AND, lhs, rhs);
   }
 
   /**
@@ -353,8 +346,8 @@ public class Simplifier {
    * if (isWhatever() || true) -> if (true), unless side effects
    * </pre>
    */
-  public JExpression shortCircuitOr(JBinaryOperation original, SourceInfo info,
-      JExpression lhs, JExpression rhs) {
+  public JExpression shortCircuitOr(JBinaryOperation original, SourceInfo info, JExpression lhs,
+      JExpression rhs) {
     info = getBestSourceInfo(original, info, lhs);
     if (lhs instanceof JBooleanLiteral) {
       JBooleanLiteral booleanLiteral = (JBooleanLiteral) lhs;
@@ -376,8 +369,7 @@ public class Simplifier {
     if (original != null) {
       return original;
     }
-    return new JBinaryOperation(info, rhs.getType(), JBinaryOperator.OR, lhs,
-        rhs);
+    return new JBinaryOperation(info, rhs.getType(), JBinaryOperator.OR, lhs, rhs);
   }
 
   private JStatement ensureBlock(JStatement stmt) {
@@ -412,8 +404,7 @@ public class Simplifier {
     return stmt;
   }
 
-  private SourceInfo getBestSourceInfo(JNode original, SourceInfo info,
-      JNode defaultNode) {
+  private SourceInfo getBestSourceInfo(JNode original, SourceInfo info, JNode defaultNode) {
     if (info == null) {
       if (original == null) {
         info = defaultNode.getSourceInfo();
@@ -424,14 +415,13 @@ public class Simplifier {
     return info;
   }
 
-  private JStatement rewriteIfIntoBoolean(SourceInfo sourceInfo,
-      JExpression condExpr, JStatement thenStmt, JStatement elseStmt,
-      JMethod currentMethod) {
+  private JStatement rewriteIfIntoBoolean(SourceInfo sourceInfo, JExpression condExpr,
+      JStatement thenStmt, JStatement elseStmt, JMethod currentMethod) {
     thenStmt = extractSingleStatement(thenStmt);
     elseStmt = extractSingleStatement(elseStmt);
 
-    if (thenStmt instanceof JReturnStatement
-        && elseStmt instanceof JReturnStatement && currentMethod != null) {
+    if (thenStmt instanceof JReturnStatement && elseStmt instanceof JReturnStatement
+        && currentMethod != null) {
       // Special case
       // if () { return ..; } else { return ..; } =>
       // return ... ? ... : ...;
@@ -442,11 +432,11 @@ public class Simplifier {
         return null;
       }
 
-      JConditional conditional = new JConditional(sourceInfo,
-          currentMethod.getType(), condExpr, thenExpression, elseExpression);
+      JConditional conditional =
+          new JConditional(sourceInfo, currentMethod.getType(), condExpr, thenExpression,
+              elseExpression);
 
-      JReturnStatement returnStatement = new JReturnStatement(sourceInfo,
-          conditional);
+      JReturnStatement returnStatement = new JReturnStatement(sourceInfo, conditional);
       return returnStatement;
     }
 
@@ -456,8 +446,9 @@ public class Simplifier {
       JExpression elseExpression = extractExpression(elseStmt);
 
       if (thenExpression != null && elseExpression != null) {
-        JConditional conditional = new JConditional(sourceInfo,
-            JPrimitiveType.VOID, condExpr, thenExpression, elseExpression);
+        JConditional conditional =
+            new JConditional(sourceInfo, JPrimitiveType.VOID, condExpr, thenExpression,
+                elseExpression);
 
         return conditional.makeStatement();
       }
@@ -474,8 +465,9 @@ public class Simplifier {
           binaryOperator = JBinaryOperator.OR;
         }
 
-        JBinaryOperation binaryOperation = new JBinaryOperation(sourceInfo,
-            program.getTypeVoid(), binaryOperator, condExpr, thenExpression);
+        JBinaryOperation binaryOperation =
+            new JBinaryOperation(sourceInfo, program.getTypeVoid(), binaryOperator, condExpr,
+                thenExpression);
 
         return binaryOperation.makeStatement();
       }

@@ -141,6 +141,7 @@ import org.eclipse.jdt.internal.compiler.ast.LocalDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.MessageSend;
 import org.eclipse.jdt.internal.compiler.ast.NullLiteral;
 import org.eclipse.jdt.internal.compiler.ast.OR_OR_Expression;
+import org.eclipse.jdt.internal.compiler.ast.OperatorIds;
 import org.eclipse.jdt.internal.compiler.ast.PostfixExpression;
 import org.eclipse.jdt.internal.compiler.ast.PrefixExpression;
 import org.eclipse.jdt.internal.compiler.ast.QualifiedAllocationExpression;
@@ -232,8 +233,8 @@ public class GenerateJavaAST {
      * Used to cache {@link Method} lookups.
      */
     private static class MethodKey {
-      private Class<? extends Object> childClass;
-      private String name;
+      private final Class<? extends Object> childClass;
+      private final String name;
 
       public MethodKey(String name, Class<? extends Object> childClass) {
         this.name = name;
@@ -244,8 +245,7 @@ public class GenerateJavaAST {
       public boolean equals(Object obj) {
         if (obj instanceof MethodKey) {
           MethodKey otherKey = (MethodKey) obj;
-          return name.equals(otherKey.name)
-              && childClass.equals(otherKey.childClass);
+          return name.equals(otherKey.name) && childClass.equals(otherKey.childClass);
         }
         return super.equals(obj);
       }
@@ -287,8 +287,7 @@ public class GenerateJavaAST {
      */
     private static final String ARRAY_LENGTH_FIELD = "length";
 
-    private static InternalCompilerException translateException(JNode node,
-        Throwable e) {
+    private static InternalCompilerException translateException(JNode node, Throwable e) {
       if (e instanceof VirtualMachineError) {
         // Always rethrow VM errors (an attempt to wrap may fail).
         throw (VirtualMachineError) e;
@@ -298,8 +297,7 @@ public class GenerateJavaAST {
         ice = (InternalCompilerException) e;
         ice.addNode(node);
       } else {
-        ice = new InternalCompilerException(node,
-            "Error constructing Java AST", e);
+        ice = new InternalCompilerException(node, "Error constructing Java AST", e);
       }
       return ice;
     }
@@ -326,9 +324,11 @@ public class GenerateJavaAST {
 
     private final boolean enableAsserts;
 
-    private final Map<JsniMethodBody, AbstractMethodDeclaration> jsniMethodMap = new HashMap<JsniMethodBody, AbstractMethodDeclaration>();
+    private final Map<JsniMethodBody, AbstractMethodDeclaration> jsniMethodMap =
+        new HashMap<JsniMethodBody, AbstractMethodDeclaration>();
 
-    private final Map<JMethod, Map<String, JLabel>> labelMap = new IdentityHashMap<JMethod, Map<String, JLabel>>();
+    private final Map<JMethod, Map<String, JLabel>> labelMap =
+        new IdentityHashMap<JMethod, Map<String, JLabel>>();
 
     private final Map<MethodKey, MethodValue> methodCache = new HashMap<MethodKey, MethodValue>();
 
@@ -336,8 +336,7 @@ public class GenerateJavaAST {
 
     private final TypeMap typeMap;
 
-    public JavaASTGenerationVisitor(TypeMap typeMap, JProgram program,
-        JJSOptions options) {
+    public JavaASTGenerationVisitor(TypeMap typeMap, JProgram program, JJSOptions options) {
       this.typeMap = typeMap;
       this.program = program;
       this.enableAsserts = options.isEnableAssertions();
@@ -391,8 +390,7 @@ public class GenerateJavaAST {
        */
       if (clazzBinding.syntheticMethods() != null) {
         for (SyntheticMethodBinding synthmeth : clazzBinding.syntheticMethods()) {
-          if (synthmeth.purpose == SyntheticMethodBinding.BridgeMethod
-              && !synthmeth.isStatic()) {
+          if (synthmeth.purpose == SyntheticMethodBinding.BridgeMethod && !synthmeth.isStatic()) {
             JMethod implmeth = (JMethod) typeMap.get(synthmeth.targetMethod);
 
             createBridgeMethod(clazz, synthmeth, implmeth);
@@ -456,8 +454,8 @@ public class GenerateJavaAST {
         if (currentClass.getSuperClass() != null) {
           JMethod myClinit = currentClass.getMethods().get(0);
           JMethod superClinit = currentClass.getSuperClass().getMethods().get(0);
-          JMethodCall superClinitCall = new JMethodCall(
-              myClinit.getSourceInfo(), null, superClinit);
+          JMethodCall superClinitCall =
+              new JMethodCall(myClinit.getSourceInfo(), null, superClinit);
           JMethodBody body = (JMethodBody) myClinit.getBody();
           body.getBlock().addStmt(0, superClinitCall.makeStatement());
         }
@@ -505,8 +503,7 @@ public class GenerateJavaAST {
         }
 
         // Write the body of the getClass() override.
-        if (currentClass instanceof JClassType
-            && currentClass != program.getTypeJavaLangObject()) {
+        if (currentClass instanceof JClassType && currentClass != program.getTypeJavaLangObject()) {
           JMethod method = currentClass.getMethods().get(2);
           assert ("getClass".equals(method.getName()));
 
@@ -517,17 +514,13 @@ public class GenerateJavaAST {
           } else {
             tryFindUpRefs(method);
             SourceInfo info = method.getSourceInfo();
-            if (isScript(program)
-                && currentClass == program.getIndexedType("Array")) {
+            if (isScript(program) && currentClass == program.getIndexedType("Array")) {
               // Special implementation: return this.arrayClass
-              implementMethod(
-                  method,
-                  new JFieldRef(info, new JThisRef(info,
-                      (JClassType) currentClass),
-                      program.getIndexedField("Array.arrayClass"), currentClass));
-            } else {
-              implementMethod(method, new JClassLiteral(info.makeChild(),
+              implementMethod(method, new JFieldRef(info, new JThisRef(info,
+                  (JClassType) currentClass), program.getIndexedField("Array.arrayClass"),
                   currentClass));
+            } else {
+              implementMethod(method, new JClassLiteral(info.makeChild(), currentClass));
             }
           }
         }
@@ -550,9 +543,9 @@ public class GenerateJavaAST {
           implementMethod(method, program.getLiteralBoolean(enableAsserts));
 
           if (disableClassMetadata) {
-            JMethod isMetadataEnabledMethod = program.getIndexedMethod("Class.isClassMetadataEnabled");
-            implementMethod(isMetadataEnabledMethod,
-                program.getLiteralBoolean(false));
+            JMethod isMetadataEnabledMethod =
+                program.getIndexedMethod("Class.isClassMetadataEnabled");
+            implementMethod(isMetadataEnabledMethod, program.getLiteralBoolean(false));
           }
         }
 
@@ -600,8 +593,7 @@ public class GenerateJavaAST {
        * literal nodes because they ALWAYS have a constant value.
        */
       JExpression result = null;
-      if (x != null && x.constant != null
-          && x.constant != Constant.NotAConstant) {
+      if (x != null && x.constant != null && x.constant != Constant.NotAConstant) {
         result = (JExpression) dispatch("processConstant", x.constant);
       }
 
@@ -620,9 +612,8 @@ public class GenerateJavaAST {
           // Such trees are cleaned up in FixAssignmentToUnbox.
           JType typeToUnbox = (JType) typeMap.get(x.resolvedType);
           if (!(typeToUnbox instanceof JClassType)) {
-            throw new InternalCompilerException(result,
-                "Attempt to unbox a non-class type: " + typeToUnbox.getName(),
-                null);
+            throw new InternalCompilerException(result, "Attempt to unbox a non-class type: "
+                + typeToUnbox.getName(), null);
           }
 
           result = unbox(result, (JClassType) typeToUnbox);
@@ -686,10 +677,9 @@ public class GenerateJavaAST {
 
     JStringLiteral processConstant(StringConstant x) {
       // May be processing an annotation
-      SourceInfo info = currentMethod == null ? currentClass.getSourceInfo()
-          : currentMethod.getSourceInfo();
-      return program.getLiteralString(info.makeChild(),
-          x.stringValue().toCharArray());
+      SourceInfo info =
+          currentMethod == null ? currentClass.getSourceInfo() : currentMethod.getSourceInfo();
+      return program.getLiteralString(info.makeChild(), x.stringValue().toCharArray());
     }
 
     /**
@@ -722,8 +712,7 @@ public class GenerateJavaAST {
          * steps are 1) assigning synthetic args to fields and 2) running
          * initializers.
          */
-        boolean hasExplicitThis = (x.constructorCall != null)
-            && !x.constructorCall.isSuperAccess();
+        boolean hasExplicitThis = (x.constructorCall != null) && !x.constructorCall.isSuperAccess();
 
         JClassType enclosingType = ctor.getEnclosingType();
         JBlock block = currentMethodBody.getBlock();
@@ -743,12 +732,10 @@ public class GenerateJavaAST {
               JParameter param = paramIt.next();
               JField field = (JField) typeMap.get(arg);
               if (!hasExplicitThis) {
-                block.addStmt(JProgram.createAssignmentStmt(info,
-                    createVariableRef(info, field),
+                block.addStmt(JProgram.createAssignmentStmt(info, createVariableRef(info, field),
                     createVariableRef(info, param)));
               }
-              currentOuterThisRefParams = Maps.put(currentOuterThisRefParams,
-                  field, param);
+              currentOuterThisRefParams = Maps.put(currentOuterThisRefParams, field, param);
             }
           }
 
@@ -758,8 +745,7 @@ public class GenerateJavaAST {
               for (SyntheticArgumentBinding arg : nestedBinding.outerLocalVariables) {
                 JParameter param = paramIt.next();
                 JField field = (JField) typeMap.get(arg);
-                block.addStmt(JProgram.createAssignmentStmt(info,
-                    createVariableRef(info, field),
+                block.addStmt(JProgram.createAssignmentStmt(info, createVariableRef(info, field),
                     createVariableRef(info, param)));
               }
             }
@@ -768,15 +754,15 @@ public class GenerateJavaAST {
 
         // optional this or super constructor call
         if (x.constructorCall != null) {
-          JMethodCall superOrThisCall = (JMethodCall) dispatch(
-              "processExpression", x.constructorCall);
+          JMethodCall superOrThisCall =
+              (JMethodCall) dispatch("processExpression", x.constructorCall);
           // Enums: wire up synthetic name/ordinal params to the super method.
           if (enclosingType.isEnumOrSubclass() != null) {
-            JVariableRef enumNameRef = createVariableRef(
-                superOrThisCall.getSourceInfo(), ctor.getParams().get(0));
+            JVariableRef enumNameRef =
+                createVariableRef(superOrThisCall.getSourceInfo(), ctor.getParams().get(0));
             superOrThisCall.addArg(0, enumNameRef);
-            JVariableRef enumOrdinalRef = createVariableRef(
-                superOrThisCall.getSourceInfo(), ctor.getParams().get(1));
+            JVariableRef enumOrdinalRef =
+                createVariableRef(superOrThisCall.getSourceInfo(), ctor.getParams().get(1));
             superOrThisCall.addArg(1, enumOrdinalRef);
           }
 
@@ -833,8 +819,7 @@ public class GenerateJavaAST {
         int ctorArgc = ctor.getParams().size();
         JMethod targetMethod = null;
         outer : for (JMethod method : javaLangString.getMethods()) {
-          if (method.getName().equals("_String")
-              && method.getParams().size() == ctorArgc) {
+          if (method.getName().equals("_String") && method.getParams().size() == ctorArgc) {
             for (int i = 0; i < ctorArgc; ++i) {
               JParameter mparam = method.getParams().get(i);
               JParameter cparam = ctor.getParams().get(i);
@@ -857,8 +842,8 @@ public class GenerateJavaAST {
 
       // Enums: hidden arguments for the name and id.
       if (x.enumConstant != null) {
-        call.addArgs(program.getLiteralString(info, x.enumConstant.name),
-            program.getLiteralInt(x.enumConstant.binding.original().id));
+        call.addArgs(program.getLiteralString(info, x.enumConstant.name), program
+            .getLiteralInt(x.enumConstant.binding.original().id));
       }
 
       // Synthetic args for inner classes
@@ -884,8 +869,7 @@ public class GenerateJavaAST {
         if (nestedBinding.outerLocalVariables != null) {
           for (SyntheticArgumentBinding arg : nestedBinding.outerLocalVariables) {
             JVariable variable = (JVariable) typeMap.get(arg.actualOuterLocalVariable);
-            call.addArg(createVariableRef(info, variable,
-                arg.actualOuterLocalVariable));
+            call.addArg(createVariableRef(info, variable, arg.actualOuterLocalVariable));
           }
         }
       }
@@ -896,8 +880,7 @@ public class GenerateJavaAST {
     JExpression processExpression(AND_AND_Expression x) {
       JType type = (JType) typeMap.get(x.resolvedType);
       SourceInfo info = makeSourceInfo(x);
-      return processBinaryOperation(info, JBinaryOperator.AND, type, x.left,
-          x.right);
+      return processBinaryOperation(info, JBinaryOperator.AND, type, x.left, x.right);
     }
 
     JExpression processExpression(ArrayAllocationExpression x) {
@@ -941,16 +924,15 @@ public class GenerateJavaAST {
 
     JExpression processExpression(ArrayReference x) {
       SourceInfo info = makeSourceInfo(x);
-      JArrayRef arrayRef = new JArrayRef(info,
-          dispProcessExpression(x.receiver), dispProcessExpression(x.position));
+      JArrayRef arrayRef =
+          new JArrayRef(info, dispProcessExpression(x.receiver), dispProcessExpression(x.position));
       return arrayRef;
     }
 
     JExpression processExpression(Assignment x) {
       JType type = (JType) typeMap.get(x.resolvedType);
       SourceInfo info = makeSourceInfo(x);
-      return processBinaryOperation(info, JBinaryOperator.ASG, type, x.lhs,
-          x.expression);
+      return processBinaryOperation(info, JBinaryOperator.ASG, type, x.lhs, x.expression);
     }
 
     JExpression processExpression(BinaryExpression x) {
@@ -958,58 +940,57 @@ public class GenerateJavaAST {
 
       int binOp = (x.bits & ASTNode.OperatorMASK) >> ASTNode.OperatorSHIFT;
       switch (binOp) {
-        case BinaryExpression.LEFT_SHIFT:
+        case OperatorIds.LEFT_SHIFT:
           op = JBinaryOperator.SHL;
           break;
-        case BinaryExpression.RIGHT_SHIFT:
+        case OperatorIds.RIGHT_SHIFT:
           op = JBinaryOperator.SHR;
           break;
-        case BinaryExpression.UNSIGNED_RIGHT_SHIFT:
+        case OperatorIds.UNSIGNED_RIGHT_SHIFT:
           op = JBinaryOperator.SHRU;
           break;
-        case BinaryExpression.PLUS:
+        case OperatorIds.PLUS:
           if (program.isJavaLangString((JType) typeMap.get(x.resolvedType))) {
             op = JBinaryOperator.CONCAT;
           } else {
             op = JBinaryOperator.ADD;
           }
           break;
-        case BinaryExpression.MINUS:
+        case OperatorIds.MINUS:
           op = JBinaryOperator.SUB;
           break;
-        case BinaryExpression.REMAINDER:
+        case OperatorIds.REMAINDER:
           op = JBinaryOperator.MOD;
           break;
-        case BinaryExpression.XOR:
+        case OperatorIds.XOR:
           op = JBinaryOperator.BIT_XOR;
           break;
-        case BinaryExpression.AND:
+        case OperatorIds.AND:
           op = JBinaryOperator.BIT_AND;
           break;
-        case BinaryExpression.MULTIPLY:
+        case OperatorIds.MULTIPLY:
           op = JBinaryOperator.MUL;
           break;
-        case BinaryExpression.OR:
+        case OperatorIds.OR:
           op = JBinaryOperator.BIT_OR;
           break;
-        case BinaryExpression.DIVIDE:
+        case OperatorIds.DIVIDE:
           op = JBinaryOperator.DIV;
           break;
-        case BinaryExpression.LESS_EQUAL:
+        case OperatorIds.LESS_EQUAL:
           op = JBinaryOperator.LTE;
           break;
-        case BinaryExpression.GREATER_EQUAL:
+        case OperatorIds.GREATER_EQUAL:
           op = JBinaryOperator.GTE;
           break;
-        case BinaryExpression.GREATER:
+        case OperatorIds.GREATER:
           op = JBinaryOperator.GT;
           break;
-        case BinaryExpression.LESS:
+        case OperatorIds.LESS:
           op = JBinaryOperator.LT;
           break;
         default:
-          throw new InternalCompilerException(
-              "Unexpected operator for BinaryExpression");
+          throw new InternalCompilerException("Unexpected operator for BinaryExpression");
       }
 
       JType type = (JType) typeMap.get(x.resolvedType);
@@ -1020,8 +1001,7 @@ public class GenerateJavaAST {
     JExpression processExpression(CastExpression x) {
       SourceInfo info = makeSourceInfo(x);
       JType type = (JType) typeMap.get(x.resolvedType);
-      JCastOperation cast = new JCastOperation(info, type,
-          dispProcessExpression(x.expression));
+      JCastOperation cast = new JCastOperation(info, type, dispProcessExpression(x.expression));
       return cast;
     }
 
@@ -1039,46 +1019,45 @@ public class GenerateJavaAST {
       JBinaryOperator op;
 
       switch (x.operator) {
-        case CompoundAssignment.PLUS:
+        case OperatorIds.PLUS:
           if (program.isJavaLangString((JType) typeMap.get(x.resolvedType))) {
             op = JBinaryOperator.ASG_CONCAT;
           } else {
             op = JBinaryOperator.ASG_ADD;
           }
           break;
-        case CompoundAssignment.MINUS:
+        case OperatorIds.MINUS:
           op = JBinaryOperator.ASG_SUB;
           break;
-        case CompoundAssignment.MULTIPLY:
+        case OperatorIds.MULTIPLY:
           op = JBinaryOperator.ASG_MUL;
           break;
-        case CompoundAssignment.DIVIDE:
+        case OperatorIds.DIVIDE:
           op = JBinaryOperator.ASG_DIV;
           break;
-        case CompoundAssignment.AND:
+        case OperatorIds.AND:
           op = JBinaryOperator.ASG_BIT_AND;
           break;
-        case CompoundAssignment.OR:
+        case OperatorIds.OR:
           op = JBinaryOperator.ASG_BIT_OR;
           break;
-        case CompoundAssignment.XOR:
+        case OperatorIds.XOR:
           op = JBinaryOperator.ASG_BIT_XOR;
           break;
-        case CompoundAssignment.REMAINDER:
+        case OperatorIds.REMAINDER:
           op = JBinaryOperator.ASG_MOD;
           break;
-        case CompoundAssignment.LEFT_SHIFT:
+        case OperatorIds.LEFT_SHIFT:
           op = JBinaryOperator.ASG_SHL;
           break;
-        case CompoundAssignment.RIGHT_SHIFT:
+        case OperatorIds.RIGHT_SHIFT:
           op = JBinaryOperator.ASG_SHR;
           break;
         case CompoundAssignment.UNSIGNED_RIGHT_SHIFT:
           op = JBinaryOperator.ASG_SHRU;
           break;
         default:
-          throw new InternalCompilerException(
-              "Unexpected operator for CompoundAssignment");
+          throw new InternalCompilerException("Unexpected operator for CompoundAssignment");
       }
 
       JType type = (JType) typeMap.get(x.resolvedType);
@@ -1092,8 +1071,7 @@ public class GenerateJavaAST {
       JExpression ifTest = dispProcessExpression(x.condition);
       JExpression thenExpr = dispProcessExpression(x.valueIfTrue);
       JExpression elseExpr = dispProcessExpression(x.valueIfFalse);
-      JConditional conditional = new JConditional(info, type, ifTest, thenExpr,
-          elseExpr);
+      JConditional conditional = new JConditional(info, type, ifTest, thenExpr, elseExpr);
       return conditional;
     }
 
@@ -1107,8 +1085,7 @@ public class GenerateJavaAST {
           op = JBinaryOperator.NEQ;
           break;
         default:
-          throw new InternalCompilerException(
-              "Unexpected operator for EqualExpression");
+          throw new InternalCompilerException("Unexpected operator for EqualExpression");
       }
 
       JType type = (JType) typeMap.get(x.resolvedType);
@@ -1189,8 +1166,8 @@ public class GenerateJavaAST {
 
       // On a super ref, don't allow polymorphic dispatch. Oddly enough,
       // QualifiedSuperReference not derived from SuperReference!
-      boolean isSuperRef = x.receiver instanceof SuperReference
-          || x.receiver instanceof QualifiedSuperReference;
+      boolean isSuperRef =
+          x.receiver instanceof SuperReference || x.receiver instanceof QualifiedSuperReference;
       if (isSuperRef) {
         call.setStaticDispatchOnly();
       }
@@ -1212,8 +1189,7 @@ public class GenerateJavaAST {
     JExpression processExpression(OR_OR_Expression x) {
       JType type = (JType) typeMap.get(x.resolvedType);
       SourceInfo info = makeSourceInfo(x);
-      return processBinaryOperation(info, JBinaryOperator.OR, type, x.left,
-          x.right);
+      return processBinaryOperation(info, JBinaryOperator.OR, type, x.left, x.right);
     }
 
     JExpression processExpression(PostfixExpression x) {
@@ -1233,8 +1209,7 @@ public class GenerateJavaAST {
           throw new InternalCompilerException("Unexpected postfix operator");
       }
 
-      JPostfixOperation postOp = new JPostfixOperation(info, op,
-          dispProcessExpression(x.lhs));
+      JPostfixOperation postOp = new JPostfixOperation(info, op, dispProcessExpression(x.lhs));
       return postOp;
     }
 
@@ -1255,8 +1230,7 @@ public class GenerateJavaAST {
           throw new InternalCompilerException("Unexpected prefix operator");
       }
 
-      JPrefixOperation preOp = new JPrefixOperation(info, op,
-          dispProcessExpression(x.lhs));
+      JPrefixOperation preOp = new JPrefixOperation(info, op, dispProcessExpression(x.lhs));
       return preOp;
     }
 
@@ -1288,8 +1262,7 @@ public class GenerateJavaAST {
        * because the explicit qualifier takes precedence.
        */
       if (!currentMethod.isStatic()) {
-        JExpression implicitOuter = new JThisRef(info,
-            (JClassType) currentClass);
+        JExpression implicitOuter = new JThisRef(info, (JClassType) currentClass);
         qualList.add(implicitOuter);
       }
 
@@ -1314,8 +1287,7 @@ public class GenerateJavaAST {
         if (nestedBinding.outerLocalVariables != null) {
           for (SyntheticArgumentBinding arg : nestedBinding.outerLocalVariables) {
             JVariable variable = (JVariable) typeMap.get(arg.actualOuterLocalVariable);
-            newInstance.addArg(createVariableRef(info, variable,
-                arg.actualOuterLocalVariable));
+            newInstance.addArg(createVariableRef(info, variable, arg.actualOuterLocalVariable));
           }
         }
       }
@@ -1455,17 +1427,14 @@ public class GenerateJavaAST {
           break;
 
         default:
-          throw new InternalCompilerException(
-              "Unexpected operator for unary expression");
+          throw new InternalCompilerException("Unexpected operator for unary expression");
       }
 
-      JPrefixOperation preOp = new JPrefixOperation(info, op,
-          dispProcessExpression(x.expression));
+      JPrefixOperation preOp = new JPrefixOperation(info, op, dispProcessExpression(x.expression));
       return preOp;
     }
 
-    List<JExpressionStatement> processExpressionStatements(
-        Statement[] statements) {
+    List<JExpressionStatement> processExpressionStatements(Statement[] statements) {
       List<JExpressionStatement> jstatements = new ArrayList<JExpressionStatement>();
       if (statements != null) {
         for (int i = 0, n = statements.length; i < n; ++i) {
@@ -1502,8 +1471,8 @@ public class GenerateJavaAST {
         if (initializer != null) {
           SourceInfo info = makeSourceInfo(declaration);
           // JDeclarationStatement's ctor sets up the field's initializer.
-          JStatement decl = new JDeclarationStatement(info, createVariableRef(
-              info, field), initializer);
+          JStatement decl =
+              new JDeclarationStatement(info, createVariableRef(info, field), initializer);
           // will either be init or clinit
           currentMethodBody.getBlock().addStmt(decl);
         }
@@ -1550,8 +1519,7 @@ public class GenerateJavaAST {
       }
     }
 
-    void processNativeMethod(AbstractMethodDeclaration x,
-        JsniMethodBody nativeMethodBody) {
+    void processNativeMethod(AbstractMethodDeclaration x, JsniMethodBody nativeMethodBody) {
       // Squirrel away a reference to the JDT node to enable error reporting.
       jsniMethodMap.put(nativeMethodBody, x);
     }
@@ -1576,8 +1544,7 @@ public class GenerateJavaAST {
 
     JStatement processStatement(BreakStatement x) {
       SourceInfo info = makeSourceInfo(x);
-      return new JBreakStatement(info, getOrCreateLabel(info, currentMethod,
-          x.label));
+      return new JBreakStatement(info, getOrCreateLabel(info, currentMethod, x.label));
     }
 
     JStatement processStatement(CaseStatement x) {
@@ -1596,8 +1563,7 @@ public class GenerateJavaAST {
 
     JStatement processStatement(ContinueStatement x) {
       SourceInfo info = makeSourceInfo(x);
-      return new JContinueStatement(info, getOrCreateLabel(info, currentMethod,
-          x.label));
+      return new JContinueStatement(info, getOrCreateLabel(info, currentMethod, x.label));
     }
 
     JStatement processStatement(DoStatement x) {
@@ -1629,7 +1595,8 @@ public class GenerateJavaAST {
       JLocal elementVar = (JLocal) typeMap.get(x.elementVariable.binding);
       String elementVarName = elementVar.getName();
 
-      JDeclarationStatement elementDecl = (JDeclarationStatement) processStatement(x.elementVariable);
+      JDeclarationStatement elementDecl =
+          (JDeclarationStatement) processStatement(x.elementVariable);
       assert (elementDecl.initializer == null);
 
       JForStatement result;
@@ -1645,43 +1612,42 @@ public class GenerateJavaAST {
          * }
          * </pre>
          */
-        JLocal arrayVar = JProgram.createLocal(info, elementVarName + "$array",
-            ((JType) typeMap.get(x.collection.resolvedType)), true,
-            currentMethodBody);
-        JLocal indexVar = JProgram.createLocal(info, elementVarName + "$index",
-            program.getTypePrimitiveInt(), false, currentMethodBody);
-        JLocal maxVar = JProgram.createLocal(info, elementVarName + "$max",
-            program.getTypePrimitiveInt(), true, currentMethodBody);
+        JLocal arrayVar =
+            JProgram.createLocal(info, elementVarName + "$array", ((JType) typeMap
+                .get(x.collection.resolvedType)), true, currentMethodBody);
+        JLocal indexVar =
+            JProgram.createLocal(info, elementVarName + "$index", program.getTypePrimitiveInt(),
+                false, currentMethodBody);
+        JLocal maxVar =
+            JProgram.createLocal(info, elementVarName + "$max", program.getTypePrimitiveInt(),
+                true, currentMethodBody);
 
         List<JStatement> initializers = new ArrayList<JStatement>(3);
         // T[] i$array = arr
-        initializers.add(createDeclaration(info, arrayVar,
-            dispProcessExpression(x.collection)));
+        initializers.add(createDeclaration(info, arrayVar, dispProcessExpression(x.collection)));
         // int i$index = 0
-        initializers.add(createDeclaration(info, indexVar,
-            program.getLiteralInt(0)));
+        initializers.add(createDeclaration(info, indexVar, program.getLiteralInt(0)));
         // int i$max = i$array.length
-        initializers.add(createDeclaration(info, maxVar, new JArrayLength(info,
-            new JLocalRef(info, arrayVar))));
+        initializers.add(createDeclaration(info, maxVar, new JArrayLength(info, new JLocalRef(info,
+            arrayVar))));
 
         // i$index < i$max
-        JExpression condition = new JBinaryOperation(info,
-            program.getTypePrimitiveBoolean(), JBinaryOperator.LT,
-            createVariableRef(info, indexVar), createVariableRef(info, maxVar));
+        JExpression condition =
+            new JBinaryOperation(info, program.getTypePrimitiveBoolean(), JBinaryOperator.LT,
+                createVariableRef(info, indexVar), createVariableRef(info, maxVar));
 
         // ++i$index
-        List<JExpressionStatement> increments = new ArrayList<JExpressionStatement>(
-            1);
-        increments.add(new JPrefixOperation(info, JUnaryOperator.INC,
-            createVariableRef(info, indexVar)).makeStatement());
+        List<JExpressionStatement> increments = new ArrayList<JExpressionStatement>(1);
+        increments.add(new JPrefixOperation(info, JUnaryOperator.INC, createVariableRef(info,
+            indexVar)).makeStatement());
 
         // T elementVar = i$array[i$index];
-        elementDecl.initializer = new JArrayRef(info, createVariableRef(info,
-            arrayVar), createVariableRef(info, indexVar));
+        elementDecl.initializer =
+            new JArrayRef(info, createVariableRef(info, arrayVar),
+                createVariableRef(info, indexVar));
         body.addStmt(0, elementDecl);
 
-        result = new JForStatement(info, initializers, condition, increments,
-            body);
+        result = new JForStatement(info, initializers, condition, increments, body);
       } else {
         /**
          * <pre>
@@ -1691,25 +1657,24 @@ public class GenerateJavaAST {
          * }
          * </pre>
          */
-        JLocal iteratorVar = JProgram.createLocal(info,
-            (elementVarName + "$iterator"), program.getIndexedType("Iterator"),
-            false, currentMethodBody);
+        JLocal iteratorVar =
+            JProgram.createLocal(info, (elementVarName + "$iterator"), program
+                .getIndexedType("Iterator"), false, currentMethodBody);
 
         List<JStatement> initializers = new ArrayList<JStatement>(1);
         // Iterator<T> i$iterator = collection.iterator()
-        initializers.add(createDeclaration(
-            info,
-            iteratorVar,
-            new JMethodCall(info, dispProcessExpression(x.collection),
-                program.getIndexedMethod("Iterable.iterator"))));
+        initializers.add(createDeclaration(info, iteratorVar, new JMethodCall(info,
+            dispProcessExpression(x.collection), program.getIndexedMethod("Iterable.iterator"))));
 
         // i$iterator.hasNext()
-        JExpression condition = new JMethodCall(info, createVariableRef(info,
-            iteratorVar), program.getIndexedMethod("Iterator.hasNext"));
+        JExpression condition =
+            new JMethodCall(info, createVariableRef(info, iteratorVar), program
+                .getIndexedMethod("Iterator.hasNext"));
 
         // T elementVar = (T) i$iterator.next();
-        elementDecl.initializer = new JMethodCall(info, createVariableRef(info,
-            iteratorVar), program.getIndexedMethod("Iterator.next"));
+        elementDecl.initializer =
+            new JMethodCall(info, createVariableRef(info, iteratorVar), program
+                .getIndexedMethod("Iterator.next"));
 
         // Perform any implicit reference type casts (due to generics).
         // Note this occurs before potential unboxing.
@@ -1722,8 +1687,7 @@ public class GenerateJavaAST {
             collectionType = (TypeBinding) privateField.get(x);
           } catch (Exception e) {
             throw new InternalCompilerException(elementDecl,
-                "Failed to retreive collectionElementType through reflection",
-                e);
+                "Failed to retreive collectionElementType through reflection", e);
           }
           JType toType = (JType) typeMap.get(collectionType);
           assert (toType instanceof JReferenceType);
@@ -1732,8 +1696,9 @@ public class GenerateJavaAST {
 
         body.addStmt(0, elementDecl);
 
-        result = new JForStatement(info, initializers, condition,
-            Collections.<JExpressionStatement> emptyList(), body);
+        result =
+            new JForStatement(info, initializers, condition, Collections
+                .<JExpressionStatement> emptyList(), body);
       }
 
       // May need to box or unbox the element assignment.
@@ -1744,11 +1709,12 @@ public class GenerateJavaAST {
            * expression cannot be a constant, so the box type must be exactly
            * that associated with the expression.
            */
-          elementDecl.initializer = autoboxUtils.box(elementDecl.initializer,
-              ((JPrimitiveType) elementDecl.initializer.getType()));
+          elementDecl.initializer =
+              autoboxUtils.box(elementDecl.initializer, ((JPrimitiveType) elementDecl.initializer
+                  .getType()));
         } else if ((x.elementVariableImplicitWidening & TypeIds.UNBOXING) != 0) {
-          elementDecl.initializer = unbox(elementDecl.initializer,
-              (JClassType) elementDecl.initializer.getType());
+          elementDecl.initializer =
+              unbox(elementDecl.initializer, (JClassType) elementDecl.initializer.getType());
         }
       }
       return result;
@@ -1776,10 +1742,8 @@ public class GenerateJavaAST {
 
       SourceInfo info = makeSourceInfo(x);
       JExpression expr = dispProcessExpression(x.condition);
-      JStatement thenStmt = removeThen ? null
-          : dispProcessStatement(x.thenStatement);
-      JStatement elseStmt = removeElse ? null
-          : dispProcessStatement(x.elseStatement);
+      JStatement thenStmt = removeThen ? null : dispProcessStatement(x.thenStatement);
+      JStatement elseStmt = removeElse ? null : dispProcessStatement(x.elseStatement);
       JIfStatement ifStmt = new JIfStatement(info, expr, thenStmt, elseStmt);
       return ifStmt;
     }
@@ -1790,8 +1754,7 @@ public class GenerateJavaAST {
         return null;
       }
       SourceInfo info = makeSourceInfo(x);
-      return new JLabeledStatement(info, getOrCreateLabel(info, currentMethod,
-          x.label), body);
+      return new JLabeledStatement(info, getOrCreateLabel(info, currentMethod, x.label), body);
     }
 
     JStatement processStatement(LocalDeclaration x) {
@@ -1812,8 +1775,7 @@ public class GenerateJavaAST {
       JExpression expression = dispProcessExpression(x.expression);
       if (isEnumType(expression.getType())) {
         // Must be an enum; synthesize a call to ordinal().
-        expression = new JMethodCall(info, expression,
-            program.getIndexedMethod("Enum.ordinal"));
+        expression = new JMethodCall(info, expression, program.getIndexedMethod("Enum.ordinal"));
       }
       JBlock block = new JBlock(info);
       // Don't use processStatements here, because it stops at control breaks
@@ -1856,8 +1818,7 @@ public class GenerateJavaAST {
         }
       }
       JBlock finallyBlock = (JBlock) dispProcessStatement(x.finallyBlock);
-      return new JTryStatement(info, tryBlock, catchArgs, catchBlocks,
-          finallyBlock);
+      return new JTryStatement(info, tryBlock, catchArgs, catchBlocks, finallyBlock);
     }
 
     JStatement processStatement(TypeDeclaration x) {
@@ -1952,8 +1913,7 @@ public class GenerateJavaAST {
             String varName = String.valueOf(arg.name);
             JParameter param = null;
             for (JParameter paramIt : currentMethod.getParams()) {
-              if (varType == paramIt.getType()
-                  && varName.equals(paramIt.getName())) {
+              if (varType == paramIt.getType() && varName.equals(paramIt.getName())) {
                 param = paramIt;
               }
             }
@@ -2005,8 +1965,8 @@ public class GenerateJavaAST {
       return call;
     }
 
-    private void addAllOuterThisRefs(List<? super JVariableRef> list,
-        JExpression expr, JClassType classType) {
+    private void addAllOuterThisRefs(List<? super JVariableRef> list, JExpression expr,
+        JClassType classType) {
       for (JField field : classType.getFields()) {
         // This fields are always first.
         if (!field.isThisRef()) {
@@ -2020,22 +1980,19 @@ public class GenerateJavaAST {
         if (param != null) {
           list.add(new JParameterRef(expr.getSourceInfo(), param));
         } else {
-          list.add(new JFieldRef(expr.getSourceInfo(), expr, field,
-              currentClass));
+          list.add(new JFieldRef(expr.getSourceInfo(), expr, field, currentClass));
         }
       }
     }
 
-    private void addAllOuterThisRefsPlusSuperChain(
-        List<? super JVariableRef> workList, JExpression expr,
-        JClassType classType) {
+    private void addAllOuterThisRefsPlusSuperChain(List<? super JVariableRef> workList,
+        JExpression expr, JClassType classType) {
       for (; classType != null; classType = classType.getSuperClass()) {
         addAllOuterThisRefs(workList, expr, classType);
       }
     }
 
-    private void addCallArgs(Expression[] jdtArgs, JMethodCall call,
-        MethodBinding binding) {
+    private void addCallArgs(Expression[] jdtArgs, JMethodCall call, MethodBinding binding) {
       JExpression[] args = new JExpression[jdtArgs == null ? 0 : jdtArgs.length];
       for (int i = 0; i < args.length; ++i) {
         args[i] = dispProcessExpression(jdtArgs[i]);
@@ -2071,8 +2028,8 @@ public class GenerateJavaAST {
         initializers.add(args[i]);
       }
       JArrayType lastParamType = (JArrayType) typeMap.get(params[varArg]);
-      JNewArray newArray = JNewArray.createInitializers(SourceOrigin.UNKNOWN,
-          lastParamType, initializers);
+      JNewArray newArray =
+          JNewArray.createInitializers(SourceOrigin.UNKNOWN, lastParamType, initializers);
       call.addArg(newArray);
     }
 
@@ -2090,23 +2047,23 @@ public class GenerateJavaAST {
      * @param jdtBridgeMethod The corresponding bridge method added in the JDT
      * @param implmeth The implementation method to bridge to
      */
-    private void createBridgeMethod(JClassType clazz,
-        SyntheticMethodBinding jdtBridgeMethod, JMethod implmeth) {
+    private void createBridgeMethod(JClassType clazz, SyntheticMethodBinding jdtBridgeMethod,
+        JMethod implmeth) {
       SourceInfo info = implmeth.getSourceInfo().makeChild();
       // create the method itself
-      JMethod bridgeMethod = program.createMethod(info,
-          String.valueOf(jdtBridgeMethod.selector), clazz,
-          (JType) typeMap.get(jdtBridgeMethod.returnType.erasure()), false,
-          false, implmeth.isFinal(), false, false);
+      JMethod bridgeMethod =
+          program.createMethod(info, String.valueOf(jdtBridgeMethod.selector), clazz,
+              (JType) typeMap.get(jdtBridgeMethod.returnType.erasure()), false, false, implmeth
+                  .isFinal(), false, false);
       bridgeMethod.setSynthetic();
       int paramIdx = 0;
       List<JParameter> implParams = implmeth.getParams();
       for (TypeBinding jdtParamType : jdtBridgeMethod.parameters) {
         JParameter param = implParams.get(paramIdx++);
         JType paramType = (JType) typeMap.get(jdtParamType.erasure());
-        JParameter newParam = new JParameter(
-            info.makeChild(param.getSourceInfo().getOrigin()), param.getName(),
-            paramType, true, false, bridgeMethod);
+        JParameter newParam =
+            new JParameter(info.makeChild(param.getSourceInfo().getOrigin()), param.getName(),
+                paramType, true, false, bridgeMethod);
         bridgeMethod.addParam(newParam);
       }
       addThrownExceptions(jdtBridgeMethod, bridgeMethod);
@@ -2114,8 +2071,7 @@ public class GenerateJavaAST {
       info.addCorrelation(info.getCorrelator().by(bridgeMethod));
 
       // create a call
-      JMethodCall call = new JMethodCall(info, new JThisRef(info, clazz),
-          implmeth);
+      JMethodCall call = new JMethodCall(info, new JThisRef(info, clazz), implmeth);
 
       for (int i = 0; i < bridgeMethod.getParams().size(); i++) {
         JParameter param = bridgeMethod.getParams().get(i);
@@ -2152,8 +2108,7 @@ public class GenerateJavaAST {
       }
     }
 
-    private JDeclarationStatement createDeclaration(SourceInfo info,
-        JLocal local, JExpression value) {
+    private JDeclarationStatement createDeclaration(SourceInfo info, JLocal local, JExpression value) {
       return new JDeclarationStatement(info, new JLocalRef(info, local), value);
     }
 
@@ -2162,8 +2117,7 @@ public class GenerateJavaAST {
      * access) of the appropriate type. Always use this method instead of
      * creating a naked JThisRef or you won't get the synthetic accesses right.
      */
-    private JExpression createQualifiedThisRef(SourceInfo info,
-        JClassType targetType) {
+    private JExpression createQualifiedThisRef(SourceInfo info, JClassType targetType) {
       assert (currentClass instanceof JClassType);
       JExpression expr = new JThisRef(info, ((JClassType) currentClass));
       List<JExpression> list = new ArrayList<JExpression>();
@@ -2204,8 +2158,7 @@ public class GenerateJavaAST {
      * 
      * TODO(scottb): could we get this info directly from JDT?
      */
-    private JExpression createThisRef(JReferenceType qualType,
-        List<JExpression> list) {
+    private JExpression createThisRef(JReferenceType qualType, List<JExpression> list) {
       LinkedList<JExpression> workList = new LinkedList<JExpression>();
       workList.addAll(list);
       while (!workList.isEmpty()) {
@@ -2221,8 +2174,7 @@ public class GenerateJavaAST {
         }
       }
 
-      throw new InternalCompilerException(
-          "Cannot create a ThisRef of the appropriate type.");
+      throw new InternalCompilerException("Cannot create a ThisRef of the appropriate type.");
     }
 
     /**
@@ -2232,8 +2184,7 @@ public class GenerateJavaAST {
      */
     private JExpression createThisRef(SourceInfo info, JReferenceType targetType) {
       assert (currentClass instanceof JClassType);
-      return createThisRef(targetType, new JThisRef(info,
-          ((JClassType) currentClass)));
+      return createThisRef(targetType, new JThisRef(info, ((JClassType) currentClass)));
     }
 
     /**
@@ -2244,8 +2195,7 @@ public class GenerateJavaAST {
       if (variable instanceof JLocal) {
         JLocal local = (JLocal) variable;
         if (local.getEnclosingMethod() != currentMethod) {
-          throw new InternalCompilerException(
-              "LocalRef referencing local in a different method.");
+          throw new InternalCompilerException("LocalRef referencing local in a different method.");
         }
         return new JLocalRef(info, local);
       } else if (variable instanceof JParameter) {
@@ -2261,10 +2211,9 @@ public class GenerateJavaAST {
         if (!field.isStatic()) {
           JClassType fieldEnclosingType = (JClassType) field.getEnclosingType();
           instance = createThisRef(info, fieldEnclosingType);
-          if (!program.typeOracle.canTriviallyCast(
-              (JReferenceType) instance.getType(), fieldEnclosingType)) {
-            throw new InternalCompilerException(
-                "FieldRef referencing field in a different type.");
+          if (!program.typeOracle.canTriviallyCast((JReferenceType) instance.getType(),
+              fieldEnclosingType)) {
+            throw new InternalCompilerException("FieldRef referencing field in a different type.");
           }
         }
         return new JFieldRef(info, instance, field, currentClass);
@@ -2276,8 +2225,7 @@ public class GenerateJavaAST {
      * Creates an appropriate JVariableRef for the polymorphic type of the
      * requested JVariable.
      */
-    private JVariableRef createVariableRef(SourceInfo info, JVariable variable,
-        Binding binding) {
+    private JVariableRef createVariableRef(SourceInfo info, JVariable variable, Binding binding) {
       // Fix up the reference if it's to an outer local/param
       variable = possiblyReferenceOuterLocal(variable, binding);
       if (variable == null) {
@@ -2299,8 +2247,8 @@ public class GenerateJavaAST {
       return typeBinding;
     }
 
-    private Method getCachedMethod(String name,
-        Class<? extends Object> childClass) throws NoSuchMethodException {
+    private Method getCachedMethod(String name, Class<? extends Object> childClass)
+        throws NoSuchMethodException {
       MethodKey key = new MethodKey(name, childClass);
       MethodValue value = methodCache.get(key);
       if (value == null) {
@@ -2316,8 +2264,7 @@ public class GenerateJavaAST {
       return value.getMethod();
     }
 
-    private JInterfaceType getOrCreateExternalType(SourceInfo info,
-        char[][] compoundName) {
+    private JInterfaceType getOrCreateExternalType(SourceInfo info, char[][] compoundName) {
       String name = BuildTypeMap.dotify(compoundName);
       JInterfaceType external = (JInterfaceType) program.getFromTypeMap(name);
       if (external == null) {
@@ -2331,8 +2278,7 @@ public class GenerateJavaAST {
      * Get a new label of a particular name, or create a new one if it doesn't
      * exist already.
      */
-    private JLabel getOrCreateLabel(SourceInfo info, JMethod enclosingMethod,
-        char[] name) {
+    private JLabel getOrCreateLabel(SourceInfo info, JMethod enclosingMethod, char[] name) {
       if (name == null) {
         return null;
       }
@@ -2378,8 +2324,7 @@ public class GenerateJavaAST {
      * local parameters.
      */
     private Iterator<JParameter> getSyntheticLocalsIterator() {
-      return currentMethod.getParams().listIterator(
-          currentMethod.getOriginalParamTypes().size());
+      return currentMethod.getParams().listIterator(currentMethod.getOriginalParamTypes().size());
     }
 
     private void implementMethod(JMethod method, JExpression returnValue) {
@@ -2431,8 +2376,7 @@ public class GenerateJavaAST {
         case TypeIds.T_short:
           return program.getTypePrimitiveShort();
         default:
-          throw new InternalCompilerException(
-              "Could not determine the desired box type");
+          throw new InternalCompilerException("Could not determine the desired box type");
       }
     }
 
@@ -2455,10 +2399,11 @@ public class GenerateJavaAST {
     }
 
     private SourceInfo makeSourceInfo(Statement x) {
-      int startLine = Util.getLineNumber(x.sourceStart,
-          currentSeparatorPositions, 0, currentSeparatorPositions.length - 1);
-      SourceOrigin toReturn = SourceOrigin.create(x.sourceStart, x.sourceEnd,
-          startLine, currentFileName);
+      int startLine =
+          Util.getLineNumber(x.sourceStart, currentSeparatorPositions, 0,
+              currentSeparatorPositions.length - 1);
+      SourceOrigin toReturn =
+          SourceOrigin.create(x.sourceStart, x.sourceEnd, startLine, currentFileName);
       if (currentMethod != null) {
         return currentMethod.getSourceInfo().makeChild(toReturn);
       }
@@ -2469,8 +2414,7 @@ public class GenerateJavaAST {
       if (expected != expression.getType()) {
         // Must be a generic; insert a cast operation.
         JReferenceType toType = (JReferenceType) expected;
-        return new JCastOperation(expression.getSourceInfo(), toType,
-            expression);
+        return new JCastOperation(expression.getSourceInfo(), toType, expression);
       } else {
         return expression;
       }
@@ -2486,8 +2430,7 @@ public class GenerateJavaAST {
      * Once we have this clue, we can use getEmulationPath to compute the
      * current class's binding for that field.
      */
-    private JVariable possiblyReferenceOuterLocal(JVariable variable,
-        Binding binding) {
+    private JVariable possiblyReferenceOuterLocal(JVariable variable, Binding binding) {
 
       if (variable instanceof JLocal || variable instanceof JParameter) {
         LocalVariableBinding localBinding = (LocalVariableBinding) binding;
@@ -2597,17 +2540,15 @@ public class GenerateJavaAST {
      * look for the specific operators that we think should match each JDT node,
      * and throw an error if there's a mismatch.
      */
-    private JExpression processBinaryOperation(SourceInfo info,
-        JBinaryOperator op, JType type, Expression arg1, Expression arg2) {
+    private JExpression processBinaryOperation(SourceInfo info, JBinaryOperator op, JType type,
+        Expression arg1, Expression arg2) {
       JExpression exprArg1 = dispProcessExpression(arg1);
       JExpression exprArg2 = dispProcessExpression(arg2);
-      JBinaryOperation binaryOperation = new JBinaryOperation(info, type, op,
-          exprArg1, exprArg2);
+      JBinaryOperation binaryOperation = new JBinaryOperation(info, type, op, exprArg1, exprArg2);
       return binaryOperation;
     }
 
-    private JExpression processQualifiedThisOrSuperRef(
-        QualifiedThisReference x, JClassType qualType) {
+    private JExpression processQualifiedThisOrSuperRef(QualifiedThisReference x, JClassType qualType) {
       /*
        * WEIRD: If a thisref or superref is qualified with the EXACT type of the
        * innermost type (in other words, a needless qualifier), it must refer to
@@ -2627,8 +2568,7 @@ public class GenerateJavaAST {
       }
     }
 
-    private InternalCompilerException translateException(Object node,
-        Throwable e) {
+    private InternalCompilerException translateException(Object node, Throwable e) {
       if (e instanceof VirtualMachineError) {
         // Always rethrow VM errors (an attempt to wrap may fail).
         throw (VirtualMachineError) e;
@@ -2679,14 +2619,13 @@ public class GenerateJavaAST {
      * For a given method(and method binding), recursively try to find all
      * methods that it overrides/implements.
      */
-    private void tryFindUpRefsRecursive(JMethod method,
-        JDeclaredType searchThisType, List<JMethod> overrides) {
+    private void tryFindUpRefsRecursive(JMethod method, JDeclaredType searchThisType,
+        List<JMethod> overrides) {
 
       // See if this class has any uprefs, unless this class is myself
       if (method.getEnclosingType() != searchThisType) {
         for (JMethod upRef : searchThisType.getMethods()) {
-          if (JTypeOracle.methodsDoMatch(method, upRef)
-              && !overrides.contains(upRef)) {
+          if (JTypeOracle.methodsDoMatch(method, upRef) && !overrides.contains(upRef)) {
             overrides.add(upRef);
             break;
           }
@@ -2695,8 +2634,7 @@ public class GenerateJavaAST {
 
       // recurse super class
       if (searchThisType.getSuperClass() != null) {
-        tryFindUpRefsRecursive(method, searchThisType.getSuperClass(),
-            overrides);
+        tryFindUpRefsRecursive(method, searchThisType.getSuperClass(), overrides);
       }
 
       // recurse super interfaces
@@ -2749,9 +2687,8 @@ public class GenerateJavaAST {
     private JExpression unbox(JExpression toUnbox, JClassType wrapperType) {
       JPrimitiveType primitiveType = getPrimitiveTypeForWrapperType(wrapperType);
       if (primitiveType == null) {
-        throw new InternalCompilerException(toUnbox,
-            "Attempt to unbox unexpected type '" + wrapperType.getName() + "'",
-            null);
+        throw new InternalCompilerException(toUnbox, "Attempt to unbox unexpected type '"
+            + wrapperType.getName() + "'", null);
       }
 
       String valueMethodName = primitiveType.getName() + "Value";
@@ -2768,14 +2705,12 @@ public class GenerateJavaAST {
       }
 
       if (valueMethod == null) {
-        throw new InternalCompilerException(toUnbox,
-            "Expected to find a method on '" + wrapperType.getName()
-                + "' whose signature matches 'public "
-                + primitiveType.getName() + " " + valueMethodName + "()'", null);
+        throw new InternalCompilerException(toUnbox, "Expected to find a method on '"
+            + wrapperType.getName() + "' whose signature matches 'public "
+            + primitiveType.getName() + " " + valueMethodName + "()'", null);
       }
 
-      JMethodCall unboxCall = new JMethodCall(toUnbox.getSourceInfo(), toUnbox,
-          valueMethod);
+      JMethodCall unboxCall = new JMethodCall(toUnbox.getSourceInfo(), toUnbox, valueMethod);
       return unboxCall;
     }
 
@@ -2789,24 +2724,24 @@ public class GenerateJavaAST {
          * class Map { $MAP = Enum.createValueOfMap($VALUES); }
          */
         SourceInfo typeInfo = type.getSourceInfo().makeChild();
-        JClassType mapClass = program.createClass(typeInfo, type.getName()
-            + "$Map", false, true);
+        JClassType mapClass = program.createClass(typeInfo, type.getName() + "$Map", false, true);
         typeInfo.addCorrelation(typeInfo.getCorrelator().by(mapClass));
         mapClass.setSuperClass(program.getTypeJavaLangObject());
         SourceInfo fieldInfo = typeInfo.makeChild();
-        mapField = program.createField(fieldInfo, "$MAP", mapClass,
-            program.getJavaScriptObject(), true, Disposition.FINAL);
+        mapField =
+            program.createField(fieldInfo, "$MAP", mapClass, program.getJavaScriptObject(), true,
+                Disposition.FINAL);
         fieldInfo.addCorrelation(fieldInfo.getCorrelator().by(mapField));
 
         SourceInfo methodInfo = typeInfo.makeChild();
-        JMethodCall call = new JMethodCall(methodInfo, null,
-            program.getIndexedMethod("Enum.createValueOfMap"));
+        JMethodCall call =
+            new JMethodCall(methodInfo, null, program.getIndexedMethod("Enum.createValueOfMap"));
         call.addArg(new JFieldRef(methodInfo, null, valuesField, type));
         JFieldRef mapRef = new JFieldRef(methodInfo, null, mapField, type);
-        JDeclarationStatement declStmt = new JDeclarationStatement(methodInfo,
-            mapRef, call);
-        JMethod clinit = program.createMethod(methodInfo, "$clinit", mapClass,
-            program.getTypeVoid(), false, true, true, true, false);
+        JDeclarationStatement declStmt = new JDeclarationStatement(methodInfo, mapRef, call);
+        JMethod clinit =
+            program.createMethod(methodInfo, "$clinit", mapClass, program.getTypeVoid(), false,
+                true, true, true, false);
         clinit.freezeParamTypes();
         methodInfo.addCorrelation(methodInfo.getCorrelator().by(clinit));
         JBlock clinitBlock = ((JMethodBody) clinit.getBody()).getBlock();
@@ -2820,14 +2755,12 @@ public class GenerateJavaAST {
       {
         SourceInfo sourceInfo = currentMethodBody.getSourceInfo();
         JFieldRef mapRef = new JFieldRef(sourceInfo, null, mapField, type);
-        JVariableRef nameRef = createVariableRef(sourceInfo,
-            currentMethod.getParams().get(0));
+        JVariableRef nameRef = createVariableRef(sourceInfo, currentMethod.getParams().get(0));
         JMethod delegateTo = program.getIndexedMethod("Enum.valueOf");
         JMethodCall call = new JMethodCall(sourceInfo, null, delegateTo);
         call.addArgs(mapRef, nameRef);
 
-        currentMethodBody.getBlock().addStmt(
-            new JReturnStatement(sourceInfo, call));
+        currentMethodBody.getBlock().addStmt(new JReturnStatement(sourceInfo, call));
       }
     }
 
@@ -2837,19 +2770,17 @@ public class GenerateJavaAST {
         // $VALUES = new E[]{A,B,B};
         SourceInfo fieldInfo = type.getSourceInfo().makeChild();
         JArrayType enumArrayType = program.getTypeArray(type);
-        valuesField = program.createField(fieldInfo, "$VALUES", type,
-            enumArrayType, true, Disposition.FINAL);
+        valuesField =
+            program.createField(fieldInfo, "$VALUES", type, enumArrayType, true, Disposition.FINAL);
         fieldInfo.addCorrelation(fieldInfo.getCorrelator().by(valuesField));
         List<JExpression> initializers = new ArrayList<JExpression>();
         for (JEnumField field : type.getEnumList()) {
           JFieldRef fieldRef = new JFieldRef(fieldInfo, null, field, type);
           initializers.add(fieldRef);
         }
-        JNewArray newExpr = JNewArray.createInitializers(fieldInfo,
-            enumArrayType, initializers);
+        JNewArray newExpr = JNewArray.createInitializers(fieldInfo, enumArrayType, initializers);
         JFieldRef valuesRef = new JFieldRef(fieldInfo, null, valuesField, type);
-        JDeclarationStatement declStmt = new JDeclarationStatement(fieldInfo,
-            valuesRef, newExpr);
+        JDeclarationStatement declStmt = new JDeclarationStatement(fieldInfo, valuesRef, newExpr);
         JBlock clinitBlock = ((JMethodBody) type.getMethods().get(0).getBody()).getBlock();
 
         /*
@@ -2867,8 +2798,7 @@ public class GenerateJavaAST {
         // return $VALUES;
         SourceInfo sourceInfo = currentMethod.getSourceInfo();
         JFieldRef valuesRef = new JFieldRef(sourceInfo, null, valuesField, type);
-        currentMethodBody.getBlock().addStmt(
-            new JReturnStatement(sourceInfo, valuesRef));
+        currentMethodBody.getBlock().addStmt(new JReturnStatement(sourceInfo, valuesRef));
       }
       return valuesField;
     }
@@ -2883,8 +2813,7 @@ public class GenerateJavaAST {
       private final AbstractMethodDeclaration methodDecl;
       private final JsniMethodBody nativeMethodBody;
 
-      private JsniRefResolver(AbstractMethodDeclaration methodDecl,
-          JsniMethodBody nativeMethodBody) {
+      private JsniRefResolver(AbstractMethodDeclaration methodDecl, JsniMethodBody nativeMethodBody) {
         this.methodDecl = methodDecl;
         this.nativeMethodBody = nativeMethodBody;
       }
@@ -2900,19 +2829,18 @@ public class GenerateJavaAST {
       private JNode findJsniRefTarget(final SourceInfo info, String ident) {
         JsniRef parsed = JsniRef.parse(ident);
         if (parsed == null) {
-          JsniCollector.reportJsniError(info, methodDecl,
-              "Badly formatted native reference '" + ident + "'");
+          JsniCollector.reportJsniError(info, methodDecl, "Badly formatted native reference '"
+              + ident + "'");
           return null;
         }
 
         JProgram prog = program;
 
-        return JsniRefLookup.findJsniRefTarget(parsed, prog,
-            new JsniRefLookup.ErrorReporter() {
-              public void reportError(String error) {
-                JsniCollector.reportJsniError(info, methodDecl, error);
-              }
-            });
+        return JsniRefLookup.findJsniRefTarget(parsed, prog, new JsniRefLookup.ErrorReporter() {
+          public void reportError(String error) {
+            JsniCollector.reportJsniError(info, methodDecl, error);
+          }
+        });
       }
 
       private void processClassLiteral(JClassLiteral classLiteral, JsContext ctx) {
@@ -2920,8 +2848,7 @@ public class GenerateJavaAST {
         nativeMethodBody.addClassRef(classLiteral);
       }
 
-      private void processField(JsNameRef nameRef, SourceInfo info,
-          JField field, JsContext ctx) {
+      private void processField(JsNameRef nameRef, SourceInfo info, JField field, JsContext ctx) {
         /*
          * We must replace any compile-time constants with the constant value of
          * the field.
@@ -2941,16 +2868,15 @@ public class GenerateJavaAST {
         }
 
         // Normal: create a jsniRef.
-        JsniFieldRef fieldRef = new JsniFieldRef(info, nameRef.getIdent(),
-            field, currentClass, ctx.isLvalue());
+        JsniFieldRef fieldRef =
+            new JsniFieldRef(info, nameRef.getIdent(), field, currentClass, ctx.isLvalue());
         nativeMethodBody.addJsniRef(fieldRef);
       }
 
-      private void processMethod(JsNameRef nameRef, SourceInfo info,
-          JMethod method, JsContext ctx) {
+      private void processMethod(JsNameRef nameRef, SourceInfo info, JMethod method, JsContext ctx) {
         assert !ctx.isLvalue();
-        JsniMethodRef methodRef = new JsniMethodRef(info, nameRef.getIdent(),
-            method, program.getJavaScriptObject());
+        JsniMethodRef methodRef =
+            new JsniMethodRef(info, nameRef.getIdent(), method, program.getJavaScriptObject());
         nativeMethodBody.addJsniRef(methodRef);
       }
 
@@ -3022,12 +2948,11 @@ public class GenerateJavaAST {
    * Combines the information from the JDT type nodes and the type map to create
    * a JProgram structure.
    */
-  public static void exec(TypeDeclaration[] types, TypeMap typeMap,
-      JProgram jprogram, JJSOptions options) {
+  public static void exec(TypeDeclaration[] types, TypeMap typeMap, JProgram jprogram,
+      JJSOptions options) {
     Event generateJavaAstEvent = SpeedTracerLogger.start(CompilerEventType.GENERATE_JAVA_AST);
     // Construct the basic AST.
-    JavaASTGenerationVisitor v = new JavaASTGenerationVisitor(typeMap,
-        jprogram, options);
+    JavaASTGenerationVisitor v = new JavaASTGenerationVisitor(typeMap, jprogram, options);
     for (TypeDeclaration type : types) {
       v.processType(type);
     }

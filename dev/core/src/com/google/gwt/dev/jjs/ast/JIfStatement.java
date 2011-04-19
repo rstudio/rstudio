@@ -26,8 +26,7 @@ public class JIfStatement extends JStatement {
   private JExpression ifExpr;
   private JStatement thenStmt;
 
-  public JIfStatement(SourceInfo info, JExpression ifExpr, JStatement thenStmt,
-      JStatement elseStmt) {
+  public JIfStatement(SourceInfo info, JExpression ifExpr, JStatement thenStmt, JStatement elseStmt) {
     super(info);
     this.ifExpr = ifExpr;
     this.thenStmt = thenStmt;
@@ -61,15 +60,13 @@ public class JIfStatement extends JStatement {
 
   @Override
   public boolean unconditionalControlBreak() {
-    boolean thenBreaks = thenStmt != null
-        && thenStmt.unconditionalControlBreak();
+    boolean thenBreaks = thenStmt != null && thenStmt.unconditionalControlBreak();
     if (thenBreaks && ifExpr == JBooleanLiteral.get(true)) {
       // if(true) { /* unconditional break */ }
       return true;
     }
 
-    boolean elseBreaks = elseStmt != null
-        && elseStmt.unconditionalControlBreak();
+    boolean elseBreaks = elseStmt != null && elseStmt.unconditionalControlBreak();
     if (elseBreaks && ifExpr == JBooleanLiteral.get(false)) {
       // if(false) { } else { /* unconditional break */ }
       return true;

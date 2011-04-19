@@ -100,7 +100,7 @@ public class ExpressionAnalyzer extends JVisitor {
     accessesField = true;
     // Can throw an NPE when the array instance is null at runtime.
     JReferenceType refType = (JReferenceType) x.getInstance().getType();
-    canThrowException = refType.canBeNull();    
+    canThrowException = refType.canBeNull();
   }
 
   @Override

@@ -32,9 +32,7 @@ import com.google.gwt.dev.util.arg.OptionStrict;
  * Controls options for the {@link JavaToJavaScriptCompiler}.
  */
 public interface JJSOptions extends OptionOptimize, OptionAggressivelyOptimize,
-    OptionDisableClassMetadata, OptionDisableCastChecking,
-    OptionEnableAssertions, OptionEnableGeneratorResultCaching, 
-    OptionRunAsyncEnabled, OptionScriptStyle,
-    OptionSoycEnabled, OptionSoycDetailed, OptionOptimizePrecompile,
-    OptionStrict {
+    OptionDisableClassMetadata, OptionDisableCastChecking, OptionEnableAssertions,
+    OptionEnableGeneratorResultCaching, OptionRunAsyncEnabled, OptionScriptStyle,
+    OptionSoycEnabled, OptionSoycDetailed, OptionOptimizePrecompile, OptionStrict {
 }

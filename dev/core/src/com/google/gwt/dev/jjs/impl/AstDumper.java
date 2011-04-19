@@ -26,29 +26,30 @@ import java.io.PrintWriter;
 
 /**
  * A simple utility to dump a JProgram to a temp file, which can be called
- * sequentially during a compilation/optimization run, so intermediate steps
- * can be compared.
+ * sequentially during a compilation/optimization run, so intermediate steps can
+ * be compared.
  * 
- * It uses the system property "gwt.jjs.dumpAst" to determine the name 
- * (or prefix) of the file to dump the AST to.
+ * It uses the system property "gwt.jjs.dumpAst" to determine the name (or
+ * prefix) of the file to dump the AST to.
  * 
- * TODO(jbrosenberg): Add proper logging and/or exception handling for the 
+ * TODO(jbrosenberg): Add proper logging and/or exception handling for the
  * potential IOException that might occur when writing the file.
  */
 public class AstDumper {
-  
+
   private static int autoVersionNumber = 0;
-  
+
   /**
-   * Appends a new version of the AST at the end of the file, each time it's called.
+   * Appends a new version of the AST at the end of the file, each time it's
+   * called.
    */
   public static void maybeDumpAST(JProgram jprogram) {
     maybeDumpAST(jprogram, null, true);
   }
-  
+
   /**
-   * Writes the AST to the file with a versioned extension, using an 
-   * auto-incrementing version number (starting from 1), each time it's called.  
+   * Writes the AST to the file with a versioned extension, using an
+   * auto-incrementing version number (starting from 1), each time it's called.
    * Any previous contents of the file written to will be overwritten.
    */
   public static void maybeDumpAST(JProgram jprogram, boolean autoIncrementVersion) {
@@ -58,27 +59,26 @@ public class AstDumper {
       maybeDumpAST(jprogram, autoVersionNumber++);
     }
   }
-  
+
   /**
-   * Writes the AST to the file with the provided version number extension.
-   * Any previous contents of the file written to will be overwritten.
+   * Writes the AST to the file with the provided version number extension. Any
+   * previous contents of the file written to will be overwritten.
    */
   public static void maybeDumpAST(JProgram jprogram, int versionNumber) {
     String fileExtension = "." + versionNumber;
     maybeDumpAST(jprogram, fileExtension, false);
   }
-  
+
   /**
-   * Writes the AST to the file with the provided version string extension.
-   * Any previous contents of the file written to will be overwritten.
+   * Writes the AST to the file with the provided version string extension. Any
+   * previous contents of the file written to will be overwritten.
    */
   public static void maybeDumpAST(JProgram jprogram, String versionString) {
     String fileExtension = "." + versionString;
     maybeDumpAST(jprogram, fileExtension, false);
   }
-  
-  private static void maybeDumpAST(JProgram jprogram,
-                              String fileExtension, boolean append) {
+
+  private static void maybeDumpAST(JProgram jprogram, String fileExtension, boolean append) {
     String dumpFile = System.getProperty("gwt.jjs.dumpAst");
     if (dumpFile != null) {
       if (fileExtension != null) {
@@ -99,6 +99,6 @@ public class AstDumper {
         System.out.println("Could not dump AST");
         e.printStackTrace();
       }
-    } 
+    }
   }
 }

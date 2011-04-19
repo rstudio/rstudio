@@ -86,8 +86,7 @@ public abstract class TempLocalVisitor extends JModVisitor {
       if (target instanceof JLocal) {
         String name = target.getName();
         if (name.startsWith(PREFIX)) {
-          curScope.recordTempAllocated(Integer.parseInt(
-              name.substring(PREFIX.length()), 10));
+          curScope.recordTempAllocated(Integer.parseInt(name.substring(PREFIX.length()), 10));
         }
       }
     }
@@ -211,7 +210,7 @@ public abstract class TempLocalVisitor extends JModVisitor {
    * A set of statements we cannot insert declaration statements into. Currently
    * this is just the "increments" list of a JForStatement.
    */
-  private Set<JStatement> banList = new HashSet<JStatement>();
+  private final Set<JStatement> banList = new HashSet<JStatement>();
 
   private JMethodBody curMethodBody = null;
   private Scope curScope = null;
@@ -273,8 +272,7 @@ public abstract class TempLocalVisitor extends JModVisitor {
     int tempNum = curScope.allocateNextFreeTemp();
     String name = PREFIX + tempNum;
     JLocal local = JProgram.createLocal(info, name, type, false, curMethodBody);
-    JDeclarationStatement init = new JDeclarationStatement(info, new JLocalRef(
-        info, local), null);
+    JDeclarationStatement init = new JDeclarationStatement(info, new JLocalRef(info, local), null);
     insertionStack.peek().insertBefore(init);
     return local;
   }

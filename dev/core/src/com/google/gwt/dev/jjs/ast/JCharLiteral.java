@@ -23,8 +23,7 @@ import com.google.gwt.dev.jjs.SourceOrigin;
  */
 public class JCharLiteral extends JValueLiteral {
 
-  public static final JCharLiteral NULL = new JCharLiteral(
-      SourceOrigin.UNKNOWN, (char) 0);
+  public static final JCharLiteral NULL = new JCharLiteral(SourceOrigin.UNKNOWN, (char) 0);
 
   public static JCharLiteral get(char value) {
     return (value == 0) ? NULL : new JCharLiteral(SourceOrigin.UNKNOWN, value);

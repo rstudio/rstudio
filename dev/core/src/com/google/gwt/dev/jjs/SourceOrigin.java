@@ -39,8 +39,7 @@ public class SourceOrigin implements SourceInfo {
     private final int endPos;
     private final int startPos;
 
-    private SourceOriginPos(String location, int startLine, int startPos,
-        int endPos) {
+    private SourceOriginPos(String location, int startLine, int startPos, int endPos) {
       super(location, startLine);
       this.startPos = startPos;
       this.endPos = endPos;
@@ -73,21 +72,20 @@ public class SourceOrigin implements SourceInfo {
    * get barely any reuse in the Java AST. Synchronized since several threads
    * could operate on it at once during parallel optimization phases.
    */
-  private static final Map<SourceOrigin, SourceOrigin> CANONICAL_SOURCE_ORIGINS = Collections.synchronizedMap(new LinkedHashMap<SourceOrigin, SourceOrigin>(
-      150, 0.75f, true) {
-    @Override
-    protected boolean removeEldestEntry(Entry<SourceOrigin, SourceOrigin> eldest) {
-      return size() > 100;
-    }
-  });
+  private static final Map<SourceOrigin, SourceOrigin> CANONICAL_SOURCE_ORIGINS = Collections
+      .synchronizedMap(new LinkedHashMap<SourceOrigin, SourceOrigin>(150, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Entry<SourceOrigin, SourceOrigin> eldest) {
+          return size() > 100;
+        }
+      });
 
   private static final Correlation[] NO_CORRELATIONS = new Correlation[0];
 
   /**
    * Creates SourceOrigin nodes.
    */
-  public static SourceOrigin create(int startPos, int endPos, int startLine,
-      String fileName) {
+  public static SourceOrigin create(int startPos, int endPos, int startLine, String fileName) {
     if (startPos < 0 && endPos < 0) {
       return create(startLine, fileName);
     }
@@ -104,8 +102,7 @@ public class SourceOrigin implements SourceInfo {
     SourceOrigin newInstance = new SourceOrigin(fileName, startLine);
     SourceOrigin canonical = CANONICAL_SOURCE_ORIGINS.get(newInstance);
 
-    assert canonical == null
-        || (newInstance != canonical && newInstance.equals(canonical));
+    assert canonical == null || (newInstance != canonical && newInstance.equals(canonical));
 
     if (canonical != null) {
       return canonical;
@@ -134,8 +131,7 @@ public class SourceOrigin implements SourceInfo {
     }
     SourceOrigin other = (SourceOrigin) o;
     return startLine == other.startLine && getEndPos() == other.getEndPos()
-        && getStartPos() == other.getStartPos()
-        && fileName.equals(other.fileName);
+        && getStartPos() == other.getStartPos() && fileName.equals(other.fileName);
   }
 
   public Correlation getCorrelation(Axis axis) {
@@ -172,8 +168,7 @@ public class SourceOrigin implements SourceInfo {
 
   @Override
   public int hashCode() {
-    return 2 + 13 * fileName.hashCode() + 17 * startLine + 29 * getStartPos()
-        + 31 * getEndPos();
+    return 2 + 13 * fileName.hashCode() + 17 * startLine + 29 * getStartPos() + 31 * getEndPos();
   }
 
   public SourceInfo makeChild() {

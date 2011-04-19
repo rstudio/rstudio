@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -83,8 +83,9 @@ public class ReplaceRebinds {
       JClassLiteral classLiteral = (JClassLiteral) arg;
       JReferenceType sourceType = (JReferenceType) classLiteral.getRefType();
       List<JClassType> allRebindResults = getAllPossibleRebindResults(sourceType);
-      JGwtCreate gwtCreate = new JGwtCreate(x.getSourceInfo(), sourceType,
-          allRebindResults, program.getTypeJavaLangObject(), currentClass);
+      JGwtCreate gwtCreate =
+          new JGwtCreate(x.getSourceInfo(), sourceType, allRebindResults, program
+              .getTypeJavaLangObject(), currentClass);
       if (allRebindResults.size() == 1) {
         // Just replace with the instantiation expression.
         ctx.replaceMe(gwtCreate.getInstantiationExpressions().get(0));
@@ -106,8 +107,8 @@ public class ReplaceRebinds {
 
       if (ref != null) {
         final List<String> errors = new ArrayList<String>();
-        JNode node = JsniRefLookup.findJsniRefTarget(ref, program,
-            new JsniRefLookup.ErrorReporter() {
+        JNode node =
+            JsniRefLookup.findJsniRefTarget(ref, program, new JsniRefLookup.ErrorReporter() {
               public void reportError(String error) {
                 errors.add(error);
               }
@@ -125,8 +126,9 @@ public class ReplaceRebinds {
 
       } else {
         // See if it's just @foo.Bar, which would result in the class seed
-        refType = program.getFromTypeMap(stringValue.charAt(0) == '@'
-            ? stringValue.substring(1) : stringValue);
+        refType =
+            program.getFromTypeMap(stringValue.charAt(0) == '@' ? stringValue.substring(1)
+                : stringValue);
         if (refType != null) {
           named = refType;
         }
@@ -136,14 +138,12 @@ public class ReplaceRebinds {
         // Not found, must be null
         ctx.replaceMe(JNullLiteral.INSTANCE);
       } else {
-        ctx.replaceMe(new JNameOf(x.getSourceInfo(), stringLiteral.getType(),
-            named));
+        ctx.replaceMe(new JNameOf(x.getSourceInfo(), stringLiteral.getType(), named));
       }
     }
   }
 
-  public static boolean exec(TreeLogger logger, JProgram program,
-      RebindPermutationOracle rpo) {
+  public static boolean exec(TreeLogger logger, JProgram program, RebindPermutationOracle rpo) {
     Event replaceRebindsEvent = SpeedTracerLogger.start(CompilerEventType.REPLACE_REBINDS);
     boolean didChange = new ReplaceRebinds(logger, program, rpo).execImpl();
     replaceRebindsEvent.end();
@@ -154,8 +154,7 @@ public class ReplaceRebinds {
   private final JProgram program;
   private final RebindPermutationOracle rpo;
 
-  private ReplaceRebinds(TreeLogger logger, JProgram program,
-      RebindPermutationOracle rpo) {
+  private ReplaceRebinds(TreeLogger logger, JProgram program, RebindPermutationOracle rpo) {
     this.logger = logger;
     this.program = program;
     this.rpo = rpo;
@@ -169,9 +168,8 @@ public class ReplaceRebinds {
       answers = rpo.getAllPossibleRebindAnswers(logger, reqType);
     } catch (UnableToCompleteException e) {
       // Should never happen.
-      throw new InternalCompilerException(
-          "Unexpected failure to get possible rebind answers for '" + reqType
-              + "'");
+      throw new InternalCompilerException("Unexpected failure to get possible rebind answers for '"
+          + reqType + "'");
     }
     List<JClassType> rebindAnswers = new ArrayList<JClassType>();
     for (String answer : answers) {
@@ -184,9 +182,9 @@ public class ReplaceRebinds {
   }
 
   private boolean execImpl() {
-    RebindVisitor rebinder = new RebindVisitor(
-        program.getIndexedMethod("Impl.getNameOf"),
-        program.getIndexedMethod("GWT.create"));
+    RebindVisitor rebinder =
+        new RebindVisitor(program.getIndexedMethod("Impl.getNameOf"), program
+            .getIndexedMethod("GWT.create"));
     rebinder.accept(program);
     return rebinder.didChange();
   }

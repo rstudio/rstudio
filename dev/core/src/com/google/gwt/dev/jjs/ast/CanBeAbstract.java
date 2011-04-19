@@ -16,7 +16,7 @@
 package com.google.gwt.dev.jjs.ast;
 
 /**
- * Interfaces implemented by entities which can be abstract. 
+ * Interfaces implemented by entities which can be abstract.
  */
 public interface CanBeAbstract {
   boolean isAbstract();

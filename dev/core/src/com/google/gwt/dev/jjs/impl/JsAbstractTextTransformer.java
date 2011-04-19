@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -29,14 +29,14 @@ public abstract class JsAbstractTextTransformer {
 
   protected StatementRanges statementRanges;
 
-  public JsAbstractTextTransformer(String js, StatementRanges statementRanges) {
-    this.js = js;
-    this.statementRanges = statementRanges;
-  }
-
   public JsAbstractTextTransformer(JsAbstractTextTransformer xformer) {
     this.js = xformer.getJs();
     this.statementRanges = xformer.getStatementRanges();
+  }
+
+  public JsAbstractTextTransformer(String js, StatementRanges statementRanges) {
+    this.js = js;
+    this.statementRanges = statementRanges;
   }
 
   public abstract void exec();
@@ -49,15 +49,14 @@ public abstract class JsAbstractTextTransformer {
     return statementRanges;
   }
 
-  protected void addStatement(String code, StringBuilder newJs,
-      ArrayList<Integer> starts, ArrayList<Integer> ends) {
+  protected void addStatement(String code, StringBuilder newJs, ArrayList<Integer> starts,
+      ArrayList<Integer> ends) {
     beginStatement(newJs, starts);
     newJs.append(code);
     endStatement(newJs, ends);
   }
 
-  protected void beginStatement(StringBuilder newJs,
-      ArrayList<Integer> starts) {
+  protected void beginStatement(StringBuilder newJs, ArrayList<Integer> starts) {
     starts.add(newJs.length());
   }
 
@@ -87,7 +86,7 @@ public abstract class JsAbstractTextTransformer {
   /**
    * Called if any operations need to be performed after all statements have
    * been processed.
-   *
+   * 
    * @param newJs
    * @param starts
    * @param ends
@@ -97,8 +96,7 @@ public abstract class JsAbstractTextTransformer {
   }
 
   protected String getJsForRange(int stmtIndex) {
-    return js.substring(statementRanges.start(stmtIndex),
-        statementRanges.end(stmtIndex));
+    return js.substring(statementRanges.start(stmtIndex), statementRanges.end(stmtIndex));
   }
 
   /**
@@ -112,21 +110,17 @@ public abstract class JsAbstractTextTransformer {
     ArrayList<Integer> ends = new ArrayList<Integer>();
 
     beginStatements(newJs, starts, ends);
-    for (int i = 0; i < stmtIndices.length; i++) {
-      String code = getJsForRange(stmtIndices[i]);
+    for (int stmtIndice : stmtIndices) {
+      String code = getJsForRange(stmtIndice);
       addStatement(code, newJs, starts, ends);
     }
     endStatements(newJs, starts, ends);
 
-    assert
-        starts.size() == ends.size() :
-        "Size mismatch between start and" + " end statement ranges.";
-    assert starts.get(0) == 0 && ends.get(ends.size() - 1) ==
-        newJs.length() :
-        "statement ranges don't cover entire JS output string.";
+    assert starts.size() == ends.size() : "Size mismatch between start and"
+        + " end statement ranges.";
+    assert starts.get(0) == 0 && ends.get(ends.size() - 1) == newJs.length() : "statement ranges don't cover entire JS output string.";
 
-    StandardStatementRanges newRanges = new StandardStatementRanges(starts,
-        ends);
+    StandardStatementRanges newRanges = new StandardStatementRanges(starts, ends);
     js = newJs.toString();
     statementRanges = newRanges;
   }

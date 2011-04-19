@@ -288,8 +288,7 @@ public abstract class JDeclaredType extends JReferenceType {
    * @see #writeMembers(ObjectOutputStream)
    */
   @SuppressWarnings("unchecked")
-  void readMembers(ObjectInputStream stream) throws IOException,
-      ClassNotFoundException {
+  void readMembers(ObjectInputStream stream) throws IOException, ClassNotFoundException {
     fields = (List<JField>) stream.readObject();
     methods = (List<JMethod>) stream.readObject();
     artificialRescues = (List<JNode>) stream.readObject();
@@ -300,8 +299,7 @@ public abstract class JDeclaredType extends JReferenceType {
    * 
    * @see #writeMethodBodies(ObjectOutputStream)
    */
-  void readMethodBodies(ObjectInputStream stream) throws IOException,
-      ClassNotFoundException {
+  void readMethodBodies(ObjectInputStream stream) throws IOException, ClassNotFoundException {
     for (JMethod method : methods) {
       method.readBody(stream);
     }
@@ -316,11 +314,11 @@ public abstract class JDeclaredType extends JReferenceType {
     }
     if (newClinitTarget != null && getClass().desiredAssertionStatus()) {
       // Make sure this is a pure upgrade to a superclass or null.
-      for (JClassType current = (JClassType) clinitTarget; current != newClinitTarget; current = current.getSuperClass()) {
-        Preconditions.checkNotNull(
-            current.getSuperClass(),
-            "Null super class for: %s (currentTarget: %s; newTarget: %s) in %s",
-            current, clinitTarget, newClinitTarget, this);
+      for (JClassType current = (JClassType) clinitTarget; current != newClinitTarget; current =
+          current.getSuperClass()) {
+        Preconditions.checkNotNull(current.getSuperClass(),
+            "Null super class for: %s (currentTarget: %s; newTarget: %s) in %s", current,
+            clinitTarget, newClinitTarget, this);
       }
     }
     clinitTarget = newClinitTarget;

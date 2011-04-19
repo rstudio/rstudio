@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -70,7 +70,7 @@ public class UnifiedAst implements Serializable {
   private transient AST initialAst;
 
   /**
-   * Metrics for the module load phase.  Stored here so they can be written out
+   * Metrics for the module load phase. Stored here so they can be written out
    * as artifacts in the compile phase.
    */
   private ModuleMetricsArtifact moduleMetrics;
@@ -86,8 +86,8 @@ public class UnifiedAst implements Serializable {
   private final JJSOptions options;
 
   /**
-   * Metrics for the precompilation phase.  Stored here so they can be written out
-   * as artifacts in the compile phase.
+   * Metrics for the precompilation phase. Stored here so they can be written
+   * out as artifacts in the compile phase.
    */
   private PrecompilationMetricsArtifact precompilationMetrics;
 
@@ -101,14 +101,12 @@ public class UnifiedAst implements Serializable {
    */
   private transient long serializedAstToken;
 
-  public UnifiedAst(JJSOptions options, AST initialAst,
-      boolean singlePermutation, Set<String> rebindRequests) {
+  public UnifiedAst(JJSOptions options, AST initialAst, boolean singlePermutation,
+      Set<String> rebindRequests) {
     this.options = new JJSOptionsImpl(options);
     this.initialAst = initialAst;
-    this.rebindRequests = Collections.unmodifiableSortedSet(new TreeSet<String>(
-        rebindRequests));
-    this.serializedAstToken = singlePermutation ? -1
-        : diskCache.writeObject(initialAst);
+    this.rebindRequests = Collections.unmodifiableSortedSet(new TreeSet<String>(rebindRequests));
+    this.serializedAstToken = singlePermutation ? -1 : diskCache.writeObject(initialAst);
   }
 
   /**
@@ -124,23 +122,22 @@ public class UnifiedAst implements Serializable {
 
   /**
    * Compiles a particular permutation.
-   *
+   * 
    * @param logger the logger to use
    * @param permutation the permutation to compile
    * @return the permutation result
    * @throws UnableToCompleteException if an error other than
    *           {@link OutOfMemoryError} occurs
    */
-  public PermutationResult compilePermutation(TreeLogger logger,
-      Permutation permutation) throws UnableToCompleteException {
-    return JavaToJavaScriptCompiler.compilePermutation(logger, this,
-        permutation);
+  public PermutationResult compilePermutation(TreeLogger logger, Permutation permutation)
+      throws UnableToCompleteException {
+    return JavaToJavaScriptCompiler.compilePermutation(logger, this, permutation);
   }
 
   /**
    * Return the current AST so that clients can explicitly walk the Java or
    * JavaScript parse trees.
-   *
+   * 
    * @return the current AST object holding the Java and JavaScript trees.
    */
   public AST getFreshAst() {
@@ -216,8 +213,7 @@ public class UnifiedAst implements Serializable {
   /**
    * Re-initialize lock object; copy serialized AST straight to cache.
    */
-  private void readObject(ObjectInputStream stream) throws IOException,
-      ClassNotFoundException {
+  private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
     stream.defaultReadObject();
     myLockObject = new Object();
     serializedAstToken = diskCache.transferFromStream(stream);
@@ -235,8 +231,7 @@ public class UnifiedAst implements Serializable {
       // Serialize into raw bytes.
       Util.writeObjectToStream(stream, initialAst);
     } else {
-      throw new IllegalStateException(
-          "No serialized AST was cached and AST was already consumed.");
+      throw new IllegalStateException("No serialized AST was cached and AST was already consumed.");
     }
   }
 }

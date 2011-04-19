@@ -25,8 +25,7 @@ public class JStringLiteral extends JValueLiteral {
   private final JClassType stringType;
   private final String value;
 
-  public JStringLiteral(SourceInfo sourceInfo, String value,
-      JClassType stringType) {
+  public JStringLiteral(SourceInfo sourceInfo, String value, JClassType stringType) {
     super(sourceInfo);
     this.value = value;
     this.stringType = stringType;

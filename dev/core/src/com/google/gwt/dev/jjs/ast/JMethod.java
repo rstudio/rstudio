@@ -48,8 +48,8 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
 
     private Object readResolve() {
       String name = signature.substring(0, signature.indexOf('('));
-      JMethod result = new JMethod(SourceOrigin.UNKNOWN, name, enclosingType,
-          null, false, false, false, false);
+      JMethod result =
+          new JMethod(SourceOrigin.UNKNOWN, name, enclosingType, null, false, false, false, false);
       result.signature = signature;
       return result;
     }
@@ -96,9 +96,8 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
   /**
    * These are only supposed to be constructed by JProgram.
    */
-  public JMethod(SourceInfo info, String name, JDeclaredType enclosingType,
-      JType returnType, boolean isAbstract, boolean isStatic, boolean isFinal,
-      boolean isPrivate) {
+  public JMethod(SourceInfo info, String name, JDeclaredType enclosingType, JType returnType,
+      boolean isAbstract, boolean isStatic, boolean isFinal, boolean isPrivate) {
     super(info);
     this.name = StringInterner.get().intern(name);
     this.enclosingType = enclosingType;
@@ -131,7 +130,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
   public void addParam(JParameter x) {
     params = Lists.add(params, x);
   }
-  
+
   public void addThrownException(JClassType exceptionType) {
     thrownExceptions = Lists.add(thrownExceptions, exceptionType);
   }
@@ -363,8 +362,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
    * 
    * @see #writeBody(ObjectOutputStream)
    */
-  void readBody(ObjectInputStream stream) throws IOException,
-      ClassNotFoundException {
+  void readBody(ObjectInputStream stream) throws IOException, ClassNotFoundException {
     body = (JAbstractMethodBody) stream.readObject();
   }
 

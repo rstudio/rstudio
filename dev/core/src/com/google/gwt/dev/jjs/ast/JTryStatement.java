@@ -29,8 +29,8 @@ public class JTryStatement extends JStatement {
   private final JBlock finallyBlock;
   private final JBlock tryBlock;
 
-  public JTryStatement(SourceInfo info, JBlock tryBlock,
-      List<JLocalRef> catchArgs, List<JBlock> catchBlocks, JBlock finallyBlock) {
+  public JTryStatement(SourceInfo info, JBlock tryBlock, List<JLocalRef> catchArgs,
+      List<JBlock> catchBlocks, JBlock finallyBlock) {
     super(info);
     assert (catchArgs.size() == catchBlocks.size());
     this.tryBlock = tryBlock;

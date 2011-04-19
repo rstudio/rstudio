@@ -61,17 +61,16 @@ public class AutoboxUtils {
 
   /**
    * Box the expression <code>toBox</code> into the wrapper type corresponding
-   * to <code>primitiveType</code>. If <code>toBox</code> is not already of
-   * type <code>primitiveType</code>, then a cast may be necessary.
+   * to <code>primitiveType</code>. If <code>toBox</code> is not already of type
+   * <code>primitiveType</code>, then a cast may be necessary.
    */
   public JExpression box(JExpression toBox, JPrimitiveType primitiveType) {
     // Find the wrapper type for this primitive type.
     String wrapperTypeName = primitiveType.getWrapperTypeName();
     JClassType wrapperType = (JClassType) program.getFromTypeMap(wrapperTypeName);
     if (wrapperType == null) {
-      throw new InternalCompilerException(toBox, "Cannot find wrapper type '"
-          + wrapperTypeName + "' associated with primitive type '"
-          + primitiveType.getName() + "'", null);
+      throw new InternalCompilerException(toBox, "Cannot find wrapper type '" + wrapperTypeName
+          + "' associated with primitive type '" + primitiveType.getName() + "'", null);
     }
 
     return box(toBox, primitiveType, wrapperType);
@@ -100,8 +99,7 @@ public class AutoboxUtils {
     return null;
   }
 
-  private JExpression box(JExpression toBox, JPrimitiveType primitiveType,
-      JClassType wrapperType) {
+  private JExpression box(JExpression toBox, JPrimitiveType primitiveType, JClassType wrapperType) {
     // Add a cast to toBox if need be
     if (toBox.getType() != primitiveType) {
       toBox = new JCastOperation(toBox.getSourceInfo(), primitiveType, toBox);
@@ -124,11 +122,9 @@ public class AutoboxUtils {
 
     if (valueOfMethod == null || !valueOfMethod.isStatic()
         || valueOfMethod.getType() != wrapperType) {
-      throw new InternalCompilerException(toBox,
-          "Expected to find a method on '" + wrapperType.getName()
-              + "' whose signature matches 'public static "
-              + wrapperType.getName() + " valueOf(" + primitiveType.getName()
-              + ")'", null);
+      throw new InternalCompilerException(toBox, "Expected to find a method on '"
+          + wrapperType.getName() + "' whose signature matches 'public static "
+          + wrapperType.getName() + " valueOf(" + primitiveType.getName() + ")'", null);
     }
 
     // Create the boxing call.
@@ -169,8 +165,7 @@ public class AutoboxUtils {
       if (boxType != null) {
         for (JMethod method : boxType.getMethods()) {
           if (!method.isStatic() && method.getParams().isEmpty()
-              && method.getName().endsWith("Value")
-              && (method.getType() instanceof JPrimitiveType)) {
+              && method.getName().endsWith("Value") && (method.getType() instanceof JPrimitiveType)) {
             unboxMethods.add(method);
           }
         }

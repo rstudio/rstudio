@@ -125,8 +125,7 @@ public class GenerateJavaScriptLiterals extends JVisitor {
     return list;
   }
 
-  protected final <T extends JsVisitable> void popList(List<T> collection,
-      int count) {
+  protected final <T extends JsVisitable> void popList(List<T> collection, int count) {
     List<T> list = new ArrayList<T>();
     while (count > 0) {
       T item = this.<T> pop();

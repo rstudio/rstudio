@@ -22,8 +22,8 @@ import com.google.gwt.dev.jjs.SourceInfo;
  */
 public class JAssertStatement extends JStatement {
 
-  private JExpression testExpr;
   private JExpression arg;
+  private JExpression testExpr;
 
   public JAssertStatement(SourceInfo info, JExpression testExpr, JExpression arg) {
     super(info);

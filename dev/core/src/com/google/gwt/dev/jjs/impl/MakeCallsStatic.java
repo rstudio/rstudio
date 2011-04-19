@@ -66,8 +66,6 @@ import java.util.Set;
  * most cases the polymorphic version can be pruned later.
  */
 public class MakeCallsStatic {
-  private static final String NAME = MakeCallsStatic.class.getSimpleName();
-
   /**
    * For all methods that should be made static, move the contents of the method
    * to a new static method, and have the original (instance) method delegate to
@@ -109,8 +107,7 @@ public class MakeCallsStatic {
       private final JParameter thisParam;
       private final Map<JParameter, JParameter> varMap;
 
-      public RewriteMethodBody(JParameter thisParam,
-          Map<JParameter, JParameter> varMap) {
+      public RewriteMethodBody(JParameter thisParam, Map<JParameter, JParameter> varMap) {
         this.thisParam = thisParam;
         this.varMap = varMap;
       }
@@ -129,10 +126,15 @@ public class MakeCallsStatic {
       }
     }
 
-    private JProgram program;
+    private final JProgram program;
 
     CreateStaticImplsVisitor(JProgram program) {
       this.program = program;
+    }
+
+    @Override
+    public boolean visit(JConstructor x, Context ctx) {
+      throw new InternalCompilerException("Should not try to staticify constructors");
     }
 
     @Override
@@ -151,20 +153,22 @@ public class MakeCallsStatic {
        * Don't use the JProgram helper because it auto-adds the new method to
        * its enclosing class.
        */
-      JMethod newMethod = new JMethod(sourceInfo, newName, enclosingType,
-          returnType, false, true, true, x.isPrivate());
+      JMethod newMethod =
+          new JMethod(sourceInfo, newName, enclosingType, returnType, false, true, true, x
+              .isPrivate());
       newMethod.setSynthetic();
       newMethod.addThrownExceptions(x.getThrownExceptions());
 
       // Setup parameters; map from the old params to the new params
-      JParameter thisParam = JParameter.create(sourceInfo, "this$static",
-          enclosingType.getNonNull(), true, true, newMethod);
+      JParameter thisParam =
+          JParameter.create(sourceInfo, "this$static", enclosingType.getNonNull(), true, true,
+              newMethod);
       Map<JParameter, JParameter> varMap = new IdentityHashMap<JParameter, JParameter>();
       for (int i = 0; i < x.getParams().size(); ++i) {
         JParameter oldVar = x.getParams().get(i);
-        JParameter newVar = JParameter.create(oldVar.getSourceInfo(),
-            oldVar.getName(), oldVar.getType(), oldVar.isFinal(), false,
-            newMethod);
+        JParameter newVar =
+            JParameter.create(oldVar.getSourceInfo(), oldVar.getName(), oldVar.getType(), oldVar
+                .isFinal(), false, newMethod);
         varMap.put(oldVar, newVar);
       }
 
@@ -218,12 +222,6 @@ public class MakeCallsStatic {
       enclosingType.getMethods().add(myIndexInClass + 1, newMethod);
       return false;
     }
-
-    @Override
-    public boolean visit(JConstructor x, Context ctx) {
-      throw new InternalCompilerException(
-          "Should not try to staticify constructors");
-    }
   }
 
   /**
@@ -245,8 +243,7 @@ public class MakeCallsStatic {
       }
 
       // Did we already do this one?
-      if (program.getStaticImpl(method) != null
-          || toBeMadeStatic.contains(method)) {
+      if (program.getStaticImpl(method) != null || toBeMadeStatic.contains(method)) {
         return;
       }
 
@@ -323,8 +320,7 @@ public class MakeCallsStatic {
 
     @Override
     public boolean visit(JMethod x, Context ctx) {
-      currentMethodIsInitiallyLive = initiallyLive.getLiveFieldsAndMethods().contains(
-          x);
+      currentMethodIsInitiallyLive = initiallyLive.getLiveFieldsAndMethods().contains(x);
       return true;
     }
 
@@ -335,9 +331,10 @@ public class MakeCallsStatic {
     }
   }
 
+  private static final String NAME = MakeCallsStatic.class.getSimpleName();
+
   public static OptimizerStats exec(JProgram program) {
-    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE,
-        "optimizer", NAME);
+    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
     OptimizerStats stats = new MakeCallsStatic(program).execImpl();
     optimizeEvent.end("didChange", "" + stats.didChange());
     return stats;

@@ -23,8 +23,7 @@ import java.util.List;
  * Interface implemented by named entities.
  */
 public interface HasName {
-  String getName();
-  
+
   /**
    * Collection of utilities to deal with HasName objects.
    */
@@ -37,4 +36,6 @@ public interface HasName {
       });
     }
   }
+
+  String getName();
 }

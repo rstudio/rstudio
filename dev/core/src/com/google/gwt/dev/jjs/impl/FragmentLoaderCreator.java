@@ -36,7 +36,8 @@ import java.io.PrintWriter;
  * runAsync and how it works.
  */
 public class FragmentLoaderCreator {
-  public static final String ASYNC_FRAGMENT_LOADER = "com.google.gwt.core.client.impl.AsyncFragmentLoader";
+  public static final String ASYNC_FRAGMENT_LOADER =
+      "com.google.gwt.core.client.impl.AsyncFragmentLoader";
   public static final String ASYNC_LOADER_CLASS_PREFIX = "AsyncLoader";
   public static final String ASYNC_LOADER_PACKAGE = "com.google.gwt.lang.asyncloaders";
   public static final String BROWSER_LOADER = "AsyncFragmentLoader.BROWSER_LOADER";
@@ -59,8 +60,9 @@ public class FragmentLoaderCreator {
   public FragmentLoaderCreator(StandardGeneratorContext context) {
     // An empty property oracle is fine, because fragment loaders aren't
     // affected by properties anyway
-    this.propOracle = new StaticPropertyOracle(new BindingProperty[0],
-        new String[0], new ConfigurationProperty[0]);
+    this.propOracle =
+        new StaticPropertyOracle(new BindingProperty[0], new String[0],
+            new ConfigurationProperty[0]);
     this.context = context;
   }
 
@@ -92,29 +94,25 @@ public class FragmentLoaderCreator {
 
   private void generateLoaderFields(PrintWriter srcWriter) {
     srcWriter.println("// Callbacks that are pending");
-    srcWriter.println("private static " + getCallbackListSimpleName()
-        + " callbacksHead = null;");
+    srcWriter.println("private static " + getCallbackListSimpleName() + " callbacksHead = null;");
 
     srcWriter.println("// The tail of the callbacks list");
-    srcWriter.println("private static " + getCallbackListSimpleName()
-        + " callbacksTail = null;");
+    srcWriter.println("private static " + getCallbackListSimpleName() + " callbacksTail = null;");
 
     srcWriter.println("// A callback caller for this entry point");
-    srcWriter.println("private static " + getLoaderSimpleName()
-        + " instance = null;");
+    srcWriter.println("private static " + getLoaderSimpleName() + " instance = null;");
   }
 
   private void generateOnLoadMethod(PrintWriter srcWriter) {
     srcWriter.println("public static void onLoad() {");
     srcWriter.println("instance = new " + getLoaderSimpleName() + "();");
-    srcWriter.println(BROWSER_LOADER + ".fragmentHasLoaded(" + entryNumber
-        + ");");
+    srcWriter.println(BROWSER_LOADER + ".fragmentHasLoaded(" + entryNumber + ");");
 
-    srcWriter.println(BROWSER_LOADER + ".logEventProgress(\""
-        + RUN_CALLBACKS + entryNumber + "\", \"begin\");");
+    srcWriter.println(BROWSER_LOADER + ".logEventProgress(\"" + RUN_CALLBACKS + entryNumber
+        + "\", \"begin\");");
     srcWriter.println("instance." + RUN_CALLBACKS + "();");
-    srcWriter.println(BROWSER_LOADER + ".logEventProgress(\""
-        + RUN_CALLBACKS + entryNumber + "\", \"end\");");
+    srcWriter.println(BROWSER_LOADER + ".logEventProgress(\"" + RUN_CALLBACKS + entryNumber
+        + "\", \"end\");");
 
     srcWriter.println("}");
   }
@@ -143,8 +141,7 @@ public class FragmentLoaderCreator {
     srcWriter.println("  instance." + RUN_CALLBACKS + "();");
     srcWriter.println("  return;");
     srcWriter.println("}");
-    srcWriter.println("if (!" + BROWSER_LOADER + ".isLoading(" + entryNumber
-        + ")) {");
+    srcWriter.println("if (!" + BROWSER_LOADER + ".isLoading(" + entryNumber + ")) {");
     srcWriter.println("  " + BROWSER_LOADER + ".inject(" + entryNumber + ",");
     srcWriter.println("  new AsyncFragmentLoader.LoadTerminatedHandler() {");
     srcWriter.println("    public void loadTerminated(Throwable reason) {");
@@ -173,8 +170,7 @@ public class FragmentLoaderCreator {
     srcWriter.println("  " + UNCAUGHT_EXCEPTION_HANDLER_CLASS + " handler = "
         + "GWT.getUncaughtExceptionHandler();");
 
-    srcWriter.println("  " + getCallbackListSimpleName()
-        + " next = callbacksHead;");
+    srcWriter.println("  " + getCallbackListSimpleName() + " next = callbacksHead;");
     srcWriter.println("  callbacksHead = callbacksHead.next;");
     srcWriter.println("  if (callbacksHead == null) {");
     srcWriter.println("    callbacksTail = null;");
@@ -218,17 +214,14 @@ public class FragmentLoaderCreator {
     return ASYNC_LOADER_PACKAGE;
   }
 
-  private PrintWriter getSourceWriterForLoader(TreeLogger logger,
-      GeneratorContext ctx) {
-    PrintWriter printWriter = ctx.tryCreate(logger, getPackage(),
-        getLoaderSimpleName());
+  private PrintWriter getSourceWriterForLoader(TreeLogger logger, GeneratorContext ctx) {
+    PrintWriter printWriter = ctx.tryCreate(logger, getPackage(), getLoaderSimpleName());
     if (printWriter == null) {
       return null;
     }
 
     printWriter.println("package " + getPackage() + ";");
-    String[] imports = new String[] {
-        GWT_CLASS, RUN_ASYNC_CALLBACK, ASYNC_FRAGMENT_LOADER};
+    String[] imports = new String[]{GWT_CLASS, RUN_ASYNC_CALLBACK, ASYNC_FRAGMENT_LOADER};
     for (String imp : imports) {
       printWriter.println("import " + imp + ";");
     }
@@ -239,11 +232,9 @@ public class FragmentLoaderCreator {
 
   private void writeCallbackListClass(TreeLogger logger, GeneratorContext ctx)
       throws UnableToCompleteException {
-    PrintWriter printWriter = ctx.tryCreate(logger, getPackage(),
-        getCallbackListSimpleName());
+    PrintWriter printWriter = ctx.tryCreate(logger, getPackage(), getCallbackListSimpleName());
     if (printWriter == null) {
-      logger.log(TreeLogger.ERROR, "Could not create type: "
-          + getCallbackListQualifiedName());
+      logger.log(TreeLogger.ERROR, "Could not create type: " + getCallbackListQualifiedName());
       throw new UnableToCompleteException();
     }
 

@@ -71,7 +71,7 @@ public final class Correlation implements Serializable {
    * Specifies the type of literal value.
    */
   public enum Literal {
-    STRING("string"), CLASS("class");
+    CLASS("class"), STRING("string");
 
     private final String description;
 
@@ -89,16 +89,17 @@ public final class Correlation implements Serializable {
    * limitations of mapping AST nodes into Strings, this Comparator may not
    * always agree with {@link Correlation#equals(Object)}.
    */
-  public static final Comparator<Correlation> AXIS_IDENT_COMPARATOR = new Comparator<Correlation>() {
-    public int compare(Correlation a, Correlation b) {
-      int r = a.axis.compareTo(b.axis);
-      if (r != 0) {
-        return r;
-      }
+  public static final Comparator<Correlation> AXIS_IDENT_COMPARATOR =
+      new Comparator<Correlation>() {
+        public int compare(Correlation a, Correlation b) {
+          int r = a.axis.compareTo(b.axis);
+          if (r != 0) {
+            return r;
+          }
 
-      return a.ident.compareTo(b.ident);
-    }
-  };
+          return a.ident.compareTo(b.ident);
+        }
+      };
 
   /**
    * This may contain a reference to either a Java or Js AST node.
@@ -136,8 +137,9 @@ public final class Correlation implements Serializable {
     }
     Correlation c = (Correlation) obj;
 
-    boolean astSame = astReference == c.astReference
-        || (astReference != null && astReference.equals(c.astReference));
+    boolean astSame =
+        astReference == c.astReference
+            || (astReference != null && astReference.equals(c.astReference));
     return axis == c.axis && astSame;
   }
 

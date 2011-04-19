@@ -56,8 +56,8 @@ public class ResolveRebinds {
     public void endVisit(JGwtCreate x, Context ctx) {
 
       if (isSoftRebind(x.getSourceType())) {
-        JMethod method = rebindMethod(x.getSourceType(), x.getResultTypes(),
-            x.getInstantiationExpressions());
+        JMethod method =
+            rebindMethod(x.getSourceType(), x.getResultTypes(), x.getInstantiationExpressions());
         JMethodCall call = new JMethodCall(x.getSourceInfo(), null, method);
         ctx.replaceMe(call);
         return;
@@ -73,16 +73,14 @@ public class ResolveRebinds {
           return;
         }
       }
-      throw new InternalCompilerException(
-          "No matching rebind result in all rebind results!");
+      throw new InternalCompilerException("No matching rebind result in all rebind results!");
     }
 
     @Override
     public void endVisit(JReboundEntryPoint x, Context ctx) {
 
       if (isSoftRebind(x.getSourceType())) {
-        JMethod method = rebindMethod(x.getSourceType(), x.getResultTypes(),
-            x.getEntryCalls());
+        JMethod method = rebindMethod(x.getSourceType(), x.getResultTypes(), x.getEntryCalls());
         JMethodCall call = new JMethodCall(x.getSourceInfo(), null, method);
         ctx.replaceMe(call.makeStatement());
         return;
@@ -98,13 +96,11 @@ public class ResolveRebinds {
           return;
         }
       }
-      throw new InternalCompilerException(
-          "No matching rebind result in all rebind results!");
+      throw new InternalCompilerException("No matching rebind result in all rebind results!");
     }
   }
 
-  public static boolean exec(JProgram program,
-      Map<String, String>[] orderedRebindAnswers) {
+  public static boolean exec(JProgram program, Map<String, String>[] orderedRebindAnswers) {
     return new ResolveRebinds(program, orderedRebindAnswers).execImpl();
   }
 
@@ -112,8 +108,7 @@ public class ResolveRebinds {
    * Returns the rebind answers that do not vary across various maps of rebind
    * answers.
    */
-  public static Map<String, String> getHardRebindAnswers(
-      Map<String, String>[] rebindAnswers) {
+  public static Map<String, String> getHardRebindAnswers(Map<String, String>[] rebindAnswers) {
     Iterator<Map<String, String>> it = Arrays.asList(rebindAnswers).iterator();
 
     // Start with an arbitrary copy of a rebind answer map
@@ -133,10 +128,10 @@ public class ResolveRebinds {
   private final Map<String, String>[] orderedRebindAnswers;
   private final JMethod permutationIdMethod;
   private final JProgram program;
-  private final Map<JReferenceType, JMethod> rebindMethods = new IdentityHashMap<JReferenceType, JMethod>();
+  private final Map<JReferenceType, JMethod> rebindMethods =
+      new IdentityHashMap<JReferenceType, JMethod>();
 
-  private ResolveRebinds(JProgram program,
-      Map<String, String>[] orderedRebindAnswers) {
+  private ResolveRebinds(JProgram program, Map<String, String>[] orderedRebindAnswers) {
     this.program = program;
     this.orderedRebindAnswers = orderedRebindAnswers;
 
@@ -153,8 +148,7 @@ public class ResolveRebinds {
       // The fact that we already compute every rebind permutation before
       // compiling should prevent this case from ever happening in real life.
       //
-      throw new InternalCompilerException("Unexpected failure to rebind '"
-          + reqType + "'");
+      throw new InternalCompilerException("Unexpected failure to rebind '" + reqType + "'");
     }
     JDeclaredType result = program.getFromTypeMap(reboundClassName);
     assert (result != null);
@@ -172,8 +166,8 @@ public class ResolveRebinds {
     return !hardRebindAnswers.containsKey(reqType);
   }
 
-  private JMethod rebindMethod(JReferenceType requestType,
-      List<JClassType> resultTypes, List<JExpression> instantiationExpressions) {
+  private JMethod rebindMethod(JReferenceType requestType, List<JClassType> resultTypes,
+      List<JExpression> instantiationExpressions) {
     assert resultTypes.size() == instantiationExpressions.size();
 
     JMethod toReturn = rebindMethods.get(requestType);
@@ -181,16 +175,15 @@ public class ResolveRebinds {
       return toReturn;
     }
 
-    SourceInfo info = requestType.getSourceInfo().makeChild(
-        SourceOrigin.UNKNOWN);
+    SourceInfo info = requestType.getSourceInfo().makeChild(SourceOrigin.UNKNOWN);
 
     // Maps the result types to the various virtual permutation ids
-    Map<JClassType, List<Integer>> resultsToPermutations = new LinkedHashMap<JClassType, List<Integer>>();
+    Map<JClassType, List<Integer>> resultsToPermutations =
+        new LinkedHashMap<JClassType, List<Integer>>();
 
     for (int i = 0, j = orderedRebindAnswers.length; i < j; i++) {
       Map<String, String> answerMap = orderedRebindAnswers[i];
-      String answerTypeName = answerMap.get(requestType.getName().replace('$',
-          '.'));
+      String answerTypeName = answerMap.get(requestType.getName().replace('$', '.'));
       // We take an answer class, e.g. DOMImplSafari ...
       JClassType answerType = (JClassType) program.getFromTypeMap(answerTypeName);
 
@@ -218,10 +211,10 @@ public class ResolveRebinds {
     assert mostUsed != null;
 
     // c_g_g_d_c_i_DOMImpl
-    toReturn = program.createMethod(info,
-        requestType.getName().replace("_", "_1").replace('.', '_'), holderType,
-        program.getTypeJavaLangObject().getNonNull(), false, true, true, false,
-        false);
+    toReturn =
+        program.createMethod(info, requestType.getName().replace("_", "_1").replace('.', '_'),
+            holderType, program.getTypeJavaLangObject().getNonNull(), false, true, true, false,
+            false);
     toReturn.freezeParamTypes();
     info.addCorrelation(info.getCorrelator().by(toReturn));
     rebindMethods.put(requestType, toReturn);
@@ -246,8 +239,7 @@ public class ResolveRebinds {
 
       for (int permutationId : permutations) {
         // case 33:
-        switchBody.addStmt(new JCaseStatement(info,
-            program.getLiteralInt(permutationId)));
+        switchBody.addStmt(new JCaseStatement(info, program.getLiteralInt(permutationId)));
       }
 
       // return new FooImpl();
@@ -259,13 +251,12 @@ public class ResolveRebinds {
         + "for supposedly soft-rebind type " + requestType.getName();
 
     // switch (CollapsedPropertyHolder.getPermutationId()) { ... }
-    JSwitchStatement sw = new JSwitchStatement(info, new JMethodCall(info,
-        null, permutationIdMethod), switchBody);
+    JSwitchStatement sw =
+        new JSwitchStatement(info, new JMethodCall(info, null, permutationIdMethod), switchBody);
 
     // return new FallbackImpl(); at the very end.
     assert mostUsedExpression != null : "No most-used expression";
-    JReturnStatement fallbackReturn = new JReturnStatement(info,
-        mostUsedExpression);
+    JReturnStatement fallbackReturn = new JReturnStatement(info, mostUsedExpression);
 
     JMethodBody body = (JMethodBody) toReturn.getBody();
     body.getBlock().addStmt(sw);

@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -20,25 +20,25 @@ import com.google.gwt.core.ext.linker.StatementRanges;
 import java.util.ArrayList;
 
 /**
- * Limits top-level blocks to MAX_BLOCK_SIZE statements. 
+ * Limits top-level blocks to MAX_BLOCK_SIZE statements.
  */
 public class JsIEBlockTextTransformer extends JsAbstractTextTransformer {
 
   // uncomment to test
 
-  //  private static final int MAX_BLOCK_SIZE = 10;
+  // private static final int MAX_BLOCK_SIZE = 10;
   private static final int MAX_BLOCK_SIZE = 1 << 15 - 1;
-
-  private boolean doSplits;
 
   private int currentStatementCount;
 
-  public JsIEBlockTextTransformer(String js, StatementRanges statementRanges) {
-    super(js, statementRanges);
-  }
+  private boolean doSplits;
 
   public JsIEBlockTextTransformer(JsAbstractTextTransformer xformer) {
     super(xformer);
+  }
+
+  public JsIEBlockTextTransformer(String js, StatementRanges statementRanges) {
+    super(js, statementRanges);
   }
 
   /**
@@ -60,8 +60,7 @@ public class JsIEBlockTextTransformer extends JsAbstractTextTransformer {
    * Record start of statement, and optionally inject new open block.
    */
   @Override
-  protected void beginStatement(StringBuilder newJs,
-      ArrayList<Integer> starts) {
+  protected void beginStatement(StringBuilder newJs, ArrayList<Integer> starts) {
     if (doSplits && currentStatementCount == 0) {
       super.beginStatement(newJs, starts);
       newJs.append('{');
@@ -106,10 +105,8 @@ public class JsIEBlockTextTransformer extends JsAbstractTextTransformer {
   /**
    * Close last block if it never filled.
    */
-  private void optionallyCloseLastBlock(StringBuilder newJs,
-      ArrayList<Integer> ends) {
-    if (doSplits && currentStatementCount > 1
-        && currentStatementCount < MAX_BLOCK_SIZE) {
+  private void optionallyCloseLastBlock(StringBuilder newJs, ArrayList<Integer> ends) {
+    if (doSplits && currentStatementCount > 1 && currentStatementCount < MAX_BLOCK_SIZE) {
       newJs.append("}");
       ends.add(newJs.length());
     }

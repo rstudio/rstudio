@@ -16,7 +16,7 @@
 package com.google.gwt.dev.jjs.ast;
 
 /**
- * Interface implemented by entities that maybe static. 
+ * Interface implemented by entities that maybe static.
  */
 public interface CanBeStatic {
   boolean isStatic();

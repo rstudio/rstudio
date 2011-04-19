@@ -35,8 +35,7 @@ public class RemoveEmptySuperCalls {
   public static class EmptySuperCallVisitor extends JModVisitor {
     @Override
     public void endVisit(JExpressionStatement x, Context ctx) {
-      if (x.getExpr() instanceof JMethodCall
-          && !(x.getExpr() instanceof JNewInstance)) {
+      if (x.getExpr() instanceof JMethodCall && !(x.getExpr() instanceof JNewInstance)) {
         JMethodCall call = (JMethodCall) x.getExpr();
         if (call.getTarget() instanceof JConstructor) {
           JConstructor ctor = (JConstructor) call.getTarget();
@@ -47,8 +46,7 @@ public class RemoveEmptySuperCalls {
             } else if (call.getArgs().size() == 1) {
               ctx.replaceMe(call.getArgs().get(0).makeStatement());
             } else {
-              JMultiExpression multi = new JMultiExpression(
-                  call.getSourceInfo());
+              JMultiExpression multi = new JMultiExpression(call.getSourceInfo());
               multi.exprs.addAll(call.getArgs());
               ctx.replaceMe(multi.makeStatement());
             }

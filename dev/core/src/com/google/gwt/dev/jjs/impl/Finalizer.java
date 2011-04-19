@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -49,12 +49,10 @@ import java.util.Set;
  * optimize.
  */
 public class Finalizer {
-  private static final String NAME = Finalizer.class.getSimpleName();
-
   /**
    * Any items that weren't marked during MarkVisitor can be set final.
-   *
-   *  Open question: What does it mean if an interface/abstract method becomes
+   * 
+   * Open question: What does it mean if an interface/abstract method becomes
    * final? Is this possible after Pruning? I guess it means that someone tried
    * to make a call to method that wasn't actually implemented anywhere in the
    * program. But if it wasn't implemented, then the enclosing class should have
@@ -125,6 +123,7 @@ public class Finalizer {
       madeChanges();
     }
   }
+
   /**
    * Find all items that ARE overriden/subclassed/reassigned.
    */
@@ -198,9 +197,10 @@ public class Finalizer {
     }
   }
 
+  private static final String NAME = Finalizer.class.getSimpleName();
+
   public static OptimizerStats exec(JProgram program) {
-    Event optimizeEvent = SpeedTracerLogger.start(
-        CompilerEventType.OPTIMIZE, "optimizer", NAME);
+    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
     OptimizerStats stats = new Finalizer().execImpl(program);
     optimizeEvent.end("didChange", "" + stats.didChange());
     return stats;
@@ -218,11 +218,10 @@ public class Finalizer {
   private OptimizerStats execImpl(JProgram program) {
     MarkVisitor marker = new MarkVisitor();
     marker.accept(program);
-    
+
     FinalizeVisitor finalizer = new FinalizeVisitor();
     finalizer.accept(program);
 
-    return new OptimizerStats(NAME).recordModified(
-        finalizer.getNumMods());
+    return new OptimizerStats(NAME).recordModified(finalizer.getNumMods());
   }
 }

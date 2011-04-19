@@ -26,39 +26,38 @@ import java.util.Map;
  */
 public class JPrimitiveType extends JType {
   /*
-   * Primitive types are static singletons.  Serialization via readResolve().
+   * Primitive types are static singletons. Serialization via readResolve().
    */
 
   private static final class Singletons {
     public static final Map<String, JPrimitiveType> map = new HashMap<String, JPrimitiveType>();
   }
 
-  public static final JPrimitiveType BOOLEAN = new JPrimitiveType("boolean",
-      "Z", "java.lang.Boolean", JBooleanLiteral.FALSE);
+  public static final JPrimitiveType BOOLEAN = new JPrimitiveType("boolean", "Z",
+      "java.lang.Boolean", JBooleanLiteral.FALSE);
 
-  public static final JPrimitiveType BYTE = new JPrimitiveType("byte", "B",
-      "java.lang.Byte", JIntLiteral.ZERO);
+  public static final JPrimitiveType BYTE = new JPrimitiveType("byte", "B", "java.lang.Byte",
+      JIntLiteral.ZERO);
 
-  public static final JPrimitiveType CHAR = new JPrimitiveType("char", "C",
-      "java.lang.Character", JCharLiteral.NULL);
+  public static final JPrimitiveType CHAR = new JPrimitiveType("char", "C", "java.lang.Character",
+      JCharLiteral.NULL);
 
-  public static final JPrimitiveType DOUBLE = new JPrimitiveType("double", "D",
-      "java.lang.Double", JDoubleLiteral.ZERO);
+  public static final JPrimitiveType DOUBLE = new JPrimitiveType("double", "D", "java.lang.Double",
+      JDoubleLiteral.ZERO);
 
-  public static final JPrimitiveType FLOAT = new JPrimitiveType("float", "F",
-      "java.lang.Float", JFloatLiteral.ZERO);
+  public static final JPrimitiveType FLOAT = new JPrimitiveType("float", "F", "java.lang.Float",
+      JFloatLiteral.ZERO);
 
-  public static final JPrimitiveType INT = new JPrimitiveType("int", "I",
-      "java.lang.Integer", JIntLiteral.ZERO);
+  public static final JPrimitiveType INT = new JPrimitiveType("int", "I", "java.lang.Integer",
+      JIntLiteral.ZERO);
 
-  public static final JPrimitiveType LONG = new JPrimitiveType("long", "J",
-      "java.lang.Long", JLongLiteral.ZERO);
+  public static final JPrimitiveType LONG = new JPrimitiveType("long", "J", "java.lang.Long",
+      JLongLiteral.ZERO);
 
-  public static final JPrimitiveType SHORT = new JPrimitiveType("short", "S",
-      "java.lang.Short", JIntLiteral.ZERO);
+  public static final JPrimitiveType SHORT = new JPrimitiveType("short", "S", "java.lang.Short",
+      JIntLiteral.ZERO);
 
-  public static final JPrimitiveType VOID = new JPrimitiveType("void", "V",
-      "java.lang.Void", null);
+  public static final JPrimitiveType VOID = new JPrimitiveType("void", "V", "java.lang.Void", null);
 
   private final transient JValueLiteral defaultValue;
 
@@ -66,8 +65,8 @@ public class JPrimitiveType extends JType {
 
   private final transient String wrapperTypeName;
 
-  private JPrimitiveType(String name, String signatureName,
-      String wrapperTypeName, JValueLiteral defaultValue) {
+  private JPrimitiveType(String name, String signatureName, String wrapperTypeName,
+      JValueLiteral defaultValue) {
     super(SourceOrigin.UNKNOWN, name);
     this.defaultValue = defaultValue;
     this.signatureName = StringInterner.get().intern(signatureName);

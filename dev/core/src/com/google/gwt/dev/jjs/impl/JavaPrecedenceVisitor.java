@@ -60,7 +60,8 @@ class JavaPrecedenceVisitor extends JVisitor {
     JavaPrecedenceVisitor visitor = new JavaPrecedenceVisitor();
     visitor.accept(expression);
     if (visitor.answer < 0) {
-      throw new InternalCompilerException("Precedence must be >= 0 (" + expression + ") " + expression.getClass());
+      throw new InternalCompilerException("Precedence must be >= 0 (" + expression + ") "
+          + expression.getClass());
     }
     return visitor.answer;
   }
@@ -143,6 +144,13 @@ class JavaPrecedenceVisitor extends JVisitor {
   }
 
   @Override
+  public boolean visit(JGwtCreate x, Context ctx) {
+    // It's a method call.
+    answer = 0;
+    return false;
+  }
+
+  @Override
   public boolean visit(JInstanceOf of, Context ctx) {
     answer = 6;
     return false;
@@ -168,13 +176,6 @@ class JavaPrecedenceVisitor extends JVisitor {
 
   @Override
   public boolean visit(JMethodCall x, Context ctx) {
-    answer = 0;
-    return false;
-  }
-
-  @Override
-  public boolean visit(JGwtCreate x, Context ctx) {
-    // It's a method call.
     answer = 0;
     return false;
   }

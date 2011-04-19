@@ -49,8 +49,7 @@ public class JArrayRef extends JExpression {
 
   public JType getType() {
     JArrayType arrayType = getArrayType();
-    return (arrayType == null) ? JNullType.INSTANCE
-        : arrayType.getElementType();
+    return (arrayType == null) ? JNullType.INSTANCE : arrayType.getElementType();
   }
 
   @Override

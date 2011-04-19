@@ -26,6 +26,7 @@ import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JEnumType;
 import com.google.gwt.dev.jjs.ast.JField;
+import com.google.gwt.dev.jjs.ast.JField.Disposition;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLiteral;
@@ -39,7 +40,6 @@ import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JType;
-import com.google.gwt.dev.jjs.ast.JField.Disposition;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -281,8 +281,7 @@ public class ImplementClassLiteralsAsFields {
     if (type instanceof JArrayType) {
       JArrayType aType = (JArrayType) type;
       if (program.isJavaScriptObject(aType.getLeafType())) {
-        return program.getTypeArray(program.getJavaScriptObject(),
-            aType.getDims());
+        return program.getTypeArray(program.getJavaScriptObject(), aType.getDims());
       }
     }
 
@@ -290,7 +289,7 @@ public class ImplementClassLiteralsAsFields {
   }
 
   /**
-   * Resolve a class literal field.  Takes the form:
+   * Resolve a class literal field. Takes the form:
    * 
    * <pre>
    * class ClassLiteralHolder {

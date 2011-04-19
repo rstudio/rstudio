@@ -55,7 +55,8 @@ public class TypeMap {
    */
   private final Map<Binding, JNode> crossRefMap = new IdentityHashMap<Binding, JNode>();
 
-  private final Map<String, JDeclaredType> externalTypesByName = new HashMap<String, JDeclaredType>();
+  private final Map<String, JDeclaredType> externalTypesByName =
+      new HashMap<String, JDeclaredType>();
 
   /**
    * Centralizes creation and singleton management.
@@ -73,7 +74,7 @@ public class TypeMap {
   public JProgram getProgram() {
     return program;
   }
-  
+
   public void put(Binding binding, JNode to) {
     if (binding == null) {
       throw new InternalCompilerException("Trying to put null into typeMap.");
@@ -95,8 +96,8 @@ public class TypeMap {
   }
 
   private boolean equals(MethodBinding binding, JMethod method) {
-    if (!(method instanceof JConstructor && binding.isConstructor()) &&
-        !method.getName().equals(String.valueOf(binding.constantPoolName()))) {
+    if (!(method instanceof JConstructor && binding.isConstructor())
+        && !method.getName().equals(String.valueOf(binding.constantPoolName()))) {
       return false;
     }
 
@@ -136,8 +137,7 @@ public class TypeMap {
     }
     JNode result = internalGet(binding, failOnNull);
     if (result == null && failOnNull) {
-      InternalCompilerException ice = new InternalCompilerException(
-          "Failed to get JNode");
+      InternalCompilerException ice = new InternalCompilerException("Failed to get JNode");
       ice.addNode(binding.getClass().getName(), binding.toString(), null);
       throw ice;
     }
@@ -165,8 +165,8 @@ public class TypeMap {
   }
 
   /**
-   * Returns a list of JNodes that have the same name as the JDT Binding.
-   * This method is only used during debugging sessions from the interactive
+   * Returns a list of JNodes that have the same name as the JDT Binding. This
+   * method is only used during debugging sessions from the interactive
    * expression evaluator.
    */
   @SuppressWarnings("unused")
@@ -179,7 +179,7 @@ public class TypeMap {
     }
     return new ArrayList<JNode>(nodes);
   }
-  
+
   private JNode internalGet(Binding binding, boolean failOnNull) {
     JNode cached = crossRefMap.get(binding);
     if (cached != null) {

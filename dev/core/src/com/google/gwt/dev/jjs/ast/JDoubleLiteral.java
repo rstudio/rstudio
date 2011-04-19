@@ -23,12 +23,11 @@ import com.google.gwt.dev.jjs.SourceOrigin;
  */
 public class JDoubleLiteral extends JValueLiteral {
 
-  public static final JDoubleLiteral ZERO = new JDoubleLiteral(
-      SourceOrigin.UNKNOWN, Double.longBitsToDouble(0L));
+  public static final JDoubleLiteral ZERO = new JDoubleLiteral(SourceOrigin.UNKNOWN, Double
+      .longBitsToDouble(0L));
 
   public static JDoubleLiteral get(double value) {
-    return isZero(value) ? ZERO : new JDoubleLiteral(SourceOrigin.UNKNOWN,
-        value);
+    return isZero(value) ? ZERO : new JDoubleLiteral(SourceOrigin.UNKNOWN, value);
   }
 
   /**

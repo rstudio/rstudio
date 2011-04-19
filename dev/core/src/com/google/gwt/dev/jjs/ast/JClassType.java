@@ -33,8 +33,7 @@ public class JClassType extends JDeclaredType implements CanBeSetFinal {
     }
 
     private Object readResolve() {
-      JClassType result = new JClassType(SourceOrigin.UNKNOWN, name, false,
-          false);
+      JClassType result = new JClassType(SourceOrigin.UNKNOWN, name, false, false);
       result.setExternal(true);
       return result;
     }
@@ -44,8 +43,7 @@ public class JClassType extends JDeclaredType implements CanBeSetFinal {
   private boolean isFinal;
   private JClassType superClass;
 
-  public JClassType(SourceInfo info, String name, boolean isAbstract,
-      boolean isFinal) {
+  public JClassType(SourceInfo info, String name, boolean isAbstract, boolean isFinal) {
     super(info, name);
     this.isAbstract = isAbstract;
     this.isFinal = isFinal;

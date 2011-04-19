@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -44,15 +44,15 @@ public class AssertionNormalizer {
     @Override
     public void endVisit(JAssertStatement x, Context ctx) {
       JExpression lhs = x.getTestExpr();
-      String methodName = "Exceptions.throwAssertionError"
-          + getAssertMethodSuffix(x.getArg());
+      String methodName = "Exceptions.throwAssertionError" + getAssertMethodSuffix(x.getArg());
       JMethod method = program.getIndexedMethod(methodName);
       JMethodCall rhs = new JMethodCall(x.getSourceInfo(), null, method);
       if (x.getArg() != null) {
         rhs.addArg(x.getArg());
       }
-      JBinaryOperation binOp = new JBinaryOperation(x.getSourceInfo(), program.getTypePrimitiveBoolean(),
-          JBinaryOperator.OR, lhs, rhs);
+      JBinaryOperation binOp =
+          new JBinaryOperation(x.getSourceInfo(), program.getTypePrimitiveBoolean(),
+              JBinaryOperator.OR, lhs, rhs);
       ctx.replaceMe(binOp.makeStatement());
     }
   }

@@ -62,6 +62,10 @@ public class FragmentExtractor {
       this.cfa = cfa;
     }
 
+    public boolean isLive(JDeclaredType type) {
+      return cfa.getInstantiatedTypes().contains(type);
+    }
+
     public boolean isLive(JField field) {
       return cfa.getLiveFieldsAndMethods().contains(field)
           || cfa.getFieldsWritten().contains(field);
@@ -69,10 +73,6 @@ public class FragmentExtractor {
 
     public boolean isLive(JMethod method) {
       return cfa.getLiveFieldsAndMethods().contains(method);
-    }
-
-    public boolean isLive(JDeclaredType type) {
-      return cfa.getInstantiatedTypes().contains(type);
     }
 
     public boolean isLive(String string) {
@@ -109,11 +109,11 @@ public class FragmentExtractor {
    * </ul>
    */
   public static interface LivenessPredicate {
+    boolean isLive(JDeclaredType type);
+
     boolean isLive(JField field);
 
     boolean isLive(JMethod method);
-
-    boolean isLive(JDeclaredType type);
 
     boolean isLive(String literal);
 
@@ -131,15 +131,15 @@ public class FragmentExtractor {
    * A {@link LivenessPredicate} where nothing is alive.
    */
   public static class NothingAlivePredicate implements LivenessPredicate {
+    public boolean isLive(JDeclaredType type) {
+      return false;
+    }
+
     public boolean isLive(JField field) {
       return false;
     }
 
     public boolean isLive(JMethod method) {
-      return false;
-    }
-
-    public boolean isLive(JDeclaredType type) {
       return false;
     }
 
@@ -201,12 +201,10 @@ public class FragmentExtractor {
   private StatementLogger statementLogger = new NullStatementLogger();
 
   public FragmentExtractor(JavaAndJavaScript javaAndJavaScript) {
-    this(javaAndJavaScript.jprogram, javaAndJavaScript.jsprogram,
-        javaAndJavaScript.map);
+    this(javaAndJavaScript.jprogram, javaAndJavaScript.jsprogram, javaAndJavaScript.map);
   }
 
-  public FragmentExtractor(JProgram jprogram, JsProgram jsprogram,
-      JavaToJavaScriptMap map) {
+  public FragmentExtractor(JProgram jprogram, JsProgram jsprogram, JavaToJavaScriptMap map) {
     this.jprogram = jprogram;
     this.jsprogram = jsprogram;
     this.map = map;
@@ -218,8 +216,7 @@ public class FragmentExtractor {
    * Add direct calls to the entry methods of the specified entry number.
    */
   public List<JsStatement> createCallsToEntryMethods(int splitPoint) {
-    List<JsStatement> callStats = new ArrayList<JsStatement>(
-        jprogram.entryMethods.size());
+    List<JsStatement> callStats = new ArrayList<JsStatement>(jprogram.entryMethods.size());
     for (JMethod entryMethod : jprogram.entryMethods.get(splitPoint)) {
       JsName name = map.nameForMethod(entryMethod);
       assert name != null;
@@ -237,7 +234,8 @@ public class FragmentExtractor {
    * .
    */
   public List<JsStatement> createCallToLeftoversFragmentHasLoaded() {
-    JMethod loadedMethod = jprogram.getIndexedMethod("AsyncFragmentLoader.browserLoaderLeftoversFragmentHasLoaded");
+    JMethod loadedMethod =
+        jprogram.getIndexedMethod("AsyncFragmentLoader.browserLoaderLeftoversFragmentHasLoaded");
     JsName loadedMethodName = map.nameForMethod(loadedMethod);
     SourceInfo sourceInfo = jsprogram.getSourceInfo();
     JsInvocation call = new JsInvocation(sourceInfo);
@@ -253,8 +251,7 @@ public class FragmentExtractor {
    * ensure that <code>livenessPredicate</code> includes strictly more live code
    * than <code>alreadyLoadedPredicate</code>.
    */
-  public List<JsStatement> extractStatements(
-      LivenessPredicate livenessPredicate,
+  public List<JsStatement> extractStatements(LivenessPredicate livenessPredicate,
       LivenessPredicate alreadyLoadedPredicate) {
     List<JsStatement> extractedStats = new ArrayList<JsStatement>();
 
@@ -272,10 +269,10 @@ public class FragmentExtractor {
 
         boolean keepIt;
         JClassType vtableTypeAssigned = vtableTypeAssigned(stat);
-        if (vtableTypeAssigned != null
-            && livenessPredicate.isLive(vtableTypeAssigned)) {
-          JsExprStmt result = extractPrototypeSetup(livenessPredicate,
-              alreadyLoadedPredicate, stat, vtableTypeAssigned);
+        if (vtableTypeAssigned != null && livenessPredicate.isLive(vtableTypeAssigned)) {
+          JsExprStmt result =
+              extractPrototypeSetup(livenessPredicate, alreadyLoadedPredicate, stat,
+                  vtableTypeAssigned);
           if (result != null) {
             stat = result;
             keepIt = true;
@@ -283,12 +280,10 @@ public class FragmentExtractor {
             keepIt = false;
           }
         } else if (containsRemovableVars(stat)) {
-          stat = removeSomeVars((JsVars) stat, livenessPredicate,
-              alreadyLoadedPredicate);
+          stat = removeSomeVars((JsVars) stat, livenessPredicate, alreadyLoadedPredicate);
           keepIt = !(stat instanceof JsEmpty);
         } else {
-          keepIt = isLive(stat, livenessPredicate)
-              && !isLive(stat, alreadyLoadedPredicate);
+          keepIt = isLive(stat, livenessPredicate) && !isLive(stat, alreadyLoadedPredicate);
         }
 
         statementLogger.logStatement(stat, keepIt);
@@ -340,7 +335,8 @@ public class FragmentExtractor {
       entryMethodNames.add(name);
     }
 
-    JMethod leftoverFragmentLoaded = jprogram.getIndexedMethod("AsyncFragmentLoader.browserLoaderLeftoversFragmentHasLoaded");
+    JMethod leftoverFragmentLoaded =
+        jprogram.getIndexedMethod("AsyncFragmentLoader.browserLoaderLeftoversFragmentHasLoaded");
     if (leftoverFragmentLoaded != null) {
       JsName name = map.nameForMethod(leftoverFragmentLoaded);
       assert name != null;
@@ -375,8 +371,7 @@ public class FragmentExtractor {
    * subset of the type's liveness. We essentially have to break up the
    * prototype chain according to exactly what's newly live.
    */
-  private JsExprStmt extractPrototypeSetup(
-      final LivenessPredicate livenessPredicate,
+  private JsExprStmt extractPrototypeSetup(final LivenessPredicate livenessPredicate,
       final LivenessPredicate alreadyLoadedPredicate, JsStatement stat,
       final JClassType vtableTypeAssigned) {
     final boolean[] anyLiveCode = new boolean[1];
@@ -402,8 +397,7 @@ public class FragmentExtractor {
           JsNameRef ctorRef = (JsNameRef) lhs.getQualifier();
           JConstructor ctor = (JConstructor) map.nameToMethod(ctorRef.getName());
           assert ctor != null;
-          if (livenessPredicate.isLive(ctor)
-              && !alreadyLoadedPredicate.isLive(ctor)) {
+          if (livenessPredicate.isLive(ctor) && !alreadyLoadedPredicate.isLive(ctor)) {
             anyLiveCode[0] = true;
           } else {
             stack.push(rhs);
@@ -411,8 +405,7 @@ public class FragmentExtractor {
           }
         }
 
-        JsBinaryOperation toReturn = new JsBinaryOperation(x.getSourceInfo(),
-            x.getOperator());
+        JsBinaryOperation toReturn = new JsBinaryOperation(x.getSourceInfo(), x.getOperator());
         toReturn.setArg2(rhs);
         toReturn.setArg1(lhs);
         stack.push(toReturn);
@@ -433,8 +426,7 @@ public class FragmentExtractor {
       JsExpression expr = ((JsExprStmt) stat).getExpression();
       if (expr instanceof JsInvocation) {
         JsInvocation inv = (JsInvocation) expr;
-        if (inv.getArguments().isEmpty()
-            && (inv.getQualifier() instanceof JsNameRef)) {
+        if (inv.getArguments().isEmpty() && (inv.getQualifier() instanceof JsNameRef)) {
           JsNameRef calleeRef = (JsNameRef) inv.getQualifier();
           if (calleeRef.getQualifier() == null) {
             return entryMethodNames.contains(calleeRef.getName());
@@ -464,8 +456,7 @@ public class FragmentExtractor {
       }
       // The method is live. Check that its enclosing type is instantiable.
       // TODO(spoon): this check should not be needed once the CFA is updated
-      return !meth.needsVtable()
-          || livenessPredicate.isLive(meth.getEnclosingType());
+      return !meth.needsVtable() || livenessPredicate.isLive(meth.getEnclosingType());
     }
 
     return livenessPredicate.miscellaneousStatementsAreLive();
@@ -507,14 +498,12 @@ public class FragmentExtractor {
    * <code>currentLivenessPredicate</code> but not by
    * <code>alreadyLoadedPredicate</code>.
    */
-  private JsStatement removeSomeVars(JsVars stat,
-      LivenessPredicate currentLivenessPredicate,
+  private JsStatement removeSomeVars(JsVars stat, LivenessPredicate currentLivenessPredicate,
       LivenessPredicate alreadyLoadedPredicate) {
     JsVars newVars = new JsVars(stat.getSourceInfo());
 
     for (JsVar var : stat) {
-      if (isLive(var, currentLivenessPredicate)
-          && !isLive(var, alreadyLoadedPredicate)) {
+      if (isLive(var, currentLivenessPredicate) && !isLive(var, alreadyLoadedPredicate)) {
         newVars.add(var);
       }
     }
@@ -545,25 +534,23 @@ public class FragmentExtractor {
    * function for <code>vtableType</code>.
    */
   private JsStatement vtableStatFor(JClassType vtableType) {
-    JsNameRef prototypeField = new JsNameRef(
-        jsprogram.createSourceInfoSynthetic(FragmentExtractor.class),
-        "prototype");
+    JsNameRef prototypeField =
+        new JsNameRef(jsprogram.createSourceInfoSynthetic(FragmentExtractor.class), "prototype");
     JsExpression constructorRef;
     SourceInfo sourceInfoVtableSetup = jsprogram.createSourceInfoSynthetic(FragmentExtractor.class);
     if (vtableType == jprogram.getTypeJavaLangString()) {
       // The methods of java.lang.String are put onto JavaScript's String
       // prototype
-      SourceInfo sourceInfoConstructorRef = jsprogram.createSourceInfoSynthetic(FragmentExtractor.class);
+      SourceInfo sourceInfoConstructorRef =
+          jsprogram.createSourceInfoSynthetic(FragmentExtractor.class);
       constructorRef = new JsNameRef(sourceInfoConstructorRef, "String");
     } else {
-      constructorRef = map.nameForType(vtableType).makeRef(
-          sourceInfoVtableSetup);
+      constructorRef = map.nameForType(vtableType).makeRef(sourceInfoVtableSetup);
     }
     prototypeField.setQualifier(constructorRef);
     SourceInfo underlineSourceInfo = jsprogram.createSourceInfoSynthetic(FragmentExtractor.class);
-    return (new JsBinaryOperation(sourceInfoVtableSetup, JsBinaryOperator.ASG,
-        jsprogram.getScope().declareName("_").makeRef(underlineSourceInfo),
-        prototypeField)).makeStmt();
+    return (new JsBinaryOperation(sourceInfoVtableSetup, JsBinaryOperator.ASG, jsprogram.getScope()
+        .declareName("_").makeRef(underlineSourceInfo), prototypeField)).makeStmt();
   }
 
   /**

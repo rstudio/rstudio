@@ -30,9 +30,8 @@ public class JForStatement extends JStatement {
   private List<JStatement> initializers;
   private JExpression testExpr;
 
-  public JForStatement(SourceInfo info, List<JStatement> initializers,
-      JExpression testExpr, List<JExpressionStatement> increments,
-      JStatement body) {
+  public JForStatement(SourceInfo info, List<JStatement> initializers, JExpression testExpr,
+      List<JExpressionStatement> increments, JStatement body) {
     super(info);
     this.initializers = Lists.normalize(initializers);
     this.testExpr = testExpr;

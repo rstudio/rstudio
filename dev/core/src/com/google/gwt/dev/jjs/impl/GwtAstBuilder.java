@@ -154,6 +154,7 @@ import org.eclipse.jdt.internal.compiler.ast.NameReference;
 import org.eclipse.jdt.internal.compiler.ast.NormalAnnotation;
 import org.eclipse.jdt.internal.compiler.ast.NullLiteral;
 import org.eclipse.jdt.internal.compiler.ast.OR_OR_Expression;
+import org.eclipse.jdt.internal.compiler.ast.OperatorIds;
 import org.eclipse.jdt.internal.compiler.ast.PostfixExpression;
 import org.eclipse.jdt.internal.compiler.ast.PrefixExpression;
 import org.eclipse.jdt.internal.compiler.ast.QualifiedAllocationExpression;
@@ -337,7 +338,7 @@ public class GwtAstBuilder {
 
     private final Stack<MethodInfo> methodStack = new Stack<MethodInfo>();
 
-    private ArrayList<JNode> nodeStack = new ArrayList<JNode>();
+    private final ArrayList<JNode> nodeStack = new ArrayList<JNode>();
 
     @Override
     public void endVisit(AllocationExpression x, BlockScope scope) {
@@ -433,53 +434,53 @@ public class GwtAstBuilder {
       JBinaryOperator op;
       int binOp = (x.bits & ASTNode.OperatorMASK) >> ASTNode.OperatorSHIFT;
       switch (binOp) {
-        case BinaryExpression.LEFT_SHIFT:
+        case OperatorIds.LEFT_SHIFT:
           op = JBinaryOperator.SHL;
           break;
-        case BinaryExpression.RIGHT_SHIFT:
+        case OperatorIds.RIGHT_SHIFT:
           op = JBinaryOperator.SHR;
           break;
-        case BinaryExpression.UNSIGNED_RIGHT_SHIFT:
+        case OperatorIds.UNSIGNED_RIGHT_SHIFT:
           op = JBinaryOperator.SHRU;
           break;
-        case BinaryExpression.PLUS:
+        case OperatorIds.PLUS:
           if (x.resolvedType instanceof ReferenceBinding) {
             op = JBinaryOperator.CONCAT;
           } else {
             op = JBinaryOperator.ADD;
           }
           break;
-        case BinaryExpression.MINUS:
+        case OperatorIds.MINUS:
           op = JBinaryOperator.SUB;
           break;
-        case BinaryExpression.REMAINDER:
+        case OperatorIds.REMAINDER:
           op = JBinaryOperator.MOD;
           break;
-        case BinaryExpression.XOR:
+        case OperatorIds.XOR:
           op = JBinaryOperator.BIT_XOR;
           break;
-        case BinaryExpression.AND:
+        case OperatorIds.AND:
           op = JBinaryOperator.BIT_AND;
           break;
-        case BinaryExpression.MULTIPLY:
+        case OperatorIds.MULTIPLY:
           op = JBinaryOperator.MUL;
           break;
-        case BinaryExpression.OR:
+        case OperatorIds.OR:
           op = JBinaryOperator.BIT_OR;
           break;
-        case BinaryExpression.DIVIDE:
+        case OperatorIds.DIVIDE:
           op = JBinaryOperator.DIV;
           break;
-        case BinaryExpression.LESS_EQUAL:
+        case OperatorIds.LESS_EQUAL:
           op = JBinaryOperator.LTE;
           break;
-        case BinaryExpression.GREATER_EQUAL:
+        case OperatorIds.GREATER_EQUAL:
           op = JBinaryOperator.GTE;
           break;
-        case BinaryExpression.GREATER:
+        case OperatorIds.GREATER:
           op = JBinaryOperator.GT;
           break;
-        case BinaryExpression.LESS:
+        case OperatorIds.LESS:
           op = JBinaryOperator.LT;
           break;
         default:
@@ -572,41 +573,41 @@ public class GwtAstBuilder {
     public void endVisit(CompoundAssignment x, BlockScope scope) {
       JBinaryOperator op;
       switch (x.operator) {
-        case CompoundAssignment.PLUS:
+        case OperatorIds.PLUS:
           if (x.resolvedType instanceof ReferenceBinding) {
             op = JBinaryOperator.ASG_CONCAT;
           } else {
             op = JBinaryOperator.ASG_ADD;
           }
           break;
-        case CompoundAssignment.MINUS:
+        case OperatorIds.MINUS:
           op = JBinaryOperator.ASG_SUB;
           break;
-        case CompoundAssignment.MULTIPLY:
+        case OperatorIds.MULTIPLY:
           op = JBinaryOperator.ASG_MUL;
           break;
-        case CompoundAssignment.DIVIDE:
+        case OperatorIds.DIVIDE:
           op = JBinaryOperator.ASG_DIV;
           break;
-        case CompoundAssignment.AND:
+        case OperatorIds.AND:
           op = JBinaryOperator.ASG_BIT_AND;
           break;
-        case CompoundAssignment.OR:
+        case OperatorIds.OR:
           op = JBinaryOperator.ASG_BIT_OR;
           break;
-        case CompoundAssignment.XOR:
+        case OperatorIds.XOR:
           op = JBinaryOperator.ASG_BIT_XOR;
           break;
-        case CompoundAssignment.REMAINDER:
+        case OperatorIds.REMAINDER:
           op = JBinaryOperator.ASG_MOD;
           break;
-        case CompoundAssignment.LEFT_SHIFT:
+        case OperatorIds.LEFT_SHIFT:
           op = JBinaryOperator.ASG_SHL;
           break;
-        case CompoundAssignment.RIGHT_SHIFT:
+        case OperatorIds.RIGHT_SHIFT:
           op = JBinaryOperator.ASG_SHR;
           break;
-        case CompoundAssignment.UNSIGNED_RIGHT_SHIFT:
+        case OperatorIds.UNSIGNED_RIGHT_SHIFT:
           op = JBinaryOperator.ASG_SHRU;
           break;
         default:
@@ -734,11 +735,11 @@ public class GwtAstBuilder {
     @Override
     public void endVisit(EqualExpression x, BlockScope scope) {
       JBinaryOperator op;
-      switch ((x.bits & BinaryExpression.OperatorMASK) >> BinaryExpression.OperatorSHIFT) {
-        case BinaryExpression.EQUAL_EQUAL:
+      switch ((x.bits & ASTNode.OperatorMASK) >> ASTNode.OperatorSHIFT) {
+        case OperatorIds.EQUAL_EQUAL:
           op = JBinaryOperator.EQ;
           break;
-        case BinaryExpression.NOT_EQUAL:
+        case OperatorIds.NOT_EQUAL:
           op = JBinaryOperator.NEQ;
           break;
         default:
@@ -1179,11 +1180,11 @@ public class GwtAstBuilder {
         SourceInfo info = makeSourceInfo(x);
         JUnaryOperator op;
         switch (x.operator) {
-          case PostfixExpression.MINUS:
+          case OperatorIds.MINUS:
             op = JUnaryOperator.DEC;
             break;
 
-          case PostfixExpression.PLUS:
+          case OperatorIds.PLUS:
             op = JUnaryOperator.INC;
             break;
 
@@ -1204,11 +1205,11 @@ public class GwtAstBuilder {
         SourceInfo info = makeSourceInfo(x);
         JUnaryOperator op;
         switch (x.operator) {
-          case PostfixExpression.MINUS:
+          case OperatorIds.MINUS:
             op = JUnaryOperator.DEC;
             break;
 
-          case PostfixExpression.PLUS:
+          case OperatorIds.PLUS:
             op = JUnaryOperator.INC;
             break;
 
@@ -1454,23 +1455,23 @@ public class GwtAstBuilder {
       try {
         SourceInfo info = makeSourceInfo(x);
         JUnaryOperator op;
-        int operator = ((x.bits & UnaryExpression.OperatorMASK) >> UnaryExpression.OperatorSHIFT);
+        int operator = ((x.bits & ASTNode.OperatorMASK) >> ASTNode.OperatorSHIFT);
 
         switch (operator) {
-          case UnaryExpression.MINUS:
+          case OperatorIds.MINUS:
             op = JUnaryOperator.NEG;
             break;
 
-          case UnaryExpression.NOT:
+          case OperatorIds.NOT:
             op = JUnaryOperator.NOT;
             break;
 
-          case UnaryExpression.PLUS:
+          case OperatorIds.PLUS:
             // Odd case.. useless + operator; just leave the operand on the
             // stack.
             return;
 
-          case UnaryExpression.TWIDDLE:
+          case OperatorIds.TWIDDLE:
             op = JUnaryOperator.BIT_NOT;
             break;
 
@@ -2098,17 +2099,17 @@ public class GwtAstBuilder {
 
     private JExpression getConstant(SourceInfo info, Constant constant) {
       switch (constant.typeID()) {
-        case Constant.T_int:
+        case TypeIds.T_int:
           return JIntLiteral.get(constant.intValue());
-        case Constant.T_byte:
+        case TypeIds.T_byte:
           return JIntLiteral.get(constant.byteValue());
-        case Constant.T_short:
+        case TypeIds.T_short:
           return JIntLiteral.get(constant.shortValue());
-        case Constant.T_char:
+        case TypeIds.T_char:
           return JCharLiteral.get(constant.charValue());
-        case Constant.T_float:
+        case TypeIds.T_float:
           return JFloatLiteral.get(constant.floatValue());
-        case Constant.T_double:
+        case TypeIds.T_double:
           return JDoubleLiteral.get(constant.doubleValue());
         case Constant.T_boolean:
           return JBooleanLiteral.get(constant.booleanValue());

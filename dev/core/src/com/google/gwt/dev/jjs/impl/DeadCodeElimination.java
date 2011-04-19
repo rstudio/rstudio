@@ -152,8 +152,8 @@ public class DeadCodeElimination {
           break;
         case EQ:
           // simplify: null == null -> true
-          if (lhs.getType() == program.getTypeNull()
-              && rhs.getType() == program.getTypeNull() && !x.hasSideEffects()) {
+          if (lhs.getType() == program.getTypeNull() && rhs.getType() == program.getTypeNull()
+              && !x.hasSideEffects()) {
             ctx.replaceMe(program.getLiteralBoolean(true));
             return;
           }
@@ -161,8 +161,8 @@ public class DeadCodeElimination {
           break;
         case NEQ:
           // simplify: null != null -> false
-          if (lhs.getType() == program.getTypeNull()
-              && rhs.getType() == program.getTypeNull() && !x.hasSideEffects()) {
+          if (lhs.getType() == program.getTypeNull() && rhs.getType() == program.getTypeNull()
+              && !x.hasSideEffects()) {
             ctx.replaceMe(program.getLiteralBoolean(false));
             return;
           }
@@ -262,14 +262,13 @@ public class DeadCodeElimination {
 
     @Override
     public void endVisit(JCastOperation x, Context ctx) {
-      maybeReplaceMe(x, simplifier.cast(x, x.getSourceInfo(), x.getCastType(),
-          x.getExpr()), ctx);
+      maybeReplaceMe(x, simplifier.cast(x, x.getSourceInfo(), x.getCastType(), x.getExpr()), ctx);
     }
 
     @Override
     public void endVisit(JConditional x, Context ctx) {
-      maybeReplaceMe(x, simplifier.conditional(x, x.getSourceInfo(),
-          x.getType(), x.getIfTest(), x.getThenExpr(), x.getElseExpr()), ctx);
+      maybeReplaceMe(x, simplifier.conditional(x, x.getSourceInfo(), x.getType(), x.getIfTest(), x
+          .getThenExpr(), x.getElseExpr()), ctx);
     }
 
     @Override
@@ -331,8 +330,7 @@ public class DeadCodeElimination {
       }
 
       if (x.hasClinit()) {
-        multi.exprs.add(createClinitCall(x.getSourceInfo(),
-            x.getField().getEnclosingType()));
+        multi.exprs.add(createClinitCall(x.getSourceInfo(), x.getField().getEnclosingType()));
       }
 
       if (literal != null) {
@@ -365,8 +363,8 @@ public class DeadCodeElimination {
      */
     @Override
     public void endVisit(JIfStatement x, Context ctx) {
-      maybeReplaceMe(x, simplifier.ifStatement(x, x.getSourceInfo(),
-          x.getIfExpr(), x.getThenStmt(), x.getElseStmt(), currentMethod), ctx);
+      maybeReplaceMe(x, simplifier.ifStatement(x, x.getSourceInfo(), x.getIfExpr(),
+          x.getThenStmt(), x.getElseStmt(), currentMethod), ctx);
     }
 
     @Override
@@ -414,8 +412,7 @@ public class DeadCodeElimination {
           ctx.replaceMe(program.getLiteralNull());
         } else if (targetType != targetType.getClinitTarget()) {
           // Tighten the target.
-          ctx.replaceMe(createClinitCall(x.getSourceInfo(),
-              targetType.getClinitTarget()));
+          ctx.replaceMe(createClinitCall(x.getSourceInfo(), targetType.getClinitTarget()));
         }
       }
     }
@@ -432,8 +429,7 @@ public class DeadCodeElimination {
           ignoringExpressionOutput.removeAll(exprs);
         } else {
           // Remove the non-final children we previously added.
-          List<JExpression> nonFinalChildren = exprs.subList(0,
-              exprs.size() - 1);
+          List<JExpression> nonFinalChildren = exprs.subList(0, exprs.size() - 1);
           ignoringExpressionOutput.removeAll(nonFinalChildren);
         }
       }
@@ -476,8 +472,7 @@ public class DeadCodeElimination {
         JMultiExpression multi = new JMultiExpression(x.getSourceInfo());
         multi.exprs.addAll(x.getArgs());
         if (x.hasClinit()) {
-          multi.exprs.add(createClinitCall(x.getSourceInfo(),
-              x.getTarget().getEnclosingType()));
+          multi.exprs.add(createClinitCall(x.getSourceInfo(), x.getTarget().getEnclosingType()));
         }
         ignoringExpressionOutput.add(multi);
         ctx.replaceMe(this.accept(multi));
@@ -503,8 +498,7 @@ public class DeadCodeElimination {
         lvalues.remove(x.getArg());
       }
       if (ignoringExpressionOutput.contains(x)) {
-        JPrefixOperation newOp = new JPrefixOperation(x.getSourceInfo(),
-            x.getOp(), x.getArg());
+        JPrefixOperation newOp = new JPrefixOperation(x.getSourceInfo(), x.getOp(), x.getArg());
         ctx.replaceMe(newOp);
       }
     }
@@ -560,8 +554,7 @@ public class DeadCodeElimination {
         JLocalRef localRef = itA.next();
         itB.next();
         JReferenceType type = (JReferenceType) localRef.getType();
-        if (!program.typeOracle.isInstantiatedType(type)
-            || type == program.getTypeNull()) {
+        if (!program.typeOracle.isInstantiatedType(type) || type == program.getTypeNull()) {
           itA.remove();
           itB.remove();
           madeChanges();
@@ -645,8 +638,7 @@ public class DeadCodeElimination {
         ignoringExpressionOutput.add(x.getInstance());
       }
       List<JExpression> args = x.getArgs();
-      List<JExpression> ignoredArgs = args.subList(target.getParams().size(),
-          args.size());
+      List<JExpression> ignoredArgs = args.subList(target.getParams().size(), args.size());
       ignoringExpressionOutput.addAll(ignoredArgs);
       return true;
     }
@@ -660,8 +652,7 @@ public class DeadCodeElimination {
           ignoringExpressionOutput.addAll(exprs);
         } else {
           // Only my final child matters.
-          List<JExpression> nonFinalChildren = exprs.subList(0,
-              exprs.size() - 1);
+          List<JExpression> nonFinalChildren = exprs.subList(0, exprs.size() - 1);
           ignoringExpressionOutput.addAll(nonFinalChildren);
         }
       }
@@ -706,15 +697,13 @@ public class DeadCodeElimination {
       return true;
     }
 
-    private JMethodCall createClinitCall(SourceInfo sourceInfo,
-        JDeclaredType targetType) {
+    private JMethodCall createClinitCall(SourceInfo sourceInfo, JDeclaredType targetType) {
       JMethod clinit = targetType.getClinitTarget().getMethods().get(0);
       assert (JProgram.isClinit(clinit));
       return new JMethodCall(sourceInfo, null, clinit);
     }
 
-    private void evalConcat(SourceInfo info, JExpression lhs, JExpression rhs,
-        Context ctx) {
+    private void evalConcat(SourceInfo info, JExpression lhs, JExpression rhs, Context ctx) {
       if (lhs instanceof JValueLiteral && rhs instanceof JValueLiteral) {
         Object lhsObj = ((JValueLiteral) lhs).getValueObj();
         Object rhsObj = ((JValueLiteral) rhs).getValueObj();
@@ -752,8 +741,7 @@ public class DeadCodeElimination {
      * 
      * @return Whether a change was made
      */
-    private boolean evalOpOnLiteral(JUnaryOperator op, JValueLiteral exp,
-        Context ctx) {
+    private boolean evalOpOnLiteral(JUnaryOperator op, JValueLiteral exp, Context ctx) {
       switch (op) {
         case BIT_NOT: {
           long value = toLong(exp);
@@ -801,10 +789,9 @@ public class DeadCodeElimination {
      * 
      * @return Whether a change was made
      */
-    private boolean evalOpOnLiterals(JBinaryOperator op, JValueLiteral lhs,
-        JValueLiteral rhs, Context ctx) {
-      if (isTypeString(lhs) || isTypeString(rhs) || isTypeNull(lhs)
-          || isTypeNull(rhs)) {
+    private boolean evalOpOnLiterals(JBinaryOperator op, JValueLiteral lhs, JValueLiteral rhs,
+        Context ctx) {
+      if (isTypeString(lhs) || isTypeString(rhs) || isTypeNull(lhs) || isTypeNull(rhs)) {
         // String simplifications are handled elsewhere.
         // Null can only be used with String append, and with
         // comparison with EQ and NEQ, and those simplifications
@@ -827,8 +814,7 @@ public class DeadCodeElimination {
         case MUL:
         case DIV:
         case MOD: {
-          if (isTypeDouble(lhs) || isTypeFloat(lhs) || isTypeDouble(rhs)
-              || isTypeFloat(rhs)) {
+          if (isTypeDouble(lhs) || isTypeFloat(lhs) || isTypeDouble(rhs) || isTypeFloat(rhs)) {
             // do the op on doubles and cast back
             double left = toDouble(lhs);
             double right = toDouble(rhs);
@@ -907,8 +893,7 @@ public class DeadCodeElimination {
         case LTE:
         case GT:
         case GTE: {
-          if (isTypeDouble(lhs) || isTypeDouble(rhs) || isTypeFloat(lhs)
-              || isTypeFloat(rhs)) {
+          if (isTypeDouble(lhs) || isTypeDouble(rhs) || isTypeFloat(lhs) || isTypeFloat(rhs)) {
             // operate on doubles
             double left = toDouble(lhs);
             double right = toDouble(rhs);
@@ -1169,7 +1154,8 @@ public class DeadCodeElimination {
     }
 
     private boolean isTypeFloatOrDouble(JType type) {
-      return ((type == program.getTypePrimitiveDouble()) || (type == program.getTypePrimitiveFloat()));
+      return ((type == program.getTypePrimitiveDouble()) || (type == program
+          .getTypePrimitiveFloat()));
     }
 
     /**
@@ -1181,10 +1167,9 @@ public class DeadCodeElimination {
     }
 
     private boolean isTypeIntegral(JType type) {
-      return ((type == program.getTypePrimitiveInt())
-          || (type == program.getTypePrimitiveLong())
-          || (type == program.getTypePrimitiveChar())
-          || (type == program.getTypePrimitiveByte()) || (type == program.getTypePrimitiveShort()));
+      return ((type == program.getTypePrimitiveInt()) || (type == program.getTypePrimitiveLong())
+          || (type == program.getTypePrimitiveChar()) || (type == program.getTypePrimitiveByte()) || (type == program
+          .getTypePrimitiveShort()));
     }
 
     private boolean isTypeLong(JExpression exp) {
@@ -1334,8 +1319,7 @@ public class DeadCodeElimination {
       }
     }
 
-    private boolean simplifyAdd(JExpression lhs, JExpression rhs, Context ctx,
-        JType type) {
+    private boolean simplifyAdd(JExpression lhs, JExpression rhs, Context ctx, JType type) {
       if (isLiteralZero(rhs)) {
         ctx.replaceMe(simplifier.cast(type, lhs));
         return true;
@@ -1356,8 +1340,7 @@ public class DeadCodeElimination {
       if (bool) {
         ctx.replaceMe(exp);
       } else {
-        ctx.replaceMe(new JPrefixOperation(exp.getSourceInfo(),
-            JUnaryOperator.NOT, exp));
+        ctx.replaceMe(new JPrefixOperation(exp.getSourceInfo(), JUnaryOperator.NOT, exp));
       }
     }
 
@@ -1368,8 +1351,7 @@ public class DeadCodeElimination {
      * <code>lhs == rhs</code>. Assumes that the case where both sides are
      * literals has already been checked.
      */
-    private void simplifyBooleanEq(JExpression lhs, JExpression rhs,
-        Context ctx, boolean negate) {
+    private void simplifyBooleanEq(JExpression lhs, JExpression rhs, Context ctx, boolean negate) {
       if (lhs instanceof JBooleanLiteral) {
         boolean left = ((JBooleanLiteral) lhs).getValue();
         simplifyBooleanEq(rhs, left ^ negate, ctx);
@@ -1382,8 +1364,7 @@ public class DeadCodeElimination {
       }
     }
 
-    private boolean simplifyDiv(JExpression lhs, JExpression rhs, Context ctx,
-        JType type) {
+    private boolean simplifyDiv(JExpression lhs, JExpression rhs, Context ctx, JType type) {
       if (isLiteralOne(rhs)) {
         ctx.replaceMe(simplifier.cast(type, lhs));
         return true;
@@ -1400,16 +1381,14 @@ public class DeadCodeElimination {
      * Simplify <code>lhs == rhs</code>. If <code>negate</code> is true, then
      * it's actually static evaluation of <code>lhs != rhs</code>.
      */
-    private void simplifyEq(JExpression lhs, JExpression rhs, Context ctx,
-        boolean negated) {
+    private void simplifyEq(JExpression lhs, JExpression rhs, Context ctx, boolean negated) {
       if (isTypeBoolean(lhs) && isTypeBoolean(rhs)) {
         simplifyBooleanEq(lhs, rhs, ctx, negated);
         return;
       }
     }
 
-    private boolean simplifyMul(JExpression lhs, JExpression rhs, Context ctx,
-        JType type) {
+    private boolean simplifyMul(JExpression lhs, JExpression rhs, Context ctx, JType type) {
       if (isLiteralOne(rhs)) {
         ctx.replaceMe(simplifier.cast(type, lhs));
         return true;
@@ -1465,8 +1444,7 @@ public class DeadCodeElimination {
       return new JPrefixOperation(exp.getSourceInfo(), JUnaryOperator.NEG, exp);
     }
 
-    private boolean simplifySub(JExpression lhs, JExpression rhs, Context ctx,
-        JType type) {
+    private boolean simplifySub(JExpression lhs, JExpression rhs, Context ctx, JType type) {
       if (isLiteralZero(rhs)) {
         ctx.replaceMe(simplifier.cast(type, lhs));
         return true;
@@ -1480,8 +1458,7 @@ public class DeadCodeElimination {
 
     private void simplifyXor(JExpression lhs, JBooleanLiteral rhs, Context ctx) {
       if (rhs.getValue()) {
-        ctx.replaceMe(new JPrefixOperation(lhs.getSourceInfo(),
-            JUnaryOperator.NOT, lhs));
+        ctx.replaceMe(new JPrefixOperation(lhs.getSourceInfo(), JUnaryOperator.NOT, lhs));
       } else {
         ctx.replaceMe(lhs);
       }
@@ -1560,8 +1537,7 @@ public class DeadCodeElimination {
            * this value is not changed.
            */
           // TODO(spoon): use simplifier.cast to shorten this
-          if ((x.getType() instanceof JPrimitiveType)
-              && (lit instanceof JValueLiteral)) {
+          if ((x.getType() instanceof JPrimitiveType) && (lit instanceof JValueLiteral)) {
             JPrimitiveType xTypePrim = (JPrimitiveType) x.getType();
             lit = xTypePrim.coerceLiteral((JValueLiteral) lit);
           }
@@ -1574,8 +1550,7 @@ public class DeadCodeElimination {
     /**
      * Replace String methods having literal args with the static result.
      */
-    private void tryOptimizeStringCall(JMethodCall x, Context ctx,
-        JMethod method) {
+    private void tryOptimizeStringCall(JMethodCall x, Context ctx, JMethod method) {
 
       if (method.getType() == program.getTypeVoid()) {
         return;
@@ -1631,8 +1606,7 @@ public class DeadCodeElimination {
         }
         Object result = actual.invoke(instance, paramValues);
         if (result instanceof String) {
-          ctx.replaceMe(program.getLiteralString(x.getSourceInfo(),
-              (String) result));
+          ctx.replaceMe(program.getLiteralString(x.getSourceInfo(), (String) result));
         } else if (result instanceof Boolean) {
           ctx.replaceMe(program.getLiteralBoolean(((Boolean) result).booleanValue()));
         } else if (result instanceof Character) {
@@ -1673,8 +1647,7 @@ public class DeadCodeElimination {
          * 
          * becomes if (i == 1) { a(); b(); } else { c(); d(); }
          */
-        JCaseStatement caseStatement = (JCaseStatement) body.getStatements().get(
-            0);
+        JCaseStatement caseStatement = (JCaseStatement) body.getStatements().get(0);
         JStatement statement = body.getStatements().get(1);
 
         FindBreakContinueStatementsVisitor visitor = new FindBreakContinueStatementsVisitor();
@@ -1686,13 +1659,13 @@ public class DeadCodeElimination {
 
         if (caseStatement.getExpr() != null) {
           // Create an if statement equivalent to the single-case switch.
-          JBinaryOperation compareOperation = new JBinaryOperation(
-              x.getSourceInfo(), program.getTypePrimitiveBoolean(),
-              JBinaryOperator.EQ, x.getExpr(), caseStatement.getExpr());
+          JBinaryOperation compareOperation =
+              new JBinaryOperation(x.getSourceInfo(), program.getTypePrimitiveBoolean(),
+                  JBinaryOperator.EQ, x.getExpr(), caseStatement.getExpr());
           JBlock block = new JBlock(x.getSourceInfo());
           block.addStmt(statement);
-          JIfStatement ifStatement = new JIfStatement(x.getSourceInfo(),
-              compareOperation, block, null);
+          JIfStatement ifStatement =
+              new JIfStatement(x.getSourceInfo(), compareOperation, block, null);
           replaceMe(ifStatement, ctx);
         } else {
           // All we have is a default case; convert to a JBlock.
@@ -1796,8 +1769,7 @@ public class DeadCodeElimination {
 
   private OptimizerStats execImpl(JNode node) {
     OptimizerStats stats = new OptimizerStats(NAME);
-    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE,
-        "optimizer", NAME);
+    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
 
     DeadCodeVisitor deadCodeVisitor = new DeadCodeVisitor();
     deadCodeVisitor.accept(node);

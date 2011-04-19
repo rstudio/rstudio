@@ -32,8 +32,8 @@ import com.google.gwt.dev.jjs.ast.JType;
  * Rewrite Java <code>==</code> so that it will execute correctly in JavaScript.
  * After this pass, Java's <code>==</code> is considered equivalent to
  * JavaScript's <code>===</code>.
- *</p>
- *<p>
+ * </p>
+ * <p>
  * Whenever possible, a Java <code>==</code> is replaced by a JavaScript
  * <code>==</code>. This is shorter than <code>===</code>, and it avoids any
  * complication due to GWT treating both <code>null</code> and
@@ -96,8 +96,8 @@ public class EqualityNormalizer {
             rhs = maskUndefined(rhs);
           }
 
-          JBinaryOperation binOp = new JBinaryOperation(x.getSourceInfo(),
-              x.getType(), x.getOp(), lhs, rhs);
+          JBinaryOperation binOp =
+              new JBinaryOperation(x.getSourceInfo(), x.getType(), x.getOp(), lhs, rhs);
           ctx.replaceMe(binOp);
           break;
         }
@@ -118,8 +118,7 @@ public class EqualityNormalizer {
               methodName = "Cast.isNotNull";
             }
             JMethod isNullMethod = program.getIndexedMethod(methodName);
-            JMethodCall call = new JMethodCall(x.getSourceInfo(), null,
-                isNullMethod);
+            JMethodCall call = new JMethodCall(x.getSourceInfo(), null, isNullMethod);
             call.addArg(lhsNullLit ? rhs : lhs);
             ctx.replaceMe(call);
           } else {
@@ -131,8 +130,7 @@ public class EqualityNormalizer {
               methodName = "Cast.jsNotEquals";
             }
             JMethod eqMethod = program.getIndexedMethod(methodName);
-            JMethodCall call = new JMethodCall(x.getSourceInfo(), null,
-                eqMethod);
+            JMethodCall call = new JMethodCall(x.getSourceInfo(), null, eqMethod);
             call.addArgs(lhs, rhs);
             ctx.replaceMe(call);
           }
@@ -158,8 +156,7 @@ public class EqualityNormalizer {
       assert ((JReferenceType) lhs.getType()).canBeNull();
 
       JMethod maskMethod = program.getIndexedMethod("Cast.maskUndefined");
-      JMethodCall lhsCall = new JMethodCall(lhs.getSourceInfo(), null,
-          maskMethod, lhs.getType());
+      JMethodCall lhsCall = new JMethodCall(lhs.getSourceInfo(), null, maskMethod, lhs.getType());
       lhsCall.addArg(lhs);
       return lhsCall;
     }
@@ -187,7 +184,7 @@ public class EqualityNormalizer {
    * A map of the combinations where each comparison strategy should be used.
    */
   private static int[][] COMPARISON_STRAT = {
-  // ..U..S.!S..N
+      // ..U..S.!S..N
       {1, 1, 1, 0,}, // UNKNOWN
       {1, 0, 1, 0,}, // STRING
       {1, 1, 0, 0,}, // NOTSTRING

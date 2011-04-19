@@ -23,8 +23,7 @@ import com.google.gwt.dev.jjs.SourceOrigin;
  */
 public class JLongLiteral extends JValueLiteral {
 
-  public static final JLongLiteral ZERO = new JLongLiteral(
-      SourceOrigin.UNKNOWN, 0L);
+  public static final JLongLiteral ZERO = new JLongLiteral(SourceOrigin.UNKNOWN, 0L);
 
   public static JLongLiteral get(long value) {
     return (value == 0) ? ZERO : new JLongLiteral(SourceOrigin.UNKNOWN, value);

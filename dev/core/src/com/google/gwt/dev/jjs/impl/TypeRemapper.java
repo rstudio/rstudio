@@ -31,61 +31,61 @@ import com.google.gwt.dev.jjs.ast.JVariable;
 /**
  * This class is a visitor which can find all sites where a JType can be updated
  * from one type to another, and calls an overridable remap method for each
- * instance.  An extending class can override the remap and return a new type
- * where it deems it necessary, such as to replace the type of all references
- * of a class.
+ * instance. An extending class can override the remap and return a new type
+ * where it deems it necessary, such as to replace the type of all references of
+ * a class.
  */
 public class TypeRemapper extends JModVisitor {
-  
+
   @Override
   public void endVisit(JBinaryOperation x, Context ctx) {
     x.setType(remap(x.getType()));
   }
-  
+
   @Override
   public void endVisit(JCastOperation x, Context ctx) {
     // JCastOperation doesn't have a settable castType method, so need to
     // create a new one and do a replacement.
     JType remapCastType = remap(x.getCastType());
     if (remapCastType != x.getCastType()) {
-      JCastOperation newX = new JCastOperation(x.getSourceInfo(), 
-                                               remapCastType, x.getExpr());
+      JCastOperation newX = new JCastOperation(x.getSourceInfo(), remapCastType, x.getExpr());
       ctx.replaceMe(newX);
     }
   }
-  
+
   @Override
   public void endVisit(JConditional x, Context ctx) {
     x.setType(remap(x.getType()));
   }
-  
+
   @Override
   public void endVisit(JConstructor x, Context ctx) {
     x.setType(remap(x.getType()));
   }
-  
+
   @Override
   public void endVisit(JGwtCreate x, Context ctx) {
     x.setType(remap(x.getType()));
   }
-  
+
   @Override
   public void endVisit(JMethod x, Context ctx) {
     x.setType(remap(x.getType()));
   }
-  
+
   @Override
   public void endVisit(JNewArray x, Context ctx) {
     x.setType((JNonNullType) remap(x.getType()));
   }
-  
+
   @Override
   public void endVisit(JVariable x, Context ctx) {
     x.setType(remap(x.getType()));
   }
-  
+
   /**
    * An overriding method will be called for each detected JType element.
+   * 
    * @param type
    */
   protected JType remap(JType type) {

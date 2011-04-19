@@ -59,8 +59,9 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
 
     private Object readResolve() {
       String name = signature.substring(0, signature.indexOf(':'));
-      JField result = new JField(SourceOrigin.UNKNOWN, name, enclosingType,
-          JNullType.INSTANCE, false, Disposition.NONE);
+      JField result =
+          new JField(SourceOrigin.UNKNOWN, name, enclosingType, JNullType.INSTANCE, false,
+              Disposition.NONE);
       result.signature = signature;
       return result;
     }
@@ -69,7 +70,7 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
   private final JDeclaredType enclosingType;
   private final boolean isCompileTimeConstant;
   private final boolean isStatic;
-  private boolean isThisRef;
+  private final boolean isThisRef;
   private boolean isVolatile;
   private transient String signature;
 

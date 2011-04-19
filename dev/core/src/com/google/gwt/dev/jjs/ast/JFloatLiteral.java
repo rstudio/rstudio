@@ -23,12 +23,11 @@ import com.google.gwt.dev.jjs.SourceOrigin;
  */
 public class JFloatLiteral extends JValueLiteral {
 
-  public static final JFloatLiteral ZERO = new JFloatLiteral(
-      SourceOrigin.UNKNOWN, Float.intBitsToFloat(0));
+  public static final JFloatLiteral ZERO = new JFloatLiteral(SourceOrigin.UNKNOWN, Float
+      .intBitsToFloat(0));
 
   public static JFloatLiteral get(float value) {
-    return isZero(value) ? ZERO
-        : new JFloatLiteral(SourceOrigin.UNKNOWN, value);
+    return isZero(value) ? ZERO : new JFloatLiteral(SourceOrigin.UNKNOWN, value);
   }
 
   /**

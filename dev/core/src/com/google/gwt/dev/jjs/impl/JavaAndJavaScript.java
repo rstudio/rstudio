@@ -23,11 +23,12 @@ import com.google.gwt.dev.js.ast.JsProgram;
  */
 public class JavaAndJavaScript {
   public final JProgram jprogram;
-  public final JsProgram jsprogram;
   public final String[] jscode;
+  public final JsProgram jsprogram;
   public final JavaToJavaScriptMap map;
 
-  public JavaAndJavaScript(JProgram jprogram, JsProgram jsprogram, String[] jscode, JavaToJavaScriptMap map) {
+  public JavaAndJavaScript(JProgram jprogram, JsProgram jsprogram, String[] jscode,
+      JavaToJavaScriptMap map) {
     this.jprogram = jprogram;
     this.jsprogram = jsprogram;
     this.jscode = jscode;

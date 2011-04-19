@@ -27,8 +27,8 @@ public class JBinaryOperation extends JExpression {
   private JExpression rhs;
   private JType type;
 
-  public JBinaryOperation(SourceInfo info, JType type, JBinaryOperator op,
-      JExpression lhs, JExpression rhs) {
+  public JBinaryOperation(SourceInfo info, JType type, JBinaryOperator op, JExpression lhs,
+      JExpression rhs) {
     super(info);
     this.op = op;
     this.type = type;
@@ -60,8 +60,7 @@ public class JBinaryOperation extends JExpression {
 
   @Override
   public boolean hasSideEffects() {
-    return op.isAssignment() || getLhs().hasSideEffects()
-        || getRhs().hasSideEffects();
+    return op.isAssignment() || getLhs().hasSideEffects() || getRhs().hasSideEffects();
   }
 
   public boolean isAssignment() {

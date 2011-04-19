@@ -32,8 +32,7 @@ public class JNullType extends JReferenceType {
 
   @Override
   public String getClassLiteralFactoryMethod() {
-    throw new InternalCompilerException(
-        "Cannot get class literal for null type");
+    throw new InternalCompilerException("Cannot get class literal for null type");
   }
 
   @Override

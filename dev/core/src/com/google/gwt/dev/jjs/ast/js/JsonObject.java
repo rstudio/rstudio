@@ -39,8 +39,7 @@ public class JsonObject extends JExpression {
     public JExpression labelExpr;
     public JExpression valueExpr;
 
-    public JsonPropInit(SourceInfo sourceInfo, JExpression labelExpr,
-        JExpression valueExpr) {
+    public JsonPropInit(SourceInfo sourceInfo, JExpression labelExpr, JExpression valueExpr) {
       super(sourceInfo);
       this.labelExpr = labelExpr;
       this.valueExpr = valueExpr;
@@ -70,8 +69,7 @@ public class JsonObject extends JExpression {
   @Override
   public boolean hasSideEffects() {
     for (JsonPropInit propInit : propInits) {
-      if (propInit.labelExpr.hasSideEffects()
-          || propInit.valueExpr.hasSideEffects()) {
+      if (propInit.labelExpr.hasSideEffects() || propInit.valueExpr.hasSideEffects()) {
         return true;
       }
     }

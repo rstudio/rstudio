@@ -31,10 +31,9 @@ public class JsniFieldRef extends JFieldRef {
   private final String ident;
   private final boolean isLvalue;
 
-  public JsniFieldRef(SourceInfo info, String ident, JField field,
-      JDeclaredType enclosingType, boolean isLvalue) {
-    super(info, field.isStatic() ? null : JNullLiteral.INSTANCE, field,
-        enclosingType);
+  public JsniFieldRef(SourceInfo info, String ident, JField field, JDeclaredType enclosingType,
+      boolean isLvalue) {
+    super(info, field.isStatic() ? null : JNullLiteral.INSTANCE, field, enclosingType);
     this.ident = ident;
     this.isLvalue = isLvalue;
   }

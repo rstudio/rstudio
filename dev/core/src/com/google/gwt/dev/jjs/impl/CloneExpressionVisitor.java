@@ -74,8 +74,7 @@ public class CloneExpressionVisitor extends JVisitor {
     this.accept(expr);
 
     if (expression == null) {
-      throw new InternalCompilerException(expr, "Unable to clone expression",
-          null);
+      throw new InternalCompilerException(expr, "Unable to clone expression", null);
     }
 
     Class<T> originalClass = (Class<T>) expr.getClass();
@@ -101,22 +100,23 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JArrayLength x, Context ctx) {
-    expression = new JArrayLength(x.getSourceInfo(), cloneExpression(
-        x.getInstance()));
+    expression = new JArrayLength(x.getSourceInfo(), cloneExpression(x.getInstance()));
     return false;
   }
 
   @Override
   public boolean visit(JArrayRef x, Context ctx) {
-    expression = new JArrayRef(x.getSourceInfo(),
-        cloneExpression(x.getInstance()), cloneExpression(x.getIndexExpr()));
+    expression =
+        new JArrayRef(x.getSourceInfo(), cloneExpression(x.getInstance()), cloneExpression(x
+            .getIndexExpr()));
     return false;
   }
 
   @Override
   public boolean visit(JBinaryOperation x, Context ctx) {
-    expression = new JBinaryOperation(x.getSourceInfo(), x.getType(),
-        x.getOp(), cloneExpression(x.getLhs()), cloneExpression(x.getRhs()));
+    expression =
+        new JBinaryOperation(x.getSourceInfo(), x.getType(), x.getOp(),
+            cloneExpression(x.getLhs()), cloneExpression(x.getRhs()));
     return false;
   }
 
@@ -128,8 +128,8 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JCastOperation x, Context ctx) {
-    expression = new JCastOperation(x.getSourceInfo(), x.getCastType(),
-        cloneExpression(x.getExpr()));
+    expression =
+        new JCastOperation(x.getSourceInfo(), x.getCastType(), cloneExpression(x.getExpr()));
     return false;
   }
 
@@ -147,9 +147,9 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JConditional x, Context ctx) {
-    expression = new JConditional(x.getSourceInfo(), x.getType(),
-        cloneExpression(x.getIfTest()), cloneExpression(x.getThenExpr()),
-        cloneExpression(x.getElseExpr()));
+    expression =
+        new JConditional(x.getSourceInfo(), x.getType(), cloneExpression(x.getIfTest()),
+            cloneExpression(x.getThenExpr()), cloneExpression(x.getElseExpr()));
     return false;
   }
 
@@ -161,8 +161,9 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JFieldRef x, Context ctx) {
-    expression = new JFieldRef(x.getSourceInfo(),
-        cloneExpression(x.getInstance()), x.getField(), x.getEnclosingType());
+    expression =
+        new JFieldRef(x.getSourceInfo(), cloneExpression(x.getInstance()), x.getField(), x
+            .getEnclosingType());
     return false;
   }
 
@@ -181,9 +182,9 @@ public class CloneExpressionVisitor extends JVisitor {
     }
 
     // Use the clone constructor.
-    JGwtCreate gwtCreate = new JGwtCreate(x.getSourceInfo(), x.getSourceType(),
-        x.getResultTypes(), x.getType(),
-        cloneExpressions(x.getInstantiationExpressions()));
+    JGwtCreate gwtCreate =
+        new JGwtCreate(x.getSourceInfo(), x.getSourceType(), x.getResultTypes(), x.getType(),
+            cloneExpressions(x.getInstantiationExpressions()));
 
     expression = gwtCreate;
     return false;
@@ -191,8 +192,7 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JInstanceOf x, Context ctx) {
-    expression = new JInstanceOf(x.getSourceInfo(), x.getTestType(),
-        cloneExpression(x.getExpr()));
+    expression = new JInstanceOf(x.getSourceInfo(), x.getTestType(), cloneExpression(x.getExpr()));
     return false;
   }
 
@@ -216,8 +216,7 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JMethodCall x, Context ctx) {
-    JMethodCall newMethodCall = new JMethodCall(x,
-        cloneExpression(x.getInstance()));
+    JMethodCall newMethodCall = new JMethodCall(x, cloneExpression(x.getInstance()));
     newMethodCall.addArgs(cloneExpressions(x.getArgs()));
     expression = newMethodCall;
     return false;
@@ -239,9 +238,9 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JNewArray x, Context ctx) {
-    expression = new JNewArray(x.getSourceInfo(), x.getType(),
-        cloneExpressions(x.dims), cloneExpressions(x.initializers),
-        x.getClassLiterals());
+    expression =
+        new JNewArray(x.getSourceInfo(), x.getType(), cloneExpressions(x.dims),
+            cloneExpressions(x.initializers), x.getClassLiterals());
     return false;
   }
 
@@ -267,15 +266,13 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JPostfixOperation x, Context ctx) {
-    expression = new JPostfixOperation(x.getSourceInfo(), x.getOp(),
-        cloneExpression(x.getArg()));
+    expression = new JPostfixOperation(x.getSourceInfo(), x.getOp(), cloneExpression(x.getArg()));
     return false;
   }
 
   @Override
   public boolean visit(JPrefixOperation x, Context ctx) {
-    expression = new JPrefixOperation(x.getSourceInfo(), x.getOp(),
-        cloneExpression(x.getArg()));
+    expression = new JPrefixOperation(x.getSourceInfo(), x.getOp(), cloneExpression(x.getArg()));
     return false;
   }
 
