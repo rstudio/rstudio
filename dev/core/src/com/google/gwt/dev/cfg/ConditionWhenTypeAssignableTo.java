@@ -27,6 +27,8 @@ import com.google.gwt.dev.javac.CompilationProblemReporter;
  */
 public class ConditionWhenTypeAssignableTo extends Condition {
 
+  private static boolean warnedMissingValidationJar = false;
+
   private final String assignableToTypeName;
 
   public ConditionWhenTypeAssignableTo(String assignableToTypeName) {
@@ -60,7 +62,12 @@ public class ConditionWhenTypeAssignableTo extends Condition {
       // This isn't a strict failure case because stale rules can reference
       // types that have been deleted.
       //
-      logger.log(TreeLogger.WARN, "Unknown type '" + assignableToTypeName
+      TreeLogger.Type level = TreeLogger.WARN;
+      if (shouldSuppressWarning(logger, assignableToTypeName)) {
+        // Suppress validation related errors
+        level = TreeLogger.DEBUG;
+      }
+      logger.log(level, "Unknown type '" + assignableToTypeName
           + "' specified in deferred binding rule", null);
       return false;
     }
@@ -86,4 +93,27 @@ public class ConditionWhenTypeAssignableTo extends Condition {
     return toString();
   }
 
+  /**
+   * Suppress multiple validation related messages and replace with a hint.  
+   *     
+   * @param typeName fully qualified type name to check for filtering
+   */
+  // TODO(zundel): Can be removed when javax.validation is included in the JRE
+  private boolean shouldSuppressWarning(TreeLogger logger, String typeName) {
+    if (typeName.startsWith("javax.validation.")
+        || typeName.startsWith("com.google.gwt.validation.")
+        || typeName.startsWith("com.google.gwt.editor.client")) {
+      if (!warnedMissingValidationJar) {
+        warnedMissingValidationJar = true;
+        logger.log(TreeLogger.WARN, "Detected warnings related to '" + typeName + "'. "
+            + "  Is validation-api-<version>-sources.jar on the classpath?");
+        logger.log(TreeLogger.INFO, "Specify -logLevel DEBUG to see all errors.");
+        // Show the first error that matches
+        return false;
+      }
+      // Suppress subsequent errors that match
+      return true;
+    }
+    return false;
+  }
 }
