@@ -103,6 +103,11 @@
    return ()
 })
 
+.rs.addJsonRpcHandler( "get_default_library", function()
+{
+   .rs.scalar(.libPaths()[1])
+})
+
 .rs.addJsonRpcHandler( "list_packages", function()
 {
    # calculate unique libpaths

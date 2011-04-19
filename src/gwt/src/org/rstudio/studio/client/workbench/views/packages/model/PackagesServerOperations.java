@@ -27,6 +27,8 @@ public interface PackagesServerOperations
          String repository,
          ServerRequestCallback<JsArrayString> requestCallback);
    
+   void getDefaultLibrary(ServerRequestCallback<String> requestCallback);
+   
    // load a package
    void loadPackage(String packageName,
                     ServerRequestCallback<Void> requestCallback);

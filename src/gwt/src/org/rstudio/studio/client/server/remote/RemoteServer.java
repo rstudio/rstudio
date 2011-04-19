@@ -394,6 +394,11 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, LIST_PACKAGES, requestCallback);
    }
    
+   public void getDefaultLibrary(ServerRequestCallback<String> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_DEFAULT_LIBRARY, requestCallback);
+   }
+   
    public void availablePackages(
          String repository,
          ServerRequestCallback<JsArrayString> requestCallback)
@@ -1356,6 +1361,7 @@ public class RemoteServer implements Server
    
    private static final String LIST_PACKAGES = "list_packages";
    private static final String AVAILABLE_PACKAGES = "available_packages";
+   private static final String GET_DEFAULT_LIBRARY = "get_default_library";
    private static final String LOAD_PACKAGE = "load_package";
    private static final String UNLOAD_PACKAGE = "unload_package";
    private static final String IS_CRAN_CONFIGURED = "is_cran_configured";

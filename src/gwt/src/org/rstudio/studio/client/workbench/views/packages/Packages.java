@@ -18,8 +18,9 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.widget.MessageDialog;
-import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -175,17 +176,42 @@ public class Packages
             "Confirm Remove",
             "Are you sure you want to remove the " + 
             packageInfo.getName() + " package?",
-            new Operation() { public void execute()
+            new ProgressOperation() 
             {
-               StringBuilder command = new StringBuilder();
-               command.append("remove.packages(\"");
-               command.append(packageInfo.getName());
-               command.append("\", lib=\"");
-               command.append(packageInfo.getLibrary());
-               command.append("\")");
-               events_.fireEvent(new SendToConsoleEvent(command.toString(), 
-                                                        true));
-            }},
+               @Override
+               public void execute(final ProgressIndicator indicator)
+               {
+                  indicator.onProgress("Removing package...");
+                  server_.getDefaultLibrary(new ServerRequestCallback<String>(){
+
+                     @Override
+                     public void onResponseReceived(String defaultLibrary)
+                     {
+                        StringBuilder command = new StringBuilder();
+                        command.append("remove.packages(\"");
+                        command.append(packageInfo.getName());
+                        command.append("\"");
+                        if (!packageInfo.getLibrary().equals(defaultLibrary))
+                        {
+                           command.append(", lib=\"");
+                           command.append(packageInfo.getLibrary());
+                           command.append("\"");
+                        }
+                        command.append(")");
+                        String cmd = command.toString();
+                        events_.fireEvent(new SendToConsoleEvent(cmd, true));
+                        indicator.onCompleted();
+                     }
+                     
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        indicator.onError(error.getUserMessage());
+                     }
+                     
+                  });      
+               }      
+            },
             true);
    }
       
