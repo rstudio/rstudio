@@ -102,7 +102,8 @@
           <include name="htmlunit/htmlunit-r5940/htmlunit-core-js-r5940.jar" />
           <include name="nekohtml/nekohtml-1.9.13.jar" />
           <include name="streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-1.5-rebased.jar" />
-          <include name="xalan/xalan-2.7.1.jar" />
+          <include name="cup/java-cup-11a.jar" />
+          <include name="xalan/xalan-2.7.1-nocup.jar" />
           <include name="xerces/xerces-2_9_1/serializer.jar" />
           <include name="xerces/xerces-2_9_1/xercesImpl-NoMetaInf.jar" />
           <include name="xerces/xerces-2_9_1/xml-apis.jar" />
@@ -165,7 +166,8 @@
           <zipfileset src="${gwt.tools.lib}/htmlunit/htmlunit-r5940/htmlunit-r5940.jar" />
           <zipfileset src="${gwt.tools.lib}/htmlunit/htmlunit-r5940/htmlunit-core-js-r5940.jar" />
           <zipfileset src="${gwt.tools.lib}/nekohtml/nekohtml-1.9.13.jar" />
-          <zipfileset src="${gwt.tools.lib}/xalan/xalan-2.7.1.jar" />
+          <zipfileset src="${gwt.tools.lib}/cup/java-cup-11a.jar" />
+          <zipfileset src="${gwt.tools.lib}/xalan/xalan-2.7.1-nocup.jar" />
           <zipfileset src="${gwt.tools.lib}/xerces/xerces-2_9_1/serializer.jar" />
           <zipfileset src="${gwt.tools.lib}/xerces/xerces-2_9_1/xercesImpl-NoMetaInf.jar" />
           <zipfileset src="${gwt.tools.lib}/xerces/xerces-2_9_1/xml-apis.jar" />

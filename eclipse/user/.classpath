@@ -21,7 +21,8 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/cssparser/cssparser-0.9.5.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/nekohtml/nekohtml-1.9.13.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/selenium/selenium-java-client-driver.jar" sourcepath="/GWT_TOOLS/lib/selenium/selenium-java-client-driver-sources.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/xalan/xalan-2.7.1.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/cup/java-cup-11a.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/xalan/xalan-2.7.1-nocup.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/xerces/xerces-2_9_1/serializer.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/xerces/xerces-2_9_1/xercesImpl-NoMetaInf.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/xerces/xerces-2_9_1/xml-apis.jar"/>
