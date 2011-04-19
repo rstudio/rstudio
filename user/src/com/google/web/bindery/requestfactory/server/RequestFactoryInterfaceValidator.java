@@ -39,6 +39,7 @@ import com.google.web.bindery.requestfactory.shared.RequestContext;
 import com.google.web.bindery.requestfactory.shared.RequestFactory;
 import com.google.web.bindery.requestfactory.shared.Service;
 import com.google.web.bindery.requestfactory.shared.ServiceName;
+import com.google.web.bindery.requestfactory.shared.SkipInterfaceValidation;
 import com.google.web.bindery.requestfactory.shared.ValueProxy;
 
 import java.io.IOException;
@@ -416,17 +417,27 @@ public class RequestFactoryInterfaceValidator {
       if ("<clinit>".equals(name) || "<init>".equals(name)) {
         return null;
       }
-      RFMethod method = new RFMethod(name, desc);
+      final RFMethod method = new RFMethod(name, desc);
       method.setDeclaredStatic((access & Opcodes.ACC_STATIC) != 0);
       method.setDeclaredSignature(signature);
       methods.add(method);
-      return null;
+
+      return new EmptyVisitor() {
+        @Override
+        public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+          if (desc.equals(Type.getDescriptor(SkipInterfaceValidation.class))) {
+            method.setValidationSkipped(true);
+          }
+          return null;
+        }
+      };
     }
   }
 
   private static class RFMethod extends Method {
     private boolean isDeclaredStatic;
     private String signature;
+    private boolean isValidationSkipped;
 
     public RFMethod(String name, String desc) {
       super(name, desc);
@@ -440,12 +451,20 @@ public class RequestFactoryInterfaceValidator {
       return isDeclaredStatic;
     }
 
+    public boolean isValidationSkipped() {
+      return isValidationSkipped;
+    }
+
     public void setDeclaredSignature(String signature) {
       this.signature = signature;
     }
 
     public void setDeclaredStatic(boolean value) {
       isDeclaredStatic = value;
+    }
+
+    public void setValidationSkipped(boolean isValidationSkipped) {
+      this.isValidationSkipped = isValidationSkipped;
     }
 
     @Override
@@ -727,7 +746,7 @@ public class RequestFactoryInterfaceValidator {
    * annotation</li>
    * <li>The domain object has getId() and getVersion() methods</li>
    * <li>All property methods in the EntityProxy can be mapped onto an
-   * equivalent domain method</li>
+   * equivalent domain method (unless validation is skipped for the method)</li>
    * <li>All referenced proxy types are valid</li>
    * </ul>
    * 
@@ -778,7 +797,7 @@ public class RequestFactoryInterfaceValidator {
    * <li><code>binaryName</code> has a {@link Service} or {@link ServiceName}
    * annotation</li>
    * <li>All service methods in the RequestContext can be mapped onto an
-   * equivalent domain method</li>
+   * equivalent domain method (unless validation is skipped for the method)</li>
    * <li>All referenced EntityProxy types are valid</li>
    * </ul>
    * 
@@ -886,7 +905,7 @@ public class RequestFactoryInterfaceValidator {
    * <li><code>binaryName</code> has a {@link ProxyFor} or {@link ProxyForName}
    * annotation</li>
    * <li>All property methods in the EntityProxy can be mapped onto an
-   * equivalent domain method</li>
+   * equivalent domain method (unless validation is skipped for the method)</li>
    * <li>All referenced proxy types are valid</li>
    * </ul>
    * 
@@ -985,7 +1004,7 @@ public class RequestFactoryInterfaceValidator {
         returnType, method.getArgumentTypes()));
 
     RFMethod found = findCompatibleServiceMethod(logger, domainServiceType,
-        searchFor);
+        searchFor, !method.isValidationSkipped());
 
     if (found != null) {
       boolean isInstance = isAssignable(logger, instanceRequestIntf,
@@ -1069,11 +1088,12 @@ public class RequestFactoryInterfaceValidator {
    * domain object.
    */
   private void checkPropertyMethod(ErrorContext logger,
-      Method clientPropertyMethod, Type domainType) {
+      RFMethod clientPropertyMethod, Type domainType) {
     logger = logger.setMethod(clientPropertyMethod);
 
     findCompatiblePropertyMethod(logger, domainType,
-        createDomainMethod(logger, clientPropertyMethod));
+        createDomainMethod(logger, clientPropertyMethod),
+        !clientPropertyMethod.isValidationSkipped());
   }
 
   private void checkUnresolvedKeyTypes(ErrorContext logger) {
@@ -1207,8 +1227,8 @@ public class RequestFactoryInterfaceValidator {
    * hierarchy that is assignment-compatible with the given Method.
    */
   private RFMethod findCompatiblePropertyMethod(final ErrorContext logger,
-      Type domainType, Method searchFor) {
-    return findCompatibleMethod(logger, domainType, searchFor, true, false,
+      Type domainType, Method searchFor, boolean mustFind) {
+    return findCompatibleMethod(logger, domainType, searchFor, mustFind, false,
         false);
   }
 
@@ -1217,8 +1237,8 @@ public class RequestFactoryInterfaceValidator {
    * hierarchy that is assignment-compatible with the given Method.
    */
   private RFMethod findCompatibleServiceMethod(final ErrorContext logger,
-      Type domainType, Method searchFor) {
-    return findCompatibleMethod(logger, domainType, searchFor, true, false,
+      Type domainType, Method searchFor, boolean mustFind) {
+    return findCompatibleMethod(logger, domainType, searchFor, mustFind, false,
         true);
   }
 

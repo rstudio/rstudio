@@ -44,10 +44,6 @@ public class EntityProxyModel implements AcceptsModelVisitor {
       return toReturn;
     }
 
-    public void setProxyFor(Class<?> value) {
-      toReturn.proxyFor = value;
-    }
-
     public void setQualifiedBinaryName(String qualifiedBinaryName) {
       toReturn.qualifiedBinaryName = qualifiedBinaryName;
     }
@@ -74,7 +70,6 @@ public class EntityProxyModel implements AcceptsModelVisitor {
     ENTITY, VALUE
   }
 
-  private Class<?> proxyFor;
   private String qualifiedBinaryName;
   private String qualifiedSourceName;
   private List<RequestMethod> requestMethods;
@@ -90,10 +85,6 @@ public class EntityProxyModel implements AcceptsModelVisitor {
       }
     }
     visitor.endVisit(this);
-  }
-
-  public Class<?> getProxyFor() {
-    return proxyFor;
   }
 
   public String getQualifiedBinaryName() {

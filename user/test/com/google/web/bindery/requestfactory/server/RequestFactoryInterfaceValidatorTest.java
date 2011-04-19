@@ -27,6 +27,7 @@ import com.google.web.bindery.requestfactory.shared.RequestFactory;
 import com.google.web.bindery.requestfactory.shared.Service;
 import com.google.web.bindery.requestfactory.shared.ServiceName;
 import com.google.web.bindery.requestfactory.shared.SimpleRequestFactory;
+import com.google.web.bindery.requestfactory.shared.SkipInterfaceValidation;
 import com.google.web.bindery.requestfactory.shared.ValueProxy;
 import com.google.web.bindery.requestfactory.shared.impl.FindRequest;
 
@@ -247,6 +248,28 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
     Request<Integer> doesNotExist(int a);
   }
 
+  @Service(Domain.class)
+  interface SkipValidationContext extends RequestContext {
+    @SkipInterfaceValidation
+    Request<Integer> doesNotExist(int a);
+
+    @SkipInterfaceValidation
+    Request<Long> foo(int a);
+  }
+
+  @Service(Domain.class)
+  interface SkipValidationProxy extends ValueProxy {
+    @SkipInterfaceValidation
+    boolean doesNotExist();
+  }
+
+  @Service(Domain.class)
+  interface SkipValidationChecksReferredProxies extends ValueProxy {
+    @SkipInterfaceValidation
+    // still validates other proxies
+    DomainProxyMissingAnnotation getDomainProxyMissingAnnotation();
+  }
+
   @ProxyFor(Domain.class)
   @ProxyForName("Domain")
   @Service(Domain.class)
@@ -419,6 +442,21 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
   public void testOverloadedMethod() {
     v.validateEntityProxy(DomainWithOverloadsProxy.class.getName());
     assertTrue(v.isPoisoned());
+  }
+
+  public void testSkipValidationChecksReferredProxies() {
+    v.validateValueProxy(SkipValidationChecksReferredProxies.class.getName());
+    assertTrue(v.isPoisoned());
+  }
+
+  public void testSkipValidationContext() {
+    v.validateRequestContext(SkipValidationContext.class.getName());
+    assertFalse(v.isPoisoned());
+  }
+
+  public void testSkipValidationProxy() {
+    v.validateValueProxy(SkipValidationProxy.class.getName());
+    assertFalse(v.isPoisoned());
   }
 
   /**
