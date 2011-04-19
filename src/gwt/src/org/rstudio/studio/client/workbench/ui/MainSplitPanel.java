@@ -101,7 +101,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    public MainSplitPanel(EventBus events,
                          Session session)
    {
-      super(events);
+      super(3, events);
       session_ = session;
       addSplitterResizedHandler(this);
    }

@@ -20,9 +20,9 @@ import org.rstudio.studio.client.application.events.EventBus;
 public class NotifyingSplitLayoutPanel extends SplitLayoutPanel
 {
    @Inject
-   public NotifyingSplitLayoutPanel(EventBus events)
+   public NotifyingSplitLayoutPanel(int splitterSize, EventBus events)
    {
-      super();
+      super(splitterSize);
 
       events_ = events;
 
