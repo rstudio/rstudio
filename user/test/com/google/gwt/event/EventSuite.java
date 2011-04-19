@@ -17,9 +17,10 @@ package com.google.gwt.event;
 
 import com.google.gwt.event.dom.client.DomEventTest;
 import com.google.gwt.event.logical.shared.LogicalEventsTest;
+import com.google.gwt.event.shared.EventBusTest;
 import com.google.gwt.event.shared.HandlerManagerTest;
-import com.google.gwt.event.shared.SimpleEventBusTest;
 import com.google.gwt.event.shared.ResettableEventBusTest;
+import com.google.gwt.event.shared.SimpleEventBusTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
 import junit.framework.Test;
@@ -32,11 +33,12 @@ public class EventSuite {
     GWTTestSuite suite = new GWTTestSuite(
         "Test for suite for the com.google.gwt.event module.");
 
-    suite.addTestSuite(LogicalEventsTest.class);
     suite.addTestSuite(DomEventTest.class);
+    suite.addTestSuite(EventBusTest.class);
     suite.addTestSuite(HandlerManagerTest.class);
-    suite.addTestSuite(SimpleEventBusTest.class);
+    suite.addTestSuite(LogicalEventsTest.class);
     suite.addTestSuite(ResettableEventBusTest.class);
+    suite.addTestSuite(SimpleEventBusTest.class);
 
     return suite;
   }

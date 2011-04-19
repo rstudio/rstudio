@@ -24,15 +24,27 @@ import com.google.web.bindery.event.shared.Event;
 public abstract class EventBus extends com.google.web.bindery.event.shared.EventBus implements
     HasHandlers {
 
-  public <H extends EventHandler> HandlerRegistration addHandler(GwtEvent.Type<H> type, H handler) {
-    return wrap(addHandler((Event.Type<H>) type, handler));
+  @Override
+  public <H> com.google.web.bindery.event.shared.HandlerRegistration addHandler(Event.Type<H> type, H handler) {
+    throw new UnsupportedOperationException("Subclass responsibility. "
+        + "This class is a legacy wrapper for com.google.web.bindery.event.shared.EventBus. "
+        + "Use that directly, or try com.google.gwt.event.shared.SimpleEventBus");
   }
+  
+  public abstract <H extends EventHandler> HandlerRegistration addHandler(GwtEvent.Type<H> type, H handler);
 
-  public <H extends EventHandler> HandlerRegistration addHandlerToSource(GwtEvent.Type<H> type,
+  @Override
+  public <H> com.google.web.bindery.event.shared.HandlerRegistration addHandlerToSource(Event.Type<H> type,
       Object source, H handler) {
-    return wrap(addHandlerToSource((Event.Type<H>) type, source, handler));
+    throw new UnsupportedOperationException("Subclass responsibility. "
+        + "This class is a legacy wrapper for com.google.web.bindery.event.shared.EventBus. "
+        + "Use that directly, or try com.google.gwt.event.shared.SimpleEventBus");
   }
 
+  public abstract <H extends EventHandler> HandlerRegistration addHandlerToSource(GwtEvent.Type<H> type,
+      Object source, H handler);
+
+  @Override
   public void fireEvent(Event<?> event) {
     throw new UnsupportedOperationException("Subclass responsibility. "
         + "This class is a legacy wrapper for com.google.web.bindery.event.shared.EventBus. "
@@ -41,6 +53,8 @@ public abstract class EventBus extends com.google.web.bindery.event.shared.Event
 
   public abstract void fireEvent(GwtEvent<?> event);
 
+
+  @Override
   public void fireEventFromSource(Event<?> event, Object source) {
     throw new UnsupportedOperationException("Subclass responsibility. "
         + "This class is a legacy wrapper for com.google.web.bindery.event.shared.EventBus. "

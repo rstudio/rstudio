@@ -27,9 +27,19 @@ public class SimpleEventBus extends EventBus {
   private final com.google.web.bindery.event.shared.SimpleEventBus real =
       new com.google.web.bindery.event.shared.SimpleEventBus();
 
+  public <H extends EventHandler> com.google.gwt.event.shared.HandlerRegistration addHandler(
+      GwtEvent.Type<H> type, H handler) {
+    return wrap(addHandler((Event.Type<H>) type, handler));
+  }
+
   @Override
   public <H> HandlerRegistration addHandler(Type<H> type, H handler) {
     return real.addHandler(type, handler);
+  }
+
+  public <H extends EventHandler> com.google.gwt.event.shared.HandlerRegistration addHandlerToSource(
+      GwtEvent.Type<H> type, Object source, H handler) {
+    return wrap(addHandlerToSource((Event.Type<H>) type, source, handler));
   }
 
   @Override
