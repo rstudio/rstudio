@@ -25,15 +25,15 @@ import com.google.gwt.dev.asm.Type;
 import com.google.gwt.dev.asm.signature.SignatureReader;
 import com.google.gwt.dev.asm.util.TraceClassVisitor;
 import com.google.gwt.dev.javac.asm.CollectAnnotationData;
+import com.google.gwt.dev.javac.asm.CollectAnnotationData.AnnotationData;
 import com.google.gwt.dev.javac.asm.CollectClassData;
+import com.google.gwt.dev.javac.asm.CollectClassData.AnnotationEnum;
 import com.google.gwt.dev.javac.asm.CollectFieldData;
 import com.google.gwt.dev.javac.asm.CollectMethodData;
 import com.google.gwt.dev.javac.asm.CollectTypeParams;
 import com.google.gwt.dev.javac.asm.ResolveClassSignature;
 import com.google.gwt.dev.javac.asm.ResolveMethodSignature;
 import com.google.gwt.dev.javac.asm.ResolveTypeSignature;
-import com.google.gwt.dev.javac.asm.CollectAnnotationData.AnnotationData;
-import com.google.gwt.dev.javac.asm.CollectClassData.AnnotationEnum;
 import com.google.gwt.dev.javac.typemodel.JAbstractMethod;
 import com.google.gwt.dev.javac.typemodel.JArrayType;
 import com.google.gwt.dev.javac.typemodel.JClassType;
@@ -238,6 +238,11 @@ public class TypeOracleMediator extends TypeOracleBuilder {
    * Turn on to trace class processing.
    */
   private static final boolean TRACE_CLASSES = false;
+
+  /**
+   * Suppress some warnings related to missing valiation.jar on classpath.
+   */
+  private static boolean warnedMissingValidationJar = false;
 
   private static JTypeParameter[] collectTypeParams(String signature) {
     if (signature != null) {
@@ -541,22 +546,27 @@ public class TypeOracleMediator extends TypeOracleBuilder {
   private Class<? extends Annotation> getAnnotationClass(TreeLogger logger,
       AnnotationData annotData) {
     Type type = Type.getType(annotData.getDesc());
+    String typeName = type.getClassName();
     try {
-      Class<?> clazz = Class.forName(type.getClassName(), false,
+      Class<?> clazz = Class.forName(typeName, false,
           Thread.currentThread().getContextClassLoader());
       if (!Annotation.class.isAssignableFrom(clazz)) {
-        logger.log(TreeLogger.ERROR, "Type " + type.getClassName()
+        logger.log(TreeLogger.ERROR, "Type " + typeName
             + " is not an annotation");
         return null;
       }
       return clazz.asSubclass(Annotation.class);
     } catch (ClassNotFoundException e) {
-      logger.log(TreeLogger.WARN, "Ignoring unresolvable annotation type "
-          + type.getClassName());
+      TreeLogger.Type level = TreeLogger.WARN;
+      if (shouldSuppressUnresolvableAnnotation(logger, typeName)) {
+        level = TreeLogger.DEBUG;
+      }
+      logger.log(level, "Ignoring unresolvable annotation type "
+          + typeName);
       return null;
     }
   }
-
+  
   @SuppressWarnings("unused")
   private Class<?> getClassLiteralForPrimitive(Type type) {
     switch (type.getSort()) {
@@ -583,7 +593,7 @@ public class TypeOracleMediator extends TypeOracleBuilder {
         return null;
     }
   }
-
+  
   /**
    * Map a bitset onto a different bitset.
    *
@@ -1163,5 +1173,28 @@ public class TypeOracleMediator extends TypeOracleBuilder {
         assert false : "Unexpected type " + type;
         return null;
     }
+  }
+
+  /**
+   * Suppress multiple validation related messages and replace with a hint.  
+   *     
+   * @param typeName fully qualified type name to check for filtering
+   */
+  // TODO(zundel): Can be removed when javax.validation is included in the JRE
+  private boolean shouldSuppressUnresolvableAnnotation(TreeLogger logger, String typeName) {
+    if (typeName.startsWith("javax.validation.")
+        || typeName.startsWith("com.google.gwt.validation.")) {
+      if (!warnedMissingValidationJar) {
+        warnedMissingValidationJar = true;
+        logger.log(TreeLogger.WARN, "Detected warnings related to '" + typeName + "'. "
+            + "  Is validation-<version>.jar on the classpath?");
+        logger.log(TreeLogger.INFO, "Specify -logLevel DEBUG to see all errors.");
+        // Show the first error that matches
+        return false;
+      }
+      // Suppress subsequent errors that match
+      return true;
+    }
+    return false;
   }
 }
