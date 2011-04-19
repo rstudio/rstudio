@@ -21,8 +21,9 @@ import com.google.web.bindery.event.shared.Event;
  * Extends {com.google.web.bindery.event.shared.EventBus} for legacy
  * compatibility.
  */
-public abstract class EventBus extends com.google.web.bindery.event.shared.EventBus implements HasHandlers {
-  
+public abstract class EventBus extends com.google.web.bindery.event.shared.EventBus implements
+    HasHandlers {
+
   public <H extends EventHandler> HandlerRegistration addHandler(GwtEvent.Type<H> type, H handler) {
     return wrap(addHandler((Event.Type<H>) type, handler));
   }
@@ -31,8 +32,24 @@ public abstract class EventBus extends com.google.web.bindery.event.shared.Event
       Object source, H handler) {
     return wrap(addHandlerToSource((Event.Type<H>) type, source, handler));
   }
-  
-  public void fireEvent(GwtEvent<?> event) {
+
+  public void fireEvent(Event<?> event) {
+    throw new UnsupportedOperationException("Subclass responsibility. "
+        + "This class is a legacy wrapper for com.google.web.bindery.event.shared.EventBus. "
+        + "Use that directly, or try com.google.gwt.event.shared.SimpleEventBus");
+  }
+
+  public abstract void fireEvent(GwtEvent<?> event);
+
+  public void fireEventFromSource(Event<?> event, Object source) {
+    throw new UnsupportedOperationException("Subclass responsibility. "
+        + "This class is a legacy wrapper for com.google.web.bindery.event.shared.EventBus. "
+        + "Use that directly, or try com.google.gwt.event.shared.SimpleEventBus");
+  }
+
+  public abstract void fireEventFromSource(GwtEvent<?> event, Object source);
+
+  protected void castFireEvent(GwtEvent<?> event) {
     try {
       fireEvent((Event<?>) event);
     } catch (com.google.web.bindery.event.shared.UmbrellaException e) {
@@ -40,7 +57,7 @@ public abstract class EventBus extends com.google.web.bindery.event.shared.Event
     }
   }
 
-  public void fireEventFromSource(GwtEvent<?> event, Object source) {
+  protected void castFireEventFromSource(GwtEvent<?> event, Object source) {
     try {
       fireEventFromSource((Event<?>) event, source);
     } catch (com.google.web.bindery.event.shared.UmbrellaException e) {

@@ -51,8 +51,18 @@ public class CountingEventBus extends com.google.gwt.event.shared.EventBus {
   }
 
   @Override
+  public void fireEvent(GwtEvent<?> event) {
+    castFireEvent(event);
+  }
+
+  @Override
   public void fireEventFromSource(Event<?> event, Object source) {
     real.fireEventFromSource(event, source);
+  }
+
+  @Override
+  public void fireEventFromSource(GwtEvent<?> event, Object source) {
+    castFireEventFromSource(event, source);
   }
 
   public int getCount(GwtEvent.Type<?> type) {
