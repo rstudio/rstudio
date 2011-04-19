@@ -21,7 +21,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.CssResource;
@@ -157,15 +156,13 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                         GWT.<Resources> create(Resources.class));
       packagesTable_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
       packagesTable_.setSelectionModel(new NoSelectionModel<PackageInfo>());
-      packagesTable_.setWidth("100%", true);
+      packagesTable_.setWidth("100%", false);
         
       LoadedColumn loadedColumn = new LoadedColumn();
       packagesTable_.addColumn(loadedColumn);
-      packagesTable_.setColumnWidth(loadedColumn, 35, Unit.PX);
       
       NameColumn nameColumn = new NameColumn();
       packagesTable_.addColumn(nameColumn);
-      packagesTable_.setColumnWidth(nameColumn, 20, Unit.PCT);
     
       TextColumn<PackageInfo> descColumn = new TextColumn<PackageInfo>() {
          public String getValue(PackageInfo packageInfo)
@@ -175,12 +172,9 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       };  
       
       packagesTable_.addColumn(descColumn);
-      packagesTable_.setColumnWidth(descColumn, 80, Unit.PCT);
       
       RemoveColumn removeColumn = new RemoveColumn();
       packagesTable_.addColumn(removeColumn);
-      packagesTable_.setColumnWidth(removeColumn, 33, Unit.PX);
-      
       
       packagesDataProvider_ = new ListDataProvider<PackageInfo>();
       packagesDataProvider_.addDataDisplay(packagesTable_);
