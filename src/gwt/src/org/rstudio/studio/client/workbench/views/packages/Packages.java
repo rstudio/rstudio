@@ -186,7 +186,7 @@ public class Packages
                events_.fireEvent(new SendToConsoleEvent(command.toString(), 
                                                         true));
             }},
-            false);
+            true);
    }
       
    public void listPackages()

@@ -226,7 +226,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                                   SafeHtml value, 
                                   SafeHtmlBuilder sb) 
             {   
-               sb.appendHtmlConstant(closeButtonPrototype_.getHTML());
+               sb.appendHtmlConstant(removeButtonPrototype_.getHTML());
             }                                
          });
 
@@ -245,8 +245,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       }
    }
    
-   final static AbstractImagePrototype closeButtonPrototype_ = 
-      AbstractImagePrototype.create(ThemeResources.INSTANCE.clearSearch());
+   final static AbstractImagePrototype removeButtonPrototype_ = 
+      AbstractImagePrototype.create(ThemeResources.INSTANCE.removePackage());
    
    
    // package name column which includes a hyperlink to package docs

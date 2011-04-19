@@ -161,4 +161,6 @@ public interface ThemeResources extends ClientBundle
    ImageResource codeTransform();
 
    ImageResource closeChevron();
+   
+   ImageResource removePackage();
 }
