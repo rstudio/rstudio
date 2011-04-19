@@ -1718,7 +1718,7 @@ public class GwtAstBuilder {
     public boolean visit(TypeDeclaration x, CompilationUnitScope scope) {
       return visit(x);
     }
-    
+
     @Override
     public boolean visit(WhileStatement x, BlockScope scope) {
       // SEE NOTE ON JDT FORCED OPTIMIZATIONS
@@ -1767,6 +1767,21 @@ public class GwtAstBuilder {
 
       if (type instanceof JClassType) {
         addBridgeMethods(x.binding);
+      }
+
+      Binding[] rescues = artificialRescues.get(x);
+      if (rescues != null) {
+        for (Binding rescue : rescues) {
+          if (rescue instanceof TypeBinding) {
+            type.addArtificialRescue(typeMap.get((TypeBinding) rescue));
+          } else if (rescue instanceof FieldBinding) {
+            type.addArtificialRescue(typeMap.get((FieldBinding) rescue));
+          } else if (rescue instanceof MethodBinding) {
+            type.addArtificialRescue(typeMap.get((MethodBinding) rescue));
+          } else {
+            throw new InternalCompilerException("Unknown artifical rescue binding type.");
+          }
+        }
       }
 
       // TODO: uprefs???
@@ -2831,6 +2846,8 @@ public class GwtAstBuilder {
     return false;
   }
 
+  Map<TypeDeclaration, Binding[]> artificialRescues;
+
   CudInfo curCud = null;
 
   JClassType javaLangClass = null;
@@ -2850,10 +2867,12 @@ public class GwtAstBuilder {
   private List<JDeclaredType> newTypes;
 
   public List<JDeclaredType> process(CompilationUnitDeclaration cud,
+      Map<TypeDeclaration, Binding[]> artificialRescues,
       Map<MethodDeclaration, JsniMethod> jsniMethods, Map<String, Binding> jsniRefs) {
     if (cud.types == null) {
       return Collections.emptyList();
     }
+    this.artificialRescues = artificialRescues;
     this.jsniRefs = jsniRefs;
     this.jsniMethods = jsniMethods;
     newTypes = new ArrayList<JDeclaredType>();

@@ -17,17 +17,13 @@ package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.util.StringInterner;
-import com.google.gwt.dev.util.collect.Lists;
-
-import java.util.List;
 
 /**
  * Base class for any storage location.
  */
 public abstract class JVariable extends JNode implements CanBeSetFinal,
-    CanHaveInitializer, HasAnnotations, HasName, HasType {
+    CanHaveInitializer, HasName, HasType {
 
-  protected List<JAnnotation> annotations = Lists.create();
   protected JDeclarationStatement declStmt = null;
   private boolean isFinal;
   private final String name;
@@ -39,18 +35,6 @@ public abstract class JVariable extends JNode implements CanBeSetFinal,
     this.name = StringInterner.get().intern(name);
     this.type = type;
     this.isFinal = isFinal;
-  }
-
-  public void addAnnotation(JAnnotation annotation) {
-    annotations = Lists.add(annotations, annotation);
-  }
-
-  public JAnnotation findAnnotation(String className) {
-    return JAnnotation.findAnnotation(this, className);
-  }
-
-  public List<JAnnotation> getAnnotations() {
-    return Lists.normalizeUnmodifiable(annotations);
   }
 
   public JLiteral getConstInitializer() {

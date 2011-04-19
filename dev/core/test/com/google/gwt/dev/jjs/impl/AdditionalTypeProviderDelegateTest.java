@@ -19,16 +19,9 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.GeneratedUnit;
 import com.google.gwt.dev.javac.JdtCompiler.AdditionalTypeProviderDelegate;
 import com.google.gwt.dev.javac.impl.MockJavaResource;
-import com.google.gwt.dev.jjs.ast.JAnnotation;
-import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
-import com.google.gwt.dev.jjs.ast.JField;
-import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JAnnotation.Property;
-import com.google.gwt.dev.jjs.ast.JAnnotation.SourceOnlyClassException;
 
 /**
  * Tests that a AdditionalTypeProviderDelegate correctly gets control when an unknown
@@ -193,17 +186,17 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
     assertNotNull("Unknown class A", goodClassType);
   }
 
-  public void testUnknownClass() throws UnableToCompleteException {
+  public void testUnknownClass() {
     try {
-      JProgram program = compileSnippet("void", "new test.C();");
+      compileSnippet("void", "new test.C();");
       fail("Shouldn't have compiled");
     } catch (UnableToCompleteException expected) {
     }
   }
  
-  public void testUnknownClassNoImport() throws UnableToCompleteException {
+  public void testUnknownClassNoImport() {
     try {
-      JProgram program = compileSnippet("void", "new test.D();");
+      compileSnippet("void", "new test.D();");
       fail("Shouldn't have compiled");
     } catch (UnableToCompleteException expected) {
     }

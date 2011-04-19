@@ -25,7 +25,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
  * ClassLiteralHolder. That field contains the class object allocation
  * initializer.
  */
-public class JClassLiteral extends JLiteral implements JAnnotationArgument {
+public class JClassLiteral extends JLiteral {
 
   private static SourceInfo addCorrelation(SourceInfo info) {
     info.addCorrelation(info.getCorrelator().by(Literal.CLASS));
@@ -39,10 +39,6 @@ public class JClassLiteral extends JLiteral implements JAnnotationArgument {
   public JClassLiteral(SourceInfo sourceInfo, JType type) {
     super(addCorrelation(sourceInfo));
     refType = type;
-  }
-
-  public JNode annotationNode() {
-    return this;
   }
 
   /**

@@ -51,7 +51,7 @@ public class ArtificialRescueCheckerTest extends CheckerTestCase {
     builder.append("@ArtificialRescue(@Rescue(className=\"Target\", methods=\"blah()\"))\n");
     builder.append("class Buggy{}");
     shouldGenerateError(builder, targetClass(), 3,
-        ArtificialRescueChecker.noMethod("Target", "blah"));
+        ArtificialRescueChecker.noMethod("Target", "blah()"));
   }
 
   public void testBadMethodSignature() {
@@ -107,7 +107,7 @@ public class ArtificialRescueCheckerTest extends CheckerTestCase {
 
   public void testOkPrimitiveArray() {
     StringBuilder builder = builder();
-    builder.append("@ArtificialRescue(@Rescue(className=\"Z[]\"))\n");
+    builder.append("@ArtificialRescue(@Rescue(className=\"boolean[]\"))\n");
     builder.append("class Buggy{}");
     shouldGenerateNoError(builder, targetClass());
   }

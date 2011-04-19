@@ -33,8 +33,8 @@ import java.util.Set;
 /**
  * A Java method implementation.
  */
-public class JMethod extends JNode implements HasAnnotations, HasEnclosingType,
-    HasName, HasType, CanBeAbstract, CanBeSetFinal, CanBeNative, CanBeStatic {
+public class JMethod extends JNode implements HasEnclosingType, HasName, HasType, CanBeAbstract,
+    CanBeSetFinal, CanBeNative, CanBeStatic {
 
   private static class ExternalSerializedForm implements Serializable {
 
@@ -65,8 +65,6 @@ public class JMethod extends JNode implements HasAnnotations, HasEnclosingType,
   }
 
   protected transient String signature;
-
-  private List<JAnnotation> annotations = Lists.create();
 
   /**
    * Special serialization treatment.
@@ -111,10 +109,6 @@ public class JMethod extends JNode implements HasAnnotations, HasEnclosingType,
     this.isPrivate = isPrivate;
   }
 
-  public void addAnnotation(JAnnotation annotation) {
-    annotations = Lists.add(annotations, annotation);
-  }
-
   /**
    * Add a method that this method overrides.
    */
@@ -155,20 +149,12 @@ public class JMethod extends JNode implements HasAnnotations, HasEnclosingType,
     return !isStatic() && !isPrivate();
   }
 
-  public JAnnotation findAnnotation(String className) {
-    return JAnnotation.findAnnotation(this, className);
-  }
-
   public void freezeParamTypes() {
     List<JType> paramTypes = new ArrayList<JType>();
     for (JParameter param : params) {
       paramTypes.add(param.getType());
     }
     setOriginalTypes(returnType, paramTypes);
-  }
-
-  public List<JAnnotation> getAnnotations() {
-    return Lists.normalizeUnmodifiable(annotations);
   }
 
   public JAbstractMethodBody getBody() {
@@ -358,7 +344,6 @@ public class JMethod extends JNode implements HasAnnotations, HasEnclosingType,
   }
 
   protected void visitChildren(JVisitor visitor) {
-    annotations = visitor.acceptImmutable(annotations);
     params = visitor.acceptImmutable(params);
     if (body != null) {
       body = (JAbstractMethodBody) visitor.accept(body);

@@ -29,12 +29,7 @@ import java.util.List;
 /**
  * Base class for any reference type.
  */
-public abstract class JDeclaredType extends JReferenceType implements
-    HasAnnotations {
-  /**
-   * Annotations applied to the type. Special serialization treatment.
-   */
-  protected transient List<JAnnotation> annotations = Lists.create();
+public abstract class JDeclaredType extends JReferenceType {
 
   /**
    * The other nodes that this node should implicitly rescue. Special
@@ -81,10 +76,6 @@ public abstract class JDeclaredType extends JReferenceType implements
 
   public JDeclaredType(SourceInfo info, String name) {
     super(info, name);
-  }
-
-  public void addAnnotation(JAnnotation annotation) {
-    annotations = Lists.add(annotations, annotation);
   }
 
   public void addArtificialRescue(JNode node) {
@@ -151,14 +142,6 @@ public abstract class JDeclaredType extends JReferenceType implements
      * a reference from a subclass to something in a superclass.
      */
     return this.getClinitTarget() != targetType.getClinitTarget();
-  }
-
-  public JAnnotation findAnnotation(String className) {
-    return JAnnotation.findAnnotation(this, className);
-  }
-
-  public List<JAnnotation> getAnnotations() {
-    return Lists.normalizeUnmodifiable(annotations);
   }
 
   public List<JNode> getArtificialRescues() {
@@ -310,7 +293,6 @@ public abstract class JDeclaredType extends JReferenceType implements
     fields = (List<JField>) stream.readObject();
     methods = (List<JMethod>) stream.readObject();
     artificialRescues = (List<JNode>) stream.readObject();
-    annotations = (List<JAnnotation>) stream.readObject();
   }
 
   /**
@@ -355,7 +337,6 @@ public abstract class JDeclaredType extends JReferenceType implements
     stream.writeObject(fields);
     stream.writeObject(methods);
     stream.writeObject(artificialRescues);
-    stream.writeObject(annotations);
   }
 
   /**

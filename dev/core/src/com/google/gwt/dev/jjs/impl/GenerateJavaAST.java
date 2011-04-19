@@ -15,17 +15,13 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.javac.ArtificialRescueChecker.RescueData;
 import com.google.gwt.dev.javac.JsniCollector;
-import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.Context;
-import com.google.gwt.dev.jjs.ast.HasAnnotations;
-import com.google.gwt.dev.jjs.ast.JAnnotation;
-import com.google.gwt.dev.jjs.ast.JAnnotation.Property;
-import com.google.gwt.dev.jjs.ast.JAnnotationArgument;
 import com.google.gwt.dev.jjs.ast.JArrayLength;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JArrayType;
@@ -102,13 +98,11 @@ import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.util.JsniRef;
-import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.collect.Maps;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
-import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.AND_AND_Expression;
 import org.eclipse.jdt.internal.compiler.ast.ASTNode;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
@@ -175,10 +169,8 @@ import org.eclipse.jdt.internal.compiler.impl.IntConstant;
 import org.eclipse.jdt.internal.compiler.impl.LongConstant;
 import org.eclipse.jdt.internal.compiler.impl.ShortConstant;
 import org.eclipse.jdt.internal.compiler.impl.StringConstant;
-import org.eclipse.jdt.internal.compiler.lookup.AnnotationBinding;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
-import org.eclipse.jdt.internal.compiler.lookup.ElementValuePair;
 import org.eclipse.jdt.internal.compiler.lookup.FieldBinding;
 import org.eclipse.jdt.internal.compiler.lookup.LocalVariableBinding;
 import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
@@ -451,7 +443,7 @@ public class GenerateJavaAST {
      */
     public void processType(TypeDeclaration x) {
       currentClass = (JDeclaredType) typeMap.get(x.binding);
-      processHasAnnotations(currentClass, x.annotations);
+      processArtificialRescues(x.annotations);
       try {
         currentClassScope = x.scope;
         currentSeparatorPositions = x.compilationResult.lineSeparatorPositions;
@@ -717,7 +709,6 @@ public class GenerateJavaAST {
     void processConstructor(ConstructorDeclaration x) {
       JConstructor ctor = (JConstructor) typeMap.get(x.binding);
       try {
-        processHasAnnotations(ctor, x.annotations);
         SourceInfo info = ctor.getSourceInfo();
 
         currentMethod = ctor;
@@ -1489,7 +1480,6 @@ public class GenerateJavaAST {
 
     void processField(FieldDeclaration declaration) {
       JField field = (JField) typeMap.tryGet(declaration.binding);
-      processHasAnnotations(field, declaration.annotations);
       if (field == null) {
         /*
          * When anonymous classes declare constant fields, the field declaration
@@ -1536,14 +1526,6 @@ public class GenerateJavaAST {
       MethodBinding b = x.binding;
       JMethod method = (JMethod) typeMap.get(b);
       try {
-        processHasAnnotations(method, x.annotations);
-        if (x.arguments != null) {
-          for (int i = 0, j = x.arguments.length; i < j; i++) {
-            JParameter p = (JParameter) typeMap.get(x.arguments[i].binding);
-            processHasAnnotations(p, x.arguments[i].annotations);
-          }
-        }
-
         if (!b.isStatic() && (b.isImplementing() || b.isOverriding())) {
           tryFindUpRefs(method, b);
         }
@@ -1815,7 +1797,6 @@ public class GenerateJavaAST {
     JStatement processStatement(LocalDeclaration x) {
       SourceInfo info = makeSourceInfo(x);
       JLocal local = (JLocal) typeMap.get(x.binding);
-      processHasAnnotations(local, x.annotations);
       JLocalRef localRef = new JLocalRef(info, local);
       JExpression initializer = dispProcessExpression(x.initialization);
       return new JDeclarationStatement(info, localRef, initializer);
@@ -2552,72 +2533,59 @@ public class GenerateJavaAST {
       return variable;
     }
 
-    private void processAnnotationProperties(SourceInfo sourceInfo,
-        JAnnotation annotation, ElementValuePair[] elementValuePairs) {
-      if (elementValuePairs == null) {
-        return;
+    /**
+     * Process a {@link ArtificialRescue.Rescue} element.
+     */
+    private void processArtificialRescue(RescueData rescue) {
+      JReferenceType classType = (JReferenceType) program.getTypeFromJsniRef(rescue.getClassName());
+      assert classType != null;
+      if (rescue.isInstantiable()) {
+        currentClass.addArtificialRescue(classType);
       }
 
-      for (ElementValuePair pair : elementValuePairs) {
-        String name = CharOperation.charToString(pair.getName());
-        List<JAnnotationArgument> values = processAnnotationPropertyValue(
-            sourceInfo, pair.getValue());
-        annotation.addValue(new Property(sourceInfo, name, values));
+      if (classType instanceof JDeclaredType) {
+        List<String> toRescue = new ArrayList<String>();
+        Collections.addAll(toRescue, rescue.getFields());
+        Collections.addAll(toRescue, rescue.getMethods());
+
+        for (String name : toRescue) {
+          JsniRef ref = JsniRef.parse("@" + classType.getName() + "::" + name);
+          final String[] errors = {null};
+          JNode node =
+              JsniRefLookup.findJsniRefTarget(ref, program, new JsniRefLookup.ErrorReporter() {
+                public void reportError(String error) {
+                  errors[0] = error;
+                }
+              });
+          if (errors[0] != null) {
+            // Should have been caught by ArtificialRescueChecker
+            throw new InternalCompilerException("Unable to artificially rescue " + name + ": "
+                + errors[0]);
+          }
+
+          if (node instanceof JType) {
+            // Already added the type above.
+          } else {
+            currentClass.addArtificialRescue(node);
+          }
+          if (node instanceof JField) {
+            JField field = (JField) node;
+            if (!field.isFinal()) {
+              field.setVolatile();
+            }
+          }
+        }
       }
     }
 
-    private List<JAnnotationArgument> processAnnotationPropertyValue(
-        SourceInfo info, Object value) {
-      if (value instanceof TypeBinding) {
-        JType type = (JType) typeMap.tryGet((TypeBinding) value);
-        if (type == null) {
-          // Indicates a binary-only class literal
-          type = getOrCreateExternalType(info,
-              ((ReferenceBinding) value).compoundName);
-        }
-        return Lists.<JAnnotationArgument> create(new JClassLiteral(
-            info.makeChild(), type));
-
-      } else if (value instanceof Constant) {
-        return Lists.create((JAnnotationArgument) dispatch("processConstant",
-            value));
-
-      } else if (value instanceof Object[]) {
-        Object[] array = (Object[]) value;
-        List<JAnnotationArgument> toReturn = Lists.create();
-        for (int i = 0, j = array.length; i < j; i++) {
-          toReturn = Lists.add(toReturn,
-              processAnnotationPropertyValue(info, array[i]).get(0));
-        }
-        return toReturn;
-
-      } else if (value instanceof AnnotationBinding) {
-        AnnotationBinding annotationBinding = (AnnotationBinding) value;
-        ReferenceBinding annotationType = annotationBinding.getAnnotationType();
-        JInterfaceType type = (JInterfaceType) typeMap.tryGet(annotationType);
-        JAnnotation toReturn;
-        if (type != null) {
-          toReturn = new JAnnotation(info, type);
-        } else {
-          JInterfaceType external = getOrCreateExternalType(info,
-              annotationType.compoundName);
-          toReturn = new JAnnotation(info, external);
-        }
-
-        // Load the properties for the annotation value
-        processAnnotationProperties(info, toReturn,
-            annotationBinding.getElementValuePairs());
-
-        return Lists.<JAnnotationArgument> create(toReturn);
-      } else if (value instanceof FieldBinding) {
-        FieldBinding fieldBinding = (FieldBinding) value;
-        assert fieldBinding.constant() != null : "Expecting constant-valued field";
-        return Lists.create((JAnnotationArgument) dispatch("processConstant",
-            fieldBinding.constant()));
+    private void processArtificialRescues(Annotation[] annotations) {
+      if (annotations == null) {
+        return;
       }
-
-      throw new InternalCompilerException("Unable to process value "
-          + value.getClass().getName());
+      RescueData[] rescues = RescueData.createFromAnnotations(annotations);
+      for (RescueData rescue : rescues) {
+        processArtificialRescue(rescue);
+      }
     }
 
     /**
@@ -2636,44 +2604,6 @@ public class GenerateJavaAST {
       JBinaryOperation binaryOperation = new JBinaryOperation(info, type, op,
           exprArg1, exprArg2);
       return binaryOperation;
-    }
-
-    /**
-     * It is safe to pass a null array.
-     */
-    private <T extends HasAnnotations & HasSourceInfo> void processHasAnnotations(
-        T x, Annotation[] annotations) {
-      if (annotations == null) {
-        return;
-      }
-
-      for (Annotation a : annotations) {
-        JAnnotation annotation;
-        ReferenceBinding binding = (ReferenceBinding) a.resolvedType;
-        String name = CharOperation.toString(binding.compoundName);
-        boolean record = false;
-        for (String prefix : JProgram.RECORDED_ANNOTATION_PACKAGES) {
-          if (name.startsWith(prefix + ".")) {
-            record = true;
-            break;
-          }
-        }
-        if (!record) {
-          continue;
-        }
-        JInterfaceType annotationType = (JInterfaceType) typeMap.tryGet(binding);
-        if (annotationType != null) {
-          annotation = new JAnnotation(x.getSourceInfo(), annotationType);
-        } else {
-          // Indicates a binary-only annotation type
-          JInterfaceType externalType = getOrCreateExternalType(
-              x.getSourceInfo(), binding.compoundName);
-          annotation = new JAnnotation(x.getSourceInfo(), externalType);
-        }
-        processAnnotationProperties(x.getSourceInfo(), annotation,
-            a.computeElementValuePairs());
-        x.addAnnotation(annotation);
-      }
     }
 
     private JExpression processQualifiedThisOrSuperRef(

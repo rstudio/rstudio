@@ -593,7 +593,6 @@ public class JavaToJavaScriptCompiler {
       }
 
       // (3) Perform Java AST normalizations.
-      ArtificialRescueRecorder.exec(jprogram);
       FixAssignmentToUnbox.exec(jprogram);
 
       /*

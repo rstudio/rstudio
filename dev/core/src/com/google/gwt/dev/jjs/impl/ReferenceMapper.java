@@ -350,7 +350,7 @@ public class ReferenceMapper {
     sb.append('.');
     sb.append(binding.name);
     sb.append(':');
-    sb.append(binding.type.constantPoolName());
+    sb.append(binding.type.signature());
     return sb.toString();
   }
 
@@ -361,10 +361,10 @@ public class ReferenceMapper {
     sb.append(binding.selector);
     sb.append('(');
     for (TypeBinding paramType : binding.parameters) {
-      sb.append(paramType.constantPoolName());
+      sb.append(paramType.signature());
     }
     sb.append(')');
-    sb.append(binding.returnType.constantPoolName());
+    sb.append(binding.returnType.signature());
     return sb.toString();
   }
 

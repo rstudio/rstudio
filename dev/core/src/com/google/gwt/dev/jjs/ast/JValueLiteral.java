@@ -20,15 +20,10 @@ import com.google.gwt.dev.jjs.SourceInfo;
 /**
  * Base class for any Java literal expression.
  */
-public abstract class JValueLiteral extends JLiteral implements
-    JAnnotationArgument {
+public abstract class JValueLiteral extends JLiteral {
 
   public JValueLiteral(SourceInfo sourceInfo) {
     super(sourceInfo);
-  }
-
-  public JNode annotationNode() {
-    return this;
   }
 
   public abstract Object getValueObj();

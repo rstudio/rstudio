@@ -25,6 +25,11 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.TYPE)
 public @interface ArtificialRescue {
+  /*
+   * Special compiler support, changing this interface in any way requires
+   * changes to ArtificialRescueChecker.
+   */
+
   /**
    * Specifies the elements of a single type to rescue.
    */

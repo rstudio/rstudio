@@ -87,13 +87,6 @@ public class JProgram extends JNode {
           "com.google.gwt.lang.EntryMethodHolder",
           "com.google.gwt.core.client.prefetch.RunAsyncCode"));
 
-  /**
-   * Only annotations defined in the following packages or sub-packages thereof
-   * will be recorded in the Java AST.
-   */
-  public static final Set<String> RECORDED_ANNOTATION_PACKAGES = new LinkedHashSet<String>(
-      Arrays.asList("com.google.gwt.core.client.impl"));
-
   static final Map<String, Set<String>> traceMethods = new HashMap<String, Set<String>>();
 
   private static final Comparator<JArrayType> ARRAYTYPE_COMPARATOR = new ArrayTypeComparator();

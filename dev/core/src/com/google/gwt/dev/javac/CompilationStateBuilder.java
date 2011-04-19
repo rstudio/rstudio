@@ -36,6 +36,7 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.EventType;
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
+import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 
@@ -88,7 +89,9 @@ public class CompilationStateBuilder {
             }
           });
 
-          ArtificialRescueChecker.check(cud, builder.isGenerated());
+          Map<TypeDeclaration, Binding[]> artificialRescues =
+              new HashMap<TypeDeclaration, Binding[]>();
+          ArtificialRescueChecker.check(cud, builder.isGenerated(), artificialRescues);
           BinaryTypeReferenceRestrictionsChecker.check(cud);
 
           MethodArgNamesLookup methodArgs = MethodParamCollector.collect(cud);
@@ -117,7 +120,7 @@ public class CompilationStateBuilder {
           if (GwtAstBuilder.ENABLED) {
             if (!cud.compilationResult().hasErrors()) {
               // Make a GWT AST.
-              types = astBuilder.process(cud, jsniMethods, jsniRefs);
+              types = astBuilder.process(cud, artificialRescues, jsniMethods, jsniRefs);
             }
           }
 

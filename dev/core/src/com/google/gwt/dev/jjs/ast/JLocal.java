@@ -40,7 +40,6 @@ public class JLocal extends JVariable implements HasEnclosingMethod {
 
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
-      annotations = visitor.acceptImmutable(annotations);
       // Do not visit declStmt, it gets visited within its own code block.
     }
     visitor.endVisit(this, ctx);
