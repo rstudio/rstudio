@@ -463,7 +463,7 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="installPackage"
         menuLabel="Install _Package..."
-        buttonLabel="Install"
+        buttonLabel="Install Package"
         desc="Install R packages" />
         
    <cmd id="updatePackages"

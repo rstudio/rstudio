@@ -125,6 +125,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       Toolbar toolbar = new Toolbar();
      
       toolbar.addLeftWidget(commands_.installPackage().createToolbarButton());
+      toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.updatePackages().createToolbarButton());
       searchWidget_ = new SearchWidget(new SuggestOracle() {
          @Override
