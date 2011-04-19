@@ -61,6 +61,11 @@ public class ServiceLayerDecorator extends ServiceLayer {
   }
 
   @Override
+  public <T extends ServiceLocator> T createServiceLocator(Class<T> clazz) {
+    return getNext().createServiceLocator(clazz);
+  }
+
+  @Override
   public ClassLoader getDomainClassLoader() {
     return getNext().getDomainClassLoader();
   }
@@ -116,12 +121,14 @@ public class ServiceLayerDecorator extends ServiceLayer {
   }
 
   @Override
-  public List<Object> loadDomainObjects(List<Class<?>> classes, List<Object> domainIds) {
+  public List<Object> loadDomainObjects(List<Class<?>> classes,
+      List<Object> domainIds) {
     return getNext().loadDomainObjects(classes, domainIds);
   }
 
   @Override
-  public boolean requiresServiceLocator(Method contextMethod, Method domainMethod) {
+  public boolean requiresServiceLocator(Method contextMethod,
+      Method domainMethod) {
     return getNext().requiresServiceLocator(contextMethod, domainMethod);
   }
 
@@ -131,8 +138,8 @@ public class ServiceLayerDecorator extends ServiceLayer {
   }
 
   @Override
-  public <T> Class<? extends T> resolveClientType(Class<?> domainClass, Class<T> clientType,
-      boolean required) {
+  public <T> Class<? extends T> resolveClientType(Class<?> domainClass,
+      Class<T> clientType, boolean required) {
     return getNext().resolveClientType(domainClass, clientType, required);
   }
 
@@ -152,18 +159,21 @@ public class ServiceLayerDecorator extends ServiceLayer {
   }
 
   @Override
-  public Method resolveRequestContextMethod(String requestContextClass, String methodName) {
-    return getNext().resolveRequestContextMethod(requestContextClass, methodName);
+  public Method resolveRequestContextMethod(String requestContextClass,
+      String methodName) {
+    return getNext().resolveRequestContextMethod(requestContextClass,
+        methodName);
   }
 
   @Override
-  public Class<?> resolveServiceClass(Class<? extends RequestContext> requestContextClass) {
+  public Class<?> resolveServiceClass(
+      Class<? extends RequestContext> requestContextClass) {
     return getNext().resolveServiceClass(requestContextClass);
   }
 
   @Override
-  public Class<? extends ServiceLocator> resolveServiceLocator(Method contextMethod,
-      Method domainMethod) {
+  public Class<? extends ServiceLocator> resolveServiceLocator(
+      Method contextMethod, Method domainMethod) {
     return getNext().resolveServiceLocator(contextMethod, domainMethod);
   }
 
@@ -173,7 +183,8 @@ public class ServiceLayerDecorator extends ServiceLayer {
   }
 
   @Override
-  public void setProperty(Object domainObject, String property, Class<?> expectedType, Object value) {
+  public void setProperty(Object domainObject, String property,
+      Class<?> expectedType, Object value) {
     getNext().setProperty(domainObject, property, expectedType, value);
   }
 
@@ -194,7 +205,8 @@ public class ServiceLayerDecorator extends ServiceLayer {
    * @throws UnexpectedException this method never returns normally
    * @see #report(String, Object...)
    */
-  protected final <T> T die(Throwable e, String message, Object... args) throws UnexpectedException {
+  protected final <T> T die(Throwable e, String message, Object... args)
+      throws UnexpectedException {
     String msg = String.format(message, args);
     log.log(Level.SEVERE, msg, e);
     throw new UnexpectedException(msg, e);
@@ -217,8 +229,8 @@ public class ServiceLayerDecorator extends ServiceLayer {
    * Report an exception thrown by code that is under the control of the
    * end-developer.
    * 
-   * @param userGeneratedException an {@link InvocationTargetException} thrown by an invocation of
-   *          user-provided code
+   * @param userGeneratedException an {@link InvocationTargetException} thrown
+   *          by an invocation of user-provided code
    * @throws ReportableException this method never returns normally
    */
   protected final <T> T report(InvocationTargetException userGeneratedException)
@@ -235,7 +247,8 @@ public class ServiceLayerDecorator extends ServiceLayer {
    * @throws ReportableException this method never returns normally
    * @see #die(Throwable, String, Object...)
    */
-  protected final <T> T report(String msg, Object... args) throws ReportableException {
+  protected final <T> T report(String msg, Object... args)
+      throws ReportableException {
     throw new ReportableException(String.format(msg, args));
   }
 
