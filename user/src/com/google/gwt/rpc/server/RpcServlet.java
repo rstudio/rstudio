@@ -33,8 +33,8 @@ import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.ServletException;
@@ -53,7 +53,7 @@ public class RpcServlet extends AbstractRemoteServiceServlet {
   protected static final String CLIENT_ORACLE_EXTENSION = ".gwt.rpc";
   private static final boolean DUMP_PAYLOAD = Boolean.getBoolean("gwt.rpc.dumpPayload");
 
-  private final Map<String, SoftReference<ClientOracle>> clientOracleCache = new HashMap<String, SoftReference<ClientOracle>>();
+  private final Map<String, SoftReference<ClientOracle>> clientOracleCache = new ConcurrentHashMap<String, SoftReference<ClientOracle>>();
 
   /**
    * The implementation of the service.
@@ -98,6 +98,17 @@ public class RpcServlet extends AbstractRemoteServiceServlet {
 
     ClientOracle toReturn;
 
+    // Fast path if the ClientOracle is already cached.
+    if (clientOracleCache.containsKey(permutationStrongName)) {
+      toReturn = clientOracleCache.get(permutationStrongName).get();
+      if (toReturn != null) {
+        return toReturn;
+      }
+    }
+
+    /* Synchronize to make sure expensive calls are executed only once.
+       Double checked locking idiom works here because of volatiles in
+       ConcurrentHashMap.*/
     synchronized (clientOracleCache) {
       if (clientOracleCache.containsKey(permutationStrongName)) {
         toReturn = clientOracleCache.get(permutationStrongName).get();
