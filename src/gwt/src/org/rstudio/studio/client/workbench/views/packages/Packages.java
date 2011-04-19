@@ -14,8 +14,10 @@ package org.rstudio.studio.client.workbench.views.packages;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -26,12 +28,13 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackagesChangedEvent;
@@ -248,41 +251,31 @@ public class Packages
       });
    }
 
+   
+   
    public void loadPackage(final String packageName)
    {  
-      server_.loadPackage(packageName, new ServerRequestCallback<Void>() {
-
-         public void onResponseReceived(Void response)
-         {
-            view_.setPackageStatus(packageName, true);
-         }
-         
-         public void onError(ServerError error)
-         {
-            view_.setPackageStatus(packageName, false);
-            globalDisplay_.showErrorMessage("Error Loading Package", 
-                                    error.getUserMessage());
-            
-         }
-      });
+      // check status to make sure the package was loaded
+      checkPackageStatusOnNextConsolePrompt(packageName);
+      
+      // send the command
+      StringBuilder command = new StringBuilder();
+      command.append("library(\"");
+      command.append(packageName);
+      command.append("\")");
+      events_.fireEvent(new SendToConsoleEvent(command.toString(), true));
    }
 
    public void unloadPackage(final String packageName)
    { 
-      server_.unloadPackage(packageName, new ServerRequestCallback<Void>() {
-
-         public void onResponseReceived(Void response)
-         {
-            view_.setPackageStatus(packageName, false);
-         }
-         
-         public void onError(ServerError error)
-         {
-            view_.setPackageStatus(packageName, true);
-            globalDisplay_.showErrorMessage("Error Unoading Package", 
-                                    error.getUserMessage());
-         }
-      }); 
+      // check status to make sure the package was unloaded
+      checkPackageStatusOnNextConsolePrompt(packageName);
+      
+      StringBuilder command = new StringBuilder();
+      command.append("detach(\"package:");
+      command.append(packageName);
+      command.append("\")");
+      events_.fireEvent(new SendToConsoleEvent(command.toString(), true));
    }
    
    public void showHelp(PackageInfo packageInfo)
@@ -342,12 +335,53 @@ public class Packages
       
       view_.listPackages(packages);
    }
+   
+   private void checkPackageStatusOnNextConsolePrompt(final String packageName)
+   {
+      // remove any existing handler
+      removeConsolePromptHandler();
+      
+      consolePromptHandlerReg_ = events_.addHandler(ConsolePromptEvent.TYPE, 
+         new ConsolePromptHandler() {
+            @Override
+            public void onConsolePrompt(ConsolePromptEvent event)
+            {  
+               // remove handler so it is only called once
+               removeConsolePromptHandler();
+               
+               // check status and set it
+               server_.isPackageLoaded(packageName, 
+                                       new ServerRequestCallback<Boolean>() {
+                  @Override
+                  public void onResponseReceived(Boolean loaded)
+                  {
+                     view_.setPackageStatus(packageName, loaded);
+                  }
 
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     // ignore errors
+                  }
+               });  
+            }
+         });
+   }
+
+   private void removeConsolePromptHandler()
+   {
+      if (consolePromptHandlerReg_ != null)
+      {
+         consolePromptHandlerReg_.removeHandler();
+         consolePromptHandlerReg_ = null;
+      }
+   }
    
    private final Display view_;
    private final PackagesServerOperations server_;
    private ArrayList<PackageInfo> allPackages_ = new ArrayList<PackageInfo>();
    private String packageFilter_ = new String();
+   private HandlerRegistration consolePromptHandlerReg_ = null;
    private final EventBus events_ ;
    private final GlobalDisplay globalDisplay_ ;
    private String installRepository_;

@@ -91,21 +91,14 @@
    })
 })
 
-.rs.addJsonRpcHandler("load_package", function(packageName)
-{
-   .rs.loadPackage(packageName)
-   return ()
-})
-
-.rs.addJsonRpcHandler( "unload_package", function(packageName)
-{
-   .rs.unloadPackage(packageName)
-   return ()
-})
-
 .rs.addJsonRpcHandler( "get_default_library", function()
 {
    .rs.scalar(.libPaths()[1])
+})
+
+.rs.addJsonRpcHandler( "is_package_loaded", function(packageName)
+{
+   .rs.scalar(packageName %in% .packages())
 })
 
 .rs.addJsonRpcHandler( "list_packages", function()

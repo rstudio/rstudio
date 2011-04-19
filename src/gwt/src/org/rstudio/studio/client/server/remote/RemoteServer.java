@@ -22,7 +22,6 @@ import com.google.gwt.json.client.*;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.*;
@@ -399,23 +398,17 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_DEFAULT_LIBRARY, requestCallback);
    }
    
+   public void isPackageLoaded(String packageName,
+                               ServerRequestCallback<Boolean> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, IS_PACKAGE_LOADED, packageName, requestCallback);
+   }
+   
    public void availablePackages(
          String repository,
          ServerRequestCallback<JsArrayString> requestCallback)
    {
       sendRequest(RPC_SCOPE, AVAILABLE_PACKAGES, repository, requestCallback);
-   }
-
-   public void loadPackage(String packageName,
-                           ServerRequestCallback<Void> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, LOAD_PACKAGE, packageName, requestCallback); 
-   }
-
-   public void unloadPackage(String packageName,
-                             ServerRequestCallback<Void> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, UNLOAD_PACKAGE, packageName, requestCallback);
    }
 
    public void isCRANConfigured(ServerRequestCallback<Boolean> requestCallback)
@@ -1362,8 +1355,7 @@ public class RemoteServer implements Server
    private static final String LIST_PACKAGES = "list_packages";
    private static final String AVAILABLE_PACKAGES = "available_packages";
    private static final String GET_DEFAULT_LIBRARY = "get_default_library";
-   private static final String LOAD_PACKAGE = "load_package";
-   private static final String UNLOAD_PACKAGE = "unload_package";
+   private static final String IS_PACKAGE_LOADED = "is_package_loaded";
    private static final String IS_CRAN_CONFIGURED = "is_cran_configured";
    private static final String SET_CRAN_REPOS_URL = "set_cran_repos_url";
 

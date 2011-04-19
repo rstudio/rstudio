@@ -29,13 +29,8 @@ public interface PackagesServerOperations
    
    void getDefaultLibrary(ServerRequestCallback<String> requestCallback);
    
-   // load a package
-   void loadPackage(String packageName,
-                    ServerRequestCallback<Void> requestCallback);
-   
-   // unload a package
-   void unloadPackage(String packageName,
-                      ServerRequestCallback<Void> requestCallback);
+   void isPackageLoaded(String packageName,
+                        ServerRequestCallback<Boolean> requestCallback);
 
    void isCRANConfigured(ServerRequestCallback<Boolean> requestCallback);
 
