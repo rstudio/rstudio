@@ -48,15 +48,21 @@
         return ()
    }
 
-   # workaround for: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=577741
-   # set index = FALSE on unix to force use of pdflatex rather than
-   # texi2dvi (the bug is that texi2dvi doesn't escape tildes)
-   index = !identical(.Platform$pkgType, "source")
-    
    # run texi2dvi
    cat("\n")
    cat("Running texi2dvi...")
-   tools:::texi2dvi(file=fileName, pdf=TRUE, clean=TRUE, index=index)
+   if (getRversion() >= "2.12")
+   {
+      # workaround for: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=577741
+      # set index = FALSE on unix to force use of pdflatex rather than
+      # texi2dvi (the bug is that texi2dvi doesn't escape tildes)
+      index = !identical(.Platform$pkgType, "source")
+      tools:::texi2dvi(file=fileName, pdf=TRUE, clean=TRUE, index=index)
+   }
+   else
+   {
+      tools:::texi2dvi(file=fileName, pdf=TRUE, clean=TRUE)
+   }
    cat("completed\n\n")
  
    # check for completed action
