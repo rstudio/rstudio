@@ -24,9 +24,9 @@ import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Element;
+import com.google.gwt.user.client.ui.FiniteWidgetIterator.WidgetProvider;
 
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 /**
  * A panel that includes a header (top), footer (bottom), and content (middle)
@@ -35,16 +35,40 @@ import java.util.NoSuchElementException;
  */
 public class HeaderPanel extends Panel implements RequiresResize {
 
+  /**
+   * The widget provider for this panel.
+   * 
+   * <p>
+   * Widgets are returned in the following order:
+   * <ol>
+   * <li>Header widget</li>
+   * <li>Content widget</li>
+   * <li>Footer widget</li>
+   * </ol>
+   */
+  private class WidgetProviderImpl implements WidgetProvider {
+
+    public Widget get(int index) {
+      switch (index) {
+        case 0:
+          return header;
+        case 1:
+          return content;
+        case 2:
+          return footer;
+      }
+      throw new ArrayIndexOutOfBoundsException(index);
+    }
+  }
+
   private Widget content;
   private final Element contentContainer;
   private Widget footer;
   private final Element footerContainer;
-  private final ResizeLayoutPanel.Impl footerImpl =
-    GWT.create(ResizeLayoutPanel.Impl.class);
+  private final ResizeLayoutPanel.Impl footerImpl = GWT.create(ResizeLayoutPanel.Impl.class);
   private Widget header;
   private final Element headerContainer;
-  private final ResizeLayoutPanel.Impl headerImpl =
-    GWT.create(ResizeLayoutPanel.Impl.class);
+  private final ResizeLayoutPanel.Impl headerImpl = GWT.create(ResizeLayoutPanel.Impl.class);
   private final ScheduledCommand layoutCmd = new ScheduledCommand() {
     public void execute() {
       layoutScheduled = false;
@@ -135,73 +159,7 @@ public class HeaderPanel extends Panel implements RequiresResize {
   }
 
   public Iterator<Widget> iterator() {
-    // Return a simple iterator that iterates over the header, content, and
-    // footer in order.
-    return new Iterator<Widget>() {
-      private int index = -1;
-
-      public boolean hasNext() {
-        switch (index) {
-          case -1:
-            if (header != null) {
-              return true;
-            }
-          case 0: // Intentional fallthrough.
-            if (content != null) {
-              return true;
-            }
-          case 1: // Intentional fallthrough.
-            if (footer != null) {
-              return true;
-            }
-        }
-        return false;
-      }
-
-      public Widget next() {
-        switch (index) {
-          case -1:
-            index++;
-            if (header != null) {
-              return header;
-            }
-          case 0: // Intentional fallthrough.
-            index++;
-            if (content != null) {
-              return content;
-            }
-          case 1: // Intentional fallthrough.
-            index++;
-            if (footer != null) {
-              return footer;
-            }
-        }
-        throw new NoSuchElementException();
-      }
-
-      public void remove() {
-        switch (index) {
-          case 0:
-            doRemove(header, "Header");
-            break;
-          case 1:
-            doRemove(content, "Content");
-            break;
-          case 2:
-            doRemove(footer, "Footer");
-            break;
-          default:
-            throw new IllegalStateException();
-        }
-      }
-
-      private void doRemove(Widget widget, String position) {
-        if (widget == null) {
-          throw new IllegalStateException(position + " was already removed.");
-        }
-        HeaderPanel.this.remove(widget);
-      }
-    };
+    return new FiniteWidgetIterator(new WidgetProviderImpl(), 3);
   }
 
   @Override

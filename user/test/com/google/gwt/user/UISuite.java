@@ -57,6 +57,7 @@ import com.google.gwt.user.client.ui.DockPanelTest;
 import com.google.gwt.user.client.ui.ElementWrappingTest;
 import com.google.gwt.user.client.ui.FastStringMapTest;
 import com.google.gwt.user.client.ui.FileUploadTest;
+import com.google.gwt.user.client.ui.FiniteWidgetIteratorTest;
 import com.google.gwt.user.client.ui.FlexTableTest;
 import com.google.gwt.user.client.ui.FlowPanelTest;
 import com.google.gwt.user.client.ui.FocusPanelTest;
@@ -169,6 +170,7 @@ public class UISuite {
     suite.addTestSuite(EventTest.class);
     suite.addTestSuite(FastStringMapTest.class);
     suite.addTestSuite(FileUploadTest.class);
+    suite.addTestSuite(FiniteWidgetIteratorTest.class);
     suite.addTestSuite(FlexTableTest.class);
     suite.addTestSuite(FlowPanelTest.class);
     suite.addTestSuite(FocusPanelTest.class);
