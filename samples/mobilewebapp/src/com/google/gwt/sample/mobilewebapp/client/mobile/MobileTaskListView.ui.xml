@@ -1,0 +1,16 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder
+  xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:c="urn:import:com.google.gwt.user.cellview.client"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui">
+
+  <ui:style>
+    
+  </ui:style>
+
+  <g:ScrollPanel>
+    <c:CellList
+      ui:field="taskList" />
+  </g:ScrollPanel>
+
+</ui:UiBinder> 

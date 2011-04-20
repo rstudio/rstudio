@@ -1,0 +1,6 @@
+.cellListEvenItem,.cellListOddItem {
+  border-bottom: 1px solid #bbb;
+  padding: 22px 10px;
+  font-size: 14pt;
+  color: #333;
+}

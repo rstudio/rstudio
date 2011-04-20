@@ -1,0 +1,85 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder
+  xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui"
+  xmlns:c="urn:import:com.google.gwt.user.cellview.client">
+
+  <ui:style>
+    .backButton {
+      display: none;
+    }
+    
+    .header {
+      background: #1a1a1a;
+      color: white;
+      font-size: 18pt;
+      line-height: 28pt;
+      text-align: center;
+      font-weight: bold;
+    }
+    
+    .addButton {
+      color: white;
+      font-size: 18pt;
+      background: none;
+      border: none;
+      text-align: right;
+      font-weight: bold;
+    }
+  </ui:style>
+
+  <g:LayoutPanel
+    ui:field='layoutPanel'>
+
+    <!-- Title -->
+    <g:layer
+      top='0px'
+      height='28pt'
+      left='0px'
+      right='0px'>
+      <g:HTMLPanel
+        ui:field='titleBar'
+        addStyleNames="{style.header}">
+        <div
+          ui:field='titleElem'>Task List</div>
+      </g:HTMLPanel>
+    </g:layer>
+
+    <!-- Back button. -->
+    <g:layer
+      top='0px'
+      height='28pt'
+      left='0px'
+      width='6ex'>
+      <g:HTMLPanel
+        ui:field='backButtonContainer'>
+        <g:Button
+          styleName="{style.backButton}">Back</g:Button>
+      </g:HTMLPanel>
+    </g:layer>
+
+    <!-- Add button. -->
+    <g:layer
+      top="0px"
+      height="28pt"
+      right="8px"
+      width="3ex">
+      <g:HTMLPanel
+        ui:field='addButtonContainer'>
+        <g:Button
+          ui:field="addButton"
+          styleName="{style.addButton}">+</g:Button>
+      </g:HTMLPanel>
+    </g:layer>
+
+    <!-- Content -->
+    <g:layer
+      top='28pt'
+      bottom='0px'
+      left='0px'
+      right='0px'>
+      <g:DeckLayoutPanel
+        ui:field="contentContainer" />
+    </g:layer>
+  </g:LayoutPanel>
+</ui:UiBinder> 

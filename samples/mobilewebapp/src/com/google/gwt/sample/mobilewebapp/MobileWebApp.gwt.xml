@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module rename-to='mobilewebapp'>
+  <!-- Inherit the core Web Toolkit stuff.                        -->
+  <inherits name='com.google.gwt.user.User'/>
+  <inherits name='com.google.gwt.sample.mobilewebapp.FormFactor'/>
+
+  <!-- Inherit RequestFactory.                                    -->
+  <inherits name='com.google.web.bindery.requestfactory.RequestFactory'/>
+
+  <!-- Inherit Activities and Places.                             -->
+  <inherits name='com.google.gwt.activity.Activity'/>
+  <inherits name='com.google.gwt.place.Place'/>
+  
+  <!-- Inherit the default GWT style sheet.  You can change       -->
+  <!-- the theme of your GWT application by uncommenting          -->
+  <!-- any one of the following lines.                            -->
+  <inherits name='com.google.gwt.user.theme.clean.Clean'/>
+  <!-- <inherits name='com.google.gwt.user.theme.standard.Standard'/> -->
+  <!-- <inherits name='com.google.gwt.user.theme.chrome.Chrome'/> -->
+  <!-- <inherits name='com.google.gwt.user.theme.dark.Dark'/>     -->
+
+  <!-- Other module inherits                                      -->
+
+  <!-- Specify the app entry point class.                         -->
+  <entry-point class='com.google.gwt.sample.mobilewebapp.client.MobileWebApp'/>
+
+  <!-- Use ClientFactoryImpl by default -->
+  <replace-with class="com.google.gwt.sample.mobilewebapp.client.ClientFactoryImpl">
+    <when-type-is class="com.google.gwt.sample.mobilewebapp.client.ClientFactory"/>
+  </replace-with>
+
+  <!-- Use ClientFactoryImplMobile for mobile form factor. -->
+  <replace-with class="com.google.gwt.sample.mobilewebapp.client.ClientFactoryImplMobile">
+    <when-type-is class="com.google.gwt.sample.mobilewebapp.client.ClientFactory"/>
+    <when-property-is name="formfactor" value="mobile"/>
+  </replace-with>
+
+  <!-- Use ClientFactoryImplTablet for tablet form factor. -->
+  <replace-with class="com.google.gwt.sample.mobilewebapp.client.ClientFactoryImplTablet">
+    <when-type-is class="com.google.gwt.sample.mobilewebapp.client.ClientFactory"/>
+    <when-property-is name="formfactor" value="tablet"/>
+  </replace-with>
+
+  <!-- Specify the paths for translatable code                    -->
+  <source path='client'/>
+  <source path='shared'/>
+</module>

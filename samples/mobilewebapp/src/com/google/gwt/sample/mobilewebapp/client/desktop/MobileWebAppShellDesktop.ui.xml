@@ -1,0 +1,155 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder
+  xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:a="urn:import:com.google.gwt.sample.mobilewebapp.client.activity"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui"
+  xmlns:c="urn:import:com.google.gwt.user.cellview.client"
+  xmlns:d="urn:import:com.google.gwt.sample.mobilewebapp.client.desktop">
+
+  <ui:style>
+    .header {
+      border-bottom: 1px solid #666;
+      padding-top: 6px;
+      padding-left: 20px;
+    }
+    
+    .headerWord {
+      font-size: 20pt;
+      font-weight: bold;
+      color: #889;
+      text-shadow: 5px 5px 6px #aaa;
+      -moz-transform: matrix(1, -0.04, 0, 1, 0pt, 0pt);
+      -webkit-transform: matrix(1, -0.04, 0, 1, 0pt, 0pt);
+      padding-right: 14px;
+    }
+    
+    .leftNav {
+      border-right: 1px solid #666;
+    }
+    
+    .mainMenuContainer {
+      background: #eee;
+      border-bottom: 1px solid #666;
+    }
+    
+    .legendColor {
+      height: 1em;
+      width: 1em;
+      margin-left: 5px;
+    }
+    
+    .legendText {
+      font-size: 80%
+    }
+  </ui:style>
+
+  <g:DockLayoutPanel
+    unit="PT">
+
+    <!-- Header -->
+    <g:north
+      size="40">
+      <g:HTMLPanel
+        addStyleNames="{style.header}">
+        <table>
+          <tr>
+            <td>
+              <div
+                class="{style.headerWord}">Task</div>
+            </td>
+            <td>
+              <div
+                class="{style.headerWord}">Manager</div>
+            </td>
+          </tr>
+        </table>
+      </g:HTMLPanel>
+    </g:north>
+
+
+    <g:center>
+      <g:DockLayoutPanel
+        unit="EM">
+
+        <!-- Left Nav. -->
+        <g:west
+          size="20">
+          <g:DockLayoutPanel
+            unit="EM"
+            ui:field="leftNav"
+            addStyleNames="{style.leftNav}">
+            <!-- Main Menu. -->
+            <g:center>
+              <g:ScrollPanel
+                addStyleNames="{style.mainMenuContainer}">
+                <c:CellList
+                  ui:field="mainMenu" />
+              </g:ScrollPanel>
+            </g:center>
+
+            <!-- Pie Chart Legand. -->
+            <g:south
+              size="6">
+              <g:HTMLPanel>
+                <table
+                  cellspacing="0"
+                  cellpadding="2">
+                  <tr>
+                    <td>
+                      <div
+                        style="background: #faa"
+                        class="{style.legendColor}"></div>
+                    </td>
+                    <td
+                      class="{style.legendText}">Past Due</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div
+                        style="background: #fca"
+                        class="{style.legendColor}"></div>
+                    </td>
+                    <td
+                      class="{style.legendText}">Due Tomorrow</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div
+                        style="background: #afa"
+                        class="{style.legendColor}"></div>
+                    </td>
+                    <td
+                      class="{style.legendText}">On Time</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div
+                        style="background: #aaa"
+                        class="{style.legendColor}"></div>
+                    </td>
+                    <td
+                      class="{style.legendText}">No Due Date</td>
+                  </tr>
+                </table>
+              </g:HTMLPanel>
+            </g:south>
+
+            <!-- Pie Chart. -->
+            <g:south
+              size="20">
+              <g:SimpleLayoutPanel
+                ui:field="pieChartContainer" />
+            </g:south>
+          </g:DockLayoutPanel>
+        </g:west>
+
+        <!-- Content. -->
+        <g:center>
+          <g:DeckLayoutPanel
+            ui:field="contentContainer" />
+        </g:center>
+      </g:DockLayoutPanel>
+    </g:center>
+
+  </g:DockLayoutPanel>
+</ui:UiBinder> 

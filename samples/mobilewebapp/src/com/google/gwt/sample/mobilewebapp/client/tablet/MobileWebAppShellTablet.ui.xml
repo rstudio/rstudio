@@ -1,0 +1,106 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder
+  xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:a="urn:import:com.google.gwt.sample.mobilewebapp.client.activity"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui"
+  xmlns:c="urn:import:com.google.gwt.user.cellview.client">
+
+  <ui:style>
+    .header {
+      background: #1a1a1a;
+      position: relative;
+    }
+    
+    .headerText {
+      color: white;
+      font-size: 18pt;
+      line-height: 28pt;
+      text-align: center;
+      font-weight: bold;
+    }
+    
+    .addButtonContainer {
+      position: absolute;
+      top: 5px;
+      right: 3px;
+    }
+    
+    .addButton {
+      color: white;
+      font-size: 18pt;
+      background: none;
+      border: none;
+      text-align: right;
+      font-weight: bold;
+    }
+    
+    .taskList {
+      border-right: 4px solid #eee;
+    }
+    
+    .contentEmptyMessage {
+      padding: 10px;
+      font-size: 28pt;
+    }
+  </ui:style>
+
+  <g:DockLayoutPanel
+    unit="PT">
+
+    <!-- Header -->
+    <g:north
+      size="32">
+      <g:HTMLPanel
+        addStyleNames="{style.header}">
+        <table
+          style="width:100%;height:100%">
+          <tr>
+            <td
+              align="right"
+              valign="middle">
+              <g:Label
+                addStyleNames="{style.headerText}">
+                App Name
+              </g:Label>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Add Button. -->
+        <div
+          class="{style.addButtonContainer}">
+          <g:Button
+            ui:field="addButton"
+            styleName="{style.addButton}">+</g:Button>
+        </div>
+      </g:HTMLPanel>
+    </g:north>
+
+    <g:center>
+      <g:DockLayoutPanel
+        unit="PCT"
+        ui:field="splitPanel">
+
+        <!-- Task List. -->
+        <g:west
+          size="30">
+          <g:SimpleLayoutPanel
+            addStyleNames="{style.taskList}"
+            ui:field="taskListContainer" />
+        </g:west>
+
+        <!-- Content. -->
+        <g:center>
+          <g:DeckLayoutPanel
+            ui:field="contentContainer">
+            <g:HTML
+              ui:field="contentEmptyMessage"
+              addStyleNames="{style.contentEmptyMessage}">
+              &laquo; Select a task from the list</g:HTML>
+          </g:DeckLayoutPanel>
+        </g:center>
+      </g:DockLayoutPanel>
+    </g:center>
+
+  </g:DockLayoutPanel>
+</ui:UiBinder> 

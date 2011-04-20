@@ -34,6 +34,10 @@
     <gwt.ant dir="mail" />
   </target>
 
+  <target name="mobilewebapp" description="Build mobile web app">
+    <gwt.ant dir="mobilewebapp" target="source" />
+  </target>
+
   <target name="showcase" description="Build showcase">
     <gwt.ant dir="showcase" />
   </target>
@@ -54,6 +58,7 @@
     <antcall target="json" />
     <antcall target="logexample" />
     <antcall target="mail" />
+    <antcall target="mobilewebapp" />
     <antcall target="showcase" />
     <antcall target="validation" />
     <!-- don't include validationtck, it is not really a sample -->
