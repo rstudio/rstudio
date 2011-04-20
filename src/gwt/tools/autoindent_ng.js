@@ -6,7 +6,7 @@ var IndentManager = function(doc, tokenizer) {
    this.$tokens = [];
    this.$endStates = [];
    
-   this.$doc.on('change', this.onChange);
+   this.$doc.on('change', this.$onDocChange);
    
 };
 
@@ -21,55 +21,45 @@ var IndentManager = function(doc, tokenizer) {
    {
       // Don't let lastRow be past the end of the document
       lastRow = Math.min(lastRow, this.$endStates.length - 1);
-      
-      var row = 0;
-      while (true)
-      {
-         // Skip over rows that don't need to be updated (rows that have not been
-         // invalidated, and are known not to be impacted by invalidated rows)
-         for ( ; row <= lastRow && !(this.$endStates[row] === null); row++)
-         {
-         }
 
-         // We may have exited the previous loop because we hit the end
-         if (row > lastRow)
-            return;
+      var row = 0;
+      var assumeGood = true;
+      for ( ; row <= lastRow; row++)
+      {
+         // No need to tokenize rows until we hit one that has been explicitly
+         // invalidated.
+         if (assumeGood && !(this.$endStates[row] === null))
+            continue;
          
-         // We're now at an invalidated row
+         assumeGood = false;
+
          var state = (row === 0) ? 'start' : this.$endStates[row-1];
-         for ( ; row <= lastRow; row++)
-         {
-            // Tokenize this line
-            var lineTokens = this.$tokenizer.getLineTokens(this.$doc.getLine(row), state);
-            this.$tokens[row] = lineTokens.tokens;
-            state = lineTokens.state;
-            
-            // If this row ends with the same state we had cached, we know any following
-            // rows will have up-to-date cached info, UNTIL we hit a row that has been
-            // explicitly invalidated. We can break and go back to the top of the while-loop.
-            if (state === this.$endStates[row] && state) // second clause is to prevent infinite loop
-               break;
-            
-            
-            this.$endStates[row] = state;
-         }
-         
-         if (row > lastRow)
-         {
-            // If we got here, it means the last row we saw before we exited
-            // was invalidated or impacted by an invalidated row. We need to
-            // make sure the NEXT row doesn't get ignored next time the tokenizer
-            // makes a pass.
-            //
-            // It's possible that "row" actually points past the last row of the
-            // document, but that's OK, $invalidateRow() will just no-op.
-            this.$invalidateRow(row);
-            return;
-         }
+         var lineTokens = this.$tokenizer.getLineTokens(this.$doc.getLine(row), state);
+         this.$tokens[row] = lineTokens.tokens;
+
+         // If we ended in the same state that the cache says, then we know that
+         // the cache is up-to-date for the subsequent lines--UNTIL we hit a row
+         // that has been explicitly invalidated.
+         if (lineTokens.state === this.$endStates[row])
+            assumeGood = true;
+         else
+            this.$endStates[row] = lineTokens.state;
+      }
+      
+      if (!assumeGood)
+      {
+         // If we get here, it means the last row we saw before we exited
+         // was invalidated or impacted by an invalidated row. We need to
+         // make sure the NEXT row doesn't get ignored next time the tokenizer
+         // makes a pass.
+         //
+         // It's possible that "row" actually points past the last row of the
+         // document, but that's OK, $invalidateRow() will just no-op.
+         this.$invalidateRow(row);
       }
    };
 
-   this.onChange = function(evt)
+   this.$onDocChange = function(evt)
    {
       var delta = evt.data;
       if (delta.action === "insertLines")
@@ -117,6 +107,12 @@ var IndentManager = function(doc, tokenizer) {
          args.push(null);
       this.$tokens.splice.apply(this.$tokens, args);
       this.$endStates.splice.apply(this.$endStates, args);
+   };
+   
+   this.$removeRows = function(row, count)
+   {
+      this.$tokens.splice(row, count);
+      this.$endStates.splice(row, count);
    };
 
 }).call(IndentManager.prototype);
