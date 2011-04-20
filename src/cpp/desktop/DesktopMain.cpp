@@ -291,9 +291,6 @@ int main(int argc, char* argv[])
 
       argList << QString::fromAscii("--www-port") << port;
 
-      if (!options.defaultCRANmirrorURL().isEmpty())
-         argList << QString::fromAscii("--r-cran-repos") << options.defaultCRANmirrorURL();
-
       error = parent_process_monitor::wrapFork(
             boost::bind(launchProcess,
                         sessionPath.absolutePath(),

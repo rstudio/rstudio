@@ -102,6 +102,38 @@ Error setUiPrefs(const json::JsonRpcRequest& request,
    return Success();
 }
 
+
+CRANMirror toCRANMirror(const json::Object& cranMirrorJson)
+{
+   CRANMirror cranMirror;
+   json::readObject(cranMirrorJson,
+                    "name", &cranMirror.name,
+                    "host", &cranMirror.host,
+                    "url", &cranMirror.url,
+                    "country", &cranMirror.country);
+   return cranMirror;
+}
+
+json::Object toCRANMirrorJson(const CRANMirror& cranMirror)
+{
+   json::Object cranMirrorJson;
+   cranMirrorJson["name"] = cranMirror.name;
+   cranMirrorJson["host"] = cranMirror.host;
+   cranMirrorJson["url"] = cranMirror.url;
+   cranMirrorJson["country"] = cranMirror.country;
+   return cranMirrorJson;
+}
+
+void setCRANReposOption(const std::string& url)
+{
+   if (!url.empty())
+   {
+      Error error = r::exec::RFunction(".rs.setCRANRepos", url).call();
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
 Error getRPrefs(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
@@ -111,6 +143,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    result["load_rdata"] = userSettings().loadRData();
    result["initial_working_dir"] = module_context::createAliasedPath(
          userSettings().initialWorkingDirectory());
+   result["cran_mirror"] = toCRANMirrorJson(userSettings().cranMirror());
 
    pResponse->setResult(result);
 
@@ -123,19 +156,44 @@ Error setRPrefs(const json::JsonRpcRequest& request,
    int saveAction;
    bool loadRData;
    std::string initialWorkingDir;
+   json::Object cranMirrorJson;
    json::readParams(request.params,
                     &saveAction,
                     &loadRData,
-                    &initialWorkingDir);
+                    &initialWorkingDir,
+                    &cranMirrorJson);
+   CRANMirror cranMirror = toCRANMirror(cranMirrorJson);
 
    userSettings().beginUpdate();
    userSettings().setSaveAction(saveAction);
    userSettings().setLoadRData(loadRData);
    userSettings().setInitialWorkingDirectory(FilePath(initialWorkingDir));
+   userSettings().setCRANMirror(cranMirror);
    userSettings().endUpdate();
+
+   setCRANReposOption(cranMirror.url);
 
    return Success();
 }
+
+Error setCRANMirror(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   json::Object cranMirrorJson;
+   Error error = json::readParam(request.params, 0, &cranMirrorJson);
+   if (error)
+      return error;
+   CRANMirror cranMirror = toCRANMirror(cranMirrorJson);
+
+   userSettings().beginUpdate();
+   userSettings().setCRANMirror(cranMirror);
+   userSettings().endUpdate();
+
+   setCRANReposOption(cranMirror.url);
+
+   return Success();
+}
+
    
 // options("pdfviewer")
 void viewPdfPostback(const std::string& pdfPath)
@@ -201,7 +259,8 @@ Error initialize()
       (bind(registerRpcMethod, "set_workbench_metrics", setWorkbenchMetrics))
       (bind(registerRpcMethod, "set_ui_prefs", setUiPrefs))
       (bind(registerRpcMethod, "get_r_prefs", getRPrefs))
-      (bind(registerRpcMethod, "set_r_prefs", setRPrefs));
+      (bind(registerRpcMethod, "set_r_prefs", setRPrefs))
+      (bind(registerRpcMethod, "set_cran_mirror", setCRANMirror));
    return initBlock.execute();
 }
 

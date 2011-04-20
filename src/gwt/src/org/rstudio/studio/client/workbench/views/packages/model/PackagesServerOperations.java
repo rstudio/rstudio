@@ -14,8 +14,8 @@ package org.rstudio.studio.client.workbench.views.packages.model;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
 
 public interface PackagesServerOperations
 {
@@ -31,9 +31,4 @@ public interface PackagesServerOperations
    
    void isPackageLoaded(String packageName,
                         ServerRequestCallback<Boolean> requestCallback);
-
-   void isCRANConfigured(ServerRequestCallback<Boolean> requestCallback);
-
-   void setCRANReposUrl(String reposUrl,
-                        ServerRequestCallback<Void> requestCallback);
 }

@@ -52,16 +52,7 @@ public:
    void setPreferR64(bool preferR64);
 #endif
 
-   QString rHome() const;
-
-   QString rDocPath() const;
-
    core::FilePath supportingFilePath() const;
-
-   QString defaultCRANmirrorName() const;
-   QString defaultCRANmirrorURL() const;
-   void setDefaultCRANmirror(QString name,
-                             QString url);
 
    QStringList ignoredUpdateVersions() const;
    void setIgnoredUpdateVersions(const QStringList& ignoredVersions);

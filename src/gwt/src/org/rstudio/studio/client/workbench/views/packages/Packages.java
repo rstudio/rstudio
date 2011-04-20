@@ -12,7 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.views.packages;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
@@ -26,6 +25,7 @@ import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.cran.DefaultCRANMirror;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -79,7 +79,8 @@ public class Packages
                    EventBus events,
                    PackagesServerOperations server,
                    GlobalDisplay globalDisplay,
-                   Session session)
+                   Session session,
+                   DefaultCRANMirror defaultCRANMirror)
    {
       super(view);
       view_ = view;
@@ -87,6 +88,7 @@ public class Packages
       globalDisplay_ = globalDisplay ;
       view_.setObserver(this) ;
       events_ = events ;
+      defaultCRANMirror_ = defaultCRANMirror;
 
       events.addHandler(InstalledPackagesChangedEvent.TYPE, this);
       events.addHandler(PackageStatusChangedEvent.TYPE, this);
@@ -114,30 +116,11 @@ public class Packages
    
    void onInstallPackage()
    {
-      server_.isCRANConfigured(new SimpleRequestCallback<Boolean>()
-      {
-         @Override
-         public void onResponseReceived(Boolean response)
+      defaultCRANMirror_.ensureConfigured(new Command() {
+         public void execute()
          {
-            if (!response)
-            {
-               CRANChooser chooser = GWT.create(CRANChooser.class);
-               chooser.chooseCRANMirror(server_,
-                                        events_,
-                                        globalDisplay_,
-                                        new Command()
-                                        {
-                                           public void execute()
-                                           {
-                                              doInstallPackage();
-                                           }
-                                        });
-            }
-            else
-            {
-               doInstallPackage();
-            }
-         }
+            doInstallPackage(); 
+         } 
       });
    }
   
@@ -167,9 +150,21 @@ public class Packages
            });
    }
    
+   
+   
    void onUpdatePackages()
    {
-      globalDisplay_.showErrorMessage("Packages", "Update Packages");
+      defaultCRANMirror_.ensureConfigured(new Command() {
+         public void execute()
+         {
+            doUpdatePackages(); 
+         } 
+      });
+   }
+   
+   private void doUpdatePackages()
+   {
+      globalDisplay_.showErrorMessage("Message", "Check for Updates");
    }
    
    public void removePackage(final PackageInfo packageInfo)
@@ -384,5 +379,6 @@ public class Packages
    private HandlerRegistration consolePromptHandlerReg_ = null;
    private final EventBus events_ ;
    private final GlobalDisplay globalDisplay_ ;
+   private final DefaultCRANMirror defaultCRANMirror_;
    private String installRepository_;
 }

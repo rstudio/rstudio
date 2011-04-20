@@ -12,6 +12,8 @@
  */
 package org.rstudio.studio.client.workbench.prefs.model;
 
+import org.rstudio.studio.client.common.cran.model.CRANMirror;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class RPrefs extends JavaScriptObject
@@ -29,4 +31,8 @@ public class RPrefs extends JavaScriptObject
    public native final String getInitialWorkingDirectory() /*-{
       return this.initial_working_dir;
    }-*/;
+   
+   public native final CRANMirror getCRANMirror() /*-{
+      return this.cran_mirror;
+   }-*/;   
 }

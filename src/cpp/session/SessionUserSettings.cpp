@@ -36,6 +36,10 @@ const char * const kUiPrefs = "uiPrefs";
 const char * const kSaveAction = "saveAction";
 const char * const kLoadRData = "loadRData";
 const char * const kInitialWorkingDirectory = "initialWorkingDirectory";
+const char * const kCRANMirrorName = "cranMirrorName";
+const char * const kCRANMirrorHost = "cranMirrorHost";
+const char * const kCRANMirrorUrl = "cranMirrorUrl";
+const char * const kCRANMirrorCountry = "cranMirrorCountry";
 }
    
 UserSettings& userSettings()
@@ -119,6 +123,24 @@ void UserSettings::setLoadRData(bool loadRData)
 core::FilePath UserSettings::initialWorkingDirectory() const
 {
    return getWorkingDirectoryValue(kInitialWorkingDirectory);
+}
+
+CRANMirror UserSettings::cranMirror() const
+{
+   CRANMirror mirror;
+   mirror.name = settings_.get(kCRANMirrorName);
+   mirror.host = settings_.get(kCRANMirrorHost);
+   mirror.url = settings_.get(kCRANMirrorUrl);
+   mirror.country = settings_.get(kCRANMirrorCountry);
+   return mirror;
+}
+
+void UserSettings::setCRANMirror(const CRANMirror& mirror)
+{
+   settings_.set(kCRANMirrorName, mirror.name);
+   settings_.set(kCRANMirrorHost, mirror.host);
+   settings_.set(kCRANMirrorUrl, mirror.url);
+   settings_.set(kCRANMirrorCountry, mirror.country);
 }
 
 void UserSettings::setInitialWorkingDirectory(const core::FilePath& filePath)

@@ -20,8 +20,13 @@ import org.rstudio.core.client.widget.images.ProgressImages;
 public class ProgressPanel extends Composite
 {
    public ProgressPanel()
+   {
+      this(ProgressImages.createLarge());
+   }
+   
+   public ProgressPanel(Image progressImage)
    { 
-      progressImage_ = ProgressImages.createLarge();
+      progressImage_ = progressImage;
       HorizontalCenterPanel progressPanel = new HorizontalCenterPanel(
                                                             progressImage_, 
                                                             100);
@@ -50,6 +55,6 @@ public class ProgressPanel extends Composite
       progressImage_.setVisible(false);
    }
    
-   private Image progressImage_ ;
+   private final Image progressImage_ ;
    private boolean progressOperationPending_ = false ;
 }

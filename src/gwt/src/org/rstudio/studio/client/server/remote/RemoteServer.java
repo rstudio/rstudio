@@ -30,6 +30,7 @@ import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.HttpLogEntry;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.codetools.Completions;
+import org.rstudio.studio.client.common.cran.model.CRANMirror;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -203,12 +204,14 @@ public class RemoteServer implements Server
    public void setRPrefs(int saveAction,
                          boolean loadRData,
                          String initialWorkingDirectory,
+                         CRANMirror cranMirror,
                          ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONNumber(saveAction));
       params.set(1, JSONBoolean.getInstance(loadRData));
       params.set(2, new JSONString(initialWorkingDirectory));
+      params.set(3, new JSONObject(cranMirror));
 
       sendRequest(RPC_SCOPE,
                   SET_R_PREFS,
@@ -416,10 +419,16 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, IS_CRAN_CONFIGURED, requestCallback);
    }
 
-   public void setCRANReposUrl(String reposUrl,
-                               ServerRequestCallback<Void> requestCallback)
+   public void setCRANMirror(CRANMirror mirror,
+                             ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, SET_CRAN_REPOS_URL, reposUrl, requestCallback);
+      sendRequest(RPC_SCOPE, SET_CRAN_MIRROR, mirror, requestCallback);
+   }
+   
+   public void getCRANMirrors(
+                  ServerRequestCallback<JsArray<CRANMirror>> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_CRAN_MIRRORS, requestCallback);
    }
 
    public void suggestTopics(String prefix,
@@ -1357,7 +1366,8 @@ public class RemoteServer implements Server
    private static final String GET_DEFAULT_LIBRARY = "get_default_library";
    private static final String IS_PACKAGE_LOADED = "is_package_loaded";
    private static final String IS_CRAN_CONFIGURED = "is_cran_configured";
-   private static final String SET_CRAN_REPOS_URL = "set_cran_repos_url";
+   private static final String SET_CRAN_MIRROR = "set_cran_mirror";
+   private static final String GET_CRAN_MIRRORS = "get_cran_mirrors";
 
    private static final String GET_HELP = "get_help";
    private static final String SHOW_HELP_TOPIC = "show_help_topic" ;

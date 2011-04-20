@@ -13,6 +13,9 @@
 package org.rstudio.studio.client.workbench.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+
+import org.rstudio.studio.client.common.cran.model.CRANMirror;
+import org.rstudio.studio.client.common.cran.model.CRANServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
@@ -38,7 +41,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    SourceServerOperations,
                                                    DataServerOperations,
                                                    ChooseFileServerOperations,
-                                                   HistoryServerOperations
+                                                   HistoryServerOperations,
+                                                   CRANServerOperations
 {   
    void onWorkbenchReady();
    
@@ -54,6 +58,7 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
    void setRPrefs(int saveAction,
                   boolean loadRData,
                   String initialWorkingDirectory,
+                  CRANMirror cranMirror,
                   ServerRequestCallback<Void> requestCallback);
 
    void updateClientState(JavaScriptObject temporary,
