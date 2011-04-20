@@ -735,14 +735,10 @@ public class JUnitShell extends DevMode {
     if (unit == null) {
       errMsg = "The test class '" + typeName + "' was not found in module '"
           + moduleName + "'; no compilation unit for that type was seen";
-    } else if (unit.isError()) {
+    } else {
       CompilationProblemReporter.logMissingTypeErrorWithHints(logger, typeName, compilationState);
       errMsg = "The test class '" + typeName
           + "' had compile errors; check log for details";
-    } else {
-      errMsg = "Unexpected error: the test class '"
-          + typeName
-          + "' appears to be valid, but no corresponding type was found in TypeOracle; please contact GWT support";
     }
     return new JUnitFatalLaunchException(errMsg);
   }
