@@ -514,6 +514,30 @@ public class BigDecimalConstructorsTest extends EmulTestBase {
   }
 
   /**
+   * new BigDecimal(String value) when value has multiple signs.
+   */
+  public void testConstrStringMultipleSignsStartWithPlus() {
+    String a = "+-3";
+    try {
+      new BigDecimal(a);
+      fail("NumberFormatException expected");
+    } catch (NumberFormatException expected) {
+    }
+  }
+
+  /**
+   * new BigDecimal(String value) when value has multiple signs.
+   */
+  public void testConstrStringMultipleSignsStartWithMinus() {
+    String a = "-+3";
+    try {
+      new BigDecimal(a);
+      fail("NumberFormatException expected");
+    } catch (NumberFormatException expected) {
+    }
+  }
+
+  /**
    * new BigDecimal(String value, MathContext).
    */
   public void testConstrStringMathContext() {

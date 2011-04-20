@@ -2608,6 +2608,12 @@ public class BigDecimal extends Number implements Comparable<BigDecimal>,
     if ((offset < last) && (val.charAt(offset) == '+')) {
       offset++;
       begin++;
+
+      // Fail if the next character is another sign.
+      if ((offset < last)
+          && (val.charAt(offset) == '+' || val.charAt(offset) == '-')) {
+        throw new NumberFormatException("For input string: \"" + val + "\"");
+      }
     }
     int counter = 0;
     boolean wasNonZero = false;
