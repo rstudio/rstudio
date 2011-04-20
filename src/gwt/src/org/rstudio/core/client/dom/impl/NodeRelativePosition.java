@@ -17,9 +17,6 @@ import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Text;
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.dom.TextEx;
-
-import java.util.ArrayList;
 
 public class NodeRelativePosition
 {

@@ -14,9 +14,6 @@ package org.rstudio.core.client.command.impl;
 
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.MenuCallback;
-import org.rstudio.core.client.regex.Match;
-import org.rstudio.core.client.regex.Pattern;
-import org.rstudio.core.client.regex.Pattern.ReplaceOperation;
 
 public class DesktopMenuCallback implements MenuCallback
 {

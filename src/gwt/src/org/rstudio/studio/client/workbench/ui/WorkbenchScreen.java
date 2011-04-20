@@ -40,14 +40,12 @@ import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.MRUList;
 import org.rstudio.studio.client.workbench.WorkbenchMainView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
-import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.ui.PaneManager.Tab;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
@@ -74,15 +72,11 @@ public class WorkbenchScreen extends Composite
                           Commands commands,
                           final Provider<MRUList> mruList,
                           FontSizeManager fontSizeManager,
-                          WorkbenchServerOperations server,
-                          GlobalDisplay globalDisplay,
                           OptionsLoader.Shim optionsLoader)
    {
       eventBus_ = eventBus;
       session_ = session;
       edit_ = edit;
-      server_ = server;
-      globalDisplay_ = globalDisplay;
       optionsLoader_ = optionsLoader;
 
       eventBus_.addHandler(ShowEditorEvent.TYPE, edit);
@@ -312,8 +306,6 @@ public class WorkbenchScreen extends Composite
    private final EventBus eventBus_;
    private final Session session_;
    private final Shim edit_;
-   private final WorkbenchServerOperations server_;
-   private final GlobalDisplay globalDisplay_;
    private final org.rstudio.studio.client.workbench.ui.OptionsLoader.Shim optionsLoader_;
 
    private final MainSplitPanel tabsPanel_ ;

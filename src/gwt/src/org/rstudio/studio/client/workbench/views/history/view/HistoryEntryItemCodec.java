@@ -16,7 +16,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.*;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.FastSelectTable.ItemCodec;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;

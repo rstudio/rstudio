@@ -13,7 +13,6 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.*;
 

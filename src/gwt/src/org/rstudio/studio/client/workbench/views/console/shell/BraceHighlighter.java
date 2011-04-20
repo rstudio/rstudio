@@ -21,7 +21,6 @@ import org.rstudio.core.client.events.*;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 
-import java.util.ArrayList;
 
 /**
  * Adds highlighting of braces, brackets, and parens to PlainTextEditor.

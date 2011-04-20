@@ -13,9 +13,7 @@
 package org.rstudio.studio.client.workbench.views.edit.ui;
 
 import com.google.gwt.user.client.Command;
-import com.google.inject.Inject;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.views.edit.Edit.Display;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 
