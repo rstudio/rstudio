@@ -191,9 +191,10 @@ public class WidgetBasedUi extends Composite {
   @UiField NamedFrame myNamedFrame;
   @UiField DateLabel myDateLabel;
   @UiField DateLabel myDateLabel2;
+  @UiField DateLabel myDateLabel3;
   @UiField NumberLabel<Float> myNumberLabel;
   @UiField NumberLabel<Float> myNumberLabel2;
-  @UiField(provided = true) @SuppressWarnings("unchecked")
+  @UiField(provided = true) @SuppressWarnings("rawtypes")
   Renderer doubleRenderer = DoubleRenderer.instance();
   @UiField ValueLabel<Double> myValueLabel;
   @UiField ImageElement myImage;

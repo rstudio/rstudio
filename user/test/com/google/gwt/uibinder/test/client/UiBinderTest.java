@@ -49,7 +49,6 @@ import com.google.gwt.user.client.ui.Widget;
 public class UiBinderTest extends GWTTestCase {
   private WidgetBasedUi widgetUi;
   private DomBasedUi domUi;
-  @SuppressWarnings("deprecation")
   private com.google.gwt.user.client.ui.DockPanel root;
 
   @Override
@@ -168,7 +167,6 @@ public class UiBinderTest extends GWTTestCase {
         widgetUi.bundledDivLegacy.getClassName());
   }
 
-  @SuppressWarnings("deprecation")
   public void testCenter() {
     // TODO(rjrjr) More of a test of HTMLPanelParser
 
@@ -380,7 +378,6 @@ public class UiBinderTest extends GWTTestCase {
     assertTrue(innerHTML.endsWith("</span>&nbsp;\u261C"));
   }
 
-  @SuppressWarnings("deprecation")
   public void testNorth() {
     Widget north = root.getWidget(0);
     assertEquals(com.google.gwt.user.client.ui.DockPanel.NORTH,
@@ -491,6 +488,10 @@ public class UiBinderTest extends GWTTestCase {
   public void testDateLabel() {
     DateLabel p = widgetUi.myDateLabel;
     assertNotNull("DateLabel exists", p);
+    p = widgetUi.myDateLabel2;
+    assertNotNull("DateLabel exists", p);
+    p = widgetUi.myDateLabel3;
+    assertNotNull("DateLabel exists", p);
   }
 
   public void testNumberLabel() {
@@ -515,7 +516,6 @@ public class UiBinderTest extends GWTTestCase {
     assertEquals("100%", root.getElement().getStyle().getProperty("width"));
   }
 
-  @SuppressWarnings("deprecation")
   public void testWest() {
     Widget west = root.getWidget(1);
     assertEquals(com.google.gwt.user.client.ui.DockPanel.WEST,

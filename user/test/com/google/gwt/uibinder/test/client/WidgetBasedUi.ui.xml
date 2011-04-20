@@ -94,6 +94,10 @@
   Tests a DateTimeFormat using for the DateTimeLabel.
 </ui:import>
 
+<ui:import field='com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat.ISO_8601'>
+  Tests a reference to a PredefinedFormat for the DateTimeLabel.
+</ui:import>
+
 <ui:import field='com.google.gwt.uibinder.test.client.WidgetBasedUi.MY_NUMBER_FORMAT'>
   Tests a NumberFormat using for the NumberLabel.
 </ui:import>
@@ -665,6 +669,7 @@
 
   <gwt:DateLabel ui:field='myDateLabel' predefinedFormat='DATE_FULL' />
   <gwt:DateLabel ui:field='myDateLabel2' format='{MY_DATE_FORMAT}' />
+  <gwt:DateLabel ui:field='myDateLabel3' predefinedFormat='{ISO_8601}' />
 
   <gwt:NumberLabel ui:field='myNumberLabel' predefinedFormat='SCIENTIFIC' />
   <gwt2:ui.NumberLabel ui:field='myNumberLabel2' format='{MY_NUMBER_FORMAT}' />
