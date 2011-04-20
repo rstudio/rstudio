@@ -56,7 +56,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   /**
    * File name for computeScriptBase.js.
    */
-  protected static final String COMPUTE_SCRIPT_BASE_JS = "com/google/gwt/core/ext/linker/impl/computeScriptBase.js";
+  protected static final String COMPUTE_SCRIPT_BASE_JS = "com/google/gwt/core/ext/linker/impl/computeScriptBaseOld.js";
 
   /**
    * The extension added to demand-loaded fragment files.

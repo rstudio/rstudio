@@ -82,6 +82,33 @@ function computeScriptBase() {
     return '';
   }
 
+  function tryMarkerScript() {
+    // If the user renamed their script tag, we'll use a fancier method to find
+    // it. Note that this will not work in the Late Loading case due to the
+    // document.write call.
+    var thisScript;
+    if (typeof isBodyLoaded == 'undefined' || !isBodyLoaded()) {
+      // Put in a marker script element which should be the first script tag after
+      // the tag we're looking for. To find it, we start at the marker and walk
+      // backwards until we find a script.
+      var markerId = "__gwt_marker___MODULE_NAME__";
+      var markerScript;
+      $doc.write('<script id="' + markerId + '"></script>');
+      markerScript = $doc.getElementById(markerId);
+      thisScript = markerScript && markerScript.previousSibling;
+      while (thisScript && thisScript.tagName != 'SCRIPT') {
+        thisScript = thisScript.previousSibling;
+      }
+      if (markerScript) {
+        markerScript.parentNode.removeChild(markerScript);
+      }
+      if (thisScript && thisScript.src) {
+        return getDirectoryOfFile(thisScript.src);
+      }
+    }
+    return '';
+  }
+
   function tryBaseTag() {
     var baseElements = $doc.getElementsByTagName('base');
     if (baseElements.length > 0) {
@@ -97,12 +124,22 @@ function computeScriptBase() {
     tempBase = tryNocacheJsTag();
   }
   if (tempBase == '') {
+    tempBase = tryMarkerScript();
+  }
+  if (tempBase == '') {
     tempBase = tryBaseTag();
   }
   if (tempBase == '') {
     // last resort
     tempBase = getDirectoryOfFile($doc.location.href);
   }  
+  
   tempBase = ensureAbsoluteUrl(tempBase);
+  
+  // Note: the base variable should not be defined in this function because in
+  // the older templates (like IFrameTemplate.js), base is defined outside this
+  // function, and they rely on the fact that calling computeScriptBase will set
+  // that base variable rather than using the return value.
+  base = tempBase;
   return tempBase;
 }
