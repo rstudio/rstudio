@@ -25,6 +25,7 @@ import com.google.gwt.dev.jjs.ast.JBooleanLiteral;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JCharLiteral;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
+import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
 import com.google.gwt.dev.jjs.ast.JExpression;
@@ -232,14 +233,15 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JNameOf x, Context ctx) {
-    expression = new JNameOf(x.getSourceInfo(), x.getType(), x.getNode());
+    expression =
+        new JNameOf(x.getSourceInfo(), (JClassType) x.getType().getUnderlyingType(), x.getNode());
     return false;
   }
 
   @Override
   public boolean visit(JNewArray x, Context ctx) {
     expression =
-        new JNewArray(x.getSourceInfo(), x.getType(), cloneExpressions(x.dims),
+        new JNewArray(x.getSourceInfo(), x.getArrayType(), cloneExpressions(x.dims),
             cloneExpressions(x.initializers), x.getClassLiterals());
     return false;
   }

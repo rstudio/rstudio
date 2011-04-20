@@ -171,11 +171,11 @@ public class ImplementClassLiteralsAsFields {
     if (type instanceof JArrayType) {
       // There's only one seed function for all arrays
       JDeclaredType arrayType = program.getIndexedType("Array");
-      call.addArg(new JNameOf(info, className.getType(), arrayType));
+      call.addArg(new JNameOf(info, program.getTypeJavaLangString(), arrayType));
 
     } else if (type instanceof JClassType) {
       // Add the name of the seed function for concrete types
-      call.addArg(new JNameOf(info, className.getType(), type));
+      call.addArg(new JNameOf(info, program.getTypeJavaLangString(), type));
 
     } else if (type instanceof JPrimitiveType) {
       // And give primitive types an illegal, though meaningful, value

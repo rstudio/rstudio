@@ -19,5 +19,8 @@ package com.google.gwt.dev.jjs.ast;
  * Interface implemented by Java entities that have a type associated with them.
  */
 public interface HasType {
+  /**
+   * Returns the type of this expression.
+   */
   JType getType();
 }

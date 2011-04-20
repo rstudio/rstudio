@@ -23,12 +23,13 @@ import com.google.gwt.dev.jjs.SourceInfo;
 public class JNameOf extends JExpression {
 
   private final HasName node;
-  private final JNonNullType stringType;
+  private final JClassType stringType;
 
-  public JNameOf(SourceInfo info, JNonNullType stringType, HasName node) {
+  public JNameOf(SourceInfo info, JClassType stringType, HasName node) {
     super(info);
     this.node = node;
     this.stringType = stringType;
+    assert stringType.getName().equals("java.lang.String");
   }
 
   public HasName getNode() {
@@ -36,7 +37,7 @@ public class JNameOf extends JExpression {
   }
 
   public JNonNullType getType() {
-    return stringType;
+    return stringType.getNonNull();
   }
 
   @Override

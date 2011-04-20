@@ -138,7 +138,7 @@ public class ReplaceRebinds {
         // Not found, must be null
         ctx.replaceMe(JNullLiteral.INSTANCE);
       } else {
-        ctx.replaceMe(new JNameOf(x.getSourceInfo(), stringLiteral.getType(), named));
+        ctx.replaceMe(new JNameOf(x.getSourceInfo(), program.getTypeJavaLangString(), named));
       }
     }
   }

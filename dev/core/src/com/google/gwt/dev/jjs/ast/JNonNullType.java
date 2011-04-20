@@ -53,6 +53,11 @@ public class JNonNullType extends JReferenceType {
     return ref.isAbstract();
   }
 
+  @Override
+  public boolean isExternal() {
+    return ref.isExternal();
+  }
+
   public boolean isFinal() {
     return ref.isFinal();
   }

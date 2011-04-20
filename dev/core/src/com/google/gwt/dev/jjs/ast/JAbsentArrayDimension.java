@@ -26,10 +26,7 @@ public class JAbsentArrayDimension extends JLiteral {
 
   public static final JExpression INSTANCE = new JAbsentArrayDimension(SourceOrigin.UNKNOWN);
 
-  /**
-   * These are only supposed to be constructed by JProgram.
-   */
-  JAbsentArrayDimension(SourceInfo sourceInfo) {
+  private JAbsentArrayDimension(SourceInfo sourceInfo) {
     super(sourceInfo);
   }
 

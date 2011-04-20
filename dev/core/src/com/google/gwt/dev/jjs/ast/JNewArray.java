@@ -44,14 +44,14 @@ public class JNewArray extends JExpression {
       classLiterals.add(classLit);
       cur = ((JArrayType) cur).getElementType();
     }
-    return new JNewArray(info, arrayType.getNonNull(), dims, null, classLiterals);
+    return new JNewArray(info, arrayType, dims, null, classLiterals);
   }
 
   public static JNewArray createInitializers(SourceInfo info, JArrayType arrayType,
       List<JExpression> initializers) {
     List<JClassLiteral> classLiterals = new ArrayList<JClassLiteral>();
     classLiterals.add(new JClassLiteral(info.makeChild(), arrayType));
-    return new JNewArray(info, arrayType.getNonNull(), null, initializers, classLiterals);
+    return new JNewArray(info, arrayType, null, initializers, classLiterals);
   }
 
   public final List<JExpression> dims;
@@ -63,12 +63,12 @@ public class JNewArray extends JExpression {
    */
   private final List<JClassLiteral> classLiterals;
 
-  private JNonNullType type;
+  private JArrayType type;
 
-  public JNewArray(SourceInfo info, JNonNullType type, List<JExpression> dims,
+  public JNewArray(SourceInfo info, JArrayType type, List<JExpression> dims,
       List<JExpression> initializers, List<JClassLiteral> classLits) {
     super(info);
-    setType(type);
+    this.type = type;
     this.dims = dims;
     this.initializers = initializers;
     this.classLiterals = classLits;
@@ -97,7 +97,7 @@ public class JNewArray extends JExpression {
   }
 
   public JNonNullType getType() {
-    return type;
+    return type.getNonNull();
   }
 
   @Override
@@ -120,8 +120,7 @@ public class JNewArray extends JExpression {
     return false;
   }
 
-  public void setType(JNonNullType type) {
-    assert type.getUnderlyingType() instanceof JArrayType;
+  public void setType(JArrayType type) {
     this.type = type;
   }
 
