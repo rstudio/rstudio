@@ -67,6 +67,7 @@ public class SearchWidget extends Composite
    {
       suggestBox_ = new FocusSuggestBox(oracle);
       initWidget(uiBinder.createAndBindUi(this));
+      close_.setVisible(false);
 
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
 
@@ -101,7 +102,7 @@ public class SearchWidget extends Composite
             String value = suggestBox_.getText();
             if (!value.equals(lastValueSent_))
             {
-               lastValueSent_ = value;
+               updateLastValue(value);
                ValueChangeEvent.fire(SearchWidget.this, value);
             }
          }
@@ -112,7 +113,7 @@ public class SearchWidget extends Composite
          {
             if (!evt.getValue().equals(lastValueSent_))
             {
-               lastValueSent_ = evt.getValue();
+               updateLastValue(evt.getValue());
                delegateEvent(SearchWidget.this, evt);
             }
          }
@@ -184,6 +185,12 @@ public class SearchWidget extends Composite
    public void focus()
    {
       suggestBox_.setFocus(true);      
+   }
+   
+   private void updateLastValue(String value)
+   {
+      lastValueSent_ = value;
+      close_.setVisible(lastValueSent_.length() > 0);
    }
 
    @UiField(provided=true)
