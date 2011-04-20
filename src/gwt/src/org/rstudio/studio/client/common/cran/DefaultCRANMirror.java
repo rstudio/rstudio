@@ -12,7 +12,9 @@ import org.rstudio.studio.client.server.Void;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
+@Singleton
 public class DefaultCRANMirror 
 {
    @Inject

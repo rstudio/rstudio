@@ -1,5 +1,7 @@
 package org.rstudio.studio.client.common.cran;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -72,26 +74,32 @@ class ChooseCRANMirrorDialog extends ModalDialog<CRANMirror>
          @Override 
          public void onResponseReceived(JsArray<CRANMirror> mirrors)
          {   
-            // save mirrors
-            mirrors_ = mirrors;
+            // keep internal list of mirrors 
+            mirrors_ = new ArrayList<CRANMirror>(mirrors.length());
             
             // create list box and select default item
             listBox_ = new ListBox(false);
             listBox_.setVisibleItemCount(18); // all
             listBox_.setWidth("100%");
             int usRows = 0;
-            if (mirrors_.length() > 0)
+            if (mirrors.length() > 0)
             {
-               for(int i=0; i<mirrors_.length(); i++)
+               for(int i=0; i<mirrors.length(); i++)
                {
-                  CRANMirror mirror = mirrors_.get(i);
+                  CRANMirror mirror = mirrors.get(i);
                   String item = mirror.getName() + " - " + mirror.getHost();
                   String value = mirror.getURL();
                   
                   if ("us".equals(mirror.getCountry()))
+                  {
+                     mirrors_.add(usRows, mirror);
                      listBox_.insertItem(item, value, usRows++);
+                  }
                   else
+                  {
+                     mirrors_.add(mirror);
                      listBox_.addItem(item, value);
+                  }
                }
                listBox_.setSelectedIndex(0);
             }
@@ -121,7 +129,7 @@ class ChooseCRANMirrorDialog extends ModalDialog<CRANMirror>
    
    private final GlobalDisplay globalDisplay_ ;
    private final ServerDataSource<JsArray<CRANMirror>> mirrorDS_;
-   private JsArray<CRANMirror> mirrors_ = null;
+   private ArrayList<CRANMirror> mirrors_ = null;
    private ListBox listBox_ = null;
 
 }
