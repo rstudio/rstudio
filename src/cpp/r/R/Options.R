@@ -17,6 +17,9 @@ options(browser = function(url)
    .C("rs_browseURL", url) ;
 })
 
+# never allow graphical menus
+options(menu.graphics = FALSE)
+
 # set max print so that the DOM won't go haywire showing large datasets
 options(max.print = 1000)
 

@@ -15,9 +15,6 @@
 options(save.defaults=list(ascii=FALSE, compress=FALSE))
 options(save.image.defaults=list(ascii=FALSE, safe=TRUE, compress=FALSE))
 
-# never allow graphical menus
-options(menu.graphics = FALSE)
-
 # no support for email
 options(mailer = "none")
 
