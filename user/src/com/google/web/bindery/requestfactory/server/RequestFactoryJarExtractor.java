@@ -72,8 +72,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -81,6 +79,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -624,6 +624,11 @@ public class RequestFactoryJarExtractor {
       WriteOperation.class, RequestFactorySource.class, SimpleEventBus.class
   };
 
+  /**
+   * Maximum number of threads to use to run the Extractor.
+   */
+  private static final int MAX_THREADS = 4;
+  
   static {
     List<Class<?>> sharedClasses = Arrays.<Class<?>> asList(SHARED_CLASSES);
 
@@ -687,7 +692,7 @@ public class RequestFactoryJarExtractor {
     RequestFactoryJarExtractor extractor = new RequestFactoryJarExtractor(
         errorContext, classLoader, jarEmitter, seeds, mode);
     extractor.run();
-    System.exit(0);
+    System.exit(extractor.isExecutionFailed() ? 1 : 0);
   }
 
   /**
@@ -732,6 +737,7 @@ public class RequestFactoryJarExtractor {
     return false;
   }
 
+  private boolean executionFailed = false;
   private final Emitter emitter;
   private final ExecutorService ex;
   private final BlockingQueue<Future<?>> inProcess = new LinkedBlockingQueue<Future<?>>();
@@ -739,8 +745,8 @@ public class RequestFactoryJarExtractor {
   private final Loader loader;
   private final Mode mode;
   private final List<Class<?>> seeds;
-  private final Map<Type, Type> seen = new HashMap<Type, Type>();
-  private final Set<String> sources = new HashSet<String>();
+  private final Map<Type, Type> seen = new ConcurrentHashMap<Type, Type>();
+  private final Set<String> sources = new ConcurrentSkipListSet<String>();
   private final ExecutorService writerService;
 
   public RequestFactoryJarExtractor(Logger logger, Loader loader,
@@ -751,7 +757,8 @@ public class RequestFactoryJarExtractor {
     this.seeds = seeds;
     this.mode = mode;
 
-    ex = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    int numThreads = Math.min(MAX_THREADS, Runtime.getRuntime().availableProcessors());
+    ex = Executors.newFixedThreadPool(numThreads);
     writerService = Executors.newSingleThreadExecutor();
   }
 
@@ -770,6 +777,7 @@ public class RequestFactoryJarExtractor {
       } catch (InterruptedException retry) {
       } catch (ExecutionException e) {
         e.getCause().printStackTrace();
+        executionFailed  = true;
       }
     }
     emitter.close();
@@ -780,6 +788,10 @@ public class RequestFactoryJarExtractor {
    */
   private void emit(final State state) {
     inProcess.add(writerService.submit(new EmitOneType(state)));
+  }
+
+  private boolean isExecutionFailed() {
+    return executionFailed;
   }
 
   /**

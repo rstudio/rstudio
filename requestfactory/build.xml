@@ -32,6 +32,7 @@
           <pathelement path="${gwt.build.out}/dev/bin-test" />
           <pathelement path="${gwt.build.out}/user/bin-test" />
         </classpath>
+        <jvmarg value="-ea"/>
         <arg value="@{target}"/>
         <arg file="${gwt.build.lib}/requestfactory-@{target}.jar"/>
       </java>
