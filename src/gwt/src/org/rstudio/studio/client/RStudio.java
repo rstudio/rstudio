@@ -36,12 +36,14 @@ import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPa
 import org.rstudio.studio.client.application.ui.serializationprogress.ApplicationSerializationProgress;
 import org.rstudio.studio.client.application.ui.support.SupportPopupMenu;
 import org.rstudio.studio.client.common.StudioResources;
+import org.rstudio.studio.client.common.cran.ChooseCRANMirrorDialog;
 import org.rstudio.studio.client.impl.BrowserFence;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.history.view.HistoryPane;
 import org.rstudio.studio.client.workbench.views.history.view.Shelf;
 import org.rstudio.studio.client.workbench.views.packages.PackagesPane;
+import org.rstudio.studio.client.workbench.views.packages.ui.CheckForUpdatesDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.ExportDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.PrintDialog;
@@ -134,6 +136,8 @@ public class RStudio implements EntryPoint
       FontSizer.ensureStylesInjected();
       PreferencesDialog.ensureStylesInjected();
       PackagesPane.ensureStylesInjected();
+      CheckForUpdatesDialog.ensureStylesInjected();
+      ChooseCRANMirrorDialog.ensureStylesInjected();
 
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");

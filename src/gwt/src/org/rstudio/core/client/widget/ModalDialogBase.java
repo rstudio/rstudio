@@ -168,6 +168,11 @@ public abstract class ModalDialogBase extends DialogBox
    {
       okButton_.setText(caption);
    }
+   
+   protected void enableOkButton(boolean enabled)
+   {
+      okButton_.setEnabled(enabled);
+   }
 
    protected void setDefaultOverrideButton(ThemedButton button)
    {

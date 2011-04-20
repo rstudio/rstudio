@@ -46,6 +46,7 @@ import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 import org.rstudio.studio.client.workbench.views.help.model.Link;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
 import org.rstudio.studio.client.workbench.views.plots.model.Point;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
@@ -412,6 +413,12 @@ public class RemoteServer implements Server
          ServerRequestCallback<JsArrayString> requestCallback)
    {
       sendRequest(RPC_SCOPE, AVAILABLE_PACKAGES, repository, requestCallback);
+   }
+   
+   public void checkForPackageUpdates(
+         ServerRequestCallback<JsArray<PackageUpdate>> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, CHECK_FOR_PACKAGE_UPDATES, requestCallback);
    }
 
    public void isCRANConfigured(ServerRequestCallback<Boolean> requestCallback)
@@ -1363,6 +1370,7 @@ public class RemoteServer implements Server
    
    private static final String LIST_PACKAGES = "list_packages";
    private static final String AVAILABLE_PACKAGES = "available_packages";
+   private static final String CHECK_FOR_PACKAGE_UPDATES = "check_for_package_updates";
    private static final String GET_DEFAULT_LIBRARY = "get_default_library";
    private static final String IS_PACKAGE_LOADED = "is_package_loaded";
    private static final String IS_CRAN_CONFIGURED = "is_cran_configured";

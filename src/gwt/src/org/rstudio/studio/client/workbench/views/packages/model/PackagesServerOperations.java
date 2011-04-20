@@ -31,4 +31,7 @@ public interface PackagesServerOperations
    
    void isPackageLoaded(String packageName,
                         ServerRequestCallback<Boolean> requestCallback);
+   
+   void checkForPackageUpdates(
+            ServerRequestCallback<JsArray<PackageUpdate>> requestCallback);
 }

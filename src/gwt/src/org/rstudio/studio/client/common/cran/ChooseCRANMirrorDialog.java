@@ -13,11 +13,14 @@ import org.rstudio.studio.client.common.cran.model.CRANMirror;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Widget;
 
-class ChooseCRANMirrorDialog extends ModalDialog<CRANMirror>
+public class ChooseCRANMirrorDialog extends ModalDialog<CRANMirror>
 {
    public ChooseCRANMirrorDialog(GlobalDisplay globalDisplay,
                                  ServerDataSource<JsArray<CRANMirror>> mirrorDS,
@@ -62,9 +65,8 @@ class ChooseCRANMirrorDialog extends ModalDialog<CRANMirror>
       // create progress container
       final SimplePanelWithProgress panel = new SimplePanelWithProgress(
                                           ProgressImages.createLargeGray());
-      final int defaultPanelHeight = 285;
-      panel.setSize("420px", defaultPanelHeight + "px");
-      
+      panel.setStylePrimaryName(RESOURCES.styles().mainWidget());
+         
       // show progress (with delay)
       panel.showProgress(200);
       
@@ -109,7 +111,8 @@ class ChooseCRANMirrorDialog extends ModalDialog<CRANMirror>
             
             // if the list box is larger than the space we initially allocated
             // then increase the panel height
-            if (listBox_.getOffsetHeight() > defaultPanelHeight)
+            final int kDefaultPanelHeight = 285;
+            if (listBox_.getOffsetHeight() > kDefaultPanelHeight)
                panel.setHeight(listBox_.getOffsetHeight() + "px");
             
             // set focus   
@@ -125,6 +128,23 @@ class ChooseCRANMirrorDialog extends ModalDialog<CRANMirror>
       });
       
       return panel;
+   }
+   
+   static interface Styles extends CssResource
+   {
+      String mainWidget();
+   }
+  
+   static interface Resources extends ClientBundle
+   {
+      @Source("ChooseCRANMirrorDialog.css")
+      Styles styles();
+   }
+   
+   static Resources RESOURCES = (Resources)GWT.create(Resources.class) ;
+   public static void ensureStylesInjected()
+   {
+      RESOURCES.styles().ensureInjected();
    }
    
    private final GlobalDisplay globalDisplay_ ;

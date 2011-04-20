@@ -23,6 +23,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -46,6 +47,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.InstallOptions;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
+import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableResources;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -152,8 +154,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    protected Widget createMainWidget()
    {
       packagesTable_ = new CellTable<PackageInfo>(
-                        15,
-                        GWT.<Resources> create(Resources.class));
+        15,
+        GWT.<PackagesCellTableResources> create(PackagesCellTableResources.class));
       packagesTable_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
       packagesTable_.setSelectionModel(new NoSelectionModel<PackageInfo>());
       packagesTable_.setWidth("100%", false);
@@ -309,13 +311,10 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       String packageNameLinkSelected();
    }
   
-   interface Resources extends CellTable.Resources 
+   interface Resources extends ClientBundle
    {
       @Source("PackagesPane.css")
       Styles styles();
-      
-      @Source("PackagesCellTable.css")
-      CellTable.Style cellTableStyle();    
    }
    
    static Resources RESOURCES = (Resources)GWT.create(Resources.class) ;

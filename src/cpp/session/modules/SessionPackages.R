@@ -150,3 +150,9 @@
               country = cranMirrors$CountryCode,
               stringsAsFactors = FALSE)
 })
+
+
+.rs.addJsonRpcHandler( "check_for_package_updates", function()
+{
+   as.data.frame(utils::old.packages(), stringsAsFactors = FALSE)
+})
