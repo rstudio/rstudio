@@ -19,5 +19,7 @@ package com.google.gwt.lang;
  * This class holds the boot strap entry method that the compiler generates.
  */
 public class EntryMethodHolder {
-
+  public static final void init() {
+    // Filled in by the compiler to call entry methods.
+  }
 }

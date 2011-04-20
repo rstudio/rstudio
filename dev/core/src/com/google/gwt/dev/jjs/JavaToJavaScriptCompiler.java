@@ -872,7 +872,7 @@ public class JavaToJavaScriptCompiler {
     return dependencyRecorder;
   }
 
-  private static JMethodCall createReboundModuleLoad(TreeLogger logger,
+  private static JMethodCall createReboundModuleLoad(TreeLogger logger, SourceInfo info,
       JDeclaredType reboundEntryType, String originalMainClassName, JDeclaredType enclosingType)
       throws UnableToCompleteException {
     if (!(reboundEntryType instanceof JClassType)) {
@@ -902,10 +902,9 @@ public class JavaToJavaScriptCompiler {
       throw new UnableToCompleteException();
     }
 
-    SourceInfo sourceInfo = entryClass.getSourceInfo();
     JExpression qualifier = null;
     if (!entryMethod.isStatic()) {
-      qualifier = JGwtCreate.createInstantiationExpression(sourceInfo, entryClass, enclosingType);
+      qualifier = JGwtCreate.createInstantiationExpression(info, entryClass, enclosingType);
 
       if (qualifier == null) {
         logger.log(TreeLogger.ERROR,
@@ -915,21 +914,17 @@ public class JavaToJavaScriptCompiler {
         throw new UnableToCompleteException();
       }
     }
-    return new JMethodCall(sourceInfo, qualifier, entryMethod);
+    return new JMethodCall(info, qualifier, entryMethod);
   }
 
   private static void findEntryPoints(TreeLogger logger, RebindPermutationOracle rpo,
       String[] mainClassNames, JProgram program) throws UnableToCompleteException {
     Event findEntryPointsEvent = SpeedTracerLogger.start(CompilerEventType.FIND_ENTRY_POINTS);
-    SourceInfo sourceInfo = program.createSourceInfoSynthetic(JavaToJavaScriptCompiler.class);
-    JMethod bootStrapMethod =
-        program.createMethod(sourceInfo, "init", program.getIndexedType("EntryMethodHolder"),
-            program.getTypeVoid(), false, true, true, false, false);
-    bootStrapMethod.freezeParamTypes();
-    bootStrapMethod.setSynthetic();
+    JMethod bootStrapMethod = program.getIndexedMethod("EntryMethodHolder.init");
 
     JMethodBody body = (JMethodBody) bootStrapMethod.getBody();
     JBlock block = body.getBlock();
+    SourceInfo info = block.getSourceInfo().makeChild();
 
     // Also remember $entry, which we'll handle specially in GenerateJsAst
     JMethod registerEntry = program.getIndexedMethod("Impl.registerEntry");
@@ -947,7 +942,7 @@ public class JavaToJavaScriptCompiler {
 
       JMethod mainMethod = findMainMethod(mainType);
       if (mainMethod != null && mainMethod.isStatic()) {
-        JMethodCall onModuleLoadCall = new JMethodCall(null, null, mainMethod);
+        JMethodCall onModuleLoadCall = new JMethodCall(info, null, mainMethod);
         block.addStmt(onModuleLoadCall.makeStatement());
         continue;
       }
@@ -965,7 +960,7 @@ public class JavaToJavaScriptCompiler {
         }
 
         JMethodCall onModuleLoadCall =
-            createReboundModuleLoad(logger, resultType, mainClassName, bootStrapMethod
+            createReboundModuleLoad(logger, info, resultType, mainClassName, bootStrapMethod
                 .getEnclosingType());
         resultTypes.add((JClassType) resultType);
         entryCalls.add(onModuleLoadCall);
@@ -974,7 +969,7 @@ public class JavaToJavaScriptCompiler {
         block.addStmt(entryCalls.get(0).makeStatement());
       } else {
         JReboundEntryPoint reboundEntryPoint =
-            new JReboundEntryPoint(mainType.getSourceInfo(), mainType, resultTypes, entryCalls);
+            new JReboundEntryPoint(info, mainType, resultTypes, entryCalls);
         block.addStmt(reboundEntryPoint);
       }
     }
