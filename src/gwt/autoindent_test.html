@@ -1,0 +1,177 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <script type="text/javascript" src="tools/ace/build_support/mini_require.js"></script>
+  <script type="text/javascript" src="tools/ace/build/src/ace-uncompressed.js"></script>
+  <script type="text/javascript" src="acesupport/acemode/r_highlight_rules.js"></script>
+  <script type="text/javascript" src="acesupport/acemode/r.js"></script>
+  <script type="text/javascript" src="tools/autoindent_ng.js"></script>
+  <style type="text/css">
+  pre {
+    margin-bottom: 30px;
+    padding: 3px;
+    border: 1px solid #999;
+  }
+  </style>
+</head>
+<body>
+
+<pre>
+doPlot &lt;- function()
+</pre>
+<pre>
+doPlot &lt;- function() {
+</pre>
+<pre>
+  doPlot &lt;- function() {
+</pre>
+<pre>
+doPlot &lt;- function()
+{
+</pre>
+<pre>
+plot(
+</pre>
+<pre>
+plot(x,
+</pre>
+<pre>
+plot(x,
+     y,
+</pre>
+<pre>
+plot(x,
+     c(foo,
+</pre>
+<pre>
+plot(x,
+     c(foo,
+       bar),
+</pre>
+<pre>
+plot(
+  x,
+  c(foo,
+    bar),
+</pre>
+<pre>
+plot(x, c(foo, bar))
+</pre>
+<pre>
+plot(
+  x, c(foo, bar))
+</pre>
+<pre>
+plot(x,
+     c(foo, bar))
+</pre>
+<pre>
+  plot(x,
+       c(foo, bar))
+</pre>
+<pre>
+  if (foo())
+</pre>
+<pre>
+  for (i = 0;
+       i &lt; (20 * intervals);
+       i += 1)
+</pre>
+<pre>
+function() {
+  for (i = 0;
+       i &lt; (20 * intervals);
+       i += 1)
+</pre>
+<pre>
+function() {
+  for (i = 0;
+       i &lt; (20 * intervals);
+       i += 1) NULL
+</pre>
+<pre>
+function() {
+  for (i = 0;
+       i &lt; (20 * intervals);
+       i += 1) ()
+</pre>
+<pre>
+function() {
+  for (i = 0;
+       i &lt; (20 * intervals);
+       i += 1)
+  {
+</pre>
+<pre>
+  if (x) {
+</pre>
+<pre>
+  if (foo(
+</pre>
+<pre>
+  if (foo(
+        bar),
+</pre>
+<pre>
+  while (foo())
+    NULL
+</pre>
+<pre>
+  while (foo())
+  {
+</pre>
+<pre>
+  # This is kind of broken
+  while (foo())
+  {
+    foo (
+  }
+</pre>
+<pre>
+  repeat
+    foo()
+</pre>
+<pre>
+function() {
+  repeat
+</pre>
+<pre>
+function() {
+  repeat {
+</pre>
+
+<script type="text/javascript">
+var IndentManager = require('autoindent').IndentManager;
+var Document = require('ace/document').Document;
+var RMode = require('mode/r').Mode;
+
+function doIndentTest(el) {
+  var doc = new Document('');
+  var tokenizer = new RMode(false);
+  var indentManager = new IndentManager(doc, tokenizer);
+
+  doc.insert({row:0, column:0}, el.innerText.trimRight());
+
+  var indent = indentManager.getNextLineIndent(doc.getLength() - 1);
+  el.appendChild(document.createTextNode(indent + "|"));
+}
+
+var test = document.getElementById("runme");
+var pres = document.getElementsByTagName("pre");
+for (var i = 0; i < pres.length; i++)
+{
+  if (!test)
+    doIndentTest(pres[i]);
+  else
+  {
+    if (pres[i] != test)
+      pres[i].style.display = 'none';
+  }
+}
+if (test)
+{
+  doIndentTest(test);
+}
+</script>
+</body>
+</html>
