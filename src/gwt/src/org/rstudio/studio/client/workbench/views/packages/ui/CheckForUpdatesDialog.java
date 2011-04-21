@@ -183,7 +183,7 @@ public class CheckForUpdatesDialog extends ModalDialog<ArrayList<PackageUpdate>>
                globalDisplay_.showMessage(
                      MessageDialog.INFO, 
                      "Check for Updates", 
-                     "All packages in the default library are up to date.");
+                     "All packages are up to date.");
             }
          }
          
