@@ -22,12 +22,6 @@ var IndentManager = function(doc, tokenizer) {
       '{': '}',
       '}': '{'
    };
-   this.$complements['('] = ')';
-   this.$complements['['] = ']';
-   this.$complements['{'] = '}';
-   this.$complements[')'] = '(';
-   this.$complements[']'] = '[';
-   this.$complements['}'] = '{';
 
    this.getNextLineIndent = function(lastRow)
    {
@@ -67,7 +61,7 @@ var IndentManager = function(doc, tokenizer) {
          {
             var preParenToken = this.$findPreviousSignificantToken(lastPos, 0);
             if (preParenToken && preParenToken.token.type === "keyword"
-                  && /^(if|while|for)$/.test(preParenToken.token.value))
+                  && /^(if|while|for|function)$/.test(preParenToken.token.value))
             {
                return this.$getIndent(this.$doc.getLine(preParenToken.row)) + "  ";
             }
@@ -129,41 +123,7 @@ var IndentManager = function(doc, tokenizer) {
       {
          indent = "";
       }
-      
 
-      /*
-      var sigTokens = this.$filterWhitespaceAndComments(this.$tokens[lastRow]);
-      if (sigTokens.length > 0
-         && sigTokens[0].type === "keyword"
-         && /^(if|while|for)$/.test(sigTokens[0].value))
-      {
-         var parens = 0;
-         var lastPos = null;
-         this.$walkParens(lastRow, lastRow, function(paren, pos)
-         {
-            lastPos = pos;
-            if (/[\[({]/.test(paren))
-               parens++;
-            else
-               parens--;
-
-            // We've either completed a set of balanced parens, or possibly
-            // the parens are invalid. In either case, stop.
-            if (parens <= 0)
-               return false;
-
-            return true;
-         });
-
-         if (lastPos != null)
-         {
-            lastPos.column = lastPos.column + 1;
-            var postIf = this.$findNextSignificantToken(lastPos, lastRow);
-            if (!postIf)
-               indent = this.$getIndent(this.$doc.getLine(lastRow)) + "  "
-         }
-      }
-      */
       
       //return indent;
       return indent;

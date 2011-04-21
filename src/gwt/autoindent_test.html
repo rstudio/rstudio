@@ -16,129 +16,131 @@
 </head>
 <body>
 
-<pre>
+<ol>
+<li><pre expected="2">
 doPlot &lt;- function()
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="2">
 doPlot &lt;- function() {
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="4">
   doPlot &lt;- function() {
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="2">
 doPlot &lt;- function()
 {
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="2">
 plot(
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="5">
 plot(x,
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="5">
 plot(x,
      y,
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="7">
 plot(x,
      c(foo,
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="5">
 plot(x,
      c(foo,
        bar),
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="2">
 plot(
   x,
   c(foo,
     bar),
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="0">
 plot(x, c(foo, bar))
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="0">
 plot(
   x, c(foo, bar))
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="0">
 plot(x,
      c(foo, bar))
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="0">
   plot(x,
        c(foo, bar))
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="4">
   if (foo())
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="4">
   for (i = 0;
        i &lt; (20 * intervals);
        i += 1)
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="4">
 function() {
   for (i = 0;
        i &lt; (20 * intervals);
        i += 1)
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="2">
 function() {
   for (i = 0;
        i &lt; (20 * intervals);
        i += 1) NULL
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="2">
 function() {
   for (i = 0;
        i &lt; (20 * intervals);
        i += 1) ()
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="4">
 function() {
   for (i = 0;
        i &lt; (20 * intervals);
        i += 1)
   {
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="4">
   if (x) {
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="4">
   if (foo(
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="6">
   if (foo(
         bar),
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="2">
   while (foo())
     NULL
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="4">
   while (foo())
   {
-</pre>
-<pre>
-  # This is kind of broken
+</pre></li>
+<li><pre expected="2">
+  # Invalid parse tree
   while (foo())
   {
-    foo (
+    foo (()
   }
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="2">
   repeat
     foo()
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="4">
 function() {
   repeat
-</pre>
-<pre>
+</pre></li>
+<li><pre expected="4">
 function() {
   repeat {
-</pre>
+</pre></li>
+</ol>
 
 <script type="text/javascript">
 var IndentManager = require('autoindent').IndentManager;
@@ -154,6 +156,11 @@ function doIndentTest(el) {
 
   var indent = indentManager.getNextLineIndent(doc.getLength() - 1);
   el.appendChild(document.createTextNode(indent + "|"));
+  var expected = el.getAttribute("expected");
+  if (expected == indent.length + "")
+    el.style.backgroundColor = '#BFB';
+  else
+    el.style.backgroundColor = 'pink';
 }
 
 var test = document.getElementById("runme");
