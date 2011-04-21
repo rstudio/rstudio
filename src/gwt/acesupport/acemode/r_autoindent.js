@@ -11,9 +11,6 @@
  *
  */
 
-// TODO: Handle soft- vs. hard-tab, dynamic tab sizes
-// TODO: Hitting Enter in the middle of a line treats indentation as if it's at the end of the line
-
 define("mode/r_autoindent", function(require, exports, module) {
 
 var IndentManager = function(doc, tokenizer) {
@@ -58,11 +55,11 @@ var IndentManager = function(doc, tokenizer) {
       
       try
       {
-         var indent = lastRow < 0 ? "" 
-                                  : this.$getIndent(this.$getLine(lastRow));
+         var defaultIndent = lastRow < 0 ? "" 
+                                         : this.$getIndent(this.$getLine(lastRow));
 
          if (!this.$tokenizeUpToRow(lastRow))
-            return indent;
+            return defaultIndent;
 
          var prevToken = this.$findPreviousSignificantToken({row: lastRow, column: this.$getLine(lastRow).length},
                                                             lastRow - 10);
@@ -95,7 +92,7 @@ var IndentManager = function(doc, tokenizer) {
                if (preParenToken && preParenToken.token.type === "keyword"
                      && /^(if|while|for|function)$/.test(preParenToken.token.value))
                {
-                  return this.$getIndent(this.$getLine(preParenToken.row)) + "  ";
+                  return this.$getIndent(this.$getLine(preParenToken.row)) + tab;
                }
             }
          }
@@ -103,14 +100,14 @@ var IndentManager = function(doc, tokenizer) {
                      && prevToken.token.type === "keyword"
                      && (prevToken.token.value === "repeat" || prevToken.token.value === "else"))
          {
-            return this.$getIndent(this.$getLine(prevToken.row)) + "  ";
+            return this.$getIndent(this.$getLine(prevToken.row)) + tab;
          }
          else if (prevToken && /\boperator\b/.test(prevToken.token.type) && !/\bparen\b/.test(prevToken.token.type))
          {
             // Is the previous line also a continuation line?
             var prevContToken = this.$findPreviousSignificantToken({row: prevToken.row, column: 0}, 0);
             if (!prevContToken || !/\boperator\b/.test(prevContToken.token.type) || /\bparen\b/.test(prevContToken.token.type))
-               return this.$getIndent(this.$getLine(prevToken.row)) + "  ";
+               return this.$getIndent(this.$getLine(prevToken.row)) + tab;
             else
                return this.$getIndent(this.$getLine(prevToken.row));
          }
@@ -152,14 +149,21 @@ var IndentManager = function(doc, tokenizer) {
 
             if (!nextTokenPos)
             {
-               // TODO: return line that contains the brace, plus 1 indent level
-               // TODO: If the token is beyond lastRow, ignore it
-               indent = this.$getIndent(this.$getLine(openBracePos.row)) + "  ";
+               // return line that contains the brace, plus 1 indent level
+               return this.$getIndent(this.$getLine(openBracePos.row)) + tab;
             }
             else
             {
                // return indent up to next token position
-               indent = (new Array(nextTokenPos.column + 1)).join(" ");
+               var indentWidth = nextTokenPos.column;
+               var tabsToUse = Math.floor(indentWidth / tabSize);
+               var spacesToAdd = indentWidth - (tabSize * tabsToUse);
+               var buffer = "";
+               for (var i = 0; i < tabsToUse; i++)
+                  buffer += tab;
+               for (var i = 0; i < spacesToAdd; i++)
+                  buffer += " ";
+               return buffer;
             }
          }
          else
@@ -171,8 +175,7 @@ var IndentManager = function(doc, tokenizer) {
                return "";
          }
       
-         //return indent;
-         return indent;
+         return defaultIndent;
       }
       finally
       {

@@ -188,7 +188,10 @@ function doIndentTest(el) {
 
   doc.insert({row:0, column:0}, el.innerText.trimRight());
 
-  var indent = indentManager.getNextLineIndent(doc.getLength() - 1);
+  var indent = indentManager.getNextLineIndent(doc.getLength() - 1,
+                                               doc.getLine(doc.getLength() - 1),
+                                               "  ",
+                                               2);
   el.appendChild(document.createTextNode(indent + "|"));
   var expected = el.getAttribute("expected");
   if (expected == indent.length + "")
