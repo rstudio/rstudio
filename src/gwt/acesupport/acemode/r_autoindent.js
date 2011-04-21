@@ -69,9 +69,18 @@ var IndentManager = function(doc, tokenizer) {
       }
       else if (prevToken
                   && prevToken.token.type === "keyword"
-                  && prevToken.token.value === "repeat")
+                  && (prevToken.token.value === "repeat" || prevToken.token.value === "else"))
       {
          return this.$getIndent(this.$doc.getLine(prevToken.row)) + "  ";
+      }
+      else if (prevToken && /\boperator\b/.test(prevToken.token.type) && !/\bparen\b/.test(prevToken.token.type))
+      {
+         // Is the previous line also a continuation line?
+         var prevContToken = this.$findPreviousSignificantToken({row: prevToken.row, column: 0}, 0);
+         if (!prevContToken || !/\boperator\b/.test(prevContToken.token.type) || /\bparen\b/.test(prevContToken.token.type))
+            return this.$getIndent(this.$doc.getLine(prevToken.row)) + "  ";
+         else
+            return this.$getIndent(this.$doc.getLine(prevToken.row));
       }
 
 
@@ -121,7 +130,11 @@ var IndentManager = function(doc, tokenizer) {
       }
       else
       {
-         indent = "";
+         var firstToken = this.$findNextSignificantToken({row: 0, column: 0}, lastRow);
+         if (firstToken)
+            return this.$getIndent(this.$doc.getLine(firstToken.row));
+         else
+            return "";
       }
 
       

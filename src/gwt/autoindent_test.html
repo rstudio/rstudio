@@ -2,7 +2,7 @@
 <html>
 <head>
   <script type="text/javascript" src="tools/ace/build_support/mini_require.js"></script>
-  <script type="text/javascript" src="tools/ace/build/src/ace-uncompressed.js"></script>
+  <script type="text/javascript" src="tools/ace/build/src/ace.js"></script>
   <script type="text/javascript" src="acesupport/acemode/r_highlight_rules.js"></script>
   <script type="text/javascript" src="acesupport/acemode/r.js"></script>
   <script type="text/javascript" src="acesupport/acemode/r_autoindent.js"></script>
@@ -20,6 +20,7 @@
 <div id="editor" style="width: 600px; height: 200px; border: 1px solid #999"></div>
 
 <h2 style="margin-top: 250px">Automated Tests</h2>
+<p>Passed: <span id="passed"></span>, Failed: <span id="failed"></span></p>
 <ol>
 <li><pre expected="2">
 doPlot &lt;- function()
@@ -70,7 +71,7 @@ plot(
 plot(x,
      c(foo, bar))
 </pre></li>
-<li><pre expected="0">
+<li><pre expected="2">
   plot(x,
        c(foo, bar))
 </pre></li>
@@ -78,9 +79,26 @@ plot(x,
   if (foo())
 </pre></li>
 <li><pre expected="4">
+  if (foo())
+    bar
+  else
+</pre></li>
+<li><pre expected="4">
+  if (foo())
+    bar
+  else
+# annoyingly placed comment
+</pre></li>
+<li><pre expected="0">
+if (foo())
+  bar
+else NULL
+</pre></li>
+<li><pre expected="4">
   for (i = 0;
        i &lt; (20 * intervals);
        i += 1)
+                  # annoyingly placed comment
 </pre></li>
 <li><pre expected="4">
 function() {
@@ -144,6 +162,18 @@ function() {
 function() {
   repeat {
 </pre></li>
+<li><pre expected="2">
+5 *
+</pre></li>
+<li><pre expected="2">
+# One expression continued over more than two lines
+5 ~
+  5 +
+</pre></li>
+<li><pre expected="4">
+else
+  5 +
+</pre></li>
 </ol>
 
 <script type="text/javascript">
@@ -162,17 +192,29 @@ function doIndentTest(el) {
   el.appendChild(document.createTextNode(indent + "|"));
   var expected = el.getAttribute("expected");
   if (expected == indent.length + "")
+  {
     el.style.backgroundColor = '#BFB';
+    return true;
+  }
   else
+  {
     el.style.backgroundColor = 'pink';
+    return false;
+  }
 }
 
 var test = document.getElementById("runme");
 var pres = document.getElementsByTagName("pre");
+var passed = 0, failed = 0;
 for (var i = 0; i < pres.length; i++)
 {
   if (!test)
-    doIndentTest(pres[i]);
+  {
+    if (doIndentTest(pres[i]))
+      passed++;
+    else
+      failed++;
+  }
   else
   {
     if (pres[i] != test)
@@ -181,8 +223,14 @@ for (var i = 0; i < pres.length; i++)
 }
 if (test)
 {
-  doIndentTest(test);
+  if (doIndentTest(test))
+    passed++;
+  else
+    failed++;
 }
+
+document.getElementById('passed').innerText = passed;
+document.getElementById('failed').innerText = failed;
 
 var editor = ace.edit('editor');
 editor.renderer.setHScrollBarAlwaysVisible(false);
