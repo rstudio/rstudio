@@ -166,16 +166,12 @@ var IndentManager = function(doc, tokenizer) {
                return buffer;
             }
          }
+
+         var firstToken = this.$findNextSignificantToken({row: 0, column: 0}, lastRow);
+         if (firstToken)
+            return this.$getIndent(this.$getLine(firstToken.row));
          else
-         {
-            var firstToken = this.$findNextSignificantToken({row: 0, column: 0}, lastRow);
-            if (firstToken)
-               return this.$getIndent(this.$getLine(firstToken.row));
-            else
-               return "";
-         }
-      
-         return defaultIndent;
+            return "";
       }
       finally
       {
