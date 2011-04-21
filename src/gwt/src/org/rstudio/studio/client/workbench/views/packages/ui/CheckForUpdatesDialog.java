@@ -1,12 +1,14 @@
 package org.rstudio.studio.client.workbench.views.packages.ui;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.ServerDataSource;
@@ -17,6 +19,9 @@ import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.cellview.client.CellTable;
@@ -38,26 +43,46 @@ public class CheckForUpdatesDialog extends ModalDialog<ArrayList<PackageUpdate>>
          ServerDataSource<JsArray<PackageUpdate>> updatesDS,
          OperationWithInput<ArrayList<PackageUpdate>> checkOperation)
    {
-      super("Check for Package Updates", checkOperation);
+      super("Update Packages", checkOperation);
       globalDisplay_ = globalDisplay;
       updatesDS_ = updatesDS;
       
       setOkButtonCaption("Install Updates");
       enableOkButton(false);
+      
+      addLeftButton(new ThemedButton("Select All", new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+           setGlobalApplyUpdate(true);       
+         } 
+      }));
+     
+      addLeftButton(new ThemedButton("Select None", new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            setGlobalApplyUpdate(false);   
+         } 
+      }));  
    }
 
    @Override
    protected ArrayList<PackageUpdate> collectInput()
    {
-      // TODO Auto-generated method stub
-      return null;
+      ArrayList<PackageUpdate> updates = new ArrayList<PackageUpdate>();
+      for (PendingUpdate update : updatesDataProvider_.getList())
+      {
+         if (update.getApplyUpdate())
+            updates.add(update.getUpdateInfo());
+      }
+      return updates;
    }
 
    @Override
    protected boolean validate(ArrayList<PackageUpdate> input)
    {
-      // TODO Auto-generated method stub
-      return false;
+      return input.size() > 0;
    }
 
    @Override
@@ -66,61 +91,70 @@ public class CheckForUpdatesDialog extends ModalDialog<ArrayList<PackageUpdate>>
       VerticalPanel mainPanel = new VerticalPanel();
       mainPanel.setStylePrimaryName(RESOURCES.styles().mainWidget());
  
-      updatesTable_ = new CellTable<PackageUpdate>(
+      updatesTable_ = new CellTable<PendingUpdate>(
             15,
             GWT.<PackagesCellTableResources> create(PackagesCellTableResources.class));
       updatesTable_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
-      updatesTable_.setSelectionModel(new NoSelectionModel<PackageUpdate>());
-      updatesTable_.setWidth("100%", false);
+      updatesTable_.setSelectionModel(new NoSelectionModel<PendingUpdate>());
+      updatesTable_.setWidth("100%", true);
       
-      updatesTable_.addColumn(new UpdateColumn(), "Update?");
+      UpdateColumn updateColumn = new UpdateColumn();
+      updatesTable_.addColumn(updateColumn);
+      updatesTable_.setColumnWidth(updateColumn, 30, Unit.PX);
       
-      TextColumn<PackageUpdate> nameColumn = new TextColumn<PackageUpdate>() {
-         public String getValue(PackageUpdate packageUpdate)
+      
+      TextColumn<PendingUpdate> nameColumn = new TextColumn<PendingUpdate>() {
+         public String getValue(PendingUpdate update)
          {
-            return packageUpdate.getPackageName();
+            return update.getUpdateInfo().getPackageName();
          } 
       };  
       updatesTable_.addColumn(nameColumn, "Package");
+      updatesTable_.setColumnWidth(nameColumn, 28, Unit.PCT);
       
-      TextColumn<PackageUpdate> installedColumn = new TextColumn<PackageUpdate>() {
-         public String getValue(PackageUpdate packageUpdate)
+      TextColumn<PendingUpdate> installedColumn = new TextColumn<PendingUpdate>() {
+         public String getValue(PendingUpdate update)
          {
-            return packageUpdate.getInstalled();
+            return update.getUpdateInfo().getInstalled();
          } 
       };  
       updatesTable_.addColumn(installedColumn, "Installed");
+      updatesTable_.setColumnWidth(installedColumn, 28, Unit.PCT);
       
-      TextColumn<PackageUpdate> availableColumn = new TextColumn<PackageUpdate>() {
-         public String getValue(PackageUpdate packageUpdate)
+      TextColumn<PendingUpdate> availableColumn = new TextColumn<PendingUpdate>() {
+         public String getValue(PendingUpdate update)
          {
-            return packageUpdate.getAvailable();
+            return update.getUpdateInfo().getAvailable();
          } 
       };  
       updatesTable_.addColumn(availableColumn, "Available");
+      updatesTable_.setColumnWidth(availableColumn, 28, Unit.PCT);
       
-      ImageButtonColumn<PackageUpdate> newsColumn = 
-         new ImageButtonColumn<PackageUpdate>(
-           AbstractImagePrototype.create(ThemeResources.INSTANCE.zoomDataset()),
-           new OperationWithInput<PackageUpdate>() {
-             public void execute(PackageUpdate packageUpdate)
+      ImageButtonColumn<PendingUpdate> newsColumn = 
+         new ImageButtonColumn<PendingUpdate>(
+           AbstractImagePrototype.create(ThemeResources.INSTANCE.newsButton()),
+           new OperationWithInput<PendingUpdate>() {
+             public void execute(PendingUpdate update)
              {
-                globalDisplay_.openMinimalWindow(packageUpdate.getNewsUrl(),
-                                                 false, 
-                                                 700, 
-                                                 800, 
-                                                 "_rstudio_package_news", 
-                                                 true);
+                globalDisplay_.openMinimalWindow(
+                                           update.getUpdateInfo().getNewsUrl(),
+                                           false, 
+                                           700, 
+                                           800, 
+                                           "_rstudio_package_news", 
+                                           true);
              }  
            }) 
            {
                @Override
-               protected boolean showButton(PackageUpdate packageUpdate)
+               protected boolean showButton(PendingUpdate update)
                {
-                  return !StringUtil.isNullOrEmpty(packageUpdate.getNewsUrl());
+                  return !StringUtil.isNullOrEmpty(
+                                          update.getUpdateInfo().getNewsUrl());
                }
            };
       updatesTable_.addColumn(newsColumn, "NEWS");
+      updatesTable_.setColumnWidth(newsColumn, 16, Unit.PCT);
   
       ScrollPanel scrollPanel = new ScrollPanel();
       scrollPanel.setWidget(updatesTable_);
@@ -132,11 +166,11 @@ public class CheckForUpdatesDialog extends ModalDialog<ArrayList<PackageUpdate>>
          @Override
          public void onResponseReceived(JsArray<PackageUpdate> packageUpdates)
          {
-            ArrayList<PackageUpdate> updates = new ArrayList<PackageUpdate>();
+            ArrayList<PendingUpdate> updates = new ArrayList<PendingUpdate>();
             for (int i=0; i<packageUpdates.length(); i++)
-               updates.add(packageUpdates.get(i));
+               updates.add(new PendingUpdate(packageUpdates.get(i), false));
             updatesTable_.setPageSize(updates.size());
-            updatesDataProvider_ = new ListDataProvider<PackageUpdate>();
+            updatesDataProvider_ = new ListDataProvider<PendingUpdate>();
             updatesDataProvider_.setList(updates);
             updatesDataProvider_.addDataDisplay(updatesTable_);
          }
@@ -148,36 +182,71 @@ public class CheckForUpdatesDialog extends ModalDialog<ArrayList<PackageUpdate>>
             super.onError(error);            
          }  
       });
-      
-      
-      
-      
+ 
       return mainPanel;
    }
    
-   class UpdateColumn extends Column<PackageUpdate, Boolean>
+   class UpdateColumn extends Column<PendingUpdate, Boolean>
    {
       public UpdateColumn()
       {
          super(new CheckboxCell(false, false));
          
-         setFieldUpdater(new FieldUpdater<PackageUpdate,Boolean>() {
-            public void update(int index, PackageUpdate packageInfo, Boolean value)
+         setFieldUpdater(new FieldUpdater<PendingUpdate,Boolean>() {
+            public void update(int index, PendingUpdate update, Boolean value)
             {
-               
-               
+               List<PendingUpdate> updates = updatesDataProvider_.getList();
+               updates.set(updates.indexOf(update), 
+                           new PendingUpdate(update.getUpdateInfo(), value));
+               manageUIState();
             }    
          });
       }
 
       @Override
-      public Boolean getValue(PackageUpdate update)
+      public Boolean getValue(PendingUpdate update)
       {
-         return null;
+         return update.getApplyUpdate();
       }
    }
    
-
+   private class PendingUpdate
+   {
+      public PendingUpdate(PackageUpdate updateInfo, boolean applyUpdate)
+      {
+         updateInfo_ = updateInfo;
+         applyUpdate_ = applyUpdate;
+      }
+      
+      public PackageUpdate getUpdateInfo()
+      {
+         return updateInfo_;
+      }
+      
+      public boolean getApplyUpdate()
+      {
+         return applyUpdate_;
+      }
+      
+      private final PackageUpdate updateInfo_;
+      private final boolean applyUpdate_;
+   }
+   
+   private void setGlobalApplyUpdate(Boolean applyUpdate)
+   {
+      List<PendingUpdate> updates = updatesDataProvider_.getList();
+      ArrayList<PendingUpdate> newUpdates = new ArrayList<PendingUpdate>();
+      for(PendingUpdate update : updates)
+         newUpdates.add(new PendingUpdate(update.getUpdateInfo(), applyUpdate));
+      updatesDataProvider_.setList(newUpdates);
+      manageUIState();
+   }
+   
+   private void manageUIState()
+   {
+      enableOkButton(collectInput().size() > 0);
+   }
+   
    static interface Styles extends CssResource
    {
       String mainWidget();
@@ -197,8 +266,8 @@ public class CheckForUpdatesDialog extends ModalDialog<ArrayList<PackageUpdate>>
    }
    
    private final GlobalDisplay globalDisplay_;
-   private CellTable<PackageUpdate> updatesTable_;
+   private CellTable<PendingUpdate> updatesTable_;
    private ServerDataSource<JsArray<PackageUpdate>> updatesDS_;
-   private ListDataProvider<PackageUpdate> updatesDataProvider_;
+   private ListDataProvider<PendingUpdate> updatesDataProvider_;
 
 }

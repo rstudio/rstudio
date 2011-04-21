@@ -163,4 +163,6 @@ public interface ThemeResources extends ClientBundle
    ImageResource closeChevron();
    
    ImageResource removePackage();
+   
+   ImageResource newsButton();
 }
