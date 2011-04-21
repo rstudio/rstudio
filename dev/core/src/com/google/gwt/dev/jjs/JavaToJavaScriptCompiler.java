@@ -42,6 +42,7 @@ import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.javac.CompilationProblemReporter;
 import com.google.gwt.dev.javac.CompilationProblemReporter.SourceFetcher;
+import com.google.gwt.dev.javac.typemodel.TypeOracle;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
 import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
@@ -512,6 +513,15 @@ public class JavaToJavaScriptCompiler {
     allRootTypes.addAll(JProgram.CODEGEN_TYPES_SET);
     allRootTypes.addAll(JProgram.INDEX_TYPES_SET);
     allRootTypes.add(FragmentLoaderCreator.ASYNC_FRAGMENT_LOADER);
+    /*
+     * Add all SingleJsoImpl types that we know about. It's likely that the
+     * concrete types are never explicitly referenced.
+     */
+    TypeOracle typeOracle = rpo.getCompilationState().getTypeOracle();
+    for (com.google.gwt.core.ext.typeinfo.JClassType singleJsoIntf : typeOracle
+        .getSingleJsoImplInterfaces()) {
+      allRootTypes.add(typeOracle.getSingleJsoImpl(singleJsoIntf).getQualifiedSourceName());
+    }
 
     Memory.maybeDumpMemory("CompStateBuilt");
 
@@ -522,8 +532,7 @@ public class JavaToJavaScriptCompiler {
 
     List<String> finalTypeOracleTypes = Lists.create();
     if (precompilationMetrics != null) {
-      for (com.google.gwt.core.ext.typeinfo.JClassType type : rpo.getCompilationState()
-          .getTypeOracle().getTypes()) {
+      for (com.google.gwt.core.ext.typeinfo.JClassType type : typeOracle.getTypes()) {
         finalTypeOracleTypes =
             Lists.add(finalTypeOracleTypes, type.getPackage().getName() + "." + type.getName());
       }

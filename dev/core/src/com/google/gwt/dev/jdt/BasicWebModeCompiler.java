@@ -17,8 +17,6 @@ package com.google.gwt.dev.jdt;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompiledClass;
@@ -68,8 +66,6 @@ public class BasicWebModeCompiler extends AbstractCompiler {
       TreeLogger logger, String[] seedTypeNames,
       ICompilationUnit... additionalUnits) throws UnableToCompleteException {
 
-    TypeOracle oracle = compilationState.getTypeOracle();
-    Set<? extends JClassType> intfTypes = oracle.getSingleJsoImplInterfaces();
     Map<String, CompiledClass> classMapBySource = compilationState.getClassFileMapBySource();
 
     /*
@@ -80,8 +76,8 @@ public class BasicWebModeCompiler extends AbstractCompiler {
      */
     Set<CompilationUnit> alreadyAdded = new HashSet<CompilationUnit>();
 
-    List<ICompilationUnit> icus = new ArrayList<ICompilationUnit>(
-        seedTypeNames.length + intfTypes.size() + additionalUnits.length);
+    List<ICompilationUnit> icus =
+        new ArrayList<ICompilationUnit>(seedTypeNames.length + additionalUnits.length);
     
     Collections.addAll(icus, additionalUnits);
 
@@ -95,25 +91,6 @@ public class BasicWebModeCompiler extends AbstractCompiler {
       
       if (alreadyAdded.add(unit)) {
         icus.add(new CompilationUnitAdapter(unit));
-      } else {
-        logger.log(TreeLogger.WARN, "Duplicate compilation unit '"
-            + unit.getResourceLocation() + "' in seed types");
-      }
-    }
-
-    /*
-     * Add all SingleJsoImpl types that we know about. It's likely that the
-     * concrete types are never explicitly referenced from the seed types.
-     */
-    for (JClassType intf : intfTypes) {
-      String implName = oracle.getSingleJsoImpl(intf).getQualifiedSourceName();
-      CompilationUnit unit = getUnitForType(logger, classMapBySource, implName);
-
-      if (alreadyAdded.add(unit)) {
-        icus.add(new CompilationUnitAdapter(unit));
-        logger.log(TreeLogger.SPAM, "Forced compilation of unit '"
-            + unit.getResourceLocation()
-            + "' becasue it contains a SingleJsoImpl type");
       }
     }
 
