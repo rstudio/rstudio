@@ -22,7 +22,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryEditorDriver;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
 import com.google.web.bindery.requestfactory.shared.RequestFactory;
-import com.google.web.bindery.requestfactory.shared.Violation;
 
 import java.util.Collections;
 import java.util.List;
@@ -166,7 +165,8 @@ public class MockRequestFactoryEditorDriver<P, E extends Editor<P>> implements
   /**
    * A no-op method that always returns false.
    */
-  public boolean setViolations(Iterable<Violation> errors) {
+  @SuppressWarnings("deprecation")
+  public boolean setViolations(Iterable<com.google.web.bindery.requestfactory.shared.Violation> errors) {
     return false;
   }
 }

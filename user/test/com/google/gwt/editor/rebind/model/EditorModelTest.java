@@ -46,13 +46,13 @@ import com.google.web.bindery.requestfactory.shared.EntityProxy;
 import com.google.web.bindery.requestfactory.shared.Request;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
 import com.google.web.bindery.requestfactory.shared.RequestFactory;
-import com.google.web.bindery.requestfactory.shared.Violation;
 
 import junit.framework.TestCase;
 
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -504,6 +504,12 @@ public class EditorModelTest extends TestCase {
     assertNull(editorField.getSetterName());
   }
 
+  @SuppressWarnings("deprecation")
+  private Set<Resource> getDeprecatedResources() {
+    return Collections.<Resource> singleton(new EmptyMockJavaResource(
+        com.google.web.bindery.requestfactory.shared.Violation.class));
+  }
+  
   private Set<Resource> getJavaResources() {
     MockJavaResource[] javaFiles = {new MockJavaResource("t.AddressProxy") {
       @Override
@@ -958,8 +964,8 @@ public class EditorModelTest extends TestCase {
         new EmptyMockJavaResource(RequestContext.class),
         new RealJavaResource(SimpleEditor.class),
         new RealJavaResource(TakesValue.class),
-        new EmptyMockJavaResource(ValueAwareEditor.class),
-        new EmptyMockJavaResource(Violation.class),}));
+        new EmptyMockJavaResource(ValueAwareEditor.class)}));
+    toReturn.addAll(getDeprecatedResources());
     toReturn.addAll(Arrays.asList(JavaResourceBase.getStandardResources()));
     return toReturn;
   }

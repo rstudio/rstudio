@@ -22,9 +22,10 @@ import com.google.web.bindery.requestfactory.shared.RequestContext;
 import com.google.web.bindery.requestfactory.shared.ServerFailure;
 import com.google.web.bindery.requestfactory.shared.SimpleFooProxy;
 import com.google.web.bindery.requestfactory.shared.SimpleFooRequest;
-import com.google.web.bindery.requestfactory.shared.Violation;
 
 import java.util.Set;
+
+import javax.validation.ConstraintViolation;
 
 /**
  * Tests that an exception thrown by a {@link Receiver} does not prevent other
@@ -37,6 +38,7 @@ public class RequestFactoryExceptionPropagationTest extends
    */
 
   private class CountingReceiver extends Receiver<Object> {
+    int constraintViolationCallCount;
     int failureCallCount;
     int successCallCount;
     int violationCallCount;
@@ -45,7 +47,15 @@ public class RequestFactoryExceptionPropagationTest extends
         int expectedSuccessCallCount, int expectedViolationCallCount) {
       assertEquals(expectedFailureCallCount, failureCallCount);
       assertEquals(expectedSuccessCallCount, successCallCount);
+      assertEquals(expectedViolationCallCount, constraintViolationCallCount);
       assertEquals(expectedViolationCallCount, violationCallCount);
+    }
+    
+    @Override
+    public void onConstraintViolation(Set<ConstraintViolation<?>> errors) {
+      constraintViolationCallCount++;
+      // Forward to onViolation
+      super.onConstraintViolation(errors);
     }
 
     @Override
@@ -58,8 +68,9 @@ public class RequestFactoryExceptionPropagationTest extends
       successCallCount++;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
-    public void onViolation(Set<Violation> errors) {
+    public void onViolation(Set<com.google.web.bindery.requestfactory.shared.Violation> errors) {
       violationCallCount++;
     }
   }
@@ -81,8 +92,9 @@ public class RequestFactoryExceptionPropagationTest extends
       throw e;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
-    public void onViolation(Set<Violation> errors) {
+    public void onViolation(Set<com.google.web.bindery.requestfactory.shared.Violation> errors) {
       throw e;
     }
   }

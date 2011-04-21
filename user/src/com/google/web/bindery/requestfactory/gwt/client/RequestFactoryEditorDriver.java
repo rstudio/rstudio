@@ -20,7 +20,6 @@ import com.google.gwt.editor.client.EditorDriver;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
 import com.google.web.bindery.requestfactory.shared.RequestFactory;
-import com.google.web.bindery.requestfactory.shared.Violation;
 
 /**
  * The interface that links RequestFactory and the Editor framework together.
@@ -47,8 +46,8 @@ import com.google.web.bindery.requestfactory.shared.Violation;
  * @see com.google.web.bindery.requestfactory.gwt.client.testing.MockRequestFactoryEditorDriver
  *      MockRequestFactoryEditorDriver
  */
-public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>>
-    extends EditorDriver<RequestContext> {
+public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>> extends
+    EditorDriver<RequestContext> {
   /**
    * Start driving the Editor and its sub-editors with data for display-only
    * mode.
@@ -126,9 +125,14 @@ public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>>
    * {@link com.google.gwt.editor.client.EditorError#getUserData()
    * getUserData()} method can be used to access the original Violation object.
    * 
-   * @param violations an Iterable over {@link Violation} instances
+   * @param violations an Iterable over
+   *          {@link com.google.web.bindery.requestfactory.shared.Violation}
+   *          instances
    * @return <code>true</code> if there were any unconsumed EditorErrors which
    *         can be retrieved from {@link #getErrors()}
+   * @deprecated Users should switch to
+   *             {@link #setConstraintViolations(Iterable)}
    */
-  boolean setViolations(Iterable<Violation> violations);
+  @Deprecated
+  boolean setViolations(Iterable<com.google.web.bindery.requestfactory.shared.Violation> violations);
 }

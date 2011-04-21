@@ -15,8 +15,6 @@
  */
 package com.google.web.bindery.requestfactory.gwt.client.impl;
 
-import com.google.web.bindery.autobean.shared.AutoBean;
-import com.google.web.bindery.autobean.shared.AutoBeanUtils;
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.EditorContext;
 import com.google.gwt.editor.client.EditorVisitor;
@@ -25,6 +23,8 @@ import com.google.gwt.editor.client.impl.BaseEditorDriver;
 import com.google.gwt.editor.client.impl.DelegateMap;
 import com.google.gwt.editor.client.impl.DelegateMap.KeyMethod;
 import com.google.gwt.editor.client.impl.SimpleViolation;
+import com.google.web.bindery.autobean.shared.AutoBean;
+import com.google.web.bindery.autobean.shared.AutoBeanUtils;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.requestfactory.gwt.client.HasRequestContext;
 import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryEditorDriver;
@@ -32,7 +32,6 @@ import com.google.web.bindery.requestfactory.shared.EntityProxy;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
 import com.google.web.bindery.requestfactory.shared.RequestFactory;
 import com.google.web.bindery.requestfactory.shared.ValueProxy;
-import com.google.web.bindery.requestfactory.shared.Violation;
 import com.google.web.bindery.requestfactory.shared.impl.Constants;
 
 import java.util.Iterator;
@@ -50,13 +49,14 @@ public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
   /**
    * Adapts a RequestFactory Violation object to the SimpleViolation interface.
    */
+  @SuppressWarnings("deprecation")
   static class SimpleViolationAdapter extends SimpleViolation {
-    private final Violation v;
+    private final com.google.web.bindery.requestfactory.shared.Violation v;
 
     /**
      * @param v
      */
-    private SimpleViolationAdapter(Violation v) {
+    private SimpleViolationAdapter(com.google.web.bindery.requestfactory.shared.Violation v) {
       this.v = v;
     }
 
@@ -84,16 +84,17 @@ public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
    * Provides a source of SimpleViolation objects based on RequestFactory's
    * simplified Violation interface.
    */
+  @SuppressWarnings("deprecation")
   static class ViolationIterable implements Iterable<SimpleViolation> {
 
-    private final Iterable<Violation> violations;
+    private final Iterable<com.google.web.bindery.requestfactory.shared.Violation> violations;
 
-    public ViolationIterable(Iterable<Violation> violations) {
+    public ViolationIterable(Iterable<com.google.web.bindery.requestfactory.shared.Violation> violations) {
       this.violations = violations;
     }
 
     public Iterator<SimpleViolation> iterator() {
-      final Iterator<Violation> source = violations.iterator();
+      final Iterator<com.google.web.bindery.requestfactory.shared.Violation> source = violations.iterator();
       return new Iterator<SimpleViolation>() {
         public boolean hasNext() {
           return source.hasNext();
@@ -202,7 +203,8 @@ public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
     initialize(requestFactory.getEventBus(), requestFactory, editor);
   }
 
-  public boolean setViolations(Iterable<Violation> violations) {
+  @SuppressWarnings("deprecation")
+  public boolean setViolations(Iterable<com.google.web.bindery.requestfactory.shared.Violation> violations) {
     return doSetViolations(new ViolationIterable(violations));
   }
 

@@ -20,19 +20,40 @@ import com.google.web.bindery.autobean.shared.AutoBean.PropertyName;
 /**
  * Represents a ConstraintViolation.
  */
-public interface ViolationMessage extends IdMessage {
+public interface ViolationMessage {
+  String LEAF = "L";
   String MESSAGE = "M";
   String PATH = "P";
+  String ROOT = "R";
+  String TEMPLATE = "T";
+
+  @PropertyName(LEAF)
+  IdMessage getLeafBeanId();
 
   @PropertyName(MESSAGE)
   String getMessage();
 
+  @PropertyName(TEMPLATE)
+  String getMessageTemplate();
+
   @PropertyName(PATH)
   String getPath();
+
+  @PropertyName(ROOT)
+  IdMessage getRootBeanId();
+
+  @PropertyName(LEAF)
+  void setLeafBeanId(IdMessage id);
 
   @PropertyName(MESSAGE)
   void setMessage(String value);
 
+  @PropertyName(TEMPLATE)
+  void setMessageTemplate(String value);
+
   @PropertyName(PATH)
   void setPath(String value);
+
+  @PropertyName(ROOT)
+  void setRootBeanId(IdMessage id);
 }

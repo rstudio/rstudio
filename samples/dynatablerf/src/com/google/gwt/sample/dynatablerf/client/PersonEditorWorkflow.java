@@ -40,9 +40,10 @@ import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryEditorDriv
 import com.google.web.bindery.requestfactory.shared.Receiver;
 import com.google.web.bindery.requestfactory.shared.Request;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
-import com.google.web.bindery.requestfactory.shared.Violation;
 
 import java.util.Set;
+
+import javax.validation.ConstraintViolation;
 
 /**
  * This class shows how the UI for editing a person is wired up to the
@@ -134,16 +135,16 @@ public class PersonEditorWorkflow {
     // Send the request
     context.fire(new Receiver<Void>() {
       @Override
-      public void onSuccess(Void response) {
-        // If everything went as planned, just dismiss the dialog box
-        dialog.hide();
+      public void onConstraintViolation(Set<ConstraintViolation<?>> errors) {
+        // Otherwise, show ConstraintViolations in the UI
+        dialog.setText("Errors detected on the server");
+        editorDriver.setConstraintViolations(errors);
       }
 
       @Override
-      public void onViolation(Set<Violation> errors) {
-        // Otherwise, show ConstraintViolations in the UI
-        dialog.setText("Errors detected on the server");
-        editorDriver.setViolations(errors);
+      public void onSuccess(Void response) {
+        // If everything went as planned, just dismiss the dialog box
+        dialog.hide();
       }
     });
   }

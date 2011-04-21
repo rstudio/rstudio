@@ -15,7 +15,15 @@
  */
 package com.google.web.bindery.requestfactory.shared;
 
+import com.google.web.bindery.autobean.shared.AutoBean;
+import com.google.web.bindery.autobean.shared.AutoBeanUtils;
+import com.google.web.bindery.requestfactory.shared.impl.Constants;
+
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
+
+import javax.validation.ConstraintViolation;
 
 /**
  * Callback object for {@link Request#fire(Receiver)} and
@@ -50,11 +58,52 @@ public abstract class Receiver<V> {
    * </code> is not empty.
    * 
    * @param errors a Set of {@link Violation} instances
+   * @deprecated Use {@link #onConstraintViolation(Set)} instead
    */
+  @Deprecated
   public void onViolation(Set<Violation> errors) {
     if (!errors.isEmpty()) {
-      onFailure(new ServerFailure(
-          "The call failed on the server due to a ConstraintViolation"));
+      onFailure(new ServerFailure("The call failed on the server due to a ConstraintViolation"));
     }
+  }
+
+  /**
+   * Called if an object sent to the server could not be validated. The default
+   * implementation calls {@link #onViolation(Set)}, converting the
+   * {@link ConstraintViolation} objects to the deprecated {@link Violation}
+   * type.
+   * 
+   * @param errors a Set of {@link ConstraintViolation} instances
+   */
+  @SuppressWarnings("deprecation")
+  public void onConstraintViolation(Set<ConstraintViolation<?>> violations) {
+    Set<Violation> converted = new HashSet<Violation>();
+    for (final ConstraintViolation<?> v : violations) {
+      converted.add(new Violation() {
+        public BaseProxy getInvalidProxy() {
+          return (BaseProxy) v.getRootBean();
+        }
+
+        public String getMessage() {
+          return v.getMessage();
+        }
+
+        public BaseProxy getOriginalProxy() {
+          AutoBean<? extends BaseProxy> parent =
+              AutoBeanUtils.getAutoBean(v.getRootBean()).getTag(Constants.PARENT_OBJECT);
+          return parent == null ? null : parent.as();
+        }
+
+        public String getPath() {
+          return v.getPropertyPath().toString();
+        }
+
+        public EntityProxyId<?> getProxyId() {
+          return v.getRootBean() instanceof EntityProxy ? ((EntityProxy) v.getRootBean())
+              .stableId() : null;
+        }
+      });
+    }
+    onViolation(Collections.unmodifiableSet(converted));
   }
 }

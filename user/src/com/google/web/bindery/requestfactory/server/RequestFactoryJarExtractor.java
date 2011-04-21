@@ -60,7 +60,6 @@ import com.google.web.bindery.requestfactory.shared.Service;
 import com.google.web.bindery.requestfactory.shared.ServiceLocator;
 import com.google.web.bindery.requestfactory.shared.ServiceName;
 import com.google.web.bindery.requestfactory.shared.ValueProxy;
-import com.google.web.bindery.requestfactory.shared.Violation;
 import com.google.web.bindery.requestfactory.shared.WriteOperation;
 import com.google.web.bindery.requestfactory.vm.RequestFactorySource;
 
@@ -244,8 +243,8 @@ public class RequestFactoryJarExtractor {
     }
 
     @Override
-    public void visit(int version, int access, String name, String signature,
-        String superName, String[] interfaces) {
+    public void visit(int version, int access, String name, String signature, String superName,
+        String[] interfaces) {
       name = processInternalName(sourceType, name);
       superName = processInternalName(sourceType, superName);
       if (interfaces != null) {
@@ -263,24 +262,22 @@ public class RequestFactoryJarExtractor {
     }
 
     @Override
-    public FieldVisitor visitField(int access, String name, String desc,
-        String signature, Object value) {
+    public FieldVisitor visitField(int access, String name, String desc, String signature,
+        Object value) {
       desc = processDescriptor(sourceType, desc);
-      return new FieldProcessor(sourceType, super.visitField(access, name, desc, signature,
-          value));
+      return new FieldProcessor(sourceType, super.visitField(access, name, desc, signature, value));
     }
 
     @Override
-    public void visitInnerClass(String name, String outerName,
-        String innerName, int access) {
+    public void visitInnerClass(String name, String outerName, String innerName, int access) {
       name = processInternalName(sourceType, name);
       outerName = processInternalName(sourceType, outerName);
       super.visitInnerClass(name, outerName, innerName, access);
     }
 
     @Override
-    public MethodVisitor visitMethod(int access, String name, String desc,
-        String signature, String[] exceptions) {
+    public MethodVisitor visitMethod(int access, String name, String desc, String signature,
+        String[] exceptions) {
       Method method = processMethod(sourceType, name, desc);
       desc = method.getDescriptor();
       if (exceptions != null) {
@@ -288,8 +285,7 @@ public class RequestFactoryJarExtractor {
           exceptions[i] = processInternalName(sourceType, exceptions[i]);
         }
       }
-      MethodVisitor mv = super.visitMethod(access, name, desc, signature,
-          exceptions);
+      MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
       if (mv != null) {
         mv = new MethodProcessor(sourceType, mv);
       }
@@ -342,8 +338,7 @@ public class RequestFactoryJarExtractor {
         String destPath = getPackagePath(state.type) + state.source;
         if (sources.add(sourcePath) && loader.exists(sourcePath)) {
           String contents = Util.readStreamAsString(loader.getResourceAsStream(sourcePath));
-          emitter.emit(destPath,
-              new ByteArrayInputStream(Util.getBytes(contents)));
+          emitter.emit(destPath, new ByteArrayInputStream(Util.getBytes(contents)));
         }
       }
       return null;
@@ -375,7 +370,7 @@ public class RequestFactoryJarExtractor {
 
   private class MethodProcessor extends MethodAdapter {
     private final String sourceType;
-    
+
     public MethodProcessor(String sourceType, MethodVisitor mv) {
       super(mv);
       this.sourceType = sourceType;
@@ -393,16 +388,14 @@ public class RequestFactoryJarExtractor {
     }
 
     @Override
-    public void visitFieldInsn(int opcode, String owner, String name,
-        String desc) {
+    public void visitFieldInsn(int opcode, String owner, String name, String desc) {
       owner = processInternalName(sourceType, owner);
       desc = processDescriptor(sourceType, desc);
       super.visitFieldInsn(opcode, owner, name, desc);
     }
 
     @Override
-    public void visitFrame(int type, int nLocal, Object[] local, int nStack,
-        Object[] stack) {
+    public void visitFrame(int type, int nLocal, Object[] local, int nStack, Object[] stack) {
       for (int i = 0, j = local.length; i < j; i++) {
         if (local[i] instanceof String) {
           local[i] = processInternalName(sourceType, (String) local[i]);
@@ -423,15 +416,14 @@ public class RequestFactoryJarExtractor {
     }
 
     @Override
-    public void visitLocalVariable(String name, String desc, String signature,
-        Label start, Label end, int index) {
+    public void visitLocalVariable(String name, String desc, String signature, Label start,
+        Label end, int index) {
       desc = processDescriptor(sourceType, desc);
       super.visitLocalVariable(name, desc, signature, start, end, index);
     }
 
     @Override
-    public void visitMethodInsn(int opcode, String owner, String name,
-        String desc) {
+    public void visitMethodInsn(int opcode, String owner, String name, String desc) {
       owner = processInternalName(sourceType, owner);
       desc = processMethod(sourceType, name, desc).getDescriptor();
       super.visitMethodInsn(opcode, owner, name, desc);
@@ -444,15 +436,13 @@ public class RequestFactoryJarExtractor {
     }
 
     @Override
-    public AnnotationVisitor visitParameterAnnotation(int parameter,
-        String desc, boolean visible) {
+    public AnnotationVisitor visitParameterAnnotation(int parameter, String desc, boolean visible) {
       desc = processDescriptor(sourceType, desc);
       return super.visitParameterAnnotation(parameter, desc, visible);
     }
 
     @Override
-    public void visitTryCatchBlock(Label start, Label end, Label handler,
-        String type) {
+    public void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
       type = processInternalName(sourceType, type);
       super.visitTryCatchBlock(start, end, handler, type);
     }
@@ -475,11 +465,11 @@ public class RequestFactoryJarExtractor {
     }
 
     @Override
-    public MethodVisitor visitMethod(int access, String name, String desc,
-        String signature, String[] exceptions) {
+    public MethodVisitor visitMethod(int access, String name, String desc, String signature,
+        String[] exceptions) {
       if ((access & Opcodes.ACC_NATIVE) != 0) {
-        MethodVisitor mv = super.visitMethod(access & ~Opcodes.ACC_NATIVE,
-            name, desc, signature, exceptions);
+        MethodVisitor mv =
+            super.visitMethod(access & ~Opcodes.ACC_NATIVE, name, desc, signature, exceptions);
         if (mv != null) {
           mv.visitCode();
           String exceptionName = Type.getInternalName(RuntimeException.class);
@@ -495,7 +485,8 @@ public class RequestFactoryJarExtractor {
           // obj
           mv.visitInsn(Opcodes.ATHROW);
 
-          // Count argument slots - long and double arguments each take up 2 slots
+          // Count argument slots - long and double arguments each take up 2
+          // slots
           int numSlots = 0;
           for (Type t : Type.getArgumentTypes(desc)) {
             numSlots += t.getSize();
@@ -534,11 +525,9 @@ public class RequestFactoryJarExtractor {
       ClassVisitor cv = writer;
       cv = new ClassProcessor(typeName, cv, state);
       cv = new NativeMethodDefanger(cv);
-      visit(logger.setType(state.type), loader, state.type.getInternalName(),
-          cv);
+      visit(logger.setType(state.type), loader, state.type.getInternalName(), cv);
       state.contents = new ByteArrayInputStream(writer.toByteArray());
-      assert seen.containsKey(state.originalType) : "No type for "
-          + state.type.getClassName();
+      assert seen.containsKey(state.originalType) : "No type for " + state.type.getClassName();
       state.type = seen.get(state.originalType);
 
       emit(state);
@@ -600,7 +589,8 @@ public class RequestFactoryJarExtractor {
   /**
    * A map of target names to the types that target should use as a base.
    */
-  private static final Map<String, List<Class<?>>> SEEDS = new LinkedHashMap<String, List<Class<?>>>();
+  private static final Map<String, List<Class<?>>> SEEDS =
+      new LinkedHashMap<String, List<Class<?>>>();
 
   /**
    * Server public API classes and interfaces.
@@ -608,21 +598,21 @@ public class RequestFactoryJarExtractor {
   private static final Class<?>[] SERVER_CLASSES = {
       DefaultExceptionHandler.class, ExceptionHandler.class, Logging.class, LoggingRequest.class,
       RequestFactoryServlet.class, ServiceLayer.class, ServiceLayerDecorator.class,
-      SimpleRequestProcessor.class
-  };
+      SimpleRequestProcessor.class};
 
   /**
    * Shared public API classes and interfaces.
    */
+  @SuppressWarnings("deprecation")
   private static final Class<?>[] SHARED_CLASSES = {
       BaseProxy.class, DefaultProxyStore.class, EntityProxy.class, EntityProxyChange.class,
       EntityProxyId.class, InstanceRequest.class, JsonRpcContent.class, JsonRpcProxy.class,
       JsonRpcService.class, JsonRpcWireName.class, Locator.class, ProxyFor.class,
       ProxyForName.class, ProxySerializer.class, ProxyStore.class, Receiver.class, Request.class,
       RequestContext.class, RequestFactory.class, RequestTransport.class, ServerFailure.class,
-      Service.class, ServiceLocator.class, ServiceName.class, ValueProxy.class, Violation.class,
-      WriteOperation.class, RequestFactorySource.class, SimpleEventBus.class
-  };
+      Service.class, ServiceLocator.class, ServiceName.class, ValueProxy.class,
+      com.google.web.bindery.requestfactory.shared.Violation.class, WriteOperation.class,
+      RequestFactorySource.class, SimpleEventBus.class};
 
   /**
    * Maximum number of threads to use to run the Extractor.
@@ -658,11 +648,9 @@ public class RequestFactoryJarExtractor {
      * lookup, since the gwt-user code is compiled separately from its tests.
      */
     try {
-      SEEDS.put(
-          "test" + CODE_AND_SOURCE,
-          Collections.unmodifiableList(Arrays.<Class<?>> asList(
-              Class.forName("com.google.web.bindery.requestfactory.vm.RequestFactoryJreSuite"),
-              Class.forName("com.google.web.bindery.requestfactory.server.SimpleBar"))));
+      SEEDS.put("test" + CODE_AND_SOURCE, Collections.unmodifiableList(Arrays.<Class<?>> asList(
+          Class.forName("com.google.web.bindery.requestfactory.vm.RequestFactoryJreSuite"), Class
+              .forName("com.google.web.bindery.requestfactory.server.SimpleBar"))));
     } catch (ClassNotFoundException ignored) {
     }
   }
@@ -670,8 +658,7 @@ public class RequestFactoryJarExtractor {
   public static void main(String[] args) throws IOException {
     if (args.length < 2) {
       System.err.println("Usage: java -cp gwt-dev.jar:gwt-user.jar:json.jar"
-          + RequestFactoryJarExtractor.class.getCanonicalName()
-          + " <target-name> outfile.jar");
+          + RequestFactoryJarExtractor.class.getCanonicalName() + " <target-name> outfile.jar");
       System.err.println("Valid targets:");
       for (String target : SEEDS.keySet()) {
         System.err.println("  " + target);
@@ -686,11 +673,11 @@ public class RequestFactoryJarExtractor {
     }
     Mode mode = Mode.match(target);
     Logger errorContext = Logger.getLogger(RequestFactoryJarExtractor.class.getName());
-    ClassLoaderLoader classLoader = new ClassLoaderLoader(
-        Thread.currentThread().getContextClassLoader());
+    ClassLoaderLoader classLoader =
+        new ClassLoaderLoader(Thread.currentThread().getContextClassLoader());
     JarEmitter jarEmitter = new JarEmitter(new File(args[1]));
-    RequestFactoryJarExtractor extractor = new RequestFactoryJarExtractor(
-        errorContext, classLoader, jarEmitter, seeds, mode);
+    RequestFactoryJarExtractor extractor =
+        new RequestFactoryJarExtractor(errorContext, classLoader, jarEmitter, seeds, mode);
     extractor.run();
     System.exit(extractor.isExecutionFailed() ? 1 : 0);
   }
@@ -709,8 +696,8 @@ public class RequestFactoryJarExtractor {
    * 
    * @return <code>true</code> if the visitor was successfully visited
    */
-  private static boolean visit(ErrorContext logger, Loader loader,
-      String internalName, ClassVisitor visitor) {
+  private static boolean visit(ErrorContext logger, Loader loader, String internalName,
+      ClassVisitor visitor) {
     assert Name.isInternalName(internalName) : "internalName";
     logger.spam("Visiting " + internalName);
     InputStream inputStream = null;
@@ -749,8 +736,8 @@ public class RequestFactoryJarExtractor {
   private final Set<String> sources = new ConcurrentSkipListSet<String>();
   private final ExecutorService writerService;
 
-  public RequestFactoryJarExtractor(Logger logger, Loader loader,
-      Emitter emitter, List<Class<?>> seeds, Mode mode) {
+  public RequestFactoryJarExtractor(Logger logger, Loader loader, Emitter emitter,
+      List<Class<?>> seeds, Mode mode) {
     this.logger = new ErrorContext(logger);
     this.loader = loader;
     this.emitter = emitter;
@@ -835,13 +822,13 @@ public class RequestFactoryJarExtractor {
     for (int i = 0, j = argumentTypes.length; i < j; i++) {
       argumentTypes[i] = processType(sourceType, argumentTypes[i]);
     }
-    method = new Method(name, processType(sourceType, method.getReturnType()),
-        argumentTypes);
+    method = new Method(name, processType(sourceType, method.getReturnType()), argumentTypes);
     return method;
   }
 
   /**
    * Process a type, possibly returning a rebased type.
+   * 
    * @param sourceType TODO
    */
   private Type processType(String sourceType, Type type) {
@@ -863,8 +850,7 @@ public class RequestFactoryJarExtractor {
       return toReturn;
     }
     assert type.getInternalName().charAt(0) != 'L';
-    if (type.getInternalName().startsWith("java/")
-        || type.getInternalName().startsWith("javax/")) {
+    if (type.getInternalName().startsWith("java/") || type.getInternalName().startsWith("javax/")) {
       return toReturn;
     }
     if (VERBOSE) {

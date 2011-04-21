@@ -37,6 +37,7 @@ import com.google.web.bindery.requestfactory.shared.impl.EntityCodex;
 import com.google.web.bindery.requestfactory.shared.impl.EntityProxyCategory;
 import com.google.web.bindery.requestfactory.shared.impl.SimpleProxyId;
 import com.google.web.bindery.requestfactory.shared.impl.ValueProxyCategory;
+import com.google.web.bindery.requestfactory.shared.messages.IdMessage;
 import com.google.web.bindery.requestfactory.shared.messages.IdMessage.Strength;
 import com.google.web.bindery.requestfactory.shared.messages.InvocationMessage;
 import com.google.web.bindery.requestfactory.shared.messages.MessageFactory;
@@ -71,8 +72,7 @@ public class SimpleRequestProcessor {
    * specific type.
    */
   @SuppressWarnings("serial")
-  static class IdToEntityMap extends
-      HashMap<SimpleProxyId<?>, AutoBean<? extends BaseProxy>> {
+  static class IdToEntityMap extends HashMap<SimpleProxyId<?>, AutoBean<? extends BaseProxy>> {
   }
 
   /**
@@ -80,8 +80,8 @@ public class SimpleRequestProcessor {
    * create an AutoBeanFactory with the desired annotations.
    */
   static final Configuration CONFIGURATION = new Configuration.Builder().setCategories(
-      EntityProxyCategory.class, ValueProxyCategory.class,
-      BaseProxyCategory.class).setNoWrap(EntityProxyId.class).build();
+      EntityProxyCategory.class, ValueProxyCategory.class, BaseProxyCategory.class).setNoWrap(
+      EntityProxyId.class).build();
 
   /**
    * Vends message objects.
@@ -118,8 +118,7 @@ public class SimpleRequestProcessor {
    * @return a payload to return to the client
    */
   public String process(String payload) {
-    RequestMessage req = AutoBeanCodex.decode(FACTORY, RequestMessage.class,
-        payload).as();
+    RequestMessage req = AutoBeanCodex.decode(FACTORY, RequestMessage.class, payload).as();
     AutoBean<ResponseMessage> responseBean = FACTORY.response();
     try {
       process(req, responseBean.as());
@@ -144,17 +143,17 @@ public class SimpleRequestProcessor {
   <T> Splittable createOobMessage(List<T> domainValues) {
     RequestState state = new RequestState(service);
 
-    List<Splittable> encodedValues = new ArrayList<Splittable>(
-        domainValues.size());
+    List<Splittable> encodedValues = new ArrayList<Splittable>(domainValues.size());
     for (T domainValue : domainValues) {
       Object clientValue;
       if (domainValue == null) {
         clientValue = null;
       } else {
-        Class<?> clientType = service.resolveClientType(domainValue.getClass(),
-            BaseProxy.class, true);
-        clientValue = state.getResolver().resolveClientValue(domainValue,
-            clientType, Collections.<String> emptySet());
+        Class<?> clientType =
+            service.resolveClientType(domainValue.getClass(), BaseProxy.class, true);
+        clientValue =
+            state.getResolver().resolveClientValue(domainValue, clientType,
+                Collections.<String> emptySet());
       }
       encodedValues.add(EntityCodex.encode(state, clientValue));
     }
@@ -178,15 +177,13 @@ public class SimpleRequestProcessor {
    * Decode an out-of-band message.
    */
   <T> List<T> decodeOobMessage(Class<T> domainClass, Splittable payload) {
-    Class<?> proxyType = service.resolveClientType(domainClass,
-        BaseProxy.class, true);
+    Class<?> proxyType = service.resolveClientType(domainClass, BaseProxy.class, true);
     RequestState state = new RequestState(service);
-    RequestMessage message = AutoBeanCodex.decode(FACTORY,
-        RequestMessage.class, payload).as();
+    RequestMessage message = AutoBeanCodex.decode(FACTORY, RequestMessage.class, payload).as();
     processOperationMessages(state, message);
-    List<Object> decoded = decodeInvocationArguments(state,
-        message.getInvocations().get(0).getParameters(),
-        new Class<?>[] {proxyType}, new Type[] {domainClass});
+    List<Object> decoded =
+        decodeInvocationArguments(state, message.getInvocations().get(0).getParameters(),
+            new Class<?>[] {proxyType}, new Type[] {domainClass});
 
     @SuppressWarnings("unchecked")
     List<T> toReturn = (List<T>) decoded;
@@ -214,8 +211,7 @@ public class SimpleRequestProcessor {
     // Invoke methods
     List<Splittable> invocationResults = new ArrayList<Splittable>();
     List<Boolean> invocationSuccess = new ArrayList<Boolean>();
-    processInvocationMessages(source, req, invocationResults,
-        invocationSuccess, returnState);
+    processInvocationMessages(source, req, invocationResults, invocationSuccess, returnState);
 
     // Store return objects
     List<OperationMessage> operations = new ArrayList<OperationMessage>();
@@ -234,10 +230,9 @@ public class SimpleRequestProcessor {
     }
   }
 
-  private AutoBean<ServerFailureMessage> createFailureMessage(
-      ReportableException e) {
-    ServerFailure failure = exceptionHandler.createServerFailure(e.getCause() == null
-        ? e : e.getCause());
+  private AutoBean<ServerFailureMessage> createFailureMessage(ReportableException e) {
+    ServerFailure failure =
+        exceptionHandler.createServerFailure(e.getCause() == null ? e : e.getCause());
     AutoBean<ServerFailureMessage> bean = FACTORY.failure();
     ServerFailureMessage msg = bean.as();
     msg.setExceptionType(failure.getExceptionType());
@@ -247,8 +242,8 @@ public class SimpleRequestProcessor {
     return bean;
   }
 
-  private void createReturnOperations(List<OperationMessage> operations,
-      RequestState returnState, IdToEntityMap toProcess) {
+  private void createReturnOperations(List<OperationMessage> operations, RequestState returnState,
+      IdToEntityMap toProcess) {
     for (Map.Entry<SimpleProxyId<?>, AutoBean<? extends BaseProxy>> entry : toProcess.entrySet()) {
       SimpleProxyId<?> id = entry.getKey();
 
@@ -258,8 +253,8 @@ public class SimpleRequestProcessor {
 
       if (id.isEphemeral()) {
         // See if the entity has been persisted in the meantime
-        returnState.getResolver().resolveClientValue(domainObject,
-            id.getProxyClass(), Collections.<String> emptySet());
+        returnState.getResolver().resolveClientValue(domainObject, id.getProxyClass(),
+            Collections.<String> emptySet());
       }
 
       if (id.isEphemeral() || id.isSynthetic() || domainObject == null) {
@@ -274,8 +269,7 @@ public class SimpleRequestProcessor {
       }
 
       Splittable version = null;
-      if (writeOperation == WriteOperation.PERSIST
-          || writeOperation == WriteOperation.UPDATE) {
+      if (writeOperation == WriteOperation.PERSIST || writeOperation == WriteOperation.UPDATE) {
         /*
          * If we're sending an operation, the domain object must be persistent.
          * This means that it must also have a non-null version.
@@ -354,8 +348,8 @@ public class SimpleRequestProcessor {
    * Decode the arguments to pass into the domain method. If the domain method
    * is not static, the instance object will be in the 0th position.
    */
-  private List<Object> decodeInvocationArguments(RequestState source,
-      InvocationMessage invocation, Method contextMethod) {
+  private List<Object> decodeInvocationArguments(RequestState source, InvocationMessage invocation,
+      Method contextMethod) {
     boolean isStatic = Request.class.isAssignableFrom(contextMethod.getReturnType());
     int baseLength = contextMethod.getParameterTypes().length;
     int length = baseLength + (isStatic ? 0 : 1);
@@ -364,25 +358,24 @@ public class SimpleRequestProcessor {
     Type[] genericArgs = new Type[length];
 
     if (!isStatic) {
-      genericArgs[0] = TypeUtils.getSingleParameterization(
-          InstanceRequest.class, contextMethod.getGenericReturnType());
+      genericArgs[0] =
+          TypeUtils.getSingleParameterization(InstanceRequest.class, contextMethod
+              .getGenericReturnType());
       contextArgs[0] = TypeUtils.ensureBaseType(genericArgs[0]);
     }
-    System.arraycopy(contextMethod.getParameterTypes(), 0, contextArgs, offset,
-        baseLength);
-    System.arraycopy(contextMethod.getGenericParameterTypes(), 0, genericArgs,
-        offset, baseLength);
+    System.arraycopy(contextMethod.getParameterTypes(), 0, contextArgs, offset, baseLength);
+    System.arraycopy(contextMethod.getGenericParameterTypes(), 0, genericArgs, offset, baseLength);
 
-    List<Object> args = decodeInvocationArguments(source,
-        invocation.getParameters(), contextArgs, genericArgs);
+    List<Object> args =
+        decodeInvocationArguments(source, invocation.getParameters(), contextArgs, genericArgs);
     return args;
   }
 
   /**
    * Handles instance invocations as the instance at the 0th parameter.
    */
-  private List<Object> decodeInvocationArguments(RequestState source,
-      List<Splittable> parameters, Class<?>[] contextArgs, Type[] genericArgs) {
+  private List<Object> decodeInvocationArguments(RequestState source, List<Splittable> parameters,
+      Class<?>[] contextArgs, Type[] genericArgs) {
     if (parameters == null) {
       // Can't return Collections.emptyList() because this must be mutable
       return new ArrayList<Object>();
@@ -395,24 +388,24 @@ public class SimpleRequestProcessor {
       Class<?> elementType = null;
       Splittable split;
       if (Collection.class.isAssignableFrom(type)) {
-        elementType = TypeUtils.ensureBaseType(TypeUtils.getSingleParameterization(
-            Collection.class, genericArgs[i]));
+        elementType =
+            TypeUtils.ensureBaseType(TypeUtils.getSingleParameterization(Collection.class,
+                genericArgs[i]));
         split = parameters.get(i);
       } else {
         split = parameters.get(i);
       }
       Object arg = EntityCodex.decode(source, type, elementType, split);
-      arg = source.getResolver().resolveDomainValue(arg,
-          !EntityProxyId.class.equals(contextArgs[i]));
+      arg =
+          source.getResolver().resolveDomainValue(arg, !EntityProxyId.class.equals(contextArgs[i]));
       args.add(arg);
     }
 
     return args;
   }
 
-  private void processInvocationMessages(RequestState state,
-      RequestMessage req, List<Splittable> results, List<Boolean> success,
-      RequestState returnState) {
+  private void processInvocationMessages(RequestState state, RequestMessage req,
+      List<Splittable> results, List<Boolean> success, RequestState returnState) {
     List<InvocationMessage> invocations = req.getInvocations();
     if (invocations == null) {
       // No method invocations which can happen via RequestContext.fire()
@@ -422,25 +415,22 @@ public class SimpleRequestProcessor {
       try {
         // Find the Method
         String[] operation = invocation.getOperation().split("::");
-        Method contextMethod = service.resolveRequestContextMethod(
-            operation[0], operation[1]);
+        Method contextMethod = service.resolveRequestContextMethod(operation[0], operation[1]);
         if (contextMethod == null) {
-          throw new UnexpectedException("Cannot resolve operation "
-              + invocation.getOperation(), null);
+          throw new UnexpectedException("Cannot resolve operation " + invocation.getOperation(),
+              null);
         }
         Method domainMethod = service.resolveDomainMethod(contextMethod);
         if (domainMethod == null) {
-          throw new UnexpectedException("Cannot resolve domain method "
-              + invocation.getOperation(), null);
+          throw new UnexpectedException(
+              "Cannot resolve domain method " + invocation.getOperation(), null);
         }
 
         // Compute the arguments
-        List<Object> args = decodeInvocationArguments(state, invocation,
-            contextMethod);
+        List<Object> args = decodeInvocationArguments(state, invocation, contextMethod);
         // Possibly use a ServiceLocator
         if (service.requiresServiceLocator(contextMethod, domainMethod)) {
-          Object serviceInstance = service.createServiceInstance(contextMethod,
-              domainMethod);
+          Object serviceInstance = service.createServiceInstance(contextMethod, domainMethod);
           args.add(0, serviceInstance);
         }
         // Invoke it
@@ -448,8 +438,9 @@ public class SimpleRequestProcessor {
 
         // Convert domain object to client object
         Type requestReturnType = service.getRequestReturnType(contextMethod);
-        returnValue = state.getResolver().resolveClientValue(returnValue,
-            requestReturnType, invocation.getPropertyRefs());
+        returnValue =
+            state.getResolver().resolveClientValue(returnValue, requestReturnType,
+                invocation.getPropertyRefs());
 
         // Convert the client object to a string
         results.add(EntityCodex.encode(returnState, returnValue));
@@ -461,8 +452,7 @@ public class SimpleRequestProcessor {
     }
   }
 
-  private void processOperationMessages(final RequestState state,
-      RequestMessage req) {
+  private void processOperationMessages(final RequestState state, RequestMessage req) {
     List<OperationMessage> operations = req.getOperations();
     if (operations == null) {
       return;
@@ -485,16 +475,17 @@ public class SimpleRequestProcessor {
         if (flatValueMap != null) {
           bean.accept(new AutoBeanVisitor() {
             @Override
-            public boolean visitReferenceProperty(String propertyName,
-                AutoBean<?> value, PropertyContext ctx) {
+            public boolean visitReferenceProperty(String propertyName, AutoBean<?> value,
+                PropertyContext ctx) {
               // containsKey to distinguish null from unknown
               if (flatValueMap.containsKey(propertyName)) {
-                Class<?> elementType = ctx instanceof CollectionPropertyContext
-                    ? ((CollectionPropertyContext) ctx).getElementType() : null;
-                Object newValue = EntityCodex.decode(state, ctx.getType(),
-                    elementType, flatValueMap.get(propertyName));
-                Object resolved = state.getResolver().resolveDomainValue(
-                    newValue, false);
+                Class<?> elementType =
+                    ctx instanceof CollectionPropertyContext ? ((CollectionPropertyContext) ctx)
+                        .getElementType() : null;
+                Object newValue =
+                    EntityCodex.decode(state, ctx.getType(), elementType, flatValueMap
+                        .get(propertyName));
+                Object resolved = state.getResolver().resolveDomainValue(newValue, false);
                 service.setProperty(domain, propertyName,
                     service.resolveDomainClass(ctx.getType()), resolved);
               }
@@ -502,15 +493,12 @@ public class SimpleRequestProcessor {
             }
 
             @Override
-            public boolean visitValueProperty(String propertyName,
-                Object value, PropertyContext ctx) {
+            public boolean visitValueProperty(String propertyName, Object value, PropertyContext ctx) {
               if (flatValueMap.containsKey(propertyName)) {
                 Splittable split = flatValueMap.get(propertyName);
                 Object newValue = ValueCodex.decode(ctx.getType(), split);
-                Object resolved = state.getResolver().resolveDomainValue(
-                    newValue, false);
-                service.setProperty(domain, propertyName, ctx.getType(),
-                    resolved);
+                Object resolved = state.getResolver().resolveDomainValue(newValue, false);
+                service.setProperty(domain, propertyName, ctx.getType(), resolved);
               }
               return false;
             }
@@ -535,17 +523,38 @@ public class SimpleRequestProcessor {
         if (errors != null && !errors.isEmpty()) {
           SimpleProxyId<?> id = entry.getKey();
           for (ConstraintViolation<Object> error : errors) {
-            ViolationMessage message = FACTORY.violation().as();
-            message.setClientId(id.getClientId());
-            message.setMessage(error.getMessage());
-            message.setPath(error.getPropertyPath().toString());
+            // Construct an ID that represents domainObject
+            IdMessage rootId = FACTORY.id().as();
+            rootId.setClientId(id.getClientId());
+            rootId.setTypeToken(service.resolveTypeToken(id.getProxyClass()));
             if (id.isEphemeral()) {
-              message.setClientId(id.getClientId());
-              message.setStrength(Strength.EPHEMERAL);
+              rootId.setStrength(Strength.EPHEMERAL);
             } else {
-              message.setServerId(toBase64(id.getServerId()));
+              rootId.setServerId(toBase64(id.getServerId()));
             }
-            message.setTypeToken(service.resolveTypeToken(id.getProxyClass()));
+
+            // If possible, also include the id of the leaf bean
+            IdMessage leafId = null;
+            if (error.getLeafBean() != null) {
+              SimpleProxyId<?> stableId = source.getStableId(error.getLeafBean());
+              if (stableId != null) {
+                leafId = FACTORY.id().as();
+                leafId.setClientId(stableId.getClientId());
+                leafId.setTypeToken(service.resolveTypeToken(stableId.getProxyClass()));
+                if (stableId.isEphemeral()) {
+                  leafId.setStrength(Strength.EPHEMERAL);
+                } else {
+                  leafId.setServerId(toBase64(stableId.getServerId()));
+                }
+              }
+            }
+
+            ViolationMessage message = FACTORY.violation().as();
+            message.setLeafBeanId(leafId);
+            message.setMessage(error.getMessage());
+            message.setMessageTemplate(error.getMessageTemplate());
+            message.setPath(error.getPropertyPath().toString());
+            message.setRootBeanId(rootId);
             errorMessages.add(message);
           }
         }

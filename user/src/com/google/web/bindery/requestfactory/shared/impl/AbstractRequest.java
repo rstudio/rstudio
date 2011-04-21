@@ -22,12 +22,13 @@ import com.google.web.bindery.requestfactory.shared.Receiver;
 import com.google.web.bindery.requestfactory.shared.Request;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
 import com.google.web.bindery.requestfactory.shared.ServerFailure;
-import com.google.web.bindery.requestfactory.shared.Violation;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
+import javax.validation.ConstraintViolation;
 
 /**
  * Abstract implementation of {@link Request}. Each request stores a
@@ -124,10 +125,10 @@ public abstract class AbstractRequest<T> implements Request<T>,
     }
   }
 
-  void onViolation(Set<Violation> errors) {
+  void onViolation(Set<ConstraintViolation<?>> errors) {
     // The user may not have called to()
     if (receiver != null) {
-      receiver.onViolation(errors);
+      receiver.onConstraintViolation(errors);
     }
   }
 }

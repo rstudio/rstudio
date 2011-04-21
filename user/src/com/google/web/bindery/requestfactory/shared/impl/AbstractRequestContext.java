@@ -33,12 +33,10 @@ import com.google.web.bindery.event.shared.UmbrellaException;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxyChange;
-import com.google.web.bindery.requestfactory.shared.EntityProxyId;
 import com.google.web.bindery.requestfactory.shared.Receiver;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
 import com.google.web.bindery.requestfactory.shared.RequestTransport.TransportReceiver;
 import com.google.web.bindery.requestfactory.shared.ServerFailure;
-import com.google.web.bindery.requestfactory.shared.Violation;
 import com.google.web.bindery.requestfactory.shared.WriteOperation;
 import com.google.web.bindery.requestfactory.shared.impl.posers.DatePoser;
 import com.google.web.bindery.requestfactory.shared.messages.IdMessage;
@@ -58,10 +56,15 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.validation.ConstraintViolation;
+import javax.validation.Path;
+import javax.validation.metadata.ConstraintDescriptor;
 
 /**
  * Base implementations for RequestContext services.
@@ -303,9 +306,9 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
 
       // Process violations and then stop
       if (response.getViolations() != null) {
-        Set<Violation> errors = new HashSet<Violation>();
+        Set<ConstraintViolation<?>> errors = new HashSet<ConstraintViolation<?>>();
         for (ViolationMessage message : response.getViolations()) {
-          errors.add(new MyViolation(message));
+          errors.add(new MyConstraintViolation(message));
         }
 
         violation(receiver, errors);
@@ -358,54 +361,76 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     }
   }
 
-  private class MyViolation implements Violation {
-
-    private final BaseProxy currentProxy;
-    private final EntityProxyId<?> id;
+  private class MyConstraintViolation implements ConstraintViolation<BaseProxy> {
+    private final BaseProxy leafBean;
+    private final String messageTemplate;
     private final String message;
     private final String path;
-    private final BaseProxy parentProxy;
+    private final BaseProxy rootBean;
+    private final Class<? extends BaseProxy> rootBeanClass;
 
-    public MyViolation(ViolationMessage message) {
-      // Support violations for value objects.
-      SimpleProxyId<BaseProxy> baseId = getId(message);
-      if (baseId instanceof EntityProxyId<?>) {
-        id = (EntityProxyId<?>) baseId;
-      } else {
-        id = null;
-      }
-      // The stub is empty, since we don't process any OperationMessages
-      AutoBean<BaseProxy> stub = getProxyForReturnPayloadGraph(baseId);
-
-      // So pick up the instance that we just sent to the server
-      AutoBean<?> edited = state.editedProxies.get(BaseProxyCategory.stableId(stub));
-      currentProxy = (BaseProxy) edited.as();
-
-      // Try to find the original, immutable version.
-      AutoBean<BaseProxy> parentBean = edited.getTag(Constants.PARENT_OBJECT);
-      parentProxy = parentBean == null ? null : parentBean.as();
-      path = message.getPath();
-      this.message = message.getMessage();
+    public MyConstraintViolation(ViolationMessage msg) {
+      AutoBean<? extends BaseProxy> leafProxy = findEditedProxy(msg.getLeafBeanId());
+      leafBean = leafProxy == null ? null : leafProxy.as();
+      message = msg.getMessage();
+      messageTemplate = msg.getMessageTemplate();
+      path = msg.getPath();
+      AutoBean<? extends BaseProxy> rootProxy = findEditedProxy(msg.getRootBeanId());
+      rootBeanClass = rootProxy.getType();
+      rootBean = rootProxy.as();
     }
 
-    public BaseProxy getInvalidProxy() {
-      return currentProxy;
+    public ConstraintDescriptor<?> getConstraintDescriptor() {
+      return null;
+    }
+
+    public Object getInvalidValue() {
+      return null;
+    }
+
+    public Object getLeafBean() {
+      return leafBean;
     }
 
     public String getMessage() {
       return message;
     }
 
-    public BaseProxy getOriginalProxy() {
-      return parentProxy;
+    public String getMessageTemplate() {
+      return messageTemplate;
     }
 
-    public String getPath() {
-      return path;
+    public Path getPropertyPath() {
+      return new Path() {
+        public Iterator<Node> iterator() {
+          return Collections.<Node> emptyList().iterator();
+        }
+
+        @Override
+        public String toString() {
+          return path;
+        }
+      };
     }
 
-    public EntityProxyId<?> getProxyId() {
-      return id;
+    public BaseProxy getRootBean() {
+      return rootBean;
+    }
+
+    @SuppressWarnings("unchecked")
+    public Class<BaseProxy> getRootBeanClass() {
+      return (Class<BaseProxy>) rootBeanClass;
+    }
+
+    private AutoBean<? extends BaseProxy> findEditedProxy(IdMessage idMessage) {
+      // Support violations for value objects.
+      SimpleProxyId<BaseProxy> rootId = getId(idMessage);
+
+      // The stub is empty, since we don't process any OperationMessages
+      AutoBean<BaseProxy> stub = getProxyForReturnPayloadGraph(rootId);
+
+      // So pick up the instance that we just sent to the server
+      return state.editedProxies.get(BaseProxyCategory.stableId(stub));
     }
   }
 
@@ -643,7 +668,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
    * Invoke the appropriate {@code onViolation} callbacks, possibly throwing an
    * {@link UmbrellaException} if one or more callbacks fails.
    */
-  protected void violation(final Receiver<Void> receiver, Set<Violation> errors) {
+  protected void violation(final Receiver<Void> receiver, Set<ConstraintViolation<?>> errors) {
     reuse();
     Set<Throwable> causes = null;
     for (AbstractRequest<?> request : new ArrayList<AbstractRequest<?>>(state.invocations)) {
@@ -658,7 +683,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     }
     if (receiver != null) {
       try {
-        receiver.onViolation(errors);
+        receiver.onConstraintViolation(errors);
       } catch (Throwable t) {
         if (causes == null) {
           causes = new HashSet<Throwable>();
