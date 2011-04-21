@@ -53,7 +53,6 @@ set(DESKTOP_SOURCE_FILES
   DesktopAboutDialog.cpp
   DesktopBrowserWindow.cpp
   DesktopCommandInvoker.cpp
-  DesktopCRANMirrorDialog.cpp
   DesktopDownloadHelper.cpp
   DesktopGwtCallback.cpp
   DesktopInputDialog.cpp
@@ -107,7 +106,6 @@ qt4_wrap_cpp(MOC_DESKTOP_SOURCE_FILES ${MOC_DESKTOP_HEADER_FILES})
 qt4_wrap_ui(DESKTOP_UI_SOURCES
    DesktopAboutDialog.ui
    DesktopChooseRHome.ui
-   DesktopCRANMirrorDialog.ui
    DesktopInputDialog.ui
    DesktopUpdateAvailableDialog.ui
 )

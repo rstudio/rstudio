@@ -28,7 +28,6 @@
 #include <core/system/System.hpp>
 
 #include "DesktopAboutDialog.hpp"
-#include "DesktopCRANMirrorDialog.hpp"
 #include "DesktopOptions.hpp"
 #include "DesktopBrowserWindow.hpp"
 #include "DesktopWindowTracker.hpp"
@@ -258,23 +257,6 @@ void GwtCallback::showFolder(QString path)
    {
       QDesktopServices::openUrl(QUrl::fromLocalFile(dir.absolutePath()));
    }
-}
-
-QString GwtCallback::getCRANMirror()
-{
-   return options().defaultCRANmirrorName();
-}
-
-QString GwtCallback::chooseCRANmirror()
-{
-   CRANMirrorDialog dialog(pOwnerWindow_);
-   if (dialog.exec() == QDialog::Accepted)
-   {
-      options().setDefaultCRANmirror(dialog.selectedName(),
-                                     dialog.selectedURL());
-      return dialog.selectedName();
-   }
-   return QString();
 }
 
 QString GwtCallback::getRVersion()

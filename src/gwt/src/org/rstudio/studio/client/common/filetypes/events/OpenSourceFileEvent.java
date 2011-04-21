@@ -13,11 +13,8 @@
 package org.rstudio.studio.client.common.filetypes.events;
 
 import com.google.gwt.event.shared.GwtEvent;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 public class OpenSourceFileEvent extends GwtEvent<OpenSourceFileHandler>
 {

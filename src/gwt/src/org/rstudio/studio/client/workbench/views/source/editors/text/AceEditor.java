@@ -119,7 +119,6 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       });
    }
 
-   @SuppressWarnings("unused")
    @Inject
    void initialize(CodeToolsServerOperations server)
    {

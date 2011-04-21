@@ -180,30 +180,6 @@ void Options::setPreferR64(bool preferR64)
 }
 #endif
 
-QString Options::rHome() const
-{
-#ifdef _WIN32
-   return binDirToHomeDir(rBinDir());
-#else
-   std::string rHomeDir = core::system::getenv("R_HOME"); 
-   return QString::fromUtf8(rHomeDir.c_str());
-#endif
-}
-
-QString Options::rDocPath() const
-{
-#ifdef _WIN32
-   QString home = rHome();
-   if (!home.isEmpty())
-      return QDir(home).absoluteFilePath(QString::fromAscii("doc"));
-   else
-      return QString();
-#else
-   std::string rDocDir = core::system::getenv("R_DOC_DIR");
-   return QString::fromUtf8(rDocDir.c_str());
-#endif
-}
-
 
 FilePath Options::supportingFilePath() const
 {
@@ -224,21 +200,6 @@ FilePath Options::supportingFilePath() const
    return supportingFilePath_;
 }
 
-QString Options::defaultCRANmirrorName() const
-{
-   return settings_.value(QString::fromAscii("CRANMirrorName")).toString();
-}
-
-QString Options::defaultCRANmirrorURL() const
-{
-   return settings_.value(QString::fromAscii("CRANMirrorURL")).toString();
-}
-
-void Options::setDefaultCRANmirror(QString name, QString url)
-{
-   settings_.setValue(QString::fromAscii("CRANMirrorName"), name);
-   settings_.setValue(QString::fromAscii("CRANMirrorURL"), url);
-}
 
 QStringList Options::ignoredUpdateVersions() const
 {

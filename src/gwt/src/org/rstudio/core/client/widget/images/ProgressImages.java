@@ -22,6 +22,11 @@ public class ProgressImages
       return new Image(CoreResources.INSTANCE.progress()) ;
    }
    
+   public static Image createSmallGray()
+   {
+      return new Image(CoreResources.INSTANCE.progress_gray());
+   }
+   
    public static Image createLarge()
    {
       return new Image(CoreResources.INSTANCE.progress_large()); 

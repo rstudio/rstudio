@@ -1848,7 +1848,10 @@ int main (int argc, char * const argv[])
       if (!desktopMode) // ignore r-libs-user in desktop mode
          rOptions.rLibsUser = options.rLibsUser();
       rOptions.rLibsExtra = options.sessionPackagesPath();
-      rOptions.rCRANRepos = options.rCRANRepos();
+      // CRAN repos: user setting first then global server option
+      rOptions.rCRANRepos = userSettings().cranMirror().url;
+      if (rOptions.rCRANRepos.empty())
+         rOptions.rCRANRepos = options.rCRANRepos();
       rOptions.rCompatibleGraphicsEngineVersion =
                               options.rCompatibleGraphicsEngineVersion();
       rOptions.serverMode = serverMode;

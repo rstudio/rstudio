@@ -483,6 +483,7 @@ public class Shell implements ConsoleInputHandler,
          }
       }
 
+      @SuppressWarnings("unused")
       private boolean lastKeyCodeWasZero_;
    }
 

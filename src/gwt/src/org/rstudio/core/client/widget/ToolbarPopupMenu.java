@@ -13,7 +13,6 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.MenuItem;
 import org.rstudio.core.client.command.AppMenuItem;

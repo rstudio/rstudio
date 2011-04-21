@@ -13,7 +13,6 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.StyleElement;
@@ -22,7 +21,6 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.UIObject;
 import org.rstudio.core.client.BrowseCap;
 
-import java.util.ArrayList;
 
 public class FontSizer
 {

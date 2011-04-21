@@ -21,15 +21,18 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.cran.DefaultCRANMirror;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
+import org.rstudio.studio.client.common.cran.model.CRANMirror;
 
 /**
  * TODO: Apply new settings
@@ -41,7 +44,8 @@ public class GeneralPreferencesPane extends PreferencesPane
    public GeneralPreferencesPane(PreferencesDialogResources res,
                                  WorkbenchServerOperations server,
                                  RemoteFileSystemContext fsContext,
-                                 FileDialogs fileDialogs)
+                                 FileDialogs fileDialogs,
+                                 final DefaultCRANMirror defaultCRANMirror)
    {
       res_ = res;
       server_ = server;
@@ -68,25 +72,31 @@ public class GeneralPreferencesPane extends PreferencesPane
             rVersion_.setText(Desktop.getFrame().getRVersion());
             add(rVersion_);
          }
-
-         cranMirror_ = new TextBoxWithButton(
-               "Default CRAN mirror:",
-               "Change...",
-               new ClickHandler()
-               {
-                  public void onClick(ClickEvent event)
-                  {
-                     String mirror = Desktop.getFrame().chooseCRANmirror();
-                     if (!StringUtil.isNullOrEmpty(mirror))
-                        cranMirror_.setText(mirror);
-                  }
-               });
-         cranMirror_.setWidth("100%");
-         cranMirror_.setText(Desktop.getFrame().getCRANMirror());
-         cranMirror_.addStyleName(res.styles().extraSpaced());
-
-         add(cranMirror_);
       }
+
+      cranMirrorTextBox_ = new TextBoxWithButton(
+         "Default CRAN mirror:",
+         "Change...",
+         new ClickHandler()
+         {
+            public void onClick(ClickEvent event)
+            {
+               defaultCRANMirror.choose(new OperationWithInput<CRANMirror>(){
+                  @Override
+                  public void execute(CRANMirror cranMirror)
+                  {
+                     cranMirror_ = cranMirror;
+                     cranMirrorTextBox_.setText(cranMirror_.getDisplay());
+                  }     
+               });
+              
+            }
+         });
+      cranMirrorTextBox_.setWidth("100%");
+      cranMirrorTextBox_.setText("");
+      cranMirrorTextBox_.addStyleName(res.styles().extraSpaced());
+      add(cranMirrorTextBox_);
+      
 
       add(tight(new Label("Initial working directory:")));
       add(dirChooser_ = new TextBoxWithButton(null, "Browse...", new ClickHandler()
@@ -128,6 +138,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       saveWorkspace_.setEnabled(false);
       loadRData_.setEnabled(false);
       dirChooser_.setEnabled(false);
+      cranMirrorTextBox_.setEnabled(false);
       server_.getRPrefs(new SimpleRequestCallback<RPrefs>()
       {
          @Override
@@ -136,6 +147,7 @@ public class GeneralPreferencesPane extends PreferencesPane
             saveWorkspace_.setEnabled(true);
             loadRData_.setEnabled(true);
             dirChooser_.setEnabled(true);
+            cranMirrorTextBox_.setEnabled(true);
 
             int saveWorkspaceIndex;
             switch (response.getSaveAction())
@@ -155,6 +167,12 @@ public class GeneralPreferencesPane extends PreferencesPane
 
             loadRData_.setValue(response.getLoadRData());
             dirChooser_.setText(response.getInitialWorkingDirectory());
+            
+            if (!response.getCRANMirror().isEmpty())
+            {
+               cranMirror_ = response.getCRANMirror();
+               cranMirrorTextBox_.setText(cranMirror_.getDisplay());
+            }
          }
       });
    }
@@ -190,6 +208,7 @@ public class GeneralPreferencesPane extends PreferencesPane
          server_.setRPrefs(saveAction,
                            loadRData_.getValue(),
                            dirChooser_.getText(),
+                           cranMirror_,
                            new SimpleRequestCallback<org.rstudio.studio.client.server.Void>());
       }
    }
@@ -206,7 +225,8 @@ public class GeneralPreferencesPane extends PreferencesPane
    private final FileDialogs fileDialogs_;
    private SelectWidget saveWorkspace_;
    private TextBoxWithButton rVersion_;
-   private TextBoxWithButton cranMirror_;
+   private CRANMirror cranMirror_ = CRANMirror.empty();
+   private TextBoxWithButton cranMirrorTextBox_;
    private TextBoxWithButton dirChooser_;
    private CheckBox loadRData_;
 }

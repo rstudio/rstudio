@@ -141,7 +141,12 @@
    return(.rs.scalar(!is.null(repos) && repos != "@CRAN@"))
 })
 
-.rs.addJsonRpcHandler( "set_cran_repos_url", function(url)
+.rs.addJsonRpcHandler( "get_cran_mirrors", function()
 {
-   .rs.setCRANRepos(url)
+   cranMirrors <- utils::getCRANmirrors()
+   data.frame(name = cranMirrors$Name,
+              host = cranMirrors$Host,
+              url = cranMirrors$URL,
+              country = cranMirrors$CountryCode,
+              stringsAsFactors = FALSE)
 })

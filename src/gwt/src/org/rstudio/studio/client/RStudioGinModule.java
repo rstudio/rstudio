@@ -24,6 +24,8 @@ import org.rstudio.studio.client.application.ui.ApplicationWindow;
 import org.rstudio.studio.client.common.DefaultGlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
+import org.rstudio.studio.client.common.cran.DefaultCRANMirror;
+import org.rstudio.studio.client.common.cran.model.CRANServerOperations;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.remote.RemoteServer;
 import org.rstudio.studio.client.workbench.ClientStateUpdater;
@@ -92,6 +94,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(WorkbenchContext.class).asEagerSingleton();
       bind(ClientStateUpdater.class).asEagerSingleton();
       bind(Commands.class).in(Singleton.class);
+      bind(DefaultCRANMirror.class).in(Singleton.class);
 
       bind(ChooseFile.class).asEagerSingleton();
       bind(AceThemes.class).asEagerSingleton();
@@ -146,6 +149,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(PackagesServerOperations.class).to(RemoteServer.class) ;
       bind(HelpServerOperations.class).to(RemoteServer.class) ;
       bind(EditServerOperations.class).to(RemoteServer.class) ;
+      bind(CRANServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 

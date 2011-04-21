@@ -14,7 +14,6 @@ package org.rstudio.studio.client.workbench.prefs.model;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 

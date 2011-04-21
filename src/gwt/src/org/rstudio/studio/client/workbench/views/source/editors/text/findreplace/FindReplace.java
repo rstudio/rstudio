@@ -22,7 +22,6 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Search;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
 
 public class FindReplace
 {

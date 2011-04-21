@@ -12,6 +12,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -23,6 +24,12 @@ public class SimplePanelWithProgress extends SimplePanel
 {
    public SimplePanelWithProgress()
    { 
+      loadProgressPanel_ = new ProgressPanel();
+   }
+   
+   public SimplePanelWithProgress(Image progressImage)
+   { 
+      loadProgressPanel_ = new ProgressPanel(progressImage);
    }
    
    @Override

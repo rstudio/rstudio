@@ -59,8 +59,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
 
    boolean suppressSyntaxHighlighting();
 
-   String getCRANMirror();
-   String chooseCRANmirror();
    String getRVersion();
    String chooseRVersion();
    boolean canChooseRVersion();

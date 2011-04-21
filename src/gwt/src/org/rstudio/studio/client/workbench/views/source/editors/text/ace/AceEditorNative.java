@@ -17,7 +17,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Command;
-import org.rstudio.core.client.CommandWithArg;
 
 import java.util.LinkedList;
 

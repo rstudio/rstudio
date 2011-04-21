@@ -28,7 +28,15 @@ namespace session {
 // singleton
 class UserSettings;
 UserSettings& userSettings();   
-   
+
+struct CRANMirror
+{
+   std::string name;
+   std::string host;
+   std::string url;
+   std::string country;
+};
+
 class UserSettings : boost::noncopyable
 {
 private:
@@ -65,6 +73,9 @@ public:
 
    core::FilePath initialWorkingDirectory() const;
    void setInitialWorkingDirectory(const core::FilePath& filePath);
+
+   CRANMirror cranMirror() const;
+   void setCRANMirror(const CRANMirror& cranMirror);
 
 private:
    core::FilePath getWorkingDirectoryValue(const std::string& key) const;

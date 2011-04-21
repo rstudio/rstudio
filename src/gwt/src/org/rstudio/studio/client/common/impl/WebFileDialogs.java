@@ -12,7 +12,6 @@
  */
 package org.rstudio.studio.client.common.impl;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.files.FilenameTransform;
