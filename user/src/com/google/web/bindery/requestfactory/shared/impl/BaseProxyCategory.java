@@ -15,12 +15,13 @@
  */
 package com.google.web.bindery.requestfactory.shared.impl;
 
-import static com.google.web.bindery.requestfactory.shared.impl.Constants.REQUEST_CONTEXT;
+import static com.google.web.bindery.requestfactory.shared.impl.Constants.REQUEST_CONTEXT_STATE;
 import static com.google.web.bindery.requestfactory.shared.impl.Constants.STABLE_ID;
 
 import com.google.web.bindery.autobean.shared.AutoBean;
 import com.google.web.bindery.autobean.shared.AutoBeanUtils;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
+import com.google.web.bindery.requestfactory.shared.impl.AbstractRequestContext.State;
 
 /**
  * Contains behaviors common to all proxy instances.
@@ -65,17 +66,17 @@ public class BaseProxyCategory {
      */
     AutoBean<T> otherBean = AutoBeanUtils.getAutoBean(returnValue);
     if (otherBean != null) {
-      otherBean.setTag(REQUEST_CONTEXT, bean.getTag(REQUEST_CONTEXT));
+      otherBean.setTag(REQUEST_CONTEXT_STATE, bean.getTag(REQUEST_CONTEXT_STATE));
     }
     return returnValue;
   }
 
   public static AbstractRequestContext requestContext(AutoBean<?> bean) {
-    return bean.getTag(REQUEST_CONTEXT);
+    State state = bean.<AbstractRequestContext.State> getTag(REQUEST_CONTEXT_STATE);
+    return state == null ? null : state.getCanonicalContext();
   }
 
-  public static <T extends BaseProxy> SimpleProxyId<T> stableId(
-      AutoBean<? extends T> bean) {
+  public static <T extends BaseProxy> SimpleProxyId<T> stableId(AutoBean<? extends T> bean) {
     return bean.getTag(STABLE_ID);
   }
 }

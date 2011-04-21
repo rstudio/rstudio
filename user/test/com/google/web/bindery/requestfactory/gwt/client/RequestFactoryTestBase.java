@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -27,6 +27,7 @@ import com.google.web.bindery.requestfactory.shared.EntityProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxyChange;
 import com.google.web.bindery.requestfactory.shared.ProxySerializer;
 import com.google.web.bindery.requestfactory.shared.Receiver;
+import com.google.web.bindery.requestfactory.shared.SimpleFooRequest;
 import com.google.web.bindery.requestfactory.shared.SimpleRequestFactory;
 import com.google.web.bindery.requestfactory.shared.impl.BaseProxyCategory;
 import com.google.web.bindery.requestfactory.shared.impl.Constants;
@@ -36,7 +37,7 @@ import com.google.web.bindery.requestfactory.shared.impl.SimpleProxyId;
  * A base class for anything that makes use of the SimpleRequestFactory.
  * Subclasses must always use {@link #finishTestAndReset()} in order to allow
  * calls to the reset methods to complete before the next test starts.
- *
+ * 
  */
 public abstract class RequestFactoryTestBase extends GWTTestCase {
 
@@ -113,13 +114,11 @@ public abstract class RequestFactoryTestBase extends GWTTestCase {
     assertTrue(AutoBeanUtils.deepEquals(originalBean, restoredBean));
 
     if (proxy instanceof EntityProxy && !id.isEphemeral()) {
-      assertEquals(((EntityProxy) proxy).stableId(),
-          ((EntityProxy) restored).stableId());
+      assertEquals(((EntityProxy) proxy).stableId(), ((EntityProxy) restored).stableId());
     }
 
     // In deference to testing stable ids, copy the original id into the clone
-    restoredBean.setTag(Constants.STABLE_ID,
-        originalBean.getTag(Constants.STABLE_ID));
+    restoredBean.setTag(Constants.STABLE_ID, originalBean.getTag(Constants.STABLE_ID));
     return restored;
   }
 
@@ -143,23 +142,13 @@ public abstract class RequestFactoryTestBase extends GWTTestCase {
   }
 
   protected void finishTestAndReset() {
-    final boolean[] reallyDone = {false, false};
-    req.simpleFooRequest().reset().fire(new Receiver<Void>() {
+    SimpleFooRequest ctx = req.simpleFooRequest();
+    ctx.reset();
+    ctx.append(req.simpleBarRequest()).reset();
+    ctx.fire(new Receiver<Void>() {
       @Override
       public void onSuccess(Void response) {
-        reallyDone[0] = true;
-        if (reallyDone[0] && reallyDone[1]) {
-          finishTest();
-        }
-      }
-    });
-    req.simpleBarRequest().reset().fire(new Receiver<Void>() {
-      @Override
-      public void onSuccess(Void response) {
-        reallyDone[1] = true;
-        if (reallyDone[0] && reallyDone[1]) {
-          finishTest();
-        }
+        finishTest();
       }
     });
   }

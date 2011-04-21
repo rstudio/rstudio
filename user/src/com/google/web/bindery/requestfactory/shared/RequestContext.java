@@ -20,6 +20,26 @@ package com.google.web.bindery.requestfactory.shared;
  */
 public interface RequestContext {
   /**
+   * Joins another RequestContext to this RequestContext.
+   * 
+   * <pre>
+   * SomeContext ctx = myFactory.someContext();
+   * // Perform operations on ctx
+   * OtherContext other = ctx.append(myFactory.otherContext());
+   * // Perform operations on both other and ctx
+   * ctx.fire() // or other.fire() are equivalent 
+   * </pre>
+   * 
+   * @param other a freshly-constructed RequestContext whose state should be
+   *          bound to this RequestContext
+   * @return {@code other}
+   * @throws IllegalStateException if any methods have been called on
+   *           {@code other} or if {@code other} was constructed by a different
+   *           RequestFactory instance
+   */
+  <T extends RequestContext> T append(T other);
+
+  /**
    * Returns a new mutable proxy that this request can carry to the server,
    * perhaps to be persisted. If the object is succesfully persisted, a PERSIST
    * event will be posted including the EntityProxyId of this proxy.

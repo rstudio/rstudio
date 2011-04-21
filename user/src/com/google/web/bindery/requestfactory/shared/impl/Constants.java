@@ -22,7 +22,7 @@ public interface Constants {
   String DOMAIN_OBJECT = "domainObject";
   String IN_RESPONSE = "inResponse";
   String PARENT_OBJECT = "parentObject";
-  String REQUEST_CONTEXT = "requestContext";
+  String REQUEST_CONTEXT_STATE = "requestContext";
   String STABLE_ID = "stableId";
   String VERSION_PROPERTY_B64 = "version";
 }

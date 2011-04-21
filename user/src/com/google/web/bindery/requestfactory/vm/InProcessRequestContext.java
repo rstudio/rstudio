@@ -42,8 +42,11 @@ import java.util.Collection;
  */
 class InProcessRequestContext extends AbstractRequestContext {
   class RequestContextHandler implements InvocationHandler {
-    public Object invoke(Object proxy, Method method, final Object[] args)
-        throws Throwable {
+    public InProcessRequestContext getContext() {
+      return InProcessRequestContext.this;
+    }
+
+    public Object invoke(Object proxy, Method method, final Object[] args) throws Throwable {
       // Maybe delegate to superclass
       Class<?> owner = method.getDeclaringClass();
       if (Object.class.equals(owner) || RequestContext.class.equals(owner)
@@ -63,9 +66,9 @@ class InProcessRequestContext extends AbstractRequestContext {
       Type returnGenericType;
       boolean isInstance = InstanceRequest.class.isAssignableFrom(method.getReturnType());
       if (isInstance) {
-        returnGenericType = TypeUtils.getParameterization(
-            InstanceRequest.class, method.getGenericReturnType(),
-            method.getReturnType())[1];
+        returnGenericType =
+            TypeUtils.getParameterization(InstanceRequest.class, method.getGenericReturnType(),
+                method.getReturnType())[1];
         if (args == null) {
           actualArgs = new Object[1];
         } else {
@@ -74,8 +77,9 @@ class InProcessRequestContext extends AbstractRequestContext {
           System.arraycopy(args, 0, actualArgs, 1, args.length);
         }
       } else {
-        returnGenericType = TypeUtils.getSingleParameterization(Request.class,
-            method.getGenericReturnType(), method.getReturnType());
+        returnGenericType =
+            TypeUtils.getSingleParameterization(Request.class, method.getGenericReturnType(),
+                method.getReturnType());
         if (args == null) {
           actualArgs = NO_ARGS;
         } else {
@@ -84,26 +88,23 @@ class InProcessRequestContext extends AbstractRequestContext {
       }
 
       Class<?> returnType = TypeUtils.ensureBaseType(returnGenericType);
-      Class<?> elementType = Collection.class.isAssignableFrom(returnType)
-          ? TypeUtils.ensureBaseType(TypeUtils.getSingleParameterization(
-              Collection.class, returnGenericType)) : null;
+      Class<?> elementType =
+          Collection.class.isAssignableFrom(returnType) ? TypeUtils.ensureBaseType(TypeUtils
+              .getSingleParameterization(Collection.class, returnGenericType)) : null;
 
       final RequestData data;
       if (dialect.equals(Dialect.STANDARD)) {
-        String operation = method.getDeclaringClass().getName() + "::"
-            + method.getName();
+        String operation = method.getDeclaringClass().getName() + "::" + method.getName();
 
         data = new RequestData(operation, actualArgs, returnType, elementType);
       } else {
         // Calculate request metadata
-        JsonRpcWireName wireInfo = method.getReturnType().getAnnotation(
-            JsonRpcWireName.class);
+        JsonRpcWireName wireInfo = method.getReturnType().getAnnotation(JsonRpcWireName.class);
         String apiVersion = wireInfo.version();
         String operation = wireInfo.value();
 
         int foundContent = -1;
-        final String[] parameterNames = args == null ? new String[0]
-            : new String[args.length];
+        final String[] parameterNames = args == null ? new String[0] : new String[args.length];
         Annotation[][] parameterAnnotations = method.getParameterAnnotations();
         parameter : for (int i = 0, j = parameterAnnotations.length; i < j; i++) {
           for (Annotation annotation : parameterAnnotations[i]) {
@@ -115,10 +116,8 @@ class InProcessRequestContext extends AbstractRequestContext {
               continue parameter;
             }
           }
-          throw new UnsupportedOperationException("No "
-              + PropertyName.class.getCanonicalName()
-              + " annotation on parameter " + i + " of method "
-              + method.toString());
+          throw new UnsupportedOperationException("No " + PropertyName.class.getCanonicalName()
+              + " annotation on parameter " + i + " of method " + method.toString());
         }
         final int contentIdx = foundContent;
 
@@ -134,14 +133,14 @@ class InProcessRequestContext extends AbstractRequestContext {
       }
 
       // Create the request, just filling in the RequestData details
-      final AbstractRequest<Object> req = new AbstractRequest<Object>(
-          InProcessRequestContext.this) {
-        @Override
-        protected RequestData makeRequestData() {
-          data.setPropertyRefs(propertyRefs);
-          return data;
-        }
-      };
+      final AbstractRequest<Object> req =
+          new AbstractRequest<Object>(InProcessRequestContext.this) {
+            @Override
+            protected RequestData makeRequestData() {
+              data.setPropertyRefs(propertyRefs);
+              return data;
+            }
+          };
 
       if (!isInstance) {
         // Instance invocations are enqueued when using() is called
@@ -153,19 +152,15 @@ class InProcessRequestContext extends AbstractRequestContext {
       } else if (dialect.equals(Dialect.JSON_RPC)) {
         // Support optional parameters for JSON-RPC payloads
         Class<?> requestType = method.getReturnType().asSubclass(Request.class);
-        return Proxy.newProxyInstance(requestType.getClassLoader(),
-            new Class<?>[] {requestType}, new InvocationHandler() {
-              public Object invoke(Object proxy, Method method, Object[] args)
-                  throws Throwable {
+        return Proxy.newProxyInstance(requestType.getClassLoader(), new Class<?>[] {requestType},
+            new InvocationHandler() {
+              public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                 if (Object.class.equals(method.getDeclaringClass())
                     || Request.class.equals(method.getDeclaringClass())) {
                   return method.invoke(req, args);
-                } else if (BeanMethod.SET.matches(method)
-                    || BeanMethod.SET_BUILDER.matches(method)) {
-                  req.getRequestData().setNamedParameter(
-                      BeanMethod.SET.inferName(method), args[0]);
-                  return Void.TYPE.equals(method.getReturnType()) ? null
-                      : proxy;
+                } else if (BeanMethod.SET.matches(method) || BeanMethod.SET_BUILDER.matches(method)) {
+                  req.getRequestData().setNamedParameter(BeanMethod.SET.inferName(method), args[0]);
+                  return Void.TYPE.equals(method.getReturnType()) ? null : proxy;
                 }
                 throw new UnsupportedOperationException(method.toString());
               }
@@ -179,10 +174,16 @@ class InProcessRequestContext extends AbstractRequestContext {
   static final Object[] NO_ARGS = new Object[0];
   private final Dialect dialect;
 
-  protected InProcessRequestContext(AbstractRequestFactory factory,
-      Dialect dialect) {
+  protected InProcessRequestContext(AbstractRequestFactory factory, Dialect dialect) {
     super(factory, dialect);
     this.dialect = dialect;
+  }
+
+  @Override
+  public <T extends RequestContext> T append(T other) {
+    RequestContextHandler h = (RequestContextHandler) Proxy.getInvocationHandler(other);
+    super.append(h.getContext());
+    return other;
   }
 
   @Override
