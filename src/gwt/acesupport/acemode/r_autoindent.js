@@ -1,4 +1,4 @@
-define("autoindent", function(require, exports, module) {
+define("mode/r_autoindent", function(require, exports, module) {
 
 var IndentManager = function(doc, tokenizer) {
    this.$doc = doc;

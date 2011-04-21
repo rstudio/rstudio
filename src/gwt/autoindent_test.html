@@ -5,7 +5,7 @@
   <script type="text/javascript" src="tools/ace/build/src/ace-uncompressed.js"></script>
   <script type="text/javascript" src="acesupport/acemode/r_highlight_rules.js"></script>
   <script type="text/javascript" src="acesupport/acemode/r.js"></script>
-  <script type="text/javascript" src="tools/autoindent_ng.js"></script>
+  <script type="text/javascript" src="acesupport/acemode/r_autoindent.js"></script>
   <style type="text/css">
   pre {
     margin-bottom: 30px;
@@ -143,7 +143,7 @@ function() {
 </ol>
 
 <script type="text/javascript">
-var IndentManager = require('autoindent').IndentManager;
+var IndentManager = require('mode/r_autoindent').IndentManager;
 var Document = require('ace/document').Document;
 var RMode = require('mode/r').Mode;
 
