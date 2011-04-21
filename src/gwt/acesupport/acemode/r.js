@@ -44,7 +44,7 @@ define("mode/r", function(require, exports, module)
    {
       this.getNextLineIndent = function(state, line, tab, tabSize, row)
       {
-         return this.$indentManager.getNextLineIndent(row, tab, tabSize);
+         return this.$indentManager.getNextLineIndent(row, line, tab, tabSize);
       };
 
       this.checkOutdent = function(state, line, input)

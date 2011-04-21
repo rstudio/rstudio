@@ -39,128 +39,153 @@ var IndentManager = function(doc, tokenizer) {
       '}': '{'
    };
 
-   this.getNextLineIndent = function(lastRow)
+   this.getNextLineIndent = function(lastRow, line, tab, tabSize)
    {
-      var indent = lastRow < 0 ? "" 
-                               : this.$getIndent(this.$doc.getLine(lastRow));
-
-      if (!this.$tokenizeUpToRow(lastRow))
-         return indent;
-
-
-      var prevToken = this.$findPreviousSignificantToken({row: lastRow, column: this.$doc.getLine(lastRow).length},
-                                                         lastRow - 10);
-      if (prevToken
-            && /\bparen\b/.test(prevToken.token.type)
-            && /\)$/.test(prevToken.token.value))
+      // This lineOverrides nonsense is necessary because the line has not 
+      // changed in the real document yet. We need to simulate it by replacing
+      // the real line with the `line` param, and when we finish with this
+      // method, undo the damage and invalidate the row.
+      // To repro the problem without using lineOverrides, comment out this
+      // block of code, and in the editor hit Enter in the middle of a line 
+      // that contains a }.
+      this.$lineOverrides = null;
+      if (!(this.$doc.getLine(lastRow) === line))
       {
-         var parens = 0;
-         var lastPos = null;
-         
-         var matched = !this.$walkParens(prevToken.row, prevToken.row - 10, function(paren, pos)
+         this.$lineOverrides = {};
+         this.$lineOverrides[lastRow] = line;
+         this.$invalidateRow(lastRow);
+      }
+      
+      try
+      {
+         var indent = lastRow < 0 ? "" 
+                                  : this.$getIndent(this.$getLine(lastRow));
+
+         if (!this.$tokenizeUpToRow(lastRow))
+            return indent;
+
+         var prevToken = this.$findPreviousSignificantToken({row: lastRow, column: this.$getLine(lastRow).length},
+                                                            lastRow - 10);
+         if (prevToken
+               && /\bparen\b/.test(prevToken.token.type)
+               && /\)$/.test(prevToken.token.value))
          {
-            lastPos = pos;
-            if (/[\[({]/.test(paren))
-               parens++;
+            var parens = 0;
+            var lastPos = null;
+         
+            var matched = !this.$walkParens(prevToken.row, prevToken.row - 10, function(paren, pos)
+            {
+               lastPos = pos;
+               if (/[\[({]/.test(paren))
+                  parens++;
+               else
+                  parens--;
+
+               // We've either completed a set of balanced parens, or possibly
+               // the parens are invalid. In either case, stop.
+               if (parens >= 0)
+                  return false;
+
+               return true;
+            });
+         
+            if (matched)
+            {
+               var preParenToken = this.$findPreviousSignificantToken(lastPos, 0);
+               if (preParenToken && preParenToken.token.type === "keyword"
+                     && /^(if|while|for|function)$/.test(preParenToken.token.value))
+               {
+                  return this.$getIndent(this.$getLine(preParenToken.row)) + "  ";
+               }
+            }
+         }
+         else if (prevToken
+                     && prevToken.token.type === "keyword"
+                     && (prevToken.token.value === "repeat" || prevToken.token.value === "else"))
+         {
+            return this.$getIndent(this.$getLine(prevToken.row)) + "  ";
+         }
+         else if (prevToken && /\boperator\b/.test(prevToken.token.type) && !/\bparen\b/.test(prevToken.token.type))
+         {
+            // Is the previous line also a continuation line?
+            var prevContToken = this.$findPreviousSignificantToken({row: prevToken.row, column: 0}, 0);
+            if (!prevContToken || !/\boperator\b/.test(prevContToken.token.type) || /\bparen\b/.test(prevContToken.token.type))
+               return this.$getIndent(this.$getLine(prevToken.row)) + "  ";
             else
-               parens--;
+               return this.$getIndent(this.$getLine(prevToken.row));
+         }
 
-            // We've either completed a set of balanced parens, or possibly
-            // the parens are invalid. In either case, stop.
-            if (parens >= 0)
-               return false;
 
+         var parens = [];
+         var that = this;
+         var openBrace = null;
+         var openBracePos = null;
+         var foundBrace = !this.$walkParens(lastRow, 0, function(paren, pos)
+         {
+            if (/[\[({]/.test(paren))
+            {
+               if (parens.length == 0
+                     || parens[parens.length - 1] != that.$complements[paren])
+               {
+                  openBracePos = pos;
+                  openBrace = paren;
+
+                  // stop walking
+                  return false;
+               }
+               else
+                  parens.pop();
+            }
+            else
+            {
+               parens.push(paren);
+            }
             return true;
          });
-         
-         if (matched)
+
+         if (foundBrace)
          {
-            var preParenToken = this.$findPreviousSignificantToken(lastPos, 0);
-            if (preParenToken && preParenToken.token.type === "keyword"
-                  && /^(if|while|for|function)$/.test(preParenToken.token.value))
+            var nextTokenPos = this.$findNextSignificantToken({
+                  row: openBracePos.row,
+                  column: openBracePos.column + 1
+               }, lastRow);
+
+            if (!nextTokenPos)
             {
-               return this.$getIndent(this.$doc.getLine(preParenToken.row)) + "  ";
-            }
-         }
-      }
-      else if (prevToken
-                  && prevToken.token.type === "keyword"
-                  && (prevToken.token.value === "repeat" || prevToken.token.value === "else"))
-      {
-         return this.$getIndent(this.$doc.getLine(prevToken.row)) + "  ";
-      }
-      else if (prevToken && /\boperator\b/.test(prevToken.token.type) && !/\bparen\b/.test(prevToken.token.type))
-      {
-         // Is the previous line also a continuation line?
-         var prevContToken = this.$findPreviousSignificantToken({row: prevToken.row, column: 0}, 0);
-         if (!prevContToken || !/\boperator\b/.test(prevContToken.token.type) || /\bparen\b/.test(prevContToken.token.type))
-            return this.$getIndent(this.$doc.getLine(prevToken.row)) + "  ";
-         else
-            return this.$getIndent(this.$doc.getLine(prevToken.row));
-      }
-
-
-      var parens = [];
-      var that = this;
-      var openBrace = null;
-      var openBracePos = null;
-      if (!this.$walkParens(lastRow, 0, function(paren, pos)
-      {
-         if (/[\[({]/.test(paren))
-         {
-            if (parens.length == 0
-                  || parens[parens.length - 1] != that.$complements[paren])
-            {
-               openBracePos = pos;
-               openBrace = paren;
-
-               // stop walking
-               return false;
+               // TODO: return line that contains the brace, plus 1 indent level
+               // TODO: If the token is beyond lastRow, ignore it
+               indent = this.$getIndent(this.$getLine(openBracePos.row)) + "  ";
             }
             else
-               parens.pop();
+            {
+               // return indent up to next token position
+               indent = (new Array(nextTokenPos.column + 1)).join(" ");
+            }
          }
          else
          {
-            parens.push(paren);
+            var firstToken = this.$findNextSignificantToken({row: 0, column: 0}, lastRow);
+            if (firstToken)
+               return this.$getIndent(this.$getLine(firstToken.row));
+            else
+               return "";
          }
-         return true;
-      }))
-      {
-         var nextTokenPos = this.$findNextSignificantToken({
-               row: openBracePos.row,
-               column: openBracePos.column + 1
-            }, lastRow);
-
-         if (!nextTokenPos)
-         {
-            // TODO: return line that contains the brace, plus 1 indent level
-            // TODO: If the token is beyond lastRow, ignore it
-            indent = this.$getIndent(this.$doc.getLine(openBracePos.row)) + "  ";
-         }
-         else
-         {
-            // return indent up to next token position
-            indent = (new Array(nextTokenPos.column + 1)).join(" ");
-         }
-      }
-      else
-      {
-         var firstToken = this.$findNextSignificantToken({row: 0, column: 0}, lastRow);
-         if (firstToken)
-            return this.$getIndent(this.$doc.getLine(firstToken.row));
-         else
-            return "";
-      }
-
       
-      //return indent;
-      return indent;
+         //return indent;
+         return indent;
+      }
+      finally
+      {
+         if (this.$lineOverrides)
+         {
+            this.$lineOverrides = null;
+            this.$invalidateRow(lastRow);
+         }
+      }
    };
    
    this.$tokenizeUpToRow = function(lastRow)
    {
-      console.log("Tokenizing up to and including " + lastRow);
       // Don't let lastRow be past the end of the document
       lastRow = Math.min(lastRow, this.$endStates.length - 1);
 
@@ -176,7 +201,7 @@ var IndentManager = function(doc, tokenizer) {
          assumeGood = false;
 
          var state = (row === 0) ? 'start' : this.$endStates[row-1];
-         var lineTokens = this.$tokenizer.getLineTokens(this.$doc.getLine(row), state);
+         var lineTokens = this.$tokenizer.getLineTokens(this.$getLine(row), state);
          this.$tokens[row] = lineTokens.tokens;
 
          // If we ended in the same state that the cache says, then we know that
@@ -261,6 +286,13 @@ var IndentManager = function(doc, tokenizer) {
          return ""; // should never happen, but whatever
       else
          return match[1];
+   };
+
+   this.$getLine = function(row)
+   {
+      if (this.$lineOverrides && this.$lineOverrides[row])
+         return this.$lineOverrides[row];
+      return this.$doc.getLine(row);
    };
 
    this.$walkParens = function(startRow, endRow, fun)
