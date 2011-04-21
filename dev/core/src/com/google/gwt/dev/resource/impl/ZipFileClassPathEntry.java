@@ -105,12 +105,13 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
   private final Map<PathPrefixSet, ZipFileSnapshot> cachedSnapshots = new ReferenceIdentityMap(
       AbstractReferenceMap.WEAK, AbstractReferenceMap.HARD, true);
 
+  private final long lastModified;
   private final String location;
-
   private final ZipFile zipFile;
 
   private ZipFileClassPathEntry(File zipFile) throws IOException {
     assert zipFile.isAbsolute();
+    this.lastModified = zipFile.lastModified();
     this.zipFile = new ZipFile(zipFile);
     this.location = zipFile.toURI().toString();
   }
@@ -140,6 +141,10 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
     return zipFile;
   }
 
+  public long lastModified() {
+    return lastModified;
+  }
+
   synchronized void index(TreeLogger logger) {
     // Never re-index.
     if (allZipFileResources == null) {
@@ -163,7 +168,7 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
         continue;
       }
       ZipFileResource zipResource = new ZipFileResource(this,
-          zipEntry.getName(), zipEntry.getTime());
+          zipEntry.getName());
       results.add(zipResource);
       Messages.READ_ZIP_ENTRY.log(logger, zipEntry.getName(), null);
     }

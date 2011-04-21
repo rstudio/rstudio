@@ -30,13 +30,11 @@ public class ZipFileResource extends AbstractResource {
   private final ZipFileClassPathEntry classPathEntry;
   private final String path;
   private final String[] pathParts;
-  private long lastModified;
 
-  public ZipFileResource(ZipFileClassPathEntry classPathEntry, String path, long lastModified) {
+  public ZipFileResource(ZipFileClassPathEntry classPathEntry, String path) {
     this.classPathEntry = classPathEntry;
     this.path = StringInterner.get().intern(path);
     this.pathParts = Strings.splitPath(path);
-    this.lastModified = lastModified;
   }
 
   @Override
@@ -44,9 +42,13 @@ public class ZipFileResource extends AbstractResource {
     return classPathEntry;
   }
 
+  /**
+   * Returns the lastModified time of the zip file itself.  Some build environments contain zip file
+   * entries that are not time synchronized, causing problems with staleness calculations.
+   */
   @Override
   public long getLastModified() {
-    return lastModified;
+    return classPathEntry.lastModified();
   }
 
   @Override
