@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.gwt.dev.javac.impl.StaticJavaResource;
+import com.google.gwt.dev.javac.testing.impl.StaticJavaResource;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsNameRef;

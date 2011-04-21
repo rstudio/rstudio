@@ -21,8 +21,8 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
-import com.google.gwt.dev.javac.impl.MockResourceOracle;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.MockResourceOracle;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
@@ -56,7 +56,7 @@ class ElementParserTester {
   static final MockJavaResource BINDER_OWNER_JAVA = new MockJavaResource(
       "my.Ui") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package my;\n");
       code.append("import com.google.gwt.user.client.ui.Widget;\n");

@@ -18,8 +18,8 @@ package com.google.gwt.dev.jjs;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.CompilationState;
-import com.google.gwt.dev.javac.impl.JavaResourceBase;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.jdt.AbstractCompiler.CompilationResults;
 import com.google.gwt.dev.jdt.BasicWebModeCompiler;
 import com.google.gwt.dev.jdt.FindDeferredBindingSitesVisitor;
@@ -29,10 +29,10 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.impl.AssertionNormalizer;
 import com.google.gwt.dev.jjs.impl.BuildTypeMap;
-import com.google.gwt.dev.jjs.impl.ImplementClassLiteralsAsFields;
-import com.google.gwt.dev.jjs.impl.TypeLinker;
 import com.google.gwt.dev.jjs.impl.FixAssignmentToUnbox;
 import com.google.gwt.dev.jjs.impl.GenerateJavaAST;
+import com.google.gwt.dev.jjs.impl.ImplementClassLiteralsAsFields;
+import com.google.gwt.dev.jjs.impl.TypeLinker;
 import com.google.gwt.dev.jjs.impl.TypeMap;
 import com.google.gwt.dev.js.ast.JsProgram;
 
@@ -54,7 +54,7 @@ public class JavaAstConstructor {
   public static final MockJavaResource ARRAY = new MockJavaResource(
       "com.google.gwt.lang.Array") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.lang;\n");
       code.append("public final class Array {\n");
@@ -67,7 +67,7 @@ public class JavaAstConstructor {
   public static final MockJavaResource CAST = new MockJavaResource(
       "com.google.gwt.lang.Cast") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.lang;\n");
       code.append("public final class Cast {\n");
@@ -83,7 +83,7 @@ public class JavaAstConstructor {
   public static final MockJavaResource CLASS = new MockJavaResource(
       "java.lang.Class") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       // This has extra code in the createForEnum method, to keep it from being inlined
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
@@ -122,7 +122,7 @@ public class JavaAstConstructor {
   public static final MockJavaResource CLASSLITERALHOLDER = new MockJavaResource(
       "com.google.gwt.lang.ClassLiteralHolder") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.lang;\n");
       code.append("final class ClassLiteralHolder {\n");
@@ -133,7 +133,7 @@ public class JavaAstConstructor {
   public static final MockJavaResource ENUM = new MockJavaResource(
       "java.lang.Enum") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
       code.append("import java.io.Serializable;\n");
@@ -160,7 +160,7 @@ public class JavaAstConstructor {
   public static final MockJavaResource GWT = new MockJavaResource(
       "com.google.gwt.core.client.GWT") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.core.client;\n");
       code.append("public final class GWT {\n");
@@ -176,7 +176,7 @@ public class JavaAstConstructor {
   public static final MockJavaResource RUNASYNCCALLBACK = new MockJavaResource(
       "com.google.gwt.core.client.RunAsyncCallback") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.core.client;\n");
       code.append("public interface RunAsyncCallback { }\n");
@@ -186,7 +186,7 @@ public class JavaAstConstructor {
   public static final MockJavaResource STATS = new MockJavaResource(
       "com.google.gwt.lang.Stats") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.lang;\n");
       code.append("public class Stats {\n");

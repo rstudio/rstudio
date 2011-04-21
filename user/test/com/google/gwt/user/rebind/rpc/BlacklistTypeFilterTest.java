@@ -25,9 +25,9 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.TypeOracleTestingUtils;
-import com.google.gwt.dev.javac.impl.JavaResourceBase;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
-import com.google.gwt.dev.javac.impl.StaticJavaResource;
+import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.StaticJavaResource;
 import com.google.gwt.dev.resource.Resource;
 
 import junit.framework.TestCase;

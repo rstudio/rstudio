@@ -16,10 +16,9 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.javac.Dependencies.Ref;
-import com.google.gwt.dev.javac.impl.JavaResourceBase;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
-import com.google.gwt.dev.javac.impl.MockResourceOracle;
-import com.google.gwt.dev.javac.impl.TweakedMockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.MockResourceOracle;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.js.JsParser;
 import com.google.gwt.dev.js.JsSourceGenerationVisitor;
@@ -51,7 +50,7 @@ public class CompilationStateTest extends CompilationStateTestBase {
   private static final MockJavaResource FOO_DIFF_API =
       new MockJavaResource("test.Foo") {
         @Override
-        protected CharSequence getContent() {
+        public CharSequence getContent() {
           StringBuffer code = new StringBuffer();
           code.append("package test;\n");
           code.append("public class Foo {\n");
@@ -65,7 +64,7 @@ public class CompilationStateTest extends CompilationStateTestBase {
   private static final MockJavaResource FOO_SAME_API =
       new MockJavaResource("test.Foo") {
         @Override
-        protected CharSequence getContent() {
+        public CharSequence getContent() {
           StringBuffer code = new StringBuffer();
           code.append("package test;\n");
           code.append("public class Foo {\n");
@@ -147,7 +146,7 @@ public class CompilationStateTest extends CompilationStateTestBase {
     MockJavaResource badFoo =
         new MockJavaResource(Shared.getTypeName(JavaResourceBase.FOO)) {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             return "compilation error LOL!";
           }
         };
@@ -252,7 +251,7 @@ public class CompilationStateTest extends CompilationStateTestBase {
   public void testMethodArgs() {
     MockJavaResource resource = new MockJavaResource("test.MethodArgsTest") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package test;\n");
         code.append("public abstract class MethodArgsTest {\n");
@@ -303,7 +302,7 @@ public class CompilationStateTest extends CompilationStateTestBase {
 
     MockJavaResource resource = new MockJavaResource("test.SerializationTest") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package test;\n");
         code.append("public abstract class SerializationTest {\n");
@@ -585,6 +584,24 @@ public class CompilationStateTest extends CompilationStateTestBase {
       assertEquals(parseJs("function() " + origMethod.function().getBody()),
           parseJs("function() " + newMethod.function().getBody()));
       // Need to test deserialization of origMethod.function()?
+    }
+  }
+
+  /**
+   * Java resource that modifies its content with a terminating newline.
+   */
+  public static class TweakedMockJavaResource extends MockJavaResource {
+
+    private MockJavaResource original;
+
+    public TweakedMockJavaResource(MockJavaResource original) {
+      super(original.getTypeName());
+      this.original = original;
+    }
+
+    @Override
+    public CharSequence getContent() {
+      return original.getContent() + "\n";
     }
   }
 }

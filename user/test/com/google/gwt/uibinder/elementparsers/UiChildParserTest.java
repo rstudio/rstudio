@@ -16,7 +16,7 @@
 package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.uibinder.rebind.UiBinderContext;
 
@@ -39,7 +39,7 @@ public class UiChildParserTest extends TestCase {
     super.setUp();
     MockJavaResource itemSubclass = new MockJavaResource(PARSED_TYPE) {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package com.google.gwt.user.client.ui;\n");
         code.append("import com.google.gwt.uibinder.client.UiChild;\n");

@@ -16,7 +16,7 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -119,7 +119,7 @@ public class ExpressionAnalyzerTest extends JJSTestBase {
   public void testFieldAccessClinit() throws Exception {
     sourceOracle.addOrReplace(new MockJavaResource("test.Foo") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package test;\n");
         code.append("public class Foo {\n");
@@ -135,7 +135,7 @@ public class ExpressionAnalyzerTest extends JJSTestBase {
   public void testFieldAccessInstance() throws Exception {
     sourceOracle.addOrReplace(new MockJavaResource("test.Foo") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package test;\n");
         code.append("import com.google.gwt.core.client.JavaScriptObject;\n");

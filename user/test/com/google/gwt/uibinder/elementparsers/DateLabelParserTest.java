@@ -16,10 +16,10 @@
 package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.i18n.client.DateTimeFormat;
-import com.google.gwt.i18n.client.TimeZone;
 import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
+import com.google.gwt.i18n.client.TimeZone;
 import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.user.client.ui.DateLabel;
 
@@ -36,7 +36,7 @@ public class DateLabelParserTest extends TestCase {
   private static final MockJavaResource DATELABEL_SUBCLASS_NO_CONSTRUCTOR = new MockJavaResource(
       "my.MyDateLabel") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package my;\n");
       code.append("import com.google.gwt.user.client.ui.DateLabel;\n");
@@ -48,7 +48,7 @@ public class DateLabelParserTest extends TestCase {
   private static final MockJavaResource DATELABEL_SUBCLASS_FORMAT_CONSTRUCTOR = new MockJavaResource(
       "my.MyConstructedDateLabel") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package my;\n");
       code.append("import com.google.gwt.user.client.ui.DateLabel;\n");
@@ -62,7 +62,7 @@ public class DateLabelParserTest extends TestCase {
   private static final MockJavaResource DATELABEL_SUBCLASS_FORMAT_AND_TZ_CONSTRUCTOR = new MockJavaResource(
       "my.MyConstructedDateLabel2") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package my;\n");
       code.append("import com.google.gwt.user.client.ui.DateLabel;\n");
@@ -77,7 +77,7 @@ public class DateLabelParserTest extends TestCase {
   private static final MockJavaResource DATELABEL_SUBCLASS_TZ_CONSTRUCTOR = new MockJavaResource(
       "my.MyConstructedDateLabel3") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package my;\n");
       code.append("import com.google.gwt.user.client.ui.DateLabel;\n");

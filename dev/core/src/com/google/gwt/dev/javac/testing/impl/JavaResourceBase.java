@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.javac.impl;
+package com.google.gwt.dev.javac.testing.impl;
 
 /**
  * Contains standard Java source files for testing.
@@ -23,7 +23,7 @@ public class JavaResourceBase {
   public static final MockJavaResource ANNOTATION = new MockJavaResource(
       "java.lang.annotation.Annotation") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.lang.annotation;\n");
       code.append("public interface Annotation {\n");
@@ -33,7 +33,7 @@ public class JavaResourceBase {
   };
   public static final MockJavaResource BAR = new MockJavaResource("test.Bar") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package test;\n");
       code.append("public class Bar extends Foo {\n");
@@ -45,7 +45,7 @@ public class JavaResourceBase {
   public static final MockJavaResource BYTE = new MockJavaResource(
       "java.lang.Byte") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
       code.append("public class Byte extends Number {\n");
@@ -62,7 +62,7 @@ public class JavaResourceBase {
   public static final MockJavaResource CHARACTER = new MockJavaResource(
       "java.lang.Character") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
       code.append("public class Character {\n");
@@ -79,7 +79,7 @@ public class JavaResourceBase {
   public static final MockJavaResource CLASS = new MockJavaResource(
       "java.lang.Class") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
       code.append("public class Class<T> {\n");
@@ -92,7 +92,7 @@ public class JavaResourceBase {
   public static final MockJavaResource CLASS_NOT_FOUND_EXCEPTION = new MockJavaResource(
       "java.lang.ClassNotFoundException") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
       code.append("public class ClassNotFoundException extends Exception {\n");
@@ -108,7 +108,7 @@ public class JavaResourceBase {
   public static final MockJavaResource COLLECTION = new MockJavaResource(
       "java.util.Collection") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.util;\n");
       code.append("public interface Collection<E> {\n");
@@ -119,7 +119,7 @@ public class JavaResourceBase {
   public static final MockJavaResource DOUBLE = new MockJavaResource(
       "java.lang.Double") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
       code.append("public class Double extends Number {\n");
@@ -137,7 +137,7 @@ public class JavaResourceBase {
   public static final MockJavaResource ENUM = new MockJavaResource(
       "java.lang.Enum") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
       code.append("import java.io.Serializable;\n");
@@ -152,7 +152,7 @@ public class JavaResourceBase {
   public static final MockJavaResource ERROR = new MockJavaResource(
       "java.lang.Error") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
       code.append("public class Error extends Throwable {\n");
@@ -163,7 +163,7 @@ public class JavaResourceBase {
   public static final MockJavaResource EXCEPTION = new MockJavaResource(
       "java.lang.Exception") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
       code.append("public class Exception extends Throwable {\n");
@@ -174,7 +174,7 @@ public class JavaResourceBase {
   public static final MockJavaResource FLOAT = new MockJavaResource(
       "java.lang.Float") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
       code.append("public class Float extends Number {\n");
@@ -190,7 +190,7 @@ public class JavaResourceBase {
   };
   public static final MockJavaResource FOO = new MockJavaResource("test.Foo") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package test;\n");
       code.append("public class Foo {\n");
@@ -202,7 +202,7 @@ public class JavaResourceBase {
   public static final MockJavaResource INTEGER = new MockJavaResource(
       "java.lang.Integer") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
       code.append("public class Integer extends Number {\n");
@@ -219,7 +219,7 @@ public class JavaResourceBase {
   public static final MockJavaResource IS_SERIALIZABLE = new MockJavaResource(
       "com.google.gwt.user.client.rpc.IsSerializable") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.rpc;\n");
       code.append("public interface IsSerializable {\n");
@@ -230,7 +230,7 @@ public class JavaResourceBase {
   public static final MockJavaResource JAVASCRIPTOBJECT = new MockJavaResource(
       "com.google.gwt.core.client.JavaScriptObject") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.core.client;\n");
       code.append("public class JavaScriptObject {\n");
@@ -244,7 +244,7 @@ public class JavaResourceBase {
   public static final MockJavaResource LONG = new MockJavaResource(
       "java.lang.Long") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
       code.append("public class Long extends Number {\n");
@@ -261,7 +261,7 @@ public class JavaResourceBase {
   public static final MockJavaResource MAP = new MockJavaResource(
       "java.util.Map") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.util;\n");
       code.append("public interface Map<K,V> { }\n");
@@ -271,7 +271,7 @@ public class JavaResourceBase {
   public static final MockJavaResource NO_CLASS_DEF_FOUND_ERROR = new MockJavaResource(
       "java.lang.NoClassDefFoundError") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
       code.append("public class NoClassDefFoundError extends Error {\n");
@@ -284,7 +284,7 @@ public class JavaResourceBase {
   public static final MockJavaResource NUMBER = new MockJavaResource(
       "java.lang.Number") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
       code.append("public class Number implements java.io.Serializable {\n");
@@ -296,7 +296,7 @@ public class JavaResourceBase {
   public static final MockJavaResource OBJECT = new MockJavaResource(
       "java.lang.Object") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
       code.append("public class Object {\n");
@@ -310,7 +310,7 @@ public class JavaResourceBase {
   public static final MockJavaResource SERIALIZABLE = new MockJavaResource(
       "java.io.Serializable") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.io;\n");
       code.append("public interface Serializable { }\n");
@@ -320,7 +320,7 @@ public class JavaResourceBase {
   public static final MockJavaResource SHORT = new MockJavaResource(
       "java.lang.Short") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
       code.append("public class Short extends Number {\n");
@@ -337,7 +337,7 @@ public class JavaResourceBase {
   public static final MockJavaResource STRING = new MockJavaResource(
       "java.lang.String") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
       code.append("import java.io.Serializable;\n");
@@ -365,7 +365,7 @@ public class JavaResourceBase {
   public static final MockJavaResource STRING_BUILDER = new MockJavaResource(
       "java.lang.StringBuilder") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
       code.append("public final class StringBuilder {\n");
@@ -376,7 +376,7 @@ public class JavaResourceBase {
   public static final MockJavaResource SUPPRESS_WARNINGS = new MockJavaResource(
       "java.lang.SuppressWarnings") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
       code.append("public @interface SuppressWarnings {\n");
@@ -388,7 +388,7 @@ public class JavaResourceBase {
   public static final MockJavaResource THROWABLE = new MockJavaResource(
       "java.lang.Throwable") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
       code.append("public class Throwable {\n");

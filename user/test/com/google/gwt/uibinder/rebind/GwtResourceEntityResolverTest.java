@@ -15,8 +15,8 @@
  */
 package com.google.gwt.uibinder.rebind;
 
-import com.google.gwt.dev.javac.impl.MockResource;
-import com.google.gwt.dev.javac.impl.MockResourceOracle;
+import com.google.gwt.dev.javac.testing.impl.MockResource;
+import com.google.gwt.dev.javac.testing.impl.MockResourceOracle;
 import com.google.gwt.dev.resource.Resource;
 
 import junit.framework.TestCase;
@@ -37,7 +37,7 @@ public class GwtResourceEntityResolverTest extends TestCase {
   private static final Resource xhtmlEntResource = new MockResource(
       "com/google/gwt/uibinder/resources/xhtml.ent") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       return "";
     }
   };

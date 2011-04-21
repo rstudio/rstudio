@@ -16,7 +16,7 @@
 package com.google.gwt.uibinder.rebind;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.dev.javac.impl.MockResourceOracle;
+import com.google.gwt.dev.javac.testing.impl.MockResourceOracle;
 
 import junit.framework.TestCase;
 

@@ -16,7 +16,7 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.javac.CompilationUnitBuilder.ResourceCompilationUnitBuilder;
-import com.google.gwt.dev.javac.impl.JavaResourceBase;
+import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.resource.Resource;
 
 import junit.framework.TestCase;

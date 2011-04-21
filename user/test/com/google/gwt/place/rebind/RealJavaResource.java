@@ -15,7 +15,7 @@
  */
 package com.google.gwt.place.rebind;
 
-import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.util.Util;
 
 import java.io.InputStream;
@@ -34,7 +34,7 @@ class RealJavaResource extends MockJavaResource {
   }
 
   @Override
-  protected CharSequence getContent() {
+  public CharSequence getContent() {
     String resourceName = getTypeName().replace('.', '/') + ".java";
     InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(
         resourceName);

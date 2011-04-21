@@ -16,8 +16,8 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.javac.Dependencies.Ref;
-import com.google.gwt.dev.javac.impl.JavaResourceBase;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.resource.Resource;
 
 import java.util.HashMap;
@@ -33,7 +33,7 @@ public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
   public static final MockJavaResource MEMBER_INNER_SUBCLASS =
       new MockJavaResource("test.OuterSubclass") {
         @Override
-        protected CharSequence getContent() {
+        public CharSequence getContent() {
           StringBuffer code = new StringBuffer();
           code.append("package test;\n");
           code.append("public class OuterSubclass extends Outer {\n");
@@ -49,7 +49,7 @@ public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
   public static final MockJavaResource NOPACKAGE =
       new MockJavaResource("NoPackage") {
         @Override
-        protected CharSequence getContent() {
+        public CharSequence getContent() {
           StringBuffer code = new StringBuffer();
           code.append("public class NoPackage extends test.Top {\n");
           code.append("  public String value() { return \"NoPackage\"; }\n");
@@ -61,7 +61,7 @@ public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
   public static final MockJavaResource NOPACKAGE2 =
       new MockJavaResource("NoPackage2") {
         @Override
-        protected CharSequence getContent() {
+        public CharSequence getContent() {
           StringBuffer code = new StringBuffer();
           code.append("public class NoPackage2 extends NoPackage {\n");
           code.append("  public String value() { return \"NoPackage2\"; }\n");
@@ -73,7 +73,7 @@ public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
   public static final MockJavaResource OUTER =
       new MockJavaResource("test.Outer") {
         @Override
-        protected CharSequence getContent() {
+        public CharSequence getContent() {
           StringBuffer code = new StringBuffer();
           code.append("package test;\n");
           code.append("public class Outer {\n");
@@ -92,7 +92,7 @@ public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
   public static final MockJavaResource STATIC_INNER_SUBCLASS =
       new MockJavaResource("test.StaticInnerSubclass") {
         @Override
-        protected CharSequence getContent() {
+        public CharSequence getContent() {
           StringBuffer code = new StringBuffer();
           code.append("package test;\n");
           code.append("public class StaticInnerSubclass extends Outer.StaticInner {\n");
@@ -104,7 +104,7 @@ public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
 
   public static final MockJavaResource TOP = new MockJavaResource("test.Top") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package test;\n");
       code.append("public class Top {\n");
@@ -120,7 +120,7 @@ public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
   public static final MockJavaResource TOP3 =
       new MockJavaResource("test.Top3") {
         @Override
-        protected CharSequence getContent() {
+        public CharSequence getContent() {
           StringBuffer code = new StringBuffer();
           code.append("package test;\n");
           code.append("public class Top3 extends Top2 {\n");
@@ -161,7 +161,8 @@ public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
         OUTER.getTypeName(), "test.Outer$StaticInner");
   }
 
-  private static void initializeExpectedDependency(MockJavaResource source,
+  private static void initializeExpectedDependency(
+      MockJavaResource source,
       String... typeNames) {
     Set<String> targetSet = new HashSet<String>();
     for (String typeName : typeNames) {

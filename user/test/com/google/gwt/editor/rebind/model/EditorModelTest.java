@@ -22,8 +22,8 @@ import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
-import com.google.gwt.dev.javac.impl.JavaResourceBase;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 import com.google.gwt.dev.util.Util;
@@ -91,7 +91,7 @@ public class EditorModelTest extends TestCase {
     }
 
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       return code;
     }
   }
@@ -101,13 +101,14 @@ public class EditorModelTest extends TestCase {
    * directly tested by this test. Note that use of this class requires your
    * source files to be on your classpath.
    */
-  private static class RealJavaResource extends MockJavaResource {
+  private static class RealJavaResource extends
+      MockJavaResource {
     public RealJavaResource(Class<?> clazz) {
       super(clazz.getName());
     }
 
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       String resourceName = getTypeName().replace('.', '/') + ".java";
       InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(
           resourceName);
@@ -506,7 +507,7 @@ public class EditorModelTest extends TestCase {
   private Set<Resource> getJavaResources() {
     MockJavaResource[] javaFiles = {new MockJavaResource("t.AddressProxy") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + EntityProxy.class.getName() + ";\n");
@@ -520,7 +521,7 @@ public class EditorModelTest extends TestCase {
       }
     }, new MockJavaResource("t.AddressEditor") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + Editor.class.getName() + ";\n");
@@ -533,7 +534,7 @@ public class EditorModelTest extends TestCase {
       }
     }, new MockJavaResource("t.CompositeProxy") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + EntityProxy.class.getName() + ";\n");
@@ -545,7 +546,7 @@ public class EditorModelTest extends TestCase {
       }
     }, new MockJavaResource("t.CompositeEditor") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + Editor.class.getName() + ";\n");
@@ -557,7 +558,7 @@ public class EditorModelTest extends TestCase {
       }
     }, new MockJavaResource("t.CompositeEditorDriver") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + RequestFactoryEditorDriver.class.getName()
@@ -569,7 +570,7 @@ public class EditorModelTest extends TestCase {
     }, new MockJavaResource("t.CyclicEditorDriver") {
         // Tests error-detection when the editor graph isn't a DAG
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + Editor.class.getName() + ";\n");
@@ -593,7 +594,7 @@ public class EditorModelTest extends TestCase {
     }, new MockJavaResource("t.DottedPathEditorDriver") {
         // Tests error-detection when the editor graph isn't a DAG
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + Editor.class.getName() + ";\n");
@@ -615,7 +616,7 @@ public class EditorModelTest extends TestCase {
     }, new MockJavaResource("t.ListEditor") {
         // Tests error-detection when the editor graph isn't a DAG
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + CompositeEditor.class.getName() + ";\n");
@@ -626,7 +627,7 @@ public class EditorModelTest extends TestCase {
       }
     }, new MockJavaResource("t.ListEditorDriver") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + RequestFactoryEditorDriver.class.getName()
@@ -639,7 +640,7 @@ public class EditorModelTest extends TestCase {
         // Tests error-detection when the editor structure doesn't match the
         // proxy
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + Editor.class.getName() + ";\n");
@@ -660,7 +661,7 @@ public class EditorModelTest extends TestCase {
       }
     }, new MockJavaResource("t.PersonProxy") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + EntityProxy.class.getName() + ";\n");
@@ -676,7 +677,7 @@ public class EditorModelTest extends TestCase {
       }
     }, new MockJavaResource("t.PersonEditor") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + Editor.class.getName() + ";\n");
@@ -693,7 +694,7 @@ public class EditorModelTest extends TestCase {
       }
     }, new MockJavaResource("t.PersonEditorWithAliasedSubEditors") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + Editor.class.getName() + ";\n");
@@ -706,7 +707,7 @@ public class EditorModelTest extends TestCase {
       }
     }, new MockJavaResource("t.PersonEditorWithAliasedSubEditorsDriver") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + RequestFactoryEditorDriver.class.getName()
@@ -718,7 +719,7 @@ public class EditorModelTest extends TestCase {
       }
     }, new MockJavaResource("t.PersonEditorWithBadPrimitiveAccess") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + Editor.class.getName() + ";\n");
@@ -730,7 +731,7 @@ public class EditorModelTest extends TestCase {
       }
     }, new MockJavaResource("t.PersonEditorWithBadPrimitiveAccessDriver") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + RequestFactoryEditorDriver.class.getName()
@@ -742,7 +743,7 @@ public class EditorModelTest extends TestCase {
       }
     }, new MockJavaResource("t.PersonEditorUsingMethods") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + Editor.class.getName() + ";\n");
@@ -758,7 +759,7 @@ public class EditorModelTest extends TestCase {
       }
     }, new MockJavaResource("t.PersonEditorDriver") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + RequestFactoryEditorDriver.class.getName()
@@ -770,7 +771,7 @@ public class EditorModelTest extends TestCase {
       }
     }, new MockJavaResource("t.PersonEditorDriverUsingMethods") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + RequestFactoryEditorDriver.class.getName()
@@ -782,7 +783,7 @@ public class EditorModelTest extends TestCase {
       }
     }, new MockJavaResource("t.PersonRequestFactory") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + RequestFactory.class.getName() + ";\n");
@@ -793,7 +794,7 @@ public class EditorModelTest extends TestCase {
     }, new MockJavaResource("t.TooManyInterfacesEditorDriver") {
         // Tests a Driver interface that extends more than RFED
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + RequestFactoryEditorDriver.class.getName()
@@ -808,7 +809,7 @@ public class EditorModelTest extends TestCase {
         // Tests error-detection when the editor structure doesn't match the
         // proxy
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + Editor.class.getName() + ";\n");
@@ -830,7 +831,7 @@ public class EditorModelTest extends TestCase {
         // Tests error-detection when the editor structure doesn't match the
         // proxy
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + Editor.class.getName() + ";\n");
@@ -860,7 +861,7 @@ public class EditorModelTest extends TestCase {
         // Tests error-detection when the editor structure doesn't match the
         // proxy
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + Editor.class.getName() + ";\n");
@@ -895,7 +896,7 @@ public class EditorModelTest extends TestCase {
        * editor-like fields within the LeafValueEditor are ignored.
        */
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + Editor.class.getName() + ";\n");
@@ -926,7 +927,7 @@ public class EditorModelTest extends TestCase {
     }, new MockJavaResource("java.util.List") {
         // Tests a Driver interface that extends more than RFED
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package java.util;\n");
         code.append("public interface List<T> {\n");

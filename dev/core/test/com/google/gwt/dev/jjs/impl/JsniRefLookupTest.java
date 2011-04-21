@@ -16,7 +16,7 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JNode;
@@ -51,7 +51,7 @@ public class JsniRefLookupTest extends JJSTestBase {
   public void setUp() {
     sourceOracle.addOrReplace(new MockJavaResource("test.Intf") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package test;\n");
         code.append("public interface Intf {\n");
@@ -66,7 +66,7 @@ public class JsniRefLookupTest extends JJSTestBase {
 
     sourceOracle.addOrReplace(new MockJavaResource("test.Foo") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package test;\n");
         code.append("public class Foo implements Intf {\n");
@@ -87,7 +87,7 @@ public class JsniRefLookupTest extends JJSTestBase {
 
     sourceOracle.addOrReplace(new MockJavaResource("test.Bar") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package test;\n");
         code.append("public class Bar extends Foo {\n");
@@ -102,7 +102,7 @@ public class JsniRefLookupTest extends JJSTestBase {
 
     sourceOracle.addOrReplace(new MockJavaResource("test.GenericClass") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package test;\n");
         code.append("public abstract class GenericClass<T> {\n");
@@ -114,7 +114,7 @@ public class JsniRefLookupTest extends JJSTestBase {
 
     sourceOracle.addOrReplace(new MockJavaResource("test.ClassWithBridge") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package test;\n");
         code.append("class ClassWithBridge extends GenericClass<String> {\n");
@@ -126,7 +126,7 @@ public class JsniRefLookupTest extends JJSTestBase {
 
     sourceOracle.addOrReplace(new MockJavaResource("test.PrivateSup") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package test;\n");
         code.append("public class PrivateSup {\n");
@@ -141,7 +141,7 @@ public class JsniRefLookupTest extends JJSTestBase {
 
     sourceOracle.addOrReplace(new MockJavaResource("test.PrivateSub") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package test;\n");
         code.append("public class PrivateSub extends PrivateSup {\n");
@@ -155,7 +155,7 @@ public class JsniRefLookupTest extends JJSTestBase {
 
     sourceOracle.addOrReplace(new MockJavaResource("test.DiffRetSuper") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package test;\n");
         code.append("public interface DiffRetSuper {\n");
@@ -167,7 +167,7 @@ public class JsniRefLookupTest extends JJSTestBase {
 
     sourceOracle.addOrReplace(new MockJavaResource("test.DiffRetSub") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package test;\n");
         code.append("public interface DiffRetSub extends DiffRetSuper {\n");

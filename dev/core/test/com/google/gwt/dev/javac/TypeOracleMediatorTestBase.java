@@ -32,8 +32,6 @@ import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
 import com.google.gwt.dev.javac.TypeOracleMediator.TypeData;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
-import com.google.gwt.dev.javac.impl.StaticJavaResource;
 import com.google.gwt.dev.javac.mediatortest.AfterAssimilate;
 import com.google.gwt.dev.javac.mediatortest.BaseInterface;
 import com.google.gwt.dev.javac.mediatortest.BeforeAssimilate;
@@ -60,6 +58,8 @@ import com.google.gwt.dev.javac.mediatortest.Outer;
 import com.google.gwt.dev.javac.mediatortest.OuterInt;
 import com.google.gwt.dev.javac.mediatortest.ReferencesGenericListConstant;
 import com.google.gwt.dev.javac.mediatortest.ReferencesParameterizedTypeBeforeItsGenericFormHasBeenProcessed;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.StaticJavaResource;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
@@ -192,7 +192,7 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
      * Looks for the source data on the classpath.
      */
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       String source = getSource();
       if (source == null) {
         try {

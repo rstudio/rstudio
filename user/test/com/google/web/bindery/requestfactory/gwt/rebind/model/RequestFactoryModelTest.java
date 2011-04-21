@@ -20,8 +20,8 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
-import com.google.gwt.dev.javac.impl.JavaResourceBase;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 import com.google.gwt.dev.util.Util;
@@ -85,7 +85,7 @@ public class RequestFactoryModelTest extends TestCase {
     }
 
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       return code;
     }
   }
@@ -102,7 +102,7 @@ public class RequestFactoryModelTest extends TestCase {
     }
 
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       String resourceName = getTypeName().replace('.', '/') + ".java";
       InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(
           resourceName);
@@ -173,7 +173,7 @@ public class RequestFactoryModelTest extends TestCase {
     Set<Resource> javaResources = getJavaResources(proxyClass);
     javaResources.add(new MockJavaResource("t.TestRequestFactory") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + RequestFactory.class.getName() + ";\n");
@@ -185,7 +185,7 @@ public class RequestFactoryModelTest extends TestCase {
     });
     javaResources.add(new MockJavaResource("t.TestContext") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + Request.class.getName() + ";\n");
@@ -230,7 +230,7 @@ public class RequestFactoryModelTest extends TestCase {
   private Set<Resource> getJavaResources(final String proxyClass) {
     MockJavaResource[] javaFiles = {new MockJavaResource("t.AddressProxy") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + ProxyFor.class.getName() + ";\n");
@@ -245,7 +245,7 @@ public class RequestFactoryModelTest extends TestCase {
       }
     }, new MockJavaResource("t.ProxyWithRepeatedGetters") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + ProxyFor.class.getName() + ";\n");
@@ -262,7 +262,7 @@ public class RequestFactoryModelTest extends TestCase {
     }, new MockJavaResource("java.util.List") {
         // Tests a Driver interface that extends more than RFED
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package java.util;\n");
         code.append("public interface List<T> extends Collection<T> {\n");
@@ -272,7 +272,7 @@ public class RequestFactoryModelTest extends TestCase {
     }, new MockJavaResource("java.util.Set") {
         // Tests a Driver interface that extends more than RFED
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package java.util;\n");
         code.append("public interface Set<T> extends Collection<T> {\n");
@@ -282,7 +282,7 @@ public class RequestFactoryModelTest extends TestCase {
     }, new MockJavaResource("java.util.SortedSet") {
         // Tests a Driver interface that extends more than RFED
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package java.util;\n");
         code.append("public interface SortedSet<T> extends Set<T> {\n");

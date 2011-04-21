@@ -15,8 +15,8 @@
  */
 package com.google.gwt.uibinder.test;
 
-import com.google.gwt.dev.javac.impl.JavaResourceBase;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
@@ -33,7 +33,7 @@ public class UiJavaResources {
   public static final MockJavaResource ABSOLUTE_PANEL = new MockJavaResource(
       "com.google.gwt.user.client.ui.AbsolutePanel") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class AbsolutePanel extends Widget {\n");
@@ -44,7 +44,7 @@ public class UiJavaResources {
   public static final MockJavaResource BUTTON = new MockJavaResource(
       "com.google.gwt.user.client.ui.Button") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("import com.google.gwt.event.dom.client.ClickEvent;\n");
@@ -62,7 +62,7 @@ public class UiJavaResources {
   public static final MockJavaResource CLICK_EVENT = new MockJavaResource(
       "com.google.gwt.event.dom.client.ClickEvent") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.event.dom.client;\n");
       code.append("import com.google.gwt.event.shared.GwtEvent;\n");
@@ -74,7 +74,7 @@ public class UiJavaResources {
   public static final MockJavaResource CLICK_HANDLER = new MockJavaResource(
       "com.google.gwt.event.dom.client.ClickHandler") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.event.dom.client;\n");
       code.append("import com.google.gwt.event.shared.EventHandler;\n");
@@ -87,7 +87,7 @@ public class UiJavaResources {
   public static final MockJavaResource COMMAND = new MockJavaResource(
       "com.google.gwt.user.client.Command") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client;\n");
       code.append("public interface Command {\n");
@@ -99,7 +99,7 @@ public class UiJavaResources {
   public static final MockJavaResource CURRENCY_DATA = new MockJavaResource(
       "com.google.gwt.i18n.client.CurrencyData") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.i18n.client;\n");
       code.append("public class CurrencyData {\n");
@@ -110,7 +110,7 @@ public class UiJavaResources {
   public static final MockJavaResource DATE_LABEL = new MockJavaResource(
       "com.google.gwt.user.client.ui.DateLabel") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("import com.google.gwt.i18n.client.DateTimeFormat;\n");
@@ -126,7 +126,7 @@ public class UiJavaResources {
   public static final MockJavaResource DATE_TIME_FORMAT = new MockJavaResource(
       "com.google.gwt.i18n.client.DateTimeFormat") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.i18n.client;\n");
       code.append("public class DateTimeFormat {\n");
@@ -146,7 +146,7 @@ public class UiJavaResources {
   public static final MockJavaResource DIALOG_BOX = new MockJavaResource(
       "com.google.gwt.user.client.ui.DialogBox") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class DialogBox extends Widget {\n");
@@ -160,7 +160,7 @@ public class UiJavaResources {
   public static final MockJavaResource DISCLOSURE_PANEL = new MockJavaResource(
       "com.google.gwt.user.client.ui.DisclosurePanel") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class DisclosurePanel extends Widget {\n");
@@ -171,7 +171,7 @@ public class UiJavaResources {
   public static final MockJavaResource DOCK_LAYOUT_PANEL = new MockJavaResource(
       "com.google.gwt.user.client.ui.DockLayoutPanel") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class DockLayoutPanel extends Widget {\n");
@@ -182,7 +182,7 @@ public class UiJavaResources {
   public static final MockJavaResource ELEMENT = new MockJavaResource(
       "com.google.gwt.dom.client.Element") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.dom.client;\n");
       code.append("public class Element {\n");
@@ -193,7 +193,7 @@ public class UiJavaResources {
   public static final MockJavaResource EVENT_HANDLER = new MockJavaResource(
       "com.google.gwt.event.shared.EventHandler") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.event.shared;\n");
       code.append("public interface EventHandler {\n");
@@ -204,7 +204,7 @@ public class UiJavaResources {
   public static final MockJavaResource GRID = new MockJavaResource(
       "com.google.gwt.user.client.ui.Grid") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class Grid extends Widget {\n");
@@ -215,7 +215,7 @@ public class UiJavaResources {
   public static final MockJavaResource GWT_EVENT = new MockJavaResource(
       "com.google.gwt.event.shared.GwtEvent") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.event.shared;\n");
       code.append("public abstract class GwtEvent<H extends EventHandler> {\n");
@@ -226,7 +226,7 @@ public class UiJavaResources {
   public static final MockJavaResource HANDLER_REGISTRATION = new MockJavaResource(
       "com.google.gwt.event.shared.HandlerRegistration") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.event.shared;\n");
       code.append("public interface HandlerRegistration {\n");
@@ -238,7 +238,7 @@ public class UiJavaResources {
   public static final MockJavaResource HAS_CLICK_HANDLERS = new MockJavaResource(
       "com.google.gwt.event.dom.client.HasClickHandlers") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.event.dom.client;\n");
       code.append("import com.google.gwt.event.shared.HandlerRegistration;\n");
@@ -251,7 +251,7 @@ public class UiJavaResources {
   public static final MockJavaResource HAS_HORIZONTAL_ALIGNMENT = new MockJavaResource(
       "com.google.gwt.user.client.ui.HasHorizontalAlignment") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class HasHorizontalAlignment {\n");
@@ -264,7 +264,7 @@ public class UiJavaResources {
   public static final MockJavaResource HAS_VERTICAL_ALIGNMENT = new MockJavaResource(
       "com.google.gwt.user.client.ui.HasVerticalAlignment") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class HasVerticalAlignment {\n");
@@ -277,7 +277,7 @@ public class UiJavaResources {
   public static final MockJavaResource IMAGE = new MockJavaResource(
       "com.google.gwt.user.client.ui.Image") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("import com.google.gwt.resources.client.ImageResource;\n");
@@ -291,7 +291,7 @@ public class UiJavaResources {
   public static final MockJavaResource IMAGE_RESOURCE = new MockJavaResource(
       "com.google.gwt.resources.client.ImageResource") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.resources.client;\n");
       code.append("public class ImageResource  {\n");
@@ -303,7 +303,7 @@ public class UiJavaResources {
   public static final MockJavaResource IS_WIDGET = new MockJavaResource(
       "com.google.gwt.user.client.ui.IsWidget") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public interface IsWidget  {\n");
@@ -315,7 +315,7 @@ public class UiJavaResources {
   public static final MockJavaResource LABEL = new MockJavaResource(
       "com.google.gwt.user.client.ui.Label") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("import com.google.gwt.event.dom.client.ClickEvent;\n");
@@ -333,7 +333,7 @@ public class UiJavaResources {
   public static final MockJavaResource LAYOUT_PANEL = new MockJavaResource(
       "com.google.gwt.user.client.ui.LayoutPanel") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class LayoutPanel extends Widget {\n");
@@ -344,7 +344,7 @@ public class UiJavaResources {
   public static final MockJavaResource LIST_BOX = new MockJavaResource(
       "com.google.gwt.user.client.ui.ListBox") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class ListBox extends Widget {\n");
@@ -355,7 +355,7 @@ public class UiJavaResources {
   public static final MockJavaResource MENU_BAR = new MockJavaResource(
       "com.google.gwt.user.client.ui.MenuBar") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class MenuBar extends Widget {\n");
@@ -366,7 +366,7 @@ public class UiJavaResources {
   public static final MockJavaResource MENU_ITEM = new MockJavaResource(
       "com.google.gwt.user.client.ui.MenuItem") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("import com.google.gwt.user.client.Command;\n");
@@ -380,7 +380,7 @@ public class UiJavaResources {
   public static final MockJavaResource MENU_ITEM_SEPARATOR = new MockJavaResource(
       "com.google.gwt.user.client.ui.MenuItemSeparator") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("import com.google.gwt.user.client.Command;\n");
@@ -392,7 +392,7 @@ public class UiJavaResources {
   public static final MockJavaResource MOUSE_OVER_EVENT = new MockJavaResource(
       "com.google.gwt.event.dom.client.MouseOverEvent") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.event.dom.client;\n");
       code.append("import com.google.gwt.event.shared.GwtEvent;\n");
@@ -404,7 +404,7 @@ public class UiJavaResources {
   public static final MockJavaResource MOUSE_OVER_HANDLER = new MockJavaResource(
       "com.google.gwt.event.dom.client.MouseOverHandler") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.event.dom.client;\n");
       code.append("import com.google.gwt.event.shared.EventHandler;\n");
@@ -417,7 +417,7 @@ public class UiJavaResources {
   public static final MockJavaResource NUMBER_LABEL = new MockJavaResource(
       "com.google.gwt.user.client.ui.NumberLabel") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("import com.google.gwt.i18n.client.NumberFormat;\n");
@@ -431,7 +431,7 @@ public class UiJavaResources {
   public static final MockJavaResource NUMBER_FORMAT = new MockJavaResource(
       "com.google.gwt.i18n.client.NumberFormat") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.i18n.client;\n");
       code.append("public class NumberFormat {\n");
@@ -442,7 +442,7 @@ public class UiJavaResources {
   public static final MockJavaResource RENDERER = new MockJavaResource(
       "com.google.gwt.text.shared.Renderer") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.text.shared;\n");
       code.append("public class Renderer<T> {\n");
@@ -453,7 +453,7 @@ public class UiJavaResources {
   public static final MockJavaResource SPLIT_LAYOUT_PANEL = new MockJavaResource(
       "com.google.gwt.user.client.ui.SplitLayoutPanel") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class SplitLayoutPanel extends DockLayoutPanel {\n");
@@ -464,7 +464,7 @@ public class UiJavaResources {
   public static final MockJavaResource STACK_LAYOUT_PANEL = new MockJavaResource(
       "com.google.gwt.user.client.ui.StackLayoutPanel") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class StackLayoutPanel extends Widget {\n");
@@ -475,7 +475,7 @@ public class UiJavaResources {
   public static final MockJavaResource STACK_PANEL = new MockJavaResource(
       "com.google.gwt.user.client.ui.StackPanel") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class StackPanel extends Widget {\n");
@@ -486,7 +486,7 @@ public class UiJavaResources {
   public static final MockJavaResource STYLE = new MockJavaResource(
       "com.google.gwt.dom.client.Style") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.dom.client;\n");
       code.append("public class Style  {\n");
@@ -498,7 +498,7 @@ public class UiJavaResources {
   public static final MockJavaResource TAB_LAYOUT_PANEL = new MockJavaResource(
       "com.google.gwt.user.client.ui.TabLayoutPanel") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class TabLayoutPanel extends Widget {\n");
@@ -509,7 +509,7 @@ public class UiJavaResources {
   public static final MockJavaResource TAB_PANEL = new MockJavaResource(
       "com.google.gwt.user.client.ui.TabPanel") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class TabPanel extends Widget {\n");
@@ -520,7 +520,7 @@ public class UiJavaResources {
   public static final MockJavaResource TEXT_BOX_BASE = new MockJavaResource(
       "com.google.gwt.user.client.ui.TextBoxBase") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class TextBoxBase {\n");
@@ -533,7 +533,7 @@ public class UiJavaResources {
   public static final MockJavaResource TREE = new MockJavaResource(
       "com.google.gwt.user.client.ui.Tree") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class Tree extends Widget {\n");
@@ -544,7 +544,7 @@ public class UiJavaResources {
   public static final MockJavaResource TREE_ITEM = new MockJavaResource(
       "com.google.gwt.user.client.ui.TreeItem") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class TreeItem extends UIObject {\n");
@@ -555,7 +555,7 @@ public class UiJavaResources {
   public static final MockJavaResource TIME_ZONE = new MockJavaResource(
       "com.google.gwt.i18n.client.TimeZone") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.i18n.client;\n");
       code.append("public class TimeZone {\n");
@@ -566,7 +566,7 @@ public class UiJavaResources {
   public static final MockJavaResource UI_BINDER = new MockJavaResource(
       "com.google.gwt.uibinder.client.UiBinder") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.uibinder.client;\n");
       code.append("public interface UiBinder<U, O> {\n");
@@ -577,7 +577,7 @@ public class UiJavaResources {
   public static final MockJavaResource UI_FACTORY = new MockJavaResource(
       "com.google.gwt.uibinder.client.UiFactory") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.uibinder.client;\n");
       code.append("import java.lang.annotation.Target;\n");
@@ -590,7 +590,7 @@ public class UiJavaResources {
   public static final MockJavaResource UI_OBJECT = new MockJavaResource(
       "com.google.gwt.user.client.ui.UIObject") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class UIObject {\n");
@@ -601,7 +601,7 @@ public class UiJavaResources {
   public static final MockJavaResource VALUE_LABEL = new MockJavaResource(
       "com.google.gwt.user.client.ui.ValueLabel") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("import com.google.gwt.text.shared.Renderer;\n");
@@ -614,7 +614,7 @@ public class UiJavaResources {
   public static final MockJavaResource WIDGET = new MockJavaResource(
       "com.google.gwt.user.client.ui.Widget") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class Widget extends UIObject {\n");

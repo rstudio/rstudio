@@ -20,8 +20,8 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.JdtCompiler.AdditionalTypeProviderDelegate;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
-import com.google.gwt.dev.javac.impl.MockResourceOracle;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.MockResourceOracle;
 import com.google.gwt.dev.jjs.JavaAstConstructor;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
@@ -216,7 +216,7 @@ public abstract class JJSTestBase extends TestCase {
       throws UnableToCompleteException {
     sourceOracle.addOrReplace(new MockJavaResource("test.EntryPoint") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package test;\n");
         for (String snippetImport : snippetImports) {
@@ -245,7 +245,7 @@ public abstract class JJSTestBase extends TestCase {
   protected void addBuiltinClasses(MockResourceOracle sourceOracle) {
     sourceOracle.addOrReplace(new MockJavaResource("java.lang.RuntimeException") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         return "package java.lang;" +
           "public class RuntimeException extends Exception { }";
       }
@@ -253,7 +253,7 @@ public abstract class JJSTestBase extends TestCase {
 
     sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.lang.Exceptions") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         return "package com.google.gwt.lang;" +
           "public class Exceptions { static boolean throwAssertionError() { throw new RuntimeException(); } }";
       }
@@ -261,7 +261,7 @@ public abstract class JJSTestBase extends TestCase {
 
     sourceOracle.addOrReplace(new MockJavaResource("java.lang.String") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         return "package java.lang;" +
           "public class String {" +
           "  public int length() { return 0; }" +

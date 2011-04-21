@@ -13,12 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.javac.impl;
+package com.google.gwt.dev.javac.testing.impl;
 
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.ResourceOracle;
-
-import junit.framework.Assert;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,7 +40,10 @@ public class MockResourceOracle implements ResourceOracle {
     Map<String, Resource> newMap = new HashMap<String, Resource>(exportedMap);
     for (Resource resource : resources) {
       String path = resource.getPath();
-      Assert.assertFalse(newMap.containsKey(path));
+      if (newMap.containsKey(path)) {
+        throw new IllegalArgumentException(String.format(
+            "Encountered two resources with the same path [%s]", path));
+      }
       newMap.put(path, resource);
     }
     export(newMap);
@@ -75,7 +76,10 @@ public class MockResourceOracle implements ResourceOracle {
     Map<String, Resource> newMap = new HashMap<String, Resource>(exportedMap);
     for (String path : paths) {
       Resource oldValue = newMap.remove(path);
-      Assert.assertNotNull(oldValue);
+      if (oldValue == null) {
+        throw new IllegalArgumentException(String.format(
+            "Attempted to remove non-existing resource with path [%s]", path));
+      }
     }
     export(newMap);
   }
@@ -84,7 +88,10 @@ public class MockResourceOracle implements ResourceOracle {
     Map<String, Resource> newMap = new HashMap<String, Resource>(exportedMap);
     for (Resource resource : resources) {
       String path = resource.getPath();
-      Assert.assertTrue(newMap.containsKey(path));
+      if (!newMap.containsKey(path)) {
+        throw new IllegalArgumentException(String.format(
+            "Attempted to replace non-existing resource with path [%s]", path));
+      }
       newMap.put(path, resource);
     }
     export(newMap);

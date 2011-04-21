@@ -18,7 +18,7 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 
@@ -37,7 +37,7 @@ public class ReplaceRunAsyncsErrorMessagesTest extends JJSTestBase {
   public void testAmbiguousClassLiteral() {
     sourceOracle.addOrReplace(new MockJavaResource("test.SplitPoint3") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package test;\n");
         code.append("import com.google.gwt.core.client.GWT;\n");
@@ -73,7 +73,7 @@ public class ReplaceRunAsyncsErrorMessagesTest extends JJSTestBase {
     sourceOracle.addOrReplace(new MockJavaResource(
         "com.google.gwt.lang.asyncloaders.AsyncLoader" + sp) {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package com.google.gwt.lang.asyncloaders;\n");
         code.append("import com.google.gwt.core.client.RunAsyncCallback;");
@@ -92,7 +92,7 @@ public class ReplaceRunAsyncsErrorMessagesTest extends JJSTestBase {
         "com.google.gwt.lang.asyncloaders.AsyncLoader" + sp
             + FragmentLoaderCreator.CALLBACK_LIST_SUFFIX) {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package com.google.gwt.lang.asyncloaders;\n");
         code.append("import com.google.gwt.core.client.RunAsyncCallback;");
@@ -116,7 +116,7 @@ public class ReplaceRunAsyncsErrorMessagesTest extends JJSTestBase {
     sourceOracle.addOrReplace(new MockJavaResource(
         "com.google.gwt.core.client.impl.AsyncFragmentLoader") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package com.google.gwt.core.client.impl;\n");
         code.append("public class AsyncFragmentLoader {\n");
@@ -135,7 +135,7 @@ public class ReplaceRunAsyncsErrorMessagesTest extends JJSTestBase {
     sourceOracle.addOrReplace(new MockJavaResource(
         "com.google.gwt.core.client.prefetch.RunAsyncCode") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package com.google.gwt.core.client.prefetch;\n");
         code.append("public class RunAsyncCode {\n");
@@ -150,7 +150,7 @@ public class ReplaceRunAsyncsErrorMessagesTest extends JJSTestBase {
 
     sourceOracle.addOrReplace(new MockJavaResource("test.SplitPoint1") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package test;\n");
         code.append("import com.google.gwt.core.client.GWT;\n");
@@ -166,7 +166,7 @@ public class ReplaceRunAsyncsErrorMessagesTest extends JJSTestBase {
 
     sourceOracle.addOrReplace(new MockJavaResource("test.SplitPoint2") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package test;\n");
         code.append("import com.google.gwt.core.client.GWT;\n");

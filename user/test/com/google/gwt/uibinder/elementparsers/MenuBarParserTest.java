@@ -16,7 +16,7 @@
 package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.MenuItemSeparator;
@@ -116,7 +116,7 @@ public class MenuBarParserTest extends TestCase {
     MockJavaResource itemSubclass = new MockJavaResource(
         "com.google.gwt.user.client.ui.MyItem") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         String superName = MenuItem.class.getCanonicalName();
         StringBuffer code = new StringBuffer();
         code.append("package com.google.gwt.user.client.ui;\n");
@@ -150,7 +150,7 @@ public class MenuBarParserTest extends TestCase {
     MockJavaResource itemSubclass = new MockJavaResource(
         "com.google.gwt.user.client.ui.MySeparator") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         String superName = MenuItemSeparator.class.getCanonicalName();
         StringBuffer code = new StringBuffer();
         code.append("package com.google.gwt.user.client.ui;\n");

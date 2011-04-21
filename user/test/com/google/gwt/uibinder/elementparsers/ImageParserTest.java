@@ -16,7 +16,7 @@
 package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.uibinder.rebind.FieldWriter;
 
 import junit.framework.TestCase;
@@ -32,7 +32,7 @@ public class ImageParserTest extends TestCase {
   private static final MockJavaResource IMAGE_SUBCLASS_NO_CONSTRUCTOR = new MockJavaResource(
       "my.MyImage") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package my;\n");
       code.append("import com.google.gwt.user.client.ui.Image;\n");
@@ -44,7 +44,7 @@ public class ImageParserTest extends TestCase {
   private static final MockJavaResource IMAGE_SUBCLASS_RESOURCE_CONSTRUCTOR = new MockJavaResource(
       "my.MyConstructedImage") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package my;\n");
       code.append("import com.google.gwt.user.client.ui.Image;\n");

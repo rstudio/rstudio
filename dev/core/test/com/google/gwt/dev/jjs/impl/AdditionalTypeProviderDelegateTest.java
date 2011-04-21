@@ -18,7 +18,7 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.GeneratedUnit;
 import com.google.gwt.dev.javac.JdtCompiler.AdditionalTypeProviderDelegate;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -76,7 +76,7 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
      // Create a source class that passes fine (just to test infrastructure.)
      sourceOracle.addOrReplace(new MockJavaResource("test.A") {
        @Override
-       protected CharSequence getContent() {
+       public CharSequence getContent() {
          StringBuffer code = new StringBuffer();
          code.append("package test;\n");
          code.append("class A {\n");
@@ -92,7 +92,7 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
      // by the AdditionalTypeProviderDelegate.
      sourceOracle.addOrReplace(new MockJavaResource("test.B") {
        @Override
-       protected CharSequence getContent() {
+       public CharSequence getContent() {
          StringBuffer code = new StringBuffer();
          code.append("package test;\n");
          code.append("import myPackage.InsertedClass;");
@@ -111,7 +111,7 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
      // class anyway?
      sourceOracle.addOrReplace(new MockJavaResource("test.B1") {
        @Override
-       protected CharSequence getContent() {
+       public CharSequence getContent() {
          StringBuffer code = new StringBuffer();
          code.append("package test;\n");
          code.append("class B1 {\n");
@@ -127,7 +127,7 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
      // Create a source file containing a reference to an unknown class.
      sourceOracle.addOrReplace(new MockJavaResource("test.C") {
        @Override
-       protected CharSequence getContent() {
+       public CharSequence getContent() {
          StringBuffer code = new StringBuffer();
          code.append("package test;\n");
          code.append("import myPackage.UnknownClass;");
@@ -145,7 +145,7 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
      // import statement.
      sourceOracle.addOrReplace(new MockJavaResource("test.D") {
        @Override
-       protected CharSequence getContent() {
+       public CharSequence getContent() {
          StringBuffer code = new StringBuffer();
          code.append("package test;\n");
          code.append("class D {\n");

@@ -22,8 +22,8 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
-import com.google.gwt.dev.javac.impl.JavaResourceBase;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
@@ -96,7 +96,7 @@ public class PlaceHistoryGeneratorContextTest extends TestCase {
     MockJavaResource intf = new MockJavaResource("my.MyPlaceHistoryMapper") {
 
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package my;\n");
         code.append("import com.google.gwt.place.shared.PlaceHistoryMapper;\n");
@@ -231,7 +231,7 @@ public class PlaceHistoryGeneratorContextTest extends TestCase {
     MockJavaResource intf = new MockJavaResource("my.MyPlaceHistoryMapper") {
 
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package my;\n");
         code.append("import com.google.gwt.place.shared.PlaceHistoryMapperWithFactory;\n");
@@ -276,7 +276,7 @@ public class PlaceHistoryGeneratorContextTest extends TestCase {
     MockJavaResource intf = new MockJavaResource("my.MyPlaceHistoryMapper") {
 
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package my;\n");
         code.append("import com.google.gwt.place.shared.PlaceHistoryMapperWithFactory;\n");
@@ -322,7 +322,7 @@ public class PlaceHistoryGeneratorContextTest extends TestCase {
     MockJavaResource intf = new MockJavaResource("my.MyPlaceHistoryMapper") {
 
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package my;\n");
         code.append("import com.google.gwt.place.shared.Place;\n");

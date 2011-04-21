@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.javac.impl;
+package com.google.gwt.dev.javac.testing.impl;
 
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Util;
@@ -48,6 +48,8 @@ public abstract class MockResource extends Resource {
     this.path = path;
   }
 
+  public abstract CharSequence getContent();
+
   @Override
   public long getLastModified() {
     return creationTime;
@@ -76,8 +78,6 @@ public abstract class MockResource extends Resource {
   public boolean wasRerooted() {
     return false;
   }
-
-  protected abstract CharSequence getContent();
 
   protected void touch() {
     creationTime = getNextCreationTime();

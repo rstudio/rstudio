@@ -16,7 +16,7 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
@@ -105,7 +105,7 @@ public class ControlFlowAnalyzerTest extends JJSTestBase {
   public void testRescueJavaScriptObjectFromJsni() throws Exception {
       sourceOracle.addOrReplace(new MockJavaResource("test.JsoIntf") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package test;");
         code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
@@ -118,7 +118,7 @@ public class ControlFlowAnalyzerTest extends JJSTestBase {
 
       sourceOracle.addOrReplace(new MockJavaResource("test.UpRefIntf") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package test;");
         code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
@@ -131,7 +131,7 @@ public class ControlFlowAnalyzerTest extends JJSTestBase {
 
      sourceOracle.addOrReplace(new MockJavaResource("test.NonImplementor") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package test;");
         code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
@@ -145,7 +145,7 @@ public class ControlFlowAnalyzerTest extends JJSTestBase {
 
      sourceOracle.addOrReplace(new MockJavaResource("test.VirtualUpRef") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package test;");
         code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
@@ -159,7 +159,7 @@ public class ControlFlowAnalyzerTest extends JJSTestBase {
 
     sourceOracle.addOrReplace(new MockJavaResource("test.SingleJso") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package test;");
         code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
@@ -175,7 +175,7 @@ public class ControlFlowAnalyzerTest extends JJSTestBase {
 
     sourceOracle.addOrReplace(new MockJavaResource("test.Foo") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package test;\n");
         code.append("import com.google.gwt.core.client.JavaScriptObject;\n");

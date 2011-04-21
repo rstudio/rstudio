@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,19 +13,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.javac.impl;
+package com.google.gwt.dev.javac.testing.impl;
 
-public class StaticJavaResource extends MockJavaResource {
+import com.google.gwt.dev.javac.Shared;
 
-  private final CharSequence source;
+/**
+ * Convenience base class for mock resources representing a java type.
+ */
+public abstract class MockJavaResource extends MockResource {
 
-  public StaticJavaResource(String qualifiedTypeName, CharSequence source) {
-    super(qualifiedTypeName);
-    this.source = source;
+  private final String qualifiedTypeName;
+
+  public MockJavaResource(String qualifiedTypeName) {
+    super(Shared.toPath(qualifiedTypeName));
+    this.qualifiedTypeName = qualifiedTypeName;
   }
 
-  @Override
-  protected CharSequence getContent() {
-    return source;
+  public String getTypeName() {
+    return qualifiedTypeName;
   }
 }

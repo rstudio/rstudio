@@ -17,7 +17,7 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 
 /**
@@ -29,7 +29,7 @@ public class RunAsyncNameTest extends JJSTestBase {
   public void setUp() {
     sourceOracle.addOrReplace(new MockJavaResource("test.CallRunAsync") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuffer code = new StringBuffer();
         code.append("package test;\n");
         code.append("import com.google.gwt.core.client.GWT;\n");

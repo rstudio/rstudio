@@ -18,7 +18,7 @@ package com.google.gwt.dev.javac;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.javac.typemodel.JClassType;
 import com.google.gwt.dev.javac.typemodel.JMethod;
 
@@ -32,7 +32,7 @@ public class JavaSourceParserTest extends CompilationStateTestBase {
 
   private static final MockJavaResource BAR = new MockJavaResource("test.Bar") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package test;\n");
       code.append("public class Bar {\n");
@@ -46,7 +46,7 @@ public class JavaSourceParserTest extends CompilationStateTestBase {
 
   private static final MockJavaResource BAZ = new MockJavaResource("test.Baz") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package test;\n");
       code.append("public class Baz {\n");
@@ -65,7 +65,7 @@ public class JavaSourceParserTest extends CompilationStateTestBase {
 
   private static final MockJavaResource FOO = new MockJavaResource("test.Foo") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package test;\n");
       code.append("public class Foo {\n");
@@ -78,7 +78,7 @@ public class JavaSourceParserTest extends CompilationStateTestBase {
   private static final MockJavaResource FOO_INT = new MockJavaResource(
       "test.FooInt") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package test;\n");
       code.append("public interface FooInt {\n");

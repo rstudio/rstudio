@@ -24,8 +24,8 @@ import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
-import com.google.gwt.dev.javac.impl.JavaResourceBase;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
@@ -190,7 +190,7 @@ public class ResourceGeneratorUtilTest extends TestCase {
         Arrays.asList(JavaResourceBase.getStandardResources()));
     res.add(new MockJavaResource("test.A") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package test;");
         code.append("interface A {");
@@ -205,7 +205,7 @@ public class ResourceGeneratorUtilTest extends TestCase {
     });
     res.add(new MockJavaResource("test.B") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package test;");
         code.append("abstract class B {");
@@ -217,7 +217,7 @@ public class ResourceGeneratorUtilTest extends TestCase {
     });
     res.add(new MockJavaResource("test.C") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package test;");
         code.append("interface C {");
@@ -228,7 +228,7 @@ public class ResourceGeneratorUtilTest extends TestCase {
     });
     res.add(new MockJavaResource("test.D") {
       @Override
-      protected CharSequence getContent() {
+      public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package test;");
         code.append("interface D {");

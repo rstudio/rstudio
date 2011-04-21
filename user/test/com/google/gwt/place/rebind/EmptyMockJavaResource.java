@@ -15,7 +15,7 @@
  */
 package com.google.gwt.place.rebind;
 
-import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 
 /**
  * Constructs an empty interface representation of a type.
@@ -48,7 +48,7 @@ class EmptyMockJavaResource extends MockJavaResource {
   }
 
   @Override
-  protected CharSequence getContent() {
+  public CharSequence getContent() {
     return code;
   }
 }

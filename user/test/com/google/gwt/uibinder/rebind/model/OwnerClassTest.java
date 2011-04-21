@@ -24,7 +24,7 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -78,7 +78,7 @@ public class OwnerClassTest extends TestCase {
         new MockJavaResource(
             "com.google.gwt.uibinder.rebind.model.EmptyOwnerClass") {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package com.google.gwt.uibinder.rebind.model;\n");
             code.append("public class EmptyOwnerClass {\n");
@@ -89,7 +89,7 @@ public class OwnerClassTest extends TestCase {
         new MockJavaResource(
             "com.google.gwt.uibinder.rebind.model.BadUiFactoryClass") {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package com.google.gwt.uibinder.rebind.model;\n");
             code.append("import com.google.gwt.uibinder.client.UiFactory;\n");
@@ -102,7 +102,7 @@ public class OwnerClassTest extends TestCase {
         new MockJavaResource(
             "com.google.gwt.uibinder.rebind.model.UiFieldsClass") {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package com.google.gwt.uibinder.rebind.model;\n");
             code.append("import com.google.gwt.user.client.ui.Button;\n");
@@ -118,7 +118,7 @@ public class OwnerClassTest extends TestCase {
         new MockJavaResource(
             "com.google.gwt.uibinder.rebind.model.UiHandlersClass") {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package com.google.gwt.uibinder.rebind.model;\n");
             code.append("import com.google.gwt.event.dom.client.ClickEvent;\n");
@@ -134,7 +134,7 @@ public class OwnerClassTest extends TestCase {
         new MockJavaResource(
             "com.google.gwt.uibinder.rebind.model.BadUiFieldsClass") {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package com.google.gwt.uibinder.rebind.model;\n");
             code.append("import com.google.gwt.uibinder.client.UiField;\n");
@@ -147,7 +147,7 @@ public class OwnerClassTest extends TestCase {
         new MockJavaResource(
             "com.google.gwt.uibinder.rebind.model.UiFactoryClass") {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package com.google.gwt.uibinder.rebind.model;\n");
             code.append("import com.google.gwt.uibinder.client.UiFactory;\n");
@@ -161,7 +161,7 @@ public class OwnerClassTest extends TestCase {
         },
         new MockJavaResource("com.google.gwt.uibinder.rebind.model.Abstract") {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package com.google.gwt.uibinder.rebind.model;\n");
             code.append("public class Abstract<T> {");
@@ -172,7 +172,7 @@ public class OwnerClassTest extends TestCase {
         new MockJavaResource(
             "com.google.gwt.uibinder.rebind.model.WildcardWidgetFactory") {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package com.google.gwt.uibinder.rebind.model;\n");
             code.append("import com.google.gwt.uibinder.client.UiFactory;\n");
@@ -186,7 +186,7 @@ public class OwnerClassTest extends TestCase {
         new MockJavaResource(
             "com.google.gwt.uibinder.rebind.model.ParamterizedWidgetFactory") {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package com.google.gwt.uibinder.rebind.model;\n");
             code.append("import com.google.gwt.uibinder.client.UiFactory;\n");
@@ -200,7 +200,7 @@ public class OwnerClassTest extends TestCase {
         new MockJavaResource(
             "com.google.gwt.uibinder.rebind.model.TooManyGenerics") {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package com.google.gwt.uibinder.rebind.model;\n");
             code.append("import com.google.gwt.uibinder.client.UiFactory;\n");
@@ -216,7 +216,7 @@ public class OwnerClassTest extends TestCase {
         new MockJavaResource(
             "com.google.gwt.uibinder.rebind.model.DuplicateUiFactoryClass") {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package com.google.gwt.uibinder.rebind.model;\n");
             code.append("import com.google.gwt.uibinder.client.UiFactory;\n");
@@ -233,7 +233,7 @@ public class OwnerClassTest extends TestCase {
         new MockJavaResource(
             "com.google.gwt.uibinder.rebind.model.ParentUiBinderClass") {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package com.google.gwt.uibinder.rebind.model;\n");
             code.append("import com.google.gwt.event.dom.client.MouseOverEvent;\n");
@@ -253,7 +253,7 @@ public class OwnerClassTest extends TestCase {
         new MockJavaResource(
             "com.google.gwt.uibinder.rebind.model.ChildUiBinderClass") {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package com.google.gwt.uibinder.rebind.model;\n");
             code.append("import com.google.gwt.event.dom.client.ClickEvent;\n");

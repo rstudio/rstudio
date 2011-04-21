@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 
@@ -29,7 +29,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     final MockJavaResource CLASS_DEP_ORIG =
         new MockJavaResource(CLASS_DEP_TYPE_NAME) {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package test;\n");
             code.append("public class ClassDependency {\n");
@@ -50,7 +50,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     final MockJavaResource CLASS_DEP_NO_CHANGE =
         new MockJavaResource(CLASS_DEP_TYPE_NAME) {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package test;\n");
             code.append("public class ClassDependency {\n");
@@ -70,7 +70,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     final MockJavaResource CLASS_DEP_NO_PRIVATE =
         new MockJavaResource(CLASS_DEP_TYPE_NAME) {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package test;\n");
             code.append("public class ClassDependency {\n");
@@ -90,7 +90,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     final MockJavaResource CLASS_DEP_NO_PROTECTED_FIELD =
         new MockJavaResource(CLASS_DEP_TYPE_NAME) {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package test;\n");
             code.append("public class ClassDependency {\n");
@@ -110,7 +110,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     final MockJavaResource CLASS_DEP_NO_DEFAULT_FIELD =
         new MockJavaResource(CLASS_DEP_TYPE_NAME) {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package test;\n");
             code.append("public class ClassDependency {\n");
@@ -130,7 +130,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     final MockJavaResource CLASS_DEP_NO_PUBLIC_FIELD =
         new MockJavaResource(CLASS_DEP_TYPE_NAME) {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package test;\n");
             code.append("public class ClassDependency {\n");
@@ -150,7 +150,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     final MockJavaResource CLASS_DEP_FIELD_VALUE_CHANGE =
         new MockJavaResource(CLASS_DEP_TYPE_NAME) {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package test;\n");
             code.append("public class ClassDependency {\n");
@@ -171,7 +171,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     final MockJavaResource CLASS_DEP_ORDER =
         new MockJavaResource(CLASS_DEP_TYPE_NAME) {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package test;\n");
             code.append("public class ClassDependency {\n");
@@ -193,7 +193,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     final MockJavaResource CLASS_DEP_INNER =
         new MockJavaResource(CLASS_DEP_TYPE_NAME) {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package test;\n");
             code.append("public class ClassDependency {\n");
@@ -217,7 +217,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     final MockJavaResource CLASS_DEP_DEPRECATED_FIELD =
         new MockJavaResource(CLASS_DEP_TYPE_NAME) {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package test;\n");
             code.append("public class ClassDependency {\n");
@@ -238,7 +238,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     final MockJavaResource CLASS_DEP_DEPRECATED_METHOD =
         new MockJavaResource(CLASS_DEP_TYPE_NAME) {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package test;\n");
             code.append("public class ClassDependency {\n");
@@ -260,7 +260,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     final MockJavaResource CLASS_DEP_ANNOTATED_FIELD =
         new MockJavaResource(CLASS_DEP_TYPE_NAME) {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package test;\n");
             code.append("public class ClassDependency {\n");
@@ -281,7 +281,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     final MockJavaResource CLASS_DEP_ANNOTATED_METHOD =
         new MockJavaResource(CLASS_DEP_TYPE_NAME) {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package test;\n");
             code.append("public class ClassDependency {\n");
@@ -302,7 +302,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     final MockJavaResource CLASS_DEP_JAVADOC =
         new MockJavaResource(CLASS_DEP_TYPE_NAME) {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package test;\n");
             code.append("public class ClassDependency {\n");
@@ -326,7 +326,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     final MockJavaResource TEST_ANNOTATION =
         new MockJavaResource("test.TestAnnotation") {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package test;\n");
             code.append("public @interface TestAnnotation {\n");
@@ -364,7 +364,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     MockJavaResource ILLEGAL_STATE_EXCEPTION =
         new MockJavaResource("java.lang.IllegalStateException") {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package java.lang;\n");
             code.append("public class IllegalStateException extends Throwable {}\n");
@@ -374,7 +374,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     MockJavaResource NUMBER_FORMAT_EXCEPTION =
         new MockJavaResource("java.lang.NumberFormatException") {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package java.lang;\n");
             code.append("public class NumberFormatException extends Throwable {}\n");
@@ -384,7 +384,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     MockJavaResource CLASS_DEP_EXCEPTION_ORIG =
         new MockJavaResource(CLASS_DEP_TYPE_NAME) {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package test;\n");
             code.append("public class ClassDependency {\n");
@@ -399,7 +399,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     MockJavaResource CLASS_DEP_EXCEPTION_MOD1 =
         new MockJavaResource(CLASS_DEP_TYPE_NAME) {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package test;\n");
             code.append("public class ClassDependency {\n");
@@ -412,7 +412,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     MockJavaResource CLASS_DEP_EXCEPTION_MOD2 =
         new MockJavaResource(CLASS_DEP_TYPE_NAME) {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package test;\n");
             code.append("public class ClassDependency {\n");
@@ -428,7 +428,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     MockJavaResource CLASS_DEP_EXCEPTION_MOD3 =
         new MockJavaResource(CLASS_DEP_TYPE_NAME) {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package test;\n");
             code.append("public class ClassDependency {\n");
@@ -456,7 +456,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     MockJavaResource CLASS_DEP_GENERIC_ORIG =
         new MockJavaResource(CLASS_DEP_TYPE_NAME) {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package test;\n");
             code.append("public class ClassDependency<T> {\n");
@@ -468,7 +468,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     MockJavaResource CLASS_DEP_GENERIC_PARAMETERIZED =
         new MockJavaResource(CLASS_DEP_TYPE_NAME) {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package test;\n");
             code.append("import java.util.Map;");
@@ -487,7 +487,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     MockJavaResource CLASS_DEP_INTERFACE_ORIG =
         new MockJavaResource(CLASS_DEP_TYPE_NAME) {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package test;\n");
             code.append("import java.util.Map;");
@@ -501,7 +501,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     MockJavaResource CLASS_DEP_INTERFACE_MOD1 =
         new MockJavaResource(CLASS_DEP_TYPE_NAME) {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package test;\n");
             code.append("import java.util.Map;");
@@ -516,7 +516,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     MockJavaResource CLASS_DEP_INTERFACE_MOD2 =
         new MockJavaResource(CLASS_DEP_TYPE_NAME) {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package test;\n");
             code.append("import java.util.Map;");
@@ -531,7 +531,7 @@ public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
     MockJavaResource CLASS_DEP_INTERFACE_MOD3 =
         new MockJavaResource(CLASS_DEP_TYPE_NAME) {
           @Override
-          protected CharSequence getContent() {
+          public CharSequence getContent() {
             StringBuffer code = new StringBuffer();
             code.append("package test;\n");
             code.append("import java.util.Map;");

@@ -20,7 +20,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.TypeOracleTestingUtils;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.shell.FailErrorLogger;
 import com.google.gwt.i18n.server.GwtLocaleFactoryImpl;
 import com.google.gwt.i18n.shared.GwtLocale;
@@ -39,7 +39,7 @@ public class LocalizableLinkageCreatorTest extends TestCase {
   private static final MockJavaResource LOCALIZABLE = new MockJavaResource(
       "com.google.gwt.i18n.client.Localizable") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.i18n.client;\n");
       code.append("public interface Localizable { }\n");
@@ -50,7 +50,7 @@ public class LocalizableLinkageCreatorTest extends TestCase {
   private static final MockJavaResource TEST = new MockJavaResource(
       "foo.Test") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package foo;\n");
       code.append("import com.google.gwt.i18n.client.Localizable;\n");
@@ -62,7 +62,7 @@ public class LocalizableLinkageCreatorTest extends TestCase {
   private static final MockJavaResource TEST_HE = new MockJavaResource(
       "foo.Test_he") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package foo;\n");
       code.append("public class Test_he extends Test { }\n");
@@ -73,7 +73,7 @@ public class LocalizableLinkageCreatorTest extends TestCase {
   private static final MockJavaResource TEST_IW = new MockJavaResource(
       "foo.Test_iw") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package foo;\n");
       code.append("public class Test_iw extends Test { }\n");

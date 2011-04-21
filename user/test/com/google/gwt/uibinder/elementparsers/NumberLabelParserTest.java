@@ -16,7 +16,7 @@
 package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.user.client.ui.NumberLabel;
@@ -34,7 +34,7 @@ public class NumberLabelParserTest extends TestCase {
   private static final MockJavaResource NUMBERLABEL_SUBCLASS_NO_CONSTRUCTOR = new MockJavaResource(
       "my.MyNumberLabel") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package my;\n");
       code.append("import com.google.gwt.user.client.ui.NumberLabel;\n");
@@ -46,7 +46,7 @@ public class NumberLabelParserTest extends TestCase {
   private static final MockJavaResource NUMBERLABEL_SUBCLASS_FORMAT_CONSTRUCTOR = new MockJavaResource(
       "my.MyConstructedNumberLabel") {
     @Override
-    protected CharSequence getContent() {
+    public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package my;\n");
       code.append("import com.google.gwt.user.client.ui.NumberLabel;\n");
