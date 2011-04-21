@@ -1,3 +1,6 @@
+// TODO: Handle soft- vs. hard-tab, dynamic tab sizes
+// TODO: Hitting Enter in the middle of a line treats indentation as if it's at the end of the line
+
 define("mode/r_autoindent", function(require, exports, module) {
 
 var IndentManager = function(doc, tokenizer) {
