@@ -20,7 +20,8 @@ git merge \
     origin/bugfix-active-line-back \
     origin/bugfix-eclipse-print-margin \
     origin/bugfix-selecttostartend \
-	origin/patch-advanced-indent \
+    origin/patch-advanced-indent \
+    origin/bugfix-isfullwidth-perf \
 
 
 make clean

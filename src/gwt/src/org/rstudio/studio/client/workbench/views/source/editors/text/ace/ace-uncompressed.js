@@ -146,7 +146,7 @@ var lookup = function(moduleName) {
     MIT License. http://github.com/280north/narwhal/blob/master/README.md
 */
 
-define('pilot/fixoldbrowsers', function(require, exports, module) {
+define('pilot/fixoldbrowsers', ['require', 'exports', 'module' ], function(require, exports, module) {
 
 /**
  * Brings an environment as close to ECMAScript 5 compliance
@@ -1008,7 +1008,7 @@ if (!String.prototype.trim) {
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('pilot/index', function(require, exports, module) {
+define('pilot/index', ['require', 'exports', 'module' , 'pilot/fixoldbrowsers', 'pilot/types/basic', 'pilot/types/command', 'pilot/types/settings', 'pilot/commands/settings', 'pilot/commands/basic', 'pilot/settings/canon', 'pilot/canon'], function(require, exports, module) {
 
 exports.startup = function(data, reason) {
     require('pilot/fixoldbrowsers');
@@ -1074,7 +1074,7 @@ exports.shutdown = function(data, reason) {
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('pilot/types/basic', function(require, exports, module) {
+define('pilot/types/basic', ['require', 'exports', 'module' , 'pilot/types'], function(require, exports, module) {
 
 var types = require("pilot/types");
 var Type = types.Type;
@@ -1405,7 +1405,7 @@ exports.shutdown = function() {
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('pilot/types', function(require, exports, module) {
+define('pilot/types', ['require', 'exports', 'module' ], function(require, exports, module) {
 
 /**
  * Some types can detect validity, that is to say they can distinguish between
@@ -1688,7 +1688,7 @@ exports.getType = function(typeSpec) {
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('pilot/types/command', function(require, exports, module) {
+define('pilot/types/command', ['require', 'exports', 'module' , 'pilot/canon', 'pilot/types/basic', 'pilot/types'], function(require, exports, module) {
 
 var canon = require("pilot/canon");
 var SelectionType = require("pilot/types/basic").SelectionType;
@@ -1762,7 +1762,7 @@ exports.shutdown = function() {
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('pilot/canon', function(require, exports, module) {
+define('pilot/canon', ['require', 'exports', 'module' , 'pilot/console', 'pilot/stacktrace', 'pilot/oop', 'pilot/useragent', 'pilot/keys', 'pilot/event_emitter', 'pilot/typecheck', 'pilot/catalog', 'pilot/types', 'pilot/lang'], function(require, exports, module) {
 
 var console = require('pilot/console');
 var Trace = require('pilot/stacktrace').Trace;
@@ -2401,7 +2401,7 @@ exports.Request = Request;
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-define('pilot/console', function(require, exports, module) {
+define('pilot/console', ['require', 'exports', 'module' ], function(require, exports, module) {
     
 /**
  * This object represents a "safe console" object that forwards debugging
@@ -2439,7 +2439,7 @@ if (typeof(window) === 'undefined') {
 }
 
 });
-define('pilot/stacktrace', function(require, exports, module) {
+define('pilot/stacktrace', ['require', 'exports', 'module' , 'pilot/useragent', 'pilot/console'], function(require, exports, module) {
     
 var ua = require("pilot/useragent");
 var console = require('pilot/console');
@@ -2808,7 +2808,7 @@ exports.Trace.prototype.log = function(lines) {
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('pilot/useragent', function(require, exports, module) {
+define('pilot/useragent', ['require', 'exports', 'module' ], function(require, exports, module) {
 
 var os = (navigator.platform.match(/mac|win|linux/i) || ["other"])[0].toLowerCase();
 var ua = navigator.userAgent;
@@ -2905,7 +2905,7 @@ exports.getOS = function() {
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('pilot/oop', function(require, exports, module) {
+define('pilot/oop', ['require', 'exports', 'module' ], function(require, exports, module) {
 
 exports.inherits = (function() {
     var tempCtor = function() {};
@@ -2961,7 +2961,7 @@ For more information about SproutCore, visit http://www.sproutcore.com
 
 // Most of the following code is taken from SproutCore with a few changes.
 
-define('pilot/keys', function(require, exports, module) {
+define('pilot/keys', ['require', 'exports', 'module' , 'pilot/oop'], function(require, exports, module) {
 
 var oop = require("pilot/oop");
 
@@ -3085,7 +3085,7 @@ exports.keyCodeToString = function(keyCode) {
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('pilot/event_emitter', function(require, exports, module) {
+define('pilot/event_emitter', ['require', 'exports', 'module' ], function(require, exports, module) {
 
 var EventEmitter = {};
 
@@ -3175,7 +3175,7 @@ exports.EventEmitter = EventEmitter;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('pilot/typecheck', function(require, exports, module) {
+define('pilot/typecheck', ['require', 'exports', 'module' ], function(require, exports, module) {
 
 var objectToString = Object.prototype.toString;
 
@@ -3254,7 +3254,7 @@ exports.isFunction = function(it) {
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('pilot/catalog', function(require, exports, module) {
+define('pilot/catalog', ['require', 'exports', 'module' ], function(require, exports, module) {
 
 
 var extensionSpecs = {};
@@ -3319,7 +3319,7 @@ exports.getExtensionSpecs = function() {
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('pilot/lang', function(require, exports, module) {
+define('pilot/lang', ['require', 'exports', 'module' ], function(require, exports, module) {
 
 exports.stringReverse = function(string) {
     return string.split("").reverse().join("");
@@ -3443,7 +3443,7 @@ exports.deferredCall = function(fcn) {
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('pilot/types/settings', function(require, exports, module) {
+define('pilot/types/settings', ['require', 'exports', 'module' , 'pilot/types/basic', 'pilot/types', 'pilot/settings'], function(require, exports, module) {
 
 var SelectionType = require('pilot/types/basic').SelectionType;
 var DeferredType = require('pilot/types/basic').DeferredType;
@@ -3585,7 +3585,7 @@ exports.shutdown = function(data, reason) {
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('pilot/settings', function(require, exports, module) {
+define('pilot/settings', ['require', 'exports', 'module' , 'pilot/console', 'pilot/oop', 'pilot/types', 'pilot/event_emitter', 'pilot/catalog'], function(require, exports, module) {
 
 /**
  * This plug-in manages settings.
@@ -3908,7 +3908,7 @@ exports.CookiePersister = CookiePersister;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('pilot/commands/settings', function(require, exports, module) {
+define('pilot/commands/settings', ['require', 'exports', 'module' , 'pilot/canon'], function(require, exports, module) {
 
 
 var setCommandSpec = {
@@ -4043,7 +4043,7 @@ exports.shutdown = function(data, reason) {
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('pilot/commands/basic', function(require, exports, module) {
+define('pilot/commands/basic', ['require', 'exports', 'module' , 'pilot/typecheck', 'pilot/canon'], function(require, exports, module) {
 
 
 var checks = require("pilot/typecheck");
@@ -4317,7 +4317,7 @@ exports.shutdown = function(data, reason) {
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('pilot/settings/canon', function(require, exports, module) {
+define('pilot/settings/canon', ['require', 'exports', 'module' ], function(require, exports, module) {
 
 
 var historyLengthSetting = {
@@ -4374,7 +4374,7 @@ exports.shutdown = function(data, reason) {
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('pilot/plugin_manager', function(require, exports, module) {
+define('pilot/plugin_manager', ['require', 'exports', 'module' , 'pilot/promise'], function(require, exports, module) {
 
 var Promise = require("pilot/promise").Promise;
 
@@ -4533,7 +4533,7 @@ exports.catalog = new exports.PluginCatalog();
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('pilot/promise', function(require, exports, module) {
+define('pilot/promise', ['require', 'exports', 'module' , 'pilot/console', 'pilot/stacktrace'], function(require, exports, module) {
 
 var console = require("pilot/console");
 var Trace = require('pilot/stacktrace').Trace;
@@ -4796,7 +4796,7 @@ exports._recent = _recent;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('pilot/environment', function(require, exports, module) {
+define('pilot/environment', ['require', 'exports', 'module' , 'pilot/settings'], function(require, exports, module) {
 
 
 var settings = require("pilot/settings").settings;
@@ -4854,7 +4854,7 @@ exports.create = create;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/editor', function(require, exports, module) {
+define('ace/editor', ['require', 'exports', 'module' , 'pilot/fixoldbrowsers', 'pilot/oop', 'pilot/event', 'pilot/lang', 'pilot/useragent', 'ace/keyboard/textinput', 'ace/mouse_handler', 'ace/keyboard/keybinding', 'ace/edit_session', 'ace/search', 'ace/background_tokenizer', 'ace/range', 'pilot/event_emitter'], function(require, exports, module) {
 
 require("pilot/fixoldbrowsers");
 
@@ -5245,7 +5245,7 @@ var Editor =function(renderer, session) {
         var lineState     = this.bgTokenizer.getState(cursor.row);
         var shouldOutdent = this.mode.checkOutdent(lineState, this.session.getLine(cursor.row), text);
         var line          = this.session.getLine(cursor.row);
-        var lineIndent    = this.mode.getNextLineIndent(lineState, line.slice(0, cursor.column), this.session.getTabString(), this.bgTokenizer, cursor.row);
+        var lineIndent    = this.mode.getNextLineIndent(lineState, line.slice(0, cursor.column), this.session.getTabString(), this.session.getTabSize(), cursor.row);
         var end           = this.session.insert(cursor, text);
 
         
@@ -5977,7 +5977,7 @@ exports.Editor = Editor;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('pilot/event', function(require, exports, module) {
+define('pilot/event', ['require', 'exports', 'module' , 'pilot/keys', 'pilot/useragent', 'pilot/dom'], function(require, exports, module) {
 
 var keys = require("pilot/keys");
 var useragent = require("pilot/useragent");
@@ -6285,7 +6285,7 @@ exports.addCommandKeyListener = function(el, callback) {
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('pilot/dom', function(require, exports, module) {
+define('pilot/dom', ['require', 'exports', 'module' ], function(require, exports, module) {
 
 var XHTML_NS = "http://www.w3.org/1999/xhtml";
 
@@ -6574,7 +6574,7 @@ exports.setSelectionEnd = function(textarea, end) {
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/keyboard/textinput', function(require, exports, module) {
+define('ace/keyboard/textinput', ['require', 'exports', 'module' , 'pilot/event', 'pilot/useragent', 'pilot/dom'], function(require, exports, module) {
 
 var event = require("pilot/event");
 var useragent = require("pilot/useragent");
@@ -6821,7 +6821,7 @@ exports.TextInput = TextInput;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/mouse_handler', function(require, exports, module) {
+define('ace/mouse_handler', ['require', 'exports', 'module' , 'pilot/event', 'pilot/dom'], function(require, exports, module) {
 
 var event = require("pilot/event");
 var dom = require("pilot/dom");
@@ -7109,7 +7109,7 @@ exports.MouseHandler = MouseHandler;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/keyboard/keybinding', function(require, exports, module) {
+define('ace/keyboard/keybinding', ['require', 'exports', 'module' , 'pilot/useragent', 'pilot/keys', 'pilot/event', 'pilot/settings', 'pilot/canon', 'ace/commands/default_commands'], function(require, exports, module) {
 
 var useragent = require("pilot/useragent");
 var keyUtil  = require("pilot/keys");
@@ -7223,7 +7223,7 @@ exports.KeyBinding = KeyBinding;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/commands/default_commands', function(require, exports, module) {
+define('ace/commands/default_commands', ['require', 'exports', 'module' , 'pilot/lang', 'pilot/canon'], function(require, exports, module) {
 
 var lang = require("pilot/lang");
 var canon = require("pilot/canon");
@@ -7589,7 +7589,7 @@ canon.addCommand({
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/edit_session', function(require, exports, module) {
+define('ace/edit_session', ['require', 'exports', 'module' , 'pilot/oop', 'pilot/lang', 'pilot/event_emitter', 'ace/selection', 'ace/mode/text', 'ace/range', 'ace/document'], function(require, exports, module) {
 
 var oop = require("pilot/oop");
 var lang = require("pilot/lang");
@@ -8827,7 +8827,11 @@ var EditSession = function(text, mode) {
         return screenRows;
     }
     
+    // For every keystroke this gets called once per char in the whole doc!!
+    // Wouldn't hurt to make it a bit faster for c >= 0x1100
     function isFullWidth(c) {
+        if (c < 0x1100)
+            return false;
         return c >= 0x1100 && c <= 0x115F ||
                c >= 0x11A3 && c <= 0x11A7 ||
                c >= 0x11FA && c <= 0x11FF ||
@@ -8904,7 +8908,7 @@ exports.EditSession = EditSession;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/selection', function(require, exports, module) {
+define('ace/selection', ['require', 'exports', 'module' , 'pilot/oop', 'pilot/lang', 'pilot/event_emitter', 'ace/range'], function(require, exports, module) {
 
 var oop = require("pilot/oop");
 var lang = require("pilot/lang");
@@ -9318,7 +9322,7 @@ exports.Selection = Selection;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/range', function(require, exports, module) {
+define('ace/range', ['require', 'exports', 'module' ], function(require, exports, module) {
 
 var Range = function(startRow, startColumn, endRow, endColumn) {
     this.start = {
@@ -9487,7 +9491,7 @@ exports.Range = Range;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/mode/text', function(require, exports, module) {
+define('ace/mode/text', ['require', 'exports', 'module' , 'ace/tokenizer', 'ace/mode/text_highlight_rules'], function(require, exports, module) {
 
 var Tokenizer = require("ace/tokenizer").Tokenizer;
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
@@ -9632,7 +9636,7 @@ exports.Mode = Mode;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/tokenizer', function(require, exports, module) {
+define('ace/tokenizer', ['require', 'exports', 'module' ], function(require, exports, module) {
 
 var Tokenizer = function(rules) {
     this.rules = rules;
@@ -9763,7 +9767,7 @@ exports.Tokenizer = Tokenizer;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/mode/text_highlight_rules', function(require, exports, module) {
+define('ace/mode/text_highlight_rules', ['require', 'exports', 'module' ], function(require, exports, module) {
 
 var TextHighlightRules = function() {
 
@@ -9843,7 +9847,7 @@ exports.TextHighlightRules = TextHighlightRules;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/document', function(require, exports, module) {
+define('ace/document', ['require', 'exports', 'module' , 'pilot/oop', 'pilot/event_emitter', 'ace/range', 'ace/anchor'], function(require, exports, module) {
 
 var oop = require("pilot/oop");
 var EventEmitter = require("pilot/event_emitter").EventEmitter;
@@ -10244,7 +10248,7 @@ exports.Document = Document;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/anchor', function(require, exports, module) {
+define('ace/anchor', ['require', 'exports', 'module' , 'pilot/oop', 'pilot/event_emitter'], function(require, exports, module) {
 
 var oop = require("pilot/oop");
 var EventEmitter = require("pilot/event_emitter").EventEmitter;
@@ -10437,7 +10441,7 @@ var Anchor = exports.Anchor = function(doc, row, column) {
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/search', function(require, exports, module) {
+define('ace/search', ['require', 'exports', 'module' , 'pilot/lang', 'pilot/oop', 'ace/range'], function(require, exports, module) {
 
 var lang = require("pilot/lang");
 var oop = require("pilot/oop");
@@ -10769,7 +10773,7 @@ exports.Search = Search;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/background_tokenizer', function(require, exports, module) {
+define('ace/background_tokenizer', ['require', 'exports', 'module' , 'pilot/oop', 'pilot/event_emitter'], function(require, exports, module) {
 
 var oop = require("pilot/oop");
 var EventEmitter = require("pilot/event_emitter").EventEmitter;
@@ -10943,7 +10947,7 @@ exports.BackgroundTokenizer = BackgroundTokenizer;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/undomanager', function(require, exports, module) {
+define('ace/undomanager', ['require', 'exports', 'module' ], function(require, exports, module) {
 
 var UndoManager = function() {
     this.reset();
@@ -11027,7 +11031,7 @@ exports.UndoManager = UndoManager;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/theme/textmate', function(require, exports, module) {
+define('ace/theme/textmate', ['require', 'exports', 'module' , 'pilot/dom'], function(require, exports, module) {
 
     var dom = require("pilot/dom");
 
@@ -11215,7 +11219,7 @@ define('ace/theme/textmate', function(require, exports, module) {
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/mode/matching_brace_outdent', function(require, exports, module) {
+define('ace/mode/matching_brace_outdent', ['require', 'exports', 'module' , 'ace/range'], function(require, exports, module) {
 
 var Range = require("ace/range").Range;
 
@@ -11298,7 +11302,7 @@ exports.MatchingBraceOutdent = MatchingBraceOutdent;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/virtual_renderer', function(require, exports, module) {
+define('ace/virtual_renderer', ['require', 'exports', 'module' , 'pilot/oop', 'pilot/dom', 'pilot/event', 'pilot/useragent', 'ace/layer/gutter', 'ace/layer/marker', 'ace/layer/text', 'ace/layer/cursor', 'ace/scrollbar', 'ace/renderloop', 'pilot/event_emitter', 'text/ace/css/editor.css'], function(require, exports, module) {
 
 var oop = require("pilot/oop");
 var dom = require("pilot/dom");
@@ -12088,7 +12092,7 @@ exports.VirtualRenderer = VirtualRenderer;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/layer/gutter', function(require, exports, module) {
+define('ace/layer/gutter', ['require', 'exports', 'module' , 'pilot/dom'], function(require, exports, module) {
 
 var dom = require("pilot/dom");
 
@@ -12211,7 +12215,7 @@ exports.Gutter = Gutter;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/layer/marker', function(require, exports, module) {
+define('ace/layer/marker', ['require', 'exports', 'module' , 'ace/range', 'pilot/dom'], function(require, exports, module) {
 
 var Range = require("ace/range").Range;
 var dom = require("pilot/dom");
@@ -12392,7 +12396,7 @@ exports.Marker = Marker;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/layer/text', function(require, exports, module) {
+define('ace/layer/text', ['require', 'exports', 'module' , 'pilot/oop', 'pilot/dom', 'pilot/lang', 'pilot/event_emitter'], function(require, exports, module) {
 
 var oop = require("pilot/oop");
 var dom = require("pilot/dom");
@@ -12769,7 +12773,7 @@ exports.Text = Text;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/layer/cursor', function(require, exports, module) {
+define('ace/layer/cursor', ['require', 'exports', 'module' , 'pilot/dom'], function(require, exports, module) {
 
 var dom = require("pilot/dom");
 
@@ -12907,7 +12911,7 @@ exports.Cursor = Cursor;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/scrollbar', function(require, exports, module) {
+define('ace/scrollbar', ['require', 'exports', 'module' , 'pilot/oop', 'pilot/dom', 'pilot/event', 'pilot/event_emitter'], function(require, exports, module) {
 
 var oop = require("pilot/oop");
 var dom = require("pilot/dom");
@@ -12993,7 +12997,7 @@ exports.ScrollBar = ScrollBar;
  *
  * ***** END LICENSE BLOCK ***** */
 
-define('ace/renderloop', function(require, exports, module) {
+define('ace/renderloop', ['require', 'exports', 'module' , 'pilot/event'], function(require, exports, module) {
 
 var event = require("pilot/event");
 
@@ -13051,7 +13055,7 @@ var RenderLoop = function(onRender) {
 
 exports.RenderLoop = RenderLoop;
 });
-define("text/ace/css/editor.css", ".ace_editor {" +
+define("text/ace/css/editor.css", [], ".ace_editor {" +
   "    position: absolute;" +
   "    overflow: hidden;" +
   "" +
@@ -13211,7 +13215,7 @@ define("text/ace/css/editor.css", ".ace_editor {" +
   "}" +
   "");
 
-define("text/styles.css", "html {" +
+define("text/styles.css", [], "html {" +
   "    height: 100%;" +
   "    overflow: hidden;" +
   "}" +
