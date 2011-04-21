@@ -25,12 +25,13 @@ import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
 import com.google.gwt.user.client.ui.AcceptsOneWidget;
 import com.google.web.bindery.requestfactory.shared.Receiver;
 
+import java.util.logging.Logger;
+
 /**
  * Activity that presents a task to be edited.
  */
 public class TaskEditActivity extends AbstractActivity implements TaskEditView.Presenter {
-
-  private static final int ONE_HOUR = 3600000;
+  private static final Logger log = Logger.getLogger(TaskEditActivity.class.getName());
 
   private final ClientFactory clientFactory;
 
@@ -86,7 +87,7 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
 
   public void saveTask(boolean addToCalendar) {
     if (task == null) {
-      doCreateTask(addToCalendar);
+      doCreateTask();
     } else {
       doUpdateTask();
     }
@@ -137,17 +138,15 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
 
   /**
    * Create a new task.
-   * 
-   * @param addToCalendar true to add the task to the calendar
    */
-  private void doCreateTask(final boolean addToCalendar) {
+  private void doCreateTask() {
     TaskRequest request = clientFactory.getRequestFactory().taskRequest();
     final TaskProxy toCreate = request.create(TaskProxy.class);
     populateTaskFromView(toCreate);
     request.persist().using(toCreate).fire(new Receiver<Void>() {
       @Override
       public void onSuccess(Void response) {
-        onTaskCreated(toCreate, addToCalendar);
+        onTaskCreated(toCreate);
       }
     });
   }
@@ -166,7 +165,7 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
         new Receiver<Void>() {
           @Override
           public void onSuccess(Void response) {
-            onTaskDeleted(toDelete);
+            onTaskDeleted();
           }
         });
   }
@@ -188,7 +187,7 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
     request.persist().using(toEdit).fire(new Receiver<Void>() {
       @Override
       public void onSuccess(Void response) {
-        onTaskUpdated(toEdit);
+        onTaskUpdated();
       }
     });
   }
@@ -200,15 +199,15 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
    */
   private void notify(String message) {
     // TODO Add notification pop-up
+    log.fine("Tell the user: " + message);
   }
 
   /**
    * Called when a task has been successfully created.
    * 
    * @param task the task that was created
-   * @param addToCalendar true to add the task to the calendar
    */
-  private void onTaskCreated(TaskProxy task, boolean addToCalendar) {
+  private void onTaskCreated(TaskProxy task) {
     // Notify the user that the task was created.
     notify("Created task '" + task.getName() + "'");
 
@@ -218,10 +217,8 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
 
   /**
    * Called when a task has been successfully deleted.
-   * 
-   * @param task the task that was deleted
    */
-  private void onTaskDeleted(TaskProxy task) {
+  private void onTaskDeleted() {
     // Notify the user that the task was deleted.
     notify("Task Deleted");
 
@@ -231,10 +228,8 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
 
   /**
    * Called when a task has been successfully updated.
-   * 
-   * @param task the task that was updated
    */
-  private void onTaskUpdated(TaskProxy task) {
+  private void onTaskUpdated() {
     // Notify the user that the task was updated.
     notify("Task Updated");
 

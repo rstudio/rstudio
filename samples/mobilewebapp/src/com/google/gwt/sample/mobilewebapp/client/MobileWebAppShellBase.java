@@ -52,7 +52,7 @@ public abstract class MobileWebAppShellBase extends ResizeComposite implements
    * 
    * @param isPortrait true if in portrait orientation, false if landscape
    */
-  protected void adjustOrientation(boolean isPortrait) {
+  protected void adjustOrientation(@SuppressWarnings("unused") boolean isPortrait) {
     // No-op by default.
   }
 
