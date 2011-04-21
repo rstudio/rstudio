@@ -6,6 +6,7 @@ import java.util.List;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -29,6 +30,7 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -155,7 +157,7 @@ public class CheckForUpdatesDialog extends ModalDialog<ArrayList<PackageUpdate>>
            };
       updatesTable_.addColumn(newsColumn, "NEWS");
       updatesTable_.setColumnWidth(newsColumn, 16, Unit.PCT);
-  
+      
       ScrollPanel scrollPanel = new ScrollPanel();
       scrollPanel.setWidget(updatesTable_);
       mainPanel.add(scrollPanel);
@@ -166,13 +168,24 @@ public class CheckForUpdatesDialog extends ModalDialog<ArrayList<PackageUpdate>>
          @Override
          public void onResponseReceived(JsArray<PackageUpdate> packageUpdates)
          {
-            ArrayList<PendingUpdate> updates = new ArrayList<PendingUpdate>();
-            for (int i=0; i<packageUpdates.length(); i++)
-               updates.add(new PendingUpdate(packageUpdates.get(i), false));
-            updatesTable_.setPageSize(updates.size());
-            updatesDataProvider_ = new ListDataProvider<PendingUpdate>();
-            updatesDataProvider_.setList(updates);
-            updatesDataProvider_.addDataDisplay(updatesTable_);
+            if (packageUpdates.length() > 0)
+            {
+               ArrayList<PendingUpdate> updates = new ArrayList<PendingUpdate>();
+               for (int i=0; i<packageUpdates.length(); i++)
+                  updates.add(new PendingUpdate(packageUpdates.get(i), false));
+               updatesTable_.setPageSize(updates.size());
+               updatesDataProvider_ = new ListDataProvider<PendingUpdate>();
+               updatesDataProvider_.setList(updates);
+               updatesDataProvider_.addDataDisplay(updatesTable_);
+            }
+            else
+            {
+               closeDialog();
+               globalDisplay_.showMessage(
+                     MessageDialog.INFO, 
+                     "Check for Updates", 
+                     "All packages in the default library are up to date.");
+            }
          }
          
          @Override

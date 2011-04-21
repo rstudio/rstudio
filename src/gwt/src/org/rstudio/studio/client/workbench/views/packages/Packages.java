@@ -180,9 +180,8 @@ public class Packages
             @Override
             public void execute(ArrayList<PackageUpdate> updates)
             {
-               /*
                StringBuilder command = new StringBuilder();
-               command.append("update.packages(oldPkgs = old.packages(instPkgs = c(");
+               command.append("install.packages(c(");
                for (int i=0; i<updates.size(); i++)
                {
                   if (i>0)
@@ -191,10 +190,9 @@ public class Packages
                   command.append(updates.get(i).getPackageName());
                   command.append("\"");
                }
-               command.append(")), ask = FALSE)");
+               command.append("))");
                String cmd = command.toString();
                events_.fireEvent(new SendToConsoleEvent(cmd, true));
-               */
             }  
       }).showModal();
    }
