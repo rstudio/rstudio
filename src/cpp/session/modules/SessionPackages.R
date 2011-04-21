@@ -154,5 +154,30 @@
 
 .rs.addJsonRpcHandler( "check_for_package_updates", function()
 {
-   as.data.frame(utils::old.packages(), stringsAsFactors = FALSE)
+   # get updates and convert to a data frame
+   updates <- as.data.frame(utils::old.packages(), 
+                            stringsAsFactors = FALSE)
+   row.names(updates) <- NULL
+   
+   # see which ones are from CRAN and add a news column for them
+   cranRep <- getOption("repos")["CRAN"]
+   cranRepLen <- nchar(cranRep)
+   isFromCRAN <- cranRep == substr(updates$Repository, 1, cranRepLen)
+   newsURL <- character(nrow(updates))
+   if (substr(cranRep, cranRepLen, cranRepLen) != "/")
+      cranRep <- paste(cranRep, "/", sep="")
+
+   newsURL[isFromCRAN] <- paste(cranRep,
+                                "web/packages/",
+                                updates$Package,
+                                "/NEWS", sep = "")[isFromCRAN]
+   
+   updates <- data.frame(packageName = updates$Package,
+                         installed = updates$Installed,
+                         available = updates$ReposVer,
+                         newsUrl = newsURL,
+                         stringsAsFactors = FALSE)
+                       
+                       
+   return (updates)
 })

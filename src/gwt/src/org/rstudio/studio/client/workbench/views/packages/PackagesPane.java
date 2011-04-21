@@ -12,7 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.views.packages;
 
-import com.google.gwt.cell.client.ButtonCell;
 import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.ClickableTextCell;
 import com.google.gwt.cell.client.FieldUpdater;
@@ -36,6 +35,7 @@ import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.NoSelectionModel;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.Toolbar;
@@ -175,7 +175,15 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       
       packagesTable_.addColumn(descColumn);
       
-      RemoveColumn removeColumn = new RemoveColumn();
+      ImageButtonColumn<PackageInfo> removeColumn = 
+        new ImageButtonColumn<PackageInfo>(
+          AbstractImagePrototype.create(ThemeResources.INSTANCE.removePackage()),
+          new OperationWithInput<PackageInfo>() {
+            public void execute(PackageInfo packageInfo)
+            {
+               observer_.removePackage(packageInfo);          
+            }  
+          });
       packagesTable_.addColumn(removeColumn);
       
       packagesDataProvider_ = new ListDataProvider<PackageInfo>();
@@ -212,39 +220,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       }
       
    }
-   
-   class RemoveColumn extends Column<PackageInfo, String>
-   {
-      public RemoveColumn()
-      {
-         super(new ButtonCell(){
-            @Override
-            public void render(Context context, 
-                                  SafeHtml value, 
-                                  SafeHtmlBuilder sb) 
-            {   
-               sb.appendHtmlConstant(removeButtonPrototype_.getHTML());
-            }                                
-         });
-
-         setFieldUpdater(new FieldUpdater<PackageInfo,String>() {
-            public void update(int index, PackageInfo pkgInfo, String value)
-            {
-               observer_.removePackage(pkgInfo);
-            }
-         });
-      }
-
-      @Override
-      public String getValue(PackageInfo object)
-      {
-         return null;
-      }
-   }
-   
-   final static AbstractImagePrototype removeButtonPrototype_ = 
-      AbstractImagePrototype.create(ThemeResources.INSTANCE.removePackage());
-   
    
    // package name column which includes a hyperlink to package docs
    class NameColumn extends Column<PackageInfo, String>

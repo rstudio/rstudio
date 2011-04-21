@@ -2,8 +2,12 @@ package org.rstudio.studio.client.workbench.views.packages.ui;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.cellview.ImageButtonColumn;
+import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
@@ -19,6 +23,7 @@ import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
+import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -29,10 +34,12 @@ public class CheckForUpdatesDialog extends ModalDialog<ArrayList<PackageUpdate>>
 {
 
    public CheckForUpdatesDialog(
+         GlobalDisplay globalDisplay,
          ServerDataSource<JsArray<PackageUpdate>> updatesDS,
          OperationWithInput<ArrayList<PackageUpdate>> checkOperation)
    {
       super("Check for Package Updates", checkOperation);
+      globalDisplay_ = globalDisplay;
       updatesDS_ = updatesDS;
       
       setOkButtonCaption("Install Updates");
@@ -91,6 +98,29 @@ public class CheckForUpdatesDialog extends ModalDialog<ArrayList<PackageUpdate>>
          } 
       };  
       updatesTable_.addColumn(availableColumn, "Available");
+      
+      ImageButtonColumn<PackageUpdate> newsColumn = 
+         new ImageButtonColumn<PackageUpdate>(
+           AbstractImagePrototype.create(ThemeResources.INSTANCE.zoomDataset()),
+           new OperationWithInput<PackageUpdate>() {
+             public void execute(PackageUpdate packageUpdate)
+             {
+                globalDisplay_.openMinimalWindow(packageUpdate.getNewsUrl(),
+                                                 false, 
+                                                 700, 
+                                                 800, 
+                                                 "_rstudio_package_news", 
+                                                 true);
+             }  
+           }) 
+           {
+               @Override
+               protected boolean showButton(PackageUpdate packageUpdate)
+               {
+                  return !StringUtil.isNullOrEmpty(packageUpdate.getNewsUrl());
+               }
+           };
+      updatesTable_.addColumn(newsColumn, "NEWS");
   
       ScrollPanel scrollPanel = new ScrollPanel();
       scrollPanel.setWidget(updatesTable_);
@@ -166,7 +196,7 @@ public class CheckForUpdatesDialog extends ModalDialog<ArrayList<PackageUpdate>>
       RESOURCES.styles().ensureInjected();
    }
    
-   
+   private final GlobalDisplay globalDisplay_;
    private CellTable<PackageUpdate> updatesTable_;
    private ServerDataSource<JsArray<PackageUpdate>> updatesDS_;
    private ListDataProvider<PackageUpdate> updatesDataProvider_;
