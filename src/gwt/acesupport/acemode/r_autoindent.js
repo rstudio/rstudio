@@ -1,3 +1,16 @@
+/*
+ * r_autoindent.js
+ *
+ * Copyright (C) 2009-11 by RStudio, Inc.
+ *
+ * This program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
 // TODO: Handle soft- vs. hard-tab, dynamic tab sizes
 // TODO: Hitting Enter in the middle of a line treats indentation as if it's at the end of the line
 
