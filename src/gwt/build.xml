@@ -44,6 +44,7 @@
          </sources>
          <sources dir="acesupport/acemode">
             <file name="r_highlight_rules.js"/>
+            <file name="r_autoindent.js"/>
             <file name="r.js"/>
             <file name="tex_highlight_rules.js"/>
             <file name="tex.js"/>

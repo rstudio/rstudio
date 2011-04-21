@@ -32,7 +32,7 @@ var IndentManager = function(doc, tokenizer) {
          return indent;
 
 
-      var prevToken = this.$findPreviousSignificantToken({row: lastRow+1, column: 0},
+      var prevToken = this.$findPreviousSignificantToken({row: lastRow, column: this.$doc.getLine(lastRow).length},
                                                          lastRow - 10);
       if (prevToken
             && /\bparen\b/.test(prevToken.token.type)
@@ -131,6 +131,7 @@ var IndentManager = function(doc, tokenizer) {
    
    this.$tokenizeUpToRow = function(lastRow)
    {
+      console.log("Tokenizing up to and including " + lastRow);
       // Don't let lastRow be past the end of the document
       lastRow = Math.min(lastRow, this.$endStates.length - 1);
 
@@ -140,13 +141,13 @@ var IndentManager = function(doc, tokenizer) {
       {
          // No need to tokenize rows until we hit one that has been explicitly
          // invalidated.
-         if (assumeGood && !(this.$endStates[row] === null))
+         if (assumeGood && this.$endStates[row])
             continue;
          
          assumeGood = false;
 
          var state = (row === 0) ? 'start' : this.$endStates[row-1];
-         var lineTokens = this.$tokenizer.$tokenizer.getLineTokens(this.$doc.getLine(row), state);
+         var lineTokens = this.$tokenizer.getLineTokens(this.$doc.getLine(row), state);
          this.$tokens[row] = lineTokens.tokens;
 
          // If we ended in the same state that the cache says, then we know that

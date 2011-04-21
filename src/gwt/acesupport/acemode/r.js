@@ -25,6 +25,7 @@ define("mode/r", function(require, exports, module)
    var TextHighlightRules = require("ace/mode/text_highlight_rules")
          .TextHighlightRules;
    var RHighlightRules = require("mode/r_highlight_rules").RHighlightRules;
+   var IndentManager = require("mode/r_autoindent").IndentManager;
 
    var MatchingBraceOutdent = function() {};
 
@@ -61,13 +62,15 @@ define("mode/r", function(require, exports, module)
       };
    }).call(MatchingBraceOutdent.prototype);
 
-   var Mode = function(suppressHighlighting)
+   var Mode = function(suppressHighlighting, doc)
    {
       if (suppressHighlighting)
          this.$tokenizer = new Tokenizer(new TextHighlightRules().getRules());
       else
          this.$tokenizer = new Tokenizer(new RHighlightRules().getRules());
       this.$outdent = new MatchingBraceOutdent();
+
+      this.$indentManager = new IndentManager(doc, this.$tokenizer);
    };
    oop.inherits(Mode, TextMode);
 
@@ -75,14 +78,7 @@ define("mode/r", function(require, exports, module)
    {
       this.getNextLineIndent = function(state, line, tab, bgTokenizer, row)
       {
-         var indent = this.$getIndent(line);
-
-         var startState = row == 0 ? "start" : bgTokenizer.getState(row-1);
-         var tokenizedLine = this.$tokenizer.getLineTokens(line, startState);
-         var tokens = tokenizedLine.tokens;
-         var endState = tokenizedLine.state;
-
-         return this.$getNextLineIndentForTokens(tokens, indent, tab, endState);
+         return this.$indentManager.getNextLineIndent(row);
       };
 
       this.$getNextLineIndentForTokens = function(tokens, indent, tab, endState)

@@ -16,6 +16,10 @@
 </head>
 <body>
 
+<h2>Interactive Tester</h2>
+<div id="editor" style="width: 600px; height: 200px; border: 1px solid #999"></div>
+
+<h2 style="margin-top: 250px">Automated Tests</h2>
 <ol>
 <li><pre expected="2">
 doPlot &lt;- function()
@@ -149,8 +153,8 @@ var RMode = require('mode/r').Mode;
 
 function doIndentTest(el) {
   var doc = new Document('');
-  var tokenizer = new RMode(false);
-  var indentManager = new IndentManager(doc, tokenizer);
+  var mode = new RMode(false, doc);
+  var indentManager = new IndentManager(doc, mode.$tokenizer);
 
   doc.insert({row:0, column:0}, el.innerText.trimRight());
 
@@ -179,6 +183,12 @@ if (test)
 {
   doIndentTest(test);
 }
+
+var editor = ace.edit('editor');
+editor.renderer.setHScrollBarAlwaysVisible(false);
+editor.setHighlightActiveLine(false);
+var RMode = require('mode/r').Mode;
+editor.getSession().setMode(new RMode(false, editor.getSession().getDocument()));
 </script>
 </body>
 </html>

@@ -68,6 +68,6 @@ public class EditSession extends JavaScriptObject
    public native final void setEditorMode(String parserName,
                                           boolean suppressHighlighting) /*-{
       var Mode = $wnd.require(parserName).Mode;
-      this.setMode(new Mode(suppressHighlighting));
+      this.setMode(new Mode(suppressHighlighting, this.getDocument()));
    }-*/;
 }
