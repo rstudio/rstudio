@@ -155,7 +155,7 @@
 .rs.addJsonRpcHandler( "check_for_package_updates", function()
 {
    # get updates and convert to a data frame
-   updates <- as.data.frame(utils::old.packages(lib.loc = .libPaths()[1]),
+   updates <- as.data.frame(utils::old.packages(),
                             stringsAsFactors = FALSE)
    row.names(updates) <- NULL
    
@@ -173,6 +173,7 @@
                                 "/NEWS", sep = "")[isFromCRAN]
    
    updates <- data.frame(packageName = updates$Package,
+                         libPath = updates$LibPath,
                          installed = updates$Installed,
                          available = updates$ReposVer,
                          newsUrl = newsURL,

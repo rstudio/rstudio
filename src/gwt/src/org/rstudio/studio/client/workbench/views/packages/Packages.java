@@ -19,6 +19,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
@@ -181,16 +182,17 @@ public class Packages
             public void execute(ArrayList<PackageUpdate> updates)
             {
                StringBuilder command = new StringBuilder();
-               command.append("install.packages(c(");
                for (int i=0; i<updates.size(); i++)
                {
-                  if (i>0)
-                    command.append(", ");
+                  PackageUpdate update = updates.get(i);
+                  command.append("install.packages(\"");
+                  command.append(update.getPackageName());
+                  command.append("\""); 
+                  command.append(", lib=\"");
+                  command.append(update.getLibPath());
                   command.append("\"");
-                  command.append(updates.get(i).getPackageName());
-                  command.append("\"");
+                  command.append(")\n");
                }
-               command.append("))");
                String cmd = command.toString();
                events_.fireEvent(new SendToConsoleEvent(cmd, true));
             }  
@@ -204,40 +206,21 @@ public class Packages
             "Confirm Remove",
             "Are you sure you want to remove the " + 
             packageInfo.getName() + " package?",
-            new ProgressOperation() 
+            new Operation() 
             {
                @Override
-               public void execute(final ProgressIndicator indicator)
+               public void execute()
                {
-                  indicator.onProgress("Removing package...");
-                  server_.getDefaultLibrary(new ServerRequestCallback<String>(){
-
-                     @Override
-                     public void onResponseReceived(String defaultLibrary)
-                     {
-                        StringBuilder command = new StringBuilder();
-                        command.append("remove.packages(\"");
-                        command.append(packageInfo.getName());
-                        command.append("\"");
-                        if (!packageInfo.getLibrary().equals(defaultLibrary))
-                        {
-                           command.append(", lib=\"");
-                           command.append(packageInfo.getLibrary());
-                           command.append("\"");
-                        }
-                        command.append(")");
-                        String cmd = command.toString();
-                        events_.fireEvent(new SendToConsoleEvent(cmd, true));
-                        indicator.onCompleted();
-                     }
-                     
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        indicator.onError(error.getUserMessage());
-                     }
-                     
-                  });      
+                  StringBuilder command = new StringBuilder();
+                  command.append("remove.packages(\"");
+                  command.append(packageInfo.getName());
+                  command.append("\""); 
+                  command.append(", lib=\"");
+                  command.append(packageInfo.getLibrary());
+                  command.append("\"");
+                  command.append(")");
+                  String cmd = command.toString();
+                  events_.fireEvent(new SendToConsoleEvent(cmd, true));  
                }      
             },
             true);
