@@ -248,6 +248,22 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
   .libPaths(append(.libPaths(), path))
 })
 
+.rs.addFunction( "libPathsPrepend", function(path)
+{
+  .libPaths(unique(c(path, .libPaths())))
+})
+
+# based on code in install.packages
+.rs.addFunction( "defaultLibPathIsWriteable", function()
+{
+  lib <- .libPaths()[1L]
+  ok <- file.info(lib)$isdir & (file.access(lib, 2) == 0)
+  if (any(!ok))
+    return (FALSE)
+  else
+    return (TRUE)
+})
+
 .rs.addFunction( "disableQuartz", function()
 {
   .rs.registerReplaceHook("quartz", "grDevices", function(...) {

@@ -283,53 +283,28 @@ void initRLibsUser()
    if (rLibsUserPath.exists())
       return;
 
-   // auto-create R_LIBS_USER if the existing default .libPath isn't writeable
-   bool autoCreate = true;
-   std::vector<std::string> libPaths;
-   Error error = r::exec::RFunction(".libPaths").call(&libPaths);
+   // if the current default lib path is writeable then we're done
+   bool defaultLibPathWriteable = false;
+   Error error = r::exec::RFunction(".rs.defaultLibPathIsWriteable").call(
+                                                   &defaultLibPathWriteable);
+   if (!error && defaultLibPathWriteable)
+      return;
+
+   // otherwise we auto-create the R_LIBS_USER path
+   error = rLibsUserPath.ensureDirectory();
    if (error)
    {
       LOG_ERROR(error);
       return;
    }
 
-   // check the current default libpath for writeabilty -- if it's writeable
-   // then don't auto-create R_LIBS_USER
-   if (libPaths.size() > 0)
+   // add it to our libPaths
+   error = r::exec::RFunction(".rs.libPathsPrepend",
+                              rLibsUserPath.absolutePath()).call();
+   if (error)
    {
-      FilePath libPath(libPaths[0]);
-      FilePath testWriteablePath = libPath.complete(".rstudio-test-writeable");
-      Error error = writeStringToFile(testWriteablePath, "abc123");
-      if (!error)
-      {
-         // found a writeable path, don't auto-create
-         autoCreate = false;
-
-         // cleanup the file
-         Error error = testWriteablePath.remove();
-         if (error)
-            LOG_ERROR(error);
-      }
-   }
-
-   // auto-create if necessary
-   if (autoCreate)
-   {
-      // create the path
-      Error error = rLibsUserPath.ensureDirectory();
-      if (error)
-      {
-         LOG_ERROR(error);
-         return;
-      }
-
-      // add it to our libPaths
-      error = r::exec::RFunction(".libPaths", rLibsUserPath.absolutePath()).call();
-      if (error)
-      {
-         LOG_ERROR(error);
-         return;
-      }
+      LOG_ERROR(error);
+      return;
    }
 }
 
