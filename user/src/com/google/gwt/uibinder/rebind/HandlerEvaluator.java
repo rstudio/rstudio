@@ -65,7 +65,8 @@ import com.google.gwt.uibinder.rebind.model.OwnerClass;
  */
 class HandlerEvaluator {
 
-  private static final String HANDLER_BASE_NAME = "handlerMethodWithNameVeryUnlikelyToCollideWithUserFieldNames";
+  private static final String HANDLER_BASE_NAME =
+      "handlerMethodWithNameVeryUnlikelyToCollideWithUserFieldNames";
   /*
    * TODO(rjrjr) The correct fix is to put the handlers in a locally defined
    * class, making the generated code look like this
@@ -82,6 +83,7 @@ class HandlerEvaluator {
   private final JClassType handlerRegistrationJClass;
   private final JClassType eventHandlerJClass;
   private final OwnerClass ownerClass;
+  private final boolean useLazyWidgetBuilders;
 
   /**
    * The verbose testable constructor.
@@ -90,9 +92,11 @@ class HandlerEvaluator {
    * @param logger the logger for warnings and errors
    * @param oracle the type oracle
    */
-  HandlerEvaluator(OwnerClass ownerClass, MortalLogger logger, TypeOracle oracle) {
+  HandlerEvaluator(OwnerClass ownerClass, MortalLogger logger,
+      TypeOracle oracle, boolean useLazyWidgetBuilders) {
     this.ownerClass = ownerClass;
     this.logger = logger;
+    this.useLazyWidgetBuilders = useLazyWidgetBuilders;
 
     handlerRegistrationJClass = oracle.findType(HandlerRegistration.class.getName());
     eventHandlerJClass = oracle.findType(EventHandler.class.getName());
@@ -156,8 +160,8 @@ class HandlerEvaluator {
         }
 
         // Cool to tie the handler into the object.
-        writeAddHandler(writer, handlerVarName, addHandlerMethodType.getName(),
-            objectName);
+        writeAddHandler(writer, fieldManager, handlerVarName,
+            addHandlerMethodType.getName(), objectName);
       }
     }
   }
@@ -215,10 +219,16 @@ class HandlerEvaluator {
    *          the object
    * @param objectName the name of the object we want to tie the handler
    */
-  void writeAddHandler(IndentedWriter writer, String handlerVarName,
-      String addHandlerMethodName, String objectName) {
-    writer.write("%1$s.%2$s(%3$s);", objectName, addHandlerMethodName,
-        handlerVarName);
+  void writeAddHandler(IndentedWriter writer, FieldManager fieldManager,
+      String handlerVarName, String addHandlerMethodName, String objectName)
+      throws UnableToCompleteException {
+    if (useLazyWidgetBuilders) {
+      fieldManager.require(objectName).addStatement("%1$s.%2$s(%3$s);",
+          objectName, addHandlerMethodName, handlerVarName);
+    } else {
+      writer.write("%1$s.%2$s(%3$s);", objectName, addHandlerMethodName,
+          handlerVarName);
+    }
   }
 
   /**

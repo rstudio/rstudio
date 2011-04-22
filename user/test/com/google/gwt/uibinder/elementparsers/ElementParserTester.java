@@ -108,7 +108,7 @@ class ElementParserTester {
     elemProvider = new XMLElementProviderImpl(new AttributeParsers(types, null,
         logger), bundleParsers, types, logger, DesignTimeUtilsStub.EMPTY);
 
-    fieldManager = new FieldManager(types, logger);
+    fieldManager = new FieldManager(types, logger, false);
     JClassType baseType = types.findType("my.Ui.BaseClass");
     MessagesWriter messages = new MessagesWriter(BINDER_URI, logger,
         templatePath, baseType.getPackage().getName(), implName);

@@ -26,6 +26,28 @@ import com.google.gwt.user.client.ui.UIObject;
  * so please don't use them for non-UiBinder code.
  */
 public class UiBinderUtil {
+
+  /**
+   * A helper class to enable lazy creation of DOM elements.
+   */
+  public static class LazyDomElement {
+
+    private Element element;
+    private final String domId;
+
+    public LazyDomElement(String domId) {
+      this.domId = domId;
+    }
+
+    public Element get() {
+      if (element == null) {
+        element = Document.get().getElementById(domId).cast();
+        element.removeAttribute("id");
+      }
+      return element;
+    }
+  }
+
   /**
    * Temporary attachment record that keeps track of where an element was
    * before attachment.  Use the detach method to put things back.
@@ -34,15 +56,15 @@ public class UiBinderUtil {
   public static class TempAttachment {
     private final Element element;
     private final Element origParent;
-    private final Element origSibling;    
-    
-    private TempAttachment(Element origParent, Element origSibling, 
+    private final Element origSibling;
+
+    private TempAttachment(Element origParent, Element origSibling,
         Element element) {
       this.origParent = origParent;
       this.origSibling = origSibling;
       this.element = element;
     }
-    
+
     /**
      * Restore to previous DOM state before attachment.
      */
@@ -54,21 +76,21 @@ public class UiBinderUtil {
         orphan(element);
       }
     }
-  }  
-  
+  }
+
   private static Element hiddenDiv;
-  
+
   /**
-   * Attaches the element to the dom temporarily.  Keeps track of where it is 
+   * Attaches the element to the dom temporarily.  Keeps track of where it is
    * attached so that things can be put back latter.
-   * 
+   *
    * @return attachment record which can be used for reverting back to previous
    *         DOM state
    */
   public static TempAttachment attachToDom(Element element) {
     // TODO(rjrjr) This is copied from HTMLPanel. Reconcile
     ensureHiddenDiv();
-    
+
     // Hang on to the panel's original parent and sibling elements so that it
     // can be replaced.
     Element origParent = element.getParentElement();
@@ -76,7 +98,7 @@ public class UiBinderUtil {
 
     // Attach the panel's element to the hidden div.
     hiddenDiv.appendChild(element);
-    
+
     return new TempAttachment(origParent, origSibling, element);
   }
 

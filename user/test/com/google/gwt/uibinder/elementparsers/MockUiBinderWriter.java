@@ -36,7 +36,7 @@ class MockUiBinderWriter extends UiBinderWriter {
       TypeOracle oracle, MortalLogger logger, FieldManager fieldManager,
       MessagesWriter messagesWriter) throws UnableToCompleteException {
     super(baseClass, implClassName, templatePath, oracle, logger, fieldManager, messagesWriter,
-        DesignTimeUtilsStub.EMPTY, new UiBinderContext(), true);
+        DesignTimeUtilsStub.EMPTY, new UiBinderContext(), true, false);
   }
 
   @Override

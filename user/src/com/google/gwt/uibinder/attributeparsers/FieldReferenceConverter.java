@@ -45,8 +45,9 @@ import java.util.regex.Pattern;
  */
 public class FieldReferenceConverter {
   /**
-   * May be thrown by the {@link com.google.gwt.uibinder.attributeparsers.FieldReferenceConverter.Delegate Delegate} for badly
-   * formatted input.
+   * May be thrown by the
+   * {@link com.google.gwt.uibinder.attributeparsers.FieldReferenceConverter.Delegate Delegate}
+   * for badly formatted input.
    */
   @SuppressWarnings("serial")
   public static class IllegalFieldReferenceException extends RuntimeException {
@@ -167,8 +168,15 @@ public class FieldReferenceConverter {
     StringBuilder b = new StringBuilder();
     String[] segments = value.split("[.]");
 
-    for (String segment : segments) {
-      segment = cssConverter.convertName(segment);
+    for (int i = 0; i < segments.length; ++i) {
+      String segment = cssConverter.convertName(segments[i]);
+
+      // The first segment is converted to a field getter. So,
+      // "bundle.whatever" becomes "get_bundle().whatever".
+      if (fieldManager != null && i == 0) {
+        segment = fieldManager.convertFieldToGetter(segment);
+      }
+
       if (b.length() == 0) {
         b.append(segment); // field name
       } else {

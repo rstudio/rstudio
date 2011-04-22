@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,14 +15,18 @@
  */
 package com.google.gwt.uibinder.rebind;
 
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.uibinder.rebind.model.ImplicitCssResource;
+import com.google.gwt.uibinder.rebind.model.OwnerClass;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -35,6 +39,21 @@ public class FieldManager {
 
   private static final String DUPLICATE_FIELD_ERROR = "Duplicate declaration of field %1$s.";
 
+  private static final Comparator<FieldWriter> BUILD_DEFINITION_SORT =
+      new Comparator<FieldWriter>() {
+    public int compare(FieldWriter field1, FieldWriter field2) {
+      return field2.getBuildPrecedence() - field1.getBuildPrecedence();
+    }
+  };
+
+  public static String getFieldBuilder(String fieldName) {
+    return String.format("build_%s()", fieldName);
+  }
+
+  public static String getFieldGetter(String fieldName) {
+    return String.format("get_%s()", fieldName);
+  }
+
   private final TypeOracle types;
   private final MortalLogger logger;
 
@@ -42,18 +61,67 @@ public class FieldManager {
    * Map of field name to FieldWriter. Note its a LinkedHashMap--we want to
    * write these out in the order they're declared.
    */
-  private final LinkedHashMap<String, FieldWriter> fieldsMap = new LinkedHashMap<String, FieldWriter>();
+  private final LinkedHashMap<String, FieldWriter> fieldsMap =
+      new LinkedHashMap<String, FieldWriter>();
 
   /**
    * A stack of the fields.
    */
   private final LinkedList<FieldWriter> parsedFieldStack = new LinkedList<FieldWriter>();
 
-  private LinkedHashMap<String, FieldReference> fieldReferences = new LinkedHashMap<String, FieldReference>();
+  private LinkedHashMap<String, FieldReference> fieldReferences =
+      new LinkedHashMap<String, FieldReference>();
 
-  public FieldManager(TypeOracle types, MortalLogger logger) {
+  /**
+   * Counts the number of times a getter field is called, this important to
+   * decide which strategy to take when outputing getters and builders.
+   * {@see com.google.gwt.uibinder.rebind.FieldWriter#writeFieldDefinition}.
+   */
+  private final Map<String, Integer> gettersCounter = new HashMap<String, Integer>();
+
+  /**
+   * Whether to use the new strategy of generating UiBinder code.
+   */
+  private final boolean useLazyWidgetBuilders;
+
+  public FieldManager(TypeOracle types, MortalLogger logger, boolean useLazyWidgetBuilders) {
     this.types = types;
     this.logger = logger;
+    this.useLazyWidgetBuilders = useLazyWidgetBuilders;
+  }
+
+  /**
+   * Converts the given field to its getter. Example:
+   *  <li> myWidgetX = get_myWidgetX()
+   *  <li> f_html1 = get_f_html1()
+   */
+  public String convertFieldToGetter(String fieldName) {
+    // TODO(hermes, rjrjr, rdcastro): revisit this and evaluate if this
+    // conversion can be made directly in FieldWriter.
+    if (!useLazyWidgetBuilders) {
+      return fieldName;
+    }
+
+    int count = getGetterCounter(fieldName) + 1;
+    gettersCounter.put(fieldName, count);
+    return getFieldGetter(fieldName);
+  }
+
+  /**
+   * Initialize with field builders the generated <b>Widgets</b> inner class.
+   * {@see com.google.gwt.uibinder.rebind.FieldWriter#writeFieldBuilder}.
+   */
+  public void initializeWidgetsInnerClass(IndentedWriter w,
+      OwnerClass ownerClass) throws UnableToCompleteException {
+
+    FieldWriter[] fields = fieldsMap.values().toArray(
+        new FieldWriter[fieldsMap.size()]);
+    Arrays.sort(fields, BUILD_DEFINITION_SORT);
+
+    for (FieldWriter field : fields) {
+      int count = getGetterCounter(field.getName());
+      field.writeFieldBuilder(w, count, ownerClass.getUiField(field.getName()));
+    }
   }
 
   /**
@@ -87,9 +155,9 @@ public class FieldManager {
    * When making a field we peek at the {@link #parsedFieldStack} to make sure
    * that the field that holds the widget currently being parsed will depended
    * upon the field being declared. This ensures, for example, that dom id
-   * fields (see {@link UiBinderWriter#declareDomIdHolder()}) used by an HTMLPanel 
+   * fields (see {@link UiBinderWriter#declareDomIdHolder()}) used by an HTMLPanel
    * will be declared before it is.
-   * 
+   *
    * @param fieldType the type of the new field
    * @param fieldName the name of the new field
    * @return a new {@link FieldWriter} instance
@@ -100,6 +168,11 @@ public class FieldManager {
     FieldWriter field = new FieldWriterOfExistingType(fieldType, fieldName,
         logger);
     return registerField(fieldName, field);
+  }
+
+  public FieldWriter registerField(String type, String fieldName)
+      throws UnableToCompleteException {
+    return registerField(types.findType(type), fieldName);
   }
 
   /**
@@ -114,7 +187,7 @@ public class FieldManager {
    * upon the field being declared. This ensures, for example, that dom id
    * fields (see {@link UiBinderWriter#declareDomIdHolder()}) used by an HTMLPanel
    * will be declared before it is.
-   * 
+   *
    * @throws UnableToCompleteException on duplicate name
    * @return a new {@link FieldWriter} instance
    */
@@ -136,7 +209,7 @@ public class FieldManager {
    * upon the field being declared. This ensures, for example, that dom id
    * fields (see {@link UiBinderWriter#declareDomIdHolder()}) used by an HTMLPanel
    * will be declared before it is.
-   * 
+   *
    * @param assignableType class or interface extened or implemented by this
    *          type
    * @param typeName the full qualified name for the class associated with the
@@ -169,10 +242,23 @@ public class FieldManager {
   }
 
   /**
+   * Gets a FieldWriter given its name or throws a RuntimeException if not found.
+   * @param fieldName the name of the {@link FieldWriter} to find
+   * @return the {@link FieldWriter} instance indexed by fieldName
+   */
+  public FieldWriter require(String fieldName) {
+    FieldWriter fieldWriter = lookup(fieldName);
+    if (fieldWriter == null) {
+      throw new RuntimeException("The required field %s doesn't exist.");
+    }
+    return fieldWriter;
+  }
+
+  /**
    * To be called after parsing is complete. Surveys all
    * <code>{field.reference}</code>s and checks they refer to existing types,
    * and have appropriate return types.
-   * 
+   *
    * @throws UnableToCompleteException if any <code>{field.references}</code>
    *           can't be resolved
    */
@@ -192,8 +278,23 @@ public class FieldManager {
   }
 
   /**
+   * Outputs the getter and builder definitions for all fields.
+   * {@see com.google.gwt.uibinder.rebind.AbstractFieldWriter#writeFieldDefinition}.
+   */
+  public void writeFieldDefinitions(IndentedWriter writer, TypeOracle typeOracle,
+      OwnerClass ownerClass, DesignTimeUtils designTime)
+      throws UnableToCompleteException {
+    Collection<FieldWriter> fields = fieldsMap.values();
+    for (FieldWriter field : fields) {
+      int counter = getGetterCounter(field.getName());
+      field.writeFieldDefinition(writer, typeOracle,
+          ownerClass.getUiField(field.getName()), designTime, counter);
+    }
+  }
+
+  /**
    * Writes all stored gwt fields.
-   * 
+   *
    * @param writer the writer to output
    * @param ownerTypeName the name of the class being processed
    */
@@ -203,6 +304,14 @@ public class FieldManager {
     for (FieldWriter field : fields) {
       field.write(writer);
     }
+  }
+
+  /**
+   * Gets the number of times a getter for the given field is called.
+   */
+  private int getGetterCounter(String fieldName) {
+    Integer count = gettersCounter.get(fieldName);
+    return (count == null) ? 0 : count;
   }
 
   private FieldWriter registerField(String fieldName, FieldWriter field)

@@ -47,7 +47,8 @@ public class HtmlInterpreter implements XMLElement.Interpreter<String> {
    */
   public static HtmlInterpreter newInterpreterForUiObject(
       UiBinderWriter writer, String uiExpression) {
-    String ancestorExpression = uiExpression + ".getElement()";
+    String ancestorExpression = writer.useLazyWidgetBuilders()
+        ? uiExpression : uiExpression + ".getElement()";
     return new HtmlInterpreter(writer, ancestorExpression,
         new HtmlMessageInterpreter(writer, ancestorExpression));
   }

@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -48,7 +48,8 @@ public class UiBinderGenerator extends Generator {
   private static final String TEMPLATE_SUFFIX = ".ui.xml";
 
   private static final String XSS_SAFE_CONFIG_PROPERTY = "UiBinder.useSafeHtmlTemplates";
-  
+  private static final String LAZY_WIDGET_BUILDERS_PROPERTY = "UiBinder.useLazyWidgetBuilders";
+
   /**
    * Given a UiBinder interface, return the path to its ui.xml file, suitable
    * for any classloader to find it as a resource.
@@ -127,10 +128,30 @@ public class UiBinderGenerator extends Generator {
     return packageName + "." + implName;
   }
 
+  private Boolean extractConfigProperty(MortalLogger logger,
+      PropertyOracle propertyOracle, String configProperty, boolean defaultValue) {
+    List<String> values;
+    try {
+      values = propertyOracle.getConfigurationProperty(configProperty).getValues();
+    } catch (BadPropertyValueException e) {
+      logger.warn("No value found for configuration property %s.", configProperty);
+      return defaultValue;
+    }
+
+    String value = values.get(0);
+    if (!value.equals(Boolean.FALSE.toString()) && !value.equals(Boolean.TRUE.toString())) {
+      logger.warn("Unparseable value \"%s\" found for configuration property %s", value,
+          configProperty);
+      return defaultValue;
+    }
+
+    return Boolean.valueOf(value);
+  }
+
   private void generateOnce(JClassType interfaceType, String implName,
       PrintWriter binderPrintWriter, TreeLogger treeLogger, TypeOracle oracle,
-      ResourceOracle resourceOracle, PropertyOracle propertyOracle, 
-      PrintWriterManager writerManager,  DesignTimeUtils designTime) 
+      ResourceOracle resourceOracle, PropertyOracle propertyOracle,
+      PrintWriterManager writerManager,  DesignTimeUtils designTime)
   throws UnableToCompleteException {
 
     MortalLogger logger = new MortalLogger(treeLogger);
@@ -138,10 +159,12 @@ public class UiBinderGenerator extends Generator {
     MessagesWriter messages = new MessagesWriter(BINDER_URI, logger,
         templatePath, interfaceType.getPackage().getName(), implName);
 
+    boolean useLazyWidgetBuilders = useLazyWidgetBuilders(logger, propertyOracle);
+    FieldManager fieldManager = new FieldManager(oracle, logger, useLazyWidgetBuilders);
+
     UiBinderWriter uiBinderWriter = new UiBinderWriter(interfaceType, implName,
-        templatePath, oracle, logger, new FieldManager(oracle, logger),
-        messages, designTime, uiBinderCtx, 
-        useSafeHtmlTemplates(logger, propertyOracle));
+        templatePath, oracle, logger, fieldManager, messages, designTime, uiBinderCtx,
+        useSafeHtmlTemplates(logger, propertyOracle), useLazyWidgetBuilders);
 
     Document doc = getW3cDoc(logger, designTime, resourceOracle, templatePath);
     designTime.rememberPathForElements(doc);
@@ -183,23 +206,13 @@ public class UiBinderGenerator extends Generator {
     return doc;
   }
 
+  private Boolean useLazyWidgetBuilders(MortalLogger logger, PropertyOracle propertyOracle) {
+    return extractConfigProperty(logger, propertyOracle, LAZY_WIDGET_BUILDERS_PROPERTY, false);
+  }
+
   private Boolean useSafeHtmlTemplates(MortalLogger logger, PropertyOracle propertyOracle) {
-    List<String> values;
-    try {
-      values = propertyOracle.getConfigurationProperty(XSS_SAFE_CONFIG_PROPERTY).getValues();
-    } catch (BadPropertyValueException e) {
-      logger.warn("No value found for configuration property %s.", XSS_SAFE_CONFIG_PROPERTY);
-      return true;
-    }
-
-    String value = values.get(0);
-    if (!value.equals(Boolean.FALSE.toString()) && !value.equals(Boolean.TRUE.toString())) {
-      logger.warn("Unparseable value \"%s\" found for configuration property %s", value,
-          XSS_SAFE_CONFIG_PROPERTY);
-      return true;
-    }
-
-    Boolean rtn = Boolean.valueOf(value);
+    Boolean rtn = extractConfigProperty(
+        logger, propertyOracle, XSS_SAFE_CONFIG_PROPERTY, true);
 
     if (!rtn) {
       logger.warn("Configuration property %s is false! UiBinder SafeHtml integration is off, "

@@ -171,7 +171,8 @@ public class UiBinderParser {
         source);
     FieldWriter field = fieldManager.registerField(dataResourceType,
         dataMethod.getName());
-    field.setInitializer(String.format("%s.%s()", bundleClass.getFieldName(),
+    field.setInitializer(String.format("%s.%s()",
+        fieldManager.convertFieldToGetter(bundleClass.getFieldName()),
         dataMethod.getName()));
   }
 
@@ -200,7 +201,8 @@ public class UiBinderParser {
 
     FieldWriter field = fieldManager.registerField(imageResourceType,
         imageMethod.getName());
-    field.setInitializer(String.format("%s.%s()", bundleClass.getFieldName(),
+    field.setInitializer(String.format("%s.%s()",
+        fieldManager.convertFieldToGetter(bundleClass.getFieldName()),
         imageMethod.getName()));
   }
 
@@ -350,7 +352,8 @@ public class UiBinderParser {
         publicType, body, importTypes);
 
     FieldWriter field = fieldManager.registerFieldForGeneratedCssResource(cssMethod);
-    field.setInitializer(String.format("%s.%s()", bundleClass.getFieldName(),
+    field.setInitializer(String.format("%s.%s()",
+        fieldManager.convertFieldToGetter(bundleClass.getFieldName()),
         cssMethod.getName()));
   }
 

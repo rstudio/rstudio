@@ -18,6 +18,7 @@ package com.google.gwt.uibinder.elementparsers;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.uibinder.rebind.FieldManager;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.uibinder.rebind.messages.MessageWriter;
@@ -60,6 +61,7 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
    * Other, but that seems more trouble than it's worth.
    */
 
+  private final FieldManager fieldManager;
   private int serial = 0;
   private final String ancestorExpression;
   private final String fieldName;
@@ -73,6 +75,7 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
     super(writer, message, ancestorExpression);
     this.fieldName = fieldName;
     this.ancestorExpression = ancestorExpression;
+    this.fieldManager = uiWriter.getFieldManager();
  }
 
   @Override
@@ -114,14 +117,23 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
   public String postProcess(String consumed) throws UnableToCompleteException {
     for (String idHolder : idToWidgetElement.keySet()) {
       XMLElement childElem = idToWidgetElement.get(idHolder);
-      String childField = uiWriter.parseElementToField(childElem);
+
+      String childField = uiWriter.parseElementToFieldWriter(childElem).getName();
 
       genSetWidgetTextCall(idHolder, childField);
-      uiWriter.addInitStatement("%1$s.addAndReplaceElement(%2$s, %3$s);",
-          fieldName, childField, idHolder);
+
+      if (uiWriter.useLazyWidgetBuilders()) {
+        fieldManager.require(fieldName).addDetachStatement(
+            "%1$s.addAndReplaceElement(%2$s, %3$s);",
+            fieldName, fieldManager.convertFieldToGetter(childField), idHolder);
+      } else {
+        uiWriter.addInitStatement("%1$s.addAndReplaceElement(%2$s, %3$s);",
+            fieldName, childField, idHolder);
+      }
     }
+
     /*
-     * We get used recursively, so this will be called again. Empty the map 
+     * We get used recursively, so this will be called again. Empty the map
      * or else we'll re-register things.
      */
     idToWidgetElement.clear();
@@ -134,8 +146,9 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
   }
 
   private String genOpenTag(String name, String idHolder) {
+    idHolder = fieldManager.convertFieldToGetter(idHolder);
     if (uiWriter.useSafeHtmlTemplates()) {
-      idHolder = uiWriter.tokenForStringExpression(idHolder); 
+      idHolder = uiWriter.tokenForStringExpression(idHolder);
     } else {
       idHolder = "\" + " + idHolder + " + \"";
     }
@@ -144,16 +157,32 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
     return openPlaceholder;
   }
 
-  private void genSetWidgetTextCall(String idHolder, String childField) {
-    if (idIsHasText.contains(idHolder)) {
-      uiWriter.addInitStatement(
-          "%s.setText(%s.getElementById(%s).getInnerText());", childField,
-          fieldName, idHolder);
-    }
-    if (idIsHasHTML.contains(idHolder)) {
-      uiWriter.addInitStatement(
-          "%s.setHTML(%s.getElementById(%s).getInnerHTML());", childField,
-          fieldName, idHolder);
+  private void genSetWidgetTextCall(String idHolder, String childField)
+      throws UnableToCompleteException {
+
+    if (uiWriter.useLazyWidgetBuilders()) {
+      if (idIsHasText.contains(idHolder)) {
+        fieldManager.require(childField).addAttachStatement(
+            "%s.setText(%s.getElementById(%s).getInnerText());", childField,
+            fieldManager.convertFieldToGetter(fieldName),
+            fieldManager.convertFieldToGetter(idHolder));
+      } else if (idIsHasHTML.contains(idHolder)) {
+        fieldManager.require(childField).addAttachStatement(
+            "%s.setHTML(%s.getElementById(%s).getInnerHTML());", childField,
+            fieldManager.convertFieldToGetter(fieldName),
+            fieldManager.convertFieldToGetter(idHolder));
+      }
+    } else {
+      if (idIsHasText.contains(idHolder)) {
+        uiWriter.addInitStatement(
+            "%s.setText(%s.getElementById(%s).getInnerText());", childField,
+            fieldName, idHolder);
+      }
+      if (idIsHasHTML.contains(idHolder)) {
+        uiWriter.addInitStatement(
+            "%s.setHTML(%s.getElementById(%s).getInnerHTML());", childField,
+            fieldName, idHolder);
+      }
     }
   }
 
@@ -186,8 +215,9 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
   }
 
   private String handleOpaqueWidgetPlaceholder(String name, String idHolder) {
+    idHolder = fieldManager.convertFieldToGetter(idHolder);
     if (uiWriter.useSafeHtmlTemplates()) {
-      idHolder = uiWriter.tokenForStringExpression(idHolder); 
+      idHolder = uiWriter.tokenForStringExpression(idHolder);
     } else {
       idHolder = "\" + " + idHolder + " + \"";
     }

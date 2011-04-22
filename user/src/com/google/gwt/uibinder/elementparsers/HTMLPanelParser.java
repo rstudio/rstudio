@@ -61,7 +61,7 @@ public class HTMLPanelParser implements ElementParser {
     if (null == customTag) {
       writer.setFieldInitializerAsConstructor(fieldName, type, writer.declareTemplateCall(html));
     } else {
-      writer.setFieldInitializerAsConstructor(fieldName, type, customTag, 
+      writer.setFieldInitializerAsConstructor(fieldName, type, customTag,
           writer.declareTemplateCall(html));
     }
   }
@@ -72,9 +72,11 @@ public class HTMLPanelParser implements ElementParser {
    */
   private HtmlInterpreter makeHtmlInterpreter(final String fieldName,
       final UiBinderWriter uiWriter) {
-    final String ancestorExpression = fieldName + ".getElement()";
+    final String ancestorExpression = uiWriter.useLazyWidgetBuilders()
+        ? fieldName : (fieldName + ".getElement()");
 
-    PlaceholderInterpreterProvider placeholderInterpreterProvider = new PlaceholderInterpreterProvider() {
+    PlaceholderInterpreterProvider placeholderInterpreterProvider =
+        new PlaceholderInterpreterProvider() {
       public PlaceholderInterpreter get(MessageWriter message) {
         return new WidgetPlaceholderInterpreter(fieldName, uiWriter, message,
             ancestorExpression);

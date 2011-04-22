@@ -44,6 +44,7 @@ public class HandlerEvaluatorTest extends TestCase {
   private OwnerClass ownerType;
   private MortalLogger logger;
   private TypeOracle oracle;
+  private FieldManager fieldManager;
 
   @Override
   protected void setUp() throws Exception {
@@ -55,6 +56,7 @@ public class HandlerEvaluatorTest extends TestCase {
     mockControl = EasyMock.createControl();
     ownerType = mockControl.createMock(OwnerClass.class);
     oracle = mockControl.createMock(TypeOracle.class);
+    fieldManager = mockControl.createMock(FieldManager.class);
 
     // TODO(hermes): sucks I know!!!! This class shouldn't be using EasyMock
     // but for now that's the easiest way of creating new instances of
@@ -70,7 +72,7 @@ public class HandlerEvaluatorTest extends TestCase {
         eventHandlerJClass);
 
     mockControl.replay();
-    evaluator = new HandlerEvaluator(ownerType, logger, oracle);
+    evaluator = new HandlerEvaluator(ownerType, logger, oracle, false);
     mockControl.verify();
     mockControl.reset();
   }
@@ -78,7 +80,7 @@ public class HandlerEvaluatorTest extends TestCase {
   public void testWriteAddHandler() throws Exception {
     StringWriter sw = new StringWriter();
     evaluator.writeAddHandler(new IndentedWriter(new PrintWriter(sw)),
-        "handler1", "addClickHandler", "label1");
+        fieldManager, "handler1", "addClickHandler", "label1");
 
     assertEquals("label1.addClickHandler(handler1);", sw.toString().trim());
   }

@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -20,7 +20,11 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.uibinder.rebind.model.OwnerField;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -33,15 +37,26 @@ import java.util.Set;
  * {@link FieldWriter#getInstantiableType()}.
  */
 abstract class AbstractFieldWriter implements FieldWriter {
-  private static final String NO_DEFAULT_CTOR_ERROR = "%1$s has no default (zero args) constructor. To fix this, you can define"
+  private static final String NO_DEFAULT_CTOR_ERROR =
+      "%1$s has no default (zero args) constructor. To fix this, you can define"
       + " a @UiFactory method on the UiBinder's owner, or annotate a constructor of %2$s with"
       + " @UiConstructor.";
 
-  private final String name;
+  private static int nextAttachVar;
+
+  public static String getNextAttachVar() {
+    return "attachRecord" + nextAttachVar++;
+  }
 
   private final Set<FieldWriter> needs = new LinkedHashSet<FieldWriter>();
+  private final List<String> statements = new ArrayList<String>();
+  private final List<String> attachStatements = new ArrayList<String>();
+  private final List<String> detachStatements = new ArrayList<String>();
+
+  private final String name;
   private String initializer;
   private boolean written;
+  private int buildPrecedence;
   private MortalLogger logger;
 
   public AbstractFieldWriter(String name, MortalLogger logger) {
@@ -50,10 +65,36 @@ abstract class AbstractFieldWriter implements FieldWriter {
     }
     this.name = name;
     this.logger = logger;
+    this.buildPrecedence = 1;
+  }
+
+  @Override
+  public void addAttachStatement(String format, Object... args) {
+    attachStatements.add(String.format(format, args));
+  }
+
+  @Override
+  public void addDetachStatement(String format, Object... args) {
+    detachStatements.add(String.format(format, args));
+  }
+
+  @Override
+  public void addStatement(String format, Object... args) {
+    statements.add(String.format(format, args));
+  }
+
+  @Override
+  public int getBuildPrecedence() {
+    return buildPrecedence;
   }
 
   public String getInitializer() {
     return initializer;
+  }
+
+  @Override
+  public String getName() {
+    return name;
   }
 
   public JType getReturnType(String[] path, MonitoredLogger logger) {
@@ -68,6 +109,11 @@ abstract class AbstractFieldWriter implements FieldWriter {
 
   public void needs(FieldWriter f) {
     needs.add(f);
+  }
+
+  @Override
+  public void setBuildPrecendence(int precedence) {
+    this.buildPrecedence = precedence;
   }
 
   public void setInitializer(String initializer) {
@@ -112,6 +158,113 @@ abstract class AbstractFieldWriter implements FieldWriter {
     w.write("%s %s = %s;", getQualifiedSourceName(), name, initializer);
 
     this.written = true;
+  }
+
+  @Override
+  public void writeFieldBuilder(IndentedWriter w, int getterCount,
+    OwnerField ownerField) throws UnableToCompleteException {
+    if (getterCount > 1) {
+      w.write("%s;  // more than one getter call detected. Precedence: %s",
+            FieldManager.getFieldBuilder(name), getBuildPrecedence());
+      return;
+    }
+
+    if (getterCount == 0 && ownerField != null) {
+      w.write("%s;  // no getter call detected but must bind to ui:field. Precedence: %s",
+          FieldManager.getFieldBuilder(name), getBuildPrecedence());
+    }
+  }
+
+  @Override
+  public void writeFieldDefinition(IndentedWriter w, TypeOracle typeOracle,
+      OwnerField ownerField, DesignTimeUtils designTime, int getterCount)
+      throws UnableToCompleteException {
+
+    // Check initializer.
+    if (initializer == null) {
+      if (ownerField != null && ownerField.isProvided()) {
+        initializer = String.format("owner.%s", name);
+      } else {
+        JClassType type = getInstantiableType();
+        if (type != null) {
+          if ((type.isInterface() == null)
+              && (type.findConstructor(new JType[0]) == null)) {
+            logger.die(NO_DEFAULT_CTOR_ERROR, type.getQualifiedSourceName(),
+                type.getName());
+          }
+        }
+        initializer = String.format("(%1$s) GWT.create(%1$s.class)",
+            getQualifiedSourceName());
+      }
+    }
+
+    w.newline();
+    w.write("/**");
+    w.write(" * Getter for %s called %s times.", name, getterCount);
+    w.write(" */");
+    if (getterCount > 1) {
+      w.write("private %1$s %2$s;", getQualifiedSourceName(), name);
+    }
+
+    w.write("private %s %s {", getQualifiedSourceName(), FieldManager.getFieldGetter(name));
+    w.indent();
+    w.write("return %s;", (getterCount > 1) ? name : FieldManager.getFieldBuilder(name));
+    w.outdent();
+    w.write("}");
+
+    w.write("private %s %s {", getQualifiedSourceName(), FieldManager.getFieldBuilder(name));
+    w.indent();
+
+    w.write("// Creation section.");
+    if (getterCount > 1) {
+      w.write("%s = %s;", name, initializer);
+    } else {
+      w.write("%s %s = %s;", getQualifiedSourceName(), name, initializer);
+    }
+
+    w.write("// Setup section.");
+    for (String s : statements) {
+      w.write(s);
+    }
+
+    String attachedVar = null;
+
+    if (attachStatements.size() > 0) {
+      w.newline();
+      w.write("// Attach section.");
+      attachedVar = getNextAttachVar();
+
+      JClassType elementType = typeOracle.findType(Element.class.getName());
+
+      String elementToAttach = getInstantiableType().isAssignableTo(elementType)
+          ? name : name + ".getElement()";
+
+      w.write("UiBinderUtil.TempAttachment %s = UiBinderUtil.attachToDom(%s);",
+          attachedVar, elementToAttach);
+
+      for (String s : attachStatements) {
+        w.write(s);
+      }
+    }
+
+    if (attachedVar != null) {
+      w.newline();
+      w.write("// Detach section.");
+      w.write("%s.detach();", attachedVar);
+      for (String s : detachStatements) {
+        w.write(s);
+      }
+    }
+
+    if ((ownerField != null) && !ownerField.isProvided()) {
+      w.newline();
+      w.write("owner.%1$s = %1$s;", name);
+    }
+
+    w.newline();
+    w.write("return %s;", name);
+    w.outdent();
+    w.write("}");
   }
 
   private JMethod findMethod(JClassType type, String methodName) {

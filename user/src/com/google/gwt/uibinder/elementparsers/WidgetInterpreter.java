@@ -16,6 +16,9 @@
 package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.uibinder.client.UiBinderUtil.LazyDomElement;
+import com.google.gwt.uibinder.rebind.FieldManager;
+import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 
@@ -66,7 +69,7 @@ class WidgetInterpreter implements XMLElement.Interpreter<String> {
     this.uiWriter = writer;
   }
 
-  public String interpretElement(XMLElement elem) 
+  public String interpretElement(XMLElement elem)
       throws UnableToCompleteException {
     if (uiWriter.isWidgetElement(elem)) {
       // Allocate a local variable to hold the dom id for this widget. Note
@@ -76,21 +79,43 @@ class WidgetInterpreter implements XMLElement.Interpreter<String> {
       String idHolder = uiWriter.declareDomIdHolder();
       String childField = uiWriter.parseElementToField(elem);
       uiWriter.ensureCurrentFieldAttached();
-      
+
       String elementPointer = idHolder + "Element";
       uiWriter.addInitStatement(
           "com.google.gwt.user.client.Element %s = " +
           "com.google.gwt.dom.client.Document.get().getElementById(%s).cast();",
           elementPointer, idHolder);
-      // Delay replacing the placeholders with the widgets until after 
-      // detachment so as not to end up attaching the widget to the DOM 
-      // unnecessarily
-      uiWriter.addDetachStatement(
-          "%1$s.addAndReplaceElement(%2$s, %3$s);", 
-          fieldName, childField, elementPointer);      
+
+      FieldManager fieldManager = uiWriter.getFieldManager();
+
+      if (uiWriter.useLazyWidgetBuilders()) {
+
+        // Register a DOM id field.
+        String lazyDomElementPath = LazyDomElement.class.getCanonicalName();
+        fieldManager.registerField(lazyDomElementPath, elementPointer)
+            .setInitializer(String.format("new %s(%s)",
+            lazyDomElementPath, fieldManager.convertFieldToGetter(idHolder)));
+
+        // Add attach/detach sections for this element.
+        FieldWriter fieldWriter = fieldManager.require(fieldName);
+        fieldWriter.addAttachStatement("%s.get();",
+            fieldManager.convertFieldToGetter(elementPointer));
+        fieldWriter.addDetachStatement("%s.addAndReplaceElement(%s, %s.get());",
+          fieldName, childField, fieldManager.convertFieldToGetter(elementPointer));
+
+      } else {
+
+        // Delay replacing the placeholders with the widgets until after
+        // detachment so as not to end up attaching the widget to the DOM
+        // unnecessarily
+        uiWriter.addDetachStatement(
+            "%1$s.addAndReplaceElement(%2$s, %3$s);",
+            fieldName, childField, elementPointer);
+      }
 
       // Create an element to hold the widget.
       String tag = getLegalPlaceholderTag(elem);
+      idHolder = fieldManager.convertFieldToGetter(idHolder);
       if (uiWriter.useSafeHtmlTemplates()) {
         idHolder = uiWriter.tokenForStringExpression(idHolder);
       } else {

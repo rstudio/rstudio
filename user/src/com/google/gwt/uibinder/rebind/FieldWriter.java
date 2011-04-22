@@ -18,6 +18,8 @@ package com.google.gwt.uibinder.rebind;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.uibinder.rebind.model.OwnerField;
 
 /**
  * Models a field to be written in the generated binder code. Note that this is
@@ -36,11 +38,60 @@ import com.google.gwt.core.ext.typeinfo.JType;
 public interface FieldWriter {
 
   /**
+   * Add a statement to be executed right after the current field is attached.
+   *
+   * <pre>
+   *   HTMLPanel panel = new HTMLPanel(
+   *      "<span id='someId' class='someclass'></span>...");
+   *
+   *   // statement section.
+   *   widgetX.setStyleName("someCss");
+   *   widgetX.setVisible(true);
+   *
+   *   // attach section.
+   *   UiBinderUtil.TempAttachment attachRecord =
+   *      UiBinderUtil.attachToDom(panel.getElement());
+   *   get_domId0Element().get();
+   *   get_domId1Element().get();
+   *
+   *   // detach section.
+   *   attachRecord.detach();
+   *   panel.addAndReplaceElement(get_someWidget(), get_domId0Element().get());
+   *   panel.addAndReplaceElement(get_otherWidget(), get_domId1Element().get());
+   * </pre>
+   */
+  void addAttachStatement(String format, Object... args);
+
+  /**
+   * Add a statement to be executed right after the current field is detached.
+   * {@see #addAttachStatement}.
+   */
+  void addDetachStatement(String format, Object... args);
+
+  /**
+   * Add a statement for the given field, executed right after its creation. Example:
+   *
+   * <pre>
+   *   WidgetX widgetX = GWT.create(WidgetX.class);
+   *
+   *   // statement section.
+   *   widgetX.setStyleName("someCss");
+   *   widgetX.setVisible(true);
+   * </pre>
+   */
+  void addStatement(String format, Object... args);
+
+  /**
    * Returns the type of this field, or for generated types the type it extends.
    */
   // TODO(rjrjr) When ui:style is able to implement multiple interfaces,
   // this will need to become a set
   JClassType getAssignableType();
+
+  /**
+   * Gets this field builder precedence.
+   */
+  int getBuildPrecedence();
 
   /**
    * Returns the custom initializer for this field, or null if it is not set.
@@ -52,6 +103,11 @@ public interface FieldWriter {
    * not yet been generated.
    */
   JClassType getInstantiableType();
+
+  /**
+   * Get the name of the field.
+   */
+  String getName();
 
   /**
    * Returns the qualified source name of this type.
@@ -71,6 +127,12 @@ public interface FieldWriter {
   void needs(FieldWriter f);
 
   /**
+   * Sets the precedence of this field builder. Field with higher values are
+   * written first.
+   */
+  void setBuildPrecendence(int precedence);
+
+  /**
    * Used to provide an initializer string to use instead of a
    * {@link com.google.gwt.core.client.GWT#create} call. Note that this is an
    * RHS expression. Don't include the leading '=', and don't end it with ';'.
@@ -83,4 +145,62 @@ public interface FieldWriter {
    * Write the field declaration.
    */
   void write(IndentedWriter w) throws UnableToCompleteException;
+
+  /**
+   * Write this field builder in the <b>Widgets</b> inner class. There are 3
+   * possible situations:
+   *
+   * <dl>
+   *   <dt>getter never called</dt>
+   *     <dd>write builder only if there's a ui:field associated</dd>
+   *   <dt>getter called only once</dt>
+   *     <dd>don't need to write the builder since the getter fallback to the
+   *      builder when called</dd>
+   *   <dt>getter called more than once</dt>
+   *     <dd>in this case a field class is created, the builder is written
+   *      and the getter returns the field class</dd>
+   * </dl>
+   *
+   * {@see com.google.gwt.uibinder.rebind.FieldWriter#writeFieldGetter}.
+   */
+  void writeFieldBuilder(IndentedWriter w, int getterCount, OwnerField ownerField)
+      throws UnableToCompleteException;
+
+  /**
+   * Output the getter and builder definitions for the given field.
+   *
+   *  <p>
+   *  <b>Example for widgets called only once:</b>
+   *  <pre>
+   *  private WidgetX get_widgetX() {
+   *    return build_widgetX();
+   *  }
+   *  private WidgetX build_widgetX() {
+   *   widget = GWT.create(WidgetX.class);
+   *   widget.setStyleName("css");
+   *   return widgetX;
+   *  }
+   *  </pre>
+   *  Notice that there's no field and the getter just fallback to the builder.
+   *  </p>
+   *
+   *  <p><b>Example for widgets called more than once:</b>
+   *  <pre>
+   *  private WidgetX widgetX;
+   *  private WidgetX get_widgetX() {
+   *    return widgetX;
+   *  }
+   *  private WidgetX build_widgetX() {
+   *   widget = GWT.create(WidgetX.class);
+   *   widget.setStyleName("css");
+   *   return widgetX;
+   *  }
+   * </pre>
+   * Notice that the getter just returns the field. The builder is called in
+   * the Widgets ctor.
+   * </p>
+   */
+  void writeFieldDefinition(IndentedWriter w, TypeOracle typeOracle,
+      OwnerField ownerField, DesignTimeUtils designTime, int getterCount)
+      throws UnableToCompleteException;
 }
