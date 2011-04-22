@@ -261,7 +261,7 @@ void ClientEventService::run()
          // from a suspend we provide client event ids in line with the 
          // client's expectations -- if we started with zero then the client
          // would never see any events!)
-         nextEventId = lastClientEventIdSeen + 1;
+         nextEventId = std::max(nextEventId, lastClientEventIdSeen + 1);
 
          // check for events (and wait a specified internal if there are none)
          try

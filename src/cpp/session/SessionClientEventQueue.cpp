@@ -20,6 +20,8 @@
 #include <core/Thread.hpp>
 #include <core/json/Json.hpp>
 
+#include <r/session/RConsoleActions.hpp>
+
 using namespace core ;
 
 namespace session {
@@ -157,6 +159,29 @@ void ClientEventQueue::flushPendingConsoleOutput()
    
    if ( !pendingConsoleOutput_.empty() )
    {
+      // If there's more console output than the client can even show, then
+      // truncate it to the amount that the client can show. Too much output
+      // can overwhelm the client, causing it to become unresponsive.
+      int limit = r::session::consoleActions().capacity() + 1;
+      if (pendingConsoleOutput_.length() > static_cast<unsigned int>(limit*2))
+      {
+         int lineCount = 0;
+         std::string::const_iterator begin = pendingConsoleOutput_.begin();
+         std::string::iterator pos = pendingConsoleOutput_.end();
+         while (--pos >= begin)
+         {
+            if (*pos == '\n')
+            {
+               if (++lineCount > limit)
+               {
+                  pendingConsoleOutput_.erase(pendingConsoleOutput_.begin(),
+                                              pos);
+                  break;
+               }
+            }
+         }
+      }
+
       pendingEvents_.push_back(ClientEvent(client_events::kConsoleWriteOutput, 
                                            pendingConsoleOutput_)); 
       pendingConsoleOutput_.clear() ;
