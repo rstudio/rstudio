@@ -25,9 +25,9 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.i18n.client.CustomDateTimeFormat;
-import com.google.gwt.i18n.client.DateTimeFormat;
-import com.google.gwt.i18n.client.CustomDateTimeFormat.Pattern;
+import com.google.gwt.i18n.shared.CustomDateTimeFormat;
+import com.google.gwt.i18n.shared.CustomDateTimeFormat.Pattern;
+import com.google.gwt.i18n.shared.DateTimeFormat;
 import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
@@ -50,6 +50,7 @@ public class CustomDateTimeFormatGenerator extends Generator {
    * @return generated class name
    * @throws UnableToCompleteException
    */
+  @SuppressWarnings("deprecation")
   @Override
   public final String generate(TreeLogger logger, final GeneratorContext context,
       String typeName) throws UnableToCompleteException {
@@ -79,6 +80,14 @@ public class CustomDateTimeFormatGenerator extends Generator {
           + CustomDateTimeFormat.class.getName());
       throw new UnableToCompleteException();
     }
+    JClassType oldDateTimeFormat;
+    try {
+      oldDateTimeFormat = typeOracle.getType(
+          com.google.gwt.i18n.client.DateTimeFormat.class.getName());
+    } catch (NotFoundException e) {
+      logger.log(TreeLogger.ERROR, "No client DateTimeFormat type?", e);
+      throw new UnableToCompleteException();
+    }
     JClassType dateTimeFormat;
     try {
       dateTimeFormat = typeOracle.getType(DateTimeFormat.class.getName());
@@ -102,24 +111,30 @@ public class CustomDateTimeFormatGenerator extends Generator {
       writer.indent();
       for (JMethod method : targetClass.getMethods()) {
         JType returnType = method.getReturnType();
-        if (returnType != dateTimeFormat) {
+        if (returnType != dateTimeFormat && returnType != oldDateTimeFormat) {
           logger.log(TreeLogger.ERROR, typeName + "." + method.getName()
               + " must return DateTimeFormat");
           throw new UnableToCompleteException();
         }
+        String pattern;
         Pattern annotation = method.getAnnotation(Pattern.class);
         if (annotation == null) {
-          logger.log(TreeLogger.ERROR, typeName + "." + method.getName()
-              + " must have an @Pattern annotation");
-          throw new UnableToCompleteException();
+          com.google.gwt.i18n.client.CustomDateTimeFormat.Pattern oldAnnotation
+              = method.getAnnotation(com.google.gwt.i18n.client.CustomDateTimeFormat.Pattern.class);
+          if (oldAnnotation == null) {
+            logger.log(TreeLogger.ERROR, typeName + "." + method.getName()
+                + " must have an @Pattern annotation");
+            throw new UnableToCompleteException();
+          }
+          pattern = oldAnnotation.value();
+        } else {
+          pattern = annotation.value();
         }
-        String pattern = annotation.value();
         pattern = dtpg.getBestPattern(pattern); 
         writer.println();
-        writer.println("public "
-            + method.getReturnType().getQualifiedSourceName() + " "
-            + method.getName() + "() {");
-        writer.println("  return DateTimeFormat.getFormat(\"" + pattern
+        String retTypeName = method.getReturnType().getQualifiedSourceName();
+        writer.println("public " + retTypeName + " " + method.getName() + "() {");
+        writer.println("  return " + retTypeName + ".getFormat(\"" + pattern
             + "\");");
         writer.println("}");
       }

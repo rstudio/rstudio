@@ -13,7 +13,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package com.google.gwt.i18n.client;
 
 import com.google.gwt.core.client.JsArrayInteger;
@@ -35,7 +34,7 @@ import java.util.Date;
  * there is a decent fallback that only uses the time zone offset to create a
  * TimeZone object.
  */
-public class TimeZone {
+public class TimeZone implements com.google.gwt.i18n.shared.TimeZone {
   // constants to reference time zone names in the time zone names array
   private static final int STD_SHORT_NAME = 0;
   private static final int STD_LONG_NAME = 1;
@@ -176,13 +175,8 @@ public class TimeZone {
   private TimeZone() {
   }
 
-  /**
-   * Returns the daylight savings time adjustment, in minutes, for the given
-   * date. If daylight savings time is in effect on the given date, the number
-   * will be positive, otherwise 0.
-   *
-   * @param date the date to check
-   * @return offset amount
+  /* (non-Javadoc)
+   * @see com.google.gwt.i18n.client.TimeZoneIntf#getDaylightAdjustment(java.util.Date)
    */
   public int getDaylightAdjustment(Date date) {
     if (transitionPoints == null) {
@@ -197,32 +191,22 @@ public class TimeZone {
     return (index == 0) ? 0 : adjustments[index - 1];
   }
 
-  /**
-   * Returns the GMT representation of this time zone object.
-   *
-   * @param date The date from which the time information should be extracted
-   * @return A GMT representation of the time given by the date
+  /* (non-Javadoc)
+   * @see com.google.gwt.i18n.client.TimeZoneIntf#getGMTString(java.util.Date)
    */
   public String getGMTString(Date date) {
     return composeGMTString(getOffset(date));
   }
 
-  /**
-   * Returns time zone id for this time zone. For time zone objects that have
-   * been instantiated from a time zone offset, the POSIX time zone id will be
-   * returned.
-   *
-   * @return time zone id
+  /* (non-Javadoc)
+   * @see com.google.gwt.i18n.client.TimeZoneIntf#getID()
    */
   public String getID() {
     return timezoneID;
   }
 
-  /**
-   * To get ISO-style (+00:00) representation of the time zone for given date.
-   *
-   * @param date The date for which time to retrieve RFC time zone string
-   * @return ISO-style time zone string
+  /* (non-Javadoc)
+   * @see com.google.gwt.i18n.client.TimeZoneIntf#getISOTimeZoneString(java.util.Date)
    */
   public String getISOTimeZoneString(Date date) {
     int offset = -getOffset(date);
@@ -238,34 +222,22 @@ public class TimeZone {
     return new String(data);
   }
 
-  /**
-   * Returns the long version of the time zone name for the given date; the
-   * result of this method will be different if daylight savings time is in
-   * effect.
-   *
-   * @param date The date for which the long time zone name is returned
-   * @return long time zone name
+  /* (non-Javadoc)
+   * @see com.google.gwt.i18n.client.TimeZoneIntf#getLongName(java.util.Date)
    */
   public String getLongName(Date date) {
     return tzNames[isDaylightTime(date) ? DLT_LONG_NAME : STD_LONG_NAME];
   }
 
-  /**
-   * Returns the RFC representation of the time zone name for the given date.
-   * To be consistent with JDK/Javascript API, west of Greenwich will be
-   * positive.
-   *
-   *  @param date The date for which time to retrieve time zone offset
-   *  @return time zone offset in minutes
+  /* (non-Javadoc)
+   * @see com.google.gwt.i18n.client.TimeZoneIntf#getOffset(java.util.Date)
    */
   public int getOffset(Date date) {
     return standardOffset - getDaylightAdjustment(date);
   }
 
-  /**
-   * To get RFC representation of certain time zone name for given date.
-   * @param date The date for which time to retrieve RFC time zone string
-   * @return RFC time zone string
+  /* (non-Javadoc)
+   * @see com.google.gwt.i18n.client.TimeZoneIntf#getRFCTimeZoneString(java.util.Date)
    */
   public String getRFCTimeZoneString(Date date) {
     int offset = -getOffset(date);
@@ -281,29 +253,22 @@ public class TimeZone {
     return new String(data);
   }
 
-  /**
-   * Returns the short time zone name for a given date.
-   *
-   * @param date The date for which time to retrieve short time zone
-   * @return short time zone name
+  /* (non-Javadoc)
+   * @see com.google.gwt.i18n.client.TimeZoneIntf#getShortName(java.util.Date)
    */
   public String getShortName(Date date) {
     return tzNames[isDaylightTime(date) ? DLT_SHORT_NAME : STD_SHORT_NAME];
   }
 
-  /**
-   * Returns the standard time zone offset, in minutes.
+  /* (non-Javadoc)
+   * @see com.google.gwt.i18n.client.TimeZoneIntf#getStandardOffset()
    */
   public int getStandardOffset() {
     return standardOffset;
   }
 
-  /**
-   * Check whether the given date and time falls within a daylight savings time
-   * period.
-   *
-   * @param date and time to check
-   * @return true if daylight savings time is in effect
+  /* (non-Javadoc)
+   * @see com.google.gwt.i18n.client.TimeZoneIntf#isDaylightTime(java.util.Date)
    */
   public boolean isDaylightTime(Date date) {
     return getDaylightAdjustment(date) > 0;

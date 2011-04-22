@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2011 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,27 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.i18n.client;
+package com.google.gwt.i18n.shared;
 
 /**
  * Create a custom localized date/time format at compile time. All methods on
  * subtypes of this interface must take no parameters and return DateTimeFormat
  * (which will be an initialized instance).
- * 
- * @deprecated use {@link com.google.gwt.i18n.shared.CustomDateTimeFormat} instead
  */
-@Deprecated
-public interface CustomDateTimeFormat extends com.google.gwt.i18n.shared.CustomDateTimeFormat {
+public interface CustomDateTimeFormat {
 
   /**
    * Annotation containing the pattern skeleton.
    * 
    * <p>The order of pattern characters and any literals don't matter, just
    * which pattern characters are present and their counts.
-   * 
-   * @deprecated use {@link com.google.gwt.i18n.shared.CustomDateTimeFormat.Pattern} instead
    */
-  @Deprecated
   public @interface Pattern {
 
     /**

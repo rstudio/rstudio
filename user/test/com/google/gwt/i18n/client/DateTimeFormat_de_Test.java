@@ -16,6 +16,7 @@
 package com.google.gwt.i18n.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.i18n.shared.DateTimeFormatTestBase;
 
 import java.util.Date;
 

@@ -15,9 +15,9 @@
  */
 package com.google.gwt.text.client;
 
-import com.google.gwt.i18n.client.DateTimeFormat;
-import com.google.gwt.i18n.client.TimeZone;
-import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
+import com.google.gwt.i18n.shared.DateTimeFormat;
+import com.google.gwt.i18n.shared.DateTimeFormat.PredefinedFormat;
+import com.google.gwt.i18n.shared.TimeZone;
 import com.google.gwt.text.shared.AbstractRenderer;
 
 import java.util.Date;
@@ -56,7 +56,6 @@ public class DateTimeFormatRenderer extends AbstractRenderer<Date> {
     if (object == null) {
       return "";
     }
-    return timeZone == null ? format.format(object) : format.format(object,
-        timeZone);
+    return format.format(object, timeZone);
   }
 }

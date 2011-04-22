@@ -30,6 +30,7 @@ import com.google.gwt.i18n.shared.AlternateMessageSelector.AlternateForm;
 
 import junit.framework.TestCase;
 
+import java.lang.annotation.Documented;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -822,7 +823,7 @@ public abstract class MessageInterfaceTestBase extends TestCase {
     GenerateKeys generate = msgIntf.getAnnotation(GenerateKeys.class);
     assertNotNull(generate);
     assertEquals(MD5KeyGenerator.class.getName(), generate.value());
-    assertNull(msgIntf.getAnnotation(Deprecated.class));
+    assertNull(msgIntf.getAnnotation(Documented.class));
   }
 
   public void testGetClassName() {
@@ -870,7 +871,7 @@ public abstract class MessageInterfaceTestBase extends TestCase {
   public void testIsAnnotationPresent() {
     assertTrue(msgIntf.isAnnotationPresent(DefaultLocale.class));
     assertTrue(msgIntf.isAnnotationPresent(GenerateKeys.class));
-    assertFalse(msgIntf.isAnnotationPresent(Deprecated.class));
+    assertFalse(msgIntf.isAnnotationPresent(Documented.class));
   }
 
   @Override

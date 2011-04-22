@@ -13,8 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-package com.google.gwt.i18n.client.impl;
+package com.google.gwt.i18n.shared.impl;
 
 import java.util.Date;
 

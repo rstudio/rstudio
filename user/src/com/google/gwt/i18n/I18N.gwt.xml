@@ -75,7 +75,7 @@
       generator="com.google.gwt.i18n.linker.LocalePropertyProviderGenerator"/>
 
   <generate-with class="com.google.gwt.i18n.rebind.LocalizableGenerator">
-    <when-type-assignable class="com.google.gwt.i18n.client.Localizable" />
+    <when-type-assignable class="com.google.gwt.i18n.shared.Localizable" />
   </generate-with>
   <generate-with class="com.google.gwt.i18n.rebind.LocaleInfoGenerator">
     <when-type-is class="com.google.gwt.i18n.client.impl.LocaleInfoImpl" />
@@ -84,7 +84,7 @@
     <when-type-is class="com.google.gwt.i18n.client.CurrencyList" />
   </generate-with>
   <generate-with class="com.google.gwt.i18n.rebind.CustomDateTimeFormatGenerator">
-    <when-type-assignable class="com.google.gwt.i18n.client.CustomDateTimeFormat" />
+    <when-type-assignable class="com.google.gwt.i18n.shared.CustomDateTimeFormat" />
   </generate-with>
   
   <!--

@@ -113,8 +113,8 @@ public class UiJavaResources {
     public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
-      code.append("import com.google.gwt.i18n.client.DateTimeFormat;\n");
-      code.append("import com.google.gwt.i18n.client.TimeZone;\n");
+      code.append("import com.google.gwt.i18n.shared.DateTimeFormat;\n");
+      code.append("import com.google.gwt.i18n.shared.TimeZone;\n");
       code.append("public class DateLabel extends ValueLabel {\n");
       code.append("  public DateLabel() { super(null); } ");
       code.append("  public DateLabel(DateTimeFormat format) { super(null); } ");
@@ -124,12 +124,32 @@ public class UiJavaResources {
     }
   };
   public static final MockJavaResource DATE_TIME_FORMAT = new MockJavaResource(
+      "com.google.gwt.i18n.shared.DateTimeFormat") {
+    @Override
+    public CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.i18n.shared;\n");
+      code.append("public class DateTimeFormat {\n");
+      code.append("  public static enum PredefinedFormat {\n");
+      PredefinedFormat[] values = PredefinedFormat.values();
+      for (int i = 0; i < values.length; i++) {
+        code.append("    ").append(values[i].name());
+        if (i < values.length - 1) {
+          code.append(",\n");
+        }
+      }
+      code.append("  }\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource DATE_TIME_FORMAT_OLD = new MockJavaResource(
       "com.google.gwt.i18n.client.DateTimeFormat") {
     @Override
     public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.i18n.client;\n");
-      code.append("public class DateTimeFormat {\n");
+      code.append("public class DateTimeFormat extends com.google.gwt.i18n.shared.DateTimeFormat {\n");
       code.append("  public static enum PredefinedFormat {\n");
       PredefinedFormat[] values = PredefinedFormat.values();
       for (int i = 0; i < values.length; i++) {
@@ -553,12 +573,23 @@ public class UiJavaResources {
     }
   };
   public static final MockJavaResource TIME_ZONE = new MockJavaResource(
+      "com.google.gwt.i18n.shared.TimeZone") {
+    @Override
+    public CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.i18n.shared;\n");
+      code.append("public interface TimeZone {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource TIME_ZONE_OLD = new MockJavaResource(
       "com.google.gwt.i18n.client.TimeZone") {
     @Override
     public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.i18n.client;\n");
-      code.append("public class TimeZone {\n");
+      code.append("public class TimeZone implements com.google.gwt.i18n.shared.TimeZone {\n");
       code.append("}\n");
       return code;
     }
@@ -638,6 +669,7 @@ public class UiJavaResources {
     rtn.add(CURRENCY_DATA);
     rtn.add(DATE_LABEL);
     rtn.add(DATE_TIME_FORMAT);
+    rtn.add(DATE_TIME_FORMAT_OLD);
     rtn.add(DIALOG_BOX);
     rtn.add(DISCLOSURE_PANEL);
     rtn.add(DOCK_LAYOUT_PANEL);
@@ -671,6 +703,7 @@ public class UiJavaResources {
     rtn.add(TAB_PANEL);
     rtn.add(TEXT_BOX_BASE);
     rtn.add(TIME_ZONE);
+    rtn.add(TIME_ZONE_OLD);
     rtn.add(TREE);
     rtn.add(TREE_ITEM);
     rtn.add(UI_OBJECT);

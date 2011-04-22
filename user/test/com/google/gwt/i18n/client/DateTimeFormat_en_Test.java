@@ -18,12 +18,13 @@ package com.google.gwt.i18n.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.constants.TimeZoneConstants;
 import com.google.gwt.i18n.client.impl.cldr.DateTimeFormatInfoImpl_de;
+import com.google.gwt.i18n.shared.DateTimeFormatTestBase;
 
 import java.util.Date;
 
 /**
- * Tests formatting functionality in {@link DateTimeFormat} for the English
- * language.
+ * Tests formatting functionality in {@link com.google.gwt.i18n.shared.DateTimeFormat} for the
+ * English language.
  */
 @SuppressWarnings("deprecation")
 public class DateTimeFormat_en_Test extends DateTimeFormatTestBase {
