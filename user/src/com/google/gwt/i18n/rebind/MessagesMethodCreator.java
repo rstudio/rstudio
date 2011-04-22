@@ -15,6 +15,7 @@
  */
 package com.google.gwt.i18n.rebind;
 
+import com.google.gwt.codegen.server.StringGenerator;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
@@ -922,7 +923,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
      *
      * @param logger
      * @param locale current locale
-     * @param out StringBuffer to append to
+     * @param out StringBuilder to append to
      * @param formatArgs format-specific arguments
      * @param subformat the remainder of the format string
      * @param argName the name of the argument to use in the generated code
@@ -1247,8 +1248,8 @@ class MessagesMethodCreator extends AbstractMethodCreator {
       final String val1, final JType elemType, final boolean isSafeHtml,
       String listPattern, final boolean formatSecond, final Parameters params)
       throws UnableToCompleteException {
-    final StringBuffer buf = new StringBuffer();
-    final StringGenerator gen = new StringGenerator(buf, isSafeHtml);
+    final StringBuilder buf = new StringBuilder();
+    final StringGenerator gen = StringGenerator.create(buf, isSafeHtml);
     try {
       List<TemplateChunk> chunks = MessageFormatParser.parse(listPattern);
       for (TemplateChunk chunk : chunks) {
@@ -1331,8 +1332,8 @@ class MessagesMethodCreator extends AbstractMethodCreator {
     writer.println("int i = arg" + listArgNum + "_size;");
     writer.println("if (i > 0) {");
     writer.indent();
-    StringBuffer outbuf = new StringBuffer();
-    StringGenerator buf = new StringGenerator(outbuf, isSafeHtml);
+    StringBuilder outbuf = new StringBuilder();
+    StringGenerator buf = StringGenerator.create(outbuf, isSafeHtml);
     formatArg(logger, locale, buf, listArg, listAccessor.getElement("--i"),
         elemType, params);
     buf.completeString();
@@ -1464,8 +1465,8 @@ class MessagesMethodCreator extends AbstractMethodCreator {
   private void generateString(final TreeLogger logger, final GwtLocale locale,
       final String template, final Parameters paramsAccessor, SourceWriter writer,
       final boolean isSafeHtml, final int lastPluralArgNumber) throws UnableToCompleteException {
-    StringBuffer outputBuf = new StringBuffer();
-    final StringGenerator buf = new StringGenerator(outputBuf, isSafeHtml);
+    StringBuilder outputBuf = new StringBuilder();
+    final StringGenerator buf = StringGenerator.create(outputBuf, isSafeHtml);
     final int n = paramsAccessor.getCount();
     try {
       for (TemplateChunk chunk : MessageFormatParser.parse(template)) {

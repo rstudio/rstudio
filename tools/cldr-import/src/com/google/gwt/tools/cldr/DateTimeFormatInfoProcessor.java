@@ -15,12 +15,12 @@
  */
 package com.google.gwt.tools.cldr;
 
+import com.google.gwt.codegen.server.StringGenerator;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.i18n.client.DateTimeFormatInfo;
 import com.google.gwt.i18n.client.impl.cldr.DateTimeFormatInfoImpl;
 import com.google.gwt.i18n.rebind.DateTimePatternGenerator;
 import com.google.gwt.i18n.rebind.MessageFormatParser;
-import com.google.gwt.i18n.rebind.StringGenerator;
 import com.google.gwt.i18n.rebind.MessageFormatParser.ArgumentChunk;
 import com.google.gwt.i18n.rebind.MessageFormatParser.DefaultTemplateChunkVisitor;
 import com.google.gwt.i18n.rebind.MessageFormatParser.StringChunk;
@@ -201,8 +201,8 @@ public class DateTimeFormatInfoProcessor extends Processor {
         prefix = ", ";
       }
       pw.println(") {");
-      final StringBuffer buf = new StringBuffer();
-      final StringGenerator gen = new StringGenerator(buf, false);
+      final StringBuilder buf = new StringBuilder();
+      final StringGenerator gen = StringGenerator.create(buf, false);
       try {
         List<TemplateChunk> chunks = MessageFormatParser.parse(value);
         for (TemplateChunk chunk : chunks) {
