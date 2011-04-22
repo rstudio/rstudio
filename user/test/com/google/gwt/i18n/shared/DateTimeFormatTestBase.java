@@ -13,9 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.i18n.client;
+package com.google.gwt.i18n.shared;
 
-import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
+import com.google.gwt.i18n.client.Messages;
+import com.google.gwt.i18n.shared.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.Date;
@@ -28,7 +29,7 @@ public abstract class DateTimeFormatTestBase extends GWTTestCase {
   /**
    * The timezone used by any tests which use a fixed timezone.
    */
-  protected static final TimeZone TEST_TIMEZONE = TimeZone.createTimeZone(300);
+  protected static final TimeZone TEST_TIMEZONE = com.google.gwt.i18n.client.TimeZone.createTimeZone(300);
 
   /**
    * Class for getting customized date/time formats.
