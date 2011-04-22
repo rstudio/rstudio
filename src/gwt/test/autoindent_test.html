@@ -190,6 +190,7 @@ function doIndentTest(el) {
 
   var indent = indentManager.getNextLineIndent(doc.getLength() - 1,
                                                doc.getLine(doc.getLength() - 1),
+                                               "start",
                                                "  ",
                                                2);
   el.appendChild(document.createTextNode(indent + "|"));

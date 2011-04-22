@@ -22,21 +22,35 @@ var TextMode = require("ace/mode/text").Mode;
 var Tokenizer = require("ace/tokenizer").Tokenizer;
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 var SweaveHighlightRules = require("mode/sweave_highlight_rules").SweaveHighlightRules;
+var IndentManager = require("mode/r_autoindent").IndentManager;
 var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
 
-var Mode = function(suppressHighlighting) {
+var Mode = function(suppressHighlighting, doc) {
 	if (suppressHighlighting)
     	this.$tokenizer = new Tokenizer(new TextHighlightRules().getRules());
 	else
     	this.$tokenizer = new Tokenizer(new SweaveHighlightRules().getRules());
-    this.$outdent = new MatchingBraceOutdent();
+   this.$outdent = new MatchingBraceOutdent();
+
+   this.$indentManager = new IndentManager(doc, this.$tokenizer, /^r-/);
 };
 oop.inherits(Mode, TextMode);
 
 (function() {
-    this.getNextLineIndent = function(state, line, tab) {
-        return this.$getIndent(line);
-    };
+   this.getNextLineIndent = function(state, line, tab, tabSize, row)
+   {
+      return this.$indentManager.getNextLineIndent(row, line, state, tab, tabSize);
+   };
+
+   this.checkOutdent = function(state, line, input)
+   {
+      return this.$outdent.checkOutdent(line, input);
+   };
+
+   this.autoOutdent = function(state, doc, row)
+   {
+      return this.$outdent.autoOutdent(doc, row);
+   };
 
 }).call(Mode.prototype);
 

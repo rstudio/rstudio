@@ -13,11 +13,12 @@
 
 define("mode/r_autoindent", function(require, exports, module) {
 
-var IndentManager = function(doc, tokenizer) {
+var IndentManager = function(doc, tokenizer, statePattern) {
    this.$doc = doc;
    this.$tokenizer = tokenizer;
    this.$tokens = new Array(doc.getLength());
    this.$endStates = new Array(doc.getLength());
+   this.$statePattern = statePattern;
 
    var that = this;
    this.$doc.on('change', function(evt) {
@@ -36,7 +37,7 @@ var IndentManager = function(doc, tokenizer) {
       '}': '{'
    };
 
-   this.getNextLineIndent = function(lastRow, line, tab, tabSize)
+   this.getNextLineIndent = function(lastRow, line, endState, tab, tabSize)
    {
       // This lineOverrides nonsense is necessary because the line has not 
       // changed in the real document yet. We need to simulate it by replacing
@@ -59,6 +60,9 @@ var IndentManager = function(doc, tokenizer) {
                                          : this.$getIndent(this.$getLine(lastRow));
 
          if (!this.$tokenizeUpToRow(lastRow))
+            return defaultIndent;
+
+         if (this.$statePattern && !this.$statePattern.test(endState))
             return defaultIndent;
 
          var prevToken = this.$findPreviousSignificantToken({row: lastRow, column: this.$getLine(lastRow).length},
@@ -121,8 +125,7 @@ var IndentManager = function(doc, tokenizer) {
          {
             if (/[\[({]/.test(paren))
             {
-               if (parens.length == 0
-                     || parens[parens.length - 1] != that.$complements[paren])
+               if (parens.length == 0)
                {
                   openBracePos = pos;
                   openBrace = paren;
@@ -130,7 +133,7 @@ var IndentManager = function(doc, tokenizer) {
                   // stop walking
                   return false;
                }
-               else
+               else if (parens[parens.length - 1] === that.$complements[paren])
                   parens.pop();
             }
             else
@@ -201,7 +204,10 @@ var IndentManager = function(doc, tokenizer) {
 
          var state = (row === 0) ? 'start' : this.$endStates[row-1];
          var lineTokens = this.$tokenizer.getLineTokens(this.$getLine(row), state);
-         this.$tokens[row] = lineTokens.tokens;
+         if (!this.$statePattern || this.$statePattern.test(lineTokens.state))
+            this.$tokens[row] = this.$filterWhitespaceAndComments(lineTokens.tokens);
+         else
+            this.$tokens[row] = [];
 
          // If we ended in the same state that the cache says, then we know that
          // the cache is up-to-date for the subsequent lines--UNTIL we hit a row
@@ -373,7 +379,7 @@ var IndentManager = function(doc, tokenizer) {
       var col = pos.column;
       for ( ; row <= lastRow; row++)
       {
-         var tokens = this.$filterWhitespaceAndComments(this.$tokens[row]);
+         var tokens = this.$tokens[row];
 
          for (var i = 0; i < tokens.length; i++)
          {
@@ -401,7 +407,7 @@ var IndentManager = function(doc, tokenizer) {
       var row = Math.min(pos.row, this.$tokens.length - 1);
       for ( ; row >= firstRow; row--)
       {
-         var tokens = this.$filterWhitespaceAndComments(this.$tokens[row]);
+         var tokens = this.$tokens[row];
          if (tokens.length == 0)
             continue;
          

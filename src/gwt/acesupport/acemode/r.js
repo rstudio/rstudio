@@ -36,7 +36,7 @@ define("mode/r", function(require, exports, module)
          this.$tokenizer = new Tokenizer(new RHighlightRules().getRules());
       this.$outdent = new MatchingBraceOutdent();
 
-      this.$indentManager = new IndentManager(doc, this.$tokenizer);
+      this.$indentManager = new IndentManager(doc, this.$tokenizer, null);
    };
    oop.inherits(Mode, TextMode);
 
@@ -44,7 +44,7 @@ define("mode/r", function(require, exports, module)
    {
       this.getNextLineIndent = function(state, line, tab, tabSize, row)
       {
-         return this.$indentManager.getNextLineIndent(row, line, tab, tabSize);
+         return this.$indentManager.getNextLineIndent(row, line, state, tab, tabSize);
       };
 
       this.checkOutdent = function(state, line, input)
