@@ -1144,7 +1144,9 @@ public class UiBinderWriter implements Statements {
     addWidgetParser("HasAlignment");
     addWidgetParser("DateLabel");
     addWidgetParser("NumberLabel");
-    addWidgetParser("LazyPanel");
+    if (useLazyWidgetBuilders) {
+      addWidgetParser("LazyPanel");
+    }
   }
 
   /**
