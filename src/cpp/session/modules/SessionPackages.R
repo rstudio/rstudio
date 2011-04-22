@@ -155,7 +155,7 @@
 .rs.addJsonRpcHandler( "check_for_package_updates", function()
 {
    # get updates and convert to a data frame
-   updates <- as.data.frame(utils::old.packages(),
+   updates <- as.data.frame(utils::old.packages(lib.loc = .libPaths()[1]),
                             stringsAsFactors = FALSE)
    row.names(updates) <- NULL
    

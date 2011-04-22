@@ -19,8 +19,9 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.widget.MessageDialog;
-import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -180,17 +181,21 @@ public class Packages
             public void execute(ArrayList<PackageUpdate> updates)
             {
                StringBuilder command = new StringBuilder();
+               command.append("install.packages(");
+               if (updates.size() > 1)
+                  command.append("c(");
                for (int i=0; i<updates.size(); i++)
                {
                   PackageUpdate update = updates.get(i);
-                  command.append("install.packages(\"");
-                  command.append(update.getPackageName());
+                  if (i > 0)
+                     command.append(", ");
                   command.append("\""); 
-                  command.append(", lib=\"");
-                  command.append(update.getLibPath());
+                  command.append(update.getPackageName());
                   command.append("\"");
-                  command.append(")\n");
                }
+               if (updates.size() > 1)
+                  command.append(")");
+               command.append(")");
                String cmd = command.toString();
                events_.fireEvent(new SendToConsoleEvent(cmd, true));
             }  
@@ -204,22 +209,41 @@ public class Packages
             "Confirm Remove",
             "Are you sure you want to remove the " + 
             packageInfo.getName() + " package?",
-            new Operation() 
+            new ProgressOperation() 
             {
                @Override
-               public void execute()
+               public void execute(final ProgressIndicator indicator)
                {
-                  StringBuilder command = new StringBuilder();
-                  command.append("remove.packages(\"");
-                  command.append(packageInfo.getName());
-                  command.append("\""); 
-                  command.append(", lib=\"");
-                  command.append(packageInfo.getLibrary());
-                  command.append("\"");
-                  command.append(")");
-                  String cmd = command.toString();
-                  events_.fireEvent(new SendToConsoleEvent(cmd, true));  
-               }      
+                  indicator.onProgress("Removing package...");
+                  server_.getDefaultLibrary(new ServerRequestCallback<String>(){
+
+                     @Override
+                     public void onResponseReceived(String defaultLibrary)
+                     {
+                        StringBuilder command = new StringBuilder();
+                        command.append("remove.packages(\"");
+                        command.append(packageInfo.getName());
+                        command.append("\"");
+                        if (!packageInfo.getLibrary().equals(defaultLibrary))
+                        {
+                           command.append(", lib=\"");
+                           command.append(packageInfo.getLibrary());
+                           command.append("\"");
+                        }
+                        command.append(")");
+                        String cmd = command.toString();
+                        events_.fireEvent(new SendToConsoleEvent(cmd, true));
+                        indicator.onCompleted();
+                     }
+                     
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        indicator.onError(error.getUserMessage());
+                     }
+                     
+                  });      
+               }  
             },
             true);
    }
