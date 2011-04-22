@@ -31,7 +31,6 @@ import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.ScrollPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.NoSelectionModel;
@@ -89,9 +88,6 @@ public class CheckForUpdatesDialog extends ModalDialog<ArrayList<PackageUpdate>>
    @Override
    protected Widget createMainWidget()
    {
-      VerticalPanel mainPanel = new VerticalPanel();
-      mainPanel.setStylePrimaryName(RESOURCES.styles().mainWidget());
- 
       updatesTable_ = new CellTable<PendingUpdate>(
             15,
             GWT.<PackagesCellTableResources> create(PackagesCellTableResources.class));
@@ -158,8 +154,8 @@ public class CheckForUpdatesDialog extends ModalDialog<ArrayList<PackageUpdate>>
       updatesTable_.setColumnWidth(newsColumn, 16, Unit.PCT);
       
       ScrollPanel scrollPanel = new ScrollPanel();
+      scrollPanel.setStylePrimaryName(RESOURCES.styles().mainWidget());
       scrollPanel.setWidget(updatesTable_);
-      mainPanel.add(scrollPanel);
       
       // query for updates
       updatesDS_.requestData(new SimpleRequestCallback<JsArray<PackageUpdate>>() {
@@ -195,7 +191,7 @@ public class CheckForUpdatesDialog extends ModalDialog<ArrayList<PackageUpdate>>
          }  
       });
  
-      return mainPanel;
+      return scrollPanel;
    }
    
    class UpdateColumn extends Column<PendingUpdate, Boolean>
