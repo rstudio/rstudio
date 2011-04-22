@@ -146,12 +146,6 @@ std::string extraLibraryPaths(const FilePath& ldPathsScript,
 
 FilePath systemDefaultRScript()
 {
-   // eliminate a potentially conflicting R_HOME before calling "which R"
-   // (the normal semantics of invoking the R script are that it overwrites
-   // R_HOME and prints a warning -- this warning is co-mingled with the
-   // output of "R RHOME" and messes up our parsing)
-   core::system::setenv("R_HOME", "");
-
    // ask system which R to use
    std::string whichOutput;
    Error error = core::system::captureCommand("which R", &whichOutput);
@@ -189,6 +183,12 @@ bool getRHomeAndLibPath(const FilePath& rScriptPath,
                         std::string* pRLibPath,
                         std::string* pErrMsg)
 {
+   // eliminate a potentially conflicting R_HOME before calling R RHOME"
+   // (the normal semantics of invoking the R script are that it overwrites
+   // R_HOME and prints a warning -- this warning is co-mingled with the
+   // output of "R RHOME" and messes up our parsing)
+   core::system::setenv("R_HOME", "");
+
    // run R script to detect R home
    std::string rHomeOutput;
    std::string command = rScriptPath.absolutePath() + " RHOME";
