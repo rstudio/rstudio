@@ -18,7 +18,6 @@
 #include <boost/regex.hpp>
 #include <boost/bind.hpp>
 #include <boost/algorithm/string/trim.hpp>
-#include <boost/algorithm/string/replace.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -39,7 +38,6 @@ void extractToMap(const std::string& keyAndValue,
       boost::algorithm::trim(key);
       std::string value = keyAndValue.substr(pos + 1) ;
       boost::algorithm::trim(value) ;
-      boost::algorithm::replace_all(value, "\"", "");
       pMap->operator[](key) = value;
    }
 }
