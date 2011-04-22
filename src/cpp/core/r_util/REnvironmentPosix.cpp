@@ -16,6 +16,7 @@
 #include <algorithm>
 
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/algorithm/string/replace.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -279,6 +280,19 @@ bool validateREnvironment(const EnvironmentVars& vars,
    return true;
 }
 
+// resolve an R path which has been parsed from the R bash script. If
+// R is running out of the source directory (and was thus never installed)
+// then the values for R_DOC_DIR, etc. will contain unexpanded references
+// to the R_HOME_DIR, so we expand these if they are present.
+std::string resolveRPath(const FilePath& rHomePath, const std::string& path)
+{
+   std::string resolvedPath = path;
+   boost::algorithm::replace_all(resolvedPath,
+                                 "${R_HOME_DIR}",
+                                 rHomePath.absolutePath());
+   return resolvedPath;
+}
+
 } // anonymous namespace
 
 
@@ -344,9 +358,6 @@ bool detectREnvironment(const FilePath& whichRScript,
                  "), " + error.summary();
       return false;
    }
-   pVars->push_back(std::make_pair("R_SHARE_DIR", scriptVars["R_SHARE_DIR"]));
-   pVars->push_back(std::make_pair("R_INCLUDE_DIR", scriptVars["R_INCLUDE_DIR"]));
-   pVars->push_back(std::make_pair("R_DOC_DIR", scriptVars["R_DOC_DIR"]));
 
    // get r home path
    std::string rHome, rLib;
@@ -374,6 +385,17 @@ bool detectREnvironment(const FilePath& whichRScript,
 
    // set R home path
    pVars->push_back(std::make_pair("R_HOME", rHomePath.absolutePath()));
+
+   // set other environment values
+   pVars->push_back(std::make_pair("R_SHARE_DIR",
+                                   resolveRPath(rHomePath,
+                                                scriptVars["R_SHARE_DIR"])));
+   pVars->push_back(std::make_pair("R_INCLUDE_DIR",
+                                   resolveRPath(rHomePath,
+                                                scriptVars["R_INCLUDE_DIR"])));
+   pVars->push_back(std::make_pair("R_DOC_DIR",
+                                   resolveRPath(rHomePath,
+                                                scriptVars["R_DOC_DIR"])));
 
    // determine library path (existing + r lib dir + r extra lib dirs)
    FilePath rLibPath(rLib);
