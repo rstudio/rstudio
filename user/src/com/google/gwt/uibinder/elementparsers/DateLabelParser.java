@@ -21,8 +21,9 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
 import com.google.gwt.i18n.client.DateTimeFormat;
-import com.google.gwt.i18n.client.TimeZone;
 import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
+import com.google.gwt.i18n.client.TimeZone;
+import com.google.gwt.uibinder.rebind.TypeOracleUtils;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 
@@ -112,13 +113,13 @@ public class DateLabelParser implements ElementParser {
       TypeOracle typeOracle, JClassType type) {
     JType dateTimeFormatType = typeOracle.findType(DateTimeFormat.class.getName());
     JType timeZoneType = typeOracle.findType(TimeZone.class.getName());
-    return type.findConstructor(new JType[] {dateTimeFormatType, timeZoneType}) != null;
+    return TypeOracleUtils.hasCompatibleConstructor(type, dateTimeFormatType, timeZoneType);
   }
 
   private boolean hasDateTimeFormatConstructor(TypeOracle typeOracle,
       JClassType type) {
     JType dateTimeFormatType = typeOracle.findType(DateTimeFormat.class.getName());
-    return type.findConstructor(new JType[] {dateTimeFormatType}) != null;
+    return TypeOracleUtils.hasCompatibleConstructor(type, dateTimeFormatType);
   }
 
   private boolean hasTimeZone(XMLElement elem) {

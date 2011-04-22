@@ -49,6 +49,7 @@ import com.google.gwt.uibinder.rebind.FieldWriterOfGeneratedCssResourceTest;
 import com.google.gwt.uibinder.rebind.GwtResourceEntityResolverTest;
 import com.google.gwt.uibinder.rebind.HandlerEvaluatorTest;
 import com.google.gwt.uibinder.rebind.TokenatorTest;
+import com.google.gwt.uibinder.rebind.TypeOracleUtilsTest;
 import com.google.gwt.uibinder.rebind.XMLElementTest;
 import com.google.gwt.uibinder.rebind.model.OwnerClassTest;
 import com.google.gwt.uibinder.rebind.model.OwnerFieldClassTest;
@@ -71,6 +72,7 @@ public class UiBinderJreSuite {
     suite.addTestSuite(TokenatorTest.class);
     suite.addTestSuite(XMLElementTest.class);
     suite.addTestSuite(DesignTimeUtilsTest.class);
+    suite.addTestSuite(TypeOracleUtilsTest.class);
 
     // model
     suite.addTestSuite(OwnerClassTest.class);
