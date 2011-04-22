@@ -179,6 +179,7 @@ FilePath systemDefaultRScript()
 }
 
 bool getRHomeAndLibPath(const FilePath& rScriptPath,
+                        const config_utils::Variables& scriptVars,
                         std::string* pRHome,
                         std::string* pRLibPath,
                         std::string* pErrMsg)
@@ -347,9 +348,20 @@ bool detectREnvironment(const FilePath& whichRScript,
       return false;
    }
 
+   // scan R script for other locations and append them to our vars
+   config_utils::Variables scriptVars;
+   Error error = config_utils::extractVariables(rScriptPath, &scriptVars);
+   if (error)
+   {
+      LOG_ERROR(error);
+      *pErrMsg = "Error reading R script (" + rScriptPath.absolutePath() +
+                 "), " + error.summary();
+      return false;
+   }
+
    // get r home path
    std::string rHome, rLib;
-   if (!getRHomeAndLibPath(rScriptPath, &rHome, &rLib, pErrMsg))
+   if (!getRHomeAndLibPath(rScriptPath, scriptVars, &rHome, &rLib, pErrMsg))
       return false;
 
    // validate: error if we got no output
@@ -374,16 +386,7 @@ bool detectREnvironment(const FilePath& whichRScript,
    // set R home path
    pVars->push_back(std::make_pair("R_HOME", rHomePath.absolutePath()));
 
-   // scan R script for other locations
-   config_utils::Variables scriptVars;
-   Error error = config_utils::extractVariables(rScriptPath, &scriptVars);
-   if (error)
-   {
-      LOG_ERROR(error);
-      *pErrMsg = "Error reading R script (" + rScriptPath.absolutePath() +
-                 "), " + error.summary();
-      return false;
-   }
+   // set other environment values
    pVars->push_back(std::make_pair("R_SHARE_DIR",
                                    resolveRPath(rHomePath,
                                                 scriptVars["R_SHARE_DIR"])));
