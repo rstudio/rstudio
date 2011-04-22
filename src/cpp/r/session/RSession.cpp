@@ -291,16 +291,6 @@ void initRLibsUser()
       LOG_ERROR(error);
       return;
    }
-
-   // if we are on windows then auto-create if there is only one libpath
-#ifdef _WIN32
-
-   if (libPaths.size() <= 1)
-      autoCreate = true;
-
-   // on OSX & Unix we check for the existence of at least one writeable libpath
-#else
-
    for (std::vector<std::string>::const_iterator
          it = libPaths.begin();
          it != libPaths.end();
@@ -323,8 +313,6 @@ void initRLibsUser()
          break;
       }
    }
-
-#endif
 
    if (autoCreate)
    {
