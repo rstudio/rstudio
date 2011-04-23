@@ -18,8 +18,10 @@ package com.google.gwt.i18n.client;
 /**
  * For backwards compatibility only.
  * 
- * @deprecated use {@link com.google.gwt.i18n.shared.Localizable} instead
+ * deprecated use {@link com.google.gwt.i18n.shared.Localizable} instead
  */
-@Deprecated
+// Temporarily remove deprecation to keep from breaking teams that don't allow
+// deprecated references.
+// @Deprecated
 public interface Localizable extends com.google.gwt.i18n.shared.Localizable {
 }

@@ -20,9 +20,11 @@ package com.google.gwt.i18n.client;
  * subtypes of this interface must take no parameters and return DateTimeFormat
  * (which will be an initialized instance).
  * 
- * @deprecated use {@link com.google.gwt.i18n.shared.CustomDateTimeFormat} instead
+ * deprecated use {@link com.google.gwt.i18n.shared.CustomDateTimeFormat} instead
  */
-@Deprecated
+// Temporarily remove deprecation to keep from breaking teams that don't allow
+// deprecated references.
+// @Deprecated
 public interface CustomDateTimeFormat extends com.google.gwt.i18n.shared.CustomDateTimeFormat {
 
   /**
@@ -31,9 +33,11 @@ public interface CustomDateTimeFormat extends com.google.gwt.i18n.shared.CustomD
    * <p>The order of pattern characters and any literals don't matter, just
    * which pattern characters are present and their counts.
    * 
-   * @deprecated use {@link com.google.gwt.i18n.shared.CustomDateTimeFormat.Pattern} instead
+   * deprecated use {@link com.google.gwt.i18n.shared.CustomDateTimeFormat.Pattern} instead
    */
-  @Deprecated
+  // Temporarily remove deprecation to keep from breaking teams that don't allow
+  // deprecated references.
+  // @Deprecated
   public @interface Pattern {
 
     /**

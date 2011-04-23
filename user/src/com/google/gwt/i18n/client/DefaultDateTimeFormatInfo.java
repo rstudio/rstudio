@@ -18,10 +18,12 @@ package com.google.gwt.i18n.client;
 /**
  * For backwards compatibility only.
  * 
- * @deprecated use {@link com.google.gwt.i18n.shared.DefaultDateTimeFormatInfo}
+ * deprecated use {@link com.google.gwt.i18n.shared.DefaultDateTimeFormatInfo}
  *     instead
  */
-@Deprecated
+// Temporarily remove deprecation to keep from breaking teams that don't allow
+// deprecated references.
+// @Deprecated
 public class DefaultDateTimeFormatInfo extends com.google.gwt.i18n.shared.DefaultDateTimeFormatInfo
     implements DateTimeFormatInfo {
 }

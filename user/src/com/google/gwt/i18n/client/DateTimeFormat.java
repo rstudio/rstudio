@@ -382,18 +382,22 @@ import java.util.Map;
  * 
  * <h3>Example</h3> {@example com.google.gwt.examples.DateTimeFormatExample}
  *
- * @deprecated use {@link com.google.gwt.i18n.shared.DateTimeFormat} instead
+ * deprecated use {@link com.google.gwt.i18n.shared.DateTimeFormat} instead
  */
-@Deprecated
+// Temporarily remove deprecation to keep from breaking teams that don't allow
+// deprecated references.
+// @Deprecated
 public class DateTimeFormat extends com.google.gwt.i18n.shared.DateTimeFormat {
 
   /**
    * Predefined date/time formats -- see {@link CustomDateTimeFormat} if you
    * need some format that isn't supplied here.
    *
-   * @deprecated use {@link com.google.gwt.i18n.shared.DateTimeFormat.PredefinedFormat} instead
+   * deprecated use {@link com.google.gwt.i18n.shared.DateTimeFormat.PredefinedFormat} instead
    */
-  @Deprecated
+   // Temporarily remove deprecation to keep from breaking teams that don't allow
+   // deprecated references.
+   // @Deprecated
   public enum PredefinedFormat {
     // TODO(jat): Javadoc to explain these formats
 
