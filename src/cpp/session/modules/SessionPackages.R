@@ -91,6 +91,31 @@
    })
 })
 
+.rs.addFunction( "is_library_writeable", function(lib)
+{
+   # must be single string
+   if (!is.character(lib) || (length(lib) > 1L))
+      stop("lib must be single element character vector")
+      
+   # implementation based on install.packages
+   ok <- file.info(lib)$isdir & (file.access(lib, 2) == 0)
+   if (.Platform$OS.type == "windows") 
+   {
+      ok <- file.info(lib)$isdir %in% TRUE
+      if (ok) 
+      {
+         fn <- file.path(lib, paste("_test_dir", Sys.getpid(), sep = "_"))
+         unlink(fn, recursive = TRUE)
+         res <- try(dir.create(fn, showWarnings = FALSE))
+         if (inherits(res, "try-error") || !res)
+            ok <- FALSE
+         else 
+            unlink(fn, recursive = TRUE)
+      }
+   } 
+   return (ok)
+})
+
 .rs.addJsonRpcHandler( "get_default_library", function()
 {
    .rs.scalar(.libPaths()[1])
@@ -139,6 +164,36 @@
 {
    repos = getOption("repos")
    return(.rs.scalar(!is.null(repos) && repos != "@CRAN@"))
+})
+
+.rs.addJsonRpcHandler( "get_package_install_context", function()
+{
+   # cran mirror configured
+   repos = getOption("repos")
+   cranMirrorConfigured <- !is.null(repos) && repos != "@CRAN@"
+   
+   # default library path
+   defaultLibraryPath = .libPaths()[1L]
+   
+   # is default library writeable (based on install.packages)
+   defaultLibraryWriteable <- .rs.is_library_writeable(defaultLibraryPath)
+   
+   # writeable library paths
+   writeableLibraryPaths <- character()
+   for (libPath in .libPaths())
+      if (.rs.is_library_writeable(libPath))
+         writeableLibraryPaths <- append(writeableLibraryPaths, libPath)
+   
+   # default user library path (based on install.packages)
+   defaultUserLibraryPath <- unlist(strsplit(Sys.getenv("R_LIBS_USER"),
+                                             .Platform$path.sep))[1L]
+
+   # return context
+   list(cranMirrorConfigured = cranMirrorConfigured,
+        defaultLibraryPath = defaultLibraryPath,
+        defaultLibraryWriteable = defaultLibraryWriteable,
+        writeableLibraryPaths = writeableLibraryPaths,
+        defaultUserLibraryPath = defaultUserLibraryPath)
 })
 
 .rs.addJsonRpcHandler( "get_cran_mirrors", function()

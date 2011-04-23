@@ -46,6 +46,7 @@ import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 import org.rstudio.studio.client.workbench.views.help.model.Link;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
 import org.rstudio.studio.client.workbench.views.plots.model.Point;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
@@ -400,6 +401,12 @@ public class RemoteServer implements Server
    public void getDefaultLibrary(ServerRequestCallback<String> requestCallback)
    {
       sendRequest(RPC_SCOPE, GET_DEFAULT_LIBRARY, requestCallback);
+   }
+   
+   public void getPackageInstallContext(
+               ServerRequestCallback<PackageInstallContext> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_PACKAGE_INSTALL_CONTEXT, requestCallback);
    }
    
    public void isPackageLoaded(String packageName,
@@ -1372,6 +1379,7 @@ public class RemoteServer implements Server
    private static final String AVAILABLE_PACKAGES = "available_packages";
    private static final String CHECK_FOR_PACKAGE_UPDATES = "check_for_package_updates";
    private static final String GET_DEFAULT_LIBRARY = "get_default_library";
+   private static final String GET_PACKAGE_INSTALL_CONTEXT = "get_package_install_context";
    private static final String IS_PACKAGE_LOADED = "is_package_loaded";
    private static final String IS_CRAN_CONFIGURED = "is_cran_configured";
    private static final String SET_CRAN_MIRROR = "set_cran_mirror";
