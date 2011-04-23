@@ -91,31 +91,6 @@
    })
 })
 
-.rs.addFunction( "is_library_writeable", function(lib)
-{
-   # must be single string
-   if (!is.character(lib) || (length(lib) > 1L))
-      stop("lib must be single element character vector")
-      
-   # implementation based on install.packages
-   ok <- file.info(lib)$isdir & (file.access(lib, 2) == 0)
-   if (.Platform$OS.type == "windows") 
-   {
-      ok <- file.info(lib)$isdir %in% TRUE
-      if (ok) 
-      {
-         fn <- file.path(lib, paste("_test_dir", Sys.getpid(), sep = "_"))
-         unlink(fn, recursive = TRUE)
-         res <- try(dir.create(fn, showWarnings = FALSE))
-         if (inherits(res, "try-error") || !res)
-            ok <- FALSE
-         else 
-            unlink(fn, recursive = TRUE)
-      }
-   } 
-   return (ok)
-})
-
 .rs.addJsonRpcHandler( "get_default_library", function()
 {
    .rs.scalar(.libPaths()[1])
@@ -176,12 +151,12 @@
    defaultLibraryPath = .libPaths()[1L]
    
    # is default library writeable (based on install.packages)
-   defaultLibraryWriteable <- .rs.is_library_writeable(defaultLibraryPath)
+   defaultLibraryWriteable <- .rs.defaultLibPathIsWriteable()
    
    # writeable library paths
    writeableLibraryPaths <- character()
    for (libPath in .libPaths())
-      if (.rs.is_library_writeable(libPath))
+      if (.rs.isLibraryWriteable(libPath))
          writeableLibraryPaths <- append(writeableLibraryPaths, libPath)
    
    # default user library path (based on install.packages)
