@@ -44,6 +44,7 @@ import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusCh
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedHandler;
 import org.rstudio.studio.client.workbench.views.packages.model.InstallOptions;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
@@ -157,12 +158,40 @@ public class Packages
    
    void onUpdatePackages()
    {
-      defaultCRANMirror_.ensureConfigured(new Command() {
-         public void execute()
-         {
-            doUpdatePackages(); 
-         } 
-      });
+      server_.getPackageInstallContext(
+         new SimpleRequestCallback<PackageInstallContext>() {
+            
+            @Override
+            public void onResponseReceived(PackageInstallContext installContext)
+            {
+               // if there are no writeable library paths then we just
+               // short circuit to all packages are up to date message
+               if (installContext.getWriteableLibraryPaths().length() == 0)
+               {
+                  globalDisplay_.showMessage(MessageDialog.INFO, 
+                                             "Check for Updates", 
+                                             "All packages are up to date.");
+                  
+               }
+               
+               // if CRAN needs to be configured then do it
+               else if (!installContext.isCRANMirrorConfigured())
+               {
+                  defaultCRANMirror_.configure(new Command() {
+                     public void execute()
+                     {
+                        doUpdatePackages(); 
+                     } 
+                  });
+               }
+               
+               // otherwise we are good to go!
+               else
+               {
+                  doUpdatePackages();
+               }
+            }
+         });
    }
    
    private void doUpdatePackages()

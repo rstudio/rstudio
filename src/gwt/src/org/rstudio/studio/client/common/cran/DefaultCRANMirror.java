@@ -32,7 +32,7 @@ public class DefaultCRANMirror
                                  onChosen).showModal();
    }
    
-   public void configure(final OperationWithInput<CRANMirror> onConfigured)
+   public void configure(final Command onConfigured)
    {
       // show dialog
       new ChooseCRANMirrorDialog(
@@ -49,7 +49,7 @@ public class DefaultCRANMirror
                       public void onResponseReceived(Void response)
                       {
                          // successfully set, call onConfigured
-                         onConfigured.execute(mirror);
+                         onConfigured.execute();
                       }
                   });             
              }
@@ -66,13 +66,7 @@ public class DefaultCRANMirror
          {
             if (!response)
             {
-               configure(new OperationWithInput<CRANMirror>() {
-                  public void execute(CRANMirror mirror)
-                  {
-                     onConfigured.execute();       
-                  }
-                  
-               });
+               configure(onConfigured);
             }
             else
             {
