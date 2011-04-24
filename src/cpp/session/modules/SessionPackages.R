@@ -91,6 +91,23 @@
    })
 })
 
+.rs.addFunction( "uniqueLibraryPaths", function()
+{
+   libPaths <- normalizePath(.libPaths())
+   uniqueLibPaths <- subset(libPaths, !duplicated(libPaths))
+   return (uniqueLibPaths)
+})
+
+.rs.addFunction( "writeableLibraryPaths", function()
+{
+   uniqueLibraryPaths <- .rs.uniqueLibraryPaths()
+   writeableLibraryPaths <- character()
+   for (libPath in uniqueLibraryPaths)
+      if (.rs.isLibraryWriteable(libPath))
+         writeableLibraryPaths <- append(writeableLibraryPaths, libPath)
+   return (writeableLibraryPaths)
+})
+
 .rs.addJsonRpcHandler( "get_default_library", function()
 {
    .rs.scalar(.libPaths()[1])
@@ -104,8 +121,7 @@
 .rs.addJsonRpcHandler( "list_packages", function()
 {
    # calculate unique libpaths
-   libPaths <- normalizePath(.libPaths())
-   uniqueLibPaths <- subset(libPaths, !duplicated(libPaths))
+   uniqueLibPaths <- .rs.uniqueLibraryPaths()
 
    # get packages
    x <- suppressWarnings(library(lib.loc=uniqueLibPaths))
@@ -154,11 +170,8 @@
    defaultLibraryWriteable <- .rs.defaultLibPathIsWriteable()
    
    # writeable library paths
-   writeableLibraryPaths <- character()
-   for (libPath in .libPaths())
-      if (.rs.isLibraryWriteable(libPath))
-         writeableLibraryPaths <- append(writeableLibraryPaths, libPath)
-   
+   writeableLibraryPaths <- .rs.writeableLibraryPaths()
+
    # default user library path (based on install.packages)
    defaultUserLibraryPath <- unlist(strsplit(Sys.getenv("R_LIBS_USER"),
                                              .Platform$path.sep))[1L]
