@@ -398,11 +398,6 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, LIST_PACKAGES, requestCallback);
    }
    
-   public void getDefaultLibrary(ServerRequestCallback<String> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, GET_DEFAULT_LIBRARY, requestCallback);
-   }
-   
    public void getPackageInstallContext(
                ServerRequestCallback<PackageInstallContext> requestCallback)
    {
@@ -427,10 +422,11 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, CHECK_FOR_PACKAGE_UPDATES, requestCallback);
    }
-
-   public void isCRANConfigured(ServerRequestCallback<Boolean> requestCallback)
+   
+   public void initDefaultUserLibrary(
+                              ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, IS_CRAN_CONFIGURED, requestCallback);
+      sendRequest(RPC_SCOPE, INIT_DEFAULT_USER_LIBRARY, requestCallback);
    }
 
    public void setCRANMirror(CRANMirror mirror,
@@ -1378,10 +1374,9 @@ public class RemoteServer implements Server
    private static final String LIST_PACKAGES = "list_packages";
    private static final String AVAILABLE_PACKAGES = "available_packages";
    private static final String CHECK_FOR_PACKAGE_UPDATES = "check_for_package_updates";
-   private static final String GET_DEFAULT_LIBRARY = "get_default_library";
+   private static final String INIT_DEFAULT_USER_LIBRARY = "init_default_user_library";
    private static final String GET_PACKAGE_INSTALL_CONTEXT = "get_package_install_context";
    private static final String IS_PACKAGE_LOADED = "is_package_loaded";
-   private static final String IS_CRAN_CONFIGURED = "is_cran_configured";
    private static final String SET_CRAN_MIRROR = "set_cran_mirror";
    private static final String GET_CRAN_MIRRORS = "get_cran_mirrors";
 
@@ -1436,4 +1431,6 @@ public class RemoteServer implements Server
    private static final String SEARCH_HISTORY_BY_PREFIX = "search_history_by_prefix";
 
    private static final String LOG = "log";
+
+
 }

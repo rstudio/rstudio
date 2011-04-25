@@ -133,13 +133,12 @@ public class CheckForUpdatesDialog extends ModalDialog<ArrayList<PackageUpdate>>
            new OperationWithInput<PendingUpdate>() {
              public void execute(PendingUpdate update)
              {
-                globalDisplay_.openMinimalWindow(
-                                           update.getUpdateInfo().getNewsUrl(),
-                                           false, 
-                                           700, 
-                                           800, 
-                                           "_rstudio_package_news", 
-                                           true);
+                GlobalDisplay.NewWindowOptions options = 
+                                  new GlobalDisplay.NewWindowOptions();
+                options.setName("_rstudio_package_news");
+                options.setAlwaysUseBrowser(true);
+                globalDisplay_.openWindow(update.getUpdateInfo().getNewsUrl(),
+                                          options);
              }  
            }) 
            {

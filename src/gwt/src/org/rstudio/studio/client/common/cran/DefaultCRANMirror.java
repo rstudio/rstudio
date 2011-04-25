@@ -56,26 +56,6 @@ public class DefaultCRANMirror
            }).showModal();
    }
    
-   
-   public void ensureConfigured(final Command onConfigured)
-   {
-      server_.isCRANConfigured(new SimpleRequestCallback<Boolean>()
-      {
-         @Override
-         public void onResponseReceived(Boolean response)
-         {
-            if (!response)
-            {
-               configure(onConfigured);
-            }
-            else
-            {
-               onConfigured.execute();
-            }
-         }
-      }); 
-   }
-   
    private final CRANServerOperations server_;
    
    private final GlobalDisplay globalDisplay_;

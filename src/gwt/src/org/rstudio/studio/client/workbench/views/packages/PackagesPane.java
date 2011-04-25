@@ -45,6 +45,7 @@ import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.help.search.SearchWidget;
 import org.rstudio.studio.client.workbench.views.packages.model.InstallOptions;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableResources;
@@ -75,11 +76,13 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    }
    
    public void installPackage(String installRepository,
+                              PackageInstallContext installContext,
                               PackagesServerOperations server,
                               GlobalDisplay globalDisplay,
                               OperationWithInput<InstallOptions> operation)
    {
       new InstallPackageDialog(installRepository,
+                               installContext,
                                server, 
                                globalDisplay, 
                                operation).showModal();

@@ -19,9 +19,9 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -29,6 +29,7 @@ import org.rstudio.studio.client.common.cran.DefaultCRANMirror;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -53,6 +54,7 @@ import org.rstudio.studio.client.workbench.views.packages.ui.CheckForUpdatesDial
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 public class Packages
@@ -68,6 +70,7 @@ public class Packages
       void listPackages(List<PackageInfo> packagesDS);
       
       void installPackage(String installRepository,
+                          PackageInstallContext installContext,
                           PackagesServerOperations server,
                           GlobalDisplay globalDisplay,
                           OperationWithInput<InstallOptions> operation);
@@ -120,17 +123,86 @@ public class Packages
    
    void onInstallPackage()
    {
-      defaultCRANMirror_.ensureConfigured(new Command() {
-         public void execute()
+      withPackageInstallContext(new OperationWithInput<PackageInstallContext>(){
+
+         @Override
+         public void execute(final PackageInstallContext installContext)
          {
-            doInstallPackage(); 
-         } 
+            if (installContext.isDefaultLibraryWriteable())
+            {
+               continueInstallPackage(installContext);
+            }
+            else
+            {
+               globalDisplay_.showYesNoMessage(MessageDialog.QUESTION, 
+                 "Create Package Library",
+                 "Would you like to create a personal library '" +
+                 installContext.getDefaultUserLibraryPath() + "' " +
+                 "to install packages into?",
+                 false,
+                 new Operation() // Yes operation
+                 {
+                    @Override
+                    public void execute()
+                    {
+                       ProgressIndicator indicator = 
+                             globalDisplay_.getProgressIndicator(
+                                                  "Error Creating Library");
+                        server_.initDefaultUserLibrary(
+                              new VoidServerRequestCallback(indicator) {
+                                 @Override
+                                 protected void onSuccess()
+                                 {
+                                    continueInstallPackage(installContext);
+                                 }
+                              });  
+                     }
+                 }, 
+                 new Operation() // No operation
+                 {
+                     @Override
+                     public void execute()
+                     {
+                        globalDisplay_.showMessage(
+                              MessageDialog.WARNING,
+                              "Install Packages",
+                              "Unable to install packages (default library '" +
+                              installContext.getDefaultLibraryPath() + "' is " +
+                              "not writeable)");
+                        
+                     }  
+                 },
+                 true);
+            }
+         }
+         
       });
    }
+   
+   
+   private void continueInstallPackage(
+                           final PackageInstallContext installContext)
+   {
+      // if CRAN needs to be configured then do it
+      if (!installContext.isCRANMirrorConfigured())
+      {
+         defaultCRANMirror_.configure(new Command() {
+            public void execute()
+            {
+               doInstallPackage(installContext); 
+            } 
+         });
+      }
+      else
+      {
+         doInstallPackage(installContext);
+      }   
+   }
   
-   private void doInstallPackage()
+   private void doInstallPackage(PackageInstallContext installContext)
    {
       view_.installPackage(installRepository_,
+                           installContext,
                            server_,
                            globalDisplay_,
                            new OperationWithInput<InstallOptions>() {
@@ -158,43 +230,43 @@ public class Packages
    
    void onUpdatePackages()
    {
-      server_.getPackageInstallContext(
-         new SimpleRequestCallback<PackageInstallContext>() {
-            
-            @Override
-            public void onResponseReceived(PackageInstallContext installContext)
+      withPackageInstallContext(new OperationWithInput<PackageInstallContext>(){
+
+         @Override
+         public void execute(final PackageInstallContext installContext)
+         {
+            // if there are no writeable library paths then we just
+            // short circuit to all packages are up to date message
+            if (installContext.getWriteableLibraryPaths().length() == 0)
             {
-               // if there are no writeable library paths then we just
-               // short circuit to all packages are up to date message
-               if (installContext.getWriteableLibraryPaths().length() == 0)
-               {
-                  globalDisplay_.showMessage(MessageDialog.INFO, 
-                                             "Check for Updates", 
-                                             "All packages are up to date.");
-                  
-               }
+               globalDisplay_.showMessage(MessageDialog.INFO, 
+                                          "Check for Updates", 
+                                          "All packages are up to date.");
                
-               // if CRAN needs to be configured then do it
-               else if (!installContext.isCRANMirrorConfigured())
-               {
-                  defaultCRANMirror_.configure(new Command() {
-                     public void execute()
-                     {
-                        doUpdatePackages(); 
-                     } 
-                  });
-               }
-               
-               // otherwise we are good to go!
-               else
-               {
-                  doUpdatePackages();
-               }
             }
-         });
+            
+            // if CRAN needs to be configured then do it
+            else if (!installContext.isCRANMirrorConfigured())
+            {
+               defaultCRANMirror_.configure(new Command() {
+                  public void execute()
+                  {
+                     doUpdatePackages(installContext); 
+                  } 
+               });
+            }
+            
+            // otherwise we are good to go!
+            else
+            {
+               doUpdatePackages(installContext);
+            }    
+         }
+         
+      });
    }
    
-   private void doUpdatePackages()
+   private void doUpdatePackages(final PackageInstallContext installContext)
    {
       new CheckForUpdatesDialog(
          globalDisplay_,
@@ -209,72 +281,116 @@ public class Packages
             @Override
             public void execute(ArrayList<PackageUpdate> updates)
             {
-               StringBuilder command = new StringBuilder();
-               command.append("install.packages(");
-               if (updates.size() > 1)
-                  command.append("c(");
-               for (int i=0; i<updates.size(); i++)
-               {
-                  PackageUpdate update = updates.get(i);
-                  if (i > 0)
-                     command.append(", ");
-                  command.append("\""); 
-                  command.append(update.getPackageName());
-                  command.append("\"");
-               }
-               if (updates.size() > 1)
-                  command.append(")");
-               command.append(")");
-               String cmd = command.toString();
+               String cmd = buildUpdatePackagesCommand(updates, installContext);
                events_.fireEvent(new SendToConsoleEvent(cmd, true));
             }  
       }).showModal();
    }
    
+   private String buildUpdatePackagesCommand(
+                              ArrayList<PackageUpdate> updates,
+                              final PackageInstallContext installContext)
+   {
+      // split the updates into their respective target libraries
+      LinkedHashMap<String, ArrayList<PackageUpdate>> updatesByLibPath = 
+         new  LinkedHashMap<String, ArrayList<PackageUpdate>>();  
+      for (PackageUpdate update : updates)
+      {
+         // auto-create target list if necessary
+         String libPath = update.getLibPath();
+         if (!updatesByLibPath.containsKey(libPath))
+            updatesByLibPath.put(libPath, new ArrayList<PackageUpdate>());
+         
+         // insert into list
+         updatesByLibPath.get(libPath).add(update);  
+      }
+      
+      // generate an install packages command for each targeted library
+      StringBuilder command = new StringBuilder();
+      for (String libPath : updatesByLibPath.keySet())
+      {
+         if (command.length() > 0)
+            command.append("\n");
+         
+         ArrayList<PackageUpdate> libPathUpdates = updatesByLibPath.get(libPath); 
+         command.append("install.packages(");
+         if (libPathUpdates.size() > 1)
+            command.append("c(");
+         for (int i=0; i<libPathUpdates.size(); i++)
+         {
+            PackageUpdate update = libPathUpdates.get(i);
+            if (i > 0)
+               command.append(", ");
+            command.append("\""); 
+            command.append(update.getPackageName());
+            command.append("\"");
+         }
+         if (libPathUpdates.size() > 1)
+            command.append(")");
+         
+         if (!libPath.equals(installContext.getDefaultLibraryPath()))
+         {
+            command.append(", lib=\"");
+            command.append(libPath);
+            command.append("\"");
+         }
+        
+         command.append(")");
+         
+      }
+      
+      return command.toString();
+   }
+   
+   
    public void removePackage(final PackageInfo packageInfo)
    {
-      globalDisplay_.showYesNoMessage(
-            MessageDialog.WARNING,
-            "Confirm Remove",
-            "Are you sure you want to remove the " + 
-            packageInfo.getName() + " package?",
-            new ProgressOperation() 
-            {
-               @Override
-               public void execute(final ProgressIndicator indicator)
-               {
-                  indicator.onProgress("Removing package...");
-                  server_.getDefaultLibrary(new ServerRequestCallback<String>(){
+      withPackageInstallContext(new OperationWithInput<PackageInstallContext>(){
 
-                     @Override
-                     public void onResponseReceived(String defaultLibrary)
+         @Override
+         public void execute(final PackageInstallContext installContext)
+         {
+            final boolean usingDefaultLibrary = packageInfo.getLibrary().equals(
+                                       installContext.getDefaultLibraryPath());
+            
+            StringBuilder message = new StringBuilder();
+            message.append("Are you sure you want to remove the '"); 
+            message.append(packageInfo.getName() + "' package");
+            if (!usingDefaultLibrary)
+            {
+               message.append(" from library '");
+               message.append(packageInfo.getLibrary());
+               message.append("'");
+            }
+            message.append("?");
+               
+            globalDisplay_.showYesNoMessage(
+               MessageDialog.WARNING,
+               "Confirm Remove",
+               message.toString(),
+               new Operation() 
+               {
+                  @Override
+                  public void execute()
+                  {     
+                     StringBuilder command = new StringBuilder();
+                     command.append("remove.packages(\"");
+                     command.append(packageInfo.getName());
+                     command.append("\"");
+                     if (!usingDefaultLibrary)
                      {
-                        StringBuilder command = new StringBuilder();
-                        command.append("remove.packages(\"");
-                        command.append(packageInfo.getName());
+                        command.append(", lib=\"");
+                        command.append(packageInfo.getLibrary());
                         command.append("\"");
-                        if (!packageInfo.getLibrary().equals(defaultLibrary))
-                        {
-                           command.append(", lib=\"");
-                           command.append(packageInfo.getLibrary());
-                           command.append("\"");
-                        }
-                        command.append(")");
-                        String cmd = command.toString();
-                        events_.fireEvent(new SendToConsoleEvent(cmd, true));
-                        indicator.onCompleted();
                      }
-                     
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        indicator.onError(error.getUserMessage());
-                     }
-                     
-                  });      
-               }  
-            },
-            true);
+                     command.append(")");
+                     String cmd = command.toString();
+                     events_.fireEvent(new SendToConsoleEvent(cmd, true));
+                  }  
+               },
+               true); 
+         }
+      });
    }
       
    public void listPackages()
@@ -436,6 +552,31 @@ public class Packages
       }
    }
    
+   private void withPackageInstallContext(
+         final OperationWithInput<PackageInstallContext> operation)
+   {
+      final ProgressIndicator indicator = 
+         globalDisplay_.getProgressIndicator("Error");
+      indicator.onProgress("Retreiving package installation context...");
+
+      server_.getPackageInstallContext(
+         new SimpleRequestCallback<PackageInstallContext>() {
+
+            @Override
+            public void onResponseReceived(PackageInstallContext context)
+            {
+               indicator.onCompleted();
+               operation.execute(context);
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               indicator.onError(error.getUserMessage());
+            }           
+         });     
+   }
+
    private final Display view_;
    private final PackagesServerOperations server_;
    private ArrayList<PackageInfo> allPackages_ = new ArrayList<PackageInfo>();

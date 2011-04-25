@@ -266,48 +266,6 @@ void saveHistoryAndClientState()
                                     s_clientStatePath);
 }
 
-
-// automatically create R_LIBS_USER if it doesen't already exist
-// and there is nowhere else writeable that we can install packages
-// to (this enables users to override this behavior by adding an
-// entry to their .libPaths is .Rprofile)
-void initRLibsUser()
-{
-   // get the full r libs user path
-   std::string rLibsUser = core::system::getenv("R_LIBS_USER");
-   rLibsUser = r::util::expandFileName(rLibsUser);
-   FilePath rLibsUserPath(rLibsUser);
-
-   // if it already exists then we are done (as R will have made it
-   // the default library as part of its startup sequence)
-   if (rLibsUserPath.exists())
-      return;
-
-   // if the current default lib path is writeable then we're done
-   bool defaultLibPathWriteable = false;
-   Error error = r::exec::RFunction(".rs.defaultLibPathIsWriteable").call(
-                                                   &defaultLibPathWriteable);
-   if (!error && defaultLibPathWriteable)
-      return;
-
-   // otherwise we auto-create the R_LIBS_USER path
-   error = rLibsUserPath.ensureDirectory();
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-
-   // add it to our libPaths
-   error = r::exec::RFunction(".rs.libPathsPrepend",
-                              rLibsUserPath.absolutePath()).call();
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-}
-
 } // anonymous namespace
   
 
@@ -339,9 +297,6 @@ Error initialize()
       if (error)
          return error;
    }
-
-   // create R_LIBS_USER if there is nowhere else defined to install packages
-   initRLibsUser();
 
    // initialize graphics device
    FilePath graphicsPath = s_options.userScratchPath.complete("graphics");

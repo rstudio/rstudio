@@ -108,9 +108,10 @@
    return (writeableLibraryPaths)
 })
 
-.rs.addJsonRpcHandler( "get_default_library", function()
+.rs.addFunction("defaultUserLibraryPath", function()
 {
-   .rs.scalar(.libPaths()[1])
+   unlist(strsplit(Sys.getenv("R_LIBS_USER"),
+                   .Platform$path.sep))[1L]
 })
 
 .rs.addJsonRpcHandler( "is_package_loaded", function(packageName)
@@ -151,12 +152,6 @@
    packages[order(packages$name),]
 })
 
-.rs.addJsonRpcHandler( "is_cran_configured", function()
-{
-   repos = getOption("repos")
-   return(.rs.scalar(!is.null(repos) && repos != "@CRAN@"))
-})
-
 .rs.addJsonRpcHandler( "get_package_install_context", function()
 {
    # cran mirror configured
@@ -173,8 +168,7 @@
    writeableLibraryPaths <- .rs.writeableLibraryPaths()
 
    # default user library path (based on install.packages)
-   defaultUserLibraryPath <- unlist(strsplit(Sys.getenv("R_LIBS_USER"),
-                                             .Platform$path.sep))[1L]
+   defaultUserLibraryPath <- .rs.defaultUserLibraryPath()
 
    # return context
    list(cranMirrorConfigured = cranMirrorConfigured,
@@ -194,11 +188,19 @@
               stringsAsFactors = FALSE)
 })
 
+.rs.addJsonRpcHandler( "init_default_user_library", function()
+{
+   userdir <- .rs.defaultUserLibraryPath()
+   dir.create(userdir, recursive = TRUE)
+   .libPaths(c(userdir, .libPaths()))
+})
+
 
 .rs.addJsonRpcHandler( "check_for_package_updates", function()
 {
-   # get updates and convert to a data frame
-   updates <- as.data.frame(utils::old.packages(lib.loc = .libPaths()[1]),
+   # get updates writeable libraries and convert to a data frame
+   updates <- as.data.frame(utils::old.packages(lib.loc =
+                                          .rs.writeableLibraryPaths()),
                             stringsAsFactors = FALSE)
    row.names(updates) <- NULL
    

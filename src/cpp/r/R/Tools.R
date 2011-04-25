@@ -248,10 +248,6 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
   .libPaths(append(.libPaths(), path))
 })
 
-.rs.addFunction( "libPathsPrepend", function(path)
-{
-  .libPaths(unique(c(path, .libPaths())))
-})
 
 .rs.addFunction( "isLibraryWriteable", function(lib)
 {

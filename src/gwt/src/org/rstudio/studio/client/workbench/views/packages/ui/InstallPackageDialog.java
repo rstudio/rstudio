@@ -28,18 +28,21 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.packages.model.InstallOptions;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 
 
 public class InstallPackageDialog extends ModalDialog<InstallOptions>
 {
    public InstallPackageDialog(String installRepository,
+                               PackageInstallContext installContext,
                                PackagesServerOperations server,
                                GlobalDisplay globalDisplay,
                                OperationWithInput<InstallOptions> operation)
    {
       super("Install Package", operation);
       initialInstallRepository_ = installRepository;
+      installContext_ = installContext;
       server_ = server;
       globalDisplay_ = globalDisplay;
       
@@ -216,6 +219,8 @@ public class InstallPackageDialog extends ModalDialog<InstallOptions>
    private TextBox repositoryURLTextBox_;
   
    private final String initialInstallRepository_ ;
+   @SuppressWarnings("unused")
+   private final PackageInstallContext installContext_;
    private final PackagesServerOperations server_;
    private final GlobalDisplay globalDisplay_;
   

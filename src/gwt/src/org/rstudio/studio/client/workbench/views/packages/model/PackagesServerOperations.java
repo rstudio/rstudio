@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.views.packages.model;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 
@@ -28,9 +29,6 @@ public interface PackagesServerOperations
          String repository,
          ServerRequestCallback<JsArrayString> requestCallback);
    
-   void getDefaultLibrary(ServerRequestCallback<String> requestCallback);
-   
-
    void isPackageLoaded(String packageName,
                         ServerRequestCallback<Boolean> requestCallback);
    
@@ -38,5 +36,7 @@ public interface PackagesServerOperations
             ServerRequestCallback<JsArray<PackageUpdate>> requestCallback);
 
    void getPackageInstallContext(
-         ServerRequestCallback<PackageInstallContext> serverRequestCallback);
+         ServerRequestCallback<PackageInstallContext> requestCallback);
+   
+   void initDefaultUserLibrary(ServerRequestCallback<Void> requestCallback);
 }

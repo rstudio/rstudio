@@ -7,8 +7,6 @@ import com.google.gwt.core.client.JsArray;
 
 public interface CRANServerOperations
 {
-   void isCRANConfigured(ServerRequestCallback<Boolean> requestCallback);
-
    void setCRANMirror(CRANMirror mirror,
                       ServerRequestCallback<Void> requestCallback);
    
