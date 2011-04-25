@@ -39,4 +39,15 @@ public class PackageInstallOptions extends JavaScriptObject
       return this.installDependencies;
    }-*/;
    
+   public static native boolean areEqual(PackageInstallOptions a, 
+                                         PackageInstallOptions b) /*-{
+      if (a === null ^ b === null)
+         return false;
+      if (a === null)
+         return true;
+      return a.libraryPath === b.libraryPath &&
+             a.installDependencies === b.installDependencies;     
+   }-*/;
+
+   
 }

@@ -18,6 +18,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -33,7 +34,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
+import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
@@ -101,24 +102,39 @@ public class Packages
       events.addHandler(InstalledPackagesChangedEvent.TYPE, this);
       events.addHandler(PackageStatusChangedEvent.TYPE, this);
       
-      // make the install repository persistent
-      new StringStateValue("packages", "installRepository", true,
-            session.getSessionInfo().getClientState())
+      // make the install options persistent
+      new JSObjectStateValue("packages", "installOptions", true,
+            session.getSessionInfo().getClientState(), false)
       {
          @Override
-         protected void onInit(String value)
+         protected void onInit(JsObject value)
          {
-            if (value != null && value.length() > 0)
-               installRepository_ = value;
+            if (value != null)
+               installOptions_ = value.cast();
+            lastKnownState_ = installOptions_;
          }
 
          @Override
-         protected String getValue()
+         protected JsObject getValue()
          {
-            return installRepository_;
+            return installOptions_.cast();
          }
-      };
 
+         @Override
+         protected boolean hasChanged()
+         {
+            if (!PackageInstallOptions.areEqual(lastKnownState_, installOptions_))
+            {
+               lastKnownState_ = installOptions_;
+               return true;
+            }
+
+            return false;
+         }
+
+         private PackageInstallOptions lastKnownState_;
+      };
+      
       listPackages();
    }
    
@@ -202,16 +218,26 @@ public class Packages
   
    private void doInstallPackage(PackageInstallContext installContext)
    {
+      // if install options have not yet intialized the default library
+      // path then set it now from the context
+      if (installOptions_.getLibraryPath().length() == 0)
+      {
+         installOptions_ = PackageInstallOptions.create(
+                                 installContext.getDefaultLibraryPath(), 
+                                 installOptions_.getInstallDependencies());
+      }
+      
       view_.installPackage(
          installContext,
-         PackageInstallOptions.create(installContext.getDefaultLibraryPath(), 
-                                      true),
+         installOptions_,
          server_,
          globalDisplay_,
-         new OperationWithInput<PackageInstallRequest>() {
-
+         new OperationWithInput<PackageInstallRequest>() 
+         {
             public void execute(PackageInstallRequest request)
             {
+               installOptions_ = request.getOptions();
+               
                String command = "install.packages(\"" +
                                  request.getPackages().get(0) +
                                  "\"";
@@ -584,5 +610,6 @@ public class Packages
    private final EventBus events_ ;
    private final GlobalDisplay globalDisplay_ ;
    private final DefaultCRANMirror defaultCRANMirror_;
-   private String installRepository_;
+   private PackageInstallOptions installOptions_ = 
+                                    PackageInstallOptions.create("", true);
 }
