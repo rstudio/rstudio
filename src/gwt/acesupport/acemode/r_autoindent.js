@@ -295,7 +295,7 @@ var IndentManager = function(doc, tokenizer, statePattern) {
 
    this.$getLine = function(row)
    {
-      if (this.$lineOverrides && this.$lineOverrides[row])
+      if (this.$lineOverrides && typeof(this.$lineOverrides[row]) != 'undefined')
          return this.$lineOverrides[row];
       return this.$doc.getLine(row);
    };
