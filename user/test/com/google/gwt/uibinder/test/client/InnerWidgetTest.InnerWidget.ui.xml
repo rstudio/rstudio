@@ -1,0 +1,4 @@
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui">
+  <g:Label ui:field="greeting">Hello world</g:Label>
+</ui:UiBinder>

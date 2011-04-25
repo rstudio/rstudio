@@ -64,7 +64,7 @@ public class UiBinderGenerator extends Generator {
       if (interfaceType.getEnclosingType() != null) {
         interfaceType = interfaceType.getEnclosingType();
       }
-      return slashify(interfaceType.getQualifiedSourceName()) + TEMPLATE_SUFFIX;
+      return slashify(interfaceType.getQualifiedBinaryName()) + TEMPLATE_SUFFIX;
     } else {
       templateName = annotation.value();
       if (!templateName.endsWith(TEMPLATE_SUFFIX)) {
@@ -88,7 +88,7 @@ public class UiBinderGenerator extends Generator {
   }
 
   private static String slashify(String s) {
-    return s.replace(".", "/");
+    return s.replace(".", "/").replace("$", ".");
   }
 
   private final UiBinderContext uiBinderCtx = new UiBinderContext();
