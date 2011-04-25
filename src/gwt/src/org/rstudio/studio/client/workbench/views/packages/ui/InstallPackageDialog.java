@@ -30,7 +30,10 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -60,12 +63,20 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
    @Override
    protected PackageInstallRequest collectInput()
    {
-      ArrayList<String> packages = new ArrayList<String>();
+      // package
       String packageName = packageNameSuggestBox_.getText().trim();
-      if (packageName.length() > 0)
-         packages.add(packageName);    
-   
-      return new PackageInstallRequest(packages, defaultInstallOptions_); 
+      
+      // library
+      String libraryPath = installContext_.getWriteableLibraryPaths().get(
+                                          libraryListBox_.getSelectedIndex());
+      
+      // install dependencies
+      boolean installDependencies = installDependenciesCheckBox_.getValue();
+      
+      return new PackageInstallRequest(packageName, 
+                                       PackageInstallOptions.create(
+                                                         libraryPath, 
+                                                         installDependencies)); 
    }
    
    
@@ -73,7 +84,7 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
    protected boolean validate(PackageInstallRequest request)
    {
       // check for package name
-      if (request.getPackages().size() < 1)
+      if (request.getPackageName().length() == 0)
       {
          globalDisplay_.showErrorMessage(
                "Package Name Required", 
@@ -94,17 +105,52 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
    {
       // vertical panel
       VerticalPanel mainPanel = new VerticalPanel();
-      mainPanel.setSpacing(3);
+      mainPanel.setSpacing(2);
       mainPanel.setStylePrimaryName(RESOURCES.styles().mainWidget());
       
-      mainPanel.add(new Label("Package name:"));
+      mainPanel.add(new Label("Package Name:"));
       
       packageNameSuggestBox_ = new SuggestBox(new PackageOracle());
       packageNameSuggestBox_.setWidth("100%");
       packageNameSuggestBox_.setLimit(20);
-      packageNameSuggestBox_.addStyleName(RESOURCES.styles().packageNameSuggestBox());
+      packageNameSuggestBox_.addStyleName(RESOURCES.styles().extraBottomPad());
       mainPanel.add(packageNameSuggestBox_);
          
+      
+      mainPanel.add(new Label("Install to Library:"));
+      
+      // library list box
+      libraryListBox_ = new ListBox();
+      libraryListBox_.setWidth("100%");
+      libraryListBox_.addStyleName(RESOURCES.styles().extraBottomPad());
+      JsArrayString libPaths = installContext_.getWriteableLibraryPaths();
+      int selectedIndex = 0;
+      for (int i=0; i<libPaths.length(); i++)
+      {
+         String libPath = libPaths.get(i);
+         
+         if (defaultInstallOptions_.getLibraryPath().equals(libPath))
+            selectedIndex = i;
+         
+         if (libPath.equals(installContext_.getDefaultLibraryPath()))
+            libPath = libPath + " [Default]";
+         
+         libraryListBox_.addItem(libPath);
+        
+      }
+      libraryListBox_.setSelectedIndex(selectedIndex); 
+      mainPanel.add(libraryListBox_);
+      
+      // install dependencies check box
+      installDependenciesCheckBox_ = new CheckBox();
+      installDependenciesCheckBox_.addStyleName(RESOURCES.styles().installDependenciesCheckBox());
+      installDependenciesCheckBox_.setText("Install dependencies");
+      installDependenciesCheckBox_.setValue(
+                           defaultInstallOptions_.getInstallDependencies());
+      mainPanel.add(installDependenciesCheckBox_);
+      
+      mainPanel.add(new HTML("<br/>"));
+      
       return mainPanel;
    }
    
@@ -143,7 +189,8 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
    static interface Styles extends CssResource
    {
       String mainWidget();
-      String packageNameSuggestBox();
+      String extraBottomPad();
+      String installDependenciesCheckBox();
    }
   
    static interface Resources extends ClientBundle
@@ -158,11 +205,13 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
       RESOURCES.styles().ensureInjected();
    }
    
-   @SuppressWarnings("unused")
    private final PackageInstallContext installContext_;
    private final PackageInstallOptions defaultInstallOptions_;
    private final PackagesServerOperations server_;
    private final GlobalDisplay globalDisplay_;
    
    private SuggestBox packageNameSuggestBox_ = null;
+   private ListBox libraryListBox_ = null;
+   private CheckBox installDependenciesCheckBox_ = null;
+   
 }

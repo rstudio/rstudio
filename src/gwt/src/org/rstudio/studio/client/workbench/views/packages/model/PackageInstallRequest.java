@@ -12,20 +12,18 @@
  */
 package org.rstudio.studio.client.workbench.views.packages.model;
 
-import java.util.ArrayList;
-
 public class PackageInstallRequest 
 {
-   public PackageInstallRequest(ArrayList<String> packages,
+   public PackageInstallRequest(String packageName,
                                 PackageInstallOptions options)
    {
-      packages_ = packages;
+      packageName_ = packageName;
       options_ = options;
    }
   
-   public ArrayList<String> getPackages()
+   public String getPackageName()
    {
-      return packages_;
+      return packageName_;
    }
    
    public PackageInstallOptions getOptions()
@@ -34,7 +32,7 @@ public class PackageInstallRequest
    }
    
    
-   private final ArrayList<String> packages_;
+   private final String packageName_;
    private final PackageInstallOptions options_;
 
    

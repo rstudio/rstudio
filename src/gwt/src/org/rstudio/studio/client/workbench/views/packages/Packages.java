@@ -216,7 +216,7 @@ public class Packages
       }   
    }
   
-   private void doInstallPackage(PackageInstallContext installContext)
+   private void doInstallPackage(final PackageInstallContext installContext)
    {
       // if install options have not yet intialized the default library
       // path then set it now from the context
@@ -238,15 +238,27 @@ public class Packages
             {
                installOptions_ = request.getOptions();
                
-               String command = "install.packages(\"" +
-                                 request.getPackages().get(0) +
-                                 "\"";
+               boolean usingDefaultLibrary = 
+                  request.getOptions().getLibraryPath().equals(
+                                       installContext.getDefaultLibraryPath());
 
-              
+               
+               StringBuilder command = new StringBuilder();
+               command.append("install.packages(\"");
+               command.append(request.getPackageName());
+               command.append("\"");
+               if (!usingDefaultLibrary)
+               {
+                  command.append(", lib=\"");
+                  command.append(request.getOptions().getLibraryPath());
+                  command.append("\"");
+               }
+               if (!request.getOptions().getInstallDependencies())
+                  command.append(", dependencies = FALSE");
 
-               command += ")";
-
-               events_.fireEvent(new SendToConsoleEvent(command, true));
+               command.append(")");
+               String cmd = command.toString();
+               events_.fireEvent(new SendToConsoleEvent(cmd, true));
             }
            });
    }

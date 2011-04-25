@@ -1,9 +1,12 @@
 
 .mainWidget {
-   width: 320px;
+   width: 360px;
 }
 
-.packageNameSuggestBox {
+.extraBottomPad {
    margin-bottom: 10px;	
+}
+
+.installDependenciesCheckBox {
 }
 
