@@ -12,14 +12,8 @@
  */
 package org.rstudio.studio.client.workbench.views.packages.ui;
 
+import java.util.ArrayList;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -27,53 +21,59 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.views.packages.model.InstallOptions;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallOptions;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallRequest;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
+import com.google.gwt.user.client.ui.SuggestBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 
-public class InstallPackageDialog extends ModalDialog<InstallOptions>
+
+public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
 {
-   public InstallPackageDialog(String installRepository,
-                               PackageInstallContext installContext,
-                               PackagesServerOperations server,
-                               GlobalDisplay globalDisplay,
-                               OperationWithInput<InstallOptions> operation)
-   {
-      super("Install Package", operation);
-      initialInstallRepository_ = installRepository;
+   public InstallPackageDialog(
+                           PackageInstallContext installContext,
+                           PackageInstallOptions defaultInstallOptions,
+                           PackagesServerOperations server,
+                           GlobalDisplay globalDisplay,
+                           OperationWithInput<PackageInstallRequest> operation)
+{
+      super("Install Package from CRAN", operation);
+      
       installContext_ = installContext;
+      defaultInstallOptions_ = defaultInstallOptions;
       server_ = server;
       globalDisplay_ = globalDisplay;
-      
+
       setOkButtonCaption("Install");
-   }
-   
+}
+
+  
    @Override
-   protected InstallOptions collectInput()
+   protected PackageInstallRequest collectInput()
    {
+      ArrayList<String> packages = new ArrayList<String>();
       String packageName = packageNameSuggestBox_.getText().trim();
-      return InstallOptions.create(installRepository(), packageName);
+      if (packageName.length() > 0)
+         packages.add(packageName);    
+   
+      return new PackageInstallRequest(packages, defaultInstallOptions_); 
    }
    
-   @Override
-   protected boolean validate(InstallOptions options)
-   {
-      // check for a repository
-      if (options.getRepository() != null && 
-          options.getRepository().length() == 0)
-      {
-         globalDisplay_.showErrorMessage(
-               "Repository URL Required",
-               "You must provide the URL of the repository to install " +
-               "the package from.",
-               repositoryURLTextBox_);
    
-         return false;
-      }
-      
+   @Override
+   protected boolean validate(PackageInstallRequest request)
+   {
       // check for package name
-      else if (options.getPackageName().length() == 0)
+      if (request.getPackages().size() < 1)
       {
          globalDisplay_.showErrorMessage(
                "Package Name Required", 
@@ -82,84 +82,29 @@ public class InstallPackageDialog extends ModalDialog<InstallOptions>
          
          return false;
       }
-      
-      // input is valid!
       else
       {
          return true;
       }
    }
-
+   
+   
    @Override
    protected Widget createMainWidget()
-   {  
+   {
       // vertical panel
       VerticalPanel mainPanel = new VerticalPanel();
-      mainPanel.setSpacing(5);
+      mainPanel.setSpacing(3);
       mainPanel.setStylePrimaryName(RESOURCES.styles().mainWidget());
       
-      // grid hosts main UI
-      Grid grid = new Grid(2,2);
-      grid.setWidth("100%");
+      mainPanel.add(new Label("Package name:"));
       
-      // repository
-      grid.setWidget(0, 0, new Label("Repository:"));
-      repositoryListBox_ = new ListBox();
-      repositoryListBox_.setStylePrimaryName(RESOURCES.styles().repositoryListBox());
-      repositoryListBox_.addItem("CRAN");
-      repositoryListBox_.addItem("Other Repository");
-      repositoryListBox_.setVisibleItemCount(1);  
-      
-      grid.setWidget(1, 0, repositoryListBox_);
-      
-      // package name
-      grid.setWidget(0, 1, new Label("Package name:"));
       packageNameSuggestBox_ = new SuggestBox(new PackageOracle());
       packageNameSuggestBox_.setWidth("100%");
       packageNameSuggestBox_.setLimit(20);
-      grid.setWidget(1, 1, packageNameSuggestBox_);
-      repositoryListBox_.addChangeHandler(new ChangeHandler() {
-         public void onChange(ChangeEvent event)
-         {
-            if (repositoryListBox_.getSelectedIndex() == 0)
-            {
-               repositoryURLGrid_.setVisible(false);
-               packageNameSuggestBox_.setFocus(true);
-            }
-            else
-            {
-               repositoryURLGrid_.setVisible(true);
-               repositoryURLTextBox_.setFocus(true);  
-            }  
-         }   
-      });
-      
-      // add grid to main panel
-      mainPanel.add(grid);
-      
-      // other repository grid
-      repositoryURLGrid_ = new Grid(2, 1);
-      repositoryURLGrid_.setWidget(0, 0, new Label("Repository URL:"));
-      repositoryURLTextBox_ = new TextBox();
-      repositoryURLTextBox_.setStylePrimaryName(RESOURCES.styles().repositoryURLTextBox());
-      repositoryURLGrid_.setWidget(1, 0, repositoryURLTextBox_);
-      mainPanel.add(repositoryURLGrid_);
-      repositoryURLGrid_.setVisible(false);
-      
-      // initial UI based on initial install repository
-      if (initialInstallRepository_ == null)
-      {
-         repositoryListBox_.setSelectedIndex(0);
-         repositoryURLGrid_.setVisible(false);
-      }
-      else
-      {
-         repositoryListBox_.setSelectedIndex(1);
-         repositoryURLGrid_.setVisible(true);
-         repositoryURLTextBox_.setText(initialInstallRepository_);
-      }
-      
-      // return the widget
+      packageNameSuggestBox_.addStyleName(RESOURCES.styles().packageNameSuggestBox());
+      mainPanel.add(packageNameSuggestBox_);
+         
       return mainPanel;
    }
    
@@ -168,7 +113,7 @@ public class InstallPackageDialog extends ModalDialog<InstallOptions>
    {
       FocusHelper.setFocusDeferred(packageNameSuggestBox_);
    }
-
+   
    private class PackageOracle extends MultiWordSuggestOracle
    {
       PackageOracle()
@@ -193,42 +138,12 @@ public class InstallPackageDialog extends ModalDialog<InstallOptions>
             }  
          });
       }
-      
-      @Override
-      public void requestSuggestions(SuggestOracle.Request request, 
-                                     SuggestOracle.Callback callback) 
-      {
-         // only return suggestions for CRAN
-         if (installRepository() == null)
-            super.requestSuggestions(request, callback);
-      }
-   }
-  
-   private String installRepository()
-   {
-      String repos = null;
-      if (repositoryListBox_.getSelectedIndex() == 1)
-         repos = repositoryURLTextBox_.getText().trim();
-      return repos;
    }
    
-   
-   private ListBox repositoryListBox_;
-   private SuggestBox packageNameSuggestBox_;
-   private Grid repositoryURLGrid_;
-   private TextBox repositoryURLTextBox_;
-  
-   private final String initialInstallRepository_ ;
-   @SuppressWarnings("unused")
-   private final PackageInstallContext installContext_;
-   private final PackagesServerOperations server_;
-   private final GlobalDisplay globalDisplay_;
-  
    static interface Styles extends CssResource
    {
       String mainWidget();
-      String repositoryListBox();
-      String repositoryURLTextBox();
+      String packageNameSuggestBox();
    }
   
    static interface Resources extends ClientBundle
@@ -242,4 +157,12 @@ public class InstallPackageDialog extends ModalDialog<InstallOptions>
    {
       RESOURCES.styles().ensureInjected();
    }
+   
+   @SuppressWarnings("unused")
+   private final PackageInstallContext installContext_;
+   private final PackageInstallOptions defaultInstallOptions_;
+   private final PackagesServerOperations server_;
+   private final GlobalDisplay globalDisplay_;
+   
+   private SuggestBox packageNameSuggestBox_ = null;
 }

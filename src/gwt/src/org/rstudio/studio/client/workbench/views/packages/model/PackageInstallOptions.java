@@ -1,5 +1,5 @@
 /*
- * InstallOptions.java
+ * PackageInstallOptions.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -14,28 +14,29 @@ package org.rstudio.studio.client.workbench.views.packages.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class InstallOptions extends JavaScriptObject
+public class PackageInstallOptions extends JavaScriptObject
 {
-   protected InstallOptions()
-   {   
+   protected PackageInstallOptions()
+   {
+      
    }
    
-   public static final native InstallOptions create(String repository, 
-                                                    String packageName) /*-{
+   public static final native PackageInstallOptions create(
+                                          String libraryPath, 
+                                          boolean installDependencies) /*-{
       var options = new Object();
-      options.repository = repository ;
-      options.packageName = packageName ;
+      options.libraryPath = libraryPath ;
+      options.installDependencies = installDependencies ;
       return options ;
    }-*/;
-   
 
-   public final native String getRepository() /*-{
-      return this.repository;
-   }-*/;
-   public final native String getPackageName() /*-{
-      return this.packageName;
+
+   public final native String getLibraryPath() /*-{
+      return this.libraryPath;
    }-*/;
    
+   public final native boolean getInstallDependencies() /*-{
+      return this.installDependencies;
+   }-*/;
    
-
 }

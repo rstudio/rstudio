@@ -43,9 +43,10 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.help.search.SearchWidget;
-import org.rstudio.studio.client.workbench.views.packages.model.InstallOptions;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallOptions;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallRequest;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableResources;
@@ -75,14 +76,14 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packagesDataProvider_.setList(packages);
    }
    
-   public void installPackage(String installRepository,
-                              PackageInstallContext installContext,
+   public void installPackage(PackageInstallContext installContext,
+                              PackageInstallOptions defaultInstallOptions,
                               PackagesServerOperations server,
                               GlobalDisplay globalDisplay,
-                              OperationWithInput<InstallOptions> operation)
+                              OperationWithInput<PackageInstallRequest> operation)
    {
-      new InstallPackageDialog(installRepository,
-                               installContext,
+      new InstallPackageDialog(installContext,
+                               defaultInstallOptions,
                                server, 
                                globalDisplay, 
                                operation).showModal();

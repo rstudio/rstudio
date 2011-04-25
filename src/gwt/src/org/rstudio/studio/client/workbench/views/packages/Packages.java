@@ -43,9 +43,10 @@ import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackag
 import org.rstudio.studio.client.workbench.views.packages.events.InstalledPackagesChangedHandler;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedHandler;
-import org.rstudio.studio.client.workbench.views.packages.model.InstallOptions;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallOptions;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallRequest;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
@@ -69,11 +70,11 @@ public class Packages
    {
       void listPackages(List<PackageInfo> packagesDS);
       
-      void installPackage(String installRepository,
-                          PackageInstallContext installContext,
+      void installPackage(PackageInstallContext installContext,
+                          PackageInstallOptions defaultInstallOptions,
                           PackagesServerOperations server,
                           GlobalDisplay globalDisplay,
-                          OperationWithInput<InstallOptions> operation);
+                          OperationWithInput<PackageInstallRequest> operation);
       
       void setPackageStatus(String packageName, boolean loaded);
   
@@ -201,27 +202,25 @@ public class Packages
   
    private void doInstallPackage(PackageInstallContext installContext)
    {
-      view_.installPackage(installRepository_,
-                           installContext,
-                           server_,
-                           globalDisplay_,
-                           new OperationWithInput<InstallOptions>() {
+      view_.installPackage(
+         installContext,
+         PackageInstallOptions.create(installContext.getDefaultLibraryPath(), 
+                                      true),
+         server_,
+         globalDisplay_,
+         new OperationWithInput<PackageInstallRequest>() {
 
-            public void execute(InstallOptions options)
+            public void execute(PackageInstallRequest request)
             {
                String command = "install.packages(\"" +
-                                 options.getPackageName() +
+                                 request.getPackages().get(0) +
                                  "\"";
 
-               if (options.getRepository() != null)
-                  command += ", repos = \"" + options.getRepository() + "\"";
+              
 
                command += ")";
 
                events_.fireEvent(new SendToConsoleEvent(command, true));
-
-               // save repository
-               installRepository_ = options.getRepository();
             }
            });
    }
