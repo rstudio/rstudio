@@ -297,14 +297,22 @@ public class Shell implements ConsoleInputHandler,
       if (command == null)
          return;
 
-      if (history_.size() > 0
-          && command.equals(history_.get(history_.size() - 1)))
+      String[] lines = command.split("\n");
+      for (String line : lines)
       {
-         // do not allow dupes
-         return;
-      }
+         // do not allow empty lines
+         if (line.length() == 0)
+            return;
 
-      history_.add(command);
+         if (history_.size() > 0
+             && line.equals(history_.get(history_.size() - 1)))
+         {
+            // do not allow dupes
+            return;
+         }
+
+         history_.add(line);
+      }
    }
 
    public void onSendToConsole(SendToConsoleEvent event)
