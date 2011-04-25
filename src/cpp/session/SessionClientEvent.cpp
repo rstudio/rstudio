@@ -60,6 +60,8 @@ const int kShowContent = 33;
 const int kShowData = 34;
 const int kAsyncCompletion = 35;
 const int kSaveActionChanged = 36;
+const int kConsoleWritePrompt = 37;
+const int kConsoleWriteInput = 38;
 
 }   
 
@@ -148,6 +150,10 @@ std::string ClientEvent::typeName() const
          return "async_completion";
       case client_events::kSaveActionChanged:
          return "save_action_changed";
+      case client_events::kConsoleWritePrompt:
+         return "console_write_prompt";
+      case client_events::kConsoleWriteInput:
+         return "console_write_input";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              boost::lexical_cast<std::string>(type_));

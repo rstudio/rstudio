@@ -102,16 +102,30 @@ public class ShellPane extends Composite implements Shell.Display,
       });
    }
 
-   public void consoleError(String error)
+   public void consoleWriteError(String error)
    {
       output(error, styles_.error(), false);
       if (!DomUtils.selectionExists())
          scrollPanel_.scrollToBottom();
    }
 
-   public void consoleOutput(String output)
+   public void consoleWriteOutput(String output)
    {
       output(output, styles_.output(), false);
+      if (!DomUtils.selectionExists())
+         scrollPanel_.scrollToBottom();
+   }
+
+   public void consoleWriteInput(String input)
+   {
+      output(input, styles_.input() + KEYWORD_CLASS_NAME, false);
+      if (!DomUtils.selectionExists())
+         scrollPanel_.scrollToBottom();
+   }
+
+   public void consoleWritePrompt(String prompt)
+   {
+      output(prompt, styles_.prompt() + KEYWORD_CLASS_NAME, false);
       if (!DomUtils.selectionExists())
          scrollPanel_.scrollToBottom();
    }
@@ -438,10 +452,12 @@ public class ShellPane extends Composite implements Shell.Display,
       String commandText = input_.getText();
       input_.setText("");
       prompt_.setHTML("");
+/*
       output(promptText, styles_.prompt() + " " + KEYWORD_CLASS_NAME, false);
       output(commandText + "\n",
              styles_.command() + " " + KEYWORD_CLASS_NAME, 
              false);
+*/
       ensureInputVisible();
 
       return commandText ;

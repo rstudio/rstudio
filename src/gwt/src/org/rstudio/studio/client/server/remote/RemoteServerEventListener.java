@@ -75,6 +75,8 @@ class RemoteServerEventListener
       public static final String ConsolePrompt = "console_prompt";
       public static final String ConsoleOutput = "console_output" ;
       public static final String ConsoleError = "console_error";
+      public static final String ConsoleWritePrompt = "console_write_prompt";
+      public static final String ConsoleWriteInput = "console_write_input";
       public static final String ShowErrorMessage = "show_error_message";
       public static final String ShowHelp = "show_help" ;
       public static final String BrowseUrl = "browse_url";
@@ -461,6 +463,16 @@ class RemoteServerEventListener
          {
             String error = event.getData();
             eventBus.fireEvent(new ConsoleWriteErrorEvent(error));
+         }
+         else if (type.equals(ClientEvent.ConsoleWritePrompt))
+         {
+            String prompt = event.getData();
+            eventBus.fireEvent(new ConsoleWritePromptEvent(prompt));
+         }
+         else if (type.equals(ClientEvent.ConsoleWriteInput))
+         {
+            String input = event.getData();
+            eventBus.fireEvent(new ConsoleWriteInputEvent(input));
          }
          else if (type.equals(ClientEvent.ConsolePrompt))
          {

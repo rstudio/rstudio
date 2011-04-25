@@ -959,22 +959,10 @@ public class TextEditingTarget implements EditingTarget
       Element activeEl = DomUtils.getActiveElement();
       if (activeEl != null)
          activeEl.blur();
+      docDisplay_.focus();
 
       String code = docDisplay_.getCode();
-      if (code != null && code.trim().length() > 0)
-      {
-         boolean sweave = fileType_.canCompilePDF();
-
-         server_.saveActiveDocument(code, sweave, new SimpleRequestCallback<Void>() {
-            @Override
-            public void onResponseReceived(Void response)
-            {
-               events_.fireEvent(new SendToConsoleEvent(
-                     createSourceCommand("~/.active-rstudio-document", "UTF-8"),
-                     true));
-            }
-         });
-      }
+      events_.fireEvent(new SendToConsoleEvent(code, true));
    }
 
    private String normalizeEncoding(String str)

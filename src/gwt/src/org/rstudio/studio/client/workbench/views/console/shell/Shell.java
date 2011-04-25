@@ -52,6 +52,8 @@ import java.util.ArrayList;
 public class Shell implements ConsoleInputHandler,
                               ConsoleWriteOutputHandler,
                               ConsoleWriteErrorHandler,
+                              ConsoleWritePromptHandler,
+                              ConsoleWriteInputHandler,
                               ConsolePromptHandler,
                               ConsoleResetHistoryHandler,
                               SendToConsoleHandler,
@@ -64,8 +66,10 @@ public class Shell implements ConsoleInputHandler,
    public interface Display extends HasKeyDownHandlers, 
                                     HasKeyPressHandlers
    {
-      void consoleError(String string) ;
-      void consoleOutput(String output) ;
+      void consoleWriteError(String string) ;
+      void consoleWriteOutput(String output) ;
+      void consoleWriteInput(String input);
+      void consoleWritePrompt(String prompt);
       void consolePrompt(String prompt) ;
       void ensureInputVisible() ;
       InputEditorDisplay getInputEditorDisplay() ;
@@ -110,6 +114,8 @@ public class Shell implements ConsoleInputHandler,
       eventBus.addHandler(ConsoleInputEvent.TYPE, this); 
       eventBus.addHandler(ConsoleWriteOutputEvent.TYPE, this);
       eventBus.addHandler(ConsoleWriteErrorEvent.TYPE, this);
+      eventBus.addHandler(ConsoleWritePromptEvent.TYPE, this);
+      eventBus.addHandler(ConsoleWriteInputEvent.TYPE, this);
       eventBus.addHandler(ConsolePromptEvent.TYPE, this);
       eventBus.addHandler(ConsoleResetHistoryEvent.TYPE, this);
       eventBus.addHandler(SendToConsoleEvent.TYPE, this);
@@ -212,7 +218,7 @@ public class Shell implements ConsoleInputHandler,
          public void onError(ServerError error) 
          {
             // show the error in the console then re-prompt
-            view_.consoleError("Error: " + error.getUserMessage() + "\n");
+            view_.consoleWriteError("Error: " + error.getUserMessage() + "\n");
             if (lastPromptText_ != null)
                consolePrompt(lastPromptText_, false);
          }
@@ -221,14 +227,24 @@ public class Shell implements ConsoleInputHandler,
 
    public void onConsoleWriteOutput(ConsoleWriteOutputEvent event)
    {
-      view_.consoleOutput(event.getOutput()) ;
+      view_.consoleWriteOutput(event.getOutput()) ;
    }
 
    public void onConsoleWriteError(ConsoleWriteErrorEvent event)
    {
-      view_.consoleError(event.getError()) ;
+      view_.consoleWriteError(event.getError()) ;
    }
    
+   public void onConsoleWriteInput(ConsoleWriteInputEvent event)
+   {
+      view_.consoleWriteInput(event.getInput());
+   }
+
+   public void onConsoleWritePrompt(ConsoleWritePromptEvent event)
+   {
+      view_.consoleWritePrompt(event.getPrompt());
+   }
+
    public void onConsolePrompt(ConsolePromptEvent event)
    {
       String prompt = event.getPrompt().getPromptText() ;

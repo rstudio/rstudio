@@ -1149,6 +1149,11 @@ bool rConsoleRead(const std::string& prompt,
    // we are about to return input to r so set the flag indicating that state
    s_rProcessingInput = true;
 
+   ClientEvent promptEvent(kConsoleWritePrompt, prompt);
+   session::clientEventQueue().add(promptEvent);
+   ClientEvent inputEvent(kConsoleWriteInput, pConsoleInput->text + "\n");
+   session::clientEventQueue().add(inputEvent);
+
    // always return true (returning false causes the process to exit)
    return true;
 }
