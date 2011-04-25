@@ -47,16 +47,49 @@ define("mode/r", function(require, exports, module)
          return this.$indentManager.getNextLineIndent(row, line, state, tab, tabSize);
       };
 
-      this.checkOutdent = function(state, line, input)
-      {
-         return this.$outdent.checkOutdent(line, input);
+      this.checkOutdent = function(state, line, input) {
+         if (! /^\s+$/.test(line))
+            return false;
+
+         return /^\s*[\{\}]/.test(input);
       };
 
-      this.autoOutdent = function(state, doc, row)
-      {
-         return this.$outdent.autoOutdent(doc, row);
+      this.autoOutdent = function(state, doc, row) {
+         if (row == 0)
+            return 0;
+
+         var line = doc.getLine(row);
+
+         var match = line.match(/^(\s*\})/);
+         if (match)
+         {
+            var column = match[1].length;
+            var openBracePos = doc.findMatchingBracket({row: row, column: column});
+
+            if (!openBracePos || openBracePos.row == row) return 0;
+
+            var indent = this.$getIndent(doc.getLine(openBracePos.row));
+            doc.replace(new Range(row, 0, row, column-1), indent);
+         }
+
+         match = line.match(/^(\s*\{)/);
+         if (match)
+         {
+            var column = match[1].length;
+            var indent = this.$indentManager.getBraceIndent(row-1);
+            doc.replace(new Range(row, 0, row, column-1), indent);
+         }
+      };
+
+      this.$getIndent = function(line) {
+         var match = line.match(/^(\s+)/);
+         if (match) {
+            return match[1];
+         }
+
+         return "";
       };
    }).call(Mode.prototype);
-
    exports.Mode = Mode;
+
 });

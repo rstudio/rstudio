@@ -71,28 +71,18 @@ var IndentManager = function(doc, tokenizer, statePattern) {
                && /\bparen\b/.test(prevToken.token.type)
                && /\)$/.test(prevToken.token.value))
          {
-            var parens = 0;
-            var lastPos = null;
-         
-            var matched = !this.$walkParens(prevToken.row, prevToken.row - 10, function(paren, pos)
-            {
-               lastPos = pos;
-               if (/[\[({]/.test(paren))
-                  parens++;
-               else
-                  parens--;
+            var openParenPos = this.$walkParensBalanced(
+                  prevToken.row,
+                  prevToken.row - 10,
+                  null,
+                  function(parens, paren, pos)
+                  {
+                     return parens.length === 0;
+                  });
 
-               // We've either completed a set of balanced parens, or possibly
-               // the parens are invalid. In either case, stop.
-               if (parens >= 0)
-                  return false;
-
-               return true;
-            });
-         
-            if (matched)
+            if (openParenPos != null)
             {
-               var preParenToken = this.$findPreviousSignificantToken(lastPos, 0);
+               var preParenToken = this.$findPreviousSignificantToken(openParenPos, 0);
                if (preParenToken && preParenToken.token.type === "keyword"
                      && /^(if|while|for|function)$/.test(preParenToken.token.value))
                {
@@ -116,34 +106,16 @@ var IndentManager = function(doc, tokenizer, statePattern) {
                return this.$getIndent(this.$getLine(prevToken.row));
          }
 
-
-         var parens = [];
-         var that = this;
-         var openBrace = null;
-         var openBracePos = null;
-         var foundBrace = !this.$walkParens(lastRow, 0, function(paren, pos)
-         {
-            if (/[\[({]/.test(paren))
-            {
-               if (parens.length == 0)
+         var openBracePos = this.$walkParensBalanced(
+               lastRow,
+               0,
+               function(parens, paren, pos)
                {
-                  openBracePos = pos;
-                  openBrace = paren;
+                  return /[\[({]/.test(paren) && parens.length === 0;
+               },
+               null);
 
-                  // stop walking
-                  return false;
-               }
-               else if (parens[parens.length - 1] === that.$complements[paren])
-                  parens.pop();
-            }
-            else
-            {
-               parens.push(paren);
-            }
-            return true;
-         });
-
-         if (foundBrace)
+         if (openBracePos != null)
          {
             var nextTokenPos = this.$findNextSignificantToken({
                   row: openBracePos.row,
@@ -164,7 +136,7 @@ var IndentManager = function(doc, tokenizer, statePattern) {
                var buffer = "";
                for (var i = 0; i < tabsToUse; i++)
                   buffer += tab;
-               for (var i = 0; i < spacesToAdd; i++)
+               for (var j = 0; j < spacesToAdd; j++)
                   buffer += " ";
                return buffer;
             }
@@ -184,6 +156,39 @@ var IndentManager = function(doc, tokenizer, statePattern) {
             this.$invalidateRow(lastRow);
          }
       }
+   };
+
+   this.getBraceIndent = function(lastRow)
+   {
+      this.$tokenizeUpToRow(lastRow);
+
+      var prevToken = this.$findPreviousSignificantToken({row: lastRow, column: this.$getLine(lastRow).length},
+                                                         lastRow - 10);
+      if (prevToken
+            && /\bparen\b/.test(prevToken.token.type)
+            && /\)$/.test(prevToken.token.value))
+      {
+         var lastPos = this.$walkParensBalanced(
+               prevToken.row,
+               prevToken.row - 10,
+               null,
+               function(parens, paren, pos)
+               {
+                  return parens.length == 0;
+               });
+
+         if (lastPos != null)
+         {
+            var preParenToken = this.$findPreviousSignificantToken(lastPos, 0);
+            if (preParenToken && preParenToken.token.type === "keyword"
+                  && /^(if|while|for|function)$/.test(preParenToken.token.value))
+            {
+               return this.$getIndent(this.$getLine(preParenToken.row));
+            }
+         }
+      }
+
+      return this.$getIndent(lastRow);
    };
    
    this.$tokenizeUpToRow = function(lastRow)
@@ -368,7 +373,49 @@ var IndentManager = function(doc, tokenizer, statePattern) {
          }).call(this);
       }
    };
-   
+
+   // Walks BACKWARD over matched pairs of parens. Stop and return result
+   // when optional function params preMatch or postMatch return true.
+   // preMatch is called when a paren is encountered and BEFORE the parens
+   // stack is modified. postMatch is called after the parens stack is modified.
+   this.$walkParensBalanced = function(startRow, endRow, preMatch, postMatch)
+   {
+      // The current stack of parens that are in effect.
+      var parens = [];
+      var result = null;
+      var that = this;
+      this.$walkParens(startRow, endRow, function(paren, pos)
+      {
+         if (preMatch && preMatch(parens, paren, pos))
+         {
+            result = pos;
+            return false;
+         }
+
+         if (/[\[({]/.test(paren))
+         {
+            if (parens[parens.length - 1] === that.$complements[paren])
+               parens.pop();
+            else
+               return true;
+         }
+         else
+         {
+            parens.push(paren);
+         }
+
+         if (postMatch && postMatch(parens, paren, pos))
+         {
+            result = pos;
+            return false;
+         }
+
+         return true;
+      });
+
+      return result;
+   };
+
    this.$findNextSignificantToken = function(pos, lastRow)
    {
       if (this.$tokens.length == 0)
