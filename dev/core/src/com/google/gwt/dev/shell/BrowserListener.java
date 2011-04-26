@@ -65,8 +65,10 @@ public class BrowserListener {
       InetAddress address = InetAddress.getByName(bindAddress);
       listenSocket.bind(new InetSocketAddress(address, port));
 
-      logger.log(TreeLogger.TRACE, "Started code server on port "
-          + listenSocket.getLocalPort(), null);
+      if (logger.isLoggable(TreeLogger.TRACE)) {
+        logger.log(TreeLogger.TRACE, "Started code server on port "
+            + listenSocket.getLocalPort(), null);
+      }
       listenThread = new Thread() {
         @Override
         public void run() {

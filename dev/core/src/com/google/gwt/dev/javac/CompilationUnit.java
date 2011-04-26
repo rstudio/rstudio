@@ -138,7 +138,9 @@ public abstract class CompilationUnit implements Serializable {
     private byte[] getClassBytes(String slashedName) {
       URL url = Thread.currentThread().getContextClassLoader().getResource(slashedName + ".class");
       if (url == null) {
-        logger.log(TreeLogger.DEBUG, "Unable to find " + slashedName + " on the classPath");
+        if (logger.isLoggable(TreeLogger.DEBUG)) {
+          logger.log(TreeLogger.DEBUG, "Unable to find " + slashedName + " on the classPath");
+        }
         return null;
       }
       String urlStr = url.toExternalForm();
@@ -148,8 +150,10 @@ public abstract class CompilationUnit implements Serializable {
       } else {
         assert mainUrlBase != null;
         if (!mainUrlBase.equals(urlStr.substring(0, urlStr.lastIndexOf('/')))) {
-          logger.log(TreeLogger.DEBUG, "Found " + slashedName + " at " + urlStr
-              + " The base location is different from  that of " + mainUrlBase + " Not loading");
+          if (logger.isLoggable(TreeLogger.DEBUG)) {
+            logger.log(TreeLogger.DEBUG, "Found " + slashedName + " at " + urlStr
+                + " The base location is different from  that of " + mainUrlBase + " Not loading");
+          }
           return null;
         }
       }
@@ -159,8 +163,10 @@ public abstract class CompilationUnit implements Serializable {
         URLConnection conn = url.openConnection();
         return Util.readURLConnectionAsBytes(conn);
       } catch (IOException ignored) {
-        logger.log(TreeLogger.DEBUG, "Unable to load " + urlStr + ", in trying to load "
-            + slashedName);
+        if (logger.isLoggable(TreeLogger.DEBUG)) {
+          logger.log(TreeLogger.DEBUG, "Unable to load " + urlStr + ", in trying to load "
+              + slashedName);
+        }
         // Fall through.
       }
       return null;

@@ -144,8 +144,10 @@ public class TypeSerializerCreator {
     if (shardSize < 0) {
       computeShardSize(logger);
     }
-    logger.log(TreeLogger.TRACE, "Using a shard size of " + shardSize
-        + " for TypeSerializerCreator createMethodMap");
+    if (logger.isLoggable(TreeLogger.TRACE)) {
+      logger.log(TreeLogger.TRACE, "Using a shard size of " + shardSize
+          + " for TypeSerializerCreator createMethodMap");
+    }
 
     try {
       ConfigurationProperty prop

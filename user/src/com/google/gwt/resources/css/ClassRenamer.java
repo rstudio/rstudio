@@ -198,9 +198,11 @@ public class ClassRenamer extends CssVisitor {
       for (String s : unknownClasses) {
         errorLogger.log(TreeLogger.ERROR, s);
       }
-      errorLogger.log(TreeLogger.INFO, "Fix by adding String accessor "
+      if (errorLogger.isLoggable(TreeLogger.INFO)) {
+        errorLogger.log(TreeLogger.INFO, "Fix by adding String accessor "
           + "method(s) to the CssResource interface for obfuscated classes, "
           + "or using an @external declaration for unobfuscated classes.");
+      }
     }
 
     if (stop) {

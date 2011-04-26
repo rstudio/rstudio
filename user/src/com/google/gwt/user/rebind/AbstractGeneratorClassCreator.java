@@ -137,8 +137,10 @@ public abstract class AbstractGeneratorClassCreator extends
       TreeLogger resBranch = searchedBranch.branch(TreeLogger.WARN, resource.toString(), null);
       Set<String> keys = resource.keySet();
       TreeLogger keyBranch = resBranch.branch(TreeLogger.INFO, "List of keys found", null);
-      for (String key : keys) {
-        keyBranch.log(TreeLogger.INFO, key, null);
+      if (keyBranch.isLoggable(TreeLogger.INFO)) {
+        for (String key : keys) {
+          keyBranch.log(TreeLogger.INFO, key, null);
+        }
       }
     }
     return new UnableToCompleteException();

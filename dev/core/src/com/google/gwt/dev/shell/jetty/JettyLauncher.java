@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.ServletContainer;
 import com.google.gwt.core.ext.ServletContainerLauncher;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.util.InstalledHelpInfo;
 import com.google.gwt.dev.util.Util;
 
@@ -161,7 +160,9 @@ public class JettyLauncher extends ServletContainerLauncher {
     }
 
     public void debug(String msg, Object arg0, Object arg1) {
-      logger.log(TreeLogger.SPAM, format(msg, arg0, arg1));
+      if (logger.isLoggable(TreeLogger.SPAM)) {
+        logger.log(TreeLogger.SPAM, format(msg, arg0, arg1));
+      }
     }
 
     public void debug(String msg, Throwable th) {
@@ -173,7 +174,9 @@ public class JettyLauncher extends ServletContainerLauncher {
     }
 
     public void info(String msg, Object arg0, Object arg1) {
-      logger.log(TreeLogger.TRACE, format(msg, arg0, arg1));
+      if (logger.isLoggable(TreeLogger.TRACE)) {
+        logger.log(TreeLogger.TRACE, format(msg, arg0, arg1));
+      }
     }
 
     public boolean isDebugEnabled() {
@@ -185,7 +188,9 @@ public class JettyLauncher extends ServletContainerLauncher {
     }
 
     public void warn(String msg, Object arg0, Object arg1) {
-      logger.log(TreeLogger.WARN, format(msg, arg0, arg1));
+      if (logger.isLoggable(TreeLogger.WARN)) {
+        logger.log(TreeLogger.WARN, format(msg, arg0, arg1));
+      }
     }
 
     public void warn(String msg, Throwable th) {
@@ -677,7 +682,7 @@ public class JettyLauncher extends ServletContainerLauncher {
       branch.log(TreeLogger.ERROR, String.format(
           "Failed to connect to open channel with port %d (return value %d)",
           port, connectorPort));
-      if (connector.getConnection() == null ) {
+      if (connector.getConnection() == null) {
         branch.log(TreeLogger.TRACE, "Connection is null");
       }
     }
@@ -700,7 +705,9 @@ public class JettyLauncher extends ServletContainerLauncher {
     if (useSsl) {
       TreeLogger sslLogger = logger.branch(TreeLogger.INFO,
           "Listening for SSL connections");
-      sslLogger.log(TreeLogger.TRACE, "Using keystore " + keyStore);
+      if (sslLogger.isLoggable(TreeLogger.TRACE)) {
+        sslLogger.log(TreeLogger.TRACE, "Using keystore " + keyStore);
+      }
       SslSocketConnector conn = new SslSocketConnector();
       if (clientAuth != null) {
         switch (clientAuth) {
@@ -787,17 +794,17 @@ public class JettyLauncher extends ServletContainerLauncher {
           new Class[]{long.class});
       method.invoke(null, Long.valueOf(3600000));
     } catch (ClassNotFoundException e) {
-      logger.log(Type.ERROR, "jreLeakPrevention.gcDaemonFail", e);
+      logger.log(TreeLogger.ERROR, "jreLeakPrevention.gcDaemonFail", e);
     } catch (SecurityException e) {
-      logger.log(Type.ERROR, "jreLeakPrevention.gcDaemonFail", e);
+      logger.log(TreeLogger.ERROR, "jreLeakPrevention.gcDaemonFail", e);
     } catch (NoSuchMethodException e) {
-      logger.log(Type.ERROR, "jreLeakPrevention.gcDaemonFail", e);
+      logger.log(TreeLogger.ERROR, "jreLeakPrevention.gcDaemonFail", e);
     } catch (IllegalArgumentException e) {
-      logger.log(Type.ERROR, "jreLeakPrevention.gcDaemonFail", e);
+      logger.log(TreeLogger.ERROR, "jreLeakPrevention.gcDaemonFail", e);
     } catch (IllegalAccessException e) {
-      logger.log(Type.ERROR, "jreLeakPrevention.gcDaemonFail", e);
+      logger.log(TreeLogger.ERROR, "jreLeakPrevention.gcDaemonFail", e);
     } catch (InvocationTargetException e) {
-      logger.log(Type.ERROR, "jreLeakPrevention.gcDaemonFail", e);
+      logger.log(TreeLogger.ERROR, "jreLeakPrevention.gcDaemonFail", e);
     }
 
     /*
@@ -814,13 +821,13 @@ public class JettyLauncher extends ServletContainerLauncher {
       // Ignore. Don't need call to getPolicy() to be successful,
       // just need to trigger static initializer.
     } catch (NoSuchMethodException e) {
-      logger.log(Type.WARN, "jreLeakPrevention.authPolicyFail", e);
+      logger.log(TreeLogger.WARN, "jreLeakPrevention.authPolicyFail", e);
     } catch (IllegalArgumentException e) {
-      logger.log(Type.WARN, "jreLeakPrevention.authPolicyFail", e);
+      logger.log(TreeLogger.WARN, "jreLeakPrevention.authPolicyFail", e);
     } catch (IllegalAccessException e) {
-      logger.log(Type.WARN, "jreLeakPrevention.authPolicyFail", e);
+      logger.log(TreeLogger.WARN, "jreLeakPrevention.authPolicyFail", e);
     } catch (InvocationTargetException e) {
-      logger.log(Type.WARN, "jreLeakPrevention.authPolicyFail", e);
+      logger.log(TreeLogger.WARN, "jreLeakPrevention.authPolicyFail", e);
     }
 
     /*
@@ -850,9 +857,9 @@ public class JettyLauncher extends ServletContainerLauncher {
       URLConnection uConn = url.openConnection();
       uConn.setDefaultUseCaches(false);
     } catch (MalformedURLException e) {
-      logger.log(Type.ERROR, "jreLeakPrevention.jarUrlConnCacheFail", e);
+      logger.log(TreeLogger.ERROR, "jreLeakPrevention.jarUrlConnCacheFail", e);
     } catch (IOException e) {
-      logger.log(Type.ERROR, "jreLeakPrevention.jarUrlConnCacheFail", e);
+      logger.log(TreeLogger.ERROR, "jreLeakPrevention.jarUrlConnCacheFail", e);
     }
 
     /*
@@ -864,7 +871,7 @@ public class JettyLauncher extends ServletContainerLauncher {
     try {
       factory.newDocumentBuilder();
     } catch (ParserConfigurationException e) {
-      logger.log(Type.ERROR, "jreLeakPrevention.xmlParseFail", e);
+      logger.log(TreeLogger.ERROR, "jreLeakPrevention.xmlParseFail", e);
     }
   }
 }

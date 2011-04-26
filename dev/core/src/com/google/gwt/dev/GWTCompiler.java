@@ -214,8 +214,10 @@ public class GWTCompiler {
 
           long compileDone = System.currentTimeMillis();
           long delta = compileDone - compileStart;
-          logger.log(TreeLogger.INFO, "Compilation succeeded -- "
-              + String.format("%.3f", delta / 1000d) + "s");
+          if (logger.isLoggable(TreeLogger.INFO)) {
+            logger.log(TreeLogger.INFO, "Compilation succeeded -- "
+                + String.format("%.3f", delta / 1000d) + "s");
+          }
         }
       }
     } catch (IOException e) {

@@ -141,10 +141,14 @@ class ServletValidator {
       context.pop();
 
       if (cdata.length() > 0) {
-        branch.log(TreeLogger.DEBUG, "  characters: " + indent + cdata);
+        if (branch.isLoggable(TreeLogger.DEBUG)) {
+          branch.log(TreeLogger.DEBUG, "  characters: " + indent + cdata);
+        }
       }
       indent = indent.substring(2);
-      branch.log(TreeLogger.DEBUG, "  endElement: " + indent + qName);
+      if (branch.isLoggable(TreeLogger.DEBUG)) {
+        branch.log(TreeLogger.DEBUG, "  endElement: " + indent + qName);
+      }
     }
 
     @Override
@@ -161,8 +165,10 @@ class ServletValidator {
         sb.append(attributes.getValue(i));
         sb.append('"');
       }
-      branch.log(TreeLogger.DEBUG, "startElement: " + indent + qName
-          + sb.toString());
+      if (branch.isLoggable(TreeLogger.DEBUG)) {
+        branch.log(TreeLogger.DEBUG, "startElement: " + indent + qName
+            + sb.toString());
+      }
       indent += "  ";
     }
   }

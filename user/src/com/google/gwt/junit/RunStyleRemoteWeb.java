@@ -274,11 +274,13 @@ class RunStyleRemoteWeb extends RunStyle {
                 + "ms  keeping alive remote browser at: " + rmiUrl,
                 e.getCause());
           } else if (e instanceof IllegalStateException) {
-            getLogger().log(TreeLogger.INFO,
-                "Browser at: " + rmiUrl + " already exited.", e);
+            if (getLogger().isLoggable(TreeLogger.INFO)) {
+              getLogger().log(TreeLogger.INFO,
+                  "Browser at: " + rmiUrl + " already exited.", e);
+            }
           } else {
             getLogger().log(TreeLogger.ERROR,
-                "Error keeping alive remote browser at " + rmiUrl, e);
+                            "Error keeping alive remote browser at " + rmiUrl, e);
           }
           remoteBrowser.setToken(0);
           synchronized (wasInterruptedLock) {

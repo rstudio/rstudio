@@ -791,10 +791,12 @@ public class ProxyCreator {
          */
         emitPolicyFileArtifact(logger, ctx, resource.getPartialPath());
       } else {
-        logger.log(TreeLogger.TRACE,
-            "SerializationPolicy file for RemoteService '"
-                + serviceIntf.getQualifiedSourceName()
-                + "' already exists; no need to rewrite it.", null);
+        if (logger.isLoggable(TreeLogger.TRACE)) {
+          logger.log(TreeLogger.TRACE,
+              "SerializationPolicy file for RemoteService '"
+              + serviceIntf.getQualifiedSourceName()
+              + "' already exists; no need to rewrite it.", null);
+        }
       }
 
       return serializationPolicyName;

@@ -159,8 +159,10 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
         }
 
         dirty = false;
-        logger.log(TreeLogger.DEBUG, "Composited " + builder.getImageCount()
-            + " images");
+        if (logger.isLoggable(TreeLogger.DEBUG)) {
+          logger.log(TreeLogger.DEBUG, "Composited " + builder.getImageCount()
+              + " images");
+        }
       }
 
       JClassType stringType = context.getGeneratorContext().getTypeOracle().findType(
@@ -569,8 +571,10 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
 
           // But only use it if we did a better job on compression
           if (newSize < originalSize) {
-            logger.log(TreeLogger.SPAM, "Reencoded image and saved "
-                + (originalSize - newSize) + " bytes");
+            if (logger.isLoggable(TreeLogger.SPAM)) {
+              logger.log(TreeLogger.SPAM, "Reencoded image and saved "
+                  + (originalSize - newSize) + " bytes");
+            }
             localizedImage = new LocalizedImage(localizedImage,
                 reencodedContents);
           }

@@ -15,7 +15,7 @@
  */
 package org.hibernate.jsr303.tck.tests.constraints.customconstraint;
 
-import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 
@@ -43,12 +43,12 @@ public class CustomConstraintValidatorCompileTest extends TckCompileTestCase {
       throws UnableToCompleteException {
     UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
     builder.expect(
-        Type.ERROR,
+        TreeLogger.ERROR,
         "No @org.hibernate.jsr303.tck.tests.constraints.customconstraint.Positive("
             + "message={validation.positive}, payload=[], groups=[]) "
             + "ConstraintValidator for type class java.lang.String",
         UnexpectedTypeException.class);
-    builder.setLowestLogLevel(Type.INFO);
+    builder.setLowestLogLevel(TreeLogger.INFO);
     UnitTestTreeLogger testLogger = builder.createLogger();
     assertModuleFails(testLogger,
         getFullyQaulifiedModuleName(getClass(), "TckCompileTest"),

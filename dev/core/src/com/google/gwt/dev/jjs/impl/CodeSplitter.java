@@ -515,6 +515,10 @@ public class CodeSplitter {
 
   private static void logInitialLoadSequence(TreeLogger logger,
       LinkedHashSet<Integer> initialLoadSequence) {
+    if (!logger.isLoggable(TreeLogger.TRACE)) {
+      return;
+    }
+
     StringBuffer message = new StringBuffer();
     message.append("Initial load sequence of split points: ");
     if (initialLoadSequence.isEmpty()) {
@@ -877,8 +881,12 @@ public class CodeSplitter {
         }
       }
     }
-    logger.log(TreeLogger.DEBUG, "Fixed up load-order dependencies by moving " + numFixups
-        + " strings in class literal constructors to fragment 0, out of " + numClassLitStrings);
+    if (logger.isLoggable(TreeLogger.DEBUG)) {
+      logger.log(TreeLogger.DEBUG, "Fixed up load-order dependencies by moving "
+          + numFixups
+          + " strings in class literal constructors to fragment 0, out of "
+          + numClassLitStrings);
+    }
   }
 
   private void fixUpLoadOrderDependenciesForFieldsInitializedToStrings(ExclusivityMap fragmentMap) {
@@ -899,8 +907,12 @@ public class CodeSplitter {
       }
     }
 
-    logger.log(TreeLogger.DEBUG, "Fixed up load-order dependencies by moving " + numFixups
-        + " strings used to initialize fields to fragment 0, out of " + +numFieldStrings);
+    if (logger.isLoggable(TreeLogger.DEBUG)) {
+      logger.log(TreeLogger.DEBUG, "Fixed up load-order dependencies by moving "
+          + numFixups
+          + " strings used to initialize fields to fragment 0, out of "
+          + +numFieldStrings);
+    }
   }
 
   private void fixUpLoadOrderDependenciesForMethods(ExclusivityMap fragmentMap) {
@@ -927,8 +939,12 @@ public class CodeSplitter {
       }
     }
 
-    logger.log(TreeLogger.DEBUG, "Fixed up load-order dependencies for instance methods by moving "
-        + numFixups + " types to fragment 0, out of " + jprogram.getDeclaredTypes().size());
+    if (logger.isLoggable(TreeLogger.DEBUG)) {
+      logger.log(TreeLogger.DEBUG,
+          "Fixed up load-order dependencies for instance methods by moving "
+          + numFixups + " types to fragment 0, out of "
+          + jprogram.getDeclaredTypes().size());
+    }
   }
 
   private void fixUpLoadOrderDependenciesForTypes(ExclusivityMap fragmentMap) {
@@ -950,8 +966,12 @@ public class CodeSplitter {
       }
     }
 
-    logger.log(TreeLogger.DEBUG, "Fixed up load-order dependencies on supertypes by moving "
-        + numFixups + " types to fragment 0, out of " + jprogram.getDeclaredTypes().size());
+    if (logger.isLoggable(TreeLogger.DEBUG)) {
+      logger.log(TreeLogger.DEBUG,
+          "Fixed up load-order dependencies on supertypes by moving " + numFixups
+          + " types to fragment 0, out of "
+          + jprogram.getDeclaredTypes().size());
+    }
   }
 
   private boolean isInitial(int entry) {

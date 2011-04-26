@@ -71,8 +71,10 @@ public class SplitPointRecorder {
               + "\"/>";
           htmlOut.printRaw(curLine);
           htmlOut.newline();
-          logger.log(TreeLogger.TRACE, "Assigning split point #" + sp
-              + " in method " + location);
+          if (logger.isLoggable(TreeLogger.TRACE)) {
+            logger.log(TreeLogger.TRACE, "Assigning split point #" + sp
+                + " in method " + location);
+          }
         }
         htmlOut.indentOut();
         htmlOut.indentOut();

@@ -151,7 +151,7 @@ public class GenerateCssAst {
 
     private TreeLogger logOrBranch(TreeLogger.Type type, String message,
         Throwable t, boolean branch) {
-      fatalErrorEncountered |= type == TreeLogger.Type.ERROR;
+      fatalErrorEncountered |= type == TreeLogger.ERROR;
       if (parentLogger.isLoggable(type)) {
         maybeBranch();
         if (branch) {

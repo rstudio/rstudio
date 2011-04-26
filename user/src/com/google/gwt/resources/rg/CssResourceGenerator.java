@@ -720,8 +720,10 @@ public class CssResourceGenerator extends AbstractResourceGenerator
           }
         }
 
-        logger.log(TreeLogger.SPAM, "Mapped " + type.getQualifiedSourceName()
-            + "." + name + " to " + obfuscatedClassName);
+        if (logger.isLoggable(TreeLogger.SPAM)) {
+          logger.log(TreeLogger.SPAM, "Mapped " + type.getQualifiedSourceName()
+              + "." + name + " to " + obfuscatedClassName);
+        }
       }
     }
   }
@@ -752,11 +754,15 @@ public class CssResourceGenerator extends AbstractResourceGenerator
     JClassType[] cssResourceSubtypes = baseInterface.getSubtypes();
     for (JClassType type : cssResourceSubtypes) {
       if (type.isInterface() != null) {
-        logger.log(TreeLogger.SPAM, "Added " + type.getQualifiedSourceName());
+        if (logger.isLoggable(TreeLogger.SPAM)) {
+          logger.log(TreeLogger.SPAM, "Added " + type.getQualifiedSourceName());
+        }
         toReturn.add(type);
 
       } else {
-        logger.log(TreeLogger.SPAM, "Ignored " + type.getQualifiedSourceName());
+        if (logger.isLoggable(TreeLogger.SPAM)) {
+          logger.log(TreeLogger.SPAM, "Ignored " + type.getQualifiedSourceName());
+        }
       }
     }
 

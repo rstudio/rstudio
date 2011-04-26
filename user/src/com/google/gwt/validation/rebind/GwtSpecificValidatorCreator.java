@@ -20,7 +20,6 @@ import com.google.gwt.core.client.UnsafeNativeLong;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
@@ -991,7 +990,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
           sw.println(", groups);");
         } else if (constraint.getComposingConstraints().isEmpty()) {
           // TODO(nchalko) What does the spec say to do here.
-          logger.log(Type.WARN, "No ConstraintValidator of " + constraint
+          logger.log(TreeLogger.WARN, "No ConstraintValidator of " + constraint
               + " for type " + clazz);
         }
         // TODO(nchalko) handle constraint.isReportAsSingleViolation() and
@@ -1101,7 +1100,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
       }
     } else if (!isComposite) {
       // TODO(nchalko) What does the spec say to do here.
-      logger.log(Type.WARN, "No ConstraintValidator of " + constraint + " for "
+      logger.log(TreeLogger.WARN, "No ConstraintValidator of " + constraint + " for "
           + p.getPropertyName() + " of type " + elementClass);
     }
 

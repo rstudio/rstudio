@@ -195,15 +195,19 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
           StandardConfigurationProperty newProp = new StandardConfigurationProperty(
               (com.google.gwt.dev.cfg.ConfigurationProperty) p);
           mutableConfigurationProperties.add(newProp);
-          logger.log(TreeLogger.SPAM,
-              "Added configuration property " + newProp, null);
+          if (logger.isLoggable(TreeLogger.SPAM)) {
+            logger.log(TreeLogger.SPAM,
+                "Added configuration property " + newProp, null);
+          }
         } else if (p instanceof BindingProperty) {
           StandardSelectionProperty newProp = new StandardSelectionProperty(
               (BindingProperty) p);
           mutableSelectionProperties.add(newProp);
           propertiesByName.put(newProp.getName(), newProp);
-          logger.log(TreeLogger.SPAM, "Added selection property " + newProp,
-              null);
+          if (logger.isLoggable(TreeLogger.SPAM)) {
+            logger.log(TreeLogger.SPAM, "Added selection property " + newProp,
+                null);
+          }
         } else {
           logger.log(TreeLogger.ERROR, "Unknown property type "
               + p.getClass().getName());
@@ -244,7 +248,9 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
       PublicResource resource = new StandardPublicResource(partialPath,
           module.findPublicFile(path));
       artifacts.add(resource);
-      logger.log(TreeLogger.SPAM, "Added public resource " + resource, null);
+      if (logger.isLoggable(TreeLogger.SPAM)) {
+        logger.log(TreeLogger.SPAM, "Added public resource " + resource, null);
+      }
     }
 
     {
@@ -252,7 +258,9 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
       for (Script script : module.getScripts()) {
         String url = script.getSrc();
         artifacts.add(new StandardScriptReference(url, index++));
-        logger.log(TreeLogger.SPAM, "Added script " + url, null);
+        if (logger.isLoggable(TreeLogger.SPAM)) {
+          logger.log(TreeLogger.SPAM, "Added script " + url, null);
+        }
       }
     }
 
@@ -260,7 +268,9 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
       int index = 0;
       for (String style : module.getStyles()) {
         artifacts.add(new StandardStylesheetReference(style, index++));
-        logger.log(TreeLogger.SPAM, "Added style " + style, null);
+        if (logger.isLoggable(TreeLogger.SPAM)) {
+          logger.log(TreeLogger.SPAM, "Added style " + style, null);
+        }
       }
     }
     return artifacts;

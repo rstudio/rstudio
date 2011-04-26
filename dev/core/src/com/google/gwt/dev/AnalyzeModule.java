@@ -120,8 +120,10 @@ public class AnalyzeModule {
       precompilationOptions = Util.readFileAsObject(optionsFile,
           PrecompileOptions.class);
     } catch (IOException e) {
-      logger.log(TreeLogger.DEBUG, "Failed to read " + optionsFile
-          + "\nHas AnalyzeModule been run?  Falling back.", e);
+      if (logger.isLoggable(TreeLogger.DEBUG)) {
+        logger.log(TreeLogger.DEBUG, "Failed to read " + optionsFile
+            + "\nHas AnalyzeModule been run?  Falling back.", e);
+      }
       return null;
     } catch (ClassNotFoundException e) {
       logger.log(TreeLogger.ERROR, "Failed to read " + optionsFile, e);
@@ -144,7 +146,9 @@ public class AnalyzeModule {
       compilerWorkDir.mkdirs();
 
       ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
-      logger.log(TreeLogger.INFO, "Analyzing module " + module.getName());
+      if (logger.isLoggable(TreeLogger.INFO)) {
+        logger.log(TreeLogger.INFO, "Analyzing module " + module.getName());
+      }
 
       /*
        * Count the permutations to expose to external build tools performing a

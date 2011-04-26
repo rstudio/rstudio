@@ -190,16 +190,22 @@ public class SwingUI extends DevModeUI {
     TreeLogger logger = handle.getLogger();
     TreeLogger branch = logger.branch(TreeLogger.INFO, "Loading module "
         + moduleName);
-    if (url != null) {
-      branch.log(TreeLogger.INFO, "Top URL: " + url);
+    if (logger.isLoggable(TreeLogger.INFO)) {
+      if (url != null) {
+        branch.log(TreeLogger.INFO, "Top URL: " + url);
+      }
+      branch.log(TreeLogger.INFO, "User agent: " + userAgent);
     }
-    branch.log(TreeLogger.INFO, "User agent: " + userAgent);
-    branch.log(TreeLogger.TRACE, "Remote socket: " + remoteSocket);
-    if (tabKey != null) {
-      branch.log(TreeLogger.DEBUG, "Tab key: " + tabKey);
+    if (logger.isLoggable(TreeLogger.TRACE)) {
+      branch.log(TreeLogger.TRACE, "Remote socket: " + remoteSocket);
     }
-    if (sessionKey != null) {
-      branch.log(TreeLogger.DEBUG, "Session key: " + sessionKey);
+    if (branch.isLoggable(TreeLogger.DEBUG)) {
+      if (tabKey != null) {
+        branch.log(TreeLogger.DEBUG, "Tab key: " + tabKey);
+      }
+      if (sessionKey != null) {
+        branch.log(TreeLogger.DEBUG, "Session key: " + sessionKey);
+      }
     }
     return handle;
   }

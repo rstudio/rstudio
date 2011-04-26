@@ -247,8 +247,10 @@ public class PrecompileOnePerm {
         getPrecompileFilename(permId));
     Util.writeObjectAsFile(logger, precompilationFile, precompilation);
 
-    branch.log(TreeLogger.INFO, "Precompilation succeeded for permutation "
-        + permId);
+    if (branch.isLoggable(TreeLogger.INFO)) {
+      branch.log(TreeLogger.INFO, "Precompilation succeeded for permutation "
+          + permId);
+    }
 
     return true;
   }

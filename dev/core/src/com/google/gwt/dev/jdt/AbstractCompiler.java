@@ -270,8 +270,9 @@ public abstract class AbstractCompiler {
        */
       private void addAdditionalTypes(TreeLogger logger, String[] typeNames) {
         for (String typeName : typeNames) {
-          final String msg = "Need additional type '" + typeName + "'";
-          logger.log(TreeLogger.SPAM, msg, null);
+          if (logger.isLoggable(TreeLogger.SPAM)) {
+            logger.log(TreeLogger.SPAM, "Need additional type '" + typeName + "'", null);
+          }
 
           resolvePossiblyNestedType(typeName);
         }
@@ -368,8 +369,10 @@ public abstract class AbstractCompiler {
         }
         CompilationUnit unit = findCompilationUnit(qname);
         if (unit != null) {
-          branch.log(TreeLogger.SPAM, "Found type in compilation unit: "
-              + unit.getResourceLocation());
+          if (branch.isLoggable(TreeLogger.SPAM)) {
+            branch.log(TreeLogger.SPAM, "Found type in compilation unit: "
+                + unit.getResourceLocation());
+          }
           ICompilationUnit icu = new CompilationUnitAdapter(unit);
           return new NameEnvironmentAnswer(icu, null);
         } else {

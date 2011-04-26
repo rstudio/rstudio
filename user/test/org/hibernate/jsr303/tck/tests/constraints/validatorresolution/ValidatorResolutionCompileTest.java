@@ -15,7 +15,7 @@
  */
 package org.hibernate.jsr303.tck.tests.constraints.validatorresolution;
 
-import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 
@@ -40,7 +40,7 @@ public class ValidatorResolutionCompileTest extends TckCompileTestCase {
       throws UnableToCompleteException {
     UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
     builder.expect(
-        Type.ERROR,
+        TreeLogger.ERROR,
         "More than one maximally specific "
             + "@org.hibernate.jsr303.tck.tests.constraints.validatorresolution.Ambiguous"
             + "(message=foobar, payload=[], groups=[]) "
@@ -49,7 +49,7 @@ public class ValidatorResolutionCompileTest extends TckCompileTestCase {
             + "found [class org.hibernate.jsr303.tck.tests.constraints.validatorresolution.Ambiguous$AmbiguousValidatorForDummy,"
             + " class org.hibernate.jsr303.tck.tests.constraints.validatorresolution.Ambiguous$AmbiguousValidatorForSerializable]",
         ValidationException.class);
-    builder.setLowestLogLevel(Type.INFO);
+    builder.setLowestLogLevel(TreeLogger.INFO);
     UnitTestTreeLogger testLogger = builder.createLogger();
     assertModuleFails(
         testLogger,
@@ -62,12 +62,12 @@ public class ValidatorResolutionCompileTest extends TckCompileTestCase {
       throws UnableToCompleteException {
     UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
     builder.expect(
-        Type.ERROR,
+        TreeLogger.ERROR,
         "No @javax.validation.constraints.Size(message={javax.validation.constraints.Size.message},"
             + " min=0, max=2147483647, payload=[], groups=[]) "
             + "ConstraintValidator for type class java.lang.Integer",
         ValidationException.class);
-    builder.setLowestLogLevel(Type.INFO);
+    builder.setLowestLogLevel(TreeLogger.INFO);
     UnitTestTreeLogger testLogger = builder.createLogger();
     assertModuleFails(
         testLogger,

@@ -195,7 +195,9 @@ public class EmbeddedTomcatServer {
 
     // Some debug messages for ourselves.
     //
-    logger.log(TreeLogger.DEBUG, "catalina.base = " + catBase, null);
+    if (logger.isLoggable(TreeLogger.DEBUG)) {
+      logger.log(TreeLogger.DEBUG, "catalina.base = " + catBase, null);
+    }
 
     // Set up the logger that will be returned by the Commons logging factory.
     //
@@ -263,7 +265,9 @@ public class EmbeddedTomcatServer {
     port = computeLocalPort(connector);
 
     if (port != listeningPort) {
-      logger.log(TreeLogger.INFO, "HTTP listening on port " + port, null);
+      if (logger.isLoggable(TreeLogger.INFO)) {
+        logger.log(TreeLogger.INFO, "HTTP listening on port " + port, null);
+      }
     }
   }
 
@@ -285,8 +289,10 @@ public class EmbeddedTomcatServer {
 
       if (srcLastModified < dstLastModified) {
         // Don't copy over it.
-        logger.log(TreeLogger.SPAM, "Source is older than existing: "
-            + dest.getAbsolutePath(), null);
+        if (logger.isLoggable(TreeLogger.SPAM)) {
+          logger.log(TreeLogger.SPAM, "Source is older than existing: "
+              + dest.getAbsolutePath(), null);
+        }
         return;
       } else if (srcLastModified == dstLastModified) {
         // Exact same time; quietly don't overwrite.
@@ -308,7 +314,9 @@ public class EmbeddedTomcatServer {
       Util.copy(srcRes.openContents(), new FileOutputStream(dest));
       dest.setLastModified(srcLastModified);
 
-      logger.log(TreeLogger.TRACE, "Wrote: " + dest.getAbsolutePath(), null);
+      if (logger.isLoggable(TreeLogger.TRACE)) {
+        logger.log(TreeLogger.TRACE, "Wrote: " + dest.getAbsolutePath(), null);
+      }
     } catch (IOException e) {
       logger.log(TreeLogger.WARN, "Failed to write: " + dest.getAbsolutePath(),
           e);
@@ -389,8 +397,10 @@ public class EmbeddedTomcatServer {
 
   private void publishAttributeToWebApp(TreeLogger logger,
       StandardContext webapp, String attrName, Object attrValue) {
-    logger.log(TreeLogger.TRACE, "Adding attribute  '" + attrName
-        + "' to web app '" + webapp.getName() + "'", null);
+    if (logger.isLoggable(TreeLogger.TRACE)) {
+      logger.log(TreeLogger.TRACE, "Adding attribute  '" + attrName
+          + "' to web app '" + webapp.getName() + "'", null);
+    }
     webapp.getServletContext().setAttribute(attrName, attrValue);
   }
 

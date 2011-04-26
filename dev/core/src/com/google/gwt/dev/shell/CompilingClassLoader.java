@@ -18,7 +18,6 @@ package com.google.gwt.dev.shell;
 import com.google.gwt.core.client.GWTBridge;
 import com.google.gwt.core.client.GwtScriptOnly;
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
@@ -619,11 +618,11 @@ public final class CompilingClassLoader extends ClassLoader implements
         }
       }
 
-      if (logger.isLoggable(Type.SPAM)) {
-        TreeLogger dumpLogger = logger.branch(Type.SPAM,
+      if (logger.isLoggable(TreeLogger.SPAM)) {
+        TreeLogger dumpLogger = logger.branch(TreeLogger.SPAM,
             "SingleJsoImpl method mappings");
         for (Map.Entry<String, List<com.google.gwt.dev.asm.commons.Method>> entry : mangledNamesToImplementations.entrySet()) {
-          dumpLogger.log(Type.SPAM, entry.getKey() + " -> " + entry.getValue());
+          dumpLogger.log(TreeLogger.SPAM, entry.getKey() + " -> " + entry.getValue());
         }
       }
     }
@@ -1197,8 +1196,10 @@ public final class CompilingClassLoader extends ClassLoader implements
         classBytes = emmaStrategy.getEmmaClassBytes(classBytes,
             lookupClassName, compiledClass.getUnit().getLastModified());
       } else {
-        logger.log(TreeLogger.SPAM, "no emma instrumentation for "
-            + lookupClassName + " because it is from super-source");
+        if (logger.isLoggable(TreeLogger.SPAM)) {
+          logger.log(TreeLogger.SPAM, "no emma instrumentation for "
+              + lookupClassName + " because it is from super-source");
+        }
       }
     } else if (emmaAvailable) {
       /*
@@ -1213,8 +1214,10 @@ public final class CompilingClassLoader extends ClassLoader implements
          * modification time = 0 ensures that whatever is on the disk is always
          * loaded.
          */
-        logger.log(TreeLogger.DEBUG, "EmmaStrategy: loading " + lookupClassName
-            + " from disk even though TypeOracle does not know about it");
+        if (logger.isLoggable(TreeLogger.DEBUG)) {
+          logger.log(TreeLogger.DEBUG, "EmmaStrategy: loading " + lookupClassName
+              + " from disk even though TypeOracle does not know about it");
+        }
         classBytes = emmaStrategy.getEmmaClassBytes(null, lookupClassName, 0);
       }
     }

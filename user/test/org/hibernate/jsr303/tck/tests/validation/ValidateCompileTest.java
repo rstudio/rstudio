@@ -15,7 +15,7 @@
  */
 package org.hibernate.jsr303.tck.tests.validation;
 
-import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 
@@ -36,11 +36,11 @@ public class ValidateCompileTest extends TckCompileTestCase {
       throws UnableToCompleteException {
     UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
     builder.expect(
-        Type.ERROR,
+        TreeLogger.ERROR,
         "Unable to create a validator for org.hibernate.jsr303.tck.tests.validation.Boy because "
             + "Annotated methods must follow the JavaBeans naming convention. age() does not.",
         ValidationException.class);
-    builder.setLowestLogLevel(Type.INFO);
+    builder.setLowestLogLevel(TreeLogger.INFO);
     UnitTestTreeLogger testLogger = builder.createLogger();
     assertModuleFails(testLogger,
         getFullyQaulifiedModuleName(getClass(), "TckCompileTest"),

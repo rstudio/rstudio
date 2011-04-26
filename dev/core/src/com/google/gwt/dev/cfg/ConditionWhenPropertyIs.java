@@ -65,8 +65,10 @@ public class ConditionWhenPropertyIs extends Condition {
         ConfigurationProperty prop = propertyOracle.getConfigurationProperty(propName);
         testValue = prop.getValues().get(0);
       }
-      logger.log(TreeLogger.DEBUG, "Property value is '" + testValue + "'",
-          null);
+      if (logger.isLoggable(TreeLogger.DEBUG)) {
+        logger.log(TreeLogger.DEBUG, "Property value is '" + testValue + "'",
+            null);
+      }
       if (testValue.equals(value)) {
         return true;
       } else {
@@ -77,8 +79,10 @@ public class ConditionWhenPropertyIs extends Condition {
               propName);
           List<? extends Set<String>> fallbackValues = prop.getFallbackValues(value);
           if (fallbackValues != null && fallbackValues.size() > 0) {
-            logger.log(TreeLogger.DEBUG, "Property value '" + value + "'" +
-                " is the fallback of '" + fallbackValues.toString() + "'", null);
+            if (logger.isLoggable(TreeLogger.DEBUG)) {
+              logger.log(TreeLogger.DEBUG, "Property value '" + value + "'" +
+                  " is the fallback of '" + fallbackValues.toString() + "'", null);
+            }
             int cost = -1;
             for (Set<String> values : fallbackValues) {
               for (String fallbackValue : values) {

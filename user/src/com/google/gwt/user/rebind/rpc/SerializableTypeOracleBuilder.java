@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.GeneratorContextExt;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
@@ -599,7 +598,7 @@ public class SerializableTypeOracleBuilder {
     }
 
     if (field.isFinal()) {
-      Type logLevel;
+      TreeLogger.Type logLevel;
       if (isManuallySerializable(field.getEnclosingType())) {
         /*
          * If the type has a custom serializer, assume the programmer knows
@@ -801,8 +800,10 @@ public class SerializableTypeOracleBuilder {
 
       rootTypes.put(clazz, logger);
     } else {
-      logger.log(TreeLogger.TRACE, clazz.getParameterizedQualifiedSourceName()
-          + " is already a root type.");
+      if (logger.isLoggable(TreeLogger.TRACE)) {
+        logger.log(TreeLogger.TRACE, clazz.getParameterizedQualifiedSourceName()
+            + " is already a root type.");
+      }
     }
   }
 
@@ -1402,7 +1403,7 @@ public class SerializableTypeOracleBuilder {
       }
       case TypeParameterExposureComputer.EXPOSURE_NONE:
         // Ignore this argument
-        logger.log(Type.DEBUG, "Ignoring type argument " + paramIndex
+        logger.log(TreeLogger.DEBUG, "Ignoring type argument " + paramIndex
             + " of type '" + baseType.getParameterizedQualifiedSourceName()
             + "' because it is not exposed in this or any subtype");
         return true;
@@ -1532,7 +1533,9 @@ public class SerializableTypeOracleBuilder {
       return;
     }
 
-    logger.log(TreeLogger.DEBUG, path.toString());
+    if (logger.isLoggable(TreeLogger.DEBUG)) {
+      logger.log(TreeLogger.DEBUG, path.toString());
+    }
     logPath(logger, path.getParent());
   }
 
@@ -1549,8 +1552,10 @@ public class SerializableTypeOracleBuilder {
       logger = printWriterTreeLogger;
     }
 
-    logger.log(TreeLogger.DEBUG, "Reachable types computed on: "
-        + new Date().toString());
+    if (logger.isLoggable(TreeLogger.DEBUG)) {
+      logger.log(TreeLogger.DEBUG, "Reachable types computed on: "
+          + new Date().toString());
+    }
     Set<JType> keySet = typeToTypeInfoComputed.keySet();
     JType[] types = keySet.toArray(new JType[0]);
     Arrays.sort(types, JTYPE_COMPARATOR);
@@ -1604,8 +1609,10 @@ public class SerializableTypeOracleBuilder {
     boolean success = canBeInstantiated(type, problems)
         && shouldConsiderFieldsForSerialization(type, problems);
     if (success) {
-      logger.log(TreeLogger.DEBUG, type.getParameterizedQualifiedSourceName()
-          + " might be instantiable");
+      if (logger.isLoggable(TreeLogger.DEBUG)) {
+        logger.log(TreeLogger.DEBUG, type.getParameterizedQualifiedSourceName()
+            + " might be instantiable");
+      }
     }
     return success;
   }

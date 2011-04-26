@@ -102,17 +102,19 @@ public class RemoteUI extends DevModeUI implements
       modules.add(handle);
     }
 
-    if (url != null) {
-      moduleLogger.log(TreeLogger.SPAM, "Top URL: " + url);
-    }
+    if (moduleLogger.isLoggable(TreeLogger.SPAM)) {
+      if (url != null) {
+        moduleLogger.log(TreeLogger.SPAM, "Top URL: " + url);
+      }
 
-    moduleLogger.log(TreeLogger.SPAM, "User agent: " + userAgent);
-    moduleLogger.log(TreeLogger.SPAM, "Remote socket: " + remoteSocket);
-    if (tabKey != null) {
-      moduleLogger.log(TreeLogger.SPAM, "Tab key: " + tabKey);
-    }
-    if (sessionKey != null) {
-      moduleLogger.log(TreeLogger.SPAM, "Session key: " + sessionKey);
+      moduleLogger.log(TreeLogger.SPAM, "User agent: " + userAgent);
+      moduleLogger.log(TreeLogger.SPAM, "Remote socket: " + remoteSocket);
+      if (tabKey != null) {
+        moduleLogger.log(TreeLogger.SPAM, "Tab key: " + tabKey);
+      }
+      if (sessionKey != null) {
+        moduleLogger.log(TreeLogger.SPAM, "Session key: " + sessionKey);
+      }
     }
 
     return handle;
@@ -136,7 +138,7 @@ public class RemoteUI extends DevModeUI implements
 
   public void onResponseException(Exception e) {
     getTopLogger().log(TreeLogger.INFO,
-        "An exception occured while attempting to send a response message.", e);   
+        "An exception occured while attempting to send a response message.", e);
   }
 
   public void onTermination(Exception e) {

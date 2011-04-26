@@ -18,7 +18,6 @@ package com.google.gwt.validation.rebind;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
@@ -154,7 +153,7 @@ public final class BeanHelper {
       try {
         bean = serverSideValidator.getConstraintsForClass(clazz);
       } catch (ValidationException e) {
-        logger.log(Type.ERROR,
+        logger.log(TreeLogger.ERROR,
             "Unable to create a validator for " + clazz.getCanonicalName()
                 + " because " + e.getMessage(), e);
         throw new UnableToCompleteException();

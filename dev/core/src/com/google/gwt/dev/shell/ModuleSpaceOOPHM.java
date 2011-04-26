@@ -118,20 +118,26 @@ public class ModuleSpaceOOPHM extends ModuleSpace {
     JsValueOOPHM jsthis = new JsValueOOPHM();
     Class<?> jthisType = (jthis == null) ? Object.class : jthis.getClass();
     JsValueGlue.set(jsthis, isolatedClassLoader, jthisType, jthis);
-    branch.log(TreeLogger.SPAM, "  this=" + jsthis);
+    if (branch.isLoggable(TreeLogger.SPAM)) {
+      branch.log(TreeLogger.SPAM, "  this=" + jsthis);
+    }
 
     int argc = args.length;
     JsValueOOPHM argv[] = new JsValueOOPHM[argc];
     for (int i = 0; i < argc; ++i) {
       argv[i] = new JsValueOOPHM();
       JsValueGlue.set(argv[i], isolatedClassLoader, types[i], args[i]);
-      branch.log(TreeLogger.SPAM, "  arg[" + i + "]=" + argv[i]);
+      if (branch.isLoggable(TreeLogger.SPAM)) {
+        branch.log(TreeLogger.SPAM, "  arg[" + i + "]=" + argv[i]);
+      }
     }
     JsValueOOPHM returnVal = new JsValueOOPHM();
     try {
       channel.invokeJavascript(isolatedClassLoader, jsthis, name, argv,
           returnVal);
-      branch.log(TreeLogger.SPAM, "  returned " + returnVal);
+      if (branch.isLoggable(TreeLogger.SPAM)) {
+        branch.log(TreeLogger.SPAM, "  returned " + returnVal);
+      }
       return returnVal;
     } catch (Throwable t) {
       branch.log(TreeLogger.SPAM, "exception thrown", t);

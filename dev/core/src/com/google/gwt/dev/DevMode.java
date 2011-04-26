@@ -498,7 +498,9 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       }
       scl.setBindAddress(bindAddress);
 
-      serverLogger.log(TreeLogger.TRACE, "Starting HTTP on port " + getPort(), null);
+      if (serverLogger.isLoggable(TreeLogger.TRACE)) {
+        serverLogger.log(TreeLogger.TRACE, "Starting HTTP on port " + getPort(), null);
+      }
       server = scl.start(serverLogger, getPort(), options.getWarDir());
       assert (server != null);
       clearCallback = false;

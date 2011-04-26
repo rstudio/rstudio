@@ -95,8 +95,10 @@ class StaticResourceContext extends AbstractResourceContext {
       // created in the output directory.
       context.commitResource(logger, out);
 
-      logger.log(TreeLogger.DEBUG, "Copied " + data.length + " bytes to "
-          + outputName, null);
+      if (logger.isLoggable(TreeLogger.DEBUG)) {
+        logger.log(TreeLogger.DEBUG, "Copied " + data.length + " bytes to "
+            + outputName, null);
+      }
     }
 
     // Return a Java expression

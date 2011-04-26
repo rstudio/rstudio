@@ -56,18 +56,18 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
       seconds.setMaximumFractionDigits(3);
       seconds.setMinimumIntegerDigits(2);
       minHr.setMinimumIntegerDigits(2);
-      logColors.put(Type.ERROR, Color.RED);
-      logIcons.put(Type.ERROR, Icons.getLogItemError());
-      logColors.put(Type.WARN, WARN_COLOR);
-      logIcons.put(Type.WARN, Icons.getLogItemWarning());
-      logColors.put(Type.INFO, Color.BLACK);
-      logIcons.put(Type.INFO, Icons.getLogItemInfo());
-      logColors.put(Type.TRACE, Color.DARK_GRAY);
-      logIcons.put(Type.TRACE, Icons.getLogItemTrace());
-      logColors.put(Type.DEBUG, DEBUG_COLOR);
-      logIcons.put(Type.DEBUG, Icons.getLogItemDebug());
-      logColors.put(Type.SPAM, SPAM_COLOR);
-      logIcons.put(Type.SPAM, Icons.getLogItemSpam());
+      logColors.put(ERROR, Color.RED);
+      logIcons.put(ERROR, Icons.getLogItemError());
+      logColors.put(WARN, WARN_COLOR);
+      logIcons.put(WARN, Icons.getLogItemWarning());
+      logColors.put(INFO, Color.BLACK);
+      logIcons.put(INFO, Icons.getLogItemInfo());
+      logColors.put(TRACE, Color.DARK_GRAY);
+      logIcons.put(TRACE, Icons.getLogItemTrace());
+      logColors.put(DEBUG, DEBUG_COLOR);
+      logIcons.put(DEBUG, Icons.getLogItemDebug());
+      logColors.put(SPAM, SPAM_COLOR);
+      logIcons.put(SPAM, Icons.getLogItemSpam());
     }
 
     /**

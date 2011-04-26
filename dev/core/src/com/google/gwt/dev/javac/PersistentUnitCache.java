@@ -115,12 +115,15 @@ class PersistentUnitCache extends MemoryUnitCache {
       }
     }
 
+    @Override
     public void run() {
       try {
         loadUnitMap(logger);
       } finally {
         loadCompleteLatch.countDown();
-        logger.log(TreeLogger.TRACE, "Loaded " + unitMap.size() + " units from persistent store.");
+        if (logger.isLoggable(TreeLogger.TRACE)) {
+          logger.log(TreeLogger.TRACE, "Loaded " + unitMap.size() + " units from persistent store.");
+        }
       }
     }
   }
@@ -170,6 +173,7 @@ class PersistentUnitCache extends MemoryUnitCache {
       Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
 
+    @Override
     public void run() {
       logger.log(TreeLogger.TRACE, "Starting UnitWriteThread.");
 
@@ -203,8 +207,10 @@ class PersistentUnitCache extends MemoryUnitCache {
           try {
             if (msg != null) {
               if (msg == UnitWriteMessage.DELETE_OLD_CACHE_FILES) {
-                logger.log(TreeLogger.TRACE, "Wrote " + recentUnitsWritten
-                    + " units to persistent cache.");
+                if (logger.isLoggable(TreeLogger.TRACE)) {
+                  logger.log(TreeLogger.TRACE, "Wrote " + recentUnitsWritten
+                      + " units to persistent cache.");
+                }
                 recentUnitsWritten = 0;
                 deleteOldCacheFiles(logger, currentCacheFile);
               } else if (msg == UnitWriteMessage.SHUTDOWN_THREAD) {
@@ -226,8 +232,10 @@ class PersistentUnitCache extends MemoryUnitCache {
           } catch (IOException ex) {
             if (!errorLogged) {
               errorLogged = true;
-              logger.log(TreeLogger.TRACE, "Error saving unit to file: "
-                  + currentCacheFile.getAbsolutePath(), ex);
+              if (logger.isLoggable(TreeLogger.TRACE)) {
+                logger.log(TreeLogger.TRACE, "Error saving unit to file: "
+                    + currentCacheFile.getAbsolutePath(), ex);
+              }
             }
           }
         }
@@ -298,8 +306,10 @@ class PersistentUnitCache extends MemoryUnitCache {
     assert cacheDir != null;
 
     this.cacheDirectory = new File(cacheDir, UNIT_CACHE_PREFIX);
-    logger.log(TreeLogger.TRACE, "Persistent unit cache dir set to: "
+    if (logger.isLoggable(TreeLogger.TRACE)) {
+      logger.log(TreeLogger.TRACE, "Persistent unit cache dir set to: "
         + this.cacheDirectory.getAbsolutePath());
+    }
 
     if (!cacheDirectory.isDirectory() && !cacheDirectory.mkdirs()) {
       logger.log(TreeLogger.ERROR, "Unable to initialize cache. Couldn't create directory "
@@ -349,7 +359,9 @@ class PersistentUnitCache extends MemoryUnitCache {
    */
   @Override
   public void cleanup(TreeLogger logger) {
-    logger.log(TreeLogger.TRACE, "Added " + addCount.intValue() + " units to persistent cache.");
+    if (logger.isLoggable(TreeLogger.TRACE)) {
+      logger.log(TreeLogger.TRACE, "Added " + addCount.intValue() + " units to persistent cache.");
+    }
     addCount.set(0);
 
     if (cleanupHasRun) {
@@ -404,7 +416,9 @@ class PersistentUnitCache extends MemoryUnitCache {
     if (filesToDelete == null) {
       return;
     }
-    logger.log(TreeLogger.INFO, "Purging cache files from " + cacheDirectory);
+    if (logger.isLoggable(TreeLogger.INFO)) {
+      logger.log(TreeLogger.INFO, "Purging cache files from " + cacheDirectory);
+    }
     for (File toDelete : filesToDelete) {
       if (!current.equals(toDelete)) {
         toDelete.delete();
@@ -448,8 +462,10 @@ class PersistentUnitCache extends MemoryUnitCache {
   private void loadUnitMap(TreeLogger logger) {
     Event loadPersistentUnitEvent =
         SpeedTracerLogger.start(DevModeEventType.LOAD_PERSISTENT_UNIT_CACHE);
-    logger.log(TreeLogger.TRACE, "Looking for previously cached Compilation Units in "
-        + cacheDirectory.getAbsolutePath());
+    if (logger.isLoggable(TreeLogger.TRACE)) {
+      logger.log(TreeLogger.TRACE, "Looking for previously cached Compilation Units in "
+          + cacheDirectory.getAbsolutePath());
+    }
     try {
       if (cacheDirectory.isDirectory() && cacheDirectory.canRead()) {
         File[] files = getCacheFiles();
@@ -489,12 +505,16 @@ class PersistentUnitCache extends MemoryUnitCache {
             // Go on to the next file.
           } catch (IOException ex) {
             deleteCacheFile = true;
-            logger.log(TreeLogger.TRACE, "Ignoring and deleting cache log "
-                + cacheFile.getAbsolutePath() + " due to read error.", ex);
+            if (logger.isLoggable(TreeLogger.TRACE)) {
+              logger.log(TreeLogger.TRACE, "Ignoring and deleting cache log "
+                  + cacheFile.getAbsolutePath() + " due to read error.", ex);
+            }
           } catch (ClassNotFoundException ex) {
             deleteCacheFile = true;
-            logger.log(TreeLogger.TRACE, "Ignoring and deleting cache log "
-                + cacheFile.getAbsolutePath() + " due to deserialization error.", ex);
+            if (logger.isLoggable(TreeLogger.TRACE)) {
+              logger.log(TreeLogger.TRACE, "Ignoring and deleting cache log "
+                  + cacheFile.getAbsolutePath() + " due to deserialization error.", ex);
+            }
           } finally {
             Utility.close(inputStream);
             Utility.close(bis);
@@ -503,13 +523,14 @@ class PersistentUnitCache extends MemoryUnitCache {
           if (deleteCacheFile) {
             cacheFile.delete();
           } else {
-            logger.log(TreeLogger.TRACE, cacheFile.getName() + ": Load complete");
+            if (logger.isLoggable(TreeLogger.TRACE)) {
+              logger.log(TreeLogger.TRACE, cacheFile.getName() + ": Load complete");
+            }
           }
         }
       } else {
         logger.log(TreeLogger.TRACE,
-            "Starting with empty Cache: CompilationUnit cache directory does "
-                + "not exist or is not readable.");
+        "Starting with empty Cache: CompilationUnit cache directory does not exist or is not readable.");
       }
     } finally {
       loadPersistentUnitEvent.end();

@@ -163,10 +163,13 @@ public class CompileModule {
     boolean gwtAstWasEnabled = GwtAstBuilder.ENABLED;
     try {
       GwtAstBuilder.ENABLED = true;
-      long start = System.currentTimeMillis();
+      // Avoid call to System.currentTimeMillis() if not logging INFO level
+      long start = logger.isLoggable(TreeLogger.INFO) ? System.currentTimeMillis() : 0L;
       final CompilationState compilationState = module.getCompilationState(logger);
-      logger.log(TreeLogger.INFO, (System.currentTimeMillis() - start)
-          + " time to get compilation state");
+      if (logger.isLoggable(TreeLogger.INFO)) {
+        logger.log(TreeLogger.INFO, (System.currentTimeMillis() - start)
+            + " time to get compilation state");
+      }
       return compilationState;
     } finally {
       GwtAstBuilder.ENABLED = gwtAstWasEnabled;
@@ -268,18 +271,23 @@ public class CompileModule {
       ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, options.getModuleNames().get(0));
       final CompilationState compilationState = buildGwtAst(logger, module);
 
-      long start = System.currentTimeMillis();
+      boolean loggable = logger.isLoggable(TreeLogger.INFO);
+      long start = loggable ? System.currentTimeMillis() : 0L;
       Map<String, JDeclaredType> compStateTypes = new HashMap<String, JDeclaredType>();
       for (CompilationUnit unit : compilationState.getCompilationUnits()) {
         for (JDeclaredType type : unit.getTypes()) {
           compStateTypes.put(type.getName(), type);
         }
       }
-      logger.log(TreeLogger.INFO, (System.currentTimeMillis() - start) + " time to get all types");
+      if (loggable) {
+        logger.log(TreeLogger.INFO, (System.currentTimeMillis() - start) + " time to get all types");
+      }
 
-      start = System.currentTimeMillis();
+      start = loggable ? System.currentTimeMillis() : 0L;
       JProgram jprogram = buildGenerateJavaAst(logger, module, compilationState);
-      logger.log(TreeLogger.INFO, (System.currentTimeMillis() - start) + " time to build old AST");
+      if (loggable) {
+        logger.log(TreeLogger.INFO, (System.currentTimeMillis() - start) + " time to build old AST");
+      }
 
       for (JDeclaredType genJavaAstType : jprogram.getDeclaredTypes()) {
         String typeName = genJavaAstType.getName();

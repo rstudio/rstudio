@@ -15,7 +15,7 @@
  */
 package org.hibernate.jsr303.tck.tests.constraints.constraintcomposition;
 
-import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 
@@ -43,11 +43,11 @@ public class ConstraintCompositionCompileTest extends TckCompileTestCase {
       throws UnableToCompleteException {
     UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
     builder.expect(
-        Type.ERROR,
+        TreeLogger.ERROR,
         "No @org.hibernate.jsr303.tck.tests.constraints.constraintcomposition.NotEmpty("
             + "message={constraint.notEmpty}, payload=[], groups=[]) "
             + "ConstraintValidator for type int", UnexpectedTypeException.class);
-    builder.setLowestLogLevel(Type.INFO);
+    builder.setLowestLogLevel(TreeLogger.INFO);
     UnitTestTreeLogger testLogger = builder.createLogger();
     assertModuleFails(testLogger,
         getFullyQaulifiedModuleName(getClass(), "MustBeApplicableTest"),
@@ -64,14 +64,14 @@ public class ConstraintCompositionCompileTest extends TckCompileTestCase {
   public void testOverriddenAttributesMustMatchInType()
       throws UnableToCompleteException {
     UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
-    builder.expect(Type.ERROR, "Unable to create a validator for "
+    builder.expect(TreeLogger.ERROR, "Unable to create a validator for "
         + "org.hibernate.jsr303.tck.tests.constraints.constraintcomposition."
         + "ConstraintCompositionTest.DummyEntityWithZipCode "
         + "because The overriding type of a composite constraint must be "
         + "identical to the overridden one. "
         + "Expected int found class java.lang.String",
         ConstraintDefinitionException.class);
-    builder.setLowestLogLevel(Type.INFO);
+    builder.setLowestLogLevel(TreeLogger.INFO);
     UnitTestTreeLogger testLogger = builder.createLogger();
     assertModuleFails(
         testLogger,
@@ -79,5 +79,4 @@ public class ConstraintCompositionCompileTest extends TckCompileTestCase {
             "OverriddenAttributesMustMatchInTypeTest"),
         OverriddenAttributesMustMatchInTypeValidatorFactory.OverriddenAttributesMustMatchInTypeValidator.class);
   }
-
 }

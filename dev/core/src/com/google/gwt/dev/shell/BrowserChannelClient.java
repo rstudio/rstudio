@@ -93,16 +93,22 @@ public class BrowserChannelClient extends BrowserChannel {
     this.tabKey = ""; // TODO(jat): update when tab support is added.
     this.versionString = versionString;
     logger.setMaxDetail(TreeLogger.WARN);
-    logger.log(TreeLogger.SPAM, "BrowserChannelClient, versionString: "
-        + versionString);
+    if (logger.isLoggable(TreeLogger.SPAM)) {
+      logger.log(TreeLogger.SPAM, "BrowserChannelClient, versionString: "
+          + versionString);
+    }
     this.handler = sessionHandlerClient;
   }
 
   public boolean disconnectFromHost() throws IOException {
-    logger.log(TreeLogger.DEBUG, "disconnecting channel " + this);
+    if (logger.isLoggable(TreeLogger.DEBUG)) {
+      logger.log(TreeLogger.DEBUG, "disconnecting channel " + this);
+    }
     if (!isConnected()) {
-      logger.log(TreeLogger.DEBUG,
-          "Disconnecting already disconnected channel " + this);
+      if (logger.isLoggable(TreeLogger.DEBUG)) {
+        logger.log(TreeLogger.DEBUG,
+            "Disconnecting already disconnected channel " + this);
+      }
       return false;
     }
     new QuitMessage(this).send();
@@ -132,17 +138,21 @@ public class BrowserChannelClient extends BrowserChannel {
       disconnectFromHost();
       return false;
     }
-    logger.log(TreeLogger.DEBUG, "sending " + MessageType.LOAD_MODULE
-        + " message, userAgent: " + handler.getUserAgent());
+    if (logger.isLoggable(TreeLogger.DEBUG)) {
+      logger.log(TreeLogger.DEBUG, "sending " + MessageType.LOAD_MODULE
+          + " message, userAgent: " + handler.getUserAgent());
+    }
     ReturnMessage returnMessage = null;
     synchronized (handler.getSynchronizationObject()) {
       new LoadModuleMessage(this, url, tabKey, sessionKey, moduleName,
           handler.getUserAgent()).send();
       returnMessage = reactToMessages(handler, true);
     }
-    logger.log(TreeLogger.DEBUG, "loaded module, returnValue: "
-        + returnMessage.getReturnValue() + ", isException: "
-        + returnMessage.isException());
+    if (logger.isLoggable(TreeLogger.DEBUG)) {
+      logger.log(TreeLogger.DEBUG, "loaded module, returnValue: "
+          + returnMessage.getReturnValue() + ", isException: "
+          + returnMessage.isException());
+    }
     return !returnMessage.isException();
   }
 
@@ -158,8 +168,10 @@ public class BrowserChannelClient extends BrowserChannel {
    * protocol.
    */
   private boolean init() throws IOException, BrowserChannelException {
-    logger.log(TreeLogger.DEBUG, "sending " + MessageType.CHECK_VERSIONS
-        + " message");
+    if (logger.isLoggable(TreeLogger.DEBUG)) {
+      logger.log(TreeLogger.DEBUG, "sending " + MessageType.CHECK_VERSIONS
+          + " message");
+    }
     new CheckVersionsMessage(this, PROTOCOL_VERSION_OLDEST,
         PROTOCOL_VERSION_CURRENT, versionString).send();
     MessageType type = Message.readMessageType(getStreamFromOtherSide());
@@ -167,13 +179,17 @@ public class BrowserChannelClient extends BrowserChannel {
       case PROTOCOL_VERSION:
         ProtocolVersionMessage protocolMessage = ProtocolVersionMessage.receive(this);
         protocolVersion = protocolMessage.getProtocolVersion();
-        logger.log(TreeLogger.DEBUG, MessageType.PROTOCOL_VERSION
-            + ": protocol version = " + protocolVersion);
+        if (logger.isLoggable(TreeLogger.DEBUG)) {
+          logger.log(TreeLogger.DEBUG, MessageType.PROTOCOL_VERSION
+              + ": protocol version = " + protocolVersion);
+        }
         break;
       case FATAL_ERROR:
         FatalErrorMessage errorMessage = FatalErrorMessage.receive(this);
-        logger.log(TreeLogger.ERROR, "Received FATAL_ERROR message "
-            + errorMessage.getError());
+        if (logger.isLoggable(TreeLogger.DEBUG)) {
+          logger.log(TreeLogger.ERROR, "Received FATAL_ERROR message "
+              + errorMessage.getError());
+        }
         return false;
       default:
         return false;
@@ -187,8 +203,10 @@ public class BrowserChannelClient extends BrowserChannel {
     while (true) {
       ExceptionOrReturnValue returnValue;
       MessageType type = Message.readMessageType(getStreamFromOtherSide());
-      logger.log(TreeLogger.INFO, "client: received " + type + ", thread: "
-          + Thread.currentThread().getName());
+      if (logger.isLoggable(TreeLogger.INFO)) {
+        logger.log(TreeLogger.INFO, "client: received " + type + ", thread: "
+            + Thread.currentThread().getName());
+      }
       try {
         switch (type) {
           case INVOKE:
@@ -200,8 +218,10 @@ public class BrowserChannelClient extends BrowserChannel {
             break;
           case FREE_VALUE:
             FreeMessage freeMessage = FreeMessage.receive(this);
-            logger.log(TreeLogger.DEBUG, type + " message "
-                + freeMessage.getIds());
+            if (logger.isLoggable(TreeLogger.DEBUG)) {
+              logger.log(TreeLogger.DEBUG, type + " message "
+                  + freeMessage.getIds());
+            }
             handler.freeValue(this, freeMessage.getIds());
             // no response
             break;

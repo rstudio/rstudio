@@ -166,9 +166,11 @@ class Dependencies implements Serializable {
     Ref mine = entry.getValue();
     boolean result;
     if ((mine == null) != (theirs == null)) {
-      logger.log(TreeLogger.DEBUG, "Invalid ref: " + entry.getKey() + " mine: "
-          + (mine == null ? "null" : "not null") + " theirs: "
-          + (theirs == null ? "null" : "not null"));
+      if (logger.isLoggable(TreeLogger.DEBUG)) {
+        logger.log(TreeLogger.DEBUG, "Invalid ref: " + entry.getKey() + " mine: "
+            + (mine == null ? "null" : "not null") + " theirs: "
+            + (theirs == null ? "null" : "not null"));
+      }
       result = false;
     } else if (mine == null && theirs == null) {
       // For package dependencies, both references being null is always the case
@@ -176,7 +178,9 @@ class Dependencies implements Serializable {
     } else if (mine.getSignatureHash().equals(theirs.getSignatureHash())) {
       result = true;
     } else {
-      logger.log(TreeLogger.DEBUG, entry.getKey() + " isn't structurally same.");
+      if (logger.isLoggable(TreeLogger.DEBUG)) {
+        logger.log(TreeLogger.DEBUG, entry.getKey() + " isn't structurally same.");
+      }
       result = false;
     }
     return result;

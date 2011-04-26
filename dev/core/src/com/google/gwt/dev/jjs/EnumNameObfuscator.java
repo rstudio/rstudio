@@ -154,8 +154,11 @@ public class EnumNameObfuscator {
     }
 
     private void info(JReturnStatement x) {
-      logger.log(TreeLogger.INFO, "Replacing Enum.name method :  "
-          + x.getSourceInfo().getFileName() + ":" + x.getSourceInfo().getStartLine());
+      if (logger.isLoggable(TreeLogger.INFO)) {
+        logger.log(TreeLogger.INFO, "Replacing Enum.name method :  "
+            + x.getSourceInfo().getFileName() + ":"
+            + x.getSourceInfo().getStartLine());
+      }
     }
   }
 

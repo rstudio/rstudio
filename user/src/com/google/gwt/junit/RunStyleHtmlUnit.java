@@ -121,8 +121,10 @@ public class RunStyleHtmlUnit extends RunStyle {
       try {
         Page page = webClient.getPage(url);
         webClient.waitForBackgroundJavaScriptStartingBefore(2000);
-        treeLogger.log(TreeLogger.SPAM, "getPage returned "
-            + ((HtmlPage) page).asXml());
+        if (treeLogger.isLoggable(TreeLogger.SPAM)) {
+          treeLogger.log(TreeLogger.SPAM, "getPage returned "
+              + ((HtmlPage) page).asXml());
+        }
         // TODO(amitmanjhi): call webClient.closeAllWindows()
       } catch (FailingHttpStatusCodeException e) {
         treeLogger.log(TreeLogger.ERROR, "HTTP request failed", e);
@@ -243,8 +245,11 @@ public class RunStyleHtmlUnit extends RunStyle {
     for (BrowserVersion browser : browsers) {
       String url = shell.getModuleUrl(moduleName);
       HtmlUnitThread hut = createHtmlUnitThread(browser, url);
-      shell.getTopLogger().log(TreeLogger.INFO,
-          "Starting " + url + " on browser " + browser.getNickname());
+      TreeLogger logger = shell.getTopLogger();
+      if (logger.isLoggable(TreeLogger.INFO)) {
+        logger.log(TreeLogger.INFO,
+            "Starting " + url + " on browser " + browser.getNickname());
+      }
       /*
        * TODO (amitmanjhi): Is it worth pausing here and waiting for the main
        * test thread to get to an "okay" state.

@@ -252,8 +252,10 @@ public class Compiler {
           linkEvent.end();
           long compileDone = System.currentTimeMillis();
           long delta = compileDone - compileStart;
-          branch.log(TreeLogger.INFO, "Compilation succeeded -- "
-              + String.format("%.3f", delta / 1000d) + "s");
+          if (branch.isLoggable(TreeLogger.INFO)) {
+            branch.log(TreeLogger.INFO, "Compilation succeeded -- "
+                + String.format("%.3f", delta / 1000d) + "s");
+          }
         }
       }
 

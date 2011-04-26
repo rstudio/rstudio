@@ -120,7 +120,9 @@ public class InterfaceGenerator extends ToolBase {
           }
         }
         interfaceName = str;
-        logger.log(TreeLogger.DEBUG, "interfaceName = " + interfaceName);
+        if (logger.isLoggable(TreeLogger.DEBUG)) {
+          logger.log(TreeLogger.DEBUG, "interfaceName = " + interfaceName);
+        }
         return true;
       }
     });
@@ -146,7 +148,9 @@ public class InterfaceGenerator extends ToolBase {
       @Override
       public void setFile(File file) {
         inputFile = file;
-        logger.log(TreeLogger.DEBUG, "inputFile = " + file.getAbsolutePath());
+        if (logger.isLoggable(TreeLogger.DEBUG)) {
+          logger.log(TreeLogger.DEBUG, "inputFile = " + file.getAbsolutePath());
+        }
       }
     });
   }

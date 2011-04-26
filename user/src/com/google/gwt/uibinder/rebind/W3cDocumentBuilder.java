@@ -16,7 +16,6 @@
 package com.google.gwt.uibinder.rebind;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.resource.ResourceOracle;
 
 import org.w3c.dom.Document;
@@ -78,8 +77,8 @@ class W3cDocumentBuilder extends DefaultHandler2 {
 
   @Override
   public void error(SAXParseException exception) {
-    logger.log(Type.ERROR, exception.getMessage());
-    logger.log(Type.DEBUG, "SAXParseException", exception);
+    logger.log(TreeLogger.ERROR, exception.getMessage());
+    logger.log(TreeLogger.DEBUG, "SAXParseException", exception);
   }
 
   @Override
@@ -88,8 +87,8 @@ class W3cDocumentBuilder extends DefaultHandler2 {
      * Fatal errors seem to be no scarier than error errors, and simply happen
      * due to badly formed XML.
      */
-    logger.log(Type.ERROR, exception.getMessage());
-    logger.log(Type.DEBUG, "SAXParseException", exception);
+    logger.log(TreeLogger.ERROR, exception.getMessage());
+    logger.log(TreeLogger.DEBUG, "SAXParseException", exception);
   }
 
   public Document getDocument() {
@@ -130,7 +129,7 @@ class W3cDocumentBuilder extends DefaultHandler2 {
 
   @Override
   public void warning(SAXParseException exception) {
-    logger.log(Type.WARN, exception.getMessage());
-    logger.log(Type.DEBUG, "SAXParseException", exception);
+    logger.log(TreeLogger.WARN, exception.getMessage());
+    logger.log(TreeLogger.DEBUG, "SAXParseException", exception);
   }
 }

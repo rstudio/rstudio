@@ -206,8 +206,10 @@ public class RunStyleSelenium extends RunStyle {
         String url = shell.getModuleUrl(moduleName);
 
         // Create the selenium instance and open the browser.
-        shell.getTopLogger().log(TreeLogger.TRACE,
-            "Starting with domain: " + domain + " Opening URL: " + url);
+        if (shell.getTopLogger().isLoggable(TreeLogger.TRACE)) {
+          shell.getTopLogger().log(TreeLogger.TRACE,
+              "Starting with domain: " + domain + " Opening URL: " + url);
+        }
         remote.createSelenium(domain);
         remote.getSelenium().start();
 

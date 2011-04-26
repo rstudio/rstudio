@@ -117,8 +117,10 @@ public abstract class ResourceFactory {
     String className = topClass.getQualifiedSourceName();
     TreeLogger branch = logger.branch(TreeLogger.SPAM,
         "Resource search order for " + className + ", locale " + bundleLocale);
-    for (AbstractResource resource : allResources) {
-      branch.log(TreeLogger.SPAM, resource.toString());
+    if (logger.isLoggable(TreeLogger.SPAM)) {
+      for (AbstractResource resource : allResources) {
+        branch.log(TreeLogger.SPAM, resource.toString());
+      }
     }
     return allResources;
   }

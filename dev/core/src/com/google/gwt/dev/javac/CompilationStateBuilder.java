@@ -265,7 +265,9 @@ public class CompilationStateBuilder {
           CompilationUnit unit = entry.getValue();
           boolean isValid = unit.getDependencies().validate(logger, allValidClasses);
           if (!isValid) {
-            logger.log(TreeLogger.TRACE, "Invalid Unit: " + unit.getTypeName());
+            if (logger.isLoggable(TreeLogger.TRACE)) {
+              logger.log(TreeLogger.TRACE, "Invalid Unit: " + unit.getTypeName());
+            }
             invalidatedUnits.add(unit);
             builders.add(entry.getKey());
             it.remove();
@@ -273,7 +275,9 @@ public class CompilationStateBuilder {
         }
 
         if (invalidatedUnits.size() > 0) {
-          logger.log(TreeLogger.TRACE, "Invalid units found: " + invalidatedUnits.size());
+          if (logger.isLoggable(TreeLogger.TRACE)) {
+            logger.log(TreeLogger.TRACE, "Invalid units found: " + invalidatedUnits.size());
+          }
         }
 
         // Any units we invalidated must now be removed from the valid classes.
@@ -304,7 +308,8 @@ public class CompilationStateBuilder {
           errorCount++;
         }
       }
-      if (suppressErrors && errorCount > 0 && !logger.isLoggable(TreeLogger.TRACE)) {
+      if (suppressErrors && errorCount > 0 && !logger.isLoggable(TreeLogger.TRACE))
+          && logger.isLoggable(TreeLogger.INFO)) {
         logger.log(TreeLogger.INFO, "Ignored " + errorCount + " unit" + (errorCount > 1 ? "s" : "")
             + " with compilation errors in first pass.  Specify -logLevel DEBUG to see all errors");
       }
@@ -388,8 +393,10 @@ public class CompilationStateBuilder {
       }
       builders.add(builder);
     }
-    logger.log(TreeLogger.TRACE, "Found " + cachedUnits.size() + " cached units.  Used "
-        + cachedUnits.size() + " / " + resources.size() + " units from cache.");
+    if (logger.isLoggable(TreeLogger.TRACE)) {
+      logger.log(TreeLogger.TRACE, "Found " + cachedUnits.size() + " cached units.  Used "
+          + cachedUnits.size() + " / " + resources.size() + " units from cache.");
+    }
 
     Collection<CompilationUnit> resultUnits =
         compileMoreLater.compile(logger, builders, cachedUnits,

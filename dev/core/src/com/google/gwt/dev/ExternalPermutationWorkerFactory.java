@@ -129,8 +129,10 @@ public class ExternalPermutationWorkerFactory extends PermutationWorkerFactory {
 
           // Get the remote worker's estimate of memory use
           long memoryUse = in.readLong();
-          logger.log(TreeLogger.SPAM, "Remote process indicates " + memoryUse
-              + " bytes of memory used");
+          if (logger.isLoggable(TreeLogger.SPAM)) {
+            logger.log(TreeLogger.SPAM, "Remote process indicates " + memoryUse
+                + " bytes of memory used");
+          }
 
         } catch (SocketTimeoutException e) {
           throw new TransientWorkerException(
@@ -224,7 +226,9 @@ public class ExternalPermutationWorkerFactory extends PermutationWorkerFactory {
     String javaCommand = System.getProperty(JAVA_COMMAND_PROPERTY,
         System.getProperty("java.home") + File.separator + "bin"
             + File.separator + "java");
-    logger.log(TreeLogger.TRACE, "javaCommand = " + javaCommand);
+    if (logger.isLoggable(TreeLogger.TRACE)) {
+      logger.log(TreeLogger.TRACE, "javaCommand = " + javaCommand);
+    }
 
     // Construct the arguments
     List<String> args = new ArrayList<String>();
@@ -377,8 +381,10 @@ public class ExternalPermutationWorkerFactory extends PermutationWorkerFactory {
        */
       sock.setSoTimeout(60000);
       sock.bind(null);
-      logger.log(TreeLogger.SPAM, "Listening for external workers on port "
-          + sock.getLocalPort());
+      if (logger.isLoggable(TreeLogger.SPAM)) {
+        logger.log(TreeLogger.SPAM, "Listening for external workers on port "
+            + sock.getLocalPort());
+      }
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Unable to create socket", e);
       throw new UnableToCompleteException();

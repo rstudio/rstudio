@@ -151,7 +151,9 @@ public class StandardRebindOracle implements RebindOracle {
           assert rule.getFallbackEvaluationCost() != 0;
           // if we found a better match, keep that as the best candidate so far
           if (rule.getFallbackEvaluationCost() <= minCostRuleSoFar.getFallbackEvaluationCost()) {
-            logger.log(TreeLogger.DEBUG, "Found better fallback match for " + rule);
+            if (logger.isLoggable(TreeLogger.DEBUG)) {
+              logger.log(TreeLogger.DEBUG, "Found better fallback match for " + rule);
+            }
             minCostRuleSoFar = rule;
           }
         }
@@ -161,12 +163,16 @@ public class StandardRebindOracle implements RebindOracle {
       // and we may have a partial match based on fall back values
       assert minCostRuleSoFar != null;
       if (minCostRuleSoFar.getFallbackEvaluationCost() < Integer.MAX_VALUE) {
-        logger.log(TreeLogger.INFO, "Could not find an exact match rule. Using 'closest' rule " +
-          minCostRuleSoFar + " based on fall back values. You may need to implement a specific " +
+        if (logger.isLoggable(TreeLogger.INFO)) {
+          logger.log(TreeLogger.INFO, "Could not find an exact match rule. Using 'closest' rule " +
+              minCostRuleSoFar + " based on fall back values. You may need to implement a specific " +
           "binding in case the fall back behavior does not replace the missing binding");
+        }
         if (!usedRules.contains(minCostRuleSoFar)) {
           usedRules.add(minCostRuleSoFar);
-          logger.log(TreeLogger.DEBUG, "No exact match was found, using closest match rule " + minCostRuleSoFar);
+          if (logger.isLoggable(TreeLogger.DEBUG)) {
+            logger.log(TreeLogger.DEBUG, "No exact match was found, using closest match rule " + minCostRuleSoFar);
+          }
           return minCostRuleSoFar;
         }
       }

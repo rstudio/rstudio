@@ -225,8 +225,10 @@ public final class ModuleDefLoader {
       throws UnableToCompleteException {
 
     if (alreadyLoadedModules.contains(moduleName)) {
-      logger.log(TreeLogger.TRACE, "Module '" + moduleName
-          + "' has already been loaded and will be skipped", null);
+      if (logger.isLoggable(TreeLogger.TRACE)) {
+        logger.log(TreeLogger.TRACE, "Module '" + moduleName
+            + "' has already been loaded and will be skipped", null);
+      }
       return;
     } else {
       alreadyLoadedModules.add(moduleName);
@@ -240,7 +242,9 @@ public final class ModuleDefLoader {
 
     if (moduleURL != null) {
       String externalForm = moduleURL.toExternalForm();
-      logger.log(TreeLogger.TRACE, "Module location: " + externalForm, null);
+      if (logger.isLoggable(TreeLogger.TRACE)) {
+        logger.log(TreeLogger.TRACE, "Module location: " + externalForm, null);
+      }
       try {
         if ((!(externalForm.startsWith("jar:file")))
             && (!(externalForm.startsWith("zip:file")))

@@ -659,7 +659,9 @@ public class StandardGeneratorContext implements GeneratorContextExt {
 
     setCurrentGenerator(generatorClass);
 
-    long before = System.currentTimeMillis();
+    // Avoid call to System.currentTimeMillis() if not logging DEBUG level
+    boolean loggable = logger.isLoggable(TreeLogger.DEBUG);
+    long before = loggable ? System.currentTimeMillis() : 0L;
     String generatorClassName = generator.getClass().getName();
     CompilerEventType type = eventsByGeneratorType.get(generatorClassName);
 
@@ -672,7 +674,6 @@ public class StandardGeneratorContext implements GeneratorContextExt {
             typeName);
 
     try {
-
       GeneratorExt generatorExt;
       if (generator instanceof GeneratorExt) {
         generatorExt = (GeneratorExt) generator;
@@ -683,14 +684,16 @@ public class StandardGeneratorContext implements GeneratorContextExt {
       RebindResult result;
       result = generatorExt.generateIncrementally(logger, this, typeName);
 
-      long after = System.currentTimeMillis();
-      if (result.getResultStatus() == RebindStatus.USE_EXISTING) {
-        msg = "Generator did not return a new class, type will be used as is";
-      } else {
-        msg = "Generator returned class '" + result.getReturnedTypeName() + "'";
+      if (loggable) {
+        if (result.getResultStatus() == RebindStatus.USE_EXISTING) {
+          msg = "Generator did not return a new class, type will be used as is";
+        } else {
+          msg = "Generator returned class '" + result.getReturnedTypeName() + "'";
+        }
+        long after = System.currentTimeMillis();
+        msg += "; in " + (after - before) + " ms";
+        logger.log(TreeLogger.DEBUG, msg, null);
       }
-      msg += "; in " + (after - before) + " ms";
-      logger.log(TreeLogger.DEBUG, msg, null);
       return result;
     } catch (AssertionError e) {
       // Catch and log the assertion as a convenience to the developer
@@ -741,8 +744,10 @@ public class StandardGeneratorContext implements GeneratorContextExt {
     JClassType existingType =
         getTypeOracle().findType(packageName, simpleTypeName);
     if (existingType != null) {
-      logger.log(TreeLogger.DEBUG, "Type '" + typeName
-          + "' already exists and will not be re-created ", null);
+      if (logger.isLoggable(TreeLogger.DEBUG)) {
+        logger.log(TreeLogger.DEBUG, "Type '" + typeName
+            + "' already exists and will not be re-created ", null);
+      }
       return null;
     }
 

@@ -82,7 +82,9 @@ public class OophmSessionHandler extends SessionHandlerServer {
               + obj.toString(), null);
       JsValueOOPHM jsval = (JsValueOOPHM) dispObj.getField(dispId);
       Value retVal = channel.convertFromJsValue(localObjects, jsval);
-      branch.log(TreeLogger.SPAM, "result is " + retVal, null);
+      if (logger.isLoggable(TreeLogger.SPAM)) {
+        branch.log(TreeLogger.SPAM, "result is " + retVal, null);
+      }
       return new ExceptionOrReturnValue(false, retVal);
     } catch (Throwable t) {
       JsValueOOPHM jsval = new JsValueOOPHM();
@@ -147,8 +149,10 @@ public class OophmSessionHandler extends SessionHandlerServer {
     for (int i = 0; i < args.length; ++i) {
       jsArgs[i] = new JsValueOOPHM();
       channel.convertToJsValue(cl, localObjects, args[i], jsArgs[i]);
-      branch.log(TreeLogger.SPAM, " arg " + i + " = " + jsArgs[i].toString(),
-          null);
+      if (logger.isLoggable(TreeLogger.SPAM)) {
+        branch.log(TreeLogger.SPAM, " arg " + i + " = " + jsArgs[i].toString(),
+            null);
+      }
     }
     JsValueOOPHM jsRetVal = new JsValueOOPHM();
     JsValueOOPHM jsMethod;
@@ -191,8 +195,10 @@ public class OophmSessionHandler extends SessionHandlerServer {
       moduleSpace = new ModuleSpaceOOPHM(msh, moduleName, channel);
       moduleMap.put(channel, moduleSpace);
       moduleSpace.onLoad(logger);
-      moduleHandle.getLogger().log(TreeLogger.INFO,
-          "Module " + moduleName + " has been loaded");
+      if (logger.isLoggable(TreeLogger.INFO)) {
+        moduleHandle.getLogger().log(TreeLogger.INFO,
+            "Module " + moduleName + " has been loaded");
+      }
     } catch (Throwable e) {
       // We do catch Throwable intentionally because there are a ton of things
       // that can go wrong trying to load a module, including Error-derived
@@ -229,8 +235,10 @@ public class OophmSessionHandler extends SessionHandlerServer {
       obj.setWrappedJavaObject(moduleSpace.getIsolatedClassLoader(),
           localObjects.get(refId));
       dispObj = obj.getJavaObjectWrapper();
-      logger.log(TreeLogger.SPAM, "Client special invoke of setProperty(id="
-          + dispId + ", newValue=" + newValue + ") on " + obj.toString(), null);
+      if (logger.isLoggable(TreeLogger.SPAM)) {
+        logger.log(TreeLogger.SPAM, "Client special invoke of setProperty(id="
+            + dispId + ", newValue=" + newValue + ") on " + obj.toString(), null);
+      }
       JsValueOOPHM jsval = new JsValueOOPHM();
       channel.convertToJsValue(moduleSpace.getIsolatedClassLoader(),
           localObjects, newValue, jsval);

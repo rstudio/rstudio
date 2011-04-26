@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dev.util.arg;
 
-import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.util.tools.ArgHandler;
 
 /**
@@ -27,7 +27,7 @@ public class ArgHandlerLogLevel extends ArgHandler {
 
   private static String computeOptionsString() {
     StringBuffer sb = new StringBuffer();
-    Type[] values = Type.values();
+    TreeLogger.Type[] values = TreeLogger.Type.values();
     for (int i = 0, c = values.length; i < c; ++i) {
       if (i > 0) {
         sb.append(", ");
@@ -70,7 +70,7 @@ public class ArgHandlerLogLevel extends ArgHandler {
   public int handle(String[] args, int startIndex) {
     if (startIndex + 1 < args.length) {
       try {
-        Type level = Type.valueOf(args[startIndex + 1]);
+        TreeLogger.Type level = TreeLogger.Type.valueOf(args[startIndex + 1]);
         options.setLogLevel(level);
         return 1;
       } catch (IllegalArgumentException e) {
@@ -83,8 +83,7 @@ public class ArgHandlerLogLevel extends ArgHandler {
     return -1;
   }
 
-  protected Type getDefaultLogLevel() {
-    return Type.INFO;
+  protected TreeLogger.Type getDefaultLogLevel() {
+    return TreeLogger.INFO;
   }
-
 }

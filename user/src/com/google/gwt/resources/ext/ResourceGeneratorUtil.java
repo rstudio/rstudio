@@ -443,7 +443,9 @@ public final class ResourceGeneratorUtil {
     if (resourceAnnotation == null) {
       if (defaultSuffixes != null) {
         for (String extension : defaultSuffixes) {
-          logger.log(TreeLogger.SPAM, "Trying default extension " + extension);
+          if (logger.isLoggable(TreeLogger.SPAM)) {
+            logger.log(TreeLogger.SPAM, "Trying default extension " + extension);
+          }
           for (Locator locator : locators) {
             URL resourceUrl = tryFindResource(locator, context,
                 getPathRelativeToPackage(method.getEnclosingType().getPackage(),

@@ -274,7 +274,9 @@ public class CompilePermsServer {
         compilePermutation(logger, ast, in, out);
 
         keepGoing = in.readBoolean();
-        logger.log(TreeLogger.SPAM, "keepGoing = " + keepGoing);
+        if (logger.isLoggable(TreeLogger.SPAM)) {
+          logger.log(TreeLogger.SPAM, "keepGoing = " + keepGoing);
+        }
       }
 
       logger.log(TreeLogger.DEBUG, "Successfully terminating");

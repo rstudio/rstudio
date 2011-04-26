@@ -110,8 +110,10 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
         logger.log(TreeLogger.ERROR, msg);
         throw new UnableToCompleteException();
       } else {
-        String msg = "Ignoring the following script tags in the gwt.xml " + "file\n" + list;
-        logger.log(TreeLogger.INFO, msg);
+        if (logger.isLoggable(TreeLogger.INFO)) {
+          logger.log(TreeLogger.INFO, "Ignoring the following script tags in the gwt.xml "
+              + "file\n" + list);
+        }
       }
     }
 

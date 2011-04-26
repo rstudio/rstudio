@@ -62,7 +62,9 @@ public abstract class RegexFilter {
         typePatterns.add(p);
         includeType.add(include);
 
-        logger.log(TreeLogger.DEBUG, "Got filter entry '" + regex + "'");
+        if (logger.isLoggable(TreeLogger.DEBUG)) {
+          logger.log(TreeLogger.DEBUG, "Got filter entry '" + regex + "'");
+        }
       } catch (PatternSyntaxException e) {
         logger.log(TreeLogger.ERROR, "Got malformed filter entry '" + regex
             + "'");
@@ -77,18 +79,24 @@ public abstract class RegexFilter {
     // Process patterns in reverse order for early exit
     int size = typePatterns.size();
     for (int idx = size - 1; idx >= 0; idx--) {
-      logger.log(TreeLogger.DEBUG, "Considering filter rule "
-          + values.get(idx) + " for query " + query);
+      if (logger.isLoggable(TreeLogger.DEBUG)) {
+        logger.log(TreeLogger.DEBUG, "Considering filter rule "
+            + values.get(idx) + " for query " + query);
+      }
       boolean include = includeType.get(idx);
       Pattern pattern = typePatterns.get(idx);
       if (pattern.matcher(query).matches()) {
         if (include) {
-          logger.log(TreeLogger.DEBUG, "Whitelisting " + query
-              + " according to rule " + values.get(idx));
+          if (logger.isLoggable(TreeLogger.DEBUG)) {
+            logger.log(TreeLogger.DEBUG, "Whitelisting " + query
+                + " according to rule " + values.get(idx));
+          }
           return true;
         } else {
-          logger.log(TreeLogger.DEBUG, "Blacklisting " + query
-              + " according to rule " + values.get(idx));
+          if (logger.isLoggable(TreeLogger.DEBUG)) {
+            logger.log(TreeLogger.DEBUG, "Blacklisting " + query
+                + " according to rule " + values.get(idx));
+          }
           return false;
         }
       }

@@ -166,8 +166,10 @@ public class ResourceOracleImpl implements ResourceOracle {
           return ZipFileClassPathEntry.get(f);
         } catch (Exception ignored) {
         }
-        logger.log(TreeLogger.TRACE, "Unexpected entry in classpath; " + f
+        if (logger.isLoggable(TreeLogger.TRACE)) {
+          logger.log(TreeLogger.TRACE, "Unexpected entry in classpath; " + f
             + " is neither a directory nor an archive (.jar or .zip)");
+        }
         return null;
       }
     } else {
@@ -329,8 +331,10 @@ public class ResourceOracleImpl implements ResourceOracle {
             }
             continue;
           } catch (AccessControlException e) {
-            logger.log(TreeLogger.DEBUG,
-                "Skipping URL due to access restrictions: " + url);
+            if (logger.isLoggable(TreeLogger.DEBUG)) {
+              logger.log(TreeLogger.DEBUG,
+                  "Skipping URL due to access restrictions: " + url);
+            }
             continue;
           } catch (URISyntaxException e) {
             caught = e;

@@ -285,7 +285,9 @@ public class CompilationProblemReporter {
       tmpSrc = File.createTempFile(typeName, ".java");
       Util.writeStringAsFile(tmpSrc, fetcher.getSource());
       String dumpPath = tmpSrc.getAbsolutePath();
-      logger.log(TreeLogger.INFO, "See snapshot: " + dumpPath, null);
+      if (logger.isLoggable(TreeLogger.INFO)) {
+        logger.log(TreeLogger.INFO, "See snapshot: " + dumpPath, null);
+      }
       return;
     } catch (IOException e) {
       caught = e;

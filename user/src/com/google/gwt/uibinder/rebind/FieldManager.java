@@ -15,7 +15,7 @@
  */
 package com.google.gwt.uibinder.rebind;
 
-import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
@@ -268,7 +268,7 @@ public class FieldManager {
     for (Map.Entry<String, FieldReference> entry : fieldReferences.entrySet()) {
       FieldReference ref = entry.getValue();
       MonitoredLogger monitoredLogger = new MonitoredLogger(
-          logger.getTreeLogger().branch(Type.TRACE, "validating " + ref));
+          logger.getTreeLogger().branch(TreeLogger.TRACE, "validating " + ref));
       ref.validate(monitoredLogger);
       failed |= monitoredLogger.hasErrors();
     }

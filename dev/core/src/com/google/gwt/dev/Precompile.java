@@ -683,9 +683,11 @@ public class Precompile {
         TreeLogger legacyLinkersLogger =
             logger.branch(TreeLogger.INFO,
                 "Precompiling on the start node, because some linkers are not updated");
-        for (Linker linker : linkerContext.findUnshardableLinkers()) {
-          legacyLinkersLogger.log(TreeLogger.INFO, "Linker" + linker.getClass().getCanonicalName()
-              + " is not updated");
+        if (legacyLinkersLogger.isLoggable(TreeLogger.INFO)) {
+          for (Linker linker : linkerContext.findUnshardableLinkers()) {
+            legacyLinkersLogger.log(TreeLogger.INFO, "Linker" + linker.getClass().getCanonicalName()
+                + " is not updated");
+          }
         }
         generateOnShards = false;
       } else if (options.isValidateOnly()) {
@@ -706,8 +708,10 @@ public class Precompile {
                 .collapseProperties().size();
         Util.writeStringAsFile(logger, new File(compilerWorkDir, PERM_COUNT_FILENAME), String
             .valueOf(numPermutations));
-        branch.log(TreeLogger.INFO, "Precompilation (minimal) succeeded, number of permutations: "
+        if (branch.isLoggable(TreeLogger.INFO)) {
+          branch.log(TreeLogger.INFO, "Precompilation (minimal) succeeded, number of permutations: "
             + numPermutations);
+        }
       } else {
         if (options.isValidateOnly()) {
           TreeLogger branch =
@@ -731,8 +735,10 @@ public class Precompile {
           int permsPrecompiled = precompilation.getPermutations().length;
           Util.writeStringAsFile(logger, new File(compilerWorkDir, PERM_COUNT_FILENAME), String
               .valueOf(permsPrecompiled));
-          branch.log(TreeLogger.INFO, "Precompilation succeeded, number of permutations: "
+          if (branch.isLoggable(TreeLogger.INFO)) {
+            branch.log(TreeLogger.INFO, "Precompilation succeeded, number of permutations: "
               + permsPrecompiled);
+          }
         }
       }
     }

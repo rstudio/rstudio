@@ -109,8 +109,10 @@ public class HtmlUnitSessionHandler extends SessionHandlerClient {
     logger.setMaxDetail(TreeLogger.ERROR);
     this.jsEngine = jsEngine;
     htmlPage = (HtmlPage) this.window.getWebWindow().getEnclosedPage();
-    logger.log(TreeLogger.INFO, "jsEngine = " + jsEngine + ", HtmlPage = "
-        + htmlPage);
+    if (logger.isLoggable(TreeLogger.INFO)) {
+      logger.log(TreeLogger.INFO, "jsEngine = " + jsEngine + ", HtmlPage = "
+          + htmlPage);
+    }
 
     jsObjectToRef = new IdentityHashMap<Scriptable, Integer>();
     nextRefId = 1;
@@ -161,8 +163,10 @@ public class HtmlUnitSessionHandler extends SessionHandlerClient {
   @Override
   public ExceptionOrReturnValue invoke(BrowserChannelClient channel, Value thisObj,
       String methodName, Value[] args) {
-    logger.log(TreeLogger.DEBUG, "INVOKE: thisObj: " + thisObj
-        + ", methodName: " + methodName + ", args: " + args);
+    if (logger.isLoggable(TreeLogger.DEBUG)) {
+      logger.log(TreeLogger.DEBUG, "INVOKE: thisObj: " + thisObj
+          + ", methodName: " + methodName + ", args: " + args);
+    }
     /*
      * 1. lookup functions by name. 2. Find context and scope. 3. Convert
      * thisObject to ScriptableObject 4. Convert args 5. Get return value
@@ -192,7 +196,9 @@ public class HtmlUnitSessionHandler extends SessionHandlerClient {
       return new ExceptionOrReturnValue(true, new Value(null));
     }
     Function jsFunction = (Function) functionObject;
-    logger.log(TreeLogger.SPAM, "INVOKE: jsFunction: " + jsFunction);
+    if (logger.isLoggable(TreeLogger.SPAM)) {
+      logger.log(TreeLogger.SPAM, "INVOKE: jsFunction: " + jsFunction);
+    }
 
     Object jsArgs[] = new Object[args.length];
     for (int i = 0; i < args.length; i++) {
@@ -217,27 +223,37 @@ public class HtmlUnitSessionHandler extends SessionHandlerClient {
       result = jsEngine.callFunction(htmlPage, jsFunction, jsContext, window,
           jsThis, jsArgs);     
     } catch (JavaScriptException ex) {
-      logger.log(TreeLogger.INFO, "INVOKE: JavaScriptException " + ex
-          + ", message: " + ex.getMessage() + " when invoking " + methodName);
+      if (logger.isLoggable(TreeLogger.INFO)) {
+        logger.log(TreeLogger.INFO, "INVOKE: JavaScriptException " + ex
+            + ", message: " + ex.getMessage() + " when invoking " + methodName);
+      }
       return new ExceptionOrReturnValue(true, makeValueFromJsval(jsContext,
           ex.getValue()));
     } catch (Exception ex) {
-      logger.log(TreeLogger.INFO, "INVOKE: exception " + ex + ", message: "
-          + ex.getMessage() + " when invoking " + methodName);
+      if (logger.isLoggable(TreeLogger.INFO)) {
+        logger.log(TreeLogger.INFO, "INVOKE: exception " + ex + ", message: "
+            + ex.getMessage() + " when invoking " + methodName);
+      }
       return new ExceptionOrReturnValue(true, makeValueFromJsval(jsContext,
           Undefined.instance));
     }
-    logger.log(TreeLogger.INFO, "INVOKE: result: " + result
-        + " of jsFunction: " + jsFunction);
+    if (logger.isLoggable(TreeLogger.INFO)) {
+      logger.log(TreeLogger.INFO, "INVOKE: result: " + result
+          + " of jsFunction: " + jsFunction);
+    }
     return new ExceptionOrReturnValue(false, makeValueFromJsval(jsContext,
         result));
   }
 
   @Override
   public void loadJsni(BrowserChannelClient channel, String jsniString) {
-    logger.log(TreeLogger.SPAM, "LOAD_JSNI: " + jsniString);
+    if (logger.isLoggable(TreeLogger.SPAM)) {
+      logger.log(TreeLogger.SPAM, "LOAD_JSNI: " + jsniString);
+    }
     ScriptResult scriptResult = htmlPage.executeJavaScript(jsniString);
-    logger.log(TreeLogger.INFO, "LOAD_JSNI: scriptResult=" + scriptResult);
+    if (logger.isLoggable(TreeLogger.INFO)) {
+      logger.log(TreeLogger.INFO, "LOAD_JSNI: scriptResult=" + scriptResult);
+    }
   }
 
   /**

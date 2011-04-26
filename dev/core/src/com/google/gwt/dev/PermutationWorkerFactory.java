@@ -254,8 +254,10 @@ public abstract class PermutationWorkerFactory {
     List<Work> work = new ArrayList<Work>(permutations.length);
     for (int i = 0; i < permutations.length; ++i) {
       Permutation perm = permutations[i];
-      logger.log(TreeLogger.DEBUG,
-          "Creating worker permutation " + perm.getId() + " of " + permutations.length);
+      if (logger.isLoggable(TreeLogger.DEBUG)) {
+        logger.log(TreeLogger.DEBUG,
+            "Creating worker permutation " + perm.getId() + " of " + permutations.length);
+      }
       work.add(new Work(logger, perm, resultFiles.get(i)));
     }
 
@@ -299,7 +301,9 @@ public abstract class PermutationWorkerFactory {
     String classes = System.getProperty(FACTORY_IMPL_PROPERTY,
         ThreadedPermutationWorkerFactory.class.getName() + ","
             + ExternalPermutationWorkerFactory.class.getName());
-    logger.log(TreeLogger.SPAM, "Factory impl property is " + classes);
+    if (logger.isLoggable(TreeLogger.SPAM)) {
+      logger.log(TreeLogger.SPAM, "Factory impl property is " + classes);
+    }
 
     String[] classParts = classes.split(",");
     for (String className : classParts) {
@@ -309,8 +313,10 @@ public abstract class PermutationWorkerFactory {
         PermutationWorkerFactory factory = clazz.newInstance();
         factory.init(logger);
         mutableFactories.add(factory);
-        logger.log(TreeLogger.SPAM, "Added PermutationWorkerFactory "
-            + clazz.getName());
+        if (logger.isLoggable(TreeLogger.SPAM)) {
+          logger.log(TreeLogger.SPAM, "Added PermutationWorkerFactory "
+              + clazz.getName());
+        }
       } catch (ClassCastException e) {
         logger.log(TreeLogger.ERROR, className + " is not a "
             + PermutationWorkerFactory.class.getName());

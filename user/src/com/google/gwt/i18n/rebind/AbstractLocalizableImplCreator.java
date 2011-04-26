@@ -408,7 +408,9 @@ abstract class AbstractLocalizableImplCreator extends
           LocaleUtils.getLocaleFactory(), targetClass, resourceList);
       catWriter = msgCatFactory.getWriter(ctx, catalogName);
       if (catWriter == null) {
-        logger.log(TreeLogger.TRACE, "Already generated " + catalogName);
+        if (logger.isLoggable(TreeLogger.TRACE)) {
+          logger.log(TreeLogger.TRACE, "Already generated " + catalogName);
+        }
         return false;
       }
       msgIntf.accept(catWriter.visitClass());

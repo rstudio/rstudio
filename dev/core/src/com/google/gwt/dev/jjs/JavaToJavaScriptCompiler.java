@@ -259,7 +259,10 @@ public class JavaToJavaScriptCompiler {
     InternalCompilerException.preload();
     PropertyOracle[] propertyOracles = permutation.getPropertyOracles();
     int permutationId = permutation.getId();
-    logger.log(TreeLogger.INFO, "Compiling permutation " + permutationId + "...");
+    if (logger.isLoggable(TreeLogger.INFO)) {
+      logger.log(TreeLogger.INFO, "Compiling permutation " + permutationId
+          + "...");
+    }
     long permStart = System.currentTimeMillis();
     try {
       if (JProgram.isTracingEnabled()) {
@@ -451,8 +454,11 @@ public class JavaToJavaScriptCompiler {
           unifiedAst.getPrecompilationMetrics(), compilationMetrics));
 
       logTrackingStats(logger);
-      logger.log(TreeLogger.TRACE, "Permutation took " + (System.currentTimeMillis() - permStart)
-          + " ms");
+      if (logger.isLoggable(TreeLogger.TRACE)) {
+        logger.log(TreeLogger.TRACE,
+            "Permutation took " + (System.currentTimeMillis() - permStart)
+            + " ms");
+      }
       return toReturn;
     } catch (Throwable e) {
       throw logAndTranslateException(logger, e);
@@ -1114,7 +1120,7 @@ public class JavaToJavaScriptCompiler {
         }
         TreeLogger nodeBranch = topBranch.branch(TreeLogger.ERROR, msg, null);
         String className = nodeInfo.getClassName();
-        if (className != null) {
+        if (className != null && logger.isLoggable(TreeLogger.INFO)) {
           nodeBranch.log(TreeLogger.INFO, className, null);
         }
       }

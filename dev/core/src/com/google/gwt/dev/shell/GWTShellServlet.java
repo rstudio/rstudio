@@ -411,9 +411,9 @@ public class GWTShellServlet extends HttpServlet {
       String moduleName) throws IOException {
 
     // Create a logger branch for this request.
-    String msg = "The development shell servlet received a request for '"
-        + partialPath + "' in module '" + moduleName + ".gwt.xml' ";
-    logger = logger.branch(TreeLogger.TRACE, msg, null);
+    logger = logger.branch(TreeLogger.TRACE,
+        "The development shell servlet received a request for '"
+        + partialPath + "' in module '" + moduleName + ".gwt.xml' ", null);
 
     // Handle auto-generation of resources.
     if (shouldAutoGenerateResources()) {
@@ -465,6 +465,7 @@ public class GWTShellServlet extends HttpServlet {
       }
 
       if (foundResource == null) {
+        String msg;
         if ("gwt.js".equals(partialPath)) {
           msg = "Loading the old 'gwt.js' bootstrap script is no longer supported; please load '"
               + moduleName + ".nocache.js' directly";
@@ -495,8 +496,9 @@ public class GWTShellServlet extends HttpServlet {
 
     if (mimeType == null) {
       mimeType = guessMimeType(path);
-      msg = "Guessed MIME type '" + mimeType + "'";
-      logger.log(TreeLogger.TRACE, msg, null);
+      if (logger.isLoggable(TreeLogger.TRACE)) {
+        logger.log(TreeLogger.TRACE, "Guessed MIME type '" + mimeType + "'", null);
+      }
     }
 
     maybeIssueXhtmlWarning(logger, mimeType, partialPath);
@@ -551,8 +553,10 @@ public class GWTShellServlet extends HttpServlet {
    */
   private String genSelectionScript(TreeLogger logger, String moduleName)
       throws UnableToCompleteException {
-    logger.log(TreeLogger.TRACE,
-        "Generating a script selection script for module " + moduleName);
+    if (logger.isLoggable(TreeLogger.TRACE)) {
+      logger.log(TreeLogger.TRACE,
+          "Generating a script selection script for module " + moduleName);
+    }
     ModuleDef module = getModuleDef(logger, moduleName);
     StandardLinkerContext context = new StandardLinkerContext(logger, module,
         new JJSOptionsImpl());

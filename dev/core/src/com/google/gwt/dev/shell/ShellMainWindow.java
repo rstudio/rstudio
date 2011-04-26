@@ -57,8 +57,10 @@ public class ShellMainWindow extends JPanel {
 
     @Override
     public void launchUrl(URL url) {
-      getLogger().log(TreeLogger.INFO, "Paste " + url.toExternalForm()
-          + " into a browser");
+      if (getLogger().isLoggable(TreeLogger.INFO)) {
+        getLogger().log(TreeLogger.INFO, "Paste " + url.toExternalForm()
+            + " into a browser");
+      }
       // is it better to use SwingUtilities2.canAccessSystemClipboard() here?
       Throwable caught = null;
       try {
@@ -99,7 +101,9 @@ public class ShellMainWindow extends JPanel {
       }
       TreeLogger branch = getLogger().branch(TreeLogger.ERROR,
           "Unable to launch default browser", caught);
-      branch.log(TreeLogger.INFO, url.toExternalForm());
+      if (branch.isLoggable(TreeLogger.INFO)) {
+        branch.log(TreeLogger.INFO, url.toExternalForm());
+      }
     }
   }
 
