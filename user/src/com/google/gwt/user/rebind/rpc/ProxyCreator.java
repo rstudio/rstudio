@@ -284,7 +284,7 @@ public class ProxyCreator {
 
     // Determine the set of serializable types
     Event event = SpeedTracerLogger.start(CompilerEventType.GENERATOR_RPC_STOB);
-    
+
     SerializableTypeOracleBuilder typesSentFromBrowserBuilder = new SerializableTypeOracleBuilder(
         logger, propertyOracle, context);
     typesSentFromBrowserBuilder.setTypeFilter(blacklistTypeFilter);
@@ -334,7 +334,7 @@ public class ProxyCreator {
       rpcLog = stringWriter.toString();
     }
     event.end();
-    
+
     generateTypeHandlers(logger, context, typesSentFromBrowser,
         typesSentToBrowser);
 
@@ -514,36 +514,23 @@ public class ProxyCreator {
     w.println(") {");
     w.indent();
 
-    String statsContextName = nameFactory.createName("statsContext");
-    generateRpcStatsContext(w, syncMethod, asyncMethod, statsContextName);
+    String helperName = nameFactory.createName("helper");
+    String helperClassName = RemoteServiceProxy.ServiceHelper.class.getCanonicalName();
+    w.println("%s %s = new %s(\"%s\", \"%s\");",
+        helperClassName, helperName, helperClassName, getProxySimpleName(),
+        syncMethod.getName());
 
-    String statsMethodExpr = getProxySimpleName() + "." + syncMethod.getName();
-    String tossName = nameFactory.createName("toss");
-    w.println("boolean %s = %s.isStatsAvailable() && %s.stats(%s.timeStat(\"%s\", \"begin\"));",
-        tossName, statsContextName, statsContextName, statsContextName, statsMethodExpr);
-    w.print(SerializationStreamWriter.class.getSimpleName());
-    w.print(" ");
-    String streamWriterName = nameFactory.createName("streamWriter");
-    w.println(streamWriterName + " = createStreamWriter();");
-    w.println("// createStreamWriter() prepared the stream");
     w.println("try {");
     w.indent();
 
-    w.println("if (getRpcToken() != null) {");
-    w.indent();
-    w.println(streamWriterName + ".writeObject(getRpcToken());");
-    w.outdent();
-    w.println("}");
-
-    w.println(streamWriterName + ".writeString(REMOTE_SERVICE_INTERFACE_NAME);");
-
-    // Write the method name
-    w.println(streamWriterName + ".writeString(\"" + syncMethod.getName()
-        + "\");");
-
     // Write the parameter count followed by the parameter values
     JParameter[] syncParams = syncMethod.getParameters();
-    w.println(streamWriterName + ".writeInt(" + syncParams.length + ");");
+
+    String streamWriterName = nameFactory.createName("streamWriter");
+    w.println("%s %s = %s.start(REMOTE_SERVICE_INTERFACE_NAME, %s);",
+        SerializationStreamWriter.class.getSimpleName(), streamWriterName,
+        helperName, syncParams.length);
+
     for (JParameter param : syncParams) {
       JType paramType = param.getType().getErasedType();
       String typeNameExpression = computeTypeNameExpression(paramType);
@@ -562,39 +549,30 @@ public class ProxyCreator {
       w.println("(" + asyncParam.getName() + ");");
     }
 
-    String payloadName = nameFactory.createName("payload");
-    w.println("String " + payloadName + " = " + streamWriterName
-        + ".toString();");
-
-    w.println(tossName + " = " + statsContextName + ".isStatsAvailable() && "
-        + statsContextName + ".stats(" + statsContextName + ".timeStat(\""
-        + statsMethodExpr + "\",  \"requestSerialized\"));");
-
     /*
      * Depending on the return type for the async method, return a
      * RequestBuilder, a Request, or nothing at all.
      */
+    JParameter callbackParam = asyncParams[asyncParams.length - 1];
+    JType returnType = syncMethod.getReturnType();
+    String callbackName = callbackParam.getName();
+
     if (asyncReturnType == JPrimitiveType.VOID) {
-      w.print("doInvoke(");
+      w.println("%s.finish(%s, ResponseReader.%s);",
+          helperName, callbackName, getResponseReaderFor(returnType).name());
     } else if (asyncReturnType.getQualifiedSourceName().equals(
         RequestBuilder.class.getName())) {
-      w.print("return doPrepareRequestBuilder(");
+      w.println("return %s.finishForRequestBuilder(%s, ResponseReader.%s);",
+          helperName, callbackName, getResponseReaderFor(returnType).name());
     } else if (asyncReturnType.getQualifiedSourceName().equals(
         Request.class.getName())) {
-      w.print("return doInvoke(");
+      w.println("return %s.finish(%s, ResponseReader.%s);",
+          helperName, callbackName, getResponseReaderFor(returnType).name());
     } else {
       // This method should have been caught by RemoteServiceAsyncValidator
       throw new RuntimeException("Unhandled return type "
           + asyncReturnType.getQualifiedSourceName());
     }
-
-    JParameter callbackParam = asyncParams[asyncParams.length - 1];
-    String callbackName = callbackParam.getName();
-    JType returnType = syncMethod.getReturnType();
-    w.print("ResponseReader." + getResponseReaderFor(returnType).name());
-    w.println(", \"" + getProxySimpleName() + "." + syncMethod.getName()
-        + "\", " + statsContextName + ", " + payloadName + ", " + callbackName
-        + ");");
 
     w.outdent();
     w.print("} catch (SerializationException ");
