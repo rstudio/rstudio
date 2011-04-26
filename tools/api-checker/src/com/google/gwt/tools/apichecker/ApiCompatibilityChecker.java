@@ -175,7 +175,9 @@ public class ApiCompatibilityChecker extends ToolBase {
   }
 
   /**
-   * Class that specifies a set of {@link CompilationUnit} read from jar files.
+   * Class that specifies a set of
+   * {@link com.google.gwt.dev.javac.CompilationUnit CompilationUnit} read from
+   * jar files.
    */
   private static class JarFileResources extends Resources {
     private static final String MOCK_PREFIX = "/mock/";
@@ -286,7 +288,8 @@ public class ApiCompatibilityChecker extends ToolBase {
   }
 
   /**
-   * Abstract internal class that specifies a set of {@link CompilationUnit}.
+   * Abstract internal class that specifies a set of
+   * {@link com.google.gwt.dev.javac.CompilationUnit CompilationUnit}.
    */
   private abstract static class Resources {
     protected final TreeLogger logger;
@@ -344,8 +347,9 @@ public class ApiCompatibilityChecker extends ToolBase {
   }
 
   /**
-   * Class that specifies a set of {@link CompilationUnit} read from the
-   * file-system.
+   * Class that specifies a set of
+   * {@link com.google.gwt.dev.javac.CompilationUnit CompilationUnit} read from
+   * the file-system.
    */
   private static class SourceFileResources extends Resources {
     private final ZipScanner excludeScanner;
@@ -966,10 +970,23 @@ public class ApiCompatibilityChecker extends ToolBase {
       throws UnableToCompleteException, NotFoundException, IOException {
     Set<Resource> resources = new HashSet<Resource>();
     if (extraSourceJars != null) {
-      Resources extra =
-          new JarFileResources(extraSourceJars, Collections.singleton(""), new HashSet<String>(
-              Arrays.asList("javax/validation/Validation.java",
-                  "javax/validation/constraints/Pattern.java")), logger);
+      Resources extra = new JarFileResources(
+          extraSourceJars,
+          Collections.singleton(""), 
+          new HashSet<String>(Arrays.asList(
+              "javax/validation/Configuration.java",
+              "javax/validation/MessageInterpolator.java",
+              "javax/validation/Validation.java",
+              "javax/validation/ValidatorContext.java",
+              "javax/validation/ValidatorFactory.java",
+              "javax/validation/ValidationProviderResolver.java",
+              "javax/validation/bootstrap/GenericBootstrap.java",
+              "javax/validation/bootstrap/ProviderSpecificBootstrap.java",
+              "javax/validation/constraints/Pattern.java",
+              "javax/validation/spi/BootstrapState.java",
+              "javax/validation/spi/ConfigurationState.java",
+              "javax/validation/spi/ValidationProvider.java")), 
+          logger);
       Set<Resource> loaded = extra.getResources();
       System.out.println("Found " + loaded.size() + " new resources");
       resources.addAll(loaded);
