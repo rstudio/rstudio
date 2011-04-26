@@ -28,16 +28,17 @@ import java.util.List;
  *
  * @param <T> The type returned by all members of the pipe
  */
- class InterpreterPipe<T> implements PostProcessingInterpreter<T> {
-  public static <T>InterpreterPipe<T> newPipe(Interpreter<T> a, Interpreter<T> b) {
+class InterpreterPipe<T> implements PostProcessingInterpreter<T> {
+  public static <T>InterpreterPipe<T> newPipe(Interpreter<T>... pipes) {
     InterpreterPipe<T> rtn = new InterpreterPipe<T>();
-    rtn.add(a);
-    rtn.add(b);
+    for (int i = 0; i < pipes.length; ++i) {
+      rtn.add(pipes[i]);
+    }
     return rtn;
   }
 
   private final List<Interpreter<T>> pipe =
-    new ArrayList<Interpreter<T>>();
+      new ArrayList<Interpreter<T>>();
 
   public void add(Interpreter<T> i) {
     pipe.add(i);

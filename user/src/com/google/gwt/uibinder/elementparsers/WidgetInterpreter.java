@@ -71,58 +71,67 @@ class WidgetInterpreter implements XMLElement.Interpreter<String> {
 
   public String interpretElement(XMLElement elem)
       throws UnableToCompleteException {
-    if (uiWriter.isWidgetElement(elem)) {
-      // Allocate a local variable to hold the dom id for this widget. Note
-      // that idHolder is a local variable reference, not a string id. We
-      // have to generate the ids at runtime, not compile time, or else
-      // we'll reuse ids for any template rendered more than once.
-      String idHolder = uiWriter.declareDomIdHolder();
-      String childField = uiWriter.parseElementToField(elem);
-      uiWriter.ensureCurrentFieldAttached();
-
-      String elementPointer = idHolder + "Element";
-      uiWriter.addInitStatement(
-          "com.google.gwt.user.client.Element %s = " +
-          "com.google.gwt.dom.client.Document.get().getElementById(%s).cast();",
-          elementPointer, idHolder);
-
-      FieldManager fieldManager = uiWriter.getFieldManager();
-
-      if (uiWriter.useLazyWidgetBuilders()) {
-
-        // Register a DOM id field.
-        String lazyDomElementPath = LazyDomElement.class.getCanonicalName();
-        fieldManager.registerField(lazyDomElementPath, elementPointer)
-            .setInitializer(String.format("new %s(%s)",
-            lazyDomElementPath, fieldManager.convertFieldToGetter(idHolder)));
-
-        // Add attach/detach sections for this element.
-        FieldWriter fieldWriter = fieldManager.require(fieldName);
-        fieldWriter.addAttachStatement("%s.get();",
-            fieldManager.convertFieldToGetter(elementPointer));
-        fieldWriter.addDetachStatement("%s.addAndReplaceElement(%s, %s.get());",
-          fieldName, childField, fieldManager.convertFieldToGetter(elementPointer));
-
-      } else {
-
-        // Delay replacing the placeholders with the widgets until after
-        // detachment so as not to end up attaching the widget to the DOM
-        // unnecessarily
-        uiWriter.addDetachStatement(
-            "%1$s.addAndReplaceElement(%2$s, %3$s);",
-            fieldName, childField, elementPointer);
-      }
-
-      // Create an element to hold the widget.
-      String tag = getLegalPlaceholderTag(elem);
-      idHolder = fieldManager.convertFieldToGetter(idHolder);
-      if (uiWriter.useSafeHtmlTemplates()) {
-        idHolder = uiWriter.tokenForStringExpression(idHolder);
-      } else {
-        idHolder = "\" + " + idHolder + " + \"";
-      }
-      return "<" + tag + " id='" + idHolder  + "'></" + tag + ">";
+    if (!uiWriter.isWidgetElement(elem)) {
+      return null;
     }
-    return null;
+
+    // Allocate a local variable to hold the dom id for this widget. Note
+    // that idHolder is a local variable reference, not a string id. We
+    // have to generate the ids at runtime, not compile time, or else
+    // we'll reuse ids for any template rendered more than once.
+    FieldManager fieldManager = uiWriter.getFieldManager();
+    FieldWriter fieldWriter = fieldManager.require(fieldName);
+    int childrenPrecedence = fieldWriter.getBuildPrecedence() + 1;
+    String idHolder = uiWriter.declareDomIdHolder();
+    uiWriter.ensureCurrentFieldAttached();
+
+    // We must guarantee that child fields are built before the container.
+    FieldWriter childFieldWriter = uiWriter.parseElementToFieldWriter(elem);
+    childFieldWriter.setBuildPrecendence(childrenPrecedence);
+
+    String elementPointer = idHolder + "Element";
+    uiWriter.addInitStatement(
+        "com.google.gwt.user.client.Element %s = " +
+        "com.google.gwt.dom.client.Document.get().getElementById(%s).cast();",
+        elementPointer, idHolder);
+
+    if (uiWriter.useLazyWidgetBuilders()) {
+
+      // Register a DOM id field.
+      String lazyDomElementPath = LazyDomElement.class.getCanonicalName();
+      FieldWriter elementWriter = fieldManager.registerField(lazyDomElementPath, elementPointer);
+      elementWriter.setBuildPrecendence(childrenPrecedence);
+      elementWriter.setInitializer(String.format("new %s(%s)",
+                                                 lazyDomElementPath, fieldManager.convertFieldToGetter(idHolder)));
+
+      // Add attach/detach sections for this element.
+      fieldWriter.addAttachStatement("%s.get();",
+                                     fieldManager.convertFieldToGetter(elementPointer));
+      fieldWriter.addDetachStatement(
+          "%s.addAndReplaceElement(%s, %s.get());",
+          fieldName,
+          fieldManager.convertFieldToGetter(childFieldWriter.getName()),
+          fieldManager.convertFieldToGetter(elementPointer));
+    } else {
+
+      // Delay replacing the placeholders with the widgets until after
+      // detachment so as not to end up attaching the widget to the DOM
+      // unnecessarily
+      uiWriter.addDetachStatement(
+          "%1$s.addAndReplaceElement(%2$s, %3$s);",
+          fieldName,
+          childFieldWriter.getName(),
+          elementPointer);
+    }
+
+    // Create an element to hold the widget.
+    String tag = getLegalPlaceholderTag(elem);
+    idHolder = fieldManager.convertFieldToGetter(idHolder);
+    if (uiWriter.useSafeHtmlTemplates()) {
+      idHolder = uiWriter.tokenForStringExpression(idHolder);
+    } else {
+      idHolder = "\" + " + idHolder + " + \"";
+    }
+    return "<" + tag + " id='" + idHolder  + "'></" + tag + ">";
   }
 }

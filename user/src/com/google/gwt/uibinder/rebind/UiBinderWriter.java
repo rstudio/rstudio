@@ -37,6 +37,7 @@ import com.google.gwt.uibinder.rebind.model.ImplicitClientBundle;
 import com.google.gwt.uibinder.rebind.model.ImplicitCssResource;
 import com.google.gwt.uibinder.rebind.model.OwnerClass;
 import com.google.gwt.uibinder.rebind.model.OwnerField;
+import com.google.gwt.user.client.ui.Attachable;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -194,6 +195,8 @@ public class UiBinderWriter implements Statements {
 
   private final JClassType uiRootType;
 
+  private final JClassType attachableClassType;
+
   private final OwnerClass ownerClass;
 
   private final FieldManager fieldManager;
@@ -273,6 +276,8 @@ public class UiBinderWriter implements Statements {
     }
     uiRootType = typeArgs[0];
     uiOwnerType = typeArgs[1];
+
+    attachableClassType = oracle.findType(Attachable.class.getCanonicalName());
 
     ownerClass = new OwnerClass(uiOwnerType, logger, uiBinderCtx);
     bundleClass = new ImplicitClientBundle(baseClass.getPackage().getName(),
@@ -662,6 +667,11 @@ public class UiBinderWriter implements Statements {
     return gwtPrefix + ":field";
   }
 
+  public boolean isAttachableElement(XMLElement elem)
+      throws UnableToCompleteException {
+    return findFieldType(elem).isAssignableTo(attachableClassType);
+  }
+
   public boolean isBinderElement(XMLElement elem) {
     String uri = elem.getNamespaceUri();
     return uri != null && UiBinderGenerator.BINDER_URI.equals(uri);
@@ -757,6 +767,18 @@ public class UiBinderWriter implements Statements {
         type.getQualifiedSourceName(), asCommaSeparatedList(args)));
   }
 
+  // TODO(rdcastro): Rename this to tokenForSafeHtmlExpression and the method
+  // above to something else.
+  public String tokenForExpression(String expression) {
+    if (!useSafeHtmlTemplates) {
+      return tokenForStringExpression(expression);
+    }
+
+    String token = tokenator.nextToken(expression);
+    htmlTemplates.noteSafeConstant(expression);
+    return tokenator.nextToken(expression);
+  }
+
   /**
    * Like {@link #tokenForStringExpression}, but used for runtime expressions
    * that we trust to be safe to interpret at runtime as HTML without escaping,
@@ -766,6 +788,7 @@ public class UiBinderWriter implements Statements {
    *
    * @param expression
    */
+  // TODO(rdcastro): Rename this tokenForSafeConstant.
   public String tokenForSafeHtmlExpression(String expression) {
     if (!useSafeHtmlTemplates) {
       return tokenForStringExpression(expression);
@@ -1146,6 +1169,7 @@ public class UiBinderWriter implements Statements {
     addWidgetParser("NumberLabel");
     if (useLazyWidgetBuilders) {
       addWidgetParser("LazyPanel");
+      addWidgetParser("AttachableHTMLPanel");
     }
   }
 
@@ -1338,6 +1362,7 @@ public class UiBinderWriter implements Statements {
 
   private void writeImports(IndentedWriter w) {
     w.write("import com.google.gwt.core.client.GWT;");
+    w.write("import com.google.gwt.dom.client.Element;");
     if (!(htmlTemplates.isEmpty())) {
       w.write("import com.google.gwt.safehtml.client.SafeHtmlTemplates;");
       w.write("import com.google.gwt.safehtml.shared.SafeHtml;");

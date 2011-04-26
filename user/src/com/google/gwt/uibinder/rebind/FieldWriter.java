@@ -126,9 +126,14 @@ public interface FieldWriter {
    */
   void needs(FieldWriter f);
 
+  // TODO(rdcastro): Remove this and detect automatically.
+  void setAttachable(boolean isAttachableOutput);
+
   /**
    * Sets the precedence of this field builder. Field with higher values are
    * written first.
+   * TODO(rdcastro): Spreading arbitrary precendence values throughout the code
+   * doesn't scale well. Centralize these values, using enums or constants.
    */
   void setBuildPrecendence(int precedence);
 

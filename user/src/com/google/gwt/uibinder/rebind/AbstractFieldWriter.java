@@ -58,6 +58,7 @@ abstract class AbstractFieldWriter implements FieldWriter {
   private boolean written;
   private int buildPrecedence;
   private MortalLogger logger;
+  private boolean isAttachable;
 
   public AbstractFieldWriter(String name, MortalLogger logger) {
     if (name == null) {
@@ -109,6 +110,11 @@ abstract class AbstractFieldWriter implements FieldWriter {
 
   public void needs(FieldWriter f) {
     needs.add(f);
+  }
+
+  @Override
+  public void setAttachable(boolean attachable) {
+    this.isAttachable = attachable;
   }
 
   @Override
@@ -232,27 +238,64 @@ abstract class AbstractFieldWriter implements FieldWriter {
     if (attachStatements.size() > 0) {
       w.newline();
       w.write("// Attach section.");
-      attachedVar = getNextAttachVar();
+      if (isAttachable) {
+        // TODO(rdcastro): This is too coupled with AttachableHTMLPanel.
+        // Make this nicer.
+        w.write("%s.wrapInitializationCallback = ", getName());
+        w.indent();
+        w.indent();
+        w.write(
+            "new com.google.gwt.user.client.Command() {");
+        w.outdent();
+        w.write("@Override public void execute() {");
+        w.indent();
+      } else {
+        attachedVar = getNextAttachVar();
 
-      JClassType elementType = typeOracle.findType(Element.class.getName());
+        JClassType elementType = typeOracle.findType(Element.class.getName());
 
-      String elementToAttach = getInstantiableType().isAssignableTo(elementType)
-          ? name : name + ".getElement()";
+        String elementToAttach = getInstantiableType().isAssignableTo(elementType)
+            ? name : name + ".getElement()";
 
-      w.write("UiBinderUtil.TempAttachment %s = UiBinderUtil.attachToDom(%s);",
-          attachedVar, elementToAttach);
+        w.write("UiBinderUtil.TempAttachment %s = UiBinderUtil.attachToDom(%s);",
+                attachedVar, elementToAttach);
+      }
 
       for (String s : attachStatements) {
         w.write(s);
       }
+
+      if (isAttachable) {
+        w.outdent();
+        w.write("}");
+        w.outdent();
+        w.write("};");
+      }
     }
 
-    if (attachedVar != null) {
-      w.newline();
-      w.write("// Detach section.");
-      w.write("%s.detach();", attachedVar);
+    w.newline();
+    if (detachStatements.size() > 0) {
+      if (isAttachable) {
+        w.write("%s.detachedInitializationCallback = ", getName());
+        w.indent();
+        w.indent();
+        w.write("new com.google.gwt.user.client.Command() {");
+        w.outdent();
+        w.write("@Override public void execute() {");
+        w.indent();
+      } else if (attachedVar != null) {
+        w.write("// Detach section.");
+        w.write("%s.detach();", attachedVar);
+      }
+
       for (String s : detachStatements) {
         w.write(s);
+      }
+      if (isAttachable) {
+        w.outdent();
+        w.write("}");
+        w.outdent();
+        w.write("};");
       }
     }
 

@@ -18,7 +18,9 @@ package com.google.gwt.uibinder.elementparsers;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.uibinder.client.UiBinderUtil.LazyDomElement;
 import com.google.gwt.uibinder.rebind.FieldManager;
+import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.uibinder.rebind.messages.MessageWriter;
@@ -115,20 +117,38 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
    */
   @Override
   public String postProcess(String consumed) throws UnableToCompleteException {
+    FieldWriter fieldWriter = fieldManager.require(fieldName);
+    int childrenPrecedence = fieldWriter.getBuildPrecedence() + 1;
+
     for (String idHolder : idToWidgetElement.keySet()) {
       XMLElement childElem = idToWidgetElement.get(idHolder);
+      FieldWriter childFieldWriter = uiWriter.parseElementToFieldWriter(childElem);
+      childFieldWriter.setBuildPrecendence(childrenPrecedence);
 
-      String childField = uiWriter.parseElementToFieldWriter(childElem).getName();
-
-      genSetWidgetTextCall(idHolder, childField);
+      genSetWidgetTextCall(idHolder, childFieldWriter.getName());
 
       if (uiWriter.useLazyWidgetBuilders()) {
-        fieldManager.require(fieldName).addDetachStatement(
-            "%1$s.addAndReplaceElement(%2$s, %3$s);",
-            fieldName, fieldManager.convertFieldToGetter(childField), idHolder);
+        // Register a DOM id field.
+        String lazyDomElementPath = LazyDomElement.class.getCanonicalName();
+        String elementPointer = idHolder + "Element";
+        FieldWriter elementWriter = fieldManager.registerField(
+            lazyDomElementPath, elementPointer);
+        elementWriter.setBuildPrecendence(childrenPrecedence);
+        elementWriter.setInitializer(String.format("new %s(%s)",
+            lazyDomElementPath, fieldManager.convertFieldToGetter(idHolder)));
+
+        // Add attach/detach sections for this element.
+        fieldWriter.addAttachStatement("%s.get();",
+            fieldManager.convertFieldToGetter(elementPointer));
+        fieldWriter.addDetachStatement(
+            "%s.addAndReplaceElement(%s, %s.get());",
+            fieldName,
+            fieldManager.convertFieldToGetter(childFieldWriter.getName()),
+            fieldManager.convertFieldToGetter(elementPointer));
       } else {
-        uiWriter.addInitStatement("%1$s.addAndReplaceElement(%2$s, %3$s);",
-            fieldName, childField, idHolder);
+        uiWriter.addInitStatement(
+            "%1$s.addAndReplaceElement(%2$s, %3$s);",
+            fieldName, childFieldWriter.getName(), idHolder);
       }
     }
 
