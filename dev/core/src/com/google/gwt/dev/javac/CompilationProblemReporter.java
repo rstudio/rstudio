@@ -189,14 +189,14 @@ public class CompilationProblemReporter {
       return false;
     }
     TreeLogger branch =
-        CompilationProblemReporter.reportErrors(logger, unit.getProblems(),
-            unit.getResourceLocation(), unit.isError(), new SourceFetcher() {
+        CompilationProblemReporter.reportErrors(logger, unit.getProblems(), unit
+            .getResourceLocation(), unit.isError(), new SourceFetcher() {
 
-              public String getSource() {
-                return unit.getSource();
-              }
+          public String getSource() {
+            return unit.getSource();
+          }
 
-            }, unit.getTypeName(), suppressErrors);
+        }, unit.getTypeName(), suppressErrors);
     return branch != null;
   }
 

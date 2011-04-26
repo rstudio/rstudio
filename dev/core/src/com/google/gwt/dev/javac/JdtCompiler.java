@@ -123,8 +123,8 @@ public class JdtCompiler {
       return Lists.normalizeUnmodifiable(results);
     }
 
-    public void process(CompilationUnitBuilder builder,
-        CompilationUnitDeclaration cud, List<CompiledClass> compiledClasses) {
+    public void process(CompilationUnitBuilder builder, CompilationUnitDeclaration cud,
+        List<CompiledClass> compiledClasses) {
       builder.setClasses(compiledClasses).setTypes(Collections.<JDeclaredType> emptyList())
           .setDependencies(new Dependencies()).setJsniMethods(Collections.<JsniMethod> emptyList())
           .setMethodArgs(new MethodArgNamesLookup()).setProblems(
@@ -180,8 +180,8 @@ public class JdtCompiler {
    * Interface for processing units on the fly during compilation.
    */
   public interface UnitProcessor {
-    void process(CompilationUnitBuilder builder,
-        CompilationUnitDeclaration cud, List<CompiledClass> compiledClasses);
+    void process(CompilationUnitBuilder builder, CompilationUnitDeclaration cud,
+        List<CompiledClass> compiledClasses);
   }
 
   /**
@@ -225,10 +225,9 @@ public class JdtCompiler {
   private class CompilerImpl extends Compiler {
 
     public CompilerImpl() {
-      super(new INameEnvironmentImpl(),
-          DefaultErrorHandlingPolicies.proceedWithAllProblems(),
-          getCompilerOptions(), new ICompilerRequestorImpl(),
-          new DefaultProblemFactory(Locale.getDefault()));
+      super(new INameEnvironmentImpl(), DefaultErrorHandlingPolicies.proceedWithAllProblems(),
+          getCompilerOptions(), new ICompilerRequestorImpl(), new DefaultProblemFactory(Locale
+              .getDefault()));
     }
 
     @Override
@@ -239,8 +238,7 @@ public class JdtCompiler {
       for (ClassFile classFile : classFiles) {
         createCompiledClass(classFile, results);
       }
-      List<CompiledClass> compiledClasses = new ArrayList<CompiledClass>(
-          results.values());
+      List<CompiledClass> compiledClasses = new ArrayList<CompiledClass>(results.values());
       addBinaryTypes(compiledClasses);
 
       ICompilationUnit icu = cud.compilationResult().compilationUnit;
@@ -252,8 +250,7 @@ public class JdtCompiler {
     /**
      * Recursively creates enclosing types first.
      */
-    private void createCompiledClass(ClassFile classFile,
-        Map<ClassFile, CompiledClass> results) {
+    private void createCompiledClass(ClassFile classFile, Map<ClassFile, CompiledClass> results) {
       if (results.containsKey(classFile)) {
         // Already created.
         return;
@@ -266,8 +263,9 @@ public class JdtCompiler {
         assert enclosingClass != null;
       }
       String internalName = CharOperation.charToString(classFile.fileName());
-      CompiledClass result = new CompiledClass(classFile.getBytes(), 
-          enclosingClass, isLocalType(classFile), internalName);
+      CompiledClass result =
+          new CompiledClass(classFile.getBytes(), enclosingClass, isLocalType(classFile),
+              internalName);
       results.put(classFile, result);
     }
   }
@@ -314,8 +312,7 @@ public class JdtCompiler {
         if (resource != null) {
           InputStream openStream = resource.openStream();
           try {
-            ClassFileReader cfr = ClassFileReader.read(openStream,
-                resource.toExternalForm(), true);
+            ClassFileReader cfr = ClassFileReader.read(openStream, resource.toExternalForm(), true);
             return new NameEnvironmentAnswer(cfr, null);
           } finally {
             Utility.close(openStream);
@@ -349,7 +346,8 @@ public class JdtCompiler {
         return false;
       }
       String resourceName = slashedPackageName + '/';
-      if ((additionalTypeProviderDelegate != null && additionalTypeProviderDelegate.doFindAdditionalPackage(slashedPackageName))) {
+      if ((additionalTypeProviderDelegate != null && additionalTypeProviderDelegate
+          .doFindAdditionalPackage(slashedPackageName))) {
         addPackages(slashedPackageName);
         return true;
       }
@@ -363,13 +361,12 @@ public class JdtCompiler {
       }
     }
   }
-  
+
   /**
    * Compiles the given set of units. The units will be internally modified to
    * reflect the results of compilation.
    */
-  public static List<CompilationUnit> compile(
-      Collection<CompilationUnitBuilder> builders) {
+  public static List<CompilationUnit> compile(Collection<CompilationUnitBuilder> builders) {
     Event jdtCompilerEvent = SpeedTracerLogger.start(CompilerEventType.JDT_COMPILER);
 
     try {
@@ -387,8 +384,9 @@ public class JdtCompiler {
     options.complianceLevel = options.sourceLevel = options.targetJDK = ClassFileConstants.JDK1_6;
 
     // Generate debug info for debugging the output.
-    options.produceDebugAttributes = ClassFileConstants.ATTR_VARS
-        | ClassFileConstants.ATTR_LINES | ClassFileConstants.ATTR_SOURCE;
+    options.produceDebugAttributes =
+        ClassFileConstants.ATTR_VARS | ClassFileConstants.ATTR_LINES
+            | ClassFileConstants.ATTR_SOURCE;
     // Tricks like "boolean stopHere = true;" depend on this setting.
     options.preserveAllLocalVariables = true;
     // Let the JDT collect compilation unit dependencies
@@ -402,8 +400,7 @@ public class JdtCompiler {
     return options;
   }
 
-  public static ReferenceBinding resolveType(
-      LookupEnvironment lookupEnvironment, String typeName) {
+  public static ReferenceBinding resolveType(LookupEnvironment lookupEnvironment, String typeName) {
     ReferenceBinding type = null;
 
     int p = typeName.indexOf('$');
@@ -575,8 +572,7 @@ public class JdtCompiler {
       }
 
       @Override
-      public boolean visit(TypeDeclaration typeDeclaration,
-          CompilationUnitScope scope) {
+      public boolean visit(TypeDeclaration typeDeclaration, CompilationUnitScope scope) {
         traverse(typeDeclaration);
         return false;
       }
@@ -696,8 +692,7 @@ public class JdtCompiler {
     return resolveType(compilerImpl.lookupEnvironment, typeName);
   }
 
-  public void setAdditionalTypeProviderDelegate(
-      AdditionalTypeProviderDelegate newDelegate) {
+  public void setAdditionalTypeProviderDelegate(AdditionalTypeProviderDelegate newDelegate) {
     additionalTypeProviderDelegate = newDelegate;
   }
 

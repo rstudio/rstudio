@@ -55,12 +55,12 @@ public final class CompiledClass implements Serializable {
    * @param enclosingClass - outer class
    * @param isLocal Is this class a local class? (See the JLS rev 2 section
    *          14.3)
-   * @param internalName the internal binary name for this class. e.g. {@code
-   *          java/util/Map$Entry}. See
+   * @param internalName the internal binary name for this class. e.g.
+   *          {@code java/util/Map$Entry}. See
    *          {@link "http://java.sun.com/docs/books/jvms/second_edition/html/ClassFile.doc.html#14757"}
    */
-  CompiledClass(byte[] classBytes, CompiledClass enclosingClass,
-      boolean isLocal, String internalName) {
+  CompiledClass(byte[] classBytes, CompiledClass enclosingClass, boolean isLocal,
+      String internalName) {
     this.enclosingClass = enclosingClass;
     this.internalName = StringInterner.get().intern(internalName);
     this.cacheToken = diskCache.writeByteArray(classBytes);
@@ -79,8 +79,8 @@ public final class CompiledClass implements Serializable {
   }
 
   /**
-   * Returns the class internal binary name for this type, e.g. {@code
-   * java/util/Map$Entry}.
+   * Returns the class internal binary name for this type, e.g.
+   * {@code java/util/Map$Entry}.
    */
   public String getInternalName() {
     return internalName;
@@ -98,8 +98,7 @@ public final class CompiledClass implements Serializable {
    */
   public String getSignatureHash() {
     if (signatureHash == null) {
-      signatureHash =
-          BytecodeSignatureMaker.getCompileDependencySignature(getBytes());
+      signatureHash = BytecodeSignatureMaker.getCompileDependencySignature(getBytes());
     }
     return signatureHash;
   }
@@ -132,8 +131,7 @@ public final class CompiledClass implements Serializable {
     if (nameEnvironmentAnswer == null) {
       try {
         ClassFileReader cfr =
-            new ClassFileReader(getBytes(),
-                unit.getResourceLocation().toCharArray(), true);
+            new ClassFileReader(getBytes(), unit.getResourceLocation().toCharArray(), true);
         nameEnvironmentAnswer = new NameEnvironmentAnswer(cfr, null);
       } catch (ClassFormatException e) {
         throw new RuntimeException("Unexpectedly unable to parse class file", e);
@@ -146,8 +144,7 @@ public final class CompiledClass implements Serializable {
     this.unit = unit;
   }
 
-  private void readObject(ObjectInputStream inputStream)
-      throws ClassNotFoundException, IOException {
+  private void readObject(ObjectInputStream inputStream) throws ClassNotFoundException, IOException {
     inputStream.defaultReadObject();
     this.cacheToken = diskCache.transferFromStream(inputStream);
   }

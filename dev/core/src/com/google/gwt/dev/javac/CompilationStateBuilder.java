@@ -146,7 +146,7 @@ public class CompilationStateBuilder {
     private final Map<String, CompiledClass> allValidClasses = new HashMap<String, CompiledClass>();
 
     private final GwtAstBuilder astBuilder = new GwtAstBuilder();
-    
+
     private final boolean suppressErrors;
 
     private transient LinkedBlockingQueue<CompilationUnitBuilder> buildQueue;
@@ -300,13 +300,12 @@ public class CompilationStateBuilder {
       logger = logger.branch(TreeLogger.DEBUG, "Validating newly compiled units");
       int errorCount = 0;
       for (CompilationUnit unit : resultUnits) {
-        if (CompilationProblemReporter.reportErrors(logger, unit,  suppressErrors)) {
+        if (CompilationProblemReporter.reportErrors(logger, unit, suppressErrors)) {
           errorCount++;
         }
       }
       if (suppressErrors && errorCount > 0 && !logger.isLoggable(TreeLogger.TRACE)) {
-        logger.log(TreeLogger.INFO, "Ignored " + errorCount + " unit" 
-            + (errorCount > 1 ? "s" : "") 
+        logger.log(TreeLogger.INFO, "Ignored " + errorCount + " unit" + (errorCount > 1 ? "s" : "")
             + " with compilation errors in first pass.  Specify -logLevel DEBUG to see all errors");
       }
       return resultUnits;
@@ -320,12 +319,12 @@ public class CompilationStateBuilder {
   }
 
   public static CompilationState buildFrom(TreeLogger logger, Set<Resource> resources,
-      AdditionalTypeProviderDelegate delegate) {  
+      AdditionalTypeProviderDelegate delegate) {
     return buildFrom(logger, resources, delegate, false);
   }
-  
+
   public static CompilationState buildFrom(TreeLogger logger, Set<Resource> resources,
-      AdditionalTypeProviderDelegate delegate, boolean suppressErrors) {  
+      AdditionalTypeProviderDelegate delegate, boolean suppressErrors) {
     Event event = SpeedTracerLogger.start(DevModeEventType.CSB_BUILD_FROM_ORACLE);
     try {
       return instance.doBuildFrom(logger, resources, delegate, suppressErrors);
@@ -333,7 +332,6 @@ public class CompilationStateBuilder {
       event.end();
     }
   }
-
 
   public static CompilationStateBuilder get() {
     return instance;
@@ -399,7 +397,8 @@ public class CompilationStateBuilder {
     return new CompilationState(logger, resultUnits, compileMoreLater);
   }
 
-  public CompilationState doBuildFrom(TreeLogger logger, Set<Resource> resources, boolean suppressErrors) {
+  public CompilationState doBuildFrom(TreeLogger logger, Set<Resource> resources,
+      boolean suppressErrors) {
     return doBuildFrom(logger, resources, null, suppressErrors);
   }
 
@@ -409,7 +408,7 @@ public class CompilationStateBuilder {
    * TODO: maybe use a finer brush than to synchronize the whole thing.
    */
   synchronized Collection<CompilationUnit> doBuildGeneratedTypes(TreeLogger logger,
-      Collection<GeneratedUnit> generatedUnits, CompileMoreLater compileMoreLater, 
+      Collection<GeneratedUnit> generatedUnits, CompileMoreLater compileMoreLater,
       boolean suppressErrors) {
 
     // Units we definitely want to build.
