@@ -13,10 +13,14 @@
 
 package org.rstudio.studio.client.workbench.views.files.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.CellTable;
 
 public interface FilesListCellTableResources extends CellTable.Resources 
 {
+   static FilesListCellTableResources INSTANCE = 
+    (FilesListCellTableResources)GWT.create(FilesListCellTableResources.class);
+   
    @Source("FilesListCellTableStyle.css")
    CellTable.Style cellTableStyle();    
 }
