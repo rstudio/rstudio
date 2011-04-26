@@ -12,8 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.views.packages.ui;
 
-import java.util.ArrayList;
-
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.ModalDialog;

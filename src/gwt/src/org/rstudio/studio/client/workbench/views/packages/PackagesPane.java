@@ -13,19 +13,9 @@
 package org.rstudio.studio.client.workbench.views.packages;
 
 import com.google.gwt.cell.client.CheckboxCell;
-import com.google.gwt.cell.client.ClickableTextCell;
 import com.google.gwt.cell.client.FieldUpdater;
-import com.google.gwt.cell.client.ValueUpdater;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.TextColumn;
@@ -36,6 +26,7 @@ import com.google.gwt.view.client.NoSelectionModel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.cellview.ImageButtonColumn;
+import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.Toolbar;
@@ -157,9 +148,11 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    @Override
    protected Widget createMainWidget()
    {
+      packagesDataProvider_ = new ListDataProvider<PackageInfo>();
+      
       packagesTable_ = new CellTable<PackageInfo>(
         15,
-        GWT.<PackagesCellTableResources> create(PackagesCellTableResources.class));
+        PackagesCellTableResources.INSTANCE);
       packagesTable_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
       packagesTable_.setSelectionModel(new NoSelectionModel<PackageInfo>());
       packagesTable_.setWidth("100%", false);
@@ -190,7 +183,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
           });
       packagesTable_.addColumn(removeColumn);
       
-      packagesDataProvider_ = new ListDataProvider<PackageInfo>();
+     
       packagesDataProvider_.addDataDisplay(packagesTable_);
       
       ScrollPanel scrollPanel = new ScrollPanel();
@@ -226,55 +219,20 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    }
    
    // package name column which includes a hyperlink to package docs
-   class NameColumn extends Column<PackageInfo, String>
+   class NameColumn extends LinkColumn<PackageInfo>
    {
       public NameColumn()
       {
-         super(new ClickableTextCell(){
-            
-            // render anchor using custom styles. detect selection and
-            // add selected style to invert text color
-            @Override
-            protected void render(Context context, 
-                                  SafeHtml value, 
-                                  SafeHtmlBuilder sb) 
-            {   
-               if (value != null) 
+         super(packagesDataProvider_,
+               new OperationWithInput<PackageInfo>() 
                {
-                 Styles styles = RESOURCES.styles();
-                 StringBuilder div = new StringBuilder();
-                 div.append("<div class=\"");
-                 div.append(styles.packageNameLink());
-                 div.append("\">");
-                 
-                 sb.appendHtmlConstant(div.toString());
-                 sb.append(value);
-                 sb.appendHtmlConstant("</div>");
-               }
-             }
-            
-            // click event which occurs on the actual package link div
-            // results in showing help for that package
-            @Override
-            public void onBrowserEvent(Context context, Element parent, 
-                                       String value, NativeEvent event, 
-                                       ValueUpdater<String> valueUpdater) 
-            {
-              super.onBrowserEvent(context, parent, value, event, valueUpdater);
-              if ("click".equals(event.getType()))
-              {  
-                 // verify that the click was on the package link
-                 JavaScriptObject evTarget = event.getEventTarget().cast();
-                 if (Element.is(evTarget) &&
-                     Element.as(evTarget).getClassName().startsWith(
-                                        RESOURCES.styles().packageNameLink()))
-                 {  
-                    observer_.showHelp(
-                      packagesDataProvider_.getList().get(context.getIndex()));
-                 }
-              }
-            }            
-         });
+                  @Override
+                  public void execute(PackageInfo packageInfo)
+                  {
+                     observer_.showHelp(packageInfo);
+                  }
+               },
+               true);
       }
       
       @Override
@@ -284,24 +242,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       }
    }
    
-   static interface Styles extends CssResource
-   {
-      String packageNameLink();
-      String packageNameLinkSelected();
-   }
-  
-   interface Resources extends ClientBundle
-   {
-      @Source("PackagesPane.css")
-      Styles styles();
-   }
    
-   static Resources RESOURCES = (Resources)GWT.create(Resources.class) ;
-   public static void ensureStylesInjected()
-   {
-      RESOURCES.styles().ensureInjected();
-   }
-
+         
    private CellTable<PackageInfo> packagesTable_;
    private ListDataProvider<PackageInfo> packagesDataProvider_;
    private SearchWidget searchWidget_;

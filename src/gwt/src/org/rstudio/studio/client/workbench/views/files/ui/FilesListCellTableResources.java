@@ -1,5 +1,5 @@
 /*
- * PackagesCellTableResources.java
+ * FilesListCellTableResources.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -10,18 +10,13 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.packages.ui;
 
+package org.rstudio.studio.client.workbench.views.files.ui;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.CellTable;
 
-public interface PackagesCellTableResources extends CellTable.Resources 
+public interface FilesListCellTableResources extends CellTable.Resources 
 {
-   static PackagesCellTableResources INSTANCE = 
-      (PackagesCellTableResources)GWT.create(PackagesCellTableResources.class) ;
-   
-  
-   @Source("PackagesCellTableStyle.css")
+   @Source("FilesListCellTableStyle.css")
    CellTable.Style cellTableStyle();    
 }

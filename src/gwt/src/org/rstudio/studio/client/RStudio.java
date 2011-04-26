@@ -24,6 +24,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.filedialog.FileDialogResources;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -40,11 +41,12 @@ import org.rstudio.studio.client.common.cran.ChooseCRANMirrorDialog;
 import org.rstudio.studio.client.impl.BrowserFence;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
+import org.rstudio.studio.client.workbench.views.files.ui.FilesListCellTableResources;
 import org.rstudio.studio.client.workbench.views.history.view.HistoryPane;
 import org.rstudio.studio.client.workbench.views.history.view.Shelf;
-import org.rstudio.studio.client.workbench.views.packages.PackagesPane;
 import org.rstudio.studio.client.workbench.views.packages.ui.CheckForUpdatesDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
+import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableResources;
 import org.rstudio.studio.client.workbench.views.plots.ui.ExportDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.PrintDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorResources;
@@ -117,6 +119,8 @@ public class RStudio implements EntryPoint
       ConsoleResources.INSTANCE.consoleStyles().ensureInjected();
       FileDialogResources.INSTANCE.styles().ensureInjected();
       ManipulatorResources.INSTANCE.manipulatorStyles().ensureInjected();
+      PackagesCellTableResources.INSTANCE.cellTableStyle().ensureInjected();
+      FilesListCellTableResources.INSTANCE.cellTableStyle().ensureInjected();
 
       SupportPopupMenu.ensureStylesInjected();
       SlideLabel.ensureStylesInjected();
@@ -135,7 +139,7 @@ public class RStudio implements EntryPoint
       FindReplaceBar.ensureStylesInjected();
       FontSizer.ensureStylesInjected();
       PreferencesDialog.ensureStylesInjected();
-      PackagesPane.ensureStylesInjected();
+      LinkColumn.ensureStylesInjected();
       CheckForUpdatesDialog.ensureStylesInjected();
       ChooseCRANMirrorDialog.ensureStylesInjected();
 

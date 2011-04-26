@@ -1,0 +1,89 @@
+
+/* Based on:
+http://code.google.com/p/google-web-toolkit/source/browse/trunk/user/src/com/google/gwt/user/cellview/client/CellTable.css
+*/
+
+
+@def selectionBorderWidth 2px;
+.cellTableWidget {
+  
+}
+
+.cellTableFirstColumn {
+}
+
+
+.cellTableLastColumn {
+  
+}
+
+.cellTableFooter {
+  border-top: 2px solid #6f7277;
+  padding: 3px 2px;
+  text-align: left;
+  color: #4b4a4a;
+  text-shadow: #ddf 1px 1px 0;
+  overflow: hidden;
+}
+
+.cellTableHeader {
+  border-bottom: 2px solid #6f7277;
+  padding: 3px 2px;
+  text-align: left;
+  color: #4b4a4a;
+  text-shadow: #ddf 1px 1px 0;
+  overflow: hidden;
+}
+
+.cellTableCell {
+  padding: 0px 1px;
+  overflow: hidden;
+}
+
+.cellTableFirstColumnFooter {
+  
+}
+
+.cellTableFirstColumnHeader {
+  
+}
+
+.cellTableLastColumnFooter {
+  
+}
+
+.cellTableLastColumnHeader {
+  
+}
+
+.cellTableSortableHeader {
+  cursor: pointer;
+  cursor: hand;
+}
+
+.cellTableSortableHeader:hover {
+  color: #6c6b6b;
+}
+
+.cellTableSortedHeaderAscending {
+
+}
+
+.cellTableSortedHeaderDescending {
+
+}
+
+.cellTableEvenRow, .cellTableOddRow, .cellTableHoveredRow, .cellTableSelectedRow, .cellTableKeyboardSelectedRow {
+  background: #ffffff;
+  color: #606060;
+}
+
+.cellTableEvenRowCell, .cellTableOddRowCell, .cellTableHoveredRowCell, .cellTableSelectedRowCell, .cellTableKeyboardSelectedRowCell, .cellTableKeyboardSelectedCell   {
+  border: selectionBorderWidth solid #ffffff;
+  color: #606060;
+}
+
+.cellTableLoading {
+  margin: 30px;
+}
+

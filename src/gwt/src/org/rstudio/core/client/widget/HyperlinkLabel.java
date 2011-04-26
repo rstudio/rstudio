@@ -54,13 +54,28 @@ public class HyperlinkLabel extends Label
          removeStyleDependentName("Link");
    }
    
+   public void setClearUnderlineOnClick(boolean clearOnClick)
+   {
+      clearUnderlineOnClick_ = clearOnClick;
+   }
+  
+   
    @Override 
    protected void onLoad()
    {
       addMouseOverHandler(mouseHandlers_);
       addMouseOutHandler(mouseHandlers_);
       if (clickHandler_ != null)
-         addClickHandler(clickHandler_);
+         addClickHandler(new ClickHandler() {
+
+            public void onClick(ClickEvent event)
+            {
+               if (clearUnderlineOnClick_)
+                  removeStyleDependentName("Link");
+               clickHandler_.onClick(event);        
+            }
+            
+         });
    }
   
   
@@ -69,4 +84,5 @@ public class HyperlinkLabel extends Label
   
    
    private boolean alwaysUnderline_ = false;
+   private boolean clearUnderlineOnClick_ = false;
 }
