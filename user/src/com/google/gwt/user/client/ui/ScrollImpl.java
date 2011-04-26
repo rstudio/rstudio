@@ -49,13 +49,17 @@ class ScrollImpl {
       // Detect if the scrollable element or the container within it changes
       // size, either of which could affect the scroll position.
       var resizeHandler = $entry(function() {
-        // Trigger a synthetic scroll event the scroll position changes.
-        if (scrollableElem.scrollTop != scrollableElem.__lastScrollTop ||
-            scrollableElem.scrollLeft != scrollableElem.__lastScrollLeft) {
-          scrollHandler(); // Update scroll positions.
-          @com.google.gwt.user.client.ui.ScrollImpl.ScrollImplTrident::triggerScrollEvent(Lcom/google/gwt/dom/client/Element;)
-            (scrollableElem);
-        }
+        // Give the browser a chance to fire a native scroll event before
+        // synthesizing one. 
+        setTimeout($entry(function() {
+          // Trigger a synthetic scroll event if the scroll position changes.
+          if (scrollableElem.scrollTop != scrollableElem.__lastScrollTop ||
+              scrollableElem.scrollLeft != scrollableElem.__lastScrollLeft) {
+            scrollHandler(); // Update scroll positions.
+            @com.google.gwt.user.client.ui.ScrollImpl.ScrollImplTrident::triggerScrollEvent(Lcom/google/gwt/dom/client/Element;)
+              (scrollableElem);
+          }
+        }), 1);
       });
       scrollable.attachEvent('onresize', resizeHandler);
       container.attachEvent('onresize', resizeHandler);
