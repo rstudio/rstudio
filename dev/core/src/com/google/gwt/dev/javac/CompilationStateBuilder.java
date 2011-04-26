@@ -308,7 +308,7 @@ public class CompilationStateBuilder {
           errorCount++;
         }
       }
-      if (suppressErrors && errorCount > 0 && !logger.isLoggable(TreeLogger.TRACE))
+      if (suppressErrors && errorCount > 0 && !logger.isLoggable(TreeLogger.TRACE)
           && logger.isLoggable(TreeLogger.INFO)) {
         logger.log(TreeLogger.INFO, "Ignored " + errorCount + " unit" + (errorCount > 1 ? "s" : "")
             + " with compilation errors in first pass.  Specify -logLevel DEBUG to see all errors");
