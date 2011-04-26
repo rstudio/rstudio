@@ -26,6 +26,7 @@ import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
 import com.google.gwt.uibinder.attributeparsers.BundleAttributeParser;
 import com.google.gwt.uibinder.attributeparsers.BundleAttributeParsers;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiBinderUtil.LazyDomElement;
 import com.google.gwt.uibinder.elementparsers.AttributeMessageParser;
 import com.google.gwt.uibinder.elementparsers.BeanParser;
 import com.google.gwt.uibinder.elementparsers.ElementParser;
@@ -370,13 +371,11 @@ public class UiBinderWriter implements Statements {
     String name = declareDomIdHolder();
 
     if (useLazyWidgetBuilders) {
-      // Initialize and add the removeAttribute('id') statement for the new
-      // DOM field.
+      // Create and initialize the dom field with LazyDomElement.
       FieldWriter field = fieldManager.require(fieldName);
-      field.setInitializer(formatCode(
-          "com.google.gwt.dom.client.Document.get().getElementById(%s).cast()",
+      field.setInitializer(formatCode("new %s(%s).get().cast()",
+          LazyDomElement.class.getCanonicalName(),
           fieldManager.convertFieldToGetter(name)));
-      field.addStatement("%s.removeAttribute(\"id\");", fieldName);
 
       // The dom must be created by its ancestor.
       fieldManager.require(ancestorField).addAttachStatement(
