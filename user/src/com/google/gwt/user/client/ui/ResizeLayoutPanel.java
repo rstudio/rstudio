@@ -82,8 +82,6 @@ public class ResizeLayoutPanel extends SimplePanel implements ProvidesResize,
 
     /**
      * Called on detach.
-     * 
-     * @param panel the panel
      */
     public void onDetach() {
       isAttached = false;
@@ -91,8 +89,6 @@ public class ResizeLayoutPanel extends SimplePanel implements ProvidesResize,
 
     /**
      * Handle a resize event.
-     * 
-     * @param panel the panel
      */
     protected void handleResize() {
       if (isAttached && delegate != null) {

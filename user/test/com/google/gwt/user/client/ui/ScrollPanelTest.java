@@ -43,9 +43,41 @@ public class ScrollPanelTest extends SimplePanelTestBase<ScrollPanel> {
         int maxVerticalPos = scrollPanel.getMaximumVerticalScrollPosition();
 
         // Account for scrollbars up to 50 pixels.
-        assertTrue(maxHorizontalPos > 300 && maxHorizontalPos < 350);
-        assertTrue(maxVerticalPos > 400 && maxHorizontalPos < 450);
+        assertTrue(maxHorizontalPos >= 300 && maxHorizontalPos < 350);
+        assertTrue(maxVerticalPos >= 400 && maxHorizontalPos < 450);
         RootPanel.get().remove(scrollPanel);
+        finishTest();
+      }
+    });
+  }
+
+  @DoNotRunWith(Platform.HtmlUnitLayout)
+  public void testScrollToPosition() {
+    final ScrollPanel scrollPanel = createPanel();
+    scrollPanel.setPixelSize(200, 300);
+    RootPanel.get().add(scrollPanel);
+
+    Label content = new Label("Hello World");
+    content.setPixelSize(500, 700);
+    scrollPanel.setWidget(content);
+    
+    delayTestFinish(3000);
+    Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+      public void execute() {
+        scrollPanel.scrollToBottom();
+        assertEquals(scrollPanel.getMaximumVerticalScrollPosition(), scrollPanel
+            .getVerticalScrollPosition());
+
+        scrollPanel.scrollToTop();
+        assertEquals(0, scrollPanel.getVerticalScrollPosition());
+
+        scrollPanel.scrollToRight();
+        assertEquals(scrollPanel.getMaximumHorizontalScrollPosition(), scrollPanel
+            .getHorizontalScrollPosition());
+
+        scrollPanel.scrollToLeft();
+        assertEquals(0, scrollPanel.getHorizontalScrollPosition());
+
         finishTest();
       }
     });

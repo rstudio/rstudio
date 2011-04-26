@@ -89,6 +89,45 @@ public class AttachDetachException extends UmbrellaException {
   }
 
   /**
+   * <p>
+   * Iterator through all child widgets, trying to perform the specified
+   * {@link Command} for each. All widgets will be visited even if the Command
+   * throws an exception. If one or more exceptions occur, they will be combined
+   * and thrown as a single {@link AttachDetachException}.
+   * </p>
+   * <p>
+   * Use this method when attaching or detaching a widget with children to
+   * ensure that the logical and physical state of all children match the
+   * logical and physical state of the parent.
+   * </p>
+   * 
+   * @param c the {@link Command} to try on all children
+   * @param widgets children to iterate, null children are ignored
+   */
+  public static void tryCommand(Command c, IsWidget... widgets) {
+    Set<Throwable> caught = null;
+    for (IsWidget w : widgets) {
+      try {
+        if (w != null) {
+          c.execute(w.asWidget());
+        }
+      } catch (Throwable e) {
+        // Catch all exceptions to prevent some children from being attached
+        // while others are not.
+        if (caught == null) {
+          caught = new HashSet<Throwable>();
+        }
+        caught.add(e);
+      }
+    }
+
+    // Throw the combined exceptions now that all children are attached.
+    if (caught != null) {
+      throw new AttachDetachException(caught);
+    }
+  }
+
+  /**
    * Construct a new {@link AttachDetachException}.
    * 
    * @param causes the causes of the exception

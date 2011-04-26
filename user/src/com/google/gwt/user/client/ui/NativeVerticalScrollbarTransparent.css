@@ -1,0 +1,15 @@
+@def OPACITY_DURATION 350ms;
+
+.nativeVerticalScrollbar {
+  opacity: 0.7;
+  filter: literal("alpha(opacity = 70)");
+  -webkit-transition: opacity OPACITY_DURATION;
+  -moz-transition: opacity OPACITY_DURATION;
+  -o-transition: opacity OPACITY_DURATION;
+  transition: opacity OPACITY_DURATION;
+}
+
+.nativeVerticalScrollbar:hover {
+  opacity: 1.0;
+  filter: literal("alpha(opacity = 100)");
+}

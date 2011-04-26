@@ -15,13 +15,15 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Style.Overflow;
+import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.touch.client.TouchScroller;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
+import com.google.gwt.user.client.Event;
 
 /**
  * A simple panel that wraps its contents in a scrollable area.
@@ -30,94 +32,22 @@ import com.google.gwt.user.client.Element;
 public class ScrollPanel extends SimplePanel implements SourcesScrollEvents,
     RequiresResize, ProvidesResize, HasScrolling {
 
-  /**
-   * Implementation of this widget.
-   */
-  static class Impl {
-    /**
-     * Get the maximum horizontal scroll position.
-     * 
-     * @param scrollable the scrollable element
-     * @return the maximum scroll position
-     */
-    public int getMaximumHorizontalScrollPosition(Element scrollable) {
-      return scrollable.getScrollWidth() - scrollable.getClientWidth();
-    }
-
-    /**
-     * Get the minimum horizontal scroll position.
-     * 
-     * @param scrollable the scrollable element
-     * @return the minimum scroll position
-     */
-    public int getMinimumHorizontalScrollPosition(Element scrollable) {
-      return 0;
-    }
-  }
-
-  /**
-   * Firefox scrolls in the negative direction in RTL mode.
-   */
-  static class ImplRtlReversed extends Impl {
-    @Override
-    public int getMaximumHorizontalScrollPosition(Element scrollable) {
-      return isRtl(scrollable) ? 0 : super
-          .getMaximumHorizontalScrollPosition(scrollable);
-    }
-
-    @Override
-    public int getMinimumHorizontalScrollPosition(Element scrollable) {
-      return isRtl(scrollable) ? scrollable.getClientWidth()
-          - scrollable.getScrollWidth() : 0;
-    }
-
-    /**
-     * Check if the specified element has an RTL direction. We can't base this
-     * on the current locale because the user can modify the direction at the
-     * DOM level.
-     * 
-     * @param scrollable the scrollable element
-     * @return true if the direction is RTL, false if LTR
-     */
-    private native boolean isRtl(Element scrollable) /*-{
-      var computedStyle = $doc.defaultView.getComputedStyle(scrollable, null);
-      return computedStyle.getPropertyValue('direction') == 'rtl';
-    }-*/;
-  }
-
-  private static Impl impl;
-
-  private Element containerElem;
+  private final Element containerElem;
+  private final Element scrollableElem;
 
   /**
    * The scroller used to support touch events.
    */
   private TouchScroller touchScroller;
-  
+
   /**
    * Creates an empty scroll panel.
    */
   public ScrollPanel() {
-    if (impl == null) {
-      impl = GWT.create(Impl.class);
-    }
-    
-    setAlwaysShowScrollBars(false);
-
-    containerElem = DOM.createDiv();
-    getElement().appendChild(containerElem);
-
-    // Prevent IE standard mode bug when a AbsolutePanel is contained.
-    DOM.setStyleAttribute(getElement(), "position", "relative");
-    DOM.setStyleAttribute(containerElem, "position", "relative");
-
-    // Hack to account for the IE6/7 scrolling bug described here:
-    //   http://stackoverflow.com/questions/139000/div-with-overflowauto-and-a-100-wide-table-problem
-    DOM.setStyleAttribute(getElement(), "zoom", "1");
-    DOM.setStyleAttribute(containerElem, "zoom", "1");
-
-    // Enable touch scrolling.
-    setTouchScrollingDisabled(false);
+    this.scrollableElem = getElement();
+    this.containerElem = Document.get().createDivElement().cast();
+    scrollableElem.appendChild(containerElem);
+    initialize();
   }
 
   /**
@@ -130,8 +60,29 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents,
     setWidget(child);
   }
 
+  /**
+   * Creates an empty scroll panel using the specified root, scrollable, and
+   * container elements.
+   * 
+   * @param root the root element of the Widget
+   * @param scrollable the scrollable element, which can be the same as the root
+   *          element
+   * @param container the container element that holds the child
+   */
+  protected ScrollPanel(Element root, Element scrollable, Element container) {
+    super(root);
+    this.scrollableElem = scrollable;
+    this.containerElem = container;
+    initialize();
+  }
+
   public HandlerRegistration addScrollHandler(ScrollHandler handler) {
-    return addDomHandler(handler, ScrollEvent.getType());
+    /*
+     * Sink the event on the scrollable element, which may not be the root
+     * element.
+     */
+    Event.sinkEvents(getScrollableElement(), Event.ONSCROLL);
+    return addHandler(handler, ScrollEvent.getType());
   }
 
   /**
@@ -149,7 +100,7 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents,
    * @param item the item whose visibility is to be ensured
    */
   public void ensureVisible(UIObject item) {
-    Element scroll = getElement();
+    Element scroll = getScrollableElement();
     Element element = item.getElement();
     ensureVisibleImpl(scroll, element);
   }
@@ -160,19 +111,19 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents,
    * @return the horizontal scroll position, in pixels
    */
   public int getHorizontalScrollPosition() {
-    return DOM.getElementPropertyInt(getElement(), "scrollLeft");
+    return getScrollableElement().getScrollLeft();
   }
 
   public int getMaximumHorizontalScrollPosition() {
-    return impl.getMaximumHorizontalScrollPosition(getElement());
+    return ScrollImpl.get().getMaximumHorizontalScrollPosition(getScrollableElement());
   }
 
   public int getMaximumVerticalScrollPosition() {
-    return getElement().getScrollHeight() - getElement().getClientHeight();
+    return getScrollableElement().getScrollHeight() - getScrollableElement().getClientHeight();
   }
 
   public int getMinimumHorizontalScrollPosition() {
-    return impl.getMinimumHorizontalScrollPosition(getElement());
+    return ScrollImpl.get().getMinimumHorizontalScrollPosition(getScrollableElement());
   }
 
   public int getMinimumVerticalScrollPosition() {
@@ -187,7 +138,7 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents,
    */
   @Deprecated
   public int getScrollPosition() {
-    return DOM.getElementPropertyInt(getElement(), "scrollTop");
+    return getScrollableElement().getScrollTop();
   }
 
   public int getVerticalScrollPosition() {
@@ -224,29 +175,28 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents,
    * Scroll to the bottom of this panel.
    */
   public void scrollToBottom() {
-    setScrollPosition(DOM.getElementPropertyInt(getElement(), "scrollHeight"));
+    setVerticalScrollPosition(getMaximumVerticalScrollPosition());
   }
 
   /**
    * Scroll to the far left of this panel.
    */
   public void scrollToLeft() {
-    setHorizontalScrollPosition(0);
+    setHorizontalScrollPosition(getMinimumHorizontalScrollPosition());
   }
 
   /**
    * Scroll to the far right of this panel.
    */
   public void scrollToRight() {
-    setHorizontalScrollPosition(DOM.getElementPropertyInt(getElement(),
-        "scrollWidth"));
+    setHorizontalScrollPosition(getMaximumHorizontalScrollPosition());
   }
 
   /**
    * Scroll to the top of this panel.
    */
   public void scrollToTop() {
-    setScrollPosition(0);
+    setVerticalScrollPosition(getMinimumVerticalScrollPosition());
   }
 
   /**
@@ -256,8 +206,7 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents,
    * @param alwaysShow <code>true</code> to show scroll bars at all times
    */
   public void setAlwaysShowScrollBars(boolean alwaysShow) {
-    DOM.setStyleAttribute(getElement(), "overflow", alwaysShow ? "scroll"
-        : "auto");
+    getScrollableElement().getStyle().setOverflow(alwaysShow ? Overflow.SCROLL : Overflow.AUTO);
   }
 
   /**
@@ -278,7 +227,7 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents,
    * @param position the new horizontal scroll position, in pixels
    */
   public void setHorizontalScrollPosition(int position) {
-    DOM.setElementPropertyInt(getElement(), "scrollLeft", position);
+    getScrollableElement().setScrollLeft(position);
   }
 
   /**
@@ -290,7 +239,7 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents,
    */
   @Deprecated
   public void setScrollPosition(int position) {
-    DOM.setElementPropertyInt(getElement(), "scrollTop", position);
+    getScrollableElement().setScrollTop(position);
   }
 
   /**
@@ -352,6 +301,40 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents,
     return containerElem;
   }
 
+  /**
+   * Get the scrollable element. That is the element with its overflow set to
+   * 'auto' or 'scroll'.
+   * 
+   * @return the scrollable element
+   */
+  protected Element getScrollableElement() {
+    return scrollableElem;
+  }
+
+  @Override
+  protected void onAttach() {
+    super.onAttach();
+
+    /*
+     * Attach the event listener in onAttach instead of onLoad so users cannot
+     * accidentally override it. If the scrollable element is the same as the
+     * root element, then we set the event listener twice (once in
+     * super.onAttach() and once here), which is fine.
+     */
+    Event.setEventListener(getScrollableElement(), this);
+  }
+
+  @Override
+  protected void onDetach() {
+    /*
+     * Detach the event listener in onDetach instead of onUnload so users cannot
+     * accidentally override it.
+     */
+    Event.setEventListener(getScrollableElement(), null);
+
+    super.onDetach();
+  }
+
   private native void ensureVisibleImpl(Element scroll, Element e) /*-{
     if (!e)
       return; 
@@ -365,4 +348,26 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents,
 
     scroll.scrollTop = realOffset - scroll.offsetHeight / 2;
   }-*/;
+
+  /**
+   * Initialize the widget.
+   */
+  private void initialize() {
+    setAlwaysShowScrollBars(false);
+
+    // Prevent IE standard mode bug when a AbsolutePanel is contained.
+    scrollableElem.getStyle().setPosition(Position.RELATIVE);
+    containerElem.getStyle().setPosition(Position.RELATIVE);
+
+    // Hack to account for the IE6/7 scrolling bug described here:
+    //   http://stackoverflow.com/questions/139000/div-with-overflowauto-and-a-100-wide-table-problem
+    scrollableElem.getStyle().setProperty("zoom", "1");
+    containerElem.getStyle().setProperty("zoom", "1");
+
+    // Enable touch scrolling.
+    setTouchScrollingDisabled(false);
+
+    // Initialize the scrollable element.
+    ScrollImpl.get().initialize(scrollableElem, containerElem);
+  }
 }
