@@ -18,9 +18,13 @@ import com.google.gwt.user.cellview.client.CellTable;
 
 public interface FilesListCellTableResources extends CellTable.Resources 
 {
-   static FilesListCellTableResources INSTANCE = 
+   static FilesListCellTableResources INSTANCE =
     (FilesListCellTableResources)GWT.create(FilesListCellTableResources.class);
-   
+
+   interface Style extends CellTable.Style
+   {
+   }
+
    @Source("FilesListCellTableStyle.css")
-   CellTable.Style cellTableStyle();    
+   Style cellTableStyle();
 }

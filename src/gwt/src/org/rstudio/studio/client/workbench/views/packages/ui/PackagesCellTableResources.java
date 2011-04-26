@@ -20,8 +20,11 @@ public interface PackagesCellTableResources extends CellTable.Resources
 {
    static PackagesCellTableResources INSTANCE = 
       (PackagesCellTableResources)GWT.create(PackagesCellTableResources.class) ;
-   
+
+   interface Style extends CellTable.Style
+   {
+   }
   
    @Source("PackagesCellTableStyle.css")
-   CellTable.Style cellTableStyle();    
+   Style cellTableStyle();
 }
