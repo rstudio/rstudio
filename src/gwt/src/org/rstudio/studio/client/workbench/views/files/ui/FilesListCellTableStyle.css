@@ -18,21 +18,22 @@ http://code.google.com/p/google-web-toolkit/source/browse/trunk/user/src/com/goo
 }
 
 .cellTableFooter {
-  border-top: 2px solid #6f7277;
-  padding: 3px 2px;
+  border-top: 1px solid #BBB;  
+  padding: 1px 1px;
   text-align: left;
-  color: #4b4a4a;
-  text-shadow: #ddf 1px 1px 0;
   overflow: hidden;
+  cursor: default;
 }
 
 .cellTableHeader {
-  border-bottom: 2px solid #6f7277;
-  padding: 3px 2px;
+  border-bottom: 1px solid #BBB;  
+  border-left: 1px solid #BBB;
+  padding: 1px 1px;
   text-align: left;
-  color: #4b4a4a;
-  text-shadow: #ddf 1px 1px 0;
+  font-weight: normal;
+  background-color: #F3F4F4;
   overflow: hidden;
+  cursor: default;
 }
 
 .cellTableCell {

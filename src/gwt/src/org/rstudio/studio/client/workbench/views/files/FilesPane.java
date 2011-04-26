@@ -178,11 +178,6 @@ public class FilesPane extends WorkbenchPane implements Files.Display
       return filesList_.getSelectedFiles();
    } 
    
-   public void scrollToBottom()
-   {
-      filesList_.scrollToBottom();
-   }
-   
    @Override 
    protected Widget createMainWidget()
    {

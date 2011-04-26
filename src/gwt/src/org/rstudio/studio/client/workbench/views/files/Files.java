@@ -32,7 +32,6 @@ import org.rstudio.studio.client.common.WorkbenchEventHelper;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserHandler;
-import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -46,7 +45,6 @@ import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.files.events.*;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
-import org.rstudio.studio.client.workbench.views.files.model.FileSystemItemAction;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.files.model.PendingFileUpload;
 
@@ -103,8 +101,6 @@ public class Files
       void showFileExport(String defaultName,
                           String defaultExtension,
                           ProgressOperationWithInput<String> operation);
-      
-      void scrollToBottom();
    }
 
    @Inject
@@ -214,23 +210,6 @@ public class Files
    void onRefreshFiles()
    {
       view_.listDirectory(currentPath_, currentPathFilesDS_);
-   }
-
-   @Handler
-   void onNewTextFile()
-   {  
-      onNewFile("New Text File", null, null);
-   }
-   
-   @Handler
-   void onNewRSourceFile()
-   {
-      onNewFile("New R Source File", "R", new FileSystemItemAction() {
-         public void execute(FileSystemItem file)
-         {
-            eventBus_.fireEvent(new OpenSourceFileEvent(file, FileTypeRegistry.R));
-         }  
-      });
    }
 
    @Handler
@@ -516,60 +495,6 @@ public class Files
       session_.persistClientState();
    }
    
-   private void addFileAndScrollToBottom(FileSystemItem file)
-   {
-     view_.updateDirectoryListing(FileChange.createAdd(file));
-     view_.scrollToBottom();
-   }
-   
-   private void onNewFile(String title, 
-                          final String defaultExtension,
-                          final FileSystemItemAction successAction)
-   {
-      globalDisplay_.promptForText(
-         title,
-         "Please enter the new file name:",
-         null,
-         new ProgressOperationWithInput<String>() {
-
-            public void execute(String input, final ProgressIndicator progress)
-            {
-               // append extension if necessary
-               if (defaultExtension != null)
-               {
-                  if (!input.contains("."))
-                     input = input.concat("." + defaultExtension);
-               }
-
-               // set progress
-               progress.onProgress("Creating file...");
-
-               // create file entry
-               final FileSystemItem newFile = FileSystemItem.createFile(
-                                          currentPath_.completePath(input));
-
-               // call server.
-               server_.createFile(
-                     newFile,
-                     new VoidServerRequestCallback(progress) {
-
-                        // HACK: manually add file entry on success so we can
-                        // scroll to the bottom and have the file appear. we will
-                        // later also get an add file event from the server but
-                        // this will be a no-op
-                        @Override
-                        protected void onSuccess()
-                        {
-                           addFileAndScrollToBottom(newFile);
-
-                           if (successAction != null)
-                              successAction.execute(newFile);
-                        }
-                     });
-             }
-         });
-   }
-
    // data source for listing files on the current path which can 
    // be passed to the files view
    ServerDataSource<JsArray<FileSystemItem>> currentPathFilesDS_ = 

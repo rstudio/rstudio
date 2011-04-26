@@ -19,7 +19,6 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -29,21 +28,16 @@ import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.ImageResourceCell;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.ScrollPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.view.client.DefaultSelectionEventManager;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.MultiSelectionModel;
@@ -71,16 +65,27 @@ public class FilesList extends Composite
       
       // selection checkbox
       Column<FileSystemItem, Boolean> checkColumn = 
-         new Column<FileSystemItem, Boolean>(new CheckboxCell(true, false)) 
+         new Column<FileSystemItem, Boolean>(new CheckboxCell(true, false) {
+            @Override
+            public void render(Context context, Boolean value, SafeHtmlBuilder sb) 
+            {
+               // don't render the check box if its for the parent path
+               if (getParentPath() == null || context.getIndex() > 0)
+                  super.render(context, value, sb);
+            }
+         }) 
          {
             @Override
             public Boolean getValue(FileSystemItem item)
             {
                return selectionModel_.isSelected(item);
             }
+            
+            
          };
       checkColumn.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
       filesCellTable_.addColumn(checkColumn); 
+      filesCellTable_.setColumnWidth(checkColumn, 20, Unit.PX);
       
       // file icon
       Column<FileSystemItem, ImageResource> iconColumn = 
@@ -89,11 +94,16 @@ public class FilesList extends Composite
             @Override
             public ImageResource getValue(FileSystemItem object)
             {
-               return fileTypeRegistry.getIconForFile(object);
+               if (object.equalTo(getParentPath()))
+                  return FileIconResources.INSTANCE.iconUpFolder();
+               else
+                  return fileTypeRegistry.getIconForFile(object);
             }
          
       };
-      filesCellTable_.addColumn(iconColumn);
+      filesCellTable_.addColumn(iconColumn, 
+                                SafeHtmlUtils.fromSafeConstant("<br/>"));
+      filesCellTable_.setColumnWidth(iconColumn, 20, Unit.PX);
     
       // file name
       LinkColumn<FileSystemItem> nameColumn = new LinkColumn<FileSystemItem>(
@@ -109,11 +119,13 @@ public class FilesList extends Composite
             @Override
             public String getValue(FileSystemItem item)
             {
-               return item.getName();
+               if (item.equalTo(getParentPath()))
+                  return "..";
+               else
+                  return item.getName();
             }
          };
-      filesCellTable_.addColumn(nameColumn);
-      
+      filesCellTable_.addColumn(nameColumn, "Name");
       
       // file size
       TextColumn<FileSystemItem> sizeColumn = new TextColumn<FileSystemItem>() {
@@ -125,7 +137,7 @@ public class FilesList extends Composite
                return new String();
          } 
       };  
-      filesCellTable_.addColumn(sizeColumn);
+      filesCellTable_.addColumn(sizeColumn, "Size");
       filesCellTable_.setColumnWidth(sizeColumn, 80, Unit.PX);
       
       // last modified
@@ -138,30 +150,22 @@ public class FilesList extends Composite
                return new String();
          } 
       };  
-      filesCellTable_.addColumn(modColumn);
+      modColumn.setSortable(true);
+      filesCellTable_.addColumn(modColumn, "Modified");
       filesCellTable_.setColumnWidth(modColumn, 160, Unit.PX);
  
       // hookup data provider
       dataProvider_.addDataDisplay(filesCellTable_);
       
-      // create vertical pane which encloses the parent widget
-      // and the files table
-      VerticalPanel verticalPanel = new VerticalPanel();
-      goToParentWidget_ = new GoToParentWidget();
-      goToParentWidget_.setVisible(false);
-      verticalPanel.add(goToParentWidget_);
-      verticalPanel.add(filesCellTable_);
-      
       // enclose in scroll panel
       scrollPanel_ = new ScrollPanel();
       initWidget(scrollPanel_);
-      scrollPanel_.setWidget(verticalPanel);   
+      scrollPanel_.setWidget(filesCellTable_);   
    }
    
    public void clearFiles()
    {
       containingPath_ = null;
-      goToParentWidget_.setVisible(false);
       dataProvider_.getList().clear();
    }
    
@@ -175,16 +179,17 @@ public class FilesList extends Composite
       // set containing path
       containingPath_ = containingPath;
       
-      // if there is a navigable parent then make the parent widget visible
-      FileSystemItem parentPath = containingPath.getParentPath();
-      if (parentPath != null)
-         goToParentWidget_.setVisible(true);
-      
-      filesCellTable_.setPageSize(files.length());
+      // set page size (+1 for parent path)
+      filesCellTable_.setPageSize(files.length() + 1);
       
       // get underlying list
       List<FileSystemItem> fileList = dataProvider_.getList();
-              
+            
+      // add entry for parent path if we have one
+      FileSystemItem parentPath = getParentPath();
+      if (parentPath != null)
+         fileList.add(parentPath);
+      
       // add files to table
       for (int i=0; i<files.length(); i++)
          fileList.add(files.get(i));
@@ -196,7 +201,10 @@ public class FilesList extends Composite
    public void selectAll()
    {
       for (FileSystemItem item : dataProvider_.getList())
-         selectionModel_.setSelected(item, true);
+      {
+         if (!item.equalTo(getParentPath()))
+            selectionModel_.setSelected(item, true);
+      }
    }
    
    public void selectNone()
@@ -223,14 +231,7 @@ public class FilesList extends Composite
             if (row == -1)
             {
                files.add(file);
-               filesCellTable_.setPageSize(files.size());
-               Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-                  @Override
-                  public void execute()
-                  {
-                     scrollToBottom();  
-                  } 
-               });
+               filesCellTable_.setPageSize(files.size() + 1);
             }
             else
             {
@@ -276,12 +277,6 @@ public class FilesList extends Composite
          getFiles().set(index, to);
    }
    
-   public void scrollToBottom()
-   {
-      scrollPanel_.scrollToBottom();
-   }
-       
- 
    private List<FileSystemItem> getFiles()
    {
       return dataProvider_.getList();
@@ -297,6 +292,14 @@ public class FilesList extends Composite
       return -1;
    }
    
+   private FileSystemItem getParentPath()
+   {
+      if (containingPath_ != null)
+         return containingPath_.getParentPath();
+      else
+         return null;
+   }
+   
    private static final ProvidesKey<FileSystemItem> KEY_PROVIDER = 
       new ProvidesKey<FileSystemItem>() {
          @Override
@@ -306,37 +309,9 @@ public class FilesList extends Composite
          }
     };
     
-   private class GoToParentWidget extends Composite
-   {
-      public GoToParentWidget()
-      {
-         HorizontalPanel panel = new HorizontalPanel();
-         panel.setSpacing(3);
-         Image img = new Image(FileIconResources.INSTANCE.iconUpFolder()); 
-         panel.add(img);
-     
-         panel.setCellWidth(img, "22px");
-         HyperlinkLabel upLabel = new HyperlinkLabel(
-            "..", 
-            new ClickHandler() 
-            {
-               public void onClick(ClickEvent event)
-               {
-                  FileSystemItem parentPath = containingPath_.getParentPath();
-                  if (parentPath != null)
-                     observer_.onFileNavigation(parentPath);               
-               }   
-            });
-         upLabel.setClearUnderlineOnClick(true);
-         upLabel.setTitle("Go to parent directory");
-         panel.add(upLabel);    
-         initWidget(panel);
-      }
-   }
    
    private FileSystemItem containingPath_ = null;
    
-   private final GoToParentWidget goToParentWidget_ ;
    private final CellTable<FileSystemItem> filesCellTable_; 
    
    private final MultiSelectionModel<FileSystemItem> selectionModel_;
