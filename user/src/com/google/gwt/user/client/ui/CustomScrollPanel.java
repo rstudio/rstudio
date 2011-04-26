@@ -527,12 +527,16 @@ public class CustomScrollPanel extends ScrollPanel {
     }
 
     /*
-     * Ensure that the viewport is anchored to the corner. If the user click and
-     * drags the content, its possible to shift the viewport and reveal the
+     * Ensure that the viewport is anchored to the corner. If the user clicks
+     * and drags the content, its possible to shift the viewport and reveal the
      * hidden scrollbars.
      */
-    getElement().setScrollLeft(0);
-    getElement().setScrollTop(0);
+    if (getElement().getScrollLeft() != 0) {
+      getElement().setScrollLeft(0);
+    }
+    if (getElement().getScrollTop() != 0) {
+      getElement().setScrollTop(0);
+    }
   }
 
   /**
