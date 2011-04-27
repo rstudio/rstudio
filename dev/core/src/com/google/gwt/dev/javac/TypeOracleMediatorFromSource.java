@@ -44,9 +44,7 @@ public class TypeOracleMediatorFromSource extends TypeOracleMediator {
     for (CompilationUnit unit : units) {
       Collection<CompiledClass> compiledClasses = unit.getCompiledClasses();
       for (CompiledClass compiledClass : compiledClasses) {
-        classDataList.add(new TypeData(compiledClass.getPackageName(),
-            compiledClass.getSourceName(), compiledClass.getInternalName(),
-            null, compiledClass.getBytes(), unit.getLastModified()));
+        classDataList.add(compiledClass.getTypeData());
       }
     }
 

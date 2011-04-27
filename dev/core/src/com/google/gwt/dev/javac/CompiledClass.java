@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.dev.javac.TypeOracleMediator.TypeData;
 import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.Name.InternalName;
@@ -38,6 +39,7 @@ public final class CompiledClass implements Serializable {
   private final CompiledClass enclosingClass;
   private final String internalName;
   private final boolean isLocal;
+  private transient TypeData typeData;
   private CompilationUnit unit;
   private String signatureHash;
 
@@ -108,6 +110,15 @@ public final class CompiledClass implements Serializable {
    */
   public String getSourceName() {
     return StringInterner.get().intern(InternalName.toSourceName(internalName));
+  }
+  
+  public TypeData getTypeData() {
+    if (typeData == null) {
+      typeData =
+          new TypeData(getPackageName(), getSourceName(), getInternalName(), null, getBytes(),
+              getUnit().getLastModified());
+    }
+    return typeData;
   }
 
   public CompilationUnit getUnit() {

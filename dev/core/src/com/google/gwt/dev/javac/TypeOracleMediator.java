@@ -84,6 +84,11 @@ public class TypeOracleMediator extends TypeOracleBuilder {
      * Bytecode from compiled Java source.
      */
     private final byte[] byteCode;
+    
+    /**
+     * Prepared information about this class.
+     */
+    private CollectClassData classData;
 
     /**
      * See {@link Type#getInternalName()}.
@@ -124,6 +129,24 @@ public class TypeOracleMediator extends TypeOracleBuilder {
       this.sourceFileResourceName = sourceFileResourceName;
       this.byteCode = classBytes;
       this.lastModifiedTime = lastModifiedTime;
+    }
+    
+    /**
+     * Collects data about a class which only needs the bytecode and no TypeOracle
+     * data structures. This is used to make the initial shallow identity pass for
+     * creating JRealClassType/JGenericType objects.
+     */
+    synchronized CollectClassData getCollectClassData() {
+      if (classData == null) {
+        ClassReader reader = new ClassReader(byteCode);
+        classData = new CollectClassData();
+        ClassVisitor cv = classData;
+        if (TRACE_CLASSES) {
+          cv = new TraceClassVisitor(cv, new PrintWriter(System.out));
+        }
+        reader.accept(cv, 0);
+      }
+      return classData;
     }
   }
 
@@ -364,7 +387,7 @@ public class TypeOracleMediator extends TypeOracleBuilder {
     TypeOracleBuildContext context = new TypeOracleBuildContext(argsLookup);
 
     for (TypeData typeData : typeDataList) {
-      CollectClassData cv = processClass(typeData);
+      CollectClassData cv = typeData.getCollectClassData();
       // skip any classes that can't be referenced by name outside of
       // their local scope, such as anonymous classes and method-local classes
       if (!cv.hasNoExternalName()) {
@@ -455,7 +478,8 @@ public class TypeOracleMediator extends TypeOracleBuilder {
 
   private Annotation createAnnotation(TreeLogger logger,
       Class<? extends Annotation> annotationClass, AnnotationData annotData) {
-    Map<String, Object> values = annotData.getValues();
+    // Make a copy before we mutate the collection.
+    Map<String, Object> values = new HashMap<String, Object>(annotData.getValues());
     for (Map.Entry<String, Object> entry : values.entrySet()) {
       Method method = null;
       Throwable caught = null;
@@ -610,22 +634,6 @@ public class TypeOracleMediator extends TypeOracleBuilder {
       }
     }
     return output;
-  }
-
-  /**
-   * Collects data about a class which only needs the bytecode and no TypeOracle
-   * data structures. This is used to make the initial shallow identity pass for
-   * creating JRealClassType/JGenericType objects.
-   */
-  private CollectClassData processClass(TypeData typeData) {
-    ClassReader reader = new ClassReader(typeData.byteCode);
-    CollectClassData mcv = new CollectClassData();
-    ClassVisitor cv = mcv;
-    if (TRACE_CLASSES) {
-      cv = new TraceClassVisitor(cv, new PrintWriter(System.out));
-    }
-    reader.accept(cv, 0);
-    return mcv;
   }
 
   private boolean resolveAnnotation(TreeLogger logger,
