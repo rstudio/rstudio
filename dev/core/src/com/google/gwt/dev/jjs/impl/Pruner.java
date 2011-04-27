@@ -360,7 +360,8 @@ public class Pruner {
 
       for (int i = 0; i < type.getMethods().size(); ++i) {
         JMethod method = type.getMethods().get(i);
-        if (!methodIsReferenced(method) || pruneViaNoninstantiability(isInstantiated, method)) {
+        if (!referencedNonTypes.contains(method)
+            || pruneViaNoninstantiability(isInstantiated, method)) {
           // Never prune clinit directly out of the class.
           if (i > 0) {
             type.removeMethod(i);
@@ -394,7 +395,7 @@ public class Pruner {
       for (int i = 1; i < type.getMethods().size(); ++i) {
         JMethod method = type.getMethods().get(i);
         // all other interface methods are instance and abstract
-        if (!isInstantiated || !methodIsReferenced(method)) {
+        if (!isInstantiated || !referencedNonTypes.contains(method)) {
           type.removeMethod(i);
           madeChanges();
           --i;
@@ -426,6 +427,8 @@ public class Pruner {
          * devirtualizations. If the instance method has been pruned, then it's
          * okay. Also, it's okay on the final pass since no more
          * devirtualizations will occur.
+         * 
+         * TODO: prune params; MakeCallsStatic smarter to account for it.
          */
         JMethod staticImplFor = program.staticImplFor(x);
         // Unless the instance method has already been pruned, of course.
@@ -480,31 +483,6 @@ public class Pruner {
         } else {
           it.remove();
           madeChanges();
-        }
-      }
-      return false;
-    }
-
-    /**
-     * Returns <code>true</code> if a method is referenced.
-     */
-    private boolean methodIsReferenced(JMethod method) {
-      // Is the method directly referenced?
-      if (referencedNonTypes.contains(method)) {
-        return true;
-      }
-
-      /*
-       * Special case: if method is the static impl for a live instance method,
-       * don't prune it unless this is the final prune.
-       * 
-       * In some cases, the staticImpl can be inlined into the instance method
-       * but still be needed at other call sites.
-       */
-      JMethod staticImplFor = program.staticImplFor(method);
-      if (staticImplFor != null && referencedNonTypes.contains(staticImplFor)) {
-        if (saveCodeGenTypes) {
-          return true;
         }
       }
       return false;

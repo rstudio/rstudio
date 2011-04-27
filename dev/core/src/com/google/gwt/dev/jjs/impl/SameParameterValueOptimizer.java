@@ -132,12 +132,6 @@ public class SameParameterValueOptimizer {
           rescuedMethods.add(m);
         }
         rescuedMethods.add(x);
-      } else {
-        JMethod staticImpl = program.staticImplFor(x);
-        if (staticImpl != null && staticImpl.getEnclosingType().getMethods().contains(staticImpl)) {
-          // instance method is still alive.
-          rescuedMethods.add(x);
-        }
       }
       return true;
     }

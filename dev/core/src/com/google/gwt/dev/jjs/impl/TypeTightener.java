@@ -300,43 +300,7 @@ public class TypeTightener {
             set.add(baseParam);
           }
         }
-      } else if (program.isStaticImpl(x)) {
-        /*
-         * Special case: also add upRefs from a staticImpl's params to the
-         * params of the instance method it is implementing. Most of the time,
-         * this would happen naturally since the instance method delegates to
-         * the static. However, in cases where the static has been inlined into
-         * the instance method, future optimization could tighten an instance
-         * call into a static call at some other call site, and fail to inline.
-         * If we allowed a staticImpl param to be tighter than its instance
-         * param, badness would ensue.
-         */
-        JMethod staticImplFor = program.staticImplFor(x);
-        if (staticImplFor == null
-            || !staticImplFor.getEnclosingType().getMethods().contains(staticImplFor)) {
-          // The instance method has already been pruned.
-          return true;
-        }
-        assert (x.getParams().size() == staticImplFor.getParams().size() + 1);
-        for (int j = 0, c = x.getParams().size(); j < c; ++j) {
-          JParameter param = x.getParams().get(j);
-          Set<JParameter> set = paramUpRefs.get(param);
-          if (set == null) {
-            set = new HashSet<JParameter>();
-            paramUpRefs.put(param, set);
-          }
-          if (j == 0) {
-            // Fake an assignment-to-self to prevent tightening; consider this
-            // an implicit assignment from a this reference of the looser type.
-            assert (param.isThis());
-            set.add(param);
-          } else {
-            JParameter baseParam = staticImplFor.getParams().get(j - 1);
-            set.add(baseParam);
-          }
-        }
       }
-
       return true;
     }
 

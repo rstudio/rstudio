@@ -144,6 +144,20 @@ public class MethodInliner {
     @Override
     public boolean visit(JMethod x, Context ctx) {
       currentMethod = x;
+      if (program.getStaticImpl(x) != null) {
+        /*
+         * Never inline a static impl into the calling instance method. We used
+         * to allow this, and it required all kinds of special logic in the
+         * optimizers to keep the AST sane. This was because it was possible to
+         * tighten an instance call to its static impl after the static impl had
+         * already been inlined, this meant any "flow" type optimizer would have
+         * to fake artifical flow from the instance method to the static impl.
+         * 
+         * TODO: allow the inlining if we are the last remaining call site, and
+         * prune the static impl? But it might tend to generate more code.
+         */
+        return false;
+      }
       return true;
     }
 
