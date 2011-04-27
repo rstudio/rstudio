@@ -25,6 +25,7 @@ import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.views.files.Files;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
+import org.rstudio.studio.client.workbench.views.files.model.FilesColumnSortInfo;
 
 import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.ImageResourceCell;
@@ -81,32 +82,8 @@ public class FilesList extends Composite
       final TextColumn<FileSystemItem> sizeColumn = addSizeColumn();
       final TextColumn<FileSystemItem> modColumn = addModifiedColumn();
       
-      // set initial sorting behavior
-      filesCellTable_.addColumnSortHandler(new Handler() {
-         @Override
-         public void onColumnSort(ColumnSortEvent event)
-         {
-            ColumnSortList sortList = event.getColumnSortList();
-            
-            // insert the default initial sort order for size and modified
-            if (event.getColumn().equals(sizeColumn) && !didFirstSizeSort_)
-            {
-               didFirstSizeSort_ = true;
-               sortList.insert(0, new ColumnSortInfo(event.getColumn(), false));
-            }
-            if (event.getColumn().equals(modColumn) && !didFirstModifiedSort_)
-            {
-               didFirstModifiedSort_ = true;
-               sortList.insert(0, new ColumnSortInfo(event.getColumn(), false));
-            }
-            
-            sortHandler_.onColumnSort(event);
-         }
-         
-         private boolean didFirstSizeSort_ = false;
-         private boolean didFirstModifiedSort_ = false;
-      });
-      filesCellTable_.getColumnSortList().push(filesCellTable_.getColumn(2));
+      // initialize sorting
+      addColumnSortHandler(sizeColumn, modColumn);
       
       // enclose in scroll panel
       scrollPanel_ = new ScrollPanel();
@@ -261,6 +238,75 @@ public class FilesList extends Composite
       });
       
       return modColumn;
+   }
+   
+   // TODO: does this logic still work with persistent stable sort?
+   
+   private void addColumnSortHandler(final TextColumn<FileSystemItem> sizeCol,
+                                     final TextColumn<FileSystemItem> modCol)
+   {
+      filesCellTable_.addColumnSortHandler(new Handler() {
+         @Override
+         public void onColumnSort(ColumnSortEvent event)
+         {
+            ColumnSortList sortList = event.getColumnSortList();
+            
+            // insert the default initial sort order for size and modified
+            if (event.getColumn().equals(sizeCol) && !didFirstSizeSort_)
+            {
+               didFirstSizeSort_ = true;
+               sortList.insert(0, new ColumnSortInfo(event.getColumn(), false));
+            }
+            if (event.getColumn().equals(modCol) && !didFirstModifiedSort_)
+            {
+               didFirstModifiedSort_ = true;
+               sortList.insert(0, new ColumnSortInfo(event.getColumn(), false));
+            }
+            
+            // record sort order and fire event to observer
+            ArrayList<FilesColumnSortInfo> sortOrder = 
+                                       new ArrayList<FilesColumnSortInfo>();
+            for (int i=0; i<sortList.size(); i++)
+            {
+               // match the column index
+               ColumnSortInfo sortInfo = sortList.get(i);     
+               Object column = sortInfo.getColumn();
+               
+               for (int c=0; c<filesCellTable_.getColumnCount(); c++)
+               {
+                  if (filesCellTable_.getColumn(c).equals(column))
+                  { 
+                     boolean ascending = sortInfo.isAscending();
+                     sortOrder.add(FilesColumnSortInfo.create(c, ascending));
+                     break;
+                  }
+               }
+            }        
+            observer_.onColumnSortOrderChanaged(sortOrder);
+    
+            // delegate the sort
+            sortHandler_.onColumnSort(event);
+         }
+         
+         private boolean didFirstSizeSort_ = false;
+         private boolean didFirstModifiedSort_ = false;
+      });
+   }
+   
+
+   public void setColumnSortOrder(List<FilesColumnSortInfo> sortList)
+   {
+      ColumnSortList columnSortList = filesCellTable_.getColumnSortList();
+      columnSortList.clear();
+      
+      for (int i=0; i< sortList.size(); i++)
+      {
+         FilesColumnSortInfo filesSortInfo = sortList.get(i);
+         ColumnSortInfo sortInfo = new ColumnSortInfo(
+               filesCellTable_.getColumn(filesSortInfo.getColumnIndex()),
+               filesSortInfo.getAscending());
+         columnSortList.insert(i, sortInfo);
+      }  
    }
    
    

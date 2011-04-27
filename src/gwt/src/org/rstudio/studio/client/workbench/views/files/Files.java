@@ -19,9 +19,11 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
@@ -41,14 +43,17 @@ import org.rstudio.studio.client.workbench.model.ClientInitState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.files.events.*;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
+import org.rstudio.studio.client.workbench.views.files.model.FilesColumnSortInfo;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.files.model.PendingFileUpload;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Files
       extends BasePresenter
@@ -70,9 +75,13 @@ public class Files
       public interface Observer extends NavigationObserver
       {
          void onFileSelectionChanged();
+         void onColumnSortOrderChanaged(List<FilesColumnSortInfo> sortList);
       }
       
       void setObserver(Observer observer);
+           
+      
+      void setColumnSortOrder(List<FilesColumnSortInfo> sortList);
       
       void listDirectory(FileSystemItem directory, 
                          ServerDataSource<JsArray<FileSystemItem>> filesDS);
@@ -141,6 +150,66 @@ public class Files
       final SessionInfo sessionInfo = session_.getSessionInfo();
       ClientInitState state = sessionInfo.getClientState();
 
+      // make the column sort order persistent
+      new JSObjectStateValue(MODULE_FILES,KAY_COLUMN_SORT_ORDER, true, state, false)
+      {
+         @Override
+         protected void onInit(JsObject value)
+         {
+            if (value != null)
+               columnSortOrder_ = value.cast();
+            
+            lastKnownState_ = columnSortOrder_;
+            
+            if (columnSortOrder_ != null)
+            {
+               ArrayList<FilesColumnSortInfo> sortOrder = new 
+                                       ArrayList<FilesColumnSortInfo>();
+               for (int i=0; i<columnSortOrder_.length(); i++)
+                  sortOrder.add(columnSortOrder_.get(i));
+               
+               view_.setColumnSortOrder(sortOrder);
+            }
+         }
+
+         @Override
+         protected JsObject getValue()
+         {
+            if (columnSortOrder_ != null)
+               return columnSortOrder_.cast();
+            else
+               return null;
+         }
+
+         @Override
+         protected boolean hasChanged()
+         {
+            if (lastKnownState_ == null && columnSortOrder_ != null)
+               return true;
+            
+            if (columnSortOrder_ == null && lastKnownState_ != null)
+               return true;
+            
+            if (columnSortOrder_.length() != lastKnownState_.length())
+               return true;
+            
+            for (int i=0; i<columnSortOrder_.length(); i++)
+            {
+               FilesColumnSortInfo sortInfo = columnSortOrder_.get(i);
+               FilesColumnSortInfo lastSortInfo = lastKnownState_.get(i);
+               if (sortInfo.getColumnIndex() != lastSortInfo.getColumnIndex())
+                  return true;
+               if (sortInfo.getAscending() != lastSortInfo.getAscending())
+                  return true;
+            }
+           
+            return false;
+         }
+
+         private JsArray<FilesColumnSortInfo> lastKnownState_ = null;
+      };
+      
+      
       // navigate to previous directory (works for resumed case)
       new StringStateValue(MODULE_FILES, KEY_PATH, false, state) {
          @Override
@@ -203,6 +272,16 @@ public class Files
          else
             view_.selectNone();
       }
+
+      @Override
+      public void onColumnSortOrderChanaged(List<FilesColumnSortInfo> sortList)
+      {
+         columnSortOrder_.setLength(0);
+         for (int i = 0; i<sortList.size(); i++)
+            columnSortOrder_.push(sortList.get(i));    
+      }
+     
+      
    };
     
 
@@ -521,5 +600,12 @@ public class Files
    private final Provider<FilesUpload> pFilesUpload_;
    private static final String MODULE_FILES = "filespane";
    private static final String KEY_PATH = "path";
+   private static final String KAY_COLUMN_SORT_ORDER = "columnSortOrder";
+   private JsArray<FilesColumnSortInfo> columnSortOrder_ = newColumnArray();
+   
+   private native final JsArray<FilesColumnSortInfo> newColumnArray() /*-{
+      return [];;
+   }-*/;
+
   
 }

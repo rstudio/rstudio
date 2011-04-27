@@ -31,10 +31,12 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
+import org.rstudio.studio.client.workbench.views.files.model.FilesColumnSortInfo;
 import org.rstudio.studio.client.workbench.views.files.model.PendingFileUpload;
 import org.rstudio.studio.client.workbench.views.files.ui.*;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class FilesPane extends WorkbenchPane implements Files.Display
 {
@@ -77,6 +79,18 @@ public class FilesPane extends WorkbenchPane implements Files.Display
          if (observer_ != null)
             observer_.onSelectAllValueChanged(value);
       }
+      
+      public void onColumnSortOrderChanaged(List<FilesColumnSortInfo> sortList)
+      {
+         if (observer_ != null)
+            observer_.onColumnSortOrderChanaged(sortList);
+      }
+   }
+   
+   @Override
+   public void setColumnSortOrder(List<FilesColumnSortInfo> sortList)
+   {
+      filesList_.setColumnSortOrder(sortList);
    }
     
    public void listDirectory(final FileSystemItem directory, 
@@ -219,4 +233,6 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    private Files.Display.Observer observer_;
 
    private final FileTypeRegistry fileTypeRegistry_;
+
+  
 }
