@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.files.ui;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import org.rstudio.core.client.Debug;
@@ -34,7 +35,11 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.ColumnSortEvent;
+import com.google.gwt.user.cellview.client.ColumnSortList;
 import com.google.gwt.user.cellview.client.TextColumn;
+import com.google.gwt.user.cellview.client.ColumnSortEvent.Handler;
+import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.ScrollPanel;
@@ -50,20 +55,67 @@ public class FilesList extends Composite
    {
       observer_ = observer;
       
+      // create data provider and sort handler
       dataProvider_ = new ListDataProvider<FileSystemItem>();
+      sortHandler_ = new ColumnSortEvent.ListHandler<FileSystemItem>(
+                                                      dataProvider_.getList());
       
+      // create cell table
       filesCellTable_ = new CellTable<FileSystemItem>(
                                           15,
                                           FilesListCellTableResources.INSTANCE,
                                           KEY_PROVIDER);
-     
       selectionModel_ = new MultiSelectionModel<FileSystemItem>(KEY_PROVIDER);
       filesCellTable_.setSelectionModel(
          selectionModel_, 
          DefaultSelectionEventManager.<FileSystemItem> createCheckboxManager());
       filesCellTable_.setWidth("100%", false);
       
-      // selection checkbox
+      // hook-up data provider 
+      dataProvider_.addDataDisplay(filesCellTable_);
+      
+      // add columns
+      addSelectionColumn();
+      addIconColumn(fileTypeRegistry);
+      addNameColumn();
+      final TextColumn<FileSystemItem> sizeColumn = addSizeColumn();
+      final TextColumn<FileSystemItem> modColumn = addModifiedColumn();
+      
+      // set initial sorting behavior
+      filesCellTable_.addColumnSortHandler(new Handler() {
+         @Override
+         public void onColumnSort(ColumnSortEvent event)
+         {
+            ColumnSortList sortList = event.getColumnSortList();
+            
+            // insert the default initial sort order for size and modified
+            if (event.getColumn().equals(sizeColumn) && !didFirstSizeSort_)
+            {
+               didFirstSizeSort_ = true;
+               sortList.insert(0, new ColumnSortInfo(event.getColumn(), false));
+            }
+            if (event.getColumn().equals(modColumn) && !didFirstModifiedSort_)
+            {
+               didFirstModifiedSort_ = true;
+               sortList.insert(0, new ColumnSortInfo(event.getColumn(), false));
+            }
+            
+            sortHandler_.onColumnSort(event);
+         }
+         
+         private boolean didFirstSizeSort_ = false;
+         private boolean didFirstModifiedSort_ = false;
+      });
+      filesCellTable_.getColumnSortList().push(filesCellTable_.getColumn(2));
+      
+      // enclose in scroll panel
+      scrollPanel_ = new ScrollPanel();
+      initWidget(scrollPanel_);
+      scrollPanel_.setWidget(filesCellTable_);   
+   }
+   
+   private Column<FileSystemItem, Boolean> addSelectionColumn()
+   {
       Column<FileSystemItem, Boolean> checkColumn = 
          new Column<FileSystemItem, Boolean>(new CheckboxCell(true, false) {
             @Override
@@ -87,7 +139,12 @@ public class FilesList extends Composite
       filesCellTable_.addColumn(checkColumn); 
       filesCellTable_.setColumnWidth(checkColumn, 20, Unit.PX);
       
-      // file icon
+      return checkColumn;
+   }
+   
+   private Column<FileSystemItem, ImageResource> addIconColumn(
+                              final FileTypeRegistry fileTypeRegistry)
+   {
       Column<FileSystemItem, ImageResource> iconColumn = 
          new Column<FileSystemItem, ImageResource>(new ImageResourceCell()) {
 
@@ -99,13 +156,25 @@ public class FilesList extends Composite
                else
                   return fileTypeRegistry.getIconForFile(object);
             }
-         
-      };
+         };
+      iconColumn.setSortable(true);
       filesCellTable_.addColumn(iconColumn, 
                                 SafeHtmlUtils.fromSafeConstant("<br/>"));
       filesCellTable_.setColumnWidth(iconColumn, 20, Unit.PX);
     
-      // file name
+      sortHandler_.setComparator(iconColumn, new Comparator<FileSystemItem>() {
+         @Override
+         public int compare(FileSystemItem arg0, FileSystemItem arg1)
+         {
+            return arg0.getExtension().compareTo(arg1.getExtension());
+         }
+      });
+      
+      return iconColumn;
+   }
+   
+   private LinkColumn<FileSystemItem> addNameColumn()
+   {
       LinkColumn<FileSystemItem> nameColumn = new LinkColumn<FileSystemItem>(
          dataProvider_, 
          new OperationWithInput<FileSystemItem>() 
@@ -125,9 +194,23 @@ public class FilesList extends Composite
                   return item.getName();
             }
          };
+      nameColumn.setSortable(true);
       filesCellTable_.addColumn(nameColumn, "Name");
       
-      // file size
+      sortHandler_.setComparator(nameColumn, new Comparator<FileSystemItem>() {
+         @Override
+         public int compare(FileSystemItem arg0, FileSystemItem arg1)
+         {
+            return arg0.getName().compareTo(arg1.getName());
+         }
+      });
+      
+      return nameColumn;
+   }
+   
+   
+   private TextColumn<FileSystemItem>  addSizeColumn()
+   {
       TextColumn<FileSystemItem> sizeColumn = new TextColumn<FileSystemItem>() {
          public String getValue(FileSystemItem file)
          {
@@ -137,10 +220,25 @@ public class FilesList extends Composite
                return new String();
          } 
       };  
+      sizeColumn.setSortable(true);
       filesCellTable_.addColumn(sizeColumn, "Size");
       filesCellTable_.setColumnWidth(sizeColumn, 80, Unit.PX);
       
-      // last modified
+      sortHandler_.setComparator(sizeColumn, new Comparator<FileSystemItem>() {
+         @Override
+         public int compare(FileSystemItem arg0, FileSystemItem arg1)
+         {
+            return new Long(arg0.getLength()).compareTo(
+                                             new Long(arg1.getLength()));
+         }
+      });
+      
+      return sizeColumn;
+   }
+
+   
+   private TextColumn<FileSystemItem> addModifiedColumn()
+   {
       TextColumn<FileSystemItem> modColumn = new TextColumn<FileSystemItem>() {
          public String getValue(FileSystemItem file)
          {
@@ -152,16 +250,19 @@ public class FilesList extends Composite
       };  
       modColumn.setSortable(true);
       filesCellTable_.addColumn(modColumn, "Modified");
-      filesCellTable_.setColumnWidth(modColumn, 160, Unit.PX);
- 
-      // hookup data provider
-      dataProvider_.addDataDisplay(filesCellTable_);
+      filesCellTable_.setColumnWidth(modColumn, 160, Unit.PX); 
       
-      // enclose in scroll panel
-      scrollPanel_ = new ScrollPanel();
-      initWidget(scrollPanel_);
-      scrollPanel_.setWidget(filesCellTable_);   
+      sortHandler_.setComparator(modColumn, new Comparator<FileSystemItem>() {
+         @Override
+         public int compare(FileSystemItem arg0, FileSystemItem arg1)
+         {
+            return arg0.getLastModified().compareTo(arg1.getLastModified());
+         }
+      });
+      
+      return modColumn;
    }
+   
    
    public void clearFiles()
    {
@@ -316,6 +417,7 @@ public class FilesList extends Composite
    
    private final MultiSelectionModel<FileSystemItem> selectionModel_;
    private final ListDataProvider<FileSystemItem> dataProvider_;
+   private final ColumnSortEvent.ListHandler<FileSystemItem> sortHandler_;
 
    private final Files.Display.Observer observer_ ;
    private final ScrollPanel scrollPanel_ ;  
