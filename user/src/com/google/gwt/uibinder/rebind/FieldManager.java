@@ -287,8 +287,13 @@ public class FieldManager {
     Collection<FieldWriter> fields = fieldsMap.values();
     for (FieldWriter field : fields) {
       int counter = getGetterCounter(field.getName());
-      field.writeFieldDefinition(writer, typeOracle,
-          ownerClass.getUiField(field.getName()), designTime, counter);
+      field.writeFieldDefinition(
+          writer,
+          typeOracle,
+          ownerClass.getUiField(field.getName()),
+          designTime,
+          counter,
+          useLazyWidgetBuilders);
     }
   }
 

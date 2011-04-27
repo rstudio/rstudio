@@ -23,6 +23,7 @@ import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.uibinder.rebind.model.OwnerField;
+import com.google.gwt.user.client.ui.AttachableHTMLPanel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,7 +59,6 @@ abstract class AbstractFieldWriter implements FieldWriter {
   private boolean written;
   private int buildPrecedence;
   private MortalLogger logger;
-  private boolean isAttachable;
 
   public AbstractFieldWriter(String name, MortalLogger logger) {
     if (name == null) {
@@ -110,11 +110,6 @@ abstract class AbstractFieldWriter implements FieldWriter {
 
   public void needs(FieldWriter f) {
     needs.add(f);
-  }
-
-  @Override
-  public void setAttachable(boolean attachable) {
-    this.isAttachable = attachable;
   }
 
   @Override
@@ -183,8 +178,15 @@ abstract class AbstractFieldWriter implements FieldWriter {
 
   @Override
   public void writeFieldDefinition(IndentedWriter w, TypeOracle typeOracle,
-      OwnerField ownerField, DesignTimeUtils designTime, int getterCount)
+      OwnerField ownerField, DesignTimeUtils designTime, int getterCount,
+      boolean useLazyWidgetBuilders)
       throws UnableToCompleteException {
+
+    JClassType attachableHTMLPanelType = typeOracle.findType(
+        AttachableHTMLPanel.class.getName());
+    boolean outputAttachDetachCallbacks = useLazyWidgetBuilders
+        && getAssignableType() != null
+        && getAssignableType().isAssignableTo(attachableHTMLPanelType);
 
     // Check initializer.
     if (initializer == null) {
@@ -238,7 +240,7 @@ abstract class AbstractFieldWriter implements FieldWriter {
     if (attachStatements.size() > 0) {
       w.newline();
       w.write("// Attach section.");
-      if (isAttachable) {
+      if (outputAttachDetachCallbacks) {
         // TODO(rdcastro): This is too coupled with AttachableHTMLPanel.
         // Make this nicer.
         w.write("%s.wrapInitializationCallback = ", getName());
@@ -265,7 +267,7 @@ abstract class AbstractFieldWriter implements FieldWriter {
         w.write(s);
       }
 
-      if (isAttachable) {
+      if (outputAttachDetachCallbacks) {
         w.outdent();
         w.write("}");
         w.outdent();
@@ -282,7 +284,7 @@ abstract class AbstractFieldWriter implements FieldWriter {
     }
 
     if (detachStatements.size() > 0) {
-      if (isAttachable) {
+      if (outputAttachDetachCallbacks) {
         w.write("%s.detachedInitializationCallback = ", getName());
         w.indent();
         w.indent();
@@ -296,7 +298,7 @@ abstract class AbstractFieldWriter implements FieldWriter {
         w.write(s);
       }
 
-      if (isAttachable) {
+      if (outputAttachDetachCallbacks) {
         w.outdent();
         w.write("}");
         w.outdent();

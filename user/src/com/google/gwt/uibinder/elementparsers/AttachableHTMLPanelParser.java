@@ -32,8 +32,6 @@ public class AttachableHTMLPanelParser implements ElementParser {
       final UiBinderWriter writer) throws UnableToCompleteException {
 
     assert writer.useLazyWidgetBuilders();
-    writer.getFieldManager().lookup(fieldName)
-        .setAttachable(true);
 
     /*
      * Gathers up elements that indicate nested Attachable objects.

@@ -126,9 +126,6 @@ public interface FieldWriter {
    */
   void needs(FieldWriter f);
 
-  // TODO(rdcastro): Remove this and detect automatically.
-  void setAttachable(boolean isAttachableOutput);
-
   /**
    * Sets the precedence of this field builder. Field with higher values are
    * written first.
@@ -206,6 +203,7 @@ public interface FieldWriter {
    * </p>
    */
   void writeFieldDefinition(IndentedWriter w, TypeOracle typeOracle,
-      OwnerField ownerField, DesignTimeUtils designTime, int getterCount)
+      OwnerField ownerField, DesignTimeUtils designTime, int getterCount,
+      boolean useLazyWidgetBuilders)
       throws UnableToCompleteException;
 }
