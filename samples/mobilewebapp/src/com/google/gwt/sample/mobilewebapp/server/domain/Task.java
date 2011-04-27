@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -26,6 +26,8 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Query;
 import javax.persistence.Version;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 /**
  * A task used in the task list.
@@ -52,7 +54,8 @@ public class Task {
         list = query.getResultList();
 
         /*
-         * Workaround for this issue: http://code.google.com/p/datanucleus-appengine/issues/detail?id=24
+         * Workaround for this issue:
+         * http://code.google.com/p/datanucleus-appengine/issues/detail?id=24
          */
         list.size();
       }
@@ -61,7 +64,7 @@ public class Task {
     } finally {
       em.close();
     }
-  };
+  }
 
   /**
    * Find a {@link Task} by id.
@@ -94,8 +97,6 @@ public class Task {
   /**
    * Populate the datastore with some default tasks. We do this to make the app
    * more intuitive on first use.
-   * 
-   * @return the local {@link Task} map
    */
   @SuppressWarnings("deprecation")
   private static void populateDatastore() {
@@ -139,6 +140,9 @@ public class Task {
   private Integer version;
 
   private Date dueDate;
+
+  @NotNull(message = "You must specify a name")
+  @Size(min = 3, message = "Name must be at least 3 characters long")
   private String name;
   private String notes;
 

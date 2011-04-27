@@ -11,6 +11,7 @@
       border-bottom: 1px solid #666;
       padding-top: 6px;
       padding-left: 20px;
+      position: relative;
     }
     
     .headerWord {
@@ -21,6 +22,14 @@
       -moz-transform: matrix(1, -0.04, 0, 1, 0pt, 0pt);
       -webkit-transform: matrix(1, -0.04, 0, 1, 0pt, 0pt);
       padding-right: 14px;
+    }
+    
+    .helpLink {
+      display: none;
+      position: absolute;
+      top: 10px;
+      right: 16px;
+      cursor: pointer;
     }
     
     .leftNav {
@@ -63,6 +72,10 @@
             </td>
           </tr>
         </table>
+
+        <g:Anchor
+          ui:field="helpLink"
+          addStyleNames="{style.helpLink}">Need Help?</g:Anchor>
       </g:HTMLPanel>
     </g:north>
 

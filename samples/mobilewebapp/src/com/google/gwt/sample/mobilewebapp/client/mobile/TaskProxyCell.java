@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -22,6 +22,7 @@ import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
 
 import java.util.Date;
@@ -37,13 +38,13 @@ public class TaskProxyCell extends AbstractCell<TaskProxy> {
    */
   interface Template extends SafeHtmlTemplates {
     @SafeHtmlTemplates.Template("{0}<div style=\"font-size:80%;\">&nbsp;</div>")
-    SafeHtml noDate(String name);
+    SafeHtml noDate(SafeHtml name);
 
     @SafeHtmlTemplates.Template("{0}<div style=\"font-size:80%;color:#999;\">Due: {1}</div>")
-    SafeHtml onTime(String name, String date);
+    SafeHtml onTime(SafeHtml name, String date);
 
     @SafeHtmlTemplates.Template("{0}<div style=\"font-size:80%;color:red;\">Due: {1}</div>")
-    SafeHtml pastDue(String name, String date);
+    SafeHtml pastDue(SafeHtml name, String date);
   }
 
   private static Template template;
@@ -63,17 +64,24 @@ public class TaskProxyCell extends AbstractCell<TaskProxy> {
       return;
     }
 
+    SafeHtml name;
+    if (value.getName() == null) {
+      name = SafeHtmlUtils.fromSafeConstant("<i>Unnamed</i>");
+    } else {
+      name = SafeHtmlUtils.fromString(value.getName());
+    }
+
     Date date = value.getDueDate();
     Date today = new Date();
     today.setHours(0);
     today.setMinutes(0);
     today.setSeconds(0);
     if (date == null) {
-      sb.append(template.noDate(value.getName()));
+      sb.append(template.noDate(name));
     } else if (date.before(today)) {
-      sb.append(template.pastDue(value.getName(), dateFormat.format(date)));
+      sb.append(template.pastDue(name, dateFormat.format(date)));
     } else {
-      sb.append(template.onTime(value.getName(), dateFormat.format(date)));
+      sb.append(template.onTime(name, dateFormat.format(date)));
     }
   }
 }

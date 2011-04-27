@@ -21,4 +21,18 @@
     <welcome-file>MobileWebApp.html</welcome-file>
   </welcome-file-list>
 
+  <!-- Set the correct mime-type of media files. -->
+  <mime-mapping>
+    <extension>ogg</extension>
+    <mime-type>audio/ogg</mime-type>
+  </mime-mapping>
+  <mime-mapping>
+    <extension>mp3</extension>
+    <mime-type>audio/mp3</mime-type>
+  </mime-mapping>
+  <mime-mapping>
+    <extension>wav</extension>
+    <mime-type>audio/wav</mime-type>
+  </mime-mapping>
+
 </web-app>

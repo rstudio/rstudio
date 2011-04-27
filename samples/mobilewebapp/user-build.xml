@@ -65,7 +65,7 @@
     <mkdir dir="${war.dir}/WEB-INF/classes"/>
     <javac srcdir="${src.dir}/" includes="**" encoding="utf-8"
         destdir="${war.dir}/WEB-INF/classes"
-        source="1.5" target="1.5" nowarn="true"
+        source="1.6" target="1.6" nowarn="true"
         debug="true" debuglevel="lines,vars,source">
       <classpath refid="project.class.path"/>
     </javac>

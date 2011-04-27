@@ -2,7 +2,8 @@
 <ui:UiBinder
   xmlns:ui="urn:ui:com.google.gwt.uibinder"
   xmlns:g="urn:import:com.google.gwt.user.client.ui"
-  xmlns:w="urn:import:com.google.gwt.widget.client">
+  xmlns:w="urn:import:com.google.gwt.widget.client"
+  xmlns:app="urn:import:com.google.gwt.sample.mobilewebapp.client.ui">
 
   <ui:style>
     .outer {
@@ -36,16 +37,16 @@
       margin-right: 10px;
     }
     
-    .checkbox {
-      color: #3f3f3f;
-    }
-    
     .nameBox {
       height: 2em;
     }
     
     .notesBox {
       height: 4em;
+    }
+    
+    .violation {
+      color: red;
     }
     
     .buttonPanel {
@@ -83,7 +84,11 @@
               class="{style.textBoxWrapper}">
               <g:TextArea
                 addStyleNames="{style.field} {style.nameBox}"
-                ui:field="nameBox" />
+                ui:field="nameField" />
+            </div>
+            <div
+              ui:field="nameViolation"
+              class="{style.violation}">
             </div>
 
             <!-- Task notes. -->
@@ -93,20 +98,15 @@
               class="{style.textBoxWrapper}">
               <g:TextArea
                 addStyleNames="{style.field} {style.notesBox}"
-                ui:field="notesBox" />
+                ui:field="notesEditor" />
             </div>
 
             <!-- Task due date. -->
             <div
               class="{style.label}">Due date</div>
-            <w:TextButton
+            <app:DateButton
               addStyleNames="{style.field}"
-              ui:field="dateButton">Set due date</w:TextButton>
-
-            <!-- Add to calendar. -->
-            <g:CheckBox
-              addStyleNames="{style.checkbox}"
-              ui:field="calendarCheckbox">Add to my calender</g:CheckBox>
+              ui:field="dueDateEditor" />
           </div>
 
           <!-- Button panel. -->

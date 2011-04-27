@@ -1,25 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module rename-to='mobilewebapp'>
   <!-- Inherit the core Web Toolkit stuff.                        -->
-  <inherits name='com.google.gwt.user.User'/>
-  <inherits name='com.google.gwt.sample.mobilewebapp.FormFactor'/>
-
-  <!-- Inherit RequestFactory.                                    -->
-  <inherits name='com.google.web.bindery.requestfactory.RequestFactory'/>
-
-  <!-- Inherit Activities and Places.                             -->
   <inherits name='com.google.gwt.activity.Activity'/>
   <inherits name='com.google.gwt.place.Place'/>
-  
-  <!-- Inherit the default GWT style sheet.  You can change       -->
-  <!-- the theme of your GWT application by uncommenting          -->
-  <!-- any one of the following lines.                            -->
+  <inherits name='com.google.gwt.user.User'/>
   <inherits name='com.google.gwt.user.theme.clean.Clean'/>
-  <!-- <inherits name='com.google.gwt.user.theme.standard.Standard'/> -->
-  <!-- <inherits name='com.google.gwt.user.theme.chrome.Chrome'/> -->
-  <!-- <inherits name='com.google.gwt.user.theme.dark.Dark'/>     -->
-
-  <!-- Other module inherits                                      -->
+  <inherits name='com.google.gwt.editor.Editor'/>
+  <inherits name='com.google.gwt.sample.mobilewebapp.FormFactor'/>
+  <inherits name='com.google.web.bindery.requestfactory.RequestFactory'/>
 
   <!-- Specify the app entry point class.                         -->
   <entry-point class='com.google.gwt.sample.mobilewebapp.client.MobileWebApp'/>

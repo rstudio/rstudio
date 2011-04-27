@@ -5,6 +5,7 @@
 
   <!-- Determine if we are in a mobile browser. -->
   <define-property name="formfactor" values="desktop,tablet,mobile"/>
+  <collapse-property name="formfactor" values="*"/>
 
   <property-provider name="formfactor">
   <![CDATA[

@@ -1,7 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder
   xmlns:ui="urn:ui:com.google.gwt.uibinder"
-  xmlns:g="urn:import:com.google.gwt.user.client.ui">
+  xmlns:g="urn:import:com.google.gwt.user.client.ui"
+  xmlns:app="urn:import:com.google.gwt.sample.mobilewebapp.client.ui">
 
   <ui:style>
     .title {
@@ -30,12 +31,12 @@
       margin-right: 10px;
     }
     
-    .checkbox {
-      color: #3f3f3f;
-    }
-    
     .notesBox {
       height: 6em;
+    }
+    
+    .violation {
+      color: red;
     }
     
     .button {
@@ -89,7 +90,14 @@
           class="{style.textBoxWrapper}">
           <g:TextBox
             addStyleNames="{style.field}"
-            ui:field="nameBox" />
+            ui:field="nameField" />
+        </td>
+      </tr>
+      <tr>
+        <td></td>
+        <td
+          ui:field="nameViolation"
+          class="{style.violation}">
         </td>
       </tr>
 
@@ -101,7 +109,7 @@
           class="{style.textBoxWrapper}">
           <g:TextArea
             addStyleNames="{style.field} {style.notesBox}"
-            ui:field="notesBox" />
+            ui:field="notesEditor" />
         </td>
       </tr>
 
@@ -110,15 +118,9 @@
         <td
           class="{style.label}">Due date:</td>
         <td>
-          <g:Button
+          <app:DateButton
             addStyleNames="{style.field} {style.button} {style.dateButton}"
-            ui:field="dateButton">Set due date</g:Button>
-
-          <!-- Add to calendar. -->
-          <br />
-          <g:CheckBox
-            addStyleNames="{style.checkbox}"
-            ui:field="calendarCheckbox">Add to my calender</g:CheckBox>
+            ui:field="dueDateEditor" />
         </td>
       </tr>
 

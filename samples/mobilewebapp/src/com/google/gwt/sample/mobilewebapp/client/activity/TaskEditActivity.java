@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,18 +21,25 @@ import com.google.gwt.sample.mobilewebapp.client.ClientFactory;
 import com.google.gwt.sample.mobilewebapp.client.TaskRequest;
 import com.google.gwt.sample.mobilewebapp.client.place.TaskEditPlace;
 import com.google.gwt.sample.mobilewebapp.client.place.TaskListPlace;
+import com.google.gwt.sample.mobilewebapp.client.ui.SoundEffects;
 import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.AcceptsOneWidget;
 import com.google.web.bindery.requestfactory.shared.Receiver;
+import com.google.web.bindery.requestfactory.shared.Request;
+import com.google.web.bindery.requestfactory.shared.ServerFailure;
 
+import java.util.Set;
 import java.util.logging.Logger;
+
+import javax.validation.ConstraintViolation;
 
 /**
  * Activity that presents a task to be edited.
  */
 public class TaskEditActivity extends AbstractActivity implements TaskEditView.Presenter {
-  private static final Logger log = Logger.getLogger(TaskEditActivity.class.getName());
 
+  private static final Logger log = Logger.getLogger(TaskEditActivity.class.getName());
   private final ClientFactory clientFactory;
 
   /**
@@ -51,6 +58,11 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
    * The ID of the current task being edited.
    */
   private final Long taskId;
+
+  /**
+   * The request used to persist the modified task.
+   */
+  private Request<Void> taskPersistRequest;
 
   /**
    * Construct a new {@link TaskEditActivity}.
@@ -85,32 +97,76 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
     clientFactory.getTaskEditView().setLocked(false);
   }
 
-  public void saveTask(boolean addToCalendar) {
-    if (task == null) {
-      doCreateTask();
-    } else {
-      doUpdateTask();
+  public void saveTask() {
+    // Flush the changes into the editable task.
+    TaskRequest context = (TaskRequest) clientFactory.getTaskEditView().getEditorDriver().flush();
+
+    /*
+     * Create a persist request the first time we try to save this task. If a
+     * request already exists, reuse it.
+     */
+    if (taskPersistRequest == null) {
+      taskPersistRequest = context.persist().using(task);
     }
+
+    // Fire the request.
+    taskPersistRequest.fire(new Receiver<Void>() {
+      @Override
+      public void onConstraintViolation(Set<ConstraintViolation<?>> violations) {
+        handleConstraintViolations(violations);
+      }
+
+      @Override
+      public void onFailure(ServerFailure error) {
+        Window.alert("An error occurred on the server while saving this task."
+            + " Please try saving the task again.");
+        doCancelTask();
+      }
+
+      @Override
+      public void onSuccess(Void response) {
+        // Notify the user that the task was updated.
+        TaskEditActivity.this.notify("Task Saved");
+
+        // Return to the task list.
+        clientFactory.getPlaceController().goTo(new TaskListPlace(true));
+      }
+    });
   }
 
   public void start(AcceptsOneWidget container, EventBus eventBus) {
+    // Prefetch the sounds used in this activity.
+    SoundEffects.get().prefetchError();
+
     // Hide the 'add' button in the shell.
     clientFactory.getShell().setAddButtonHandler(null);
 
     // Set the presenter on the view.
     final TaskEditView view = clientFactory.getTaskEditView();
     view.setPresenter(this);
+    view.setNameViolation(null);
 
-    // Clear the display until the task is loaded.
-    showTask(null);
-
-    if (taskId != null) {
+    if (taskId == null) {
+      // Create a new task.
+      view.setEditing(false);
+      TaskRequest request = clientFactory.getRequestFactory().taskRequest();
+      task = request.create(TaskProxy.class);
+      view.getEditorDriver().edit(task, request);
+    } else {
       // Lock the display until the task is loaded.
+      view.setEditing(true);
       view.setLocked(true);
 
       // Load the existing task.
       clientFactory.getRequestFactory().taskRequest().findTask(this.taskId).fire(
           new Receiver<TaskProxy>() {
+            @Override
+            public void onFailure(ServerFailure error) {
+              Window.alert("An error occurred on the server while loading this task."
+                  + " Please select a different task from the task list.");
+              doCancelTask();
+            }
+
             @Override
             public void onSuccess(TaskProxy response) {
               // Early exit if this activity has already been cancelled.
@@ -118,8 +174,18 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
                 return;
               }
 
+              // Task not found.
+              if (response == null) {
+                Window.alert("The task with id '" + taskId + "' could not be found."
+                    + " Please select a different task from the task list.");
+                doCancelTask();
+                return;
+              }
+
               // Show the task.
-              showTask(response);
+              task = response;
+              view.getEditorDriver()
+                  .edit(response, clientFactory.getRequestFactory().taskRequest());
               view.setLocked(false);
             }
           });
@@ -137,21 +203,6 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
   }
 
   /**
-   * Create a new task.
-   */
-  private void doCreateTask() {
-    TaskRequest request = clientFactory.getRequestFactory().taskRequest();
-    final TaskProxy toCreate = request.create(TaskProxy.class);
-    populateTaskFromView(toCreate);
-    request.persist().using(toCreate).fire(new Receiver<Void>() {
-      @Override
-      public void onSuccess(Void response) {
-        onTaskCreated(toCreate);
-      }
-    });
-  }
-
-  /**
    * Delete the current task.
    */
   private void doDeleteTask() {
@@ -164,6 +215,12 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
     clientFactory.getRequestFactory().taskRequest().remove().using(toDelete).fire(
         new Receiver<Void>() {
           @Override
+          public void onFailure(ServerFailure error) {
+            Window.alert("An error occurred on the server while deleting this task."
+                + " Please try deleting it again.");
+          }
+
+          @Override
           public void onSuccess(Void response) {
             onTaskDeleted();
           }
@@ -171,25 +228,14 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
   }
 
   /**
-   * Update the current task.
+   * Handle constraint violations.
    */
-  private void doUpdateTask() {
-    if (task == null) {
-      return;
-    }
+  private void handleConstraintViolations(Set<ConstraintViolation<?>> violations) {
+    // Display the violations.
+    clientFactory.getTaskEditView().getEditorDriver().setConstraintViolations(violations);
 
-    // Create a mutable version of the current task.
-    TaskRequest request = clientFactory.getRequestFactory().taskRequest();
-    final TaskProxy toEdit = request.edit(task);
-    populateTaskFromView(toEdit);
-
-    // Persist the changes.
-    request.persist().using(toEdit).fire(new Receiver<Void>() {
-      @Override
-      public void onSuccess(Void response) {
-        onTaskUpdated();
-      }
-    });
+    // Play a sound.
+    SoundEffects.get().playError();
   }
 
   /**
@@ -203,19 +249,6 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
   }
 
   /**
-   * Called when a task has been successfully created.
-   * 
-   * @param task the task that was created
-   */
-  private void onTaskCreated(TaskProxy task) {
-    // Notify the user that the task was created.
-    notify("Created task '" + task.getName() + "'");
-
-    // Return to the task list.
-    clientFactory.getPlaceController().goTo(new TaskListPlace(true));
-  }
-
-  /**
    * Called when a task has been successfully deleted.
    */
   private void onTaskDeleted() {
@@ -224,52 +257,5 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
 
     // Return to the task list.
     clientFactory.getPlaceController().goTo(new TaskListPlace(true));
-  }
-
-  /**
-   * Called when a task has been successfully updated.
-   */
-  private void onTaskUpdated() {
-    // Notify the user that the task was updated.
-    notify("Task Updated");
-
-    // Return to the task list.
-    clientFactory.getPlaceController().goTo(new TaskListPlace(true));
-  }
-
-  /**
-   * Populate the specified task using the values the user specified in the
-   * view.
-   * 
-   * @param task the task to populate
-   */
-  private void populateTaskFromView(TaskProxy task) {
-    TaskEditView view = clientFactory.getTaskEditView();
-    task.setName(view.getName());
-    task.setNotes(view.getNotes());
-    task.setDueDate(view.getDueDate());
-  }
-
-  /**
-   * Show the specified task in the view.
-   * 
-   * @param task the task to show
-   */
-  private void showTask(TaskProxy task) {
-    this.task = task;
-    TaskEditView view = clientFactory.getTaskEditView();
-    if (task == null) {
-      // Create a new task.
-      view.setEditing(false);
-      view.setDueDate(null);
-      view.setName("");
-      view.setNotes("");
-    } else {
-      // Edit an existing task.
-      view.setEditing(true);
-      view.setDueDate(task.getDueDate());
-      view.setName(task.getName());
-      view.setNotes(task.getNotes());
-    }
   }
 }

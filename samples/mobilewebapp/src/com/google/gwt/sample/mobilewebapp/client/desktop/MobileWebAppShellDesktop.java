@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -23,12 +23,20 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.place.shared.Place;
 import com.google.gwt.place.shared.PlaceChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.sample.mobilewebapp.client.ClientFactory;
+import com.google.gwt.sample.mobilewebapp.client.MobileWebAppShellBase;
+import com.google.gwt.sample.mobilewebapp.client.activity.TaskListActivity;
+import com.google.gwt.sample.mobilewebapp.client.activity.TaskListActivity.TaskListUpdateEvent;
+import com.google.gwt.sample.mobilewebapp.client.place.TaskEditPlace;
+import com.google.gwt.sample.mobilewebapp.client.place.TaskListPlace;
+import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.CellList;
 import com.google.gwt.user.cellview.client.CellList.Style;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HasOneWidget;
@@ -37,13 +45,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
-import com.google.gwt.sample.mobilewebapp.client.ClientFactory;
-import com.google.gwt.sample.mobilewebapp.client.MobileWebAppShellBase;
-import com.google.gwt.sample.mobilewebapp.client.activity.TaskListActivity;
-import com.google.gwt.sample.mobilewebapp.client.activity.TaskListActivity.TaskListUpdateEvent;
-import com.google.gwt.sample.mobilewebapp.client.place.TaskEditPlace;
-import com.google.gwt.sample.mobilewebapp.client.place.TaskListPlace;
-import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -60,8 +61,7 @@ public class MobileWebAppShellDesktop extends MobileWebAppShellBase {
   interface MainMenuStyle extends CellList.Style {
   }
 
-  interface MobileWebAppShellDesktopUiBinder extends
-      UiBinder<Widget, MobileWebAppShellDesktop> {
+  interface MobileWebAppShellDesktopUiBinder extends UiBinder<Widget, MobileWebAppShellDesktop> {
   }
 
   /**
@@ -126,6 +126,10 @@ public class MobileWebAppShellDesktop extends MobileWebAppShellBase {
 
   private static MobileWebAppShellDesktopUiBinder uiBinder = GWT
       .create(MobileWebAppShellDesktopUiBinder.class);
+
+  // TODO(jlabanca): Record and show a help video tutorial.
+  @UiField
+  Anchor helpLink;
 
   /**
    * The main menu list.
