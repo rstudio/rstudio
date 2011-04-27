@@ -27,14 +27,14 @@ import java.util.List;
 public class JReboundEntryPoint extends JStatement {
 
   private final List<JExpression> entryCalls;
-  private final List<JClassType> resultTypes;
-  private final JDeclaredType sourceType;
+  private final List<String> resultTypes;
+  private final String sourceType;
 
-  public JReboundEntryPoint(SourceInfo info, JDeclaredType sourceType,
+  public JReboundEntryPoint(SourceInfo info, JReferenceType sourceType,
       List<JClassType> resultTypes, List<JExpression> entryCalls) {
     super(info);
-    this.sourceType = sourceType;
-    this.resultTypes = resultTypes;
+    this.sourceType = JGwtCreate.nameOf(sourceType);
+    this.resultTypes = JGwtCreate.nameOf(resultTypes);
     this.entryCalls = entryCalls;
   }
 
@@ -42,11 +42,11 @@ public class JReboundEntryPoint extends JStatement {
     return entryCalls;
   }
 
-  public List<JClassType> getResultTypes() {
+  public List<String> getResultTypes() {
     return resultTypes;
   }
 
-  public JDeclaredType getSourceType() {
+  public String getSourceType() {
     return sourceType;
   }
 

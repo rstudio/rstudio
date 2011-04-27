@@ -34,14 +34,12 @@ public class RecordRebinds {
   private class RebindVisitor extends JVisitor {
     @Override
     public void endVisit(JGwtCreate x, Context ctx) {
-      String reqType = x.getSourceType().getName().replace('$', '.');
-      liveRebindRequests.add(reqType);
+      liveRebindRequests.add(x.getSourceType());
     }
 
     @Override
     public void endVisit(JReboundEntryPoint x, Context ctx) {
-      String reqType = x.getSourceType().getName().replace('$', '.');
-      liveRebindRequests.add(reqType);
+      liveRebindRequests.add(x.getSourceType());
     }
   }
 

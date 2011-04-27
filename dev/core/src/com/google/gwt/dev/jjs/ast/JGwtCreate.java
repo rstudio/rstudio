@@ -16,8 +16,10 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.util.collect.Lists;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -49,8 +51,24 @@ public class JGwtCreate extends JExpression {
     return new JNewInstance(info, noArgCtor, enclosingType);
   }
 
+  static List<String> nameOf(Collection<? extends JType> types) {
+    List<String> result = Lists.create();
+    for (JType type : types) {
+      result = Lists.add(result, nameOf(type));
+    }
+    return Lists.normalizeUnmodifiable(result);
+  }
+
+  /**
+   * Rebinds are always on a source type name.
+   */
+  static String nameOf(JType type) {
+    // TODO: replace with BinaryName.toSourceName(type.getName())?
+    return type.getName().replace('$', '.');
+  }
+
   private static ArrayList<JExpression> createInstantiationExpressions(SourceInfo info,
-      List<JClassType> classTypes, JDeclaredType enclosingType) {
+      Collection<JClassType> classTypes, JDeclaredType enclosingType) {
     ArrayList<JExpression> exprs = new ArrayList<JExpression>();
     for (JClassType classType : classTypes) {
       JExpression expr = createInstantiationExpression(info, classType, enclosingType);
@@ -61,8 +79,10 @@ public class JGwtCreate extends JExpression {
   }
 
   private final ArrayList<JExpression> instantiationExpressions;
-  private final List<JClassType> resultTypes;
-  private final JReferenceType sourceType;
+
+  private final List<String> resultTypes;
+
+  private final String sourceType;
 
   /*
    * Initially object; will be updated by type tightening.
@@ -70,10 +90,19 @@ public class JGwtCreate extends JExpression {
   private JType type;
 
   /**
+   * Public constructor used during AST creation.
+   */
+  public JGwtCreate(SourceInfo info, JReferenceType sourceType, Collection<JClassType> resultTypes,
+      JType type, JDeclaredType enclosingType) {
+    this(info, nameOf(sourceType), nameOf(resultTypes), type, createInstantiationExpressions(info,
+        resultTypes, enclosingType));
+  }
+
+  /**
    * Constructor used for cloning an existing node.
    */
-  public JGwtCreate(SourceInfo info, JReferenceType sourceType, List<JClassType> resultTypes,
-      JType type, ArrayList<JExpression> instantiationExpressions) {
+  public JGwtCreate(SourceInfo info, String sourceType, List<String> resultTypes, JType type,
+      ArrayList<JExpression> instantiationExpressions) {
     super(info);
     this.sourceType = sourceType;
     this.resultTypes = resultTypes;
@@ -81,24 +110,15 @@ public class JGwtCreate extends JExpression {
     this.instantiationExpressions = instantiationExpressions;
   }
 
-  /**
-   * Public constructor used during AST creation.
-   */
-  public JGwtCreate(SourceInfo info, JReferenceType sourceType, List<JClassType> resultTypes,
-      JType type, JDeclaredType enclosingType) {
-    this(info, sourceType, resultTypes, type, createInstantiationExpressions(info, resultTypes,
-        enclosingType));
-  }
-
   public ArrayList<JExpression> getInstantiationExpressions() {
     return instantiationExpressions;
   }
 
-  public List<JClassType> getResultTypes() {
+  public List<String> getResultTypes() {
     return resultTypes;
   }
 
-  public JReferenceType getSourceType() {
+  public String getSourceType() {
     return sourceType;
   }
 

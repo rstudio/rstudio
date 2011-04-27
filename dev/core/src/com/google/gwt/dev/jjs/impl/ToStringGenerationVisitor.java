@@ -499,7 +499,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   @Override
   public boolean visit(JGwtCreate x, Context ctx) {
     print("GWT.create(");
-    printTypeName(x.getSourceType());
+    print(x.getSourceType());
     print(".class)");
     return false;
   }
@@ -775,7 +775,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   @Override
   public boolean visit(JReboundEntryPoint x, Context ctx) {
     print("<JReboundEntryPoint>");
-    printTypeName(x.getSourceType());
+    print(x.getSourceType());
     return false;
   }
 
