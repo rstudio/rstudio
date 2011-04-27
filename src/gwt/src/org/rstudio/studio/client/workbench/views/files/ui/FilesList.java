@@ -78,12 +78,12 @@ public class FilesList extends Composite
       // add columns
       addSelectionColumn();
       addIconColumn(fileTypeRegistry);
-      addNameColumn();
-      final TextColumn<FileSystemItem> sizeColumn = addSizeColumn();
-      final TextColumn<FileSystemItem> modColumn = addModifiedColumn();
+      nameColumn_ = addNameColumn();
+      sizeColumn_ = addSizeColumn();
+      modifiedColumn_ = addModifiedColumn();
       
       // initialize sorting
-      addColumnSortHandler(sizeColumn, modColumn);
+      addColumnSortHandler();
       
       // enclose in scroll panel
       scrollPanel_ = new ScrollPanel();
@@ -240,10 +240,7 @@ public class FilesList extends Composite
       return modColumn;
    }
    
-   // TODO: does this logic still work with persistent stable sort?
-   
-   private void addColumnSortHandler(final TextColumn<FileSystemItem> sizeCol,
-                                     final TextColumn<FileSystemItem> modCol)
+   private void addColumnSortHandler()
    {
       filesCellTable_.addColumnSortHandler(new Handler() {
          @Override
@@ -252,20 +249,28 @@ public class FilesList extends Composite
             ColumnSortList sortList = event.getColumnSortList();
             
             // insert the default initial sort order for size and modified
-            if (event.getColumn().equals(sizeCol) && !didFirstSizeSort_)
+            if (event.getColumn().equals(sizeColumn_) && 
+                forceSizeSortDescending)
             {
-               didFirstSizeSort_ = true;
+               forceSizeSortDescending = false;
+               forceModifiedSortDescending = true;
                sortList.insert(0, new ColumnSortInfo(event.getColumn(), false));
             }
-            if (event.getColumn().equals(modCol) && !didFirstModifiedSort_)
+            else if (event.getColumn().equals(modifiedColumn_) && 
+                     forceModifiedSortDescending)
             {
-               didFirstModifiedSort_ = true;
+               forceModifiedSortDescending = false;
+               forceSizeSortDescending = true;
                sortList.insert(0, new ColumnSortInfo(event.getColumn(), false));
             }
+            else
+            {
+               forceModifiedSortDescending = true;
+               forceSizeSortDescending = true;
+            } 
             
             // record sort order and fire event to observer
-            ArrayList<FilesColumnSortInfo> sortOrder = 
-                                       new ArrayList<FilesColumnSortInfo>();
+            JsArray<FilesColumnSortInfo> sortOrder = newSortOrderArray();
             for (int i=0; i<sortList.size(); i++)
             {
                // match the column index
@@ -277,7 +282,7 @@ public class FilesList extends Composite
                   if (filesCellTable_.getColumn(c).equals(column))
                   { 
                      boolean ascending = sortInfo.isAscending();
-                     sortOrder.add(FilesColumnSortInfo.create(c, ascending));
+                     sortOrder.push(FilesColumnSortInfo.create(c, ascending));
                      break;
                   }
                }
@@ -288,25 +293,38 @@ public class FilesList extends Composite
             sortHandler_.onColumnSort(event);
          }
          
-         private boolean didFirstSizeSort_ = false;
-         private boolean didFirstModifiedSort_ = false;
+         private native final JsArray<FilesColumnSortInfo> newSortOrderArray()
+         /*-{
+            return [];
+         }-*/;       
+         private boolean forceSizeSortDescending = true;
+         private boolean forceModifiedSortDescending = true;
       });
    }
    
-
-   public void setColumnSortOrder(List<FilesColumnSortInfo> sortList)
+  
+  
+   public void setColumnSortOrder(JsArray<FilesColumnSortInfo> sortOrder)
    {
       ColumnSortList columnSortList = filesCellTable_.getColumnSortList();
       columnSortList.clear();
       
-      for (int i=0; i< sortList.size(); i++)
+      if (sortOrder != null)
       {
-         FilesColumnSortInfo filesSortInfo = sortList.get(i);
-         ColumnSortInfo sortInfo = new ColumnSortInfo(
-               filesCellTable_.getColumn(filesSortInfo.getColumnIndex()),
-               filesSortInfo.getAscending());
-         columnSortList.insert(i, sortInfo);
-      }  
+         for (int i=0; i< sortOrder.length(); i++)
+         {
+            FilesColumnSortInfo filesSortInfo = sortOrder.get(i);
+            Column<?,?> column = filesCellTable_.getColumn(
+                                          filesSortInfo.getColumnIndex());
+            boolean ascending = filesSortInfo.getAscending();
+            ColumnSortInfo sortInfo = new ColumnSortInfo(column, ascending);
+            columnSortList.insert(i, sortInfo);
+         }
+      }
+      else
+      {
+         columnSortList.push(nameColumn_);
+      }
    }
    
    
@@ -458,8 +476,11 @@ public class FilesList extends Composite
     
    
    private FileSystemItem containingPath_ = null;
-   
+  
    private final CellTable<FileSystemItem> filesCellTable_; 
+   private final LinkColumn<FileSystemItem> nameColumn_;
+   private final TextColumn<FileSystemItem> sizeColumn_;
+   private final TextColumn<FileSystemItem> modifiedColumn_;
    
    private final MultiSelectionModel<FileSystemItem> selectionModel_;
    private final ListDataProvider<FileSystemItem> dataProvider_;

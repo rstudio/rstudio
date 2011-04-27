@@ -36,7 +36,6 @@ import org.rstudio.studio.client.workbench.views.files.model.PendingFileUpload;
 import org.rstudio.studio.client.workbench.views.files.ui.*;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class FilesPane extends WorkbenchPane implements Files.Display
 {
@@ -80,17 +79,18 @@ public class FilesPane extends WorkbenchPane implements Files.Display
             observer_.onSelectAllValueChanged(value);
       }
       
-      public void onColumnSortOrderChanaged(List<FilesColumnSortInfo> sortList)
+      public void onColumnSortOrderChanaged(
+                                    JsArray<FilesColumnSortInfo> sortOrder)
       {
          if (observer_ != null)
-            observer_.onColumnSortOrderChanaged(sortList);
+            observer_.onColumnSortOrderChanaged(sortOrder);
       }
    }
    
    @Override
-   public void setColumnSortOrder(List<FilesColumnSortInfo> sortList)
+   public void setColumnSortOrder(JsArray<FilesColumnSortInfo> sortOrder)
    {
-      filesList_.setColumnSortOrder(sortList);
+      filesList_.setColumnSortOrder(sortOrder);
    }
     
    public void listDirectory(final FileSystemItem directory, 

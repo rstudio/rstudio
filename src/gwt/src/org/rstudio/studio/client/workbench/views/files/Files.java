@@ -53,7 +53,6 @@ import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperatio
 import org.rstudio.studio.client.workbench.views.files.model.PendingFileUpload;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class Files
       extends BasePresenter
@@ -75,13 +74,13 @@ public class Files
       public interface Observer extends NavigationObserver
       {
          void onFileSelectionChanged();
-         void onColumnSortOrderChanaged(List<FilesColumnSortInfo> sortList);
+         void onColumnSortOrderChanaged(JsArray<FilesColumnSortInfo> sortOrder);
       }
       
       void setObserver(Observer observer);
            
       
-      void setColumnSortOrder(List<FilesColumnSortInfo> sortList);
+      void setColumnSortOrder(JsArray<FilesColumnSortInfo> sortOrder);
       
       void listDirectory(FileSystemItem directory, 
                          ServerDataSource<JsArray<FileSystemItem>> filesDS);
@@ -158,18 +157,12 @@ public class Files
          {
             if (value != null)
                columnSortOrder_ = value.cast();
+            else
+               columnSortOrder_ = null;
             
             lastKnownState_ = columnSortOrder_;
             
-            if (columnSortOrder_ != null)
-            {
-               ArrayList<FilesColumnSortInfo> sortOrder = new 
-                                       ArrayList<FilesColumnSortInfo>();
-               for (int i=0; i<columnSortOrder_.length(); i++)
-                  sortOrder.add(columnSortOrder_.get(i));
-               
-               view_.setColumnSortOrder(sortOrder);
-            }
+            view_.setColumnSortOrder(columnSortOrder_);
          }
 
          @Override
@@ -184,26 +177,15 @@ public class Files
          @Override
          protected boolean hasChanged()
          {
-            if (lastKnownState_ == null && columnSortOrder_ != null)
-               return true;
-            
-            if (columnSortOrder_ == null && lastKnownState_ != null)
-               return true;
-            
-            if (columnSortOrder_.length() != lastKnownState_.length())
-               return true;
-            
-            for (int i=0; i<columnSortOrder_.length(); i++)
+            if (lastKnownState_ != columnSortOrder_)
             {
-               FilesColumnSortInfo sortInfo = columnSortOrder_.get(i);
-               FilesColumnSortInfo lastSortInfo = lastKnownState_.get(i);
-               if (sortInfo.getColumnIndex() != lastSortInfo.getColumnIndex())
-                  return true;
-               if (sortInfo.getAscending() != lastSortInfo.getAscending())
-                  return true;
+               lastKnownState_ = columnSortOrder_;
+               return true;
             }
-           
-            return false;
+            else
+            {
+               return false;
+            }
          }
 
          private JsArray<FilesColumnSortInfo> lastKnownState_ = null;
@@ -274,14 +256,11 @@ public class Files
       }
 
       @Override
-      public void onColumnSortOrderChanaged(List<FilesColumnSortInfo> sortList)
+      public void onColumnSortOrderChanaged(
+                                    JsArray<FilesColumnSortInfo> sortOrder)
       {
-         columnSortOrder_.setLength(0);
-         for (int i = 0; i<sortList.size(); i++)
-            columnSortOrder_.push(sortList.get(i));    
+         columnSortOrder_ = sortOrder;
       }
-     
-      
    };
     
 
@@ -601,11 +580,5 @@ public class Files
    private static final String MODULE_FILES = "filespane";
    private static final String KEY_PATH = "path";
    private static final String KAY_COLUMN_SORT_ORDER = "columnSortOrder";
-   private JsArray<FilesColumnSortInfo> columnSortOrder_ = newColumnArray();
-   
-   private native final JsArray<FilesColumnSortInfo> newColumnArray() /*-{
-      return [];;
-   }-*/;
-
-  
+   private JsArray<FilesColumnSortInfo> columnSortOrder_ = null;
 }
