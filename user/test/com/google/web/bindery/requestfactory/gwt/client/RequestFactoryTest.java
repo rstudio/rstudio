@@ -194,7 +194,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     }
   }
 
-  private static final int DELAY_TEST_FINISH = 10 * 1000;
+  private static final int DELAY_TEST_FINISH = 30 * 1000;
 
   public <T extends EntityProxy> void assertContains(Collection<T> col, T value) {
     EntityProxyId<?> lookFor = value.stableId();
