@@ -128,11 +128,11 @@ public interface FieldWriter {
 
   /**
    * Sets the precedence of this field builder. Field with higher values are
-   * written first.
-   * TODO(rdcastro): Spreading arbitrary precendence values throughout the code
-   * doesn't scale well. Centralize these values, using enums or constants.
+   * written first. This is automatically set by FieldManager when the field is
+   * created. You should only change it somewhere else if you <b>really</b> know
+   * what you are doing.
    */
-  void setBuildPrecendence(int precedence);
+  void setBuildPrecedence(int precedence);
 
   /**
    * Used to provide an initializer string to use instead of a

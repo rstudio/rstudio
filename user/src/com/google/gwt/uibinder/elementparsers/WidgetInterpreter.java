@@ -75,20 +75,17 @@ class WidgetInterpreter implements XMLElement.Interpreter<String> {
       return null;
     }
 
+    FieldManager fieldManager = uiWriter.getFieldManager();
+    FieldWriter fieldWriter = fieldManager.require(fieldName);
+
     // Allocate a local variable to hold the dom id for this widget. Note
     // that idHolder is a local variable reference, not a string id. We
     // have to generate the ids at runtime, not compile time, or else
     // we'll reuse ids for any template rendered more than once.
-    FieldManager fieldManager = uiWriter.getFieldManager();
-    FieldWriter fieldWriter = fieldManager.require(fieldName);
-    int childrenPrecedence = fieldWriter.getBuildPrecedence() + 1;
     String idHolder = uiWriter.declareDomIdHolder();
     uiWriter.ensureCurrentFieldAttached();
 
-    // We must guarantee that child fields are built before the container.
     FieldWriter childFieldWriter = uiWriter.parseElementToFieldWriter(elem);
-    childFieldWriter.setBuildPrecendence(childrenPrecedence);
-
     String elementPointer = idHolder + "Element";
     uiWriter.addInitStatement(
         "com.google.gwt.user.client.Element %s = " +
@@ -100,7 +97,6 @@ class WidgetInterpreter implements XMLElement.Interpreter<String> {
       // Register a DOM id field.
       String lazyDomElementPath = LazyDomElement.class.getCanonicalName();
       FieldWriter elementWriter = fieldManager.registerField(lazyDomElementPath, elementPointer);
-      elementWriter.setBuildPrecendence(childrenPrecedence);
       elementWriter.setInitializer(String.format("new %s(%s)",
                                                  lazyDomElementPath, fieldManager.convertFieldToGetter(idHolder)));
 

@@ -49,9 +49,7 @@ class AttachableInterpreter implements XMLElement.Interpreter<String> {
     FieldManager fieldManager = uiWriter.getFieldManager();
     FieldWriter fieldWriter = fieldManager.require(fieldName);
 
-    // We must guarantee that child fields are built before the container.
     FieldWriter childFieldWriter = uiWriter.parseElementToFieldWriter(elem);
-    childFieldWriter.setBuildPrecendence(2);
 
     String elementPointer = idHolder + "Element";
     fieldWriter.addAttachStatement(

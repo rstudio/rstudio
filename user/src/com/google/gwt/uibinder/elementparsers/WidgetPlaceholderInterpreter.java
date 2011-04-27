@@ -118,12 +118,10 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
   @Override
   public String postProcess(String consumed) throws UnableToCompleteException {
     FieldWriter fieldWriter = fieldManager.require(fieldName);
-    int childrenPrecedence = fieldWriter.getBuildPrecedence() + 1;
 
     for (String idHolder : idToWidgetElement.keySet()) {
       XMLElement childElem = idToWidgetElement.get(idHolder);
       FieldWriter childFieldWriter = uiWriter.parseElementToFieldWriter(childElem);
-      childFieldWriter.setBuildPrecendence(childrenPrecedence);
 
       genSetWidgetTextCall(idHolder, childFieldWriter.getName());
 
@@ -133,7 +131,6 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
         String elementPointer = idHolder + "Element";
         FieldWriter elementWriter = fieldManager.registerField(
             lazyDomElementPath, elementPointer);
-        elementWriter.setBuildPrecendence(childrenPrecedence);
         elementWriter.setInitializer(String.format("new %s(%s)",
             lazyDomElementPath, fieldManager.convertFieldToGetter(idHolder)));
 

@@ -403,9 +403,6 @@ public class UiBinderWriter implements Statements {
         oracle.findType(String.class.getName()), domHolderName);
     domField.setInitializer("com.google.gwt.dom.client.Document.get().createUniqueId()");
 
-    // Dom IDs must be created first, that's why it gets a higher builder precedence.
-    domField.setBuildPrecendence(2);
-
     return domHolderName;
   }
 
@@ -1099,8 +1096,6 @@ public class UiBinderWriter implements Statements {
       for (ImplicitCssResource css : bundleClass.getCssMethods()) {
         String fieldName = css.getName();
         FieldWriter cssField = fieldManager.require(fieldName);
-        cssField.addStatement("%s.ensureInjected();", fieldName);
-        cssField.setBuildPrecendence(2);
       }
       writeBinderForAttachableStrategy(niceWriter, rootField);
     } else {

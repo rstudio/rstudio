@@ -30,7 +30,7 @@ public interface Attachable extends SafeHtmlRenderer<String> {
 
   /**
    * Replace the previous contents of the receiver with the given element,
-   * presumed to have been created via a previous call to {@link #asHtml}.
+   * presumed to have been created via a previous call to {@link #render}.
    * Assumes the element is attached to the document.
    */
   void wrapElement(Element element);

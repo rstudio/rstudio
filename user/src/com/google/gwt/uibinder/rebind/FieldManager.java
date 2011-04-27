@@ -319,13 +319,19 @@ public class FieldManager {
     return (count == null) ? 0 : count;
   }
 
+  private FieldWriter peek() {
+    return parsedFieldStack.getFirst();
+  }
+
   private FieldWriter registerField(String fieldName, FieldWriter field)
       throws UnableToCompleteException {
     requireUnique(fieldName);
     fieldsMap.put(fieldName, field);
 
     if (parsedFieldStack.size() > 0) {
-      parsedFieldStack.getFirst().needs(field);
+      FieldWriter parent = peek();
+      field.setBuildPrecedence(parent.getBuildPrecedence() + 1);
+      parent.needs(field);
     }
 
     return field;

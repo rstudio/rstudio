@@ -113,7 +113,7 @@ abstract class AbstractFieldWriter implements FieldWriter {
   }
 
   @Override
-  public void setBuildPrecendence(int precedence) {
+  public void setBuildPrecedence(int precedence) {
     this.buildPrecedence = precedence;
   }
 
