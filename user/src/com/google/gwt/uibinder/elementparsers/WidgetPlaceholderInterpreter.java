@@ -182,14 +182,16 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
 
     if (uiWriter.useLazyWidgetBuilders()) {
       if (idIsHasText.contains(idHolder)) {
-        fieldManager.require(childField).addAttachStatement(
-            "%s.setText(%s.getElementById(%s).getInnerText());", childField,
-            fieldManager.convertFieldToGetter(fieldName),
+        fieldManager.require(fieldName).addAttachStatement(
+            "%s.setText(%s.getElementById(%s).getInnerText());",
+            fieldManager.convertFieldToGetter(childField),
+            fieldName,
             fieldManager.convertFieldToGetter(idHolder));
       } else if (idIsHasHTML.contains(idHolder)) {
-        fieldManager.require(childField).addAttachStatement(
-            "%s.setHTML(%s.getElementById(%s).getInnerHTML());", childField,
-            fieldManager.convertFieldToGetter(fieldName),
+        fieldManager.require(fieldName).addAttachStatement(
+            "%s.setHTML(%s.getElementById(%s).getInnerHTML());",
+            fieldManager.convertFieldToGetter(childField),
+            fieldName,
             fieldManager.convertFieldToGetter(idHolder));
       }
     } else {

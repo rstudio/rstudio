@@ -274,6 +274,13 @@ abstract class AbstractFieldWriter implements FieldWriter {
     }
 
     w.newline();
+    // If we forced an attach, we should always detach, regardless of whether
+    // there are any detach statements.
+    if (attachedVar != null) {
+      w.write("// Detach section.");
+      w.write("%s.detach();", attachedVar);
+    }
+
     if (detachStatements.size() > 0) {
       if (isAttachable) {
         w.write("%s.detachedInitializationCallback = ", getName());
@@ -283,14 +290,12 @@ abstract class AbstractFieldWriter implements FieldWriter {
         w.outdent();
         w.write("@Override public void execute() {");
         w.indent();
-      } else if (attachedVar != null) {
-        w.write("// Detach section.");
-        w.write("%s.detach();", attachedVar);
       }
 
       for (String s : detachStatements) {
         w.write(s);
       }
+
       if (isAttachable) {
         w.outdent();
         w.write("}");
