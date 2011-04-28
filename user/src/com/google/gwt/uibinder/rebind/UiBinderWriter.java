@@ -39,6 +39,7 @@ import com.google.gwt.uibinder.rebind.model.ImplicitCssResource;
 import com.google.gwt.uibinder.rebind.model.OwnerClass;
 import com.google.gwt.uibinder.rebind.model.OwnerField;
 import com.google.gwt.user.client.ui.Attachable;
+import com.google.gwt.user.client.ui.Widget;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -557,7 +558,7 @@ public class UiBinderWriter implements Statements {
       throws UnableToCompleteException {
     String tagName = elem.getLocalName();
 
-    if (!isWidgetElement(elem)) {
+    if (!isImportedElement(elem)) {
       return findDomElementTypeForTag(tagName);
     }
 
@@ -673,9 +674,20 @@ public class UiBinderWriter implements Statements {
     return uri != null && UiBinderGenerator.BINDER_URI.equals(uri);
   }
 
-  public boolean isWidgetElement(XMLElement elem) {
+  public boolean isSubclassOf(XMLElement elem, Class<?> clazz)
+      throws UnableToCompleteException {
     String uri = elem.getNamespaceUri();
-    return uri != null && uri.startsWith(PACKAGE_URI_SCHEME);
+    JClassType t = findFieldType(elem);
+    if (t == null) {
+      return false;
+    }
+    JClassType widgetType = oracle.findType(clazz.getCanonicalName());
+    return t.isAssignableTo(widgetType);
+  }
+
+  public boolean isWidgetElement(XMLElement elem)
+      throws UnableToCompleteException {
+    return isSubclassOf(elem, Widget.class);
   }
 
   /**
@@ -1022,6 +1034,11 @@ public class UiBinderWriter implements Statements {
     parsers.add(new IsEmptyParser());
 
     return parsers;
+  }
+
+  private boolean isImportedElement(XMLElement elem) {
+    String uri = elem.getNamespaceUri();
+    return uri != null && uri.startsWith(PACKAGE_URI_SCHEME);  
   }
 
   /**
