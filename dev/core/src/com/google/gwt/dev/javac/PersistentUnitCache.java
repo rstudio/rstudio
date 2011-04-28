@@ -312,7 +312,7 @@ class PersistentUnitCache extends MemoryUnitCache {
     }
 
     if (!cacheDirectory.isDirectory() && !cacheDirectory.mkdirs()) {
-      logger.log(TreeLogger.ERROR, "Unable to initialize cache. Couldn't create directory "
+      logger.log(TreeLogger.WARN, "Unable to initialize cache. Couldn't create directory "
           + cacheDirectory.getAbsolutePath() + ".");
       throw new UnableToCompleteException();
     }
@@ -323,11 +323,11 @@ class PersistentUnitCache extends MemoryUnitCache {
           new File(cacheDirectory, CACHE_FILE_PREFIX + String.format("%016X", timestamp++));
     } while (currentCacheFile.exists());
 
-    // this isn't 100% reliable if multiple processes are in contention
+    // This isn't 100% reliable if multiple processes are in contention
     try {
       currentCacheFile.createNewFile();
     } catch (IOException ex) {
-      logger.log(TreeLogger.ERROR, "Unable to create new cache log file "
+      logger.log(TreeLogger.WARN, "Unable to create new cache log file "
           + currentCacheFile.getAbsolutePath() + ".", ex);
       throw new UnableToCompleteException();
     }

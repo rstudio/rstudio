@@ -200,7 +200,11 @@ public class Compiler {
         options.setExtraDir(new File("extras"));
       }
 
-      CompilationStateBuilder.init(logger, new File(options.getWarDir(), "WEB-INF"));
+      File persistentUnitCacheDir = null;
+      if (options.getWarDir() != null && !options.getWarDir().getName().endsWith(".jar")) {
+        persistentUnitCacheDir = new File(options.getWarDir(), "WEB-INF");
+      }
+      CompilationStateBuilder.init(logger, persistentUnitCacheDir);
 
       for (ModuleDef module : modules) {
         String moduleName = module.getCanonicalName();

@@ -42,8 +42,7 @@ public class UnitCacheFactory {
    * Only one instance of the cache is instantiated. If a previously created
    * cache exists, the previous instance is returned.
    */
-  public static synchronized UnitCache get(TreeLogger logger, File cacheDir)
-      throws UnableToCompleteException {
+  public static synchronized UnitCache get(TreeLogger logger, File cacheDir) {
     assert logger != null;
     if (instance == null) {
       if (usePersistent) {
@@ -52,14 +51,18 @@ public class UnitCacheFactory {
         if (propertyCacheDir != null) {
           cacheDir = new File(propertyCacheDir);
         } else if (cacheDir == null) {
-          throw new IllegalArgumentException("Expected " + dirProp
-              + " system property to be set.");
+          logger.log(TreeLogger.TRACE, "To enable persistent unit caching, specify the -Dgwt.persistentunitcachedir=<dir> system property.");
         }
-        instance = new PersistentUnitCache(logger, cacheDir);
-      } else {
-        // Fallback - use in-memory only cache.
-        instance = new MemoryUnitCache();
+        if (cacheDir != null) {
+          try {
+            instance = new PersistentUnitCache(logger, cacheDir);
+            return instance;
+          } catch (UnableToCompleteException ignored) {
+          }
+        }
       }
+      // Fallback - use in-memory only cache.
+      instance = new MemoryUnitCache();
     }
     return instance;
   }

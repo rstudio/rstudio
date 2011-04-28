@@ -416,7 +416,12 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
     scanThread.setPriority((Thread.MIN_PRIORITY + Thread.NORM_PRIORITY) / 2);
     scanThread.start();
 
-    if (!super.doStartup(new File(options.getWarDir(), "WEB-INF"))) {
+    File persistentCacheDir = null;
+    if (options.getWarDir() != null && !options.getWarDir().getName().endsWith(".jar")) {
+      persistentCacheDir = new File(options.getWarDir(), "WEB-INF");
+    }
+
+    if (!super.doStartup(persistentCacheDir)) {
       return false;
     }
 
