@@ -41,6 +41,8 @@ public class AceThemes
       addTheme("TextMate", res.textmate());
       addTheme("Eclipse", res.eclipse());
       addTheme("Cobalt", res.cobalt());
+      addTheme("Solarized", res.solarized());
+      addTheme("Solarized (dark)", res.solarizedDark());
       addTheme("Idle Fingers", res.idle_fingers());
       addTheme("Twilight", res.twilight());
       

@@ -32,6 +32,12 @@ public interface AceThemeResources extends ClientBundle
    @Source("cobalt.css")
    StaticDataResource cobalt();
 
+   @Source("solarized.css")
+   StaticDataResource solarized();
+
+   @Source("solarized_dark.css")
+   StaticDataResource solarizedDark();
+
 //   @Source("clouds.css")
 //   StaticDataResource clouds();
 //
