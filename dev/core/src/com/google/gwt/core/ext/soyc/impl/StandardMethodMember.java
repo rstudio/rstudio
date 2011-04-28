@@ -16,9 +16,14 @@
 package com.google.gwt.core.ext.soyc.impl;
 
 import com.google.gwt.core.ext.soyc.ClassMember;
+import com.google.gwt.core.ext.soyc.Member;
 import com.google.gwt.core.ext.soyc.MethodMember;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JType;
+
+import java.util.Collections;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * An implementation of MethodMember.
@@ -27,6 +32,7 @@ public class StandardMethodMember extends AbstractMemberWithDependencies
     implements MethodMember {
   private final ClassMember enclosing;
   private final String sourceName;
+  private final SortedSet<MethodMember> overridesView;
 
   /**
    * Constructed by {@link MemberFactory#get(JMethod)}.
@@ -43,10 +49,21 @@ public class StandardMethodMember extends AbstractMemberWithDependencies
     sb.append(")");
     sb.append(method.getOriginalReturnType().getJsniSignatureName());
     this.sourceName = sb.toString();
+
+    SortedSet<MethodMember> overrides = new TreeSet<MethodMember>(
+        Member.SOURCE_NAME_COMPARATOR);
+    for (JMethod override : method.getOverrides()) {
+      overrides.add(factory.get(override));
+    }
+    overridesView = Collections.unmodifiableSortedSet(overrides);
   }
 
   public ClassMember getEnclosing() {
     return enclosing;
+  }
+
+  public SortedSet<MethodMember> getOverrides() {
+    return overridesView;
   }
 
   @Override

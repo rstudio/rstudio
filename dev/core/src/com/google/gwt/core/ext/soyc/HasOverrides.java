@@ -18,9 +18,19 @@
  */
 package com.google.gwt.core.ext.soyc;
 
+import java.util.SortedSet;
+
 /**
- * Represents compiled JS code derived from a Java method.
+ * A tag interface for Members to indicate that they override or extend another
+ * Member.
+ * 
+ * @param <T> the type of Member that is overridden or extended
  */
-public interface MethodMember extends HasDependencies, HasEnclosing,
-    HasOverrides<MethodMember>, Member {
+public interface HasOverrides<T extends Member> {
+  /**
+   * Returns the complete set of overridden members. For example, if
+   * <code>C</code> extends <code>B</code> extends <code>A</code>, then
+   * <code>C</code> would return the set <code>[A, B]</code>.
+   */
+  SortedSet<T> getOverrides();
 }

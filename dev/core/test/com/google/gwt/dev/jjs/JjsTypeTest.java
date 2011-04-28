@@ -238,7 +238,6 @@ public class JjsTypeTest extends TestCase {
 
     classObject = createClass("java.lang.Object", null, false, false);
     classString = createClass("java.lang.String", classObject, false, true);
-    createClass("com.google.gwt.lang.Array", classObject, false, true);
     classJso = createClass("com.google.gwt.core.client.JavaScriptObject",
         classObject, false, false);
 

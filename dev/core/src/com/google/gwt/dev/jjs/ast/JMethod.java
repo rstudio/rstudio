@@ -70,9 +70,8 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
    * Special serialization treatment.
    */
   private transient JAbstractMethodBody body = null;
-  private JMethod directOverride;
   private final JDeclaredType enclosingType;
-  private boolean isAbstract;
+  private final boolean isAbstract;
   private boolean isFinal;
   private final boolean isPrivate;
   private final boolean isStatic;
@@ -80,6 +79,14 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
   private final String name;
   private List<JType> originalParamTypes;
   private JType originalReturnType;
+
+  /**
+   * References to any methods which this method overrides. This should be an
+   * EXHAUSTIVE list, that is, if C overrides B overrides A, then C's overrides
+   * list will contain both A and B.
+   */
+  private List<JMethod> overrides = Collections.emptyList();
+
   private List<JParameter> params = Collections.emptyList();
   private JType returnType;
   private List<JClassType> thrownExceptions = Collections.emptyList();
@@ -99,6 +106,22 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
     this.isStatic = isStatic;
     this.isFinal = isFinal;
     this.isPrivate = isPrivate;
+  }
+
+  /**
+   * Add a method that this method overrides.
+   */
+  public void addOverride(JMethod toAdd) {
+    assert canBePolymorphic();
+    overrides = Lists.add(overrides, toAdd);
+  }
+
+  /**
+   * Add methods that this method overrides.
+   */
+  public void addOverrides(List<JMethod> toAdd) {
+    assert canBePolymorphic();
+    overrides = Lists.addAll(overrides, toAdd);
   }
 
   /**
@@ -138,13 +161,6 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
     return body;
   }
 
-  /**
-   * Returns the method this method directly overrides, or <code>null</code>.
-   */
-  public JMethod getDirectOverride() {
-    return directOverride;
-  }
-
   public JDeclaredType getEnclosingType() {
     return enclosingType;
   }
@@ -159,6 +175,13 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
 
   public JType getOriginalReturnType() {
     return originalReturnType;
+  }
+
+  /**
+   * Returns the transitive closure of all the methods this method overrides.
+   */
+  public List<JMethod> getOverrides() {
+    return overrides;
   }
 
   /**
@@ -238,25 +261,11 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
     params = Lists.remove(params, index);
   }
 
-  public void setAbstract(boolean isAbstract) {
-    this.isAbstract = isAbstract;
-  }
-
   public void setBody(JAbstractMethodBody body) {
     this.body = body;
     if (body != null) {
       body.setMethod(this);
     }
-  }
-
-  /**
-   * Returns the method this method directly overrides.
-   */
-  public void setDirectOverride(JMethod directOverride) {
-    assert canBePolymorphic();
-    assert this.directOverride == null;
-    assert directOverride.getEnclosingType() instanceof JClassType;
-    this.directOverride = directOverride;
   }
 
   public void setFinal() {
