@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
+import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.jjs.impl.HasNameSort;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
@@ -188,6 +189,8 @@ public class JTypeOracle implements Serializable {
     return true;
   }
 
+  private JDeclaredType baseArrayType;
+
   /**
    * A map of all interfaces to the set of classes that could theoretically
    * implement them.
@@ -234,11 +237,6 @@ public class JTypeOracle implements Serializable {
   private JDeclaredType javaLangCloneable;
 
   /**
-   * Caches the {@link Object} class.
-   */
-  private JClassType javaLangObject = null;
-
-  /**
    * A map of all interfaces that are implemented by overlay types to the
    * overlay type that initially implements it.
    */
@@ -277,15 +275,6 @@ public class JTypeOracle implements Serializable {
    */
   private final Map<JInterfaceType, Set<JInterfaceType>> superInterfaceMap =
       new IdentityHashMap<JInterfaceType, Set<JInterfaceType>>();
-  /**
-   * A map of all methods with virtual overrides, onto the collection of
-   * overridden methods. Each key method's collections is a map of the set of
-   * subclasses who inherit the key method mapped onto the set of interface
-   * methods the key method virtually implements. For a definition of a virtual
-   * override, see {@link #getAllVirtualOverrides(JMethod)}.
-   */
-  private final Map<JMethod, Map<JClassType, Set<JMethod>>> virtualUpRefMap =
-      new IdentityHashMap<JMethod, Map<JClassType, Set<JMethod>>>();
 
   public JTypeOracle(JProgram program) {
     this.program = program;
@@ -417,7 +406,7 @@ public class JTypeOracle implements Serializable {
         }
       }
 
-      if (qType == javaIoSerializable || qType == javaLangCloneable) {
+      if (qType == javaIoSerializable || qType == javaLangCloneable || qType == baseArrayType) {
         return true;
       }
     } else if (type instanceof JClassType) {
@@ -455,7 +444,7 @@ public class JTypeOracle implements Serializable {
   }
 
   public void computeBeforeAST() {
-    javaLangObject = program.getTypeJavaLangObject();
+    baseArrayType = program.getIndexedType("Array");
     javaIoSerializable = program.getFromTypeMap(Serializable.class.getName());
     javaLangCloneable = program.getFromTypeMap(Cloneable.class.getName());
 
@@ -509,11 +498,6 @@ public class JTypeOracle implements Serializable {
         computeCouldImplement((JClassType) type);
       }
     }
-    for (JDeclaredType type : program.getDeclaredTypes()) {
-      if (type instanceof JClassType) {
-        computeVirtualUpRefs((JClassType) type);
-      }
-    }
 
     // Create dual mappings for any jso interface with a Java implementor.
     for (JInterfaceType jsoIntf : jsoSingleImpls.keySet()) {
@@ -527,62 +511,42 @@ public class JTypeOracle implements Serializable {
     }
   }
 
-  public Set<JMethod> getAllOverrides(JMethod method) {
-    return getAllOverrides(method, instantiatedTypes);
+  public Set<JMethod> getPossibleDispatches(JMethodCall x) {
+    if (!x.canBePolymorphic()) {
+      return IdentitySets.create(x.getTarget());
+    }
+    if (x instanceof JsniMethodRef) {
+      return getPossibleDispatches(x.getTarget().getEnclosingType(), x.getTarget());
+    } else {
+      return getPossibleDispatches((JReferenceType) x.getInstance().getType(), x.getTarget());
+    }
   }
 
-  /**
-   * References to any methods which this method implementation might override
-   * or implement in any instantiable class.
-   */
-  public Set<JMethod> getAllOverrides(JMethod method, Set<JReferenceType> instantiatedTypes) {
-    Set<JMethod> results = new IdentityHashSet<JMethod>();
-    getAllRealOverrides(method, results);
-    getAllVirtualOverrides(method, instantiatedTypes, results);
-    return results;
-  }
+  public Set<JMethod> getPossibleDispatches(JReferenceType type, JMethod method) {
+    if (!method.canBePolymorphic() || type instanceof JNullType) {
+      return IdentitySets.create(method);
+    }
+    type = type.getUnderlyingType();
+    if (type instanceof JArrayType) {
+      type = baseArrayType;
+    }
+    Set<JClassType> concreteTypes = getConcreteTypesFor((JDeclaredType) type);
+    // This can happen with generic intersection types.
+    if (type != method.getEnclosingType()) {
+      concreteTypes.retainAll(getConcreteTypesFor(method.getEnclosingType()));
+    }
 
-  /**
-   * References to any methods which this method directly overrides. This should
-   * be an EXHAUSTIVE list, that is, if C overrides B overrides A, then C's
-   * overrides list will contain both A and B.
-   */
-  public Set<JMethod> getAllRealOverrides(JMethod method) {
-    Set<JMethod> results = new IdentityHashSet<JMethod>();
-    getAllRealOverrides(method, results);
-    return results;
-  }
-
-  public Set<JClassType> getAllSubClasses(JReferenceType type) {
-    return subClassMap.get(type);
-  }
-
-  /**
-   * Returns the set of methods the given method virtually overrides. A virtual
-   * override is an association between a concrete method and an unrelated
-   * interface method with the exact same name and signature. The association
-   * occurs if and only if some subclass extends the concrete method's
-   * containing class and implements the interface method's containing
-   * interface. Example:
-   * 
-   * <pre>
-   * interface IFoo {
-   *   foo();
-   * }
-   * class Unrelated {
-   *   foo() { ... }
-   * }
-   * class Foo extends Unrelated implements IFoo {
-   * }
-   * </pre>
-   * 
-   * In this case, <code>Unrelated.foo()</code> virtually implements
-   * <code>IFoo.foo()</code> in subclass <code>Foo</code>.
-   */
-  public Set<JMethod> getAllVirtualOverrides(JMethod method) {
-    Set<JMethod> results = new IdentityHashSet<JMethod>();
-    getAllVirtualOverrides(method, instantiatedTypes, results);
-    return results;
+    String signature = method.getSignature();
+    Set<JMethod> results = IdentitySets.create();
+    for (JClassType candidate : concreteTypes) {
+      results = findMethodMatching(candidate, signature, results);
+    }
+    if (results.size() == 0) {
+      // No live implementors, just return the original.
+      return IdentitySets.create(method);
+    } else {
+      return results;
+    }
   }
 
   public JClassType getSingleJsoImpl(JReferenceType maybeSingleJsoIntf) {
@@ -806,75 +770,32 @@ public class JTypeOracle implements Serializable {
   }
 
   /**
-   * WEIRD: Suppose class Foo declares void f(){} and unrelated interface I also
-   * declares void f(). Then suppose Bar extends Foo implements I and doesn't
-   * override f(). We need to record a "virtual" upref from Foo.f() to I.f() so
-   * that if I.f() is rescued AND Bar is instantiable, Foo.f() does not get
-   * pruned.
-   */
-  private void computeVirtualUpRefs(JClassType type) {
-    if (type.getSuperClass() == null || type.getSuperClass() == javaLangObject) {
-      return;
-    }
-
-    /*
-     * For each interface I directly implement, check all methods and make sure
-     * I define implementations for them. If I don't, then check all my super
-     * classes to find virtual overrides.
-     */
-    for (JInterfaceType intf : type.getImplements()) {
-      computeVirtualUpRefs(type, intf);
-      for (JInterfaceType superIntf : get(superInterfaceMap, intf)) {
-        computeVirtualUpRefs(type, superIntf);
-      }
-    }
-  }
-
-  /**
-   * For each interface I directly implement, check all methods and make sure I
-   * define implementations for them. If I don't, then check all my super
-   * classes to find virtual overrides.
-   */
-  private void computeVirtualUpRefs(JClassType type, JInterfaceType intf) {
-    outer : for (JMethod intfMethod : intf.getMethods()) {
-      for (JMethod classMethod : type.getMethods()) {
-        if (methodsDoMatch(intfMethod, classMethod)) {
-          // this class directly implements the interface method
-          continue outer;
-        }
-      }
-
-      // this class does not directly implement the interface method
-      // if any super classes do, create a virtual up ref
-      for (JClassType superType = type.getSuperClass(); superType != javaLangObject; superType =
-          superType.getSuperClass()) {
-        for (JMethod superMethod : superType.getMethods()) {
-          if (methodsDoMatch(intfMethod, superMethod)) {
-            // this super class directly implements the interface method
-            // create a virtual up ref
-
-            // System.out.println("Virtual upref from " + superType.getName()
-            // + "." + superMethod.getName() + " to " + intf.getName() + "."
-            // + intfMethod.getName() + " via " + type.getName());
-
-            Map<JClassType, Set<JMethod>> classToMethodMap =
-                getOrCreateMap(virtualUpRefMap, superMethod);
-            add(classToMethodMap, type, intfMethod);
-
-            // do not search additional super types
-            continue outer;
-          }
-        }
-      }
-    }
-  }
-
-  /**
    * Returns true if type extends the interface represented by qType, either
    * directly or indirectly.
    */
   private boolean extendsInterface(JInterfaceType type, JInterfaceType qType) {
     return get(superInterfaceMap, type).contains(qType);
+  }
+
+  /**
+   * Find a method in candidate that matches the appropriate signature.
+   * 
+   * TODO: make this run faster by precomputing a global map? The current
+   * implementation does linear scans of all the methods in a type, which is
+   * slower than it could be. Not sure if it will make a practical difference,
+   * though.
+   */
+  private Set<JMethod> findMethodMatching(JClassType candidate, String signature,
+      Set<JMethod> results) {
+    for (JMethod tryMethod : candidate.getMethods()) {
+      if (!tryMethod.canBePolymorphic()) {
+        continue;
+      }
+      if (tryMethod.getSignature().equals(signature)) {
+        return IdentitySets.add(results, tryMethod);
+      }
+    }
+    return findMethodMatching(candidate.getSuperClass(), signature, results);
   }
 
   private <K, V> Set<V> get(Map<K, Set<V>> map, K key) {
@@ -885,23 +806,25 @@ public class JTypeOracle implements Serializable {
     return set;
   }
 
-  private void getAllRealOverrides(JMethod method, Set<JMethod> results) {
-    for (JMethod possibleOverride : method.getOverrides()) {
-      results.add(possibleOverride);
+  private Set<JClassType> getConcreteTypesFor(JDeclaredType superType) {
+    Set<JClassType> types = new IdentityHashSet<JClassType>();
+    if (superType instanceof JInterfaceType) {
+      types.addAll(get(isImplementedMap, (JInterfaceType) superType));
+    } else {
+      JClassType classType = (JClassType) superType;
+      types.addAll(get(subClassMap, classType));
+      types.add(classType);
     }
-  }
-
-  private void getAllVirtualOverrides(JMethod method, Set<JReferenceType> instantiatedTypes,
-      Set<JMethod> results) {
-    Map<JClassType, Set<JMethod>> overrideMap = virtualUpRefMap.get(method);
-    if (overrideMap != null) {
-      for (Map.Entry<JClassType, Set<JMethod>> entry : overrideMap.entrySet()) {
-        JClassType classType = entry.getKey();
-        if (isInstantiatedType(classType, instantiatedTypes)) {
-          results.addAll(entry.getValue());
-        }
+    for (Iterator<JClassType> it = types.iterator(); it.hasNext();) {
+      JClassType type = it.next();
+      if (type.isAbstract()) {
+        it.remove();
+      } else if (instantiatedTypes != null && !instantiatedTypes.contains(type)) {
+        // If we've computed instantiability, eliminate non-instantiable types.
+        it.remove();
       }
     }
+    return types;
   }
 
   private <K, V> Set<V> getOrCreate(Map<K, Set<V>> map, K key) {
@@ -911,15 +834,6 @@ public class JTypeOracle implements Serializable {
       map.put(key, set);
     }
     return set;
-  }
-
-  private <K, K2, V> Map<K2, V> getOrCreateMap(Map<K, Map<K2, V>> map, K key) {
-    Map<K2, V> map2 = map.get(key);
-    if (map2 == null) {
-      map2 = new IdentityHashMap<K2, V>();
-      map.put(key, map2);
-    }
-    return map2;
   }
 
   /**

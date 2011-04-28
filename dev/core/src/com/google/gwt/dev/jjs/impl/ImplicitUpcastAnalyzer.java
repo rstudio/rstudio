@@ -25,6 +25,7 @@ import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
+import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -50,9 +51,11 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
   protected JMethod currentMethod;
   private final JType javaScriptObjectType;
   private final JType nullType;
+  private final JProgram program;
   private final JType throwableType;
 
   public ImplicitUpcastAnalyzer(JProgram program) {
+    this.program = program;
     this.throwableType = program.getIndexedType("Throwable");
     this.javaScriptObjectType = program.getJavaScriptObject();
     this.nullType = program.getTypeNull();
@@ -104,14 +107,6 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
 
   @Override
   public void endVisit(JMethod x, Context ctx) {
-    // check for upcast in return type as compared to an overridden method
-    List<JMethod> overrides = x.getOverrides();
-    if (overrides != null && overrides.size() > 0) {
-      // only check the first one, since other ones will be checked when those
-      // overridden methods are visited, don't want to do redundant work
-      processIfTypesNotEqual(x.getType(), overrides.get(0).getType(), x.getSourceInfo());
-    }
-
     if (x.getBody() != null && x.getBody().isNative()) {
       /*
        * Check if this method has a native (jsni) method body, in which case all
@@ -134,14 +129,17 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
 
   @Override
   public void endVisit(JMethodCall x, Context ctx) {
-    // check for upcast in argument passing
     List<JExpression> args = x.getArgs();
-    List<JParameter> params = x.getTarget().getParams();
-
-    for (int i = 0; i < args.size(); i++) {
-      // make sure the param wasn't pruned
-      if (i < params.size()) {
+    for (JMethod method : program.typeOracle.getPossibleDispatches(x)) {
+      // check for upcast in argument passing
+      List<JParameter> params = method.getParams();
+      for (int i = 0; i < params.size(); i++) {
         processIfTypesNotEqual(args.get(i).getType(), params.get(i).getType(), x.getSourceInfo());
+      }
+
+      // check if any return type doesn't match
+      if (!(x instanceof JNewInstance)) {
+        processIfTypesNotEqual(method.getType(), x.getType(), x.getSourceInfo());
       }
     }
   }
@@ -156,15 +154,17 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
 
   @Override
   public void endVisit(JsniMethodRef x, Context ctx) {
-    // the return type of this method ref will be cast to JavaScriptObject
-    if (x.getTarget().getType() != JPrimitiveType.VOID) {
-      processIfTypesNotEqual(x.getTarget().getType(), javaScriptObjectType, x.getSourceInfo());
-    }
+    for (JMethod method : program.typeOracle.getPossibleDispatches(x)) {
+      // the return type of this method ref will be cast to JavaScriptObject
+      if (method.getType() != JPrimitiveType.VOID) {
+        processIfTypesNotEqual(x.getTarget().getType(), javaScriptObjectType, x.getSourceInfo());
+      }
 
-    // check referenced method's params, which are passed as JavaScriptObjects
-    List<JParameter> params = x.getTarget().getParams();
-    for (int i = 0; i < params.size(); i++) {
-      processIfTypesNotEqual(javaScriptObjectType, params.get(i).getType(), x.getSourceInfo());
+      // check referenced method's params, which are passed as JavaScriptObjects
+      List<JParameter> params = method.getParams();
+      for (int i = 0; i < params.size(); i++) {
+        processIfTypesNotEqual(javaScriptObjectType, params.get(i).getType(), x.getSourceInfo());
+      }
     }
   }
 

@@ -17,7 +17,6 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
-import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
@@ -30,17 +29,14 @@ import com.google.gwt.dev.jjs.ast.JPrefixOperation;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JValueLiteral;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Detects when same literal is passed as parameter value, and uses literal
@@ -63,36 +59,31 @@ public class SameParameterValueOptimizer {
 
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
-      JMethod method = x.getTarget();
-
-      if (x.canBePolymorphic() || rescuedMethods.contains(method)) {
-        return;
-      }
-
       List<JExpression> args = x.getArgs();
-      List<JParameter> params = method.getParams();
+      for (JMethod method : program.typeOracle.getPossibleDispatches(x)) {
+        List<JParameter> params = method.getParams();
+        for (int i = 0; i < params.size(); i++) {
+          JParameter param = params.get(i);
+          JExpression arg = args.get(i);
 
-      for (int i = 0; i < args.size() && i < params.size(); i++) {
-        JParameter param = params.get(i);
-        JExpression arg = args.get(i);
+          if (!(arg instanceof JValueLiteral)) {
+            parameterValues.put(param, null);
+            continue;
+          }
 
-        if (!(arg instanceof JValueLiteral)) {
-          parameterValues.put(param, null);
-          continue;
-        }
+          if (!parameterValues.containsKey(param)) {
+            parameterValues.put(param, (JValueLiteral) arg);
+            continue;
+          }
 
-        if (!parameterValues.containsKey(param)) {
-          parameterValues.put(param, (JValueLiteral) arg);
-          continue;
-        }
+          JValueLiteral commonParamValue = parameterValues.get(param);
+          if (commonParamValue == null) {
+            continue;
+          }
 
-        JValueLiteral commonParamValue = parameterValues.get(param);
-        if (commonParamValue == null) {
-          continue;
-        }
-
-        if (!equalLiterals(commonParamValue, (JValueLiteral) arg)) {
-          parameterValues.put(param, null);
+          if (!equalLiterals(commonParamValue, (JValueLiteral) arg)) {
+            parameterValues.put(param, null);
+          }
         }
       }
     }
@@ -112,28 +103,12 @@ public class SameParameterValueOptimizer {
     }
 
     @Override
-    public void endVisit(JsniMethodBody x, Context ctx) {
-      for (JsniMethodRef methodRef : x.getJsniMethodRefs()) {
-        rescuedMethods.add(methodRef.getTarget());
-      }
-    }
-
-    @Override
-    public boolean visit(JConstructor x, Context ctx) {
-      // Cannot be overridden or staticified.
-      return true;
-    }
-
-    @Override
-    public boolean visit(JMethod x, Context ctx) {
-      Set<JMethod> overrides = program.typeOracle.getAllOverrides(x);
-      if (!overrides.isEmpty()) {
-        for (JMethod m : overrides) {
-          rescuedMethods.add(m);
+    public void endVisit(JsniMethodRef x, Context ctx) {
+      for (JMethod method : program.typeOracle.getPossibleDispatches(x)) {
+        for (JParameter p : method.getParams()) {
+          parameterValues.put(p, null);
         }
-        rescuedMethods.add(x);
       }
-      return true;
     }
 
     private boolean equalLiterals(JValueLiteral l1, JValueLiteral l2) {
@@ -195,13 +170,6 @@ public class SameParameterValueOptimizer {
       new IdentityHashMap<JParameter, JValueLiteral>();
   private final JProgram program;
 
-  /**
-   * These methods should not be tried to optimized due to their polymorphic
-   * nature.
-   * 
-   * TODO: support polymorphic calls properly.
-   */
-  private final Set<JMethod> rescuedMethods = new HashSet<JMethod>();
   private final Simplifier simplifier;
 
   private SameParameterValueOptimizer(JProgram program) {
@@ -215,9 +183,6 @@ public class SameParameterValueOptimizer {
     analysisVisitor.accept(node);
 
     for (JParameter parameter : parameterValues.keySet()) {
-      if (rescuedMethods.contains(parameter.getEnclosingMethod())) {
-        continue;
-      }
       JValueLiteral valueLiteral = parameterValues.get(parameter);
       if (valueLiteral != null) {
         SubstituteParameterVisitor substituteParameterVisitor =
