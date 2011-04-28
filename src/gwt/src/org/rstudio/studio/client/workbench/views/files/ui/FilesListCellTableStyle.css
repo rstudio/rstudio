@@ -18,20 +18,19 @@ http://code.google.com/p/google-web-toolkit/source/browse/trunk/user/src/com/goo
 }
 
 .cellTableFooter {
-  border-top: 1px solid #BBB;  
-  padding: 1px 1px;
-  text-align: left;
-  overflow: hidden;
-  cursor: default;
 }
 
 .cellTableHeader {
-  border-bottom: 1px solid #BBB;  
-  border-left: 1px solid #BBB;
-  padding: 1px 1px;
+  border-bottom: 1px solid #d6dadc;  
+  border-right: 1px solid #d6dadc;
+  border-top: 1px solid white;
+  border-left: 1px solid white;
+  padding: 1px 2px;
   text-align: left;
   font-weight: normal;
-  background-color: #F3F4F4;
+  font-size: 11px;
+  color: #3c474d;
+  background-color: #eeeff1;
   overflow: hidden;
   cursor: default;
 }
@@ -46,7 +45,7 @@ http://code.google.com/p/google-web-toolkit/source/browse/trunk/user/src/com/goo
 }
 
 .cellTableFirstColumnHeader {
-  
+ 
 }
 
 .cellTableLastColumnFooter {
@@ -54,7 +53,7 @@ http://code.google.com/p/google-web-toolkit/source/browse/trunk/user/src/com/goo
 }
 
 .cellTableLastColumnHeader {
-  
+  border-right: none;
 }
 
 .cellTableSortableHeader {
@@ -63,7 +62,6 @@ http://code.google.com/p/google-web-toolkit/source/browse/trunk/user/src/com/goo
 }
 
 .cellTableSortableHeader:hover {
-  color: #6c6b6b;
 }
 
 .cellTableSortedHeaderAscending {

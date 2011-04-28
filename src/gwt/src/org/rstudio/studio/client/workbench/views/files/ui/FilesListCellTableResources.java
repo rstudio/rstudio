@@ -14,6 +14,8 @@
 package org.rstudio.studio.client.workbench.views.files.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.user.cellview.client.CellTable;
 
 public interface FilesListCellTableResources extends CellTable.Resources 
@@ -21,10 +23,21 @@ public interface FilesListCellTableResources extends CellTable.Resources
    static FilesListCellTableResources INSTANCE =
     (FilesListCellTableResources)GWT.create(FilesListCellTableResources.class);
 
+   @Source("ascendingArrow.png")
+   @ImageOptions(flipRtl = true)
+   ImageResource cellTableSortAscending();
+
+   /**
+    * Icon used when a column is sorted in descending order.
+    */
+   @Source("descendingArrow.png")
+   @ImageOptions(flipRtl = true)
+   ImageResource cellTableSortDescending();
+   
    interface Style extends CellTable.Style
    {
    }
-
+   
    @Source("FilesListCellTableStyle.css")
    Style cellTableStyle();
 }
