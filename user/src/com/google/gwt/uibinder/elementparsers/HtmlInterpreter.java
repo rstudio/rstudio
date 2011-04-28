@@ -88,7 +88,7 @@ public class HtmlInterpreter implements XMLElement.Interpreter<String> {
     if (writer.useLazyWidgetBuilders() &&
         writer.isSubclassOf(elem, SafeHtml.class)) {
       String childFieldName = writer.parseElementToField(elem);
-      return writer.tokenForExpression(childFieldName);
+      return writer.tokenForSafeHtmlExpression(childFieldName);
     }
     return pipe.interpretElement(elem);
   }

@@ -79,6 +79,6 @@ class AttachableInterpreter implements XMLElement.Interpreter<String> {
     // TODO(rdcastro): use the render() call that receives the SafeHtmlBuilder
     String elementHtml = fieldManager.convertFieldToGetter(childFieldWriter.getName()) + ".render("
         + fieldManager.convertFieldToGetter(idHolder) + ")";
-    return uiWriter.tokenForExpression(elementHtml);
+    return uiWriter.tokenForSafeHtmlExpression(elementHtml);
   }
 }

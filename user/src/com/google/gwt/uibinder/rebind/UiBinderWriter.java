@@ -775,18 +775,6 @@ public class UiBinderWriter implements Statements {
         type.getQualifiedSourceName(), asCommaSeparatedList(args)));
   }
 
-  // TODO(rdcastro): Rename this to tokenForSafeHtmlExpression and the method
-  // above to something else.
-  public String tokenForExpression(String expression) {
-    if (!useSafeHtmlTemplates) {
-      return tokenForStringExpression(expression);
-    }
-
-    String token = tokenator.nextToken(expression);
-    htmlTemplates.noteSafeConstant(expression);
-    return tokenator.nextToken(expression);
-  }
-
   /**
    * Like {@link #tokenForStringExpression}, but used for runtime expressions
    * that we trust to be safe to interpret at runtime as HTML without escaping,
@@ -796,8 +784,7 @@ public class UiBinderWriter implements Statements {
    *
    * @param expression
    */
-  // TODO(rdcastro): Rename this tokenForSafeConstant.
-  public String tokenForSafeHtmlExpression(String expression) {
+  public String tokenForSafeConstant(String expression) {
     if (!useSafeHtmlTemplates) {
       return tokenForStringExpression(expression);
     }
@@ -807,6 +794,22 @@ public class UiBinderWriter implements Statements {
     htmlTemplates.noteSafeConstant("SafeHtmlUtils.fromSafeConstant(" +
         expression + ")");
     return token;
+  }
+
+  /**
+   * Like {@link #tokenForStringExpression}, but used for runtime {@link SafeHtml}
+   * instances.
+   *
+   * @param expression
+   */
+  public String tokenForSafeHtmlExpression(String expression) {
+    if (!useSafeHtmlTemplates) {
+      return tokenForStringExpression(expression);
+    }
+
+    String token = tokenator.nextToken(expression);
+    htmlTemplates.noteSafeConstant(expression);
+    return tokenator.nextToken(expression);
   }
 
   /**
