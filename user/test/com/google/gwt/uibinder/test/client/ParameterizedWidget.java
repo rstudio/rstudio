@@ -23,7 +23,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * Used by {@link TestParameterizedWidgets}.
+ * Used by {@link ParameterizedWidgetsTest}.
  */
 class ParameterizedWidget<T> extends Composite {
   interface Binder extends UiBinder<Widget, ParameterizedWidget<?>> {

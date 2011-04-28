@@ -648,7 +648,8 @@ public class UiJavaResources {
     public CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
-      code.append("public class Widget extends UIObject {\n");
+      code.append("public class Widget extends UIObject implements IsWidget {\n");
+      code.append("  public Widget asWidget() { return this; }");
       code.append("}\n");
       return code;
     }

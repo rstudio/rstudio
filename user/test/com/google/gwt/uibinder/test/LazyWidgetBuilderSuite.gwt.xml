@@ -1,4 +1,4 @@
-<!-- Copyright 2008 Google Inc.                                             -->
+<!-- Copyright 2011 Google Inc.                                             -->
 <!-- Licensed under the Apache License, Version 2.0 (the "License"); you    -->
 <!-- may not use this file except in compliance with the License. You may   -->
 <!-- may obtain a copy of the License at                                    -->
@@ -11,9 +11,9 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<!-- Allows the test app to be run directly.                                -->
+<!-- Tests that rely on the useLazyWidgetBuilders switch                    -->
 <module>
   <inherits name="com.google.gwt.user.User" />
   <inherits name="com.google.gwt.debug.Debug"/>
-  <entry-point class="com.google.gwt.uibinder.test.client.UiBinderTestApp" />
+  <set-configuration-property name="UiBinder.useLazyWidgetBuilders" value="true"/>
 </module>

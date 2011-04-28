@@ -16,27 +16,31 @@
 package com.google.gwt.uibinder;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
+import com.google.gwt.uibinder.client.UiBinderUtilTest;
+import com.google.gwt.uibinder.test.client.InnerWidgetTest;
+import com.google.gwt.uibinder.test.client.ParameterizedWidgetsTest;
+import com.google.gwt.uibinder.test.client.UiBinderTest;
+import com.google.gwt.uibinder.test.client.UiChildTest;
 
 import junit.framework.Test;
 
 /**
- * Convenience suite for running both UiBinder suites from an IDE. Its name
- * does not end in Suite to keep ant from running it redundantly.
+ * Test suite for UiBinder GWTTestCases.
  */
-public class All {
-
-  /**
-   * Returns a test suite containing all the UiBinder tests.
-   */
+public class UiBinderSuite {
   public static Test suite() {
-    GWTTestSuite suite = new GWTTestSuite("All UiBinder tests");
+    GWTTestSuite suite = new GWTTestSuite(
+        "Integration tests for UiBinder");
 
-    suite.addTest(UiBinderJreSuite.suite());
-    suite.addTest(UiBinderSuite.suite());
+    suite.addTestSuite(InnerWidgetTest.class);
+    suite.addTestSuite(UiBinderTest.class);
+    suite.addTestSuite(UiBinderUtilTest.class);
+    suite.addTestSuite(UiChildTest.class);
+    suite.addTestSuite(ParameterizedWidgetsTest.class);
 
     return suite;
   }
 
-  private All() {
+  private UiBinderSuite() {
   }
 }
