@@ -606,7 +606,7 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JCastOperation x, Context ctx) {
-      throw new InternalCompilerException("Should not get here.");
+      // These are left in when cast checking is disabled.
     }
 
     @Override

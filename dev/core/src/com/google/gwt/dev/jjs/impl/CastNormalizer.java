@@ -410,7 +410,7 @@ public class CastNormalizer {
       JType toType = x.getCastType();
       JExpression expr = x.getExpr();
       if (disableCastChecking && toType instanceof JReferenceType) {
-        ctx.replaceMe(expr);
+        // Just leave the cast in, GenerateJavaScriptAST will ignore it.
         return;
       }
       if (toType instanceof JNullType) {
@@ -425,7 +425,7 @@ public class CastNormalizer {
         /*
          * Override the type of the magic method with the null type.
          */
-        JMethodCall call = new JMethodCall(x.getSourceInfo(), null, method, program.getTypeNull());
+        JMethodCall call = new JMethodCall(x.getSourceInfo(), null, method, toType);
         call.addArg(expr);
         replaceExpr = call;
       } else if (toType instanceof JReferenceType) {
