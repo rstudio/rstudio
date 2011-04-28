@@ -32,7 +32,7 @@ public class All {
     GWTTestSuite suite = new GWTTestSuite("All UiBinder tests");
 
     suite.addTest(UiBinderJreSuite.suite());
-    suite.addTest(UiBinderSuite.suite());
+    suite.addTest(UiBinderGwtSuite.suite());
 
     return suite;
   }

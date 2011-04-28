@@ -20,7 +20,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Used by {@link ParameterizedWidget}. 
- * @see ParameterizedWidgetsTest
+ * @see TestParameterizedWidgets
  */
 abstract class Abstract<T> extends Widget {
   Abstract() {

@@ -95,7 +95,7 @@ public class AbsolutePanelParserTest extends TestCase {
     b.append("  <g:at left='1' top='2'>");
     b.append("    <g:Button/>");
     b.append("  </g:at>");
-    b.append("  <g:Label/>");
+    b.append("  <g:TextBox/>");
     b.append("  <g:at left='10' top='20'>");
     b.append("    <g:Label/>");
     b.append("  </g:at>");
@@ -104,7 +104,7 @@ public class AbsolutePanelParserTest extends TestCase {
     tester.parse(b.toString());
 
     assertStatements("fieldName.add(<g:Button>, 1, 2);",
-        "fieldName.add(<g:Label>);", "fieldName.add(<g:Label>, 10, 20);");
+        "fieldName.add(<g:TextBox>);", "fieldName.add(<g:Label>, 10, 20);");
   }
 
   private void assertStatements(String... expected) {

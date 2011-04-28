@@ -41,7 +41,7 @@ public class InnerWidgetTest extends GWTTestCase {
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.uibinder.test.UiBinderSuite";
+    return "com.google.gwt.uibinder.test.UiBinderTestApp";
   }
 
   public void testHappy() {

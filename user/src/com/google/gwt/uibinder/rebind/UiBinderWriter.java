@@ -39,7 +39,6 @@ import com.google.gwt.uibinder.rebind.model.ImplicitCssResource;
 import com.google.gwt.uibinder.rebind.model.OwnerClass;
 import com.google.gwt.uibinder.rebind.model.OwnerField;
 import com.google.gwt.user.client.ui.Attachable;
-import com.google.gwt.user.client.ui.IsWidget;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -558,7 +557,7 @@ public class UiBinderWriter implements Statements {
       throws UnableToCompleteException {
     String tagName = elem.getLocalName();
 
-    if (!isImportedElement(elem)) {
+    if (!isWidgetElement(elem)) {
       return findDomElementTypeForTag(tagName);
     }
 
@@ -674,19 +673,9 @@ public class UiBinderWriter implements Statements {
     return uri != null && UiBinderGenerator.BINDER_URI.equals(uri);
   }
 
-  public boolean isSubclassOf(XMLElement elem, Class<?> clazz)
-      throws UnableToCompleteException {
-    JClassType t = findFieldType(elem);
-    if (t == null) {
-      return false;
-    }
-    JClassType widgetType = oracle.findType(clazz.getCanonicalName());
-    return t.isAssignableTo(widgetType);
-  }
-
-  public boolean isWidgetElement(XMLElement elem)
-      throws UnableToCompleteException {
-    return isSubclassOf(elem, IsWidget.class);
+  public boolean isWidgetElement(XMLElement elem) {
+    String uri = elem.getNamespaceUri();
+    return uri != null && uri.startsWith(PACKAGE_URI_SCHEME);
   }
 
   /**
@@ -781,29 +770,32 @@ public class UiBinderWriter implements Statements {
    * {@link com.google.gwt.safehtml.shared.SafeHtmlUtils#fromSafeConstant} to
    * keep the expression from being escaped by the SafeHtml template.
    *
-   * @param expression must resolve to trusted HTML string
+   * @param expression
    */
   public String tokenForSafeConstant(String expression) {
     if (!useSafeHtmlTemplates) {
       return tokenForStringExpression(expression);
     }
 
-    expression = "SafeHtmlUtils.fromSafeConstant(" + expression + ")";
-    htmlTemplates.noteSafeConstant(expression);
-    return tokenator.nextToken(expression);
+    String token =  tokenator.nextToken("SafeHtmlUtils.fromSafeConstant(" +
+        expression + ")");
+    htmlTemplates.noteSafeConstant("SafeHtmlUtils.fromSafeConstant(" +
+        expression + ")");
+    return token;
   }
 
   /**
-   * Like {@link #tokenForStringExpression}, but used for runtime
-   * {@link com.google.gwt.safehtml.shared.SafeHtml SafeHtml} instances.
-   * 
-   * @param expression must resolve to SafeHtml object
+   * Like {@link #tokenForStringExpression}, but used for runtime {@link SafeHtml}
+   * instances.
+   *
+   * @param expression
    */
   public String tokenForSafeHtmlExpression(String expression) {
     if (!useSafeHtmlTemplates) {
       return tokenForStringExpression(expression);
     }
 
+    String token = tokenator.nextToken(expression);
     htmlTemplates.noteSafeConstant(expression);
     return tokenator.nextToken(expression);
   }
@@ -816,7 +808,7 @@ public class UiBinderWriter implements Statements {
    * setInnerHTML() and setText() calls, to allow a unique dom id attribute or
    * other runtime expression in the string.
    *
-   * @param expression must resolve to String
+   * @param expression
    */
   public String tokenForStringExpression(String expression) {
     return tokenator.nextToken(("\" + " + expression + " + \""));
@@ -1033,11 +1025,6 @@ public class UiBinderWriter implements Statements {
     parsers.add(new IsEmptyParser());
 
     return parsers;
-  }
-
-  private boolean isImportedElement(XMLElement elem) {
-    String uri = elem.getNamespaceUri();
-    return uri != null && uri.startsWith(PACKAGE_URI_SCHEME);  
   }
 
   /**

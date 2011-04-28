@@ -11,7 +11,7 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<!-- Allows the test app to be run directly.                                -->
+<!-- GWT UiBinder support.                                                  -->
 <module>
   <inherits name="com.google.gwt.user.User" />
   <inherits name="com.google.gwt.debug.Debug"/>

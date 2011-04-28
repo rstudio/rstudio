@@ -32,7 +32,7 @@ public class UiBinderUtilTest extends GWTTestCase {
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.uibinder.test.UiBinderSuite";
+    return "com.google.gwt.uibinder.UiBinder";
   }
 
   public void testAttachToDomAndGetChildUnattached() {
