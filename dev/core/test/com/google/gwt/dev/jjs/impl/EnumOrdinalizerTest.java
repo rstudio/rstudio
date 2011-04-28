@@ -166,7 +166,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
     EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
     assertTrue(tracker.isOrdinalized("test.EntryPoint$Fruit"));
   }
-  
+
   public void testOrdinalizeFieldRefOrdinalMethodCall() 
       throws UnableToCompleteException  {
     EnumOrdinalizer.resetTracker();
@@ -189,16 +189,31 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
     EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
     assertTrue(tracker.isOrdinalized("test.EntryPoint$Fruit"));
   }
-  
+
+  public void testOrdinalizeUnusedEmptyEnum() throws UnableToCompleteException {
+    EnumOrdinalizer.resetTracker();
+
+    setupEmptyEnum();
+
+    optimize("void", "EmptyEnum myEnum;");
+
+    EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
+    assertTrue(tracker.isOrdinalized("test.EntryPoint$EmptyEnum"));
+  }
+
+  public void testOrdinalizeUnusedEnum() throws UnableToCompleteException {
+    EnumOrdinalizer.resetTracker();
+
+    setupFruitEnum();
+
+    optimize("void", "Fruit myEnum;");
+
+    EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
+    assertTrue(tracker.isOrdinalized("test.EntryPoint$Fruit"));
+  }
+
   public void testOrdinalizeMethodCallExpressionOrdinalFieldRef() 
       throws UnableToCompleteException {
-    /*
-     * the switch expression gets transformed to 
-     *  'switch ((Enum) getResolvedFruit(fruit)).ordinal)'
-     * by the time the EnumOrdinalizer sees it.  So this test is testing the
-     * logic to replace an ordinal field ref expression with the expression
-     * itself.
-     */
     EnumOrdinalizer.resetTracker();
     
     setupFruitEnum();
@@ -367,7 +382,14 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
     assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
     assertFalse(tracker.isOrdinalized("test.EntryPoint$Fruit"));
   }
-  
+
+  public void testNotOrdinalizableInstanceOf() {
+    /*
+     * TODO(jbrosenberg): determine if this really needs to be true, and write a
+     * test to prove it.
+     */
+  }
+
   public void testNotOrdinalizableStaticFieldRef() 
       throws UnableToCompleteException  {
     EnumOrdinalizer.resetTracker();
@@ -795,12 +817,16 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
     assertTrue(tracker.isVisited("test.EntryPoint$Vegetable"));
     assertFalse(tracker.isOrdinalized("test.EntryPoint$Vegetable"));
   }
-  
+
+  private void setupEmptyEnum() {
+    addSnippetClassDecl("public enum EmptyEnum {}");
+  }
+
   private void setupFruitEnum() {
     addSnippetClassDecl("public enum Fruit {APPLE, ORANGE}");
     setupExtraDummyEnum();
   }
-    
+
   private void setupFruitEnumWithInstanceField() {
     addSnippetClassDecl("public enum Fruit {APPLE(\"a\"), ORANGE(\"b\");",
                         "  public final String instanceField;",

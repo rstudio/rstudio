@@ -84,37 +84,18 @@ public class JavaAstConstructor {
       "java.lang.Class") {
     @Override
     public CharSequence getContent() {
-      // This has extra code in the createForEnum method, to keep it from being inlined
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
       code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
       code.append("public final class Class<T> {\n");
-      code.append("  static <T> Class<T> createForArray(String packageName,\n");
-      code.append("       String className, String seedName, Class<?> componentType) {\n");
-      code.append("     return new Class<T>(); }\n");
-      code.append("  static <T> Class<T> createForClass(String packageName,\n");
-      code.append("       String className, String seedName, Class<? super T> superclass) {\n");
-      code.append("     return new Class<T>(); }\n");
-      code.append("  static <T> Class<T> createForEnum(String packageName,\n");
-      code.append("       String className, String seedName, Class<? super T> superclass,\n");
-      code.append("       JavaScriptObject enumConstantsFunc, JavaScriptObject enumValueOfFunc) {\n");
-      code.append("     Class<T> newClass = new Class<T>();\n");
-      code.append("     newClass.className = className;\n");
-      code.append("     newClass.packageName = packageName;\n");
-      code.append("     newClass.seedName = seedName;\n");
-      code.append("     return newClass;}\n");
-      code.append("  static <T> Class<T> createForInterface(String packageName, String className) {\n");
-      code.append("     return new Class<T>(); }\n");
-      code.append("  static <T> Class<T> createForPrimitive(String packageName,\n");
-      code.append("       String className, String jni) {\n");
-      code.append("     return new Class<T>(); }\n");
+      code.append("  static <T> Class<T> createForArray(String packageName, String className, String seedName, Class<?> componentType) { return new Class<T>(); }\n");
+      code.append("  static <T> Class<T> createForClass(String packageName, String className, String seedName, Class<? super T> superclass) { return new Class<T>(); }\n");
+      code.append("  static <T> Class<T> createForEnum(String packageName, String className, String seedName, Class<? super T> superclass, JavaScriptObject enumConstantsFunc, JavaScriptObject enumValueOfFunc) { return new Class<T>(); }\n");
+      code.append("  static <T> Class<T> createForInterface(String packageName, String className) { return new Class<T>(); }\n");
+      code.append("  static <T> Class<T> createForPrimitive(String packageName, String className, String jni) { return new Class<T>(); }\n");
       code.append("  static boolean isClassMetadataEnabled() { return true; }\n");
       code.append("  public boolean desiredAssertionStatus() { return true; }\n");
-      code.append("  public String getName() { return className; }\n");
-      code.append("  public T[] getEnumConstants() { return null; }\n");
-      code.append("  private String packageName = null;");
-      code.append("  private String className = null;");
-      code.append("  private String seedName = null;");
+      code.append("  public String getName() { return null; }\n");
       code.append("}\n");
       return code;
     }
@@ -139,16 +120,12 @@ public class JavaAstConstructor {
       code.append("import java.io.Serializable;\n");
       code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
       code.append("public abstract class Enum<E extends Enum<E>> implements Serializable {\n");
-      code.append("  public static <T extends Enum<T>> T valueOf(Class<T> enumType, String name) { \n");
-      code.append("    for (T enumConstant : enumType.getEnumConstants()) {\n");
-      code.append("      if (enumConstant.name() != null) {\n");
-      code.append("        return enumConstant;}}\n");
-      code.append("    return null;}\n");
+      code.append("  public static native <T extends Enum<T>> T valueOf(Class<T> enumType, String name) /*-{ }-*/;\n");
+      code.append("  protected static native <T extends Enum<T>> JavaScriptObject createValueOfMap(T[] enumConstants) /*-{ }-*/;\n");
+      code.append("  protected static native <T extends Enum<T>> T valueOf(JavaScriptObject map, String name) /*-{ }-*/;\n");
       code.append("  protected Enum(String name, int ordinal) { \n");
       code.append("    this.name = name;\n");
       code.append("    this.ordinal = ordinal;}\n");
-      code.append("  protected static <T extends Enum<T>> JavaScriptObject createValueOfMap(T[] enumConstants) { return null;}\n");
-      code.append("  protected static <T extends Enum<T>> T valueOf(JavaScriptObject map, String name) { return null; }\n");
       code.append("  private final String name;\n");
       code.append("  private final int ordinal;\n");
       code.append("  public final String name() { return name; }\n");

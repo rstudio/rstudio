@@ -30,6 +30,7 @@ import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JThisRef;
@@ -505,18 +506,8 @@ public class MethodInliner {
     return stats;
   }
 
-  /**
-   * Insert an implicit cast if the types differ; it might get optimized out
-   * later, but in some cases it will force correct math evaluation.
-   */
-  private static JExpression maybeCast(JExpression exp, JType targetType) {
-    if (exp.getType() != targetType) {
-      exp = new JCastOperation(exp.getSourceInfo(), targetType, exp);
-    }
-    return exp;
-  }
-
   private JMethod currentMethod;
+
   private final JProgram program;
 
   private MethodInliner(JProgram program) {
@@ -540,5 +531,33 @@ public class MethodInliner {
       }
     }
     return stats;
+  }
+
+  /**
+   * Insert an implicit cast if the types differ; it might get optimized out
+   * later, but in some cases it will force correct math evaluation.
+   */
+  private JExpression maybeCast(JExpression exp, JType targetType) {
+    if (targetType instanceof JReferenceType) {
+      assert exp.getType() instanceof JReferenceType;
+      targetType = merge((JReferenceType) exp.getType(), (JReferenceType) targetType);
+    }
+    if (!program.typeOracle.canTriviallyCast(exp.getType(), targetType)) {
+      exp = new JCastOperation(exp.getSourceInfo(), targetType, exp);
+    }
+    return exp;
+  }
+
+  private JReferenceType merge(JReferenceType source, JReferenceType target) {
+    JReferenceType result;
+    if (program.typeOracle.canTriviallyCast(source.getUnderlyingType(), target.getUnderlyingType())) {
+      result = source;
+    } else {
+      result = target;
+    }
+    if ((!target.canBeNull())) {
+      result = result.getNonNull();
+    }
+    return result;
   }
 }

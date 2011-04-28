@@ -29,13 +29,11 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVariable;
 
 /**
- * This class is a visitor which can find all sites where a JType can be updated
- * from one type to another, and calls an overridable remap method for each
- * instance. An extending class can override the remap and return a new type
- * where it deems it necessary, such as to replace the type of all references of
- * a class.
+ * A visitor that changes all JType references in the AST. Subclasses override
+ * {@link #remap(JType)} to replace all occurrences of one or more types with
+ * different types.
  */
-public class TypeRemapper extends JModVisitor {
+public abstract class TypeRemapper extends JModVisitor {
 
   @Override
   public void endVisit(JBinaryOperation x, Context ctx) {
@@ -44,8 +42,11 @@ public class TypeRemapper extends JModVisitor {
 
   @Override
   public void endVisit(JCastOperation x, Context ctx) {
-    // JCastOperation doesn't have a settable castType method, so need to
-    // create a new one and do a replacement.
+    /*
+     * JCastOperation doesn't have a settable castType method, so need to create
+     * a new one and do a replacement. Use remap() instead of modRemap() since
+     * the ctx.replaceMe() will record a change.
+     */
     JType remapCastType = remap(x.getCastType());
     if (remapCastType != x.getCastType()) {
       JCastOperation newX = new JCastOperation(x.getSourceInfo(), remapCastType, x.getExpr());
@@ -55,41 +56,47 @@ public class TypeRemapper extends JModVisitor {
 
   @Override
   public void endVisit(JConditional x, Context ctx) {
-    x.setType(remap(x.getType()));
+    x.setType(modRemap(x.getType()));
   }
 
   @Override
   public void endVisit(JConstructor x, Context ctx) {
-    x.setType(remap(x.getType()));
+    x.setType(modRemap(x.getType()));
   }
 
   @Override
   public void endVisit(JGwtCreate x, Context ctx) {
-    x.setType(remap(x.getType()));
+    x.setType(modRemap(x.getType()));
   }
 
   @Override
   public void endVisit(JMethod x, Context ctx) {
-    x.setType(remap(x.getType()));
+    x.setType(modRemap(x.getType()));
   }
 
   @Override
   public void endVisit(JNewArray x, Context ctx) {
-    x.setType((JArrayType) remap(x.getArrayType()));
+    x.setType((JArrayType) modRemap(x.getArrayType()));
   }
 
   @Override
   public void endVisit(JVariable x, Context ctx) {
-    x.setType(remap(x.getType()));
+    x.setType(modRemap(x.getType()));
   }
 
   /**
-   * An overriding method will be called for each detected JType element.
+   * Override to return a possibly-different type.
    * 
-   * @param type
+   * @param type the original type
+   * @return a replacement type, which may be the original type
    */
-  protected JType remap(JType type) {
-    // override to possibly return an different type
-    return type;
+  protected abstract JType remap(JType type);
+
+  private JType modRemap(JType type) {
+    JType result = remap(type);
+    if (result != type) {
+      madeChanges();
+    }
+    return result;
   }
 }
