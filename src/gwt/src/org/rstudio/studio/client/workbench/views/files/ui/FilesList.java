@@ -99,7 +99,7 @@ public class FilesList extends Composite
             public void render(Context context, Boolean value, SafeHtmlBuilder sb) 
             {
                // don't render the check box if its for the parent path
-               if (getParentPath() == null || context.getIndex() > 0)
+               if (parentPath_ == null || context.getIndex() > 0)
                   super.render(context, value, sb);
             }
          }) 
@@ -118,6 +118,7 @@ public class FilesList extends Composite
       
       return checkColumn;
    }
+  
    
    private Column<FileSystemItem, ImageResource> addIconColumn(
                               final FileTypeRegistry fileTypeRegistry)
@@ -128,7 +129,7 @@ public class FilesList extends Composite
             @Override
             public ImageResource getValue(FileSystemItem object)
             {
-               if (object.equalTo(getParentPath()))
+               if (object == parentPath_)
                   return FileIconResources.INSTANCE.iconUpFolder();
                else
                   return fileTypeRegistry.getIconForFile(object);
@@ -139,11 +140,16 @@ public class FilesList extends Composite
                                 SafeHtmlUtils.fromSafeConstant("<br/>"));
       filesCellTable_.setColumnWidth(iconColumn, 20, Unit.PX);
     
-      sortHandler_.setComparator(iconColumn, new Comparator<FileSystemItem>() {
+      sortHandler_.setComparator(iconColumn, new FilesListComparator() {
          @Override
-         public int compare(FileSystemItem arg0, FileSystemItem arg1)
+         public int doCompare(FileSystemItem arg0, FileSystemItem arg1)
          {
-            return arg0.getExtension().compareTo(arg1.getExtension());
+            if (arg0 == parentPath_)
+               return 1;
+            else if (arg1 == parentPath_)
+               return -1;
+            else
+               return arg0.getExtension().compareTo(arg1.getExtension());
          }
       });
       
@@ -165,7 +171,7 @@ public class FilesList extends Composite
             @Override
             public String getValue(FileSystemItem item)
             {
-               if (item.equalTo(getParentPath()))
+               if (item == parentPath_)
                   return "..";
                else
                   return item.getName();
@@ -174,9 +180,9 @@ public class FilesList extends Composite
       nameColumn.setSortable(true);
       filesCellTable_.addColumn(nameColumn, "Name");
       
-      sortHandler_.setComparator(nameColumn, new Comparator<FileSystemItem>() {
+      sortHandler_.setComparator(nameColumn, new FilesListComparator() {
          @Override
-         public int compare(FileSystemItem arg0, FileSystemItem arg1)
+         public int doCompare(FileSystemItem arg0, FileSystemItem arg1)
          {
             return arg0.getName().compareTo(arg1.getName());
          }
@@ -201,9 +207,9 @@ public class FilesList extends Composite
       filesCellTable_.addColumn(sizeColumn, "Size");
       filesCellTable_.setColumnWidth(sizeColumn, 80, Unit.PX);
       
-      sortHandler_.setComparator(sizeColumn, new Comparator<FileSystemItem>() {
+      sortHandler_.setComparator(sizeColumn, new FilesListComparator() {
          @Override
-         public int compare(FileSystemItem arg0, FileSystemItem arg1)
+         public int doCompare(FileSystemItem arg0, FileSystemItem arg1)
          {
             return new Long(arg0.getLength()).compareTo(
                                              new Long(arg1.getLength()));
@@ -229,9 +235,9 @@ public class FilesList extends Composite
       filesCellTable_.addColumn(modColumn, "Modified");
       filesCellTable_.setColumnWidth(modColumn, 160, Unit.PX); 
       
-      sortHandler_.setComparator(modColumn, new Comparator<FileSystemItem>() {
+      sortHandler_.setComparator(modColumn, new FilesListComparator() {
          @Override
-         public int compare(FileSystemItem arg0, FileSystemItem arg1)
+         public int doCompare(FileSystemItem arg0, FileSystemItem arg1)
          {
             return arg0.getLastModified().compareTo(arg1.getLastModified());
          }
@@ -343,6 +349,7 @@ public class FilesList extends Composite
       
       // set containing path
       containingPath_ = containingPath;
+      parentPath_ = containingPath_.getParentPath();
       
       // set page size (+1 for parent path)
       filesCellTable_.setPageSize(files.length() + 1);
@@ -351,9 +358,8 @@ public class FilesList extends Composite
       List<FileSystemItem> fileList = dataProvider_.getList();
             
       // add entry for parent path if we have one
-      FileSystemItem parentPath = getParentPath();
-      if (parentPath != null)
-         fileList.add(parentPath);
+      if (parentPath_ != null)
+         fileList.add(parentPath_);
       
       // add files to table
       for (int i=0; i<files.length(); i++)
@@ -367,7 +373,7 @@ public class FilesList extends Composite
    {
       for (FileSystemItem item : dataProvider_.getList())
       {
-         if (!item.equalTo(getParentPath()))
+         if (item != parentPath_)
             selectionModel_.setSelected(item, true);
       }
    }
@@ -457,13 +463,6 @@ public class FilesList extends Composite
       return -1;
    }
    
-   private FileSystemItem getParentPath()
-   {
-      if (containingPath_ != null)
-         return containingPath_.getParentPath();
-      else
-         return null;
-   }
    
    private static final ProvidesKey<FileSystemItem> KEY_PROVIDER = 
       new ProvidesKey<FileSystemItem>() {
@@ -474,8 +473,26 @@ public class FilesList extends Composite
          }
     };
     
+    // comparator which ensures that the parent path is always on top
+    private abstract class FilesListComparator implements Comparator<FileSystemItem>
+    {
+       @Override
+       public int compare(FileSystemItem arg0, FileSystemItem arg1)
+       {
+          if (arg0 == parentPath_)
+             return 1;
+          else if (arg1 == parentPath_)
+             return -1;
+          else
+             return doCompare(arg0, arg1);
+       }
+       
+       protected abstract int doCompare(FileSystemItem arg0, FileSystemItem arg1);    
+    }
+    
    
    private FileSystemItem containingPath_ = null;
+   private FileSystemItem parentPath_ = null;
   
    private final CellTable<FileSystemItem> filesCellTable_; 
    private final LinkColumn<FileSystemItem> nameColumn_;
