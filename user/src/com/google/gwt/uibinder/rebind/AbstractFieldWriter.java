@@ -208,7 +208,8 @@ abstract class AbstractFieldWriter implements FieldWriter {
 
     w.newline();
     w.write("/**");
-    w.write(" * Getter for %s called %s times.", name, getterCount);
+    w.write(" * Getter for %s called %s times. Build precedence: %s.",
+        name, getterCount, getBuildPrecedence());
     w.write(" */");
     if (getterCount > 1) {
       w.write("private %1$s %2$s;", getQualifiedSourceName(), name);

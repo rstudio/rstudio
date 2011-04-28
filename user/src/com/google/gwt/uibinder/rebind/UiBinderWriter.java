@@ -1101,6 +1101,8 @@ public class UiBinderWriter implements Statements {
       for (ImplicitCssResource css : bundleClass.getCssMethods()) {
         String fieldName = css.getName();
         FieldWriter cssField = fieldManager.require(fieldName);
+        cssField.addStatement("%s.ensureInjected();", fieldName);
+        cssField.setBuildPrecedence(Integer.MAX_VALUE - 1);  // must be just below its bundle.
       }
       writeBinderForAttachableStrategy(niceWriter, rootField);
     } else {
