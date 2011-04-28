@@ -573,7 +573,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     ctx.receiveEnum(OnlyUsedByRequestContextMethod.FOO).fire(new Receiver<Void>() {
       @Override
       public void onSuccess(Void response) {
-        finishTest();
+        finishTestAndReset();
       }
     });
   }
