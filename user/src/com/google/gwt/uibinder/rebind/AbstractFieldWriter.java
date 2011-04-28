@@ -227,7 +227,7 @@ abstract class AbstractFieldWriter implements FieldWriter {
     if (getterCount > 1) {
       w.write("%s = %s;", name, initializer);
     } else {
-      w.write("%s %s = %s;", getQualifiedSourceName(), name, initializer);
+      w.write("final %s %s = %s;", getQualifiedSourceName(), name, initializer);
     }
 
     w.write("// Setup section.");

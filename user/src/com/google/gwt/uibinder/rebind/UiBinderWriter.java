@@ -1080,7 +1080,9 @@ public class UiBinderWriter implements Statements {
     fieldManager.registerFieldOfGeneratedType(
         oracle.findType(ClientBundle.class.getName()),
         bundleClass.getPackageName(), bundleClass.getClassName(),
-        bundleClass.getFieldName());
+        bundleClass.getFieldName())
+      .setBuildPrecedence(Integer.MAX_VALUE);  // must be the first thing built.
+
     // Allow GWT.create() to init the field, the default behavior
 
     String rootField = new UiBinderParser(this, messages, fieldManager, oracle,

@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.uibinder.attributeparsers.CssNameConverter;
 import com.google.gwt.uibinder.rebind.model.ImplicitCssResource;
+import com.google.gwt.uibinder.rebind.model.OwnerField;
 
 import java.util.Set;
 
@@ -68,5 +69,12 @@ class FieldWriterOfGeneratedCssResource extends AbstractFieldWriter {
       }
     }
     return super.getReturnType(path, logger);
+  }
+
+  @Override
+  public void writeFieldBuilder(IndentedWriter w,
+      int getterCount, OwnerField ownerField) throws UnableToCompleteException {
+    w.write("%s;  // generated css resource must be always created. Precedence: %s",
+        FieldManager.getFieldBuilder(getName()), getBuildPrecedence());
   }
 }
