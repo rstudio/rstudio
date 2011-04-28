@@ -244,34 +244,7 @@ core::Error listFiles(const json::JsonRpcRequest& request,
    // success
    return Success();
 }
-   
 
-// IN: String path
-core::Error createFile(const core::json::JsonRpcRequest& request, 
-                       json::JsonRpcResponse* pResponse)
-{
-   std::string path;
-   Error error = json::readParam(request.params, 0, &path);
-   if (error)
-      return error ;   
-   
-   // calculate file path
-   FilePath filePath = module_context::resolveAliasedPath(path) ;
-   if (filePath.exists())
-   {
-      return fileExistsError(ERROR_LOCATION);
-   }
-   else
-   {
-      // create the file
-      boost::shared_ptr<std::ostream> pOfs;
-      error = filePath.open_w(&pOfs);
-      if (error)
-         return error;
-   }
-
-   return Success() ;
-}
 
 // IN: String path
 core::Error createFolder(const core::json::JsonRpcRequest& request,
@@ -932,7 +905,6 @@ Error initialize()
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "list_files", listFiles))
-      (bind(registerRpcMethod, "create_file", createFile))
       (bind(registerRpcMethod, "create_folder", createFolder))
       (bind(registerRpcMethod, "delete_files", deleteFiles))
       (bind(registerRpcMethod, "copy_file", copyFile))

@@ -544,12 +544,6 @@ public class RemoteServer implements Server
                   requestCallback);
    }
 
-   public void createFile(FileSystemItem file,
-                          ServerRequestCallback<Void> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, CREATE_FILE, file.getPath(), requestCallback);
-   }
-
    public void createFolder(FileSystemItem folder,
                             ServerRequestCallback<Void> requestCallback)
    {
@@ -1388,7 +1382,6 @@ public class RemoteServer implements Server
 
    private static final String LIST_FILES = "list_files";
    private static final String LIST_ALL_FILES = "list_all_files";
-   private static final String CREATE_FILE = "create_file";
    private static final String CREATE_FOLDER = "create_folder";
    private static final String DELETE_FILES = "delete_files";
    private static final String COPY_FILE = "copy_file";

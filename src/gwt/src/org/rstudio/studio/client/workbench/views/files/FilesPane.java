@@ -31,6 +31,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
+import org.rstudio.studio.client.workbench.views.files.model.FilesColumnSortInfo;
 import org.rstudio.studio.client.workbench.views.files.model.PendingFileUpload;
 import org.rstudio.studio.client.workbench.views.files.ui.*;
 
@@ -77,6 +78,19 @@ public class FilesPane extends WorkbenchPane implements Files.Display
          if (observer_ != null)
             observer_.onSelectAllValueChanged(value);
       }
+      
+      public void onColumnSortOrderChanaged(
+                                    JsArray<FilesColumnSortInfo> sortOrder)
+      {
+         if (observer_ != null)
+            observer_.onColumnSortOrderChanaged(sortOrder);
+      }
+   }
+   
+   @Override
+   public void setColumnSortOrder(JsArray<FilesColumnSortInfo> sortOrder)
+   {
+      filesList_.setColumnSortOrder(sortOrder);
    }
     
    public void listDirectory(final FileSystemItem directory, 
@@ -89,12 +103,12 @@ public class FilesPane extends WorkbenchPane implements Files.Display
          {
             setProgress(false);
             filePathToolbar_.setPath(directory.getPath());
-            fileList_.displayFiles(directory, response); 
+            filesList_.displayFiles(directory, response); 
          }
          public void onError(ServerError error)
          {
             setProgress(false);
-            fileList_.clearFiles();
+            filesList_.clearFiles();
             globalDisplay_.showErrorMessage("File Listing Error",
                                             "Error navigating to " +
                                             directory.getPath() + ":\n\n" +
@@ -110,16 +124,16 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    
    public void updateDirectoryListing(FileChange fileAction)
    {
-      if (fileList_ != null) // can be called by file_changed event
+      if (filesList_ != null) // can be called by file_changed event
                              // prior to widget creation
       {
-         fileList_.updateWithAction(fileAction);
+         filesList_.updateWithAction(fileAction);
       }
    }
    
    public void renameFile(FileSystemItem from, FileSystemItem to)
    {
-      fileList_.renameFile(from, to);
+      filesList_.renameFile(from, to);
    }
     
    public void showFolderPicker(
@@ -165,23 +179,18 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    
    public void selectAll()
    {
-      fileList_.selectAll();
+      filesList_.selectAll();
    }
    
    public void selectNone()
    {
-      fileList_.selectNone();
+      filesList_.selectNone();
    }
    
    public ArrayList<FileSystemItem> getSelectedFiles()
    {
-      return fileList_.getSelectedFiles();
+      return filesList_.getSelectedFiles();
    } 
-   
-   public void scrollToBottom()
-   {
-      fileList_.scrollToBottom();
-   }
    
    @Override 
    protected Widget createMainWidget()
@@ -189,11 +198,11 @@ public class FilesPane extends WorkbenchPane implements Files.Display
       filePathToolbar_ = new FilePathToolbar(new DisplayObserverProxy());
 
       // create file list and file progress
-      fileList_ = new FileList(new DisplayObserverProxy(), fileTypeRegistry_);
+      filesList_ = new FilesList(new DisplayObserverProxy(), fileTypeRegistry_);
 
       DockLayoutPanel dockPanel = new DockLayoutPanel(Unit.PX);
       dockPanel.addNorth(filePathToolbar_, filePathToolbar_.getHeight());
-      dockPanel.add(fileList_);
+      dockPanel.add(filesList_);
       // return container
       return dockPanel;
    }
@@ -216,7 +225,7 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    }
 
    private boolean needsInit = false;
-   private FileList fileList_ ;
+   private FilesList filesList_ ;
    private FilePathToolbar filePathToolbar_;
    private final GlobalDisplay globalDisplay_ ;
    private final Commands commands_;
@@ -224,4 +233,6 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    private Files.Display.Observer observer_;
 
    private final FileTypeRegistry fileTypeRegistry_;
+
+  
 }

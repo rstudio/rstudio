@@ -19,9 +19,11 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
@@ -32,7 +34,6 @@ import org.rstudio.studio.client.common.WorkbenchEventHelper;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserHandler;
-import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -42,11 +43,12 @@ import org.rstudio.studio.client.workbench.model.ClientInitState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.files.events.*;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
-import org.rstudio.studio.client.workbench.views.files.model.FileSystemItemAction;
+import org.rstudio.studio.client.workbench.views.files.model.FilesColumnSortInfo;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.files.model.PendingFileUpload;
 
@@ -72,9 +74,13 @@ public class Files
       public interface Observer extends NavigationObserver
       {
          void onFileSelectionChanged();
+         void onColumnSortOrderChanaged(JsArray<FilesColumnSortInfo> sortOrder);
       }
       
       void setObserver(Observer observer);
+           
+      
+      void setColumnSortOrder(JsArray<FilesColumnSortInfo> sortOrder);
       
       void listDirectory(FileSystemItem directory, 
                          ServerDataSource<JsArray<FileSystemItem>> filesDS);
@@ -103,8 +109,6 @@ public class Files
       void showFileExport(String defaultName,
                           String defaultExtension,
                           ProgressOperationWithInput<String> operation);
-      
-      void scrollToBottom();
    }
 
    @Inject
@@ -145,6 +149,49 @@ public class Files
       final SessionInfo sessionInfo = session_.getSessionInfo();
       ClientInitState state = sessionInfo.getClientState();
 
+      // make the column sort order persistent
+      new JSObjectStateValue(MODULE_FILES,KAY_COLUMN_SORT_ORDER, true, state, false)
+      {
+         @Override
+         protected void onInit(JsObject value)
+         {
+            if (value != null)
+               columnSortOrder_ = value.cast();
+            else
+               columnSortOrder_ = null;
+            
+            lastKnownState_ = columnSortOrder_;
+            
+            view_.setColumnSortOrder(columnSortOrder_);
+         }
+
+         @Override
+         protected JsObject getValue()
+         {
+            if (columnSortOrder_ != null)
+               return columnSortOrder_.cast();
+            else
+               return null;
+         }
+
+         @Override
+         protected boolean hasChanged()
+         {
+            if (lastKnownState_ != columnSortOrder_)
+            {
+               lastKnownState_ = columnSortOrder_;
+               return true;
+            }
+            else
+            {
+               return false;
+            }
+         }
+
+         private JsArray<FilesColumnSortInfo> lastKnownState_ = null;
+      };
+      
+      
       // navigate to previous directory (works for resumed case)
       new StringStateValue(MODULE_FILES, KEY_PATH, false, state) {
          @Override
@@ -207,6 +254,13 @@ public class Files
          else
             view_.selectNone();
       }
+
+      @Override
+      public void onColumnSortOrderChanaged(
+                                    JsArray<FilesColumnSortInfo> sortOrder)
+      {
+         columnSortOrder_ = sortOrder;
+      }
    };
     
 
@@ -214,23 +268,6 @@ public class Files
    void onRefreshFiles()
    {
       view_.listDirectory(currentPath_, currentPathFilesDS_);
-   }
-
-   @Handler
-   void onNewTextFile()
-   {  
-      onNewFile("New Text File", null, null);
-   }
-   
-   @Handler
-   void onNewRSourceFile()
-   {
-      onNewFile("New R Source File", "R", new FileSystemItemAction() {
-         public void execute(FileSystemItem file)
-         {
-            eventBus_.fireEvent(new OpenSourceFileEvent(file, FileTypeRegistry.R));
-         }  
-      });
    }
 
    @Handler
@@ -516,60 +553,6 @@ public class Files
       session_.persistClientState();
    }
    
-   private void addFileAndScrollToBottom(FileSystemItem file)
-   {
-     view_.updateDirectoryListing(FileChange.createAdd(file));
-     view_.scrollToBottom();
-   }
-   
-   private void onNewFile(String title, 
-                          final String defaultExtension,
-                          final FileSystemItemAction successAction)
-   {
-      globalDisplay_.promptForText(
-         title,
-         "Please enter the new file name:",
-         null,
-         new ProgressOperationWithInput<String>() {
-
-            public void execute(String input, final ProgressIndicator progress)
-            {
-               // append extension if necessary
-               if (defaultExtension != null)
-               {
-                  if (!input.contains("."))
-                     input = input.concat("." + defaultExtension);
-               }
-
-               // set progress
-               progress.onProgress("Creating file...");
-
-               // create file entry
-               final FileSystemItem newFile = FileSystemItem.createFile(
-                                          currentPath_.completePath(input));
-
-               // call server.
-               server_.createFile(
-                     newFile,
-                     new VoidServerRequestCallback(progress) {
-
-                        // HACK: manually add file entry on success so we can
-                        // scroll to the bottom and have the file appear. we will
-                        // later also get an add file event from the server but
-                        // this will be a no-op
-                        @Override
-                        protected void onSuccess()
-                        {
-                           addFileAndScrollToBottom(newFile);
-
-                           if (successAction != null)
-                              successAction.execute(newFile);
-                        }
-                     });
-             }
-         });
-   }
-
    // data source for listing files on the current path which can 
    // be passed to the files view
    ServerDataSource<JsArray<FileSystemItem>> currentPathFilesDS_ = 
@@ -596,5 +579,6 @@ public class Files
    private final Provider<FilesUpload> pFilesUpload_;
    private static final String MODULE_FILES = "filespane";
    private static final String KEY_PATH = "path";
-  
+   private static final String KAY_COLUMN_SORT_ORDER = "columnSortOrder";
+   private JsArray<FilesColumnSortInfo> columnSortOrder_ = null;
 }

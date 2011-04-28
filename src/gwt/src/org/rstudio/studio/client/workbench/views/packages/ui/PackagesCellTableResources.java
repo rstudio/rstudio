@@ -12,10 +12,19 @@
  */
 package org.rstudio.studio.client.workbench.views.packages.ui;
 
+
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.CellTable;
 
 public interface PackagesCellTableResources extends CellTable.Resources 
 {
+   static PackagesCellTableResources INSTANCE = 
+      (PackagesCellTableResources)GWT.create(PackagesCellTableResources.class) ;
+
+   interface Style extends CellTable.Style
+   {
+   }
+  
    @Source("PackagesCellTableStyle.css")
-   CellTable.Style cellTableStyle();    
+   Style cellTableStyle();
 }

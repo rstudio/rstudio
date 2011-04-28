@@ -31,11 +31,7 @@ public interface FilesServerOperations extends ServerEventSource
    void listAllFiles(String path,
                      String pattern,
                      ServerRequestCallback<JsArrayString> requestCallback);
-       
-   // create a file
-   void createFile(FileSystemItem file,
-                   ServerRequestCallback<Void> requestCallback);
-   
+         
    // create a folder
    void createFolder(FileSystemItem folder,
                      ServerRequestCallback<Void> requestCallback);
