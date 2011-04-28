@@ -37,6 +37,7 @@ import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
+import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 
@@ -264,6 +265,18 @@ public class CompilationStateBuilder {
           Entry<CompilationUnitBuilder, CompilationUnit> entry = it.next();
           CompilationUnit unit = entry.getValue();
           boolean isValid = unit.getDependencies().validate(logger, allValidClasses);
+          if (isValid && unit.isError()) {
+            // See if the unit has classes that can't provide a
+            // NameEnvironmentAnswer
+            for (CompiledClass cc : unit.getCompiledClasses()) {
+              try {
+                cc.getNameEnvironmentAnswer();
+              } catch (ClassFormatException ex) {
+                isValid = false;
+                break;
+              }
+            }
+          }
           if (!isValid) {
             if (logger.isLoggable(TreeLogger.TRACE)) {
               logger.log(TreeLogger.TRACE, "Invalid Unit: " + unit.getTypeName());

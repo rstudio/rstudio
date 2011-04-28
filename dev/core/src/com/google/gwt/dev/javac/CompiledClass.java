@@ -138,15 +138,11 @@ public final class CompiledClass implements Serializable {
     return internalName;
   }
 
-  NameEnvironmentAnswer getNameEnvironmentAnswer() {
+  NameEnvironmentAnswer getNameEnvironmentAnswer() throws ClassFormatException {
     if (nameEnvironmentAnswer == null) {
-      try {
-        ClassFileReader cfr =
-            new ClassFileReader(getBytes(), unit.getResourceLocation().toCharArray(), true);
-        nameEnvironmentAnswer = new NameEnvironmentAnswer(cfr, null);
-      } catch (ClassFormatException e) {
-        throw new RuntimeException("Unexpectedly unable to parse class file", e);
-      }
+      ClassFileReader cfr =
+          new ClassFileReader(getBytes(), unit.getResourceLocation().toCharArray(), true);
+      nameEnvironmentAnswer = new NameEnvironmentAnswer(cfr, null);
     }
     return nameEnvironmentAnswer;
   }

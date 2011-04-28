@@ -127,8 +127,8 @@ public class JdtCompiler {
         List<CompiledClass> compiledClasses) {
       builder.setClasses(compiledClasses).setTypes(Collections.<JDeclaredType> emptyList())
           .setDependencies(new Dependencies()).setJsniMethods(Collections.<JsniMethod> emptyList())
-          .setMethodArgs(new MethodArgNamesLookup()).setProblems(
-              cud.compilationResult().getProblems());
+          .setMethodArgs(new MethodArgNamesLookup())
+          .setProblems(cud.compilationResult().getProblems());
       results.add(builder.build());
     }
   }
@@ -226,8 +226,8 @@ public class JdtCompiler {
 
     public CompilerImpl() {
       super(new INameEnvironmentImpl(), DefaultErrorHandlingPolicies.proceedWithAllProblems(),
-          getCompilerOptions(), new ICompilerRequestorImpl(), new DefaultProblemFactory(Locale
-              .getDefault()));
+          getCompilerOptions(), new ICompilerRequestorImpl(), new DefaultProblemFactory(
+              Locale.getDefault()));
     }
 
     @Override
@@ -293,8 +293,12 @@ public class JdtCompiler {
       char[] binaryNameChars = CharOperation.concatWith(compoundTypeName, '/');
       String binaryName = String.valueOf(binaryNameChars);
       CompiledClass compiledClass = binaryTypes.get(binaryName);
-      if (compiledClass != null) {
-        return compiledClass.getNameEnvironmentAnswer();
+      try {
+        if (compiledClass != null) {
+          return compiledClass.getNameEnvironmentAnswer();
+        }
+      } catch (ClassFormatException ex) {
+        // fall back to binary class
       }
       if (isPackage(binaryName)) {
         return null;
@@ -339,6 +343,17 @@ public class JdtCompiler {
       if (JreIndex.contains(slashedPackageName)) {
         return true;
       }
+      /*
+       * TODO(zundel): When cached CompiledClass instances are used, 'packages'
+       * does not contain all packages in the compile and this test fails the
+       * test on some packages.
+       * 
+       * This is supposed to work via the call chain:
+       * 
+       * CSB.doBuildFrom -> CompileMoreLater.addValidUnit 
+       *    -> JdtCompiler.addCompiledUnit
+       *    -> addPackages()
+       */
       if (packages.contains(slashedPackageName)) {
         return true;
       }
