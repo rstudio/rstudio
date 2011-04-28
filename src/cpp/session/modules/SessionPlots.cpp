@@ -45,18 +45,6 @@ namespace {
 // locations
 #define kGraphics "/graphics"
    
-Error setActivePlot(const json::JsonRpcRequest& request, 
-                    json::JsonRpcResponse* pResponse)
-{   
-   // params
-   int index ;
-   Error error = json::readParam(request.params, 0, &index);
-   if (error)
-      return error ;
-   
-   return r::session::graphics::display().setActivePlot(index);   
-} 
-   
 Error nextPlot(const json::JsonRpcRequest& request, 
                json::JsonRpcResponse* pResponse)
 {   
@@ -72,16 +60,25 @@ Error previousPlot(const json::JsonRpcRequest& request,
 }  
 
    
-Error removePlot(const json::JsonRpcRequest& request, 
+Error removePlot(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {   
-   // params
-   int index ;
-   Error error = json::readParam(request.params, 0, &index);
-   if (error)
-      return error ;
-   
-   return r::session::graphics::display().removePlot(index);
+   r::session::graphics::Display& display = r::session::graphics::display();
+
+   if (display.plotCount() < 1)
+   {
+      return Error(core::json::errc::ParamInvalid, ERROR_LOCATION);
+   }
+   else if (display.plotCount() == 1)
+   {
+      r::session::graphics::display().clear();
+      return Success();
+   }
+   else
+   {
+      int activePlot = display.activePlotIndex();
+      return display.removePlot(activePlot);
+   }
 } 
    
    
@@ -90,20 +87,6 @@ Error clearPlots(const json::JsonRpcRequest& request,
 {
    r::session::graphics::display().clear();
    return Success();
-}
-
-Error loadPlot(const json::JsonRpcRequest& request, 
-               json::JsonRpcResponse* pResponse)
-{   
-   // params
-   std::string varName ;
-   Error error = json::readParam(request.params, 0, &varName);
-   if (error)
-      return error;
-   
-   // execute replay plot
-   boost::format replayFmt("replayPlot(%1%)");
-   return r::exec::executeString(boost::str(replayFmt % varName));
 }
 
 Error refreshPlot(const json::JsonRpcRequest& request,
@@ -449,12 +432,10 @@ Error initialize()
    using namespace module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "set_active_plot", setActivePlot))
       (bind(registerRpcMethod, "next_plot", nextPlot))
       (bind(registerRpcMethod, "previous_plot", previousPlot))
       (bind(registerRpcMethod, "remove_plot", removePlot))
       (bind(registerRpcMethod, "clear_plots", clearPlots))
-      (bind(registerRpcMethod, "load_plot", loadPlot))
       (bind(registerRpcMethod, "refresh_plot", refreshPlot))
       (bind(registerRpcMethod, "export_plot", exportPlot))
       (bind(registerRpcMethod, "set_manipulator_values", setManipulatorValues))

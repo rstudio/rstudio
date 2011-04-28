@@ -227,6 +227,33 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       setChangePlotProgress();
       server_.previousPlot(new PlotRequestCallback());
    }
+   
+   void onRemovePlot()
+   {
+      // delete plot gesture indicates we are done with locator
+      safeClearLocator();
+      
+      // confirm
+      globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
+            
+         "Remove Plot",
+         
+         "Are you sure you want to remove the current plot?",
+  
+         new ProgressOperation() {
+            public void execute(final ProgressIndicator indicator)
+            {
+               indicator.onProgress("Removing plot...");
+               server_.removePlot(new VoidServerRequestCallback(indicator));
+            }
+         },
+      
+         true
+      
+       );
+      
+      view_.bringToFront();
+   }
 
    void onClearPlots()
    {      
@@ -236,7 +263,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       // confirm
       globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
             
-         "Confirm Clear Plots",
+         "Clear Plots",
          
          "Are you sure you want to clear all of the plots in the history?",
   

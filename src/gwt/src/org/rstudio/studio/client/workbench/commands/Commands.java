@@ -97,6 +97,7 @@ public abstract class Commands extends CommandBundle
    public abstract AppCommand exportPlotAsImage();
    public abstract AppCommand printPlot();
    public abstract AppCommand zoomPlot();
+   public abstract AppCommand removePlot();
    public abstract AppCommand clearPlots();
    public abstract AppCommand refreshPlot();
    public abstract AppCommand activatePlots();

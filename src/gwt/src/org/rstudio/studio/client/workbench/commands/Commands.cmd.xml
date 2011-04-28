@@ -133,6 +133,8 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="exportPlotAsImage"/>
          <cmd refid="printPlot"/>
          <separator/>
+         <cmd refid="removePlot"/>
+         <separator/>
          <cmd refid="clearPlots"/>
       </menu>
       
@@ -209,6 +211,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="quickOpen" value="Cmd+Alt+O"/>
       <shortcut refid="previousPlot" value="Cmd+PageUp" />
       <shortcut refid="nextPlot" value="Cmd+PageDown" />
+      <shortcut refid="removePlot" value="Cmd+Shift+R" />
       <shortcut refid="showManipulator" value="Cmd+Shift+M"/>
       <shortcut refid="showRequestLog" value="Ctrl+`" />
       <shortcut refid="logFocusedElement" value="Ctrl+Shift+`" />
@@ -424,13 +427,17 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Zoom Plot..."
         buttonLabel="Zoom"
         desc="View a larger version of the plot in a new window"/>
+   <cmd id="removePlot"
+        buttonLabel=""
+        menuLabel="_Remove Plot..."
+        desc="Remove the current plot"/> 
    <cmd id="clearPlots"
         buttonLabel="Clear All"
         menuLabel="_Clear All..."
         desc="Clear all Plots"/>    
    <cmd id="refreshPlot"
         buttonLabel=""
-        menuLabel="_Refresh"
+        menuLabel="Refresh"
         desc="Refresh current plot"/>     
    <cmd id="showManipulator"
         buttonLabel=""

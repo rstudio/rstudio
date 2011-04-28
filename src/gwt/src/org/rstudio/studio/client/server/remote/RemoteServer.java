@@ -691,6 +691,11 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, PREVIOUS_PLOT, requestCallback);
    }
    
+   public void removePlot(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, REMOVE_PLOT, requestCallback);
+   }
+   
    public void clearPlots(ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, CLEAR_PLOTS, requestCallback);
@@ -1391,6 +1396,7 @@ public class RemoteServer implements Server
 
    private static final String NEXT_PLOT = "next_plot";
    private static final String PREVIOUS_PLOT = "previous_plot";
+   private static final String REMOVE_PLOT = "remove_plot";
    private static final String CLEAR_PLOTS = "clear_plots";
    private static final String REFRESH_PLOT = "refresh_plot";
    private static final String EXPORT_PLOT = "export_plot";
