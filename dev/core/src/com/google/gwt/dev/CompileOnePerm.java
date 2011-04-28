@@ -38,10 +38,10 @@ public class CompileOnePerm {
   /**
    * Options for CompilePerm.
    */
-  public interface CompileOnePermOptions extends CompileTaskOptions, OptionPerm {
+  public interface CompileOnePermOptions extends Precompile.PrecompileOptions, OptionPerm {
   }
 
-  static class ArgProcessor extends CompileArgProcessor {
+  static class ArgProcessor extends Precompile.ArgProcessor {
     public ArgProcessor(CompileOnePermOptions options) {
       super(options);
       registerHandler(new ArgHandlerPerm(options));
@@ -56,7 +56,7 @@ public class CompileOnePerm {
   /**
    * Concrete class to implement compiler perm options.
    */
-  static class CompileOnePermOptionsImpl extends CompileTaskOptionsImpl
+  static class CompileOnePermOptionsImpl extends Precompile.PrecompileOptionsImpl
       implements CompileOnePermOptions {
 
     private int permToCompile = -1;

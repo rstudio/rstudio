@@ -47,7 +47,7 @@ public class CompilePerms {
   /**
    * Options for CompilePerms.
    */
-  public interface CompilePermsOptions extends CompileTaskOptions,
+  public interface CompilePermsOptions extends Precompile.PrecompileOptions,
       OptionLocalWorkers, OptionPerms {
   }
 
@@ -128,7 +128,7 @@ public class CompilePerms {
     }
   }
 
-  static class ArgProcessor extends CompileArgProcessor {
+  static class ArgProcessor extends Precompile.ArgProcessor {
     public ArgProcessor(CompilePermsOptions options) {
       super(options);
       registerHandler(new ArgHandlerPerms(options));
@@ -144,7 +144,7 @@ public class CompilePerms {
   /**
    * Concrete class to implement compiler perm options.
    */
-  static class CompilePermsOptionsImpl extends CompileTaskOptionsImpl implements
+  static class CompilePermsOptionsImpl extends Precompile.PrecompileOptionsImpl implements
       CompilePermsOptions {
 
     private int localWorkers;
