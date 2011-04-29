@@ -207,6 +207,7 @@ public class AttachableHTMLPanel extends ComplexPanel implements Attachable {
       element.getParentNode().replaceChild(getElement(), element);
     } else {
       setElement(element);
+      html = null;
     }
 
     if (wrapInitializationCallback != null) {
