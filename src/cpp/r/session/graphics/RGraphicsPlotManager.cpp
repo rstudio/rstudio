@@ -146,7 +146,7 @@ Error PlotManager::setActivePlot(int index)
 
    
 // NOTE: returns an error if the plot index is invalid. Otherwise it 
-// is guaranteed to have removed the spot. Rendering or file errors which
+// is guaranteed to have removed the plot. Rendering or file errors which
 // occur during the removal or transformation to a new graphics state are
 // reported to the user and logged but are not returned (because in these
 // cases the actual removal succeeded)

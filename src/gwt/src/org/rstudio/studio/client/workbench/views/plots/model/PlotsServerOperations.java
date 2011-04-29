@@ -25,6 +25,8 @@ public interface PlotsServerOperations
    void nextPlot(ServerRequestCallback<Void> requestCallback);
    void previousPlot(ServerRequestCallback<Void> requestCallback);
    
+   void removePlot(ServerRequestCallback<Void> requestCallback);
+   
    void clearPlots(ServerRequestCallback<Void> requestCallback);
       
    void refreshPlot(ServerRequestCallback<Void> requestCallback);
