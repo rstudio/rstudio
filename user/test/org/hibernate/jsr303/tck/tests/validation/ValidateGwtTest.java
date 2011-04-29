@@ -15,8 +15,6 @@
  */
 package org.hibernate.jsr303.tck.tests.validation;
 
-import org.hibernate.jsr303.tck.util.client.Failing;
-
 import javax.validation.ValidationException;
 
 /**
@@ -34,12 +32,10 @@ public class ValidateGwtTest extends AbstractValidationTest {
     delegate.testConstraintViolation();
   }
 
-  @Failing(issue = 5930)
   public void testGraphValidationWithArray() {
     delegate.testGraphValidationWithArray();
   }
 
-  @Failing(issue = 5930)
   public void testGraphValidationWithList() {
     delegate.testGraphValidationWithList();
   }

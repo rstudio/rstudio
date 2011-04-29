@@ -48,7 +48,6 @@ public class GraphNavigationGwtTest extends GWTTestCase {
     delegate.testFullGraphValidationBeforeNextGroupInSequence();
   }
 
-  @Failing(issue = 5946)
   public void testGraphNavigationDeterminism() {
     delegate.testGraphNavigationDeterminism();
   }

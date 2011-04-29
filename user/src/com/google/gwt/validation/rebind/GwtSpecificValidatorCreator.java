@@ -1483,7 +1483,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
     sw.println("\");");
 
     // TODO(nchalko) move this out of here to the Validate method
-    if (p.isCascaded()) {
+    if (p.isCascaded() && hasValid(p, useField)) {
 
       // if(value != null) {
       sw.println("if(value != null) {");

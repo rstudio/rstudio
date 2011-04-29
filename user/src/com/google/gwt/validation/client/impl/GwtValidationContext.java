@@ -62,7 +62,7 @@ public class GwtValidationContext<T> {
     this.beanDescriptor = beanDescriptor;
     this.messageInterpolator = messageInterpolator;
     this.validator = validator;
-    this.validatedObjects = validatedObjects;
+    this.validatedObjects = new HashSet<Object>(validatedObjects);
   }
 
   public final void addValidatedObject(Object o) {
