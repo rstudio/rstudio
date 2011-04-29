@@ -120,11 +120,15 @@ public class ValidatorCreator extends AbstractCreator {
   private void writeContext(SourceWriter sw, BeanHelper bean, String objectName) {
     // GwtValidationContext<T> context = new GwtValidationContext<T>(
     sw.print(GwtValidationContext.class.getSimpleName());
-    sw.print("<T> context =");
-    sw.print("    new " + GwtValidationContext.class.getSimpleName());
-    sw.println("<T>" + "(");
+    sw.print("<T> context = new ");
+    sw.print(GwtValidationContext.class.getSimpleName());
+    sw.println("<T>(");
     sw.indent();
     sw.indent();
+
+    // (Class<T>) MyBean.class,
+    sw.print("(Class<T>) ");
+    sw.println(bean.getTypeCanonicalName() + ".class, ");
 
     // object,
     sw.println(objectName + ", ");

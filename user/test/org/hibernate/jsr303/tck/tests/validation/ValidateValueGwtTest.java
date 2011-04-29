@@ -15,7 +15,6 @@
  */
 package org.hibernate.jsr303.tck.tests.validation;
 
-import org.hibernate.jsr303.tck.util.client.Failing;
 
 /**
  * Test wrapper for {@link ValidateValueTest}.
@@ -28,12 +27,10 @@ public class ValidateValueGwtTest extends AbstractValidationTest {
     delegate.testExistingPropertyWoConstraintsNorCascaded();
   }
 
-  @Failing(issue = 5804)
   public void testValidateValue() {
     delegate.testValidateValue();
   }
 
-  @Failing(issue = 5804)
   public void testValidateValueFailure() {
     delegate.testValidateValueFailure();
   }
@@ -62,7 +59,6 @@ public class ValidateValueGwtTest extends AbstractValidationTest {
     delegate.testValidateValueWithNullPropertyName();
   }
 
-  // This passes but the desired behavior is still not working
   public void testValidIsNotHonoredValidateValue() {
     delegate.testValidIsNotHonoredValidateValue();
   }

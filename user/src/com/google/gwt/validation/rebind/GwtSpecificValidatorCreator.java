@@ -1028,7 +1028,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
    * {@link javax.validation.ReportAsSingleViolation ReportAsSingleViolation},
    * then is called recursively and the {@code violationsVar} is changed to
    * match the the {@code constraintDescriptorVar}.
-   * 
+   *
    * @param sw the Source Writer
    * @param p the property
    * @param elementClass The class of the Element
@@ -1043,7 +1043,7 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
       String constraintDescriptorVar, String violationsVar)
       throws UnableToCompleteException {
     boolean isComposite = !constraint.getComposingConstraints().isEmpty();
-    boolean firstReportAsSingleViolation = 
+    boolean firstReportAsSingleViolation =
         constraint.isReportAsSingleViolation()
         && violationsVar.equals(DEFAULT_VIOLATION_VAR) && isComposite;
     boolean reportAsSingleViolation = firstReportAsSingleViolation
@@ -1393,6 +1393,10 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
 
   private void writeValidatePropertyCall(SourceWriter sw,
       PropertyDescriptor property, boolean useValue) {
+    if (useValue) {
+      // boolean valueTypeMatches = false;
+      sw.println("boolean valueTypeMatches = false;");
+    }
     if (beanHelper.hasGetter(property)) {
       if (useValue) {
         // if ( value == null || value instanceof propertyType) {
@@ -1401,13 +1405,16 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
             property, false)));
         sw.println(") {");
         sw.indent();
+
+        // valueTypeMatches = true;
+        sw.println("valueTypeMatches = true;");
       }
       // validate_getMyProperty
       writeValidateGetterCall(sw, property, useValue);
       if (useValue) {
-        // } else
+        // }
         sw.outdent();
-        sw.print("} else ");
+        sw.println("}");
       }
     }
 
@@ -1419,19 +1426,22 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
             property, true)));
         sw.println(") {");
         sw.indent();
+
+        // valueTypeMatches = true;
+        sw.println("valueTypeMatches = true;");
       }
       // validate_myProperty
       writeValidateFieldCall(sw, property, useValue);
       if (useValue) {
         // } else
         sw.outdent();
-        sw.print("}  else ");
+        sw.println("}");
       }
     }
 
     if (useValue & (beanHelper.hasGetter(property) || beanHelper.hasField(property))) {
-      // {
-      sw.println(" {");
+      // if(!valueTypeMatches) {
+      sw.println("if(!valueTypeMatches)  {");
       sw.indent();
 
       // throw new ValidationException(value.getClass +
