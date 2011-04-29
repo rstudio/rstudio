@@ -322,7 +322,7 @@ void GwtCallback::openMinimalWindow(QString name,
    }
 
    browser->webView()->load(QUrl(url));
-   browser->setFixedSize(width, height);
+   browser->resize(width, height);
    browser->show();
    browser->activateWindow();
 }
