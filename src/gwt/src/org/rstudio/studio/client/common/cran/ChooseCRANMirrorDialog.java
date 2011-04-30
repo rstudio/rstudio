@@ -27,6 +27,8 @@ import org.rstudio.studio.client.server.ServerError;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.ListBox;
@@ -41,6 +43,7 @@ public class ChooseCRANMirrorDialog extends ModalDialog<CRANMirror>
       super("Choose CRAN Mirror", inputOperation);
       globalDisplay_ = globalDisplay;
       mirrorDS_ = mirrorDS;
+      enableOkButton(false);
    }
 
    @Override
@@ -95,31 +98,29 @@ public class ChooseCRANMirrorDialog extends ModalDialog<CRANMirror>
             listBox_ = new ListBox(false);
             listBox_.setVisibleItemCount(18); // all
             listBox_.setWidth("100%");
-            int usRows = 0;
             if (mirrors.length() > 0)
             {
                for(int i=0; i<mirrors.length(); i++)
                {
                   CRANMirror mirror = mirrors.get(i);
+                  mirrors_.add(mirror);
                   String item = mirror.getName() + " - " + mirror.getHost();
                   String value = mirror.getURL();
-                  
-                  if ("us".equals(mirror.getCountry()))
-                  {
-                     mirrors_.add(usRows, mirror);
-                     listBox_.insertItem(item, value, usRows++);
-                  }
-                  else
-                  {
-                     mirrors_.add(mirror);
-                     listBox_.addItem(item, value);
-                  }
+                  listBox_.addItem(item, value);
                }
-               listBox_.setSelectedIndex(0);
             }
             
             // set it into the panel
             panel.setWidget(listBox_);
+            
+            // update ok button on changed
+            listBox_.addChangeHandler(new ChangeHandler() {
+               @Override
+               public void onChange(ChangeEvent event)
+               {
+                  enableOkButton(listBox_.getSelectedIndex() != -1);
+               }
+            });
             
             // if the list box is larger than the space we initially allocated
             // then increase the panel height
