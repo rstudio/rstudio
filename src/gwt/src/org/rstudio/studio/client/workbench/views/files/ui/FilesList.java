@@ -140,9 +140,9 @@ public class FilesList extends Composite
                                 SafeHtmlUtils.fromSafeConstant("<br/>"));
       filesCellTable_.setColumnWidth(iconColumn, 20, Unit.PX);
     
-      sortHandler_.setComparator(iconColumn, new FilesListComparator() {
+      sortHandler_.setComparator(iconColumn, new FoldersOnBottomComparator() {
          @Override
-         public int doCompare(FileSystemItem arg0, FileSystemItem arg1)
+         public int doItemCompare(FileSystemItem arg0, FileSystemItem arg1)
          {
             if (arg0 == parentPath_)
                return 1;
@@ -207,9 +207,9 @@ public class FilesList extends Composite
       filesCellTable_.addColumn(sizeColumn, "Size");
       filesCellTable_.setColumnWidth(sizeColumn, 80, Unit.PX);
       
-      sortHandler_.setComparator(sizeColumn, new FilesListComparator() {
+      sortHandler_.setComparator(sizeColumn, new FoldersOnBottomComparator() {
          @Override
-         public int doCompare(FileSystemItem arg0, FileSystemItem arg1)
+         public int doItemCompare(FileSystemItem arg0, FileSystemItem arg1)
          {
             return new Long(arg0.getLength()).compareTo(
                                              new Long(arg1.getLength()));
@@ -235,9 +235,9 @@ public class FilesList extends Composite
       filesCellTable_.addColumn(modColumn, "Modified");
       filesCellTable_.setColumnWidth(modColumn, 160, Unit.PX); 
       
-      sortHandler_.setComparator(modColumn, new FilesListComparator() {
+      sortHandler_.setComparator(modColumn, new FoldersOnBottomComparator() {
          @Override
-         public int doCompare(FileSystemItem arg0, FileSystemItem arg1)
+         public int doItemCompare(FileSystemItem arg0, FileSystemItem arg1)
          {
             return arg0.getLastModified().compareTo(arg1.getLastModified());
          }
@@ -473,7 +473,7 @@ public class FilesList extends Composite
     
     // comparator which ensures that the parent path is always on top
     private abstract class FilesListComparator implements Comparator<FileSystemItem>
-    {
+    {     
        @Override
        public int compare(FileSystemItem arg0, FileSystemItem arg1)
        {
@@ -488,6 +488,50 @@ public class FilesList extends Composite
        }
        
        protected abstract int doCompare(FileSystemItem arg0, FileSystemItem arg1);    
+    }
+    
+    private abstract class SeparateFoldersComparator extends FilesListComparator
+    {
+       public SeparateFoldersComparator(boolean foldersOnBottom)
+       {
+          if (foldersOnBottom)
+             sortFactor_ = 1;
+          else
+             sortFactor_ = -1;
+       }
+       
+       protected int doCompare(FileSystemItem arg0, FileSystemItem arg1)
+       {
+          int ascendingResult = activeSortColumnAscending_ ? 1 : -1;
+          
+          if (arg0.isDirectory() && !arg1.isDirectory())
+             return ascendingResult * sortFactor_;
+          else if (arg1.isDirectory() && !arg0.isDirectory())
+             return -ascendingResult * sortFactor_;
+          else
+             return doItemCompare(arg0, arg1);
+       }
+       
+       protected abstract int doItemCompare(FileSystemItem arg0, FileSystemItem arg1);    
+       
+       private final int sortFactor_ ;   
+    }
+    
+    private abstract class FoldersOnBottomComparator extends SeparateFoldersComparator
+    {
+       public FoldersOnBottomComparator() 
+       { 
+          super(true); 
+       }
+    }
+    
+    @SuppressWarnings("unused")
+    private abstract class FoldersOnTopComparator extends SeparateFoldersComparator
+    {
+       public FoldersOnTopComparator() 
+       { 
+          super(false); 
+       }
     }
     
    
