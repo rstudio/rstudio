@@ -60,9 +60,9 @@ public class CheckForUpdatesDialog extends ModalDialog<ArrayList<PackageUpdate>>
       updatesDS_ = updatesDS;
       
       setOkButtonCaption("Install Updates");
-      enableOkButton(false);
-      
-      addLeftButton(new ThemedButton("Select All", new ClickHandler() {
+    
+      addLeftButton(selectAllButton_ = new ThemedButton("Select All", 
+                                                        new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
          {
@@ -70,13 +70,19 @@ public class CheckForUpdatesDialog extends ModalDialog<ArrayList<PackageUpdate>>
          } 
       }));
      
-      addLeftButton(new ThemedButton("Select None", new ClickHandler() {
+      addLeftButton(selectNoneButton_ = new ThemedButton("Select None", 
+                                                         new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
          {
             setGlobalApplyUpdate(false);   
          } 
       }));  
+      
+      enableOkButton(false);
+      enableCancelButton(false);
+      selectAllButton_.setEnabled(false);
+      selectNoneButton_.setEnabled(false);
    }
 
    @Override
@@ -183,6 +189,10 @@ public class CheckForUpdatesDialog extends ModalDialog<ArrayList<PackageUpdate>>
                updatesDataProvider_ = new ListDataProvider<PendingUpdate>();
                updatesDataProvider_.setList(updates);
                updatesDataProvider_.addDataDisplay(updatesTable_);
+               
+               enableCancelButton(true);
+               selectAllButton_.setEnabled(true);
+               selectNoneButton_.setEnabled(false);
             }
             else
             {
@@ -288,5 +298,7 @@ public class CheckForUpdatesDialog extends ModalDialog<ArrayList<PackageUpdate>>
    private CellTable<PendingUpdate> updatesTable_;
    private ServerDataSource<JsArray<PackageUpdate>> updatesDS_;
    private ListDataProvider<PendingUpdate> updatesDataProvider_;
+   private ThemedButton selectAllButton_;
+   private ThemedButton selectNoneButton_;
 
 }
