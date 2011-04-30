@@ -47,7 +47,7 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
                            GlobalDisplay globalDisplay,
                            OperationWithInput<PackageInstallRequest> operation)
 {
-      super("Install Package from CRAN", operation);
+      super("Install Package", operation);
       
       installContext_ = installContext;
       defaultInstallOptions_ = defaultInstallOptions;
