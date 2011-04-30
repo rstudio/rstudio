@@ -108,7 +108,6 @@ public class FilesPane extends WorkbenchPane implements Files.Display
          public void onError(ServerError error)
          {
             setProgress(false);
-            filesList_.clearFiles();
             globalDisplay_.showErrorMessage("File Listing Error",
                                             "Error navigating to " +
                                             directory.getPath() + ":\n\n" +
