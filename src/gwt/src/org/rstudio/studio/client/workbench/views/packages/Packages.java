@@ -391,7 +391,7 @@ public class Packages
                                        installContext.getDefaultLibraryPath());
             
             StringBuilder message = new StringBuilder();
-            message.append("Are you sure you want to remove the '"); 
+            message.append("Are you sure you wish to permanently uninstall the '"); 
             message.append(packageInfo.getName() + "' package");
             if (!usingDefaultLibrary)
             {
@@ -399,11 +399,11 @@ public class Packages
                message.append(packageInfo.getLibrary());
                message.append("'");
             }
-            message.append("?");
+            message.append("? This action cannot be undone.");
                
             globalDisplay_.showYesNoMessage(
                MessageDialog.WARNING,
-               "Confirm Remove",
+               "Uninstall Package ",
                message.toString(),
                new Operation() 
                {
