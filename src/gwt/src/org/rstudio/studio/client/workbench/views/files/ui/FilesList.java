@@ -255,25 +255,30 @@ public class FilesList extends Composite
             ColumnSortList sortList = event.getColumnSortList();
 
             // insert the default initial sort order for size and modified
-            if (event.getColumn().equals(sizeColumn_) && 
-                forceSizeSortDescending)
+            if (!applyingProgrammaticSort_)
             {
-               forceSizeSortDescending = false;
-               forceModifiedSortDescending = true;
-               sortList.insert(0, new ColumnSortInfo(event.getColumn(), false));
+               if (event.getColumn().equals(sizeColumn_) && 
+                   forceSizeSortDescending)
+               {
+                  forceSizeSortDescending = false;
+                  forceModifiedSortDescending = true;
+                  sortList.insert(0, 
+                                  new ColumnSortInfo(event.getColumn(), false));
+               }
+               else if (event.getColumn().equals(modifiedColumn_) && 
+                        forceModifiedSortDescending)
+               {
+                  forceModifiedSortDescending = false;
+                  forceSizeSortDescending = true;
+                  sortList.insert(0, 
+                                  new ColumnSortInfo(event.getColumn(), false));
+               }
+               else
+               {
+                  forceModifiedSortDescending = true;
+                  forceSizeSortDescending = true;
+               } 
             }
-            else if (event.getColumn().equals(modifiedColumn_) && 
-                     forceModifiedSortDescending)
-            {
-               forceModifiedSortDescending = false;
-               forceSizeSortDescending = true;
-               sortList.insert(0, new ColumnSortInfo(event.getColumn(), false));
-            }
-            else
-            {
-               forceModifiedSortDescending = true;
-               forceSizeSortDescending = true;
-            } 
             
             // record sort order and fire event to observer
             JsArray<FilesColumnSortInfo> sortOrder = newSortOrderArray();
@@ -359,9 +364,8 @@ public class FilesList extends Composite
       for (int i=0; i<files.length(); i++)
          fileList.add(files.get(i));
            
-      // force sort
-      ColumnSortEvent.fire(filesCellTable_, 
-                           filesCellTable_.getColumnSortList());
+      // apply sort list
+      applyColumnSortList();
       
       // fire selection changed
       observer_.onFileSelectionChanged();
@@ -461,6 +465,13 @@ public class FilesList extends Composite
       return -1;
    }
    
+   private void applyColumnSortList()
+   {
+      applyingProgrammaticSort_ = true;
+      ColumnSortEvent.fire(filesCellTable_, 
+                           filesCellTable_.getColumnSortList());
+      applyingProgrammaticSort_ = false;
+   }
    
    private static final ProvidesKey<FileSystemItem> KEY_PROVIDER = 
       new ProvidesKey<FileSystemItem>() {
@@ -543,6 +554,7 @@ public class FilesList extends Composite
    private final TextColumn<FileSystemItem> sizeColumn_;
    private final TextColumn<FileSystemItem> modifiedColumn_;
    private boolean activeSortColumnAscending_ = true;
+   private boolean applyingProgrammaticSort_ = false;
    
    
    private final MultiSelectionModel<FileSystemItem> selectionModel_;
