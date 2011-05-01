@@ -218,7 +218,7 @@ public class Packages
   
    private void doInstallPackage(final PackageInstallContext installContext)
    {
-      // if install options have not yet intialized the default library
+      // if install options have not yet initialized the default library
       // path then set it now from the context
       if (installOptions_.getLibraryPath().length() == 0)
       {
@@ -242,11 +242,22 @@ public class Packages
                   request.getOptions().getLibraryPath().equals(
                                        installContext.getDefaultLibraryPath());
 
-               
+               List<String> packages = request.getPackages();
                StringBuilder command = new StringBuilder();
-               command.append("install.packages(\"");
-               command.append(request.getPackageName());
-               command.append("\"");
+               command.append("install.packages(");
+               if (packages.size() > 1)
+                  command.append("c(");
+               for (int i=0; i<packages.size(); i++)
+               {
+                  if (i > 0)
+                     command.append(", ");
+                  command.append("\""); 
+                  command.append(packages.get(i));
+                  command.append("\"");
+               }
+               if (packages.size() > 1)
+                  command.append(")");
+               
                if (!usingDefaultLibrary)
                {
                   command.append(", lib=\"");
@@ -323,6 +334,7 @@ public class Packages
             }  
       }).showModal();
    }
+   
    
    private String buildUpdatePackagesCommand(
                               ArrayList<PackageUpdate> updates,
