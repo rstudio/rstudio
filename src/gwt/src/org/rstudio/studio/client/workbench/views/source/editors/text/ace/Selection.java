@@ -13,6 +13,8 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.user.client.Command;
+import org.rstudio.core.client.CommandWithArg;
 
 public class Selection extends JavaScriptObject
 {
@@ -43,4 +45,23 @@ public class Selection extends JavaScriptObject
    public native final void selectAll() /*-{
       this.selectAll();
    }-*/;
+
+   public final void addCursorChangeHandler(final CommandWithArg<Position> handler)
+   {
+      onCursorChange(new Command()
+      {
+         public void execute()
+         {
+            handler.execute(getCursor());
+         }
+      });
+   }
+
+   private native void onCursorChange(Command command) /*-{
+      this.on("changeCursor",
+              $entry(function () {
+                 command.@com.google.gwt.user.client.Command::execute()();
+              }));
+   }-*/;
+
 }

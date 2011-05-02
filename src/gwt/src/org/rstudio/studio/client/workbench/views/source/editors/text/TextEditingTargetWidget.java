@@ -37,6 +37,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplace;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
+import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
+import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarWidget;
 
 public class TextEditingTargetWidget
       extends ResizeComposite
@@ -50,12 +52,16 @@ public class TextEditingTargetWidget
       commands_ = commands;
       editor_ = editor;
       sourceOnSave_ = new CheckBox("Source on Save");
+      statusBar_ = new StatusBarWidget();
       panel_ = new PanelWithToolbar(createToolbar(),
-                                    editor.toWidget());
+                                    editor.toWidget(),
+                                    statusBar_);
       adaptToFileType(fileType);
 
       initWidget(panel_);
    }
+
+   private StatusBarWidget statusBar_;
 
    private Toolbar createToolbar()
    {
@@ -192,6 +198,11 @@ public class TextEditingTargetWidget
    public void setFontSize(double size)
    {
       editor_.setFontSize(size);
+   }
+
+   public StatusBar getStatusBar()
+   {
+      return statusBar_;
    }
 
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)

@@ -67,9 +67,9 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.PublishPdfEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.PublishPdfHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
+import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.PublishPdfDialog;
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
@@ -102,6 +102,7 @@ public class TextEditingTarget implements EditingTarget
       void showFindReplace();
       void onActivate();
       void setFontSize(double size);
+      StatusBar getStatusBar();
 
       boolean isAttached();
    }
@@ -140,33 +141,50 @@ public class TextEditingTarget implements EditingTarget
       void setTabSize(int tabSize);
       void setShowPrintMargin(boolean on);
       void setPrintMarginColumn(int column);
+
+      HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);
+
+      String getCurrentFunction();
+
+      Position getCursorPosition();
    }
-   private class ExplicitSaveProgressIndicator implements ProgressIndicator
+
+   private class SaveProgressIndicator implements ProgressIndicator
    {
 
-      public ExplicitSaveProgressIndicator(FileSystemItem file,
-                                           TextFileType fileType,
-                                           Command executeOnSuccess)
+      public SaveProgressIndicator(FileSystemItem file,
+                                   TextFileType fileType,
+                                   Command executeOnSuccess)
       {
          file_ = file;
          newFileType_ = fileType;
          executeOnSuccess_ = executeOnSuccess;
       }
+
       public void onProgress(String message)
       {
       }
 
       public void onCompleted()
       {
-         ignoreDeletes_ = false;
-         commands_.reopenSourceDocWithEncoding().setEnabled(true);         
-         name_.setValue(file_.getName(), true);
-         // Make sure tooltip gets updated, even if name hasn't changed
-         name_.fireChangeEvent(); 
-         dirtyState_.setValue(false, true);
+         if (newFileType_ != null)
+            fileType_ = newFileType_;
+
+         if (file_ != null)
+         {
+            ignoreDeletes_ = false;
+            commands_.reopenSourceDocWithEncoding().setEnabled(true);
+            name_.setValue(file_.getName(), true);
+            // Make sure tooltip gets updated, even if name hasn't changed
+            name_.fireChangeEvent();
+            dirtyState_.setValue(false, true);
+         }
+
          if (newFileType_ != null)
          {
-            fileType_ = newFileType_;
+            // Make sure the icon gets updated, even if name hasn't changed
+            name_.fireChangeEvent();
+            updateStatusBarLanguage();
             view_.adaptToFileType(newFileType_);
             events_.fireEvent(new FileTypeChangedEvent());
             if (!fileType_.canSourceOnSave() && docUpdateSentinel_.sourceOnSave())
@@ -174,6 +192,7 @@ public class TextEditingTarget implements EditingTarget
                view_.getSourceOnSave().setValue(false, true);
             }
          }
+
          if (executeOnSuccess_ != null)
             executeOnSuccess_.execute();
       }
@@ -190,6 +209,7 @@ public class TextEditingTarget implements EditingTarget
       private final TextFileType newFileType_;
       private final Command executeOnSuccess_;
    }
+
    @Inject
    public TextEditingTarget(Commands commands,
                             SourceServerOperations server,
@@ -354,6 +374,65 @@ public class TextEditingTarget implements EditingTarget
                }
             }
       ));
+
+      initStatusBar();
+   }
+
+   private void initStatusBar()
+   {
+      statusBar_ = view_.getStatusBar();
+      docDisplay_.addCursorChangedHandler(new CursorChangedHandler()
+      {
+         public void onCursorChanged(CursorChangedEvent event)
+         {
+            updateStatusBarPosition();
+         }
+      });
+      updateStatusBarPosition();
+      updateStatusBarLanguage();
+
+      statusBarFileTypes_ = new TextFileType[] {
+            FileTypeRegistry.R,
+            FileTypeRegistry.SWEAVE,
+            FileTypeRegistry.TEXT,
+            FileTypeRegistry.RD,
+            FileTypeRegistry.TEX,
+      };
+
+      for (TextFileType fileType : statusBarFileTypes_)
+      {
+         statusBar_.getLanguage().addOptionValue(fileType.getLabel());
+      }
+
+      statusBar_.getLanguage().addSelectionHandler(new SelectionHandler<String>()
+      {
+         public void onSelection(SelectionEvent<String> event)
+         {
+            String item = event.getSelectedItem();
+            for (TextFileType fileType : statusBarFileTypes_)
+            {
+               if (fileType.getLabel().equals(item))
+               {
+                  docUpdateSentinel_.changeFileType(
+                        fileType.getTypeId(),
+                        new SaveProgressIndicator(null, fileType, null));
+                  break;
+               }
+            }
+         }
+      });
+   }
+
+   private void updateStatusBarLanguage()
+   {
+      statusBar_.getLanguage().setValue(fileType_.getLabel());
+   }
+
+   private void updateStatusBarPosition()
+   {
+      Position pos = docDisplay_.getCursorPosition();
+      statusBar_.getPosition().setValue((pos.getRow() + 1) + ":" +
+                                        (pos.getColumn() + 1));
    }
 
    private void registerPrefs()
@@ -538,7 +617,7 @@ public class TextEditingTarget implements EditingTarget
                   docUpdateSentinel_.save(path,
                                           null,
                                           encoding,
-                                          new ExplicitSaveProgressIndicator(
+                                          new SaveProgressIndicator(
                                                 FileSystemItem.createFile(path),
                                                 null,
                                                 command
@@ -681,7 +760,7 @@ public class TextEditingTarget implements EditingTarget
                            saveItem.getPath(),
                            fileType.getTypeId(),
                            encoding,
-                           new ExplicitSaveProgressIndicator(saveItem,
+                           new SaveProgressIndicator(saveItem,
                                                              fileType,
                                                              executeOnSuccess));
 
@@ -737,11 +816,7 @@ public class TextEditingTarget implements EditingTarget
 
    public ImageResource getIcon()
    {
-      String path = docUpdateSentinel_.getPath();
-      if (path != null)
-         return fileTypeRegistry_.getIconForFile(FileSystemItem.createFile(path));
-      else
-         return fileType_.getDefaultIcon();
+      return fileType_.getDefaultIcon();
    }
 
    public String getTabTooltip()
@@ -1261,6 +1336,8 @@ public class TextEditingTarget implements EditingTarget
             });
    }
 
+   private StatusBar statusBar_;
+   private TextFileType[] statusBarFileTypes_;
    private DocDisplay docDisplay_;
    private final UIPrefs prefs_;
    private Display view_;

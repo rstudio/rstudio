@@ -1,0 +1,56 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             xmlns:sb='urn:import:org.rstudio.studio.client.workbench.views.source.editors.text.status'>
+
+   <ui:image field='statusBarTile' src='statusBarTile.png' repeatStyle='Horizontal'/>
+   <ui:image field='statusBarSeparator' src='statusBarSeparator.png'/>
+
+   <ui:style>
+      @sprite .statusBar {
+         gwt-image: 'statusBarTile';
+         width: 100%;
+         font-size: 10px;
+      }
+      .statusBar div {
+         display: inline;
+         height: 16px;
+         position: relative;
+         top: 1px;
+         white-space: nowrap;
+      }
+      .statusBar img {
+         position: relative;
+         top: 2px;
+         margin-left: 4px;
+      }
+      .statusBar .element {
+         display: block;
+         cursor: default;
+         padding-left: 5px;
+         padding-right: 6px;
+      }
+      .statusBar .element.pos {
+         min-width: 40px;
+         text-align: center;
+      }
+      .statusBar .element.last {
+         background: none;
+      }
+   </ui:style>
+
+   <g:HorizontalPanel styleName="{style.statusBar}">
+      <sb:StatusBarElementWidget ui:field="position_"
+                           styleName="{style.element} {style.pos}"
+                           showArrows="false"/>
+      <sb:StatusBarElementWidget ui:field="function_" styleName="{style.element}"
+                           showArrows="true" visible="false"/>
+      <sb:StatusBarElementWidget ui:field="language_" styleName="{style.element}"
+                           showArrows="true"/>
+      <sb:StatusBarElementWidget ui:field="encoding_" styleName="{style.element}"
+                           showArrows="true" visible="false"/>
+      <sb:StatusBarElementWidget ui:field="tabStyle_"
+                           styleName="{style.element} {style.last}"
+                           showArrows="true"
+                           showSeparator="false" visible="false"/>
+   </g:HorizontalPanel>
+</ui:UiBinder>

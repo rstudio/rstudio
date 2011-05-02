@@ -28,6 +28,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
@@ -52,6 +53,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 
 public class AceEditor implements DocDisplay, InputEditorDisplay
 {
@@ -522,6 +526,21 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
    public void setPrintMarginColumn(int column)
    {
       widget_.getEditor().getRenderer().setPrintMarginColumn(column);
+   }
+
+   public HandlerRegistration addCursorChangedHandler(final CursorChangedHandler handler)
+   {
+      return widget_.addCursorChangedHandler(handler);
+   }
+
+   public String getCurrentFunction()
+   {
+      return "";
+   }
+
+   public Position getCursorPosition()
+   {
+      return widget_.getEditor().getSession().getSelection().getCursor();
    }
 
    public void setFontSize(double size)

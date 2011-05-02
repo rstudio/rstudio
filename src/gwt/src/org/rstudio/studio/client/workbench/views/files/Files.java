@@ -255,7 +255,6 @@ public class Files
             view_.selectNone();
       }
 
-      @Override
       public void onColumnSortOrderChanaged(
                                     JsArray<FilesColumnSortInfo> sortOrder)
       {

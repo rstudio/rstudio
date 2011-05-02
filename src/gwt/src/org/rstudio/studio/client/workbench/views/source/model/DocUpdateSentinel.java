@@ -157,6 +157,11 @@ public class DocUpdateSentinel
       }
    }
 
+   public void changeFileType(String fileType, final ProgressIndicator progress)
+   {
+      saveWithSuspendedAutoSave(null, fileType, null, progress);
+   }
+
    public void save(String path,
                     // fileType==null means don't change value
                     String fileType,
@@ -167,6 +172,14 @@ public class DocUpdateSentinel
       assert path != null;
       if (path == null)
          throw new IllegalArgumentException("Path cannot be null");
+      saveWithSuspendedAutoSave(path, fileType, encoding, progress);
+   }
+
+   private void saveWithSuspendedAutoSave(String path,
+                                          String fileType,
+                                          String encoding,
+                                          final ProgressIndicator progress)
+   {
       bufferedCommand_.suspend();
       doSave(path, fileType, encoding, new ProgressIndicator()
       {
@@ -213,13 +226,13 @@ public class DocUpdateSentinel
 
       // Don't auto-save when there are no changes. In addition to being
       // wasteful, it causes the server to think the document is dirty.
-      if (path == null && diff.isEmpty())
+      if (path == null && fileType == null && diff.isEmpty())
       {
          changesPending_ = false;
          return false;
       }
 
-      if (path == null
+      if (path == null && fileType == null
           && oldContents.length() == 0
           && newContents.equals("\n"))
       {

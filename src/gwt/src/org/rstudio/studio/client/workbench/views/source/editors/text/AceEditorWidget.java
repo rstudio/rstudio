@@ -24,12 +24,17 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 
 public class AceEditorWidget extends Composite
       implements RequiresResize,
@@ -57,6 +62,19 @@ public class AceEditorWidget extends Composite
             ValueChangeEvent.fire(AceEditorWidget.this, null);
          }
       });
+      editor_.getSession().getSelection().addCursorChangeHandler(new CommandWithArg<Position>()
+      {
+         public void execute(Position arg)
+         {
+            AceEditorWidget.this.fireEvent(new CursorChangedEvent(arg));
+         }
+      });
+   }
+
+   public HandlerRegistration addCursorChangedHandler(
+         CursorChangedHandler handler)
+   {
+      return addHandler(handler, CursorChangedEvent.TYPE);
    }
 
    public AceEditorNative getEditor() {

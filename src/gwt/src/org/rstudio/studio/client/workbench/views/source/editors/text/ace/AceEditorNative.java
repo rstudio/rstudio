@@ -116,4 +116,38 @@ public class AceEditorNative extends JavaScriptObject {
       var loader = require("rstudio/loader");
       return loader.loadEditor(container);
    }-*/;
+
+   public static HandlerRegistration addEventListener(JavaScriptObject target,
+                                                      String event,
+                                                      Command command)
+   {
+      final JavaScriptObject functor = addEventListenerInternal(target,
+                                                                event,
+                                                                command);
+      return new HandlerRegistration()
+      {
+         public void removeHandler()
+         {
+            invokeFunctor(functor);
+         }
+      };
+   }
+
+   private static native JavaScriptObject addEventListenerInternal(
+         JavaScriptObject target,
+         String eventName,
+         Command command) /*-{
+      var callback = $entry(function() {
+         command.@com.google.gwt.user.client.Command::execute()();
+      });
+
+      target.addEventListener(eventName, callback);
+      return function() {
+         target.removeEventListener(eventName, callback);
+      };
+   }-*/;
+
+   private static native void invokeFunctor(JavaScriptObject functor) /*-{
+      functor();
+   }-*/;
 }
