@@ -40,7 +40,6 @@
     <call-subproject subproject="requestfactory" subtarget="build" />
     <call-subproject subproject="servlet" subtarget="build" />
     <call-subproject subproject="jni" subtarget="build" />
-    <call-subproject subproject="requestfactory" subtarget="build" />
   </target>
 
   <target name="dist" depends="build, doc" description="[action] Make all the distributions">
