@@ -25,7 +25,7 @@ public class ValueChangeRequestEvent<T> extends GwtEvent<ValueChangeRequestHandl
       handler.onValueChangeRequest(this) ;
    }
 
-   @SuppressWarnings("unchecked")
+   @SuppressWarnings({ "unchecked", "rawtypes" })
    @Override
    public GwtEvent.Type<ValueChangeRequestHandler<T>> getAssociatedType()
    {

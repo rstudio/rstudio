@@ -61,7 +61,6 @@ public class RpcResponse extends JavaScriptObject
       return field;
    }
 
-   @SuppressWarnings("unused")
    private static Boolean wrapBoolean(boolean value)
    {
       return value;

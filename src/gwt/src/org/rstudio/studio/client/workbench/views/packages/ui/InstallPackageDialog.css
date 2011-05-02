@@ -1,10 +1,11 @@
 
+
 .mainWidget {
    width: 360px;
 }
 
 .extraBottomPad {
-   margin-bottom: 10px;	
+   margin-bottom: 15px;	
 }
 
 .installDependenciesCheckBox {

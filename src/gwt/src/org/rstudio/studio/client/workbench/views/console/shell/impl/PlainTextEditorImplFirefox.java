@@ -79,7 +79,6 @@ public class PlainTextEditorImplFirefox extends PlainTextEditorImpl
       */
    }
 
-   @SuppressWarnings("unused")
    private void manageZwsp()
    {
       String val = textContainer_.getInnerText();

@@ -47,13 +47,11 @@ public class AceCompletionAdapter
       };
    }-*/;
 
-   @SuppressWarnings("unused")
    private boolean onKeyDown(NativeEvent e)
    {
       return completionManager_.previewKeyDown(e);
    }
 
-   @SuppressWarnings("unused")
    private boolean onTextInput(String text)
    {
       if (text == null)

@@ -32,7 +32,6 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
 {
    private static class State extends JavaScriptObject
    {
-      @SuppressWarnings("unused")
       protected State() {}
 
       public native final boolean hasSplitterPos() /*-{

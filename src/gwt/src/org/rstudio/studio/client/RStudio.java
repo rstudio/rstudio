@@ -49,6 +49,7 @@ import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialo
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableResources;
 import org.rstudio.studio.client.workbench.views.plots.ui.ExportDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.PrintDialog;
+import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlotDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorResources;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.PublishPdfDialog;
@@ -130,6 +131,7 @@ public class RStudio implements EntryPoint
       InstallPackageDialog.ensureStylesInjected();
       PublishPdfDialog.ensureStylesInjected();
       ExportDialog.ensureStylesInjected();
+      ExportPlotDialog.ensureStylesInjected();
       ApplicationEndedPopupPanel.ensureStylesInjected();
       ApplicationSerializationProgress.ensureStylesInjected();
       HistoryPane.ensureStylesInjected();

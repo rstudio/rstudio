@@ -41,17 +41,72 @@ namespace packages {
 namespace {
 
 Error availablePackagesBegin(const core::json::JsonRpcRequest& request,
-                             std::string* pContribUrl)
+                             std::vector<std::string>* pContribUrls)
 {
-   return r::exec::evaluateString<std::string>(
+   return r::exec::evaluateString<std::vector<std::string> >(
          "contrib.url(getOption('repos'), getOption('pkgType'))",
-         pContribUrl);
+         pContribUrls);
 }
 
-Error availablePackagesEnd(const core::json::JsonRpcRequest& request,
-                           const std::string& contribUrl,
-                           core::json::JsonRpcResponse* pResponse)
+class AvailablePackagesCache
 {
+public:
+
+   void insert(const std::string& contribUrl,
+               const std::vector<std::string>& availablePackages)
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         cache_[contribUrl] = availablePackages;
+      }
+      END_LOCK_MUTEX
+   }
+
+
+   bool lookup(const std::string& contribUrl,
+               std::vector<std::string>* pAvailablePackages)
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         std::map<std::string, std::vector<std::string> >::const_iterator it =
+                                                         cache_.find(contribUrl);
+         if (it != cache_.end())
+         {
+            *pAvailablePackages = it->second;
+            return true;
+         }
+         else
+         {
+            return false;
+         }
+      }
+      END_LOCK_MUTEX
+
+      // keep compiler happy
+      return false;
+   }
+
+private:
+   boost::mutex mutex_;
+   std::map<std::string, std::vector<std::string> > cache_;
+};
+
+void downloadAvailablePackages(const std::string& contribUrl,
+                               std::vector<std::string>* pAvailablePackages)
+{
+   // cache available packages to minimize http round trips
+   static AvailablePackagesCache s_availablePackagesCache;
+
+   // check cache first
+   std::vector<std::string> availablePackages;
+   if (s_availablePackagesCache.lookup(contribUrl, &availablePackages))
+   {
+      std::copy(availablePackages.begin(),
+                availablePackages.end(),
+                std::back_inserter(*pAvailablePackages));
+      return;
+   }
+
    http::URL url(contribUrl + "/PACKAGES");
    http::Request pkgRequest;
    pkgRequest.setMethod("GET");
@@ -66,10 +121,10 @@ Error availablePackagesEnd(const core::json::JsonRpcRequest& request,
                                    pkgRequest,
                                    &pkgResponse);
 
-   if (error)
-      return error;
-
-   if (pkgResponse.statusCode() == 200)
+   // we don't log errors or bad http status codes because we expect these
+   // requests will fail frequently due to either being offline or unable to
+   // navigate a proxy server
+   if (!error && (pkgResponse.statusCode() == 200))
    {
       std::string body = pkgResponse.body();
       boost::regex re("^Package:\\s*([^\\s]+?)\\s*$");
@@ -78,24 +133,39 @@ Error availablePackagesEnd(const core::json::JsonRpcRequest& request,
       boost::sregex_iterator matchEnd;
       std::vector<std::string> results;
       for (; matchBegin != matchEnd; matchBegin++)
+      {
+         // copy to temporary list for insertion into cache
          results.push_back((*matchBegin)[1]);
 
-      json::Array jsonResults;
-      for (size_t i = 0; i < results.size(); i++)
-         jsonResults.push_back(results.at(i));
+         // append to out param
+         pAvailablePackages->push_back((*matchBegin)[1]);
+      }
 
-      pResponse->setResult(jsonResults);
-      return Success();
+      // add to cache
+      s_availablePackagesCache.insert(contribUrl, results);
    }
-   else
-   {
-      std::string msg = "Could not retrieve " + contribUrl + ", http status: " +
-                        boost::lexical_cast<std::string>(pkgResponse.statusCode());
+}
 
-      return systemError(boost::system::errc::protocol_error,
-                         msg,
-                         ERROR_LOCATION);
-   }
+Error availablePackagesEnd(const core::json::JsonRpcRequest& request,
+                           const std::vector<std::string>& contribUrls,
+                           core::json::JsonRpcResponse* pResponse)
+{
+   // download available packages
+   std::vector<std::string> availablePackages;
+   std::for_each(contribUrls.begin(),
+                 contribUrls.end(),
+                 boost::bind(&downloadAvailablePackages, _1, &availablePackages));
+
+   // order and remove duplicates
+   std::stable_sort(availablePackages.begin(), availablePackages.end());
+   std::unique(availablePackages.begin(), availablePackages.end());
+
+   // return as json
+   json::Array jsonResults;
+   for (size_t i = 0; i < availablePackages.size(); i++)
+      jsonResults.push_back(availablePackages.at(i));
+   pResponse->setResult(jsonResults);
+   return Success();
 }
 
 } // anonymous namespace
@@ -106,7 +176,7 @@ Error initialize()
    using namespace module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
-      (bind(registerRpcAsyncCoupleMethod<std::string>,
+      (bind(registerRpcAsyncCoupleMethod<std::vector<std::string> >,
             "available_packages",
             availablePackagesBegin,
             availablePackagesEnd))

@@ -34,7 +34,8 @@ public class ImageButtonColumn<T> extends Column<T, String>
          {   
             if (value != null)
             {
-               sb.appendHtmlConstant("<span style=\"cursor: pointer;\">");
+               sb.appendHtmlConstant("<span title=\"Uninstall package\" " +
+                                     "style=\"cursor: pointer;\">");
                sb.appendHtmlConstant(imagePrototype.getHTML());
                sb.appendHtmlConstant("</span>");
             }

@@ -12,9 +12,12 @@
  */
 package org.rstudio.studio.client.workbench.views.packages.ui;
 
+import java.util.List;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.ModalDialog;
+import org.rstudio.core.client.widget.MultipleItemSuggestTextBox;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
@@ -47,7 +50,7 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
                            GlobalDisplay globalDisplay,
                            OperationWithInput<PackageInstallRequest> operation)
 {
-      super("Install Package from CRAN", operation);
+      super("Install Packages", operation);
       
       installContext_ = installContext;
       defaultInstallOptions_ = defaultInstallOptions;
@@ -61,8 +64,8 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
    @Override
    protected PackageInstallRequest collectInput()
    {
-      // package
-      String packageName = packageNameSuggestBox_.getText().trim();
+      // packages
+      List<String> packages = packagesTextBox_.getItems();
       
       // library
       String libraryPath = installContext_.getWriteableLibraryPaths().get(
@@ -71,7 +74,7 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
       // install dependencies
       boolean installDependencies = installDependenciesCheckBox_.getValue();
       
-      return new PackageInstallRequest(packageName, 
+      return new PackageInstallRequest(packages, 
                                        PackageInstallOptions.create(
                                                          libraryPath, 
                                                          installDependencies)); 
@@ -82,12 +85,12 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
    protected boolean validate(PackageInstallRequest request)
    {
       // check for package name
-      if (request.getPackageName().length() == 0)
+      if (request.getPackages().size() == 0)
       {
          globalDisplay_.showErrorMessage(
                "Package Name Required", 
-               "You must provide the name of the package to install.",
-               packageNameSuggestBox_);
+               "You must provide the name of the packages to install.",
+               packagesSuggestBox_);
          
          return false;
       }
@@ -97,7 +100,6 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
       }
    }
    
-   
    @Override
    protected Widget createMainWidget()
    {
@@ -106,13 +108,15 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
       mainPanel.setSpacing(2);
       mainPanel.setStylePrimaryName(RESOURCES.styles().mainWidget());
       
-      mainPanel.add(new Label("Package Name:"));
+      mainPanel.add(new Label("Packages (separate multiple with space or comma):"));
       
-      packageNameSuggestBox_ = new SuggestBox(new PackageOracle());
-      packageNameSuggestBox_.setWidth("100%");
-      packageNameSuggestBox_.setLimit(20);
-      packageNameSuggestBox_.addStyleName(RESOURCES.styles().extraBottomPad());
-      mainPanel.add(packageNameSuggestBox_);
+      packagesTextBox_ = new MultipleItemSuggestTextBox();
+      packagesSuggestBox_ = new SuggestBox(new PackageOracle(),
+                                           packagesTextBox_);
+      packagesSuggestBox_.setWidth("100%");
+      packagesSuggestBox_.setLimit(20);
+      packagesSuggestBox_.addStyleName(RESOURCES.styles().extraBottomPad());
+      mainPanel.add(packagesSuggestBox_);
          
       
       mainPanel.add(new Label("Install to Library:"));
@@ -155,7 +159,7 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
    @Override
    protected void onDialogShown()
    {
-      FocusHelper.setFocusDeferred(packageNameSuggestBox_);
+      FocusHelper.setFocusDeferred(packagesSuggestBox_);
    }
    
    private class PackageOracle extends MultiWordSuggestOracle
@@ -208,7 +212,8 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
    private final PackagesServerOperations server_;
    private final GlobalDisplay globalDisplay_;
    
-   private SuggestBox packageNameSuggestBox_ = null;
+   private MultipleItemSuggestTextBox packagesTextBox_ = null;
+   private SuggestBox packagesSuggestBox_ = null;
    private ListBox libraryListBox_ = null;
    private CheckBox installDependenciesCheckBox_ = null;
    

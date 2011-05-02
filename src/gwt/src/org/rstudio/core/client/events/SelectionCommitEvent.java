@@ -45,7 +45,7 @@ public class SelectionCommitEvent<I> extends GwtEvent<SelectionCommitHandler<I>>
 
    // The instance knows its BeforeSelectionHandler is of type I, but the TYPE
    // field itself does not, so we have to do an unsafe cast here.
-   @SuppressWarnings("unchecked")
+   @SuppressWarnings({ "unchecked", "rawtypes" })
    @Override
    public final Type<SelectionCommitHandler<I>> getAssociatedType() {
      return (Type) TYPE;

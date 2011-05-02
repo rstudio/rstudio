@@ -52,7 +52,6 @@ public class InterceptPasteStrategy implements PasteStrategy
       };
    }-*/;
 
-   @SuppressWarnings("unused")
    private void onPaste(NativeEvent event)
    {
       try

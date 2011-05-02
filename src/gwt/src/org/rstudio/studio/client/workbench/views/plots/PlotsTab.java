@@ -61,6 +61,8 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
       @Handler
       public abstract void onExportPlotAsImage();
       @Handler
+      public abstract void onExportPlot();
+      @Handler
       public abstract void onRefreshPlot();
       @Handler
       public abstract void onShowManipulator();
@@ -109,6 +111,7 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
       commands_.nextPlot().setEnabled(false);
       commands_.previousPlot().setEnabled(false);
       commands_.exportPlotAsImage().setEnabled(false);
+      commands_.exportPlot().setEnabled(false);
       commands_.printPlot().setEnabled(false);
       commands_.zoomPlot().setEnabled(false);
       commands_.removePlot().setEnabled(false);
@@ -164,6 +167,7 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
       boolean hasPlots = plotsState.getPlotCount() >= 1;
       commands_.printPlot().setEnabled(hasPlots);
       commands_.exportPlotAsImage().setEnabled(hasPlots);
+      commands_.exportPlot().setEnabled(hasPlots);
       commands_.zoomPlot().setEnabled(hasPlots);
       commands_.removePlot().setEnabled(hasPlots);
       commands_.clearPlots().setEnabled(hasPlots);

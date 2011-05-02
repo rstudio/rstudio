@@ -110,8 +110,8 @@
 
 .rs.addFunction("defaultUserLibraryPath", function()
 {
-   unlist(strsplit(Sys.getenv("R_LIBS_USER"),
-                   .Platform$path.sep))[1L]
+   normalizePath(unlist(strsplit(Sys.getenv("R_LIBS_USER"),
+                                 .Platform$path.sep))[1L])
 })
 
 .rs.addJsonRpcHandler( "is_package_loaded", function(packageName)

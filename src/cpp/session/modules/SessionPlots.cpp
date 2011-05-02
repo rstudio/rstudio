@@ -24,6 +24,8 @@
 #include <core/BoostErrors.hpp>
 #include <core/FileSerializer.hpp>
 
+#include <core/text/TemplateFilter.hpp>
+
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 
@@ -178,8 +180,8 @@ void setTemporaryFileResponse(const FilePath& filePath,
    Error error = filePath.remove();
    if (error)
       LOG_ERROR(error);
-}   
-   
+}
+
 void handleZoomRequest(const http::Request& request, http::Response* pResponse)
 {
    using namespace r::session;
@@ -189,6 +191,60 @@ void handleZoomRequest(const http::Request& request, http::Response* pResponse)
    if (!extractSizeParams(request, 100, 3000, &width, &height, pResponse))
      return ;
 
+   // define template
+   std::stringstream templateStream;
+   templateStream <<
+      "<html>"
+         "<head>"
+            "<title>RStudio Plot</title>"
+            "<script type=\"text/javascript\">"
+
+               "window.timerPending = false;"
+
+               "window.onresize = function() {"
+
+                  "if(window.timerPending) "
+                     "return;"
+
+                  "window.timerPending = true;"
+
+                  "setTimeout( function() { "
+
+                     "window.location.href = "
+                        "\"plot_zoom?width=\" + document.body.clientWidth "
+                              " + \"&height=\" + document.body.clientHeight; "
+                   "}, 300);"
+
+                  "window.timerPending = false;"
+
+               "}"
+            "</script>"
+         "</head>"
+         "<body style=\"margin: 0\">"
+            "<img src=\"plot_zoom_png?width=#width#&height=#height#\"/>"
+         "</body>"
+      "</html>";
+
+   // define variables
+   std::map<std::string,std::string> variables;
+   variables["width"] = boost::lexical_cast<std::string>(width);
+   variables["height"] = boost::lexical_cast<std::string>(height);
+   text::TemplateFilter filter(variables);
+
+   pResponse->setNoCacheHeaders();
+   pResponse->setBody(templateStream, filter);
+   pResponse->setContentType("text/html");
+}
+   
+void handleZoomPngRequest(const http::Request& request,
+                          http::Response* pResponse)
+{
+   using namespace r::session;
+
+   // get the width and height parameters
+   int width, height;
+   if (!extractSizeParams(request, 100, 3000, &width, &height, pResponse))
+     return ;
 
    // generate the file
    FilePath imagePath = module_context::tempFile("plot", "png");
@@ -439,6 +495,7 @@ Error initialize()
       (bind(registerRpcMethod, "refresh_plot", refreshPlot))
       (bind(registerRpcMethod, "export_plot", exportPlot))
       (bind(registerRpcMethod, "set_manipulator_values", setManipulatorValues))
+      (bind(registerUriHandler, kGraphics "/plot_zoom_png", handleZoomPngRequest))
       (bind(registerUriHandler, kGraphics "/plot_zoom", handleZoomRequest))
       (bind(registerUriHandler, kGraphics "/plot.pdf", handlePrintRequest))
       (bind(registerUriHandler, kGraphics "/plot.png", handlePngRequest))

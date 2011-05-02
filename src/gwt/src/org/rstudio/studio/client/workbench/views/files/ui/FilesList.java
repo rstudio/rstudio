@@ -144,9 +144,9 @@ public class FilesList extends Composite
          @Override
          public int doCompare(FileSystemItem arg0, FileSystemItem arg1)
          {
-            if (arg0 == parentPath_)
+            if (arg0.isDirectory() && !arg1.isDirectory())
                return 1;
-            else if (arg1 == parentPath_)
+            else if (arg1.isDirectory() && !arg0.isDirectory())
                return -1;
             else
                return arg0.getExtension().compareTo(arg1.getExtension());
@@ -207,9 +207,9 @@ public class FilesList extends Composite
       filesCellTable_.addColumn(sizeColumn, "Size");
       filesCellTable_.setColumnWidth(sizeColumn, 80, Unit.PX);
       
-      sortHandler_.setComparator(sizeColumn, new FilesListComparator() {
+      sortHandler_.setComparator(sizeColumn, new FoldersOnBottomComparator() {
          @Override
-         public int doCompare(FileSystemItem arg0, FileSystemItem arg1)
+         public int doItemCompare(FileSystemItem arg0, FileSystemItem arg1)
          {
             return new Long(arg0.getLength()).compareTo(
                                              new Long(arg1.getLength()));
@@ -235,9 +235,9 @@ public class FilesList extends Composite
       filesCellTable_.addColumn(modColumn, "Modified");
       filesCellTable_.setColumnWidth(modColumn, 160, Unit.PX); 
       
-      sortHandler_.setComparator(modColumn, new FilesListComparator() {
+      sortHandler_.setComparator(modColumn, new FoldersOnBottomComparator() {
          @Override
-         public int doCompare(FileSystemItem arg0, FileSystemItem arg1)
+         public int doItemCompare(FileSystemItem arg0, FileSystemItem arg1)
          {
             return arg0.getLastModified().compareTo(arg1.getLastModified());
          }
@@ -251,29 +251,34 @@ public class FilesList extends Composite
       filesCellTable_.addColumnSortHandler(new Handler() {
          @Override
          public void onColumnSort(ColumnSortEvent event)
-         {
+         {     
             ColumnSortList sortList = event.getColumnSortList();
-            
+
             // insert the default initial sort order for size and modified
-            if (event.getColumn().equals(sizeColumn_) && 
-                forceSizeSortDescending)
+            if (!applyingProgrammaticSort_)
             {
-               forceSizeSortDescending = false;
-               forceModifiedSortDescending = true;
-               sortList.insert(0, new ColumnSortInfo(event.getColumn(), false));
+               if (event.getColumn().equals(sizeColumn_) && 
+                   forceSizeSortDescending)
+               {
+                  forceSizeSortDescending = false;
+                  forceModifiedSortDescending = true;
+                  sortList.insert(0, 
+                                  new ColumnSortInfo(event.getColumn(), false));
+               }
+               else if (event.getColumn().equals(modifiedColumn_) && 
+                        forceModifiedSortDescending)
+               {
+                  forceModifiedSortDescending = false;
+                  forceSizeSortDescending = true;
+                  sortList.insert(0, 
+                                  new ColumnSortInfo(event.getColumn(), false));
+               }
+               else
+               {
+                  forceModifiedSortDescending = true;
+                  forceSizeSortDescending = true;
+               } 
             }
-            else if (event.getColumn().equals(modifiedColumn_) && 
-                     forceModifiedSortDescending)
-            {
-               forceModifiedSortDescending = false;
-               forceSizeSortDescending = true;
-               sortList.insert(0, new ColumnSortInfo(event.getColumn(), false));
-            }
-            else
-            {
-               forceModifiedSortDescending = true;
-               forceSizeSortDescending = true;
-            } 
             
             // record sort order and fire event to observer
             JsArray<FilesColumnSortInfo> sortOrder = newSortOrderArray();
@@ -295,6 +300,9 @@ public class FilesList extends Composite
             }        
             observer_.onColumnSortOrderChanaged(sortOrder);
     
+            // record active sort column ascending state
+            activeSortColumnAscending_ = event.isSortAscending();
+            
             // delegate the sort
             sortHandler_.onColumnSort(event);
          }
@@ -334,19 +342,9 @@ public class FilesList extends Composite
    }
    
    
-   public void clearFiles()
-   {
-      containingPath_ = null;
-      dataProvider_.getList().clear();
-   }
-   
-   
    public void displayFiles(FileSystemItem containingPath, 
                             JsArray<FileSystemItem> files)
    {
-      // clear
-      clearFiles();
-      
       // set containing path
       containingPath_ = containingPath;
       parentPath_ = containingPath_.getParentPath();
@@ -356,6 +354,7 @@ public class FilesList extends Composite
       
       // get underlying list
       List<FileSystemItem> fileList = dataProvider_.getList();
+      fileList.clear();
             
       // add entry for parent path if we have one
       if (parentPath_ != null)
@@ -365,6 +364,9 @@ public class FilesList extends Composite
       for (int i=0; i<files.length(); i++)
          fileList.add(files.get(i));
            
+      // apply sort list
+      applyColumnSortList();
+      
       // fire selection changed
       observer_.onFileSelectionChanged();
    }
@@ -463,6 +465,13 @@ public class FilesList extends Composite
       return -1;
    }
    
+   private void applyColumnSortList()
+   {
+      applyingProgrammaticSort_ = true;
+      ColumnSortEvent.fire(filesCellTable_, 
+                           filesCellTable_.getColumnSortList());
+      applyingProgrammaticSort_ = false;
+   }
    
    private static final ProvidesKey<FileSystemItem> KEY_PROVIDER = 
       new ProvidesKey<FileSystemItem>() {
@@ -475,19 +484,65 @@ public class FilesList extends Composite
     
     // comparator which ensures that the parent path is always on top
     private abstract class FilesListComparator implements Comparator<FileSystemItem>
-    {
+    {     
        @Override
        public int compare(FileSystemItem arg0, FileSystemItem arg1)
        {
+          int ascendingFactor = activeSortColumnAscending_ ? -1 : 1;
+          
           if (arg0 == parentPath_)
-             return 1;
+             return 1 * ascendingFactor;
           else if (arg1 == parentPath_)
-             return -1;
+             return -1 * ascendingFactor;
           else
              return doCompare(arg0, arg1);
        }
        
        protected abstract int doCompare(FileSystemItem arg0, FileSystemItem arg1);    
+    }
+    
+    private abstract class SeparateFoldersComparator extends FilesListComparator
+    {
+       public SeparateFoldersComparator(boolean foldersOnBottom)
+       {
+          if (foldersOnBottom)
+             sortFactor_ = 1;
+          else
+             sortFactor_ = -1;
+       }
+       
+       protected int doCompare(FileSystemItem arg0, FileSystemItem arg1)
+       {
+          int ascendingResult = activeSortColumnAscending_ ? 1 : -1;
+          
+          if (arg0.isDirectory() && !arg1.isDirectory())
+             return ascendingResult * sortFactor_;
+          else if (arg1.isDirectory() && !arg0.isDirectory())
+             return -ascendingResult * sortFactor_;
+          else
+             return doItemCompare(arg0, arg1);
+       }
+       
+       protected abstract int doItemCompare(FileSystemItem arg0, FileSystemItem arg1);    
+       
+       private final int sortFactor_ ;   
+    }
+    
+    private abstract class FoldersOnBottomComparator extends SeparateFoldersComparator
+    {
+       public FoldersOnBottomComparator() 
+       { 
+          super(true); 
+       }
+    }
+    
+    @SuppressWarnings("unused")
+    private abstract class FoldersOnTopComparator extends SeparateFoldersComparator
+    {
+       public FoldersOnTopComparator() 
+       { 
+          super(false); 
+       }
     }
     
    
@@ -498,6 +553,9 @@ public class FilesList extends Composite
    private final LinkColumn<FileSystemItem> nameColumn_;
    private final TextColumn<FileSystemItem> sizeColumn_;
    private final TextColumn<FileSystemItem> modifiedColumn_;
+   private boolean activeSortColumnAscending_ = true;
+   private boolean applyingProgrammaticSort_ = false;
+   
    
    private final MultiSelectionModel<FileSystemItem> selectionModel_;
    private final ListDataProvider<FileSystemItem> dataProvider_;
