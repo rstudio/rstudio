@@ -33,6 +33,7 @@ public abstract class Commands extends CommandBundle
    public abstract AppCommand closeSourceDoc();
    public abstract AppCommand closeAllSourceDocs();
    public abstract AppCommand executeAllCode();
+   public abstract AppCommand sourceActiveDocument();
    public abstract AppCommand executeCode();
    public abstract AppCommand compilePDF();
    public abstract AppCommand publishPDF();

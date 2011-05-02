@@ -150,6 +150,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.printSourceDoc());
       dynamicCommands_.add(commands.executeCode());
       dynamicCommands_.add(commands.executeAllCode());
+      dynamicCommands_.add(commands.sourceActiveDocument());
       dynamicCommands_.add(commands.compilePDF());
       dynamicCommands_.add(commands.publishPDF());
       dynamicCommands_.add(commands.popoutDoc());

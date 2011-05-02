@@ -999,6 +999,31 @@ public class TextEditingTarget implements EditingTarget
       return sweaveStr;
    }
 
+   @Handler
+   void onSourceActiveDocument()
+   {
+      // Stops the console from thinking it has focus, and thus stealing it
+      Element activeEl = DomUtils.getActiveElement();
+      if (activeEl != null)
+         activeEl.blur();
+
+      String code = docDisplay_.getCode();
+      if (code != null && code.trim().length() > 0)
+      {
+         boolean sweave = fileType_.canCompilePDF();
+
+         server_.saveActiveDocument(code, sweave, new SimpleRequestCallback<Void>() {
+            @Override
+            public void onResponseReceived(Void response)
+            {
+               events_.fireEvent(new SendToConsoleEvent(
+                     createSourceCommand("~/.active-rstudio-document", "UTF-8"),
+                     true));
+            }
+         });
+      }
+   }
+
    private String normalizeEncoding(String str)
    {
       return StringUtil.notNull(str).replaceAll("[- ]", "").toLowerCase();
@@ -1026,12 +1051,12 @@ public class TextEditingTarget implements EditingTarget
                            "'";
 
       if (isAscii || isSystemEncoding)
-         return "source(" + escapedPath + ");";
+         return "source(" + escapedPath + ")";
       else
       {
          return "source.with.encoding(" + escapedPath + ", encoding='" +
                 (!StringUtil.isNullOrEmpty(encoding) ? encoding : "UTF-8") +
-                "');";
+                "')";
       }
    }
 

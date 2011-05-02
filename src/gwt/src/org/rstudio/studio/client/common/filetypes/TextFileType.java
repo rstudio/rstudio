@@ -96,7 +96,10 @@ public class TextFileType extends EditableFileType
          results.add(commands.commentUncomment());
       }
       if (canExecuteAllCode())
+      {
          results.add(commands.executeAllCode());
+         results.add(commands.sourceActiveDocument());
+      }
       if (canCompilePDF())
       {
          results.add(commands.compilePDF());
