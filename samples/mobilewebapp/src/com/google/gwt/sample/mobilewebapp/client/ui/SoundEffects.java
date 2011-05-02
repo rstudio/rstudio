@@ -16,48 +16,12 @@
 package com.google.gwt.sample.mobilewebapp.client.ui;
 
 import com.google.gwt.dom.client.AudioElement;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.media.client.Audio;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A bundle of sound effects that can be used in the application.
  */
 public class SoundEffects {
-
-  /**
-   * The source path and type of an audio source file.
-   */
-  private static class AudioSource {
-    private final String source;
-    private final AudioType type;
-
-    public AudioSource(String source, AudioType type) {
-      this.source = source;
-      this.type = type;
-    }
-  }
-
-  /**
-   * The supported audio types.
-   */
-  private static enum AudioType {
-    OGG("audio/ogg"), MP3("audio/mp3"), WAV("audio/wav");
-
-    private final String mimeType;
-
-    private AudioType(String mimeType) {
-      this.mimeType = mimeType;
-    }
-
-    public String getMimeType() {
-      return mimeType;
-    }
-  }
-
-  private static List<AudioType> typePreference = new ArrayList<AudioType>();
 
   private static SoundEffects instance;
   private static boolean isSupported;
@@ -71,37 +35,11 @@ public class SoundEffects {
     if (instance == null) {
       isSupported = Audio.isSupported();
       instance = new SoundEffects();
-
-      // Detect which audio types we support.
-      if (isSupported) {
-        AudioElement elem = Document.get().createAudioElement();
-
-        // Prefer "can play probably" to "can play maybe".
-        for (AudioType audioType : AudioType.values()) {
-          if (AudioElement.CAN_PLAY_PROBABLY.equals(elem.canPlayType(audioType.getMimeType()))) {
-            typePreference.add(audioType);
-          }
-        }
-
-        // Use "can play maybe" if its the only thing available.
-        for (AudioType audioType : AudioType.values()) {
-          if (AudioElement.CAN_PLAY_MAYBE.equals(elem.canPlayType(audioType.getMimeType()))) {
-            typePreference.add(audioType);
-          }
-        }
-      }
     }
     return instance;
   }
 
-  /**
-   * Create and return an audio source.
-   */
-  private static AudioSource audioSource(String source, AudioType type) {
-    return new AudioSource(source, type);
-  }
-
-  private AudioElement error;
+  private Audio error;
 
   /**
    * Construct using {@link #get()}.
@@ -122,79 +60,43 @@ public class SoundEffects {
    */
   public void prefetchError() {
     if (isSupported && error == null) {
-      error =
-          createAudioElement(audioSource("audio/error.ogg", AudioType.OGG), audioSource(
-              "audio/error.mp3", AudioType.MP3), audioSource("audio/error.wav", AudioType.WAV));
+      error = Audio.createIfSupported();
+      error.addSource("audio/error.ogg", AudioElement.TYPE_OGG);
+      error.addSource("audio/error.mp3", AudioElement.TYPE_MP3);
+      error.addSource("audio/error.wav", AudioElement.TYPE_WAV);
+      prefetchAudio(error);
     }
   }
 
   /**
-   * Create an {@link Audio} that will play one of the specified source media
-   * files. The sources will be tried in the order they are added until a
-   * supported format is found.
+   * Play an audio.
    * 
-   * <p>
-   * This method will attempt to prefetch the audio sources by playing the file
-   * muted.
-   * </p>
-   * 
-   * @param sources the source files, of which one will be chosen
-   * @return a new {@link AudioElement}, or null if not supported
+   * @param audio the audio to play, or null if not supported
    */
-  private AudioElement createAudioElement(AudioSource... sources) {
-    if (!isSupported) {
-      return null;
-    }
-
-    AudioSource bestSource = null;
-    for (int i = 0; i < typePreference.size() && bestSource == null; i++) {
-      AudioType type = typePreference.get(i);
-      for (AudioSource source : sources) {
-        if (source.type == type) {
-          bestSource = source;
-          break;
-        }
-      }
-    }
-
-    // None of the source files are supported.
-    if (bestSource == null) {
-      return null;
-    }
-
-    // Create the audio element.
-    AudioElement audio = Document.get().createAudioElement();
-    audio.setSrc(bestSource.source);
-
-    // Force the browser to fetch the source files.
-    audio.setVolume(0.0);
-    audio.play();
-
-    return audio;
-  }
-
-  /**
-   * Play an audio element.
-   * 
-   * @param audio the audio element to play, or null if not supported
-   */
-  private void playAudio(AudioElement audio) {
+  private void playAudio(Audio audio) {
     if (audio == null) {
       return;
     }
-
+  
     // Pause current progress.
     audio.pause();
-
-    /*
-     * Some browsers throw an error when we try to seek back to time 0, so reset
-     * the source instead. The audio file should be loaded from the browser
-     * cache.
-     */
-    audio.setSrc(audio.getSrc());
-
+  
+    // Reset the source.
+    // TODO(jlabanca): Is cache-control=private making the source unseekable?
+    audio.setSrc(audio.getCurrentSrc());
+  
     // Unmute because we muted in createAudioElement.
-    audio.setVolume(1.0);
     audio.play();
+  }
+
+  /**
+   * Prefetch an audio.
+   * 
+   * @param audio the audio to prefetch, or null if not supported
+   */
+  private void prefetchAudio(Audio audio) {
+    if (audio != null) {
+      audio.load();
+    }
   }
 }

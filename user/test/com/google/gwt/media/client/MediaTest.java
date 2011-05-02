@@ -16,6 +16,7 @@
 package com.google.gwt.media.client;
 
 import com.google.gwt.dom.client.MediaElement;
+import com.google.gwt.dom.client.SourceElement;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -86,6 +87,30 @@ public abstract class MediaTest extends GWTTestCase {
   @Override
   public String getModuleName() {
     return "com.google.gwt.media.MediaTest";
+  }
+
+  public void testAddSource() {
+    final MediaBase media = getMedia();
+    if (media == null) {
+      return; // don't continue if not supported
+    }
+
+    // Add some source elements.
+    SourceElement source0 = media.addSource("file.ogg", "audio/ogg");
+    assertEquals("file.ogg", source0.getSrc());
+    assertEquals("audio/ogg", source0.getType());
+    SourceElement source1 = media.addSource("file.ogv", "video/ogg");
+    assertEquals("file.ogv", source1.getSrc());
+    assertEquals("video/ogg", source1.getType());
+
+    // Add a source without a type.
+    SourceElement source2 = media.addSource("file.mp3");
+    assertEquals("file.mp3", source2.getSrc());
+
+    // Check that the sources are a children of the media.
+    assertEquals(media.getElement(), source0.getParentElement());
+    assertEquals(media.getElement(), source1.getParentElement());
+    assertEquals(media.getElement(), source2.getParentElement());
   }
 
   public void testAutoPlay() {
@@ -308,6 +333,36 @@ public abstract class MediaTest extends GWTTestCase {
         || state == MediaElement.HAVE_FUTURE_DATA
         || state == MediaElement.HAVE_METADATA
         || state == MediaElement.HAVE_NOTHING);
+  }
+
+  public void testRemoveSource() {
+    final MediaBase media = getMedia();
+    if (media == null) {
+      return; // don't continue if not supported
+    }
+
+    // Add some source elements.
+    SourceElement source0 = media.addSource("file.ogg", "audio/ogg");
+    SourceElement source1 = media.addSource("file.ogv", "video/ogg");
+    SourceElement source2 = media.addSource("file.mp3");
+    assertEquals(media.getElement(), source0.getParentElement());
+    assertEquals(media.getElement(), source1.getParentElement());
+    assertEquals(media.getElement(), source2.getParentElement());
+
+    // Remove a source.
+    media.removeSource(source1);
+    assertEquals(media.getElement(), source0.getParentElement());
+    assertNull(source1.getParentElement());
+    assertEquals(media.getElement(), source2.getParentElement());
+
+    // Let a source remove itself.
+    source2.removeFromParent();
+    assertEquals(media.getElement(), source0.getParentElement());
+    assertNull(source1.getParentElement());
+    assertNull(source2.getParentElement());
+
+    // Remove a source that is not a child.
+    media.removeSource(source0);
   }
 
   public void testSupported() {

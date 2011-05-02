@@ -1050,6 +1050,15 @@ public class Document extends Node {
   }
 
   /**
+   * Creates an &lt;source&gt; element.
+   * 
+   * @return the newly created element
+   */
+  public final SourceElement createSourceElement() {
+    return (SourceElement) DOMImpl.impl.createElement(this, SourceElement.TAG);
+  }
+
+  /**
    * Creates a &lt;span&gt; element.
    * 
    * @return the newly created element

@@ -34,6 +34,21 @@ public class VideoElement extends MediaElement {
    */
   public static final String TAG = "video";
 
+  /**
+   * The audio type of MP4 encoded video.
+   */
+  public static final String TYPE_MP4 = "video/mp4";
+
+  /**
+   * The audio type of Ogg encoded video.
+   */
+  public static final String TYPE_OGG = "video/ogg";
+
+  /**
+   * The audio type of WebM encoded audio.
+   */
+  public static final String TYPE_WEBM = "video/webm";
+
   protected VideoElement() {
   }
 

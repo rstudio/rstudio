@@ -34,6 +34,21 @@ public class AudioElement extends MediaElement {
    */
   public static final String TAG = "audio";
 
+  /**
+   * The audio type of MP3 encoded audio.
+   */
+  public static final String TYPE_MP3 = "audio/mpeg";
+
+  /**
+   * The audio type of Ogg encoded audio.
+   */
+  public static final String TYPE_OGG = "audio/ogg";
+
+  /**
+   * The audio type of WAV encoded audio.
+   */
+  public static final String TYPE_WAV = "audio/wav";
+
   protected AudioElement() {
   }
 }

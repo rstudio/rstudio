@@ -15,7 +15,9 @@
  */
 package com.google.gwt.media.client;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.MediaElement;
+import com.google.gwt.dom.client.SourceElement;
 import com.google.gwt.event.dom.client.CanPlayThroughEvent;
 import com.google.gwt.event.dom.client.CanPlayThroughHandler;
 import com.google.gwt.event.dom.client.EndedEvent;
@@ -60,6 +62,57 @@ public abstract class MediaBase extends FocusWidget
     return addDomHandler(handler, ProgressEvent.getType());
   }
 
+  /**
+   * Add a source element to this media. The browser will request source files
+   * from the server until it finds one it can play.
+   * 
+   * <p>
+   * Only use this method if you do not know the type of the source file, as the
+   * browser cannot determine the format from the filename and must download
+   * each source until a compatible one is found. Instead, you should specify
+   * the type for the media using {@link #addSource(String, String)} so the
+   * browser can choose a source file without downloading the file.
+   * </p>
+   * 
+   * @param url a String URL
+   * @see #addSource(String, String)
+   */
+  public SourceElement addSource(String url) {
+    SourceElement elem = Document.get().createSourceElement();
+    elem.setSrc(url);
+    getElement().appendChild(elem);
+    return elem;
+  }
+
+  /**
+   * Add a source element to this media, specifying the type (format) of the
+   * media. The browser will choose a supported source file and download it.
+   * 
+   * <p>
+   * The type is the format or encoding of the media represented by the source
+   * element. For example, the type of an
+   * {@link com.google.gwt.dom.client.AudioElement} could be one of
+   * {@value com.google.gwt.dom.client.AudioElement#TYPE_OGG},
+   * {@link com.google.gwt.dom.client.AudioElement#TYPE_MP3}, or
+   * {@link com.google.gwt.dom.client.AudioElement#TYPE_WAV}.
+   * </p>
+   * 
+   * <p>
+   * You can also add the codec information to the type, giving the browser even
+   * more information about whether or not it can play the file (Example: "
+   * <code>audio/ogg; codec=vorbis</code>");
+   * </p>
+   * 
+   * @param url a String URL
+   * @param type the type (format) of the media
+   * @see #getSrc()
+   */
+  public SourceElement addSource(String url, String type) {
+    SourceElement elem = addSource(url);
+    elem.setType(type);
+    return elem;
+  }
+  
   /**
    * Returns {@code true} if the native player is capable of playing content of
    * the given MIME type.
@@ -384,6 +437,17 @@ public abstract class MediaBase extends FocusWidget
   }
 
   /**
+   * Remove the specified {@link SourceElement} from this media. If the source
+   * element is not a child of this widget, it will not be removed.
+   * 
+   * @param source the source element to remove
+   * @see #addSource(String, String)
+   */
+  public void removeSource(SourceElement source) {
+    getElement().removeChild(source);
+  }
+
+  /**
    * Enables or disables autoplay of the resource.
    *
    * @param autoplay if {@code true}, enable autoplay
@@ -479,10 +543,18 @@ public abstract class MediaBase extends FocusWidget
 
   /**
    * Sets the source URL for the media.
-   *
+   * 
+   * <p>
+   * Support for different media types varies between browsers. Instead of using
+   * this method, you should encode your media in multiple formats and add all
+   * of them using {@link #addSource(String, String)} so the browser can choose
+   * a source that it supports.
+   * </p>
+   * 
    * @param url a String URL
-   *
+   * 
    * @see #getSrc()
+   * @see #addSource(String, String)
    */
   public void setSrc(String url) {
     getMediaElement().setSrc(url);
