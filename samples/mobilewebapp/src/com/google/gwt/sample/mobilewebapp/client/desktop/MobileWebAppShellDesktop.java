@@ -18,8 +18,12 @@ package com.google.gwt.sample.mobilewebapp.client.desktop;
 import com.google.gwt.canvas.dom.client.CssColor;
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.MediaElement;
+import com.google.gwt.dom.client.VideoElement;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.media.client.Video;
 import com.google.gwt.place.shared.Place;
 import com.google.gwt.place.shared.PlaceChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -37,11 +41,16 @@ import com.google.gwt.user.cellview.client.CellList.Style;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Anchor;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
+import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasOneWidget;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
@@ -124,10 +133,15 @@ public class MobileWebAppShellDesktop extends MobileWebAppShellBase {
    */
   private static final String CHART_URL_ATTRIBUTE = "chart";
 
+  /**
+   * The external URL of the video tutorial for browsers that do not support
+   * video.
+   */
+  private static final String EXTERNAL_TUTORIAL_URL = "http://www.youtube.com/watch?v=oHg5SJYRHA0";
+
   private static MobileWebAppShellDesktopUiBinder uiBinder = GWT
       .create(MobileWebAppShellDesktopUiBinder.class);
 
-  // TODO(jlabanca): Record and show a help video tutorial.
   @UiField
   Anchor helpLink;
 
@@ -161,6 +175,16 @@ public class MobileWebAppShellDesktop extends MobileWebAppShellBase {
    * A pie chart showing a snapshot of the tasks.
    */
   private PieChart pieChart;
+
+  /**
+   * The {@link DialogBox} used to display the tutorial.
+   */
+  private PopupPanel tutoralPopup;
+
+  /**
+   * The video tutorial.
+   */
+  private Video tutorialVideo;
 
   /**
    * Construct a new {@link MobileWebAppShellDesktop}.
@@ -255,6 +279,13 @@ public class MobileWebAppShellDesktop extends MobileWebAppShellBase {
             updatePieChart(event.getTasks());
           }
         });
+
+    // Show a tutorial when the help link is clicked.
+    helpLink.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
+        showTutorial();
+      }
+    });
   }
 
   public boolean isTaskListIncluded() {
@@ -284,6 +315,74 @@ public class MobileWebAppShellDesktop extends MobileWebAppShellBase {
       firstContentWidget = false;
       contentContainer.animate(0);
     }
+  }
+
+  /**
+   * Show a tutorial video.
+   */
+  private void showTutorial() {
+    // Reuse the tutorial dialog if it is already created.
+    if (tutoralPopup != null) {
+      // Reset the video.
+      // TODO(jlabanca): Is cache-control=private making the video non-seekable?
+      if (tutorialVideo != null) {
+        tutorialVideo.setSrc(tutorialVideo.getCurrentSrc());
+      }
+
+      tutoralPopup.center();
+      return;
+    }
+
+    /*
+     * Forward the use to YouTube if video is not supported or if none of the
+     * source formats are supported.
+     */
+    tutorialVideo = Video.createIfSupported();
+    if (tutorialVideo == null) {
+      Label label = new Label("Click the link below to view the tutoral:");
+      Anchor anchor = new Anchor(EXTERNAL_TUTORIAL_URL, EXTERNAL_TUTORIAL_URL);
+      anchor.setTarget("_blank");
+      FlowPanel panel = new FlowPanel();
+      panel.add(label);
+      panel.add(anchor);
+
+      tutoralPopup = new PopupPanel(true, false);
+      tutoralPopup.setWidget(panel);
+      tutoralPopup.setGlassEnabled(true);
+
+      // Hide the popup when the user clicks the link.
+      anchor.addClickHandler(new ClickHandler() {
+        public void onClick(ClickEvent event) {
+          tutoralPopup.hide();
+        }
+      });
+
+      tutoralPopup.center();
+      return;
+    }
+
+    // Add the video sources.
+    tutorialVideo.addSource("video/tutorial.ogv", VideoElement.TYPE_OGG);
+    tutorialVideo.addSource("video/tutorial.mp4", VideoElement.TYPE_MP4);
+
+    // Setup the video player.
+    tutorialVideo.setControls(true);
+    tutorialVideo.setAutoplay(true);
+
+    // Put the video in a dialog.
+    final DialogBox popup = new DialogBox(false, false);
+    popup.setText("Tutorial");
+    VerticalPanel vPanel = new VerticalPanel();
+    vPanel.add(tutorialVideo);
+    vPanel.add(new Button("Close", new ClickHandler() {
+      public void onClick(ClickEvent event) {
+        tutorialVideo.pause();
+        popup.hide();
+      }
+    }));
+    popup.setWidget(vPanel);
+    tutoralPopup = popup;
+    popup.center();
   }
 
   /**

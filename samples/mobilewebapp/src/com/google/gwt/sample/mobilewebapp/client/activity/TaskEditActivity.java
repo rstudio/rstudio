@@ -50,6 +50,12 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
   private boolean isDead = false;
 
   /**
+   * Indicates whether the activity is editing an existing task or creating a
+   * new task.
+   */
+  private boolean isEditing;
+
+  /**
    * The current task being edited.
    */
   private TaskProxy task;
@@ -76,10 +82,10 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
   }
 
   public void deleteTask() {
-    if (task == null) {
-      doCancelTask();
-    } else {
+    if (isEditing) {
       doDeleteTask();
+    } else {
+      doCancelTask();
     }
   }
 
@@ -148,12 +154,14 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
 
     if (taskId == null) {
       // Create a new task.
+      isEditing = false;
       view.setEditing(false);
       TaskRequest request = clientFactory.getRequestFactory().taskRequest();
       task = request.create(TaskProxy.class);
       view.getEditorDriver().edit(task, request);
     } else {
       // Lock the display until the task is loaded.
+      isEditing = true;
       view.setEditing(true);
       view.setLocked(true);
 

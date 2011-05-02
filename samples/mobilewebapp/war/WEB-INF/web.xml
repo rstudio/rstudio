@@ -34,5 +34,13 @@
     <extension>wav</extension>
     <mime-type>audio/wav</mime-type>
   </mime-mapping>
+  <mime-mapping>
+    <extension>ogv</extension>
+    <mime-type>video/ogg</mime-type>
+  </mime-mapping>
+  <mime-mapping>
+    <extension>mp4</extension>
+    <mime-type>video/mp4</mime-type>
+  </mime-mapping>
 
 </web-app>
