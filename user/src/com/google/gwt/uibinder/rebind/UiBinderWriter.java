@@ -792,7 +792,7 @@ public class UiBinderWriter implements Statements {
    */
   public String tokenForSafeHtmlExpression(String expression) {
     if (!useSafeHtmlTemplates) {
-      return tokenForStringExpression(expression);
+      return tokenForStringExpression(expression + ".asString()");
     }
 
     String token = tokenator.nextToken(expression);
