@@ -1,17 +1,13 @@
 package org.rstudio.studio.client.workbench.views.plots.ui.export;
 
-
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -42,32 +38,26 @@ public class ExportPlotDialog extends ModalDialogBase
    protected Widget createMainWidget()
    {
       VerticalPanel mainPanel = new VerticalPanel();
-      mainPanel.setStylePrimaryName(RESOURCES.styles().mainWidget());
+      mainPanel.setStylePrimaryName(
+                  ExportPlotDialogResources.INSTANCE.styles().mainWidget());
+      
+   
+      imagePreview_ = new ResizableImagePreview();
+      imagePreview_.setWidth("360px");
+      imagePreview_.setHeight("240px");
+      
+      mainPanel.add(imagePreview_);
+      
       
       return mainPanel;
       
    }
-   
-   
-   public static interface Styles extends CssResource
-   {
-      String mainWidget();
-   }
-
-   public static interface Resources extends ClientBundle
-   {
-      @Source("ExportPlotDialog.css")
-      Styles styles();
-   }
-   
-   public static Resources RESOURCES = (Resources)GWT.create(Resources.class) ;
-   public static void ensureStylesInjected()
-   {
-      RESOURCES.styles().ensureInjected();
-   }
+  
    
    @SuppressWarnings("unused")
    private final PlotsServerOperations server_;
    private ExportPlotOptions options_;
+   
+   private ResizableImagePreview imagePreview_;
   
 }

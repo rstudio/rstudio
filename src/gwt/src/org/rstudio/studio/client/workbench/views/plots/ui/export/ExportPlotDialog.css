@@ -1,6 +1,9 @@
 
 .mainWidget {
-   width: 360px;
 }
 
-
+.imagePreview {
+   border: 1px solid #BBB;
+   outline: 0;
+   background-color: white;
+}

@@ -29,6 +29,7 @@ import org.rstudio.core.client.files.filedialog.FileDialogResources;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.core.client.widget.ResizeGripper;
 import org.rstudio.core.client.widget.SlideLabel;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
@@ -49,7 +50,7 @@ import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialo
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableResources;
 import org.rstudio.studio.client.workbench.views.plots.ui.ExportDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.PrintDialog;
-import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlotDialog;
+import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlotDialogResources;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorResources;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.PublishPdfDialog;
@@ -122,7 +123,8 @@ public class RStudio implements EntryPoint
       ManipulatorResources.INSTANCE.manipulatorStyles().ensureInjected();
       PackagesCellTableResources.INSTANCE.cellTableStyle().ensureInjected();
       FilesListCellTableResources.INSTANCE.cellTableStyle().ensureInjected();
-
+      ExportPlotDialogResources.INSTANCE.styles().ensureInjected();
+      
       SupportPopupMenu.ensureStylesInjected();
       SlideLabel.ensureStylesInjected();
       ThemedButton.ensureStylesInjected();
@@ -131,7 +133,6 @@ public class RStudio implements EntryPoint
       InstallPackageDialog.ensureStylesInjected();
       PublishPdfDialog.ensureStylesInjected();
       ExportDialog.ensureStylesInjected();
-      ExportPlotDialog.ensureStylesInjected();
       ApplicationEndedPopupPanel.ensureStylesInjected();
       ApplicationSerializationProgress.ensureStylesInjected();
       HistoryPane.ensureStylesInjected();
@@ -144,6 +145,7 @@ public class RStudio implements EntryPoint
       LinkColumn.ensureStylesInjected();
       CheckForUpdatesDialog.ensureStylesInjected();
       ChooseCRANMirrorDialog.ensureStylesInjected();
+      ResizeGripper.ensureStylesInjected();
 
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");
