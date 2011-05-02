@@ -81,7 +81,6 @@ public class DomUtilsIE8Impl implements DomUtilsImpl
          rng.boundingHeight];
    }-*/;
 
-   @SuppressWarnings("unused")
    private native final Element getSelectionParentElement(Document doc) /*-{
       return doc.selection.createRange().parentElement();
    }-*/;

@@ -56,7 +56,6 @@ public class TextareaPasteStrategy implements PasteStrategy
             false);
    }-*/;
 
-   @SuppressWarnings("unused")
    private void onPaste(NativeEvent event)
    {
       final InputEditorSelection selection = editor_.getSelection();

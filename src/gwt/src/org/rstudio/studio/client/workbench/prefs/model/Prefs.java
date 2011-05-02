@@ -251,7 +251,7 @@ public abstract class Prefs
       return val;
    }
 
-   @SuppressWarnings("unchecked")
+   @SuppressWarnings({ "unchecked", "rawtypes" })
    protected <T> PrefValue<T> object(String name)
    {
       PrefValue<T> val = (PrefValue<T>) values_.get(name);

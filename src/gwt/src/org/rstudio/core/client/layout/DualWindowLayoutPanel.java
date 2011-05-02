@@ -142,7 +142,6 @@ public class DualWindowLayoutPanel extends SimplePanel
 
    private static class State extends JavaScriptObject
    {
-      @SuppressWarnings("unused")
       protected State() {}
 
       public native final boolean hasSplitterPos() /*-{

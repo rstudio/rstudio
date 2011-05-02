@@ -112,7 +112,6 @@ public class WindowEx extends JavaScriptObject
       return handlers_.addHandler(BlurEvent.getType(), handler);
    }
 
-   @SuppressWarnings("unused")
    private static void fireFocusHandlers()
    {
       NativeEvent nativeEvent = Document.get().createFocusEvent();
@@ -125,7 +124,6 @@ public class WindowEx extends JavaScriptObject
       });
    }
 
-   @SuppressWarnings("unused")
    private static void fireBlurHandlers()
    {
       NativeEvent nativeEvent = Document.get().createBlurEvent();

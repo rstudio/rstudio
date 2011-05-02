@@ -108,7 +108,6 @@ public class ExternalJavaScriptLoader
       });
    }-*/;
 
-   @SuppressWarnings("unused")
    private void onLoaded()
    {
       state_ = State.Loaded;
