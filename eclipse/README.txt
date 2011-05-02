@@ -20,7 +20,7 @@ Create a variable named "GWT_ROOT" pointing to your "trunk" folder.
 Window->Preferences->Java->Build Path->Classpath Variables
 Create a variable named "GWT_TOOLS" pointing to your "tools" folder.
 Create a variable named "JDK_HOME" pointing to the root of your JDK install
-  (for example, C:\Program Files\jdk1.5.0_05 or /usr/lib/j2sdk1.5-sun)
+  (for example, C:\Program Files\jdk1.6 or /usr/lib/j2sdk1.6-sun)
 
 ---------------- Spelling -----------------
 
@@ -71,7 +71,7 @@ alphabetically.
 
 ------------ Compiler settings ------------
 Window->Preferences->Java->Compiler
-Set the compiler compliance level to 1.5.
+Set the compiler compliance level to 1.6.
 
 ------- Compiler errors & warnings --------
 Window->Preferences->Java->Compiler->Errors/Warnings
