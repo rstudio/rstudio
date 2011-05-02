@@ -62,7 +62,7 @@ public class AttachableHTMLPanel extends ComplexPanel implements Attachable {
   public Command wrapInitializationCallback = null;
   public Command detachedInitializationCallback = null;
 
-  private SafeHtml html = null;
+  protected SafeHtml html = null;
   private String styleName = null;
 
   /**
@@ -140,7 +140,7 @@ public class AttachableHTMLPanel extends ComplexPanel implements Attachable {
 
   @Override
   public com.google.gwt.user.client.Element getElement() {
-    if (html != null) {
+    if (!isFullyInitialized()) {
       // In case we haven't finished initialization yet, finish it now.
       buildAndInitDivContainer();
       html = null;
@@ -182,16 +182,16 @@ public class AttachableHTMLPanel extends ComplexPanel implements Attachable {
   @Override
   public void render(String id, SafeHtmlBuilder builder) {
     if (styleName != null) {
-      builder.append(TEMPLATE.renderWithIdAndClass(id, styleName, html));
+      builder.append(TEMPLATE.renderWithIdAndClass(id, styleName, getInnerHtml()));
       styleName = null;
     } else {
-      builder.append(TEMPLATE.renderWithId(id, html));
+      builder.append(TEMPLATE.renderWithId(id, getInnerHtml()));
     }
   }
 
   @Override
   public void setStyleName(String styleName) {
-    if (html != null) {
+    if (!isFullyInitialized()) {
       // If we haven't built the actual HTML element yet, we save the style
       // to apply later on.
       this.styleName = styleName;
@@ -202,7 +202,7 @@ public class AttachableHTMLPanel extends ComplexPanel implements Attachable {
 
   @Override
   public void wrapElement(Element element) {
-    if (html == null) {
+    if (!isFullyInitialized()) {
       // NOTE(rdcastro): This code is only run when Attachable is in active use.
       element.getParentNode().replaceChild(getElement(), element);
     } else {
@@ -217,6 +217,21 @@ public class AttachableHTMLPanel extends ComplexPanel implements Attachable {
   }
 
   /**
+   * Returns the HTML to be set as the innerHTML of the container.
+   */
+  protected SafeHtml getInnerHtml() {
+    return html;
+  }
+
+  /**
+   * Whether the initilization of the panel is finished (i.e., the corresponding
+   * DOM element has been built).
+   */
+  protected boolean isFullyInitialized() {
+    return html == null;
+  }
+
+  /**
    * Method that finishes the initialization of HTMLPanel instances built from
    * HTML. This will create a div to wrap the given HTML and call any callbacks
    * that may have been added to the panel.
@@ -224,7 +239,7 @@ public class AttachableHTMLPanel extends ComplexPanel implements Attachable {
   private void buildAndInitDivContainer() {
     // Build the div that'll container the panel's HTML.
     Element element = Document.get().createDivElement();
-    element.setInnerHTML(html.asString());
+    element.setInnerHTML(getInnerHtml().asString());
     setElement(element);
 
     // If there's any wrap callback to call, we have to attach the div before
