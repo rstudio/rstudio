@@ -1083,8 +1083,7 @@ public class UiBinderWriter implements Statements {
     fieldManager.registerFieldOfGeneratedType(
         oracle.findType(ClientBundle.class.getName()),
         bundleClass.getPackageName(), bundleClass.getClassName(),
-        bundleClass.getFieldName())
-      .setBuildPrecedence(Integer.MAX_VALUE);  // must be the first thing built.
+        bundleClass.getFieldName());
 
     // Allow GWT.create() to init the field, the default behavior
 
@@ -1102,7 +1101,6 @@ public class UiBinderWriter implements Statements {
         String fieldName = css.getName();
         FieldWriter cssField = fieldManager.require(fieldName);
         cssField.addStatement("%s.ensureInjected();", fieldName);
-        cssField.setBuildPrecedence(Integer.MAX_VALUE - 1);  // must be just below its bundle.
       }
       writeBinderForAttachableStrategy(niceWriter, rootField);
     } else {

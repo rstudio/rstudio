@@ -35,7 +35,7 @@ class FieldWriterOfGeneratedCssResource extends AbstractFieldWriter {
 
   public FieldWriterOfGeneratedCssResource(JType stringType,
       ImplicitCssResource css, MortalLogger logger) {
-    super(css.getName(), logger);
+    super(css.getName(), FieldWriterType.GENERATED_CSS, logger);
     this.stringType = stringType;
     this.css = css;
   }
@@ -74,7 +74,7 @@ class FieldWriterOfGeneratedCssResource extends AbstractFieldWriter {
   @Override
   public void writeFieldBuilder(IndentedWriter w,
       int getterCount, OwnerField ownerField) throws UnableToCompleteException {
-    w.write("%s;  // generated css resource must be always created. Precedence: %s",
-        FieldManager.getFieldBuilder(getName()), getBuildPrecedence());
+    w.write("%s;  // generated css resource must be always created. Type: %s. Precedence: %s",
+        FieldManager.getFieldBuilder(getName()), getFieldType(), getBuildPrecedence());
   }
 }

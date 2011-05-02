@@ -63,6 +63,7 @@ public class FieldWriterOfGeneratedCssResourceTest extends TestCase {
 
     assertEquals(stringType, f.getReturnType(new String[] {
         "fieldName", "ableBaker"}, new MonitoredLogger(TreeLogger.NULL)));
+    assertEquals(FieldWriterType.GENERATED_CSS, f.getFieldType());
   }
 
   public void testDashesMatchesCamels() {
@@ -78,5 +79,7 @@ public class FieldWriterOfGeneratedCssResourceTest extends TestCase {
 
     assertEquals(stringType, f.getReturnType(new String[] {
         "fieldName", "able-baker"}, new MonitoredLogger(TreeLogger.NULL)));
+
+    assertEquals(FieldWriterType.GENERATED_CSS, f.getFieldType());
   }
 }

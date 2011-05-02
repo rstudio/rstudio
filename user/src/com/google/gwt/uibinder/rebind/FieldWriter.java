@@ -94,6 +94,11 @@ public interface FieldWriter {
   int getBuildPrecedence();
 
   /**
+   * Gets the type of this field.
+   */
+  FieldWriterType getFieldType();
+
+  /**
    * Returns the custom initializer for this field, or null if it is not set.
    */
   String getInitializer();

@@ -42,7 +42,13 @@ public class FieldManager {
   private static final Comparator<FieldWriter> BUILD_DEFINITION_SORT =
       new Comparator<FieldWriter>() {
     public int compare(FieldWriter field1, FieldWriter field2) {
-      return field2.getBuildPrecedence() - field1.getBuildPrecedence();
+      // First get type precedence, if ties the field precedence is used.
+      int precedence = field2.getFieldType().getBuildPrecedence()
+          - field1.getFieldType().getBuildPrecedence();
+      if (precedence == 0) {
+        precedence = field2.getBuildPrecedence() - field1.getBuildPrecedence();
+      }
+      return precedence;
     }
   };
 
@@ -158,16 +164,22 @@ public class FieldManager {
    * fields (see {@link UiBinderWriter#declareDomIdHolder()}) used by an HTMLPanel
    * will be declared before it is.
    *
+   * @param fieldWriterType the field writer type associated
    * @param fieldType the type of the new field
    * @param fieldName the name of the new field
    * @return a new {@link FieldWriter} instance
    * @throws UnableToCompleteException on duplicate name
    */
+  public FieldWriter registerField(FieldWriterType fieldWriterType,
+      JClassType fieldType, String fieldName) throws UnableToCompleteException {
+    FieldWriter field = new FieldWriterOfExistingType(
+        fieldWriterType, fieldType, fieldName, logger);
+    return registerField(fieldName, field);
+  }
+
   public FieldWriter registerField(JClassType fieldType, String fieldName)
       throws UnableToCompleteException {
-    FieldWriter field = new FieldWriterOfExistingType(fieldType, fieldName,
-        logger);
-    return registerField(fieldName, field);
+    return registerField(FieldWriterType.DEFAULT, fieldType, fieldName);
   }
 
   public FieldWriter registerField(String type, String fieldName)

@@ -58,15 +58,17 @@ abstract class AbstractFieldWriter implements FieldWriter {
   private String initializer;
   private boolean written;
   private int buildPrecedence;
-  private MortalLogger logger;
+  private final MortalLogger logger;
+  private final FieldWriterType fieldType;
 
-  public AbstractFieldWriter(String name, MortalLogger logger) {
+  public AbstractFieldWriter(String name, FieldWriterType fieldType, MortalLogger logger) {
     if (name == null) {
       throw new RuntimeException("name cannot be null");
     }
     this.name = name;
     this.logger = logger;
     this.buildPrecedence = 1;
+    this.fieldType = fieldType;
   }
 
   @Override
@@ -87,6 +89,11 @@ abstract class AbstractFieldWriter implements FieldWriter {
   @Override
   public int getBuildPrecedence() {
     return buildPrecedence;
+  }
+
+  @Override
+  public FieldWriterType getFieldType() {
+    return fieldType;
   }
 
   public String getInitializer() {
@@ -165,14 +172,15 @@ abstract class AbstractFieldWriter implements FieldWriter {
   public void writeFieldBuilder(IndentedWriter w, int getterCount,
     OwnerField ownerField) throws UnableToCompleteException {
     if (getterCount > 1) {
-      w.write("%s;  // more than one getter call detected. Precedence: %s",
-            FieldManager.getFieldBuilder(name), getBuildPrecedence());
+      w.write("%s;  // more than one getter call detected. Type: %s, precedence: %s",
+            FieldManager.getFieldBuilder(name), getFieldType(), getBuildPrecedence());
       return;
     }
 
     if (getterCount == 0 && ownerField != null) {
-      w.write("%s;  // no getter call detected but must bind to ui:field. Precedence: %s",
-          FieldManager.getFieldBuilder(name), getBuildPrecedence());
+      w.write("%s;  // no getter call detected but must bind to ui:field. "
+          + "Type: %s, precedence: %s", FieldManager.getFieldBuilder(name),
+          getFieldType(), getBuildPrecedence());
     }
   }
 
@@ -208,8 +216,8 @@ abstract class AbstractFieldWriter implements FieldWriter {
 
     w.newline();
     w.write("/**");
-    w.write(" * Getter for %s called %s times. Build precedence: %s.",
-        name, getterCount, getBuildPrecedence());
+    w.write(" * Getter for %s called %s times. Type: %s. Build precedence: %s.",
+        name, getterCount, getFieldType(), getBuildPrecedence());
     w.write(" */");
     if (getterCount > 1) {
       w.write("private %1$s %2$s;", getQualifiedSourceName(), name);

@@ -27,9 +27,9 @@ class FieldWriterOfGeneratedType extends AbstractFieldWriter {
   private final String typeName;
   private final JClassType assignableType;
 
-  public FieldWriterOfGeneratedType(JClassType assignableType,
-      String typePackage, String typeName, String name, MortalLogger logger) {
-    super(name, logger);
+  public FieldWriterOfGeneratedType(JClassType assignableType, String typePackage,
+      String typeName, String name, MortalLogger logger) {
+    super(name, FieldWriterType.GENERATED_BUNDLE, logger);
     if (assignableType == null) {
       throw new RuntimeException("assignableType must not be null");
     }

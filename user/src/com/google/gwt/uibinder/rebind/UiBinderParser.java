@@ -259,8 +259,8 @@ public class UiBinderParser {
       writer.die(elem, "Should only find attributes \"field\" and \"type\"");
     }
 
-    FieldWriter fieldWriter = fieldManager.registerField(resourceType,
-        resourceName);
+    FieldWriter fieldWriter = fieldManager.registerField(
+        FieldWriterType.IMPORTED, resourceType, resourceName);
     OwnerField ownerField = writer.getOwnerClass().getUiField(resourceName);
 
     /* Perhaps it is provided via @UiField */
