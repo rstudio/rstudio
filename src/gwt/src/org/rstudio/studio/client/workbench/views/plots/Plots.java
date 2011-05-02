@@ -46,11 +46,13 @@ import org.rstudio.studio.client.workbench.views.plots.events.LocatorHandler;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedHandler;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportOptions;
+import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
 import org.rstudio.studio.client.workbench.views.plots.model.PrintOptions;
 import org.rstudio.studio.client.workbench.views.plots.ui.ExportDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.PrintDialog;
+import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlotDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorChangedHandler;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorManager;
 
@@ -171,6 +173,39 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
          }
 
          private ExportOptions lastKnownState_;
+      };
+      
+      new JSObjectStateValue("plots", "exportPlotOptions", false,
+            session.getSessionInfo().getClientState(), false)
+      {
+         @Override
+         protected void onInit(JsObject value)
+         {
+            if (value != null)
+               exportPlotOptions_ = value.cast();
+            lastKnownState_ = exportPlotOptions_;
+         }
+
+         @Override
+         protected JsObject getValue()
+         {
+            return exportPlotOptions_.cast();
+         }
+
+         @Override
+         protected boolean hasChanged()
+         {
+            if (!ExportPlotOptions.areEqual(lastKnownState_, 
+                                            exportPlotOptions_))
+            {
+               lastKnownState_ = exportPlotOptions_;
+               return true;
+            }
+
+            return false;
+         }
+
+         private ExportPlotOptions lastKnownState_;
       };
    }
    
@@ -318,6 +353,25 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       }).showModal();
    }
    
+   void onExportPlot()
+   {
+      view_.bringToFront();
+      
+      new ExportPlotDialog(
+        server_, 
+        exportPlotOptions_,  
+        new OperationWithInput<ExportPlotOptions>() 
+        {
+           public void execute(ExportPlotOptions options)
+           {
+              // update default options
+              exportPlotOptions_ = options;
+              session_.persistClientState();
+           }
+        }).showModal();
+       
+   }
+   
    void onZoomPlot()
    {
       final int PADDING = 20;
@@ -453,6 +507,12 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    // default export options
    private ExportOptions exportOptions_ = ExportOptions.create(
                                                    ExportOptions.PNG_TYPE,
+                                                   500, 
+                                                   400);
+   
+   // default export options
+   private ExportPlotOptions exportPlotOptions_ = ExportPlotOptions.create(
+                                                   ExportPlotOptions.PNG_TYPE,
                                                    500, 
                                                    400);
    
