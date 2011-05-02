@@ -97,15 +97,15 @@ public abstract class MediaTest extends GWTTestCase {
 
     // Add some source elements.
     SourceElement source0 = media.addSource("file.ogg", "audio/ogg");
-    assertEquals("file.ogg", source0.getSrc());
+    assertTrue(source0.getSrc().endsWith("file.ogg"));
     assertEquals("audio/ogg", source0.getType());
     SourceElement source1 = media.addSource("file.ogv", "video/ogg");
-    assertEquals("file.ogv", source1.getSrc());
+    assertTrue(source1.getSrc().endsWith("file.ogv"));
     assertEquals("video/ogg", source1.getType());
 
     // Add a source without a type.
     SourceElement source2 = media.addSource("file.mp3");
-    assertEquals("file.mp3", source2.getSrc());
+    assertTrue(source2.getSrc().endsWith("file.mp3"));
 
     // Check that the sources are a children of the media.
     assertEquals(media.getElement(), source0.getParentElement());
