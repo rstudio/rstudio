@@ -962,7 +962,41 @@ public class TextEditingTarget implements EditingTarget
       docDisplay_.focus();
 
       String code = docDisplay_.getCode();
+
+      if (fileType_.canCompilePDF())
+      {
+         code = stangle(code);
+      }
+
+      code = code.replaceAll("^[ \t\n]*\n", "");
+      code = code.replaceAll("\n[ \t\n]*$", "");
+
       events_.fireEvent(new SendToConsoleEvent(code, true));
+   }
+
+   private static String stangle(String sweaveStr)
+   {
+      StringBuilder code = new StringBuilder();
+      Pattern pStart = Pattern.create("^<<.*>>=", "mg");
+      Pattern pNewLine = Pattern.create("\n");
+      Pattern pEnd = Pattern.create("\n@");
+      int pos = 0;
+      Match mStart;
+      while (null != (mStart = pStart.match(sweaveStr, pos)))
+      {
+         Match mNewLine = pNewLine.match(sweaveStr, mStart.getIndex());
+         if (mNewLine == null)
+            break;
+
+         Match mEnd = pEnd.match(sweaveStr, mNewLine.getIndex() + 1);
+         if (mEnd == null)
+            break;
+
+         code.append(sweaveStr, mNewLine.getIndex() + 1, mEnd.getIndex() + 1);
+         pos = mEnd.getIndex() + 2;
+      }
+      sweaveStr = code.toString();
+      return sweaveStr;
    }
 
    private String normalizeEncoding(String str)
