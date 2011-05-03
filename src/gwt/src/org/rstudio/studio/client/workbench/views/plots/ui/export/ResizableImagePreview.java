@@ -36,12 +36,12 @@ public class ResizableImagePreview extends Composite
       imageFrame_.setUrl("about:blank");
       imageFrame_.setStylePrimaryName(resources.styles().imagePreview());
       layoutPanel.add(imageFrame_);
-      layoutPanel.setWidgetLeftRight(imageFrame_, 0, Unit.PX, 8, Unit.PX);
-      layoutPanel.setWidgetTopBottom(imageFrame_, 0, Unit.PX, 8, Unit.PX);
+      layoutPanel.setWidgetLeftRight(imageFrame_, 0, Unit.PX, 6, Unit.PX);
+      layoutPanel.setWidgetTopBottom(imageFrame_, 0, Unit.PX, 6, Unit.PX);
       layoutPanel.getWidgetContainerElement(imageFrame_).getStyle().setOverflow(Overflow.VISIBLE);
       
       // resize gripper
-      ResizeGripper gripper = new ResizeGripper();
+      ResizeGripper gripper = new ResizeGripper(this);
       layoutPanel.add(gripper);
       layoutPanel.setWidgetRightWidth(gripper, 
                                       0, Unit.PX, 
