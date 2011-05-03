@@ -88,7 +88,8 @@ public class ResizeGripper extends Composite
             lastX_ = DOM.eventGetClientX(event);
             lastY_ = DOM.eventGetClientY(event);
             DOM.setCapture(getElement());
-            DOM.eventPreventDefault(event);
+            event.preventDefault();
+            event.stopPropagation();
             break;
          }
         
@@ -107,7 +108,8 @@ public class ResizeGripper extends Composite
                
                observer_.onResizing(xDelta, yDelta);
                
-               DOM.eventPreventDefault(event);
+               event.preventDefault();
+               event.stopPropagation();
             }
             break;
          }
@@ -118,6 +120,8 @@ public class ResizeGripper extends Composite
             {
                stopResizing();
                DOM.releaseCapture(getElement());
+               event.preventDefault();
+               event.stopPropagation();
             }
             break;   
          }
@@ -129,8 +133,6 @@ public class ResizeGripper extends Composite
             break;
          }
       }
-      
-      super.onBrowserEvent(event);
    }
    
    private boolean isResizing()
