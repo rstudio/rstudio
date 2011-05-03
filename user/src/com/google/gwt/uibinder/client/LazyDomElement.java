@@ -24,19 +24,19 @@ import com.google.gwt.dom.client.Element;
  * elements and delay calls to getElementById() to when the element is actually
  * used. But note that it will throw a RuntimeException in case the element is
  * accessed but not yet attached in the DOM tree.
- *
+ * <p>
  * Usage example:
- *
+ * <p>
  * <b>Template:</b>
  * <pre>
  *   &lt;gwt:HTMLPanel&gt;
  *      &lt;div ui:field="myDiv" /&gt;
  *   &lt;/gwt:HTMLPanel&gt;
  * </pre>
- *
+ * <p>
  * <b>Class:</b>
  * <pre>
- *   @UiField LazyDomElement&lt;DivElement&gt; myDiv;
+ *   {@literal @}UiField LazyDomElement&lt;DivElement&gt; myDiv;
  *
  *   public setText(String text) {
  *     myDiv.get().setInnerHtml(text);
