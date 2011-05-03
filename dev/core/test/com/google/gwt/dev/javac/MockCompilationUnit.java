@@ -71,6 +71,11 @@ class MockCompilationUnit extends CompilationUnit {
   }
 
   @Override
+  public String getResourcePath() {
+    return Shared.toPath(typeName);
+  }
+
+  @Override
   public String getSource() {
     return source;
   }

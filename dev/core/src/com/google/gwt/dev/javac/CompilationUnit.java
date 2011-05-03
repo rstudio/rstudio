@@ -286,8 +286,17 @@ public abstract class CompilationUnit implements Serializable {
    * virtual location (in the case of generators or mock data) where the source
    * for this unit originated. This should be unique for each unit compiled to
    * create a module.
+   * 
+   * @see {@link com.google.gwt.dev.resource.Resource#getLocation()}
    */
   public abstract String getResourceLocation();
+
+  /**
+   * Returns the full abstract path of the resource.
+   * 
+   * @see {@link com.google.gwt.dev.resource.Resource#getPath()}
+   */
+  public abstract String getResourcePath();
 
   /**
    * Returns the source code for this unit.

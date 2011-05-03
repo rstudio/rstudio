@@ -42,10 +42,10 @@ public class MemoryUnitCacheTest extends TestCase {
     assertEquals("com.example.Bar", result.getTypeName());
     
     // Find by type name
-    result = cache.find("/mock/com/example/Foo.java");
+    result = cache.find("com/example/Foo.java");
     assertNotNull(result);
     assertEquals("com.example.Foo", result.getTypeName());
-    result = cache.find("/mock/com/example/Bar.java");
+    result = cache.find("com/example/Bar.java");
     assertNotNull(result);
     assertEquals("com.example.Bar", result.getTypeName());
     cache.cleanup(logger); // should be a no-op
@@ -58,7 +58,7 @@ public class MemoryUnitCacheTest extends TestCase {
     result = cache.find(foo2.getContentId());
     assertNotNull(result);
     assertEquals("com.example.Foo", result.getTypeName());
-    result = cache.find("/mock/com/example/Foo.java");
+    result = cache.find("com/example/Foo.java");
     assertNotNull(result);
     assertEquals("com.example.Foo", result.getTypeName());
     assertEquals(foo2.getContentId(), result.getContentId());
@@ -67,23 +67,7 @@ public class MemoryUnitCacheTest extends TestCase {
     cache.remove(bar1);
     result = cache.find(bar1.getContentId());
     assertNull(result);
-    result = cache.find("/mock/com/example.Bar");
+    result = cache.find("com/example.Bar");
     assertNull(result);
-  }
-  
-  public void testUnitsWithSameTypeName() {
-    MemoryUnitCache cache = new MemoryUnitCache();
-    CompilationUnit result;
-    
-    MockCompilationUnit foo1 = new MockCompilationUnit("com.example.Foo", "source1", "location1");
-    cache.add(foo1);
-    MockCompilationUnit foo2 = new MockCompilationUnit("com.example.Foo", "source2", "location2");
-    cache.add(foo2);
-    result = cache.find("location1");
-    assertEquals("com.example.Foo", result.getTypeName());
-    assertEquals(foo1.getContentId(), result.getContentId());
-    result = cache.find("location2");
-    assertEquals("com.example.Foo", result.getTypeName());
-    assertEquals(foo2.getContentId(), result.getContentId());    
   }
 }

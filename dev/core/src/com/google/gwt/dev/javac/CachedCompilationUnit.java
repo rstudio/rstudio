@@ -31,6 +31,7 @@ public class CachedCompilationUnit extends CompilationUnit {
   private final ContentId contentId;
   private final Dependencies dependencies;
   private final String resourceLocation;
+  private final String resourcePath;
   private final List<JsniMethod> jsniMethods;
   private final long lastModified;
   private final MethodArgNamesLookup methodArgNamesLookup;
@@ -55,6 +56,7 @@ public class CachedCompilationUnit extends CompilationUnit {
     this.contentId = unit.getContentId();
     this.dependencies = unit.getDependencies();
     this.resourceLocation = unit.getResourceLocation();
+    this.resourcePath = unit.getResourcePath();
     this.jsniMethods = unit.getJsniMethods();
     this.lastModified = unit.getLastModified();
     this.methodArgNamesLookup = unit.getMethodArgs();
@@ -98,6 +100,11 @@ public class CachedCompilationUnit extends CompilationUnit {
   @Override
   public String getResourceLocation() {
     return resourceLocation;
+  }
+
+  @Override
+  public String getResourcePath() {
+    return resourcePath;
   }
 
   @Override

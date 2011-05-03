@@ -393,7 +393,7 @@ public class CompilationStateBuilder {
       ResourceCompilationUnitBuilder builder =
           new ResourceCompilationUnitBuilder(typeName, resource);
 
-      CompilationUnit cachedUnit = unitCache.find(resource.getLocation());
+      CompilationUnit cachedUnit = unitCache.find(resource.getPath());
       if (cachedUnit != null) {
         if (cachedUnit.getLastModified() == resource.getLastModified()) {
           cachedUnits.put(builder, cachedUnit);

@@ -63,6 +63,11 @@ class SourceFileCompilationUnit extends CompilationUnitImpl {
     return sourceFile.getLocation();
   }
 
+  @Override
+  public String getResourcePath() {
+    return sourceFile.getPath();
+  }
+
   @Deprecated
   @Override
   public String getSource() {

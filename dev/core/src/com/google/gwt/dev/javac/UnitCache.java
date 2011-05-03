@@ -40,11 +40,11 @@ public interface UnitCache {
   CompilationUnit find(ContentId contentId);
 
   /**
-   * Lookup a {@link CompilationUnit} by resource location.  
+   * Lookup a {@link CompilationUnit} by resource path. 
    * 
-   * @see {@link CompilationUnit#getResourceLocation()}
+   * @see {@link CompilationUnit#getResourcePath()}
    */
-  CompilationUnit find(String resourceLocation);
+  CompilationUnit find(String resourcePath);
 
   /**
    * Remove a {@link CompilationUnit} from the cache.

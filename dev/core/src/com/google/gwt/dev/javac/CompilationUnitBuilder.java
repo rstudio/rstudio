@@ -182,6 +182,11 @@ public abstract class CompilationUnitBuilder {
       return getLocationFor(generatedUnit);
     }
 
+    @Override
+    public String getResourcePath() {
+      return Shared.toPath(generatedUnit.getTypeName());
+    }
+
     @Deprecated
     @Override
     public String getSource() {

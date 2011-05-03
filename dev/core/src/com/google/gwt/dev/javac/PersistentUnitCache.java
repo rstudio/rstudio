@@ -78,7 +78,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * uses lots of heap and takes 5-10 seconds. Once the PersistentUnitCache is
  * created, it starts eagerly loading the cache in a background thread).</li>
  * 
- * <li>Although units logged to disk with the same resource Location are
+ * <li>Although units logged to disk with the same resource path are
  * eventually cleaned up, the most recently compiled unit stays in the cache
  * forever. This means that stale units that are no longer referenced will never
  * be purged, unless by some external action (e.g. ant clean).</li>
@@ -346,7 +346,7 @@ class PersistentUnitCache extends MemoryUnitCache {
     unitCacheMapLoader.await();
     super.add(newUnit);
     addCount.getAndIncrement();
-    unitWriteQueue.add(new UnitWriteMessage(unitMap.get(newUnit.getResourceLocation())));
+    unitWriteQueue.add(new UnitWriteMessage(unitMap.get(newUnit.getResourcePath())));
   }
 
   /**
@@ -397,9 +397,9 @@ class PersistentUnitCache extends MemoryUnitCache {
   }
 
   @Override
-  public CompilationUnit find(String resourceLocation) {
+  public CompilationUnit find(String resourcePath) {
     unitCacheMapLoader.await();
-    return super.find(resourceLocation);
+    return super.find(resourcePath);
   }
 
   /**
@@ -491,13 +491,13 @@ class PersistentUnitCache extends MemoryUnitCache {
                 break;
               }
               UnitCacheEntry entry = new UnitCacheEntry(unit, UnitOrigin.PERSISTENT);
-              UnitCacheEntry oldEntry = unitMap.get(unit.getResourceLocation());
+              UnitCacheEntry oldEntry = unitMap.get(unit.getResourcePath());
               if (oldEntry != null && unit.getLastModified() > oldEntry.getUnit().getLastModified()) {
                 super.remove(oldEntry.getUnit());
-                unitMap.put(unit.getResourceLocation(), entry);
+                unitMap.put(unit.getResourcePath(), entry);
                 unitMapByContentId.put(unit.getContentId(), entry);
               } else if (oldEntry == null) {
-                unitMap.put(unit.getResourceLocation(), entry);
+                unitMap.put(unit.getResourcePath(), entry);
                 unitMapByContentId.put(unit.getContentId(), entry);
               }
             }

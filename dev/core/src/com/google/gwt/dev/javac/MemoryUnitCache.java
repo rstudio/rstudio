@@ -26,7 +26,7 @@ import java.util.Map;
 /**
  * This cache stores {@link CompilationUnit} instances in a Map.
  * 
- * Only one unit is cached per resource location. If the contentId of the unit
+ * Only one unit is cached per resource path. If the contentId of the unit
  * changes, the old unit is discarded and replaced with the new unit.
  */
 class MemoryUnitCache implements UnitCache {
@@ -72,7 +72,7 @@ class MemoryUnitCache implements UnitCache {
    * References to all {@link CompilationUnit} objects loaded from the
    * persistent store, and any new ones added to the store as well.
    * 
-   * The key is resource location.
+   * The key is resource path.
    */
   @SuppressWarnings("unchecked")
   protected final Map<String, UnitCacheEntry> unitMap = Collections
@@ -91,12 +91,12 @@ class MemoryUnitCache implements UnitCache {
    */
   public void add(CompilationUnit newUnit) {
     UnitCacheEntry newEntry = new UnitCacheEntry(newUnit, UnitOrigin.RUN_TIME);
-    String resourceLocation = newUnit.getResourceLocation();
-    UnitCacheEntry oldEntry = unitMap.get(resourceLocation);
+    String resourcePath = newUnit.getResourcePath();
+    UnitCacheEntry oldEntry = unitMap.get(resourcePath);
     if (oldEntry != null) {
       remove(oldEntry.getUnit());
     }
-    unitMap.put(resourceLocation, newEntry);
+    unitMap.put(resourcePath, newEntry);
     unitMapByContentId.put(newUnit.getContentId(), newEntry);
   }
 
@@ -115,8 +115,8 @@ class MemoryUnitCache implements UnitCache {
     return null;
   }
 
-  public CompilationUnit find(String resourceLocation) {
-    UnitCacheEntry entry = unitMap.get(resourceLocation);
+  public CompilationUnit find(String resourcePath) {
+    UnitCacheEntry entry = unitMap.get(resourcePath);
     if (entry != null) {
       return entry.getUnit();
     }
@@ -124,7 +124,7 @@ class MemoryUnitCache implements UnitCache {
   }
 
   public void remove(CompilationUnit unit) {
-    unitMap.remove(unit.getResourceLocation());
+    unitMap.remove(unit.getResourcePath());
     unitMapByContentId.remove(unit.getContentId());
   }
 }

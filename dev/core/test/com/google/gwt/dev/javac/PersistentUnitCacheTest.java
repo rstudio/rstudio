@@ -130,10 +130,10 @@ public class PersistentUnitCacheTest extends TestCase {
     assertEquals("com.example.Bar", result.getTypeName());
 
     // Find by type name
-    result = cache.find("/mock/com/example/Foo.java");
+    result = cache.find("com/example/Foo.java");
     assertNotNull(result);
     assertEquals("com.example.Foo", result.getTypeName());
-    result = cache.find("/mock/com/example/Bar.java");
+    result = cache.find("com/example/Bar.java");
     assertNotNull(result);
     assertEquals("com.example.Bar", result.getTypeName());
 
@@ -145,7 +145,7 @@ public class PersistentUnitCacheTest extends TestCase {
     result = cache.find(foo2.getContentId());
     assertNotNull(result);
     assertEquals("com.example.Foo", result.getTypeName());
-    result = cache.find("/mock/com/example/Foo.java");
+    result = cache.find("com/example/Foo.java");
     assertNotNull(result);
     assertEquals("com.example.Foo", result.getTypeName());
     assertEquals(foo2.getContentId(), result.getContentId());
@@ -160,11 +160,11 @@ public class PersistentUnitCacheTest extends TestCase {
     // Fire up the cache again. It be pre-populated.
     // Search by type name
     cache = new PersistentUnitCache(logger, cacheDir);
-    result = cache.find("/mock/com/example/Foo.java");
+    result = cache.find("com/example/Foo.java");
     assertNotNull(result);
     assertEquals("com.example.Foo", result.getTypeName());
     assertEquals(foo2.getContentId(), result.getContentId());
-    result = cache.find("/mock/com/example/Bar.java");
+    result = cache.find("com/example/Bar.java");
     assertNotNull(result);
     assertEquals("com.example.Bar", result.getTypeName());
     assertEquals(bar1.getContentId(), result.getContentId());
@@ -211,12 +211,12 @@ public class PersistentUnitCacheTest extends TestCase {
     assertEquals("com.example.Bar", result.getTypeName());
     assertEquals(bar1.getContentId(), result.getContentId());
 
-    result = cache.find("/mock/com/example/Foo.java");
+    result = cache.find("com/example/Foo.java");
     assertNotNull(result);
     assertEquals("com.example.Foo", result.getTypeName());
     assertEquals(lastUnit.getContentId(), result.getContentId());
 
-    result = cache.find("/mock/com/example/Bar.java");
+    result = cache.find("com/example/Bar.java");
     assertNotNull(result);
     assertEquals("com.example.Bar", result.getTypeName());
     assertEquals(bar1.getContentId(), result.getContentId());
