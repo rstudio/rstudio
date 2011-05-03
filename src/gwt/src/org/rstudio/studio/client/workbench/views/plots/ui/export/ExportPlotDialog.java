@@ -57,7 +57,14 @@ public class ExportPlotDialog extends ModalDialogBase
    
       plotSizer_ = new PlotSizer(options_.getWidth(), 
                                  options_.getHeight(),
-                                 server_); 
+                                 server_,
+                                 new PlotSizer.Observer() {
+                                    public void onPlotResized(boolean withMouse)
+                                    {
+                                       if (!withMouse)
+                                          center();       
+                                    }
+                                 }); 
       mainPanel.add(plotSizer_);
        
       return mainPanel;
@@ -68,8 +75,8 @@ public class ExportPlotDialog extends ModalDialogBase
    protected void onDialogShown()
    {
       super.onDialogShown();
-      
-      plotSizer_.loadInitialImage();
+      center();
+      plotSizer_.onSizerShown();
    }
    
   
