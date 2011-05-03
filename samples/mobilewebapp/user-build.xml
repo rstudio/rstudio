@@ -3,7 +3,7 @@
   <property file="local.properties" />
   <!-- Arguments to gwtc and devmode targets -->
   <property name="gwt.args" value="" />
-  <property name="src.dir" value="src" />
+  <property name="src.dir" value="src/main" />
   <property name="war.dir" value="war" />
   <property name="gwt.sdk" value="../.." />
 
