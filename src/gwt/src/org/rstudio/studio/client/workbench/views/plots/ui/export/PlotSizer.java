@@ -92,8 +92,8 @@ public class PlotSizer extends Composite
                                                     new ClickHandler(){
          public void onClick(ClickEvent event) 
          {
-            layoutPanel.setSize(getImageWidth() + "px", 
-                                getImageHeight() + "px");
+            layoutPanel.setSize((getImageWidth() + IMAGE_INSET) + "px", 
+                                (getImageHeight() + IMAGE_INSET) + "px");
             updateImage();
             
             observer_.onPlotResized(false);
@@ -140,8 +140,8 @@ public class PlotSizer extends Composite
             int newWidth = layoutPanel.getOffsetWidth() + xDelta;
             int newHeight = layoutPanel.getOffsetHeight() + yDelta;
             
-            setWidthTextBox(newWidth);
-            setHeightTextBox(newHeight);
+            setWidthTextBox(newWidth - IMAGE_INSET);
+            setHeightTextBox(newHeight - IMAGE_INSET);
             
             layoutPanel.setSize(newWidth + "px", newHeight + "px");
          }
