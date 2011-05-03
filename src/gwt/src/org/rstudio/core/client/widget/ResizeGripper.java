@@ -56,6 +56,9 @@ public class ResizeGripper extends Composite
    @Override
    public void onBrowserEvent(Event event) 
    {
+      event.preventDefault();
+      event.stopPropagation();
+
       final int eventType = DOM.eventGetType(event);
       
       if (Event.ONMOUSEDOWN == eventType)
