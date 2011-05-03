@@ -137,13 +137,20 @@ public class PlotSizer extends Composite
          @Override
          public void onResizing(int xDelta, int yDelta)
          {
-            int newWidth = layoutPanel.getOffsetWidth() + xDelta;
-            int newHeight = layoutPanel.getOffsetHeight() + yDelta;
+            // get start width and height
+            int startWidth = getImageWidth();
+            int startHeight = getImageHeight();
             
-            setWidthTextBox(newWidth - IMAGE_INSET);
-            setHeightTextBox(newHeight - IMAGE_INSET);
+            // calculate new height and width 
+            int newWidth = startWidth + xDelta;
+            int newHeight = startHeight + yDelta;
+           
             
-            layoutPanel.setSize(newWidth + "px", newHeight + "px");
+            setWidthTextBox(newWidth);
+            setHeightTextBox(newHeight);
+            
+            layoutPanel.setSize(newWidth + IMAGE_INSET + "px", 
+                                newHeight + IMAGE_INSET + "px");
          }
 
          @Override
