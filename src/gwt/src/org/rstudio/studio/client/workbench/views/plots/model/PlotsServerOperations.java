@@ -22,6 +22,11 @@ public interface PlotsServerOperations
 {
    String getGraphicsUrl(String filename);
    
+   String getPlotExportUrl(String type, 
+                           int width, 
+                           int height, 
+                           boolean attachment);
+   
    void nextPlot(ServerRequestCallback<Void> requestCallback);
    void previousPlot(ServerRequestCallback<Void> requestCallback);
    

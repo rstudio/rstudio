@@ -24,7 +24,7 @@ import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-public class ExportPlotDialog extends ModalDialogBase
+public class ExportPlotDialog extends ModalDialogBase 
 {
    public ExportPlotDialog(PlotsServerOperations server,
                            ExportPlotOptions options,
@@ -53,23 +53,31 @@ public class ExportPlotDialog extends ModalDialogBase
       mainPanel.setStylePrimaryName(
                   ExportPlotDialogResources.INSTANCE.styles().mainWidget());
       
+      
    
-      imagePreview_ = new ResizableImagePreview();
-      imagePreview_.setWidth("360px");
-      imagePreview_.setHeight("240px");
-      
-      mainPanel.add(imagePreview_);
-      
-      
+      plotSizer_ = new PlotSizer(options_.getWidth(), 
+                                 options_.getHeight(),
+                                 server_); 
+      mainPanel.add(plotSizer_);
+       
       return mainPanel;
       
    }
-  
    
-   @SuppressWarnings("unused")
+   @Override
+   protected void onDialogShown()
+   {
+      super.onDialogShown();
+      
+      plotSizer_.loadInitialImage();
+   }
+   
+  
    private final PlotsServerOperations server_;
    private ExportPlotOptions options_;
    
-   private ResizableImagePreview imagePreview_;
+   private PlotSizer plotSizer_;
+
+ 
   
 }

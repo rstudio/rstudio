@@ -19,6 +19,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.json.client.*;
+import com.google.gwt.user.client.Random;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.rstudio.core.client.Debug;
@@ -679,6 +680,26 @@ public class RemoteServer implements Server
    public String getGraphicsUrl(String filename)
    {
       return getApplicationURL(GRAPHICS_SCOPE) + "/" + filename;
+   }
+   
+   public String getPlotExportUrl(String type, 
+                                  int width, 
+                                  int height, 
+                                  boolean attachment)
+   {
+      // build preview URL
+      String previewURL = getGraphicsUrl("plot." + type);
+      previewURL += "?";
+      previewURL += "width=" + width;
+      previewURL += "&";
+      previewURL += "height=" + height;
+      // append random number to default over-aggressive image caching
+      // by browsers
+      previewURL += "&randomizer=" + Random.nextInt();
+      if (attachment)
+         previewURL += "&attachment=1";
+      
+      return previewURL;
    }
    
    public void nextPlot(ServerRequestCallback<Void> requestCallback)

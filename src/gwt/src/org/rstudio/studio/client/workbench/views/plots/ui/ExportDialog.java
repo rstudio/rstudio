@@ -20,7 +20,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.client.Random;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.widget.ImageFrame;
@@ -164,7 +163,7 @@ public class ExportDialog extends ModalDialogBase
       String w = Math.min(getWidth(), Window.getClientWidth() - 80) + "px";
       String h = Math.min(getHeight(), Window.getClientHeight() - 250) + "px";
       imagePreview_.setSize(w, h);
-      
+       
       if (!resizeOnly)
       {
          center();
@@ -176,7 +175,7 @@ public class ExportDialog extends ModalDialogBase
    {
       // get options
       ExportOptions options = getExportOptions();
-      
+            
       // determine extension for current type
       String imageType = options.getType();
       String ext = null;
@@ -187,19 +186,11 @@ public class ExportDialog extends ModalDialogBase
       else
          throw new IllegalStateException("Bad image type: " + imageType);
      
-      // build preview url
-      String previewURL = server_.getGraphicsUrl("plot." + ext);
-      previewURL += "?";
-      previewURL += "width=" + options.getWidth();
-      previewURL += "&";
-      previewURL += "height=" + options.getHeight();
-      // append random number to default over-aggressive image caching
-      // by browsers
-      previewURL += "&randomizer=" + Random.nextInt();
-      if (attachment)
-         previewURL += "&attachment=1";
       
-      return previewURL;
+      return server_.getPlotExportUrl(ext, 
+                                      options.getWidth(), 
+                                      options.getHeight(), 
+                                      attachment);
    }
    
    private ExportOptions getExportOptions()
