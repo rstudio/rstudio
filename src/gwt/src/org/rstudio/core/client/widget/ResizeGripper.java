@@ -21,26 +21,29 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.Widget;
-
-
-
 
 public class ResizeGripper extends Composite
 {
-   public ResizeGripper(Widget targetWidget)
-   {    
-      targetWidget_ = targetWidget;
+   public interface Observer
+   {
+      void onResizingStarted();
+      void onResizing(int xDelta, int yDelta);
+      void onResizingCompleted();
+   }
+   
+   public ResizeGripper(Observer observer)
+   {   
+      observer_ = observer;
       gripperImageResource_ = RESOURCES.resizeGripper();
       Image image = new Image(gripperImageResource_);
       initWidget(image);
       setStylePrimaryName(RESOURCES.styles().resizeGripper());
       
-      
       DOM.sinkEvents(getElement(), 
                      Event.ONMOUSEDOWN | 
                      Event.ONMOUSEMOVE | 
-                     Event.ONMOUSEUP);
+                     Event.ONMOUSEUP |
+                     Event.ONLOSECAPTURE);
    }
    
    public int getImageWidth()
@@ -55,50 +58,84 @@ public class ResizeGripper extends Composite
  
    @Override
    public void onBrowserEvent(Event event) 
-   {
-      event.preventDefault();
-      event.stopPropagation();
-
-      final int eventType = DOM.eventGetType(event);
-      
-      if (Event.ONMOUSEDOWN == eventType)
+   {  
+      switch(DOM.eventGetType(event))
       {
-         sizing_ = true;
-         lastX_ = DOM.eventGetClientX(event);
-         lastY_ = DOM.eventGetClientY(event);
-         DOM.setCapture(getElement());
-      }
-      else if (Event.ONMOUSEMOVE == eventType)
-      {
-         if (sizing_)
-         {     
-            DOM.setCapture(getElement());
-            
-            int x = DOM.eventGetClientX(event);
-            int y = DOM.eventGetClientY(event);
-            int xOffset = x - lastX_;
-            int yOffset = y - lastY_;
-            
-            targetWidget_.setSize(
-              targetWidget_.getOffsetWidth() + xOffset + "px",
-              targetWidget_.getOffsetHeight() + yOffset + "px");
+         case Event.ONMOUSEDOWN: 
+         {
+            startResizing();
             
             lastX_ = DOM.eventGetClientX(event);
             lastY_ = DOM.eventGetClientY(event);
             
+            DOM.setCapture(getElement());
+            
+            observer_.onResizingStarted();
+            
+            event.preventDefault();
             event.stopPropagation();
+            break;
          }
-      }
-      else if (Event.ONMOUSEUP == eventType)
-      {
-         sizing_ = false;
-         lastX_ = 0;
-         lastY_ = 0;
-         DOM.releaseCapture(getElement());
+        
+         case Event.ONMOUSEMOVE: 
+         {
+            if (isResizing())
+            {      
+               int x = DOM.eventGetClientX(event);
+               int y = DOM.eventGetClientY(event);
+               
+               int xDelta = x - lastX_;
+               int yDelta = y - lastY_;
+            
+               lastX_ = DOM.eventGetClientX(event);
+               lastY_ = DOM.eventGetClientY(event);
+               
+               observer_.onResizing(xDelta, yDelta);
+               
+               event.preventDefault();
+               event.stopPropagation();
+            }
+            break;
+         }
+        
+         case Event.ONMOUSEUP:
+         {
+            if (isResizing())
+            {
+               stopResizing();
+               DOM.releaseCapture(getElement());
+               event.preventDefault();
+               event.stopPropagation();
+            }
+            break;   
+         }
          
+         case Event.ONLOSECAPTURE: // IE-only
+         {
+            if (isResizing())
+               stopResizing();
+            break;
+         }
       }
    }
    
+   private boolean isResizing()
+   {
+      return sizing_;
+   }
+   
+   private void startResizing()
+   {
+      sizing_ = true;
+   }
+   
+   private void stopResizing()
+   {
+      sizing_ = false;
+      lastX_ = 0;
+      lastY_ = 0;
+      observer_.onResizingCompleted();
+   }
    
    interface Styles extends CssResource
    {
@@ -119,12 +156,10 @@ public class ResizeGripper extends Composite
       RESOURCES.styles().ensureInjected();
    }
    
-   private final Widget targetWidget_;
    private final ImageResource gripperImageResource_;
+   private final Observer observer_;
    
    private boolean sizing_ = false;
    private int lastX_ = 0;
    private int lastY_ = 0;
-   
-
 }

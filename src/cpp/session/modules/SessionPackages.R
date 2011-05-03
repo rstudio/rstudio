@@ -93,7 +93,11 @@
 
 .rs.addFunction( "uniqueLibraryPaths", function()
 {
-   libPaths <- normalizePath(.libPaths())
+   # get library paths (normalize on unix to get rid of duplicate symlinks)
+   libPaths <- .libPaths()
+   if (!identical(.Platform$OS.type, "windows"))
+      libPaths <- normalizePath(libPaths)
+
    uniqueLibPaths <- subset(libPaths, !duplicated(libPaths))
    return (uniqueLibPaths)
 })
@@ -110,8 +114,8 @@
 
 .rs.addFunction("defaultUserLibraryPath", function()
 {
-   normalizePath(unlist(strsplit(Sys.getenv("R_LIBS_USER"),
-                                 .Platform$path.sep))[1L])
+   unlist(strsplit(Sys.getenv("R_LIBS_USER"),
+                              .Platform$path.sep))[1L]
 })
 
 .rs.addJsonRpcHandler( "is_package_loaded", function(packageName)

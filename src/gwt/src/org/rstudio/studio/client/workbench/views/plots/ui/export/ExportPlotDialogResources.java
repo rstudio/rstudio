@@ -23,6 +23,9 @@ public interface ExportPlotDialogResources extends ClientBundle
    {
       String mainWidget();
       String imagePreview();
+      String imageOptions();
+      String imageOptionLabel();
+      String imageSizeTextBox();
    }
 
   
