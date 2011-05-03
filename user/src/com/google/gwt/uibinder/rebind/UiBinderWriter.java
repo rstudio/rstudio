@@ -25,8 +25,8 @@ import com.google.gwt.uibinder.attributeparsers.AttributeParser;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
 import com.google.gwt.uibinder.attributeparsers.BundleAttributeParser;
 import com.google.gwt.uibinder.attributeparsers.BundleAttributeParsers;
+import com.google.gwt.uibinder.client.LazyDomElement;
 import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.uibinder.client.UiBinderUtil.LazyDomElement;
 import com.google.gwt.uibinder.elementparsers.AttributeMessageParser;
 import com.google.gwt.uibinder.elementparsers.BeanParser;
 import com.google.gwt.uibinder.elementparsers.ElementParser;
@@ -198,6 +198,8 @@ public class UiBinderWriter implements Statements {
 
   private final JClassType attachableClassType;
 
+  private final JClassType lazyDomElementClass;
+
   private final OwnerClass ownerClass;
 
   private final FieldManager fieldManager;
@@ -279,6 +281,7 @@ public class UiBinderWriter implements Statements {
     uiOwnerType = typeArgs[1];
 
     attachableClassType = oracle.findType(Attachable.class.getCanonicalName());
+    lazyDomElementClass = oracle.findType(LazyDomElement.class.getCanonicalName());
 
     ownerClass = new OwnerClass(uiOwnerType, logger, uiBinderCtx);
     bundleClass = new ImplicitClientBundle(baseClass.getPackage().getName(),
@@ -373,13 +376,26 @@ public class UiBinderWriter implements Statements {
     if (useLazyWidgetBuilders) {
       // Create and initialize the dom field with LazyDomElement.
       FieldWriter field = fieldManager.require(fieldName);
-      field.setInitializer(formatCode("new %s(%s).get().cast()",
-          LazyDomElement.class.getCanonicalName(),
-          fieldManager.convertFieldToGetter(name)));
 
-      // The dom must be created by its ancestor.
-      fieldManager.require(ancestorField).addAttachStatement(
-          fieldManager.convertFieldToGetter(fieldName) + ";");
+      /**
+       * But if the owner field is an instance of LazyDomElement then the code
+       * can be optimized, no cast is needed and the getter doesn't need to be
+       * called in its ancestral.
+       */
+      if (isOwnerFieldLazyDomElement(fieldName)) {
+        field.setInitializer(formatCode("new %s(%s)",
+            field.getQualifiedSourceName(),
+            fieldManager.convertFieldToGetter(name)));
+      } else {
+
+        field.setInitializer(formatCode("new %s(%s).get().cast()",
+            LazyDomElement.class.getCanonicalName(),
+            fieldManager.convertFieldToGetter(name)));
+
+        // The dom must be created by its ancestor.
+        fieldManager.require(ancestorField).addAttachStatement(
+            fieldManager.convertFieldToGetter(fieldName) + ";");
+      }
     } else {
       setFieldInitializer(fieldName, "null");
       addInitStatement(
@@ -399,7 +415,7 @@ public class UiBinderWriter implements Statements {
    */
   public String declareDomIdHolder() throws UnableToCompleteException {
     String domHolderName = "domId" + domId++;
-    FieldWriter domField = fieldManager.registerField(
+    FieldWriter domField = fieldManager.registerField(FieldWriterType.DOM_ID_HOLDER,
         oracle.findType(String.class.getName()), domHolderName);
     domField.setInitializer("com.google.gwt.dom.client.Document.get().createUniqueId()");
 
@@ -442,7 +458,16 @@ public class UiBinderWriter implements Statements {
       throws UnableToCompleteException {
     String fieldName = getFieldName(elem);
     if (fieldName != null) {
-      fieldManager.registerField(findFieldType(elem), fieldName);
+
+      /**
+       * We can switch types if useLazyWidgetBuilders is enabled and the
+       * respective owner field is a LazyDomElement.
+       */
+      if (useLazyWidgetBuilders && isOwnerFieldLazyDomElement(fieldName)) {
+        fieldManager.registerFieldForLazyDomElement(findFieldType(elem), ownerClass.getUiField(fieldName));
+      } else {
+        fieldManager.registerField(findFieldType(elem), fieldName);
+      }
     }
     return fieldName;
   }
@@ -671,6 +696,18 @@ public class UiBinderWriter implements Statements {
   public boolean isBinderElement(XMLElement elem) {
     String uri = elem.getNamespaceUri();
     return uri != null && UiBinderGenerator.BINDER_URI.equals(uri);
+  }
+
+  /**
+   * Checks whether the given owner field name is a LazyDomElement or not.
+   */
+  public boolean isOwnerFieldLazyDomElement(String fieldName) {
+    OwnerField ownerField = ownerClass.getUiField(fieldName);
+    if (ownerField == null) {
+      return false;
+    }
+
+    return lazyDomElementClass.isAssignableFrom(ownerField.getType().getRawType());
   }
 
   public boolean isWidgetElement(XMLElement elem) {

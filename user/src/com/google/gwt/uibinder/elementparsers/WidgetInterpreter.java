@@ -16,9 +16,9 @@
 package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.uibinder.client.UiBinderUtil.LazyDomElement;
 import com.google.gwt.uibinder.rebind.FieldManager;
 import com.google.gwt.uibinder.rebind.FieldWriter;
+import com.google.gwt.uibinder.client.LazyDomElement;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 
@@ -97,8 +97,8 @@ class WidgetInterpreter implements XMLElement.Interpreter<String> {
       // Register a DOM id field.
       String lazyDomElementPath = LazyDomElement.class.getCanonicalName();
       FieldWriter elementWriter = fieldManager.registerField(lazyDomElementPath, elementPointer);
-      elementWriter.setInitializer(String.format("new %s(%s)",
-                                                 lazyDomElementPath, fieldManager.convertFieldToGetter(idHolder)));
+      elementWriter.setInitializer(String.format("new %s<Element>(%s)",
+          lazyDomElementPath, fieldManager.convertFieldToGetter(idHolder)));
 
       // Add attach/detach sections for this element.
       fieldWriter.addAttachStatement("%s.get();",

@@ -28,27 +28,6 @@ import com.google.gwt.user.client.ui.UIObject;
 public class UiBinderUtil {
 
   /**
-   * A helper class to enable lazy creation of DOM elements.
-   */
-  public static class LazyDomElement {
-
-    private Element element;
-    private final String domId;
-
-    public LazyDomElement(String domId) {
-      this.domId = domId;
-    }
-
-    public Element get() {
-      if (element == null) {
-        element = Document.get().getElementById(domId).cast();
-        element.removeAttribute("id");
-      }
-      return element;
-    }
-  }
-
-  /**
    * Temporary attachment record that keeps track of where an element was
    * before attachment.  Use the detach method to put things back.
    *

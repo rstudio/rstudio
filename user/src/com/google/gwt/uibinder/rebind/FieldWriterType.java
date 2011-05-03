@@ -21,9 +21,10 @@ package com.google.gwt.uibinder.rebind;
  */
 enum FieldWriterType {
 
-  GENERATED_BUNDLE(4),
-  GENERATED_CSS(3),
-  IMPORTED(2),  // ui:with clauses.
+  GENERATED_BUNDLE(5),
+  GENERATED_CSS(4),
+  IMPORTED(3),  // ui:with clauses.
+  DOM_ID_HOLDER(2),
   DEFAULT(1);
 
   /**

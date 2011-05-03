@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.uibinder.rebind.model.ImplicitCssResource;
+import com.google.gwt.uibinder.rebind.model.OwnerField;
 import com.google.gwt.uibinder.rebind.model.OwnerClass;
 
 import java.util.Arrays;
@@ -208,6 +209,27 @@ public class FieldManager {
     FieldWriter field = new FieldWriterOfGeneratedCssResource(
         types.findType(String.class.getCanonicalName()), cssResource, logger);
     return registerField(cssResource.getName(), field);
+  }
+
+  /**
+   * Register a new field for {@link com.google.gwt.uibinder.client.LazyDomElement}
+   * types. LazyDomElement fields can only be associated with html elements. Example:
+   *
+   *  <li>LazyDomElement&lt;DivElement&gt; -&gt; &lt;div&gt;</li>
+   *  <li>LazyDomElement&lt;Element&gt; -&gt; &lt;div&gt;</li>
+   *  <li>LazyDomElement&lt;SpanElement&gt; -&gt; &lt;span&gt;</li>
+   *
+   * @param templateFieldType the html type to bind, eg, SpanElement, DivElement, etc
+   * @param ownerField the field instance
+   */
+  public FieldWriter registerFieldForLazyDomElement(JClassType templateFieldType,
+      OwnerField ownerField) throws UnableToCompleteException {
+    if (ownerField == null) {
+      throw new RuntimeException("Cannot register a null owner field for LazyDomElement.");
+    }
+    FieldWriter field = new FieldWriterOfLazyDomElement(
+        templateFieldType, ownerField, logger);
+    return registerField(ownerField.getName(), field);
   }
 
   /**

@@ -18,9 +18,9 @@ package com.google.gwt.uibinder.elementparsers;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.uibinder.client.UiBinderUtil.LazyDomElement;
 import com.google.gwt.uibinder.rebind.FieldManager;
 import com.google.gwt.uibinder.rebind.FieldWriter;
+import com.google.gwt.uibinder.client.LazyDomElement;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.uibinder.rebind.messages.MessageWriter;
@@ -131,7 +131,7 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
         String elementPointer = idHolder + "Element";
         FieldWriter elementWriter = fieldManager.registerField(
             lazyDomElementPath, elementPointer);
-        elementWriter.setInitializer(String.format("new %s(%s)",
+        elementWriter.setInitializer(String.format("new %s<Element>(%s)",
             lazyDomElementPath, fieldManager.convertFieldToGetter(idHolder)));
 
         // Add attach/detach sections for this element.

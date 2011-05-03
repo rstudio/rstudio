@@ -76,6 +76,14 @@ public class OwnerField {
   }
 
   /**
+   * Gets the type associated with this field.
+   */
+  public JClassType getRawType() {
+    // This shorten getType().getRawType() and make tests easier.
+    return getType().getRawType();
+  }
+
+  /**
    * Returns a descriptor for the type of the field.
    */
   public OwnerFieldClass getType() {
