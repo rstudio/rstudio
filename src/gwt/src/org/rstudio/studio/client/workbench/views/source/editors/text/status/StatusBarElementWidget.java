@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
@@ -55,6 +56,7 @@ public class StatusBarElementWidget extends FlowPanel
                return;
 
             ToolbarPopupMenu menu = new ToolbarPopupMenu();
+            menu.getElement().getStyle().setFontSize(10, Unit.PX);
             for (final String option : options_)
                menu.addItem(new MenuItem(option, new Command()
                {

@@ -10,6 +10,7 @@
          gwt-image: 'statusBarTile';
          width: 100%;
          font-size: 10px;
+         color: #3c474d;
       }
       .statusBar div {
          display: inline;

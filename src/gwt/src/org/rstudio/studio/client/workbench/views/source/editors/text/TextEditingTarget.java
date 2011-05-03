@@ -393,8 +393,8 @@ public class TextEditingTarget implements EditingTarget
 
       statusBarFileTypes_ = new TextFileType[] {
             FileTypeRegistry.R,
-            FileTypeRegistry.SWEAVE,
             FileTypeRegistry.TEXT,
+            FileTypeRegistry.SWEAVE,
             FileTypeRegistry.RD,
             FileTypeRegistry.TEX,
       };
