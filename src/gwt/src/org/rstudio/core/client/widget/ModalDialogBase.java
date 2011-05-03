@@ -84,6 +84,14 @@ public abstract class ModalDialogBase extends DialogBox
    }
 
    @Override
+   protected void beginDragging(MouseDownEvent event)
+   {
+      // Prevent text selection from occurring when moving the dialog box
+      event.preventDefault();
+      super.beginDragging(event);
+   }
+
+   @Override
    protected void onLoad()
    {
       // 728: Focus remains in Source view when message dialog pops up over it
