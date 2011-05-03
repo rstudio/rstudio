@@ -43,6 +43,7 @@ public class PlotSizer extends Composite
    
    public PlotSizer(int initialWidth, 
                     int initialHeight,
+                    boolean keepRatio,
                     PlotsServerOperations server,
                     Observer observer)
    {
@@ -76,9 +77,10 @@ public class PlotSizer extends Composite
   
       // lock ratio check box
       sizeInputPanel.add(new HTML("&nbsp;&nbsp;"));
-      lockRatioCheckBox_ = new CheckBox();
-      lockRatioCheckBox_.setText("Keep ratio");
-      sizeInputPanel.add(lockRatioCheckBox_);
+      keepRatioCheckBox_ = new CheckBox();
+      keepRatioCheckBox_.setValue(keepRatio);
+      keepRatioCheckBox_.setText("Keep ratio");
+      sizeInputPanel.add(keepRatioCheckBox_);
       
       // image and sizer in layout panel (create now so we can call
       // setSize in update button click handler)
@@ -204,6 +206,11 @@ public class PlotSizer extends Composite
          return lastHeight_;
       }
    } 
+   
+   public boolean getKeepRatio()
+   {
+      return keepRatioCheckBox_.getValue();
+   }
       
    private void setWidthTextBox(int width)
    {
@@ -249,7 +256,7 @@ public class PlotSizer extends Composite
    private final ImageFrame imageFrame_;
    private final TextBox widthTextBox_;
    private final TextBox heightTextBox_;
-   private final CheckBox lockRatioCheckBox_;
+   private final CheckBox keepRatioCheckBox_;
    
    private final PlotsServerOperations server_;
    private final Observer observer_;

@@ -24,12 +24,14 @@ public class ExportPlotOptions extends JavaScriptObject
    public static final String JPEG_TYPE = "JPEG";
    
    public static final native ExportPlotOptions create(String type,
-                                                   int width, 
-                                                   int height) /*-{
+                                                       int width, 
+                                                       int height,
+                                                       boolean keepRatio) /*-{
       var options = new Object();
       options.type = type;
       options.width = width ;
       options.height = height ;
+      options.keepRatio = keepRatio;
       return options ;
    }-*/;
 
@@ -40,7 +42,8 @@ public class ExportPlotOptions extends JavaScriptObject
          return true;
       return a.type === b.type &&
              a.width === b.width &&
-             a.height === b.height;      
+             a.height === b.height &&
+             a.keepRatio === b.keepRatio;      
    }-*/;
    
    public final native String getType() /*-{
@@ -52,5 +55,12 @@ public class ExportPlotOptions extends JavaScriptObject
    }-*/;
    public final native int getHeight() /*-{
       return this.height;
+   }-*/;
+   
+   public final native boolean getKeepRatio() /*-{
+      if (this.keepRatio)
+         return this.keepRatio;
+      else
+         return false;
    }-*/;
 }

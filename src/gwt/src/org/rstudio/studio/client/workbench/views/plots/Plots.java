@@ -143,7 +143,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
          });
       
       
-      new JSObjectStateValue("plots", "exportOptions", false,
+      new JSObjectStateValue("plotspane", "exportOptions", true,
                              session.getSessionInfo().getClientState(), false)
       {
          @Override
@@ -175,7 +175,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
          private ExportOptions lastKnownState_;
       };
       
-      new JSObjectStateValue("plots", "exportPlotOptions", false,
+      new JSObjectStateValue("plotspane", "exportPlotOptions", true,
             session.getSessionInfo().getClientState(), false)
       {
          @Override
@@ -514,7 +514,8 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    private ExportPlotOptions exportPlotOptions_ = ExportPlotOptions.create(
                                                    ExportPlotOptions.PNG_TYPE,
                                                    500, 
-                                                   400);
+                                                   400,
+                                                   false);
    
    // size of most recently rendered plot
    Size plotSize_ = null;

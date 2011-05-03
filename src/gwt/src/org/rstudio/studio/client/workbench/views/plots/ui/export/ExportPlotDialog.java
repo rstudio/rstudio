@@ -39,7 +39,12 @@ public class ExportPlotDialog extends ModalDialogBase
       
       ThemedButton closeButton = new ThemedButton("Close", new ClickHandler() {
          public void onClick(ClickEvent event) {
-            onClose.execute(options_);
+            ExportPlotOptions options = ExportPlotOptions.create(
+                                                options_.getType(), 
+                                                plotSizer_.getImageWidth(), 
+                                                plotSizer_.getImageHeight(), 
+                                                plotSizer_.getKeepRatio());
+            onClose.execute(options);
             closeDialog();
          }
       });
@@ -57,6 +62,7 @@ public class ExportPlotDialog extends ModalDialogBase
    
       plotSizer_ = new PlotSizer(options_.getWidth(), 
                                  options_.getHeight(),
+                                 options_.getKeepRatio(),
                                  server_,
                                  new PlotSizer.Observer() {
                                     public void onPlotResized(boolean withMouse)
@@ -75,7 +81,6 @@ public class ExportPlotDialog extends ModalDialogBase
    protected void onDialogShown()
    {
       super.onDialogShown();
-      center();
       plotSizer_.onSizerShown();
    }
    
