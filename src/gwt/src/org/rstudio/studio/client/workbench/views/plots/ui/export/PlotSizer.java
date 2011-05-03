@@ -19,6 +19,7 @@ import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperatio
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.LayoutPanel;
 
 public class PlotSizer extends Composite 
@@ -46,6 +47,14 @@ public class PlotSizer extends Composite
       layoutPanel.setWidgetLeftRight(imageFrame_, 0, Unit.PX, IMAGE_INSET, Unit.PX);
       layoutPanel.setWidgetTopBottom(imageFrame_, 0, Unit.PX, IMAGE_INSET, Unit.PX);
       layoutPanel.getWidgetContainerElement(imageFrame_).getStyle().setOverflow(Overflow.VISIBLE);
+      
+      // Stops mouse events from being routed to the iframe, which would
+      // interfere with resizing
+      FlowPanel imageSurface = new FlowPanel();
+      imageSurface.setSize("100%", "100%");
+      layoutPanel.add(imageSurface);
+      layoutPanel.setWidgetTopBottom(imageSurface, 0, Unit.PX, 0, Unit.PX);
+      layoutPanel.setWidgetLeftRight(imageSurface, 0, Unit.PX, 0, Unit.PX);
       
       // resize gripper
       ResizeGripper gripper = new ResizeGripper(new ResizeGripper.Observer() 
