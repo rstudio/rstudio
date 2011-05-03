@@ -60,6 +60,12 @@ public class PlotSizer extends Composite
       ResizeGripper gripper = new ResizeGripper(new ResizeGripper.Observer() 
       {
          @Override
+         public void onResizingStarted()
+         {
+            
+         }
+         
+         @Override
          public void onResizing(int xDelta, int yDelta)
          {
             setSize(getOffsetWidth() + xDelta + "px",

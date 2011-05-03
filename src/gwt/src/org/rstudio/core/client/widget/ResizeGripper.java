@@ -18,17 +18,15 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.RootPanel;
-
 
 public class ResizeGripper extends Composite
 {
    public interface Observer
    {
+      void onResizingStarted();
       void onResizing(int xDelta, int yDelta);
       void onResizingCompleted();
    }
@@ -46,25 +44,6 @@ public class ResizeGripper extends Composite
                      Event.ONMOUSEMOVE | 
                      Event.ONMOUSEUP |
                      Event.ONLOSECAPTURE);
-      
-      // glass element for capturing mouse events over iframes (based on 
-      // implementation of GWT SplitPanel)
-      if (glassElem_ == null) 
-      {
-         glassElem_ = DOM.createDiv();
-         glassElem_.getStyle().setProperty("position", "absolute");
-         glassElem_.getStyle().setProperty("top", "0px");
-         glassElem_.getStyle().setProperty("left", "0px");
-         glassElem_.getStyle().setProperty("margin", "0px");
-         glassElem_.getStyle().setProperty("padding", "0px");
-         glassElem_.getStyle().setProperty("border", "0px");
-   
-         // We need to set the background color or mouse events will go right
-         // through the glassElem.
-         glassElem_.getStyle().setProperty("background", "white");
-         glassElem_.getStyle().setProperty("opacity", "0.0");
-         glassElem_.getStyle().setProperty("filter", "alpha(opacity=0)");
-      }
    }
    
    public int getImageWidth()
@@ -85,9 +64,14 @@ public class ResizeGripper extends Composite
          case Event.ONMOUSEDOWN: 
          {
             startResizing();
+            
             lastX_ = DOM.eventGetClientX(event);
             lastY_ = DOM.eventGetClientY(event);
+            
             DOM.setCapture(getElement());
+            
+            observer_.onResizingStarted();
+            
             event.preventDefault();
             event.stopPropagation();
             break;
@@ -143,13 +127,6 @@ public class ResizeGripper extends Composite
    private void startResizing()
    {
       sizing_ = true;
-      
-      // Resize glassElem to take up the entire scrollable window area
-      int height = RootPanel.getBodyElement().getScrollHeight() - 1;
-      int width = RootPanel.getBodyElement().getScrollWidth() - 1;
-      glassElem_.getStyle().setProperty("height", height + "px");
-      glassElem_.getStyle().setProperty("width", width + "px");
-      RootPanel.getBodyElement().appendChild(glassElem_);
    }
    
    private void stopResizing()
@@ -157,9 +134,6 @@ public class ResizeGripper extends Composite
       sizing_ = false;
       lastX_ = 0;
       lastY_ = 0;
-      
-      RootPanel.getBodyElement().removeChild(glassElem_);
-      
       observer_.onResizingCompleted();
    }
    
@@ -188,8 +162,4 @@ public class ResizeGripper extends Composite
    private boolean sizing_ = false;
    private int lastX_ = 0;
    private int lastY_ = 0;
-   
-   private static Element glassElem_ = null;
-   
-
 }
