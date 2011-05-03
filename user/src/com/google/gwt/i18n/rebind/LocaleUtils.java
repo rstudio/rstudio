@@ -41,24 +41,28 @@ public class LocaleUtils {
   /**
    * The token representing the locale property controlling Localization.
    */
-  private static final String PROP_LOCALE = "locale";
+  // @VisibleForTesting
+  static final String PROP_LOCALE = "locale";
 
   /**
    * The config property identifying the URL query paramter name to possibly get
    * the value of the locale property.
    */
-  private static final String PROP_LOCALE_QUERY_PARAM = "locale.queryparam";
+  // @VisibleForTesting
+  static final String PROP_LOCALE_QUERY_PARAM = "locale.queryparam";
 
   /**
    * The config property identifying the cookie name to possibly get the value
    * of the locale property.
    */
-  private static final String PROP_LOCALE_COOKIE = "locale.cookie";
+  // @VisibleForTesting
+  static final String PROP_LOCALE_COOKIE = "locale.cookie";
 
   /**
    * The token representing the runtime.locales configuration property.
    */
-  private static final String PROP_RUNTIME_LOCALES = "runtime.locales";
+  // @VisibleForTesting
+  static final String PROP_RUNTIME_LOCALES = "runtime.locales";
 
   /**
    * Multiple generators need to access the shared cache state of
@@ -145,25 +149,20 @@ public class LocaleUtils {
 
     List<String> rtLocaleNames = prop.getValues();
     if (rtLocaleNames != null) {
-      for (String rtLocale : rtLocaleNames) {
-        GwtLocale locale = factoryInstance.fromString(rtLocale);
-        // TODO(jat): remove use of labels
-        existingLocales:
-        for (GwtLocale existing : allCompileLocales) {
-          for (GwtLocale alias : existing.getAliases()) {
-            if (!alias.isDefault() && locale.inheritsFrom(alias)
-                && locale.usesSameScript(alias)) {
-              allLocales.add(locale);
-              break existingLocales;
-            }
-          }
+      for (String rtLocaleName : rtLocaleNames) {
+        GwtLocale rtLocale = factoryInstance.fromString(rtLocaleName);
+        if (rtLocale.isDefault()) {
+          continue;
         }
-        if (!compileLocale.isDefault()
-            && locale.inheritsFrom(compileLocale)
-            && locale.usesSameScript(compileLocale)) {
-          // TODO(jat): don't include runtime locales which also inherit
-          // from a more-specific compile locale than this one
-          runtimeLocales.add(locale);
+        for (GwtLocale search : rtLocale.getCompleteSearchList()) {
+          if (search.equals(compileLocale) && rtLocale.usesSameScript(compileLocale)) {
+            runtimeLocales.add(rtLocale);
+            allLocales.add(rtLocale);
+            break;
+          } else if (allCompileLocales.contains(search) && rtLocale.usesSameScript(search)) {
+            allLocales.add(rtLocale);
+            break;
+          }
         }
       }
     }

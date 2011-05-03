@@ -46,6 +46,7 @@ import com.google.gwt.i18n.client.NumberParse_fr_Test;
 import com.google.gwt.i18n.client.RuntimeLocalesTest;
 import com.google.gwt.i18n.client.TimeZoneInfoTest;
 import com.google.gwt.i18n.client.TimeZoneTest;
+import com.google.gwt.i18n.rebind.LocaleUtilsTest;
 import com.google.gwt.i18n.server.GwtLocaleTest;
 import com.google.gwt.i18n.server.MessageFormatParserTest;
 import com.google.gwt.i18n.server.PropertyCatalogFactoryTest;
@@ -97,6 +98,7 @@ public class I18NSuite {
     suite.addTestSuite(I18N_nb_Test.class);
     suite.addTestSuite(LocaleInfo_ar_Test.class);
     suite.addTestSuite(LocaleInfoTest.class);
+    suite.addTestSuite(LocaleUtilsTest.class);
     suite.addTestSuite(LocalizedNames_default_Test.class);
     suite.addTestSuite(LocalizedNames_en_Test.class);
     suite.addTestSuite(MessageFormatParserTest.class);

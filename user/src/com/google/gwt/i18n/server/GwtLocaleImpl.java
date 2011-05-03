@@ -577,17 +577,17 @@ public class GwtLocaleImpl implements GwtLocale {
    * @return true if the scripts are the same
    */
   public boolean usesSameScript(GwtLocale other) {
-    // The number of aliases is very small, so n^2 isn't a problem here.
-    List<GwtLocale> myAliases = getAliases();
-    List<GwtLocale> otherAliases = other.getAliases();
-    for (GwtLocale alias : myAliases) {
-      for (GwtLocale otherAlias : otherAliases) {
-        if (equalsNullCheck(alias.getScript(), otherAlias.getScript())) {
-          return true;
-        }
-      }
+    String myScript = script != null ? script : DefaultLanguageScripts.getDefaultScript(language,
+        region);
+    String otherScript = other.getScript() != null ? other.getScript()
+        : DefaultLanguageScripts.getDefaultScript(other.getLanguage(), other.getRegion());
+    // two locales with an unspecified script and no default for the language
+    // match only if the language is the same
+    if (myScript == null) {
+      return equalsNullCheck(language, other.getLanguage());
+    } else {
+      return myScript.equals(otherScript);
     }
-    return false;
   }
 
   /**
