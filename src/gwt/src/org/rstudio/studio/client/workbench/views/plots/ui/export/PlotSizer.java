@@ -73,6 +73,7 @@ public class PlotSizer extends Composite
       // panel with it on the left and the options on the right
       HorizontalPanel topPanel = new HorizontalPanel();
       CellPanel optionsPanel = null;
+      HorizontalPanel widthAndHeightPanel = null;
       if (extraWidget != null)
       {
          topPanel.setWidth("100%");
@@ -90,22 +91,22 @@ public class PlotSizer extends Composite
                                        optionsPanel,
                                        HasHorizontalAlignment.ALIGN_RIGHT);
          
-         
-         
+         widthAndHeightPanel = new HorizontalPanel();
+         widthAndHeightPanel.setStylePrimaryName(
+                                       resources.styles().widthAndHeightEntry());
+         configureHorizontalOptionsPanel(widthAndHeightPanel);
+         optionsPanel.add(widthAndHeightPanel);
       }
       else
       {
-         optionsPanel = topPanel;
+         optionsPanel = topPanel ;
          optionsPanel.setStylePrimaryName(
                                  resources.styles().horizontalSizeOptions());
+         widthAndHeightPanel = topPanel;
          configureHorizontalOptionsPanel(topPanel);  
       }
           
       // image width
-      HorizontalPanel widthAndHeightPanel = new HorizontalPanel();
-      widthAndHeightPanel.setStylePrimaryName(
-                                    resources.styles().widthAndHeightEntry());
-      configureHorizontalOptionsPanel(widthAndHeightPanel);
       widthAndHeightPanel.add(createImageOptionLabel("Width:"));
       widthTextBox_ = createImageSizeTextBox();
       widthTextBox_.addChangeHandler(new ChangeHandler() {
@@ -164,8 +165,9 @@ public class PlotSizer extends Composite
       });
       widthAndHeightPanel.add(heightTextBox_);
       
-      // add width and height panel to options panel container
-      optionsPanel.add(widthAndHeightPanel);
+      // add width and height panel to options panel container if necessary
+      if (widthAndHeightPanel != optionsPanel)
+         optionsPanel.add(widthAndHeightPanel);
   
       // lock ratio check box
       keepRatioCheckBox_ = new CheckBox();

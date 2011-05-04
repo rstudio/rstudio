@@ -26,10 +26,6 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-// TODO: checkbox baseline tip from joe
-
-// TODO: make sure we replay the while display list onto the plot
-
 public class ExportPlotDialog extends ModalDialogBase 
 {
    public ExportPlotDialog(PlotsServerOperations server,
