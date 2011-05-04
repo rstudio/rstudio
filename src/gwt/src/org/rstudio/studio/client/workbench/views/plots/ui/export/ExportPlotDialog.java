@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.plots.ui.export;
 
+import org.rstudio.core.client.Size;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -20,14 +21,14 @@ import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperatio
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-// TODO: limit the initial size of the dialog (and thus the displayed
-// image) based on your workbench size
-
 // TODO: checkbox baseline tip from joe
+
+// TODO: make sure we replay the while display list onto the plot
 
 public class ExportPlotDialog extends ModalDialogBase 
 {
@@ -67,8 +68,15 @@ public class ExportPlotDialog extends ModalDialogBase
    {
       VerticalPanel mainPanel = new VerticalPanel();    
    
-      plotSizer_ = new PlotSizer(options_.getWidth(), 
-                                 options_.getHeight(),
+      // enforce maximum initial dimensions based on screen size
+      Size maxSize = new Size(Window.getClientWidth() - 100,
+                              Window.getClientHeight() - 250);
+      
+      int width = Math.min(options_.getWidth(), maxSize.width);
+      int height = Math.min(options_.getHeight(), maxSize.height);
+      
+      plotSizer_ = new PlotSizer(width, 
+                                 height,
                                  options_.getKeepRatio(),
                                  new ExportTargetWidget(),
                                  server_,
