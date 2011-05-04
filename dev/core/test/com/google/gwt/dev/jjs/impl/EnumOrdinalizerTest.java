@@ -43,12 +43,11 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
     super.setUp();
     EnumOrdinalizer.enableTracker();
     
-    // don't need to runDeadCodeElimination, it's after we're done anyway
-    runDeadCodeElimination = false;
-    
     // defaults, can be overridden by individual test cases
     runTypeTightener = false;
     runMethodCallTightener = false;
+    runMethodInliner = true;
+    runMakeCallsStatic = true;
   }
   
   public void testOrdinalizeBasicAssignment() 
@@ -240,6 +239,58 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
     assertTrue(tracker.isOrdinalized("test.EntryPoint$Fruit"));
   }
   
+  public void testOrdinalizableStaticFieldRef() 
+      throws UnableToCompleteException  {
+    EnumOrdinalizer.resetTracker();
+    
+    // this will cause a static field ref in the enum clinit
+    setupFruitEnumWithStaticField();
+    optimize("void", "String y = Fruit.staticField;");
+    
+    EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
+    assertTrue(tracker.isOrdinalized("test.EntryPoint$Fruit"));
+  } 
+  
+  public void testOrdinalizableStaticMethod() 
+      throws UnableToCompleteException  {
+    EnumOrdinalizer.resetTracker();
+    
+    // this will cause a static method enum class
+    setupFruitEnumWithStaticMethod();
+    optimize("void", "int y = Fruit.staticMethod();");
+    
+    EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
+    assertTrue(tracker.isOrdinalized("test.EntryPoint$Fruit"));
+  } 
+  
+  public void testNotOrdinalizableInstanceStaticFieldRef() 
+      throws UnableToCompleteException  {
+    EnumOrdinalizer.resetTracker();
+    
+    // this will cause a static field ref in the enum clinit
+    setupFruitEnumWithStaticField();
+    optimize("void", "Fruit fruit = Fruit.APPLE;",
+                     "String y = fruit.staticField;");
+    
+    EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
+    assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
+    assertFalse(tracker.isOrdinalized("test.EntryPoint$Fruit"));
+  } 
+  
+  public void testNotOrdinalizableInstanceStaticMethod() 
+      throws UnableToCompleteException  {
+    EnumOrdinalizer.resetTracker();
+    
+    // this will cause a static method enum class
+    setupFruitEnumWithStaticMethod();
+    optimize("void", "Fruit fruit = Fruit.APPLE;",
+                     "int y = fruit.staticMethod();");
+    
+    EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
+    assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
+    assertFalse(tracker.isOrdinalized("test.EntryPoint$Fruit"));
+  } 
+  
   public void testNotOrdinalizableClassLiteralReference() 
       throws UnableToCompleteException  {
     EnumOrdinalizer.resetTracker();
@@ -383,20 +434,40 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
     assertFalse(tracker.isOrdinalized("test.EntryPoint$Fruit"));
   }
 
-  public void testNotOrdinalizableInstanceOf() {
-    /*
-     * TODO(jbrosenberg): determine if this really needs to be true, and write a
-     * test to prove it.
-     */
+  public void testNotOrdinalizableInstanceOfEnumExpression() 
+      throws UnableToCompleteException  {
+    setupFruitEnum();
+    optimize("void", "Fruit fruit = Fruit.APPLE;",
+                     "if (fruit instanceof Enum) {",
+                     "  fruit = Fruit.ORANGE;",
+                     "}");
+    
+    EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
+    assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
+    assertFalse(tracker.isOrdinalized("test.EntryPoint$Fruit"));
   }
 
-  public void testNotOrdinalizableStaticFieldRef() 
+  public void testNotOrdinalizableInstanceOfEnumTestType() 
+      throws UnableToCompleteException  {
+    setupFruitEnum();
+    optimize("void", "Object fruitObj = new Object();",
+                     "if (fruitObj instanceof Fruit) {",
+                     "  fruitObj = null;",
+                     "}");
+    
+    EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
+    assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
+    assertFalse(tracker.isOrdinalized("test.EntryPoint$Fruit"));
+  }
+
+  public void testNotOrdinalizableStaticFieldRefToVALUES() 
       throws UnableToCompleteException  {
     EnumOrdinalizer.resetTracker();
     
-    // this will cause a static field ref in the enum clinit
-    setupFruitEnumWithStaticField();
-    optimize("void");
+    // this ends up inlining the values() method call, and thus $VALUES is referenced external
+    // to the Fruit enum class.
+    setupFruitEnum();
+    optimize("void", "Fruit[] fruits = Fruit.values();");
     
     EnumOrdinalizer.Tracker tracker = EnumOrdinalizer.getTracker();
     assertTrue(tracker.isVisited("test.EntryPoint$Fruit"));
@@ -407,7 +478,9 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
       throws UnableToCompleteException  {
     EnumOrdinalizer.resetTracker();
     
-    // this ends up calling Fruit.clinit() first (which is a static method call)
+    // make sure values() method call doesn't doesn't get inlined
+    runMethodInliner = false;
+    
     setupFruitEnum();
     optimize("void", "Fruit[] fruits = Fruit.values();");
     
@@ -824,7 +897,6 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
 
   private void setupFruitEnum() {
     addSnippetClassDecl("public enum Fruit {APPLE, ORANGE}");
-    setupExtraDummyEnum();
   }
 
   private void setupFruitEnumWithInstanceField() {
@@ -834,31 +906,27 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
                         "    instanceField = str;",
                         "  }",
                         "}");
-    setupExtraDummyEnum();
   }
     
   private void setupFruitEnumWithStaticField() {
     addSnippetClassDecl("public enum Fruit {APPLE, ORANGE;",
                         "  public static final String staticField = \"STATIC\";",
                         "}");
-    setupExtraDummyEnum();
+  }
+    
+  private void setupFruitEnumWithStaticMethod() {
+    addSnippetClassDecl("public enum Fruit {APPLE, ORANGE;",
+                        "  public static final int staticMethod() {",
+                        "    int x = 0;",
+                        "    return x;",
+                        "  }",
+                        "}");
   }
     
   private void setupVegetableEnum() {
     addSnippetClassDecl("public enum Vegetable {CARROT, SPINACH}");
   }
     
-  private void setupExtraDummyEnum() {
-    /*
-     * Assure there are at least more 2 enums in the program, so inlining or
-     * tightening doesn't push a single enum sub-class into the methods of the 
-     * Enum super-class itself (which prevents ordinalization in most cases).
-     * TODO(jbrosenberg): Make ordinalization work if there's only 1 enum in 
-     * a program.
-     */
-    addSnippetClassDecl("public enum DummyEnum {DUMMY}");
-  }
-  
   private void setupFruitSwitchMethod() {
     addSnippetClassDecl("public static String fruitSwitch(Fruit fruit) {",
                         " switch(fruit) {",
@@ -878,19 +946,11 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   private final boolean runCastNormalizer = true;
   private final boolean runEqualityNormalizer = true;
   
-  /*
-   * EnumOrdinalizer depends MakeCallsStatic and MethodInliner running before
-   * it runs, since they cleanup the internal structure of an enum class to
-   * inline instance methods like $init.
-   * TODO(jbrosenberg): Update EnumOrdinalizer to be able to succeed 
-   * irrespective of the ordering and interaction with other optimizers.
-   */
-  private final boolean runMakeCallsStatic = true;
-  private final boolean runMethodInliner = true;
-  
-  // these can be enabled where needed
-  private boolean runMethodCallTightener = false;
-  private boolean runTypeTightener = false;
+  // These are enabled as needed for a given test
+  private boolean runMakeCallsStatic;
+  private boolean runMethodInliner;
+  private boolean runMethodCallTightener;
+  private boolean runTypeTightener;
   
   @Override
   protected boolean optimizeMethod(JProgram program, JMethod method) {

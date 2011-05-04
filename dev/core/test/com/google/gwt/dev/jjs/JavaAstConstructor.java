@@ -72,10 +72,11 @@ public class JavaAstConstructor {
       code.append("package com.google.gwt.lang;\n");
       code.append("public final class Cast {\n");
       code.append("  public static Object dynamicCast(Object src, int dstId) { return src;}\n");
-      code.append("  public static boolean isNull(Object a) { return false;}\n");
-      code.append("  public static boolean isNotNull(Object a) { return false;}\n");
-      code.append("  public static boolean jsEquals(Object a, Object b) { return false;}\n");
-      code.append("  public static boolean jsNotEquals(Object a, Object b) { return false;}\n");
+      code.append("  public static boolean instanceOf(Object src, int dstId) { return false;}\n");
+      code.append("  public static native boolean isNull(Object a) /*-{ }-*/;\n");
+      code.append("  public static native boolean isNotNull(Object a) /*-{ }-*/;\n");
+      code.append("  public static native boolean jsEquals(Object a, Object b) /*-{ }-*/;\n");
+      code.append("  public static native boolean jsNotEquals(Object a, Object b) /*-{ }-*/;\n");
       code.append("}\n");
       return code;
     }

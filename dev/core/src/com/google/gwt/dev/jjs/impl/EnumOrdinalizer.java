@@ -71,9 +71,13 @@ import java.util.TreeSet;
  * This optimizer modifies enum classes to change their field constants to ints,
  * and to remove initialization of those constants in the clinit method. An
  * ordinalized enum class will not be removed from the AST by this optimizer,
- * but as long as all references to it are replaced (which is one of the
- * requirements for ordinalization), then the enum class itself will be pruned
- * by subsequent optimizer passes.
+ * but as long as all references to it are replaced, then the enum class itself
+ * will be pruned by subsequent optimizer passes. Some enum classes may not be
+ * completely removed however. Ordinalization can proceed in cases where there
+ * are added static fields or methods in the enum class. In such cases a reduced
+ * version of the original enum class can remain in the AST, containing only
+ * static fields and methods which aren't part of the enum infrastructure (in
+ * which case it will no longer behave as an enum class at all).
  * 
  * Regardless of whether an ordinalized enum class ends up being completely
  * pruned away, the AST is expected to be in a coherent and usable state after
@@ -295,13 +299,29 @@ public class EnumOrdinalizer {
    * does this by keeping track of a "black-list" for ordinals which violate the
    * conditions for ordinalization, below.
    * 
-   * An enum cannot be ordinalized, if it: is implicitly upcast. is implicitly
-   * cast to from a nullType. is implicitly cast to or from a javaScriptObject
-   * type. is explicitly cast to another type (or vice-versa). it's class
-   * literal is used explicitly. it has an artificial rescue recorded for it.
-   * has any field referenced, except for: one of it's enum constants
-   * Enum.ordinal has any method called, except for: ordinal() Enum.ordinal()
-   * Enum() super constructor Enum.createValueOfMap()
+   * An enum cannot be ordinalized, if it:
+   * <ul>
+   * <li>is implicitly upcast.</li>
+   * <li>is implicitly cast to from a nullType.</li>
+   * <li>is implicitly cast to or from a javaScriptObject type.</li>
+   * <li>is explicitly cast to another type (or vice-versa).</li>
+   * <li>is tested in an instanceof expression.</li>
+   * <li>it's class literal is used explicitly.</li>
+   * <li>it has an artificial rescue recorded for it.</li>
+   * <li>has any field referenced, except for:</li>
+   * <ul>
+   * <li>static fields, other than the synthetic $VALUES field.</li>
+   * <li>Enum.ordinal.</li>
+   * </ul>
+   * <li>has any method called, except for:</li>
+   * <ul>
+   * <li>ordinal().</li>
+   * <li>Enum.ordinal().</li>
+   * <li>Enum() super constructor.</li>
+   * <li>Enum.createValueOfMap().</li>
+   * <li>static methods, other than values() or valueOf().</li>
+   * </ul>
+   * </ul>
    * 
    * This visitor extends the ImplicitUpcastAnalyzer, which encapsulates all the
    * conditions where implicit upcasting can occur in an AST. The rest of the
@@ -394,6 +414,11 @@ public class EnumOrdinalizer {
       JEnumType maybeEnum = x.isEnumOrSubclass();
       if (maybeEnum != null) {
         enumsVisited.put(program.getClassLiteralName(maybeEnum), maybeEnum);
+
+        // don't need to re-ordinalize a previously ordinalized enum
+        if (maybeEnum.isOrdinalized()) {
+          addToBlackList(maybeEnum, x.getSourceInfo());
+        }
       }
     }
 
@@ -408,44 +433,28 @@ public class EnumOrdinalizer {
         // check any instance field reference other than ordinal
         blackListIfEnumExpression(x.getInstance());
       } else if (x.getField().isStatic()) {
-        // check static field references
-
         /*
-         * Need to exempt static fieldRefs to the special $VALUES array that
-         * gets generated for all enum classes, if the reference occurs within
-         * the enum class itself (such as happens in the clinit() or values()
-         * method for all enums).
+         * Black list if the $VALUES static field is referenced outside of an
+         * enum class. This can happen if there's a call to an enum's values()
+         * method, which then gets inlined.
+         * 
+         * TODO (jbrosenberg): Investigate further whether referencing the
+         * $VALUES array (as well as the values() method) should not block
+         * ordinalization. Instead, convert $VALUES to an array of int.
          */
         if (x.getField().getName().equals("$VALUES")
-            && this.currentMethod.getEnclosingType() == x.getField().getEnclosingType()) {
-          if (getEnumType(x.getField().getEnclosingType()) != null) {
-            return;
-          }
+            && this.currentMethod.getEnclosingType() != x.getField().getEnclosingType()) {
+          blackListIfEnum(x.getField().getEnclosingType(), x.getSourceInfo());
         }
-
-        /*
-         * Need to exempt static fieldRefs for enum constants themselves. Detect
-         * these as final fields, that have the same enum type as their
-         * enclosing type.
-         */
-        if (x.getField().isFinal()
-            && (x.getField().getEnclosingType() == getEnumType(x.getField().getType()))) {
-          return;
-        }
-
-        /*
-         * Check any other refs to static fields of an enum class. This includes
-         * references to $VALUES that might occur outside of the enum class
-         * itself. This can occur when a call to the values() method gets
-         * inlined, etc. Also check here for any user defined static fields.
-         */
-        blackListIfEnum(x.getField().getEnclosingType(), x.getSourceInfo());
       }
     }
 
     @Override
     public void endVisit(JInstanceOf x, Context ctx) {
       // If any instanceof tests haven't been optimized out, black list.
+      blackListIfEnum(x.getExpr().getType(), x.getSourceInfo());
+      // TODO (jbrosenberg): Investigate further whether ordinalization can be
+      // allowed in this case.
       blackListIfEnum(x.getTestType(), x.getSourceInfo());
     }
 
@@ -461,11 +470,10 @@ public class EnumOrdinalizer {
       if (x.getInstance() != null) {
         blackListIfEnumExpression(x.getInstance());
       } else if (x.getTarget().isStatic()) {
-        /*
-         * need to exempt static methodCalls for an enum class if it occurs
-         * within the enum class itself (such as in $clinit() or values())
-         */
-        if (this.currentMethod.getEnclosingType() != x.getTarget().getEnclosingType()) {
+        // black-list static method calls on an enum class only for valueOf()
+        // and values()
+        String methodName = x.getTarget().getName();
+        if (methodName.equals("valueOf") || methodName.equals("values")) {
           blackListIfEnum(x.getTarget().getEnclosingType(), x.getSourceInfo());
         }
       }
@@ -888,17 +896,14 @@ public class EnumOrdinalizer {
     ordinalAnalyzer.accept(program);
     ordinalAnalyzer.afterVisitor();
 
-    if (tracker != null) {
-      for (JEnumType type : enumsVisited.values()) {
-        tracker.addVisited(type.getName());
-        if (!ordinalizationBlackList.contains(type)) {
-          tracker.addOrdinalized(type.getName());
-        }
-      }
-    }
-
     // Bail if we don't need to do any ordinalization
     if (enumsVisited.size() == ordinalizationBlackList.size()) {
+      // Update tracker stats
+      if (tracker != null) {
+        for (JEnumType type : enumsVisited.values()) {
+          tracker.addVisited(type.getName());
+        }
+      }
       return stats;
     }
 
@@ -919,6 +924,19 @@ public class EnumOrdinalizer {
 
     if (tracker != null) {
       tracker.maybeDumpAST(program, 2);
+    }
+
+    // Update enums ordinalized, and tracker stats
+    for (JEnumType type : enumsVisited.values()) {
+      if (tracker != null) {
+        tracker.addVisited(type.getName());
+      }
+      if (!ordinalizationBlackList.contains(type)) {
+        if (tracker != null) {
+          tracker.addOrdinalized(type.getName());
+        }
+        type.setOrdinalized();
+      }
     }
     return stats;
   }
