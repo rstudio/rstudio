@@ -78,6 +78,7 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
    */
   public TaskEditActivity(TaskEditPlace place, ClientFactory clientFactory) {
     this.taskId = place.getTaskId();
+    this.task = place.getTask();
     this.clientFactory = clientFactory;
   }
 
@@ -163,40 +164,45 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
       // Lock the display until the task is loaded.
       isEditing = true;
       view.setEditing(true);
-      view.setLocked(true);
 
-      // Load the existing task.
-      clientFactory.getRequestFactory().taskRequest().findTask(this.taskId).fire(
-          new Receiver<TaskProxy>() {
-            @Override
-            public void onFailure(ServerFailure error) {
-              Window.alert("An error occurred on the server while loading this task."
-                  + " Please select a different task from the task list.");
-              doCancelTask();
-            }
-
-            @Override
-            public void onSuccess(TaskProxy response) {
-              // Early exit if this activity has already been cancelled.
-              if (isDead) {
-                return;
-              }
-
-              // Task not found.
-              if (response == null) {
-                Window.alert("The task with id '" + taskId + "' could not be found."
+      if (task == null) {
+        // Load the existing task.
+        view.setLocked(true);
+        clientFactory.getRequestFactory().taskRequest().findTask(this.taskId).fire(
+            new Receiver<TaskProxy>() {
+              @Override
+              public void onFailure(ServerFailure error) {
+                Window.alert("An error occurred on the server while loading this task."
                     + " Please select a different task from the task list.");
                 doCancelTask();
-                return;
               }
 
-              // Show the task.
-              task = response;
-              view.getEditorDriver()
-                  .edit(response, clientFactory.getRequestFactory().taskRequest());
-              view.setLocked(false);
-            }
-          });
+              @Override
+              public void onSuccess(TaskProxy response) {
+                // Early exit if this activity has already been cancelled.
+                if (isDead) {
+                  return;
+                }
+
+                // Task not found.
+                if (response == null) {
+                  Window.alert("The task with id '" + taskId + "' could not be found."
+                      + " Please select a different task from the task list.");
+                  doCancelTask();
+                  return;
+                }
+
+                // Show the task.
+                task = response;
+                view.getEditorDriver().edit(response,
+                    clientFactory.getRequestFactory().taskRequest());
+                view.setLocked(false);
+              }
+            });
+      } else {
+        // Use the task that was passed with the place.
+        view.getEditorDriver().edit(task, clientFactory.getRequestFactory().taskRequest());
+      }
     }
 
     // Display the view.

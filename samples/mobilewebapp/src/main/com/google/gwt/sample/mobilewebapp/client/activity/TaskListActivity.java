@@ -221,7 +221,8 @@ public class TaskListActivity extends AbstractActivity implements TaskListView.P
 
   public void selectTask(TaskProxy selected) {
     // Go into edit mode when a task is selected.
-    clientFactory.getPlaceController().goTo(TaskEditPlace.createTaskEditPlace(selected.getId()));
+    clientFactory.getPlaceController().goTo(
+        TaskEditPlace.createTaskEditPlace(selected.getId(), selected));
   }
 
   public void start(AcceptsOneWidget container, EventBus eventBus) {

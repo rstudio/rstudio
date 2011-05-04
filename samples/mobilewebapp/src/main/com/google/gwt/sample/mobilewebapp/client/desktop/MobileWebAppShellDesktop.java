@@ -18,9 +18,8 @@ package com.google.gwt.sample.mobilewebapp.client.desktop;
 import com.google.gwt.canvas.dom.client.CssColor;
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.MediaElement;
-import com.google.gwt.dom.client.VideoElement;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.VideoElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.media.client.Video;
@@ -110,6 +109,17 @@ public class MobileWebAppShellDesktop extends MobileWebAppShellBase {
 
     public Place getPlace() {
       return place;
+    }
+
+    /**
+     * Check whether or not this {@link MainMenuItem} maps to the specified
+     * place.
+     * 
+     * @param p a {@link Place}
+     * @return true if this menu item maps to the place, false if not
+     */
+    public boolean mapsToPlace(Place p) {
+      return place == p;
     }
   }
 
@@ -202,7 +212,13 @@ public class MobileWebAppShellDesktop extends MobileWebAppShellBase {
 
     // Add items to the main menu.
     final List<MainMenuItem> menuItems = new ArrayList<MainMenuItem>();
-    menuItems.add(new MainMenuItem("Task List", new TaskListPlace(false)));
+    menuItems.add(new MainMenuItem("Task List", new TaskListPlace(false)) {
+      @Override
+      public boolean mapsToPlace(Place p) {
+        // Map to all TaskListPlace instances.
+        return p instanceof TaskListPlace;
+      }
+    });
     menuItems.add(new MainMenuItem("Add Task", TaskEditPlace.getTaskCreatePlace()));
     mainMenu.setRowData(menuItems);
 
@@ -224,7 +240,7 @@ public class MobileWebAppShellDesktop extends MobileWebAppShellBase {
       public void onPlaceChange(PlaceChangeEvent event) {
         Place place = event.getNewPlace();
         for (MainMenuItem menuItem : menuItems) {
-          if (place == menuItem.getPlace()) {
+          if (menuItem.mapsToPlace(place)) {
             // We found a match in the main menu.
             selectionModel.setSelected(menuItem, true);
             return;
