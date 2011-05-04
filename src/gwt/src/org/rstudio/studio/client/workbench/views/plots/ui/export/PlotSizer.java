@@ -20,6 +20,8 @@ import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperatio
 
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -47,12 +49,11 @@ public class PlotSizer extends Composite
                     PlotsServerOperations server,
                     Observer observer)
    {
+      // alias objects and resources
       server_ = server;
       observer_ = observer;
-      
-      // alias resources
       ExportPlotDialogResources resources = ExportPlotDialogResources.INSTANCE;
-      
+           
       // main widget
       VerticalPanel verticalPanel = new VerticalPanel();
       
@@ -65,14 +66,60 @@ public class PlotSizer extends Composite
       // image width
       sizeInputPanel.add(createImageOptionLabel("Width:"));
       widthTextBox_ = createImageSizeTextBox();
-      setWidthTextBox(initialWidth);
+      widthTextBox_.addChangeHandler(new ChangeHandler() {
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            // screen out programmatic sets
+            if (settingDimenensionInProgress_)
+               return;
+            
+            // enforce min size
+            int width = constrainWidth(getImageWidth());
+           
+            // preserve aspect ratio if requested
+            if (getKeepRatio())
+            {  
+               double ratio = (double)lastHeight_ / (double)lastWidth_;
+               int height = constrainHeight((int) (ratio * (double)width));
+               setHeightTextBox(height);
+            }
+  
+            // set width
+            setWidthTextBox(width);
+         }
+         
+      });
       sizeInputPanel.add(widthTextBox_);
      
       // image height
       sizeInputPanel.add(new HTML("&nbsp;&nbsp;"));
       sizeInputPanel.add(createImageOptionLabel("Height:"));
       heightTextBox_ = createImageSizeTextBox();
-      setHeightTextBox(initialHeight);
+      heightTextBox_.addChangeHandler(new ChangeHandler() {
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            // screen out programmatic sets
+            if (settingDimenensionInProgress_)
+               return;
+            
+            // enforce min size
+            int height = constrainHeight(getImageHeight());
+            
+            // preserve aspect ratio if requested
+            if (getKeepRatio())
+            {
+               double ratio = (double)lastWidth_ / (double)lastHeight_;
+               int width = constrainWidth((int) (ratio * (double)height));
+               setWidthTextBox(width);
+            }
+           
+            // always set height
+            setHeightTextBox(height);
+         }
+         
+      });
       sizeInputPanel.add(heightTextBox_);
   
       // lock ratio check box
@@ -84,24 +131,24 @@ public class PlotSizer extends Composite
       
       // image and sizer in layout panel (create now so we can call
       // setSize in update button click handler)
-      final LayoutPanel layoutPanel = new LayoutPanel(); 
+      final LayoutPanel previewPanel = new LayoutPanel(); 
      
       
       // update button
-      ThemedButton previewButton = new ThemedButton("Preview", 
+      ThemedButton updateButton = new ThemedButton("Update Size", 
                                                     new ClickHandler(){
          public void onClick(ClickEvent event) 
          {
-            layoutPanel.setSize((getImageWidth() + IMAGE_INSET) + "px", 
+            previewPanel.setSize((getImageWidth() + IMAGE_INSET) + "px", 
                                 (getImageHeight() + IMAGE_INSET) + "px");
             updateImage();
             
             observer_.onPlotResized(false);
          }
       });
-      previewButton.getElement().getStyle().setMarginTop(5, Unit.PX);
+      updateButton.getElement().getStyle().setMarginTop(5, Unit.PX);
       sizeInputPanel.add(new HTML("&nbsp;"));
-      sizeInputPanel.add(previewButton);
+      sizeInputPanel.add(updateButton);
 
       verticalPanel.add(sizeInputPanel); 
        
@@ -112,26 +159,30 @@ public class PlotSizer extends Composite
       imageFrame_.setMarginHeight(0);
       imageFrame_.setMarginWidth(0);
       imageFrame_.setStylePrimaryName(resources.styles().imagePreview());
-      layoutPanel.add(imageFrame_);
-      layoutPanel.setWidgetLeftRight(imageFrame_, 0, Unit.PX, IMAGE_INSET, Unit.PX);
-      layoutPanel.setWidgetTopBottom(imageFrame_, 0, Unit.PX, IMAGE_INSET, Unit.PX);
-      layoutPanel.getWidgetContainerElement(imageFrame_).getStyle().setOverflow(Overflow.VISIBLE);
+      previewPanel.add(imageFrame_);
+      previewPanel.setWidgetLeftRight(imageFrame_, 0, Unit.PX, IMAGE_INSET, Unit.PX);
+      previewPanel.setWidgetTopBottom(imageFrame_, 0, Unit.PX, IMAGE_INSET, Unit.PX);
+      previewPanel.getWidgetContainerElement(imageFrame_).getStyle().setOverflow(Overflow.VISIBLE);
       
       // Stops mouse events from being routed to the iframe, which would
       // interfere with resizing
       FlowPanel imageSurface = new FlowPanel();
       imageSurface.setSize("100%", "100%");
-      layoutPanel.add(imageSurface);
-      layoutPanel.setWidgetTopBottom(imageSurface, 0, Unit.PX, 0, Unit.PX);
-      layoutPanel.setWidgetLeftRight(imageSurface, 0, Unit.PX, 0, Unit.PX);
+      previewPanel.add(imageSurface);
+      previewPanel.setWidgetTopBottom(imageSurface, 0, Unit.PX, 0, Unit.PX);
+      previewPanel.setWidgetLeftRight(imageSurface, 0, Unit.PX, 0, Unit.PX);
       
       // resize gripper
       ResizeGripper gripper = new ResizeGripper(new ResizeGripper.Observer() 
       {
          @Override
          public void onResizingStarted()
-         {
+         {    
+            int startWidth = getImageWidth();
+            int startHeight = getImageHeight();
             
+            widthAspectRatio_ = (double)startWidth / (double)startHeight;
+            heightAspectRatio_ = (double)startHeight / (double)startWidth;
          }
          
          @Override
@@ -142,15 +193,25 @@ public class PlotSizer extends Composite
             int startHeight = getImageHeight();
             
             // calculate new height and width 
-            int newWidth = startWidth + xDelta;
-            int newHeight = startHeight + yDelta;
-           
+            int newWidth = constrainWidth(startWidth + xDelta);
+            int newHeight = constrainHeight(startHeight + yDelta);
             
+            // preserve aspect ratio if requested
+            if (getKeepRatio())
+            {
+               if (Math.abs(xDelta) > Math.abs(yDelta))
+                  newHeight = (int) (heightAspectRatio_ * (double)newWidth);
+               else
+                  newWidth = (int) (widthAspectRatio_ * (double)newHeight);
+            }
+            
+            // set text boxes
             setWidthTextBox(newWidth);
-            setHeightTextBox(newHeight);
+            setHeightTextBox(newHeight);  
             
-            layoutPanel.setSize(newWidth + IMAGE_INSET + "px", 
-                                newHeight + IMAGE_INSET + "px");
+            // set image preview size
+            previewPanel.setSize(newWidth + IMAGE_INSET + "px", 
+                                 newHeight + IMAGE_INSET + "px");
          }
 
          @Override
@@ -159,23 +220,34 @@ public class PlotSizer extends Composite
             updateImage();
             
             observer_.onPlotResized(true);
-         }     
+         } 
+         
+         private double widthAspectRatio_ = 1.0;
+         private double heightAspectRatio_ = 1.0;
       });
       
       // layout gripper
-      layoutPanel.add(gripper);
-      layoutPanel.setWidgetRightWidth(gripper, 
+      previewPanel.add(gripper);
+      previewPanel.setWidgetRightWidth(gripper, 
                                       0, Unit.PX, 
                                       gripper.getImageWidth(), Unit.PX);
-      layoutPanel.setWidgetBottomHeight(gripper, 
+      previewPanel.setWidgetBottomHeight(gripper, 
                                         0, Unit.PX, 
                                         gripper.getImageHeight(), Unit.PX);
      
-      
-      layoutPanel.setSize((initialWidth + IMAGE_INSET) + "px", 
+      // constrain dimensions
+      initialWidth = constrainWidth(initialWidth);
+      initialHeight = constrainHeight(initialHeight);
+            
+      // initialie text boxes
+      setWidthTextBox(initialWidth);
+      setHeightTextBox(initialHeight);
+ 
+      // initialize preview
+      previewPanel.setSize((initialWidth + IMAGE_INSET) + "px", 
                           (initialHeight + IMAGE_INSET) + "px");
       
-      verticalPanel.add(layoutPanel);
+      verticalPanel.add(previewPanel);
      
       initWidget(verticalPanel);
      
@@ -221,15 +293,45 @@ public class PlotSizer extends Composite
       
    private void setWidthTextBox(int width)
    {
+      settingDimenensionInProgress_ = true;
       lastWidth_ = width;
       widthTextBox_.setText(Integer.toString(width));
+      settingDimenensionInProgress_ = false;
    }
    
    
    private void setHeightTextBox(int height)
    {
+      settingDimenensionInProgress_ = true;
       lastHeight_ = height;
       heightTextBox_.setText(Integer.toString(height));
+      settingDimenensionInProgress_ = false;
+   }
+   
+   private int constrainWidth(int width)
+   {
+      if (width < MIN_SIZE)
+      {
+         keepRatioCheckBox_.setValue(false);
+         return MIN_SIZE;
+      }
+      else
+      {
+         return width;
+      }
+   }
+   
+   private int constrainHeight(int height)
+   {
+      if (height < MIN_SIZE)
+      {
+         keepRatioCheckBox_.setValue(false);
+         return MIN_SIZE;
+      }
+      else
+      {
+         return height;
+      }
    }
    
    private Label createImageOptionLabel(String text)
@@ -270,4 +372,8 @@ public class PlotSizer extends Composite
    
    private int lastWidth_;
    private int lastHeight_ ;
+  
+   private boolean settingDimenensionInProgress_ = false;
+   
+   private final int MIN_SIZE = 100;
 }
