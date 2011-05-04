@@ -202,14 +202,20 @@ public class AttachableHTMLPanel extends ComplexPanel implements Attachable {
 
   @Override
   public void wrapElement(Element element) {
-    if (!isFullyInitialized()) {
-      // NOTE(rdcastro): This code is only run when Attachable is in active use.
-      element.getParentNode().replaceChild(getElement(), element);
-    } else {
-      setElement(element);
-      html = null;
+    if (isFullyInitialized()) {
+      /*
+       * If wrapElement is being called after the widget is fully initialized,
+       * that's probably a programming error, as it's much more efficient to
+       * build the whole tree at once.
+       */
+      throw new IllegalStateException(
+          "wrapElement() cannot be called twice, or after a call to getElement()"
+          + "has forced the widget to render itself (e.g. after adding it to a"
+          + "panel)");
     }
 
+    setElement(element);
+    html = null;
     if (wrapInitializationCallback != null) {
       wrapInitializationCallback.execute();
       wrapInitializationCallback = null;
