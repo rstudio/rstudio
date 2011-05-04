@@ -29,6 +29,9 @@
     <when-property-is name="formfactor" value="tablet"/>
   </replace-with>
 
+  <define-linker name="appcachelinker" class="com.google.gwt.sample.mobilewebapp.linker.AppCacheLinker" />
+  <add-linker name="appcachelinker" />
+
   <!-- Specify the paths for translatable code                    -->
   <source path='client'/>
   <source path='shared'/>

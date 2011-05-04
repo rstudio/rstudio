@@ -43,4 +43,10 @@
     <mime-type>video/mp4</mime-type>
   </mime-mapping>
 
+  <!-- Set the HTML5 appcache mime type -->
+  <mime-mapping>
+    <extension>manifest</extension>        
+    <mime-type>text/cache-manifest</mime-type>        
+  </mime-mapping>
+
 </web-app>

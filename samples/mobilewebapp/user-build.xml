@@ -4,6 +4,7 @@
   <!-- Arguments to gwtc and devmode targets -->
   <property name="gwt.args" value="" />
   <property name="src.dir" value="src/main" />
+  <property name="src.dev.dir" value="src/dev" />
   <property name="war.dir" value="war" />
   <property name="gwt.sdk" value="../.." />
 
@@ -74,9 +75,20 @@
     </copy>
   </target>
 
-  <target name="gwtc" depends="javac" description="GWT compile to JavaScript (production mode)">
+  <target name="javac-dev" description="Compile gwtc related classes">
+    <mkdir dir="build/dev-classes"/>
+    <javac srcdir="${src.dev.dir}" includes="**" encoding="utf-8"
+        destdir="build/dev-classes"
+        source="1.6" target="1.6" nowarn="true"
+        debug="true" debuglevel="lines,vars,source">
+      <classpath refid="project.class.path"/>
+    </javac>
+  </target>
+
+  <target name="gwtc" depends="javac,javac-dev" description="GWT compile to JavaScript (production mode)">
     <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler">
       <classpath>
+        <path location="build/dev-classes"/>
         <pathelement location="${src.dir}/"/>
         <path refid="project.class.path"/>
       </classpath>
@@ -95,9 +107,10 @@
     <enhance_war war="${war.dir}/" />
   </target>
 
-  <target name="devmode" depends="javac,datanucleusenhance" description="Run development mode">
+  <target name="devmode" depends="javac,javac-dev,datanucleusenhance" description="Run development mode">
     <java failonerror="true" fork="true" classname="com.google.gwt.dev.DevMode">
       <classpath>
+        <path location="build/dev-classes"/>
         <pathelement location="${src.dir}/"/>
         <path refid="project.class.path"/>
         <path refid="tools.class.path"/>
@@ -131,6 +144,7 @@
     <delete dir="war/WEB-INF/deploy/" failonerror="false" />
     <delete dir="war/WEB-INF/lib/" failonerror="false" />
     <delete dir="war/mobilewebapp/" failonerror="false" />
+    <delete dir="build/" failonerror="false" />
   </target>
 
 </project>
