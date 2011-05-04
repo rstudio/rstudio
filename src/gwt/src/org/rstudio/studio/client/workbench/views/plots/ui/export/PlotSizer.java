@@ -35,6 +35,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 public class PlotSizer extends Composite 
 {  
@@ -49,22 +50,39 @@ public class PlotSizer extends Composite
                     PlotsServerOperations server,
                     Observer observer)
    {
+      this(initialWidth, initialHeight, keepRatio, null, server, observer);
+   }
+   
+   
+   private void configureHorizontalOptionsPanel(HorizontalPanel panel)
+   {
+      panel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
+      panel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+   }
+   
+   public PlotSizer(int initialWidth, 
+                    int initialHeight,
+                    boolean keepRatio,
+                    Widget extraWidget,
+                    PlotsServerOperations server,
+                    final Observer observer)
+   {
       // alias objects and resources
       server_ = server;
-      observer_ = observer;
       ExportPlotDialogResources resources = ExportPlotDialogResources.INSTANCE;
            
       // main widget
       VerticalPanel verticalPanel = new VerticalPanel();
       
       // options panel
-      HorizontalPanel sizeInputPanel = new HorizontalPanel();
-      sizeInputPanel.setStylePrimaryName(resources.styles().imageOptions());
-      sizeInputPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
-      sizeInputPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+      HorizontalPanel optionsPanel = new HorizontalPanel();
+      optionsPanel.setStylePrimaryName(resources.styles().imageOptions());
+      configureHorizontalOptionsPanel(optionsPanel);
       
       // image width
-      sizeInputPanel.add(createImageOptionLabel("Width:"));
+      HorizontalPanel widthAndHeightPanel = new HorizontalPanel();
+      configureHorizontalOptionsPanel(widthAndHeightPanel);
+      widthAndHeightPanel.add(createImageOptionLabel("Width:"));
       widthTextBox_ = createImageSizeTextBox();
       widthTextBox_.addChangeHandler(new ChangeHandler() {
          @Override
@@ -90,11 +108,11 @@ public class PlotSizer extends Composite
          }
          
       });
-      sizeInputPanel.add(widthTextBox_);
+      widthAndHeightPanel.add(widthTextBox_);
      
       // image height
-      sizeInputPanel.add(new HTML("&nbsp;&nbsp;"));
-      sizeInputPanel.add(createImageOptionLabel("Height:"));
+      widthAndHeightPanel.add(new HTML("&nbsp;&nbsp;"));
+      widthAndHeightPanel.add(createImageOptionLabel("Height:"));
       heightTextBox_ = createImageSizeTextBox();
       heightTextBox_.addChangeHandler(new ChangeHandler() {
          @Override
@@ -120,14 +138,17 @@ public class PlotSizer extends Composite
          }
          
       });
-      sizeInputPanel.add(heightTextBox_);
+      widthAndHeightPanel.add(heightTextBox_);
+      
+      // add width and height panel to options panel container
+      optionsPanel.add(widthAndHeightPanel);
   
       // lock ratio check box
-      sizeInputPanel.add(new HTML("&nbsp;&nbsp;"));
+      optionsPanel.add(new HTML("&nbsp;&nbsp;"));
       keepRatioCheckBox_ = new CheckBox();
       keepRatioCheckBox_.setValue(keepRatio);
       keepRatioCheckBox_.setText("Maintain aspect ratio");
-      sizeInputPanel.add(keepRatioCheckBox_);
+      optionsPanel.add(keepRatioCheckBox_);
       
       // image and sizer in layout panel (create now so we can call
       // setSize in update button click handler)
@@ -143,14 +164,14 @@ public class PlotSizer extends Composite
                                 (getImageHeight() + IMAGE_INSET) + "px");
             updateImage();
             
-            observer_.onPlotResized(false);
+            observer.onPlotResized(false);
          }
       });
       updateButton.getElement().getStyle().setMarginTop(5, Unit.PX);
-      sizeInputPanel.add(new HTML("&nbsp;"));
-      sizeInputPanel.add(updateButton);
+      optionsPanel.add(new HTML("&nbsp;"));
+      optionsPanel.add(updateButton);
 
-      verticalPanel.add(sizeInputPanel); 
+      verticalPanel.add(optionsPanel); 
        
       // image frame
       imageFrame_ = new ImageFrame();
@@ -218,8 +239,7 @@ public class PlotSizer extends Composite
          public void onResizingCompleted()
          {
             updateImage();
-            
-            observer_.onPlotResized(true);
+            observer.onPlotResized(true);
          } 
          
          private double widthAspectRatio_ = 1.0;
@@ -355,9 +375,9 @@ public class PlotSizer extends Composite
    private void updateImage()
    {
       imageFrame_.setImageUrl(server_.getPlotExportUrl("png", 
-                              getImageWidth(),
-                              getImageHeight(),
-                              false));
+                                                       getImageWidth(),
+                                                       getImageHeight(),
+                                                       false));
    }
    
    private static final int IMAGE_INSET = 6;
@@ -368,7 +388,6 @@ public class PlotSizer extends Composite
    private final CheckBox keepRatioCheckBox_;
    
    private final PlotsServerOperations server_;
-   private final Observer observer_;
    
    private int lastWidth_;
    private int lastHeight_ ;
