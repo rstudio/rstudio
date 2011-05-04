@@ -320,19 +320,8 @@ var IndentManager = function(doc, tokenizer, statePattern) {
                   if (parenRe.test(tokens[i].type))
                   {
                      var value = tokens[i].value;
-                     if (value.length == 1)
-                     {
-                        if (!fun(value, {row: startRow, column: tokens[i].column}))
-                           return false;
-                     }
-                     else
-                     {
-                        for (var j = 0; j < value.length; j++)
-                        {
-                           if (!fun(value.charAt(j), {row: startRow, column: tokens[i].column + j}))
-                              return false;
-                        }
-                     }
+                     if (!fun(value, {row: startRow, column: tokens[i].column}))
+                        return false;
                   }
                }
             }
@@ -353,19 +342,8 @@ var IndentManager = function(doc, tokenizer, statePattern) {
                   if (parenRe.test(tokens[i].type))
                   {
                      var value = tokens[i].value;
-                     if (value.length == 1)
-                     {
-                        if (!fun(value, {row: startRow, column: tokens[i].column}))
-                           return false;
-                     }
-                     else
-                     {
-                        for (var j = value.length - 1; j >= 0; j--)
-                        {
-                           if (!fun(value.charAt(j), {row: startRow, column: tokens[i].column + j}))
-                              return false;
-                        }
-                     }
+                     if (!fun(value, {row: startRow, column: tokens[i].column}))
+                        return false;
                   }
                }
             }
@@ -486,9 +464,28 @@ var IndentManager = function(doc, tokenizer, statePattern) {
 
    this.$filterWhitespaceAndComments = function(tokens)
    {
-      return tokens.filter(function (t) {
+      tokens = tokens.filter(function (t) {
          return !isWhitespaceOrComment(t);
       });
+
+      for (var i = tokens.length - 1; i >= 0; i--)
+      {
+         if (tokens[i].value.length > 1 && /\bparen\b/.test(tokens[i].type))
+         {
+            var token = tokens[i];
+            tokens.splice(i, 1);
+            for (var j = token.value.length - 1; j >= 0; j--)
+            {
+               var newToken = {
+                  type: token.type,
+                  value: token.value.charAt(j),
+                  column: token.column + j
+               };
+               tokens.splice(i, 0, newToken);
+            }
+         }
+      }
+      return tokens;
    };
 
 }).call(IndentManager.prototype);
