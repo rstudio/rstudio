@@ -21,6 +21,12 @@ public interface ExportPlotDialogResources extends ClientBundle
 {  
    public static interface Styles extends CssResource
    {
+      String exportTargetLabel();
+      String imageFormatListBox();
+      String fileNameTextBox();
+      String directoryButton();
+      String directoryTextBox();
+      
       String imagePreview();
       String imageOptionLabel();
       String imageSizeTextBox();

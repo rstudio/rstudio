@@ -181,7 +181,7 @@ public class PlotSizer extends Composite
      
       
       // update button
-      ThemedButton updateButton = new ThemedButton("Update Image Size", 
+      ThemedButton updateButton = new ThemedButton("Update Preview", 
                                                     new ClickHandler(){
          public void onClick(ClickEvent event) 
          {

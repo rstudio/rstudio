@@ -20,9 +20,14 @@ import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperatio
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+
+// TODO: limit the initial size of the dialog (and thus the displayed
+// image) based on your workbench size
+
+// TODO: checkbox baseline tip from joe
 
 public class ExportPlotDialog extends ModalDialogBase 
 {
@@ -33,11 +38,10 @@ public class ExportPlotDialog extends ModalDialogBase
       server_ = server;
       options_ = options;
       
-      setText("Export Plot");
+      setText("Save Plot as Image");
      
-      setButtonAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
       
-      ThemedButton closeButton = new ThemedButton("Close", new ClickHandler() {
+      ThemedButton saveButton = new ThemedButton("Save", new ClickHandler() {
          public void onClick(ClickEvent event) {
             ExportPlotOptions options = ExportPlotOptions.create(
                                                 options_.getType(), 
@@ -48,7 +52,14 @@ public class ExportPlotDialog extends ModalDialogBase
             closeDialog();
          }
       });
-      addCancelButton(closeButton); 
+      addOkButton(saveButton);
+      addCancelButton();
+      
+      viewPlotAfterSavingCheckBox_ = 
+                        new CheckBox("View plot after saving");
+      addLeftWidget(viewPlotAfterSavingCheckBox_);
+      
+      
    }
   
    @Override
@@ -59,6 +70,7 @@ public class ExportPlotDialog extends ModalDialogBase
       plotSizer_ = new PlotSizer(options_.getWidth(), 
                                  options_.getHeight(),
                                  options_.getKeepRatio(),
+                                 new ExportTargetWidget(),
                                  server_,
                                  new PlotSizer.Observer() {
                                     public void onPlotResized(boolean withMouse)
@@ -85,6 +97,8 @@ public class ExportPlotDialog extends ModalDialogBase
    private ExportPlotOptions options_;
    
    private PlotSizer plotSizer_;
+   
+   private CheckBox viewPlotAfterSavingCheckBox_;
 
  
   

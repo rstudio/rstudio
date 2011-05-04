@@ -1,4 +1,29 @@
 
+.exportTargetLabel {
+   margin-right: 7px;	
+}
+
+.imageFormatListBox {
+   width: 150px;	
+}
+
+.fileNameTextBox {
+	margin-top: 4px;
+   width: 145px; 	
+}
+
+.directoryButton {
+  margin-left: -2px;
+}
+
+.directoryTextBox {
+	margin-left: -2px;
+   width: 180px;
+   border: none;
+   outline: none;
+   background: transparent;
+}
+
 .imageOptionLabel {
    margin-right: 5px;
 }
@@ -37,7 +62,7 @@
 }
 
 .verticalSizeOptions .widthAndHeightEntry {
-   margin-bottom: 8px;	
+   margin-bottom: 4px;	
 }
 
 .verticalSizeOptions .maintainAspectRatioCheckBox {
@@ -46,6 +71,6 @@
 
 .verticalSizeOptions .updateImageSizeButton {
 	margin-left: -2px;
-	margin-top: 10px;
-	margin-bottom: 8px;
+	margin-top: 6px;
+	margin-bottom: 4px;
 }

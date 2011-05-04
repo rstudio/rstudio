@@ -513,8 +513,8 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    // default export options
    private ExportPlotOptions exportPlotOptions_ = ExportPlotOptions.create(
                                                    ExportPlotOptions.PNG_TYPE,
-                                                   500, 
-                                                   400,
+                                                   550, 
+                                                   450,
                                                    false);
    
    // size of most recently rendered plot
