@@ -4,6 +4,7 @@
 
    <ui:image field='statusBarTile' src='statusBarTile.png' repeatStyle='Horizontal'/>
    <ui:image field='statusBarSeparator' src='statusBarSeparator.png'/>
+   <ui:image field='function' src='function.png'/>
 
    <ui:style>
       @sprite .statusBar {
@@ -43,8 +44,9 @@
       <sb:StatusBarElementWidget ui:field="position_"
                            styleName="{style.element} {style.pos}"
                            showArrows="false"/>
+      <g:Image resource='{function}'/>
       <sb:StatusBarElementWidget ui:field="function_" styleName="{style.element}"
-                           showArrows="true" visible="false"/>
+                           showArrows="true"/>
       <sb:StatusBarElementWidget ui:field="language_" styleName="{style.element}"
                            showArrows="true"/>
       <sb:StatusBarElementWidget ui:field="encoding_" styleName="{style.element}"

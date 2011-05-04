@@ -141,6 +141,11 @@ public class StatusBarElementWidget extends FlowPanel
       return addHandler(handler, SelectionEvent.getType());
    }
 
+   public HandlerRegistration addMouseDownHandler(MouseDownHandler handler)
+   {
+      return addDomHandler(handler, MouseDownEvent.getType());
+   }
+
    private final ArrayList<String> options_;
    private final Label label_;
    private Image arrows_;

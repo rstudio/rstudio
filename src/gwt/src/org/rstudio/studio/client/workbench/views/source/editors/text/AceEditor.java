@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Document;
@@ -535,12 +536,23 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
 
    public String getCurrentFunction()
    {
-      return "";
+      return getSession().getMode().getCurrentFunction(getCursorPosition());
    }
 
    public Position getCursorPosition()
    {
-      return widget_.getEditor().getSession().getSelection().getCursor();
+      return getSession().getSelection().getCursor();
+   }
+
+   public void setCursorPosition(Position position)
+   {
+      getSession().getSelection().setSelectionRange(
+            Range.fromPoints(position, position));
+   }
+
+   public JsArray<FunctionStart> getFunctionTree()
+   {
+      return getSession().getMode().getFunctionTree();
    }
 
    public void setFontSize(double size)

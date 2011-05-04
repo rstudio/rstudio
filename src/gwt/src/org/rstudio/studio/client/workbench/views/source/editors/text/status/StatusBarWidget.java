@@ -56,7 +56,7 @@ public class StatusBarWidget extends Composite
       HorizontalPanel hpanel = binder.createAndBindUi(this);
       hpanel.setVerticalAlignment(HorizontalPanel.ALIGN_TOP);
 
-      hpanel.setCellWidth(hpanel.getWidget(1), "100%");
+      hpanel.setCellWidth(hpanel.getWidget(2), "100%");
 
       initWidget(hpanel);
 

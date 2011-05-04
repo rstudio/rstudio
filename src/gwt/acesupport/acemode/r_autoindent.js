@@ -13,6 +13,8 @@
 
 define("mode/r_autoindent", function(require, exports, module) {
 
+var Anchor = require("ace/anchor").Anchor;
+
 var IndentManager = function(doc, tokenizer, statePattern) {
    this.$doc = doc;
    this.$tokenizer = tokenizer;
@@ -24,6 +26,216 @@ var IndentManager = function(doc, tokenizer, statePattern) {
    this.$doc.on('change', function(evt) {
       that.$onDocChange.apply(that, [evt]);
    });
+
+   this.$TokenCursor = function()
+   {
+      this.$row = 0;
+      this.$offset = 0;
+   };
+   (function() {
+      this.moveToStartOfRow = function(row)
+      {
+         this.$row = row;
+         this.$offset = 0;
+      };
+
+      this.moveToPreviousToken = function()
+      {
+         while (this.$offset == 0 && this.$row > 0)
+         {
+            this.$row--;
+            this.$offset = that.$tokens[this.$row].length;
+         }
+
+         if (this.$offset == 0)
+            return false;
+
+         this.$offset--;
+
+         return true;
+      };
+
+      this.moveToNextToken = function(maxRow)
+      {
+         this.$offset++;
+
+         while (this.$offset >= that.$tokens[this.$row].length && this.$row < maxRow)
+         {
+            this.$row++;
+            this.$offset = 0;
+         }
+
+         if (this.$offset >= that.$tokens[this.$row].length)
+            return false;
+
+         return true;
+      };
+
+      this.findToken = function(predicate, maxRow)
+      {
+         do
+         {
+            var t = this.currentToken();
+            if (t && predicate(t))
+               return t;
+         }
+         while (this.moveToNextToken(maxRow));
+         return null;
+      };
+
+      this.currentToken = function()
+      {
+         var token = (that.$tokens[this.$row] || [])[this.$offset];
+         if (token)
+            return {token: token, row: this.$row, column: token.column};
+         else
+            return null;
+      };
+
+      this.currentValue = function()
+      {
+         var token = this.currentToken();
+         if (token === null)
+            return null;
+         else
+            return token.token.value;
+      };
+
+      this.currentPosition = function()
+      {
+         var token = this.currentToken();
+         if (token === null)
+            return null;
+         else
+            return {row: token.row, column: token.column};
+      };
+
+      this.cloneCursor = function()
+      {
+         var clone = new that.$TokenCursor();
+         clone.$row = this.$row;
+         clone.$offset = this.$offset;
+         return clone;
+      };
+
+   }).call(this.$TokenCursor.prototype);
+
+   this.$ScopeTree = function(label, start)
+   {
+      this.$label = label;
+      this.$start = start;
+      this.$end = null;
+      this.$children = [];
+   };
+
+   (function() {
+      function comparePoints(pos1, pos2)
+      {
+         if (pos1.row != pos2.row)
+            return pos1.row - pos2.row;
+         return pos1.column - pos2.column;
+      }
+
+      this.getLabel = function()
+      {
+         return this.$label;
+      };
+
+      this.getStart = function()
+      {
+         return this.$start;
+      };
+
+      this.setEnd = function(pos)
+      {
+         this.$end = pos;
+      };
+
+      this.getEnd = function()
+      {
+         return this.$end;
+      };
+
+      this.exportFunctions = function(list)
+      {
+         if (this.$label)
+         {
+            var here = {
+               label: this.$label,
+               start: this.$start,
+               children: []
+            };
+            list.push(here);
+            list = here.children;
+         }
+
+         for (var i = 0; i < this.$children.length; i++)
+            this.$children[i].exportFunctions(list);
+      };
+
+      this.comparePosition = function(pos)
+      {
+         if (comparePoints(pos, this.$start) < 0)
+            return -1;
+         if (this.$end != null && comparePoints(pos, this.$end) >= 0)
+            return 1;
+         return 0;
+      };
+
+      this.addChild = function(label, start)
+      {
+         var child = new that.$ScopeTree(label, start);
+         var index = this.$binarySearch(start);
+         if (index >= 0)
+         {
+            return this.$children.addChild(label, start);
+         }
+         else
+         {
+            index = -(index+1);
+            this.$children.splice(index, 0, child);
+            return child;
+         }
+      };
+
+      this.findLabel = function(pos)
+      {
+         var index = this.$binarySearch(pos);
+         if (index >= 0)
+         {
+            var label = this.$children[index].findLabel(pos);
+            return label || this.$label;
+         }
+         else
+         {
+            return this.$label;
+         }
+      };
+
+      // start is inclusive, end is exclusive
+      // Positive result is match, negative result is -([closest index] + 1)
+      this.$binarySearch = function(pos, start /*optional*/, end /*optional*/)
+      {
+         if (typeof(start) === 'undefined')
+            start = 0;
+         if (typeof(end) === 'undefined')
+            end = this.$children.length;
+
+         // No elements left to test
+         if (start === end)
+            return -(start + 1);
+
+         var mid = Math.floor((start + end)/2);
+         var comp = this.$children[mid].comparePosition(pos);
+         if (comp === 0)
+            return mid;
+         else if (comp < 0)
+            return this.$binarySearch(pos, start, mid);
+         else // comp > 0
+            return this.$binarySearch(pos, mid + 1, end);
+      };
+   }).call(this.$ScopeTree.prototype);
+
 };
 
 (function () {
@@ -35,6 +247,128 @@ var IndentManager = function(doc, tokenizer, statePattern) {
       ']': '[',
       '{': '}',
       '}': '{'
+   };
+
+   var pFunction = function(t)
+   {
+      return t.token.type == 'keyword' && t.token.value == 'function';
+   };
+
+   var pAssign = function(t)
+   {
+      return /\boperator\b/.test(t.token.type) && /^(=|<-|<<-)$/.test(t.token.value);
+   };
+
+   var pIdentifier = function(t)
+   {
+      return /\bidentifier\b/.test(t.token.type);
+   };
+
+   this.$buildScopeTree = function()
+   {
+      function getAssocFuncToken(tokenCursor)
+      {
+         if (tokenCursor.currentValue() !== "{")
+            return null;
+         if (!tokenCursor.moveToPreviousToken())
+            return null;
+         if (tokenCursor.currentValue() !== ")")
+            return null;
+
+         var success = false;
+         var parenCount = 0;
+         while (tokenCursor.moveToPreviousToken())
+         {
+            if (tokenCursor.currentValue() === "(")
+            {
+               if (parenCount == 0)
+               {
+                  success = true;
+                  break;
+               }
+               parenCount--;
+            }
+            else if (tokenCursor.currentValue() === ")")
+            {
+               parenCount++;
+            }
+         }
+         if (!success)
+            return null;
+
+         if (!tokenCursor.moveToPreviousToken())
+            return null;
+         if (!pFunction(tokenCursor.currentToken()))
+            return null;
+         if (!tokenCursor.moveToPreviousToken())
+            return null;
+         if (!pAssign(tokenCursor.currentToken()))
+            return null;
+         if (!tokenCursor.moveToPreviousToken())
+            return null;
+         if (!pIdentifier(tokenCursor.currentToken()))
+            return null;
+
+         return tokenCursor.currentToken();
+      }
+
+      this.$tokenizeUpToRow(this.$tokens.length - 1);
+
+      var root = new this.$ScopeTree("(Top level)", {row:0, column:0});
+      var nodes = [root];
+
+      var tokenCursor = new this.$TokenCursor();
+      while (tokenCursor.moveToNextToken(this.$tokens.length - 1))
+      {
+         if (tokenCursor.currentValue() === "{")
+         {
+            var funcToken = getAssocFuncToken(tokenCursor.cloneCursor());
+
+            var label, startPos;
+            if (funcToken)
+            {
+               label = funcToken.token.value;
+               startPos = {row: funcToken.row, column: funcToken.column};
+            }
+            else
+            {
+               label = null;
+               startPos = tokenCursor.currentPosition();
+            }
+
+            var child = nodes[nodes.length - 1].addChild(label, startPos);
+            nodes.push(child);
+         }
+         else if (tokenCursor.currentValue() === "}")
+         {
+            if (nodes.length > 1)
+            {
+               var node = nodes.pop();
+               var pos = tokenCursor.currentPosition();
+               pos.column++;
+               node.setEnd(pos);
+            }
+         }
+      }
+
+      this.$scopeTree = root;
+      return this.$scopeTree;
+   };
+
+   this.getCurrentFunction = function(position)
+   {
+      this.$buildScopeTree();
+      if (!position)
+         return "";
+      return this.$scopeTree.findLabel(position);
+   };
+
+   this.getFunctionTree = function()
+   {
+      this.$buildScopeTree();
+      var list = [];
+      this.$scopeTree.exportFunctions(list);
+      return list;
    };
 
    this.getNextLineIndent = function(lastRow, line, endState, tab, tabSize)

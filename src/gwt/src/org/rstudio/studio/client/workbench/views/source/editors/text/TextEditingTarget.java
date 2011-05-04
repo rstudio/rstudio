@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
@@ -25,8 +26,12 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasValue;
+import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -143,10 +148,11 @@ public class TextEditingTarget implements EditingTarget
       void setPrintMarginColumn(int column);
 
       HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);
+      Position getCursorPosition();
+      void setCursorPosition(Position position);
 
       String getCurrentFunction();
-
-      Position getCursorPosition();
+      JsArray<FunctionStart> getFunctionTree();
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -421,6 +427,46 @@ public class TextEditingTarget implements EditingTarget
             }
          }
       });
+
+      statusBar_.getFunction().addMouseDownHandler(new MouseDownHandler()
+      {
+         public void onMouseDown(MouseDownEvent event)
+         {
+            JsArray<FunctionStart> tree = docDisplay_.getFunctionTree();
+            ToolbarPopupMenu menu = new ToolbarPopupMenu();
+            addFunctionsToMenu(menu, tree, "");
+            menu.showRelativeTo((UIObject) statusBar_.getFunction());
+         }
+      });
+   }
+
+   private void addFunctionsToMenu(ToolbarPopupMenu menu,
+                                   final JsArray<FunctionStart> funcs,
+                                   String indent)
+   {
+      for (int i = 0; i < funcs.length(); i++)
+      {
+         final FunctionStart func = funcs.get(i);
+
+         SafeHtmlBuilder labelBuilder = new SafeHtmlBuilder();
+         labelBuilder.appendHtmlConstant(indent);
+         labelBuilder.appendEscaped(func.getLabel());
+
+         menu.addItem(new MenuItem(
+               labelBuilder.toSafeHtml(),
+               new Command()
+               {
+                  public void execute()
+                  {
+                     docDisplay_.setCursorPosition(func.getStart());
+                     docDisplay_.focus();
+                  }
+               }));
+
+         addFunctionsToMenu(menu,
+                            func.getChildren(),
+                            indent + "&nbsp;&nbsp;");
+      }
    }
 
    private void updateStatusBarLanguage()
@@ -433,6 +479,7 @@ public class TextEditingTarget implements EditingTarget
       Position pos = docDisplay_.getCursorPosition();
       statusBar_.getPosition().setValue((pos.getRow() + 1) + ":" +
                                         (pos.getColumn() + 1));
+      statusBar_.getFunction().setValue(docDisplay_.getCurrentFunction());
    }
 
    private void registerPrefs()
