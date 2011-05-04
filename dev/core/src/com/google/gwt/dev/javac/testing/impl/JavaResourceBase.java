@@ -42,6 +42,16 @@ public class JavaResourceBase {
       return code;
     }
   };
+  public static final MockJavaResource BOOLEAN = new MockJavaResource("java.lang.Boolean") {
+    @Override
+    public CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package java.lang;\n");
+      code.append("public class Boolean {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource BYTE = new MockJavaResource(
       "java.lang.Byte") {
     @Override
@@ -401,7 +411,7 @@ public class JavaResourceBase {
 
   public static MockJavaResource[] getStandardResources() {
     return new MockJavaResource[]{
-        ANNOTATION, BYTE, CHARACTER, CLASS, CLASS_NOT_FOUND_EXCEPTION,
+        ANNOTATION, BYTE, BOOLEAN, CHARACTER, CLASS, CLASS_NOT_FOUND_EXCEPTION,
         COLLECTION, DOUBLE, ENUM, EXCEPTION, ERROR, FLOAT, INTEGER,
         IS_SERIALIZABLE, JAVASCRIPTOBJECT, LONG, MAP, NO_CLASS_DEF_FOUND_ERROR,
         NUMBER, OBJECT, SERIALIZABLE, SHORT, STRING, STRING_BUILDER,

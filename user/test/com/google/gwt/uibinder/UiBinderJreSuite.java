@@ -31,6 +31,7 @@ import com.google.gwt.uibinder.elementparsers.DialogBoxParserTest;
 import com.google.gwt.uibinder.elementparsers.DisclosurePanelParserTest;
 import com.google.gwt.uibinder.elementparsers.DockLayoutPanelParserTest;
 import com.google.gwt.uibinder.elementparsers.GridParserTest;
+import com.google.gwt.uibinder.elementparsers.HasTreeItemsParserTest;
 import com.google.gwt.uibinder.elementparsers.ImageParserTest;
 import com.google.gwt.uibinder.elementparsers.IsEmptyParserTest;
 import com.google.gwt.uibinder.elementparsers.LayoutPanelParserTest;
@@ -42,8 +43,8 @@ import com.google.gwt.uibinder.elementparsers.StackLayoutPanelParserTest;
 import com.google.gwt.uibinder.elementparsers.StackPanelParserTest;
 import com.google.gwt.uibinder.elementparsers.TabLayoutPanelParserTest;
 import com.google.gwt.uibinder.elementparsers.TabPanelParserTest;
-import com.google.gwt.uibinder.elementparsers.HasTreeItemsParserTest;
 import com.google.gwt.uibinder.elementparsers.UIObjectParserTest;
+import com.google.gwt.uibinder.elementparsers.UiChildParserTest;
 import com.google.gwt.uibinder.rebind.DesignTimeUtilsTest;
 import com.google.gwt.uibinder.rebind.FieldWriterOfExistingTypeTest;
 import com.google.gwt.uibinder.rebind.FieldWriterOfGeneratedCssResourceTest;
@@ -102,6 +103,7 @@ public class UiBinderJreSuite {
     suite.addTestSuite(DisclosurePanelParserTest.class);
     suite.addTestSuite(DockLayoutPanelParserTest.class);
     suite.addTestSuite(GridParserTest.class);
+    suite.addTestSuite(HasTreeItemsParserTest.class);
     suite.addTestSuite(ImageParserTest.class);
     suite.addTestSuite(IsEmptyParserTest.class);
     suite.addTestSuite(LayoutPanelParserTest.class);
@@ -113,7 +115,7 @@ public class UiBinderJreSuite {
     suite.addTestSuite(StackPanelParserTest.class);
     suite.addTestSuite(TabLayoutPanelParserTest.class);
     suite.addTestSuite(TabPanelParserTest.class);
-    suite.addTestSuite(HasTreeItemsParserTest.class);
+    suite.addTestSuite(UiChildParserTest.class);
     suite.addTestSuite(UIObjectParserTest.class);
 
     return suite;

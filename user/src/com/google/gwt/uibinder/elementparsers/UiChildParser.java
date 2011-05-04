@@ -96,6 +96,10 @@ public class UiChildParser implements ElementParser {
     numCallsToChildMethod.put(tag, priorCalls + 1);
   }
 
+  private JClassType getFirstParamType(JMethod method) {
+    return method.getParameters()[0].getType().isClassOrInterface();
+  }
+
   /**
    * Process a child element that should be added using a 
    * {@link com.google.gwt.uibinder.client.UiChild UiChild} method.
@@ -113,8 +117,15 @@ public class UiChildParser implements ElementParser {
     }
     XMLElement toAdd = children.next();
 
-    if (!writer.isWidgetElement(toAdd)) {
-      writer.die(child, "Expecting only widgets in %s", child);
+    if (!writer.isImportedElement(toAdd)) {
+      writer.die(child, "Expected child from a urn:import namespace, found %s",
+          toAdd);
+    }
+    
+    JClassType paramClass = getFirstParamType(method);
+    if (!writer.isElementAssignableTo(toAdd, paramClass)) {
+      writer.die(child, "Expected child of type %s in %s, found %s", 
+          paramClass.getSimpleSourceName(), child, toAdd);
     }
 
     // Make sure that there is only one element per tag.
@@ -143,10 +154,9 @@ public class UiChildParser implements ElementParser {
   }
 
   /**
-   * Go through all of the given method's required attributes and consume them
-   * from the given element. Any attributes not required by the method are left
-   * untouched. If a parameter is not present in the element, it will be passed
-   * null.
+   * Go through all of the given method's required parameters and consume them
+   * from the given element's attributes. If a parameter is not present in the
+   * element, it will be passed null. Unexpected attributes are an error.
    * 
    * @param element The element to find the necessary attributes for the
    *          parameters to the method.
@@ -171,6 +181,10 @@ public class UiChildParser implements ElementParser {
       String value = element.consumeAttributeWithDefault(param.getName(),
           defaultValue, param.getType());
       args[index] = value;
+    }
+    
+    if (element.getAttributeCount() > 0) {
+      writer.die(element, "Unexpected attributes");
     }
     return args;
   }

@@ -174,8 +174,7 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
     return openPlaceholder;
   }
 
-  private void genSetWidgetTextCall(String idHolder, String childField)
-      throws UnableToCompleteException {
+  private void genSetWidgetTextCall(String idHolder, String childField) {
 
     if (uiWriter.useLazyWidgetBuilders()) {
       if (idIsHasText.contains(idHolder)) {

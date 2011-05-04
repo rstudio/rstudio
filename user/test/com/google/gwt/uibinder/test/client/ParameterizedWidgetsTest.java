@@ -20,10 +20,10 @@ import com.google.gwt.junit.client.GWTTestCase;
 /**
  * Test that {@literal @}UiFactory and parameterized return types get along.
  */
-public class TestParameterizedWidgets extends GWTTestCase {
+public class ParameterizedWidgetsTest extends GWTTestCase {
   @Override
   public String getModuleName() {
-    return "com.google.gwt.uibinder.test.UiBinderTestApp";
+    return "com.google.gwt.uibinder.test.UiBinderSuite";
   }
 
   public void testHappy() {

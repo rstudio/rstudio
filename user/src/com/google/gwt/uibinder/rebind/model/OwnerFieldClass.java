@@ -311,6 +311,15 @@ public class OwnerFieldClass {
                   + "with \"add\".");
             }
           }
+          JParameter[] parameters = method.getParameters();
+          if (parameters.length == 0) {
+            logger.die("%s must take at least one Object argument", method.getName());
+          }
+          JType type = parameters[0].getType();
+          if (type.isClassOrInterface() == null) {
+            logger.die("%s first parameter must be an object type, found %s", 
+                method.getName(), type.getQualifiedSourceName());
+          }
           uiChildren.put(tag, Pair.create(method, limit));
         }
       }

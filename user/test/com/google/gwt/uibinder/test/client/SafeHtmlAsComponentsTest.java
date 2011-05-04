@@ -16,36 +16,44 @@
 package com.google.gwt.uibinder.test.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Label;
 
 /**
- * Test that UiBinder picks the correct template file for inner classes.
+ * Test the use of SafeHtml objects as UiBinder components. E.g.
+ * 
+ * <pre>
+ * &lt;div>&lt;my:SafeHtmlThingy foo="bar"/>&lt;/div></pre>
  */
-public class InnerWidgetTest extends GWTTestCase {
-  static class InnerWidget extends Composite {
-    interface Binder extends UiBinder<Label, InnerWidget> {
+public class SafeHtmlAsComponentsTest extends GWTTestCase {
+  static class Ui {
+    interface Binder extends UiBinder<Element, Ui> {
     }
 
     static final Binder binder = GWT.create(Binder.class);
 
-    @UiField Label greeting;
-  
-    InnerWidget() {
-      initWidget(binder.createAndBindUi(this));
+    @UiField
+    DivElement div;
+    @UiField
+    SafeHtmlObject safeObject;
+
+    Ui() {
+      binder.createAndBindUi(this);
     }
   }
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.uibinder.test.UiBinderSuite";
+    return "com.google.gwt.uibinder.test.LazyWidgetBuilderSuite";
   }
 
-  public void testHappy() {
-    InnerWidget widget = new InnerWidget();
-    assertNotNull(widget.greeting);
+  public void testSafeHtml() {
+    Ui domUi = new Ui();
+    assertNotNull(domUi.safeObject);
+    assertEquals(domUi.safeObject.asString(), domUi.div.getInnerHTML());
+    assertEquals("Hello <b>Bob</b>".toLowerCase(), domUi.div.getInnerHTML().toLowerCase());
   }
 }

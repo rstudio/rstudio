@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Google Inc.
+ * Copyright 2011 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,15 +15,21 @@
  */
 package com.google.gwt.uibinder.test.client;
 
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.safehtml.shared.SafeHtml;
 
 /**
- * Used by {@link ParameterizedWidget}. 
- * @see ParameterizedWidgetsTest
+ * Used by UiBinderTest.
  */
-abstract class Abstract<T> extends Widget {
-  Abstract() {
-    setElement(Document.get().createDivElement());
+public class SafeHtmlObject implements SafeHtml {
+  private String name = "unset";
+
+  @Override
+  public String asString() {
+    return "Hello <b>" + name + "</b>";
+  }
+
+  public void setName(String name) {
+    // Bad - should escape this name
+    this.name = name;
   }
 }

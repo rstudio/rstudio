@@ -220,8 +220,7 @@ class HandlerEvaluator {
    * @param objectName the name of the object we want to tie the handler
    */
   void writeAddHandler(IndentedWriter writer, FieldManager fieldManager,
-      String handlerVarName, String addHandlerMethodName, String objectName)
-      throws UnableToCompleteException {
+      String handlerVarName, String addHandlerMethodName, String objectName) {
     if (useLazyWidgetBuilders) {
       fieldManager.require(objectName).addStatement("%1$s.%2$s(%3$s);",
           objectName, addHandlerMethodName, handlerVarName);
