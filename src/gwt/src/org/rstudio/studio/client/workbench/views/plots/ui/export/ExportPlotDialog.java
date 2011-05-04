@@ -54,11 +54,7 @@ public class ExportPlotDialog extends ModalDialogBase
    @Override
    protected Widget createMainWidget()
    {
-      VerticalPanel mainPanel = new VerticalPanel();
-      mainPanel.setStylePrimaryName(
-                  ExportPlotDialogResources.INSTANCE.styles().mainWidget());
-      
-      
+      VerticalPanel mainPanel = new VerticalPanel();    
    
       plotSizer_ = new PlotSizer(options_.getWidth(), 
                                  options_.getHeight(),

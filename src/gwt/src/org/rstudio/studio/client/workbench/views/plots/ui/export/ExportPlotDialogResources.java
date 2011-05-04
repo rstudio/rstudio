@@ -21,11 +21,16 @@ public interface ExportPlotDialogResources extends ClientBundle
 {  
    public static interface Styles extends CssResource
    {
-      String mainWidget();
       String imagePreview();
-      String imageOptions();
       String imageOptionLabel();
       String imageSizeTextBox();
+      
+      String verticalSizeOptions();
+      String horizontalSizeOptions();
+      
+      String widthAndHeightEntry();
+      String maintainAspectRatioCheckBox();
+      String updateImageSizeButton();
    }
 
   

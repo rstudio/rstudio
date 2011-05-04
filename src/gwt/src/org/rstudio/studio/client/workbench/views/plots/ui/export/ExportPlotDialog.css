@@ -1,12 +1,4 @@
 
-.mainWidget {
-}
-
-.imageOptions {
-   margin-bottom: 5px;
-}
-
-
 .imageOptionLabel {
    margin-right: 5px;
 }
@@ -16,9 +8,44 @@
    width: 35px;
 }
 
-
 .imagePreview {
    border: 1px solid #BBB;
    outline: 0;
    background-color: white;
+}
+
+.horizontalSizeOptions {
+	
+}
+
+.horizontalSizeOptions .widthAndHeightEntry {
+   margin-right: 10px;	
+   margin-bottom: 4px;
+}
+
+.horizontalSizeOptions .maintainAspectRatioCheckBox  {
+   margin-right: 10px;  
+   margin-bottom: 4px;
+}
+
+.horizontalSizeOptions .updateImageSizeButton  {
+   margin-bottom: 1px;
+}
+
+.verticalSizeOptions {
+  
+}
+
+.verticalSizeOptions .widthAndHeightEntry {
+   margin-bottom: 8px;	
+}
+
+.verticalSizeOptions .maintainAspectRatioCheckBox {
+   margin-left: -3px;
+}
+
+.verticalSizeOptions .updateImageSizeButton {
+	margin-left: -2px;
+	margin-top: 10px;
+	margin-bottom: 8px;
 }

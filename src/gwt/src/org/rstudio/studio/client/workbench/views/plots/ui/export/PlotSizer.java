@@ -1,5 +1,5 @@
 /*
- * ResizableImagePreview.java
+t * ResizableImagePreview.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -24,9 +24,11 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.ui.CellPanel;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Focusable;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
@@ -53,13 +55,6 @@ public class PlotSizer extends Composite
       this(initialWidth, initialHeight, keepRatio, null, server, observer);
    }
    
-   
-   private void configureHorizontalOptionsPanel(HorizontalPanel panel)
-   {
-      panel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
-      panel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
-   }
-   
    public PlotSizer(int initialWidth, 
                     int initialHeight,
                     boolean keepRatio,
@@ -73,14 +68,43 @@ public class PlotSizer extends Composite
            
       // main widget
       VerticalPanel verticalPanel = new VerticalPanel();
-      
-      // options panel
-      HorizontalPanel optionsPanel = new HorizontalPanel();
-      optionsPanel.setStylePrimaryName(resources.styles().imageOptions());
-      configureHorizontalOptionsPanel(optionsPanel);
-      
+           
+      // if we have an extra widget then enclose it within a horizontal
+      // panel with it on the left and the options on the right
+      HorizontalPanel topPanel = new HorizontalPanel();
+      CellPanel optionsPanel = null;
+      if (extraWidget != null)
+      {
+         topPanel.setWidth("100%");
+         
+         topPanel.add(extraWidget);
+         topPanel.setCellHorizontalAlignment(extraWidget, 
+                                             HasHorizontalAlignment.ALIGN_LEFT);
+         
+         optionsPanel = new VerticalPanel();
+         optionsPanel.setStylePrimaryName(
+                                    resources.styles().verticalSizeOptions());
+         optionsPanel.setSpacing(0);
+         topPanel.add(optionsPanel);
+         topPanel.setCellHorizontalAlignment(
+                                       optionsPanel,
+                                       HasHorizontalAlignment.ALIGN_RIGHT);
+         
+         
+         
+      }
+      else
+      {
+         optionsPanel = topPanel;
+         optionsPanel.setStylePrimaryName(
+                                 resources.styles().horizontalSizeOptions());
+         configureHorizontalOptionsPanel(topPanel);  
+      }
+          
       // image width
       HorizontalPanel widthAndHeightPanel = new HorizontalPanel();
+      widthAndHeightPanel.setStylePrimaryName(
+                                    resources.styles().widthAndHeightEntry());
       configureHorizontalOptionsPanel(widthAndHeightPanel);
       widthAndHeightPanel.add(createImageOptionLabel("Width:"));
       widthTextBox_ = createImageSizeTextBox();
@@ -144,8 +168,9 @@ public class PlotSizer extends Composite
       optionsPanel.add(widthAndHeightPanel);
   
       // lock ratio check box
-      optionsPanel.add(new HTML("&nbsp;&nbsp;"));
       keepRatioCheckBox_ = new CheckBox();
+      keepRatioCheckBox_.setStylePrimaryName(
+                           resources.styles().maintainAspectRatioCheckBox());
       keepRatioCheckBox_.setValue(keepRatio);
       keepRatioCheckBox_.setText("Maintain aspect ratio");
       optionsPanel.add(keepRatioCheckBox_);
@@ -167,12 +192,13 @@ public class PlotSizer extends Composite
             observer.onPlotResized(false);
          }
       });
-      updateButton.getElement().getStyle().setMarginTop(5, Unit.PX);
-      optionsPanel.add(new HTML("&nbsp;"));
+      updateButton.setStylePrimaryName(
+                                 resources.styles().updateImageSizeButton());
       optionsPanel.add(updateButton);
 
-      verticalPanel.add(optionsPanel); 
-       
+      // add top panel
+      verticalPanel.add(topPanel);
+         
       // image frame
       imageFrame_ = new ImageFrame();
       imageFrame_.setUrl("about:blank");
@@ -181,9 +207,14 @@ public class PlotSizer extends Composite
       imageFrame_.setMarginWidth(0);
       imageFrame_.setStylePrimaryName(resources.styles().imagePreview());
       previewPanel.add(imageFrame_);
-      previewPanel.setWidgetLeftRight(imageFrame_, 0, Unit.PX, IMAGE_INSET, Unit.PX);
-      previewPanel.setWidgetTopBottom(imageFrame_, 0, Unit.PX, IMAGE_INSET, Unit.PX);
-      previewPanel.getWidgetContainerElement(imageFrame_).getStyle().setOverflow(Overflow.VISIBLE);
+      previewPanel.setWidgetLeftRight(imageFrame_, 
+                                      0, Unit.PX, 
+                                      IMAGE_INSET, Unit.PX);
+      previewPanel.setWidgetTopBottom(imageFrame_, 
+                                      0, Unit.PX, 
+                                      IMAGE_INSET, Unit.PX);
+      previewPanel.getWidgetContainerElement(
+                     imageFrame_).getStyle().setOverflow(Overflow.VISIBLE);
       
       // Stops mouse events from being routed to the iframe, which would
       // interfere with resizing
@@ -268,6 +299,12 @@ public class PlotSizer extends Composite
                           (initialHeight + IMAGE_INSET) + "px");
       
       verticalPanel.add(previewPanel);
+      
+      // set initial focus widget
+      if (extraWidget == null)
+         initialFocusWidget_ = widthTextBox_;
+      else
+         initialFocusWidget_ = null;
      
       initWidget(verticalPanel);
      
@@ -276,7 +313,9 @@ public class PlotSizer extends Composite
    public void onSizerShown()
    {  
       updateImage();
-      FocusHelper.setFocusDeferred(widthTextBox_);
+      
+      if (initialFocusWidget_ != null)
+         FocusHelper.setFocusDeferred(initialFocusWidget_);
    }
   
   
@@ -380,12 +419,22 @@ public class PlotSizer extends Composite
                                                        false));
    }
    
+   private void configureHorizontalOptionsPanel(HorizontalPanel panel)
+   {
+      panel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
+      panel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+   }
+   
+   
+   
    private static final int IMAGE_INSET = 6;
    
    private final ImageFrame imageFrame_;
    private final TextBox widthTextBox_;
    private final TextBox heightTextBox_;
    private final CheckBox keepRatioCheckBox_;
+   
+   private final Focusable initialFocusWidget_;
    
    private final PlotsServerOperations server_;
    
