@@ -5,6 +5,24 @@
 
 <web-app>
 
+  <!--
+    Require login. We only require login for the MobileWebApp.html page (instead of *.html) because
+    we do not want to require login for the compiled GWT javascript files, which also end in .html.
+  -->
+  <security-constraint>
+    <display-name>
+      Redirect to the login page if needed before showing
+      the host html page.
+    </display-name>
+    <web-resource-collection>
+      <web-resource-name>Login required</web-resource-name>
+      <url-pattern>/MobileWebApp.html</url-pattern>
+    </web-resource-collection>
+    <auth-constraint>
+      <role-name>*</role-name>
+    </auth-constraint>
+  </security-constraint>
+
   <!-- RequestFactory -->
   <servlet>
     <servlet-name>requestFactoryServlet</servlet-name>
@@ -15,7 +33,20 @@
     <servlet-name>requestFactoryServlet</servlet-name>
     <url-pattern>/gwtRequest</url-pattern>
   </servlet-mapping>
-  
+
+  <filter>
+    <filter-name>GaeAuthFilter</filter-name>
+    <description>
+      This filter demonstrates making GAE authentication
+      services visible to a RequestFactory client.
+    </description>
+    <filter-class>com.google.gwt.sample.gaerequest.server.GaeAuthFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>GaeAuthFilter</filter-name>
+    <url-pattern>/gwtRequest/*</url-pattern>
+  </filter-mapping>
+
   <!-- Default page to serve -->
   <welcome-file-list>
     <welcome-file>MobileWebApp.html</welcome-file>

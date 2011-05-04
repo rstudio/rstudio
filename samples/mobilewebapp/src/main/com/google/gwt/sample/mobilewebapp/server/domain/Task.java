@@ -36,13 +36,14 @@ import javax.validation.constraints.Size;
 public class Task {
 
   /**
-   * Find all tasks.
+   * Find all tasks for the current user.
    */
   @SuppressWarnings("unchecked")
   public static List<Task> findAllTasks() {
     EntityManager em = entityManager();
     try {
-      Query query = em.createQuery("select o from Task o");
+      Query query = em.createQuery("select o from Task o where o.userId=:userId");
+      query.setParameter("userId", UserServiceWrapper.get().getCurrentUserId());
       List<Task> list = query.getResultList();
 
       /*
@@ -67,7 +68,7 @@ public class Task {
   }
 
   /**
-   * Find a {@link Task} by id.
+   * Find a {@link Task} by id for the current user.
    * 
    * @param id the {@link Task} id
    * @return the associated {@link Task}, or null if not found
@@ -76,10 +77,14 @@ public class Task {
     if (id == null) {
       return null;
     }
+
     EntityManager em = entityManager();
     try {
       Task task = em.find(Task.class, id);
-      return task;
+      if (task != null && UserServiceWrapper.get().getCurrentUserId().equals(task.userId)) {
+        return task;
+      }
+      return null;
     } finally {
       em.close();
     }
@@ -135,6 +140,11 @@ public class Task {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  /**
+   * The unique ID of the user who owns this task.
+   */
+  private String userId;
+
   @Version
   @Column(name = "version")
   private Integer version;
@@ -187,7 +197,16 @@ public class Task {
   public void persist() {
     EntityManager em = entityManager();
     try {
-      em.persist(this);
+      // Set the user id if this is a new task.
+      String curUserId = UserServiceWrapper.get().getCurrentUserId();
+      if (userId == null) {
+        userId = curUserId;
+      }
+
+      // Verify the current user owns the task before updating it.
+      if (curUserId.equals(userId)) {
+        em.persist(this);
+      }
     } finally {
       em.close();
     }
@@ -200,7 +219,11 @@ public class Task {
     EntityManager em = entityManager();
     try {
       Task task = em.find(Task.class, this.id);
-      em.remove(task);
+
+      // Verify the current user owns the task before removing it.
+      if (UserServiceWrapper.get().getCurrentUserId().equals(task.userId)) {
+        em.remove(task);
+      }
     } finally {
       em.close();
     }

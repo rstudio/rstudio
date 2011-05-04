@@ -26,6 +26,7 @@ import com.google.gwt.place.shared.PlaceController;
 import com.google.gwt.place.shared.PlaceHistoryHandler;
 import com.google.gwt.place.shared.PlaceHistoryHandler.DefaultHistorian;
 import com.google.gwt.place.shared.PlaceHistoryHandler.Historian;
+import com.google.gwt.sample.gaerequest.client.ReloadOnAuthenticationFailure;
 import com.google.gwt.sample.mobilewebapp.client.activity.AppActivityMapper;
 import com.google.gwt.sample.mobilewebapp.client.place.AppPlaceHistoryMapper;
 import com.google.gwt.sample.mobilewebapp.client.place.TaskListPlace;
@@ -52,6 +53,9 @@ public class MobileWebApp implements EntryPoint {
     ClientFactory clientFactory = GWT.create(ClientFactory.class);
     EventBus eventBus = clientFactory.getEventBus();
     PlaceController placeController = clientFactory.getPlaceController();
+
+    // Check for Authentication failures or mismatches
+    new ReloadOnAuthenticationFailure().register(eventBus);
 
     /*
      * Add the main application shell to the RootLayoutPanel. The shell includes

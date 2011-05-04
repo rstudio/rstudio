@@ -19,14 +19,15 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.place.shared.PlaceController;
-import com.google.web.bindery.requestfactory.gwt.client.DefaultRequestTransport;
-import com.google.gwt.storage.client.Storage;
-import com.google.gwt.user.client.Window;
+import com.google.gwt.sample.gaerequest.client.GaeAuthRequestTransport;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskEditView;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskListView;
 import com.google.gwt.sample.mobilewebapp.client.desktop.DesktopTaskEditView;
 import com.google.gwt.sample.mobilewebapp.client.desktop.DesktopTaskListView;
 import com.google.gwt.sample.mobilewebapp.client.desktop.MobileWebAppShellDesktop;
+import com.google.gwt.storage.client.Storage;
+import com.google.gwt.user.client.Window;
+import com.google.web.bindery.requestfactory.shared.RequestTransport;
 
 /**
  * Default implementation of {@link ClientFactory}. Used by desktop version.
@@ -47,7 +48,7 @@ class ClientFactoryImpl implements ClientFactory {
   private TaskListView taskListView;
 
   public ClientFactoryImpl() {
-    DefaultRequestTransport requestTransport = new DefaultRequestTransport();
+    RequestTransport requestTransport = new GaeAuthRequestTransport(eventBus);
     requestFactory = GWT.create(MobileWebAppRequestFactory.class);
     requestFactory.initialize(eventBus, requestTransport);
 
