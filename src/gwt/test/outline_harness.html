@@ -1,0 +1,47 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <script type="text/javascript" src="../tools/ace/build_support/mini_require.js"></script>
+  <script type="text/javascript" src="../tools/ace/build/src/ace-uncompressed.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_autoindent.js"></script>
+  <style type="text/css">
+  pre {
+    margin-bottom: 30px;
+    padding: 3px;
+    border: 1px solid #999;
+  }
+  </style>
+</head>
+<body>
+
+<h2>Interactive Tester</h2>
+<input id="funcName" type="text" readonly="true" style="width: 598px; border: 1px solid #999; margin-bottom: 12px"/><button onclick="updateLabel();">Update</button>
+<div id="editor" style="width: 600px; height: 300px; border: 1px solid #999"></div>
+
+
+<script type="text/javascript">
+var IndentManager = require('mode/r_autoindent').IndentManager;
+var Document = require('ace/document').Document;
+var RMode = require('mode/r').Mode;
+
+var editor = ace.edit('editor');
+editor.renderer.setHScrollBarAlwaysVisible(false);
+editor.setHighlightActiveLine(false);
+var RMode = require('mode/r').Mode;
+var mode = new RMode(false, editor.getSession().getDocument());
+editor.getSession().setMode(mode);
+
+function updateLabel() {
+  var mgr = mode.$indentManager;
+  var fname = mgr.getCurrentFunction(editor.getSession().getSelection().getCursor());
+  document.getElementById('funcName').value = fname;
+}
+
+editor.getSession().getSelection().on("changeCursor", function() {
+  setTimeout(updateLabel, 0);
+});
+</script>
+</body>
+</html>
