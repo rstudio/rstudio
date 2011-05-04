@@ -98,7 +98,12 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
       final H handler, DomEvent.Type<H> type) {
     assert handler != null : "handler must not be null";
     assert type != null : "type must not be null";
-    sinkEvents(Event.getTypeInt(type.getName()));
+    int typeInt = Event.getTypeInt(type.getName());
+    if (typeInt == -1) {
+      sinkBitlessEvent(type.getName());
+    } else {
+      sinkEvents(typeInt);
+    }
     return ensureHandlers().addHandler(type, handler);
   }
 

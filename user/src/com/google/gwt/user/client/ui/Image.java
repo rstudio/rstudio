@@ -26,12 +26,18 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
+import com.google.gwt.event.dom.client.DragEndEvent;
+import com.google.gwt.event.dom.client.DragEndHandler;
 import com.google.gwt.event.dom.client.DragEnterEvent;
 import com.google.gwt.event.dom.client.DragEnterHandler;
-import com.google.gwt.event.dom.client.DragExitEvent;
-import com.google.gwt.event.dom.client.DragExitHandler;
+import com.google.gwt.event.dom.client.DragEvent;
+import com.google.gwt.event.dom.client.DragLeaveEvent;
+import com.google.gwt.event.dom.client.DragLeaveHandler;
+import com.google.gwt.event.dom.client.DragHandler;
 import com.google.gwt.event.dom.client.DragOverEvent;
 import com.google.gwt.event.dom.client.DragOverHandler;
+import com.google.gwt.event.dom.client.DragStartEvent;
+import com.google.gwt.event.dom.client.DragStartHandler;
 import com.google.gwt.event.dom.client.DropEvent;
 import com.google.gwt.event.dom.client.DropHandler;
 import com.google.gwt.event.dom.client.ErrorEvent;
@@ -554,16 +560,28 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
     return addHandler(handler, DoubleClickEvent.getType());
   }
 
+  public HandlerRegistration addDragEndHandler(DragEndHandler handler) {
+    return addBitlessDomHandler(handler, DragEndEvent.getType());
+  }
+
   public HandlerRegistration addDragEnterHandler(DragEnterHandler handler) {
     return addBitlessDomHandler(handler, DragEnterEvent.getType());
   }
 
-  public HandlerRegistration addDragExitHandler(DragExitHandler handler) {
-    return addBitlessDomHandler(handler, DragExitEvent.getType());
+  public HandlerRegistration addDragHandler(DragHandler handler) {
+    return addBitlessDomHandler(handler, DragEvent.getType());
   }
-  
+
+  public HandlerRegistration addDragLeaveHandler(DragLeaveHandler handler) {
+    return addBitlessDomHandler(handler, DragLeaveEvent.getType());
+  }
+
   public HandlerRegistration addDragOverHandler(DragOverHandler handler) {
     return addBitlessDomHandler(handler, DragOverEvent.getType());
+  }
+
+  public HandlerRegistration addDragStartHandler(DragStartHandler handler) {
+    return addBitlessDomHandler(handler, DragStartEvent.getType());
   }
 
   public HandlerRegistration addDropHandler(DropHandler handler) {

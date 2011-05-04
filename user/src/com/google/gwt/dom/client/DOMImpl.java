@@ -367,6 +367,10 @@ abstract class DOMImpl {
     select.remove(index);
   }-*/;
 
+  public native void setDraggable(Element elem, String draggable) /*-{
+    elem.draggable = draggable;
+  }-*/;
+
   public native void setInnerText(Element elem, String text) /*-{
     // Remove all children first.
     while (elem.firstChild) {

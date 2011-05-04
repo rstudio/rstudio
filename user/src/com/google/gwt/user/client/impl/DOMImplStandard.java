@@ -32,6 +32,8 @@ abstract class DOMImplStandard extends DOMImpl {
 
   private static JavaScriptObject dispatchCapturedMouseEvent;
 
+  private static JavaScriptObject dispatchDragEvent;
+
   private static JavaScriptObject dispatchEvent;
 
   private static JavaScriptObject dispatchUnhandledEvent;
@@ -170,6 +172,12 @@ abstract class DOMImplStandard extends DOMImpl {
       }
     });
 
+    // Some drag events must call preventDefault to prevent native text selection.
+    @com.google.gwt.user.client.impl.DOMImplStandard::dispatchDragEvent = $entry(function(evt) {
+      evt.preventDefault();
+      @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent.call(this, evt);
+    });
+
     @com.google.gwt.user.client.impl.DOMImplStandard::dispatchUnhandledEvent = $entry(function(evt) {
       this.__gwtLastUnhandledEvent = evt.type;
       @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent.call(this, evt);
@@ -212,16 +220,22 @@ abstract class DOMImplStandard extends DOMImpl {
   }-*/;
 
   protected native void sinkBitlessEventImpl(Element elem, String eventTypeName) /*-{
-    if (eventTypeName == "dragenter")
-      elem.ondragenter = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent;
-    if (eventTypeName == "dragexit")
-      elem.ondragexit  = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent;
-    if (eventTypeName == "dragover")
-      elem.ondragover  = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent;
-    if (eventTypeName == "drop")
+    if (eventTypeName == "drag")
+      elem.ondrag      = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent;
+    else if (eventTypeName == "dragend")
+      elem.ondragend   = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent;
+    else if (eventTypeName == "dragenter")
+      elem.ondragenter = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchDragEvent;
+    else if (eventTypeName == "dragleave")
+      elem.ondragleave = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent;
+    else if (eventTypeName == "dragover")
+      elem.ondragover  = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchDragEvent;
+    else if (eventTypeName == "dragstart")
+      elem.ondragstart = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent;
+    else if (eventTypeName == "drop")
       elem.ondrop      = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent;
   }-*/;
-  
+
   protected native void sinkEventsImpl(Element elem, int bits) /*-{
     var chMask = (elem.__eventBits || 0) ^ bits;
     elem.__eventBits = bits;

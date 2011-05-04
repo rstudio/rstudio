@@ -16,43 +16,43 @@
 package com.google.gwt.event.dom.client;
 
 /**
- * Represents a native drag Exit event.
+ * Represents a native drag leave event.
  */
-public class DragExitEvent extends DomEvent<DragExitHandler> {
+public class DragLeaveEvent extends DragDropEventBase<DragLeaveHandler> {
 
   /**
-   * Event type for drag exit events. Represents the meta-data associated
-   * with this event.
+   * Event type for drag leave events. Represents the meta-data associated with
+   * this event.
    */
-  private static final Type<DragExitHandler> TYPE = new Type<DragExitHandler>(
-      "dragexit", new DragExitEvent());
+  private static final Type<DragLeaveHandler> TYPE = new Type<DragLeaveHandler>("dragleave",
+      new DragLeaveEvent());
 
   /**
    * Gets the event type associated with drag exit events.
    * 
    * @return the handler type
    */
-  public static Type<DragExitHandler> getType() {
+  public static Type<DragLeaveHandler> getType() {
     return TYPE;
   }
 
   /**
    * Protected constructor, use
-   * {@link DomEvent#fireNativeEvent(com.google.gwt.dom.client.NativeEvent,
-   * com.google.gwt.event.shared.HasHandlers)}
+   * {@link DomEvent#fireNativeEvent(com.google.gwt.dom.client.NativeEvent, com.google.gwt.event.shared.HasHandlers)}
+   * or
+   * {@link DomEvent#fireNativeEvent(com.google.gwt.dom.client.NativeEvent, com.google.gwt.event.shared.HasHandlers, com.google.gwt.dom.client.Element)}
    * to fire drag exit events.
    */
-  protected DragExitEvent() {
+  protected DragLeaveEvent() {
   }
 
   @Override
-  public final Type<DragExitHandler> getAssociatedType() {
+  public final Type<DragLeaveHandler> getAssociatedType() {
     return TYPE;
   }
 
   @Override
-  protected void dispatch(DragExitHandler handler) {
-    handler.onDragExit(this);
+  protected void dispatch(DragLeaveHandler handler) {
+    handler.onDragLeave(this);
   }
-
 }

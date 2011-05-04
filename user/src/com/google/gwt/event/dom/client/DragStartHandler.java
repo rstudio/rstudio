@@ -18,14 +18,14 @@ package com.google.gwt.event.dom.client;
 import com.google.gwt.event.shared.EventHandler;
 
 /**
- * Handler interface for {@link DragExitEvent} events.
+ * Handler interface for {@link DragStartEvent} events.
  */
-public interface DragExitHandler extends EventHandler {
+public interface DragStartHandler extends EventHandler {
 
   /**
-   * Called when a {@link DragExitEvent} is fired.
+   * Called when a {@link DragStartEvent} is fired.
    * 
-   * @param event the {@link DragExitEvent} that was fired
+   * @param event the {@link DragStartEvent} that was fired
    */
-  void onDragExit(DragExitEvent event);
+  void onDragStart(DragStartEvent event);
 }

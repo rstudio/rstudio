@@ -23,6 +23,21 @@ import com.google.gwt.core.client.JavaScriptObject;
 public class Element extends Node {
 
   /**
+   * Constant returned from {@link #getDraggable()}.
+   */
+  public static final String DRAGGABLE_AUTO = "auto";
+
+  /**
+   * Constant returned from {@link #getDraggable()}.
+   */
+  public static final String DRAGGABLE_FALSE = "false";
+
+  /**
+   * Constant returned from {@link #getDraggable()}.
+   */
+  public static final String DRAGGABLE_TRUE = "true";
+
+  /**
    * Assert that the given {@link Node} is an {@link Element} and automatically
    * typecast it.
    */
@@ -219,6 +234,16 @@ public class Element extends Node {
   public final native String getDir() /*-{
      return this.dir;
    }-*/;
+
+  /**
+   * Returns the draggable attribute of this element.
+   * 
+   * @return one of {@link #DRAGGABLE_AUTO}, {@link #DRAGGABLE_FALSE}, or
+   *         {@link #DRAGGABLE_TRUE}
+   */
+  public final native String getDraggable() /*-{
+    return this.draggable || null;
+  }-*/;
 
   /**
    * Returns a NodeList of all descendant Elements with a given tag name, in the
@@ -595,6 +620,16 @@ public class Element extends Node {
   public final native void setDir(String dir) /*-{
      this.dir = dir;
    }-*/;
+
+  /**
+   * Changes the draggable attribute to one of {@link #DRAGGABLE_AUTO},
+   * {@link #DRAGGABLE_FALSE}, or {@link #DRAGGABLE_TRUE}.
+   * 
+   * @param draggable a String constants
+   */
+  public final void setDraggable(String draggable) {
+    DOMImpl.impl.setDraggable(this, draggable);
+  }
 
   /**
    * The element's identifier.

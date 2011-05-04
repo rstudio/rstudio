@@ -16,7 +16,7 @@
 package com.google.gwt.dom.client;
 
 /**
- * WebKit based implementation of {@link com.google.gwt.user.client.impl.DOMImplStandardBase}.
+ * WebKit based implementation of {@link com.google.gwt.dom.client.DOMImplStandardBase}.
  */
 class DOMImplWebkit extends DOMImplStandardBase {
 
@@ -35,5 +35,19 @@ class DOMImplWebkit extends DOMImplStandardBase {
     }
     return false;
   }-*/;
+
+  /**
+   * Webkit based browsers require that we set the webkit-user-drag style
+   * attribute to make an element draggable.
+   */
+  @Override
+  public void setDraggable(Element elem, String draggable) {
+    super.setDraggable(elem, draggable);
+    if ("true".equals(draggable)) {
+      elem.getStyle().setProperty("webkitUserDrag", "element");
+    } else {
+      elem.getStyle().clearProperty("webkitUserDrag");
+    }
+  }
 }
 

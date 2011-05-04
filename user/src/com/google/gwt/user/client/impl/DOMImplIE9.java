@@ -15,8 +15,40 @@
  */
 package com.google.gwt.user.client.impl;
 
+import com.google.gwt.user.client.Element;
+
 /**
  * IE9 implementation of {@link com.google.gwt.user.client.impl.DOMImplStandardBase}.
  */
 class DOMImplIE9 extends DOMImplStandardBase {
+
+  /**
+   * IE uses a non-standard way of handling drag events.
+   */
+  @Override
+  protected void initEventSystem() {
+    super.initEventSystem();
+    initEventSystemIE();
+  }
+
+  @Override
+  protected void sinkBitlessEventImpl(Element elem, String eventTypeName) {
+    super.sinkBitlessEventImpl(elem, eventTypeName);
+
+    if ("dragover".equals(eventTypeName)) {
+      /*
+       * In IE, we have to sink dragenter with dragover in order to make an
+       * element a drop target.
+       */
+      super.sinkBitlessEventImpl(elem, "dragenter");
+    }
+  }
+
+  private native void initEventSystemIE() /*-{
+    // In IE, drag events return false instead of calling preventDefault.
+    @com.google.gwt.user.client.impl.DOMImplStandard::dispatchDragEvent = $entry(function(evt) {
+      @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent.call(this, evt);
+      return false;
+    });
+  }-*/;
 }

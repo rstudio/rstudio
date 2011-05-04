@@ -36,7 +36,6 @@ import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.CellList;
-import com.google.gwt.user.cellview.client.CellList.Style;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Anchor;
@@ -82,7 +81,7 @@ public class MobileWebAppShellDesktop extends MobileWebAppShellBase {
      * MainMenuCellList.css.
      */
     @Source({"MainMenuCellList.css", CellList.Style.DEFAULT_CSS})
-    Style cellListStyle();
+    MainMenuStyle cellListStyle();
   }
 
   /**

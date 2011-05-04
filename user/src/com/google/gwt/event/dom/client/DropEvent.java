@@ -18,7 +18,7 @@ package com.google.gwt.event.dom.client;
 /**
  * Represents a native drop event.
  */
-public class DropEvent extends DomEvent<DropHandler> {
+public class DropEvent extends DragDropEventBase<DropHandler> {
 
   /**
    * Event type for drop events. Represents the meta-data associated
@@ -39,6 +39,8 @@ public class DropEvent extends DomEvent<DropHandler> {
   /**
    * Protected constructor, use
    * {@link DomEvent#fireNativeEvent(com.google.gwt.dom.client.NativeEvent, com.google.gwt.event.shared.HasHandlers)}
+   * or
+   * {@link DomEvent#fireNativeEvent(com.google.gwt.dom.client.NativeEvent, com.google.gwt.event.shared.HasHandlers, com.google.gwt.dom.client.Element)}
    * to fire drop events.
    */
   protected DropEvent() {

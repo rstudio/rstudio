@@ -120,6 +120,15 @@ public class NativeEvent extends JavaScriptObject {
   }
 
   /**
+   * Get the {@link DataTransfer} associated with the current drag event.
+   * 
+   * @return the {@link DataTransfer} object, or null if not a drag event
+   */
+  public final native DataTransfer getDataTransfer() /*-{
+    return this.dataTransfer || null;
+  }-*/;
+
+  /**
    * Returns the element that was the actual target of the given event.
    * 
    * @return the target element

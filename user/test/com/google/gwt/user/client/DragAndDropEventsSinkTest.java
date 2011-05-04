@@ -16,32 +16,29 @@
 
 package com.google.gwt.user.client;
 
+import com.google.gwt.event.dom.client.DragEndEvent;
+import com.google.gwt.event.dom.client.DragEndHandler;
 import com.google.gwt.event.dom.client.DragEnterEvent;
 import com.google.gwt.event.dom.client.DragEnterHandler;
-import com.google.gwt.event.dom.client.DragExitEvent;
-import com.google.gwt.event.dom.client.DragExitHandler;
+import com.google.gwt.event.dom.client.DragEvent;
+import com.google.gwt.event.dom.client.DragLeaveEvent;
+import com.google.gwt.event.dom.client.DragLeaveHandler;
+import com.google.gwt.event.dom.client.DragHandler;
 import com.google.gwt.event.dom.client.DragOverEvent;
 import com.google.gwt.event.dom.client.DragOverHandler;
+import com.google.gwt.event.dom.client.DragStartEvent;
+import com.google.gwt.event.dom.client.DragStartHandler;
 import com.google.gwt.event.dom.client.DropEvent;
 import com.google.gwt.event.dom.client.DropHandler;
 import com.google.gwt.event.dom.client.HasAllDragAndDropHandlers;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.ui.Anchor;
-import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.ListBox;
-import com.google.gwt.user.client.ui.PasswordTextBox;
-import com.google.gwt.user.client.ui.RichTextArea;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.SimpleRadioButton;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.ToggleButton;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
@@ -49,29 +46,43 @@ import com.google.gwt.user.client.ui.Widget;
  */
 public class DragAndDropEventsSinkTest extends GWTTestCase {
 
-  private static class DragEnterHandlerImpl extends HandlerImpl implements
-      DragEnterHandler {
+  private static class DragEndHandlerImpl extends HandlerImpl implements DragEndHandler {
+    public void onDragEnd(DragEndEvent event) {
+      eventFired();
+    }
+  }
+
+  private static class DragEnterHandlerImpl extends HandlerImpl implements DragEnterHandler {
     public void onDragEnter(DragEnterEvent event) {
       eventFired();
     }
   }
 
-  private static class DragExitHandlerImpl extends HandlerImpl implements
-      DragExitHandler {
-    public void onDragExit(DragExitEvent event) {
+  private static class DragHandlerImpl extends HandlerImpl implements DragHandler {
+    public void onDrag(DragEvent event) {
       eventFired();
     }
   }
 
-  private static class DragOverHandlerImpl extends HandlerImpl implements
-      DragOverHandler {
+  private static class DragLeaveHandlerImpl extends HandlerImpl implements DragLeaveHandler {
+    public void onDragLeave(DragLeaveEvent event) {
+      eventFired();
+    }
+  }
+
+  private static class DragOverHandlerImpl extends HandlerImpl implements DragOverHandler {
     public void onDragOver(DragOverEvent event) {
       eventFired();
     }
   }
 
-  private static class DropHandlerImpl extends HandlerImpl implements
-      DropHandler {
+  private static class DragStartHandlerImpl extends HandlerImpl implements DragStartHandler {
+    public void onDragStart(DragStartEvent event) {
+      eventFired();
+    }
+  }
+
+  private static class DropHandlerImpl extends HandlerImpl implements DropHandler {
     public void onDrop(DropEvent event) {
       eventFired();
     }
@@ -89,6 +100,20 @@ public class DragAndDropEventsSinkTest extends GWTTestCase {
     }
   }
 
+  /**
+   * Interface to create a widget.
+   * 
+   * @param <W> the widget type
+   */
+  private interface WidgetCreator<W extends Widget & HasAllDragAndDropHandlers> {
+    /**
+     * Create a widget to test.
+     * 
+     * @return the new widget
+     */
+    W createWidget();
+  }
+
   public static native boolean isEventSupported(String eventName) /*-{
     var div = $doc.createElement("div");
     return ("on" + eventName) in div;
@@ -104,11 +129,13 @@ public class DragAndDropEventsSinkTest extends GWTTestCase {
     if (!isEventSupported("dragstart")) {
       return;
     }
-    
-    verifyDragEnterEventSink(new FocusPanel());
-    verifyDragExitEventSink(new FocusPanel());
-    verifyDragOverEventSink(new FocusPanel());
-    verifyDropEventSink(new FocusPanel());
+
+    verifyDragAndDropEventSink(new WidgetCreator<FocusPanel>() {
+      @Override
+      public FocusPanel createWidget() {
+        return new FocusPanel();
+      }
+    });
   }
 
   public void testFocusWidgetEventSink() {
@@ -116,56 +143,13 @@ public class DragAndDropEventsSinkTest extends GWTTestCase {
     if (!isEventSupported("dragstart")) {
       return;
     }
-    
-    verifyDragEnterEventSink(new Anchor());
-    verifyDragExitEventSink(new Anchor());
-    verifyDragOverEventSink(new Anchor());
-    verifyDropEventSink(new Anchor());
 
-    verifyDragEnterEventSink(new Button());
-    verifyDragExitEventSink(new Button());
-    verifyDragOverEventSink(new Button());
-    verifyDropEventSink(new Button());
-
-    verifyDragEnterEventSink(new CheckBox());
-    verifyDragExitEventSink(new CheckBox());
-    verifyDragOverEventSink(new CheckBox());
-    verifyDropEventSink(new CheckBox());
-
-    verifyDragEnterEventSink(new ToggleButton());
-    verifyDragExitEventSink(new ToggleButton());
-    verifyDragOverEventSink(new ToggleButton());
-    verifyDropEventSink(new ToggleButton());
-
-    verifyDragEnterEventSink(new ListBox());
-    verifyDragExitEventSink(new ListBox());
-    verifyDragOverEventSink(new ListBox());
-    verifyDropEventSink(new ListBox());
-
-    verifyDragEnterEventSink(new RichTextArea());
-    verifyDragExitEventSink(new RichTextArea());
-    verifyDragOverEventSink(new RichTextArea());
-    verifyDropEventSink(new RichTextArea());
-
-    verifyDragEnterEventSink(new TextArea());
-    verifyDragExitEventSink(new TextArea());
-    verifyDragOverEventSink(new TextArea());
-    verifyDropEventSink(new TextArea());
-
-    verifyDragEnterEventSink(new PasswordTextBox());
-    verifyDragExitEventSink(new PasswordTextBox());
-    verifyDragOverEventSink(new PasswordTextBox());
-    verifyDropEventSink(new PasswordTextBox());
-
-    verifyDragEnterEventSink(new TextBox());
-    verifyDragExitEventSink(new TextBox());
-    verifyDragOverEventSink(new TextBox());
-    verifyDropEventSink(new TextBox());
-
-    verifyDragEnterEventSink(new SimpleRadioButton("foo"));
-    verifyDragExitEventSink(new SimpleRadioButton("foo"));
-    verifyDragOverEventSink(new SimpleRadioButton("foo"));
-    verifyDropEventSink(new SimpleRadioButton("foo"));
+    verifyDragAndDropEventSink(new WidgetCreator<Anchor>() {
+      @Override
+      public Anchor createWidget() {
+        return new Anchor();
+      }
+    });
   }
 
   public void testHTMLTableEventSink() {
@@ -173,16 +157,18 @@ public class DragAndDropEventsSinkTest extends GWTTestCase {
     if (!isEventSupported("dragstart")) {
       return;
     }
-    
-    verifyDragEnterEventSink(new Grid());
-    verifyDragExitEventSink(new Grid());
-    verifyDragOverEventSink(new Grid());
-    verifyDropEventSink(new Grid());
 
-    verifyDragEnterEventSink(new FlexTable());
-    verifyDragExitEventSink(new FlexTable());
-    verifyDragOverEventSink(new FlexTable());
-    verifyDropEventSink(new FlexTable());
+    verifyDragAndDropEventSink(new WidgetCreator<Grid>() {
+      @Override
+      public Grid createWidget() {
+        return new Grid();
+      }
+    }, new WidgetCreator<FlexTable>() {
+      @Override
+      public FlexTable createWidget() {
+        return new FlexTable();
+      }
+    });
   }
 
   public void testImageEventSink() {
@@ -190,11 +176,13 @@ public class DragAndDropEventsSinkTest extends GWTTestCase {
     if (!isEventSupported("dragstart")) {
       return;
     }
-    
-    verifyDragEnterEventSink(new Image());
-    verifyDragExitEventSink(new Image());
-    verifyDragOverEventSink(new Image());
-    verifyDropEventSink(new Image());
+
+    verifyDragAndDropEventSink(new WidgetCreator<Image>() {
+      @Override
+      public Image createWidget() {
+        return new Image();
+      }
+    });
   }
 
   public void testLabelEventSink() {
@@ -202,11 +190,13 @@ public class DragAndDropEventsSinkTest extends GWTTestCase {
     if (!isEventSupported("dragstart")) {
       return;
     }
-    
-    verifyDragEnterEventSink(new Label());
-    verifyDragExitEventSink(new Label());
-    verifyDragOverEventSink(new Label());
-    verifyDropEventSink(new Label());
+
+    verifyDragAndDropEventSink(new WidgetCreator<Label>() {
+      @Override
+      public Label createWidget() {
+        return new Label();
+      }
+    });
   }
 
   @Override
@@ -214,6 +204,28 @@ public class DragAndDropEventsSinkTest extends GWTTestCase {
     // clean up after ourselves
     RootPanel.get().clear();
     super.gwtTearDown();
+  }
+
+  private void verifyDragAndDropEventSink(WidgetCreator<?>... creators) {
+    for (WidgetCreator<?> creator : creators) {
+      verifyDragEventSink(creator.createWidget());
+      verifyDragEndEventSink(creator.createWidget());
+      verifyDragEnterEventSink(creator.createWidget());
+      verifyDragLeaveEventSink(creator.createWidget());
+      verifyDragOverEventSink(creator.createWidget());
+      verifyDragStartEventSink(creator.createWidget());
+      verifyDropEventSink(creator.createWidget());
+    }
+  }
+
+  private <W extends Widget & HasAllDragAndDropHandlers> void verifyDragEndEventSink(W w) {
+    DragEndHandlerImpl handler = new DragEndHandlerImpl();
+    w.addDragEndHandler(handler);
+
+    assertFalse(handler.hasEventFired());
+    w.fireEvent(new DragEndEvent() {
+    });
+    assertTrue(handler.hasEventFired());
   }
 
   private <W extends Widget & HasAllDragAndDropHandlers> void verifyDragEnterEventSink(W w) {
@@ -226,12 +238,22 @@ public class DragAndDropEventsSinkTest extends GWTTestCase {
     assertTrue(handler.hasEventFired());
   }
 
-  private <W extends Widget & HasAllDragAndDropHandlers> void verifyDragExitEventSink(W w) {
-    DragExitHandlerImpl handler = new DragExitHandlerImpl();
-    w.addDragExitHandler(handler);
+  private <W extends Widget & HasAllDragAndDropHandlers> void verifyDragEventSink(W w) {
+    DragHandlerImpl handler = new DragHandlerImpl();
+    w.addDragHandler(handler);
 
     assertFalse(handler.hasEventFired());
-    w.fireEvent(new DragExitEvent() {
+    w.fireEvent(new DragEvent() {
+    });
+    assertTrue(handler.hasEventFired());
+  }
+
+  private <W extends Widget & HasAllDragAndDropHandlers> void verifyDragLeaveEventSink(W w) {
+    DragLeaveHandlerImpl handler = new DragLeaveHandlerImpl();
+    w.addDragLeaveHandler(handler);
+
+    assertFalse(handler.hasEventFired());
+    w.fireEvent(new DragLeaveEvent() {
     });
     assertTrue(handler.hasEventFired());
   }
@@ -242,6 +264,16 @@ public class DragAndDropEventsSinkTest extends GWTTestCase {
 
     assertFalse(handler.hasEventFired());
     w.fireEvent(new DragOverEvent() {
+    });
+    assertTrue(handler.hasEventFired());
+  }
+
+  private <W extends Widget & HasAllDragAndDropHandlers> void verifyDragStartEventSink(W w) {
+    DragStartHandlerImpl handler = new DragStartHandlerImpl();
+    w.addDragStartHandler(handler);
+
+    assertFalse(handler.hasEventFired());
+    w.fireEvent(new DragStartEvent() {
     });
     assertTrue(handler.hasEventFired());
   }

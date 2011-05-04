@@ -16,23 +16,23 @@
 package com.google.gwt.event.dom.client;
 
 /**
- * Represents a native drag enter event.
+ * Represents a native drag end event.
  */
-public class DragEnterEvent extends DragDropEventBase<DragEnterHandler> {
+public class DragEndEvent extends DragDropEventBase<DragEndHandler> {
 
   /**
-   * Event type for drag enter events. Represents the meta-data associated
-   * with this event.
+   * Event type for drag end events. Represents the meta-data associated with
+   * this event.
    */
-  private static final Type<DragEnterHandler> TYPE = new Type<DragEnterHandler>(
-      "dragenter", new DragEnterEvent());
+  private static final Type<DragEndHandler> TYPE = new Type<DragEndHandler>("dragend",
+      new DragEndEvent());
 
   /**
-   * Gets the event type associated with drag enter events.
+   * Gets the event type associated with drag end events.
    * 
    * @return the handler type
    */
-  public static Type<DragEnterHandler> getType() {
+  public static Type<DragEndHandler> getType() {
     return TYPE;
   }
 
@@ -41,19 +41,18 @@ public class DragEnterEvent extends DragDropEventBase<DragEnterHandler> {
    * {@link DomEvent#fireNativeEvent(com.google.gwt.dom.client.NativeEvent, com.google.gwt.event.shared.HasHandlers)}
    * or
    * {@link DomEvent#fireNativeEvent(com.google.gwt.dom.client.NativeEvent, com.google.gwt.event.shared.HasHandlers, com.google.gwt.dom.client.Element)}
-   * to fire drag enter events.
+   * to fire drag end events.
    */
-  protected DragEnterEvent() {
+  protected DragEndEvent() {
   }
 
   @Override
-  public final Type<DragEnterHandler> getAssociatedType() {
+  public final Type<DragEndHandler> getAssociatedType() {
     return TYPE;
   }
 
   @Override
-  protected void dispatch(DragEnterHandler handler) {
-    handler.onDragEnter(this);
+  protected void dispatch(DragEndHandler handler) {
+    handler.onDragEnd(this);
   }
-
 }

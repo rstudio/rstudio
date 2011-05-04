@@ -18,7 +18,7 @@ package com.google.gwt.event.dom.client;
 /**
  * Represents a native drag over event.
  */
-public class DragOverEvent extends DomEvent<DragOverHandler> {
+public class DragOverEvent extends DragDropEventBase<DragOverHandler> {
 
   /**
    * Event type for drag over events. Represents the meta-data associated
@@ -39,6 +39,8 @@ public class DragOverEvent extends DomEvent<DragOverHandler> {
   /**
    * Protected constructor, use
    * {@link DomEvent#fireNativeEvent(com.google.gwt.dom.client.NativeEvent, com.google.gwt.event.shared.HasHandlers)}
+   * or
+   * {@link DomEvent#fireNativeEvent(com.google.gwt.dom.client.NativeEvent, com.google.gwt.event.shared.HasHandlers, com.google.gwt.dom.client.Element)}
    * to fire drag over events.
    */
   protected DragOverEvent() {

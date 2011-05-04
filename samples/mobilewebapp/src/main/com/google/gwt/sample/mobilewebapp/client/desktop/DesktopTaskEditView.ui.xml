@@ -2,6 +2,7 @@
 <ui:UiBinder
   xmlns:ui="urn:ui:com.google.gwt.uibinder"
   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+  xmlns:c="urn:import:com.google.gwt.user.cellview.client"
   xmlns:app="urn:import:com.google.gwt.sample.mobilewebapp.client.ui">
 
   <ui:style>
@@ -65,79 +66,108 @@
       color: white;
       background: #940000;
     }
+    
+    .templateList {
+      border-left: 1px solid #aaa;
+    }
   </ui:style>
 
-  <!-- Edit Form. -->
-  <g:HTMLPanel
-    addStyleNames="{style.editForm}">
-    <table
-      cellspacing="10"
-      align="center">
+  <g:DockLayoutPanel
+    ui:field="dockLayoutPanel"
+    unit="PX">
+    <!-- Edit Form. -->
+    <g:center>
+      <g:HTMLPanel
+        ui:field="editForm"
+        addStyleNames="{style.editForm}">
+        <table
+          cellspacing="10"
+          align="center">
 
-      <!-- Form title. -->
-      <tr>
-        <td
-          align='center'
-          colspan='2'
-          class="{style.title}">Task Details</td>
-      </tr>
+          <!-- Form title. -->
+          <tr>
+            <td
+              align='center'
+              colspan='2'
+              class="{style.title}">Task Details</td>
+          </tr>
 
-      <!-- Task name. -->
-      <tr>
-        <td
-          class="{style.label}">Task Name:</td>
-        <td
-          class="{style.textBoxWrapper}">
-          <g:TextBox
-            addStyleNames="{style.field}"
-            ui:field="nameField" />
-        </td>
-      </tr>
-      <tr>
-        <td></td>
-        <td
-          ui:field="nameViolation"
-          class="{style.violation}">
-        </td>
-      </tr>
+          <!-- Task name. -->
+          <tr>
+            <td
+              class="{style.label}">Task Name:</td>
+            <td
+              class="{style.textBoxWrapper}">
+              <g:TextBox
+                addStyleNames="{style.field}"
+                ui:field="nameField" />
+            </td>
+          </tr>
+          <tr>
+            <td></td>
+            <td
+              ui:field="nameViolation"
+              class="{style.violation}">
+            </td>
+          </tr>
 
-      <!-- Task notes. -->
-      <tr>
-        <td
-          class="{style.label}">Notes:</td>
-        <td
-          class="{style.textBoxWrapper}">
-          <g:TextArea
-            addStyleNames="{style.field} {style.notesBox}"
-            ui:field="notesEditor" />
-        </td>
-      </tr>
+          <!-- Task notes. -->
+          <tr>
+            <td
+              class="{style.label}">Notes:</td>
+            <td
+              class="{style.textBoxWrapper}">
+              <g:TextArea
+                addStyleNames="{style.field} {style.notesBox}"
+                ui:field="notesEditor" />
+            </td>
+          </tr>
 
-      <!-- Task due date. -->
-      <tr>
-        <td
-          class="{style.label}">Due date:</td>
-        <td>
-          <app:DateButton
-            addStyleNames="{style.field} {style.button} {style.dateButton}"
-            ui:field="dueDateEditor" />
-        </td>
-      </tr>
+          <!-- Task due date. -->
+          <tr>
+            <td
+              class="{style.label}">Due date:</td>
+            <td>
+              <app:DateButton
+                addStyleNames="{style.field} {style.button} {style.dateButton}"
+                ui:field="dueDateEditor" />
+            </td>
+          </tr>
 
-      <!-- Button panel. -->
-      <tr
-        class="{style.buttonPanel}">
-        <td></td>
-        <td
-          align='center'>
-          <g:Button
-            ui:field="saveButton"
-            addStyleNames="{style.button} {style.saveButton}">Done</g:Button>
-          <g:Button
-            ui:field="deleteButton"
-            addStyleNames="{style.button} {style.deleteButton}">Delete Item</g:Button>
-        </td>
-      </tr>
-    </table>
-  </g:HTMLPanel>
+          <!-- Button panel. -->
+          <tr
+            class="{style.buttonPanel}">
+            <td></td>
+            <td
+              align='center'>
+              <g:Button
+                ui:field="saveButton"
+                addStyleNames="{style.button} {style.saveButton}">Done</g:Button>
+              <g:Button
+                ui:field="deleteButton"
+                addStyleNames="{style.button} {style.deleteButton}">Delete Item</g:Button>
+            </td>
+          </tr>
+        </table>
+      </g:HTMLPanel>
+    </g:center>
+
+    <!-- Templates. -->
+    <g:east
+      size="250">
+      <g:ScrollPanel
+        ui:field="templateListContainer"
+        addStyleNames="{style.templateList}">
+        <g:HTMLPanel>
+          <b>Templates:</b>
+          <br />
+          Drag a template over the form to the left use it.
+          <c:CellList
+            ui:field="templateList" />
+        </g:HTMLPanel>
+      </g:ScrollPanel>
+    </g:east>
+
+  </g:DockLayoutPanel>
+
 </ui:UiBinder> 

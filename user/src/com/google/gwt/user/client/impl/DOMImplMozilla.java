@@ -40,6 +40,16 @@ class DOMImplMozilla extends DOMImplStandard {
     initSyntheticMouseUpEvents();
   }
 
+  @Override
+  protected void sinkBitlessEventImpl(Element elem, String eventTypeName) {
+    if ("dragleave".equals(eventTypeName) && isGecko190OrBefore()) {
+      // Firefox 3.0- uses dragexit instead of dragleave.
+      sinkBitlessEventImplMozilla(elem, "dragexit");
+    } else {
+      super.sinkBitlessEventImpl(elem, eventTypeName);
+    }
+  }
+
   private native void initSyntheticMouseUpEvents() /*-{
     $wnd.addEventListener(
       'mouseout',
@@ -65,5 +75,17 @@ class DOMImplMozilla extends DOMImplStandard {
 
     $wnd.addEventListener('DOMMouseScroll', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent,
       true);
+  }-*/;
+
+  /**
+   * Return true if using Gecko 1.9.0 (Firefox 3) or earlier.
+   */
+  private native boolean isGecko190OrBefore() /*-{
+    return @com.google.gwt.dom.client.DOMImplMozilla::isGecko190OrBefore()();
+  }-*/;
+
+  private native void sinkBitlessEventImplMozilla(Element elem, String eventTypeName) /*-{
+    if (eventTypeName == "dragexit")
+      elem.ondragexit = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchDragEvent;
   }-*/;
 }

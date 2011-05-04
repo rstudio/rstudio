@@ -15,24 +15,49 @@
  */
 package com.google.gwt.sample.mobilewebapp.client.desktop;
 
+import com.google.gwt.cell.client.AbstractCell;
+import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.DataTransfer;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.DragDropEventBase;
+import com.google.gwt.event.dom.client.DragLeaveEvent;
+import com.google.gwt.event.dom.client.DragLeaveHandler;
+import com.google.gwt.event.dom.client.DragOverEvent;
+import com.google.gwt.event.dom.client.DragOverHandler;
+import com.google.gwt.event.dom.client.DropEvent;
+import com.google.gwt.event.dom.client.DropHandler;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskEditView;
 import com.google.gwt.sample.mobilewebapp.client.ui.DateButton;
 import com.google.gwt.sample.mobilewebapp.client.ui.EditorDecorator;
 import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
+import com.google.gwt.sample.mobilewebapp.shared.TaskProxyImpl;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.cellview.client.CellList;
+import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DecoratedPopupPanel;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextBoxBase;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryEditorDriver;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * View used to edit a task.
@@ -46,8 +71,66 @@ public class DesktopTaskEditView extends Composite implements TaskEditView {
   }
 
   /**
-   * Editor driver for this view.
+   * A ClientBundle that provides images for this widget.
    */
+  interface Resources extends ClientBundle {
+    @Source("DesktopTaskEditView.css")
+    Style style();
+  }
+
+  /**
+   * The styles used in this widget.
+   */
+  interface Style extends CssResource {
+    /**
+     * Applies to the cells in the task template list.
+     */
+    String taskTemplateCell();
+  }
+
+  /**
+   * The cell used to render task templates.
+   */
+  static class TaskTemplateCell extends AbstractCell<TaskProxy> {
+
+    interface Template extends SafeHtmlTemplates {
+      @SafeHtmlTemplates.Template("<div class=\"{0}\" draggable=\"true\">"
+          + "{1}<div style=\"font-size:80%;\">{2}</div></div>")
+      SafeHtml task(String className, String name, String notes);
+    }
+
+    private Template template = GWT.create(Template.class);
+    private final String className;
+
+    public TaskTemplateCell(String className) {
+      super("dragstart");
+      this.className = className;
+    }
+
+    @Override
+    public void onBrowserEvent(Context context, Element parent, TaskProxy value, NativeEvent event,
+        ValueUpdater<TaskProxy> valueUpdater) {
+      if ("dragstart".equals(event.getType())) {
+        // Save the ID of the TaskProxy.
+        DataTransfer dataTransfer = event.getDataTransfer();
+        dataTransfer.setData("text", String.valueOf(context.getIndex()));
+
+        // Set the image.
+        dataTransfer.setDragImage(parent, 25, 15);
+      }
+    }
+
+    @Override
+    public void render(Context context, TaskProxy value, SafeHtmlBuilder sb) {
+      if (value == null) {
+        return;
+      }
+
+      String notes = value.getNotes();
+      sb.append(template.task(className, value.getName(), (notes == null) ? "" : notes));
+    }
+  }
+
   interface Driver extends RequestFactoryEditorDriver<TaskProxy, DesktopTaskEditView> {
   }
 
@@ -84,6 +167,15 @@ public class DesktopTaskEditView extends Composite implements TaskEditView {
   }
 
   @UiField
+  DockLayoutPanel dockLayoutPanel;
+
+  /**
+   * The panel that contains the edit form.
+   */
+  @UiField
+  HTMLPanel editForm;
+
+  @UiField
   Button deleteButton;
   @UiField
   DateButton dueDateEditor;
@@ -98,6 +190,12 @@ public class DesktopTaskEditView extends Composite implements TaskEditView {
   @UiField
   Button saveButton;
 
+  @UiField(provided = true)
+  final CellList<TaskProxy> templateList;
+
+  @UiField
+  Widget templateListContainer;
+
   private final Driver driver = GWT.create(Driver.class);
 
   /**
@@ -105,13 +203,27 @@ public class DesktopTaskEditView extends Composite implements TaskEditView {
    */
   private Presenter presenter;
 
+  private final Resources resources;
+
   /**
    * Construct a new {@link DesktopTaskEditView}.
    */
   public DesktopTaskEditView() {
+    // Initialize the styles.
+    resources = GWT.create(Resources.class);
+    resources.style().ensureInjected();
+
+    // Create the template list.
+    templateList = createTaskTemplateList();
+
     initWidget(uiBinder.createAndBindUi(this));
     nameEditor = EditorDecorator.create(nameField.asEditor(), nameViolation);
     driver.initialize(this);
+
+    // Hide the template list if it isn't supported.
+    if (!DragDropEventBase.isSupported()) {
+      dockLayoutPanel.setWidgetSize(templateListContainer, 0);
+    }
 
     // Create a new task or modify the current task when done is pressed.
     saveButton.addClickHandler(new ClickHandler() {
@@ -130,6 +242,52 @@ public class DesktopTaskEditView extends Composite implements TaskEditView {
         }
       }
     });
+
+    // Add the form as a drop target.
+    editForm.addDomHandler(new DragOverHandler() {
+      public void onDragOver(DragOverEvent event) {
+        // Highlight the name and notes box.
+        nameField.getElement().getStyle().setBackgroundColor("#ffa");
+        notesEditor.getElement().getStyle().setBackgroundColor("#ffa");
+      }
+    }, DragOverEvent.getType());
+    editForm.addDomHandler(new DragLeaveHandler() {
+      public void onDragLeave(DragLeaveEvent event) {
+        EventTarget eventTarget = event.getNativeEvent().getEventTarget();
+        if (!Element.is(eventTarget)) {
+          return;
+        }
+        Element target = Element.as(eventTarget);
+
+        if (target == editForm.getElement()) {
+          // Un-highlight the name and notes box.
+          nameField.getElement().getStyle().clearBackgroundColor();
+          notesEditor.getElement().getStyle().clearBackgroundColor();
+        }
+      }
+    }, DragLeaveEvent.getType());
+    editForm.addDomHandler(new DropHandler() {
+      public void onDrop(DropEvent event) {
+        // Prevent the default text drop.
+        event.preventDefault();
+
+        // Un-highlight the name and notes box.
+        nameField.getElement().getStyle().clearBackgroundColor();
+        notesEditor.getElement().getStyle().clearBackgroundColor();
+
+        // Fill in the form.
+        try {
+          // Get the template the from the data transfer object.
+          DataTransfer dataTransfer = event.getNativeEvent().getDataTransfer();
+          int templateIndex = Integer.parseInt(dataTransfer.getData("text"));
+          TaskProxy template = templateList.getVisibleItem(templateIndex);
+          nameField.setValue(template.getName());
+          notesEditor.setValue(template.getNotes());
+        } catch (NumberFormatException e) {
+          // The user probably dragged something other than a template.
+        }
+      }
+    }, DropEvent.getType());
   }
 
   public RequestFactoryEditorDriver<TaskProxy, ?> getEditorDriver() {
@@ -156,4 +314,19 @@ public class DesktopTaskEditView extends Composite implements TaskEditView {
     this.presenter = presenter;
   }
 
+  private CellList<TaskProxy> createTaskTemplateList() {
+    CellList<TaskProxy> list =
+        new CellList<TaskProxy>(new TaskTemplateCell(resources.style().taskTemplateCell()));
+    list.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
+
+    // Create the templates.
+    List<TaskProxy> templates = new ArrayList<TaskProxy>();
+    templates.add(new TaskProxyImpl("Call mom", null));
+    templates.add(new TaskProxyImpl("Register to vote", "Where is my polling location again?"));
+    templates.add(new TaskProxyImpl("Replace air filter", "Size: 24x13x1"));
+    templates.add(new TaskProxyImpl("Take out the trash", null));
+    list.setRowData(templates);
+
+    return list;
+  }
 }

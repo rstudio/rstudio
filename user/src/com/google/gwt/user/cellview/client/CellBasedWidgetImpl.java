@@ -115,9 +115,14 @@ abstract class CellBasedWidgetImpl {
 
     int eventsToSink = 0;
     for (String typeName : typeNames) {
-      int typeInt = sinkEvent(widget, typeName);
-      if (typeInt > 0) {
-        eventsToSink |= typeInt;
+      int typeInt = Event.getTypeInt(typeName);
+      if (typeInt < 0) {
+        widget.sinkBitlessEvent(typeName);
+      } else {
+        typeInt = sinkEvent(widget, typeName);
+        if (typeInt > 0) {
+          eventsToSink |= typeInt;
+        }
       }
     }
     if (eventsToSink > 0) {
