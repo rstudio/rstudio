@@ -126,7 +126,7 @@ public class PlotSizer extends Composite
       sizeInputPanel.add(new HTML("&nbsp;&nbsp;"));
       keepRatioCheckBox_ = new CheckBox();
       keepRatioCheckBox_.setValue(keepRatio);
-      keepRatioCheckBox_.setText("Keep ratio");
+      keepRatioCheckBox_.setText("Maintain aspect ratio");
       sizeInputPanel.add(keepRatioCheckBox_);
       
       // image and sizer in layout panel (create now so we can call
@@ -135,7 +135,7 @@ public class PlotSizer extends Composite
      
       
       // update button
-      ThemedButton updateButton = new ThemedButton("Update Size", 
+      ThemedButton updateButton = new ThemedButton("Update Image Size", 
                                                     new ClickHandler(){
          public void onClick(ClickEvent event) 
          {
