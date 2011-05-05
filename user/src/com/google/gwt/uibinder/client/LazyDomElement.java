@@ -65,7 +65,7 @@ public class LazyDomElement<T extends Element> {
   */
   public T get() {
     if (element == null) {
-      element = Document.get().getElementById(domId).cast();
+      element = Document.get().getElementById(domId).<T>cast();
       if (element == null) {
         throw new RuntimeException("Cannot find element with id \"" + domId
             + "\". Perhaps it is not attached to the document body.");
