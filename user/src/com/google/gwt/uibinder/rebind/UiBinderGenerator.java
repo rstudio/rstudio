@@ -49,6 +49,8 @@ public class UiBinderGenerator extends Generator {
 
   private static final String XSS_SAFE_CONFIG_PROPERTY = "UiBinder.useSafeHtmlTemplates";
   private static final String LAZY_WIDGET_BUILDERS_PROPERTY = "UiBinder.useLazyWidgetBuilders";
+  
+  private static boolean gaveSafeHtmlWarning;
 
   /**
    * Given a UiBinder interface, return the path to its ui.xml file, suitable
@@ -214,10 +216,11 @@ public class UiBinderGenerator extends Generator {
     Boolean rtn = extractConfigProperty(
         logger, propertyOracle, XSS_SAFE_CONFIG_PROPERTY, true);
 
-    if (!rtn) {
+    if (!gaveSafeHtmlWarning && !rtn) {
       logger.warn("Configuration property %s is false! UiBinder SafeHtml integration is off, "
           + "leaving your users more vulnerable to cross-site scripting attacks.",
           XSS_SAFE_CONFIG_PROPERTY);
+      gaveSafeHtmlWarning = true;
     }
     return rtn;
   }

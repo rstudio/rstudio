@@ -30,9 +30,6 @@ public class TabPanelParser implements ElementParser {
 
   public void parse(XMLElement panelElem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
-    writer.warn(panelElem,
-        "%1$s:%2$s is deprecated. Use the %1$s:TabLayoutPanel instead.",
-        panelElem.getPrefix(), panelElem.getLocalName());
     // Parse children.
     for (XMLElement tabElem : panelElem.consumeChildElements()) {
       // TabPanel can only contain Tab elements.

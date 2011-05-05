@@ -29,9 +29,6 @@ public class StackPanelParser implements ElementParser {
 
   public void parse(XMLElement elem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
-    writer.warn(elem,
-        "%1$s:%2$s is deprecated. Use the %1$s:StackLayoutPanel instead.",
-        elem.getPrefix(), elem.getLocalName());
     // Parse children.
     for (XMLElement child : elem.consumeChildElements()) {
 
