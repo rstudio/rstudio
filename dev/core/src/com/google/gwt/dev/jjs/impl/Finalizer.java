@@ -86,7 +86,7 @@ public class Finalizer {
 
     @Override
     public void endVisit(JMethod x, Context ctx) {
-      if (!x.isFinal() && !isOverriden.contains(x)) {
+      if (!x.isFinal() && !isOverridden.contains(x) && x.getEnclosingType() instanceof JClassType) {
         setFinal(x);
       }
     }
@@ -125,7 +125,7 @@ public class Finalizer {
   }
 
   /**
-   * Find all items that ARE overriden/subclassed/reassigned.
+   * Find all items that ARE overridden/subclassed/reassigned.
    */
   private class MarkVisitor extends JVisitor {
 
@@ -155,9 +155,9 @@ public class Finalizer {
 
     @Override
     public void endVisit(JMethod x, Context ctx) {
-      for (int i = 0; i < x.getOverrides().size(); ++i) {
-        JMethod it = x.getOverrides().get(i);
-        isOverriden.add(it);
+      for (JMethod override = x.getDirectOverride(); override != null; override =
+          override.getDirectOverride()) {
+        isOverridden.add(override);
       }
     }
 
@@ -206,7 +206,7 @@ public class Finalizer {
     return stats;
   }
 
-  private final Set<JMethod> isOverriden = new HashSet<JMethod>();
+  private final Set<JMethod> isOverridden = new HashSet<JMethod>();
 
   private final Set<JVariable> isReassigned = new HashSet<JVariable>();
 

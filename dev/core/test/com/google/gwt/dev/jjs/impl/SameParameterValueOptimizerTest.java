@@ -124,7 +124,7 @@ public class SameParameterValueOptimizerTest extends OptimizerTestBase {
   public void testInstanceMethod_Poly() throws Exception {
     addSnippetClassDecl("void foo(int i) { int j = i; }");
     optimizeMethod("foo", "void", "new EntryPoint().foo(1);").intoString(
-      "int j = i;");
+      "int j = 1;");
   }
 
   public void testInstanceMethod_Final() throws Exception {
@@ -140,7 +140,7 @@ public class SameParameterValueOptimizerTest extends OptimizerTestBase {
         "  void foo(int i) { int j = i; }", // overrides
         "}");
     optimizeMethod("foo", "void", "new EntryPoint().foo(1);").intoString(
-      "int j = i;");
+      "int j = 1;");
   }
   
   @Override

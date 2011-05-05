@@ -16,16 +16,13 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.Context;
-import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
-import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNode;
-import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
@@ -57,22 +54,14 @@ public class MethodCallTightener {
         return;
       }
 
+      // Of the set of possible dispatches, see if there's one that subsumes the
+      // rest.
+
       JReferenceType instanceType = ((JReferenceType) instance.getType()).getUnderlyingType();
       JReferenceType enclosingType = method.getEnclosingType();
 
-      if (instanceType == enclosingType || instanceType instanceof JInterfaceType) {
-        // This method call is as tight as it can be for the type of the
-        // qualifier
-        return;
-      }
-
-      if (instanceType instanceof JArrayType) {
-        // shouldn't get here; arrays don't have extra methods
-        return;
-      }
-
-      if (instanceType instanceof JNullType) {
-        // TypeTightener will handle this case
+      if (instanceType == enclosingType || !(instanceType instanceof JClassType)) {
+        // Cannot tighten.
         return;
       }
 
@@ -87,7 +76,7 @@ public class MethodCallTightener {
       outer : for (type = (JClassType) instanceType; type != null && type != enclosingType; type =
           type.getSuperClass()) {
         for (JMethod methodIt : type.getMethods()) {
-          if (methodOverrides(methodIt, method)) {
+          if (methodIt.canBePolymorphic() && methodOverrides(methodIt, method)) {
             foundMethod = methodIt;
             break outer;
           }
@@ -100,9 +89,11 @@ public class MethodCallTightener {
 
       /*
        * Replace the call to the original method with a call to the same method
-       * on the tighter type.
+       * on the tighter type. Don't update the call's result type, however,
+       * TypeTightener will handle that accurately.
        */
-      JMethodCall call = new JMethodCall(x.getSourceInfo(), x.getInstance(), foundMethod);
+      JMethodCall call =
+          new JMethodCall(x.getSourceInfo(), x.getInstance(), foundMethod, x.getType());
       call.addArgs(x.getArgs());
       ctx.replaceMe(call);
     }
@@ -112,28 +103,8 @@ public class MethodCallTightener {
       // Do not tighten new operations.
     }
 
-    /**
-     * Check whether <code>subMethod</code> overrides <code>supMethod</code>.
-     * For the purposes of this method, indirect overrides are considered
-     * overrides. For example, if method A.m overrides B.m, and B.m overrides
-     * C.m, then A.m is considered to override C.m. Additionally, implementing
-     * an interface is considered <q>overriding</q> for the purposes of this
-     * method.
-     * 
-     */
     private boolean methodOverrides(JMethod subMethod, JMethod supMethod) {
-      if (subMethod.getParams().size() != supMethod.getParams().size()) {
-        // short cut: check the number of parameters
-        return false;
-      }
-
-      if (!subMethod.getName().equals(supMethod.getName())) {
-        // short cut: check the method names
-        return false;
-      }
-
-      // long way: get all overrides and see if supMethod is included
-      return program.typeOracle.getAllOverrides(subMethod).contains(supMethod);
+      return subMethod.getSignature().equals(supMethod.getSignature());
     }
   }
 

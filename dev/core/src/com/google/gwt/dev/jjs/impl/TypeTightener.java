@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.CanBeAbstract;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
@@ -207,32 +208,25 @@ public class TypeTightener {
         // TODO: do I still need this?
         addAssignment(x, x.getLiteralInitializer());
       }
-      currentMethod = null;
     }
 
     @Override
     public void endVisit(JMethod x, Context ctx) {
-      if (program.typeOracle.isInstantiatedType(x.getEnclosingType())) {
-        for (JMethod method : program.typeOracle.getAllOverrides(x)) {
-          addOverrider(method, x);
-        }
-      }
       currentMethod = null;
     }
 
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
-      // All of the params in the target method are considered to be assigned by
-      // the arguments from the caller
-      Iterator<JExpression> argIt = x.getArgs().iterator();
-      List<JParameter> params = x.getTarget().getParams();
-      for (int i = 0; i < params.size(); ++i) {
-        JParameter param = params.get(i);
-        JExpression arg = argIt.next();
-        if (param.getType() instanceof JReferenceType) {
-          addAssignment(param, arg);
-        }
+      for (JMethod target : program.typeOracle.getPossibleDispatches(x)) {
+        assignParameters(x, target);
+        // Assign the target return type to the call also.
+        addMethodResolution(x, target);
       }
+    }
+
+    @Override
+    public void endVisit(JNewInstance x, Context ctx) {
+      assignParameters(x, x.getTarget());
     }
 
     @Override
@@ -255,10 +249,10 @@ public class TypeTightener {
     public void endVisit(JsniMethodRef x, Context ctx) {
       // If this happens in JSNI, we can't make any type-tightening assumptions
       // Fake an assignment-to-self on all args to prevent tightening
-      JMethod method = x.getTarget();
-      for (JParameter param : method.getParams()) {
-        addAssignment(param, new JParameterRef(program
-            .createSourceInfoSynthetic(RecordVisitor.class), param));
+      for (JMethod method : program.typeOracle.getPossibleDispatches(x)) {
+        for (JParameter param : method.getParams()) {
+          addAssignment(param, new JParameterRef(SourceOrigin.UNKNOWN, param));
+        }
       }
     }
 
@@ -271,36 +265,9 @@ public class TypeTightener {
       }
     }
 
-    /**
-     * Merge param call args across overriders/implementors. We can't tighten a
-     * param type in an overriding method if the declaring method is looser.
-     */
     @Override
     public boolean visit(JMethod x, Context ctx) {
       currentMethod = x;
-
-      if (x.canBePolymorphic()) {
-        /*
-         * Add an assignment to each parameter from that same parameter in every
-         * method this method overrides.
-         */
-        Set<JMethod> overrides = program.typeOracle.getAllOverrides(x);
-        if (overrides.isEmpty()) {
-          return true;
-        }
-        for (int j = 0, c = x.getParams().size(); j < c; ++j) {
-          JParameter param = x.getParams().get(j);
-          Set<JParameter> set = paramUpRefs.get(param);
-          if (set == null) {
-            set = new HashSet<JParameter>();
-            paramUpRefs.put(param, set);
-          }
-          for (JMethod baseMethod : overrides) {
-            JParameter baseParam = baseMethod.getParams().get(j);
-            set.add(baseParam);
-          }
-        }
-      }
       return true;
     }
 
@@ -319,12 +286,26 @@ public class TypeTightener {
       }
     }
 
-    private void addOverrider(JMethod target, JMethod overrider) {
-      add(target, overrider, overriders);
+    private void addMethodResolution(JMethodCall call, JMethod method) {
+      add(call, method, methodResolutions);
     }
 
     private void addReturn(JMethod target, JExpression expr) {
       add(target, expr, returns);
+    }
+
+    /**
+     * All of the params in the target method are considered to be assigned by
+     * the arguments from the caller.
+     */
+    private void assignParameters(JMethodCall x, JMethod target) {
+      Iterator<JExpression> argIt = x.getArgs().iterator();
+      for (JParameter param : target.getParams()) {
+        JExpression arg = argIt.next();
+        if (param.getType() instanceof JReferenceType) {
+          addAssignment(param, arg);
+        }
+      }
     }
   }
 
@@ -477,7 +458,7 @@ public class TypeTightener {
     }
 
     /**
-     * Tighten based on return types and overrides.
+     * Tighten based on return types.
      */
     @Override
     public void endVisit(JMethod x, Context ctx) {
@@ -504,34 +485,24 @@ public class TypeTightener {
       }
 
       /*
-       * The only information that we can infer about native methods is if they
-       * are declared to return a leaf type.
+       * The only information that we can infer about abstract / native methods
+       * is if they are declared to return a leaf type.
        */
-      if (x.isNative()) {
+      if (x.isAbstract() || x.isNative()) {
         return;
       }
 
-      // tighten based on both returned types and possible overrides
-      List<JReferenceType> typeList = new ArrayList<JReferenceType>();
-
+      // tighten based on returned types
       Set<JExpression> myReturns = returns.get(x);
-      if (myReturns != null) {
+      JReferenceType resultType;
+      if (myReturns == null) {
+        resultType = typeNull;
+      } else {
+        assert myReturns.size() > 0;
+        List<JReferenceType> typeList = new ArrayList<JReferenceType>();
         for (JExpression expr : myReturns) {
           typeList.add((JReferenceType) expr.getType());
         }
-      }
-      Set<JMethod> myOverriders = overriders.get(x);
-      if (myOverriders != null) {
-        for (JMethod method : myOverriders) {
-          typeList.add((JReferenceType) method.getType());
-        }
-      }
-
-      JReferenceType resultType;
-      if (typeList.isEmpty()) {
-        // The method returns nothing
-        resultType = typeNull;
-      } else {
         resultType = program.generalizeTypes(typeList);
       }
       resultType = program.strongerType(refType, resultType);
@@ -543,39 +514,53 @@ public class TypeTightener {
 
     /**
      * Tighten the target method from the abstract base method to the final
-     * implementation.
+     * implementation. Tighten the call result based on possible dispatches.
      */
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
-      JMethod target = x.getTarget();
-      JMethod concreteMethod = getSingleConcreteMethod(target);
-      if (concreteMethod != null) {
-        JMethodCall newCall = new JMethodCall(x.getSourceInfo(), x.getInstance(), concreteMethod);
-        newCall.addArgs(x.getArgs());
-        ctx.replaceMe(newCall);
-        target = concreteMethod;
-        x = newCall;
+      Set<JMethod> targets = methodResolutions.get(x);
+      if (targets == null) {
+        return;
+      }
+      assert targets.size() > 0;
+      if (targets.size() == 1) {
+        JMethod target = targets.iterator().next();
+        if (target != x.getTarget()) {
+          JMethodCall newCall = new JMethodCall(x.getSourceInfo(), x.getInstance(), target);
+          newCall.addArgs(x.getArgs());
+          ctx.replaceMe(newCall);
+          x = newCall;
+        }
+        if (x.canBePolymorphic()) {
+          x.setCannotBePolymorphic();
+          madeChanges();
+        }
+        if (x.getType() == target.getType()) {
+          // Short-cut.
+          return;
+        }
       }
 
-      if (x.canBePolymorphic()) {
-        // See if we can remove virtualization from this call.
-        JExpression instance = x.getInstance();
-        assert (instance != null);
-        JReferenceType instanceType = (JReferenceType) instance.getType();
-        Set<JMethod> myOverriders = overriders.get(target);
-        if (myOverriders != null) {
-          for (JMethod override : myOverriders) {
-            JReferenceType overrideType = override.getEnclosingType();
-            if (program.typeOracle.canTheoreticallyCast(instanceType, overrideType)) {
-              // This call is truly polymorphic.
-              // TODO: composite types! :)
-              return;
-            }
-          }
-        }
-        x.setCannotBePolymorphic();
+      // Tighten based on joint return types.
+      if (!(x.getType() instanceof JReferenceType)) {
+        return;
+      }
+      JReferenceType orig = (JReferenceType) x.getType();
+      List<JReferenceType> typeList = new ArrayList<JReferenceType>(targets.size());
+      for (JMethod target : targets) {
+        typeList.add((JReferenceType) target.getType());
+      }
+      JReferenceType resultType = program.generalizeTypes(typeList);
+      resultType = program.strongerType(orig, resultType);
+      if (orig != resultType) {
+        x.setType(resultType);
         madeChanges();
       }
+    }
+
+    @Override
+    public void endVisit(JNewInstance x, Context ctx) {
+      // Nothing.
     }
 
     @Override
@@ -599,24 +584,6 @@ public class TypeTightener {
        * type information.
        */
       return !x.isNative();
-    }
-
-    /**
-     * Find a replacement method. If the original method is abstract, this will
-     * return the leaf, final implementation of the method. If the method is
-     * already concrete, but enclosed by an abstract type, the overriding method
-     * from the leaf concrete type will be returned. If the method is static,
-     * return <code>null</code> no matter what.
-     */
-    private JMethod getSingleConcreteMethod(JMethod method) {
-      if (!method.canBePolymorphic()) {
-        return null;
-      }
-      if (getSingleConcreteType(method.getEnclosingType()) != null) {
-        return getSingleConcrete(method, overriders);
-      } else {
-        return null;
-      }
     }
 
     /**
@@ -714,15 +681,6 @@ public class TypeTightener {
         }
       }
 
-      if (x instanceof JParameter) {
-        Set<JParameter> myParams = paramUpRefs.get(x);
-        if (myParams != null) {
-          for (JParameter param : myParams) {
-            typeList.add((JReferenceType) param.getType());
-          }
-        }
-      }
-
       JReferenceType resultType;
       if (!typeList.isEmpty()) {
         resultType = program.generalizeTypes(typeList);
@@ -797,10 +755,8 @@ public class TypeTightener {
       new IdentityHashMap<JVariable, Set<JExpression>>();
   private final Map<JReferenceType, Set<JClassType>> implementors =
       new IdentityHashMap<JReferenceType, Set<JClassType>>();
-  private final Map<JMethod, Set<JMethod>> overriders =
-      new IdentityHashMap<JMethod, Set<JMethod>>();
-  private final Map<JParameter, Set<JParameter>> paramUpRefs =
-      new IdentityHashMap<JParameter, Set<JParameter>>();
+  private final Map<JMethodCall, Set<JMethod>> methodResolutions =
+      new IdentityHashMap<JMethodCall, Set<JMethod>>();
   private final JProgram program;
   private final Map<JMethod, Set<JExpression>> returns =
       new IdentityHashMap<JMethod, Set<JExpression>>();
