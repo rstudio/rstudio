@@ -53,7 +53,8 @@ public class SafeHtmlAsComponentsTest extends GWTTestCase {
   public void testSafeHtml() {
     Ui domUi = new Ui();
     assertNotNull(domUi.safeObject);
-    assertEquals(domUi.safeObject.asString(), domUi.div.getInnerHTML());
+    assertEquals(domUi.safeObject.asString().toLowerCase(),
+                 domUi.div.getInnerHTML().toLowerCase());
     assertEquals("Hello <b>Bob</b>".toLowerCase(), domUi.div.getInnerHTML().toLowerCase());
   }
 }
