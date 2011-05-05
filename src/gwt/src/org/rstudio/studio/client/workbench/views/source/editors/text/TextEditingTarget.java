@@ -474,6 +474,10 @@ public class TextEditingTarget implements EditingTarget
    private void updateStatusBarLanguage()
    {
       statusBar_.getLanguage().setValue(fileType_.getLabel());
+      boolean isR = fileType_ == FileTypeRegistry.R;
+      statusBar_.getFunction().setVisible(isR);
+      if (isR)
+         updateCurrentFunction();
    }
 
    private void updateStatusBarPosition()
@@ -481,7 +485,21 @@ public class TextEditingTarget implements EditingTarget
       Position pos = docDisplay_.getCursorPosition();
       statusBar_.getPosition().setValue((pos.getRow() + 1) + ":" +
                                         (pos.getColumn() + 1));
-      statusBar_.getFunction().setValue(docDisplay_.getCurrentFunction());
+      updateCurrentFunction();
+   }
+
+   private void updateCurrentFunction()
+   {
+      Scheduler.get().scheduleFinally(
+            new RepeatingCommand()
+            {
+               public boolean execute()
+               {
+                  final String func = docDisplay_.getCurrentFunction();
+                  statusBar_.getFunction().setValue(func);
+                  return false;
+               }
+            });
    }
 
    private void registerPrefs()

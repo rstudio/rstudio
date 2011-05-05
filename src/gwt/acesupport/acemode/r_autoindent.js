@@ -118,6 +118,16 @@ var IndentManager = function(doc, tokenizer, statePattern) {
          return clone;
       };
 
+      this.isFirstSignificantTokenOnLine = function()
+      {
+         return this.$offset == 0;
+      };
+
+      this.isLastSignificantTokenOnLine = function()
+      {
+         return this.$offset == (that.$tokens[this.$row] || []).length - 1;
+      };
+
    }).call(this.$TokenCursor.prototype);
 
    this.$ScopeTree = function(label, start)
@@ -266,14 +276,14 @@ var IndentManager = function(doc, tokenizer, statePattern) {
 
    this.$buildScopeTree = function()
    {
-      function getAssocFuncToken(tokenCursor)
+      function findAssocFuncToken(tokenCursor)
       {
          if (tokenCursor.currentValue() !== "{")
-            return null;
+            return false;
          if (!tokenCursor.moveToPreviousToken())
-            return null;
+            return false;
          if (tokenCursor.currentValue() !== ")")
-            return null;
+            return false;
 
          var success = false;
          var parenCount = 0;
@@ -294,22 +304,22 @@ var IndentManager = function(doc, tokenizer, statePattern) {
             }
          }
          if (!success)
-            return null;
+            return false;
 
          if (!tokenCursor.moveToPreviousToken())
-            return null;
+            return false;
          if (!pFunction(tokenCursor.currentToken()))
-            return null;
+            return false;
          if (!tokenCursor.moveToPreviousToken())
-            return null;
+            return false;
          if (!pAssign(tokenCursor.currentToken()))
-            return null;
+            return false;
          if (!tokenCursor.moveToPreviousToken())
-            return null;
+            return false;
          if (!pIdentifier(tokenCursor.currentToken()))
-            return null;
+            return false;
 
-         return tokenCursor.currentToken();
+         return true;
       }
 
       this.$tokenizeUpToRow(this.$tokens.length - 1);
@@ -322,18 +332,21 @@ var IndentManager = function(doc, tokenizer, statePattern) {
       {
          if (tokenCursor.currentValue() === "{")
          {
-            var funcToken = getAssocFuncToken(tokenCursor.cloneCursor());
-
+            var localCursor = tokenCursor.cloneCursor();
             var label, startPos;
-            if (funcToken)
+            if (findAssocFuncToken(localCursor))
             {
-               label = funcToken.token.value;
-               startPos = {row: funcToken.row, column: funcToken.column};
+               label = localCursor.currentValue();
+               startPos = localCursor.currentPosition();
+               if (localCursor.isFirstSignificantTokenOnLine())
+                  startPos.column = 0;
             }
             else
             {
                label = null;
                startPos = tokenCursor.currentPosition();
+               if (tokenCursor.isFirstSignificantTokenOnLine())
+                  startPos.column = 0;
             }
 
             var child = nodes[nodes.length - 1].addChild(label, startPos);
@@ -345,7 +358,15 @@ var IndentManager = function(doc, tokenizer, statePattern) {
             {
                var node = nodes.pop();
                var pos = tokenCursor.currentPosition();
-               pos.column++;
+               if (tokenCursor.isLastSignificantTokenOnLine())
+               {
+                  pos.row++;
+                  pos.column = 0;
+               }
+               else
+               {
+                  pos.column++;
+               }
                node.setEnd(pos);
             }
          }

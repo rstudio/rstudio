@@ -24,4 +24,6 @@ public interface StatusBarElement extends HasSelectionHandlers<String>,
 
    void addOptionValue(String label);
    void clearOptions();
+
+   void setVisible(boolean visible);
 }
