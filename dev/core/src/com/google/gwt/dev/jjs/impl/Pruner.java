@@ -50,7 +50,6 @@ import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.js.ast.JsFunction;
-import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -329,17 +328,15 @@ public class Pruner {
    * unreferenced methods and fields from their containing classes.
    */
   private class PruneVisitor extends JModVisitor {
-    private final Set<JMethod> methodsReferencedButNotExecuted;
     private final Map<JMethod, ArrayList<JParameter>> methodToOriginalParamsMap =
         new HashMap<JMethod, ArrayList<JParameter>>();
     private final Set<? extends JNode> referencedNonTypes;
     private final Set<? extends JReferenceType> referencedTypes;
 
     public PruneVisitor(Set<? extends JReferenceType> referencedTypes,
-        Set<? extends JNode> referencedNodes, Set<JMethod> methodsReferencedButNotExecuted) {
+        Set<? extends JNode> referencedNodes) {
       this.referencedTypes = referencedTypes;
       this.referencedNonTypes = referencedNodes;
-      this.methodsReferencedButNotExecuted = methodsReferencedButNotExecuted;
     }
 
     public Map<JMethod, ArrayList<JParameter>> getMethodToOriginalParamsMap() {
@@ -371,9 +368,6 @@ public class Pruner {
             madeChanges();
             --i;
           }
-        } else if (methodsReferencedButNotExecuted.contains(method)) {
-          method.setAbstract(true);
-          method.setBody(null);
         } else {
           accept(method);
         }
@@ -564,7 +558,7 @@ public class Pruner {
       /*
        * HACK HACK HACK: ControlFlowAnalyzer has special hacks for dealing with
        * ClassLiterals, which causes the body of ClassLiteralHolder's clinit to
-       * never be rescued. This in turn causes invalid references to static
+       * never be rescured. This in turn causes invalid references to static
        * methods, which violates otherwise good assumptions about compiler
        * operation.
        * 
@@ -628,19 +622,17 @@ public class Pruner {
 
       program.typeOracle.setInstantiatedTypes(livenessAnalyzer.getInstantiatedTypes());
 
-      Set<JNode> referencedNonTypes =
-          new IdentityHashSet<JNode>(livenessAnalyzer.getLiveFieldsAndMethods());
-      referencedNonTypes.addAll(livenessAnalyzer.getMethodsReferencedButNotExecuted());
       PruneVisitor pruner =
-          new PruneVisitor(livenessAnalyzer.getReferencedTypes(), referencedNonTypes,
-              livenessAnalyzer.getMethodsReferencedButNotExecuted());
+          new PruneVisitor(livenessAnalyzer.getReferencedTypes(), livenessAnalyzer
+              .getLiveFieldsAndMethods());
       pruner.accept(program);
       stats.recordModified(pruner.getNumMods());
       if (!pruner.didChange()) {
         break;
       }
       CleanupRefsVisitor cleaner =
-          new CleanupRefsVisitor(referencedNonTypes, pruner.getMethodToOriginalParamsMap());
+          new CleanupRefsVisitor(livenessAnalyzer.getLiveFieldsAndMethods(), pruner
+              .getMethodToOriginalParamsMap());
       cleaner.accept(program.getDeclaredTypes());
     }
     return stats;
@@ -657,9 +649,7 @@ public class Pruner {
         if (method instanceof JConstructor) {
           livenessAnalyzer.traverseFromInstantiationOf(type);
         }
-        if (!method.canBePolymorphic()) {
-          livenessAnalyzer.traverseFrom(method);
-        }
+        livenessAnalyzer.traverseFrom(method);
       }
     }
   }

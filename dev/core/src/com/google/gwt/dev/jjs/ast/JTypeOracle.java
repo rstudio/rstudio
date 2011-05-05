@@ -16,9 +16,7 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
-import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.jjs.impl.HasNameSort;
-import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.collect.IdentitySets;
@@ -190,8 +188,6 @@ public class JTypeOracle implements Serializable {
     return true;
   }
 
-  private JDeclaredType baseArrayType;
-
   /**
    * A map of all interfaces to the set of classes that could theoretically
    * implement them.
@@ -238,14 +234,16 @@ public class JTypeOracle implements Serializable {
   private JDeclaredType javaLangCloneable;
 
   /**
+   * Caches the {@link Object} class.
+   */
+  private JClassType javaLangObject = null;
+
+  /**
    * A map of all interfaces that are implemented by overlay types to the
    * overlay type that initially implements it.
    */
   private final Map<JInterfaceType, JClassType> jsoSingleImpls =
       new IdentityHashMap<JInterfaceType, JClassType>();
-
-  private Map<JClassType, Map<String, JMethod>> polyMethodMap =
-      new IdentityHashMap<JClassType, Map<String, JMethod>>();
 
   /**
    * The associated {@link JProgram}.
@@ -279,6 +277,15 @@ public class JTypeOracle implements Serializable {
    */
   private final Map<JInterfaceType, Set<JInterfaceType>> superInterfaceMap =
       new IdentityHashMap<JInterfaceType, Set<JInterfaceType>>();
+  /**
+   * A map of all methods with virtual overrides, onto the collection of
+   * overridden methods. Each key method's collections is a map of the set of
+   * subclasses who inherit the key method mapped onto the set of interface
+   * methods the key method virtually implements. For a definition of a virtual
+   * override, see {@link #getAllVirtualOverrides(JMethod)}.
+   */
+  private final Map<JMethod, Map<JClassType, Set<JMethod>>> virtualUpRefMap =
+      new IdentityHashMap<JMethod, Map<JClassType, Set<JMethod>>>();
 
   public JTypeOracle(JProgram program) {
     this.program = program;
@@ -410,7 +417,7 @@ public class JTypeOracle implements Serializable {
         }
       }
 
-      if (qType == javaIoSerializable || qType == javaLangCloneable || qType == baseArrayType) {
+      if (qType == javaIoSerializable || qType == javaLangCloneable) {
         return true;
       }
     } else if (type instanceof JClassType) {
@@ -448,7 +455,7 @@ public class JTypeOracle implements Serializable {
   }
 
   public void computeBeforeAST() {
-    baseArrayType = program.getIndexedType("Array");
+    javaLangObject = program.getTypeJavaLangObject();
     javaIoSerializable = program.getFromTypeMap(Serializable.class.getName());
     javaLangCloneable = program.getFromTypeMap(Cloneable.class.getName());
 
@@ -502,6 +509,11 @@ public class JTypeOracle implements Serializable {
         computeCouldImplement((JClassType) type);
       }
     }
+    for (JDeclaredType type : program.getDeclaredTypes()) {
+      if (type instanceof JClassType) {
+        computeVirtualUpRefs((JClassType) type);
+      }
+    }
 
     // Create dual mappings for any jso interface with a Java implementor.
     for (JInterfaceType jsoIntf : jsoSingleImpls.keySet()) {
@@ -515,23 +527,62 @@ public class JTypeOracle implements Serializable {
     }
   }
 
-  public List<JMethod> getPossibleDispatches(JMethodCall x) {
-    JMethod target = x.getTarget();
-    if (!x.canBePolymorphic()) {
-      return Lists.create(target);
-    } else if (x instanceof JsniMethodRef) {
-      return getPossibleDispatchesImpl(target.getEnclosingType(), target);
-    } else {
-      return getPossibleDispatchesImpl((JReferenceType) x.getInstance().getType(), target);
-    }
+  public Set<JMethod> getAllOverrides(JMethod method) {
+    return getAllOverrides(method, instantiatedTypes);
   }
 
-  public List<JMethod> getPossibleDispatches(JReferenceType type, JMethod method) {
-    if (!method.canBePolymorphic() || method.isFinal()) {
-      return Lists.create(method);
-    } else {
-      return getPossibleDispatchesImpl(type, method);
-    }
+  /**
+   * References to any methods which this method implementation might override
+   * or implement in any instantiable class.
+   */
+  public Set<JMethod> getAllOverrides(JMethod method, Set<JReferenceType> instantiatedTypes) {
+    Set<JMethod> results = new IdentityHashSet<JMethod>();
+    getAllRealOverrides(method, results);
+    getAllVirtualOverrides(method, instantiatedTypes, results);
+    return results;
+  }
+
+  /**
+   * References to any methods which this method directly overrides. This should
+   * be an EXHAUSTIVE list, that is, if C overrides B overrides A, then C's
+   * overrides list will contain both A and B.
+   */
+  public Set<JMethod> getAllRealOverrides(JMethod method) {
+    Set<JMethod> results = new IdentityHashSet<JMethod>();
+    getAllRealOverrides(method, results);
+    return results;
+  }
+
+  public Set<JClassType> getAllSubClasses(JReferenceType type) {
+    return subClassMap.get(type);
+  }
+
+  /**
+   * Returns the set of methods the given method virtually overrides. A virtual
+   * override is an association between a concrete method and an unrelated
+   * interface method with the exact same name and signature. The association
+   * occurs if and only if some subclass extends the concrete method's
+   * containing class and implements the interface method's containing
+   * interface. Example:
+   * 
+   * <pre>
+   * interface IFoo {
+   *   foo();
+   * }
+   * class Unrelated {
+   *   foo() { ... }
+   * }
+   * class Foo extends Unrelated implements IFoo {
+   * }
+   * </pre>
+   * 
+   * In this case, <code>Unrelated.foo()</code> virtually implements
+   * <code>IFoo.foo()</code> in subclass <code>Foo</code>.
+   */
+  public Set<JMethod> getAllVirtualOverrides(JMethod method) {
+    Set<JMethod> results = new IdentityHashSet<JMethod>();
+    getAllVirtualOverrides(method, instantiatedTypes, results);
+    return results;
   }
 
   public JClassType getSingleJsoImpl(JReferenceType maybeSingleJsoIntf) {
@@ -555,43 +606,8 @@ public class JTypeOracle implements Serializable {
     }
   }
 
-  /**
-   * Determine whether a type is instantiated.
-   */
-  public boolean isInstantiatedType(JDeclaredType type) {
-    return instantiatedTypes == null || instantiatedTypes.contains(type);
-  }
-
-  /**
-   * Determine whether a type is instantiated.
-   */
   public boolean isInstantiatedType(JReferenceType type) {
-    type = type.getUnderlyingType();
-    if (instantiatedTypes == null || instantiatedTypes.contains(type)) {
-      return true;
-    }
-
-    if (type.isExternal()) {
-      // TODO(tobyr) I don't know under what situations it is safe to assume
-      // that an external type won't be instantiated. For example, if we
-      // assumed that an external exception weren't instantiated, because we
-      // didn't see it constructed in our code, dead code elimination would
-      // incorrectly elide any catch blocks for that exception.
-      //
-      // We should see how this effects optimization and if we can limit its
-      // impact if necessary.
-      return true;
-    }
-
-    if (type instanceof JNullType) {
-      return true;
-    } else if (type instanceof JArrayType) {
-      JArrayType arrayType = (JArrayType) type;
-      if (arrayType.getLeafType() instanceof JNullType) {
-        return true;
-      }
-    }
-    return false;
+    return isInstantiatedType(type, instantiatedTypes);
   }
 
   public boolean isSameOrSuper(JClassType type, JClassType qType) {
@@ -649,8 +665,8 @@ public class JTypeOracle implements Serializable {
   }
 
   public void setInstantiatedTypes(Set<JReferenceType> instantiatedTypes) {
-    this.instantiatedTypes = instantiatedTypes;
-    this.polyMethodMap.keySet().retainAll(instantiatedTypes);
+    this.instantiatedTypes = new IdentityHashSet<JReferenceType>();
+    this.instantiatedTypes.addAll(instantiatedTypes);
   }
 
   private <K, V> void add(Map<K, Set<V>> map, K key, V value) {
@@ -790,21 +806,75 @@ public class JTypeOracle implements Serializable {
   }
 
   /**
+   * WEIRD: Suppose class Foo declares void f(){} and unrelated interface I also
+   * declares void f(). Then suppose Bar extends Foo implements I and doesn't
+   * override f(). We need to record a "virtual" upref from Foo.f() to I.f() so
+   * that if I.f() is rescued AND Bar is instantiable, Foo.f() does not get
+   * pruned.
+   */
+  private void computeVirtualUpRefs(JClassType type) {
+    if (type.getSuperClass() == null || type.getSuperClass() == javaLangObject) {
+      return;
+    }
+
+    /*
+     * For each interface I directly implement, check all methods and make sure
+     * I define implementations for them. If I don't, then check all my super
+     * classes to find virtual overrides.
+     */
+    for (JInterfaceType intf : type.getImplements()) {
+      computeVirtualUpRefs(type, intf);
+      for (JInterfaceType superIntf : get(superInterfaceMap, intf)) {
+        computeVirtualUpRefs(type, superIntf);
+      }
+    }
+  }
+
+  /**
+   * For each interface I directly implement, check all methods and make sure I
+   * define implementations for them. If I don't, then check all my super
+   * classes to find virtual overrides.
+   */
+  private void computeVirtualUpRefs(JClassType type, JInterfaceType intf) {
+    outer : for (JMethod intfMethod : intf.getMethods()) {
+      for (JMethod classMethod : type.getMethods()) {
+        if (methodsDoMatch(intfMethod, classMethod)) {
+          // this class directly implements the interface method
+          continue outer;
+        }
+      }
+
+      // this class does not directly implement the interface method
+      // if any super classes do, create a virtual up ref
+      for (JClassType superType = type.getSuperClass(); superType != javaLangObject; superType =
+          superType.getSuperClass()) {
+        for (JMethod superMethod : superType.getMethods()) {
+          if (methodsDoMatch(intfMethod, superMethod)) {
+            // this super class directly implements the interface method
+            // create a virtual up ref
+
+            // System.out.println("Virtual upref from " + superType.getName()
+            // + "." + superMethod.getName() + " to " + intf.getName() + "."
+            // + intfMethod.getName() + " via " + type.getName());
+
+            Map<JClassType, Set<JMethod>> classToMethodMap =
+                getOrCreateMap(virtualUpRefMap, superMethod);
+            add(classToMethodMap, type, intfMethod);
+
+            // do not search additional super types
+            continue outer;
+          }
+        }
+      }
+    }
+  }
+
+  /**
    * Returns true if type extends the interface represented by qType, either
    * directly or indirectly.
    */
   private boolean extendsInterface(JInterfaceType type, JInterfaceType qType) {
     return get(superInterfaceMap, type).contains(qType);
-  }
-
-  /**
-   * Find a method in candidate that matches the appropriate signature.
-   */
-  private JMethod findMethodMatching(JClassType classType, String signature) {
-    Map<String, JMethod> polyMethods = getOrCreatePolyMap(classType);
-    JMethod result = polyMethods.get(signature);
-    assert result != null;
-    return result;
   }
 
   private <K, V> Set<V> get(Map<K, Set<V>> map, K key) {
@@ -813,6 +883,25 @@ public class JTypeOracle implements Serializable {
       return Collections.emptySet();
     }
     return set;
+  }
+
+  private void getAllRealOverrides(JMethod method, Set<JMethod> results) {
+    for (JMethod possibleOverride : method.getOverrides()) {
+      results.add(possibleOverride);
+    }
+  }
+
+  private void getAllVirtualOverrides(JMethod method, Set<JReferenceType> instantiatedTypes,
+      Set<JMethod> results) {
+    Map<JClassType, Set<JMethod>> overrideMap = virtualUpRefMap.get(method);
+    if (overrideMap != null) {
+      for (Map.Entry<JClassType, Set<JMethod>> entry : overrideMap.entrySet()) {
+        JClassType classType = entry.getKey();
+        if (isInstantiatedType(classType, instantiatedTypes)) {
+          results.addAll(entry.getValue());
+        }
+      }
+    }
   }
 
   private <K, V> Set<V> getOrCreate(Map<K, Set<V>> map, K key) {
@@ -824,84 +913,13 @@ public class JTypeOracle implements Serializable {
     return set;
   }
 
-  private Map<String, JMethod> getOrCreatePolyMap(JClassType classType) {
-    Map<String, JMethod> polyMap = polyMethodMap.get(classType);
-    if (polyMap == null) {
-      if (classType.getSuperClass() == null) {
-        polyMap = new HashMap<String, JMethod>();
-      } else {
-        polyMap = new HashMap<String, JMethod>(getOrCreatePolyMap(classType.getSuperClass()));
-      }
-      for (JMethod method : classType.getMethods()) {
-        if (method.canBePolymorphic()) {
-          polyMap.put(method.getSignature(), method);
-        }
-      }
-      polyMethodMap.put(classType, polyMap);
+  private <K, K2, V> Map<K2, V> getOrCreateMap(Map<K, Map<K2, V>> map, K key) {
+    Map<K2, V> map2 = map.get(key);
+    if (map2 == null) {
+      map2 = new IdentityHashMap<K2, V>();
+      map.put(key, map2);
     }
-    return polyMap;
-  }
-
-  private List<JMethod> getPossibleDispatchesImpl(JReferenceType type, JMethod method) {
-    /*
-     * This method isn't very readable, because it's a hot spot that's been
-     * hand-tuned for performance. Sorry!
-     */
-    if (type instanceof JNullType) {
-      return Lists.create(method);
-    }
-    type = type.getUnderlyingType();
-    if (type instanceof JArrayType) {
-      type = baseArrayType;
-    }
-    JDeclaredType strongerType;
-    JDeclaredType intersectionType = null;
-    JDeclaredType enclosingType = method.getEnclosingType();
-    if (type == enclosingType || canTriviallyCast(type, enclosingType)) {
-      strongerType = (JDeclaredType) type;
-    } else if (canTriviallyCast(method.getEnclosingType(), type)) {
-      strongerType = method.getEnclosingType();
-    } else {
-      /*
-       * This happens with generic intersection types, the type of the qualifier
-       * can be unrelated to the type of the invoked method. In those cases, we
-       * only need to compute the intersection of the two.
-       */
-      strongerType = (JDeclaredType) type;
-      intersectionType = method.getEnclosingType();
-    }
-
-    String signature = method.getSignature();
-    List<JMethod> results = new ArrayList<JMethod>();
-    Set<JClassType> subTypes;
-    if (strongerType instanceof JInterfaceType) {
-      subTypes = get(isImplementedMap, (JInterfaceType) strongerType);
-    } else {
-      JClassType classType = (JClassType) strongerType;
-      if (classType.isFinal()) {
-        // Early out.
-        return Lists.create(findMethodMatching((JClassType) strongerType, signature));
-      }
-      // Do the exact type manually since it won't be included in the subtypes.
-      if (intersectionType == null || canTriviallyCast(classType, intersectionType)) {
-        maybeAddPossibleDispatch(classType, signature, results);
-      }
-      subTypes = get(subClassMap, classType);
-    }
-    if (intersectionType == null) {
-      // Common case.
-      for (JClassType candidate : subTypes) {
-        maybeAddPossibleDispatch(candidate, signature, results);
-      }
-    } else {
-      // Rare intersection case.
-      for (JClassType candidate : subTypes) {
-        if (canTriviallyCast(candidate, intersectionType)) {
-          maybeAddPossibleDispatch(candidate, signature, results);
-        }
-      }
-    }
-    return results;
+    return map2;
   }
 
   /**
@@ -912,11 +930,46 @@ public class JTypeOracle implements Serializable {
     return get(implementsMap, type).contains(qType);
   }
 
-  private void maybeAddPossibleDispatch(JClassType candidate, String signature,
-      List<JMethod> results) {
-    if (!candidate.isAbstract() && isInstantiatedType(candidate)) {
-      results.add(findMethodMatching(candidate, signature));
+  /**
+   * Determine whether a type is instantiated, given an assumed list of
+   * instantiated types.
+   * 
+   * @param type any type
+   * @param instantiatedTypes a set of types assumed to be instantiated. If
+   *          <code>null</code>, then there are no assumptions about which types
+   *          are instantiated.
+   * @return whether the type is instantiated
+   */
+  private boolean isInstantiatedType(JReferenceType type, Set<JReferenceType> instantiatedTypes) {
+    type = type.getUnderlyingType();
+
+    if (type.isExternal()) {
+      // TODO(tobyr) I don't know under what situations it is safe to assume
+      // that an external type won't be instantiated. For example, if we
+      // assumed that an external exception weren't instantiated, because we
+      // didn't see it constructed in our code, dead code elimination would
+      // incorrectly elide any catch blocks for that exception.
+      //
+      // We should see how this effects optimization and if we can limit its
+      // impact if necessary.
+      return true;
     }
+
+    if (instantiatedTypes == null) {
+      return true;
+    }
+
+    if (type instanceof JNullType) {
+      return true;
+    }
+
+    if (type instanceof JArrayType) {
+      JArrayType arrayType = (JArrayType) type;
+      if (arrayType.getLeafType() instanceof JNullType) {
+        return true;
+      }
+    }
+    return instantiatedTypes.contains(type);
   }
 
   /**

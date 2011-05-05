@@ -85,6 +85,7 @@ import com.google.gwt.dev.jjs.ast.JThisRef;
 import com.google.gwt.dev.jjs.ast.JThrowStatement;
 import com.google.gwt.dev.jjs.ast.JTryStatement;
 import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.dev.jjs.ast.JUnaryOperator;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
@@ -511,7 +512,7 @@ public class GenerateJavaAST {
             // Just use JavaScriptObject's implementation for all subclasses.
             currentClass.getMethods().remove(2);
           } else {
-            findUpRef(method);
+            tryFindUpRefs(method);
             SourceInfo info = method.getSourceInfo();
             if (isScript(program) && currentClass == program.getIndexedType("Array")) {
               // Special implementation: return this.arrayClass
@@ -1494,8 +1495,8 @@ public class GenerateJavaAST {
       MethodBinding b = x.binding;
       JMethod method = (JMethod) typeMap.get(b);
       try {
-        if (method.canBePolymorphic()) {
-          findUpRef(method);
+        if (!b.isStatic() && (b.isImplementing() || b.isOverriding())) {
+          tryFindUpRefs(method, b);
         }
 
         if (x.isNative()) {
@@ -2091,7 +2092,20 @@ public class GenerateJavaAST {
       body.getBlock().addStmt(callOrReturn);
 
       // Add overrides.
-      findUpRef(bridgeMethod);
+      List<JMethod> overrides = new ArrayList<JMethod>();
+      tryFindUpRefs(bridgeMethod, overrides);
+      assert !overrides.isEmpty();
+      for (JMethod over : overrides) {
+        bridgeMethod.addOverride(over);
+        /*
+         * TODO(scottb): with a diamond-shape inheritance hierarchy, it may be
+         * possible to get dups in this way. Really, method.overrides should
+         * probably just be an IdentitySet to avoid having to check contains in
+         * various places. Left as a todo because I don't think dups is super
+         * harmful.
+         */
+        bridgeMethod.addOverrides(over.getOverrides());
+      }
     }
 
     private JDeclarationStatement createDeclaration(SourceInfo info, JLocal local, JExpression value) {
@@ -2231,21 +2245,6 @@ public class GenerateJavaAST {
         typeBinding = typeBinding.erasure();
       }
       return typeBinding;
-    }
-
-    private void findUpRef(JMethod method) {
-      assert method.canBePolymorphic();
-      JClassType superClass = method.getEnclosingType().getSuperClass();
-      while (superClass != null) {
-        for (JMethod tryMethod : superClass.getMethods()) {
-          if (tryMethod.canBePolymorphic()
-              && tryMethod.getSignature().equals(method.getSignature())) {
-            method.setDirectOverride(tryMethod);
-            return;
-          }
-        }
-        superClass = superClass.getSuperClass();
-      }
     }
 
     private Method getCachedMethod(String name, Class<? extends Object> childClass)
@@ -2588,6 +2587,101 @@ public class GenerateJavaAST {
       }
       ice.addNode(className, description, sourceInfo);
       return ice;
+    }
+
+    /**
+     * For a given method, try to find all methods that it overrides/implements.
+     * This version does not use JDT.
+     */
+    private void tryFindUpRefs(JMethod method) {
+      List<JMethod> overrides = new ArrayList<JMethod>();
+      tryFindUpRefs(method, overrides);
+      method.addOverrides(overrides);
+    }
+
+    private void tryFindUpRefs(JMethod method, List<JMethod> overrides) {
+      if (method.getEnclosingType() != null) {
+        tryFindUpRefsRecursive(method, method.getEnclosingType(), overrides);
+      }
+    }
+
+    /**
+     * For a given method(and method binding), try to find all methods that it
+     * overrides/implements.
+     */
+    private void tryFindUpRefs(JMethod method, MethodBinding binding) {
+      // Should never get a parameterized instance here.
+      assert binding == binding.original();
+      tryFindUpRefsRecursive(method, binding, binding.declaringClass);
+    }
+
+    /**
+     * For a given method(and method binding), recursively try to find all
+     * methods that it overrides/implements.
+     */
+    private void tryFindUpRefsRecursive(JMethod method, JDeclaredType searchThisType,
+        List<JMethod> overrides) {
+
+      // See if this class has any uprefs, unless this class is myself
+      if (method.getEnclosingType() != searchThisType) {
+        for (JMethod upRef : searchThisType.getMethods()) {
+          if (JTypeOracle.methodsDoMatch(method, upRef) && !overrides.contains(upRef)) {
+            overrides.add(upRef);
+            break;
+          }
+        }
+      }
+
+      // recurse super class
+      if (searchThisType.getSuperClass() != null) {
+        tryFindUpRefsRecursive(method, searchThisType.getSuperClass(), overrides);
+      }
+
+      // recurse super interfaces
+      for (JInterfaceType intf : searchThisType.getImplements()) {
+        tryFindUpRefsRecursive(method, intf, overrides);
+      }
+    }
+
+    /**
+     * For a given method(and method binding), recursively try to find all
+     * methods that it overrides/implements.
+     */
+    private void tryFindUpRefsRecursive(JMethod method, MethodBinding binding,
+        ReferenceBinding searchThisType) {
+      /*
+       * Always look for uprefs in the original, so we can correctly compare
+       * erased signatures. The general design for uprefs is to model what the
+       * JVM does in terms of matching up overrides based on binary match.
+       */
+      searchThisType = (ReferenceBinding) searchThisType.original();
+
+      // See if this class has any uprefs, unless this class is myself
+      if (binding.declaringClass != searchThisType) {
+        for (MethodBinding tryMethod : searchThisType.getMethods(binding.selector)) {
+          if (binding.returnType.erasure() == tryMethod.returnType.erasure()
+              && binding.areParameterErasuresEqual(tryMethod)) {
+            JMethod upRef = (JMethod) typeMap.get(tryMethod);
+            if (!method.getOverrides().contains(upRef)) {
+              method.addOverride(upRef);
+              break;
+            }
+          }
+        }
+      }
+
+      // recurse super class
+      if (searchThisType.superclass() != null) {
+        tryFindUpRefsRecursive(method, binding, searchThisType.superclass());
+      }
+
+      // recurse super interfaces
+      if (searchThisType.superInterfaces() != null) {
+        for (int i = 0; i < searchThisType.superInterfaces().length; i++) {
+          ReferenceBinding intf = searchThisType.superInterfaces()[i];
+          tryFindUpRefsRecursive(method, binding, intf);
+        }
+      }
     }
 
     private JExpression unbox(JExpression toUnbox, JClassType wrapperType) {

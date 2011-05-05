@@ -23,7 +23,6 @@ import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JGwtCreate;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JType;
@@ -72,11 +71,6 @@ public abstract class TypeRemapper extends JModVisitor {
 
   @Override
   public void endVisit(JMethod x, Context ctx) {
-    x.setType(modRemap(x.getType()));
-  }
-
-  @Override
-  public void endVisit(JMethodCall x, Context ctx) {
     x.setType(modRemap(x.getType()));
   }
 

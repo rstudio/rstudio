@@ -55,11 +55,12 @@ import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsVisitor;
-import com.google.gwt.dev.util.collect.IdentityHashSet;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -355,28 +356,17 @@ public class ControlFlowAnalyzer {
 
     @Override
     public boolean visit(JMethodCall call, Context ctx) {
-      List<JMethod> dispatches = program.typeOracle.getPossibleDispatches(call);
-      JMethod originalTarget = call.getTarget();
-      for (JMethod method : dispatches) {
-        if (method == originalTarget) {
-          originalTarget = null;
-        }
-        if (method.isStatic() || program.isJavaScriptObject(method.getEnclosingType())
-            || instantiatedTypes.contains(method.getEnclosingType())) {
-          rescue(method);
-        } else {
-          // It's a virtual method whose class is not instantiable
-          if (!liveFieldsAndMethods.contains(method)) {
-            methodsLiveExceptForInstantiability.add(method);
-          }
+      JMethod method = call.getTarget();
+      if (method.isStatic() || program.isJavaScriptObject(method.getEnclosingType())
+          || instantiatedTypes.contains(method.getEnclosingType())) {
+        rescue(method);
+      } else {
+        // It's a virtual method whose class is not instantiable
+        if (!liveFieldsAndMethods.contains(method)) {
+          methodsLiveExceptForInstantiability.add(method);
         }
       }
-      if (originalTarget != null) {
-        // Make sure it isn't pruned, but don't visit the body.
-        if (!liveFieldsAndMethods.contains(originalTarget)) {
-          methodsReferencedButNotExecuted.add(originalTarget);
-        }
-      }
+
       return true;
     }
 
@@ -535,7 +525,6 @@ public class ControlFlowAnalyzer {
         if (!liveFieldsAndMethods.contains(method)) {
           liveFieldsAndMethods.add(method);
           methodsLiveExceptForInstantiability.remove(method);
-          methodsReferencedButNotExecuted.remove(method);
           if (dependencyRecorder != null) {
             curMethodStack.add(method);
             dependencyRecorder.methodIsLiveBecause(method, curMethodStack);
@@ -551,6 +540,7 @@ public class ControlFlowAnalyzer {
              */
             maybeRescueJavaScriptObjectPassingIntoJava(method.getType());
           }
+          rescueOverridingMethods(method);
           return true;
         }
       }
@@ -589,11 +579,7 @@ public class ControlFlowAnalyzer {
             } else if (artificial instanceof JVariable) {
               rescue((JVariable) artificial);
             } else if (artificial instanceof JMethod) {
-              JMethod method = (JMethod) artificial;
-              for (JMethod d : program.typeOracle.getPossibleDispatches(method.getEnclosingType(),
-                  method)) {
-                rescue(d);
-              }
+              rescue((JMethod) artificial);
             }
           }
         }
@@ -654,12 +640,12 @@ public class ControlFlowAnalyzer {
         /*
          * Any reference types (except String, which works by default) that take
          * part in a concat must rescue java.lang.Object.toString().
+         * 
+         * TODO: can we narrow the focus by walking up the type hierarchy or
+         * doing explicit toString calls?
          */
         JMethod toStringMethod = program.getIndexedMethod("Object.toString");
-        for (JMethod method : program.typeOracle.getPossibleDispatches((JReferenceType) type,
-            toStringMethod)) {
-          rescue(method);
-        }
+        rescue(toStringMethod);
       } else if (type == charType) {
         /*
          * Characters must rescue String.valueOf(char)
@@ -698,6 +684,31 @@ public class ControlFlowAnalyzer {
         }
       }
     }
+
+    /**
+     * Assume that <code>method</code> is live. Rescue any overriding methods
+     * that might be called if <code>method</code> is called through virtual
+     * dispatch.
+     */
+    private void rescueOverridingMethods(JMethod method) {
+      if (!method.isStatic()) {
+
+        List<JMethod> overriders = methodsThatOverrideMe.get(method);
+        if (overriders != null) {
+          for (JMethod overrider : overriders) {
+            if (liveFieldsAndMethods.contains(overrider)) {
+              // The override is already alive, do nothing.
+            } else if (instantiatedTypes.contains(overrider.getEnclosingType())) {
+              // The enclosing class is alive, make my override reachable.
+              rescue(overrider);
+            } else {
+              // The enclosing class is not yet alive, put override in limbo.
+              methodsLiveExceptForInstantiability.add(overrider);
+            }
+          }
+        }
+      }
+    }
   }
 
   private final JDeclaredType baseArrayType;
@@ -717,14 +728,14 @@ public class ControlFlowAnalyzer {
   private Set<JMethod> methodsLiveExceptForInstantiability = new HashSet<JMethod>();
 
   /**
-   * See {@link #getMethodsReferencedButNotExecuted()}.
+   * A precomputed map of all instance methods onto a set of methods that
+   * override each key method.
    */
-  private Set<JMethod> methodsReferencedButNotExecuted = new HashSet<JMethod>();
+  private Map<JMethod, List<JMethod>> methodsThatOverrideMe;
 
   private final JProgram program;
 
   private Set<JReferenceType> referencedTypes = new HashSet<JReferenceType>();
-
   private final RescueVisitor rescuer = new RescueVisitor();
   private JMethod stringValueOfChar = null;
 
@@ -738,14 +749,14 @@ public class ControlFlowAnalyzer {
     stringValueOfChar = cfa.stringValueOfChar;
     liveStrings = new HashSet<String>(cfa.liveStrings);
     methodsLiveExceptForInstantiability =
-        new IdentityHashSet<JMethod>(cfa.methodsLiveExceptForInstantiability);
-    methodsReferencedButNotExecuted =
-        new IdentityHashSet<JMethod>(cfa.methodsReferencedButNotExecuted);
+        new HashSet<JMethod>(cfa.methodsLiveExceptForInstantiability);
+    methodsThatOverrideMe = cfa.methodsThatOverrideMe;
   }
 
   public ControlFlowAnalyzer(JProgram program) {
     this.program = program;
     baseArrayType = program.getIndexedType("Array");
+    buildMethodsOverriding();
   }
 
   /**
@@ -772,29 +783,6 @@ public class ControlFlowAnalyzer {
 
   public Set<String> getLiveStrings() {
     return liveStrings;
-  }
-
-  /**
-   * A set of methods that are the direct target of calls, but cannot possibly
-   * execute. Example:
-   * 
-   * <pre>
-   * abstract class Foo {
-   *   void f() { someCode(); }
-   * }
-   * class Bar extends Foo {
-   *   void f() { differentCode(); }
-   * }
-   * void main() {
-   *   new Bar().f();
-   * }
-   * </pre>
-   * 
-   * Until/unless the call to Bar.f is tightened, we can't fully prune Foo.f(),
-   * however the body of Foo.f() can never execute.
-   */
-  public Set<JMethod> getMethodsReferencedButNotExecuted() {
-    return methodsReferencedButNotExecuted;
   }
 
   /**
@@ -826,10 +814,7 @@ public class ControlFlowAnalyzer {
    * Assume <code>method</code> is live, and find out what else might execute.
    */
   public void traverseFrom(JMethod method) {
-    for (JMethod target : program.typeOracle.getPossibleDispatches(method.getEnclosingType(),
-        method)) {
-      rescuer.rescue(target);
-    }
+    rescuer.rescue(method);
   }
 
   /**
@@ -849,5 +834,21 @@ public class ControlFlowAnalyzer {
 
   public void traverseFromReferenceTo(JDeclaredType type) {
     rescuer.rescue(type, true, false);
+  }
+
+  private void buildMethodsOverriding() {
+    methodsThatOverrideMe = new HashMap<JMethod, List<JMethod>>();
+    for (JDeclaredType type : program.getDeclaredTypes()) {
+      for (JMethod method : type.getMethods()) {
+        for (JMethod overridden : program.typeOracle.getAllOverrides(method)) {
+          List<JMethod> overs = methodsThatOverrideMe.get(overridden);
+          if (overs == null) {
+            overs = new ArrayList<JMethod>();
+            methodsThatOverrideMe.put(overridden, overs);
+          }
+          overs.add(method);
+        }
+      }
+    }
   }
 }

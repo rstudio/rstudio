@@ -30,7 +30,7 @@ public class JMethodCall extends JExpression {
   private boolean cannotBePolymorphic = false;
   private JExpression instance;
   private final JMethod method;
-  private JType type;
+  private final JType overrideReturnType;
   private boolean staticDispatchOnly = false;
 
   /**
@@ -43,18 +43,23 @@ public class JMethodCall extends JExpression {
     this.instance = instance;
     this.cannotBePolymorphic = other.cannotBePolymorphic;
     this.method = other.method;
-    this.type = other.type;
+    this.overrideReturnType = other.overrideReturnType;
     this.staticDispatchOnly = other.staticDispatchOnly;
   }
 
   public JMethodCall(SourceInfo info, JExpression instance, JMethod method) {
-    this(info, instance, method, method.getType());
+    super(info);
+    assert (method != null);
+    assert (instance != null || method.isStatic() || this instanceof JNewInstance);
+    this.instance = instance;
+    this.method = method;
+    this.overrideReturnType = null;
   }
 
   /**
-   * Create a method call whose type is set to the specified type, rather than
-   * the return type of the target method. This constructor is used during
-   * normalizing transformations to preserve type semantics when calling
+   * Create a method call whose type is overridden to the specified type,
+   * ignoring the return type of the target method. This constructor is used
+   * during normalizing transformations to preserve type semantics when calling
    * externally-defined compiler implementation methods.
    * 
    * For example, Cast.dynamicCast() returns Object but that method is used to
@@ -62,14 +67,14 @@ public class JMethodCall extends JExpression {
    * allows us to preserve type information during the latter phases of
    * compilation.
    */
-  public JMethodCall(SourceInfo info, JExpression instance, JMethod method, JType type) {
+  public JMethodCall(SourceInfo info, JExpression instance, JMethod method, JType overrideReturnType) {
     super(info);
     assert (method != null);
-    assert (instance != null || !method.needsVtable());
+    assert (instance != null || method.isStatic());
     this.instance = instance;
     this.method = method;
-    assert (type != null);
-    this.type = type;
+    assert (overrideReturnType != null);
+    this.overrideReturnType = overrideReturnType;
   }
 
   /**
@@ -121,7 +126,11 @@ public class JMethodCall extends JExpression {
   }
 
   public JType getType() {
-    return type;
+    if (overrideReturnType != null) {
+      return overrideReturnType;
+    } else {
+      return method.getType();
+    }
   }
 
   @Override
@@ -154,13 +163,6 @@ public class JMethodCall extends JExpression {
 
   public void setStaticDispatchOnly() {
     this.staticDispatchOnly = true;
-  }
-
-  /**
-   * Set an explicit result type different from the natural method target.
-   */
-  public void setType(JType returnType) {
-    this.type = returnType;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {
