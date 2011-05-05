@@ -290,6 +290,8 @@ public class CSSResourceTest extends GWTTestCase {
     assertTrue(text.contains("with_underscore:_is_better"));
     assertTrue(text.contains("ns\\:tag"));
     assertTrue(text.contains("ns\\:tag:pseudo"));
+    assertTrue(text.contains("ns\\:tag::double-pseudo"));
+    assertTrue(text.contains("ns\\:tag::-webkit-scrollbar"));
 
     // Check escaped string values
     assertTrue(text.contains("\"Hello\\\\\\\" world\""));

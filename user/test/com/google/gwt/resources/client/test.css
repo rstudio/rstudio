@@ -129,6 +129,14 @@ ns\:tag:pseudo {
   content : "blah";
 }
 
+ns\:tag::double-pseudo {
+  content : "blah";
+}
+
+ns\:tag::-webkit-scrollbar {
+  content : "blah";
+}
+
 /* Test merging / promotion functions*/
 
 .may-merge {
