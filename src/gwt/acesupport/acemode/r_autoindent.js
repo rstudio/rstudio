@@ -85,20 +85,12 @@ var IndentManager = function(doc, tokenizer, statePattern) {
 
       this.currentToken = function()
       {
-         var token = (that.$tokens[this.$row] || [])[this.$offset];
-         if (token)
-            return {token: token, row: this.$row, column: token.column};
-         else
-            return null;
+         return (that.$tokens[this.$row] || [])[this.$offset];
       };
 
       this.currentValue = function()
       {
-         var token = this.currentToken();
-         if (token === null)
-            return null;
-         else
-            return token.token.value;
+         return this.currentToken().value;
       };
 
       this.currentPosition = function()
@@ -107,7 +99,7 @@ var IndentManager = function(doc, tokenizer, statePattern) {
          if (token === null)
             return null;
          else
-            return {row: token.row, column: token.column};
+            return {row: this.$row, column: token.column};
       };
 
       this.cloneCursor = function()
@@ -259,69 +251,69 @@ var IndentManager = function(doc, tokenizer, statePattern) {
       '}': '{'
    };
 
-   var pFunction = function(t)
+   function pFunction(t)
    {
-      return t.token.type == 'keyword' && t.token.value == 'function';
-   };
+      return t.type == 'keyword' && t.value == 'function';
+   }
 
-   var pAssign = function(t)
+   function pAssign(t)
    {
-      return /\boperator\b/.test(t.token.type) && /^(=|<-|<<-)$/.test(t.token.value);
-   };
+      return /\boperator\b/.test(t.type) && /^(=|<-|<<-)$/.test(t.value);
+   }
 
-   var pIdentifier = function(t)
+   function pIdentifier(t)
    {
-      return /\bidentifier\b/.test(t.token.type);
-   };
+      return /\bidentifier\b/.test(t.type);
+   }
+
+   function findAssocFuncToken(tokenCursor)
+   {
+      if (tokenCursor.currentValue() !== "{")
+         return false;
+      if (!tokenCursor.moveToPreviousToken())
+         return false;
+      if (tokenCursor.currentValue() !== ")")
+         return false;
+
+      var success = false;
+      var parenCount = 0;
+      while (tokenCursor.moveToPreviousToken())
+      {
+         if (tokenCursor.currentValue() === "(")
+         {
+            if (parenCount == 0)
+            {
+               success = true;
+               break;
+            }
+            parenCount--;
+         }
+         else if (tokenCursor.currentValue() === ")")
+         {
+            parenCount++;
+         }
+      }
+      if (!success)
+         return false;
+
+      if (!tokenCursor.moveToPreviousToken())
+         return false;
+      if (!pFunction(tokenCursor.currentToken()))
+         return false;
+      if (!tokenCursor.moveToPreviousToken())
+         return false;
+      if (!pAssign(tokenCursor.currentToken()))
+         return false;
+      if (!tokenCursor.moveToPreviousToken())
+         return false;
+      if (!pIdentifier(tokenCursor.currentToken()))
+         return false;
+
+      return true;
+   }
 
    this.$buildScopeTree = function()
    {
-      function findAssocFuncToken(tokenCursor)
-      {
-         if (tokenCursor.currentValue() !== "{")
-            return false;
-         if (!tokenCursor.moveToPreviousToken())
-            return false;
-         if (tokenCursor.currentValue() !== ")")
-            return false;
-
-         var success = false;
-         var parenCount = 0;
-         while (tokenCursor.moveToPreviousToken())
-         {
-            if (tokenCursor.currentValue() === "(")
-            {
-               if (parenCount == 0)
-               {
-                  success = true;
-                  break;
-               }
-               parenCount--;
-            }
-            else if (tokenCursor.currentValue() === ")")
-            {
-               parenCount++;
-            }
-         }
-         if (!success)
-            return false;
-
-         if (!tokenCursor.moveToPreviousToken())
-            return false;
-         if (!pFunction(tokenCursor.currentToken()))
-            return false;
-         if (!tokenCursor.moveToPreviousToken())
-            return false;
-         if (!pAssign(tokenCursor.currentToken()))
-            return false;
-         if (!tokenCursor.moveToPreviousToken())
-            return false;
-         if (!pIdentifier(tokenCursor.currentToken()))
-            return false;
-
-         return true;
-      }
-
       this.$tokenizeUpToRow(this.$tokens.length - 1);
 
       var root = new this.$ScopeTree("(Top level)", {row:0, column:0});
