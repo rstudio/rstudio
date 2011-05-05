@@ -23,15 +23,18 @@ public class ExportPlotOptions extends JavaScriptObject
    public static final String PNG_TYPE = "PNG";
    public static final String JPEG_TYPE = "JPEG";
    
-   public static final native ExportPlotOptions create(String type,
+   public static final native ExportPlotOptions create(String format,
                                                        int width, 
                                                        int height,
-                                                       boolean keepRatio) /*-{
+                                                       boolean keepRatio,
+                                                       boolean viewAfterSave) 
+   /*-{
       var options = new Object();
-      options.type = type;
+      options.format = format;
       options.width = width ;
       options.height = height ;
       options.keepRatio = keepRatio;
+      options.viewAfterSave = viewAfterSave;
       return options ;
    }-*/;
 
@@ -40,14 +43,15 @@ public class ExportPlotOptions extends JavaScriptObject
          return false;
       if (a === null)
          return true;
-      return a.type === b.type &&
+      return a.format === b.format &&
              a.width === b.width &&
              a.height === b.height &&
-             a.keepRatio === b.keepRatio;      
+             a.keepRatio === b.keepRatio &&
+             a.viewAfterSave === b.viewAfterSave;      
    }-*/;
    
-   public final native String getType() /*-{
-      return this.type;
+   public final native String getFormat() /*-{
+      return this.format;
    }-*/;
    
    public final native int getWidth() /*-{
@@ -62,5 +66,12 @@ public class ExportPlotOptions extends JavaScriptObject
          return this.keepRatio;
       else
          return false;
+   }-*/;
+   
+   public final native boolean getViewAfterSave() /*-{
+   if (this.viewAfterSave)
+      return this.viewAfterSave;
+   else
+      return false;
    }-*/;
 }

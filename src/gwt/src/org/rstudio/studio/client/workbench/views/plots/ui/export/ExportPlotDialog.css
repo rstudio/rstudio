@@ -4,24 +4,24 @@
 }
 
 .imageFormatListBox {
-   width: 150px;	
+   width: 170px;	
 }
 
 .fileNameTextBox {
 	margin-top: 4px;
-   width: 145px; 	
+   width: 165px; 	
 }
 
 .directoryButton {
   margin-left: -2px;
 }
 
-.directoryTextBox {
-	margin-left: -2px;
-   width: 180px;
-   border: none;
-   outline: none;
-   background: transparent;
+.directoryLabel {
+	margin-left: -1px;
+   width: 250px;
+   height: 1.5em;
+   cursor: default;
+}
 }
 
 .imageOptionLabel {

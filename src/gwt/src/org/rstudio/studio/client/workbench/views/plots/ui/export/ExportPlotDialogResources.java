@@ -25,7 +25,7 @@ public interface ExportPlotDialogResources extends ClientBundle
       String imageFormatListBox();
       String fileNameTextBox();
       String directoryButton();
-      String directoryTextBox();
+      String directoryLabel();
       
       String imagePreview();
       String imageOptionLabel();

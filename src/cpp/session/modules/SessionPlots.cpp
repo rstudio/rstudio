@@ -116,6 +116,59 @@ Error exportPlot(const json::JsonRpcRequest& request,
                                                         width,
                                                         height);
 }
+
+bool hasStem(const FilePath& filePath, const std::string& stem)
+{
+   return filePath.stem() == stem;
+}
+
+Error getPlotExportContext(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   // context
+   json::Object contextJson;
+
+   // get supported formats
+   json::Array formats;
+   formats.push_back("PNG");
+   formats.push_back("JPEG");
+   formats.push_back("GIF");
+   formats.push_back("PDF");
+   contextJson["formats"] = formats;
+
+   // get working directory
+   FilePath workingDir = module_context::safeCurrentPath();
+   contextJson["directory"] = module_context::createFileSystemItem(workingDir);
+
+   // determine unique file name
+   std::vector<FilePath> children;
+   Error error = workingDir.children(&children);
+   if (error)
+      return error;
+
+   // search for unique stem
+   int i = 0;
+   std::string stem = "Rplot";
+   while(true)
+   {
+      // seek stem
+      std::vector<FilePath>::const_iterator it = std::find_if(
+                                                children.begin(),
+                                                children.end(),
+                                                boost::bind(hasStem, _1, stem));
+      // break if not found
+      if (it == children.end())
+         break;
+
+      // update stem and search again
+      stem = "Rplot" + boost::lexical_cast<std::string>(++i);
+   }
+   contextJson["filename"] = stem;
+
+   pResponse->setResult(contextJson);
+
+   return Success();
+}
    
 template <typename T>
 bool extractSizeParams(const http::Request& request,
@@ -494,6 +547,7 @@ Error initialize()
       (bind(registerRpcMethod, "clear_plots", clearPlots))
       (bind(registerRpcMethod, "refresh_plot", refreshPlot))
       (bind(registerRpcMethod, "export_plot", exportPlot))
+      (bind(registerRpcMethod, "get_plot_export_context", getPlotExportContext))
       (bind(registerRpcMethod, "set_manipulator_values", setManipulatorValues))
       (bind(registerUriHandler, kGraphics "/plot_zoom_png", handleZoomPngRequest))
       (bind(registerUriHandler, kGraphics "/plot_zoom", handleZoomRequest))
