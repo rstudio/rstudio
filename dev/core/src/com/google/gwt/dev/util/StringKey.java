@@ -38,7 +38,7 @@ public abstract class StringKey implements Comparable<StringKey>, Serializable {
    */
   protected StringKey(String value) {
     this.value = value;
-    this.hashCode = getClass().hashCode() * 13
+    this.hashCode = getClass().getName().hashCode() * 13
         + (value == null ? 0 : value.hashCode());
   }
 
@@ -64,9 +64,6 @@ public abstract class StringKey implements Comparable<StringKey>, Serializable {
   @Override
   public final boolean equals(Object o) {
     if (o == null) {
-      return false;
-    }
-    if (getClass() != o.getClass()) {
       return false;
     }
     return compareTo((StringKey) o) == 0 ? true : false;
