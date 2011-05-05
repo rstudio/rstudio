@@ -458,6 +458,10 @@ public final class ServerSerializationStreamWriter extends
         // This can be expanded into a break followed by a hyphen
         return true;
       default:
+        if (ch < ' ') {
+          // Chrome 11 mangles control characters
+          return true;
+        }
         switch (Character.getType(ch)) {
           // Conservative
           case Character.COMBINING_SPACING_MARK:
