@@ -109,6 +109,14 @@ public abstract class AttachableComposite extends Widget implements Attachable {
   }
 
   @Override
+  public void setStyleName(String styleName) {
+    if (this.widget == null) {
+      throw new IllegalStateException("setStyleName called before initWidget.");
+    }
+    widget.setStyleName(styleName);
+  }
+
+  @Override
   public void wrapElement(Element element) {
     if (attachable != null) {
       assert (initFinished == false);
