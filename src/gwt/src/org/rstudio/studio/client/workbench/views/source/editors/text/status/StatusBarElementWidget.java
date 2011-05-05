@@ -13,7 +13,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
@@ -26,7 +25,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItem;
-import org.rstudio.core.client.widget.ToolbarPopupMenu;
 
 import java.util.ArrayList;
 
@@ -55,8 +53,7 @@ public class StatusBarElementWidget extends FlowPanel
             if (options_.size() == 0)
                return;
 
-            ToolbarPopupMenu menu = new ToolbarPopupMenu();
-            menu.getElement().getStyle().setFontSize(10, Unit.PX);
+            StatusBarPopupMenu menu = new StatusBarPopupMenu();
             for (final String option : options_)
                menu.addItem(new MenuItem(option, new Command()
                {
@@ -65,7 +62,7 @@ public class StatusBarElementWidget extends FlowPanel
                      SelectionEvent.fire(StatusBarElementWidget.this, option);
                   }
                }));
-            menu.showRelativeTo(label_);
+            menu.showRelativeToUpward(label_);
          }
       }, MouseDownEvent.getType());
    }

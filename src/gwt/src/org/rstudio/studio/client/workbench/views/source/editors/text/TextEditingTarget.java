@@ -26,7 +26,6 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasValue;
@@ -75,6 +74,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
+import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupMenu;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.PublishPdfDialog;
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
@@ -432,15 +432,17 @@ public class TextEditingTarget implements EditingTarget
       {
          public void onMouseDown(MouseDownEvent event)
          {
+            // Unlike the other status bar elements, the function outliner
+            // needs its menu built on demand
             JsArray<FunctionStart> tree = docDisplay_.getFunctionTree();
-            ToolbarPopupMenu menu = new ToolbarPopupMenu();
+            StatusBarPopupMenu menu = new StatusBarPopupMenu();
             addFunctionsToMenu(menu, tree, "");
-            menu.showRelativeTo((UIObject) statusBar_.getFunction());
+            menu.showRelativeToUpward((UIObject) statusBar_.getFunction());
          }
       });
    }
 
-   private void addFunctionsToMenu(ToolbarPopupMenu menu,
+   private void addFunctionsToMenu(StatusBarPopupMenu menu,
                                    final JsArray<FunctionStart> funcs,
                                    String indent)
    {
