@@ -158,8 +158,15 @@ public class AttachableHTMLPanel extends ComplexPanel implements Attachable {
    * Adopts the given, but doesn't change anything about its DOM element.
    * Should only be used for widgets with elements that are children of this
    * panel's element.
+   * No-op if called with an Attachable that isn't also IsWidget,
+   * but safe to call with such as a convenience.
    */
-  public void logicalAdd(Widget widget) {
+  public void logicalAdd(Attachable attachable) {
+    if (!(attachable instanceof IsWidget)) {
+      // Nothing to do if not a Widget.
+      return;
+    }
+    Widget widget = ((IsWidget) attachable).asWidget();
     getChildren().add(widget);
     adopt(widget);
   }
