@@ -28,7 +28,6 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
@@ -37,7 +36,6 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
@@ -49,13 +47,12 @@ import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedHandler;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
-import org.rstudio.studio.client.workbench.views.plots.model.PlotExportContext;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
 import org.rstudio.studio.client.workbench.views.plots.model.PrintOptions;
 import org.rstudio.studio.client.workbench.views.plots.ui.ExportDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.PrintDialog;
-import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlotDialog;
+import org.rstudio.studio.client.workbench.views.plots.ui.export.CopyPlotToClipboardWebDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorChangedHandler;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorManager;
 
@@ -89,16 +86,12 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                 GlobalDisplay globalDisplay,
                 Commands commands,
                 final PlotsServerOperations server,
-                FileDialogs fileDialogs,
-                RemoteFileSystemContext fileSystemContext,
                 Session session)
    {
       super(view);
       view_ = view;
       globalDisplay_ = globalDisplay;
       server_ = server;
-      fileDialogs_ = fileDialogs;
-      fileSystemContext_ = fileSystemContext;
       session_ = session;
       locator_ = new Locator(view.getPlotsParent());
       locator_.addSelectionHandler(new SelectionHandler<Point>()
@@ -364,6 +357,11 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    {
       view_.bringToFront();
       
+      new CopyPlotToClipboardWebDialog(server_, 
+                                       exportPlotOptions_,
+                                       saveExportOptionsOperation_).showModal();
+      
+      /*
       final ProgressIndicator indicator = 
                                  globalDisplay_.getProgressIndicator("Error");
       indicator.onProgress("Preparing to export plot...");
@@ -376,7 +374,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
             {
                indicator.onCompleted();
                
-               new ExportPlotDialog(
+               new SavePlotAsImageDialog(
                      server_, 
                      fileDialogs_,
                      fileSystemContext_,
@@ -399,8 +397,21 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
             {
                indicator.onError(error.getUserMessage());
             }           
-         });     
+         });   
+       */  
+       
    }
+   
+   private OperationWithInput<ExportPlotOptions> saveExportOptionsOperation_ =
+      new OperationWithInput<ExportPlotOptions>() 
+      {
+         public void execute(ExportPlotOptions options)
+         {
+            exportPlotOptions_ = options;
+            session_.persistClientState();
+         }
+      };
+   
    
    void onZoomPlot()
    {
@@ -530,8 +541,6 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    private final Display view_;
    private final GlobalDisplay globalDisplay_;
    private final PlotsServerOperations server_;
-   private final FileDialogs fileDialogs_;
-   private final RemoteFileSystemContext fileSystemContext_;
    private final Session session_;
    private final Locator locator_;
    private final ManipulatorManager manipulatorManager_;

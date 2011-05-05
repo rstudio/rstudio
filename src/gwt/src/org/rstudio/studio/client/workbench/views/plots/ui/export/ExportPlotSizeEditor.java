@@ -39,32 +39,32 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-public class PlotSizer extends Composite 
+public class ExportPlotSizeEditor extends Composite 
 {  
    public interface Observer
    {
       void onPlotResized(boolean withMouse);
    }
    
-   public PlotSizer(int initialWidth, 
-                    int initialHeight,
-                    boolean keepRatio,
-                    PlotsServerOperations server,
-                    Observer observer)
+   public ExportPlotSizeEditor(int initialWidth, 
+                               int initialHeight,
+                               boolean keepRatio,
+                               PlotsServerOperations server,
+                               Observer observer)
    {
       this(initialWidth, initialHeight, keepRatio, null, server, observer);
    }
    
-   public PlotSizer(int initialWidth, 
-                    int initialHeight,
-                    boolean keepRatio,
-                    Widget extraWidget,
-                    PlotsServerOperations server,
-                    final Observer observer)
+   public ExportPlotSizeEditor(int initialWidth, 
+                               int initialHeight,
+                               boolean keepRatio,
+                               Widget extraWidget,
+                               PlotsServerOperations server,
+                               final Observer observer)
    {
       // alias objects and resources
       server_ = server;
-      ExportPlotDialogResources resources = ExportPlotDialogResources.INSTANCE;
+      ExportPlotResources resources = ExportPlotResources.INSTANCE;
            
       // main widget
       VerticalPanel verticalPanel = new VerticalPanel();
@@ -93,7 +93,7 @@ public class PlotSizer extends Composite
          
          widthAndHeightPanel = new HorizontalPanel();
          widthAndHeightPanel.setStylePrimaryName(
-                                       resources.styles().widthAndHeightEntry());
+                                    resources.styles().widthAndHeightEntry());
          configureHorizontalOptionsPanel(widthAndHeightPanel);
          optionsPanel.add(widthAndHeightPanel);
       }
@@ -399,7 +399,7 @@ public class PlotSizer extends Composite
    {
       Label label = new Label(text);
       label.setStylePrimaryName(
-            ExportPlotDialogResources.INSTANCE.styles().imageOptionLabel());
+            ExportPlotResources.INSTANCE.styles().imageOptionLabel());
       return label;
    }
    
@@ -407,7 +407,7 @@ public class PlotSizer extends Composite
    {
       TextBox textBox = new TextBox();
       textBox.setStylePrimaryName(
-            ExportPlotDialogResources.INSTANCE.styles().imageSizeTextBox());
+            ExportPlotResources.INSTANCE.styles().imageSizeTextBox());
       return textBox;
    }
   

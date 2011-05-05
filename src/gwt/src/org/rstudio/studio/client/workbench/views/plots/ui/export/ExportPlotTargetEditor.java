@@ -4,12 +4,13 @@ import java.util.HashMap;
 
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomMetrics;
+import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
-import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotExportContext;
 
 import com.google.gwt.core.client.JsArrayString;
@@ -22,17 +23,15 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 
-public class ExportTargetWidget extends Composite 
+public class ExportPlotTargetEditor extends Composite 
 {
-   public ExportTargetWidget(String defaultFormat,
-                             PlotExportContext context,
-                             final FileDialogs fileDialogs,
-                             final RemoteFileSystemContext fileSystemContext)
+   public ExportPlotTargetEditor(String defaultFormat,
+                                 PlotExportContext context)
    {
       context_ = context;
       
-      ExportPlotDialogResources.Styles styles = 
-                              ExportPlotDialogResources.INSTANCE.styles();
+      ExportPlotResources.Styles styles = 
+                              ExportPlotResources.INSTANCE.styles();
 
       
       Grid grid = new Grid(3, 2);
@@ -73,9 +72,9 @@ public class ExportTargetWidget extends Composite
          @Override
          public void onClick(ClickEvent event)
          {
-            fileDialogs.chooseFolder(
+            fileDialogs_.chooseFolder(
                "Choose Directory",
-               fileSystemContext,
+               fileSystemContext_,
                FileSystemItem.createDir(directoryLabel_.getTitle().trim()),
                new ProgressOperationWithInput<FileSystemItem>() {
 
@@ -159,11 +158,20 @@ public class ExportTargetWidget extends Composite
    private Label directoryLabel_;
    
    private final PlotExportContext context_;
+ 
+   private final FileSystemContext fileSystemContext_ =
+      RStudioGinjector.INSTANCE.getRemoteFileSystemContext();
+   
+   private final FileDialogs fileDialogs_ = 
+      RStudioGinjector.INSTANCE.getFileDialogs();
    
    // remember what directory was chosen for plot export for various
    // working directories
    static HashMap<String, FileSystemItem> initialDirectories_ = 
                                        new HashMap<String,FileSystemItem>();
    
+   
+   
+ 
    
 }
