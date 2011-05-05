@@ -20,9 +20,6 @@ public class ExportPlotOptions extends JavaScriptObject
    {   
    }
    
-   public static final String PNG_TYPE = "PNG";
-   public static final String JPEG_TYPE = "JPEG";
-   
    public static final native ExportPlotOptions create(String format,
                                                        int width, 
                                                        int height,

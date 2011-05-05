@@ -130,10 +130,23 @@ Error getPlotExportContext(const json::JsonRpcRequest& request,
 
    // get supported formats
    json::Array formats;
+
+   // base formats
    formats.push_back("PNG");
-   formats.push_back("JPEG");
-   formats.push_back("GIF");
    formats.push_back("PDF");
+   formats.push_back("Postscript");
+#if _WIN32
+   formats.push_back("Metafile");
+#endif
+#ifndef _WIN32
+   formats.push_back("SVG");
+#endif
+   formats.push_back("JPEG");
+   formats.push_back("TIFF");
+   formats.push_back("BMP");
+   formats.push_back("XFig");
+   formats.push_back("PicTeX");
+
    contextJson["formats"] = formats;
 
    // get working directory
