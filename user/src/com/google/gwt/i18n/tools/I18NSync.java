@@ -21,7 +21,6 @@ import com.google.gwt.i18n.client.Localizable;
 import com.google.gwt.i18n.client.Messages;
 import com.google.gwt.i18n.rebind.AbstractLocalizableInterfaceCreator;
 import com.google.gwt.i18n.rebind.ConstantsInterfaceCreator;
-import com.google.gwt.i18n.rebind.LocalizableGenerator;
 import com.google.gwt.i18n.rebind.MessagesInterfaceCreator;
 import com.google.gwt.util.tools.ArgHandlerExtra;
 import com.google.gwt.util.tools.ArgHandlerString;
@@ -117,11 +116,6 @@ public class I18NSync extends ToolBase {
       return true;
     }
   }
-
-  /**
-   * Created Key.
-   */
-  public static final String ID = "@" + LocalizableGenerator.GWT_KEY + " ";
 
   /**
    * Creates a <code>Constants</code> interface from a class name. The

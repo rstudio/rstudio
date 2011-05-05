@@ -15,6 +15,7 @@
  */
 package com.google.gwt.i18n.rebind;
 
+import com.google.gwt.codegen.server.CodeGenUtils;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.ext.Generator;
@@ -41,8 +42,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Generator used to generate an implementation of the LocaleInfoImpl class,
@@ -197,9 +198,9 @@ public class LocaleInfoGenerator extends Generator {
             displayName = displayNames.getProperty(localeName);
           }
           if (displayName != null && displayName.length() != 0) {
-            localeName = quoteQuotes(localeName);
-            displayName = quoteQuotes(displayName);
-            writer.println("      nativeDisplayNamesJava.put(\"" + localeName + "\", \"" + displayName + "\");");
+            writer.println("      nativeDisplayNamesJava.put("
+                + CodeGenUtils.asStringLiteral(localeName) + ", "
+                + CodeGenUtils.asStringLiteral(displayName) + ");");
           }
         }
       }
@@ -228,12 +229,11 @@ public class LocaleInfoGenerator extends Generator {
             displayName = displayNames.getProperty(localeName);
           }
           if (displayName != null && displayName.length() != 0) {
-            localeName = quoteQuotes(localeName);
-            displayName = quoteQuotes(displayName);
             if (needComma) {
               writer.println(",");
             }
-            writer.print("    \"" + localeName + "\": \"" + displayName + "\"");
+            writer.print("    " + CodeGenUtils.asStringLiteral(localeName) + ": "
+                + CodeGenUtils.asStringLiteral(displayName));
             needComma = true;
           }
         }
@@ -280,7 +280,7 @@ public class LocaleInfoGenerator extends Generator {
       if (queryParam != null) {
         writer.println("@Override");
         writer.println("public String getLocaleQueryParam() {");
-        writer.println("  return \"" + quoteQuotes(queryParam) + "\";");
+        writer.println("  return " + CodeGenUtils.asStringLiteral(queryParam) + ";");
         writer.println("}");
         writer.println();
       }
@@ -288,7 +288,7 @@ public class LocaleInfoGenerator extends Generator {
       if (cookie != null) {
         writer.println("@Override");
         writer.println("public String getLocaleCookieName() {");
-        writer.println("  return \"" + quoteQuotes(cookie) + "\";");
+        writer.println("  return " + CodeGenUtils.asStringLiteral(cookie) + ";");
         writer.println("}");
         writer.println();
       }
@@ -298,14 +298,14 @@ public class LocaleInfoGenerator extends Generator {
       // Avoid warnings for trying to create the same type multiple times
       GeneratorContext subContext = new CachedGeneratorContext(context);
       generateConstantsLookup(logger, subContext, writer, localizableGenerator,
-          runtimeLocales, locale,
+          runtimeLocales, localeUtils, locale,
           "com.google.gwt.i18n.client.impl.cldr.DateTimeFormatInfoImpl");
       writer.println("}");
       writer.println();
       writer.println("@Override");
       writer.println("public NumberConstants getNumberConstants() {");
       generateConstantsLookup(logger, subContext, writer, localizableGenerator,
-          runtimeLocales, locale,
+          runtimeLocales, localeUtils, locale,
           "com.google.gwt.i18n.client.constants.NumberConstantsImpl");
       writer.println("}");
       writer.commit(logger);
@@ -319,22 +319,23 @@ public class LocaleInfoGenerator extends Generator {
    * @param writer
    * @param localizableGenerator 
    * @param runtimeLocales
+   * @param localeUtils 
    * @param locale 
    * @throws UnableToCompleteException
    */
   private void generateConstantsLookup(TreeLogger logger,
       GeneratorContext context, SourceWriter writer,
       LocalizableGenerator localizableGenerator, Set<GwtLocale> runtimeLocales,
-      GwtLocale locale, String typeName)
+      LocaleUtils localeUtils, GwtLocale locale, String typeName)
       throws UnableToCompleteException {
     writer.indent();
     boolean fetchedRuntimeLocale = false;
     Map<String, Set<GwtLocale>> localeMap = new HashMap<String, Set<GwtLocale>>();
     generateOneLocale(logger, context, localizableGenerator, typeName,
-        localeMap, locale);
+        localeUtils, localeMap, locale);
     for (GwtLocale runtimeLocale : runtimeLocales) {
       generateOneLocale(logger, context, localizableGenerator, typeName,
-          localeMap, runtimeLocale);
+          localeUtils, localeMap, runtimeLocale);
     }
     if (localeMap.size() > 1) {
       for (Entry<String, Set<GwtLocale>> entry : localeMap.entrySet()) {
@@ -372,16 +373,17 @@ public class LocaleInfoGenerator extends Generator {
    * @param context
    * @param localizableGenerator
    * @param typeName
+   * @param localeUtils
    * @param localeMap
    * @param locale
    * @throws UnableToCompleteException
    */
   private void generateOneLocale(TreeLogger logger, GeneratorContext context,
       LocalizableGenerator localizableGenerator, String typeName,
-      Map<String, Set<GwtLocale>> localeMap, GwtLocale locale)
+      LocaleUtils localeUtils, Map<String, Set<GwtLocale>> localeMap, GwtLocale locale)
       throws UnableToCompleteException {
     String generatedClass = localizableGenerator.generate(logger, context,
-        typeName, locale.toString());
+        typeName, localeUtils, locale);
     if (generatedClass == null) {
       logger.log(TreeLogger.ERROR, "Failed to generate " + typeName
           + " in locale " + locale.toString());
@@ -394,9 +396,5 @@ public class LocaleInfoGenerator extends Generator {
       localeMap.put(generatedClass, locales);
     }
     locales.add(locale);
-  }
-  
-  private String quoteQuotes(String val) {
-    return val.replace("\"", "\\\"");
   }
 }

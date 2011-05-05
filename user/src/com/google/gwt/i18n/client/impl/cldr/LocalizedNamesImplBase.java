@@ -54,6 +54,13 @@ public abstract class LocalizedNamesImplBase extends DefaultLocalizedNames
   }
 
   @Override
+  protected String[] loadLikelyRegionCodes() {
+    // If this override isn't here, LocalizableGenerator-produced overrides
+    // fail with a visibility error in both javac and eclipse.
+    return super.loadLikelyRegionCodes();
+  }
+
+  @Override
   protected final void loadNameMap() {
     if (GWT.isScript()) {
       jsoNameMap = loadNameMapNative(); 
