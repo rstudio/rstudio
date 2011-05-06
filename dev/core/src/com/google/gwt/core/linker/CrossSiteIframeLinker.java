@@ -69,7 +69,10 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     // Must do installScript before installLocation and waitForBodyLoaded
     includeJs(ss, logger, getJsInstallScript(context), "__INSTALL_SCRIPT__");
     includeJs(ss, logger, getJsInstallLocation(context), "__INSTALL_LOCATION__");
+    
+    // Must do waitForBodyLoaded before isBodyLoaded
     includeJs(ss, logger, getJsWaitForBodyLoaded(context), "__WAIT_FOR_BODY_LOADED__");
+    includeJs(ss, logger, getJsIsBodyLoaded(context), "__IS_BODY_LOADED__");
 
     // Must do permutations before providers
     includeJs(ss, logger, getJsPermutations(context), "__PERMUTATIONS__");
@@ -186,6 +189,16 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
    */
   protected String getJsInstallScript(LinkerContext context) {
     return "com/google/gwt/core/ext/linker/impl/installScriptEarlyDownload.js";
+  }
+
+  /**
+   * Returns the name of the {@code JsIsBodyLoaded} script.  By default,
+   * returns {@code "com/google/gwt/core/ext/linker/impl/isBodyLoaded.js"}.
+   *
+   * @param context a LinkerContext
+   */
+  protected String getJsIsBodyLoaded(LinkerContext context) {
+    return "com/google/gwt/core/ext/linker/impl/isBodyLoaded.js";
   }
 
   /**

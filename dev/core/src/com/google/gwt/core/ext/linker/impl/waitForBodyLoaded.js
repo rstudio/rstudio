@@ -1,6 +1,9 @@
 // Setup code which waits for the body to be loaded and then calls the
 // callback function
 function setupWaitForBodyLoad(callback) {
+  // Provides the isBodyLoaded() function
+  __IS_BODY_LOADED__
+  
   var bodyDone = false;
 
   if (isBodyLoaded()) {

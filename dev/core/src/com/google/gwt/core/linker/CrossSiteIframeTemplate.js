@@ -22,16 +22,6 @@ function __MODULE_FUNC__() {
    * Internal Helper Functions
    ***************************************************************************/
 
-  function isBodyLoaded() {
-    if (typeof $doc.readyState == "undefined") {
-      // FF 3.5 and below does not have readyState, but it does allow us to
-      // append to the body before it has finished loading, so we return whether
-      // the body element exists.
-      return (typeof $doc.body != "undefined" && $doc.body != null);
-    }
-    return (/loaded|complete/.test($doc.readyState));
-  }
-
   function isHostedMode() {
     var query = $wnd.location.search;
     return ((query.indexOf('gwt.codesvr.__MODULE_NAME__=') != -1) ||
