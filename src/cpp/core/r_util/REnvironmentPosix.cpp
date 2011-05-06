@@ -28,27 +28,8 @@ namespace r_util {
 
 namespace {
 
-// MacOS X Specific
-#ifdef __APPLE__
-
-#define kLibRFileName            "libR.dylib"
-#define kLibraryPathEnvVariable  "DYLD_LIBRARY_PATH"
-
-// no extra paths on the mac
-std::string extraLibraryPaths(const FilePath& ldPathsScript,
-                              const std::string& rHome)
+FilePath scanForRScript(const std::vector<std::string>& rScriptPaths)
 {
-   return std::string();
-}
-
-FilePath systemDefaultRScript()
-{
-   // define potential paths (use same order as in conventional osx PATH)
-   std::vector<std::string> rScriptPaths;
-   rScriptPaths.push_back("/opt/local/bin/R");
-   rScriptPaths.push_back("/usr/bin/R");
-   rScriptPaths.push_back("/usr/local/bin/R");
-
    // iterate over paths
    for (std::vector<std::string>::const_iterator it = rScriptPaths.begin();
         it != rScriptPaths.end();
@@ -73,6 +54,29 @@ FilePath systemDefaultRScript()
 
    // didn't find it
    return FilePath();
+}
+
+// MacOS X Specific
+#ifdef __APPLE__
+
+#define kLibRFileName            "libR.dylib"
+#define kLibraryPathEnvVariable  "DYLD_LIBRARY_PATH"
+
+// no extra paths on the mac
+std::string extraLibraryPaths(const FilePath& ldPathsScript,
+                              const std::string& rHome)
+{
+   return std::string();
+}
+
+FilePath systemDefaultRScript()
+{
+   // define potential paths (use same order as in conventional osx PATH)
+   std::vector<std::string> rScriptPaths;
+   rScriptPaths.push_back("/opt/local/bin/R");
+   rScriptPaths.push_back("/usr/bin/R");
+   rScriptPaths.push_back("/usr/local/bin/R");
+   return scanForRScript(rScriptPaths);
 }
 
 bool getRHomeAndLibPath(const FilePath& rScriptPath,
@@ -159,7 +163,17 @@ FilePath systemDefaultRScript()
 
    // check for nothing returned
    if (whichOutput.empty())
-      return FilePath();
+   {
+      // try scanning known locations
+      std::vector<std::string> rScriptPaths;
+      rScriptPaths.push_back("/usr/local/bin/R");
+      rScriptPaths.push_back("/usr/bin/R");
+      FilePath rScriptPath = scanForRScript(rScriptPaths);
+      if (rScriptPath.empty())
+         return FilePath();
+      else
+         whichOutput = rScriptPath.absolutePath();
+   }
 
    // verify that the alias points to a real version of R
    FilePath rBinaryPath;
