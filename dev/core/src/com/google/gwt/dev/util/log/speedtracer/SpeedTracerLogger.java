@@ -17,7 +17,9 @@ package com.google.gwt.dev.util.log.speedtracer;
 
 import com.google.gwt.dev.json.JsonArray;
 import com.google.gwt.dev.json.JsonObject;
+import com.google.gwt.dev.shell.DevModeSession;
 import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.dev.util.log.dashboard.DashboardNotifierFactory;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -60,13 +62,14 @@ public final class SpeedTracerLogger {
   private static final String defaultFormatString = 
     System.getProperty("gwt.speedtracerformat");
   
-  // Use cummulative multi-threaded process cpu time instead of wall time
+  // Use cumulative multi-threaded process cpu time instead of wall time
   private static final boolean logProcessCpuTime = 
     getBooleanProperty("gwt.speedtracer.logProcessCpuTime");
   
-  // Use per thread cpu time instead of wall time
-  private static final boolean logThreadCpuTime = 
-    getBooleanProperty("gwt.speedtracer.logThreadCpuTime");
+  // Use per thread cpu time instead of wall time. If logProcessCpuTime is set,
+  // then this can remain false - we only need one or the other.
+  private static final boolean logThreadCpuTime =
+      getBooleanProperty("gwt.speedtracer.logThreadCpuTime");
   
   // Turn on logging summarizing gc time during an event
   private static final boolean logGcTime =
@@ -81,6 +84,15 @@ public final class SpeedTracerLogger {
   private static final boolean jsniCallLoggingEnabled = 
       !getBooleanProperty("gwt.speedtracer.disableJsniLogging");
 
+  static {
+    // verify configuration
+    if (logProcessCpuTime && logThreadCpuTime) {
+      throw new RuntimeException("System properties are misconfigured: "
+          + "Specify one or the other of 'gwt.speedtracer.logProcessCpuTime' "
+          + "or 'gwt.speedtracer.logThreadCpuTime', not both.");
+    }
+  }
+  
   /**
    * Represents a node in a tree of SpeedTracer events.
    */
@@ -88,38 +100,46 @@ public final class SpeedTracerLogger {
     protected final EventType type;
     List<Event> children;
     List<String> data;
-    long durationNanos;
-    final long startTimeNanos;
+    DevModeSession devModeSession;
+    
+    long elapsedDurationNanos;
+    long elapsedStartTimeNanos;
+
+    long processCpuDurationNanos;
+    long processCpuStartTimeNanos;
+
+    long threadCpuDurationNanos;
+    long threadCpuStartTimeNanos;
 
     Event() {
       if (enabled) {
-        timeKeeper.resetTimeBase();
-        this.startTimeNanos = timeKeeper.normalizedTimeNanos();
+        threadCpuTimeKeeper.resetTimeBase();
+        recordStartTime();
         this.data = Lists.create();
         this.children = Lists.create();
       } else {
-        this.startTimeNanos = 0L;
+        this.processCpuStartTimeNanos = 0L;
+        this.threadCpuStartTimeNanos = 0L;
+        this.elapsedStartTimeNanos = 0L;
         this.data = null;
         this.children = null;
       }
       this.type = null;
     }
-    
-    Event(Event parent, EventType type, String... data) {
-      this(timeKeeper.normalizedTimeNanos(), parent, type, data);
-    }
-    
-    Event(long startTimeNanos, Event parent, EventType type, String... data) {
+
+    Event(DevModeSession session, Event parent, EventType type, String... data) {
+
       if (parent != null) {
         parent.children = Lists.add(parent.children, this);
       }
       this.type = type;
       assert (data.length % 2 == 0);
+      recordStartTime();
       this.data = Lists.create(data);
       this.children = Lists.create();
-      this.startTimeNanos = startTimeNanos;
+      this.devModeSession = session;
     }
-
+    
     /**
      * @param data key/value pairs to add to JSON object.
      */
@@ -129,7 +149,7 @@ public final class SpeedTracerLogger {
         this.data = Lists.addAll(this.data, data);
       }
     }
-
+    
     /**
      * Signals the end of the current event.
      */
@@ -137,19 +157,76 @@ public final class SpeedTracerLogger {
       endImpl(this, data);
     }
 
+    public DevModeSession getDevModeSession() {
+      return devModeSession;
+    }
+
+    /**
+     * Returns the event duration, in nanoseconds, for the log file. Depending
+     * on system properties, this will measured in elapsed time, process CPU
+     * time, or thread CPU time.
+     */
+    public long getDurationNanos() {
+      return logProcessCpuTime ? processCpuDurationNanos : (logThreadCpuTime
+          ? threadCpuDurationNanos : elapsedDurationNanos);
+    }
+
+    public long getElapsedDurationNanos() {
+      return this.elapsedDurationNanos;
+    }
+
+    public long getElapsedStartTimeNanos() {
+      return this.elapsedStartTimeNanos;
+    }
+
+    /**
+     * Returns the event start time, normalized in nanoseconds, for the log
+     * file. Depending on system properties, this will be normalized based on
+     * elapsed time, process CPU time, or thread CPU time.
+     */
+    public long getStartTimeNanos() {
+      return logProcessCpuTime ? processCpuStartTimeNanos : (logThreadCpuTime
+          ? threadCpuStartTimeNanos : elapsedStartTimeNanos);
+    }
+
+    public EventType getType() {
+      return type;
+    }
+
     @Override
     public String toString() {
       return type.getName();
     }
 
+    /**
+     * Extends the durations of the current event by the durations of the
+     * specified event.
+     */
+    void extendDuration(Event refEvent) {
+      elapsedDurationNanos += refEvent.elapsedDurationNanos;
+      processCpuDurationNanos += refEvent.processCpuDurationNanos;
+      threadCpuDurationNanos += refEvent.threadCpuDurationNanos;
+    }
+
+    /**
+     * Sets the start time of this event to start immediately after the
+     * specified event ends.
+     */
+    void setStartsAfter(Event refEvent) {
+      elapsedStartTimeNanos = refEvent.elapsedStartTimeNanos + refEvent.elapsedDurationNanos;
+      processCpuStartTimeNanos =
+          refEvent.processCpuStartTimeNanos + refEvent.processCpuDurationNanos;
+      threadCpuStartTimeNanos = refEvent.threadCpuStartTimeNanos + refEvent.threadCpuDurationNanos;
+    }
+    
     JsonObject toJson() {
       JsonObject json = JsonObject.create();
       json.put("type", -2);
       json.put("typeName", type.getName());
       json.put("color", type.getColor());
-      double startMs = convertToMilliseconds(startTimeNanos);
+      double startMs = convertToMilliseconds(getStartTimeNanos());
       json.put("time", startMs);
-      double durationMs = convertToMilliseconds(durationNanos);
+      double durationMs = convertToMilliseconds(getDurationNanos());
       json.put("duration", durationMs);
 
       JsonObject jsonData = JsonObject.create();
@@ -165,6 +242,49 @@ public final class SpeedTracerLogger {
       json.put("children", jsonChildren);
 
       return json;
+    }
+
+    /**
+     * Records the duration of this event based on the current time and the
+     * event's recorded start time.
+     */
+    void updateDuration() {
+      long elapsedEndTimeNanos = elapsedTimeKeeper.normalizedTimeNanos();
+      assert (elapsedEndTimeNanos >= elapsedStartTimeNanos);
+      elapsedDurationNanos = elapsedEndTimeNanos - elapsedStartTimeNanos;
+
+      // don't bother making expensive time keeping method calls unless
+      // necessary
+      if (logProcessCpuTime) {
+        long processCpuEndTimeNanos = processCpuTimeKeeper.normalizedTimeNanos();
+        assert (processCpuEndTimeNanos >= processCpuStartTimeNanos);
+        processCpuDurationNanos = processCpuEndTimeNanos - processCpuStartTimeNanos;
+      } else if (logThreadCpuTime) {
+        long threadCpuEndTimeNanos = threadCpuTimeKeeper.normalizedTimeNanos();
+        assert (threadCpuEndTimeNanos >= threadCpuStartTimeNanos);
+        threadCpuDurationNanos = threadCpuEndTimeNanos - threadCpuStartTimeNanos;
+      }
+    }
+
+    /**
+     * Marks the start time for this event. Three different time measurements
+     * are used:
+     * <ol>
+     * <li>Elapsed (wall-clock) time</li>
+     * <li>Process CPU time</li>
+     * <li>Thread CPU time</li>
+     * </ol>
+     */
+    private void recordStartTime() {
+      elapsedStartTimeNanos = elapsedTimeKeeper.normalizedTimeNanos();
+
+      // don't bother making expensive time keeping method calls unless
+      // necessary
+      if (logProcessCpuTime) {
+        processCpuStartTimeNanos = processCpuTimeKeeper.normalizedTimeNanos();
+      } else if (logThreadCpuTime) {
+        threadCpuStartTimeNanos = threadCpuTimeKeeper.normalizedTimeNanos();
+      }
     }
   }
 
@@ -210,21 +330,68 @@ public final class SpeedTracerLogger {
     }
   }
   
-  private interface NormalizedTimeKeeper {
-    long normalizedTimeNanos();
-    void resetTimeBase();
-    long zeroTimeMillis();
-  }
+  /**
+   * Provides functionality specific to garbage collection events.
+   */
+  private class GcEvent extends Event {
+    private Event refEvent;
 
-  /*
+    /**
+     * Constructs an event that represents garbage collection metrics.
+     * 
+     * @param refEvent the event during which the garbage collections took place
+     * @param gcType the garbage collector type
+     * @param collectionCount the total number of collections for this garbage
+     *          collector type
+     * @param durationNanos the total elapsed time spent in garbage collection
+     *          during the span of {@code refEvent}
+     */
+    GcEvent(Event refEvent, String gcType, long collectionCount, long durationNanos) {
+      super(null, null, SpeedTracerEventType.GC, "Collector Type", gcType,
+          "Cumulative Collection Count", Long.toString(collectionCount));
+
+      this.refEvent = refEvent;
+      // GarbageCollectorMXBean can only provide elapsed time, so that's all we
+      // record
+      this.elapsedDurationNanos = durationNanos;
+    }
+
+    /**
+     * Returns elapsed duration since that is the only duration we can measure
+     * for garbage collection events.
+     */
+    @Override
+    public long getDurationNanos() {
+      return getElapsedDurationNanos();
+    }
+
+    /**
+     * Returns a start time so that this event ends with its {@code refEvent}.
+     */
+    @Override
+    public long getElapsedStartTimeNanos() {
+      return refEvent.getElapsedStartTimeNanos() + refEvent.getElapsedDurationNanos()
+          - getElapsedDurationNanos();
+    }
+
+    /**
+     * Returns a start time so that this event ends with its {@code refEvent}.
+     */
+    @Override
+    public long getStartTimeNanos() {
+      return refEvent.getStartTimeNanos() + refEvent.getDurationNanos() - getDurationNanos();
+    }
+  }
+  
+  /**
    * Time keeper which uses wall time.
    */
-  private class DefaultNormalizedTimeKeeper implements NormalizedTimeKeeper {
+  private class ElapsedNormalizedTimeKeeper {
 
     private final long zeroTimeNanos;
     private final long zeroTimeMillis;
 
-    public DefaultNormalizedTimeKeeper() {
+    public ElapsedNormalizedTimeKeeper() {
       zeroTimeNanos = System.nanoTime();
       zeroTimeMillis = (long) convertToMilliseconds(zeroTimeNanos);
     }
@@ -233,19 +400,16 @@ public final class SpeedTracerLogger {
       return System.nanoTime() - zeroTimeNanos;
     }
     
-    public void resetTimeBase() {
-    }
-    
     public long zeroTimeMillis() {
       return zeroTimeMillis;
     }
   }
-
-  /*
+  
+  /**
    * Time keeper which uses process cpu time.  This can be greater than wall
-   * time, since it is cummulative over the multiple threads of a process.
+   * time, since it is cumulative over the multiple threads of a process.
    */
-  private class ProcessNormalizedTimeKeeper implements NormalizedTimeKeeper {
+  private class ProcessNormalizedTimeKeeper {
     private final OperatingSystemMXBean osMXBean;
     private final Method getProcessCpuTimeMethod;
     private final long zeroTimeNanos;
@@ -256,7 +420,7 @@ public final class SpeedTracerLogger {
         osMXBean = ManagementFactory.getOperatingSystemMXBean();
         /* 
          * Find this method by reflection, since it's part of the Sun
-         * implementation for OperatingSystemMXBean, and we can't alwayws assume
+         * implementation for OperatingSystemMXBean, and we can't always assume
          * that com.sun.management.OperatingSystemMXBean will be available.
          */
         getProcessCpuTimeMethod = 
@@ -276,16 +440,13 @@ public final class SpeedTracerLogger {
         throw new RuntimeException(ex);
       }
     }
-    
-    public void resetTimeBase() {
-    }
-    
+
     public long zeroTimeMillis() {
       return zeroTimeMillis;
     }
   }
 
-  /*
+  /**
    * Time keeper which uses per thread cpu time.  It is assumed that individual
    * events logged will be single threaded, and that top-level events will call
    * {@link #resetTimeBase()} prior to logging time.  The resettable time base
@@ -295,7 +456,7 @@ public final class SpeedTracerLogger {
    * output, although the relation to wall time is actually compressed within
    * a logged event (thread cpu time does not include wait time, etc.).
    */
-  private class ThreadNormalizedTimeKeeper implements NormalizedTimeKeeper {
+  private class ThreadNormalizedTimeKeeper {
 
     private final ThreadMXBean threadMXBean;
     private final ThreadLocal<Long> resettableTimeBase = new ThreadLocal<Long>();
@@ -409,7 +570,7 @@ public final class SpeedTracerLogger {
     JsonObject toJson() {
       JsonObject json = JsonObject.create();
       json.put("type", 11);
-      double startMs = convertToMilliseconds(startTimeNanos);
+      double startMs = convertToMilliseconds(getStartTimeNanos());
       json.put("time", startMs);
       json.put("duration", 0.0);
       JsonObject jsonData = JsonObject.create();
@@ -461,14 +622,35 @@ public final class SpeedTracerLogger {
   /**
    * Signals that a new event has started. You must end each event for each
    * corresponding call to {@code start}. You may nest timing calls.
-   *
+   * 
+   * <p>
+   * Has the same effect as calling
+   * {@link #start(DevModeSession, EventType, String...)
+   * start(DevModeSession.getSessionForCurrentThread(), type, data)}.
+   * 
    * @param type the type of event
-   * @data a set of key-value pairs (each key is followed by its value) that
-   *       contain additional information about the event
-   * @return an Event object to be closed by the caller
+   * @param data a set of key-value pairs (each key is followed by its value)
+   *          that contain additional information about the event
+   * @return an Event object to be ended by the caller
    */
   public static Event start(EventType type, String... data) {
-    return SpeedTracerLogger.get().startImpl(type, data);
+    return SpeedTracerLogger.get().startImpl(DevModeSession.getSessionForCurrentThread(), type,
+        data);
+  }
+
+  /**
+   * Signals that a new event has started. You must end each event for each
+   * corresponding call to {@code start}. You may nest timing calls.
+   *
+   * @param session the devmode session with which this event is associated or
+   *      null if no devmode session is active
+   * @param type the type of event
+   * @param data a set of key-value pairs (each key is followed by its value) that
+   *       contain additional information about the event
+   * @return an Event object to be ended by the caller
+   */
+  public static Event start(DevModeSession session, EventType type, String... data) {
+    return SpeedTracerLogger.get().startImpl(session, type, data);
   }
 
   private static double convertToMilliseconds(long nanos) {
@@ -496,91 +678,81 @@ public final class SpeedTracerLogger {
 
   private final boolean enabled;
   
-  private final DummyEvent dummyEvent;
+  private final DummyEvent dummyEvent = new DummyEvent();
 
-  private final BlockingQueue<Event> eventsToWrite;
+  private BlockingQueue<Event> eventsToWrite;
 
+  private final boolean fileLoggingEnabled;
+  
   private CountDownLatch flushLatch;
 
-  private final Event flushSentinel;
+  private Event flushSentinel;
 
-  private final Format outputFormat;
+  private Format outputFormat;
 
-  private final ThreadLocal<Stack<Event>> pendingEvents;
+  private ThreadLocal<Stack<Event>> pendingEvents;
   
-  private final CountDownLatch shutDownLatch;
+  private CountDownLatch shutDownLatch;
 
-  private final Event shutDownSentinel;
+  private Event shutDownSentinel;
 
-  private final List<GarbageCollectorMXBean> gcMXBeans;
+  private List<GarbageCollectorMXBean> gcMXBeans;
   
-  private final Map<String, Long> lastGcTimes;
+  private Map<String, Long> lastGcTimes;
 
-  private final NormalizedTimeKeeper timeKeeper;
+  private final ElapsedNormalizedTimeKeeper elapsedTimeKeeper = new ElapsedNormalizedTimeKeeper();
+
+  private final ProcessNormalizedTimeKeeper processCpuTimeKeeper =
+      new ProcessNormalizedTimeKeeper();
+
+  private final ThreadNormalizedTimeKeeper threadCpuTimeKeeper = new ThreadNormalizedTimeKeeper();
 
   /**
    * Constructor intended for unit testing.
-   *
+   * 
    * @param writer alternative {@link Writer} to send speed tracer output.
    */
   SpeedTracerLogger(Writer writer, Format format) {
     enabled = true;
+    fileLoggingEnabled = true;
     outputFormat = format;
     eventsToWrite = openLogWriter(writer, "");
     pendingEvents = initPendingEvents();
-    timeKeeper = initTimeKeeper();
-    gcMXBeans = null;
-    lastGcTimes = null;
     shutDownSentinel = new DummyEvent();
     flushSentinel = new DummyEvent();
     shutDownLatch = new CountDownLatch(1);
-    dummyEvent = null;
   }
 
   private SpeedTracerLogger() {
-    // Enabled flag (will be true if logFile is non-null)
-    this.enabled = logFile != null;
-    
+    fileLoggingEnabled = logFile != null;
+    enabled = fileLoggingEnabled || DashboardNotifierFactory.areNotificationsEnabled();
+
     if (enabled) {
-      // Allow a system property to override the default output format
-      Format format = Format.HTML;
-      if (defaultFormatString != null) {
-        for (Format value : Format.values()) {
-          if (value.name().toLowerCase().equals(defaultFormatString.toLowerCase())) {
-            format = value;
-            break;
+      if (fileLoggingEnabled) {
+        // Allow a system property to override the default output format
+        Format format = Format.HTML;
+        if (defaultFormatString != null) {
+          for (Format value : Format.values()) {
+            if (value.name().toLowerCase().equals(defaultFormatString.toLowerCase())) {
+              format = value;
+              break;
+            }
           }
         }
+        outputFormat = format;
+        eventsToWrite = openDefaultLogWriter();
+
+        shutDownSentinel = new DummyEvent();
+        flushSentinel = new DummyEvent();
+        shutDownLatch = new CountDownLatch(1);
       }
-      
-      outputFormat = format;
-      eventsToWrite = openDefaultLogWriter();
-      pendingEvents = initPendingEvents();
-      timeKeeper = initTimeKeeper();
-      
+
       if (logGcTime) {
         gcMXBeans = ManagementFactory.getGarbageCollectorMXBeans();
         lastGcTimes = new ConcurrentHashMap<String, Long>();
-      } else {
-        gcMXBeans = null;
-        lastGcTimes = null;
       }
-      
-      shutDownSentinel = new DummyEvent();
-      flushSentinel = new DummyEvent();
-      shutDownLatch = new CountDownLatch(1);
-      dummyEvent = null;
-    } else {
-      outputFormat = null;
-      eventsToWrite = null;
-      pendingEvents = null;
-      timeKeeper = null;
-      gcMXBeans = null;
-      lastGcTimes = null;
-      shutDownSentinel = null;
-      flushSentinel = null;
-      shutDownLatch = null;
-      dummyEvent = new DummyEvent();
+
+      pendingEvents = initPendingEvents();
     }
   }
 
@@ -607,7 +779,13 @@ public final class SpeedTracerLogger {
   }
   
   void addGcEvents(Event refEvent) {
-    for (java.lang.management.GarbageCollectorMXBean gcMXBean : gcMXBeans) {
+    // we're not sending GC events to the dashboard, so we only record them
+    // to file
+    if (!fileLoggingEnabled) {
+      return;
+    }
+
+    for (GarbageCollectorMXBean gcMXBean : gcMXBeans) {
       String gcName = gcMXBean.getName();
       Long lastGcTime = lastGcTimes.get(gcName);
       long currGcTime = gcMXBean.getCollectionTime();
@@ -617,26 +795,23 @@ public final class SpeedTracerLogger {
       if (currGcTime > lastGcTime) {
         // create a new event
         long gcDurationNanos = (currGcTime - lastGcTime) * 1000000L;
-        long gcStartTimeNanos = refEvent.startTimeNanos + refEvent.durationNanos
-          - gcDurationNanos;
-        Event gcEvent = new Event(gcStartTimeNanos, null, 
-            SpeedTracerEventType.GC, "Collector Type", gcName, 
-            "Cummulative Collection Count", Long.toString(gcMXBean.getCollectionCount()));
-        gcEvent.durationNanos = gcDurationNanos;
+        Event gcEvent =
+            new GcEvent(refEvent, gcName, gcMXBean.getCollectionCount(), gcDurationNanos);
+
         eventsToWrite.add(gcEvent);
-        
         lastGcTimes.put(gcName, currGcTime);
       }
     }
   }
   
   void addOverheadEvent(Event refEvent) {
-    long overheadStartTime = refEvent.startTimeNanos + refEvent.durationNanos;
-    Event overheadEvent = 
-      new Event(overheadStartTime, refEvent, SpeedTracerEventType.OVERHEAD);
-    overheadEvent.durationNanos = 
-      timeKeeper.normalizedTimeNanos() - overheadStartTime;
-    refEvent.durationNanos += overheadEvent.durationNanos;
+    Event overheadEvent =
+        new Event(refEvent.devModeSession, refEvent, SpeedTracerEventType.OVERHEAD);
+    // measure the time between the end of refEvent and now
+    overheadEvent.setStartsAfter(refEvent);
+    overheadEvent.updateDuration();
+
+    refEvent.extendDuration(overheadEvent);
   }
 
   void endImpl(Event event, String... data) {
@@ -644,8 +819,6 @@ public final class SpeedTracerLogger {
       return;
     }
 
-    long endTimeNanos = timeKeeper.normalizedTimeNanos();
-    
     if (data.length % 2 == 1) {
       throw new IllegalArgumentException("Unmatched data argument");
     }
@@ -656,17 +829,14 @@ public final class SpeedTracerLogger {
           "Tried to end an event that never started!");
     }
     Event currentEvent = threadPendingEvents.pop();
-
-    assert (endTimeNanos >= currentEvent.startTimeNanos);
-    currentEvent.durationNanos = endTimeNanos - currentEvent.startTimeNanos;
-
+    currentEvent.updateDuration();
+    
     while (currentEvent != event && !threadPendingEvents.isEmpty()) {
       // Missed a closing end for one or more frames! Try to sync back up.
       currentEvent.addData("Missed",
           "This event was closed without an explicit call to Event.end()");
       currentEvent = threadPendingEvents.pop();
-      assert (endTimeNanos >= currentEvent.startTimeNanos);
-      currentEvent.durationNanos = endTimeNanos - currentEvent.startTimeNanos;
+      currentEvent.updateDuration();
     }
 
     if (threadPendingEvents.isEmpty() && currentEvent != event) {
@@ -685,7 +855,12 @@ public final class SpeedTracerLogger {
     }
     
     if (threadPendingEvents.isEmpty()) {
-      eventsToWrite.add(currentEvent);
+      if (fileLoggingEnabled) {
+        eventsToWrite.add(currentEvent);
+      }
+
+      DashboardNotifierFactory.getNotifier().devModeEvent(currentEvent.getDevModeSession(),
+          currentEvent);
     }
   }
 
@@ -695,6 +870,10 @@ public final class SpeedTracerLogger {
    * thread.
    */
   void flush() {
+    if (!fileLoggingEnabled) {
+      return;
+    }
+    
     try {
       // Wait for the other thread to drain the queue.
       flushLatch = new CountDownLatch(1);
@@ -705,7 +884,7 @@ public final class SpeedTracerLogger {
     }
   }
 
-  Event startImpl(EventType type, String... data) {
+  Event startImpl(DevModeSession session, EventType type, String... data) {
     if (!enabled) {
       return dummyEvent;
     }
@@ -719,15 +898,19 @@ public final class SpeedTracerLogger {
     if (!threadPendingEvents.isEmpty()) {
       parent = threadPendingEvents.peek();
     } else {
-      // start new time base for top-level events
-      timeKeeper.resetTimeBase();
+      // reset the thread CPU time base for top-level events (so events can be
+      // properly sequenced chronologically)
+      threadCpuTimeKeeper.resetTimeBase();
     }
     
-    Event newEvent = new Event(parent, type, data);
+    Event newEvent = new Event(session, parent, type, data);
     // Add a field to the top level event in order to  track the base time
     // so we can re-normalize the data
     if (threadPendingEvents.size() == 0) {
-      newEvent.addData("baseTime", "" + timeKeeper.zeroTimeMillis());
+      long baseTime = logProcessCpuTime ? processCpuTimeKeeper.zeroTimeMillis()
+          : (logThreadCpuTime ? threadCpuTimeKeeper.zeroTimeMillis()
+              : elapsedTimeKeeper.zeroTimeMillis());
+      newEvent.addData("baseTime", "" + baseTime);
     }
     threadPendingEvents.push(newEvent);
     return newEvent;
@@ -740,16 +923,6 @@ public final class SpeedTracerLogger {
         return new Stack<Event>();
       }
     };
-  }
-  
-  private NormalizedTimeKeeper initTimeKeeper() {
-    if (logProcessCpuTime) {
-      return new ProcessNormalizedTimeKeeper();
-    } else if (logThreadCpuTime) {
-      return new ThreadNormalizedTimeKeeper();
-    } else {
-      return new DefaultNormalizedTimeKeeper();
-    } 
   }
   
   private BlockingQueue<Event> openDefaultLogWriter() {

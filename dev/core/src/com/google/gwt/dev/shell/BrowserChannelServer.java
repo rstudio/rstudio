@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.HelpInfo;
 import com.google.gwt.dev.shell.BrowserChannel.SessionHandler.ExceptionOrReturnValue;
 import com.google.gwt.dev.shell.JsValue.DispatchObject;
+import com.google.gwt.dev.util.log.dashboard.DashboardNotifierFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -106,6 +107,8 @@ public class BrowserChannelServer extends BrowserChannel
   private static Map<String, byte[]> iconCache = new HashMap<String, byte[]>();
   
   private static final Object cacheLock = new Object();
+  
+  private DevModeSession devModeSession;
 
   private final SessionHandlerServer handler;
 
@@ -161,6 +164,13 @@ public class BrowserChannelServer extends BrowserChannel
       e.printStackTrace();
       throw new HostedModeException("I/O error communicating with client");
     }
+  }
+
+  /**
+   * Returns the {@code DevModeSession} representing this browser connection.
+   */
+  public DevModeSession getDevModeSession() {
+    return devModeSession;
   }
 
   /**
@@ -507,6 +517,9 @@ public class BrowserChannelServer extends BrowserChannel
     Thread.currentThread().setName(
         "Code server for " + moduleName + " from " + userAgent + " on " + url
         + " @ " + sessionKey);
+
+    createDevModeSession();
+
     logger = handler.loadModule(this, moduleName, userAgent, url,
         tabKey, sessionKey, iconBytes);
     if (logger == null) {
@@ -630,6 +643,17 @@ public class BrowserChannelServer extends BrowserChannel
             localObjects.get(val.getJavaObject().getRefid()));
         break;
     }
+  }
+  
+  /**
+   * Creates the {@code DevModeSession} that represents the current browser
+   * connection, sets it as the "default" session for the current thread, and
+   * notifies a GWT Dashboard.
+   */
+  private void createDevModeSession() {
+    devModeSession = new DevModeSession(moduleName, userAgent);
+    DevModeSession.setSessionForCurrentThread(devModeSession);
+    DashboardNotifierFactory.getNotifier().devModeSession(devModeSession);
   }
 
   /**

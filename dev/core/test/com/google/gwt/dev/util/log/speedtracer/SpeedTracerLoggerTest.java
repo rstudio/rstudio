@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2011 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,9 @@ package com.google.gwt.dev.util.log.speedtracer;
 import com.google.gwt.dev.json.JsonArray;
 import com.google.gwt.dev.json.JsonException;
 import com.google.gwt.dev.json.JsonObject;
+import com.google.gwt.dev.shell.DevModeSession;
+import com.google.gwt.dev.shell.DevModeSessionTestUtil;
+import com.google.gwt.dev.util.log.dashboard.SpeedTracerLoggerTestMockNotifier;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.EventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Format;
@@ -30,6 +33,8 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.LinkedList;
+import java.util.Properties;
 
 /**
  * Tests the SpeedTracerLogger class.
@@ -44,10 +49,12 @@ public class SpeedTracerLoggerTest extends TestCase {
       this.color = color;
     }
 
+    @Override
     public String getColor() {
       return color;
     }
 
+    @Override
     public String getName() {
       return name;
     }
@@ -66,7 +73,7 @@ public class SpeedTracerLoggerTest extends TestCase {
     @Override
     public void run() {
       for (int i = 0; i < MAX_EVENT_LOGS; i++) {
-        Event e = logger.startImpl(event);
+        Event e = logger.startImpl(null, event);
         logger.endImpl(e);
       }
     }
@@ -83,10 +90,10 @@ public class SpeedTracerLoggerTest extends TestCase {
   public void testSpeedTracerLogger() throws IOException, JsonException {
     Writer writer = new StringWriter();
     SpeedTracerLogger logger = new SpeedTracerLogger(writer, Format.HTML);
-    Event dummyOneEvent = logger.startImpl(dummyOne);
-    Event dummyTwoEvent = logger.startImpl(dummyTwo);
+    Event dummyOneEvent = logger.startImpl(null, dummyOne);
+    Event dummyTwoEvent = logger.startImpl(null, dummyTwo);
     logger.endImpl(dummyTwoEvent);
-    Event dummyThreeEvent = logger.startImpl(dummyThree);
+    Event dummyThreeEvent = logger.startImpl(null, dummyThree);
     logger.endImpl(dummyThreeEvent);
     logger.endImpl(dummyOneEvent);
     logger.flush();
@@ -113,7 +120,7 @@ public class SpeedTracerLoggerTest extends TestCase {
       JsonException {
     Writer writer = new StringWriter();
     SpeedTracerLogger logger = new SpeedTracerLogger(writer, Format.HTML);
-    Event dummyOneEvent = logger.startImpl(dummyOne, "extraStart", "valueStart");
+    Event dummyOneEvent = logger.startImpl(null, dummyOne, "extraStart", "valueStart");
     logger.addDataImpl("extraMiddle", "valueMiddle");
     logger.endImpl(dummyOneEvent, "extraEnd", "valueEnd");
     logger.flush();
@@ -133,11 +140,11 @@ public class SpeedTracerLoggerTest extends TestCase {
   public void testSpeedTracerLoggerMultiple() throws IOException, JsonException {
     Writer writer = new StringWriter();
     SpeedTracerLogger logger = new SpeedTracerLogger(writer, Format.HTML);
-    Event dummyOneEvent = logger.startImpl(dummyOne);
+    Event dummyOneEvent = logger.startImpl(null, dummyOne);
     logger.endImpl(dummyOneEvent);
-    Event dummyTwoEvent = logger.startImpl(dummyTwo);
+    Event dummyTwoEvent = logger.startImpl(null, dummyTwo);
     logger.endImpl(dummyTwoEvent);
-    Event dummyThreeEvent = logger.startImpl(dummyThree);
+    Event dummyThreeEvent = logger.startImpl(null, dummyThree);
     logger.endImpl(dummyThreeEvent);
     logger.flush();
 
@@ -199,7 +206,7 @@ public class SpeedTracerLoggerTest extends TestCase {
   public void testSpeedTracerLoggerMarkTimeline() throws IOException, JsonException {
    Writer writer = new StringWriter();
     SpeedTracerLogger logger = new SpeedTracerLogger(writer, Format.RAW);
-    Event dummyOneEvent = logger.startImpl(dummyOne);
+    Event dummyOneEvent = logger.startImpl(null, dummyOne);
     logger.markTimelineImpl("Test Message");
     dummyOneEvent.end();
     logger.flush();
@@ -222,7 +229,7 @@ public class SpeedTracerLoggerTest extends TestCase {
   public void testSpeedTracerLoggerRaw() throws IOException, JsonException {
    Writer writer = new StringWriter();
     SpeedTracerLogger logger = new SpeedTracerLogger(writer, Format.RAW);
-    Event dummyOneEvent = logger.startImpl(dummyOne);
+    Event dummyOneEvent = logger.startImpl(null, dummyOne);
     dummyOneEvent.end();
     logger.flush();
 
@@ -260,5 +267,75 @@ public class SpeedTracerLoggerTest extends TestCase {
       }
     }
     return jsonReader;
+  }
+  
+  public void testSpeedTracerWhenOnlyDashboardEnabled() {
+    // backup system properties before making changes to them
+    Properties props = (Properties) System.getProperties().clone();
+
+    try {
+      // no logging to file!
+      System.clearProperty("gwt.speedtracerlog");
+      // we don't capture GC events in dashboard, so setting this will allow us
+      // to confirm that they *don't* show up in dashboard notices
+      System.setProperty("gwt.speedtracer.logGcTime", "yes");
+
+      // now enable the mock dashboard notifier
+      SpeedTracerLoggerTestMockNotifier notifier = SpeedTracerLoggerTestMockNotifier.enable();
+
+      // create "sessions"
+      DevModeSession session1 = DevModeSessionTestUtil.createSession("test1", "test", true);
+      DevModeSession session2 = DevModeSessionTestUtil.createSession("test2", "test", false);
+
+      // expected values (used in final assertions below)
+      LinkedList<Event> expectedEvents = new LinkedList<Event>();
+      LinkedList<DevModeSession> expectedSessions = new LinkedList<DevModeSession>();
+
+      Event evt1, evt2;
+
+      // test events with no session specified
+      evt1 = SpeedTracerLogger.start(DevModeEventType.MODULE_INIT, "k1", "v1", "k2", "v2");
+      // also test that child events aren't posted (only top-level events)
+      evt2 = SpeedTracerLogger.start(DevModeEventType.CLASS_BYTES_REWRITE);
+      evt2.end();
+      evt1.end();
+      // expect only first event
+      expectedEvents.add(evt1);
+      expectedSessions.add(session1); // event should get "default" session
+
+      // now with session specified
+      evt1 = SpeedTracerLogger.start(session2, DevModeEventType.JAVA_TO_JS_CALL, "k1", "v1");
+      // also test that child events aren't posted (only top-level events)
+      evt2 = SpeedTracerLogger.start(DevModeEventType.CREATE_UI);
+      evt2.end();
+      evt1.end();
+      // expect only first event
+      expectedEvents.add(evt1);
+      expectedSessions.add(session2);
+
+      evt1 = SpeedTracerLogger.start(session1, DevModeEventType.JS_TO_JAVA_CALL, "k1", "v1");
+      evt1.end();
+      expectedEvents.add(evt1);
+      expectedSessions.add(session1);
+
+      // Finally, assert that the events and corresponding sessions sent to the
+      // notifier are exactly as expected
+      assertEquals("Events posted to dashboard do not match expected events!", expectedEvents,
+          notifier.getEventSequence());
+
+      // Collect sessions associated with each event
+      LinkedList<DevModeSession> actualSessions = new LinkedList<DevModeSession>();
+      for (Event event : notifier.getEventSequence()) {
+        actualSessions.add(event.getDevModeSession());
+      }
+
+      // and confirm the sessions are correct
+      assertEquals("Events posted to dashboard are associated with incorrect sessions!",
+          expectedSessions, actualSessions);
+
+    } finally {
+      // restore system properties
+      System.setProperties(props);
+    }
   }
 }

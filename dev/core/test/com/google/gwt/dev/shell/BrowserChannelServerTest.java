@@ -208,6 +208,10 @@ public class BrowserChannelServerTest extends TestCase {
     assertNull(handler.getSessionKey());
     assertNull(handler.getUserAgentIcon());
     assertEquals(MessageType.RETURN, type);
+    DevModeSession session = server.getDevModeSession();
+    assertNotNull(session);
+    assertEquals("testModule", session.getModuleName());
+    assertEquals("userAgent", session.getUserAgent());
     ReturnMessage.receive(client);
     QuitMessage.send(client);
     server.waitForClose();
@@ -246,6 +250,10 @@ public class BrowserChannelServerTest extends TestCase {
     assertEquals("session", handler.getSessionKey());
     assertNull(handler.getUserAgentIcon());
     assertEquals(MessageType.RETURN, type);
+    DevModeSession session = server.getDevModeSession();
+    assertNotNull(session);
+    assertEquals("testModule", session.getModuleName());
+    assertEquals("userAgent", session.getUserAgent());
     ReturnMessage.receive(client);
     QuitMessage.send(client);
     server.waitForClose();
@@ -296,6 +304,10 @@ public class BrowserChannelServerTest extends TestCase {
       assertEquals(iconBytes[i], receivedIcon[i]);
     }
     assertEquals(MessageType.RETURN, type);
+    DevModeSession session = server.getDevModeSession();
+    assertNotNull(session);
+    assertEquals("testModule", session.getModuleName());
+    assertEquals("userAgent", session.getUserAgent());
     ReturnMessage.receive(client);
     QuitMessage.send(client);
     server.waitForClose();
