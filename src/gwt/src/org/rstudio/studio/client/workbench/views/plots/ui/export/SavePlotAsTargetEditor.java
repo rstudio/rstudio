@@ -6,14 +6,16 @@ import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotExportContext;
+import org.rstudio.studio.client.workbench.views.plots.model.PlotExportFormat;
 
-import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -23,9 +25,14 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 
-public class ExportPlotTargetEditor extends Composite 
+// TODO: specify pdf in pixels
+// TODO: use Rplot001 as the syntax for names
+// TODO: we don't check for plot stem in the actual target dir
+// TODO: view after saving
+
+public class SavePlotAsTargetEditor extends Composite implements CanFocus
 {
-   public ExportPlotTargetEditor(String defaultFormat,
+   public SavePlotAsTargetEditor(String defaultFormat,
                                  PlotExportContext context)
    {
       context_ = context;
@@ -42,14 +49,14 @@ public class ExportPlotTargetEditor extends Composite
           
       grid.setWidget(0, 0, imageFormatLabel);
       imageFormatListBox_ = new ListBox();
-      JsArrayString formats = context.getFormats();
+      JsArray<PlotExportFormat> formats = context.getFormats();
       int selectedIndex = 0;
       for (int i=0; i<formats.length(); i++)
       {
-         String format = formats.get(i);
-         if (format.equals(defaultFormat))
+         PlotExportFormat format = formats.get(i);
+         if (format.getName().equals(defaultFormat))
             selectedIndex = i;
-         imageFormatListBox_.addItem(formats.get(i));
+         imageFormatListBox_.addItem(format.getName(), format.getExtension());
       }
       imageFormatListBox_.setSelectedIndex(selectedIndex);
       imageFormatListBox_.setStylePrimaryName(styles.imageFormatListBox());
@@ -62,7 +69,6 @@ public class ExportPlotTargetEditor extends Composite
       fileNameTextBox_.setText(context.getFilename());
       fileNameTextBox_.setStylePrimaryName(styles.fileNameTextBox());
       grid.setWidget(1, 1, fileNameTextBox_);
-      
       
       ThemedButton directoryButton = new ThemedButton("Directory...");
       directoryButton.setStylePrimaryName(styles.directoryButton());
@@ -90,8 +96,8 @@ public class ExportPlotTargetEditor extends Composite
                     initialDirectories_.put(context_.getDirectory().getPath(),
                                             input);
                     
-                    // set displaye
-                    setDirectoryText(input);  
+                    // set display
+                    setDirectory(input);  
                  }          
                });
          }
@@ -99,14 +105,14 @@ public class ExportPlotTargetEditor extends Composite
       
      
       directoryLabel_ = new Label();
-      setDirectoryText(getInitialDirectory());
+      setDirectory(getInitialDirectory());
       directoryLabel_.setStylePrimaryName(styles.directoryLabel());
       grid.setWidget(2, 1, directoryLabel_);
         
       initWidget(grid);
    }
    
-   public void setInitialFocus()
+   public void focus()
    {
       fileNameTextBox_.setFocus(true);
       fileNameTextBox_.selectAll();
@@ -116,6 +122,30 @@ public class ExportPlotTargetEditor extends Composite
    {
       return imageFormatListBox_.getValue(
                                  imageFormatListBox_.getSelectedIndex());
+   }
+    
+   public FileSystemItem getTargetPath()
+   {
+      // first determine format extension
+      String fmtExt = "." + imageFormatListBox_.getValue(
+                                       imageFormatListBox_.getSelectedIndex());
+      
+      // get the filename
+      String filename = fileNameTextBox_.getText().trim();
+      if (filename.length() == 0)
+         return null;
+      
+      // compute the target path
+      FileSystemItem targetPath = FileSystemItem.createFile(
+                                          directory_.completePath(filename));
+      
+      // if the extension isn't already correct then append it
+      if (!targetPath.getExtension().equalsIgnoreCase(fmtExt))
+         targetPath = FileSystemItem.createFile(targetPath.getPath() + fmtExt);
+      
+      // return the path
+      return targetPath;
+      
    }
    
    private FileSystemItem getInitialDirectory()
@@ -128,8 +158,11 @@ public class ExportPlotTargetEditor extends Composite
          return context_.getDirectory();
    }
    
-   private void setDirectoryText(FileSystemItem directory)
+   private void setDirectory(FileSystemItem directory)
    {
+      // set directory
+      directory_ = directory;
+      
       // measure HTML and truncate if necessary
       String path = directory.getPath();
       Size textSize = DomMetrics.measureHTML(path, "gwt-Label");
@@ -155,7 +188,9 @@ public class ExportPlotTargetEditor extends Composite
    
    private ListBox imageFormatListBox_;
    private TextBox fileNameTextBox_;
+   private FileSystemItem directory_;
    private Label directoryLabel_;
+  
    
    private final PlotExportContext context_;
  

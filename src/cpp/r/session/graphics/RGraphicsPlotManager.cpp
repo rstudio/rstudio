@@ -240,6 +240,15 @@ Error PlotManager::savePlotAsPng(const FilePath& filePath,
 }
 
 
+Error PlotManager::savePlotAsPdf(const core::FilePath& filePath,
+                                 int widthPx,
+                                 int heightPx)
+{
+   double widthInches = (double)widthPx / 72.0;
+   double heightInches = (double)heightPx / 72.0;
+   return savePlotAsPdf(filePath, widthInches, heightInches);
+}
+
 Error PlotManager::savePlotAsPdf(const FilePath& filePath, 
                                  double widthInches,
                                  double heightInches)

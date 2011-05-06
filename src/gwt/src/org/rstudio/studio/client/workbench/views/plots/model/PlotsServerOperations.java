@@ -49,4 +49,10 @@ public interface PlotsServerOperations
                    int width,
                    int height,
                    ServerRequestCallback<Void> requestCallback);
+   
+   void savePlotAs(FileSystemItem file,
+                   String format,
+                   int width,
+                   int height,
+                   ServerRequestCallback<Void> requestCallback);
 }

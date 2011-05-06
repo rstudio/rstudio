@@ -3,7 +3,7 @@ package org.rstudio.studio.client.workbench.views.plots.model;
 import org.rstudio.core.client.files.FileSystemItem;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.JsArray;
 
 public class PlotExportContext extends JavaScriptObject
 {
@@ -11,7 +11,7 @@ public class PlotExportContext extends JavaScriptObject
    {
    }
    
-   public final native JsArrayString getFormats() /*-{
+   public final native JsArray<PlotExportFormat> getFormats() /*-{
       return this.formats;
    }-*/;
    

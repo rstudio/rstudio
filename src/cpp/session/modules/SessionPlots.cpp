@@ -117,9 +117,52 @@ Error exportPlot(const json::JsonRpcRequest& request,
                                                         height);
 }
 
+Error savePlotAs(const json::JsonRpcRequest& request,
+                 json::JsonRpcResponse* pResponse)
+{
+   // get args
+   std::string path, format;
+   int width, height;
+   Error error = json::readParams(request.params, &path, &format, &width, &height);
+   if (error)
+      return error;
+
+   // resolve path
+   FilePath plotPath = module_context::resolveAliasedPath(path);
+
+   // if it already exists then return file exists error
+   if (plotPath.exists())
+      return fileExistsError(ERROR_LOCATION);
+
+   // save plot
+   using namespace r::session::graphics;
+   Display& display = r::session::graphics::display();
+   if (format == "png")
+   {
+      return display.savePlotAsPng(plotPath, width, height);
+   }
+   else if (format == "pdf")
+   {
+      return display.savePlotAsPdf(plotPath, width, height);
+   }
+   else
+   {
+      return Error(json::errc::ParamInvalid, ERROR_LOCATION);
+   }
+}
+
 bool hasStem(const FilePath& filePath, const std::string& stem)
 {
    return filePath.stem() == stem;
+}
+
+json::Object plotExportFormat(const std::string& name,
+                              const std::string& extension)
+{
+   json::Object formatJson;
+   formatJson["name"] = name;
+   formatJson["extension"] = extension;
+   return formatJson;
 }
 
 Error getPlotExportContext(const json::JsonRpcRequest& request,
@@ -132,20 +175,22 @@ Error getPlotExportContext(const json::JsonRpcRequest& request,
    json::Array formats;
 
    // base formats
-   formats.push_back("PNG");
-   formats.push_back("PDF");
-   formats.push_back("Postscript");
+   formats.push_back(plotExportFormat("PNG", "png"));
+   formats.push_back(plotExportFormat("PDF", "pdf"));
+/*
+   formats.push_back(plotExportFormat("Postscript", "ps"));
 #if _WIN32
-   formats.push_back("Metafile");
+   formats.push_back(plotExportFormat("Metafile", "emf"));
 #endif
 #ifndef _WIN32
-   formats.push_back("SVG");
+   formats.push_back(plotExportFormat("SVG", "svg"));
 #endif
-   formats.push_back("JPEG");
-   formats.push_back("TIFF");
-   formats.push_back("BMP");
-   formats.push_back("XFig");
-   formats.push_back("PicTeX");
+   formats.push_back(plotExportFormat("JPEG", "jpeg"));
+   formats.push_back(plotExportFormat("TIFF", "tiff"));
+   formats.push_back(plotExportFormat("BMP", "bmp"));
+   formats.push_back(plotExportFormat("XFig", "fix"));
+   formats.push_back(plotExportFormat("PicTeX", "tex"));
+*/
 
    contextJson["formats"] = formats;
 
@@ -560,6 +605,7 @@ Error initialize()
       (bind(registerRpcMethod, "clear_plots", clearPlots))
       (bind(registerRpcMethod, "refresh_plot", refreshPlot))
       (bind(registerRpcMethod, "export_plot", exportPlot))
+      (bind(registerRpcMethod, "save_plot_as", savePlotAs))
       (bind(registerRpcMethod, "get_plot_export_context", getPlotExportContext))
       (bind(registerRpcMethod, "set_manipulator_values", setManipulatorValues))
       (bind(registerUriHandler, kGraphics "/plot_zoom_png", handleZoomPngRequest))

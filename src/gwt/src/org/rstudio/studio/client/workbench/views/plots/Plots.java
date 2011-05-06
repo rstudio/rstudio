@@ -48,6 +48,7 @@ import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedHandler;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
+import org.rstudio.studio.client.workbench.views.plots.model.PlotExportContext;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
 import org.rstudio.studio.client.workbench.views.plots.model.PrintOptions;
@@ -359,13 +360,13 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    {
       view_.bringToFront();
       
+      /*
       exportPlot_.copyPlotToClipboard(server_, 
                                       exportPlotOptions_,
                                       saveExportOptionsOperation_);
-      
+     */ 
      
-      
-      /*
+     
       final ProgressIndicator indicator = 
                                  globalDisplay_.getProgressIndicator("Error");
       indicator.onProgress("Preparing to export plot...");
@@ -378,22 +379,11 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
             {
                indicator.onCompleted();
                
-               new SavePlotAsImageDialog(
-                     server_, 
-                     fileDialogs_,
-                     fileSystemContext_,
-                     context,
-                     exportPlotOptions_,  
-                     new OperationWithInput<ExportPlotOptions>() 
-                     {
-                        public void execute(ExportPlotOptions options)
-                        {
-                           // update default options
-                           exportPlotOptions_ = options;
-                           session_.persistClientState();
-                        }
-                     }).showModal();
-               
+               exportPlot_.savePlotAsImage(globalDisplay_,
+                                           server_, 
+                                           context, 
+                                           exportPlotOptions_, 
+                                           saveExportOptionsOperation_);  
             }
 
             @Override
@@ -402,7 +392,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                indicator.onError(error.getUserMessage());
             }           
          });   
-       */  
+       
        
    }
    

@@ -740,6 +740,20 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, EXPORT_PLOT, params, requestCallback);
    }
    
+   public void savePlotAs(FileSystemItem file,
+                          String format,
+                          int width,
+                          int height,
+                          ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(file.getPath()));
+      params.set(1, new JSONString(format));
+      params.set(2, new JSONNumber(width));
+      params.set(3, new JSONNumber(height));
+      sendRequest(RPC_SCOPE, SAVE_PLOT_AS, params, requestCallback);
+   }
+   
    public void getPlotExportContext(
                   ServerRequestCallback<PlotExportContext> requestCallback)
    {
@@ -1428,6 +1442,7 @@ public class RemoteServer implements Server
    private static final String CLEAR_PLOTS = "clear_plots";
    private static final String REFRESH_PLOT = "refresh_plot";
    private static final String EXPORT_PLOT = "export_plot";
+   private static final String SAVE_PLOT_AS = "save_plot_as";
    private static final String GET_PLOT_EXPORT_CONTEXT = "get_plot_export_context";
    private static final String LOCATOR_COMPLETED = "locator_completed";
    private static final String SET_MANIPULATOR_VALUES = "set_manipulator_values";

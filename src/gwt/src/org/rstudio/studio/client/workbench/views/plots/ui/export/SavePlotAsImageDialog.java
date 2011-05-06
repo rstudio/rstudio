@@ -1,7 +1,13 @@
 package org.rstudio.studio.client.workbench.views.plots.ui.export;
 
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotExportContext;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
@@ -13,8 +19,8 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class SavePlotAsImageDialog extends ExportPlotDialog
 {
-
    public SavePlotAsImageDialog(
+                           GlobalDisplay globalDisplay,
                            PlotsServerOperations server,
                            PlotExportContext context, 
                            final ExportPlotOptions options,
@@ -23,25 +29,33 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
       super(server, options);
       
       setText("Save Plot as Image");
+     
+      globalDisplay_ = globalDisplay;
+      server_ = server;
+      progressIndicator_ = addProgressIndicator();
       
       ThemedButton saveButton = new ThemedButton("Save Plot", 
                                                  new ClickHandler() {
          public void onClick(ClickEvent event) 
          {
+            attemptSavePlot(new Operation() {
+               @Override
+               public void execute()
+               {
+                  // save user options
+                  onClose.execute(getCurrentOptions(options));
             
-            
-            // save user options
-            onClose.execute(getCurrentOptions(options));
-            
-            // close dialog
-            closeDialog();
+                  // close dialog
+                  closeDialog();
+               }
+            });
          }
       });
       addOkButton(saveButton);
       addCancelButton();
       
       // file type and target path
-      exportTarget_ = new ExportPlotTargetEditor(options.getFormat(), 
+      saveAsTarget_ = new SavePlotAsTargetEditor(options.getFormat(), 
                                                  context);
       
       // view after size
@@ -54,14 +68,14 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
    @Override
    protected Widget createTopLeftWidget()
    {
-      return exportTarget_;
+      return saveAsTarget_;
    }
    
    @Override
    protected void onDialogShown()
    {
       super.onDialogShown();
-      exportTarget_.setInitialFocus();
+      saveAsTarget_.focus();
    }
    
    @Override
@@ -71,12 +85,47 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
       return ExportPlotOptions.create(sizeEditor.getImageWidth(), 
                                       sizeEditor.getImageHeight(), 
                                       sizeEditor.getKeepRatio(),
-                                      exportTarget_.getFormat(),
+                                      saveAsTarget_.getFormat(),
                                       viewAfterSaveCheckBox_.getValue(),
                                       previous.getCopyAsMetafile());    
    }
    
-   private ExportPlotTargetEditor exportTarget_;
+   private void attemptSavePlot(final Operation onCompleted)
+   {
+      // get plot format 
+      String format = saveAsTarget_.getFormat();
+      
+      // validate path
+      FileSystemItem targetPath = saveAsTarget_.getTargetPath();
+      if (targetPath == null)
+      {
+         globalDisplay_.showErrorMessage(
+            "File Name Required", 
+            "You must provide a file name for the plot image.", 
+            saveAsTarget_);
+         return;
+      }
+      
+      // save plot
+      progressIndicator_.onProgress("Saving plot...");
+      ExportPlotSizeEditor sizeEditor = getSizeEditor();
+      server_.savePlotAs(targetPath, 
+                         format, 
+                         sizeEditor.getImageWidth(), 
+                         sizeEditor.getImageHeight(), 
+                         new VoidServerRequestCallback(progressIndicator_) {
+                            @Override
+                            protected void onSuccess()
+                            {
+                               onCompleted.execute();
+                            }
+                         });
+   }
+   
+   private final GlobalDisplay globalDisplay_;
+   private ProgressIndicator progressIndicator_;
+   private final PlotsServerOperations server_;
+   private SavePlotAsTargetEditor saveAsTarget_;
    private CheckBox viewAfterSaveCheckBox_;
    
 }

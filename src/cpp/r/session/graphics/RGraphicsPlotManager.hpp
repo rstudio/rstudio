@@ -77,6 +77,10 @@ public:
                                      int heightPx);
       
    virtual core::Error savePlotAsPdf(const core::FilePath& filePath,
+                                     int widthPx,
+                                     int heightPx);
+
+   virtual core::Error savePlotAsPdf(const core::FilePath& filePath,
                                      double widthInches,
                                      double heightInches);
 
