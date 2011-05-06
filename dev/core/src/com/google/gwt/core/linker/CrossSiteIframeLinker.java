@@ -130,6 +130,14 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     replaceAll(ss, "__MODULE_NAME__", context.getModuleName());
     replaceAll(ss, "__HOSTED_FILENAME__", getHostedFilenameFull(context));
 
+    if (context.isOutputCompact()) {
+      replaceAll(ss, "__START_OBFUSCATED_ONLY__", "");
+      replaceAll(ss, "__END_OBFUSCATED_ONLY__", "");      
+    } else {
+      replaceAll(ss, "__START_OBFUSCATED_ONLY__", "/*");
+      replaceAll(ss, "__END_OBFUSCATED_ONLY__", "*/");
+    }
+
     return ss.toString();
   }
 
@@ -408,26 +416,20 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
 
   @Override
   protected String wrapPrimaryFragment(TreeLogger logger, LinkerContext context, String script,
-      ArtifactSet artifacts, CompilationResult result) {
+      ArtifactSet artifacts, CompilationResult result) throws UnableToCompleteException {
     StringBuffer out = new StringBuffer();
     if (shouldIncludeBootstrapInPrimaryFragment(context)) {
-      try {
-        out.append(generateSelectionScript(logger, context, artifacts, result));
-      } catch (UnableToCompleteException e) {
-        logger.log(TreeLogger.ERROR, "Problem setting up selection script", e);
-        e.printStackTrace();
-      }
+      out.append(generateSelectionScript(logger, context, artifacts, result));
     }
-
     if (shouldInstallCode(context)) {
       // Rewrite the code so it can be installed with
       // __MODULE_FUNC__.onScriptDownloaded
       out.append(context.getModuleFunctionName());
       out.append(".onScriptDownloaded(");
-      out.append(JsToStringGenerationVisitor.javaScriptString(script.toString()));
+      out.append(JsToStringGenerationVisitor.javaScriptString(script));
       out.append(")");
     } else {
-      out.append(script.toString());
+      out.append(script);
     }
     return out.toString();
   }

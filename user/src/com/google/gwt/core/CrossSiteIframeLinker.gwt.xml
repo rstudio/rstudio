@@ -12,9 +12,10 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<!-- Defines the cross-site iframe linker   -->
+<!-- Defines the cross-site iframe linker and it's subclasses  -->
 <module>
   <define-linker name="xsiframe" class="com.google.gwt.core.linker.CrossSiteIframeLinker" />
+  <define-linker name="direct_install" class="com.google.gwt.core.linker.DirectInstallLinker" />
   <define-configuration-property name="xsiframe.failIfScriptTag" is_multi_valued="FALSE"/>
   <set-configuration-property name="xsiframe.failIfScriptTag" value="TRUE"/> 
 

@@ -362,7 +362,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
 
   protected String wrapPrimaryFragment(TreeLogger logger,
       LinkerContext context, String script, ArtifactSet artifacts,
-      CompilationResult result) {
+      CompilationResult result) throws UnableToCompleteException {
     return script;
   }
 
