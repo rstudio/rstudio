@@ -56,6 +56,11 @@ struct DisplayState
    int plotCount;
 };
 
+extern const char * const kPngFormat;
+extern const char * const kJpegFormat;
+extern const char * const kTiffFormat;
+extern const char * const kBmpFormat;
+
 class Display
 {
 public:
@@ -70,13 +75,10 @@ public:
    virtual core::Error removePlot(int index) = 0;
 
    // actions on active plot   
-   virtual core::Error savePlotAsPng(const core::FilePath& filePath,
-                                     int widthPx,
-                                     int heightPx) = 0;
-   
-   virtual core::Error savePlotAsPdf(const core::FilePath& filePath,
-                                     int widthPx,
-                                     int heightPx) = 0;
+   virtual core::Error savePlotAsImage(const core::FilePath& filePath,
+                                       const std::string& format,
+                                       int widthPx,
+                                       int heightPx) = 0;
 
    virtual core::Error savePlotAsPdf(const core::FilePath& filePath,
                                      double widthInches,

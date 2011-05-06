@@ -72,13 +72,10 @@ public:
    virtual core::Error removePlot(int index);
    
    // actions on active plot
-   virtual core::Error savePlotAsPng(const core::FilePath& filePath,
-                                     int widthPx,
-                                     int heightPx);
-      
-   virtual core::Error savePlotAsPdf(const core::FilePath& filePath,
-                                     int widthPx,
-                                     int heightPx);
+   virtual core::Error savePlotAsImage(const core::FilePath& filePath,
+                                       const std::string& format,
+                                       int widthPx,
+                                       int heightPx);
 
    virtual core::Error savePlotAsPdf(const core::FilePath& filePath,
                                      double widthInches,
@@ -134,10 +131,13 @@ private:
    core::Error savePlotAsFile(const boost::function<core::Error()>&
                                                          deviceCreationFunction);
    core::Error savePlotAsFile(const std::string& fileDeviceCreationCode);
-   core::Error savePlotAsFile(const std::string& fileType,
-                              int width,
-                              int height,
-                              const core::FilePath& targetPath);
+
+   core::Error savePlotAsBitmapFile(const std::string& bitmapFileType,
+                                    int width,
+                                    int height,
+                                    const core::FilePath& targetPath);
+
+
    
    // error helpers
    core::Error plotIndexError(int index, const core::ErrorLocation& location)

@@ -112,9 +112,11 @@ Error exportPlot(const json::JsonRpcRequest& request,
    FilePath plotPath = module_context::resolveAliasedPath(path);
 
    // save plot
-   return r::session::graphics::display().savePlotAsPng(plotPath,
-                                                        width,
-                                                        height);
+   using namespace r::session::graphics;
+   return r::session::graphics::display().savePlotAsImage(plotPath,
+                                                          kPngFormat,
+                                                          width,
+                                                          height);
 }
 
 Error savePlotAs(const json::JsonRpcRequest& request,
@@ -137,18 +139,7 @@ Error savePlotAs(const json::JsonRpcRequest& request,
    // save plot
    using namespace r::session::graphics;
    Display& display = r::session::graphics::display();
-   if (format == "png")
-   {
-      return display.savePlotAsPng(plotPath, width, height);
-   }
-   else if (format == "pdf")
-   {
-      return display.savePlotAsPdf(plotPath, width, height);
-   }
-   else
-   {
-      return Error(json::errc::ParamInvalid, ERROR_LOCATION);
-   }
+   return display.savePlotAsImage(plotPath, format, width, height);
 }
 
 bool hasStem(const FilePath& filePath, const std::string& stem)
@@ -175,19 +166,23 @@ Error getPlotExportContext(const json::JsonRpcRequest& request,
    json::Array formats;
 
    // base formats
-   formats.push_back(plotExportFormat("PNG", "png"));
-   formats.push_back(plotExportFormat("PDF", "pdf"));
+   using namespace r::session::graphics;
+   formats.push_back(plotExportFormat("PNG", kPngFormat));
+   formats.push_back(plotExportFormat("JPEG", kJpegFormat));
+   formats.push_back(plotExportFormat("TIFF", kTiffFormat));
+   formats.push_back(plotExportFormat("BMP", kBmpFormat));
 /*
+#ifndef _WIN32
+   formats.push_back(plotExportFormat("SVG", "svg"));
+#endif
    formats.push_back(plotExportFormat("Postscript", "ps"));
 #if _WIN32
    formats.push_back(plotExportFormat("Metafile", "emf"));
 #endif
-#ifndef _WIN32
-   formats.push_back(plotExportFormat("SVG", "svg"));
-#endif
-   formats.push_back(plotExportFormat("JPEG", "jpeg"));
-   formats.push_back(plotExportFormat("TIFF", "tiff"));
-   formats.push_back(plotExportFormat("BMP", "bmp"));
+*/
+
+
+/*
    formats.push_back(plotExportFormat("XFig", "fix"));
    formats.push_back(plotExportFormat("PicTeX", "tex"));
 */
@@ -219,7 +214,10 @@ Error getPlotExportContext(const json::JsonRpcRequest& request,
          break;
 
       // update stem and search again
-      stem = "Rplot" + boost::lexical_cast<std::string>(++i);
+      boost::format fmt("Rplot%1%");
+      stem = boost::str(fmt % boost::io::group(std::setfill('0'),
+                                               std::setw(3),
+                                               ++i));
    }
    contextJson["filename"] = stem;
 
@@ -307,7 +305,7 @@ void handleZoomRequest(const http::Request& request, http::Response* pResponse)
    templateStream <<
       "<html>"
          "<head>"
-            "<title>RStudio Plot</title>"
+            "<title>Plot Zoom</title>"
             "<script type=\"text/javascript\">"
 
                "window.timerPending = false;"
@@ -358,8 +356,12 @@ void handleZoomPngRequest(const http::Request& request,
      return ;
 
    // generate the file
+   using namespace r::session::graphics;
    FilePath imagePath = module_context::tempFile("plot", "png");
-   Error saveError = graphics::display().savePlotAsPng(imagePath, width, height);
+   Error saveError = graphics::display().savePlotAsImage(imagePath,
+                                                         kPngFormat,
+                                                         width,
+                                                         height);
    if (saveError)
    {
       pResponse->setError(http::status::InternalServerError, 
@@ -411,7 +413,10 @@ void handlePngRequest(const http::Request& request,
    // generate the image
    using namespace r::session;
    FilePath imagePath = module_context::tempFile("plot", "png");
-   Error error = graphics::display().savePlotAsPng(imagePath, width, height);
+   Error error = graphics::display().savePlotAsImage(imagePath,
+                                                      graphics::kPngFormat,
+                                                      width,
+                                                      height);
    if (error)
    {
       pResponse->setError(http::status::InternalServerError,

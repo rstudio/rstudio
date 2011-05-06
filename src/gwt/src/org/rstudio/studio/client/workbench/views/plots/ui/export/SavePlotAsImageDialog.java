@@ -1,6 +1,5 @@
 package org.rstudio.studio.client.workbench.views.plots.ui.export;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;

@@ -25,9 +25,8 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 
-// TODO: specify pdf in pixels
-// TODO: use Rplot001 as the syntax for names
 // TODO: we don't check for plot stem in the actual target dir
+// TODO: rename PlotExportContext to SaveAsContext ??
 // TODO: view after saving
 
 public class SavePlotAsTargetEditor extends Composite implements CanFocus
@@ -54,7 +53,7 @@ public class SavePlotAsTargetEditor extends Composite implements CanFocus
       for (int i=0; i<formats.length(); i++)
       {
          PlotExportFormat format = formats.get(i);
-         if (format.getName().equals(defaultFormat))
+         if (format.getExtension().equals(defaultFormat))
             selectedIndex = i;
          imageFormatListBox_.addItem(format.getName(), format.getExtension());
       }

@@ -39,6 +39,11 @@ namespace r {
 namespace session {  
 namespace graphics {
 
+const char * const kPngFormat = "png";
+const char * const kJpegFormat = "jpeg";
+const char * const kBmpFormat = "bmp";
+const char * const kTiffFormat = "tiff";
+
 
 // satisfy r::session::graphics::Display singleton
 Display& display()
@@ -229,24 +234,56 @@ Error PlotManager::savePlotAsFile(const std::string& deviceCreationCode)
          boost::bind(r::exec::executeString, deviceCreationCode));
 }
 
-Error PlotManager::savePlotAsPng(const FilePath& filePath, 
-                                 int widthPx, 
-                                 int heightPx)
+Error PlotManager::savePlotAsImage(const FilePath& filePath,
+                                   const std::string& format,
+                                   int widthPx,
+                                   int heightPx)
 {
-   return savePlotAsFile(boost::bind(file_device::create,
-                                          widthPx,
-                                          heightPx,
-                                          filePath));
+   if (format == kPngFormat)
+   {
+      return savePlotAsFile(boost::bind(file_device::create,
+                                        widthPx,
+                                        heightPx,
+                                        filePath));
+   }
+   else if (format == kBmpFormat || format == kJpegFormat || format == kTiffFormat)
+   {
+      return savePlotAsBitmapFile(format, widthPx, heightPx, filePath);
+   }
+   else
+   {
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+   }
 }
 
-
-Error PlotManager::savePlotAsPdf(const core::FilePath& filePath,
-                                 int widthPx,
-                                 int heightPx)
+Error PlotManager::savePlotAsBitmapFile(const std::string& bitmapFileType,
+                                        int width,
+                                        int height,
+                                        const FilePath& targetPath)
 {
-   double widthInches = (double)widthPx / 72.0;
-   double heightInches = (double)heightPx / 72.0;
-   return savePlotAsPdf(filePath, widthInches, heightInches);
+   // optional format specific extra params
+   std::string extraParams;
+
+   // add extra quality parameter for jpegs
+   if (bitmapFileType == kJpegFormat)
+      extraParams = ", quality = 100";
+
+#ifdef __APPLE__
+   extraParams += ", type = \"quartz\"";
+#endif
+
+   // generate code for creating bitmap file device
+   boost::format fmt(
+      "{ require(grDevices, quietly=TRUE); "
+      "  %1%(filename=\"%2%\", width=%3%, height=%4%, pointsize = 16 %5%); }");
+   std::string deviceCreationCode = boost::str(fmt % bitmapFileType %
+                                                     targetPath %
+                                                     width %
+                                                     height %
+                                                     extraParams);
+
+   // save the file
+   return savePlotAsFile(deviceCreationCode);
 }
 
 Error PlotManager::savePlotAsPdf(const FilePath& filePath, 
