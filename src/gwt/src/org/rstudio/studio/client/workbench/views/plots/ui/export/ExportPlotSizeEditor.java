@@ -12,10 +12,7 @@ t * ResizableImagePreview.java
  */
 package org.rstudio.studio.client.workbench.views.plots.ui.export;
 
-import org.rstudio.core.client.widget.FocusHelper;
-import org.rstudio.core.client.widget.ImageFrame;
-import org.rstudio.core.client.widget.ResizeGripper;
-import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 
 import com.google.gwt.dom.client.Style.Overflow;
@@ -27,7 +24,6 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.CellPanel;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focusable;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -200,7 +196,7 @@ public class ExportPlotSizeEditor extends Composite
 
       // add top panel
       verticalPanel.add(topPanel);
-         
+
       // image frame
       imageFrame_ = new ImageFrame();
       imageFrame_.setUrl("about:blank");
@@ -208,23 +204,21 @@ public class ExportPlotSizeEditor extends Composite
       imageFrame_.setMarginHeight(0);
       imageFrame_.setMarginWidth(0);
       imageFrame_.setStylePrimaryName(resources.styles().imagePreview());
-      previewPanel.add(imageFrame_);
-      previewPanel.setWidgetLeftRight(imageFrame_, 
+
+      // Stops mouse events from being routed to the iframe, which would
+      // interfere with resizing
+      final GlassPanel glassPanel = new GlassPanel(imageFrame_);
+      glassPanel.setSize("100%", "100%");
+
+      previewPanel.add(glassPanel);
+      previewPanel.setWidgetLeftRight(glassPanel,
                                       0, Unit.PX, 
                                       IMAGE_INSET, Unit.PX);
-      previewPanel.setWidgetTopBottom(imageFrame_, 
+      previewPanel.setWidgetTopBottom(glassPanel,
                                       0, Unit.PX, 
                                       IMAGE_INSET, Unit.PX);
       previewPanel.getWidgetContainerElement(
-                     imageFrame_).getStyle().setOverflow(Overflow.VISIBLE);
-      
-      // Stops mouse events from being routed to the iframe, which would
-      // interfere with resizing
-      FlowPanel imageSurface = new FlowPanel();
-      imageSurface.setSize("100%", "100%");
-      previewPanel.add(imageSurface);
-      previewPanel.setWidgetTopBottom(imageSurface, 0, Unit.PX, 0, Unit.PX);
-      previewPanel.setWidgetLeftRight(imageSurface, 0, Unit.PX, 0, Unit.PX);
+                     glassPanel).getStyle().setOverflow(Overflow.VISIBLE);
       
       // resize gripper
       ResizeGripper gripper = new ResizeGripper(new ResizeGripper.Observer() 
@@ -237,6 +231,8 @@ public class ExportPlotSizeEditor extends Composite
             
             widthAspectRatio_ = (double)startWidth / (double)startHeight;
             heightAspectRatio_ = (double)startHeight / (double)startWidth;
+
+            glassPanel.setGlass(true);
          }
          
          @Override
@@ -271,6 +267,7 @@ public class ExportPlotSizeEditor extends Composite
          @Override
          public void onResizingCompleted()
          {
+            glassPanel.setGlass(false);
             updateImage();
             observer.onPlotResized(true);
          } 
