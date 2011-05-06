@@ -264,8 +264,84 @@ public class TextEditingTarget implements EditingTarget
                event.stopPropagation();
                docDisplay_.insertCode(" <- ", false);
             }
+            else if (mod == KeyboardShortcut.CTRL
+                     && ne.getKeyCode() == KeyCodes.KEY_UP
+                     && fileType_ == FileTypeRegistry.R)
+            {
+               event.preventDefault();
+               event.stopPropagation();
+               jumpToPreviousFunction();
+            }
+            else if (mod == KeyboardShortcut.CTRL
+                     && ne.getKeyCode() == KeyCodes.KEY_DOWN
+                     && fileType_ == FileTypeRegistry.R)
+            {
+               event.preventDefault();
+               event.stopPropagation();
+               jumpToNextFunction();
+            }
          }
       });
+   }
+
+   private void jumpToPreviousFunction()
+   {
+      Position cursor = docDisplay_.getCursorPosition();
+      JsArray<FunctionStart> functions = docDisplay_.getFunctionTree();
+      FunctionStart jumpTo = findPreviousFunction(functions, cursor);
+      docDisplay_.setCursorPosition(jumpTo.getStart());
+      docDisplay_.moveCursorNearTop();
+   }
+
+   private FunctionStart findPreviousFunction(JsArray<FunctionStart> funcs, Position pos)
+   {
+      FunctionStart result = null;
+      for (int i = 0; i < funcs.length(); i++)
+      {
+         FunctionStart child = funcs.get(i);
+         if (child.getStart().compareTo(pos) >= 0)
+            break;
+         result = child;
+      }
+
+      if (result == null)
+         return result;
+
+      FunctionStart descendant = findPreviousFunction(result.getChildren(),
+                                                      pos);
+      if (descendant != null)
+         result = descendant;
+
+      return result;
+   }
+
+   private void jumpToNextFunction()
+   {
+      Position cursor = docDisplay_.getCursorPosition();
+      JsArray<FunctionStart> functions = docDisplay_.getFunctionTree();
+      FunctionStart jumpTo = findNextFunction(functions, cursor);
+      docDisplay_.setCursorPosition(jumpTo.getStart());
+      docDisplay_.moveCursorNearTop();
+   }
+
+   private FunctionStart findNextFunction(JsArray<FunctionStart> funcs, Position pos)
+   {
+      for (int i = 0; i < funcs.length(); i++)
+      {
+         FunctionStart child = funcs.get(i);
+         if (child.getStart().compareTo(pos) <= 0)
+         {
+            FunctionStart descendant = findNextFunction(child.getChildren(), pos);
+            if (descendant != null)
+               return descendant;
+         }
+         else
+         {
+            return child;
+         }
+      }
+
+      return null;
    }
 
    public void initialize(SourceDocument document,
