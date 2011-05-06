@@ -66,6 +66,32 @@
         <copy tofile="${sample.build}/build.xml" file="user-build.xml"/>
       </then>
     </if>
+    <if>
+      <available file="user-build.xml"/>
+      <then>
+        <copy tofile="${sample.build}/build.xml" file="user-build.xml"/>
+      </then>
+    </if>
+    <if>
+      <available file="user-project"/>
+      <then>
+        <copy tofile="${sample.build}/.project" file="user-project"/>
+      </then>
+    </if>
+    <if>
+      <available file="user-classpath"/>
+      <then>
+        <copy tofile="${sample.build}/.classpath" file="user-classpath"/>
+      </then>
+    </if>
+    <if>
+      <available file="user-settings"/>
+      <then>
+        <copy todir="${sample.build}/.settings">
+          <fileset dir="user-settings"/>
+        </copy>
+      </then>
+    </if>
   </target>
 
   <target name="serverlibs" description="Copy server libs to the output folder">

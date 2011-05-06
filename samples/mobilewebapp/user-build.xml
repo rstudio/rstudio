@@ -142,7 +142,6 @@
     <delete dir="war/WEB-INF/classes/META-INF" failonerror="false" />
     <delete file="war/WEB-INF/classes/log4j.properties" failonerror="false" />
     <delete dir="war/WEB-INF/deploy/" failonerror="false" />
-    <delete dir="war/WEB-INF/lib/" failonerror="false" />
     <delete dir="war/mobilewebapp/" failonerror="false" />
     <delete dir="build/" failonerror="false" />
   </target>

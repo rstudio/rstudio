@@ -64,8 +64,6 @@ public class DesktopTaskListView extends Composite implements TaskListView {
 
   /**
    * Construct a new {@link DesktopTaskListView}.
-   * 
-   * @param presenter the {@link Presenter} that handles this view
    */
   public DesktopTaskListView() {
     // Create the CellTable.

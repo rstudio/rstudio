@@ -26,3 +26,55 @@ To compile your project for deployment, just type 'ant'.
 To compile and also bundle into a .war file, type 'ant war'.
 
 For a full listing of other targets, type 'ant -p'.
+
+-- Building with Eclipse and the Google Plugin for Eclipse --
+
+If you use Eclipse, you can simply import the generated project into
+Eclipse.  We've tested against Eclipse 3.5 and 3.6 and GPE 2.3.  Later
+versions will likely also work, earlier versions may not.
+
+1. In Eclipse, make sure the App Engine SDK is configured in
+
+  Window -> Properties -> Google -> App Engine
+
+2. Go to the File menu and choose:
+
+  File -> Import... -> Existing Projects into Workspace
+
+  Browse to the directory containing this file,
+  select "MobileWebApp".
+
+  Be sure to uncheck "Copy projects into workspace" if it is checked.
+  
+  Click Finish.
+
+  You can now browse the project in Eclipse.
+
+3. Eclipse may produce warings indicating that
+
+  "The App Engine SDJ JAR xx.yy.jar is missing in the WEB-INF/lib directory"
+
+  Select the warning, right click and choose
+
+  "Quick fix" -> "Synchronize <WAR>/WEB-INF/lib with SDK libraries"
+
+  Click "Finish"
+
+4. Eclipse may also produce a warning indicating that
+
+  "The GWT SDK JAR gwt-servlet.jar is missing in the WEB-INF/lib directory"
+
+  Select the warning, right click and choose
+
+  "Quick fix" -> "Synchronize <WAR>/WEB-INF/lib with SDK libraries"
+
+  Click "Finish"
+
+5. To launch your web app in GWT development mode, go to the Run menu and choose:
+
+  Run -> Open Debug Dialog...
+
+  Under Java Application, you should find a launch configuration
+  named "MobileWebApp".  Select and click "Debug".
+
+  You can now use the built-in debugger to debug your web app in development mode.

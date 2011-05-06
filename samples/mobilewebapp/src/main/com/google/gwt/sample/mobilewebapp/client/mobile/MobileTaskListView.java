@@ -75,8 +75,6 @@ public class MobileTaskListView extends Composite implements TaskListView {
 
   /**
    * Construct a new {@link MobileTaskListView}.
-   * 
-   * @param presenter the {@link Presenter} that handles this view
    */
   public MobileTaskListView() {
     // Create the CellList.
