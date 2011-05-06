@@ -21,6 +21,9 @@ import javax.validation.ValidationProviderResolver;
 import javax.validation.spi.BootstrapState;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * GWT {@link BootstrapState}.
  */
 public class GwtBootStrapState implements BootstrapState {

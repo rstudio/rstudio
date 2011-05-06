@@ -24,6 +24,9 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Pattern.Flag;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * {@link Pattern} constraint validator implementation.
  * <p>
  * Note this implementation uses {@link RegExp} which differs from

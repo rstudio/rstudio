@@ -24,7 +24,9 @@ import javax.validation.metadata.ConstraintDescriptor;
 import javax.validation.metadata.PropertyDescriptor;
 
 /**
- *
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  */
 public class PropertyDescriptorImpl implements PropertyDescriptor {
 

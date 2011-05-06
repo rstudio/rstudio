@@ -21,6 +21,9 @@ import java.math.BigInteger;
 import javax.validation.ConstraintValidatorContext;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * {@link javax.validation.constraints.DecimalMin} constraint validator
  * implementation for a {@link Number}.
  */

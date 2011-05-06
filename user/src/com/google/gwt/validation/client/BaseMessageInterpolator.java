@@ -26,6 +26,9 @@ import javax.validation.MessageInterpolator;
 import javax.validation.metadata.ConstraintDescriptor;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * Base GWT {@link MessageInterpolator}.
  */
 public abstract class BaseMessageInterpolator implements MessageInterpolator {

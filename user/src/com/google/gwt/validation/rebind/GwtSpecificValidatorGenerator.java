@@ -25,6 +25,9 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.validation.client.impl.GwtSpecificValidator;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * Generates a {@link com.google.gwt.validation.client.GwtSpecificValidator}.
  * <p>
  * This class is thread safe.

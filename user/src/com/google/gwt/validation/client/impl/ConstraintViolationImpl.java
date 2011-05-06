@@ -22,8 +22,11 @@ import javax.validation.Path;
 import javax.validation.metadata.ConstraintDescriptor;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * An implementation of {@link ConstraintViolation}.
- *
+ * 
  * @param <T> the type of bean validated.
  */
 public class ConstraintViolationImpl<T> implements ConstraintViolation<T>,

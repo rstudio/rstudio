@@ -26,11 +26,14 @@ import javax.validation.ValidatorContext;
 import javax.validation.ValidatorFactory;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * Abstract {@link ValidatorFactory} that delegates to a GWT generated
  * {@link Validator}.
  * <p>
  * Extend this class create and implement createValidator
- *
+ * 
  * <pre>
  * public class MyValidatorFactory extends AbstractGwtValidatorFactory {
  *   @GwtValidation(value = {Pojo.class,Other.class})
@@ -44,7 +47,7 @@ import javax.validation.ValidatorFactory;
  * </pre>
  * <p>
  * Then add a line like this to your Gwt Module config (gwt.xml) file.
- *
+ * 
  * <pre>
  * &lt;replace-with class="com.example.MyValidatorFactory">
  *   &lt;when-type-is class="javax.validation.ValidatorFactory"/>

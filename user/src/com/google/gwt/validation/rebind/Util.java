@@ -30,6 +30,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * Static utilities for the validation rebind package.
  */
 class Util {

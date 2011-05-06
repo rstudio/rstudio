@@ -26,6 +26,9 @@ import javax.validation.ValidatorContext;
 import javax.validation.ValidatorFactory;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * GWT {@link ValidatorContext}.
  */
 public class GwtValidatorContext implements ValidatorContext {

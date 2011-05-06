@@ -22,6 +22,9 @@ import java.io.InputStream;
 import javax.validation.spi.BootstrapState;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * Extends {@link BaseGwtConfiguration} with just the parts that are not GWT
  * compatible.
  */

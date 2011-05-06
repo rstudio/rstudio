@@ -21,21 +21,24 @@ import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * Masks a {@link ConstraintValidator} that is not GWT compatible. This
  * validator always fails.
  * <p>
  * Extend this class and implement it as GWT super class. Use validation groups
  * to keep this constraint from being validated on the client.
- *
+ * 
  * <p>
  * In a super source directory override your validator like this:
- *
+ * 
  * <pre>
  * public class MyValidator extends
  *     NotGwtCompatibleValidator &lt;MyConstraint, MyType&gt;{
  * }
  * </pre>
- *
+ * 
  * @param <A> the constraint to validate
  * @param <T> the type to validate
  */

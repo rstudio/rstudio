@@ -18,6 +18,9 @@ package com.google.gwt.validation.client;
 import java.util.Locale;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * Simple GWT {@link javax.validation.MessageInterpolator}.
  */
 public class GwtMessageInterpolator extends BaseMessageInterpolator {

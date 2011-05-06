@@ -31,10 +31,13 @@ import javax.validation.MessageInterpolator;
 import javax.validation.groups.Default;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * Base methods for implementing a {@link GwtSpecificValidator}.
  * <p>
  * All methods that do not need to be generated go here.
- *
+ * 
  * @param <G> the type object to validate
  */
 public abstract class AbstractGwtSpecificValidator<G> implements

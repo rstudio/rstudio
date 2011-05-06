@@ -43,6 +43,9 @@ import javax.validation.metadata.BeanDescriptor;
 import javax.validation.metadata.PropertyDescriptor;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * A simple struct for the various values associated with a Bean that can be
  * validated.
  */

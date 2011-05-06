@@ -29,12 +29,15 @@ import javax.validation.spi.BootstrapState;
 import javax.validation.spi.ValidationProvider;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * This class is the entry point for Bean Validation. There are three ways to
  * bootstrap it:
  * <ul>
  * <li>
  * The easiest approach is to build the default <code>ValidatorFactory</code>.
- *
+ * 
  * <pre>{@code ValidatorFactory factory = Validation.buildDefaultValidatorFactory();}</pre>
  * In this case, the default validation provider resolver will be used to locate
  * available providers. The chosen provider is defined as followed:
@@ -48,7 +51,7 @@ import javax.validation.spi.ValidationProvider;
  * <code>ValidationProviderResolver</code>. The chosen
  * <code>ValidationProvider</code> is then determined in the same way as in the
  * default bootstrapping case (see above).
- *
+ * 
  * <pre>{@code
  * Configuration<?> configuration = Validation
  *    .byDefaultProvider()
@@ -62,7 +65,7 @@ import javax.validation.spi.ValidationProvider;
  * fashion the expected provider.
  * <p/>
  * Optionally you can choose a custom <code>ValidationProviderResolver</code>.
- *
+ * 
  * <pre>{@code
  * ACMEConfiguration configuration = Validation
  *    .byProvider(ACMEProvider.class)
@@ -80,7 +83,7 @@ import javax.validation.spi.ValidationProvider;
  * <li>
  * This class is thread-safe.</li>
  * </ul>
- *
+ * 
  * This class was modified by Google from the original
  * javax.validation.Validation source to make it suitable for GWT.
  */

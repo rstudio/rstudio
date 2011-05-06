@@ -27,8 +27,11 @@ import javax.validation.Payload;
 import javax.validation.metadata.ConstraintDescriptor;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * A immutable GWT implementation of {@link ConstraintDescriptor}.
- *
+ * 
  * @param <T> the constraint annotation to describe.
  */
 public class ConstraintDescriptorImpl<T extends Annotation> implements

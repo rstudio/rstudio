@@ -16,6 +16,9 @@
 package com.google.gwt.validation.client;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * Always resolves message keys to null.
  */
 public class NullUserValidationMessageResolver implements

@@ -19,6 +19,9 @@ import java.io.InputStream;
 import java.util.Set;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * Only the GWT incompatible parts.
  */
 public class GwtConfigurationState extends BaseConfigurationState {

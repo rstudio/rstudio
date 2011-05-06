@@ -37,6 +37,9 @@ import javax.validation.ConstraintViolation;
 import javax.validation.metadata.BeanDescriptor;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * Class that creates the validator for the given input class.
  */
 public class ValidatorCreator extends AbstractCreator {

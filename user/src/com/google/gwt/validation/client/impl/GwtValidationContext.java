@@ -24,13 +24,16 @@ import javax.validation.metadata.BeanDescriptor;
 import javax.validation.metadata.ConstraintDescriptor;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * Context for a {@link com.google.gwt.validation.client.GwtValidation}.
- *
+ * 
  * <p>
  * NOTE: This class is not thread safe.
- *
+ * 
  * @param <T> the type of the root bean.
- *
+ * 
  */
 public class GwtValidationContext<T> {
 

@@ -74,6 +74,9 @@ import javax.validation.metadata.ConstraintDescriptor;
 import javax.validation.metadata.PropertyDescriptor;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * Creates a {@link com.google.gwt.validation.client.GwtSpecificValidator}.
  * <p>
  * This class is not thread safe.

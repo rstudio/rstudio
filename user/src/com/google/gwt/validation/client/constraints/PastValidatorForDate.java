@@ -22,6 +22,9 @@ import javax.validation.ConstraintValidatorContext;
 import javax.validation.constraints.Past;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * {@link Past} constraint validator implementation for a {@link java.util.Date}.
  */
 public class PastValidatorForDate implements ConstraintValidator<Past, Date> {

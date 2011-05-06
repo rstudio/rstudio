@@ -23,6 +23,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * Annotates a {@code javax.validation.Validator} explicitly listing the classes
  * that can be validated in GWT.
  * <p>
@@ -71,12 +74,12 @@ import java.lang.annotation.Target;
  * MySubBean bean = new MySubBean();
  * Set&lt;ConstraintViolation&lt;MyBean>> violations = validator.validate(bean);
  * </pre>
- *
+ * 
  * The {@code Size} constraint will not be validated.
- *
+ * 
  * Instead make sure you list the all BeanTypes that will be directly validated
  * in the {@link GwtValidation} annotation.
- *
+ * 
  * 
  */
 @Documented

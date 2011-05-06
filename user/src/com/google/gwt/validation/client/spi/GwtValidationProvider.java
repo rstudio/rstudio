@@ -26,6 +26,9 @@ import javax.validation.spi.ConfigurationState;
 import javax.validation.spi.ValidationProvider;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * GWT {@link ValidationProvider}.
  */
 public class GwtValidationProvider implements

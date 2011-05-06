@@ -28,6 +28,9 @@ import javax.validation.spi.BootstrapState;
 import javax.validation.spi.ConfigurationState;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * Base GWT {@link Configuration}.
  */
 public abstract class BaseGwtConfiguration implements

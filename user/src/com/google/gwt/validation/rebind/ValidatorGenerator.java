@@ -24,6 +24,9 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.validation.client.GwtValidation;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * Generates the generic {@link javax.validation.Validator}. The generic
  * validator only handles the classes listed in the
  * {@link com.google.gwt.validation.client.GwtValidation} annotation. See

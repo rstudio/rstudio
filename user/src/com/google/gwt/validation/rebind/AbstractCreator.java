@@ -27,6 +27,9 @@ import com.google.gwt.user.rebind.SourceWriter;
 import java.io.PrintWriter;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * Abstract Class for Creating source files.
  * <p>
  * This class is not thread safe.

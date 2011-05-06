@@ -22,6 +22,9 @@ import javax.validation.Path.Node;
 import javax.validation.TraversableResolver;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * GWT {@link TraversableResolver}.
  */
 public class GwtTraversableResolver implements TraversableResolver {

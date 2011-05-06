@@ -20,6 +20,9 @@ import javax.validation.ConstraintValidatorContext;
 import javax.validation.constraints.AssertTrue;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * {@link AssertTrue} constraint validator implementation.
  */
 public class AssertTrueValidator implements

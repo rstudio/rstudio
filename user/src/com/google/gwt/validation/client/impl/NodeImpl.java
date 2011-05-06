@@ -20,6 +20,9 @@ import java.io.Serializable;
 import javax.validation.Path.Node;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * An immutable GWT safe implementation of {@link Node}.
  */
 class NodeImpl implements Node, Serializable {

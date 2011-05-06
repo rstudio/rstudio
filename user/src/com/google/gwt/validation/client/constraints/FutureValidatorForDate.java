@@ -22,6 +22,9 @@ import javax.validation.ConstraintValidatorContext;
 import javax.validation.constraints.Future;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * {@link Future} constraint validator implementation for a
  * {@link java.util.Date}.
  */

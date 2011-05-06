@@ -25,10 +25,13 @@ import javax.validation.metadata.ConstraintDescriptor;
 import javax.validation.metadata.PropertyDescriptor;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * Abstract BeanDescriptor for use by generated {@link GwtBeanDescriptor}.
  * <p>
  * Subclasses are expected to call setDescriptorMap from the constructor.
- *
+ * 
  * @param <T> the bean Type
  */
 public final class GwtBeanDescriptorImpl<T> implements GwtBeanDescriptor<T> {

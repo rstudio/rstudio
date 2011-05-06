@@ -21,6 +21,7 @@ import javax.validation.ConstraintValidator;
 import javax.validation.constraints.DecimalMax;
 
 /**
+ * <p>
  * Abstract {@link DecimalMax} constraint validator implementation for a
  * <code>T</code>.
  * 

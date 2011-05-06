@@ -27,10 +27,13 @@ import javax.validation.ConstraintViolation;
 import javax.validation.metadata.ConstraintDescriptor;
 
 /**
+ * <strong>EXPERIMENTAL</strong> and subject to change. Do not use this in
+ * production code.
+ * <p>
  * GWT safe immutable implementation of {@link ConstraintValidatorContext}
  * <p>
  * These objects are very short lived.
- *
+ * 
  * @param <A> the constraint being validated
  * @param <T> the type of object being validated
  */
