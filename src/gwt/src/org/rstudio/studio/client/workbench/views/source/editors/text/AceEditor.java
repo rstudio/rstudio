@@ -550,6 +550,12 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
             Range.fromPoints(position, position));
    }
 
+   public void moveCursorNearTop()
+   {
+      int screenRow = getSession().documentToScreenRow(getCursorPosition());
+      widget_.getEditor().scrollToRow(Math.max(0, screenRow - 4));
+   }
+
    public JsArray<FunctionStart> getFunctionTree()
    {
       return getSession().getMode().getFunctionTree();

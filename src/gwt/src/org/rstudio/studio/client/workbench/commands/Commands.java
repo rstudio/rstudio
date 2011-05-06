@@ -66,6 +66,7 @@ public abstract class Commands extends CommandBundle
    public abstract AppCommand showFolder();
 
    // View
+   public abstract AppCommand jumpToFunction();
    public abstract AppCommand switchToTab();
    public abstract AppCommand previousTab();
    public abstract AppCommand nextTab();

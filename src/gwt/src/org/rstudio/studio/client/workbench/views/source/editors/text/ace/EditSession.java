@@ -74,4 +74,8 @@ public class EditSession extends JavaScriptObject
    public native final Mode getMode() /*-{
       return this.getMode();
    }-*/;
+
+   public native final int documentToScreenRow(Position position) /*-{
+      return this.documentToScreenRow(position.row, position.column);
+   }-*/;
 }

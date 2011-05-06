@@ -13,6 +13,8 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
@@ -85,6 +87,14 @@ public class StatusBarElementWidget extends FlowPanel
    public void clearOptions()
    {
       options_.clear();
+   }
+
+   public void click()
+   {
+      NativeEvent evt = Document.get().createMouseDownEvent(0, 0, 0, 0, 0,
+                                                            false, false,
+                                                            false, false, 0);
+      ClickEvent.fireNativeEvent(evt, this);
    }
 
    public void setShowArrows(boolean showArrows)

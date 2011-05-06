@@ -150,6 +150,7 @@ public class TextEditingTarget implements EditingTarget
       HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);
       Position getCursorPosition();
       void setCursorPosition(Position position);
+      void moveCursorNearTop();
 
       String getCurrentFunction();
       JsArray<FunctionStart> getFunctionTree();
@@ -438,6 +439,7 @@ public class TextEditingTarget implements EditingTarget
             StatusBarPopupMenu menu = new StatusBarPopupMenu();
             addFunctionsToMenu(menu, tree, "");
             menu.showRelativeToUpward((UIObject) statusBar_.getFunction());
+            menu.focus();
          }
       });
    }
@@ -461,6 +463,7 @@ public class TextEditingTarget implements EditingTarget
                   public void execute()
                   {
                      docDisplay_.setCursorPosition(func.getStart());
+                     docDisplay_.moveCursorNearTop();
                      docDisplay_.focus();
                   }
                }));
@@ -1114,6 +1117,12 @@ public class TextEditingTarget implements EditingTarget
       code = code.replaceAll("\n[ \t\n]*$", "");
 
       events_.fireEvent(new SendToConsoleEvent(code, true));
+   }
+
+   @Handler
+   void onJumpToFunction()
+   {
+      statusBar_.getFunction().click();
    }
 
    private static String stangle(String sweaveStr)

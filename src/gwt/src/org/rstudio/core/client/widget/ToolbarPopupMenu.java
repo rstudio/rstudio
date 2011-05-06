@@ -25,14 +25,17 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    public ToolbarPopupMenu()
    {
       super(true);
-      menuBar_ = new ToolbarMenuBar(true);
-      menuBar_.setVisible(true);
-      add(wrapMenuBar(menuBar_));
+      add(wrapMenuBar(menuBar_ = createMenuBar()));
    }
 
-   protected Widget wrapMenuBar(MenuBar menuBar)
+   protected ToolbarMenuBar createMenuBar()
    {
-      return menuBar;
+      return new ToolbarMenuBar(true);
+   }
+
+   protected Widget wrapMenuBar(ToolbarMenuBar toolbarMenuBar)
+   {
+      return toolbarMenuBar;
    }
 
    @Override
@@ -84,7 +87,12 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    {
       return menuBar_.getItemCount() ;
    }
-   
+
+   public void focus()
+   {
+      menuBar_.focus();
+   }
+
    private class ToolbarPopupMenuCommand implements Command
    {
       public ToolbarPopupMenuCommand(Command coreCommand)
@@ -100,7 +108,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       private Command coreCommand_;
    }
    
-   private class ToolbarMenuBar extends BaseMenuBar
+   protected class ToolbarMenuBar extends BaseMenuBar
    {
       public ToolbarMenuBar(boolean vertical)
       {

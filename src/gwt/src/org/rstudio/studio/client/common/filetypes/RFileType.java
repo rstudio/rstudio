@@ -13,8 +13,12 @@
 package org.rstudio.studio.client.common.filetypes;
 
 import com.google.gwt.resources.client.ImageResource;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
+import org.rstudio.studio.client.workbench.commands.Commands;
+
+import java.util.HashSet;
 
 public class RFileType extends TextFileType
 {
@@ -44,5 +48,13 @@ public class RFileType extends TextFileType
    public boolean getWordWrap()
    {
       return RStudioGinjector.INSTANCE.getUIPrefs().softWrapRFiles().getValue();
+   }
+
+   @Override
+   public HashSet<AppCommand> getSupportedCommands(Commands commands)
+   {
+      HashSet<AppCommand> result = super.getSupportedCommands(commands);
+      result.add(commands.jumpToFunction());
+      return result;
    }
 }
