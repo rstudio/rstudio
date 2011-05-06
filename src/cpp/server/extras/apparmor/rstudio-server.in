@@ -19,6 +19,7 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
   ${CMAKE_INSTALL_PREFIX}/bin/rsession ux,
 
   # execution and reading of R script to detect R HOME
+  /bin/bash rix,
   /bin/uname rix,
   /bin/which rix,
   /usr/bin/which rix,
