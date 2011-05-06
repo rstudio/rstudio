@@ -447,7 +447,10 @@ public class FilesList extends Composite
    {
       int index = getFiles().indexOf(from);
       if (index != -1)
+      {
+         selectNone();
          getFiles().set(index, to);
+      }
    }
    
    private List<FileSystemItem> getFiles()
