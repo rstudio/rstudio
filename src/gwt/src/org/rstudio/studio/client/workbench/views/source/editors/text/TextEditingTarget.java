@@ -478,7 +478,7 @@ public class TextEditingTarget implements EditingTarget
    {
       statusBar_.getLanguage().setValue(fileType_.getLabel());
       boolean isR = fileType_ == FileTypeRegistry.R;
-      statusBar_.getFunction().setVisible(isR);
+      statusBar_.setFunctionVisible(isR);
       if (isR)
          updateCurrentFunction();
    }

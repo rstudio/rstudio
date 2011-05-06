@@ -17,6 +17,5 @@ public interface StatusBar
    StatusBarElement getPosition();
    StatusBarElement getFunction();
    StatusBarElement getLanguage();
-   StatusBarElement getEncoding();
-   StatusBarElement getTabs();
+   void setFunctionVisible(boolean visible);
 }

@@ -36,7 +36,6 @@ public class StatusBarElementWidget extends FlowPanel
    interface Resources extends ClientBundle
    {
       ImageResource upDownArrow();
-      ImageResource statusBarSeparator();
    }
 
    public StatusBarElementWidget()
@@ -115,24 +114,6 @@ public class StatusBarElementWidget extends FlowPanel
       }
    }
 
-   public void setShowSeparator(boolean showSeparator)
-   {
-      if (showSeparator ^ separator_ != null)
-      {
-         if (showSeparator)
-         {
-            Resources res = GWT.create(Resources.class);
-            separator_ = new Image(res.statusBarSeparator());
-            add(separator_);
-         }
-         else
-         {
-            separator_.removeFromParent();
-            separator_ = null;
-         }
-      }
-   }
-
    public String getText()
    {
       return label_.getText();
@@ -153,8 +134,14 @@ public class StatusBarElementWidget extends FlowPanel
       return addDomHandler(handler, MouseDownEvent.getType());
    }
 
+   public void setContentsVisible(boolean visible)
+   {
+      label_.setVisible(visible);
+      if (arrows_ != null)
+         arrows_.setVisible(visible);
+   }
+
    private final ArrayList<String> options_;
    private final Label label_;
    private Image arrows_;
-   private Image separator_;
 }
