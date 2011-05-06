@@ -86,7 +86,8 @@ public class SimpleAppCacheLinker extends AbstractLinker {
     }
 
     if (toReturn.find(SelectionInformation.class).isEmpty()) {
-      logger.log(TreeLogger.INFO, "devmode: generating empty " + MANIFEST);
+      logger.log(TreeLogger.INFO, "DevMode warning: Clobbering " + MANIFEST + " to allow debugging. "
+          + "Recompile before deploying your app!");
       artifacts = null;
     }
     
@@ -161,9 +162,8 @@ public class SimpleAppCacheLinker extends AbstractLinker {
     sb.append("NETWORK:\n");
     sb.append("*\n");
 
-    logger.log(TreeLogger.INFO, "Make sure you have the following"
-        + " attribute added to your landing page's <html> tag: <html manifest=\""
-        + context.getModuleFunctionName() + "/" + MANIFEST + "\">");
+    logger.log(TreeLogger.INFO, "Be sure your landing page's <html> tag declares a manifest:"
+        + " <html manifest=" + context.getModuleFunctionName() + "/" + MANIFEST + "\">");
 
     // Create the manifest as a new artifact and return it:
     return emitString(logger, sb.toString(), MANIFEST);
