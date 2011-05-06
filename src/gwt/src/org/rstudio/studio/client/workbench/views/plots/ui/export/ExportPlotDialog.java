@@ -12,83 +12,103 @@
  */
 package org.rstudio.studio.client.workbench.views.plots.ui.export;
 
+import org.rstudio.core.client.Size;
 import org.rstudio.core.client.widget.ModalDialogBase;
-import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ExportPlotDialog extends ModalDialogBase 
 {
    public ExportPlotDialog(PlotsServerOperations server,
-                           ExportPlotOptions options,
-                           final OperationWithInput<ExportPlotOptions> onClose)
+                           ExportPlotOptions options)
    { 
       server_ = server;
       options_ = options;
-      
-      setText("Export Plot");
-     
-      setButtonAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
-      
-      ThemedButton closeButton = new ThemedButton("Close", new ClickHandler() {
-         public void onClick(ClickEvent event) {
-            ExportPlotOptions options = ExportPlotOptions.create(
-                                                options_.getType(), 
-                                                plotSizer_.getImageWidth(), 
-                                                plotSizer_.getImageHeight(), 
-                                                plotSizer_.getKeepRatio());
-            onClose.execute(options);
-            closeDialog();
-         }
-      });
-      addCancelButton(closeButton); 
    }
   
    @Override
    protected Widget createMainWidget()
    {
-      VerticalPanel mainPanel = new VerticalPanel();
-      mainPanel.setStylePrimaryName(
-                  ExportPlotDialogResources.INSTANCE.styles().mainWidget());
-      
-      
+      VerticalPanel mainPanel = new VerticalPanel();    
    
-      plotSizer_ = new PlotSizer(options_.getWidth(), 
-                                 options_.getHeight(),
+      // enforce maximum initial dimensions based on screen size
+      Size maxSize = new Size(Window.getClientWidth() - 100,
+                              Window.getClientHeight() - 250);
+      
+      int width = Math.min(options_.getWidth(), maxSize.width);
+      int height = Math.min(options_.getHeight(), maxSize.height);
+      
+      sizeEditor_ = new ExportPlotSizeEditor(
+                                 width, 
+                                 height,
                                  options_.getKeepRatio(),
+                                 createTopLeftWidget(),
                                  server_,
-                                 new PlotSizer.Observer() {
+                                 new ExportPlotSizeEditor.Observer() {
                                     public void onPlotResized(boolean withMouse)
                                     {
                                        if (!withMouse)
                                           center();       
                                     }
                                  }); 
-      mainPanel.add(plotSizer_);
+      mainPanel.add(sizeEditor_);
+      
+      Widget bottomWidget = createBottomWidget();
+      if (bottomWidget != null)
+         mainPanel.add(bottomWidget);
        
       return mainPanel;
       
    }
    
+ 
+   protected Widget createTopLeftWidget()
+   {
+      return null;
+   }
+   
+   protected Widget createBottomWidget()
+   {
+      return null;
+   }
+   
+   protected ExportPlotSizeEditor getSizeEditor()
+   {
+      return sizeEditor_;
+   }
+   
+   protected ExportPlotOptions getCurrentOptions(ExportPlotOptions previous)
+   {
+      ExportPlotSizeEditor sizeEditor = getSizeEditor();
+      return ExportPlotOptions.create(sizeEditor.getImageWidth(), 
+                                      sizeEditor.getImageHeight(), 
+                                      sizeEditor.getKeepRatio(),
+                                      previous.getFormat(),
+                                      previous.getViewAfterSave(),
+                                      previous.getCopyAsMetafile());    
+   }
+    
+  
    @Override
    protected void onDialogShown()
    {
       super.onDialogShown();
-      plotSizer_.onSizerShown();
+      sizeEditor_.onSizerShown();
    }
    
   
    private final PlotsServerOperations server_;
-   private ExportPlotOptions options_;
+  
    
-   private PlotSizer plotSizer_;
+   private final ExportPlotOptions options_;
+   
+   private ExportPlotSizeEditor sizeEditor_;
+   
+
 
  
   

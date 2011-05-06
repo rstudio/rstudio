@@ -117,6 +117,14 @@
       <when-property-is name="rstudio.desktop" value="true"/>
    </replace-with>
 
+    <replace-with class="org.rstudio.studio.client.workbench.views.plots.ui.export.impl.ExportPlotWeb">
+       <when-type-is class="org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlot"/>
+    </replace-with>
+    <replace-with class="org.rstudio.studio.client.workbench.views.plots.ui.export.impl.ExportPlotDesktop">
+       <when-type-is class="org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlot"/>
+       <when-property-is name="rstudio.desktop" value="true"/>
+    </replace-with>
+
    <replace-with class="org.rstudio.studio.client.common.dialog.WebDialogBuilderFactory">
       <when-type-is class="org.rstudio.studio.client.common.dialog.DialogBuilderFactory"/>
    </replace-with>

@@ -184,7 +184,7 @@ public class FilesList extends Composite
          @Override
          public int doCompare(FileSystemItem arg0, FileSystemItem arg1)
          {
-            return arg0.getName().compareTo(arg1.getName());
+            return arg0.getName().compareToIgnoreCase(arg1.getName());
          }
       });
       
@@ -447,7 +447,10 @@ public class FilesList extends Composite
    {
       int index = getFiles().indexOf(from);
       if (index != -1)
+      {
+         selectNone();
          getFiles().set(index, to);
+      }
    }
    
    private List<FileSystemItem> getFiles()

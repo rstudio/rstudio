@@ -1,0 +1,101 @@
+
+.exportTargetLabel {
+   margin-right: 7px;	
+}
+
+.imageFormatListBox {
+   width: 170px;	
+}
+
+.fileNameTextBox {
+	margin-top: 4px;
+   width: 165px; 	
+}
+
+.directoryButton {
+  margin-left: -2px;
+}
+
+.directoryLabel {
+	margin-left: -1px;
+   width: 250px;
+   height: 1.5em;
+   cursor: default;
+}
+}
+
+.imageOptionLabel {
+   margin-right: 5px;
+}
+
+.imageSizeTextBox {
+   text-align: left;
+   width: 35px;
+}
+
+.imagePreview {
+   border: 1px solid #BBB;
+   outline: 0;
+   background-color: white;
+}
+
+.horizontalSizeOptions {
+	margin-bottom: 4px;
+}
+
+.horizontalSizeOptions .widthAndHeightEntry {
+   margin-right: 10px;	
+   margin-bottom: 4px;
+}
+
+.horizontalSizeOptions .maintainAspectRatioCheckBox  {
+	margin-left: 10px;
+   margin-right: 10px;  
+   margin-bottom: 4px;
+}
+
+.horizontalSizeOptions .updateImageSizeButton  {
+	padding-top: 5px;
+  
+}
+
+.verticalSizeOptions {
+  
+}
+
+.verticalSizeOptions .widthAndHeightEntry {
+   margin-bottom: 4px;	
+}
+
+.verticalSizeOptions .maintainAspectRatioCheckBox {
+   margin-left: -3px;
+}
+
+.verticalSizeOptions .updateImageSizeButton {
+	margin-left: -2px;
+	margin-top: 6px;
+	margin-bottom: 4px;
+}
+
+.rightClickCopyLabel {
+	margin-left: 8px;
+	margin-top: 3px;
+	width: 220px;
+}
+
+.copyFormatLabel {
+	margin-top: 2px;
+	margin-right: 6px;
+	
+}
+
+.copyFormatBitmap {
+   margin-right: 8px;	
+}
+
+.copyFormatMetafile {
+}
+
+
+
+

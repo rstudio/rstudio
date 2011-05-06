@@ -20,18 +20,20 @@ public class ExportPlotOptions extends JavaScriptObject
    {   
    }
    
-   public static final String PNG_TYPE = "PNG";
-   public static final String JPEG_TYPE = "JPEG";
-   
-   public static final native ExportPlotOptions create(String type,
-                                                       int width, 
+   public static final native ExportPlotOptions create(int width, 
                                                        int height,
-                                                       boolean keepRatio) /*-{
+                                                       boolean keepRatio,
+                                                       String format,
+                                                       boolean viewAfterSave,
+                                                       boolean copyAsMetafile) 
+   /*-{
       var options = new Object();
-      options.type = type;
       options.width = width ;
       options.height = height ;
+      options.format = format;
       options.keepRatio = keepRatio;
+      options.viewAfterSave = viewAfterSave;
+      options.copyAsMetafile = copyAsMetafile;
       return options ;
    }-*/;
 
@@ -40,14 +42,16 @@ public class ExportPlotOptions extends JavaScriptObject
          return false;
       if (a === null)
          return true;
-      return a.type === b.type &&
+      return a.format === b.format &&
              a.width === b.width &&
              a.height === b.height &&
-             a.keepRatio === b.keepRatio;      
+             a.keepRatio === b.keepRatio &&
+             a.viewAfterSave === b.viewAfterSave &&
+             a.copyAsMetafile === b.copyAsMetafile;    
    }-*/;
    
-   public final native String getType() /*-{
-      return this.type;
+   public final native String getFormat() /*-{
+      return this.format;
    }-*/;
    
    public final native int getWidth() /*-{
@@ -60,6 +64,20 @@ public class ExportPlotOptions extends JavaScriptObject
    public final native boolean getKeepRatio() /*-{
       if (this.keepRatio)
          return this.keepRatio;
+      else
+         return false;
+   }-*/;
+   
+   public final native boolean getViewAfterSave() /*-{
+      if (this.viewAfterSave)
+         return this.viewAfterSave;
+      else
+         return false;
+   }-*/;
+   
+   public final native boolean getCopyAsMetafile() /*-{
+      if (this.copyAsMetafile)
+         return this.copyAsMetafile;
       else
          return false;
    }-*/;

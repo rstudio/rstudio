@@ -49,6 +49,7 @@ import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
+import org.rstudio.studio.client.workbench.views.plots.model.PlotExportContext;
 import org.rstudio.studio.client.workbench.views.plots.model.Point;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
@@ -738,6 +739,12 @@ public class RemoteServer implements Server
       params.set(2, new JSONNumber(height));
       sendRequest(RPC_SCOPE, EXPORT_PLOT, params, requestCallback);
    }
+   
+   public void getPlotExportContext(
+                  ServerRequestCallback<PlotExportContext> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_PLOT_EXPORT_CONTEXT, requestCallback);
+   }
 
    public void locatorCompleted(Point point,
                                 ServerRequestCallback<Void> requestCallback)
@@ -1421,6 +1428,7 @@ public class RemoteServer implements Server
    private static final String CLEAR_PLOTS = "clear_plots";
    private static final String REFRESH_PLOT = "refresh_plot";
    private static final String EXPORT_PLOT = "export_plot";
+   private static final String GET_PLOT_EXPORT_CONTEXT = "get_plot_export_context";
    private static final String LOCATOR_COMPLETED = "locator_completed";
    private static final String SET_MANIPULATOR_VALUES = "set_manipulator_values";
 
