@@ -13,6 +13,8 @@
 
 define("mode/r_autoindent", function(require, exports, module) {
 
+var Anchor = require("ace/anchor").Anchor;
+
 var IndentManager = function(doc, tokenizer, statePattern) {
    this.$doc = doc;
    this.$tokenizer = tokenizer;
@@ -24,6 +26,271 @@ var IndentManager = function(doc, tokenizer, statePattern) {
    this.$doc.on('change', function(evt) {
       that.$onDocChange.apply(that, [evt]);
    });
+
+   this.$TokenCursor = function(row, offset)
+   {
+      this.$row = row || 0;
+      this.$offset = offset || 0;
+   };
+   (function() {
+      this.moveToStartOfRow = function(row)
+      {
+         this.$row = row;
+         this.$offset = 0;
+      };
+
+      this.moveToPreviousToken = function()
+      {
+         while (this.$offset == 0 && this.$row > 0)
+         {
+            this.$row--;
+            this.$offset = that.$tokens[this.$row].length;
+         }
+
+         if (this.$offset == 0)
+            return false;
+
+         this.$offset--;
+
+         return true;
+      };
+
+      this.moveToNextToken = function(maxRow)
+      {
+         if (this.$row > maxRow)
+            return;
+
+         this.$offset++;
+
+         while (this.$offset >= that.$tokens[this.$row].length && this.$row < maxRow)
+         {
+            this.$row++;
+            this.$offset = 0;
+         }
+
+         if (this.$offset >= that.$tokens[this.$row].length)
+            return false;
+
+         return true;
+      };
+
+      this.seekToNearestToken = function(position)
+      {
+         this.$row = position.row;
+         var rowTokens = that.$tokens[this.$row] || [];
+         for (this.$offset = 0; this.$offset < rowTokens.length; this.$offset++)
+         {
+            var token = rowTokens[this.$offset];
+            if (token.column + token.value.length >= position.column)
+            {
+               break;
+            }
+         }
+      };
+
+      this.findToken = function(predicate, maxRow)
+      {
+         do
+         {
+            var t = this.currentToken();
+            if (t && predicate(t))
+               return t;
+         }
+         while (this.moveToNextToken(maxRow));
+         return null;
+      };
+
+      this.currentToken = function()
+      {
+         return (that.$tokens[this.$row] || [])[this.$offset];
+      };
+
+      this.currentValue = function()
+      {
+         return this.currentToken().value;
+      };
+
+      this.currentPosition = function()
+      {
+         var token = this.currentToken();
+         if (token === null)
+            return null;
+         else
+            return {row: this.$row, column: token.column};
+      };
+
+      this.cloneCursor = function()
+      {
+         var clone = new that.$TokenCursor();
+         clone.$row = this.$row;
+         clone.$offset = this.$offset;
+         return clone;
+      };
+
+      this.isFirstSignificantTokenOnLine = function()
+      {
+         return this.$offset == 0;
+      };
+
+      this.isLastSignificantTokenOnLine = function()
+      {
+         return this.$offset == (that.$tokens[this.$row] || []).length - 1;
+      };
+
+   }).call(this.$TokenCursor.prototype);
+
+   this.$ScopeTree = function(label, start)
+   {
+      this.$label = label;
+      this.$start = start;
+      this.$end = null;
+      this.$children = [];
+   };
+
+   (function() {
+      function comparePoints(pos1, pos2)
+      {
+         if (pos1.row != pos2.row)
+            return pos1.row - pos2.row;
+         return pos1.column - pos2.column;
+      }
+
+      this.getLabel = function()
+      {
+         return this.$label;
+      };
+
+      this.getStart = function()
+      {
+         return this.$start;
+      };
+
+      this.setEnd = function(pos)
+      {
+         this.$end = pos;
+      };
+
+      this.getEnd = function()
+      {
+         return this.$end;
+      };
+
+      this.exportFunctions = function(list)
+      {
+         if (this.$label)
+         {
+            var here = {
+               label: this.$label,
+               start: this.$start,
+               children: []
+            };
+            list.push(here);
+            list = here.children;
+         }
+
+         for (var i = 0; i < this.$children.length; i++)
+            this.$children[i].exportFunctions(list);
+      };
+
+      this.comparePosition = function(pos)
+      {
+         if (comparePoints(pos, this.$start) < 0)
+            return -1;
+         if (this.$end != null && comparePoints(pos, this.$end) >= 0)
+            return 1;
+         return 0;
+      };
+
+      this.addChild = function(label, start)
+      {
+         var child = new that.$ScopeTree(label, start);
+         var index = this.$binarySearch(start);
+         if (index >= 0)
+         {
+            return this.$children.addChild(label, start);
+         }
+         else
+         {
+            index = -(index+1);
+            this.$children.splice(index, 0, child);
+            return child;
+         }
+      };
+
+      this.findLabel = function(pos)
+      {
+         var index = this.$binarySearch(pos);
+         if (index >= 0)
+         {
+            var label = this.$children[index].findLabel(pos);
+            return label || this.$label;
+         }
+         else
+         {
+            return this.$label;
+         }
+      };
+
+      // Invalidates everything after pos, and possibly some stuff before.
+      // Returns the position from which parsing should resume.
+      this.invalidateFrom = function(pos)
+      {
+         var index = this.$binarySearch(pos);
+         var resumePos;
+         if (index >= 0)
+         {
+            resumePos = this.$children[index].getStart();
+         }
+         else
+         {
+            index = -(index+1);
+            resumePos = pos;
+         }
+
+         if (index < this.$children.length)
+         {
+            this.$children.splice(index, this.$children.length - index);
+         }
+
+         this.$end = null;
+
+         return resumePos;
+      };
+
+      this.pushOpenScopes = function(stack)
+      {
+         if (this.$end === null)
+         {
+            stack.push(this);
+            if (this.$children.length > 0)
+               this.$children[this.$children.length - 1].pushOpenScopes(stack);
+         }
+      };
+
+      // start is inclusive, end is exclusive
+      // Positive result is match, negative result is -([closest index] + 1)
+      this.$binarySearch = function(pos, start /*optional*/, end /*optional*/)
+      {
+         if (typeof(start) === 'undefined')
+            start = 0;
+         if (typeof(end) === 'undefined')
+            end = this.$children.length;
+
+         // No elements left to test
+         if (start === end)
+            return -(start + 1);
+
+         var mid = Math.floor((start + end)/2);
+         var comp = this.$children[mid].comparePosition(pos);
+         if (comp === 0)
+            return mid;
+         else if (comp < 0)
+            return this.$binarySearch(pos, start, mid);
+         else // comp > 0
+            return this.$binarySearch(pos, mid + 1, end);
+      };
+   }).call(this.$ScopeTree.prototype);
+
 };
 
 (function () {
@@ -35,6 +302,161 @@ var IndentManager = function(doc, tokenizer, statePattern) {
       ']': '[',
       '{': '}',
       '}': '{'
+   };
+
+   function pFunction(t)
+   {
+      return t.type == 'keyword' && t.value == 'function';
+   }
+
+   function pAssign(t)
+   {
+      return /\boperator\b/.test(t.type) && /^(=|<-|<<-)$/.test(t.value);
+   }
+
+   function pIdentifier(t)
+   {
+      return /\bidentifier\b/.test(t.type);
+   }
+
+   function findAssocFuncToken(tokenCursor)
+   {
+      if (tokenCursor.currentValue() !== "{")
+         return false;
+      if (!tokenCursor.moveToPreviousToken())
+         return false;
+      if (tokenCursor.currentValue() !== ")")
+         return false;
+
+      var success = false;
+      var parenCount = 0;
+      while (tokenCursor.moveToPreviousToken())
+      {
+         if (tokenCursor.currentValue() === "(")
+         {
+            if (parenCount == 0)
+            {
+               success = true;
+               break;
+            }
+            parenCount--;
+         }
+         else if (tokenCursor.currentValue() === ")")
+         {
+            parenCount++;
+         }
+      }
+      if (!success)
+         return false;
+
+      if (!tokenCursor.moveToPreviousToken())
+         return false;
+      if (!pFunction(tokenCursor.currentToken()))
+         return false;
+      if (!tokenCursor.moveToPreviousToken())
+         return false;
+      if (!pAssign(tokenCursor.currentToken()))
+         return false;
+      if (!tokenCursor.moveToPreviousToken())
+         return false;
+      if (!pIdentifier(tokenCursor.currentToken()))
+         return false;
+
+      return true;
+   }
+
+   this.$invalidateScopeTreeFrom = function(position)
+   {
+      if (this.$scopeTree)
+      {
+         this.$scopeTreeParsePos = this.$scopeTree.invalidateFrom(position);
+      }
+   };
+
+   this.$buildScopeTreeUpToRow = function(maxrow)
+   {
+      // It's possible that determining the scope at 'position' may require
+      // parsing beyond the position itself--for example if the position is
+      // on the identifier of a function whose open brace is a few tokens later.
+      // Seems like it would be rare indeed for this distance to be more than 30
+      // rows.
+      maxRow = Math.min(maxrow + 30, this.$doc.getLength() - 1);
+      this.$tokenizeUpToRow(maxRow);
+
+      // If this is the first time we're parsing, initialize the scope tree
+      if (!this.$scopeTree)
+      {
+         this.$scopeTreeParsePos = {row: 0, column: 0};
+         this.$scopeTree = new this.$ScopeTree("(Top level)", this.$scopeTreeParsePos);
+      }
+
+      var nodes = [];
+      this.$scopeTree.pushOpenScopes(nodes);
+      var tokenCursor = new this.$TokenCursor();
+      tokenCursor.seekToNearestToken(this.$scopeTreeParsePos);
+
+      while (tokenCursor.moveToNextToken(maxRow))
+      {
+         this.$scopeTreeParsePos = tokenCursor.currentPosition();
+         this.$scopeTreeParsePos.column += tokenCursor.currentValue().length;
+
+         if (tokenCursor.currentValue() === "{")
+         {
+            var localCursor = tokenCursor.cloneCursor();
+            var label, startPos;
+            if (findAssocFuncToken(localCursor))
+            {
+               label = localCursor.currentValue();
+               startPos = localCursor.currentPosition();
+               if (localCursor.isFirstSignificantTokenOnLine())
+                  startPos.column = 0;
+            }
+            else
+            {
+               label = null;
+               startPos = tokenCursor.currentPosition();
+               if (tokenCursor.isFirstSignificantTokenOnLine())
+                  startPos.column = 0;
+            }
+
+            var child = nodes[nodes.length - 1].addChild(label, startPos);
+            nodes.push(child);
+         }
+         else if (tokenCursor.currentValue() === "}")
+         {
+            if (nodes.length > 1)
+            {
+               var node = nodes.pop();
+               var pos = tokenCursor.currentPosition();
+               if (tokenCursor.isLastSignificantTokenOnLine())
+               {
+                  pos.row++;
+                  pos.column = 0;
+               }
+               else
+               {
+                  pos.column++;
+               }
+               node.setEnd(pos);
+            }
+         }
+      }
+   };
+
+   this.getCurrentFunction = function(position)
+   {
+      if (!position)
+         return "";
+      this.$buildScopeTreeUpToRow(position.row);
+      return this.$scopeTree.findLabel(position);
+   };
+
+   this.getFunctionTree = function()
+   {
+      this.$buildScopeTreeUpToRow(this.$doc.getLength() - 1);
+      var list = [];
+      this.$scopeTree.exportFunctions(list);
+      return list;
    };
 
    this.getNextLineIndent = function(lastRow, line, endState, tab, tabSize)
@@ -239,6 +661,7 @@ var IndentManager = function(doc, tokenizer, statePattern) {
    this.$onDocChange = function(evt)
    {
       var delta = evt.data;
+
       if (delta.action === "insertLines")
       {
          this.$insertNewRows(delta.range.start.row,
@@ -266,6 +689,8 @@ var IndentManager = function(doc, tokenizer, statePattern) {
       {
          this.$invalidateRow(delta.range.start.row);
       }
+
+      this.$invalidateScopeTreeFrom(delta.range.start);
    };
    
    this.$invalidateRow = function(row)
@@ -413,7 +838,8 @@ var IndentManager = function(doc, tokenizer, statePattern) {
                return {
                   token: tokens[i], 
                   row: row, 
-                  column: Math.max(tokens[i].column, col)
+                  column: Math.max(tokens[i].column, col),
+                  offset: i
                };
             }
          }
@@ -440,7 +866,8 @@ var IndentManager = function(doc, tokenizer, statePattern) {
             return {
                row: row,
                column: tokens[tokens.length - 1].column,
-               token: tokens[tokens.length - 1]
+               token: tokens[tokens.length - 1],
+               offset: tokens.length - 1
             };
          
          for (var i = tokens.length - 1; i >= 0; i--)
@@ -450,7 +877,8 @@ var IndentManager = function(doc, tokenizer, statePattern) {
                return {
                   row: row,
                   column: tokens[i].column,
-                  token: tokens[i]
+                  token: tokens[i],
+                  offset: i
                };
             }
          }

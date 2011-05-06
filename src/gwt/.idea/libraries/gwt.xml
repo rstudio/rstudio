@@ -1,13 +1,16 @@
 <component name="libraryTable">
   <library name="gwt">
     <CLASSES>
-      <root url="file://$PROJECT_DIR$/lib/gwt/2.3.0-m1" />
+      <root url="jar://$PROJECT_DIR$/lib/gwt/2.3.0-m1/validation-api-1.0.0.GA.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/gwt/2.3.0-m1/validation-api-1.0.0.GA-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/gwt/2.3.0-m1/gwt-dev.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/gwt/2.3.0-m1/gwt-user.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/gwt/2.3.0-m1/gwt-api-checker.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
       <root url="jar://$PROJECT_DIR$/lib/gwt/2.3.0-m1/gwt-dev.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/gwt/2.3.0-m1/gwt-user.jar!/" />
     </SOURCES>
-    <jarDirectory url="file://$PROJECT_DIR$/lib/gwt/2.3.0-m1" recursive="false" />
   </library>
 </component>

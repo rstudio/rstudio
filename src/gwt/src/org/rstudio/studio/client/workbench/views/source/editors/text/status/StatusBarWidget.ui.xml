@@ -3,9 +3,12 @@
              xmlns:sb='urn:import:org.rstudio.studio.client.workbench.views.source.editors.text.status'>
 
    <ui:image field='statusBarTile' src='statusBarTile.png' repeatStyle='Horizontal'/>
-   <ui:image field='statusBarSeparator' src='statusBarSeparator.png'/>
+   <ui:data field='statusBarSeparator' src='statusBarSeparator.png'/>
+   <ui:image field='function' src='function.png'/>
 
    <ui:style>
+      @url SEPARATOR statusBarSeparator;
+
       @sprite .statusBar {
          gwt-image: 'statusBarTile';
          width: 100%;
@@ -24,34 +27,39 @@
          top: 2px;
          margin-left: 4px;
       }
+      .statusBar img.funcIcon {
+         top: 3px;
+      }
       .statusBar .element {
          display: block;
          cursor: default;
          padding-left: 5px;
          padding-right: 6px;
+         background-image: SEPARATOR;
+         background-position: right -1px;
+         background-repeat: no-repeat;
       }
       .statusBar .element.pos {
          min-width: 40px;
          text-align: center;
       }
       .statusBar .element.last {
-         background: none;
+         background-image: none;
       }
    </ui:style>
 
    <g:HorizontalPanel styleName="{style.statusBar}">
       <sb:StatusBarElementWidget ui:field="position_"
-                           styleName="{style.element} {style.pos}"
-                           showArrows="false"/>
-      <sb:StatusBarElementWidget ui:field="function_" styleName="{style.element}"
-                           showArrows="true" visible="false"/>
-      <sb:StatusBarElementWidget ui:field="language_" styleName="{style.element}"
-                           showArrows="true"/>
-      <sb:StatusBarElementWidget ui:field="encoding_" styleName="{style.element}"
-                           showArrows="true" visible="false"/>
-      <sb:StatusBarElementWidget ui:field="tabStyle_"
-                           styleName="{style.element} {style.last}"
-                           showArrows="true"
-                           showSeparator="false" visible="false"/>
+                                 styleName="{style.element} {style.pos}"
+                                 showArrows="false"/>
+      <g:Image ui:field="funcIcon_"
+               resource='{function}'
+               styleName="{style.funcIcon}"/>
+      <sb:StatusBarElementWidget ui:field="function_"
+                                 styleName="{style.element}"
+                                 showArrows="true"/>
+      <sb:StatusBarElementWidget ui:field="language_"
+                                 styleName="{style.element} {style.last}"
+                                 showArrows="true"/>
    </g:HorizontalPanel>
 </ui:UiBinder>

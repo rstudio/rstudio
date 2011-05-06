@@ -150,4 +150,12 @@ public class AceEditorNative extends JavaScriptObject {
    private static native void invokeFunctor(JavaScriptObject functor) /*-{
       functor();
    }-*/;
+
+   public final native void scrollToRow(int row) /*-{
+      this.scrollToRow(row);
+   }-*/;
+
+   public final native void scrollToLine(int line, boolean center) /*-{
+      this.scrollToLine(line, center);
+   }-*/;
 }

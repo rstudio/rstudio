@@ -13,11 +13,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.resources.client.ImageResource.ImageOptions;
-import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.*;
@@ -27,24 +22,6 @@ public class StatusBarWidget extends Composite
       implements StatusBar, WidgetableWithHeight
 {
    private int height_;
-
-   interface Styles extends CssResource
-   {
-      String statusBar();
-   }
-
-   interface Resources extends ClientBundle
-   {
-      @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
-      ImageResource statusBarTile();
-
-      ImageResource upDownArrow();
-
-      ImageResource statusBarSeparator();
-
-      @Source("StatusBar.css")
-      Styles styles();
-   }
 
    interface Binder extends UiBinder<HorizontalPanel, StatusBarWidget>
    {
@@ -56,7 +33,7 @@ public class StatusBarWidget extends Composite
       HorizontalPanel hpanel = binder.createAndBindUi(this);
       hpanel.setVerticalAlignment(HorizontalPanel.ALIGN_TOP);
 
-      hpanel.setCellWidth(hpanel.getWidget(1), "100%");
+      hpanel.setCellWidth(hpanel.getWidget(2), "100%");
 
       initWidget(hpanel);
 
@@ -88,14 +65,10 @@ public class StatusBarWidget extends Composite
       return language_;
    }
 
-   public StatusBarElement getEncoding()
+   public void setFunctionVisible(boolean visible)
    {
-      return encoding_;
-   }
-
-   public StatusBarElement getTabs()
-   {
-      return tabStyle_;
+      function_.setContentsVisible(visible);
+      funcIcon_.setVisible(visible);
    }
 
    @UiField
@@ -105,7 +78,5 @@ public class StatusBarWidget extends Composite
    @UiField
    StatusBarElementWidget language_;
    @UiField
-   StatusBarElementWidget encoding_;
-   @UiField
-   StatusBarElementWidget tabStyle_;
+   Image funcIcon_;
 }

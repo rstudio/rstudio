@@ -700,6 +700,13 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    white-space: nowrap;
 }
 
+.statusBarMenu {
+   font-size: 10px;
+}
+.statusBarMenu .gwt-MenuItem {
+   padding-right: 30px;
+}
+
 .miniToolbar {
    margin-top: 4px;
 }

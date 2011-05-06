@@ -13,7 +13,8 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
@@ -26,7 +27,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItem;
-import org.rstudio.core.client.widget.ToolbarPopupMenu;
 
 import java.util.ArrayList;
 
@@ -36,7 +36,6 @@ public class StatusBarElementWidget extends FlowPanel
    interface Resources extends ClientBundle
    {
       ImageResource upDownArrow();
-      ImageResource statusBarSeparator();
    }
 
    public StatusBarElementWidget()
@@ -55,8 +54,7 @@ public class StatusBarElementWidget extends FlowPanel
             if (options_.size() == 0)
                return;
 
-            ToolbarPopupMenu menu = new ToolbarPopupMenu();
-            menu.getElement().getStyle().setFontSize(10, Unit.PX);
+            StatusBarPopupMenu menu = new StatusBarPopupMenu();
             for (final String option : options_)
                menu.addItem(new MenuItem(option, new Command()
                {
@@ -65,7 +63,7 @@ public class StatusBarElementWidget extends FlowPanel
                      SelectionEvent.fire(StatusBarElementWidget.this, option);
                   }
                }));
-            menu.showRelativeTo(label_);
+            menu.showRelativeToUpward(label_);
          }
       }, MouseDownEvent.getType());
    }
@@ -90,6 +88,14 @@ public class StatusBarElementWidget extends FlowPanel
       options_.clear();
    }
 
+   public void click()
+   {
+      NativeEvent evt = Document.get().createMouseDownEvent(0, 0, 0, 0, 0,
+                                                            false, false,
+                                                            false, false, 0);
+      ClickEvent.fireNativeEvent(evt, this);
+   }
+
    public void setShowArrows(boolean showArrows)
    {
       if (showArrows ^ arrows_ != null)
@@ -104,24 +110,6 @@ public class StatusBarElementWidget extends FlowPanel
          {
             arrows_.removeFromParent();
             arrows_ = null;
-         }
-      }
-   }
-
-   public void setShowSeparator(boolean showSeparator)
-   {
-      if (showSeparator ^ separator_ != null)
-      {
-         if (showSeparator)
-         {
-            Resources res = GWT.create(Resources.class);
-            separator_ = new Image(res.statusBarSeparator());
-            add(separator_);
-         }
-         else
-         {
-            separator_.removeFromParent();
-            separator_ = null;
          }
       }
    }
@@ -141,8 +129,19 @@ public class StatusBarElementWidget extends FlowPanel
       return addHandler(handler, SelectionEvent.getType());
    }
 
+   public HandlerRegistration addMouseDownHandler(MouseDownHandler handler)
+   {
+      return addDomHandler(handler, MouseDownEvent.getType());
+   }
+
+   public void setContentsVisible(boolean visible)
+   {
+      label_.setVisible(visible);
+      if (arrows_ != null)
+         arrows_.setVisible(visible);
+   }
+
    private final ArrayList<String> options_;
    private final Label label_;
    private Image arrows_;
-   private Image separator_;
 }

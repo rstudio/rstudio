@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
@@ -25,8 +26,11 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasValue;
+import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -70,6 +74,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
+import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupMenu;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.PublishPdfDialog;
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
@@ -143,10 +148,12 @@ public class TextEditingTarget implements EditingTarget
       void setPrintMarginColumn(int column);
 
       HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);
+      Position getCursorPosition();
+      void setCursorPosition(Position position);
+      void moveCursorNearTop();
 
       String getCurrentFunction();
-
-      Position getCursorPosition();
+      JsArray<FunctionStart> getFunctionTree();
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -257,8 +264,84 @@ public class TextEditingTarget implements EditingTarget
                event.stopPropagation();
                docDisplay_.insertCode(" <- ", false);
             }
+            else if (mod == KeyboardShortcut.CTRL
+                     && ne.getKeyCode() == KeyCodes.KEY_UP
+                     && fileType_ == FileTypeRegistry.R)
+            {
+               event.preventDefault();
+               event.stopPropagation();
+               jumpToPreviousFunction();
+            }
+            else if (mod == KeyboardShortcut.CTRL
+                     && ne.getKeyCode() == KeyCodes.KEY_DOWN
+                     && fileType_ == FileTypeRegistry.R)
+            {
+               event.preventDefault();
+               event.stopPropagation();
+               jumpToNextFunction();
+            }
          }
       });
+   }
+
+   private void jumpToPreviousFunction()
+   {
+      Position cursor = docDisplay_.getCursorPosition();
+      JsArray<FunctionStart> functions = docDisplay_.getFunctionTree();
+      FunctionStart jumpTo = findPreviousFunction(functions, cursor);
+      docDisplay_.setCursorPosition(jumpTo.getStart());
+      docDisplay_.moveCursorNearTop();
+   }
+
+   private FunctionStart findPreviousFunction(JsArray<FunctionStart> funcs, Position pos)
+   {
+      FunctionStart result = null;
+      for (int i = 0; i < funcs.length(); i++)
+      {
+         FunctionStart child = funcs.get(i);
+         if (child.getStart().compareTo(pos) >= 0)
+            break;
+         result = child;
+      }
+
+      if (result == null)
+         return result;
+
+      FunctionStart descendant = findPreviousFunction(result.getChildren(),
+                                                      pos);
+      if (descendant != null)
+         result = descendant;
+
+      return result;
+   }
+
+   private void jumpToNextFunction()
+   {
+      Position cursor = docDisplay_.getCursorPosition();
+      JsArray<FunctionStart> functions = docDisplay_.getFunctionTree();
+      FunctionStart jumpTo = findNextFunction(functions, cursor);
+      docDisplay_.setCursorPosition(jumpTo.getStart());
+      docDisplay_.moveCursorNearTop();
+   }
+
+   private FunctionStart findNextFunction(JsArray<FunctionStart> funcs, Position pos)
+   {
+      for (int i = 0; i < funcs.length(); i++)
+      {
+         FunctionStart child = funcs.get(i);
+         if (child.getStart().compareTo(pos) <= 0)
+         {
+            FunctionStart descendant = findNextFunction(child.getChildren(), pos);
+            if (descendant != null)
+               return descendant;
+         }
+         else
+         {
+            return child;
+         }
+      }
+
+      return null;
    }
 
    public void initialize(SourceDocument document,
@@ -421,11 +504,59 @@ public class TextEditingTarget implements EditingTarget
             }
          }
       });
+
+      statusBar_.getFunction().addMouseDownHandler(new MouseDownHandler()
+      {
+         public void onMouseDown(MouseDownEvent event)
+         {
+            // Unlike the other status bar elements, the function outliner
+            // needs its menu built on demand
+            JsArray<FunctionStart> tree = docDisplay_.getFunctionTree();
+            StatusBarPopupMenu menu = new StatusBarPopupMenu();
+            addFunctionsToMenu(menu, tree, "");
+            menu.showRelativeToUpward((UIObject) statusBar_.getFunction());
+            menu.focus();
+         }
+      });
+   }
+
+   private void addFunctionsToMenu(StatusBarPopupMenu menu,
+                                   final JsArray<FunctionStart> funcs,
+                                   String indent)
+   {
+      for (int i = 0; i < funcs.length(); i++)
+      {
+         final FunctionStart func = funcs.get(i);
+
+         SafeHtmlBuilder labelBuilder = new SafeHtmlBuilder();
+         labelBuilder.appendHtmlConstant(indent);
+         labelBuilder.appendEscaped(func.getLabel());
+
+         menu.addItem(new MenuItem(
+               labelBuilder.toSafeHtml(),
+               new Command()
+               {
+                  public void execute()
+                  {
+                     docDisplay_.setCursorPosition(func.getStart());
+                     docDisplay_.moveCursorNearTop();
+                     docDisplay_.focus();
+                  }
+               }));
+
+         addFunctionsToMenu(menu,
+                            func.getChildren(),
+                            indent + "&nbsp;&nbsp;");
+      }
    }
 
    private void updateStatusBarLanguage()
    {
       statusBar_.getLanguage().setValue(fileType_.getLabel());
+      boolean isR = fileType_ == FileTypeRegistry.R;
+      statusBar_.setFunctionVisible(isR);
+      if (isR)
+         updateCurrentFunction();
    }
 
    private void updateStatusBarPosition()
@@ -433,6 +564,21 @@ public class TextEditingTarget implements EditingTarget
       Position pos = docDisplay_.getCursorPosition();
       statusBar_.getPosition().setValue((pos.getRow() + 1) + ":" +
                                         (pos.getColumn() + 1));
+      updateCurrentFunction();
+   }
+
+   private void updateCurrentFunction()
+   {
+      Scheduler.get().scheduleFinally(
+            new RepeatingCommand()
+            {
+               public boolean execute()
+               {
+                  final String func = docDisplay_.getCurrentFunction();
+                  statusBar_.getFunction().setValue(func);
+                  return false;
+               }
+            });
    }
 
    private void registerPrefs()
@@ -1047,6 +1193,12 @@ public class TextEditingTarget implements EditingTarget
       code = code.replaceAll("\n[ \t\n]*$", "");
 
       events_.fireEvent(new SendToConsoleEvent(code, true));
+   }
+
+   @Handler
+   void onJumpToFunction()
+   {
+      statusBar_.getFunction().click();
    }
 
    private static String stangle(String sweaveStr)

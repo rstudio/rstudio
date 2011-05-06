@@ -14,7 +14,9 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.command.AppMenuItem;
 import org.rstudio.core.client.command.BaseMenuBar;
 
@@ -23,9 +25,17 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    public ToolbarPopupMenu()
    {
       super(true);
-      menuBar_ = new ToolbarMenuBar(true);
-      menuBar_.setVisible(true);
-      add(menuBar_);
+      add(wrapMenuBar(menuBar_ = createMenuBar()));
+   }
+
+   protected ToolbarMenuBar createMenuBar()
+   {
+      return new ToolbarMenuBar(true);
+   }
+
+   protected Widget wrapMenuBar(ToolbarMenuBar toolbarMenuBar)
+   {
+      return toolbarMenuBar;
    }
 
    @Override
@@ -77,7 +87,12 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    {
       return menuBar_.getItemCount() ;
    }
-   
+
+   public void focus()
+   {
+      menuBar_.focus();
+   }
+
    private class ToolbarPopupMenuCommand implements Command
    {
       public ToolbarPopupMenuCommand(Command coreCommand)
@@ -93,7 +108,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       private Command coreCommand_;
    }
    
-   private class ToolbarMenuBar extends BaseMenuBar
+   protected class ToolbarMenuBar extends BaseMenuBar
    {
       public ToolbarMenuBar(boolean vertical)
       {

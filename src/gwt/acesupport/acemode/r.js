@@ -47,6 +47,16 @@ define("mode/r", function(require, exports, module)
          return this.$indentManager.getNextLineIndent(row, line, state, tab, tabSize);
       };
 
+      this.getCurrentFunction = function(position)
+      {
+         return this.$indentManager.getCurrentFunction(position);
+      };
+
+      this.getFunctionTree = function()
+      {
+         return this.$indentManager.getFunctionTree();
+      };
+
       this.checkOutdent = function(state, line, input) {
          if (! /^\s+$/.test(line))
             return false;

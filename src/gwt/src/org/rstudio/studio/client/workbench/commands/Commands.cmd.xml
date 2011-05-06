@@ -88,6 +88,8 @@ well as menu structures (for main menu and popup menus).
       <separator/>
 
       <menu label="_View">
+         <cmd refid="jumpToFunction"/>
+         <separator/>
          <cmd refid="switchToTab"/>
          <separator/>
          <cmd refid="nextTab"/>
@@ -206,6 +208,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="activatePlots" value="Ctrl+6"/>
       <shortcut refid="activatePackages" value="Ctrl+7"/>
       <shortcut refid="activateHelp" value="Ctrl+8"/>
+      <shortcut refid="jumpToFunction" value="Ctrl+Alt+Up"/>
       <shortcut refid="switchToTab" value="Ctrl+Alt+Down"/>
       <shortcut refid="previousTab" value="Ctrl+Alt+Left"/>
       <shortcut refid="nextTab" value="Ctrl+Alt+Right"/>
@@ -314,6 +317,8 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Show P_ackages"/>
    <cmd id="activateHelp"
         menuLabel="Show _Help"/>
+   <cmd id="jumpToFunction"
+        menuLabel="_Jump to Function..."/>
    <cmd id="switchToTab"
         menuLabel="Switch to _Tab..."/>
    <cmd id="previousTab"
