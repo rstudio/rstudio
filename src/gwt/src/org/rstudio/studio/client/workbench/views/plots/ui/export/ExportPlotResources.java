@@ -40,6 +40,10 @@ public interface ExportPlotResources extends ClientBundle
       String updateImageSizeButton();
       
       String rightClickCopyLabel();
+      
+      String copyFormatLabel();
+      String copyFormatBitmap();
+      String copyFormatMetafile();  
    }
 
   

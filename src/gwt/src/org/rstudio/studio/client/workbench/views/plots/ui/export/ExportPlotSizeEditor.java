@@ -351,6 +351,11 @@ public class ExportPlotSizeEditor extends Composite
    {
       return keepRatioCheckBox_.getValue();
    }
+   
+   public ImageFrame getImageFrame()
+   {
+      return imageFrame_;
+   }
       
    private void setWidthTextBox(int width)
    {

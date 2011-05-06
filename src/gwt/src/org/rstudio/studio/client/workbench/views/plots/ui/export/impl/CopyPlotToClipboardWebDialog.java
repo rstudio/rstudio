@@ -1,9 +1,11 @@
-package org.rstudio.studio.client.workbench.views.plots.ui.export;
+package org.rstudio.studio.client.workbench.views.plots.ui.export.impl;
 
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
+import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlotDialog;
+import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlotResources;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -23,25 +25,22 @@ public class CopyPlotToClipboardWebDialog extends ExportPlotDialog
      
       setText("Copy Plot to Clipboard");
       
+      ExportPlotResources resources = ExportPlotResources.INSTANCE;
+      
       ThemedButton closeButton = new ThemedButton("Close", 
             new ClickHandler() {
          public void onClick(ClickEvent event) 
          {
-            ExportPlotSizeEditor sizeEditor = getSizeEditor();
-            ExportPlotOptions saveOptions = ExportPlotOptions.create(
-                  options.getFormat(), 
-                  sizeEditor.getImageWidth(), 
-                  sizeEditor.getImageHeight(), 
-                  sizeEditor.getKeepRatio(),
-                  options.getViewAfterSave());
-            onClose.execute(saveOptions);
+            // save options
+            onClose.execute(getCurrentOptions(options));
+            
+            // close dialog
             closeDialog();
          }
       });
-      
       addCancelButton(closeButton);
       
-      ExportPlotResources resources = ExportPlotResources.INSTANCE;
+     
       HorizontalPanel infoPanel = new HorizontalPanel();
       
       Image rightMouseImage = new Image(resources.rightMouse());

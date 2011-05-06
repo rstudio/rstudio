@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.plots;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.HasResizeHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
@@ -52,7 +53,7 @@ import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
 import org.rstudio.studio.client.workbench.views.plots.model.PrintOptions;
 import org.rstudio.studio.client.workbench.views.plots.ui.ExportDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.PrintDialog;
-import org.rstudio.studio.client.workbench.views.plots.ui.export.CopyPlotToClipboardWebDialog;
+import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlot;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorChangedHandler;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorManager;
 
@@ -93,6 +94,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       globalDisplay_ = globalDisplay;
       server_ = server;
       session_ = session;
+      exportPlot_ = GWT.create(ExportPlot.class);
       locator_ = new Locator(view.getPlotsParent());
       locator_.addSelectionHandler(new SelectionHandler<Point>()
       {
@@ -357,9 +359,11 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    {
       view_.bringToFront();
       
-      new CopyPlotToClipboardWebDialog(server_, 
-                                       exportPlotOptions_,
-                                       saveExportOptionsOperation_).showModal();
+      exportPlot_.copyPlotToClipboard(server_, 
+                                      exportPlotOptions_,
+                                      saveExportOptionsOperation_);
+      
+     
       
       /*
       final ProgressIndicator indicator = 
@@ -545,6 +549,9 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    private final Locator locator_;
    private final ManipulatorManager manipulatorManager_;
    
+   // export plot impl
+   private final ExportPlot exportPlot_ ;
+   
    // default export options
    private ExportOptions exportOptions_ = ExportOptions.create(
                                                    ExportOptions.PNG_TYPE,
@@ -553,9 +560,10 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    
    // default export options
    private ExportPlotOptions exportPlotOptions_ = ExportPlotOptions.create(
-                                                   "PNG",
                                                    550, 
                                                    450,
+                                                   false,
+                                                   "PNG",
                                                    false,
                                                    false);
    

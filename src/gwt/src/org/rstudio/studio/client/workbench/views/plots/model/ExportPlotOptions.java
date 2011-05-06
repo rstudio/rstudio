@@ -20,18 +20,20 @@ public class ExportPlotOptions extends JavaScriptObject
    {   
    }
    
-   public static final native ExportPlotOptions create(String format,
-                                                       int width, 
+   public static final native ExportPlotOptions create(int width, 
                                                        int height,
                                                        boolean keepRatio,
-                                                       boolean viewAfterSave) 
+                                                       String format,
+                                                       boolean viewAfterSave,
+                                                       boolean copyAsMetafile) 
    /*-{
       var options = new Object();
-      options.format = format;
       options.width = width ;
       options.height = height ;
+      options.format = format;
       options.keepRatio = keepRatio;
       options.viewAfterSave = viewAfterSave;
+      options.copyAsMetafile = copyAsMetafile;
       return options ;
    }-*/;
 
@@ -44,7 +46,8 @@ public class ExportPlotOptions extends JavaScriptObject
              a.width === b.width &&
              a.height === b.height &&
              a.keepRatio === b.keepRatio &&
-             a.viewAfterSave === b.viewAfterSave;      
+             a.viewAfterSave === b.viewAfterSave &&
+             a.copyAsMetafile === b.copyAsMetafile;    
    }-*/;
    
    public final native String getFormat() /*-{
@@ -66,9 +69,16 @@ public class ExportPlotOptions extends JavaScriptObject
    }-*/;
    
    public final native boolean getViewAfterSave() /*-{
-   if (this.viewAfterSave)
-      return this.viewAfterSave;
-   else
-      return false;
+      if (this.viewAfterSave)
+         return this.viewAfterSave;
+      else
+         return false;
+   }-*/;
+   
+   public final native boolean getCopyAsMetafile() /*-{
+      if (this.copyAsMetafile)
+         return this.copyAsMetafile;
+      else
+         return false;
    }-*/;
 }

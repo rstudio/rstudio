@@ -28,23 +28,23 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
                                                  new ClickHandler() {
          public void onClick(ClickEvent event) 
          {
-            ExportPlotSizeEditor sizeEditor = getSizeEditor();
-            ExportPlotOptions options = ExportPlotOptions.create(
-                                     exportTarget_.getFormat(), 
-                                     sizeEditor.getImageWidth(), 
-                                     sizeEditor.getImageHeight(), 
-                                     sizeEditor.getKeepRatio(),
-                                     viewAfterSaveCheckBox_.getValue());
-            onClose.execute(options);
+            
+            
+            // save user options
+            onClose.execute(getCurrentOptions(options));
+            
+            // close dialog
             closeDialog();
          }
       });
       addOkButton(saveButton);
       addCancelButton();
       
+      // file type and target path
       exportTarget_ = new ExportPlotTargetEditor(options.getFormat(), 
                                                  context);
       
+      // view after size
       viewAfterSaveCheckBox_ = new CheckBox("View plot after saving");
       viewAfterSaveCheckBox_.setValue(options.getViewAfterSave());
       addLeftWidget(viewAfterSaveCheckBox_);
@@ -62,6 +62,18 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
    {
       super.onDialogShown();
       exportTarget_.setInitialFocus();
+   }
+   
+   @Override
+   protected ExportPlotOptions getCurrentOptions(ExportPlotOptions previous)
+   {
+      ExportPlotSizeEditor sizeEditor = getSizeEditor();
+      return ExportPlotOptions.create(sizeEditor.getImageWidth(), 
+                                      sizeEditor.getImageHeight(), 
+                                      sizeEditor.getKeepRatio(),
+                                      exportTarget_.getFormat(),
+                                      viewAfterSaveCheckBox_.getValue(),
+                                      previous.getCopyAsMetafile());    
    }
    
    private ExportPlotTargetEditor exportTarget_;

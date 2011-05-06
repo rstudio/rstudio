@@ -79,7 +79,23 @@
 
 .rightClickCopyLabel {
 	margin-left: 8px;
-	width: 250px;
+	margin-top: 3px;
+	width: 220px;
 }
+
+.copyFormatLabel {
+	margin-top: 2px;
+	margin-right: 6px;
+	
+}
+
+.copyFormatBitmap {
+   margin-right: 8px;	
+}
+
+.copyFormatMetafile {
+}
+
+
 
 

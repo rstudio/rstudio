@@ -80,6 +80,17 @@ public class ExportPlotDialog extends ModalDialogBase
    {
       return sizeEditor_;
    }
+   
+   protected ExportPlotOptions getCurrentOptions(ExportPlotOptions previous)
+   {
+      ExportPlotSizeEditor sizeEditor = getSizeEditor();
+      return ExportPlotOptions.create(sizeEditor.getImageWidth(), 
+                                      sizeEditor.getImageHeight(), 
+                                      sizeEditor.getKeepRatio(),
+                                      previous.getFormat(),
+                                      previous.getViewAfterSave(),
+                                      previous.getCopyAsMetafile());    
+   }
     
   
    @Override
