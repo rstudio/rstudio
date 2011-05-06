@@ -18,6 +18,7 @@ package com.google.gwt.xml.client;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.xml.client.impl.DOMParseException;
 import com.google.gwt.xml.client.impl.XMLParserImplSafari;
 
@@ -129,7 +130,7 @@ public class XMLTest extends GWTTestCase {
     top.appendChild(d.createCDATASection("klmnopqrst"));
     return d;
   }
-
+  
   /**
    * Returns the module name for GWT unit test running.
    */
@@ -216,7 +217,10 @@ public class XMLTest extends GWTTestCase {
 
     // we didn't define a dtd, so no id for us
     Element e1NodeDirect = d.getElementById("e1Id");
-    assertNull(e1NodeDirect);
+    // Chrome 11 fails to implement this behavior
+    if (!Window.Navigator.getUserAgent().contains("Chrome/11.")) {
+      assertNull(e1NodeDirect);
+    }
 
     Document alienDoc = XMLParser.createDocument();
     Node alienNode11 = alienDoc.importNode(e1Node, true);
