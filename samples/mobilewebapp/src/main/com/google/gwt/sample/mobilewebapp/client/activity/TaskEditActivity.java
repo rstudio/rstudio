@@ -37,7 +37,8 @@ import javax.validation.ConstraintViolation;
 /**
  * Activity that presents a task to be edited.
  */
-public class TaskEditActivity extends AbstractActivity implements TaskEditView.Presenter {
+public class TaskEditActivity extends AbstractActivity implements TaskEditView.Presenter,
+    TaskReadView.Presenter {
 
   private static final Logger log = Logger.getLogger(TaskEditActivity.class.getName());
   private final ClientFactory clientFactory;
@@ -56,9 +57,14 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
   private boolean isEditing;
 
   /**
-   * The current task being edited.
+   * The current task being displayed, might not be possible to edit it.
    */
-  private TaskProxy task;
+  private TaskProxy readOnlyTask;
+
+  /**
+   * The current task being edited, provided by RequestFactory.
+   */
+  private TaskProxy editTask;
 
   /**
    * The ID of the current task being edited.
@@ -69,15 +75,17 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
    * The request used to persist the modified task.
    */
   private Request<Void> taskPersistRequest;
+  private AcceptsOneWidget container;
 
   /**
    * Construct a new {@link TaskEditActivity}.
+   *
    * @param clientFactory the {@link ClientFactory} of shared resources
    * @param place configuration for this activity
    */
   public TaskEditActivity(ClientFactory clientFactory, TaskEditPlace place) {
     this.taskId = place.getTaskId();
-    this.task = place.getTask();
+    this.readOnlyTask = place.getTask();
     this.clientFactory = clientFactory;
   }
 
@@ -112,7 +120,7 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
      * request already exists, reuse it.
      */
     if (taskPersistRequest == null) {
-      taskPersistRequest = context.persist().using(task);
+      taskPersistRequest = context.persist().using(editTask);
     }
 
     // Fire the request.
@@ -141,32 +149,31 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
   }
 
   public void start(AcceptsOneWidget container, EventBus eventBus) {
+    this.container = container;
     // Prefetch the sounds used in this activity.
     SoundEffects.get().prefetchError();
 
     // Hide the 'add' button in the shell.
     clientFactory.getShell().setAddButtonHandler(null);
 
-    // Set the presenter on the view.
-    final TaskEditView view = clientFactory.getTaskEditView();
-    view.setPresenter(this);
-    view.setNameViolation(null);
+    // Set the presenter on the views.
+    final TaskEditView editView = clientFactory.getTaskEditView();
+    editView.setPresenter(this);
+    editView.setNameViolation(null);
+
+    final TaskReadView readView = clientFactory.getTaskReadView();
+    readView.setPresenter(this);
 
     if (taskId == null) {
-      // Create a new task.
-      isEditing = false;
-      view.setEditing(false);
-      TaskRequest request = clientFactory.getRequestFactory().taskRequest();
-      task = request.create(TaskProxy.class);
-      view.getEditorDriver().edit(task, request);
+      editTask();
+      return;
     } else {
       // Lock the display until the task is loaded.
       isEditing = true;
-      view.setEditing(true);
+      editView.setEditing(true);
 
-      if (task == null) {
+      if (readOnlyTask == null) {
         // Load the existing task.
-        view.setLocked(true);
         clientFactory.getRequestFactory().taskRequest().findTask(this.taskId).fire(
             new Receiver<TaskProxy>() {
               @Override
@@ -192,20 +199,18 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
                 }
 
                 // Show the task.
-                task = response;
-                view.getEditorDriver().edit(response,
-                    clientFactory.getRequestFactory().taskRequest());
-                view.setLocked(false);
+                readOnlyTask = response;
+                readView.getEditorDriver().edit(response);
               }
             });
       } else {
         // Use the task that was passed with the place.
-        view.getEditorDriver().edit(task, clientFactory.getRequestFactory().taskRequest());
+        readView.getEditorDriver().edit(readOnlyTask);
       }
     }
 
     // Display the view.
-    container.setWidget(view.asWidget());
+    container.setWidget(readView);
   }
 
   /**
@@ -219,12 +224,12 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
    * Delete the current task.
    */
   private void doDeleteTask() {
-    if (task == null) {
+    if (editTask == null) {
       return;
     }
 
     // Delete the task in the data store.
-    final TaskProxy toDelete = this.task;
+    final TaskProxy toDelete = this.editTask;
     clientFactory.getRequestFactory().taskRequest().remove().using(toDelete).fire(
         new Receiver<Void>() {
           @Override
@@ -270,5 +275,53 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
 
     // Return to the task list.
     clientFactory.getPlaceController().goTo(new TaskListPlace(true));
+  }
+
+  @Override
+  public void editTask() {
+    // Load the existing task.
+    final TaskEditView editView = clientFactory.getTaskEditView();
+
+    if (taskId == null) {
+      isEditing = false;
+      editView.setEditing(false);
+      TaskRequest request = clientFactory.getRequestFactory().taskRequest();
+      editTask = request.create(TaskProxy.class);
+      editView.getEditorDriver().edit(editTask, request);
+    } else {
+      editView.setLocked(true);
+      clientFactory.getRequestFactory().taskRequest().findTask(this.taskId).fire(
+          new Receiver<TaskProxy>() {
+            @Override
+            public void onFailure(ServerFailure error) {
+              Window.alert("An error occurred on the server while loading this task."
+                  + " Please select a different task from the task list.");
+              doCancelTask();
+            }
+
+            @Override
+            public void onSuccess(TaskProxy response) {
+              // Early exit if this activity has already been cancelled.
+              if (isDead) {
+                return;
+              }
+
+              // Task not found.
+              if (response == null) {
+                Window.alert("The task with id '" + taskId + "' could not be found."
+                    + " Please select a different task from the task list.");
+                doCancelTask();
+                return;
+              }
+
+              // Show the task.
+              editTask = response;
+              editView.getEditorDriver().edit(response,
+                  clientFactory.getRequestFactory().taskRequest());
+              editView.setLocked(false);
+            }
+          });
+    }
+    container.setWidget(editView);
   }
 }

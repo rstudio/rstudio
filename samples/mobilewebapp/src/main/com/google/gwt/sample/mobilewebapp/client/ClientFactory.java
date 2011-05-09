@@ -17,9 +17,10 @@ package com.google.gwt.sample.mobilewebapp.client;
 
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.place.shared.PlaceController;
-import com.google.gwt.storage.client.Storage;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskEditView;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskListView;
+import com.google.gwt.sample.mobilewebapp.client.activity.TaskReadView;
+import com.google.gwt.storage.client.Storage;
 
 /**
  * The factory responsible for instantiating everything interesting in this
@@ -82,6 +83,11 @@ public interface ClientFactory {
    * Get an implementation of {@link TaskListView}.
    */
   TaskListView getTaskListView();
+
+  /**
+   * Get an implementation of {@link TaskEditView}.
+   */
+  TaskReadView getTaskReadView();
 
   /**
    * Must be called before any get methods.

@@ -22,16 +22,18 @@ import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.place.shared.PlaceController;
 import com.google.gwt.place.shared.PlaceHistoryHandler;
-import com.google.gwt.sample.mobilewebapp.client.activity.AppActivityMapper;
 import com.google.gwt.sample.gaerequest.client.GaeAuthRequestTransport;
 import com.google.gwt.sample.gaerequest.client.ReloadOnAuthenticationFailure;
+import com.google.gwt.sample.mobilewebapp.client.activity.AppActivityMapper;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskEditView;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskListActivity;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskListView;
+import com.google.gwt.sample.mobilewebapp.client.activity.TaskReadView;
 import com.google.gwt.sample.mobilewebapp.client.desktop.DesktopTaskEditView;
 import com.google.gwt.sample.mobilewebapp.client.desktop.DesktopTaskListView;
 import com.google.gwt.sample.mobilewebapp.client.desktop.MobileWebAppShellDesktop;
 import com.google.gwt.sample.mobilewebapp.client.place.AppPlaceHistoryMapper;
+import com.google.gwt.sample.mobilewebapp.client.tablet.TabletTaskReadView;
 import com.google.gwt.storage.client.Storage;
 import com.google.gwt.user.client.Window;
 import com.google.web.bindery.requestfactory.shared.RequestTransport;
@@ -63,6 +65,8 @@ class ClientFactoryImpl implements ClientFactory {
    */
   private final PlaceHistoryHandler historyHandler = new PlaceHistoryHandler(historyMapper);
 
+  private TaskReadView taskReadView;
+
   public ClientFactoryImpl() {
     RequestTransport requestTransport = new GaeAuthRequestTransport(eventBus);
     requestFactory = GWT.create(MobileWebAppRequestFactory.class);
@@ -89,12 +93,7 @@ class ClientFactoryImpl implements ClientFactory {
      */
     activityManager = new ActivityManager(activityMapper, eventBus);
   }
-  
-  public void init() {
-    activityManager.setDisplay(getShell());
-  }
 
-  @Override
   public App getApp() {
     return new App(getLocalStorageIfSupported(), getEventBus(), getPlaceController(),
         historyMapper, historyHandler, new ReloadOnAuthenticationFailure(), getShell());
@@ -135,6 +134,17 @@ class ClientFactoryImpl implements ClientFactory {
       taskListView = createTaskListView();
     }
     return taskListView;
+  }
+
+  public TaskReadView getTaskReadView() {
+    if (taskReadView == null) {
+      taskReadView = createTaskReadView();
+    }
+    return taskReadView;
+  }
+
+  public void init() {
+    activityManager.setDisplay(getShell());
   }
 
   /**
@@ -192,5 +202,9 @@ class ClientFactoryImpl implements ClientFactory {
         return new TaskListActivity(ClientFactoryImpl.this, false);
       }
     };
+  }
+
+  private TaskReadView createTaskReadView() {
+    return new TabletTaskReadView();
   }
 }
