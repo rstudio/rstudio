@@ -20,6 +20,7 @@ public class GlassPanel extends ResizeComposite
 {
    public GlassPanel(Widget child)
    {
+      child_ = child;
       panel_ = new LayoutPanel();
 
       panel_.add(child);
@@ -55,7 +56,13 @@ public class GlassPanel extends ResizeComposite
             panel_.remove(glass_);
       }
    }
+   
+   public Element getChildContainerElement()
+   {
+      return panel_.getWidgetContainerElement(child_);
+   }
 
    private LayoutPanel panel_;
    private Widget glass_;
+   private final Widget child_;
 }
