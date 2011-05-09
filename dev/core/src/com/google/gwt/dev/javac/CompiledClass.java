@@ -38,6 +38,7 @@ public final class CompiledClass implements Serializable {
 
   private final CompiledClass enclosingClass;
   private final String internalName;
+  private final String sourceName;
   private final boolean isLocal;
   private transient TypeData typeData;
   private CompilationUnit unit;
@@ -65,6 +66,7 @@ public final class CompiledClass implements Serializable {
       String internalName) {
     this.enclosingClass = enclosingClass;
     this.internalName = StringInterner.get().intern(internalName);
+    this.sourceName = StringInterner.get().intern(InternalName.toSourceName(internalName));
     this.cacheToken = diskCache.writeByteArray(classBytes);
     this.isLocal = isLocal;
   }
@@ -109,7 +111,7 @@ public final class CompiledClass implements Serializable {
    * Returns the qualified source name, e.g. {@code java.util.Map.Entry}.
    */
   public String getSourceName() {
-    return StringInterner.get().intern(InternalName.toSourceName(internalName));
+    return sourceName;
   }
   
   public TypeData getTypeData() {

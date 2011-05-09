@@ -26,7 +26,15 @@ public class CompiledClassTest extends TestCase {
   static byte[] dummyByteCode = {
     (byte) 0xDE, (byte) 0xAD, (byte)0xBE, (byte)0xEF  
   };
-  static final String DUMMY_NAME = "com.example.DeadBeef";
+  static final String DUMMY_NAME = "com/example/DeadBeef";
+  
+  /**
+   * Test for {@link CompiledClass#getSourceName()}.
+   */
+  public void testSourceName() throws Exception {
+    CompiledClass compiledClass = new CompiledClass(dummyByteCode, null, false, DUMMY_NAME);
+    assertEquals("com.example.DeadBeef", compiledClass.getSourceName());
+  }
   
   public void testCompiledClassSerialization() throws Exception {
     CompiledClass writeObject = new CompiledClass(dummyByteCode, null, false, DUMMY_NAME);
