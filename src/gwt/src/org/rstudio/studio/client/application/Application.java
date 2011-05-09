@@ -21,6 +21,7 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.event.shared.UmbrellaException;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
@@ -429,18 +430,8 @@ public class Application implements ApplicationEventHandlers,
          csv.writeValue(e.toString());
 
          StringBuilder stackTrace = new StringBuilder();
-         // stack frame
-         StackTraceElement[] stack = e.getStackTrace();
-         if (stack != null)
-         {
-            for (int i=0; i<stack.length; i++)
-            {
-               if (i > 0)
-                  stackTrace.append("\n");
-               stackTrace.append("    at ");
-               stackTrace.append(stack[i].toString());
-            }
-         }
+         writeStackTrace(e, stackTrace, false);
+
          csv.writeValue(stackTrace.toString());
 
          message.append(csv.getValue());
@@ -454,9 +445,40 @@ public class Application implements ApplicationEventHandlers,
       {
          // make sure exceptions never escape the uncaught handler
       }
-   }   
+   }
 
-   
+   private void writeStackTrace(Throwable e,
+                                StringBuilder stackTrace,
+                                boolean includeMessage)
+   {
+      if (e == null)
+         return;
+
+      if (includeMessage)
+         stackTrace.append("\n").append(e.toString()).append("\n");
+
+      // stack frame
+      StackTraceElement[] stack = e.getStackTrace();
+      if (stack != null)
+      {
+         for (int i=0; i<stack.length; i++)
+         {
+            if (i > 0)
+               stackTrace.append("\n");
+            stackTrace.append("    at ");
+            stackTrace.append(stack[i].toString());
+         }
+      }
+
+      if (e instanceof UmbrellaException)
+      {
+         UmbrellaException ue = (UmbrellaException)e;
+         for (Throwable t : ue.getCauses())
+            writeStackTrace(t, stackTrace, true);
+      }
+   }
+
+
    private void verifyAgreement(SessionInfo sessionInfo,
                               final Operation verifiedOperation)
    {
