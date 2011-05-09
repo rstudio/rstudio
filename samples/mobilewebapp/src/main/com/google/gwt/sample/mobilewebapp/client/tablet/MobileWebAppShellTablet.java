@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,30 +17,37 @@ package com.google.gwt.sample.mobilewebapp.client.tablet;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.place.shared.PlaceController;
+import com.google.gwt.sample.mobilewebapp.client.ClientFactory;
+import com.google.gwt.sample.mobilewebapp.client.MobileWebAppShell;
+import com.google.gwt.sample.mobilewebapp.client.Provider;
+import com.google.gwt.sample.mobilewebapp.client.activity.TaskListActivity;
+import com.google.gwt.sample.mobilewebapp.client.activity.TaskListView;
+import com.google.gwt.sample.mobilewebapp.client.place.TaskListPlace;
+import com.google.gwt.sample.mobilewebapp.client.ui.OrientationHelper;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.IsWidget;
+import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.sample.mobilewebapp.client.ClientFactory;
-import com.google.gwt.sample.mobilewebapp.client.MobileWebAppShellBase;
-import com.google.gwt.sample.mobilewebapp.client.activity.TaskListActivity;
-import com.google.gwt.sample.mobilewebapp.client.place.TaskListPlace;
 
 /**
  * Tablet version of the UI shell.
  */
-public class MobileWebAppShellTablet extends MobileWebAppShellBase {
+public class MobileWebAppShellTablet extends ResizeComposite implements MobileWebAppShell {
 
   interface MobileWebAppShellTabletUiBinder extends UiBinder<Widget, MobileWebAppShellTablet> {
   }
 
-  private static MobileWebAppShellTabletUiBinder uiBinder = GWT
-      .create(MobileWebAppShellTabletUiBinder.class);
+  private static MobileWebAppShellTabletUiBinder uiBinder =
+      GWT.create(MobileWebAppShellTabletUiBinder.class);
 
   /**
    * The width of the task list in landscape mode in PCT.
@@ -83,11 +90,6 @@ public class MobileWebAppShellTablet extends MobileWebAppShellBase {
   private HandlerRegistration addButtonHandler;
 
   /**
-   * The {@link ClientFactory} of shared resources.
-   */
-  private final ClientFactory clientFactory;
-
-  /**
    * A boolean indicating that we have not yet seen the first content widget.
    */
   private boolean firstContentWidget = true;
@@ -97,13 +99,29 @@ public class MobileWebAppShellTablet extends MobileWebAppShellBase {
    */
   private TaskListActivity taskListActivity;
 
+  private final EventBus bus;
+
+  private final TaskListView taskListView;
+
+  private final PlaceController placeController;
+
+  private final Provider<TaskListActivity> taskListActivityProvider;
+
   /**
    * Construct a new {@link MobileWebAppShellTablet}.
    * 
    * @param clientFactory the {@link ClientFactory} of shared resources
    */
-  public MobileWebAppShellTablet(final ClientFactory clientFactory) {
-    this.clientFactory = clientFactory;
+  public MobileWebAppShellTablet(EventBus bus, OrientationHelper orientationHelper,
+      PlaceController placeController, Provider<TaskListActivity> taskListActivityProvider,
+      TaskListView taskListView) {
+    this.bus = bus;
+
+    this.placeController = placeController;
+
+    this.taskListActivityProvider = taskListActivityProvider;
+
+    this.taskListView = taskListView;
 
     // Inject the tablet specific styles.
     TabletResources resources = GWT.create(TabletResources.class);
@@ -114,10 +132,18 @@ public class MobileWebAppShellTablet extends MobileWebAppShellBase {
 
     // Initialize the add button.
     setAddButtonHandler(null);
-  }
 
-  public boolean isTaskListIncluded() {
-    return !isOrientationPortrait();
+    orientationHelper.setCommands(this, new Command() {
+      @Override
+      public void execute() {
+        onShiftToPortrait();
+      }
+    }, new Command() {
+      @Override
+      public void execute() {
+        onShiftToLandscape();
+      }
+    });
   }
 
   /**
@@ -158,50 +184,52 @@ public class MobileWebAppShellTablet extends MobileWebAppShellBase {
     }
   }
 
-  @Override
-  protected void adjustOrientation(boolean isPortrait) {
-    if (isPortrait) {
-      // Hide the static task list view.
-      if (taskListActivity != null) {
-        taskListActivity.onStop();
-        taskListActivity = null;
-      }
-      splitPanel.setWidgetSize(taskListContainer, 0);
+  private void onShiftToLandscape() {
+    // Show the static task list view.
+    splitPanel.setWidgetSize(taskListContainer, LANDSCAPE_TASK_LIST_WIDTH_PCT);
 
-      /*
-       * Add both views to the DeckLayoutPanel so we can animate between them.
-       * Using a DeckLayoutPanel here works because we only have two views, and
-       * we always know that the edit view should animate in from the right side
-       * of the screen. A more complex app will require more complex logic to
-       * figure out which direction to animate.
-       */
-      contentContainer.insert(clientFactory.getTaskListView(), 0);
-      contentContainer.setAnimationDuration(500);
+    // TODO(rjrjr) View managing activity is an abomination
+    if (taskListActivity == null) {
+      taskListActivity = taskListActivityProvider.get();
+      taskListActivity.start(taskListContainer, bus);
 
-      // Ensure that something is displayed.
-      Widget curWidget = contentContainer.getVisibleWidget();
-      if (curWidget == null || curWidget == contentEmptyMessage) {
-        clientFactory.getPlaceController().goTo(new TaskListPlace(false));
-        contentContainer.animate(0);
-      }
-    } else {
-      // Show the static task list view.
-      splitPanel.setWidgetSize(taskListContainer, LANDSCAPE_TASK_LIST_WIDTH_PCT);
-      if (taskListActivity == null) {
-        taskListActivity = new TaskListActivity(clientFactory, false);
-        taskListActivity.start(taskListContainer, clientFactory.getEventBus());
+      // DeckLayoutPanel sets the display to none, so we need to clear it.
+      taskListView.asWidget().getElement().getStyle().clearDisplay();
+    }
 
-        // DeckLayoutPanel sets the display to none, so we need to clear it.
-        clientFactory.getTaskListView().asWidget().getElement().getStyle().clearDisplay();
-      }
+    // Do not use animations when the task list is always visible.
+    contentContainer.setAnimationDuration(0);
 
-      // Do not use animations when the task list is always visible.
-      contentContainer.setAnimationDuration(0);
-
-      // Ensure that the task list view is not displayed as content.
-      if (contentContainer.getVisibleWidget() == null) {
-        contentContainer.setWidget(contentEmptyMessage);
-      }
+    // Ensure that the task list view is not displayed as content.
+    if (contentContainer.getVisibleWidget() == null) {
+      contentContainer.setWidget(contentEmptyMessage);
     }
   }
+
+  private void onShiftToPortrait() {
+    // Hide the static task list view.
+    if (taskListActivity != null) {
+      taskListActivity.onStop();
+      taskListActivity = null;
+    }
+    splitPanel.setWidgetSize(taskListContainer, 0);
+
+    /*
+     * Add both views to the DeckLayoutPanel so we can animate between them.
+     * Using a DeckLayoutPanel here works because we only have two views, and we
+     * always know that the edit view should animate in from the right side of
+     * the screen. A more complex app will require more complex logic to figure
+     * out which direction to animate.
+     */
+    contentContainer.insert(taskListView, 0);
+    contentContainer.setAnimationDuration(500);
+
+    // Ensure that something is displayed.
+    Widget curWidget = contentContainer.getVisibleWidget();
+    if (curWidget == null || curWidget == contentEmptyMessage) {
+      placeController.goTo(new TaskListPlace(false));
+      contentContainer.animate(0);
+    }
+  }
+
 }

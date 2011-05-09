@@ -72,11 +72,10 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
 
   /**
    * Construct a new {@link TaskEditActivity}.
-   * 
-   * @param place the task being edited
    * @param clientFactory the {@link ClientFactory} of shared resources
+   * @param place configuration for this activity
    */
-  public TaskEditActivity(TaskEditPlace place, ClientFactory clientFactory) {
+  public TaskEditActivity(ClientFactory clientFactory, TaskEditPlace place) {
     this.taskId = place.getTaskId();
     this.task = place.getTask();
     this.clientFactory = clientFactory;

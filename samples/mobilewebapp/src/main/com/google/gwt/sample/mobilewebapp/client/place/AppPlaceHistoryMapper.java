@@ -24,6 +24,9 @@ import com.google.gwt.place.shared.WithTokenizers;
  * with the browser history system &mdash; that is, it makes the browser's back
  * and forth buttons work for you, and also makes each spot in your app
  * bookmarkable.
+ * <p>
+ * Its implementation is code generated based on the @WithTokenizers
+ * annotation.
  */
 @WithTokenizers({TaskListPlace.Tokenizer.class, TaskEditPlace.Tokenizer.class})
 public interface AppPlaceHistoryMapper extends PlaceHistoryMapper {

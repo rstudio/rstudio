@@ -25,11 +25,14 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.media.client.Video;
 import com.google.gwt.place.shared.Place;
 import com.google.gwt.place.shared.PlaceChangeEvent;
+import com.google.gwt.place.shared.PlaceController;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.sample.mobilewebapp.client.ClientFactory;
-import com.google.gwt.sample.mobilewebapp.client.MobileWebAppShellBase;
+import com.google.gwt.sample.mobilewebapp.client.MobileWebAppShell;
+import com.google.gwt.sample.mobilewebapp.client.activity.TaskEditView;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskListActivity;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskListActivity.TaskListUpdateEvent;
+import com.google.gwt.sample.mobilewebapp.client.activity.TaskListView;
 import com.google.gwt.sample.mobilewebapp.client.place.TaskEditPlace;
 import com.google.gwt.sample.mobilewebapp.client.place.TaskListPlace;
 import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
@@ -48,10 +51,12 @@ import com.google.gwt.user.client.ui.HasOneWidget;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -60,7 +65,7 @@ import java.util.List;
 /**
  * Desktop version of the UI shell.
  */
-public class MobileWebAppShellDesktop extends MobileWebAppShellBase {
+public class MobileWebAppShellDesktop extends ResizeComposite implements MobileWebAppShell {
 
   /**
    * CSS override used for the main menu.
@@ -197,10 +202,11 @@ public class MobileWebAppShellDesktop extends MobileWebAppShellBase {
 
   /**
    * Construct a new {@link MobileWebAppShellDesktop}.
-   * 
    * @param clientFactory the {@link ClientFactory} of shared resources
    */
-  public MobileWebAppShellDesktop(final ClientFactory clientFactory) {
+  public MobileWebAppShellDesktop(EventBus bus, final PlaceController placeController,
+      TaskListView taskListView, TaskEditView taskEditView) {
+
     // Initialize the main menu.
     Resources resources = GWT.create(Resources.class);
     mainMenu = new CellList<MainMenuItem>(new MainMenuItemCell(), resources);
@@ -228,14 +234,14 @@ public class MobileWebAppShellDesktop extends MobileWebAppShellBase {
       public void onSelectionChange(SelectionChangeEvent event) {
         MainMenuItem selected = selectionModel.getSelectedObject();
         if (selected != null) {
-          clientFactory.getPlaceController().goTo(selected.getPlace());
+          placeController.goTo(selected.getPlace());
         }
       }
     });
     mainMenu.setSelectionModel(selectionModel);
 
     // Update selection based on the current place.
-    clientFactory.getEventBus().addHandler(PlaceChangeEvent.TYPE, new PlaceChangeEvent.Handler() {
+    bus.addHandler(PlaceChangeEvent.TYPE, new PlaceChangeEvent.Handler() {
       public void onPlaceChange(PlaceChangeEvent event) {
         Place place = event.getNewPlace();
         for (MainMenuItem menuItem : menuItems) {
@@ -283,12 +289,12 @@ public class MobileWebAppShellDesktop extends MobileWebAppShellBase {
      * the screen. A more complex app will require more complex logic to figure
      * out which direction to animate.
      */
-    contentContainer.add(clientFactory.getTaskListView());
-    contentContainer.add(clientFactory.getTaskEditView());
+    contentContainer.add(taskListView);
+    contentContainer.add(taskEditView);
     contentContainer.setAnimationDuration(800);
 
     // Listen for events from the task list activity.
-    clientFactory.getEventBus().addHandler(TaskListUpdateEvent.getType(),
+    bus.addHandler(TaskListUpdateEvent.getType(),
         new TaskListActivity.TaskListUpdateHandler() {
           public void onTaskListUpdated(TaskListUpdateEvent event) {
             updatePieChart(event.getTasks());
@@ -301,10 +307,6 @@ public class MobileWebAppShellDesktop extends MobileWebAppShellBase {
         showTutorial();
       }
     });
-  }
-
-  public boolean isTaskListIncluded() {
-    return false;
   }
 
   /**

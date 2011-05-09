@@ -21,13 +21,14 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.sample.mobilewebapp.client.ClientFactory;
+import com.google.gwt.sample.mobilewebapp.client.place.TaskEditPlace;
+import com.google.gwt.sample.mobilewebapp.client.place.TaskListPlace;
+import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
+import com.google.gwt.sample.mobilewebapp.shared.TaskProxyImpl;
 import com.google.gwt.storage.client.Storage;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.AcceptsOneWidget;
-import com.google.gwt.sample.mobilewebapp.client.ClientFactory;
-import com.google.gwt.sample.mobilewebapp.client.place.TaskEditPlace;
-import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
-import com.google.gwt.sample.mobilewebapp.shared.TaskProxyImpl;
 import com.google.web.bindery.requestfactory.shared.Receiver;
 import com.google.web.bindery.requestfactory.shared.ServerFailure;
 
@@ -201,8 +202,12 @@ public class TaskListActivity extends AbstractActivity implements TaskListView.P
    * Construct a new {@link TaskListActivity}.
    * 
    * @param clientFactory the {@link ClientFactory} of shared resources
-   * @param clearTaskList true to clear the task list, false not to
+   * @param place configuration for this activity
    */
+  public TaskListActivity(ClientFactory clientFactory, TaskListPlace place) {
+    this(clientFactory, place.isTaskListStale());
+  }
+
   public TaskListActivity(ClientFactory clientFactory, boolean clearTaskList) {
     this.clientFactory = clientFactory;
     this.clearTaskList = clearTaskList;
