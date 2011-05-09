@@ -13,6 +13,13 @@
 
 define("mode/r_autoindent", function(require, exports, module) {
 
+function comparePoints(pos1, pos2)
+{
+   if (pos1.row != pos2.row)
+      return pos1.row - pos2.row;
+   return pos1.column - pos2.column;
+}
+
 var Anchor = require("ace/anchor").Anchor;
 
 var IndentManager = function(doc, tokenizer, statePattern) {
@@ -148,13 +155,6 @@ var IndentManager = function(doc, tokenizer, statePattern) {
    };
 
    (function() {
-      function comparePoints(pos1, pos2)
-      {
-         if (pos1.row != pos2.row)
-            return pos1.row - pos2.row;
-         return pos1.column - pos2.column;
-      }
-
       this.getLabel = function()
       {
          return this.$label;
@@ -367,7 +367,7 @@ var IndentManager = function(doc, tokenizer, statePattern) {
 
    this.$invalidateScopeTreeFrom = function(position)
    {
-      if (this.$scopeTree)
+      if (this.$scopeTree && comparePoints(this.$scopeTreeParsePos, position) > 0)
       {
          this.$scopeTreeParsePos = this.$scopeTree.invalidateFrom(position);
       }

@@ -42,6 +42,7 @@ function updateLabel() {
 editor.getSession().getSelection().on("changeCursor", function() {
   setTimeout(updateLabel, 0);
 });
+updateLabel();
 </script>
 </body>
 </html>
