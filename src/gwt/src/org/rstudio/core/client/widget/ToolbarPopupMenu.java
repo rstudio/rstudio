@@ -13,7 +13,15 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
@@ -114,11 +122,37 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       {
          super(vertical) ;
       }
-      
+
+      @Override
+      protected void onLoad()
+      {
+         super.onLoad();
+         nativePreviewReg_ = Event.addNativePreviewHandler(new NativePreviewHandler()
+         {
+            public void onPreviewNativeEvent(NativePreviewEvent e)
+            {
+               if (e.getTypeInt() == Event.ONKEYDOWN
+                   && e.getNativeEvent().getKeyCode() == KeyCodes.KEY_ESCAPE)
+               {
+                  nativePreviewReg_.removeHandler();
+                  Scheduler.get().scheduleDeferred(new ScheduledCommand()
+                  {
+                     public void execute()
+                     {
+                        hide();
+                     }
+                  });
+               }
+            }
+         });
+      }
+
       public int getItemCount()
       {
          return getItems().size() ;
       }
+
+      private HandlerRegistration nativePreviewReg_;
    }
    
    private ToolbarMenuBar menuBar_ ;

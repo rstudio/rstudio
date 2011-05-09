@@ -387,7 +387,7 @@ var IndentManager = function(doc, tokenizer, statePattern) {
       if (!this.$scopeTree)
       {
          this.$scopeTreeParsePos = {row: 0, column: 0};
-         this.$scopeTree = new this.$ScopeTree("(Top level)", this.$scopeTreeParsePos);
+         this.$scopeTree = new this.$ScopeTree("(Top Level)", this.$scopeTreeParsePos);
       }
 
       var nodes = [];

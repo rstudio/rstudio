@@ -8,27 +8,31 @@
 
    <ui:style>
       @url SEPARATOR statusBarSeparator;
+      @external gwt-Label;
 
       @sprite .statusBar {
          gwt-image: 'statusBarTile';
          width: 100%;
-         font-size: 10px;
+         font-size: 11px;
          color: #3c474d;
       }
       .statusBar div {
          display: inline;
          height: 16px;
+         white-space: nowrap;
+      }
+      .statusBar .gwt-Label {
          position: relative;
          top: 1px;
-         white-space: nowrap;
       }
       .statusBar img {
          position: relative;
          top: 2px;
-         margin-left: 4px;
+         margin-left: 6px;
       }
       .statusBar img.funcIcon {
-         top: 3px;
+         top: 2px;
+         margin-left: 4px;
       }
       .statusBar .element {
          display: block;
@@ -36,11 +40,11 @@
          padding-left: 5px;
          padding-right: 6px;
          background-image: SEPARATOR;
-         background-position: right -1px;
+         background-position: right 0;
          background-repeat: no-repeat;
       }
       .statusBar .element.pos {
-         min-width: 40px;
+         min-width: 45px;
          text-align: center;
       }
       .statusBar .element.last {

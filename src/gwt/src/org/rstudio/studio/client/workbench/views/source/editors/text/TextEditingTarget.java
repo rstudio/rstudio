@@ -48,6 +48,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.files.FilenameTransform;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
@@ -513,6 +514,8 @@ public class TextEditingTarget implements EditingTarget
             // needs its menu built on demand
             JsArray<FunctionStart> tree = docDisplay_.getFunctionTree();
             StatusBarPopupMenu menu = new StatusBarPopupMenu();
+            menu.getElement().getStyle().setProperty(
+                  "fontFamily", ThemeFonts.getFixedWidthFont());
             addFunctionsToMenu(menu, tree, "");
             menu.showRelativeToUpward((UIObject) statusBar_.getFunction());
             menu.focus();
