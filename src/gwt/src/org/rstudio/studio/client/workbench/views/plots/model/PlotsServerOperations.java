@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.plots.model;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import com.google.gwt.json.client.JSONObject;
@@ -55,5 +56,6 @@ public interface PlotsServerOperations
                    String format,
                    int width,
                    int height,
-                   ServerRequestCallback<Void> requestCallback);
+                   boolean overwrite,
+                   ServerRequestCallback<Bool> requestCallback);
 }

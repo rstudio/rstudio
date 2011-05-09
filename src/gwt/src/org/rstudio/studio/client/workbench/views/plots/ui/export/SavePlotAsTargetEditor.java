@@ -26,12 +26,13 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 
 
-// TODO: save plot as overwrite support (check windows code)
-
 // TODO: view after saving (desktop and web difference)
+
+// TODO: other image formats
+
 // TODO: windows metafile support
 // TODO: clipboard vector graphics for other platforms?
-// TODO: other image formats
+
 // TODO: Save As PDF... dialog
 
 public class SavePlotAsTargetEditor extends Composite implements CanFocus

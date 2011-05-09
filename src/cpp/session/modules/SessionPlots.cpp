@@ -119,27 +119,50 @@ Error exportPlot(const json::JsonRpcRequest& request,
                                                           height);
 }
 
+
+json::Object boolObject(bool value)
+{
+   json::Object boolObject ;
+   boolObject["value"] = value;
+   return boolObject;
+}
+
 Error savePlotAs(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
    // get args
    std::string path, format;
    int width, height;
-   Error error = json::readParams(request.params, &path, &format, &width, &height);
+   bool overwrite;
+   Error error = json::readParams(request.params,
+                                  &path,
+                                  &format,
+                                  &width,
+                                  &height,
+                                  &overwrite);
    if (error)
       return error;
 
    // resolve path
    FilePath plotPath = module_context::resolveAliasedPath(path);
 
-   // if it already exists then return file exists error
-   if (plotPath.exists())
-      return fileExistsError(ERROR_LOCATION);
+   // if it already exists and we aren't ovewriting then return false
+   if (plotPath.exists() && !overwrite)
+   {
+      pResponse->setResult(boolObject(false));
+      return Success();
+   }
 
    // save plot
    using namespace r::session::graphics;
    Display& display = r::session::graphics::display();
-   return display.savePlotAsImage(plotPath, format, width, height);
+   error =  display.savePlotAsImage(plotPath, format, width, height);
+   if (error)
+      return error;
+
+   // set success result
+   pResponse->setResult(boolObject(true));
+   return Success();
 }
 
 bool hasStem(const FilePath& filePath, const std::string& stem)

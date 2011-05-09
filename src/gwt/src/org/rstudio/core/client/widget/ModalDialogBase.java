@@ -253,7 +253,7 @@ public abstract class ModalDialogBase extends DialogBox
    }
    
    
-   protected ProgressIndicator addProgressIndicator()
+   protected ModalDialogProgressIndicator addProgressIndicator()
    {
       final SlideLabel label = new SlideLabel(true);
       Element labelEl = label.getElement();
@@ -264,7 +264,7 @@ public abstract class ModalDialogBase extends DialogBox
       labelStyle.setTop(-12, Style.Unit.PX);
       getWidget().getElement().getParentElement().appendChild(labelEl);
 
-      return new ProgressIndicator()
+      return new ModalDialogProgressIndicator()
       {
          public void onProgress(String message)
          {
@@ -272,7 +272,7 @@ public abstract class ModalDialogBase extends DialogBox
             {
                label.setText("", true);
                if (showing_)
-                  endProgress();
+                  clearProgress();
             }
             else
             {
@@ -288,18 +288,19 @@ public abstract class ModalDialogBase extends DialogBox
 
          public void onCompleted()
          {
-            endProgress();
+            clearProgress();
             closeDialog();
          }
 
          public void onError(String message)
          {
-            endProgress();
+            clearProgress();
             RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
                   "Error", message);
          }
 
-         private void endProgress()
+         @Override
+         public void clearProgress()
          {
             if (showing_)
             {
@@ -307,8 +308,9 @@ public abstract class ModalDialogBase extends DialogBox
                label.hide();
                showing_ = false;
             }
+            
          }
-
+         
          private boolean showing_;
       };
    }

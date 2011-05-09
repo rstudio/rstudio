@@ -1,12 +1,15 @@
 package org.rstudio.studio.client.workbench.views.plots.ui.export;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.ModalDialogProgressIndicator;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.Bool;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotContext;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
@@ -37,7 +40,7 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
                                                  new ClickHandler() {
          public void onClick(ClickEvent event) 
          {
-            attemptSavePlot(new Operation() {
+            attemptSavePlot(false, new Operation() {
                @Override
                public void execute()
                {
@@ -89,7 +92,8 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
                                       previous.getCopyAsMetafile());    
    }
    
-   private void attemptSavePlot(final Operation onCompleted)
+   private void attemptSavePlot(boolean overwrite,
+                                final Operation onCompleted)
    {
       // get plot format 
       String format = saveAsTarget_.getFormat();
@@ -108,21 +112,54 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
       // save plot
       progressIndicator_.onProgress("Saving plot...");
       ExportPlotSizeEditor sizeEditor = getSizeEditor();
-      server_.savePlotAs(targetPath, 
-                         format, 
-                         sizeEditor.getImageWidth(), 
-                         sizeEditor.getImageHeight(), 
-                         new VoidServerRequestCallback(progressIndicator_) {
-                            @Override
-                            protected void onSuccess()
-                            {
-                               onCompleted.execute();
-                            }
-                         });
+      server_.savePlotAs(
+         targetPath, 
+         format, 
+         sizeEditor.getImageWidth(), 
+         sizeEditor.getImageHeight(), 
+         overwrite,
+         new ServerRequestCallback<Bool>() {
+
+            @Override
+            public void onResponseReceived(Bool saved)
+            {
+               progressIndicator_.clearProgress();
+               
+               if (saved.getValue())
+               {
+                  onCompleted.execute();
+               }
+               else
+               { 
+                  globalDisplay_.showYesNoMessage(
+                        MessageDialog.WARNING, 
+                        "File Exists", 
+                        "The specified image file name already exists. " +
+                        "Do you want to overwrite it?", 
+                        new Operation() {
+                           @Override
+                           public void execute()
+                           {
+                              attemptSavePlot(true, onCompleted);
+                           }
+                        }, 
+                        true);
+                 
+               }
+            }
+            
+            @Override
+            public void onError(ServerError error)
+            {
+               progressIndicator_.onError(error.getUserMessage());
+            }
+         
+      });
+                         
    }
    
    private final GlobalDisplay globalDisplay_;
-   private ProgressIndicator progressIndicator_;
+   private ModalDialogProgressIndicator progressIndicator_;
    private final PlotsServerOperations server_;
    private SavePlotAsTargetEditor saveAsTarget_;
    private CheckBox viewAfterSaveCheckBox_;

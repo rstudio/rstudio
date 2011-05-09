@@ -32,6 +32,7 @@ import org.rstudio.studio.client.application.model.HttpLogEntry;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.cran.model.CRANMirror;
+import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -744,13 +745,15 @@ public class RemoteServer implements Server
                           String format,
                           int width,
                           int height,
-                          ServerRequestCallback<Void> requestCallback)
+                          boolean overwrite,
+                          ServerRequestCallback<Bool> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(file.getPath()));
       params.set(1, new JSONString(format));
       params.set(2, new JSONNumber(width));
       params.set(3, new JSONNumber(height));
+      params.set(4, JSONBoolean.getInstance(overwrite));
       sendRequest(RPC_SCOPE, SAVE_PLOT_AS, params, requestCallback);
    }
    
