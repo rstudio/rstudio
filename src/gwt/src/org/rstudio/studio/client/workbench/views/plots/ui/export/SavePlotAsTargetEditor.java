@@ -12,8 +12,8 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
-import org.rstudio.studio.client.workbench.views.plots.model.PlotExportContext;
-import org.rstudio.studio.client.workbench.views.plots.model.PlotExportFormat;
+import org.rstudio.studio.client.workbench.views.plots.model.SavePlotContext;
+import org.rstudio.studio.client.workbench.views.plots.model.SavePlotFormat;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
@@ -25,21 +25,27 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 
-// TODO: we don't check for plot stem in the actual target dir
-// TODO: rename PlotExportContext to SaveAsContext ??
-// TODO: view after saving
+
+// TODO: Save As PDF... dialog
+
+// TODO: rollout the feature (including menus)
+
+// TODO: other image formats
+
+// TODO: windows metafile clipboard support
+// TODO: clipboard vector graphics for other platforms?
+
+
 
 public class SavePlotAsTargetEditor extends Composite implements CanFocus
 {
    public SavePlotAsTargetEditor(String defaultFormat,
-                                 PlotExportContext context)
+                                 SavePlotContext context)
    {
       context_ = context;
       
-      ExportPlotResources.Styles styles = 
-                              ExportPlotResources.INSTANCE.styles();
+      ExportPlotResources.Styles styles = ExportPlotResources.INSTANCE.styles();
 
-      
       Grid grid = new Grid(3, 2);
       grid.setCellPadding(0);
     
@@ -48,11 +54,11 @@ public class SavePlotAsTargetEditor extends Composite implements CanFocus
           
       grid.setWidget(0, 0, imageFormatLabel);
       imageFormatListBox_ = new ListBox();
-      JsArray<PlotExportFormat> formats = context.getFormats();
+      JsArray<SavePlotFormat> formats = context.getFormats();
       int selectedIndex = 0;
       for (int i=0; i<formats.length(); i++)
       {
-         PlotExportFormat format = formats.get(i);
+         SavePlotFormat format = formats.get(i);
          if (format.getExtension().equals(defaultFormat))
             selectedIndex = i;
          imageFormatListBox_.addItem(format.getName(), format.getExtension());
@@ -65,7 +71,7 @@ public class SavePlotAsTargetEditor extends Composite implements CanFocus
       imageFormatLabel.setStylePrimaryName(styles.exportTargetLabel());
       grid.setWidget(1, 0, fileNameLabel);
       fileNameTextBox_ = new TextBox();
-      fileNameTextBox_.setText(context.getFilename());
+      fileNameTextBox_.setText(context.getUniqueFileStem());
       fileNameTextBox_.setStylePrimaryName(styles.fileNameTextBox());
       grid.setWidget(1, 1, fileNameTextBox_);
       
@@ -91,9 +97,9 @@ public class SavePlotAsTargetEditor extends Composite implements CanFocus
                     
                     indicator.onCompleted();
                     
-                    // update cache
-                    initialDirectories_.put(context_.getDirectory().getPath(),
-                                            input);
+                    // update default
+                    ExportPlot.setDefaultSaveDirectory(context_.getDirectory(),
+                                                       input);
                     
                     // set display
                     setDirectory(input);  
@@ -104,7 +110,7 @@ public class SavePlotAsTargetEditor extends Composite implements CanFocus
       
      
       directoryLabel_ = new Label();
-      setDirectory(getInitialDirectory());
+      setDirectory(context_.getDirectory());
       directoryLabel_.setStylePrimaryName(styles.directoryLabel());
       grid.setWidget(2, 1, directoryLabel_);
         
@@ -147,15 +153,11 @@ public class SavePlotAsTargetEditor extends Composite implements CanFocus
       
    }
    
-   private FileSystemItem getInitialDirectory()
+   public FileSystemItem getTargetDirectory()
    {
-      // do we have a cached initial dir?
-      String directory = context_.getDirectory().getPath();
-      if (initialDirectories_.containsKey(directory))
-         return initialDirectories_.get(directory);
-      else
-         return context_.getDirectory();
+      return directory_;
    }
+  
    
    private void setDirectory(FileSystemItem directory)
    {
@@ -191,7 +193,7 @@ public class SavePlotAsTargetEditor extends Composite implements CanFocus
    private Label directoryLabel_;
   
    
-   private final PlotExportContext context_;
+   private final SavePlotContext context_;
  
    private final FileSystemContext fileSystemContext_ =
       RStudioGinjector.INSTANCE.getRemoteFileSystemContext();

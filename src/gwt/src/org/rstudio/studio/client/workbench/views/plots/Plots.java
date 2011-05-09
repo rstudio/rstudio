@@ -23,6 +23,7 @@ import com.google.gwt.user.client.ui.Panel;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.HasCustomizableToolbar;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -35,6 +36,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -46,13 +48,11 @@ import org.rstudio.studio.client.workbench.views.plots.events.LocatorEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.LocatorHandler;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedHandler;
-import org.rstudio.studio.client.workbench.views.plots.model.ExportOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
-import org.rstudio.studio.client.workbench.views.plots.model.PlotExportContext;
+import org.rstudio.studio.client.workbench.views.plots.model.SavePlotContext;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
 import org.rstudio.studio.client.workbench.views.plots.model.PrintOptions;
-import org.rstudio.studio.client.workbench.views.plots.ui.ExportDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.PrintDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlot;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorChangedHandler;
@@ -86,6 +86,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    @Inject
    public Plots(final Display view,
                 GlobalDisplay globalDisplay,
+                WorkbenchContext workbenchContext,
                 Commands commands,
                 final PlotsServerOperations server,
                 Session session)
@@ -93,6 +94,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       super(view);
       view_ = view;
       globalDisplay_ = globalDisplay;
+      workbenchContext_ = workbenchContext;
       server_ = server;
       session_ = session;
       exportPlot_ = GWT.create(ExportPlot.class);
@@ -144,40 +146,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                });
             }
          });
-      
-      
-      new JSObjectStateValue("plotspane", "exportOptions", true,
-                             session.getSessionInfo().getClientState(), false)
-      {
-         @Override
-         protected void onInit(JsObject value)
-         {
-            if (value != null)
-               exportOptions_ = value.cast();
-            lastKnownState_ = exportOptions_;
-         }
-
-         @Override
-         protected JsObject getValue()
-         {
-            return exportOptions_.cast();
-         }
-
-         @Override
-         protected boolean hasChanged()
-         {
-            if (!ExportOptions.areEqual(lastKnownState_, exportOptions_))
-            {
-               lastKnownState_ = exportOptions_;
-               return true;
-            }
-
-            return false;
-         }
-
-         private ExportOptions lastKnownState_;
-      };
-      
+            
       new JSObjectStateValue("plotspane", "exportPlotOptions", true,
             session.getSessionInfo().getClientState(), false)
       {
@@ -338,52 +307,33 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
      
    }
    
-   void onExportPlotAsImage()
+   void onSavePlotAsImage()
    {
       view_.bringToFront();
       
-      // show the dialog 
-      new ExportDialog(
-            server_,
-            exportOptions_,
-            new OperationWithInput<ExportOptions>() {
-               public void execute(ExportOptions input)
-               {
-                 // update default options
-                 exportOptions_ = input;
-                 session_.persistClientState(); 
-               }
-      }).showModal();
-   }
-   
-   void onExportPlot()
-   {
-      view_.bringToFront();
-      
-      /*
-      exportPlot_.copyPlotToClipboard(server_, 
-                                      exportPlotOptions_,
-                                      saveExportOptionsOperation_);
-     */ 
-     
-     
       final ProgressIndicator indicator = 
-                                 globalDisplay_.getProgressIndicator("Error");
+         globalDisplay_.getProgressIndicator("Error");
       indicator.onProgress("Preparing to export plot...");
 
-      server_.getPlotExportContext(
-         new SimpleRequestCallback<PlotExportContext>() {
+      // get the default directory
+      FileSystemItem defaultDir = ExportPlot.getDefaultSaveDirectory(
+            workbenchContext_.getCurrentWorkingDir());
+
+      // get context
+      server_.getSavePlotContext(
+         defaultDir.getPath(),
+         new SimpleRequestCallback<SavePlotContext>() {
 
             @Override
-            public void onResponseReceived(PlotExportContext context)
+            public void onResponseReceived(SavePlotContext context)
             {
                indicator.onCompleted();
-               
+
                exportPlot_.savePlotAsImage(globalDisplay_,
-                                           server_, 
-                                           context, 
-                                           exportPlotOptions_, 
-                                           saveExportOptionsOperation_);  
+                     server_, 
+                     context, 
+                     exportPlotOptions_, 
+                     saveExportOptionsOperation_);  
             }
 
             @Override
@@ -391,9 +341,16 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
             {
                indicator.onError(error.getUserMessage());
             }           
-         });   
-       
-       
+         });
+   }
+   
+   void onCopyPlotToClipboard()
+   {
+      view_.bringToFront();
+      
+      exportPlot_.copyPlotToClipboard(server_, 
+                                      exportPlotOptions_,
+                                      saveExportOptionsOperation_);    
    }
    
    private OperationWithInput<ExportPlotOptions> saveExportOptionsOperation_ =
@@ -535,18 +492,13 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    private final Display view_;
    private final GlobalDisplay globalDisplay_;
    private final PlotsServerOperations server_;
+   private final WorkbenchContext workbenchContext_;
    private final Session session_;
    private final Locator locator_;
    private final ManipulatorManager manipulatorManager_;
    
    // export plot impl
    private final ExportPlot exportPlot_ ;
-   
-   // default export options
-   private ExportOptions exportOptions_ = ExportOptions.create(
-                                                   ExportOptions.PNG_TYPE,
-                                                   500, 
-                                                   400);
    
    // default export options
    private ExportPlotOptions exportPlotOptions_ = ExportPlotOptions.create(

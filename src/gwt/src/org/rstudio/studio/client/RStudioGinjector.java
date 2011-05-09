@@ -21,6 +21,7 @@ import org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader;
 import org.rstudio.studio.client.application.ui.impl.WebApplicationHeader;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.NewFileMenu;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
@@ -47,6 +48,7 @@ public interface RStudioGinjector extends Ginjector
    GlobalDisplay getGlobalDisplay();
    RemoteFileSystemContext getRemoteFileSystemContext();
    FileDialogs getFileDialogs();
+   FileTypeRegistry getFileTypeRegistry();
    Commands getCommands();
    UIPrefs getUIPrefs();
    Session getSession();

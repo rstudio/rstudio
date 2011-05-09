@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.plots.model;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import com.google.gwt.json.client.JSONObject;
@@ -21,6 +22,8 @@ import com.google.gwt.json.client.JSONObject;
 public interface PlotsServerOperations
 {
    String getGraphicsUrl(String filename);
+ 
+   String getFileUrl(FileSystemItem file);
    
    String getPlotExportUrl(String type, 
                            int width, 
@@ -42,17 +45,14 @@ public interface PlotsServerOperations
    void locatorCompleted(Point point, 
                         ServerRequestCallback<Void> requestCallback);
 
-   void getPlotExportContext(
-                  ServerRequestCallback<PlotExportContext> requestCallback);
-   
-   void exportPlot(FileSystemItem file,
-                   int width,
-                   int height,
-                   ServerRequestCallback<Void> requestCallback);
+   void getSavePlotContext(
+                  String directory,
+                  ServerRequestCallback<SavePlotContext> requestCallback);
    
    void savePlotAs(FileSystemItem file,
                    String format,
                    int width,
                    int height,
-                   ServerRequestCallback<Void> requestCallback);
+                   boolean overwrite,
+                   ServerRequestCallback<Bool> requestCallback);
 }

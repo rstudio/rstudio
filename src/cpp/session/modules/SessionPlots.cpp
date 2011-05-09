@@ -98,25 +98,11 @@ Error refreshPlot(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error exportPlot(const json::JsonRpcRequest& request,
-                  json::JsonRpcResponse* pResponse)
+json::Object boolObject(bool value)
 {
-   // get args
-   std::string path;
-   int width, height;
-   Error error = json::readParams(request.params, &path, &width, &height);
-   if (error)
-      return error;
-
-   // resolve path
-   FilePath plotPath = module_context::resolveAliasedPath(path);
-
-   // save plot
-   using namespace r::session::graphics;
-   return r::session::graphics::display().savePlotAsImage(plotPath,
-                                                          kPngFormat,
-                                                          width,
-                                                          height);
+   json::Object boolObject ;
+   boolObject["value"] = value;
+   return boolObject;
 }
 
 Error savePlotAs(const json::JsonRpcRequest& request,
@@ -125,21 +111,36 @@ Error savePlotAs(const json::JsonRpcRequest& request,
    // get args
    std::string path, format;
    int width, height;
-   Error error = json::readParams(request.params, &path, &format, &width, &height);
+   bool overwrite;
+   Error error = json::readParams(request.params,
+                                  &path,
+                                  &format,
+                                  &width,
+                                  &height,
+                                  &overwrite);
    if (error)
       return error;
 
    // resolve path
    FilePath plotPath = module_context::resolveAliasedPath(path);
 
-   // if it already exists then return file exists error
-   if (plotPath.exists())
-      return fileExistsError(ERROR_LOCATION);
+   // if it already exists and we aren't ovewriting then return false
+   if (plotPath.exists() && !overwrite)
+   {
+      pResponse->setResult(boolObject(false));
+      return Success();
+   }
 
    // save plot
    using namespace r::session::graphics;
    Display& display = r::session::graphics::display();
-   return display.savePlotAsImage(plotPath, format, width, height);
+   error =  display.savePlotAsImage(plotPath, format, width, height);
+   if (error)
+      return error;
+
+   // set success result
+   pResponse->setResult(boolObject(true));
+   return Success();
 }
 
 bool hasStem(const FilePath& filePath, const std::string& stem)
@@ -156,17 +157,21 @@ json::Object plotExportFormat(const std::string& name,
    return formatJson;
 }
 
-Error getPlotExportContext(const json::JsonRpcRequest& request,
-                           json::JsonRpcResponse* pResponse)
+Error getSavePlotContext(const json::JsonRpcRequest& request,
+                         json::JsonRpcResponse* pResponse)
 {
+   // get directory arg
+   std::string directory;
+   Error error = json::readParam(request.params, 0, &directory);
+   if (error)
+      return error;
+
    // context
    json::Object contextJson;
 
    // get supported formats
+    using namespace r::session::graphics;
    json::Array formats;
-
-   // base formats
-   using namespace r::session::graphics;
    formats.push_back(plotExportFormat("PNG", kPngFormat));
    formats.push_back(plotExportFormat("JPEG", kJpegFormat));
    formats.push_back(plotExportFormat("TIFF", kTiffFormat));
@@ -189,13 +194,15 @@ Error getPlotExportContext(const json::JsonRpcRequest& request,
 
    contextJson["formats"] = formats;
 
-   // get working directory
-   FilePath workingDir = module_context::safeCurrentPath();
-   contextJson["directory"] = module_context::createFileSystemItem(workingDir);
+   // get directory path
+   FilePath directoryPath = module_context::resolveAliasedPath(directory);
+
+   // reflect directory back to caller
+   contextJson["directory"] = module_context::createFileSystemItem(directoryPath);
 
    // determine unique file name
    std::vector<FilePath> children;
-   Error error = workingDir.children(&children);
+   error = directoryPath.children(&children);
    if (error)
       return error;
 
@@ -216,10 +223,10 @@ Error getPlotExportContext(const json::JsonRpcRequest& request,
       // update stem and search again
       boost::format fmt("Rplot%1%");
       stem = boost::str(fmt % boost::io::group(std::setfill('0'),
-                                               std::setw(3),
+                                               std::setw(2),
                                                ++i));
    }
-   contextJson["filename"] = stem;
+   contextJson["uniqueFileStem"] = stem;
 
    pResponse->setResult(contextJson);
 
@@ -609,9 +616,8 @@ Error initialize()
       (bind(registerRpcMethod, "remove_plot", removePlot))
       (bind(registerRpcMethod, "clear_plots", clearPlots))
       (bind(registerRpcMethod, "refresh_plot", refreshPlot))
-      (bind(registerRpcMethod, "export_plot", exportPlot))
       (bind(registerRpcMethod, "save_plot_as", savePlotAs))
-      (bind(registerRpcMethod, "get_plot_export_context", getPlotExportContext))
+      (bind(registerRpcMethod, "get_save_plot_context", getSavePlotContext))
       (bind(registerRpcMethod, "set_manipulator_values", setManipulatorValues))
       (bind(registerUriHandler, kGraphics "/plot_zoom_png", handleZoomPngRequest))
       (bind(registerUriHandler, kGraphics "/plot_zoom", handleZoomRequest))

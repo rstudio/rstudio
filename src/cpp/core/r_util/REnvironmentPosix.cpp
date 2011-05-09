@@ -186,7 +186,11 @@ FilePath systemDefaultRScript()
 
    // check for real path doesn't exist
    if (!rBinaryPath.exists())
+   {
+      LOG_ERROR_MESSAGE("Real path of R script does not exist (" +
+                        rBinaryPath.absolutePath() + ")");
       return FilePath();
+   }
 
    // got a valid R binary
    return rBinaryPath;

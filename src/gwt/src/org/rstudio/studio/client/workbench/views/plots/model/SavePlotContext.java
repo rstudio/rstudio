@@ -5,13 +5,13 @@ import org.rstudio.core.client.files.FileSystemItem;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
-public class PlotExportContext extends JavaScriptObject
+public class SavePlotContext extends JavaScriptObject
 {
-   protected PlotExportContext()
+   protected SavePlotContext()
    {
    }
    
-   public final native JsArray<PlotExportFormat> getFormats() /*-{
+   public final native JsArray<SavePlotFormat> getFormats() /*-{
       return this.formats;
    }-*/;
    
@@ -19,7 +19,7 @@ public class PlotExportContext extends JavaScriptObject
       return this.directory;
    }-*/;
    
-   public final native String getFilename() /*-{
-      return this.filename;
+   public final native String getUniqueFileStem() /*-{
+      return this.uniqueFileStem;
    }-*/;
 }

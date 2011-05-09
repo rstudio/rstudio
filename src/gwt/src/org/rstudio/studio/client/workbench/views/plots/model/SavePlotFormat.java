@@ -2,9 +2,9 @@ package org.rstudio.studio.client.workbench.views.plots.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class PlotExportFormat extends JavaScriptObject
+public class SavePlotFormat extends JavaScriptObject
 {  
-   protected PlotExportFormat()
+   protected SavePlotFormat()
    {
    }
    
