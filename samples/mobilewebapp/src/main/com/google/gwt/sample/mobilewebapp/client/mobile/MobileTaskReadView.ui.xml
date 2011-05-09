@@ -1,0 +1,130 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder
+  xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui"
+  xmlns:w="urn:import:com.google.gwt.widget.client"
+  xmlns:app="urn:import:com.google.gwt.sample.mobilewebapp.client.ui">
+
+  <ui:style>
+    .outer {
+      background: #eee;
+    }
+    
+    .title {
+      background: #393939;
+      color: white;
+      padding: 4px 10px;
+      font-size: 10pt;
+    }
+    
+    .editForm {
+      padding: 10px;
+      background: white;
+    }
+    
+    .label {
+      color: #666;
+      font-size: 10pt;
+      padding-bottom: 3px;
+    }
+    
+    .field {
+      width: 100%;
+      margin-bottom: 12px;
+    }
+    
+    .textBoxWrapper {
+      margin-right: 10px;
+    }
+    
+    .nameBox {
+      height: 2em;
+    }
+    
+    .notesBox {
+      height: 4em;
+    }
+    
+    .buttonPanel {
+      width: 100%;
+      padding: 10px;
+      margin-top: 15px;
+    }
+    
+    .button {
+      width: 100%;
+    }
+  </ui:style>
+
+  <g:DockLayoutPanel
+    unit="PT">
+    <!-- Title. -->
+    <g:north
+      size="18">
+      <g:Label
+        addStyleNames="{style.title}">DETAILS</g:Label>
+    </g:north>
+
+    <g:center>
+      <g:ScrollPanel
+        addStyleNames="{style.outer}">
+        <g:HTMLPanel>
+
+          <!-- Edit Form. -->
+          <div
+            class="{style.editForm}">
+            <!-- Task name. -->
+            <div
+              class="{style.label}">What</div>
+            <div
+              class="{style.textBoxWrapper}">
+              <g:Label
+                addStyleNames="{style.field} {style.nameBox}"
+                ui:field="nameEditor" />
+            </div>
+
+            <!-- Task notes. -->
+            <div
+              class="{style.label}">Notes</div>
+            <div
+              class="{style.textBoxWrapper}">
+              <g:Label
+                addStyleNames="{style.field} {style.notesBox}"
+                ui:field="notesEditor" />
+            </div>
+
+            <!-- Task due date. -->
+            <div
+              class="{style.label}">Due date</div>
+            <g:DateLabel
+              addStyleNames="{style.field}"
+              ui:field="dueDateEditor" />
+          </div>
+
+          <!-- Button panel. -->
+          <table
+            class="{style.buttonPanel}"
+            cellspacing="0"
+            cellpadding="0">
+            <tr>
+              <td
+                align="center"
+                style="width:50%;padding-right:5px;">
+                <w:TextButton
+                  ui:field="saveButton"
+                  addStyleNames="{style.button}">Edit</w:TextButton>
+              </td>
+              <td
+                align="center"
+                style="width:50%;padding-left:5px;">
+                &nbsp;
+              </td>
+            </tr>
+          </table>
+
+        </g:HTMLPanel>
+      </g:ScrollPanel>
+    </g:center>
+  </g:DockLayoutPanel>
+
+</ui:UiBinder> 

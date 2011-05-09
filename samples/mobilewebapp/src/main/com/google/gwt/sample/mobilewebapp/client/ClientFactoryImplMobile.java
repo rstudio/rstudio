@@ -17,8 +17,10 @@ package com.google.gwt.sample.mobilewebapp.client;
 
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskEditView;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskListView;
+import com.google.gwt.sample.mobilewebapp.client.activity.TaskReadView;
 import com.google.gwt.sample.mobilewebapp.client.mobile.MobileTaskEditView;
 import com.google.gwt.sample.mobilewebapp.client.mobile.MobileTaskListView;
+import com.google.gwt.sample.mobilewebapp.client.mobile.MobileTaskReadView;
 import com.google.gwt.sample.mobilewebapp.client.mobile.MobileWebAppShellMobile;
 import com.google.gwt.sample.mobilewebapp.client.ui.OrientationHelper;
 import com.google.gwt.sample.mobilewebapp.client.ui.WindowBasedOrientationHelper;
@@ -43,5 +45,10 @@ public class ClientFactoryImplMobile extends ClientFactoryImpl {
   @Override
   protected TaskListView createTaskListView() {
     return new MobileTaskListView();
+  }
+
+  @Override
+  protected TaskReadView createTaskReadView() {
+    return new MobileTaskReadView();
   }
 }

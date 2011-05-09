@@ -1,0 +1,140 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder
+  xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui"
+  xmlns:c="urn:import:com.google.gwt.user.cellview.client"
+  xmlns:app="urn:import:com.google.gwt.sample.mobilewebapp.client.ui">
+
+  <ui:style>
+    .title {
+      padding: 4px 10px;
+      font-size: 14pt;
+      font-weight: bold;
+      color: #666;
+    }
+    
+    .editForm {
+      padding: 10px;
+      background: white;
+    }
+    
+    .label {
+      color: #333;
+      font-size: 10pt;
+      padding-bottom: 3px;
+    }
+    
+    .field {
+      width: 300px;
+    }
+    
+    .textBoxWrapper {
+      margin-right: 10px;
+    }
+    
+    .notesBox {
+      height: 6em;
+    }
+    
+    .violation {
+      color: red;
+    }
+    
+    .button {
+      padding-top: 8px;
+      padding-bottom: 8px;
+      color: #3f3f3f;
+    }
+    
+    .dateButton {
+      text-align: center;
+    }
+    
+    .buttonPanel {
+      padding: 10px;
+      margin-top: 15px;
+    }
+    
+    .saveButton {
+      width: 130px;
+      margin-right: 5px;
+    }
+    
+    .templateList {
+      border-left: 1px solid #aaa;
+    }
+  </ui:style>
+
+  <g:DockLayoutPanel
+    ui:field="dockLayoutPanel"
+    unit="PX">
+    <!-- Edit Form. -->
+    <g:center>
+      <g:HTMLPanel
+        ui:field="editForm"
+        addStyleNames="{style.editForm}">
+        <table
+          cellspacing="10"
+          align="center">
+
+          <!-- Form title. -->
+          <tr>
+            <td
+              align='center'
+              colspan='2'
+              class="{style.title}">Task Details</td>
+          </tr>
+
+          <!-- Task name. -->
+          <tr>
+            <td
+              class="{style.label}">Task Name:</td>
+            <td
+              class="{style.textBoxWrapper}">
+              <g:Label
+                addStyleNames="{style.field}"
+                ui:field="nameEditor" />
+            </td>
+          </tr>
+
+          <!-- Task notes. -->
+          <tr>
+            <td
+              class="{style.label}">Notes:</td>
+            <td
+              class="{style.textBoxWrapper}">
+              <g:Label
+                addStyleNames="{style.field} {style.notesBox}"
+                ui:field="notesEditor" />
+            </td>
+          </tr>
+
+          <!-- Task due date. -->
+          <tr>
+            <td
+              class="{style.label}">Due date:</td>
+            <td>
+              <g:DateLabel
+                addStyleNames="{style.field} {style.button} {style.dateButton}"
+                ui:field="dueDateEditor" />
+            </td>
+          </tr>
+
+          <!-- Button panel. -->
+          <tr
+            class="{style.buttonPanel}">
+            <td
+              colspan='2'
+              align='center'>
+              <g:Button
+                ui:field="saveButton"
+                addStyleNames="{style.button} {style.saveButton}">Edit</g:Button>
+            </td>
+          </tr>
+        </table>
+      </g:HTMLPanel>
+    </g:center>
+
+  </g:DockLayoutPanel>
+
+</ui:UiBinder> 

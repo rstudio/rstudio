@@ -31,9 +31,9 @@ import com.google.gwt.sample.mobilewebapp.client.activity.TaskListView;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskReadView;
 import com.google.gwt.sample.mobilewebapp.client.desktop.DesktopTaskEditView;
 import com.google.gwt.sample.mobilewebapp.client.desktop.DesktopTaskListView;
+import com.google.gwt.sample.mobilewebapp.client.desktop.DesktopTaskReadView;
 import com.google.gwt.sample.mobilewebapp.client.desktop.MobileWebAppShellDesktop;
 import com.google.gwt.sample.mobilewebapp.client.place.AppPlaceHistoryMapper;
-import com.google.gwt.sample.mobilewebapp.client.tablet.TabletTaskReadView;
 import com.google.gwt.storage.client.Storage;
 import com.google.gwt.user.client.Window;
 import com.google.web.bindery.requestfactory.shared.RequestTransport;
@@ -175,6 +175,10 @@ class ClientFactoryImpl implements ClientFactory {
     return new DesktopTaskListView();
   }
 
+  protected TaskReadView createTaskReadView() {
+    return new DesktopTaskReadView();
+  }
+
   /**
    * Returns provider that indicates whether the task list is always visible.
    * The default implementation returned by this method always indicates false.
@@ -202,9 +206,5 @@ class ClientFactoryImpl implements ClientFactory {
         return new TaskListActivity(ClientFactoryImpl.this, false);
       }
     };
-  }
-
-  private TaskReadView createTaskReadView() {
-    return new TabletTaskReadView();
   }
 }
