@@ -13,6 +13,7 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.*;
 
@@ -25,6 +26,8 @@ public class GlassPanel extends ResizeComposite
       panel_.add(child);
       panel_.setWidgetLeftRight(child, 0, Unit.PX, 0, Unit.PX);
       panel_.setWidgetTopBottom(child, 0, Unit.PX, 0, Unit.PX);
+      panel_.getWidgetContainerElement(child).getStyle().setOverflow(
+                                                             Overflow.VISIBLE);
 
       glass_ = new HTML();
       glass_.setSize("100%", "100%");
