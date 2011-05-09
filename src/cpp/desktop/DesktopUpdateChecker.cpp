@@ -55,6 +55,8 @@ void UpdateChecker::performCheck(bool manuallyInvoked)
    // build URL (specify key-value pair return)
    QUrl url = checkForUpdatesURL();
    url.addQueryItem(QString::fromAscii("format"), QString::fromAscii("kvp"));
+   if (manuallyInvoked)
+      url.addQueryItem(QString::fromAscii("manual"), QString::fromAscii("true"));
 
    // download manifest (URL downlader frees itself)
    URLDownloader* pURLDownloader = new URLDownloader(url,
