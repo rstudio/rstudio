@@ -35,7 +35,7 @@ editor.getSession().setMode(mode);
 
 function updateLabel() {
   var mgr = mode.$indentManager;
-  var fname = mgr.getCurrentFunction(editor.getSession().getSelection().getCursor());
+  var fname = mgr.getCurrentFunction(editor.getSession().getSelection().getCursor()).label;
   document.getElementById('funcName').value = fname;
 }
 

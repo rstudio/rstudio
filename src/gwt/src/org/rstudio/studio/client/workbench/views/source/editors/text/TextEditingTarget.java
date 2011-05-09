@@ -153,7 +153,7 @@ public class TextEditingTarget implements EditingTarget
       void setCursorPosition(Position position);
       void moveCursorNearTop();
 
-      String getCurrentFunction();
+      FunctionStart getCurrentFunction();
       JsArray<FunctionStart> getFunctionTree();
    }
 
@@ -513,28 +513,43 @@ public class TextEditingTarget implements EditingTarget
             // Unlike the other status bar elements, the function outliner
             // needs its menu built on demand
             JsArray<FunctionStart> tree = docDisplay_.getFunctionTree();
-            StatusBarPopupMenu menu = new StatusBarPopupMenu();
+            final StatusBarPopupMenu menu = new StatusBarPopupMenu();
             menu.getElement().getStyle().setProperty(
                   "fontFamily", ThemeFonts.getFixedWidthFont());
-            addFunctionsToMenu(menu, tree, "");
+            MenuItem defaultItem = addFunctionsToMenu(
+                  menu, tree, "", docDisplay_.getCurrentFunction());
+            if (defaultItem != null)
+            {
+               menu.selectItem(defaultItem);
+               Scheduler.get().scheduleFinally(new RepeatingCommand()
+               {
+                  public boolean execute()
+                  {
+                     menu.ensureSelectedIsVisible();
+                     return false;
+                  }
+               });
+            }
             menu.showRelativeToUpward((UIObject) statusBar_.getFunction());
          }
       });
    }
 
-   private void addFunctionsToMenu(StatusBarPopupMenu menu,
-                                   final JsArray<FunctionStart> funcs,
-                                   String indent)
+   private MenuItem addFunctionsToMenu(StatusBarPopupMenu menu,
+                                       final JsArray<FunctionStart> funcs,
+                                       String indent,
+                                       FunctionStart defaultFunction)
    {
+      MenuItem defaultMenuItem = null;
+
       for (int i = 0; i < funcs.length(); i++)
       {
          final FunctionStart func = funcs.get(i);
-
          SafeHtmlBuilder labelBuilder = new SafeHtmlBuilder();
          labelBuilder.appendHtmlConstant(indent);
          labelBuilder.appendEscaped(func.getLabel());
 
-         menu.addItem(new MenuItem(
+         final MenuItem menuItem = new MenuItem(
                labelBuilder.toSafeHtml(),
                new Command()
                {
@@ -544,12 +559,27 @@ public class TextEditingTarget implements EditingTarget
                      docDisplay_.moveCursorNearTop();
                      docDisplay_.focus();
                   }
-               }));
+               });
+         menu.addItem(menuItem);
 
-         addFunctionsToMenu(menu,
-                            func.getChildren(),
-                            indent + "&nbsp;&nbsp;");
+         if (defaultFunction != null && defaultMenuItem == null &&
+             func.getLabel().equals(defaultFunction.getLabel()) &&
+             func.getStart().getRow() == defaultFunction.getStart().getRow() &&
+             func.getStart().getColumn() == defaultFunction.getStart().getColumn())
+         {
+            defaultMenuItem = menuItem;
+         }
+
+         MenuItem childDefaultMenuItem = addFunctionsToMenu(
+               menu,
+               func.getChildren(),
+               indent + "&nbsp;&nbsp;",
+               defaultMenuItem == null ? defaultFunction : null);
+         if (childDefaultMenuItem != null)
+            defaultMenuItem = childDefaultMenuItem;
       }
+
+      return defaultMenuItem;
    }
 
    private void updateStatusBarLanguage()
@@ -576,8 +606,11 @@ public class TextEditingTarget implements EditingTarget
             {
                public boolean execute()
                {
-                  final String func = docDisplay_.getCurrentFunction();
-                  statusBar_.getFunction().setValue(func);
+                  FunctionStart function = docDisplay_.getCurrentFunction();
+                  String label = function != null
+                                ? function.getLabel()
+                                : null;
+                  statusBar_.getFunction().setValue(label);
                   return false;
                }
             });

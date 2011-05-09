@@ -10,7 +10,7 @@ public class Mode extends JavaScriptObject
    {
    }
 
-   public native final String getCurrentFunction(Position position) /*-{
+   public native final FunctionStart getCurrentFunction(Position position) /*-{
       if (!this.getCurrentFunction)
          return null;
       return this.getCurrentFunction(position);

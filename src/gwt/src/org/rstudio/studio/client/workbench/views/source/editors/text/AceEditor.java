@@ -534,7 +534,7 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       return widget_.addCursorChangedHandler(handler);
    }
 
-   public String getCurrentFunction()
+   public FunctionStart getCurrentFunction()
    {
       return getSession().getMode().getCurrentFunction(getCursorPosition());
    }

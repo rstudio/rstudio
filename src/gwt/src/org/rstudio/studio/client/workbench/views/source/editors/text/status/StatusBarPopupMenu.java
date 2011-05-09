@@ -37,15 +37,20 @@ public class StatusBarPopupMenu extends ToolbarPopupMenu
       {
          public void onSelection(SelectionEvent<MenuItem> event)
          {
-            if (event.getSelectedItem() != null)
-            {
-               DomUtils.ensureVisibleVert(scrollPanel_.getElement(),
-                                          event.getSelectedItem().getElement(),
-                                          0);
-            }
+            ensureSelectedIsVisible();
          }
       });
       return menuBar;
+   }
+
+   public void ensureSelectedIsVisible()
+   {
+      if (menuBar_.getSelectedItem() != null)
+      {
+         DomUtils.ensureVisibleVert(scrollPanel_.getElement(),
+                                    menuBar_.getSelectedItem().getElement(),
+                                    0);
+      }
    }
 
    @Override

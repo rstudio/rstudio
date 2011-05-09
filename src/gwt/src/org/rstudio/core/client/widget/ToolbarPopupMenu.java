@@ -61,6 +61,11 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       menuBar_.selectItem(null);
    }
 
+   public void selectItem(MenuItem menuItem)
+   {
+      menuBar_.selectItem(menuItem);
+   }
+
    public void addItem(MenuItem menuItem)
    {
       Command command = menuItem.getCommand();
@@ -194,5 +199,5 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       private HandlerRegistration nativePreviewReg_;
    }
    
-   private ToolbarMenuBar menuBar_ ;
+   protected ToolbarMenuBar menuBar_ ;
 }

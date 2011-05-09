@@ -148,40 +148,40 @@ var IndentManager = function(doc, tokenizer, statePattern) {
 
    this.$ScopeTree = function(label, start)
    {
-      this.$label = label;
-      this.$start = start;
-      this.$end = null;
+      this.label = label;
+      this.start = start;
+      this.end = null;
       this.$children = [];
    };
 
    (function() {
       this.getLabel = function()
       {
-         return this.$label;
+         return this.label;
       };
 
       this.getStart = function()
       {
-         return this.$start;
+         return this.start;
       };
 
       this.setEnd = function(pos)
       {
-         this.$end = pos;
+         this.end = pos;
       };
 
       this.getEnd = function()
       {
-         return this.$end;
+         return this.end;
       };
 
       this.exportFunctions = function(list)
       {
-         if (this.$label)
+         if (this.label)
          {
             var here = {
-               label: this.$label,
-               start: this.$start,
+               label: this.label,
+               start: this.start,
                children: []
             };
             list.push(here);
@@ -194,9 +194,9 @@ var IndentManager = function(doc, tokenizer, statePattern) {
 
       this.comparePosition = function(pos)
       {
-         if (comparePoints(pos, this.$start) < 0)
+         if (comparePoints(pos, this.start) < 0)
             return -1;
-         if (this.$end != null && comparePoints(pos, this.$end) >= 0)
+         if (this.end != null && comparePoints(pos, this.end) >= 0)
             return 1;
          return 0;
       };
@@ -217,17 +217,21 @@ var IndentManager = function(doc, tokenizer, statePattern) {
          }
       };
 
-      this.findLabel = function(pos)
+      this.findFunction = function(pos)
       {
          var index = this.$binarySearch(pos);
          if (index >= 0)
          {
-            var label = this.$children[index].findLabel(pos);
-            return label || this.$label;
+            var child = this.$children[index].findFunction(pos);
+            if (child)
+               return child;
+            if (this.label)
+               return this;
+            return null;
          }
          else
          {
-            return this.$label;
+            return this.label ? this : null;
          }
       };
 
@@ -252,14 +256,14 @@ var IndentManager = function(doc, tokenizer, statePattern) {
             this.$children.splice(index, this.$children.length - index);
          }
 
-         this.$end = null;
+         this.end = null;
 
          return resumePos;
       };
 
       this.pushOpenScopes = function(stack)
       {
-         if (this.$end === null)
+         if (this.end === null)
          {
             stack.push(this);
             if (this.$children.length > 0)
@@ -448,7 +452,7 @@ var IndentManager = function(doc, tokenizer, statePattern) {
       if (!position)
          return "";
       this.$buildScopeTreeUpToRow(position.row);
-      return this.$scopeTree.findLabel(position);
+      return this.$scopeTree.findFunction(position);
    };
 
    this.getFunctionTree = function()
