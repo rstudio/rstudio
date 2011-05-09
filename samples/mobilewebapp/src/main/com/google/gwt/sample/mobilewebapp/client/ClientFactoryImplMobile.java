@@ -32,7 +32,7 @@ public class ClientFactoryImplMobile extends ClientFactoryImpl {
   @Override
   protected MobileWebAppShell createShell() {
     return new MobileWebAppShellMobile(orientationHelper, getTaskListView(),
-        getTaskEditView());
+        getTaskEditView(), getTaskReadView());
   }
 
   @Override

@@ -33,6 +33,7 @@ import com.google.gwt.sample.mobilewebapp.client.activity.TaskEditView;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskListActivity;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskListActivity.TaskListUpdateEvent;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskListView;
+import com.google.gwt.sample.mobilewebapp.client.activity.TaskReadView;
 import com.google.gwt.sample.mobilewebapp.client.place.TaskEditPlace;
 import com.google.gwt.sample.mobilewebapp.client.place.TaskListPlace;
 import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
@@ -205,7 +206,7 @@ public class MobileWebAppShellDesktop extends ResizeComposite implements MobileW
    * @param clientFactory the {@link ClientFactory} of shared resources
    */
   public MobileWebAppShellDesktop(EventBus bus, final PlaceController placeController,
-      TaskListView taskListView, TaskEditView taskEditView) {
+      TaskListView taskListView, TaskEditView taskEditView, TaskReadView taskReadView) {
 
     // Initialize the main menu.
     Resources resources = GWT.create(Resources.class);
@@ -283,13 +284,14 @@ public class MobileWebAppShellDesktop extends ResizeComposite implements MobileW
     setAddButtonHandler(null);
 
     /*
-     * Add both views to the DeckLayoutPanel so we can animate between them.
-     * Using a DeckLayoutPanel here works because we only have two views, and we
-     * always know that the edit view should animate in from the right side of
+     * Add all views to the DeckLayoutPanel so we can animate between them.
+     * Using a DeckLayoutPanel here works because we only have a few views, and we
+     * always know that the task views should animate in from the right side of
      * the screen. A more complex app will require more complex logic to figure
      * out which direction to animate.
      */
     contentContainer.add(taskListView);
+    contentContainer.add(taskReadView);
     contentContainer.add(taskEditView);
     contentContainer.setAnimationDuration(800);
 

@@ -154,7 +154,7 @@ class ClientFactoryImpl implements ClientFactory {
    */
   protected MobileWebAppShell createShell() {
     return new MobileWebAppShellDesktop(eventBus, placeController, getTaskListView(),
-        getTaskEditView());
+        getTaskEditView(), getTaskReadView());
   }
 
   /**

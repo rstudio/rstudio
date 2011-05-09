@@ -25,6 +25,7 @@ import com.google.gwt.sample.mobilewebapp.client.ClientFactory;
 import com.google.gwt.sample.mobilewebapp.client.MobileWebAppShell;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskEditView;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskListView;
+import com.google.gwt.sample.mobilewebapp.client.activity.TaskReadView;
 import com.google.gwt.sample.mobilewebapp.client.ui.OrientationHelper;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -109,7 +110,7 @@ public class MobileWebAppShellMobile extends ResizeComposite implements MobileWe
    * @param clientFactory the {@link ClientFactory} of shared resources
    */
   public MobileWebAppShellMobile(OrientationHelper orientationHelper, TaskListView taskListView,
-      TaskEditView taskEditView) {
+      TaskEditView taskEditView, TaskReadView taskReadView) {
 
     initWidget(uiBinder.createAndBindUi(this));
 
@@ -117,13 +118,14 @@ public class MobileWebAppShellMobile extends ResizeComposite implements MobileWe
     setAddButtonHandler(null);
 
     /*
-     * Add both views to the DeckLayoutPanel so we can animate between them.
-     * Using a DeckLayoutPanel here works because we only have two views, and we
-     * always know that the edit view should animate in from the right side of
+     * Add all views to the DeckLayoutPanel so we can animate between them.
+     * Using a DeckLayoutPanel here works because we only have a few views, and we
+     * always know that the task views should animate in from the right side of
      * the screen. A more complex app will require more complex logic to figure
      * out which direction to animate.
      */
     contentContainer.add(taskListView);
+    contentContainer.add(taskReadView);
     contentContainer.add(taskEditView);
     contentContainer.setAnimationDuration(500);
 
