@@ -217,8 +217,8 @@ public class XMLTest extends GWTTestCase {
 
     // we didn't define a dtd, so no id for us
     Element e1NodeDirect = d.getElementById("e1Id");
-    // Chrome 11 fails to implement this behavior
-    if (!Window.Navigator.getUserAgent().contains("Chrome/11.")) {
+    // Chrome 11 and 12 fail to implement this behavior
+    if (!Window.Navigator.getUserAgent().matches(".*Chrome/1[12]\\..*")) {
       assertNull(e1NodeDirect);
     }
 
