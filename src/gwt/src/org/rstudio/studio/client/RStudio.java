@@ -48,7 +48,6 @@ import org.rstudio.studio.client.workbench.views.history.view.Shelf;
 import org.rstudio.studio.client.workbench.views.packages.ui.CheckForUpdatesDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableResources;
-import org.rstudio.studio.client.workbench.views.plots.ui.ExportDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.PrintDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlotResources;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorResources;
@@ -132,7 +131,6 @@ public class RStudio implements EntryPoint
       PrintDialog.ensureStylesInjected();
       InstallPackageDialog.ensureStylesInjected();
       PublishPdfDialog.ensureStylesInjected();
-      ExportDialog.ensureStylesInjected();
       ApplicationEndedPopupPanel.ensureStylesInjected();
       ApplicationSerializationProgress.ensureStylesInjected();
       HistoryPane.ensureStylesInjected();

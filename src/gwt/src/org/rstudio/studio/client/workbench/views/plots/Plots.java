@@ -48,13 +48,11 @@ import org.rstudio.studio.client.workbench.views.plots.events.LocatorEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.LocatorHandler;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedHandler;
-import org.rstudio.studio.client.workbench.views.plots.model.ExportOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotContext;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
 import org.rstudio.studio.client.workbench.views.plots.model.PrintOptions;
-import org.rstudio.studio.client.workbench.views.plots.ui.ExportDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.PrintDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlot;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorChangedHandler;
@@ -148,40 +146,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                });
             }
          });
-      
-      
-      new JSObjectStateValue("plotspane", "exportOptions", true,
-                             session.getSessionInfo().getClientState(), false)
-      {
-         @Override
-         protected void onInit(JsObject value)
-         {
-            if (value != null)
-               exportOptions_ = value.cast();
-            lastKnownState_ = exportOptions_;
-         }
-
-         @Override
-         protected JsObject getValue()
-         {
-            return exportOptions_.cast();
-         }
-
-         @Override
-         protected boolean hasChanged()
-         {
-            if (!ExportOptions.areEqual(lastKnownState_, exportOptions_))
-            {
-               lastKnownState_ = exportOptions_;
-               return true;
-            }
-
-            return false;
-         }
-
-         private ExportOptions lastKnownState_;
-      };
-      
+            
       new JSObjectStateValue("plotspane", "exportPlotOptions", true,
             session.getSessionInfo().getClientState(), false)
       {
@@ -342,44 +307,18 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
      
    }
    
-   void onExportPlotAsImage()
+   void onSavePlotAsImage()
    {
       view_.bringToFront();
       
-      // show the dialog 
-      new ExportDialog(
-            server_,
-            exportOptions_,
-            new OperationWithInput<ExportOptions>() {
-               public void execute(ExportOptions input)
-               {
-                 // update default options
-                 exportOptions_ = input;
-                 session_.persistClientState(); 
-               }
-      }).showModal();
-   }
-   
-   void onExportPlot()
-   {
-      view_.bringToFront();
-      
-      /*
-      exportPlot_.copyPlotToClipboard(server_, 
-                                      exportPlotOptions_,
-                                      saveExportOptionsOperation_);
-     */ 
-     
-     
       final ProgressIndicator indicator = 
-                                 globalDisplay_.getProgressIndicator("Error");
+         globalDisplay_.getProgressIndicator("Error");
       indicator.onProgress("Preparing to export plot...");
 
-      
       // get the default directory
       FileSystemItem defaultDir = ExportPlot.getDefaultSaveDirectory(
-                                    workbenchContext_.getCurrentWorkingDir());
-      
+            workbenchContext_.getCurrentWorkingDir());
+
       // get context
       server_.getSavePlotContext(
          defaultDir.getPath(),
@@ -389,12 +328,12 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
             public void onResponseReceived(SavePlotContext context)
             {
                indicator.onCompleted();
-               
+
                exportPlot_.savePlotAsImage(globalDisplay_,
-                                           server_, 
-                                           context, 
-                                           exportPlotOptions_, 
-                                           saveExportOptionsOperation_);  
+                     server_, 
+                     context, 
+                     exportPlotOptions_, 
+                     saveExportOptionsOperation_);  
             }
 
             @Override
@@ -402,9 +341,16 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
             {
                indicator.onError(error.getUserMessage());
             }           
-         });   
-       
-       
+         });
+   }
+   
+   void onCopyPlotToClipboard()
+   {
+      view_.bringToFront();
+      
+      exportPlot_.copyPlotToClipboard(server_, 
+                                      exportPlotOptions_,
+                                      saveExportOptionsOperation_);    
    }
    
    private OperationWithInput<ExportPlotOptions> saveExportOptionsOperation_ =
@@ -553,12 +499,6 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    
    // export plot impl
    private final ExportPlot exportPlot_ ;
-   
-   // default export options
-   private ExportOptions exportOptions_ = ExportOptions.create(
-                                                   ExportOptions.PNG_TYPE,
-                                                   500, 
-                                                   400);
    
    // default export options
    private ExportPlotOptions exportPlotOptions_ = ExportPlotOptions.create(

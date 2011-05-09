@@ -134,7 +134,8 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="zoomPlot"/>
          <separator/>
-         <cmd refid="exportPlotAsImage"/>
+         <cmd refid="savePlotAsImage"/>
+         <cmd refid="copyPlotToClipboard"/>
          <cmd refid="printPlot"/>
          <separator/>
          <cmd refid="removePlot"/>
@@ -218,7 +219,6 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="previousPlot" value="Cmd+PageUp" />
       <shortcut refid="nextPlot" value="Cmd+PageDown" />
       <shortcut refid="removePlot" value="Cmd+Shift+R" />
-      <shortcut refid="exportPlot" value="Cmd+Shift+0" />
       <shortcut refid="showManipulator" value="Cmd+Shift+M"/>
       <shortcut refid="showRequestLog" value="Ctrl+`" />
       <shortcut refid="logFocusedElement" value="Ctrl+Shift+`" />
@@ -427,17 +427,15 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         menuLabel="_Previous Plot"
         desc="Previous plot"/>
-   <cmd id="exportPlot" 
-        buttonLabel="Export"
-        menuLabel="_Export Plot..."
-        desc="Export the current plot" />
-   <cmd id="exportPlotAsImage" 
-        buttonLabel="Export"
-        menuLabel="_Export As Image..."
-        desc="Export the current plot as a PNG image" />
+   <cmd id="savePlotAsImage"
+        menuLabel="_Save Plot as Image..."
+        desc="Save the current plot as an image file"/> 
+   <cmd id="copyPlotToClipboard"
+        menuLabel="Cop_y Plot to Clipboard..."
+        desc="Copy the current plot to the clipboard"/>    
    <cmd id="printPlot"
         buttonLabel = "PDF"
-        menuLabel="_Print to PDF..."
+        menuLabel="Print to PDF..."
         desc="Print current plot to a PDF file"/>
    <cmd id ="zoomPlot" 
         menuLabel="_Zoom Plot..."

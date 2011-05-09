@@ -49,11 +49,6 @@ public interface PlotsServerOperations
                   String directory,
                   ServerRequestCallback<SavePlotContext> requestCallback);
    
-   void exportPlot(FileSystemItem file,
-                   int width,
-                   int height,
-                   ServerRequestCallback<Void> requestCallback);
-   
    void savePlotAs(FileSystemItem file,
                    String format,
                    int width,

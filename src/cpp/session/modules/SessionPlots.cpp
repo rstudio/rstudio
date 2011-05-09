@@ -98,28 +98,6 @@ Error refreshPlot(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error exportPlot(const json::JsonRpcRequest& request,
-                  json::JsonRpcResponse* pResponse)
-{
-   // get args
-   std::string path;
-   int width, height;
-   Error error = json::readParams(request.params, &path, &width, &height);
-   if (error)
-      return error;
-
-   // resolve path
-   FilePath plotPath = module_context::resolveAliasedPath(path);
-
-   // save plot
-   using namespace r::session::graphics;
-   return r::session::graphics::display().savePlotAsImage(plotPath,
-                                                          kPngFormat,
-                                                          width,
-                                                          height);
-}
-
-
 json::Object boolObject(bool value)
 {
    json::Object boolObject ;
@@ -638,7 +616,6 @@ Error initialize()
       (bind(registerRpcMethod, "remove_plot", removePlot))
       (bind(registerRpcMethod, "clear_plots", clearPlots))
       (bind(registerRpcMethod, "refresh_plot", refreshPlot))
-      (bind(registerRpcMethod, "export_plot", exportPlot))
       (bind(registerRpcMethod, "save_plot_as", savePlotAs))
       (bind(registerRpcMethod, "get_save_plot_context", getSavePlotContext))
       (bind(registerRpcMethod, "set_manipulator_values", setManipulatorValues))
