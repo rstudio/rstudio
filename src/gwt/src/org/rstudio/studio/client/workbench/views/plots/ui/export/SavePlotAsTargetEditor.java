@@ -26,14 +26,16 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 
 
-// TODO: view after saving (desktop and web difference)
+// TODO: Save As PDF... dialog
+
+// TODO: rollout the feature (including menus)
 
 // TODO: other image formats
 
-// TODO: windows metafile support
+// TODO: windows metafile clipboard support
 // TODO: clipboard vector graphics for other platforms?
 
-// TODO: Save As PDF... dialog
+
 
 public class SavePlotAsTargetEditor extends Composite implements CanFocus
 {
@@ -42,10 +44,8 @@ public class SavePlotAsTargetEditor extends Composite implements CanFocus
    {
       context_ = context;
       
-      ExportPlotResources.Styles styles = 
-                              ExportPlotResources.INSTANCE.styles();
+      ExportPlotResources.Styles styles = ExportPlotResources.INSTANCE.styles();
 
-      
       Grid grid = new Grid(3, 2);
       grid.setCellPadding(0);
     

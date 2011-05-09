@@ -22,6 +22,8 @@ import com.google.gwt.json.client.JSONObject;
 public interface PlotsServerOperations
 {
    String getGraphicsUrl(String filename);
+ 
+   String getFileUrl(FileSystemItem file);
    
    String getPlotExportUrl(String type, 
                            int width, 
