@@ -15,6 +15,8 @@
  */
 package com.google.gwt.sample.mobilewebapp.client;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.place.shared.Place;
 import com.google.gwt.place.shared.PlaceChangeEvent;
@@ -24,7 +26,9 @@ import com.google.gwt.sample.gaerequest.client.ReloadOnAuthenticationFailure;
 import com.google.gwt.sample.mobilewebapp.client.place.AppPlaceHistoryMapper;
 import com.google.gwt.sample.mobilewebapp.client.place.TaskListPlace;
 import com.google.gwt.storage.client.Storage;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HasWidgets;
+import com.google.web.bindery.event.shared.UmbrellaException;
 
 /**
  * The heart of the applicaiton, mainly concerned with bootstrapping.
@@ -53,7 +57,7 @@ public class App {
   private final AppPlaceHistoryMapper historyMapper;
 
   private final PlaceHistoryHandler historyHandler;
-  
+
   private final ReloadOnAuthenticationFailure reloadOnAuthenticationFailure;
 
   public App(Storage storage, EventBus eventBus, PlaceController placeController,
@@ -76,6 +80,17 @@ public class App {
    */
   public void run(HasWidgets.ForIsWidget parentView) {
     parentView.add(shell);
+
+    GWT.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+      @Override
+      public void onUncaughtException(Throwable e) {
+        while (e instanceof UmbrellaException) {
+          e = ((UmbrellaException)e).getCauses().iterator().next();
+        }
+        Window.alert("An unexpected error occurred: " + e.getMessage());
+        placeController.goTo(new TaskListPlace(false));
+      }
+    });
 
     // Check for authentication failures or mismatches
     reloadOnAuthenticationFailure.register(eventBus);

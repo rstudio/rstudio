@@ -21,6 +21,7 @@ import com.google.gwt.sample.mobilewebapp.client.activity.TaskEditView;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskListView;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskReadView;
 import com.google.gwt.storage.client.Storage;
+import com.google.gwt.sample.mobilewebapp.shared.MobileWebAppRequestFactory;
 
 /**
  * The factory responsible for instantiating everything interesting in this

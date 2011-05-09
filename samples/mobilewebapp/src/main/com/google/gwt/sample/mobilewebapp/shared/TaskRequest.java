@@ -13,10 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.mobilewebapp.client;
+package com.google.gwt.sample.mobilewebapp.shared;
 
 import com.google.gwt.sample.mobilewebapp.server.domain.Task;
-import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
 import com.google.web.bindery.requestfactory.shared.InstanceRequest;
 import com.google.web.bindery.requestfactory.shared.Request;
 import com.google.web.bindery.requestfactory.shared.RequestContext;

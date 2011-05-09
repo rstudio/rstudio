@@ -34,6 +34,7 @@ import com.google.gwt.sample.mobilewebapp.client.desktop.DesktopTaskListView;
 import com.google.gwt.sample.mobilewebapp.client.desktop.DesktopTaskReadView;
 import com.google.gwt.sample.mobilewebapp.client.desktop.MobileWebAppShellDesktop;
 import com.google.gwt.sample.mobilewebapp.client.place.AppPlaceHistoryMapper;
+import com.google.gwt.sample.mobilewebapp.shared.MobileWebAppRequestFactory;
 import com.google.gwt.storage.client.Storage;
 import com.google.gwt.user.client.Window;
 import com.google.web.bindery.requestfactory.shared.RequestTransport;

@@ -18,11 +18,11 @@ package com.google.gwt.sample.mobilewebapp.client.activity;
 import com.google.gwt.activity.shared.AbstractActivity;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.sample.mobilewebapp.client.ClientFactory;
-import com.google.gwt.sample.mobilewebapp.client.TaskRequest;
 import com.google.gwt.sample.mobilewebapp.client.place.TaskEditPlace;
 import com.google.gwt.sample.mobilewebapp.client.place.TaskListPlace;
 import com.google.gwt.sample.mobilewebapp.client.ui.SoundEffects;
 import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
+import com.google.gwt.sample.mobilewebapp.shared.TaskRequest;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.AcceptsOneWidget;
 import com.google.web.bindery.requestfactory.shared.Receiver;
@@ -131,13 +131,6 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
       }
 
       @Override
-      public void onFailure(ServerFailure error) {
-        Window.alert("An error occurred on the server while saving this task."
-            + " Please try saving the task again.");
-        doCancelTask();
-      }
-
-      @Override
       public void onSuccess(Void response) {
         // Notify the user that the task was updated.
         TaskEditActivity.this.notify("Task Saved");
@@ -176,13 +169,6 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
         // Load the existing task.
         clientFactory.getRequestFactory().taskRequest().findTask(this.taskId).fire(
             new Receiver<TaskProxy>() {
-              @Override
-              public void onFailure(ServerFailure error) {
-                Window.alert("An error occurred on the server while loading this task."
-                    + " Please select a different task from the task list.");
-                doCancelTask();
-              }
-
               @Override
               public void onSuccess(TaskProxy response) {
                 // Early exit if this activity has already been cancelled.
@@ -234,8 +220,8 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
         new Receiver<Void>() {
           @Override
           public void onFailure(ServerFailure error) {
-            Window.alert("An error occurred on the server while deleting this task."
-                + " Please try deleting it again.");
+            Window.alert("An error occurred on the server while deleting this task: \"."
+                + error.getMessage() + "\".");
           }
 
           @Override
@@ -292,13 +278,6 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
       editView.setLocked(true);
       clientFactory.getRequestFactory().taskRequest().findTask(this.taskId).fire(
           new Receiver<TaskProxy>() {
-            @Override
-            public void onFailure(ServerFailure error) {
-              Window.alert("An error occurred on the server while loading this task."
-                  + " Please select a different task from the task list.");
-              doCancelTask();
-            }
-
             @Override
             public void onSuccess(TaskProxy response) {
               // Early exit if this activity has already been cancelled.
