@@ -23,6 +23,7 @@ import com.google.gwt.user.client.ui.Panel;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.HasCustomizableToolbar;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -35,6 +36,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -48,7 +50,7 @@ import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedHandler;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
-import org.rstudio.studio.client.workbench.views.plots.model.PlotExportContext;
+import org.rstudio.studio.client.workbench.views.plots.model.SavePlotContext;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
 import org.rstudio.studio.client.workbench.views.plots.model.PrintOptions;
@@ -86,6 +88,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    @Inject
    public Plots(final Display view,
                 GlobalDisplay globalDisplay,
+                WorkbenchContext workbenchContext,
                 Commands commands,
                 final PlotsServerOperations server,
                 Session session)
@@ -93,6 +96,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       super(view);
       view_ = view;
       globalDisplay_ = globalDisplay;
+      workbenchContext_ = workbenchContext;
       server_ = server;
       session_ = session;
       exportPlot_ = GWT.create(ExportPlot.class);
@@ -371,11 +375,18 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                                  globalDisplay_.getProgressIndicator("Error");
       indicator.onProgress("Preparing to export plot...");
 
-      server_.getPlotExportContext(
-         new SimpleRequestCallback<PlotExportContext>() {
+      
+      // get the default directory
+      FileSystemItem defaultDir = ExportPlot.getDefaultSaveDirectory(
+                                    workbenchContext_.getCurrentWorkingDir());
+      
+      // get context
+      server_.getSavePlotContext(
+         defaultDir.getPath(),
+         new SimpleRequestCallback<SavePlotContext>() {
 
             @Override
-            public void onResponseReceived(PlotExportContext context)
+            public void onResponseReceived(SavePlotContext context)
             {
                indicator.onCompleted();
                
@@ -535,6 +546,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    private final Display view_;
    private final GlobalDisplay globalDisplay_;
    private final PlotsServerOperations server_;
+   private final WorkbenchContext workbenchContext_;
    private final Session session_;
    private final Locator locator_;
    private final ManipulatorManager manipulatorManager_;

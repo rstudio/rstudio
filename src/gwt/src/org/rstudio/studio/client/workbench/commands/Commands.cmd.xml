@@ -218,7 +218,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="previousPlot" value="Cmd+PageUp" />
       <shortcut refid="nextPlot" value="Cmd+PageDown" />
       <shortcut refid="removePlot" value="Cmd+Shift+R" />
-      <shortcut refid="exportPlot" value="Cmd+Shift+L" />
+      <shortcut refid="exportPlot" value="Cmd+Shift+T" />
       <shortcut refid="showManipulator" value="Cmd+Shift+M"/>
       <shortcut refid="showRequestLog" value="Ctrl+`" />
       <shortcut refid="logFocusedElement" value="Ctrl+Shift+`" />

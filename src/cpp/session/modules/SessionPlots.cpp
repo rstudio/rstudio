@@ -156,17 +156,21 @@ json::Object plotExportFormat(const std::string& name,
    return formatJson;
 }
 
-Error getPlotExportContext(const json::JsonRpcRequest& request,
-                           json::JsonRpcResponse* pResponse)
+Error getSavePlotContext(const json::JsonRpcRequest& request,
+                         json::JsonRpcResponse* pResponse)
 {
+   // get directory arg
+   std::string directory;
+   Error error = json::readParam(request.params, 0, &directory);
+   if (error)
+      return error;
+
    // context
    json::Object contextJson;
 
    // get supported formats
+    using namespace r::session::graphics;
    json::Array formats;
-
-   // base formats
-   using namespace r::session::graphics;
    formats.push_back(plotExportFormat("PNG", kPngFormat));
    formats.push_back(plotExportFormat("JPEG", kJpegFormat));
    formats.push_back(plotExportFormat("TIFF", kTiffFormat));
@@ -189,13 +193,15 @@ Error getPlotExportContext(const json::JsonRpcRequest& request,
 
    contextJson["formats"] = formats;
 
-   // get working directory
-   FilePath workingDir = module_context::safeCurrentPath();
-   contextJson["directory"] = module_context::createFileSystemItem(workingDir);
+   // get directory path
+   FilePath directoryPath = module_context::resolveAliasedPath(directory);
+
+   // reflect directory back to caller
+   contextJson["directory"] = module_context::createFileSystemItem(directoryPath);
 
    // determine unique file name
    std::vector<FilePath> children;
-   Error error = workingDir.children(&children);
+   error = directoryPath.children(&children);
    if (error)
       return error;
 
@@ -216,10 +222,10 @@ Error getPlotExportContext(const json::JsonRpcRequest& request,
       // update stem and search again
       boost::format fmt("Rplot%1%");
       stem = boost::str(fmt % boost::io::group(std::setfill('0'),
-                                               std::setw(3),
+                                               std::setw(2),
                                                ++i));
    }
-   contextJson["filename"] = stem;
+   contextJson["uniqueFileStem"] = stem;
 
    pResponse->setResult(contextJson);
 
@@ -611,7 +617,7 @@ Error initialize()
       (bind(registerRpcMethod, "refresh_plot", refreshPlot))
       (bind(registerRpcMethod, "export_plot", exportPlot))
       (bind(registerRpcMethod, "save_plot_as", savePlotAs))
-      (bind(registerRpcMethod, "get_plot_export_context", getPlotExportContext))
+      (bind(registerRpcMethod, "get_save_plot_context", getSavePlotContext))
       (bind(registerRpcMethod, "set_manipulator_values", setManipulatorValues))
       (bind(registerUriHandler, kGraphics "/plot_zoom_png", handleZoomPngRequest))
       (bind(registerUriHandler, kGraphics "/plot_zoom", handleZoomRequest))

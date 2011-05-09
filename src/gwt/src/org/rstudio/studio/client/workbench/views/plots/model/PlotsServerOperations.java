@@ -42,8 +42,9 @@ public interface PlotsServerOperations
    void locatorCompleted(Point point, 
                         ServerRequestCallback<Void> requestCallback);
 
-   void getPlotExportContext(
-                  ServerRequestCallback<PlotExportContext> requestCallback);
+   void getSavePlotContext(
+                  String directory,
+                  ServerRequestCallback<SavePlotContext> requestCallback);
    
    void exportPlot(FileSystemItem file,
                    int width,

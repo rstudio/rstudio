@@ -8,7 +8,7 @@ import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
-import org.rstudio.studio.client.workbench.views.plots.model.PlotExportContext;
+import org.rstudio.studio.client.workbench.views.plots.model.SavePlotContext;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -21,7 +21,7 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
    public SavePlotAsImageDialog(
                            GlobalDisplay globalDisplay,
                            PlotsServerOperations server,
-                           PlotExportContext context, 
+                           SavePlotContext context, 
                            final ExportPlotOptions options,
                            final OperationWithInput<ExportPlotOptions> onClose)
    {

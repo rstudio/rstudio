@@ -49,7 +49,7 @@ import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
-import org.rstudio.studio.client.workbench.views.plots.model.PlotExportContext;
+import org.rstudio.studio.client.workbench.views.plots.model.SavePlotContext;
 import org.rstudio.studio.client.workbench.views.plots.model.Point;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
@@ -754,10 +754,14 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SAVE_PLOT_AS, params, requestCallback);
    }
    
-   public void getPlotExportContext(
-                  ServerRequestCallback<PlotExportContext> requestCallback)
+   public void getSavePlotContext(
+                  String directory,
+                  ServerRequestCallback<SavePlotContext> requestCallback)
    {
-      sendRequest(RPC_SCOPE, GET_PLOT_EXPORT_CONTEXT, requestCallback);
+      sendRequest(RPC_SCOPE, 
+                  GET_SAVE_PLOT_CONTEXT, 
+                  directory, 
+                  requestCallback);
    }
 
    public void locatorCompleted(Point point,
@@ -1443,7 +1447,7 @@ public class RemoteServer implements Server
    private static final String REFRESH_PLOT = "refresh_plot";
    private static final String EXPORT_PLOT = "export_plot";
    private static final String SAVE_PLOT_AS = "save_plot_as";
-   private static final String GET_PLOT_EXPORT_CONTEXT = "get_plot_export_context";
+   private static final String GET_SAVE_PLOT_CONTEXT = "get_save_plot_context";
    private static final String LOCATOR_COMPLETED = "locator_completed";
    private static final String SET_MANIPULATOR_VALUES = "set_manipulator_values";
 
