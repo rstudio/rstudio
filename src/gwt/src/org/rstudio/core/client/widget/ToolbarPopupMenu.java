@@ -14,16 +14,24 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.DomEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.command.AppMenuItem;
 import org.rstudio.core.client.command.BaseMenuBar;
@@ -124,6 +132,13 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       }
 
       @Override
+      protected void onUnload()
+      {
+         nativePreviewReg_.removeHandler();
+         super.onUnload();
+      }
+
+      @Override
       protected void onLoad()
       {
          super.onLoad();
@@ -131,17 +146,41 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
          {
             public void onPreviewNativeEvent(NativePreviewEvent e)
             {
-               if (e.getTypeInt() == Event.ONKEYDOWN
-                   && e.getNativeEvent().getKeyCode() == KeyCodes.KEY_ESCAPE)
+               if (e.getTypeInt() == Event.ONKEYDOWN)
                {
-                  nativePreviewReg_.removeHandler();
-                  Scheduler.get().scheduleDeferred(new ScheduledCommand()
+                  switch (e.getNativeEvent().getKeyCode())
                   {
-                     public void execute()
-                     {
+                     case KeyCodes.KEY_ESCAPE:
+                        e.cancel();
                         hide();
-                     }
-                  });
+                        break;
+                     case KeyCodes.KEY_DOWN:
+                        e.cancel();
+                        moveSelectionDown();
+                        break;
+                     case KeyCodes.KEY_UP:
+                        e.cancel();
+                        moveSelectionUp();
+                        break;
+                     case KeyCodes.KEY_ENTER:
+                        e.cancel();
+                        final MenuItem menuItem = getSelectedItem();
+                        if (menuItem != null)
+                        {
+                           NativeEvent evt = Document.get().createClickEvent(
+                                 0,
+                                 0,
+                                 0,
+                                 0,
+                                 0,
+                                 false,
+                                 false,
+                                 false,
+                                 false);
+                           menuItem.getElement().dispatchEvent(evt);
+                        }
+                        break;
+                  }
                }
             }
          });

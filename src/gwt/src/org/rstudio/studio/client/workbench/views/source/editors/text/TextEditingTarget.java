@@ -518,7 +518,6 @@ public class TextEditingTarget implements EditingTarget
                   "fontFamily", ThemeFonts.getFixedWidthFont());
             addFunctionsToMenu(menu, tree, "");
             menu.showRelativeToUpward((UIObject) statusBar_.getFunction());
-            menu.focus();
          }
       });
    }
