@@ -129,3 +129,10 @@
 	margin-left: 10px;
 }
 
+.savePdfViewAfterCheckbox {
+   margin-left: 7px;
+}
+
+.savePdfViewAfterCheckbox input[type=checkbox] {
+   margin-top: 10px;
+}

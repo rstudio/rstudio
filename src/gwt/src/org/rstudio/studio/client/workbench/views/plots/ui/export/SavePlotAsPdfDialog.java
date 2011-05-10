@@ -91,11 +91,6 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
       });
       addOkButton(saveButton);
       addCancelButton();
-            
-      // view after size
-      viewAfterSaveCheckBox_ = new CheckBox("View plot after saving");
-      viewAfterSaveCheckBox_.setValue(options.getViewAfterSave());
-      addLeftWidget(viewAfterSaveCheckBox_);
    }
    
    @Override 
@@ -110,7 +105,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
    {
       ExportPlotResources.Styles styles = ExportPlotResources.INSTANCE.styles();
       
-      Grid grid = new Grid(5, 2);
+      Grid grid = new Grid(6, 2);
       grid.setStylePrimaryName(styles.savePdfMainWidget());
       final int kComponentSpacing = 7;    
       
@@ -212,6 +207,13 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
       fileNameTextBox_.setStylePrimaryName(styles.savePdfFileNameTextBox());
       grid.setWidget(4, 1, fileNameTextBox_);
       
+      
+      // view after size
+      viewAfterSaveCheckBox_ = new CheckBox("View plot after saving");
+      viewAfterSaveCheckBox_.setStylePrimaryName(
+                                       styles.savePdfViewAfterCheckbox());
+      viewAfterSaveCheckBox_.setValue(options_.getViewAfterSave());
+      grid.setWidget(5, 1, viewAfterSaveCheckBox_);
       
       // set default values
       paperSizeListBox_.setSelectedIndex(selectedPaperSize);
