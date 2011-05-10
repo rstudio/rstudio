@@ -67,12 +67,12 @@ import java.util.SortedSet;
 public class StandardGeneratorContext implements GeneratorContextExt {
 
   /**
-   * Extras added to {@link CompilationUnit}.
+   * Extras added to {@link GeneratedUnit}.
    */
-  public static interface Generated extends GeneratedUnit {
+  private static interface Generated extends GeneratedUnit {
     void abort();
 
-    void commit();
+    void commit(TreeLogger logger);
 
     /**
      * Returns the strong hash of the source.
@@ -83,7 +83,7 @@ public class StandardGeneratorContext implements GeneratorContextExt {
   }
 
   /**
-   * This compilation unit acts as a normal compilation unit as well as a buffer
+   * This generated unit acts as a normal generated unit as well as a buffer
    * into which generators can write their source. A controller should ensure
    * that source isn't requested until the generator has finished writing it.
    * This version is backed by {@link StandardGeneratorContext#diskCache}.
@@ -113,9 +113,9 @@ public class StandardGeneratorContext implements GeneratorContextExt {
     }
 
     /**
-     * Finalizes the source and adds this compilation unit to the host.
+     * Finalizes the source and adds this generated unit to the host.
      */
-    public void commit() {
+    public void commit(TreeLogger logger) {
       String source = sw.toString();
       strongHash = Util.computeStrongName(Util.getBytes(source));
       sourceToken = diskCache.writeString(source);
@@ -155,7 +155,7 @@ public class StandardGeneratorContext implements GeneratorContextExt {
   }
 
   /**
-   * This compilation unit acts as a normal compilation unit as well as a buffer
+   * This generated unit acts as a normal generated unit as well as a buffer
    * into which generators can write their source. A controller should ensure
    * that source isn't requested until the generator has finished writing it.
    * This version is backed by an explicit generated file.
@@ -169,15 +169,15 @@ public class StandardGeneratorContext implements GeneratorContextExt {
     }
 
     @Override
-    public void commit() {
-      super.commit();
+    public void commit(TreeLogger logger) {
+      super.commit(logger);
       FileOutputStream fos = null;
       try {
         fos = new FileOutputStream(file);
         diskCache.transferToStream(sourceToken, fos);
       } catch (IOException e) {
-        throw new RuntimeException("Error writing out generated unit at '"
-            + file.getAbsolutePath() + "'", e);
+        logger.log(TreeLogger.WARN, "Error writing out generated unit at '"
+            + file.getAbsolutePath() + "': " + e);
       } finally {
         Utility.close(fos);
       }
@@ -185,7 +185,7 @@ public class StandardGeneratorContext implements GeneratorContextExt {
 
     @Override
     public String optionalFileLocation() {
-      return file.getAbsolutePath();
+      return file.exists() ? file.getAbsolutePath() : null;
     }
   }
 
@@ -382,7 +382,7 @@ public class StandardGeneratorContext implements GeneratorContextExt {
   public final void commit(TreeLogger logger, PrintWriter pw) {
     Generated gcup = uncommittedGeneratedCupsByPrintWriter.get(pw);
     if (gcup != null) {
-      gcup.commit();
+      gcup.commit(logger);
       uncommittedGeneratedCupsByPrintWriter.remove(pw);
       committedGeneratedCups.put(gcup.getTypeName(), gcup);
     } else {
