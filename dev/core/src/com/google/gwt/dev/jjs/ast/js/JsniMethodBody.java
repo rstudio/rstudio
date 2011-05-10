@@ -18,7 +18,6 @@ package com.google.gwt.dev.jjs.ast.js;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JAbstractMethodBody;
-import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsFunction;
@@ -37,7 +36,7 @@ import java.util.Set;
  */
 public class JsniMethodBody extends JAbstractMethodBody {
 
-  private List<JClassLiteral> classRefs = Collections.emptyList();
+  private List<JsniClassLiteral> classRefs = Collections.emptyList();
   private JsFunction jsFunction = null;
   private List<JsniFieldRef> jsniFieldRefs = Collections.emptyList();
   private List<JsniMethodRef> jsniMethodRefs = Collections.emptyList();
@@ -51,7 +50,7 @@ public class JsniMethodBody extends JAbstractMethodBody {
   /**
    * Adds a reference from this method to a Java class literal.
    */
-  public void addClassRef(JClassLiteral ref) {
+  public void addClassRef(JsniClassLiteral ref) {
     classRefs = Lists.add(classRefs, ref);
   }
 
@@ -72,7 +71,7 @@ public class JsniMethodBody extends JAbstractMethodBody {
   /**
    * Return this method's references to Java class literals.
    */
-  public List<JClassLiteral> getClassRefs() {
+  public List<JsniClassLiteral> getClassRefs() {
     return classRefs;
   }
 

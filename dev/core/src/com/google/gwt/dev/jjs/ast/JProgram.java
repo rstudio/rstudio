@@ -311,8 +311,6 @@ public class JProgram extends JNode {
    */
   public final List<List<JMethod>> entryMethods = new ArrayList<List<JMethod>>();
 
-  public final Map<String, JNode> jsniMap = new HashMap<String, JNode>();
-
   public final JTypeOracle typeOracle = new JTypeOracle(this);
 
   /**

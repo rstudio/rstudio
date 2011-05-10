@@ -90,6 +90,7 @@ import com.google.gwt.dev.jjs.ast.JUnaryOperator;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
+import com.google.gwt.dev.jjs.ast.js.JsniClassLiteral;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
@@ -2843,8 +2844,9 @@ public class GenerateJavaAST {
         });
       }
 
-      private void processClassLiteral(JClassLiteral classLiteral, JsContext ctx) {
+      private void processClassLiteral(JsNameRef nameRef, SourceInfo info, JType type, JsContext ctx) {
         assert !ctx.isLvalue();
+        JsniClassLiteral classLiteral = new JsniClassLiteral(info, nameRef.getIdent(), type);
         nativeMethodBody.addClassRef(classLiteral);
       }
 
@@ -2885,24 +2887,21 @@ public class GenerateJavaAST {
         // TODO: make this tighter when we have real source info
         // JSourceInfo info = translateInfo(nameRef.getInfo());
         String ident = nameRef.getIdent();
-        JNode node = program.jsniMap.get(ident);
+        JNode node = jsniMap.get(ident);
         if (node == null) {
           node = findJsniRefTarget(info, ident);
           if (node == null) {
             return; // already reported error
           }
-          if (node instanceof JType) {
-            node = new JClassLiteral(info.makeChild(), (JType) node);
-          }
-          program.jsniMap.put(ident, node);
+          jsniMap.put(ident, node);
         }
 
         if (node instanceof JField) {
           processField(nameRef, info, (JField) node, ctx);
         } else if (node instanceof JMethod) {
           processMethod(nameRef, info, (JMethod) node, ctx);
-        } else if (node instanceof JClassLiteral) {
-          processClassLiteral((JClassLiteral) node, ctx);
+        } else if (node instanceof JType) {
+          processClassLiteral(nameRef, info, (JType) node, ctx);
         } else {
           throw new InternalCompilerException(node,
               "JSNI reference to something other than a class, field, or method?", null);
@@ -2911,6 +2910,8 @@ public class GenerateJavaAST {
     }
 
     private JDeclaredType currentClass;
+
+    private final Map<String, JNode> jsniMap = new HashMap<String, JNode>();
 
     private final Map<JsniMethodBody, AbstractMethodDeclaration> jsniMethodMap;
 

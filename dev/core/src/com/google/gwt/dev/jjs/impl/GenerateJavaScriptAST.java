@@ -86,6 +86,8 @@ import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
+import com.google.gwt.dev.jjs.ast.js.JsniClassLiteral;
+import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.jjs.ast.js.JsonArray;
@@ -1312,6 +1314,17 @@ public class GenerateJavaScriptAST {
 
     @Override
     public boolean visit(JsniMethodBody x, Context ctx) {
+      final Map<String, JNode> jsniMap = new HashMap<String, JNode>();
+      for (JsniClassLiteral ref : x.getClassRefs()) {
+        jsniMap.put(ref.getIdent(), ref.getField());
+      }
+      for (JsniFieldRef ref : x.getJsniFieldRefs()) {
+        jsniMap.put(ref.getIdent(), ref.getField());
+      }
+      for (JsniMethodRef ref : x.getJsniMethodRefs()) {
+        jsniMap.put(ref.getIdent(), ref.getTarget());
+      }
+
       final JsFunction jsFunc = x.getFunc();
 
       // replace all JSNI idents with a real JsName now that we know it
@@ -1331,7 +1344,7 @@ public class GenerateJavaScriptAST {
             JsNameRef ref = (JsNameRef) x.getQualifier();
             String ident = ref.getIdent();
             if (isJsniIdent(ident)) {
-              JNode node = program.jsniMap.get(ident);
+              JNode node = jsniMap.get(ident);
               assert node instanceof JConstructor;
               assert ref.getQualifier() == null;
               JsName jsName = names.get(node);
@@ -1348,12 +1361,8 @@ public class GenerateJavaScriptAST {
         public void endVisit(JsNameRef x, JsContext ctx) {
           String ident = x.getIdent();
           if (isJsniIdent(ident)) {
-            JNode node = program.jsniMap.get(ident);
+            JNode node = jsniMap.get(ident);
             assert (node != null);
-            if (node instanceof JClassLiteral) {
-              node = ((JClassLiteral) node).getField();
-              assert node != null;
-            }
             if (node instanceof JField) {
               JField field = (JField) node;
               JsName jsName = names.get(field);

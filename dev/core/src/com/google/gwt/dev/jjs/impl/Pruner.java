@@ -209,7 +209,6 @@ public class Pruner {
       if (isPruned(x.getField())) {
         String ident = x.getIdent();
         JField nullField = program.getNullField();
-        program.jsniMap.put(ident, nullField);
         JsniFieldRef nullFieldRef =
             new JsniFieldRef(x.getSourceInfo(), ident, nullField, x.getEnclosingType(), x
                 .isLvalue());
@@ -223,7 +222,6 @@ public class Pruner {
       if (isPruned(x.getTarget())) {
         String ident = x.getIdent();
         JMethod nullMethod = program.getNullMethod();
-        program.jsniMap.put(ident, nullMethod);
         JsniMethodRef nullMethodRef =
             new JsniMethodRef(x.getSourceInfo(), ident, nullMethod, program.getJavaScriptObject());
         ctx.replaceMe(nullMethodRef);

@@ -88,6 +88,7 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JUnaryOperator;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
+import com.google.gwt.dev.jjs.ast.js.JsniClassLiteral;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
@@ -232,9 +233,6 @@ public class GwtAstBuilder {
 
     /**
      * Resolves local references to function parameters, and JSNI references.
-     * 
-     * TODO: move more error reporting to
-     * {@link com.google.gwt.dev.javac.JsniChecker}.
      */
     private class JsniResolver extends JsModVisitor {
       private final JsniMethodBody nativeMethodBody;
@@ -253,7 +251,7 @@ public class GwtAstBuilder {
             assert ident.startsWith("@null::");
           } else if (binding instanceof TypeBinding) {
             JType type = typeMap.get((TypeBinding) binding);
-            processClassLiteral(type, info, ctx);
+            processClassLiteral(x, info, type, ctx);
           } else if (binding instanceof FieldBinding) {
             JField field = typeMap.get((FieldBinding) binding);
             processField(x, info, field, ctx);
@@ -264,9 +262,9 @@ public class GwtAstBuilder {
         }
       }
 
-      private void processClassLiteral(JType type, SourceInfo info, JsContext ctx) {
+      private void processClassLiteral(JsNameRef nameRef, SourceInfo info, JType type, JsContext ctx) {
         assert !ctx.isLvalue();
-        JClassLiteral classLiteral = new JClassLiteral(info, type);
+        JsniClassLiteral classLiteral = new JsniClassLiteral(info, nameRef.getIdent(), type);
         nativeMethodBody.addClassRef(classLiteral);
       }
 
