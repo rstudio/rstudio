@@ -460,7 +460,7 @@ var IndentManager = function(doc, tokenizer, statePattern) {
       this.$buildScopeTreeUpToRow(this.$doc.getLength() - 1);
       var list = [];
       this.$scopeTree.exportFunctions(list);
-      return list;
+      return list[0].children;
    };
 
    this.getNextLineIndent = function(lastRow, line, endState, tab, tabSize)

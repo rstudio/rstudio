@@ -514,8 +514,6 @@ public class TextEditingTarget implements EditingTarget
             // needs its menu built on demand
             JsArray<FunctionStart> tree = docDisplay_.getFunctionTree();
             final StatusBarPopupMenu menu = new StatusBarPopupMenu();
-            menu.getElement().getStyle().setProperty(
-                  "fontFamily", ThemeFonts.getFixedWidthFont());
             MenuItem defaultItem = addFunctionsToMenu(
                   menu, tree, "", docDisplay_.getCurrentFunction());
             if (defaultItem != null)
