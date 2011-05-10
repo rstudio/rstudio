@@ -50,7 +50,7 @@ import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
-import org.rstudio.studio.client.workbench.views.plots.model.SavePlotContext;
+import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.views.plots.model.Point;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
@@ -745,9 +745,29 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SAVE_PLOT_AS, params, requestCallback);
    }
    
+   public void savePlotAsPdf(FileSystemItem file,
+                             double widthInches,
+                             double heightInches,
+                             boolean overwrite,
+                             ServerRequestCallback<Bool> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(file.getPath()));
+      params.set(1, new JSONNumber(widthInches));
+      params.set(2, new JSONNumber(heightInches));
+      params.set(3, JSONBoolean.getInstance(overwrite));
+      sendRequest(RPC_SCOPE, SAVE_PLOT_AS_PDF, params, requestCallback);
+   }
+   
+   public void getUniqueSavePlotStem(String directory,
+                                  ServerRequestCallback<String> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_UNIQUE_SAVE_PLOT_STEM, directory, requestCallback);
+   }
+   
    public void getSavePlotContext(
                   String directory,
-                  ServerRequestCallback<SavePlotContext> requestCallback)
+                  ServerRequestCallback<SavePlotAsImageContext> requestCallback)
    {
       sendRequest(RPC_SCOPE, 
                   GET_SAVE_PLOT_CONTEXT, 
@@ -1437,6 +1457,8 @@ public class RemoteServer implements Server
    private static final String CLEAR_PLOTS = "clear_plots";
    private static final String REFRESH_PLOT = "refresh_plot";
    private static final String SAVE_PLOT_AS = "save_plot_as";
+   private static final String SAVE_PLOT_AS_PDF = "save_plot_as_pdf";
+   private static final String GET_UNIQUE_SAVE_PLOT_STEM = "get_unique_save_plot_stem";
    private static final String GET_SAVE_PLOT_CONTEXT = "get_save_plot_context";
    private static final String LOCATOR_COMPLETED = "locator_completed";
    private static final String SET_MANIPULATOR_VALUES = "set_manipulator_values";

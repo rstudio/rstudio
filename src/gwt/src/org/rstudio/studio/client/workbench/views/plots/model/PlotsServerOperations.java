@@ -45,9 +45,12 @@ public interface PlotsServerOperations
    void locatorCompleted(Point point, 
                         ServerRequestCallback<Void> requestCallback);
 
+   void getUniqueSavePlotStem(String directory,
+                              ServerRequestCallback<String> requestCallback);
+   
    void getSavePlotContext(
                   String directory,
-                  ServerRequestCallback<SavePlotContext> requestCallback);
+                  ServerRequestCallback<SavePlotAsImageContext> requestCallback);
    
    void savePlotAs(FileSystemItem file,
                    String format,
@@ -55,4 +58,10 @@ public interface PlotsServerOperations
                    int height,
                    boolean overwrite,
                    ServerRequestCallback<Bool> requestCallback);
+   
+   void savePlotAsPdf(FileSystemItem file,
+                      double widthInches,
+                      double heightInches,
+                      boolean overwrite,
+                      ServerRequestCallback<Bool> requestCallback);
 }

@@ -55,11 +55,11 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
       @Handler
       public abstract void onClearPlots();
       @Handler
-      public abstract void onPrintPlot();
-      @Handler
       public abstract void onZoomPlot();
       @Handler
       public abstract void onSavePlotAsImage();
+      @Handler
+      public abstract void onSavePlotAsPdf();
       @Handler
       public abstract void onCopyPlotToClipboard();
       @Handler
@@ -111,8 +111,8 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
       commands_.nextPlot().setEnabled(false);
       commands_.previousPlot().setEnabled(false);
       commands_.savePlotAsImage().setEnabled(false);
+      commands_.savePlotAsPdf().setEnabled(false);
       commands_.copyPlotToClipboard().setEnabled(false);
-      commands_.printPlot().setEnabled(false);
       commands_.zoomPlot().setEnabled(false);
       commands_.removePlot().setEnabled(false);
       commands_.clearPlots().setEnabled(false);
@@ -165,8 +165,8 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
       // other commands which are only enabled if there is at least
       // one plot alive
       boolean hasPlots = plotsState.getPlotCount() >= 1;
-      commands_.printPlot().setEnabled(hasPlots);
       commands_.savePlotAsImage().setEnabled(hasPlots);
+      commands_.savePlotAsPdf().setEnabled(hasPlots);
       commands_.copyPlotToClipboard().setEnabled(hasPlots);
       commands_.zoomPlot().setEnabled(hasPlots);
       commands_.removePlot().setEnabled(hasPlots);

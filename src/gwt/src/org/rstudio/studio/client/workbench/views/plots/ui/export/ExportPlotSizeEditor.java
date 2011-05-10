@@ -208,7 +208,11 @@ public class ExportPlotSizeEditor extends Composite
       // Stops mouse events from being routed to the iframe, which would
       // interfere with resizing
       final GlassPanel glassPanel = new GlassPanel(imageFrame_);
+      glassPanel.getChildContainerElement().getStyle().setOverflow(
+                                                            Overflow.VISIBLE);
       glassPanel.setSize("100%", "100%");
+      
+      
 
       previewPanel.add(glassPanel);
       previewPanel.setWidgetLeftRight(glassPanel,

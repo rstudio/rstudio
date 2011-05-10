@@ -49,11 +49,10 @@ import org.rstudio.studio.client.workbench.views.plots.events.LocatorHandler;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedHandler;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
-import org.rstudio.studio.client.workbench.views.plots.model.SavePlotContext;
+import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
-import org.rstudio.studio.client.workbench.views.plots.model.PrintOptions;
-import org.rstudio.studio.client.workbench.views.plots.ui.PrintDialog;
+import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
 import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlot;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorChangedHandler;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorManager;
@@ -147,6 +146,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
             }
          });
             
+      // export plot options
       new JSObjectStateValue("plotspane", "exportPlotOptions", true,
             session.getSessionInfo().getClientState(), false)
       {
@@ -179,7 +179,42 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
 
          private ExportPlotOptions lastKnownState_;
       };
-   }
+   
+   
+   // save plot as pdf options
+   new JSObjectStateValue("plotspane", "savePlotAsPdfOptions", true,
+         session.getSessionInfo().getClientState(), false)
+   {
+      @Override
+      protected void onInit(JsObject value)
+      {
+         if (value != null)
+            savePlotAsPdfOptions_ = value.cast();
+         lastKnownState_ = savePlotAsPdfOptions_;
+      }
+
+      @Override
+      protected JsObject getValue()
+      {
+         return savePlotAsPdfOptions_.cast();
+      }
+
+      @Override
+      protected boolean hasChanged()
+      {
+         if (!SavePlotAsPdfOptions.areEqual(lastKnownState_, 
+                                            savePlotAsPdfOptions_))
+         {
+            lastKnownState_ = savePlotAsPdfOptions_;
+            return true;
+         }
+
+         return false;
+      }
+
+      private SavePlotAsPdfOptions lastKnownState_;
+   };
+}
    
    public void onPlotsChanged(PlotsChangedEvent event)
    {
@@ -287,25 +322,6 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
        );
     }
 
-   void onPrintPlot()
-   {
-      view_.bringToFront();
-      new PrintDialog(new OperationWithInput<PrintOptions>() {
-         public void execute(PrintOptions options)
-         {
-            // build print url
-            String printURL = server_.getGraphicsUrl("plot.pdf");
-            printURL += "?";
-            printURL += "width=" + options.getWidth();
-            printURL += "&";
-            printURL += "height=" + options.getHeight();
-            
-            // open new window with "printed" pdf
-            globalDisplay_.openWindow(printURL);
-         }
-      }).showModal();
-     
-   }
    
    void onSavePlotAsImage()
    {
@@ -322,10 +338,10 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       // get context
       server_.getSavePlotContext(
          defaultDir.getPath(),
-         new SimpleRequestCallback<SavePlotContext>() {
+         new SimpleRequestCallback<SavePlotAsImageContext>() {
 
             @Override
-            public void onResponseReceived(SavePlotContext context)
+            public void onResponseReceived(SavePlotAsImageContext context)
             {
                indicator.onCompleted();
 
@@ -343,6 +359,55 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
             }           
          });
    }
+   
+   void onSavePlotAsPdf()
+   {
+      view_.bringToFront();
+      
+      final ProgressIndicator indicator = 
+         globalDisplay_.getProgressIndicator("Error");
+      indicator.onProgress("Preparing to export plot...");
+
+      // get the default directory
+      final FileSystemItem defaultDir = ExportPlot.getDefaultSaveDirectory(
+            workbenchContext_.getCurrentWorkingDir());
+
+      // get context
+      server_.getUniqueSavePlotStem(
+         defaultDir.getPath(),
+         new SimpleRequestCallback<String>() {
+
+            @Override
+            public void onResponseReceived(String stem)
+            {
+               indicator.onCompleted();
+
+               exportPlot_.savePlotAsPdf(
+                 globalDisplay_,
+                 server_, 
+                 defaultDir,
+                 stem,
+                 savePlotAsPdfOptions_, 
+                     new OperationWithInput<SavePlotAsPdfOptions>() {
+                        @Override
+                        public void execute(SavePlotAsPdfOptions options)
+                        {
+                           savePlotAsPdfOptions_ = options;
+                           session_.persistClientState();
+                        }
+                    
+                 }) ;  
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               indicator.onError(error.getUserMessage());
+            }           
+         });
+   }
+      
+   
    
    void onCopyPlotToClipboard()
    {
@@ -501,14 +566,13 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    private final ExportPlot exportPlot_ ;
    
    // default export options
-   private ExportPlotOptions exportPlotOptions_ = ExportPlotOptions.create(
-                                                   550, 
-                                                   450,
-                                                   false,
-                                                   "PNG",
-                                                   false,
-                                                   false);
+   private ExportPlotOptions exportPlotOptions_ = 
+      ExportPlotOptions.create(550, 450, false, "PNG", false, false);
    
+   // default save as pdf options
+   private SavePlotAsPdfOptions savePlotAsPdfOptions_ = 
+                           SavePlotAsPdfOptions.create(8.5, 11, true, false);
+  
    // size of most recently rendered plot
    Size plotSize_ = null;
 }

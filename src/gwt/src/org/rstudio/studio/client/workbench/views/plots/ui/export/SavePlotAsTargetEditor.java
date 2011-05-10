@@ -2,8 +2,6 @@ package org.rstudio.studio.client.workbench.views.plots.ui.export;
 
 import java.util.HashMap;
 
-import org.rstudio.core.client.Size;
-import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.CanFocus;
@@ -12,8 +10,8 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
-import org.rstudio.studio.client.workbench.views.plots.model.SavePlotContext;
-import org.rstudio.studio.client.workbench.views.plots.model.SavePlotFormat;
+import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsImageContext;
+import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsImageFormat;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
@@ -26,9 +24,7 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 
 
-// TODO: Save As PDF... dialog
-
-// TODO: rollout the feature (including menus)
+// TODO: Save As PDF: custom sizes, preview?
 
 // TODO: other image formats
 
@@ -40,7 +36,7 @@ import com.google.gwt.user.client.ui.TextBox;
 public class SavePlotAsTargetEditor extends Composite implements CanFocus
 {
    public SavePlotAsTargetEditor(String defaultFormat,
-                                 SavePlotContext context)
+                                 SavePlotAsImageContext context)
    {
       context_ = context;
       
@@ -54,11 +50,11 @@ public class SavePlotAsTargetEditor extends Composite implements CanFocus
           
       grid.setWidget(0, 0, imageFormatLabel);
       imageFormatListBox_ = new ListBox();
-      JsArray<SavePlotFormat> formats = context.getFormats();
+      JsArray<SavePlotAsImageFormat> formats = context.getFormats();
       int selectedIndex = 0;
       for (int i=0; i<formats.length(); i++)
       {
-         SavePlotFormat format = formats.get(i);
+         SavePlotAsImageFormat format = formats.get(i);
          if (format.getExtension().equals(defaultFormat))
             selectedIndex = i;
          imageFormatListBox_.addItem(format.getName(), format.getExtension());
@@ -66,19 +62,11 @@ public class SavePlotAsTargetEditor extends Composite implements CanFocus
       imageFormatListBox_.setSelectedIndex(selectedIndex);
       imageFormatListBox_.setStylePrimaryName(styles.imageFormatListBox());
       grid.setWidget(0, 1, imageFormatListBox_);
-      
-      Label fileNameLabel = new Label("File name:");
-      imageFormatLabel.setStylePrimaryName(styles.exportTargetLabel());
-      grid.setWidget(1, 0, fileNameLabel);
-      fileNameTextBox_ = new TextBox();
-      fileNameTextBox_.setText(context.getUniqueFileStem());
-      fileNameTextBox_.setStylePrimaryName(styles.fileNameTextBox());
-      grid.setWidget(1, 1, fileNameTextBox_);
-      
+           
       ThemedButton directoryButton = new ThemedButton("Directory...");
       directoryButton.setStylePrimaryName(styles.directoryButton());
       directoryButton.getElement().getStyle().setMarginLeft(-2, Unit.PX);
-      grid.setWidget(2, 0, directoryButton);
+      grid.setWidget(1, 0, directoryButton);
       directoryButton.addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
@@ -108,11 +96,18 @@ public class SavePlotAsTargetEditor extends Composite implements CanFocus
          }
       });
       
-     
       directoryLabel_ = new Label();
       setDirectory(context_.getDirectory());
       directoryLabel_.setStylePrimaryName(styles.directoryLabel());
-      grid.setWidget(2, 1, directoryLabel_);
+      grid.setWidget(1, 1, directoryLabel_);
+      
+      Label fileNameLabel = new Label("File name:");
+      fileNameLabel.setStylePrimaryName(styles.fileNameLabel());
+      grid.setWidget(2, 0, fileNameLabel);
+      fileNameTextBox_ = new TextBox();
+      fileNameTextBox_.setText(context.getUniqueFileStem());
+      fileNameTextBox_.setStylePrimaryName(styles.fileNameTextBox());
+      grid.setWidget(2, 1, fileNameTextBox_);
         
       initWidget(grid);
    }
@@ -132,25 +127,10 @@ public class SavePlotAsTargetEditor extends Composite implements CanFocus
    public FileSystemItem getTargetPath()
    {
       // first determine format extension
-      String fmtExt = "." + imageFormatListBox_.getValue(
+      String ext = "." + imageFormatListBox_.getValue(
                                        imageFormatListBox_.getSelectedIndex());
       
-      // get the filename
-      String filename = fileNameTextBox_.getText().trim();
-      if (filename.length() == 0)
-         return null;
-      
-      // compute the target path
-      FileSystemItem targetPath = FileSystemItem.createFile(
-                                          directory_.completePath(filename));
-      
-      // if the extension isn't already correct then append it
-      if (!targetPath.getExtension().equalsIgnoreCase(fmtExt))
-         targetPath = FileSystemItem.createFile(targetPath.getPath() + fmtExt);
-      
-      // return the path
-      return targetPath;
-      
+      return ExportPlot.composeTargetPath(ext, fileNameTextBox_, directory_);  
    }
    
    public FileSystemItem getTargetDirectory()
@@ -163,24 +143,10 @@ public class SavePlotAsTargetEditor extends Composite implements CanFocus
    {
       // set directory
       directory_ = directory;
-      
-      // measure HTML and truncate if necessary
-      String path = directory.getPath();
-      Size textSize = DomMetrics.measureHTML(path, "gwt-Label");
-      if (textSize.width >= 250)
-      {
-         // shortened directory nam
-         if (directory.getParentPath() != null &&
-             directory.getParentPath().getParentPath() != null)
-         {
-            path = ".../" + 
-                   directory.getParentPath().getName() + "/" +
-                   directory.getName(); 
-         }
-      }
-      
+        
       // set label
-      directoryLabel_.setText(path);
+      String dirLabel = ExportPlot.shortDirectoryName(directory, 250);
+      directoryLabel_.setText(dirLabel);
       
       // set tooltip
       directoryLabel_.setTitle(directory.getPath());
@@ -193,7 +159,7 @@ public class SavePlotAsTargetEditor extends Composite implements CanFocus
    private Label directoryLabel_;
   
    
-   private final SavePlotContext context_;
+   private final SavePlotAsImageContext context_;
  
    private final FileSystemContext fileSystemContext_ =
       RStudioGinjector.INSTANCE.getRemoteFileSystemContext();

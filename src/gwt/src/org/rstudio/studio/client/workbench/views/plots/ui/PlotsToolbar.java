@@ -52,15 +52,13 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
       // export commands
       ToolbarPopupMenu exportMenu = new ToolbarPopupMenu();
       exportMenu.addItem(commands_.savePlotAsImage().createMenuItem(false));
+      exportMenu.addItem(commands_.savePlotAsPdf().createMenuItem(false));
+      exportMenu.addSeparator();
       exportMenu.addItem(commands_.copyPlotToClipboard().createMenuItem(false));
       ToolbarButton exportButton = new ToolbarButton(
             "Export", commands_.savePlotAsImage().getImageResource(),
             exportMenu);
       addLeftWidget(exportButton);
-      addLeftSeparator();
-      
-      // print
-      addLeftWidget(commands_.printPlot().createToolbarButton());
       addLeftSeparator();
       
       addLeftWidget(commands_.removePlot().createToolbarButton());
