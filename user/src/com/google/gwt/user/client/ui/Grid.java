@@ -45,11 +45,11 @@ import com.google.gwt.user.client.Element;
  * 
  * <pre>
  * &lt;g:Grid>
- *  &lt;g:row>
- *    &lt;g:customCell>
+ *  &lt;g:row styleName="optionalHeaderStyle">
+ *    &lt;g:customCell styleName="optionalFooCellStyle">
  *      &lt;g:Label>foo&lt;/g:Label>
  *    &lt;/g:customCell>
- *    &lt;g:customCell>
+ *    &lt;g:customCell styleName="optionalBarCellStyle">
  *      &lt;g:Label>bar&lt;/g:Label>
  *    &lt;/g:customCell>
  *  &lt;/g:row>

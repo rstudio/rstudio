@@ -31,14 +31,20 @@ public class GridParser implements ElementParser {
   private static class CellContent {
     private String tagName;
     private String content;
+    private String styleName;
 
-    public CellContent(String tagName, String content) {
+    public CellContent(String tagName, String content, String styleName) {
       this.tagName = tagName;
       this.content = content;
+      this.styleName = styleName;
     }
 
-    public String getConent() {
+    public String getContent() {
       return this.content;
+    }
+
+    public String getStyleName() {
+      return styleName;
     }
 
     public String getTagName() {
@@ -46,13 +52,38 @@ public class GridParser implements ElementParser {
     }
   }
 
+  private static class RowContent {
+    private List<CellContent> columns = new ArrayList<CellContent>();
+    private String styleName;
+
+    private void addColumn(CellContent column) {
+      columns.add(column);
+    }
+
+    public List<CellContent> getColumns() {
+      return columns;
+    }
+
+    public String getStyleName() {
+      return styleName;
+    }
+
+    public void setColumns(List<CellContent> columns) {
+      this.columns = columns;
+    }
+
+    public void setStyleName(String styleName) {
+      this.styleName = styleName;
+    }
+  }
+
   private static class Size {
     private int rows;
     private int columns;
 
-    public Size() {
-      this.rows = 0;
-      this.columns = 0;
+    public Size(int rows, int columns) {
+      this.rows = rows;
+      this.columns = columns;
     }
 
     public int getColumns() {
@@ -62,14 +93,6 @@ public class GridParser implements ElementParser {
     public int getRows() {
       return this.rows;
     }
-
-    public void setColumns(int cols) {
-      this.columns = cols;
-    }
-
-    public void setRows(int rows) {
-      this.rows = rows;
-    }
   }
 
   private static final String ROW_TAG = "row";
@@ -78,10 +101,12 @@ public class GridParser implements ElementParser {
 
   private static final String CUSTOMCELL_TAG = "customCell";
 
+  private static final String STYLE_NAME_ATTRIBUTE = "styleName";
+
   public void parse(XMLElement elem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
 
-    List<List<CellContent>> matrix = new ArrayList<List<CellContent>>();
+    List<RowContent> matrix = new ArrayList<RowContent>();
 
     parseRows(elem, fieldName, writer, matrix);
     Size size = getMatrixSize(matrix);
@@ -90,40 +115,48 @@ public class GridParser implements ElementParser {
       writer.addStatement("%s.resize(%s, %s);", fieldName,
           Integer.toString(size.getRows()), Integer.toString(size.getColumns()));
 
-      for (List<CellContent> row : matrix) {
-        for (CellContent column : row) {
+      for (RowContent row : matrix) {
+        if ((row.getStyleName() != null) && (!row.getStyleName().isEmpty())) {
+          writer.addStatement("%s.getRowFormatter().setStyleName(%s, %s);",
+              fieldName,
+              matrix.indexOf(row),
+              row.getStyleName());
+        }
+
+        for (CellContent column : row.getColumns()) {
           if (column.getTagName().equals(CELL_TAG)) {
             writer.addStatement("%s.setHTML(%s, %s, %s);", fieldName,
                 Integer.toString(matrix.indexOf(row)),
-                Integer.toString(row.indexOf(column)), 
-                writer.declareTemplateCall(column.getConent()));
+                Integer.toString(row.getColumns().indexOf(column)),
+                writer.declareTemplateCall(column.getContent()));
           }
           if (column.getTagName().equals(CUSTOMCELL_TAG)) {
             writer.addStatement("%s.setWidget(%s, %s, %s);", fieldName,
                 Integer.toString(matrix.indexOf(row)),
-                Integer.toString(row.indexOf(column)), column.getConent());
+                Integer.toString(row.getColumns().indexOf(column)), column.getContent());
+          }
+          if ((column.getStyleName() != null) && (!column.getStyleName().isEmpty())) {
+            writer.addStatement("%s.getCellFormatter().setStyleName(%s, %s, %s);",
+                fieldName,
+                matrix.indexOf(row),
+                row.getColumns().indexOf(column),
+                column.getStyleName());
           }
         }
       }
     }
   }
 
-  private Size getMatrixSize(List<List<CellContent>> matrix) {
-    Size size = new Size();
-
-    size.setRows(matrix.size());
-
+  private Size getMatrixSize(List<RowContent> matrix) {
     int maxColumns = 0;
-    for (List<CellContent> column : matrix) {
-      maxColumns = (column.size() > maxColumns) ? column.size() : maxColumns;
+    for (RowContent row : matrix) {
+      maxColumns = (row.getColumns().size() > maxColumns) ? row.getColumns().size() : maxColumns;
     }
-    size.setColumns(maxColumns);
-
-    return size;
+    return new Size(matrix.size(), maxColumns);
   }
 
   private void parseColumns(String fieldName, UiBinderWriter writer,
-      List<List<CellContent>> matrix, XMLElement child)
+      RowContent row, XMLElement child)
       throws UnableToCompleteException {
 
     String tagName;
@@ -135,22 +168,23 @@ public class GridParser implements ElementParser {
             fieldName, CELL_TAG, CUSTOMCELL_TAG);
       }
       CellContent newColumn = null;
+      String styleName = cell.consumeStringAttribute(STYLE_NAME_ATTRIBUTE, null);
       if (tagName.equals(CELL_TAG)) {
         HtmlInterpreter htmlInt = HtmlInterpreter.newInterpreterForUiObject(
             writer, fieldName);
         String html = cell.consumeInnerHtml(htmlInt);
-        newColumn = new CellContent(tagName, html);
+        newColumn = new CellContent(tagName, html, styleName);
       }
       if (tagName.equals(CUSTOMCELL_TAG)) {
         newColumn = new CellContent(tagName,
-            writer.parseElementToField(cell.consumeSingleChildElement()));
+            writer.parseElementToField(cell.consumeSingleChildElement()), styleName);
       }
-      matrix.get(matrix.size() - 1).add(newColumn);
+      row.addColumn(newColumn);
     }
   }
 
   private void parseRows(XMLElement elem, String fieldName,
-      UiBinderWriter writer, List<List<CellContent>> matrix)
+      UiBinderWriter writer, List<RowContent> matrix)
       throws UnableToCompleteException {
 
     for (XMLElement child : elem.consumeChildElements()) {
@@ -161,9 +195,11 @@ public class GridParser implements ElementParser {
             "%1$s:Grid elements must contain only %1$s:%2$s children, found %3$s:%4$s",
             elem.getPrefix(), ROW_TAG, child.getPrefix(), tagName);
       }
-      List<CellContent> newRow = new ArrayList<CellContent>();
+
+      RowContent newRow = new RowContent();
+      newRow.setStyleName(child.consumeStringAttribute(STYLE_NAME_ATTRIBUTE, null));
       matrix.add(newRow);
-      parseColumns(fieldName, writer, matrix, child);
+      parseColumns(fieldName, writer, newRow, child);
     }
   }
 }

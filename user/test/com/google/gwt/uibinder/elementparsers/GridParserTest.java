@@ -117,6 +117,38 @@ public class GridParserTest extends TestCase {
     assertNull(tester.logger.died);
   }
 
+  public void testStyleName() throws UnableToCompleteException, SAXException {
+    StringBuffer b = new StringBuffer();
+    b.append("<g:Grid>");
+    b.append("  <g:row styleName=\"rowHeaderStyle\">");
+    b.append("    <g:cell styleName=\"headerStyle\">foo</g:cell>");
+    b.append("    <g:cell styleName=\"headerStyle\">bar</g:cell>");
+    b.append("  </g:row>");
+    b.append("  <g:row>");
+    b.append("    <g:cell>foo</g:cell>");
+    b.append("    <g:cell>bar</g:cell>");
+    b.append("  </g:row>");
+    b.append("</g:Grid>");
+
+    String[] expected = {"fieldName.resize(2, 2);",
+        "fieldName.getRowFormatter().setStyleName(0, \"rowHeaderStyle\");",
+        "fieldName.setHTML(0, 0, \"@mockToken-foo\");",
+        "fieldName.getCellFormatter().setStyleName(0, 0, \"headerStyle\");",
+        "fieldName.setHTML(0, 1, \"@mockToken-bar\");",
+        "fieldName.getCellFormatter().setStyleName(0, 1, \"headerStyle\");",
+        "fieldName.setHTML(1, 0, \"@mockToken-foo\");",
+        "fieldName.setHTML(1, 1, \"@mockToken-bar\");"};
+
+    FieldWriter w = tester.parse(b.toString());
+
+    Iterator<String> i = tester.writer.statements.iterator();
+    for (String e : expected) {
+      assertEquals(e, i.next());
+    }
+    assertFalse(i.hasNext());
+    assertNull(tester.logger.died);
+  }
+
   public void testValidChild() throws UnableToCompleteException, SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:Grid>");
