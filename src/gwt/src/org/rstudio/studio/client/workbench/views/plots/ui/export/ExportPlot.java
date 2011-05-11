@@ -7,6 +7,7 @@ import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
@@ -31,6 +32,7 @@ public abstract class ExportPlot
    
    public void savePlotAsPdf(GlobalDisplay globalDisplay,
                              PlotsServerOperations server,
+                             SessionInfo sessionInfo,
                              FileSystemItem defaultDirectory,
                              String defaultPlotName,
                              final SavePlotAsPdfOptions options,
@@ -38,6 +40,7 @@ public abstract class ExportPlot
    {
       new SavePlotAsPdfDialog(globalDisplay,
                               server,
+                              sessionInfo,
                               defaultDirectory,
                               defaultPlotName,
                               options,

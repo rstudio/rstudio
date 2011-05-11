@@ -64,4 +64,10 @@ public interface PlotsServerOperations
                       double heightInches,
                       boolean overwrite,
                       ServerRequestCallback<Bool> requestCallback);
+   
+   
+   void copyPlotToClipboardMetafile(
+                                 int width, 
+                                 int height,
+                                 ServerRequestCallback<Void> requestCallback);
 }

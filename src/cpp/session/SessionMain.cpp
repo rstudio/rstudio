@@ -310,6 +310,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["log_dir"] = options.userLogPath().absolutePath();
       sessionInfo["scratch_dir"] = options.userScratchPath().absolutePath();
    }
+
+   // temp dir
+   sessionInfo["temp_dir"] = r::session::utils::tempDir().absolutePath();
    
    // installed version
    sessionInfo["version"] = installedVersion();

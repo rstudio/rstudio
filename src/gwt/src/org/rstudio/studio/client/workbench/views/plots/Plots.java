@@ -385,6 +385,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                exportPlot_.savePlotAsPdf(
                  globalDisplay_,
                  server_, 
+                 session_.getSessionInfo(),
                  defaultDir,
                  stem,
                  savePlotAsPdfOptions_, 

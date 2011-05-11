@@ -101,7 +101,7 @@ public class ExportPlotDialog extends ModalDialogBase
    }
    
   
-   private final PlotsServerOperations server_;
+   protected final PlotsServerOperations server_;
   
    
    private final ExportPlotOptions options_;

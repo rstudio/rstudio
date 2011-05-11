@@ -65,6 +65,8 @@ public slots:
    // Image coordinates are relative to the window contents
    void copyImageToClipboard(int left, int top, int width, int height);
 
+   bool supportsClipboardMetafile();
+
    int showMessageBox(int type,
                       QString caption,
                       QString message,

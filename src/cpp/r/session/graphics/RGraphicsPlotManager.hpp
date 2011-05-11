@@ -81,6 +81,10 @@ public:
                                      double widthInches,
                                      double heightInches);
 
+   virtual core::Error savePlotAsMetafile(const core::FilePath& filePath,
+                                          int widthPx,
+                                          int heightPx);
+
    // display
    virtual bool hasOutput() const;
    virtual bool hasChanges() const;

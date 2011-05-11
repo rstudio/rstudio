@@ -23,12 +23,8 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 
-
-// TODO: Save As PDF: custom sizes, preview?
-
 // TODO: other image formats
 
-// TODO: windows metafile clipboard support
 // TODO: clipboard vector graphics for other platforms?
 
 

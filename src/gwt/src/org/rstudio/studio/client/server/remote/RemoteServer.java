@@ -759,6 +759,20 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SAVE_PLOT_AS_PDF, params, requestCallback);
    }
    
+   public void copyPlotToClipboardMetafile(
+                              int width, 
+                              int height,
+                              ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONNumber(width));
+      params.set(1, new JSONNumber(height));
+      sendRequest(RPC_SCOPE, 
+                  COPY_PLOT_TO_CLIPBOARD_METAFILE, 
+                  params, 
+                  requestCallback);
+   }
+   
    public void getUniqueSavePlotStem(String directory,
                                   ServerRequestCallback<String> requestCallback)
    {
@@ -1458,6 +1472,7 @@ public class RemoteServer implements Server
    private static final String REFRESH_PLOT = "refresh_plot";
    private static final String SAVE_PLOT_AS = "save_plot_as";
    private static final String SAVE_PLOT_AS_PDF = "save_plot_as_pdf";
+   private static final String COPY_PLOT_TO_CLIPBOARD_METAFILE = "copy_plot_to_clipboard_metafile";
    private static final String GET_UNIQUE_SAVE_PLOT_STEM = "get_unique_save_plot_stem";
    private static final String GET_SAVE_PLOT_CONTEXT = "get_save_plot_context";
    private static final String LOCATOR_COMPLETED = "locator_completed";

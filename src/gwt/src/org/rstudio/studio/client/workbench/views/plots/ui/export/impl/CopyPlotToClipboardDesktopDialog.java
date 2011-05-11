@@ -4,6 +4,7 @@ import org.rstudio.core.client.dom.ElementEx;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.ImageFrame;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.application.Desktop;
@@ -34,13 +35,18 @@ public class CopyPlotToClipboardDesktopDialog extends ExportPlotDialog
          public void onClick(ClickEvent event) 
          {
             // do the copy
-            performCopy();
-            
-            // save options
-            onClose.execute(getCurrentOptions(options));
-            
-            // close dialog
-            closeDialog();
+            performCopy(new Operation() {
+
+               @Override
+               public void execute()
+               {
+                  // save options
+                  onClose.execute(getCurrentOptions(options));
+                  
+                  // close dialog
+                  closeDialog();  
+               }        
+            });
          }
       });
       
@@ -49,12 +55,12 @@ public class CopyPlotToClipboardDesktopDialog extends ExportPlotDialog
    }
    
    
-   protected void performCopy()
+   protected void performCopy(Operation onCompleted)
    {
-      copyAsBitmap();
+      copyAsBitmap(onCompleted);
    }
    
-   protected void copyAsBitmap()
+   protected void copyAsBitmap(Operation onCompleted)
    {
       ImageFrame imageFrame = getSizeEditor().getImageFrame();
       final WindowEx win = imageFrame.getElement().<IFrameElementEx>cast()
@@ -62,13 +68,16 @@ public class CopyPlotToClipboardDesktopDialog extends ExportPlotDialog
 
       Document doc = win.getDocument();
       NodeList<Element> images = doc.getElementsByTagName("img");
-      if (images.getLength() == 0)
-         return;
-      ElementEx img = images.getItem(0).cast();
+      if (images.getLength() > 0)
+      {
+         ElementEx img = images.getItem(0).cast();
 
-      Desktop.getFrame().copyImageToClipboard(img.getClientLeft(),
-                                              img.getClientTop(),
-                                              img.getClientWidth(),
-                                              img.getClientHeight());
+         Desktop.getFrame().copyImageToClipboard(img.getClientLeft(),
+                                                 img.getClientTop(),
+                                                 img.getClientWidth(),
+                                                 img.getClientHeight());
+      }
+      
+      onCompleted.execute();
    }
 }

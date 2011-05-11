@@ -450,6 +450,9 @@ Error makeFileHidden(const FilePath& path)
    return Success();
 }
 
+
+
+
 bool stderrIsTerminal()
 {
    return _isatty(_fileno(stderr));
@@ -590,6 +593,116 @@ Error useDefaultSignalHandler(SignalType signal)
 {
    return Success();
 }
+
+class ClipboardScope : boost::noncopyable
+{
+public:
+   ClipboardScope() : opened_(false) {}
+
+   Error open()
+   {
+      if (!::OpenClipboard(NULL))
+      {
+         return systemError(::GetLastError(), ERROR_LOCATION);
+      }
+      else
+      {
+         opened_ = true;
+         return Success();
+      }
+   }
+
+   ~ClipboardScope()
+   {
+      try
+      {
+         if (opened_)
+         {
+            if (!::CloseClipboard())
+               LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+         }
+      }
+      catch(...)
+      {
+      }
+   }
+
+private:
+   bool opened_;
+};
+
+class EnhMetaFile : boost::noncopyable
+{
+public:
+   EnhMetaFile() : hMF_(NULL) {}
+
+   Error open(const FilePath& path)
+   {
+      hMF_ = ::GetEnhMetaFile(path.absolutePath().c_str());
+      if (hMF_ == NULL)
+         return systemError(::GetLastError(), ERROR_LOCATION);
+      else
+         return Success();
+   }
+
+   ~EnhMetaFile()
+   {
+      try
+      {
+         if (hMF_ != NULL)
+         {
+            if (!::DeleteEnhMetaFile(hMF_))
+               LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+         }
+      }
+      catch(...)
+      {
+      }
+   }
+
+   HENHMETAFILE handle() const { return hMF_; }
+
+   void release()
+   {
+      hMF_ = NULL;
+   }
+
+private:
+  HENHMETAFILE hMF_;
+};
+
+
+Error copyMetafileToClipboard(const FilePath& path)
+{
+   // open metafile
+   EnhMetaFile enhMetaFile;
+   Error error = enhMetaFile.open(path);
+   if (error)
+      return error;
+
+   // open the clipboard
+   ClipboardScope clipboardScope;
+   error = clipboardScope.open();
+   if (error)
+      return error;
+
+   // emtpy the clipboard
+   if (!::EmptyClipboard())
+      return systemError(::GetLastError(), ERROR_LOCATION);
+
+   // set the clipboard data
+   if (!::SetClipboardData(CF_ENHMETAFILE, enhMetaFile.handle()))
+      return systemError(::GetLastError(), ERROR_LOCATION);
+
+   // release the handle (because the clipboard now owns it)
+   enhMetaFile.release();
+
+   // return success
+   return Success();
+}
+
+
+
 } // namespace system
 } // namespace core
 
