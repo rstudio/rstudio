@@ -1288,6 +1288,17 @@ FilePath tempFile(const std::string& prefix, const std::string& extension)
    return filePath;
 }
 
+FilePath tempDir()
+{
+   std::string tempDir;
+   Error error = r::exec::RFunction("tempdir").call(&tempDir);
+   if (error)
+      LOG_ERROR(error);
+   FilePath filePath(r::util::fixPath(tempDir));
+   return filePath;
+}
+
+
 } // namespace utils
    
 } // namespace session

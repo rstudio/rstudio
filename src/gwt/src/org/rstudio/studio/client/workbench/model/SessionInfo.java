@@ -48,6 +48,10 @@ public class SessionInfo extends JavaScriptObject
    public final native String getScratchDir() /*-{
       return this.scratch_dir;
    }-*/;
+   
+   public final native String getTempDir() /*-{
+      return this.temp_dir;
+   }-*/;
 
    public final native JsObject getUiPrefs() /*-{
       if (!this.ui_prefs)

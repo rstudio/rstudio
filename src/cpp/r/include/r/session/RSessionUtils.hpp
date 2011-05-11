@@ -32,6 +32,8 @@ core::FilePath safeCurrentPath();
 core::FilePath tempFile(const std::string& prefix, 
                         const std::string& extension);
 
+core::FilePath tempDir();
+
      
 } // namespace utils
 } // namespace session

@@ -53,7 +53,7 @@ public class SavePlotAsHandler
                                   final boolean viewAfterSave,
                                   Operation onCompleted)
    {
-      progressIndicator_.onProgress("Saving Plot...");
+      progressIndicator_.onProgress("Converting Plot...");
 
       savePlotAs(
             targetPath, 
@@ -94,7 +94,7 @@ public class SavePlotAsHandler
                               final Operation onCompleted)
    {
       globalDisplay_.openProgressWindow("_rstudio_save_plot_as",
-            "Saving Plot...", 
+            "Converting Plot...", 
             new OperationWithInput<WindowEx>() {                                        
          public void execute(final WindowEx window)
          {
@@ -153,14 +153,13 @@ public class SavePlotAsHandler
                @Override
                public void onResponseReceived(Bool saved)
                {
-
-
                   if (saved.getValue())
                   {
                      uiHandler.onSuccess();
 
                      // fire onCompleted
-                     onCompleted.execute();
+                     if (onCompleted != null)
+                        onCompleted.execute();
                   }
                   else
                   { 

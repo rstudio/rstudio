@@ -3,6 +3,7 @@ package org.rstudio.studio.client.workbench.views.plots.ui.export;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ModalDialogBase;
@@ -17,6 +18,7 @@ import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
 
@@ -42,6 +44,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
 {
    public SavePlotAsPdfDialog(GlobalDisplay globalDisplay,
                               PlotsServerOperations server,
+                              final SessionInfo sessionInfo,
                               FileSystemItem defaultDirectory,
                               String defaultPlotName,
                               final SavePlotAsPdfOptions options,
@@ -91,6 +94,25 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
       });
       addOkButton(saveButton);
       addCancelButton();
+      
+      
+      ThemedButton previewButton =  new ThemedButton("Preview",
+                                                     new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {  
+            // get temp file for preview
+            FileSystemItem tempDir = 
+                  FileSystemItem.createDir(sessionInfo.getTempDir());
+            FileSystemItem previewPath = 
+                  FileSystemItem.createFile(tempDir.completePath("preview.pdf"));
+                
+            // invoke handler
+            SavePlotAsHandler handler = createSavePlotAsHandler();
+            handler.attemptSave(previewPath, true, true, null);    
+         }
+      });
+      addLeftButton(previewButton);
    }
    
    @Override 
@@ -241,47 +263,15 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
          return;
       }
       
-      // create handler
-      SavePlotAsHandler handler = new SavePlotAsHandler(
-            globalDisplay_, 
-            progressIndicator_, 
-            new SavePlotAsHandler.ServerOperations()
-            {
-               @Override
-               public void savePlot(
-                     FileSystemItem targetPath, 
-                     boolean overwrite,
-                     ServerRequestCallback<Bool> requestCallback)
-               {
-                  PaperSize paperSize = selectedPaperSize();
-                  double width = paperSize.getWidth();
-                  double height = paperSize.getHeight();
-                  if (!isPortraitOrientation())
-                  {
-                     width = paperSize.getHeight();
-                     height = paperSize.getWidth();
-                  }
-                  
-                  server_.savePlotAsPdf(targetPath, 
-                                        width,
-                                        height,
-                                        overwrite,
-                                        requestCallback);
-               }
-
-               @Override
-               public String getFileUrl(FileSystemItem path)
-               {
-                  return server_.getFileUrl(path);
-               }
-            });
-      
       // invoke handler
+      SavePlotAsHandler handler = createSavePlotAsHandler();
       handler.attemptSave(targetPath, 
                           overwrite, 
                           viewAfterSaveCheckBox_.getValue(), 
                           onCompleted);      
    }
+   
+ 
    
    private FileSystemItem getTargetPath()
    { 
@@ -343,6 +333,43 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
       private final double width_ ;
       private final double height_ ;
       private final NumberFormat sizeFormat_ = NumberFormat.getFormat("##0.00");
+   }
+   
+   private SavePlotAsHandler createSavePlotAsHandler() 
+   {
+      return new SavePlotAsHandler(
+         globalDisplay_, 
+         progressIndicator_, 
+         new SavePlotAsHandler.ServerOperations()
+         {
+            @Override
+            public void savePlot(
+                  FileSystemItem targetPath, 
+                  boolean overwrite,
+                  ServerRequestCallback<Bool> requestCallback)
+            {
+               PaperSize paperSize = selectedPaperSize();
+               double width = paperSize.getWidth();
+               double height = paperSize.getHeight();
+               if (!isPortraitOrientation())
+               {
+                  width = paperSize.getHeight();
+                  height = paperSize.getWidth();
+               }
+               
+               server_.savePlotAsPdf(targetPath, 
+                                     width,
+                                     height,
+                                     overwrite,
+                                     requestCallback);
+            }
+
+            @Override
+            public String getFileUrl(FileSystemItem path)
+            {
+               return server_.getFileUrl(path);
+            }
+         });
    }
    
    private final List<PaperSize> paperSizes_ = new ArrayList<PaperSize>(); 
