@@ -53,6 +53,8 @@ public interface ExportPlotResources extends ClientBundle
       String savePdfFileNameLabel();
       String savePdfFileNameTextBox();
       String savePdfViewAfterCheckbox();
+      String savePdfPaperSizeTextBox();
+      String savePdfPaperSizeX();
    }
 
   
