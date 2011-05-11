@@ -47,6 +47,7 @@ void addToSystemPath(const FilePath& path, bool prepend = false);
 #ifdef _WIN32
 bool isWin64();
 Error makeFileHidden(const FilePath& path);
+Error copyMetafileToClipboard(const FilePath& path);
 #endif
 
 void initHook();

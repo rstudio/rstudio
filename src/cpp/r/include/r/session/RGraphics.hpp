@@ -60,6 +60,7 @@ extern const char * const kPngFormat;
 extern const char * const kJpegFormat;
 extern const char * const kTiffFormat;
 extern const char * const kBmpFormat;
+extern const char * const kMetafileFormat;
 
 class Display
 {
@@ -83,6 +84,10 @@ public:
    virtual core::Error savePlotAsPdf(const core::FilePath& filePath,
                                      double widthInches,
                                      double heightInches) = 0;
+
+   virtual core::Error savePlotAsMetafile(const core::FilePath& filePath,
+                                          int widthPx,
+                                          int heightPx) = 0;
       
    // display
    virtual bool hasOutput() const = 0 ;
