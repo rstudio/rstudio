@@ -3,7 +3,6 @@ package org.rstudio.studio.client.workbench.views.plots.ui.export;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ModalDialogBase;

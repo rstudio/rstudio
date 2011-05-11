@@ -13,6 +13,9 @@ import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+
 public class SavePlotAsHandler
 {
    public interface ServerOperations
@@ -108,8 +111,15 @@ public class SavePlotAsHandler
                      public void onSuccess()
                      {
                         // redirect window to view file
-                        String url = server_.getFileUrl(targetPath);
-                        window.replaceLocationHref(url);
+                        final String url = server_.getFileUrl(targetPath);
+                        Scheduler.get().scheduleDeferred(new ScheduledCommand(){
+                           @Override
+                           public void execute()
+                           {
+                              window.replaceLocationHref(url);       
+                           }    
+                        });
+                       
                      }
 
                      @Override
@@ -130,7 +140,7 @@ public class SavePlotAsHandler
          }
       });
    }
-
+   
    private interface PlotSaveAsUIHandler
    {
       void onSuccess();
@@ -197,5 +207,4 @@ public class SavePlotAsHandler
    private final GlobalDisplay globalDisplay_;
    private ModalDialogProgressIndicator progressIndicator_;
    private final ServerOperations server_;
-
 }
