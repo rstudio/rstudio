@@ -326,7 +326,7 @@ Error PlotManager::savePlotAsMetafile(const core::FilePath& filePath,
    return savePlotAsFile(deviceCreationCode);
 
 #else
-   return systemError(boost::system::errc::not_supported);
+   return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
 #endif
 }
 
