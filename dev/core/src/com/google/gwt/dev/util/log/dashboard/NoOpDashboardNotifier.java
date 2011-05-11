@@ -13,20 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package com.google.gwt.dev.util.log.dashboard;
 
 import com.google.gwt.dev.shell.DevModeSession;
-import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 /**
- * Implements the <code>DashboardNotifier</code> interface but does not actually
+ * Implements the {@code DashboardNotifier} interface but does not actually
  * do anything.
  */
 public class NoOpDashboardNotifier implements DashboardNotifier {
 
   @Override
-  public void devModeEvent(DevModeSession sesion, Event event) {
+  public void devModeEvent(DevModeSession sesion, String eventType, long startTimeNanos,
+      long durationNanos) {
     // do nothing
   }
 

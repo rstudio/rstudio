@@ -17,7 +17,6 @@
 package com.google.gwt.dev.util.log.dashboard;
 
 import com.google.gwt.dev.shell.DevModeSession;
-import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 /**
  * Sends information to a dashboard service. The dashboard service collects
@@ -34,7 +33,8 @@ public interface DashboardNotifier {
   /**
    * Records a top-level event to the dashboard.
    */
-  void devModeEvent(DevModeSession session, Event event);
+  void devModeEvent(DevModeSession session, String eventType, long startTimeNanos,
+      long durationNanos);
 
   /**
    * Records a new module/session.

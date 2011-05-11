@@ -21,6 +21,7 @@ import com.google.gwt.dev.json.JsonObject;
 import com.google.gwt.dev.shell.DevModeSession;
 import com.google.gwt.dev.shell.DevModeSessionTestUtil;
 import com.google.gwt.dev.util.log.dashboard.SpeedTracerLoggerTestMockNotifier;
+import com.google.gwt.dev.util.log.dashboard.SpeedTracerLoggerTestMockNotifier.DevModeEvent;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.EventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Format;
@@ -288,7 +289,7 @@ public class SpeedTracerLoggerTest extends TestCase {
       DevModeSession session2 = DevModeSessionTestUtil.createSession("test2", "test", false);
 
       // expected values (used in final assertions below)
-      LinkedList<Event> expectedEvents = new LinkedList<Event>();
+      LinkedList<DevModeEvent> expectedEvents = new LinkedList<DevModeEvent>();
       LinkedList<DevModeSession> expectedSessions = new LinkedList<DevModeSession>();
 
       Event evt1, evt2;
@@ -300,7 +301,7 @@ public class SpeedTracerLoggerTest extends TestCase {
       evt2.end();
       evt1.end();
       // expect only first event
-      expectedEvents.add(evt1);
+      expectedEvents.add(new DevModeEvent(evt1));
       expectedSessions.add(session1); // event should get "default" session
 
       // now with session specified
@@ -310,12 +311,12 @@ public class SpeedTracerLoggerTest extends TestCase {
       evt2.end();
       evt1.end();
       // expect only first event
-      expectedEvents.add(evt1);
+      expectedEvents.add(new DevModeEvent(evt1));
       expectedSessions.add(session2);
 
       evt1 = SpeedTracerLogger.start(session1, DevModeEventType.JS_TO_JAVA_CALL, "k1", "v1");
       evt1.end();
-      expectedEvents.add(evt1);
+      expectedEvents.add(new DevModeEvent(evt1));
       expectedSessions.add(session1);
 
       // Finally, assert that the events and corresponding sessions sent to the
@@ -325,7 +326,7 @@ public class SpeedTracerLoggerTest extends TestCase {
 
       // Collect sessions associated with each event
       LinkedList<DevModeSession> actualSessions = new LinkedList<DevModeSession>();
-      for (Event event : notifier.getEventSequence()) {
+      for (DevModeEvent event : notifier.getEventSequence()) {
         actualSessions.add(event.getDevModeSession());
       }
 

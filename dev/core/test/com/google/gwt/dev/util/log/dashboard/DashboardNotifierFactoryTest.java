@@ -16,7 +16,6 @@
 package com.google.gwt.dev.util.log.dashboard;
 
 import com.google.gwt.dev.shell.DevModeSession;
-import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import junit.framework.TestCase;
 
@@ -29,7 +28,8 @@ public class DashboardNotifierFactoryTest extends TestCase {
     // create test notifier instance
     DashboardNotifier obj = new DashboardNotifier() {
       @Override
-      public void devModeEvent(DevModeSession session, Event event) {
+      public void devModeEvent(DevModeSession session, String eventType, long startTimeNanos,
+          long durationNanos) {
         // no need to do anything
       }
 

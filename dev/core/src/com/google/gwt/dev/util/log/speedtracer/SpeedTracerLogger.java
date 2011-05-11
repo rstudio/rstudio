@@ -860,7 +860,8 @@ public final class SpeedTracerLogger {
       }
 
       DashboardNotifierFactory.getNotifier().devModeEvent(currentEvent.getDevModeSession(),
-          currentEvent);
+          currentEvent.getType().getName(), currentEvent.getElapsedStartTimeNanos(),
+          currentEvent.getElapsedDurationNanos());
     }
   }
 

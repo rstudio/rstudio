@@ -23,9 +23,60 @@ import junit.framework.Assert;
 import java.util.LinkedList;
 
 /**
- * Mock object for testing SpeedTracerLogger
+ * Mock object for testing integration of {@code SpeedTracerLogger} and
+ * {@code DashboardNotifier}.
  */
 public class SpeedTracerLoggerTestMockNotifier implements DashboardNotifier {
+
+  /**
+   * Represents the parameters passed to {@code devModeEvent()}.
+   */
+  public static class DevModeEvent {
+    private DevModeSession session;
+    private String eventType;
+    private long startTimeNanos;
+    private long durationNanos;
+
+    public DevModeEvent(DevModeSession session, String eventType, long startTimeNanos,
+        long durationNanos) {
+      this.session = session;
+      this.eventType = eventType;
+      this.startTimeNanos = startTimeNanos;
+      this.durationNanos = durationNanos;
+    }
+    
+    public DevModeEvent(Event e) {
+      this.session = e.getDevModeSession();
+      this.eventType = e.getType().getName();
+      this.startTimeNanos = e.getElapsedStartTimeNanos();
+      this.durationNanos = e.getElapsedDurationNanos();
+    }
+
+    public DevModeSession getDevModeSession() {
+      return session;
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+      if (o != null && o instanceof DevModeEvent) {
+        DevModeEvent e = (DevModeEvent) o;
+        return session.equals(e.session) && eventType.equals(e.eventType)
+            && startTimeNanos == e.startTimeNanos && durationNanos == e.durationNanos;
+      }
+      return false;
+    }
+
+    @Override
+    public int hashCode() {
+      int hash = 37;
+      hash = hash*19 + session.hashCode();
+      hash = hash*19 + eventType.hashCode();
+      hash = hash*19 + Long.valueOf(startTimeNanos).hashCode();
+      hash = hash*19 + Long.valueOf(durationNanos).hashCode();
+      return hash;
+    }
+  }
+  
   /**
    * Activates this mock object. After calling this, the notifier factory will
    * be setup so that dashboard notifications are enabled and the notifier
@@ -38,13 +89,15 @@ public class SpeedTracerLoggerTestMockNotifier implements DashboardNotifier {
   }
 
   /**
-   * This keeps track of events
+   * Keeps track of calls to {@code devModeEvent()}.
    */
-  private LinkedList<Event> eventSeq = new LinkedList<Event>();
+  private LinkedList<DevModeEvent> eventSeq = new LinkedList<DevModeEvent>();
 
   @Override
-  public void devModeEvent(DevModeSession session, Event event) {
-    eventSeq.add(event);
+  public void devModeEvent(DevModeSession session, String eventType, long startTimeNanos,
+      long durationNanos) {
+    DevModeEvent e = new DevModeEvent(session, eventType, startTimeNanos, durationNanos);
+    eventSeq.add(e);
   }
 
   @Override
@@ -55,7 +108,7 @@ public class SpeedTracerLoggerTestMockNotifier implements DashboardNotifier {
         false);
   }
 
-  public LinkedList<Event> getEventSequence() {
+  public LinkedList<DevModeEvent> getEventSequence() {
     return eventSeq;
   }
 }

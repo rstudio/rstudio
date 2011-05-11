@@ -47,13 +47,14 @@ public class DevModeSession {
   private String userAgent;
 
   /**
-   * Creates a new instance.
+   * Creates a new instance. It is public only for unit test purposes and is
+   * not meant to be used outside of this package.
    * 
    * @param moduleName the name of the GWT module for this session
    * @param userAgent the User agent field provided by the browser for this
    *          session
    */
-  DevModeSession(String moduleName, String userAgent) {
+  public DevModeSession(String moduleName, String userAgent) {
     this.moduleName = moduleName;
     this.userAgent = userAgent;
   }
