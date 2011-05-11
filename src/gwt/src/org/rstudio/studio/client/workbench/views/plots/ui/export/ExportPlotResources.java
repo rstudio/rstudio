@@ -24,6 +24,7 @@ public interface ExportPlotResources extends ClientBundle
    {
       String exportTargetLabel();
       String imageFormatListBox();
+      String fileNameLabel();
       String fileNameTextBox();
       String directoryButton();
       String directoryLabel();
@@ -44,6 +45,14 @@ public interface ExportPlotResources extends ClientBundle
       String copyFormatLabel();
       String copyFormatBitmap();
       String copyFormatMetafile();  
+      
+      String savePdfMainWidget();
+      String savePdfSizeListBox();
+      String savePdfSizeLabel();
+      String savePdfDirectoryLabel();
+      String savePdfFileNameLabel();
+      String savePdfFileNameTextBox();
+      String savePdfViewAfterCheckbox();
    }
 
   

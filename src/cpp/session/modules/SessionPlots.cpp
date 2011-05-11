@@ -143,6 +143,45 @@ Error savePlotAs(const json::JsonRpcRequest& request,
    return Success();
 }
 
+
+Error savePlotAsPdf(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   // get args
+   std::string path;
+   double width, height;
+   bool overwrite;
+   Error error = json::readParams(request.params,
+                                  &path,
+                                  &width,
+                                  &height,
+                                  &overwrite);
+   if (error)
+      return error;
+
+   // resolve path
+   FilePath plotPath = module_context::resolveAliasedPath(path);
+
+   // if it already exists and we aren't ovewriting then return false
+   if (plotPath.exists() && !overwrite)
+   {
+      pResponse->setResult(boolObject(false));
+      return Success();
+   }
+
+   // save plot
+   using namespace r::session::graphics;
+   Display& display = r::session::graphics::display();
+   error =  display.savePlotAsPdf(plotPath, width, height);
+   if (error)
+      return error;
+
+   // set success result
+   pResponse->setResult(boolObject(true));
+   return Success();
+}
+
+
 bool hasStem(const FilePath& filePath, const std::string& stem)
 {
    return filePath.stem() == stem;
@@ -155,6 +194,59 @@ json::Object plotExportFormat(const std::string& name,
    formatJson["name"] = name;
    formatJson["extension"] = extension;
    return formatJson;
+}
+
+Error uniqueSavePlotStem(const FilePath& directoryPath, std::string* pStem)
+{
+   // determine unique file name
+   std::vector<FilePath> children;
+   Error error = directoryPath.children(&children);
+   if (error)
+      return error;
+
+   // search for unique stem
+   int i = 0;
+   *pStem = "Rplot";
+   while(true)
+   {
+      // seek stem
+      std::vector<FilePath>::const_iterator it = std::find_if(
+                                                children.begin(),
+                                                children.end(),
+                                                boost::bind(hasStem, _1, *pStem));
+      // break if not found
+      if (it == children.end())
+         break;
+
+      // update stem and search again
+      boost::format fmt("Rplot%1%");
+      *pStem = boost::str(fmt % boost::io::group(std::setfill('0'),
+                                                 std::setw(2),
+                                                 ++i));
+   }
+
+   return Success();
+}
+
+Error getUniqueSavePlotStem(const json::JsonRpcRequest& request,
+                            json::JsonRpcResponse* pResponse)
+{
+   // get directory arg and convert to path
+   std::string directory;
+   Error error = json::readParam(request.params, 0, &directory);
+   if (error)
+      return error;
+   FilePath directoryPath = module_context::resolveAliasedPath(directory);
+
+   // get stem
+   std::string stem;
+   error = uniqueSavePlotStem(directoryPath, &stem);
+   if (error)
+      return error;
+
+   // set resposne
+   pResponse->setResult(stem);
+   return Success();
 }
 
 Error getSavePlotContext(const json::JsonRpcRequest& request,
@@ -200,32 +292,11 @@ Error getSavePlotContext(const json::JsonRpcRequest& request,
    // reflect directory back to caller
    contextJson["directory"] = module_context::createFileSystemItem(directoryPath);
 
-   // determine unique file name
-   std::vector<FilePath> children;
-   error = directoryPath.children(&children);
+   // get unique stem
+   std::string stem;
+   error = uniqueSavePlotStem(directoryPath, &stem);
    if (error)
       return error;
-
-   // search for unique stem
-   int i = 0;
-   std::string stem = "Rplot";
-   while(true)
-   {
-      // seek stem
-      std::vector<FilePath>::const_iterator it = std::find_if(
-                                                children.begin(),
-                                                children.end(),
-                                                boost::bind(hasStem, _1, stem));
-      // break if not found
-      if (it == children.end())
-         break;
-
-      // update stem and search again
-      boost::format fmt("Rplot%1%");
-      stem = boost::str(fmt % boost::io::group(std::setfill('0'),
-                                               std::setw(2),
-                                               ++i));
-   }
    contextJson["uniqueFileStem"] = stem;
 
    pResponse->setResult(contextJson);
@@ -384,31 +455,7 @@ void handleZoomPngRequest(const http::Request& request,
    if (error)
       LOG_ERROR(error);
 }
-   
-void handlePrintRequest(const http::Request& request, http::Response* pResponse)
-{
-   // get the width and height parameters
-   double width, height;
-   if (!extractSizeParams(request, 3.0, 30.0, &width, &height, pResponse))
-      return ;
- 
-   // generate the pdf
-   FilePath pdfPath = module_context::tempFile("plot", "pdf");
-   using namespace r::session;
-   Error error = graphics::display().savePlotAsPdf(pdfPath, width, height);
-   if (error)
-   {
-      pResponse->setError(http::status::InternalServerError,
-                          error.code().message());
-      return;
-   }
-   
-   // return it
-   setTemporaryFileResponse(pdfPath, request, pResponse);
-}
 
-
-   
 void handlePngRequest(const http::Request& request, 
                       http::Response* pResponse)
 {
@@ -617,11 +664,12 @@ Error initialize()
       (bind(registerRpcMethod, "clear_plots", clearPlots))
       (bind(registerRpcMethod, "refresh_plot", refreshPlot))
       (bind(registerRpcMethod, "save_plot_as", savePlotAs))
+      (bind(registerRpcMethod, "save_plot_as_pdf", savePlotAsPdf))
+      (bind(registerRpcMethod, "get_unique_save_plot_stem", getUniqueSavePlotStem))
       (bind(registerRpcMethod, "get_save_plot_context", getSavePlotContext))
       (bind(registerRpcMethod, "set_manipulator_values", setManipulatorValues))
       (bind(registerUriHandler, kGraphics "/plot_zoom_png", handleZoomPngRequest))
       (bind(registerUriHandler, kGraphics "/plot_zoom", handleZoomRequest))
-      (bind(registerUriHandler, kGraphics "/plot.pdf", handlePrintRequest))
       (bind(registerUriHandler, kGraphics "/plot.png", handlePngRequest))
       (bind(registerUriHandler, kGraphics, handleGraphicsRequest));
    return initBlock.execute();

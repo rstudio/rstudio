@@ -135,8 +135,9 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="zoomPlot"/>
          <separator/>
          <cmd refid="savePlotAsImage"/>
+         <cmd refid="savePlotAsPdf"/>
+         <separator/>
          <cmd refid="copyPlotToClipboard"/>
-         <cmd refid="printPlot"/>
          <separator/>
          <cmd refid="removePlot"/>
          <separator/>
@@ -428,15 +429,14 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Previous Plot"
         desc="Previous plot"/>
    <cmd id="savePlotAsImage"
-        menuLabel="_Save Plot as Image..."
+        menuLabel="Save Plot as _Image..."
         desc="Save the current plot as an image file"/> 
+    <cmd id="savePlotAsPdf"
+        menuLabel="Save Plot as _PDF..."
+        desc="Save the current plot as a PDF file"/>
    <cmd id="copyPlotToClipboard"
         menuLabel="Cop_y Plot to Clipboard..."
         desc="Copy the current plot to the clipboard"/>    
-   <cmd id="printPlot"
-        buttonLabel = "PDF"
-        menuLabel="Print to PDF..."
-        desc="Print current plot to a PDF file"/>
    <cmd id ="zoomPlot" 
         menuLabel="_Zoom Plot..."
         buttonLabel="Zoom"

@@ -1,20 +1,15 @@
 package org.rstudio.studio.client.workbench.views.plots.ui.export;
 
-import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialogProgressIndicator;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.Bool;
-import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
-import org.rstudio.studio.client.workbench.views.plots.model.SavePlotContext;
+import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 
 
@@ -28,7 +23,7 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
    public SavePlotAsImageDialog(
                            GlobalDisplay globalDisplay,
                            PlotsServerOperations server,
-                           SavePlotContext context, 
+                           SavePlotAsImageContext context, 
                            final ExportPlotOptions options,
                            final OperationWithInput<ExportPlotOptions> onClose)
    {
@@ -40,7 +35,7 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
       server_ = server;
       progressIndicator_ = addProgressIndicator();
       
-      ThemedButton saveButton = new ThemedButton("Save Plot", 
+      ThemedButton saveButton = new ThemedButton("Save", 
                                                  new ClickHandler() {
          public void onClick(ClickEvent event) 
          {
@@ -98,7 +93,7 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
                                 final Operation onCompleted)
    {
       // get plot format 
-      String format = saveAsTarget_.getFormat();
+      final String format = saveAsTarget_.getFormat();
       
       // validate path
       FileSystemItem targetPath = saveAsTarget_.getTargetPath();
@@ -111,164 +106,41 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
          return;
       }
       
-      if (Desktop.isDesktop() || !viewAfterSaveCheckBox_.getValue())
-         desktopSavePlotAs(format, targetPath, overwrite, onCompleted);
-      else
-         webSavePlotAs(format, targetPath, overwrite, onCompleted);
-                         
-   }
-   
-  
-   private void desktopSavePlotAs(String format, 
-                                  final FileSystemItem targetPath, 
-                                  boolean overwrite,
-                                  Operation onCompleted)
-   {
-      progressIndicator_.onProgress("Saving Plot...");
-      
-      savePlotAs(
-        format, 
-        targetPath, 
-        overwrite, 
-        onCompleted, 
-        new PlotSaveAsUIHandler() {
-           @Override
-           public void onSuccess()
-           {
-              progressIndicator_.clearProgress();
-              
-              if (viewAfterSaveCheckBox_.getValue())
-              {
-                 RStudioGinjector.INSTANCE.getFileTypeRegistry().openFile(
-                                                             targetPath);
-              }
-           }
-           
-           @Override
-           public void onError(ServerError error)
-           {
-              progressIndicator_.onError(error.getUserMessage());
-               
-           }
-
-           @Override
-           public void onOverwritePrompt()
-           {
-              progressIndicator_.clearProgress();
-           }
-        });
-   }
-   
-   private void webSavePlotAs(final String format, 
-                              final FileSystemItem targetPath, 
-                              final boolean overwrite,
-                              final Operation onCompleted)
-   {
-      globalDisplay_.openProgressWindow("_rstudio_save_plot_as",
-                                        "Saving Plot...", 
-                                        new OperationWithInput<WindowEx>() {                                        
-         public void execute(final WindowEx window)
-         {
-            savePlotAs(
-               format, 
-               targetPath, 
-               overwrite, 
-               onCompleted, 
-               new PlotSaveAsUIHandler() {
-                  @Override
-                  public void onSuccess()
-                  {
-                     // redirect window to view file
-                     String url = server_.getFileUrl(targetPath);
-                     window.replaceLocationHref(url);
-                  }
-                  
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     window.close();
-                     
-                     globalDisplay_.showErrorMessage("Error Saving Plot", 
-                                                     error.getUserMessage());       
-                  }
-       
-                  @Override
-                  public void onOverwritePrompt()
-                  {
-                     window.close();
-                  }
-               });
-         }
-      });
-   }
-   
-   private interface PlotSaveAsUIHandler
-   {
-      void onSuccess();
-      void onError(ServerError error);
-      void onOverwritePrompt();
-   }
-   
-   
-   private void savePlotAs(String format, 
-                           final FileSystemItem targetPath, 
-                           boolean overwrite,
-                           final Operation onCompleted,
-                           final PlotSaveAsUIHandler uiHandler)
-   {
-      ExportPlotSizeEditor sizeEditor = getSizeEditor();
-      server_.savePlotAs(
-         targetPath, 
-         format, 
-         sizeEditor.getImageWidth(), 
-         sizeEditor.getImageHeight(), 
-         overwrite,
-         new ServerRequestCallback<Bool>() {
-
-            @Override
-            public void onResponseReceived(Bool saved)
+      // create handler
+      SavePlotAsHandler handler = new SavePlotAsHandler(
+            globalDisplay_, 
+            progressIndicator_, 
+            new SavePlotAsHandler.ServerOperations()
             {
-               
-               
-               if (saved.getValue())
+               @Override
+               public void savePlot(
+                     FileSystemItem targetPath, 
+                     boolean overwrite,
+                     ServerRequestCallback<Bool> requestCallback)
                {
-                  uiHandler.onSuccess();
-                  
-                  // fire onCompleted
-                  onCompleted.execute();
+                  ExportPlotSizeEditor sizeEditor = getSizeEditor();
+                  server_.savePlotAs(targetPath, 
+                                     format, 
+                                     sizeEditor.getImageWidth(), 
+                                     sizeEditor.getImageHeight(), 
+                                     overwrite,
+                                     requestCallback);
                }
-               else
-               { 
-                  uiHandler.onOverwritePrompt();
-                  
-                  globalDisplay_.showYesNoMessage(
-                        MessageDialog.WARNING, 
-                        "File Exists", 
-                        "The specified image file name already exists. " +
-                        "Do you want to overwrite it?", 
-                        new Operation() {
-                           @Override
-                           public void execute()
-                           {
-                              attemptSavePlot(true, onCompleted);
-                           }
-                        }, 
-                        true);
-                 
+
+               @Override
+               public String getFileUrl(FileSystemItem path)
+               {
+                  return server_.getFileUrl(path);
                }
-            }
-            
-            @Override
-            public void onError(ServerError error)
-            {
-               uiHandler.onError(error);
-            }
-         
-      });     
+            });
+      
+      // invoke handler
+      handler.attemptSave(targetPath, 
+                          overwrite, 
+                          viewAfterSaveCheckBox_.getValue(), 
+                          onCompleted);                   
    }
-   
-   
-   
+  
    private final GlobalDisplay globalDisplay_;
    private ModalDialogProgressIndicator progressIndicator_;
    private final PlotsServerOperations server_;

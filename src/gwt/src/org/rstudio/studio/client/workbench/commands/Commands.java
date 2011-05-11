@@ -97,8 +97,8 @@ public abstract class Commands extends CommandBundle
    public abstract AppCommand nextPlot();
    public abstract AppCommand previousPlot();
    public abstract AppCommand savePlotAsImage();
+   public abstract AppCommand savePlotAsPdf();
    public abstract AppCommand copyPlotToClipboard();
-   public abstract AppCommand printPlot();
    public abstract AppCommand zoomPlot();
    public abstract AppCommand removePlot();
    public abstract AppCommand clearPlots();

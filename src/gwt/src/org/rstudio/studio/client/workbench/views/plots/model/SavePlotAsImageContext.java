@@ -5,13 +5,13 @@ import org.rstudio.core.client.files.FileSystemItem;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
-public class SavePlotContext extends JavaScriptObject
+public class SavePlotAsImageContext extends JavaScriptObject
 {
-   protected SavePlotContext()
+   protected SavePlotAsImageContext()
    {
    }
    
-   public final native JsArray<SavePlotFormat> getFormats() /*-{
+   public final native JsArray<SavePlotAsImageFormat> getFormats() /*-{
       return this.formats;
    }-*/;
    
