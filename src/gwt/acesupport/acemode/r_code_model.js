@@ -1,5 +1,5 @@
 /*
- * r_autoindent.js
+ * r_code_model.js
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -11,7 +11,7 @@
  *
  */
 
-define("mode/r_autoindent", function(require, exports, module) {
+define("mode/r_code_model", function(require, exports, module) {
 
 function comparePoints(pos1, pos2)
 {
@@ -22,7 +22,7 @@ function comparePoints(pos1, pos2)
 
 var Anchor = require("ace/anchor").Anchor;
 
-var IndentManager = function(doc, tokenizer, statePattern) {
+var RCodeModel = function(doc, tokenizer, statePattern) {
    this.$doc = doc;
    this.$tokenizer = tokenizer;
    this.$tokens = new Array(doc.getLength());
@@ -920,8 +920,8 @@ var IndentManager = function(doc, tokenizer, statePattern) {
       return tokens;
    };
 
-}).call(IndentManager.prototype);
+}).call(RCodeModel.prototype);
 
-exports.IndentManager = IndentManager;
+exports.RCodeModel = RCodeModel;
 
 });

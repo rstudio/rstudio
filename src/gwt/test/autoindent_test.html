@@ -5,7 +5,7 @@
   <script type="text/javascript" src="../tools/ace/build/src/ace.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/r_highlight_rules.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/r.js"></script>
-  <script type="text/javascript" src="../acesupport/acemode/r_autoindent.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_code_model.js"></script>
   <style type="text/css">
   pre {
     margin-bottom: 30px;
@@ -177,22 +177,22 @@ else
 </ol>
 
 <script type="text/javascript">
-var IndentManager = require('mode/r_autoindent').IndentManager;
+var RCodeModel = require('mode/r_code_model').RCodeModel;
 var Document = require('ace/document').Document;
 var RMode = require('mode/r').Mode;
 
 function doIndentTest(el) {
   var doc = new Document('');
   var mode = new RMode(false, doc);
-  var indentManager = new IndentManager(doc, mode.$tokenizer);
+  var rCodeModel = new RCodeModel(doc, mode.$tokenizer);
 
   doc.insert({row:0, column:0}, el.innerText.trimRight());
 
-  var indent = indentManager.getNextLineIndent(doc.getLength() - 1,
-                                               doc.getLine(doc.getLength() - 1),
-                                               "start",
-                                               "  ",
-                                               2);
+  var indent = rCodeModel.getNextLineIndent(doc.getLength() - 1,
+                                            doc.getLine(doc.getLength() - 1),
+                                            "start",
+                                            "  ",
+                                            2);
   el.appendChild(document.createTextNode(indent + "|"));
   var expected = el.getAttribute("expected");
   if (expected == indent.length + "")

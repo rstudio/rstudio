@@ -25,7 +25,7 @@ define("mode/r", function(require, exports, module)
    var TextHighlightRules = require("ace/mode/text_highlight_rules")
          .TextHighlightRules;
    var RHighlightRules = require("mode/r_highlight_rules").RHighlightRules;
-   var IndentManager = require("mode/r_autoindent").IndentManager;
+   var RCodeModel = require("mode/r_code_model").RCodeModel;
    var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
 
    var Mode = function(suppressHighlighting, doc)
@@ -36,7 +36,7 @@ define("mode/r", function(require, exports, module)
          this.$tokenizer = new Tokenizer(new RHighlightRules().getRules());
       this.$outdent = new MatchingBraceOutdent();
 
-      this.$indentManager = new IndentManager(doc, this.$tokenizer, null);
+      this.$rCodeModel = new RCodeModel(doc, this.$tokenizer, null);
    };
    oop.inherits(Mode, TextMode);
 
@@ -49,9 +49,20 @@ define("mode/r", function(require, exports, module)
                       position.row == cursor.row &&
                       position.column == cursor.column;
 
+         if (typing) {
+            var postRng = Range.fromPoints(position, {
+               row: position.row,
+               column: position.column + 1});
+            var postChar = session.doc.getTextRange(postRng);
+            if (/^\)$/.test(postChar) && postChar == text) {
+               session.selection.moveCursorTo(postRng.end);
+               return;
+            }
+         }
+
          var endPos = __insert.call(session, position, text);
          // Is this an open paren?
-         if (typing && /^\(+$/.test(text)) {
+         if (typing && /^\($/.test(text)) {
             // Is the next char not a character or number?
             var nextCharRng = Range.fromPoints(endPos, {
                row: endPos.row,
@@ -96,17 +107,17 @@ define("mode/r", function(require, exports, module)
 
       this.getNextLineIndent = function(state, line, tab, tabSize, row)
       {
-         return this.$indentManager.getNextLineIndent(row, line, state, tab, tabSize);
+         return this.$rCodeModel.getNextLineIndent(row, line, state, tab, tabSize);
       };
 
       this.getCurrentFunction = function(position)
       {
-         return this.$indentManager.getCurrentFunction(position);
+         return this.$rCodeModel.getCurrentFunction(position);
       };
 
       this.getFunctionTree = function()
       {
-         return this.$indentManager.getFunctionTree();
+         return this.$rCodeModel.getFunctionTree();
       };
 
       this.checkOutdent = function(state, line, input) {
@@ -138,7 +149,7 @@ define("mode/r", function(require, exports, module)
          if (match)
          {
             var column = match[1].length;
-            var indent = this.$indentManager.getBraceIndent(row-1);
+            var indent = this.$rCodeModel.getBraceIndent(row-1);
             doc.replace(new Range(row, 0, row, column-1), indent);
          }
       };
