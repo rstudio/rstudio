@@ -32,6 +32,8 @@ public class AppCacheLinker extends SimpleAppCacheLinker {
     return new String[] {
         "/MobileWebApp.html",
         "/MobileWebApp.css",
+        "/favicon.ico",
+        "/app_icon.png",
         "/audio/error.mp3",
         "/audio/error.ogg",
         "/audio/error.wav",
