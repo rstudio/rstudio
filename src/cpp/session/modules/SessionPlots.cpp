@@ -181,6 +181,17 @@ Error savePlotAsPdf(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error copyPlotToClipboardMetafile(const json::JsonRpcRequest& request,
+                                  json::JsonRpcResponse* pResponse)
+{
+#if _WIN32
+   return Success();
+#else
+   return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
+#endif
+}
+
+
 
 bool hasStem(const FilePath& filePath, const std::string& stem)
 {
@@ -665,6 +676,7 @@ Error initialize()
       (bind(registerRpcMethod, "refresh_plot", refreshPlot))
       (bind(registerRpcMethod, "save_plot_as", savePlotAs))
       (bind(registerRpcMethod, "save_plot_as_pdf", savePlotAsPdf))
+      (bind(registerRpcMethod, "copy_plot_to_clipboard_metafile", copyPlotToClipboardMetafile))
       (bind(registerRpcMethod, "get_unique_save_plot_stem", getUniqueSavePlotStem))
       (bind(registerRpcMethod, "get_save_plot_context", getSavePlotContext))
       (bind(registerRpcMethod, "set_manipulator_values", setManipulatorValues))

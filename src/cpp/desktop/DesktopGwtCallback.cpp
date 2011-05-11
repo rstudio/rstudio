@@ -334,6 +334,15 @@ void GwtCallback::copyImageToClipboard(int left, int top, int width, int height)
    pOwnerWindow_->webView()->triggerPageAction(QWebPage::CopyImageToClipboard);
 }
 
+bool GwtCallback::supportsClipboardMetafile()
+{
+#ifdef Q_OS_WIN32
+   return true;
+#else
+   return false;
+#endif
+}
+
 namespace {
    QMessageBox::ButtonRole captionToRole(QString caption)
    {

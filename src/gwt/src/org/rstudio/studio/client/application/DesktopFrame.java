@@ -40,6 +40,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
                              int clientTop,
                              int clientWidth,
                              int clientHeight);
+   
+   boolean supportsClipboardMetafile();
 
    int showMessageBox(int type,
                       String caption,

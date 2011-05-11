@@ -1,7 +1,10 @@
 package org.rstudio.studio.client.workbench.views.plots.ui.export.impl;
 
 
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlotResources;
@@ -11,10 +14,10 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RadioButton;
 
-public class CopyPlotToClipboardWindowsDialog extends CopyPlotToClipboardDesktopDialog
+public class CopyPlotToClipboardDesktopMetafileDialog extends CopyPlotToClipboardDesktopDialog
 {
 
-   public CopyPlotToClipboardWindowsDialog(
+   public CopyPlotToClipboardDesktopMetafileDialog(
                                  PlotsServerOperations server,
                                  ExportPlotOptions options,
                                  OperationWithInput<ExportPlotOptions> onClose)
@@ -49,12 +52,12 @@ public class CopyPlotToClipboardWindowsDialog extends CopyPlotToClipboardDesktop
    
    
    @Override
-   protected void performCopy()
+   protected void performCopy(Operation onCompleted)
    {
       if (getCopyAsMetafile())
-         copyAsMetafile();
+         copyAsMetafile(onCompleted);
       else
-         copyAsBitmap();
+         copyAsBitmap(onCompleted);
    }
      
    
@@ -76,12 +79,23 @@ public class CopyPlotToClipboardWindowsDialog extends CopyPlotToClipboardDesktop
       return copyAsMetafileRadioButton_.getValue();
    }
    
-   private void copyAsMetafile()
+   private void copyAsMetafile(final Operation onCompleted)
    {
-      
+      ExportPlotSizeEditor sizeEditor = getSizeEditor();
+      server_.copyPlotToClipboardMetafile(
+            sizeEditor.getImageWidth(),
+            sizeEditor.getImageHeight(),
+            new SimpleRequestCallback<Void>() 
+            {
+               @Override
+               public void onResponseReceived(Void response)
+               {
+                  onCompleted.execute();
+               }
+            });
    }
    
    private RadioButton copyAsBitmapRadioButton_;
    private RadioButton copyAsMetafileRadioButton_;
-
+  
 }
