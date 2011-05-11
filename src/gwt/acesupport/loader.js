@@ -20,8 +20,41 @@
 
 define("rstudio/loader", function(require, exports, module) {
 
+var Editor = require("ace/editor").Editor;
+var EditSession = require("ace/edit_session").EditSession;
+var Range = require("ace/range").Range;
+
+
+// Monkeypatch EditSession.insert and Editor.removeLeft to allow R mode to
+// do automatic brace insertion
+
+(function() {
+   var __insert = this.insert;
+   this.insert = function(position, text) {
+      if (this.getMode().wrapInsert) {
+         return this.getMode().wrapInsert(this, __insert, position, text);
+      }
+      else {
+         return __insert.call(this, position, text);
+      }
+   };
+}).call(EditSession.prototype);
+
+(function() {
+   var __removeLeft = this.removeLeft;
+   this.removeLeft = function() {
+      if (this.session.getMode().wrapRemoveLeft) {
+         return this.session.getMode().wrapRemoveLeft(this, __removeLeft);
+      }
+      else {
+         return __removeLeft.call(this);
+      }
+   };
+}).call(Editor.prototype);
+
+
 function loadEditor(container) {
-    var catalog = require("pilot/plugin_manager").catalog;
+   var catalog = require("pilot/plugin_manager").catalog;
 	var env = null;
 	var loaded = catalog.registerPlugins(["pilot/index"]).isResolved();
     env = require("pilot/environment").create();
@@ -30,7 +63,6 @@ function loadEditor(container) {
 	if (!loaded)
 		throw new Error("Environment loading was not synchronous");
 
-	var Editor = require("ace/editor").Editor;
 	var Renderer = require("ace/virtual_renderer").VirtualRenderer;
 	var UndoManager = require("ace/undomanager").UndoManager;
 

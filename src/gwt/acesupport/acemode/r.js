@@ -42,6 +42,58 @@ define("mode/r", function(require, exports, module)
 
    (function()
    {
+      this.wrapInsert = function(session, __insert, position, text)
+      {
+         var cursor = session.selection.getCursor();
+         var typing = session.selection.isEmpty() &&
+                      position.row == cursor.row &&
+                      position.column == cursor.column;
+
+         var endPos = __insert.call(session, position, text);
+         // Is this an open paren?
+         if (typing && /^\(+$/.test(text)) {
+            // Is the next char not a character or number?
+            var nextCharRng = Range.fromPoints(endPos, {
+               row: endPos.row,
+               column: endPos.column + 1
+            });
+            var nextChar = session.doc.getTextRange(nextCharRng);
+            if (/^[;,\s)]$/.test(nextChar) || nextChar.length == 0) {
+               session.doc.insert(endPos, ")");
+               session.selection.moveCursorTo(endPos.row, endPos.column, false);
+            }
+         }
+         return endPos;
+      };
+
+      this.wrapRemoveLeft = function(editor, __removeLeft)
+      {
+         if (editor.$readOnly)
+            return;
+
+         var secondaryDeletion = null;
+         if (editor.selection.isEmpty()) {
+            editor.selection.selectLeft();
+            if (editor.session.getDocument().getTextRange(editor.selection.getRange()) == "(")
+            {
+               var nextCharRng = Range.fromPoints(editor.selection.getRange().end, {
+                  row: editor.selection.getRange().end.row,
+                  column: editor.selection.getRange().end.column + 1
+               });
+               var nextChar = editor.session.getDocument().getTextRange(nextCharRng);
+               if (nextChar == ")")
+               {
+                  secondaryDeletion = editor.getSelectionRange();
+               }
+            }
+         }
+
+         editor.session.remove(editor.getSelectionRange());
+         if (secondaryDeletion)
+            editor.session.remove(secondaryDeletion);
+         editor.clearSelection();
+      };
+
       this.getNextLineIndent = function(state, line, tab, tabSize, row)
       {
          return this.$indentManager.getNextLineIndent(row, line, state, tab, tabSize);
