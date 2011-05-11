@@ -21,8 +21,6 @@
   <servlet path='/echo' class='com.google.gwt.user.server.rpc.MixedSerializableEchoServiceImpl' />
   <servlet path='/collections'
     class='com.google.gwt.user.server.rpc.CollectionsTestServiceImpl' />
-  <servlet path='/corejava'
-    class='com.google.gwt.user.server.rpc.CoreJavaTestServiceImpl' />
   <servlet path='/customfieldserializers'
     class='com.google.gwt.user.server.rpc.CustomFieldSerializerTestServiceImpl' />
   <servlet path='/enums'

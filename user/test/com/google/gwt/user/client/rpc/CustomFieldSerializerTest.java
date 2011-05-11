@@ -57,9 +57,7 @@ public class CustomFieldSerializerTest extends RpcTestBase {
   }
 
   /**
-   * Tests that the custom field serializers are actually called when the
-   * custom field serializer does not derive from
-   * {@link CustomFieldSerializer}
+   * Tests that the custom field serializers are actually called.
    */
   public void testCustomFieldSerialization() {
     CustomFieldSerializerTestServiceAsync service = getServiceAsync();
@@ -85,9 +83,6 @@ public class CustomFieldSerializerTest extends RpcTestBase {
   /**
    * Test that custom serializers that call readObject() inside instantiate (as
    * is required for most immutable classes) work.
-   * 
-   * This also checks that custom <code>instantiate</code> works when the
-   * custom serializer does not implement {@link CustomFieldSerializer}.
    */
   public void testSerializableImmutables() {
     CustomFieldSerializerTestServiceAsync service = getServiceAsync();

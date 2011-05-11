@@ -28,7 +28,6 @@ import com.google.gwt.rpc.client.RpcUnicodeEscapingTest;
 import com.google.gwt.rpc.client.RpcValueTypesTest;
 import com.google.gwt.user.client.rpc.CollectionsTest;
 import com.google.gwt.user.client.rpc.CollectionsTestWithTypeObfuscation;
-import com.google.gwt.user.client.rpc.CoreJavaTest;
 import com.google.gwt.user.client.rpc.CustomFieldSerializerTest;
 import com.google.gwt.user.client.rpc.CustomFieldSerializerTestWithTypeObfuscation;
 import com.google.gwt.user.client.rpc.EnumsTest;
@@ -103,7 +102,6 @@ public class RPCSuite {
     suite.addTestSuite(EnumsTest.class);
     suite.addTestSuite(InheritanceTest.class);
     suite.addTestSuite(CollectionsTest.class);
-    suite.addTestSuite(CoreJavaTest.class);
     suite.addTestSuite(CustomFieldSerializerTest.class);
     suite.addTestSuite(ExceptionsTest.class);
     suite.addTestSuite(ObjectGraphTest.class);
