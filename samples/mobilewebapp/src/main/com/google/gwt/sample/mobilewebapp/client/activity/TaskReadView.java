@@ -20,6 +20,9 @@ import com.google.gwt.editor.client.SimpleBeanEditorDriver;
 import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
 import com.google.gwt.user.client.ui.IsWidget;
 
+/**
+ * A readonly view of a task.
+ */
 public interface TaskReadView extends IsWidget, Editor<TaskProxy> {
 
   /**

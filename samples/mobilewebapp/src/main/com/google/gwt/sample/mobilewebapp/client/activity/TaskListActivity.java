@@ -25,16 +25,13 @@ import com.google.gwt.sample.mobilewebapp.client.ClientFactory;
 import com.google.gwt.sample.mobilewebapp.client.place.TaskEditPlace;
 import com.google.gwt.sample.mobilewebapp.client.place.TaskListPlace;
 import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
-import com.google.gwt.sample.mobilewebapp.shared.TaskProxyImpl;
 import com.google.gwt.storage.client.Storage;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.AcceptsOneWidget;
 import com.google.web.bindery.requestfactory.shared.Receiver;
 import com.google.web.bindery.requestfactory.shared.ServerFailure;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -96,86 +93,19 @@ public class TaskListActivity extends AbstractActivity implements TaskListView.P
     void onTaskListUpdated(TaskListUpdateEvent event);
   }
 
-  private static final String TASKLIST_SAVE_KEY = "TASKLIST";
-  private static final String TASKSEP = "&&";
-  private static final String FIELDSEP = "@@";
-  private static final String FIELDEMPTY = "***";
-
   /**
    * The delay in milliseconds between calls to refresh the task list.
    */
   private static final int REFRESH_DELAY = 5000;
 
   /**
-   * Convert a task proxy list into a string.
+   * The handler that handlers add button clicks.
    */
-  private static String getStringFromTaskProxy(List<TaskProxy> list) {
-    StringBuilder sb = new StringBuilder();
-    for (TaskProxy proxy : list) {
-      sb.append(proxy.getDueDate() != null ? proxy.getDueDate().getTime() : FIELDEMPTY);
-      sb.append(FIELDSEP);
-      sb.append(proxy.getId() != null ? proxy.getId() : "");
-      sb.append(FIELDSEP);
-      String name = proxy.getName();
-      sb.append(name != null && name.length() > 0 ? proxy.getName() : FIELDEMPTY);
-      sb.append(FIELDSEP);
-      String notes = proxy.getNotes();
-      sb.append(notes != null && notes.length() > 0 ? proxy.getNotes() : FIELDEMPTY);
-      sb.append(TASKSEP);
+  private final ClickHandler addButtonHandler = new ClickHandler() {
+    public void onClick(ClickEvent event) {
+      clientFactory.getPlaceController().goTo(TaskEditPlace.getTaskCreatePlace());
     }
-    return sb.toString();
-  }
-
-  /**
-   * Parse a task proxy list from a string.
-   */
-  private static List<TaskProxy> getTaskProxyFromString(String taskProxyList) {
-    ArrayList<TaskProxy> list = new ArrayList<TaskProxy>(0);
-    if (taskProxyList == null) {
-      return list;
-    }
-    // taskproxy1&&taskproxy2&&taskproxy3&&...
-    String taskProxyStrings[] = taskProxyList.split(TASKSEP);
-    for (String taskProxyString : taskProxyStrings) {
-      if (taskProxyString == null) {
-        continue;
-      }
-      // date@@id@@name@@notes
-      String taskProxyStringData[] = taskProxyString.split(FIELDSEP);
-      if (taskProxyStringData.length >= 4) {
-        // collect the fields
-        String dateString = taskProxyStringData[0];
-        String idString = taskProxyStringData[1];
-        String nameString = taskProxyStringData[2];
-        if (FIELDEMPTY.equals(nameString)) {
-          nameString = null;
-        }
-        String notesString = taskProxyStringData[3];
-        if (FIELDEMPTY.equals(notesString)) {
-          notesString = null;
-        }
-        // parse the numerical fields
-        Date dueDate = null;
-        try {
-          dueDate = new Date(Long.parseLong(dateString));
-        } catch (NumberFormatException nfe) {
-        }
-        Long idLong = 0L;
-        try {
-          idLong = Long.parseLong(idString);
-        } catch (NumberFormatException nfe) {
-        }
-        // create and populate the TaskProxy
-        TaskProxyImpl taskProxy = new TaskProxyImpl();
-        taskProxy.setDueDate(dueDate);
-        taskProxy.setId(idLong);
-        taskProxy.setName(nameString);
-        taskProxy.setNotes(notesString);
-        list.add(taskProxy);
-      }
-    }
-    return list;
-  }
+  };
 
   private final Storage storage;
 
@@ -214,6 +144,10 @@ public class TaskListActivity extends AbstractActivity implements TaskListView.P
     this.storage = clientFactory.getLocalStorageIfSupported();
   }
 
+  public ClickHandler getAddButtonHandler() {
+    return addButtonHandler;
+  }
+
   @Override
   public void onCancel() {
     killActivity();
@@ -232,11 +166,7 @@ public class TaskListActivity extends AbstractActivity implements TaskListView.P
 
   public void start(AcceptsOneWidget container, EventBus eventBus) {
     // Add a handler to the 'add' button in the shell.
-    clientFactory.getShell().setAddButtonHandler(new ClickHandler() {
-      public void onClick(ClickEvent event) {
-        clientFactory.getPlaceController().goTo(TaskEditPlace.getTaskCreatePlace());
-      }
-    });
+    clientFactory.getShell().setAddButtonHandler(addButtonHandler);
 
     // Set the presenter on the view.
     final TaskListView view = clientFactory.getTaskListView();
@@ -257,13 +187,8 @@ public class TaskListActivity extends AbstractActivity implements TaskListView.P
     };
 
     // Load the saved task list from storage
-    if (storage != null) { // if storage is supported
-      String taskString = storage.getItem(TASKLIST_SAVE_KEY);
-      if (taskString != null) {
-        List<TaskProxy> list = getTaskProxyFromString(taskString);
-        setTasks(list);
-      }
-    }
+    List<TaskProxy> list = clientFactory.getTaskProxyLocalStorage().getTasks();
+    setTasks(list);
 
     // Request the task list now.
     refreshTaskList();
@@ -302,16 +227,12 @@ public class TaskListActivity extends AbstractActivity implements TaskListView.P
 
             // Display the tasks in the view.
             if (response == null) {
-              setTasks(Collections.<TaskProxy> emptyList());
-            } else {
-              setTasks(response);
-
-              // save the response to storage
-              if (storage != null) { // if storage is supported
-                String responseString = getStringFromTaskProxy(response);
-                storage.setItem(TASKLIST_SAVE_KEY, responseString);
-              }
+              response = Collections.<TaskProxy> emptyList();
             }
+            setTasks(response);
+
+            // save the response to storage
+            clientFactory.getTaskProxyLocalStorage().setTasks(response);
 
             // Restart the timer.
             refreshTimer.schedule(REFRESH_DELAY);

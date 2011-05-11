@@ -59,8 +59,9 @@
               align="right"
               valign="middle">
               <g:Label
+                ui:field="titleLabel"
                 addStyleNames="{style.headerText}">
-                App Name
+                Cloud Tasks
               </g:Label>
             </td>
           </tr>

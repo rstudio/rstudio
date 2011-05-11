@@ -27,7 +27,6 @@ import com.google.gwt.place.shared.Place;
 import com.google.gwt.place.shared.PlaceChangeEvent;
 import com.google.gwt.place.shared.PlaceController;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.sample.mobilewebapp.client.ClientFactory;
 import com.google.gwt.sample.mobilewebapp.client.MobileWebAppShell;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskEditView;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskListActivity;
@@ -234,7 +233,7 @@ public class MobileWebAppShellDesktop extends ResizeComposite implements MobileW
     selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
         MainMenuItem selected = selectionModel.getSelectedObject();
-        if (selected != null) {
+        if (selected != null && !selected.mapsToPlace(placeController.getWhere())) {
           placeController.goTo(selected.getPlace());
         }
       }
@@ -437,10 +436,18 @@ public class MobileWebAppShellDesktop extends ResizeComposite implements MobileW
 
     // Update the pie chart.
     pieChart.clearSlices();
-    pieChart.addSlice(pastDue, CssColor.make(255, 100, 100));
-    pieChart.addSlice(dueSoon, CssColor.make(255, 200, 100));
-    pieChart.addSlice(onTime, CssColor.make(100, 255, 100));
-    pieChart.addSlice(noDate, CssColor.make(200, 200, 200));
+    if (pastDue > 0) {
+      pieChart.addSlice(pastDue, CssColor.make(255, 100, 100));
+    }
+    if (dueSoon > 0) {
+      pieChart.addSlice(dueSoon, CssColor.make(255, 200, 100));
+    }
+    if (onTime > 0) {
+      pieChart.addSlice(onTime, CssColor.make(100, 255, 100));
+    }
+    if (noDate > 0) {
+      pieChart.addSlice(noDate, CssColor.make(200, 200, 200));
+    }
     pieChart.redraw();
   }
 }

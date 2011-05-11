@@ -19,13 +19,15 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.sample.mobilewebapp.client.ClientFactory;
+import com.google.gwt.place.shared.PlaceController;
 import com.google.gwt.sample.mobilewebapp.client.MobileWebAppShell;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskEditView;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskListView;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskReadView;
+import com.google.gwt.sample.mobilewebapp.client.place.TaskListPlace;
 import com.google.gwt.sample.mobilewebapp.client.ui.OrientationHelper;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -106,11 +108,9 @@ public class MobileWebAppShellMobile extends ResizeComposite implements MobileWe
 
   /**
    * Construct a new {@link MobileWebAppShellMobile}.
-   * 
-   * @param clientFactory the {@link ClientFactory} of shared resources
    */
   public MobileWebAppShellMobile(OrientationHelper orientationHelper, TaskListView taskListView,
-      TaskEditView taskEditView, TaskReadView taskReadView) {
+      TaskEditView taskEditView, TaskReadView taskReadView, final PlaceController placeController) {
 
     initWidget(uiBinder.createAndBindUi(this));
 
@@ -140,6 +140,14 @@ public class MobileWebAppShellMobile extends ResizeComposite implements MobileWe
         onShiftToLandscape();
       }
     });
+
+    // Return the the task list place when the title is clicked.
+    titleBar.addDomHandler(new ClickHandler() {      
+      @Override
+      public void onClick(ClickEvent event) {
+        placeController.goTo(new TaskListPlace(false));
+      }
+    }, ClickEvent.getType());
   }
 
   /**

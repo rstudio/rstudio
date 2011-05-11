@@ -41,7 +41,7 @@
         ui:field='titleBar'
         addStyleNames="{style.header}">
         <div
-          ui:field='titleElem'>Task List</div>
+          ui:field='titleElem'>Cloud Tasks</div>
       </g:HTMLPanel>
     </g:layer>
 

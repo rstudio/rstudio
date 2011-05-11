@@ -54,6 +54,7 @@ class ClientFactoryImpl implements ClientFactory {
   private final MobileWebAppRequestFactory requestFactory;
   private MobileWebAppShell shell;
   private final Storage localStorage;
+  private final TaskProxyLocalStorage taskProxyLocalStorage;
   private TaskEditView taskEditView;
   private TaskListView taskListView;
   private final ActivityManager activityManager;
@@ -80,6 +81,7 @@ class ClientFactoryImpl implements ClientFactory {
     } else {
       localStorage = null;
     }
+    taskProxyLocalStorage = new TaskProxyLocalStorage(localStorage);
 
     /*
      * ActivityMapper determines an Activity to run for a particular place.
@@ -135,6 +137,10 @@ class ClientFactoryImpl implements ClientFactory {
       taskListView = createTaskListView();
     }
     return taskListView;
+  }
+
+  public TaskProxyLocalStorage getTaskProxyLocalStorage() {
+    return taskProxyLocalStorage;
   }
 
   public TaskReadView getTaskReadView() {

@@ -63,11 +63,11 @@
           <tr>
             <td>
               <div
-                class="{style.headerWord}">Task</div>
+                class="{style.headerWord}">Cloud</div>
             </td>
             <td>
               <div
-                class="{style.headerWord}">Manager</div>
+                class="{style.headerWord}">Tasks</div>
             </td>
           </tr>
         </table>

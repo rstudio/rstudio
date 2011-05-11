@@ -86,6 +86,11 @@ public interface ClientFactory {
   TaskListView getTaskListView();
 
   /**
+   * Get the {@link TaskProxyLocalStorage} that stores tasks.
+   */
+  TaskProxyLocalStorage getTaskProxyLocalStorage();
+
+  /**
    * Get an implementation of {@link TaskEditView}.
    */
   TaskReadView getTaskReadView();

@@ -16,11 +16,11 @@
 package com.google.gwt.sample.mobilewebapp.client.tablet;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.place.shared.PlaceController;
-import com.google.gwt.sample.mobilewebapp.client.ClientFactory;
 import com.google.gwt.sample.mobilewebapp.client.MobileWebAppShell;
 import com.google.gwt.sample.mobilewebapp.client.Provider;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskListActivity;
@@ -34,6 +34,7 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.IsWidget;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -85,6 +86,12 @@ public class MobileWebAppShellTablet extends ResizeComposite implements MobileWe
   SimplePanel taskListContainer;
 
   /**
+   * The label containing the application title.
+   */
+  @UiField
+  Label titleLabel;
+
+  /**
    * A reference to the handler for the add button.
    */
   private HandlerRegistration addButtonHandler;
@@ -113,7 +120,7 @@ public class MobileWebAppShellTablet extends ResizeComposite implements MobileWe
    * @param clientFactory the {@link ClientFactory} of shared resources
    */
   public MobileWebAppShellTablet(EventBus bus, OrientationHelper orientationHelper,
-      PlaceController placeController, Provider<TaskListActivity> taskListActivityProvider,
+      final PlaceController placeController, Provider<TaskListActivity> taskListActivityProvider,
       TaskListView taskListView) {
     this.bus = bus;
 
@@ -142,6 +149,14 @@ public class MobileWebAppShellTablet extends ResizeComposite implements MobileWe
       @Override
       public void execute() {
         onShiftToLandscape();
+      }
+    });
+
+    // Go to the task list place when the title is clicked.
+    titleLabel.addClickHandler(new ClickHandler() {      
+      @Override
+      public void onClick(ClickEvent event) {
+        placeController.goTo(new TaskListPlace(false));
       }
     });
   }
@@ -176,6 +191,11 @@ public class MobileWebAppShellTablet extends ResizeComposite implements MobileWe
    */
   public void setWidget(IsWidget content) {
     contentContainer.setWidget((content == null) ? contentEmptyMessage : content);
+
+    // If the content is null and we are in landscape mode, show the add button.
+    if (content == null && taskListActivity != null) {
+      setAddButtonHandler(taskListActivity.getAddButtonHandler());
+    }
 
     // Do not animate the first time we show a widget.
     if (firstContentWidget) {
