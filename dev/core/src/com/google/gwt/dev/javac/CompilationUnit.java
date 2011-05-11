@@ -315,12 +315,10 @@ public abstract class CompilationUnit implements Serializable {
   public List<JDeclaredType> getTypes() {
     try {
       byte[] bytes = getTypesSerialized();
-      ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(
-          bytes));
+      ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes));
       return JProgram.deserializeTypes(ois);
     } catch (IOException e) {
-      throw new RuntimeException("Unexpected IOException on in-memory stream",
-          e);
+      throw new RuntimeException("Unexpected IOException on in-memory stream", e);
     } catch (ClassNotFoundException e) {
       throw new RuntimeException("Unexpected error deserializing AST for '" + getTypeName() + "'",
           e);

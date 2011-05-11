@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -52,11 +52,12 @@ import java.util.Set;
 public class ResourceOracleImpl implements ResourceOracle {
 
   private static class Messages {
-    static final Message1String EXAMINING_PATH_ROOT = new Message1String(
-        TreeLogger.DEBUG, "Searching for resources within $0");
-    static final Message1String IGNORING_SHADOWED_RESOURCE = new Message1String(
-        TreeLogger.DEBUG,
-        "Resource '$0' is being shadowed by another resource higher in the classpath having the same name; this one will not be used");
+    static final Message1String EXAMINING_PATH_ROOT = new Message1String(TreeLogger.DEBUG,
+        "Searching for resources within $0");
+    static final Message1String IGNORING_SHADOWED_RESOURCE =
+        new Message1String(
+            TreeLogger.DEBUG,
+            "Resource '$0' is being shadowed by another resource higher in the classpath having the same name; this one will not be used");
     static final Message0 REFRESHING_RESOURCES = new Message0(TreeLogger.TRACE,
         "Refreshing resources");
   }
@@ -109,8 +110,8 @@ public class ResourceOracleImpl implements ResourceOracle {
     public final AbstractResource resource;
 
     public ResourceData(AbstractResource resource, PathPrefix pathPrefix) {
-      this.resource = pathPrefix.shouldReroot() ? new RerootedResource(
-          resource, pathPrefix) : resource;
+      this.resource =
+          pathPrefix.shouldReroot() ? new RerootedResource(resource, pathPrefix) : resource;
       this.pathPrefix = pathPrefix;
     }
 
@@ -168,7 +169,7 @@ public class ResourceOracleImpl implements ResourceOracle {
         }
         if (logger.isLoggable(TreeLogger.TRACE)) {
           logger.log(TreeLogger.TRACE, "Unexpected entry in classpath; " + f
-            + " is neither a directory nor an archive (.jar or .zip)");
+              + " is neither a directory nor an archive (.jar or .zip)");
         }
         return null;
       }
@@ -189,8 +190,8 @@ public class ResourceOracleImpl implements ResourceOracle {
    * Preinitializes the classpath for a given {@link ClassLoader}.
    */
   public static void preload(TreeLogger logger, ClassLoader classLoader) {
-    Event resourceOracle = SpeedTracerLogger.start(
-        CompilerEventType.RESOURCE_ORACLE, "phase", "preload");
+    Event resourceOracle =
+        SpeedTracerLogger.start(CompilerEventType.RESOURCE_ORACLE, "phase", "preload");
     List<ClassPathEntry> entries = getAllClassPathEntries(logger, classLoader);
     for (ClassPathEntry entry : entries) {
       // We only handle pre-indexing jars, the file system could change.
@@ -212,31 +213,28 @@ public class ResourceOracleImpl implements ResourceOracle {
    * @param first At least one ResourceOracleImpl must be passed to refresh
    * @param rest Callers may optionally pass several oracles
    */
-  public static synchronized void refresh(
-      TreeLogger logger, ResourceOracleImpl first, ResourceOracleImpl... rest) {
+  public static synchronized void refresh(TreeLogger logger, ResourceOracleImpl first,
+      ResourceOracleImpl... rest) {
     int len = 1 + rest.length;
     ResourceOracleImpl[] oracles = new ResourceOracleImpl[1 + rest.length];
     oracles[0] = first;
     System.arraycopy(rest, 0, oracles, 1, rest.length);
-    
+
     Event resourceOracle =
         SpeedTracerLogger.start(CompilerEventType.RESOURCE_ORACLE, "phase", "refresh");
-    TreeLogger refreshBranch = Messages.REFRESHING_RESOURCES.branch(logger,
-        null);
+    TreeLogger refreshBranch = Messages.REFRESHING_RESOURCES.branch(logger, null);
 
     /*
      * Allocate fresh data structures in anticipation of needing to honor the
      * "new identity for the collections if anything changes" guarantee. Use a
      * LinkedHashMap because we do not want the order to change.
      */
-    List<Map<String, ResourceData>> resourceDataMaps = new ArrayList<
-        Map<String, ResourceData>>();
-    
+    List<Map<String, ResourceData>> resourceDataMaps = new ArrayList<Map<String, ResourceData>>();
+
     List<PathPrefixSet> pathPrefixSets = new ArrayList<PathPrefixSet>();
     for (ResourceOracleImpl oracle : oracles) {
       if (!oracle.classPath.equals(oracles[0].classPath)) {
-        throw new IllegalArgumentException(
-            "Refreshing multiple oracles with different classpaths");
+        throw new IllegalArgumentException("Refreshing multiple oracles with different classpaths");
       }
       resourceDataMaps.add(new LinkedHashMap<String, ResourceData>());
       pathPrefixSets.add(oracle.pathPrefixSet);
@@ -254,27 +252,23 @@ public class ResourceOracleImpl implements ResourceOracle {
      * prefix wins.
      */
     for (ClassPathEntry pathRoot : oracles[0].classPath) {
-      TreeLogger branchForClassPathEntry = Messages.EXAMINING_PATH_ROOT.branch(
-          refreshBranch, pathRoot.getLocation(), null);
+      TreeLogger branchForClassPathEntry =
+          Messages.EXAMINING_PATH_ROOT.branch(refreshBranch, pathRoot.getLocation(), null);
 
-      List<Map<AbstractResource, PathPrefix>> resourceToPrefixMaps = pathRoot.findApplicableResources(
-          branchForClassPathEntry, pathPrefixSets);
+      List<Map<AbstractResource, PathPrefix>> resourceToPrefixMaps =
+          pathRoot.findApplicableResources(branchForClassPathEntry, pathPrefixSets);
       for (int i = 0; i < len; ++i) {
         Map<String, ResourceData> resourceDataMap = resourceDataMaps.get(i);
-        Map<AbstractResource, PathPrefix> resourceToPrefixMap = 
-          resourceToPrefixMaps.get(i);
-        for (Entry<AbstractResource, PathPrefix> entry :
-            resourceToPrefixMap.entrySet()) {
-          ResourceData newCpeData = new ResourceData(entry.getKey(),
-              entry.getValue());
+        Map<AbstractResource, PathPrefix> resourceToPrefixMap = resourceToPrefixMaps.get(i);
+        for (Entry<AbstractResource, PathPrefix> entry : resourceToPrefixMap.entrySet()) {
+          ResourceData newCpeData = new ResourceData(entry.getKey(), entry.getValue());
           String resourcePath = newCpeData.resource.getPath();
           ResourceData oldCpeData = resourceDataMap.get(resourcePath);
           // Old wins unless the new resource has higher priority.
           if (oldCpeData == null || oldCpeData.compareTo(newCpeData) < 0) {
             resourceDataMap.put(resourcePath, newCpeData);
           } else {
-            Messages.IGNORING_SHADOWED_RESOURCE.log(branchForClassPathEntry,
-                resourcePath, null);
+            Messages.IGNORING_SHADOWED_RESOURCE.log(branchForClassPathEntry, resourcePath, null);
           }
         }
       }
@@ -294,17 +288,17 @@ public class ResourceOracleImpl implements ResourceOracle {
       // Update exposed collections with new (unmodifiable) data structures.
       oracles[i].exposedResources = Collections.unmodifiableSet(externalSet);
       oracles[i].exposedResourceMap = Collections.unmodifiableMap(externalMap);
-      oracles[i].exposedPathNames = Collections.unmodifiableSet(
-          externalMap.keySet());
+      oracles[i].exposedPathNames = Collections.unmodifiableSet(externalMap.keySet());
     }
-  
+
     resourceOracle.end();
   }
 
-  private static void addAllClassPathEntries(TreeLogger logger,
-      ClassLoader classLoader, List<ClassPathEntry> classPath) {
+  private static void addAllClassPathEntries(TreeLogger logger, ClassLoader classLoader,
+      List<ClassPathEntry> classPath) {
     // URL is expensive in collections, so we use URI instead
-    // See: http://michaelscharf.blogspot.com/2006/11/javaneturlequals-and-hashcode-make.html
+    // See:
+    // http://michaelscharf.blogspot.com/2006/11/javaneturlequals-and-hashcode-make.html
     Set<URI> seenEntries = new HashSet<URI>();
     for (; classLoader != null; classLoader = classLoader.getParent()) {
       if (classLoader instanceof URLClassLoader) {
@@ -315,8 +309,7 @@ public class ResourceOracleImpl implements ResourceOracle {
           try {
             uri = url.toURI();
           } catch (URISyntaxException e) {
-            logger.log(TreeLogger.WARN, "Error processing classpath URL '"
-                + url + "'", e);
+            logger.log(TreeLogger.WARN, "Error processing classpath URL '" + url + "'", e);
             continue;
           }
           if (seenEntries.contains(uri)) {
@@ -332,8 +325,7 @@ public class ResourceOracleImpl implements ResourceOracle {
             continue;
           } catch (AccessControlException e) {
             if (logger.isLoggable(TreeLogger.DEBUG)) {
-              logger.log(TreeLogger.DEBUG,
-                  "Skipping URL due to access restrictions: " + url);
+              logger.log(TreeLogger.DEBUG, "Skipping URL due to access restrictions: " + url);
             }
             continue;
           } catch (URISyntaxException e) {
@@ -341,15 +333,14 @@ public class ResourceOracleImpl implements ResourceOracle {
           } catch (IOException e) {
             caught = e;
           }
-          logger.log(TreeLogger.WARN, "Error processing classpath URL '" + url
-              + "'", caught);
+          logger.log(TreeLogger.WARN, "Error processing classpath URL '" + url + "'", caught);
         }
       }
     }
   }
 
-  private static synchronized List<ClassPathEntry> getAllClassPathEntries(
-      TreeLogger logger, ClassLoader classLoader) {
+  private static synchronized List<ClassPathEntry> getAllClassPathEntries(TreeLogger logger,
+      ClassLoader classLoader) {
     List<ClassPathEntry> classPath = classPathCache.get(classLoader);
     if (classPath == null) {
       classPath = new ArrayList<ClassPathEntry>();

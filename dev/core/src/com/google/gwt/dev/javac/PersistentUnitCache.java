@@ -78,10 +78,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * uses lots of heap and takes 5-10 seconds. Once the PersistentUnitCache is
  * created, it starts eagerly loading the cache in a background thread).</li>
  * 
- * <li>Although units logged to disk with the same resource path are
- * eventually cleaned up, the most recently compiled unit stays in the cache
- * forever. This means that stale units that are no longer referenced will never
- * be purged, unless by some external action (e.g. ant clean).</li>
+ * <li>Although units logged to disk with the same resource path are eventually
+ * cleaned up, the most recently compiled unit stays in the cache forever. This
+ * means that stale units that are no longer referenced will never be purged,
+ * unless by some external action (e.g. ant clean).</li>
  * 
  * <li>Unless ant builds are made aware of the cache directory, the cache will
  * persist if a user does an ant clean.</li>
@@ -122,7 +122,8 @@ class PersistentUnitCache extends MemoryUnitCache {
       } finally {
         loadCompleteLatch.countDown();
         if (logger.isLoggable(TreeLogger.TRACE)) {
-          logger.log(TreeLogger.TRACE, "Loaded " + unitMap.size() + " units from persistent store.");
+          logger
+              .log(TreeLogger.TRACE, "Loaded " + unitMap.size() + " units from persistent store.");
         }
       }
     }
@@ -308,7 +309,7 @@ class PersistentUnitCache extends MemoryUnitCache {
     this.cacheDirectory = new File(cacheDir, UNIT_CACHE_PREFIX);
     if (logger.isLoggable(TreeLogger.TRACE)) {
       logger.log(TreeLogger.TRACE, "Persistent unit cache dir set to: "
-        + this.cacheDirectory.getAbsolutePath());
+          + this.cacheDirectory.getAbsolutePath());
     }
 
     if (!cacheDirectory.isDirectory() && !cacheDirectory.mkdirs()) {
@@ -529,8 +530,9 @@ class PersistentUnitCache extends MemoryUnitCache {
           }
         }
       } else {
-        logger.log(TreeLogger.TRACE,
-        "Starting with empty Cache: CompilationUnit cache directory does not exist or is not readable.");
+        logger
+            .log(TreeLogger.TRACE,
+                "Starting with empty Cache: CompilationUnit cache directory does not exist or is not readable.");
       }
     } finally {
       loadPersistentUnitEvent.end();

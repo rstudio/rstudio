@@ -40,7 +40,7 @@ public interface UnitCache {
   CompilationUnit find(ContentId contentId);
 
   /**
-   * Lookup a {@link CompilationUnit} by resource path. 
+   * Lookup a {@link CompilationUnit} by resource path.
    * 
    * @see {@link CompilationUnit#getResourcePath()}
    */

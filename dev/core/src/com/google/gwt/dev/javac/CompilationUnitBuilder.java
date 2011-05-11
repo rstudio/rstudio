@@ -62,10 +62,10 @@ public abstract class CompilationUnitBuilder {
     @Override
     protected CompilationUnit makeUnit(List<CompiledClass> compiledClasses,
         List<JDeclaredType> types, Dependencies dependencies,
-        Collection<? extends JsniMethod> jsniMethods,
-        MethodArgNamesLookup methodArgs, CategorizedProblem[] problems) {
-      return new GeneratedCompilationUnit(generatedUnit, compiledClasses,
-          types, dependencies, jsniMethods, methodArgs, problems);
+        Collection<? extends JsniMethod> jsniMethods, MethodArgNamesLookup methodArgs,
+        CategorizedProblem[] problems) {
+      return new GeneratedCompilationUnit(generatedUnit, compiledClasses, types, dependencies,
+          jsniMethods, methodArgs, problems);
     }
 
     @Override
@@ -139,8 +139,7 @@ public abstract class CompilationUnitBuilder {
       try {
         Util.copy(in, out);
       } catch (IOException e) {
-        throw new RuntimeException("Unexpected error reading resource '"
-            + resource + "'", e);
+        throw new RuntimeException("Unexpected error reading resource '" + resource + "'", e);
       }
       byte[] content = out.toByteArray();
       contentId = new ContentId(getTypeName(), Util.computeStrongName(content));
@@ -150,25 +149,21 @@ public abstract class CompilationUnitBuilder {
     @Override
     protected CompilationUnit makeUnit(List<CompiledClass> compiledClasses,
         List<JDeclaredType> types, Dependencies dependencies,
-        Collection<? extends JsniMethod> jsniMethods,
-        MethodArgNamesLookup methodArgs, CategorizedProblem[] problems) {
-      return new SourceFileCompilationUnit(getResource(), contentId,
-          compiledClasses, types, dependencies, jsniMethods, methodArgs,
-          problems, getLastModified());
+        Collection<? extends JsniMethod> jsniMethods, MethodArgNamesLookup methodArgs,
+        CategorizedProblem[] problems) {
+      return new SourceFileCompilationUnit(getResource(), contentId, compiledClasses, types,
+          dependencies, jsniMethods, methodArgs, problems, getLastModified());
     }
   }
 
-  private static final class GeneratedCompilationUnit extends
-      CompilationUnitImpl {
+  private static final class GeneratedCompilationUnit extends CompilationUnitImpl {
     private final GeneratedUnit generatedUnit;
-    
+
     public GeneratedCompilationUnit(GeneratedUnit generatedUnit,
-        List<CompiledClass> compiledClasses, List<JDeclaredType> types,
-        Dependencies dependencies,
-        Collection<? extends JsniMethod> jsniMethods,
-        MethodArgNamesLookup methodArgs, CategorizedProblem[] problems) {
-      super(compiledClasses, types, dependencies, jsniMethods, methodArgs,
-          problems);
+        List<CompiledClass> compiledClasses, List<JDeclaredType> types, Dependencies dependencies,
+        Collection<? extends JsniMethod> jsniMethods, MethodArgNamesLookup methodArgs,
+        CategorizedProblem[] problems) {
+      super(compiledClasses, types, dependencies, jsniMethods, methodArgs, problems);
       this.generatedUnit = generatedUnit;
     }
 
@@ -268,8 +263,7 @@ public abstract class CompilationUnitBuilder {
     assert dependencies != null;
     assert jsniMethods != null;
     assert methodArgs != null;
-    return makeUnit(compiledClasses, types, dependencies, jsniMethods,
-        methodArgs, problems);
+    return makeUnit(compiledClasses, types, dependencies, jsniMethods, methodArgs, problems);
   }
 
   public abstract ContentId getContentId();
@@ -290,8 +284,7 @@ public abstract class CompilationUnitBuilder {
     return this;
   }
 
-  public CompilationUnitBuilder setCompiledClasses(
-      List<CompiledClass> compiledClasses) {
+  public CompilationUnitBuilder setCompiledClasses(List<CompiledClass> compiledClasses) {
     this.compiledClasses = compiledClasses;
     return this;
   }
@@ -301,8 +294,7 @@ public abstract class CompilationUnitBuilder {
     return this;
   }
 
-  public CompilationUnitBuilder setJsniMethods(
-      Collection<? extends JsniMethod> jsniMethods) {
+  public CompilationUnitBuilder setJsniMethods(Collection<? extends JsniMethod> jsniMethods) {
     this.jsniMethods = jsniMethods;
     return this;
   }
@@ -334,10 +326,10 @@ public abstract class CompilationUnitBuilder {
 
   protected abstract String doGetSource();
 
-  protected abstract CompilationUnit makeUnit(
-      List<CompiledClass> compiledClasses, List<JDeclaredType> types,
-      Dependencies dependencies, Collection<? extends JsniMethod> jsniMethods,
-      MethodArgNamesLookup methodArgs, CategorizedProblem[] errors);
+  protected abstract CompilationUnit makeUnit(List<CompiledClass> compiledClasses,
+      List<JDeclaredType> types, Dependencies dependencies,
+      Collection<? extends JsniMethod> jsniMethods, MethodArgNamesLookup methodArgs,
+      CategorizedProblem[] errors);
 
   /**
    * This only matters for {@link ArtificialRescueChecker}.

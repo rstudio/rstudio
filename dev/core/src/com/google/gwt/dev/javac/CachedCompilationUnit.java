@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -23,7 +23,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * This class provides a Convenient way to serialize a {@CompilationUnit}.
+ * A convenient way to serialize a {@CompilationUnit}.
  */
 public class CachedCompilationUnit extends CompilationUnit {
   private final DiskCacheToken astToken;
@@ -43,11 +43,14 @@ public class CachedCompilationUnit extends CompilationUnit {
   private final DiskCacheToken sourceToken;
 
   /**
-   * Create a compilation unit that can be serialized from another {@link CompilationUnit}.
-   * 
+   * Create a compilation unit that can be serialized from another
+   * {@link CompilationUnit}.
+   *
    * @param unit A unit to copy
-   * @param sourceToken A valid {@DiskCache} token for this unit's source code.
-   * @param astToken A valid {@DiskCache} token for this unit's serialized AST types.
+   * @param sourceToken A valid {@DiskCache} token for this unit's
+   *          source code.
+   * @param astToken A valid {@DiskCache} token for this unit's
+   *          serialized AST types.
    */
   @SuppressWarnings("deprecation")
   CachedCompilationUnit(CompilationUnit unit, long sourceToken, long astToken) {

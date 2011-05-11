@@ -63,6 +63,7 @@ public abstract class Resource {
       return null;
     }
   }
+
   /**
    * Overridden to finalize; always returns identity hash code.
    */
