@@ -17,7 +17,8 @@
  */
 define("mode/r", function(require, exports, module)
 {
-
+   var Editor = require("ace/editor").Editor;
+   var EditSession = require("ace/edit_session").EditSession;
    var Range = require("ace/range").Range;
    var oop = require("pilot/oop");
    var TextMode = require("ace/mode/text").Mode;
@@ -25,8 +26,36 @@ define("mode/r", function(require, exports, module)
    var TextHighlightRules = require("ace/mode/text_highlight_rules")
          .TextHighlightRules;
    var RHighlightRules = require("mode/r_highlight_rules").RHighlightRules;
-   var IndentManager = require("mode/r_autoindent").IndentManager;
+   var RCodeModel = require("mode/r_code_model").RCodeModel;
    var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
+
+   // Monkeypatch EditSession.insert and Editor.removeLeft to allow R mode to
+   // do automatic brace insertion
+
+   (function() {
+      var __insert = this.insert;
+      this.insert = function(position, text) {
+         if (this.getMode().wrapInsert) {
+            return this.getMode().wrapInsert(this, __insert, position, text);
+         }
+         else {
+            return __insert.call(this, position, text);
+         }
+      };
+   }).call(EditSession.prototype);
+
+   (function() {
+      var __removeLeft = this.removeLeft;
+      this.removeLeft = function() {
+         if (this.session.getMode().wrapRemoveLeft) {
+            return this.session.getMode().wrapRemoveLeft(this, __removeLeft);
+         }
+         else {
+            return __removeLeft.call(this);
+         }
+      };
+   }).call(Editor.prototype);
+
 
    var Mode = function(suppressHighlighting, doc)
    {
@@ -36,12 +65,26 @@ define("mode/r", function(require, exports, module)
          this.$tokenizer = new Tokenizer(new RHighlightRules().getRules());
       this.$outdent = new MatchingBraceOutdent();
 
-      this.$indentManager = new IndentManager(doc, this.$tokenizer, null);
+      this.$rCodeModel = new RCodeModel(doc, this.$tokenizer, null);
    };
    oop.inherits(Mode, TextMode);
 
    (function()
    {
+      var complements = {
+         "(": ")",
+         "[": "]",
+         '"': '"',
+         "'": "'"
+      };
+
+      var reOpen = /^[(["']$/;
+      var reClose = /^[)\]"']$/;
+      // reStop is the set of characters before which we allow ourselves to
+      // automatically insert a closing paren. If any other character
+      // immediately follows the cursor we will NOT do the insert.
+      var reStop = /^[;,\s)\]}]$/;
+
       this.wrapInsert = function(session, __insert, position, text)
       {
          var cursor = session.selection.getCursor();
@@ -49,17 +92,30 @@ define("mode/r", function(require, exports, module)
                       position.row == cursor.row &&
                       position.column == cursor.column;
 
+         if (typing) {
+            var postRng = Range.fromPoints(position, {
+               row: position.row,
+               column: position.column + 1});
+            var postChar = session.doc.getTextRange(postRng);
+            if (reClose.test(postChar) && postChar == text) {
+               session.selection.moveCursorTo(postRng.end.row,
+                                              postRng.end.column,
+                                              false);
+               return;
+            }
+         }
+
          var endPos = __insert.call(session, position, text);
          // Is this an open paren?
-         if (typing && /^\(+$/.test(text)) {
+         if (typing && reOpen.test(text)) {
             // Is the next char not a character or number?
             var nextCharRng = Range.fromPoints(endPos, {
                row: endPos.row,
                column: endPos.column + 1
             });
             var nextChar = session.doc.getTextRange(nextCharRng);
-            if (/^[;,\s)]$/.test(nextChar) || nextChar.length == 0) {
-               session.doc.insert(endPos, ")");
+            if (reStop.test(nextChar) || nextChar.length == 0) {
+               session.doc.insert(endPos, complements[text]);
                session.selection.moveCursorTo(endPos.row, endPos.column, false);
             }
          }
@@ -74,14 +130,15 @@ define("mode/r", function(require, exports, module)
          var secondaryDeletion = null;
          if (editor.selection.isEmpty()) {
             editor.selection.selectLeft();
-            if (editor.session.getDocument().getTextRange(editor.selection.getRange()) == "(")
+            var text = editor.session.getDocument().getTextRange(editor.selection.getRange());
+            if (/^[([]$/.test(text))
             {
                var nextCharRng = Range.fromPoints(editor.selection.getRange().end, {
                   row: editor.selection.getRange().end.row,
                   column: editor.selection.getRange().end.column + 1
                });
                var nextChar = editor.session.getDocument().getTextRange(nextCharRng);
-               if (nextChar == ")")
+               if (nextChar == complements[text])
                {
                   secondaryDeletion = editor.getSelectionRange();
                }
@@ -96,17 +153,17 @@ define("mode/r", function(require, exports, module)
 
       this.getNextLineIndent = function(state, line, tab, tabSize, row)
       {
-         return this.$indentManager.getNextLineIndent(row, line, state, tab, tabSize);
+         return this.$rCodeModel.getNextLineIndent(row, line, state, tab, tabSize);
       };
 
       this.getCurrentFunction = function(position)
       {
-         return this.$indentManager.getCurrentFunction(position);
+         return this.$rCodeModel.getCurrentFunction(position);
       };
 
       this.getFunctionTree = function()
       {
-         return this.$indentManager.getFunctionTree();
+         return this.$rCodeModel.getFunctionTree();
       };
 
       this.checkOutdent = function(state, line, input) {
@@ -138,7 +195,7 @@ define("mode/r", function(require, exports, module)
          if (match)
          {
             var column = match[1].length;
-            var indent = this.$indentManager.getBraceIndent(row-1);
+            var indent = this.$rCodeModel.getBraceIndent(row-1);
             doc.replace(new Range(row, 0, row, column-1), indent);
          }
       };
