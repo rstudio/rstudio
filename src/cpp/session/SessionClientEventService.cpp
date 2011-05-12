@@ -182,11 +182,18 @@ void ClientEventService::run()
 {
    try
    {    
-      // time durations
+      // default time durations
       using namespace boost::posix_time;
       time_duration maxRequestSec = seconds(50);
-      time_duration batchDelayMs = milliseconds(20);
-      time_duration maxBatchDelaySec = seconds(2);
+      time_duration batchDelay = milliseconds(20);
+      time_duration maxTotalBatchDelay = seconds(2);
+
+      // make much shorter for desktop mode
+      if (session::options().programMode() == kSessionProgramModeDesktop)
+      {
+         batchDelay = milliseconds(2);
+         maxTotalBatchDelay = milliseconds(10);
+      }
       
       // get alias to client event queue
       ClientEventQueue& clientEventQueue = session::clientEventQueue();
@@ -275,9 +282,9 @@ void ClientEventService::run()
                // wait for additional events that occur in rapid succession 
                // but don't wait for more than the specified maximum seconds
                boost::system_time maxBatchDelayTime = 
-                              boost::get_system_time() + maxBatchDelaySec;
+                              boost::get_system_time() + maxTotalBatchDelay;
                
-               while ( clientEventQueue.waitForEvent(batchDelayMs) && 
+               while ( clientEventQueue.waitForEvent(batchDelay) &&
                        (boost::get_system_time() < maxBatchDelayTime) )
                {
                }
