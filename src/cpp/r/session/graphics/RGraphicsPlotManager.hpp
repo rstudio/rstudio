@@ -136,15 +136,18 @@ private:
                                                          deviceCreationFunction);
    core::Error savePlotAsFile(const std::string& fileDeviceCreationCode);
 
-   core::Error savePlotAsBitmapFile(const std::string& bitmapFileType,
+   core::Error savePlotAsBitmapFile(const core::FilePath& targetPath,
+                                    const std::string& bitmapFileType,
                                     int width,
-                                    int height,
-                                    const core::FilePath& targetPath);
+                                    int height);
 
-   core::Error savePlotAsSvg(int width,
-                             int height,
-                             const core::FilePath& targetPath);
+   core::Error savePlotAsSvg(const core::FilePath& targetPath,
+                             int width,
+                             int height);
 
+   core::Error savePlotAsPostscript(const core::FilePath& targetPath,
+                                    int width,
+                                    int height);
 
    
    // error helpers
