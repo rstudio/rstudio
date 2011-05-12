@@ -73,7 +73,7 @@ public abstract class Receiver<V> {
    * {@link ConstraintViolation} objects to the deprecated {@link Violation}
    * type.
    * 
-   * @param errors a Set of {@link ConstraintViolation} instances
+   * @param violations a Set of {@link ConstraintViolation} instances
    */
   @SuppressWarnings("deprecation")
   public void onConstraintViolation(Set<ConstraintViolation<?>> violations) {

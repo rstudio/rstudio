@@ -31,7 +31,7 @@ public interface Splittable {
   Splittable NULL = StringQuoter.nullValue();
 
   /**
-   * Returns a boolean representation of the data;
+   * Returns a boolean representation of the data.
    */
   boolean asBoolean();
 

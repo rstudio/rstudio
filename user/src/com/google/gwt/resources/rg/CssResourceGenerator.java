@@ -631,7 +631,6 @@ public class CssResourceGenerator extends AbstractResourceGenerator
     }
   }
 
-
   /**
    * Determine the class prefix that will be used. If a value is automatically
    * computed, the <code>reservedPrefixes</code> set will be cleared because the

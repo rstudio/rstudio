@@ -230,7 +230,6 @@ public class SimpleEventBusTest extends HandlerTestBase {
     assertNotFired(two);
   }
 
-
   static class ThrowingHandler implements MouseDownHandler {
     private final RuntimeException e;
 

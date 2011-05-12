@@ -89,7 +89,7 @@ public class ResettableEventBus extends EventBus {
   }
 
   /**
-   * Visible for testing
+   * Visible for testing.
    */
   int getRegistrationSize() {
     return real.getRegistrationSize();

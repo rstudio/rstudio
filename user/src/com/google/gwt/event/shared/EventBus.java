@@ -53,7 +53,6 @@ public abstract class EventBus extends com.google.web.bindery.event.shared.Event
 
   public abstract void fireEvent(GwtEvent<?> event);
 
-
   @Override
   public void fireEventFromSource(Event<?> event, Object source) {
     throw new UnsupportedOperationException("Subclass responsibility. "

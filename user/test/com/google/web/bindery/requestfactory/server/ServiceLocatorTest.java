@@ -20,7 +20,7 @@ import com.google.web.bindery.requestfactory.shared.ServiceLocator;
 import junit.framework.TestCase;
 
 /**
- * Tests creating of ServiceLocators with custom ServiceLayerDecorators
+ * Tests creating of ServiceLocators with custom ServiceLayerDecorators.
  */
 public class ServiceLocatorTest extends TestCase {
 

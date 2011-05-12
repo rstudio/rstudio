@@ -56,7 +56,6 @@ public class CanPlayThroughEvent extends DomEvent<CanPlayThroughHandler> {
     return TYPE;
   }
 
-
   @Override
   protected void dispatch(CanPlayThroughHandler handler) {
     handler.onCanPlayThrough(this);

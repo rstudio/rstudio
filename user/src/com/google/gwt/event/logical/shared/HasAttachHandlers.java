@@ -34,7 +34,7 @@ public interface HasAttachHandlers extends HasHandlers {
   /**
    * Returns whether or not the receiver is attached to the
    * {@link com.google.gwt.dom.client.Document Document}'s
-   * {@link com.google.gwt.dom.client.BodyElement BodyElement}
+   * {@link com.google.gwt.dom.client.BodyElement BodyElement}.
    * 
    * @return true if attached, false otherwise
    */

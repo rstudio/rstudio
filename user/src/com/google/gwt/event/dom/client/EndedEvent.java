@@ -55,7 +55,6 @@ public class EndedEvent extends DomEvent<EndedHandler> {
     return TYPE;
   }
 
-
   @Override
   protected void dispatch(EndedHandler handler) {
     handler.onEnded(this);

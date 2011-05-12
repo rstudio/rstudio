@@ -267,7 +267,7 @@ public class WebAppCreatorTest extends TestCase {
   }
 
   /**
-   * Generate a .classpath containing a .jar in war/WEB-INF/lib
+   * Generate a .classpath containing a .jar in war/WEB-INF/lib.
    */
   public void testCreatorOnlyEclipseWithJars() throws IOException, WebAppCreatorException {
     runCreator("-out", projectFolder, "-XnoEclipse", "-junit", mockJar,

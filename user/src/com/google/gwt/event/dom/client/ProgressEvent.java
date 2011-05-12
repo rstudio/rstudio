@@ -55,7 +55,6 @@ public class ProgressEvent extends DomEvent<ProgressHandler> {
     return TYPE;
   }
 
-
   @Override
   protected void dispatch(ProgressHandler handler) {
     handler.onProgress(this);

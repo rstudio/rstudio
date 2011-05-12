@@ -135,8 +135,7 @@ public class SimpleAppCacheLinker extends AbstractLinker {
           }
         }
       }
-      
-      
+
       String[] cacheExtraFiles = getCacheExtraFiles(); 
       for (int i = 0; i < cacheExtraFiles.length; i++) {
         staticResoucesSb.append(cacheExtraFiles[i]);

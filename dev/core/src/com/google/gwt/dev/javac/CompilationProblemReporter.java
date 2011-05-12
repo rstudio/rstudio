@@ -53,8 +53,6 @@ public class CompilationProblemReporter {
    * 
    * @param logger logger for logging errors to the console
    * @param missingType The qualified source name of the type to report
-   * @param unitMap if available, pass
-   *          {@link CompilationState#getCompilationUnitMap()}.
    */
   public static void logMissingTypeErrorWithHints(TreeLogger logger, String missingType,
       CompilationState compilationState) {
@@ -105,7 +103,7 @@ public class CompilationProblemReporter {
    *          originated.
    * @param isError <code>true</code> if this is considered a fatal compilation
    *          error.
-   * @param supressErrors Controls the log level for logging errors. See
+   * @param suppressErrors Controls the log level for logging errors. See
    *          {@link #reportErrors(TreeLogger, CompilationUnit, boolean)}.
    * @return a branch of the logger parameter for logging further problems.
    */
@@ -174,7 +172,7 @@ public class CompilationProblemReporter {
    * 
    * @param logger logger for reporting errors to the console
    * @param unit Compilation unit that may have errors
-   * @param supressErrors Controls he log level for logging errors. If
+   * @param suppressErrors Controls he log level for logging errors. If
    *          <code>false</code> is passed, compilation errors are logged at
    *          TreeLogger.ERROR and warnings logged at TreeLogger.WARN. If
    *          <code>true</code> is passed, compilation errors are logged at

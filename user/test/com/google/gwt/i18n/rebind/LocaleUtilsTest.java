@@ -112,7 +112,7 @@ public class LocaleUtilsTest extends TestCase {
   }
 
   /**
-   * Mock selection property;
+   * Mock selection property.
    */
   private static class MockSelectionProperty implements SelectionProperty {
 

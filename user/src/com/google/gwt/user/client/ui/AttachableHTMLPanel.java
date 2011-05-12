@@ -99,7 +99,6 @@ public class AttachableHTMLPanel extends ComplexPanel implements Attachable {
     add(widget, getElement());
   }
 
-
   /**
    * Adds a child widget to the panel, replacing the HTML element.
    *
