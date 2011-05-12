@@ -599,17 +599,16 @@ public class TextEditingTarget implements EditingTarget
 
    private void updateCurrentFunction()
    {
-      Scheduler.get().scheduleFinally(
-            new RepeatingCommand()
+      Scheduler.get().scheduleDeferred(
+            new ScheduledCommand()
             {
-               public boolean execute()
+               public void execute()
                {
                   FunctionStart function = docDisplay_.getCurrentFunction();
                   String label = function != null
                                 ? function.getLabel()
                                 : null;
                   statusBar_.getFunction().setValue(label);
-                  return false;
                }
             });
    }
