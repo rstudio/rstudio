@@ -307,6 +307,8 @@ MimeType s_mimeTypes[] =
    { "css",   "text/css" },
    { "gif",   "image/gif" },
    { "jpg",   "image/jpeg" },
+   { "jpeg",  "image/jpeg" },
+   { "jpe",   "image/jpeg" },
    { "png",   "image/png" },
    { "js",    "application/x-javascript" },
    { "pdf",   "application/pdf" },
@@ -329,6 +331,7 @@ MimeType s_mimeTypes[] =
   
    { "tif",   "image/tiff" },
    { "tiff",  "image/tiff" },
+   { "bmp",   "image/bmp"  },
       
    { "atom",  "application/atom+xml" },
    { "rss",   "application/rss+xml" },
