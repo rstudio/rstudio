@@ -96,7 +96,7 @@ public class SavePlotAsHandler
                               final boolean viewAfterSave,
                               final Operation onCompleted)
    {
-      globalDisplay_.openProgressWindow("_rstudio_save_plot_as",
+      globalDisplay_.openProgressWindow("_blank",
             "Converting Plot...", 
             new OperationWithInput<WindowEx>() {                                        
          public void execute(final WindowEx window)

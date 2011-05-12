@@ -172,7 +172,7 @@ Error savePlotAsPdf(const json::JsonRpcRequest& request,
    // save plot
    using namespace r::session::graphics;
    Display& display = r::session::graphics::display();
-   error =  display.savePlotAsPdf(plotPath, width, height);
+   error = display.savePlotAsPdf(plotPath, width, height);
    if (error)
       return error;
 
@@ -322,14 +322,6 @@ Error getSavePlotContext(const json::JsonRpcRequest& request,
    if(supportsSvg())
       formats.push_back(plotExportFormat("SVG", kSvgFormat));
    formats.push_back(plotExportFormat("Postscript", kPostscriptFormat));
-
-
-
-/*
-   formats.push_back(plotExportFormat("XFig", "fix"));
-   formats.push_back(plotExportFormat("PicTeX", "tex"));
-*/
-
    contextJson["formats"] = formats;
 
    // get directory path
