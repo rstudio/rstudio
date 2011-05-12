@@ -61,6 +61,8 @@ extern const char * const kJpegFormat;
 extern const char * const kTiffFormat;
 extern const char * const kBmpFormat;
 extern const char * const kMetafileFormat;
+extern const char * const kSvgFormat;
+extern const char * const kPostscriptFormat;
 
 class Display
 {

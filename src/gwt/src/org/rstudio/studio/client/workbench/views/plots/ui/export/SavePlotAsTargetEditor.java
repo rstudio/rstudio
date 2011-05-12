@@ -25,9 +25,6 @@ import com.google.gwt.user.client.ui.TextBox;
 
 // TODO: other image formats
 
-// TODO: clipboard vector graphics for other platforms?
-
-
 
 public class SavePlotAsTargetEditor extends Composite implements CanFocus
 {

@@ -39,12 +39,22 @@ namespace r {
 namespace session {  
 namespace graphics {
 
+namespace {
+
+double pixelsToInches(int pixels)
+{
+   return (double)pixels / 96.0;
+}
+
+} // anonymous namespace
+
 const char * const kPngFormat = "png";
 const char * const kJpegFormat = "jpeg";
 const char * const kBmpFormat = "bmp";
 const char * const kTiffFormat = "tiff";
 const char * const kMetafileFormat = "emf";
-
+const char * const kSvgFormat = "svg";
+const char * const kPostscriptFormat = "eps";
 
 // satisfy r::session::graphics::Display singleton
 Display& display()
@@ -249,11 +259,19 @@ Error PlotManager::savePlotAsImage(const FilePath& filePath,
    }
    else if (format == kBmpFormat || format == kJpegFormat || format == kTiffFormat)
    {
-      return savePlotAsBitmapFile(format, widthPx, heightPx, filePath);
+      return savePlotAsBitmapFile(filePath, format, widthPx, heightPx);
+   }
+   else if (format == kSvgFormat)
+   {
+      return savePlotAsSvg(filePath, widthPx, heightPx);
    }
    else if (format == kMetafileFormat)
    {
       return savePlotAsMetafile(filePath, widthPx, heightPx);
+   }
+   else if (format == kPostscriptFormat)
+   {
+      return savePlotAsPostscript(filePath, widthPx, heightPx);
    }
    else
    {
@@ -261,10 +279,10 @@ Error PlotManager::savePlotAsImage(const FilePath& filePath,
    }
 }
 
-Error PlotManager::savePlotAsBitmapFile(const std::string& bitmapFileType,
+Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
+                                        const std::string& bitmapFileType,
                                         int width,
-                                        int height,
-                                        const FilePath& targetPath)
+                                        int height)
 {
    // optional format specific extra params
    std::string extraParams;
@@ -306,14 +324,54 @@ Error PlotManager::savePlotAsPdf(const FilePath& filePath,
    return savePlotAsFile(deviceCreationCode);
 }
 
+Error PlotManager::savePlotAsSvg(const FilePath& targetPath,
+                                 int width,
+                                 int height)
+{
+   // calculate size in inches
+   double widthInches = pixelsToInches(width);
+   double heightInches = pixelsToInches(height);
+
+   // generate code for creating svg device
+   boost::format fmt("{ require(grDevices, quietly=TRUE); "
+                     "  svg(filename=\"%1%\", width=%2%, height=%3%, "
+                     "      antialias = \"subpixel\"); }");
+   std::string deviceCreationCode = boost::str(fmt % targetPath %
+                                                     widthInches %
+                                                     heightInches);
+
+   return savePlotAsFile(deviceCreationCode);
+}
+
+Error PlotManager::savePlotAsPostscript(const FilePath& targetPath,
+                                        int width,
+                                        int height)
+{
+   // calculate size in inches
+   double widthInches = pixelsToInches(width);
+   double heightInches = pixelsToInches(height);
+
+   // generate code for creating postscript device
+   boost::format fmt("{ require(grDevices, quietly=TRUE); "
+                     "  postscript(file=\"%1%\", width=%2%, height=%3%, "
+                     "             paper = \"special\", "
+                     "             horizontal = FALSE); }");
+   std::string deviceCreationCode = boost::str(fmt % targetPath %
+                                                     widthInches %
+                                                     heightInches);
+
+   return savePlotAsFile(deviceCreationCode);
+}
+
+
 Error PlotManager::savePlotAsMetafile(const core::FilePath& filePath,
                                       int widthPx,
                                       int heightPx)
-{
+{ 
 #ifdef _WIN32
    // calculate size in inches
-   double widthInches = (double)widthPx / 96.0;
-   double heightInches = (double)heightPx / 96.0;
+   double widthInches = pixelsToInches(widthPx);
+   double heightInches = pixelsToInches(heightPx);
 
    // generate code for creating metafile device
    boost::format fmt("{ require(grDevices, quietly=TRUE); "

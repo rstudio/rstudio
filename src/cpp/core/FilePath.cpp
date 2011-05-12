@@ -332,6 +332,8 @@ MimeType s_mimeTypes[] =
    { "tif",   "image/tiff" },
    { "tiff",  "image/tiff" },
    { "bmp",   "image/bmp"  },
+   { "ps",    "application/postscript" },
+   { "eps",   "application/postscript" },
       
    { "atom",  "application/atom+xml" },
    { "rss",   "application/rss+xml" },
