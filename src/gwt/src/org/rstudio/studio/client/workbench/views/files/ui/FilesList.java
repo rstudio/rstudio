@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.views.files.ui;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
@@ -345,6 +346,9 @@ public class FilesList extends Composite
    public void displayFiles(FileSystemItem containingPath, 
                             JsArray<FileSystemItem> files)
    {
+      // clear the selection
+      selectNone();
+      
       // set containing path
       containingPath_ = containingPath;
       parentPath_ = containingPath_.getParentPath();
@@ -388,7 +392,11 @@ public class FilesList extends Composite
    
    public ArrayList<FileSystemItem> getSelectedFiles()
    {    
-      return new ArrayList<FileSystemItem>(selectionModel_.getSelectedSet());
+      // first make sure there are no leftover items in the selected set
+      Set<FileSystemItem> selectedSet = selectionModel_.getSelectedSet();
+      selectedSet.retainAll(dataProvider_.getList());
+   
+      return new ArrayList<FileSystemItem>(selectedSet);
    }
    
    public void updateWithAction(FileChange viewAction)
