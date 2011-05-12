@@ -54,7 +54,7 @@ const char * const kBmpFormat = "bmp";
 const char * const kTiffFormat = "tiff";
 const char * const kMetafileFormat = "emf";
 const char * const kSvgFormat = "svg";
-const char * const kPostscriptFormat = "ps";
+const char * const kPostscriptFormat = "eps";
 
 // satisfy r::session::graphics::Display singleton
 Display& display()
@@ -340,10 +340,7 @@ Error PlotManager::savePlotAsSvg(const FilePath& targetPath,
                                                      widthInches %
                                                      heightInches);
 
-   Error error = savePlotAsFile(deviceCreationCode);
-   if (error)
-      LOG_ERROR(error);
-   return error;
+   return savePlotAsFile(deviceCreationCode);
 }
 
 Error PlotManager::savePlotAsPostscript(const FilePath& targetPath,
@@ -354,20 +351,16 @@ Error PlotManager::savePlotAsPostscript(const FilePath& targetPath,
    double widthInches = pixelsToInches(width);
    double heightInches = pixelsToInches(height);
 
-   // generate code for creating svg device
+   // generate code for creating postscript device
    boost::format fmt("{ require(grDevices, quietly=TRUE); "
                      "  postscript(file=\"%1%\", width=%2%, height=%3%, "
                      "             paper = \"special\", "
-                     "             horizontal = TRUE); }");
+                     "             horizontal = FALSE); }");
    std::string deviceCreationCode = boost::str(fmt % targetPath %
                                                      widthInches %
                                                      heightInches);
 
-   Error error = savePlotAsFile(deviceCreationCode);
-   if (error)
-      LOG_ERROR(error);
-   return error;
-
+   return savePlotAsFile(deviceCreationCode);
 }
 
 

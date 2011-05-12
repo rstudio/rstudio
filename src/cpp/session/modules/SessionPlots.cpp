@@ -321,7 +321,7 @@ Error getSavePlotContext(const json::JsonRpcRequest& request,
 #endif
    if(supportsSvg())
       formats.push_back(plotExportFormat("SVG", kSvgFormat));
-   formats.push_back(plotExportFormat("Postscript", "ps"));
+   formats.push_back(plotExportFormat("Postscript", kPostscriptFormat));
 
 
 
