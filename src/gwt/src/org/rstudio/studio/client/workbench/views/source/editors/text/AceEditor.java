@@ -524,6 +524,11 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       widget_.getEditor().getRenderer().setShowPrintMargin(on);
    }
 
+   public void setPadding(int padding)
+   {
+      widget_.getEditor().getRenderer().setPadding(padding);
+   }
+
    public void setPrintMarginColumn(int column)
    {
       widget_.getEditor().getRenderer().setPrintMarginColumn(column);
@@ -613,6 +618,11 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
    public HandlerRegistration addKeyDownHandler(KeyDownHandler handler)
    {
       return widget_.addKeyDownHandler(handler);
+   }
+
+   public void autoHeight()
+   {
+      widget_.autoHeight();
    }
 
    private final HandlerManager handlers_ = new HandlerManager(this);

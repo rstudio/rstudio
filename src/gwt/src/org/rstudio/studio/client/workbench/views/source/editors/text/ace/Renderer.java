@@ -67,4 +67,12 @@ public class Renderer extends JavaScriptObject
    public native final void setPrintMarginColumn(int column) /*-{
       this.setPrintMarginColumn(column);
    }-*/;
+
+   public native final void setPadding(int padding) /*-{
+      this.setPadding(padding);
+   }-*/;
+
+   public native final int getLineHeight() /*-{
+      return this.lineHeight;
+   }-*/;
 }

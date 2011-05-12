@@ -164,6 +164,11 @@ public class AceEditorWidget extends Composite
       editor_.getRenderer().onResize(true);
    }
 
+   public void autoHeight()
+   {
+      editor_.autoHeight();
+   }
+
    private final AceEditorNative editor_;
    private boolean initToEmptyString_ = true;
 }
