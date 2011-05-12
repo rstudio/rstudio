@@ -44,6 +44,7 @@ const char * const kJpegFormat = "jpeg";
 const char * const kBmpFormat = "bmp";
 const char * const kTiffFormat = "tiff";
 const char * const kMetafileFormat = "emf";
+const char * const kSvgFormat = "svg";
 
 
 // satisfy r::session::graphics::Display singleton
@@ -251,6 +252,10 @@ Error PlotManager::savePlotAsImage(const FilePath& filePath,
    {
       return savePlotAsBitmapFile(format, widthPx, heightPx, filePath);
    }
+   else if (format == kSvgFormat)
+   {
+      return savePlotAsSvg(widthPx, heightPx, filePath);
+   }
    else if (format == kMetafileFormat)
    {
       return savePlotAsMetafile(filePath, widthPx, heightPx);
@@ -306,10 +311,34 @@ Error PlotManager::savePlotAsPdf(const FilePath& filePath,
    return savePlotAsFile(deviceCreationCode);
 }
 
+Error PlotManager::savePlotAsSvg(int width,
+                                 int height,
+                                 const FilePath& targetPath)
+{
+   // calculate size in inches
+   double widthInches = (double)width / 96.0;
+   double heightInches = (double)height / 96.0;
+
+   // generate code for creating metafile device
+   boost::format fmt("{ require(grDevices, quietly=TRUE); "
+                     "  svg(filename=\"%1%\", width=%2%, height=%3%, "
+                     "      antialias = \"subpixel\"); }");
+   std::string deviceCreationCode = boost::str(fmt % targetPath %
+                                                     widthInches %
+                                                     heightInches);
+
+   Error error = savePlotAsFile(deviceCreationCode);
+   if (error)
+      LOG_ERROR(error);
+   return error;
+
+}
+
+
 Error PlotManager::savePlotAsMetafile(const core::FilePath& filePath,
                                       int widthPx,
                                       int heightPx)
-{
+{ 
 #ifdef _WIN32
    // calculate size in inches
    double widthInches = (double)widthPx / 96.0;

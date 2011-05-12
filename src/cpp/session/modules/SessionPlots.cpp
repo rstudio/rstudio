@@ -307,10 +307,11 @@ Error getSavePlotContext(const json::JsonRpcRequest& request,
    formats.push_back(plotExportFormat("JPEG", kJpegFormat));
    formats.push_back(plotExportFormat("TIFF", kTiffFormat));
    formats.push_back(plotExportFormat("BMP", kBmpFormat));
-/*
 #ifndef _WIN32
-   formats.push_back(plotExportFormat("SVG", "svg"));
+   //formats.push_back(plotExportFormat("SVG", kSvgFormat));
 #endif
+
+/*
    formats.push_back(plotExportFormat("Postscript", "ps"));
 */
 #if _WIN32

@@ -141,6 +141,10 @@ private:
                                     int height,
                                     const core::FilePath& targetPath);
 
+   core::Error savePlotAsSvg(int width,
+                             int height,
+                             const core::FilePath& targetPath);
+
 
    
    // error helpers
