@@ -95,6 +95,12 @@ public class ResourceOracleImpl implements ResourceOracle {
     }
 
     @Override
+    public String getPathPrefix() {
+      int fullPathLen = resource.getPath().length();
+      return resource.getPath().substring(0, fullPathLen - path.length());
+    }
+
+    @Override
     public InputStream openContents() {
       return resource.openContents();
     }

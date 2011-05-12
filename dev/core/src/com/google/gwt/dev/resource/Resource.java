@@ -50,6 +50,14 @@ public abstract class Resource {
   public abstract String getPath();
 
   /**
+   * If some prefix was stripped from the path, as is for RerootedResources,
+   * retrieve it back with this method.
+   */
+  public String getPathPrefix() {
+    return "";
+  }
+
+  /**
    * Returns a URL for this resource if the resource happens to be based off the
    * file system, otherwise returns <code>null</code>.
    * 

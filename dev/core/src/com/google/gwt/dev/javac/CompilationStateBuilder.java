@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -371,7 +371,7 @@ public class CompilationStateBuilder {
   /**
    * Build a new compilation state from a source oracle. Allow the caller to
    * specify a compiler delegate that will handle undefined names.
-   * 
+   *
    * TODO: maybe use a finer brush than to synchronize the whole thing.
    */
   public synchronized CompilationState doBuildFrom(TreeLogger logger, Set<Resource> resources,
@@ -393,14 +393,24 @@ public class CompilationStateBuilder {
       ResourceCompilationUnitBuilder builder =
           new ResourceCompilationUnitBuilder(typeName, resource);
 
-      CompilationUnit cachedUnit = unitCache.find(resource.getPath());
-      if (cachedUnit != null) {
-        if (cachedUnit.getLastModified() == resource.getLastModified()) {
-          cachedUnits.put(builder, cachedUnit);
-          compileMoreLater.addValidUnit(cachedUnit);
-          continue;
-        }
+      CompilationUnit cachedUnit = unitCache.find(resource.getPathPrefix() + resource.getPath());
+      if (cachedUnit != null && cachedUnit.getLastModified() != resource.getLastModified()) {
         unitCache.remove(cachedUnit);
+        if (!cachedUnit.getContentId().equals(builder.getContentId())) {
+          cachedUnit = null;
+        } else {
+          // Update the cache. The location might have changed since last build
+          // (e.g. jar to file)
+          CachedCompilationUnit updatedUnit =
+              new CachedCompilationUnit(cachedUnit.asCachedCompilationUnit(),
+                  resource.getLastModified(), resource.getLocation());
+          unitCache.add(updatedUnit);
+        }
+      }
+      if (cachedUnit != null) {
+        cachedUnits.put(builder, cachedUnit);
+        compileMoreLater.addValidUnit(cachedUnit);
+        continue;
       }
       builders.add(builder);
     }
@@ -422,7 +432,7 @@ public class CompilationStateBuilder {
 
   /**
    * Compile new generated units into an existing state.
-   * 
+   *
    * TODO: maybe use a finer brush than to synchronize the whole thing.
    */
   synchronized Collection<CompilationUnit> doBuildGeneratedTypes(TreeLogger logger,

@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -14,6 +14,9 @@
  * the License.
  */
 package com.google.gwt.dev.javac;
+
+import com.google.gwt.dev.util.DiskCache;
+import com.google.gwt.dev.util.Util;
 
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 
@@ -43,6 +46,14 @@ class MockCompilationUnit extends CompilationUnit {
     this.resourceLocation = resourceLocation;
     contentId = new ContentId(typeName, source);
     lastModified = nextTimestamp.getAndIncrement();
+  }
+
+  @Override
+  public CachedCompilationUnit asCachedCompilationUnit() {
+    DiskCache diskCache = DiskCache.INSTANCE;
+    long sourceToken = diskCache.writeByteArray(Util.getBytes(source));
+    long astToken = diskCache.writeByteArray(Util.getBytes("Dummy AST data"));
+    return new CachedCompilationUnit(this, sourceToken, astToken);
   }
 
   @Override
@@ -103,10 +114,6 @@ class MockCompilationUnit extends CompilationUnit {
   @Override
   public boolean isSuperSource() {
     return false;
-  }
-
-  protected Object writeReplace() {
-    return this;
   }
 
   @Override

@@ -209,6 +209,12 @@ public abstract class CompilationUnit implements Serializable {
    */
   private transient Map<String, String> anonymousClassMap = null;
 
+  /**
+   * Returns the unit as an instance of {@link CachedCompilationUnit}, making
+   * a copy if necessary.
+   */
+  public abstract CachedCompilationUnit asCachedCompilationUnit();
+
   @Deprecated
   public final boolean constructAnonymousClassMappings(TreeLogger logger) {
     /*
@@ -292,9 +298,11 @@ public abstract class CompilationUnit implements Serializable {
   public abstract String getResourceLocation();
 
   /**
-   * Returns the full abstract path of the resource.
+   * Returns the full abstract path of the resource. If a resource has been
+   * re-rooted, this path should include any path prefix that was stripped.
    * 
-   * @see {@link com.google.gwt.dev.resource.Resource#getPath()}
+   * @see {@link com.google.gwt.dev.resource.Resource#getPath()} and
+   *      {@link com.google.gwt.dev.resource.Resource#getPathPrefix()}
    */
   public abstract String getResourcePath();
 
@@ -376,10 +384,12 @@ public abstract class CompilationUnit implements Serializable {
   }
 
   /**
-   * Subclasses must implement explicit serialization. The canonical serialized
-   * form is {@link CachedCompilationUnit}.
+   * The canonical serialized form of a CompilatinUnit is
+   * {@link CachedCompilationUnit}.
    */
-  protected abstract Object writeReplace();
+  protected final Object writeReplace() {
+    return asCachedCompilationUnit();
+  }
 
   /**
    * Returns the content ID for the source with which this unit was compiled.

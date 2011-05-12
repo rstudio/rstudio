@@ -30,17 +30,46 @@ public class CachedCompilationUnit extends CompilationUnit {
   private final Collection<CompiledClass> compiledClasses;
   private final ContentId contentId;
   private final Dependencies dependencies;
-  private final String resourceLocation;
-  private final String resourcePath;
-  private final List<JsniMethod> jsniMethods;
-  private final long lastModified;
-  private final MethodArgNamesLookup methodArgNamesLookup;
-  private final String typeName;
   private final boolean isError;
   private final boolean isGenerated;
   private final boolean isSuperSource;
+  private final List<JsniMethod> jsniMethods;
+  private final long lastModified;
+  private final MethodArgNamesLookup methodArgNamesLookup;
   private final CategorizedProblem[] problems;
+  private final String resourceLocation;
+  private final String resourcePath;
   private final DiskCacheToken sourceToken;
+  private final String typeName;
+
+  /**
+   * Shallow copy of a CachedCompiliationUnit, replacing some parameters in the new copy.
+   *
+   * @param unit Unit to clone.
+   * @param lastModified last modified date to replace in the clone
+   * @param resourceLocation location to replace in the clone.
+   */
+  public CachedCompilationUnit(CachedCompilationUnit unit, long lastModified,
+      String resourceLocation) {
+    assert unit != null;
+    this.compiledClasses = unit.getCompiledClasses();
+    this.contentId = unit.getContentId();
+    this.dependencies = unit.getDependencies();
+    this.resourcePath = unit.getResourcePath();
+    this.jsniMethods = unit.getJsniMethods();
+    this.methodArgNamesLookup = unit.getMethodArgs();
+    this.typeName = unit.getTypeName();
+    this.isError = unit.isError();
+    this.isGenerated = unit.isGenerated();
+    this.isSuperSource = unit.isSuperSource();
+    this.problems = unit.problems;
+    this.astToken = unit.astToken;
+    this.sourceToken = unit.sourceToken;
+
+    // Override these fields
+    this.lastModified = lastModified;
+    this.resourceLocation = resourceLocation;
+  }
 
   /**
    * Create a compilation unit that can be serialized from another
@@ -78,6 +107,11 @@ public class CachedCompilationUnit extends CompilationUnit {
     }
     this.astToken = new DiskCacheToken(astToken);
     this.sourceToken = new DiskCacheToken(sourceToken);
+  }
+
+  @Override
+  public CachedCompilationUnit asCachedCompilationUnit() {
+    return this;
   }
 
   @Override
@@ -141,11 +175,6 @@ public class CachedCompilationUnit extends CompilationUnit {
   @Deprecated
   public boolean isSuperSource() {
     return isSuperSource;
-  }
-
-  @Override
-  protected Object writeReplace() {
-    return this;
   }
 
   @Override
