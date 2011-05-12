@@ -137,7 +137,7 @@ public class StandardSymbolData implements SymbolData {
 
   @Override
   public String toString() {
-    return methodSig != null ? methodSig : className;
+    return isClass() ? className : getJsniIdent();
   }
 
   private void readObject(ObjectInputStream in) throws IOException,

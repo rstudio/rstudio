@@ -100,45 +100,35 @@ public class ReplaceRebinds {
       JStringLiteral stringLiteral = (JStringLiteral) arg0;
       String stringValue = stringLiteral.getValue();
 
-      HasName named = null;
+      JNode node = null;
 
       JDeclaredType refType;
       JsniRef ref = JsniRef.parse(stringValue);
 
       if (ref != null) {
         final List<String> errors = new ArrayList<String>();
-        JNode node =
-            JsniRefLookup.findJsniRefTarget(ref, program, new JsniRefLookup.ErrorReporter() {
-              public void reportError(String error) {
-                errors.add(error);
-              }
-            });
-
+        node = JsniRefLookup.findJsniRefTarget(ref, program, new JsniRefLookup.ErrorReporter() {
+          public void reportError(String error) {
+            errors.add(error);
+          }
+        });
         if (!errors.isEmpty()) {
           for (String error : errors) {
             logger.log(TreeLogger.ERROR, error);
           }
         }
-
-        if (node instanceof HasName) {
-          named = (HasName) node;
-        }
-
       } else {
         // See if it's just @foo.Bar, which would result in the class seed
-        refType =
+        node =
             program.getFromTypeMap(stringValue.charAt(0) == '@' ? stringValue.substring(1)
                 : stringValue);
-        if (refType != null) {
-          named = refType;
-        }
       }
-
-      if (named == null) {
+      if (node == null) {
         // Not found, must be null
         ctx.replaceMe(JNullLiteral.INSTANCE);
       } else {
-        ctx.replaceMe(new JNameOf(x.getSourceInfo(), program.getTypeJavaLangString(), named));
+        ctx.replaceMe(new JNameOf(x.getSourceInfo(), program.getTypeJavaLangString(),
+            (HasName) node));
       }
     }
   }
