@@ -1,0 +1,46 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <script type="text/javascript" src="../tools/ace/build_support/mini_require.js"></script>
+  <script type="text/javascript" src="../tools/ace/build/src/ace-uncompressed.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_code_model.js"></script>
+  <style type="text/css">
+  .ace_sb {
+    display: none;
+  }
+  </style>
+</head>
+<body>
+
+<h2>Size-to-fit Editor</h2>
+<div id="editor" style="width: 50%; height: 20px; border-top: 1px dotted #ccc; border-bottom: 1px dotted #ccc"></div>
+
+
+<script type="text/javascript">
+var RCodeModel = require('mode/r_code_model').RCodeModel;
+var Document = require('ace/document').Document;
+
+var editor = ace.edit('editor');
+editor.renderer.setHScrollBarAlwaysVisible(false);
+editor.setHighlightActiveLine(false);
+editor.getSession().setUseWrapMode(true);
+editor.renderer.setShowGutter(false);
+editor.renderer.setShowPrintMargin(false);
+var RMode = require('mode/r').Mode;
+var mode = new RMode(false, editor.getSession().getDocument());
+editor.getSession().setMode(mode);
+
+function updateEditorHeight() {
+  editor.container.style.height = (Math.max(1, editor.getSession().getScreenLength()) * editor.renderer.lineHeight) + 'px';
+  editor.resize();
+  editor.renderer.scrollToY(0);
+  editor.renderer.scrollToX(0);
+}
+editor.getSession().getDocument().on("change", updateEditorHeight);
+updateEditorHeight();
+editor.focus();
+</script>
+</body>
+</html>
