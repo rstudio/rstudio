@@ -137,7 +137,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
          value<bool>(&autoReloadSource_)->default_value(false),
          "Reload R source if it changes during the session")
       ("r-compatible-graphics-engine-version",
-         value<int>(&rCompatibleGraphicsEngineVersion_)->default_value(8),
+         value<int>(&rCompatibleGraphicsEngineVersion_)->default_value(9),
          "Maximum graphics engine version we are compatible with")
       ("r-css-file",
          value<std::string>(&rHelpCssFilePath_)->default_value("resources/R.css"),
