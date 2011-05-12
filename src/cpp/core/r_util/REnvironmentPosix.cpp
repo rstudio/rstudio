@@ -318,11 +318,16 @@ bool detectREnvironment(const FilePath& ldPathsScript,
                         EnvironmentVars* pVars,
                         std::string* pErrMsg)
 {
-   return detectREnvironment(FilePath(), ldPathsScript, pVars, pErrMsg);
+   return detectREnvironment(FilePath(),
+                             ldPathsScript,
+                             std::string(),
+                             pVars,
+                             pErrMsg);
 }
 
 bool detectREnvironment(const FilePath& whichRScript,
                         const FilePath& ldPathsScript,
+                        const std::string& ldLibraryPath,
                         EnvironmentVars* pVars,
                         std::string* pErrMsg)
 {
@@ -418,6 +423,9 @@ bool detectREnvironment(const FilePath& whichRScript,
    // determine library path (existing + r lib dir + r extra lib dirs)
    FilePath rLibPath(rLib);
    std::string libraryPath = core::system::getenv(kLibraryPathEnvVariable);
+   if (!libraryPath.empty())
+      libraryPath.append(":");
+   libraryPath.append(ldLibraryPath);
    if (!libraryPath.empty())
       libraryPath.append(":");
    libraryPath.append(rLibPath.absolutePath());

@@ -103,6 +103,9 @@ ProgramStatus Options::read(int argc, char * const argv[])
       ("rldpath-path",
          value<std::string>(&rldpathPath_)->default_value("bin/r-ldpath"),
          "path to r-ldpath script")
+      ("rsession-ld-library-path",
+         value<std::string>(&rsessionLdLibraryPath_)->default_value(""),
+         "default LD_LIBRARY_PATH for rsession")
       ("rsession-config-file",
          value<std::string>(&rsessionConfigFile_)->default_value(""),
          "path to rsession config file")
