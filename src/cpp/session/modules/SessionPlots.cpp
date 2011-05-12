@@ -288,6 +288,15 @@ Error getUniqueSavePlotStem(const json::JsonRpcRequest& request,
    return Success();
 }
 
+bool supportsSvg()
+{
+   bool supportsSvg = false;
+   Error error = r::exec::RFunction("capabilities", "cairo").call(&supportsSvg);
+   if (error)
+      LOG_ERROR(error);
+   return supportsSvg;
+}
+
 Error getSavePlotContext(const json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
@@ -307,9 +316,8 @@ Error getSavePlotContext(const json::JsonRpcRequest& request,
    formats.push_back(plotExportFormat("JPEG", kJpegFormat));
    formats.push_back(plotExportFormat("TIFF", kTiffFormat));
    formats.push_back(plotExportFormat("BMP", kBmpFormat));
-#ifndef _WIN32
-   //formats.push_back(plotExportFormat("SVG", kSvgFormat));
-#endif
+   if(supportsSvg())
+      formats.push_back(plotExportFormat("SVG", kSvgFormat));
 
 /*
    formats.push_back(plotExportFormat("Postscript", "ps"));
