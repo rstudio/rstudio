@@ -351,6 +351,8 @@ public class Files
             }
             
             progress.onProgress("Moving files...");
+            
+            view_.selectNone();
       
             server_.moveFiles(selectedFiles, 
                               targetDir, 
@@ -464,6 +466,9 @@ public class Files
             else
                target = FileSystemItem.createFile(path);
               
+            // clear selection
+            view_.selectNone();
+            
             // premptively rename in the UI then fallback to refreshing
             // the view if there is an error
             view_.renameFile(file, target);
@@ -501,11 +506,12 @@ public class Files
                            public void execute(final ProgressIndicator progress)
                            {
                               progress.onProgress("Deleting files...");
+                             
+                              view_.selectNone();
                               
                               server_.deleteFiles(
                                     selectedFiles, 
                                     new VoidServerRequestCallback(progress));
-                               
                            }
                         },
                        true);
