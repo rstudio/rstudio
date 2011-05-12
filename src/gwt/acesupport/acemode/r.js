@@ -32,29 +32,37 @@ define("mode/r", function(require, exports, module)
    // Monkeypatch EditSession.insert and Editor.removeLeft to allow R mode to
    // do automatic brace insertion
 
-   (function() {
-      var __insert = this.insert;
-      this.insert = function(position, text) {
-         if (this.getMode().wrapInsert) {
-            return this.getMode().wrapInsert(this, __insert, position, text);
-         }
-         else {
-            return __insert.call(this, position, text);
-         }
-      };
-   }).call(EditSession.prototype);
+   if (!EditSession.prototype.insertWrapped) {
+      EditSession.prototype.insertWrapped = true;
 
-   (function() {
-      var __removeLeft = this.removeLeft;
-      this.removeLeft = function() {
-         if (this.session.getMode().wrapRemoveLeft) {
-            return this.session.getMode().wrapRemoveLeft(this, __removeLeft);
-         }
-         else {
-            return __removeLeft.call(this);
-         }
-      };
-   }).call(Editor.prototype);
+      (function() {
+         var __insert = this.insert;
+         this.insert = function(position, text) {
+            if (this.getMode().wrapInsert) {
+               return this.getMode().wrapInsert(this, __insert, position, text);
+            }
+            else {
+               return __insert.call(this, position, text);
+            }
+         };
+      }).call(EditSession.prototype);
+   }
+
+   if (!Editor.prototype.removeLeftWrapped) {
+      Editor.prototype.removeLeftWrapped = true;
+
+      (function() {
+         var __removeLeft = this.removeLeft;
+         this.removeLeft = function() {
+            if (this.session.getMode().wrapRemoveLeft) {
+               return this.session.getMode().wrapRemoveLeft(this, __removeLeft);
+            }
+            else {
+               return __removeLeft.call(this);
+            }
+         };
+      }).call(Editor.prototype);
+   }
 
 
    var Mode = function(suppressHighlighting, doc)
