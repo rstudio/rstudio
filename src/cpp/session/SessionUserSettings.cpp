@@ -40,6 +40,8 @@ const char * const kCRANMirrorName = "cranMirrorName";
 const char * const kCRANMirrorHost = "cranMirrorHost";
 const char * const kCRANMirrorUrl = "cranMirrorUrl";
 const char * const kCRANMirrorCountry = "cranMirrorCountry";
+const char * const kAlwaysSaveHistory = "alwaysSaveHistory";
+const char * const kUseGlobalHistory = "useGlobalHistory";
 }
    
 UserSettings& userSettings()
@@ -141,6 +143,26 @@ void UserSettings::setCRANMirror(const CRANMirror& mirror)
    settings_.set(kCRANMirrorHost, mirror.host);
    settings_.set(kCRANMirrorUrl, mirror.url);
    settings_.set(kCRANMirrorCountry, mirror.country);
+}
+
+bool UserSettings::alwaysSaveHistory() const
+{
+   return settings_.getBool(kAlwaysSaveHistory, true);
+}
+
+void UserSettings::setAlwaysSaveHistory(bool alwaysSave)
+{
+   settings_.set(kAlwaysSaveHistory, alwaysSave);
+}
+
+bool UserSettings::useGlobalHistory() const
+{
+   return settings_.getBool(kUseGlobalHistory, true);
+}
+
+void UserSettings::setUseGlobalHistory(bool useGlobal)
+{
+   return settings_.set(kUseGlobalHistory, useGlobal);
 }
 
 void UserSettings::setInitialWorkingDirectory(const core::FilePath& filePath)

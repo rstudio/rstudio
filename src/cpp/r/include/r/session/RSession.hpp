@@ -59,6 +59,8 @@ struct ROptions
    core::FilePath defaultWorkingDir;
    core::FilePath startupEnvironmentFilePath;
    boost::function<core::FilePath()> rEnvironmentDir;
+   boost::function<core::FilePath()> rHistoryDir;
+   boost::function<bool()> alwaysSaveHistory;
    core::FilePath rSourcePath;
    core::FilePath rLibsExtra;
    std::string rLibsUser;

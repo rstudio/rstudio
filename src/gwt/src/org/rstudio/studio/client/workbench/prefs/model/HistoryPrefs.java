@@ -1,5 +1,5 @@
 /*
- * RPrefs.java
+ * HistoryPrefs.java
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -14,15 +14,15 @@ package org.rstudio.studio.client.workbench.prefs.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class RPrefs extends JavaScriptObject
+public class HistoryPrefs extends JavaScriptObject
 {
-   protected RPrefs() {}
+   protected HistoryPrefs() {}
 
-   public native final GeneralPrefs getGeneralPrefs() /*-{
-      return this.general_prefs;
+   public native final boolean getAlwaysSave() /*-{
+      return this.always_save;
    }-*/;
 
-   public native final HistoryPrefs getHistoryPrefs() /*-{
-      return this.history_prefs;
+   public native final boolean getUseGlobal() /*-{
+      return this.use_global;
    }-*/;
 }

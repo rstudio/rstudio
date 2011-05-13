@@ -29,8 +29,11 @@ import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.cran.DefaultCRANMirror;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
+import org.rstudio.studio.client.workbench.prefs.model.GeneralPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.HistoryPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.common.cran.model.CRANMirror;
 
@@ -123,8 +126,6 @@ public class GeneralPreferencesPane extends PreferencesPane
       }));
       dirChooser_.setWidth("80%");
 
-      add(loadRData_ = new CheckBox("Restore .RData into workspace at startup"));
-
       saveWorkspace_ = new SelectWidget(
             "Save workspace to .RData on exit:",
             new String[] {
@@ -133,24 +134,47 @@ public class GeneralPreferencesPane extends PreferencesPane
                   "Ask"
             });
       add(saveWorkspace_);
+      
+      add(loadRData_ = new CheckBox("Restore .RData into workspace at startup"));
+   
+      alwaysSaveHistory_ = new CheckBox(
+            "Always save .Rhistory (even when not saving .RData)");
+      alwaysSaveHistory_.addStyleName(res.styles().extraSpaced());
+      add(alwaysSaveHistory_);
+      
+      useGlobalHistory_ = new CheckBox(
+            "Use global .Rhistory (rather than per-working directory)");
+      
+      // only allow tweaking of global vs. non-global history in desktop
+      // mode (in server mode there is no way to start in a non-standard
+      // working directory so saving history in working directoriees rather
+      // than globally will basically break history)
+      if (Desktop.isDesktop())
+         add(useGlobalHistory_);
+      
      
-
       saveWorkspace_.setEnabled(false);
       loadRData_.setEnabled(false);
       dirChooser_.setEnabled(false);
       cranMirrorTextBox_.setEnabled(false);
+      alwaysSaveHistory_.setEnabled(false);
+      useGlobalHistory_.setEnabled(false);
       server_.getRPrefs(new SimpleRequestCallback<RPrefs>()
       {
          @Override
          public void onResponseReceived(RPrefs response)
          {
+          
+            // general prefs
+            GeneralPrefs generalPrefs = response.getGeneralPrefs();
+            
             saveWorkspace_.setEnabled(true);
             loadRData_.setEnabled(true);
             dirChooser_.setEnabled(true);
             cranMirrorTextBox_.setEnabled(true);
-
+            
             int saveWorkspaceIndex;
-            switch (response.getSaveAction())
+            switch (generalPrefs.getSaveAction())
             {
                case SaveAction.NOSAVE: 
                   saveWorkspaceIndex = 1; 
@@ -165,14 +189,23 @@ public class GeneralPreferencesPane extends PreferencesPane
             }
             saveWorkspace_.getListBox().setSelectedIndex(saveWorkspaceIndex);
 
-            loadRData_.setValue(response.getLoadRData());
-            dirChooser_.setText(response.getInitialWorkingDirectory());
+            loadRData_.setValue(generalPrefs.getLoadRData());
+            dirChooser_.setText(generalPrefs.getInitialWorkingDirectory());
             
-            if (!response.getCRANMirror().isEmpty())
+            if (!generalPrefs.getCRANMirror().isEmpty())
             {
-               cranMirror_ = response.getCRANMirror();
+               cranMirror_ = generalPrefs.getCRANMirror();
                cranMirrorTextBox_.setText(cranMirror_.getDisplay());
             }
+            
+            // history prefs
+            HistoryPrefs historyPrefs = response.getHistoryPrefs();
+            
+            alwaysSaveHistory_.setEnabled(true);
+            useGlobalHistory_.setEnabled(true);
+            
+            alwaysSaveHistory_.setValue(historyPrefs.getAlwaysSave());
+            useGlobalHistory_.setValue(historyPrefs.getUseGlobal());
          }
       });
    }
@@ -205,11 +238,15 @@ public class GeneralPreferencesPane extends PreferencesPane
                break; 
          }
 
-         server_.setRPrefs(saveAction,
+         server_.setGeneralPrefs(saveAction,
                            loadRData_.getValue(),
                            dirChooser_.getText(),
                            cranMirror_,
-                           new SimpleRequestCallback<org.rstudio.studio.client.server.Void>());
+                           new SimpleRequestCallback<Void>());
+         
+         server_.setHistoryPrefs(alwaysSaveHistory_.getValue(),
+                                 useGlobalHistory_.getValue(),
+                                 new SimpleRequestCallback<Void>());
       }
    }
 
@@ -229,4 +266,6 @@ public class GeneralPreferencesPane extends PreferencesPane
    private TextBoxWithButton cranMirrorTextBox_;
    private TextBoxWithButton dirChooser_;
    private CheckBox loadRData_;
+   private final CheckBox alwaysSaveHistory_;
+   private final CheckBox useGlobalHistory_;
 }

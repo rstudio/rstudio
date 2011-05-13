@@ -42,6 +42,7 @@ import org.rstudio.studio.client.workbench.model.Agreement;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
+import org.rstudio.studio.client.workbench.prefs.model.GeneralPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.views.files.model.FileUploadToken;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
@@ -206,7 +207,7 @@ public class RemoteServer implements Server
                   requestCallback);
    }
 
-   public void setRPrefs(int saveAction,
+   public void setGeneralPrefs(int saveAction,
                          boolean loadRData,
                          String initialWorkingDirectory,
                          CRANMirror cranMirror,
@@ -219,7 +220,21 @@ public class RemoteServer implements Server
       params.set(3, new JSONObject(cranMirror));
 
       sendRequest(RPC_SCOPE,
-                  SET_R_PREFS,
+                  SET_GENERAL_PREFS,
+                  params,
+                  requestCallback);
+   }
+   
+   public void setHistoryPrefs(boolean alwaysSave,
+                               boolean useGlobal,
+                               ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, JSONBoolean.getInstance(alwaysSave));
+      params.set(1, JSONBoolean.getInstance(useGlobal));
+     
+      sendRequest(RPC_SCOPE,
+                  SET_HISTORY_PREFS,
                   params,
                   requestCallback);
    }
@@ -1417,7 +1432,8 @@ public class RemoteServer implements Server
    private static final String SET_WORKBENCH_METRICS = "set_workbench_metrics";
    private static final String SET_UI_PREFS = "set_ui_prefs";
    private static final String GET_R_PREFS = "get_r_prefs";
-   private static final String SET_R_PREFS = "set_r_prefs";
+   private static final String SET_GENERAL_PREFS = "set_general_prefs";
+   private static final String SET_HISTORY_PREFS = "set_history_prefs";
    private static final String SET_CLIENT_STATE = "set_client_state";
    private static final String USER_PROMPT_COMPLETED = "user_prompt_completed";
    

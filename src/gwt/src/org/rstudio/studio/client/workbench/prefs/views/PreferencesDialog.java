@@ -70,7 +70,10 @@ public class PreferencesDialog extends ModalDialog<Void>
 
       addStyleName(res.styles().preferencesDialog());
 
-      panes_ = new PreferencesPane[] {pR.get(), source, appearance, paneLayout};
+      panes_ = new PreferencesPane[] {pR.get(), 
+                                     source, 
+                                     appearance, 
+                                     paneLayout};
 
       for (final PreferencesPane pane : panes_)
       {

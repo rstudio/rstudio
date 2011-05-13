@@ -12,17 +12,27 @@
  */
 package org.rstudio.studio.client.workbench.prefs.model;
 
+import org.rstudio.studio.client.common.cran.model.CRANMirror;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class RPrefs extends JavaScriptObject
+public class GeneralPrefs extends JavaScriptObject
 {
-   protected RPrefs() {}
+   protected GeneralPrefs() {}
 
-   public native final GeneralPrefs getGeneralPrefs() /*-{
-      return this.general_prefs;
+   public native final int getSaveAction() /*-{
+      return this.save_action;
    }-*/;
 
-   public native final HistoryPrefs getHistoryPrefs() /*-{
-      return this.history_prefs;
+   public native final boolean getLoadRData() /*-{
+      return this.load_rdata;
    }-*/;
+
+   public native final String getInitialWorkingDirectory() /*-{
+      return this.initial_working_dir;
+   }-*/;
+   
+   public native final CRANMirror getCRANMirror() /*-{
+      return this.cran_mirror;
+   }-*/;   
 }

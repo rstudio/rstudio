@@ -46,4 +46,5 @@ public interface PreferencesDialogResources extends ClientBundle
    ImageResource iconEdit();
    ImageResource iconPanes();
    ImageResource iconR();
+   ImageResource iconHistory();
 }

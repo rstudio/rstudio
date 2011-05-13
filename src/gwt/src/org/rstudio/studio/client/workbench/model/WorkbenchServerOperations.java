@@ -54,13 +54,18 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
 
    void getRPrefs(ServerRequestCallback<RPrefs> requestCallback);
 
-   // Save Action: "yes", "no", or "ask"
-   void setRPrefs(int saveAction,
-                  boolean loadRData,
-                  String initialWorkingDirectory,
-                  CRANMirror cranMirror,
-                  ServerRequestCallback<Void> requestCallback);
+   void setGeneralPrefs(int saveAction,
+                        boolean loadRData,
+                        String initialWorkingDirectory,
+                        CRANMirror cranMirror,
+                        ServerRequestCallback<Void> requestCallback);
 
+   
+   void setHistoryPrefs(boolean alwaysSave,
+                        boolean useGlobal,
+                        ServerRequestCallback<Void> requestCallback);
+   
+   
    void updateClientState(JavaScriptObject temporary,
                           JavaScriptObject persistent,
                           ServerRequestCallback<Void> requestCallback);

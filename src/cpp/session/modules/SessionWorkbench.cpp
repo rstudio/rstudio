@@ -137,21 +137,31 @@ void setCRANReposOption(const std::string& url)
 Error getRPrefs(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
-   json::Object result;
-
-   result["save_action"] = userSettings().saveAction();
-   result["load_rdata"] = userSettings().loadRData();
-   result["initial_working_dir"] = module_context::createAliasedPath(
+   // get general prefs
+   json::Object generalPrefs;
+   generalPrefs["save_action"] = userSettings().saveAction();
+   generalPrefs["load_rdata"] = userSettings().loadRData();
+   generalPrefs["initial_working_dir"] = module_context::createAliasedPath(
          userSettings().initialWorkingDirectory());
-   result["cran_mirror"] = toCRANMirrorJson(userSettings().cranMirror());
+   generalPrefs["cran_mirror"] = toCRANMirrorJson(userSettings().cranMirror());
+
+   // get history prefs
+   json::Object historyPrefs;
+   historyPrefs["always_save"] = userSettings().alwaysSaveHistory();
+   historyPrefs["use_global"] = userSettings().useGlobalHistory();
+
+   // initialize and set result object
+   json::Object result;
+   result["general_prefs"] = generalPrefs;
+   result["history_prefs"] = historyPrefs;
 
    pResponse->setResult(result);
 
    return Success();
 }
 
-Error setRPrefs(const json::JsonRpcRequest& request,
-                json::JsonRpcResponse* pResponse)
+Error setGeneralPrefs(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse* pResponse)
 {
    int saveAction;
    bool loadRData;
@@ -175,6 +185,23 @@ Error setRPrefs(const json::JsonRpcRequest& request,
 
    return Success();
 }
+
+Error setHistoryPrefs(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse*)
+{
+   bool alwaysSave, useGlobal;
+   Error error = json::readParams(request.params, &alwaysSave, &useGlobal);
+   if (error)
+      return error;
+
+   userSettings().beginUpdate();
+   userSettings().setAlwaysSaveHistory(alwaysSave);
+   userSettings().setUseGlobalHistory(useGlobal);
+   userSettings().endUpdate();
+
+   return Success();
+}
+
 
 Error setCRANMirror(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
@@ -259,7 +286,8 @@ Error initialize()
       (bind(registerRpcMethod, "set_workbench_metrics", setWorkbenchMetrics))
       (bind(registerRpcMethod, "set_ui_prefs", setUiPrefs))
       (bind(registerRpcMethod, "get_r_prefs", getRPrefs))
-      (bind(registerRpcMethod, "set_r_prefs", setRPrefs))
+      (bind(registerRpcMethod, "set_general_prefs", setGeneralPrefs))
+      (bind(registerRpcMethod, "set_history_prefs", setHistoryPrefs))
       (bind(registerRpcMethod, "set_cran_mirror", setCRANMirror));
    return initBlock.execute();
 }
