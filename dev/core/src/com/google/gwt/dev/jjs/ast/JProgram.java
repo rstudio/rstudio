@@ -335,10 +335,6 @@ public class JProgram extends JNode {
 
   private final Map<JMethod, JMethod> instanceToStaticMap = new IdentityHashMap<JMethod, JMethod>();
 
-  private JField nullField;
-
-  private JMethod nullMethod;
-
   private Map<JReferenceType, Integer> queryIds;
 
   /**
@@ -855,22 +851,11 @@ public class JProgram extends JNode {
   }
 
   public JField getNullField() {
-    if (nullField == null) {
-      nullField =
-          new JField(createSourceInfoSynthetic(JProgram.class), "nullField", null,
-              JNullType.INSTANCE, false, Disposition.FINAL);
-    }
-    return nullField;
+    return JField.NULL_FIELD;
   }
 
   public JMethod getNullMethod() {
-    if (nullMethod == null) {
-      nullMethod =
-          new JMethod(createSourceInfoSynthetic(JProgram.class), "nullMethod", null,
-              JNullType.INSTANCE, false, false, true, false);
-      nullMethod.setSynthetic();
-    }
-    return nullMethod;
+    return JMethod.NULL_METHOD;
   }
 
   public int getQueryId(JReferenceType elementType) {

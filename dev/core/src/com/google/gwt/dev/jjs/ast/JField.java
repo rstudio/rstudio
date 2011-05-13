@@ -67,6 +67,17 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
     }
   }
 
+  private static class ExternalSerializedNullField implements Serializable {
+    public static final ExternalSerializedNullField INSTANCE = new ExternalSerializedNullField();
+
+    private Object readResolve() {
+      return NULL_FIELD;
+    }
+  }
+
+  public static final JField NULL_FIELD = new JField(SourceOrigin.UNKNOWN, "nullField", null,
+      JNullType.INSTANCE, false, Disposition.FINAL);
+
   private final JDeclaredType enclosingType;
   private final boolean isCompileTimeConstant;
   private final boolean isStatic;
@@ -153,6 +164,8 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
   protected Object writeReplace() {
     if (enclosingType != null && enclosingType.isExternal()) {
       return new ExternalSerializedForm(this);
+    } else if (this == NULL_FIELD) {
+      return ExternalSerializedNullField.INSTANCE;
     } else {
       return this;
     }

@@ -77,6 +77,19 @@ public class ImplementClassLiteralsAsFields {
     normalizerEvent.end();
   }
 
+  private static String createIdent(JMethod method) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(method.getEnclosingType().getName());
+    sb.append("::");
+    sb.append(method.getName());
+    sb.append('(');
+    for (JType type : method.getOriginalParamTypes()) {
+      sb.append(type.getJsniSignatureName());
+    }
+    sb.append(')');
+    return sb.toString();
+  }
+
   private static String getClassName(String fullName) {
     int pos = fullName.lastIndexOf(".");
     return fullName.substring(pos + 1);
@@ -223,8 +236,10 @@ public class ImplementClassLiteralsAsFields {
         if (valueOfMethod == null) {
           throw new InternalCompilerException("Could not find enum valueOf() method");
         }
-        call.addArg(new JsniMethodRef(info, null, valuesMethod, program.getJavaScriptObject()));
-        call.addArg(new JsniMethodRef(info, null, valueOfMethod, program.getJavaScriptObject()));
+        call.addArg(new JsniMethodRef(info, createIdent(valuesMethod), valuesMethod, program
+            .getJavaScriptObject()));
+        call.addArg(new JsniMethodRef(info, createIdent(valueOfMethod), valueOfMethod, program
+            .getJavaScriptObject()));
       } else if (isEnumOrSubclass) {
         // A subclass of an enum class
         call.addArg(JNullLiteral.INSTANCE);

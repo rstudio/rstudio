@@ -28,6 +28,7 @@ public class JsniClassLiteral extends JClassLiteral {
 
   public JsniClassLiteral(SourceInfo info, String ident, JType type) {
     super(info, type);
+    assert ident != null;
     this.ident = ident;
   }
 

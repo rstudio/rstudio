@@ -55,7 +55,23 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
     }
   }
 
+  private static class ExternalSerializedNullMethod implements Serializable {
+    public static final ExternalSerializedNullMethod INSTANCE = new ExternalSerializedNullMethod();
+
+    private Object readResolve() {
+      return NULL_METHOD;
+    }
+  }
+
+  public static final JMethod NULL_METHOD = new JMethod(SourceOrigin.UNKNOWN, "nullMethod", null,
+      JNullType.INSTANCE, false, false, true, false);
+
   private static final String TRACE_METHOD_WILDCARD = "*";
+
+  static {
+    NULL_METHOD.setSynthetic();
+    NULL_METHOD.freezeParamTypes();
+  }
 
   private static void trace(String title, String code) {
     System.out.println("---------------------------");
@@ -352,6 +368,8 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
   protected Object writeReplace() {
     if (enclosingType != null && enclosingType.isExternal()) {
       return new ExternalSerializedForm(this);
+    } else if (this == NULL_METHOD) {
+      return ExternalSerializedNullMethod.INSTANCE;
     } else {
       return this;
     }
