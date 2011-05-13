@@ -58,7 +58,7 @@ public class ShellPane extends Composite implements Shell.Display,
       input_ = editor ;
       input_.setShowLineNumbers(false);
       input_.setShowPrintMargin(false);
-      input_.setFileType(FileTypeRegistry.R);
+      input_.setFileType(FileTypeRegistry.R, true);
       input_.setPadding(0);
       input_.autoHeight();
       Widget inputWidget_ = input_.toWidget();
@@ -103,6 +103,7 @@ public class ShellPane extends Composite implements Shell.Display,
       {
          public void execute()
          {
+            input_.autoHeight();
             scrollPanel_.scrollToBottom();
          }
       });
@@ -456,7 +457,7 @@ public class ShellPane extends Composite implements Shell.Display,
       // parse out the command text
       @SuppressWarnings("unused")
       String promptText = prompt_.getElement().getInnerText();
-      String commandText = input_.getText();
+      String commandText = input_.getCode();
       input_.setText("");
       prompt_.setHTML("");
 /*
@@ -472,13 +473,12 @@ public class ShellPane extends Composite implements Shell.Display,
 
    public HandlerRegistration addKeyDownHandler(KeyDownHandler handler)
    {
-      return input_.addKeyDownHandler(handler) ;
+      return input_.addCapturingKeyDownHandler(handler) ;
    }
 
    public HandlerRegistration addKeyPressHandler(KeyPressHandler handler)
    {
-      //return input_.addKeyPressHandler(handler) ;
-      return null;
+      return input_.addCapturingKeyPressHandler(handler) ;
    }
    
    public int getCharacterWidth()

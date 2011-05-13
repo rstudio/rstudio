@@ -15,12 +15,6 @@ package org.rstudio.core.client;
 public class BrowseCapFirefox extends BrowseCap
 {
    @Override
-   public boolean emulatedHomeAndEnd()
-   {
-      return true;
-   }
-
-   @Override
    public boolean suppressBrowserForwardBack()
    {
       return true;

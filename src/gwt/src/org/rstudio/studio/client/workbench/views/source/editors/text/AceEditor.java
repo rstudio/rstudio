@@ -30,6 +30,7 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
@@ -132,16 +133,21 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
 
    public void setFileType(TextFileType fileType)
    {
-      fileType_ = fileType;
-      updateLanguage();
+      setFileType(fileType, false);
    }
 
-   private void updateLanguage()
+   public void setFileType(TextFileType fileType, boolean suppressCompletion)
+   {
+      fileType_ = fileType;
+      updateLanguage(suppressCompletion);
+   }
+
+   private void updateLanguage(boolean suppressCompletion)
    {
       if (fileType_ == null)
          return;
 
-      if (fileType_.getEditorLanguage().useRCompletion())
+      if (!suppressCompletion && fileType_.getEditorLanguage().useRCompletion())
       {
          completionManager_ = new RCompletionManager(this,
                                                      new CompletionPopupPanel(),
@@ -578,6 +584,21 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
          ValueChangeHandler<Void> handler)
    {
       return handlers_.addHandler(ValueChangeEvent.getType(), handler);
+   }
+
+   public HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler)
+   {
+      return widget_.addCapturingKeyDownHandler(handler);
+   }
+
+   public HandlerRegistration addCapturingKeyPressHandler(KeyPressHandler handler)
+   {
+      return widget_.addCapturingKeyPressHandler(handler);
+   }
+
+   public HandlerRegistration addCapturingKeyUpHandler(KeyUpHandler handler)
+   {
+      return widget_.addCapturingKeyUpHandler(handler);
    }
 
    public void fireEvent(GwtEvent<?> event)

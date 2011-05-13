@@ -167,7 +167,10 @@ public class AceEditorNative extends JavaScriptObject {
          editor.renderer.scrollToY(0);
          editor.renderer.scrollToX(0);
       }
-      editor.getSession().getDocument().on("change", updateEditorHeight);
+      if (!editor.autoHeightAttached) {
+         editor.autoHeightAttached = true;
+         editor.getSession().getDocument().on("change", updateEditorHeight);
+      }
       updateEditorHeight();
    }-*/;
 }

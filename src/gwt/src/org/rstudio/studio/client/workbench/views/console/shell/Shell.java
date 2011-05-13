@@ -63,7 +63,7 @@ public class Shell implements ConsoleInputHandler,
    {
    }
 
-   public interface Display extends HasKeyDownHandlers, 
+   public interface Display extends HasKeyDownHandlers,
                                     HasKeyPressHandlers
    {
       void consoleWriteError(String string) ;
@@ -355,7 +355,7 @@ public class Shell implements ConsoleInputHandler,
             event.preventDefault();
 
          int modifiers = KeyboardShortcut.getModifierValue(event.getNativeEvent());
-         
+
          if (event.isUpArrow())
          {
             event.preventDefault();
@@ -410,34 +410,6 @@ public class Shell implements ConsoleInputHandler,
             }
              
             input_.clear();
-         }
-         else if (BrowseCap.INSTANCE.emulatedHomeAndEnd()
-                  && keyCode == KeyCodes.KEY_HOME
-                  && modifiers == KeyboardShortcut.NONE)
-         {
-            InputEditorUtil.moveSelectionToLineStart(input_);
-            event.preventDefault();
-         }
-         else if (BrowseCap.INSTANCE.emulatedHomeAndEnd()
-                  && keyCode == KeyCodes.KEY_HOME
-                  && modifiers == KeyboardShortcut.SHIFT)
-         {
-            InputEditorUtil.extendSelectionToLineStart(input_);
-            event.preventDefault();
-         }
-         else if (BrowseCap.INSTANCE.emulatedHomeAndEnd()
-                  && keyCode == KeyCodes.KEY_END
-                  && modifiers == KeyboardShortcut.NONE)
-         {
-            InputEditorUtil.moveSelectionToLineEnd(input_);
-            event.preventDefault();
-         }
-         else if (BrowseCap.INSTANCE.emulatedHomeAndEnd()
-                  && keyCode == KeyCodes.KEY_END
-                  && modifiers == KeyboardShortcut.SHIFT)
-         {
-            InputEditorUtil.extendSelectionToLineEnd(input_);
-            event.preventDefault();
          }
          else
          {
