@@ -67,14 +67,10 @@ class AttachableInterpreter implements XMLElement.Interpreter<String> {
         "%s.performDetachedInitialization();",
         fieldManager.convertFieldToGetter(childFieldWriter.getName()));
 
-    // If this particular Attachable is a Widget, it needs to be added to the
-    // HTMLPanel.
-    if (uiWriter.isWidgetElement(elem)) {
-      fieldWriter.addDetachStatement(
-          "%s.logicalAdd(%s);",
-          fieldManager.convertFieldToGetter(fieldName),
-          fieldManager.convertFieldToGetter(childFieldWriter.getName()));
-    }
+    fieldWriter.addDetachStatement(
+        "%s.logicalAdd(%s);",
+        fieldManager.convertFieldToGetter(fieldName),
+        fieldManager.convertFieldToGetter(childFieldWriter.getName()));
 
     // TODO(rdcastro): use the render() call that receives the SafeHtmlBuilder
     String elementHtml = fieldManager.convertFieldToGetter(childFieldWriter.getName()) + ".render("
