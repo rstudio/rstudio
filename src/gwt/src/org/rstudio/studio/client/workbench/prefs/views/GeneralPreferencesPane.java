@@ -72,30 +72,6 @@ public class GeneralPreferencesPane extends PreferencesPane
          }
       }
 
-      cranMirrorTextBox_ = new TextBoxWithButton(
-         "Default CRAN mirror:",
-         "Change...",
-         new ClickHandler()
-         {
-            public void onClick(ClickEvent event)
-            {
-               defaultCRANMirror.choose(new OperationWithInput<CRANMirror>(){
-                  @Override
-                  public void execute(CRANMirror cranMirror)
-                  {
-                     cranMirror_ = cranMirror;
-                     cranMirrorTextBox_.setText(cranMirror_.getDisplay());
-                  }     
-               });
-              
-            }
-         });
-      cranMirrorTextBox_.setWidth("100%");
-      cranMirrorTextBox_.setText("");
-      cranMirrorTextBox_.addStyleName(res.styles().extraSpaced());
-      add(cranMirrorTextBox_);
-      
-
       add(tight(new Label("Initial working directory:")));
       add(dirChooser_ = new TextBoxWithButton(null, "Browse...", new ClickHandler()
       {
@@ -139,6 +115,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       
       useGlobalHistory_ = new CheckBox(
             "Use global .Rhistory (rather than per-working directory)");
+      useGlobalHistory_.addStyleName(res.styles().extraSpaced());
       
       // only allow tweaking of global vs. non-global history in desktop
       // mode (in server mode there is no way to start in a non-standard
@@ -146,6 +123,30 @@ public class GeneralPreferencesPane extends PreferencesPane
       // than globally will basically break history)
       if (Desktop.isDesktop())
          add(useGlobalHistory_);
+
+      cranMirrorTextBox_ = new TextBoxWithButton(
+            "Default CRAN mirror:",
+            "Change...",
+            new ClickHandler()
+            {
+               public void onClick(ClickEvent event)
+               {
+                  defaultCRANMirror.choose(new OperationWithInput<CRANMirror>(){
+                     @Override
+                     public void execute(CRANMirror cranMirror)
+                     {
+                        cranMirror_ = cranMirror;
+                        cranMirrorTextBox_.setText(cranMirror_.getDisplay());
+                     }     
+                  });
+                 
+               }
+            });
+      cranMirrorTextBox_.setWidth("90%");
+      cranMirrorTextBox_.setText("");
+      cranMirrorTextBox_.addStyleName(res.styles().cranMirrorTextBox());
+      cranMirrorTextBox_.addStyleName(res.styles().extraSpaced());
+      add(cranMirrorTextBox_);
       
      
       saveWorkspace_.setEnabled(false);
