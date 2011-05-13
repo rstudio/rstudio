@@ -16,6 +16,9 @@
 package com.google.gwt.sample.mobilewebapp.client.mobile;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.sample.mobilewebapp.client.ProvidesPresenter;
+import com.google.gwt.sample.mobilewebapp.client.activity.TaskListView;
+import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.CellList;
@@ -25,8 +28,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.NoSelectionModel;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionModel;
-import com.google.gwt.sample.mobilewebapp.client.activity.TaskListView;
-import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
 
 import java.util.List;
 
@@ -34,7 +35,6 @@ import java.util.List;
  * View used to display the list of Tasks.
  */
 public class MobileTaskListView extends Composite implements TaskListView {
-
   /**
    * Resources used by the mobile CellList.
    */
@@ -42,6 +42,7 @@ public class MobileTaskListView extends Composite implements TaskListView {
     @Source({CellList.Style.DEFAULT_CSS, "MobileCellList.css"})
     CellListStyle cellListStyle();
   }
+
 
   /**
    * Styles used by the mobile CellList.
@@ -55,6 +56,11 @@ public class MobileTaskListView extends Composite implements TaskListView {
   interface MobileTaskListViewUiBinder extends
       UiBinder<Widget, MobileTaskListView> {
   }
+
+  /**
+   * Provides a new presenter for each session with this view.
+   */
+  private final ProvidesPresenter<TaskListView.Presenter, TaskListView> presenterFactory;
 
   /**
    * The UiBinder used to generate the view.
@@ -76,7 +82,9 @@ public class MobileTaskListView extends Composite implements TaskListView {
   /**
    * Construct a new {@link MobileTaskListView}.
    */
-  public MobileTaskListView() {
+  public MobileTaskListView(ProvidesPresenter<TaskListView.Presenter, TaskListView> presenterFactory) {
+    this.presenterFactory = presenterFactory;
+    
     // Create the CellList.
     CellListResources cellListRes = GWT.create(CellListResources.class);
     taskList = new CellList<TaskProxy>(new TaskProxyCell(), cellListRes);
@@ -117,5 +125,15 @@ public class MobileTaskListView extends Composite implements TaskListView {
 
   public void setTasks(List<TaskProxy> tasks) {
     taskList.setRowData(tasks);
+  }
+
+  @Override
+  public void start() {
+    setPresenter(presenterFactory.getPresenter(this));
+  }
+
+  @Override
+  public void stop() {
+    presenter.onStop();
   }
 }

@@ -17,6 +17,7 @@ package com.google.gwt.sample.mobilewebapp.client.place;
 
 import com.google.gwt.place.shared.Place;
 import com.google.gwt.place.shared.PlaceTokenizer;
+import com.google.gwt.place.shared.Prefix;
 import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
 
 /**
@@ -27,6 +28,7 @@ public class TaskEditPlace extends Place {
   /**
    * The tokenizer for this place.
    */
+  @Prefix("edit")
   public static class Tokenizer implements PlaceTokenizer<TaskEditPlace> {
 
     private static final String NO_ID = "create";

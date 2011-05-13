@@ -16,7 +16,6 @@
 package com.google.gwt.sample.mobilewebapp.client.desktop;
 
 import com.google.gwt.canvas.dom.client.CssColor;
-import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.VideoElement;
@@ -26,7 +25,6 @@ import com.google.gwt.media.client.Video;
 import com.google.gwt.place.shared.Place;
 import com.google.gwt.place.shared.PlaceChangeEvent;
 import com.google.gwt.place.shared.PlaceController;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.sample.mobilewebapp.client.MobileWebAppShell;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskEditView;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskListActivity;
@@ -87,59 +85,6 @@ public class MobileWebAppShellDesktop extends ResizeComposite implements MobileW
      */
     @Source({"MainMenuCellList.css", CellList.Style.DEFAULT_CSS})
     MainMenuStyle cellListStyle();
-  }
-
-  /**
-   * An item in the main menu that maps to a specific place.
-   */
-  private static class MainMenuItem {
-    private final String name;
-    private final Place place;
-
-    /**
-     * Construct a new {@link MainMenuItem}.
-     * 
-     * @param name the display name
-     * @param place the place to open when selected
-     */
-    public MainMenuItem(String name, Place place) {
-      this.name = name;
-      this.place = place;
-    }
-
-    public String getName() {
-      return name;
-    }
-
-    public Place getPlace() {
-      return place;
-    }
-
-    /**
-     * Check whether or not this {@link MainMenuItem} maps to the specified
-     * place.
-     * 
-     * @param p a {@link Place}
-     * @return true if this menu item maps to the place, false if not
-     */
-    public boolean mapsToPlace(Place p) {
-      return place == p;
-    }
-  }
-
-  /**
-   * The cell used to render a {@link MainMenuItem}.
-   */
-  private static class MainMenuItemCell extends AbstractCell<MainMenuItem> {
-
-    @Override
-    public void render(com.google.gwt.cell.client.Cell.Context context, MainMenuItem value,
-        SafeHtmlBuilder sb) {
-      if (value == null) {
-        return;
-      }
-      sb.appendEscaped(value.getName());
-    }
   }
 
   /**
@@ -209,7 +154,7 @@ public class MobileWebAppShellDesktop extends ResizeComposite implements MobileW
 
     // Initialize the main menu.
     Resources resources = GWT.create(Resources.class);
-    mainMenu = new CellList<MainMenuItem>(new MainMenuItemCell(), resources);
+    mainMenu = new CellList<MainMenuItem>(new MainMenuItem.Cell(), resources);
     mainMenu.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
 
     // We don't expect to have more than 30 menu items.

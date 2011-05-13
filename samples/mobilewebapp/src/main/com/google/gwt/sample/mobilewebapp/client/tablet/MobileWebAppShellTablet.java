@@ -20,12 +20,11 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.place.shared.PlaceController;
+import com.google.gwt.sample.mobilewebapp.client.ClientFactory;
 import com.google.gwt.sample.mobilewebapp.client.MobileWebAppShell;
-import com.google.gwt.sample.mobilewebapp.client.Provider;
-import com.google.gwt.sample.mobilewebapp.client.activity.TaskListActivity;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskListView;
-import com.google.gwt.sample.mobilewebapp.client.place.TaskListPlace;
+import com.google.gwt.sample.mobilewebapp.client.event.AddTaskEvent;
+import com.google.gwt.sample.mobilewebapp.client.event.GoHomeEvent;
 import com.google.gwt.sample.mobilewebapp.client.ui.OrientationHelper;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -41,6 +40,8 @@ import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Tablet version of the UI shell.
+ * 
+ * TODO(rjrjr): this thing needs a presenter. Not an activity. A presenter.
  */
 public class MobileWebAppShellTablet extends ResizeComposite implements MobileWebAppShell {
 
@@ -101,32 +102,20 @@ public class MobileWebAppShellTablet extends ResizeComposite implements MobileWe
    */
   private boolean firstContentWidget = true;
 
-  /**
-   * The main task list, which is always visible.
-   */
-  private TaskListActivity taskListActivity;
-
-  private final EventBus bus;
+  private final EventBus eventBus;
 
   private final TaskListView taskListView;
 
-  private final PlaceController placeController;
-
-  private final Provider<TaskListActivity> taskListActivityProvider;
+  private boolean isShowingTaskList;
 
   /**
    * Construct a new {@link MobileWebAppShellTablet}.
    * 
    * @param clientFactory the {@link ClientFactory} of shared resources
    */
-  public MobileWebAppShellTablet(EventBus bus, OrientationHelper orientationHelper,
-      final PlaceController placeController, Provider<TaskListActivity> taskListActivityProvider,
+  public MobileWebAppShellTablet(final EventBus eventBus, OrientationHelper orientationHelper,
       TaskListView taskListView) {
-    this.bus = bus;
-
-    this.placeController = placeController;
-
-    this.taskListActivityProvider = taskListActivityProvider;
+    this.eventBus = eventBus;
 
     this.taskListView = taskListView;
 
@@ -153,10 +142,10 @@ public class MobileWebAppShellTablet extends ResizeComposite implements MobileWe
     });
 
     // Go to the task list place when the title is clicked.
-    titleLabel.addClickHandler(new ClickHandler() {      
+    titleLabel.addClickHandler(new ClickHandler() {
       @Override
       public void onClick(ClickEvent event) {
-        placeController.goTo(new TaskListPlace(false));
+        eventBus.fireEvent(new GoHomeEvent());
       }
     });
   }
@@ -193,8 +182,13 @@ public class MobileWebAppShellTablet extends ResizeComposite implements MobileWe
     contentContainer.setWidget((content == null) ? contentEmptyMessage : content);
 
     // If the content is null and we are in landscape mode, show the add button.
-    if (content == null && taskListActivity != null) {
-      setAddButtonHandler(taskListActivity.getAddButtonHandler());
+    if (content == null && isShowingTaskList) {
+      setAddButtonHandler(new ClickHandler() {
+        @Override
+        public void onClick(ClickEvent event) {
+          eventBus.fireEvent(new AddTaskEvent());
+        }
+      });
     }
 
     // Do not animate the first time we show a widget.
@@ -209,12 +203,12 @@ public class MobileWebAppShellTablet extends ResizeComposite implements MobileWe
     splitPanel.setWidgetSize(taskListContainer, LANDSCAPE_TASK_LIST_WIDTH_PCT);
 
     // TODO(rjrjr) View managing activity is an abomination
-    if (taskListActivity == null) {
-      taskListActivity = taskListActivityProvider.get();
-      taskListActivity.start(taskListContainer, bus);
-
+    if (!isShowingTaskList) {
+      taskListView.start();
+      taskListContainer.add(taskListView);
       // DeckLayoutPanel sets the display to none, so we need to clear it.
       taskListView.asWidget().getElement().getStyle().clearDisplay();
+      isShowingTaskList = true;
     }
 
     // Do not use animations when the task list is always visible.
@@ -228,9 +222,9 @@ public class MobileWebAppShellTablet extends ResizeComposite implements MobileWe
 
   private void onShiftToPortrait() {
     // Hide the static task list view.
-    if (taskListActivity != null) {
-      taskListActivity.onStop();
-      taskListActivity = null;
+    if (isShowingTaskList) {
+      taskListView.stop();
+      isShowingTaskList = false;
     }
     splitPanel.setWidgetSize(taskListContainer, 0);
 
@@ -247,9 +241,8 @@ public class MobileWebAppShellTablet extends ResizeComposite implements MobileWe
     // Ensure that something is displayed.
     Widget curWidget = contentContainer.getVisibleWidget();
     if (curWidget == null || curWidget == contentEmptyMessage) {
-      placeController.goTo(new TaskListPlace(false));
+      eventBus.fireEvent(new GoHomeEvent());
       contentContainer.animate(0);
     }
   }
-
 }

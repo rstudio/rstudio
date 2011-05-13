@@ -23,8 +23,15 @@ import com.google.gwt.place.shared.PlaceChangeEvent;
 import com.google.gwt.place.shared.PlaceController;
 import com.google.gwt.place.shared.PlaceHistoryHandler;
 import com.google.gwt.sample.gaerequest.client.ReloadOnAuthenticationFailure;
+import com.google.gwt.sample.mobilewebapp.client.event.AddTaskEvent;
+import com.google.gwt.sample.mobilewebapp.client.event.EditingCanceledEvent;
+import com.google.gwt.sample.mobilewebapp.client.event.GoHomeEvent;
+import com.google.gwt.sample.mobilewebapp.client.event.ShowTaskEvent;
+import com.google.gwt.sample.mobilewebapp.client.event.TaskSavedEvent;
 import com.google.gwt.sample.mobilewebapp.client.place.AppPlaceHistoryMapper;
+import com.google.gwt.sample.mobilewebapp.client.place.TaskEditPlace;
 import com.google.gwt.sample.mobilewebapp.client.place.TaskListPlace;
+import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
 import com.google.gwt.storage.client.Storage;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HasWidgets;
@@ -81,11 +88,47 @@ public class App {
   public void run(HasWidgets.ForIsWidget parentView) {
     parentView.add(shell);
 
+    eventBus.addHandler(AddTaskEvent.TYPE, new AddTaskEvent.Handler() {
+      @Override
+      public void onAddTask(AddTaskEvent event) {
+        placeController.goTo(TaskEditPlace.getTaskCreatePlace());
+      }
+    });
+
+    eventBus.addHandler(ShowTaskEvent.TYPE, new ShowTaskEvent.Handler() {
+      @Override
+      public void onShowTask(ShowTaskEvent event) {
+        TaskProxy task = event.getTask();
+        placeController.goTo(TaskEditPlace.createTaskEditPlace(task.getId(), task));
+      }
+    });
+
+    eventBus.addHandler(GoHomeEvent.TYPE, new GoHomeEvent.Handler() {
+      @Override
+      public void onGoHome(GoHomeEvent event) {
+        placeController.goTo(new TaskListPlace(false));
+      }
+    });
+
+    eventBus.addHandler(TaskSavedEvent.TYPE, new TaskSavedEvent.Handler() {
+      @Override
+      public void onTaskSaved(TaskSavedEvent event) {
+        placeController.goTo(new TaskListPlace(true));
+      }
+    });
+
+    eventBus.addHandler(EditingCanceledEvent.TYPE, new EditingCanceledEvent.Handler() {
+      @Override
+      public void onEditCanceled(EditingCanceledEvent event) {
+        placeController.goTo(new TaskListPlace(false));
+      }
+    });
+
     GWT.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
       @Override
       public void onUncaughtException(Throwable e) {
         while (e instanceof UmbrellaException) {
-          e = ((UmbrellaException)e).getCauses().iterator().next();
+          e = ((UmbrellaException) e).getCauses().iterator().next();
         }
         Window.alert("An unexpected error occurred: " + e.getMessage());
         placeController.goTo(new TaskListPlace(false));
@@ -105,7 +148,7 @@ public class App {
   private void initBrowserHistory(final AppPlaceHistoryMapper historyMapper,
       PlaceHistoryHandler historyHandler, TaskListPlace defaultPlace) {
 
-    Place savedPlace = defaultPlace;
+    Place savedPlace = null;
     if (storage != null) {
       try {
         // wrap in try-catch in case stored value is invalid
@@ -113,6 +156,9 @@ public class App {
       } catch (Throwable t) {
         // ignore error and use the default-default
       }
+    }
+    if (savedPlace == null) {
+      savedPlace = defaultPlace;
     }
     historyHandler.register(placeController, eventBus, savedPlace);
 

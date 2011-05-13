@@ -16,9 +16,7 @@
 package com.google.gwt.sample.mobilewebapp.client;
 
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskEditView;
-import com.google.gwt.sample.mobilewebapp.client.activity.TaskListView;
 import com.google.gwt.sample.mobilewebapp.client.activity.TaskReadView;
-import com.google.gwt.sample.mobilewebapp.client.mobile.MobileTaskListView;
 import com.google.gwt.sample.mobilewebapp.client.tablet.MobileWebAppShellTablet;
 import com.google.gwt.sample.mobilewebapp.client.tablet.TabletTaskEditView;
 import com.google.gwt.sample.mobilewebapp.client.tablet.TabletTaskReadView;
@@ -28,24 +26,17 @@ import com.google.gwt.sample.mobilewebapp.client.ui.WindowBasedOrientationHelper
 /**
  * Tablet version of {@link ClientFactory}.
  */
-public class ClientFactoryImplTablet extends ClientFactoryImpl {
+public class ClientFactoryImplTablet extends ClientFactoryImplMobile {
   private final OrientationHelper orientationHelper = new WindowBasedOrientationHelper();
 
   @Override
   protected MobileWebAppShell createShell() {
-    return new MobileWebAppShellTablet(getEventBus(), orientationHelper, getPlaceController(),
-        getTaskListActivityProvider(), getTaskListView());
+    return new MobileWebAppShellTablet(getEventBus(), orientationHelper, getTaskListView());
   }
 
   @Override
   protected TaskEditView createTaskEditView() {
     return new TabletTaskEditView();
-  }
-
-  @Override
-  protected TaskListView createTaskListView() {
-    // Use the mobile list view on tablets.
-    return new MobileTaskListView();
   }
 
   @Override

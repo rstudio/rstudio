@@ -17,6 +17,7 @@ package com.google.gwt.sample.mobilewebapp.client.place;
 
 import com.google.gwt.place.shared.Place;
 import com.google.gwt.place.shared.PlaceTokenizer;
+import com.google.gwt.place.shared.Prefix;
 
 /**
  * The place in the app that shows a list of tasks.
@@ -27,6 +28,7 @@ public class TaskListPlace extends Place {
    * The tokenizer for this place. TaskList doesn't have any state, so we don't
    * have anything to encode.
    */
+  @Prefix("tl")
   public static class Tokenizer implements PlaceTokenizer<TaskListPlace> {
 
     public TaskListPlace getPlace(String token) {

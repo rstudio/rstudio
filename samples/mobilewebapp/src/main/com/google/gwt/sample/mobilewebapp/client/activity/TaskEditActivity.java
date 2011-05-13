@@ -18,8 +18,9 @@ package com.google.gwt.sample.mobilewebapp.client.activity;
 import com.google.gwt.activity.shared.AbstractActivity;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.sample.mobilewebapp.client.ClientFactory;
+import com.google.gwt.sample.mobilewebapp.client.event.EditingCanceledEvent;
+import com.google.gwt.sample.mobilewebapp.client.event.TaskSavedEvent;
 import com.google.gwt.sample.mobilewebapp.client.place.TaskEditPlace;
-import com.google.gwt.sample.mobilewebapp.client.place.TaskListPlace;
 import com.google.gwt.sample.mobilewebapp.client.ui.SoundEffects;
 import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
 import com.google.gwt.sample.mobilewebapp.shared.TaskRequest;
@@ -177,7 +178,7 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
         TaskEditActivity.this.notify("Task Saved");
 
         // Return to the task list.
-        clientFactory.getPlaceController().goTo(new TaskListPlace(true));
+        clientFactory.getEventBus().fireEvent(new TaskSavedEvent());
       }
     });
   }
@@ -249,7 +250,7 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
    * Cancel the current task.
    */
   private void doCancelTask() {
-    clientFactory.getPlaceController().goTo(new TaskListPlace(false));
+    clientFactory.getEventBus().fireEvent(new EditingCanceledEvent());
   }
 
   /**
@@ -306,6 +307,6 @@ public class TaskEditActivity extends AbstractActivity implements TaskEditView.P
     notify("Task Deleted");
 
     // Return to the task list.
-    clientFactory.getPlaceController().goTo(new TaskListPlace(true));
+    clientFactory.getEventBus().fireEvent(new TaskSavedEvent());
   }
 }

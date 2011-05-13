@@ -22,7 +22,8 @@ import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.sample.mobilewebapp.client.ClientFactory;
-import com.google.gwt.sample.mobilewebapp.client.place.TaskEditPlace;
+import com.google.gwt.sample.mobilewebapp.client.event.AddTaskEvent;
+import com.google.gwt.sample.mobilewebapp.client.event.ShowTaskEvent;
 import com.google.gwt.sample.mobilewebapp.client.place.TaskListPlace;
 import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
 import com.google.gwt.user.client.Timer;
@@ -102,7 +103,7 @@ public class TaskListActivity extends AbstractActivity implements TaskListView.P
    */
   private final ClickHandler addButtonHandler = new ClickHandler() {
     public void onClick(ClickEvent event) {
-      clientFactory.getPlaceController().goTo(TaskEditPlace.getTaskCreatePlace());
+      clientFactory.getEventBus().fireEvent(new AddTaskEvent());
     }
   };
 
@@ -125,6 +126,11 @@ public class TaskListActivity extends AbstractActivity implements TaskListView.P
    */
   private Timer refreshTimer;
 
+  public TaskListActivity(ClientFactory clientFactory, boolean clearTaskList) {
+    this.clientFactory = clientFactory;
+    this.clearTaskList = clearTaskList;
+  }
+
   /**
    * Construct a new {@link TaskListActivity}.
    * 
@@ -133,11 +139,6 @@ public class TaskListActivity extends AbstractActivity implements TaskListView.P
    */
   public TaskListActivity(ClientFactory clientFactory, TaskListPlace place) {
     this(clientFactory, place.isTaskListStale());
-  }
-
-  public TaskListActivity(ClientFactory clientFactory, boolean clearTaskList) {
-    this.clientFactory = clientFactory;
-    this.clearTaskList = clearTaskList;
   }
 
   public ClickHandler getAddButtonHandler() {
@@ -156,8 +157,7 @@ public class TaskListActivity extends AbstractActivity implements TaskListView.P
 
   public void selectTask(TaskProxy selected) {
     // Go into edit mode when a task is selected.
-    clientFactory.getPlaceController().goTo(
-        TaskEditPlace.createTaskEditPlace(selected.getId(), selected));
+    clientFactory.getEventBus().fireEvent(new ShowTaskEvent(selected));
   }
 
   public void start(AcceptsOneWidget container, EventBus eventBus) {

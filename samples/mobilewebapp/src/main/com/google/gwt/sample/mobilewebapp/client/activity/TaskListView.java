@@ -31,6 +31,11 @@ public interface TaskListView extends IsWidget {
   public static interface Presenter {
 
     /**
+     * View was told to stop. Don't really expect to submit this.
+     */
+    void onStop();
+
+    /**
      * Select a task.
      * 
      * @param selected the select task
@@ -56,4 +61,14 @@ public interface TaskListView extends IsWidget {
    * @param tasks the list of tasks
    */
   void setTasks(List<TaskProxy> tasks);
+  
+  /**
+   * Start a new session of this view.
+   */
+  void start();
+
+  /**
+   * Stop it! 
+   */
+  void stop();
 }
