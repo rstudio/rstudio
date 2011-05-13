@@ -26,10 +26,8 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DateLabel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TextBoxBase;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.widget.client.TextButton;
-import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryEditorDriver;
 
 /**
  * View used to edit a task.

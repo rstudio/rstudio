@@ -25,7 +25,6 @@ import com.google.gwt.sample.mobilewebapp.client.ClientFactory;
 import com.google.gwt.sample.mobilewebapp.client.place.TaskEditPlace;
 import com.google.gwt.sample.mobilewebapp.client.place.TaskListPlace;
 import com.google.gwt.sample.mobilewebapp.shared.TaskProxy;
-import com.google.gwt.storage.client.Storage;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.AcceptsOneWidget;
 import com.google.web.bindery.requestfactory.shared.Receiver;
@@ -107,8 +106,6 @@ public class TaskListActivity extends AbstractActivity implements TaskListView.P
     }
   };
 
-  private final Storage storage;
-
   /**
    * A boolean indicating that we should clear the task list when started.
    */
@@ -141,7 +138,6 @@ public class TaskListActivity extends AbstractActivity implements TaskListView.P
   public TaskListActivity(ClientFactory clientFactory, boolean clearTaskList) {
     this.clientFactory = clientFactory;
     this.clearTaskList = clearTaskList;
-    this.storage = clientFactory.getLocalStorageIfSupported();
   }
 
   public ClickHandler getAddButtonHandler() {
