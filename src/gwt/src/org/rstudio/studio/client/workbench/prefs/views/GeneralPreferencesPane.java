@@ -159,56 +159,54 @@ public class GeneralPreferencesPane extends PreferencesPane
       cranMirrorTextBox_.setEnabled(false);
       alwaysSaveHistory_.setEnabled(false);
       useGlobalHistory_.setEnabled(false);
-      server_.getRPrefs(new SimpleRequestCallback<RPrefs>()
-      {
-         @Override
-         public void onResponseReceived(RPrefs response)
-         {
-          
-            // general prefs
-            GeneralPrefs generalPrefs = response.getGeneralPrefs();
-            
-            saveWorkspace_.setEnabled(true);
-            loadRData_.setEnabled(true);
-            dirChooser_.setEnabled(true);
-            cranMirrorTextBox_.setEnabled(true);
-            
-            int saveWorkspaceIndex;
-            switch (generalPrefs.getSaveAction())
-            {
-               case SaveAction.NOSAVE: 
-                  saveWorkspaceIndex = 1; 
-                  break;
-               case SaveAction.SAVE: 
-                  saveWorkspaceIndex = 0; 
-                  break; 
-               case SaveAction.SAVEASK:
-               default: 
-                  saveWorkspaceIndex = 2; 
-                  break; 
-            }
-            saveWorkspace_.getListBox().setSelectedIndex(saveWorkspaceIndex);
-
-            loadRData_.setValue(generalPrefs.getLoadRData());
-            dirChooser_.setText(generalPrefs.getInitialWorkingDirectory());
-            
-            if (!generalPrefs.getCRANMirror().isEmpty())
-            {
-               cranMirror_ = generalPrefs.getCRANMirror();
-               cranMirrorTextBox_.setText(cranMirror_.getDisplay());
-            }
-            
-            // history prefs
-            HistoryPrefs historyPrefs = response.getHistoryPrefs();
-            
-            alwaysSaveHistory_.setEnabled(true);
-            useGlobalHistory_.setEnabled(true);
-            
-            alwaysSaveHistory_.setValue(historyPrefs.getAlwaysSave());
-            useGlobalHistory_.setValue(historyPrefs.getUseGlobal());
-         }
-      });
    }
+   
+   @Override
+   protected void initializeRPrefs(RPrefs rPrefs)
+   {
+      // general prefs
+      GeneralPrefs generalPrefs = rPrefs.getGeneralPrefs();
+      
+      saveWorkspace_.setEnabled(true);
+      loadRData_.setEnabled(true);
+      dirChooser_.setEnabled(true);
+      cranMirrorTextBox_.setEnabled(true);
+      
+      int saveWorkspaceIndex;
+      switch (generalPrefs.getSaveAction())
+      {
+         case SaveAction.NOSAVE: 
+            saveWorkspaceIndex = 1; 
+            break;
+         case SaveAction.SAVE: 
+            saveWorkspaceIndex = 0; 
+            break; 
+         case SaveAction.SAVEASK:
+         default: 
+            saveWorkspaceIndex = 2; 
+            break; 
+      }
+      saveWorkspace_.getListBox().setSelectedIndex(saveWorkspaceIndex);
+
+      loadRData_.setValue(generalPrefs.getLoadRData());
+      dirChooser_.setText(generalPrefs.getInitialWorkingDirectory());
+      
+      if (!generalPrefs.getCRANMirror().isEmpty())
+      {
+         cranMirror_ = generalPrefs.getCRANMirror();
+         cranMirrorTextBox_.setText(cranMirror_.getDisplay());
+      }
+      
+      // history prefs
+      HistoryPrefs historyPrefs = rPrefs.getHistoryPrefs();
+      
+      alwaysSaveHistory_.setEnabled(true);
+      useGlobalHistory_.setEnabled(true);
+      
+      alwaysSaveHistory_.setValue(historyPrefs.getAlwaysSave());
+      useGlobalHistory_.setValue(historyPrefs.getUseGlobal());
+   }
+   
 
    @Override
    public ImageResource getIcon()

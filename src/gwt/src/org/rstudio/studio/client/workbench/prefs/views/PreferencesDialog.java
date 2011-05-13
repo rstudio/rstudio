@@ -35,6 +35,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
+import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 
 public class PreferencesDialog extends ModalDialog<Void>
 {
@@ -110,6 +111,12 @@ public class PreferencesDialog extends ModalDialog<Void>
       });
 
       sectionChooser.select(0);
+   }
+   
+   public void initializeRPrefs(RPrefs rPrefs)
+   {
+      for (PreferencesPane pane : panes_)
+         pane.initializeRPrefs(rPrefs);
    }
 
    private void setPaneVisibility(PreferencesPane pane, boolean visible)

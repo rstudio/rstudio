@@ -38,23 +38,19 @@ public class HistoryPreferencesPane extends PreferencesPane
       add(useGlobalHistory_ = new CheckBox(
             "Use global .Rhistory (rather than per-working directory)"));
       useGlobalHistory_.setEnabled(false);
-      
-      server_.getRPrefs(new SimpleRequestCallback<RPrefs>()
-      {
-         @Override
-         public void onResponseReceived(RPrefs response)
-         {
-            HistoryPrefs prefs = response.getHistoryPrefs();
-            
-            alwaysSaveHistory_.setEnabled(true);
-            alwaysSaveHistory_.setValue(prefs.getAlwaysSave());
-            
-            useGlobalHistory_.setEnabled(true);
-            useGlobalHistory_.setValue(prefs.getUseGlobal());           
-         }
-      });
    }
 
+   @Override
+   protected void initializeRPrefs(RPrefs rPrefs)
+   {
+      HistoryPrefs prefs = rPrefs.getHistoryPrefs();
+      
+      alwaysSaveHistory_.setEnabled(true);
+      alwaysSaveHistory_.setValue(prefs.getAlwaysSave());
+      
+      useGlobalHistory_.setEnabled(true);
+      useGlobalHistory_.setValue(prefs.getUseGlobal()); 
+   }
 
    @Override
    public ImageResource getIcon()
