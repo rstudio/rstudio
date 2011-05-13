@@ -20,6 +20,19 @@ public class GeneralPrefs extends JavaScriptObject
 {
    protected GeneralPrefs() {}
 
+   public static final native GeneralPrefs create(int saveAction,
+                                                  boolean loadRData,
+                                                  String initialWorkingDir,
+                                                  CRANMirror cranMirror) /*-{
+      var prefs = new Object();
+      prefs.save_action = saveAction;
+      prefs.load_rdata = loadRData;
+      prefs.initial_working_dir = initialWorkingDir;
+      prefs.cran_mirror = cranMirror;
+      return prefs ;
+   }-*/;
+
+   
    public native final int getSaveAction() /*-{
       return this.save_action;
    }-*/;

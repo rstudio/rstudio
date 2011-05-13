@@ -18,11 +18,26 @@ public class RPrefs extends JavaScriptObject
 {
    protected RPrefs() {}
 
+   public static native final RPrefs createEmpty() /*-{
+      var prefs = new Object();
+      this.general_prefs = new Object();
+      this.history_prefs = new Object();
+      return prefs;
+   }-*/;
+   
    public native final GeneralPrefs getGeneralPrefs() /*-{
       return this.general_prefs;
+   }-*/;
+   
+   public native final void setGeneralPrefs(GeneralPrefs generalPrefs) /*-{
+      this.general_prefs = generalPrefs;
    }-*/;
 
    public native final HistoryPrefs getHistoryPrefs() /*-{
       return this.history_prefs;
+   }-*/;
+   
+   public native final void setHistoryPrefs(HistoryPrefs historyPrefs) /*-{
+      this.history_prefs = historyPrefs;
    }-*/;
 }

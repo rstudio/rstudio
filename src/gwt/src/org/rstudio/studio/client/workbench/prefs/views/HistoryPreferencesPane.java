@@ -16,19 +16,14 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.inject.Inject;
 
-import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.HistoryPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 
 public class HistoryPreferencesPane extends PreferencesPane
 {
    @Inject
-   public HistoryPreferencesPane(WorkbenchServerOperations server,
-                                 PreferencesDialogResources res)
+   public HistoryPreferencesPane(PreferencesDialogResources res)
    {
-      server_ = server;
       res_ = res;
 
       add(alwaysSaveHistory_ = new CheckBox(
@@ -71,16 +66,17 @@ public class HistoryPreferencesPane extends PreferencesPane
    }
 
    @Override
-   public void onApply()
+   public void onApply(RPrefs rPrefs)
    {
-      super.onApply();
+      super.onApply(rPrefs);
      
-      server_.setHistoryPrefs(alwaysSaveHistory_.getValue(),
-                              useGlobalHistory_.getValue(),
-                              new SimpleRequestCallback<Void>());
+      // set history prefs
+      HistoryPrefs historyPrefs = HistoryPrefs.create(
+                                       alwaysSaveHistory_.getValue(),
+                                       useGlobalHistory_.getValue());
+      rPrefs.setHistoryPrefs(historyPrefs);
    }
 
-   private final WorkbenchServerOperations server_;
    private final PreferencesDialogResources res_;
    private final CheckBox alwaysSaveHistory_;
    private final CheckBox useGlobalHistory_;

@@ -37,7 +37,7 @@ public abstract class PreferencesPane extends VerticalPanel
       return true;
    }
 
-   public void onApply()
+   public void onApply(RPrefs rPrefs)
    {
       for (Command cmd : onApplyCommands_)
          cmd.execute();

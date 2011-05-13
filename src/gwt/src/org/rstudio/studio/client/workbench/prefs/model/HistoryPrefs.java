@@ -18,6 +18,15 @@ public class HistoryPrefs extends JavaScriptObject
 {
    protected HistoryPrefs() {}
 
+   public static final native HistoryPrefs create(boolean alwaysSave, 
+                                                  boolean useGlobal) /*-{
+      var prefs = new Object();
+      prefs.always_save = alwaysSave;
+      prefs.use_global = useGlobal;
+      return prefs ;
+   }-*/;
+
+   
    public native final boolean getAlwaysSave() /*-{
       return this.always_save;
    }-*/;

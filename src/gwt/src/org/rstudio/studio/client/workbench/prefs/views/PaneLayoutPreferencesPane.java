@@ -24,6 +24,7 @@ import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 
@@ -293,9 +294,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    }
 
    @Override
-   public void onApply()
+   public void onApply(RPrefs rPrefs)
    {
-      super.onApply();
+      super.onApply(rPrefs);
 
       if (dirty_)
       {

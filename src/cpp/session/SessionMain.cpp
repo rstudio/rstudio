@@ -1570,7 +1570,8 @@ FilePath rEnvironmentDir()
 
 FilePath rHistoryDir()
 {
-   if (userSettings().useGlobalHistory())
+   if (session::options().programMode() == kSessionProgramModeServer ||
+       userSettings().useGlobalHistory())
    {
       return getDefaultWorkingDirectory();
    }

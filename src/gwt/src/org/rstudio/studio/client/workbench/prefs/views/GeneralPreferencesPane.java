@@ -27,11 +27,8 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.common.FileDialogs;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.cran.DefaultCRANMirror;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
-import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.GeneralPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.HistoryPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
@@ -45,13 +42,11 @@ public class GeneralPreferencesPane extends PreferencesPane
 {
    @Inject
    public GeneralPreferencesPane(PreferencesDialogResources res,
-                                 WorkbenchServerOperations server,
                                  RemoteFileSystemContext fsContext,
                                  FileDialogs fileDialogs,
                                  final DefaultCRANMirror defaultCRANMirror)
    {
       res_ = res;
-      server_ = server;
       fsContext_ = fsContext;
       fileDialogs_ = fileDialogs;
 
@@ -215,9 +210,9 @@ public class GeneralPreferencesPane extends PreferencesPane
    }
 
    @Override
-   public void onApply()
+   public void onApply(RPrefs rPrefs)
    {
-      super.onApply();
+      super.onApply(rPrefs);
 
       if (saveWorkspace_.isEnabled())
       {
@@ -236,15 +231,18 @@ public class GeneralPreferencesPane extends PreferencesPane
                break; 
          }
 
-         server_.setGeneralPrefs(saveAction,
-                           loadRData_.getValue(),
-                           dirChooser_.getText(),
-                           cranMirror_,
-                           new SimpleRequestCallback<Void>());
+         // set general prefs
+         GeneralPrefs generalPrefs = GeneralPrefs.create(saveAction, 
+                                                         loadRData_.getValue(),
+                                                         dirChooser_.getText(),
+                                                         cranMirror_);
+         rPrefs.setGeneralPrefs(generalPrefs);
          
-         server_.setHistoryPrefs(alwaysSaveHistory_.getValue(),
-                                 useGlobalHistory_.getValue(),
-                                 new SimpleRequestCallback<Void>());
+         // set history prefs
+         HistoryPrefs historyPrefs = HistoryPrefs.create(
+                                          alwaysSaveHistory_.getValue(),
+                                          useGlobalHistory_.getValue());
+         rPrefs.setHistoryPrefs(historyPrefs);
       }
    }
 
@@ -255,7 +253,6 @@ public class GeneralPreferencesPane extends PreferencesPane
    }
 
    private final PreferencesDialogResources res_;
-   private final WorkbenchServerOperations server_;
    private final FileSystemContext fsContext_;
    private final FileDialogs fileDialogs_;
    private SelectWidget saveWorkspace_;

@@ -20,6 +20,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
@@ -114,9 +115,9 @@ public class EditingPreferencesPane extends PreferencesPane
    }
 
    @Override
-   public void onApply()
+   public void onApply(RPrefs rPrefs)
    {
-      super.onApply();
+      super.onApply(rPrefs);
       prefs_.defaultEncoding().setValue(encodingValue_);
    }
 
