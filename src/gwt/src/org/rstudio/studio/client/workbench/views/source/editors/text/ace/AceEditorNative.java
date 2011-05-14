@@ -173,4 +173,8 @@ public class AceEditorNative extends JavaScriptObject {
       }
       updateEditorHeight();
    }-*/;
+
+   public static native void setInsertMatching(boolean insertMatching) /*-{
+      $wnd.require("mode/r").setInsertMatching(insertMatching);
+   }-*/;
 }

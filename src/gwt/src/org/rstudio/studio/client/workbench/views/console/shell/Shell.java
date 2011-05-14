@@ -21,6 +21,7 @@ import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -40,6 +41,7 @@ import org.rstudio.studio.client.workbench.model.ConsoleAction;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.*;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
@@ -48,6 +50,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.HistoryCom
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 
 import java.util.ArrayList;
 
@@ -93,7 +96,8 @@ public class Shell implements ConsoleInputHandler,
                 Display display,
                 Session session,
                 GlobalDisplay globalDisplay,
-                Commands commands)
+                Commands commands,
+                UIPrefs uiPrefs)
    {
       super() ;
 
@@ -136,6 +140,11 @@ public class Shell implements ConsoleInputHandler,
 
       addKeyDownPreviewHandler(new HistoryCompletionManager(
             view_.getInputEditorDisplay(), server));
+
+      uiPrefs.insertMatching().bind(new CommandWithArg<Boolean>() {
+         public void execute(Boolean arg) {
+            AceEditorNative.setInsertMatching(arg);
+         }});
 
       sessionInit(session);
    }

@@ -95,6 +95,9 @@ define("mode/r", function(require, exports, module)
 
       this.wrapInsert = function(session, __insert, position, text)
       {
+         if (!this.insertMatching)
+            return __insert.call(session, position, text);
+
          var cursor = session.selection.getCursor();
          var typing = session.selection.isEmpty() &&
                       position.row == cursor.row &&
@@ -132,6 +135,11 @@ define("mode/r", function(require, exports, module)
 
       this.wrapRemoveLeft = function(editor, __removeLeft)
       {
+         if (!this.insertMatching) {
+            __removeLeft.call(editor);
+            return;
+         }
+
          if (editor.$readOnly)
             return;
 
@@ -218,5 +226,9 @@ define("mode/r", function(require, exports, module)
       };
    }).call(Mode.prototype);
    exports.Mode = Mode;
+
+   exports.setInsertMatching = function(insertMatching) {
+      Mode.prototype.insertMatching = insertMatching;
+   };
 
 });
