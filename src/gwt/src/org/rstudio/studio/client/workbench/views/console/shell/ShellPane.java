@@ -36,6 +36,8 @@ import org.rstudio.studio.client.workbench.model.ConsoleAction;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 
 public class ShellPane extends Composite implements Shell.Display,
                                                     RequiresResize
@@ -64,6 +66,13 @@ public class ShellPane extends Composite implements Shell.Display,
       Widget inputWidget_ = input_.toWidget();
       input_.addClickHandler(secondaryInputHandler) ;
       inputWidget_.addStyleName(styles_.input());
+      input_.addCursorChangedHandler(new CursorChangedHandler()
+      {
+         public void onCursorChanged(CursorChangedEvent event)
+         {
+            input_.scrollToCursor(scrollPanel_, 8);
+         }
+      });
 
       inputLine_ = new DockPanel();
       inputLine_.setHorizontalAlignment(DockPanel.ALIGN_LEFT);
@@ -471,14 +480,14 @@ public class ShellPane extends Composite implements Shell.Display,
       return commandText ;
    }
 
-   public HandlerRegistration addKeyDownHandler(KeyDownHandler handler)
+   public HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler)
    {
       return input_.addCapturingKeyDownHandler(handler) ;
    }
 
    public HandlerRegistration addKeyPressHandler(KeyPressHandler handler)
    {
-      return input_.addCapturingKeyPressHandler(handler) ;
+      return input_.addKeyPressHandler(handler) ;
    }
    
    public int getCharacterWidth()

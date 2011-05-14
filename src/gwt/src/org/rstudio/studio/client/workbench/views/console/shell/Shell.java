@@ -18,8 +18,10 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -63,8 +65,7 @@ public class Shell implements ConsoleInputHandler,
    {
    }
 
-   public interface Display extends HasKeyDownHandlers,
-                                    HasKeyPressHandlers
+   public interface Display extends HasKeyPressHandlers
    {
       void consoleWriteError(String string) ;
       void consoleWriteOutput(String output) ;
@@ -82,6 +83,8 @@ public class Shell implements ConsoleInputHandler,
       void playbackActions(RpcObjectList<ConsoleAction> actions);
 
       void setMaxOutputLines(int maxLines);
+
+      HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler);
    }
 
    @Inject
@@ -108,7 +111,9 @@ public class Shell implements ConsoleInputHandler,
       keyPressPreviewHandlers_ = new ArrayList<KeyPressPreviewHandler>() ;
 
       InputKeyDownHandler handler = new InputKeyDownHandler() ;
-      view_.addKeyDownHandler(handler) ;
+      // This needs to be a capturing key down handler or else Ace will have
+      // handled the event before we had a chance to prevent it
+      view_.addCapturingKeyDownHandler(handler) ;
       view_.addKeyPressHandler(handler) ;
       
       eventBus.addHandler(ConsoleInputEvent.TYPE, this); 
@@ -433,22 +438,6 @@ public class Shell implements ConsoleInputHandler,
                   case 'Y':
                      event.preventDefault();
                      InputEditorUtil.pasteYanked(input_);
-                     break;
-               }
-            }
-            else if (mod == KeyboardShortcut.META)
-            {
-               switch (keyCode)
-               {
-                  case KeyCodes.KEY_LEFT:
-                     event.preventDefault();
-                     event.stopPropagation();
-                     InputEditorUtil.moveSelectionToLineStart(input_);
-                     break;
-                  case KeyCodes.KEY_RIGHT:
-                     event.preventDefault();
-                     event.stopPropagation();
-                     InputEditorUtil.moveSelectionToLineEnd(input_);
                      break;
                }
             }

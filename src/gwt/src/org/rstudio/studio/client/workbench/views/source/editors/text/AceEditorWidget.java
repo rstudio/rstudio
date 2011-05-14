@@ -41,7 +41,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Edit
 public class AceEditorWidget extends Composite
       implements RequiresResize,
                  HasValueChangeHandlers<Void>,
-                 HasKeyDownHandlers
+                 HasKeyDownHandlers,
+                 HasKeyPressHandlers
 {
    public AceEditorWidget()
    {
@@ -164,6 +165,11 @@ public class AceEditorWidget extends Composite
    public HandlerRegistration addKeyDownHandler(KeyDownHandler handler)
    {
       return addHandler(handler, KeyDownEvent.getType());
+   }
+
+   public HandlerRegistration addKeyPressHandler(KeyPressHandler handler)
+   {
+      return addHandler(handler, KeyPressEvent.getType());
    }
 
    public HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler)

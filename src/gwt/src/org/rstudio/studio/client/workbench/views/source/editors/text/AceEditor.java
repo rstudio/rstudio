@@ -27,13 +27,13 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DynamicIFrame;
@@ -55,9 +55,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
-import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 
 public class AceEditor implements DocDisplay, InputEditorDisplay
 {
@@ -271,15 +269,12 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
             getSession().getSelection().getRange());
    }
 
-   public void beginSetSelection(InputEditorSelection selection,
-                                 Command callback)
+   public void setSelection(InputEditorSelection selection)
    {
       AceInputEditorPosition start = (AceInputEditorPosition)selection.getStart();
       AceInputEditorPosition end = (AceInputEditorPosition)selection.getEnd();
       getSession().getSelection().setSelectionRange(Range.fromPoints(
             start.getValue(), end.getValue()));
-      if (callback != null)
-         callback.execute();
    }
 
    public Rectangle getCursorBounds()
@@ -641,9 +636,22 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       return widget_.addKeyDownHandler(handler);
    }
 
+   public HandlerRegistration addKeyPressHandler(KeyPressHandler handler)
+   {
+      return widget_.addKeyPressHandler(handler);
+   }
+
    public void autoHeight()
    {
       widget_.autoHeight();
+   }
+
+   public void scrollToCursor(ScrollPanel scrollPanel, int padding)
+   {
+      DomUtils.ensureVisibleVert(
+            scrollPanel.getElement(),
+            widget_.getEditor().getRenderer().getCursorElement(),
+            padding);
    }
 
    private final HandlerManager handlers_ = new HandlerManager(this);

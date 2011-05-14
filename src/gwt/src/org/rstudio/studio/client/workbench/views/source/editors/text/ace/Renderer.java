@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.user.client.Element;
 
 public class Renderer extends JavaScriptObject
 {
@@ -74,5 +75,9 @@ public class Renderer extends JavaScriptObject
 
    public native final int getLineHeight() /*-{
       return this.lineHeight;
+   }-*/;
+
+   public native final Element getCursorElement() /*-{
+      return this.$cursorLayer.cursor;
    }-*/;
 }
