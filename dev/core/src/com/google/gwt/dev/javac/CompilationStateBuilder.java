@@ -394,17 +394,19 @@ public class CompilationStateBuilder {
           new ResourceCompilationUnitBuilder(typeName, resource);
 
       CompilationUnit cachedUnit = unitCache.find(resource.getPathPrefix() + resource.getPath());
+      
+      // Try to rescue cached units from previous sessions where a jar has been
+      // recompiled.
       if (cachedUnit != null && cachedUnit.getLastModified() != resource.getLastModified()) {
         unitCache.remove(cachedUnit);
-        if (!cachedUnit.getContentId().equals(builder.getContentId())) {
-          cachedUnit = null;
-        } else {
-          // Update the cache. The location might have changed since last build
-          // (e.g. jar to file)
+        if (cachedUnit instanceof CachedCompilationUnit && 
+            cachedUnit.getContentId().equals(builder.getContentId())) {
           CachedCompilationUnit updatedUnit =
-              new CachedCompilationUnit(cachedUnit.asCachedCompilationUnit(),
-                  resource.getLastModified(), resource.getLocation());
+              new CachedCompilationUnit((CachedCompilationUnit) cachedUnit, resource
+                  .getLastModified(), resource.getLocation());
           unitCache.add(updatedUnit);
+        } else {
+          cachedUnit = null;
         }
       }
       if (cachedUnit != null) {
