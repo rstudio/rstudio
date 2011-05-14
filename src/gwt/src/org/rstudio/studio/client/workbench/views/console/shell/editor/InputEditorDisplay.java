@@ -40,4 +40,7 @@ public interface InputEditorDisplay extends HasAllFocusHandlers,
 
    InputEditorSelection getStart();
    InputEditorSelection getEnd();
+
+   int getCurrentLineNum();
+   int getCurrentLineCount();
 }

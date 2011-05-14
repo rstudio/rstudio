@@ -369,6 +369,17 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       return getSession().getLine(row);
    }
 
+   public int getCurrentLineNum()
+   {
+      Position pos = getCursorPosition();
+      return getSession().documentToScreenRow(pos);
+   }
+
+   public int getCurrentLineCount()
+   {
+      return getSession().getScreenLength();
+   }
+
    public void replaceCode(String code)
    {
       int endRow, endCol;

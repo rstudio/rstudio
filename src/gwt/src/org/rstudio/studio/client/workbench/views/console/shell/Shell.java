@@ -370,21 +370,27 @@ public class Shell implements ConsoleInputHandler,
 
          int modifiers = KeyboardShortcut.getModifierValue(event.getNativeEvent());
 
-         if (event.isUpArrow())
+         if (event.isUpArrow() && modifiers == 0)
          {
-            event.preventDefault();
-            event.stopPropagation();
+            if (input_.getCurrentLineNum() == 0)
+            {
+               event.preventDefault();
+               event.stopPropagation();
 
-            navigateHistory(-1);
+               navigateHistory(-1);
+            }
          }
-         else if (event.isDownArrow())
+         else if (event.isDownArrow() && modifiers == 0)
          {
-            event.preventDefault();
-            event.stopPropagation();
-            
-            navigateHistory(1);
+            if (input_.getCurrentLineNum() == input_.getCurrentLineCount() - 1)
+            {
+               event.preventDefault();
+               event.stopPropagation();
+
+               navigateHistory(1);
+            }
          }
-         else if (keyCode == KeyCodes.KEY_ENTER)
+         else if (keyCode == KeyCodes.KEY_ENTER && modifiers == 0)
          {
             event.preventDefault();
             event.stopPropagation();
@@ -392,7 +398,7 @@ public class Shell implements ConsoleInputHandler,
             restoreFocus_ = true;
             processCommandEntry();
          }
-         else if (keyCode == KeyCodes.KEY_ESCAPE)
+         else if (keyCode == KeyCodes.KEY_ESCAPE && modifiers == 0)
          {
             event.preventDefault();
 
