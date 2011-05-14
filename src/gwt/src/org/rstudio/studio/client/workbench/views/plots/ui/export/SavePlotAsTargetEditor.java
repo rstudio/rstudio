@@ -23,9 +23,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 
-// TODO: other image formats
-
-
 public class SavePlotAsTargetEditor extends Composite implements CanFocus
 {
    public SavePlotAsTargetEditor(String defaultFormat,

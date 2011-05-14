@@ -15,6 +15,12 @@ package org.rstudio.studio.client.workbench.ui;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.core.client.AsyncShim;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
+import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
 
 public class OptionsLoader
@@ -26,15 +32,42 @@ public class OptionsLoader
 
 
    @Inject
-   OptionsLoader(Provider<PreferencesDialog> pPrefDialog)
+   OptionsLoader(GlobalDisplay globalDisplay,
+                 WorkbenchServerOperations server,
+                 Provider<PreferencesDialog> pPrefDialog)
    {
+      globalDisplay_ = globalDisplay;
+      server_ = server;
       pPrefDialog_ = pPrefDialog;
    }
 
    public void showOptions()
    {
-      pPrefDialog_.get().showModal();
+      final ProgressIndicator indicator = globalDisplay_.getProgressIndicator(
+                                                      "Error Reading Options");
+      indicator.onProgress("Reading options...");
+
+      server_.getRPrefs(
+         new SimpleRequestCallback<RPrefs>() {
+
+            @Override
+            public void onResponseReceived(RPrefs rPrefs)
+            {
+               indicator.onCompleted();
+               PreferencesDialog prefDialog = pPrefDialog_.get();
+               prefDialog.initializeRPrefs(rPrefs);
+               prefDialog.showModal();
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               indicator.onError(error.getUserMessage());
+            }           
+         });        
    }
 
+   private final GlobalDisplay globalDisplay_;
+   private final WorkbenchServerOperations server_;
    private final Provider<PreferencesDialog> pPrefDialog_;
 }

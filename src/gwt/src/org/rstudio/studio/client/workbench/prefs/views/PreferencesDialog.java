@@ -26,17 +26,18 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
-import org.rstudio.core.client.widget.ModalDialog;
-import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ModalDialogBase;
+import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
-import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
+import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 
-public class PreferencesDialog extends ModalDialog<Void>
+public class PreferencesDialog extends ModalDialogBase
 {
    @Inject
    public PreferencesDialog(WorkbenchServerOperations server,
@@ -46,22 +47,37 @@ public class PreferencesDialog extends ModalDialog<Void>
                             Provider<GeneralPreferencesPane> pR,
                             EditingPreferencesPane source,
                             AppearancePreferencesPane appearance,
-                            PaneLayoutPreferencesPane paneLayout,
-                            GlobalDisplay globalDisplay)
+                            PaneLayoutPreferencesPane paneLayout)
    {
-      super("Options", (OperationWithInput<Void>)null);
+      super();
 
+      setText("Options");
+      
+      ThemedButton okButton = new ThemedButton("OK", new ClickHandler() {
+         public void onClick(ClickEvent event) 
+         {
+            attemptSaveChanges(new Operation() {
+               @Override
+               public void execute()
+               {
+                  closeDialog();
+               }
+            });        
+         }
+      });
+      addOkButton(okButton);
+      addCancelButton();
+      
       addButton(new ThemedButton("Apply", new ClickHandler()
       {
          public void onClick(ClickEvent event)
          {
-            if (validate(Void.create()))
-               onSuccess();
+            attemptSaveChanges();
          }
       }));
 
       session_ = session;
-      globalDisplay_ = globalDisplay;
+      progressIndicator_ = addProgressIndicator(false);
       server_ = server;
       panel_ = new DockLayoutPanel(Unit.PX);
       panel_.setStyleName(res.styles().outer());
@@ -70,7 +86,10 @@ public class PreferencesDialog extends ModalDialog<Void>
 
       addStyleName(res.styles().preferencesDialog());
 
-      panes_ = new PreferencesPane[] {pR.get(), source, appearance, paneLayout};
+      panes_ = new PreferencesPane[] {pR.get(), 
+                                     source, 
+                                     appearance, 
+                                     paneLayout};
 
       for (final PreferencesPane pane : panes_)
       {
@@ -108,6 +127,12 @@ public class PreferencesDialog extends ModalDialog<Void>
 
       sectionChooser.select(0);
    }
+   
+   public void initializeRPrefs(RPrefs rPrefs)
+   {
+      for (PreferencesPane pane : panes_)
+         pane.initializeRPrefs(rPrefs);
+   }
 
    private void setPaneVisibility(PreferencesPane pane, boolean visible)
    {
@@ -117,41 +142,56 @@ public class PreferencesDialog extends ModalDialog<Void>
    }
 
    @Override
-   protected Void collectInput()
-   {
-      return Void.create();
-   }
-
-   @Override
-   protected boolean validate(Void input)
-   {
-      for (PreferencesPane pane : panes_)
-         if (!pane.validate())
-            return false;
-      return true;
-   }
-
-   @Override
    protected Widget createMainWidget()
    {
       return panel_;
    }
 
-   @Override
-   protected void onSuccess()
+   private void attemptSaveChanges()
+   {
+      attemptSaveChanges(null);
+   }
+   
+   private void attemptSaveChanges(final Operation onCompleted)
+   {
+      if (validate())
+      {
+         progressIndicator_.onProgress("Saving options...");
+         
+         // apply changes
+         RPrefs rPrefs = RPrefs.createEmpty();
+         for (PreferencesPane pane : panes_)
+            pane.onApply(rPrefs);
+
+         // save changes
+         server_.setPrefs(
+            rPrefs, 
+            session_.getSessionInfo().getUiPrefs(),
+            new SimpleRequestCallback<Void>() {
+
+               @Override
+               public void onResponseReceived(Void response)
+               {
+                  progressIndicator_.onCompleted();
+                  if (onCompleted != null)
+                     onCompleted.execute();
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  progressIndicator_.onError(error.getUserMessage());
+               }           
+            });  
+      }
+   }
+   
+   private boolean validate()
    {
       for (PreferencesPane pane : panes_)
-         pane.onApply();
-
-      server_.setUiPrefs(session_.getSessionInfo().getUiPrefs(), new ServerRequestCallback<Void>()
-      {
-         @Override
-         public void onError(ServerError error)
-         {
-            globalDisplay_.showErrorMessage("Error Saving Preferences",
-                                            error.getUserMessage());
-         }
-      });
+         if (!pane.validate())
+            return false;
+      return true;
    }
 
    public static void ensureStylesInjected()
@@ -166,5 +206,5 @@ public class PreferencesDialog extends ModalDialog<Void>
    private Integer currentIndex_;
    private final WorkbenchServerOperations server_;
    private final Session session_;
-   private final GlobalDisplay globalDisplay_;
+   private final ProgressIndicator progressIndicator_;
 }

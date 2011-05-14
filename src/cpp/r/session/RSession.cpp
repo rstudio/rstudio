@@ -252,20 +252,6 @@ void reportHistoryAccessError(const std::string& context,
    REprintf(("Error attempting to " + errmsg + "\n").c_str());
 }
 
-// save our session state when the quit function is called
-void saveHistoryAndClientState()
-{
-   // save history
-   FilePath historyPath = s_options.defaultWorkingDir.complete(kRHistory);
-   Error error = consoleHistory().saveToFile(historyPath);
-   if (error)
-      reportHistoryAccessError("write history to", historyPath, error);
-
-   // commit persistent client state
-   r::session::clientState().commit(ClientStateCommitPersistentOnly,
-                                    s_clientStatePath);
-}
-
 } // anonymous namespace
   
 
@@ -352,8 +338,8 @@ Error initialize()
    // new session
    else
    {  
-      // restore console history from default working directory
-      FilePath historyPath = s_options.defaultWorkingDir.complete(kRHistory);
+      // restore console history
+      FilePath historyPath = s_options.rHistoryDir().complete(kRHistory);
       error = consoleHistory().loadFromFile(historyPath, false);
       if (error)
          reportHistoryAccessError("read history from", historyPath, error);
@@ -899,7 +885,7 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
       // prompt user to resolve SA_SAVEASK into SA_SAVE or SA_NOSAVE
       if (saveact == SA_SAVEASK) 
       {
-         if (imageIsDirty())
+         if (imageIsDirty() || !s_options.alwaysSaveHistory())
             saveact = saveAsk();
          else
             saveact = SA_NOSAVE; // auto-resolve to no save when not dirty
@@ -913,7 +899,16 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
          if (runLast)
             R_dot_Last();
          
-         // save environment and history 
+         // save history if we either always save history or saveact == SA_SAVE
+         if (s_options.alwaysSaveHistory() || saveact == SA_SAVE)
+         {
+            FilePath historyPath = s_options.rHistoryDir().complete(kRHistory);
+            Error error = consoleHistory().saveToFile(historyPath);
+            if (error)
+               reportHistoryAccessError("write history to", historyPath, error);
+         }
+
+         // save environment and history
          if (saveact == SA_SAVE)
          {
             // attempt save if the image is dirty
@@ -942,8 +937,9 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
             r::exec::error("Unable to quit (session cleanup failure)\n");
          }
 
-         // save other persistent session state (history and client state)
-         saveHistoryAndClientState();
+         // commit persistent client state
+         r::session::clientState().commit(ClientStateCommitPersistentOnly,
+                                          s_clientStatePath);
 
          // clear display (closes the device). need to do this here
          // so that all of the graphics files are deleted

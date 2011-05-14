@@ -455,6 +455,11 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
          try
          {
             size = Double.parseDouble(textBox.getText().trim());
+            
+            if (size < kMimimumSize)
+               size = defaultValue;
+            else if (size > kMaximumSize)
+               size = defaultValue;
          }
          catch(NumberFormatException e)
          {
@@ -469,6 +474,9 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
       private final TextBox heightTextBox_;
       private final List<PaperSize> paperSizes_ = new ArrayList<PaperSize>(); 
       private final NumberFormat sizeFormat_ = NumberFormat.getFormat("##0.00");
+      
+      private final double kMimimumSize = 3.0;
+      private final double kMaximumSize = 100.0;
    }
    
   

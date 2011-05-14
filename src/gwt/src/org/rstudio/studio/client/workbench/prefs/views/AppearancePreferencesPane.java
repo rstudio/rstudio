@@ -18,6 +18,8 @@ import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
+
+import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
@@ -96,9 +98,9 @@ public class AppearancePreferencesPane extends PreferencesPane
    }
 
    @Override
-   public void onApply()
+   public void onApply(RPrefs rPrefs)
    {
-      super.onApply();
+      super.onApply(rPrefs);
       double fontSize = Double.parseDouble(fontSize_.getValue());
       uiPrefs_.fontSize().setValue(fontSize);
       uiPrefs_.theme().setValue(theme_.getValue());

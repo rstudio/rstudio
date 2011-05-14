@@ -63,6 +63,7 @@ bool prepareEnvironment(Options& options)
    r_util::EnvironmentVars rEnvVars;
    bool success = r_util::detectREnvironment(rWhichRPath,
                                              rLdScriptPath,
+                                             std::string(),
                                              &rEnvVars,
                                              &errMsg);
    if (!success)

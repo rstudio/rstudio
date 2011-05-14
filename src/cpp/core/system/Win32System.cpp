@@ -638,7 +638,7 @@ public:
 
    Error open(const FilePath& path)
    {
-      hMF_ = ::GetEnhMetaFile(path.absolutePath().c_str());
+      hMF_ = ::GetEnhMetaFileW(path.absolutePathW().c_str());
       if (hMF_ == NULL)
          return systemError(::GetLastError(), ERROR_LOCATION);
       else

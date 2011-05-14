@@ -23,6 +23,7 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
+import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 
 import java.util.ArrayList;
 
@@ -36,7 +37,7 @@ public abstract class PreferencesPane extends VerticalPanel
       return true;
    }
 
-   public void onApply()
+   public void onApply(RPrefs rPrefs)
    {
       for (Command cmd : onApplyCommands_)
          cmd.execute();
@@ -60,6 +61,10 @@ public abstract class PreferencesPane extends VerticalPanel
       });
    }
 
+   protected void initializeRPrefs(RPrefs rPrefs)
+   {
+   }
+   
    protected CheckBox checkboxPref(String label,
                                    final HasValue<Boolean> prefValue)
    {

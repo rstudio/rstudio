@@ -37,6 +37,7 @@ public interface PreferencesDialogResources extends ClientBundle
       String spaced();
       String extraSpaced();
       String encodingChooser();
+      String cranMirrorTextBox();
    }
 
    @Source("PreferencesDialog.css")
@@ -46,4 +47,5 @@ public interface PreferencesDialogResources extends ClientBundle
    ImageResource iconEdit();
    ImageResource iconPanes();
    ImageResource iconR();
+   ImageResource iconHistory();
 }

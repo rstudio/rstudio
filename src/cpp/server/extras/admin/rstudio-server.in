@@ -78,8 +78,12 @@ case "$1" in
         ps opid,cputime,args -C "rsession"
         ;;
 
+    version)
+        echo "${CPACK_PACKAGE_VERSION}"
+        ;;
+
     *)
-        echo $"Usage: rstudio-server {start|stop|restart|suspend-session|suspend-all|force-suspend-session|force-suspend-all|offline|online|active-sessions}"
+        echo $"Usage: rstudio-server {start|stop|restart|suspend-session|suspend-all|force-suspend-session|force-suspend-all|offline|online|active-sessions|version}"
         exit 2
 esac
 

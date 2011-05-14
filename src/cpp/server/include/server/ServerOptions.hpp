@@ -105,6 +105,11 @@ public:
    {
       return std::string(rldpathPath_.c_str());
    }
+
+   std::string rsessionLdLibraryPath() const
+   {
+      return std::string(rsessionLdLibraryPath_.c_str());
+   }
    
    std::string rsessionConfigFile() const
    { 
@@ -141,6 +146,7 @@ private:
    std::string rsessionPath_;
    std::string rldpathPath_;
    std::string rsessionConfigFile_;
+   std::string rsessionLdLibraryPath_;
    int rsessionMemoryLimitMb_;
    int rsessionStackLimitMb_;
    int rsessionUserProcessLimit_;

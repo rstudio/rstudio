@@ -1568,6 +1568,19 @@ FilePath rEnvironmentDir()
    }
 }
 
+FilePath rHistoryDir()
+{
+   if (session::options().programMode() == kSessionProgramModeServer ||
+       userSettings().useGlobalHistory())
+   {
+      return getDefaultWorkingDirectory();
+   }
+   else
+   {
+      return FilePath::safeCurrentPath(session::options().userHomePath());
+   }
+}
+
 FilePath getStartupEnvironmentFilePath()
 {
    FilePath envFile = session::options().initialEnvironmentFileOverride();
@@ -1852,6 +1865,9 @@ int main (int argc, char * const argv[])
       rOptions.defaultWorkingDir = getDefaultWorkingDirectory();
       rOptions.startupEnvironmentFilePath = getStartupEnvironmentFilePath();
       rOptions.rEnvironmentDir = boost::bind(rEnvironmentDir);
+      rOptions.rHistoryDir = boost::bind(rHistoryDir);
+      rOptions.alwaysSaveHistory = boost::bind(&UserSettings::alwaysSaveHistory,
+                                               &(userSettings()));
       rOptions.rSourcePath = options.coreRSourcePath();
       if (!desktopMode) // ignore r-libs-user in desktop mode
          rOptions.rLibsUser = options.rLibsUser();

@@ -90,6 +90,10 @@ public:
    // full filesystem absolute path 
    std::string absolutePath() const ;
 
+#if _WIN32
+   std::wstring absolutePathW() const;
+#endif
+
    // path relative to parent directory. returns empty string if this path
    // is not a child of the passed parent path
    std::string relativePath(const FilePath& parentPath) const ;

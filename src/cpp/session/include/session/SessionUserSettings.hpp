@@ -77,6 +77,12 @@ public:
    CRANMirror cranMirror() const;
    void setCRANMirror(const CRANMirror& cranMirror);
 
+   bool alwaysSaveHistory() const;
+   void setAlwaysSaveHistory(bool alwaysSave);
+
+   bool useGlobalHistory() const;
+   void setUseGlobalHistory(bool useGlobal);
+
 private:
    core::FilePath getWorkingDirectoryValue(const std::string& key) const;
    void setWorkingDirectoryValue(const std::string& key,

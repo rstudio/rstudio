@@ -456,6 +456,16 @@ std::string FilePath::absolutePath() const
       return BOOST_FS_PATH2STR(pImpl_->path) ;
 }
 
+#if _WIN32
+std::wstring FilePath::absolutePathW() const
+{
+   if (empty())
+      return std::wstring();
+   else
+      return pImpl_->path.wstring();
+}
+#endif
+
 Error FilePath::remove() const
 {
    try

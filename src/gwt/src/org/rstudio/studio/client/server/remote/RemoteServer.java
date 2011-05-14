@@ -190,6 +190,16 @@ public class RemoteServer implements Server
                   requestCallback);
    }
 
+   public void setPrefs(RPrefs rPrefs,
+                        JavaScriptObject uiPrefs,
+                        ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(rPrefs));
+      params.set(1, new JSONObject(uiPrefs));
+      sendRequest(RPC_SCOPE, SET_PREFS, params, requestCallback);
+}
+   
    public void setUiPrefs(JavaScriptObject uiPrefs,
                           ServerRequestCallback<Void> requestCallback)
    {
@@ -203,24 +213,6 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE,
                   GET_R_PREFS,
-                  requestCallback);
-   }
-
-   public void setRPrefs(int saveAction,
-                         boolean loadRData,
-                         String initialWorkingDirectory,
-                         CRANMirror cranMirror,
-                         ServerRequestCallback<Void> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONNumber(saveAction));
-      params.set(1, JSONBoolean.getInstance(loadRData));
-      params.set(2, new JSONString(initialWorkingDirectory));
-      params.set(3, new JSONObject(cranMirror));
-
-      sendRequest(RPC_SCOPE,
-                  SET_R_PREFS,
-                  params,
                   requestCallback);
    }
 
@@ -1415,9 +1407,9 @@ public class RemoteServer implements Server
    private static final String QUIT_SESSION = "quit_session";
    
    private static final String SET_WORKBENCH_METRICS = "set_workbench_metrics";
+   private static final String SET_PREFS = "set_prefs";
    private static final String SET_UI_PREFS = "set_ui_prefs";
    private static final String GET_R_PREFS = "get_r_prefs";
-   private static final String SET_R_PREFS = "set_r_prefs";
    private static final String SET_CLIENT_STATE = "set_client_state";
    private static final String USER_PROMPT_COMPLETED = "user_prompt_completed";
    

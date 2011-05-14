@@ -43,12 +43,14 @@ bool initialize(std::string* pErrMsg)
 
    // determine rLdPaths script location
    FilePath rLdScriptPath(server::options().rldpathPath());
+   std::string ldLibraryPath = server::options().rsessionLdLibraryPath();
 
    // attempt to detect R environment
    std::string errMsg;
    r_util::EnvironmentVars rEnvVars;
    return r_util::detectREnvironment(rWhichRPath,
                                      rLdScriptPath,
+                                     ldLibraryPath,
                                      &s_rEnvironmentVars,
                                      pErrMsg);
 }

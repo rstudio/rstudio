@@ -89,6 +89,86 @@ Error setWorkbenchMetrics(const json::JsonRpcRequest& request,
    return Success();
 }
 
+CRANMirror toCRANMirror(const json::Object& cranMirrorJson)
+{
+   CRANMirror cranMirror;
+   json::readObject(cranMirrorJson,
+                    "name", &cranMirror.name,
+                    "host", &cranMirror.host,
+                    "url", &cranMirror.url,
+                    "country", &cranMirror.country);
+   return cranMirror;
+}
+
+void setCRANReposOption(const std::string& url)
+{
+   if (!url.empty())
+   {
+      Error error = r::exec::RFunction(".rs.setCRANRepos", url).call();
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
+Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
+{
+   // read params
+   json::Object uiPrefs, generalPrefs, historyPrefs;
+   Error error = json::readObjectParam(request.params, 0,
+                                       "general_prefs", &generalPrefs,
+                                       "history_prefs", &historyPrefs);
+   if (error)
+      return error;
+   error = json::readParam(request.params, 1, &uiPrefs);
+   if (error)
+      return error;
+
+
+   // read and set general prefs
+   int saveAction;
+   bool loadRData;
+   std::string initialWorkingDir;
+   json::Object cranMirrorJson;
+   error = json::readObject(generalPrefs,
+                            "save_action", &saveAction,
+                            "load_rdata", &loadRData,
+                            "initial_working_dir", &initialWorkingDir,
+                            "cran_mirror", &cranMirrorJson);
+   if (error)
+      return error;
+   CRANMirror cranMirror = toCRANMirror(cranMirrorJson);
+   userSettings().beginUpdate();
+   userSettings().setSaveAction(saveAction);
+   userSettings().setLoadRData(loadRData);
+   userSettings().setInitialWorkingDirectory(FilePath(initialWorkingDir));
+   userSettings().setCRANMirror(cranMirror);
+   userSettings().endUpdate();
+
+   // NOTE: must be outside of userSettings update block because it has its
+   // own block and nested blocks are not supported
+   setCRANReposOption(cranMirror.url);
+
+
+   // read and set history prefs
+   bool alwaysSave, useGlobal;
+   error = json::readObject(historyPrefs,
+                            "always_save", &alwaysSave,
+                            "use_global", &useGlobal);
+   if (error)
+      return error;
+   userSettings().beginUpdate();
+   userSettings().setAlwaysSaveHistory(alwaysSave);
+   userSettings().setUseGlobalHistory(useGlobal);
+   userSettings().endUpdate();
+
+
+   // set ui prefs
+   userSettings().setUiPrefs(uiPrefs);
+
+   return Success();
+}
+
+
 Error setUiPrefs(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
@@ -103,17 +183,6 @@ Error setUiPrefs(const json::JsonRpcRequest& request,
 }
 
 
-CRANMirror toCRANMirror(const json::Object& cranMirrorJson)
-{
-   CRANMirror cranMirror;
-   json::readObject(cranMirrorJson,
-                    "name", &cranMirror.name,
-                    "host", &cranMirror.host,
-                    "url", &cranMirror.url,
-                    "country", &cranMirror.country);
-   return cranMirror;
-}
-
 json::Object toCRANMirrorJson(const CRANMirror& cranMirror)
 {
    json::Object cranMirrorJson;
@@ -124,54 +193,28 @@ json::Object toCRANMirrorJson(const CRANMirror& cranMirror)
    return cranMirrorJson;
 }
 
-void setCRANReposOption(const std::string& url)
-{
-   if (!url.empty())
-   {
-      Error error = r::exec::RFunction(".rs.setCRANRepos", url).call();
-      if (error)
-         LOG_ERROR(error);
-   }
-}
-
 Error getRPrefs(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
-   json::Object result;
-
-   result["save_action"] = userSettings().saveAction();
-   result["load_rdata"] = userSettings().loadRData();
-   result["initial_working_dir"] = module_context::createAliasedPath(
+   // get general prefs
+   json::Object generalPrefs;
+   generalPrefs["save_action"] = userSettings().saveAction();
+   generalPrefs["load_rdata"] = userSettings().loadRData();
+   generalPrefs["initial_working_dir"] = module_context::createAliasedPath(
          userSettings().initialWorkingDirectory());
-   result["cran_mirror"] = toCRANMirrorJson(userSettings().cranMirror());
+   generalPrefs["cran_mirror"] = toCRANMirrorJson(userSettings().cranMirror());
+
+   // get history prefs
+   json::Object historyPrefs;
+   historyPrefs["always_save"] = userSettings().alwaysSaveHistory();
+   historyPrefs["use_global"] = userSettings().useGlobalHistory();
+
+   // initialize and set result object
+   json::Object result;
+   result["general_prefs"] = generalPrefs;
+   result["history_prefs"] = historyPrefs;
 
    pResponse->setResult(result);
-
-   return Success();
-}
-
-Error setRPrefs(const json::JsonRpcRequest& request,
-                json::JsonRpcResponse* pResponse)
-{
-   int saveAction;
-   bool loadRData;
-   std::string initialWorkingDir;
-   json::Object cranMirrorJson;
-   json::readParams(request.params,
-                    &saveAction,
-                    &loadRData,
-                    &initialWorkingDir,
-                    &cranMirrorJson);
-   CRANMirror cranMirror = toCRANMirror(cranMirrorJson);
-
-   userSettings().beginUpdate();
-   userSettings().setSaveAction(saveAction);
-   userSettings().setLoadRData(loadRData);
-   userSettings().setInitialWorkingDirectory(FilePath(initialWorkingDir));
-   userSettings().setCRANMirror(cranMirror);
-   userSettings().endUpdate();
-
-   setCRANReposOption(cranMirror.url);
 
    return Success();
 }
@@ -257,9 +300,9 @@ Error initialize()
       (bind(registerUriHandler, "/file_show", handleFileShow))
       (bind(registerRpcMethod, "set_client_state", setClientState))
       (bind(registerRpcMethod, "set_workbench_metrics", setWorkbenchMetrics))
+      (bind(registerRpcMethod, "set_prefs", setPrefs))
       (bind(registerRpcMethod, "set_ui_prefs", setUiPrefs))
       (bind(registerRpcMethod, "get_r_prefs", getRPrefs))
-      (bind(registerRpcMethod, "set_r_prefs", setRPrefs))
       (bind(registerRpcMethod, "set_cran_mirror", setCRANMirror));
    return initBlock.execute();
 }

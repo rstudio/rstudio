@@ -32,6 +32,7 @@ bool detectREnvironment(const FilePath& ldPathsScript,
 
 bool detectREnvironment(const FilePath& whichRScript,
                         const FilePath& ldPathsScript,
+                        const std::string& ldLibraryPath,
                         EnvironmentVars* pVars,
                         std::string* pErrMsg);
 
