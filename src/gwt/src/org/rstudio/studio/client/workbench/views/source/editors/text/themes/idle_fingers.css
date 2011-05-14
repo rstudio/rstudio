@@ -153,3 +153,4 @@ color:#BC9458;
   color:#323232;
 background-color:#FFF980;   
 }
+.nocolor.ace_editor .ace_line span {color:#CC7833 !important;}

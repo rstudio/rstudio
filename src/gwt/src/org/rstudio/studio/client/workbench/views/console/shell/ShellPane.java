@@ -25,6 +25,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
@@ -33,6 +34,7 @@ import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
@@ -43,7 +45,7 @@ public class ShellPane extends Composite implements Shell.Display,
                                                     RequiresResize
 {
    @Inject
-   public ShellPane(AceEditor editor)
+   public ShellPane(AceEditor editor, UIPrefs uiPrefs)
    {
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
 
@@ -63,14 +65,24 @@ public class ShellPane extends Composite implements Shell.Display,
       input_.setFileType(FileTypeRegistry.R, true);
       input_.setPadding(0);
       input_.autoHeight();
-      Widget inputWidget_ = input_.toWidget();
+      final Widget inputWidget = input_.toWidget();
       input_.addClickHandler(secondaryInputHandler) ;
-      inputWidget_.addStyleName(styles_.input());
+      inputWidget.addStyleName(styles_.input());
       input_.addCursorChangedHandler(new CursorChangedHandler()
       {
          public void onCursorChanged(CursorChangedEvent event)
          {
             input_.scrollToCursor(scrollPanel_, 8);
+         }
+      });
+      uiPrefs.syntaxColorConsole().bind(new CommandWithArg<Boolean>()
+      {
+         public void execute(Boolean arg)
+         {
+            if (arg)
+               inputWidget.removeStyleName("nocolor");
+            else
+               inputWidget.addStyleName("nocolor");
          }
       });
 

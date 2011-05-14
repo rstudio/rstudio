@@ -45,6 +45,7 @@ public class EditingPreferencesPane extends PreferencesPane
       add(indent(marginCol_ = numericPref("Margin column", prefs.printMarginColumn())));
       add(checkboxPref("Automatically insert matching parens/quotes", prefs_.insertMatching()));
       add(checkboxPref("Soft-wrap R source files", prefs_.softWrapRFiles()));
+      add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
 
       encodingValue_ = prefs_.defaultEncoding().getValue();
       add(encoding_ = new TextBoxWithButton(

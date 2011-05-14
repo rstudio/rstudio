@@ -148,3 +148,4 @@
 .ace_xml_pe {
   
 }
+.nocolor.ace_editor .ace_line span {color:#FC6F09 !important;}

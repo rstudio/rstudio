@@ -139,3 +139,4 @@
 .ace_string.ace_regex {
   color: rgb(255, 0, 0)
 }
+.nocolor.ace_editor .ace_line span {color: blue !important;}

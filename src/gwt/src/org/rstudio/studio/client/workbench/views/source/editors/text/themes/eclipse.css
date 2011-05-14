@@ -90,3 +90,4 @@
 .ace_marker-layer .ace_active_line {
   background: rgb(232, 242, 254);
 }
+.nocolor.ace_editor .ace_line span {color: rgb(127, 0, 85) !important;}
