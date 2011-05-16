@@ -542,7 +542,7 @@ public class HistoryPane extends WorkbenchPane
       return new Toolbar(new Widget[] {
             commands_.historySendToConsole().createToolbarButton(),
             commands_.historySendToSource().createToolbarButton(),
-         // commands_.historyRemoveEntries().createToolbarButton(),
+           // commands_.historyRemoveEntries().createToolbarButton(),
             commands_.clearHistory().createToolbarButton()
       }, new Widget[] {
             searchWidget_

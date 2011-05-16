@@ -37,7 +37,7 @@ ConsoleHistory::ConsoleHistory()
    setCapacity(500);
 }
    
-void ConsoleHistory::setCapacity(int capacity)
+void ConsoleHistory::setCapacity(long capacity)
 {
    historyBuffer_.set_capacity(capacity);
 }
@@ -85,8 +85,8 @@ void ConsoleHistory::clear()
    historyBuffer_.clear();
 }
    
-void ConsoleHistory::subset(int beginIndex, // inclusive
-                            int endIndex,   // exclusive,
+void ConsoleHistory::subset(long beginIndex, // inclusive
+                            long endIndex,   // exclusive,
                             std::vector<std::string>* pEntries) const
 {
    // clear existing

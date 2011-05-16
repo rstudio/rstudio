@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.history;
 
+import com.google.gwt.core.client.JsArrayNumber;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
@@ -358,7 +359,46 @@ public class History extends BasePresenter implements SelectionCommitHandler<Voi
    
    @Handler
    void onHistoryRemoveEntries()
-   {
+   {   
+      // get selected indexes (bail if there is no selection)
+      final ArrayList<Long> selectedIndexes = view_.getSelectedCommandIndexes();
+      if (selectedIndexes.size() < 1)
+      {
+         globalDisplay_.showErrorMessage(
+                              "Error", 
+                              "No history entries currently selected.");
+         return;
+      }
+      
+      // bring view to front
+      view_.bringToFront();
+      
+      globalDisplay_.showYesNoMessage(
+            GlobalDisplay.MSG_QUESTION,
+            "Confirm Remove Entries",
+            "Are you sure you want to remove the selected entries from " +
+            "the history?",
+     
+            new ProgressOperation() {
+               public void execute(final ProgressIndicator indicator)
+               {
+                  indicator.onProgress("Removing items...");
+                  
+                  JsArrayNumber indexes = (JsArrayNumber) 
+                                             JsArrayNumber.createArray();
+                  
+                  for (int i = 0; i<selectedIndexes.size(); i++)
+                     indexes.push(selectedIndexes.get(i));
+                  
+                  server_.removeHistoryItems(
+                                    indexes,
+                                    new VoidServerRequestCallback(indicator));
+               }
+            },
+            
+            true
+         );
+      
       
    }
    
