@@ -125,6 +125,14 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="clearWorkspace"/>
       </menu>
+      
+      <separator/>
+      
+      <menu label="Hi_story">
+        <cmd refid="historySendToConsole"/>
+        <cmd refid="historySendToSource"/>
+      
+      </menu>
     
       <separator/>
 
@@ -410,10 +418,12 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Interrupt R"/>
 
    <cmd id="historySendToSource"
-        label="To Source"
+        menuLabel="Insert into Source"
+        buttonLabel="To Source"
         desc="Insert the selected command(s) into the current document"/>
    <cmd id="historySendToConsole"
-        label="To Console"
+        menuLabel="Send to Console"
+        buttonLabel="To Console"
         desc="Send the selected command(s) to the R console"/>
    <cmd id="historyDismissResults"
         label="Done" />
