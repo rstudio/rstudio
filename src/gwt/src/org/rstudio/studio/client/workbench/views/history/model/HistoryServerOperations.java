@@ -13,7 +13,6 @@
 package org.rstudio.studio.client.workbench.views.history.model;
 
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
-import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
@@ -40,7 +39,7 @@ public interface HistoryServerOperations
     *  removeHistoryItems -- indexes of items to remove 
     */
    void removeHistoryItems(JsArrayNumber itemIndexes, 
-                           ServerRequestCallback<Bool> requestCallback);
+                           ServerRequestCallback<Void> requestCallback);
    
    
    /*

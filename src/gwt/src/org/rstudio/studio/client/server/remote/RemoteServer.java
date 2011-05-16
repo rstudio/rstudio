@@ -1020,7 +1020,7 @@ public class RemoteServer implements Server
    
    
    public void removeHistoryItems(JsArrayNumber itemIndexes, 
-                                  ServerRequestCallback<Bool> requestCallback)
+                                  ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, 
                   REMOVE_HISTORY_ITEMS, 

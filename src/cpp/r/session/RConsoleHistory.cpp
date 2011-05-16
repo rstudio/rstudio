@@ -79,6 +79,17 @@ void ConsoleHistory::add(const std::string& command)
       }
    }
 }
+
+void ConsoleHistory::clear()
+{
+   historyBuffer_.clear();
+}
+
+void ConsoleHistory::remove(int index)
+{
+   if (index >= 0 && index < (int)historyBuffer_.size())
+      historyBuffer_.erase(historyBuffer_.begin() + index);
+}
    
 void ConsoleHistory::subset(int beginIndex, // inclusive
                             int endIndex,   // exclusive,

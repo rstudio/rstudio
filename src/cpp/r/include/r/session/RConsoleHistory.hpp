@@ -61,6 +61,10 @@ public:
       return historyBuffer_.size();
    }
 
+   void clear();
+
+   void remove(int index);
+
    void subset(int beginIndex, // inclusive
                int endIndex,   // exclusive,
                std::vector<std::string>* pEntries) const;

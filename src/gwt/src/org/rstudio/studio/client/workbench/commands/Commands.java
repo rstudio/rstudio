@@ -76,6 +76,8 @@ public abstract class Commands extends CommandBundle
    // History
    public abstract AppCommand historySendToSource();
    public abstract AppCommand historySendToConsole();
+   public abstract AppCommand historyRemoveEntries();
+   public abstract AppCommand clearHistory();
    public abstract AppCommand historyDismissResults();
    public abstract AppCommand historyShowContext();
    public abstract AppCommand historyDismissContext();

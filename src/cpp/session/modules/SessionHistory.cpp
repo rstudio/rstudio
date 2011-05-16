@@ -252,8 +252,8 @@ History& historyArchive()
    return instance;
 }
 
-Error setJsonResultFromHistory(int startIndex, 
-                               int endIndex,  
+Error setJsonResultFromHistory(int startIndex,
+                               int endIndex,
                                json::JsonRpcResponse* pResponse)
 {
    // validate indexes
@@ -362,12 +362,38 @@ Error getHistoryItems(const json::JsonRpcRequest& request,
 Error removeHistoryItems(const json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
+   // get indexes
+   json::Array indexesJson;
+   Error error = json::readParam(request.params, 0, &indexesJson);
+   if (error)
+      return error;
+
+   // convert to vector of ints and sort them (ascending)
+   std::vector<int> indexes;
+   for (std::size_t i=0; i<indexesJson.size(); i++)
+   {
+      const json::Value& value = indexesJson[i];
+      if (json::isType<int>(value))
+         indexes.push_back(value.get_int());
+   }
+   std::sort(indexes.begin(), indexes.end());
+
+   // remove the indexes in reverse order (so removal doesn't affect
+   // the validity of the other indexes)
+
+
    return Success();
 }
 
 Error clearHistory(const json::JsonRpcRequest& request,
                    json::JsonRpcResponse* pResponse)
 {
+   r::session::consoleHistory().clear();
+
+   json::Array historyJson;
+   ClientEvent event(client_events::kConsoleResetHistory, historyJson);
+   module_context::enqueClientEvent(event);
+
    return Success();
 }
 
@@ -387,7 +413,7 @@ Error getHistoryArchiveItems(const json::JsonRpcRequest& request,
    endIndex = std::min(endIndex, historySize);
    
    // return json for the appropriate range
-   return setJsonResultFromHistory(startIndex, endIndex, pResponse);   
+   return setJsonResultFromHistory(startIndex, endIndex, pResponse);
 }
    
 Error searchHistoryArchive(const json::JsonRpcRequest& request,
