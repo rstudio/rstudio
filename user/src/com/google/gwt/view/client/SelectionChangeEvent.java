@@ -17,6 +17,8 @@ package com.google.gwt.view.client;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.HasHandlers;
 
 /**
  * Represents a selection change event.
@@ -38,6 +40,20 @@ public class SelectionChangeEvent extends
   }
 
   /**
+   * Interface specifying that a class can add
+   * {@code SelectionChangeEvent.Handler}s.
+   */
+  public interface HasSelectionChangedHandlers extends HasHandlers {
+    /**
+     * Adds a {@link SelectionChangeEvent} handler.
+     * 
+     * @param handler the handler
+     * @return {@link HandlerRegistration} used to remove this handler
+     */
+    HandlerRegistration addSelectionChangeHandler(Handler handler);
+  }
+
+  /**
    * Handler type.
    */
   private static Type<SelectionChangeEvent.Handler> TYPE;
@@ -48,7 +64,7 @@ public class SelectionChangeEvent extends
    *
    * @param source the source of the handlers
    */
-  public static void fire(SelectionModel<?> source) {
+  public static void fire(HasSelectionChangedHandlers source) {
     if (TYPE != null) {
       SelectionChangeEvent event = new SelectionChangeEvent();
       source.fireEvent(event);

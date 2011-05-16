@@ -20,14 +20,14 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.view.client.SelectionChangeEvent.HasSelectionChangedHandlers;
 
 /**
  * A model for selection within a list.
  * 
  * @param <T> the data type of records in the list
  */
-public interface SelectionModel<T> extends HasHandlers, ProvidesKey<T> {
+public interface SelectionModel<T> extends HasSelectionChangedHandlers, ProvidesKey<T> {
 
   /**
    * A default implementation of {@link SelectionModel} that provides listener
