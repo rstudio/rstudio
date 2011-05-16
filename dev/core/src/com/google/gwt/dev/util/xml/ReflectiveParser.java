@@ -44,6 +44,26 @@ import javax.xml.parsers.SAXParserFactory;
  * elements) is ignored, so think attributes.
  */
 public final class ReflectiveParser {
+  
+  private static SAXParserFactory saxParserFactory;
+
+  private static synchronized SAXParser createNewSaxParser() throws ParserConfigurationException,
+      SAXException {
+    if (saxParserFactory == null) {
+      Thread currentThread = Thread.currentThread();
+      ClassLoader oldClassLoader = currentThread.getContextClassLoader();
+      try {
+        // use system ClassLoader to avoid using expensive GWT ClassLoader
+        currentThread.setContextClassLoader(ClassLoader.getSystemClassLoader());
+        saxParserFactory = SAXParserFactory.newInstance();
+        saxParserFactory.setFeature(
+            "http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+      } finally {
+        currentThread.setContextClassLoader(oldClassLoader);
+      }
+    }
+    return saxParserFactory.newSAXParser();
+  }
 
   private static final class Impl extends DefaultHandler {
 
@@ -320,11 +340,7 @@ public final class ReflectiveParser {
       Throwable caught = null;
       try {
         this.reader = reader;
-        SAXParserFactory factory = SAXParserFactory.newInstance();
-        factory.setFeature(
-            "http://apache.org/xml/features/nonvalidating/load-external-dtd",
-            false);
-        SAXParser parser = factory.newSAXParser();
+        SAXParser parser = createNewSaxParser();
         InputSource inputSource = new InputSource(this.reader);
         XMLReader xmlReader = parser.getXMLReader();
         xmlReader.setContentHandler(this);
