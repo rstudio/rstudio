@@ -175,6 +175,6 @@ public class AceEditorNative extends JavaScriptObject {
    }-*/;
 
    public static native void setInsertMatching(boolean insertMatching) /*-{
-      $wnd.require("mode/r").setInsertMatching(insertMatching);
+      $wnd.require("mode/auto_brace_insert").setInsertMatching(insertMatching);
    }-*/;
 }

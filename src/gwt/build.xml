@@ -43,6 +43,7 @@
             <file name="loader.js"/>
          </sources>
          <sources dir="acesupport/acemode">
+            <file name="auto_brace_insert.js"/>
             <file name="r_highlight_rules.js"/>
             <file name="r_code_model.js"/>
             <file name="r.js"/>
