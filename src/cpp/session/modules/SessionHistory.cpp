@@ -48,11 +48,11 @@ namespace {
 struct HistoryEntry
 {
    HistoryEntry() : index(0), timestamp(0) {}
-   HistoryEntry(long index, double timestamp, const std::string& command)
+   HistoryEntry(int index, double timestamp, const std::string& command)
       : index(index), timestamp(timestamp), command(command)
    {
    }
-   long index;
+   int index;
    double timestamp;
    std::string command;
 };
@@ -67,7 +67,7 @@ void historyEntriesAsJson(const std::vector<HistoryEntry>& entries,
    json::Array indexArray, timestampArray, commandArray;
    for (std::size_t i=0; i<entries.size(); i++)
    {
-      indexArray.push_back((double)entries[i].index);
+      indexArray.push_back(entries[i].index);
       timestampArray.push_back(entries[i].timestamp);
       commandArray.push_back(entries[i].command);
    }
@@ -111,7 +111,7 @@ public:
       }
    }
 private:
-   long nextIndex_;
+   int nextIndex_;
 };
    
    
@@ -252,12 +252,12 @@ History& historyArchive()
    return instance;
 }
 
-Error setJsonResultFromHistory(long startIndex,
-                               long endIndex,
+Error setJsonResultFromHistory(int startIndex,
+                               int endIndex,
                                json::JsonRpcResponse* pResponse)
 {
    // validate indexes
-   long historySize = historyArchive().size();
+   int historySize = historyArchive().size();
    if ( (startIndex < 0)               ||
         (startIndex > historySize)     ||
         (endIndex < 0)                 ||
@@ -295,8 +295,8 @@ bool matches(const HistoryEntry& entry,
 }
 
 
-void historyRangeAsJson(long startIndex,
-                        long endIndex,
+void historyRangeAsJson(int startIndex,
+                        int endIndex,
                         json::Object* pHistoryJson)
 {
    // get the subset of entries
@@ -318,11 +318,10 @@ Error getRecentHistory(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
    // get params
-   double maxItemsDbl;
-   Error error = json::readParam(request.params, 0, &maxItemsDbl);
+   int maxItems;
+   Error error = json::readParam(request.params, 0, &maxItems);
    if (error)
       return error;
-   long maxItems = (long)maxItemsDbl;
 
    // alias console history
    using namespace r::session;
@@ -333,8 +332,8 @@ Error getRecentHistory(const json::JsonRpcRequest& request,
       return Error(json::errc::ParamInvalid, ERROR_LOCATION);
 
    // compute start and end indexes
-   long startIndex = std::max(0L, consoleHistory.size() - maxItems);
-   long endIndex = consoleHistory.size();
+   int startIndex = std::max(0, consoleHistory.size() - maxItems);
+   int endIndex = consoleHistory.size();
 
    // get json and set it
    json::Object historyJson;
@@ -347,15 +346,15 @@ Error getHistoryItems(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
    // get start and end index
-   double startIndex; // inclusive
-   double endIndex;   // exclusive
+   int startIndex; // inclusive
+   int endIndex;   // exclusive
    Error error = json::readParams(request.params, &startIndex, &endIndex);
    if (error)
       return error;
 
    // get the range and return it
    json::Object historyJson;
-   historyRangeAsJson((long)startIndex, (long)endIndex, &historyJson);
+   historyRangeAsJson(startIndex, endIndex, &historyJson);
    pResponse->setResult(historyJson);
    return Success();
 }
@@ -382,19 +381,19 @@ Error getHistoryArchiveItems(const json::JsonRpcRequest& request,
                              json::JsonRpcResponse* pResponse)
 {
    // get start and end index
-   double startIndex; // inclusive
-   double endIndex;   // exclusive
+   int startIndex; // inclusive
+   int endIndex;   // exclusive
    Error error = json::readParams(request.params, &startIndex, &endIndex);
    if (error)
       return error;
    
    // truncate indexes if necessary
-   long historySize = historyArchive().size();
-   long startIndexLong = std::min((long)startIndex, historySize);
-   long endIndexLong = std::min((long)endIndex, historySize);
+   int historySize = historyArchive().size();
+   startIndex = std::min(startIndex, historySize);
+   endIndex = std::min(endIndex, historySize);
    
    // return json for the appropriate range
-   return setJsonResultFromHistory(startIndexLong, endIndexLong, pResponse);
+   return setJsonResultFromHistory(startIndex, endIndex, pResponse);
 }
    
 Error searchHistoryArchive(const json::JsonRpcRequest& request,
@@ -402,11 +401,10 @@ Error searchHistoryArchive(const json::JsonRpcRequest& request,
 {
    // get the query
    std::string query;
-   double maxEntriesDbl;
-   Error error = json::readParams(request.params, &query, &maxEntriesDbl);
+   int maxEntries;
+   Error error = json::readParams(request.params, &query, &maxEntries);
    if (error)
       return error;
-   long maxEntries = maxEntriesDbl;
    
    // convert the query into a list of search terms
    std::vector<std::string> searchTerms;
@@ -446,11 +444,10 @@ Error searchHistoryArchiveByPrefix(const json::JsonRpcRequest& request,
 {
    // get the query
    std::string prefix;
-   double maxEntriesDbl;
-   Error error = json::readParams(request.params, &prefix, &maxEntriesDbl);
+   int maxEntries;
+   Error error = json::readParams(request.params, &prefix, &maxEntries);
    if (error)
       return error;
-   long maxEntries = (long)maxEntriesDbl;
    
    // trim the prefix
    boost::algorithm::trim(prefix);
