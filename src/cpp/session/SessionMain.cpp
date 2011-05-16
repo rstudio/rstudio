@@ -1080,6 +1080,10 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
    if (s_printCharsetWarning)
       r::exec::warning("Character set is not UTF-8; please change your locale");
 
+   // propagate console history options
+   r::session::consoleHistory().setRemoveDuplicates(
+                                 userSettings().removeHistoryDuplicates());
+
    // set flag indicating we had an abnormal end (if this doesn't get
    // unset by the time we launch again then we didn't terminate normally
    // i.e. either the process dying unexpectedly or a call to R_Suicide)

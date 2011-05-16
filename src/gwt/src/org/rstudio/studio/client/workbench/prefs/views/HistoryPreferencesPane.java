@@ -27,12 +27,16 @@ public class HistoryPreferencesPane extends PreferencesPane
       res_ = res;
 
       add(alwaysSaveHistory_ = new CheckBox(
-            "Always save .Rhistory (even when not saving .RData)"));
+            "Always save history (even when not saving .RData)"));
       alwaysSaveHistory_.setEnabled(false);
       
       add(useGlobalHistory_ = new CheckBox(
-            "Use global .Rhistory (rather than per-working directory)"));
+            "Use single global history (rather than per-working directory)"));
       useGlobalHistory_.setEnabled(false);
+      
+      add(removeHistoryDuplicates_ = new CheckBox(
+                                 "Remove duplicate entries in history"));
+      removeHistoryDuplicates_.setEnabled(false);
    }
 
    @Override
@@ -45,6 +49,9 @@ public class HistoryPreferencesPane extends PreferencesPane
       
       useGlobalHistory_.setEnabled(true);
       useGlobalHistory_.setValue(prefs.getUseGlobal()); 
+      
+      removeHistoryDuplicates_.setEnabled(true);
+      removeHistoryDuplicates_.setValue(prefs.getRemoveDuplicates());
    }
 
    @Override
@@ -73,11 +80,13 @@ public class HistoryPreferencesPane extends PreferencesPane
       // set history prefs
       HistoryPrefs historyPrefs = HistoryPrefs.create(
                                        alwaysSaveHistory_.getValue(),
-                                       useGlobalHistory_.getValue());
+                                       useGlobalHistory_.getValue(),
+                                       removeHistoryDuplicates_.getValue());
       rPrefs.setHistoryPrefs(historyPrefs);
    }
 
    private final PreferencesDialogResources res_;
    private final CheckBox alwaysSaveHistory_;
    private final CheckBox useGlobalHistory_;
+   private final CheckBox removeHistoryDuplicates_;
 }

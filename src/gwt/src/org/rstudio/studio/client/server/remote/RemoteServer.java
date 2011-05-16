@@ -16,6 +16,7 @@ package org.rstudio.studio.client.server.remote;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayNumber;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.json.client.*;
@@ -997,8 +998,44 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, ICONVLIST, requestCallback);      
    }
-
-   public void getHistory(
+   
+   
+   public void getRecentHistory(
+         long maxItems,
+         ServerRequestCallback<RpcObjectList<HistoryEntry>> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_RECENT_HISTORY, maxItems, requestCallback);
+   }
+   
+   public void getHistoryItems(
+         long startIndex, // inclusive
+         long endIndex, // exclusive
+         ServerRequestCallback<RpcObjectList<HistoryEntry>> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONNumber(startIndex));
+      params.set(1, new JSONNumber(endIndex));
+      sendRequest(RPC_SCOPE, GET_HISTORY_ITEMS, params, requestCallback);
+   }
+   
+   
+   public void removeHistoryItems(JsArrayNumber itemIndexes, 
+                                  ServerRequestCallback<Bool> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, 
+                  REMOVE_HISTORY_ITEMS, 
+                  itemIndexes, 
+                  requestCallback);
+   }
+   
+  
+   public void clearHistory(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, CLEAR_HISTORY, requestCallback);
+   }
+   
+   
+   public void getHistoryArchiveItems(
          long startIndex, // inclusive
          long endIndex,   // exclusive
          ServerRequestCallback<RpcObjectList<HistoryEntry>> requestCallback)
@@ -1006,18 +1043,11 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONNumber(startIndex));
       params.set(1, new JSONNumber(endIndex));
-      sendRequest(RPC_SCOPE, GET_HISTORY, params, requestCallback);
+      sendRequest(RPC_SCOPE, GET_HISTORY_ARCHIVE_ITEMS, params, requestCallback);
    }
    
-   public void getRecentHistory(
-         long maxEntries,
-         ServerRequestCallback<RpcObjectList<HistoryEntry>> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, GET_RECENT_HISTORY, maxEntries, requestCallback);
-   }
- 
-   
-   public void searchHistory(
+  
+   public void searchHistoryArchive(
          String query, 
          long maxEntries,
          ServerRequestCallback<RpcObjectList<HistoryEntry>> requestCallback)
@@ -1025,10 +1055,10 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(query));
       params.set(1, new JSONNumber(maxEntries));
-      sendRequest(RPC_SCOPE, SEARCH_HISTORY, params, requestCallback);
+      sendRequest(RPC_SCOPE, SEARCH_HISTORY_ARCHIVE, params, requestCallback);
    }
    
-   public void searchHistoryByPrefix(
+   public void searchHistoryArchiveByPrefix(
          String prefix,
          long maxEntries,
          ServerRequestCallback<RpcObjectList<HistoryEntry>> requestCallback)
@@ -1036,7 +1066,7 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(prefix));
       params.set(1, new JSONNumber(maxEntries));
-      sendRequest(RPC_SCOPE, SEARCH_HISTORY_BY_PREFIX, params, requestCallback);
+      sendRequest(RPC_SCOPE, SEARCH_HISTORY_ARCHIVE_BY_PREFIX, params, requestCallback);
    }
    
    // package-visible methods for peer classes RemoteServerAuth and
@@ -1491,10 +1521,13 @@ public class RemoteServer implements Server
    private static final String PUBLISH_PDF = "publish_pdf";
    private static final String IS_TEX_INSTALLED = "is_tex_installed";
 
-   private static final String GET_HISTORY = "get_history";
    private static final String GET_RECENT_HISTORY = "get_recent_history";
-   private static final String SEARCH_HISTORY = "search_history";
-   private static final String SEARCH_HISTORY_BY_PREFIX = "search_history_by_prefix";
+   private static final String GET_HISTORY_ITEMS = "get_history_items";
+   private static final String REMOVE_HISTORY_ITEMS = "remove_history_items";
+   private static final String CLEAR_HISTORY = "clear_history";
+   private static final String GET_HISTORY_ARCHIVE_ITEMS = "get_history_archive_items";
+   private static final String SEARCH_HISTORY_ARCHIVE = "search_history_archive";
+   private static final String SEARCH_HISTORY_ARCHIVE_BY_PREFIX = "search_history_archive_by_prefix";
 
    private static final String LOG = "log";
 

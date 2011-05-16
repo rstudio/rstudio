@@ -13,46 +13,70 @@
 package org.rstudio.studio.client.workbench.views.history.model;
 
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
+import org.rstudio.studio.client.server.Bool;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+
+import com.google.gwt.core.client.JsArrayNumber;
 
 public interface HistoryServerOperations
 {  
    /*
-    *  getHistory -- return a range of history items (note that startIndex
-    *  is inclusive and endIndex is exclusive)
+    *  getRecentHistory -- return all of the available history items (up to max)
     */
-   void getHistory(
+   void getRecentHistory(
+         long maxItems,
+         ServerRequestCallback<RpcObjectList<HistoryEntry>> requestCallback);
+   
+   /*
+    *  getHistoryItems -- get a subset of history items
+    */
+   void getHistoryItems(
+         long startIndex, // inclusive
+         long endIndex,    // exclusive
+         ServerRequestCallback<RpcObjectList<HistoryEntry>> requestCallback);
+   
+   /*
+    *  removeHistoryItems -- indexes of items to remove 
+    */
+   void removeHistoryItems(JsArrayNumber itemIndexes, 
+                           ServerRequestCallback<Bool> requestCallback);
+   
+   
+   /*
+    *  clearHistory -- clear the entire history 
+    */
+   void clearHistory(ServerRequestCallback<Void> requestCallback);
+   
+   
+   /*
+    *  getHistoryArchiveItems -- return a range of history archive items 
+    *  (note that startIndex is inclusive and endIndex is exclusive)
+    */
+   void getHistoryArchiveItems(
          long startIndex, // inclusive
          long endIndex,   // exclusive
          ServerRequestCallback<RpcObjectList<HistoryEntry>> requestCallback);
    
+  
    /*
-    *  getRecentHistory - get up to maxEntries history items read from the 
-    *  bottom of the history database (items are returned in index ascending
-    *  order i.e. oldest ones first)
-    */
-   void getRecentHistory(
-         long maxEntries,
-         ServerRequestCallback<RpcObjectList<HistoryEntry>> requestCallback);
-   
-   /*
-    *  searchHistory - search the history for the query (return up to
-    *  maxEntries). the search is conducted beginning with the most recent
-    *  history items and returned in index decsending order i.e. newest
+    *  searchHistoryDatabase - search the history archive for the query 
+    *  (return up to maxEntries). the search is conducted beginning with the
+    *  most recent history items and returned in index decsending order i.e. newest
     *  ones first)
     */
-   void searchHistory(
+   void searchHistoryArchive(
          String query,  
          long maxEntries,
          ServerRequestCallback<RpcObjectList<HistoryEntry>> requestCallback);
    
    /*
-    *  searchHistoryByPrefix - search the history for items with the 
+    *  searchHistoryArchiveByPrefix - search the history for items with the 
     *  specified prefix (return up to maxEntries. the search is conducted
     *  beginning with the most recent history items and returned in index
     *  descending order i.e. newest ones first)
     */
-   void searchHistoryByPrefix(
+   void searchHistoryArchiveByPrefix(
          String prefix,
          long maxEntries,
          ServerRequestCallback<RpcObjectList<HistoryEntry>> requestCallback);

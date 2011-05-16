@@ -32,8 +32,9 @@ ConsoleHistory& consoleHistory()
 }
    
 ConsoleHistory::ConsoleHistory()
+   : removeDuplicates_(true)
 {
-   setCapacity(250);
+   setCapacity(500);
 }
    
 void ConsoleHistory::setCapacity(int capacity)
@@ -41,12 +42,16 @@ void ConsoleHistory::setCapacity(int capacity)
    historyBuffer_.set_capacity(capacity);
 }
 
+void ConsoleHistory::setRemoveDuplicates(bool removeDuplicates)
+{
+   removeDuplicates_ = removeDuplicates;
+}
+
 void ConsoleHistory::add(const std::string& command)
 {
    if (!command.empty())
    {
       // split input into list of commands
-      std::vector<std::string> commands;
       boost::char_separator<char> lineSep("\n");
       boost::tokenizer<boost::char_separator<char> > lines(command, lineSep);
       for (boost::tokenizer<boost::char_separator<char> >::iterator 
@@ -60,15 +65,42 @@ void ConsoleHistory::add(const std::string& command)
          if (line.empty())
             continue;
          
-         // add to buffer
-         historyBuffer_.push_back(line);
+         // add this line if its not a duplciate
+         if (!removeDuplicates_ ||
+             historyBuffer_.empty() ||
+             (line != historyBuffer_.back()))
+         {
+            // add to buffer
+            historyBuffer_.push_back(line);
          
-         // notify listeners
-         onAdd_(line);
+            // notify listeners
+            onAdd_(line);
+         }
       }
    }
 }
    
+void ConsoleHistory::subset(int beginIndex, // inclusive
+                            int endIndex,   // exclusive,
+                            std::vector<std::string>* pEntries) const
+{
+   // clear existing
+   pEntries->clear();
+
+   // bail if begin index exceeds our number of entries
+   if (beginIndex >= size())
+      return;
+
+   // cap end index at our size
+   endIndex = std::min(endIndex, size());
+
+   // copy
+   std::copy(historyBuffer_.begin() + beginIndex,
+             historyBuffer_.begin() + endIndex,
+             std::back_inserter(*pEntries));
+}
+
+
 
 void ConsoleHistory::asJson(json::Array* pHistoryArray) const
 {

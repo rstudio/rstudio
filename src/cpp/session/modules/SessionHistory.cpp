@@ -118,23 +118,13 @@ private:
 class History : boost::noncopyable
 {
 private:
-   History() : entryCacheValid_(false), nextIndex_(-1) {}
-   friend History& history();
+   History() : entryCacheValid_(false) {}
+   friend History& historyArchive();
    
 public:
    
-   void add(const std::string& command)
+   Error add(const std::string& command)
    {
-      std::vector<std::string> commands ;
-      commands.push_back(command);
-      add(commands);
-   }
-   
-   void add(const std::vector<std::string>& commands)
-   {
-      // determine the next index 
-      int nextEntryIndex = nextIndex();
-      
       // invalidiate the entry cache -- obviously we could maintain the entry 
       // cache in memory however the OS will do this as well so better to free 
       // it on the assumption that an add operation means the user has resumed
@@ -143,47 +133,12 @@ public:
       entries_.clear();
       entryCacheValid_ = false;
             
-      // note current time for stamping entries
+      // write the entry to the file
+      std::ostringstream ostrEntry ;
       double currentTime = core::date_time::millisecondsSinceEpoch();
-      
-      // buffer containing history entries to write to file; vector of 
-      // history entries to be used in firing event to client
-      std::ostringstream ostrEntries ;
-      std::vector<HistoryEntry> entries;
-      
-        // iterate over commands
-      for (std::vector<std::string>::const_iterator it = commands.begin();
-           it != commands.end();
-           ++it)
-      {
-         // add entry to buffer
-         writeEntry(currentTime, *it, &ostrEntries);
-         ostrEntries << std::endl;
-         
-         // add entry to vector
-         entries.push_back(HistoryEntry(nextEntryIndex++, currentTime, *it));
-      }
-      
-      // write history entries to file -- if we fail then don't proceed
-      // to firing events (because the entries will not be retreivable
-      // on subsequent get_history, search_history, etc. calls)
-      Error error = appendToFile(historyDatabaseFilePath(), ostrEntries.str());
-      if (error)
-      {
-         LOG_ERROR(error);
-         return;
-      }
-         
-      // update the nextIndex. we keep this in memory so that on subsequent
-      // calls to add we don't need to re-read the history file to determine
-      // the next index
-      nextIndex_ = nextEntryIndex;
-      
-      // fire event
-      json::Object entriesJson;
-      historyEntriesAsJson(entries, &entriesJson);
-      ClientEvent event(client_events::kHistoryEntriesAdded, entriesJson);
-      module_context::enqueClientEvent(event);
+      writeEntry(currentTime, command, &ostrEntry);
+      ostrEntry << std::endl;
+      return appendToFile(historyDatabaseFilePath(), ostrEntry.str());
    }
    
    std::vector<HistoryEntry>::const_iterator begin() const
@@ -248,29 +203,10 @@ private:
          {
             entryCacheValid_ = true; // doesn't exist so empty cache is valid
          }
-         
-         // always update nextIndex to be consistent with our in-memory
-         // list of entries. if for some reason we fail to read the history
-         // file then to the end user it will appear as if it is empty and
-         // our nextIndex_ must reflect this
-         nextIndex_ = entries_.size();
       }
       
       return entries_;
    }
-   
-   int nextIndex() const
-   {
-      // initially we have no idea how many items are in the file so
-      // we need to force a read of file to determine the nextIndex. 
-      // subsequently we will just keep the counter in memory (so we can
-      // continue to add entries w/ the correct index without having to
-      // keep the entire list of history entries in memory)
-      if (nextIndex_ == -1)
-         nextIndex_ = size();
-      return nextIndex_;
-   }
-   
    
    static void writeEntry(double timestamp, 
                           const std::string& command, 
@@ -308,10 +244,9 @@ private:
 private:
    mutable bool entryCacheValid_;
    mutable std::vector<HistoryEntry> entries_;
-   mutable int nextIndex_;
 };
    
-History& history()
+History& historyArchive()
 {
    static History instance;
    return instance;
@@ -322,7 +257,7 @@ Error setJsonResultFromHistory(int startIndex,
                                json::JsonRpcResponse* pResponse)
 {
    // validate indexes
-   int historySize = history().size();
+   int historySize = historyArchive().size();
    if ( (startIndex < 0)               ||
         (startIndex > historySize)     ||
         (endIndex < 0)                 ||
@@ -333,7 +268,7 @@ Error setJsonResultFromHistory(int startIndex,
    
    // return the entries
    std::vector<HistoryEntry> entries;
-   const History& hist = history();
+   const History& hist = historyArchive();
    std::copy(hist.begin() + startIndex,
              hist.begin() + endIndex,
              std::back_inserter(entries));
@@ -358,9 +293,86 @@ bool matches(const HistoryEntry& entry,
    // had all of the search terms, return true
    return true;
 }
-   
-Error getHistory(const json::JsonRpcRequest& request, 
-                 json::JsonRpcResponse* pResponse)
+
+
+void historyRangeAsJson(int startIndex,
+                        int endIndex,
+                        json::Object* pHistoryJson)
+{
+   // get the subset of entries
+   std::vector<HistoryEntry> historyEntries;
+   std::vector<std::string> entries;
+   r::session::consoleHistory().subset(startIndex, endIndex, &entries);
+   for (std::vector<std::string>::const_iterator it = entries.begin();
+        it != entries.end();
+        ++it)
+   {
+       historyEntries.push_back(HistoryEntry(startIndex++, 0, *it));
+   }
+
+   // convert to json
+   historyEntriesAsJson(historyEntries, pHistoryJson);
+}
+
+Error getRecentHistory(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   // get params
+   int maxItems;
+   Error error = json::readParam(request.params, 0, &maxItems);
+   if (error)
+      return error;
+
+   // alias console history
+   using namespace r::session;
+   ConsoleHistory& consoleHistory = r::session::consoleHistory();
+
+   // validate
+   if (maxItems <= 0)
+      return Error(json::errc::ParamInvalid, ERROR_LOCATION);
+
+   // compute start and end indexes
+   int startIndex = std::max(0, consoleHistory.size() - maxItems);
+   int endIndex = consoleHistory.size();
+
+   // get json and set it
+   json::Object historyJson;
+   historyRangeAsJson(startIndex, endIndex, &historyJson);
+   pResponse->setResult(historyJson);
+   return Success();
+}
+
+Error getHistoryItems(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse* pResponse)
+{
+   // get start and end index
+   int startIndex; // inclusive
+   int endIndex;   // exclusive
+   Error error = json::readParams(request.params, &startIndex, &endIndex);
+   if (error)
+      return error;
+
+   // get the range and return it
+   json::Object historyJson;
+   historyRangeAsJson(startIndex, endIndex, &historyJson);
+   pResponse->setResult(historyJson);
+   return Success();
+}
+
+Error removeHistoryItems(const json::JsonRpcRequest& request,
+                         json::JsonRpcResponse* pResponse)
+{
+   return Success();
+}
+
+Error clearHistory(const json::JsonRpcRequest& request,
+                   json::JsonRpcResponse* pResponse)
+{
+   return Success();
+}
+
+Error getHistoryArchiveItems(const json::JsonRpcRequest& request,
+                             json::JsonRpcResponse* pResponse)
 {
    // get start and end index
    int startIndex; // inclusive
@@ -370,7 +382,7 @@ Error getHistory(const json::JsonRpcRequest& request,
       return error;
    
    // truncate indexes if necessary
-   int historySize = history().size();
+   int historySize = historyArchive().size();
    startIndex = std::min(startIndex, historySize);
    endIndex = std::min(endIndex, historySize);
    
@@ -378,25 +390,8 @@ Error getHistory(const json::JsonRpcRequest& request,
    return setJsonResultFromHistory(startIndex, endIndex, pResponse);   
 }
    
-Error getRecentHistory(const json::JsonRpcRequest& request, 
-                       json::JsonRpcResponse* pResponse)
-{
-   // get max entries
-   int maxEntries;
-   Error error = json::readParam(request.params, 0, &maxEntries);
-   if (error)
-      return error;
-   
-   // compute indexes
-   int endIndex = history().size();
-   int startIndex = std::max(endIndex - maxEntries, 0);
-   
-   // return json for the appropriate range
-   return setJsonResultFromHistory(startIndex, endIndex, pResponse);
-}
-
-Error searchHistory(const json::JsonRpcRequest& request, 
-                    json::JsonRpcResponse* pResponse)
+Error searchHistoryArchive(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
 {
    // get the query
    std::string query;
@@ -413,7 +408,7 @@ Error searchHistory(const json::JsonRpcRequest& request,
    
    // examine the items in the history for matches
    std::vector<HistoryEntry> matchingEntries;
-   const History& hist = history();
+   const History& hist = historyArchive();
    for (std::vector<HistoryEntry>::const_reverse_iterator 
             it = hist.rbegin();
             it != hist.rend();
@@ -438,8 +433,8 @@ Error searchHistory(const json::JsonRpcRequest& request,
    return Success();
 }
    
-Error searchHistoryByPrefix(const json::JsonRpcRequest& request, 
-                            json::JsonRpcResponse* pResponse)
+Error searchHistoryArchiveByPrefix(const json::JsonRpcRequest& request,
+                                   json::JsonRpcResponse* pResponse)
 {
    // get the query
    std::string prefix;
@@ -453,7 +448,7 @@ Error searchHistoryByPrefix(const json::JsonRpcRequest& request,
    
    // examine the items in the history for matches
    std::vector<HistoryEntry> matchingEntries;
-   const History& hist = history();
+   const History& hist = historyArchive();
    for (std::vector<HistoryEntry>::const_reverse_iterator 
         it = hist.rbegin();
         it != hist.rend();
@@ -477,8 +472,19 @@ Error searchHistoryByPrefix(const json::JsonRpcRequest& request,
 
 void onHistoryAdd(const std::string& command)
 {   
-   // add command
-   history().add(command);
+   // add command to history archive
+   Error error = historyArchive().add(command);
+   if (error)
+      LOG_ERROR(error);
+
+   // fire event
+   int entryIndex = r::session::consoleHistory().size() - 1;
+   std::vector<HistoryEntry> entries;
+   entries.push_back(HistoryEntry(entryIndex, 0, command));
+   json::Object entriesJson;
+   historyEntriesAsJson(entries, &entriesJson);
+   ClientEvent event(client_events::kHistoryEntriesAdded, entriesJson);
+   module_context::enqueClientEvent(event);
 }
 
 } // anonymous namespace
@@ -497,10 +503,13 @@ Error initialize()
    using namespace session::module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "get_history", getHistory))
       (bind(registerRpcMethod, "get_recent_history", getRecentHistory))
-      (bind(registerRpcMethod, "search_history", searchHistory))
-      (bind(registerRpcMethod, "search_history_by_prefix", searchHistoryByPrefix));
+      (bind(registerRpcMethod, "get_history_items", getHistoryItems))
+      (bind(registerRpcMethod, "remove_history_items", removeHistoryItems))
+      (bind(registerRpcMethod, "clear_history", clearHistory))
+      (bind(registerRpcMethod, "get_history_archive_items", getHistoryArchiveItems))
+      (bind(registerRpcMethod, "search_history_archive", searchHistoryArchive))
+      (bind(registerRpcMethod, "search_history_archive_by_prefix", searchHistoryArchiveByPrefix));
    return initBlock.execute();
 }
 

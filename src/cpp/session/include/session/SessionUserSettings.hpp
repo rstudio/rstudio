@@ -66,7 +66,6 @@ public:
 
    int saveAction() const;
    void setSaveAction(int saveAction);
-   void applySaveAction() const;
 
    bool loadRData() const;
    void setLoadRData(bool loadRData);
@@ -82,6 +81,9 @@ public:
 
    bool useGlobalHistory() const;
    void setUseGlobalHistory(bool useGlobal);
+
+   bool removeHistoryDuplicates() const;
+   void setRemoveHistoryDuplicates(bool removeDuplicates);
 
 private:
    core::FilePath getWorkingDirectoryValue(const std::string& key) const;
