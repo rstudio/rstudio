@@ -125,15 +125,7 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="clearWorkspace"/>
       </menu>
-      
-      <separator/>
-      
-      <menu label="Hi_story">
-        <cmd refid="historySendToConsole"/>
-        <cmd refid="historySendToSource"/>
-      
-      </menu>
-    
+         
       <separator/>
 
       <menu label="_Plots">
