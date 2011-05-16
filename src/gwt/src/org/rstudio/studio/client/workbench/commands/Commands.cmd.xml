@@ -417,6 +417,14 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Send to Console"
         buttonLabel="To Console"
         desc="Send the selected command(s) to the R console"/>
+   <cmd id="historyRemoveEntries"
+        menuLabel="Remove Entries..."
+        buttonLabel=""
+        desc="Remove the selected history entries"/>
+   <cmd id="clearHistory"
+        menuLabel="Clear All..."
+        buttonLabel=""
+        desc="Clear all history entries"/>
    <cmd id="historyDismissResults"
         label="Done" />
    <cmd id="historyShowContext"

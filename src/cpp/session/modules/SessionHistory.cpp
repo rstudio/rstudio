@@ -368,6 +368,12 @@ Error removeHistoryItems(const json::JsonRpcRequest& request,
 Error clearHistory(const json::JsonRpcRequest& request,
                    json::JsonRpcResponse* pResponse)
 {
+   r::session::consoleHistory().clear();
+
+   json::Array historyJson;
+   ClientEvent event(client_events::kConsoleResetHistory, historyJson);
+   module_context::enqueClientEvent(event);
+
    return Success();
 }
 

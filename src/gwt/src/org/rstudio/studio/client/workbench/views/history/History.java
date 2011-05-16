@@ -29,11 +29,14 @@ import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -351,6 +354,35 @@ public class History extends BasePresenter implements SelectionCommitHandler<Voi
       String commandString = getSelectedCommands();
       if (commandString.length() > 0)
          events_.fireEvent(new InsertSourceEvent(commandString, true));
+   }
+   
+   @Handler
+   void onHistoryRemoveEntries()
+   {
+      
+   }
+   
+   @Handler
+   void onClearHistory()
+   {
+      view_.bringToFront();
+      
+      globalDisplay_.showYesNoMessage(
+         GlobalDisplay.MSG_QUESTION,
+         "Confirm Clear History",
+         "Are you sure you want to clear all history entries?",
+  
+         new ProgressOperation() {
+            public void execute(final ProgressIndicator indicator)
+            {
+               indicator.onProgress("Clearing history...");
+               server_.clearHistory(
+                     new VoidServerRequestCallback(indicator));
+            }
+         },
+         
+         true
+      );
    }
 
    @Handler

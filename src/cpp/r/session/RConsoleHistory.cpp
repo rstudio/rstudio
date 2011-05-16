@@ -79,6 +79,11 @@ void ConsoleHistory::add(const std::string& command)
       }
    }
 }
+
+void ConsoleHistory::clear()
+{
+   historyBuffer_.clear();
+}
    
 void ConsoleHistory::subset(int beginIndex, // inclusive
                             int endIndex,   // exclusive,

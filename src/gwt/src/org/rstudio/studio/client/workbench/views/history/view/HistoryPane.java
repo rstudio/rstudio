@@ -198,6 +198,11 @@ public class HistoryPane extends WorkbenchPane
             }
          }
          mode_ = mode;
+         
+         // enable/disable commands
+         boolean enableRemoveCommands = mode_ == Mode.Recent;
+         commands_.historyRemoveEntries().setEnabled(enableRemoveCommands);
+         commands_.clearHistory().setEnabled(enableRemoveCommands);
       }
    }
 
@@ -536,7 +541,9 @@ public class HistoryPane extends WorkbenchPane
 
       return new Toolbar(new Widget[] {
             commands_.historySendToConsole().createToolbarButton(),
-            commands_.historySendToSource().createToolbarButton()
+            commands_.historySendToSource().createToolbarButton(),
+         // commands_.historyRemoveEntries().createToolbarButton(),
+            commands_.clearHistory().createToolbarButton()
       }, new Widget[] {
             searchWidget_
       });
