@@ -34,7 +34,7 @@ ConsoleHistory& consoleHistory()
 ConsoleHistory::ConsoleHistory()
    : removeDuplicates_(true)
 {
-   setCapacity(250);
+   setCapacity(500);
 }
    
 void ConsoleHistory::setCapacity(int capacity)
