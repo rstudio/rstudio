@@ -217,6 +217,8 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="firstTab" value="Ctrl+Alt+Shift+Left"/>
       <shortcut refid="lastTab" value="Ctrl+Alt+Shift+Right"/>
       <shortcut refid="quickOpen" value="Cmd+Alt+O"/>
+      <shortcut refid="historySendToConsole" value="Cmd+Shift+C"/>
+      <shortcut refid="historySendToSource" value="Cmd+Shift+U"/>
       <shortcut refid="previousPlot" value="Cmd+PageUp" />
       <shortcut refid="nextPlot" value="Cmd+PageDown" />
       <shortcut refid="removePlot" value="Cmd+Shift+R" />
@@ -408,10 +410,10 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Interrupt R"/>
 
    <cmd id="historySendToSource"
-        label="Insert into Source"
+        label="To Source"
         desc="Insert the selected command(s) into the current document"/>
    <cmd id="historySendToConsole"
-        label="Send to Console"
+        label="To Console"
         desc="Send the selected command(s) to the R console"/>
    <cmd id="historyDismissResults"
         label="Done" />
