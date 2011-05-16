@@ -63,6 +63,7 @@ public class ShellPane extends Composite implements Shell.Display,
       input_.setShowLineNumbers(false);
       input_.setShowPrintMargin(false);
       input_.setFileType(FileTypeRegistry.R, true);
+      input_.setUseWrapMode(true);
       input_.setPadding(0);
       input_.autoHeight();
       final Widget inputWidget = input_.toWidget();

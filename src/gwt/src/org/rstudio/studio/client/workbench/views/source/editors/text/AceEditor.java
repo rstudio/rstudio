@@ -526,6 +526,14 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
       getSession().setUseSoftTabs(on);
    }
 
+   /**
+    * Warning: This will be overridden whenever the file type is set
+    */
+   public void setUseWrapMode(boolean useWrapMode)
+   {
+      getSession().setUseWrapMode(useWrapMode);
+   }
+
    public void setTabSize(int tabSize)
    {
       getSession().setTabSize(tabSize);

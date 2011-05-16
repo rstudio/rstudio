@@ -144,6 +144,7 @@ public class TextEditingTarget implements EditingTarget
       void setHighlightSelectedLine(boolean on);
       void setShowLineNumbers(boolean on);
       void setUseSoftTabs(boolean on);
+      void setUseWrapMode(boolean on);
       void setTabSize(int tabSize);
       void setShowPrintMargin(boolean on);
       void setPrintMarginColumn(int column);
