@@ -48,6 +48,8 @@ private:
       
 public:   
    void setCapacity(int capacity);
+
+   void setRemoveDuplicates(bool removeDuplicates);
    
    void add(const std::string& command);
    
@@ -75,6 +77,7 @@ public:
    }
    
 private:   
+   bool removeDuplicates_;
    boost::circular_buffer<std::string> historyBuffer_ ;
    AddSignal onAdd_; 
 };

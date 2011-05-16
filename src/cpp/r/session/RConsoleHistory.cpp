@@ -32,6 +32,7 @@ ConsoleHistory& consoleHistory()
 }
    
 ConsoleHistory::ConsoleHistory()
+   : removeDuplicates_(true)
 {
    setCapacity(250);
 }
@@ -41,12 +42,16 @@ void ConsoleHistory::setCapacity(int capacity)
    historyBuffer_.set_capacity(capacity);
 }
 
+void ConsoleHistory::setRemoveDuplicates(bool removeDuplicates)
+{
+   removeDuplicates_ = removeDuplicates;
+}
+
 void ConsoleHistory::add(const std::string& command)
 {
    if (!command.empty())
    {
       // split input into list of commands
-      std::vector<std::string> commands;
       boost::char_separator<char> lineSep("\n");
       boost::tokenizer<boost::char_separator<char> > lines(command, lineSep);
       for (boost::tokenizer<boost::char_separator<char> >::iterator 
@@ -60,11 +65,17 @@ void ConsoleHistory::add(const std::string& command)
          if (line.empty())
             continue;
          
-         // add to buffer
-         historyBuffer_.push_back(line);
+         // add this line if its not a duplciate
+         if (!removeDuplicates_ ||
+             historyBuffer_.empty() ||
+             (line != historyBuffer_.back()))
+         {
+            // add to buffer
+            historyBuffer_.push_back(line);
          
-         // notify listeners
-         onAdd_(line);
+            // notify listeners
+            onAdd_(line);
+         }
       }
    }
 }

@@ -22,6 +22,7 @@
 #include <session/SessionOptions.hpp>
 
 #include <r/session/RSession.hpp>
+#include <r/session/RConsoleHistory.hpp>
 
 using namespace core ;
 
@@ -42,6 +43,7 @@ const char * const kCRANMirrorUrl = "cranMirrorUrl";
 const char * const kCRANMirrorCountry = "cranMirrorCountry";
 const char * const kAlwaysSaveHistory = "alwaysSaveHistory";
 const char * const kUseGlobalHistory = "useGlobalHistory";
+const char * const kRemoveHistoryDuplicates = "removeHistoryDuplicates";
 }
    
 UserSettings& userSettings()
@@ -104,13 +106,11 @@ int UserSettings::saveAction() const
 void UserSettings::setSaveAction(int saveAction)
 {
    settings_.set(kSaveAction, saveAction);
-   applySaveAction();
+
+   // update in underlying R session
+   r::session::setSaveAction(saveAction);
 }
 
-void UserSettings::applySaveAction() const
-{
-   r::session::setSaveAction(saveAction());
-}
 
 bool UserSettings::loadRData() const
 {
@@ -162,7 +162,21 @@ bool UserSettings::useGlobalHistory() const
 
 void UserSettings::setUseGlobalHistory(bool useGlobal)
 {
-   return settings_.set(kUseGlobalHistory, useGlobal);
+   settings_.set(kUseGlobalHistory, useGlobal);
+}
+
+bool UserSettings::removeHistoryDuplicates() const
+{
+   return settings_.getBool(kRemoveHistoryDuplicates, true);
+}
+
+
+void UserSettings::setRemoveHistoryDuplicates(bool removeDuplicates)
+{
+   settings_.set(kRemoveHistoryDuplicates, removeDuplicates);
+
+   // update in underlying R session
+   r::session::consoleHistory().setRemoveDuplicates(removeDuplicates);
 }
 
 void UserSettings::setInitialWorkingDirectory(const core::FilePath& filePath)

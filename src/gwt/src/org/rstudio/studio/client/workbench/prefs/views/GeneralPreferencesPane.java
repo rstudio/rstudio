@@ -109,20 +109,25 @@ public class GeneralPreferencesPane extends PreferencesPane
       add(loadRData_ = new CheckBox("Restore .RData into workspace at startup"));
    
       alwaysSaveHistory_ = new CheckBox(
-            "Always save .Rhistory (even when not saving .RData)");
+            "Always save history (even when not saving .RData)");
       alwaysSaveHistory_.addStyleName(res.styles().extraSpaced());
       add(alwaysSaveHistory_);
       
       useGlobalHistory_ = new CheckBox(
-            "Use global .Rhistory (rather than per-working directory)");
+            "Use single global history (rather than per-working directory)");
       useGlobalHistory_.addStyleName(res.styles().extraSpaced());
-      
+         
       // only allow tweaking of global vs. non-global history in desktop
       // mode (in server mode there is no way to start in a non-standard
       // working directory so saving history in working directoriees rather
       // than globally will basically break history)
       if (Desktop.isDesktop())
          add(useGlobalHistory_);
+      
+      removeHistoryDuplicates_ = new CheckBox(
+                                 "Remove duplicate entries in history");
+      removeHistoryDuplicates_.addStyleName(res.styles().extraSpaced());
+      add(removeHistoryDuplicates_);
 
       cranMirrorTextBox_ = new TextBoxWithButton(
             "Default CRAN mirror:",
@@ -155,6 +160,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       cranMirrorTextBox_.setEnabled(false);
       alwaysSaveHistory_.setEnabled(false);
       useGlobalHistory_.setEnabled(false);
+      removeHistoryDuplicates_.setEnabled(false);
    }
    
    @Override
@@ -198,9 +204,11 @@ public class GeneralPreferencesPane extends PreferencesPane
       
       alwaysSaveHistory_.setEnabled(true);
       useGlobalHistory_.setEnabled(true);
+      removeHistoryDuplicates_.setEnabled(true);
       
       alwaysSaveHistory_.setValue(historyPrefs.getAlwaysSave());
       useGlobalHistory_.setValue(historyPrefs.getUseGlobal());
+      removeHistoryDuplicates_.setValue(historyPrefs.getRemoveDuplicates());
    }
    
 
@@ -242,7 +250,8 @@ public class GeneralPreferencesPane extends PreferencesPane
          // set history prefs
          HistoryPrefs historyPrefs = HistoryPrefs.create(
                                           alwaysSaveHistory_.getValue(),
-                                          useGlobalHistory_.getValue());
+                                          useGlobalHistory_.getValue(),
+                                          removeHistoryDuplicates_.getValue());
          rPrefs.setHistoryPrefs(historyPrefs);
       }
    }
@@ -264,4 +273,5 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox loadRData_;
    private final CheckBox alwaysSaveHistory_;
    private final CheckBox useGlobalHistory_;
+   private final CheckBox removeHistoryDuplicates_;
 }

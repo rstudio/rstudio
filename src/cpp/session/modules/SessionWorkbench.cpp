@@ -150,17 +150,18 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 
 
    // read and set history prefs
-   bool alwaysSave, useGlobal;
+   bool alwaysSave, useGlobal, removeDuplicates;
    error = json::readObject(historyPrefs,
                             "always_save", &alwaysSave,
-                            "use_global", &useGlobal);
+                            "use_global", &useGlobal,
+                            "remove_duplicates", &removeDuplicates);
    if (error)
       return error;
    userSettings().beginUpdate();
    userSettings().setAlwaysSaveHistory(alwaysSave);
    userSettings().setUseGlobalHistory(useGlobal);
+   userSettings().setRemoveHistoryDuplicates(removeDuplicates);
    userSettings().endUpdate();
-
 
    // set ui prefs
    userSettings().setUiPrefs(uiPrefs);
@@ -208,6 +209,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    json::Object historyPrefs;
    historyPrefs["always_save"] = userSettings().alwaysSaveHistory();
    historyPrefs["use_global"] = userSettings().useGlobalHistory();
+   historyPrefs["remove_duplicates"] = userSettings().removeHistoryDuplicates();
 
    // initialize and set result object
    json::Object result;

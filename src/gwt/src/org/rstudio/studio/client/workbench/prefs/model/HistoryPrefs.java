@@ -19,10 +19,12 @@ public class HistoryPrefs extends JavaScriptObject
    protected HistoryPrefs() {}
 
    public static final native HistoryPrefs create(boolean alwaysSave, 
-                                                  boolean useGlobal) /*-{
+                                                  boolean useGlobal,
+                                                  boolean removeDuplicates) /*-{
       var prefs = new Object();
       prefs.always_save = alwaysSave;
       prefs.use_global = useGlobal;
+      prefs.remove_duplicates = removeDuplicates;
       return prefs ;
    }-*/;
 
@@ -33,5 +35,12 @@ public class HistoryPrefs extends JavaScriptObject
 
    public native final boolean getUseGlobal() /*-{
       return this.use_global;
+   }-*/;
+   
+   public native final boolean getRemoveDuplicates() /*-{
+      if (this.remove_duplicates === undefined)
+         return true;
+      else
+         return this.remove_duplicates;
    }-*/;
 }
