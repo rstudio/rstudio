@@ -69,6 +69,27 @@ void ConsoleHistory::add(const std::string& command)
    }
 }
    
+void ConsoleHistory::subset(int beginIndex, // inclusive
+                            int endIndex,   // exclusive,
+                            std::vector<std::string>* pEntries) const
+{
+   // clear existing
+   pEntries->clear();
+
+   // bail if begin index exceeds our number of entries
+   if (beginIndex >= size())
+      return;
+
+   // cap end index at our size
+   endIndex = std::min(endIndex, size());
+
+   // copy
+   std::copy(historyBuffer_.begin() + beginIndex,
+             historyBuffer_.begin() + endIndex,
+             std::back_inserter(*pEntries));
+}
+
+
 
 void ConsoleHistory::asJson(json::Array* pHistoryArray) const
 {

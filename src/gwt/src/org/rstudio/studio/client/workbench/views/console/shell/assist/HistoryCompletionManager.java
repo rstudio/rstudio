@@ -120,7 +120,7 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
       final Token token = historyRequestInvalidation_.getInvalidationToken();
 
       String value = input_.getText();
-      server_.searchHistoryByPrefix(
+      server_.searchHistoryArchiveByPrefix(
             value, 20,
             new SimpleRequestCallback<RpcObjectList<HistoryEntry>>()
             {

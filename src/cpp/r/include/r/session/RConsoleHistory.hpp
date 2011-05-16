@@ -54,6 +54,15 @@ public:
    const_iterator begin() const { return historyBuffer_.begin(); }
    const_iterator end() const { return historyBuffer_.end(); }
    
+   int size() const
+   {
+      return historyBuffer_.size();
+   }
+
+   void subset(int beginIndex, // inclusive
+               int endIndex,   // exclusive,
+               std::vector<std::string>* pEntries) const;
+
    void asJson(core::json::Array* pHistoryArray) const;
    
    core::Error loadFromFile(const core::FilePath& filePath, bool verifyFile);

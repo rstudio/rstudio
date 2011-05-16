@@ -358,9 +358,86 @@ bool matches(const HistoryEntry& entry,
    // had all of the search terms, return true
    return true;
 }
-   
-Error getHistory(const json::JsonRpcRequest& request, 
-                 json::JsonRpcResponse* pResponse)
+
+
+void historyRangeAsJson(int startIndex,
+                        int endIndex,
+                        json::Object* pHistoryJson)
+{
+   // get the subset of entries
+   std::vector<HistoryEntry> historyEntries;
+   std::vector<std::string> entries;
+   r::session::consoleHistory().subset(startIndex, endIndex, &entries);
+   for (std::vector<std::string>::const_iterator it = entries.begin();
+        it != entries.end();
+        ++it)
+   {
+       historyEntries.push_back(HistoryEntry(startIndex++, 0, *it));
+   }
+
+   // convert to json
+   historyEntriesAsJson(historyEntries, pHistoryJson);
+}
+
+Error getRecentHistory(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   // get params
+   int maxItems;
+   Error error = json::readParam(request.params, 0, &maxItems);
+   if (error)
+      return error;
+
+   // alias console history
+   using namespace r::session;
+   ConsoleHistory& consoleHistory = r::session::consoleHistory();
+
+   // validate
+   if (maxItems <= 0)
+      return Error(json::errc::ParamInvalid, ERROR_LOCATION);
+
+   // compute start and end indexes
+   int startIndex = std::max(0, consoleHistory.size() - maxItems);
+   int endIndex = consoleHistory.size();
+
+   // get json and set it
+   json::Object historyJson;
+   historyRangeAsJson(startIndex, endIndex, &historyJson);
+   pResponse->setResult(historyJson);
+   return Success();
+}
+
+Error getHistoryItems(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse* pResponse)
+{
+   // get start and end index
+   int startIndex; // inclusive
+   int endIndex;   // exclusive
+   Error error = json::readParams(request.params, &startIndex, &endIndex);
+   if (error)
+      return error;
+
+   // get the range and return it
+   json::Object historyJson;
+   historyRangeAsJson(startIndex, endIndex, &historyJson);
+   pResponse->setResult(historyJson);
+   return Success();
+}
+
+Error removeHistoryItems(const json::JsonRpcRequest& request,
+                         json::JsonRpcResponse* pResponse)
+{
+   return Success();
+}
+
+Error clearHistory(const json::JsonRpcRequest& request,
+                   json::JsonRpcResponse* pResponse)
+{
+   return Success();
+}
+
+Error getHistoryArchiveItems(const json::JsonRpcRequest& request,
+                             json::JsonRpcResponse* pResponse)
 {
    // get start and end index
    int startIndex; // inclusive
@@ -378,25 +455,8 @@ Error getHistory(const json::JsonRpcRequest& request,
    return setJsonResultFromHistory(startIndex, endIndex, pResponse);   
 }
    
-Error getRecentHistory(const json::JsonRpcRequest& request, 
-                       json::JsonRpcResponse* pResponse)
-{
-   // get max entries
-   int maxEntries;
-   Error error = json::readParam(request.params, 0, &maxEntries);
-   if (error)
-      return error;
-   
-   // compute indexes
-   int endIndex = history().size();
-   int startIndex = std::max(endIndex - maxEntries, 0);
-   
-   // return json for the appropriate range
-   return setJsonResultFromHistory(startIndex, endIndex, pResponse);
-}
-
-Error searchHistory(const json::JsonRpcRequest& request, 
-                    json::JsonRpcResponse* pResponse)
+Error searchHistoryArchive(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
 {
    // get the query
    std::string query;
@@ -438,8 +498,8 @@ Error searchHistory(const json::JsonRpcRequest& request,
    return Success();
 }
    
-Error searchHistoryByPrefix(const json::JsonRpcRequest& request, 
-                            json::JsonRpcResponse* pResponse)
+Error searchHistoryArchiveByPrefix(const json::JsonRpcRequest& request,
+                                   json::JsonRpcResponse* pResponse)
 {
    // get the query
    std::string prefix;
@@ -497,10 +557,13 @@ Error initialize()
    using namespace session::module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "get_history", getHistory))
       (bind(registerRpcMethod, "get_recent_history", getRecentHistory))
-      (bind(registerRpcMethod, "search_history", searchHistory))
-      (bind(registerRpcMethod, "search_history_by_prefix", searchHistoryByPrefix));
+      (bind(registerRpcMethod, "get_history_items", getHistoryItems))
+      (bind(registerRpcMethod, "remove_history_items", removeHistoryItems))
+      (bind(registerRpcMethod, "clear_history", clearHistory))
+      (bind(registerRpcMethod, "get_history_archive_items", getHistoryArchiveItems))
+      (bind(registerRpcMethod, "search_history_archive", searchHistoryArchive))
+      (bind(registerRpcMethod, "search_history_archive_by_prefix", searchHistoryArchiveByPrefix));
    return initBlock.execute();
 }
 

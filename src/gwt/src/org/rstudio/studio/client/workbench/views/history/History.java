@@ -39,6 +39,8 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleResetHistoryEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleResetHistoryHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.history.History.Display.Mode;
 import org.rstudio.studio.client.workbench.views.history.events.FetchCommandsEvent;
@@ -125,7 +127,7 @@ public class History extends BasePresenter implements SelectionCommitHandler<Voi
          final String query = searchQuery_;
          if (searchQuery_ != null && searchQuery_.length() > 0)
          {
-            server_.searchHistory(
+            server_.searchHistoryArchive(
                   searchQuery_, COMMAND_CHUNK_SIZE,
                   new SimpleRequestCallback<RpcObjectList<HistoryEntry>>()
                   {
@@ -187,6 +189,15 @@ public class History extends BasePresenter implements SelectionCommitHandler<Voi
       view_.addFetchCommandsHandler(this);
 
       server_ = server;
+      events_.addHandler(ConsoleResetHistoryEvent.TYPE, new ConsoleResetHistoryHandler()
+      {
+         @Override
+         public void onConsoleResetHistory(ConsoleResetHistoryEvent event)
+         {
+            syncHistory();
+         }  
+      });
+      
       events_.addHandler(HistoryEntriesAddedEvent.TYPE, new HistoryEntriesAddedHandler()
       {
          public void onHistoryEntriesAdded(HistoryEntriesAddedEvent event)
@@ -227,11 +238,13 @@ public class History extends BasePresenter implements SelectionCommitHandler<Voi
          }
       };
 
-      restoreHistory();
+      syncHistory();
    }
 
-   private void restoreHistory()
+   private void syncHistory()
    {
+      historyPosition_ = 0;
+      
       server_.getRecentHistory(
             COMMAND_CHUNK_SIZE,
             new ServerRequestCallback<RpcObjectList<HistoryEntry>>()
@@ -365,7 +378,7 @@ public class History extends BasePresenter implements SelectionCommitHandler<Voi
       final long start = Math.max(0, min - CONTEXT_LINES);
       final long end = max + CONTEXT_LINES;
 
-      server_.getHistory(
+      server_.getHistoryArchiveItems(
             start,
             end,
             new SimpleRequestCallback<RpcObjectList<HistoryEntry>>() {
@@ -407,7 +420,7 @@ public class History extends BasePresenter implements SelectionCommitHandler<Voi
 
       long startIndex = Math.max(0, historyPosition_ - COMMAND_CHUNK_SIZE);
       long endIndex = historyPosition_;
-      server_.getHistory(startIndex, endIndex,
+      server_.getHistoryItems(startIndex, endIndex,
             new SimpleRequestCallback<RpcObjectList<HistoryEntry>>()
             {
                @Override
