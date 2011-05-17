@@ -401,6 +401,31 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
       return results;
    }
 
+   public ArrayList<Integer> getSelectedIndices(boolean fromTop)
+   {
+      sortSelectedRows();
+
+      ArrayList<Integer> results = new ArrayList<Integer>();
+      final int count = table_.getRows().getLength();
+      for (TableRowElement row : selectedRows_)
+      {
+         // TODO: Make sure it's OK that these are physical indices, not logical
+         if (fromTop)
+            results.add(row.getRowIndex());
+         else
+         {
+            results.add(count - row.getRowIndex());
+         }
+      }
+      return results;
+   }
+
+   public int getRowCount()
+   {
+      // TODO: Make sure logical/physical is taken into account here
+      return table_.getRows().getLength();
+   }
+
    private void sortSelectedRows()
    {
       Collections.sort(selectedRows_, new Comparator<TableRowElement>()
