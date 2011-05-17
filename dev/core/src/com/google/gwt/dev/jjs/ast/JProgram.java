@@ -22,8 +22,8 @@ import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.JField.Disposition;
+import com.google.gwt.dev.jjs.ast.js.JsCastMap;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
-import com.google.gwt.dev.jjs.ast.js.JsonObject;
 import com.google.gwt.dev.jjs.impl.CodeSplitter;
 import com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs.RunAsyncReplacement;
 import com.google.gwt.dev.util.collect.Lists;
@@ -320,7 +320,7 @@ public class JProgram extends JNode {
 
   private final HashMap<JType, JArrayType> arrayTypes = new HashMap<JType, JArrayType>();
 
-  private IdentityHashMap<JReferenceType, JsonObject> castableTypeMaps;
+  private IdentityHashMap<JReferenceType, JsCastMap> castMaps;
 
   /**
    * A factory to create correlations.
@@ -335,7 +335,7 @@ public class JProgram extends JNode {
 
   private final Map<JMethod, JMethod> instanceToStaticMap = new IdentityHashMap<JMethod, JMethod>();
 
-  private Map<JReferenceType, Integer> queryIds;
+  private Map<JReferenceType, Integer> queryIdsByType;
 
   /**
    * Filled in by ReplaceRunAsync, once the numbers are known.
@@ -357,6 +357,8 @@ public class JProgram extends JNode {
   private JClassType typeJavaLangObject;
 
   private final Map<String, JDeclaredType> typeNameMap = new HashMap<String, JDeclaredType>();
+
+  private List<JReferenceType> typesByQueryId;
 
   private JClassType typeSpecialClassLiteralHolder;
 
@@ -740,19 +742,13 @@ public class JProgram extends JNode {
     return allEntryMethods;
   }
 
-  public JsonObject getCastableTypeMap(JReferenceType referenceType) {
+  public JsCastMap getCastMap(JReferenceType referenceType) {
     // ensure jsonCastableTypeMaps has been initialized
     // it might not have been if the CastNormalizer has not been run
-    if (castableTypeMaps == null) {
+    if (castMaps == null) {
       initTypeInfo(null);
     }
-    JsonObject returnMap = castableTypeMaps.get(referenceType);
-    if (returnMap == null) {
-      // add a new empty map
-      returnMap = new JsonObject(createSourceInfoSynthetic(JProgram.class), getJavaScriptObject());
-      castableTypeMaps.put(referenceType, returnMap);
-    }
-    return returnMap;
+    return castMaps.get(referenceType);
   }
 
   public String getClassLiteralName(JType type) {
@@ -860,7 +856,7 @@ public class JProgram extends JNode {
 
   public int getQueryId(JReferenceType elementType) {
     assert (elementType == elementType.getUnderlyingType());
-    Integer integer = queryIds.get(elementType);
+    Integer integer = queryIdsByType.get(elementType);
     if (integer == null) {
       return 0;
     }
@@ -981,15 +977,18 @@ public class JProgram extends JNode {
     return JPrimitiveType.SHORT;
   }
 
+  public List<JReferenceType> getTypesByQueryId() {
+    return typesByQueryId;
+  }
+
   public JPrimitiveType getTypeVoid() {
     return JPrimitiveType.VOID;
   }
 
-  public void initTypeInfo(
-      IdentityHashMap<JReferenceType, JsonObject> instantiatedTypeCastableTypeMaps) {
-    castableTypeMaps = instantiatedTypeCastableTypeMaps;
-    if (castableTypeMaps == null || castableTypeMaps.size() == 0) {
-      castableTypeMaps = new IdentityHashMap<JReferenceType, JsonObject>();
+  public void initTypeInfo(IdentityHashMap<JReferenceType, JsCastMap> instantiatedCastableTypesMap) {
+    castMaps = instantiatedCastableTypesMap;
+    if (castMaps == null) {
+      castMaps = new IdentityHashMap<JReferenceType, JsCastMap>();
     }
   }
 
@@ -1032,8 +1031,10 @@ public class JProgram extends JNode {
     }
   }
 
-  public void recordQueryIds(Map<JReferenceType, Integer> queryIds) {
-    this.queryIds = queryIds;
+  public void recordQueryIds(Map<JReferenceType, Integer> queryIdsByType,
+      List<JReferenceType> typesByQueryId) {
+    this.queryIdsByType = queryIdsByType;
+    this.typesByQueryId = typesByQueryId;
   }
 
   public void setRunAsyncReplacements(Map<Integer, RunAsyncReplacement> map) {

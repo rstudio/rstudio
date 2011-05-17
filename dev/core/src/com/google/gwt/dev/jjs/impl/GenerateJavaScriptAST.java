@@ -23,6 +23,7 @@ import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.HasEnclosingType;
 import com.google.gwt.dev.jjs.ast.HasName;
@@ -46,6 +47,7 @@ import com.google.gwt.dev.jjs.ast.JContinueStatement;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JDoStatement;
+import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
@@ -86,6 +88,8 @@ import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
+import com.google.gwt.dev.jjs.ast.js.JsCastMap;
+import com.google.gwt.dev.jjs.ast.js.JsCastMap.JsQueryType;
 import com.google.gwt.dev.jjs.ast.js.JsniClassLiteral;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
@@ -93,6 +97,7 @@ import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.jjs.ast.js.JsonArray;
 import com.google.gwt.dev.jjs.ast.js.JsonObject;
 import com.google.gwt.dev.jjs.ast.js.JsonObject.JsonPropInit;
+import com.google.gwt.dev.js.JsParser;
 import com.google.gwt.dev.js.JsStackEmulator;
 import com.google.gwt.dev.js.ast.JsArrayAccess;
 import com.google.gwt.dev.js.ast.JsArrayLiteral;
@@ -122,6 +127,7 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsNormalScope;
+import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
@@ -146,6 +152,7 @@ import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.collect.Maps;
 
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -256,14 +263,19 @@ public class GenerateJavaScriptAST {
       /*
        * put nullMethod in the global scope, too; it's the replacer for clinits
        */
-      nullMethodName = topScope.declareName(nullMethod.getName());
-      names.put(nullMethod, nullMethodName);
+      nullFunc = createGlobalFunction("function " + nullMethod.getName() + "(){}");
+      names.put(nullMethod, nullFunc.getName());
 
       /*
        * Make sure we record all of the program's array types since
        * JProgram.traverse() doesn't iterate over them.
        */
       accept(program.getAllArrayTypes());
+
+      // Generate symbolic names for all query type ids.
+      if (!output.shouldMinimize()) {
+        setupSymbolicCastMaps();
+      }
     }
 
     @Override
@@ -344,6 +356,10 @@ public class GenerateJavaScriptAST {
       assert x.getEnclosingType() != null;
       String mangleName = mangleNameForGlobal(x);
 
+      if (JProgram.isClinit(x)) {
+        name = name + "_" + x.getEnclosingType().getShortName();
+      }
+
       /*
        * Only allocate a name for a function if it is native, not polymorphic,
        * or stack-stripping is disabled.
@@ -411,6 +427,20 @@ public class GenerateJavaScriptAST {
       return false;
     }
 
+    private JsFunction createGlobalFunction(String code) {
+      try {
+        List<JsStatement> stmts =
+            JsParser.parse(SourceOrigin.UNKNOWN, topScope, new StringReader(code));
+        assert stmts.size() == 1;
+        JsExprStmt stmt = (JsExprStmt) stmts.get(0);
+        List<JsStatement> globalStmts = jsProgram.getGlobalBlock().getStatements();
+        globalStmts.add(0, stmt);
+        return (JsFunction) stmt.getExpression();
+      } catch (Exception e) {
+        throw new InternalCompilerException("Unexpected exception parsing '" + code + "'", e);
+      }
+    }
+
     /**
      * Generate a file name URI string for a source info, for symbol data
      * export.
@@ -441,13 +471,28 @@ public class GenerateJavaScriptAST {
     }
 
     private void recordSymbol(JReferenceType x, JsName jsName) {
-      int queryId = program.getQueryId(x);
-      JsonObject castableTypeMapObj = program.getCastableTypeMap(x);
-      CastableTypeMap castableTypeMap = new StandardCastableTypeMap(castableTypeMapObj.toString());
+      StringBuilder sb = new StringBuilder();
+      sb.append('{');
+      JsCastMap castMap = program.getCastMap(x);
+      if (castMap != null) {
+        boolean isFirst = true;
+        for (JExpression expr : castMap.getExprs()) {
+          JsQueryType queryType = (JsQueryType) expr;
+          if (isFirst) {
+            isFirst = false;
+          } else {
+            sb.append(',');
+          }
+          sb.append(queryType.getQueryId());
+          sb.append(":1");
+        }
+      }
+      sb.append('}');
+      CastableTypeMap castableTypeMap = new StandardCastableTypeMap(sb.toString());
 
       StandardSymbolData symbolData =
           StandardSymbolData.forClass(x.getName(), x.getSourceInfo().getFileName(), x
-              .getSourceInfo().getStartLine(), queryId, castableTypeMap);
+              .getSourceInfo().getStartLine(), program.getQueryId(x), castableTypeMap);
       assert !symbolTable.containsKey(symbolData);
       symbolTable.put(symbolData, jsName);
     }
@@ -488,6 +533,43 @@ public class GenerateJavaScriptAST {
       assert !symbolTable.containsKey(symbolData) : "Duplicate symbol " + "recorded "
           + jsName.getIdent() + " for " + x.getName() + " and key " + symbolData.getJsniIdent();
       symbolTable.put(symbolData, jsName);
+    }
+
+    /**
+     * Create more readable output by generating symbolic constants for query
+     * ids.
+     */
+    private void setupSymbolicCastMaps() {
+      namesByQueryId = new ArrayList<JsName>();
+      for (JReferenceType type : program.getTypesByQueryId()) {
+        String shortName;
+        String longName;
+        if (type instanceof JArrayType) {
+          JArrayType arrayType = (JArrayType) type;
+          JType leafType = arrayType.getLeafType();
+          if (leafType instanceof JReferenceType) {
+            shortName = ((JReferenceType) leafType).getShortName();
+          } else {
+            shortName = leafType.getName();
+          }
+          shortName += "_$" + arrayType.getDims();
+          longName = getNameString(leafType) + "_$" + arrayType.getDims();
+        } else {
+          shortName = type.getShortName();
+          longName = getNameString(type);
+        }
+        JsName name = topScope.declareName("Q$" + longName, "Q$" + shortName);
+        namesByQueryId.add(name);
+      }
+      StringBuilder sb = new StringBuilder();
+      sb.append("function makeCastMap(a) {");
+      sb.append("  var result = {};");
+      sb.append("  for (var i = 0, c = a.length; i < c; ++i) {");
+      sb.append("    result[a[i]] = 1;");
+      sb.append("  }");
+      sb.append("  return result;");
+      sb.append("}");
+      makeMapFunction = createGlobalFunction(sb.toString());
     }
   }
 
@@ -1133,7 +1215,6 @@ public class GenerateJavaScriptAST {
 
       // Generate entry methods
       generateGwtOnLoad(Arrays.asList(entryFunctions).subList(0, x.getEntryCount(0)), globalStmts);
-      generateNullFunc(globalStmts);
 
       // Add a few things onto the beginning.
 
@@ -1144,6 +1225,8 @@ public class GenerateJavaScriptAST {
 
       // Long lits must go at the top, they can be constant field initializers.
       generateLongLiterals(vars);
+
+      generateQueryIdConstants(vars);
 
       // Class objects, but only if there are any.
       if (x.getDeclaredTypes().contains(x.getTypeClassLiteralHolder())) {
@@ -1195,6 +1278,30 @@ public class GenerateJavaScriptAST {
     }
 
     @Override
+    public void endVisit(JsCastMap x, Context ctx) {
+      super.endVisit(x, ctx);
+      JsArrayLiteral arrayLit = (JsArrayLiteral) pop();
+      SourceInfo sourceInfo = x.getSourceInfo();
+      if (namesByQueryId == null || x.getExprs().size() == 0) {
+        // {2:1, 4:1, 12:1};
+        JsObjectLiteral objLit = new JsObjectLiteral(sourceInfo);
+        List<JsPropertyInitializer> props = objLit.getPropertyInitializers();
+        JsNumberLiteral one = new JsNumberLiteral(sourceInfo, 1);
+        for (JsExpression expr : arrayLit.getExpressions()) {
+          JsPropertyInitializer prop = new JsPropertyInitializer(sourceInfo, expr, one);
+          props.add(prop);
+        }
+        push(objLit);
+      } else {
+        // makeMap([Q_Object, Q_Foo, Q_Bar]);
+        JsInvocation inv = new JsInvocation(sourceInfo);
+        inv.setQualifier(makeMapFunction.getName().makeRef(sourceInfo));
+        inv.getArguments().add(arrayLit);
+        push(inv);
+      }
+    }
+
+    @Override
     public void endVisit(JsniMethodRef x, Context ctx) {
       JMethod method = x.getTarget();
       JsNameRef nameRef = names.get(method).makeRef(x.getSourceInfo());
@@ -1204,7 +1311,7 @@ public class GenerateJavaScriptAST {
     @Override
     public void endVisit(JsonArray x, Context ctx) {
       JsArrayLiteral jsArrayLiteral = new JsArrayLiteral(x.getSourceInfo());
-      popList(jsArrayLiteral.getExpressions(), x.exprs.size());
+      popList(jsArrayLiteral.getExpressions(), x.getExprs().size());
       push(jsArrayLiteral);
     }
 
@@ -1220,6 +1327,16 @@ public class GenerateJavaScriptAST {
       JsExpression valueExpr = (JsExpression) pop();
       JsExpression labelExpr = (JsExpression) pop();
       push(new JsPropertyInitializer(init.getSourceInfo(), labelExpr, valueExpr));
+    }
+
+    @Override
+    public void endVisit(JsQueryType x, Context ctx) {
+      if (namesByQueryId == null || x.getQueryId() < 0) {
+        super.endVisit(x, ctx);
+      } else {
+        JsName name = namesByQueryId.get(x.getQueryId());
+        push(name.makeRef(x.getSourceInfo()));
+      }
     }
 
     @Override
@@ -1413,7 +1530,7 @@ public class GenerateJavaScriptAST {
                 if (jsName == null) {
                   // this can occur when JSNI references an instance method on a
                   // type that was never actually instantiated.
-                  jsName = nullMethodName;
+                  jsName = nullFunc.getName();
                 }
                 x.resolve(jsName);
               }
@@ -1491,8 +1608,8 @@ public class GenerateJavaScriptAST {
     }
 
     private void generateCastableTypeMap(JClassType x, List<JsStatement> globalStmts) {
-      JsonObject castableTypeMap = program.getCastableTypeMap(x);
-      if (castableTypeMap != null) {
+      JsCastMap castMap = program.getCastMap(x);
+      if (castMap != null) {
         JField castableTypeMapField = program.getIndexedField("Object.castableTypeMap");
         JsName castableTypeMapName = names.get(castableTypeMapField);
         if (castableTypeMapName == null) {
@@ -1500,17 +1617,13 @@ public class GenerateJavaScriptAST {
           return;
         }
 
-        SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic(GenerateJavaScriptAST.class);
-
-        accept(castableTypeMap);
-        JsExpression objExpr = pop();
-
         // Generate castableTypeMap for each type prototype
-        // _.castableTypeMap$ = {2:1, 4:1, 12:1};
+        // _.castableTypeMap$ = ...
+        SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic(GenerateJavaScriptAST.class);
         JsNameRef fieldRef = castableTypeMapName.makeRef(sourceInfo);
         fieldRef.setQualifier(globalTemp.makeRef(sourceInfo));
-        JsExpression asg = createAssignment(fieldRef, objExpr);
-
+        accept(castMap);
+        JsExpression asg = createAssignment(fieldRef, (JsExpression) pop());
         JsExprStmt asgStmt = asg.makeStmt();
         globalStmts.add(asgStmt);
         typeForStatMap.put(asgStmt, x);
@@ -1662,13 +1775,16 @@ public class GenerateJavaScriptAST {
       }
     }
 
-    private void generateNullFunc(List<JsStatement> globalStatements) {
-      // handle null method
-      SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic(GenerateJavaScriptAST.class);
-      JsFunction nullFunc = new JsFunction(sourceInfo, topScope, nullMethodName, true);
-      nullFunc.setBody(new JsBlock(sourceInfo));
-      // Add it first, so that script-tag chunking in IFrameLinker works
-      globalStatements.add(0, nullFunc.makeStmt());
+    private void generateQueryIdConstants(JsVars vars) {
+      if (namesByQueryId != null) {
+        SourceInfo info = vars.getSourceInfo();
+        int id = 0;
+        for (JsName jsName : namesByQueryId) {
+          JsVar var = new JsVar(info, jsName);
+          var.setInitExpr(new JsNumberLiteral(info, id++));
+          vars.add(var);
+        }
+      }
     }
 
     private void generateSeedFuncAndPrototype(JClassType x, List<JsStatement> globalStmts) {
@@ -1770,7 +1886,7 @@ public class GenerateJavaScriptAST {
       SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic(GenerateJavaScriptAST.class);
       JsNameRef fieldRef = typeMarkerName.makeRef(sourceInfo);
       fieldRef.setQualifier(globalTemp.makeRef(sourceInfo));
-      JsExpression asg = createAssignment(fieldRef, nullMethodName.makeRef(sourceInfo));
+      JsExpression asg = createAssignment(fieldRef, nullFunc.getName().makeRef(sourceInfo));
       JsExprStmt stmt = asg.makeStmt();
       globalStmts.add(stmt);
       typeForStatMap.put(stmt, program.getTypeJavaLangObject());
@@ -1802,8 +1918,8 @@ public class GenerateJavaScriptAST {
       SourceInfo sourceInfo = clinitFunc.getSourceInfo();
       // self-assign to the null method immediately (to prevent reentrancy)
       JsExpression asg =
-          createAssignment(clinitFunc.getName().makeRef(sourceInfo), nullMethodName
-              .makeRef(sourceInfo));
+          createAssignment(clinitFunc.getName().makeRef(sourceInfo), nullFunc.getName().makeRef(
+              sourceInfo));
       statements.add(0, asg.makeStmt());
     }
 
@@ -2017,11 +2133,14 @@ public class GenerateJavaScriptAST {
    * Sorted to avoid nondeterministic iteration.
    */
   private final Map<Long, JsName> longLits = new TreeMap<Long, JsName>();
+
   private final Map<JsName, JsExpression> longObjects = new IdentityHashMap<JsName, JsExpression>();
+  private JsFunction makeMapFunction;
   private final Map<JAbstractMethodBody, JsFunction> methodBodyMap =
       new IdentityHashMap<JAbstractMethodBody, JsFunction>();
   private final Map<HasName, JsName> names = new IdentityHashMap<HasName, JsName>();
-  private JsName nullMethodName;
+  private List<JsName> namesByQueryId;
+  private JsFunction nullFunc;
 
   /**
    * Contains JsNames for the Object instance methods, such as equals, hashCode,

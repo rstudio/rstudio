@@ -90,6 +90,7 @@ import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.jjs.ast.js.JsonArray;
 import com.google.gwt.dev.jjs.ast.js.JsonObject;
+import com.google.gwt.dev.jjs.ast.js.JsCastMap.JsQueryType;
 import com.google.gwt.dev.jjs.ast.js.JsonObject.JsonPropInit;
 import com.google.gwt.dev.js.JsSourceGenerationVisitor;
 import com.google.gwt.dev.util.TextOutput;
@@ -574,7 +575,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
 
   @Override
   public boolean visit(JIntLiteral x, Context ctx) {
-    print(Integer.toString(x.getValue()).toCharArray());
+    print(Integer.toString(x.getValue()));
     return false;
   }
 
@@ -680,6 +681,14 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     print(CHARS_STARSLASH);
     printStringLiteral(x.getNode().getName());
     return false;
+  }
+
+  @Override
+  public boolean visit(JsQueryType x, Context ctx) {
+    print(CHARS_SLASHSTAR);
+    printTypeName(x.getQueryType());
+    print(CHARS_STARSLASH);
+    return super.visit(x, ctx);
   }
 
   @Override
@@ -816,7 +825,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   @Override
   public boolean visit(JsonArray x, Context ctx) {
     print('[');
-    visitCollectionWithCommas(x.exprs.iterator());
+    visitCollectionWithCommas(x.getExprs().iterator());
     print(']');
     return false;
   }

@@ -34,6 +34,8 @@ import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.dev.jjs.ast.js.JsCastMap;
+import com.google.gwt.dev.jjs.ast.js.JsCastMap.JsQueryType;
 import com.google.gwt.dev.jjs.ast.js.JsonArray;
 import com.google.gwt.dev.jjs.ast.js.JsonObject;
 
@@ -96,6 +98,25 @@ public class ArrayNormalizer {
       }
     }
 
+    private JsQueryType getElementQueryType(SourceInfo sourceInfo, JArrayType arrayType) {
+      JType elementType = arrayType.getElementType();
+      int elementQueryId = -1;
+      if (elementType instanceof JReferenceType) {
+        JReferenceType elementRefType = (JReferenceType) elementType;
+        elementType = elementRefType.getUnderlyingType();
+        elementQueryId = program.getQueryId(elementRefType);
+      }
+      return new JsQueryType(sourceInfo, elementType, elementQueryId);
+    }
+
+    private JExpression getOrCreateCastMap(SourceInfo sourceInfo, JArrayType arrayType) {
+      JsCastMap castableTypeMap = program.getCastMap(arrayType);
+      if (castableTypeMap == null || castableTypeMap.getExprs().size() == 0) {
+        return new JsonObject(sourceInfo, program.getJavaScriptObject());
+      }
+      return castableTypeMap;
+    }
+
     /**
      * @see com.google.gwt.lang.Array regarding seed types
      */
@@ -118,10 +139,11 @@ public class ArrayNormalizer {
 
     private void processDim(JNewArray x, Context ctx, JArrayType arrayType) {
       // override the type of the called method with the array's type
-      JMethodCall call = new JMethodCall(x.getSourceInfo(), null, initDim, arrayType);
+      SourceInfo sourceInfo = x.getSourceInfo();
+      JMethodCall call = new JMethodCall(sourceInfo, null, initDim, arrayType);
       JLiteral classLit = x.getClassLiteral();
-      JsonObject castableTypeMap = program.getCastableTypeMap(arrayType);
-      JLiteral queryIdLit = program.getLiteralInt(tryGetQueryId(arrayType));
+      JExpression castableTypeMap = getOrCreateCastMap(sourceInfo, arrayType);
+      JLiteral queryIdLit = getElementQueryType(sourceInfo, arrayType);
       JExpression dim = x.dims.get(0);
       JType elementType = arrayType.getElementType();
       call.addArgs(classLit, castableTypeMap, queryIdLit, dim, getSeedTypeLiteralFor(elementType));
@@ -142,15 +164,15 @@ public class ArrayNormalizer {
         JArrayType curArrayType = (JArrayType) cur;
 
         JLiteral classLit = x.getClassLiterals().get(i);
-        classLitList.exprs.add(classLit);
+        classLitList.getExprs().add(classLit);
 
-        JsonObject castableTypeMap = program.getCastableTypeMap(curArrayType);
-        castableTypeMapList.exprs.add(castableTypeMap);
+        JExpression castableTypeMap = getOrCreateCastMap(sourceInfo, curArrayType);
+        castableTypeMapList.getExprs().add(castableTypeMap);
 
-        JLiteral queryIdLit = program.getLiteralInt(tryGetQueryId(curArrayType));
-        queryIdList.exprs.add(queryIdLit);
+        JLiteral queryIdLit = getElementQueryType(sourceInfo, curArrayType);
+        queryIdList.getExprs().add(queryIdLit);
 
-        dimList.exprs.add(x.dims.get(i));
+        dimList.getExprs().add(x.dims.get(i));
         cur = curArrayType.getElementType();
       }
       call.addArgs(classLitList, castableTypeMapList, queryIdList, dimList, program
@@ -163,23 +185,14 @@ public class ArrayNormalizer {
       SourceInfo sourceInfo = x.getSourceInfo();
       JMethodCall call = new JMethodCall(sourceInfo, null, initValues, arrayType);
       JLiteral classLit = x.getClassLiteral();
-      JsonObject castableTypeMap = program.getCastableTypeMap(arrayType);
-      JLiteral queryIdLit = program.getLiteralInt(tryGetQueryId(arrayType));
+      JExpression castableTypeMap = getOrCreateCastMap(sourceInfo, arrayType);
+      JLiteral queryIdLit = getElementQueryType(sourceInfo, arrayType);
       JsonArray initList = new JsonArray(sourceInfo, program.getJavaScriptObject());
       for (int i = 0; i < x.initializers.size(); ++i) {
-        initList.exprs.add(x.initializers.get(i));
+        initList.getExprs().add(x.initializers.get(i));
       }
       call.addArgs(classLit, castableTypeMap, queryIdLit, initList);
       ctx.replaceMe(call);
-    }
-
-    private int tryGetQueryId(JArrayType type) {
-      JType elementType = type.getElementType();
-      int leafQueryId = -1;
-      if (elementType instanceof JReferenceType) {
-        leafQueryId = program.getQueryId(((JReferenceType) elementType).getUnderlyingType());
-      }
-      return leafQueryId;
     }
   }
 

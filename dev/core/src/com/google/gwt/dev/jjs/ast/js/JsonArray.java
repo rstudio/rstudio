@@ -19,7 +19,6 @@ import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
-import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 
 import java.util.ArrayList;
@@ -30,7 +29,7 @@ import java.util.List;
  */
 public class JsonArray extends JExpression {
 
-  public List<JExpression> exprs = new ArrayList<JExpression>();
+  private final List<JExpression> exprs = new ArrayList<JExpression>();
 
   private final JClassType jsoType;
 
@@ -39,13 +38,17 @@ public class JsonArray extends JExpression {
     this.jsoType = jsoType;
   }
 
-  public JType getType() {
+  public List<JExpression> getExprs() {
+    return exprs;
+  }
+
+  public JClassType getType() {
     return jsoType;
   }
 
   @Override
   public boolean hasSideEffects() {
-    for (int i = 0, c = exprs.size(); i < c; ++i) {
+    for (int i = 0, c = getExprs().size(); i < c; ++i) {
       if (exprs.get(i).hasSideEffects()) {
         return true;
       }

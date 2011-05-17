@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JArrayType;
@@ -26,7 +27,6 @@ import com.google.gwt.dev.jjs.ast.JCharLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
-import com.google.gwt.dev.jjs.ast.JIntLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
@@ -38,15 +38,20 @@ import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.jjs.ast.js.JsonObject;
-import com.google.gwt.dev.jjs.ast.js.JsonObject.JsonPropInit;
+import com.google.gwt.dev.jjs.ast.js.JsCastMap;
+import com.google.gwt.dev.jjs.ast.js.JsCastMap.JsQueryType;
+import com.google.gwt.dev.util.collect.Lists;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Replace cast and instanceof operations with calls to the Cast class. Depends
@@ -68,11 +73,10 @@ import java.util.Set;
 public class CastNormalizer {
   private class AssignTypeCastabilityVisitor extends JVisitor {
 
-    Set<JReferenceType> alreadyRan = new HashSet<JReferenceType>();
-    private final IdentityHashMap<JReferenceType, JsonObject> castableTypeMaps =
-        new IdentityHashMap<JReferenceType, JsonObject>();
+    private final Set<JReferenceType> alreadyRan = new HashSet<JReferenceType>();
+    private final IdentityHashMap<JReferenceType, JsCastMap> castableTypesMap =
+        new IdentityHashMap<JReferenceType, JsCastMap>();
     private final List<JArrayType> instantiatedArrayTypes = new ArrayList<JArrayType>();
-    private int nextQueryId = 0;
     private final Map<JReferenceType, Set<JReferenceType>> queriedTypes =
         new IdentityHashMap<JReferenceType, Set<JReferenceType>>();
 
@@ -84,20 +88,18 @@ public class CastNormalizer {
         }
       }
 
-      // Reserve query id 0 for java.lang.Object (for array stores on JSOs).
+      // Force entries for Object and String.
       recordCastInternal(program.getTypeJavaLangObject(), program.getTypeJavaLangObject());
-
-      // Reserve query id 1 for java.lang.String to facilitate the mashup case.
-      // Also, facilitates detecting an object as a Java String (see Cast.java)
-      // Multiple GWT modules need to modify String's prototype the same way.
       recordCastInternal(program.getTypeJavaLangString(), program.getTypeJavaLangObject());
     }
 
     public void computeTypeCastabilityMaps() {
+      List<JReferenceType> sortedQueryTypes = sortQueryTypes();
+      queryIdsByType = assignQueryIds(sortedQueryTypes);
 
       // do String first (which will pull in Object also, it's superclass).
       computeSourceType(program.getTypeJavaLangString());
-      assert (castableTypeMaps.size() == 2);
+      assert (castableTypesMap.size() == 2);
 
       /*
        * Compute the list of classes than can successfully satisfy cast
@@ -115,14 +117,9 @@ public class CastNormalizer {
       }
 
       // pass our info to JProgram
-      program.initTypeInfo(castableTypeMaps);
+      program.initTypeInfo(castableTypesMap);
 
-      // JSO's marker queryId is -1 (used for array stores).
-      JClassType jsoType = program.getJavaScriptObject();
-      if (jsoType != null) {
-        queryIds.put(jsoType, -1);
-      }
-      program.recordQueryIds(queryIds);
+      program.recordQueryIds(queryIdsByType, sortedQueryTypes);
     }
 
     /*
@@ -189,6 +186,20 @@ public class CastNormalizer {
       recordCast(x.getTestType(), x.getExpr());
     }
 
+    private Map<JReferenceType, Integer> assignQueryIds(List<JReferenceType> sortedQueryTypes) {
+      Map<JReferenceType, Integer> result = new IdentityHashMap<JReferenceType, Integer>();
+      int queryId = 0;
+      for (JReferenceType queryType : sortedQueryTypes) {
+        result.put(queryType, queryId++);
+      }
+      // JSO's marker queryId is -1 (used for array stores).
+      JClassType jsoType = program.getJavaScriptObject();
+      if (jsoType != null) {
+        result.put(jsoType, -1);
+      }
+      return result;
+    }
+
     private boolean canTriviallyCastJsoSemantics(JReferenceType type, JReferenceType qType) {
       type = type.getUnderlyingType();
       qType = qType.getUnderlyingType();
@@ -227,10 +238,12 @@ public class CastNormalizer {
       }
 
       // Find all possible query types which I can satisfy
-      Set<JReferenceType> yesSet = null;
+      Set<JsQueryType> castableTypes = new TreeSet<JsQueryType>(JSQUERY_COMPARATOR);
 
-      // NOTE: non-deterministic iteration over HashSet and HashMap. This is
-      // okay here because we're just adding things to another HashSet.
+      /*
+       * NOTE: non-deterministic iteration over HashSet and HashMap. Okay
+       * because we're sorting the results.
+       */
       for (JReferenceType qType : queriedTypes.keySet()) {
 
         Set<JReferenceType> querySet = queriedTypes.get(qType);
@@ -239,37 +252,16 @@ public class CastNormalizer {
          * with JSO cross-casts anymore.
          */
         if (canTriviallyCastJsoSemantics(type, qType)) {
-
           for (JReferenceType argType : querySet) {
-
             if (canTriviallyCastJsoSemantics(type, argType) || program.isJavaScriptObject(qType)) {
-              if (yesSet == null) {
-                yesSet = new HashSet<JReferenceType>();
+              int queryId = queryIdsByType.get(qType);
+              // Ignore Object (id 0) which is always true.
+              if (queryId > 0) {
+                castableTypes.add(new JsQueryType(SourceOrigin.UNKNOWN, qType, queryId));
               }
-              yesSet.add(qType);
               break;
             }
           }
-        }
-      }
-
-      // Use a sparse array to sort my yes set.
-      JReferenceType[] yesArray = new JReferenceType[nextQueryId];
-      if (yesSet != null) {
-        for (JReferenceType yesType : yesSet) {
-          yesArray[queryIds.get(yesType)] = yesType;
-        }
-      }
-
-      // Create a sparse lookup object.
-      SourceInfo sourceInfo = program.createSourceInfoSynthetic(AssignTypeCastabilityVisitor.class);
-      JsonObject jsonObject = new JsonObject(sourceInfo, program.getJavaScriptObject());
-      // Start at 1; 0 is Object and always true.
-      for (int i = 1; i < nextQueryId; ++i) {
-        if (yesArray[i] != null) {
-          JIntLiteral labelExpr = program.getLiteralInt(i);
-          JIntLiteral valueExpr = program.getLiteralInt(1);
-          jsonObject.propInits.add(new JsonPropInit(sourceInfo, labelExpr, valueExpr));
         }
       }
 
@@ -277,13 +269,14 @@ public class CastNormalizer {
        * Don't add an entry for empty answer sets, except for Object and String
        * which require entries.
        */
-      if (jsonObject.propInits.isEmpty() && type != program.getTypeJavaLangObject()
+      if (castableTypes.isEmpty() && type != program.getTypeJavaLangObject()
           && type != program.getTypeJavaLangString()) {
         return;
       }
 
       // add an entry for me
-      castableTypeMaps.put(type, jsonObject);
+      castableTypesMap.put(type, new JsCastMap(SourceOrigin.UNKNOWN, Lists.create(castableTypes),
+          program.getJavaScriptObject()));
     }
 
     private void recordCast(JType targetType, JExpression rhs) {
@@ -310,11 +303,34 @@ public class CastNormalizer {
       rhsType = rhsType.getUnderlyingType();
       Set<JReferenceType> querySet = queriedTypes.get(toType);
       if (querySet == null) {
-        queryIds.put(toType, nextQueryId++);
         querySet = new HashSet<JReferenceType>();
         queriedTypes.put(toType, querySet);
       }
       querySet.add(rhsType);
+    }
+
+    /**
+     * Sort into alphabetical, except Object and String which must come first.
+     */
+    private List<JReferenceType> sortQueryTypes() {
+      // Initial name-only sort.
+      List<JReferenceType> sortedQueryTypes = new ArrayList<JReferenceType>(queriedTypes.keySet());
+      Collections.sort(sortedQueryTypes, new HasNameSort());
+
+      // Used LinkedHashSet to move Object and String to the front.
+      LinkedHashSet<JReferenceType> tempSortedQueryTypes = new LinkedHashSet<JReferenceType>();
+      // Reserve query id 0 for java.lang.Object (for array stores on JSOs).
+      tempSortedQueryTypes.add(program.getTypeJavaLangObject());
+      /*
+       * Reserve query id 1 for java.lang.String to facilitate the mashup case.
+       * Also, facilitates detecting an object as a Java String (see Cast.java)
+       * Multiple GWT modules need to modify String's prototype the same way.
+       */
+      tempSortedQueryTypes.add(program.getTypeJavaLangString());
+      // Add the rest.
+      tempSortedQueryTypes.addAll(sortedQueryTypes);
+      sortedQueryTypes = new ArrayList<JReferenceType>(tempSortedQueryTypes);
+      return sortedQueryTypes;
     }
   }
 
@@ -413,6 +429,7 @@ public class CastNormalizer {
         // Just leave the cast in, GenerateJavaScriptAST will ignore it.
         return;
       }
+      SourceInfo info = x.getSourceInfo();
       if (toType instanceof JNullType) {
         /*
          * Magic: a null type cast means the user tried a cast that couldn't
@@ -425,7 +442,7 @@ public class CastNormalizer {
         /*
          * Override the type of the magic method with the null type.
          */
-        JMethodCall call = new JMethodCall(x.getSourceInfo(), null, method, toType);
+        JMethodCall call = new JMethodCall(info, null, method, toType);
         call.addArg(expr);
         replaceExpr = call;
       } else if (toType instanceof JReferenceType) {
@@ -438,7 +455,6 @@ public class CastNormalizer {
           // just remove the cast
           replaceExpr = curExpr;
         } else {
-
           JMethod method;
           boolean isJsoCast = program.typeOracle.isEffectivelyJavaScriptObject(refType);
           if (isJsoCast) {
@@ -452,11 +468,10 @@ public class CastNormalizer {
             method = program.getIndexedMethod("Cast.dynamicCast");
           }
           // override the type of the called method with the target cast type
-          JMethodCall call = new JMethodCall(x.getSourceInfo(), null, method, toType);
+          JMethodCall call = new JMethodCall(info, null, method, toType);
           call.addArg(curExpr);
           if (!isJsoCast) {
-            JIntLiteral qId = program.getLiteralInt(queryIds.get(refType));
-            call.addArg(qId);
+            call.addArg(new JsQueryType(info, refType, queryIdsByType.get(refType)));
           }
           replaceExpr = call;
         }
@@ -485,7 +500,7 @@ public class CastNormalizer {
              * do the narrowing conversion.
              */
             JMethod castMethod = program.getIndexedMethod("LongLib.toInt");
-            JMethodCall call = new JMethodCall(x.getSourceInfo(), null, castMethod);
+            JMethodCall call = new JMethodCall(info, null, castMethod);
             call.addArg(expr);
             expr = call;
             fromType = tInt;
@@ -527,7 +542,7 @@ public class CastNormalizer {
 
         if (methodName != null) {
           JMethod castMethod = program.getIndexedMethod(methodName);
-          JMethodCall call = new JMethodCall(x.getSourceInfo(), null, castMethod, toType);
+          JMethodCall call = new JMethodCall(info, null, castMethod, toType);
           call.addArg(expr);
           replaceExpr = call;
         } else {
@@ -568,13 +583,19 @@ public class CastNormalizer {
         JMethodCall call = new JMethodCall(x.getSourceInfo(), null, method);
         call.addArg(x.getExpr());
         if (!isJsoCast) {
-          JIntLiteral qId = program.getLiteralInt(queryIds.get(toType));
-          call.addArg(qId);
+          call.addArg(new JsQueryType(x.getSourceInfo(), toType, queryIdsByType.get(toType)));
         }
         ctx.replaceMe(call);
       }
     }
   }
+
+  private static final Comparator<JsQueryType> JSQUERY_COMPARATOR = new Comparator<JsQueryType>() {
+    @Override
+    public int compare(JsQueryType o1, JsQueryType o2) {
+      return o1.getQueryId() - o2.getQueryId();
+    }
+  };
 
   public static void exec(JProgram program, boolean disableCastChecking) {
     new CastNormalizer(program, disableCastChecking).execImpl();
@@ -584,8 +605,7 @@ public class CastNormalizer {
 
   private final JProgram program;
 
-  private final Map<JReferenceType, Integer> queryIds =
-      new IdentityHashMap<JReferenceType, Integer>();
+  private Map<JReferenceType, Integer> queryIdsByType;
 
   private CastNormalizer(JProgram program, boolean disableCastChecking) {
     this.program = program;
