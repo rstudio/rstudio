@@ -99,8 +99,16 @@ public:
 };
 
 
-// R history file
-const char * const kRHistory = ".Rhistory";
+FilePath rHistoryFilePath()
+{
+   std::string histFile = core::system::getenv("R_HISTFILE");
+   boost::algorithm::trim(histFile);
+   if (histFile.empty())
+      histFile = ".Rhistory";
+
+   return s_options.rHistoryDir().complete(histFile);
+}
+
    
 FilePath rSaveGlobalEnvironmentFilePath()
 {
@@ -269,6 +277,9 @@ SEXP win32QuitHook(SEXP call, SEXP op, SEXP args, SEXP rho);
 // one-time per session initialization
 Error initialize()
 {
+   // initialize console history capacity
+   r::session::consoleHistory().setCapacityFromRHistsize();
+
    // install R tools
    FilePath toolsFilePath = s_options.rSourcePath.complete("Tools.R");
    Error error = r::sourceManager().sourceLocal(toolsFilePath);
@@ -339,7 +350,7 @@ Error initialize()
    else
    {  
       // restore console history
-      FilePath historyPath = s_options.rHistoryDir().complete(kRHistory);
+      FilePath historyPath = rHistoryFilePath();
       error = consoleHistory().loadFromFile(historyPath, false);
       if (error)
          reportHistoryAccessError("read history from", historyPath, error);
@@ -902,7 +913,7 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
          // save history if we either always save history or saveact == SA_SAVE
          if (s_options.alwaysSaveHistory() || saveact == SA_SAVE)
          {
-            FilePath historyPath = s_options.rHistoryDir().complete(kRHistory);
+            FilePath historyPath = rHistoryFilePath();
             Error error = consoleHistory().saveToFile(historyPath);
             if (error)
                reportHistoryAccessError("write history to", historyPath, error);
@@ -1059,10 +1070,7 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    
    // set source reloading behavior
    sourceManager().setAutoReload(options.autoReloadSource);
-   
-   // set console history size
-   consoleHistory().setCapacity(options.consoleHistorySize);
-   
+     
    // initialize suspended session path
    FilePath userScratchPath = s_options.userScratchPath;
    s_suspendedSessionPath = userScratchPath.complete("suspended-session");  

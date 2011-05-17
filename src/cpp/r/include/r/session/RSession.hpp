@@ -50,8 +50,7 @@ struct ROptions
          autoReloadSource(false),
          shellEscape(false),
          restoreWorkspace(true),
-         saveWorkspace(SA_SAVEASK),
-         consoleHistorySize(250)
+         saveWorkspace(SA_SAVEASK)
    {
    }
    core::FilePath userHomePath;
@@ -71,7 +70,6 @@ struct ROptions
    bool shellEscape;
    bool restoreWorkspace;
    SA_TYPE saveWorkspace;
-   int consoleHistorySize;
 };
       
 struct RInitInfo

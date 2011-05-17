@@ -15,7 +15,6 @@ package org.rstudio.studio.client.server.remote;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
@@ -39,6 +38,7 @@ import org.rstudio.studio.client.workbench.model.QuotaStatus;
 import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileEvent;
 import org.rstudio.studio.client.workbench.views.console.events.*;
 import org.rstudio.studio.client.workbench.views.console.model.ConsolePrompt;
+import org.rstudio.studio.client.workbench.views.console.model.ConsoleResetHistory;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
 import org.rstudio.studio.client.workbench.views.data.model.DataView;
 import org.rstudio.studio.client.workbench.views.edit.events.ShowEditorEvent;
@@ -553,8 +553,8 @@ class RemoteServerEventListener
          }
          else if (type.equals(ClientEvent.ConsoleResetHistory))
          {
-            JsArrayString history = event.getData();
-            eventBus.fireEvent(new ConsoleResetHistoryEvent(history));
+            ConsoleResetHistory reset = event.getData();
+            eventBus.fireEvent(new ConsoleResetHistoryEvent(reset));
          }
          else if (type.equals(ClientEvent.SessionSerialization))
          {

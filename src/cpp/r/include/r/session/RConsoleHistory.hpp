@@ -49,6 +49,13 @@ private:
 public:   
    void setCapacity(int capacity);
 
+   void setCapacityFromRHistsize();
+
+   int capacity() const
+   {
+      return historyBuffer_.capacity();
+   }
+
    void setRemoveDuplicates(bool removeDuplicates);
    
    void add(const std::string& command);
@@ -63,7 +70,7 @@ public:
 
    void clear();
 
-   void remove(int index);
+   void remove(const std::vector<int>& indexes);
 
    void subset(int beginIndex, // inclusive
                int endIndex,   // exclusive,
@@ -79,6 +86,9 @@ public:
    {
       return onAdd_.connect(slot);
    }
+
+private:
+   void safeRemove(int index);
    
 private:   
    bool removeDuplicates_;
