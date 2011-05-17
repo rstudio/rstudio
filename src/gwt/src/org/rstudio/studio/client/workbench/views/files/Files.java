@@ -30,7 +30,7 @@ import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.WorkbenchEventHelper;
+import org.rstudio.studio.client.common.WorkbenchHelper;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserHandler;
@@ -520,7 +520,7 @@ public class Files
    @Handler
    void onSyncWorkingDir()
    {
-      WorkbenchEventHelper.sendSetWdToConsole(currentPath_, eventBus_);
+      WorkbenchHelper.sendSetWdToConsole(currentPath_, eventBus_);
    }
 
    @Handler
