@@ -49,7 +49,7 @@ public class Logging {
     String strongName = null;
     if (threadLocalRequest != null) {
       // can be null during tests
-      threadLocalRequest.getHeader(RpcRequestBuilder.STRONG_NAME_HEADER);
+      strongName = threadLocalRequest.getHeader(RpcRequestBuilder.STRONG_NAME_HEADER);
     }
     RemoteLoggingServiceUtil.logOnServer(logRecordJson, strongName,
         deobfuscator, null);
