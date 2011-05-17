@@ -77,6 +77,10 @@ public class SessionInfo extends JavaScriptObject
    public final native JsArrayString getConsoleHistory() /*-{
       return this.console_history;
    }-*/;
+   
+   public final native int getConsoleHistoryCapacity() /*-{
+      return this.console_history_capacity;
+   }-*/;
 
    public final native RpcObjectList<ConsoleAction> getConsoleActions() /*-{
       return this.console_actions;

@@ -22,6 +22,14 @@ public class HistoryEntry extends JavaScriptObject
    {
    }
    
+   public static final native HistoryEntry create(int index, String command) /*-{
+      var entry = new Object();
+      entry.index = index;
+      entry.timestamp = 0;
+      entry.command = command;
+      return entry;
+   }-*/;
+   
    public final long getIndex()
    { 
       return new Double(getIndexNative()).longValue();

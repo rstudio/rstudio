@@ -312,7 +312,31 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
       table_.setInnerText("");
       selectedRows_.clear();
    }
+   
+   // TODO: handle physical to logical
+   public int getRowCount()
+   {
+      return table_.getRows().getLength();
+   }
+   
+   // TODO: handle physical to logical
+   public void removeTopRow()
+   {
+      setSelected(0, 1, false);
+      table_.getRows().getItem(0).removeFromParent();
+   }
+   
+   // TODO: handle physical to logical
+   public ArrayList<Integer> getSelectedRowIndexes()
+   {
+      sortSelectedRows();
 
+      ArrayList<Integer> results = new ArrayList<Integer>();
+      for (TableRowElement row : selectedRows_)
+         results.add(row.getRowIndex());
+      return results;
+   }
+   
    private boolean isSelected(TableRowElement tr)
    {
       return tr.getClassName().contains(selectedClassName_);

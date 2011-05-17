@@ -324,6 +324,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    json::Array historyArray;
    r::session::consoleHistory().asJson(&historyArray);
    sessionInfo["console_history"] = historyArray;
+   sessionInfo["console_history_capacity"] =
+                              r::session::consoleHistory().capacity();
    
    // client state
    json::Object clientStateObject;
@@ -1267,7 +1269,10 @@ void rConsoleHistoryReset()
 {
    json::Array historyJson;
    r::session::consoleHistory().asJson(&historyJson);
-   ClientEvent event(kConsoleResetHistory, historyJson); 
+   json::Object resetJson;
+   resetJson["history"] = historyJson;
+   resetJson["preserve_ui_context"] = false;
+   ClientEvent event(kConsoleResetHistory, resetJson);
    session::clientEventQueue().add(event);
 }
 
@@ -1885,7 +1890,6 @@ int main (int argc, char * const argv[])
       rOptions.serverMode = serverMode;
       rOptions.autoReloadSource = options.autoReloadSource();
       rOptions.shellEscape = options.rShellEscape();
-      rOptions.consoleHistorySize = 250;
       rOptions.restoreWorkspace = userSettings().loadRData();
       // save action
       int saveAction = userSettings().saveAction();

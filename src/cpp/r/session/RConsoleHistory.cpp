@@ -13,12 +13,15 @@
 
 #include <r/session/RConsoleHistory.hpp>
 
+#include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/tokenizer.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/system/System.hpp>
+#include <core/SafeConvert.hpp>
 
 using namespace core;
 
@@ -34,12 +37,22 @@ ConsoleHistory& consoleHistory()
 ConsoleHistory::ConsoleHistory()
    : removeDuplicates_(true)
 {
-   setCapacity(500);
+   setCapacity(512);
 }
    
 void ConsoleHistory::setCapacity(int capacity)
 {
    historyBuffer_.set_capacity(capacity);
+}
+
+void ConsoleHistory::setCapacityFromRHistsize()
+{
+   std::string histSize = core::system::getenv("R_HISTSIZE");
+   if (!histSize.empty())
+   {
+      setCapacity(
+         safe_convert::stringTo<std::size_t>(histSize, capacity()));
+   }
 }
 
 void ConsoleHistory::setRemoveDuplicates(bool removeDuplicates)
@@ -85,10 +98,20 @@ void ConsoleHistory::clear()
    historyBuffer_.clear();
 }
 
-void ConsoleHistory::remove(int index)
+
+void ConsoleHistory::remove(const std::vector<int>& indexes)
 {
-   if (index >= 0 && index < (int)historyBuffer_.size())
-      historyBuffer_.erase(historyBuffer_.begin() + index);
+   // make a copy and sort descending
+   std::vector<int> sortedIndexes;
+   std::copy(indexes.begin(),
+             indexes.end(),
+             std::back_inserter(sortedIndexes));
+   std::sort(sortedIndexes.begin(), sortedIndexes.end(),std::greater<int>());
+
+   // remove them all
+   std::for_each(sortedIndexes.begin(),
+                 sortedIndexes.end(),
+                 boost::bind(&ConsoleHistory::safeRemove, this, _1));
 }
    
 void ConsoleHistory::subset(int beginIndex, // inclusive
@@ -150,6 +173,12 @@ Error ConsoleHistory::saveToFile(const FilePath& filePath) const
                                                       filePath,
                                                       historyBuffer_,
                                                       core::stringifyString);
+}
+
+void ConsoleHistory::safeRemove(int index)
+{
+   if (index >= 0 && index < (int)historyBuffer_.size())
+      historyBuffer_.erase(historyBuffer_.begin() + index);
 }
 
 } // namespace session

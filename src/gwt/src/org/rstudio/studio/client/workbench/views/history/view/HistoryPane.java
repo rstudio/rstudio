@@ -331,17 +331,37 @@ public class HistoryPane extends WorkbenchPane
       return table;
    }
 
-   public void setRecentCommands(ArrayList<HistoryEntry> entries)
+   public void setRecentCommands(ArrayList<HistoryEntry> entries,
+                                 boolean scrollToBottom)
    {
       commandList_.clear();
       commandList_.addItems(entries, true);
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      if (scrollToBottom)
       {
-         public void execute()
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
          {
-            recentScrollPanel_.scrollToBottom();
-         }
-      });
+            public void execute()
+            {
+               recentScrollPanel_.scrollToBottom();
+            }
+         });
+      }
+   }
+   
+   public void truncateRecentCommands(int maxCommands)
+   {
+      while(commandList_.getRowCount() > maxCommands)
+         commandList_.removeTopRow();
+   }
+   
+   public ArrayList<Integer> getRecentCommandsSelectedRowIndexes()
+   {
+      return commandList_.getSelectedRowIndexes();
+   }
+   
+   public int getRecentCommandsRowsDisplayed()
+   {
+      return commandList_.getRowCount();
    }
 
    public void setMoreCommands(long moreCommands)
@@ -409,6 +429,16 @@ public class HistoryPane extends WorkbenchPane
             searchWidget_.fireEvent(event);
          }
       };
+   }
+   
+   public int getRecentCommandsScrollPosition()
+   {
+      return recentScrollPanel_.getVerticalScrollPosition();
+   }
+   
+   public void setRecentCommandsScrollPosition(int scrollPosition)
+   {
+      recentScrollPanel_.setVerticalScrollPosition(scrollPosition);
    }
 
    private HasHistory getActiveHistory()
@@ -542,7 +572,7 @@ public class HistoryPane extends WorkbenchPane
       return new Toolbar(new Widget[] {
             commands_.historySendToConsole().createToolbarButton(),
             commands_.historySendToSource().createToolbarButton(),
-           // commands_.historyRemoveEntries().createToolbarButton(),
+            commands_.historyRemoveEntries().createToolbarButton(),
             commands_.clearHistory().createToolbarButton()
       }, new Widget[] {
             searchWidget_

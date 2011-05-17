@@ -12,6 +12,8 @@
  */
 package org.rstudio.studio.client.workbench.views.console.events;
 
+import org.rstudio.studio.client.workbench.views.console.model.ConsoleResetHistory;
+
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.shared.GwtEvent;
 
@@ -20,14 +22,19 @@ public class ConsoleResetHistoryEvent extends GwtEvent<ConsoleResetHistoryHandle
    public static final GwtEvent.Type<ConsoleResetHistoryHandler> TYPE =
       new GwtEvent.Type<ConsoleResetHistoryHandler>();
     
-   public ConsoleResetHistoryEvent(JsArrayString history)
+   public ConsoleResetHistoryEvent(ConsoleResetHistory reset)
    {
-      history_ = history;
+      reset_ = reset;
    }
    
    public JsArrayString getHistory()
    {
-      return history_;
+      return reset_.getHistory();
+   }
+   
+   public boolean getPreserveUIContext()
+   {
+      return reset_.getPreserveUIContext();
    }
    
    @Override
@@ -42,5 +49,5 @@ public class ConsoleResetHistoryEvent extends GwtEvent<ConsoleResetHistoryHandle
       return TYPE;
    }
    
-   private final JsArrayString history_;
+   private final ConsoleResetHistory reset_;
 }
