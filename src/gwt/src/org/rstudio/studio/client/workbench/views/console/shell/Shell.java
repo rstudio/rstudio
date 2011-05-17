@@ -20,9 +20,7 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -275,7 +273,7 @@ public class Shell implements ConsoleInputHandler,
             && initialInput_ != null
             && initialInput_.length() > 0)
       {
-         view_.getInputEditorDisplay().setText(initialInput_);
+         view_.getInputEditorDisplay().setInputText(initialInput_);
          view_.ensureInputVisible();
       }
 
@@ -333,7 +331,7 @@ public class Shell implements ConsoleInputHandler,
    {
       InputEditorDisplay display = view_.getInputEditorDisplay();
       display.clear();
-      display.setText(event.getCode());
+      display.setInputText(event.getCode());
       if (event.shouldExecute())
          processCommandEntry();
       else
@@ -501,9 +499,10 @@ public class Shell implements ConsoleInputHandler,
          historyTail_ = input_.getText();
       }
 
-      input_.setText(newPos < history_.size() ? history_.get(newPos)
-                     : historyTail_ != null ? historyTail_
-                     : "");
+      input_.setInputText(
+            newPos < history_.size() ? history_.get(newPos) :
+            historyTail_ != null ? historyTail_ :
+            "");
       historyPos_ = newPos;
 
       view_.ensureInputVisible();

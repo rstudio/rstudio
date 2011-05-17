@@ -21,7 +21,7 @@ public interface InputEditorDisplay extends HasAllFocusHandlers,
                                             HasClickHandlers
 {
    String getText() ;
-   void setText(String string) ;
+   void setInputText(String string) ;
    boolean hasSelection() ;
    InputEditorSelection getSelection() ;
    void setSelection(InputEditorSelection selection) ;

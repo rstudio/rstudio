@@ -244,9 +244,10 @@ public class AceEditor implements DocDisplay, InputEditorDisplay
             getSession().getSelection().getCursor().getRow());
    }
 
-   public void setText(String string)
+   public void setInputText(String string)
    {
       setCode(string, false);
+      getSession().getSelection().moveCursorFileEnd();
    }
 
    public boolean hasSelection()

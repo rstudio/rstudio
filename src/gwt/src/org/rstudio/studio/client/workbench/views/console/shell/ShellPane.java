@@ -51,9 +51,13 @@ public class ShellPane extends Composite implements Shell.Display,
 
       SelectInputClickHandler secondaryInputHandler = new SelectInputClickHandler();
 
-      output_ = new PreWidget() ;
-      output_.setStylePrimaryName(styles_.output()) ;
+      output_ = new PreWidget();
+      output_.setStylePrimaryName(styles_.output());
       output_.addClickHandler(secondaryInputHandler);
+
+      pendingInput_ = new PreWidget();
+      pendingInput_.setStyleName(styles_.output());
+      pendingInput_.addClickHandler(secondaryInputHandler);
 
       prompt_ = new HTML() ;
       prompt_.setStylePrimaryName(styles_.prompt()) ;
@@ -102,6 +106,7 @@ public class ShellPane extends Composite implements Shell.Display,
       verticalPanel_.addStyleName("ace_line");
       FontSizer.applyNormalFontSize(verticalPanel_);
       verticalPanel_.add(output_) ;
+      verticalPanel_.add(pendingInput_) ;
       verticalPanel_.add(inputLine_) ;
       verticalPanel_.setWidth("100%") ;
 
@@ -147,6 +152,8 @@ public class ShellPane extends Composite implements Shell.Display,
 
    public void consoleWriteInput(String input)
    {
+      pendingInput_.setText("");
+      pendingInput_.setVisible(false);
       output(input, styles_.input() + KEYWORD_CLASS_NAME, false);
       if (!DomUtils.selectionExists())
          scrollPanel_.scrollToBottom();
@@ -480,14 +487,20 @@ public class ShellPane extends Composite implements Shell.Display,
       @SuppressWarnings("unused")
       String promptText = prompt_.getElement().getInnerText();
       String commandText = input_.getCode();
-      input_.setText("");
+      input_.setInputText("");
       prompt_.setHTML("");
-/*
-      output(promptText, styles_.prompt() + " " + KEYWORD_CLASS_NAME, false);
-      output(commandText + "\n",
-             styles_.command() + " " + KEYWORD_CLASS_NAME, 
-             false);
-*/
+
+      SpanElement pendingPrompt = Document.get().createSpanElement();
+      pendingPrompt.setInnerText(promptText);
+      pendingPrompt.setClassName(styles_.prompt() + " " + KEYWORD_CLASS_NAME);
+
+      SpanElement pendingInput = Document.get().createSpanElement();
+      pendingInput.setInnerText(StringUtil.notNull(commandText).split("\n")[0] + "\n");
+      pendingInput.setClassName(styles_.command() + " " + KEYWORD_CLASS_NAME);
+      pendingInput_.getElement().appendChild(pendingPrompt);
+      pendingInput_.getElement().appendChild(pendingInput);
+      pendingInput_.setVisible(true);
+
       ensureInputVisible();
 
       return commandText ;
@@ -563,6 +576,7 @@ public class ShellPane extends Composite implements Shell.Display,
    private int maxLines_ = -1;
    private boolean cleared_ = false;
    private final PreWidget output_ ;
+   private PreWidget pendingInput_ ;
    // Save a reference to the most recent output text node in case the
    // next bit of output contains \b or \r control characters
    private Text trailingOutput_ ;

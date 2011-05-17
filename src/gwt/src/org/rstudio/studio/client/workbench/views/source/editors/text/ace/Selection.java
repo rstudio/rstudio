@@ -57,11 +57,14 @@ public class Selection extends JavaScriptObject
       });
    }
 
+   public native final void moveCursorFileEnd() /*-{
+      this.moveCursorFileEnd();
+   }-*/;
+
    private native void onCursorChange(Command command) /*-{
       this.on("changeCursor",
               $entry(function () {
                  command.@com.google.gwt.user.client.Command::execute()();
               }));
    }-*/;
-
 }
