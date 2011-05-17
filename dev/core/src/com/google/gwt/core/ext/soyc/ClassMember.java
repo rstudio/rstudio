@@ -24,8 +24,8 @@ import java.util.SortedSet;
  * {@link #getMethods()} may be incomplete when compared to the original Java
  * type.
  */
-public interface ClassMember extends HasDependencies,
-    HasOverrides<ClassMember>, Member {
+public interface ClassMember extends HasDependencies, Member {
+
   /**
    * Returns the fields of the ClassMember that have been retained in the
    * compiled output.

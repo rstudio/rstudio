@@ -16,16 +16,12 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.Context;
-import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JClassType;
-import com.google.gwt.dev.jjs.ast.JExpression;
-import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNode;
-import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
@@ -49,54 +45,35 @@ public class MethodCallTightener {
 
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
-      JMethod method = x.getTarget();
-      JExpression instance = x.getInstance();
-
       // The method call is already known statically
       if (!x.canBePolymorphic()) {
         return;
       }
 
-      JReferenceType instanceType = ((JReferenceType) instance.getType()).getUnderlyingType();
-      JReferenceType enclosingType = method.getEnclosingType();
-
-      if (instanceType == enclosingType || instanceType instanceof JInterfaceType) {
-        // This method call is as tight as it can be for the type of the
-        // qualifier
+      JReferenceType instanceType =
+          ((JReferenceType) x.getInstance().getType()).getUnderlyingType();
+      if (!(instanceType instanceof JClassType)) {
+        // Cannot tighten.
         return;
       }
 
-      if (instanceType instanceof JArrayType) {
-        // shouldn't get here; arrays don't have extra methods
+      JMethod method = x.getTarget();
+      if (instanceType == method.getEnclosingType()) {
+        // Cannot tighten.
         return;
       }
 
-      if (instanceType instanceof JNullType) {
-        // TypeTightener will handle this case
-        return;
-      }
-
-      assert (instanceType instanceof JClassType);
-
-      /*
-       * Search myself and all my super types to find a tighter implementation
-       * of the called method, if possible.
-       */
-      JMethod foundMethod = null;
-      JClassType type;
-      outer : for (type = (JClassType) instanceType; type != null && type != enclosingType; type =
-          type.getSuperClass()) {
-        for (JMethod methodIt : type.getMethods()) {
-          if (methodOverrides(methodIt, method)) {
-            foundMethod = methodIt;
-            break outer;
-          }
-        }
-      }
-
+      JMethod foundMethod =
+          program.typeOracle.getPolyMethod((JClassType) instanceType, method.getSignature());
       if (foundMethod == null) {
+        // The declared instance type is abstract and doesn't have the method.
         return;
       }
+      if (foundMethod == method) {
+        // The instance type doesn't override the method.
+        return;
+      }
+      assert foundMethod.canBePolymorphic();
 
       /*
        * Replace the call to the original method with a call to the same method
@@ -110,30 +87,6 @@ public class MethodCallTightener {
     @Override
     public void endVisit(JNewInstance x, Context ctx) {
       // Do not tighten new operations.
-    }
-
-    /**
-     * Check whether <code>subMethod</code> overrides <code>supMethod</code>.
-     * For the purposes of this method, indirect overrides are considered
-     * overrides. For example, if method A.m overrides B.m, and B.m overrides
-     * C.m, then A.m is considered to override C.m. Additionally, implementing
-     * an interface is considered <q>overriding</q> for the purposes of this
-     * method.
-     * 
-     */
-    private boolean methodOverrides(JMethod subMethod, JMethod supMethod) {
-      if (subMethod.getParams().size() != supMethod.getParams().size()) {
-        // short cut: check the number of parameters
-        return false;
-      }
-
-      if (!subMethod.getName().equals(supMethod.getName())) {
-        // short cut: check the method names
-        return false;
-      }
-
-      // long way: get all overrides and see if supMethod is included
-      return program.typeOracle.getAllOverrides(subMethod).contains(supMethod);
     }
   }
 

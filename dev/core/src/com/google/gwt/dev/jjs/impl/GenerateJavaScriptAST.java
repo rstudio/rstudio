@@ -146,6 +146,7 @@ import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.collect.Maps;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -198,7 +199,7 @@ public class GenerateJavaScriptAST {
         recordSymbol(x, jsName);
       } else {
         JsName jsName;
-        if (belongsToSpecialObfuscatedType(x)) {
+        if (specialObfuscatedFields.containsKey(x)) {
           jsName = peek().declareName(mangleNameSpecialObfuscate(x));
           jsName.setObfuscatable(false);
         } else {
@@ -319,13 +320,14 @@ public class GenerateJavaScriptAST {
       String name = x.getName();
       if (x.needsVtable()) {
         if (polymorphicNames.get(x) == null) {
-          String mangleName = mangleNameForPoly(x);
           JsName polyName;
-          if (belongsToSpecialObfuscatedType(x)) {
+          if (x.isPrivate()) {
+            polyName = interfaceScope.declareName(mangleNameForPrivatePoly(x), name);
+          } else if (specialObfuscatedMethodSigs.containsKey(x.getSignature())) {
             polyName = interfaceScope.declareName(mangleNameSpecialObfuscate(x));
             polyName.setObfuscatable(false);
           } else {
-            polyName = interfaceScope.declareName(mangleName, name);
+            polyName = interfaceScope.declareName(mangleNameForPoly(x), name);
           }
           polymorphicNames.put(x, polyName);
         }
@@ -2032,20 +2034,14 @@ public class GenerateJavaScriptAST {
   private final JProgram program;
 
   /**
-   * All of the fields and polymorphic methods in String.
-   * 
-   * Because we modify String's prototype, all fields and polymorphic methods on
-   * String's super types need special handling.
+   * All of the fields in String and Array need special handling for interop.
    */
-  private final Map<String, String> specialObfuscatedIdents = new HashMap<String, String>();
+  private final Map<JField, String> specialObfuscatedFields = new HashMap<JField, String>();
 
   /**
-   * All of the super types of String.
-   * 
-   * Because we modify String's prototype, all fields and polymorphic methods on
-   * String's super types need special handling.
+   * All of the methods in String and Array need special handling for interop.
    */
-  private final Set<JDeclaredType> specialObfuscatedTypes = new HashSet<JDeclaredType>();
+  private final Map<String, String> specialObfuscatedMethodSigs = new HashMap<String, String>();
 
   /**
    * If true, polymorphic functions are made anonymous vtable declarations and
@@ -2084,54 +2080,54 @@ public class GenerateJavaScriptAST {
 
     this.stripStack =
         JsStackEmulator.getStackMode(propertyOracles) == JsStackEmulator.StackMode.STRIP;
+
     /*
-     * Because we modify String's prototype, all fields and polymorphic methods
-     * on String's super types need special handling.
+     * Because we modify the JavaScript String prototype, all fields and
+     * polymorphic methods on String and super types need special handling.
      */
-    specialObfuscatedTypes.add(program.getIndexedType("Comparable"));
-    specialObfuscatedTypes.add(program.getIndexedType("CharSequence"));
-    specialObfuscatedTypes.add(program.getTypeJavaLangObject());
-    specialObfuscatedTypes.add(program.getTypeJavaLangString());
-    specialObfuscatedTypes.add(program.getIndexedType("Array"));
 
     // Object polymorphic
-    specialObfuscatedIdents.put("getClass", "gC");
-    specialObfuscatedIdents.put("hashCode", "hC");
-    specialObfuscatedIdents.put("equals", "eQ");
-    specialObfuscatedIdents.put("toString", "tS");
-    specialObfuscatedIdents.put("finalize", "fZ");
-
-    // Object fields
-    specialObfuscatedIdents.put("expando", "eX");
-    specialObfuscatedIdents.put("typeMarker", "tM");
-    specialObfuscatedIdents.put("castableTypeMap", "cM");
-
+    Map<String, String> namesToIdents = new HashMap<String, String>();
+    namesToIdents.put("getClass", "gC");
+    namesToIdents.put("hashCode", "hC");
+    namesToIdents.put("equals", "eQ");
+    namesToIdents.put("toString", "tS");
+    namesToIdents.put("finalize", "fZ");
     // String polymorphic
-    specialObfuscatedIdents.put("charAt", "cA");
-    specialObfuscatedIdents.put("compareTo", "cT");
-    specialObfuscatedIdents.put("length", "lN");
-    specialObfuscatedIdents.put("subSequence", "sS");
+    namesToIdents.put("charAt", "cA");
+    namesToIdents.put("compareTo", "cT");
+    namesToIdents.put("length", "lN");
+    namesToIdents.put("subSequence", "sS");
 
-    // Array magic field
-    specialObfuscatedIdents.put("arrayClass", "aC");
-    specialObfuscatedIdents.put("queryId", "qI");
-  }
-
-  boolean belongsToSpecialObfuscatedType(JField x) {
-    return specialObfuscatedTypes.contains(x.getEnclosingType());
-  }
-
-  boolean belongsToSpecialObfuscatedType(JMethod x) {
-    if (specialObfuscatedTypes.contains(x.getEnclosingType())) {
-      return true;
-    }
-    for (Object element : x.getOverrides()) {
-      JMethod override = (JMethod) element;
-      if (specialObfuscatedTypes.contains(override.getEnclosingType())) {
-        return true;
+    List<JMethod> methods = new ArrayList<JMethod>(program.getTypeJavaLangObject().getMethods());
+    methods.addAll(program.getIndexedType("Comparable").getMethods());
+    methods.addAll(program.getIndexedType("CharSequence").getMethods());
+    for (JMethod method : methods) {
+      if (method.canBePolymorphic()) {
+        String ident = namesToIdents.get(method.getName());
+        assert ident != null;
+        specialObfuscatedMethodSigs.put(method.getSignature(), ident);
       }
     }
-    return false;
+
+    namesToIdents.clear();
+    // Object fields
+    namesToIdents.put("expando", "eX");
+    namesToIdents.put("typeMarker", "tM");
+    namesToIdents.put("castableTypeMap", "cM");
+    // Array magic field
+    namesToIdents.put("arrayClass", "aC");
+    namesToIdents.put("queryId", "qI");
+
+    List<JField> fields = new ArrayList<JField>(program.getTypeJavaLangObject().getFields());
+    fields.addAll(program.getIndexedType("Array").getFields());
+    for (JField field : fields) {
+      if (!field.isStatic()) {
+        String ident = namesToIdents.get(field.getName());
+        assert ident != null;
+        specialObfuscatedFields.put(field, ident);
+      }
+    }
   }
 
   String getNameString(HasName hasName) {
@@ -2155,30 +2151,29 @@ public class GenerateJavaScriptAST {
   }
 
   String mangleNameForPoly(JMethod x) {
-    if (x.getOverrides().isEmpty()) {
-      return mangleNameForPolyImpl(x);
-    } else {
-      for (JMethod override : x.getOverrides()) {
-        if (override.getOverrides().isEmpty()) {
-          return mangleNameForPolyImpl(override);
-        }
-      }
+    assert !x.isPrivate() && !x.isStatic();
+    StringBuffer sb = new StringBuffer();
+    sb.append(getNameString(x));
+    sb.append("__");
+    for (int i = 0; i < x.getOriginalParamTypes().size(); ++i) {
+      JType type = x.getOriginalParamTypes().get(i);
+      sb.append(type.getJavahSignatureName());
     }
-    throw new InternalCompilerException("Cycle in overrides???");
+    sb.append(x.getOriginalReturnType().getJavahSignatureName());
+    return sb.toString();
   }
 
-  String mangleNameForPolyImpl(JMethod x) {
+  String mangleNameForPrivatePoly(JMethod x) {
+    assert x.isPrivate() && !x.isStatic();
     StringBuffer sb = new StringBuffer();
-    if (x.isPrivate() && !x.isStatic()) {
-      /*
-       * Private instance methods in different classes should not override each
-       * other, so they must have distinct polymorphic names. Therefore, add the
-       * class name to the mangled name.
-       */
-      sb.append("private$");
-      sb.append(getNameString(x.getEnclosingType()));
-      sb.append("$");
-    }
+    /*
+     * Private instance methods in different classes should not override each
+     * other, so they must have distinct polymorphic names. Therefore, add the
+     * class name to the mangled name.
+     */
+    sb.append("private$");
+    sb.append(getNameString(x.getEnclosingType()));
+    sb.append("$");
     sb.append(getNameString(x));
     sb.append("__");
     for (int i = 0; i < x.getOriginalParamTypes().size(); ++i) {
@@ -2190,10 +2185,10 @@ public class GenerateJavaScriptAST {
   }
 
   String mangleNameSpecialObfuscate(JField x) {
-    assert (specialObfuscatedIdents.containsKey(x.getName()));
+    assert (specialObfuscatedFields.containsKey(x));
     switch (output) {
       case OBFUSCATED:
-        return specialObfuscatedIdents.get(x.getName());
+        return specialObfuscatedFields.get(x);
       case PRETTY:
         return x.getName() + "$";
       case DETAILED:
@@ -2203,10 +2198,10 @@ public class GenerateJavaScriptAST {
   }
 
   String mangleNameSpecialObfuscate(JMethod x) {
-    assert (specialObfuscatedIdents.containsKey(x.getName()));
+    assert (specialObfuscatedMethodSigs.containsKey(x.getSignature()));
     switch (output) {
       case OBFUSCATED:
-        return specialObfuscatedIdents.get(x.getName());
+        return specialObfuscatedMethodSigs.get(x.getSignature());
       case PRETTY:
         return x.getName() + "$";
       case DETAILED:
