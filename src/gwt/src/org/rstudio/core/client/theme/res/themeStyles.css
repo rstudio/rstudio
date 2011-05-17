@@ -1,7 +1,7 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
-@external ace_editor, ace_text-layer, ace_gutter, ace_marker-layer ace_bracket;
+@external ace_editor, ace_text-layer, ace_gutter;
 @external cueText;
 @external search;
 @external highlight, disabled;
@@ -133,12 +133,6 @@ pre {
 
 .ace_editor .ace_gutter {
    width: 3.3em !important;
-}
-
-.ace_editor .ace_marker-layer .ace_bracket {
-   margin: 0;
-   border: 0;
-   background-color: #EE3;
 }
 
 .gwt-MenuBar {

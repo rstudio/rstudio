@@ -149,3 +149,4 @@
   
 }
 .nocolor.ace_editor .ace_line span {color:#FC803A !important;}
+.ace_bracket {margin: 0 !important; border: 0 !important; background-color: #FCE94F;}

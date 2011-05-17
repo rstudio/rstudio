@@ -19,6 +19,9 @@ Find.find('ace/lib/ace/theme/') do |file|
   
   raise "No keyword color found for #{style_name}" unless /\.ace_keyword\b.*?\s+(color:[^;\n]+)/m =~ rules
   rules += "\n.nocolor.ace_editor .ace_line span {#{$1} !important;}"
+  
+  raise "No bracket color found for #{style_name}" unless /\.ace_bracket\b.*?\s+border: 1px solid ([^;\n]+)/m =~ rules
+  rules += "\n.ace_bracket {margin: 0 !important; border: 0 !important; background-color: #{$1};}"
 
   newfile = "#{OutDir}/#{File.basename(file).gsub(/\.js$/, '.css')}"
   File.open(newfile, 'w') {|f| f.write(rules)}

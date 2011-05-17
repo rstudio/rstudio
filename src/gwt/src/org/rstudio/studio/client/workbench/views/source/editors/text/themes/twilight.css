@@ -151,3 +151,4 @@ color:#5F5A60;
   color:#494949;
 }
 .nocolor.ace_editor .ace_line span {color:#CDA869 !important;}
+.ace_bracket {margin: 0 !important; border: 0 !important; background-color: rgba(255, 255, 255, 0.25);}
