@@ -714,7 +714,7 @@ public class MakeTopLevelHtmlForPerm {
           outFile.println("<td class=\"soyc-bargraph-col\">");
           outFile.println("<div class=\"soyc-bar-graph goog-inline-block\">");
           // CHECKSTYLE_OFF
-          outFile.println("<div style=\"width:" + perc
+          outFile.println("<div style=\"width:" + (perc * 100.0)
               + "%;\" class=\"soyc-bar-graph-fill goog-inline-block\"></div>");
           // CHECKSTYLE_ON
           outFile.println("</div>");
@@ -1064,7 +1064,7 @@ public class MakeTopLevelHtmlForPerm {
             outFile.println("<td class=\"soyc-bargraph-col\">");
             outFile.println("<div class=\"soyc-bar-graph goog-inline-block\">");
             // CHECKSTYLE_OFF
-            outFile.println("<div style=\"width:" + perc
+            outFile.println("<div style=\"width:" + (perc * 100.0)
                 + "%;\" class=\"soyc-bar-graph-fill goog-inline-block\"></div>");
             // CHECKSTYLE_ON
             outFile.println("</div>");
@@ -1235,7 +1235,7 @@ public class MakeTopLevelHtmlForPerm {
         outFile.println("<td class=\"soyc-bargraph-col\">");
         outFile.println("<div class=\"soyc-bar-graph goog-inline-block\">");
         // CHECKSTYLE_OFF
-        outFile.println("<div style=\"width:" + perc
+        outFile.println("<div style=\"width:" + (perc * 100.0)
             + "%;\" class=\"soyc-bar-graph-fill goog-inline-block\"></div>");
         // CHECKSTYLE_ON
         outFile.println("</div>");
@@ -1437,7 +1437,7 @@ public class MakeTopLevelHtmlForPerm {
         outFile.println("<td class=\"soyc-bargraph-col\">");
         outFile.println("<div class=\"soyc-bar-graph goog-inline-block\">");
         // CHECKSTYLE_OFF
-        outFile.println("<div style=\"width:" + perc
+        outFile.println("<div style=\"width:" + (perc * 100.0)
             + "%;\" class=\"soyc-bar-graph-fill goog-inline-block\"></div>");
         // CHECKSTYLE_ON
         outFile.println("</div>");
@@ -1753,7 +1753,7 @@ public class MakeTopLevelHtmlForPerm {
         outFile.println("<td class=\"soyc-bargraph-col\">");
         outFile.println("<div class=\"soyc-bar-graph goog-inline-block\">");
         // CHECKSTYLE_OFF
-        outFile.println("<div style=\"width:" + perc
+        outFile.println("<div style=\"width:" + (perc * 100.0)
             + "%;\" class=\"soyc-bar-graph-fill goog-inline-block\"></div>");
         // CHECKSTYLE_ON
         outFile.println("</div>");
