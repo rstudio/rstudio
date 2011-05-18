@@ -33,24 +33,18 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
-import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.files.FilenameTransform;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
-import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.FileDialogs;
+import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.WorkbenchHelper;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
-import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
@@ -68,7 +62,8 @@ import org.rstudio.studio.client.workbench.views.source.events.InsertSourceEvent
 
 import java.util.ArrayList;
 
-// TODO: Make History and Workspace Save/Load stuff share codepath
+// TODO: Save Workspace As...
+// TODO: editor should open .Rhistory files
 // TODO: History menu items
 // TODO: Search History command (only if menu_
 // TODO: Consider history restored message at startup
@@ -207,9 +202,7 @@ public class History extends BasePresenter implements SelectionCommitHandler<Voi
    public History(final Display view,
                   HistoryServerOperations server,
                   final GlobalDisplay globalDisplay,
-                  FileDialogs fileDialogs,
-                  WorkbenchContext workbenchContext,
-                  RemoteFileSystemContext fsContext,
+                  ConsoleDispatcher consoleDispatcher,
                   EventBus events,
                   final Session session,
                   Commands commands,
@@ -219,9 +212,7 @@ public class History extends BasePresenter implements SelectionCommitHandler<Voi
       view_ = view;
       events_ = events;
       globalDisplay_ = globalDisplay;
-      fileDialogs_ = fileDialogs;
-      workbenchContext_ = workbenchContext;
-      fsContext_ = fsContext;
+      consoleDispatcher_ = consoleDispatcher;
       searchCommand_ = new SearchCommand(session);
       session_ = session;
 
@@ -447,60 +438,17 @@ public class History extends BasePresenter implements SelectionCommitHandler<Voi
    {
       view_.bringToFront();
       
-      fileDialogs_.openFile(
-            "Load History",
-            fsContext_,
-            workbenchContext_.getCurrentWorkingDir(),
-            new ProgressOperationWithInput<FileSystemItem>()
-            {
-               public void execute(FileSystemItem input, ProgressIndicator indicator)
-               {
-                  if (input == null)
-                     return;
-                  
-                  WorkbenchHelper.sendFileCommandToConsole("loadhistory", 
-                                                           input, 
-                                                           events_);
-                  indicator.onCompleted();
-               }
-            });
+      consoleDispatcher_.chooseFileThenExecuteCommand("Load History", 
+                                                      "loadhistory");
    }
    
    void onSaveHistory()
    {
       view_.bringToFront();
       
-      fileDialogs_.saveFile(
-            "Save History As",
-            fsContext_,
-            workbenchContext_.getCurrentWorkingDir(),
-            new FilenameTransform()
-            {
-               public String transform(String filename)
-               {
-                  // auto-append .RData if that isn't the extension
-                  String ext = FileSystemItem.getExtensionFromPath(filename);
-                  return ext.equalsIgnoreCase(".rhistory")
-                        ? filename
-                        : filename + ".Rhistory";
-               }
-            },
-            new ProgressOperationWithInput<FileSystemItem>()
-            {
-               public void execute(
-                     FileSystemItem input,
-                     ProgressIndicator indicator)
-               {
-                  if (input == null)
-                     return;
-                  
-                  WorkbenchHelper.sendFileCommandToConsole("savehistory", 
-                                                           input, 
-                                                           events_);
-                 
-                  indicator.onCompleted();
-               }
-            });
+      consoleDispatcher_.saveFileAsThenExecuteCommand("Save History As", 
+                                                      ".Rhistory", 
+                                                      "savehistory");
    }
    
    @Handler
@@ -706,7 +654,5 @@ public class History extends BasePresenter implements SelectionCommitHandler<Voi
    private final SearchCommand searchCommand_;
    private HistoryServerOperations server_;
    private final Session session_;
-   private final WorkbenchContext workbenchContext_;
-   private final RemoteFileSystemContext fsContext_;
-   private final FileDialogs fileDialogs_;
+   private final ConsoleDispatcher consoleDispatcher_;
 }

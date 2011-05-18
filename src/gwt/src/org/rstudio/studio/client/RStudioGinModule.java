@@ -21,6 +21,7 @@ import org.rstudio.studio.client.application.ApplicationView;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.ui.ApplicationWindow;
+import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.DefaultGlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
@@ -95,7 +96,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ClientStateUpdater.class).asEagerSingleton();
       bind(Commands.class).in(Singleton.class);
       bind(DefaultCRANMirror.class).in(Singleton.class);
-
+      bind(ConsoleDispatcher.class).in(Singleton.class);
       bind(ChooseFile.class).asEagerSingleton();
       bind(AceThemes.class).asEagerSingleton();
 

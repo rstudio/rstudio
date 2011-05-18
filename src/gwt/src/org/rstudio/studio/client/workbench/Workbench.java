@@ -23,9 +23,9 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.WorkbenchHelper;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -52,7 +52,8 @@ public class Workbench implements BusyHandler,
                     Server server,
                     Commands commands,
                     RemoteFileSystemContext fsContext,
-                    FileDialogs fileDialogs)
+                    FileDialogs fileDialogs,
+                    ConsoleDispatcher consoleDispatcher)
    {
       view_ = view;
       workbenchContext_ = workbenchContext;
@@ -61,7 +62,8 @@ public class Workbench implements BusyHandler,
       server_ = server;
       fsContext_ = fsContext;
       fileDialogs_ = fileDialogs;
-     
+      consoleDispatcher_ = consoleDispatcher;
+      
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
       
       // edit
@@ -202,7 +204,7 @@ public class Workbench implements BusyHandler,
                      return;
 
                   // set console
-                  WorkbenchHelper.sendSetWdToConsole(input, eventBus_); 
+                  consoleDispatcher_.executeSetWd(input); 
                   
                   // set files pane
                   eventBus_.fireEvent(new DirectoryNavigateEvent(input));
@@ -215,10 +217,11 @@ public class Workbench implements BusyHandler,
    private final Server server_;
    private final EventBus eventBus_;
    private final WorkbenchMainView view_;
-   GlobalDisplay globalDisplay_;
+   private final GlobalDisplay globalDisplay_;
    private final RemoteFileSystemContext fsContext_;
    private final FileDialogs fileDialogs_;
    private final WorkbenchContext workbenchContext_;
+   private final ConsoleDispatcher consoleDispatcher_;
    private final TimeBufferedCommand metricsChangedCommand_;
    private WorkbenchMetrics lastWorkbenchMetrics_;
    private boolean nearQuotaWarningShown_ = false; 
