@@ -147,7 +147,7 @@ void UserSettings::setCRANMirror(const CRANMirror& mirror)
 
 bool UserSettings::alwaysSaveHistory() const
 {
-   return settings_.getBool(kAlwaysSaveHistory, true);
+   return settings_.getBool(kAlwaysSaveHistory, false);
 }
 
 void UserSettings::setAlwaysSaveHistory(bool alwaysSave)
