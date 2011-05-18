@@ -62,9 +62,6 @@ import org.rstudio.studio.client.workbench.views.source.events.InsertSourceEvent
 
 import java.util.ArrayList;
 
-// TODO: History menu items
-
-
 public class History extends BasePresenter implements SelectionCommitHandler<Void>,
                                                       FetchCommandsHandler
 {
