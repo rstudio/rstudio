@@ -62,13 +62,8 @@ import org.rstudio.studio.client.workbench.views.source.events.InsertSourceEvent
 
 import java.util.ArrayList;
 
-// TODO: Save Workspace As...
 // TODO: History menu items
-// TODO: Search History command (only if menu_
-// TODO: Consider history restored message at startup
-// TODO: Prune out savehistory command from savehistory?
-// TODO: Consider defaulting to save history in working dir
-// TODO: Consider defaulting to not removing duplicates
+
 
 public class History extends BasePresenter implements SelectionCommitHandler<Void>,
                                                       FetchCommandsHandler
