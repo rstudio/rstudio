@@ -183,9 +183,24 @@
 }
 .soyc-table thead th {
   font-weight:bold;
-  text-align:left;
   background:#c5d7ef;
   vertical-align:bottom
+}
+.soyc-numerical-col-header {
+  text-align: right;
+}
+.soyc-bargraph-col {
+  text-align: right;
+}
+.soyc-numerical-col {
+  text-align: right;
+  font-family: monospace;
+  width: 10em;
+}
+.soyc-percent-col {
+  text-align: right;
+  font-family: monospace;
+  width: 10em;
 }
 .soyc-table tfoot tr td {
   border-top:1px solid #c5d7ef;
