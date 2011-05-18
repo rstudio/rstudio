@@ -63,7 +63,6 @@ import org.rstudio.studio.client.workbench.views.source.events.InsertSourceEvent
 import java.util.ArrayList;
 
 // TODO: Save Workspace As...
-// TODO: editor should open .Rhistory files
 // TODO: History menu items
 // TODO: Search History command (only if menu_
 // TODO: Consider history restored message at startup
