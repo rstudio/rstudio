@@ -15,6 +15,8 @@ package org.rstudio.studio.client.server.remote;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
@@ -64,6 +66,7 @@ import org.rstudio.studio.client.workbench.views.workspace.events.WorkspaceObjec
 import org.rstudio.studio.client.workbench.views.workspace.events.WorkspaceRefreshEvent;
 import org.rstudio.studio.client.workbench.views.workspace.model.WorkspaceObjectInfo;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 
@@ -360,7 +363,7 @@ class RemoteServerEventListener
                      
                      // disppatch event
                      ClientEvent event = events.get(i);
-                     dispatchEvent(event);
+                     enqueueEventForDispatch(event);
                      lastEventId_ = event.getId();
                   }   
                }
@@ -441,7 +444,30 @@ class RemoteServerEventListener
       activeRequest_ = server_.getEvents(lastEventId_, 
                                          activeRequestCallback_,
                                          retryHandler);                             
-   }  
+   }
+
+   private void enqueueEventForDispatch(ClientEvent event)
+   {
+      pendingEvents_.add(event);
+      if (pendingEvents_.size() == 1)
+      {
+         Scheduler.get().scheduleIncremental(new RepeatingCommand()
+         {
+            public boolean execute()
+            {
+               final int MAX_EVENTS_AT_ONCE = 200;
+               for (int i = 0;
+                    i < MAX_EVENTS_AT_ONCE && pendingEvents_.size() > 0;
+                    i++)
+               {
+                  ClientEvent currentEvent = pendingEvents_.remove(0);
+                  dispatchEvent(currentEvent);
+               }
+               return pendingEvents_.size() > 0;
+            }
+         });
+      }
+   }
    
    private void dispatchEvent(ClientEvent event) 
    { 
@@ -753,6 +779,8 @@ class RemoteServerEventListener
    
    private RpcRequest activeRequest_ ;
    private ServerRequestCallback<JsArray<ClientEvent>> activeRequestCallback_;
+
+   private final ArrayList<ClientEvent> pendingEvents_ = new ArrayList<ClientEvent>();
    
    private Watchdog watchdog_ = new Watchdog();
 
