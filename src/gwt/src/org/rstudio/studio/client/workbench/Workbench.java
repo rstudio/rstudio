@@ -25,7 +25,7 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.WorkbenchEventHelper;
+import org.rstudio.studio.client.common.WorkbenchHelper;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -202,7 +202,7 @@ public class Workbench implements BusyHandler,
                      return;
 
                   // set console
-                  WorkbenchEventHelper.sendSetWdToConsole(input, eventBus_); 
+                  WorkbenchHelper.sendSetWdToConsole(input, eventBus_); 
                   
                   // set files pane
                   eventBus_.fireEvent(new DirectoryNavigateEvent(input));

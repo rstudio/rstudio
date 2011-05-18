@@ -570,14 +570,20 @@ public class HistoryPane extends WorkbenchPane
          }
       });
 
-      return new Toolbar(new Widget[] {
-            commands_.historySendToConsole().createToolbarButton(),
-            commands_.historySendToSource().createToolbarButton(),
-            commands_.historyRemoveEntries().createToolbarButton(),
-            commands_.clearHistory().createToolbarButton()
-      }, new Widget[] {
-            searchWidget_
-      });
+      Toolbar toolbar = new Toolbar();
+      toolbar.addLeftWidget(commands_.loadHistory().createToolbarButton());
+      toolbar.addLeftWidget(commands_.saveHistory().createToolbarButton());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.historySendToConsole().createToolbarButton());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.historySendToSource().createToolbarButton());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.historyRemoveEntries().createToolbarButton());
+      toolbar.addLeftWidget(commands_.clearHistory().createToolbarButton());
+      
+      toolbar.addRightWidget(searchWidget_);
+      
+      return toolbar;
    }
 
    public HandlerRegistration addSelectionCommitHandler(

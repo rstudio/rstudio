@@ -16,7 +16,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
-public class WorkbenchEventHelper
+public class WorkbenchHelper
 {
    public static void sendSetWdToConsole(FileSystemItem dir, EventBus eventBus)
    {
@@ -27,5 +27,11 @@ public class WorkbenchEventHelper
             new SendToConsoleEvent("setwd(\"" + escaped + "\")", true));
    }
    
-
+   public static void sendFileCommandToConsole(String command, 
+                                               FileSystemItem file,
+                                               EventBus eventBus)
+   {
+      String code = command + "(\"" + file.getPath() + "\")";
+      eventBus.fireEvent(new SendToConsoleEvent(code, true));
+   }
 }
