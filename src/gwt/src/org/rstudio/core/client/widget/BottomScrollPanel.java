@@ -15,6 +15,7 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.user.client.ui.ScrollPanel;
+import org.rstudio.core.client.dom.DomUtils;
 
 /**
  * An implementation of ScrollPanel that defaults its scroll position to the
@@ -53,7 +54,7 @@ public class BottomScrollPanel extends ScrollPanel
    @Override
    public void scrollToBottom()
    {
-      super.scrollToBottom();
+      DomUtils.scrollToBottom(getElement());
       scrolledToBottom_ = true;
    }
 

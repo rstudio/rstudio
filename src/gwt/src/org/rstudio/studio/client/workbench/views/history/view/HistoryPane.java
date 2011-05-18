@@ -45,6 +45,7 @@ import org.rstudio.studio.client.workbench.views.history.History.SearchBoxDispla
 import org.rstudio.studio.client.workbench.views.history.events.FetchCommandsEvent;
 import org.rstudio.studio.client.workbench.views.history.events.FetchCommandsHandler;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
+import org.rstudio.studio.client.workbench.views.history.view.HistoryEntryItemCodec.TimestampMode;
 
 import java.util.ArrayList;
 
@@ -116,7 +117,7 @@ public class HistoryPane extends WorkbenchPane
          }
       });
 
-      commandList_ = createHistoryTable(false);
+      commandList_ = createHistoryTable(TimestampMode.NONE);
       vpanel.add(commandList_);
 
       recentScrollPanel_ = new BottomScrollPanel();
@@ -131,7 +132,7 @@ public class HistoryPane extends WorkbenchPane
       searchLabel_ = new Label();
       searchLabel_.setHeight("");
       searchResults_ = new HistoryTableWithToolbar(
-            createHistoryTable(true),
+            createHistoryTable(TimestampMode.ITEM),
             new Widget[] {
                   searchLabel_
             },
@@ -144,7 +145,7 @@ public class HistoryPane extends WorkbenchPane
 
       contextLabel_ = new Label();
       contextResults_ = new HistoryTableWithToolbar(
-            createHistoryTable(false),
+            createHistoryTable(TimestampMode.GROUP),
             new Widget[] {
                   new SmallButton(commands_.historyDismissContext()),
                   contextLabel_
@@ -304,13 +305,13 @@ public class HistoryPane extends WorkbenchPane
       recentScrollPanel_.scrollToBottom();
    }
 
-   private HistoryTable createHistoryTable(boolean alwaysTimestamp)
+   private HistoryTable createHistoryTable(TimestampMode timestampMode)
    {
       HistoryTable table = new HistoryTable(
             styles_.command(),
             styles_.timestamp(),
             styles_.selected(),
-            alwaysTimestamp,
+            timestampMode,
             commands_);
       table.setSize("100%", "100%");
       table.addClickHandler(new ClickHandler()
@@ -350,8 +351,8 @@ public class HistoryPane extends WorkbenchPane
    
    public void truncateRecentCommands(int maxCommands)
    {
-      while(commandList_.getRowCount() > maxCommands)
-         commandList_.removeTopRow();
+      commandList_.removeTopRows(
+            Math.max(0, commandList_.getRowCount() - maxCommands));
    }
    
    public ArrayList<Integer> getRecentCommandsSelectedRowIndexes()

@@ -40,13 +40,15 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
    public interface ItemCodec<T, TItemOutput, TItemOutput2>
    {
       TableRowElement getRowForItem(T entry);
-      void onRowsInserted(TableSectionElement tbody);
+      void onRowsChanged(TableSectionElement tbody);
       TItemOutput getOutputForRow(TableRowElement row);
       TItemOutput2 getOutputForRow2(TableRowElement row);
       boolean isValueRow(TableRowElement row);
       boolean hasNonValueRows();
 
       Integer logicalOffsetToPhysicalOffset(TableElement table, int offset);
+      Integer physicalOffsetToLogicalOffset(TableElement table, int offset);
+      int getLogicalRowCount(TableElement table);
    }
 
    public FastSelectTable(ItemCodec<TItemInput, TItemOutput, TItemOutput2> codec,
@@ -299,7 +301,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
       else
          getElement().appendChild(tbody);
 
-      codec_.onRowsInserted(tbody);
+      codec_.onRowsChanged(tbody);
    }
 
    protected void addToTop(TableSectionElement tbody)
@@ -313,27 +315,52 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
       selectedRows_.clear();
    }
    
-   // TODO: handle physical to logical
    public int getRowCount()
    {
-      return table_.getRows().getLength();
+      return codec_.getLogicalRowCount(table_);
    }
    
-   // TODO: handle physical to logical
-   public void removeTopRow()
+   public void removeTopRows(int rowCount)
    {
-      setSelected(0, 1, false);
-      table_.getRows().getItem(0).removeFromParent();
+      if (rowCount <= 0)
+         return;
+
+      NodeList<TableSectionElement> tBodies = table_.getTBodies();
+      for (int i = 0; i < tBodies.getLength(); i++)
+      {
+         rowCount = removeTopRows(tBodies.getItem(i), rowCount);
+         if (rowCount == 0)
+            return;
+      }
    }
-   
-   // TODO: handle physical to logical
+
+   private int removeTopRows(TableSectionElement tbody, int rowCount)
+   {
+      while (rowCount > 0 && tbody.getRows().getLength() >= 0)
+      {
+         TableRowElement topRow = tbody.getRows().getItem(0);
+         if (codec_.isValueRow(topRow))
+            rowCount--;
+         selectedRows_.remove(topRow);
+         topRow.removeFromParent();
+      }
+
+      if (tbody.getRows().getLength() > 0)
+         codec_.onRowsChanged(tbody);
+      else
+         tbody.removeFromParent();
+
+      return rowCount;
+   }
+
    public ArrayList<Integer> getSelectedRowIndexes()
    {
       sortSelectedRows();
 
       ArrayList<Integer> results = new ArrayList<Integer>();
       for (TableRowElement row : selectedRows_)
-         results.add(row.getRowIndex());
+         results.add(codec_.physicalOffsetToLogicalOffset(table_,
+                                                          row.getRowIndex()));
       return results;
    }
    
@@ -423,31 +450,6 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
       for (TableRowElement row : selectedRows_)
          results.add(codec_.getOutputForRow(row));
       return results;
-   }
-
-   public ArrayList<Integer> getSelectedIndices(boolean fromTop)
-   {
-      sortSelectedRows();
-
-      ArrayList<Integer> results = new ArrayList<Integer>();
-      final int count = table_.getRows().getLength();
-      for (TableRowElement row : selectedRows_)
-      {
-         // TODO: Make sure it's OK that these are physical indices, not logical
-         if (fromTop)
-            results.add(row.getRowIndex());
-         else
-         {
-            results.add(count - row.getRowIndex());
-         }
-      }
-      return results;
-   }
-
-   public int getRowCount()
-   {
-      // TODO: Make sure logical/physical is taken into account here
-      return table_.getRows().getLength();
    }
 
    private void sortSelectedRows()

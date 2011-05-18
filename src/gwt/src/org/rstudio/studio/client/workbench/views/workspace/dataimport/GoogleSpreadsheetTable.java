@@ -61,7 +61,7 @@ public class GoogleSpreadsheetTable
          return row;
       }
 
-      public void onRowsInserted(TableSectionElement tbody)
+      public void onRowsChanged(TableSectionElement tbody)
       {
       }
 
@@ -89,6 +89,17 @@ public class GoogleSpreadsheetTable
                                                    int offset)
       {
          return offset;
+      }
+
+      public Integer physicalOffsetToLogicalOffset(TableElement table,
+                                                   int offset)
+      {
+         return offset;
+      }
+
+      public int getLogicalRowCount(TableElement table)
+      {
+         return table.getRows().getLength();
       }
 
       private final String dateStyle_;

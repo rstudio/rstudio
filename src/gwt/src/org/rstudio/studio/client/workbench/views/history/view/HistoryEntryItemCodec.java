@@ -25,14 +25,16 @@ import java.util.Date;
 
 public class HistoryEntryItemCodec implements ItemCodec<HistoryEntry, String, Long>
 {
+   public enum TimestampMode { GROUP, ITEM, NONE };
+
    public HistoryEntryItemCodec(String commandClass,
                                 String timestampClass,
-                                boolean alwaysTimestamp,
+                                TimestampMode timestampMode,
                                 boolean disclosureButton)
    {
       commandClass_ = commandClass;
       timestampClass_ = timestampClass;
-      alwaysTimestamp_ = alwaysTimestamp;
+      timestampMode_ = timestampMode;
       disclosureButton_ = disclosureButton;
 
       res_ = GWT.create(HistoryPane.Resources.class);
@@ -114,26 +116,32 @@ public class HistoryEntryItemCodec implements ItemCodec<HistoryEntry, String, Lo
 
    public boolean hasNonValueRows()
    {
-      return !alwaysTimestamp_;
+      return timestampMode_ == TimestampMode.GROUP;
    }
 
-   public void onRowsInserted(TableSectionElement tbody)
+   public void onRowsChanged(TableSectionElement tbody)
    {
+      if (timestampMode_ == TimestampMode.NONE)
+         return;
+
       long lastTime = -1;
 
-      Node previousSibling = tbody.getPreviousSibling();
-      if (previousSibling != null
-          && previousSibling.getNodeType() == Node.ELEMENT_NODE
-          && ((Element)previousSibling).getTagName().equalsIgnoreCase("tbody"))
+      if (timestampMode_ == TimestampMode.GROUP)
       {
-         TableSectionElement prevbody = (TableSectionElement) previousSibling;
-         NodeList<TableRowElement> prevrows = prevbody.getRows();
-         if (prevrows.getLength() > 0)
+         Node previousSibling = tbody.getPreviousSibling();
+         if (previousSibling != null
+             && previousSibling.getNodeType() == Node.ELEMENT_NODE
+             && ((Element)previousSibling).getTagName().equalsIgnoreCase("tbody"))
          {
-            TableRowElement lastRow = prevrows.getItem(prevrows.getLength()-1);
-            if (isValueRow(lastRow))
+            TableSectionElement prevbody = (TableSectionElement) previousSibling;
+            NodeList<TableRowElement> prevrows = prevbody.getRows();
+            if (prevrows.getLength() > 0)
             {
-               lastTime = getTimestampForRow(lastRow);
+               TableRowElement lastRow = prevrows.getItem(prevrows.getLength()-1);
+               if (isValueRow(lastRow))
+               {
+                  lastTime = getTimestampForRow(lastRow);
+               }
             }
          }
       }
@@ -144,13 +152,14 @@ public class HistoryEntryItemCodec implements ItemCodec<HistoryEntry, String, Lo
       {
          TableRowElement row = rows.getItem(i);
          long time = getTimestampForRow(row);
-         if (alwaysTimestamp_ || Math.abs(time - lastTime) > 1000*60*15)
+         if (timestampMode_ == TimestampMode.ITEM
+             || (timestampMode_ == TimestampMode.GROUP && Math.abs(time - lastTime) > 1000*60*15))
          {
             final String formatted = formatDate(time);
             if (formatted != null)
             {
                int extraRows;
-               if (alwaysTimestamp_)
+               if (timestampMode_ == TimestampMode.ITEM)
                   extraRows = addTimestampCell(row, formatted);
                else
                   extraRows = addTimestampRow(row, formatted);
@@ -166,6 +175,9 @@ public class HistoryEntryItemCodec implements ItemCodec<HistoryEntry, String, Lo
 
    public Integer logicalOffsetToPhysicalOffset(TableElement table, int offset)
    {
+      if (!hasNonValueRows())
+         return offset;
+
       NodeList<TableSectionElement> bodies = table.getTBodies();
       int skew = 0;
       int pos = 0;
@@ -203,6 +215,60 @@ public class HistoryEntryItemCodec implements ItemCodec<HistoryEntry, String, Lo
          return null;
    }
 
+   public Integer physicalOffsetToLogicalOffset(TableElement table, int offset)
+   {
+      if (!hasNonValueRows())
+         return offset;
+
+      if (offset >= table.getRows().getLength())
+         return null;
+
+      NodeList<TableSectionElement> bodies = table.getTBodies();
+      int logicalOffset = 0;
+      for (int i = 0; offset > 0 && i < bodies.getLength(); i++)
+      {
+         TableSectionElement body = bodies.getItem(i);
+         NodeList<TableRowElement> rows = body.getRows();
+         int rowCount = rows.getLength();
+         int extraRows = body.getPropertyInt("extrarows");
+         if (rowCount < offset)
+         {
+            logicalOffset += rowCount - extraRows;
+            offset -= rowCount;
+         }
+         else
+         {
+            // It's in here
+            for (int j = 0; offset > 0 && j < rows.getLength(); j++)
+            {
+               offset--;
+               if (isValueRow(rows.getItem(j)))
+                  logicalOffset++;
+            }
+         }
+      }
+
+      return logicalOffset;
+   }
+
+   public int getLogicalRowCount(TableElement table)
+   {
+      if (!hasNonValueRows())
+         return table.getRows().getLength();
+
+      NodeList<TableSectionElement> bodies = table.getTBodies();
+      int logicalOffset = 0;
+      for (int i = 0; i < bodies.getLength(); i++)
+      {
+         TableSectionElement body = bodies.getItem(i);
+         NodeList<TableRowElement> rows = body.getRows();
+         int rowCount = rows.getLength();
+         int extraRows = body.getPropertyInt("extrarows");
+         logicalOffset += rowCount - extraRows;
+      }
+      return logicalOffset;
+   }
+
    private int addTimestampRow(TableRowElement row, String formatted)
    {
       Element tsRow = Document.get().createElement("tr");
@@ -235,7 +301,7 @@ public class HistoryEntryItemCodec implements ItemCodec<HistoryEntry, String, Lo
 
    private final String commandClass_;
    private final String timestampClass_;
-   private final boolean alwaysTimestamp_;
+   private final TimestampMode timestampMode_;
    private final boolean disclosureButton_;
    private Resources res_;
 }

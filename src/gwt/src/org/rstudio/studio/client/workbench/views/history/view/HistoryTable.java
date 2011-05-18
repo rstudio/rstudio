@@ -27,6 +27,7 @@ import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.history.HasHistory;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
+import org.rstudio.studio.client.workbench.views.history.view.HistoryEntryItemCodec.TimestampMode;
 import org.rstudio.studio.client.workbench.views.history.view.HistoryPane.Resources;
 
 import java.util.ArrayList;
@@ -37,18 +38,18 @@ public class HistoryTable extends FastSelectTable<HistoryEntry, String, Long>
    public HistoryTable(String commandClassName,
                        String timestampClassName,
                        String selectedClassName,
-                       boolean searchResult,
+                       TimestampMode timestampMode,
                        final Commands commands)
    {
       super(new HistoryEntryItemCodec(commandClassName,
                                       timestampClassName,
-                                      searchResult,
-                                      searchResult),
+                                      timestampMode,
+                                      timestampMode == TimestampMode.ITEM),
             selectedClassName,
             true,
             true);
 
-      searchResult_ = searchResult;
+      searchResult_ = timestampMode == TimestampMode.ITEM;
       
       applyWidthConstraints();
 
