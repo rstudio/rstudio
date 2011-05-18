@@ -189,7 +189,7 @@ public class Workspace
    {
       view_.bringToFront();
       
-      consoleDispatcher_.saveFileAsThenExecuteCommand("Save Workspace",
+      consoleDispatcher_.saveFileAsThenExecuteCommand("Save Workspace As",
                                                       ".RData",
                                                       "save.image");
    }
